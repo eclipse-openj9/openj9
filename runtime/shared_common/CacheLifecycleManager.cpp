@@ -259,6 +259,7 @@ printSharedCache(void* element, void* param)
 			j9tty_printf(PORTLIB, "%-14s", "level");
 			j9tty_printf(PORTLIB, "%-16s", "cache-type");
 			j9tty_printf(PORTLIB, "%-16s", "feature");
+			j9tty_printf(PORTLIB, "%-12s", "layer");
 #if !defined(WIN32)
 			j9tty_printf(PORTLIB, "%-15s", "OS shmid");
 			j9tty_printf(PORTLIB, "%-15s", "OS semid");
@@ -306,6 +307,11 @@ printSharedCache(void* element, void* param)
 			j9tty_printf(PORTLIB, "%-16s", "non-cr");
 		} else {
 			j9tty_printf(PORTLIB, "%-16s", "default");
+		}
+		if (currentItem->layer >= 0) {
+			j9tty_printf(PORTLIB, "%-12d", currentItem->layer);
+		} else {
+			j9tty_printf(PORTLIB, "%-12s", "");
 		}
 #if !defined(WIN32)
 		if (currentItem->os_shmid != (UDATA)J9SH_OSCACHE_UNKNOWN) {
@@ -361,9 +367,9 @@ deleteSharedCache(void *element, void* param)
 	Trc_SHR_CLM_deleteSharedCache_Entry();
 	
 	if (J9PORT_SHR_CACHE_TYPE_SNAPSHOT == cacheType) {
-		returnVal = j9shr_destroy_snapshot(state->vm, state->ctrlDirName, verboseFlags, cacheInfo->name, cacheInfo->generation, cacheInfo->generation, &(cacheInfo->versionData));
+		returnVal = j9shr_destroy_snapshot(state->vm, state->ctrlDirName, verboseFlags, cacheInfo->name, cacheInfo->generation, cacheInfo->generation, &(cacheInfo->versionData), cacheInfo->layer, cacheInfo->layer);
 	} else {
-		returnVal = j9shr_destroy_cache(state->vm, state->ctrlDirName, verboseFlags, cacheInfo->name, cacheInfo->generation, cacheInfo->generation, &(cacheInfo->versionData), false);
+		returnVal = j9shr_destroy_cache(state->vm, state->ctrlDirName, verboseFlags, cacheInfo->name, cacheInfo->generation, cacheInfo->generation, &(cacheInfo->versionData), false, cacheInfo->layer, cacheInfo->layer);
 	}
 	if ((J9SH_DESTROY_FAILED_CURRENT_GEN_CACHE == returnVal) ||
 		(J9SH_DESTROY_FAILED_OLDER_GEN_CACHE == returnVal) ||
@@ -724,9 +730,9 @@ j9shr_destroySharedCache(J9JavaVM *vm, const char *ctrlDirName, const char *name
 		verboseFlags = J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT;
 	}
 	if (J9PORT_SHR_CACHE_TYPE_SNAPSHOT == cacheType) {
-		rc = j9shr_destroy_snapshot(vm, ctrlDir, verboseFlags, modifiedCacheNamePtr, OSCACHE_LOWEST_ACTIVE_GEN, OSCACHE_CURRENT_CACHE_GEN, &versionData);
+		rc = j9shr_destroy_snapshot(vm, ctrlDir, verboseFlags, modifiedCacheNamePtr, OSCACHE_LOWEST_ACTIVE_GEN, OSCACHE_CURRENT_CACHE_GEN, &versionData, -1, J9SH_DESTROY_TOP_LAYER_ONLY);
 	} else {
-		rc = j9shr_destroy_cache(vm, ctrlDir, verboseFlags, modifiedCacheNamePtr, OSCACHE_LOWEST_ACTIVE_GEN, OSCACHE_CURRENT_CACHE_GEN, &versionData, false);
+		rc = j9shr_destroy_cache(vm, ctrlDir, verboseFlags, modifiedCacheNamePtr, OSCACHE_LOWEST_ACTIVE_GEN, OSCACHE_CURRENT_CACHE_GEN, &versionData, false, -1, J9SH_DESTROY_TOP_LAYER_ONLY);
 	}
 
 	return rc;
@@ -745,6 +751,8 @@ j9shr_destroySharedCache(J9JavaVM *vm, const char *ctrlDirName, const char *name
  * @param [in] generationEnd  Delete all cache generations upto and including generation specified
  * @param [in] versionData  The version data describing the cache to destroy
  * @param [in] isReset  True if reset option is being used, false otherwise.
+ * @param [in] layerStart  Delete all cache layers starting from layer number specified
+ * @param [in] layerEnd  Delete all cache layers upto and including layer number specified. If layerEnd is J9SH_DESTROY_TOP_LAYER_ONLY, delete top layer only
  *
  * @returns	J9SH_DESTROYED_ALL_CACHE when no cache exists or successfully destroyed all caches,
  * 			J9SH_DESTROYED_NONE when it fails to destroy any cache,
@@ -752,16 +760,23 @@ j9shr_destroySharedCache(J9JavaVM *vm, const char *ctrlDirName, const char *name
  * 			J9SH_DESTROY_FAILED_OLDER_GEN_CACHE when it failed to destroy one or more older generation cache and either current generation cache does not exists or is successfully destroyed.
  */
 IDATA
-j9shr_destroy_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseFlags, const char* cacheName, UDATA generationStart, UDATA generationEnd, J9PortShcVersion* versionData, BOOLEAN isReset) {
+j9shr_destroy_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseFlags, const char* cacheName, UDATA generationStart, UDATA generationEnd, J9PortShcVersion* versionData, BOOLEAN isReset, I_8 layerStart, I_8 layerEnd) {
 	SH_OSCache* oscache;
 	IDATA returnVal = J9SH_DESTROYED_ALL_CACHE;
 	IDATA cacheStatus = J9SH_DESTROYED_NONE;
 	char cacheDirName[J9SH_MAXPATH];
 	bool noCacheExists = true;
 	UDATA lastGeneration = generationEnd;
+	bool topLayerOnly = (J9SH_DESTROY_TOP_LAYER_ONLY == layerEnd);
+	I_8 layerMin = 0;
+	I_8 layerMax = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	Trc_SHR_CLM_j9shr_destroy_cache_Entry(verboseFlags, cacheName, generationStart, generationEnd);
+	Trc_SHR_CLM_j9shr_destroy_cache_Entry_V1(verboseFlags, cacheName, generationStart, generationEnd, layerStart, layerEnd);
+
+	if (isReset) {
+		Trc_SHR_Assert_True(topLayerOnly);
+	}
 
 	oscache = (SH_OSCache*) j9mem_allocate_memory(SH_OSCache::getRequiredConstrBytes(), J9MEM_CATEGORY_CLASSES);
 	if (oscache == NULL) {
@@ -782,24 +797,31 @@ j9shr_destroy_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseF
 	}
 	/* try to remove older generation cache first */
 	for (UDATA i = generationStart; i <= lastGeneration; i++) {
-		/* explicitly pass 0 as verboseFlags to j9shr_stat_cache to suppress printing of messages related to cache existence in all cases */
-		if (1 == j9shr_stat_cache(vm, cacheDirName, 0 , cacheName, versionData, i)) {
-			cacheStatus = J9SH_DESTROYED_OLDER_GEN_CACHE;
-			SH_OSCache::newInstance(PORTLIB, oscache, cacheName, i, versionData);
-			/*Pass in 0 for runtime flags means we will not check semid in cache header when we destroy a cache*/
-			if (!oscache->startup(vm, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, cacheName, vm->sharedClassPreinitConfig, 0, J9SH_OSCACHE_OPEXIST_DESTROY, verboseFlags, 0/*runtime check*/, 0, vm->sharedCacheAPI->storageKeyTesting, versionData, NULL, SHR_STARTUP_REASON_DESTROY)) {
-				if (oscache->getError() != J9SH_OSCACHE_NO_CACHE) {
-					cacheStatus = J9SH_DESTROY_FAILED_OLDER_GEN_CACHE;
+		I_8 layerMaxOldGen = -1;
+		I_8 layerMinOldGen = -1;
+		if (i > J9SH_GENERATION_37) {
+			layerMaxOldGen = J9SH_LAYER_NUM_MAX_VALUE;
+		}
+		for (I_8 l = layerMaxOldGen; l >= layerMinOldGen; l--) {
+			/* explicitly pass 0 as verboseFlags to j9shr_stat_cache to suppress printing of messages related to cache existence in all cases */
+			if (1 == j9shr_stat_cache(vm, cacheDirName, 0 , cacheName, versionData, i, l)) {
+				cacheStatus = J9SH_DESTROYED_OLDER_GEN_CACHE;
+				SH_OSCache::newInstance(PORTLIB, oscache, cacheName, i, versionData, l);
+				/*Pass in 0 for runtime flags means we will not check semid in cache header when we destroy a cache*/
+				if (!oscache->startup(vm, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, cacheName, vm->sharedClassPreinitConfig, 0, J9SH_OSCACHE_OPEXIST_DESTROY, verboseFlags, 0/*runtime check*/, 0, vm->sharedCacheAPI->storageKeyTesting, versionData, NULL, SHR_STARTUP_REASON_DESTROY)) {
+					if (oscache->getError() != J9SH_OSCACHE_NO_CACHE) {
+						cacheStatus = J9SH_DESTROY_FAILED_OLDER_GEN_CACHE;
+						noCacheExists = false;
+					}
+				} else {
 					noCacheExists = false;
+					if (-1 == oscache->destroy(false, (FALSE != isReset))) {
+						/* failed to destroy a cache */
+						cacheStatus = J9SH_DESTROY_FAILED_OLDER_GEN_CACHE;
+					}
 				}
-			} else {
-				noCacheExists = false;
-				if (-1 == oscache->destroy(false, (FALSE != isReset))) {
-					/* failed to destroy a cache */
-					cacheStatus = J9SH_DESTROY_FAILED_OLDER_GEN_CACHE;
-				}
+				oscache->cleanup();
 			}
-			oscache->cleanup();
 		}
 	}
 
@@ -811,29 +833,36 @@ j9shr_destroy_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseF
 			CLM_TRACE1(J9NLS_SHRC_CLCM_FAILED_REMOVED_OLDER_GEN, cacheName);
 		}
 	}
+	layerMax = topLayerOnly ? J9SH_LAYER_NUM_MAX_VALUE : layerEnd;
+	layerMin = layerStart;
 
 	/* try to remove current generation cache */
 	if (OSCACHE_CURRENT_CACHE_GEN == generationEnd) {
-		/* explicitly pass 0 as verboseFlags to j9shr_stat_cache to suppress printing of messages related to cache existence in all cases */
-		if (1 == j9shr_stat_cache(vm, cacheDirName, 0 , cacheName, versionData, OSCACHE_CURRENT_CACHE_GEN)) {
-			SH_OSCache::newInstance(PORTLIB, oscache, cacheName, OSCACHE_CURRENT_CACHE_GEN, versionData);
-			/*Pass in 0 for runtime flags means we will not check semid in cache header when we destroy a cache*/
-			if (!oscache->startup(vm, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, cacheName, vm->sharedClassPreinitConfig, 0, J9SH_OSCACHE_OPEXIST_DESTROY, verboseFlags, 0/*runtime check*/, 0, vm->sharedCacheAPI->storageKeyTesting, versionData, NULL, SHR_STARTUP_REASON_DESTROY)) {
-				/* failed to destroy current gen cache. */
-				if (oscache->getError() != J9SH_OSCACHE_NO_CACHE) {
-					noCacheExists = false;
-					returnVal = J9SH_DESTROY_FAILED_CURRENT_GEN_CACHE;
-					CLM_TRACE1(J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN, cacheName);
-				}
-			} else {
-				noCacheExists = false;
-				if (-1 == oscache->destroy(false, (FALSE != isReset))) {
+		for (I_8 l = layerMax; l >= layerMin; l--) {
+			/* explicitly pass 0 as verboseFlags to j9shr_stat_cache to suppress printing of messages related to cache existence in all cases */
+			if (1 == j9shr_stat_cache(vm, cacheDirName, 0 , cacheName, versionData, OSCACHE_CURRENT_CACHE_GEN, l)) {
+				SH_OSCache::newInstance(PORTLIB, oscache, cacheName, OSCACHE_CURRENT_CACHE_GEN, versionData, l);
+				/*Pass in 0 for runtime flags means we will not check semid in cache header when we destroy a cache*/
+				if (!oscache->startup(vm, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, cacheName, vm->sharedClassPreinitConfig, 0, J9SH_OSCACHE_OPEXIST_DESTROY, verboseFlags, 0/*runtime check*/, 0, vm->sharedCacheAPI->storageKeyTesting, versionData, NULL, SHR_STARTUP_REASON_DESTROY)) {
 					/* failed to destroy current gen cache. */
-					returnVal = J9SH_DESTROY_FAILED_CURRENT_GEN_CACHE;
-					CLM_TRACE1(J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN, cacheName);
+					if (oscache->getError() != J9SH_OSCACHE_NO_CACHE) {
+						noCacheExists = false;
+						returnVal = J9SH_DESTROY_FAILED_CURRENT_GEN_CACHE;
+						CLM_TRACE1(J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN, cacheName);
+					}
+				} else {
+					noCacheExists = false;
+					if (-1 == oscache->destroy(false, (FALSE != isReset))) {
+						/* failed to destroy current gen cache. */
+						returnVal = J9SH_DESTROY_FAILED_CURRENT_GEN_CACHE;
+						CLM_TRACE1(J9NLS_SHRC_CLCM_FAILED_REMOVED_CURRENT_GEN, cacheName);
+					}
+				}
+				oscache->cleanup();
+				if (topLayerOnly) {
+					break;
 				}
 			}
-			oscache->cleanup();
 		}
 	}
 
@@ -952,6 +981,8 @@ done:
  * @param [in] generationStart  Delete all snapshot of cache generations starting from generation specified
  * @param [in] generationEnd  Delete all snapshot of cache generations upto and including generation specified
  * @param [in] versionData  The version data describing the snapshot to destroy
+ * @param [in] layerStart  Delete all snapshots of cache layers starting from layer number specified
+ * @param [in] layerEnd  Delete all snapshots of cache layers upto and including layer number specified. If layerEnd is J9SH_DESTROY_TOP_LAYER_ONLY, delete top layer only
  *
  * @return	J9SH_DESTROYED_ALL_SNAPSHOT when no snapshot exists or successfully destroyed all snapshots,
  * 			J9SH_DESTROYED_NONE when it fails to destroy any snapshots,
@@ -960,7 +991,7 @@ done:
  * 													and either snapshot of current generation cache does not exists or is successfully destroyed.
  */
 IDATA
-j9shr_destroy_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseFlags, const char* snapshotName, UDATA generationStart, UDATA generationEnd, J9PortShcVersion* versionData)
+j9shr_destroy_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseFlags, const char* snapshotName, UDATA generationStart, UDATA generationEnd, J9PortShcVersion* versionData, I_8 layerStart, I_8 layerEnd)
 {
 	IDATA returnVal = J9SH_DESTROYED_ALL_SNAPSHOT;
 	IDATA snapshotStatus = J9SH_DESTROYED_NONE;
@@ -969,9 +1000,12 @@ j9shr_destroy_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verbo
 	char cacheDirName[J9SH_MAXPATH];
 	bool noSnapshotExists = true;
 	UDATA lastGeneration = generationEnd;
+	bool topLayerOnly = (J9SH_DESTROY_TOP_LAYER_ONLY == layerEnd);
+	I_8 layerMin = 0;
+	I_8 layerMax = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	
-	Trc_SHR_CLM_j9shr_destroy_snapshot_Entry(verboseFlags, snapshotName, generationStart, generationEnd);
+	Trc_SHR_CLM_j9shr_destroy_snapshot_Entry_V1(verboseFlags, snapshotName, generationStart, generationEnd, layerStart, layerEnd);
 
 	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 		Trc_SHR_CLM_j9shr_destroy_snapshot_getCacheDirFailed();
@@ -984,57 +1018,73 @@ j9shr_destroy_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verbo
 		/* current generation cache snapshot is destroyed after destroying existing older generation cache snapshots */
 		lastGeneration = generationEnd - 1;
 	}
+
 	/* try to remove older generation cache snapshot first */
 	for (UDATA i = generationStart; i <= lastGeneration; i++) {
-		SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, snapshotName, versionData, i, false);
-		/* No check for the return value of getCachePathName() as it always returns 0 */
-		SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen);
-		if (EsIsFile == j9file_attr(pathFileName)) {
-			IDATA rc = deleteSnapshot(vm, verboseFlags, pathFileName);
+		I_8 layerMaxOldGen = -1;
+		I_8 layerMinOldGen = -1;
+		if (i > J9SH_GENERATION_37) {
+			layerMaxOldGen = J9SH_LAYER_NUM_MAX_VALUE;
+		}
+		for (I_8 l = layerMaxOldGen; l >= layerMinOldGen; l--) {
+			SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, snapshotName, versionData, i, false, l);
+			/* No check for the return value of getCachePathName() as it always returns 0 */
+			SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen);
+			if (EsIsFile == j9file_attr(pathFileName)) {
+				IDATA rc = deleteSnapshot(vm, verboseFlags, pathFileName);
 
-			if (0 == rc) {
-				noSnapshotExists = false;
-				snapshotStatus = J9SH_DESTROYED_OLDER_GEN_SNAPSHOT;
-				CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN, snapshotName);
-			} else if (-2 == rc) {
-				noSnapshotExists = false;
-				snapshotStatus = J9SH_DESTROY_FAILED_OLDER_GEN_SNAPSHOT;
-				returnVal = snapshotStatus;
-				CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN, snapshotName);
+				if (0 == rc) {
+					noSnapshotExists = false;
+					snapshotStatus = J9SH_DESTROYED_OLDER_GEN_SNAPSHOT;
+					CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_REMOVED_OLDER_GEN, snapshotName);
+				} else if (-2 == rc) {
+					noSnapshotExists = false;
+					snapshotStatus = J9SH_DESTROY_FAILED_OLDER_GEN_SNAPSHOT;
+					returnVal = snapshotStatus;
+					CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_OLDER_GEN, snapshotName);
+				}
+				/* rc is -1 means J9PORT_ERROR_FILE_NOENT occurred while deleting the snapshot file, silently ignore this case*/
 			}
-			/* rc is -1 means J9PORT_ERROR_FILE_NOENT occurred while deleting the snapshot file, silently ignore this case*/
 		}
 	}
 
+	layerMax = topLayerOnly ? J9SH_LAYER_NUM_MAX_VALUE : layerEnd;
+	layerMin = layerStart;
+
 	/* try to remove current generation cache snapshot */
 	if (OSCACHE_CURRENT_CACHE_GEN == generationEnd) {
-		SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, snapshotName, versionData, OSCACHE_CURRENT_CACHE_GEN, false);
-		/* No check for the return value of getCachePathName() as it always returns 0 */
-		SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen);
-		if (EsIsFile == j9file_attr(pathFileName)) {
-			IDATA rc = deleteSnapshot(vm, verboseFlags, pathFileName);
+		for (I_8 l = layerMax; l >= layerMin; l--) {
+			SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, snapshotName, versionData, OSCACHE_CURRENT_CACHE_GEN, false, l);
+			/* No check for the return value of getCachePathName() as it always returns 0 */
+			SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen);
+			if (EsIsFile == j9file_attr(pathFileName)) {
+				IDATA rc = deleteSnapshot(vm, verboseFlags, pathFileName);
 
-			if (0 == rc) {
-				/* Destroy the snapshot successfully */
-				J9PortShcVersion versionData;
+				if (0 == rc) {
+					/* Destroy the snapshot successfully */
+					J9PortShcVersion versionData;
 
-				noSnapshotExists = false;
-				memset(&versionData, 0, sizeof(J9PortShcVersion));
-				/* Do not care about the getValuesFromShcFilePrefix() return value */
-				getValuesFromShcFilePrefix(PORTLIB, nameWithVGen, &versionData);
-				if (J9SH_FEATURE_COMPRESSED_POINTERS == versionData.feature) {
-					CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR, snapshotName);
-				} else if (J9SH_FEATURE_NON_COMPRESSED_POINTERS == versionData.feature) {
-					CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR, snapshotName);
-				} else {
-					CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED, snapshotName);
+					noSnapshotExists = false;
+					memset(&versionData, 0, sizeof(J9PortShcVersion));
+					/* Do not care about the getValuesFromShcFilePrefix() return value */
+					getValuesFromShcFilePrefix(PORTLIB, nameWithVGen, &versionData);
+					if (J9SH_FEATURE_COMPRESSED_POINTERS == versionData.feature) {
+						CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_CR, snapshotName);
+					} else if (J9SH_FEATURE_NON_COMPRESSED_POINTERS == versionData.feature) {
+						CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED_NONCR, snapshotName);
+					} else {
+						CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_DESTROYED, snapshotName);
+					}
+				} else if (-2 == rc) {
+					noSnapshotExists = false;
+					returnVal = J9SH_DESTROY_FAILED_CURRENT_GEN_SNAPSHOT;
+					CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN, snapshotName);
 				}
-			} else if (-2 == rc) {
-				noSnapshotExists = false;
-				returnVal = J9SH_DESTROY_FAILED_CURRENT_GEN_SNAPSHOT;
-				CLM_TRACE1(J9NLS_SHRC_CLCM_SNAPSHOT_FAILED_REMOVED_CURRENT_GEN, snapshotName);
+				/* rc is -1 means J9PORT_ERROR_FILE_NOENT occurred while deleting the snapshot file, silently ignore this case*/
+				if (topLayerOnly) {
+					break;
+				}
 			}
-			/* rc is -1 means J9PORT_ERROR_FILE_NOENT occurred while deleting the snapshot file, silently ignore this case*/
 		}
 	}
 	if (true == noSnapshotExists) {
@@ -1059,7 +1109,7 @@ done:
  * @return 1 if the cache exists, 0 otherwise
  */	
 IDATA
-j9shr_stat_cache(struct J9JavaVM* vm, const char* cacheDirName, UDATA verboseFlags, const char* name, J9PortShcVersion* versionData, UDATA generation)
+j9shr_stat_cache(struct J9JavaVM* vm, const char* cacheDirName, UDATA verboseFlags, const char* name, J9PortShcVersion* versionData, UDATA generation, I_8 layer)
 {
 	char nameWithVGen[CACHE_ROOT_MAXLEN];
 	IDATA result;
@@ -1068,7 +1118,7 @@ j9shr_stat_cache(struct J9JavaVM* vm, const char* cacheDirName, UDATA verboseFla
 	
 	Trc_SHR_CLM_j9shr_stat_cache_Entry(verboseFlags, name, generation);
 
-	SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, name, versionData, generation, true);
+	SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, name, versionData, generation, true, layer);
 	result = SH_OSCache::statCache(PORTLIB, cacheDirName, nameWithVGen, (verboseFlags != 0));
 	
 	Trc_SHR_CLM_j9shr_stat_cache_Exit(result);

@@ -183,6 +183,7 @@ J9SharedClassesHelpText J9SHAREDCLASSESHELPTEXT[] = {
 	HELPTEXT_NEWLINE,
 	{OPTION_DESTROY, J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROY, 0, 0},
 	{OPTION_DESTROYALL, J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALL, 0, 0},
+	{OPTION_DESTROYALLLAYERS, J9NLS_SHRC_SHRINIT_HELPTEXT_DESTROYALLLAYERS, 0, 0},
 	HELPTEXT_NEWLINE,
 #if !defined(J9SHR_CACHELET_SUPPORT)
 	{OPTION_RESET, J9NLS_SHRC_SHRINIT_HELPTEXT_RESET, 0, 0},
@@ -283,6 +284,7 @@ J9SharedClassesOptions J9SHAREDCLASSESOPTIONS[] = {
 	{ OPTION_NAME_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_NAME_EQUALS, 0},
 	{ OPTION_DESTROY, PARSE_TYPE_EXACT, RESULT_DO_DESTROY, 0},
 	{ OPTION_DESTROYALL, PARSE_TYPE_EXACT, RESULT_DO_DESTROYALL, 0},
+	{ OPTION_DESTROYALLLAYERS, PARSE_TYPE_EXACT, RESULT_DO_DESTROYALLLAYERS, 0},
 	{ OPTION_EXPIRE_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_EXPIRE, 0},
 	{ OPTION_LISTALLCACHES, PARSE_TYPE_EXACT, RESULT_DO_LISTALLCACHES, 0},
 	{ OPTION_PRINTSTATS, PARSE_TYPE_EXACT, RESULT_DO_PRINTSTATS, 0},
@@ -382,11 +384,11 @@ bool modifyCacheName(J9JavaVM *vm, const char* origName, UDATA verboseFlags, cha
 static BOOLEAN j9shr_parseMemSize(char * str, UDATA & value);
 static void addTestJitHint(J9HookInterface** hookInterface, UDATA eventNum, void* voidData, void* userData);
 static IDATA j9shr_restoreFromSnapshot(J9JavaVM* vm, const char* ctrlDirName, const char* cacheName, bool* cacheExist);
-static void j9shr_print_snapshot_filename(J9JavaVM* vm, const char* cacheDirName, const char* snapshotName);
+static void j9shr_print_snapshot_filename(J9JavaVM* vm, const char* cacheDirName, const char* snapshotName, I_8 layer);
 static IDATA j9shr_aotMethodOperation(J9JavaVM* vm, char* methodSpecs, UDATA action);
 static bool recoverMethodSpecSeparator(char* string, char* end);
 static void adjustCacheSizes(J9PortLibrary* portlib, UDATA verboseFlags, J9SharedClassPreinitConfig* piconfig, U_64 newSize);
-static IDATA checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, const char* cacheName, J9PortShcVersion* versionData, U_32 cacheType);
+static IDATA checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, const char* cacheName, J9PortShcVersion* versionData, U_32 cacheType, I_8 layer);
 static bool isClassFromPatchedModule(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader);
 static J9Module* getModule(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader);
 static bool isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize);
@@ -429,7 +431,7 @@ IDATA
 j9shr_print_stats(J9JavaVM *vm, UDATA parseResult, U_64 runtimeFlags, UDATA printStatsOptions);
 
 static void 
-j9shr_print_cache_filename(J9JavaVM* vm, const char* cacheDirName, U_64 runtimeFlags, const char* cacheName);
+j9shr_print_cache_filename(J9JavaVM* vm, const char* cacheDirName, U_64 runtimeFlags, const char* cacheName, I_8 layer);
 
 static void
 reportUtilityNotApplicable(J9JavaVM* vm, const char* ctrlDirName, const char* cacheName, UDATA verboseFlags, U_64 runtimeFlags, UDATA command);
@@ -954,6 +956,7 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 
 		case RESULT_DO_DESTROY:
 		case RESULT_DO_DESTROYALL:
+		case RESULT_DO_DESTROYALLLAYERS:
 		case RESULT_DO_PRINT_CACHENAME:
 		case RESULT_DO_PRINT_SNAPSHOTNAME:
 		case RESULT_DO_LISTALLCACHES:
@@ -2309,6 +2312,7 @@ reportUtilityNotApplicable(J9JavaVM* vm, const char* ctrlDirName, const char* ca
 	char cacheDirName[J9SH_MAXPATH];
 	const char *optionName;
 	UDATA groupPerm = 0;
+	I_8 layer = 0;
 
 	if ((runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_GROUP_ACCESS) != 0) {
 		groupPerm = 1;
@@ -2332,7 +2336,7 @@ reportUtilityNotApplicable(J9JavaVM* vm, const char* ctrlDirName, const char* ca
 	if (SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, versionData.cacheType) == -1) {
 		return;
 	}
-	if ((reportedIncompatibleNum == 0) && (j9shr_stat_cache(vm, cacheDirName, 0, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN))) {
+	if ((reportedIncompatibleNum == 0) && (j9shr_stat_cache(vm, cacheDirName, 0, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, layer))) {
 		if (versionData.cacheType == J9PORT_SHR_CACHE_TYPE_PERSISTENT) {
 			SHRINIT_ERR_TRACE2(verboseFlags, J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS, optionName, cacheName);
 		} else if (versionData.cacheType == J9PORT_SHR_CACHE_TYPE_NONPERSISTENT) {
@@ -2393,6 +2397,7 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 	J9PortShcVersion versionData;
 	U_32 cacheType = getCacheTypeFromRuntimeFlags(runtimeFlags);
 	UDATA groupPerm = 0;
+	I_8 layer = 0;
 
 	if ((runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_GROUP_ACCESS) != 0) {
 		groupPerm = 1;
@@ -2406,15 +2411,22 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 		j9shr_dump_help(vm, (command==RESULT_DO_MORE_HELP));
 		break;
 	case RESULT_DO_DESTROY: 
+	case RESULT_DO_DESTROYALLLAYERS:
 	case RESULT_DO_RESET:
-		setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
-		versionData.cacheType = cacheType;
-		j9shr_destroy_cache(vm, sharedClassConfig->ctrlDirName, verboseFlags, cacheName, OSCACHE_LOWEST_ACTIVE_GEN, OSCACHE_CURRENT_CACHE_GEN, &versionData, (RESULT_DO_RESET == command));
-		if (command == RESULT_DO_RESET) {
-			/* Return with a return code intended for non-utility options */
-			return J9VMDLLMAIN_NON_UTILITY_OK;
+		{
+			I_8 layerEnd = J9SH_DESTROY_TOP_LAYER_ONLY;
+			if (RESULT_DO_DESTROYALLLAYERS == command) {
+				layerEnd = J9SH_LAYER_NUM_MAX_VALUE;
+			}
+			setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+			versionData.cacheType = cacheType;
+			j9shr_destroy_cache(vm, sharedClassConfig->ctrlDirName, verboseFlags, cacheName, OSCACHE_LOWEST_ACTIVE_GEN, OSCACHE_CURRENT_CACHE_GEN, &versionData, (RESULT_DO_RESET == command), -1, layerEnd);
+			if (command == RESULT_DO_RESET) {
+				/* Return with a return code intended for non-utility options */
+				return J9VMDLLMAIN_NON_UTILITY_OK;
+			}
+			break;
 		}
-		break;
 	case RESULT_DO_DESTROYALL:
 		j9shr_destroy_all_cache(vm, sharedClassConfig->ctrlDirName, groupPerm, verboseFlags);
 		break;
@@ -2422,7 +2434,7 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 	case RESULT_DO_DESTROYSNAPSHOT:
 		setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
 		versionData.cacheType = J9PORT_SHR_CACHE_TYPE_SNAPSHOT;
-		j9shr_destroy_snapshot(vm, sharedClassConfig->ctrlDirName, verboseFlags, cacheName, OSCACHE_LOWEST_ACTIVE_GEN, OSCACHE_CURRENT_CACHE_GEN, &versionData);
+		j9shr_destroy_snapshot(vm, sharedClassConfig->ctrlDirName, verboseFlags, cacheName, OSCACHE_LOWEST_ACTIVE_GEN, OSCACHE_CURRENT_CACHE_GEN, &versionData, -1, J9SH_DESTROY_TOP_LAYER_ONLY);
 		break;
 	case RESULT_DO_DESTROYALLSNAPSHOTS:
 		j9shr_destroy_all_snapshot(vm, sharedClassConfig->ctrlDirName, groupPerm, verboseFlags);
@@ -2436,7 +2448,7 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 			break;
 		}
 		if (RESULT_DO_SNAPSHOTCACHE == command) {
-			if (1 != checkIfCacheExists(vm, sharedClassConfig->ctrlDirName, cacheDirName, cacheName, &versionData, cacheType)) {
+			if (1 != checkIfCacheExists(vm, sharedClassConfig->ctrlDirName, cacheDirName, cacheName, &versionData, cacheType, layer)) {
 				SHRINIT_ERR_TRACE1(verboseFlags, J9NLS_SHRC_SHRINIT_FAILURE_CREATE_SNAPSHOT, cacheName);
 			} else {
 				return J9VMDLLMAIN_OK;
@@ -2474,7 +2486,7 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 	case RESULT_DO_PRINTORPHANSTATS:
 		{
 			/* Test for existence of cache first. If it exists, proceed with cache init */
-			IDATA cacheExists = checkIfCacheExists(vm, sharedClassConfig->ctrlDirName, cacheDirName, cacheName, &versionData, cacheType);
+			IDATA cacheExists = checkIfCacheExists(vm, sharedClassConfig->ctrlDirName, cacheDirName, cacheName, &versionData, cacheType, layer);
 
 			if (0 == cacheExists) {
 				if (verboseFlags != 0) {
@@ -2498,7 +2510,7 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 				break;
 			}
 			/* Test for existence of cache first. If it exists, proceed with cache init */
-			cacheExists = checkIfCacheExists(vm, sharedClassConfig->ctrlDirName, cacheDirName, cacheName, &versionData, cacheType);
+			cacheExists = checkIfCacheExists(vm, sharedClassConfig->ctrlDirName, cacheDirName, cacheName, &versionData, cacheType, layer);
 			if (0 == cacheExists) {
 				if (verboseFlags != 0) {
 					reportUtilityNotApplicable(vm, sharedClassConfig->ctrlDirName, cacheName, verboseFlags, runtimeFlags, command);
@@ -2513,14 +2525,14 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 		if (SH_OSCache::getCacheDir(vm, sharedClassConfig->ctrlDirName, cacheDirName, J9SH_MAXPATH, cacheType) == -1) {
 			return J9VMDLLMAIN_SILENT_EXIT_VM;
 		}
-		j9shr_print_cache_filename(vm, cacheDirName, runtimeFlags, cacheName);
+		j9shr_print_cache_filename(vm, cacheDirName, runtimeFlags, cacheName, layer);
 		break;
 
 	case RESULT_DO_PRINT_SNAPSHOTNAME:
 		if (-1 == SH_OSCache::getCacheDir(vm, sharedClassConfig->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_SNAPSHOT)) {
 			return J9VMDLLMAIN_SILENT_EXIT_VM;
 		}
-		j9shr_print_snapshot_filename(vm, cacheDirName, cacheName);
+		j9shr_print_snapshot_filename(vm, cacheDirName, cacheName, layer);
 		break;
 
 	case RESULT_DO_INVALIDATE_AOT_METHODS_EQUALS:
@@ -2545,7 +2557,7 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 	case RESULT_DO_ADJUST_MAXAOT_EQUALS:
 	case RESULT_DO_ADJUST_MINJITDATA_EQUALS:
 	case RESULT_DO_ADJUST_MAXJITDATA_EQUALS:
-		if (1 == checkIfCacheExists(vm, sharedClassConfig->ctrlDirName, cacheDirName, cacheName, &versionData, cacheType)) {
+		if (1 == checkIfCacheExists(vm, sharedClassConfig->ctrlDirName, cacheDirName, cacheName, &versionData, cacheType, layer)) {
 			return J9VMDLLMAIN_OK;
 		}
 		break;
@@ -3763,7 +3775,7 @@ j9shr_print_stats(J9JavaVM *vm, UDATA parseResult, U_64 runtimeFlags, UDATA prin
  *
  */
 static void
-j9shr_print_cache_filename(J9JavaVM* vm, const char* cacheDirName, U_64 runtimeFlags, const char* cacheName)
+j9shr_print_cache_filename(J9JavaVM* vm, const char* cacheDirName, U_64 runtimeFlags, const char* cacheName, I_8 layer)
 {	
 	char cacheNameWithVGen[J9SH_MAXPATH];
 	PORT_ACCESS_FROM_JAVAVM(vm);	
@@ -3783,7 +3795,7 @@ j9shr_print_cache_filename(J9JavaVM* vm, const char* cacheDirName, U_64 runtimeF
 			cacheName, 
 			&versionData, 
 			SH_OSCache::getCurrentCacheGen(), 
-			true);
+			true, layer);
 
 	j9tty_printf(PORTLIB, "%s%s\n", cacheDirName, cacheNameWithVGen);
 	return;
@@ -4395,6 +4407,7 @@ j9shr_createCacheSnapshot(J9JavaVM* vm, const char* cacheName)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	char cacheDirName[J9SH_MAXPATH];
 	UDATA verboseFlags = vm->sharedCacheAPI->verboseFlags;
+	I_8 layer = 0;
 
 	Trc_SHR_INIT_j9shr_createCacheSnapshot_Entry(cacheName);
 
@@ -4411,7 +4424,7 @@ j9shr_createCacheSnapshot(J9JavaVM* vm, const char* cacheName)
 
 		setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
 		versionData.cacheType = J9PORT_SHR_CACHE_TYPE_SNAPSHOT;
-		SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, false);
+		SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, false, layer);
 		/* No check for the return value of getCachePathName() as it always returns 0 */
 		SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen);
 
@@ -4669,7 +4682,7 @@ j9shr_restoreFromSnapshot(J9JavaVM* vm, const char* ctrlDirName, const char* cac
  * @param [in] snapshotName User specified snapshot name (possibly null)
  */
 static void
-j9shr_print_snapshot_filename(J9JavaVM* vm, const char* cacheDirName, const char* snapshotName)
+j9shr_print_snapshot_filename(J9JavaVM* vm, const char* cacheDirName, const char* snapshotName, I_8 layer)
 {
 	char snapshotNameWithVGen[J9SH_MAXPATH];
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -4687,7 +4700,7 @@ j9shr_print_snapshot_filename(J9JavaVM* vm, const char* cacheDirName, const char
 			snapshotName,
 			&versionData,
 			SH_OSCache::getCurrentCacheGen(),
-			true);
+			true, layer);
 
 	j9tty_printf(PORTLIB, "%s%s\n", cacheDirName, snapshotNameWithVGen);
 	return;
@@ -4845,7 +4858,7 @@ j9shr_jvmPhaseChange(J9VMThread *currentThread, UDATA phase)
  * @return 1 if the cache exist, 0 if the cache does not exist, and -1 if failed to get cache directory.
  */
 static IDATA
-checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, const char* cacheName, J9PortShcVersion* versionData, U_32 cacheType)
+checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, const char* cacheName, J9PortShcVersion* versionData, U_32 cacheType, I_8 layer)
 {
 	IDATA ret = -1;
 	if (-1 == SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, cacheType)) {
@@ -4853,7 +4866,7 @@ checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, co
 	} else {
 		setCurrentCacheVersion(vm, J2SE_VERSION(vm), versionData);
 		versionData->cacheType = cacheType;
-		ret = j9shr_stat_cache(vm, cacheDirName, vm->sharedCacheAPI->verboseFlags, cacheName, versionData, OSCACHE_CURRENT_CACHE_GEN);
+		ret = j9shr_stat_cache(vm, cacheDirName, vm->sharedCacheAPI->verboseFlags, cacheName, versionData, OSCACHE_CURRENT_CACHE_GEN, layer);
 	}
 	return ret;
 }

@@ -48,13 +48,14 @@
  * maximum length of user specified or default cacheName  => 64 chars
  * prefix separator char is _     => 1 char
  * generation string is of form Gnn where nn stands for 2 digit number => 3 chars
+ * layer number string is of form Lnn where nn stands for 2 digit number => 3 chars
  *
- * Total chars needed  = 11 + 8 + 64 + 1 + 3 = 87 chars.
+ * Total chars needed  = 11 + 8 + 64 + 1 + 3 + 3 = 90 chars.
  *
  * Add 1 to above length to accommodate NULL char.
  * Reference:  getCacheVersionAndGen function
  */
-#define CACHE_ROOT_MAXLEN 88
+#define CACHE_ROOT_MAXLEN 91
 
 #define SHR_SUBOPT_BUFLEN (2 * J9SH_MAXPATH)
 
