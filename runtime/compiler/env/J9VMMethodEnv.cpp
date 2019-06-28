@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,7 @@ J9::VMMethodEnv::startPC(TR_OpaqueMethodBlock *method)
 uintptr_t
 J9::VMMethodEnv::bytecodeStart(TR_OpaqueMethodBlock *method)
    {
-   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
+   J9ROMMethod *romMethod = getOriginalROMMethod((J9Method *)method);
    return (uintptr_t)(J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
    }
 
