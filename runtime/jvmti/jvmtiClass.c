@@ -2301,7 +2301,7 @@ jvmtiGetConstantPool_writeConstants(jvmtiGcp_translation *translation, unsigned 
 				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <MethodHandle> method/fieldIndex %d  refType %d\n",
 								  htEntry->cpType, htEntry->type.methodHandle.methodOrFieldRefIndex, htEntry->type.methodHandle.handleType));
 				GCP_WRITE_U8 (constantPoolBufIndex, cpItemType);
-				GCP_WRITE_U16(constantPoolBufIndex, htEntry->type.methodHandle.handleType);
+				GCP_WRITE_U8 (constantPoolBufIndex, htEntry->type.methodHandle.handleType);
 				GCP_WRITE_U16(constantPoolBufIndex, htEntry->type.methodHandle.methodOrFieldRefIndex);
 
 				break;

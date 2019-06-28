@@ -222,7 +222,7 @@ testGetConstantPool_classLoad(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thre
 		jint i; 
 
 		for (i = 0; i < methodCount; ++i) {
-			J9UTF8 *romMethodName;
+			char *methodName = NULL;
 			jmethodID method = methods[i];
 			jlocation start;
 			jlocation end;
@@ -250,11 +250,15 @@ testGetConstantPool_classLoad(jvmtiEnv *jvmti_env, JNIEnv* jni_env, jthread thre
 				continue;
 			}
 
-			romMethodName = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(((J9JNIMethodID *) method)->method));
-			if (strncmp((const char *) romMethodName->data, "<clinit>", romMethodName->length)) {
+			err = (*jvmti_env)->GetMethodName(jvmti_env, method, &methodName, NULL, NULL);
+			if (err != JVMTI_ERROR_NONE) {
+				j9tty_printf(PORTLIB, "\t%s\n", errorName(jvmti_env, thread, err, "!!! Failed to get method name"));
+				goto done;
+			} 
+
+			if (0 != strcmp(methodName, "<clinit>")) {
 				continue;
 			}
-
 
 			err = (*jvmti_env)->GetBytecodes(jvmti_env, method, &size, &bytecodes);
 			if (err != JVMTI_ERROR_NONE) {
