@@ -1,7 +1,4 @@
 /*[INCLUDE-IF Sidecar16]*/
-
-package com.ibm.oti.vm;
-
 /*******************************************************************************
  * Copyright (c) 2003, 2019 IBM Corp. and others
  *
@@ -23,13 +20,13 @@ package com.ibm.oti.vm;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.vm;
 
 import java.util.*;
 import java.io.IOException;
 import java.io.InputStream;
 
 /*[IF Sidecar19-SE]
-import java.lang.Module;
 import jdk.internal.reflect.CallerSensitive;
 /*[ELSE]*/
 import sun.reflect.CallerSensitive;
@@ -42,7 +39,6 @@ import sun.reflect.CallerSensitive;
  * @author		OTI
  * @version		initial
  */
-
 public final class MsgHelp {
 
 /**

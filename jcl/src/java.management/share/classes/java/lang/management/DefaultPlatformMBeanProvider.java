@@ -22,8 +22,6 @@
  *******************************************************************************/
 package java.lang.management;
 
-import java.lang.ModuleLayer;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;

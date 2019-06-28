@@ -22,7 +22,6 @@
  *******************************************************************************/
 package com.ibm.lang.management.internal;
 
-import java.lang.ModuleLayer;
 import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;

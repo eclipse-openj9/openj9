@@ -57,7 +57,6 @@ import jdk.internal.reflect.CallerSensitive;
 import java.lang.invoke.VarHandle.AccessMode;
 import java.lang.reflect.Array;
 /*[IF Sidecar19-SE-OpenJ9]*/
-import java.lang.Module;
 /*[IF Java12]*/
 import jdk.internal.access.SharedSecrets;
 import jdk.internal.access.JavaLangAccess;
