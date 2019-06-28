@@ -123,7 +123,7 @@ static char *
 getMethodName(J9Method * m)
 {
 	static char buf[512];
-	J9UTF8 * n = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(m));
+	J9UTF8 * n = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(m)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(m));
 	memcpy(buf, J9UTF8_DATA(n), J9UTF8_LENGTH(n));
 	buf[J9UTF8_LENGTH(n)] = 0;
 	return buf;
