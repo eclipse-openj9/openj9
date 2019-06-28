@@ -1604,7 +1604,7 @@ onLoadInternal(
    
    if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
       {
-      JITaaS::J9Stream::initVersion();
+      JITaaS::CommunicationStream::initVersion();
 
       // Allocate the hashtable that holds information about clients
       compInfo->setClientSessionHT(ClientSessionHT::allocate());
@@ -1633,8 +1633,8 @@ onLoadInternal(
          PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t>::allocator_type(TR::Compiler->persistentAllocator())));
 
       // Try to initialize SSL
-      JITaaS::J9ClientStream::static_init(compInfo->getPersistentInfo());
-      JITaaS::J9Stream::initVersion();
+      JITaaS::ClientStream::static_init(compInfo->getPersistentInfo());
+      JITaaS::CommunicationStream::initVersion();
       }
 
 #if defined(TR_HOST_S390)

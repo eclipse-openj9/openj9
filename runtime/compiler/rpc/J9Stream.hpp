@@ -23,10 +23,11 @@
 #ifndef J9_STREAM_HPP
 #define J9_STREAM_HPP
 
+#include <google/protobuf/io/zero_copy_stream_impl.h> // for ZeroCopyInputStream
+#include "rpc/ProtobufTypeConvert.hpp"
 #include "rpc/SSLProtobufStream.hpp"
 #include "env/TRMemory.hpp"
-#include "env/CompilerEnv.hpp"
-#include "control/Options.hpp"
+
 
 namespace JITaaS
 {
@@ -38,7 +39,7 @@ enum JITaaSCompatibilityFlags
 
 using namespace google::protobuf::io;
 
-class J9Stream
+class CommunicationStream
    {
 public:
 #if defined(JITAAS_ENABLE_SSL)
@@ -55,13 +56,8 @@ public:
       }
 #endif
 
-   static void initVersion()
-      {
-      if (TR::Compiler->target.is64Bit() && TR::Options::useCompressedPointers())
-         {
-         CONFIGURATION_FLAGS |= JITaaSCompressedRef;
-         }
-      }
+   static void initVersion();
+  
 
    static uint64_t getJITaaSVersion()
       {
@@ -69,7 +65,7 @@ public:
       }
 
 protected:
-   J9Stream()
+   CommunicationStream()
       : _inputStream(NULL),
       _outputStream(NULL),
 #if defined(JITAAS_ENABLE_SSL)
@@ -107,7 +103,7 @@ protected:
          }
       }
 
-   virtual ~J9Stream()
+   virtual ~CommunicationStream()
       {
       if (_inputStream)
          {

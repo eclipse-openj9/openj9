@@ -20,8 +20,20 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include <google/protobuf/io/zero_copy_stream_impl.h>	
-#include "rpc/ProtobufTypeConvert.hpp"
-#include "rpc/J9Stream.hpp"
 
-uint32_t JITaaS::J9Stream::CONFIGURATION_FLAGS = 0;
+#include "rpc/J9Stream.hpp"
+#include "env/CompilerEnv.hpp" // for TR::Compiler->target.is64Bit()
+#include "control/Options.hpp" // TR::Options::useCompressedPointers()
+
+namespace JITaaS
+{
+uint32_t CommunicationStream::CONFIGURATION_FLAGS = 0;
+
+void CommunicationStream::initVersion()
+   {
+   if (TR::Compiler->target.is64Bit() && TR::Options::useCompressedPointers())
+      {
+      CONFIGURATION_FLAGS |= JITaaSCompressedRef;
+      }
+   }
+};

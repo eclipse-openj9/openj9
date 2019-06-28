@@ -165,7 +165,7 @@ std::string packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
    return romClassStr;
    }
 
-void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *fe, TR::Compilation *comp)
+void handler_IProfiler_profilingSample(JITaaS::ClientStream *client, TR_J9VM *fe, TR::Compilation *comp)
    {
    auto recv = client->getRecvData<TR_OpaqueMethodBlock*, uint32_t, uintptrj_t>();
    auto method = std::get<0>(recv);
@@ -217,7 +217,7 @@ void handler_IProfiler_profilingSample(JITaaS::J9ClientStream *client, TR_J9VM *
       }
    }
 
-bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
+bool handleServerMessage(JITaaS::ClientStream *client, TR_J9VM *fe)
    {
    using JITaaS::MessageType;
    TR::CompilationInfoPerThread *compInfoPT = fe->_compInfoPT;
@@ -251,7 +251,7 @@ bool handleServerMessage(JITaaS::J9ClientStream *client, TR_J9VM *fe)
 
       // We want to break the connection when the compilation failed midway
       // as a way to inform the server that this compilation has failed and it should abort
-      client->~J9ClientStream();
+      client->~ClientStream();
       TR_Memory::jitPersistentFree(client);
       compInfoPT->setClientStream(NULL);
 
@@ -2471,12 +2471,12 @@ remoteCompile(
    std::string detailsStr = std::string((char*) &details, sizeof(TR::IlGeneratorMethodDetails));
    TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
    bool useAotCompilation = compInfoPT->getMethodBeingCompiled()->_useAotCompilation;
-   JITaaS::J9ClientStream *client = NULL;
+   JITaaS::ClientStream *client = NULL;
    if (enableJITaaSPerCompConn)
       {
       try 
          {
-         client = new (PERSISTENT_NEW) JITaaS::J9ClientStream(compInfo->getPersistentInfo());
+         client = new (PERSISTENT_NEW) JITaaS::ClientStream(compInfo->getPersistentInfo());
          }
       catch (const JITaaS::StreamFailure &e)
          {
@@ -2494,7 +2494,7 @@ remoteCompile(
          {
          try
             {
-            client = new (PERSISTENT_NEW) JITaaS::J9ClientStream(compInfo->getPersistentInfo());
+            client = new (PERSISTENT_NEW) JITaaS::ClientStream(compInfo->getPersistentInfo());
             compInfoPT->setClientStream(client);
             }
          catch (const JITaaS::StreamFailure &e)
@@ -2541,7 +2541,6 @@ remoteCompile(
    std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended;
    std::string logFileStr;
    std::string svmSymbolToIdStr;
-   JITaaS::Status status;
    std::vector<TR_ResolvedJ9Method*> resolvedMirrorMethodsPersistIPInfo;
    try
       {
@@ -2572,7 +2571,7 @@ remoteCompile(
          client->writeError(JITaaS::MessageType::compilationAbort, 0 /* placeholder */);
          // We want to break the connection when the compilation failed midway
          // as a way to inform the server that this compilation has failed and it should abort
-         client->~J9ClientStream();
+         client->~ClientStream();
          TR_Memory::jitPersistentFree(client);
          compInfoPT->setClientStream(NULL);
 
@@ -2595,12 +2594,10 @@ remoteCompile(
       if (statusCode == compilationStreamVersionIncompatible)
          throw JITaaS::StreamVersionIncompatible();
       client->setVersionCheckStatus();
-      
-      status = client->waitForFinish();
       }
    catch (const JITaaS::StreamFailure &e)
       {
-      client->~J9ClientStream();
+      client->~ClientStream();
       TR_Memory::jitPersistentFree(client);
       compInfoPT->setClientStream(NULL);
 
@@ -2608,15 +2605,15 @@ remoteCompile(
       }
    catch (const JITaaS::StreamVersionIncompatible &e)
       {
-      client->~J9ClientStream();
+      client->~ClientStream();
       TR_Memory::jitPersistentFree(client);
       compInfoPT->setClientStream(NULL);
-      JITaaS::J9ClientStream::incrementIncompatibilityCount(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
+      JITaaS::ClientStream::incrementIncompatibilityCount(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
       compiler->failCompilation<JITaaS::StreamVersionIncompatible>(e.what());
       }
 
    TR_MethodMetaData *metaData = NULL;
-   if (status.ok() && (statusCode == compilationOK || statusCode == compilationNotNeeded))
+   if (statusCode == compilationOK || statusCode == compilationNotNeeded)
       {
       try
          {
@@ -2730,12 +2727,12 @@ remoteCompile(
    else
       {
       compInfoPT->getMethodBeingCompiled()->_compErrCode = statusCode;
-      compiler->failCompilation<JITaaS::ServerCompFailure>("JITaaS compilation failed.");
+      compiler->failCompilation<JITaaS::ServerCompilationFailure>("JITaaS compilation failed.");
       }
 
    if (enableJITaaSPerCompConn && client)
       {
-      client->~J9ClientStream();
+      client->~ClientStream();
       TR_Memory::jitPersistentFree(client);
       }
    return metaData;
@@ -3076,7 +3073,7 @@ ClientSessionData::~ClientSessionData()
    }
 
 void
-ClientSessionData::processUnloadedClasses(JITaaS::J9ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes)
+ClientSessionData::processUnloadedClasses(JITaaS::ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes)
    {
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server will process a list of %u unloaded classes for clientUID %llu", (unsigned)classes.size(), (unsigned long long)_clientUID);
@@ -3334,7 +3331,7 @@ ClientSessionData::ClassInfo::freeClassInfo()
    }
 
 ClientSessionData::VMInfo *
-ClientSessionData::getOrCacheVMInfo(JITaaS::J9ServerStream *stream)
+ClientSessionData::getOrCacheVMInfo(JITaaS::ServerStream *stream)
    {
    if (!_vmInfo)
       {
@@ -3701,7 +3698,7 @@ JITaaSHelpers::romClassFromString(const std::string &romClassStr, TR_PersistentM
    }
 
 J9ROMClass *
-JITaaSHelpers::getRemoteROMClass(J9Class *clazz, JITaaS::J9ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple)
+JITaaSHelpers::getRemoteROMClass(J9Class *clazz, JITaaS::ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple)
    {
    stream->write(JITaaS::MessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
    const auto &recv = stream->read<ClassInfoTuple>();
@@ -3711,7 +3708,7 @@ JITaaSHelpers::getRemoteROMClass(J9Class *clazz, JITaaS::J9ServerStream *stream,
 
 // Return true if able to get data from cache, return false otherwise
 bool
-JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITaaS::J9ServerStream *stream, ClassInfoDataType dataType, void *data)
+JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITaaS::ServerStream *stream, ClassInfoDataType dataType, void *data)
    {
    JITaaSHelpers::ClassInfoTuple classInfoTuple;
    ClientSessionData::ClassInfo classInfo;
@@ -3749,7 +3746,7 @@ JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *client
 
 // Return true if able to get data from cache, return false otherwise
 bool
-JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITaaS::J9ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2)
+JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITaaS::ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2)
    {
    JITaaSHelpers::ClassInfoTuple classInfoTuple;
    ClientSessionData::ClassInfo classInfo;
@@ -4049,7 +4046,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    uint64_t clientId = 0;
    TR::CompilationInfo *compInfo = getCompilationInfo();
    J9VMThread *compThread = getCompilationThread();
-   JITaaS::J9ServerStream *stream = entry._stream;
+   JITaaS::ServerStream *stream = entry._stream;
    setMethodBeingCompiled(&entry); // must have compilation monitor
    entry._compInfoPT = this; // create the reverse link
    // update the last time the compilation thread had to do something.
@@ -4262,7 +4259,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (!enableJITaaSPerCompConn)
          {
          // Delete server stream
-         stream->~J9ServerStream();
+         stream->~ServerStream();
          TR_Memory::jitPersistentFree(stream);
          entry._stream = NULL;
          }
@@ -4277,7 +4274,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (!enableJITaaSPerCompConn)
          {
          // Delete server stream
-         stream->~J9ServerStream();
+         stream->~ServerStream();
          TR_Memory::jitPersistentFree(stream);
          entry._stream = NULL;
          }
@@ -4299,7 +4296,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (!enableJITaaSPerCompConn)
          {
          // Delete server stream
-         stream->~J9ServerStream();
+         stream->~ServerStream();
          TR_Memory::jitPersistentFree(stream);
          entry._stream = NULL;
          }
@@ -4373,7 +4370,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (enableJITaaSPerCompConn)
          {
          // Delete server stream
-         stream->~J9ServerStream();
+         stream->~ServerStream();
          TR_Memory::jitPersistentFree(stream);
          entry._stream = NULL;
          }
@@ -4490,7 +4487,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    if (enableJITaaSPerCompConn)
       {
       // Delete server stream
-      stream->~J9ServerStream();
+      stream->~ServerStream();
       TR_Memory::jitPersistentFree(stream);
       entry._stream = NULL;
       }

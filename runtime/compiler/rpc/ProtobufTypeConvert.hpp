@@ -42,10 +42,11 @@ namespace JITaaS
       operator bool() const { return false; }
    };
 
-   // This struct and global is used as a hacky replacement for run-time type information (rtti), which is not enabled in our build.
-   // Every instance of this struct gets a unique identifier assigned to it (assuming constructors run in serial)
-   // It is inteneded to be used by holding a static instance of it within a templated class, so that each template instantiation
-   // gets a different unique ID.
+   // This struct and global is used as a replacement for run-time type information (rtti), 
+   // which is not supported in our build.
+   // Every instance of this struct gets a unique ID assigned to it (assuming constructors run serially)
+   // It is intended to be used by holding a static instance of it within a templated class, 
+   // so that each template instantiation gets a different unique ID.
    extern uint64_t typeCount;
    struct TypeID
       {
@@ -143,8 +144,9 @@ namespace JITaaS
       static inline Any::TypeCase typeCase() { return Any::kVectorV; }
       };
    // tuple
-   // using getArgs and setArgs here is perhaps a bit heavyweight, but it does allow non-primitives to be sent,
-   // which we can't do with vectors right now. (should be trivial to add support for though, just forward declare and use ProtoBufTypeConvert)
+   // Using getArgs and setArgs here is perhaps a bit heavyweight, but it does allow non-primitives to be sent,
+   // which we can't do with vectors right now.
+   // (should be trivial to add support for though, just forward declare and use ProtoBufTypeConvert)
    template <typename... T> struct AnyPrimitive<const std::tuple<T...>>
       {
       static inline std::tuple<T...> read(const Any *msg)

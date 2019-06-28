@@ -44,13 +44,13 @@ enum VersionCheckStatus
    PASSED = 1,
    };
 
-class J9ClientStream : J9Stream
+class ClientStream : CommunicationStream
    {
 public:
    static void static_init(TR::PersistentInfo *info);
 
-   J9ClientStream(TR::PersistentInfo *info);
-   virtual ~J9ClientStream()
+   ClientStream(TR::PersistentInfo *info);
+   virtual ~ClientStream()
       {
       _numConnectionsClosed++;
       }
@@ -70,8 +70,6 @@ public:
          write(MessageType::compilationRequest, args...);
          }
       }
-
-   Status waitForFinish();
 
    template <typename ...T>
    void write(MessageType type, T... args)
@@ -93,8 +91,6 @@ public:
       {
       return getArgs<T...>(_sMsg.mutable_data());
       }
-
-   void shutdown();
 
    template <typename ...T>
    void writeError(MessageType type, T... args)

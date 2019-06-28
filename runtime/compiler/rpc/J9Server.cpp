@@ -36,7 +36,6 @@
 #include "control/Options.hpp"
 #include "env/VerboseLog.hpp"
 #include "env/TRMemory.hpp"
-#include "env/j9method.h"
 #include "rpc/SSLProtobufStream.hpp"
 #if defined(JITAAS_ENABLE_SSL)
 #include <openssl/err.h>
@@ -44,20 +43,20 @@
 
 namespace JITaaS
 {
-int J9ServerStream::_numConnectionsOpened = 0;
-int J9ServerStream::_numConnectionsClosed = 0;
+int ServerStream::_numConnectionsOpened = 0;
+int ServerStream::_numConnectionsClosed = 0;
 
 #if defined(JITAAS_ENABLE_SSL)
-J9ServerStream::J9ServerStream(int connfd, BIO *ssl, uint32_t timeout)
-   : J9Stream(),
+ServerStream::ServerStream(int connfd, BIO *ssl, uint32_t timeout)
+   : CommunicationStream(),
    _msTimeout(timeout)
    {
    initStream(connfd, ssl);
    _numConnectionsOpened++;
    }
 #else // JITAAS_ENABLE_SSL
-J9ServerStream::J9ServerStream(int connfd, uint32_t timeout)
-   : J9Stream(),
+ServerStream::ServerStream(int connfd, uint32_t timeout)
+   : CommunicationStream(),
    _msTimeout(timeout)
    {
    initStream(connfd);
@@ -65,14 +64,9 @@ J9ServerStream::J9ServerStream(int connfd, uint32_t timeout)
    }
 #endif
 
-// J9Stream destructor is used instead
-void
-J9ServerStream::finish()
-   {
-   }
 
 void
-J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, std::string dataCache, CHTableCommitData chTableData,
+ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, std::string dataCache, CHTableCommitData chTableData,
                                  std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended,
                                  std::string logFileStr, std::string symbolToIdStr,
                                  std::vector<TR_ResolvedJ9Method*> resolvedMethodsForPersistIprofileInfo)
@@ -81,7 +75,6 @@ J9ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, st
       {
       write(MessageType::compilationCode, statusCode, codeCache, dataCache, chTableData,
             classesThatShouldNotBeNewlyExtended, logFileStr, symbolToIdStr, resolvedMethodsForPersistIprofileInfo);
-      finish();
       }
    catch (std::exception &e)
       {
@@ -229,13 +222,13 @@ acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio)
 #endif
 
 void
-J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::PersistentInfo *info)
+serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::PersistentInfo *info)
    {
 #if defined(JITAAS_ENABLE_SSL)
    SSL_CTX *sslCtx = NULL;
-   if (J9Stream::useSSL(info))
+   if (CommunicationStream::useSSL(info))
       {
-      J9Stream::initSSL();
+      CommunicationStream::initSSL();
       sslCtx = createSSLContext(info);
       }
 #endif
@@ -308,9 +301,9 @@ J9CompileServer::buildAndServe(J9BaseCompileDispatcher *compiler, TR::Persistent
       if (sslCtx && !acceptOpenSSLConnection(sslCtx, connfd, bio))
          continue;
 
-      J9ServerStream *stream = new (PERSISTENT_NEW) J9ServerStream(connfd, bio, timeoutMs);
+      ServerStream *stream = new (PERSISTENT_NEW) ServerStream(connfd, bio, timeoutMs);
 #else
-      J9ServerStream *stream = new (PERSISTENT_NEW) J9ServerStream(connfd, timeoutMs);
+      ServerStream *stream = new (PERSISTENT_NEW) ServerStream(connfd, timeoutMs);
 #endif
       compiler->compile(stream);
       }

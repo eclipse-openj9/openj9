@@ -448,7 +448,7 @@ public:
                                void *oldStartPC, TR_FrontEnd *vm=0, TR_MethodToBeCompiled *entry=NULL, TR::Compilation *comp=NULL);
    static void endMethodHandleThunkCompilation(J9VMThread *vmThread, TR_J9VMBase *trvm, uintptrj_t *handleRef, uintptrj_t *argRef, void *startPC);
 
-   static JITaaS::J9ServerStream *getStream();
+   static JITaaS::ServerStream *getStream();
    static bool isInterpreted(J9Method *method) { return !isCompiled(method); }
    static bool isCompiled(J9Method *method)
       {
@@ -612,7 +612,7 @@ public:
 
    TR_MethodToBeCompiled *addMethodToBeCompiled(TR::IlGeneratorMethodDetails &details, void *pc, CompilationPriority priority,
       bool async, TR_OptimizationPlan *optPlan, bool *queued, TR_YesNoMaybe methodIsInSharedCache);
-   TR_MethodToBeCompiled *addOutOfProcessMethodToBeCompiled(JITaaS::J9ServerStream *stream);
+   TR_MethodToBeCompiled *addOutOfProcessMethodToBeCompiled(JITaaS::ServerStream *stream);
    void                   queueEntry(TR_MethodToBeCompiled *entry);
    void                   recycleCompilationEntry(TR_MethodToBeCompiled *cur);
    void                   requeueOutOfProcessEntry(TR_MethodToBeCompiled *entry);
