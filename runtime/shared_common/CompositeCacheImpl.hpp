@@ -228,7 +228,7 @@ public:
 
 	bool isAddressInMetaDataArea(const void* address) const;
 
-	bool isAddressInCache(const void* address);
+	bool isAddressInCache(const void* address, bool includeHeaderReadWriteArea = true);
 
 	void runExitCode(J9VMThread *currentThread);
 	
@@ -265,6 +265,10 @@ public:
 	SH_CompositeCacheImpl* getNext(void);
 	
 	void setNext(SH_CompositeCacheImpl* next);
+
+	void setPrevious(SH_CompositeCacheImpl* previous);
+	
+	SH_CompositeCacheImpl* getPrevious(void);
 
 	U_32 getBytesRequiredForItemWithAlign(ShcItem* itemToWrite, U_32 align, U_32 alignOffset);
 
@@ -418,6 +422,14 @@ public:
 
 	bool isAddressInReleasedMetaDataBounds(J9VMThread* currentThread, UDATA metadataAddress) const;
 
+	const char* getCacheUniqueID(J9VMThread* currentThread) const;
+
+	const char* getCacheName(void) const;
+
+	bool verifyCacheUniqueID(J9VMThread* currentThread, const char* expectedCacheUniqueID) const;
+	
+	void setMetadataMemorySegment(J9MemorySegment** segment);
+
 private:
 	J9SharedClassConfig* _sharedClassConfig;
 	SH_OSCache* _oscache;
@@ -429,6 +441,7 @@ private:
 	const char* _cacheName;
 	
 	SH_CompositeCacheImpl* _next;
+	SH_CompositeCacheImpl* _previous;
 	SH_CompositeCacheImpl* _parent;
 	SH_CompositeCacheImpl* _ccHead; /* first supercache, if chained */
 	
@@ -508,6 +521,8 @@ private:
 	UDATA  _minimumAccessedShrCacheMetadata;
 
 	UDATA _maximumAccessedShrCacheMetadata;
+	
+	I_8 _layer;
 
 #if defined(J9SHR_CACHELET_SUPPORT)
 	/**

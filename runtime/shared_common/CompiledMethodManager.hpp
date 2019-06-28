@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,13 +85,16 @@ class SH_CompiledMethodResourceDescriptor : public SH_ResourceDescriptor
 			return (const void*)CMWDATA(wrapper);
 		}
 
-		virtual void writeDataToCache(const ShcItem* newCacheItem, const void* resourceAddress) 
+		virtual void writeDataToCache(const ShcItem* newCacheItem, const J9ShrOffset* resourceOffset) 
 		{
 			CompiledMethodWrapper* cmwInCache = (CompiledMethodWrapper*)ITEMDATA(newCacheItem);
 
 			cmwInCache->dataLength = _dataSize;
 			cmwInCache->codeLength = _codeSize;
-			cmwInCache->romMethodOffset = (J9SRP)((BlockPtr)resourceAddress - (BlockPtr)(cmwInCache));
+#if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
+			cmwInCache->romMethodOffset.cacheLayer = resourceOffset->cacheLayer;
+#endif /* defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE) */
+			cmwInCache->romMethodOffset.offset = resourceOffset->offset;
 			memcpy(CMWDATA(cmwInCache), (void *)_dataStart, _dataSize);
 			memcpy(CMWCODE(cmwInCache), (void *)_codeStart, _codeSize);
 		}

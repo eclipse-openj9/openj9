@@ -243,7 +243,8 @@ public:
 		U_8 *intermediateData = getIntermediateClassDataFromPreviousROMClass();
 		U_32 intermediateDataLength = getIntermediateClassDataLengthFromPreviousROMClass();
 		if ((NULL != intermediateData)
-			&& (TRUE == j9shr_Query_IsAddressInCache(_javaVM, intermediateData, intermediateDataLength))
+			&& (TRUE == j9shr_Query_IsAddressInReadWriteCache(_javaVM, intermediateData, intermediateDataLength))
+			/* J9ROMClass pointing to intermediateData using SRP, so share only when intermediateData is in readWriteCache */
 		) {
 			shareable = true;
 		}

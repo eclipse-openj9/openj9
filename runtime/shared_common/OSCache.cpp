@@ -435,6 +435,9 @@ SH_OSCache::commonStartup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirP
 		cachePathNameLen = strlen(fullPathName);
 		if ((_cachePathName = (char*)j9mem_allocate_memory(cachePathNameLen + 1, J9MEM_CATEGORY_CLASSES))) {
 			strcpy(_cachePathName, fullPathName);
+			if (NULL == getCacheUniqueID(vm->internalVMFunctions->currentVMThread(vm))) {
+				return -1;
+			}
 		} else {
 			Trc_SHR_OSC_commonStartup_nomem_cachePathName();
 			OSC_ERR_TRACE(J9NLS_SHRC_OSCACHE_ALLOC_FAILED);
@@ -467,6 +470,7 @@ SH_OSCache::commonInit(J9PortLibrary* portLibrary, UDATA generation, I_8 layer)
 	_cacheNameWithVGen = NULL;
 	_cacheName = NULL;
 	_cachePathName = NULL;
+	_cacheUniqueID = NULL;
 	_cacheDirName = NULL;
 	_verboseFlags = 0;
 	_createFlags = 0;
@@ -498,6 +502,9 @@ SH_OSCache::commonCleanup()
 	}
 	if (_cacheDirName) {
 		j9mem_free_memory(_cacheDirName);
+	}
+	if (_cacheUniqueID) {
+		j9mem_free_memory(_cacheUniqueID);
 	}
 
 	/* If the cache is destroyed and then restarted, we still need portLibrary, versionData and generation */
@@ -1139,7 +1146,7 @@ SH_OSCache::getCacheStatsCommon(J9JavaVM* vm, SH_OSCache *cache, SH_OSCache_Info
 
 	memset(cmPtr, 0, bytesRequired);
 
-	cmStats = SH_CacheMap::newInstanceForStats(vm, (SH_CacheMap* )cmPtr, cacheInfo->name);
+	cmStats = SH_CacheMap::newInstanceForStats(vm, (SH_CacheMap* )cmPtr, cacheInfo->name, cacheInfo->layer);
 	if (cmStats == NULL) {
 		retval = false;
 		goto done;
@@ -1218,3 +1225,106 @@ void *
 SH_OSCache::getOSCacheStart() {
 	return _headerStart;
 }
+
+/**
+ * Get the unique ID of the current cache
+ * @param[in] currentThread  The current VM thread.
+ *
+ * @return the cache unique ID
+ */
+const char*
+SH_OSCache::getCacheUniqueID(J9VMThread* currentThread)
+{
+	PORT_ACCESS_FROM_VMC(currentThread);
+	if (NULL != _cacheUniqueID) {
+		return _cacheUniqueID;
+	}
+	Trc_SHR_Assert_True(NULL != _cacheDirName);
+	Trc_SHR_Assert_True(NULL != _cacheName);
+
+	U_32 cacheType = J9_ARE_ALL_BITS_SET(_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE) ? J9PORT_SHR_CACHE_TYPE_PERSISTENT : J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
+	UDATA sizeRequired = generateCacheUniqueID(currentThread, _cacheDirName, _cacheName, _layer, cacheType, NULL, 0);
+
+	_cacheUniqueID = (char*)j9mem_allocate_memory(sizeRequired, J9MEM_CATEGORY_VM);
+	if (NULL == _cacheUniqueID) {
+		return NULL;
+	}
+	generateCacheUniqueID(currentThread, _cacheDirName, _cacheName, _layer, cacheType, _cacheUniqueID, sizeRequired);
+	return _cacheUniqueID;
+}
+
+/**
+ * Generate a cache unique ID
+ * @param[in] currentThread  The current VM thread.
+ * @param[in] cacheDirName  The cache directory
+ * @param[in] cacheName  The cache name
+ * @param[in] layer  The cache layer number
+ * @param[in] cacheType  The cache type
+ * @param[out] buf  The buffer for the cache unique ID
+ * @param[out] bufLen  The length of the buffer
+ *
+ * @return If buf is not NULL, the number of characters printed into buf is returned , not including the NUL terminator.
+ * 			If buf is NULL, the size of the buffer required to print to the unique ID, including the NUL terminator is returned.
+ */
+UDATA
+SH_OSCache::generateCacheUniqueID(J9VMThread* currentThread, const char* cacheDirName, const char* cacheName, I_8 layer, U_32 cacheType, char* buf, UDATA bufLen)
+{
+	char nameWithVGen[J9SH_MAXPATH];
+	char cacheFilePathName[J9SH_MAXPATH];
+	J9JavaVM* vm = currentThread->javaVM;
+	PORT_ACCESS_FROM_VMC(currentThread);
+
+	J9PortShcVersion versionData;
+	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+	versionData.cacheType = cacheType;
+
+	getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, J9SH_MAXPATH, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, true, layer);
+	/* Directory is included here, so if the cache directory is renamed, caches with layer > 0 becomes unusable */
+	getCachePathName(PORTLIB, cacheDirName, cacheFilePathName, J9SH_MAXPATH, nameWithVGen);
+	I_64 timeStamp = j9file_lastmod(cacheFilePathName);
+	I_64 fileSize = j9file_length(cacheFilePathName);
+	return j9str_printf(PORTLIB, buf, bufLen, "%s-%llx_%llx", cacheFilePathName, fileSize, timeStamp);
+}
+
+/**
+ * Get the cache name and layer number from the unique cache ID.
+ * @param[in] vm  The Java VM.
+ * @param[in] cacheDirName  The cache directory
+ * @param[in] uniqueID  The cache unique ID
+ * @param[in] idLen  The length of the cache unique ID
+ * @param[out] nameBuf  The buffer for the cache name
+ * @param[out] nameBuffLen  The length of cache name buffer
+ * @param[out] layer  The layer number in the cache unique ID
+ *
+ */
+void
+SH_OSCache::getCacheNameAndLayerFromUnqiueID(J9JavaVM* vm, const char* cacheDirName, const char* uniqueID, UDATA idLen, char* nameBuf, UDATA nameBuffLen, I_8* layer)
+{
+	UDATA dirLen = strlen(cacheDirName);
+	const char* cacheNameWithVGenStart = uniqueID + dirLen;
+	char* cacheNameWithVGenEnd = strnrchrHelper(cacheNameWithVGenStart, '-', idLen - dirLen);
+	if (NULL == cacheNameWithVGenEnd) {
+		Trc_SHR_Assert_ShouldNeverHappen();
+	}
+
+	char nameWithVGenCopy[J9SH_MAXPATH];
+	memset(nameWithVGenCopy, 0, J9SH_MAXPATH);
+	strncpy(nameWithVGenCopy, cacheNameWithVGenStart, cacheNameWithVGenEnd - cacheNameWithVGenStart);
+
+	SH_OSCache::removeCacheVersionAndGen(nameBuf, nameBuffLen, J9SH_VERSION_STRING_LEN + 1, nameWithVGenCopy);
+	I_8 layerNo = getLayerFromName(nameWithVGenCopy);
+	Trc_SHR_Assert_True(((layerNo >= 0) 
+						&& (layerNo <= J9SH_LAYER_NUM_MAX_VALUE))
+						);
+	*layer = layerNo;
+}
+
+/* 
+ * Return the layer number 
+ */
+I_8
+SH_OSCache::getLayer()
+{
+	return _layer;
+}
+

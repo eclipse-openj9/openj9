@@ -204,6 +204,14 @@ public:
 	static IDATA getCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, const char* cacheNameWithVGen, UDATA groupPerm, UDATA localVerboseFlags, UDATA j2seVersion, SH_OSCache_Info* result, UDATA reason);
 	
 	static IDATA getCachePathName(J9PortLibrary* portLibrary, const char* cacheDirName, char* buffer, UDATA bufferSize, const char* cacheNameWithVGen);
+	
+	static void getCacheNameAndLayerFromUnqiueID(J9JavaVM* vm, const char* cacheDirName, const char* uniqueID, UDATA idLen, char* nameBuf, UDATA nameBuffLen, I_8* layer);
+	
+	static UDATA generateCacheUniqueID(J9VMThread* currentThread, const char* cacheDir, const char* cacheName, I_8 layer, U_32 cacheType, char* buf, UDATA bufLen);
+	
+	const char* getCacheUniqueID(J9VMThread* currentThread);
+
+	I_8 getLayer();
 
 	bool isRunningReadOnly();
 
@@ -264,7 +272,7 @@ protected:
 	static IDATA removeCacheVersionAndGen(char* buffer, UDATA bufferSize, UDATA versionLen, const char* cacheNameWithVGen);
 	
 	IDATA commonStartup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPerm, const char* cacheName, J9SharedClassPreinitConfig* piconfig_, UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData);
-	
+
 	void commonInit(J9PortLibrary* portLibrary, UDATA generation, I_8 layer = 0);
 
 	void commonCleanup();
@@ -295,6 +303,7 @@ protected:
 	U_32 _dataLength;
 	char* _cacheNameWithVGen;
 	char* _cachePathName;
+	char* _cacheUniqueID;
 	UDATA _activeGeneration;
 	I_8 _layer;
 	UDATA _createFlags;

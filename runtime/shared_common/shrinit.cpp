@@ -88,6 +88,8 @@ extern "C" {
 
 #define SHR_MODULE_UPGRADE_PATH_SYS_PROP	SYSPROP_JDK_MODULE_UPGRADE_PATH
 
+#define SHRINIT_CREATE_NEW_LAYER (-2)
+
 #define SHRINIT_TRACE(verbose, var) if (verbose) j9nls_printf(PORTLIB, J9NLS_INFO, var)
 #define SHRINIT_TRACE1(verbose, var, p1) if (verbose) j9nls_printf(PORTLIB, J9NLS_INFO, var, p1)
 #define SHRINIT_TRACE2(verbose, var, p1, p2) if (verbose) j9nls_printf(PORTLIB, J9NLS_INFO, var, p1, p2)
@@ -106,6 +108,7 @@ extern "C" {
 #define SHRINIT_WARNING_TRACE1(verbose, var, p1) if (verbose) j9nls_printf(PORTLIB, J9NLS_WARNING, var, p1)
 #define SHRINIT_WARNING_TRACE2(verbose, var, p1, p2) if (verbose) j9nls_printf(PORTLIB, J9NLS_WARNING, var, p1, p2)
 #define SHRINIT_WARNING_TRACE3(verbose, var, p1, p2, p3) if (verbose) j9nls_printf(PORTLIB, J9NLS_WARNING, var, p1, p2, p3)
+#define SHRINIT_WARNING_TRACE4(verbose, var, p1, p2, p3, p4) if (verbose) j9nls_printf(PORTLIB, J9NLS_WARNING, var, p1, p2, p3, p4)
 #define PERF_TRACE_EVERY_N_FINDS 100
 
 #define SHRINIT_ASCII_OF_POUND_SYMBOL 0xa3 /* ASCII value of pound symbol */
@@ -275,6 +278,10 @@ J9SharedClassesHelpText J9SHAREDCLASSESHELPTEXT[] = {
 	{OPTION_DISABLE_CORRUPT_CACHE_DUMPS, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_DISABLE_CORRUPT_CACHE_DUMPS},
 	{OPTION_CHECK_STRINGTABLE_RESET, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET},
 	{OPTION_ADDTESTJITHINT, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_ADD_JIT_HINTS},
+#if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
+	{HELPTEXT_LAYER_EQUALS, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS},
+	{OPTION_CREATE_LAYER, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER},
+#endif /* J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE */
 	{NULL, 0, 0, 0, 0}
 };
 
@@ -368,6 +375,10 @@ J9SharedClassesOptions J9SHAREDCLASSESOPTIONS[] = {
 	{ OPTION_FIND_AOT_METHODS_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_FIND_AOT_METHODS_EQUALS, J9SHR_RUNTIMEFLAG_DO_NOT_CREATE_CACHE},
 	{ OPTION_NO_URL_TIMESTAMP_CHECK, PARSE_TYPE_EXACT, RESULT_DO_REMOVE_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_ENABLE_URL_TIMESTAMP_CHECK},
 	{ OPTION_URL_TIMESTAMP_CHECK, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_ENABLE_URL_TIMESTAMP_CHECK},
+#if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
+	{ OPTION_LAYER_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_LAYER_EQUALS, 0 },
+	{ OPTION_CREATE_LAYER, PARSE_TYPE_EXACT, RESULT_DO_CREATE_LAYER, 0 },
+#endif /* defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE) */
 	{ NULL, 0, 0 }
 };
 
@@ -394,6 +405,7 @@ static J9Module* getModule(J9VMThread* vmThread, U_8* className, UDATA className
 static bool isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize);
 static char* generateStartupHintsKey(J9JavaVM *vm);
 static void fetchStartupHintsFromSharedCache(J9VMThread* vmThread);
+static void findExistingCacheLayerNumbers(J9JavaVM* vm, const char* ctrlDirName, const char* cacheName, U_64 runtimeFlags, I_8 *maxLayerNo);
 
 typedef struct J9SharedVerifyStringTable {
 	void *romClassAreaStart;
@@ -662,6 +674,27 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 			options += strlen(OPTION_MODIFIED_EQUALS)+strlen(*modContext)+1;
 			continue;
 
+		case RESULT_DO_LAYER_EQUALS:
+		{
+			UDATA temp = 0;
+			char* layerString = options + strlen(OPTION_LAYER_EQUALS);
+			char* cursor = layerString;
+			if ((scan_udata(&cursor, &temp) == 0)
+				&& (temp <= J9SH_LAYER_NUM_MAX_VALUE)
+			) {
+				vm->sharedCacheAPI->layer = (I_8)temp;
+			} else {
+				SHRINIT_ERR_TRACE3(1, J9NLS_SHRC_SHRINIT_OPTION_INVALID_LAYER_NUMBER, temp, OPTION_LAYER_EQUALS, J9SH_LAYER_NUM_MAX_VALUE + 1);
+				return RESULT_PARSE_FAILED;
+			}
+			options += strlen(OPTION_LAYER_EQUALS)+ (cursor - layerString) +1;
+			continue;
+		}
+		case RESULT_DO_CREATE_LAYER:
+		{
+			vm->sharedCacheAPI->layer = SHRINIT_CREATE_NEW_LAYER;
+			break;
+		}
 		case RESULT_DO_ADJUST_SOFTMX_EQUALS:
 		case RESULT_DO_ADJUST_MINAOT_EQUALS:
 		case RESULT_DO_ADJUST_MAXAOT_EQUALS:
@@ -1636,6 +1669,11 @@ j9shr_storeCompiledMethod(J9VMThread* currentThread, const J9ROMMethod* romMetho
 		return NULL;
 	}
 
+	if (vm->sharedClassConfig->layer > 0) {
+		/* JIT/AOT support for multi-layer cache is not ready yet */
+		return NULL;
+	}
+
 	SH_CacheMap* cm = (SH_CacheMap*)(sharedClassConfig->sharedClassCache);
 	cm->updateRuntimeFullFlags(currentThread);
 
@@ -1924,7 +1962,12 @@ j9shr_storeAttachedData(J9VMThread* currentThread, const void* addressInCache, c
 		Trc_SHR_INIT_storeAttachedData_exit_SccN(currentThread);
 		return J9SHR_RESOURCE_PARAMETER_ERROR;
 	}
-	
+
+	if (vm->sharedClassConfig->layer > 0) {
+		/* JIT/AOT support for multi-layer cache is not ready yet */
+		return J9SHR_RESOURCE_PARAMETER_ERROR;
+	}
+
 	SH_CacheMap* cm = (SH_CacheMap*)(sharedClassConfig->sharedClassCache);
 	cm->updateRuntimeFullFlags(currentThread);
 
@@ -2087,6 +2130,11 @@ j9shr_updateAttachedData(J9VMThread* currentThread, const void* addressInCache, 
 
 	if (sharedClassConfig == NULL) {
 		Trc_SHR_INIT_updateAttachedData_exit_SccN(currentThread);
+		return J9SHR_RESOURCE_PARAMETER_ERROR;
+	}
+
+	if (vm->sharedClassConfig->layer > 0) {
+		/* JIT/AOT support for multi-layer cache is not ready yet */
 		return J9SHR_RESOURCE_PARAMETER_ERROR;
 	}
 
@@ -2336,6 +2384,11 @@ reportUtilityNotApplicable(J9JavaVM* vm, const char* ctrlDirName, const char* ca
 	if (SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, versionData.cacheType) == -1) {
 		return;
 	}
+
+	if ((NULL != vm->sharedClassConfig) && (vm->sharedClassConfig->layer > 0)) {
+		layer = vm->sharedClassConfig->layer;
+	}
+
 	if ((reportedIncompatibleNum == 0) && (j9shr_stat_cache(vm, cacheDirName, 0, cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, layer))) {
 		if (versionData.cacheType == J9PORT_SHR_CACHE_TYPE_PERSISTENT) {
 			SHRINIT_ERR_TRACE2(verboseFlags, J9NLS_SHRC_SHRINIT_OTHER_PERS_TYPE_CACHE_EXISTS, optionName, cacheName);
@@ -2380,7 +2433,7 @@ static void j9shr_printStats_dump_help(J9JavaVM* vm, bool moreHelp, bool helpFor
 }
 
 
-static inline U_32
+U_32
 getCacheTypeFromRuntimeFlags(U_64 runtimeFlags)
 {
         if (0 != (runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE)) {
@@ -3116,6 +3169,7 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 	char* modContext = vm->sharedCacheAPI->modContext;
 	char* expireTime = vm->sharedCacheAPI->expireTime;
 	char* ctrlDirName = vm->sharedCacheAPI->ctrlDirName;
+	I_8 layer = vm->sharedCacheAPI->layer;
 	IDATA returnVal = J9VMDLLMAIN_FAILED;
 	UDATA cmBytes, nameBytes, modContextBytes;
 	J9SharedClassConfig* tempConfig;
@@ -3126,6 +3180,8 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 	bool cacheHasIntegrity;
 	J9VMThread* currentThread = vm->internalVMFunctions->currentVMThread(vm);
 	I_32 cacheType = 0;
+	I_8 maxLayer = -1;
+	char cacheDirName[J9SH_MAXPATH];
 
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	
@@ -3225,7 +3281,8 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 		parseResult==RESULT_DO_PRINTSTATS_EQUALS) {
 		doPrintStats = true;
 		/* Do not try to kill a cache if we just want to get stats on it */
-		runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_STATS;
+		/* set J9SHR_RUNTIMEFLAG_ENABLE_READONLY. If not set, vmCntr will be increased in the cache header */
+		runtimeFlags |= (J9SHR_RUNTIMEFLAG_ENABLE_STATS | J9SHR_RUNTIMEFLAG_ENABLE_READONLY);
 		runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION;
 		runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_TEST_BAD_BUILDID;
 		runtimeFlags &= ~J9SHR_RUNTIMEFLAG_AUTOKILL_DIFF_BUILDID;
@@ -3273,6 +3330,7 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 	memset(tempConfig, 0, memBytesNeeded);
 
 	tempConfig->ctrlDirName = ctrlDirName;
+	tempConfig->layer = layer;
 
 	rc = performSharedClassesCommandLineAction(vm, tempConfig, modifiedCacheNamePtr, verboseFlags, runtimeFlags, expireTime, parseResult, printStatsOptions);
 	if ((J9VMDLLMAIN_FAILED == rc) || (J9VMDLLMAIN_SILENT_EXIT_VM == rc)) {
@@ -3298,6 +3356,7 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 
 	/* make this list circular */
 	tempConfig->cacheDescriptorList->next = tempConfig->cacheDescriptorList;
+	tempConfig->cacheDescriptorList->previous = tempConfig->cacheDescriptorList;
 
 	/* Copy the cache name */
 	strcpy(copiedCacheName, modifiedCacheNamePtr);
@@ -3318,7 +3377,7 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 	tempConfig->maxAOT = vm->sharedCacheAPI->maxAOT;
 	tempConfig->minJIT = vm->sharedCacheAPI->minJIT;
 	tempConfig->maxJIT = vm->sharedCacheAPI->maxJIT;
-	
+
 	/* Fill in the getJavacoreData address so we can dump information about the shared cache if
 	 * the cache is found corrupted during startup.
 	 */
@@ -3341,7 +3400,39 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 	}
 	/* Start up the cache */
 	vm->sharedClassConfig = tempConfig;
-	
+
+	j9shr_getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, cacheType);
+	findExistingCacheLayerNumbers(vm, cacheDirName, cacheName, runtimeFlags, &maxLayer);
+	if (-1 == layer) {
+		/* Neither of "layer=" nor "createLayer" are used in the command line */
+		if (-1 == maxLayer) {
+			/* There is no existing layers under cacheName. This JVM can create a new cache layer 0. */
+			vm->sharedClassConfig->layer = 0;
+		} else {
+			/* There are existing layers under cacheName, use the existing maximum layer, but do not create new layer.
+			 * J9SHR_RUNTIMEFLAG_DO_NOT_CREATE_CACHE is not set here, so if maxLayer cache has a different build ID,
+			 * it will be deleted and a new one will be created.
+			 */
+			vm->sharedClassConfig->layer = maxLayer;
+		}
+	} else if (SHRINIT_CREATE_NEW_LAYER == layer) {
+		/* "createLayer" is used in the command line */
+		vm->sharedClassConfig->layer = maxLayer + 1;
+	} else {
+		/* "layer=" is used in the command line */
+		if (layer > (maxLayer + 1)) {
+			SHRINIT_ERR_TRACE3(verboseFlags, J9NLS_SHRC_SHRINIT_INVALIDATE_LAYER_NUMBER, layer, maxLayer, maxLayer + 1);
+			goto _error;
+		} else if ((maxLayer + 1) == layer) {
+			/* Create a new layer */
+		} else {
+			/* layer <= maxLayer */
+			/* An existing shared cache with higer layer number already exists */
+			/* Use the layer number in the CML, but do not create new cache layer */
+			vm->sharedClassConfig->runtimeFlags |= J9SHR_RUNTIMEFLAG_DO_NOT_CREATE_CACHE;
+		}
+	}
+
 	/*Add the cachemap before calling startup to enable debug extensions in jextract etc*/
 	cm = SH_CacheMap::newInstance(vm, vm->sharedClassConfig, cmPtr, cacheName, cacheType);
 	vm->sharedClassConfig->sharedClassCache = (void*)cm;
@@ -4159,34 +4250,18 @@ j9shr_isCacheFull(J9JavaVM *vm)
  * @return TRUE if memory segment is in any cache, FALSE otherwise.
  */
 BOOLEAN
-j9shr_isAddressInCache(J9JavaVM *vm, void *address, UDATA length)
+j9shr_isAddressInCache(J9JavaVM *vm, void *address, UDATA length, BOOLEAN checkReadWriteCacheOnly)
 {
 	BOOLEAN retval = FALSE;
 
 	if (NULL != vm->sharedClassConfig) {
-		J9SharedClassCacheDescriptor *cache = vm->sharedClassConfig->cacheDescriptorList;
-		U_8 *ptr = (U_8*)address;
-
-		while (NULL != cache) {
-			U_8 *cacheStart = (U_8*)cache->cacheStartAddress;
-			U_8 *cacheEnd = cacheStart + cache->cacheSizeBytes;
-
-			if ( (ptr >= cacheStart) && ((ptr + length) <= cacheEnd) ) {
-				retval = TRUE;
-				break;
-			}
-
-			if (cache->next == vm->sharedClassConfig->cacheDescriptorList) {
-				/* Break out of the circular descriptor list. */
-				break;
-			}
-
-			cache = cache->next;
-		}
+		SH_CacheMap* cm = (SH_CacheMap *)vm->sharedClassConfig->sharedClassCache;
+		retval = cm->isAddressInCache(address, length, true, (TRUE == checkReadWriteCacheOnly));
 	}
 
 	return retval;
 }
+
 
 /**
  * This method returns the default cache type depending on the platform.
@@ -4407,7 +4482,7 @@ j9shr_createCacheSnapshot(J9JavaVM* vm, const char* cacheName)
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	char cacheDirName[J9SH_MAXPATH];
 	UDATA verboseFlags = vm->sharedCacheAPI->verboseFlags;
-	I_8 layer = 0;
+	I_8 layer = vm->sharedClassConfig->layer;
 
 	Trc_SHR_INIT_j9shr_createCacheSnapshot_Entry(cacheName);
 
@@ -5197,6 +5272,38 @@ IDATA
 j9shr_getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType)
 {
 	return SH_OSCache::getCacheDir(vm, ctrlDirName, buffer, bufferSize, cacheType, false);
+}
+
+/**
+ * Determine existing top layer number
+ *
+ * @param [in] vm  The Java VM
+ * @param [in] ctrlDirName  The control dir name
+ * @param [in] cacheName  The cache name
+ * @param [in] runtimeFlags  The runtime flags
+ * @param [out] maxLayerNo  The existing top layer number
+ */
+static void
+findExistingCacheLayerNumbers(J9JavaVM* vm, const char* ctrlDirName, const char* cacheName, U_64 runtimeFlags, I_8 *maxLayerNo)
+{
+	I_8 maxLayer = -1;
+
+	J9PortShcVersion versionData;
+	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+	versionData.cacheType = getCacheTypeFromRuntimeFlags(runtimeFlags);
+
+	for (I_8 layer = 0; layer <= J9SH_LAYER_NUM_MAX_VALUE; layer++) {
+		if (1 == j9shr_stat_cache(vm, ctrlDirName, 0 , cacheName, &versionData, OSCACHE_CURRENT_CACHE_GEN, layer)) {
+			if (layer > maxLayer) {
+				maxLayer = layer;
+			}
+		}
+	}
+
+	if (-1 != maxLayer) {
+		*maxLayerNo = maxLayer;
+	}
+	return;
 }
 
 } /* extern "C" */

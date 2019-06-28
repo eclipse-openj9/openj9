@@ -30,9 +30,6 @@
 
 #define CACHE_ROOT_PREFIX "sharedcc"
 
-/* Maximum length of the cache name (including NULL char) specified by user in the command line */
-#define USER_SPECIFIED_CACHE_NAME_MAXLEN 65
-
 /*
  * For Windows,  cacheNameWithVersionString
  * = version string + prefix separator char + cacheName + prefix separator char + generation string

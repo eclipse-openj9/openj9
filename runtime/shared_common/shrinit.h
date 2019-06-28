@@ -55,7 +55,7 @@ UDATA j9shr_getFreeAvailableSpaceBytes(J9JavaVM *vm);
 void j9shr_hookZipLoadEvent(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 void j9shr_resetSharedStringTable(J9JavaVM* vm);
 BOOLEAN j9shr_isCacheFull(J9JavaVM *vm);
-BOOLEAN j9shr_isAddressInCache(J9JavaVM *vm, void *address, UDATA length);
+BOOLEAN j9shr_isAddressInCache(J9JavaVM *vm, void *address, UDATA length, BOOLEAN checkReadWriteCacheOnly);
 void j9shr_populatePreinitConfigDefaults(J9JavaVM *vm, J9SharedClassPreinitConfig *updatedWithDefaults);
 BOOLEAN j9shr_isPlatformDefaultPersistent(struct J9JavaVM* vm);
 UDATA j9shr_isBCIEnabled(J9JavaVM *vm);
@@ -72,6 +72,7 @@ void j9shr_storeGCHints(J9VMThread* currentThread, UDATA heapSize1, UDATA heapSi
 IDATA j9shr_findGCHints(J9VMThread* currentThread, UDATA *heapSize1, UDATA *heapSize2);
 const U_8* storeStartupHintsToSharedCache(J9VMThread* currentThread);
 IDATA j9shr_getCacheDir(J9JavaVM* vm, const char* ctrlDirName, char* buffer, UDATA bufferSize, U_32 cacheType);
+U_32 getCacheTypeFromRuntimeFlags(U_64 runtimeFlags);
 
 typedef struct J9SharedClassesHelpText {
 	const char* option;
@@ -188,6 +189,8 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_ADJUST_MAXJITDATA_EQUALS "adjustmaxjitdata="
 #define OPTION_NO_URL_TIMESTAMP_CHECK "noCheckURLTimestamps"
 #define OPTION_URL_TIMESTAMP_CHECK "checkURLTimestamps"
+#define OPTION_LAYER_EQUALS "layer="
+#define OPTION_CREATE_LAYER "createLayer"
 
 /* public options for printallstats= and printstats=  */
 #define SUB_OPTION_PRINTSTATS_ALL "all"
@@ -264,7 +267,8 @@ typedef struct J9SharedClassesOptions {
 #define RESULT_DO_ADJUST_MAXJITDATA_EQUALS 48
 #define RESULT_DO_BOOTCLASSESONLY 49
 #define RESULT_DO_DESTROYALLLAYERS 50
-
+#define RESULT_DO_LAYER_EQUALS 51
+#define RESULT_DO_CREATE_LAYER 52
 
 #define PARSE_TYPE_EXACT 1
 #define PARSE_TYPE_STARTSWITH 2
@@ -295,6 +299,7 @@ typedef struct J9SharedClassesOptions {
 #define HELPTEXT_ADJUST_MAXAOT_EQUALS OPTION_ADJUST_MAXAOT_EQUALS"<size>"
 #define HELPTEXT_ADJUST_MINJITDATA_EQUALS OPTION_ADJUST_MINJITDATA_EQUALS"<size>"
 #define HELPTEXT_ADJUST_MAXJITDATA_EQUALS OPTION_ADJUST_MAXJITDATA_EQUALS"<size>"
+#define HELPTEXT_LAYER_EQUALS OPTION_LAYER_EQUALS "<number>"
 
 #define HELPTEXT_NEWLINE {"", 0, 0, 0, 0}
 

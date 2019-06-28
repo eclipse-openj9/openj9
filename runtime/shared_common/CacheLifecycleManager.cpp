@@ -802,11 +802,11 @@ j9shr_destroy_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseF
 		if (i > J9SH_GENERATION_37) {
 			layerMaxOldGen = J9SH_LAYER_NUM_MAX_VALUE;
 		}
-		for (I_8 l = layerMaxOldGen; l >= layerMinOldGen; l--) {
+		for (I_8 layer = layerMaxOldGen; layer >= layerMinOldGen; layer--) {
 			/* explicitly pass 0 as verboseFlags to j9shr_stat_cache to suppress printing of messages related to cache existence in all cases */
-			if (1 == j9shr_stat_cache(vm, cacheDirName, 0 , cacheName, versionData, i, l)) {
+			if (1 == j9shr_stat_cache(vm, cacheDirName, 0 , cacheName, versionData, i, layer)) {
 				cacheStatus = J9SH_DESTROYED_OLDER_GEN_CACHE;
-				SH_OSCache::newInstance(PORTLIB, oscache, cacheName, i, versionData, l);
+				SH_OSCache::newInstance(PORTLIB, oscache, cacheName, i, versionData, layer);
 				/*Pass in 0 for runtime flags means we will not check semid in cache header when we destroy a cache*/
 				if (!oscache->startup(vm, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, cacheName, vm->sharedClassPreinitConfig, 0, J9SH_OSCACHE_OPEXIST_DESTROY, verboseFlags, 0/*runtime check*/, 0, vm->sharedCacheAPI->storageKeyTesting, versionData, NULL, SHR_STARTUP_REASON_DESTROY)) {
 					if (oscache->getError() != J9SH_OSCACHE_NO_CACHE) {
@@ -838,10 +838,10 @@ j9shr_destroy_cache(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verboseF
 
 	/* try to remove current generation cache */
 	if (OSCACHE_CURRENT_CACHE_GEN == generationEnd) {
-		for (I_8 l = layerMax; l >= layerMin; l--) {
+		for (I_8 layer = layerMax; layer >= layerMin; layer--) {
 			/* explicitly pass 0 as verboseFlags to j9shr_stat_cache to suppress printing of messages related to cache existence in all cases */
-			if (1 == j9shr_stat_cache(vm, cacheDirName, 0 , cacheName, versionData, OSCACHE_CURRENT_CACHE_GEN, l)) {
-				SH_OSCache::newInstance(PORTLIB, oscache, cacheName, OSCACHE_CURRENT_CACHE_GEN, versionData, l);
+			if (1 == j9shr_stat_cache(vm, cacheDirName, 0 , cacheName, versionData, OSCACHE_CURRENT_CACHE_GEN, layer)) {
+				SH_OSCache::newInstance(PORTLIB, oscache, cacheName, OSCACHE_CURRENT_CACHE_GEN, versionData, layer);
 				/*Pass in 0 for runtime flags means we will not check semid in cache header when we destroy a cache*/
 				if (!oscache->startup(vm, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, cacheName, vm->sharedClassPreinitConfig, 0, J9SH_OSCACHE_OPEXIST_DESTROY, verboseFlags, 0/*runtime check*/, 0, vm->sharedCacheAPI->storageKeyTesting, versionData, NULL, SHR_STARTUP_REASON_DESTROY)) {
 					/* failed to destroy current gen cache. */
@@ -1026,8 +1026,8 @@ j9shr_destroy_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verbo
 		if (i > J9SH_GENERATION_37) {
 			layerMaxOldGen = J9SH_LAYER_NUM_MAX_VALUE;
 		}
-		for (I_8 l = layerMaxOldGen; l >= layerMinOldGen; l--) {
-			SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, snapshotName, versionData, i, false, l);
+		for (I_8 layer = layerMaxOldGen; layer >= layerMinOldGen; layer--) {
+			SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, snapshotName, versionData, i, false, layer);
 			/* No check for the return value of getCachePathName() as it always returns 0 */
 			SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen);
 			if (EsIsFile == j9file_attr(pathFileName)) {
@@ -1053,8 +1053,8 @@ j9shr_destroy_snapshot(struct J9JavaVM* vm, const char* ctrlDirName, UDATA verbo
 
 	/* try to remove current generation cache snapshot */
 	if (OSCACHE_CURRENT_CACHE_GEN == generationEnd) {
-		for (I_8 l = layerMax; l >= layerMin; l--) {
-			SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, snapshotName, versionData, OSCACHE_CURRENT_CACHE_GEN, false, l);
+		for (I_8 layer = layerMax; layer >= layerMin; layer--) {
+			SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, nameWithVGen, CACHE_ROOT_MAXLEN, snapshotName, versionData, OSCACHE_CURRENT_CACHE_GEN, false, layer);
 			/* No check for the return value of getCachePathName() as it always returns 0 */
 			SH_OSCache::getCachePathName(PORTLIB, cacheDirName, pathFileName, J9SH_MAXPATH, nameWithVGen);
 			if (EsIsFile == j9file_attr(pathFileName)) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,6 +102,7 @@ OpenCacheHelper::openTestCache(I_32 cacheType, I_32 cacheSize, const char *cache
 
 	sharedClassConfig->cacheDescriptorList = (J9SharedClassCacheDescriptor*)((UDATA)sharedClassConfig + sizeof(J9SharedClassConfig));
 	sharedClassConfig->cacheDescriptorList->next = sharedClassConfig->cacheDescriptorList;
+	sharedClassConfig->cacheDescriptorList->previous = sharedClassConfig->cacheDescriptorList;
 	sharedClassConfig->softMaxBytes = -1;
 	sharedClassConfig->minAOT = -1;
 	sharedClassConfig->maxAOT = -1;
@@ -136,7 +137,6 @@ OpenCacheHelper::openTestCache(I_32 cacheType, I_32 cacheSize, const char *cache
 	memset(memory, 0, cacheObjectSize);
 
 	cacheMap = SH_CacheMap::newInstance(vm, sharedClassConfig, (SH_CacheMap*)memory, cacheName, cacheType);
-
 	sharedClassConfig->runtimeFlags |= J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE;
 	sharedClassConfig->sharedClassCache = (void*)cacheMap;
 	if (true == inMemoryCache) {

@@ -431,6 +431,7 @@ CorruptCacheTest::openTestCache(J9JavaVM *vm, I_32 cacheType, I_32 cacheSize, U_
 
 	sharedClassConfig->cacheDescriptorList = (J9SharedClassCacheDescriptor*)((UDATA)sharedClassConfig + sizeof(J9SharedClassConfig));
 	sharedClassConfig->cacheDescriptorList->next = sharedClassConfig->cacheDescriptorList;
+	sharedClassConfig->cacheDescriptorList->previous = sharedClassConfig->cacheDescriptorList;
 	sharedClassConfig->softMaxBytes = -1;
 	sharedClassConfig->minAOT = -1;
 	sharedClassConfig->maxAOT = -1;

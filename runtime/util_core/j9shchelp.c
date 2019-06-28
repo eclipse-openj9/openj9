@@ -144,6 +144,10 @@ getLayerFromName(const char* cacheNameWithVGen)
 	IDATA nameLen = strlen(cacheNameWithVGen);
 	I_8 layerNumber = J9SH_LAYER_NUM_UNSET;
 	UDATA temp0 = 0;
+	
+	if (nameLen <= 3) {
+		goto done;
+	}
 
 	cursor += (nameLen - 3);
 	if (J9SH_LAYER_NUM_CHAR != *cursor ) {
@@ -392,12 +396,18 @@ isCacheFileName(J9PortLibrary* portlib, const char* nameToTest, uintptr_t expect
 	 * For cache file with layer number like C290M4F1A64P_CC1_G39L01, 'G' is at nameToTestLen-6.
 	 */
 	if (getLayerFromName(nameToTest) == J9SH_LAYER_NUM_UNSET) {
+		if (nameToTestLen <= 4) {
+			return 0;
+		}
 		if ((nameToTest[nameToTestLen-3] != 'G')
 			|| (nameToTest[nameToTestLen-4] != '_')
 		) {
 			return 0;
 		}
 	} else {
+		if (nameToTestLen <= 7) {
+			return 0;
+		}
 		if ((nameToTest[nameToTestLen-6] != 'G')
 			|| (nameToTest[nameToTestLen-7] != '_')
 		) {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -234,6 +234,7 @@ AttachedDataTest::openTestCache(J9JavaVM* vm, BlockPtr preallocatedCache, UDATA 
 
 	sharedClassConfig->cacheDescriptorList = (J9SharedClassCacheDescriptor*)((UDATA)sharedClassConfig + sizeof(J9SharedClassConfig));
 	sharedClassConfig->cacheDescriptorList->next = sharedClassConfig->cacheDescriptorList;
+	sharedClassConfig->cacheDescriptorList->previous = sharedClassConfig->cacheDescriptorList;
 
 	sharedClassConfig->softMaxBytes = -1;
 	sharedClassConfig->minAOT = -1;
@@ -362,7 +363,9 @@ AttachedDataTest::closeTestCache(J9JavaVM *vm, bool freeCache)
 		/* Unprotect the cacheMemory before freeing. Otherwise it can cause crash on linux/ppc 64-bit machine when 
 		 * the next call to allocate memory for cache returns same address as current cacheMemory.
 		 */
-		j9mmap_protect(cacheMemory, piConfig->sharedClassCacheSize, (J9PORT_PAGE_PROTECT_READ | J9PORT_PAGE_PROTECT_WRITE));
+		if (NULL != piConfig) {
+			j9mmap_protect(cacheMemory, piConfig->sharedClassCacheSize, (J9PORT_PAGE_PROTECT_READ | J9PORT_PAGE_PROTECT_WRITE));
+		}
 		j9mem_free_memory(cacheAllocated);
 		cacheAllocated = NULL;
 		cacheMemory = NULL;
