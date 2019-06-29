@@ -20,14 +20,8 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
-
 package openj9.lang.management.internal;
 
-/*[IF Sidecar19-SE]*/
-import java.lang.Module;
-import java.lang.ModuleLayer;
-/*[ENDIF]*/
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Field;

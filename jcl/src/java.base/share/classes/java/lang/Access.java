@@ -43,7 +43,6 @@ import sun.nio.ch.Interruptible;
 import sun.reflect.annotation.AnnotationType;
 
 /*[IF Sidecar19-SE]
-import java.lang.Module;
 import java.util.Iterator;
 import java.util.List;
 /*[IF Java11]*/

@@ -1,11 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
-package com.ibm.oti.lang;
-
-import java.lang.Object;
-import java.lang.Throwable;
-
 /*******************************************************************************
- * Copyright (c) 2007, 2010 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +20,7 @@ import java.lang.Throwable;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package com.ibm.oti.lang;
 
 public interface ArgumentHelper {
 	public Object helper(Object[] arguments) throws Throwable;

@@ -25,8 +25,6 @@ package jdk.internal.misc;
 import com.ibm.oti.vm.VM;
 import com.ibm.oti.vm.VMLangAccess;
 
-import java.lang.Class;
-import java.lang.ClassLoader;
 import java.lang.reflect.Field;
 import java.security.ProtectionDomain;
 import java.util.Objects;
