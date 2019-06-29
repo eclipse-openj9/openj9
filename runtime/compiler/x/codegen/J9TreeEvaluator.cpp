@@ -12760,10 +12760,14 @@ J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGene
          }
       else
          {
-         fieldClassReg = cg->allocateRegister();
          if (isWrite)
             {
+            fieldClassReg = cg->allocateRegister();
             generateRegMemInstruction(LRegMem(), node, fieldClassReg, generateX86MemoryReference(sideEffectRegister, fej9->getOffsetOfClassFromJavaLangClassField(), cg), cg);
+            }
+         else
+            {
+            fieldClassReg = sideEffectRegister;
             }
          classFlagsMemRef = generateX86MemoryReference(fieldClassReg, fej9->getOffsetOfClassFlags(), cg);
          }
@@ -12787,7 +12791,7 @@ J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGene
    deps->stopAddingConditions();
    generateLabelInstruction(LABEL, node, endLabel, deps, cg);
 
-   if (isInstanceField || (!isResolved) || isAOTCompile)
+   if (isInstanceField || (!isResolved && isWrite) || isAOTCompile)
       {
       cg->stopUsingRegister(fieldClassReg);
       }
