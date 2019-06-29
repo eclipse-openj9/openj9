@@ -94,11 +94,12 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/codegen/Relocation.cpp \
     omr/compiler/codegen/ScratchRegisterManager.cpp \
     omr/compiler/codegen/StorageInfo.cpp \
-    omr/compiler/compile/Method.cpp \
     omr/compiler/compile/OMRAliasBuilder.cpp \
     omr/compiler/compile/OMRCompilation.cpp \
+    omr/compiler/compile/OMRMethod.cpp \
     omr/compiler/compile/OMRSymbolReferenceTable.cpp \
     omr/compiler/compile/OSRData.cpp \
+    omr/compiler/compile/ResolvedMethod.cpp \
     omr/compiler/compile/TLSCompilationManager.cpp \
     omr/compiler/compile/VirtualGuard.cpp \
     omr/compiler/control/OMROptions.cpp \
@@ -265,6 +266,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/codegen/MonitorState.cpp \
     compiler/compile/J9AliasBuilder.cpp \
     compiler/compile/J9Compilation.cpp \
+    compiler/compile/J9Method.cpp \
     compiler/compile/J9SymbolReferenceTable.cpp \
     compiler/control/CompilationController.cpp \
     compiler/control/CompilationThread.cpp \
