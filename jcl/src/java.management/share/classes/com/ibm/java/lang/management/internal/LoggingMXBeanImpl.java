@@ -23,10 +23,6 @@
 package com.ibm.java.lang.management.internal;
 
 import java.lang.management.PlatformLoggingMXBean;
-/*[IF Sidecar19-SE]*/
-import java.lang.Module;
-import java.lang.ModuleLayer;
-/*[ENDIF]*/
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
