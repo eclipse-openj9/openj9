@@ -308,7 +308,7 @@ int inflateBuffer(U_8 *buffer, int numberOfBytes, U_8 *outBuffer, int unCompress
    _stream.avail_in = numberOfBytes;
    ret = inflate(&_stream, Z_NO_FLUSH);
    /**
-    * ZLIB returns Z_STREAM_END if the buffer streamed to be inflated is finished.
+    * ZLIB returns Z_STREAM_END if the buffer stream to be inflated is finished.
     * In this case it returns DECOMPRESSION_FAILED.
     * Caller of this routine can then decide if they want to retry deflating
     * Using larger output buffer. 
@@ -364,7 +364,7 @@ int deflateBuffer(const U_8 *buffer, int numberOfBytes, U_8 *outBuffer, int leve
    _stream.next_out = (Bytef*) outBuffer;
    ret = deflate(&_stream, Z_FINISH);
    /**
-    * ZLIB returns Z_STREAM_END if the buffer streamed to be deflated is finished.
+    * ZLIB returns Z_STREAM_END if the buffer stream to be deflated is finished.
     * That Return COMPRESSION_FAILED in case we are ending up inflating the data.
     * Caller of this routine can then decide if they want to retry deflating
     * Using larger output buffer. 
