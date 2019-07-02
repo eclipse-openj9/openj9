@@ -307,19 +307,20 @@ int inflateBuffer(U_8 *buffer, int numberOfBytes, U_8 *outBuffer, int unCompress
    _stream.next_in = in;
    _stream.avail_in = numberOfBytes;
    ret = inflate(&_stream, Z_NO_FLUSH);
-   switch (ret)
-      {
-      case Z_NEED_DICT:
-      case Z_DATA_ERROR:
-      case Z_MEM_ERROR:
-         inflateEnd(&_stream);
-         return DECOMPRESSION_FAILED;
-      }
-   ret = DECOMPRESSION_SUCCEEDED;
-   if (_stream.avail_out != 0)
+   /**
+    * ZLIB returns Z_STREAM_END if the buffer streamed to be inflated is finished.
+    * In this case it returns DECOMPRESSION_FAILED.
+    * Caller of this routine can then decide if they want to retry deflating
+    * Using larger output buffer. 
+    */
+   if (ret != Z_STREAM_END)
       {
       TR_ASSERT(0, "Fails while inflating buffer");
       ret = DECOMPRESSION_FAILED;
+      }
+   else
+      {
+      ret = DECOMPRESSION_SUCCEEDED;
       }
    inflateEnd(&_stream);
    return ret;
@@ -363,7 +364,7 @@ int deflateBuffer(const U_8 *buffer, int numberOfBytes, U_8 *outBuffer, int leve
    _stream.next_out = (Bytef*) outBuffer;
    ret = deflate(&_stream, Z_FINISH);
    /**
-    * ZLIB return Z_STREAM_END if the buffer streamed to be deflated is finished.
+    * ZLIB returns Z_STREAM_END if the buffer streamed to be deflated is finished.
     * That Return COMPRESSION_FAILED in case we are ending up inflating the data.
     * Caller of this routine can then decide if they want to retry deflating
     * Using larger output buffer. 
@@ -6410,7 +6411,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                if (aotMethodHeader->flags & TR_AOTMethodHeader_CompressedMethodInCache)
                   {
                   /**
-                    * For each AOT compiled method we store in the shareclass cache we have follwing layout.
+                    * For each AOT compiled method we store in the shareclass cache we have following layout.
                     * ---------------------------------------------------------------------------------------
                     * | CompiledMethodWrapper | J9JITDataCacheHeader | AOTMethodHeader | Metadata | Codedata|
                     * ---------------------------------------------------------------------------------------
@@ -9339,7 +9340,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                             * -----------------------------------------------------------------------------------------------------
                             * 
                             * When we compile a method, we send data from J9JITDataCacheHeader to store in the cache.
-                            * For each methdo Shared Class Cache API adds CompiledMethodWrapper header which holds the size of data in cache, 
+                            * For each method Shared Class Cache API adds CompiledMethodWrapper header which holds the size of data in cache, 
                             * as well as J9ROMMethod of compiled method. 
                             * Size of the original data is extracted from the TR_AOTMethodHeader while size of compressed data is extracted from
                             * CompiledMethodWrapper. 
@@ -9380,14 +9381,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                               codedataToStoreSize = 0;  
                               if (TR::Options::getVerboseOption(TR_VerboseAOTCompression))
                                  {
-                                 J9UTF8 *className;
-                                 J9UTF8 *name;
-                                 J9UTF8 *signature;
-                                 getClassNameSignatureFromMethod(method, className, name, signature);
-                                 TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "%.*s.%.*s%.*s : Compression of method data Successful - Original method size = %d bytes, Compressed Method Size = %d bytes",
-                                    J9UTF8_LENGTH(className), (char *) J9UTF8_DATA(className),
-                                    J9UTF8_LENGTH(name), (char *) J9UTF8_DATA(name),
-                                    J9UTF8_LENGTH(signature), (char *) J9UTF8_DATA(signature),
+                                 TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "%s : Compression of method data Successful - Original method size = %d bytes, Compressed Method Size = %d bytes",
+                                    comp->signature(),
                                     dataSize+codeSize, metadataToStoreSize);
                                  }
                               }
@@ -9395,14 +9390,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                               {
                               if (TR::Options::getVerboseOption(TR_VerboseAOTCompression))
                                  {
-                                 J9UTF8 *className;
-                                 J9UTF8 *name;
-                                 J9UTF8 *signature;
-                                 getClassNameSignatureFromMethod(method, className, name, signature);
-                                 TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "!%.*s.%.*s%.*s : Compression of method data Failed - Original method size = %d bytes",
-                                    J9UTF8_LENGTH(className), (char *) J9UTF8_DATA(className),
-                                    J9UTF8_LENGTH(name), (char *) J9UTF8_DATA(name),
-                                    J9UTF8_LENGTH(signature), (char *) J9UTF8_DATA(signature),
+                                 TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "!%s : Compression of method data Failed - Original method size = %d bytes",
+                                    comp->signature(),
                                     dataSize+codeSize);
                                  }
                               }
@@ -9413,14 +9402,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                         // In case we can not allocate extra memory to hold temp data for compressing, we still the uncompressed data into the cache
                         if (TR::Options::getVerboseOption(TR_VerboseAOTCompression))
                            {
-                           J9UTF8 *className;
-                           J9UTF8 *name;
-                           J9UTF8 *signature;
-                           getClassNameSignatureFromMethod(method, className, name, signature);
-                           TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "!%.*s.%.*s%.*s : Method will not be compressed as necessary memory can not be allocated, Method Size = %d bytes",
-                              J9UTF8_LENGTH(className), (char *) J9UTF8_DATA(className),
-                              J9UTF8_LENGTH(name), (char *) J9UTF8_DATA(name),
-                              J9UTF8_LENGTH(signature), (char *) J9UTF8_DATA(signature),
+                           TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "!%s : Method will not be compressed as necessary memory can not be allocated, Method Size = %d bytes",
+                              comp->signature(),
                               dataSize+codeSize);   
                            }   
                         }
