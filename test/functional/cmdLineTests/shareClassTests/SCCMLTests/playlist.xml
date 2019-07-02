@@ -330,11 +330,6 @@
 	</test>
 	<test>
 		<testCaseName>ShareClassesCMLOpenJ9</testCaseName>
-		<disabled>
-			SharedClasses by default is disabled from the 0.12.0 release while we
-			work through some performance issues related to lost iprofiler data.
-			See issue: https://github.com/eclipse/openj9/issues/4222
-		</disabled>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
