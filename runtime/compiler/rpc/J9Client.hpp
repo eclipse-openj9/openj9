@@ -36,7 +36,7 @@ class SSLOutputStream;
 class SSLInputStream;
 #endif
 
-namespace JITaaS
+namespace JITServer
 {
 enum VersionCheckStatus
    {

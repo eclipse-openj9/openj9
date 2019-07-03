@@ -28,7 +28,7 @@
 #include <type_traits>
 #include "StreamTypes.hpp"
 
-namespace JITaaS
+namespace JITServer
    {
    template <typename... Args>
    std::tuple<Args...> getArgs(const AnyData *message);

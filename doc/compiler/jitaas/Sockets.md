@@ -26,7 +26,7 @@ Client server communication via TCP sockets is the default communication backend
 
 Encryption via TLS (OpenSSL) is optionally supported. See [Usage](Usage.md) for encryption setup instructions.
 
-If a network error occurs, `JITaaS::StreamFailure` is thrown.
+If a network error occurs, `JITServer::StreamFailure` is thrown.
 
 ### `J9Stream`
 Implements basic functionality such as stream initialization (with/without TLS), reading/writing objects to streams, and stream cleanup.

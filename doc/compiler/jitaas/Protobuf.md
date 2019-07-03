@@ -59,4 +59,4 @@ If you are not familiar with some advanced C++ features, this may look quite con
 
 Note that `std::string`, `std::vector` and `std::tuple` are not trivially copyable, so structs containing them cannot be serialized. Structs containing only primitive types are fine. If you need to send a struct like object containing non trivially copyable types, use `std::tuple`. Structs containing pointers **are** trivially copyable, but the values pointed to will not be copied for you. These details arise because it is impossible to inspect the types of fields in a struct at compile time in C++ (unless you consider The Great Type Loophole, but let's not go there).
 
-If you need to send an empty message (forcing the other process to block until it is received), you can send the special type JITaaS::Void. Sending/receiving no values is not supported so an empty type is used as a workaround.
+If you need to send an empty message (forcing the other process to block until it is received), you can send the special type JITServer::Void. Sending/receiving no values is not supported so an empty type is used as a workaround.

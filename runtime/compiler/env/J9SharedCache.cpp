@@ -822,7 +822,7 @@ TR_J9JITaaSServerSharedCache::rememberClass(J9Class *clazz, bool create)
          return it->second;
          }
       }
-   _stream->write(JITaaS::MessageType::SharedCache_rememberClass, clazz, create);
+   _stream->write(JITServer::MessageType::SharedCache_rememberClass, clazz, create);
    UDATA * chainData = std::get<0>(_stream->read<UDATA *>());
    if (chainData)
       {
@@ -852,7 +852,7 @@ uintptrj_t
 TR_J9JITaaSServerSharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
-   _stream->write(JITaaS::MessageType::SharedCache_getClassChainOffsetInSharedCache, clazz);
+   _stream->write(JITServer::MessageType::SharedCache_getClassChainOffsetInSharedCache, clazz);
    return std::get<0>(_stream->read<uintptrj_t>());
    }
 
@@ -863,8 +863,8 @@ TR_J9JITaaSServerSharedCache::addHint(J9Method * method, TR_SharedCacheHint theH
    auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
    if (vmInfo->_hasSharedClassCache)
       {
-      _stream->write(JITaaS::MessageType::SharedCache_addHint, method, theHint);
-      _stream->read<JITaaS::Void>();
+      _stream->write(JITServer::MessageType::SharedCache_addHint, method, theHint);
+      _stream->read<JITServer::Void>();
       }
    }
 
@@ -874,6 +874,6 @@ TR_J9JITaaSServerSharedCache::storeSharedData(J9VMThread *vmThread, char *key, J
    TR_ASSERT(_stream, "stream must be initialized by now");
    std::string dataStr((char *) descriptor->address, descriptor->length);
 
-   _stream->write(JITaaS::MessageType::SharedCache_storeSharedData, std::string(key, strlen(key)), *descriptor, dataStr);
+   _stream->write(JITServer::MessageType::SharedCache_storeSharedData, std::string(key, strlen(key)), *descriptor, dataStr);
    return std::get<0>(_stream->read<const void *>());
    }

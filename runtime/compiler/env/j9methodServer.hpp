@@ -277,7 +277,7 @@ public:
    void cacheResolvedMethodsCallees();
 
 protected:
-   JITaaS::ServerStream *_stream;
+   JITServer::ServerStream *_stream;
    J9Class *_ramClass; // client pointer to RAM class
    UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _fieldAttributesCache;
    UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _staticAttributesCache;

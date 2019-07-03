@@ -39,7 +39,7 @@
 #include <openssl/err.h>
 #endif
 
-namespace JITaaS
+namespace JITServer
 {
 
 int ClientStream::_numConnectionsOpened = 0;
@@ -198,7 +198,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    if (!ssl)
       {
       ERR_print_errors_fp(stderr);
-      throw JITaaS::StreamFailure("Failed to create new SSL connection");
+      throw JITServer::StreamFailure("Failed to create new SSL connection");
       }
 
    SSL_set_connect_state(ssl);
@@ -207,13 +207,13 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
       {
       ERR_print_errors_fp(stderr);
       SSL_free(ssl);
-      throw JITaaS::StreamFailure("Cannot set file descriptor for SSL");
+      throw JITServer::StreamFailure("Cannot set file descriptor for SSL");
       }
    if (SSL_connect(ssl) != 1)
       {
       ERR_print_errors_fp(stderr);
       SSL_free(ssl);
-      throw JITaaS::StreamFailure("Failed to SSL_connect");
+      throw JITServer::StreamFailure("Failed to SSL_connect");
       }
 
    X509* cert = SSL_get_peer_certificate(ssl);
@@ -221,7 +221,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
       {
       ERR_print_errors_fp(stderr);
       SSL_free(ssl);
-      throw JITaaS::StreamFailure("Server certificate unspecified");
+      throw JITServer::StreamFailure("Server certificate unspecified");
       }
    X509_free(cert);
 
@@ -229,7 +229,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
       {
       ERR_print_errors_fp(stderr);
       SSL_free(ssl);
-      throw JITaaS::StreamFailure("Server certificate verification failed");
+      throw JITServer::StreamFailure("Server certificate verification failed");
       }
 
    BIO *bio = BIO_new_ssl(ctx, true);
@@ -237,14 +237,14 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
       {
       ERR_print_errors_fp(stderr);
       SSL_free(ssl);
-      throw JITaaS::StreamFailure("Failed to make new BIO");
+      throw JITServer::StreamFailure("Failed to make new BIO");
       }
    if (BIO_set_ssl(bio, ssl, true) != 1)
       {
       ERR_print_errors_fp(stderr);
       BIO_free_all(bio);
       SSL_free(ssl);
-      throw JITaaS::StreamFailure("Failed to set BIO SSL");
+      throw JITServer::StreamFailure("Failed to set BIO SSL");
       }
 
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))

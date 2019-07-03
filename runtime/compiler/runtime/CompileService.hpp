@@ -50,12 +50,12 @@ private:
    };
 
 
-class J9CompileDispatcher : public JITaaS::BaseCompileDispatcher
+class J9CompileDispatcher : public JITServer::BaseCompileDispatcher
 {
 public:
    J9CompileDispatcher(J9JITConfig *jitConfig) : _jitConfig(jitConfig) { }
 
-   void compile(JITaaS::ServerStream *stream) override;
+   void compile(JITServer::ServerStream *stream) override;
 
 private:
    J9JITConfig *_jitConfig;
