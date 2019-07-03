@@ -26,14 +26,14 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h> 
 #include "net/ProtobufTypeConvert.hpp"
 #include "net/CommunicationStream.hpp"
-#include "env/CHTable.hpp"
+#include "env/VerboseLog.hpp"
+#include "control/Options.hpp"
 
 #if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/ssl.h>
 class SSLOutputStream;
 class SSLInputStream;
 #endif
-class TR_ResolvedJ9Method;
 
 namespace JITServer
 {
@@ -97,11 +97,20 @@ public:
       return getArgs<T...>(_cMsg.mutable_data());
       }
 
-   void finishCompilation(uint32_t statusCode, std::string codeCache = "", std::string dataCache = "", 
-                          CHTableCommitData chTableData = {},
-                          std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended = {},
-                          std::string logFileStr = "", std::string symbolToIdStr = "",
-                          std::vector<TR_ResolvedJ9Method*> = {});
+   template <typename... T>
+   void finishCompilation(uint32_t statusCode, T... args)
+      {
+      try
+         {
+         write(MessageType::compilationCode, statusCode, args...);
+         }
+      catch (std::exception &e)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Could not finish compilation: %s", e.what());
+         }
+      }
+
    void setClientId(uint64_t clientId)
       {
       _clientId = clientId;
