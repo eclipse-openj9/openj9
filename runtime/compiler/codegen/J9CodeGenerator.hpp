@@ -107,6 +107,20 @@ public:
 
    void fixUpProfiledInterfaceGuardTest();
 
+   /**
+    * \brief
+    *      This query is used by both fixUpProfiledInterfaceGuardTest (a codegen level optimization) and virtual guard evaluators
+    *      to decide whether a NOP guard should be generated. It's used on all platforms and compilation phases so that the decision
+    *      of generating VG NOPs is made in a consistent way.
+    *
+    * \param node
+    *      the virtual guard node
+    *
+    * \return
+    *      true if a NOP virtual guard should be generated. Otherwise, false.
+   */
+   bool willGenerateNOPForVirtualGuard(TR::Node* node);
+
    void zeroOutAutoOnEdge(TR::SymbolReference * liveAutoSym, TR::Block *block, TR::Block *succBlock, TR::list<TR::Block*> *newBlocks, TR_ScratchList<TR::Node> *fsdStores);
 
    TR::Linkage *createLinkageForCompilation();
