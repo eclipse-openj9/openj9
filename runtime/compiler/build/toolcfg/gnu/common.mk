@@ -132,8 +132,8 @@ ifeq ($(HOST_ARCH),x)
         CX_FLAGS+=-m64 -fPIC
     endif
 
-    ifneq ($(JITAAS_ENABLE_SSL),)
-        CX_DEFINES+=JITAAS_ENABLE_SSL
+    ifneq ($(JITSERVER_ENABLE_SSL),)
+        CX_DEFINES+=JITSERVER_ENABLE_SSL
     endif
 endif
 
@@ -521,7 +521,7 @@ PROTO_CMD?=protoc
 
 CXX_DEFINES+=GOOGLE_PROTOBUF_NO_RTTI
 
-ifeq ($(JITAAS_ENABLE_SSL),)
+ifeq ($(JITSERVER_ENABLE_SSL),)
     SOLINK_SLINK+=protobuf
 else
     SOLINK_SLINK+=protobuf ssl
@@ -552,4 +552,4 @@ else
             CXX_INCLUDES+=$(subst -I,,$(OPENSSL_CFLAGS))
         endif
     endif # OPENSSL_CFLAGS
-endif # JITAAS_ENABLE_SSL
+endif # JITSERVER_ENABLE_SSL

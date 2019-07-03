@@ -28,7 +28,7 @@
 #include "rpc/J9Stream.hpp"
 #include "env/CHTable.hpp"
 
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/ssl.h>
 class SSLOutputStream;
 class SSLInputStream;
@@ -40,7 +40,7 @@ namespace JITServer
 class ServerStream : CommunicationStream
    {
 public:
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
    ServerStream(int connfd, BIO *ssl, uint32_t timeout);
 #else
    ServerStream(int connfd, uint32_t timeout);
