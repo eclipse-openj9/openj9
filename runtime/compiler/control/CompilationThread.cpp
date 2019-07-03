@@ -3111,7 +3111,7 @@ void TR::CompilationInfo::stopCompilationThreads()
           (uint32_t)_jitConfig->dataCacheTotalKB);
 
       if (getJProfilerThread())
-         fprintf(stderr, "Allocated memory for profile info = %d KB\n", getJProfilerThread()->getProfileInfoFootprint()/1024);
+         fprintf(stderr, "Allocated memory for profile info = %lu KB\n", getJProfilerThread()->getProfileInfoFootprint()/1024);
       }
 
    static char * printPersistentMem = feGetEnv("TR_PrintPersistentMem");
@@ -8926,7 +8926,7 @@ TR::CompilationInfoPerThreadBase::compile(
 
       if (compiler->getOption(TR_BreakAfterCompile))
          {
-         fprintf(stderr, "\n=== Finished compiling %s at %p ===\n", compiler->signature(), metaData->startPC);
+         fprintf(stderr, "\n=== Finished compiling %s at %p ===\n", compiler->signature(), (void *)metaData->startPC);
          TR::Compiler->debug.breakPoint();
          }
 

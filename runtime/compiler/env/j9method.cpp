@@ -8763,7 +8763,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             haveFilter = (bool *) comp()->trMemory()->allocateMemory(sizeof(bool) * numFilters, stackAlloc);
             for (int i = 0; i <numFilters; i++)
                {
-               haveFilter[i] = filters[i] != NULL;
+               haveFilter[i] = (filters[i] != 0) ? true: false;
                }
             }
          else

@@ -482,7 +482,7 @@ TR::DefaultCompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
                else
                   {
                   if (logSampling)
-                     curMsg += sprintf(curMsg, " cannot be compiled, extra field is %08X", TR::CompilationInfo::getJ9MethodExtra(j9method));
+                     curMsg += sprintf(curMsg, " cannot be compiled, extra field is %08lX", TR::CompilationInfo::getJ9MethodExtra(j9method));
                   }
                }
             TR::Recompilation::globalSampleCount++;
