@@ -188,7 +188,7 @@ ifneq ($(DEBUG),)
 $(info DEFAULT_EXCLUDE is set to $(DEFAULT_EXCLUDE))
 endif
 
-JAVA_COMMAND:=$(Q)$(JAVA_BIN)$(D)java$(Q)
+JAVA_COMMAND:=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)java$(Q)
 
 #######################################
 # common dir and jars
@@ -349,4 +349,3 @@ rmResultFile:
 
 resultsSummary:
 	@perl $(Q)$(TEST_ROOT)$(D)TestConfig$(D)scripts$(D)testKitGen$(D)resultsSummary$(D)resultsSum.pl$(Q) --failuremk=$(Q)$(FAILEDTARGETS)$(Q) --resultFile=$(Q)$(TEMPRESULTFILE)$(Q) --tapFile=$(Q)$(TAPRESULTFILE)$(Q) --diagnostic=$(DIAGNOSTICLEVEL)
-

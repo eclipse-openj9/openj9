@@ -79,7 +79,7 @@
 	</target>
 
 	<target name="generateTestClass" depends="compile" description="Generate test class files ">
-		<property name="build.javaexecutable" value="${JAVA_BIN}/java"/>
+		<property name="build.javaexecutable" value="${TEST_JDK_HOME}/bin/java"/>
 		<java classname="IntLongObjectAlignmentTestGenerator" failonerror="true" fork="true" logError="true" jvm="${build.javaexecutable}">
 			<classpath>
 				<pathelement path="${build}"/>

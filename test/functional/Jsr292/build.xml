@@ -51,7 +51,7 @@
 	<target name="compile_generator" depends="init" description="Compile SimpleIndyGenerator">
 		<echo>Compiling Everything but IndyTest and ComplexIndyTest</echo>
 		<echo>Ant version is ${ant.version}</echo>
-		<property name="compiler.javac" value="${JAVA_BIN}/javac" />
+		<property name="compiler.javac" value="${TEST_JDK_HOME}/bin/javac" />
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
 		<echo>===executable:                   ${compiler.javac}</echo>
@@ -72,7 +72,7 @@
 	</target>
 	
 	<target name="generate_indyn" depends="compile_generator" description="Run SimpleIndyGenerator to generate bytecode" > 
-		<property name="javaexecutable.java" value="${JAVA_BIN}/java" />
+		<property name="javaexecutable.java" value="${TEST_JDK_HOME}/bin/java" />
 		<echo>Running SimpleIndyGenerator</echo>
 		<java classname="com.ibm.j9.jsr292.indyn.SimpleIndyGenerator" failonerror="true" fork="true" logError="true" 
 				jvm="${javaexecutable.java}">
@@ -105,7 +105,7 @@
 	
 	<target name="compile_bootstrap" depends="init" description="compile the bootstrap source " >
 		<echo>Ant version is ${ant.version}</echo>
-		<property name="compiler.javac" value="${JAVA_BIN}/javac" />
+		<property name="compiler.javac" value="${TEST_JDK_HOME}/bin/javac" />
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
 		<echo>===executable:                   ${compiler.javac}</echo>
