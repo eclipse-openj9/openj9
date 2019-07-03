@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,3 +50,20 @@ VM_DdrDebugLink(J9ROMConstantDynamicRef)
 VM_DdrDebugLink(J9SFStackFrame)
 VM_DdrDebugLink(J9SRPHashTable)
 VM_DdrDebugLink(J9VMPopFramesInterruptEvent)
+
+
+/* Declare these for compatibility with the old DTFJ plugin, see https://github.com/eclipse/openj9/issues/6316 */
+/* @ddr_namespace: map_to_type=J9Consts */
+
+#define J9_JAVA_CLASS_ARRAY J9AccClassArray
+#define J9_JAVA_CLASS_REFERENCE_MASK J9AccClassReferenceMask
+#define J9_JAVA_CLASS_GC_SPECIAL J9AccClassGCSpecial
+#define J9_JAVA_CLASS_RAM_SHAPE_SHIFT J9AccClassRAMShapeShift
+#define J9_JAVA_STATIC J9AccStatic
+#define J9_JAVA_CLASS_RAM_ARRAY J9AccClassRAMArray
+#define J9_JAVA_INTERFACE J9AccInterface
+#define J9_JAVA_CLASS_DEPTH_MASK J9AccClassDepthMask
+#define J9_JAVA_CLASS_HOT_SWAPPED_OUT J9AccClassHotSwappedOut
+#define J9_JAVA_INTERFACE J9AccInterface
+#define J9_JAVA_CLASS_DYING J9AccClassDying
+#define J9_JAVA_NATIVE J9AccNative
