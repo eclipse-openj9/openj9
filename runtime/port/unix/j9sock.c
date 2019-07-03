@@ -2596,8 +2596,12 @@ j9sock_set_nonblocking(struct J9PortLibrary *portLibrary, j9socket_t socketP, BO
 	uint32_t param = nonblocking;
 
 	Trc_PRT_sock_j9sock_setnonblocking_Entry(socketP, nonblocking);
-	/* set the socket to non blocking or block as requested */	
+	/* set the socket to non blocking or block as requested */
+#if defined(AIXPPC)
+	rc = ioctl (SOCKET_CAST(socketP), (int)FIONBIO, &param);
+#else /* defined(AIXPPC) */
 	rc = ioctl (SOCKET_CAST(socketP), FIONBIO, &param);
+#endif /* defined(AIXPPC) */
 	
 	if (rc < 0)	{
 		rc = errno;
