@@ -27,7 +27,7 @@
 
 #include "infra/Assert.hpp"
 
-namespace JITaaS
+namespace JITServer
 {
 class StreamFailure: public virtual std::exception
    {

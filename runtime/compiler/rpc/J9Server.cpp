@@ -41,7 +41,7 @@
 #include <openssl/err.h>
 #endif
 
-namespace JITaaS
+namespace JITServer
 {
 int ServerStream::_numConnectionsOpened = 0;
 int ServerStream::_numConnectionsClosed = 0;

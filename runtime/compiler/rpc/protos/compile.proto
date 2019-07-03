@@ -23,7 +23,7 @@
 
 syntax = "proto3";
 
-package JITaaS;
+package JITServer;
 
 message Any
    {

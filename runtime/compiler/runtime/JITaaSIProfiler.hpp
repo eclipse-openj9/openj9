@@ -26,7 +26,7 @@
 #include "runtime/J9Profiler.hpp"
 #include "runtime/IProfiler.hpp"
 
-namespace JITaaS
+namespace JITServer
 {
 class ClientStream;
 }
@@ -103,7 +103,7 @@ class TR_JITaaSClientIProfiler : public TR_IProfiler
       uint32_t walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
                                               TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort, TR::Compilation *comp);
       uintptr_t serializeIProfilerMethodEntries(uintptrj_t *pcEntries, uint32_t numEntries, uintptr_t memChunk, uintptrj_t methodStartAddress);
-      bool serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITaaS::ClientStream *client, bool usePersistentCache);
+      bool serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITServer::ClientStream *client, bool usePersistentCache);
       std::string serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb);
    };
 

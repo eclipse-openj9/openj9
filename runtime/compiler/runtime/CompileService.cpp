@@ -28,7 +28,7 @@
 
 // Routine called when a new connection request has been received at the server
 // Executed by the dispatcher thread
-void J9CompileDispatcher::compile(JITaaS::ServerStream *stream)
+void J9CompileDispatcher::compile(JITServer::ServerStream *stream)
    {
    TR::CompilationInfo * compInfo = getCompilationInfo(_jitConfig);
 

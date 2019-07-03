@@ -68,7 +68,7 @@ struct TR_MethodToBeCompiled;
 class TR_ResolvedMethod;
 class TR_RelocationRuntime;
 class ClientSessionData;
-namespace JITaaS { class ClientStream; }
+namespace JITServer { class ClientStream; }
 
 enum CompilationThreadState
    {
@@ -248,8 +248,8 @@ class CompilationInfoPerThreadBase
    void                   setClientData(ClientSessionData *data) { _cachedClientDataPtr = data; }
    ClientSessionData     *getClientData() { return _cachedClientDataPtr; }
 
-   void                   setClientStream(JITaaS::ClientStream *stream) { _clientStream = stream; }
-   JITaaS::ClientStream *getClientStream() { return _clientStream; }
+   void                   setClientStream(JITServer::ClientStream *stream) { _clientStream = stream; }
+   JITServer::ClientStream *getClientStream() { return _clientStream; }
 
    protected:
 
@@ -279,7 +279,7 @@ class CompilationInfoPerThreadBase
 
    // JITaaS
    ClientSessionData * _cachedClientDataPtr;
-   JITaaS::ClientStream * _clientStream;
+   JITServer::ClientStream * _clientStream;
 
 private:
    void logCompilationSuccess(
@@ -378,7 +378,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    void                   setServerVM(TR_J9ServerVM *vm) { _serverVM = vm; }
    TR_J9SharedCacheServerVM *getSharedCacheServerVM() { return _sharedCacheServerVM; }
    void                   setSharedCacheServerVM(TR_J9SharedCacheServerVM *vm) { _sharedCacheServerVM = vm; }
-   JITaaS::ServerStream  *getStream();
+   JITServer::ServerStream  *getStream();
    J9ROMClass            *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=NULL);
    J9ROMClass            *getRemoteROMClassIfCached(J9Class *);
    void                   addThunkToBeRelocated(void *thunk, std::string signature);

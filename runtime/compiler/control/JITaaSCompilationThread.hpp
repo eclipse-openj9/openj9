@@ -170,13 +170,13 @@ class ClientSessionData
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getClassByNameMap() { return _classByNameMap; }
    PersistentUnorderedMap<J9Class *, UDATA *> & getClassClainDataCache() { return _classChainDataMap; }
    PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock*> & getConstantPoolToClassMap() { return _constantPoolToClassMap; }
-   void processUnloadedClasses(JITaaS::ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes);
+   void processUnloadedClasses(JITServer::ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
    TR::Monitor *getClassMapMonitor() { return _classMapMonitor; }
    TR::Monitor *getClassChainDataMapMonitor() { return _classChainDataMapMonitor; }
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
-   VMInfo *getOrCacheVMInfo(JITaaS::ServerStream *stream);
+   VMInfo *getOrCacheVMInfo(JITServer::ServerStream *stream);
    void clearCaches(); // destroys _chTableClassMap, _romClassMap and _J9MethodMap
    TR_AddressSet& getUnloadedClassAddresses()
       {
@@ -287,7 +287,7 @@ class ClientSessionHT
 
 size_t methodStringLength(J9ROMMethod *);
 std::string packROMClass(J9ROMClass *, TR_Memory *);
-bool handleServerMessage(JITaaS::ClientStream *, TR_J9VM *);
+bool handleServerMessage(JITServer::ClientStream *, TR_J9VM *);
 TR_MethodMetaData *remoteCompile(J9VMThread *, TR::Compilation *, TR_ResolvedMethod *,
       J9Method *, TR::IlGeneratorMethodDetails &, TR::CompilationInfoPerThreadBase *);
 TR_MethodMetaData *remoteCompilationEnd(J9VMThread * vmThread, TR::Compilation *comp, TR_ResolvedMethod * compilee, J9Method * method,
@@ -438,10 +438,10 @@ class JITaaSHelpers
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple);
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, ClientSessionData::ClassInfo &classInfo);
    static J9ROMClass *getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz);
-   static J9ROMClass *getRemoteROMClass(J9Class *, JITaaS::ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple);
+   static J9ROMClass *getRemoteROMClass(J9Class *, JITServer::ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple);
    static J9ROMClass *romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory);
-   static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITaaS::ServerStream *stream, ClassInfoDataType dataType,  void *data);
-   static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITaaS::ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2);
+   static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType,  void *data);
+   static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2);
    static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
    //purgeCache function can only be used inside the JITaaSCompilationThread.cpp file.
    //It is a templated function, calling it outside the JITaaSCompilationThread.cpp will give linking error. 

@@ -35,7 +35,7 @@ class SSLInputStream;
 #endif
 class TR_ResolvedJ9Method;
 
-namespace JITaaS
+namespace JITServer
 {
 class ServerStream : CommunicationStream
    {
@@ -75,18 +75,18 @@ public:
    std::tuple<T...> readCompileRequest()
       {
       readBlocking(_cMsg);
-      if (_cMsg.type() == JITaaS::MessageType::clientTerminate)
+      if (_cMsg.type() == JITServer::MessageType::clientTerminate)
          {
          uint64_t clientId = std::get<0>(getRecvData<uint64_t>());
-         throw JITaaS::StreamCancel(_cMsg.type(), clientId);
+         throw JITServer::StreamCancel(_cMsg.type(), clientId);
          }
       if (_cMsg.version() != 0 && _cMsg.version() != getJITaaSVersion())
          {
          throw StreamVersionIncompatible(getJITaaSVersion(), _cMsg.version());
          }
-      if (_cMsg.type() != JITaaS::MessageType::compilationRequest)
+      if (_cMsg.type() != JITServer::MessageType::compilationRequest)
          {
-         throw JITaaS::StreamMessageTypeMismatch(JITaaS::MessageType::compilationRequest, _cMsg.type());
+         throw JITServer::StreamMessageTypeMismatch(JITServer::MessageType::compilationRequest, _cMsg.type());
          }
       return getArgs<T...>(_cMsg.mutable_data());
       }

@@ -34,7 +34,7 @@
 class TR_J9VMBase;
 class TR_ResolvedMethod;
 namespace TR { class CompilationInfo; }
-namespace JITaaS { class ServerStream; }
+namespace JITServer { class ServerStream; }
 
 class TR_J9SharedCache : public TR_SharedCache
    {
@@ -202,11 +202,11 @@ public:
 
    virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) override;
 
-   void setStream(JITaaS::ServerStream *stream) { _stream = stream; }
+   void setStream(JITServer::ServerStream *stream) { _stream = stream; }
    virtual const void *storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor);
 
 private:
-   JITaaS::ServerStream *_stream;
+   JITServer::ServerStream *_stream;
    };
 
 #endif
