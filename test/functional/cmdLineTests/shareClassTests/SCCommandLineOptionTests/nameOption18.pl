@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2018 IBM Corp. and others
+# Copyright (c) 2009, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@ use strict;
 use warnings;
 
 sub nameOption18test{
-	my ($java_bin, $cache_max_len_string)=@_;
+	my ($java_exe, $cache_max_len_string)=@_;
 
 	my $test_name = "nameOption18";	
 	my $user_name=get_user_name();
@@ -44,7 +44,7 @@ sub nameOption18test{
 	# increment the length by 1 and convert to string 
 	my $new_cache_len = ($cache_max_len_string + 0 ) + 1;
     my $new_cache_len_string = $new_cache_len . ' ';
-	long_cache_name_fail_cases_test( $java_bin, $test_name, $new_cache_len_string,
+	long_cache_name_fail_cases_test( $java_exe, $test_name, $new_cache_len_string,
 		$error_msg, $append_token, $expanded_token);
 }		
 	
