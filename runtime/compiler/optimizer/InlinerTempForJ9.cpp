@@ -4837,7 +4837,9 @@ TR_J9InlinerUtil::computePrexInfo(TR_CallTarget *target)
                }
             continue;
             }
-         else if (target->_guard->_kind == TR_MutableCallSiteTargetGuard)
+         else if (target->_calleeSymbol->getResolvedMethod()->convertToMethod()->isArchetypeSpecimen()
+                  && target->_calleeSymbol->getResolvedMethod()->getMethodHandleLocation()
+                  && comp()->getOrCreateKnownObjectTable())
             {
             // Here's a situation where inliner is taking it upon itself to draw
             // conclusions about known objects.  VP won't get a chance to figure this
@@ -4848,12 +4850,16 @@ TR_J9InlinerUtil::computePrexInfo(TR_CallTarget *target)
             //
             if (priorKnowledge < KNOWN_OBJECT)
                {
-               argInfo->set(0, new (inliner()->trStackMemory()) TR_PrexArgument(target->_guard->_mutableCallSiteEpoch, comp()));
+               TR::KnownObjectTable::Index methodHandleIndex = comp()->getKnownObjectTable()->getIndexAt(target->_calleeSymbol->getResolvedMethod()->getMethodHandleLocation());
+               TR_PrexArgument *prexArg = new (inliner()->trStackMemory()) TR_PrexArgument(methodHandleIndex, comp());
+               if (target->_guard->_kind == TR_MutableCallSiteTargetGuard)
+                  prexArg->setTypeInfoForInlinedBody();
+               argInfo->set(0, prexArg);
                if (tracePrex)
                   {
                   TR::Node *call     = site->_callNode;
-                  TR::Node *targetMH = call->getArgument(0);
-                  traceMsg(comp(), "PREX.inl:      %p: MutableCallSite.target [%p] is known object obj%d in inlined call [%p]\n", argInfo->get(0), targetMH, target->_guard->_mutableCallSiteEpoch, call);
+                  TR::Node *mh = call->getArgument(0);
+                  traceMsg(comp(), "PREX.inl:      %p: %p is known object obj%d in inlined call [%p]\n", argInfo->get(0), mh, methodHandleIndex, call);
                   }
                }
             }
@@ -5863,6 +5869,13 @@ TR_J9InlinerUtil::createPrexArgInfoForCallTarget(TR_VirtualGuardSelection *guard
             char *s = TR::Compiler->cls.classNameChars(comp(), guard->_thisClass, len);
             heuristicTrace(tracer(),"Created an argInfo to fix receiver to class %s",s);
             }
+         }
+
+      if (implementer->convertToMethod()->isArchetypeSpecimen() &&
+          implementer->getMethodHandleLocation() &&
+          comp()->getOrCreateKnownObjectTable())
+         {
+         myPrexArgInfo->set(0, new (comp()->trHeapMemory()) TR_PrexArgument(comp()->getKnownObjectTable()->getIndexAt(implementer->getMethodHandleLocation()), comp()));
          }
       }
    return myPrexArgInfo;
