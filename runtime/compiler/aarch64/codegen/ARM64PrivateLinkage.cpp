@@ -47,9 +47,44 @@ void TR::ARM64PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_
    TR_UNIMPLEMENTED();
    }
 
+static void lockRegister(TR::RealRegister *regToAssign)
+   {
+   regToAssign->setState(TR::RealRegister::Locked);
+   regToAssign->setAssignedRegister(regToAssign);
+   }
+
 void TR::ARM64PrivateLinkage::initARM64RealRegisterLinkage()
    {
-   TR_UNIMPLEMENTED();
+   TR::Machine *machine = cg()->machine();
+   TR::RealRegister *reg;
+   int icount;
+
+   reg = machine->getRealRegister(TR::RealRegister::RegNum::x16); // IP0
+   lockRegister(reg);
+
+   reg = machine->getRealRegister(TR::RealRegister::RegNum::x17); // IP1
+   lockRegister(reg);
+
+   reg = machine->getRealRegister(TR::RealRegister::RegNum::x29); // FP
+   lockRegister(reg);
+
+   reg = machine->getRealRegister(TR::RealRegister::RegNum::x30); // LR
+   lockRegister(reg);
+
+   reg = machine->getRealRegister(TR::RealRegister::RegNum::sp); // SP
+   lockRegister(reg);
+
+   // assign "maximum" weight to registers x0-x15
+   for (icount = TR::RealRegister::x0; icount <= TR::RealRegister::x15; icount++)
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000);
+
+   // assign "maximum" weight to registers x18-x28
+   for (icount = TR::RealRegister::x18; icount <= TR::RealRegister::x28; icount++)
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000);
+
+   // assign "maximum" weight to registers v0-v31
+   for (icount = TR::RealRegister::v0; icount <= TR::RealRegister::v31; icount++)
+      machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000);
    }
 
 void TR::ARM64PrivateLinkage::createPrologue(TR::Instruction *cursor)
