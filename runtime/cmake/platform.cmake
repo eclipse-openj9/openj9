@@ -20,25 +20,20 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-#TODO alot of this should really just be inherited from the OMR config
-#TODO we are assuming Linux at the moment
-if(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
-    set(OMR_TOOLCONFIG "xlc")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -q64 -qalias=noansi")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -q64 -qalias=noansi -qnortti -qnoeh -qsuppress=1540-1087:1540-1088:1540-1090")
-    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -qpic=large -q64")
-endif()
+include(OmrPlatform)
+omr_platform_global_setup()
 
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+if(OMR_TOOLCONFIG STREQUAL "gnu")
     set(CMAKE_CXX_FLAGS " -g -fno-rtti -fno-exceptions ${CMAKE_CXX_FLAGS}")
     set(CMAKE_C_FLAGS "-g ${CMAKE_C_FLAGS}")
     set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,defs ${CMAKE_SHARED_LINKER_FLAGS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -O3 -fno-strict-aliasing")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -O3 -fno-strict-aliasing -fno-exceptions -fno-rtti -fno-threadsafe-statics")
+elseif(OMR_TOOLCONFIG STREQUAL "xlc")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3 -qalias=noansi")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -qalias=noansi -qnortti -qnoeh -qsuppress=1540-1087:1540-1088:1540-1090")
+    set(CMAKE_ASM_FLAGS "${CMAKE_ASM_FLAGS} -qpic=large")
 endif()
-
-include(OmrPlatform)
-omr_platform_global_setup()
 
 if(OMR_ARCH_POWER)
     #TODO do based on toolchain stuff
