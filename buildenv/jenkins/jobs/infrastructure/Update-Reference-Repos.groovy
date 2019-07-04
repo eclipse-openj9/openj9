@@ -45,7 +45,7 @@ timeout(time: 6, unit: 'HOURS') {
         node(SETUP_LABEL) {
             try{
                 checkout scm
-                def variableFile = load 'buildenv/jenkins/common/variables-functions'
+                def variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
                 variableFile.parse_variables_file()
                 variableFile.set_user_credentials()
 

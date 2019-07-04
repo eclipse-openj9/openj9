@@ -32,9 +32,9 @@ if (!binding.hasVariable('SCM_BRANCH')) SCM_BRANCH = 'refs/heads/master'
 if (!binding.hasVariable('LIGHTWEIGHT_CHECKOUT')) LIGHTWEIGHT_CHECKOUT = false
 
 if (jobType == 'build') {
-    pipelineScript = 'buildenv/jenkins/jobs/builds/Build-Test-Any-Platform'
+    pipelineScript = 'buildenv/jenkins/jobs/pipelines/Build-Any-Platform.groovy'
 } else if (jobType == 'pipeline') {
-    pipelineScript = 'buildenv/jenkins/jobs/pipelines/Pipeline-Build-Test-Any-Platform'
+    pipelineScript = 'buildenv/jenkins/jobs/pipelines/Pipeline-Build-Test-Any-Platform.groovy'
 } else {
     error "Unknown build type:'${jobType}'"
 }

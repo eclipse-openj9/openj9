@@ -71,7 +71,7 @@ def createWrapper(GENERAL_SPECIFICATIONS, SPECIFICATIONS){
 
         parameters = GENERAL_SPECIFICATIONS + SPECIFICATIONS
 
-        jobDsl targets: 'buildenv/jenkins/jobs/infrastructure/wrapper_template', ignoreExisting: false, additionalParameters: parameters
+        jobDsl targets: 'buildenv/jenkins/jobs/infrastructure/wrapper_template.groovy', ignoreExisting: false, additionalParameters: parameters
     }
 }
 

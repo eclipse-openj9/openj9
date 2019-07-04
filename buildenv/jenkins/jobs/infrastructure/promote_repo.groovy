@@ -47,8 +47,8 @@ timestamps {
             stage('Promote') {
                 try {
                     checkout scm
-                    buildfile = load 'buildenv/jenkins/common/pipeline-functions'
-                    variableFile = load 'buildenv/jenkins/common/variables-functions'
+                    buildfile = load 'buildenv/jenkins/common/pipeline-functions.groovy'
+                    variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
                     variableFile.parse_variables_file()
 
                     dir('repo') {
