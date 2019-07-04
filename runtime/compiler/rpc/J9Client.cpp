@@ -41,9 +41,10 @@
 
 namespace JITServer
 {
-
 int ClientStream::_numConnectionsOpened = 0;
 int ClientStream::_numConnectionsClosed = 0;
+
+// used for checking server compatibility
 int ClientStream::_incompatibilityCount = 0;
 uint64_t ClientStream::_incompatibleStartTime = 0;
 const uint64_t ClientStream::RETRY_COMPATIBILITY_INTERVAL = 10000; //ms

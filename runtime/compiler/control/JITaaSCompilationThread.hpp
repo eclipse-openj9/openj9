@@ -396,57 +396,81 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
 class JITaaSHelpers
    {
    public:
-   enum ClassInfoDataType
-      {
-      CLASSINFO_ROMCLASS_MODIFIERS,
-      CLASSINFO_ROMCLASS_EXTRAMODIFIERS,
-      CLASSINFO_BASE_COMPONENT_CLASS,
-      CLASSINFO_NUMBER_DIMENSIONS,
-      CLASSINFO_PARENT_CLASS,
-      CLASSINFO_INTERFACE_CLASS,
-      CLASSINFO_CLASS_HAS_FINAL_FIELDS,
-      CLASSINFO_CLASS_DEPTH_AND_FLAGS,
-      CLASSINFO_CLASS_INITIALIZED,
-      CLASSINFO_BYTE_OFFSET_TO_LOCKWORD,
-      CLASSINFO_LEAF_COMPONENT_CLASS,
-      CLASSINFO_CLASS_LOADER,
-      CLASSINFO_HOST_CLASS,
-      CLASSINFO_COMPONENT_CLASS,
-      CLASSINFO_ARRAY_CLASS,
-      CLASSINFO_TOTAL_INSTANCE_SIZE,
-      CLASSINFO_CLASS_OF_STATIC_CACHE,
-      CLASSINFO_REMOTE_ROM_CLASS,
-      CLASSINFO_CLASS_FLAGS,
-      CLASSINFO_METHODS_OF_CLASS,
-      };
-   // NOTE: when adding new elements to this tuple, add them to the end,
-   // to not mess with the established order.
-   using ClassInfoTuple = std::tuple
-      <
-      std::string, J9Method *,                                       // 0: string                  1: methodsOfClass
-      TR_OpaqueClassBlock *, int32_t,                                // 2: baseComponentClass      3: numDimensions
-      TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>,     // 4: parentClass             5: tmpInterfaces
-      std::vector<uint8_t>, bool,                                    // 6: methodTracingInfo       7: classHasFinalFields
-      uintptrj_t, bool,                                              // 8: classDepthAndFlags      9: classInitialized
-      uint32_t, TR_OpaqueClassBlock *,                               // 10: byteOffsetToLockword   11: leafComponentClass
-      void *, TR_OpaqueClassBlock *,                                 // 12: classLoader            13: hostClass
-      TR_OpaqueClassBlock *, TR_OpaqueClassBlock *,                  // 14: componentClass         15: arrayClass
-      uintptrj_t, J9ROMClass *,                                      // 16: totalInstanceSize      17: remoteRomClass
-      uintptrj_t, uintptrj_t                                         // 18: _constantPool          19: classFlags
-      >;
-   static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory);
-   static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple);
-   static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, ClientSessionData::ClassInfo &classInfo);
-   static J9ROMClass *getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz);
-   static J9ROMClass *getRemoteROMClass(J9Class *, JITServer::ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple);
-   static J9ROMClass *romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory);
-   static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType,  void *data);
-   static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2);
-   static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
-   //purgeCache function can only be used inside the JITaaSCompilationThread.cpp file.
-   //It is a templated function, calling it outside the JITaaSCompilationThread.cpp will give linking error. 
-   template <typename map, typename key>
-   static void purgeCache (std::vector<ClassUnloadedData> *unloadedClasses, map m, key ClassUnloadedData::*k);
+      enum ClassInfoDataType
+         {
+         CLASSINFO_ROMCLASS_MODIFIERS,
+         CLASSINFO_ROMCLASS_EXTRAMODIFIERS,
+         CLASSINFO_BASE_COMPONENT_CLASS,
+         CLASSINFO_NUMBER_DIMENSIONS,
+         CLASSINFO_PARENT_CLASS,
+         CLASSINFO_INTERFACE_CLASS,
+         CLASSINFO_CLASS_HAS_FINAL_FIELDS,
+         CLASSINFO_CLASS_DEPTH_AND_FLAGS,
+         CLASSINFO_CLASS_INITIALIZED,
+         CLASSINFO_BYTE_OFFSET_TO_LOCKWORD,
+         CLASSINFO_LEAF_COMPONENT_CLASS,
+         CLASSINFO_CLASS_LOADER,
+         CLASSINFO_HOST_CLASS,
+         CLASSINFO_COMPONENT_CLASS,
+         CLASSINFO_ARRAY_CLASS,
+         CLASSINFO_TOTAL_INSTANCE_SIZE,
+         CLASSINFO_CLASS_OF_STATIC_CACHE,
+         CLASSINFO_REMOTE_ROM_CLASS,
+         CLASSINFO_CLASS_FLAGS,
+         CLASSINFO_METHODS_OF_CLASS,
+         };
+      // NOTE: when adding new elements to this tuple, add them to the end,
+      // to not mess with the established order.
+      using ClassInfoTuple = std::tuple
+         <
+         std::string, J9Method *,                                       // 0: string                  1: methodsOfClass
+         TR_OpaqueClassBlock *, int32_t,                                // 2: baseComponentClass      3: numDimensions
+         TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>,     // 4: parentClass             5: tmpInterfaces
+         std::vector<uint8_t>, bool,                                    // 6: methodTracingInfo       7: classHasFinalFields
+         uintptrj_t, bool,                                              // 8: classDepthAndFlags      9: classInitialized
+         uint32_t, TR_OpaqueClassBlock *,                               // 10: byteOffsetToLockword   11: leafComponentClass
+         void *, TR_OpaqueClassBlock *,                                 // 12: classLoader            13: hostClass
+         TR_OpaqueClassBlock *, TR_OpaqueClassBlock *,                  // 14: componentClass         15: arrayClass
+         uintptrj_t, J9ROMClass *,                                      // 16: totalInstanceSize      17: remoteRomClass
+         uintptrj_t, uintptrj_t                                         // 18: _constantPool          19: classFlags
+         >;
+      static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory);
+      static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple);
+      static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, ClientSessionData::ClassInfo &classInfo);
+      static J9ROMClass *getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz);
+      static J9ROMClass *getRemoteROMClass(J9Class *, JITServer::ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple);
+      static J9ROMClass *romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory);
+      static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType,  void *data);
+      static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2);
+      static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
+      //purgeCache function can only be used inside the JITaaSCompilationThread.cpp file.
+      //It is a templated function, calling it outside the JITaaSCompilationThread.cpp will give linking error. 
+      template <typename map, typename key>
+      static void purgeCache (std::vector<ClassUnloadedData> *unloadedClasses, map m, key ClassUnloadedData::*k);
+
+      // functions used for allowing the client to compile locally when server is unavailable
+      // should be only used on the client side
+      static void postStreamFailure(OMRPortLibrary *portLibrary);
+      static bool shouldRetryConnection(OMRPortLibrary *portLibrary);
+      static void postStreamConnectionSuccess();
+      static bool isServerAvailable()
+         {
+         return _serverAvailable;
+         }
+      static TR::Monitor * getClientStreamMonitor()
+         {
+         if (!_clientStreamMonitor)
+            {
+            _clientStreamMonitor = TR::Monitor::create("clientStreamMonitor");
+            }
+         return _clientStreamMonitor;
+         }
+
+   private:
+      static uint64_t _waitTime;
+      static uint64_t _nextConnectionRetryTime;
+      static bool _serverAvailable;
+      static TR::Monitor * _clientStreamMonitor;
    };
 
 #endif
