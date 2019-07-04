@@ -226,7 +226,7 @@
 	-explainExcludes \
 	-xids all,$(PLATFORM),$(JCL_VERSION) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
 	${TEST_STATUS}</command>
-		<platformRequirements>^arch.ppc,^arch.arm</platformRequirements>
+		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>

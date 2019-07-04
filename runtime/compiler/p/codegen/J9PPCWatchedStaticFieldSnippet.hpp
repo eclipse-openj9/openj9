@@ -20,31 +20,39 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef J9WATCHEDINSTANCEFIELDSNIPPET_INCL
-#define J9WATCHEDINSTANCEFIELDSNIPPET_INCL
+#ifndef J9PPCWATCHEDSTATICFIELDSNIPPET_INCL
+#define J9PPCWATCHEDSTATICFIELDSNIPPET_INCL
 
-#include "codegen/Snippet.hpp"
-#include "codegen/CodeGenerator.hpp"
+#include "codegen/J9WatchedStaticFieldSnippet.hpp"
+#include "codegen/Instruction.hpp"
+
 
 namespace TR {
 
-class J9WatchedInstanceFieldSnippet : public TR::Snippet
+class J9PPCWatchedStaticFieldSnippet: public TR::J9WatchedStaticFieldSnippet
    {
-   protected :
+   private:
+   TR::Instruction *_upperInstruction, *_lowerInstruction;
+   int32_t _tocOffset;
+   bool isloaded;
 
-   J9JITWatchedInstanceFieldData instanceFieldData;
+   public:
+   J9PPCWatchedStaticFieldSnippet(TR::CodeGenerator *cg, TR::Node *node, J9Method *m, UDATA loc, void *fieldAddress, J9Class *fieldClass)
+      : TR::J9WatchedStaticFieldSnippet(cg, node, m, loc, fieldAddress, fieldClass), _upperInstruction(NULL), _lowerInstruction(NULL), isloaded(false) {}
+    
+   int32_t getTOCOffset() {return _tocOffset;}
+   void setTOCOffset(int32_t offset) {_tocOffset = offset;}
 
-   public :
+   TR::Instruction *getUpperInstruction() {return _upperInstruction;}
+   TR::Instruction *getLowerInstruction() {return _lowerInstruction;}
 
-   J9WatchedInstanceFieldSnippet(TR::CodeGenerator *cg, TR::Node *node, J9Method *m, UDATA loc, UDATA os);
+   void setUpperInstruction(TR::Instruction *pi) {_upperInstruction = pi;}
+   void setLowerInstruction(TR::Instruction *pi) {_lowerInstruction = pi;}
 
-   J9Method *getMethod() { return instanceFieldData.method; }
-   UDATA getLocation() { return instanceFieldData.location; }
-   UDATA getOffset() { return instanceFieldData.offset; }
-   virtual uint32_t getLength(int32_t val) { return sizeof(J9JITWatchedInstanceFieldData); }
+   void setLoadSnippet() {isloaded = true;}
+   bool isSnippetLoaded() {return isloaded;}
 
    virtual uint8_t *emitSnippetBody();
-   virtual void print(TR::FILE *pOutFile, TR_Debug *debug);
    };
 }
 

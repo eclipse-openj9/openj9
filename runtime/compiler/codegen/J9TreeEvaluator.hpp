@@ -33,6 +33,7 @@ namespace J9 { typedef J9::TreeEvaluator TreeEvaluatorConnector; }
 #endif
 
 #include "codegen/OMRTreeEvaluator.hpp"
+#include "codegen/Snippet.hpp"
 
 namespace J9
 {
@@ -110,8 +111,22 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluatorConnector
    static TR::Register *srdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lrdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static void rdWrtbarHelperForFieldWatch(TR::Node *node, TR::CodeGenerator *cg, TR::Register *sideEffectRegister, TR::Register *valueReg); 
 
+   /*
+    * \brief
+    *   Invokes the sequence of codegen routines to report the watched field.
+    */
+   static void rdWrtbarHelperForFieldWatch(TR::Node *node, TR::CodeGenerator *cg, TR::Register *sideEffectRegister, TR::Register *valueReg);
+   /*
+    * \brief
+    *   Populates and Returns the FieldWatchStaticSnippet corresponding to the specific codegen.
+    */
+   static TR::Snippet *getFieldWatchStaticSnippet(TR::CodeGenerator *cg, TR::Node *node, J9Method *m, UDATA loc, void *fieldAddress, J9Class *fieldClass);
+   /*
+    * \brief
+    *   Populates and Returns the FieldWatchInstanceSnippet corresponding to the specific codegen.
+    */
+   static TR::Snippet *getFieldWatchInstanceSnippet(TR::CodeGenerator *cg, TR::Node *node, J9Method *m, UDATA loc, UDATA os);
    /*
     * \brief
     *   Sets the node representing the value to be written for an indirect wrtbar. Returns

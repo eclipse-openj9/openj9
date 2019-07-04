@@ -30,7 +30,7 @@ namespace TR {
 
 class J9WatchedStaticFieldSnippet : public TR::Snippet
    {
-   private :
+   protected :
 
    J9JITWatchedStaticFieldData staticFieldData;
 
