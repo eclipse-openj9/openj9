@@ -20,7 +20,18 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "codegen/ARM64Instruction.hpp"
+#include "codegen/ARM64JNILinkage.hpp"
+#include "codegen/ARM64PrivateLinkage.hpp"
+#include "codegen/CodeGenerator.hpp"
+#include "codegen/GenerateInstructions.hpp"
+#include "codegen/J9ARM64Snippet.hpp"
 #include "codegen/TreeEvaluator.hpp"
+#include "il/DataTypes.hpp"
+#include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/OMRDataTypes_inlines.hpp"
+#include "il/symbol/LabelSymbol.hpp"
 
 void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceInstruction, TR::CodeGenerator *cg)
    {
@@ -38,3 +49,33 @@ J9::ARM64::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
    {
    TR_ASSERT_FATAL(false, "This helper implements platform specific code for Fieldwatch, which is currently not supported on ARM64 platforms.\n");
    }
+	
+TR::Register *J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node *divisor = node->getFirstChild()->getSecondChild();
+   bool is64Bit = node->getFirstChild()->getType().isInt64();
+   bool isConstDivisor = divisor->getOpCode().isLoadConst();
+
+   if (!isConstDivisor || (!is64Bit && divisor->getInt() == 0) || (is64Bit && divisor->getLongInt() == 0))
+      {
+      TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
+      cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+
+      if (isConstDivisor)
+         {
+         // No explicit check required
+         generateLabelInstruction(cg, TR::InstOpCode::b, node, snippetLabel);
+         }
+      else
+         {
+         TR::Register *divisorReg = cg->evaluate(divisor);
+         TR::InstOpCode::Mnemonic compareOp = is64Bit ? TR::InstOpCode::cbzx : TR::InstOpCode::cbzw;
+         generateCompareBranchInstruction(cg, compareOp, node, divisorReg, snippetLabel, NULL);
+         }
+      }
+
+   cg->evaluate(node->getFirstChild());
+   cg->decReferenceCount(node->getFirstChild());
+   return NULL;
+   }
+	
