@@ -38,7 +38,7 @@ J9::ARM64::CodeGenerator::CodeGenerator() :
 
    cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
 
-      /*
+   /*
     * "Statically" initialize the FE-specific tree evaluator functions.
     * This code only needs to execute once per JIT lifetime.
     */
