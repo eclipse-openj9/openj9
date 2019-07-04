@@ -56,10 +56,11 @@ timeout(time: 10, unit: 'HOURS') {
                 cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
             }
         }
-    }
-    stage ('Queue') {
-        node("${NODE}") {
-            buildFile.build_all()
+
+        stage ('Queue') {
+            node("${NODE}") {
+                buildFile.build_all()
+            }
         }
     }
 }
