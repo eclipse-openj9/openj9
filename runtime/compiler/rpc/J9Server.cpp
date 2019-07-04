@@ -37,7 +37,7 @@
 #include "env/VerboseLog.hpp"
 #include "env/TRMemory.hpp"
 #include "rpc/SSLProtobufStream.hpp"
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/err.h>
 #endif
 
@@ -46,7 +46,7 @@ namespace JITServer
 int ServerStream::_numConnectionsOpened = 0;
 int ServerStream::_numConnectionsClosed = 0;
 
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
 ServerStream::ServerStream(int connfd, BIO *ssl, uint32_t timeout)
    : CommunicationStream(),
    _msTimeout(timeout)
@@ -54,7 +54,7 @@ ServerStream::ServerStream(int connfd, BIO *ssl, uint32_t timeout)
    initStream(connfd, ssl);
    _numConnectionsOpened++;
    }
-#else // JITAAS_ENABLE_SSL
+#else // JITSERVER_ENABLE_SSL
 ServerStream::ServerStream(int connfd, uint32_t timeout)
    : CommunicationStream(),
    _msTimeout(timeout)
@@ -83,7 +83,7 @@ ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, std:
       }
    }
 
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
 SSL_CTX *createSSLContext(TR::PersistentInfo *info)
    {
    SSL_CTX *ctx = SSL_CTX_new(SSLv23_server_method());
@@ -224,7 +224,7 @@ acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio)
 void
 serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::PersistentInfo *info)
    {
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
    SSL_CTX *sslCtx = NULL;
    if (CommunicationStream::useSSL(info))
       {
@@ -296,7 +296,7 @@ serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::PersistentIn
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Error accepting connection: errno=%d", errno);
          continue;
          }
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
       BIO *bio = NULL;
       if (sslCtx && !acceptOpenSSLConnection(sslCtx, connfd, bio))
          continue;
@@ -309,7 +309,7 @@ serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::PersistentIn
       }
 
    // TODO This will never be called - if the server actually shuts down properly then we should do this
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
    if (sslCtx)
       {
       SSL_CTX_free(sslCtx);

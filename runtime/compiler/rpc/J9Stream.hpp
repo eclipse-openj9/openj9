@@ -42,7 +42,7 @@ using namespace google::protobuf::io;
 class CommunicationStream
    {
 public:
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
    static bool useSSL(TR::PersistentInfo *info)
       {
       return (info->getJITaaSSslKeys().size() || info->getJITaaSSslCerts().size() || info->getJITaaSSslRootCerts().size());
@@ -68,7 +68,7 @@ protected:
    CommunicationStream()
       : _inputStream(NULL),
       _outputStream(NULL),
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
       _ssl(NULL),
       _sslInputStream(NULL),
       _sslOutputStream(NULL),
@@ -79,14 +79,14 @@ protected:
       // which initializes these variables
       }
 
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
    void initStream(int connfd, BIO *ssl)
 #else
    void initStream(int connfd)
 #endif
    {
       _connfd = connfd;
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
       _ssl = ssl;
       if (_ssl)
          {
@@ -115,7 +115,7 @@ protected:
          _outputStream->~ZeroCopyOutputStream();
          TR_Memory::jitPersistentFree(_outputStream);
          }
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
       if (_ssl)
          {
          _sslInputStream->~SSLInputStream();
@@ -160,7 +160,7 @@ protected:
             throw JITServer::StreamFailure("JITaaS I/O error: writing to stream");
          // codedOutputStream must be dropped before calling flush
          }
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
       if (_ssl ? !((CopyingOutputStreamAdaptor*)_outputStream)->Flush()
                : !((FileOutputStream*)_outputStream)->Flush())
 #else
@@ -175,7 +175,7 @@ protected:
    J9ServerMessage _sMsg;
    J9ClientMessage _cMsg;
 
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
    BIO *_ssl; // SSL connection, null if not using SSL
    SSLInputStream *_sslInputStream;
    SSLOutputStream *_sslOutputStream;

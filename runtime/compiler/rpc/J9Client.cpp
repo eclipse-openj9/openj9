@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h> /// gethostname, read, write
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/err.h>
 #endif
 
@@ -53,7 +53,7 @@ const int ClientStream::INCOMPATIBILITY_COUNT_LIMIT = 5;
 // This is called during startup from rossa.cpp
 void ClientStream::static_init(TR::PersistentInfo *info)
    {
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
    if (!CommunicationStream::useSSL(info))
       return;
 
@@ -125,7 +125,7 @@ void ClientStream::static_init(TR::PersistentInfo *info)
 #endif
    }
 
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
 SSL_CTX *ClientStream::_sslCtx;
 #endif
 
@@ -188,7 +188,7 @@ int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs
    return sockfd;
    }
 
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
 BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    {
    if (!ctx)
@@ -261,7 +261,7 @@ ClientStream::ClientStream(TR::PersistentInfo *info)
    initStream(connfd, ssl);
    _numConnectionsOpened++;
    }
-#else // JITAAS_ENABLE_SSL
+#else // JITSERVER_ENABLE_SSL
 ClientStream::ClientStream(TR::PersistentInfo *info)
    : CommunicationStream(), _timeout(info->getJITaaSTimeout()), _versionCheckStatus(NOT_DONE)
    {

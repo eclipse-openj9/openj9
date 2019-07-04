@@ -30,7 +30,7 @@
 #include "ilgen/J9IlGeneratorMethodDetails.hpp"
 #include "rpc/J9Stream.hpp"
 
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/ssl.h>
 class SSLOutputStream;
 class SSLInputStream;
@@ -145,7 +145,7 @@ private:
    static const uint64_t RETRY_COMPATIBILITY_INTERVAL;
    static const int INCOMPATIBILITY_COUNT_LIMIT;
 
-#if defined(JITAAS_ENABLE_SSL)
+#if defined(JITSERVER_ENABLE_SSL)
    static SSL_CTX *_sslCtx;
 #endif
    };
