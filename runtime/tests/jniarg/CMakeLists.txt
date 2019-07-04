@@ -39,6 +39,8 @@ target_link_libraries(jniargtests
 		j9vm_interface
 )
 
+include("exports.cmake")
+
 install(
 	TARGETS jniargtests
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
