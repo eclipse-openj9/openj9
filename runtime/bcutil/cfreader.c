@@ -1921,6 +1921,8 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 					errorCode = J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_INVALID__ID;
 					goto _errorFound;
 				}
+
+				/* index range verification happens in ClassFileOracle.cpp with Xfuture */
 			}
 			break;
 
@@ -1956,6 +1958,8 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 					errorCode = J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8__ID;
 					goto _errorFound;
 				}
+
+				/* index range verification happens in ClassFileOracle.cpp with Xfuture */
 			}
 			break;
 
