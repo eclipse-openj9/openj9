@@ -7593,18 +7593,6 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
         sc->addHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintDLT);
       }
 
-   if (that->_methodBeingCompiled->_optimizationPlan->isUpgradeRecompilation())
-      {
-      TR_ASSERT(that->_methodBeingCompiled->_oldStartPC, "upgrade recompilations must have some oldstartpc");
-      TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(that->_methodBeingCompiled->_oldStartPC);
-      if (bodyInfo->getIsAotedBody() || bodyInfo->getHotness() <= cold)
-         {
-         TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
-         if (sc)
-            sc->addHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintUpgrade);
-         }
-      }
-
    that->setMetadata(NULL);
    try
       {
@@ -7627,6 +7615,18 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       else
          {
          compilee = vm->createResolvedMethod(p->trMemory(), method);
+         }
+
+      if (that->_methodBeingCompiled->_optimizationPlan->isUpgradeRecompilation())
+         {
+         //TR_ASSERT(that->_methodBeingCompiled->_oldStartPC, "upgrade recompilations must have some oldstartpc");
+         TR_PersistentJittedBodyInfo *bodyInfo = ((TR_ResolvedJ9Method*)compilee)->getExistingJittedBodyInfo();
+         if (bodyInfo->getIsAotedBody() || bodyInfo->getHotness() <= cold)
+            {
+            TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
+            if (sc)
+               sc->addHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintUpgrade);
+            }
          }
 
       // See if this method can be compiled and check it against the method
