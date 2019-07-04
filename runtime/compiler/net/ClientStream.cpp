@@ -20,10 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "J9Client.hpp"
+#include "ClientStream.hpp"
 #include "control/Options.hpp"
 #include "env/VerboseLog.hpp"
-#include "rpc/SSLProtobufStream.hpp"
+#include "net/SSLProtobufStream.hpp"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>

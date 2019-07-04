@@ -83,8 +83,8 @@ PRODUCT_SLINK=$(J9LIBS) $(J9LIBS)
 # RPC
 #
 PRODUCT_INCLUDES+=\
-    $(FIXED_SRCBASE)/compiler/rpc/gen \
-	$(FIXED_SRCBASE)/compiler/rpc
+    $(FIXED_SRCBASE)/compiler/net/gen \
+	$(FIXED_SRCBASE)/compiler/net
 
 #
 # Now we include the host and target tool config

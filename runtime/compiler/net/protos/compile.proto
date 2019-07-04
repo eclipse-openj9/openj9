@@ -307,8 +307,3 @@ message J9ClientMessage
    AnyData data = 2;
    uint64 version = 3;
    }
-
-service J9CompileService
-   {
-   rpc Compile (stream J9ClientMessage) returns (stream J9ServerMessage);
-   }

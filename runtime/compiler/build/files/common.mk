@@ -379,10 +379,10 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/runtime/StatisticsThread.cpp \
     compiler/env/VMJ9Server.cpp \
     compiler/env/j9methodServer.cpp \
-    compiler/rpc/J9Server.cpp \
-    compiler/rpc/J9Client.cpp \
-    compiler/rpc/J9Stream.cpp \
-    compiler/rpc/ProtobufTypeConvert.cpp \
+    compiler/net/ServerStream.cpp \
+    compiler/net/ClientStream.cpp \
+    compiler/net/CommunicationStream.cpp \
+    compiler/net/ProtobufTypeConvert.cpp \
     compiler/control/JITaaSCompilationThread.cpp \
     compiler/env/JITaaSPersistentCHTable.cpp \
     compiler/env/JITaaSCHTable.cpp \
@@ -394,4 +394,4 @@ include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH).mk
 include $(JIT_MAKE_DIR)/files/target/$(TARGET_ARCH).mk
 -include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH)-extra.mk
 -include $(JIT_MAKE_DIR)/files/target/$(TARGET_ARCH)-extra.mk
-include $(JIT_MAKE_DIR)/files/rpc.mk
+include $(JIT_MAKE_DIR)/files/net.mk

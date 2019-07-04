@@ -20,15 +20,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef J9_CLIENT_H
-#define J9_CLIENT_H
+#ifndef CLIENT_STREAM_H
+#define CLIENT_STREAM_H
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include "compile/CompilationTypes.hpp"
-#include "rpc/StreamTypes.hpp"
-#include "rpc/ProtobufTypeConvert.hpp"
 #include "ilgen/J9IlGeneratorMethodDetails.hpp"
-#include "rpc/J9Stream.hpp"
+#include "net/StreamTypes.hpp"
+#include "net/ProtobufTypeConvert.hpp"
+#include "net/CommunicationStream.hpp"
 
 #if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/ssl.h>
@@ -152,4 +152,4 @@ private:
 
 }
 
-#endif // J9_CLIENT_H
+#endif // CLIENT_STREAM_H

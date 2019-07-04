@@ -32,11 +32,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h> /// gethostname, read, write
-#include "J9Server.hpp"
+#include "ServerStream.hpp"
 #include "control/Options.hpp"
 #include "env/VerboseLog.hpp"
 #include "env/TRMemory.hpp"
-#include "rpc/SSLProtobufStream.hpp"
+#include "net/SSLProtobufStream.hpp"
 #if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/err.h>
 #endif

@@ -21,7 +21,7 @@
  *******************************************************************************/
 
 
-#include "rpc/J9Stream.hpp"
+#include "CommunicationStream.hpp"
 #include "env/CompilerEnv.hpp" // for TR::Compiler->target.is64Bit()
 #include "control/Options.hpp" // TR::Options::useCompressedPointers()
 
