@@ -33,10 +33,10 @@ timestamps {
         try{
             currentBuild.description = "<a href=\"${RUN_DISPLAY_URL}\">Blue Ocean</a>"
             checkout scm
-            variableFile = load 'buildenv/jenkins/common/variables-functions'
+            variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
             variableFile.set_job_variables('pipeline')
 
-            buildFile = load 'buildenv/jenkins/common/pipeline-functions'
+            buildFile = load 'buildenv/jenkins/common/pipeline-functions.groovy'
             SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_SHAS_MAP)
             BUILD_NAME = buildFile.get_build_job_name(SPEC, SDK_VERSION, BUILD_IDENTIFIER)
             // Stash DSL file so we can quickly load it on master
