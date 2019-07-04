@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,6 +62,24 @@ target_link_libraries(j9thrtestnatives
 	j9thr
 )
 
+omr_add_exports(j9thrtestnatives
+	Java_com_ibm_thread_TestNatives_setSpinCounts
+	Java_com_ibm_tests_perftests_jlm_JLMInfoHelper_jvmtiJlmSet
+	Java_com_ibm_tests_perftests_jlm_JLMInfoHelper_jvmtiJlmDump
+	Agent_OnLoad
+	Agent_OnAttach
+	Agent_OnUnload
+	Java_com_ibm_j9_monitor_tests_TestNatives_getLockWordValue
+	Java_com_ibm_j9_monitor_tests_TestNatives_getLockWordOffset
+	Java_com_ibm_j9_monitor_tests_TestNatives_getHeaderSize
+	Java_com_ibm_j9_monitor_tests_TestNatives_getLockwordSize
+	Java_j9vm_test_thread_TestNatives_getSchedulingPolicy
+	Java_j9vm_test_thread_TestNatives_getSchedulingPriority
+	Java_j9vm_test_thread_TestNatives_getGCAlarmSchedulingPolicy
+	Java_j9vm_test_thread_TestNatives_getGCAlarmSchedulingPriority
+	Java_j9vm_test_softmx_TestNatives_setAggressiveGCPolicy
+)
+
 add_library(j9thrnumanatives SHARED
 	thrnumanatives/thrnumanatives.c
 )
@@ -69,6 +87,10 @@ add_library(j9thrnumanatives SHARED
 target_link_libraries(j9thrnumanatives
 	PRIVATE
 	j9vm_interface
+)
+
+omr_add_exports(j9thrnumanatives
+	Java_com_ibm_j9_numa_NumaTest_getUsableNodeCount
 )
 
 add_executable(thrstatetest
