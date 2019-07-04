@@ -21,7 +21,7 @@
  *******************************************************************************/
 
 #include "runtime/Listener.hpp"
-#include "rpc/J9Server.hpp"
+#include "net/ServerStream.hpp"
 #include "env/VMJ9.h"
 #include "runtime/CompileService.hpp"
 

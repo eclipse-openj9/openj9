@@ -20,12 +20,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef J9_SERVER_H
-#define J9_SERVER_H
+#ifndef SERVER_STREAM_H
+#define SERVER_STREAM_H
 
 #include <google/protobuf/io/zero_copy_stream_impl.h> 
-#include "rpc/ProtobufTypeConvert.hpp"
-#include "rpc/J9Stream.hpp"
+#include "net/ProtobufTypeConvert.hpp"
+#include "net/CommunicationStream.hpp"
 #include "env/CHTable.hpp"
 
 #if defined(JITSERVER_ENABLE_SSL)
@@ -134,4 +134,4 @@ void serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::Persist
 
 }
 
-#endif // J9_SERVER_H
+#endif // SERVER_STREAM_H

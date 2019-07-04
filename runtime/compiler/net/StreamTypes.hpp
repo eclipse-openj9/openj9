@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "rpc/gen/compile.pb.h"
+#include "net/gen/compile.pb.h"
 
 #ifndef RPC_TYPES_H
 #define RPC_TYPES_H

@@ -25,8 +25,8 @@
 #
 # Compile .proto files to .cpp files
 #
-PROTO_GEN_DIR=$(FIXED_SRCBASE)/compiler/rpc/gen
-PROTO_DIR=$(FIXED_SRCBASE)/compiler/rpc/protos
+PROTO_GEN_DIR=$(FIXED_SRCBASE)/compiler/net/gen
+PROTO_DIR=$(FIXED_SRCBASE)/compiler/net/protos
 
 #
 # Compile .proto file into .cpp and .h files

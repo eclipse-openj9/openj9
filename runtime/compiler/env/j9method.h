@@ -23,7 +23,7 @@
 #ifndef j9method_h
 #define j9method_h
 
-#include "rpc/J9Server.hpp"
+#include "net/ServerStream.hpp"
 #include "codegen/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"

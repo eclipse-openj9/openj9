@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "rpc/J9Server.hpp"
+#include "net/ServerStream.hpp"
 #include "j9methodServer.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"

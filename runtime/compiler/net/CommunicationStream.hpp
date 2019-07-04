@@ -20,12 +20,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef J9_STREAM_HPP
-#define J9_STREAM_HPP
+#ifndef COMMUNICATION_STREAM_H
+#define COMMUNICATION_STREAM_H
 
 #include <google/protobuf/io/zero_copy_stream_impl.h> // for ZeroCopyInputStream
-#include "rpc/ProtobufTypeConvert.hpp"
-#include "rpc/SSLProtobufStream.hpp"
+#include "net/ProtobufTypeConvert.hpp"
+#include "net/SSLProtobufStream.hpp"
 #include "env/TRMemory.hpp"
 
 
@@ -191,4 +191,4 @@ protected:
 
 };
 
-#endif
+#endif // COMMUNICATION_STREAM_H
