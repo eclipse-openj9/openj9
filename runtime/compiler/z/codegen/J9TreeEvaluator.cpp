@@ -4066,7 +4066,7 @@ J9::Z::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGenera
          }
       }
    // First load the class flags into a register.
-   generateRXInstruction(cg, TR::InstOpCode::getLoadOpCode(), node, fieldClassFlags, generateS390MemoryReference(fieldClassReg, cg->comp()->fej9()->getOffsetOfClassFlags(), cg));
+   generateRXInstruction(cg, TR::InstOpCode::L, node, fieldClassFlags, generateS390MemoryReference(fieldClassReg, cg->comp()->fej9()->getOffsetOfClassFlags(), cg));
    // Then test the bit to test with the relevant flag to check if fieldwatch is enabled.
    generateRIInstruction(cg, TR::InstOpCode::TMLL, node, fieldClassFlags, J9ClassHasWatchedFields);
    // If Condition Code from above test is not 0, then we branch to OOL (instructions) to report the fieldwatch event. Otherwise fall through to mergePointLabel.
