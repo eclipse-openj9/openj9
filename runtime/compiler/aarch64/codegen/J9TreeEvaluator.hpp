@@ -63,6 +63,9 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
     */
    static void generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg, TR::Register *dataSnippetRegister);
 
+   static TR::Register *checkcastAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Register *checkcastEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    };
 
 }

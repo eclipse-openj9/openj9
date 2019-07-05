@@ -78,4 +78,20 @@ TR::Register *J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::Code
    cg->decReferenceCount(node->getFirstChild());
    return NULL;
    }
-	
+
+TR::Register *
+J9::ARM64::TreeEvaluator::checkcastAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return checkcastEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::checkcastEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::ILOpCodes opCode = node->getOpCodeValue();
+   TR::Node::recreate(node, TR::call);
+   TR::Register *targetRegister = directCallEvaluator(node, cg);
+   TR::Node::recreate(node, opCode);
+
+   return targetRegister;
+   }
