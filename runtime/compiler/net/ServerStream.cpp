@@ -33,8 +33,6 @@
 #include <stdlib.h>
 #include <unistd.h> /// gethostname, read, write
 #include "ServerStream.hpp"
-#include "control/Options.hpp"
-#include "env/VerboseLog.hpp"
 #include "env/TRMemory.hpp"
 #include "net/SSLProtobufStream.hpp"
 #if defined(JITSERVER_ENABLE_SSL)
@@ -63,25 +61,6 @@ ServerStream::ServerStream(int connfd, uint32_t timeout)
    _numConnectionsOpened++;
    }
 #endif
-
-
-void
-ServerStream::finishCompilation(uint32_t statusCode, std::string codeCache, std::string dataCache, CHTableCommitData chTableData,
-                                 std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended,
-                                 std::string logFileStr, std::string symbolToIdStr,
-                                 std::vector<TR_ResolvedJ9Method*> resolvedMethodsForPersistIprofileInfo)
-   {
-   try
-      {
-      write(MessageType::compilationCode, statusCode, codeCache, dataCache, chTableData,
-            classesThatShouldNotBeNewlyExtended, logFileStr, symbolToIdStr, resolvedMethodsForPersistIprofileInfo);
-      }
-   catch (std::exception &e)
-      {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Could not finish compilation: %s", e.what());
-      }
-   }
 
 #if defined(JITSERVER_ENABLE_SSL)
 SSL_CTX *createSSLContext(TR::PersistentInfo *info)
