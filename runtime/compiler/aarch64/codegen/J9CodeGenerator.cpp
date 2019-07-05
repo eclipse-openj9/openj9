@@ -29,12 +29,25 @@
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
+extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg);
+
 J9::ARM64::CodeGenerator::CodeGenerator() :
       J9::CodeGenerator()
    {
    TR::CodeGenerator *cg = self();
 
    cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
+
+      /*
+    * "Statically" initialize the FE-specific tree evaluator functions.
+    * This code only needs to execute once per JIT lifetime.
+    */
+   static bool initTreeEvaluatorTable = false;
+   if (!initTreeEvaluatorTable)
+      {
+      TEMPORARY_initJ9ARM64TreeEvaluatorTable(cg);
+      initTreeEvaluatorTable = true;
+      }
    }
 
 TR::Linkage *
