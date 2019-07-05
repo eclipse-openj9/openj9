@@ -54,7 +54,7 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::newarray] = TR::TreeEvaluator::newArrayEvaluator;
    tet[TR::anewarray] = TR::TreeEvaluator::anewArrayEvaluator;
    tet[TR::variableNewArray] = TR::TreeEvaluator::anewArrayEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::multianewarray] = TR::TreeEvaluator::multianewArrayEvaluator;
+   tet[TR::multianewarray] = TR::TreeEvaluator::multianewArrayEvaluator;
    tet[TR::arraylength] = TR::TreeEvaluator::arraylengthEvaluator;
    tet[TR::ResolveCHK] = TR::TreeEvaluator::resolveCHKEvaluator;
    tet[TR::DIVCHK] = TR::TreeEvaluator::DIVCHKEvaluator;
@@ -168,6 +168,16 @@ J9::ARM64::TreeEvaluator::checkcastEvaluator(TR::Node *node, TR::CodeGenerator *
    TR::Register *targetRegister = directCallEvaluator(node, cg);
    TR::Node::recreate(node, opCode);
 
+   return targetRegister;
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::ILOpCodes opCode = node->getOpCodeValue();
+   TR::Node::recreate(node, TR::acall);
+   TR::Register *targetRegister = directCallEvaluator(node, cg);
+   TR::Node::recreate(node, opCode);
    return targetRegister;
    }
 
