@@ -33,6 +33,46 @@
 #include "il/OMRDataTypes_inlines.hpp"
 #include "il/symbol/LabelSymbol.hpp"
 
+/*
+ * J9 PPC specific tree evaluator table overrides
+ */
+extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
+   {
+   TR_TreeEvaluatorFunctionPointer *tet = cg->getTreeEvaluatorTable();
+
+   // TODO:ARM64: Enable when Implemented: tet[TR::awrtbar] = TR::TreeEvaluator::awrtbarEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::awrtbari] = TR::TreeEvaluator::awrtbariEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::monent] = TR::TreeEvaluator::monentEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::monexit] = TR::TreeEvaluator::monexitEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::monexitfence] = TR::TreeEvaluator::monexitfenceEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::asynccheck] = TR::TreeEvaluator::asynccheckEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::instanceof] = TR::TreeEvaluator::instanceofEvaluator;
+   tet[TR::checkcast] = TR::TreeEvaluator::checkcastEvaluator;
+   tet[TR::checkcastAndNULLCHK] = TR::TreeEvaluator::checkcastAndNULLCHKEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::New] = TR::TreeEvaluator::newObjectEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::variableNew] = TR::TreeEvaluator::newObjectEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::newarray] = TR::TreeEvaluator::newArrayEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::anewarray] = TR::TreeEvaluator::anewArrayEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::variableNewArray] = TR::TreeEvaluator::anewArrayEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::multianewarray] = TR::TreeEvaluator::multianewArrayEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::arraylength] = TR::TreeEvaluator::arraylengthEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::ResolveCHK] = TR::TreeEvaluator::resolveCHKEvaluator;
+   tet[TR::DIVCHK] = TR::TreeEvaluator::DIVCHKEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::BNDCHK] = TR::TreeEvaluator::BNDCHKEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCopyBNDCHK] = TR::TreeEvaluator::ArrayCopyBNDCHKEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::BNDCHKwithSpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::SpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::ArrayStoreCHK] = TR::TreeEvaluator::ArrayStoreCHKEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCHK] = TR::TreeEvaluator::ArrayCHKEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::MethodEnterHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::MethodExitHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::allocationFence] = TR::TreeEvaluator::flushEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::loadFence] = TR::TreeEvaluator::flushEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::storeFence] = TR::TreeEvaluator::flushEvaluator;
+   // TODO:ARM64: Enable when Implemented: tet[TR::fullFence] = TR::TreeEvaluator::flushEvaluator;
+
+   }
+
 void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceInstruction, TR::CodeGenerator *cg)
    {
    TR_UNIMPLEMENTED();
@@ -78,4 +118,20 @@ TR::Register *J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::Code
    cg->decReferenceCount(node->getFirstChild());
    return NULL;
    }
-	
+
+TR::Register *
+J9::ARM64::TreeEvaluator::checkcastAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return checkcastEvaluator(node, cg);
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::checkcastEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::ILOpCodes opCode = node->getOpCodeValue();
+   TR::Node::recreate(node, TR::call);
+   TR::Register *targetRegister = directCallEvaluator(node, cg);
+   TR::Node::recreate(node, opCode);
+
+   return targetRegister;
+   }
