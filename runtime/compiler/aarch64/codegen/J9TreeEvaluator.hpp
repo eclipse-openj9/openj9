@@ -74,6 +74,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *newArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *anewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Register *monentEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    };
 
 }
