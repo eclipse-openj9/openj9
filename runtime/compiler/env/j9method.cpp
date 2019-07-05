@@ -1726,7 +1726,6 @@ bool storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *co
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(definingClass->romClass);
    traceMsg(comp, "\tdefiningClass name %.*s\n", J9UTF8_LENGTH(className), J9UTF8_DATA(className));
 
-   J9ROMClass *romClass = NULL;
    void *classChain = NULL;
 
    // all kinds of validations may need to rely on the entire class chain, so make sure we can build one first
@@ -1749,7 +1748,7 @@ bool storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *co
          if ((*info)->_reloKind == reloKind)
             {
             if (isStatic)
-               inLocalList = (romClass == ((J9Class *)((*info)->_clazz))->romClass);
+               inLocalList = (definingClass->romClass == ((J9Class *)((*info)->_clazz))->romClass);
             else
                inLocalList = (classChain == (*info)->_classChain &&
                               cpIndex == (*info)->_cpIndex &&
