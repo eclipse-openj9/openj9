@@ -90,7 +90,8 @@ J9::ARM64::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
    TR_ASSERT_FATAL(false, "This helper implements platform specific code for Fieldwatch, which is currently not supported on ARM64 platforms.\n");
    }
 	
-TR::Register *J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+TR::Register *
+J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *divisor = node->getFirstChild()->getSecondChild();
    bool is64Bit = node->getFirstChild()->getType().isInt64();
