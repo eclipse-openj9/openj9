@@ -43,7 +43,7 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    // TODO:ARM64: Enable when Implemented: tet[TR::awrtbar] = TR::TreeEvaluator::awrtbarEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::awrtbari] = TR::TreeEvaluator::awrtbariEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::monent] = TR::TreeEvaluator::monentEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::monexit] = TR::TreeEvaluator::monexitEvaluator;
+   tet[TR::monexit] = TR::TreeEvaluator::monexitEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::monexitfence] = TR::TreeEvaluator::monexitfenceEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::asynccheck] = TR::TreeEvaluator::asynccheckEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::instanceof] = TR::TreeEvaluator::instanceofEvaluator;
@@ -117,6 +117,16 @@ TR::Register *J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::Code
    cg->evaluate(node->getFirstChild());
    cg->decReferenceCount(node->getFirstChild());
    return NULL;
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::ILOpCodes opCode = node->getOpCodeValue();
+   TR::Node::recreate(node, TR::call);
+   TR::Register *targetRegister = directCallEvaluator(node, cg);
+   TR::Node::recreate(node, opCode);
+   return targetRegister;
    }
 
 TR::Register *
