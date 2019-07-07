@@ -4175,6 +4175,8 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
       // retrials of compilations from JPQ are not going to work correctly
       entry._reqFromJProfilingQueue = false;
 
+      entry.unsetRemoteCompReq(); // remote compilation decisions do not carry over from one retrial to the next
+
       compInfo->debugPrint("\trequeueing interrupted compilation request", details, compThread);
 
       // After releasing the monitors and vm access below, we will loop back to the head of the loop, and retry the

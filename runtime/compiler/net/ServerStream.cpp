@@ -45,15 +45,14 @@ int ServerStream::_numConnectionsOpened = 0;
 int ServerStream::_numConnectionsClosed = 0;
 
 #if defined(JITSERVER_ENABLE_SSL)
-ServerStream::ServerStream(int connfd, BIO *ssl, uint32_t timeout)
-   : CommunicationStream(),
-   _msTimeout(timeout)
+ServerStream::ServerStream(int connfd, BIO *ssl)
+   : CommunicationStream()
    {
    initStream(connfd, ssl);
    _numConnectionsOpened++;
    }
 #else // JITSERVER_ENABLE_SSL
-ServerStream::ServerStream(int connfd, uint32_t timeout)
+ServerStream::ServerStream(int connfd)
    : CommunicationStream()
    {
    initStream(connfd);
@@ -233,15 +232,15 @@ ServerStream::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR
       exit(-1);
       }
 
-   struct timeval t = {timeoutMs/1000, timeoutMs*1000%1000000};
-   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void *)&t, sizeof(t)) < 0)
+   struct timeval timeoutForListening = {0, 0}; // Wait forever
+   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeoutForListening, sizeof(timeoutForListening)) < 0)
       {
-      perror("Can't set option SO_RCVTIMEO on socket");
+      perror("Can't set option SO_RCVTIMEO on sockfd socket");
       exit(-1);
       }
-   if (setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void *)&t, sizeof(t)) < 0)
+   if (setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeoutForListening, sizeof(timeoutForListening)) < 0)
       {
-      perror("Can't set option SO_SNDTIMEO on socket");
+      perror("Can't set option SO_SNDTIMEO on sockfd socket");
       exit(-1);
       }
 
@@ -274,14 +273,27 @@ ServerStream::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Error accepting connection: errno=%d", errno);
          continue;
          }
+
+      struct timeval timeoutMsForConnection = {timeoutMs/1000, timeoutMs*1000%1000000};
+      if (setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeoutMsForConnection, sizeof(timeoutMsForConnection)) < 0)
+         {
+         perror("Can't set option SO_RCVTIMEO on connfd socket");
+         exit(-1);
+         }
+      if (setsockopt(connfd, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeoutMsForConnection, sizeof(timeoutMsForConnection)) < 0)
+         {
+         perror("Can't set option SO_SNDTIMEO on connfd socket");
+         exit(-1);
+         }
+
 #if defined(JITSERVER_ENABLE_SSL)
       BIO *bio = NULL;
       if (sslCtx && !acceptOpenSSLConnection(sslCtx, connfd, bio))
          continue;
 
-      ServerStream *stream = new (PERSISTENT_NEW) ServerStream(connfd, bio, timeoutMs);
+      ServerStream *stream = new (PERSISTENT_NEW) ServerStream(connfd, bio);
 #else
-      ServerStream *stream = new (PERSISTENT_NEW) ServerStream(connfd, timeoutMs);
+      ServerStream *stream = new (PERSISTENT_NEW) ServerStream(connfd);
 #endif
       compiler->compile(stream);
       }

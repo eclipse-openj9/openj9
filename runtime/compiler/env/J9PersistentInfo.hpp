@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,7 +128,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _JITaaSMode(NONJITaaS_MODE),
          _JITaaSServerAddress("localhost"),
          _JITaaSServerPort(38400),
-         _timeout(0),
+         _timeoutMs(1000),
       OMR::PersistentInfoConnector(pm)
       {}
 
@@ -293,8 +293,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setJITaaSMode(JITaaSModes m) { _JITaaSMode = m; }
    const std::string &getJITaaSServerAddress() const { return _JITaaSServerAddress; }
    void setJITaaSServerAddress(char *addr) { _JITaaSServerAddress = addr; }
-   uint32_t getJITaaSTimeout() { return _timeout; }
-   void setJITaaSTimeout(uint32_t t) { _timeout = t; }
+   uint32_t getJITaaSTimeout() { return _timeoutMs; }
+   void setJITaaSTimeout(uint32_t t) { _timeoutMs = t; }
    uint32_t getJITaaSServerPort() const { return _JITaaSServerPort; }
    void setJITaaSServerPort(uint32_t port) { _JITaaSServerPort = port; }
    uint64_t getJITaaSId() { return _JITaaSId; }
@@ -392,7 +392,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    std::string _JITaaSServerAddress;
    uint32_t _JITaaSServerPort;
    uint64_t _JITaaSId;
-   uint32_t _timeout;
+   uint32_t _timeoutMs; // timeout for communication sockets used in out-of-process JIT compilation
    std::string _sslRootCerts;
    // SoA key pairs
    // We use std::vector here to avoid an annoying include loop.

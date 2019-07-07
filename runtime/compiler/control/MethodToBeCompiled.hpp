@@ -64,6 +64,7 @@ struct TR_MethodToBeCompiled
    bool isAotLoad() const { return _doAotLoad; }
    bool isRemoteCompReq() const { return _remoteCompReq; } // at the client
    void setRemoteCompReq() { _remoteCompReq = true; }
+   void unsetRemoteCompReq() { _remoteCompReq = false; }
    bool isOutOfProcessCompReq() const { return _stream != NULL; } // at the server
    uint64_t getClientUID() const;
    void cleanupJITaaS();
