@@ -6771,10 +6771,11 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
    {
    bool doLocalComp = false;
    static char *localColdCompilations = feGetEnv("TR_LocalColdCompilations");
+   // Perform all AOT compilations remotely.
    // As a heuristic, cold compilations should be performed locally because
    // they are supposed to be cheap with respect to memory and CPU.
    //
-   if (entry->_optimizationPlan->getOptLevel() <= cold &&
+   if (!entry->_useAotCompilation && entry->_optimizationPlan->getOptLevel() <= cold &&
       (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) || localColdCompilations) || 
       !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
       (!JITaaSHelpers::isServerAvailable() && !JITaaSHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))))
