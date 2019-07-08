@@ -416,7 +416,6 @@ TR::CompilationInfo::incrementMethodQueueSize()
       _maxQueueSize = _numQueuedMethods;
    }
 
-
 int32_t TR::CompilationInfo::VERY_SMALL_QUEUE   = 2;
 int32_t TR::CompilationInfo::SMALL_QUEUE        = 4;
 int32_t TR::CompilationInfo::MEDIUM_LARGE_QUEUE = 30;

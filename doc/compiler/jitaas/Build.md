@@ -24,7 +24,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 There are currently 3 supported build procedures. Select the one that best suits your needs.
 
 - [Building the whole VM](#vm). The complete build process (Most correct and recommended). Produces a complete JVM as output (including the JIT).
-- [Building only the JIT](#jit). Choose this if you have an existing SDK and have no need to modify the VM or JCL. This only builds OMR and everything in the `runtime/compiler` directory. Output artifact is `libj9jit29.so`. (Fastest way to get JITaaS built)
+- [Building only the JIT](#jit). Choose this if you have an existing SDK and have no need to modify the VM or JCL. This only builds OMR and everything in the `runtime/compiler` directory. Output artifact is `libj9jit29.so`. (Fastest way to get JITServer built)
 - [Building in Docker](#docker). Choose this if you don't want to deal with build dependencies. Takes the longest.
 
 For building the whole VM and building only the JIT, you will have to go through the [Prepare your system](#prerequisites) step.
@@ -119,7 +119,7 @@ Depending on where you want to fetch OpenJ9 sources from, you could use your own
 ```
 bash get_source.sh -openj9-repo=https://github.com/<Your GitHub UserID>/openj9.git -openj9-branch=jitaas -omr-repo=https://github.com/eclipse/openj9-omr.git -omr-branch=jitaas
 ```
-See https://www.eclipse.org/openj9/oj9_build.html for more detail. The only difference is you need to check out the JITaaS code instead of upstream OpenJ9.
+See https://www.eclipse.org/openj9/oj9_build.html for more detail. The only difference is you need to check out the JITServer code instead of upstream OpenJ9.
 
 ## JIT
 
@@ -137,8 +137,8 @@ make -f compiler.mk -C "$JIT_SRCBASE"/compiler -j$(nproc) J9SRC="$JAVA_HOME"/jre
 cp "$JIT_SRCBASE"/compiler/../objs/libj9jit29.so "$J9SRC"
 ```
 
-The only new addition to the build process for JITaaS is to protobuf schema files. These are supposed to be build automatically, but it keeps getting broken by upstream changes to openJ9. So, if you get errors about missing files named like `compile.pb.h`, try building the make target `proto` by adding the word `proto` to the end of the make command above.
+The only new addition to the build process for JITServer is to protobuf schema files. These are supposed to be build automatically, but it keeps getting broken by upstream changes to openJ9. So, if you get errors about missing files named like `compile.pb.h`, try building the make target `proto` by adding the word `proto` to the end of the make command above.
 
 ## DOCKER
 
-Follow the [Docker.md](Docker.md) section `build/Dockerfile` for building JITaaS in Docker.
+Follow the [Docker.md](Docker.md) section `build/Dockerfile` for building JITServer in Docker.

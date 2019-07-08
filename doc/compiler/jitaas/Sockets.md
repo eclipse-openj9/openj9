@@ -37,7 +37,7 @@ One instance per compilation thread. Typically, this is only interacted with thr
 
 ### `J9ServerStream`
 
-There is one instance per compilation thread. Instances are created by `J9CompileServer::buildAndServe`, a method which loops forever waiting for compilation requests and adding them to the compilation queue using the method `J9CompileDispatcher::compile`.
+There is one instance per compilation thread. Instances are created by `ServerStream::serveRemoteCompilationRequests`, a method which loops forever waiting for compilation requests and adding them to the compilation queue using the method `J9CompileDispatcher::compile`.
 
 Accessible on a compilation thread via `TR::CompilationInfo::getStream()`, but beware that a thread local read is performed, so try to avoid calling it in particularly hot code.
 

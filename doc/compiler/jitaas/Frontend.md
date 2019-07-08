@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2018 IBM Corp. and others
+Copyright (c) 2018, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,4 +20,4 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-The frontend, typically instantiated as `TR_J9VM`, is specialized for JITaaS on the server as `TR_J9ServerVM` in the file `VMJ9Server.hpp`. This is done in a manner similarly to how `TR_J9SharedCacheVM` is used for AOT, except the overridden functionality is quite different. For JITaaS, most overridden methods send messages to query information from the `TR_J9VM` on the client. In some cases cached data is accessed instead of performing a remote call. By doing this, we can make the server compile code which is compatible with the client side VM.
+The frontend, typically instantiated as `TR_J9VM`, is specialized for JITServer on the server as `TR_J9ServerVM` in the file `VMJ9Server.hpp`. This is done in a manner similarly to how `TR_J9SharedCacheVM` is used for AOT, except the overridden functionality is quite different. For JITServer, most overridden methods send messages to query information from the `TR_J9VM` on the client. In some cases cached data is accessed instead of performing a remote call. By doing this, we can make the server compile code which is compatible with the client side VM.

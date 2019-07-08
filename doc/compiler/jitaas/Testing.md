@@ -41,15 +41,15 @@ These are the steps to run the tests on your machine.
    export JAVA_BIN=/your/sdk/jre/bin
    export SPEC=linux_x86-64_cmprssptrs
    ```
-   Either `TEST_FLAGS` or `EXTRA_OPTIONS` can be used to run tests with JITaaS. The following will launch both the server and the client during the test.
+   Either `TEST_FLAGS` or `EXTRA_OPTIONS` can be used to run tests with JITServer. The following will launch both the server and the client during the test.
    ```
    export TEST_FLAG="JITAAS"
    ```
    The following sets up only the client side which requires manually starting the server before running the test.
    ```
-   export EXTRA_OPTIONS=" -XX:JITaaSClient " # spaces at the start and end are important!
+   export EXTRA_OPTIONS=" -XX:+UseJITServer " # spaces at the start and end are important!
    ```
-   NOTE: It's important to put spaces before and after `-XX:JITaaSClient`, otherwise
+   NOTE: It's important to put spaces before and after `-XX:+UseJITServer`, otherwise
    some tests will not run properly.
 
    Compile the test
@@ -68,7 +68,7 @@ These are the steps to run the tests on your machine.
 
    Manually start the server if `JITAAS` TEST_FLAG is not used.
    ```
-   $JAVA_BIN/java -XX:JITaaSServer
+   $JAVA_BIN/java -XX:+StartAsJITServer
    ```
    ```
    make _sanity
@@ -89,4 +89,4 @@ For more advanced testing features, refer to [this guide](https://github.com/ecl
 
 ## DOCKER
 
-Follow the [Docker.md](Docker.md) here for building then testing JITaaS in Docker.
+Follow the [Docker.md](Docker.md) here for building then testing JITServer in Docker.

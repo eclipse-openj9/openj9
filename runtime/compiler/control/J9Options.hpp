@@ -37,7 +37,9 @@ namespace J9 { typedef J9::Options OptionsConnector; }
 #include <stdint.h>
 #include "control/OptionsUtil.hpp"
 #include "env/jittypes.h"
+#if defined(JITSERVER_SUPPORT)
 namespace TR { class CompilationInfoPerThreadBase; }
+#endif /* defined(JITSERVER_SUPPORT) */
 
 namespace J9
 {
@@ -83,8 +85,12 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _samplingFrequencyInIdleMode;
    static int32_t getSamplingFrequencyInIdleMode() {return _samplingFrequencyInIdleMode;}
 
+#if defined(JITSERVER_SUPPORT)
    static int32_t _statisticsFrequency;
    static int32_t getStatisticsFrequency() {return _statisticsFrequency;}
+
+   static uint32_t _compilationSequenceNumber;
+#endif /* defined(JITSERVER_SUPPORT) */
 
    static int32_t _samplingFrequencyInDeepIdleMode;
    static int32_t getSamplingFrequencyInDeepIdleMode() {return _samplingFrequencyInDeepIdleMode;}
@@ -302,8 +308,6 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static bool _aggressiveLockReservation;
 
-   static uint32_t _compilationSequenceNumber;
-
    static void  printPID();
 
 
@@ -332,16 +336,6 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static char *inlinefileOption(char *option, void *, TR::OptionTable *entry);
    static char *limitfileOption(char *option, void *, TR::OptionTable *entry);
    static char *versionOption(char *option, void *, TR::OptionTable *entry);
-
-   static const size_t FILENAME_MAX_SIZE = 1025;
-   static std::string packOptions(TR::Options *origOptions);
-   static TR::Options *unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::CompilationInfoPerThreadBase* compInfoPT, TR_J9VMBase *fe, TR_Memory *trMemory);
-   static uint8_t *appendContent(char * &charPtr, uint8_t * curPos, size_t length);
-   static std::string packLogFile(TR::FILE *fp);
-   void setLogFileForClientOptions(int doubleCompile = 0);
-   void closeLogFileForClientOptions();
-   int writeLogFileFromServer(const std::string& logFileContent);
-
    bool  fePreProcess(void *base);
    bool  fePostProcessAOT(void *base);
    bool  fePostProcessJIT(void *base);
@@ -350,7 +344,17 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    bool  showPID();
    void openLogFiles(J9JITConfig *jitConfig);
 
-   void setupJITaaSOptions();
+#if defined(JITSERVER_SUPPORT)
+   static const size_t FILENAME_MAX_SIZE = 1025;
+   static std::string packOptions(TR::Options *origOptions);
+   static TR::Options *unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::CompilationInfoPerThreadBase* compInfoPT, TR_J9VMBase *fe, TR_Memory *trMemory);
+   static uint8_t *appendContent(char * &charPtr, uint8_t * curPos, size_t length);
+   static std::string packLogFile(TR::FILE *fp);
+   void setLogFileForClientOptions(int doubleCompile = 0);
+   void closeLogFileForClientOptions();
+   int writeLogFileFromServer(const std::string& logFileContent);
+   void setupJITServerOptions();
+#endif /* defined(JITSERVER_SUPPORT) */
    };
 
 }

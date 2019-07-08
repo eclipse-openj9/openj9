@@ -612,7 +612,7 @@ static void jitHookVMInitialized(J9HookInterface * * hook, UDATA eventNum, void 
    TR::CompilationInfo *compInfo = getCompilationInfo(vmThread->javaVM->jitConfig);
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      fprintf(stderr, "\nJITaaS server ready to accept incoming requests\n");
+      fprintf(stderr, "\nJITServer ready to accept incoming requests\n");
       j9thread_sleep(10000000000);
       }
    }
@@ -7073,7 +7073,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       listener->startListenerThread(javaVM);
 
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Started JITaaSServer listener thread: %p ", listener->getListenerThread());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Started JITServer listener thread: %p ", listener->getListenerThread());
 
       if (jitConfig->samplingFrequency != 0)
          {
