@@ -157,6 +157,7 @@ J9::ARM64::TreeEvaluator::newObjectEvaluator(TR::Node *node, TR::CodeGenerator *
    return targetRegister;
    }
 
+TR::Register *
 J9::ARM64::TreeEvaluator::newArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::ILOpCodes opCode = node->getOpCodeValue();
