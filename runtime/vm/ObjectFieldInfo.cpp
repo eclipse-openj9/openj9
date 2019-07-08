@@ -57,7 +57,7 @@ ObjectFieldInfo::countInstanceFields(void)
 					} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {
 						_totalFlatFieldDoubleBytes += (U_32) ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - fieldClass->backfillOffset, sizeof(U_64));
 					} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
-						_totalFlatFieldRefBytes += (U_32) ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - fieldClass->backfillOffset, sizeof(fj9object_t));
+						_totalFlatFieldRefBytes += (U_32) ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - fieldClass->backfillOffset, _referenceSize);
 					} else {
 						_totalFlatFieldSingleBytes += (U_32) (fieldClass->totalInstanceSize - fieldClass->backfillOffset);
 					}
@@ -128,10 +128,10 @@ ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 		_subclassBackfillOffset = NO_BACKFILL_AVAILABLE;
 
 		accumulator = getPaddedTrueNonContendedSize(); /* this includes the header */
-		accumulator += (_contendedObjectCount * sizeof(J9Object)) + (_contendedSingleCount * sizeof(U_32)) + (_contendedDoubleCount * sizeof(U_64)); /* add the contended fields */
-		accumulator = ROUND_UP_TO_POWEROF2((UDATA)accumulator, (UDATA)_cacheLineSize) - sizeof(J9Object); /* Rounding takes care of the odd number of 4-byte fields. Remove the header */
+		accumulator += (_contendedObjectCount * _referenceSize) + (_contendedSingleCount * sizeof(U_32)) + (_contendedDoubleCount * sizeof(U_64)); /* add the contended fields */
+		accumulator = ROUND_UP_TO_POWEROF2((UDATA)accumulator, (UDATA)_cacheLineSize) - _objectHeaderSize; /* Rounding takes care of the odd number of 4-byte fields. Remove the header */
 	} else {
-		accumulator = _superclassFieldsSize + (_totalObjectCount * sizeof(J9Object)) + (_totalSingleCount * sizeof(U_32)) + (_totalDoubleCount * sizeof(U_64));
+		accumulator = _superclassFieldsSize + (_totalObjectCount * _referenceSize) + (_totalSingleCount * sizeof(U_32)) + (_totalDoubleCount * sizeof(U_64));
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 		accumulator += _totalFlatFieldDoubleBytes + _totalFlatFieldRefBytes + _totalFlatFieldSingleBytes;
 
@@ -152,7 +152,7 @@ ObjectFieldInfo::calculateTotalFieldsSizeAndBackfill()
 				_myBackfillOffset = _superclassBackfillOffset;
 				_superclassBackfillOffset = NO_BACKFILL_AVAILABLE;
 			}
-			if (((accumulator + sizeof(J9Object)) % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) {
+			if (((accumulator + _objectHeaderSize) % OBJECT_SIZE_INCREMENT_IN_BYTES) != 0) {
 				/* we have consumed the superclass's backfill (if any), so let our subclass use the residue at the end of this class. */
 				_subclassBackfillOffset = accumulator;
 				accumulator += BACKFILL_SIZE;

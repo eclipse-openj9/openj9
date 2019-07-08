@@ -1296,7 +1296,7 @@ uintptrj_t
 TR_J9VMBase::getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getReferenceFieldAt");
-   return (uintptrj_t)J9OBJECT_OBJECT_LOAD(vmThread(), objectPointer, J9_OBJECT_HEADER_SIZE + fieldOffset);
+   return (uintptrj_t)J9OBJECT_OBJECT_LOAD(vmThread(), objectPointer, TR::Compiler->om.objectHeaderSizeInBytes() + fieldOffset);
    }
 
 uintptrj_t
@@ -1304,7 +1304,7 @@ TR_J9VMBase::getVolatileReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t fi
    {
    TR_ASSERT(haveAccess(), "Must haveAccess in getVolatileReferenceFieldAt");
    return (uintptrj_t)vmThread()->javaVM->javaVM->memoryManagerFunctions->j9gc_objaccess_mixedObjectReadObject(vmThread(),
-      (J9Object*)objectPointer, J9_OBJECT_HEADER_SIZE + fieldOffset, IS_VOLATILE);
+      (J9Object*)objectPointer, TR::Compiler->om.objectHeaderSizeInBytes() + fieldOffset, IS_VOLATILE);
    }
 
 int32_t

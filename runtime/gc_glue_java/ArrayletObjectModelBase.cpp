@@ -82,7 +82,7 @@ GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, UDATA 
 	 * 3. in-line data
 	 * In hybrid specs, the spine may also include padding for a secondary size field in empty arrays
 	 */
-	UDATA const slotSize = compressObjectReferences() ? sizeof(U_32) : sizeof(UDATA);
+	UDATA const slotSize = J9GC_REFERENCE_SIZE(this);
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)
 	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 	UDATA spineArrayoidSize = 0;

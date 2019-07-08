@@ -457,7 +457,7 @@ J9::ObjectModel::offsetOfDiscontiguousArraySizeField()
 uintptrj_t
 J9::ObjectModel::objectHeaderSizeInBytes()
    {
-   return compressObjectReferences() ? sizeof(J9NonIndexableObjectCompressed) : sizeof(J9NonIndexableObjectFull);
+   return compressObjectReferences() ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull);
    }
 
 

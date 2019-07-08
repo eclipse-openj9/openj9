@@ -221,13 +221,13 @@ Java_com_ibm_jit_JITHelpers_is32Bit(JNIEnv *env, jobject rcv)
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getNumBitsInReferenceField(JNIEnv *env, jobject rcv)
 {
-	return (jint) (sizeof(fj9object_t) * 8);
+	return (jint) (J9VMTHREAD_REFERENCE_SIZE((J9VMThread*)env) * 8);
 }
 
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getNumBytesInReferenceField(JNIEnv *env, jobject rcv)
 {
-	return (jint) sizeof(fj9object_t);
+	return (jint) J9VMTHREAD_REFERENCE_SIZE((J9VMThread*)env);
 }
 
 jint JNICALL
@@ -245,7 +245,7 @@ Java_com_ibm_jit_JITHelpers_getNumBytesInDescriptionWord(JNIEnv *env, jobject rc
 jint JNICALL
 Java_com_ibm_jit_JITHelpers_getNumBytesInJ9ObjectHeader(JNIEnv *env, jobject rcv)
 {
-	return (jint) sizeof(J9Object);
+	return (jint) J9VMTHREAD_OBJECT_HEADER_SIZE((J9VMThread*)env);
 }
 
 #if defined(J9VM_ENV_DATA64)

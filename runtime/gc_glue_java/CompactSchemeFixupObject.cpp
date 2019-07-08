@@ -103,5 +103,5 @@ void
 MM_CompactSchemeFixupObject::verifyForwardingPtr(omrobjectptr_t objectPtr, omrobjectptr_t forwardingPtr)
 {
 	assume0(forwardingPtr <= objectPtr);
-	assume0(J9GC_J9OBJECT_CLAZZ(forwardingPtr) && ((UDATA)J9GC_J9OBJECT_CLAZZ(forwardingPtr) & 0x3) == 0);
+	assume0(J9GC_J9OBJECT_CLAZZ(forwardingPtr, _extensions) && ((UDATA)J9GC_J9OBJECT_CLAZZ(forwardingPtr, _extensions) & 0x3) == 0);
 }

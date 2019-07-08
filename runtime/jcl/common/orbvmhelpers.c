@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,13 +38,13 @@ Java_com_ibm_oti_vm_ORBVMHelpers_is32Bit(JNIEnv *env, jclass rcv)
 jint JNICALL
 Java_com_ibm_oti_vm_ORBVMHelpers_getNumBitsInReferenceField(JNIEnv *env, jclass rcv)
 {
-	return (jint) (sizeof(fj9object_t) * 8);
+	return (jint) (J9VMTHREAD_REFERENCE_SIZE((J9VMThread*)env) * 8);
 }
 
 jint JNICALL
 Java_com_ibm_oti_vm_ORBVMHelpers_getNumBytesInReferenceField(JNIEnv *env, jclass rcv)
 {
-	return (jint) sizeof(fj9object_t);
+	return (jint) J9VMTHREAD_REFERENCE_SIZE((J9VMThread*)env);
 }
 
 jint JNICALL
@@ -62,7 +62,7 @@ Java_com_ibm_oti_vm_ORBVMHelpers_getNumBytesInDescriptionWord(JNIEnv *env, jclas
 jint JNICALL
 Java_com_ibm_oti_vm_ORBVMHelpers_getNumBytesInJ9ObjectHeader(JNIEnv *env, jclass rcv)
 {
-	return (jint) sizeof(J9Object);
+	return (jint) J9VMTHREAD_OBJECT_HEADER_SIZE((J9VMThread*)env);
 }
 
 #if defined(J9VM_ENV_DATA64)

@@ -1455,7 +1455,7 @@ old_slow_jitResolveFieldImpl(J9VMThread *currentThread, UDATA parmCount, J9Const
 	if (NULL != addr) {
 		goto done;
 	}
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	JIT_RETURN_UDATA(valueOffset);
 done:
 	return addr;
@@ -2063,7 +2063,7 @@ impl_jitReferenceArrayCopy(J9VMThread *currentThread, UDATA lengthInBytes)
 		(J9IndexableObject*)currentThread->floatTemp2,
 		(fj9object_t*)currentThread->floatTemp3,
 		(fj9object_t*)currentThread->floatTemp4,
-		(I_32)(lengthInBytes / (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread) ? sizeof(U_32) : sizeof(UDATA)))
+		(I_32)(lengthInBytes / J9VMTHREAD_REFERENCE_SIZE(currentThread))
 	)) {
 		exception = (void*)-1;
 	}

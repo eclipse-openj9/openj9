@@ -160,7 +160,7 @@ private:
 	MMINLINE UDATA
 	getClassShape(J9Object *objectPtr)
 	{
-		J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, this);
 		return J9GC_CLASS_SHAPE(clazz);
 	}
 
@@ -220,7 +220,7 @@ public:
 	MMINLINE ScanType
 	getScanType(J9Object *objectPtr)
 	{
-		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, this);
 		return getScanType(clazz);
 	}
 	
@@ -256,7 +256,7 @@ public:
 	MMINLINE bool
 	isObjectArray(J9Object *objectPtr)
 	{
-		J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, this);
 		return (OBJECT_HEADER_SHAPE_POINTERS == J9GC_CLASS_SHAPE(clazz));
 	}
 
@@ -715,7 +715,7 @@ public:
 	MMINLINE bool
 	isOverflowBitSet(J9Object *objectPtr)
 	{
-		return (GC_OVERFLOW == (J9GC_J9OBJECT_FLAGS_FROM_CLAZZ(objectPtr) & GC_OVERFLOW));
+		return (GC_OVERFLOW == (J9GC_J9OBJECT_FLAGS_FROM_CLAZZ(objectPtr, this) & GC_OVERFLOW));
 	}
 #endif /* defined(OMR_GC_REALTIME) */
 

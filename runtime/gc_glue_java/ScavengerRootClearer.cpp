@@ -69,7 +69,7 @@ MM_ScavengerRootClearer::processReferenceList(MM_EnvironmentStandard *env, MM_He
 			}
 
 			if (_scavenger->isObjectInEvacuateMemory(referent)) {
-				uintptr_t referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9AccClassReferenceMask;
+				uintptr_t referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj, env)) & J9AccClassReferenceMask;
 				/* transition the state to cleared */
 				Assert_MM_true(GC_ObjectModel::REF_STATE_INITIAL == J9GC_J9VMJAVALANGREFERENCE_STATE(env, referenceObj));
 				J9GC_J9VMJAVALANGREFERENCE_STATE(env, referenceObj) = GC_ObjectModel::REF_STATE_CLEARED;

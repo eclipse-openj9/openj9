@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -228,7 +227,7 @@ public:
 	MMINLINE UDATA
 	getSpineSize(J9IndexableObject* objPtr, ArrayLayout layout)
 	{
-		return getSpineSize(J9GC_J9OBJECT_CLAZZ(objPtr), layout, getSizeInElements(objPtr));
+		return getSpineSize(J9GC_J9OBJECT_CLAZZ(objPtr, this), layout, getSizeInElements(objPtr));
 	}
 
 	/**
@@ -309,7 +308,7 @@ public:
 	MMINLINE UDATA
 	getDataSizeInBytes(J9IndexableObject *arrayPtr)
 	{
-		return getDataSizeInBytes(J9GC_J9OBJECT_CLAZZ(arrayPtr), getSizeInElements(arrayPtr));
+		return getDataSizeInBytes(J9GC_J9OBJECT_CLAZZ(arrayPtr, this), getSizeInElements(arrayPtr));
 	}
 
 	/**
@@ -366,7 +365,7 @@ public:
 		/* Check if the objPtr is in the allowed arraylet range. */
 		if (((UDATA)objPtr >= (UDATA)_arrayletRangeBase) && ((UDATA)objPtr < (UDATA)_arrayletRangeTop)) {
 			UDATA dataSizeInBytes = getDataSizeInBytes(objPtr);
-			J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objPtr);
+			J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objPtr, this);
 			layout = getArrayletLayout(clazz, dataSizeInBytes);
 		}
 		return layout;
@@ -435,7 +434,7 @@ public:
 	/*MMINLINE*/ void
 	memcpyFromArray(void *destData, J9IndexableObject *srcObject, I_32 elementIndex, I_32 elementCount)
 	{
-		UDATA elementSize = J9ARRAYCLASS_GET_STRIDE(J9GC_J9OBJECT_CLAZZ(srcObject));
+		UDATA elementSize = J9ARRAYCLASS_GET_STRIDE(J9GC_J9OBJECT_CLAZZ(srcObject, this));
 		if (isInlineContiguousArraylet(srcObject)) {
 			// If the data is stored contiguously, then a simple copy is sufficient.
 			void* srcData = getDataPointerForContiguous(srcObject);
@@ -593,7 +592,7 @@ public:
 	MMINLINE void
 	memcpyToArray(J9IndexableObject *destObject, I_32 elementIndex, I_32 elementCount, void *srcData)
 	{
-		UDATA elementSize = J9ARRAYCLASS_GET_STRIDE(J9GC_J9OBJECT_CLAZZ(destObject));
+		UDATA elementSize = J9ARRAYCLASS_GET_STRIDE(J9GC_J9OBJECT_CLAZZ(destObject, this));
 		if (isInlineContiguousArraylet(destObject)) {
 			// If the data is stored contiguously, then a simple copy is sufficient.
 			void* destData = getDataPointerForContiguous(destObject);
@@ -748,7 +747,7 @@ public:
 	getSizeInBytesWithoutHeader(J9IndexableObject *arrayPtr)
 	{
 		ArrayLayout layout = getArrayLayout(arrayPtr);
-		return getSpineSizeWithoutHeader(J9GC_J9OBJECT_CLAZZ(arrayPtr), layout, getSizeInElements(arrayPtr));
+		return getSpineSizeWithoutHeader(J9GC_J9OBJECT_CLAZZ(arrayPtr, this), layout, getSizeInElements(arrayPtr));
 	}
 
 	/**
@@ -792,7 +791,7 @@ public:
 	getSizeInBytesWithHeader(J9IndexableObject *arrayPtr)
 	{
 		ArrayLayout layout = getArrayLayout(arrayPtr);
-		return getSpineSize(J9GC_J9OBJECT_CLAZZ(arrayPtr), layout, getSizeInElements(arrayPtr));
+		return getSpineSize(J9GC_J9OBJECT_CLAZZ(arrayPtr, this), layout, getSizeInElements(arrayPtr));
 	}
 
 	/**
@@ -899,7 +898,7 @@ public:
 	getHashcodeOffset(J9IndexableObject *arrayPtr)
 	{
 		ArrayLayout layout = getArrayLayout(arrayPtr);
-		return getHashcodeOffset(J9GC_J9OBJECT_CLAZZ(arrayPtr), layout, getSizeInElements(arrayPtr));
+		return getHashcodeOffset(J9GC_J9OBJECT_CLAZZ(arrayPtr, this), layout, getSizeInElements(arrayPtr));
 	}
 	
 	MMINLINE void

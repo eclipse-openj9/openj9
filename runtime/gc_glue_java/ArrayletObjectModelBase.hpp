@@ -158,17 +158,17 @@ public:
 			 * would be unable to reach all of the heap.
 			 */
 			needAlignment = true;
+#if !defined(J9VM_ENV_DATA64)
 		} else {
 			/* The alignment padding is only required when the size of the spine pointers are
 			 * not 8 byte aligned.  For example, on a 64-bit non-compressed platform, a single
 			 * spine pointer would be 8 byte aligned, whereas on a 32-bit platform, a single
 			 * spine pointer would not be 8 byte aligned, and would require additional padding.
 			 */
-			if (sizeof(fj9object_t) < sizeof(double)) {
-				if (OBJECT_HEADER_SHAPE_DOUBLES == J9GC_CLASS_SHAPE(clazz)) {
-					needAlignment = true;
-				}
+			if (OBJECT_HEADER_SHAPE_DOUBLES == J9GC_CLASS_SHAPE(clazz)) {
+				needAlignment = true;
 			}
+#endif /* !J9VM_ENV_DATA64 */
 		}
 
 		return needAlignment;

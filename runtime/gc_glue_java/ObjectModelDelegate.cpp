@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,7 +64,7 @@ GC_ObjectModelDelegate::calculateObjectDetailsForCopy(MM_EnvironmentBase *env, M
 		*objectCopySizeInBytes = getArrayObjectModel()->getSizeInBytesWithHeader(clazz, size);
 		hashcodeOffset = getArrayObjectModel()->getHashcodeOffset(clazz, size);
 	} else {
-		*objectCopySizeInBytes = clazz->totalInstanceSize + sizeof(J9Object);
+		*objectCopySizeInBytes = clazz->totalInstanceSize + J9GC_OBJECT_HEADER_SIZE(this);
 		hashcodeOffset = getMixedObjectModel()->getHashcodeOffset(clazz);
 	}
 

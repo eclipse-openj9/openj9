@@ -126,7 +126,7 @@ public class Main implements Constants {
 	private static final String[] fieldMacros = {
 		"#define J9VMCONSTANTPOOL_AT(vm, index, kind) ((kind*)&(vm)->jclConstantPool[index])",
 		"#define J9VMCONSTANTPOOL_FIELDREF_AT(vm, index) J9VMCONSTANTPOOL_AT(vm, index, J9RAMFieldRef)",
-		"#define J9VMCONSTANTPOOL_FIELD_OFFSET(vm, index) (sizeof(J9Object) + J9VMCONSTANTPOOL_FIELDREF_AT(vm, index)->valueOffset)",
+		"#define J9VMCONSTANTPOOL_FIELD_OFFSET(vm, index) (J9JAVAVM_OBJECT_HEADER_SIZE(vm) + J9VMCONSTANTPOOL_FIELDREF_AT(vm, index)->valueOffset)",
 		"",
 		"#if !defined(J9VM_ENV_LITTLE_ENDIAN) && !defined(J9VM_ENV_DATA64)",
 		"#define J9VMCONSTANTPOOL_ADDRESS_OFFSET(vm, index) J9VMCONSTANTPOOL_FIELD_OFFSET(vm, index) + sizeof(UDATA)",

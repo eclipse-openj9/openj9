@@ -145,7 +145,7 @@ public:
 	MMINLINE omrobjectptr_t
 	getIndirectObject(omrobjectptr_t objectPtr)
 	{
-		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, this);
 		return J9VM_J9CLASS_TO_HEAPCLASS(clazz);
 	}
 
@@ -320,7 +320,7 @@ public:
 	MMINLINE bool
 	isIndexable(omrobjectptr_t objectPtr)
 	{
-		J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, this);
 		return J9GC_CLASS_IS_ARRAY(clazz);
 	}
 
@@ -372,7 +372,7 @@ public:
 			GC_ArrayletObjectModel::ArrayLayout layout = _arrayObjectModel->getArrayletLayout(clazz, dataSize);
 			size = _arrayObjectModel->getSizeInBytesWithHeader(clazz, layout, elements);
 		} else {
-			size = _mixedObjectModel->getSizeInBytesWithoutHeader(clazz) + sizeof(J9Object);
+			size = _mixedObjectModel->getSizeInBytesWithoutHeader(clazz) + J9GC_OBJECT_HEADER_SIZE(this);
 		}
 
 		return size;

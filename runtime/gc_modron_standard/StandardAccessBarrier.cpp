@@ -731,7 +731,7 @@ MM_StandardAccessBarrier::asConstantPoolObject(J9VMThread *vmThread, J9Object* t
 			if (!env->saveObjects(toConvert)) {
 				Assert_MM_unreachable();
 			}
-			J9Class *j9class = J9GC_J9OBJECT_CLAZZ(toConvert);
+			J9Class *j9class = J9GC_J9OBJECT_CLAZZ_THREAD(toConvert, vmThread);
 			cpObject = J9AllocateObject(vmThread, j9class, allocationFlags);
 			env->restoreObjects(&toConvert);
 			if (cpObject != NULL) {

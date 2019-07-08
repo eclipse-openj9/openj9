@@ -2314,7 +2314,7 @@ findObjectDeadlockedThreads(J9VMThread *currentThread,
 
 	/* Finally, ready to output the list of deadlocked threads */
 	if (pDeadlockedThreads) {
-		deadlockedThreads = (j9object_t *)j9mem_allocate_memory(deadCount * sizeof(j9object_t), OMRMEM_CATEGORY_VM);
+		deadlockedThreads = (j9object_t *)j9mem_allocate_memory(deadCount * sizeof(UDATA), OMRMEM_CATEGORY_VM);
 		if (NULL == deadlockedThreads) {
 			j9mem_free_memory(thrChain);
 			return -1;
@@ -2322,7 +2322,7 @@ findObjectDeadlockedThreads(J9VMThread *currentThread,
 	}
 
 	if (pBlockingObjects) {
-		blockingObjects = (j9object_t *)j9mem_allocate_memory(deadCount * sizeof(j9object_t), OMRMEM_CATEGORY_VM);
+		blockingObjects = (j9object_t *)j9mem_allocate_memory(deadCount * sizeof(UDATA), OMRMEM_CATEGORY_VM);
 		if (NULL == blockingObjects) {
 			j9mem_free_memory(deadlockedThreads);
 			j9mem_free_memory(thrChain);

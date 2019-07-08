@@ -112,7 +112,7 @@ public:
 	MMINLINE GC_ObjectScanner *
 	getObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, void *scannerSpace, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo)
 	{
-		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
 		/* object class must have proper eye catcher */
 		Assert_MM_true((UDATA)0x99669966 == clazz->eyecatcher);
 
