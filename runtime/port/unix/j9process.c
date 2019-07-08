@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -151,7 +151,11 @@ setNonBlocking(int fd)
 #else
 	int nbio = 1;
 	
+#if defined(AIXPPC)
+	rc = ioctl(fd, (int)FIONBIO, &nbio);
+#else /* defined(AIXPPC) */
 	rc = ioctl(fd, FIONBIO, &nbio);
+#endif /* defined(AIXPPC) */
 #endif /* defined(J9ZOS390) */
 	
 	return rc;
