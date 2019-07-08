@@ -33,9 +33,9 @@ import javax.management.ObjectName;
  * Runtime type for {@link MemoryManagerMXBean}.
  * <p>
  * There is only ever one instance of this class in a virtual machine.
- * The type does not need to be modeled as a DynamicMBean, as it is structured 
+ * The type does not need to be modeled as a DynamicMBean, as it is structured
  * statically, without attributes, operations, notifications, etc., configured,
- * on the fly. The StandardMBean model is sufficient for the bean type.  
+ * on the fly. The StandardMBean model is sufficient for the bean type.
  * </p>
  * @since 1.5
  */
@@ -53,11 +53,11 @@ public class MemoryManagerMXBeanImpl implements MemoryManagerMXBean {
 	private final ObjectName objectName;
 
 	/**
-	 * Sets the metadata for this bean. 
+	 * Sets the metadata for this bean.
 	 * @param objectName
-	 * @param name 
+	 * @param name
 	 * @param id
-	 * @param memBean 
+	 * @param memBean
 	 */
 	MemoryManagerMXBeanImpl(ObjectName objectName, String name, int id, MemoryMXBeanImpl memBean) {
 		super();
@@ -66,11 +66,11 @@ public class MemoryManagerMXBeanImpl implements MemoryManagerMXBean {
 		this.id = id;
 		this.managedPoolList = new LinkedList<>();
 	}
-    
-    /**
-     * add managed pool for this bean 
-     * @param poolBean	managed pool bean
-     */
+
+	/**
+	 * add managed pool for this bean
+	 * @param poolBean managed pool bean
+	 */
 	protected void addMemoryPool(MemoryPoolMXBean poolBean) {
 		managedPoolList.add(poolBean);
 	}
@@ -83,12 +83,12 @@ public class MemoryManagerMXBeanImpl implements MemoryManagerMXBean {
 
 	/**
 	 * Retrieves the list of memory pool beans managed by this manager.
-	 * 
+	 *
 	 * @return the list of <code>MemoryPoolMXBean</code> instances
 	 */
 	List<MemoryPoolMXBean> getMemoryPoolMXBeans() {
-        return managedPoolList;
-    }
+		return managedPoolList;
+	}
 
 	/**
 	 * {@inheritDoc}

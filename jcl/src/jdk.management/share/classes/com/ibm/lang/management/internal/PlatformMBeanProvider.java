@@ -113,7 +113,7 @@ public final class PlatformMBeanProvider extends sun.management.spi.PlatformMBea
 			.addInterfaceIf(com.ibm.lang.management.MemoryPoolMXBean.class, true)
 			.addInterface(java.lang.management.MemoryPoolMXBean.class)
 			.register(allComponents);
-		
+
 		components = Collections.unmodifiableList(allComponents);
 	}
 

@@ -40,7 +40,7 @@ public class OperatingSystemMXBeanImpl extends NotificationBroadcasterSupport im
 
 	/**
 	 * Singleton accessor method.
-	 * 
+	 *
 	 * @return the {@link OperatingSystemMXBeanImpl} singleton.
 	 */
 	public static OperatingSystemMXBeanImpl getInstance() {
@@ -63,22 +63,22 @@ public class OperatingSystemMXBeanImpl extends NotificationBroadcasterSupport im
 	 */
 	@Override
 	public final String getArch() {
-        return System.getProperty("os.arch"); //$NON-NLS-1$
-    }
+		return System.getProperty("os.arch"); //$NON-NLS-1$
+	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public final int getAvailableProcessors() {
-        return Runtime.getRuntime().availableProcessors();
-    }
+	@Override
+	public final int getAvailableProcessors() {
+		return Runtime.getRuntime().availableProcessors();
+	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public final String getName() {
+	@Override
+	public final String getName() {
 		return System.getProperty("os.name"); //$NON-NLS-1$
 	}
 
@@ -102,25 +102,25 @@ public class OperatingSystemMXBeanImpl extends NotificationBroadcasterSupport im
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
+	@Override
 	public final double getSystemLoadAverage() {
 		return this.getSystemLoadAverageImpl();
 	}
 
-    /**
-     * @return the time-averaged value of the sum of the number of runnable
-     *         entities running on the available processors together with the
-     *         number of runnable entities ready and queued to run on the
-     *         available processors.
-     * @see #getSystemLoadAverage()
-     */
-    private native double getSystemLoadAverageImpl();
+	/**
+	 * @return the time-averaged value of the sum of the number of runnable
+	 *         entities running on the available processors together with the
+	 *         number of runnable entities ready and queued to run on the
+	 *         available processors.
+	 * @see #getSystemLoadAverage()
+	 */
+	private native double getSystemLoadAverageImpl();
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public final String getVersion() {
+	@Override
+	public final String getVersion() {
 		return System.getProperty("os.version"); //$NON-NLS-1$
 	}
 

@@ -31,9 +31,9 @@ import javax.management.ObjectName;
  * Runtime type for {@link CompilationMXBean}
  * <p>
  * There is only ever one instance of this class in a virtual machine.
- * The type does no need to be modeled as a DynamicMBean, as it is structured 
+ * The type does no need to be modeled as a DynamicMBean, as it is structured
  * statically, without attributes, operations, notifications, etc, configured,
- * on the fly. The StandardMBean model is sufficient for the bean type.  
+ * on the fly. The StandardMBean model is sufficient for the bean type.
  * </p>
  * @since 1.5
  */
@@ -45,14 +45,14 @@ public final class CompilationMXBeanImpl implements CompilationMXBean {
 
 	/**
 	 * Query whether the VM is running with a JIT compiler enabled.
-	 * 
+	 *
 	 * @return true if a JIT is enabled, false otherwise
 	 */
 	private static native boolean isJITEnabled();
 
 	/**
 	 * Constructor intentionally private to prevent instantiation by others.
-	 * Sets the metadata for this bean. 
+	 * Sets the metadata for this bean.
 	 */
 	private CompilationMXBeanImpl() {
 		super();
@@ -61,7 +61,7 @@ public final class CompilationMXBeanImpl implements CompilationMXBean {
 
 	/**
 	 * Singleton accessor method.
-	 * 
+	 *
 	 * @return the <code>ClassLoadingMXBeanImpl</code> singleton.
 	 */
 	public static CompilationMXBeanImpl getInstance() {

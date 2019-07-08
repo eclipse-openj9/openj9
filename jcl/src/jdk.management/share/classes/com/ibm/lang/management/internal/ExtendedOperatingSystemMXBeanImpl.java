@@ -38,7 +38,7 @@ import com.ibm.lang.management.TotalPhysicalMemoryNotificationInfo;
 
 /**
  * Runtime type for {@link com.ibm.lang.management.OperatingSystemMXBean}.
- * 
+ *
  * @author sonchakr, sridevi
  * @since 1.7.1
  */
@@ -49,7 +49,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	private static final ExtendedOperatingSystemMXBeanImpl instance = new ExtendedOperatingSystemMXBeanImpl();
 
 	/*
-	 * Maintain 3 distinct sampling points of timestamps and CPU times (in static fields). 
+	 * Maintain 3 distinct sampling points of timestamps and CPU times (in static fields).
 	 * They are used in the getProcessCpuLoad calculations.
 	 */
 	private static long oldTime = -1;
@@ -63,7 +63,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 
 	/**
 	 * Singleton accessor method.
-	 * 
+	 *
 	 * @return the {@link com.ibm.lang.management.internal.ExtendedOperatingSystemMXBeanImpl} singleton.
 	 */
 	public static ExtendedOperatingSystemMXBeanImpl getInstance() {
@@ -77,8 +77,8 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	/**
 	 * Used to identify emulated hardware (z/OS only)
 	 *
-	 * @param hwModel The hardware model number 
-	 * @return True if hwModel is in the list of hardware model numbers indicating 
+	 * @param hwModel The hardware model number
+	 * @return True if hwModel is in the list of hardware model numbers indicating
 	 * emulated hardware. False otherwise
 	 */
 	private static boolean isZosHardwareEmulated(String hwModel) {
@@ -106,7 +106,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	private HwEmulResult isHwEmulated = HwEmulResult.UNKNOWN;
 
 	/**
-	 * Protected  Constructor to prevent instantiation by others, but let subclasses use it.
+	 * Protected constructor to prevent instantiation by others, but let subclasses use it.
 	 */
 	ExtendedOperatingSystemMXBeanImpl() {
 		super();
@@ -129,13 +129,13 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	private native boolean isDLPAREnabled();
 
 	/**
-	 * Helper Function to validate the timing information in the two 
+	 * Helper Function to validate the timing information in the two
 	 * records and calculate the CPU utilization
 	 * per CPU over that interval.
-	 * @param	endTs Timestamp at the end of the interval.
-	 * @param	endCpuTime Cpu time consumed at the end of the interval.
-	 * @param	startTs Timestamp at the beginning of the interval.
-	 * @param	startCpuTime Cpu time sampled at the onset of the interval.
+	 * @param endTs Timestamp at the end of the interval.
+	 * @param endCpuTime Cpu time consumed at the end of the interval.
+	 * @param startTs Timestamp at the beginning of the interval.
+	 * @param startCpuTime Cpu time sampled at the onset of the interval.
 	 * @return number in [0.0, 1.0], or ERROR_VALUE in case of error
 	 */
 	private double calculateProcessCpuLoad(long endTs, long endCpuTime, long startTs, long startCpuTime) {
@@ -184,8 +184,8 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 * Retrieve hardware model
 	 *
 	 * @return String containing the hardware model. NULL in case of an error.
-	 * @throws UnsupportedOperationException if the operation is not implemented on this platform. 
-	 * UnsupportedOperationException will also be thrown if the operation is implemented but it 
+	 * @throws UnsupportedOperationException if the operation is not implemented on this platform.
+	 * UnsupportedOperationException will also be thrown if the operation is implemented but it
 	 * cannot be performed because the system does not satisfy all the requirements, for example,
 	 * an OS service is not installed.
 	 */
@@ -198,8 +198,8 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 * Retrieve hardware model
 	 *
 	 * @return String containing the hardware model. NULL in case of an error.
-	 * @throws UnsupportedOperationException if the operation is not implemented on this platform. 
-	 * UnsupportedOperationException will also be thrown if the operation is implemented but it 
+	 * @throws UnsupportedOperationException if the operation is not implemented on this platform.
+	 * UnsupportedOperationException will also be thrown if the operation is implemented but it
 	 * cannot be performed because the system does not satisfy all the requirements, for example,
 	 * an OS service is not installed.
 	 */
@@ -234,7 +234,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 			return CpuLoadCalculationConstants.ERROR_VALUE;
 		}
 
-		/* If a sufficiently long interval has elapsed since last sampling, calculate using 
+		/* If a sufficiently long interval has elapsed since last sampling, calculate using
 		 * the most recent value in the history.
 		 */
 		if ((latestTime - interimTime) >= CpuLoadCalculationConstants.MINIMUM_INTERVAL) {
@@ -256,18 +256,18 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 				interimTime = latestTime;
 				interimCpuTime = latestCpuTime;
 				/*
-				 * either the latest time or the interim time are bogus. 
-				 * Discard the interim value and try with the oldest value. 
+				 * either the latest time or the interim time are bogus.
+				 * Discard the interim value and try with the oldest value.
 				 */
 			}
 		}
 		if ((latestTime - oldTime) >= CpuLoadCalculationConstants.MINIMUM_INTERVAL) {
-			processCpuLoad = calculateProcessCpuLoad(latestTime, 
-					latestCpuTime, 
+			processCpuLoad = calculateProcessCpuLoad(latestTime,
+					latestCpuTime,
 					oldTime,
 					oldCpuTime);
 			if (processCpuLoad < 0) {
-				/* the stats look bogus.  Discard them */
+				/* the stats look bogus. Discard them */
 				oldTime = latestTime;
 				oldCpuTime = latestCpuTime;
 			}
@@ -304,7 +304,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 * Returns total amount of time the process has been scheduled or
 	 * executed so far in both kernel and user modes. Returns -1 if the
 	 * value is unavailable on this platform or in the case of an error.
-	 * 
+	 *
 	 * @return process cpu ime in 1 ns units
 	 * @see #getProcessCpuTime()
 	 */
@@ -339,7 +339,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 * Returns the amount of physical memory being used by the process
 	 * in bytes. Returns -1 if the value is unavailable on this platform
 	 * or in the case of an error.
-	 * 
+	 *
 	 * @return amount of physical memory being used by the process in bytes
 	 * @see #getProcessPrivateMemorySize()
 	 */
@@ -357,7 +357,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 * Returns the amount of private memory used by the process in bytes.
 	 * Returns -1 if the value is unavailable on this platform or in the
 	 * case of an error.
-	 * 
+	 *
 	 * @return amount of private memory used by the process in bytes
 	 * @see #getProcessPrivateMemorySize()
 	 */
@@ -387,7 +387,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 * Returns the amount of virtual memory used by the process in bytes,
 	 * including physical memory and swap space. Returns -1 if the value
 	 * is unavailable on this platform or in the case of an error.
-	 * 
+	 *
 	 * @return amount of virtual memory used by the process in bytes
 	 * @see #getCommittedVirtualMemorySize()
 	 */
@@ -462,7 +462,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 				if (isEmuTmp) {
 					isHwEmulated = HwEmulResult.YES;
 				} else {
-					isHwEmulated = HwEmulResult.NO; 
+					isHwEmulated = HwEmulResult.NO;
 				}
 			} else {
 				if (null == hwModel) {
@@ -533,7 +533,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 			throw new NullPointerException(com.ibm.oti.util.Msg.getString("K056B")); //$NON-NLS-1$
 		}
 
-		/* Check the array received for a NULL slot. If an unallocated slot is hit, throw 
+		/* Check the array received for a NULL slot. If an unallocated slot is hit, throw
 		 * a NullPointerException indicating this.
 		 */
 		for (ProcessorUsage p : procUsageArr) {
@@ -615,13 +615,13 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 
 	/**
 	 * Do lazy initialization of the precision value.
-	 * By default, precision is 1 ns.  The user can override this by -Dcom.ibm.lang.management.OperatingSystemMXBean.isCpuTime100ns=true
+	 * By default, precision is 1 ns. The user can override this by -Dcom.ibm.lang.management.OperatingSystemMXBean.isCpuTime100ns=true
 	 */
 	private final static class CpuTimePrecisionHolder {
 		static final int precision = getPrecision();
 		static final int NS_SCALE_FACTOR = 100;
 		static final int NO_SCALE_FACTOR = 1;
-		
+
 		private static int getPrecision() {
 			boolean is100ns = Boolean.getBoolean("com.ibm.lang.management.OperatingSystemMXBean.isCpuTime100ns"); //$NON-NLS-1$
 			int precisionVaue = is100ns ? NO_SCALE_FACTOR : NS_SCALE_FACTOR; /* if 1 ns resolution, scale the result up by 100 */

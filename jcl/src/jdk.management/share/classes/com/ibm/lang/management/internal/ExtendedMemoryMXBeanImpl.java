@@ -49,14 +49,14 @@ public final class ExtendedMemoryMXBeanImpl extends MemoryMXBeanImpl implements 
 	private ExtendedMemoryMXBeanImpl() {
 		super();
 		notificationThread = new MemoryNotificationThread(this);
-    	notificationThread.setDaemon(true);
-    	notificationThread.setName("MemoryMXBean notification dispatcher"); //$NON-NLS-1$
+		notificationThread.setDaemon(true);
+		notificationThread.setName("MemoryMXBean notification dispatcher"); //$NON-NLS-1$
 		notificationThread.setPriority(Thread.NORM_PRIORITY + 1);
 		notificationThread.start();
 	}
 
 	/**
-	 * Deprecated.  Use getTotalPhysicalMemorySize().
+	 * Deprecated. Use getTotalPhysicalMemorySize().
 	 */
 	/*[IF Sidecar19-SE]
 	@Deprecated(forRemoval = true, since = "1.8")

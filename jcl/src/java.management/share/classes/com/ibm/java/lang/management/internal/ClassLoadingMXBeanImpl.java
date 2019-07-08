@@ -31,117 +31,117 @@ import javax.management.ObjectName;
  * Runtime type for {@link ClassLoadingMXBean}.
  * <p>
  * There is only ever one instance of this class in a virtual machine.
- * The type does no need to be modeled as a DynamicMBean, as it is structured 
+ * The type does no need to be modeled as a DynamicMBean, as it is structured
  * statically, without attributes, operations, notifications, etc, configured,
- * on the fly. The StandardMBean model is sufficient for the bean type.  
+ * on the fly. The StandardMBean model is sufficient for the bean type.
  * </p>
  * @since 1.5
  */
 public final class ClassLoadingMXBeanImpl implements ClassLoadingMXBean {
 
-    private static final ClassLoadingMXBeanImpl instance = new ClassLoadingMXBeanImpl();
+	private static final ClassLoadingMXBeanImpl instance = new ClassLoadingMXBeanImpl();
 
-    private final ObjectName objectName;
+	private final ObjectName objectName;
 
-    /**
-     * Constructor intentionally private to prevent instantiation by others.
-     * Sets the metadata for this bean.
-     */
-    private ClassLoadingMXBeanImpl() {
-        super();
-        objectName = ManagementUtils.createObjectName(ManagementFactory.CLASS_LOADING_MXBEAN_NAME);
-    }
+	/**
+	 * Constructor intentionally private to prevent instantiation by others.
+	 * Sets the metadata for this bean.
+	 */
+	private ClassLoadingMXBeanImpl() {
+		super();
+		objectName = ManagementUtils.createObjectName(ManagementFactory.CLASS_LOADING_MXBEAN_NAME);
+	}
 
-    /**
-     * Singleton accessor method.
-     * 
-     * @return the <code>ClassLoadingMXBeanImpl</code> singleton.
-     */
+	/**
+	 * Singleton accessor method.
+	 *
+	 * @return the <code>ClassLoadingMXBeanImpl</code> singleton.
+	 */
 	public static ClassLoadingMXBeanImpl getInstance() {
-        return instance;
-    }
+		return instance;
+	}
 
-    /**
-     * @return the number of loaded classes
-     * @see #getLoadedClassCount()
-     */
-    private native int getLoadedClassCountImpl();
+	/**
+	 * @return the number of loaded classes
+	 * @see #getLoadedClassCount()
+	 */
+	private native int getLoadedClassCountImpl();
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
+	@Override
 	public int getLoadedClassCount() {
-        return this.getLoadedClassCountImpl();
-    }
+		return this.getLoadedClassCountImpl();
+	}
 
-    /**
-     * @return the total number of classes that have been loaded
-     * @see #getTotalLoadedClassCount()
-     */
-    private native long getTotalLoadedClassCountImpl();
+	/**
+	 * @return the total number of classes that have been loaded
+	 * @see #getTotalLoadedClassCount()
+	 */
+	private native long getTotalLoadedClassCountImpl();
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
+	@Override
 	public long getTotalLoadedClassCount() {
-        return this.getTotalLoadedClassCountImpl();
-    }
+		return this.getTotalLoadedClassCountImpl();
+	}
 
-    /**
-     * @return the total number of unloaded classes
-     * @see #getUnloadedClassCount()
-     */
-    private native long getUnloadedClassCountImpl();
+	/**
+	 * @return the total number of unloaded classes
+	 * @see #getUnloadedClassCount()
+	 */
+	private native long getUnloadedClassCountImpl();
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public long getUnloadedClassCount() {
-        return this.getUnloadedClassCountImpl();
-    }
+	@Override
+	public long getUnloadedClassCount() {
+		return this.getUnloadedClassCountImpl();
+	}
 
-    /**
-     * @return true if running in verbose mode
-     * @see #isVerbose()
-     */
-    private native boolean isVerboseImpl();
+	/**
+	 * @return true if running in verbose mode
+	 * @see #isVerbose()
+	 */
+	private native boolean isVerboseImpl();
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public boolean isVerbose() {
-        return this.isVerboseImpl();
-    }
+	@Override
+	public boolean isVerbose() {
+		return this.isVerboseImpl();
+	}
 
-    /**
-     * @param value true to put the class loading system into verbose
-     * mode, false to take the class loading system out of verbose mode.
-     * @see #setVerbose(boolean)
-     */
-    private native void setVerboseImpl(boolean value);
+	/**
+	 * @param value true to put the class loading system into verbose
+	 * mode, false to take the class loading system out of verbose mode.
+	 * @see #setVerbose(boolean)
+	 */
+	private native void setVerboseImpl(boolean value);
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public void setVerbose(boolean value) {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkPermission(ManagementPermissionHelper.MPCONTROL);
-        }
-        this.setVerboseImpl(value);
-    }
+	@Override
+	public void setVerbose(boolean value) {
+		SecurityManager security = System.getSecurityManager();
+		if (security != null) {
+			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
+		}
+		this.setVerboseImpl(value);
+	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public ObjectName getObjectName() {
-        return objectName;
-    }
+	@Override
+	public ObjectName getObjectName() {
+		return objectName;
+	}
 
 }

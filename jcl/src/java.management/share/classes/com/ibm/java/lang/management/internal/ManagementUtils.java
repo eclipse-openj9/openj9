@@ -197,7 +197,6 @@ public final class ManagementUtils {
 		}
 	}
 
-
 	/**
 	 * Convenience method to converts an array of <code>String</code> to a
 	 * <code>List&lt;String&gt;</code>.

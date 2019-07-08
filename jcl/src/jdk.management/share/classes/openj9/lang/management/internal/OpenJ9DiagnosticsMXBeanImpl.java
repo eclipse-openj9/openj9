@@ -47,6 +47,7 @@ import openj9.lang.management.ConfigurationUnavailableException;
  * </p>
  */
 public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBean {
+
 	private final static OpenJ9DiagnosticsMXBeanImpl instance;
 
 /*[IF Sidecar19-SE]*/
@@ -75,7 +76,6 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 					Class.forName(openj9_jvm, "com.ibm.jvm.InvalidDumpOptionException"), //$NON-NLS-1$
 					Class.forName(openj9_jvm, "com.ibm.jvm.DumpConfigurationUnavailableException"), //$NON-NLS-1$
 				});
-
 
 			Class<?> dumpClass = classes[0];
 			invalidDumpOptionExClass = classes[1];
@@ -106,11 +106,11 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	public void resetDumpOptions() throws ConfigurationUnavailableException {
 		checkManagementSecurityPermission();
 		try {
-/*[IF Sidecar19-SE]*/
+			/*[IF Sidecar19-SE]*/
 			dump_resetDumpOptions.invoke(null);
-/*[ELSE]
+			/*[ELSE]
 			Dump.resetDumpOptions();
-/*[ENDIF]*/
+			/*[ENDIF]*/
 		} catch (Exception e) {
 			handleDumpConfigurationUnavailableException(e);
 			throw handleError(e);
@@ -124,11 +124,11 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	public void setDumpOptions(String dumpOptions) throws InvalidOptionException, ConfigurationUnavailableException {
 		checkManagementSecurityPermission();
 		try {
-/*[IF Sidecar19-SE]*/
+			/*[IF Sidecar19-SE]*/
 			dump_setDumpOptions.invoke(null, dumpOptions);
-/*[ELSE]
+			/*[ELSE]
 			Dump.setDumpOptions(dumpOptions);
-/*[ENDIF]*/
+			/*[ENDIF]*/
 		} catch (Exception e) {
 			handleInvalidDumpOptionException(e);
 			handleDumpConfigurationUnavailableException(e);
@@ -143,7 +143,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	public void triggerDump(String dumpAgent) throws IllegalArgumentException {
 		checkManagementSecurityPermission();
 		switch (dumpAgent) {
-/*[IF Sidecar19-SE]*/
+		/*[IF Sidecar19-SE]*/
 		case "java": //$NON-NLS-1$
 			try {
 				dump_JavaDump.invoke(null);
@@ -172,7 +172,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 				throw handleError(e);
 			}
 			break;
-/*[ELSE]
+		/*[ELSE]
 		case "java": //$NON-NLS-1$
 			Dump.JavaDump();
 			break;
@@ -185,13 +185,12 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 		case "snap": //$NON-NLS-1$
 			Dump.SnapDump();
 			break;
-/*[ENDIF]*/
+		/*[ENDIF]*/
 		default:
 			/*[MSG "K0663", "Invalid or Unsupported Dump Agent cannot be triggered"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0663")); //$NON-NLS-1$
 		}
 	}
-
 
 	/**
 	 * {@inheritDoc}
@@ -201,10 +200,10 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 		String fileName = null;
 		checkManagementSecurityPermission();
 		switch (dumpAgent) {
-/*[IF Sidecar19-SE]*/
+		/*[IF Sidecar19-SE]*/
 		case "java": //$NON-NLS-1$
 			try {
-				fileName = (String)dump_javaDumpToFile.invoke(null, fileNamePattern);
+				fileName = (String) dump_javaDumpToFile.invoke(null, fileNamePattern);
 			} catch (Exception e) {
 				handleInvalidDumpOptionException(e);
 				throw handleError(e);
@@ -212,7 +211,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 			break;
 		case "heap": //$NON-NLS-1$
 			try {
-				fileName = (String)dump_heapDumpToFile.invoke(null, fileNamePattern);
+				fileName = (String) dump_heapDumpToFile.invoke(null, fileNamePattern);
 			} catch (Exception e) {
 				handleInvalidDumpOptionException(e);
 				throw handleError(e);
@@ -220,7 +219,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 			break;
 		case "system": //$NON-NLS-1$
 			try {
-				fileName = (String)dump_systemDumpToFile.invoke(null, fileNamePattern);
+				fileName = (String) dump_systemDumpToFile.invoke(null, fileNamePattern);
 			} catch (Exception e) {
 				handleInvalidDumpOptionException(e);
 				throw handleError(e);
@@ -228,13 +227,13 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 			break;
 		case "snap": //$NON-NLS-1$
 			try {
-				fileName = (String)dump_snapDumpToFile.invoke(null, fileNamePattern);
+				fileName = (String) dump_snapDumpToFile.invoke(null, fileNamePattern);
 			} catch (Exception e) {
 				handleInvalidDumpOptionException(e);
 				throw handleError(e);
 			}
 			break;
-/*[ELSE]
+		/*[ELSE]
 		case "java": //$NON-NLS-1$
 			try {
 				fileName = Dump.javaDumpToFile(fileNamePattern);
@@ -267,14 +266,13 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 				throw handleError(e);
 			}
 			break;
-/*[ENDIF]*/
+		/*[ENDIF]*/
 		default:
 			/*[MSG "K0663", "Invalid or Unsupported Dump Agent cannot be triggered"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0663")); //$NON-NLS-1$
 		}
 		return fileName;
 	}
-
 
 	/**
 	 * {@inheritDoc}
@@ -284,14 +282,13 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 		String dumpOptions = "heap:opts=CLASSIC"; //$NON-NLS-1$
 		checkManagementSecurityPermission();
 		try {
-/*[IF Sidecar19-SE]*/
-			String fileName = (String)dump_triggerDump.invoke(null, dumpOptions);
-/*[ELSE]
+			/*[IF Sidecar19-SE]*/
+			String fileName = (String) dump_triggerDump.invoke(null, dumpOptions);
+			/*[ELSE]
 			String fileName = Dump.triggerDump(dumpOptions);
-/*[ENDIF]*/
+			/*[ENDIF]*/
 			return fileName;
 		} catch (Exception e) {
-
 			handleInvalidDumpOptionException(e);
 			throw handleError(e);
 		}
@@ -300,7 +297,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	private static void checkManagementSecurityPermission() {
 		/* Check the caller has Management Permission. */
 		SecurityManager manager = System.getSecurityManager();
-		if( manager != null ) {
+		if (manager != null) {
 			manager.checkPermission(ManagementPermissionHelper.MPCONTROL);
 		}
 	}
@@ -329,46 +326,45 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	@Override
 	public ObjectName getObjectName() {
 		try {
-			ObjectName name = new ObjectName("openj9.lang.management:type=OpenJ9Diagnostics");  //$NON-NLS-1$
+			ObjectName name = new ObjectName("openj9.lang.management:type=OpenJ9Diagnostics"); //$NON-NLS-1$
 			return name;
 		} catch (MalformedObjectNameException e) {
 			return null;
 		}
 	}
 
-
 	/* Handle error thrown by method invoke as internal error */
 	private static InternalError handleError(Exception cause) {
-/*[IF Sidecar19-SE]*/
+		/*[IF Sidecar19-SE]*/
 		handleInvocationTargetException(cause);
-/*[ENDIF]*/
+		/*[ENDIF]*/
 		InternalError err = new InternalError(cause.toString());
 		err.initCause(cause);
 		throw err;
 	}
 
 	private static void handleInvalidDumpOptionException(Exception cause) throws InvalidOptionException {
-/*[IF Sidecar19-SE]*/
+		/*[IF Sidecar19-SE]*/
 		if (invalidDumpOptionExClass.isInstance(cause.getCause())) {
 			throw new InvalidOptionException("Error in dump options specified", cause.getCause());
 		}
-/*[ELSE]
+		/*[ELSE]
 		if (cause instanceof InvalidDumpOptionException) {
 			throw new InvalidOptionException("Error in dump options specified", cause);
 		}
-/*[ENDIF]*/
+		/*[ENDIF]*/
 	}
 
 	private static void handleDumpConfigurationUnavailableException(Exception cause) throws ConfigurationUnavailableException {
-/*[IF Sidecar19-SE]*/
+		/*[IF Sidecar19-SE]*/
 		if (dumpConfigurationUnavailableExClass.isInstance(cause.getCause())) {
-			throw new ConfigurationUnavailableException("Dump configuration cannot be changed while a dump is in progress", cause.getCause());
+			throw new ConfigurationUnavailableException("Dump configuration cannot be changed while a dump is in progress", cause.getCause()); //$NON-NLS-1$
 		}
-/*[ELSE]
+		/*[ELSE]
 		if (cause instanceof DumpConfigurationUnavailableException) {
 			throw new ConfigurationUnavailableException("Dump configuration cannot be changed while a dump is in progress", cause);
 		}
-/*[ENDIF]*/
+		/*[ENDIF]*/
 	}
 
 	/* invoke throws InvocationTargetException if the method it is invoking
@@ -387,5 +383,5 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 		}
 	}
 /*[ENDIF]*/
-}
 
+}

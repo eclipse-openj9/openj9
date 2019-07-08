@@ -59,7 +59,7 @@ public final class BufferPoolMXBeanImpl implements BufferPoolMXBean {
 
 	/**
 	 * Get the list of all buffer pool beans.
-	 * 
+	 *
 	 * @return the list of all buffer pool beans
 	 */
 	public static List<BufferPoolMXBean> getBufferPoolMXBeans() {

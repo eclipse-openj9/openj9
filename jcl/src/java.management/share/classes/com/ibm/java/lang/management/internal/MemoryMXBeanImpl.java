@@ -49,6 +49,7 @@ import java.util.ServiceLoader;
 /*[ELSE]
 import com.ibm.oti.shared.SharedClassStatistics;
 /*[ENDIF]*/
+
 /**
  * Runtime type for {@link MemoryMXBean}.
  * <p>
@@ -66,7 +67,7 @@ import com.ibm.oti.shared.SharedClassStatistics;
  * protected
  * <code>handleNotification(javax.management.NotificationListener, javax.management.Notification, java.lang.Object)</code>
  * method cannot be overridden for any custom notification behavior. However,
- * taking the agile mantra of <b>YAGNI </b> to heart, it was decided that the
+ * taking the agile mantra of <b>YAGNI</b> to heart, it was decided that the
  * default implementation of that method will suffice until new requirements
  * prove otherwise.
  * </p>
@@ -99,7 +100,7 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 	private final List<MemoryPoolMXBean> managedPoolList;
 
 	private final ObjectName objectName;
-	
+
 	/*[IF Sidecar19-SE]*/
 	private final SharedClassProvider sharedClassServiceProvider;
 	/*[ENDIF]*/
@@ -135,7 +136,7 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 
 	private void setManagedMemoryPoolsForManagers() {
 		Iterator<MemoryManagerMXBean> iterManager = memoryManagerList.iterator();
-		
+
 		while (iterManager.hasNext()) {
 			MemoryManagerMXBeanImpl beanManager = (MemoryManagerMXBeanImpl) iterManager.next();
 
@@ -154,24 +155,24 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 				}
 			}
 		}
-    }
+	}
 
-    /**
-     * Singleton accessor method.
-     * 
-     * @return the <code>ClassLoadingMXBeanImpl</code> singleton.
-     */
+	/**
+	 * Singleton accessor method.
+	 *
+	 * @return the <code>ClassLoadingMXBeanImpl</code> singleton.
+	 */
 	public static MemoryMXBeanImpl getInstance() {
-        return instance;
-    }
+		return instance;
+	}
 
-    /**
-     * Instantiates MemoryManagerMXBean and GarbageCollectorMXBean instance(s)
-     * for the current VM configuration and stores them in memoryManagerList.
-     */
-    private native void createMemoryManagers();
+	/**
+	 * Instantiates MemoryManagerMXBean and GarbageCollectorMXBean instance(s)
+	 * for the current VM configuration and stores them in memoryManagerList.
+	 */
+	private native void createMemoryManagers();
 
-    private void createMemoryManagerHelper(String name, int internalID, boolean isGC) {
+	private void createMemoryManagerHelper(String name, int internalID, boolean isGC) {
 		String domain = isGC
 				? ManagementFactory.GARBAGE_COLLECTOR_MXBEAN_DOMAIN_TYPE
 				: ManagementFactory.MEMORY_MANAGER_MXBEAN_DOMAIN_TYPE;
@@ -196,13 +197,13 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 		return new GarbageCollectorMXBeanImpl(objName, name, internalID, this);
 	}
 
-    /**
-     * Retrieves the list of memory manager beans in the system.
-     * 
-     * @param copy indicates whether a copy of the list should be returned
-     * 
-     * @return the list of <code>MemoryManagerMXBean</code> instances
-     */
+	/**
+	 * Retrieves the list of memory manager beans in the system.
+	 *
+	 * @param copy indicates whether a copy of the list should be returned
+	 *
+	 * @return the list of <code>MemoryManagerMXBean</code> instances
+	 */
 	public List<MemoryManagerMXBean> getMemoryManagerMXBeans(boolean copy) {
 		List<MemoryManagerMXBean> list = memoryManagerList;
 
@@ -228,19 +229,19 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 		return result;
 	}
 
-    /**
-     * Instantiate the MemoryPoolMXBeans representing the memory managed by
-     * this manager, and store them in the managedPoolList.
-     */
-    private native void createMemoryPools();
-    
-    private void createMemoryPoolHelper(String name, int internalID, boolean isHeap) {
+	/**
+	 * Instantiate the MemoryPoolMXBeans representing the memory managed by
+	 * this manager, and store them in the managedPoolList.
+	 */
+	private native void createMemoryPools();
+
+	private void createMemoryPoolHelper(String name, int internalID, boolean isHeap) {
 		managedPoolList.add(makeMemoryPoolBean(name, isHeap ? MemoryType.HEAP : MemoryType.NON_HEAP, internalID));
 	}
 
 	/**
 	 * Create a new MemoryPoolMXBean.
-	 * 
+	 *
 	 * @param name the name of the memory pool
 	 * @param internalID an internal id number representing the memory pool
 	 * @param type the type of the memory pool
@@ -262,22 +263,22 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 
 		return copy ? new ArrayList<>(list) : list;
 	}
-    
+
 	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public void gc() {
 		System.gc();
-    }
+	}
 
-    /**
-     * @param constructor MemoryUsage Constructor
-     * @return an instance of {@link MemoryUsage} which can be interrogated by
-     *         the caller.
-     * @see #getHeapMemoryUsage()
-     */
-    private native MemoryUsage getHeapMemoryUsageImpl(Class<MemoryUsage> clazz, Constructor<MemoryUsage> constructor);
+	/**
+	 * @param constructor MemoryUsage Constructor
+	 * @return an instance of {@link MemoryUsage} which can be interrogated by
+	 *         the caller.
+	 * @see #getHeapMemoryUsage()
+	 */
+	private native MemoryUsage getHeapMemoryUsageImpl(Class<MemoryUsage> clazz, Constructor<MemoryUsage> constructor);
 
 	/**
 	 * {@inheritDoc}
@@ -289,76 +290,76 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 		} else {
 			return null;
 		}
-    }
+	}
 
-    /**
-     * @param constructor MemoryUsage Constructor
-     * @return an instance of {@link MemoryUsage} which can be interrogated by
-     *         the caller.
-     * @see #getNonHeapMemoryUsage()
-     */
-    private native MemoryUsage getNonHeapMemoryUsageImpl(Class<MemoryUsage> clazz, Constructor<MemoryUsage> constructor);
+	/**
+	 * @param constructor MemoryUsage Constructor
+	 * @return an instance of {@link MemoryUsage} which can be interrogated by
+	 *         the caller.
+	 * @see #getNonHeapMemoryUsage()
+	 */
+	private native MemoryUsage getNonHeapMemoryUsageImpl(Class<MemoryUsage> clazz, Constructor<MemoryUsage> constructor);
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public MemoryUsage getNonHeapMemoryUsage() {
-    	if (null != memUsageConstructor) {
-    		return this.getNonHeapMemoryUsageImpl(MemoryUsage.class, memUsageConstructor);
-    	} else {
-    		return null;
-    	}
-    }
+	@Override
+	public MemoryUsage getNonHeapMemoryUsage() {
+		if (null != memUsageConstructor) {
+			return this.getNonHeapMemoryUsageImpl(MemoryUsage.class, memUsageConstructor);
+		} else {
+			return null;
+		}
+	}
 
-    /**
-     * @return the number of objects awaiting finalization.
-     * @see #getObjectPendingFinalizationCount()
-     */
-    private native int getObjectPendingFinalizationCountImpl();
+	/**
+	 * @return the number of objects awaiting finalization.
+	 * @see #getObjectPendingFinalizationCount()
+	 */
+	private native int getObjectPendingFinalizationCountImpl();
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public int getObjectPendingFinalizationCount() {
-        return this.getObjectPendingFinalizationCountImpl();
-    }
+	@Override
+	public int getObjectPendingFinalizationCount() {
+		return this.getObjectPendingFinalizationCountImpl();
+	}
 
-    /**
-     * @return <code>true</code> if verbose output is being produced ;
-     *         <code>false</code> otherwise.
-     * @see #isVerbose()
-     */
-    private native boolean isVerboseImpl();
+	/**
+	 * @return <code>true</code> if verbose output is being produced ;
+	 *         <code>false</code> otherwise.
+	 * @see #isVerbose()
+	 */
+	private native boolean isVerboseImpl();
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public boolean isVerbose() {
-        return this.isVerboseImpl();
-    }
+	@Override
+	public boolean isVerbose() {
+		return this.isVerboseImpl();
+	}
 
-    /**
-     * @param value
-     *            <code>true</code> enables verbose output ;
-     *            <code>false</code> disables verbose output.
-     * @see #setVerbose(boolean)
-     */
-    private native void setVerboseImpl(boolean value);
+	/**
+	 * @param value
+	 *            <code>true</code> enables verbose output ;
+	 *            <code>false</code> disables verbose output.
+	 * @see #setVerbose(boolean)
+	 */
+	private native void setVerboseImpl(boolean value);
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public void setVerbose(boolean value) {
-        SecurityManager security = System.getSecurityManager();
-        if (security != null) {
-            security.checkPermission(ManagementPermissionHelper.MPCONTROL);
-        }
-        this.setVerboseImpl(value);
-    }
+	@Override
+	public void setVerbose(boolean value) {
+		SecurityManager security = System.getSecurityManager();
+		if (security != null) {
+			security.checkPermission(ManagementPermissionHelper.MPCONTROL);
+		}
+		this.setVerboseImpl(value);
+	}
 
 	/**
 	 * @return value of -Xmx in bytes
@@ -429,55 +430,55 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 	public boolean isSetMaxHeapSizeSupported() {
 		return this.isSetMaxHeapSizeSupportedImpl();
 	}
-	
-	/**
-	 * {@inheritDoc}
-	 */
-    @Override
-    public void removeNotificationListener(NotificationListener listener,
-            NotificationFilter filter, Object handback)
-            throws ListenerNotFoundException {
-        notifier.removeNotificationListener(listener, filter, handback);
-    }
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public void addNotificationListener(NotificationListener listener,
-            NotificationFilter filter, Object handback)
-            throws IllegalArgumentException {
-        notifier.addNotificationListener(listener, filter, handback);
-    }
+	@Override
+	public void removeNotificationListener(NotificationListener listener,
+			NotificationFilter filter, Object handback)
+			throws ListenerNotFoundException {
+		notifier.removeNotificationListener(listener, filter, handback);
+	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public void removeNotificationListener(NotificationListener listener)
-            throws ListenerNotFoundException {
-        notifier.removeNotificationListener(listener);
-    }
+	@Override
+	public void addNotificationListener(NotificationListener listener,
+			NotificationFilter filter, Object handback)
+			throws IllegalArgumentException {
+		notifier.addNotificationListener(listener, filter, handback);
+	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-    @Override
-    public MBeanNotificationInfo[] getNotificationInfo() {
-        // We know what kinds of notifications we can emit whereas the
-        // notifier delegate does not. So, for this method, no delegating.
-        // Instead respond using our own metadata.
-        MBeanNotificationInfo[] notifications = new MBeanNotificationInfo[1];
-        String[] notifTypes = new String[2];
-        notifTypes[0] = java.lang.management.MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED;
-        notifTypes[1] = java.lang.management.MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED;
-        notifications[0] = new MBeanNotificationInfo(notifTypes,
-                javax.management.Notification.class.getName(),
-                "Memory Notification"); //$NON-NLS-1$
-        return notifications;
-    }
+	@Override
+	public void removeNotificationListener(NotificationListener listener)
+			throws ListenerNotFoundException {
+		notifier.removeNotificationListener(listener);
+	}
 
-    /*
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public MBeanNotificationInfo[] getNotificationInfo() {
+		// We know what kinds of notifications we can emit whereas the
+		// notifier delegate does not. So, for this method, no delegating.
+		// Instead respond using our own metadata.
+		MBeanNotificationInfo[] notifications = new MBeanNotificationInfo[1];
+		String[] notifTypes = new String[2];
+		notifTypes[0] = java.lang.management.MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED;
+		notifTypes[1] = java.lang.management.MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED;
+		notifications[0] = new MBeanNotificationInfo(notifTypes,
+				javax.management.Notification.class.getName(),
+				"Memory Notification"); //$NON-NLS-1$
+		return notifications;
+	}
+
+	/*
 	 * Send notifications to registered listeners. This will be called when
 	 * either of the following situations occur: <ol><li> With the method
 	 * {@link java.lang.management.MemoryPoolMXBean#isUsageThresholdSupported()}
@@ -493,7 +494,7 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 	 * will be
 	 * {@link MemoryNotificationInfo#MEMORY_COLLECTION_THRESHOLD_EXCEEDED}.
 	 * </ol>
-	 * 
+	 *
 	 * @param notification For this type of bean the user data will consist of a
 	 * {@link CompositeData} instance that represents a
 	 * {@link MemoryNotificationInfo} object.
@@ -737,7 +738,7 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 		return SharedClassStatistics.freeSpaceBytes();
 		/*[ENDIF]*/
 	}
-	
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -748,11 +749,11 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 	private native String getGCModeImpl();
 
 	/**
-     * Returns the amount of CPU time spent in the GC by the master thread, in milliseconds.
-     * 
-     * @return CPU time used in milliseconds
-     * @see #getGCMasterThreadCpuUsed()
-     */
+	 * Returns the amount of CPU time spent in the GC by the master thread, in milliseconds.
+	 *
+	 * @return CPU time used in milliseconds
+	 * @see #getGCMasterThreadCpuUsed()
+	 */
 	private native long getGCMasterThreadCpuUsedImpl();
 
 	/**
@@ -763,11 +764,11 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 	}
 
 	/**
-     * Returns the amount of CPU time spent in the GC by all slave threads, in milliseconds.
-     * 
-     * @return CPU time used in milliseconds
-     * @see #getGCSlaveThreadsCpuUsed()
-     */
+	 * Returns the amount of CPU time spent in the GC by all slave threads, in milliseconds.
+	 *
+	 * @return CPU time used in milliseconds
+	 * @see #getGCSlaveThreadsCpuUsed()
+	 */
 	private native long getGCSlaveThreadsCpuUsedImpl();
 
 	/**
@@ -779,7 +780,7 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 
 	/**
 	 * Returns the maximum number of GC worker threads.
-	 * 
+	 *
 	 * @return maximum number of GC worker threads
 	 * @see #getMaximumGCThreads()
 	 */
@@ -794,7 +795,7 @@ public class MemoryMXBeanImpl implements MemoryMXBean, NotificationEmitter {
 
 	/**
 	 * Returns the number of GC slave threads that participated in the most recent collection.
-	 * 
+	 *
 	 * @return number of active GC worker threads
 	 * @see #getCurrentGCThreads()
 	 */

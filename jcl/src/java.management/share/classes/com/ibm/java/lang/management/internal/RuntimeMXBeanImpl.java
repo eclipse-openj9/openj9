@@ -54,7 +54,7 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 
 	/**
 	 * Singleton accessor method.
-	 * 
+	 *
 	 * @return the <code>RuntimeMXBeanImpl</code> singleton.
 	 */
 	public static RuntimeMXBean getInstance() {
@@ -238,7 +238,7 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 
 	public static void checkMonitorPermission() {
 		SecurityManager security = System.getSecurityManager();
-		
+
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
 		}

@@ -41,15 +41,15 @@ import javax.management.openmbean.CompositeData;
  * <code>java.lang.management.GarbageCollectorMXBean</code>, this class also
  * provides an implementation of most of the IBM extension interface
  * <code>com.ibm.lang.management.GarbageCollectorMXBean</code>.
- * The type does not need to be modeled as a DynamicMBean, as it is structured 
+ * The type does not need to be modeled as a DynamicMBean, as it is structured
  * statically, without attributes, operations, notifications, etc., configured,
- * on the fly. The StandardMBean model is sufficient for the bean type.  
+ * on the fly. The StandardMBean model is sufficient for the bean type.
  * </p>
  * @since 1.5
  */
 public class GarbageCollectorMXBeanImpl
 		extends MemoryManagerMXBeanImpl
-        implements GarbageCollectorMXBean, NotificationEmitter {
+		implements GarbageCollectorMXBean, NotificationEmitter {
 
 	/**
 	 * The delegate for all notification management.
@@ -126,7 +126,7 @@ public class GarbageCollectorMXBeanImpl
 	/**
 	 * Returns the amount of heap memory used by objects that are managed
 	 * by the collector corresponding to this bean object.
-	 * 
+	 *
 	 * @return memory used in bytes
 	 * @see #getMemoryUsed()
 	 */
@@ -229,7 +229,7 @@ public class GarbageCollectorMXBeanImpl
 
 	/**
 	 * Send notifications to registered listeners. This will be called at the end of Garbage Collections.
-	 * 
+	 *
 	 * @param notification For this type of bean the user data will consist of
 	 *     a {@link CompositeData} instance that represents
 	 *     a {@link com.sun.management.GarbageCollectionNotificationInfo} object

@@ -61,7 +61,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 
 	/**
 	 * Singleton accessor method.
-	 * 
+	 *
 	 * @return the <code>ThreadMXBeanImpl</code> singleton.
 	 */
 	public static ThreadMXBean getInstance() {
@@ -271,7 +271,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	/**
 	 * Create ThreadInfo objects containing ThreadInfoBase objects.
 	 * @param infoBases containers for the actual thread information
-	 * @return ThreadInfo array whose elements wrap the elements of infoBases 
+	 * @return ThreadInfo array whose elements wrap the elements of infoBases
 	 */
 	private static ThreadInfo[] makeThreadInfos(ThreadInfoBase[] infoBases) {
 		PrivilegedAction<ThreadInfo[]> action = () -> Arrays.stream(infoBases)
@@ -287,7 +287,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 * Assumes that caller has already carried out error checking on the
 	 * <code>id</code> and <code>maxDepth</code> arguments.
 	 * </p>
-	 * 
+	 *
 	 * @param ids
 	 *            thread ids
 	 * @param lockedMonitors
@@ -378,7 +378,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 * Assumes that caller has already carried out error checking on the
 	 * <code>id</code> and <code>maxDepth</code> arguments.
 	 * </p>
-	 * 
+	 *
 	 * @param id
 	 *            thread id
 	 * @param maxStackDepth
@@ -694,7 +694,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 		return dumpAllThreadsCommon(lockedMonitors, lockedSynchronizers, maxDepth);
 	}
 	/*[ENDIF]*/ // Java10
-	
+
 	/**
 	 * @param lockedMonitors
 	 *            if <code>true</code> then include details of locked object
@@ -714,10 +714,10 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	/**
 	 * Answers an array of instances of the ThreadInfoBase
 	 * class according to ids.
-	 * 
+	 *
 	 * @param ids
 	 *            thread ids
-	 * @param maxStackDepth 
+	 * @param maxStackDepth
 	 *            the max stack depth
 	 * @param getLockedMonitors
 	 *            if <code>true</code> attempt to set the returned
@@ -728,7 +728,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 *            <code>ThreadInfo</code> with details of ownable
 	 *            synchronizers locked by the specified thread
 	 * @return array of ThreadInfoBase
-	 */   
+	 */
 	private native ThreadInfoBase[] getMultiThreadInfoImpl(long[] ids, int maxStackDepth,
 			boolean getLockedMonitors, boolean getLockedSynchronizers);
 
@@ -798,7 +798,7 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 				return myHandle;
 			}
 		});
-	}	
+	}
 
 	/**
 	 * Wrap a ThreadInfoBase object in a ThreadInfo object.
@@ -826,4 +826,5 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 		}
 		return newThreadInfo;
 	}
+
 }
