@@ -783,7 +783,7 @@ done:
 		j9object_t instance = NULL;
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9_IS_J9CLASS_FLATTENED(objectClass)) {
+		if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
 			instance = objectAllocate->inlineAllocateIndexableValueTypeObject(currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
 		} else
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
