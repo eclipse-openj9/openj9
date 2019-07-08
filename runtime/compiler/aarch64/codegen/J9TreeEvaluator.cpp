@@ -149,7 +149,7 @@ J9::ARM64::TreeEvaluator::checkcastEvaluator(TR::Node *node, TR::CodeGenerator *
 
 TR::Register *
 J9::ARM64::TreeEvaluator::newObjectEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   }
+   {
    TR::ILOpCodes opCode = node->getOpCodeValue();
    TR::Node::recreate(node, TR::acall);
    TR::Register *targetRegister = directCallEvaluator(node, cg);
