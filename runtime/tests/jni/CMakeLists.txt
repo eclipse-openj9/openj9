@@ -45,7 +45,7 @@ target_include_directories(j9ben
 	PRIVATE
 		"${j9vm_BINARY_DIR}/j9vm"
 )
-
+include("exports.cmake")
 install(
 	TARGETS j9ben
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

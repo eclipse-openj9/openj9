@@ -146,17 +146,27 @@ if(OMR_ARCH_X86)
 			xcinterp.s
 			stackswap.s
 	)
-elseif(OMR_ARCH_POWER) #TODO check linux and 64bit
+elseif(OMR_ARCH_POWER)
 	j9vm_gen_asm(pcinterp.m4)
-
-	if(NOT (OMR_ENV_DATA64 AND OMR_ENV_LITTLE_ENDIAN))
-		message(SEND_ERROR "Only PPC64 LE is currently supported")
+	target_sources(j9vm PRIVATE pcinterp.s)
+	if(OMR_OS_LINUX)
+		if(NOT (OMR_ENV_DATA64 AND OMR_ENV_LITTLE_ENDIAN))
+			message(SEND_ERROR "Only PPC64 LE is currently supported")
+		endif()
+		target_sources(j9vm PRIVATE xl64/unsafeHelper.s)
+	elseif(OMR_OS_AIX)
+		if(OMR_ENV_DATA64)
+			target_sources(j9vm PRIVATE ap64/unsafeHelper.s)
+		else()
+			target_sources(j9vm PRIVATE ap32/unsafeHelper.s)
+		endif()
+		if(OMR_TOOLCONFIG STREQUAL "xlc")
+			# Suppress warning "Infinite loop. Program may not stop"
+			target_compile_options(j9vm PRIVATE "-qsuppress=1500-010")
+		endif()
+	else()
+		message(SEND_ERROR "Unsupported platfrom")
 	endif()
-	target_sources(j9vm
-		PRIVATE
-			xl64/unsafeHelper.s
-			pcinterp.s
-	)
 else()
 	message(SEND_ERROR "Unsupported platform")
 endif()
