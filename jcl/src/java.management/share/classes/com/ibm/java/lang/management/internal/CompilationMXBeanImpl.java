@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,7 @@ public final class CompilationMXBeanImpl implements CompilationMXBean {
 
 	private static final CompilationMXBeanImpl instance = isJITEnabled() ? new CompilationMXBeanImpl() : null;
 
-	private final ObjectName objectName;
+	private ObjectName objectName;
 
 	/**
 	 * Query whether the VM is running with a JIT compiler enabled.
@@ -56,7 +56,6 @@ public final class CompilationMXBeanImpl implements CompilationMXBean {
 	 */
 	private CompilationMXBeanImpl() {
 		super();
-		objectName = ManagementUtils.createObjectName(ManagementFactory.COMPILATION_MXBEAN_NAME);
 	}
 
 	/**
@@ -114,6 +113,9 @@ public final class CompilationMXBeanImpl implements CompilationMXBean {
 	 */
 	@Override
 	public ObjectName getObjectName() {
+		if (objectName == null) {
+			objectName = ManagementUtils.createObjectName(ManagementFactory.COMPILATION_MXBEAN_NAME);
+		}
 		return objectName;
 	}
 

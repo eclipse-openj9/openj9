@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,7 @@ public class MemoryPoolMXBeanImpl implements MemoryPoolMXBean {
 
 	private final MemoryMXBeanImpl memBean;
 
-	private final ObjectName objectName;
+	private ObjectName objectName;
 
 	/**
 	 * Sets the metadata for this bean.
@@ -73,7 +73,6 @@ public class MemoryPoolMXBeanImpl implements MemoryPoolMXBean {
 	 */
 	protected MemoryPoolMXBeanImpl(String name, MemoryType type, int id, MemoryMXBeanImpl memBean) {
 		super();
-		objectName = ManagementUtils.createObjectName(ManagementFactory.MEMORY_POOL_MXBEAN_DOMAIN_TYPE, name);
 		this.name = name;
 		this.type = type;
 		this.id = id;
@@ -454,6 +453,9 @@ public class MemoryPoolMXBeanImpl implements MemoryPoolMXBean {
 	 */
 	@Override
 	public ObjectName getObjectName() {
+		if (objectName == null) {
+			objectName = ManagementUtils.createObjectName(ManagementFactory.MEMORY_POOL_MXBEAN_DOMAIN_TYPE, name);
+		}
 		return objectName;
 	}
 

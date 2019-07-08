@@ -47,8 +47,9 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	private static Boolean isThreadCpuTimeEnabled = null;
 	private static Boolean isThreadCpuTimeSupported = null;
 
-	private final ObjectName objectName;
 	private static final MethodHandle threadInfoConstructorHandle = getThreadInfoConstructorHandle();
+
+	private ObjectName objectName;
 
 	/**
 	 * Protected constructor to limit instantiation.
@@ -56,7 +57,6 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 */
 	protected ThreadMXBeanImpl() {
 		super();
-		objectName = ManagementUtils.createObjectName(ManagementFactory.THREAD_MXBEAN_NAME);
 	}
 
 	/**
@@ -778,6 +778,9 @@ public class ThreadMXBeanImpl implements ThreadMXBean {
 	 */
 	@Override
 	public ObjectName getObjectName() {
+		if (objectName == null) {
+			objectName = ManagementUtils.createObjectName(ManagementFactory.THREAD_MXBEAN_NAME);
+		}
 		return objectName;
 	}
 

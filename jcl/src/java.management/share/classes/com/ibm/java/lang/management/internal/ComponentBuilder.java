@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,14 +95,20 @@ public final class ComponentBuilder<T extends PlatformManagedObject> {
 
 		private final Map<String, Object> nameToMBeanMap;
 
-		Group(String objectNameBase, List<? extends PlatformManagedObject> implementations,
+		Group(String objectNameBase, List<String> objectNames,
+				List<? extends PlatformManagedObject> implementations,
 				Set<Class<?>> interfaceTypes) {
-			super(objectNameBase, interfaceTypes);
+			super(objectNameBase.concat(",name=*"), interfaceTypes); //$NON-NLS-1$
 
-			Map<String, Object> beanMap = new HashMap<>(implementations.size());
+			int beanCount = implementations.size();
+			Map<String, Object> beanMap = new HashMap<>(beanCount);
+			String namePrefix = objectNameBase.concat(",name="); //$NON-NLS-1$
 
-			for (PlatformManagedObject implementation : implementations) {
-				beanMap.put(implementation.getObjectName().getCanonicalName(), implementation);
+			for (int i = 0; i < beanCount; ++i) {
+				String objectName = namePrefix.concat(objectNames.get(i));
+				PlatformManagedObject implementation = implementations.get(i);
+
+				beanMap.put(objectName, implementation);
 			}
 
 			this.nameToMBeanMap = Collections.unmodifiableMap(beanMap);
@@ -137,8 +143,8 @@ public final class ComponentBuilder<T extends PlatformManagedObject> {
 
 		private final Object implementation;
 
-		Singleton(PlatformManagedObject implementation, Set<Class<?>> interfaceTypes) {
-			super(implementation.getObjectName().getCanonicalName(), interfaceTypes);
+		Singleton(String objectName, PlatformManagedObject implementation, Set<Class<?>> interfaceTypes) {
+			super(objectName, interfaceTypes);
 			this.implementation = implementation;
 		}
 
@@ -153,12 +159,13 @@ public final class ComponentBuilder<T extends PlatformManagedObject> {
 	 * Create a new builder for a list of beans all matching the object name pattern.
 	 *
 	 * @param objectNameBase the object name base; ",name=*" will be appended to form the pattern
+	 * @param objectNames the list of names to be appended to objectNameBase + ",name="
 	 * @param implementations the implementation beans
 	 * @return a new builder object
 	 */
 	public static <T extends PlatformManagedObject> ComponentBuilder<T> create(String objectNameBase,
-			List<T> implementations) {
-		return new ComponentBuilder<>(objectNameBase, implementations);
+			List<String> objectNames, List<T> implementations) {
+		return new ComponentBuilder<>(objectNameBase, objectNames, implementations);
 	}
 
 	/**
@@ -172,30 +179,27 @@ public final class ComponentBuilder<T extends PlatformManagedObject> {
 		return new ComponentBuilder<>(objectName, implementation);
 	}
 
-	/**
-	 * Create a new builder for a required singleton. The implementation
-	 * will provide the object name.
-	 *
-	 * @param implementation the implementation
-	 * @return a new builder object
-	 */
-	public static <T extends PlatformManagedObject> ComponentBuilder<T> create(T implementation) {
-		return new ComponentBuilder<>(implementation);
-	}
-
 	private final List<T> implementations;
 
 	private final Set<Class<?>> interfaceTypes;
 
-	private final String objectNamePattern;
+	private final String objectNameBase;
+
+	private final List<String> objectNames;
 
 	private final boolean singleton;
 
-	private ComponentBuilder(String objectNameBase, List<T> implementations) {
+	private ComponentBuilder(String objectNameBase, List<String> objectNames, List<T> implementations) {
 		super();
+
+		if (objectNames.size() != implementations.size()) {
+			throw new IllegalArgumentException();
+		}
+
 		this.implementations = implementations;
 		this.interfaceTypes = new HashSet<>();
-		this.objectNamePattern = objectNameBase + ",name=*"; //$NON-NLS-1$
+		this.objectNameBase = objectNameBase;
+		this.objectNames = objectNames;
 		this.singleton = false;
 	}
 
@@ -203,15 +207,8 @@ public final class ComponentBuilder<T extends PlatformManagedObject> {
 		super();
 		this.implementations = Collections.singletonList(implementation);
 		this.interfaceTypes = new HashSet<>();
-		this.objectNamePattern = objectName;
-		this.singleton = true;
-	}
-
-	private ComponentBuilder(T implementation) {
-		super();
-		this.implementations = Collections.singletonList(implementation);
-		this.interfaceTypes = new HashSet<>();
-		this.objectNamePattern = implementation.getObjectName().getCanonicalName();
+		this.objectNameBase = objectName;
+		this.objectNames = Collections.emptyList();
 		this.singleton = true;
 	}
 
@@ -259,12 +256,12 @@ public final class ComponentBuilder<T extends PlatformManagedObject> {
 			PlatformManagedObject implementation = implementations.get(0);
 
 			if (implementation == null) {
-				component = new Missing(objectNamePattern, interfaceTypes);
+				component = new Missing(objectNameBase, interfaceTypes);
 			} else {
-				component = new Singleton(implementation, interfaceTypes);
+				component = new Singleton(objectNameBase, implementation, interfaceTypes);
 			}
 		} else {
-			component = new Group(objectNamePattern, implementations, interfaceTypes);
+			component = new Group(objectNameBase, objectNames, implementations, interfaceTypes);
 		}
 
 		components.add(component);

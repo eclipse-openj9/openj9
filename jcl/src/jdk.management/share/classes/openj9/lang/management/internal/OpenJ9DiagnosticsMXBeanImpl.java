@@ -22,23 +22,24 @@
  *******************************************************************************/
 package openj9.lang.management.internal;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Field;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
+/*[IF Sidecar19-SE]*/
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-/*[IF !Sidecar19-SE]
+import java.util.Optional;
+/*[ELSE]*/
 import com.ibm.jvm.Dump;
-import com.ibm.jvm.InvalidDumpOptionException;
 import com.ibm.jvm.DumpConfigurationUnavailableException;
+import com.ibm.jvm.InvalidDumpOptionException;
 /*[ENDIF]*/
 import com.ibm.java.lang.management.internal.ManagementPermissionHelper;
 
-import openj9.lang.management.OpenJ9DiagnosticsMXBean;
-import openj9.lang.management.InvalidOptionException;
 import openj9.lang.management.ConfigurationUnavailableException;
+import openj9.lang.management.InvalidOptionException;
+import openj9.lang.management.OpenJ9DiagnosticsMXBean;
 
 /**
  * Runtime type for {@link OpenJ9DiagnosticsMXBean}.
@@ -48,55 +49,48 @@ import openj9.lang.management.ConfigurationUnavailableException;
  */
 public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBean {
 
-	private final static OpenJ9DiagnosticsMXBeanImpl instance;
+	private static final OpenJ9DiagnosticsMXBean instance = createInstance();
 
-/*[IF Sidecar19-SE]*/
-	private static final Method dump_setDumpOptions;
-	private static final Method dump_resetDumpOptions;
-	private static final Method dump_triggerDump;
-	private static final Method dump_JavaDump;
-	private static final Method dump_HeapDump;
-	private static final Method dump_SystemDump;
-	private static final Method dump_SnapDump;
-	private static final Method dump_javaDumpToFile;
-	private static final Method dump_heapDumpToFile;
-	private static final Method dump_systemDumpToFile;
-	private static final Method dump_snapDumpToFile;
-	private static final Class<?> invalidDumpOptionExClass;
-	private static final Class<?> dumpConfigurationUnavailableExClass;
-/*[ENDIF]*/
+	/*[IF Sidecar19-SE]*/
+	private final Class<?> dumpConfigurationUnavailableExClass;
+	private final Class<?> invalidDumpOptionExClass;
+	private final Method dump_HeapDump;
+	private final Method dump_heapDumpToFile;
+	private final Method dump_JavaDump;
+	private final Method dump_javaDumpToFile;
+	private final Method dump_resetDumpOptions;
+	private final Method dump_setDumpOptions;
+	private final Method dump_SnapDump;
+	private final Method dump_snapDumpToFile;
+	private final Method dump_SystemDump;
+	private final Method dump_systemDumpToFile;
+	private final Method dump_triggerDump;
+	/*[ENDIF]*/
 
-	static {
-/*[IF Sidecar19-SE]*/
-		try {
-			Module openj9_jvm = ModuleLayer.boot().findModule("openj9.jvm").get(); //$NON-NLS-1$
-			Class<?>[] classes = AccessController.doPrivileged((PrivilegedAction<Class<?>[]>)
-				() -> new Class[] {
-					Class.forName(openj9_jvm, "com.ibm.jvm.Dump"), //$NON-NLS-1$
-					Class.forName(openj9_jvm, "com.ibm.jvm.InvalidDumpOptionException"), //$NON-NLS-1$
-					Class.forName(openj9_jvm, "com.ibm.jvm.DumpConfigurationUnavailableException"), //$NON-NLS-1$
-				});
+	private static OpenJ9DiagnosticsMXBean createInstance() {
+		/*[IF Sidecar19-SE]*/
+		// TODO remove the dependency on the openj9.jvm module
+		final Optional<Module> openj9_jvm = ModuleLayer.boot().findModule("openj9.jvm"); //$NON-NLS-1$
 
-			Class<?> dumpClass = classes[0];
-			invalidDumpOptionExClass = classes[1];
-			dumpConfigurationUnavailableExClass = classes[2];
-
-			dump_setDumpOptions = dumpClass.getMethod("setDumpOptions", String.class); //$NON-NLS-1$
-			dump_resetDumpOptions = dumpClass.getMethod("resetDumpOptions"); //$NON-NLS-1$
-			dump_triggerDump = dumpClass.getMethod("triggerDump", String.class); //$NON-NLS-1$
-			dump_JavaDump = dumpClass.getMethod("JavaDump"); //$NON-NLS-1$
-			dump_HeapDump = dumpClass.getMethod("HeapDump"); //$NON-NLS-1$
-			dump_SystemDump = dumpClass.getMethod("SystemDump"); //$NON-NLS-1$
-			dump_SnapDump = dumpClass.getMethod("SnapDump"); //$NON-NLS-1$
-			dump_javaDumpToFile = dumpClass.getMethod("javaDumpToFile", String.class); //$NON-NLS-1$
-			dump_heapDumpToFile = dumpClass.getMethod("heapDumpToFile", String.class); //$NON-NLS-1$
-			dump_systemDumpToFile = dumpClass.getMethod("systemDumpToFile", String.class); //$NON-NLS-1$
-			dump_snapDumpToFile = dumpClass.getMethod("snapDumpToFile", String.class); //$NON-NLS-1$
-		} catch (Exception e) {
-			throw handleError(e);
+		if (!openj9_jvm.isPresent()) {
+			return null;
 		}
-/*[ENDIF]*/
-		instance = new OpenJ9DiagnosticsMXBeanImpl();
+
+		PrivilegedAction<OpenJ9DiagnosticsMXBean> action = new PrivilegedAction<OpenJ9DiagnosticsMXBean>() {
+			@Override
+			public OpenJ9DiagnosticsMXBean run() {
+				try {
+					return new OpenJ9DiagnosticsMXBeanImpl(openj9_jvm.get());
+				} catch (Exception e) {
+					throw handleError(e);
+				}
+			}
+		};
+
+		return AccessController.doPrivileged(action);
+		/*[ELSE]
+		return new OpenJ9DiagnosticsMXBeanImpl();
+		/*[ENDIF]*/
 	}
 
 	/**
@@ -108,7 +102,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 		try {
 			/*[IF Sidecar19-SE]*/
 			dump_resetDumpOptions.invoke(null);
-			/*[ELSE]
+			/*[ELSE]*/
 			Dump.resetDumpOptions();
 			/*[ENDIF]*/
 		} catch (Exception e) {
@@ -126,7 +120,7 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 		try {
 			/*[IF Sidecar19-SE]*/
 			dump_setDumpOptions.invoke(null, dumpOptions);
-			/*[ELSE]
+			/*[ELSE]*/
 			Dump.setDumpOptions(dumpOptions);
 			/*[ENDIF]*/
 		} catch (Exception e) {
@@ -307,16 +301,38 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	 *
 	 * @return a static instance of {@link OpenJ9DiagnosticsMXBeanImpl}.
 	 */
-	public static OpenJ9DiagnosticsMXBeanImpl getInstance() {
+	public static OpenJ9DiagnosticsMXBean getInstance() {
 		return instance;
 	}
 
 	/**
-	 * Empty constructor intentionally private to prevent instantiation by others.
+	 * Private constructor to prevent instantiation by others.
 	 */
+	/*[IF Sidecar19-SE]*/
+	private OpenJ9DiagnosticsMXBeanImpl(Module openj9_jvm) throws Exception {
+		super();
+		dumpConfigurationUnavailableExClass = Class.forName(openj9_jvm, "com.ibm.jvm.DumpConfigurationUnavailableException"); //$NON-NLS-1$
+		invalidDumpOptionExClass = Class.forName(openj9_jvm, "com.ibm.jvm.InvalidDumpOptionException"); //$NON-NLS-1$
+
+		Class<?> dumpClass = Class.forName(openj9_jvm, "com.ibm.jvm.Dump"); //$NON-NLS-1$
+
+		dump_HeapDump = dumpClass.getMethod("HeapDump"); //$NON-NLS-1$
+		dump_heapDumpToFile = dumpClass.getMethod("heapDumpToFile", String.class); //$NON-NLS-1$
+		dump_JavaDump = dumpClass.getMethod("JavaDump"); //$NON-NLS-1$
+		dump_javaDumpToFile = dumpClass.getMethod("javaDumpToFile", String.class); //$NON-NLS-1$
+		dump_resetDumpOptions = dumpClass.getMethod("resetDumpOptions"); //$NON-NLS-1$
+		dump_setDumpOptions = dumpClass.getMethod("setDumpOptions", String.class); //$NON-NLS-1$
+		dump_SnapDump = dumpClass.getMethod("SnapDump"); //$NON-NLS-1$
+		dump_snapDumpToFile = dumpClass.getMethod("snapDumpToFile", String.class); //$NON-NLS-1$
+		dump_SystemDump = dumpClass.getMethod("SystemDump"); //$NON-NLS-1$
+		dump_systemDumpToFile = dumpClass.getMethod("systemDumpToFile", String.class); //$NON-NLS-1$
+		dump_triggerDump = dumpClass.getMethod("triggerDump", String.class); //$NON-NLS-1$
+	}
+	/*[ELSE]*/
 	private OpenJ9DiagnosticsMXBeanImpl() {
 		super();
 	}
+	/*[ENDIF]*/
 
 	/**
 	 * Returns the object name of the MXBean.
@@ -326,62 +342,53 @@ public final class OpenJ9DiagnosticsMXBeanImpl implements OpenJ9DiagnosticsMXBea
 	@Override
 	public ObjectName getObjectName() {
 		try {
-			ObjectName name = new ObjectName("openj9.lang.management:type=OpenJ9Diagnostics"); //$NON-NLS-1$
-			return name;
+			return ObjectName.getInstance("openj9.lang.management:type=OpenJ9Diagnostics"); //$NON-NLS-1$
 		} catch (MalformedObjectNameException e) {
-			return null;
+			throw new InternalError(e);
 		}
 	}
 
 	/* Handle error thrown by method invoke as internal error */
-	private static InternalError handleError(Exception cause) {
+	private static InternalError handleError(Exception error) {
 		/*[IF Sidecar19-SE]*/
-		handleInvocationTargetException(cause);
+		// invoke throws InvocationTargetException if the method it is invoking throws an error.
+		// Unwrap that error for this class to maintain its specification.
+		if (error instanceof InvocationTargetException) {
+			Throwable cause = error.getCause();
+
+			if (cause instanceof Error) {
+				throw (Error) cause;
+			} else if (cause instanceof RuntimeException) {
+				throw (RuntimeException) cause;
+			}
+		}
+
 		/*[ENDIF]*/
-		InternalError err = new InternalError(cause.toString());
-		err.initCause(cause);
-		throw err;
+		throw new InternalError(error.toString(), error);
 	}
 
-	private static void handleInvalidDumpOptionException(Exception cause) throws InvalidOptionException {
+	private void handleInvalidDumpOptionException(Exception cause) throws InvalidOptionException {
 		/*[IF Sidecar19-SE]*/
 		if (invalidDumpOptionExClass.isInstance(cause.getCause())) {
-			throw new InvalidOptionException("Error in dump options specified", cause.getCause());
+			throw new InvalidOptionException("Error in dump options specified", cause.getCause()); //$NON-NLS-1$
 		}
-		/*[ELSE]
+		/*[ELSE]*/
 		if (cause instanceof InvalidDumpOptionException) {
-			throw new InvalidOptionException("Error in dump options specified", cause);
+			throw new InvalidOptionException("Error in dump options specified", cause); //$NON-NLS-1$
 		}
 		/*[ENDIF]*/
 	}
 
-	private static void handleDumpConfigurationUnavailableException(Exception cause) throws ConfigurationUnavailableException {
+	private void handleDumpConfigurationUnavailableException(Exception cause) throws ConfigurationUnavailableException {
 		/*[IF Sidecar19-SE]*/
 		if (dumpConfigurationUnavailableExClass.isInstance(cause.getCause())) {
 			throw new ConfigurationUnavailableException("Dump configuration cannot be changed while a dump is in progress", cause.getCause()); //$NON-NLS-1$
 		}
-		/*[ELSE]
+		/*[ELSE]*/
 		if (cause instanceof DumpConfigurationUnavailableException) {
-			throw new ConfigurationUnavailableException("Dump configuration cannot be changed while a dump is in progress", cause);
+			throw new ConfigurationUnavailableException("Dump configuration cannot be changed while a dump is in progress", cause); //$NON-NLS-1$
 		}
 		/*[ENDIF]*/
 	}
-
-	/* invoke throws InvocationTargetException if the method it is invoking
-	 * throws an error. This method unwraps that error for this class to maintain
-	 * its specification.
-	 */
-/*[IF Sidecar19-SE]*/
-	private static void handleInvocationTargetException(Exception cause) {
-		if (cause instanceof InvocationTargetException) {
-			Throwable wrappedCause = cause.getCause();
-			if (wrappedCause instanceof Error) {
-				throw (Error)wrappedCause;
-			} else if (wrappedCause instanceof RuntimeException) {
-				throw (RuntimeException)wrappedCause;
-			}
-		}
-	}
-/*[ENDIF]*/
 
 }

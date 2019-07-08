@@ -22,6 +22,8 @@
  *******************************************************************************/
 package com.ibm.lang.management.internal;
 
+import java.util.Objects;
+
 import javax.management.MBeanNotificationInfo;
 
 import com.ibm.java.lang.management.internal.ManagementUtils;
@@ -58,8 +60,6 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	private static long interimCpuTime = -1;
 	private static long latestTime = -1;
 	private static long latestCpuTime = -1;
-
-	private static MemoryUsage memObj = new MemoryUsage();
 
 	/**
 	 * Singleton accessor method.
@@ -172,12 +172,12 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	@Override
 	public final long getFreeSwapSpaceSize() {
 		try {
-			memObj = retrieveMemoryUsage(memObj);
+			MemoryUsage usage = retrieveMemoryUsage(new MemoryUsage());
+			return usage.getSwapFree();
 		} catch (MemoryUsageRetrievalException e) {
 			// In case of exception return -1
 			return -1;
 		}
-		return memObj.getSwapFree();
 	}
 
 	/**
@@ -292,6 +292,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	/*[ELSE]*/
 	@Deprecated
 	/*[ENDIF]*/
+	@Override
 	public final long getProcessCpuTimeByNS() {
 		long cpuTimeNS = this.getProcessCpuTime();
 		if (CpuTimePrecisionHolder.precision == CpuTimePrecisionHolder.NO_SCALE_FACTOR) {
@@ -379,6 +380,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	/*[ELSE]*/
 	@Deprecated
 	/*[ENDIF]*/
+	@Override
 	public final long getProcessVirtualMemorySize() {
 		return this.getProcessVirtualMemorySizeImpl();
 	}
@@ -417,6 +419,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	/*[ELSE]*/
 	@Deprecated
 	/*[ENDIF]*/
+	@Override
 	public final long getTotalPhysicalMemory() {
 		return this.getTotalPhysicalMemoryImpl();
 	}
@@ -435,12 +438,12 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	@Override
 	public final long getTotalSwapSpaceSize() {
 		try {
-			memObj = retrieveMemoryUsage(memObj);
+			MemoryUsage usage = retrieveMemoryUsage(new MemoryUsage());
+			return usage.getSwapTotal();
 		} catch (MemoryUsageRetrievalException e) {
 			// In case of exception return -1
 			return -1;
 		}
-		return memObj.getSwapTotal();
 	}
 
 	/**
@@ -484,13 +487,8 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 */
 	@Override
 	public final MemoryUsage retrieveMemoryUsage() throws MemoryUsageRetrievalException {
-		/* Allocate and construct a MemoryUsage instance. */
-		MemoryUsage memoryUsageObj = new MemoryUsage();
-
-		/* Obtain the current memory usage stats. */
-		memoryUsageObj = getMemoryUsageImpl(memoryUsageObj);
-
-		return memoryUsageObj;
+		/* Allocate and construct a MemoryUsage instance to obtain the current memory usage stats. */
+		return getMemoryUsageImpl(new MemoryUsage());
 	}
 
 	/**
@@ -499,15 +497,8 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	@Override
 	public final MemoryUsage retrieveMemoryUsage(MemoryUsage memoryUsageObj)
 			throws NullPointerException, MemoryUsageRetrievalException {
-		/* For this overload, it is expected that we receive a pre-allocated object. */
-		if (null == memoryUsageObj) {
-			throw new NullPointerException();
-		}
-
 		/* Obtain the current memory usage stats. */
-		memoryUsageObj = getMemoryUsageImpl(memoryUsageObj);
-
-		return memoryUsageObj;
+		return getMemoryUsageImpl(Objects.requireNonNull(memoryUsageObj));
 	}
 
 	/**
@@ -544,9 +535,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 		}
 
 		/* obtain the processor usage statistics at this moment. */
-		procUsageArr = getProcessorUsageImpl(procUsageArr);
-
-		return procUsageArr;
+		return getProcessorUsageImpl(procUsageArr);
 	}
 
 	/**
@@ -554,15 +543,8 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 */
 	@Override
 	public final ProcessorUsage retrieveTotalProcessorUsage() throws ProcessorUsageRetrievalException {
-		/* The user expects the DeprecatedExtendedOperatingSystem class to instantiate and
-		 * return an object on its own.
-		 */
-		ProcessorUsage procUsageObj = new ProcessorUsage();
-
 		/* Obtain the processor usage statistics sample at this time. */
-		procUsageObj = getTotalProcessorUsageImpl(procUsageObj);
-
-		return procUsageObj;
+		return getTotalProcessorUsageImpl(new ProcessorUsage());
 	}
 
 	/**
@@ -571,15 +553,8 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	@Override
 	public final ProcessorUsage retrieveTotalProcessorUsage(ProcessorUsage procUsageObj)
 			throws NullPointerException, ProcessorUsageRetrievalException {
-		/* Did the user pass on a Null object. Throw an exception, if yes. */
-		if (null == procUsageObj) {
-			throw new NullPointerException();
-		}
-
 		/* Obtain the processor usage statistics sample at this time. */
-		procUsageObj = getTotalProcessorUsageImpl(procUsageObj);
-
-		return procUsageObj;
+		return getTotalProcessorUsageImpl(Objects.requireNonNull(procUsageObj));
 	}
 
 	/**
@@ -617,7 +592,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 * Do lazy initialization of the precision value.
 	 * By default, precision is 1 ns. The user can override this by -Dcom.ibm.lang.management.OperatingSystemMXBean.isCpuTime100ns=true
 	 */
-	private final static class CpuTimePrecisionHolder {
+	private static final class CpuTimePrecisionHolder {
 		static final int precision = getPrecision();
 		static final int NS_SCALE_FACTOR = 100;
 		static final int NO_SCALE_FACTOR = 1;

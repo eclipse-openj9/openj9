@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 2001, 2016 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,9 +22,9 @@
  *******************************************************************************/
 package com.ibm.lang.management.internal;
 
-import com.ibm.lang.management.CpuLoadCalculationConstants;
+import static com.ibm.lang.management.CpuLoadCalculationConstants.*;
 
-final class CpuUtilizationHelper implements CpuLoadCalculationConstants {
+final class CpuUtilizationHelper {
 
 	SysinfoCpuTime oldestTime = null;
 	SysinfoCpuTime interimTime = null;

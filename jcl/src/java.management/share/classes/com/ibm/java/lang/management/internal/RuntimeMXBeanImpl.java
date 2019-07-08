@@ -41,7 +41,7 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 
 	private static final RuntimeMXBean instance = new RuntimeMXBeanImpl();
 
-	private final ObjectName objectName;
+	private ObjectName objectName;
 
 	/**
 	 * Constructor intentionally private to prevent instantiation by others.
@@ -49,7 +49,6 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 	 */
 	protected RuntimeMXBeanImpl() {
 		super();
-		objectName = ManagementUtils.createObjectName(ManagementFactory.RUNTIME_MXBEAN_NAME);
 	}
 
 	/**
@@ -233,6 +232,9 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 	 */
 	@Override
 	public final ObjectName getObjectName() {
+		if (objectName == null) {
+			objectName = ManagementUtils.createObjectName(ManagementFactory.RUNTIME_MXBEAN_NAME);
+		}
 		return objectName;
 	}
 

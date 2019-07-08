@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2016 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,8 +25,6 @@ package com.ibm.java.lang.management.internal;
 import java.lang.management.ManagementFactory;
 import java.lang.management.OperatingSystemMXBean;
 
-import javax.management.MBeanNotificationInfo;
-import javax.management.NotificationBroadcasterSupport;
 import javax.management.ObjectName;
 
 /**
@@ -34,7 +32,7 @@ import javax.management.ObjectName;
  *
  * @since 1.5
  */
-public class OperatingSystemMXBeanImpl extends NotificationBroadcasterSupport implements OperatingSystemMXBean {
+public class OperatingSystemMXBeanImpl extends LazyDelegatingNotifier implements OperatingSystemMXBean {
 
 	private static final OperatingSystemMXBeanImpl instance = new OperatingSystemMXBeanImpl();
 
@@ -47,7 +45,7 @@ public class OperatingSystemMXBeanImpl extends NotificationBroadcasterSupport im
 		return instance;
 	}
 
-	private final ObjectName objectName;
+	private ObjectName objectName;
 
 	/**
 	 * Constructor intentionally private to prevent instantiation by others.
@@ -55,7 +53,6 @@ public class OperatingSystemMXBeanImpl extends NotificationBroadcasterSupport im
 	 */
 	protected OperatingSystemMXBeanImpl() {
 		super();
-		objectName = ManagementUtils.createObjectName(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME);
 	}
 
 	/**
@@ -86,16 +83,10 @@ public class OperatingSystemMXBeanImpl extends NotificationBroadcasterSupport im
 	 * {@inheritDoc}
 	 */
 	@Override
-	public MBeanNotificationInfo[] getNotificationInfo() {
-		// This base implementation doesn't provide for any notifications.
-		return new MBeanNotificationInfo[0];
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	@Override
 	public final ObjectName getObjectName() {
+		if (objectName == null) {
+			objectName = ManagementUtils.createObjectName(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME);
+		}
 		return objectName;
 	}
 

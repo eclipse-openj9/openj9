@@ -24,13 +24,8 @@ package com.ibm.java.lang.management.internal;
 
 import java.io.IOException;
 import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.LockInfo;
-import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryType;
-import java.lang.management.MemoryUsage;
-import java.lang.management.MonitorInfo;
 import java.lang.management.RuntimeMXBean;
-import java.lang.management.ThreadInfo;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -42,8 +37,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 /*[IF !Sidecar19-SE]*/
 import java.lang.management.ManagementFactory;
 import java.lang.management.PlatformManagedObject;
@@ -810,6 +803,7 @@ public final class ManagementUtils {
 			}
 		}
 
+		/*[IF] DEBUG */
 		private static void checkNames(Collection<? extends PlatformManagedObject> beans, ObjectName pattern) {
 			for (PlatformManagedObject bean : beans) {
 				ObjectName objectName = bean.getObjectName();
@@ -827,6 +821,7 @@ public final class ManagementUtils {
 				}
 			}
 		}
+		/*[ENDIF]*/
 
 		private static <T extends PlatformManagedObject> Component<T> create(String objectNamePattern, T bean) {
 			return new Component<>(objectNamePattern, bean);
@@ -874,7 +869,9 @@ public final class ManagementUtils {
 			if (bean == null) {
 				this.beansByName = Collections.emptyMap();
 			} else {
+				/*[IF] DEBUG */
 				checkNames(Collections.singleton(bean), name);
+				/*[ENDIF]*/
 				this.beansByName = Collections.singletonMap(name, bean);
 			}
 			this.interfaceTypes = new HashSet<>();
@@ -884,6 +881,7 @@ public final class ManagementUtils {
 		private Component(String objectNamePattern, Collection<? extends T> beans) {
 			super();
 
+			/*[IF] DEBUG */
 			ObjectName pattern = Metadata.makeObjectName(objectNamePattern);
 
 			if (!pattern.isPattern()) {
@@ -891,6 +889,7 @@ public final class ManagementUtils {
 			}
 
 			checkNames(beans, pattern);
+			/*[ENDIF]*/
 
 			this.beansByName = new HashMap<>(beans.size());
 			this.interfaceTypes = new HashSet<>();

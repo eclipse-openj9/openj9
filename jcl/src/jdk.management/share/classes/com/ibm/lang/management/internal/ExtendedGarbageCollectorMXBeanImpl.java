@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,6 @@
 package com.ibm.lang.management.internal;
 
 import javax.management.MBeanNotificationInfo;
-import javax.management.ObjectName;
 
 import com.ibm.java.lang.management.internal.GarbageCollectorMXBeanImpl;
 import com.ibm.lang.management.GarbageCollectorMXBean;
@@ -45,8 +44,8 @@ public final class ExtendedGarbageCollectorMXBeanImpl
 		extends GarbageCollectorMXBeanImpl
 		implements GarbageCollectorMXBean {
 
-	ExtendedGarbageCollectorMXBeanImpl(ObjectName objectName, String name, int id, ExtendedMemoryMXBeanImpl memBean) {
-		super(objectName, name, id, memBean);
+	ExtendedGarbageCollectorMXBeanImpl(String domainName, String name, int id, ExtendedMemoryMXBeanImpl memBean) {
+		super(domainName, name, id, memBean);
 	}
 
 	/**

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,8 @@ import javax.management.ObjectName;
  */
 public class MemoryManagerMXBeanImpl implements MemoryManagerMXBean {
 
+	private final String domainName;
+
 	private final String name;
 
 	/**
@@ -50,18 +52,17 @@ public class MemoryManagerMXBeanImpl implements MemoryManagerMXBean {
 
 	private final List<MemoryPoolMXBean> managedPoolList;
 
-	private final ObjectName objectName;
+	private ObjectName objectName;
 
 	/**
 	 * Sets the metadata for this bean.
-	 * @param objectName
+	 * @param domainName
 	 * @param name
 	 * @param id
-	 * @param memBean
 	 */
-	MemoryManagerMXBeanImpl(ObjectName objectName, String name, int id, MemoryMXBeanImpl memBean) {
+	MemoryManagerMXBeanImpl(String domainName, String name, int id) {
 		super();
-		this.objectName = objectName;
+		this.domainName = domainName;
 		this.name = name;
 		this.id = id;
 		this.managedPoolList = new LinkedList<>();
@@ -124,6 +125,9 @@ public class MemoryManagerMXBeanImpl implements MemoryManagerMXBean {
 	 */
 	@Override
 	public ObjectName getObjectName() {
+		if (objectName == null) {
+			objectName = ManagementUtils.createObjectName(domainName, name);
+		}
 		return objectName;
 	}
 

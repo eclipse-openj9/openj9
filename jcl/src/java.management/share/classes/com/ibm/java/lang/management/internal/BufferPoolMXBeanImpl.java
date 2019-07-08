@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,14 +66,16 @@ public final class BufferPoolMXBeanImpl implements BufferPoolMXBean {
 		return list;
 	}
 
-	private final ObjectName objectName;
+	private ObjectName objectName;
 
 	private final BufferPool pool;
 
+	private final String poolName;
+
 	private BufferPoolMXBeanImpl(BufferPool pool, String poolName) {
 		super();
-		this.objectName = ManagementUtils.createObjectName(ManagementUtils.BUFFERPOOL_MXBEAN_DOMAIN_TYPE, poolName);
 		this.pool = pool;
+		this.poolName = poolName;
 	}
 
 	/**
@@ -105,6 +107,9 @@ public final class BufferPoolMXBeanImpl implements BufferPoolMXBean {
 	 */
 	@Override
 	public ObjectName getObjectName() {
+		if (objectName == null) {
+			objectName = ManagementUtils.createObjectName(ManagementUtils.BUFFERPOOL_MXBEAN_DOMAIN_TYPE, poolName);
+		}
 		return objectName;
 	}
 

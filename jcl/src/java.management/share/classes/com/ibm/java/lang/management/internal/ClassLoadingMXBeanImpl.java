@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,7 +41,7 @@ public final class ClassLoadingMXBeanImpl implements ClassLoadingMXBean {
 
 	private static final ClassLoadingMXBeanImpl instance = new ClassLoadingMXBeanImpl();
 
-	private final ObjectName objectName;
+	private ObjectName objectName;
 
 	/**
 	 * Constructor intentionally private to prevent instantiation by others.
@@ -49,7 +49,6 @@ public final class ClassLoadingMXBeanImpl implements ClassLoadingMXBean {
 	 */
 	private ClassLoadingMXBeanImpl() {
 		super();
-		objectName = ManagementUtils.createObjectName(ManagementFactory.CLASS_LOADING_MXBEAN_NAME);
 	}
 
 	/**
@@ -141,6 +140,9 @@ public final class ClassLoadingMXBeanImpl implements ClassLoadingMXBean {
 	 */
 	@Override
 	public ObjectName getObjectName() {
+		if (objectName == null) {
+			objectName = ManagementUtils.createObjectName(ManagementFactory.CLASS_LOADING_MXBEAN_NAME);
+		}
 		return objectName;
 	}
 
