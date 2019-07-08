@@ -2691,6 +2691,10 @@ fail:
 					memcpy(ramClass->superclasses, superclass->superclasses, superclassCount * sizeof(UDATA));
 				}
 				ramClass->superclasses[superclassCount] = superclass;
+
+				/* Propagate self referencing field offsets from superclass (special treated during GC) - these take priority over self referencing fields of derived class*/
+				ramClass->selfReferencingField1 = superclass->selfReferencingField1;
+				ramClass->selfReferencingField2 = superclass->selfReferencingField2;
 			}
 			tempClassDepthAndFlags |= ((romClass->instanceShape & OBJECT_HEADER_SHAPE_MASK) << J9AccClassRAMShapeShift);
 			if (J9ROMCLASS_IS_ARRAY(romClass)) {

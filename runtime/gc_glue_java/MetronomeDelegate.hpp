@@ -210,6 +210,7 @@ public:
 	{
 		UDATA pointersScanned = 0;
 		switch(_extensions->objectModel.getScanType(objectPtr)) {
+		case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 		case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 		case GC_ObjectModel::SCAN_MIXED_OBJECT:
 		case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
