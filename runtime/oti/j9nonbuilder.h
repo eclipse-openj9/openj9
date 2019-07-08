@@ -1,6 +1,6 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
  *
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
  * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
@@ -2978,6 +2978,8 @@ typedef struct J9Class {
 	UDATA* instanceLeafDescription;
 #endif /* J9VM_GC_LEAF_BITS */
 	UDATA instanceHotFieldDescription;
+	UDATA selfReferencingField1;
+	UDATA selfReferencingField2;
 	struct J9Method* initializerCache;
 	UDATA romableAotITable;
 	UDATA packageID;
@@ -3044,6 +3046,8 @@ typedef struct J9ArrayClass {
 	UDATA* instanceLeafDescription;
 #endif /* J9VM_GC_LEAF_BITS */
 	UDATA instanceHotFieldDescription;
+	UDATA selfReferencingField1;
+	UDATA selfReferencingField2;
 	struct J9Method* initializerCache;
 	UDATA romableAotITable;
 	UDATA packageID;

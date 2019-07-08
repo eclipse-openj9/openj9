@@ -129,6 +129,7 @@ MM_GlobalMarkCardScrubber::scrubObject(MM_EnvironmentVLHGC *env, J9Object *objec
 	Assert_MM_mustBeClass(clazz);
 	switch(MM_GCExtensions::getExtensions(env)->objectModel.getScanType(clazz)) {
 		case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
+		case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 		case GC_ObjectModel::SCAN_MIXED_OBJECT:
 		case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
 		case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
