@@ -2376,7 +2376,7 @@ j9sock_readfrom(struct J9PortLibrary *portLibrary, j9socket_t sock, uint8_t *buf
  *            by @ref j9sock_fdset_size().
  * @param[in] readfd The j9fdset_t representing the descriptor to be checked to see if data can be read without blocking.
  * @param[in] writefd The j9fdset_t representing the descriptor to be checked to see if data can be written without blocking.
- * @param[in] exceptfd_notSupported Not supported, must either by NULL or empty
+ * @param[in] exceptfd_notSupported Not supported, must either by NULL or empty. Must be NULL on AIX or z/OS.
  * @param[in] timeout Pointer to the timeout (a j9timeval struct).
  *
  * @return	Number of socket descriptors that are ready, otherwise return the (negative) error code.
@@ -2408,16 +2408,14 @@ j9sock_select(struct J9PortLibrary *portLibrary, int32_t nfds, j9fdset_t readfd,
 		rc = J9PORT_ERROR_SOCKET_ARGSINVALID;
 	} else {
 
-		if (NULL != exceptfd_notSupported) {
+		if ((NULL != exceptfd_notSupported)
 #if defined(LINUX) || defined(OSX)
-			if (-1 != exceptfd_notSupported->fd) {
-#else
-			if (NULL != &exceptfd_notSupported->handle) {
+			&& (-1 != exceptfd_notSupported->fd)
 #endif
-				rc = omrerror_set_last_error_with_message(J9PORT_ERROR_SOCKET_ARGSINVALID, "exceptfd_notSupported cannot contain a valid fd");
-				Trc_PRT_sock_j9sock_select_Exit(rc);
-				return rc;
-			}
+		) {
+			rc = omrerror_set_last_error_with_message(J9PORT_ERROR_SOCKET_ARGSINVALID, "exceptfd_notSupported cannot contain a valid fd");
+			Trc_PRT_sock_j9sock_select_Exit(rc);
+			return rc;
 		}
 
 #if defined(LINUX) || defined(OSX)
@@ -2596,8 +2594,12 @@ j9sock_set_nonblocking(struct J9PortLibrary *portLibrary, j9socket_t socketP, BO
 	uint32_t param = nonblocking;
 
 	Trc_PRT_sock_j9sock_setnonblocking_Entry(socketP, nonblocking);
-	/* set the socket to non blocking or block as requested */	
+	/* set the socket to non blocking or block as requested */
+#if defined(AIXPPC)
+	rc = ioctl (SOCKET_CAST(socketP), (int)FIONBIO, &param);
+#else /* defined(AIXPPC) */
 	rc = ioctl (SOCKET_CAST(socketP), FIONBIO, &param);
+#endif /* defined(AIXPPC) */
 	
 	if (rc < 0)	{
 		rc = errno;
@@ -3937,7 +3939,7 @@ disconnectSocket(struct J9PortLibrary *portLibrary, j9socket_t sock, socklen_t f
   	Trc_PRT_sock_disconnectSocket_Entry(sock, fromlen);
 
 	/* must use AF_INET with an INADDR_ANY to disconnect a socket on AIX, and can not use port 0 */
-	j9sock_sockaddr_init6(portLibrary, &sockaddrP, INADDR_ANY, fromlen, J9ADDR_FAMILY_AFINET4, 1, 0, 0, sock);
+	j9sock_sockaddr_init6(portLibrary, &sockaddrP, (uint8_t *)INADDR_ANY, fromlen, J9ADDR_FAMILY_AFINET4, 1, 0, 0, sock);
 
 	rc = connectSocket(portLibrary, sock, &sockaddrP, fromlen);
 
