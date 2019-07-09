@@ -65,6 +65,8 @@ jboolean JNICALL
 Java_com_ibm_oti_shared_SharedAbstractHelper_getIsVerboseImpl (JNIEnv* env, jobject thisObj);
 void JNICALL 
 Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange2 (JNIEnv* env, jobject thisObj, jobject classLoaderObj);
+void JNICALL
+Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3 (JNIEnv* env, jobject thisObj, jint helperID, jobject classLoaderObj, jobjectArray urlArrayObj, jint urlIndex, jint urlCount, jboolean isOpen);
 jboolean JNICALL 
 Java_com_ibm_oti_shared_SharedClassTokenHelperImpl_findSharedClassImpl2(JNIEnv* env, jobject thisObj, jint helperID, jstring classNameObj, jobject loaderObj, jstring tokenObj, jboolean doFind, jboolean doStore, jbyteArray romClassCookie);
 jint JNICALL 
@@ -74,9 +76,9 @@ Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl2(J
 jint JNICALL 
 Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_storeSharedClassImpl2(JNIEnv* env, jobject thisObj, jint helperID, jstring partitionObj, jobject loaderObj, jobjectArray urlArrayObj, jint urlCount, jint cpLoadIndex, jclass clazzObj, jbyteArray nativeFlags);
 jboolean JNICALL 
-Java_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl3(JNIEnv* env, jobject thisObj, jint helperID, jstring partitionObj, jstring classNameObj, jobject loaderObj, jobject urlObj, jboolean doFind, jboolean doStore, jbyteArray romClassCookie, jboolean minimizeUpdateChecks);
+Java_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl3(JNIEnv* env, jobject thisObj, jint helperID, jstring partitionObj, jstring classNameObj, jobject loaderObj, jobject urlObj, jboolean doFind, jboolean doStore, jbyteArray romClassCookie, jboolean newJarFile, jboolean minimizeUpdateChecks);
 jint JNICALL 
-Java_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl3(JNIEnv* env, jobject thisObj, jint helperID, jstring partitionObj, jobject loaderObj, jobject urlObj, jclass clazzObj, jboolean minimizeUpdateChecks, jbyteArray nativeFlags);
+Java_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl3(JNIEnv* env, jobject thisObj, jint helperID, jstring partitionObj, jobject loaderObj, jobject urlObj, jclass clazzObj, jboolean newJarFile, jboolean minimizeUpdateChecks, jbyteArray nativeFlags);
 void JNICALL
 Java_com_ibm_oti_shared_SharedClassUtilities_init(JNIEnv *env, jclass clazz);
 jint JNICALL
