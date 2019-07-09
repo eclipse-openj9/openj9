@@ -54,8 +54,7 @@ ServerStream::ServerStream(int connfd, BIO *ssl, uint32_t timeout)
    }
 #else // JITSERVER_ENABLE_SSL
 ServerStream::ServerStream(int connfd, uint32_t timeout)
-   : CommunicationStream(),
-   _msTimeout(timeout)
+   : CommunicationStream()
    {
    initStream(connfd);
    _numConnectionsOpened++;
@@ -201,7 +200,7 @@ acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio)
 #endif
 
 void
-serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::PersistentInfo *info)
+ServerStream::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::PersistentInfo *info)
    {
 #if defined(JITSERVER_ENABLE_SSL)
    SSL_CTX *sslCtx = NULL;
