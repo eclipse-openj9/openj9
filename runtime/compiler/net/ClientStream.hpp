@@ -44,9 +44,32 @@ enum VersionCheckStatus
    PASSED = 1,
    };
 
+/**
+   @class ClientStream
+   @brief Implementation of the communication API for a client asking for remote JIT compilations
+
+   Typical sequence executed by a client is:
+   (1) Establish a connection to the JITServer by creating a ClientStream object
+         client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
+   (2) Determine compilation parameters and send the compilation request over the network
+          client->buildCompileRequest(method, clazz, .................);
+   (3) Handle any queries from the server
+       Typical seq: (3.1) client->read(); (3.2) client->getRecvData(...); (3.3) client->write(...);
+          while(!handleServerMessage(client, frontend));
+   (4) Read compilation result
+          auto recv = client->getRecvData<uint32_t, std::string, std::string, .......>();
+   (5) install compiled code into code cache
+*/
 class ClientStream : CommunicationStream
    {
 public:
+   /**
+       @brief Function called to perform static initialization of ClientStream
+
+       Creates SSL context, load certificates and keys. 
+       Only needs to be done once during JVM initialization.
+   */
+// This is called during startup from rossa.cpp
    static void static_init(TR::PersistentInfo *info);
 
    ClientStream(TR::PersistentInfo *info);
@@ -55,6 +78,12 @@ public:
       _numConnectionsClosed++;
       }
 
+   /**
+      @brief Send a compilation request to the JITServer
+
+      As a side-effect, this function may also embed version information in the message
+      if this is the first message sent after a connection request.
+   */
    template <typename... T>
    void buildCompileRequest(T... args)
       {
@@ -71,6 +100,12 @@ public:
          }
       }
 
+   /**
+      @brief Send a message to the JITServer
+
+      @param [in] type Message type
+      @param [in] args Additional arguments sent to the JITServer
+   */
    template <typename ...T>
    void write(MessageType type, T... args)
       {
@@ -80,18 +115,34 @@ public:
       writeBlocking(_cMsg);
       }
 
+   /**
+      @brief Read a message from the server
+
+      The read operation is blocking (subject to a timeout)
+ 
+      @return Returns the type of the message being received
+   */
    MessageType read()
       {
       readBlocking(_sMsg);
       return _sMsg.type();
       }
 
+   /**
+       @brief Extract the data from the received message and return it
+   */
    template <typename ...T>
    std::tuple<T...> getRecvData()
       {
       return getArgs<T...>(_sMsg.mutable_data());
       }
 
+   /**
+      @brief Send an error message to the JITServer
+
+      Examples of error messages include 'compilationAbort' (e.g. when class unloading happens)
+      and `clientTerminate` (e.g. when the client is about to exit)
+   */
    template <typename ...T>
    void writeError(MessageType type, T... args)
       {
@@ -113,6 +164,9 @@ public:
       _versionCheckStatus = PASSED;
       }
 
+   /**
+      @brief Function called when JITServer was discovered to be incompatible with the client
+   */
    static void incrementIncompatibilityCount(OMRPortLibrary *portLibrary)
       {
       OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
@@ -120,6 +174,17 @@ public:
       _incompatibleStartTime = omrtime_current_time_millis();
       }
 
+   /**
+       @brief Function that answers whether JITServer is compatible with the client
+
+       Note that the discovery of the incompatibility is done in the first message
+       that the client sends to the server. This function is actually called to
+       determine if we need to try the compatibilty check again. The idea is that
+       the incompatible server could be killed and another one (compatible) could be
+       instantiated. If enough time has passed since the server was found to be 
+       incompatible, then the client should try again. "Enough time" is defined as a
+       constant 10 second interval.
+   */
    static bool isServerCompatible(OMRPortLibrary *portLibrary)
       {
       OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
@@ -134,15 +199,15 @@ public:
       return _incompatibilityCount < INCOMPATIBILITY_COUNT_LIMIT;
       }
 
+   // Statistics
    static int _numConnectionsOpened;
    static int _numConnectionsClosed;
 
 private:
-   uint32_t _timeout;
-   VersionCheckStatus _versionCheckStatus;
+   VersionCheckStatus _versionCheckStatus; // indicates whether a version checking has been performed
    static int _incompatibilityCount;
-   static uint64_t _incompatibleStartTime;
-   static const uint64_t RETRY_COMPATIBILITY_INTERVAL;
+   static uint64_t _incompatibleStartTime; // Time when version incomptibility has been detected
+   static const uint64_t RETRY_COMPATIBILITY_INTERVAL; // (ms) When we should perform again a version compatibilty check
    static const int INCOMPATIBILITY_COUNT_LIMIT;
 
 #if defined(JITSERVER_ENABLE_SSL)

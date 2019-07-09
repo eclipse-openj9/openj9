@@ -255,7 +255,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    }
 
 ClientStream::ClientStream(TR::PersistentInfo *info)
-   : CommunicationStream(), _timeout(info->getJITaaSTimeout()), _versionCheckStatus(NOT_DONE)
+   : CommunicationStream(), _versionCheckStatus(NOT_DONE)
    {
    int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());
    BIO *ssl = openSSLConnection(_sslCtx, connfd);
@@ -264,7 +264,7 @@ ClientStream::ClientStream(TR::PersistentInfo *info)
    }
 #else // JITSERVER_ENABLE_SSL
 ClientStream::ClientStream(TR::PersistentInfo *info)
-   : CommunicationStream(), _timeout(info->getJITaaSTimeout()), _versionCheckStatus(NOT_DONE)
+   : CommunicationStream(),  _versionCheckStatus(NOT_DONE)
    {
    int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());
    initStream(connfd);
