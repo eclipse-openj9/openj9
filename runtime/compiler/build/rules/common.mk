@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,8 +24,9 @@ clean: jit_cleanobjs jit_cleandeps jit_cleandll
 cleanobjs: jit_cleanobjs
 cleandeps: jit_cleandeps
 cleandll: jit_cleandll
-proto: proto_clean protoc
-
+ifneq ($(JITSERVER_SUPPORT),)
+    proto: proto_clean protoc
+endif
 #
 # Define our targets. "jit_cleanobjs" "jit_cleandeps" and "jit_cleandll" are double-colon so they can be appended to
 # throughout the makefile.
@@ -36,7 +37,9 @@ jit_createdirs::
 jit_cleanobjs::
 jit_cleandeps::
 jit_cleandll::
-protoc:
-proto_clean:
+ifneq ($(JITSERVER_SUPPORT),)
+    protoc:
+    proto_clean:
+endif
 
 include $(JIT_MAKE_DIR)/rules/$(TOOLCHAIN)/common.mk
