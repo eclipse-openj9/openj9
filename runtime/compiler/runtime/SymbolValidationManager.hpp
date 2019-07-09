@@ -794,6 +794,15 @@ private:
    void setSymbolOfID(uint16_t id, void *symbol, TR::SymbolType type);
    void defineGuaranteedID(void *symbol, TR::SymbolType type);
 
+   /**
+    * @brief Heuristic to determine whether a class is worth remembering (and hence
+    *        worth considering during optimization) in an AOT compilation.
+    *
+    * @param clazz : The class being considered
+    * @return true if worth remembering, false otherwise.
+    */
+   bool isClassWorthRemembering(TR_OpaqueClassBlock *clazz);
+
    /* Monotonically increasing IDs */
    uint16_t _symbolID;
 
@@ -881,6 +890,8 @@ private:
    typedef TR::typed_allocator<ClassFromAnyCPIndex, TR::Region&> ClassFromAnyCPIndexAlloc;
    typedef std::set<ClassFromAnyCPIndex, LessClassFromAnyCPIndex, ClassFromAnyCPIndexAlloc> ClassFromAnyCPIndexSet;
    ClassFromAnyCPIndexSet _classesFromAnyCPIndex;
+
+   TR_OpaqueClassBlock *_jlthrowable;
    };
 
 }
