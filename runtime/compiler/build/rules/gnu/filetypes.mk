@@ -22,6 +22,31 @@
 # These are the rules to compile files of type ".x" into object files
 # as well as to generate clean and cleandeps rules
 #
+ifneq ($(JITSERVER_SUPPORT),)
+   #
+   # Compile .proto files to .cpp files
+   #
+   PROTO_GEN_DIR=$(FIXED_SRCBASE)/compiler/net/gen
+   PROTO_DIR=$(FIXED_SRCBASE)/compiler/net/protos
+
+   #
+   # Compile .proto file into .cpp and .h files
+   #
+   define DEF_RULE.proto
+
+   $(1).pb.cpp $(1).pb.h: $(2) | jit_createdirs
+	   $$(PROTO_CMD) --cpp_out=$$(PROTO_GEN_DIR) -I $$(PROTO_DIR) $$<
+	   cp $(1).pb.cc $(1).pb.cpp
+
+   JIT_DIR_LIST+=$(dir $(1))
+
+   jit_cleanobjs::
+	   rm -f $(1).pb.cpp $(1).pb.cc $(1).pb.h
+
+   endef # DEF_RULE.proto
+
+   RULE.proto=$(eval $(DEF_RULE.proto))
+endif
 
 #
 # Compile .c file into .o file
@@ -109,7 +134,7 @@ endif # ($(HOST_ARCH),x)
 ##### END X SPECIFIC RULES #####
 
 ##### START PPC SPECIFIC RULES #####
-ifeq ($(HOST_ARCH),p) 
+ifeq ($(HOST_ARCH),p)
 
 #
 # Compile .ipp file into .o file
@@ -145,7 +170,7 @@ endef # DEF_RULE.spp
 
 RULE.spp=$(eval $(DEF_RULE.spp))
 
-endif # ($(HOST_ARCH),p) 
+endif # ($(HOST_ARCH),p)
 ##### END PPC SPECIFIC RULES #####
 
 ##### START Z SPECIFIC RULES #####
