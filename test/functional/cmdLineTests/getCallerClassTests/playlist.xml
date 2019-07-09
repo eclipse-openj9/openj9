@@ -40,6 +40,10 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 		<test>
 		<testCaseName>cmdLineTester_getCallerClassTests</testCaseName>
@@ -58,5 +62,9 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 </playlist>

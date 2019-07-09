@@ -41,6 +41,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_GCRegressionTests_Mode301</testCaseName>

@@ -41,6 +41,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -60,6 +64,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -104,6 +112,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -149,6 +161,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<!-- jit.test.jar tests start here -->
@@ -171,6 +187,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<!-- jit.test.tr start here -->
@@ -210,6 +230,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -233,6 +257,10 @@
 			<group>functional</group>
 		</groups>
 		<aot>nonapplicable</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<!-- jit.test.hw tests start here -->
@@ -258,6 +286,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -280,6 +312,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<!-- jit.test.ra tests start here -->
@@ -352,5 +388,9 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 </playlist>

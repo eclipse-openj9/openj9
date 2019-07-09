@@ -38,6 +38,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
@@ -61,6 +65,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
@@ -86,6 +94,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
@@ -109,6 +121,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
@@ -135,6 +151,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
@@ -160,6 +180,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
@@ -184,6 +208,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 			<subset>9</subset>
@@ -210,6 +238,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>9</subset>
 			<subset>11+</subset>
@@ -236,6 +268,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>9</subset>
 			<subset>11+</subset>
@@ -262,6 +298,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>9</subset>
 			<subset>11+</subset>
@@ -287,6 +327,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>9</subset>
 			<subset>11+</subset>
@@ -313,6 +357,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 		</subsets>
@@ -338,6 +386,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 		</subsets>
@@ -363,6 +415,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 		</subsets>
@@ -387,6 +443,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 		</subsets>
@@ -413,6 +473,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>thrstatetest</testCaseName>
@@ -436,6 +500,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<subset>9</subset>
 			<subset>11+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>vmLifecyleTests</testCaseName>
@@ -459,6 +527,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<subsets>
 			<subset>8</subset>
 		</subsets>

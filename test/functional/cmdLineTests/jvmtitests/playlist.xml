@@ -58,6 +58,10 @@
 			<type>native</type>
 		</types>
 		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_SE80</testCaseName>
@@ -97,6 +101,10 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr</testCaseName>
@@ -136,6 +144,10 @@
 		<subsets>
 			<subset>11+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_debug</testCaseName>
@@ -172,6 +184,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_nongold</testCaseName>
@@ -208,6 +224,10 @@
 			<type>native</type>
 		</types>
 		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 
@@ -236,6 +256,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 
@@ -277,6 +301,10 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_nongold</testCaseName>
@@ -316,6 +344,10 @@
 		<subsets>
 			<subset>11+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 
@@ -350,6 +382,10 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_hcr_OSRG_nongold</testCaseName>
@@ -382,6 +418,10 @@
 		<subsets>
 			<subset>11+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -419,6 +459,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -446,6 +490,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_decompilationTests_nongold</testCaseName>
@@ -474,6 +522,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>decompileAtMethodResolve</testCaseName>
@@ -491,6 +543,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_soae</testCaseName>
@@ -524,5 +580,9 @@
 			<subset>11+</subset>
 		</subsets>
 		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 </playlist>

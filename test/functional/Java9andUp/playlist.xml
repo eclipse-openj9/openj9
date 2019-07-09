@@ -49,6 +49,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -74,6 +78,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	
 	<test>
@@ -97,6 +105,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -119,6 +131,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -142,6 +158,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -161,6 +181,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -180,6 +204,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -199,6 +227,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -218,6 +250,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -237,6 +273,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -256,6 +296,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -277,6 +321,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	
 	<test>
@@ -297,6 +345,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>StaticAccessChecks-IllegalAccessPermit</testCaseName>
@@ -317,6 +369,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>StaticAccessChecks-IllegalAccessDeny</testCaseName>
@@ -337,6 +393,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -358,6 +418,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>TestClassLoaderFindResource</testCaseName>
@@ -376,5 +440,9 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 </playlist>

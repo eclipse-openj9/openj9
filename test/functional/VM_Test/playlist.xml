@@ -48,6 +48,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>jvmnativestest</testCaseName>
@@ -66,6 +70,10 @@
 			<subset>8</subset>
 			<subset>11+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -87,6 +95,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -107,6 +119,10 @@
 			<subset>9</subset>
 			<subset>11+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>recreateClassTest</testCaseName>
@@ -128,6 +144,10 @@
 			<subset>8</subset>
 		</subsets>
 		<disabled>excluded OpenJ9 tests</disabled>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -145,8 +165,11 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
-		
-	<disabled>excluded OpenJ9 tests</disabled>
+		<disabled>excluded OpenJ9 tests</disabled>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 </playlist>

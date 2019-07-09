@@ -22,7 +22,7 @@
   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-<project name="JLM_Tests" default="clean" basedir=".">
+<project name="JLM_Tests" default="build" basedir=".">
 
 	<description>
 		Build JLM Tests
@@ -52,6 +52,7 @@
 		<echo>===executable:                   ${compiler.javac}</echo>
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${build}</echo>
+		
 		<if>
 			<equals arg1="${JDK_VERSION}" arg2="8"/>
 			<then>
@@ -114,7 +115,15 @@
 		<delete dir="${build}"/>
 	</target>
 
-	<target name="build">
-		<antcall target="clean" inheritall="true" />
+	<target name="build" >
+		<if>
+			<or>
+				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="openj9" />
+			</or>
+			<then>
+				<antcall target="clean" inheritall="true" />
+			</then>
+		</if>
 	</target>
 </project>
