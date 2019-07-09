@@ -568,32 +568,31 @@ public final class JITHelpers {
 	}
 
 	/**
-	 * Searches in the source character array for the index of the target character array.
-	 * Both arrays must be Latin1 arrays consisting of compressible characters ranging from \u0000 to \u00FF.
-	 * The source and target character arrays have their lengths specified. The search for the array starts
-	 * at the specified offset and moves towards the end of source array.
+	 * Returns the first index of the target character array within the source character array starting from the specified
+	 * offset.
+	 *
+	 * <p>This API implicitly assumes the following:
+	 * <blockquote><pre>
+	 *     - s1Value != null
+	 *     - s2Value != null
+	 *     - 0 <= s1len <= s1Value.length * 2
+	 *     - 1 <= s2len <= s2Value.length * 2
+	 *     - 0 <= start < s1len
+	 * <blockquote><pre>
 	 * 
-	 * @param s1Value
-	 * 		 	the source character array to search in
-	 * @param s1len
-	 * 		    the length of the source array
-	 * @param s2Value
-	 * 			the target character array to search for
-	 * @param s2len
-	 * 			the length of the target array
-	 * @param start
-	 * 			the starting offset
-	 * 
-	 * @return the index of the target array inside the source array, or -1 if the target array is not found
-	 * */
+	 * @param s1Value the source character array to search in.
+	 * @param s1len   the length (in number of characters) of the source array.
+	 * @param s2Value the target character array to search for.
+	 * @param s2len   the length (in number of characters) of the target array.
+	 * @param start   the starting offset (in number of characters) to search from.
+	 * @return        the index (in number of characters) of the target array within the source array, or -1 if the
+	 *                target array is not found within the source array.
+	 */
 	public int intrinsicIndexOfStringLatin1(char[] s1Value, int s1len, char[] s2Value, int s2len, int start) {
 		char firstChar = byteToCharUnsigned(getByteFromArrayByIndex(s2Value, 0));
 
 		while (true) {
-			int i = -1;
-			if (start < s1len) {
-				i = intrinsicIndexOfLatin1(s1Value, (byte)firstChar, start, s1len);
-			}
+			int i = intrinsicIndexOfLatin1(s1Value, (byte)firstChar, start, s1len);
 						
 			// Handles subCount > count || start >= count
 			if (i == -1 || s2len + i > s1len) {
@@ -615,24 +614,26 @@ public final class JITHelpers {
 	}
 	
 	/**
-	 * Searches in the source character array for the index of the target character array.
-	 * Both arrays consisting of UTF16 characters.
-	 * The source and target character arrays have their lengths specified. The search for the array starts
-	 * at the specified offset and moves towards the end of source array.
+	 * Returns the first index of the target character array within the source character array starting from the specified
+	 * offset.
+	 *
+	 * <p>This API implicitly assumes the following:
+	 * <blockquote><pre>
+	 *     - s1Value != null
+	 *     - s2Value != null
+	 *     - 0 <= s1len <= s1Value.length
+	 *     - 1 <= s2len <= s2Value.length
+	 *     - 0 <= start < s1len
+	 * <blockquote><pre>
 	 * 
-	 * @param s1Value
-	 * 		 	the source character array to search in
-	 * @param s1len
-	 * 		    the length of the source array
-	 * @param s2Value
-	 * 			the target character array to search for
-	 * @param s2len
-	 * 			the length of the target array
-	 * @param start
-	 * 			the starting offset
-	 * 
-	 * @return the index of the target array inside the source array, or -1 if the target array is not found
-	 * */
+	 * @param s1Value the source character array to search in.
+	 * @param s1len   the length (in number of characters) of the source array.
+	 * @param s2Value the target character array to search for.
+	 * @param s2len   the length (in number of characters) of the target array.
+	 * @param start   the starting offset (in number of characters) to search from.
+	 * @return        the index (in number of characters) of the target array within the source array, or -1 if the
+	 *                target array is not found within the source array.
+	 */
 	public int intrinsicIndexOfStringUTF16(char[] s1Value, int s1len, char[] s2Value, int s2len, int start) {
 		char firstChar = s2Value[0];
 
@@ -640,7 +641,7 @@ public final class JITHelpers {
 			int i = intrinsicIndexOfUTF16(s1Value, firstChar, start, s1len);
 			
 			// Handles subCount > count || start >= count
-			if ((i == -1) || (s2len + i > s1len)) {
+			if (i == -1 || s2len + i > s1len) {
 				return -1;
 			}
 
@@ -657,19 +658,53 @@ public final class JITHelpers {
 			start = i + 1;
 		}
 	}
-	
+
+	/**
+	 * Returns the first index of the character within the source character array starting from the specified offset.
+	 *
+	 * <p>This API implicitly assumes the following:
+	 * <blockquote><pre>
+	 *     - array != null
+	 *     - 0 <= offset < length <= array.length * 1 (if array instanceof byte[])
+	 *     - 0 <= offset < length <= array.length * 2 (if array instanceof char[])
+	 * <blockquote><pre>
+	 * 
+	 * @param array  the source character array to search in.
+	 * @param ch     the character to search for.
+	 * @param offset the starting offset (in number of characters) to search from.
+	 * @param length the length (in number of characters) of the source array.
+	 * @return       the index (in number of characters) of \p ch within the source array, or -1 if \p ch is not found
+	 *               within the source array.
+	 */
 	public int intrinsicIndexOfLatin1(Object array, byte ch, int offset, int length) {
 		for (int i = offset; i < length; i++) {
-			if(getByteFromArrayByIndex(array, i) == ch) {
+			if (getByteFromArrayByIndex(array, i) == ch) {
 				return i;
 			}
 		}
 		return -1;
 	}
 
+	/**
+	 * Returns the first index of the character within the source character array starting from the specified offset.
+	 *
+	 * <p>This API implicitly assumes the following:
+	 * <blockquote><pre>
+	 *     - array != null
+	 *     - 0 <= offset < length <= array.length * 1 (if array instanceof byte[])
+	 *     - 0 <= offset < length <= array.length * 2 (if array instanceof char[])
+	 * <blockquote><pre>
+	 * 
+	 * @param array  the source character array to search in.
+	 * @param ch     the character to search for.
+	 * @param offset the starting offset (in number of characters) to search from.
+	 * @param length the length (in number of characters) of the source array.
+	 * @return       the index (in number of characters) of \p ch within the source array, or -1 if \p ch is not found
+	 *               within the source array.
+	 */
 	public int intrinsicIndexOfUTF16(Object array, char ch, int offset, int length) {
 		for (int i = offset; i < length; i++) {
-			if(getCharFromArrayByIndex(array, i) == ch) {
+			if (getCharFromArrayByIndex(array, i) == ch) {
 				return i;
 			}
 		}
