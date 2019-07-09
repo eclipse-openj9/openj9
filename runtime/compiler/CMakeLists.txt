@@ -179,6 +179,7 @@ set(J9_INCLUDES
 	${j9vm_SOURCE_DIR}/include
 	${j9vm_SOURCE_DIR}/util
 	${j9vm_BINARY_DIR}
+	${j9vm_BINARY_DIR}/oti
 	${omr_BINARY_DIR}
 	${CMAKE_CURRENT_BINARY_DIR}
 )
