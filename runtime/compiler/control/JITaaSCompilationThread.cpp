@@ -568,6 +568,7 @@ bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
          vmInfo._writeBarrierType = TR::Compiler->om.writeBarrierType();
          vmInfo._compressObjectReferences = TR::Compiler->om.compressObjectReferences();
          vmInfo._processorFeatureFlags = TR::Compiler->target.cpu.getProcessorFeatureFlags();
+         vmInfo._invokeWithArgumentsHelperMethod = J9VMJAVALANGINVOKEMETHODHANDLE_INVOKEWITHARGUMENTSHELPER_METHOD(fe->getJ9JITConfig()->javaVM);
          client->write(response, vmInfo);
          }
          break;

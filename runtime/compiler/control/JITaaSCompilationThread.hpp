@@ -157,6 +157,7 @@ class ClientSessionData
       MM_GCWriteBarrierType _writeBarrierType;
       bool _compressObjectReferences;
       TR_ProcessorFeatureFlags _processorFeatureFlags;
+      J9Method *_invokeWithArgumentsHelperMethod;
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
