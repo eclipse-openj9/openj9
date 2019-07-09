@@ -741,6 +741,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 					|| (0 == strncmp(packageName, JAVASLASH, sizeof(JAVASLASH) - 1))
 				) {
 					vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, J9NLS_VM_ONLY_BOOT_PLATFORM_CLASSLOADER_DEFINE_PKG_JAVA);
+					goto done;
 				}
 #undef JAVASLASH
 #undef JAVADOT
@@ -826,6 +827,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 			}
 		}
 	}
+done:
 #if defined(CALL_BUNDLED_FUNCTIONS_DIRECTLY)
 	omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
 #else
