@@ -78,7 +78,7 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     */
    void process_java_lang_StringUTF16_toBytes(TR::TreeTop* treetop, TR::Node* node);
    /** \brief
-    *     Transforms java/lang/StrictMath.sqrt(D)D into a CodeGen inlined function with equivalent semantics.
+    *     Transforms java/lang/StrictMath.sqrt(D)D and java/lang/Math.sqrt(D)D into a CodeGen inlined function with equivalent semantics.
     *
     *  \param treetop
     *     The treetop which anchors the call node.
@@ -87,12 +87,12 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     *     The call node representing a call to java/lang/StrictMath.sqrt(D)D which has the following shape:
     *
     *     \code
-    *     dcall  java/lang/StrictMath.sqrt(D)D
+    *     dcall  java/lang/StrictMath.sqrt(D)D or java/lang/Math.sqrt(D)D
     *       <jclass>
     *       <value>
     *     \endcode
     */
-   void process_java_lang_StrictMath_sqrt(TR::TreeTop* treetop, TR::Node* node);
+   void process_java_lang_StrictMath_and_Math_sqrt(TR::TreeTop* treetop, TR::Node* node);
    /** \brief
     *     Transforms certain Unsafe atomic helpers into a CodeGen inlined helper with equivalent semantics.
     *

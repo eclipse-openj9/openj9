@@ -104,12 +104,11 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    treetop->insertAfter(TR::TreeTop::create(comp(), TR::Node::create(node, TR::treetop, 1, newCallNode)));
    }
 
-void J9::RecognizedCallTransformer::process_java_lang_StrictMath_sqrt(TR::TreeTop* treetop, TR::Node* node)
+void J9::RecognizedCallTransformer::process_java_lang_StrictMath_and_Math_sqrt(TR::TreeTop* treetop, TR::Node* node)
    {
-      TR::Node* dumpNode = node->getChild(0);
-      TR::Node* valueNode = node->getChild(1);
+      TR::Node* valueNode = node->getLastChild();
 
-      anchorNode(dumpNode, treetop);
+      anchorAllChildren(node, treetop);
       prepareToReplaceNode(node);
 
       TR::Node::recreateWithoutProperties(node, TR::dsqrt, 1, valueNode, getSymRefTab()->findOrCreateNewArraySymbolRef(node->getSymbolReference()->getOwningMethodSymbol(comp())));
@@ -436,10 +435,8 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
          process_java_lang_StringUTF16_toBytes(treetop, node);
          break;
       case TR::java_lang_StrictMath_sqrt:
-         process_java_lang_StrictMath_sqrt(treetop, node);
-         break;
       case TR::java_lang_Math_sqrt:
-         processIntrinsicFunction(treetop, node, TR::dsqrt);
+         process_java_lang_StrictMath_and_Math_sqrt(treetop, node);
          break;
       default:
          break;
