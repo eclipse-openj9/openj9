@@ -56,6 +56,10 @@
 			<subset>8</subset>
 		</subsets>
 		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -91,6 +95,10 @@
 			<subset>9+</subset>
 		</subsets>
 		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -117,6 +125,10 @@
 			<subset>8</subset>
 		</subsets>
 		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -144,6 +156,10 @@
 			<subset>9+</subset>
 		</subsets>
 		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -170,6 +186,10 @@
 			<subset>8</subset>
 		</subsets>
 		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -197,6 +217,10 @@
 			<subset>9+</subset>
 		</subsets>
 		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -226,6 +250,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -255,6 +283,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -284,6 +316,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -309,6 +345,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -334,6 +374,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -363,6 +407,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -392,6 +440,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<tags>
 			<tag>test:largepages</tag>
 		</tags>
@@ -423,6 +475,10 @@
 			<group>functional</group>
 		</groups>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -451,6 +507,10 @@
 			<group>functional</group>
 		</groups>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -479,6 +539,10 @@
 			<group>functional</group>
 		</groups>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -507,6 +571,10 @@
 			<group>functional</group>
 		</groups>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -538,6 +606,10 @@
 			<tag>test:largepages</tag>
 		</tags>
 		<disabled>https://github.com/eclipse/openj9/issues/480</disabled>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -567,6 +639,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -596,6 +672,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -625,6 +705,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -655,6 +739,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -685,6 +773,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 		<tags>
 			<tag>test:largepages</tag>
 		</tags>
@@ -718,6 +810,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -748,6 +844,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -778,6 +878,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -807,6 +911,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>testDefaultDisclaimMemory_zlinux</testCaseName>
@@ -835,6 +943,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -865,6 +977,10 @@
 		<types>
 			<type>native</type>
 		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -888,6 +1004,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -912,6 +1032,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -938,6 +1062,10 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -964,6 +1092,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -991,6 +1123,10 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -1018,6 +1154,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<!-- Exclude testOpenJ9DiagnosticsMXBean test on win32: https://github.com/eclipse/openj9/issues/2213-->
@@ -1044,6 +1184,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<!-- Exclude testOpenJ9DiagnosticsMXBean test on win32: https://github.com/eclipse/openj9/issues/2213-->
@@ -1070,6 +1214,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -1093,6 +1241,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -1117,6 +1269,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -1138,6 +1294,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -1159,6 +1319,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -1184,6 +1348,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 </playlist>

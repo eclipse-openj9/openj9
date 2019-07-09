@@ -28,6 +28,36 @@
 		<testCaseName>jsr292Test_jdk8</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_8.xml$(Q) \
+	-testnames jsr292Test,jsr292Test_optional \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+		</subsets>
+		<!-- 
+			TODO: Further investigation is needed for running against non-openj9 sdk
+		-->
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+
+	<test>
+		<testCaseName>jsr292Test_jdk8_special</testCaseName>
+		<variations>
 			<variation>Mode195</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
@@ -47,6 +77,10 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -76,7 +110,7 @@
 		</subsets>
 	</test>
 
-    <test>
+  <test>
 		<testCaseName>jsr292Test</testCaseName>
 		<variations>
 				<variation>NoOptions</variation>
@@ -100,6 +134,13 @@
 		<subsets>
 			<subset>11+</subset>
 		</subsets>
+		<!-- 
+			TODO: Further investigation is needed for running against non-openj9 sdk
+		-->
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -155,6 +196,10 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -181,6 +226,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -206,13 +255,17 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
+
 
 	<test>
 		<testCaseName>jsr292BootstrapTest</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
-			<variation>Mode195</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-opens=java.base/java.lang=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED \
@@ -235,6 +288,35 @@
 	</test>
 
 	<test>
+		<testCaseName>jsr292BootstrapTests_special</testCaseName>
+		<variations>
+			<variation>Mode195</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-opens=java.base/java.lang=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED \
+	-Xbootclasspath/a:$(Q)$(TEST_RESROOT)$(D)jsr292bootstrap.jar$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames jsr292BootstrapTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>9+</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+
+	<test>
 		<testCaseName>jsr292_MethodHandleAPI_Test</testCaseName>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	--add-opens=java.base/java.lang.invoke=ALL-UNNAMED --add-opens=java.base/java.lang=ALL-UNNAMED \
@@ -254,6 +336,13 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<!-- 
+			TODO: Further investigation is needed for running against non-openj9 sdk
+		-->
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -277,6 +366,10 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 	<test>
@@ -298,6 +391,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 
 </playlist>
