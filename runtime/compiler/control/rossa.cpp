@@ -1794,12 +1794,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
       hwProfiler->turnBufferProcessingOffTemporarily();
       }
 
-   /* Register this module with trace */
-#if defined(UT_DIRECT_TRACE_REGISTRATION)
    UT_MODULE_LOADED(J9_UTINTERFACE_FROM_VM(javaVM));
-#else
-   UT_MODULE_LOADED(javaVM);
-#endif
    Trc_JIT_VMInitStages_Event1(curThread);
 
    return 0;
