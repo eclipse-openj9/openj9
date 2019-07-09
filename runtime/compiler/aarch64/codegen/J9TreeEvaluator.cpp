@@ -42,8 +42,8 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
 
    // TODO:ARM64: Enable when Implemented: tet[TR::awrtbar] = TR::TreeEvaluator::awrtbarEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::awrtbari] = TR::TreeEvaluator::awrtbariEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::monent] = TR::TreeEvaluator::monentEvaluator;
    tet[TR::monexit] = TR::TreeEvaluator::monexitEvaluator;
+   tet[TR::monent] = TR::TreeEvaluator::monentEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::monexitfence] = TR::TreeEvaluator::monexitfenceEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::asynccheck] = TR::TreeEvaluator::asynccheckEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::instanceof] = TR::TreeEvaluator::instanceofEvaluator;
@@ -89,7 +89,7 @@ J9::ARM64::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
    {
    TR_ASSERT_FATAL(false, "This helper implements platform specific code for Fieldwatch, which is currently not supported on ARM64 platforms.\n");
    }
-	
+
 TR::Register *
 J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -172,6 +172,16 @@ J9::ARM64::TreeEvaluator::anewArrayEvaluator(TR::Node *node, TR::CodeGenerator *
    {
    TR::ILOpCodes opCode = node->getOpCodeValue();
    TR::Node::recreate(node, TR::acall);
+   TR::Register *targetRegister = directCallEvaluator(node, cg);
+   TR::Node::recreate(node, opCode);
+   return targetRegister;
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::ILOpCodes opCode = node->getOpCodeValue();
+   TR::Node::recreate(node, TR::call);
    TR::Register *targetRegister = directCallEvaluator(node, cg);
    TR::Node::recreate(node, opCode);
    return targetRegister;
