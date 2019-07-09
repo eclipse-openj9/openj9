@@ -2575,6 +2575,7 @@ remoteCompile(
    std::string logFileStr;
    std::string svmSymbolToIdStr;
    std::vector<TR_ResolvedJ9Method*> resolvedMirrorMethodsPersistIPInfo;
+   TR_OptimizationPlan modifiedOptPlan;
    try
       {
       // release VM access just before sending the compilation request
@@ -2588,7 +2589,7 @@ remoteCompile(
             seqNo, compiler->signature(), compiler->getHotnessName());
          }
       client->buildCompileRequest(TR::comp()->getPersistentInfo()->getJITaaSId(), romMethodOffset,
-                                 method, clazz, compiler->getMethodHotness(), detailsStr, details.getType(), unloadedClasses,
+                                 method, clazz, *compInfoPT->getMethodBeingCompiled()->_optimizationPlan, detailsStr, details.getType(), unloadedClasses,
                                  classInfoTuple, optionsStr, recompMethodInfoStr, seqNo, useAotCompilation);
       // re-acquire VM access and check for possible class unloading
       acquireVMAccessNoSuspend(vmThread);
@@ -2613,7 +2614,7 @@ remoteCompile(
 
       while(!handleServerMessage(client, compiler->fej9vm()));
       auto recv = client->getRecvData<uint32_t, std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>,
-                                      std::string, std::string, std::vector<TR_ResolvedJ9Method*>>();
+                                      std::string, std::string, std::vector<TR_ResolvedJ9Method*>, TR_OptimizationPlan>();
       statusCode = std::get<0>(recv);
       codeCacheStr = std::get<1>(recv);
       dataCacheStr = std::get<2>(recv);
@@ -2622,6 +2623,8 @@ remoteCompile(
       logFileStr = std::get<5>(recv);
       svmSymbolToIdStr = std::get<6>(recv);
       resolvedMirrorMethodsPersistIPInfo = std::get<7>(recv);
+      modifiedOptPlan = std::get<8>(recv);
+
       if (statusCode >= compilationMaxError)
          throw JITServer::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
       if (statusCode == compilationStreamVersionIncompatible)
@@ -2667,6 +2670,8 @@ remoteCompile(
 
          TR_ASSERT(codeCacheStr.size(), "must have code cache");
          TR_ASSERT(dataCacheStr.size(), "must have data cache");
+
+         compInfoPT->getMethodBeingCompiled()->_optimizationPlan->clone(&modifiedOptPlan);
 
          // relocate the received compiled code
          metaData = remoteCompilationEnd(vmThread, compiler, compilee, method, compInfoPT, codeCacheStr, dataCacheStr);
@@ -2989,7 +2994,8 @@ outOfProcessCompilationEnd(
                                      logFileStr, svmSymbolToIdStr,
                                      (resolvedMirrorMethodsPersistIPInfo) ?
                                                          std::vector<TR_ResolvedJ9Method*>(resolvedMirrorMethodsPersistIPInfo->begin(), resolvedMirrorMethodsPersistIPInfo->end()) :
-                                                         std::vector<TR_ResolvedJ9Method*>()
+                                                         std::vector<TR_ResolvedJ9Method*>(),
+                                     *entry->_optimizationPlan
                                      );
    compInfoPT->clearPerCompilationCaches();
 
@@ -4126,23 +4132,23 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    bool useAotCompilation = false;
    try
       {
-      auto req = stream->readCompileRequest<uint64_t, uint32_t, J9Method *, J9Class*, TR_Hotness, std::string,
+      auto req = stream->readCompileRequest<uint64_t, uint32_t, J9Method *, J9Class*, TR_OptimizationPlan, std::string,
          J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>,
          JITaaSHelpers::ClassInfoTuple, std::string, std::string, uint32_t, bool>();
 
-      clientId                  = std::get<0>(req);
-      uint32_t romMethodOffset  = std::get<1>(req);
-      J9Method *ramMethod       = std::get<2>(req);
-      J9Class *clazz            = std::get<3>(req);
-      TR_Hotness optLevel       = std::get<4>(req);
-      std::string detailsStr    = std::get<5>(req);
-      auto detailsType          = std::get<6>(req);
-      auto &unloadedClasses     = std::get<7>(req);
-      auto &classInfoTuple      = std::get<8>(req);
-      std::string clientOptStr  = std::get<9>(req);
-      std::string recompInfoStr = std::get<10>(req);
-      uint32_t seqNo            = std::get<11>(req); // sequence number at the client
-      useAotCompilation         = std::get<12>(req);
+      clientId                           = std::get<0>(req);
+      uint32_t romMethodOffset           = std::get<1>(req);
+      J9Method *ramMethod                = std::get<2>(req);
+      J9Class *clazz                     = std::get<3>(req);
+      TR_OptimizationPlan clientOptPlan  = std::get<4>(req);
+      std::string detailsStr             = std::get<5>(req);
+      auto detailsType                   = std::get<6>(req);
+      auto &unloadedClasses              = std::get<7>(req);
+      auto &classInfoTuple               = std::get<8>(req);
+      std::string clientOptStr           = std::get<9>(req);
+      std::string recompInfoStr          = std::get<10>(req);
+      uint32_t seqNo                     = std::get<11>(req); // sequence number at the client
+      useAotCompilation                  = std::get<12>(req);
 
       if (useAotCompilation)
          {
@@ -4288,8 +4294,10 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       J9Method *methodsOfClass = std::get<1>(classInfoTuple);
 
       // Build my entry
-      if (!(optPlan = TR_OptimizationPlan::alloc(optLevel)))
+      if (!(optPlan = TR_OptimizationPlan::alloc(clientOptPlan.getOptLevel())))
          throw std::bad_alloc();
+      optPlan->clone(&clientOptPlan);
+
       TR::IlGeneratorMethodDetails *clientDetails = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
       *(uintptr_t*)clientDetails = 0; // smash remote vtable pointer to catch bugs early
       TR::IlGeneratorMethodDetails details;
