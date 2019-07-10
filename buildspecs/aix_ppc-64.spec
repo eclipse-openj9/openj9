@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2018 IBM Corp. and others
+Copyright (c) 2006, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -178,7 +178,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="jit_requiresTrapHandler" value="true"/>
 		<flag id="jit_runtimeInstrumentation" value="true"/>
 		<flag id="jit_supportsDirectJNI" value="true"/>
-		<flag id="math_useDivRem" value="true"/>
 		<flag id="module_algorithm_test" value="true"/>
 		<flag id="module_bcutil" value="true"/>
 		<flag id="module_bcverify" value="true"/>
