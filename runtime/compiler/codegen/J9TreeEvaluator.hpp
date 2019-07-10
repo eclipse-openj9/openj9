@@ -145,6 +145,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluatorConnector
 
    static void preEvaluateEscapingNodesForSpineCheck(TR::Node *root, TR::CodeGenerator *cg);
 
+   static TR::Register *resolveCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
    };
 
 }

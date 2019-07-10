@@ -3011,41 +3011,6 @@ J9::Z::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg
 
 
 ///////////////////////////////////////////////////////////////////////////////////////
-// resolveCHKEvaluator - Resolve check a static, field or method. child 1 is reference
-//   to be resolved. Symbolref indicates failure action/destination
-///////////////////////////////////////////////////////////////////////////////////////
-   TR::Register *
-J9::Z::TreeEvaluator::resolveCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
-   {
-   // No code is generated for the resolve check. The child will reference an
-   // unresolved symbol and all check handling is done via the corresponding
-   // snippet.
-   //
-   TR::Node * firstChild = node->getFirstChild();
-   bool fixRefCount = false;
-   if (cg->comp()->useCompressedPointers())
-      {
-      // for stores under ResolveCHKs, artificially bump
-      // down the reference count before evaluation (since stores
-      // return null as registers)
-      //
-      if (node->getFirstChild()->getOpCode().isStoreIndirect() &&
-            node->getFirstChild()->getReferenceCount() > 1)
-         {
-         node->getFirstChild()->decReferenceCount();
-         fixRefCount = true;
-         }
-      }
-   cg->evaluate(firstChild);
-   if (fixRefCount)
-      firstChild->incReferenceCount();
-
-   cg->decReferenceCount(firstChild);
-   return NULL;
-   }
-
-
-///////////////////////////////////////////////////////////////////////////////////////
 // DIVCHKEvaluator - Divide by zero check. child 1 is the divide. Symbolref indicates
 //    failure action/destination
 ///////////////////////////////////////////////////////////////////////////////////////

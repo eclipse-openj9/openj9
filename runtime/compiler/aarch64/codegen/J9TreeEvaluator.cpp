@@ -34,7 +34,7 @@
 #include "il/symbol/LabelSymbol.hpp"
 
 /*
- * J9 PPC specific tree evaluator table overrides
+ * J9 ARM64 specific tree evaluator table overrides
  */
 extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    {
@@ -56,7 +56,7 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::variableNewArray] = TR::TreeEvaluator::anewArrayEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::multianewarray] = TR::TreeEvaluator::multianewArrayEvaluator;
    tet[TR::arraylength] = TR::TreeEvaluator::arraylengthEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::ResolveCHK] = TR::TreeEvaluator::resolveCHKEvaluator;
+   tet[TR::ResolveCHK] = TR::TreeEvaluator::resolveCHKEvaluator;
    tet[TR::DIVCHK] = TR::TreeEvaluator::DIVCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::BNDCHK] = TR::TreeEvaluator::BNDCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCopyBNDCHK] = TR::TreeEvaluator::ArrayCopyBNDCHKEvaluator;
@@ -70,7 +70,6 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    // TODO:ARM64: Enable when Implemented: tet[TR::loadFence] = TR::TreeEvaluator::flushEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::storeFence] = TR::TreeEvaluator::flushEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::fullFence] = TR::TreeEvaluator::flushEvaluator;
-
    }
 
 void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceInstruction, TR::CodeGenerator *cg)
