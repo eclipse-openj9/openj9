@@ -199,8 +199,8 @@ J9::ARM64::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator
    TR::Register *lengthReg = cg->allocateRegister();
    TR::Register *discontiguousLengthReg = cg->allocateRegister();
 
-   TR::MemoryReference *contiguousArraySizeMR = new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfContiguousArraySizeField(), 4, cg);
-   TR::MemoryReference *discontiguousArraySizeMR = new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField(), 4, cg);   
+   TR::MemoryReference *contiguousArraySizeMR = new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfContiguousArraySizeField(), cg);
+   TR::MemoryReference *discontiguousArraySizeMR = new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField(), cg);
 
    generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, lengthReg, contiguousArraySizeMR);
    generateCompareImmInstruction(cg, node, lengthReg, 0);
