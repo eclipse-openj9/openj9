@@ -40,8 +40,8 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    {
    TR_TreeEvaluatorFunctionPointer *tet = cg->getTreeEvaluatorTable();
 
-   // TODO:ARM64: Enable when Implemented: tet[TR::awrtbar] = TR::TreeEvaluator::awrtbarEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::awrtbari] = TR::TreeEvaluator::awrtbariEvaluator;
+   tet[TR::awrtbar] = TR::TreeEvaluator::awrtbarEvaluator;
+   tet[TR::awrtbari] = TR::TreeEvaluator::awrtbariEvaluator;
    tet[TR::monexit] = TR::TreeEvaluator::monexitEvaluator;
    tet[TR::monent] = TR::TreeEvaluator::monentEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::monexitfence] = TR::TreeEvaluator::monexitfenceEvaluator;
@@ -87,6 +87,20 @@ void
 J9::ARM64::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *dataSnippetRegister)
    {
    TR_ASSERT_FATAL(false, "This helper implements platform specific code for Fieldwatch, which is currently not supported on ARM64 platforms.\n");
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_UNIMPLEMENTED();
+   return NULL;
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_UNIMPLEMENTED();
+   return NULL;
    }
 
 TR::Register *
