@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,7 +68,7 @@ public:
 			flags |= J9VM_FIELD_OFFSET_WALK_PREINDEX_INTERFACE_FIELDS;
 		}
 
-		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class *clazz = J9GC_J9OBJECT_CLAZZ_VM(objectPtr, _javaVM);
 		_fieldShape = _javaVM->internalVMFunctions->fullTraversalFieldOffsetsStartDo(_javaVM, clazz, &_walkState, flags);
 	}
 

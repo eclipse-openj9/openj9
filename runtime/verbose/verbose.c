@@ -378,7 +378,7 @@ printClassShape(J9VMThread* vmThread, J9Class* clazz)
 							shape[offset+1] = J9UTF8_DATA(signature)[0];
 							break;
 						default:
-							memset(shape + offset, J9UTF8_DATA(signature)[0], sizeof(fj9object_t) / sizeof(U_32));
+							memset(shape + offset, J9UTF8_DATA(signature)[0], J9VMTHREAD_REFERENCE_SIZE(vmThread) / sizeof(U_32));
 							break;
 						}
 					}

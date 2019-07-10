@@ -602,7 +602,7 @@ Java_sun_misc_Unsafe_objectFieldOffset(JNIEnv *env, jobject receiver, jobject fi
 		} else if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		} else {
-			offset = (jlong)fieldID->offset + J9_OBJECT_HEADER_SIZE;
+			offset = (jlong)fieldID->offset + J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 		}
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
@@ -780,7 +780,7 @@ Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, 
 		} else if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		} else {
-			offset = (jlong)fieldID->offset + J9_OBJECT_HEADER_SIZE;
+			offset = (jlong)fieldID->offset + J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 		}
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);

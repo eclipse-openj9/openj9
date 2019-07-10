@@ -460,6 +460,7 @@ initJ9HiddenField(J9HiddenInstanceField *field, J9UTF8 *classNameUTF8, J9ROMFiel
 UDATA
 initializeHiddenInstanceFieldsList(J9JavaVM *vm)
 {
+	UDATA const referenceSize = J9JAVAVM_REFERENCE_SIZE(vm);
 	UDATA rc = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
@@ -468,12 +469,12 @@ initializeHiddenInstanceFieldsList(J9JavaVM *vm)
 		goto exit;
 	}
 
-	vm->hiddenLockwordFieldShape = allocAndInitFakeJ9ROMFieldShape(vm, "lockword", (ObjectFieldInfo::LOCKWORD_SIZE == sizeof(U_32) ? "I" : "J"));
+	vm->hiddenLockwordFieldShape = allocAndInitFakeJ9ROMFieldShape(vm, "lockword", (referenceSize == sizeof(U_32) ? "I" : "J"));
 	if (NULL == vm->hiddenLockwordFieldShape) {
 		goto destroyMutexAndCleanup;
 	}
 
-	vm->hiddenFinalizeLinkFieldShape = allocAndInitFakeJ9ROMFieldShape(vm, "finalizeLink", (ObjectFieldInfo::FINALIZE_LINK_SIZE == sizeof(U_32) ? "I" : "J"));
+	vm->hiddenFinalizeLinkFieldShape = allocAndInitFakeJ9ROMFieldShape(vm, "finalizeLink", (referenceSize == sizeof(U_32) ? "I" : "J"));
 	if (NULL == vm->hiddenFinalizeLinkFieldShape) {
 		goto destroyMutexAndCleanup;
 	}
@@ -659,8 +660,12 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 
 	Trc_VM_romFieldOffsetsStartDo_Entry( NULL, romClass, superClazz, flags );
 
+	UDATA const referenceSize = J9JAVAVM_REFERENCE_SIZE(vm);
+	UDATA const objectHeaderSize = J9JAVAVM_OBJECT_HEADER_SIZE(vm);
+
 	/* init the walk state, including all counters to 0 */
 	memset( state, 0, sizeof( *state ) );
+	state->vm = vm;
 	state->walkFlags = flags;
 	state->romClass = romClass;
 	state->hiddenInstanceFieldWalkIndex = (UDATA)-1;
@@ -686,8 +691,8 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 			 * we store the total instance size (including the header) instead.
 			 */
 			fieldInfo.setSuperclassFieldsSize((U_32) superClazz->totalInstanceSize);
-			if ((superClazz->totalInstanceSize + sizeof(J9Object)) != (UDATA)superClazz->backfillOffset) {
-				fieldInfo.setSuperclassBackfillOffset(superClazz->backfillOffset - sizeof(J9Object));
+			if ((superClazz->totalInstanceSize + objectHeaderSize) != (UDATA)superClazz->backfillOffset) {
+				fieldInfo.setSuperclassBackfillOffset(superClazz->backfillOffset - objectHeaderSize);
 			}
 		} else {
 			fieldInfo.setSuperclassFieldsSize(0);
@@ -701,7 +706,7 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 		 */
 		if ((LOCKWORD_NEEDED == lockwordNeeded)||(NO_LOCKWORD_NEEDED == lockwordNeeded)) {
 			if ((NULL != superClazz) && ((UDATA)-1 != superClazz->lockOffset) && (0 == J9CLASS_DEPTH(superClazz))) {
-				U_32 newSuperSize = fieldInfo.getSuperclassFieldsSize() - ObjectFieldInfo::LOCKWORD_SIZE;
+				U_32 newSuperSize = fieldInfo.getSuperclassFieldsSize() - referenceSize;
 				/*
 				 * superClazz is java.lang.Object: subtract off non-inherited monitor field.
 				 * Note that java.lang.Object's backfill slot can be only at the end.
@@ -794,17 +799,17 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 		 * Note that the hidden fields remember their offsets, so this need be done once only.
 		 */
 		if (fieldInfo.isHiddenFieldOffsetResolutionRequired()) {
-			UDATA hiddenSingleOffset = sizeof(J9Object);
-			UDATA hiddenDoubleOffset = sizeof(J9Object);
-			UDATA hiddenObjectOffset = sizeof(J9Object);
+			UDATA hiddenSingleOffset = objectHeaderSize;
+			UDATA hiddenDoubleOffset = objectHeaderSize;
+			UDATA hiddenObjectOffset = objectHeaderSize;
 			if (fieldInfo.isContendedClassLayout()) { /* hidden fields go immediately after the superclass fields and the instance fields which are placed on the following cache line */
 				/* hidden doubles go right at the start.  No adjustment required */
 				hiddenObjectOffset = hiddenDoubleOffset + (fieldInfo.getTotalDoubleCount() * sizeof(U_64));
-				hiddenSingleOffset = hiddenObjectOffset + (fieldInfo.getTotalObjectCount() * sizeof(fj9object_t));
+				hiddenSingleOffset = hiddenObjectOffset + (fieldInfo.getTotalObjectCount() * referenceSize);
 			} else {
 				hiddenSingleOffset += state->firstSingleOffset + (fieldInfo.getNonBackfilledInstanceSingleCount() * sizeof(U_32));
 				hiddenDoubleOffset += state->firstDoubleOffset + (fieldInfo.getInstanceDoubleCount() * sizeof(U_64));
-				hiddenObjectOffset += state->firstObjectOffset + (fieldInfo.getNonBackfilledInstanceObjectCount() * sizeof(fj9object_t));
+				hiddenObjectOffset += state->firstObjectOffset + (fieldInfo.getNonBackfilledInstanceObjectCount() * referenceSize);
 			}
 			bool useBackfillForObject = false;
 			bool useBackfillForSingle = false;
@@ -828,7 +833,7 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 						useBackfillForObject = false;
 					} else {
 						hiddenField->fieldOffset = hiddenObjectOffset;
-						hiddenObjectOffset += sizeof(fj9object_t);
+						hiddenObjectOffset += referenceSize;
 					}
 				} else if (J9_ARE_ALL_BITS_SET(modifiers, J9FieldSizeDouble)) {
 					hiddenField->fieldOffset = hiddenDoubleOffset;
@@ -910,6 +915,7 @@ fieldOffsetsNextDo(J9ROMFieldOffsetWalkState *state)
 	}
 
 	if (walkHiddenFields && (0 != state->hiddenInstanceFieldWalkIndex)) {
+		UDATA const objectHeaderSize = J9JAVAVM_OBJECT_HEADER_SIZE(state->vm);
 		/* Note: hiddenInstanceFieldWalkIndex is the index of the last hidden instance field that was returned. */
 		J9HiddenInstanceField *hiddenField = state->hiddenInstanceFields[--state->hiddenInstanceFieldWalkIndex];
 
@@ -918,7 +924,7 @@ fieldOffsetsNextDo(J9ROMFieldOffsetWalkState *state)
 		 * This function returns offsets relative to the end of the object header,
 		 * whereas fieldOffset is relative to the start of the header.
 		 */
-		state->result.offset = hiddenField->fieldOffset - sizeof(J9Object);
+		state->result.offset = hiddenField->fieldOffset - objectHeaderSize;
 		/* Hidden fields do not have a valid JVMTI index. */
 		state->result.index = (UDATA)-1;
 	}
@@ -939,7 +945,8 @@ static void
 fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 {
 	J9ROMClass * romClass = state->romClass;
-	
+	UDATA const referenceSize = J9JAVAVM_REFERENCE_SIZE(state->vm);
+
 	/* loop in case we have been told to only consider instance or static fields */
 	while( field != NULL ) {
 		U_32 modifiers = field->modifiers;
@@ -950,7 +957,7 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 		if( modifiers & J9AccStatic ) {
 			if( state->walkFlags & J9VM_FIELD_OFFSET_WALK_INCLUDE_STATIC ) {
 				if (modifiers & J9FieldFlagObject) {
-					state->result.offset = state->objectStaticsSeen * sizeof( j9object_t );
+					state->result.offset = state->objectStaticsSeen * sizeof(UDATA);
 					state->objectStaticsSeen++;
 					break;
 				} else if ( 0 == (state->walkFlags & J9VM_FIELD_OFFSET_WALK_ONLY_OBJECT_SLOTS) ) {
@@ -964,7 +971,7 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 						state->result.offset = doubleSlots * sizeof( U_64 ) + state->doubleStaticsSeen * sizeof( U_64 );
 						state->doubleStaticsSeen++;
 					} else {
-						state->result.offset = romClass->objectStaticCount * sizeof( j9object_t ) + state->singleStaticsSeen * sizeof( UDATA );
+						state->result.offset = romClass->objectStaticCount * sizeof(UDATA) + state->singleStaticsSeen * sizeof( UDATA );
 						state->singleStaticsSeen++;
 					}
 					break;
@@ -986,7 +993,7 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 								J9Class *fieldClass = NULL;
 								fieldClass = findJ9ClassInFlattenedClassCache(state->flattenedClassCache, fieldSigBytes + 1, J9UTF8_LENGTH(fieldSig) - 2);
 								if (J9_ARE_NO_BITS_SET(fieldClass->classFlags, J9ClassIsFlattened)) {
-									state->result.offset = state->firstObjectOffset + state->objectsSeen * sizeof(fj9object_t);
+									state->result.offset = state->firstObjectOffset + state->objectsSeen * referenceSize;
 									state->objectsSeen++;
 								} else {
 									U_32 firstFieldOffset = (U_32) fieldClass->backfillOffset;
@@ -996,7 +1003,7 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 										state->currentFlatDoubleOffset += ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - firstFieldOffset, sizeof(U_64));
 									} else if (J9_ARE_ALL_BITS_SET(fieldClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
 										state->result.offset = state->firstFlatObjectOffset + state->currentFlatObjectOffset - firstFieldOffset;
-										state->currentFlatObjectOffset += ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - firstFieldOffset, sizeof(fj9object_t));
+										state->currentFlatObjectOffset += ROUND_UP_TO_POWEROF2(fieldClass->totalInstanceSize - firstFieldOffset, referenceSize);
 									} else {
 										state->result.offset = state->firstFlatSingleOffset + state->currentFlatSingleOffset - firstFieldOffset;
 										state->currentFlatSingleOffset += fieldClass->totalInstanceSize - firstFieldOffset;
@@ -1005,7 +1012,7 @@ fieldOffsetsFindNext(J9ROMFieldOffsetWalkState *state, J9ROMFieldShape *field)
 							} else
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 							{
-								state->result.offset = state->firstObjectOffset + state->objectsSeen * sizeof( fj9object_t );
+								state->result.offset = state->firstObjectOffset + state->objectsSeen * referenceSize;
 								state->objectsSeen++;
 							}
 						}

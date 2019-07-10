@@ -91,7 +91,7 @@ protected:
 	 */
 	MMINLINE fj9object_t* getFinalizeLinkAddress(j9object_t object)
 	{
-		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(object);
+		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(object, this);
 		return getFinalizeLinkAddress(object, clazz);
 	}
 

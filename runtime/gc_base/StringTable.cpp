@@ -85,7 +85,7 @@ MM_StringTable::initialize(MM_EnvironmentBase *env)
 	memset(_mutex, 0, sizeof(omrthread_monitor_t) * _tableCount);
 
 	for (UDATA tableIndex = 0; tableIndex < _tableCount; tableIndex++) {
-		_table[tableIndex] = collisionResilientHashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(j9object_t), 0, OMRMEM_CATEGORY_MM, listToTreeThreshold, stringHashFn, stringComparatorFn, NULL, javaVM);
+		_table[tableIndex] = collisionResilientHashTableNew(OMRPORT_FROM_J9PORT(javaVM->portLibrary), J9_GET_CALLSITE(), initialSize, sizeof(UDATA), 0, OMRMEM_CATEGORY_MM, listToTreeThreshold, stringHashFn, stringComparatorFn, NULL, javaVM);
 		if (NULL == _table[tableIndex]) {
 			return false;
 		}

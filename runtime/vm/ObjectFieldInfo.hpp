@@ -36,6 +36,8 @@
 
 class ObjectFieldInfo {
 private:
+	U_32 _objectHeaderSize;
+	U_32 _referenceSize;
 	U_32 _cacheLineSize;
 	bool _useContendedClassLayout; /* check this in constructor. Forced to false if we can't get the line size */
 	J9ROMClass *_romClass;
@@ -77,8 +79,8 @@ private:
 	VMINLINE U_32
 	getPaddedTrueNonContendedSize(void) const
 	{
-		U_32 accumulator = _superclassFieldsSize +  sizeof(J9Object); /* get the true size with header */
-		accumulator += (_totalObjectCount * sizeof(J9Object)) + (_totalSingleCount * sizeof(U_32)) + (_totalDoubleCount * sizeof(U_64)); /* add the non-contended and hidden fields */
+		U_32 accumulator = _superclassFieldsSize +  _objectHeaderSize; /* get the true size with header */
+		accumulator += (_totalObjectCount * _objectHeaderSize) + (_totalSingleCount * sizeof(U_32)) + (_totalDoubleCount * sizeof(U_64)); /* add the non-contended and hidden fields */
 		accumulator = ROUND_DOWN_TO_POWEROF2(accumulator, OBJECT_SIZE_INCREMENT_IN_BYTES) + _cacheLineSize; /* get the worst-case cache line boundary and add a cache size */
 		return accumulator;
 	}
@@ -88,8 +90,6 @@ public:
 	enum {
 		NO_BACKFILL_AVAILABLE = -1,
 		BACKFILL_SIZE = sizeof(U_32),
-		LOCKWORD_SIZE = sizeof(j9objectmonitor_t),
-		FINALIZE_LINK_SIZE = sizeof(fj9object_t),
 		OBJECT_SIZE_INCREMENT_IN_BYTES = 8
 	};
 
@@ -98,11 +98,13 @@ public:
 #else
 	ObjectFieldInfo(J9JavaVM *vm, J9ROMClass *romClass):
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+		_objectHeaderSize(J9JAVAVM_OBJECT_HEADER_SIZE(vm)),
+		_referenceSize(J9JAVAVM_REFERENCE_SIZE(vm)),
 		_cacheLineSize(0),
 		_useContendedClassLayout(false),
 		_romClass(romClass),
 		_superclassFieldsSize((U_32) -1),
-		_objectCanUseBackfill((sizeof(fj9object_t) == BACKFILL_SIZE)),
+		_objectCanUseBackfill(J9JAVAVM_REFERENCE_SIZE(vm) == BACKFILL_SIZE),
 		_instanceObjectCount(0),
 		_instanceSingleCount(0),
 		_instanceDoubleCount(0),
@@ -290,7 +292,7 @@ public:
 	VMINLINE IDATA
 	getMyBackfillOffsetForHiddenField(void) const
 	{
-		return _myBackfillOffset + sizeof(J9Object);
+		return _myBackfillOffset + _objectHeaderSize;
 	}
 
 	VMINLINE U_32
@@ -302,7 +304,7 @@ public:
 	VMINLINE U_32
 	getSuperclassObjectSize(void) const
 	{
-		return _superclassFieldsSize + sizeof(J9Object);
+		return _superclassFieldsSize + _objectHeaderSize;
 	}
 
 	VMINLINE void
@@ -361,7 +363,7 @@ public:
 				U_8 *utfData = J9UTF8_DATA(className);
 				Trc_VM_contendedClass(utfLength, utfData);
 			}
-			fieldDataStart = getPaddedTrueNonContendedSize() - sizeof(J9Object);
+			fieldDataStart = getPaddedTrueNonContendedSize() - _objectHeaderSize;
 		}
 		return fieldDataStart;
 	}
@@ -385,7 +387,7 @@ public:
 	VMINLINE UDATA
 	addObjectsArea(UDATA start) const
 	{
-		return start + (isContendedClassLayout() ? _contendedObjectCount: getNonBackfilledObjectCount()) * sizeof(fj9object_t);
+		return start + (isContendedClassLayout() ? _contendedObjectCount: getNonBackfilledObjectCount()) * _referenceSize;
 	}
 
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES

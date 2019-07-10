@@ -92,7 +92,7 @@ public:
 	MMINLINE UDATA
 	getSizeInBytesWithoutHeader(J9Object *objectPtr)
 	{
-		return getSizeInBytesWithoutHeader(J9GC_J9OBJECT_CLAZZ(objectPtr));
+		return getSizeInBytesWithoutHeader(J9GC_J9OBJECT_CLAZZ(objectPtr, this));
 	}
 
 	/**
@@ -125,7 +125,7 @@ public:
 	MMINLINE UDATA
 	getHeaderSize(J9Object *objectPtr)
 	{
-		return compressObjectReferences() ? sizeof(J9NonIndexableObjectCompressed) : sizeof(J9NonIndexableObjectFull);
+		return J9GC_OBJECT_HEADER_SIZE(this);
 	}
 
 	/**
@@ -147,7 +147,7 @@ public:
 	MMINLINE UDATA
 	getHashcodeOffset(J9Object *objectPtr)
 	{
-		return getHashcodeOffset(J9GC_J9OBJECT_CLAZZ(objectPtr));
+		return getHashcodeOffset(J9GC_J9OBJECT_CLAZZ(objectPtr, this));
 	}
 
 	/**

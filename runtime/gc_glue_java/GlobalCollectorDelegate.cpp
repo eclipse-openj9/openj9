@@ -70,7 +70,7 @@ static void
 fixObjectIfClassDying(OMR_VMThread *omrVMThread, MM_HeapRegionDescriptor *region, omrobjectptr_t object, void *userData)
 {
 	/* Check to see if the object's class is being unloaded. If so, it can't be left as dark matter so abandon it */
-	uintptr_t classFlags = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(object));
+	uintptr_t classFlags = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ_CMP(object, OMRVMTHREAD_COMPRESS_OBJECT_REFERENCES(omrVMThread)));
 	if (0 != (classFlags & J9AccClassDying)) {
 		MM_MemorySubSpace *memorySubSpace = region->getSubSpace();
 		uintptr_t deadObjectByteSize = MM_GCExtensions::getExtensions(omrVMThread)->objectModel.getConsumedSizeInBytesWithHeader(object);
