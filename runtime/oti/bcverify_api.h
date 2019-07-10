@@ -135,6 +135,14 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved);
 I_32 
 bcvCheckClassName (J9CfrConstantPoolInfo * info);
 
+/**
+* Check the validity of a class name during class loading.
+*
+* @param info A pointer to J9CfrConstantPoolInfo
+* @returns The arity of the class if valid, -1 otherwise
+*/
+I_32
+bcvCheckClassNameInLoading (J9CfrConstantPoolInfo * info);
 
 /**
 * @brief

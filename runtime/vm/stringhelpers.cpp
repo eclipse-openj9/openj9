@@ -414,39 +414,47 @@ getStringUTF8Length(J9VMThread *vmThread, j9object_t string)
 UDATA 
 verifyQualifiedName(J9VMThread *vmThread, j9object_t string)
 {
+	J9JavaVM* vm = vmThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	UDATA unicodeLength = J9VMJAVALANGSTRING_LENGTH(vmThread, string);
-	j9object_t unicodeBytes = J9VMJAVALANGSTRING_VALUE(vmThread, string);
-	UDATA i = 0;
-	UDATA rc = CLASSNAME_VALID_NON_ARRARY;
+	char utf8NameStackBuffer[J9VM_PACKAGE_NAME_BUFFER_LENGTH];
+	J9CfrConstantPoolInfo classNameInfo = {0, 0, 0, 0, 0, NULL, 0};
+	IDATA arity = 0;
 
-	if (unicodeLength == 0) {
+	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	if (0 == unicodeLength) {
 		return CLASSNAME_INVALID;
 	}
 
-	if (IS_STRING_COMPRESSED(vmThread, string)) {
-		if ('[' == J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, 0)) {
-			rc = CLASSNAME_VALID_ARRARY;
-		}
-		for (i = 0; i < unicodeLength; i++) {
-			U_8 c = J9JAVAARRAYOFBYTE_LOAD(vmThread, unicodeBytes, i);
-			if (c == '/') {
-				rc = CLASSNAME_INVALID;
-				break;
-			}
-		}
-	} else {
-		if ('[' == J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, 0)) {
-			rc = CLASSNAME_VALID_ARRARY;
-		}
-		for (i = 0; i < unicodeLength; i++) {
-			U_16 c = J9JAVAARRAYOFCHAR_LOAD(vmThread, unicodeBytes, i);
-			if (c == '/') {
-				rc = CLASSNAME_INVALID;
-				break;
-			}
-		}
+	classNameInfo.slot1 = (U_32)unicodeLength;
+	classNameInfo.bytes = (U_8*)copyStringToUTF8WithMemAlloc(vmThread, string,
+									J9_STR_NULL_TERMINATE_RESULT, "", 0,
+									utf8NameStackBuffer, J9VM_PACKAGE_NAME_BUFFER_LENGTH, NULL);
+	if (NULL == classNameInfo.bytes) {
+		vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
+		return CLASSNAME_INVALID;
 	}
-	return rc;
+
+	/* keep checking other invalid characters in the class name */
+	arity = bcvCheckClassNameInLoading(&classNameInfo);
+	if ((NULL != classNameInfo.bytes) && ((U_8*)utf8NameStackBuffer != classNameInfo.bytes)) {
+		j9mem_free_memory(classNameInfo.bytes);
+		classNameInfo.bytes = NULL;
+	}
+
+	/* map the return code against the arity value from checkNameImpl (called by bcvCheckClassName):
+	 * 1) if arity = -1, then rc = CLASSNAME_INVALID(0)
+	 * 2) if arity = 0,  then rc = CLASSNAME_VALID_NON_ARRARY(1)
+	 * 3) if arity > 0,  then rc = CLASSNAME_VALID_ARRARY(2)
+	 */
+	if (arity < 0) {
+		return CLASSNAME_INVALID;
+	} else if (0 == arity) {
+		return CLASSNAME_VALID_NON_ARRARY;
+	} else {
+		return CLASSNAME_VALID_ARRARY;
+	}
 }
 
 /**
