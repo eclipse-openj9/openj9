@@ -74,9 +74,9 @@ public:
       @param timeout timeout value (ms) to be set for connfd
    */
 #if defined(JITSERVER_ENABLE_SSL)
-   ServerStream(int connfd, BIO *ssl, uint32_t timeout);
+   ServerStream(int connfd, BIO *ssl);
 #else
-   ServerStream(int connfd, uint32_t timeout);
+   ServerStream(int connfd);
 #endif
    virtual ~ServerStream() 
       {

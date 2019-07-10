@@ -245,14 +245,15 @@ bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
    acquireVMAccessNoSuspend(vmThread);
 
    // If JVM has unloaded classes inform the server to abort this compilation
-   if (compInfoPT->compilationShouldBeInterrupted())
+   uint8_t interruptReason = compInfoPT->compilationShouldBeInterrupted();
+   if (interruptReason)
       {
       if (response != MessageType::compilationCode)
          client->writeError(JITServer::MessageType::compilationAbort, 0 /* placeholder */); // inform the server if compilation is not yet complete
 
-      if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH,
-            "Interrupting remote compilation of %s @ %s", comp->signature(), comp->getHotnessName());
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in handleServerMessage of %s @ %s", 
+                                                          interruptReason, comp->signature(), comp->getHotnessName());
 
       // We want to break the connection when the compilation failed midway
       // as a way to inform the server that this compilation has failed and it should abort
@@ -2477,67 +2478,47 @@ remoteCompile(
    std::string detailsStr = std::string((char*) &details, sizeof(TR::IlGeneratorMethodDetails));
    TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
    bool useAotCompilation = compInfoPT->getMethodBeingCompiled()->_useAotCompilation;
-   JITServer::ClientStream *client = NULL;
-   if (enableJITaaSPerCompConn)
+
+   JITServer::ClientStream *client = enableJITaaSPerCompConn ? NULL : compInfoPT->getClientStream();
+   if (!client)
       {
       try 
          {
          if (JITaaSHelpers::isServerAvailable())
             {
             client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
+            if (!enableJITaaSPerCompConn)
+               compInfoPT->setClientStream(client);
             }
          else if (JITaaSHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary)))
             {
             client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
+            if (!enableJITaaSPerCompConn)
+               compInfoPT->setClientStream(client);
             JITaaSHelpers::postStreamConnectionSuccess();
             }
          else
             {
+            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+                  "Server is not available. Retry with local compilation for %s @ %s", compiler->signature(), compiler->getHotnessName());
             compiler->failCompilation<JITServer::StreamFailure>("Server is not available, should retry with local compilation.");
             }
          }
       catch (const JITServer::StreamFailure &e)
          {
          JITaaSHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+               "JITServer::StreamFailure: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
          compiler->failCompilation<JITServer::StreamFailure>(e.what());
          }
       catch (const std::bad_alloc &e)
          {
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+               "std::bad_alloc: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
          compiler->failCompilation<std::bad_alloc>(e.what());
-         }
-      }
-   else
-      {
-      client = compInfoPT->getClientStream();
-      if (!client)
-         {
-         try
-            {
-            if (JITaaSHelpers::isServerAvailable())
-               {
-               client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
-               compInfoPT->setClientStream(client);
-               }
-            else if (JITaaSHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary)))
-               {
-               client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
-               compInfoPT->setClientStream(client);
-               JITaaSHelpers::postStreamConnectionSuccess();
-               }
-            else
-               {
-               compiler->failCompilation<JITServer::StreamFailure>("Server is not available, should retry with local compilation.");
-               }
-            }
-         catch (const JITServer::StreamFailure &e)
-            {
-            JITaaSHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
-            compiler->failCompilation<JITServer::StreamFailure>(e.what());
-            }
-         catch (const std::bad_alloc &e)
-            {
-            compiler->failCompilation<std::bad_alloc>(e.what());
-            }
          }
       }
 
@@ -2593,14 +2574,16 @@ remoteCompile(
                                  classInfoTuple, optionsStr, recompMethodInfoStr, seqNo, useAotCompilation);
       // re-acquire VM access and check for possible class unloading
       acquireVMAccessNoSuspend(vmThread);
-      if (compInfoPT->compilationShouldBeInterrupted())
+      uint8_t interruptReason = compInfoPT->compilationShouldBeInterrupted();
+      if (interruptReason)
          {
          // JITaaS FIXME: The server is not informed that the client is going to abort
          // Is it better to let the code flow into handleServerMessage() wait for a 
          // query from the server and then abort sending a "cancel" message back?
          auto comp = compInfoPT->getCompilation();
-         if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_DISPATCH, "Interrupting remote compilation of %s @ %s", comp->signature(), comp->getHotnessName());
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in remoteCompile of %s @ %s",
+                 interruptReason, comp->signature(), comp->getHotnessName());
 
          client->writeError(JITServer::MessageType::compilationAbort, 0 /* placeholder */);
          // We want to break the connection when the compilation failed midway
@@ -2609,7 +2592,7 @@ remoteCompile(
          TR_Memory::jitPersistentFree(client);
          compInfoPT->setClientStream(NULL);
 
-         comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
+         comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in remoteCompile");
          }
 
       while(!handleServerMessage(client, compiler->fej9vm()));
@@ -2639,6 +2622,9 @@ remoteCompile(
       TR_Memory::jitPersistentFree(client);
       compInfoPT->setClientStream(NULL);
 
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+            "JITServer::StreamFailure: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
       compiler->failCompilation<JITServer::StreamFailure>(e.what());
       }
    catch (const JITServer::StreamVersionIncompatible &e)
@@ -2647,6 +2633,10 @@ remoteCompile(
       TR_Memory::jitPersistentFree(client);
       compInfoPT->setClientStream(NULL);
       JITServer::ClientStream::incrementIncompatibilityCount(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
+
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+            "JITServer::StreamVersionIncompatible: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
       compiler->failCompilation<JITServer::StreamVersionIncompatible>(e.what());
       }
 
@@ -2767,6 +2757,10 @@ remoteCompile(
    else
       {
       compInfoPT->getMethodBeingCompiled()->_compErrCode = statusCode;
+
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+            "JITServer::ServerCompilationFailure: errCode %u for %s @ %s", statusCode, compiler->signature(), compiler->getHotnessName());
       compiler->failCompilation<JITServer::ServerCompilationFailure>("JITaaS compilation failed.");
       }
 

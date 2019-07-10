@@ -1101,7 +1101,7 @@ static bool JITaaSParseOptionsCommon(char **options, char delimiter, TR::Compila
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
 
-   uint32_t port, timeout;
+   uint32_t port, timeoutMs;
    if (try_scan(options, "sslKey="))
       {
       char * fileName = scan_to_delim(PORTLIB, options, delimiter);
@@ -1127,8 +1127,10 @@ static bool JITaaSParseOptionsCommon(char **options, char delimiter, TR::Compila
       }
    else if (getJITaaSNumericOptionFromCommandLineOptions(options, delimiter, "port=", &port))
       compInfo->getPersistentInfo()->setJITaaSServerPort(port);
-   else if (getJITaaSNumericOptionFromCommandLineOptions(options, delimiter, "timeout=", &timeout))
-      compInfo->getPersistentInfo()->setJITaaSTimeout(timeout);
+   else if (getJITaaSNumericOptionFromCommandLineOptions(options, delimiter, "timeout=", &timeoutMs))
+      {
+      compInfo->getPersistentInfo()->setJITaaSTimeout(timeoutMs);
+      }
    else // option not known
       {
       if (*unRecognizedOptions != *options)
@@ -2287,13 +2289,14 @@ J9::Options::setupJITaaSOptions()
 
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       {
-      if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS Server Mode. Port: %d",
-               compInfo->getPersistentInfo()->getJITaaSServerPort());
-      else if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS Client Mode. Server address: %s port: %d",
-               compInfo->getPersistentInfo()->getJITaaSServerAddress().c_str(),
-               compInfo->getPersistentInfo()->getJITaaSServerPort());
+      TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
+      if (persistentInfo->getJITaaSMode() == SERVER_MODE)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS Server Mode. Port: %d. Connection Timeout %ums",
+               persistentInfo->getJITaaSServerPort(), persistentInfo->getJITaaSTimeout());
+      else if (persistentInfo->getJITaaSMode() == CLIENT_MODE)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS Client Mode. Server address: %s port: %d. Connection Timeout %ums",
+               persistentInfo->getJITaaSServerAddress().c_str(), persistentInfo->getJITaaSServerPort(),
+               persistentInfo->getJITaaSTimeout());
       }
    }
 
