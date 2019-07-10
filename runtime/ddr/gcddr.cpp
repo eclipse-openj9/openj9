@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,6 +63,7 @@ GC_DdrDebugLink(MM_GCExtensions)
 GC_DdrDebugLink(MM_HeapLinkedFreeHeader)
 GC_DdrDebugLink(MM_HeapMap)
 GC_DdrDebugLink(MM_HeapRegionDescriptor)
+GC_DdrDebugLink(MM_HeapRegionDescriptor::RegionType)
 GC_DdrDebugLink(MM_IncrementalCardTable)
 GC_DdrDebugLink(MM_LargeObjectAllocateStats)
 GC_DdrDebugLink(MM_MemoryPoolAddressOrderedList)
@@ -72,7 +73,6 @@ GC_DdrDebugLink(MM_RealtimeMarkingScheme)
 GC_DdrDebugLink(MM_ScavengerForwardedHeader)
 GC_DdrDebugLink(MM_StringTable)
 GC_DdrDebugLink(MM_SweepPoolManagerVLHGC)
-GC_DdrDebugLink(MM_HeapRegionDescriptor::RegionType)
 
 #if defined(J9VM_GC_FINALIZATION)
 GC_DdrDebugLink(GC_FinalizeListManager)
