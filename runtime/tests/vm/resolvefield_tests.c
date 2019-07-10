@@ -38,7 +38,7 @@ typedef struct testFieldDef {
 
 /* Function prototypes. */
 static UDATA calculateJ9UTFSize(UDATA stringLength);
-static UDATA calculateFieldSize(U_32 modifiers);
+static UDATA calculateFieldSize(J9JavaVM *vm, U_32 modifiers);
 static U_32 calculateFieldModifiersForSignature(const U_8 *signature);
 static J9ROMClass *createFakeROMClass(U_8 *buffer, UDATA bufferSize, const char *className, testFieldDef *regularFields);
 static IDATA checkForFieldOverlaps(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClass, UDATA *badOffset);
@@ -65,12 +65,12 @@ calculateJ9UTFSize(UDATA stringLength)
 }
 
 static UDATA
-calculateFieldSize(U_32 modifiers)
+calculateFieldSize(J9JavaVM *vm, U_32 modifiers)
 {
 	UDATA size;
 
 	if (J9FieldFlagObject == (modifiers & J9FieldFlagObject)) {
-		size = sizeof(fj9object_t);
+		size = J9JAVAVM_REFERENCE_SIZE(vm);
 	} else if (J9FieldSizeDouble == (modifiers & J9FieldSizeDouble)) {
 		size = sizeof(U_64);
 	} else {
@@ -152,13 +152,14 @@ createFakeROMClass(U_8 *buffer, UDATA bufferSize, const char *className, testFie
 static IDATA
 checkForFieldOverlaps(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClass, UDATA *badOffset)
 {
+	UDATA const objectHeaderSize = J9JAVAVM_OBJECT_HEADER_SIZE(vm);
 	J9ROMFieldOffsetWalkResult *walkResult;
 	J9ROMFieldOffsetWalkState walkState;
 	U_8 buf[1024];
 	UDATA i, fieldSize;
 
 	memset(buf, 0, sizeof(buf));
-	for (i = 0; i < sizeof(J9Object); i++) {
+	for (i = 0; i < objectHeaderSize; i++) {
 		buf[i] = 0xff;
 	}
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
@@ -170,9 +171,9 @@ checkForFieldOverlaps(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClass, U
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	while (NULL != walkResult->field) {
 
-		fieldSize = calculateFieldSize(walkResult->field->modifiers);
+		fieldSize = calculateFieldSize(vm, walkResult->field->modifiers);
 		for (i = 0; i < fieldSize; i++) {
-			UDATA offset = i + walkResult->offset + sizeof(J9Object);
+			UDATA offset = i + walkResult->offset + objectHeaderSize;
 
 #if VMTEST_DEBUG
 			J9UTF8 *fieldName = SRP_GET(walkResult->field->nameAndSignature.name, J9UTF8*);
@@ -186,7 +187,7 @@ checkForFieldOverlaps(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClass, U
 				return -1;
 			}
 
-			if (offset - sizeof(J9Object) > walkResult->totalInstanceSize) {
+			if (offset - objectHeaderSize > walkResult->totalInstanceSize) {
 				/* Error - offset outside of reported instance size? */
 				*badOffset = offset;
 				return -1;
@@ -223,7 +224,7 @@ checkForPresenceOfField(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClass,
 
 	while (NULL != walkResult->field) {
 		J9UTF8 *resultFieldName = SRP_GET(walkResult->field->nameAndSignature.name, J9UTF8*);
-		UDATA resultFieldSize = calculateFieldSize(walkResult->field->modifiers);
+		UDATA resultFieldSize = calculateFieldSize(vm, walkResult->field->modifiers);
 
 #if VMTEST_DEBUG
 		printf("Got field %.*s with index %d and size %d.\n",
@@ -356,7 +357,7 @@ testAddHiddenInstanceFields(J9PortLibrary *portLib, const char *testName,
 	for (fieldIndex = 0; NULL != regularFields[fieldIndex].fieldName; fieldIndex++) {
 		const char *fieldName = regularFields[fieldIndex].fieldName;
 		const char *fieldSignature = regularFields[fieldIndex].fieldSignature;
-		UDATA fieldSize = calculateFieldSize(calculateFieldModifiersForSignature((U_8*)fieldSignature));
+		UDATA fieldSize = calculateFieldSize(&javaVM, calculateFieldModifiersForSignature((U_8*)fieldSignature));
 
 		if (0 != checkForPresenceOfField(&javaVM, fakeROMClass, NULL, (U_8*)fieldName, strlen(fieldName), fieldSize, fieldIndex + 1)) {
 			outputErrorMessage(TEST_ERROR_ARGS, "regular field '%s' not found!\n", fieldName);
@@ -368,7 +369,7 @@ testAddHiddenInstanceFields(J9PortLibrary *portLib, const char *testName,
 	for (fieldIndex = 0; NULL != hiddenFields[fieldIndex].fieldName; fieldIndex++) {
 		const char *fieldName = hiddenFields[fieldIndex].fieldName;
 		const char *fieldSignature = hiddenFields[fieldIndex].fieldSignature;
-		UDATA fieldSize = calculateFieldSize(calculateFieldModifiersForSignature((U_8*)fieldSignature));
+		UDATA fieldSize = calculateFieldSize(&javaVM, calculateFieldModifiersForSignature((U_8*)fieldSignature));
 		UDATA hiddenIndex = (UDATA)-1;
 
 		if (0 != checkForPresenceOfField(&javaVM, fakeROMClass, NULL, (U_8*)fieldName, strlen(fieldName), fieldSize, hiddenIndex)) {

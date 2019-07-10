@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -1774,7 +1773,7 @@ MM_IncrementalGenerationalGC::verifyMarkMapClosure(MM_EnvironmentVLHGC *env, MM_
 			J9Object *object = NULL;
 			while (NULL != (object = iterator.nextObject())) {
 				/* first, check the validity of the object's class */
-				J9Class *clazz = J9GC_J9OBJECT_CLAZZ(object);
+				J9Class *clazz = J9GC_J9OBJECT_CLAZZ(object, env);
 				Assert_MM_true((UDATA)0x99669966 == clazz->eyecatcher);
 				/* second, verify that it is an instance of a marked class */
 				J9Object *classObject = (J9Object *)clazz->classObject;

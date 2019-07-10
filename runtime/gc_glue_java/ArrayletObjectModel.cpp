@@ -57,7 +57,7 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes,
 	const UDATA minimumSpineSize = 0;
 #else
 	/* the spine always contains a single pointer to the data */
-	const UDATA minimumSpineSize = compressObjectReferences() ? sizeof(U_32) : sizeof(UDATA);
+	const UDATA minimumSpineSize = J9GC_REFERENCE_SIZE(this);
 #endif
 	UDATA minimumSpineSizeAfterGrowing = minimumSpineSize;
 	if (extensions->isVLHGC()) {

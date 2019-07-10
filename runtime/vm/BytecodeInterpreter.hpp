@@ -6438,7 +6438,8 @@ retry:
 #endif
 
 				{
-					UDATA const newValueOffset = valueOffset + J9_OBJECT_HEADER_SIZE;
+					UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread);
+					UDATA const newValueOffset = valueOffset + objectHeaderSize;
 					bool isVolatile = (0 != (flags & J9AccVolatile));
 
 					if (flags & J9FieldSizeDouble) {
@@ -6470,9 +6471,9 @@ retry:
 							_objectAccessBarrier.copyObjectFields(_currentThread,
 												flattenedFieldClass,
 												objectref,
-												cache->offset + J9_OBJECT_HEADER_SIZE,
+												cache->offset + objectHeaderSize,
 												newObjectRef,
-												J9_OBJECT_HEADER_SIZE);
+												objectHeaderSize);
 
 							_sp += (slotsToPop - 1);
 							*(j9object_t*)_sp = newObjectRef;
@@ -6574,8 +6575,9 @@ resolve:
 		}
 #endif
 		{
+			UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread);
 			bool isVolatile = (0 != (flags & J9AccVolatile));
-			UDATA const newValueOffset = valueOffset + J9_OBJECT_HEADER_SIZE;
+			UDATA const newValueOffset = valueOffset + objectHeaderSize;
 
 			if (flags & J9FieldSizeDouble) {
 				j9object_t objectref = *(j9object_t*)(_sp + 2);
@@ -6598,9 +6600,9 @@ resolve:
 					_objectAccessBarrier.copyObjectFields(_currentThread,
 										cache->clazz,
 										*(j9object_t*)_sp,
-										J9_OBJECT_HEADER_SIZE,
+										objectHeaderSize,
 										objectref,
-										cache->offset + J9_OBJECT_HEADER_SIZE);
+										cache->offset + objectHeaderSize);
 
 				} else
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
@@ -8407,8 +8409,9 @@ retry:
 			_objectAccessBarrier.cloneObject(_currentThread, originalObjectRef, copyObjectRef, objectRefClass);
 		}
 		{
+			UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread);
 			bool const isVolatile = (0 != (flags & J9AccVolatile));
-			UDATA const newValueOffset = valueOffset + J9_OBJECT_HEADER_SIZE;
+			UDATA const newValueOffset = valueOffset + objectHeaderSize;
 
 			if (J9_ARE_ALL_BITS_SET(flags, J9FieldSizeDouble)) {
 				_objectAccessBarrier.inlineMixedObjectStoreU64(_currentThread, copyObjectRef, newValueOffset, *(U_64*)_sp, isVolatile);
@@ -8419,9 +8422,9 @@ retry:
 					_objectAccessBarrier.copyObjectFields(_currentThread,
 										cache->clazz,
 										*(j9object_t*)_sp,
-										J9_OBJECT_HEADER_SIZE,
+										objectHeaderSize,
 										copyObjectRef,
-										cache->offset + J9_OBJECT_HEADER_SIZE);
+										cache->offset + objectHeaderSize);
 				} else {
 					_objectAccessBarrier.inlineMixedObjectStoreObject(_currentThread, copyObjectRef, newValueOffset, *(j9object_t*)_sp, isVolatile);
 				}

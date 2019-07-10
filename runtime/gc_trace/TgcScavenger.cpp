@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -196,13 +195,13 @@ tgcHookScavengerReportObjectHistogram(J9HookInterface** hook, UDATA eventNum, vo
 		while(NULL != (object = objectHeapIterator.nextObject())) {
 			/* iterate over objects in the segment */
 			UDATA objectAge = extensions->objectModel.getObjectAge(object);
-			ClassEntry *entry = findClassInList(classList, J9GC_J9OBJECT_CLAZZ(object));
+			ClassEntry *entry = findClassInList(classList, J9GC_J9OBJECT_CLAZZ(object, extensions));
 			if(NULL != entry) {
 				/* increment the appropriate struct */
 				entry->count[objectAge] += 1;
 			} else {
 				/* add it to the list */
-				entry = addClassEntry(vmThread, classList, J9GC_J9OBJECT_CLAZZ(object), objectAge);
+				entry = addClassEntry(vmThread, classList, J9GC_J9OBJECT_CLAZZ(object, extensions), objectAge);
 				if(!entry) {
 					/* whoops! */
 					tgcExtensions->printf("Failed to allocate for histogram!\n");

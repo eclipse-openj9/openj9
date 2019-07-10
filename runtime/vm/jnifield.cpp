@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2012, 2018 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,7 +80,7 @@ getBooleanField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	jboolean value = (jboolean)J9OBJECT_U32_LOAD(currentThread, object, valueOffset);
 
 	if (j9FieldID->field->modifiers & J9AccVolatile) {
@@ -112,7 +112,7 @@ getByteField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	jbyte value = (jbyte)J9OBJECT_U32_LOAD(currentThread, object, valueOffset);
 
 	if (j9FieldID->field->modifiers & J9AccVolatile) {
@@ -144,7 +144,7 @@ getCharField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	jchar value = (jchar)J9OBJECT_U32_LOAD(currentThread, object, valueOffset);
 
 	if (j9FieldID->field->modifiers & J9AccVolatile) {
@@ -176,7 +176,7 @@ getShortField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	jshort value = (jshort)J9OBJECT_U32_LOAD(currentThread, object, valueOffset);
 
 	if (j9FieldID->field->modifiers & J9AccVolatile) {
@@ -208,7 +208,7 @@ getIntField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	jint value = J9OBJECT_I32_LOAD(currentThread, object, valueOffset);
 
 	if (j9FieldID->field->modifiers & J9AccVolatile) {
@@ -240,7 +240,7 @@ getLongField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	jlong value = J9OBJECT_I64_LOAD(currentThread, object, valueOffset);
 
 	if (j9FieldID->field->modifiers & J9AccVolatile) {
@@ -272,7 +272,7 @@ getFloatField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	U_32 uvalue = J9OBJECT_U32_LOAD(currentThread, object, valueOffset);
 	jfloat value = *((jfloat *)&uvalue);
 
@@ -305,7 +305,7 @@ getDoubleField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	U_64 uvalue = J9OBJECT_U64_LOAD(currentThread, object, valueOffset);
 	jdouble value = *((jdouble *)&uvalue);
 
@@ -345,7 +345,7 @@ setByteField(JNIEnv *env, jobject obj, jfieldID fieldID, jbyte value)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	J9OBJECT_U32_STORE(currentThread, object, valueOffset, (U_32)value);
 
 	if (isVolatile) {
@@ -383,7 +383,7 @@ setBooleanField(JNIEnv *env, jobject obj, jfieldID fieldID, jboolean value)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	J9OBJECT_U32_STORE(currentThread, object, valueOffset, (U_32) (value & 1));
 
 	if (isVolatile) {
@@ -421,7 +421,7 @@ setCharField(JNIEnv *env, jobject obj, jfieldID fieldID, jchar value)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	J9OBJECT_U32_STORE(currentThread, object, valueOffset, (U_32)value);
 
 	if (isVolatile) {
@@ -459,7 +459,7 @@ setShortField(JNIEnv *env, jobject obj, jfieldID fieldID, jshort value)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	J9OBJECT_U32_STORE(currentThread, object, valueOffset, (U_32)value);
 
 	if (isVolatile) {
@@ -497,7 +497,7 @@ setIntField(JNIEnv *env, jobject obj, jfieldID fieldID, jint value)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	J9OBJECT_I32_STORE(currentThread, object, valueOffset, value);
 
 	if (isVolatile) {
@@ -534,7 +534,7 @@ setLongField(JNIEnv *env, jobject obj, jfieldID fieldID, jlong value)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	J9OBJECT_I64_STORE(currentThread, object, valueOffset, value);
 
 	if (isVolatile) {
@@ -572,7 +572,7 @@ setFloatField(JNIEnv *env, jobject obj, jfieldID fieldID, jfloat value)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	J9OBJECT_U32_STORE(currentThread, object, valueOffset, *((U_32 *)&value));
 
 	if (isVolatile) {
@@ -611,7 +611,7 @@ setDoubleField(JNIEnv *env, jobject obj, jfieldID fieldID, jdouble value)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	J9OBJECT_U64_STORE(currentThread, object, valueOffset, *((U_64 *)&value));
 
 	if (isVolatile) {
@@ -642,7 +642,7 @@ getObjectField(JNIEnv *env, jobject obj, jfieldID fieldID)
 	}
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	j9object_t value = J9OBJECT_OBJECT_LOAD(currentThread, object, valueOffset);
 
 	if (j9FieldID->field->modifiers & J9AccVolatile) {
@@ -685,7 +685,7 @@ setObjectField(JNIEnv *env, jobject obj, jfieldID fieldID, jobject valueRef)
 
 	j9object_t object = J9_JNI_UNWRAP_REFERENCE(obj);
 	j9object_t value = (NULL == valueRef) ? NULL : J9_JNI_UNWRAP_REFERENCE(valueRef);
-	valueOffset += J9_OBJECT_HEADER_SIZE;
+	valueOffset += J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 	J9OBJECT_OBJECT_STORE(currentThread, object, valueOffset, value);
 
 	if (isVolatile) {

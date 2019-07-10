@@ -49,6 +49,9 @@ private:
 	const UDATA _readBarrierType;
 #if defined (OMR_GC_COMPRESSED_POINTERS)
 	const UDATA _compressedPointersShift;
+#if defined(OMR_GC_FULL_POINTERS)
+	bool const _compressObjectReferences;
+#endif /* OMR_GC_FULL_POINTERS */
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 
 /* Methods */
@@ -62,8 +65,27 @@ public:
 		, _readBarrierType(currentThread->javaVM->gcReadBarrierType)
 #if defined (OMR_GC_COMPRESSED_POINTERS)
 		, _compressedPointersShift(currentThread->javaVM->compressedPointersShift)
+#if defined(OMR_GC_FULL_POINTERS)
+		, _compressObjectReferences(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread))
+#endif /* OMR_GC_FULL_POINTERS */
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 	{}
+
+	/**
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
+	 */
+	MMINLINE bool compressObjectReferences() {
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+		return _compressObjectReferences;
+#else /* defined(OMR_GC_FULL_POINTERS) */
+		return true;
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return false;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+	}
 
 	static VMINLINE void
 	internalPostBatchStoreObjectCardTableAndGenerational(J9VMThread *vmThread, j9object_t object)
@@ -347,7 +369,7 @@ public:
 	VMINLINE UDATA
 	mixedObjectGetHeaderSize()
 	{
-		return sizeof(J9Object);
+		return compressObjectReferences() ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull);
 	}
 
 	VMINLINE UDATA
@@ -380,10 +402,10 @@ public:
 #if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
 		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset);
 #else /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
-
 		if (j9gc_modron_readbar_none != _readBarrierType) {	
 			vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset);
 		} else {
+			UDATA const referenceSize = J9VMTHREAD_REFERENCE_SIZE(vmThread);
 			UDATA offset = 0;
 			UDATA limit = mixedObjectGetDataSize(objectClass);
 			
@@ -393,7 +415,7 @@ public:
 			
 			while (offset < limit) {
 				*(fj9object_t *)((UDATA)destObject + offset + destOffset) = *(fj9object_t *)((UDATA)srcObject + offset + srcOffset);
-				offset += sizeof(fj9object_t);
+				offset += referenceSize;
 			}
 		
 #if defined(J9VM_THR_LOCK_NURSERY)
@@ -2504,10 +2526,10 @@ protected:
 		fj9object_t swapValue = internalConvertTokenFromPointer(swapObject);
 		bool result = true;
 
-		if (sizeof(fj9object_t) == sizeof(UDATA)) {
-			result = ((UDATA)compareValue == VM_AtomicSupport::lockCompareExchange((UDATA *)destAddress, (UDATA)compareValue, (UDATA)swapValue));
-		} else if (sizeof(fj9object_t) == sizeof(U_32)) {
+		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
 			result = ((U_32)(UDATA)compareValue == VM_AtomicSupport::lockCompareExchangeU32((U_32 *)destAddress, (U_32)(UDATA)compareValue, (U_32)(UDATA)swapValue));
+		} else {
+			result = ((UDATA)compareValue == VM_AtomicSupport::lockCompareExchange((UDATA *)destAddress, (UDATA)compareValue, (UDATA)swapValue));
 		}
 
 		return result;
@@ -2520,10 +2542,10 @@ protected:
 		fj9object_t swapValue = internalConvertTokenFromPointer(swapObject);
 		fj9object_t result = (fj9object_t)NULL;
 
-		if (sizeof(fj9object_t) == sizeof(UDATA)) {
-			result = (fj9object_t)VM_AtomicSupport::lockCompareExchange((UDATA *)destAddress, (UDATA)compareValue, (UDATA)swapValue);
-		} else if (sizeof(fj9object_t) == sizeof(U_32)) {
+		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
 			result = (fj9object_t)VM_AtomicSupport::lockCompareExchangeU32((U_32 *)destAddress, (U_32)(UDATA)compareValue, (U_32)(UDATA)swapValue);
+		} else {
+			result = (fj9object_t)VM_AtomicSupport::lockCompareExchange((UDATA *)destAddress, (UDATA)compareValue, (UDATA)swapValue);
 		}
 
 		return result;

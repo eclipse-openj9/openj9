@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -125,7 +124,7 @@ MM_GlobalMarkCardScrubber::scrubObject(MM_EnvironmentVLHGC *env, J9Object *objec
 {
 	bool doScrub = true;
 	
-	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
 	Assert_MM_mustBeClass(clazz);
 	switch(MM_GCExtensions::getExtensions(env)->objectModel.getScanType(clazz)) {
 		case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:

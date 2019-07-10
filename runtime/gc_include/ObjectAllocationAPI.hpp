@@ -265,7 +265,7 @@ public:
 			&& J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit);
 
 		/* Calculate the size of the object */
-		UDATA const headerSize = J9VMTHREAD_MIXED_HEADER_SIZE(currentThread);
+		UDATA const headerSize = J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 		UDATA dataSize = clazz->totalInstanceSize;
 		UDATA allocateSize = (dataSize + headerSize + _objectAlignmentInBytes - 1) & ~(UDATA)(_objectAlignmentInBytes - 1);
 		if (allocateSize < J9_GC_MINIMUM_OBJECT_SIZE) {
@@ -329,7 +329,7 @@ public:
 
 		/* Initialize the object */
 		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread)) {
-			J9NonIndexableObjectCompressed *objectHeader = (J9NonIndexableObjectCompressed*) instance;
+			J9ObjectCompressed *objectHeader = (J9ObjectCompressed*) instance;
 			objectHeader->clazz = (U_32)(UDATA)clazz;
 			if (initializeSlots) {
 				memset(objectHeader + 1, 0, dataSize);
@@ -338,7 +338,7 @@ public:
 				*(U_32*)J9OBJECT_MONITOR_EA(currentThread, instance) = OBJECT_HEADER_LOCK_RESERVED;
 			}
 		} else {
-			J9NonIndexableObjectFull *objectHeader = (J9NonIndexableObjectFull*) instance;
+			J9ObjectFull *objectHeader = (J9ObjectFull*) instance;
 			objectHeader->clazz = (UDATA)clazz;
 			if (initializeSlots) {
 				memset(objectHeader + 1, 0, dataSize);

@@ -579,7 +579,7 @@ Java_com_ibm_j9_monitor_tests_TestNatives_getLockWordOffset(JNIEnv* env, jobject
 jlong JNICALL
 Java_com_ibm_j9_monitor_tests_TestNatives_getHeaderSize(JNIEnv* env, jclass clazz)
 {
-	return sizeof(J9Object);
+	return J9VMTHREAD_OBJECT_HEADER_SIZE((J9VMThread*)env);
 }
 
 jlong JNICALL

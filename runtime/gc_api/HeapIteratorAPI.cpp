@@ -182,7 +182,7 @@ j9mm_iterate_spaces(
 		{
 			spaceDesc.fobjectPointerScale = 1;
 		}
-		spaceDesc.fobjectSize = sizeof(fj9object_t);
+		spaceDesc.fobjectSize = J9JAVAVM_REFERENCE_SIZE(vm);
 		spaceDesc.memorySpace = defaultMemorySpace;
 
 		returnCode = func(vm, &spaceDesc, userData);
@@ -592,7 +592,7 @@ initializeRegionDescriptor(MM_GCExtensionsBase* extensions, J9MM_IterateRegionDe
 #if defined(J9VM_GC_MINIMUM_OBJECT_SIZE)
 	objectMinimumSize = J9_GC_MINIMUM_OBJECT_SIZE;
 #else /* J9VM_GC_MINIMUM_OBJECT_SIZE */
-	objectMinimumSize = sizeof(J9Object);
+	objectMinimumSize = J9GC_OBJECT_HEADER_SIZE(extensions)
 #endif /* J9VM_GC_MINIMUM_OBJECT_SIZE */
 	
 	switch(region->getRegionType()) {
@@ -753,7 +753,7 @@ iterateRegionObjects(
 	J9Object* object = NULL;
 	while(NULL != (object = objectHeapIterator.nextObject())) {
 		J9MM_IterateObjectDescriptor objectDescriptor;
-		if ((extensions->objectModel.isDeadObject(object)) || (0 != (J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(object)) & J9AccClassDying))) {
+		if ((extensions->objectModel.isDeadObject(object)) || (0 != (J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ_VM(object, vm)) & J9AccClassDying))) {
 			if (0 != (flags & j9mm_iterator_flag_include_holes)) {
 				if (extensions->objectModel.isDeadObject(object)) {
 					objectDescriptor.id = (UDATA)object;

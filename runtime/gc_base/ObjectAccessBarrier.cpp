@@ -1334,7 +1334,8 @@ MM_ObjectAccessBarrier::getLockwordAddress(J9VMThread *vmThread, J9Object *objec
 void
 MM_ObjectAccessBarrier::cloneObject(J9VMThread *vmThread, J9Object *srcObject, J9Object *destObject)
 {
-	copyObjectFields(vmThread, J9GC_J9OBJECT_CLAZZ(srcObject), srcObject, J9_OBJECT_HEADER_SIZE, destObject, J9_OBJECT_HEADER_SIZE);
+	UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread);
+	copyObjectFields(vmThread, J9GC_J9OBJECT_CLAZZ_THREAD(srcObject, vmThread), srcObject, objectHeaderSize, destObject, objectHeaderSize);
 }
 
 /**

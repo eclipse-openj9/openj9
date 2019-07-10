@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 2017, 2019 IBM Corp. and others
  *
@@ -460,7 +459,7 @@ MM_MarkingDelegate::processReferenceList(MM_EnvironmentBase *env, MM_HeapRegionD
 			_markingScheme->fixupForwardedSlot(&referentSlotObject);
 			omrobjectptr_t referent = referentSlotObject.readReferenceFromSlot();
 
-			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9AccClassReferenceMask;
+			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj, env)) & J9AccClassReferenceMask;
 			if (_markingScheme->isMarked(referent)) {
 				if (J9AccClassReferenceSoft == referenceObjectType) {
 					U_32 age = J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, referenceObj);
@@ -538,7 +537,7 @@ MM_MarkingDelegate::getReferenceStatus(MM_EnvironmentBase *env, omrobjectptr_t o
 	*referentMustBeMarked = *isReferenceCleared;
 	bool referentMustBeCleared = false;
 
-	UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9AccClassReferenceMask;
+	UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr, env)) & J9AccClassReferenceMask;
 	switch (referenceObjectType) {
 	case J9AccClassReferenceWeak:
 		referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_weak));

@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -1371,7 +1370,7 @@ MM_CopyForwardScheme::copyAndForwardObjectClass(MM_EnvironmentVLHGC *env, MM_All
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	_extensions->classLoaderRememberedSet->rememberInstance(env, objectPtr);
 	if(isDynamicClassUnloadingEnabled()) {
-		j9object_t classObject = (j9object_t)J9GC_J9OBJECT_CLAZZ(objectPtr)->classObject;
+		j9object_t classObject = (j9object_t)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->classObject;
 		Assert_MM_true(J9_INVALID_OBJECT != classObject);
 		if (copyAndForward(env, reservingContext, &classObject)) {
 			/* we don't need to update anything with the new address of the class object since objectPtr points at the immobile J9Class */
@@ -2053,9 +2052,9 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 void
 MM_CopyForwardScheme::copyLeafChildren(MM_EnvironmentVLHGC* env, MM_AllocationContextTarok *reservingContext, J9Object* objectPtr)
 {
-	J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+	J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
 	if (GC_ObjectModel::SCAN_MIXED_OBJECT == _extensions->objectModel.getScanType(clazz)) {
-		UDATA instanceLeafDescription = (UDATA)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
+		UDATA instanceLeafDescription = (UDATA)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 		/* For now we only support leaf children in small objects. If the leaf description isn't immediate, ignore it to keep the code simple. */
 		if (1 == (instanceLeafDescription & 1)) {
 			fj9object_t* scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
@@ -2245,7 +2244,7 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 	UDATA descriptionBits;
 	UDATA descriptionIndex;
 #if defined(J9VM_GC_LEAF_BITS)
-	UDATA *leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
+	UDATA *leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 	UDATA leafBits;
 #endif /* J9VM_GC_LEAF_BITS */
 
@@ -2254,7 +2253,7 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 	UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
 
 	endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
-	descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceDescription;
+	descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceDescription;
 
 	if (((UDATA)descriptionPtr) & 1) {
 		descriptionBits = ((UDATA)descriptionPtr) >> 1;
@@ -2329,7 +2328,7 @@ MM_CopyForwardScheme::scanReferenceObjectSlots(MM_EnvironmentVLHGC *env, MM_Allo
 	bool referentMustBeCleared = false;
 	if (isReferenceInCollectionSet) {
 		UDATA referenceObjectOptions = env->_cycleState->_referenceObjectOptions;
-		UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9AccClassReferenceMask;
+		UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr, env)) & J9AccClassReferenceMask;
 		switch (referenceObjectType) {
 		case J9AccClassReferenceWeak:
 			referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_weak)) ;
@@ -2819,7 +2818,7 @@ MM_CopyForwardScheme::aliasToCopyCache(MM_EnvironmentVLHGC *env, MM_CopyScanCach
 MMINLINE void
 MM_CopyForwardScheme::scanObject(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason)
 {
-	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
 	Assert_MM_mustBeClass(clazz);
 	switch(_extensions->objectModel.getScanType(clazz)) {
 	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
@@ -3058,7 +3057,7 @@ MM_CopyForwardScheme::incrementalScanReferenceObjectSlots(MM_EnvironmentVLHGC *e
 		mixedObjectIterator.restore(&(scanCache->_objectIteratorState));
 	}
 
-	if (J9AccClassReferenceSoft == (J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9AccClassReferenceMask)) {
+	if (J9AccClassReferenceSoft == (J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr, env)) & J9AccClassReferenceMask)) {
 		/* Object is a Soft Reference: mark it if not expired */
 		U_32 age = J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, objectPtr);
 		referentMustBeMarked = age < _extensions->getDynamicMaxSoftReferenceAge();
@@ -3553,13 +3552,13 @@ MM_CopyForwardScheme::updateOrDeleteObjectsFromExternalCycle(MM_EnvironmentVLHGC
 						if(isLiveObject(object)) {
 							Assert_MM_true(externalMarkMap->isBitSet(object));
 							Assert_MM_true(_markMap->isBitSet(object));
-							Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(object));
+							Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(object, env));
 						} else {
 							Assert_MM_true(isObjectInEvacuateMemory(object));
 							J9Object *forwardedObject = updateForwardedPointer(object);
 							if(externalMarkMap->isBitSet(forwardedObject)) {
 								Assert_MM_true(_markMap->isBitSet(forwardedObject));
-								Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(forwardedObject));
+								Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(forwardedObject, env));
 								preservedCount += 1;
 								*slot = forwardedObject;
 							} else {
@@ -4312,7 +4311,7 @@ private:
 			/* heap object - validate and mark */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(_env));
 			verifyObject(slotPtr);
-			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(*slotPtr));
+			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ_THREAD(*slotPtr, ((J9StackWalkState*)walkState)->walkThread));
 		} else if (NULL != *slotPtr) {
 			/* stack object - just validate */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(_env));
@@ -4322,10 +4321,10 @@ private:
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator) {
 		if (_copyForwardScheme->isHeapObject(*slotPtr)) {
 			verifyObject(slotPtr);
-			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(*slotPtr));
+			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ_THREAD(*slotPtr, vmThreadIterator->getVMThread()));
 		} else if (NULL != *slotPtr) {
 			Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
-			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(*slotPtr));
+			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ_THREAD(*slotPtr, vmThreadIterator->getVMThread()));
 		}
 	}
 
@@ -4473,7 +4472,7 @@ MM_CopyForwardScheme::verifyCopyForwardResult(MM_EnvironmentVLHGC *env)
 void
 MM_CopyForwardScheme::verifyObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
 {
-	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
 	Assert_MM_mustBeClass(clazz);
 	switch(_extensions->objectModel.getScanType(clazz)) {
 	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
@@ -4936,7 +4935,7 @@ MM_CopyForwardScheme::processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegi
 		GC_SlotObject referentSlotObject(_extensions->getOmrVM(), &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, referenceObj));
 		J9Object *referent = referentSlotObject.readReferenceFromSlot();
 		if (NULL != referent) {
-			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9AccClassReferenceMask;
+			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj, env)) & J9AccClassReferenceMask;
 			
 			/* update the referent if it's been forwarded */
 			MM_ScavengerForwardedHeader forwardedReferent(referent);
