@@ -101,7 +101,7 @@ J9::ARM::CodeGenerator::CodeGenerator() :
    static bool initTreeEvaluatorTable = false;
    if (!initTreeEvaluatorTable)
       {
-      TEMPORARY_initJ9ARMTreeEvaluatorTable(cg);
+      TEMPORARY_initJ9ARMTreeEvaluatorTable(self());
       initTreeEvaluatorTable = true;
       }
    }

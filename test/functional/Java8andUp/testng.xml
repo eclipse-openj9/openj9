@@ -352,6 +352,11 @@
 			<class name="j9vm.test.jni.ExceptionTest" />
 		</classes>
 	</test>
+	<test name="loadLegacyLibrary">
+		<classes>
+			<class name="j9vm.test.loadLibrary.TestLoadLegacyLibrary" />
+		</classes>
+	</test>
 	<test name="memoryCategories">
 		<classes>
 			<class name="j9vm.test.memory.MemoryAllocator" />
