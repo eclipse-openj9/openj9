@@ -1673,3 +1673,37 @@ void J9::TreeEvaluator::preEvaluateEscapingNodesForSpineCheck(TR::Node *root, TR
    TR::TreeEvaluator::initializeStrictlyFutureUseCounts(root, cg->comp()->incVisitCount(), cg);
    TR::TreeEvaluator::evaluateNodesWithFutureUses(root, cg);
    }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+// resolveCHKEvaluator - Resolve check a static, field or method. child 1 is reference
+//   to be resolved. Symbolref indicates failure action/destination
+///////////////////////////////////////////////////////////////////////////////////////
+TR::Register *J9::TreeEvaluator::resolveCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // No code is generated for the resolve check. The child will reference an
+   // unresolved symbol and all check handling is done via the corresponding
+   // snippet.
+   //
+   TR::Node *firstChild = node->getFirstChild();
+   bool fixRefCount = false;
+   if (cg->comp()->useCompressedPointers())
+      {
+      // for stores under ResolveCHKs, artificially bump
+      // down the reference count before evaluation (since stores
+      // return null as registers)
+      //
+      if (node->getFirstChild()->getOpCode().isStoreIndirect() &&
+          node->getFirstChild()->getReferenceCount() > 1)
+         {
+         node->getFirstChild()->decReferenceCount();
+         fixRefCount = true;
+         }
+      }
+   cg->evaluate(firstChild);
+   if (fixRefCount)
+      firstChild->incReferenceCount();
+
+   cg->decReferenceCount(firstChild);
+   return NULL;
+   }

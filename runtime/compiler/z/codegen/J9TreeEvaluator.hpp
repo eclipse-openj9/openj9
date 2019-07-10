@@ -62,7 +62,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *anewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *multianewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *resolveCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ArrayCopyBNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);

@@ -2324,34 +2324,6 @@ TR::Register *J9::Power::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR:
    return lengthReg;
    }
 
-TR::Register *J9::Power::TreeEvaluator::resolveCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   // No code is generated for the resolve check. The child will reference an
-   // unresolved symbol and all check handling is done via the corresponding
-   // snippet.
-   //
-   TR::Node *firstChild = node->getFirstChild();
-   bool fixRefCount = false;
-   if (cg->comp()->useCompressedPointers())
-      {
-      // for stores under ResolveCHKs, artificially bump
-      // down the reference count before evaluation (since stores
-      // return null as registers)
-      //
-      if (node->getFirstChild()->getOpCode().isStoreIndirect() && node->getFirstChild()->getReferenceCount() > 1)
-         {
-         node->getFirstChild()->decReferenceCount();
-         fixRefCount = true;
-         }
-      }
-   cg->evaluate(firstChild);
-   if (fixRefCount)
-      firstChild->incReferenceCount();
-
-   cg->decReferenceCount(firstChild);
-   return NULL;
-   }
-
 TR::Register *J9::Power::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Node *secondChild = node->getFirstChild()->getSecondChild();

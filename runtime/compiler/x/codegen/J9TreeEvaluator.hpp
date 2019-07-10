@@ -57,7 +57,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *exceptionRangeFenceEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *NULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ZEROCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *resolveCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *resolveAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *evaluateNULLCHKWithPossibleResolve(TR::Node *node, bool needResolution, TR::CodeGenerator *cg);
    static TR::Register *DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);

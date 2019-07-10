@@ -40,6 +40,16 @@
 #include "arm/codegen/ARMInstruction.hpp"
 #include "arm/codegen/GenerateInstructions.hpp"
 
+/*
+ * J9 ARM specific tree evaluator table overrides
+ */
+extern void TEMPORARY_initJ9ARMTreeEvaluatorTable(TR::CodeGenerator *cg)
+   {
+   TR_TreeEvaluatorFunctionPointer *tet = cg->getTreeEvaluatorTable();
+
+   tet[TR::ResolveCHK] = TR::TreeEvaluator::resolveCHKEvaluator;
+   }
+
 /**
  *  \brief
  *     Generates code for card marking checks
