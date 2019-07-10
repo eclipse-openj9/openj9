@@ -55,7 +55,7 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::anewarray] = TR::TreeEvaluator::anewArrayEvaluator;
    tet[TR::variableNewArray] = TR::TreeEvaluator::anewArrayEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::multianewarray] = TR::TreeEvaluator::multianewArrayEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::arraylength] = TR::TreeEvaluator::arraylengthEvaluator;
+   tet[TR::arraylength] = TR::TreeEvaluator::arraylengthEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::ResolveCHK] = TR::TreeEvaluator::resolveCHKEvaluator;
    tet[TR::DIVCHK] = TR::TreeEvaluator::DIVCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::BNDCHK] = TR::TreeEvaluator::BNDCHKEvaluator;
@@ -187,3 +187,29 @@ J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return targetRegister;
    }
 
+TR::Register *
+J9::ARM64::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   // ldrw R, [B + contiguousSize]        
+   // cmp R, 0                            
+   // cselw R, [B + discontiguousSize]    
+   //
+   TR::Register *objectReg = cg->evaluate(node->getFirstChild());
+   TR::Register *lengthReg = cg->allocateRegister();
+   TR::Register *discontiguousLengthReg = cg->allocateRegister();
+
+   TR::MemoryReference *contiguousArraySizeMR = new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfContiguousArraySizeField(), 4, cg);
+   TR::MemoryReference *discontiguousArraySizeMR = new (cg->trHeapMemory()) TR::MemoryReference(objectReg, fej9->getOffsetOfDiscontiguousArraySizeField(), 4, cg);   
+
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, lengthReg, contiguousArraySizeMR);
+   generateCompareImmInstruction(cg, node, lengthReg, 0);
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, discontiguousLengthReg, discontiguousArraySizeMR);
+   generateCondTrg1Src2Instruction(cg, TR::InstOpCode::cselw, node, lengthReg, lengthReg, discontiguousLengthReg, TR::CC_NE);
+
+   cg->stopUsingRegister(discontiguousLengthReg);
+   cg->decReferenceCount(node->getFirstChild());
+   node->setRegister(lengthReg);
+
+   return lengthReg;
+   }
