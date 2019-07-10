@@ -87,8 +87,8 @@ sub runmkgen {
 		print "Getting modes data from modes.xml and ottawa.csv...\n";
 		my $data;
 		if ( $graphSpecs =~ /zos/ ) {
-			require "parseFilesForZos.pl";
-			$data = getFileDataForZos($modesxml, $ottawacsv);
+			require "modesData.pl";
+			$data = getModesData();
 		} else {
 			require "parseFiles.pl";
 			$data = getFileData($modesxml, $ottawacsv);
