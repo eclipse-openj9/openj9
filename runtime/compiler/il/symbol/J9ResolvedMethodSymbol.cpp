@@ -34,9 +34,6 @@ J9::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod *method, TR::Co
          (method->getRecognizedMethod() == TR::java_lang_StrictMath_floor) ||
          (method->getRecognizedMethod() == TR::java_lang_Math_ceil) ||
          (method->getRecognizedMethod() == TR::java_lang_StrictMath_ceil))) ||
-       (TR::Compiler->target.cpu.getSupportsHardwareSQRT() &&
-        ((method->getRecognizedMethod() == TR::java_lang_Math_sqrt) ||
-         (method->getRecognizedMethod() == TR::java_lang_StrictMath_sqrt))) ||
        (TR::Compiler->target.cpu.getSupportsHardwareCopySign() &&
         ((method->getRecognizedMethod() == TR::java_lang_Math_copySign_F) ||
          (method->getRecognizedMethod() == TR::java_lang_Math_copySign_D))))
