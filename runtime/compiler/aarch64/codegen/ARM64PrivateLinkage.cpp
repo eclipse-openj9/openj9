@@ -25,22 +25,29 @@
 #include "codegen/CallSnippet.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGeneratorUtils.hpp"
+#include "codegen/GCStackAtlas.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RealRegister.hpp"
 #include "codegen/Register.hpp"
+#include "codegen/StackCheckFailureSnippet.hpp"
 #include "compile/Compilation.hpp"
+#include "env/CompilerEnv.hpp"
 #include "env/StackMemoryRegion.hpp"
+#include "exceptions/JITShutDown.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/ParameterSymbol.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/SymbolReference.hpp"
+#include "infra/Assert.hpp"
 #include "infra/List.hpp"
 
 TR::ARM64PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)
-   : TR::Linkage(cg)
+   : TR::Linkage(cg),
+   _interpretedMethodEntryPoint(NULL),
+   _jittedMethodEntryPoint(NULL)
    {
    int32_t i;
 
@@ -127,8 +134,8 @@ TR::ARM64PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)
 
    // Volatile GPR (0-15, 18) + FPR (0-31) + VFT Reg
    _properties._numberOfDependencyGPRegisters = 17 + 32 + 1;
-   _properties._offsetToFirstParm             = 0; // To be determined
-   _properties._offsetToFirstLocal            = 0; // To be determined
+   _properties._offsetToFirstParm             = 0;
+   _properties._offsetToFirstLocal            = -8;
    }
 
 TR::ARM64LinkageProperties& TR::ARM64PrivateLinkage::getProperties()
@@ -143,12 +150,127 @@ uint32_t TR::ARM64PrivateLinkage::getRightToLeft()
 
 void TR::ARM64PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    {
-   TR_UNIMPLEMENTED();
+   const TR::ARM64LinkageProperties& linkageProperties = getProperties();
+   int32_t firstLocalOffset = linkageProperties.getOffsetToFirstLocal();
+   uint32_t stackIndex = firstLocalOffset;
+   int32_t lowGCOffset = stackIndex;
+
+   TR::GCStackAtlas *atlas = cg()->getStackAtlas();
+
+   // Map all garbage collected references together so can concisely represent
+   // stack maps. They must be mapped so that the GC map index in each local
+   // symbol is honoured.
+   //
+   uint32_t numberOfLocalSlotsMapped = atlas->getNumberOfSlotsMapped() - atlas->getNumberOfParmSlotsMapped();
+
+   stackIndex -= numberOfLocalSlotsMapped * TR::Compiler->om.sizeofReferenceAddress();
+
+   if (comp()->useCompressedPointers())
+      {
+      // If there are any local objects we have to make sure they are aligned properly
+      // when compressed pointers are used.  Otherwise, pointer compression may clobber
+      // part of the pointer.
+      //
+      // Each auto's GC index will have already been aligned, so just the starting stack
+      // offset needs to be aligned.
+      //
+      uint32_t unalignedStackIndex = stackIndex;
+      stackIndex &= ~(TR::Compiler->om.objectAlignmentInBytes() - 1);
+      uint32_t paddingBytes = unalignedStackIndex - stackIndex;
+      if (paddingBytes > 0)
+         {
+         TR_ASSERT((paddingBytes & (TR::Compiler->om.sizeofReferenceAddress() - 1)) == 0, "Padding bytes should be a multiple of the slot/pointer size");
+         uint32_t paddingSlots = paddingBytes / TR::Compiler->om.sizeofReferenceAddress();
+         atlas->setNumberOfSlotsMapped(atlas->getNumberOfSlotsMapped() + paddingSlots);
+         }
+      }
+
+   ListIterator<TR::AutomaticSymbol> automaticIterator(&method->getAutomaticList());
+   TR::AutomaticSymbol *localCursor;
+   int32_t firstLocalGCIndex = atlas->getNumberOfParmSlotsMapped();
+
+   // Map local references to set the stack position correct according to the GC map index
+   //
+   for (localCursor = automaticIterator.getFirst(); localCursor; localCursor = automaticIterator.getNext())
+      {
+      if (localCursor->getGCMapIndex() >= 0)
+         {
+         localCursor->setOffset(stackIndex + TR::Compiler->om.sizeofReferenceAddress() * (localCursor->getGCMapIndex() - firstLocalGCIndex));
+         if (localCursor->getGCMapIndex() == atlas->getIndexOfFirstInternalPointer())
+            {
+            atlas->setOffsetOfFirstInternalPointer(localCursor->getOffset() - firstLocalOffset);
+            }
+         }
+      }
+
+   method->setObjectTempSlots((lowGCOffset - stackIndex) / TR::Compiler->om.sizeofReferenceAddress());
+   lowGCOffset = stackIndex;
+
+   // Now map the rest of the locals
+   //
+   automaticIterator.reset();
+   localCursor = automaticIterator.getFirst();
+
+   while (localCursor != NULL)
+      {
+      if (localCursor->getGCMapIndex() < 0 &&
+          localCursor->getSize() != 8)
+         {
+         mapSingleAutomatic(localCursor, stackIndex);
+         }
+
+      localCursor = automaticIterator.getNext();
+      }
+
+   automaticIterator.reset();
+   localCursor = automaticIterator.getFirst();
+
+   while (localCursor != NULL)
+      {
+      if (localCursor->getGCMapIndex() < 0 &&
+          localCursor->getSize() == 8)
+         {
+         stackIndex -= (stackIndex & 0x4)?4:0;
+         mapSingleAutomatic(localCursor, stackIndex);
+         }
+
+      localCursor = automaticIterator.getNext();
+      }
+
+   method->setLocalMappingCursor(stackIndex);
+
+   // Map the parameters
+   //
+   ListIterator<TR::ParameterSymbol> parameterIterator(&method->getParameterList());
+   TR::ParameterSymbol *parmCursor = parameterIterator.getFirst();
+
+   int32_t offsetToFirstParm = linkageProperties.getOffsetToFirstParm();
+   uint32_t sizeOfParameterArea = method->getNumParameterSlots() * TR::Compiler->om.sizeofReferenceAddress();
+
+   while (parmCursor != NULL)
+      {
+      uint32_t parmSize = (parmCursor->getDataType() != TR::Address) ? parmCursor->getSize()*2 : parmCursor->getSize();
+
+      parmCursor->setParameterOffset(sizeOfParameterArea -
+                                     parmCursor->getParameterOffset() -
+                                     parmSize +
+                                     offsetToFirstParm);
+
+      parmCursor = parameterIterator.getNext();
+      }
+
+   atlas->setLocalBaseOffset(lowGCOffset - firstLocalOffset);
+   atlas->setParmBaseOffset(atlas->getParmBaseOffset() + offsetToFirstParm - firstLocalOffset);
    }
 
 void TR::ARM64PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex)
    {
-   TR_UNIMPLEMENTED();
+   int32_t roundup = (comp()->useCompressedPointers() && p->isLocalObject() ? TR::Compiler->om.objectAlignmentInBytes() : TR::Compiler->om.sizeofReferenceAddress()) - 1;
+   int32_t roundedSize = (p->getSize() + roundup) & (~roundup);
+   if (roundedSize == 0)
+      roundedSize = 4;
+
+   p->setOffset(stackIndex -= roundedSize);
    }
 
 static void lockRegister(TR::RealRegister *regToAssign)
@@ -242,9 +364,266 @@ TR::ARM64PrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymb
    }
 
 
+int32_t
+TR::ARM64PrivateLinkage::calculatePreservedRegisterSaveSize(
+      uint32_t &registerSaveDescription,
+      uint32_t &numGPRsSaved)
+   {
+   TR::Machine *machine = cg()->machine();
+
+   TR::RealRegister::RegNum firstPreservedGPR = TR::RealRegister::x21;
+   TR::RealRegister::RegNum lastPreservedGPR = TR::RealRegister::x28;
+
+   // Create a bit vector of preserved registers that have been modified
+   // in this method.
+   //
+   for (int32_t i = firstPreservedGPR; i <= lastPreservedGPR; i++)
+      {
+      if (machine->getRealRegister((TR::RealRegister::RegNum)i)->getHasBeenAssignedInMethod())
+         {
+         registerSaveDescription |= 1 << (i-1);
+         numGPRsSaved++;
+         }
+      }
+
+   return numGPRsSaved*8;
+   }
+
+
 void TR::ARM64PrivateLinkage::createPrologue(TR::Instruction *cursor)
    {
-   TR_UNIMPLEMENTED();
+
+   // Prologues are emitted post-RA so it is fine to use real registers directly
+   // in instructions
+   //
+   TR::ARM64LinkageProperties& properties = getProperties();
+   TR::Machine *machine = cg()->machine();
+   TR::RealRegister *vmThread = machine->getRealRegister(properties.getMethodMetaDataRegister());   // x19
+   TR::RealRegister *javaSP = machine->getRealRegister(properties.getStackPointerRegister());       // x20
+
+   setInterpretedMethodEntryPoint(cursor);
+
+   // --------------------------------------------------------------------------
+   // Create the entry point when transitioning from an interpreted method.
+   // Parameters are passed on the stack, so load them into the appropriate
+   // linkage registers expected by the JITed method entry point.
+   //
+   cursor = loadStackParametersToLinkageRegisters(cursor);
+
+   setJittedMethodEntryPoint(cursor);
+
+   // Entry breakpoint
+   //
+   if (comp()->getOption(TR_EntryBreakPoints))
+      {
+      cursor = generateExceptionInstruction(cg(), TR::InstOpCode::brkarm64, NULL, 0, cursor);
+      }
+
+   // --------------------------------------------------------------------------
+   // Determine the bitvector of registers to preserve in the prologue
+   //
+   uint32_t registerSaveDescription = 0;
+   uint32_t numGPRsSaved = 0;
+
+   uint32_t preservedRegisterSaveSize = calculatePreservedRegisterSaveSize(registerSaveDescription, numGPRsSaved);
+
+   // Offset between the entry JavaSP of a method and the first mapped local.  This covers
+   // the space needed to preserve the RA.  It is a negative (or zero) offset.
+   //
+   int32_t firstLocalOffset = properties.getOffsetToFirstLocal();
+
+   // The localMappingCursor is a negative-offset mapping of locals (autos and spills) to
+   // the stack relative to the entry JavaSP of a method.  It includes the offset to the
+   // first mapped local.
+   //
+   TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
+   int32_t localsSize = -(int32_t)(bodySymbol->getLocalMappingCursor());
+
+   // Size of the frame needed to handle the argument storage requirements of any method
+   // call in the current method.
+   //
+   // The offset to the first parm is the offset between the entry JavaSP and the first
+   // mapped parameter.  It is a positive (or zero) offset.
+   //
+   int32_t outgoingArgsSize = cg()->getLargestOutgoingArgSize() + properties.getOffsetToFirstParm();
+
+   int32_t frameSizeIncludingReturnAddress = preservedRegisterSaveSize + localsSize + outgoingArgsSize;
+
+   // Align the frame to 16 bytes
+   //
+   int32_t alignedFrameSizeIncludingReturnAddress = (frameSizeIncludingReturnAddress + 15) & ~15;
+
+   // The frame size maintained by the code generator does not include the RA
+   //
+   cg()->setFrameSizeInBytes(alignedFrameSizeIncludingReturnAddress + firstLocalOffset);
+
+   // --------------------------------------------------------------------------
+   // Encode register save description (RSD)
+   //
+   int32_t preservedRegisterOffsetFromJavaBP = (alignedFrameSizeIncludingReturnAddress - outgoingArgsSize + firstLocalOffset);
+
+   TR_ASSERT_FATAL(preservedRegisterOffsetFromJavaBP >= 0, "expecting a positive preserved register area offset");
+
+   // Frame size is too large for the RSD word in the metadata
+   //
+   if (preservedRegisterOffsetFromJavaBP > 0xffff)
+      {
+      comp()->failCompilation<TR::CompilationInterrupted>("Overflowed or underflowed bounds of regSaveOffset in calculateFrameSize.");
+      }
+
+   registerSaveDescription |= (preservedRegisterOffsetFromJavaBP & 0xffff);
+
+   cg()->setRegisterSaveDescription(registerSaveDescription);
+
+   // --------------------------------------------------------------------------
+   // Store return address (RA)
+   //
+   TR::MemoryReference *returnAddressMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, firstLocalOffset, cg());
+   cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::sturx, NULL, returnAddressMR, machine->getRealRegister(TR::RealRegister::lr), cursor);
+
+   // --------------------------------------------------------------------------
+   // Speculatively adjust Java SP with the needed frame size.
+   // This includes the preserved RA slot.
+   //
+   if (constantIsUnsignedImm12(alignedFrameSizeIncludingReturnAddress))
+      {
+      cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::subimmx, NULL, javaSP, javaSP, alignedFrameSizeIncludingReturnAddress, cursor);
+      }
+   else
+      {
+      TR::RealRegister *x9Reg = machine->getRealRegister(TR::RealRegister::RegNum::x9);
+
+      if (constantIsUnsignedImm16(alignedFrameSizeIncludingReturnAddress))
+         {
+         // x9 will contain the aligned frame size
+         //
+         cursor = loadConstant32(cg(), NULL, alignedFrameSizeIncludingReturnAddress, x9Reg, cursor);
+         cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::subx, NULL, javaSP, javaSP, x9Reg, cursor);
+         }
+      else
+         {
+         TR_ASSERT_FATAL(0, "Large frame size not supported in prologue yet");
+         }
+      }
+
+   // --------------------------------------------------------------------------
+   // Perform javaSP overflow check
+   //
+   if (!comp()->isDLT())
+      {
+      //    if (javaSP < vmThread->SOM)
+      //       goto stackOverflowSnippetLabel
+      //
+      // stackOverflowRestartLabel:
+      //
+      TR::MemoryReference *somMR = new (cg()->trHeapMemory()) TR::MemoryReference(vmThread, cg()->getStackLimitOffset(), cg());
+      TR::RealRegister *somReg = machine->getRealRegister(TR::RealRegister::RegNum::x10);
+      cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, NULL, somReg, somMR, cursor);
+
+      TR::RealRegister *zeroReg = machine->getRealRegister(TR::RealRegister::xzr);
+      cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::subsx, NULL, zeroReg, javaSP, somReg, cursor);
+
+      TR::LabelSymbol *stackOverflowSnippetLabel = generateLabelSymbol(cg());
+      cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::b_cond, NULL, stackOverflowSnippetLabel, TR::CC_LS, cursor);
+
+      TR::LabelSymbol *stackOverflowRestartLabel = generateLabelSymbol(cg());
+      cursor = generateLabelInstruction(cg(), TR::InstOpCode::label, NULL, stackOverflowRestartLabel, cursor);
+
+      cg()->addSnippet(new (cg()->trHeapMemory()) TR::ARM64StackCheckFailureSnippet(cg(), NULL, stackOverflowRestartLabel, stackOverflowSnippetLabel));
+      }
+
+   // --------------------------------------------------------------------------
+   // Preserve GPRs
+   //
+   // javaSP has been adjusted, so preservedRegs start at offset outgoingArgSize
+   // relative to the javaSP
+   //
+   // Registers are preserved in order from x21 (low memory) -> x28 (high memory)
+   //
+   if (numGPRsSaved)
+      {
+      TR::RealRegister::RegNum firstPreservedGPR = TR::RealRegister::x21;
+      TR::RealRegister::RegNum lastPreservedGPR = TR::RealRegister::x28;
+
+      int32_t preservedRegisterOffsetFromJavaSP = outgoingArgsSize;
+
+      for (TR::RealRegister::RegNum regIndex = firstPreservedGPR; regIndex <= lastPreservedGPR; regIndex=(TR::RealRegister::RegNum)((uint32_t)regIndex+1))
+         {
+         TR::RealRegister *preservedRealReg = machine->getRealRegister(regIndex);
+         if (preservedRealReg->getHasBeenAssignedInMethod())
+            {
+            TR::MemoryReference *preservedRegMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, preservedRegisterOffsetFromJavaSP, cg());
+            cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, NULL, preservedRegMR, preservedRealReg, cursor);
+            preservedRegisterOffsetFromJavaSP += 8;
+            numGPRsSaved--;
+            }
+         }
+
+      TR_ASSERT_FATAL(numGPRsSaved == 0, "preserved register mismatch in prologue");
+      }
+
+   // --------------------------------------------------------------------------
+   // Initialize locals
+   //
+   TR::GCStackAtlas *atlas = cg()->getStackAtlas();
+   if (atlas)
+      {
+      // The GC stack maps are conservative in that they all say that
+      // collectable locals are live. This means that these locals must be
+      // cleared out in case a GC happens before they are allocated a valid
+      // value.
+      // The atlas contains the number of locals that need to be cleared. They
+      // are all mapped together starting at GC index 0.
+      //
+      uint32_t numLocalsToBeInitialized = atlas->getNumberOfSlotsToBeInitialized();
+      if (numLocalsToBeInitialized > 0 || atlas->getInternalPointerMap())
+         {
+         // The LocalBaseOffset and firstLocalOffset are either negative or zero values
+         //
+         int32_t initializedLocalsOffsetFromAdjustedJavaSP = alignedFrameSizeIncludingReturnAddress + atlas->getLocalBaseOffset() + firstLocalOffset;
+
+         TR::RealRegister *zeroReg = machine->getRealRegister(TR::RealRegister::RegNum::x10);
+         cursor = loadConstant64(cg(), NULL, 0, zeroReg, cursor);
+
+         for (int32_t i = 0; i < numLocalsToBeInitialized; i++, initializedLocalsOffsetFromAdjustedJavaSP += TR::Compiler->om.sizeofReferenceAddress())
+            {
+            TR::MemoryReference *localMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, initializedLocalsOffsetFromAdjustedJavaSP, cg());
+            cursor = generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, NULL, localMR, zeroReg, cursor);
+            }
+
+         if (atlas->getInternalPointerMap())
+            {
+            TR_ASSERT_FATAL(0, "internal pointer initialization not available yet");
+            }
+         }
+      }
+
+   // Adjust final offsets on locals and parm symbols now that the frame size is known.
+   // These offsets are relative to the javaSP which has been adjusted downward to
+   // accommodate the frame of this method.
+   //
+   ListIterator<TR::AutomaticSymbol> automaticIterator(&bodySymbol->getAutomaticList());
+   TR::AutomaticSymbol *localCursor = automaticIterator.getFirst();
+
+   while (localCursor != NULL)
+      {
+      localCursor->setOffset(localCursor->getOffset() + alignedFrameSizeIncludingReturnAddress);
+      localCursor = automaticIterator.getNext();
+      }
+
+   ListIterator<TR::ParameterSymbol> parameterIterator(&bodySymbol->getParameterList());
+   TR::ParameterSymbol *parmCursor = parameterIterator.getFirst();
+   while (parmCursor != NULL)
+      {
+      parmCursor->setParameterOffset(parmCursor->getParameterOffset() + alignedFrameSizeIncludingReturnAddress);
+      parmCursor = parameterIterator.getNext();
+      }
+
+   // Ensure arguments reside where the method body expects them to be (either in registers or
+   // on the stack).  This state is influenced by global register assignment.
+   //
+   cursor = copyParametersToHomeLocation(cursor);
+
    }
 
 void TR::ARM64PrivateLinkage::createEpilogue(TR::Instruction *cursor)
@@ -256,30 +635,32 @@ void TR::ARM64PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    TR::RealRegister *javaSP = machine->getRealRegister(properties.getStackPointerRegister()); // x20
 
    // restore preserved GPRs
-   int32_t preservedRegisterOffset = cg()->getLargestOutgoingArgSize() + properties.getOffsetToFirstParm(); // outgoingArgsSize
-   TR::RealRegister::RegNum firstPreservedGPR = TR::RealRegister::x28;
-   TR::RealRegister::RegNum lastPreservedGPR = TR::RealRegister::x21;
-   for (TR::RealRegister::RegNum r = firstPreservedGPR; r >= lastPreservedGPR; r = (TR::RealRegister::RegNum)((uint32_t)r-1))
+   int32_t preservedRegisterOffsetFromJavaSP = cg()->getLargestOutgoingArgSize() + properties.getOffsetToFirstParm(); // outgoingArgsSize
+   TR::RealRegister::RegNum firstPreservedGPR = TR::RealRegister::x21;
+   TR::RealRegister::RegNum lastPreservedGPR = TR::RealRegister::x28;
+   for (TR::RealRegister::RegNum r = firstPreservedGPR; r <= lastPreservedGPR; r = (TR::RealRegister::RegNum)((uint32_t)r+1))
       {
       TR::RealRegister *rr = machine->getRealRegister(r);
       if (rr->getHasBeenAssignedInMethod())
          {
-         TR::MemoryReference *preservedRegMR = new (trHeapMemory()) TR::MemoryReference(javaSP, preservedRegisterOffset, cg());
+         TR::MemoryReference *preservedRegMR = new (trHeapMemory()) TR::MemoryReference(javaSP, preservedRegisterOffsetFromJavaSP, cg());
          cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, rr, preservedRegMR, cursor);
-         preservedRegisterOffset += 8;
+         preservedRegisterOffsetFromJavaSP += 8;
          }
       }
 
    // remove space for preserved registers
-   uint32_t frameSize = cg()->getFrameSizeInBytes();
-   if (constantIsUnsignedImm12(frameSize))
+   int32_t firstLocalOffset = properties.getOffsetToFirstLocal();
+
+   uint32_t alignedFrameSizeIncludingReturnAddress = cg()->getFrameSizeInBytes() - firstLocalOffset;
+   if (constantIsUnsignedImm12(alignedFrameSizeIncludingReturnAddress))
       {
-      cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, lastNode, javaSP, javaSP, frameSize, cursor);
+      cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, lastNode, javaSP, javaSP, alignedFrameSizeIncludingReturnAddress, cursor);
       }
    else
       {
       TR::RealRegister *x9Reg = machine->getRealRegister(TR::RealRegister::RegNum::x9);
-      cursor = loadConstant32(cg(), lastNode, frameSize, x9Reg, cursor);
+      cursor = loadConstant32(cg(), lastNode, alignedFrameSizeIncludingReturnAddress, x9Reg, cursor);
       cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::addx, lastNode, javaSP, javaSP, x9Reg, cursor);
       }
 
@@ -287,8 +668,8 @@ void TR::ARM64PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    TR::RealRegister *lr = machine->getRealRegister(TR::RealRegister::lr);
    if (machine->getLinkRegisterKilled())
       {
-      TR::MemoryReference *returnAddressMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, 0, cg());
-      cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, lr, returnAddressMR, cursor);
+      TR::MemoryReference *returnAddressMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, firstLocalOffset, cg());
+      cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldurx, lastNode, lr, returnAddressMR, cursor);
       }
 
    // return
@@ -839,12 +1220,6 @@ TR::Register *TR::ARM64PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    return retReg;
    }
 
-int32_t TR::ARM64HelperLinkage::buildArgs(TR::Node *callNode,
-   TR::RegisterDependencyConditions *dependencies)
-   {
-   return buildPrivateLinkageArgs(callNode, dependencies, _helperLinkage);
-   }
-
 TR::Instruction *
 TR::ARM64PrivateLinkage::loadStackParametersToLinkageRegisters(TR::Instruction *cursor)
    {
@@ -933,3 +1308,28 @@ TR::ARM64PrivateLinkage::copyParametersToHomeLocation(TR::Instruction *cursor)
    return cursor;
    }
 
+void TR::ARM64PrivateLinkage::performPostBinaryEncoding()
+   {
+   // --------------------------------------------------------------------------
+   // Encode the size of the interpreter entry area into the linkage info word
+   //
+   TR_ASSERT_FATAL(cg()->getReturnTypeInfoInstruction(),
+                   "Expecting the return type info instruction to be created");
+
+   TR::ARM64ImmInstruction *linkageInfoWordInstruction = cg()->getReturnTypeInfoInstruction();
+   uint32_t linkageInfoWord = linkageInfoWordInstruction->getSourceImmediate();
+
+   intptrj_t jittedMethodEntryAddress = reinterpret_cast<intptrj_t>(getJittedMethodEntryPoint()->getBinaryEncoding());
+   intptrj_t interpretedMethodEntryAddress = reinterpret_cast<intptrj_t>(getInterpretedMethodEntryPoint()->getBinaryEncoding());
+
+   linkageInfoWord = (static_cast<uint32_t>(jittedMethodEntryAddress - interpretedMethodEntryAddress) << 16) | linkageInfoWord;
+   linkageInfoWordInstruction->setSourceImmediate(linkageInfoWord);
+
+   *(uint32_t *)(linkageInfoWordInstruction->getBinaryEncoding()) = linkageInfoWord;
+   }
+
+int32_t TR::ARM64HelperLinkage::buildArgs(TR::Node *callNode,
+   TR::RegisterDependencyConditions *dependencies)
+   {
+   return buildPrivateLinkageArgs(callNode, dependencies, _helperLinkage);
+   }

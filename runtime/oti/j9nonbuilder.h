@@ -1073,7 +1073,7 @@ typedef struct J9SharedClassJavacoreDataDescriptor {
 	I_8 topLayer;
 	UDATA cacheSize;
 	UDATA freeBytes;
-	UDATA percFull;	
+	UDATA percFull;
 	const char* cacheName;
 	U_32 feature;
 	IDATA shmid;
@@ -1727,19 +1727,19 @@ typedef struct J9ModuleExtraInfo {
 /*             Structure of Flattened Class Cache              */
 /*                                                             *
  *    Default Value   |   Number of Entries   |                *
- *____________________|_______________________|________________* 
+ *____________________|_______________________|________________*
  *                    |                       |                *
  *      clazz 0       |   Name & Signature 0  |     offset 0   *
- *____________________|_______________________|________________* 
+ *____________________|_______________________|________________*
  *                    |                       |                *
  *      clazz 1       |   Name & Signature 1  |     offset 1   *
- *____________________|_______________________|________________* 
+ *____________________|_______________________|________________*
  *         .          |           .           |        .       *
  *         .          |           .           |        .       *
  *         .          |           .           |        .       *
- *____________________|_______________________|________________* 
+ *____________________|_______________________|________________*
  *                    |                       |                *
- *      clazz N       |   Name & Signature N  |     offset N   * 
+ *      clazz N       |   Name & Signature N  |     offset N   *
  ***************************************************************/
 typedef struct J9FlattenedClassCacheEntry {
 	struct J9Class* clazz;
@@ -2584,9 +2584,6 @@ typedef struct J9SFJ2IFrame {
 	UDATA jit_r9;
 	UDATA jit_r6;
 #elif defined(J9VM_ARCH_AARCH64) /* J9VM_ARCH_ARM */
-	UDATA jit_r18;
-	UDATA jit_r19;
-	UDATA jit_r20;
 	UDATA jit_r21;
 	UDATA jit_r22;
 	UDATA jit_r23;

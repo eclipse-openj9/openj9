@@ -286,7 +286,7 @@ static void printMetaData(J9TR_MethodMetaData * methodMetaData)
       printf("Stub Metadata 0x%p, nothing to dump\n", methodMetaData);
       return;
       }
-   
+
    printf("Metadata dump:\n");
    initializeIterator(&iter, methodMetaData);
    for (index = 0; index < iter._stackAtlas->numberOfMaps; ++index)
@@ -376,7 +376,7 @@ void jitGetMapsFromPC(J9JavaVM * javaVM, J9TR_MethodMetaData * methodMetaData, U
 
    if (methodMetaData->flags & JIT_METADATA_IS_STUB)
       return;
-   
+
    if (!stackAtlas)
       return;
 
@@ -1367,7 +1367,7 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
 
        /* If base array was moved by a non zero displacement
        */
-#if defined(J9VM_INTERP_STACKWALK_TRACING) 
+#if defined(J9VM_INTERP_STACKWALK_TRACING)
       if ((displacement != 0) || (walkState->walkThread->javaVM->runtimeFlags & J9_RUNTIME_SNIFF_AND_WHACK))
 #else
       if (displacement != 0)
@@ -1733,8 +1733,26 @@ void jitAddSpilledRegisters(J9StackWalkState * walkState, void * stackMap)
       while (savedGPRs != 0);
       }
 #elif defined(TR_HOST_ARM64)
-   // TODO: Implement this
-   assert(0);
+   savedGPRs = registerSaveDescription & 0xffff0000;
+
+   if (savedGPRs)
+      {
+      UDATA saveOffset = registerSaveDescription & 0xffff;
+      UDATA *saveCursor = (UDATA *) (((U_8 *) walkState->bp) - saveOffset);
+      U_8 i = 1;
+      do
+         {
+         if (savedGPRs & 1)
+            {
+            *mapCursor = saveCursor++;
+            }
+
+         ++i;
+         ++mapCursor;
+         savedGPRs >>= 1;
+         }
+      while (savedGPRs != 0);
+      }
 #else
 #error Unknown TR_HOST type
 #endif
