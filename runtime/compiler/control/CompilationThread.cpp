@@ -1094,10 +1094,8 @@ void TR::CompilationInfo::setAllCompilationsShouldBeInterrupted()
 
 bool TR::CompilationInfo::useSeparateCompilationThread()
    {
-#if (defined(TR_HOST_X86) || defined(TR_HOST_S390) || (defined(TR_HOST_POWER)) || defined(TR_HOST_ARM))
    if (!TR::Options::getCmdLineOptions()->getOption(TR_AOT))
       return !TR::Options::getCmdLineOptions()->getOption(TR_DisableCompilationThread);
-#endif
    return TR::Options::getCmdLineOptions()->getOption(TR_EnableCompilationThread);
    }
 
