@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package org.openj9.test.java.lang.management;
 
 import org.testng.log4testng.Logger;
@@ -51,6 +50,7 @@ import javax.management.MBeanOperationInfo;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 import javax.management.ReflectionException;
+import javax.management.StandardMBean;
 
 // This class is not public API.
 import com.ibm.java.lang.management.internal.LoggingMXBeanImpl;
@@ -93,7 +93,7 @@ public class TestLoggingMXBean {
 			objName = new ObjectName(LogManager.LOGGING_MXBEAN_NAME);
 			mbs = ManagementFactory.getPlatformMBeanServer();
 		} catch (Exception me) {
-			Assert.fail("Unexpected exception in setting up ClassLoadingMXBean test: " + me.getMessage());
+			Assert.fail("Unexpected exception in setting up LoggingMXBean test: " + me.getMessage());
 		}
 		logger.info("Starting TestLoggingMXBean tests ...");
 	}
@@ -371,6 +371,15 @@ public class TestLoggingMXBean {
 
 	@Test
 	public final void testInvoke() {
+		StandardMBean sb = null;
+		/*
+		 * In Java 8, the logging bean is also a StandardMBean.
+		 * Note that using a cast or 'instanceof' directly will not compile on Java 11+.
+		 */
+		if (StandardMBean.class.isInstance(lb)) {
+			sb = StandardMBean.class.cast(lb);
+		}
+
 		// 3 different operations that can be invoked on this kind of bean.
 		while (loggerNamesEnumeration.hasMoreElements()) {
 			String logName = loggerNamesEnumeration.nextElement();
@@ -421,42 +430,49 @@ public class TestLoggingMXBean {
 				Assert.fail("Unexpected InstanceNotFoundException (getParentLoggerName): " + e.getCause().getMessage());
 			}
 
-			// Call getParentLoggerName(String) again with a bad argument type.
-			try {
-				Object retVal = lb.invoke("getParentLoggerName", new Object[] { new Long(311) },
-						new String[] { Long.TYPE.getName() });
-				Assert.fail("Should have thrown exception !!");
-			} catch (ReflectionException e) {
-				// This exception is expected.
-			} catch (Exception e) {
-				Assert.fail("Unexpected exception: " + e.getMessage());
-			}
+			/*
+			 * In Java 8, the logging bean is also a StandardMBean.
+			 */
+			if (sb != null) {
+				// Call getParentLoggerName(String) again with a bad argument type.
+				try {
+					Object retVal = sb.invoke("getParentLoggerName", new Object[] { new Long(311) },
+							new String[] { Long.TYPE.getName() });
+					Assert.fail("Should have thrown exception !!");
+				} catch (ReflectionException e) {
+					// This exception is expected.
+				} catch (Exception e) {
+					Assert.fail("Unexpected exception: " + e.getMessage());
+				}
 
-			// Operation #3 --- setLoggerLevel(String, String)
-			try {
-				Object retVal = lb.invoke("setLoggerLevel", new Object[] { logName, Level.SEVERE.getName() },
-						new String[] { String.class.getName(), String.class.getName() });
-				// Verify the set worked
-				AssertJUnit.assertEquals(Level.SEVERE.getName(), logger.getLevel().getName());
-			} catch (MBeanException e) {
-				Assert.fail("Unexpected MBeanException (setLoggerLevel): " + e.getCause().getMessage());
-			} catch (ReflectionException e) {
-				Assert.fail("Unexpected ReflectionException (setLoggerLevel): " + e.getCause().getMessage());
-			} catch (NullPointerException n) {
-				Assert.fail("Unexpected NullPointerException (setLoggerLevel): " + n.getCause().getMessage());
+				// Operation #3 --- setLoggerLevel(String, String)
+				try {
+					Object retVal = sb.invoke("setLoggerLevel", new Object[] { logName, Level.SEVERE.getName() },
+							new String[] { String.class.getName(), String.class.getName() });
+					// Verify the set worked
+					AssertJUnit.assertEquals(Level.SEVERE.getName(), logger.getLevel().getName());
+				} catch (MBeanException e) {
+					Assert.fail("Unexpected MBeanException (setLoggerLevel): " + e.getCause().getMessage());
+				} catch (ReflectionException e) {
+					Assert.fail("Unexpected ReflectionException (setLoggerLevel): " + e.getCause().getMessage());
+				} catch (NullPointerException n) {
+					Assert.fail("Unexpected NullPointerException (setLoggerLevel): " + n.getCause().getMessage());
+				}
 			}
 		}
 
-		// Try invoking a bogus operation ...
-		try {
-			Object retVal = lb.invoke("GetUpStandUp", new Object[] { new Long(7446), new Long(54) },
-					new String[] { "java.lang.Long", "java.lang.Long" });
-			Assert.fail("Unreacheable code: should have thrown an exception.");
-		} catch (ReflectionException e) {
-			// This exception is expected.
-			logger.debug("Exception occurred, as expected: " + e.getMessage());
-		} catch (Exception e) {
-			Assert.fail("Unexpected exception: " + e.getMessage());
+		if (sb != null) {
+			// Try invoking a bogus operation ...
+			try {
+				Object retVal = sb.invoke("GetUpStandUp", new Object[] { new Long(7446), new Long(54) },
+						new String[] { "java.lang.Long", "java.lang.Long" });
+				Assert.fail("Unreacheable code: should have thrown an exception.");
+			} catch (ReflectionException e) {
+				// This exception is expected.
+				logger.debug("Exception occurred, as expected: " + e.getMessage());
+			} catch (Exception e) {
+				Assert.fail("Unexpected exception: " + e.getMessage());
+			}
 		}
 	}
 
