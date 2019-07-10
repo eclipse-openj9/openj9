@@ -1,5 +1,5 @@
 /*******************************************************************************
-* Copyright (c) 2017, 2018 IBM Corp. and others
+* Copyright (c) 2017, 2019 IBM Corp. and others
 *
 * This program and the accompanying materials are made available under
 * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,6 +77,22 @@ class RecognizedCallTransformer : public OMR::RecognizedCallTransformer
     *     \endcode
     */
    void process_java_lang_StringUTF16_toBytes(TR::TreeTop* treetop, TR::Node* node);
+   /** \brief
+    *     Transforms java/lang/StrictMath.sqrt(D)D and java/lang/Math.sqrt(D)D into a CodeGen inlined function with equivalent semantics.
+    *
+    *  \param treetop
+    *     The treetop which anchors the call node.
+    *
+    *  \param node
+    *     The call node representing a call to java/lang/StrictMath.sqrt(D)D which has the following shape:
+    *
+    *     \code
+    *     dcall  java/lang/StrictMath.sqrt(D)D or java/lang/Math.sqrt(D)D
+    *       <jclass>
+    *       <value>
+    *     \endcode
+    */
+   void process_java_lang_StrictMath_and_Math_sqrt(TR::TreeTop* treetop, TR::Node* node);
    /** \brief
     *     Transforms certain Unsafe atomic helpers into a CodeGen inlined helper with equivalent semantics.
     *
