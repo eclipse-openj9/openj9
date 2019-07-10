@@ -41,7 +41,6 @@ add_library(j9util STATIC
 	cpplink.c
 	defarg.c
 	divhelp.c
-	divrem.c
 	eventframe.c
 	extendedHCR.c
 	extendedmethodblockaccess.c
