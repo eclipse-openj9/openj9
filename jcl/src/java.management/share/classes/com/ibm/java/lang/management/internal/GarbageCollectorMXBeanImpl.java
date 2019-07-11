@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,11 +27,9 @@ import java.lang.management.GarbageCollectorMXBean;
 import javax.management.ListenerNotFoundException;
 import javax.management.MBeanNotificationInfo;
 import javax.management.Notification;
-import javax.management.NotificationBroadcasterSupport;
 import javax.management.NotificationEmitter;
 import javax.management.NotificationFilter;
 import javax.management.NotificationListener;
-import javax.management.ObjectName;
 import javax.management.openmbean.CompositeData;
 
 /**
@@ -41,30 +39,33 @@ import javax.management.openmbean.CompositeData;
  * <code>java.lang.management.GarbageCollectorMXBean</code>, this class also
  * provides an implementation of most of the IBM extension interface
  * <code>com.ibm.lang.management.GarbageCollectorMXBean</code>.
- * The type does not need to be modeled as a DynamicMBean, as it is structured 
+ * The type does not need to be modeled as a DynamicMBean, as it is structured
  * statically, without attributes, operations, notifications, etc., configured,
- * on the fly. The StandardMBean model is sufficient for the bean type.  
+ * on the fly. The StandardMBean model is sufficient for the bean type.
  * </p>
  * @since 1.5
  */
 public class GarbageCollectorMXBeanImpl
 		extends MemoryManagerMXBeanImpl
-        implements GarbageCollectorMXBean, NotificationEmitter {
+		implements GarbageCollectorMXBean, NotificationEmitter {
+
+	private final MemoryMXBeanImpl memoryBean;
 
 	/**
 	 * The delegate for all notification management.
 	 */
-	private final NotificationBroadcasterSupport notifier;
+	private final LazyDelegatingNotifier notifier;
 
 	/**
-	 * @param objectName The ObjectName of this bean
+	 * @param domainName The domain name of this bean
 	 * @param name The name of this collector
 	 * @param id An internal id number representing this collector
 	 * @param memBean The memory bean that receives notification events from pools managed by this collector
 	 */
-	protected GarbageCollectorMXBeanImpl(ObjectName objectName, String name, int id, MemoryMXBeanImpl memBean) {
-		super(objectName, name, id, memBean);
-		notifier = new NotificationBroadcasterSupport();
+	protected GarbageCollectorMXBeanImpl(String domainName, String name, int id, MemoryMXBeanImpl memBean) {
+		super(domainName, name, id);
+		memoryBean = memBean;
+		notifier = new LazyDelegatingNotifier();
 	}
 
 	/**
@@ -126,7 +127,7 @@ public class GarbageCollectorMXBeanImpl
 	/**
 	 * Returns the amount of heap memory used by objects that are managed
 	 * by the collector corresponding to this bean object.
-	 * 
+	 *
 	 * @return memory used in bytes
 	 * @see #getMemoryUsed()
 	 */
@@ -207,6 +208,8 @@ public class GarbageCollectorMXBeanImpl
 	@Override
 	public final void addNotificationListener(NotificationListener listener, NotificationFilter filter, Object handback)
 			throws IllegalArgumentException {
+		// must ensure notification thread is running
+		memoryBean.startNotificationThread();
 		notifier.addNotificationListener(listener, filter, handback);
 	}
 
@@ -229,7 +232,7 @@ public class GarbageCollectorMXBeanImpl
 
 	/**
 	 * Send notifications to registered listeners. This will be called at the end of Garbage Collections.
-	 * 
+	 *
 	 * @param notification For this type of bean the user data will consist of
 	 *     a {@link CompositeData} instance that represents
 	 *     a {@link com.sun.management.GarbageCollectionNotificationInfo} object
