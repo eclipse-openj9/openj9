@@ -544,10 +544,7 @@ uint8_t *TR::AMD64PrivateLinkage::generateVirtualIndirectThunk(TR::Node *callNod
    if (fej9->storeOffsetToArgumentsInVirtualIndirectThunks())
       {
       codeSize += 8;
-      // JITaaS TODO: for JITaaS we need this to be in code memory.
-      // it should be fine for nonJITaaS as well but it hurts footprint
-      //thunk = (uint8_t *)comp->trMemory()->allocateMemory(codeSize, heapAlloc);
-      thunk = (uint8_t *)cg()->allocateCodeMemory(codeSize, true);
+      thunk = (uint8_t *)comp->trMemory()->allocateMemory(codeSize, heapAlloc);
       cursor = thunkEntry = thunk + 8; // 4 bytes holding the size of storeArguments
       }
    else

@@ -786,48 +786,16 @@ TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memor
    }
 
 void
-TR::CompilationInfoPerThread::addThunkToBeRelocated(void *thunk, std::string signature)
+TR::CompilationInfoPerThread::addThunkToBeRelocated(const std::string &serializedThunk, const std::string &signature)
    {
-   _thunksToBeRelocated.emplace_back(thunk, signature);
+   _thunksToBeRelocated.emplace_back(serializedThunk, signature);
    }
 
 void
-TR::CompilationInfoPerThread::addInvokeExactThunkToBeRelocated(TR_J2IThunk *thunk)
+TR::CompilationInfoPerThread::addInvokeExactThunkToBeRelocated(const std::string &serializedThunk)
    {
-   _invokeExactThunksToBeRelocated.emplace_back(thunk);
+   _invokeExactThunksToBeRelocated.emplace_back(serializedThunk);
    }
-
-void *
-j9ThunkInvokeExactHelperFromTerseSignature(void * jitConfig, UDATA signatureLength, char *signatureChars)
-{
-   TR_RuntimeHelper helper;
-
-   switch (signatureChars[signatureLength - 1]) {
-      case 'V':
-         helper = TR_icallVMprJavaSendInvokeExact0;
-         break;
-      case 'F':
-         helper = TR_icallVMprJavaSendInvokeExactF;
-         break;
-      case 'D':
-         helper = TR_icallVMprJavaSendInvokeExactD;
-         break;
-      case 'J':
-         helper = TR_icallVMprJavaSendInvokeExactJ;
-         break;
-      case '[':
-         /* intentional fall-through */
-      case 'L':
-         helper = TR_icallVMprJavaSendInvokeExactL;
-         break;
-      default:
-         helper = TR_icallVMprJavaSendInvokeExact1;
-         break;
-   }
-   TR::SymbolReference *symRef = TR::comp()->getSymRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
-
-   return symRef->getMethodAddress();
-}
 
 void
 TR::CompilationInfoPerThread::relocateThunks()
@@ -835,48 +803,55 @@ TR::CompilationInfoPerThread::relocateThunks()
    TR_ASSERT(_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT, "Should be called in JITServer client mode only");
 
    TR_J9VMBase *fe = _vm;
+   
+   // Compute the total amount of memory required for all thunks
+   size_t totalThunkSize = 0;
    for (auto p : _thunksToBeRelocated)
       {
-      void *thunk = (U_8 *)p.first - (U_8 *)TR::compInfoPT->reloRuntime()->aotMethodHeaderEntry()->compileMethodCodeStartPC + (U_8 *)TR::compInfoPT->reloRuntime()->newMethodCodeStart();
-      std::string signature = p.second;
-      void *vmHelper = j9ThunkVMHelperFromSignature(fe->_jitConfig, signature.size(), &signature[0]);
-      TR::compInfoPT->reloRuntime()->reloTarget()->performThunkRelocation((uint8_t*) thunk, (UDATA)vmHelper);
-      // Always need to call base version of setJ2IThunk, even in AOT mode
-      fe->TR_J9VMBase::setJ2IThunk(&signature[0], signature.size(), thunk, TR::comp());
-      if (_vm->_compInfoPT->getCompilation()->compileRelocatableCode())
-         // For AOT compilation, also need to call TR_J9SharedCacheVM version of the method
-         _vm->setJ2IThunk(&signature[0], signature.size(), thunk, TR::comp());
+      const std::string &serializedThunk = p.first;
+      totalThunkSize += serializedThunk.size();
+      }
+   for (const std::string serializedThunk : _invokeExactThunksToBeRelocated)
+      {
+      totalThunkSize += serializedThunk.size();
+      }
+
+   uint8_t *coldCode;
+   TR::CodeCache *codeCache = reloRuntime()->codeCache();
+   // Allocate code cache for all thunks in one call, if there is not enough space, can fail early
+   uint8_t *thunkStart = TR::CodeCacheManager::instance()->allocateCodeMemory(totalThunkSize, 0, &codeCache, &coldCode, true);
+   if (!thunkStart)
+      {
+      codeCache->unreserve();
+      compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate code cache");
+      }
+
+   for (auto p : _thunksToBeRelocated)
+      {
+      const std::string &serializedThunk = p.first;
+      std::string &signature = p.second;
+
+      memcpy(thunkStart, serializedThunk.data(), serializedThunk.size());
+      // The first 8 bytes hold the offset to arguments
+      uint8_t *thunkAddress = thunkStart + 8;
+
+      void *vmHelper = j9ThunkVMHelperFromSignature(_jitConfig, signature.size(), &signature[0]);
+      compInfoPT->reloRuntime()->reloTarget()->performThunkRelocation(thunkAddress, (UDATA)vmHelper);
+      // Ideally, should use signature.data() here, but setJ2IThunk has non-const pointer
+      // as argument, and it uses it to invoke a VM function that also takes non-const pointer.
+      fe->TR_J9VMBase::setJ2IThunk(&signature[0], signature.size(), thunkAddress, TR::comp());
+
+      thunkStart += serializedThunk.size();
       }
    _thunksToBeRelocated.clear();
-   for (TR_J2IThunk *thunk : _invokeExactThunksToBeRelocated)
+
+   for (const std::string serializedThunk : _invokeExactThunksToBeRelocated)
       {
-      TR_J2IThunk *realThunk = (TR_J2IThunk *)((U_8 *)thunk - (U_8 *)TR::compInfoPT->reloRuntime()->aotMethodHeaderEntry()->compileMethodCodeStartPC + (U_8 *)TR::compInfoPT->reloRuntime()->newMethodCodeStart());
-      char *signature = realThunk->terseSignature();
-      void *vmHelper = j9ThunkInvokeExactHelperFromTerseSignature(fe->_jitConfig, strlen(signature), signature);
-      *(UDATA *)(realThunk->entryPoint() + 2) = (UDATA) vmHelper; // JITaaS TODO: This is amd64 specific
+      TR_J2IThunk *realThunk = reinterpret_cast<TR_J2IThunk *>(thunkStart);
+      memcpy(realThunk, serializedThunk.data(), serializedThunk.size());
+      compInfoPT->reloRuntime()->reloTarget()->performInvokeExactJ2IThunkRelocation(realThunk);
       fe->setInvokeExactJ2IThunk(realThunk, TR::comp());
-      }
-   _invokeExactThunksToBeRelocated.clear();
-   }
-
-void
-TR::CompilationInfoPerThread::persistThunksToSCC(const J9JITDataCacheHeader *cacheEntry, uint8_t *existingCode)
-   {
-   TR_ASSERT(_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT, "Should be called in JITServer client mode only");
-   TR_ASSERT(_vm->isAOT_DEPRECATED_DO_NOT_USE(), "Should be for AOT mode only");
-
-   TR_AOTMethodHeader * aotMethodHeaderEntry = (TR_AOTMethodHeader *)(cacheEntry + 1); // skip the header J9JITDataCacheHeader
-   for (auto p : _thunksToBeRelocated)
-      {
-      void *thunk = (U_8 *)p.first - (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC + (U_8 *)existingCode;
-      std::string signature = p.second;
-      _vm->setJ2IThunk(&signature[0], signature.size(), thunk, TR::comp());
-      }
-   _thunksToBeRelocated.clear();
-   for (TR_J2IThunk *thunk : _invokeExactThunksToBeRelocated)
-      {
-      TR_J2IThunk *realThunk = (TR_J2IThunk *)((U_8 *)thunk - (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC + (U_8 *)existingCode);
-      _vm->setInvokeExactJ2IThunk(realThunk, TR::comp());
+      thunkStart += serializedThunk.size();
       }
    _invokeExactThunksToBeRelocated.clear();
    }

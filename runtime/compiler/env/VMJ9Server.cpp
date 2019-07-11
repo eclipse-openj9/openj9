@@ -32,6 +32,7 @@
 #include "control/JITaaSCompilationThread.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "exceptions/AOTFailure.hpp"
+#include "codegen/CodeGenerator.hpp"
 
 void
 TR_J9ServerVM::getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods)
@@ -1176,12 +1177,21 @@ TR_J9ServerVM::isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBl
    }
 
 void *
+TR_J9ServerVM::getJ2IThunk(char *signatureChars, uint32_t signatureLength, TR::Compilation *comp)
+   {
+   // Return NULL, since thunk will be recreated on the server whether or not it already exists.
+   // TODO: Track which thunks were created per-client, so that we don't need to recreate them.
+   return NULL;
+   }
+
+void *
 TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr, TR::Compilation *comp)
    {
    TR_J9VMBase::setJ2IThunk(signatureChars, signatureLength, thunkptr, comp);
    std::string signature(signatureChars, signatureLength);
+   std::string serializedThunk((char *) ((U_8 *) thunkptr - 8), *((U_32 *)((U_8*) thunkptr - 8)) + 8);
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_setJ2IThunk, thunkptr, signature);
+   stream->write(JITServer::MessageType::VM_setJ2IThunk, signature, serializedThunk);
    stream->read<JITServer::Void>();
    return thunkptr;
    }
@@ -1359,8 +1369,9 @@ void
 TR_J9ServerVM::setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp)
    {
    TR_J9VMBase::setInvokeExactJ2IThunk(thunkptr, comp);
+   std::string serializedThunk((char *) thunkptr, ((TR_J2IThunk *) thunkptr)->totalSize());
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_setInvokeExactJ2IThunk, thunkptr);
+   stream->write(JITServer::MessageType::VM_setInvokeExactJ2IThunk, serializedThunk);
    stream->read<JITServer::Void>();
    }
 
@@ -1375,6 +1386,8 @@ TR_J9ServerVM::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *com
       && (  method->getMandatoryRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact
          || method->isArchetypeSpecimen()))
       {
+      if (isAOT_DEPRECATED_DO_NOT_USE()) // While we're here... we need an AOT relocation for this call
+         comp->cg()->addExternalRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(NULL, (uint8_t *)callNode, (uint8_t *)methodSymbol->getMethod()->signatureChars(), TR_J2IThunks, comp->cg()), __FILE__, __LINE__, callNode);
       // for JITaaS always need to regenerate a thunk, when it's needed
       return true;
       }
