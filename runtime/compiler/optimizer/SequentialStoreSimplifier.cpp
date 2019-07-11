@@ -693,7 +693,6 @@ bool TR_ShiftedValueTree::process(TR::Node* loadNode)
       case TR::l2b: shift = true;  _valueSize = 8; shiftCode = TR::lushr; altShiftCode = TR::lshr; constCode = TR::iconst; break;
       case TR::bload:
       case TR::bconst:
-      case TR::cconst:
       case TR::sconst:
       case TR::iconst:
       case TR::lconst: shift = false; _valueSize = 1; _shiftValue = 0; break;
@@ -720,7 +719,6 @@ bool TR_ShiftedValueTree::process(TR::Node* loadNode)
          _valNode = loadNode->getFirstChild()->getFirstChild();
          switch(constCode)
             {
-            case TR::cconst: _shiftValue = shiftVal->getConst<uint16_t>(); break;
             case TR::sconst: _shiftValue = shiftVal->getShortInt(); break;
             case TR::iconst: _shiftValue = shiftVal->getInt(); break;
             case TR::lconst: _shiftValue = shiftVal->getLongInt(); break;
@@ -965,7 +963,6 @@ int64_t TR_arraycopySequentialStores::constVal()
       switch (_val[entry]->getValNode()->getOpCodeValue())
          {
          case TR::bconst: curVal = (uint64_t) (_val[entry]->getValNode()->getByte() & 0xFF); break;
-         case TR::cconst: curVal = (uint64_t) (_val[entry]->getValNode()->getConst<uint16_t>() & 0xFF); break;
          case TR::sconst: curVal = (uint64_t) (_val[entry]->getValNode()->getShortInt() & 0xFF); break;
          case TR::iconst: curVal = (uint64_t) (_val[entry]->getValNode()->getInt() & 0xFF); break;
          case TR::lconst: curVal = (uint64_t) (_val[entry]->getValNode()->getLongInt() & 0xFF); break;
