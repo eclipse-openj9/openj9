@@ -536,6 +536,36 @@ TR_ResolvedJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * comp, I_32 cp
    return result;
    }
 
+static bool doResolveAtRuntime(J9Method *method, I_32 cpIndex, TR::Compilation *comp)
+   {
+   if (!method)
+      return true;
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+   auto stream = fej9->_compInfoPT->getMethodBeingCompiled()->_stream;
+   if (method == fej9->_compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_invokeWithArgumentsHelperMethod)
+      {
+      // invokeWithArgumentsHelper is a weirdo
+      if (fej9->isAOT_DEPRECATED_DO_NOT_USE())
+         {
+         comp->failCompilation<TR::CompilationException>("invokeWithArgumentsHelper");
+         }
+      else
+         {
+         return false; // It is incorrect to try to resolve this
+         }
+      }
+   else if (comp->ilGenRequest().details().isMethodHandleThunk()) // cmvc 195373
+      {
+      return false;
+      }
+   else if (fej9->_compInfoPT->getClientData()->getRtResolve())
+      {
+      return performTransformation(comp, "Setting as unresolved static call cpIndex=%d\n", cpIndex);
+      }
+
+   return false;
+   }
+
 TR_ResolvedMethod *
 TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP)
    {
@@ -559,7 +589,7 @@ TR_ResolvedJ9JITaaSServerMethod::getResolvedStaticMethod(TR::Compilation * comp,
          ramMethod = NULL;
       }
 
-   bool skipForDebugging = false;
+   bool skipForDebugging = doResolveAtRuntime(ramMethod, cpIndex, comp);
    if (isArchetypeSpecimen())
       {
       // ILGen macros currently must be resolved for correctness, or else they
