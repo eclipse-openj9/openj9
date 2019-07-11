@@ -9189,15 +9189,15 @@ TR::Register *intOrLongClobberEvaluate(
  * \param node
  *   The tree node
  *
- * \param isLatin1
- *   True when the string is Latin1, False when the string is UTF16
- *
  * \param cg
  *   The Code Generator
  *
+ * \param isLatin1
+ *   True when the string is Latin1, False when the string is UTF16
+ *
  * Note that this version does not support discontiguous arrays
  */
-static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::CodeGenerator* cg)
+static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isLatin1)
    {
    static uint8_t MASKOFSIZEONE[] =
       {
@@ -9231,10 +9231,10 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::C
       shift = 1;
       }
 
-   auto address = cg->evaluate(node->getChild(1));
-   auto value = cg->evaluate(node->getChild(2));
+   auto array = cg->evaluate(node->getChild(1));
+   auto ch = cg->evaluate(node->getChild(2));
    auto offset = cg->evaluate(node->getChild(3));
-   auto size = cg->evaluate(node->getChild(4));
+   auto length = cg->evaluate(node->getChild(4));
 
    auto ECX = cg->allocateRegister();
    auto result = cg->allocateRegister();
@@ -9244,15 +9244,15 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::C
 
    auto dependencies = generateRegisterDependencyConditions((uint8_t)7, (uint8_t)7, cg);
    dependencies->addPreCondition(ECX, TR::RealRegister::ecx, cg);
-   dependencies->addPreCondition(address, TR::RealRegister::NoReg, cg);
-   dependencies->addPreCondition(size, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(array, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(length, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(result, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(scratch, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(scratchXMM, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(valueXMM, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(ECX, TR::RealRegister::ecx, cg);
-   dependencies->addPostCondition(address, TR::RealRegister::NoReg, cg);
-   dependencies->addPostCondition(size, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(array, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(length, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(result, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(scratch, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(scratchXMM, TR::RealRegister::NoReg, cg);
@@ -9264,13 +9264,13 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::C
    begLabel->setStartInternalControlFlow();
    endLabel->setEndInternalControlFlow();
 
-   generateRegRegInstruction(MOVDRegReg4, node, valueXMM, value, cg);
+   generateRegRegInstruction(MOVDRegReg4, node, valueXMM, ch, cg);
    generateRegMemInstruction(PSHUFBRegMem, node, valueXMM, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, shuffleMask), cg), cg);
 
    generateRegRegInstruction(MOV4RegReg, node, result, offset, cg);
 
    generateLabelInstruction(LABEL, node, begLabel, cg);
-   generateRegMemInstruction(LEARegMem(), node, scratch, generateX86MemoryReference(address, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+   generateRegMemInstruction(LEARegMem(), node, scratch, generateX86MemoryReference(array, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
    generateRegRegInstruction(MOVRegReg(), node, ECX, scratch, cg);
    generateRegImmInstruction(ANDRegImms(), node, scratch, ~(width - 1), cg);
    generateRegImmInstruction(ANDRegImms(), node, ECX, width - 1, cg);
@@ -9288,17 +9288,17 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::C
       }
    generateRegImmInstruction(ADD4RegImms, node, result, width >> shift, cg);
    generateRegRegInstruction(SUB4RegReg, node, result, ECX, cg);
-   generateRegRegInstruction(CMP4RegReg, node, result, size, cg);
+   generateRegRegInstruction(CMP4RegReg, node, result, length, cg);
    generateLabelInstruction(JGE1, node, endLabel, cg);
 
    generateLabelInstruction(LABEL, node, loopLabel, cg);
-   generateRegMemInstruction(MOVDQURegMem, node, scratchXMM, generateX86MemoryReference(address, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+   generateRegMemInstruction(MOVDQURegMem, node, scratchXMM, generateX86MemoryReference(array, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
    generateRegRegInstruction(compareOp, node, scratchXMM, valueXMM, cg);
    generateRegRegInstruction(PMOVMSKB4RegReg, node, scratch, scratchXMM, cg);
    generateRegRegInstruction(TEST4RegReg, node, scratch, scratch, cg);
    generateLabelInstruction(JNE1, node, endLabel, cg);
    generateRegImmInstruction(ADD4RegImms, node, result, width >> shift, cg);
-   generateRegRegInstruction(CMP4RegReg, node, result, size, cg);
+   generateRegRegInstruction(CMP4RegReg, node, result, length, cg);
    generateLabelInstruction(JL1, node, loopLabel, cg);
    generateLabelInstruction(LABEL, node, endLabel, dependencies, cg);
 
@@ -9308,7 +9308,7 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::C
       generateRegImmInstruction(SHR4RegImm1, node, scratch, shift, cg);
       }
    generateRegRegInstruction(ADDRegReg(), node, result, scratch, cg);
-   generateRegRegInstruction(CMPRegReg(), node, result, size, cg);
+   generateRegRegInstruction(CMPRegReg(), node, result, length, cg);
    generateRegMemInstruction(CMOVGERegMem(), node, result, generateX86MemoryReference(TR::Compiler->target.is32Bit() ? cg->findOrCreate4ByteConstant(node, -1) : cg->findOrCreate8ByteConstant(node, -1), cg), cg);
 
    cg->stopUsingRegister(ECX);
@@ -11493,12 +11493,12 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
          if (!cg->getSupportsInlineStringIndexOf())
             break;
          else
-            return inlineIntrinsicIndexOf(node, true, cg);
+            return inlineIntrinsicIndexOf(node, cg, true);
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
          if (!cg->getSupportsInlineStringIndexOf())
             break;
          else
-            return inlineIntrinsicIndexOf(node, false, cg);
+            return inlineIntrinsicIndexOf(node, cg, false);
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Little:
          return TR::TreeEvaluator::encodeUTF16Evaluator(node, cg);

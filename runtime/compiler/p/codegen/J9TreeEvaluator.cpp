@@ -12295,15 +12295,15 @@ static TR::Register *inlineEncodeUTF16(TR::Node *node, TR::CodeGenerator *cg)
    return outputLenReg;
    }
 
-static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::CodeGenerator *cg)
+static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *cg, bool isLatin1)
    {
    auto vectorCompareOp = isLatin1 ? TR::InstOpCode::vcmpeubr : TR::InstOpCode::vcmpeuhr;
    auto scalarLoadOp = isLatin1 ? TR::InstOpCode::lbzx : TR::InstOpCode::lhzx;
 
-   TR::Register *arrObjectAddress = cg->evaluate(node->getChild(1));
-   TR::Register *targetScalar = cg->evaluate(node->getChild(2));
-   TR::Register *startIndex = cg->evaluate(node->getChild(3));
-   TR::Register *endIndex = cg->evaluate(node->getChild(4));
+   TR::Register *array = cg->evaluate(node->getChild(1));
+   TR::Register *ch = cg->evaluate(node->getChild(2));
+   TR::Register *offset = cg->evaluate(node->getChild(3));
+   TR::Register *length = cg->evaluate(node->getChild(4));
 
    TR::Register *cr0 = cg->allocateRegister(TR_CCR);
    TR::Register *cr6 = cg->allocateRegister(TR_CCR);
@@ -12336,13 +12336,13 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
    generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel);
 
    // Special case for empty strings, which always return -1
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0, startIndex, endIndex);
+   generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0, offset, length);
    generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, notFoundLabel, cr0);
 
    // IMPORTANT: The upper 32 bits of a 64-bit register containing an int are undefined. Since the
    // indices are being passed in as ints, we must ensure that their upper 32 bits are not garbage.
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, result, startIndex);
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, endAddress, endIndex);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, result, offset);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::extsw, node, endAddress, length);
 
    if (!isLatin1)
       {
@@ -12351,13 +12351,13 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
       }
 
    if (node->getChild(3)->getReferenceCount() == 1)
-      srm->donateScratchRegister(startIndex);
+      srm->donateScratchRegister(offset);
    if (node->getChild(4)->getReferenceCount() == 1)
-      srm->donateScratchRegister(endIndex);
+      srm->donateScratchRegister(length);
 
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, arrAddress, arrObjectAddress, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, arrAddress, array, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
    if (node->getChild(1)->getReferenceCount() == 1)
-      srm->donateScratchRegister(arrObjectAddress);
+      srm->donateScratchRegister(array);
 
    // Handle the first character using a simple scalar compare. Otherwise, first character matches
    // would be slower than the old scalar comparison loop. This is a problem since first character
@@ -12369,7 +12369,7 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
 
       // Since we're going to do a load followed immediately by a comparison, we need to ensure that
       // the target scalar is zero-extended and *not* sign-extended.
-      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, zxTargetScalar, targetScalar, 0, isLatin1 ? 0xff : 0xffff);
+      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, zxTargetScalar, ch, 0, isLatin1 ? 0xff : 0xffff);
 
       generateTrg1MemInstruction(cg, scalarLoadOp, node, value, new (cg->trHeapMemory()) TR::MemoryReference(result, arrAddress, isLatin1 ? 1 : 2, cg));
       generateTrg1Src2Instruction(cg, TR::InstOpCode::cmp4, node, cr0, value, zxTargetScalar);
@@ -12391,9 +12391,9 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
 
    // Splat the value to be compared against and its bitwise complement into two vector registers
    // for later use
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrwz, node, targetVector, targetScalar);
+   generateTrg1Src1Instruction(cg, TR::InstOpCode::mtvsrwz, node, targetVector, ch);
    if (node->getChild(2)->getReferenceCount() == 1)
-      srm->donateScratchRegister(targetScalar);
+      srm->donateScratchRegister(ch);
    if (isLatin1)
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::vspltb, node, targetVector, targetVector, 7);
    else
@@ -12601,52 +12601,50 @@ static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, bool isLatin1, TR::C
    if (!isLatin1)
       generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, result, result, 1);
 
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 15 + srm->numAvailableRegisters(), cg->trMemory());
+
+   if (node->getChild(1)->getReferenceCount() != 1)
       {
-      TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 15 + srm->numAvailableRegisters(), cg->trMemory());
-
-      if (node->getChild(1)->getReferenceCount() != 1)
-         {
-         deps->addPostCondition(arrObjectAddress, TR::RealRegister::NoReg);
-         deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
-         }
-      if (node->getChild(2)->getReferenceCount() != 1)
-         deps->addPostCondition(targetScalar, TR::RealRegister::NoReg);
-      if (node->getChild(3)->getReferenceCount() != 1)
-         deps->addPostCondition(startIndex, TR::RealRegister::NoReg);
-      if (node->getChild(4)->getReferenceCount() != 1)
-         deps->addPostCondition(endIndex, TR::RealRegister::NoReg);
-
-      deps->addPostCondition(cr0, TR::RealRegister::cr0);
-      deps->addPostCondition(cr6, TR::RealRegister::cr6);
-
-      deps->addPostCondition(zeroRegister, TR::RealRegister::NoReg);
+      deps->addPostCondition(array, TR::RealRegister::NoReg);
       deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
-      deps->addPostCondition(result, TR::RealRegister::NoReg);
-      deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
-      deps->addPostCondition(arrAddress, TR::RealRegister::NoReg);
-      deps->addPostCondition(currentAddress, TR::RealRegister::NoReg);
-      deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
-      deps->addPostCondition(endAddress, TR::RealRegister::NoReg);
-
-      deps->addPostCondition(targetVector, TR::RealRegister::NoReg);
-      deps->addPostCondition(targetVectorNot, TR::RealRegister::NoReg);
-      deps->addPostCondition(searchVector, TR::RealRegister::NoReg);
-      deps->addPostCondition(permuteVector, TR::RealRegister::NoReg);
-
-      srm->addScratchRegistersToDependencyList(deps, true);
-
-      generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
-
-      deps->stopUsingDepRegs(cg, result);
-
-      node->setRegister(result);
-
-      cg->decReferenceCount(node->getChild(0));
-      cg->decReferenceCount(node->getChild(1));
-      cg->decReferenceCount(node->getChild(2));
-      cg->decReferenceCount(node->getChild(3));
-      cg->decReferenceCount(node->getChild(4));
       }
+   if (node->getChild(2)->getReferenceCount() != 1)
+      deps->addPostCondition(ch, TR::RealRegister::NoReg);
+   if (node->getChild(3)->getReferenceCount() != 1)
+      deps->addPostCondition(offset, TR::RealRegister::NoReg);
+   if (node->getChild(4)->getReferenceCount() != 1)
+      deps->addPostCondition(length, TR::RealRegister::NoReg);
+
+   deps->addPostCondition(cr0, TR::RealRegister::cr0);
+   deps->addPostCondition(cr6, TR::RealRegister::cr6);
+
+   deps->addPostCondition(zeroRegister, TR::RealRegister::NoReg);
+   deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
+   deps->addPostCondition(result, TR::RealRegister::NoReg);
+   deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
+   deps->addPostCondition(arrAddress, TR::RealRegister::NoReg);
+   deps->addPostCondition(currentAddress, TR::RealRegister::NoReg);
+   deps->getPostConditions()->getRegisterDependency(deps->getAddCursorForPost() - 1)->setExcludeGPR0();
+   deps->addPostCondition(endAddress, TR::RealRegister::NoReg);
+
+   deps->addPostCondition(targetVector, TR::RealRegister::NoReg);
+   deps->addPostCondition(targetVectorNot, TR::RealRegister::NoReg);
+   deps->addPostCondition(searchVector, TR::RealRegister::NoReg);
+   deps->addPostCondition(permuteVector, TR::RealRegister::NoReg);
+
+   srm->addScratchRegistersToDependencyList(deps, true);
+
+   generateDepLabelInstruction(cg, TR::InstOpCode::label, node, endLabel, deps);
+
+   deps->stopUsingDepRegs(cg, result);
+
+   node->setRegister(result);
+
+   cg->decReferenceCount(node->getChild(0));
+   cg->decReferenceCount(node->getChild(1));
+   cg->decReferenceCount(node->getChild(2));
+   cg->decReferenceCount(node->getChild(3));
+   cg->decReferenceCount(node->getChild(4));
 
    return result;
    }
@@ -13545,7 +13543,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
          if (cg->getSupportsInlineStringIndexOf())
             {
-            resultReg = inlineIntrinsicIndexOf(node, true, cg);
+            resultReg = inlineIntrinsicIndexOf(node, cg, true);
             return true;
             }
          break;
@@ -13553,7 +13551,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
          if (cg->getSupportsInlineStringIndexOf())
             {
-            resultReg = inlineIntrinsicIndexOf(node, false, cg);
+            resultReg = inlineIntrinsicIndexOf(node, cg, false);
             return true;
             }
          break;
