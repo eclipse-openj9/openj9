@@ -24,6 +24,7 @@
 #include "CommunicationStream.hpp"
 #include "env/CompilerEnv.hpp" // for TR::Compiler->target.is64Bit()
 #include "control/Options.hpp" // TR::Options::useCompressedPointers()
+#include "control/CompilationRuntime.hpp"
 
 namespace JITServer
 {
@@ -36,4 +37,14 @@ void CommunicationStream::initVersion()
       CONFIGURATION_FLAGS |= JITaaSCompressedRef;
       }
    }
+
+#if defined(JITSERVER_ENABLE_SSL)
+bool CommunicationStream::useSSL()
+   {
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+   return (compInfo->getJITServerSslKeys().size() ||
+           compInfo->getJITServerSslCerts().size() ||
+           compInfo->getJITServerSslRootCerts().size());
+   }
+#endif
 };

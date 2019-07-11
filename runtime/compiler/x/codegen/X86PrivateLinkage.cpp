@@ -1743,7 +1743,7 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
                int32_t signatureLen = strlen(j2iSignature);
                virtualThunk = fej9->getJ2IThunk(j2iSignature, signatureLen, comp());
                // in server mode, we always need to regenerate the thunk inside the code cache for this compilation
-               if (!virtualThunk || comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+               if (!virtualThunk || comp()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
                   {
                   virtualThunk = fej9->setJ2IThunk(j2iSignature, signatureLen,
                      generateVirtualIndirectThunk(
@@ -1765,7 +1765,7 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
          {
          virtualThunk = fej9->getJ2IThunk(methodSymbol->getMethod(), comp());
          // in server mode, we always need to regenerate the thunk inside the code cache for this compilation
-         if (!virtualThunk || comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         if (!virtualThunk || comp()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             virtualThunk = fej9->setJ2IThunk(methodSymbol->getMethod(), generateVirtualIndirectThunk(callNode), comp());
          }
 

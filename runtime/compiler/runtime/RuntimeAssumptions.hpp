@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <stddef.h>
 #include <stdint.h>
+#include <vector>
 #include "env/RuntimeAssumptionTable.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"

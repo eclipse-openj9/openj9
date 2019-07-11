@@ -2569,7 +2569,7 @@ remoteCompile(
             "Client sending compReq seqNo=%u to server for method %s @ %s.",
             seqNo, compiler->signature(), compiler->getHotnessName());
          }
-      client->buildCompileRequest(TR::comp()->getPersistentInfo()->getJITaaSId(), romMethodOffset,
+      client->buildCompileRequest(TR::comp()->getPersistentInfo()->getClientUID(), romMethodOffset,
                                  method, clazz, *compInfoPT->getMethodBeingCompiled()->_optimizationPlan, detailsStr, details.getType(), unloadedClasses,
                                  classInfoTuple, optionsStr, recompMethodInfoStr, seqNo, useAotCompilation);
       // re-acquire VM access and check for possible class unloading
@@ -3018,7 +3018,7 @@ void printJITaaSCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compIn
 #ifdef COLLECT_CHTABLE_STATS
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    j9tty_printf(PORTLIB, "JITaaS CHTable Statistics:\n");
-   if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       TR_JITaaSClientPersistentCHTable *table = (TR_JITaaSClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
       j9tty_printf(PORTLIB, "Num updates sent: %d (1 per compilation)\n", table->_numUpdates);
@@ -3030,7 +3030,7 @@ void printJITaaSCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compIn
          j9tty_printf(PORTLIB, "Total update bytes: %d. Compilation max: %d. Average per compilation: %f\n", table->_updateBytes, table->_maxUpdateBytes, table->_updateBytes / float(table->_numUpdates));
          }
       }
-   else if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   else if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       TR_JITaaSServerPersistentCHTable *table = (TR_JITaaSServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
       j9tty_printf(PORTLIB, "Num updates received: %d (1 per compilation)\n", table->_numUpdates);
@@ -3048,7 +3048,7 @@ void printJITaaSCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compIn
 void printJITaaSCacheStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-   if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       auto clientSessionHT = compInfo->getClientSessionHT();
       clientSessionHT->printStats();

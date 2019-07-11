@@ -37,6 +37,7 @@
 #include <unistd.h> /// gethostname, read, write
 #if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/err.h>
+#include "control/CompilationRuntime.hpp"
 #endif
 
 namespace JITServer
@@ -55,7 +56,7 @@ const int ClientStream::INCOMPATIBILITY_COUNT_LIMIT = 5;
 void ClientStream::static_init(TR::PersistentInfo *info)
    {
 #if defined(JITSERVER_ENABLE_SSL)
-   if (!CommunicationStream::useSSL(info))
+   if (!CommunicationStream::useSSL())
       return;
 
    CommunicationStream::initSSL();
@@ -75,11 +76,12 @@ void ClientStream::static_init(TR::PersistentInfo *info)
       exit(1);
       }
 
-   auto &sslKeys = info->getJITaaSSslKeys();
-   auto &sslCerts = info->getJITaaSSslCerts();
-   auto &sslRootCerts = info->getJITaaSSslRootCerts();
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+   auto &sslKeys = compInfo->getJITServerSslKeys();
+   auto &sslCerts = compInfo->getJITServerSslCerts();
+   auto &sslRootCerts = compInfo->getJITServerSslRootCerts();
 
-   // TODO: we could also set up keys and certs here, if it's necessary to use TLS client keys 
+   // TODO: we could also set up keys and certs here, if it's necessary to use TLS client keys
    // it's not needed for a basic setup.
    TR_ASSERT_FATAL(sslKeys.size() == 0 && sslCerts.size() == 0, "client keypairs are not yet supported, use a root cert chain instead");
 
@@ -257,7 +259,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
 ClientStream::ClientStream(TR::PersistentInfo *info)
    : CommunicationStream(), _versionCheckStatus(NOT_DONE)
    {
-   int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());
+   int connfd = openConnection(info->getJITServerAddress(), info->getJITServerPort(), info->getSocketTimeout());
    BIO *ssl = openSSLConnection(_sslCtx, connfd);
    initStream(connfd, ssl);
    _numConnectionsOpened++;
@@ -266,7 +268,7 @@ ClientStream::ClientStream(TR::PersistentInfo *info)
 ClientStream::ClientStream(TR::PersistentInfo *info)
    : CommunicationStream(),  _versionCheckStatus(NOT_DONE)
    {
-   int connfd = openConnection(info->getJITaaSServerAddress(), info->getJITaaSServerPort(), info->getJITaaSTimeout());
+   int connfd = openConnection(info->getJITServerAddress(), info->getJITServerPort(), info->getSocketTimeout());
    initStream(connfd);
    _numConnectionsOpened++;
    }

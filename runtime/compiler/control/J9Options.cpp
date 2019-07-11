@@ -1108,7 +1108,7 @@ static bool JITaaSParseOptionsCommon(char **options, char delimiter, TR::Compila
       std::string key = readFileToString(fileName);
       j9mem_free_memory(fileName);
       if (!key.empty())
-         compInfo->getPersistentInfo()->addJITaaSSslKey(key);
+         compInfo->addJITServerSslKey(key);
       }
    else if (try_scan(options, "sslCert="))
       {
@@ -1116,20 +1116,20 @@ static bool JITaaSParseOptionsCommon(char **options, char delimiter, TR::Compila
       std::string cert = readFileToString(fileName);
       j9mem_free_memory(fileName);
       if (!cert.empty())
-         compInfo->getPersistentInfo()->addJITaaSSslCert(cert);
+         compInfo->addJITServerSslCert(cert);
       }
    else if (try_scan(options, "sslRootCerts="))
       {
       char * fileName = scan_to_delim(PORTLIB, options, delimiter);
       std::string cert = readFileToString(fileName);
       j9mem_free_memory(fileName);
-      compInfo->getPersistentInfo()->setJITaaSSslRootCerts(cert);
+      compInfo->setJITServerSslRootCerts(cert);
       }
    else if (getJITaaSNumericOptionFromCommandLineOptions(options, delimiter, "port=", &port))
-      compInfo->getPersistentInfo()->setJITaaSServerPort(port);
+      compInfo->getPersistentInfo()->setJITServerPort(port);
    else if (getJITaaSNumericOptionFromCommandLineOptions(options, delimiter, "timeout=", &timeoutMs))
       {
-      compInfo->getPersistentInfo()->setJITaaSTimeout(timeoutMs);
+      compInfo->getPersistentInfo()->setSocketTimeout(timeoutMs);
       }
    else // option not known
       {
@@ -2040,7 +2040,7 @@ J9::Options::fePreProcess(void * base)
          {
          if (xxJITaaSClientArgIndex > xxJITaaSServerArgIndex)   // client mode
             {
-            compInfo->getPersistentInfo()->setJITaaSMode(CLIENT_MODE);
+            compInfo->getPersistentInfo()->setRemoteCompilationMode(JITServer::CLIENT);
 
             // parse -XX:JITaaSClient:server=<address/hostname>,port=<number> option if provided
             char *xxJITaaSClientOptionWithArgs = "-XX:JITaaSClient:"; // tail colon indicates server and port are provided
@@ -2059,7 +2059,7 @@ J9::Options::fePreProcess(void * base)
                   if (try_scan(&options, "server=")) // parse server=<address/hostname> option
                      {
                      char *address = scan_to_delim(PORTLIB, &options, delimiter);
-                     compInfo->getPersistentInfo()->setJITaaSServerAddress(address);
+                     compInfo->getPersistentInfo()->setJITServerAddress(address);
                      j9mem_free_memory(address);
                      }
                   else if (!JITaaSParseOptionsCommon(&options, delimiter, compInfo, &unRecognizedOptions))
@@ -2069,7 +2069,7 @@ J9::Options::fePreProcess(void * base)
             }
          else                                               // server mode
             {
-            compInfo->getPersistentInfo()->setJITaaSMode(SERVER_MODE);
+            compInfo->getPersistentInfo()->setRemoteCompilationMode(JITServer::SERVER);
 
             // parse -XX:JITaaSServer:port=<number> option if provided
             char *xxJITaaSServerOptionWithArgs = "-XX:JITaaSServer:"; // tail colon indicates options are provided
@@ -2087,21 +2087,21 @@ J9::Options::fePreProcess(void * base)
                }
             }
          }
-      if (compInfo->getPersistentInfo()->getJITaaSMode() != NONJITaaS_MODE)
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::NONE)
          {
          // generate a random identifier for this JITaaS instance.
          // TODO: prevent collisions with some kind of atomic registration algo!
          std::random_device rd;
          std::mt19937_64 rng(rd());
          std::uniform_int_distribution<uint64_t> dist;
-         compInfo->getPersistentInfo()->setJITaaSId(dist(rng));
+         compInfo->getPersistentInfo()->setClientUID(dist(rng));
          }
       }
    // Set a value for _safeReservePhysicalMemoryValue that is proportional
    // to the amount of free physical memory at boot time
    // For JITaaS we can use a 0 value because compilations are done remotely
    // The user can still override it with a command line option
-   if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       J9::Options::_safeReservePhysicalMemoryValue = 0;
       }
@@ -2258,8 +2258,8 @@ J9::Options::setupJITaaSOptions()
    {
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
 
-   if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE ||
-       compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ||
+       compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       self()->setOption(TR_DisableSamplingJProfiling);
       self()->setOption(TR_DisableSharedCacheHints);
@@ -2270,7 +2270,7 @@ J9::Options::setupJITaaSOptions()
       self()->setOption(TR_DisableMethodIsCold); // shady heuristic; better to disable to reduce client/server traffic
       self()->setOption(TR_DisableDecimalFormatPeephole);// JITaas decimalFormatPeephole, 
 
-      if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          // The server can compile with VM access in hand because GC is not a factor here
          // For the same reason we don't have to use TR_EnableYieldVMAccess
@@ -2290,13 +2290,13 @@ J9::Options::setupJITaaSOptions()
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       {
       TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
-      if (persistentInfo->getJITaaSMode() == SERVER_MODE)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS Server Mode. Port: %d. Connection Timeout %ums",
-               persistentInfo->getJITaaSServerPort(), persistentInfo->getJITaaSTimeout());
-      else if (persistentInfo->getJITaaSMode() == CLIENT_MODE)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS Client Mode. Server address: %s port: %d. Connection Timeout %ums",
-               persistentInfo->getJITaaSServerAddress().c_str(), persistentInfo->getJITaaSServerPort(),
-               persistentInfo->getJITaaSTimeout());
+      if (persistentInfo->getRemoteCompilationMode() == JITServer::SERVER)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITServer Server Mode. Port: %d. Connection Timeout %ums",
+               persistentInfo->getJITServerPort(), persistentInfo->getSocketTimeout());
+      else if (persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITServer Client Mode. Server address: %s port: %d. Connection Timeout %ums",
+               persistentInfo->getJITServerAddress().c_str(), persistentInfo->getJITServerPort(),
+               persistentInfo->getSocketTimeout());
       }
    }
 

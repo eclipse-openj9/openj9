@@ -37,6 +37,7 @@
 #include "net/SSLProtobufStream.hpp"
 #if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/err.h>
+#include "control/CompilationRuntime.hpp"
 #endif
 
 namespace JITServer
@@ -80,9 +81,10 @@ SSL_CTX *createSSLContext(TR::PersistentInfo *info)
       exit(1);
       }
 
-   auto &sslKeys = info->getJITaaSSslKeys();
-   auto &sslCerts = info->getJITaaSSslCerts();
-   auto &sslRootCerts = info->getJITaaSSslRootCerts();
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
+   auto &sslKeys = compInfo->getJITServerSslKeys();
+   auto &sslCerts = compInfo->getJITServerSslCerts();
+   auto &sslRootCerts = compInfo->getJITServerSslRootCerts();
 
    TR_ASSERT_FATAL(sslKeys.size() == 1 && sslCerts.size() == 1, "only one key and cert is supported for now");
    TR_ASSERT_FATAL(sslRootCerts.size() == 0, "server does not understand root certs yet");
@@ -203,15 +205,15 @@ ServerStream::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR
    {
 #if defined(JITSERVER_ENABLE_SSL)
    SSL_CTX *sslCtx = NULL;
-   if (CommunicationStream::useSSL(info))
+   if (CommunicationStream::useSSL())
       {
       CommunicationStream::initSSL();
       sslCtx = createSSLContext(info);
       }
 #endif
 
-   uint32_t port = info->getJITaaSServerPort();
-   uint32_t timeoutMs = info->getJITaaSTimeout();
+   uint32_t port = info->getJITServerPort();
+   uint32_t timeoutMs = info->getSocketTimeout();
    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
    if (sockfd < 0)
       {

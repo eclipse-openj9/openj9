@@ -609,7 +609,7 @@ static void jitHookVMInitialized(J9HookInterface * * hook, UDATA eventNum, void 
    {
    J9VMThread* vmThread = ((J9VMInitEvent *)eventData)->vmThread;
    TR::CompilationInfo *compInfo = getCompilationInfo(vmThread->javaVM->jitConfig);
-   if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       fprintf(stderr, "\nJITaaS server ready to accept incoming requests\n");
       j9thread_sleep(10000000000);
@@ -1968,7 +1968,7 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
       if (compInfo)
          {
          static char * isPrintJITaaSMsgStats = feGetEnv("TR_PrintJITaaSMsgStats");
-         if (isPrintJITaaSMsgStats && compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+         if (isPrintJITaaSMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
             printJITaaSMsgStats(jitConfig);
 
          if (feGetEnv("TR_PrintJITaaSCHTableStats"))
@@ -1976,7 +1976,7 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
 
          if (feGetEnv("TR_PrintJITaaSIPMsgStats"))
             {
-            if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+            if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
                {
                TR_J9VMBase * vmj9 = (TR_J9VMBase *)(TR_J9VMBase::get(context->javaVM->jitConfig, 0));
                TR_JITaaSIProfiler *JITaaSIProfiler = (TR_JITaaSIProfiler *)vmj9->getIProfiler();
@@ -2765,7 +2765,7 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
       table->classGotUnloaded(fej9, clazz);
 
    // Add to JITaaS unload list
-   if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       compInfo->getUnloadedClassesTempList()->push_back(clazz);
 
    }
@@ -3002,7 +3002,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
    for (i = 0; i < classCount; i++)
       {
       // Add to JITaaS unload list
-      if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          compInfo->getUnloadedClassesTempList()->push_back((TR_OpaqueClassBlock *) classPair->oldClass);
 
       freshClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(classPair->newClass);
@@ -3544,7 +3544,7 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
    TR_PersistentCHTable * table = 0;
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
       table = compInfo->getPersistentInfo()->getPersistentCHTable();
 
    TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, vmThread);
@@ -4097,7 +4097,7 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    cl->newInstanceCount = options->getInitialCount();
 #endif
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
       {
       TR_PersistentClassInfo *info = compInfo->getPersistentInfo()->getPersistentCHTable()->classGotLoaded(vm, clazz);
 
@@ -4159,7 +4159,7 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    classLoadEvent->failed = allocFailed;
 
    // Determine whether this class gets lock reservation
-   if (options->getOption(TR_ReservingLocks) && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
+   if (options->getOption(TR_ReservingLocks) && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(TR_J9VMBase::get(jitConfig, 0));
       int lwOffset = fej9->getByteOffsetToLockword(clazz);
@@ -4243,7 +4243,7 @@ static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA e
 
    jitAcquireClassTableMutex(vmThread);
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts) && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
       {
       if (!initFailed && !compInfo->getPersistentInfo()->getPersistentCHTable()->classGotInitialized(vm, compInfo->persistentMemory(), clazz))
          initFailed = true;
@@ -4759,7 +4759,7 @@ void JitShutdown(J9JITConfig * jitConfig)
       }
 
    static char * isPrintJITaaSMsgStats = feGetEnv("TR_PrintJITaaSMsgStats");
-   if (isPrintJITaaSMsgStats && compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+   if (isPrintJITaaSMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       printJITaaSMsgStats(jitConfig);
 
    static char * isPrintJITaaSCHTableStats = feGetEnv("TR_PrintJITaaSCHTableStats");
@@ -5788,7 +5788,7 @@ static void iProfilerActivationLogic(J9JITConfig * jitConfig, TR::CompilationInf
          TR_IProfiler *iProfiler = fej9->getIProfiler();
          TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
          if (iProfiler && iProfiler->getProfilerMemoryFootprint() < TR::Options::_iProfilerMemoryConsumptionLimit &&
-             compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
+             compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
             {
             // Turn on if classLoadPhase became active or
             // if many interpreted samples
@@ -6934,7 +6934,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    jitConfig->samplerMonitor = NULL; // initialize this field just in case
    TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
    compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_NOT_CREATED); // just in case
-   if (jitConfig->samplingFrequency && !vmj9->isAOT_DEPRECATED_DO_NOT_USE() && compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
+   if (jitConfig->samplingFrequency && !vmj9->isAOT_DEPRECATED_DO_NOT_USE() && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
       {
       if ((jitConfig->sampleInterruptHandlerKey = javaVM->internalVMFunctions->J9RegisterAsyncEvent(javaVM, jitMethodSampleInterrupt, NULL)) < 0)
          {
@@ -7009,9 +7009,9 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       }
    else
       {
-      // Do not register the hook that sets method invocation counts in JITaaS server mode
+      // Do not register the hook that sets method invocation counts in JITServer server mode
       // This ensures that interpreter will not send methods for compilation
-      if (compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
          {
          if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZE_SEND_TARGET, jitHookInitializeSendTarget, OMR_GET_CALLSITE(), NULL))
             {
@@ -7030,7 +7030,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
             iProfiler->startIProfilerThread(javaVM);
             }
          if (TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase) ||
-             compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+             compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             {
             interpreterProfilingState = IPROFILING_STATE_OFF;
             }
@@ -7066,7 +7066,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          }
       }
    
-   if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener;
       listener->startListenerThread(javaVM);

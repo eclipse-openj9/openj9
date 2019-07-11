@@ -1574,13 +1574,13 @@ TR_J9ServerVM::getClassFromCP(J9ConstantPool *cp)
 void
 TR_J9ServerVM::reserveTrampolineIfNecessary( TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding)
 {
-    // Not necessary in JITaaS server mode
+    // Not necessary in JITServer server mode
 }
 
 intptrj_t
 TR_J9ServerVM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference * symRef, void * callSite)
 {
-    // Not necessary in JITaaS server mode, return the call's PC so that the call will not appear to require a trampoline
+    // Not necessary in JITServer server mode, return the call's PC so that the call will not appear to require a trampoline
     return (intptrj_t)callSite;
 }
 
