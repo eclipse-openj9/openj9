@@ -140,8 +140,9 @@ public:
    /**
       @brief Send an error message to the JITServer
 
-      Examples of error messages include 'compilationAbort' (e.g. when class unloading happens)
-      and `clientTerminate` (e.g. when the client is about to exit)
+      Examples of error messages include 'compilationAbort' (e.g. when class unloading happens),
+      'clientTerminate' (e.g. when the client is about to exit), 
+      and 'compilationTerminate' (e.g. when the client is closing the connection)
    */
    template <typename ...T>
    void writeError(MessageType type, T... args)

@@ -54,6 +54,7 @@ enum MessageType
    compilationRequest = 4; // type used when client sends remote compilation requests
    compilationAbort = 5; // type used when client informs the server to abort the remote compilation
    clientTerminate = 6; // type used when client process is about to terminate
+   connectionTerminate = 7; // type used when client informs the server to close the connection
 
    // For TR_ResolvedJ9JITaaSServerMethod methods
    ResolvedMethod_isJNINative = 100;
