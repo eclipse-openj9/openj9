@@ -68,6 +68,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    static TR::Register *monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
+   static TR::Register *instanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
    static TR::Register *checkcastAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *checkcastEvaluator(TR::Node *node, TR::CodeGenerator *cg);
