@@ -6020,7 +6020,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		int s2len = s2.lengthInternal();
 
 		if (s2len > 0) {
-			if (s2len + start > s1len) {
+			if (start > s1len - s2len) {
 				return -1;
 			}
 

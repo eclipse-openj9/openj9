@@ -920,17 +920,17 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
    }
 
 extern TR::Register *
-intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed)
+inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isLatin1)
    {
    cg->generateDebugCounter("z13/simd/indexOf", 1, TR::DebugCounter::Free);
 
-   TR::Register* address = cg->evaluate(node->getChild(1));
-   TR::Register* value = cg->evaluate(node->getChild(2));
-   TR::Register* index = cg->evaluate(node->getChild(3));
-   TR::Register* size = cg->gprClobberEvaluate(node->getChild(4));
+   TR::Register* array = cg->evaluate(node->getChild(1));
+   TR::Register* ch = cg->evaluate(node->getChild(2));
+   TR::Register* offset = cg->evaluate(node->getChild(3));
+   TR::Register* length = cg->gprClobberEvaluate(node->getChild(4));
 
    // load length isn't used after loop, size must is adjusted to become bytes left
-   TR::Register* loopCounter = size;
+   TR::Register* loopCounter = length;
    TR::Register* loadLength = cg->allocateRegister();
    TR::Register* indexRegister = cg->allocateRegister();
    TR::Register* offsetAddress = cg->allocateRegister();
@@ -949,13 +949,8 @@ intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed)
    TR::LabelSymbol* failureLabel = generateLabelSymbol( cg);
    TR::LabelSymbol* cFlowRegionEnd = generateLabelSymbol( cg);
 
-   const int elementSizeMask = isCompressed ? 0x0 : 0x1;   // byte or halfword mask
-   uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   const int8_t sizeOfVector = cg->machine()->getVRFSize();
-   const bool is64 = TR::Compiler->target.is64Bit();
-
-   TR::RegisterDependencyConditions * regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 8, cg);
-   regDeps->addPostCondition(address, TR::RealRegister::AssignAny);
+   TR::RegisterDependencyConditions* regDeps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 8, cg);
+   regDeps->addPostCondition(array, TR::RealRegister::AssignAny);
    regDeps->addPostCondition(loopCounter, TR::RealRegister::AssignAny);
    regDeps->addPostCondition(indexRegister, TR::RealRegister::AssignAny);
    regDeps->addPostCondition(loadLength, TR::RealRegister::AssignAny);
@@ -964,28 +959,31 @@ intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed)
    regDeps->addPostCondition(resultVector, TR::RealRegister::AssignAny);
    regDeps->addPostCondition(valueVector, TR::RealRegister::AssignAny);
 
-   generateVRRfInstruction(cg, TR::InstOpCode::VLVGP, node, valueVector, index, value);
-   generateVRIcInstruction(cg, TR::InstOpCode::VREP, node, valueVector, valueVector, (sizeOfVector / (1 << elementSizeMask)) - 1, elementSizeMask);
+   generateVRRfInstruction(cg, TR::InstOpCode::VLVGP, node, valueVector, offset, ch);
+   
+   // Byte or halfword mask
+   const int elementSizeMask = isLatin1 ? 0x0 : 0x1;
+   generateVRIcInstruction(cg, TR::InstOpCode::VREP, node, valueVector, valueVector, (cg->machine()->getVRFSize() / (1 << elementSizeMask)) - 1, elementSizeMask);
    generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, resultVector, 0, 0);
    generateVRIaInstruction(cg, TR::InstOpCode::VGBM, node, charBufferVector, 0, 0);
 
-   if (is64)
+   if (TR::Compiler->target.is64Bit())
       {
-      generateRREInstruction(cg, TR::InstOpCode::LLGFR, node, indexRegister, index);
+      generateRREInstruction(cg, TR::InstOpCode::LLGFR, node, indexRegister, offset);
       }
    else
       {
-      generateRRInstruction(cg, TR::InstOpCode::LR, node, indexRegister, index);
+      generateRRInstruction(cg, TR::InstOpCode::LR, node, indexRegister, offset);
       }
-   generateRRInstruction(cg, TR::InstOpCode::SR, node, size, index);
+   generateRRInstruction(cg, TR::InstOpCode::SR, node, length, offset);
 
-   if (!isCompressed)
+   if (!isLatin1)
       {
-      generateRSInstruction(cg, TR::InstOpCode::SLL, node, size, 1);
+      generateRSInstruction(cg, TR::InstOpCode::SLL, node, length, 1);
       generateRSInstruction(cg, TR::InstOpCode::SLL, node, indexRegister, 1);
       }
 
-   generateRRInstruction(cg, TR::InstOpCode::LR, node, loadLength, size);
+   generateRRInstruction(cg, TR::InstOpCode::LR, node, loadLength, length);
    generateRILInstruction(cg, TR::InstOpCode::NILF, node, loadLength, 0xF);
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionStart);
    cFlowRegionStart->setStartInternalControlFlow();
@@ -994,7 +992,7 @@ intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed)
    // VLL takes an index, not a count, so subtract 1 from the count
    generateRILInstruction(cg, TR::InstOpCode::SLFI, node, loadLength, 1);
 
-   generateRXInstruction(cg, TR::InstOpCode::LA, node, offsetAddress, generateS390MemoryReference(address, indexRegister, headerSize, cg));
+   generateRXInstruction(cg, TR::InstOpCode::LA, node, offsetAddress, generateS390MemoryReference(array, indexRegister, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
    generateVRSbInstruction(cg, TR::InstOpCode::VLL, node, charBufferVector, loadLength, generateS390MemoryReference(offsetAddress, 0, cg));
 
    generateVRRbInstruction(cg, TR::InstOpCode::VFEE, node, resultVector, charBufferVector, valueVector, 0x1, elementSizeMask);
@@ -1011,19 +1009,19 @@ intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed)
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, fullVectorLabel);
 
-   generateRIEInstruction(cg, TR::InstOpCode::CIJ, node, size, sizeOfVector, failureLabel, TR::InstOpCode::COND_BL);
+   generateRIEInstruction(cg, TR::InstOpCode::CIJ, node, length, cg->machine()->getVRFSize(), failureLabel, TR::InstOpCode::COND_BL);
 
    // Set loopcounter to 1/16 of the length, remainder has already been accounted for
    generateRSInstruction(cg, TR::InstOpCode::SRL, node, loopCounter, loopCounter, 4);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, loopLabel);
 
-   generateVRXInstruction(cg, TR::InstOpCode::VL, node, charBufferVector, generateS390MemoryReference(address, indexRegister, headerSize, cg));
+   generateVRXInstruction(cg, TR::InstOpCode::VL, node, charBufferVector, generateS390MemoryReference(array, indexRegister, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg));
 
    generateVRRbInstruction(cg, TR::InstOpCode::VFEE, node, resultVector, charBufferVector, valueVector, 0x1, elementSizeMask);
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK4, node, foundLabel);
 
-   generateRILInstruction(cg, TR::InstOpCode::AFI, node, indexRegister, sizeOfVector);
+   generateRILInstruction(cg, TR::InstOpCode::AFI, node, indexRegister, cg->machine()->getVRFSize());
 
    generateS390BranchInstruction(cg, TR::InstOpCode::BRCT, node, loopCounter, loopLabel);
 
@@ -1037,7 +1035,7 @@ intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed)
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, foundLabelExtractedScratch);
    generateRRInstruction(cg, TR::InstOpCode::AR, node, indexRegister, scratch);
 
-   if (!isCompressed)
+   if (!isLatin1)
       {
       generateRSInstruction(cg, TR::InstOpCode::SRL, node, indexRegister, indexRegister, 1);
       }
@@ -1054,11 +1052,13 @@ intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed)
    cg->stopUsingRegister(valueVector);
 
    node->setRegister(indexRegister);
+
    cg->recursivelyDecReferenceCount(node->getChild(0));
    cg->decReferenceCount(node->getChild(1));
    cg->decReferenceCount(node->getChild(2));
    cg->decReferenceCount(node->getChild(3));
    cg->decReferenceCount(node->getChild(4));
+
    return indexRegister;
    }
 
