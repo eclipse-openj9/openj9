@@ -41,7 +41,7 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 
 	private static final RuntimeMXBean instance = new RuntimeMXBeanImpl();
 
-	private final ObjectName objectName;
+	private ObjectName objectName;
 
 	/**
 	 * Constructor intentionally private to prevent instantiation by others.
@@ -49,12 +49,11 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 	 */
 	protected RuntimeMXBeanImpl() {
 		super();
-		objectName = ManagementUtils.createObjectName(ManagementFactory.RUNTIME_MXBEAN_NAME);
 	}
 
 	/**
 	 * Singleton accessor method.
-	 * 
+	 *
 	 * @return the <code>RuntimeMXBeanImpl</code> singleton.
 	 */
 	public static RuntimeMXBean getInstance() {
@@ -233,12 +232,15 @@ public class RuntimeMXBeanImpl implements RuntimeMXBean {
 	 */
 	@Override
 	public final ObjectName getObjectName() {
+		if (objectName == null) {
+			objectName = ManagementUtils.createObjectName(ManagementFactory.RUNTIME_MXBEAN_NAME);
+		}
 		return objectName;
 	}
 
 	public static void checkMonitorPermission() {
 		SecurityManager security = System.getSecurityManager();
-		
+
 		if (security != null) {
 			security.checkPermission(ManagementPermissionHelper.MPMONITOR);
 		}

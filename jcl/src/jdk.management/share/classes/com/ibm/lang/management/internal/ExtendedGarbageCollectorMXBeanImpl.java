@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,6 @@
 package com.ibm.lang.management.internal;
 
 import javax.management.MBeanNotificationInfo;
-import javax.management.ObjectName;
 
 import com.ibm.java.lang.management.internal.GarbageCollectorMXBeanImpl;
 import com.ibm.lang.management.GarbageCollectorMXBean;
@@ -44,9 +43,9 @@ import java.util.List;
 public final class ExtendedGarbageCollectorMXBeanImpl
 		extends GarbageCollectorMXBeanImpl
 		implements GarbageCollectorMXBean {
-	
-	ExtendedGarbageCollectorMXBeanImpl(ObjectName objectName, String name, int id, ExtendedMemoryMXBeanImpl memBean) {
-		super(objectName, name, id, memBean);
+
+	ExtendedGarbageCollectorMXBeanImpl(String domainName, String name, int id, ExtendedMemoryMXBeanImpl memBean) {
+		super(domainName, name, id, memBean);
 	}
 
 	/**
@@ -77,11 +76,10 @@ public final class ExtendedGarbageCollectorMXBeanImpl
 	 * @see #getLastGcInfo()
 	 */
 	private native GcInfo getLastGcInfoImpl(int id);
- 
+
 	static GcInfo buildGcInfo(long index, long startTime, long endTime,
 							long[] initialSize, long[] preUsed, long[] preCommitted, long[] preMax,
 							long[] postUsed, long[] postCommitted, long[] postMax) {
-
 		/* retrieve the names of MemoryPools*/
 		List<MemoryPoolMXBean> memoryPoolList = ManagementFactory.getMemoryPoolMXBeans();
 		String[] poolNames = new String[memoryPoolList.size()];
@@ -89,12 +87,13 @@ public final class ExtendedGarbageCollectorMXBeanImpl
 		for (MemoryPoolMXBean bean : memoryPoolList) {
 			poolNames[idx++] = bean.getName();
 		}
-		Map<String,MemoryUsage> usageBeforeGc = new HashMap<>(poolNames.length); 
-		Map<String,MemoryUsage> usageAfterGc = new HashMap<>(poolNames.length);
+		Map<String, MemoryUsage> usageBeforeGc = new HashMap<>(poolNames.length);
+		Map<String, MemoryUsage> usageAfterGc = new HashMap<>(poolNames.length);
 		for (int count = 0; count < poolNames.length; ++count) {
-			usageBeforeGc.put(poolNames[count], new MemoryUsage(initialSize[count], preUsed[count],  preCommitted[count],  preMax[count]));
+			usageBeforeGc.put(poolNames[count], new MemoryUsage(initialSize[count], preUsed[count], preCommitted[count], preMax[count]));
 			usageAfterGc.put(poolNames[count], new MemoryUsage(initialSize[count], postUsed[count], postCommitted[count], postMax[count]));
 		}
 		return GcInfoUtil.newGcInfoInstance(index, startTime, endTime, usageBeforeGc, usageAfterGc);
 	}
+
 }
