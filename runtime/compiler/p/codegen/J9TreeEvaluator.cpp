@@ -2073,11 +2073,6 @@ TR::Register *J9::Power::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::Cod
    return TR::TreeEvaluator::VMmonexitEvaluator(node, cg);
    }
 
-TR::Register *J9::Power::TreeEvaluator::monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   return NULL;
-   }
-
 TR::Register *J9::Power::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    // The child contains an inline test. If it succeeds, the helper is called

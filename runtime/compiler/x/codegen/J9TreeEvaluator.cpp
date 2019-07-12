@@ -1156,11 +1156,6 @@ TR::Register *J9::X86::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeG
    return TR::TreeEvaluator::VMmonexitEvaluator(node, cg);
    }
 
-TR::Register *J9::X86::TreeEvaluator::monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   return NULL;
-   }
-
 TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    // Generate the test and branch for async message processing.
