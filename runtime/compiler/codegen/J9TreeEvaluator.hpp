@@ -111,6 +111,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public OMR::TreeEvaluatorConnector
    static TR::Register *srdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lrdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *lrdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    /*
     * \brief

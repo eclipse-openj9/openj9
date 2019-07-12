@@ -48,6 +48,7 @@ extern void TEMPORARY_initJ9ARMTreeEvaluatorTable(TR::CodeGenerator *cg)
    TR_TreeEvaluatorFunctionPointer *tet = cg->getTreeEvaluatorTable();
 
    tet[TR::ResolveCHK] = TR::TreeEvaluator::resolveCHKEvaluator;
+   tet[TR::monexitfence] = TR::TreeEvaluator::monexitfenceEvaluator;
    }
 
 /**

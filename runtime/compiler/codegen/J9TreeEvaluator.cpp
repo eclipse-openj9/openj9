@@ -448,6 +448,15 @@ J9::TreeEvaluator::lrdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return TR::TreeEvaluator::lloadEvaluator(node, cg);
    }
 
+///////////////////////////////////////////////////////////////////////////////////////
+// monexitfence -- do nothing, just a placeholder for live monitor meta data
+///////////////////////////////////////////////////////////////////////////////////////
+TR::Register *
+J9::TreeEvaluator::monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return NULL;
+   }
+
 bool J9::TreeEvaluator::getIndirectWrtbarValueNode(TR::CodeGenerator *cg, TR::Node *node, TR::Node*& sourceChild, bool incSrcRefCount)
    {
    TR_ASSERT_FATAL(node->getOpCode().isIndirect() && node->getOpCode().isWrtBar(), "getIndirectWrtbarValueNode expects indirect wrtbar nodes only n%dn (%p)\n", node->getGlobalIndex(), node);
