@@ -46,6 +46,7 @@
 #define JSR292_forGenericInvokeSig "(Ljava/lang/invoke/MethodType;Z)Ljava/lang/invoke/MethodHandle;"
 
 #define JSR292_ArgumentMoverHandle  "java/lang/invoke/ArgumentMoverHandle"
+#define JSR292_BruteArgumentMoverHandle  "java/lang/invoke/BruteArgumentMoverHandle"
 
 #define JSR292_StaticFieldGetterHandle "java/lang/invoke/StaticFieldGetterHandle"
 #define JSR292_StaticFieldSetterHandle "java/lang/invoke/StaticFieldSetterHandle"

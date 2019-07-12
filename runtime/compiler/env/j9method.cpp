@@ -3983,6 +3983,12 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       {  TR::unknownMethod}
       };
 
+   static X BruteArgumentMoverHandleMethods[] =
+      {
+      {  TR::java_lang_invoke_BruteArgumentMoverHandle_permuteArgs,     11, "permuteArgs",   (int16_t)-1, "*"},
+      {  TR::unknownMethod}
+      };
+
    static X PermuteHandleMethods[] =
       {
       {x(TR::java_lang_invoke_PermuteHandle_permuteArgs, "permuteArgs", "(I)I")},
@@ -4507,6 +4513,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       { "org/apache/harmony/luni/platform/OSMemory", OSMemoryMethods },
       { "java/util/concurrent/atomic/AtomicBoolean", JavaUtilConcurrentAtomicBooleanMethods },
       { "java/util/concurrent/atomic/AtomicInteger", JavaUtilConcurrentAtomicIntegerMethods },
+      { "java/lang/invoke/BruteArgumentMoverHandle", BruteArgumentMoverHandleMethods },
       { 0 }
       };
 
@@ -7472,6 +7479,31 @@ getMethodHandleThunkDetails(TR_J9ByteCodeIlGenerator *ilgen, TR::Compilation *co
    return NULL;
    }
 
+static TR::DataType typeFromSig(char sig)
+   {
+   switch (sig)
+      {
+      case 'L':
+      case '[':
+         return TR::Address;
+      case 'I':
+      case 'Z':
+      case 'B':
+      case 'S':
+      case 'C':
+         return TR::Int32;
+      case 'J':
+         return TR::Int64;
+      case 'F':
+         return TR::Float;
+      case 'D':
+         return TR::Double;
+      default:
+         break;
+      }
+   return TR::NoType;
+   }
+
 bool
 TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
    {
@@ -7486,8 +7518,9 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
    char *nextHandleSignature = NULL;
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
+   TR::RecognizedMethod rm = symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
 
-   switch (symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
+   switch (rm)
       {
       case TR::java_lang_invoke_CollectHandle_numArgsToPassThrough:
       case TR::java_lang_invoke_CollectHandle_numArgsToCollect:
@@ -7812,6 +7845,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          }
          return true;
       case TR::java_lang_invoke_ArgumentMoverHandle_permuteArgs:
+      case TR::java_lang_invoke_BruteArgumentMoverHandle_permuteArgs:
          {
          J9::MethodHandleThunkDetails *thunkDetails = getMethodHandleThunkDetails(this, comp(), symRef);
          if (!thunkDetails)
@@ -7851,10 +7885,19 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          TR::Node *originalArgs;
          char * oldSignature;
          char * newSignature;
+         TR::Node* extraArrayNode = NULL;
+         TR::Node* extraL[5];
+         if (rm == TR::java_lang_invoke_BruteArgumentMoverHandle_permuteArgs)
+            {
+            extraArrayNode = pop();
+            for (int i=4; i>=0; i--)
+                extraL[i] = pop();
+            }
 
             {
             TR::VMAccessCriticalSection invokePermuteHandlePermuteArgs(fej9);
             uintptrj_t methodHandle = *thunkDetails->getHandleRef();
+
             uintptrj_t permuteArray = fej9->getReferenceField(methodHandle, "permute", "[I");
 
             // Create temporary placeholder to cause argument expressions to be expanded
@@ -7888,6 +7931,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                   char *argType = nthSignatureArgument(i, nextHandleSignature+1);
                   char  extraName[10];
                   char *extraSignature;
+
                   switch (argType[0])
                      {
                      case 'L':
@@ -7900,12 +7944,33 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                         extraSignature = artificialSignature(stackAlloc, "(L" JSR292_ArgumentMoverHandle ";I).@", nextHandleSignature, i);
                         break;
                      }
+
                   if (comp()->getOption(TR_TraceILGen))
                      traceMsg(comp(), "  permuteArgs:   %d: call to %s.%s%s\n", argIndex, JSR292_ArgumentMoverHandle, extraName, extraSignature);
-                  TR::SymbolReference *extra = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_ArgumentMoverHandle, extraName, extraSignature, TR::MethodSymbol::Static);
-                  loadAuto(TR::Address, 0);
-                  loadConstant(TR::iconst, argIndex);
-                  genInvokeDirect(extra);
+
+                  // Get the argument type of next handle
+                  TR::DataType dataType = typeFromSig(argType[0]);
+
+                  if (dataType == TR::Address && extraArrayNode)
+                     {
+                     if (-1 - argIndex < 5)
+                        {
+                        push(extraL[-1-argIndex]);
+                        }
+                     else
+                        {
+                        push(extraArrayNode);
+                        loadConstant(TR::iconst, -1 - argIndex);
+                        loadArrayElement(TR::Address, comp()->il.opCodeForIndirectArrayLoad(TR::Address), false);
+                        }
+                     }
+                  else
+                     {
+                     TR::SymbolReference *extra = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_ArgumentMoverHandle, extraName, extraSignature, TR::MethodSymbol::Static);
+                     loadAuto(TR::Address, 0);
+                     loadConstant(TR::iconst, argIndex);
+                     genInvokeDirect(extra);
+                     }
                   }
                }
             if (comp()->getOption(TR_TraceILGen))
