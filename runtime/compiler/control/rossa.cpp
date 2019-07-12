@@ -1598,6 +1598,11 @@ onLoadInternal(
    // OpenJ9 issue #5917 tracks the work to enable.
    //
    TR::Options::getCmdLineOptions()->setOption(TR_DisableDynamicLoopTransfer);
+
+   // ArrayCopy transformations are not available in AArch64 yet.
+   // OpenJ9 issue #6438 tracks the work to enable.
+   //
+   TR::Options::getCmdLineOptions()->setOption(TR_DisableArrayCopyOpts);
 #endif
 
 #if defined(TR_HOST_POWER)
