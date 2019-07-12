@@ -932,6 +932,7 @@
    x10JITHelpers_checkHighBounds,
 
    // JSR292
+   java_lang_invoke_BruteArgumentMoverHandle_permuteArgs,
    java_lang_invoke_ArgumentMoverHandle_permuteArgs,
    java_lang_invoke_AsTypeHandle_convertArgs,
    java_lang_invoke_CatchHandle_numCatchTargetArgsToPassThrough,
