@@ -4420,7 +4420,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
       return node;
       }
 
-#if !defined(TR_HOST_ARM)
+#if !defined(TR_HOST_ARM) && !defined(TR_HOST_ARM64)
 
    if (comp()->supportsQuadOptimization())
       {
@@ -4559,7 +4559,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
          	break;
          }
       }
-#endif // TR_HOST_ARM
+#endif
 
    if (symbol->getRecognizedMethod() == TR::com_ibm_Compiler_Internal__TR_Prefetch)
       {
