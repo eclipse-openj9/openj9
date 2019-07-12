@@ -1378,7 +1378,7 @@ void TR_J9VMBase::printVerboseLogHeader(TR::Options *cmdLineOptions)
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"Version Information:");
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     JIT Level  - %s", getJ9JITConfig()->jitLevelName);
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     JVM Level  - %s", EsBuildVersionString);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     GC Level   - %s", Modron_ImportString);
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     GC Level   - %s", J9VM_VERSION_STRING);
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"");
 
    const char *vendorId;
