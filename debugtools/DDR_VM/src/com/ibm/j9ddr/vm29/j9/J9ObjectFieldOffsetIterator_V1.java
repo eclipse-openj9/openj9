@@ -405,10 +405,6 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	 * @throws CorruptDataException
 	 */
 	private UDATA checkLockwordNeeded(J9ROMClassPointer romClass, J9ClassPointer ramSuperClass,J9ClassPointer instanceClass) throws CorruptDataException {
-		if (!J9BuildFlags.thr_lockNursery) {
-			return NO_LOCKWORD_NEEDED;
-		}
-
 		J9ClassPointer ramClassForRomClass = instanceClass;
 		while (!ramClassForRomClass.isNull() && (!romClass.equals(ramClassForRomClass.romClass()))) {
 			ramClassForRomClass = J9ClassHelper.superclass(ramClassForRomClass);

@@ -1510,9 +1510,7 @@ typedef struct J9ObjectMonitor {
 	UDATA proDeflationCount;
 	UDATA antiDeflationCount;
 #endif /* J9VM_THR_SMART_DEFLATION */
-#if defined(J9VM_THR_LOCK_NURSERY)
 	j9objectmonitor_t alternateLockword;
-#endif /* J9VM_THR_LOCK_NURSERY */
 	U_32 hash;
 } J9ObjectMonitor;
 
@@ -4704,9 +4702,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *queryLogOptions)(struct J9JavaVM *vm, I_32 buffer_size, void *options_buffer, I_32 *data_size) ;
 	UDATA  ( *setLogOptions)(struct J9JavaVM *vm, char *options) ;
 	void  ( *exitJavaThread)(struct J9JavaVM * vm) ;
-#if defined(J9VM_THR_LOCK_NURSERY)
 	void  ( *cacheObjectMonitorForLookup)(struct J9JavaVM* vm, struct J9VMThread* vmStruct, struct J9ObjectMonitor* objectMonitor) ;
-#endif /* J9VM_THR_LOCK_NURSERY */
 	void*  ( *jniArrayAllocateMemoryFromThread)(struct J9VMThread* vmThread, UDATA sizeInBytes) ;
 	void  ( *jniArrayFreeMemoryFromThread)(struct J9VMThread* vmThread, void* location) ;
 	void  (JNICALL *sendForGenericInvoke)(struct J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg) ;

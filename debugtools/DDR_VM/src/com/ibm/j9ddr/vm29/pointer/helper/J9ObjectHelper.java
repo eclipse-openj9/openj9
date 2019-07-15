@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,14 +97,8 @@ public class J9ObjectHelper
 	
 	public static UDATA monitor(J9ObjectPointer objPointer) throws CorruptDataException 
 	{
-		if(J9BuildFlags.thr_lockNursery) {
-			// TODO : lockNursery support
-			throw new UnsupportedOperationException("lockNursery not supported yet");			
-		} else {
-			// TODO : non-lockNursery support
-			throw new UnsupportedOperationException("need a non-lockNursery blob");
-			//return new UDATA(getUDATAAtOffset(J9Object._monitorOffset_));
-		}
+		// TODO : lockNursery support
+		throw new UnsupportedOperationException("lockNursery not supported yet");			
 	}
 	
 	/**

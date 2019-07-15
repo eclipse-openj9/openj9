@@ -1547,13 +1547,8 @@ bool TR_J9VMBase::generateCompressedPointers()
 
 bool TR_J9VMBase::generateCompressedLockWord()
    {
-#if defined(J9VM_THR_LOCK_NURSERY)
    if (sizeof(j9objectmonitor_t) == 4)
       return true;
-#else
-   if (sizeof((((J9Object *)NULL)->monitor)) == 4)
-      return true;
-#endif
    return false;
    }
 
@@ -2107,16 +2102,12 @@ TR_J9VMBase::getWriteBarrierGCFlagMaskAsByte()
 int32_t
 TR_J9VMBase::getByteOffsetToLockword(TR_OpaqueClassBlock * clazzPointer)
    {
-#if defined (J9VM_THR_LOCK_NURSERY)
    J9JavaVM * jvm = _jitConfig->javaVM;
 
    if (clazzPointer == NULL)
       return 0;
 
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)->lockOffset;
-#else
-   return TMP_OFFSETOF_J9OBJECT_MONITOR;
-#endif
    }
 
 bool
@@ -4402,10 +4393,7 @@ TR_J9VMBase::initializeLocalObjectFlags(TR::Compilation * comp, TR::Node * alloc
 
 bool TR_J9VMBase::hasTwoWordObjectHeader()
   {
-#if defined(J9VM_THR_LOCK_NURSERY)
   return true;
-#endif
-  return false;;
   }
 
 // Create trees to initialize the header of an object that is being created

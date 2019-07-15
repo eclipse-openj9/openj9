@@ -2446,9 +2446,7 @@ fail:
 					ramClass->totalInstanceSize = classBeingRedefined->totalInstanceSize;
 					ramClass->backfillOffset = classBeingRedefined->backfillOffset;
 					ramClass->finalizeLinkOffset = classBeingRedefined->finalizeLinkOffset;
-#if defined(J9VM_THR_LOCK_NURSERY)
 					ramClass->lockOffset = classBeingRedefined->lockOffset;
-#endif
 				} else {
 					instanceDescription = allocationRequests[RAM_INSTANCE_DESCRIPTION_FRAGMENT].address;
 					iTable = allocationRequests[RAM_ITABLE_FRAGMENT].address;
@@ -2880,9 +2878,6 @@ fail:
 				ramArrayClass->componentType = elementClass;
 				ramArrayClass->module = leafComponentType->module;
 				
-#if defined(J9VM_THR_LOCK_NURSERY) && defined(J9VM_THR_LOCK_NURSERY_FAT_ARRAYS)
-				ramArrayClass->lockOffset = (UDATA)TMP_OFFSETOF_J9INDEXABLEOBJECT_MONITOR;
-#endif
 				if (J9_IS_J9CLASS_VALUETYPE(elementClass) && J9_IS_J9CLASS_FLATTENED(elementClass)) {
 					if (J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {
 						J9ARRAYCLASS_SET_STRIDE(ramClass, ROUND_UP_TO_POWEROF2(J9_VALUETYPE_FLATTENED_SIZE(elementClass), sizeof(U_64)));

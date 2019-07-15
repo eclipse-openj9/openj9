@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -734,15 +733,11 @@ MM_RootScanner::scanMonitorLookupCaches(MM_EnvironmentBase *env)
 	GC_VMThreadListIterator vmThreadListIterator(static_cast<J9JavaVM*>(_omrVM->_language_vm));
 	while (J9VMThread *walkThread = vmThreadListIterator.nextVMThread()) {
 		if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-#if defined(J9VM_THR_LOCK_NURSERY)
 			j9objectmonitor_t *objectMonitorLookupCache = walkThread->objectMonitorLookupCache;
 			UDATA cacheIndex = 0;
 			for (; cacheIndex < J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE; cacheIndex++) {
 				doMonitorLookupCacheSlot(&objectMonitorLookupCache[cacheIndex]);
 			}
-#else
-			doMonitorLookupCacheSlot(&vmThread->cachedMonitor);
-#endif /* J9VM_THR_LOCK_NURSERY */
 		}
 	}
 	reportScanningEnded(RootScannerEntity_MonitorLookupCaches);

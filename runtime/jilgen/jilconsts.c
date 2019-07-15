@@ -291,9 +291,6 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 #if defined(J9VM_INTERP_COMPRESSED_OBJECT_HEADER)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_INTERP_COMPRESSED_OBJECT_HEADER", 1) |
 #endif /* J9VM_INTERP_COMPRESSED_OBJECT_HEADER */
-#if defined(J9VM_THR_LOCK_NURSERY)
-			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_THR_LOCK_NURSERY", 1) |
-#endif /* J9VM_THR_LOCK_NURSERY */
 #if defined(J9VM_INTERP_SMALL_MONITOR_SLOT)
 			writeConstant(OMRPORTLIB, fd, "ASM_J9VM_INTERP_SMALL_MONITOR_SLOT", 1) |
 #endif /* J9VM_INTERP_SMALL_MONITOR_SLOT */
@@ -509,9 +506,7 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			/* J9Class */
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9Class_classLoader", offsetof(J9Class, classLoader)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9Class_lastITable", offsetof(J9Class, lastITable)) |
-#if defined(J9VM_THR_LOCK_NURSERY)
 			writeConstant(OMRPORTLIB, fd, "J9TR_J9Class_lockOffset", offsetof(J9Class, lockOffset)) |
-#endif /* J9VM_THR_LOCK_NURSERY */
 			writeConstant(OMRPORTLIB, fd, "J9TR_ArrayClass_componentType", offsetof(J9ArrayClass, componentType)) |
 
 			/* J9ITable */
