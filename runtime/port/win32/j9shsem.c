@@ -161,12 +161,6 @@ j9shsem_open(struct J9PortLibrary *portLibrary, struct j9shsem_handle **handle, 
 	omrstr_printf(baseFile, J9SH_MAXPATH, "%s_semaphore", semaphoreFullName);
 	omrmem_free_memory(semaphoreFullName);
 	Trc_PRT_shsem_j9shsem_open_builtsemname(baseFile);
-	for (i = 0; baseFile[i] != '\0' && i < J9SH_MAXPATH; i++) {
-		if (('\\' == baseFile[i]) || (':' == baseFile[i]) || (' ' == baseFile[i])) {
-			baseFile[i] = '_';
-		}
-	}
-	Trc_PRT_shsem_j9shsem_open_translatedsemname(baseFile);
 
 	shsem_handle = (*handle) = createsemHandle(portLibrary, params->setSize, baseFile);
 	if (!shsem_handle) {
