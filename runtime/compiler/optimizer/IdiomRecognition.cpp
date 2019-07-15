@@ -6863,7 +6863,6 @@ TR_CISCTransformer::analyzeCharBoolTable(TR_CISCNode *boolTable, uint8_t *table6
       case TR::su2i:
          if (defNode->isOptionalNode()) defNode = defNode->getChild(0);
          // fall through
-      case TR::cloadi:
          defBV.setAll(0, 65535);
          break;
       default:

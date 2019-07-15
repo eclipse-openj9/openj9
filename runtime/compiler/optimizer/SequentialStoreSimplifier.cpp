@@ -1763,8 +1763,7 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
                {
                opcode = TR::cstorei;
                int32_t constValue = (int32_t)arrayset.getConstant();
-               if (istoreNode->getOpCodeValue() == TR::bstorei ||
-                   istoreNode->getOpCodeValue() == TR::bustorei)
+               if (istoreNode->getOpCodeValue() == TR::bstorei)
                   {
                   uint8_t byteConstValue = (uint8_t) constValue;
                   constValue = (int32_t) byteConstValue;
@@ -1778,8 +1777,7 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
                {
                opcode = TR::istorei;
                int32_t constValue = (int32_t)arrayset.getConstant();
-               if (istoreNode->getOpCodeValue() == TR::bstorei ||
-                   istoreNode->getOpCodeValue() == TR::bustorei)
+               if (istoreNode->getOpCodeValue() == TR::bstorei)
                   {
                   uint8_t byteConstValue = (uint8_t) constValue;
                   constValue = (int32_t) byteConstValue;
@@ -1802,8 +1800,7 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
                int64_t longConstValue = (int64_t) constValue;
                constValueNode = TR::Node::create(istoreNode, TR::lconst, 0, 0);
 
-               if (istoreNode->getOpCodeValue() == TR::bstorei ||
-                   istoreNode->getOpCodeValue() == TR::bustorei)
+               if (istoreNode->getOpCodeValue() == TR::bstorei)
                   {
                   uint8_t byteConstValue = (uint8_t) longConstValue;
                   longConstValue = (int64_t) byteConstValue;
@@ -2271,8 +2268,8 @@ static TR::TreeTop * reduceArrayLoad(TR_ArrayShiftTreeCollection * storeTrees, T
          // between 2 and 3 bytes go into here, and we will transform the first 2 bytes
          newDataType = TR::Int16;
          numValidTrees = 2 / storeTrees->getTree(0)->getRootNode()->getOpCode().getSize();
-         storeOpCode = TR::cstorei;
-         loadOpCode = TR::cloadi;
+         storeOpCode = TR::sstorei;
+         loadOpCode = TR::sloadi;
          }
 
       if (numValidTrees < 2 ||

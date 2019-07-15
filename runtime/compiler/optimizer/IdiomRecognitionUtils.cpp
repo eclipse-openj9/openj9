@@ -387,7 +387,7 @@ createIdiomByteArrayStoreInLoop(TR_PCISCGraph *tgt, int32_t ctrl, int dagId, TR_
 TR_PCISCNode *
 createIdiomCharArrayLoadInLoop(TR_PCISCGraph *tgt, int32_t ctrl, int dagId, TR_PCISCNode *pred, TR_PCISCNode *base, TR_PCISCNode *index, TR_PCISCNode *cmah, TR_PCISCNode *const2)
    {
-   return createIdiomArrayLoadInLoop(tgt, ctrl, dagId, pred, TR::cloadi, TR::Int16, base, index, cmah, const2);
+   return createIdiomArrayLoadInLoop(tgt, ctrl, dagId, pred, TR::sloadi, TR::Int16, base, index, cmah, const2);
    }
 
 //*****************************************************************************************
@@ -420,7 +420,7 @@ createIdiomArrayStoreBodyInLoop(TR_PCISCGraph *tgt, int32_t ctrl, int dagId, TR_
       }
    else
       {
-      i2c = new (PERSISTENT_NEW) TR_PCISCNode(tgt->trMemory(),
+            i2c = new (PERSISTENT_NEW) TR_PCISCNode(tgt->trMemory(),
                                               (opcode == TR::cstorei) ? (TR_CISCOps)TR::i2s : TR_conversion,
                                               (opcode == TR::cstorei) ? TR::Int16 : TR::NoType,
                                               tgt->incNumNodes(),  dagId,   1,   1, pred); tgt->addNode(i2c);
@@ -440,7 +440,7 @@ createIdiomArrayStoreBodyInLoop(TR_PCISCGraph *tgt, int32_t ctrl, int dagId, TR_
 TR_PCISCNode *
 createIdiomCharArrayStoreBodyInLoop(TR_PCISCGraph *tgt, int32_t ctrl, int dagId, TR_PCISCNode *pred, TR_PCISCNode *addr, TR_PCISCNode *storeval)
    {
-   return createIdiomArrayStoreBodyInLoop(tgt, ctrl, dagId, pred, TR::cstorei, TR::Int16, addr, storeval);
+   return createIdiomArrayStoreBodyInLoop(tgt, ctrl, dagId, pred, TR::sstorei, TR::Int16, addr, storeval);
    }
 
 //*****************************************************************************************
@@ -464,7 +464,7 @@ createIdiomArrayStoreInLoop(TR_PCISCGraph *tgt, int32_t ctrl, int dagId, TR_PCIS
 TR_PCISCNode *
 createIdiomCharArrayStoreInLoop(TR_PCISCGraph *tgt, int32_t ctrl, int dagId, TR_PCISCNode *pred, TR_PCISCNode *base, TR_PCISCNode *index, TR_PCISCNode *cmah, TR_PCISCNode *const2, TR_PCISCNode *storeval)
    {
-   return createIdiomArrayStoreInLoop(tgt, ctrl, dagId, pred, TR::cstorei, TR::Int16, base, index, cmah, const2, storeval);
+   return createIdiomArrayStoreInLoop(tgt, ctrl, dagId, pred, TR::sstorei, TR::Int16, base, index, cmah, const2, storeval);
    }
 
 //*****************************************************************************************

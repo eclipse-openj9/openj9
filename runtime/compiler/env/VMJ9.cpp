@@ -3362,7 +3362,7 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
          TR::Node::createif(TR::ificmpne,
             TR::Node::create(TR::iand, 2,
                TR::Node::create(TR::bu2i, 1,
-                  TR::Node::createWithSymRef(root, TR::buload, 0, new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), addressSym))),
+                  TR::Node::createWithSymRef(root, TR::bload, 0, new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), addressSym))),
                TR::Node::create(root, TR::iconst, 0, J9HOOK_FLAG_HOOKED)),
             TR::Node::create(root, TR::iconst, 0, 0)));
 
@@ -3383,7 +3383,7 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
          TR::TreeTop * selectedTest = TR::TreeTop::create(comp,
             TR::Node::createif(TR::ificmpne,
                TR::Node::create(TR::bu2i, 1,
-                  TR::Node::createWithSymRef(root, TR::buload, 0, new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), extendedFlagsSym))),
+                  TR::Node::createWithSymRef(root, TR::bload, 0, new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), extendedFlagsSym))),
                TR::Node::create(root, TR::iconst, 0, 0)));
 
          result = selectedTest;
