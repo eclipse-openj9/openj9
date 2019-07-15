@@ -59,6 +59,17 @@
 	</if>
 	<echo> build.list is ${build.list} </echo>
 
+	<macrodef name="checkGitRepoSha">
+		<attribute name="repoDir" default="." />
+		<sequential>
+			<exec executable="bash" failonerror="false">
+				<arg line="${TEST_ROOT}/TestConfig/scripts/getSHA.sh" />
+				<arg line="--repo_dir @{repoDir}" />
+				<arg line="--output_file ${TEST_ROOT}/TestConfig/SHA.txt" />
+			</exec>
+		</sequential>
+	</macrodef>
+
 	<target name="build" depends="stage_test_material" description="using ${JDK_VERSION} to compile the source ">
 		<subant target="">
 			<property name="build.dir" value="subant1.build" />
