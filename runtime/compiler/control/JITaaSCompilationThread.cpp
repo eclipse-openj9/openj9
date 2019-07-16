@@ -1579,6 +1579,20 @@ bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
          client->write(response, mirror->callSiteTableEntryAddress(callSiteIndex));
          }
          break;
+      case MessageType::ResolvedMethod_varHandleMethodTypeTableEntryAddress:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method*, int32_t>();
+         auto mirror = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         client->write(response, mirror->varHandleMethodTypeTableEntryAddress(cpIndex));
+         }
+      case MessageType::ResolvedMethod_isUnresolvedVarHandleMethodTypeTableEntry:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method*, int32_t>();
+         auto mirror = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         client->write(response, mirror->isUnresolvedVarHandleMethodTypeTableEntry(cpIndex));
+         }
       case MessageType::ResolvedMethod_getResolvedDynamicMethod:
          {
          auto recv = client->getRecvData<int32_t, J9Class *>();

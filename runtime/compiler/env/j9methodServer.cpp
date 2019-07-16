@@ -1232,6 +1232,20 @@ TR_ResolvedJ9JITaaSServerMethod::callSiteTableEntryAddress(int32_t callSiteIndex
    return std::get<0>(_stream->read<void*>());
    }
 
+bool
+TR_ResolvedJ9JITaaSServerMethod::isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex)
+   {
+   _stream->write(JITServer::MessageType::ResolvedMethod_isUnresolvedVarHandleMethodTypeTableEntry, _remoteMirror, cpIndex);
+   return std::get<0>(_stream->read<bool>());
+   }
+
+void *
+TR_ResolvedJ9JITaaSServerMethod::varHandleMethodTypeTableEntryAddress(int32_t cpIndex)
+   {
+   _stream->write(JITServer::MessageType::ResolvedMethod_varHandleMethodTypeTableEntryAddress, _remoteMirror, cpIndex);
+   return std::get<0>(_stream->read<void*>());
+   }
+
 TR_ResolvedMethod *
 TR_ResolvedJ9JITaaSServerMethod::getResolvedDynamicMethod(TR::Compilation * comp, I_32 callSiteIndex, bool * unresolvedInCP)
    {

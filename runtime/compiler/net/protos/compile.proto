@@ -108,6 +108,8 @@ enum MessageType
    ResolvedMethod_stringConstant = 149;
    ResolvedMethod_getResolvedVirtualMethod = 150;
    ResolvedMethod_getMultipleResolvedMethods = 151;
+   ResolvedMethod_varHandleMethodTypeTableEntryAddress = 152;
+   ResolvedMethod_isUnresolvedVarHandleMethodTypeTableEntry = 153;
 
    ResolvedRelocatableMethod_createResolvedRelocatableJ9Method = 160;
    ResolvedRelocatableMethod_storeValidationRecordIfNecessary = 161;

@@ -256,6 +256,8 @@ public:
 #endif
    virtual bool isUnresolvedCallSiteTableEntry(int32_t callSiteIndex) override;
    virtual void * callSiteTableEntryAddress(int32_t callSiteIndex) override;
+   virtual bool isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex) override;
+   virtual void * varHandleMethodTypeTableEntryAddress(int32_t cpIndex) override;
    virtual TR_ResolvedMethod * getResolvedDynamicMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP) override;
    virtual bool isSameMethod(TR_ResolvedMethod *) override;
    virtual bool isInlineable(TR::Compilation *) override;
