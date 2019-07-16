@@ -30,6 +30,7 @@
 #include "codegen/Register.hpp"
 #include "codegen/RegisterPair.hpp"
 #include "codegen/Snippet.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
@@ -640,7 +641,7 @@ void TR::IA32PrivateLinkage::buildIPIC(
 
    TR::Instruction *slotPatchInstruction = NULL;
 
-   TR_Method *method = site.getMethodSymbol()->getMethod();
+   TR::Method *method = site.getMethodSymbol()->getMethod();
    TR_OpaqueClassBlock *declaringClass = NULL;
    uintptrj_t itableIndex;
    if (  useLastITableCache

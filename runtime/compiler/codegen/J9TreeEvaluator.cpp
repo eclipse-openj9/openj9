@@ -36,40 +36,56 @@
 #include "runtime/J9ValueProfiler.hpp"
 #include "util_api.h"
 
+TR::Snippet *
+J9::TreeEvaluator::getFieldWatchInstanceSnippet(TR::CodeGenerator *cg, TR::Node *node, J9Method *m, UDATA loc, UDATA os)
+   {
+   return new (cg->trHeapMemory()) TR::J9WatchedInstanceFieldSnippet(cg, node, m, loc, os);
+   }
+
+TR::Snippet *
+J9::TreeEvaluator::getFieldWatchStaticSnippet(TR::CodeGenerator *cg, TR::Node *node, J9Method *m, UDATA loc, void *fieldAddress, J9Class *fieldClass)
+   {
+   return new (cg->trHeapMemory()) TR::J9WatchedStaticFieldSnippet(cg, node, m, loc, fieldAddress, fieldClass);
+   }
+
 void
 J9::TreeEvaluator::rdWrtbarHelperForFieldWatch(TR::Node *node, TR::CodeGenerator *cg, TR::Register *sideEffectRegister, TR::Register *valueReg)
    {
-   bool isWrite = node->getOpCode().isWrtBar();
-
    TR_ASSERT_FATAL(J9ClassHasWatchedFields >= std::numeric_limits<uint16_t>::min() && J9ClassHasWatchedFields <= std::numeric_limits<uint16_t>::max(), "Expecting value of J9ClassHasWatchedFields to be within 16 bits. Currently it's %d(%p).", J9ClassHasWatchedFields, J9ClassHasWatchedFields);
-   // Populate a data snippet with the required information so we can call a VM helper to report the fieldwatch event.
-   J9Method *owningMethod = reinterpret_cast<J9Method *>(node->getOwningMethod());
-   int32_t bcIndex = node->getByteCodeInfo().getByteCodeIndex();
+   
+   // Populate a data snippet with the required information so we can call a VM helper to report the Field Watch event.
    TR::SymbolReference *symRef = node->getSymbolReference();
+   J9Method *owningMethod = reinterpret_cast<J9Method *>(node->getOwningMethod());
+   TR::Register *dataSnippetRegister = cg->allocateRegister();
+   bool isWrite = node->getOpCode().isWrtBar();
    bool isUnresolved = symRef->isUnresolved();
+   int32_t bcIndex = node->getByteCodeInfo().getByteCodeIndex();
+   
    TR::Snippet *dataSnippet = NULL;
    if (symRef->getSymbol()->isStatic())
       {
       void *fieldAddress = isUnresolved ? reinterpret_cast<void *>(-1) : symRef->getSymbol()->getStaticSymbol()->getStaticAddress();
       J9Class *fieldClass = isUnresolved ? NULL : reinterpret_cast<J9Class *>(symRef->getOwningMethod(cg->comp())->getDeclaringClassFromFieldOrStatic(cg->comp(), symRef->getCPIndex()));
-      dataSnippet = new (cg->trHeapMemory()) TR::J9WatchedStaticFieldSnippet (cg, node, owningMethod, bcIndex, fieldAddress, fieldClass);
+      dataSnippet = TR::TreeEvaluator::getFieldWatchStaticSnippet(cg, node, owningMethod, bcIndex, fieldAddress, fieldClass);
       }
    else
       {
-      dataSnippet = new (cg->trHeapMemory()) TR::J9WatchedInstanceFieldSnippet(cg, node, owningMethod, bcIndex, isUnresolved ? -1 : symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes());
+      dataSnippet = TR::TreeEvaluator::getFieldWatchInstanceSnippet(cg, node, owningMethod, bcIndex, isUnresolved ? -1 : symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes());
       }
    cg->addSnippet(dataSnippet);
 
    // If unresolved, then we generate instructions to populate the data snippet's fields correctly at runtime.
    // Note: We also call the VM Helper routine to fill in the data snippet's fields if this is an AOT compilation.
    // Once the infrastructure to support AOT during fieldwatch is enabled and functionally correct, we can remove is check.
-   if (node->getSymbolReference()->isUnresolved() || cg->comp()->compileRelocatableCode() /* isAOTCompile */)
+   if (isUnresolved || cg->comp()->compileRelocatableCode() /* isAOTCompile */)
       {
       // Resolve and populate dataSnippet fields.
-      TR::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(cg, node, dataSnippet, isWrite, sideEffectRegister);
+      TR::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(cg, node, dataSnippet, isWrite, sideEffectRegister, dataSnippetRegister);
       }
-   // Generate instructions to call the VM helper and report the fieldwatch event.
-   TR::TreeEvaluator::generateTestAndReportFieldWatchInstructions(cg, node, dataSnippet, isWrite, sideEffectRegister, valueReg);
+   // Generate instructions to call the VM helper and report the fieldwatch event
+   TR::TreeEvaluator::generateTestAndReportFieldWatchInstructions(cg, node, dataSnippet, isWrite, sideEffectRegister, valueReg, dataSnippetRegister);
+
+   cg->stopUsingRegister(dataSnippetRegister);
    }
 
 TR::Register *
@@ -432,6 +448,15 @@ J9::TreeEvaluator::lrdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    return TR::TreeEvaluator::lloadEvaluator(node, cg);
    }
 
+///////////////////////////////////////////////////////////////////////////////////////
+// monexitfence -- do nothing, just a placeholder for live monitor meta data
+///////////////////////////////////////////////////////////////////////////////////////
+TR::Register *
+J9::TreeEvaluator::monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return NULL;
+   }
+
 bool J9::TreeEvaluator::getIndirectWrtbarValueNode(TR::CodeGenerator *cg, TR::Node *node, TR::Node*& sourceChild, bool incSrcRefCount)
    {
    TR_ASSERT_FATAL(node->getOpCode().isIndirect() && node->getOpCode().isWrtBar(), "getIndirectWrtbarValueNode expects indirect wrtbar nodes only n%dn (%p)\n", node->getGlobalIndex(), node);
@@ -713,6 +738,8 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
    //
    if (objectNode->isNull())
       {
+      if (instanceOfOrCheckCastNode->getOpCodeValue() == TR::checkcastAndNULLCHK)
+            sequences[i++] = NullTest;
       sequences[i++] = isInstanceOf ? GoToFalse : GoToTrue;
       }
    // Cast class is unresolved, not a lot of room to be fancy here.
@@ -1654,4 +1681,38 @@ void J9::TreeEvaluator::preEvaluateEscapingNodesForSpineCheck(TR::Node *root, TR
    {
    TR::TreeEvaluator::initializeStrictlyFutureUseCounts(root, cg->comp()->incVisitCount(), cg);
    TR::TreeEvaluator::evaluateNodesWithFutureUses(root, cg);
+   }
+
+
+///////////////////////////////////////////////////////////////////////////////////////
+// resolveCHKEvaluator - Resolve check a static, field or method. child 1 is reference
+//   to be resolved. Symbolref indicates failure action/destination
+///////////////////////////////////////////////////////////////////////////////////////
+TR::Register *J9::TreeEvaluator::resolveCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // No code is generated for the resolve check. The child will reference an
+   // unresolved symbol and all check handling is done via the corresponding
+   // snippet.
+   //
+   TR::Node *firstChild = node->getFirstChild();
+   bool fixRefCount = false;
+   if (cg->comp()->useCompressedPointers())
+      {
+      // for stores under ResolveCHKs, artificially bump
+      // down the reference count before evaluation (since stores
+      // return null as registers)
+      //
+      if (node->getFirstChild()->getOpCode().isStoreIndirect() &&
+          node->getFirstChild()->getReferenceCount() > 1)
+         {
+         node->getFirstChild()->decReferenceCount();
+         fixRefCount = true;
+         }
+      }
+   cg->evaluate(firstChild);
+   if (fixRefCount)
+      firstChild->incReferenceCount();
+
+   cg->decReferenceCount(firstChild);
+   return NULL;
    }

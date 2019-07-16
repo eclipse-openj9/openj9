@@ -2,7 +2,7 @@
 package com.ibm.oti.shared;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,6 +57,8 @@ final class SharedClassURLClasspathHelperImpl extends SharedClassAbstractHelper 
 		initialize(loader, id, canFind, canStore);
 		initializeShareableClassloader(loader);
 		initializeURLs();
+		notifyClasspathChange3(id, loader, this.urls, 0, this.urlCount, true);
+		
 	}
 
 	private void initializeURLs() {
@@ -79,6 +81,9 @@ final class SharedClassURLClasspathHelperImpl extends SharedClassAbstractHelper 
 	 * essentially flushes the classpath caches and forces them to rebuild.
 	 */
 	private native void notifyClasspathChange2(ClassLoader classloader);
+	
+	/* Notify the open state to all the jar/zip files on the URL classpath to force a timestamp check once */
+	private native void notifyClasspathChange3(int loaderId, ClassLoader classloader, URL[] loaderURLs, int urlIndex, int loaderURLCount, boolean isOpen);
 
 	@Override
 	public byte[] findSharedClass(String className, IndexHolder indexFoundAtHolder) {
@@ -238,8 +243,9 @@ final class SharedClassURLClasspathHelperImpl extends SharedClassAbstractHelper 
 			if (!validateURL(urls[urlCount], false)) {
 				invalidURLExists = true;
 			}
-			++urlCount;
 			notifyClasspathChange2(loader);
+			notifyClasspathChange3(id, loader, urls, urlCount, (urlCount + 1), true);
+			++urlCount;
 		}
 	}
 
@@ -346,6 +352,7 @@ final class SharedClassURLClasspathHelperImpl extends SharedClassAbstractHelper 
 			/*[MSG "K05b2", "setClasspath() updated classpath. Now urlCount={0}"]*/
 			printVerboseInfo(Msg.getString("K05b2", urlCount)); //$NON-NLS-1$
 			notifyClasspathChange2(loader);
+			notifyClasspathChange3(id, loader, urls, 0, urlCount, true);
 		}
 	}
 

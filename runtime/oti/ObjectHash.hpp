@@ -220,19 +220,37 @@ public:
 
 			if (J9_ARE_ANY_BITS_SET(flags, OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS)) {
 				if (J9CLASS_IS_ARRAY(objectClass)) {
-					UDATA offset = ((J9IndexableObjectContiguous*)objectPointer)->size;
-					if (0 != offset) {
-						/* Contiguous array */
-						J9ROMArrayClass *romClass = (J9ROMArrayClass*)objectClass->romClass;
-						offset = ROUND_UP_TO_POWEROF2((offset << (romClass->arrayShape & 0x0000FFFF)) + sizeof(J9IndexableObjectContiguous), sizeof(I_32));
-						hashValue = *(I_32*)((UDATA)objectPointer + offset);
-					} else {
-						if (0 == ((J9IndexableObjectDiscontiguous*)objectPointer)->size) {
-							/* Zero-sized array */
-							hashValue = *(I_32*)((J9IndexableObjectDiscontiguous*)objectPointer + 1);
+					if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
+						UDATA offset = ((J9IndexableObjectContiguousCompressed*)objectPointer)->size;
+						if (0 != offset) {
+							/* Contiguous array */
+							J9ROMArrayClass *romClass = (J9ROMArrayClass*)objectClass->romClass;
+							offset = ROUND_UP_TO_POWEROF2((offset << (romClass->arrayShape & 0x0000FFFF)) + sizeof(J9IndexableObjectContiguousCompressed), sizeof(I_32));
+							hashValue = *(I_32*)((UDATA)objectPointer + offset);
 						} else {
-							/* Discontiguous array */
-							hashValue = vm->memoryManagerFunctions->j9gc_objaccess_getObjectHashCode(vm, objectPointer);
+							if (0 == ((J9IndexableObjectDiscontiguousCompressed*)objectPointer)->size) {
+								/* Zero-sized array */
+								hashValue = *(I_32*)((J9IndexableObjectDiscontiguousCompressed*)objectPointer + 1);
+							} else {
+								/* Discontiguous array */
+								hashValue = vm->memoryManagerFunctions->j9gc_objaccess_getObjectHashCode(vm, objectPointer);
+							}
+						}
+					} else {
+						UDATA offset = ((J9IndexableObjectContiguousFull*)objectPointer)->size;
+						if (0 != offset) {
+							/* Contiguous array */
+							J9ROMArrayClass *romClass = (J9ROMArrayClass*)objectClass->romClass;
+							offset = ROUND_UP_TO_POWEROF2((offset << (romClass->arrayShape & 0x0000FFFF)) + sizeof(J9IndexableObjectContiguousFull), sizeof(I_32));
+							hashValue = *(I_32*)((UDATA)objectPointer + offset);
+						} else {
+							if (0 == ((J9IndexableObjectDiscontiguous*)objectPointer)->size) {
+								/* Zero-sized array */
+								hashValue = *(I_32*)((J9IndexableObjectDiscontiguousFull*)objectPointer + 1);
+							} else {
+								/* Discontiguous array */
+								hashValue = vm->memoryManagerFunctions->j9gc_objaccess_getObjectHashCode(vm, objectPointer);
+							}
 						}
 					}
 				} else {

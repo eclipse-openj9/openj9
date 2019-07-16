@@ -462,7 +462,7 @@ public class Session implements ISession {
 	
 	//print some help for the user
 	private void printHelp() {
-		String launcher = System.getProperty(SYSPROP_LAUNCHER, "dtfjview");
+		String launcher = System.getProperty(SYSPROP_LAUNCHER, "jdmpview");
 		
 		out.print(
 				"Usage: \"" + launcher + " -core <core_file> [-verbose]\" or \n" +

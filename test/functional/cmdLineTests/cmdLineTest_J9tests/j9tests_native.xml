@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2019, 2019 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 Command-Line Option Tests" timeout="600">
+    <variable name="EMPTY_OPTION" value="-Custom:EmptyOption"/>
+    <variable name="WHITESPACE_OPTION" value="-Custom:WhitespaceOption"/>
+    <variable name="IGNORE_UNRECOGNIZED_OPTIONS" value="-Custom:IgnoreUnrecognizedOptions"/>
+    <variable name="COMMANDLINE_OPTION_UNRECOGNIZED" value="Command-line option unrecognised"/>
+    <variable name="TEST_NATIVEVMARGS_CONCLUDED_WITH_CODE" value="[MSG] Test nativevmargs concluded with code:"/>
+
+    <test id="test nativevmargs ignore empty and whitespace VM options">
+        <command>$NATIVEVMARGS$ $JVMLIBPATH$ $IGNORE_UNRECOGNIZED_OPTIONS$ $EMPTY_OPTION$ $WHITESPACE_OPTION$</command>
+        <output type="success" caseSensitive="yes" regex="no">$TEST_NATIVEVMARGS_CONCLUDED_WITH_CODE$ 0</output>
+        <output type="failure" regex="no">[ERR]</output>
+    </test>
+
+    <test id="test nativevmargs reject empty VM option">
+        <command>$NATIVEVMARGS$ $JVMLIBPATH$ $EMPTY_OPTION$</command>
+        <output type="success" caseSensitive="yes" regex="no">$COMMANDLINE_OPTION_UNRECOGNIZED$</output>
+        <output type="required" caseSensitive="yes" regex="no">$TEST_NATIVEVMARGS_CONCLUDED_WITH_CODE$ 7</output>
+    </test>
+
+    <test id="test nativevmargs reject whitespace VM option">
+        <command>$NATIVEVMARGS$ $JVMLIBPATH$ $WHITESPACE_OPTION$</command>
+        <output type="success" caseSensitive="yes" regex="no">$COMMANDLINE_OPTION_UNRECOGNIZED$</output>
+        <output type="required" caseSensitive="yes" regex="no">$TEST_NATIVEVMARGS_CONCLUDED_WITH_CODE$ 7</output>
+    </test>
+
+</suite>

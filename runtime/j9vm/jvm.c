@@ -2670,7 +2670,7 @@ deleteDirsFromLibpath(const char *const libpath, const char *const deleteStart, 
 
 	newPath = malloc(preLen + delim + postLen + 1);
 	if (NULL == newPath) {
-		fprintf(stderr, "deleteDirsFromLibpath: malloc(%d) failed, aborting\n", preLen + delim + postLen + 1);
+		fprintf(stderr, "deleteDirsFromLibpath: malloc(%zu) failed, aborting\n", preLen + delim + postLen + 1);
 		abort();
 	}
 

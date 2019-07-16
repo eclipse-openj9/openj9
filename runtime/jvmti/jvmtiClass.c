@@ -1164,8 +1164,8 @@ redefineClassesCommon(jvmtiEnv* env,
 			if (!extensionsEnabled) {
 				/* Fast HCR path - where the J9Class is redefined in place. */
 
-				/* Add method equivalences for the methods that were re-defined (reverse of before!). */
-				rc = fixMethodEquivalences(currentThread, classPairs, jitEventDataPtr, TRUE, &methodEquivalences, extensionsUsed);
+				/* Add method equivalences for the methods that were re-defined (reverse of before!). Propagate any equivalent resolved callsites. */
+				rc = fixMethodEquivalencesAndCallSites(currentThread, classPairs, jitEventDataPtr, TRUE, &methodEquivalences, extensionsUsed);
 				if (rc != JVMTI_ERROR_NONE) {
 					goto failed;
 				}
@@ -1230,8 +1230,8 @@ redefineClassesCommon(jvmtiEnv* env,
 				/* Unresolve all classes */
 				unresolveAllClasses(currentThread, classPairs, methodPairs, extensionsUsed);
  
-				/* Update method equivalences */
-				rc = fixMethodEquivalences(currentThread, classPairs, jitEventDataPtr, FALSE, &methodEquivalences, extensionsUsed);
+				/* Update method equivalences. Propagate any equivalent resolved callsites. */
+				rc = fixMethodEquivalencesAndCallSites(currentThread, classPairs, jitEventDataPtr, FALSE, &methodEquivalences, extensionsUsed);
 				if (rc != JVMTI_ERROR_NONE) {
 					goto failed;
 				}
@@ -2301,7 +2301,7 @@ jvmtiGetConstantPool_writeConstants(jvmtiGcp_translation *translation, unsigned 
 				jvmtiGetConstantPoolWrite_printf(("        HT CPT %2d <MethodHandle> method/fieldIndex %d  refType %d\n",
 								  htEntry->cpType, htEntry->type.methodHandle.methodOrFieldRefIndex, htEntry->type.methodHandle.handleType));
 				GCP_WRITE_U8 (constantPoolBufIndex, cpItemType);
-				GCP_WRITE_U16(constantPoolBufIndex, htEntry->type.methodHandle.handleType);
+				GCP_WRITE_U8 (constantPoolBufIndex, htEntry->type.methodHandle.handleType);
 				GCP_WRITE_U16(constantPoolBufIndex, htEntry->type.methodHandle.methodOrFieldRefIndex);
 
 				break;
@@ -2623,7 +2623,7 @@ jvmtiGetConstantPool_addMethodHandle(jvmtiGcp_translation *translation, UDATA cp
 		return JVMTI_ERROR_OUT_OF_MEMORY;
 	}
 
-	translation->totalSize += 5;
+	translation->totalSize += 4;
 	translation->cp[*sunCpIndex] = htEntry;
 	(*sunCpIndex)++;
 

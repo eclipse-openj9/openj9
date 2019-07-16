@@ -34,15 +34,12 @@
 #include <stdint.h>
 #include <string.h>
 #include "env/StackMemoryRegion.hpp"
-#include "codegen/BackingStore.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/GCStackMap.hpp"
-#include "codegen/Instruction.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
-#include "codegen/Snippet.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
@@ -71,121 +68,128 @@ J9::CodeGenerator::createStackAtlas()
    //
    TR::Compilation *comp = self()->comp();
    TR::ResolvedMethodSymbol * methodSymbol = comp->getMethodSymbol();
-   int32_t slotIndex = 0;
 
-   intptrj_t stackSlotSize = TR::Compiler->om.sizeofReferenceAddress();
+   const bool doLocalsCompaction = self()->getLocalsIG() && self()->getSupportsCompactedLocals();
 
-   // --------------------------------------------------------------------------
+   // From hereon, any stack memory allocations will expire / die when the function returns
+   //
+   TR::StackMemoryRegion stackMemoryRegion(*self()->trMemory());
+
+   // --------------------------------------------------------------------------------
    // First map the parameters - the mapping of parameters is constrained by
    // the linkage, so we depend on whether the linkage maps the parameters
    // right to left or left to right.
    // We assume that the parameters are mapped contiguously
    //
    ListIterator<TR::ParameterSymbol> parameterIterator(&methodSymbol->getParameterList());
-
-   // Find the offsets of the first and last reference parameters
-   //
-   int32_t sizeOfParameterAreaInBytes = methodSymbol->getNumParameterSlots() * stackSlotSize;
-   int32_t firstMappedParmOffset = sizeOfParameterAreaInBytes;
-   int32_t offsetInBytes;
    TR::ParameterSymbol *parmCursor;
-   int32_t numberOfParmSlots;
-   int32_t numberOfPaddingSlots = 0;
-   void *stackMark = 0;
-   int32_t *colourToGCIndexMap = 0;
 
-   bool doLocalCompaction = (self()->getLocalsIG() && self()->getSupportsCompactedLocals()) ? true : false;
+   intptrj_t stackSlotSize = TR::Compiler->om.sizeofReferenceAddress();
+   int32_t sizeOfParameterAreaInBytes = methodSymbol->getNumParameterSlots() * stackSlotSize;
+   int32_t firstMappedParmOffsetInBytes;
+   int32_t parmOffsetInBytes;
+   int32_t numParmSlots;
 
-   // From here, down, any stack memory allocations will expire / die when the function returns
-   TR::StackMemoryRegion stackMemoryRegion(*self()->trMemory());
-
-   if (doLocalCompaction)
+   // Compute:
+   //
+   // 1) The offset of the first reference parameter, and
+   // 2) The total range of slots between the first parameter that contains a
+   //    collected reference and the last slot that contains a collected
+   //    reference.
+   //
+   // Both quantities must be positive values or 0.
+   //
+   if (comp->getOption(TR_MimicInterpreterFrameShape))
       {
-      colourToGCIndexMap = (int32_t *) self()->trMemory()->allocateStackMemory(self()->getLocalsIG()->getNumberOfColoursUsedToColour() * sizeof(int32_t));
-      for (int32_t i=0; i<self()->getLocalsIG()->getNumberOfColoursUsedToColour(); ++i)
-         {
-         colourToGCIndexMap[i] = -1;
-         }
-      }
-
-   bool interpreterFrameShape = comp->getOption(TR_MimicInterpreterFrameShape);
-
-   if (interpreterFrameShape)
-      {
-      firstMappedParmOffset = 0;
-      numberOfParmSlots = methodSymbol->getNumParameterSlots();
+      firstMappedParmOffsetInBytes = 0;
+      numParmSlots = methodSymbol->getNumParameterSlots();
       }
    else
       {
-      int32_t lastMappedParmOffset = -1;
+      firstMappedParmOffsetInBytes = sizeOfParameterAreaInBytes;
+      int32_t lastMappedParmOffsetInBytes = -1;
+
       for (parmCursor = parameterIterator.getFirst(); parmCursor; parmCursor = parameterIterator.getNext())
          {
          if ((parmCursor->isReferencedParameter() || comp->getOption(TR_FullSpeedDebug)) && parmCursor->isCollectedReference())
             {
-            offsetInBytes = parmCursor->getParameterOffset();
+            parmOffsetInBytes = parmCursor->getParameterOffset();
 
             if (!_bodyLinkage->getRightToLeft())
                {
-               offsetInBytes = sizeOfParameterAreaInBytes - offsetInBytes - stackSlotSize;
+               parmOffsetInBytes = sizeOfParameterAreaInBytes - parmOffsetInBytes - stackSlotSize;
                }
 
-            if (offsetInBytes < firstMappedParmOffset)
+            if (parmOffsetInBytes < firstMappedParmOffsetInBytes)
                {
-               firstMappedParmOffset = offsetInBytes;
+               firstMappedParmOffsetInBytes = parmOffsetInBytes;
                }
 
-            if (offsetInBytes > lastMappedParmOffset)
+            if (parmOffsetInBytes > lastMappedParmOffsetInBytes)
                {
-               lastMappedParmOffset = offsetInBytes;
+               lastMappedParmOffsetInBytes = parmOffsetInBytes;
                }
             }
          }
 
-      if (lastMappedParmOffset >= firstMappedParmOffset)
+      if (lastMappedParmOffsetInBytes >= firstMappedParmOffsetInBytes)
          {
          // The range of stack slots between the first and last parameter that
          // contain a collected references.
          //
-         numberOfParmSlots = ((lastMappedParmOffset-firstMappedParmOffset)/stackSlotSize) + 1;
+         numParmSlots = ((lastMappedParmOffsetInBytes-firstMappedParmOffsetInBytes)/stackSlotSize) + 1;
          }
       else
          {
          // No collected reference parameters.
          //
-         numberOfParmSlots = 0;
+         numParmSlots = 0;
          }
       }
 
-   // Now assign GC map indices to parameters depending on the linkage mapping.
-   // At the same time build the parameter map.
+   TR_ASSERT(firstMappedParmOffsetInBytes >= 0, "firstMappedParmOffsetInBytes must be positive or 0");
+   TR_ASSERT(numParmSlots >= 0, "numParmSlots must be positive or 0");
+
+   // --------------------------------------------------------------------------------
+   // Construct the parameter map for mapped reference parameters
    //
-   TR_GCStackMap * parameterMap = new (self()->trHeapMemory(), numberOfParmSlots) TR_GCStackMap(numberOfParmSlots);
+   TR_GCStackMap *parameterMap = new (self()->trHeapMemory(), numParmSlots) TR_GCStackMap(numParmSlots);
+
+   // --------------------------------------------------------------------------------
+   // Now assign GC map indices to parameters depending on the linkage mapping.
+   // At the same time populate the parameter map.
+   //
+
+   // slotIndex is the zero-based index into the GC map bit vector for a reference
+   // parameter or auto.
+   //
+   int32_t slotIndex = 0;
+
    parameterIterator.reset();
    for (parmCursor = parameterIterator.getFirst(); parmCursor; parmCursor = parameterIterator.getNext())
       {
-      // always has to be on stack for FSD
-      if (interpreterFrameShape || comp->getOption(TR_FullSpeedDebug))
+      if (comp->getOption(TR_MimicInterpreterFrameShape) || comp->getOption(TR_FullSpeedDebug))
          {
          parmCursor->setParmHasToBeOnStack();
          }
 
-      if ((parmCursor->isReferencedParameter() || interpreterFrameShape || comp->getOption(TR_FullSpeedDebug)) &&
+      if ((parmCursor->isReferencedParameter() || comp->getOption(TR_MimicInterpreterFrameShape) || comp->getOption(TR_FullSpeedDebug)) &&
           parmCursor->isCollectedReference())
          {
-         offsetInBytes = parmCursor->getParameterOffset();
+         parmOffsetInBytes = parmCursor->getParameterOffset();
          if (!_bodyLinkage->getRightToLeft())
             {
-            offsetInBytes = sizeOfParameterAreaInBytes - offsetInBytes - stackSlotSize;
+            parmOffsetInBytes = sizeOfParameterAreaInBytes - parmOffsetInBytes - stackSlotSize;
             }
 
          // Normalize the parameter offset on the stack to a zero-based index
          // into the GC map.
          //
-         slotIndex = (offsetInBytes-firstMappedParmOffset)/stackSlotSize;
+         slotIndex = (parmOffsetInBytes-firstMappedParmOffsetInBytes)/stackSlotSize;
          parmCursor->setGCMapIndex(slotIndex);
 
          if (parmCursor->getLinkageRegisterIndex()<0 ||
-             parmCursor->getAllocatedIndex()<0 ||
+             parmCursor->getAssignedGlobalRegisterIndex()<0 ||
              _bodyLinkage->hasToBeOnStack(parmCursor))
             {
             parameterMap->setBit(slotIndex);
@@ -193,12 +197,12 @@ J9::CodeGenerator::createStackAtlas()
          }
       }
 
-   // Either all the parameter slots, or just the range of parameters that contain
-   // collected references.
+   // At this point, slotIndex will cover either all the parameter slots or just
+   // the range of parameters that contain collected references.
    //
-   slotIndex = numberOfParmSlots;
+   slotIndex = numParmSlots;
 
-   // --------------------------------------------------------------------------
+   // --------------------------------------------------------------------------------
    // Now assign a GC map index to reference locals. When the stack is mapped,
    // these locals will have to be mapped contiguously in the stack according to
    // this index.
@@ -206,9 +210,6 @@ J9::CodeGenerator::createStackAtlas()
    // Locals that need initialization during the method prologue are mapped first,
    // then the ones that do not need initialization.
    //
-
-   bool localObjectsFound = false;
-   TR_GCStackAllocMap *stackAllocMap = NULL;
 
    ListIterator<TR::AutomaticSymbol> automaticIterator(&methodSymbol->getAutomaticList());
    TR::AutomaticSymbol * localCursor;
@@ -256,7 +257,7 @@ J9::CodeGenerator::createStackAtlas()
             localCursor->setGCMapIndex(slotIndex -
                                        assignedIndex -
                                        TR::Symbol::convertTypeToNumberOfSlots(localCursor->getDataType()) +
-                                       numberOfParmSlots
+                                       numParmSlots
                                        );
             if (debug("traceFSDStackMap"))
                {
@@ -266,6 +267,24 @@ J9::CodeGenerator::createStackAtlas()
          }
       }
 
+   // Iniialize colour mapping for locals compaction
+   //
+   int32_t *colourToGCIndexMap = 0;
+
+   if (doLocalsCompaction)
+      {
+      colourToGCIndexMap = (int32_t *) self()->trMemory()->allocateStackMemory(self()->getLocalsIG()->getNumberOfColoursUsedToColour() * sizeof(int32_t));
+      TR_ASSERT(colourToGCIndexMap, "Failed to allocate colourToGCIndexMap on stack");
+
+      for (int32_t i=0; i<self()->getLocalsIG()->getNumberOfColoursUsedToColour(); ++i)
+         {
+         colourToGCIndexMap[i] = -1;
+         }
+      }
+
+   // --------------------------------------------------------------------------------
+   // Map uninitialized reference locals that are not stack allocated objects
+   //
    for (localCursor = automaticIterator.getFirst(); localCursor; localCursor = automaticIterator.getNext())
       {
       if (localCursor->getGCMapIndex() < 0 &&
@@ -275,7 +294,7 @@ J9::CodeGenerator::createStackAtlas()
           !localCursor->isInternalPointer() &&
           !localCursor->isPinningArrayPointer())
          {
-         if (doLocalCompaction && !localCursor->holdsMonitoredObject())
+         if (doLocalsCompaction && !localCursor->holdsMonitoredObject())
             {
             // For reference locals that share a stack slot, make sure they get
             // the same GC index.
@@ -308,7 +327,13 @@ J9::CodeGenerator::createStackAtlas()
          }
       }
 
-   int32_t numberOfSlotsToBeInitialized = slotIndex - numberOfParmSlots;
+   int32_t numberOfSlotsToBeInitialized = slotIndex - numParmSlots;
+
+   // --------------------------------------------------------------------------------
+   // Map initialized reference locals and stack allocated objects
+   //
+   int32_t numLocalObjectPaddingSlots = 0;
+   bool localObjectsFound = false;
 
    for (localCursor = automaticIterator.getFirst(); localCursor; localCursor = automaticIterator.getNext())
       {
@@ -318,7 +343,7 @@ J9::CodeGenerator::createStackAtlas()
           !localCursor->isInternalPointer() &&
           !localCursor->isPinningArrayPointer())
          {
-         if (doLocalCompaction &&
+         if (doLocalsCompaction &&
              !localCursor->holdsMonitoredObject())
             {
             // For reference locals that share a stack slot, make sure they get
@@ -348,23 +373,23 @@ J9::CodeGenerator::createStackAtlas()
                }
             }
 
-
          if (localCursor->isLocalObject())
             {
-               localObjectsFound = true;
-               int32_t localObjectAlignment = comp->fej9()->getLocalObjectAlignmentInBytes();
-               if (localObjectAlignment > stackSlotSize && (TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isPower() || TR::Compiler->target.cpu.isZ()))
+            localObjectsFound = true;
+            int32_t localObjectAlignment = comp->fej9()->getLocalObjectAlignmentInBytes();
+            if (localObjectAlignment > stackSlotSize &&
+                (TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isPower() || TR::Compiler->target.cpu.isZ()))
+               {
+               // We only get here in compressedrefs mode
+               int32_t gcMapIndexAlignment = localObjectAlignment / stackSlotSize;
+               int32_t remainder = (slotIndex - numParmSlots) % gcMapIndexAlignment;
+               if (remainder)
                   {
-                  // We only get here in compressedrefs mode
-                  int32_t gcMapIndexAlignment = localObjectAlignment / stackSlotSize;
-                  int32_t remainder = (slotIndex - numberOfParmSlots) % gcMapIndexAlignment;
-                  if (remainder)
-                     {
-                     slotIndex += gcMapIndexAlignment - remainder;
-                     numberOfPaddingSlots += gcMapIndexAlignment - remainder;
-                     traceMsg(comp, "GC index of local object %p is adjusted by +%d, and is %d now\n",localCursor, gcMapIndexAlignment - remainder, slotIndex);
-                     }
+                  slotIndex += gcMapIndexAlignment - remainder;
+                  numLocalObjectPaddingSlots += gcMapIndexAlignment - remainder;
+                  traceMsg(comp, "GC index of local object %p is adjusted by +%d, and is %d now\n",localCursor, gcMapIndexAlignment - remainder, slotIndex);
                   }
+               }
             }
 
          localCursor->setGCMapIndex(slotIndex);
@@ -372,19 +397,19 @@ J9::CodeGenerator::createStackAtlas()
          }
       }
 
-   int32_t numberOfSlots = slotIndex;
+   int32_t totalSlotsInMap = slotIndex;
 
-   // --------------------------------------------------------------------------
-   // Build the stack map for a method.  Start with all parameters and locals
-   // being live, and selectively mark slots that are not live.
+   // --------------------------------------------------------------------------------
+   // Construct and populate the stack map for a method.  Start with all parameters
+   // and locals being live, and selectively unmark slots that are not live.
    //
-   TR_GCStackMap * localMap = new (self()->trHeapMemory(), numberOfSlots) TR_GCStackMap(numberOfSlots);
+   TR_GCStackMap * localMap = new (self()->trHeapMemory(), totalSlotsInMap) TR_GCStackMap(totalSlotsInMap);
    localMap->copy(parameterMap);
 
    // Set all the local references to be live
    //
    int32_t i;
-   for (i = numberOfParmSlots; i < numberOfSlots; ++i)
+   for (i = numParmSlots; i < totalSlotsInMap; ++i)
       {
       localMap->setBit(i);
       }
@@ -409,8 +434,13 @@ J9::CodeGenerator::createStackAtlas()
          }
       }
 
+   // --------------------------------------------------------------------------
+   // Construct and populate the local object stack map
+   //
    // Reset the bits for parts of local objects that are not collected slots
    //
+   TR_GCStackAllocMap *localObjectStackMap = NULL;
+
    if (localObjectsFound)
       {
       for (localCursor = automaticIterator.getFirst(); localCursor; localCursor = automaticIterator.getNext())
@@ -420,12 +450,12 @@ J9::CodeGenerator::createStackAtlas()
             TR::AutomaticSymbol * localObject = localCursor->getLocalObjectSymbol();
             slotIndex = localObject->getGCMapIndex();
 
-            if (!stackAllocMap)
+            if (!localObjectStackMap)
                {
-               stackAllocMap = new (self()->trHeapMemory(), numberOfSlots) TR_GCStackAllocMap(numberOfSlots);
+               localObjectStackMap = new (self()->trHeapMemory(), totalSlotsInMap) TR_GCStackAllocMap(totalSlotsInMap);
                }
 
-            stackAllocMap->setBit(slotIndex);
+            localObjectStackMap->setBit(slotIndex);
 
             int32_t * collectedSlots = localObject->getReferenceSlots();
             int32_t i = 0;
@@ -459,19 +489,23 @@ J9::CodeGenerator::createStackAtlas()
 
    self()->setMethodStackMap(localMap);
 
+   // --------------------------------------------------------------------------
    // Now create the stack atlas
    //
-   TR::GCStackAtlas * atlas = new (self()->trHeapMemory()) TR::GCStackAtlas(numberOfParmSlots, numberOfSlots, self()->trMemory());
-   atlas->setParmBaseOffset(firstMappedParmOffset);
+   TR::GCStackAtlas * atlas = new (self()->trHeapMemory()) TR::GCStackAtlas(numParmSlots, totalSlotsInMap, self()->trMemory());
+   atlas->setParmBaseOffset(firstMappedParmOffsetInBytes);
    atlas->setParameterMap(parameterMap);
    atlas->setLocalMap(localMap);
-   atlas->setStackAllocMap(stackAllocMap);
+   atlas->setStackAllocMap(localObjectStackMap);
    atlas->setNumberOfSlotsToBeInitialized(numberOfSlotsToBeInitialized);
-   atlas->setIndexOfFirstSpillTemp(numberOfSlots);
+   atlas->setIndexOfFirstSpillTemp(totalSlotsInMap);
    atlas->setInternalPointerMap(0);
    atlas->setNumberOfPendingPushSlots(numberOfPendingPushSlots);
-   atlas->setNumberOfPaddingSlots(numberOfPaddingSlots);
-   if (comp->getOption(TR_TraceCG)) traceMsg(comp, "numberOfSlots is %d, numberOfPaddingSlots is %d\n", numberOfSlots, numberOfPaddingSlots);
+   atlas->setNumberOfPaddingSlots(numLocalObjectPaddingSlots);
    self()->setStackAtlas(atlas);
 
+   if (comp->getOption(TR_TraceCG))
+      {
+      traceMsg(comp, "totalSlotsInMap is %d, numLocalObjectPaddingSlots is %d\n", totalSlotsInMap, numLocalObjectPaddingSlots);
+      }
    }

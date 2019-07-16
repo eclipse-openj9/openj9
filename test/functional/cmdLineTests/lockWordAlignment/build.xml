@@ -79,7 +79,7 @@
 	</target>
 
 	<target name="generateTestClass" depends="compile" description="Generate test class files ">
-		<property name="build.javaexecutable" value="${JAVA_BIN}/java"/>
+		<property name="build.javaexecutable" value="${TEST_JDK_HOME}/bin/java"/>
 		<java classname="IntLongObjectAlignmentTestGenerator" failonerror="true" fork="true" logError="true" jvm="${build.javaexecutable}">
 			<classpath>
 				<pathelement path="${build}"/>
@@ -113,6 +113,14 @@
 	</target>
 
 	<target name="build" >
-		<antcall target="clean" inheritall="true" />
+		<if>
+			<or>
+				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="openj9" />
+			</or>
+			<then>
+				<antcall target="clean" inheritall="true" />
+			</then>
+		</if>
 	</target>
 </project>

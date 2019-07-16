@@ -22,6 +22,7 @@
 #include "compile/ResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "compile/Compilation.hpp"
 
 
 J9::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod *method, TR::Compilation *comp) :
@@ -33,9 +34,6 @@ J9::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod *method, TR::Co
          (method->getRecognizedMethod() == TR::java_lang_StrictMath_floor) ||
          (method->getRecognizedMethod() == TR::java_lang_Math_ceil) ||
          (method->getRecognizedMethod() == TR::java_lang_StrictMath_ceil))) ||
-       (TR::Compiler->target.cpu.getSupportsHardwareSQRT() &&
-        ((method->getRecognizedMethod() == TR::java_lang_Math_sqrt) ||
-         (method->getRecognizedMethod() == TR::java_lang_StrictMath_sqrt))) ||
        (TR::Compiler->target.cpu.getSupportsHardwareCopySign() &&
         ((method->getRecognizedMethod() == TR::java_lang_Math_copySign_F) ||
          (method->getRecognizedMethod() == TR::java_lang_Math_copySign_D))))
@@ -129,3 +127,18 @@ J9::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod *method, TR::Co
 
    }
 
+TR::KnownObjectTable::Index
+J9::ResolvedMethodSymbol::getKnownObjectIndexForParm(int32_t ordinal)
+   {
+   TR::KnownObjectTable::Index index = TR::KnownObjectTable::UNKNOWN;
+   if (ordinal == 0)
+      {
+      if (self()->getResolvedMethod()->convertToMethod()->isArchetypeSpecimen())
+         {
+         TR::KnownObjectTable *knot = self()->comp()->getOrCreateKnownObjectTable();
+         if (knot)
+            index = knot->getExistingIndexAt(self()->getResolvedMethod()->getMethodHandleLocation());
+         }
+      }
+   return index;
+   }

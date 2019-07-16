@@ -165,4 +165,4 @@ general:
         TIMEOUT_TIME: "Overall build timeout"
     repository_url: "https://github.com/eclipse/openj9.git"
     repository_branch: "refs/heads/master"
-    pipeline_script_path: "buildenv/jenkins/jobs/pipelines/Pipeline-Build-Test-All"
+    pipeline_script_path: "buildenv/jenkins/jobs/pipelines/Pipeline-Build-Test-All.groovy"

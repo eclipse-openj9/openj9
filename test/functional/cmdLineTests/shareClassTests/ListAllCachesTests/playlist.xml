@@ -44,9 +44,14 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
-	<testCaseName>testSCCMLExpireAndListALLCaches</testCaseName>
+		<testCaseName>testSCCMLExpireAndListALLCaches</testCaseName>
 		<variations>
 			<variation>Mode110</variation>
 		</variations>
@@ -65,5 +70,7 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
+
 	</test>
 </playlist>

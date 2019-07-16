@@ -71,6 +71,7 @@ void
 MM_CompactSchemeFixupObject::fixupObject(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr)
 {
 	switch(env->getExtensions()->objectModel.getScanType(objectPtr)) {
+	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
 	case GC_ObjectModel::SCAN_CLASS_OBJECT:
@@ -102,5 +103,5 @@ void
 MM_CompactSchemeFixupObject::verifyForwardingPtr(omrobjectptr_t objectPtr, omrobjectptr_t forwardingPtr)
 {
 	assume0(forwardingPtr <= objectPtr);
-	assume0(J9GC_J9OBJECT_CLAZZ(forwardingPtr) && ((UDATA)J9GC_J9OBJECT_CLAZZ(forwardingPtr) & 0x3) == 0);
+	assume0(J9GC_J9OBJECT_CLAZZ(forwardingPtr, _extensions) && ((UDATA)J9GC_J9OBJECT_CLAZZ(forwardingPtr, _extensions) & 0x3) == 0);
 }

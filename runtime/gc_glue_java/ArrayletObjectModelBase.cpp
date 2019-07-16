@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,9 @@
 bool
 GC_ArrayletObjectModelBase::initialize(MM_GCExtensionsBase * extensions)
 {
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	_compressObjectReferences = extensions->compressObjectReferences();
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	_omrVM = extensions->getOmrVM();
 	_arrayletRangeBase = NULL;
 	_arrayletRangeTop = (void *)UDATA_MAX;
@@ -79,6 +82,7 @@ GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, UDATA 
 	 * 3. in-line data
 	 * In hybrid specs, the spine may also include padding for a secondary size field in empty arrays
 	 */
+	UDATA const slotSize = J9GC_REFERENCE_SIZE(this);
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)
 	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 	UDATA spineArrayoidSize = 0;
@@ -86,13 +90,13 @@ GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, UDATA 
 	if (InlineContiguous != layout) {
 		if (0 != dataSize) {
 			/* not in-line, so there in an arrayoid */
-			spinePaddingSize = alignData ? (extensions->getObjectAlignmentInBytes() - sizeof(fj9object_t)) : 0;
-			spineArrayoidSize = numberArraylets * sizeof(fj9object_t);
+			spinePaddingSize = alignData ? (extensions->getObjectAlignmentInBytes() - slotSize) : 0;
+			spineArrayoidSize = numberArraylets * slotSize;
 		}
 	}
 #else
-	UDATA spinePaddingSize = alignData ? sizeof(fj9object_t) : 0;
-	UDATA spineArrayoidSize = numberArraylets * sizeof(fj9object_t);
+	UDATA spinePaddingSize = alignData ? slotSize : 0;
+	UDATA spineArrayoidSize = numberArraylets * slotSize;
 #endif
 	UDATA spineDataSize = 0;
 	if (InlineContiguous == layout) {

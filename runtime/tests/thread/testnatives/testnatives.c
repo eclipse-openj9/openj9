@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2018 IBM Corp. and others
+ * Copyright (c) 2008, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,11 +31,9 @@
 #include "vmi.h"
 #include "ibmjvmti.h"
 #include "jlm.h"
-
-#ifdef J9VM_THR_LOCK_NURSERY
-#include "lockNurseryUtil.h"
-#endif
-
+#include "j9.h"
+#include "j9protos.h"
+#include "j9consts.h"
 #include "thrdsup.h"
 
 #define INTERNAL_ERROR						-1
@@ -535,22 +533,25 @@ jlong JNICALL
 Java_com_ibm_j9_monitor_tests_TestNatives_getLockWordValue(JNIEnv* env, jobject testNativesObject, jobject lockwordObj)
 {
 	j9object_t obj;
-	j9objectmonitor_t *lockEA;
-	j9objectmonitor_t lock;
-	J9JavaVM *vm = ((J9VMThread *) env)->javaVM;
+	UDATA lock;
+	J9VMThread *currentThread = (J9VMThread *) env;
+	J9JavaVM *vm = currentThread->javaVM;
 
 	vm->internalVMFunctions->internalEnterVMFromJNI((J9VMThread *)env);
 
 	obj = J9_JNI_UNWRAP_REFERENCE(lockwordObj);
 #if defined( J9VM_THR_LOCK_NURSERY )
-	if (!LN_HAS_LOCKWORD((J9VMThread *)env,obj)) {
+	if (!LN_HAS_LOCKWORD(currentThread, obj)) {
 		lock = 0 | OBJECT_HEADER_LOCK_INFLATED;
-		lockEA = &lock;
 	} else
 #endif
 	{
-		lockEA = J9OBJECT_MONITOR_EA((J9VMThread *) env, obj);
-		lock = *lockEA;
+		j9objectmonitor_t *lockEA = J9OBJECT_MONITOR_EA(currentThread, obj);
+		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread)) {
+			lock = *(U_32*)lockEA;
+		} else {
+			lock = *(UDATA*)lockEA;
+		}
 	}
 
 	vm->internalVMFunctions->internalExitVMToJNI((J9VMThread *)env);
@@ -578,7 +579,7 @@ Java_com_ibm_j9_monitor_tests_TestNatives_getLockWordOffset(JNIEnv* env, jobject
 jlong JNICALL
 Java_com_ibm_j9_monitor_tests_TestNatives_getHeaderSize(JNIEnv* env, jclass clazz)
 {
-	return sizeof(J9Object);
+	return J9VMTHREAD_OBJECT_HEADER_SIZE((J9VMThread*)env);
 }
 
 jlong JNICALL
@@ -607,5 +608,3 @@ Java_j9vm_test_softmx_TestNatives_setAggressiveGCPolicy(JNIEnv* env, jclass claz
 	javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 }
-
-

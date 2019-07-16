@@ -603,7 +603,7 @@ void j9gc_jvmPhaseChange(J9VMThread *currentThread, UDATA phase)
 	MM_EnvironmentBase env(currentThread->omrVMThread);
 	if (J9VM_PHASE_NOT_STARTUP == phase) {
 
-		if (NULL != vm->sharedClassConfig) {
+		if ((NULL != vm->sharedClassConfig) && extensions->useGCStartupHints) {
 			if (extensions->isStandardGC()) {
 				/* read old values from SC */
 				uintptr_t hintDefaultOld = 0;
@@ -649,7 +649,7 @@ gcExpandHeapOnStartup(J9JavaVM *javaVM)
 	J9VMThread *currentThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
 	MM_EnvironmentBase env(currentThread->omrVMThread);
 
-	if (NULL != sharedClassConfig) {
+	if ((NULL != sharedClassConfig) && extensions->useGCStartupHints) {
 		if (extensions->isStandardGC()) {
 			uintptr_t hintDefault = 0;
 			uintptr_t hintTenure = 0;

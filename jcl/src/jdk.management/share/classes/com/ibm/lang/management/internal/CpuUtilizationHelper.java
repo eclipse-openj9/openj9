@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar16]*/
 /*******************************************************************************
- * Copyright (c) 2001, 2016 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,21 +22,21 @@
  *******************************************************************************/
 package com.ibm.lang.management.internal;
 
-import com.ibm.lang.management.CpuLoadCalculationConstants;
+import static com.ibm.lang.management.CpuLoadCalculationConstants.*;
 
-final class CpuUtilizationHelper implements CpuLoadCalculationConstants {
+final class CpuUtilizationHelper {
 
 	SysinfoCpuTime oldestTime = null;
 	SysinfoCpuTime interimTime = null;
 	SysinfoCpuTime latestTime = null;
 
 	/**
-	 * Returns the CPU utilization, i.e. fraction of the time spent in user or system/privileged mode, since the last call to getSystemCpuLoad() on this object.  
+	 * Returns the CPU utilization, i.e. fraction of the time spent in user or system/privileged mode, since the last call to getSystemCpuLoad() on this object.
 	 * To compute load over different concurrent intervals, create separate objects.
 	 * If insufficient time (less than 10 ms) has elapsed since a previous call on this object, or
 	 * if an operating system error has occurred, e.g. clock rollover, ERROR_VALUE is returned.
-	 * If this operation is not supported due to insufficient user privilege, return INSUFFICIENT_PRIVILEGE. 
-	 * If this operation is not supported on this platform, return UNSUPPORTED_VALUE. 
+	 * If this operation is not supported due to insufficient user privilege, return INSUFFICIENT_PRIVILEGE.
+	 * If this operation is not supported on this platform, return UNSUPPORTED_VALUE.
 	 * INTERNAL_ERROR indicates an internal problem.
 	 * This is not guaranteed to return the same value as reported by operating system
 	 * utilities such as Unix "top" or Windows task manager.
@@ -72,15 +72,15 @@ final class CpuUtilizationHelper implements CpuLoadCalculationConstants {
 			} else {
 				interimTime = latestTime;
 				/*
-				 * either the latest time or the interim time are bogus. 
-				 * Discard the interim value and try with the oldest value. 
+				 * either the latest time or the interim time are bogus.
+				 * Discard the interim value and try with the oldest value.
 				 */
 			}
 		}
 
 		if ((latestTime.getTimestamp() - oldestTime.getTimestamp()) >= MINIMUM_INTERVAL) {
 			cpuLoad = calculateCpuLoad(latestTime, oldestTime);
-			if (cpuLoad < 0) { /* the stats look bogus.  Discard them */
+			if (cpuLoad < 0) { /* the stats look bogus. Discard them */
 				oldestTime = latestTime;
 			}
 		}

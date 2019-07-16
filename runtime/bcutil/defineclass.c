@@ -486,6 +486,8 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 	if ((J9VM_DEBUG_ATTRIBUTE_RECORD_ALL == (vm->requiredDebugAttributes & J9VM_DEBUG_ATTRIBUTE_RECORD_ALL))
 			&& classCouldPossiblyBeShared(vmThread, loadData)) {
 		/* Shared Classes has requested that all debug information be kept and the class will be shared. */
+	} else if (0 != (vm->runtimeFlags & J9_RUNTIME_XFUTURE)) {
+		/* Don't strip debug information with Xfuture */
 	} else {
 		/* either the class is not going to be shared  -or- shared classes does not require the debug information to be maintained */
 		UDATA stripFlags = 0;
@@ -539,7 +541,9 @@ internalLoadROMClass(J9VMThread * vmThread, J9LoadROMClassData *loadData, J9Tran
 
 	/* Determine allowed class file version */
 #ifdef J9VM_OPT_SIDECAR
-	if (J2SE_VERSION(vm) >= J2SE_V13) {
+	if (J2SE_VERSION(vm) >= J2SE_V14) {
+		translationFlags |= BCT_Java14MajorVersionShifted;
+	} else if (J2SE_VERSION(vm) >= J2SE_V13) {
 		translationFlags |= BCT_Java13MajorVersionShifted;
 	} else if (J2SE_VERSION(vm) >= J2SE_V12) {
 		translationFlags |= BCT_Java12MajorVersionShifted;

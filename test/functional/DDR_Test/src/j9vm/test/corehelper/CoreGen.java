@@ -26,7 +26,19 @@ package j9vm.test.corehelper;
 
  	public static void main(String[] args) {
 		SimpleThread st = new SimpleThread();
+
+		/* Fork a thread for TestJITExt that is guaranteed to have a JIT frame
+		 * at the top of the stack. Fix until  https://github.com/eclipse/openj9/issues/5966 
+		 * is resolved.
+		 */
+		Compiler.compileClass(j9vm.test.corehelper.TestJITExtHelperThread.class);
+		TestJITExtHelperThread tjet = new TestJITExtHelperThread();
+
+		tjet.configureJittedHelperThread();
+
 		st.configureObj();
 		st.configureValidJavaThreads();
+
+		tjet.endJittedHelperThread();
 	}
 }

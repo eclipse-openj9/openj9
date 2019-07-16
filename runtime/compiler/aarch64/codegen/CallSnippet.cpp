@@ -22,6 +22,7 @@
 
 #include "codegen/CallSnippet.hpp"
 #include "codegen/ARM64AOTRelocation.hpp"
+#include "codegen/ARM64Instruction.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/InstOpCode.hpp"
 #include "codegen/Linkage.hpp"
@@ -33,7 +34,6 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/symbol/LabelSymbol.hpp"
-#include "runtime/CodeCacheManager.hpp"
 
 static uint8_t *storeArgumentItem(TR::InstOpCode::Mnemonic op, uint8_t *buffer, TR::RealRegister *reg, int32_t offset, TR::CodeGenerator *cg)
    {
@@ -170,28 +170,6 @@ static int32_t instructionCountForArguments(TR::Node *callNode, TR::CodeGenerato
    return count;
    }
 
-static uint32_t encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node, TR::CodeGenerator *cg)
-   {
-   uintptrj_t target = (uintptrj_t)symRef->getMethodAddress();
-
-   if (cg->directCallRequiresTrampoline(target, (intptrj_t)cursor))
-      {
-      target = TR::CodeCacheManager::instance()->findHelperTrampoline(symRef->getReferenceNumber(), (void *)cursor);
-
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinUnconditionalBranchImmediateRange(target, (intptrj_t)cursor),
-                      "Target address is out of range");
-      }
-
-   cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(
-                             cursor,
-                             (uint8_t *)symRef,
-                             TR_HelperAddress, cg),
-                             __FILE__, __LINE__, node);
-
-   uintptr_t distance = target - (uintptr_t)cursor;
-   return TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::bl) | ((distance >> 2) & 0x3ffffff); /* imm26 */
-   }
-
 TR_RuntimeHelper TR::ARM64CallSnippet::getHelper()
    {
    TR::Compilation * comp = cg()->comp();
@@ -253,7 +231,7 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
    glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper(), false, false, false);
 
    // bl glueRef
-   *(int32_t *)cursor = encodeHelperBranchAndLink(glueRef, cursor, callNode, cg());
+   *(int32_t *)cursor = cg()->encodeHelperBranchAndLink(glueRef, cursor, callNode);
    cursor += 4;
 
    // Store the code cache RA
@@ -365,9 +343,9 @@ uint8_t *TR::ARM64UnresolvedCallSnippet::emitSnippetBody()
       }
 
    // CP index and helper offset
-   *(int32_t *)cursor = (helperLookupOffset<<24) | methodSymRef->getCPIndexForVM();
+   *(intptrj_t *)cursor = (helperLookupOffset<<56) | methodSymRef->getCPIndexForVM();
 
-   return cursor + 4;
+   return cursor + 8;
    }
 
 uint32_t TR::ARM64UnresolvedCallSnippet::getLength(int32_t estimatedSnippetStart)
@@ -386,7 +364,7 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
    getSnippetLabel()->setCodeLocation(cursor);
 
    // bl glueRef
-   *(int32_t *)cursor = encodeHelperBranchAndLink(glueRef, cursor, getNode(), cg());
+   *(int32_t *)cursor = cg()->encodeHelperBranchAndLink(glueRef, cursor, getNode());
    cursor += 4;
 
    // Store the code cache RA
@@ -409,9 +387,9 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
    cursor += 8;
 
    // CP index
-   *(int32_t *)cursor = methodSymRef->getCPIndexForVM();
+   *(intptrj_t *)cursor = methodSymRef->getCPIndexForVM();
 
-   return cursor + 4;
+   return cursor + 8;
    }
 
 uint32_t TR::ARM64VirtualUnresolvedSnippet::getLength(int32_t estimatedSnippetStart)
@@ -428,7 +406,7 @@ uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
    getSnippetLabel()->setCodeLocation(cursor);
 
    // bl glueRef
-   *(int32_t *)cursor = encodeHelperBranchAndLink(glueRef, cursor, getNode(), cg());
+   *(int32_t *)cursor = cg()->encodeHelperBranchAndLink(glueRef, cursor, getNode());
    cursor += 4;
 
    // Store the code cache RA
@@ -451,14 +429,14 @@ uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
    cursor += 8;
 
    // CP index
-   *(int32_t *)cursor = methodSymRef->getCPIndexForVM();
-   cursor += 4;
+   *(intptrj_t *)cursor = methodSymRef->getCPIndexForVM();
+   cursor += 8;
 
-   // Add 2 more slots for resolved values
-   *(int32_t *)cursor = 0;
-   cursor += 4;
-   *(int32_t *)cursor = 0;
-   cursor += 4;
+   // Add 2 more slots for resolved values (interface class and iTable offset)
+   *(intptrj_t *)cursor = 0;
+   cursor += 8;
+   *(intptrj_t *)cursor = 0;
+   cursor += 8;
 
    return cursor;
    }
@@ -509,21 +487,28 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
 
    buffer = flushArgumentsToStack(buffer, callNode, argSize, cg);
 
+   TR::RealRegister *x15reg = cg->machine()->getRealRegister(TR::RealRegister::x15);
+
    // movz x15, low 16 bits
-   *(int32_t *)buffer = 0xD280000F | ((dispatcher & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movzx) | ((dispatcher & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // movk x15, next 16 bits, lsl #16
-   *(int32_t *)buffer = 0xF2A0000F | (((dispatcher >> 16) & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL16 << 5) | (((dispatcher >> 16) & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // movk x15, next 16 bits, lsl #32
-   *(int32_t *)buffer = 0xF2C0000F | (((dispatcher >> 32) & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL32 << 5) | (((dispatcher >> 32) & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // movk x15, next 16 bits, lsl #48
-   *(int32_t *)buffer = 0xF2E0000F | (((dispatcher >> 48) & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL48 << 5) | (((dispatcher >> 48) & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // br x15
-   *(int32_t *)buffer = 0xD61F01E0;
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::br);
+   x15reg->setRegisterFieldRN((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
 
    *((int32_t *)thunk + 1) = buffer - returnValue;  // patch offset for AOT relocation
    *(int32_t *)thunk = buffer - returnValue;        // patch size of thunk
@@ -538,7 +523,7 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
 TR_J2IThunk *TR::ARM64CallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg, char *signature)
    {
    int32_t codeSize = 4 * (instructionCountForArguments(callNode, cg) + 5); // 5 instructions for branch
-   intptr_t dispatcher;
+   uintptr_t dispatcher;
    TR::Compilation *comp = cg->comp();
    TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
    TR_J2IThunk *thunk = TR_J2IThunk::allocate(codeSize, signature, cg, thunkTable);
@@ -574,21 +559,28 @@ TR_J2IThunk *TR::ARM64CallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNod
 
    buffer = flushArgumentsToStack(buffer, callNode, argSize, cg);
 
+   TR::RealRegister *x15reg = cg->machine()->getRealRegister(TR::RealRegister::x15);
+
    // movz x15, low 16 bits
-   *(int32_t *)buffer = 0xD280000F | (((UDATA)dispatcher & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movzx) | ((dispatcher & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // movk x15, next 16 bits, lsl #16
-   *(int32_t *)buffer = 0xF2A0000F | ((((UDATA)dispatcher >> 16) & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL16 << 5) | (((dispatcher >> 16) & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // movk x15, next 16 bits, lsl #32
-   *(int32_t *)buffer = 0xF2C0000F | ((((UDATA)dispatcher >> 32) & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL32 << 5) | (((dispatcher >> 32) & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // movk x15, next 16 bits, lsl #48
-   *(int32_t *)buffer = 0xF2E0000F | ((((UDATA)dispatcher >> 48) & 0xFFFF) << 5);
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movkx) | (TR::MOV_LSL48 << 5) | (((dispatcher >> 48) & 0xFFFF) << 5);
+   x15reg->setRegisterFieldRD((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
    // br x15
-   *(int32_t *)buffer = 0xD61F01E0;
-   buffer += 4;
+   *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::br);
+   x15reg->setRegisterFieldRN((uint32_t *)buffer);
+   buffer += ARM64_INSTRUCTION_LENGTH;
 
 #ifdef TR_HOST_ARM64
    arm64CodeSync(thunk->entryPoint(), codeSize);

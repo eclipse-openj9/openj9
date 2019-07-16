@@ -61,7 +61,7 @@
 	<target name="compile_modulec" depends="init" description="Compile the module files in mods.modulec">
 		<echo>Compiling the module files in mods.modulec</echo>
 		<echo>Ant version is ${ant.version}</echo>
-		<property name="compiler.javac" value="${JAVA_BIN}/javac" />
+		<property name="compiler.javac" value="${TEST_JDK_HOME}/bin/javac" />
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
 		<echo>===executable:                   ${compiler.javac}</echo>
@@ -84,7 +84,7 @@
 	<target name="compile_moduleb" depends="init" description="Compile the module files in mods.moduleb">
 		<echo>Compiling the module files in mods.moduleb</echo>
 		<echo>Ant version is ${ant.version}</echo>
-		<property name="compiler.javac" value="${JAVA_BIN}/javac" />
+		<property name="compiler.javac" value="${TEST_JDK_HOME}/bin/javac" />
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
 		<echo>===executable:                   ${compiler.javac}</echo>
@@ -107,7 +107,7 @@
 	<target name="compile_modulea" depends="init,compile_moduleb,compile_modulec" description="Compile the module files in mods.modulea">
 		<echo>Compiling the module files in mods.modulea</echo>
 		<echo>Ant version is ${ant.version}</echo>
-		<property name="compiler.javac" value="${JAVA_BIN}/javac" />
+		<property name="compiler.javac" value="${TEST_JDK_HOME}/bin/javac" />
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
 		<echo>===executable:                   ${compiler.javac}</echo>

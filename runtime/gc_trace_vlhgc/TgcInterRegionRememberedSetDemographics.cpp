@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,7 +96,7 @@ TgcParallelHeapWalkTask::run(MM_EnvironmentBase *env)
 					J9Object *objectPtr = NULL;
 					while(NULL != (objectPtr = mapIterator.nextObject())) {
 						ClassTableEntry exemplar;
-						exemplar.clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+						exemplar.clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
 						exemplar.rememberedInstances = 0;
 						exemplar.totalInstances = 0;
 						ClassTableEntry *entry = (ClassTableEntry *)hashTableAdd(hashTable, &exemplar);

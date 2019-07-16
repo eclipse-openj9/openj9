@@ -61,9 +61,8 @@
 #include "j9cfg.h"
 #include "j9protos.h"
 #include "omrthread.h"
-#ifdef J9VM_THR_LOCK_NURSERY
-#include "lockNurseryUtil.h"
-#endif
+#include "j9protos.h"
+#include "j9consts.h"
 #include "util_internal.h"
 #include "ut_j9vmutil.h"
 #include "monhelp.h"
@@ -776,7 +775,7 @@ getLockWord(J9VMThread *vmThread, j9object_t object)
 #ifdef J9VM_THR_LOCK_NURSERY
 
 	if (LN_HAS_LOCKWORD(vmThread,object)) {
-		lockWord = READMON_ADDR(J9OBJECT_MONITOR_EA_SAFE(vmThread, object));
+		lockWord = READMON_ADDR(J9OBJECT_MONITOR_EA(vmThread, object));
 	} else {
 		J9ObjectMonitor *objectMonitor = monitorTablePeek(vmThread->javaVM, vmThread, object);
 		if (objectMonitor != NULL){
@@ -856,7 +855,7 @@ monitorTablePeek(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t object)
 	 *
 	 * For more information see CMVC 179161
 	 */
-	if (0 != (TMP_J9OBJECT_FLAGS(object) & (OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS | OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS))) {
+	if (0 != (J9OBJECT_FLAGS_FROM_CLAZZ_VM(vm, object) & (OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS | OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS))) {
 		J9HashTable *monitorTable = NULL;
 		omrthread_monitor_t mutex = vm->monitorTableMutex;
 		J9ObjectMonitor key_objectMonitor;

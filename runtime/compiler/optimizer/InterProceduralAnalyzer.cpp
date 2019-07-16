@@ -214,7 +214,7 @@ List<OMR::RuntimeAssumption> *TR::InterProceduralAnalyzer::analyzeCallGraph(TR::
    if (!resolvedMethodSymbol)  // as per current logic, it is an interface method
       {
       int32_t cpIndex = symRef->getCPIndex();
-      TR_Method * originalMethod = methodSymbol->getMethod();
+      TR::Method * originalMethod = methodSymbol->getMethod();
       int32_t len = originalMethod->classNameLength();
       char *s = classNameToSignature(originalMethod->classNameChars(), len, comp());
       clazz = fe()->getClassFromSignature(s, len, owningMethod);

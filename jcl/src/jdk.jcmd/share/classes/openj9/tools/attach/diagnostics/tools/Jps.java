@@ -23,6 +23,7 @@
 
 package openj9.tools.attach.diagnostics.tools;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Properties;
@@ -71,9 +72,16 @@ public class Jps {
 							String theCommand = vmProperties.getProperty(SUN_JAVA_COMMAND, ""); //$NON-NLS-1$
 							String parts[] = theCommand.split("\\s+", 2); /* split into at most 2 parts: command and argument string */  //$NON-NLS-1$
 							if (noPackageName) {
-								String commandName = parts[0];
-								int finalDot = commandName.lastIndexOf('.');
-								parts[0] = commandName.substring(finalDot + 1); /* if the dot is missing, we get the whole string */
+								String commandString = parts[0];
+								int finalSeparatorPosition = -1;
+								if (commandString.toLowerCase().endsWith(".jar")) { //$NON-NLS-1$
+									/* the application was launched via '-jar'.  Get the file name, without directory path. */
+									finalSeparatorPosition = commandString.lastIndexOf(File.pathSeparatorChar);
+								} else {
+									/* the application was launched using a class name */
+									finalSeparatorPosition = commandString.lastIndexOf('.');
+								}
+								parts[0] = commandString.substring(finalSeparatorPosition + 1);
 							}
 							if (printApplicationArguments) {
 								for (String p:parts) {

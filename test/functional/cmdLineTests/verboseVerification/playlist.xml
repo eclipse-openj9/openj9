@@ -39,5 +39,9 @@
 			<subset>8</subset>
 			<subset>11+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 </playlist>

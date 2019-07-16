@@ -24,9 +24,8 @@
 #include "j9consts.h"
 #include "j9protos.h"
 #include "ut_j9vm.h"
-#ifdef J9VM_THR_LOCK_NURSERY
-#include "lockNurseryUtil.h"
-#endif
+#include "j9protos.h"
+#include "j9consts.h"
 #include "vm_internal.h"
 #include "util_internal.h"
 #include "monhelp.h"

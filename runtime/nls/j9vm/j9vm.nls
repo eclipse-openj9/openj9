@@ -1932,3 +1932,10 @@ J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.explanation=The specified interface i
 J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.system_action=The JVM will throw an IncompatibleClassChangeError.
 J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+J9NLS_VM_XVERIFYNONE_DEPRECATED=Since Java 13 -Xverify:none and -noverify were deprecated for removal and may not be accepted options in the future.
+# START NON-TRANSLATABLE
+J9NLS_VM_XVERIFYNONE_DEPRECATED.explanation=Since Java 13 -Xverify:none and -noverify were deprecated for removal and may not be accepted options in the future.
+J9NLS_VM_XVERIFYNONE_DEPRECATED.system_action=The JVM will show a warning and continue to recognize the options.
+J9NLS_VM_XVERIFYNONE_DEPRECATED.user_response=Consider not using these options as they will likely be removed in a future release.
+# END NON-TRANSLATABLE

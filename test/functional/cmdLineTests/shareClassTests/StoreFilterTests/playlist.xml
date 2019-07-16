@@ -44,6 +44,11 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_StoreFilterTests_unix</testCaseName>
@@ -65,5 +70,10 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>		
 	</test>
 </playlist>

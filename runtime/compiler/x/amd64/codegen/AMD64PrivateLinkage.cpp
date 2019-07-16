@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
+#include "compile/Method.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/CHTable.hpp"
@@ -1318,7 +1319,7 @@ void TR::AMD64PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelSymbol *
    lastPicSlot.setHelperMethodSymbolRef(callHelperSymRef);
    TR::Instruction *slotPatchInstruction = NULL;
 
-   TR_Method *method = site.getMethodSymbol()->getMethod();
+   TR::Method *method = site.getMethodSymbol()->getMethod();
    TR_OpaqueClassBlock *declaringClass = NULL;
    uintptrj_t itableIndex;
    if (  useLastITableCache

@@ -37,7 +37,7 @@
 #include "env/VMJ9.h"
 
 
-extern void TEMPORARY_initJ9PPCTreeEvaluatorTable(TR::CodeGenerator *cg);
+extern void TEMPORARY_initJ9ARMTreeEvaluatorTable(TR::CodeGenerator *cg);
 
 J9::ARM::CodeGenerator::CodeGenerator() :
       J9::CodeGenerator()
@@ -92,6 +92,7 @@ J9::ARM::CodeGenerator::CodeGenerator() :
       {
       cg->setIsDualTLH();
       }
+#endif
 
    /*
     * "Statically" initialize the FE-specific tree evaluator functions.
@@ -100,10 +101,9 @@ J9::ARM::CodeGenerator::CodeGenerator() :
    static bool initTreeEvaluatorTable = false;
    if (!initTreeEvaluatorTable)
       {
-      TEMPORARY_initJ9PPCTreeEvaluatorTable(cg);
+      TEMPORARY_initJ9ARMTreeEvaluatorTable(self());
       initTreeEvaluatorTable = true;
       }
-#endif
    }
 
 static int32_t identifyFarConditionalBranches(int32_t estimate, TR::CodeGenerator *cg)

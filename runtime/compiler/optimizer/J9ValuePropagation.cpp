@@ -24,6 +24,7 @@
 #include "optimizer/VPBCDConstraint.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "il/symbol/ParameterSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -182,7 +183,7 @@ void
 J9::ValuePropagation::transformCallToIconstInPlaceOrInDelayedTransformations(TR::TreeTop* callTree, int32_t result, bool isGlobal, bool inPlace)
    {
     TR::Node * callNode = callTree->getNode()->getFirstChild();
-    TR_Method * calledMethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
+    TR::Method * calledMethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
     const char *signature = calledMethod->signature(comp()->trMemory(), stackAlloc);
     if (inPlace)
        {
@@ -928,7 +929,7 @@ J9::ValuePropagation::doDelayedTransformations()
       TR::TreeTop *callTree = it->_tree;
       int32_t result = it->_result;
       TR::Node * callNode = callTree->getNode()->getFirstChild();
-      TR_Method * calledMethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
+      TR::Method * calledMethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
       const char *signature = calledMethod->signature(comp()->trMemory(), stackAlloc);
 
       if (!performTransformation(comp(), "%sTransforming call %s on node %p on tree %p to iconst %d\n", OPT_DETAILS, signature, callNode, callTree, result))
@@ -1188,38 +1189,6 @@ J9::ValuePropagation::getParmValues()
    TR_ASSERT(parmIterator->atEnd() && parmIndex == numParms, "Bad signature for owning method");
    }
 
-static bool isTakenSideOfAVirtualGuard(TR::Compilation* comp, TR::Block* block)
-   {
-   // First block can never be taken side
-   if (block == comp->getMethodSymbol()->getFirstTreeTop()->getEnclosingBlock())
-      return false;
-
-   for (auto edge = block->getPredecessors().begin(); edge != block->getPredecessors().end(); ++edge)
-      {
-      TR::Block *pred = toBlock((*edge)->getFrom());
-      TR::Node* predLastRealNode = pred->getLastRealTreeTop()->getNode();
-
-      if (predLastRealNode
-          && predLastRealNode->isTheVirtualGuardForAGuardedInlinedCall()
-          && predLastRealNode->getBranchDestination()->getEnclosingBlock() == block)
-         return true;
-
-      }
-
-   return false;
-   }
-
-static bool skipFinalFieldFoldingInBlock(TR::Compilation* comp, TR::Block* block)
-   {
-   if (block->isCold()
-       || block->isOSRCatchBlock()
-       || block->isOSRCodeBlock()
-       || isTakenSideOfAVirtualGuard(comp, block))
-      return true;
-
-   return false;
-   }
-
 static bool isStaticFinalFieldWorthFolding(TR::Compilation* comp, TR_OpaqueClassBlock* declaringClass, char* fieldSignature, int32_t fieldSigLength)
    {
    if (comp->getMethodSymbol()->hasMethodHandleInvokes()
@@ -1232,194 +1201,21 @@ static bool isStaticFinalFieldWorthFolding(TR::Compilation* comp, TR_OpaqueClass
    return false;
    }
 
-
-// Do not add fear point in a frame that doesn't support OSR
-static bool cannotAttemptOSRDuring(TR::Compilation* comp, int32_t callerIndex)
-   {
-   TR::ResolvedMethodSymbol *method = callerIndex == -1 ?
-      comp->getJittedMethodSymbol() : comp->getInlinedResolvedMethodSymbol(callerIndex);
-
-   return method->cannotAttemptOSRDuring(callerIndex, comp, false);
-   }
-
 bool J9::ValuePropagation::transformDirectLoad(TR::Node* node)
    {
-   // Allow OMR to fold reliable static final field first
+   // Allow OMR to fold reliable static final field
    if (OMR::ValuePropagation::transformDirectLoad(node))
       return true;
 
+   // Limited to varhandle folding only in VP
    if (node->isLoadOfStaticFinalField() &&
-       tryFoldStaticFinalFieldAt(_curTree, node))
+          TR::TransformUtil::attemptVarHandleStaticFinalFieldFolding(this, _curTree, node))
       {
       return true;
       }
 
    return false;
    }
-
-
-static TR_HCRGuardAnalysis* runHCRGuardAnalysisIfPossible()
-   {
-   return NULL;
-   }
-
-TR_YesNoMaybe J9::ValuePropagation::safeToAddFearPointAt(TR::TreeTop* tt)
-   {
-   if (trace())
-      {
-      traceMsg(comp(), "Checking if it is safe to add fear point at n%dn\n", tt->getNode()->getGlobalIndex());
-      }
-
-   int32_t callerIndex = tt->getNode()->getByteCodeInfo().getCallerIndex();
-   if (!cannotAttemptOSRDuring(comp(), callerIndex) && !comp()->isOSRProhibitedOverRangeOfTrees())
-      {
-      if (trace())
-         {
-         traceMsg(comp(), "Safe to add fear point because there is no OSR prohibition\n");
-         }
-      return TR_yes;
-      }
-
-   // Look for an OSR point dominating tt in block
-   TR::Block* block = tt->getEnclosingBlock();
-   TR::TreeTop* firstTT = block->getEntry();
-   while (tt != firstTT)
-      {
-      if (comp()->isPotentialOSRPoint(tt->getNode()))
-         {
-         TR_YesNoMaybe result = comp()->isPotentialOSRPointWithSupport(tt) ? TR_yes : TR_no;
-         if (trace())
-            {
-            traceMsg(comp(), "Found %s potential OSR point n%dn, %s to add fear point\n",
-                     result == TR_yes ? "supported" : "unsupported",
-                     tt->getNode()->getGlobalIndex(),
-                     result == TR_yes ? "Safe" : "Not safe");
-            }
-
-         return result;
-         }
-      tt = tt->getPrevTreeTop();
-      }
-
-   TR_HCRGuardAnalysis* guardAnalysis = runHCRGuardAnalysisIfPossible();
-   if (guardAnalysis)
-      {
-      TR_YesNoMaybe result = guardAnalysis->_blockAnalysisInfo[block->getNumber()]->isEmpty() ? TR_yes : TR_no;
-      if (trace())
-         {
-         traceMsg(comp(), "%s to add fear point based on HCRGuardAnalysis\n", result == TR_yes ? "Safe" : "Not safe");
-         }
-
-      return result;
-      }
-
-   if (trace())
-      {
-      traceMsg(comp(), "Cannot determine if it is safe\n");
-      }
-   return TR_maybe;
-   }
-
-/** \brief
- *     Try to fold static final field
- *
- *  \param tree
- *     The tree with the load of static final field.
- *
- *  \param fieldNode
- *     The node which is a load of a static final field.
- */
-bool J9::ValuePropagation::tryFoldStaticFinalFieldAt(TR::TreeTop* tree, TR::Node* fieldNode)
-   {
-   TR_ASSERT(fieldNode->isLoadOfStaticFinalField(), "Node n%dn %p has to be a load of a static final field", fieldNode->getGlobalIndex(), fieldNode);
-
-   if (comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding))
-      {
-      return false;
-      }
-
-   if (!comp()->supportsInduceOSR()
-       || !comp()->isOSRTransitionTarget(TR::postExecutionOSR)
-       || comp()->getOSRMode() != TR::voluntaryOSR)
-      {
-      return false;
-      }
-
-   if (skipFinalFieldFoldingInBlock(comp(), tree->getEnclosingBlock())
-       || safeToAddFearPointAt(tree) != TR_yes
-       || TR::TransformUtil::canFoldStaticFinalField(comp(), fieldNode) != TR_maybe)
-      {
-      return false;
-      }
-
-   TR::SymbolReference* symRef = fieldNode->getSymbolReference();
-   if (symRef->hasKnownObjectIndex())
-      {
-      return false;
-      }
-
-   int32_t cpIndex = symRef->getCPIndex();
-   TR_OpaqueClassBlock* declaringClass = symRef->getOwningMethod(comp())->getClassFromFieldOrStatic(comp(), cpIndex);
-   int32_t fieldNameLen;
-   char* fieldName = symRef->getOwningMethod(comp())->fieldName(cpIndex, fieldNameLen, comp()->trMemory(), stackAlloc);
-   int32_t fieldSigLength;
-   char* fieldSignature = symRef->getOwningMethod(comp())->staticSignatureChars(cpIndex, fieldSigLength);
-
-   if (trace())
-      {
-      traceMsg(comp(),
-              "Looking at static final field n%dn %.*s declared in class %p\n",
-              fieldNode->getGlobalIndex(), fieldNameLen, fieldName, declaringClass);
-      }
-
-   if (isStaticFinalFieldWorthFolding(comp(), declaringClass, fieldSignature, fieldSigLength))
-      {
-      if (TR::TransformUtil::foldStaticFinalFieldAssumingProtection(comp(), fieldNode))
-         {
-         // Add class to assumption table
-         comp()->addClassForStaticFinalFieldModification(declaringClass);
-         // Insert osrFearPointHelper call
-         TR::TreeTop* helperTree = TR::TreeTop::create(comp(),
-                                                       TR::Node::create(fieldNode,
-                                                                        TR::treetop,
-                                                                        1,
-                                                                        TR::Node::createOSRFearPointHelperCall(fieldNode)));
-         tree->insertBefore(helperTree);
-
-         if (trace())
-            {
-            traceMsg(comp(),
-                    "Static final field n%dn is folded with OSRFearPointHelper call tree n%dn  helper tree n%dn\n",
-                    fieldNode->getGlobalIndex(), tree->getNode()->getGlobalIndex(), helperTree->getNode()->getGlobalIndex());
-            }
-
-         TR::DebugCounter::prependDebugCounter(comp(),
-                                               TR::DebugCounter::debugCounterName(comp(),
-                                                                                  "staticFinalFieldFolding/success/(field %.*s)/(%s %s)",
-                                                                                  fieldNameLen,
-                                                                                  fieldName,
-                                                                                  comp()->signature(),
-                                                                                  comp()->getHotnessName(comp()->getMethodHotness())),
-                                                                                  tree->getNextTreeTop());
-
-         return true;
-         }
-      }
-   else
-      {
-      TR::DebugCounter::prependDebugCounter(comp(),
-                                            TR::DebugCounter::debugCounterName(comp(),
-                                                                               "staticFinalFieldFolding/notWorthFolding/(field %.*s)/(%s %s)",
-                                                                               fieldNameLen,
-                                                                               fieldName,
-                                                                               comp()->signature(),
-                                                                               comp()->getHotnessName(comp()->getMethodHotness())),
-                                                                               tree->getNextTreeTop());
-      }
-
-   return false;
-   }
-
 
 static void getHelperSymRefs(OMR::ValuePropagation *vp, TR::Node *curCallNode, TR::SymbolReference *&getHelpersSymRef, TR::SymbolReference *&helperSymRef, char *helperSig, int32_t helperSigLen, TR::MethodSymbol::Kinds helperCallKind)
    {
@@ -1479,7 +1275,7 @@ static void transformToOptimizedCloneCall(OMR::ValuePropagation *vp, TR::Node *n
         {
         //FIXME: add me to the list of calls to be inlined
         //
-        TR_Method *method = optimizedCloneSymRef->getSymbol()->castToMethodSymbol()->getMethod();
+        TR::Method *method = optimizedCloneSymRef->getSymbol()->castToMethodSymbol()->getMethod();
         TR::Node *helpersCallNode = TR::Node::createWithSymRef(node, method->directCallOpCode(), 0, getHelpersSymRef);
         TR::TreeTop *helpersCallTT = TR::TreeTop::create(vp->comp(), TR::Node::create(TR::treetop, 1, helpersCallNode));
         vp->_curTree->insertBefore(helpersCallTT);

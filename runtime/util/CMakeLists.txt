@@ -41,7 +41,6 @@ add_library(j9util STATIC
 	cpplink.c
 	defarg.c
 	divhelp.c
-	divrem.c
 	eventframe.c
 	extendedHCR.c
 	extendedmethodblockaccess.c
@@ -110,6 +109,8 @@ if(OMR_OS_LINUX)
 	target_sources(j9util PRIVATE linux/osinfo.c)
 elseif(OMR_OS_WINDOWS)
 	target_sources(j9util PRIVATE win32/openlibrary.c)
+elseif(OMR_OS_AIX)
+	target_sources(j9util PRIVATE aix/sethwprefetch.c)
 endif()
 
 if(OMR_ARCH_X86)

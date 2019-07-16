@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2004, 2018 IBM Corp. and others
+  Copyright (c) 2004, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -130,6 +130,11 @@
 
 	<test id="rc019b">
 		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc019b -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+ 
+	<test id="rc020">
+		<command>$EXE$ $JVM_OPTS$ $AGENTLIB$=test:rc020 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
 		<return type="success" value="0"/>
 	</test>
 

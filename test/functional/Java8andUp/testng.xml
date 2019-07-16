@@ -96,6 +96,12 @@
 		</classes>
 	</test>
 	
+	<test name="TestJmap">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestJmap"/>
+		</classes>
+	</test>
+	
 	<test name="TestFileLocking">
 		<classes>
 			<class name="org.openj9.test.fileLock.TestFileLocking"/>
@@ -344,6 +350,11 @@
 	<test name="jniOnLoadExceptions">
 		<classes>
 			<class name="j9vm.test.jni.ExceptionTest" />
+		</classes>
+	</test>
+	<test name="loadLegacyLibrary">
+		<classes>
+			<class name="j9vm.test.loadLibrary.TestLoadLegacyLibrary" />
 		</classes>
 	</test>
 	<test name="memoryCategories">

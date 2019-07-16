@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2019, 2019 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+
+<suite id="JVMTI-fieldwatch Tests" timeout="360">
+	<variable name="AGENTLIB" value="-agentlib:jvmtitest" />
+	<variable name="TESTID" value="testid" />
+	<variable name="ENABLE_ATTACH" value="-Dcom.ibm.tools.attach.enable=yes" />
+	<variable name="TESTRUNNER" value="com.ibm.jvmti.tests.util.TestRunner" />
+
+	<test id="fw001-1">
+		<command>$EXE$ -XX:+JITInlineWatches -Xjit:disableAsyncCompilation,inhibitRecompilation,dontInline={*jitme*},disableSuffixLogs,{*jitme*}(count=0,traceFull,traceCG,log=unresolvedTrace.log) $AGENTLIB$=test:fw001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="fw001-2">
+		<command>$EXE$ -XX:+JITInlineWatches -Xjit:disableAsyncCompilation,inhibitRecompilation,dontInline={*jitme*},disableSuffixLogs,{*jitme*}(count=1,traceFull,traceCG,log=resolvedTrace.log) $AGENTLIB$=test:fw001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="fw001-3">
+		<command>$EXE$ -XX:+JITInlineWatches -Xjit:disableAsyncCompilation,dontInline={*jitme*},disableSuffixLogs,{*jitme*}(count=2,traceFull,traceCG,log=resolvedTrace.log) $AGENTLIB$=test:fw001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="fw001-4">
+		<command>$EXE$ -XX:+JITInlineWatches -Xjit:disableAsyncCompilation,dontInline={*jitme*},disableSuffixLogs,{*jitme*}(count=2) $AGENTLIB$=test:fw001 -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="fw001-5">
+		<command>$EXE$ $AGENTLIB$=test:fw001 -XX:+JITInlineWatches -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+	<test id="fw001-6">
+		<command>$EXE$ $AGENTLIB$=test:fw001 -Xint -cp $Q$$JAR$$Q$ $TESTRUNNER$</command>
+		<return type="success" value="0"/>
+	</test>
+
+</suite>

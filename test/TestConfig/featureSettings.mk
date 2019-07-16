@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2018, 2018 IBM Corp. and others
+#  Copyright (c) 2018, 2019 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,7 @@
 TEST_ITERATIONS = 1
 
 ifneq (,$(findstring AOT,$(TEST_FLAG)))
+export TR_silentEnv=1
 export TR_Options=forceAOT
 export TR_OptionsAOT=forceAOT
 AOT_OPTIONS = -Xshareclasses:name=$@ -Xscmx400M -Xscmaxaot256m

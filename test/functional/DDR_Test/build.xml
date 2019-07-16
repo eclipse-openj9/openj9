@@ -43,6 +43,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<property name="j9ddr" location="${TEST_JDK_HOME}/lib/ddr/j9ddr.jar" />
 		</else>
 	</if>
+	
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -100,11 +101,19 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<target name="build" >
 		<echo>os.name: ${os.name}</echo>
 		<if>
-			<not>
-				<equals arg1="${os.name}" arg2="z/OS" />
-			</not>
+			<or>
+				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="openj9" />
+			</or>
 			<then>
-				<antcall target="clean" inheritall="true" />
+				 <if>
+					<not>
+						<equals arg1="${os.name}" arg2="z/OS" />
+					</not>
+					<then>
+						<antcall target="clean" inheritall="true" />
+					</then>
+				</if>
 			</then>
 		</if>
 	</target>

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,9 +31,9 @@ import javax.management.ObjectName;
  * Runtime type for {@link CompilationMXBean}
  * <p>
  * There is only ever one instance of this class in a virtual machine.
- * The type does no need to be modeled as a DynamicMBean, as it is structured 
+ * The type does no need to be modeled as a DynamicMBean, as it is structured
  * statically, without attributes, operations, notifications, etc, configured,
- * on the fly. The StandardMBean model is sufficient for the bean type.  
+ * on the fly. The StandardMBean model is sufficient for the bean type.
  * </p>
  * @since 1.5
  */
@@ -41,27 +41,26 @@ public final class CompilationMXBeanImpl implements CompilationMXBean {
 
 	private static final CompilationMXBeanImpl instance = isJITEnabled() ? new CompilationMXBeanImpl() : null;
 
-	private final ObjectName objectName;
+	private ObjectName objectName;
 
 	/**
 	 * Query whether the VM is running with a JIT compiler enabled.
-	 * 
+	 *
 	 * @return true if a JIT is enabled, false otherwise
 	 */
 	private static native boolean isJITEnabled();
 
 	/**
 	 * Constructor intentionally private to prevent instantiation by others.
-	 * Sets the metadata for this bean. 
+	 * Sets the metadata for this bean.
 	 */
 	private CompilationMXBeanImpl() {
 		super();
-		objectName = ManagementUtils.createObjectName(ManagementFactory.COMPILATION_MXBEAN_NAME);
 	}
 
 	/**
 	 * Singleton accessor method.
-	 * 
+	 *
 	 * @return the <code>ClassLoadingMXBeanImpl</code> singleton.
 	 */
 	public static CompilationMXBeanImpl getInstance() {
@@ -114,6 +113,9 @@ public final class CompilationMXBeanImpl implements CompilationMXBean {
 	 */
 	@Override
 	public ObjectName getObjectName() {
+		if (objectName == null) {
+			objectName = ManagementUtils.createObjectName(ManagementFactory.COMPILATION_MXBEAN_NAME);
+		}
 		return objectName;
 	}
 

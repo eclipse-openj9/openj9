@@ -23,21 +23,18 @@
 
 package openj9.tools.attach.diagnostics.tools;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import com.ibm.tools.attach.target.AttachHandler;
 import com.ibm.tools.attach.target.IPC;
 
 import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
 import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
-import openj9.tools.attach.diagnostics.base.DiagnosticsInfo;
+import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 
 /**
  * JStack 
@@ -76,9 +73,9 @@ public class Jstack {
 			}
 			try {
 				diagProvider.attach(vmid);
-				DiagnosticsInfo groupInfo = diagProvider.getThreadGroupInfo(printSynchronizers);
-				out.printf("Virtual machine: %s JVM information %s%n", vmid, groupInfo.getJavaInfo()); //$NON-NLS-1$
-				out.println(groupInfo.toString());
+				out.printf("Virtual machine: %s JVM information:%n", vmid); //$NON-NLS-1$
+				Util.runCommandAndPrintResult(diagProvider, DiagnosticUtils.makeThreadPrintCommand(printSynchronizers), "jstack"); //$NON-NLS-1$
+
 				if (printProperties) {
 					out.println("System properties:"); //$NON-NLS-1$
 					out.println(diagProvider.getSystemProperties());
@@ -122,7 +119,7 @@ public class Jstack {
 				+ "        <vmid>s are read from stdin if none are supplied as arguments%n"
 				+ "    -p: print the target's system and agent properties%n"
 				+ "    -l: Long format. Print the thread's ownable synchronizers%n"
-				+ "    -J: supply arguments to the Java VM running jps%n"
+				+ "    -J: supply arguments to the Java VM running jstack%n"
 				;
 		vmids = new ArrayList<>();
 		for (String a: args) {
@@ -141,15 +138,7 @@ public class Jstack {
 
 		if (okay && vmids.isEmpty()) {
 			/* grab the VMIDs from stdin. */
-			try (BufferedReader jpsOutReader = new BufferedReader(new InputStreamReader(System.in))) {
-				vmids = jpsOutReader.lines()
-						.map(s -> s.trim())
-						.filter(s -> !s.isEmpty())
-						.collect(Collectors.toList());
-				okay = true;
-			} catch (IOException e) {
-				/* ignore */
-			}
+			vmids = Util.inStreamToStringList(System.in);
 		}
 		return okay;
 	}

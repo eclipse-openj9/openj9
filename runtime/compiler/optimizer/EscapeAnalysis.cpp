@@ -2551,7 +2551,7 @@ bool TR_EscapeAnalysis::checkAllNewsOnRHSInLoopWithAliasing(int32_t defIndex, TR
             // that has the value number of a candidate allocation, other than the
             // current candidate, is harmless.  The added restriction in the
             // second case avoids allowing the current candidate through from a
-            // a previous loop iteration. 
+            // a previous loop iteration.
             if (otherAllocNode->_node == firstChild
                    || (candidate->_node != otherAllocNode->_node
                        && _valueNumberInfo->getValueNumber(otherAllocNode->_node)
@@ -4694,7 +4694,7 @@ void TR_EscapeAnalysis::checkEscapeViaCall(TR::Node *node, TR::NodeChecklist& vi
                TR_ResolvedMethod *owningMethod = symRef->getOwningMethod(comp());
                TR_ResolvedMethod *resolvedMethod = NULL;
                TR::MethodSymbol *sym = symRef->getSymbol()->castToMethodSymbol();
-               TR_Method * originalMethod = sym->getMethod();
+               TR::Method * originalMethod = sym->getMethod();
                int32_t len = originalMethod->classNameLength();
                char *s = classNameToSignature(originalMethod->classNameChars(), len, comp());
                TR_OpaqueClassBlock *originalMethodClass = comp()->fej9()->getClassFromSignature(s, len, owningMethod);

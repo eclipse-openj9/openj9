@@ -245,6 +245,20 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		goto _exit;
 	}
 
+	if(try_scan(scan_start, "concurrentKickoffTenuringHeadroom=")) {
+		UDATA value = 0;
+		if(!scan_udata_helper(javaVM, scan_start, &value, "concurrentKickoffTenuringHeadroom=")) {
+			goto _error;
+		}
+		if(value > 100) {
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_INTEGER_OUT_OF_RANGE, "concurrentKickoffTenuringHeadroom=", (UDATA)0, (UDATA)100);
+			goto _error;
+		}
+		extensions->concurrentKickoffTenuringHeadroom = ((float)value) / 100.0f;
+		goto _exit;
+	}
+
+
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	/* Parsing of concurrentScavengeBackground/Slack must happen before concurrentScavenge, since the later option is a substring of the former(s).
 	 * However, there is no effective limitation on relative order of these options in a command line. */
@@ -254,6 +268,17 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		}
 		goto _exit;
 	}
+
+	if(try_scan(scan_start, "concurrentScavengeAllocDeviationBoost=")) {
+		UDATA value;
+		if(!scan_udata_helper(javaVM, scan_start, &value, "concurrentScavengeAllocDeviationBoost=")) {
+			goto _error;
+		}
+
+		extensions->concurrentScavengerAllocDeviationBoost = value / (float)10.0;
+		goto _exit;
+	}
+
 	if(try_scan(scan_start, "concurrentScavengeBackground=")) {
 		if(!scan_udata_helper(javaVM, scan_start, &extensions->concurrentScavengerBackgroundThreads, "concurrentScavengeBackground=")) {
 			goto _error;
@@ -1051,7 +1076,19 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTION_FVTEST_UNKNOWN_TYPE, *scan_start);
 		goto _error;
 	}
-	
+#if defined(J9VM_GC_VLHGC)
+#if defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD)
+	if (try_scan(scan_start, "concurrentCopyForward")) {
+		extensions->_isConcurrentCopyForward = true;
+		goto _exit;
+	}
+	if (try_scan(scan_start, "noConcurrentCopyForward")) {
+		extensions->_isConcurrentCopyForward = false;
+		goto _exit;
+	}
+#endif /* defined(OMR_GC_VLHGC_CONCURRENT_COPY_FORWARD) */
+#endif /* defined(J9VM_GC_VLHGC) */
+
 #if defined(J9VM_GC_MODRON_SCAVENGER)
 	if (try_scan(scan_start, "scanCacheSize=")) {
 		/* Read in restricted scan cache size */

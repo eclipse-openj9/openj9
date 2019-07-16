@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2009, 2018 IBM Corp. and others
+# Copyright (c) 2009, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,13 +33,13 @@ use strict;
 use warnings;
 
 sub nameOption17test{
-	my ($java_bin, $cache_max_len_string)=@_;
+	my ($java_exe, $cache_max_len_string)=@_;
 	my $test_name = "nameOption17";
 
 	my $new_cache_len = ($cache_max_len_string + 0 ) + 1;
 	my $new_cache_len_string = ($new_cache_len . '');
 	my $error_msg = long_cache_name_err_msg();
-	long_cache_name_fail_cases_test($java_bin, $test_name, $new_cache_len_string, $error_msg);
+	long_cache_name_fail_cases_test($java_exe, $test_name, $new_cache_len_string, $error_msg);
 }		
 	
 nameOption17test((@ARGV));

@@ -80,9 +80,6 @@ uint8_t *TR::PPCMonitorEnterSnippet::emitSnippetBody()
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
 
-#if !defined(J9VM_TASUKI_LOCKS_SINGLE_SLOT)
-   TR_ASSERT(0, "Tasuki double slot lock enter snippet not implemented");
-#endif
    // The 32-bit code for the snippet looks like:
    // incLabel:
    //    rlwinm  threadReg, monitorReg, 0, LOCK_THREAD_PTR_AND_UPPER_COUNT_BIT_MASK
@@ -362,10 +359,6 @@ uint8_t *TR::PPCMonitorExitSnippet::emitSnippetBody()
    {
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
-
-#if !defined(J9VM_TASUKI_LOCKS_SINGLE_SLOT)
-   TR_ASSERT(0, "Tasuki double slot lock exit snippet not implemented");
-#endif
 
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
 

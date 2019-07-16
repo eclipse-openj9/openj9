@@ -67,6 +67,9 @@ MM_ObjectAccessBarrier::initialize(MM_EnvironmentBase *env)
 		}
 #endif /* J9VM_GC_REALTIME */
 
+#if defined (OMR_GC_FULL_POINTERS)
+		_compressObjectReferences = true;
+#endif /* OMR_GC_FULL_POINTERS */
 		_compressedPointersShift = omrVM->_compressedPointersShift;
 		vm->compressedPointersShift = omrVM->_compressedPointersShift;
 		Trc_MM_CompressedAccessBarrierInitialized(env->getLanguageVMThread(), 0, _compressedPointersShift);
@@ -1331,7 +1334,8 @@ MM_ObjectAccessBarrier::getLockwordAddress(J9VMThread *vmThread, J9Object *objec
 void
 MM_ObjectAccessBarrier::cloneObject(J9VMThread *vmThread, J9Object *srcObject, J9Object *destObject)
 {
-	copyObjectFields(vmThread, J9GC_J9OBJECT_CLAZZ(srcObject), srcObject, J9_OBJECT_HEADER_SIZE, destObject, J9_OBJECT_HEADER_SIZE);
+	UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread);
+	copyObjectFields(vmThread, J9GC_J9OBJECT_CLAZZ_THREAD(srcObject, vmThread), srcObject, objectHeaderSize, destObject, objectHeaderSize);
 }
 
 /**

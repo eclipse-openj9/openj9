@@ -23,6 +23,7 @@
 #include "j9cfg.h"
 #include "jilconsts.inc"
 
+#define J9VMTHREAD x19
 #define J9SP x20
 
 	.globl	_interpreterUnresolvedStaticGlue
@@ -48,6 +49,7 @@
 	.globl	_interpreterDoubleStaticGlue
 	.globl	_interpreterSyncDoubleStaticGlue
 	.globl	_nativeStaticHelper
+	.globl	_interfaceDispatch
 
 	.extern	jitResolveClass
 	.extern	jitResolveClassFromStaticField
@@ -56,7 +58,10 @@
 	.extern	jitResolveStaticFieldSetter
 	.extern	jitResolveField
 	.extern	jitResolveFieldSetter
+	.extern	jitResolveInterfaceMethod
+	.extern	jitLookupInterfaceMethod
 	.extern	jitCallCFunction
+	.extern	jitThrowException
 	.extern	mcc_reservationAdjustment_unwrapper
 	.extern	mcc_callPointPatching_unwrapper
 	.extern	mcc_lookupHelperTrampoline_unwrapper
@@ -80,10 +85,18 @@
 	.set	J9TR_USCSnippet_CP,		20
 	.set	J9TR_USCSnippet_CPIndex,	28
 
-// Encoding of CPIndex field in USC snippet (helperOffset: 8 bits, cpIndex: 24 bits)
+// Encoding of CPIndex field in USC snippet (helperOffset: 8 bits, cpIndex: 56 bits)
 
-	.set	J9TR_USCSnippet_HelperOffset,	0xFF000000
-	.set	J9TR_USCSnippet_HelperOffsetShift,	24
+	.set	J9TR_USCSnippet_HelperOffset,	0xFF00000000000000
+	.set	J9TR_USCSnippet_HelperOffsetShift,	56
+
+// Interface call snippet
+
+	.set	J9TR_ICSnippet_codeCacheReturnAddress,	0
+	.set	J9TR_UICSnippet_CP,		8
+	.set	J9TR_UICSnippet_CPIndex,	16
+	.set	J9TR_ICSnippet_InterfaceClass,	24
+	.set	J9TR_ICSnippet_MethodIndex,	32
 
 	.text
 	.align 2
@@ -147,7 +160,7 @@ L_mergedUnresolvedSpecialStaticGlue:
 	mov	x27, x30					// save snippet address
 	ldr	x0, [x27, #J9TR_SCSnippet_codeCacheReturnAddress]	// Fetch code cache EIP
 	ldr	x1, [x27, #J9TR_USCSnippet_CP]			// get CP
-	ldr	w28, [x27, #J9TR_USCSnippet_CPIndex]		// get CP index & flags (4 bytes)
+	ldr	x28, [x27, #J9TR_USCSnippet_CPIndex]		// get CP index & flags
 	and	x2, x28, #~(J9TR_USCSnippet_HelperOffset)	// remove helper offset from CP index
 	blr	x3						// call resolve helper
 	str	x0, [x27, #J9TR_SCSnippet_method]		// update snippet with resolved method
@@ -247,7 +260,67 @@ _virtualUnresolvedHelper:
 	hlt	#0	// Not implemented yet
 
 _interfaceCallHelper:
-	hlt	#0	// Not implemented yet
+	stp	x0, x1, [J9SP, #-64]!
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	mov	x3, x30						// preserve LR
+	add	x0, x30, #J9TR_UICSnippet_CP			// get CP/index pair pointer
+	ldr	x1, [x30, #J9TR_ICSnippet_codeCacheReturnAddress]	// get code cache RA
+	mov	x28, x1						// protect RA in x28 (in L_commonLookupException, it is expected)
+	bl	jitResolveInterfaceMethod			// call the helper
+	cbz	x0, L_commonLookupException			// if resolve failed, throw the exception
+	add	x0, x3, #J9TR_Snippet_CallInstruction		// get address of BL instruction in snippet
+	ldr	x1, const_interfaceDispatch			// get new snippet branch target
+	mov	x2, #TR_ARM64interfaceDispatch
+	bl	L_refreshHelper					// rewrite the BL
+	mov	x30, x3						// restore LR
+	ldr	x0, [J9SP, #0]					// refetch 'this'
+	b	L_continueInterfaceSend				// lookup interface method and send
+_interfaceDispatch:
+	stp	x0, x1, [J9SP, #-64]!
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+L_continueInterfaceSend:
+#ifdef J9VM_GC_COMPRESSED_POINTERS
+	ldr	w0, [x0, #J9TR_ObjectHeader_class]		// load class offset of receiver
+#else
+	ldr	x0, [x0, #J9TR_ObjectHeader_class]		// load class of receiver
+#endif
+	and	x0, x0, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
+	add	x1, x30, #J9TR_ICSnippet_InterfaceClass		// get InterfaceClass/MethodIndex pair pointer
+	ldr	x2, [x30, #J9TR_ICSnippet_codeCacheReturnAddress]	// get code cache RA
+	mov	x28, x2						// protect LR in x28 (in L_commonLookupException, it is expected)
+	bl	jitLookupInterfaceMethod			// call the helper
+	cbz	x0, L_commonLookupException			// if resolve failed, throw the exception
+	mov	x15, #J9TR_InterpVTableOffset
+	sub	x15, x15, x0					// convert interp vTableIndex to jit index (must be in x15 for patch virtual)
+	mov	x30, x28						// set LR = code cache RA
+	ldr	x0, [J9SP, #0]					// refetch 'this'
+#ifdef J9VM_GC_COMPRESSED_POINTERS
+	ldr	w14, [x0, #J9TR_ObjectHeader_class]		// load class offset of receiver
+#else
+	ldr	x14, [x0, #J9TR_ObjectHeader_class]		// load class of receiver
+#endif
+	and	x14, x14, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
+	ldr	x1, [J9SP, #8]					// restore other parameter regs
+	ldp	x2, x3, [J9SP, #16]
+	ldp	x4, x5, [J9SP, #32]
+	ldp	x6, x7, [J9SP, #48]
+	add	J9SP, J9SP, #64
+	ldr	x15, [x14, x15]					// jump thru vtable
+	br	x15
+
+L_commonLookupException:
+	add	J9SP, J9SP, #64					// clean up stack but do not restore register values
+	ldr	x0, [J9VMTHREAD, #J9TR_VMThreadCurrentException]	// load pending exception from vmStruct
+	mov	x30, x28					// move correct LR in to get exception throw.
+	b	jitThrowException				// throw it
+
+	.align	3
+const_interfaceDispatch:
+	.dword	_interfaceDispatch
 
 // Handles calls to static call snippets
 //
