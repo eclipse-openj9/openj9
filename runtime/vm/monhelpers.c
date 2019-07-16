@@ -41,7 +41,6 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 
 	Trc_VM_objectMonitorExit_Entry(vmStruct,object);
 
-#ifdef J9VM_THR_LOCK_NURSERY
 	if (!LN_HAS_LOCKWORD(vmStruct,object)) {
 		J9ObjectMonitor *objectMonitor = NULL;
 
@@ -52,9 +51,7 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 		}
 
 		lockEA = &(objectMonitor->alternateLockword);
-	} else 
-#endif /* J9VM_THR_LOCK_NURSERY */
-	{
+	} else {
 		lockEA = J9OBJECT_MONITOR_EA(vmStruct, object);
 	}
 	lock = *lockEA;
@@ -218,13 +215,9 @@ objectMonitorInflate(J9VMThread* vmStruct, j9object_t object, UDATA lock)
 	/* set the count to be the current thread's count */
 	((J9ThreadAbstractMonitor*)monitor)->count = J9_FLATLOCK_COUNT(lock);	
 
-#ifdef J9VM_THR_LOCK_NURSERY
 	if (!LN_HAS_LOCKWORD(vmStruct,object)) {
 			objectMonitor->alternateLockword = (j9objectmonitor_t)(UDATA)objectMonitor | OBJECT_HEADER_LOCK_INFLATED;
-	}
-	else
-#endif
-	{
+	} else {
 		J9OBJECT_SET_MONITOR(vmStruct, object, (j9objectmonitor_t)(UDATA)objectMonitor | OBJECT_HEADER_LOCK_INFLATED);
 	}
 
@@ -263,16 +256,13 @@ cancelLockReservation(J9VMThread* vmStruct)
 	Assert_VM_mustHaveVMAccess(vmStruct);
 
 	object = vmStruct->blockingEnterObject;
-#ifdef J9VM_THR_LOCK_NURSERY
 	if (!LN_HAS_LOCKWORD(vmStruct,object)) {
 		J9ObjectMonitor *objectMonitor = monitorTableAt(vmStruct, object);
 
 		Assert_VM_true(objectMonitor != NULL);
 
 		lock = objectMonitor->alternateLockword;
-	} else
-#endif
-	{
+	} else {
 		lock = *J9OBJECT_MONITOR_EA(vmStruct, object);
 	}
 
@@ -289,16 +279,13 @@ cancelLockReservation(J9VMThread* vmStruct)
 
 		/* refresh the object pointer, since we may have released VM access */
 		object = vmStruct->blockingEnterObject;
-#ifdef J9VM_THR_LOCK_NURSERY
 		if (!LN_HAS_LOCKWORD(vmStruct,object)) {
 			J9ObjectMonitor *objectMonitor = monitorTableAt(vmStruct, object);
 
 			Assert_VM_true(objectMonitor != NULL);
 
 			lockEA = &objectMonitor->alternateLockword;
-		} else
-#endif
-		{
+		} else {
 			lockEA = J9OBJECT_MONITOR_EA(vmStruct, object);
 		}
 

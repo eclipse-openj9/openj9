@@ -2008,7 +2008,6 @@ J9ObjectMonitor *
 monitorTableAt(J9VMThread* vmStruct, j9object_t object);
 
 
-#ifdef J9VM_THR_LOCK_NURSERY
 /**
 * @brief used to cache an J9ObjectMonitor in the vmthread structure so that
 *        we don't have to go to the monitor table to get it
@@ -2020,7 +2019,6 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object);
 void
 cacheObjectMonitorForLookup(J9JavaVM* vm, J9VMThread* vmStruct, J9ObjectMonitor* objectMonitor);
 
-#endif
 
 /* ---------------- PackageIDHashTable.c ---------------- */
 

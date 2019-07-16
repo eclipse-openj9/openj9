@@ -211,7 +211,6 @@ processXLogOptions(J9JavaVM * vm);
 
 
 /* ---------------- lockwordconfig.c ---------------- */
-#if defined(J9VM_THR_LOCK_NURSERY)
 /**
  * This method should be called to clean up the lockword configuration
  *
@@ -248,7 +247,6 @@ printLockwordWhat(J9JavaVM* jvm);
  */
 J9HashTable* readLocknurseryHashtable(J9HashTable* lockwordExceptions);
 #endif /* J9VM_OUT_OF_PROCESS */
-#endif /* J9VM_THR_LOCK_NURSERY */
 
 
 /* ------------------- stringhelpers.c ----------------- */

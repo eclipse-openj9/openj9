@@ -45,9 +45,7 @@ static UDATA hits, misses;
 #define TRACE(message)
 #endif
 
-#ifdef J9VM_THR_LOCK_NURSERY
 #define J9_OBJECT_MONITOR_LOOKUP_SLOT(object,vm) ( (((UDATA)object) >> vm->omrVM->_objectAlignmentShift) & (J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE-1))
-#endif
 
 static UDATA hashMonitorCompare (void *leftKey, void *rightKey, void *userData);
 static UDATA hashMonitorDestroyDo (void *entry, void *opaque);
@@ -86,7 +84,6 @@ hashMonitorCompare(void *tableEntryKey, void *userKey, void *userData)
 	return tableEntryObject == (j9object_t)userMonitor->userData;
 }
 
-#ifdef J9VM_THR_LOCK_NURSERY
 void
 cacheObjectMonitorForLookup(J9JavaVM* vm, J9VMThread* vmStruct, J9ObjectMonitor* objectMonitor)
 {
@@ -94,7 +91,6 @@ cacheObjectMonitorForLookup(J9JavaVM* vm, J9VMThread* vmStruct, J9ObjectMonitor*
 
 	vmStruct->objectMonitorLookupCache[J9_OBJECT_MONITOR_LOOKUP_SLOT(object,vm)] = (j9objectmonitor_t) ((UDATA) objectMonitor);
 }
-#endif
 
 
 
@@ -242,7 +238,6 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object)
 	PORT_ACCESS_FROM_VMC(vmStruct);
 #endif
 
-#ifdef J9VM_THR_LOCK_NURSERY
 	Trc_VM_monitorTableAt_Entry(vmStruct, object, J9OBJECT_CLAZZ(vmStruct, object),J9OBJECT_MONITOR_OFFSET(vmStruct,object));
 
 	if (TrcEnabled_Trc_VM_monitorTableAtObjectWithNoLockword){
@@ -251,16 +246,8 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object)
 			Trc_VM_monitorTableAtObjectWithNoLockword(vmStruct, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmStruct, object)->romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmStruct, object)->romClass)), object);
 		}
 	}
-
-#else
-	Trc_VM_monitorTableAt_Entry(vmStruct, object, J9OBJECT_CLAZZ(vmStruct, object),offsetof(J9Object,monitor));
-#endif
-
-#ifdef J9VM_THR_LOCK_NURSERY
 	objectMonitor = (J9ObjectMonitor*) ((UDATA) vmStruct->objectMonitorLookupCache[J9_OBJECT_MONITOR_LOOKUP_SLOT(object,vm)]);
-#else
-	objectMonitor = vmStruct->cachedMonitor;
-#endif
+
 	/* If we are in a middle of a concurrent GC that may move objects, existing barriers ensure that object ptr is always up-to-date. We also
 	 * have to make sure that the entry in the thread local caches points to the up-to-date location of the cached object, before we proceed
 	 * with the comparison. Otherwise, we may miss to identify cache hit. Hence, we call a 'weak' read barrier (only updating slot if object already moved,
@@ -295,9 +282,7 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object)
 			omrthread_monitor_t monitor;
 			UDATA monitorFlags = J9THREAD_MONITOR_OBJECT;
 
-#ifdef J9VM_THR_LOCK_NURSERY
 			key_objectMonitor.alternateLockword = 0;
-#endif
 
 			if (omrthread_monitor_init_with_name(&monitor, monitorFlags, NULL) == 0) {
 				TRACE("Adding monitor");
@@ -350,11 +335,7 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object)
 	}
 
 	if (NULL != objectMonitor) {
-#ifdef J9VM_THR_LOCK_NURSERY
 		cacheObjectMonitorForLookup(vm, vmStruct, objectMonitor);
-#else
-		vmStruct->cachedMonitor = objectMonitor;
-#endif
 	}
 
 	omrthread_monitor_exit(mutex);

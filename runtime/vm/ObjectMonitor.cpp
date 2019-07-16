@@ -290,15 +290,12 @@ objectMonitorEnterNonBlocking(J9VMThread *currentThread, j9object_t object)
 			*lwEA = incremented;
 			/* no barrier is required in the recursive case */
 		} else {
-#if defined(J9VM_THR_LOCK_NURSERY)
 			/* check to see if object is unlocked (JIT did not do initial inline sequence due to insufficient static type info) */
 			if ((0 == (lock & ~OBJECT_HEADER_LOCK_RESERVED)) &&
 				VM_ObjectMonitor::inlineFastInitAndEnterMonitor(currentThread, lwEA, false, lock)
 			) {
 				/* compare and swap succeeded - barrier already performed */
-			} else
-#endif /* J9VM_THR_LOCK_NURSERY */
-			{
+			} else {
 				J9ObjectMonitor *objectMonitor = NULL;
 				/* check if the monitor is flat */
 				if (!J9_LOCK_IS_INFLATED(lock)) {
@@ -508,11 +505,7 @@ spinOnTryEnter(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor, j9obje
 	UDATA _tryEnterSpinCount2 = tryEnterSpinCount2;
 
 	/* we have the monitor object from the lock word so prime the cache with the monitor so we do not later look it up from the monitor table */
-#if defined(J9VM_THR_LOCK_NURSERY)
 	cacheObjectMonitorForLookup(vm, currentThread, objectMonitor);
-#else /* J9VM_THR_LOCK_NURSERY */
-	currentThread->cachedMonitor = objectMonitor;
-#endif /* J9VM_THR_LOCK_NURSERY */
 
 	for (; _tryEnterYieldCount > 0; _tryEnterYieldCount--) {
 		for (_tryEnterSpinCount2 = tryEnterSpinCount2; _tryEnterSpinCount2 > 0; _tryEnterSpinCount2--) {

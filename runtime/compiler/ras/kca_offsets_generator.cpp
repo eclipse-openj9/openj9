@@ -91,11 +91,7 @@ J9::Options::kcaOffsets(char *option, void *, TR::OptionTable *entry)
       #else
 	  fprintf( file, "#define J9OBJECT_FLAGS             (0) // Does not exist!\n" );
       #endif
-      #if !defined(J9VM_THR_LOCK_NURSERY)
-      fprintf( file, "#define J9OBJECT_MONITOR           (%d)\n", offsetof(J9IndexableObjectContiguous,monitor) );
-      #else
       fprintf( file, "#define J9OBJECT_MONITOR           (0) // Does not exist!\n" );
-      #endif
       fprintf( file, "#define J9OBJECT_ARRAY_SIZE        (%d)\n", offsetof(J9IndexableObjectContiguous,size) );
 
       fprintf( file, "#define METADATA_CLASSNAME         (%d)\n", offsetof(J9JITExceptionTable,className) );

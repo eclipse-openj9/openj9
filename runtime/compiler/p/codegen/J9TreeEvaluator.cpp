@@ -5866,7 +5866,6 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
    generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel, NULL);
    startLabel->setStartInternalControlFlow();
 
-#if defined (J9VM_THR_LOCK_NURSERY)
    if (lwOffset <= 0)
       {
       objectClassReg = cg->allocateRegister();
@@ -5960,7 +5959,6 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
 
       numDeps = numDeps + 2;
       }
-#endif
 
    bool reserveLocking = false, normalLockWithReservationPreserving = false;
 
@@ -7083,24 +7081,6 @@ static void genInitObjectHeader(TR::Node *node, TR::Instruction *&iCursor, TR_Op
       opCode = TR::InstOpCode::stw;
       lockSize = 4;
       }
-
-#if !defined(J9VM_THR_LOCK_NURSERY)
-   // Init monitor
-   if (needZeroInit)
-      iCursor = generateMemSrc1Instruction(cg, opCode, node, new (cg->trHeapMemory()) TR::MemoryReference(resReg, TMP_OFFSETOF_J9OBJECT_MONITOR, lockSize, cg), zeroReg, iCursor);
-#endif
-#if defined(J9VM_THR_LOCK_NURSERY) && defined(J9VM_THR_LOCK_NURSERY_FAT_ARRAYS)
-   // Initialize the monitor
-   // word for arrays that have a
-   // lock word
-   int32_t lwOffset = fej9->getByteOffsetToLockword(clazz);
-   if (needZeroInit &&
-         (node->getOpCodeValue() != TR::New) &&
-         (lwOffset > 0) && !fej9->isPackedClass(classAddress))
-   iCursor = generateMemSrc1Instruction(cg, opCode, node,
-         new (cg->trHeapMemory()) TR::MemoryReference(resReg, TMP_OFFSETOF_J9INDEXABLEOBJECT_MONITOR, lockSize, cg),
-         zeroReg, iCursor);
-#endif
    }
 
 static void genAlignArray(TR::Node *node, TR::Instruction *&iCursor, bool isVariableLen, TR::Register *resReg, int32_t objectSize, int32_t dataBegin, TR::Register *dataSizeReg,
@@ -8522,7 +8502,6 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
    generateLabelInstruction(cg, TR::InstOpCode::label, node, startLabel, NULL);
    startLabel->setStartInternalControlFlow();
 
-#if defined (J9VM_THR_LOCK_NURSERY)
    if (lwOffset <= 0)
       {
       objectClassReg = cg->allocateRegister();
@@ -8615,7 +8594,6 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
 
       numDeps = numDeps + 2;
       }
-#endif
 
    bool reserveLocking = false, normalLockWithReservationPreserving = false;
 

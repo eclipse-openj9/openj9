@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2018 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -151,10 +151,6 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 		
 		U32 size = J9IndexableObjectHelper.size(localObject);
 		
-		if (!J9BuildFlags.thr_lockNursery) {
-			out.println(String.format("    j9objectmonitor_t monitor = %s;", J9IndexableObjectHelper.monitor(localObject).getHexValue()));
-		}
-		
 		if (size.anyBitsIn(0x80000000)) {
 			out.println(String.format("    U_32 size = %s; // Size exceeds Integer.MAX_VALUE!", size.getHexValue()));
 		} else {
@@ -265,24 +261,12 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 		J9ClassPointer previousSuperclass = J9ClassPointer.NULL;
 		boolean lockwordPrinted = false;
 		
-		if (J9BuildFlags.thr_lockNursery) {
-			lockwordPrinted = false;
-		}
-		
 		/* print individual fields */
 		J9UTF8Pointer classNameUTF = instanceClass.romClass().className();
 		padding(out, tabLevel);		
 		out.println(String.format("struct J9Class* clazz = !j9class 0x%X   // %s", localClazz.getAddress(), J9UTF8Helper.stringValue(classNameUTF)));
 		padding(out, tabLevel);
 		out.println(String.format("Object flags = %s;", J9ObjectHelper.flags(localObject).getHexValue()));
-		
-		if (!J9BuildFlags.thr_lockNursery) {
-			UDATA lockword = J9ObjectHelper.monitor(localObject);
-			if (lockword != null) {
-				padding(out, tabLevel);
-				out.println(String.format("j9objectmonitor_t monitor = %s;", lockword.getHexValue()));
-			}
-		}
 		
 		depth = J9ClassHelper.classDepth(instanceClass).longValue();
 		for (superclassIndex = 0; superclassIndex <= depth; superclassIndex++) {
@@ -301,15 +285,13 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 				J9ObjectFieldOffset result = iterator.next();
 				boolean printField = true;
 				boolean isHiddenField = result.isHidden();
-				if (J9BuildFlags.thr_lockNursery) {
-					boolean isLockword = (isHiddenField && ((result.getOffsetOrAddress().add(J9Object.SIZEOF).eq(superclass.lockOffset()))));
-					
-					if (isLockword) {
-						/* Print the lockword field if it is indeed the lockword for this instanceClass and we haven't printed it yet. */
-						printField = (!lockwordPrinted && (instanceClass.lockOffset().eq(superclass.lockOffset())));
-						if (printField) {
-							lockwordPrinted = true;
-						}
+				boolean isLockword = (isHiddenField && ((result.getOffsetOrAddress().add(J9Object.SIZEOF).eq(superclass.lockOffset()))));
+				
+				if (isLockword) {
+					/* Print the lockword field if it is indeed the lockword for this instanceClass and we haven't printed it yet. */
+					printField = (!lockwordPrinted && (instanceClass.lockOffset().eq(superclass.lockOffset())));
+					if (printField) {
+						lockwordPrinted = true;
 					}
 				}
 				

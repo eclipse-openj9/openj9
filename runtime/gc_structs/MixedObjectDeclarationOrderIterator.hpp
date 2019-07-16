@@ -31,13 +31,11 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "modron.h"
+#include "locknursery.h"
 
 #include "MixedObjectModel.hpp"
 #include "SlotObject.hpp"
-
-#ifdef J9VM_THR_LOCK_NURSERY
 #include "locknursery.h"
-#endif
 
 /**
  * Iterate over all slots in a mixed object which contain an object reference.
