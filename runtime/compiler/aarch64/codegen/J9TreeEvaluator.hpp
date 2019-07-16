@@ -53,7 +53,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    static TR::Register *DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
-   static TR::Register * flushEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *flushEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    
    /*
@@ -90,6 +90,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *multianewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Register *ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    };
 
 }
