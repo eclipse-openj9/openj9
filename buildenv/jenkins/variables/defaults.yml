@@ -73,9 +73,9 @@ test_dependencies_job_name: 'test.getDependency'
 slack_channel: '#jenkins'
 build_discarder:
   logs:
-    Nightly: 30
+    Nightly: 40
     Release: 10
-    OMR: 30
+    OMR: 20
     OpenJDK8: 20
     OpenJDK11: 20
     OpenJDK12: 20
