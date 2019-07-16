@@ -334,8 +334,8 @@ j9jit_testarossa_err(
                }
             }
          }
-      // Do not allow local compilations in JITaaS server mode
-      if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      // Do not allow local compilations in JITServer server mode
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          return 0;
       }
 
@@ -1503,11 +1503,11 @@ onLoadInternal(
 
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
       {
-      if (persistentMemory->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_JITaaSIProfiler::allocate(jitConfig);
          }
-      else if (persistentMemory->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+      else if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          {
          ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_JITaaSClientIProfiler::allocate(jitConfig);
          }
@@ -1586,11 +1586,11 @@ onLoadInternal(
       }
 
    TR_PersistentCHTable *chtable;
-   if (persistentMemory->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       chtable = new (PERSISTENT_NEW) TR_JITaaSServerPersistentCHTable(persistentMemory);
       }
-   else if (persistentMemory->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+   else if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       chtable = new (PERSISTENT_NEW) TR_JITaaSClientPersistentCHTable(persistentMemory);
       }
@@ -1602,7 +1602,7 @@ onLoadInternal(
       return -1;
    persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
    
-   if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       JITServer::CommunicationStream::initVersion();
 
@@ -1624,7 +1624,7 @@ onLoadInternal(
          return -1;
          }
       }
-   else if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+   else if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       compInfo->setUnloadedClassesTempList(new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock*>(
          PersistentVector<TR_OpaqueClassBlock*>::allocator_type(TR::Compiler->persistentAllocator())));
@@ -1814,10 +1814,10 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
          {
          javaVM->sharedClassConfig->runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_AOT;
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
-         if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             {
             // TODO: Format the error message to use j9nls_printf
-            fprintf(stderr, "Aborting Compilation: SCC/AOT must be enabled and can be stored in JITaaS Server Mode.");
+            fprintf(stderr, "Aborting Compilation: SCC/AOT must be enabled and can be stored in JITServer Server Mode.");
             return -1;
             }
          }
@@ -1825,10 +1825,10 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
          {
          TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
-         if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             {
             // TODO: Format the error message to use j9nls_printf
-            fprintf(stderr, "Aborting Compilation: SCC/AOT must be enabled and can be stored in JITaaS Server Mode.");
+            fprintf(stderr, "Aborting Compilation: SCC/AOT must be enabled and can be stored in JITServer Server Mode.");
             return -1;
             }
          }        

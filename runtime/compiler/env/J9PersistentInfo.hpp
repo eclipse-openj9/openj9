@@ -34,11 +34,7 @@ namespace J9 { typedef J9::PersistentInfo PersistentInfoConnector; }
 
 #include <stdint.h>
 #include <string>
-#include <vector>
 #include "env/jittypes.h"
-
-
-
 
 class TR_FrontEnd;
 class TR_PersistentMemory;
@@ -63,11 +59,17 @@ enum IprofilerStates {
    IPROFILING_STATE_OFF,
 };
 
-enum JITaaSModes {
-   NONJITaaS_MODE = 0,
-   CLIENT_MODE,
-   SERVER_MODE,
-};
+#if defined(JITSERVER_SUPPORT)
+namespace JITServer
+{
+enum RemoteCompilationModes
+   {
+   NONE = 0,
+   CLIENT,
+   SERVER,
+   };
+}
+#endif
 
 #define MAX_SUPERCLASSES (20000)
 namespace J9
@@ -125,10 +127,12 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _gpuInitMonitor(NULL),
          _runtimeInstrumentationEnabled(false),
          _runtimeInstrumentationRecompilationEnabled(false),
-         _JITaaSMode(NONJITaaS_MODE),
-         _JITaaSServerAddress("localhost"),
-         _JITaaSServerPort(38400),
-         _timeoutMs(1000),
+#if defined(JITSERVER_SUPPORT)
+         _remoteCompilationMode(JITServer::NONE),
+         _JITServerAddress("localhost"),
+         _JITServerPort(38400),
+         _socketTimeoutMs(1000),
+#endif
       OMR::PersistentInfoConnector(pm)
       {}
 
@@ -159,7 +163,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    bool isUnloadedClass(void *v, bool yesIReallyDontCareAboutHCR); // You probably want isObsoleteClass
    bool isInUnloadedMethod(uintptrj_t address);
    int32_t getNumUnloadedClasses() const { return _numUnloadedClasses; }
-   TR_AddressSet* getUnloadedClassAddresses() { return _unloadedClassAddresses; }
+   TR_AddressSet* getUnloadedClassAddresses() const { return _unloadedClassAddresses; }
 
    void incNumLoadedClasses() {_numLoadedClasses++;}
 
@@ -289,22 +293,18 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint8_t _paddingBefore[128];
    int32_t _countForRecompile;
 
-   JITaaSModes getJITaaSMode() const { return _JITaaSMode;}
-   void setJITaaSMode(JITaaSModes m) { _JITaaSMode = m; }
-   const std::string &getJITaaSServerAddress() const { return _JITaaSServerAddress; }
-   void setJITaaSServerAddress(char *addr) { _JITaaSServerAddress = addr; }
-   uint32_t getJITaaSTimeout() { return _timeoutMs; }
-   void setJITaaSTimeout(uint32_t t) { _timeoutMs = t; }
-   uint32_t getJITaaSServerPort() const { return _JITaaSServerPort; }
-   void setJITaaSServerPort(uint32_t port) { _JITaaSServerPort = port; }
-   uint64_t getJITaaSId() { return _JITaaSId; }
-   void setJITaaSId(uint64_t val) { _JITaaSId = val; }
-   const std::vector<std::string> &getJITaaSSslKeys() { return _sslKeys; }
-   void addJITaaSSslKey(std::string key) { _sslKeys.push_back(key); }
-   const std::vector<std::string> &getJITaaSSslCerts() { return _sslCerts; }
-   void addJITaaSSslCert(std::string cert) { _sslCerts.push_back(cert); }
-   const std::string &getJITaaSSslRootCerts() { return _sslRootCerts; }
-   void setJITaaSSslRootCerts(std::string cert) { _sslRootCerts = cert; }
+#if defined(JITSERVER_SUPPORT)
+   JITServer::RemoteCompilationModes getRemoteCompilationMode() const { return _remoteCompilationMode; }
+   void setRemoteCompilationMode(JITServer::RemoteCompilationModes m) { _remoteCompilationMode = m; }
+   const std::string &getJITServerAddress() const { return _JITServerAddress; }
+   void setJITServerAddress(char *addr) { _JITServerAddress = addr; }
+   uint32_t getSocketTimeout() const { return _socketTimeoutMs; }
+   void setSocketTimeout(uint32_t t) { _socketTimeoutMs = t; }
+   uint32_t getJITServerPort() const { return _JITServerPort; }
+   void setJITServerPort(uint32_t port) { _JITServerPort = port; }
+   uint64_t getClientUID() const { return _clientUID; }
+   void setClientUID(uint64_t val) { _clientUID = val; }
+#endif
 
    private:
    TR_AddressSet *_unloadedClassAddresses;
@@ -388,17 +388,13 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
 
    int32_t _numLoadedClasses; ///< always increasing
-   JITaaSModes _JITaaSMode; // NONJITaaS_MODE, CLIENT_MODE, SERVER_MODE
-   std::string _JITaaSServerAddress;
-   uint32_t _JITaaSServerPort;
-   uint64_t _JITaaSId;
-   uint32_t _timeoutMs; // timeout for communication sockets used in out-of-process JIT compilation
-   std::string _sslRootCerts;
-   // SoA key pairs
-   // We use std::vector here to avoid an annoying include loop.
-   // Don't do this! Use PersistentVector instead.
-   std::vector<std::string> _sslKeys;
-   std::vector<std::string> _sslCerts;
+#if defined(JITSERVER_SUPPORT)
+   JITServer::RemoteCompilationModes _remoteCompilationMode; // JITServer::NONE, JITServer::CLIENT, JITServer::SERVER
+   std::string _JITServerAddress;
+   uint32_t    _JITServerPort;
+   uint64_t    _clientUID;
+   uint32_t    _socketTimeoutMs; // timeout for communication sockets used in out-of-process JIT compilation
+#endif
    };
 
 }

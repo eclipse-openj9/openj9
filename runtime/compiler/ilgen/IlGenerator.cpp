@@ -276,7 +276,7 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
                      return true;
                      }
                   // JITaaS FIXME: Bypass bug where this doesn't work if it's not the system class loader.
-                  else if (comp()->getPersistentInfo()->getJITaaSMode() != SERVER_MODE)
+                  else if (comp()->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
                      {
                      createGeneratedFirstBlock();
                      loadSymbol(TR::aload, symRefTab()->findOrCreateClassLoaderSymbolRef(caller));

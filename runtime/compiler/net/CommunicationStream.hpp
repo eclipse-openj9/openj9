@@ -28,7 +28,6 @@
 #include "net/SSLProtobufStream.hpp"
 #include "env/TRMemory.hpp"
 
-
 namespace JITServer
 {
 enum JITaaSCompatibilityFlags
@@ -43,11 +42,7 @@ class CommunicationStream
    {
 public:
 #if defined(JITSERVER_ENABLE_SSL)
-   static bool useSSL(TR::PersistentInfo *info)
-      {
-      return (info->getJITaaSSslKeys().size() || info->getJITaaSSslCerts().size() || info->getJITaaSSslRootCerts().size());
-      }
-
+   static bool useSSL();
    static void initSSL()
       {
       SSL_load_error_strings();

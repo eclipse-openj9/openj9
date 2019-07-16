@@ -593,7 +593,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
       if (vmType==J9_SERVER_VM || vmType==J9_SHARED_CACHE_SERVER_VM)
          {
-         TR_ASSERT(vmWithoutThreadInfo->_compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE, "J9_SERVER_VM and J9_SHARED_CACHE_SERVER_VM should only be instantiated in JITaaS SERVER_MODE");
+         TR_ASSERT(vmWithoutThreadInfo->_compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER, "J9_SERVER_VM and J9_SHARED_CACHE_SERVER_VM should only be instantiated in JITServer::SERVER mode");
          TR::CompilationInfoPerThread *compInfoPT = NULL;
          // Get the compInfoPT from the cached J9_VM with thread info
          // or search using the compInfo from the J9_VM without thread info
@@ -736,10 +736,10 @@ TR_J9VMBase::TR_J9VMBase(
 
    _sharedCache = NULL;
    if (TR::Options::sharedClassCache() ||
-       (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE))
+       (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER))
       // shared classes and AOT must be enabled, or we should be on the JITaaS server with remote AOT enabled
       {
-      if (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          _sharedCache = new (PERSISTENT_NEW) TR_J9JITaaSServerSharedCache(this);
       else
          _sharedCache = new (PERSISTENT_NEW) TR_J9SharedCache(this);
@@ -764,7 +764,7 @@ TR_J9VMBase::freeSharedCache()
    {
    if (_sharedCache)        // shared classes and AOT must be enabled
       {
-      if (_compInfo && (_compInfo->getPersistentInfo()->getJITaaSMode() != SERVER_MODE))
+      if (_compInfo && (_compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER))
          {
          TR_ASSERT(TR::Options::sharedClassCache(), "Found shared cache with option disabled");
          }

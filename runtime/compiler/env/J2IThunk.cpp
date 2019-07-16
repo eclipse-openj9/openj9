@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@ TR_J2IThunk::allocate(
    int16_t terseSignatureBufLength = thunkTable->terseSignatureLength(signature)+1;
    int16_t totalSize = (int16_t)sizeof(TR_J2IThunk) + codeSize + terseSignatureBufLength;
    TR_J2IThunk *result;
-   if (TR::comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   if (TR::comp()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
        result = (TR_J2IThunk*)cg->allocateCodeMemory(totalSize, false, true);
    else
        result = (TR_J2IThunk*)cg->allocateCodeMemory(totalSize, true, false);

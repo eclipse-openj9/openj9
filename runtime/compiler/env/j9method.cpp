@@ -2296,7 +2296,7 @@ TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClaz
    _fullSignature = NULL;
    }
 
-TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClazz, uintptr_t cpIndex, bool isJITaaSServerMode)
+TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClazz, uintptr_t cpIndex, bool JITServerMode)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 

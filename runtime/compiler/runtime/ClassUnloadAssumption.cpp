@@ -1137,8 +1137,8 @@ J9::PersistentInfo::ensureUnloadedAddressSetsAreInitialized()
       {
       return true;
       }
-   // In JITaaS server mode unloaded addresses are maintained per client
-   else if (getJITaaSMode() != SERVER_MODE)
+   // In JITServer server mode unloaded addresses are maintained per client
+   else if (getRemoteCompilationMode() != JITServer::SERVER)
       {
       int32_t maxUnloadedAddressRanges = TR::Options::getCmdLineOptions()->getMaxUnloadedAddressRanges();
       if (maxUnloadedAddressRanges < 1)
@@ -1160,7 +1160,7 @@ J9::PersistentInfo::isUnloadedClass(
       void *v,
       bool yesIReallyDontCareAboutHCR)
    {
-   if (getJITaaSMode() != SERVER_MODE)
+   if (getRemoteCompilationMode() != JITServer::SERVER)
       {
       OMR::CriticalSection isUnloadedClass(assumptionTableMutex);
       return _unloadedClassAddresses && _unloadedClassAddresses->mayContain((uintptrj_t)v);
@@ -1193,7 +1193,7 @@ J9::PersistentInfo::isObsoleteClass(void *v, TR_FrontEnd *fe)
 bool
 J9::PersistentInfo::isInUnloadedMethod(uintptrj_t address)
    {
-   TR_ASSERT(getJITaaSMode() != SERVER_MODE, "JITaaS server does not maintain unloaded method ranges, this method should not be called");
+   TR_ASSERT(getRemoteCompilationMode() != JITServer::SERVER, "JITServer does not maintain unloaded method ranges, this method should not be called");
    OMR::CriticalSection isInUnloadedMethod(assumptionTableMutex);
    return _unloadedMethodAddresses && _unloadedMethodAddresses->mayContain(address);
    }

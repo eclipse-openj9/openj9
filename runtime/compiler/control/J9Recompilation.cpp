@@ -67,7 +67,7 @@ J9::Recompilation::setupMethodInfo()
    // NOTE: cannot use _compilation->isOutOfProcessCompilation here, because this
    // method is called from within OMR::Compilation() constructor, before 
    // _isOutOfProcessCompilation is set
-   if (comp()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   if (comp()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(TR::compInfoPT);
       _methodInfo = compInfoPT->getRecompilationMethodInfo();

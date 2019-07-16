@@ -975,6 +975,14 @@ public:
    static void storeAOTInSharedCache(J9VMThread *vmThread, J9ROMMethod *romMethod, const U_8 *dataStart, UDATA dataSize, const U_8 *codeStart, UDATA codeSize, TR::Compilation *comp, J9JITConfig *jitConfig, TR_MethodToBeCompiled *entry);
 #endif
    static bool canRelocateMethod(TR::Compilation * comp);
+#if defined(JITSERVER_SUPPORT)
+   const PersistentVector<std::string> &getJITServerSslKeys() const { return _sslKeys; }
+   void  addJITServerSslKey(const std::string &key) { _sslKeys.push_back(key); }
+   const PersistentVector<std::string> &getJITServerSslCerts() const { return _sslCerts; }
+   void  addJITServerSslCert(const std::string &cert) { _sslCerts.push_back(cert); }
+   const std::string &getJITServerSslRootCerts() const { return _sslRootCerts; }
+   void  setJITServerSslRootCerts(const std::string &cert) { _sslRootCerts = cert; }
+#endif
 
    static int32_t         VERY_SMALL_QUEUE;
    static int32_t         SMALL_QUEUE;
@@ -1175,6 +1183,11 @@ private:
    uint8_t _chTableUpdateFlags;
    // number of local gc cycles done
    uint32_t _localGCCounter = 0;
+#if defined(JITSERVER_SUPPORT)
+   std::string                   _sslRootCerts;
+   PersistentVector<std::string> _sslKeys;
+   PersistentVector<std::string> _sslCerts;
+#endif
    }; // CompilationInfo
 }
 

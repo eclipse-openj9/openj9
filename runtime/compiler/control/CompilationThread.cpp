@@ -153,8 +153,8 @@ TR_RelocationRuntime*
 TR::CompilationInfoPerThreadBase::reloRuntime()
    {
    if (_methodBeingCompiled->isAotLoad() ||
-       _compInfo.getPersistentInfo()->getJITaaSMode() == NONJITaaS_MODE ||
-       (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE && TR::Options::sharedClassCache())) // Enable local AOT compilations at client
+       _compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::NONE ||
+       (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && TR::Options::sharedClassCache())) // Enable local AOT compilations at client
       return static_cast<TR_RelocationRuntime*>(&_sharedCacheReloRuntime);
    return static_cast<TR_RelocationRuntime*>(&_remoteCompileReloRuntime);
    }
@@ -370,8 +370,8 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    if (getRampDownMCT())
       return TR_no;
 
-   // Always activate in JITaaS server mode
-   if (getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   // Always activate in JITServer server mode
+   if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       return TR_yes;
 
    // Do not activate if we already exceed the CPU enablement for compilation threads
@@ -626,7 +626,7 @@ void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
    compilationRuntime->freeAllCompilationThreads();
 
    TR::RawAllocator rawAllocator(jitConfig->javaVM);
-   _compilationRuntime->~CompilationInfo();
+   compilationRuntime->~CompilationInfo();
    rawAllocator.deallocate(compilationRuntime);
    }
 
@@ -696,7 +696,7 @@ j9ThunkInvokeExactHelperFromTerseSignature(void * jitConfig, UDATA signatureLeng
 void
 TR::CompilationInfoPerThread::relocateThunks()
    {
-   TR_ASSERT(_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE, "Should be called in JITaaS client mode only");
+   TR_ASSERT(_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT, "Should be called in JITServer client mode only");
 
    TR_J9VMBase *fe = _vm;
    for (auto p : _thunksToBeRelocated)
@@ -726,7 +726,7 @@ TR::CompilationInfoPerThread::relocateThunks()
 void
 TR::CompilationInfoPerThread::persistThunksToSCC(const J9JITDataCacheHeader *cacheEntry, uint8_t *existingCode)
    {
-   TR_ASSERT(_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE, "Should be called in JITaaS client mode only");
+   TR_ASSERT(_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT, "Should be called in JITServer client mode only");
    TR_ASSERT(_vm->isAOT_DEPRECATED_DO_NOT_USE(), "Should be for AOT mode only");
 
    TR_AOTMethodHeader * aotMethodHeaderEntry = (TR_AOTMethodHeader *)(cacheEntry + 1); // skip the header J9JITDataCacheHeader
@@ -930,7 +930,7 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
    _serverVM = NULL;
    _sharedCacheServerVM = NULL;
 
-   if (compInfo.getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   if (compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       _classesThatShouldNotBeNewlyExtended = new (PERSISTENT_NEW) PersistentUnorderedSet<TR_OpaqueClassBlock*>(
          PersistentUnorderedSet<TR_OpaqueClassBlock*>::allocator_type(TR::Compiler->persistentAllocator()));
@@ -947,6 +947,10 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _samplingThreadWaitTimeInDeepIdleToNotifyVM(-1),
    _numDiagnosticThreads(0),
    _numCompThreads(0),
+#if defined(JITSERVER_SUPPORT)
+   _sslKeys(decltype(_sslKeys)::allocator_type(TR::Compiler->persistentAllocator())),
+   _sslCerts(decltype(_sslCerts)::allocator_type(TR::Compiler->persistentAllocator())),
+#endif
    _arrayOfCompilationInfoPerThread(NULL)
    {
    // The object is zero-initialized before this method is called
@@ -2569,7 +2573,7 @@ int32_t *TR::CompilationInfo::_compThreadActivationThresholdsonStarvation = NULL
 
 void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThreads)
    {
-   if (getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       numUsableCompThreads = ((numUsableCompThreads < 0) ||
                               (numUsableCompThreads > MAX_SERVER_USABLE_COMP_THREADS)) ?
@@ -2598,7 +2602,7 @@ TR::CompilationInfo::allocateCompilationThreads(int32_t numUsableCompThreads)
    TR_ASSERT((numUsableCompThreads == TR::Options::_numUsableCompilationThreads),
              "numUsableCompThreads %d is not equal to the Option value %d", numUsableCompThreads, TR::Options::_numUsableCompilationThreads);
 
-   if (getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       TR_ASSERT((0 < numUsableCompThreads) && (numUsableCompThreads <= MAX_SERVER_USABLE_COMP_THREADS),
                "numUsableCompThreads %d is greater than supported %d", numUsableCompThreads, MAX_SERVER_USABLE_COMP_THREADS);
@@ -2733,7 +2737,7 @@ TR::CompilationInfo::startCompilationThread(int32_t priority, int32_t threadId, 
    setCompBudget(TR::Options::_compilationBudget); // might do it several time, but it does not hurt
 
    // Create a compInfo for this thread
-   TR::CompilationInfoPerThread  *compInfoPT = getPersistentInfo()->getJITaaSMode() == SERVER_MODE ?
+   TR::CompilationInfoPerThread  *compInfoPT = getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ?
       new (persistentMemory()) TR::CompilationInfoPerThreadRemote(*this, _jitConfig, threadId, isDiagnosticThread) :
       new (persistentMemory()) TR::CompilationInfoPerThread(*this, _jitConfig, threadId, isDiagnosticThread);
    if (!compInfoPT || !compInfoPT->initializationSucceeded() || !compInfoPT->getCompThreadMonitor())
@@ -3266,7 +3270,7 @@ void TR::CompilationInfo::stopCompilationThreads()
 
    if (feGetEnv("TR_PrintJITaaSIPMsgStats"))
       {
-      if (getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          TR_J9VMBase * vmj9 = (TR_J9VMBase *)(TR_J9VMBase::get(_jitConfig, 0));
          TR_JITaaSIProfiler *JITaaSIProfiler = (TR_JITaaSIProfiler *)vmj9->getIProfiler();
@@ -3276,12 +3280,12 @@ void TR::CompilationInfo::stopCompilationThreads()
 
    if (feGetEnv("TR_PrintJITaaSConnStats"))
       {
-      if (getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          fprintf(stderr, "Number of connections opened = %u\n", JITServer::ServerStream::_numConnectionsOpened);
          fprintf(stderr, "Number of connections closed = %u\n", JITServer::ServerStream::_numConnectionsClosed);
          }
-      else if (getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+      else if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          {
          fprintf(stderr, "Number of connections opened = %u\n", JITServer::ClientStream::_numConnectionsOpened);
          fprintf(stderr, "Number of connections closed = %u\n", JITServer::ClientStream::_numConnectionsClosed);
@@ -3409,12 +3413,12 @@ void TR::CompilationInfo::stopCompilationThreads()
 #endif
 
    releaseCompMonitor(vmThread);
-   if (getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+   if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       try
          {
          JITServer::ClientStream client(getPersistentInfo());
-         client.writeError(JITServer::MessageType::clientTerminate, getPersistentInfo()->getJITaaSId());
+         client.writeError(JITServer::MessageType::clientTerminate, getPersistentInfo()->getClientUID());
          }
       catch (const JITServer::StreamFailure &e)
          {
@@ -3957,7 +3961,7 @@ TR::CompilationInfoPerThread::processEntries()
       }
 
    static bool enableJITaaSPerCompConn = feGetEnv("TR_EnableJITaaSPerCompConn") ? true : false;
-   if (compInfo->getPersistentInfo()->getJITaaSMode() == CLIENT_MODE && !enableJITaaSPerCompConn)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && !enableJITaaSPerCompConn)
       {
       JITServer::ClientStream *client = getClientStream();
       if (client)
@@ -4995,7 +4999,7 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
       if (compInfoPT->isDiagnosticThread() || // InstantReplay compilations must be processed immediately
          _methodQueue->_priority >= CP_SYNC_MIN ||       // sync comp
          _methodQueue->_methodIsInSharedCache == TR_yes || // very cheap relocation
-         getPersistentInfo()->getJITaaSMode() == SERVER_MODE) // compile right away in server mode
+         getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER) // compile right away in server mode
          {
          m = _methodQueue;
          _methodQueue = _methodQueue->_next;
@@ -6968,7 +6972,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       else
          _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
 
-      if ((_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE) &&
+      if ((_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT) &&
          !shouldPerformLocalComp(entry))
          {
          entry->setRemoteCompReq();
@@ -6982,7 +6986,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
 
       // When both canDoRelocatableCompile and TR::Options::canJITCompile() are false,
       // remote compilation request should not be used.
-      if ((_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE) &&
+      if ((_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT) &&
           TR::Options::canJITCompile())
          {
          bool doLocalCompilation = shouldPerformLocalComp(entry);
@@ -7073,11 +7077,11 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
                                                        TR_RelocationRuntime *reloRuntime)
    {
    // JITaaS cleanup tasks
-   if (_compInfo.getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       ((TR::CompilationInfoPerThread*)this)->getClassesThatShouldNotBeNewlyExtended()->clear();
       }
-   else if (_compInfo.getPersistentInfo()->getJITaaSMode() == CLIENT_MODE)
+   else if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       if (entry->isRemoteCompReq())
          {
@@ -7300,7 +7304,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       if (_compiler->cg() && _compiler->cg()->getCodeCache())
          {
          // For JITaaS SERVER we should wipe this method from the code cache
-         if (_compInfo.getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             _compiler->cg()->getCodeCache()->resetCodeCache();
             
          _compiler->cg()->getCodeCache()->unreserve();
@@ -7338,7 +7342,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
    if (_compiler && _compiler->getKnownObjectTable())
       _compiler->freeKnownObjectTable();
 
-   if (_compiler && _compiler->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+   if (_compiler && _compiler->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       _compiler->getOptions()->closeLogFileForClientOptions();
       }
@@ -7538,7 +7542,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
       Trc_JIT_outOfMemory(vmThread);
 
-      if (getCompilation() && getCompilation()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      if (getCompilation() && getCompilation()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          getCompilation()->getOptions()->closeLogFileForClientOptions();
          }
@@ -7689,7 +7693,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             }
          else
             {
-            // JITaaS: we want to suppress log file for client mode
+            // JITServer: we want to suppress log file for client mode
             // Client will get the log files from server.
             if (that->_methodBeingCompiled->isRemoteCompReq())
                {
@@ -7792,7 +7796,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                TR_ASSERT(vm->isAOT_DEPRECATED_DO_NOT_USE(), "assertion failure");
 
                // Do not delay relocations for JITaaS_SERVER
-               if (that->getCompilationInfo()->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+               if (that->getCompilationInfo()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
                   options->setOption(TR_DisableDelayRelocationForAOTCompilations);
                }
 
@@ -8258,7 +8262,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
       Trc_JIT_outOfMemory(vmThread);
 
-      if (compiler && compiler->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      if (compiler && compiler->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          compiler->getOptions()->closeLogFileForClientOptions();
          }
@@ -8666,7 +8670,7 @@ TR::CompilationInfoPerThreadBase::compile(
       // to reset when throwing the data away
       //
       if ((_jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
-            || compiler->getPersistentInfo()->getJITaaSMode() == SERVER_MODE
+            || compiler->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
             || vm.isAOT_DEPRECATED_DO_NOT_USE() && !_methodBeingCompiled->isRemoteCompReq()
 #endif //endif J9VM_INTERP_AOT_COMPILE_SUPPORT
@@ -8791,7 +8795,7 @@ TR::CompilationInfoPerThreadBase::compile(
             metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
             }
          }
-      else if (_methodBeingCompiled->isRemoteCompReq()) // JITaaS Client Mode
+      else if (_methodBeingCompiled->isRemoteCompReq()) // JITServer Client Mode
          {
          metaData = remoteCompile(vmThread, compiler, compilee, method, details, this);
          }
@@ -9635,7 +9639,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
    if (details.isNewInstanceThunk())
       {
-      if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      if (comp->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          J9::NewInstanceThunkDetails &mhDetails = static_cast<J9::NewInstanceThunkDetails &>(details);
          J9Class *clazz = mhDetails.classNeedingThunk();
@@ -9654,7 +9658,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          }
 
       if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
-           (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)) &&
+           (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)) &&
           comp)
          {
          if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
@@ -9677,7 +9681,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 #ifdef J9VM_JIT_DYNAMIC_LOOP_TRANSFER
       if (startPC)
          {
-         if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         if (comp->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             outOfProcessCompilationEnd(entry, comp);
          else
             {
@@ -9699,7 +9703,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          }
 #endif // ifdef J9VM_JIT_DYNAMIC_LOOP_TRANSFER
       if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
-           (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)) &&
+           (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)) &&
           comp)
          {
          if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
@@ -9725,7 +9729,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       {
       if (startPC)
          {
-         if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+         if (comp->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             {
             outOfProcessCompilationEnd(entry, comp);
             }
@@ -9766,7 +9770,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       {
       //if (vmThread)
       TR_ASSERT(vmThread, "We must always have a vmThread in compilationEnd()\n");
-      if (comp->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)
+      if (comp->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          outOfProcessCompilationEnd(entry, comp);
          }
@@ -10094,7 +10098,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       }
 
    if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
-       (compInfo->getPersistentInfo()->getJITaaSMode() == SERVER_MODE)) &&
+       (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)) &&
        comp)
       {
       if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
@@ -12546,7 +12550,7 @@ TR::CompilationInfo::addOutOfProcessMethodToBeCompiled(JITServer::ServerStream *
 void
 TR::CompilationInfo::requeueOutOfProcessEntry(TR_MethodToBeCompiled *entry)
    {
-   TR_ASSERT(getPersistentInfo()->getJITaaSMode() == SERVER_MODE, "Should be called in JITaaS server mode only");
+   TR_ASSERT(getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER, "Should be called in JITServer server mode only");
 
    recycleCompilationEntry(entry);
    // we do not requeue outOfProcessEntry for the Per-Compilation-Connection Mode
