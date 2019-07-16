@@ -23,9 +23,7 @@
 #include "j9.h"
 #include "j9protos.h"
 #include "j9consts.h"
-#ifdef J9VM_THR_LOCK_NURSERY
 #include "rommeth.h"
-#endif
 #include "ut_j9vm.h"
 #include "vm_internal.h"
 #include "locknursery.h"
@@ -106,10 +104,8 @@ calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *
 		}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
-#if defined( J9VM_THR_LOCK_NURSERY )
 		/* write lockword offset into ramClass */
 		ramClass->lockOffset =	walkState->lockOffset;
-#endif
 		ramClass->finalizeLinkOffset = walkState->finalizeLinkOffset;
 	}
 	
@@ -313,7 +309,6 @@ calculateInstanceDescription( J9VMThread *vmThread, J9Class *ramClass, J9Class *
 UDATA
 checkLockwordNeeded(J9JavaVM *vm, J9ROMClass *romClass, J9Class *ramSuperClass, U_32 walkFlags )
 {
-#ifdef J9VM_THR_LOCK_NURSERY
 	J9ROMMethod* romMethod;
 	UDATA i;
 	J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
@@ -469,10 +464,6 @@ checkLockwordNeeded(J9JavaVM *vm, J9ROMClass *romClass, J9Class *ramSuperClass, 
 
 	/* We should never get here due to the checking done in jvmint */
 	return NO_LOCKWORD_NEEDED;
-
-#else
-	return NO_LOCKWORD_NEEDED;
-#endif
 }
 
 

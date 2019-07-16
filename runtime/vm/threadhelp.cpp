@@ -243,7 +243,6 @@ getMonitorForWait(J9VMThread* vmThread, j9object_t object)
 	omrthread_monitor_t monitor;
 	J9ObjectMonitor * objectMonitor;
 
-#ifdef J9VM_THR_LOCK_NURSERY
 	if (!LN_HAS_LOCKWORD(vmThread,object)) {
 		objectMonitor = monitorTableAt(vmThread, object);
 
@@ -255,9 +254,7 @@ getMonitorForWait(J9VMThread* vmThread, j9object_t object)
 		}
 		lock = objectMonitor->alternateLockword;
 	} 
-	else 
-#endif
-	{
+	else {
 		lock = J9OBJECT_MONITOR(vmThread, object);
 	}
 

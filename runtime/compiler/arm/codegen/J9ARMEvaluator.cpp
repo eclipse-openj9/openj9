@@ -1119,29 +1119,6 @@ static void genInitObjectHeader(TR::CodeGenerator  *cg,
    tempMR = new (cg->trHeapMemory()) TR::MemoryReference(resReg, (int32_t)TR::Compiler->om.offsetOfHeaderFlags(), cg);
    iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, temp1Reg, iCursor);
 #endif /* J9VM_INTERP_FLAGS_IN_CLASS_SLOT */
-
-   // Initialize monitor if required
-   int32_t monitorOffset;
-   bool initMonitor = false;
-#if !defined(J9VM_THR_LOCK_NURSERY)
-   monitorOffset = (int32_t)TMP_OFFSETOF_J9OBJECT_MONITOR;
-   initMonitor = true;
-#elif defined(J9VM_THR_LOCK_NURSERY_FAT_ARRAYS)
-   monitorOffset = (int32_t)TMP_OFFSETOF_J9INDEXABLEOBJECT_MONITOR;
-   // Initialize the monitor
-   // word for arrays that have a
-   // lock word
-   int32_t lwOffset = fej9->getByteOffsetToLockword((TR_OpaqueClassBlock *)clazz);
-   if ((node->getOpCodeValue() != TR::New) &&
-         (lwOffset > 0))
-      initMonitor = true;
-#endif
-   if (initMonitor)
-      {
-      tempMR = new (cg->trHeapMemory()) TR::MemoryReference(resReg, monitorOffset, cg);
-      iCursor = generateMemSrc1Instruction(cg, ARMOp_str, node, tempMR, zeroReg, iCursor);
-      }
-
    }
 
 

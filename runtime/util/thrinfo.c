@@ -71,12 +71,6 @@
 /* include the debug extension prototypes if we are being recompiled in dbgext/ */
 #include "dbggen.h"
 
-#ifndef J9VM_THR_LOCK_NURSERY
-/* The J9OBJECT_MONITOR_EA macro doesn't currently work OOP on Metronome VMs */
-#undef J9OBJECT_MONITOR_EA
-#define J9OBJECT_MONITOR_EA(token,obj) (&TMP_J9OBJECT_MONITOR(obj))
-#endif
-
 #endif /* J9VM_OUT_OF_PROCESS */
 
 
@@ -772,7 +766,6 @@ static j9objectmonitor_t
 getLockWord(J9VMThread *vmThread, j9object_t object)
 {
 	j9objectmonitor_t lockWord;
-#ifdef J9VM_THR_LOCK_NURSERY
 
 	if (LN_HAS_LOCKWORD(vmThread,object)) {
 		lockWord = READMON_ADDR(J9OBJECT_MONITOR_EA(vmThread, object));
@@ -784,9 +777,6 @@ getLockWord(J9VMThread *vmThread, j9object_t object)
 			lockWord = 0;
 		}
 	}
-#else
-	lockWord = READMON_ADDR(J9OBJECT_MONITOR_EA(vmThread, object));
-#endif
 
 	return lockWord;
 }

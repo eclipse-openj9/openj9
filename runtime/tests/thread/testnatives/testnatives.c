@@ -540,12 +540,9 @@ Java_com_ibm_j9_monitor_tests_TestNatives_getLockWordValue(JNIEnv* env, jobject 
 	vm->internalVMFunctions->internalEnterVMFromJNI((J9VMThread *)env);
 
 	obj = J9_JNI_UNWRAP_REFERENCE(lockwordObj);
-#if defined( J9VM_THR_LOCK_NURSERY )
 	if (!LN_HAS_LOCKWORD(currentThread, obj)) {
 		lock = 0 | OBJECT_HEADER_LOCK_INFLATED;
-	} else
-#endif
-	{
+	} else {
 		j9objectmonitor_t *lockEA = J9OBJECT_MONITOR_EA(currentThread, obj);
 		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread)) {
 			lock = *(U_32*)lockEA;

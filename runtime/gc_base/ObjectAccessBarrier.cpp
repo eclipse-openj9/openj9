@@ -1315,15 +1315,11 @@ MM_ObjectAccessBarrier::getArrayObjectDataAddress(J9VMThread *vmThread, J9Indexa
  j9objectmonitor_t *
 MM_ObjectAccessBarrier::getLockwordAddress(J9VMThread *vmThread, J9Object *object)
 {
-#if defined(J9VM_THR_LOCK_NURSERY)
 	UDATA lockOffset = J9OBJECT_CLAZZ(vmThread, object)->lockOffset;
 	if ((IDATA) lockOffset < 0) {
 		return NULL;	
 	}
 	return (j9objectmonitor_t *)(((U_8 *)object) + lockOffset);
-#else /* J9VM_THR_LOCK_NURSERY */
-	return &(object->monitor);
-#endif /* J9VM_THR_LOCK_NURSERY */
 }
 
 /**
@@ -1423,7 +1419,6 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 			}
 		}
 
-#if defined(J9VM_THR_LOCK_NURSERY)
 		/* initialize lockword, if present */
 		lockwordAddress = getLockwordAddress(vmThread, destObject);
 		if (NULL != lockwordAddress) {
@@ -1433,7 +1428,6 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 				*lockwordAddress = 0;
 			}
 		}
-#endif /* J9VM_THR_LOCK_NURSERY */
 	}
 }
 
@@ -1463,13 +1457,11 @@ MM_ObjectAccessBarrier::cloneIndexableObject(J9VMThread *vmThread, J9IndexableOb
 		_extensions->indexableObjectModel.memcpyArray(destObject, srcObject);
 	}
 
-#if defined(J9VM_THR_LOCK_NURSERY)
 	/* zero lockword, if present */
 	lockwordAddress = getLockwordAddress(vmThread, (J9Object*) destObject);
 	if (NULL != lockwordAddress) {
 		*lockwordAddress = 0;
 	}
-#endif /* J9VM_THR_LOCK_NURSERY */
 
 	return;
 }

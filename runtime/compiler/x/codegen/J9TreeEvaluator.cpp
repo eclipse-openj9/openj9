@@ -660,9 +660,6 @@ static void generateCommonLockNurseryCodes(TR::Node          *node,
                                      TR::Register      *objectReg
                                      )
    {
-#if !defined(J9VM_THR_LOCK_NURSERY)
-   TR_ASSERT(0, "the x86 evaluator requires lock nursery to be defined, otherwise you'll need to make sure the code below works");
-#endif
    TR::Compilation *comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    if (comp->getOption(TR_EnableMonitorCacheLookup))

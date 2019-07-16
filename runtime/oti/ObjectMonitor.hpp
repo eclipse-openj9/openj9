@@ -68,15 +68,12 @@ public:
 	inlineGetLockAddress(J9VMThread *currentThread, j9object_t object)
 	{
 		j9objectmonitor_t *lockEA = NULL;
-#ifdef J9VM_THR_LOCK_NURSERY
 		if (!LN_HAS_LOCKWORD(currentThread, object)) {
 			J9ObjectMonitor *objectMonitor = J9_VM_FUNCTION(currentThread, monitorTableAt)(currentThread, object);
 			if (NULL != objectMonitor) {
 				lockEA = &(objectMonitor->alternateLockword);
 			}
-		} else
-#endif
-		{
+		} else {
 			lockEA = J9OBJECT_MONITOR_EA(currentThread, object);
 		}
 		return lockEA;
@@ -103,7 +100,6 @@ public:
 		j9objectmonitor_t lock = (j9objectmonitor_t)NULL;
 		J9ObjectMonitor *objectMonitor = NULL;
 
-#ifdef J9VM_THR_LOCK_NURSERY
 		if (!LN_HAS_LOCKWORD(currentThread, object)) {
 			objectMonitor = monitorTableAt(currentThread, object);
 			if (objectMonitor == NULL) {
@@ -113,9 +109,7 @@ public:
 			}
 			lock = objectMonitor->alternateLockword;
 		}
-		else
-#endif
-		{
+		else {
 			lock = J9OBJECT_MONITOR(currentThread, object);
 		}
 
@@ -261,10 +255,7 @@ done:
 	inlineFastObjectMonitorEnter(J9VMThread *currentThread, j9object_t object)
 	{
 		bool locked = false;
-#if defined(J9VM_THR_LOCK_NURSERY)
-		if (LN_HAS_LOCKWORD(currentThread, object))
-#endif /* J9VM_THR_LOCK_NURSERY */
-		{
+		if (LN_HAS_LOCKWORD(currentThread, object)) {
 			locked = inlineFastInitAndEnterMonitor(currentThread, J9OBJECT_MONITOR_EA(currentThread, object));
 		}
 		return locked;
@@ -282,10 +273,7 @@ done:
 	inlineFastObjectMonitorExit(J9VMThread *currentThread, j9object_t object)
 	{
 		bool unlocked = false;
-#if defined(J9VM_THR_LOCK_NURSERY)
-		if (LN_HAS_LOCKWORD(currentThread, object))
-#endif /* J9VM_THR_LOCK_NURSERY */
-		{
+		if (LN_HAS_LOCKWORD(currentThread, object)) {
 			j9objectmonitor_t *lockEA = J9OBJECT_MONITOR_EA(currentThread, object);
 
 			if ((j9objectmonitor_t)(UDATA)currentThread == *lockEA) {
