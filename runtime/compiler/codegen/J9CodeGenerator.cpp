@@ -3951,11 +3951,12 @@ bool
 J9::CodeGenerator::willGenerateNOPForVirtualGuard(TR::Node *node)
    {
    TR::Compilation *comp = self()->comp();
-   TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
 
    if (!(node->isNopableInlineGuard() || node->isHCRGuard() || node->isOSRGuard())
            || !self()->getSupportsVirtualGuardNOPing())
       return false;
+
+   TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
 
    if (!((comp->performVirtualGuardNOPing() || node->isHCRGuard() || node->isOSRGuard() || self()->needClassAndMethodPointerRelocations()) &&
          comp->isVirtualGuardNOPingRequired(virtualGuard)) &&
