@@ -188,7 +188,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="module_codert_common" value="true"/>
 		<flag id="module_codert_s390" value="true"/>
 		<flag id="module_codert_vm" value="true"/>
-		<flag id="module_dbx" value="true"/>
 		<flag id="module_ddr" value="true"/>
 		<flag id="module_gptest" value="true"/>
 		<flag id="module_j9vm" value="true"/>

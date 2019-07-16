@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,17 +56,17 @@ checkJ9ROMClassSanity(J9JavaVM *vm)
 
 	vmchkPrintf(vm, "  %s Checking ROM classes>\n", VMCHECK_PREFIX);
 
-	clazz = vmchkAllClassesStartDo(vm, &walkState);
+	clazz = vm->internalVMFunctions->allClassesStartDo(&walkState, vm, NULL);
 	while (NULL != clazz) {
-		J9ROMClass *romClass = (J9ROMClass *)DBG_ARROW(clazz, romClass);
-		J9ClassLoader *classLoader = (J9ClassLoader *)DBG_ARROW(clazz, classLoader);
+		J9ROMClass *romClass = clazz->romClass;
+		J9ClassLoader *classLoader = clazz->classLoader;
 
 		verifyJ9ROMClass(vm, romClass, classLoader);
 
 		count++;
-		clazz = vmchkAllClassesNextDo(vm, &walkState);
+		clazz = vm->internalVMFunctions->allClassesNextDo(&walkState);
 	}
-	vmchkAllClassesEndDo(vm, &walkState);
+	vm->internalVMFunctions->allClassesEndDo(&walkState);
 
 	vmchkPrintf(vm, "  %s Checking %d ROM classes done>\n", VMCHECK_PREFIX, count);
 }
@@ -75,44 +75,44 @@ static void
 verifyJ9ROMClass(J9JavaVM *vm, J9ROMClass *romClass, J9ClassLoader *classLoader)
 {
 	J9MemorySegment *segment;
-	VMCHECK_PORT_ACCESS_FROM_JAVAVM(vm);
+	PORT_ACCESS_FROM_JAVAVM(vm);
 
-	vmchkMonitorEnter(vm, vm->classMemorySegments->segmentMutex);
+	omrthread_monitor_enter(vm->classMemorySegments->segmentMutex);
 
 	segment = findSegmentInClassLoaderForAddress(classLoader, (U_8*)romClass);
 	if (segment != NULL) {
 		U_8 *address;
 
-		if (0 != DBG_ARROW(romClass, interfaceCount)) {
-			address = (U_8*)VMCHECK_J9ROMCLASS_INTERFACES(romClass);
+		if (0 != romClass->interfaceCount) {
+			address = (U_8*)J9ROMCLASS_INTERFACES(romClass);
 			verifyAddressInSegment(vm, segment, address, "romClass->interfaces");
 		}
 
-		if (0 != DBG_ARROW(romClass, romMethodCount)) {
-			address = (U_8*)VMCHECK_J9ROMCLASS_ROMMETHODS(romClass);
+		if (0 != romClass->romMethodCount) {
+			address = (U_8*)J9ROMCLASS_ROMMETHODS(romClass);
 			verifyAddressInSegment(vm, segment, address, "romClass->romMethods");
 		}
 
-		if (0 != DBG_ARROW(romClass, romFieldCount)) {
-			address = (U_8*)VMCHECK_J9ROMCLASS_ROMFIELDS(romClass);
+		if (0 != romClass->romFieldCount) {
+			address = (U_8*)J9ROMCLASS_ROMFIELDS(romClass);
 			verifyAddressInSegment(vm, segment, address, "romClass->romFields");
 		}
 
-		if (0 != DBG_ARROW(romClass, innerClassCount)) {
-			address = (U_8*)VMCHECK_J9ROMCLASS_INNERCLASSES(romClass);
+		if (0 != romClass->innerClassCount) {
+			address = (U_8*)J9ROMCLASS_INNERCLASSES(romClass);
 			verifyAddressInSegment(vm, segment, address, "romClass->innerClasses");
 		}
 
-		address = (U_8*)VMCHECK_J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
+		address = (U_8*)J9ROMCLASS_CPSHAPEDESCRIPTION(romClass);
 		verifyAddressInSegment(vm, segment, address, "romClass->cpShapeDescription");
 	}
 
-	vmchkMonitorExit(vm, vm->classMemorySegments->segmentMutex);
+	omrthread_monitor_exit(vm->classMemorySegments->segmentMutex);
 
 	{
-		J9UTF8 *className = VMCHECK_J9ROMCLASS_CLASSNAME(romClass);
-		J9UTF8 *superclassName = VMCHECK_J9ROMCLASS_SUPERCLASSNAME(romClass);
-		J9UTF8 *outerclassName = VMCHECK_J9ROMCLASS_OUTERCLASSNAME(romClass);
+		J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+		J9UTF8 *superclassName = J9ROMCLASS_SUPERCLASSNAME(romClass);
+		J9UTF8 *outerclassName = J9ROMCLASS_OUTERCLASSNAME(romClass);
 
 		if (FALSE == verifyUTF8(className)) {
 			vmchkPrintf(vm, " %s - Invalid className=0x%p utf8 for romClass=0x%p>\n",
@@ -130,18 +130,18 @@ verifyJ9ROMClass(J9JavaVM *vm, J9ROMClass *romClass, J9ClassLoader *classLoader)
 		}
 	}
 
-	if (DBG_ARROW(romClass, ramConstantPoolCount) > DBG_ARROW(romClass, romConstantPoolCount)) {
+	if (romClass->ramConstantPoolCount > romClass->romConstantPoolCount) {
 		vmchkPrintf(vm, "%s - Error ramConstantPoolCount=%d > romConstantPoolCount=%d for romClass=0x%p>\n",
-			VMCHECK_FAILED, DBG_ARROW(romClass, ramConstantPoolCount),
-			DBG_ARROW(romClass, romConstantPoolCount), romClass);
+			VMCHECK_FAILED, romClass->ramConstantPoolCount,
+			romClass->romConstantPoolCount, romClass);
 	}
 }
 
 static void
 verifyAddressInSegment(J9JavaVM *vm, J9MemorySegment *segment, U_8 *address, const char *description)
 {
-	U_8 *heapBase = (U_8 *)DBG_ARROW(segment, heapBase);
-	U_8 *heapAlloc = (U_8 *)DBG_ARROW(segment, heapAlloc);
+	U_8 *heapBase = segment->heapBase;
+	U_8 *heapAlloc = segment->heapAlloc;
 
 	if ((address < heapBase) || (address >= heapAlloc)) {
 		vmchkPrintf(vm, "%s - Address 0x%p (%s) not in segment [heapBase=0x%p, heapAlloc=0x%p]>\n",

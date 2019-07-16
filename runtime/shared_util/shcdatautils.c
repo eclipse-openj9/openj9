@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,9 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-#if defined(J9VM_OUT_OF_PROCESS)
-#include "j9dbgext.h"
-#endif
 
 #include "shcdatautils.h"
 
@@ -153,11 +150,7 @@ shcSharedClassMetadataEntriesStartDo(J9JavaVM* vm, J9SharedClassMetadataWalkStat
 	UDATA length;
 	ShcItemHdr* firstEntry;
 	
-#if defined(J9VM_OUT_OF_PROCESS)
-	if (!(metaStart = dbgReadSharedCacheMetadata(vm, &length, &firstEntry))) {
-#else
 	if (!(metaStart = shcReadSharedCacheMetadata(vm, &length, &firstEntry))) {
-#endif
 		return NULL;
 	}
 	

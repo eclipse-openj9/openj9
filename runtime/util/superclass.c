@@ -19,23 +19,12 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-#if defined(J9VM_OUT_OF_PROCESS)
-#include "j9dbgext.h"
-#endif
 #include "j9protos.h"
 #include "j9consts.h"
 #include "util_internal.h"
 
-#if defined(J9VM_OUT_OF_PROCESS)
-#define READU(field) dbgReadUDATA((UDATA *)&(field))
-#define READP(field) ((void *)READU(field))
-#else /* not J9VM_OUT_OF_PROCESS */
-#define READU(field) (field)
-#define READP(field) (field)
-#endif
-
-#define J9RAMCLASS_SUPERCLASSES(clazz) ((J9Class **)READP((clazz)->superclasses))
-#define J9RAMCLASS_DEPTH(clazz) (READU(J9CLASS_FLAGS(clazz)) & J9AccClassDepthMask)
+#define J9RAMCLASS_SUPERCLASSES(clazz) ((J9Class **)((clazz)->superclasses))
+#define J9RAMCLASS_DEPTH(clazz) ((J9CLASS_FLAGS(clazz)) & J9AccClassDepthMask)
 
 UDATA 
 isSameOrSuperClassOf(J9Class *superClass, J9Class *baseClass)
@@ -44,7 +33,7 @@ isSameOrSuperClassOf(J9Class *superClass, J9Class *baseClass)
 	
 	return ((baseClass == superClass)
 					|| ((J9RAMCLASS_DEPTH(baseClass) > superClassDepth)
-					   && (READP(J9RAMCLASS_SUPERCLASSES(baseClass)[superClassDepth]) == superClass)));
+					   && ((J9RAMCLASS_SUPERCLASSES(baseClass)[superClassDepth]) == superClass)));
 }
 
 

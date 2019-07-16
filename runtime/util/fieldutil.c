@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,10 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-#if defined(J9VM_OUT_OF_PROCESS)
-#include "j9dbgext.h"
-#include "dbggen.h"
-#endif /* defined(J9VM_OUT_OF_PROCESS) */
 
 #include "j9.h"
 #include "j9protos.h"
@@ -269,67 +265,3 @@ getFieldTypeAnnotationsDataFromROMField(J9ROMFieldShape * field)
 
 
 
-#if defined(J9VM_OUT_OF_PROCESS)
-static UDATA
-debugRomFieldSize(J9ROMFieldShape *romField)
-{
-	UDATA modifiers = (UDATA)dbgReadSlot((UDATA)&((romField)->modifiers), sizeof((romField)->modifiers));
-	UDATA size = sizeof(J9ROMFieldShape);
-
-	if (modifiers & J9FieldFlagConstant) {
-		size += ((modifiers & J9FieldSizeDouble) ? sizeof(U_64) : sizeof(U_32));
-	}
-
-	if (modifiers & J9FieldFlagHasGenericSignature) {
-		size += sizeof(U_32);
-	}
-
-	if (modifiers & J9FieldFlagHasFieldAnnotations) {
-		UDATA bytesToPad = 0;
-		U_32 annotationSize = dbgReadU32((U_32 *)((UDATA)romField + size));
-		/* add the length of annotation data */
-		size += annotationSize;
-		/* add the size of the size of the annotation data */
-		size += sizeof(U_32);
-
-		bytesToPad = sizeof(U_32) - annotationSize%sizeof(U_32);
-		if (sizeof(U_32)==bytesToPad) {
-			bytesToPad = 0;
-		}
-		/* add the padding */
-		size += bytesToPad;
-	}
-	
-	return size;
-}
-
-J9ROMFieldShape *
-debugRomFieldsStartDo(J9ROMClass *romClass, J9ROMFieldWalkState *state)
-{
-	state->fieldsLeft = (U_32)dbgReadSlot((UDATA)&((romClass)->romFieldCount), sizeof((romClass)->romFieldCount));
-
-	if (state->fieldsLeft == 0) {
-		state->field = NULL;
-	} else {
-		J9ROMClass *localRomClass = dbgRead_J9ROMClass(romClass);
-		state->field = TARGET_NNSRP_GET(localRomClass->romFields, struct J9ROMFieldShape*);
-		--(state->fieldsLeft);
-		dbgFree(localRomClass);
-	}
-
-	return state->field;
-}
-
-
-J9ROMFieldShape *
-debugRomFieldsNextDo(J9ROMFieldWalkState *state)
-{
-	if (state->fieldsLeft == 0) {
-		return NULL;
-	}
-
-	state->field = (J9ROMFieldShape *) (((U_8 *) state->field) + debugRomFieldSize(state->field));
-	--(state->fieldsLeft);
-	return state->field;
-}
-#endif /* defined(J9VM_OUT_OF_PROCESS) */

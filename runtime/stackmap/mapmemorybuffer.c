@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,6 @@
 UDATA *
 j9mapmemory_GetBuffer(void * userData) 
 {
-#ifndef J9VM_OUT_OF_PROCESS
 	J9JavaVM* vm = (J9JavaVM *) userData;
 	
 	if (vm && vm->mapMemoryBuffer) {
@@ -57,7 +56,6 @@ j9mapmemory_GetBuffer(void * userData)
 		Trc_Map_j9mapmemory_GetBuffer();
 		return (UDATA *) vm->mapMemoryBuffer;
 	}
-#endif
 	return NULL;
 }
 
@@ -71,7 +69,6 @@ j9mapmemory_GetBuffer(void * userData)
 void
 j9mapmemory_ReleaseBuffer(void * userData) 
 {
-#ifndef J9VM_OUT_OF_PROCESS
 	J9JavaVM* vm = (J9JavaVM *) userData;
 
 	if (vm && vm->mapMemoryBuffer) {
@@ -84,7 +81,6 @@ j9mapmemory_ReleaseBuffer(void * userData)
 		Trc_Map_j9mapmemory_ReleaseBuffer();
 		threadEnv->monitor_exit(vm->mapMemoryBufferMutex);
 	}
-#endif
 }
 
 /*
@@ -96,7 +92,6 @@ j9mapmemory_ReleaseBuffer(void * userData)
 U_32 *
 j9mapmemory_GetResultsBuffer(void * userData) 
 {
-#ifndef J9VM_OUT_OF_PROCESS
 	J9JavaVM* vm = (J9JavaVM *) userData;
 
 	if (vm && vm->mapMemoryResultsBuffer) {
@@ -108,7 +103,6 @@ j9mapmemory_GetResultsBuffer(void * userData)
 		Trc_Map_j9mapmemory_GetResultsBuffer();
 		return (U_32 *) vm->mapMemoryResultsBuffer;
 	}
-#endif
 	return NULL;
 }
 
@@ -122,7 +116,6 @@ j9mapmemory_GetResultsBuffer(void * userData)
 void
 j9mapmemory_ReleaseResultsBuffer(void * userData) 
 {
-#ifndef J9VM_OUT_OF_PROCESS
 	J9JavaVM* vm = (J9JavaVM *) userData;
 
 	if (vm && vm->mapMemoryResultsBuffer) {
@@ -135,6 +128,5 @@ j9mapmemory_ReleaseResultsBuffer(void * userData)
 		(*jniVM)->GetEnv(jniVM, (void**)&threadEnv, J9THREAD_VERSION_1_1);
 		threadEnv->monitor_exit(vm->mapMemoryBufferMutex);
 	}
-#endif
 }
 
