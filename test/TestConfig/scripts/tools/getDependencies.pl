@@ -106,9 +106,9 @@ my %jcommander = (
 	sha1 => 'bfcb96281ea3b59d626704f74bc6d625ff51cbce'
 );
 my %asmtools = (
-	url => 'https://ci.adoptopenjdk.net/view/Dependencies/job/asmtools/107/artifact/asmtools.jar',
+	url => 'https://ci.adoptopenjdk.net/view/Dependencies/job/asmtools/lastSuccessfulBuild/artifact/asmtools.jar',
 	fname => 'asmtools.jar',
-	sha1 => '04cf07c584121c2e5a3d1dad2839fc8ab4828b6d'
+	sha1 => 'a00bdba2fd20dbddc2dcd9f8760d373ed128ceab'
 );
 # this is needed for JDK11 and up
 my %jaxb_api = (
