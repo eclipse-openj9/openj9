@@ -415,7 +415,7 @@ def get_summary_table(identifier) {
 
     def buildReleases = get_sorted_releases()
 
-    def headerCols = ['']
+    def headerCols = ['&nbsp;']
     headerCols.addAll(buildReleases)
 
     // summary table
@@ -433,6 +433,11 @@ def get_summary_table(identifier) {
     summaryText += "<tbody>"
 
     for (spec in BUILD_SPECS.keySet().sort()){
+        if (!VARIABLES."${spec}") {
+            // unsupported spec (is not defined in variables file), skip it
+            continue
+        }
+
         // table row
         summaryText += "<tr>"
         summaryText += "<td style=\"font-weight: bold;\">${spec}</td>"
@@ -441,43 +446,45 @@ def get_summary_table(identifier) {
         buildReleases.each { release ->
             // table cell
             def innerTable = "<table><tbody>"
+            def downstreamJobNames = buildFile.get_downstream_job_names(spec, release, identifier)
+            def downstreamBuilds = [:]
+            def pipelineLink = '&nbsp;'
+            def pipelineDuration = '&nbsp;'
 
             // check if this release is supported for this spec
             if (BUILD_SPECS.get(spec).contains(release)) {
                 def pipelineName = get_pipeline_name(spec, release)
                 def build = pipelineBuilds.get(pipelineName)
-                def downstreamJobNames = buildFile.get_downstream_job_names(spec, release, identifier)
 
                 if (build) {
-                    def pipelineLink = buildFile.get_build_embedded_status_link(build)
-                    innerTable += "<tr style=\"text-align: right\"><td colspan=\"2\">${pipelineLink}</td><td>${build.getDurationString()}</td></tr>"
-
-                    // add pipeline's downstream builds
-                    def downstreamBuilds = buildFile.get_downstream_builds(build, pipelineName, downstreamJobNames.values())
-
-                    downstreamJobNames.each { label, jobName ->
-                        def downstreamBuild = downstreamBuilds.get(jobName)
-                        def link = ''
-                        def runtime = ''
-
-                        if (downstreamBuild) {
-                            link = buildFile.get_build_embedded_status_link(downstreamBuild)
-                            runtime = downstreamBuild.getDurationString()
-                        }
-
-                        if (showLabel) {
-                            //show downstream jobs short names only once per platform
-                            innerTable += "<tr><td>${label}</td><td>${link}</td><td style=\"text-align: right\">${runtime}</td></tr>"
-                        } else {
-                            innerTable += "<tr><td colspan=\"2\">${link}</td><td style=\"text-align: right\">${runtime}</td></tr>"
-                        }
-                    }
-                } else {
-                    downstreamJobNames.keySet().each {
-                        innerTable += "<tr><td colspan=\"3\">${it}</td></tr>"
-                    }
+                    pipelineLink = buildFile.get_build_embedded_status_link(build)
+                    downstreamBuilds.putAll(buildFile.get_downstream_builds(build, pipelineName, downstreamJobNames.values()))
+                    pipelineDuration = build.getDurationString()
                 }
             }
+
+            innerTable += "<tr><td>&nbsp;</td><td style=\"text-align: right;\">${pipelineLink}</td><td style=\"text-align: right;\">${pipelineDuration}</td></tr>"
+
+            // add pipeline's downstream builds
+            downstreamJobNames.each { label, jobName ->
+                def downstreamBuild = downstreamBuilds.get(jobName)
+                def link = '&nbsp;'
+                def duration = '&nbsp;'
+                def aLabel = '&nbsp;'
+
+                if (downstreamBuild) {
+                    link = buildFile.get_build_embedded_status_link(downstreamBuild)
+                    duration = downstreamBuild.getDurationString()
+                }
+
+                if (showLabel) {
+                    //show downstream jobs short names only once per platform
+                    aLabel = label
+                }
+
+                innerTable += "<tr style=\"vertical-align: bottom;\"><td>${aLabel}</td><td style=\"text-align: right\">${link}</td><td style=\"text-align: right\">${duration}</td></tr>"
+            }
+ 
 
             innerTable += "</tbody></table>"
             summaryText += "<td>${innerTable}</td>"
