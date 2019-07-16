@@ -503,7 +503,7 @@ def get_sorted_releases() {
     def unsortedReleases = variableFile.get_build_releases(BUILD_SPECS)
     def sortedReleases = []
 
-    for (release in RELEASES) {
+    for (release in CURRENT_RELEASES) {
         if (unsortedReleases.contains(release)) {
             sortedReleases.add(release)
         }
