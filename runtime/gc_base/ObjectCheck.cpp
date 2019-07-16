@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -129,7 +128,7 @@ j9gc_ext_check_is_valid_heap_object(J9JavaVM *javaVM, J9Object *ptr, UDATA flags
 	}
 
 	/* ensure that the object header fits into the segment */
-	if (((UDATA)highAddress - (UDATA)ptr) < sizeof(J9Object)) {
+	if (((UDATA)highAddress - (UDATA)ptr) < J9JAVAVM_OBJECT_HEADER_SIZE(javaVM)) {
 		return J9OBJECTCHECK_INVALID;
 	}
 	
@@ -139,7 +138,7 @@ j9gc_ext_check_is_valid_heap_object(J9JavaVM *javaVM, J9Object *ptr, UDATA flags
 	 */
 
 	/* ensure that its class is valid */
-	retVal = isValidClass(javaVM, J9GC_J9OBJECT_CLAZZ(ptr), flags);
+	retVal = isValidClass(javaVM, J9GC_J9OBJECT_CLAZZ_VM(ptr, javaVM), flags);
 	if (J9OBJECTCHECK_CLASS != retVal) {
 		return retVal;
 	}

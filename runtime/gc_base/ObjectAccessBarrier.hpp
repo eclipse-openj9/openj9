@@ -54,6 +54,9 @@ protected:
 	MM_GCExtensions *_extensions; 
 	MM_Heap *_heap;
 #if defined (OMR_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_FULL_POINTERS)
+	bool _compressObjectReferences;
+#endif /* OMR_GC_FULL_POINTERS */
 	UDATA _compressedPointersShift; /**< the number of bits to shift by when converting between the compressed pointers heap and real heap */
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 	UDATA _referenceLinkOffset; /** Offset within java/lang/ref/Reference of the reference link field */
@@ -88,7 +91,7 @@ protected:
 	 */
 	MMINLINE fj9object_t* getFinalizeLinkAddress(j9object_t object)
 	{
-		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(object);
+		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(object, this);
 		return getFinalizeLinkAddress(object, clazz);
 	}
 
@@ -264,6 +267,24 @@ public:
 	virtual bool postObjectRead(J9VMThread *vmThread, J9Class *srcClass, J9Object **srcAddress);
 
 	/**
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
+	 */
+	MMINLINE bool
+	compressObjectReferences()
+	{
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+		return _compressObjectReferences;
+#else /* OMR_GC_FULL_POINTERS */
+		return true;
+#endif /* OMR_GC_FULL_POINTERS */
+#else /* OMR_GC_COMPRESSED_POINTERS */
+		return false;
+#endif /* OMR_GC_COMPRESSED_POINTERS */
+	}
+
+	/**
 	 * Special barrier for auto-remembering stack-referenced objects. This must be called 
 	 * in two cases:
 	 * 1) an object which was allocated directly into old space.
@@ -304,11 +325,13 @@ public:
 	MMINLINE mm_j9object_t 
 	convertPointerFromToken(fj9object_t token)
 	{
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-		return (mm_j9object_t)((UDATA)token << compressedPointersShift());
-#else /* OMR_GC_COMPRESSED_POINTERS */
-		return (mm_j9object_t)token;
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+		mm_j9object_t result = (mm_j9object_t)(uintptr_t)token;
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+		if (compressObjectReferences()) {
+			result = (mm_j9object_t)((UDATA)token << compressedPointersShift());
+		}
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return result;
 	}
 	
 	/**
@@ -320,11 +343,13 @@ public:
 	MMINLINE fj9object_t 
 	convertTokenFromPointer(mm_j9object_t pointer)
 	{
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-		return (fj9object_t)((UDATA)pointer >> compressedPointersShift());
-#else /* OMR_GC_COMPRESSED_POINTERS */
-		return (fj9object_t)pointer;
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+		fj9object_t result = (fj9object_t)(uintptr_t)pointer;
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+		if (compressObjectReferences()) {
+			result = (fj9object_t)((UDATA)pointer >> compressedPointersShift());
+		}
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return result;
 	}
 
 	/**
@@ -336,12 +361,14 @@ public:
 	 */
 	MMINLINE UDATA 
 	compressedPointersShift()
-	{ 
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-		return _compressedPointersShift;
-#else /* OMR_GC_COMPRESSED_POINTERS */
-		return 0;
-#endif /* OMR_GC_COMPRESSED_POINTERS */ 
+	{
+		UDATA shift = 0;
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+		if (compressObjectReferences()) {
+			shift = _compressedPointersShift;
+		}
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return shift;
 	}
 
 	virtual UDATA compressedPointersShadowHeapBase(J9VMThread *vmThread);
@@ -535,6 +562,9 @@ public:
 		, _extensions(NULL) 
 		, _heap(NULL)
 #if defined (OMR_GC_COMPRESSED_POINTERS)
+#if defined (OMR_GC_FULL_POINTERS)
+		, _compressObjectReferences(false)
+#endif /* OMR_GC_FULL_POINTERS */
 		, _compressedPointersShift(0)
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 		, _referenceLinkOffset(UDATA_MAX)

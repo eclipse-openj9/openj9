@@ -208,7 +208,6 @@ enum INIT_STAGE {
 #define VMOPT_XJCL_COLON "-Xjcl:"
 #define VMOPT_XFUTURE "-Xfuture"
 #define VMOPT_ALL "all"
-#define VMOPT_XVERIFY_ALL "-Xverify:" VMOPT_ALL
 #define VMOPT_XSIGQUITTOFILE "-XsigquitToFile"
 #define VMOPT_XDEBUG "-Xdebug"
 #define VMOPT_XNOAGENT "-Xnoagent"
@@ -450,6 +449,9 @@ enum INIT_STAGE {
 
 #define VMOPT_XCOMPRESSEDREFS "-Xcompressedrefs"
 #define VMOPT_XNOCOMPRESSEDREFS "-Xnocompressedrefs"
+
+#define VMOPT_XXTRANSPARENT_HUGEPAGE "-XX:+TransparentHugePage"
+#define VMOPT_XXNOTRANSPARENT_HUGEPAGE "-XX:-TransparentHugePage"
 
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 

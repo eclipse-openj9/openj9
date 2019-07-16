@@ -22,6 +22,7 @@
 
 #include "ilgen/J9ByteCodeIterator.hpp"
 #include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "env/VMJ9.h"
 #include "ras/Debug.hpp"
 #include "env/IO.hpp"
@@ -148,7 +149,7 @@ TR_J9ByteCodeIterator::findFloatingPointInstruction()
                index = index | J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG;
 
             TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
-            TR_Method *thisMethod = fej9->createMethod(_trMemory, method()->containingClass(), index);
+            TR::Method *thisMethod = fej9->createMethod(_trMemory, method()->containingClass(), index);
 
             // check return type
             type = thisMethod->returnType();

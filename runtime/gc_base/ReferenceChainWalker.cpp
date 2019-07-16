@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -344,10 +343,11 @@ void
 MM_ReferenceChainWalker::scanObject(J9Object *objectPtr)
 {
 	/* add the object's class for scanning */
-	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, _extensions);
 	doClassSlot(&clazz, J9GC_REFERENCE_TYPE_CLASS, -1, objectPtr);
 
 	switch(_extensions->objectModel.getScanType(objectPtr)) {
+	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
 	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:

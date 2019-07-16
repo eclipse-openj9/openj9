@@ -26,6 +26,8 @@
 #include "optimizer/J9EstimateCodeSize.hpp"
 
 #include "env/KnownObjectTable.hpp"
+#include "compile/InlineBlock.hpp"
+#include "compile/Method.hpp"
 #include "compile/OSRData.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
@@ -1055,6 +1057,12 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
    if(comp()->getOption(TR_TraceUnsafeInlining))
        traceMsg(comp(),"\tcreateUnsafePutWithOffset.  call tree %p offset(datatype) %d isvolatile %d needNullCheck %d isOrdered %d\n", callNodeTreeTop, type.getDataType(),isVolatile,needNullCheck,isOrdered);
 
+   // Truncate the value before inlining the call
+   if (TR_J9MethodBase::isUnsafeGetPutBoolean(calleeSymbol->getRecognizedMethod()))
+      {
+      TR::TransformUtil::truncateBooleanForUnsafeGetPut(comp(), callNodeTreeTop);
+      }
+
    // Preserve null check on the unsafe object
    TR::TransformUtil::separateNullCheck(comp(), callNodeTreeTop, comp()->getOption(TR_TraceUnsafeInlining));
 
@@ -1391,6 +1399,12 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
 
    if (debug("traceUnsafe"))
       printf("createUnsafeGetWithOffset %s in %s\n", type.toString(), comp()->signature());
+
+   // Truncate the return before inlining the call
+   if (TR_J9MethodBase::isUnsafeGetPutBoolean(calleeSymbol->getRecognizedMethod()))
+      {
+      TR::TransformUtil::truncateBooleanForUnsafeGetPut(comp(), callNodeTreeTop);
+      }
 
    // Preserve null check on the unsafe object
    TR::TransformUtil::separateNullCheck(comp(), callNodeTreeTop, comp()->getOption(TR_TraceUnsafeInlining));
@@ -2432,23 +2446,13 @@ TR_J9InlinerPolicy::skipHCRGuardForCallee(TR_ResolvedMethod *callee)
          break;
       }
 
-   // Certain JSR292 methods are also ignored here as they are internal to the JIT and therefore cannot be
-   // redefined
-   TR::RecognizedMethod mandatoryRM = callee->convertToMethod()->getMandatoryRecognizedMethod();
-   if (mandatoryRM == TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress)
-      return true;
-
-   // VarHandle operation methods are also ignored here as they are implementation detail and are not expected to be redefined.
-   if (TR_J9MethodBase::isVarHandleOperationMethod(mandatoryRM))
-      return true;
-
-   // Check if the class of the method is internal to our VM
+   // Skip HCR guard for non-public methods in java/lang/invoke package. These methods
+   // are related to implementation details of MethodHandle and VarHandle
    int32_t length = callee->classNameLength();
    char* className = callee->classNameChars();
-
-   if (length == 29 && !strncmp(className, "java/lang/invoke/DirectHandle", length))
-      return true;
-   else if (length == 32 && !strncmp(className, "java/lang/invoke/PrimitiveHandle", length))
+   if (length > 17
+       && !strncmp("java/lang/invoke/", className, 17)
+       && !callee->isPublic())
       return true;
 
    return false;
@@ -4830,7 +4834,9 @@ TR_J9InlinerUtil::computePrexInfo(TR_CallTarget *target)
                }
             continue;
             }
-         else if (target->_guard->_kind == TR_MutableCallSiteTargetGuard)
+         else if (target->_calleeSymbol->getResolvedMethod()->convertToMethod()->isArchetypeSpecimen()
+                  && target->_calleeSymbol->getResolvedMethod()->getMethodHandleLocation()
+                  && comp()->getOrCreateKnownObjectTable())
             {
             // Here's a situation where inliner is taking it upon itself to draw
             // conclusions about known objects.  VP won't get a chance to figure this
@@ -4841,12 +4847,16 @@ TR_J9InlinerUtil::computePrexInfo(TR_CallTarget *target)
             //
             if (priorKnowledge < KNOWN_OBJECT)
                {
-               argInfo->set(0, new (inliner()->trStackMemory()) TR_PrexArgument(target->_guard->_mutableCallSiteEpoch, comp()));
+               TR::KnownObjectTable::Index methodHandleIndex = comp()->getKnownObjectTable()->getIndexAt(target->_calleeSymbol->getResolvedMethod()->getMethodHandleLocation());
+               TR_PrexArgument *prexArg = new (inliner()->trStackMemory()) TR_PrexArgument(methodHandleIndex, comp());
+               if (target->_guard->_kind == TR_MutableCallSiteTargetGuard)
+                  prexArg->setTypeInfoForInlinedBody();
+               argInfo->set(0, prexArg);
                if (tracePrex)
                   {
                   TR::Node *call     = site->_callNode;
-                  TR::Node *targetMH = call->getArgument(0);
-                  traceMsg(comp(), "PREX.inl:      %p: MutableCallSite.target [%p] is known object obj%d in inlined call [%p]\n", argInfo->get(0), targetMH, target->_guard->_mutableCallSiteEpoch, call);
+                  TR::Node *mh = call->getArgument(0);
+                  traceMsg(comp(), "PREX.inl:      %p: %p is known object obj%d in inlined call [%p]\n", argInfo->get(0), mh, methodHandleIndex, call);
                   }
                }
             }
@@ -5055,7 +5065,7 @@ static TR_PrexArgument *stronger(TR_PrexArgument *left, TR_PrexArgument *right, 
       return right;
    }
 
-static void populateClassNameSignature(TR_Method* m, TR_ResolvedMethod* caller, TR_OpaqueClassBlock* &c, char* &nc, int32_t &nl, char* &sc, int32_t &sl)
+static void populateClassNameSignature(TR::Method *m, TR_ResolvedMethod* caller, TR_OpaqueClassBlock* &c, char* &nc, int32_t &nl, char* &sc, int32_t &sl)
    {
    int32_t len = m->classNameLength();
    char* cs = classNameToSignature(m->classNameChars(), len, TR::comp());
@@ -5066,7 +5076,7 @@ static void populateClassNameSignature(TR_Method* m, TR_ResolvedMethod* caller, 
    sl = m->signatureLength();
    }
 
-static char* classSignature (TR_Method* m, TR::Compilation* comp) //tracer helper
+static char* classSignature (TR::Method * m, TR::Compilation* comp) //tracer helper
    {
    int32_t len = m->classNameLength();
    return classNameToSignature(m->classNameChars(), len /*don't care, cos this gives us a null terminated string*/, comp);
@@ -5100,7 +5110,7 @@ TR::Node* TR_PrexArgInfo::getCallNode (TR::ResolvedMethodSymbol* methodSymbol, T
 
 
          populateClassNameSignature (callsite->_initialCalleeMethod ?
-               callsite->_initialCalleeMethod->convertToMethod() : //TR_ResolvedMethod doesn't extend TR_Method
+               callsite->_initialCalleeMethod->convertToMethod() : //TR_ResolvedMethod doesn't extend TR::Method
                callsite->_interfaceMethod,
             methodSymbol->getResolvedMethod(),
             callSiteClass,
@@ -5856,6 +5866,13 @@ TR_J9InlinerUtil::createPrexArgInfoForCallTarget(TR_VirtualGuardSelection *guard
             char *s = TR::Compiler->cls.classNameChars(comp(), guard->_thisClass, len);
             heuristicTrace(tracer(),"Created an argInfo to fix receiver to class %s",s);
             }
+         }
+
+      if (implementer->convertToMethod()->isArchetypeSpecimen() &&
+          implementer->getMethodHandleLocation() &&
+          comp()->getOrCreateKnownObjectTable())
+         {
+         myPrexArgInfo->set(0, new (comp()->trHeapMemory()) TR_PrexArgument(comp()->getKnownObjectTable()->getIndexAt(implementer->getMethodHandleLocation()), comp()));
          }
       }
    return myPrexArgInfo;

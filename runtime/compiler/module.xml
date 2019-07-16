@@ -54,6 +54,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<dependency name="j9shrcommon"/>
 			<dependency name="j9shrutil"/>
 			<dependency name="j9shr"/>
+			<dependency name="j9zlib"/>
 		</dependencies>
 
 		<commands>

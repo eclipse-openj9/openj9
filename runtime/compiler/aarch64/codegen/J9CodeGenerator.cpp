@@ -27,6 +27,9 @@
 #include "codegen/ARM64SystemLinkage.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
+#include "runtime/CodeCacheManager.hpp"
+
+extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg);
 
 J9::ARM64::CodeGenerator::CodeGenerator() :
       J9::CodeGenerator()
@@ -34,6 +37,17 @@ J9::ARM64::CodeGenerator::CodeGenerator() :
    TR::CodeGenerator *cg = self();
 
    cg->setAheadOfTimeCompile(new (cg->trHeapMemory()) TR::AheadOfTimeCompile(cg));
+
+   /*
+    * "Statically" initialize the FE-specific tree evaluator functions.
+    * This code only needs to execute once per JIT lifetime.
+    */
+   static bool initTreeEvaluatorTable = false;
+   if (!initTreeEvaluatorTable)
+      {
+      TEMPORARY_initJ9ARM64TreeEvaluatorTable(cg);
+      initTreeEvaluatorTable = true;
+      }
    }
 
 TR::Linkage *
@@ -68,4 +82,28 @@ TR::Recompilation *
 J9::ARM64::CodeGenerator::allocateRecompilationInfo()
    {
    return TR_ARM64Recompilation::allocate(self()->comp());
+   }
+
+uint32_t
+J9::ARM64::CodeGenerator::encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node)
+   {
+   TR::CodeGenerator *cg = self();
+   uintptrj_t target = (uintptrj_t)symRef->getMethodAddress();
+
+   if (cg->directCallRequiresTrampoline(target, (intptrj_t)cursor))
+      {
+      target = TR::CodeCacheManager::instance()->findHelperTrampoline(symRef->getReferenceNumber(), (void *)cursor);
+
+      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinUnconditionalBranchImmediateRange(target, (intptrj_t)cursor),
+                      "Target address is out of range");
+      }
+
+   cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(
+                             cursor,
+                             (uint8_t *)symRef,
+                             TR_HelperAddress, cg),
+                             __FILE__, __LINE__, node);
+
+   uintptr_t distance = target - (uintptr_t)cursor;
+   return TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::bl) | ((distance >> 2) & 0x3ffffff); /* imm26 */
    }

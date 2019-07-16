@@ -618,6 +618,23 @@ jitExclusiveVMShutdownPending(J9VMThread * vmThread)
    #endif
    }
 
+// Code cache callbacks to be used by the VM
+//
+extern "C" U_8*
+getCodeCacheWarmAlloc(void *codeCache)
+   {
+   TR::CodeCache * cc = static_cast<TR::CodeCache*>(codeCache);
+   return cc->getWarmCodeAlloc();
+   }
+
+extern "C" U_8*
+getCodeCacheColdAlloc(void *codeCache)
+   {
+   TR::CodeCache * cc = static_cast<TR::CodeCache*>(codeCache);
+   return cc->getColdCodeAlloc();
+   }
+
+
 // -----------------------------------------------------------------------------
 // JIT control
 // -----------------------------------------------------------------------------
@@ -781,7 +798,6 @@ command(J9VMThread * vmThread, const char * cmdString)
 
    return 0;
    }
-
 
 static IDATA
 internalCompileClass(J9VMThread * vmThread, J9Class * clazz)
@@ -1030,6 +1046,10 @@ onLoadInternal(
       if ((jitConfig->dataCacheList = javaVM->internalVMFunctions->allocateMemorySegmentList(javaVM, 3, J9MEM_CATEGORY_JIT)) == NULL)
          return -1;
       }
+
+   // Callbacks for code cache allocation pointers
+   jitConfig->codeCacheWarmAlloc = getCodeCacheWarmAlloc;
+   jitConfig->codeCacheColdAlloc = getCodeCacheColdAlloc;
 
    /* Allocate the privateConfig structure.  Note that the AOTRT DLL does not allocate this structure */
    jitConfig->privateConfig = j9mem_allocate_memory(sizeof(TR_JitPrivateConfig), J9MEM_CATEGORY_JIT);
@@ -1653,6 +1673,11 @@ onLoadInternal(
    // OpenJ9 issue #5917 tracks the work to enable.
    //
    TR::Options::getCmdLineOptions()->setOption(TR_DisableDynamicLoopTransfer);
+
+   // ArrayCopy transformations are not available in AArch64 yet.
+   // OpenJ9 issue #6438 tracks the work to enable.
+   //
+   TR::Options::getCmdLineOptions()->setOption(TR_DisableArrayCopyOpts);
 #endif
 
 #if defined(TR_HOST_POWER)

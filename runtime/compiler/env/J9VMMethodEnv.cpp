@@ -100,7 +100,14 @@ J9::VMMethodEnv::startPC(TR_OpaqueMethodBlock *method)
 uintptr_t
 J9::VMMethodEnv::bytecodeStart(TR_OpaqueMethodBlock *method)
    {
-   J9ROMMethod *romMethod = romMethodOfRamMethod((J9Method*) method);
+
+   auto stream = TR::CompilationInfo::getStream();
+   if (stream)
+      {
+      stream->write(JITServer::MessageType::VM_getBytecodePC, method);
+      return std::get<0>(stream->read<uintptr_t>());
+      }
+   J9ROMMethod *romMethod = getOriginalROMMethod((J9Method *)method);
    return (uintptr_t)(J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
    }
 

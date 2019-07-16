@@ -23,6 +23,7 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/aarch64/runtime/VirtualGuardRuntime.cpp
 
 JIT_PRODUCT_SOURCE_FILES+= \
+    compiler/aarch64/runtime/ARM64ArrayCopy.spp \
     compiler/aarch64/runtime/FlushICache.spp \
     compiler/aarch64/runtime/PicBuilder.spp \
     compiler/aarch64/runtime/Recomp.cpp \

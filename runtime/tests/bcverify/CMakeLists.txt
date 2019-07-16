@@ -63,6 +63,12 @@ target_include_directories(bcuwhite
 		${j9vm_BINARY_DIR}/bcverify
 )
 
+omr_add_exports(bcuwhite
+	Java_com_ibm_j9_test_bcverify_TestNatives_bcvCheckName
+	Java_com_ibm_j9_test_bcverify_TestNatives_bcvCheckClassName
+	Java_com_ibm_j9_test_bcverify_TestNatives_bcvCheckMethodName
+)
+
 install(
 	TARGETS bcuwhite
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

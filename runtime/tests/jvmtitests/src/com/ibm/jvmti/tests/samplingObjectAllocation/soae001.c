@@ -84,16 +84,16 @@ Java_com_ibm_jvmti_tests_samplingObjectAllocation_soae001_reset(JNIEnv *jni_env,
 }
 
 jint JNICALL
-Java_com_ibm_jvmti_tests_samplingObjectAllocation_soae001_enable(JNIEnv *jni_env, jclass cls)
+Java_com_ibm_jvmti_tests_samplingObjectAllocation_soae001_enable(JNIEnv *jni_env, jclass cls, jthread thread)
 {
 	jint result = JNI_OK;
 	jvmtiError err = JVMTI_ERROR_NONE;
 	JVMTI_ACCESS_FROM_AGENT(env);
 	
 	/* Enable the JVMTI_EVENT_SAMPLED_OBJECT_ALLOC callback */
-	err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC, NULL);
+	err = (*jvmti_env)->SetEventNotificationMode(jvmti_env, JVMTI_ENABLE, JVMTI_EVENT_SAMPLED_OBJECT_ALLOC, thread);
 	if (JVMTI_ERROR_NONE != err) {
-		error(env, err, "Failed to enable JVMTI_EVENT_SAMPLED_OBJECT_ALLOC event");
+		softError(env, err, "Failed to enable JVMTI_EVENT_SAMPLED_OBJECT_ALLOC event");
 		result = JNI_ERR;
 	}
 	

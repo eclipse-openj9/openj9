@@ -22,8 +22,6 @@
  *******************************************************************************/
 package java.lang.management;
 
-import java.lang.ModuleLayer;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -51,32 +49,40 @@ final class DefaultPlatformMBeanProvider extends sun.management.spi.PlatformMBea
 		List<PlatformComponent<Object>> allComponents = new ArrayList<>();
 
 		// register standard singleton beans
-		ComponentBuilder.create(ClassLoadingMXBeanImpl.getInstance())
+		ComponentBuilder.create(ManagementFactory.CLASS_LOADING_MXBEAN_NAME, ClassLoadingMXBeanImpl.getInstance())
 			.addInterface(java.lang.management.ClassLoadingMXBean.class)
 			.register(allComponents);
 
-		ComponentBuilder.create(MemoryMXBeanImpl.getInstance())
+		ComponentBuilder.create(ManagementFactory.MEMORY_MXBEAN_NAME, MemoryMXBeanImpl.getInstance())
 			.addInterface(java.lang.management.MemoryMXBean.class)
 			.register(allComponents);
 
-		ComponentBuilder.create(OperatingSystemMXBeanImpl.getInstance())
+		ComponentBuilder.create(ManagementFactory.OPERATING_SYSTEM_MXBEAN_NAME, OperatingSystemMXBeanImpl.getInstance())
 			.addInterface(java.lang.management.OperatingSystemMXBean.class)
 			.register(allComponents);
 
-		/* LoggingMXBeanImpl depends on java.logging. If java.logging is not 
-		 * available exclude this component.
+		LoggingMXBeanImpl logging = LoggingMXBeanImpl.getInstance();
+
+		/*
+		 * The logging bean will be included only if the java.logging module is present.
 		 */
-		if (ModuleLayer.boot().findModule("java.logging").isPresent()) { //$NON-NLS-1$
-			ComponentBuilder.create(LoggingMXBeanImpl.getInstance())
+		if (logging != null) {
+			/*
+			 * This is the publicly documented name of the logging bean.
+			 * We can't refer to LogManager.LOGGING_MXBEAN_NAME
+			 * because the java.logging module is not accessible here.
+			 */
+			String LOGGING_MXBEAN_NAME = "java.util.logging:type=Logging"; //$NON-NLS-1$
+			ComponentBuilder.create(LOGGING_MXBEAN_NAME, logging)
 				.addInterface(java.lang.management.PlatformLoggingMXBean.class)
 				.register(allComponents);
 		}
 
-		ComponentBuilder.create(RuntimeMXBeanImpl.getInstance())
+		ComponentBuilder.create(ManagementFactory.RUNTIME_MXBEAN_NAME, RuntimeMXBeanImpl.getInstance())
 			.addInterface(java.lang.management.RuntimeMXBean.class)
 			.register(allComponents);
 
-		ComponentBuilder.create(ThreadMXBeanImpl.getInstance())
+		ComponentBuilder.create(ManagementFactory.THREAD_MXBEAN_NAME, ThreadMXBeanImpl.getInstance())
 			.addInterface(java.lang.management.ThreadMXBean.class)
 			.register(allComponents);
 
@@ -86,24 +92,64 @@ final class DefaultPlatformMBeanProvider extends sun.management.spi.PlatformMBea
 			.register(allComponents);
 
 		// register beans with zero or more instances
-		ComponentBuilder.create(ManagementUtils.BUFFERPOOL_MXBEAN_DOMAIN_TYPE, BufferPoolMXBeanImpl.getBufferPoolMXBeans())
-			.addInterface(java.lang.management.BufferPoolMXBean.class)
-			.register(allComponents);
 
-		ComponentBuilder.create(ManagementFactory.GARBAGE_COLLECTOR_MXBEAN_DOMAIN_TYPE, MemoryMXBeanImpl.getInstance().getGarbageCollectorMXBeans())
-			.addInterface(java.lang.management.GarbageCollectorMXBean.class)
-			.addInterface(java.lang.management.MemoryManagerMXBean.class)
-			.register(allComponents);
+		{
+			List<BufferPoolMXBean> beans = BufferPoolMXBeanImpl.getBufferPoolMXBeans();
+			int beanCount = beans.size();
+			List<String> names = new ArrayList<>(beanCount);
 
-		ComponentBuilder.create(ManagementFactory.MEMORY_MANAGER_MXBEAN_DOMAIN_TYPE,
-				// exclude garbage collector beans handled above
-				excluding(MemoryMXBeanImpl.getInstance().getMemoryManagerMXBeans(false), java.lang.management.GarbageCollectorMXBean.class))
-			.addInterface(java.lang.management.MemoryManagerMXBean.class)
-			.register(allComponents);
+			for (BufferPoolMXBean bean : beans) {
+				names.add(bean.getName());
+			}
 
-		ComponentBuilder.create(ManagementFactory.MEMORY_POOL_MXBEAN_DOMAIN_TYPE, MemoryMXBeanImpl.getInstance().getMemoryPoolMXBeans(false))
-			.addInterface(java.lang.management.MemoryPoolMXBean.class)
-			.register(allComponents);
+			ComponentBuilder.create(ManagementUtils.BUFFERPOOL_MXBEAN_DOMAIN_TYPE, names, beans)
+				.addInterface(java.lang.management.BufferPoolMXBean.class)
+				.register(allComponents);
+		}
+
+		{
+			List<GarbageCollectorMXBean> beans = MemoryMXBeanImpl.getInstance().getGarbageCollectorMXBeans();
+			int beanCount = beans.size();
+			List<String> names = new ArrayList<>(beanCount);
+
+			for (GarbageCollectorMXBean bean : beans) {
+				names.add(bean.getName());
+			}
+
+			ComponentBuilder.create(ManagementFactory.GARBAGE_COLLECTOR_MXBEAN_DOMAIN_TYPE, names, beans)
+				.addInterface(java.lang.management.GarbageCollectorMXBean.class)
+				.addInterface(java.lang.management.MemoryManagerMXBean.class)
+				.register(allComponents);
+		}
+
+		{
+			// exclude garbage collector beans handled above
+			List<MemoryManagerMXBean> beans = excluding(MemoryMXBeanImpl.getInstance().getMemoryManagerMXBeans(false), java.lang.management.GarbageCollectorMXBean.class);
+			int beanCount = beans.size();
+			List<String> names = new ArrayList<>(beanCount);
+
+			for (MemoryManagerMXBean bean : beans) {
+				names.add(bean.getName());
+			}
+
+			ComponentBuilder.create(ManagementFactory.MEMORY_MANAGER_MXBEAN_DOMAIN_TYPE, names, beans)
+				.addInterface(java.lang.management.MemoryManagerMXBean.class)
+				.register(allComponents);
+		}
+
+		{
+			List<MemoryPoolMXBean> beans = MemoryMXBeanImpl.getInstance().getMemoryPoolMXBeans(false);
+			int beanCount = beans.size();
+			List<String> names = new ArrayList<>(beanCount);
+
+			for (MemoryPoolMXBean bean : beans) {
+				names.add(bean.getName());
+			}
+
+			ComponentBuilder.create(ManagementFactory.MEMORY_POOL_MXBEAN_DOMAIN_TYPE, names, beans)
+				.addInterface(java.lang.management.MemoryPoolMXBean.class)
+				.register(allComponents);
+		}
 
 		components = Collections.unmodifiableList(allComponents);
 	}

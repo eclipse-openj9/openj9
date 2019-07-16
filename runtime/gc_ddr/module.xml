@@ -61,6 +61,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<include path="gc_vlhgc" type="relativepath">
 				<include-if condition="spec.flags.gc_vlhgc"/>
 			</include>
+			<include path="omr/gc/base/vlhgc" type="relativepath">
+				<include-if condition="spec.flags.gc_vlhgc"/>
+			</include>
 		</includes>
 		<makefilestubs>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>

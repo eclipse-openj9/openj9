@@ -79,7 +79,7 @@ TR_J9ServerVM::getSuperClass(TR_OpaqueClassBlock *clazz)
    return parentClass;
    }
 
-TR_Method *
+TR::Method *
 TR_J9ServerVM::createMethod(TR_Memory * trMemory, TR_OpaqueClassBlock * clazz, int32_t refOffset)
    {
    return new (trMemory->trHeapMemory()) TR_J9Method(this, trMemory, TR::Compiler->cls.convertClassOffsetToClassPtr(clazz), refOffset, true);
@@ -903,6 +903,14 @@ TR_J9ServerVM::getReferenceFieldAtAddress(uintptrj_t fieldAddress)
    }
 
 uintptrj_t
+TR_J9ServerVM::getReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_getReferenceFieldAt, objectPointer, fieldOffset);
+   return std::get<0>(stream->read<uintptrj_t>());
+   }
+
+uintptrj_t
 TR_J9ServerVM::getVolatileReferenceFieldAt(uintptrj_t objectPointer, uintptrj_t fieldOffset)
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
@@ -1333,7 +1341,7 @@ TR_J9ServerVM::getBytecodePC(TR_OpaqueMethodBlock *method, TR_ByteCodeInfo &bcIn
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_getBytecodePC, method);
-   uintptrj_t methodStart = std::get<0>(stream->read<uintptrj_t>());
+   uintptrj_t methodStart = (uintptrj_t) std::get<0>(stream->read<uintptr_t>());
    return methodStart + (uintptrj_t)(bcInfo.getByteCodeIndex());
    }
 
@@ -1362,7 +1370,7 @@ TR_J9ServerVM::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *com
    TR_ASSERT(callNode->getOpCode().isCall(), "needsInvokeExactJ2IThunk expects call node; found %s", callNode->getOpCode().getName());
 
    TR::MethodSymbol *methodSymbol = callNode->getSymbol()->castToMethodSymbol();
-   TR_Method       *method       = methodSymbol->getMethod();
+   TR::Method       *method       = methodSymbol->getMethod();
    if (  methodSymbol->isComputed()
       && (  method->getMandatoryRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact
          || method->isArchetypeSpecimen()))

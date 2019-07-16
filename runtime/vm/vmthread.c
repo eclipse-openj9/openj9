@@ -1754,7 +1754,7 @@ createCachedOutOfMemoryError(J9VMThread * currentThread, j9object_t threadObject
 		currentThread, jlOutOfMemoryError, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 	if (outOfMemoryError != NULL) {
 		J9Class * arrayClass;
-		J9IndexableObject *walkback;
+		j9object_t walkback;
 
 #ifdef J9VM_ENV_DATA64
 		arrayClass = vm->longArrayClass;
@@ -1762,7 +1762,7 @@ createCachedOutOfMemoryError(J9VMThread * currentThread, j9object_t threadObject
 		arrayClass = vm->intArrayClass;
 #endif
 		PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, outOfMemoryError);
-		walkback = (J9IndexableObject *)gcFuncs->J9AllocateIndexableObject(
+		walkback = gcFuncs->J9AllocateIndexableObject(
 			currentThread, arrayClass, 32, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 		outOfMemoryError = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 		if (walkback == NULL) {
@@ -2314,7 +2314,7 @@ findObjectDeadlockedThreads(J9VMThread *currentThread,
 
 	/* Finally, ready to output the list of deadlocked threads */
 	if (pDeadlockedThreads) {
-		deadlockedThreads = (j9object_t *)j9mem_allocate_memory(deadCount * sizeof(j9object_t), OMRMEM_CATEGORY_VM);
+		deadlockedThreads = (j9object_t *)j9mem_allocate_memory(deadCount * sizeof(UDATA), OMRMEM_CATEGORY_VM);
 		if (NULL == deadlockedThreads) {
 			j9mem_free_memory(thrChain);
 			return -1;
@@ -2322,7 +2322,7 @@ findObjectDeadlockedThreads(J9VMThread *currentThread,
 	}
 
 	if (pBlockingObjects) {
-		blockingObjects = (j9object_t *)j9mem_allocate_memory(deadCount * sizeof(j9object_t), OMRMEM_CATEGORY_VM);
+		blockingObjects = (j9object_t *)j9mem_allocate_memory(deadCount * sizeof(UDATA), OMRMEM_CATEGORY_VM);
 		if (NULL == blockingObjects) {
 			j9mem_free_memory(deadlockedThreads);
 			j9mem_free_memory(thrChain);

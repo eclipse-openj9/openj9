@@ -1905,6 +1905,8 @@ BinaryHeapDumpWriter::writeArrayObjectRecord(J9MM_IterateObjectDescriptor* objec
 void
 BinaryHeapDumpWriter::writeClassRecord(J9Class *currentClass)
 {
+	UDATA const objectHeaderSize = J9JAVAVM_OBJECT_HEADER_SIZE(_VirtualMachine);
+
 	if (J9CLASS_FLAGS(currentClass) & J9AccClassHotSwappedOut) {
 		/* Skip classes which have been redefined */
 		return;
@@ -2073,7 +2075,7 @@ BinaryHeapDumpWriter::writeClassRecord(J9Class *currentClass)
 	int flags = ((addressOffsetEncoding << 6) & 0xC0) | ((combinedReferenceOffsetEncoding << 4) & 0x30);
 
 	/* Calculate the instance size preventing sizes big than 32 bits breaking the dump */
-	UDATA instanceSize = (currentClass->totalInstanceSize + sizeof(J9NonIndexableObject)) & 0xFFFFFFFF;
+	UDATA instanceSize = (currentClass->totalInstanceSize + objectHeaderSize) & 0xFFFFFFFF;
 
 	/* Extract the superclass address */
 	J9Class* superClass = currentClass->superclasses[J9CLASS_DEPTH(currentClass) - 1];
@@ -2302,7 +2304,7 @@ int BinaryHeapDumpWriter::getObjectHashCode(j9object_t object) {
 #if defined(J9VM_OPT_NEW_OBJECT_HASH)
 	/* Sniff hash code without growing of objects
 	 */
-	UDATA objectFlags = TMP_J9OBJECT_FLAGS(object);
+	UDATA objectFlags = J9OBJECT_FLAGS_FROM_CLAZZ_VM(_VirtualMachine, object);
 	UDATA hashed = objectFlags & (OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS | OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS);
 
 	int hashCode = 0;

@@ -36,6 +36,7 @@
 #include "vmaccess.h"
 #include "codegen/CodeGenerator.hpp"
 #include "compile/CompilationTypes.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/OptimizationPlan.hpp"
 #include "control/OptionsUtil.hpp"
@@ -192,7 +193,7 @@ TR::OptionSet *findOptionSet(J9Method *method, bool isAOT)
 
       TR_FilterBST * filter = 0;
       if (TR::Options::getDebug() && TR::Options::getDebug()->getCompilationFilters())
-         TR::Options::getDebug()->methodSigCanBeCompiled(methodSignature, filter, TR_Method::J9);
+         TR::Options::getDebug()->methodSigCanBeCompiled(methodSignature, filter, TR::Method::J9);
 
       int32_t index = filter ? filter->getOptionSet() : 0;
       int32_t lineNum = filter ? filter->getLineNumber() : 0;

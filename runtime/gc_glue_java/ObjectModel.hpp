@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -115,6 +114,7 @@ public:
 		SCAN_CLASSLOADER_OBJECT = 6,
 		SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT = 7,
 		SCAN_OWNABLESYNCHRONIZER_OBJECT = 8,
+		SCAN_MIXED_OBJECT_LINKED = 9
 	};
 
 	/**
@@ -160,7 +160,7 @@ private:
 	MMINLINE UDATA
 	getClassShape(J9Object *objectPtr)
 	{
-		J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, this);
 		return J9GC_CLASS_SHAPE(clazz);
 	}
 
@@ -215,7 +215,7 @@ public:
 	MMINLINE ScanType
 	getScanType(J9Object *objectPtr)
 	{
-		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, this);
 		return getScanType(clazz);
 	}
 	
@@ -251,7 +251,7 @@ public:
 	MMINLINE bool
 	isObjectArray(J9Object *objectPtr)
 	{
-		J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, this);
 		return (OBJECT_HEADER_SHAPE_POINTERS == J9GC_CLASS_SHAPE(clazz));
 	}
 
@@ -574,11 +574,15 @@ public:
 		 * pointer if another thread copied the object underneath us). In non-compressed, this field should still be readable
 		 * out of the heap.
 		 */
+		 uint32_t size = 0;
 #if defined (OMR_GC_COMPRESSED_POINTERS)
-		uint32_t size = forwardedHeader->getPreservedOverlap();
-#else /* defined (OMR_GC_COMPRESSED_POINTERS) */
-		uint32_t size = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
+		if (compressObjectReferences()) {
+			size = forwardedHeader->getPreservedOverlap();
+		} else
 #endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
+		{
+			size = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
+		}
 
 #if defined(OMR_GC_HYBRID_ARRAYLETS)
 		if (0 == size) {
@@ -602,11 +606,15 @@ public:
 	{
 		GC_ArrayletObjectModel::ArrayLayout layout = GC_ArrayletObjectModel::InlineContiguous;
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)
+		 uint32_t size = 0;
 #if defined (OMR_GC_COMPRESSED_POINTERS)
-		uint32_t size = forwardedHeader->getPreservedOverlap();
-#else /* defined (OMR_GC_COMPRESSED_POINTERS) */
-		uint32_t size = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
-#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */		
+		if (compressObjectReferences()) {
+			size = forwardedHeader->getPreservedOverlap();
+		} else
+#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
+		{
+			size = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
+		}
 		
 		if (0 != size) {
 			return layout;
@@ -702,7 +710,7 @@ public:
 	MMINLINE bool
 	isOverflowBitSet(J9Object *objectPtr)
 	{
-		return (GC_OVERFLOW == (J9GC_J9OBJECT_FLAGS_FROM_CLAZZ(objectPtr) & GC_OVERFLOW));
+		return (GC_OVERFLOW == (J9GC_J9OBJECT_FLAGS_FROM_CLAZZ(objectPtr, this) & GC_OVERFLOW));
 	}
 #endif /* defined(OMR_GC_REALTIME) */
 
@@ -717,7 +725,11 @@ public:
 	{
 		uintptr_t classBits = (uintptr_t)clazz;
 		uintptr_t flagsBits = flags & (uintptr_t)OMR_OBJECT_METADATA_FLAGS_MASK;
-		*(getObjectHeaderSlotAddress(objectPtr)) = (fomrobject_t)(classBits | flagsBits);
+		if (compressObjectReferences()) {
+			*((uint32_t*)getObjectHeaderSlotAddress(objectPtr)) = (uint32_t)(classBits | flagsBits);
+		} else {
+			*((uintptr_t*)getObjectHeaderSlotAddress(objectPtr)) = (classBits | flagsBits);
+		}
 	}
 
 	/**

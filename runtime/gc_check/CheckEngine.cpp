@@ -273,7 +273,7 @@ GC_CheckEngine::checkJ9ObjectPointer(J9JavaVM *javaVM, J9Object *objectPtr, J9Ob
 			}
 		}
 
-		if (J9MODRON_GCCHK_J9CLASS_EYECATCHER == (UDATA)J9GC_J9OBJECT_CLAZZ_WITH_FLAGS(objectPtr)) {
+		if (J9MODRON_GCCHK_J9CLASS_EYECATCHER == J9GC_J9OBJECT_CLAZZ_WITH_FLAGS_VM(objectPtr, javaVM)) {
 			return J9MODRON_GCCHK_RC_OBJECT_SLOT_POINTS_TO_J9CLASS;
 		}
 
@@ -464,7 +464,7 @@ GC_CheckEngine::checkJ9Object(J9JavaVM *javaVM, J9Object* objectPtr, J9MM_Iterat
 
 	if (checkFlags & J9MODRON_GCCHK_VERIFY_CLASS_SLOT) {
 		/* Check that the class pointer points to the class heap, etc. */
-		UDATA ret = checkJ9ClassPointer(javaVM, (J9Class *)J9GC_J9OBJECT_CLAZZ(objectPtr), true);
+		UDATA ret = checkJ9ClassPointer(javaVM, J9GC_J9OBJECT_CLAZZ_VM(objectPtr, javaVM), true);
 
 		if (J9MODRON_GCCHK_RC_OK != ret) {
 			return ret;
@@ -477,7 +477,7 @@ GC_CheckEngine::checkJ9Object(J9JavaVM *javaVM, J9Object* objectPtr, J9MM_Iterat
 		J9MM_IterateObjectDescriptor objectDesc;
 
 		/* Basic check that there is enough room for the object header */
-		if (delta < sizeof(J9Object)) {
+		if (delta < J9JAVAVM_OBJECT_HEADER_SIZE(javaVM)) {
 			return J9MODRON_GCCHK_RC_INVALID_RANGE;
 		}
 
@@ -661,7 +661,7 @@ GC_CheckEngine::checkStackObject(J9JavaVM *javaVM, J9Object *objectPtr)
 
 	if (_cycle->getCheckFlags() & J9MODRON_GCCHK_VERIFY_CLASS_SLOT) {
 		/* Check that the class pointer points to the class heap, etc. */
-		UDATA ret = checkJ9ClassPointer(javaVM, J9GC_J9OBJECT_CLAZZ(objectPtr));
+		UDATA ret = checkJ9ClassPointer(javaVM, J9GC_J9OBJECT_CLAZZ_VM(objectPtr, javaVM));
 		if (J9MODRON_GCCHK_RC_OK != ret) {
 			return ret;
 		}
@@ -947,7 +947,7 @@ GC_CheckEngine::checkClassStatics(J9JavaVM* vm, J9Class* clazz)
 						 * However if class found - it must fit object's class
 						 */
 						if (NULL != classToCast) {
-							if (0 == instanceOfOrCheckCast(J9GC_J9OBJECT_CLAZZ(*address), classToCast)) {
+							if (0 == instanceOfOrCheckCast(J9GC_J9OBJECT_CLAZZ_VM(*address, vm), classToCast)) {
 								result = J9MODRON_GCCHK_RC_CLASS_STATICS_FIELD_POINTS_WRONG_OBJECT;
 								GC_CheckError error(clazz, address, _cycle, _currentCheck, "Class ", result, _cycle->nextErrorCount());
 								_reporter->report(&error);
@@ -1093,7 +1093,7 @@ GC_CheckEngine::checkObjectHeap(J9JavaVM *javaVM, J9MM_IterateObjectDescriptor *
 		return J9MODRON_SLOT_ITERATOR_UNRECOVERABLE_ERROR;
 	}
 
-	clazz = (J9Class*)J9GC_J9OBJECT_CLAZZ(objectDesc->object);
+	clazz = J9GC_J9OBJECT_CLAZZ_VM(objectDesc->object, javaVM);
 	result = checkJ9ClassPointer(javaVM, clazz, true);
 	if (J9MODRON_GCCHK_RC_OK == result) {
 		ObjectSlotIteratorCallbackUserData userData;
@@ -1297,7 +1297,7 @@ GC_CheckEngine::checkSlotOwnableSynchronizerList(J9JavaVM *javaVM, J9Object **ob
 		GC_CheckError error(currentList, objectIndirect, _cycle, _currentCheck, result, _cycle->nextErrorCount());
 		_reporter->report(&error);
 	} else {
-		J9Class *instanceClass = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class *instanceClass = J9GC_J9OBJECT_CLAZZ_VM(objectPtr, javaVM);
 		if (0 == (J9CLASS_FLAGS(instanceClass) & J9AccClassOwnableSynchronizer)) {
 			GC_CheckError error(currentList, objectIndirect, _cycle, _currentCheck, J9MODRON_GCCHK_RC_INVALID_FLAGS, _cycle->nextErrorCount());
 			_reporter->report(&error);

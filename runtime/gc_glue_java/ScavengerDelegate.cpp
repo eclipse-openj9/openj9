@@ -265,7 +265,12 @@ MM_ScavengerDelegate::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr
 #endif /* defined(OMR_GC_MODRON_STRICT) */
 
 	GC_ObjectScanner *objectScanner = NULL;
-	switch(_extensions->objectModel.getScanType(objectPtr)) {
+	J9Class *clazzPtr = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
+
+	switch(_extensions->objectModel.getScanType(clazzPtr)) {
+	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
+		_extensions->scavenger->deepScan(env, objectPtr, clazzPtr->selfReferencingField1, clazzPtr->selfReferencingField2);
+		/* Fall through and treat as mixed object (create mixed object scanner) */
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
 	case GC_ObjectModel::SCAN_CLASS_OBJECT:
@@ -281,7 +286,6 @@ MM_ScavengerDelegate::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr
 			bool referentMustBeMarked = isReferenceCleared || !isObjectInNewSpace;
 			bool referentMustBeCleared = false;
 
-			J9Class *clazzPtr = J9GC_J9OBJECT_CLAZZ(objectPtr);
 			UDATA referenceObjectOptions = env->_cycleState->_referenceObjectOptions;
 			UDATA referenceObjectType = J9CLASS_FLAGS(clazzPtr) & J9AccClassReferenceMask;
 			switch (referenceObjectType) {
@@ -504,9 +508,9 @@ MM_ScavengerDelegate::reverseForwardedObject(MM_EnvironmentBase *env, MM_Forward
 		omrobjectptr_t objectPtr = originalForwardedHeader->getObject();
 		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(_omrVM);
 		omrobjectptr_t fwdObjectPtr = originalForwardedHeader->getForwardedObject();
-		J9Class *forwardedClass = J9GC_J9OBJECT_CLAZZ(fwdObjectPtr);
+		J9Class *forwardedClass = J9GC_J9OBJECT_CLAZZ(fwdObjectPtr, env);
 		Assert_MM_mustBeClass(forwardedClass);
-		UDATA forwardedFlags = J9GC_J9OBJECT_FLAGS_FROM_CLAZZ(fwdObjectPtr);
+		UDATA forwardedFlags = J9GC_J9OBJECT_FLAGS_FROM_CLAZZ(fwdObjectPtr, env);
 		/* If object just has been moved (this scavenge) we should undo hash flags and set hashed/not moved */
 		if (OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS == (forwardedFlags & (OBJECT_HEADER_HAS_BEEN_HASHED_IN_CLASS | OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS))) {
 			forwardedFlags &= ~OBJECT_HEADER_HAS_BEEN_MOVED_IN_CLASS;
@@ -515,10 +519,12 @@ MM_ScavengerDelegate::reverseForwardedObject(MM_EnvironmentBase *env, MM_Forward
 		extensions->objectModel.setObjectClassAndFlags(objectPtr, forwardedClass, forwardedFlags);
 
 #if defined (OMR_GC_COMPRESSED_POINTERS)
-		/* Restore destroyed overlapped slot in the original object. This slot might need to be reversed
-		 * as well or it may be already reversed - such fixup will be completed at in a later pass.
-		 */
-		originalForwardedHeader->restoreDestroyedOverlap();
+		if (compressObjectReferences()) {
+			/* Restore destroyed overlapped slot in the original object. This slot might need to be reversed
+			 * as well or it may be already reversed - such fixup will be completed at in a later pass.
+			 */
+			originalForwardedHeader->restoreDestroyedOverlap();
+		}
 #endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
 
 		MM_ObjectAccessBarrier* barrier = extensions->accessBarrier;
@@ -557,7 +563,7 @@ MM_ScavengerDelegate::fixupDestroyedSlot(MM_EnvironmentBase *env, MM_ForwardedHe
 		/* Check the first description bit */
 		bool isObjectSlot = false;
 		omrobjectptr_t objectPtr = originalForwardedHeader->getObject();
-		uintptr_t *descriptionPtr = (uintptr_t *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceDescription;
+		uintptr_t *descriptionPtr = (uintptr_t *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceDescription;
 		if (0 != (((uintptr_t)descriptionPtr) & 1)) {
 			isObjectSlot = 0 != (1 & (((uintptr_t)descriptionPtr) >> 1));
 		} else {
@@ -672,8 +678,10 @@ MM_ScavengerDelegate::switchConcurrentForThread(MM_EnvironmentBase *env)
 		vmThread->readBarrierRangeCheckBase = (UDATA)base;
 		vmThread->readBarrierRangeCheckTop = (UDATA)top - 1;
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-		vmThread->readBarrierRangeCheckBaseCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckBase);
-		vmThread->readBarrierRangeCheckTopCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckTop);
+		if (compressObjectReferences()) {
+			vmThread->readBarrierRangeCheckBaseCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckBase);
+			vmThread->readBarrierRangeCheckTopCompressed = _extensions->accessBarrier->convertTokenFromPointer((mm_j9object_t)vmThread->readBarrierRangeCheckTop);
+		}
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 
 		if (_extensions->isConcurrentScavengerHWSupported()) {
@@ -711,6 +719,7 @@ MM_ScavengerDelegate::switchConcurrentForThread(MM_EnvironmentBase *env)
 		vmThread->readBarrierRangeCheckBase = UDATA_MAX;
 		vmThread->readBarrierRangeCheckTop = 0;
 #ifdef OMR_GC_COMPRESSED_POINTERS
+		/* No need for a runtime check here - it would just waste cycles */
 		vmThread->readBarrierRangeCheckBaseCompressed = U_32_MAX;
 		vmThread->readBarrierRangeCheckTopCompressed = 0;
 #endif

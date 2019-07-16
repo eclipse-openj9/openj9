@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,8 @@ import javax.management.openmbean.CompositeData;
 import com.ibm.java.lang.management.internal.ManagementUtils;
 import com.ibm.java.lang.management.internal.StackTraceElementUtil;
 
+import openj9.management.internal.MonitorInfoBase;
+
 /**
  * This class represents information about objects locked via
  * a synchronized method or block.
@@ -34,10 +36,10 @@ import com.ibm.java.lang.management.internal.StackTraceElementUtil;
  * @since 1.6
  */
 public class MonitorInfo extends LockInfo {
-
-	private final int stackDepth;
-
-	private final StackTraceElement stackFrame;
+	/**
+	 * Container for the actual data.
+	 */
+	private final MonitorInfoBase baseInfo;
 
 	/**
 	 * Creates a new <code>MonitorInfo</code> instance.
@@ -68,26 +70,13 @@ public class MonitorInfo extends LockInfo {
 	 */
 	public MonitorInfo(String className, int identityHashCode, int stackDepth, StackTraceElement stackFrame) {
 		super(className, identityHashCode);
-		if ((stackFrame == null && stackDepth >= 0) || (stackFrame != null && stackDepth < 0)) {
-			String arg;
-			if (stackFrame == null) {
-				/*[MSG "K0610", "null"]*/
-				arg = com.ibm.oti.util.Msg.getString("K0610"); //$NON-NLS-1$
-			} else {
-				/*[MSG "K0611", "not null"]*/
-				arg = com.ibm.oti.util.Msg.getString("K0611"); //$NON-NLS-1$
-			}
-			/*[MSG "K060F", "Parameter stackDepth is {0} but stackFrame is {1}"]*/
-			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K060F", stackDepth, arg)); //$NON-NLS-1$
-		}
-		this.stackDepth = stackDepth;
-		this.stackFrame = stackFrame;
+		/* MonitorInfoBase's constructor validates the arguments. */
+		baseInfo = new MonitorInfoBase(className, identityHashCode, stackDepth, stackFrame);
 	}
-
-	private MonitorInfo(Object object, int stackDepth, StackTraceElement stackFrame) {
-		super(object.getClass().getName(), System.identityHashCode(object));
-		this.stackDepth = stackDepth;
-		this.stackFrame = stackFrame;
+	
+	MonitorInfo(MonitorInfoBase base) {
+		super(base);
+		baseInfo = base;
 	}
 
 	/**
@@ -98,7 +87,7 @@ public class MonitorInfo extends LockInfo {
 	 *         monitor object locking too place
 	 */
 	public int getLockedStackDepth() {
-		return stackDepth;
+		return baseInfo.getStackDepth();
 	}
 
 	/**
@@ -108,7 +97,7 @@ public class MonitorInfo extends LockInfo {
 	 *         monitor was locked
 	 */
 	public StackTraceElement getLockedStackFrame() {
-		return stackFrame;
+		return baseInfo.getStackFrame();
 	}
 
 	/**
@@ -176,4 +165,8 @@ public class MonitorInfo extends LockInfo {
 		return result;
 	}
 
+	@Override
+	MonitorInfoBase getBaseInfo() {
+		return baseInfo;
+	}
 }

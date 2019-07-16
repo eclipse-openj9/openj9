@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "omrthread.h"
 #include "rastrace_internal.h"
@@ -31,14 +32,12 @@
 #include "atoe.h"
 #endif
 
-
 #undef DEBUG
 #if defined(DEBUG)
 #define WRAPPER_DEBUG(x) printf x
 #else
 #define WRAPPER_DEBUG(x)
 #endif
-
 
 void
 twFprintf(const char * template, ...)
@@ -48,10 +47,11 @@ twFprintf(const char * template, ...)
 
 	va_start(arg_ptr, template);
 	j9tty_err_vprintf(template, arg_ptr);
-	va_end(arg_ptr); 
+	va_end(arg_ptr);
 }
 
-UtThreadData ** twThreadSelf(void)
+UtThreadData **
+twThreadSelf(void)
 {
 	omrthread_t self = omrthread_self();
 
@@ -84,13 +84,13 @@ twE2A(char * str)
 int32_t
 twCompareAndSwap32(volatile uint32_t *target, uint32_t old, uint32_t new32)
 {
-	return (compareAndSwapU32((uint32_t *)target, old, new32) == old)? TRUE : FALSE;
+	return (compareAndSwapU32((uint32_t *)target, old, new32) == old) ? TRUE : FALSE;
 }
 
 int32_t
 twCompareAndSwapPtr(volatile uintptr_t *target, uintptr_t old, uintptr_t newptr)
 {
-	return (compareAndSwapUDATA((uintptr_t *)target, old, newptr) == old)? TRUE : FALSE;
+	return (compareAndSwapUDATA((uintptr_t *)target, old, newptr) == old) ? TRUE : FALSE;
 }
 
 omr_error_t
@@ -101,8 +101,8 @@ twThreadAttach(UtThreadData **thr, char *name)
 	OMR_VMThread *currentThread = NULL;
 
 	WRAPPER_DEBUG(("<TW> ThreadAttach called\n"));
-	
-	/* 
+
+	/*
 	 * Attach the thread to the VM. For the J9VM, this will generate the
 	 * J9HOOK_THREAD_ABOUT_TO_START hook, which the trace engine
 	 * catches and uses to call threadStart().
@@ -113,8 +113,8 @@ twThreadAttach(UtThreadData **thr, char *name)
 			goto out;
 		}
 	}
-	
-	/* 
+
+	/*
 	 * threadStart() will have allocated this thread's UtThreadData struct
 	 * so we need to retrieve it and set our local `thr' accordingly.
 	 */
@@ -145,7 +145,7 @@ twThreadDetach(UtThreadData **thr)
 
 	WRAPPER_DEBUG(("<TW> ThreadDetach called\n"));
 
-	/* 
+	/*
 	 * Detach the thread from the VM. For the J9VM, this will generate the
 	 * J9HOOK_VM_THREAD_END hook, which the trace engine
 	 * catches and uses to call threadStop().

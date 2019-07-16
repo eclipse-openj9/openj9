@@ -50,7 +50,6 @@ class ValuePropagation : public OMR::ValuePropagation
 
    virtual void constrainRecognizedMethod(TR::Node *node);
    virtual bool transformDirectLoad(TR::Node *node);
-   bool tryFoldStaticFinalFieldAt(TR::TreeTop* tree, TR::Node* fieldNode);
    virtual void doDelayedTransformations();
    void transformCallToIconstWithHCRGuard(TR::TreeTop *callTree, int32_t result);
    void transformCallToIconstInPlaceOrInDelayedTransformations(TR::TreeTop *callTree, int32_t result, bool isGlobal, bool inPlace = true);
@@ -72,8 +71,6 @@ class ValuePropagation : public OMR::ValuePropagation
    virtual TR::Node *innerConstrainAcall(TR::Node *node);
 
    private:
-
-   TR_YesNoMaybe safeToAddFearPointAt(TR::TreeTop* tt);
 
    struct TreeIntResultPair {
       TR_ALLOC(TR_Memory::ValuePropagation)

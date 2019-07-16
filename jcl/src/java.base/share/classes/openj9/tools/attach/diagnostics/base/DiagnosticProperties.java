@@ -26,8 +26,11 @@ package openj9.tools.attach.diagnostics.base;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Comparator;
 import java.util.Properties;
+import com.ibm.tools.attach.target.IPC;
 
 /**
  * Augments Properties with convenience methods to add ints, booleans, and
@@ -36,6 +39,15 @@ import java.util.Properties;
  */
 public class DiagnosticProperties {
 	private final Properties baseProperties;
+
+	/**
+	 * Master prefix for property keys
+	 */
+	public static final String OPENJ9_DIAGNOSTICS_PREFIX = "openj9_diagnostics."; //$NON-NLS-1$
+	/**
+	 * Use for commands which return a single string
+	 */
+	public static final String DIAGNOSTICS_STRING_RESULT = OPENJ9_DIAGNOSTICS_PREFIX + "string_result"; //$NON-NLS-1$
 
 	private static final String JAVA_LANG_STRING = "java.lang.String"; //$NON-NLS-1$
 
@@ -47,8 +59,15 @@ public class DiagnosticProperties {
 	/**
 	 * For development use only
 	 */
-	public static boolean isDebug = Boolean.getBoolean(DEBUG_PROPERTY);
+	public static boolean isDebug;
 
+	static {
+		AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+			isDebug = Boolean.getBoolean(DEBUG_PROPERTY);
+			return null;
+		});
+	}
+	
 	/**
 	 * @param props Properties object received from the target.
 	 */
@@ -163,6 +182,18 @@ public class DiagnosticProperties {
 	 * Return a property value for the given key.
 	 * 
 	 * @param key property name
+	 * @return property value as a String
+	 * @throws IOException if the property is missing
+	 */
+	public String getString(String key) throws IOException {
+		checkExists(key);
+		return baseProperties.getProperty(key);
+	}
+
+	/**
+	 * Return a property value for the given key.
+	 * 
+	 * @param key property name
 	 * @return property value or null if the property is not found
 	 */
 	public String getPropertyOrNull(String key) {
@@ -236,7 +267,7 @@ public class DiagnosticProperties {
 	 * @param props Properties object to dump
 	 */
 	public static void dumpPropertiesIfDebug(String msg, final Properties props) {
-		if (DiagnosticProperties.isDebug) {
+		if (isDebug) {
 			if (null != msg) {
 				System.err.println(msg);
 			}
@@ -254,7 +285,7 @@ public class DiagnosticProperties {
 	 * @return String representation of props
 	 */
 	public static String printProperties(final Properties props) {
-		final StringWriter buff = new StringWriter(1000);
+		StringWriter buff = new StringWriter(1000);
 		try (PrintWriter buffWriter = new PrintWriter(buff)) {
 			props.entrySet().stream().sorted(Comparator.comparing(e -> e.getKey().toString())).forEach(theEntry -> {
 				buffWriter.print(theEntry.getKey());
@@ -262,8 +293,46 @@ public class DiagnosticProperties {
 				buffWriter.println((String) theEntry.getValue());
 			});
 		}
-		final String result = buff.toString();
-		return result;
+		return buff.toString();
+	}
+	
+	/**
+	 * Print the result string of a command that produces a single string. Print an
+	 * error message if the command resulted in an error.
+	 * 
+	 * @return String result or error message
+	 */
+	public String printStringResult() {
+		StringWriter buff = new StringWriter(1000);
+		try (PrintWriter buffWriter = new PrintWriter(buff)) {
+			if (Boolean.parseBoolean(getPropertyOrNull(IPC.PROPERTY_DIAGNOSTICS_ERROR))) {
+				buffWriter.printf("Error: %s%n", getString(IPC.PROPERTY_DIAGNOSTICS_ERRORTYPE)); //$NON-NLS-1$
+				String msg = getPropertyOrNull(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG);
+				if (null != msg) {
+					buffWriter.println(msg);
+				}
+			} else {
+				buffWriter.println(getString(DIAGNOSTICS_STRING_RESULT));
+			}
+		} catch (IOException e) {
+			buff = new StringWriter();
+			buff.append("Error parsing properties: "); //$NON-NLS-1$
+			buff.append(e.toString());
+			buff.append(System.lineSeparator());
+		}
+		return buff.toString();
+	}
+
+	/**
+	 * Create a properties file to hold a single string.
+	 * 
+	 * @param text text of the string
+	 * @return DiagnosticProperties object
+	 */
+	public static DiagnosticProperties makeStringResult(String text) {
+		DiagnosticProperties props = makeCommandSucceeded();
+		props.put(DIAGNOSTICS_STRING_RESULT, text);
+		return props;
 	}
 
 	/**
@@ -274,4 +343,55 @@ public class DiagnosticProperties {
 	public Properties toProperties() {
 		return baseProperties;
 	}
+
+	/**
+	 * Report successful execution of a command
+	 * @return DiagnosticProperties object
+	 */
+	public static DiagnosticProperties makeCommandSucceeded() {
+		return makeStatusProperties(false, null); // $NON-NLS-1$
+	}
+
+	/**
+	 * Report an error in the command
+	 * @param message error message
+	 * @return DiagnosticProperties object
+	 */
+	public static DiagnosticProperties makeErrorProperties(String message) {
+		return makeStatusProperties(true, message); // $NON-NLS-1$
+	}
+
+	/**
+	 * Encode information about an exception into properties.
+	 * 
+	 * @param e Exception object
+	 * @return Properties object
+	 */
+	public static Properties makeExceptionProperties(Exception e) {
+		Properties props = new Properties();
+		props.put(IPC.PROPERTY_DIAGNOSTICS_ERROR, Boolean.toString(true));
+		props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORTYPE, e.getClass().getName());
+		String msg = e.getMessage();
+		if (null != msg) {
+			props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG, msg);
+		}
+		return props;
+	}
+
+	/**
+	 * Report the status of a command execution.
+	 * 
+	 * @param error true if the command failed
+	 * @param msg   status message
+	 * @return DiagnosticProperties object
+	 */
+	public static DiagnosticProperties makeStatusProperties(boolean error, String msg) {
+		DiagnosticProperties props = new DiagnosticProperties();
+		props.put(IPC.PROPERTY_DIAGNOSTICS_ERROR, Boolean.toString(error));
+		if (null != msg) {
+			props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG, msg);
+		}
+		return props;
+	}
+
 }

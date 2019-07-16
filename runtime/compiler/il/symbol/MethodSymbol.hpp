@@ -28,7 +28,7 @@
 #include <stddef.h>
 #include "codegen/LinkageConventionsEnum.hpp"
 
-class TR_Method;
+namespace TR { class Method; }
 
 namespace TR
 {
@@ -38,7 +38,7 @@ class OMR_EXTENSIBLE MethodSymbol : public J9::MethodSymbolConnector
 
 protected:
 
-   MethodSymbol(TR_LinkageConventions lc = TR_Private, TR_Method* m = NULL) :
+   MethodSymbol(TR_LinkageConventions lc = TR_Private, TR::Method * m = NULL) :
       J9::MethodSymbolConnector(lc, m) { }
 
 private:

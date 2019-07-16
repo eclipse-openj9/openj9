@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,13 +55,13 @@ typedef struct JniIDCache {
 	
 	traceDotCGlobalMemory traceGlobals;
 
-	jclass CLS_java_lang_management_ThreadInfo;
-	jclass CLS_java_lang_management_MonitorInfo;
-	jclass CLS_java_lang_management_LockInfo;
-	jmethodID MID_java_lang_management_ThreadInfo_init_nolocks;
-	jmethodID MID_java_lang_management_ThreadInfo_init;
-	jmethodID MID_java_lang_management_MonitorInfo_init;
-	jmethodID MID_java_lang_management_LockInfo_init;
+	jclass CLS_openj9_management_internal_ThreadInfoBase;
+	jclass CLS_openj9_management_internal_MonitorInfoBase;
+	jclass CLS_openj9_management_internal_LockInfoBase;
+	jmethodID MID_openj9_management_internal_ThreadInfoBase_init_nolocks;
+	jmethodID MID_openj9_management_internal_ThreadInfoBase_init;
+	jmethodID MID_openj9_management_internal_MonitorInfoBase_init;
+	jmethodID MID_openj9_management_internal_LockInfoBase_init;
 	jclass CLS_java_lang_StackTraceElement;
 	jmethodID MID_java_lang_StackTraceElement_isNativeMethod;
 

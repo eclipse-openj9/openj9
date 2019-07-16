@@ -3801,7 +3801,7 @@ extern TR::Register *toLowerIntrinsic(TR::Node * node, TR::CodeGenerator * cg, b
 
 extern TR::Register* inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isCompressed);
 
-extern TR::Register *intrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isCompressed);
+extern TR::Register *inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isLatin1);
 
 extern TR::Register *inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg);
 extern TR::Register *inlineDoubleMin(TR::Node *node, TR::CodeGenerator *cg);
@@ -4070,10 +4070,10 @@ J9::Z::CodeGenerator::inlineDirectCall(
       switch (methodSymbol->getRecognizedMethod())
          {
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
-            resultReg = intrinsicIndexOf(node, cg, true);
+            resultReg = inlineIntrinsicIndexOf(node, cg, true);
             return true;
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
-            resultReg = intrinsicIndexOf(node, cg, false);
+            resultReg = inlineIntrinsicIndexOf(node, cg, false);
             return true;
          case TR::java_lang_StringLatin1_indexOf:
          case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1:

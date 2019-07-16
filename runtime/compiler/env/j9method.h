@@ -26,6 +26,7 @@
 #include "net/ServerStream.hpp"
 #include "codegen/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
@@ -113,7 +114,7 @@ private:
    friend class TR_J9MethodBase;
    };
 
-class TR_J9MethodBase : public TR_Method
+class TR_J9MethodBase : public TR::Method
    {
 public:
    TR_ALLOC(TR_Memory::Method)
@@ -130,6 +131,7 @@ public:
    bool                          isBigDecimalConvertersMethod( TR::Compilation * comp = NULL);
 
    static bool                   isUnsafeGetPutWithObjectArg(TR::RecognizedMethod rm);
+   static bool                   isUnsafeGetPutBoolean(TR::RecognizedMethod rm);
    static bool                   isUnsafePut(TR::RecognizedMethod rm);
    static bool                   isVolatileUnsafe(TR::RecognizedMethod rm);
    static TR::DataType           unsafeDataTypeForArray(TR::RecognizedMethod rm);
@@ -288,7 +290,7 @@ public:
    virtual uint32_t              classModifiers();
    virtual uint32_t              classExtraModifiers();
 
-   virtual TR_Method *           convertToMethod();
+   virtual TR::Method *           convertToMethod();
 
    virtual uint32_t              numberOfParameters();
    virtual uint32_t              numberOfExplicitParameters();
@@ -542,7 +544,7 @@ class TR_ResolvedRelocatableJ9Method : public TR_ResolvedJ9Method
 public:
    TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
-   virtual TR_Method *           convertToMethod();
+   virtual TR::Method *           convertToMethod();
 
    virtual void *                constantPool();
 

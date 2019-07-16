@@ -41,13 +41,17 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_GCRegressionTests_Mode301</testCaseName>
 		<variations>
 			<variation>Mode301</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)gcRegressionTests.jar$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -DTESTOUTPUT=$(TESTOUTPUT) \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)gcRegressionTests.jar$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
 		-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -Xint -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)gcRegressionTests.xml$(Q) \
 		-verbose -explainExcludes -xids all,$(PLATFORM),Mode301 -plats all,$(PLATFORM),Mode301 -xlist $(Q)$(TEST_RESROOT)$(D)gcRegressionTests_excludes.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>

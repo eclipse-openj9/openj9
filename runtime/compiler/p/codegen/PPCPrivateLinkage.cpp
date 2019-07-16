@@ -672,7 +672,7 @@ bool TR::PPCPrivateLinkage::hasToBeOnStack(TR::ParameterSymbol *parm)
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
 
-   bool result = (parm->getAllocatedIndex()>=0       &&
+   bool result = (parm->getAssignedGlobalRegisterIndex()>=0       &&
           ( (  parm->getLinkageRegisterIndex()==0 &&
                parm->isCollectedReference()       &&
                !bodySymbol->isStatic()            &&

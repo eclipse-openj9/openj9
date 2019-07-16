@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,7 +73,7 @@ MM_GlobalAllocationManagerTarok::shouldIdentifyThreadAsCommon(MM_EnvironmentBase
 		/* determine if the thread's class matches any of the wildcards specified using -XXgc:numaCommonThreadClass= */
 		J9Object* threadObject = ((J9VMThread *)env->getLanguageVMThread())->threadObject;
 		if (NULL != threadObject) {
-			J9Class *threadClass = J9GC_J9OBJECT_CLAZZ(threadObject);
+			J9Class *threadClass = J9GC_J9OBJECT_CLAZZ(threadObject, env);
 			J9UTF8* classNameUTF8 = J9ROMCLASS_CLASSNAME(threadClass->romClass);
 			MM_Wildcard *wildcard = MM_GCExtensions::getExtensions(_extensions)->numaCommonThreadClassNamePatterns;
 			while (!result && (NULL != wildcard)) {

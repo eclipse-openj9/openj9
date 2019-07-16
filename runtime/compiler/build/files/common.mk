@@ -31,6 +31,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/IdiomRecognition.cpp \
     compiler/optimizer/IdiomRecognitionUtils.cpp \
     compiler/optimizer/IdiomTransformations.cpp \
+    compiler/optimizer/J9CFGSimplifier.cpp \
     compiler/optimizer/J9LocalCSE.cpp \
     compiler/optimizer/J9OptimizationManager.cpp \
     compiler/optimizer/J9Optimizer.cpp \
@@ -56,6 +57,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/SignExtendLoads.cpp \
     compiler/optimizer/SPMDParallelizer.cpp \
     compiler/optimizer/SPMDPreCheck.cpp \
+    compiler/optimizer/StaticFinalFieldFolding.cpp \
     compiler/optimizer/StringBuilderTransformer.cpp \
     compiler/optimizer/StringPeepholes.cpp \
     compiler/optimizer/UnsafeFastPath.cpp \
@@ -92,11 +94,12 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/codegen/Relocation.cpp \
     omr/compiler/codegen/ScratchRegisterManager.cpp \
     omr/compiler/codegen/StorageInfo.cpp \
-    omr/compiler/compile/Method.cpp \
     omr/compiler/compile/OMRAliasBuilder.cpp \
     omr/compiler/compile/OMRCompilation.cpp \
+    omr/compiler/compile/OMRMethod.cpp \
     omr/compiler/compile/OMRSymbolReferenceTable.cpp \
     omr/compiler/compile/OSRData.cpp \
+    omr/compiler/compile/ResolvedMethod.cpp \
     omr/compiler/compile/TLSCompilationManager.cpp \
     omr/compiler/compile/VirtualGuard.cpp \
     omr/compiler/control/OMROptions.cpp \
@@ -157,7 +160,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/optimizer/BackwardUnionBitVectorAnalysis.cpp \
     omr/compiler/optimizer/BitVectorAnalysis.cpp \
     omr/compiler/optimizer/CatchBlockRemover.cpp \
-    omr/compiler/optimizer/CFGSimplifier.cpp \
+    omr/compiler/optimizer/OMRCFGSimplifier.cpp \
     omr/compiler/optimizer/CompactLocals.cpp \
     omr/compiler/optimizer/CopyPropagation.cpp \
     omr/compiler/optimizer/DataFlowAnalysis.cpp \
@@ -263,6 +266,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/codegen/MonitorState.cpp \
     compiler/compile/J9AliasBuilder.cpp \
     compiler/compile/J9Compilation.cpp \
+    compiler/compile/J9Method.cpp \
     compiler/compile/J9SymbolReferenceTable.cpp \
     compiler/control/CompilationController.cpp \
     compiler/control/CompilationThread.cpp \

@@ -180,7 +180,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="jit_runtimeInstrumentation" value="true"/>
 		<flag id="jit_supportsDirectJNI" value="true"/>
 		<flag id="jit_transactionDiagnosticThreadBlock" value="true"/>
-		<flag id="math_useDivRem" value="true"/>
 		<flag id="module_algorithm_test" value="true"/>
 		<flag id="module_bcutil" value="true"/>
 		<flag id="module_bcverify" value="true"/>

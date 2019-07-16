@@ -88,8 +88,8 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 {
 	J9JVMTIEnv * j9env = (J9JVMTIEnv *) env;
 	J9JavaVM * vm = j9env->vm;
-	J9VMThread * currentThread;
-	jvmtiError rc;
+	J9VMThread * currentThread = NULL;
+	jvmtiError rc = JVMTI_ERROR_NONE;
 
 	Trc_JVMTI_jvmtiSetEventNotificationMode_Entry(env);
 
@@ -185,6 +185,9 @@ jvmtiSetEventNotificationMode(jvmtiEnv* env,
 			case JVMTI_EVENT_COMPILED_METHOD_UNLOAD:
 			case JVMTI_EVENT_DYNAMIC_CODE_GENERATED:
 			case JVMTI_EVENT_DATA_DUMP_REQUEST:
+#if JAVA_SPEC_VERSION >= 11
+			case  JVMTI_EVENT_SAMPLED_OBJECT_ALLOC:
+#endif /* JAVA_SPEC_VERSION >= 11 */
 				if (event_thread != NULL) {
 					JVMTI_ERROR(JVMTI_ERROR_ILLEGAL_ARGUMENT);
 				}

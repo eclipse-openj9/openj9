@@ -112,6 +112,7 @@
 		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc019a_getValue"/>
 		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc019b_redefineClass"/>
 		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc019b_getValue"/>
+		<export name="Java_com_ibm_jvmti_tests_redefineClasses_rc020_redefineClass"/>
 		<export name="Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc001_verifyOnLoadCapabilities"/>
 		<export name="Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc001_verifyLiveCapabilities"/>
 		<export name="Java_com_ibm_jvmti_tests_getPotentialCapabilities_gpc002_verifyCapabilityRetention"/>
@@ -147,6 +148,9 @@
 		<export name="Java_com_ibm_jvmti_tests_decompResolveFrame_decomp003_startStepping"/>
 		<export name="Java_com_ibm_jvmti_tests_decompResolveFrame_decomp003_stopStepping"/>
 		<export name="Java_com_ibm_jvmti_tests_decompResolveFrame_decomp004_triggerDecompile"/>
+		<export name="Java_com_ibm_jvmti_tests_fieldwatch_fw001_startTest"/>
+		<export name="Java_com_ibm_jvmti_tests_fieldwatch_fw001_endTest"/>
+		<export name="Java_com_ibm_jvmti_tests_fieldwatch_fw001_modifyWatches"/>
 		<export name="Java_com_ibm_jvmti_tests_vmDump_vmd001_tryQueryDumpSmallBuffer"/>
 		<export name="Java_com_ibm_jvmti_tests_vmDump_vmd001_tryQueryDumpBigBuffer"/>
 		<export name="Java_com_ibm_jvmti_tests_vmDump_vmd001_tryQueryDumpInvalidBufferSize"/>

@@ -52,6 +52,21 @@
 #include "env/PersistentCHTable.hpp"
 #include "optimizer/J9TransformUtil.hpp"
 
+namespace J9
+{
+enum NonUserMethod
+   {
+   unknownNonUserMethod,
+   nonUser_java_util_HashMap_rehash,
+   nonUser_java_util_HashMap_analyzeMap,
+   nonUser_java_util_HashMap_calculateCapacity,
+   nonUser_java_util_HashMap_findNullKeyEntry,
+
+   numNonUserMethods
+   };
+}
+
+
 J9::SymbolReferenceTable::SymbolReferenceTable(size_t sizeHint, TR::Compilation *c) :
    OMR::SymbolReferenceTableConnector(sizeHint, c),
      _immutableInfo(c->trMemory()),
@@ -488,7 +503,7 @@ J9::SymbolReferenceTable::methodSymRefWithSignature(TR::SymbolReference *origina
 
    // Check _methodsBySignature to see if we've already created a symref for this one
    //
-   TR_Method *originalMethod = originalSymbol->getMethod();
+   TR::Method *originalMethod = originalSymbol->getMethod();
 
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
 
@@ -1172,7 +1187,7 @@ J9::SymbolReferenceTable::findOrCreateClassStaticsSymbol(TR::ResolvedMethodSymbo
       sym->setNotCollected();
    // cpIndex for resolved Class statics symbol is unused. Furthermore having a cpIndex here might create illusion for cases where we
    // care about cpIndex and also as Two or more (resolved) static field references belonging to same class will
-   // share the same information (inlined call site index, cpIndex) , using a cpIndex for these cases will 
+   // share the same information (inlined call site index, cpIndex) , using a cpIndex for these cases will
    // need further changes to prevent any sharing hence it is set to -1 for static resolved fields.
    // For more detailed information take a look at PR#4322 in eclipse/openj9 repo
    symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), -1);
@@ -1323,7 +1338,7 @@ J9::SymbolReferenceTable::isStaticTypeBool(TR::SymbolReference *symRef)
 bool
 J9::SymbolReferenceTable::isReturnTypeBool(TR::SymbolReference *symRef)
    {
-   TR_Method *method = symRef->getSymbol()->castToResolvedMethodSymbol()->getMethod();
+   TR::Method *method = symRef->getSymbol()->castToResolvedMethodSymbol()->getMethod();
    char *methodSignature = method->signatureChars();
    const int32_t len = method->signatureLength();
    dumpOptDetails(comp(), "got method signature as %.*s\n", len, methodSignature);
@@ -1348,7 +1363,12 @@ J9::SymbolReferenceTable::addParameters(TR::ResolvedMethodSymbol * methodSymbol)
    ListIterator<TR::ParameterSymbol> parms(&methodSymbol->getParameterList());
    for (TR::ParameterSymbol * p = parms.getFirst(); p; p = parms.getNext())
       {
-      TR::SymbolReference *symRef = new (trHeapMemory()) TR::SymbolReference(self(), p, index, p->getSlot());
+      TR::KnownObjectTable::Index knownObjectIndex = methodSymbol->getKnownObjectIndexForParm(p->getOrdinal());
+      TR::SymbolReference *symRef = NULL;
+      if (knownObjectIndex == TR::KnownObjectTable::UNKNOWN)
+         symRef = new (trHeapMemory()) TR::SymbolReference(self(), p, index, p->getSlot());
+      else
+         symRef = createTempSymRefWithKnownObject(p, index, p->getSlot(), knownObjectIndex);
       methodSymbol->setParmSymRef(p->getSlot(), symRef);
       if (!parmSlotCameFromExpandingAnArchetypeArgPlaceholder(p->getSlot(), methodSymbol, trMemory()))
          methodSymbol->getAutoSymRefs(p->getSlot()).add(symRef);
@@ -1839,13 +1859,13 @@ J9::SymbolReferenceTable::userFieldMethodId(TR::MethodSymbol *methodSymbol)
       {
       TR::RecognizedMethod method = methodSymbol->getRecognizedMethod();
       if (method == TR::java_util_HashMap_rehash)
-         return nonUser_java_util_HashMap_rehash - 1;
+         return J9::nonUser_java_util_HashMap_rehash - 1;
       else if (method == TR::java_util_HashMap_analyzeMap)
-         return nonUser_java_util_HashMap_analyzeMap - 1;
+         return J9::nonUser_java_util_HashMap_analyzeMap - 1;
       else if (method == TR::java_util_HashMap_calculateCapacity)
-         return nonUser_java_util_HashMap_calculateCapacity - 1;
+         return J9::nonUser_java_util_HashMap_calculateCapacity - 1;
       else if (method == TR::java_util_HashMap_findNullKeyEntry)
-         return nonUser_java_util_HashMap_findNullKeyEntry - 1;
+         return J9::nonUser_java_util_HashMap_findNullKeyEntry - 1;
       }
    return -1;
    }
@@ -2137,7 +2157,8 @@ TR::ParameterSymbol *
 J9::SymbolReferenceTable::createParameterSymbol(
       TR::ResolvedMethodSymbol *owningMethodSymbol,
       int32_t slot,
-      TR::DataType type)
+      TR::DataType type,
+      TR::KnownObjectTable::Index knownObjectIndex)
    {
    TR::ParameterSymbol * sym = TR::ParameterSymbol::create(trHeapMemory(),type,slot);
 
@@ -2147,7 +2168,12 @@ J9::SymbolReferenceTable::createParameterSymbol(
       sym->setGCMapIndex(-slot + parameterSlots - sym->getNumberOfSlots());
       }
 
-   TR::SymbolReference *symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), slot);
+   TR::SymbolReference *symRef = NULL;
+   if (knownObjectIndex == TR::KnownObjectTable::UNKNOWN)
+      symRef = new (trHeapMemory()) TR::SymbolReference(self(), sym, owningMethodSymbol->getResolvedMethodIndex(), slot);
+   else
+      symRef = createTempSymRefWithKnownObject(sym,  owningMethodSymbol->getResolvedMethodIndex(), slot, knownObjectIndex);
+
    owningMethodSymbol->setParmSymRef(slot, symRef);
    if (!parmSlotCameFromExpandingAnArchetypeArgPlaceholder(slot, owningMethodSymbol, trMemory()))
       owningMethodSymbol->getAutoSymRefs(slot).add(symRef);

@@ -22,6 +22,8 @@
 
 #include <algorithm>
 #include "codegen/CodeGenerator.hpp"
+#include "compile/InlineBlock.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
@@ -3242,6 +3244,12 @@ TR_J9ByteCodeIlGenerator::genAsyncCheck()
 void
 TR_J9ByteCodeIlGenerator::genCheckCast()
    {
+   if (_methodSymbol->safeToSkipCheckCasts())
+      {
+      pop();
+      return;
+      }
+
    TR::Node *node = genNodeAndPopChildren(TR::checkcast, 2, symRefTab()->findOrCreateCheckCastSymbolRef(_methodSymbol));
    genTreeTop(node);
    push(node->getFirstChild()); // The object reference
@@ -3578,13 +3586,62 @@ TR_J9ByteCodeIlGenerator::genIfTwoOperand(TR::ILOpCodes nodeop)
 int32_t
 TR_J9ByteCodeIlGenerator::genIfImpl(TR::ILOpCodes nodeop)
    {
-   _methodSymbol->setHasBranches(true);
    int32_t branchBC = _bcIndex + next2BytesSigned();
    int32_t fallThruBC = _bcIndex + 3;
 
    TR::Node * second = pop();
    TR::Node * first = pop();
 
+   TR::DataType type = first->getDataType();
+   if (branchBC > _bcIndex &&
+       first->getOpCode().isLoadConst() &&
+       second->getOpCode().isLoadConst() &&
+       type != TR::Address &&
+       type != TR::Float &&
+       type != TR::Double)
+      {
+      int64_t v1 = first->getConstValue();
+      int64_t v2 = second->getConstValue();
+      bool branchTaken;
+      TR_ComparisonTypes compareType = TR::ILOpCode::getCompareType(nodeop);
+      bool isUnsignedCompare = TR::ILOpCode(nodeop).isUnsignedCompare();
+      switch (compareType)
+         {
+         case TR_cmpEQ:
+            branchTaken = v1 == v2;
+            break;
+         case TR_cmpNE:
+            branchTaken = v1 != v2;
+            break;
+         case TR_cmpLT:
+            branchTaken = isUnsignedCompare ? (uint64_t)v1 < (uint64_t)v2 : v1 < v2;
+            break;
+         case TR_cmpLE:
+            branchTaken = isUnsignedCompare ? (uint64_t)v1 <= (uint64_t)v2 : v1 <= v2;
+            break;
+         case TR_cmpGT:
+            branchTaken = isUnsignedCompare ? (uint64_t)v1 > (uint64_t)v2 : v1 > v2;
+            break;
+         case TR_cmpGE:
+            branchTaken = isUnsignedCompare ? (uint64_t)v1 >= (uint64_t)v2 : v1 >= v2;
+            break;
+         }
+
+      if (_blocksToInline)
+         {
+         if (comp()->getOption(TR_TraceILGen))
+            traceMsg(comp(), "Not folding the if because of partial inlining\n");
+         }
+      else
+         {
+         if (comp()->getOption(TR_TraceILGen))
+            traceMsg(comp(), "%s\n", branchTaken ? "taking the branch" : "fall through");
+
+         return branchTaken ? branchBC : fallThruBC;
+         }
+      }
+
+   _methodSymbol->setHasBranches(true);
    handlePendingPushSaveSideEffects(first);
    handlePendingPushSaveSideEffects(second);
 
@@ -3836,7 +3893,7 @@ TR_J9ByteCodeIlGenerator::genInvokeSpecial(int32_t cpIndex)
       return;
       }
 
-   TR_Method *callee = methodSymRef->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method *callee = methodSymRef->getSymbol()->castToMethodSymbol()->getMethod();
    if (callee->isConstructor())
       {
       if (trace)
@@ -4112,7 +4169,7 @@ TR_J9ByteCodeIlGenerator::genInvokeHandle(TR::SymbolReference *invokeExactSymRef
          }
       if (comp()->getOptions()->getVerboseOption(TR_VerboseMethodHandleDetails))
          {
-         TR_Method *callee = callNode->getSymbol()->castToMethodSymbol()->getMethod();
+         TR::Method *callee = callNode->getSymbol()->castToMethodSymbol()->getMethod();
          TR_VerboseLog::writeLineLocked(TR_Vlog_MHD, "Call to invokeExact%.*s from %s", callee->signatureLength(), callee->signatureChars(), comp()->signature());
          }
       }
@@ -4133,18 +4190,32 @@ TR_J9ByteCodeIlGenerator::genILGenMacroInvokeExact(TR::SymbolReference *invokeEx
    return callNode;
    }
 
-void
-TR_J9ByteCodeIlGenerator::genHandleTypeCheck()
+TR::Node*
+TR_J9ByteCodeIlGenerator::genHandleTypeCheck(TR::Node* handle, TR::Node* expectedType)
    {
-   TR::Node *expectedType = pop();
-   TR::SymbolReference *getTypeSymRef = comp()->getSymRefTab()->methodSymRefFromName(_methodSymbol, JSR292_MethodHandle, JSR292_getType, JSR292_getTypeSig, TR::MethodSymbol::Special); // TODO:JSR292: Too bad I can't do a more general lookup and let it optimize itself.  Virtual call doesn't seem to work
-   genInvokeDirect(getTypeSymRef);
-   TR::Node *handleType = pop();
+   uint32_t typeOffset = fej9()->getInstanceFieldOffsetIncludingHeader("Ljava/lang/invoke/MethodHandle;", "type", "Ljava/lang/invoke/MethodType;", method());
+   TR::SymbolReference *typeSymRef = comp()->getSymRefTab()->findOrFabricateShadowSymbol(_methodSymbol,
+                                                                                         TR::Symbol::Java_lang_invoke_MethodHandle_type,
+                                                                                         TR::Address,
+                                                                                         typeOffset,
+                                                                                         false,
+                                                                                         false,
+                                                                                         true,
+                                                                                         "java/lang/invoke/MethodHandle.type Ljava/lang/invoke/MethodType;");
 
-   genTreeTop(TR::Node::createWithSymRef(TR::ZEROCHK, 1, 1,
-      TR::Node::create(TR::acmpeq, 2, expectedType, handleType),
-      symRefTab()->findOrCreateMethodTypeCheckSymbolRef(_methodSymbol)));
-   }
+   TR::Node *handleType = TR::Node::createWithSymRef(comp()->il.opCodeForIndirectLoad(TR::Address), 1, 1, handle, typeSymRef);
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp(), "Inserted indirect load of MethodHandle.type n%dn %p\n", handleType->getGlobalIndex(), handleType);
+      }
+
+    // Generate zerochk
+    TR::Node* zerochkNode = TR::Node::createWithSymRef(TR::ZEROCHK, 1, 1,
+                                                       TR::Node::create(TR::acmpeq, 2, expectedType, handleType),
+                                                       symRefTab()->findOrCreateMethodTypeCheckSymbolRef(_methodSymbol));
+    return zerochkNode;
+    }
 
 TR::Node *
 TR_J9ByteCodeIlGenerator::genInvokeHandleGeneric(int32_t cpIndex)
@@ -4158,7 +4229,7 @@ TR_J9ByteCodeIlGenerator::genInvokeHandleGeneric(int32_t cpIndex)
       comp()->failCompilation<J9::FSDHasInvokeHandle>("FSD_HAS_INVOKEHANDLE 2");
 
    TR::SymbolReference * invokeGenericSymRef = symRefTab()->findOrCreateHandleMethodSymbol(_methodSymbol, cpIndex);
-   TR_Method *invokeGeneric = invokeGenericSymRef->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method *invokeGeneric = invokeGenericSymRef->getSymbol()->castToMethodSymbol()->getMethod();
    TR::SymbolReference *invokeExactOriginal = symRefTab()->methodSymRefFromName(_methodSymbol,
       JSR292_MethodHandle, JSR292_invokeExact, JSR292_invokeExactSig, TR::MethodSymbol::ComputedVirtual, invokeGenericSymRef->getCPIndex());
    TR::SymbolReference *invokeExactSymRef = symRefTab()->methodSymRefWithSignature(
@@ -4250,7 +4321,7 @@ static int32_t numOpsNonStandardLengths[] =
 TR::Node *
 TR_J9ByteCodeIlGenerator::getReceiverFor(TR::SymbolReference *symRef)
    {
-   TR_Method * method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method * method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
    int32_t receiverDepth = method->numberOfExplicitParameters(); // look past all the explicit arguments
    return _stack->element(_stack->topIndex() - receiverDepth);
    }
@@ -4273,7 +4344,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
    bool isStatic     = symbol->isStatic();
    bool isDirectCall = indirectCallFirstChild == NULL;
 
-   TR_Method * calledMethod = symbol->getMethod();
+   TR::Method * calledMethod = symbol->getMethod();
    int32_t numArgs = calledMethod->numberOfExplicitParameters() + (isStatic ? 0 : 1);
 
    TR::ILOpCodes opcode = TR::BadILOp;
@@ -4347,7 +4418,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
       return node;
       }
 
-#if !defined(TR_HOST_ARM)
+#if !defined(TR_HOST_ARM) && !defined(TR_HOST_ARM64)
 
    if (comp()->supportsQuadOptimization())
       {
@@ -4486,7 +4557,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
          	break;
          }
       }
-#endif // TR_HOST_ARM
+#endif
 
    if (symbol->getRecognizedMethod() == TR::com_ibm_Compiler_Internal__TR_Prefetch)
       {
@@ -4502,7 +4573,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
 
       // Get the type of prefetch
       PrefetchType prefetchType = NoPrefetch;
-      TR_Method *method = symbol->castToMethodSymbol()->getMethod();
+      TR::Method *method = symbol->castToMethodSymbol()->getMethod();
       if (method->nameLength() == 15 && !strncmp(method->nameChars(), "_TR_Release_All", 15))
          {
          prefetchType = ReleaseAll;
@@ -5727,7 +5798,11 @@ TR_J9ByteCodeIlGenerator::runMacro(TR::SymbolReference * symRef)
       case TR::java_lang_invoke_ILGenMacros_typeCheck:
          {
          if (!comp()->compileRelocatableCode())
-            genHandleTypeCheck();
+            {
+            TR::Node* expectedType = pop();
+            TR::Node* handle = pop();
+            genTreeTop(genHandleTypeCheck(handle, expectedType));
+            }
          return true;
          }
       case TR::java_lang_invoke_ILGenMacros_arrayElements:

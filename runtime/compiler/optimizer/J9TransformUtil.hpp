@@ -48,7 +48,7 @@ class OMR_EXTENSIBLE TransformUtil : public OMR::TransformUtilConnector
 public:
    static TR::TreeTop *generateRetranslateCallerWithPrepTrees(TR::Node *node, TR_PersistentMethodInfo::InfoBits reason, TR::Compilation *comp);
    static int32_t getLoopNestingDepth(TR::Compilation *comp, TR::Block *block);
-   static bool foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, char *className, int32_t classNameLength, bool isStatic, TR::Compilation *comp);
+   static bool foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char *className, int32_t classNameLength, bool isStatic, TR::Compilation *comp);
 
    static TR::Node *generateArrayElementShiftAmountTrees(
          TR::Compilation *comp,
@@ -56,6 +56,7 @@ public:
    
    static TR::Node *transformIndirectLoad(TR::Compilation *, TR::Node *node);
    static bool transformDirectLoad(TR::Compilation *, TR::Node *node);
+
    /**
     * \brief
     *    Fold direct load of a reliable static final field. A reliable static final field
@@ -74,6 +75,7 @@ public:
     * \return
     *    True if the field has been folded
     */
+
    static bool foldReliableStaticFinalField(TR::Compilation *, TR::Node *node);
    /**
     * \brief
@@ -92,6 +94,34 @@ public:
     *    True if the field has been folded
     */
    static bool foldStaticFinalFieldAssumingProtection(TR::Compilation *, TR::Node *node);
+
+   /** \brief
+    *     Try to fold var handle static final field with protection
+    *
+    *  \param opt
+    *     The current optimization object.
+    *
+    *  \param currentTree
+    *     The tree with the load of static final field.
+    *
+    *  \param node
+    *     The node which is a load of a static final field.
+    */
+   static bool attemptVarHandleStaticFinalFieldFolding(TR::Optimization* opt, TR::TreeTop * currentTree, TR::Node *node);
+
+   /** \brief
+    *     Try to fold generic static final field with protection
+    *
+    *  \param opt
+    *     The current optimization object.
+    *
+    *  \param currentTree
+    *     The tree with the load of static final field.
+    *
+    *  \param node
+    *     The node which is a load of a static final field.
+    */
+   static bool attemptGenericStaticFinalFieldFolding(TR::Optimization* opt, TR::TreeTop * currentTree, TR::Node *node);
 
    /**
     * \brief
@@ -149,6 +179,17 @@ public:
     */
    static TR::TreeTop* generateReportFinalFieldModificationCallTree(TR::Compilation *comp, TR::Node *node);
 
+   /*
+    * \brief
+    *    Truncate boolean for Unsafe get/put APIs.
+    *    The boolean loaded or written by Unsafe APIs can only have value zero or one. The spec rules on
+    *    Unsafe behavior regarding boolean is to check `(0 != value)`.
+    *
+    *   \param comp  The compilation Object
+    *   \param tree  The tree containing Unsafe call that reads/writes a boolean
+    *
+    */
+   static void truncateBooleanForUnsafeGetPut(TR::Compilation *comp, TR::TreeTop* tree);
 protected:
    /**
     * \brief
@@ -165,6 +206,23 @@ protected:
     */
    static bool foldStaticFinalFieldImpl(TR::Compilation *, TR::Node *node);
 
+   /** \brief
+    *     Try to fold static final field with protection
+    *
+    *  \param opt
+    *     The current optimization object.
+    *
+    *  \param currentTree
+    *     The tree with the load of static final field.
+    *
+    *  \param node
+    *     The node which is a load of a static final field.
+    *
+    *  \param varHandleOnly
+    *     True if only folding varHandle static final fields.
+    *     Faslse if folding all static final fileds.
+    */
+   static bool attemptStaticFinalFieldFoldingImpl(TR::Optimization* opt, TR::TreeTop * currentTree, TR::Node *node, bool varHandleOnly);
    };
 
 }

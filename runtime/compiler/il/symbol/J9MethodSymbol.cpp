@@ -136,6 +136,9 @@ J9::MethodSymbol::isPureFunction()
 static TR::RecognizedMethod canSkipNullChecks[] =
    {
    // NOTE!! add methods whose checks can be skipped by sov library to the beginning of the list (see stopMethod below)
+   TR::java_lang_invoke_FilterArgumentsHandle_invokeExact,
+   TR::java_lang_invoke_MethodHandle_undoCustomizationLogic,
+   TR::java_lang_invoke_CollectHandle_invokeExact,
    TR::java_util_ArrayList_add,
    TR::java_util_ArrayList_ensureCapacity,
    TR::java_util_ArrayList_get,
@@ -203,6 +206,8 @@ static TR::RecognizedMethod canSkipBoundChecks[] =
    //TR::java_util_ArrayList_remove,
    //TR::java_util_ArrayList_ensureCapacity,
    //TR::java_util_ArrayList_get,
+   TR::java_lang_invoke_FilterArgumentsHandle_invokeExact,
+   TR::java_lang_invoke_CollectHandle_invokeExact,
    TR::java_lang_String_trim,
    TR::java_lang_String_charAt,
    TR::java_lang_String_charAtInternal_I,
@@ -332,6 +337,7 @@ J9::MethodSymbol::safeToSkipCheckCasts()
 //
 static TR::RecognizedMethod canSkipArrayStoreChecks[] =
    {
+   TR::java_lang_invoke_CollectHandle_invokeExact,
    TR::java_util_ArrayList_add,
    TR::java_util_ArrayList_ensureCapacity,
    TR::java_util_ArrayList_get,

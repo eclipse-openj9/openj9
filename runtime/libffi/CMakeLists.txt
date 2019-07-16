@@ -86,28 +86,42 @@ elseif(OMR_ARCH_POWER)
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "XL")
 		set(CMAKE_ASM_FLAGS "-qalias=noansi -qxflag=LTOL:LTOL0 -qxflag=selinux -qarch=ppc64 -q64")
 	endif()
-	target_sources(ffi
-		PRIVATE
-			powerpc/ffi.c
+	if(OMR_OS_LINUX)
+		target_sources(ffi
+			PRIVATE
+				powerpc/ffi.c
+				powerpc/ppc_closure.S
+				powerpc/sysv.S
+				powerpc/linux64.S
+				powerpc/linux64_closure.S
+				powerpc/ffi_linux64.c
+				powerpc/ffi_sysv.c
+		)
+		set_source_files_properties(
 			powerpc/ppc_closure.S
 			powerpc/sysv.S
 			powerpc/linux64.S
 			powerpc/linux64_closure.S
-			powerpc/ffi_linux64.c
-			powerpc/ffi_sysv.c
-	)
-	set_source_files_properties(
-		powerpc/ppc_closure.S
-		powerpc/sysv.S
-		powerpc/linux64.S
-		powerpc/linux64_closure.S
-		PROPERTIES
-		LANGUAGE ASM
-	)
-	if(OMR_ENV_LITTLE_ENDIAN)
-		target_include_directories(ffi PUBLIC preconf/xl64)
-	else()
-		target_include_directories(ffi PUBLIC preconf/xp64)
+			PROPERTIES
+			LANGUAGE ASM
+		)
+		if(OMR_ENV_LITTLE_ENDIAN)
+			target_include_directories(ffi PUBLIC preconf/xl64)
+		else()
+			target_include_directories(ffi PUBLIC preconf/xp64)
+		endif()
+	elseif(OMR_OS_AIX)
+		target_sources(ffi
+			PRIVATE
+				powerpc/ffi_darwin.c
+				powerpc/aix.S
+				powerpc/aix_closure.S
+		)
+		if(OMR_ENV_DATA64)
+			target_include_directories(ffi PUBLIC preconf/ap64)
+		else()
+			target_include_directories(ffi PUBLIC preconf/ap32)
+		endif()
 	endif()
 	target_include_directories(ffi PUBLIC powerpc)
 endif()

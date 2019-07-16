@@ -20,12 +20,11 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-
 #include "j9.h"
 #include "j9accessbarrier.h"
 #include "j9protos.h"
-#include "lockNurseryUtil.h"
 #include "mmhook.h"
+#include "j9consts.h"
 #include "ut_j9vm.h"
 #include "vm_api.h"
 #include "vm_internal.h"
@@ -262,7 +261,12 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object)
 #else
 	objectMonitor = vmStruct->cachedMonitor;
 #endif
-	if ((objectMonitor != NULL) && (((J9ThreadAbstractMonitor*)objectMonitor->monitor)->userData == (UDATA) object)) {
+	/* If we are in a middle of a concurrent GC that may move objects, existing barriers ensure that object ptr is always up-to-date. We also
+	 * have to make sure that the entry in the thread local caches points to the up-to-date location of the cached object, before we proceed
+	 * with the comparison. Otherwise, we may miss to identify cache hit. Hence, we call a 'weak' read barrier (only updating slot if object already moved,
+	 * but not triggering a copy) on userData slot.
+	 */
+	if ((objectMonitor != NULL) && (J9MONITORTABLE_OBJECT_LOAD_VM(vm, &((J9ThreadAbstractMonitor*)objectMonitor->monitor)->userData) == object)) {
 		HIT();
 		TRACE("Cache hit");
 		Trc_VM_monitorTableAt_CacheHit_Exit(vmStruct, objectMonitor);

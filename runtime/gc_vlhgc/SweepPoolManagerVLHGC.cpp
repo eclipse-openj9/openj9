@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -308,7 +307,7 @@ MM_SweepPoolManagerVLHGC::addFreeMemory(MM_EnvironmentBase *env, MM_ParallelSwee
 	} else {
 		UDATA freeSizeInBytes = MM_Bits::convertSlotsToBytes(size);
 		J9Object *object = (J9Object *)(address - J9MODRON_HEAP_SLOTS_PER_MARK_BIT);
-		Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(object));
+		Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(object, env));
 		UDATA objectSizeDelta = 
 			_extensions->objectModel.getConsumedSizeInBytesWithHeader(object)
 			- (J9MODRON_HEAP_SLOTS_PER_MARK_BIT * sizeof(UDATA));

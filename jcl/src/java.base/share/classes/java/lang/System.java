@@ -38,7 +38,6 @@ import jdk.internal.misc.SharedSecrets;
 /*[ENDIF] Java12 */
 import jdk.internal.misc.VM;
 import java.lang.StackWalker.Option;
-import java.lang.Module;
 import jdk.internal.reflect.Reflection;
 import jdk.internal.reflect.CallerSensitive;
 import java.util.*;

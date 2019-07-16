@@ -2935,3 +2935,6 @@ TraceEvent=Trc_SHR_INIT_j9shr_findGCHints_Event_Found Overhead=1 Level=4 Templat
 TraceEvent=Trc_SHR_CM_storeSharedData_OverwriteExisting Overhead=1 Level=4 Template="CM storeSharedData: Existing data in the shared cache has been overwritten (result %p, data->address %p, foundDatalen %zu)."
 TraceEvent=Trc_SHR_CM_updateLocalHintsData_OverwriteHeapSizes Overhead=1 Level=4 Template="CM updateLocalHintsData: Existing hints (heapSize1=%zu, heapSize2=%zu) in the shared cache will be overwritten to (heapSize1=%zu, heapSize2=%zu)."
 TraceEvent=Trc_SHR_CM_updateLocalHintsData_WriteHeapSizes Overhead=1 Level=4 Template="CM updateLocalHintsData: Will write hints (heapSize1=%zu, heapSize2=%zu) to shared cache."
+
+TraceEntry=Trc_SHR_INIT_updateClasspathOpenState_entry Overhead=1 Level=3 Template="INIT Entering j9shr_updateClasspathOpenState"
+TraceExit=Trc_SHR_INIT_updateClasspathOpenState_exit Overhead=1 Level=3 Template="INIT Exiting j9shr_updateClasspathOpenState"

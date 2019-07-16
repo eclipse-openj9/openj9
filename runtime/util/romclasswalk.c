@@ -1196,6 +1196,8 @@ static void allSlotsInCallSiteDataDo (J9ROMClass* romClass, J9ROMClassWalkCallba
 	 *			U_16 argument[argumentCount];
 	 *		} bootStrapMethodData[romClass->bsmCount];
 	 * }
+	 * 
+	 * Note: SRP is 32 bits
 	 */
 	BOOLEAN rangeValid;
 	UDATA index, bsmArgumentCount;
