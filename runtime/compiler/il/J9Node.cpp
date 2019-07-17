@@ -2168,15 +2168,15 @@ J9::Node::isUnsafePutOrderedCall()
    if (!symbol)
       return false;
 
-   if ((symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V) ||
-       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putByteOrdered_jlObjectJB_V) ||
-       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putCharOrdered_jlObjectJC_V) ||
-       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putShortOrdered_jlObjectJS_V) ||
-       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putIntOrdered_jlObjectJI_V) ||
-       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putLongOrdered_jlObjectJJ_V) ||
-       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putFloatOrdered_jlObjectJF_V) ||
-       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putDoubleOrdered_jlObjectJD_V) ||
-       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V))
+   if ((symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putOrderedBoolean_jlObjectJZ_V) ||
+       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putOrderedByte_jlObjectJB_V) ||
+       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putOrderedChar_jlObjectJC_V) ||
+       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putOrderedShort_jlObjectJS_V) ||
+       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V) ||
+       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putOrderedLong_jlObjectJJ_V) ||
+       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putOrderedFloat_jlObjectJF_V) ||
+       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putOrderedDouble_jlObjectJD_V) ||
+       (symbol->getRecognizedMethod() == TR::sun_misc_Unsafe_putOrderedObject_jlObjectJjlObject_V))
       isPutOrdered = true;
 
    return isPutOrdered;
