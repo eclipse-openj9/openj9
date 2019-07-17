@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,8 @@
 
 string(TIMESTAMP J9VM_CURRENT_YEAR "%Y")
 string(TIMESTAMP J9VM_BUILD_DATE "%Y%m%d")
+string(TIMESTAMP J9VM_UNIQUE_BUILD_ID "%Y%m%d%H%M%S")
 
-# TODO these are just dummy values
-set(J9VM_BUILD_TAG j9vm_build_tag)
-set(OMR_BUILD_TAG omr_build_tag)
-set(JIT_BUILD_TAG jit_build_tag)
-set(J9VM_BUILD_ID 0000)
-set(J9VM_UNIQUE_BUILD_ID 66666)
+# information intended to be overridden at build time
+set(BUILD_ID 000000 CACHE STRING "")
+set(OPENJ9_SHA unknown CACHE STRING "")
