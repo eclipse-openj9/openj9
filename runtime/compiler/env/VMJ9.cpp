@@ -7782,8 +7782,8 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
 
          return callNode;
          }
-      case TR::java_lang_J9VMInternals_getInstanceShapeFromJ9Class32:
-      case TR::com_ibm_oti_vm_ORBVMHelpers_getInstanceShapeFromJ9Class32:
+      case TR::java_lang_J9VMInternals_getTotalInstanceSizeFromJ9Class32:
+      case TR::com_ibm_oti_vm_ORBVMHelpers_getTotalInstanceSizeFromJ9Class32:
          {
          TR::Node::recreate(callNode, TR::iloadi);
          callNode->setSymbolReference(comp->getSymRefTab()->findOrCreateInstanceShapeSymbolRef());
@@ -7812,8 +7812,8 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          callNode->setSymbolReference(comp->getSymRefTab()->findOrCreateClassFromJavaLangClassAsPrimitiveSymbolRef());
          return callNode;
          }
-      case TR::java_lang_J9VMInternals_getInstanceShapeFromJ9Class64:
-      case TR::com_ibm_oti_vm_ORBVMHelpers_getInstanceShapeFromJ9Class64:
+      case TR::java_lang_J9VMInternals_getTotalInstanceSizeFromJ9Class64:
+      case TR::com_ibm_oti_vm_ORBVMHelpers_getTotalInstanceSizeFromJ9Class64:
          {
          TR::Node::recreate(callNode, TR::lloadi);
          callNode->setSymbolReference(comp->getSymRefTab()->findOrCreateInstanceShapeSymbolRef());
