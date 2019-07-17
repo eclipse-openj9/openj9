@@ -36,6 +36,22 @@
 
 extern TR::Monitor *assumptionTableMutex;
 
+bool
+TR_PersistentClassInfo::isInitialized(bool validate)
+   {
+   bool initialized = ((((uintptr_t) _classId) & 1) == 0);
+   TR::Compilation *comp = TR::comp();
+   if (comp &&
+       comp->compileRelocatableCode() &&
+       comp->getOption(TR_UseSymbolValidationManager) &&
+       validate &&
+       initialized)
+      {
+      initialized = comp->getSymbolValidationManager()->addClassInfoIsInitializedRecord(_classId, initialized);
+      }
+   return initialized;
+   }
+
 void
 TR_PersistentClassInfo::setInitialized(TR_PersistentMemory * persistentMemory)
    {

@@ -1385,7 +1385,7 @@ TR::SymbolValidationManager::validateClassInfoIsInitializedRecord(uint16_t class
       _chTable->findClassInfoAfterLocking(clazz, _comp, true);
 
    if (classInfo)
-      initialized = classInfo->isInitialized();
+      initialized = classInfo->isInitialized(false);
 
    bool valid = (!wasInitialized || initialized);
    return valid;
