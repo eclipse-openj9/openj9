@@ -1784,7 +1784,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	@Deprecated(forRemoval=false, since="1.1")
 	public void getBytes(int start, int end, byte[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal()) {
+		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= (data.length - index))) {
 			// Check if the String is compressed
 			if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
 				compressedArrayCopy(value, start, data, index, end - start);
@@ -5756,7 +5756,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	@Deprecated
 	public void getBytes(int start, int end, byte[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal()) {
+		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= (data.length - index))) {
 			// Check if the String is compressed
 			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				compressedArrayCopy(value, start, data, index, end - start);
