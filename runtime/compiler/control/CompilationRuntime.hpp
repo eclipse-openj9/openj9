@@ -40,7 +40,9 @@
 #include "infra/Statistics.hpp"
 #include "control/rossa.h"
 #include "runtime/RelocationRuntime.hpp"
+#if defined(JITSERVER_SUPPORT)
 #include "env/PersistentCollections.hpp"
+#endif
 
 extern "C" {
 struct J9Method;

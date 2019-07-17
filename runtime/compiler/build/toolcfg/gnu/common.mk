@@ -104,12 +104,12 @@ CX_FLAGS+=\
     -Wreturn-type \
     -fno-strict-aliasing
 
-ifeq ($(JITSERVER_SUPPORT),)
-    CXX_FLAGS+=\
-        -std=c++0x
-else
+ifneq ($(JITSERVER_SUPPORT),)
     CXX_FLAGS+=\
         -std=c++11
+else
+    CXX_FLAGS+=\
+        -std=c++0x
 endif
 CXX_FLAGS+=\
     -fno-rtti \

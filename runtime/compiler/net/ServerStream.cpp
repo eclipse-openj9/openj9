@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -300,8 +300,8 @@ ServerStream::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR
       compiler->compile(stream);
       }
 
-   // TODO This will never be called - if the server actually shuts down properly then we should do this
 #if defined(JITSERVER_ENABLE_SSL)
+   // The following piece of code will be executed only if the server shuts down properly
    if (sslCtx)
       {
       SSL_CTX_free(sslCtx);
