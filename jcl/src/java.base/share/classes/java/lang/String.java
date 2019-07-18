@@ -1792,19 +1792,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 	}
 
-	void getBytes(int start, int end, char[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal()) {
-			// Check if the String is compressed
-			if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
-				compressedArrayCopy(value, start, data, index, end - start);
-			} else {
-				compress(value, start, data, index, end - start);
-			}
-		} else {
-			throw new StringIndexOutOfBoundsException();
-		}
-	}
-
 	/**
 	 * Converts this String to a byte encoding using the specified encoding.
 	 *
@@ -3926,7 +3913,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if (count < 0) {
 			throw new IllegalArgumentException();
 		} else if (count == 0 || isEmpty()) {
-			return "";
+			return ""; //$NON-NLS-1$
 		} else if (count == 1) {
 			return this;
 		}
