@@ -238,15 +238,6 @@ parseLockwordConfig(J9JavaVM* jvm, char* options, BOOLEAN* what);
 void
 printLockwordWhat(J9JavaVM* jvm);
 
-#if defined(J9VM_OUT_OF_PROCESS)
-/**
- * This method is called to copy the lock nursery exceptions hashtable so that it can be used locally for debugging
- *
- * @param jvm pointer to J9JavaVM to be localized
- * @return to the local version of the hashtable
- */
-J9HashTable* readLocknurseryHashtable(J9HashTable* lockwordExceptions);
-#endif /* J9VM_OUT_OF_PROCESS */
 
 
 /* ------------------- stringhelpers.c ----------------- */

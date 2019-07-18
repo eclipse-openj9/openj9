@@ -122,7 +122,7 @@ lswInitialize(J9JavaVM * vm, J9StackWalkState * walkState)
 	memset(slotWalker, 0x00, sizeof(J9SlotWalker));
 
 
-	slotWalker->sp = REMOTE_ADDR(walkState->walkSP);
+	slotWalker->sp = walkState->walkSP;
 	slotWalker->stackBottom = walkState->walkThread->stackObject->end;
 	slotArraySize = sizeof(J9SWSlot) * (slotWalker->stackBottom - slotWalker->sp);
 
@@ -217,7 +217,7 @@ lswFrameNew(J9JavaVM * vm, J9StackWalkState * walkState, UDATA frameType)
 
 		/* The bottom slot is always set to arg0EA */
 
-		frame->bottomSlot = REMOTE_ADDR(walkState->arg0EA);
+		frame->bottomSlot = walkState->arg0EA;
 
 		/* Figure out the topSlot of this frame based on previous frames arg0EA 
 		   or SP if we are looking at the first/top frame */
@@ -265,7 +265,7 @@ lswRecord(J9StackWalkState * walkState, UDATA recordType, void * recordValue)
 		case LSW_TYPE_JIT_BP:
 			slotIndex = getSlotIndex(walkState, recordValue);
 			slot = &slotWalker->slots[slotIndex];
-			slot->data = READ_UDATA((UDATA *) recordValue);
+			slot->data = *((UDATA *) recordValue);
 			slot->name = lswStrDup(slotWalker, "Return PC");
 
 			/* Fall through to LSW_TYPE_BP to record the BP location */
@@ -281,17 +281,17 @@ lswRecord(J9StackWalkState * walkState, UDATA recordType, void * recordValue)
 			slotIndex = getSlotIndex(walkState, recordValue);
 			slot = &slotWalker->slots[slotIndex];
 
-			slot->data = READ_UDATA(slotPtr);
+			slot->data = *(slotPtr);
 			slot->name = lswStrDup(slotWalker, "SavedA0");
 
 			slot--;
 			slotPtr--;
-			slot->data = READ_UDATA(slotPtr);
+			slot->data = *(slotPtr);
 			slot->name = lswStrDup(slotWalker, "SavedPC");
 
 			slot--;
 			slotPtr--;
-			slot->data = READ_UDATA(slotPtr);
+			slot->data = *(slotPtr);
 			slot->type = LSW_TYPE_METHOD;
 			slot->name = lswStrDup(slotWalker, "SavedMethod");
 
@@ -307,7 +307,7 @@ lswRecord(J9StackWalkState * walkState, UDATA recordType, void * recordValue)
 			break;
 
 		case LSW_TYPE_FRAME_BOTTOM:
-			frame->bottomSlot = REMOTE_ADDR(recordValue);
+			frame->bottomSlot = recordValue;
 			break;
 
 		case LSW_TYPE_ARG_COUNT:
@@ -324,8 +324,8 @@ lswRecord(J9StackWalkState * walkState, UDATA recordType, void * recordValue)
 
 		case LSW_TYPE_JIT_FRAME_INFO:
 			frame->pc = (UDATA *) walkState->pc;
-			frame->cp = (UDATA *) REMOTE_ADDR(walkState->constantPool);
-			frame->ftd.jit.jitInfo = REMOTE_ADDR(walkState->jitInfo);
+			frame->cp = (UDATA *) walkState->constantPool;
+			frame->ftd.jit.jitInfo = (UDATA *) walkState->jitInfo;
 			frame->ftd.jit.bytecodeIndex = walkState->bytecodePCOffset;
 			frame->ftd.jit.inlineDepth = walkState->inlineDepth;
 			frame->ftd.jit.pcOffset = walkState->pc - (U_8 *) walkState->method->extra;
@@ -333,7 +333,7 @@ lswRecord(J9StackWalkState * walkState, UDATA recordType, void * recordValue)
 
 		case LSW_TYPE_FRAME_INFO:
 			frame->pc = (UDATA *) walkState->pc;
-			frame->cp = REMOTE_ADDR(walkState->constantPool);
+			frame->cp = (UDATA *) walkState->constantPool;
 			frame->frameFlags = walkState->frameFlags;
 			frame->literals = (UDATA) walkState->literals;
 			break;
@@ -369,7 +369,7 @@ lswRecordSlot(J9StackWalkState * walkState, const void * slotAddress, UDATA slot
 
 	slot = &slotWalker->slots[slotIndex];
 
-	slot->data = READ_UDATA(slotAddressUDATA);
+	slot->data = *(slotAddressUDATA);
 	slot->type = slotType;
 
 	va_start(args, format);
@@ -400,19 +400,10 @@ lswDescribeObject(J9VMThread * vmThread, char * dataPtr, J9Class ** class, J9Obj
 {
 	J9JavaVM *vm = vmThread->javaVM;
 	if (J9VMJAVALANGCLASS_OR_NULL(vm) == *class) {
-#ifdef J9VM_OUT_OF_PROCESS
-		/* Do not use J9VM_J9CLASS_FROM_HEAPCLASS, it will try to dbg read the local vm structure again */
-		*class = (J9Class *) J9OBJECT_ADDRESS_LOAD(vm, object,
-												   J9VMCONSTANTPOOL_ADDRESS_OFFSET(vm, J9VMCONSTANTPOOL_JAVALANGCLASS_VMREF));
-		*class = READ_CLASS(*class);
-		dataPtr += sprintf(dataPtr, "jlC: ");
-#else
 		/* Heap class, get the class */
 		*class = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, object);
 		dataPtr += sprintf(dataPtr, "jlC: "); 
-#endif
 	} else {
-		*class = READ_CLASS(*class);
 		dataPtr += sprintf(dataPtr, "obj: ");
 	} 
 
@@ -438,13 +429,13 @@ lswDescribeSlot(J9VMThread * vmThread, J9StackWalkState * walkState, J9SWSlot * 
 			if (slot->data) {
 			
 				if (slot->type == LSW_TYPE_INDIRECT_O_SLOT) {
-					object = (J9Object *) READ_UDATA((UDATA *) (slot->data & ~1));
+					object = (J9Object *) *((UDATA *) (slot->data & ~1));
 					dataPtr += sprintf(dataPtr, "%p -> ", object);
 				} else {
 					object = (J9Object *) slot->data;
 				}
 				
-				object = (J9Object *) READ_OBJECT(object);
+				object = (J9Object *) object;
 				class = J9OBJECT_CLAZZ(vmThread, object);
 				
 				dataPtr = lswDescribeObject(vmThread, dataPtr, &class, object);
@@ -495,7 +486,7 @@ lswPrintFrameSlots(J9VMThread * vmThread, J9StackWalkState * walkState, J9SWFram
 		slot = &slotWalker->slots[topSlotIndex + i];
 		if (slot->data == 0 && NULL == slot->name) {
 			slot = (J9SWSlot *) &unknownSlot;
-			slot->data = READ_UDATA(frame->topSlot + i);
+			slot->data = *(frame->topSlot + i);
 		}
 
 		lswDescribeSlot(vmThread, walkState, slot, stringBuf, LSW_STRING_MAX);
@@ -530,7 +521,7 @@ lswPrintFrames(J9VMThread * vmThread, J9StackWalkState * walkState)
 	frame = J9_LINKED_LIST_START_DO(slotWalker->frameList); 
 	while (frame) {
 		char frameName[64];
-		J9Method * method = READ_METHOD(frame->method);
+		J9Method * method = frame->method;
 		PORT_ACCESS_FROM_WALKSTATE(walkState);
 
 		if (method) {

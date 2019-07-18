@@ -29,15 +29,6 @@
 #include "locknursery.h"
 #include "util_api.h"
 
-#if !defined (J9VM_OUT_OF_PROCESS)
-#define DBG_ARROW(base, item) ((UDATA)(base)->item)
-#else
-#define DONT_REDIRECT_SRP
-#include "j9dbgext.h"
-#include "dbggen.h"
-#define DBG_ARROW(base, item) dbgReadSlot((UDATA)&((base)->item), sizeof((base)->item))
-#endif
-
 static const UDATA slotsPerShapeElement = sizeof(UDATA) * 8; /* Each slot is represented by one bit */
 
 #ifdef J9VM_GC_LEAF_BITS
@@ -316,13 +307,8 @@ checkLockwordNeeded(J9JavaVM *vm, J9ROMClass *romClass, J9Class *ramSuperClass, 
 	J9HashTable* lockwordExceptions= NULL;
 
 
-#if defined(J9VM_OUT_OF_PROCESS)
-	lockwordExceptions = (J9HashTable*) DBG_ARROW(vm, lockwordExceptions);
-	lockwordExceptions = dbgReadLockwordExceptions(lockwordExceptions);
-#else
 	lockwordExceptions = vm->lockwordExceptions;
-#endif
-	lockAssignmentAlgorithm = DBG_ARROW(vm,lockwordMode);
+	lockAssignmentAlgorithm = vm->lockwordMode;
 
 	/* Arrays can't have a monitor */
 	if (J9ROMCLASS_IS_ARRAY(romClass)) {

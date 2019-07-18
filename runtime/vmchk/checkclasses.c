@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,19 +73,16 @@ checkJ9ClassSanity(J9JavaVM *vm)
 
 	vmchkPrintf(vm, "  %s Checking classes>\n", VMCHECK_PREFIX);
 
-#if defined(J9VM_OUT_OF_PROCESS)
-	localJavaVM = dbgRead_J9JavaVM(vm);
-#endif
 
 	javaLangObjectClass = J9VMJAVALANGOBJECT_OR_NULL(localJavaVM);
 
 	/*
 	 * allClassesStartDo() walks each segment of each classloader. It doesn't rely on subclassTraversalLink.
 	 */
-	clazz = vmchkAllClassesStartDo(vm, &walkState);
+	clazz = vm->internalVMFunctions->allClassesStartDo(&walkState, vm, NULL);
 	while (NULL != clazz) {
 
-		if (!VMCHECK_IS_CLASS_OBSOLETE(clazz)) {
+		if (!J9_IS_CLASS_OBSOLETE(clazz)) {
 			verifyJ9Class(vm, clazz, javaLangObjectClass);
 		} else {
 			verifyObsoleteJ9Class(vm, clazz, javaLangObjectClass);
@@ -93,9 +90,9 @@ checkJ9ClassSanity(J9JavaVM *vm)
 		}
 
 		count++;
-		clazz = vmchkAllClassesNextDo(vm, &walkState);
+		clazz = vm->internalVMFunctions->allClassesNextDo(&walkState);
 	}
-	vmchkAllClassesEndDo(vm, &walkState);
+	vm->internalVMFunctions->allClassesEndDo(&walkState);
 
 	vmchkPrintf(vm, "  %s Checking %d classes (%d obsolete) done>\n", VMCHECK_PREFIX, count, obsoleteCount);
 }
@@ -105,7 +102,7 @@ static BOOLEAN
 verifyJ9Class(J9JavaVM *vm, J9Class *clazz, J9Class *javaLangObjectClass)
 {
 	BOOLEAN passed = verifyJ9ClassHeader(vm, clazz, javaLangObjectClass);
-	J9ClassLoader *classLoader = (J9ClassLoader *)DBG_ARROW(clazz, classLoader);
+	J9ClassLoader *classLoader = clazz->classLoader;
 
 	if (NULL != classLoader) {
 		if (NULL == findSegmentInClassLoaderForAddress(classLoader, (U_8*)clazz)) {
@@ -127,17 +124,17 @@ verifyObsoleteJ9Class(J9JavaVM *vm, J9Class *clazz, J9Class *javaLangObjectClass
 {
 	BOOLEAN passed = TRUE;
 	J9Class *replacedClass;
-	J9Class *currentClass = VMCHECK_J9_CURRENT_CLASS(clazz);
+	J9Class *currentClass = J9_CURRENT_CLASS(clazz);
 
 	verifyJ9ClassHeader(vm, currentClass, javaLangObjectClass);
 
-	replacedClass = (J9Class *)DBG_ARROW(currentClass, replacedClass);
+	replacedClass = currentClass->replacedClass;
 	while (NULL != replacedClass) {
 		if (replacedClass == clazz) {
 			/* Expected case: found clazz in the list. */
 			break;
 		}
-		replacedClass = (J9Class *)DBG_ARROW(replacedClass, replacedClass);
+		replacedClass = replacedClass->replacedClass;
 	}
 
 	if (NULL == replacedClass) {
@@ -154,10 +151,10 @@ static BOOLEAN
 verifyJ9ClassHeader(J9JavaVM *vm, J9Class *clazz, J9Class *javaLangObjectClass)
 {
 	BOOLEAN passed = TRUE;
-	J9ROMClass *romClass = (J9ROMClass *)DBG_ARROW(clazz, romClass);
-	J9ClassLoader *classLoader = (J9ClassLoader *)DBG_ARROW(clazz, classLoader);
+	J9ROMClass *romClass = clazz->romClass;
+	J9ClassLoader *classLoader = clazz->classLoader;
 
-	if (J9CLASS_EYECATCHER != DBG_ARROW(clazz, eyecatcher)) {
+	if (J9CLASS_EYECATCHER != clazz->eyecatcher) {
 		vmchkPrintf(vm, "%s - Error 0x99669966 != eyecatcher (0x%p) for class=0x%p>\n",
 			VMCHECK_FAILED, clazz->eyecatcher, clazz);
 		passed = FALSE;
@@ -173,29 +170,29 @@ verifyJ9ClassHeader(J9JavaVM *vm, J9Class *clazz, J9Class *javaLangObjectClass)
 	}
 
 	if (javaLangObjectClass != clazz) {
-		if (NULL == (J9Class **)DBG_ARROW(clazz, superclasses)) {
+		if (NULL == clazz->superclasses) {
 			vmchkPrintf(vm, "%s - Error NULL == superclasses for non-java.lang.Object class=0x%p>\n",
 				VMCHECK_FAILED, clazz);
 			passed = FALSE;
 		}
 	}
 
-	if (J9ClassInitSucceeded == DBG_ARROW(clazz, initializeStatus)) {
-		if (NULL == (j9object_t)DBG_ARROW(clazz, classObject)) {
+	if (J9ClassInitSucceeded == clazz->initializeStatus) {
+		if (NULL == clazz->classObject) {
 			vmchkPrintf(vm, "%s - Error NULL == class->classObject for initialized class=0x%p>\n",
 				VMCHECK_FAILED, clazz);
 			passed = FALSE;
 		}
 	}
 
-	if (VMCHECK_IS_CLASS_OBSOLETE(clazz)) {
+	if (J9_IS_CLASS_OBSOLETE(clazz)) {
 		vmchkPrintf(vm, "%s - Error clazz=0x%p is obsolete>\n", VMCHECK_FAILED, clazz);
 		passed = FALSE;
 	}
 
-	if ((NULL != romClass) && (0 != DBG_ARROW(romClass, ramConstantPoolCount))) {
-		J9ConstantPool *constantPool = (J9ConstantPool *)DBG_ARROW(clazz, ramConstantPool);
-		J9Class *cpClass = (J9Class *)DBG_ARROW(constantPool, ramClass);
+	if ((NULL != romClass) && (0 != romClass->ramConstantPoolCount)) {
+		J9ConstantPool *constantPool = (J9ConstantPool*)clazz->ramConstantPool;
+		J9Class *cpClass = constantPool->ramClass;
 
 		if (clazz != cpClass) {
 			vmchkPrintf(vm, "%s - Error clazz=0x%p does not equal clazz->ramConstantPool->ramClass=0x%p>\n",
@@ -211,12 +208,12 @@ static BOOLEAN
 verifyJ9ClassSubclassHierarchy(J9JavaVM *vm, J9Class *clazz, J9Class *javaLangObjectClass)
 {
 	UDATA index = 0;
-	UDATA rootDepth = VMCHECK_CLASS_DEPTH(clazz);
+	UDATA rootDepth = J9CLASS_DEPTH(clazz);
 	J9Class *currentClass = clazz;
 	BOOLEAN done = FALSE;
 
 	while (!done) {
-		J9Class *nextSubclass = (J9Class *)DBG_ARROW(currentClass, subclassTraversalLink);
+		J9Class *nextSubclass = currentClass->subclassTraversalLink;
 
 		if (NULL == nextSubclass) {
 			vmchkPrintf(vm, "%s - Error class=0x%p had NULL entry in subclassTraversalLink list at index=%d following class=0x%p>\n",
@@ -229,7 +226,7 @@ verifyJ9ClassSubclassHierarchy(J9JavaVM *vm, J9Class *clazz, J9Class *javaLangOb
 			return FALSE;
 		}
 
-		if (VMCHECK_CLASS_DEPTH(nextSubclass) <= rootDepth) {
+		if (J9CLASS_DEPTH(nextSubclass) <= rootDepth) {
 			done = TRUE;
 		} else {
 			currentClass = nextSubclass;
@@ -243,14 +240,13 @@ verifyJ9ClassSubclassHierarchy(J9JavaVM *vm, J9Class *clazz, J9Class *javaLangOb
 J9MemorySegment *
 findSegmentInClassLoaderForAddress(J9ClassLoader *classLoader, U_8 *address)
 {
-	J9MemorySegment *segment;
+	J9MemorySegment *segment = classLoader->classSegments;
 
-	segment = (J9MemorySegment *)DBG_ARROW(classLoader, classSegments);
 	while (NULL != segment) {
-		if (((UDATA)address >= DBG_ARROW(segment, heapBase)) && ((UDATA)address < DBG_ARROW(segment, heapAlloc))) {
+		if ((address >= segment->heapBase) && (address < segment->heapAlloc)) {
 			break;
 		}
-		segment = (J9MemorySegment *)DBG_ARROW(segment, nextSegmentInClassLoader);
+		segment = segment->nextSegmentInClassLoader;
 	}
 
 	return segment;

@@ -375,25 +375,6 @@ typedef struct J9WalkFieldHierarchyState {
  */
 void walkFieldHierarchyDo(J9Class *clazz, J9WalkFieldHierarchyState *state);
 
-#if defined(J9VM_OUT_OF_PROCESS)
-
-/**
-* @brief
-* @param state
-* @return J9ROMFieldShape *
-*/
-J9ROMFieldShape * debugRomFieldsNextDo(J9ROMFieldWalkState *state);
-
-
-/**
-* @brief
-* @param romClass
-* @param state
-* @return J9ROMFieldShape *
-*/
-J9ROMFieldShape * debugRomFieldsStartDo(J9ROMClass *romClass, J9ROMFieldWalkState *state);
-
-#endif /* defined(J9VM_OUT_OF_PROCESS) */
 
 /* ---------------- final.c ---------------- */
 
@@ -1506,17 +1487,6 @@ releaseOptInfoBuffer(J9JavaVM *vm, J9ROMClass *romClass);
 */
 J9VariableInfoValues * 
 variableInfoNextDo(J9VariableInfoWalkState *state);
-
-/**
-* @brief
-* @param variableInfo
-* @param variableInfoCount
-* @param state
-* @param readLocation
-* @return J9VariableInfoValues *
-*/
-J9VariableInfoValues *
-debugVariableInfoStartDo(U_8 * variableInfo, U_32 variableInfoCount, J9VariableInfoWalkState* state, UDATA readLocation);
 
 /**
 * @brief

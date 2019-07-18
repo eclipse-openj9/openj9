@@ -36,10 +36,6 @@
 #define SET_LOCKNURSERY_HASHTABLE_ENTRY_MASK(entry) (((UDATA) entry)| LOCKNURSERY_HASHTABLE_ENTRY_MASK )
 #define IS_LOCKNURSERY_HASHTABLE_ENTRY_MASKED(entry) (((UDATA) entry) & LOCKNURSERY_HASHTABLE_ENTRY_MASK )
 
-#if !defined(J9VM_OUT_OF_PROCESS)
 #define ROM_FIELD_WALK_MODIFIERS(javavm) ((javavm)->romFieldsWalkModifiers)
-#else /* !defined(J9VM_OUT_OF_PROCESS) */
-#define ROM_FIELD_WALK_MODIFIERS(javavm) dbgReadU32((U_32*)&(javavm)->romFieldsWalkModifiers)
-#endif /* !defined(J9VM_OUT_OF_PROCESS) */
 
 #endif /* locknursery_h */
