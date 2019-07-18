@@ -31,19 +31,16 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.Formatter;
 import java.util.StringJoiner;
-import java.util.function.IntConsumer;
-import java.util.function.IntFunction;
-import java.util.function.IntUnaryOperator;
 import java.util.Iterator;
 import java.nio.charset.Charset;
 /*[IF Java12]*/
 import java.util.function.Function;
 import java.util.Optional;
 /*[ENDIF]*/
+/*[IF Sidecar19-SE]*/
 import java.util.Spliterator;
 import java.util.stream.StreamSupport;
 
-/*[IF Sidecar19-SE]*/
 import jdk.internal.misc.Unsafe;
 import java.util.stream.IntStream;
 /*[ELSE] Sidecar19-SE*/
@@ -69,15 +66,15 @@ import java.lang.invoke.MethodHandles.Lookup;
  *
  * @see StringBuffer
  */
-public final class String implements Serializable, Comparable<String>, CharSequence 
+public final class String implements Serializable, Comparable<String>, CharSequence
 /*[IF Java12]*/
 	, Constable, ConstantDesc
 /*[ENDIF]*/
 {
-	
+
 	/*
 	 * Last character of String substitute in String.replaceAll(regex, substitute) can't be \ or $.
-	 * The backslash (\) is used to escape literal characters, and the dollar sign ($) is treated as 
+	 * The backslash (\) is used to escape literal characters, and the dollar sign ($) is treated as
 	 * references to captured subsequences.
 	 */
 	private void checkLastChar(char lastChar) {
@@ -86,10 +83,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0801")); //$NON-NLS-1$
 		} else if (lastChar == '$') {
 			/*[MSG "K0802", "Last character in replacement string can't be $, group index is required."]*/
-			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0802")); //$NON-NLS-1$			
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0802")); //$NON-NLS-1$
 		}
 	}
-	
+
 /*[IF Sidecar19-SE]*/
 	// DO NOT CHANGE OR MOVE THIS LINE
 	// IT MUST BE THE FIRST THING IN THE INITIALIZATION
@@ -99,15 +96,15 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Determines whether String compression is enabled.
 	 */
 	static final boolean enableCompression = com.ibm.oti.vm.VM.J9_STRING_COMPRESSION_ENABLED;
-	
+
 	static final byte LATIN1 = 0;
 	static final byte UTF16 = 1;
 	static final boolean COMPACT_STRINGS;
 	static {
- 		COMPACT_STRINGS = enableCompression;
- 	}
+		COMPACT_STRINGS = enableCompression;
+	}
 
-	// returns UTF16 when COMPACT_STRINGS is false 
+	// returns UTF16 when COMPACT_STRINGS is false
 	byte coder() {
 		if (enableCompression) {
 			return coder;
@@ -115,12 +112,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return UTF16;
 		}
 	}
-	
+
 	// no range checking, caller ensures bytes is in UTF16
 	// coder is one of LATIN1 or UTF16
 	void getBytes(byte[] bytes, int offset, byte coder) {
 		int currentLength = lengthInternal();
-		
+
 		// Check if the String is compressed
 		if (enableCompression && (null == compressionFlag || this.coder == LATIN1)) {
 			if (String.LATIN1 == coder) {
@@ -132,7 +129,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			decompressedArrayCopy(value, 0, bytes, offset, currentLength);
 		}
 	}
-	
+
 	static void checkIndex(int index, int length) {
 		if ((0 <= index) && (index < length)) {
 			return;
@@ -146,24 +143,24 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 		throw new StringIndexOutOfBoundsException("offset="+offset + " length="+length); //$NON-NLS-1$ //$NON-NLS-2$
 	}
-	
+
 	/**
 	 * CaseInsensitiveComparator compares Strings ignoring the case of the characters.
 	 */
 	private static final class CaseInsensitiveComparator implements Comparator<String>, Serializable {
 		static final long serialVersionUID = 8575799808933029326L;
-		
+
 		/**
 		 * Compare the two objects to determine the relative ordering.
 		 *
 		 * @param o1
-		 *			  an Object to compare
+		 *          an Object to compare
 		 * @param o2
-		 *			  an Object to compare
+		 *          an Object to compare
 		 * @return {@code < 0} if o1 is less than o2, {@code 0} if they are equal, and {@code > 0} if o1 is greater
 		 *
 		 * @exception ClassCastException
-		 *					when objects are not the correct type
+		 *          when objects are not the correct type
 		 */
 		public int compare(String o1, String o2) {
 			return o1.compareToIgnoreCase(o2);
@@ -174,14 +171,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * A Comparator which compares Strings ignoring the case of the characters.
 	 */
 	public static final Comparator<String> CASE_INSENSITIVE_ORDER = new CaseInsensitiveComparator();
-	
+
 	// Used to represent the value of an empty String
 	private static final byte[] emptyValue = new byte[0];
-	
+
 	// Used to extract the value of a single ASCII character String by the integral value of the respective character as
 	// an index into this table
 	private static final byte[][] compressedAsciiTable;
-	
+
 	private static final byte[][] decompressedAsciiTable;
 
 	// Used to access compression related helper methods
@@ -191,7 +188,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		private static final long serialVersionUID = 1346155847239551492L;
 	}
 
-	// Singleton used by all String instances to indicate a non-compressed string has been 
+	// Singleton used by all String instances to indicate a non-compressed string has been
 	// allocated. JIT attempts to fold away the null check involving this static if the
 	// StringCompressionFlag class has not been initialized and patches the code to bring back
 	// the null check if a non-compressed String is constructed.
@@ -215,9 +212,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			}
 		}
 	}
-	
+
 	/**
-	 * This is a System property to enable sharing of the underlying value array in {@link #String.substring(int)} and 
+	 * This is a System property to enable sharing of the underlying value array in {@link #String.substring(int)} and
 	 * {@link #String.substring(int, int)} if the offset is zero.
 	 */
 	static boolean enableSharingInSubstringWhenOffsetIsZero;
@@ -233,19 +230,19 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		for (int i = 0; i < compressedAsciiTable.length; ++i) {
 			byte[] asciiValue = new byte[1];
-			
+
 			helpers.putByteInArrayByIndex(asciiValue, 0, (byte) i);
-			
+
 			compressedAsciiTable[i] = asciiValue;
 		}
-		
+
 		decompressedAsciiTable = new byte[256][];
-		
+
 		for (int i = 0; i < decompressedAsciiTable.length; ++i) {
 			byte[] asciiValue = new byte[2];
-			
+
 			helpers.putCharInArrayByIndex(asciiValue, 0, (char) i);
-			
+
 			decompressedAsciiTable[i] = asciiValue;
 		}
 	}
@@ -265,7 +262,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		return true;
 	}
-	
+
 	static void compress(byte[] array1, int start1, byte[] array2, int start2, int length) {
 		for (int i = 0; i < length; ++i) {
 			helpers.putByteInArrayByIndex(array2, start2 + i, (byte) helpers.getCharFromArrayByIndex(array1, start1 + i));
@@ -277,7 +274,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			helpers.putByteInArrayByIndex(array2, start2 + i, (byte) helpers.getCharFromArrayByIndex(array1, start1 + i));
 		}
 	}
-	
+
 	static void compress(byte[] array1, int start1, char[] array2, int start2, int length) {
 		for (int i = 0; i < length; ++i) {
 			helpers.putByteInArrayByIndex(array2, start2 + i, (byte) helpers.getCharFromArrayByIndex(array1, start1 + i));
@@ -289,7 +286,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			helpers.putByteInArrayByIndex(array2, start2 + i, (byte) helpers.getCharFromArrayByIndex(array1, start1 + i));
 		}
 	}
-	
+
 	static void decompress(byte[] array1, int start1, byte[] array2, int start2, int length) {
 		for (int i = 0; i < length; ++i) {
 			helpers.putCharInArrayByIndex(array2, start2 + i, helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(array1, start1 + i)));
@@ -301,7 +298,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			helpers.putCharInArrayByIndex(array2, start2 + i, helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(array1, start1 + i)));
 		}
 	}
-	
+
 	static void decompress(byte[] array1, int start1, char[] array2, int start2, int length) {
 		for (int i = 0; i < length; ++i) {
 			helpers.putCharInArrayByIndex(array2, start2 + i, helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(array1, start1 + i)));
@@ -313,7 +310,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			helpers.putCharInArrayByIndex(array2, start2 + i, helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(array1, start1 + i)));
 		}
 	}
-	
+
 	static void compressedArrayCopy(byte[] array1, int start1, byte[] array2, int start2, int length) {
 		if (array1 == array2 && start1 < start2) {
 			for (int i = length - 1; i >= 0; --i) {
@@ -337,7 +334,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			helpers.putByteInArrayByIndex(array2, start2 + i, helpers.getByteFromArrayByIndex(array1, start1 + i));
 		}
 	}
-	
+
 	static void compressedArrayCopy(char[] array1, int start1, char[] array2, int start2, int length) {
 		if (array1 == array2 && start1 < start2) {
 			for (int i = length - 1; i >= 0; --i) {
@@ -349,7 +346,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			}
 		}
 	}
-	
+
 	static void decompressedArrayCopy(byte[] array1, int start1, byte[] array2, int start2, int length) {
 		if (array1 == array2 && start1 < start2) {
 			for (int i = length - 1; i >= 0; --i) {
@@ -377,7 +374,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	static void decompressedArrayCopy(char[] array1, int start1, char[] array2, int start2, int length) {
 		System.arraycopy(array1, start1, array2, start2, length);
 	}
-	
+
 	boolean isCompressed() {
 		// Check if the String is compressed
 		if (enableCompression) {
@@ -390,14 +387,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return false;
 		}
 	}
-	
+
 	String(byte[] byteArray, byte coder) {
 		if (enableCompression) {
 			if (String.LATIN1 == coder) {
 				value = byteArray;
 			} else {
 				value = byteArray;
-				
+
 				initCompressionFlag();
 			}
 		} else {
@@ -410,10 +407,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if (offset >= 0 && count >= 0 && offset <= length - count) {
 			return;
 		}
-		
+
 		throw newStringIndexOutOfBoundsException(offset, count, length);
 	}
-	
+
 	static private StringIndexOutOfBoundsException newStringIndexOutOfBoundsException(int offset, int count, int length) {
 		return new StringIndexOutOfBoundsException("offset = " + offset + " count = " + count + " length = " + length); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 	}
@@ -436,10 +433,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * defined, the default encoding is ISO8859_1 (ISO-Latin-1). If 8859-1 is not available, an ASCII encoding is used.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 *
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @see #getBytes()
 	 * @see #getBytes(int, int, byte[], int)
@@ -463,12 +460,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the byte array to a String, setting the high byte of every character to the specified value.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param high
-	 *			  the high byte to use
+	 *          the high byte to use
 	 *
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @deprecated Use String(byte[]) or String(byte[], String) instead
 	 */
@@ -482,16 +479,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * defined, the default encoding is ISO8859_1 (ISO-Latin-1). If 8859-1 is not available, an ASCII encoding is used.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param start
-	 *			  the starting offset in the byte array
+	 *          the starting offset in the byte array
 	 * @param length
-	 *			  the number of bytes to convert
+	 *          the number of bytes to convert
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @see #getBytes()
 	 * @see #getBytes(int, int, byte[], int)
@@ -509,10 +506,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	public String(byte[] data, int start, int length) {
 		data.getClass(); // Implicit null check
-		
+
 		if (start >= 0 && 0 <= length && length <= data.length - start) {
 			StringCoding.Result scResult = StringCoding.decode(data, start, length);
-			
+
 			value = scResult.value;
 			coder = scResult.coder;
 
@@ -528,18 +525,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the byte array to a String, setting the high byte of every character to the specified value.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param high
-	 *			  the high byte to use
+	 *          the high byte to use
 	 * @param start
-	 *			  the starting offset in the byte array
+	 *          the starting offset in the byte array
 	 * @param length
-	 *			  the number of bytes to convert
+	 *          the number of bytes to convert
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @deprecated Use String(byte[], int, int) instead
 	 */
@@ -551,12 +548,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			if (enableCompression && high == 0) {
 				value = new byte[length];
 				coder = LATIN1;
-					
+
 				compressedArrayCopy(data, start, value, 0, length);
 			} else {
 				value = new byte[length * 2];
 				coder = UTF16;
-					
+
 				high <<= 8;
 
 				for (int i = 0; i < length; ++i) {
@@ -576,20 +573,20 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the byte array to a String using the specified encoding.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param start
-	 *			  the starting offset in the byte array
+	 *          the starting offset in the byte array
 	 * @param length
-	 *			  the number of bytes to convert
+	 *          the number of bytes to convert
 	 * @param encoding
-	 *			  the encoding
+	 *          the encoding
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws UnsupportedEncodingException
-	 *				when encoding is not supported
+	 *          when encoding is not supported
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @see #getBytes()
 	 * @see #getBytes(int, int, byte[], int)
@@ -611,7 +608,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		if (start >= 0 && 0 <= length && length <= data.length - start) {
 			StringCoding.Result scResult = StringCoding.decode(encoding, data, start, length);
-			
+
 			value = scResult.value;
 			coder = scResult.coder;
 
@@ -627,14 +624,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the byte array to a String using the specified encoding.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param encoding
-	 *			  the encoding
+	 *          the encoding
 	 *
 	 * @throws UnsupportedEncodingException
-	 *				when encoding is not supported
+	 *          when encoding is not supported
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @see #getBytes()
 	 * @see #getBytes(int, int, byte[], int)
@@ -653,32 +650,32 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public String(byte[] data, String encoding) throws UnsupportedEncodingException {
 		this(data, 0, data.length, encoding);
 	}
-	
+
 	private String(String s, char c) {
 		if (s == null) {
 			s = "null"; //$NON-NLS-1$
 		}
-		
+
 		int slen = s.lengthInternal();
-		
+
 		int concatlen = slen + 1;
 
 		// Check if the String is compressed
 		if (enableCompression && (null == compressionFlag || s.coder == LATIN1) && c <= 255) {
 			value = new byte[concatlen];
 			coder = LATIN1;
-				
+
 			compressedArrayCopy(s.value, 0, value, 0, slen);
-				
+
 			helpers.putByteInArrayByIndex(value, slen, (byte) c);
 		} else {
 			value = new byte[concatlen * 2];
 			coder = UTF16;
-				
+
 			decompressedArrayCopy(s.value, 0, value, 0, slen);
-				
+
 			helpers.putCharInArrayByIndex(value, slen, c);
-				
+
 			if (enableCompression) {
 				initCompressionFlag();
 			}
@@ -690,10 +687,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * no effect on the String.
 	 *
 	 * @param data
-	 *			  the array of characters
+	 *          the array of characters
 	 *
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 */
 	public String(char[] data) {
 		this(data, 0, data.length);
@@ -703,20 +700,20 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Initializes this String to use the specified character array. The character array should not be modified after the String is created.
 	 *
 	 * @param data
-	 *			  a non-null array of characters
+	 *          a non-null array of characters
 	 */
 	String(char[] data, boolean ignore) {
 		if (enableCompression && compressible(data, 0, data.length)) {
 			value = new byte[data.length];
 			coder = LATIN1;
-				
+
 			compress(data, 0, value, 0, data.length);
 		} else {
 			value = new byte[data.length * 2];
 			coder = UTF16;
-				
+
 			decompressedArrayCopy(data, 0, value, 0, data.length);
-				
+
 			if (enableCompression) {
 				initCompressionFlag();
 			}
@@ -728,30 +725,30 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * no effect on the String.
 	 *
 	 * @param data
-	 *			  the array of characters
+	 *          the array of characters
 	 * @param start
-	 *			  the starting offset in the character array
+	 *          the starting offset in the character array
 	 * @param length
-	 *			  the number of characters to use
+	 *          the number of characters to use
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 */
 	public String(char[] data, int start, int length) {
 		if (start >= 0 && 0 <= length && length <= data.length - start) {
 			if (enableCompression && compressible(data, start, length)) {
 				value = new byte[length];
 				coder = LATIN1;
-					
+
 				compress(data, start, value, 0, length);
 			} else {
 				value = new byte[length * 2];
 				coder = UTF16;
-					
+
 				decompressedArrayCopy(data, start, value, 0, length);
-					
+
 				if (enableCompression) {
 					initCompressionFlag();
 				}
@@ -773,24 +770,24 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		} else if (length == 1) {
 			if (enableCompression && compressed) {
 				char theChar = helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(data, start));
-					
+
 				value = compressedAsciiTable[theChar];
 				coder = LATIN1;
 				hashCode = theChar;
 			} else {
 				char theChar = helpers.getCharFromArrayByIndex(data, start);
-					
+
 				if (theChar <= 255) {
 					value = decompressedAsciiTable[theChar];
 				} else {
 					value = new byte[2];
-						
+
 					helpers.putCharInArrayByIndex(value, 0, theChar);
 				}
 
 				coder = UTF16;
 				hashCode = theChar;
-					
+
 				if (enableCompression) {
 					initCompressionFlag();
 				}
@@ -801,7 +798,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					value = data;
 				} else {
 					value = new byte[length];
-						
+
 					compressedArrayCopy(data, start, value, 0, length);
 				}
 
@@ -811,7 +808,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					value = data;
 				} else {
 					value = new byte[length * 2];
-						
+
 					decompressedArrayCopy(data, start, value, 0, length);
 				}
 
@@ -823,7 +820,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			}
 		}
 	}
-	
+
 	String(byte[] data, int start, int length, boolean compressed, boolean sharingIsAllowed) {
 		if (length == 0) {
 			value = emptyValue;
@@ -836,24 +833,24 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		} else if (length == 1) {
 			if (enableCompression && compressed) {
 				char theChar = helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(data, start));
-					
+
 				value = compressedAsciiTable[theChar];
 				coder = LATIN1;
 				hashCode = theChar;
 			} else {
 				char theChar = helpers.getCharFromArrayByIndex(data, start);
-					
+
 				if (theChar <= 255) {
 					value = decompressedAsciiTable[theChar];
 				} else {
 					value = new byte[2];
-						
+
 					helpers.putCharInArrayByIndex(value, 0, theChar);
 				}
 
 				coder = UTF16;
 				hashCode = theChar;
-					
+
 				if (enableCompression) {
 					initCompressionFlag();
 				}
@@ -864,7 +861,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					value = data;
 				} else {
 					value = new byte[length];
-						
+
 					compressedArrayCopy(data, start, value, 0, length);
 				}
 
@@ -874,7 +871,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					value = data;
 				} else {
 					value = new byte[length * 2];
-						
+
 					decompressedArrayCopy(data, start, value, 0, length);
 				}
 
@@ -891,7 +888,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Creates a string that is a copy of another string
 	 *
 	 * @param string
-	 *			  the String to copy
+	 *          the String to copy
 	 */
 	public String(String string) {
 		value = string.value;
@@ -903,7 +900,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Creates a string from the contents of a StringBuffer.
 	 *
 	 * @param buffer
-	 *			  the StringBuffer
+	 *          the StringBuffer
 	 */
 	public String(StringBuffer buffer) {
 		this(buffer.toString());
@@ -949,7 +946,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			} else {
 				decompressedArrayCopy(s2.value, 0, value, s1len, s2len);
 			}
-				
+
 			if (enableCompression) {
 				initCompressionFlag();
 			}
@@ -977,7 +974,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		int s3len = s3.lengthInternal();
 
 		int concatlen = s1len + s2len + s3len;
-		
+
 		if (enableCompression && (null == compressionFlag || (s1.coder | s2.coder | s3.coder) == LATIN1)) {
 			value = new byte[concatlen];
 			coder = LATIN1;
@@ -1009,7 +1006,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			} else {
 				decompressedArrayCopy(s3.value, 0, value, (s1len + s2len), s3len);
 			}
-				
+
 			if (enableCompression) {
 				initCompressionFlag();
 			}
@@ -1042,7 +1039,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		// Char length of the final String
 		int len = s1len + v1len;
-		
+
 		if (enableCompression && (null == compressionFlag || s1.coder == LATIN1)) {
 			value = new byte[len];
 			coder = LATIN1;
@@ -1089,7 +1086,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			// Copy in s1 contents
 			decompressedArrayCopy(s1.value, 0, value, 0, s1len);
-				
+
 			if (enableCompression) {
 				initCompressionFlag();
 			}
@@ -1206,7 +1203,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			// Copy in s3 contents
 			start = start - s3len;
-				
+
 			// Check if the String is compressed
 			if (enableCompression && s3.coder == LATIN1) {
 				decompress(s3.value, 0, value, start, s3len);
@@ -1216,7 +1213,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			// Copy in s2 contents
 			start = start - s2len;
-				
+
 			// Check if the String is compressed
 			if (enableCompression && s2.coder == LATIN1) {
 				decompress(s2.value, 0, value, start, s2len);
@@ -1243,7 +1240,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			// Copy in s1 contents
 			start = index2 + 1 - s1len;
-				
+
 			// Check if the String is compressed
 			if (enableCompression && s1.coder == LATIN1) {
 				decompress(s1.value, 0, value, start, s1len);
@@ -1267,7 +1264,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			if (v1 < 0) {
 				helpers.putCharInArrayByIndex(value, index1--, (char) '-');
 			}
-				
+
 			if (enableCompression) {
 				initCompressionFlag();
 			}
@@ -1293,11 +1290,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Answers the character at the specified offset in this String.
 	 *
 	 * @param index
-	 *			  the zero-based index in this string
+	 *          the zero-based index in this string
 	 * @return the character at the index
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code index < 0} or {@code index >= length()}
+	 *          when {@code index < 0} or {@code index >= length()}
 	 */
 	public char charAt(int index) {
 		if (0 <= index && index < lengthInternal()) {
@@ -1321,7 +1318,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return helpers.getCharFromArrayByIndex(value, index);
 		}
 	}
-	
+
 	// This method is needed so idiom recognition properly recognizes idiomatic loops where we are doing an operation on
 	// the byte[] value of two Strings. In such cases we extract the String.value fields before entering the operation loop.
 	// However if chatAt is used inside the loop then the JIT will anchor the load of the value byte[] inside of the loop thus
@@ -1345,12 +1342,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * position in the specified string, or if the specified String is a prefix of the this String.
 	 *
 	 * @param string
-	 *			  the string to compare
+	 *          the string to compare
 	 * @return 0 if the strings are equal, a negative integer if this String is before the specified String, or a positive integer if this String is
-	 *			after the specified String
+	 *          after the specified String
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 */
 	public int compareTo(String string) {
 		String s1 = this;
@@ -1370,8 +1367,8 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		if (enableCompression && (null == compressionFlag || (s1.coder | s2.coder) == LATIN1)) {
 			while (o1 < end) {
-				int result = 
-					helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s1Value, o1++)) - 
+				int result =
+					helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s1Value, o1++)) -
 					helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s2Value, o2++));
 
 				if (result != 0) {
@@ -1380,8 +1377,8 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			}
 		} else {
 			while (o1 < end) {
-				int result = 
-					s1.charAtInternal(o1++, s1Value) - 
+				int result =
+					s1.charAtInternal(o1++, s1Value) -
 					s2.charAtInternal(o2++, s2Value);
 
 				if (result != 0) {
@@ -1414,7 +1411,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Compare the receiver to the specified String to determine the relative ordering when the case of the characters is ignored.
 	 *
 	 * @param string
-	 *			  a String
+	 *          a String
 	 * @return an {@code int < 0} if this String is less than the specified String, 0 if they are equal, and {@code > 0} if this String is greater
 	 */
 	public int compareToIgnoreCase(String string) {
@@ -1430,7 +1427,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		int o1 = 0;
 		int o2 = 0;
 
-		
 		byte[] s1Value = s1.value;
 		byte[] s2Value = s2.value;
 
@@ -1442,7 +1438,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				if (byteAtO1 == byteAtO2) {
 					continue;
 				}
-				
+
 				int result = compareValue(byteAtO1) - compareValue(byteAtO2);
 
 				if (result != 0) {
@@ -1473,11 +1469,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Concatenates this String and the specified string.
 	 *
 	 * @param string
-	 *			  the string to concatenate
+	 *          the string to concatenate
 	 * @return a String which is the concatenation of this String and the specified String
 	 *
 	 * @throws NullPointerException
-	 *				if string is null
+	 *          if string is null
 	 */
 	public String concat(String string) {
 		String s1 = this;
@@ -1525,11 +1521,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * effect on the String.
 	 *
 	 * @param data
-	 *			  the array of characters
+	 *          the array of characters
 	 * @return the new String
 	 *
 	 * @throws NullPointerException
-	 *				if data is null
+	 *          if data is null
 	 */
 	public static String copyValueOf(char[] data) {
 		return new String(data, 0, data.length);
@@ -1540,17 +1536,17 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * effect on the String.
 	 *
 	 * @param data
-	 *			  the array of characters
+	 *          the array of characters
 	 * @param start
-	 *			  the starting offset in the character array
+	 *          the starting offset in the character array
 	 * @param length
-	 *			  the number of characters to use
+	 *          the number of characters to use
 	 * @return the new String
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
-	 *				if data is null
+	 *          if data is null
 	 */
 	public static String copyValueOf(char[] data, int start, int length) {
 		return new String(data, start, length);
@@ -1560,11 +1556,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Compares the specified string to this String to determine if the specified string is a suffix.
 	 *
 	 * @param suffix
-	 *			  the string to look for
+	 *          the string to look for
 	 * @return true when the specified string is a suffix of this String, false otherwise
 	 *
 	 * @throws NullPointerException
-	 *				if suffix is null
+	 *          if suffix is null
 	 */
 	public boolean endsWith(String suffix) {
 		return regionMatches(lengthInternal() - suffix.lengthInternal(), suffix, 0, suffix.lengthInternal());
@@ -1575,7 +1571,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * the same order.
 	 *
 	 * @param object
-	 *			  the object to compare
+	 *          the object to compare
 	 * @return true if the specified object is equal to this String, false otherwise
 	 *
 	 * @see #hashCode()
@@ -1617,13 +1613,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					if (com.ibm.oti.vm.VM.J9_JIT_STRING_DEDUP_POLICY != com.ibm.oti.vm.VM.J9_JIT_STRING_DEDUP_POLICY_DISABLED) {
 						deduplicateStrings(s1, s1Value, s2, s2Value);
 					}
-			
+
 					return true;
 				}
 			}
 
 			return false;
-		}		
+		}
 	}
 
 	/**
@@ -1668,7 +1664,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Compares the specified String to this String ignoring the case of the characters and answer if they are equal.
 	 *
 	 * @param string
-	 *			  the string to compare
+	 *          the string to compare
 	 * @return true if the specified string is equal to this String, false otherwise
 	 */
 	public boolean equalsIgnoreCase(String string) {
@@ -1678,7 +1674,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if (s1 == s2) {
 			return true;
 		}
-		
+
 		if (s2 == null) {
 			return false;
 		}
@@ -1700,12 +1696,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		// Upper bound index on the last char to compare
 		int end = s1len;
-		
+
 		byte[] s1Value = s1.value;
 		byte[] s2Value = s2.value;
 
 		if (enableCompression && (null == compressionFlag || (s1.coder | s2.coder) == LATIN1)) {
-			// Compare the last chars. Under string compression, the compressible char set obeys 1-1 mapping for upper/lower 
+			// Compare the last chars. Under string compression, the compressible char set obeys 1-1 mapping for upper/lower
 			// case, converting to lower cases then compare should be sufficient.
 			byte byteAtO1Last = helpers.getByteFromArrayByIndex(s1Value, s1len - 1);
 			byte byteAtO2Last = helpers.getByteFromArrayByIndex(s2Value, s1len - 1);
@@ -1719,13 +1715,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				byte byteAtO1 = helpers.getByteFromArrayByIndex(s1Value, o1++);
 				byte byteAtO2 = helpers.getByteFromArrayByIndex(s2Value, o2++);
 
-				if (byteAtO1 != byteAtO2 && 
+				if (byteAtO1 != byteAtO2 &&
 						toUpperCase(helpers.byteToCharUnsigned(byteAtO1)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2))) {
 					return false;
 				}
 			}
 		} else {
-			// Compare the last chars. Under string compression, the compressible char set obeys 1-1 mapping for upper/lower 
+			// Compare the last chars. Under string compression, the compressible char set obeys 1-1 mapping for upper/lower
 			// case, converting to lower cases then compare should be sufficient.
 			char charAtO1Last = s1.charAtInternal(s1len - 1, s1Value);
 			char charAtO2Last = s2.charAtInternal(s1len - 1, s2Value);
@@ -1767,18 +1763,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts this String to a byte array, ignoring the high order bits of each character.
 	 *
 	 * @param start
-	 *			  the starting offset of characters to copy
+	 *          the starting offset of characters to copy
 	 * @param end
-	 *			  the ending offset of characters to copy
+	 *          the ending offset of characters to copy
 	 * @param data
-	 *			  the destination byte array
+	 *          the destination byte array
 	 * @param index
-	 *			  the starting offset in the byte array
+	 *          the starting offset in the byte array
 	 *
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code start < 0, end > length(), index < 0, end - start > data.length - index}
+	 *          when {@code start < 0, end > length(), index < 0, end - start > data.length - index}
 	 *
 	 * @deprecated Use getBytes() or getBytes(String)
 	 */
@@ -1795,29 +1791,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			throw new StringIndexOutOfBoundsException();
 		}
 	}
-	
-	void getBytes(int start, int end, char[] data, int index) {
-		if (0 <= start && start <= end && end <= lengthInternal()) {
-			// Check if the String is compressed
-			if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
-				compressedArrayCopy(value, start, data, index, end - start);
-			} else {
-				compress(value, start, data, index, end - start);
-			}
-		} else {
-			throw new StringIndexOutOfBoundsException();
-		}
-	}
 
 	/**
 	 * Converts this String to a byte encoding using the specified encoding.
 	 *
 	 * @param encoding
-	 *			  the encoding
+	 *          the encoding
 	 * @return the byte array encoding of this String
 	 *
 	 * @throws UnsupportedEncodingException
-	 *				when the encoding is not supported
+	 *          when the encoding is not supported
 	 *
 	 * @see String
 	 * @see UnsupportedEncodingException
@@ -1831,18 +1814,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Copies the specified characters in this String to the character array starting at the specified offset in the character array.
 	 *
 	 * @param start
-	 *			  the starting offset of characters to copy
+	 *          the starting offset of characters to copy
 	 * @param end
-	 *			  the ending offset of characters to copy
+	 *          the ending offset of characters to copy
 	 * @param data
-	 *			  the destination character array
+	 *          the destination character array
 	 * @param index
-	 *			  the starting offset in the character array
+	 *          the starting offset in the character array
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code start < 0, end > length(), start > end, index < 0, end - start > buffer.length - index}
+	 *          when {@code start < 0, end > length(), start > end, index < 0, end - start > buffer.length - index}
 	 * @throws NullPointerException
-	 *				when buffer is null
+	 *          when buffer is null
 	 */
 	public void getChars(int start, int end, char[] data, int index) {
 		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= (data.length - index))) {
@@ -1919,7 +1902,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * the end of this String.
 	 *
 	 * @param c
-	 *			  the character to find
+	 *          the character to find
 	 * @return the index in this String of the specified character, -1 if the character isn't found
 	 *
 	 * @see #lastIndexOf(int)
@@ -1936,9 +1919,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * the end of this String.
 	 *
 	 * @param c
-	 *			  the character to find
+	 *          the character to find
 	 * @param start
-	 *			  the starting offset
+	 *          the starting offset
 	 * @return the index in this String of the specified character, -1 if the character isn't found
 	 *
 	 * @see #lastIndexOf(int)
@@ -1988,11 +1971,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * of this String.
 	 *
 	 * @param string
-	 *			  the string to find
+	 *          the string to find
 	 * @return the index in this String of the specified string, -1 if the string isn't found
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 *
 	 * @see #lastIndexOf(int)
 	 * @see #lastIndexOf(int, int)
@@ -2009,13 +1992,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * end of this String.
 	 *
 	 * @param subString
-	 *			  the string to find
+	 *          the string to find
 	 * @param start
-	 *			  the starting offset
+	 *          the starting offset
 	 * @return the index in this String of the specified string, -1 if the string isn't found
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 *
 	 * @see #lastIndexOf(int)
 	 * @see #lastIndexOf(int, int)
@@ -2026,7 +2009,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if (subString.length() == 1) {
 			return indexOf(subString.charAtInternal(0), start);
 		}
-		
+
 		return indexOf(value, coder, lengthInternal(), subString, start);
 	}
 
@@ -2041,7 +2024,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			// of this string
 			return s2Length == 0 ? s1Length : -1;
 		}
-		
+
 		if (s2Length == 0) {
 			// At this point we know fromIndex < s1Length so there is a hit at fromIndex
 			return fromIndex;
@@ -2078,7 +2061,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * beginning of this String.
 	 *
 	 * @param c
-	 *			  the character to find
+	 *          the character to find
 	 * @return the index in this String of the specified character, -1 if the character isn't found
 	 *
 	 * @see #lastIndexOf(int)
@@ -2095,9 +2078,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * the beginning of this String.
 	 *
 	 * @param c
-	 *			  the character to find
+	 *          the character to find
 	 * @param start
-	 *			  the starting offset
+	 *          the starting offset
 	 * @return the index in this String of the specified character, -1 if the character isn't found
 	 *
 	 * @see #lastIndexOf(int)
@@ -2115,7 +2098,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			if (c >= 0 && c <= Character.MAX_VALUE) {
 				byte[] array = value;
-				
+
 				// Check if the String is compressed
 				if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
 					if (c <= 255) {
@@ -2157,11 +2140,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * of this String.
 	 *
 	 * @param string
-	 *			  the string to find
+	 *          the string to find
 	 * @return the index in this String of the specified string, -1 if the string isn't found
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 *
 	 * @see #lastIndexOf(int)
 	 * @see #lastIndexOf(int, int)
@@ -2177,13 +2160,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * beginning of this String.
 	 *
 	 * @param subString
-	 *			  the string to find
+	 *          the string to find
 	 * @param start
-	 *			  the starting offset
+	 *          the starting offset
 	 * @return the index in this String of the specified string, -1 if the string isn't found
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 *
 	 * @see #lastIndexOf(int)
 	 * @see #lastIndexOf(int, int)
@@ -2205,7 +2188,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if (fromIndex < 0) {
 			return -1;
 		}
-		
+
 		if (s2Length == 0) {
 			return fromIndex;
 		}
@@ -2236,7 +2219,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public int length() {
 		return lengthInternal();
 	}
-	
+
 	/**
 	 * Answers the size of this String. This method is to be used internally within the current package whenever
 	 * possible as the JIT compiler will take special precaution to avoid generating HCR guards for calls to this
@@ -2256,17 +2239,17 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Compares the specified string to this String and compares the specified range of characters to determine if they are the same.
 	 *
 	 * @param thisStart
-	 *			  the starting offset in this String
+	 *          the starting offset in this String
 	 * @param string
-	 *			  the string to compare
+	 *          the string to compare
 	 * @param start
-	 *			  the starting offset in string
+	 *          the starting offset in string
 	 * @param length
-	 *			  the number of characters to compare
+	 *          the number of characters to compare
 	 * @return true if the ranges of characters is equal, false otherwise
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 */
 	public boolean regionMatches(int thisStart, String string, int start, int length) {
 		string.getClass(); // Implicit null check
@@ -2326,19 +2309,19 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * is true, the case of the characters is ignored during the comparison.
 	 *
 	 * @param ignoreCase
-	 *			  specifies if case should be ignored
+	 *          specifies if case should be ignored
 	 * @param thisStart
-	 *			  the starting offset in this String
+	 *          the starting offset in this String
 	 * @param string
-	 *			  the string to compare
+	 *          the string to compare
 	 * @param start
-	 *			  the starting offset in string
+	 *          the starting offset in string
 	 * @param length
-	 *			  the number of characters to compare
+	 *          the number of characters to compare
 	 * @return true if the ranges of characters is equal, false otherwise
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 */
 	public boolean regionMatches(boolean ignoreCase, int thisStart, String string, int start, int length) {
 		if (!ignoreCase) {
@@ -2405,9 +2388,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Replaces occurrences of the specified character with another character.
 	 *
 	 * @param oldChar
-	 *			  the character to replace
+	 *          the character to replace
 	 * @param newChar
-	 *			  the replacement character
+	 *          the replacement character
 	 * @return a String with occurrences of oldChar replaced by newChar
 	 */
 	public String replace(char oldChar, char newChar) {
@@ -2444,7 +2427,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			}
 		} else {
 			byte[] buffer = new byte[len * 2];
-			
+
 			decompressedArrayCopy(value, 0, buffer, 0, len);
 
 			do {
@@ -2459,11 +2442,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Compares the specified string to this String to determine if the specified string is a prefix.
 	 *
 	 * @param prefix
-	 *			  the string to look for
+	 *          the string to look for
 	 * @return true when the specified string is a prefix of this String, false otherwise
 	 *
 	 * @throws NullPointerException
-	 *				when prefix is null
+	 *          when prefix is null
 	 */
 	public boolean startsWith(String prefix) {
 		return startsWith(prefix, 0);
@@ -2473,13 +2456,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Compares the specified string to this String, starting at the specified offset, to determine if the specified string is a prefix.
 	 *
 	 * @param prefix
-	 *			  the string to look for
+	 *          the string to look for
 	 * @param start
-	 *			  the starting offset
+	 *          the starting offset
 	 * @return true when the specified string occurs in this String at the specified offset, false otherwise
 	 *
 	 * @throws NullPointerException
-	 *				when prefix is null
+	 *          when prefix is null
 	 */
 	public boolean startsWith(String prefix, int start) {
 		if (prefix.length() == 1) {
@@ -2490,39 +2473,39 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 		return regionMatches(start, prefix, 0, prefix.lengthInternal());
 	}
-	
+
 /*[IF Java11]*/
 	/**
 	 * Strip leading and trailing white space from a string.
-	 * 
+	 *
 	 * @return a substring of the original containing no leading
 	 * or trailing white space
-	 * 
+	 *
 	 * @since 11
 	 */
 	public String strip() {
 		String result;
-		
+
 		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
 			result = StringLatin1.strip(value);
 		} else {
 			result = StringUTF16.strip(value);
 		}
-		
+
 		return (result == null) ? this : result;
 	}
-	
+
 	/**
 	 * Strip leading white space from a string.
-	 * 
+	 *
 	 * @return a substring of the original containing no leading
 	 * white space
-	 * 
+	 *
 	 * @since 11
 	 */
 	public String stripLeading() {
 		String result;
-		
+
 		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
 			result = StringLatin1.stripLeading(value);
 		} else {
@@ -2531,33 +2514,33 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		return (result == null) ? this : result;
 	}
-	
+
 	/**
 	 * Strip trailing white space from a string.
-	 * 
+	 *
 	 * @return a substring of the original containing no trailing
 	 * white space
-	 * 
+	 *
 	 * @since 11
 	 */
 	public String stripTrailing() {
 		String result;
-		
+
 		if (enableCompression && (null == compressionFlag || coder == LATIN1)) {
 			result = StringLatin1.stripTrailing(value);
 		} else {
 			result = StringUTF16.stripTrailing(value);
 		}
-		
+
 		return (result == null) ? this : result;
 	}
 
 	/**
-	 * Determine if the string contains only white space characters. 
-	 * 
+	 * Determine if the string contains only white space characters.
+	 *
 	 * @return true if the string is empty or contains only white space
 	 * characters, otherwise false.
-	 * 
+	 *
 	 * @since 11
 	 */
 	public boolean isBlank() {
@@ -2568,18 +2551,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		} else {
 			index = StringUTF16.indexOfNonWhitespace(value);
 		}
-		
+
 		return index >= lengthInternal();
 	}
 
 	/**
 	 * Returns a stream of substrings extracted from this string partitioned by line terminators.
-	 * 
+	 *
 	 * Line terminators recognized are line feed "\n", carriage return "\r", and carriage return
 	 * followed by line feed "\r\n".
-	 * 
-	 * @return the stream of this string's substrings partitioned by line terminators 
-	 * 
+	 *
+	 * @return the stream of this string's substrings partitioned by line terminators
+	 *
 	 * @since 11
 	 */
 	public Stream<String> lines() {
@@ -2603,11 +2586,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Copies a range of characters into a new String.
 	 *
 	 * @param start
-	 *			  the offset of the first character
+	 *          the offset of the first character
 	 * @return a new String containing the characters from start to the end of the string
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code start < 0} or {@code start > length()}
+	 *          when {@code start < 0} or {@code start > length()}
 	 */
 	public String substring(int start) {
 		if (start == 0) {
@@ -2634,13 +2617,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Copies a range of characters.
 	 *
 	 * @param start
-	 *			  the offset of the first character
+	 *          the offset of the first character
 	 * @param end
-	 *			  the offset one past the last character
+	 *          the offset one past the last character
 	 * @return a String containing the characters from start to end - 1
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code start < 0, start > end} or {@code end > length()}
+	 *          when {@code start < 0, start > end} or {@code end > length()}
 	 */
 	public String substring(int start, int end) {
 		int len = lengthInternal();
@@ -2720,7 +2703,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the characters in this String to lowercase, using the specified Locale.
 	 *
 	 * @param locale
-	 *			  the Locale
+	 *          the Locale
 	 * @return a String containing the lowercase characters equivalent to the characters in this String
 	 */
 	public String toLowerCase(Locale locale) {
@@ -2778,7 +2761,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the characters in this String to uppercase, using the specified Locale.
 	 *
 	 * @param locale
-	 *			  the Locale
+	 *          the Locale
 	 * @return a String containing the uppercase characters equivalent to the characters in this String
 	 */
 	public String toUpperCase(Locale locale) {
@@ -2859,11 +2842,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * effect on the String.
 	 *
 	 * @param data
-	 *			  the array of characters
+	 *          the array of characters
 	 * @return the String
 	 *
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 */
 	public static String valueOf(char[] data) {
 		return new String(data, 0, data.length);
@@ -2874,17 +2857,17 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * effect on the String.
 	 *
 	 * @param data
-	 *			  the array of characters
+	 *          the array of characters
 	 * @param start
-	 *			  the starting offset in the character array
+	 *          the starting offset in the character array
 	 * @param length
-	 *			  the number of characters to use
+	 *          the number of characters to use
 	 * @return the String
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 */
 	public static String valueOf(char[] data, int start, int length) {
 		return new String(data, start, length);
@@ -2894,24 +2877,24 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the specified character to its string representation.
 	 *
 	 * @param value
-	 *			  the character
+	 *          the character
 	 * @return the character converted to a string
 	 */
 	public static String valueOf(char value) {
 		String string;
 
 		if (value <= 255) {
-		   if (enableCompression) {
-		       string = new String(compressedAsciiTable[value], 0, 1, true);
-		   } else {
-		       string = new String(decompressedAsciiTable[value], 0, 1, false);
-		   }
+			if (enableCompression) {
+				string = new String(compressedAsciiTable[value], 0, 1, true);
+			} else {
+				string = new String(decompressedAsciiTable[value], 0, 1, false);
+			}
 		} else {
 			byte[] buffer = new byte[2];
-			
+
 			helpers.putCharInArrayByIndex(buffer, 0, value);
-			
-		   string = new String(buffer, 0, 1, false);
+
+			string = new String(buffer, 0, 1, false);
 		}
 
 		return string;
@@ -2921,7 +2904,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the specified double to its string representation.
 	 *
 	 * @param value
-	 *			  the double
+	 *          the double
 	 * @return the double converted to a string
 	 */
 	public static String valueOf(double value) {
@@ -2932,7 +2915,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the specified float to its string representation.
 	 *
 	 * @param value
-	 *			  the float
+	 *          the float
 	 * @return the float converted to a string
 	 */
 	public static String valueOf(float value) {
@@ -2943,7 +2926,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the specified integer to its string representation.
 	 *
 	 * @param value
-	 *			  the integer
+	 *          the integer
 	 * @return the integer converted to a string
 	 */
 	public static String valueOf(int value) {
@@ -2954,7 +2937,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the specified long to its string representation.
 	 *
 	 * @param value
-	 *			  the long
+	 *          the long
 	 * @return the long converted to a string
 	 */
 	public static String valueOf(long value) {
@@ -2966,7 +2949,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * {@code toString()} to get the string representation.
 	 *
 	 * @param value
-	 *			  the object
+	 *          the object
 	 * @return the object converted to a string
 	 */
 	public static String valueOf(Object value) {
@@ -2978,7 +2961,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * {@code "false"}.
 	 *
 	 * @param value
-	 *			  the boolean
+	 *          the boolean
 	 * @return the boolean converted to a string
 	 */
 	public static String valueOf(boolean value) {
@@ -2989,11 +2972,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Answers whether the characters in the StringBuffer buffer are the same as those in this String.
 	 *
 	 * @param buffer
-	 *			  the StringBuffer to compare this String to
+	 *          the StringBuffer to compare this String to
 	 * @return true when the characters in buffer are identical to those in this String. If they are not, false will be returned.
 	 *
 	 * @throws NullPointerException
-	 *				when buffer is null
+	 *          when buffer is null
 	 *
 	 * @since 1.4
 	 */
@@ -3005,7 +2988,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			if (s1Length != sbLength) {
 				return false;
 			}
-			
+
 			byte[] s1Value = value;
 			byte[] sbValue = buffer.getValue();
 
@@ -3034,13 +3017,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Determines whether a this String matches a given regular expression.
 	 *
 	 * @param expr
-	 *			  the regular expression to be matched
+	 *          the regular expression to be matched
 	 * @return true if the expression matches, otherwise false
 	 *
 	 * @throws PatternSyntaxException
-	 *				if the syntax of the supplied regular expression is not valid
+	 *          if the syntax of the supplied regular expression is not valid
 	 * @throws NullPointerException
-	 *				if expr is null
+	 *          if expr is null
 	 *
 	 * @since 1.4
 	 */
@@ -3051,14 +3034,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	/**
 	 * Replace any substrings within this String that match the supplied regular expression expr, with the String substitute.
 	 *
-	 * @param regex 
-	 *			  the regular expression to match
+	 * @param regex
+	 *          the regular expression to match
 	 * @param substitute
-	 *			  the string to replace the matching substring with
+	 *          the string to replace the matching substring with
 	 * @return the new string
 	 *
 	 * @throws NullPointerException
-	 *				if expr is null
+	 *          if expr is null
 	 *
 	 * @since 1.4
 	 */
@@ -3117,13 +3100,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Replace any substrings within this String that match the supplied regular expression expr, with the String substitute.
 	 *
 	 * @param expr
-	 *			  the regular expression to match
+	 *          the regular expression to match
 	 * @param substitute
-	 *			  the string to replace the matching substring with
+	 *          the string to replace the matching substring with
 	 * @return the new string
 	 *
 	 * @throws NullPointerException
-	 *				if expr is null
+	 *          if expr is null
 	 *
 	 * @since 1.4
 	 */
@@ -3137,11 +3120,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *
 	 *
 	 * @param regex
-	 *			  Regular expression that is used as a delimiter
+	 *          Regular expression that is used as a delimiter
 	 * @return The array of strings which are split around the regex
 	 *
 	 * @throws PatternSyntaxException
-	 *				if the syntax of regex is invalid
+	 *          if the syntax of regex is invalid
 	 *
 	 * @since 1.4
 	 */
@@ -3190,9 +3173,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * If max is negative or zero, then regex can be applied to this string as many times as
 	 * possible and there is no size limit in the returned array.
 	 * If max is 0, all the empty string(s) at the end of the returned array will be discarded.
-	 * 
-	 * 
-	 * 
+	 *
 	 * @param regex Regular expression that is used as a delimiter
 	 * @param max The threshold of the returned array
 	 * @return The array of strings which are split around the regex
@@ -3285,14 +3266,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Has the same result as the substring function, but is present so that String may implement the CharSequence interface.
 	 *
 	 * @param start
-	 *			  the offset the first character
+	 *          the offset the first character
 	 * @param end
-	 *			  the offset of one past the last character to include
+	 *          the offset of one past the last character to include
 	 *
 	 * @return the subsequence requested
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when start or end is less than zero, start is greater than end, or end is greater than the length of the String.
+	 *          when start or end is less than zero, start is greater than end, or end is greater than the length of the String.
 	 *
 	 * @see java.lang.CharSequence#subSequence(int, int)
 	 *
@@ -3304,11 +3285,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 	/**
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param start
-	 *			  the starting offset in the byte array
+	 *          the starting offset in the byte array
 	 * @param length
-	 *			  the number of bytes to convert
+	 *          the number of bytes to convert
 	 *
 	 * @since 1.5
 	 */
@@ -3343,7 +3324,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Creates a string from the contents of a StringBuilder.
 	 *
 	 * @param builder
-	 *			  the StringBuilder
+	 *          the StringBuilder
 	 *
 	 * @since 1.5
 	 */
@@ -3355,7 +3336,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Returns the Unicode character at the given point.
 	 *
 	 * @param index
-	 *			  the character index
+	 *          the character index
 	 * @return the Unicode character value at the index
 	 *
 	 * @since 1.5
@@ -3389,7 +3370,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Returns the Unicode character before the given point.
 	 *
 	 * @param index
-	 *			  the character index
+	 *          the character index
 	 * @return the Unicode character value before the index
 	 *
 	 * @since 1.5
@@ -3423,9 +3404,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Returns the total Unicode values in the specified range.
 	 *
 	 * @param start
-	 *			  first index
+	 *          first index
 	 * @param end
-	 *			  last index
+	 *          last index
 	 * @return the total Unicode values
 	 *
 	 * @since 1.5
@@ -3461,9 +3442,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Returns the index of the code point that was offset by codePointCount.
 	 *
 	 * @param start
-	 *			  the position to offset
+	 *          the position to offset
 	 * @param codePointCount
-	 *			  the code point count
+	 *          the code point count
 	 * @return the offset index
 	 *
 	 * @since 1.5
@@ -3527,7 +3508,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Compares the content of the character sequence to this String
 	 *
 	 * @param sequence
-	 *			  the character sequence
+	 *          the character sequence
 	 * @return {@code true} if the content of this String is equal to the character sequence, {@code false} otherwise.
 	 *
 	 * @since 1.5
@@ -3550,7 +3531,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 	/**
 	 * @param sequence
-	 *			  the sequence to compare to
+	 *          the sequence to compare to
 	 * @return {@code true} if this String contains the sequence, {@code false} otherwise.
 	 *
 	 * @since 1.5
@@ -3599,9 +3580,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 	/**
 	 * @param sequence1
-	 *			  the old character sequence
+	 *          the old character sequence
 	 * @param sequence2
-	 *			  the new character sequence
+	 *          the new character sequence
 	 * @return the new String
 	 *
 	 * @since 1.5
@@ -3676,9 +3657,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Format the receiver using the specified format and args.
 	 *
 	 * @param format
-	 *			  the format to use
+	 *          the format to use
 	 * @param args
-	 *			  the format arguments to use
+	 *          the format arguments to use
 	 *
 	 * @return the formatted result
 	 *
@@ -3692,11 +3673,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Format the receiver using the specified local, format and args.
 	 *
 	 * @param locale
-	 *			  the locale used to create the Formatter, may be null
+	 *          the locale used to create the Formatter, may be null
 	 * @param format
-	 *			  the format to use
+	 *          the format to use
 	 * @param args
-	 *			  the format arguments to use
+	 *          the format arguments to use
 	 *
 	 * @return the formatted result
 	 *
@@ -3725,12 +3706,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the byte array to a String using the specified Charset.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param charset
-	 *			  the Charset to use
+	 *          the Charset to use
 	 *
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @since 1.6
 	 *
@@ -3745,18 +3726,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the byte array to a String using the specified Charset.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param start
-	 *			  the starting offset in the byte array
+	 *          the starting offset in the byte array
 	 * @param length
-	 *			  the number of bytes to convert
+	 *          the number of bytes to convert
 	 * @param charset
-	 *			  the Charset to use
+	 *          the Charset to use
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @since 1.6
 	 *
@@ -3770,7 +3751,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		if (start >= 0 && 0 <= length && length <= data.length - start) {
 			StringCoding.Result scResult = StringCoding.decode(charset, data, start, length);
-			
+
 			value = scResult.value;
 			coder = scResult.coder;
 
@@ -3786,7 +3767,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts this String to a byte encoding using the specified Charset.
 	 *
 	 * @param charset
-	 *			  the Charset to use
+	 *          the Charset to use
 	 * @return the byte array encoding of this String
 	 *
 	 * @since 1.6
@@ -3799,12 +3780,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Creates a new String by putting each element together joined by the delimiter. If an element is null, then "null" is used as string to join.
 	 *
 	 * @param delimiter
-	 *			  Used as joiner to put elements together
+	 *          Used as joiner to put elements together
 	 * @param elements
-	 *			  Elements to be joined
+	 *          Elements to be joined
 	 * @return string of joined elements by delimiter
 	 * @throws NullPointerException
-	 *				if one of the arguments is null
+	 *          if one of the arguments is null
 	 *
 	 */
 	public static String join(CharSequence delimiter, CharSequence... elements) {
@@ -3821,12 +3802,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Creates a new String by putting each element together joined by the delimiter. If an element is null, then "null" is used as string to join.
 	 *
 	 * @param delimiter
-	 *			  Used as joiner to put elements together
+	 *          Used as joiner to put elements together
 	 * @param elements
-	 *			  Elements to be joined
+	 *          Elements to be joined
 	 * @return string of joined elements by delimiter
 	 * @throws NullPointerException
-	 *				if one of the arguments is null
+	 *          if one of the arguments is null
 	 *
 	 */
 	public static String join(CharSequence delimiter, Iterable<? extends CharSequence> elements) {
@@ -3885,19 +3866,19 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	/**
 	 * Returns a string object containing the character (Unicode code point)
 	 * specified.
-	 * 
+	 *
 	 * @param codePoint
-	 *            a Unicode code point.
+	 *          a Unicode code point.
 	 * @return a string containing the character (Unicode code point) supplied.
 	 * @throws IllegalArgumentException
-	 *             if the codePoint is not a valid Unicode code point.
+	 *          if the codePoint is not a valid Unicode code point.
 	 * @since 11
 	 */
 	static String valueOfCodePoint(int codePoint) {
 		String string;
 		if ((codePoint < Character.MIN_CODE_POINT) || (codePoint > Character.MAX_CODE_POINT)) {
 			/*[MSG "K0800", "Invalid Unicode code point - {0}"]*/
-			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0800", Integer.toString(codePoint)));	//$NON-NLS-1$
+			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0800", Integer.toString(codePoint)));   //$NON-NLS-1$
 		} else if (codePoint <= 255) {
 			if (enableCompression) {
 				string = new String(compressedAsciiTable[codePoint], LATIN1);
@@ -3919,20 +3900,20 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 	/**
 	 * Returns a string whose value is the concatenation of this string repeated
-	 * count times. 
-	 * 
+	 * count times.
+	 *
 	 * @param count
-	 *            a positive integer indicating the number of times to be repeated
+	 *          a positive integer indicating the number of times to be repeated
 	 * @return a string whose value is the concatenation of this string repeated count times
 	 * @throws IllegalArgumentException
-	 *             if the count is negative
+	 *          if the count is negative
 	 * @since 11
 	 */
 	public String repeat(int count) {
 		if (count < 0) {
 			throw new IllegalArgumentException();
 		} else if (count == 0 || isEmpty()) {
-			return "";
+			return ""; //$NON-NLS-1$
 		} else if (count == 1) {
 			return this;
 		}
@@ -3944,7 +3925,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			byte[] buffer = new byte[repeatlen];
 
 			for (int i = 0; i < count; i++) {
-				compressedArrayCopy(value, 0, buffer, i * length, length);				
+				compressedArrayCopy(value, 0, buffer, i * length, length);
 			}
 
 			return new String(buffer, LATIN1);
@@ -3952,9 +3933,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			byte[] buffer = new byte[repeatlen * 2];
 
 			for (int i = 0; i < count; i++) {
-				decompressedArrayCopy(value, 0, buffer, i * length, length);				
+				decompressedArrayCopy(value, 0, buffer, i * length, length);
 			}
-				
+
 			return new String(buffer, UTF16);
 		}
 	}
@@ -3969,25 +3950,24 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Determines whether String compression is enabled.
 	 */
 	static final boolean enableCompression = com.ibm.oti.vm.VM.J9_STRING_COMPRESSION_ENABLED;
-	
-	
+
 	/**
 	 * CaseInsensitiveComparator compares Strings ignoring the case of the characters.
 	 */
 	private static final class CaseInsensitiveComparator implements Comparator<String>, Serializable {
 		static final long serialVersionUID = 8575799808933029326L;
-		
+
 		/**
 		 * Compare the two objects to determine the relative ordering.
 		 *
 		 * @param o1
-		 *			  an Object to compare
+		 *            an Object to compare
 		 * @param o2
-		 *			  an Object to compare
+		 *            an Object to compare
 		 * @return an int < 0 if object1 is less than object2, 0 if they are equal, and > 0 if object1 is greater
 		 *
 		 * @exception ClassCastException
-		 *					when objects are not the correct type
+		 *                  when objects are not the correct type
 		 */
 		public int compare(String o1, String o2) {
 			return o1.compareToIgnoreCase(o2);
@@ -3998,14 +3978,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * A Comparator which compares Strings ignoring the case of the characters.
 	 */
 	public static final Comparator<String> CASE_INSENSITIVE_ORDER = new CaseInsensitiveComparator();
-	
+
 	// Used to represent the value of an empty String
 	private static final char[] emptyValue = new char[0];
-	
+
 	// Used to extract the value of a single ASCII character String by the integral value of the respective character as
 	// an index into this table
 	private static final char[][] compressedAsciiTable;
-	
+
 	private static final char[][] decompressedAsciiTable;
 
 	// Used to access compression related helper methods
@@ -4015,7 +3995,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		private static final long serialVersionUID = 1346155847239551492L;
 	}
 
-	// Singleton used by all String instances to indicate a non-compressed string has been 
+	// Singleton used by all String instances to indicate a non-compressed string has been
 	// allocated. JIT attempts to fold away the null check involving this static if the
 	// StringCompressionFlag class has not been initialized and patches the code to bring back
 	// the null check if a non-compressed String is constructed.
@@ -4039,9 +4019,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			}
 		}
 	}
-	
+
 	/**
-	 * This is a System property to enable sharing of the underlying value array in {@link #String.substring(int)} and 
+	 * This is a System property to enable sharing of the underlying value array in {@link #String.substring(int)} and
 	 * {@link #String.substring(int, int)} if the offset is zero.
 	 */
 	static boolean enableSharingInSubstringWhenOffsetIsZero;
@@ -4057,19 +4037,19 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		for (int i = 0; i < compressedAsciiTable.length; ++i) {
 			char[] asciiValue = new char[1];
-			
+
 			helpers.putByteInArrayByIndex(asciiValue, 0, (byte) i);
-			
+
 			compressedAsciiTable[i] = asciiValue;
 		}
-		
+
 		decompressedAsciiTable = new char[256][];
-		
+
 		for (int i = 0; i < decompressedAsciiTable.length; ++i) {
 			char[] asciiValue = new char[1];
-			
+
 			helpers.putCharInArrayByIndex(asciiValue, 0, (char) i);
-			
+
 			decompressedAsciiTable[i] = asciiValue;
 		}
 	}
@@ -4089,7 +4069,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		return true;
 	}
-	
+
 	static void compress(byte[] array1, int start1, byte[] array2, int start2, int length) {
 		for (int i = 0; i < length; ++i) {
 			helpers.putByteInArrayByIndex(array2, start2 + i, (byte) helpers.getCharFromArrayByIndex(array1, start1 + i));
@@ -4101,7 +4081,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			helpers.putByteInArrayByIndex(array2, start2 + i, (byte) helpers.getCharFromArrayByIndex(array1, start1 + i));
 		}
 	}
-	
+
 	static void compress(byte[] array1, int start1, char[] array2, int start2, int length) {
 		for (int i = 0; i < length; ++i) {
 			helpers.putByteInArrayByIndex(array2, start2 + i, (byte) helpers.getCharFromArrayByIndex(array1, start1 + i));
@@ -4113,7 +4093,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			helpers.putByteInArrayByIndex(array2, start2 + i, (byte) helpers.getCharFromArrayByIndex(array1, start1 + i));
 		}
 	}
-	
+
 	static void decompress(byte[] array1, int start1, byte[] array2, int start2, int length) {
 		for (int i = 0; i < length; ++i) {
 			helpers.putCharInArrayByIndex(array2, start2 + i, helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(array1, start1 + i)));
@@ -4125,7 +4105,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			helpers.putCharInArrayByIndex(array2, start2 + i, helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(array1, start1 + i)));
 		}
 	}
-	
+
 	static void decompress(byte[] array1, int start1, char[] array2, int start2, int length) {
 		for (int i = 0; i < length; ++i) {
 			helpers.putCharInArrayByIndex(array2, start2 + i, helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(array1, start1 + i)));
@@ -4137,7 +4117,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			helpers.putCharInArrayByIndex(array2, start2 + i, helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(array1, start1 + i)));
 		}
 	}
-	
+
 	static void compressedArrayCopy(byte[] array1, int start1, byte[] array2, int start2, int length) {
 		if (array1 == array2 && start1 < start2) {
 			for (int i = length - 1; i >= 0; --i) {
@@ -4161,7 +4141,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			helpers.putByteInArrayByIndex(array2, start2 + i, helpers.getByteFromArrayByIndex(array1, start1 + i));
 		}
 	}
-	
+
 	static void compressedArrayCopy(char[] array1, int start1, char[] array2, int start2, int length) {
 		if (array1 == array2 && start1 < start2) {
 			for (int i = length - 1; i >= 0; --i) {
@@ -4173,12 +4153,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			}
 		}
 	}
-	
 
 	static void decompressedArrayCopy(char[] array1, int start1, char[] array2, int start2, int length) {
 		System.arraycopy(array1, start1, array2, start2, length);
 	}
-	
+
 	boolean isCompressed() {
 		// Check if the String is compressed
 		if (enableCompression && (null == compressionFlag || count >= 0)) {
@@ -4187,7 +4166,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			return false;
 		}
 	}
-	
 
 	/**
 	 * Answers an empty string.
@@ -4202,10 +4180,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * defined, the default encoding is ISO8859_1 (ISO-Latin-1). If 8859-1 is not available, an ASCII encoding is used.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 *
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @see #getBytes()
 	 * @see #getBytes(int, int, byte[], int)
@@ -4219,7 +4197,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @see #valueOf(int)
 	 * @see #valueOf(long)
 	 * @see #valueOf(Object)
-	 *
 	 */
 	public String(byte[] data) {
 		this(data, 0, data.length);
@@ -4229,12 +4206,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the byte array to a String, setting the high byte of every character to the specified value.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param high
-	 *			  the high byte to use
+	 *          the high byte to use
 	 *
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @deprecated Use String(byte[]) or String(byte[], String) instead
 	 */
@@ -4248,16 +4225,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * defined, the default encoding is ISO8859_1 (ISO-Latin-1). If 8859-1 is not available, an ASCII encoding is used.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param start
-	 *			  the starting offset in the byte array
+	 *          the starting offset in the byte array
 	 * @param length
-	 *			  the number of bytes to convert
+	 *          the number of bytes to convert
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @see #getBytes()
 	 * @see #getBytes(int, int, byte[], int)
@@ -4271,24 +4248,23 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @see #valueOf(int)
 	 * @see #valueOf(long)
 	 * @see #valueOf(Object)
-	 *
 	 */
 	public String(byte[] data, int start, int length) {
 		data.getClass(); // Implicit null check
-		
+
 		if (start >= 0 && 0 <= length && length <= data.length - start) {
 			char[] buffer = StringCoding.decode(data, start, length);
-			
+
 			if (enableCompression) {
 				if (compressible(buffer, 0, buffer.length)) {
 					value = new char[(buffer.length + 1) / 2];
 					count = buffer.length;
-					
+
 					compress(buffer, 0, value, 0, buffer.length);
 				} else {
 					value = buffer;
 					count = buffer.length | uncompressedBit;
-					
+
 					initCompressionFlag();
 				}
 			} else {
@@ -4304,18 +4280,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the byte array to a String, setting the high byte of every character to the specified value.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param high
-	 *			  the high byte to use
+	 *          the high byte to use
 	 * @param start
-	 *			  the starting offset in the byte array
+	 *          the starting offset in the byte array
 	 * @param length
-	 *			  the number of bytes to convert
+	 *          the number of bytes to convert
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @deprecated Use String(byte[], int, int) instead
 	 */
@@ -4328,12 +4304,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				if (high == 0) {
 					value = new char[(length + 1) / 2];
 					count = length;
-					
+
 					compressedArrayCopy(data, start, value, 0, length);
 				} else {
 					value = new char[length];
 					count = length | uncompressedBit;
-					
+
 					high <<= 8;
 
 					for (int i = 0; i < length; ++i) {
@@ -4342,7 +4318,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 					initCompressionFlag();
 				}
-				
+
 			} else {
 				value = new char[length];
 				count = length;
@@ -4362,20 +4338,20 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the byte array to a String using the specified encoding.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param start
-	 *			  the starting offset in the byte array
+	 *          the starting offset in the byte array
 	 * @param length
-	 *			  the number of bytes to convert
+	 *          the number of bytes to convert
 	 * @param encoding
-	 *			  the encoding
+	 *          the encoding
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws UnsupportedEncodingException
-	 *				when encoding is not supported
+	 *          when encoding is not supported
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @see #getBytes()
 	 * @see #getBytes(int, int, byte[], int)
@@ -4393,22 +4369,22 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	public String(byte[] data, int start, int length, final String encoding) throws UnsupportedEncodingException {
 		encoding.getClass(); // Implicit null check
-		
+
 		data.getClass(); // Implicit null check
 
 		if (start >= 0 && 0 <= length && length <= data.length - start) {
 			char[] buffer = StringCoding.decode(encoding, data, start, length);
-			
+
 			if (enableCompression) {
 				if (compressible(buffer, 0, buffer.length)) {
 					value = new char[(buffer.length + 1) / 2];
 					count = buffer.length;
-					
+
 					compress(buffer, 0, value, 0, buffer.length);
 				} else {
 					value = buffer;
 					count = buffer.length | uncompressedBit;
-					
+
 					initCompressionFlag();
 				}
 			} else {
@@ -4424,14 +4400,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts the byte array to a String using the specified encoding.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param encoding
-	 *			  the encoding
+	 *          the encoding
 	 *
 	 * @throws UnsupportedEncodingException
-	 *				when encoding is not supported
+	 *          when encoding is not supported
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @see #getBytes()
 	 * @see #getBytes(int, int, byte[], int)
@@ -4450,14 +4426,14 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public String(byte[] data, String encoding) throws UnsupportedEncodingException {
 		this(data, 0, data.length, encoding);
 	}
-	
+
 	private String(String s, char c) {
 		if (s == null) {
 			s = "null"; //$NON-NLS-1$
 		}
-		
+
 		int slen = s.lengthInternal();
-		
+
 		int concatlen = slen + 1;
 
 		if (enableCompression) {
@@ -4465,26 +4441,26 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			if ((null == compressionFlag || s.count >= 0) && c <= 255) {
 				value = new char[(concatlen + 1) / 2];
 				count = concatlen;
-				
+
 				compressedArrayCopy(s.value, 0, value, 0, slen);
-				
+
 				helpers.putByteInArrayByIndex(value, slen, (byte) c);
 			} else {
 				value = new char[concatlen];
 				count = (concatlen) | uncompressedBit;
-				
+
 				System.arraycopy(s.value, 0, value, 0, slen);
-				
+
 				value[slen] = c;
-				
+
 				initCompressionFlag();
 			}
 		} else {
 			value = new char[concatlen];
 			count = concatlen;
-			
+
 			System.arraycopy(s.value, 0, value, 0, slen);
-			
+
 			value[slen] = c;
 		}
 	}
@@ -4494,10 +4470,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * no effect on the String.
 	 *
 	 * @param data
-	 *			  the array of characters
+	 *          the array of characters
 	 *
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 */
 	public String(char[] data) {
 		this(data, 0, data.length);
@@ -4507,27 +4483,27 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Initializes this String to use the specified character array. The character array should not be modified after the String is created.
 	 *
 	 * @param data
-	 *			  a non-null array of characters
+	 *          a non-null array of characters
 	 */
 	String(char[] data, boolean ignore) {
 		if (enableCompression) {
 			if (compressible(data, 0, data.length)) {
 				value = new char[(data.length + 1) / 2];
 				count = data.length;
-				
+
 				compress(data, 0, value, 0, data.length);
 			} else {
 				value = new char[data.length];
 				count = data.length | uncompressedBit;
-				
+
 				System.arraycopy(data, 0, value, 0, data.length);
-				
+
 				initCompressionFlag();
 			}
 		} else {
 			value = new char[data.length];
 			count = data.length;
-			
+
 			System.arraycopy(data, 0, value, 0, data.length);
 		}
 	}
@@ -4537,16 +4513,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * no effect on the String.
 	 *
 	 * @param data
-	 *			  the array of characters
+	 *          the array of characters
 	 * @param start
-	 *			  the starting offset in the character array
+	 *          the starting offset in the character array
 	 * @param length
-	 *			  the number of characters to use
+	 *          the number of characters to use
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 */
 	public String(char[] data, int start, int length) {
 		if (start >= 0 && 0 <= length && length <= data.length - start) {
@@ -4554,20 +4530,20 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				if (compressible(data, start, length)) {
 					value = new char[(length + 1) / 2];
 					count = length;
-					
+
 					compress(data, start, value, 0, length);
 				} else {
 					value = new char[length];
 					count = length | uncompressedBit;
-					
+
 					System.arraycopy(data, start, value, 0, length);
-					
+
 					initCompressionFlag();
 				}
 			} else {
 				value = new char[length];
 				count = length;
-				
+
 				System.arraycopy(data, start, value, 0, length);
 			}
 		} else {
@@ -4583,25 +4559,25 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			} else if (length == 1) {
 				if (compressed) {
 					char theChar = helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(data, start));
-					
+
 					value = compressedAsciiTable[theChar];
 					count = 1;
-					
+
 					hashCode = theChar;
 				} else {
-					
+
 					char theChar = data[start];
-					
+
 					if (theChar <= 255) {
 						value = decompressedAsciiTable[theChar];
 					} else {
 						value = new char[] { theChar };
 					}
-					
+
 					count = 1 | uncompressedBit;
-					
+
 					hashCode = theChar;
-					
+
 					initCompressionFlag();
 				}
 			} else {
@@ -4612,7 +4588,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					} else {
 						value = new char[(length + 1) / 2];
 						count = length;
-						
+
 						compressedArrayCopy(data, start, value, 0, length);
 					}
 				} else {
@@ -4622,7 +4598,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					} else {
 						value = new char[length];
 						count = length | uncompressedBit;
-						
+
 						System.arraycopy(data, start, value, 0, length);
 					}
 
@@ -4635,10 +4611,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				count = 0;
 			} else if (length == 1 && data[start] < 256) {
 				char theChar = data[start];
-				
+
 				value = decompressedAsciiTable[theChar];
 				count = 1;
-				
+
 				hashCode = theChar;
 			} else {
 				if (start == 0) {
@@ -4647,13 +4623,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				} else {
 					value = new char[length];
 					count = length;
-					
+
 					System.arraycopy(data, start, value, 0, length);
 				}
 			}
 		}
 	}
-	
+
 	String(char[] data, int start, int length, boolean compressed, boolean sharingIsAllowed) {
 		if (enableCompression) {
 			if (length == 0) {
@@ -4662,24 +4638,24 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			} else if (length == 1) {
 				if (compressed) {
 					char theChar = helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(data, start));
-					
+
 					value = compressedAsciiTable[theChar];
 					count = 1;
-					
+
 					hashCode = theChar;
 				} else {
 					char theChar = data[start];
-					
+
 					if (theChar <= 255) {
 						value = decompressedAsciiTable[theChar];
 					} else {
 						value = new char[] { theChar };
 					}
-					
+
 					count = 1 | uncompressedBit;
-					
+
 					hashCode = theChar;
-					
+
 					initCompressionFlag();
 				}
 			} else {
@@ -4690,7 +4666,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					} else {
 						value = new char[(length + 1) / 2];
 						count = length;
-						
+
 						compressedArrayCopy(data, start, value, 0, length);
 					}
 				} else {
@@ -4700,7 +4676,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 					} else {
 						value = new char[length];
 						count = length | uncompressedBit;
-						
+
 						System.arraycopy(data, start, value, 0, length);
 					}
 
@@ -4713,10 +4689,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				count = 0;
 			} else if (length == 1 && data[start] <= 255) {
 				char theChar = data[start];
-				
+
 				value = decompressedAsciiTable[theChar];
 				count = 1;
-				
+
 				hashCode = theChar;
 			} else {
 				if (start == 0 && sharingIsAllowed) {
@@ -4725,7 +4701,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				} else {
 					value = new char[length];
 					count = length;
-					
+
 					System.arraycopy(data, start, value, 0, length);
 				}
 			}
@@ -4736,7 +4712,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Creates a string that is a copy of another string
 	 *
 	 * @param string
-	 *			  the String to copy
+	 *          the String to copy
 	 */
 	public String(String string) {
 		value = string.value;
@@ -4748,7 +4724,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Creates a string from the contents of a StringBuffer.
 	 *
 	 * @param buffer
-	 *			  the StringBuffer
+	 *          the StringBuffer
 	 */
 	public String(StringBuffer buffer) {
 		synchronized (buffer) {
@@ -4761,7 +4737,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				} else {
 					value = chars;
 					count = buffer.length() | uncompressedBit;
-					
+
 					initCompressionFlag();
 				}
 			} else {
@@ -4812,7 +4788,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				} else {
 					System.arraycopy(s2.value, 0, value, s1len, s2len);
 				}
-				
+
 				initCompressionFlag();
 			}
 		} else {
@@ -4845,7 +4821,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		int s3len = s3.lengthInternal();
 
 		int concatlen = s1len + s2len + s3len;
-		
+
 		if (enableCompression) {
 			if (null == compressionFlag || (s1.count | s2.count | s3.count) >= 0) {
 				value = new char[(concatlen + 1) / 2];
@@ -4878,7 +4854,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				} else {
 					System.arraycopy(s3.value, 0, value, (s1len + s2len), s3len);
 				}
-				
+
 				initCompressionFlag();
 			}
 		} else {
@@ -4917,7 +4893,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		// Char length of the final String
 		int len = s1len + v1len;
-		
+
 		if (enableCompression) {
 			// Check if the String is compressed
 			if (null == compressionFlag || s1.count >= 0) {
@@ -4966,7 +4942,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 				// Copy in s1 contents
 				System.arraycopy(s1.value, 0, value, 0, s1len);
-				
+
 				initCompressionFlag();
 			}
 		} else {
@@ -5106,7 +5082,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 				// Copy in s3 contents
 				start = start - s3len;
-				
+
 				// Check if the String is compressed
 				if (s3.count >= 0) {
 					decompress(s3.value, 0, value, start, s3len);
@@ -5116,7 +5092,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 				// Copy in s2 contents
 				start = start - s2len;
-				
+
 				// Check if the String is compressed
 				if (s2.count >= 0) {
 					decompress(s2.value, 0, value, start, s2len);
@@ -5143,7 +5119,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 				// Copy in s1 contents
 				start = index2 + 1 - s1len;
-				
+
 				// Check if the String is compressed
 				if (s1.count >= 0) {
 					decompress(s1.value, 0, value, start, s1len);
@@ -5167,7 +5143,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				if (v1 < 0) {
 					value[index1--] = '-';
 				}
-				
+
 				initCompressionFlag();
 			}
 		} else {
@@ -5244,18 +5220,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Answers the character at the specified offset in this String.
 	 *
 	 * @param index
-	 *			  the zero-based index in this string
+	 *          the zero-based index in this string
 	 * @return the character at the index
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code index < 0} or {@code index >= length()}
+	 *          when {@code index < 0} or {@code index >= length()}
 	 */
 	public char charAt(int index) {
 		if (0 <= index && index < lengthInternal()) {
 			// Check if the String is compressed
 			if (enableCompression && (null == compressionFlag || count >= 0)) {
 				return helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(value, index));
-			} 
+			}
 
 			return value[index];
 		}
@@ -5272,7 +5248,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		return value[index];
 	}
-	
+
 	// This method is needed so idiom recognition properly recognizes idiomatic loops where we are doing an operation on
 	// the byte[] value of two Strings. In such cases we extract the String.value fields before entering the operation loop.
 	// However if chatAt is used inside the loop then the JIT will anchor the load of the value byte[] inside of the loop thus
@@ -5296,12 +5272,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * position in the specified string, or if the specified String is a prefix of the this String.
 	 *
 	 * @param string
-	 *			  the string to compare
+	 *          the string to compare
 	 * @return 0 if the strings are equal, a negative integer if this String is before the specified String, or a positive integer if this String is
-	 *			after the specified String
+	 *          after the specified String
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 */
 	public int compareTo(String string) {
 		String s1 = this;
@@ -5323,12 +5299,12 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		if (enableCompression && (null == compressionFlag || (s1.count | s2.count) >= 0)) {
 			while (o1 < end) {
-            if ((result = 
-                  helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s1Value, o1++)) - 
-                  helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s2Value, o2++))) != 0) {
-               return result;
+				if ((result =
+						helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s1Value, o1++)) -
+						helpers.byteToCharUnsigned(helpers.getByteFromArrayByIndex(s2Value, o2++))) != 0) {
+					return result;
+					}
 				}
-			}
 		} else {
 			while (o1 < end) {
 				if ((result = s1.charAtInternal(o1++, s1Value) - s2.charAtInternal(o2++, s2Value)) != 0) {
@@ -5361,7 +5337,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Compare the receiver to the specified String to determine the relative ordering when the case of the characters is ignored.
 	 *
 	 * @param string
-	 *			  a String
+	 *          a String
 	 * @return an {@code int < 0} if this String is less than the specified String, 0 if they are equal, and {@code > 0} if this String is greater
 	 */
 	public int compareToIgnoreCase(String string) {
@@ -5378,7 +5354,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		int o2 = 0;
 
 		int result;
-		
+
 		char[] s1Value = s1.value;
 		char[] s2Value = s2.value;
 
@@ -5417,11 +5393,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Concatenates this String and the specified string.
 	 *
 	 * @param string
-	 *			  the string to concatenate
+	 *          the string to concatenate
 	 * @return a String which is the concatenation of this String and the specified String
 	 *
 	 * @throws NullPointerException
-	 *				if string is null
+	 *          if string is null
 	 */
 	public String concat(String string) {
 		String s1 = this;
@@ -5469,11 +5445,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * effect on the String.
 	 *
 	 * @param data
-	 *			  the array of characters
+	 *          the array of characters
 	 * @return the new String
 	 *
 	 * @throws NullPointerException
-	 *				if data is null
+	 *          if data is null
 	 */
 	public static String copyValueOf(char[] data) {
 		return new String(data, 0, data.length);
@@ -5484,17 +5460,17 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * effect on the String.
 	 *
 	 * @param data
-	 *			  the array of characters
+	 *          the array of characters
 	 * @param start
-	 *			  the starting offset in the character array
+	 *          the starting offset in the character array
 	 * @param length
-	 *			  the number of characters to use
+	 *          the number of characters to use
 	 * @return the new String
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
-	 *				if data is null
+	 *          if data is null
 	 */
 	public static String copyValueOf(char[] data, int start, int length) {
 		return new String(data, start, length);
@@ -5504,11 +5480,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Compares the specified string to this String to determine if the specified string is a suffix.
 	 *
 	 * @param suffix
-	 *			  the string to look for
+	 *          the string to look for
 	 * @return true when the specified string is a suffix of this String, false otherwise
 	 *
 	 * @throws NullPointerException
-	 *				if suffix is null
+	 *          if suffix is null
 	 */
 	public boolean endsWith(String suffix) {
 		return regionMatches(lengthInternal() - suffix.lengthInternal(), suffix, 0, suffix.lengthInternal());
@@ -5519,7 +5495,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * the same order.
 	 *
 	 * @param object
-	 *			  the object to compare
+	 *          the object to compare
 	 * @return true if the specified object is equal to this String, false otherwise
 	 *
 	 * @see #hashCode()
@@ -5562,7 +5538,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			if (com.ibm.oti.vm.VM.J9_JIT_STRING_DEDUP_POLICY != com.ibm.oti.vm.VM.J9_JIT_STRING_DEDUP_POLICY_DISABLED) {
 				deduplicateStrings(s1, s1Value, s2, s2Value);
 			}
-			
+
 			return true;
 		}
 
@@ -5623,7 +5599,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Compares the specified String to this String ignoring the case of the characters and answer if they are equal.
 	 *
 	 * @param string
-	 *			  the string to compare
+	 *          the string to compare
 	 * @return true if the specified string is equal to this String, false otherwise
 	 */
 	public boolean equalsIgnoreCase(String string) {
@@ -5633,7 +5609,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if (s1 == s2) {
 			return true;
 		}
-		
+
 		if (s2 == null) {
 			return false;
 		}
@@ -5655,7 +5631,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 		// Upper bound index on the last char to compare
 		int end = s1len;
-		
+
 		char[] s1Value = s1.value;
 		char[] s2Value = s2.value;
 
@@ -5676,7 +5652,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				byte byteAtO1 = helpers.getByteFromArrayByIndex(s1Value, o1++);
 				byte byteAtO2 = helpers.getByteFromArrayByIndex(s2Value, o2++);
 
-				if (byteAtO1 != byteAtO2 
+				if (byteAtO1 != byteAtO2
 						&& toUpperCase(helpers.byteToCharUnsigned(byteAtO1)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2))) {
 					return false;
 				}
@@ -5689,7 +5665,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			char charAtO1Last = s1.charAtInternal(s1len-1, s1Value);
 			char charAtO2Last = s2.charAtInternal(s1len-1, s2Value);
 
-			if (charAtO1Last != charAtO2Last 
+			if (charAtO1Last != charAtO2Last
 					&& toUpperCase(charAtO1Last) != toUpperCase(charAtO2Last)
 					&& ((charAtO1Last < 256 && charAtO2Last < 256) || Character.toLowerCase(charAtO1Last) != Character.toLowerCase(charAtO2Last))) {
 				return false;
@@ -5699,8 +5675,8 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
 
-				if (charAtO1 != charAtO2 
-						&& toUpperCase(charAtO1) != toUpperCase(charAtO2) 
+				if (charAtO1 != charAtO2
+						&& toUpperCase(charAtO1) != toUpperCase(charAtO2)
 						&& ((charAtO1 < 256 && charAtO2 < 256) || Character.toLowerCase(charAtO1) != Character.toLowerCase(charAtO2))) {
 					return false;
 				}
@@ -5720,8 +5696,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	public byte[] getBytes() {
 		int currentLength = lengthInternal();
-		
-		
+
 		char[] buffer;
 
 		// Check if the String is compressed
@@ -5731,7 +5706,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		} else {
 			buffer = value;
 		}
-		
+
 		return StringCoding.encode(buffer, 0, currentLength);
 	}
 
@@ -5739,18 +5714,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts this String to a byte array, ignoring the high order bits of each character.
 	 *
 	 * @param start
-	 *			  the starting offset of characters to copy
+	 *          the starting offset of characters to copy
 	 * @param end
-	 *			  the ending offset of characters to copy
+	 *          the ending offset of characters to copy
 	 * @param data
-	 *			  the destination byte array
+	 *          the destination byte array
 	 * @param index
-	 *			  the starting offset in the byte array
+	 *          the starting offset in the byte array
 	 *
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code start < 0, end > length(), index < 0, end - start > data.length - index}
+	 *          when {@code start < 0, end > length(), index < 0, end - start > data.length - index}
 	 *
 	 * @deprecated Use getBytes() or getBytes(String)
 	 */
@@ -5767,7 +5742,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			throw new StringIndexOutOfBoundsException();
 		}
 	}
-	
+
 	void getBytes(int start, int end, char[] data, int index) {
 		if (0 <= start && start <= end && end <= lengthInternal()) {
 			// Check if the String is compressed
@@ -5785,11 +5760,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Converts this String to a byte encoding using the specified encoding.
 	 *
 	 * @param encoding
-	 *			  the encoding
+	 *          the encoding
 	 * @return the byte array encoding of this String
 	 *
 	 * @throws UnsupportedEncodingException
-	 *				when the encoding is not supported
+	 *          when the encoding is not supported
 	 *
 	 * @see String
 	 * @see UnsupportedEncodingException
@@ -5800,7 +5775,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 
 		int currentLength = lengthInternal();
-		
+
 		char[] buffer;
 
 		// Check if the String is compressed
@@ -5810,7 +5785,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		} else {
 			buffer = value;
 		}
-		
+
 		return StringCoding.encode(encoding, buffer, 0, currentLength);
 	}
 
@@ -5818,18 +5793,18 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Copies the specified characters in this String to the character array starting at the specified offset in the character array.
 	 *
 	 * @param start
-	 *			  the starting offset of characters to copy
+	 *          the starting offset of characters to copy
 	 * @param end
-	 *			  the ending offset of characters to copy
+	 *          the ending offset of characters to copy
 	 * @param data
-	 *			  the destination character array
+	 *          the destination character array
 	 * @param index
-	 *			  the starting offset in the character array
+	 *          the starting offset in the character array
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code start < 0, end > length(), start > end, index < 0, end - start > buffer.length - index}
+	 *          when {@code start < 0, end > length(), start > end, index < 0, end - start > buffer.length - index}
 	 * @throws NullPointerException
-	 *				when buffer is null
+	 *          when buffer is null
 	 */
 	public void getChars(int start, int end, char[] data, int index) {
 		if (0 <= start && start <= end && end <= lengthInternal() && 0 <= index && ((end - start) <= (data.length - index))) {
@@ -5901,7 +5876,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * the end of this String.
 	 *
 	 * @param c
-	 *			  the character to find
+	 *          the character to find
 	 * @return the index in this String of the specified character, -1 if the character isn't found
 	 *
 	 * @see #lastIndexOf(int)
@@ -5918,9 +5893,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * the end of this String.
 	 *
 	 * @param c
-	 *			  the character to find
+	 *          the character to find
 	 * @param start
-	 *			  the starting offset
+	 *          the starting offset
 	 * @return the index in this String of the specified character, -1 if the character isn't found
 	 *
 	 * @see #lastIndexOf(int)
@@ -5970,17 +5945,16 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * of this String.
 	 *
 	 * @param string
-	 *			  the string to find
+	 *          the string to find
 	 * @return the index in this String of the specified string, -1 if the string isn't found
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 *
 	 * @see #lastIndexOf(int)
 	 * @see #lastIndexOf(int, int)
 	 * @see #lastIndexOf(String)
 	 * @see #lastIndexOf(String, int)
-	 *
 	 */
 	public int indexOf(String string) {
 		return indexOf(string, 0);
@@ -5991,13 +5965,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * end of this String.
 	 *
 	 * @param subString
-	 *			  the string to find
+	 *          the string to find
 	 * @param start
-	 *			  the starting offset
+	 *          the starting offset
 	 * @return the index in this String of the specified string, -1 if the string isn't found
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 *
 	 * @see #lastIndexOf(int)
 	 * @see #lastIndexOf(int, int)
@@ -6008,7 +5982,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		if (subString.length() == 1) {
 			return indexOf(subString.charAtInternal(0), start);
 		}
-		
+
 		if (start < 0) {
 			start = 0;
 		}
@@ -6081,7 +6055,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * beginning of this String.
 	 *
 	 * @param c
-	 *			  the character to find
+	 *          the character to find
 	 * @return the index in this String of the specified character, -1 if the character isn't found
 	 *
 	 * @see #lastIndexOf(int)
@@ -6098,9 +6072,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * the beginning of this String.
 	 *
 	 * @param c
-	 *			  the character to find
+	 *          the character to find
 	 * @param start
-	 *			  the starting offset
+	 *          the starting offset
 	 * @return the index in this String of the specified character, -1 if the character isn't found
 	 *
 	 * @see #lastIndexOf(int)
@@ -6118,7 +6092,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 
 			if (c >= 0 && c <= Character.MAX_VALUE) {
 				char[] array = value;
-				
+
 				// Check if the String is compressed
 				if (enableCompression && (null == compressionFlag || count >= 0)) {
 					if (c <= 255) {
@@ -6160,11 +6134,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * of this String.
 	 *
 	 * @param string
-	 *			  the string to find
+	 *          the string to find
 	 * @return the index in this String of the specified string, -1 if the string isn't found
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 *
 	 * @see #lastIndexOf(int)
 	 * @see #lastIndexOf(int, int)
@@ -6181,13 +6155,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * beginning of this String.
 	 *
 	 * @param subString
-	 *			  the string to find
+	 *          the string to find
 	 * @param start
-	 *			  the starting offset
+	 *          the starting offset
 	 * @return the index in this String of the specified string, -1 if the string isn't found
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 *
 	 * @see #lastIndexOf(int)
 	 * @see #lastIndexOf(int, int)
@@ -6271,7 +6245,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public int length() {
 		return lengthInternal();
 	}
-	
+
 	/**
 	 * Answers the size of this String. This method is to be used internally within the current package whenever
 	 * possible as the JIT compiler will take special precaution to avoid generating HCR guards for calls to this
@@ -6285,10 +6259,10 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			if (compressionFlag == null || count >= 0) {
 				return count;
 			}
-			
+
 			return count & ~uncompressedBit;
 		}
-		
+
 		return count;
 	}
 
@@ -6296,17 +6270,17 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Compares the specified string to this String and compares the specified range of characters to determine if they are the same.
 	 *
 	 * @param thisStart
-	 *			  the starting offset in this String
+	 *          the starting offset in this String
 	 * @param string
-	 *			  the string to compare
+	 *          the string to compare
 	 * @param start
-	 *			  the starting offset in string
+	 *          the starting offset in string
 	 * @param length
-	 *			  the number of characters to compare
+	 *          the number of characters to compare
 	 * @return true if the ranges of characters is equal, false otherwise
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 */
 	public boolean regionMatches(int thisStart, String string, int start, int length) {
 		string.getClass(); // Implicit null check
@@ -6366,19 +6340,19 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * is true, the case of the characters is ignored during the comparison.
 	 *
 	 * @param ignoreCase
-	 *			  specifies if case should be ignored
+	 *          specifies if case should be ignored
 	 * @param thisStart
-	 *			  the starting offset in this String
+	 *          the starting offset in this String
 	 * @param string
-	 *			  the string to compare
+	 *          the string to compare
 	 * @param start
-	 *			  the starting offset in string
+	 *          the starting offset in string
 	 * @param length
-	 *			  the number of characters to compare
+	 *          the number of characters to compare
 	 * @return true if the ranges of characters is equal, false otherwise
 	 *
 	 * @throws NullPointerException
-	 *				when string is null
+	 *          when string is null
 	 */
 	public boolean regionMatches(boolean ignoreCase, int thisStart, String string, int start, int length) {
 		if (!ignoreCase) {
@@ -6419,7 +6393,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				byte byteAtO1 = helpers.getByteFromArrayByIndex(s1Value, o1++);
 				byte byteAtO2 = helpers.getByteFromArrayByIndex(s2Value, o2++);
 
-				if (byteAtO1 != byteAtO2 
+				if (byteAtO1 != byteAtO2
 						&& toUpperCase(helpers.byteToCharUnsigned(byteAtO1)) != toUpperCase(helpers.byteToCharUnsigned(byteAtO2))
 						&& toLowerCase(helpers.byteToCharUnsigned(byteAtO1)) != toLowerCase(helpers.byteToCharUnsigned(byteAtO2))) {
 					return false;
@@ -6430,8 +6404,8 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 				char charAtO1 = s1.charAtInternal(o1++, s1Value);
 				char charAtO2 = s2.charAtInternal(o2++, s2Value);
 
-				if (charAtO1 != charAtO2 
-						&& toUpperCase(charAtO1) != toUpperCase(charAtO2) 
+				if (charAtO1 != charAtO2
+						&& toUpperCase(charAtO1) != toUpperCase(charAtO2)
 						&& toLowerCase(charAtO1) != toLowerCase(charAtO2)) {
 					return false;
 				}
@@ -6445,9 +6419,9 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Replaces occurrences of the specified character with another character.
 	 *
 	 * @param oldChar
-	 *			  the character to replace
+	 *          the character to replace
 	 * @param newChar
-	 *			  the replacement character
+	 *          the replacement character
 	 * @return a String with occurrences of oldChar replaced by newChar
 	 */
 	public String replace(char oldChar, char newChar) {
@@ -6499,11 +6473,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Compares the specified string to this String to determine if the specified string is a prefix.
 	 *
 	 * @param prefix
-	 *			  the string to look for
+	 *          the string to look for
 	 * @return true when the specified string is a prefix of this String, false otherwise
 	 *
 	 * @throws NullPointerException
-	 *				when prefix is null
+	 *          when prefix is null
 	 */
 	public boolean startsWith(String prefix) {
 		return startsWith(prefix, 0);
@@ -6513,13 +6487,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Compares the specified string to this String, starting at the specified offset, to determine if the specified string is a prefix.
 	 *
 	 * @param prefix
-	 *			  the string to look for
+	 *          the string to look for
 	 * @param start
-	 *			  the starting offset
+	 *          the starting offset
 	 * @return true when the specified string occurs in this String at the specified offset, false otherwise
 	 *
 	 * @throws NullPointerException
-	 *				when prefix is null
+	 *          when prefix is null
 	 */
 	public boolean startsWith(String prefix, int start) {
 		if (prefix.length() == 1) {
@@ -6535,11 +6509,11 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Copies a range of characters into a new String.
 	 *
 	 * @param start
-	 *			  the offset of the first character
+	 *          the offset of the first character
 	 * @return a new String containing the characters from start to the end of the string
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code start < 0} or {@code start > length()}
+	 *          when {@code start < 0} or {@code start > length()}
 	 */
 	public String substring(int start) {
 		if (start == 0) {
@@ -6564,13 +6538,13 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * Copies a range of characters.
 	 *
 	 * @param start
-	 *			  the offset of the first character
+	 *          the offset of the first character
 	 * @param end
-	 *			  the offset one past the last character
+	 *          the offset one past the last character
 	 * @return a String containing the characters from start to end - 1
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code start < 0, start > end} or {@code end > length()}
+	 *          when {@code start < 0, start > end} or {@code end > length()}
 	 */
 	public String substring(int start, int end) {
 		int len = lengthInternal();
@@ -6714,7 +6688,7 @@ written authorization of the copyright holder.
 	 * Converts the characters in this String to lowercase, using the specified Locale.
 	 *
 	 * @param locale
-	 *			  the Locale
+	 *          the Locale
 	 * @return a String containing the lowercase characters equivalent to the characters in this String
 	 */
 	public String toLowerCase(Locale locale) {
@@ -6748,7 +6722,7 @@ written authorization of the copyright holder.
 	 * The core of lower case conversion. This is the old, not-as-fast path.
 	 *
 	 * @param language
-	 *			  a string representing the Locale
+	 *          a string representing the Locale
 	 * @return a new string object
 	 */
 	private String toLowerCaseCore(String language) {
@@ -6774,7 +6748,7 @@ written authorization of the copyright holder.
 					lithuanian = language == "lt"; //$NON-NLS-1$
 
 					builder = new StringBuilder(len);
-					
+
 					// Check if the String is compressed
 					if (enableCompression && (null == compressionFlag || count >= 0)) {
 						builder.append(value, 0, i, true);
@@ -6788,10 +6762,10 @@ written authorization of the copyright holder.
 
 					continue;
 				}
-				
+
 				if (!turkishAzeri && (0x0130 == codePoint)) {
 					builder.append("i\u0307"); //$NON-NLS-1$
-					
+
 					continue;
 				}
 
@@ -6879,19 +6853,19 @@ written authorization of the copyright holder.
 	/* The following code points are extracted from the Canonical_Combining_Class=Above table found in:
 	 * https://www.unicode.org/Public/6.2.0/ucd/extracted/DerivedCombiningClass.txt
 	 */
-	private static char[] startCombiningAbove = { '\u0300', '\u033D', '\u0346', '\u034A', '\u0350', '\u0357', '\u035B', '\u0363', '\u0483', '\u0592', 
-			'\u0597', '\u059C', '\u05A8', '\u05AB', '\u05AF', '\u05C4', '\u0610', '\u0653', '\u0657', '\u065D', '\u06D6', '\u06DF', '\u06E4', '\u06E7', 
-			'\u06EB', '\u0730', '\u0732', '\u0735', '\u073A', '\u073D', '\u073F', '\u0743', '\u0745', '\u0747', '\u0749', '\u07EB', '\u07F3', '\u0816', 
-			'\u081B', '\u0825', '\u0829', '\u08E4', '\u08E7', '\u08EA', '\u08F3', '\u08F7', '\u08FB', '\u0951', '\u0953', '\u0F82', '\u0F86', '\u135D', 
-			'\u17DD', '\u193A', '\u1A17', '\u1A75', '\u1B6B', '\u1B6D', '\u1CD0', '\u1CDA', '\u1CE0', '\u1CF4', '\u1DC0', '\u1DC3', '\u1DCB', '\u1DD1', 
-			'\u1DFE', '\u20D0', '\u20D4', '\u20DB', '\u20E1', '\u20E7', '\u20E9', '\u20F0', '\u2CEF', '\u2DE0', '\uA66F', '\uA674', '\uA69F', '\uA6F0', 
+	private static char[] startCombiningAbove = { '\u0300', '\u033D', '\u0346', '\u034A', '\u0350', '\u0357', '\u035B', '\u0363', '\u0483', '\u0592',
+			'\u0597', '\u059C', '\u05A8', '\u05AB', '\u05AF', '\u05C4', '\u0610', '\u0653', '\u0657', '\u065D', '\u06D6', '\u06DF', '\u06E4', '\u06E7',
+			'\u06EB', '\u0730', '\u0732', '\u0735', '\u073A', '\u073D', '\u073F', '\u0743', '\u0745', '\u0747', '\u0749', '\u07EB', '\u07F3', '\u0816',
+			'\u081B', '\u0825', '\u0829', '\u08E4', '\u08E7', '\u08EA', '\u08F3', '\u08F7', '\u08FB', '\u0951', '\u0953', '\u0F82', '\u0F86', '\u135D',
+			'\u17DD', '\u193A', '\u1A17', '\u1A75', '\u1B6B', '\u1B6D', '\u1CD0', '\u1CDA', '\u1CE0', '\u1CF4', '\u1DC0', '\u1DC3', '\u1DCB', '\u1DD1',
+			'\u1DFE', '\u20D0', '\u20D4', '\u20DB', '\u20E1', '\u20E7', '\u20E9', '\u20F0', '\u2CEF', '\u2DE0', '\uA66F', '\uA674', '\uA69F', '\uA6F0',
 			'\uA8E0', '\uAAB0', '\uAAB2', '\uAAB7', '\uAABE', '\uAAC1', '\uFE20' };
-	private static char[] endCombiningAbove = { '\u0314', '\u0344', '\u0346', '\u034C', '\u0352', '\u0357', '\u035B', '\u036F', '\u0487', '\u0595', 
-			'\u0599', '\u05A1', '\u05A9', '\u05AC', '\u05AF', '\u05C4', '\u0617', '\u0654', '\u065B', '\u065E', '\u06DC', '\u06E2', '\u06E4', '\u06E8', 
-			'\u06EC', '\u0730', '\u0733', '\u0736', '\u073A', '\u073D', '\u0741', '\u0743', '\u0745', '\u0747', '\u074A', '\u07F1', '\u07F3', '\u0819', 
-			'\u0823', '\u0827', '\u082D', '\u08E5', '\u08E8', '\u08EC', '\u08F5', '\u08F8', '\u08FE', '\u0951', '\u0954', '\u0F83', '\u0F87', '\u135F', 
-			'\u17DD', '\u193A', '\u1A17', '\u1A7C', '\u1B6B', '\u1B73', '\u1CD2', '\u1CDB', '\u1CE0', '\u1CF4', '\u1DC1', '\u1DC9', '\u1DCC', '\u1DE6', 
-			'\u1DFE', '\u20D1', '\u20D7', '\u20DC', '\u20E1', '\u20E7', '\u20E9', '\u20F0', '\u2CF1', '\u2DFF', '\uA66F', '\uA67D', '\uA69F', '\uA6F1', 
+	private static char[] endCombiningAbove = { '\u0314', '\u0344', '\u0346', '\u034C', '\u0352', '\u0357', '\u035B', '\u036F', '\u0487', '\u0595',
+			'\u0599', '\u05A1', '\u05A9', '\u05AC', '\u05AF', '\u05C4', '\u0617', '\u0654', '\u065B', '\u065E', '\u06DC', '\u06E2', '\u06E4', '\u06E8',
+			'\u06EC', '\u0730', '\u0733', '\u0736', '\u073A', '\u073D', '\u0741', '\u0743', '\u0745', '\u0747', '\u074A', '\u07F1', '\u07F3', '\u0819',
+			'\u0823', '\u0827', '\u082D', '\u08E5', '\u08E8', '\u08EC', '\u08F5', '\u08F8', '\u08FE', '\u0951', '\u0954', '\u0F83', '\u0F87', '\u135F',
+			'\u17DD', '\u193A', '\u1A17', '\u1A7C', '\u1B6B', '\u1B73', '\u1CD2', '\u1CDB', '\u1CE0', '\u1CF4', '\u1DC1', '\u1DC9', '\u1DCC', '\u1DE6',
+			'\u1DFE', '\u20D1', '\u20D7', '\u20DC', '\u20E1', '\u20E7', '\u20E9', '\u20F0', '\u2CF1', '\u2DFF', '\uA66F', '\uA67D', '\uA69F', '\uA6F1',
 			'\uA8F1', '\uAAB0', '\uAAB3', '\uAAB8', '\uAABF', '\uAAC1', '\uFE26' };
 	private static char[] upperValues = { '\u0053', '\u0053', '\u0000', '\u02BC', '\u004E', '\u0000', '\u004A', '\u030C', '\u0000', '\u0399',
 			'\u0308', '\u0301', '\u03A5', '\u0308', '\u0301', '\u0535', '\u0552', '\u0000', '\u0048', '\u0331', '\u0000', '\u0054', '\u0308', '\u0000',
@@ -6939,8 +6913,8 @@ written authorization of the copyright holder.
 		 * https://www.unicode.org/Public/6.2.0/ucd/extracted/DerivedCombiningClass.txt
 		 */
 		} else if (codePoint == 0x10A0F || codePoint == 0x10A38 ||
-			(codePoint >= 0x11100 && codePoint <= 0x11102) || 
-			(codePoint >= 0x1D185 && codePoint <= 0x1D189) || 
+			(codePoint >= 0x11100 && codePoint <= 0x11102) ||
+			(codePoint >= 0x1D185 && codePoint <= 0x1D189) ||
 			(codePoint >= 0x1D1AA && codePoint <= 0x1D1AD) ||
 			(codePoint >= 0x1D242 && codePoint <= 0x1D244)) {
 			return true;
@@ -6992,7 +6966,7 @@ written authorization of the copyright holder.
 	 * three characters are the upper case conversion. If only two characters are used, the third character in the table is \u0000.
 	 *
 	 * @param ch
-	 *			  the char being converted to upper case
+	 *          the char being converted to upper case
 	 *
 	 * @return the index into the upperValues table, or -1
 	 */
@@ -7048,7 +7022,7 @@ written authorization of the copyright holder.
 	 * Converts the characters in this String to uppercase, using the specified Locale.
 	 *
 	 * @param locale
-	 *			  the Locale
+	 *          the Locale
 	 * @return a String containing the uppercase characters equivalent to the characters in this String
 	 */
 	public String toUpperCase(Locale locale) {
@@ -7081,11 +7055,10 @@ written authorization of the copyright holder.
 	 * The core of upper case conversion. This is the old, not-as-fast path.
 	 *
 	 * @param language
-	 *			  the string representing the locale
+	 *          the string representing the locale
 	 * @return the upper case string
 	 */
 	private String toUpperCaseCore(String language) {
-
 		boolean turkishAzeri = language == "tr" || language == "az"; //$NON-NLS-1$ //$NON-NLS-2$
 		boolean lithuanian = language == "lt"; //$NON-NLS-1$
 
@@ -7112,7 +7085,7 @@ written authorization of the copyright holder.
 				if (codePoint != upper) {
 					if (builder == null) {
 						builder = new StringBuilder(len);
-						
+
 						// Check if the String is compressed
 						if (enableCompression && (null == compressionFlag || count >= 0)) {
 							builder.append(value, 0, i, true);
@@ -7207,11 +7180,11 @@ written authorization of the copyright holder.
 	 * effect on the String.
 	 *
 	 * @param data
-	 *			  the array of characters
+	 *          the array of characters
 	 * @return the String
 	 *
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 */
 	public static String valueOf(char[] data) {
 		return new String(data, 0, data.length);
@@ -7222,17 +7195,17 @@ written authorization of the copyright holder.
 	 * effect on the String.
 	 *
 	 * @param data
-	 *			  the array of characters
+	 *          the array of characters
 	 * @param start
-	 *			  the starting offset in the character array
+	 *          the starting offset in the character array
 	 * @param length
-	 *			  the number of characters to use
+	 *          the number of characters to use
 	 * @return the String
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 */
 	public static String valueOf(char[] data, int start, int length) {
 		return new String(data, start, length);
@@ -7242,18 +7215,18 @@ written authorization of the copyright holder.
 	 * Converts the specified character to its string representation.
 	 *
 	 * @param value
-	 *			  the character
+	 *          the character
 	 * @return the character converted to a string
 	 */
 	public static String valueOf(char value) {
 		String string;
 
 		if (value <= 255) {
-		   if (enableCompression) {
-		       string = new String(compressedAsciiTable[value], 0, 1, true);
-		   } else {
-		       string = new String(decompressedAsciiTable[value], 0, 1, false);
-		   }
+			if (enableCompression) {
+				string = new String(compressedAsciiTable[value], 0, 1, true);
+			} else {
+				string = new String(decompressedAsciiTable[value], 0, 1, false);
+			}
 		} else {
 			string = new String(new char[] { value }, 0, 1, false);
 		}
@@ -7265,7 +7238,7 @@ written authorization of the copyright holder.
 	 * Converts the specified double to its string representation.
 	 *
 	 * @param value
-	 *			  the double
+	 *          the double
 	 * @return the double converted to a string
 	 */
 	public static String valueOf(double value) {
@@ -7276,7 +7249,7 @@ written authorization of the copyright holder.
 	 * Converts the specified float to its string representation.
 	 *
 	 * @param value
-	 *			  the float
+	 *          the float
 	 * @return the float converted to a string
 	 */
 	public static String valueOf(float value) {
@@ -7287,7 +7260,7 @@ written authorization of the copyright holder.
 	 * Converts the specified integer to its string representation.
 	 *
 	 * @param value
-	 *			  the integer
+	 *          the integer
 	 * @return the integer converted to a string
 	 */
 	public static String valueOf(int value) {
@@ -7298,7 +7271,7 @@ written authorization of the copyright holder.
 	 * Converts the specified long to its string representation.
 	 *
 	 * @param value
-	 *			  the long
+	 *          the long
 	 * @return the long converted to a string
 	 */
 	public static String valueOf(long value) {
@@ -7310,7 +7283,7 @@ written authorization of the copyright holder.
 	 * {@code toString()} to get the string representation.
 	 *
 	 * @param value
-	 *			  the object
+	 *          the object
 	 * @return the object converted to a string
 	 */
 	public static String valueOf(Object value) {
@@ -7322,7 +7295,7 @@ written authorization of the copyright holder.
 	 * {@code "false"}.
 	 *
 	 * @param value
-	 *			  the boolean
+	 *          the boolean
 	 * @return the boolean converted to a string
 	 */
 	public static String valueOf(boolean value) {
@@ -7333,11 +7306,11 @@ written authorization of the copyright holder.
 	 * Answers whether the characters in the StringBuffer buffer are the same as those in this String.
 	 *
 	 * @param buffer
-	 *			  the StringBuffer to compare this String to
+	 *          the StringBuffer to compare this String to
 	 * @return true when the characters in buffer are identical to those in this String. If they are not, false will be returned.
 	 *
 	 * @throws NullPointerException
-	 *				when buffer is null
+	 *          when buffer is null
 	 *
 	 * @since 1.4
 	 */
@@ -7348,7 +7321,7 @@ written authorization of the copyright holder.
 			if (lengthInternal() != size) {
 				return false;
 			}
-			
+
 			if (enableCompression && buffer.isCompressed()) {
 				return regionMatches(0, new String(buffer.getValue(), 0, size, true), 0, size);
 			} else {
@@ -7361,31 +7334,31 @@ written authorization of the copyright holder.
 	 * Determines whether a this String matches a given regular expression.
 	 *
 	 * @param expr
-	 *			  the regular expression to be matched
+	 *          the regular expression to be matched
 	 * @return true if the expression matches, otherwise false
 	 *
 	 * @throws PatternSyntaxException
-	 *				if the syntax of the supplied regular expression is not valid
+	 *          if the syntax of the supplied regular expression is not valid
 	 * @throws NullPointerException
-	 *				if expr is null
+	 *          if expr is null
 	 *
 	 * @since 1.4
 	 */
 	public boolean matches(String expr) {
 		return Pattern.matches(expr, this);
 	}
-	
+
 	/**
 	 * Replace any substrings within this String that match the supplied regular expression expr, with the String substitute.
 	 *
 	 * @param regex
-	 *			  the regular expression to match
+	 *          the regular expression to match
 	 * @param substitute
-	 *			  the string to replace the matching substring with
+	 *          the string to replace the matching substring with
 	 * @return the new string
 	 *
 	 * @throws NullPointerException
-	 *				if expr is null
+	 *          if expr is null
 	 *
 	 * @since 1.4
 	 */
@@ -7444,13 +7417,13 @@ written authorization of the copyright holder.
 	 * Replace any substrings within this String that match the supplied regular expression expr, with the String substitute.
 	 *
 	 * @param expr
-	 *			  the regular expression to match
+	 *          the regular expression to match
 	 * @param substitute
-	 *			  the string to replace the matching substring with
+	 *          the string to replace the matching substring with
 	 * @return the new string
 	 *
 	 * @throws NullPointerException
-	 *				if expr is null
+	 *          if expr is null
 	 *
 	 * @since 1.4
 	 */
@@ -7464,11 +7437,11 @@ written authorization of the copyright holder.
 	 *
 	 *
 	 * @param regex
-	 *			  Regular expression that is used as a delimiter
+	 *          Regular expression that is used as a delimiter
 	 * @return The array of strings which are split around the regex
 	 *
 	 * @throws PatternSyntaxException
-	 *				if the syntax of regex is invalid
+	 *          if the syntax of regex is invalid
 	 *
 	 * @since 1.4
 	 */
@@ -7517,9 +7490,7 @@ written authorization of the copyright holder.
 	 * If max is negative or zero, then regex can be applied to this string as many times as
 	 * possible and there is no size limit in the returned array.
 	 * If max is 0, all the empty string(s) at the end of the returned array will be discarded.
-	 * 
-	 * 
-	 * 
+	 *
 	 * @param regex Regular expression that is used as a delimiter
 	 * @param max The threshold of the returned array
 	 * @return The array of strings which are split around the regex
@@ -7610,14 +7581,14 @@ written authorization of the copyright holder.
 	 * Has the same result as the substring function, but is present so that String may implement the CharSequence interface.
 	 *
 	 * @param start
-	 *			  the offset the first character
+	 *          the offset the first character
 	 * @param end
-	 *			  the offset of one past the last character to include
+	 *          the offset of one past the last character to include
 	 *
 	 * @return the subsequence requested
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when start or end is less than zero, start is greater than end, or end is greater than the length of the String.
+	 *          when start or end is less than zero, start is greater than end, or end is greater than the length of the String.
 	 *
 	 * @see java.lang.CharSequence#subSequence(int, int)
 	 *
@@ -7629,11 +7600,11 @@ written authorization of the copyright holder.
 
 	/**
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param start
-	 *			  the starting offset in the byte array
+	 *          the starting offset in the byte array
 	 * @param length
-	 *			  the number of bytes to convert
+	 *          the number of bytes to convert
 	 *
 	 * @since 1.5
 	 */
@@ -7643,7 +7614,7 @@ written authorization of the copyright holder.
 
 			// Optimistically assume we can compress data[]
 			boolean compressible = enableCompression;
-					
+
 			for (int i = start; i < start + length; ++i) {
 				int codePoint = data[i];
 
@@ -7653,20 +7624,20 @@ written authorization of the copyright holder.
 					if (compressible && codePoint > 255) {
 						compressible = false;
 					}
-					
+
 					++size;
 				} else if (codePoint <= Character.MAX_CODE_POINT) {
 					if (compressible) {
 						codePoint -= Character.MIN_SUPPLEMENTARY_CODE_POINT;
-	
+
 						int codePoint1 = Character.MIN_HIGH_SURROGATE + (codePoint >> 10);
 						int codePoint2 = Character.MIN_LOW_SURROGATE + (codePoint & 0x3FF);
-	
+
 						if (codePoint1 > 255 || codePoint2 > 255) {
 							compressible = false;
 						}
 					}
-					
+
 					size += 2;
 				} else {
 					throw new IllegalArgumentException();
@@ -7697,7 +7668,7 @@ written authorization of the copyright holder.
 
 				if (enableCompression) {
 					count = size | uncompressedBit;
-					
+
 					initCompressionFlag();
 				} else {
 					count = size;
@@ -7725,7 +7696,7 @@ written authorization of the copyright holder.
 	 * Creates a string from the contents of a StringBuilder.
 	 *
 	 * @param builder
-	 *			  the StringBuilder
+	 *          the StringBuilder
 	 *
 	 * @since 1.5
 	 */
@@ -7739,7 +7710,7 @@ written authorization of the copyright holder.
 			} else {
 				value = chars;
 				count = builder.lengthInternal() | uncompressedBit;
-				
+
 				initCompressionFlag();
 			}
 		} else {
@@ -7752,7 +7723,7 @@ written authorization of the copyright holder.
 	 * Returns the Unicode character at the given point.
 	 *
 	 * @param index
-	 *			  the character index
+	 *          the character index
 	 * @return the Unicode character value at the index
 	 *
 	 * @since 1.5
@@ -7786,7 +7757,7 @@ written authorization of the copyright holder.
 	 * Returns the Unicode character before the given point.
 	 *
 	 * @param index
-	 *			  the character index
+	 *          the character index
 	 * @return the Unicode character value before the index
 	 *
 	 * @since 1.5
@@ -7820,9 +7791,9 @@ written authorization of the copyright holder.
 	 * Returns the total Unicode values in the specified range.
 	 *
 	 * @param start
-	 *			  first index
+	 *          first index
 	 * @param end
-	 *			  last index
+	 *          last index
 	 * @return the total Unicode values
 	 *
 	 * @since 1.5
@@ -7858,9 +7829,9 @@ written authorization of the copyright holder.
 	 * Returns the index of the code point that was offset by codePointCount.
 	 *
 	 * @param start
-	 *			  the position to offset
+	 *          the position to offset
 	 * @param codePointCount
-	 *			  the code point count
+	 *          the code point count
 	 * @return the offset index
 	 *
 	 * @since 1.5
@@ -7924,7 +7895,7 @@ written authorization of the copyright holder.
 	 * Compares the content of the character sequence to this String
 	 *
 	 * @param sequence
-	 *			  the character sequence
+	 *          the character sequence
 	 * @return {@code true} if the content of this String is equal to the character sequence, {@code false} otherwise.
 	 *
 	 * @since 1.5
@@ -7947,7 +7918,7 @@ written authorization of the copyright holder.
 
 	/**
 	 * @param sequence
-	 *			  the sequence to compare to
+	 *          the sequence to compare to
 	 * @return {@code true} if this String contains the sequence, {@code false} otherwise.
 	 *
 	 * @since 1.5
@@ -7996,9 +7967,9 @@ written authorization of the copyright holder.
 
 	/**
 	 * @param sequence1
-	 *			  the old character sequence
+	 *          the old character sequence
 	 * @param sequence2
-	 *			  the new character sequence
+	 *          the new character sequence
 	 * @return the new String
 	 *
 	 * @since 1.5
@@ -8073,9 +8044,9 @@ written authorization of the copyright holder.
 	 * Format the receiver using the specified format and args.
 	 *
 	 * @param format
-	 *			  the format to use
+	 *          the format to use
 	 * @param args
-	 *			  the format arguments to use
+	 *          the format arguments to use
 	 *
 	 * @return the formatted result
 	 *
@@ -8089,11 +8060,11 @@ written authorization of the copyright holder.
 	 * Format the receiver using the specified local, format and args.
 	 *
 	 * @param locale
-	 *			  the locale used to create the Formatter, may be null
+	 *          the locale used to create the Formatter, may be null
 	 * @param format
-	 *			  the format to use
+	 *          the format to use
 	 * @param args
-	 *			  the format arguments to use
+	 *          the format arguments to use
 	 *
 	 * @return the formatted result
 	 *
@@ -8122,12 +8093,12 @@ written authorization of the copyright holder.
 	 * Converts the byte array to a String using the specified Charset.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param charset
-	 *			  the Charset to use
+	 *          the Charset to use
 	 *
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @since 1.6
 	 *
@@ -8142,18 +8113,18 @@ written authorization of the copyright holder.
 	 * Converts the byte array to a String using the specified Charset.
 	 *
 	 * @param data
-	 *			  the byte array to convert to a String
+	 *          the byte array to convert to a String
 	 * @param start
-	 *			  the starting offset in the byte array
+	 *          the starting offset in the byte array
 	 * @param length
-	 *			  the number of bytes to convert
+	 *          the number of bytes to convert
 	 * @param charset
-	 *			  the Charset to use
+	 *          the Charset to use
 	 *
 	 * @throws IndexOutOfBoundsException
-	 *				when {@code length < 0, start < 0} or {@code start + length > data.length}
+	 *          when {@code length < 0, start < 0} or {@code start + length > data.length}
 	 * @throws NullPointerException
-	 *				when data is null
+	 *          when data is null
 	 *
 	 * @since 1.6
 	 *
@@ -8167,17 +8138,17 @@ written authorization of the copyright holder.
 
 		if (start >= 0 && 0 <= length && length <= data.length - start) {
 			char[] chars = StringCoding.decode(charset, data, start, length);
-			
+
 			if (enableCompression) {
 				if (compressible(chars, 0, chars.length)) {
 					value = new char[(chars.length + 1) / 2];
 					count = chars.length;
-					
+
 					compress(chars, 0, value, 0, chars.length);
 				} else {
 					value = chars;
 					count = chars.length | uncompressedBit;
-					
+
 					initCompressionFlag();
 				}
 			} else {
@@ -8193,15 +8164,14 @@ written authorization of the copyright holder.
 	 * Converts this String to a byte encoding using the specified Charset.
 	 *
 	 * @param charset
-	 *			  the Charset to use
+	 *          the Charset to use
 	 * @return the byte array encoding of this String
 	 *
 	 * @since 1.6
 	 */
 	public byte[] getBytes(Charset charset) {
 		int currentLength = lengthInternal();
-		
-		
+
 		char[] buffer;
 
 		// Check if the String is compressed
@@ -8211,7 +8181,7 @@ written authorization of the copyright holder.
 		} else {
 			buffer = value;
 		}
-		
+
 		return StringCoding.encode(charset, buffer, 0, currentLength);
 	}
 
@@ -8219,13 +8189,12 @@ written authorization of the copyright holder.
 	 * Creates a new String by putting each element together joined by the delimiter. If an element is null, then "null" is used as string to join.
 	 *
 	 * @param delimiter
-	 *			  Used as joiner to put elements together
+	 *          Used as joiner to put elements together
 	 * @param elements
-	 *			  Elements to be joined
+	 *          Elements to be joined
 	 * @return string of joined elements by delimiter
 	 * @throws NullPointerException
-	 *				if one of the arguments is null
-	 *
+	 *          if one of the arguments is null
 	 */
 	public static String join(CharSequence delimiter, CharSequence... elements) {
 		StringJoiner stringJoiner = new StringJoiner(delimiter);
@@ -8241,13 +8210,12 @@ written authorization of the copyright holder.
 	 * Creates a new String by putting each element together joined by the delimiter. If an element is null, then "null" is used as string to join.
 	 *
 	 * @param delimiter
-	 *			  Used as joiner to put elements together
+	 *          Used as joiner to put elements together
 	 * @param elements
-	 *			  Elements to be joined
+	 *          Elements to be joined
 	 * @return string of joined elements by delimiter
 	 * @throws NullPointerException
-	 *				if one of the arguments is null
-	 *
+	 *          if one of the arguments is null
 	 */
 	public static String join(CharSequence delimiter, Iterable<? extends CharSequence> elements) {
 		StringJoiner stringJoiner = new StringJoiner(delimiter);
@@ -8267,12 +8235,12 @@ written authorization of the copyright holder.
 	/**
 	 * Apply a function to this string. The function expects a single String input
 	 * and returns an R.
-	 * 
-	 * @param f 
-	 *			  the functional interface to be applied
+	 *
+	 * @param f
+	 *          the functional interface to be applied
 	 *
 	 * @return the result of application of the function to this string
-	 * 
+	 *
 	 * @since 12
 	 */
 	public <R> R transform(Function<? super String, ? extends R> f) {
@@ -8280,11 +8248,11 @@ written authorization of the copyright holder.
 	}
 
 	/**
-	 * Returns the nominal descriptor of this String instance, or an empty optional 
+	 * Returns the nominal descriptor of this String instance, or an empty optional
 	 * if construction is not possible.
-	 * 
+	 *
 	 * @return Optional with nominal descriptor of String instance
-	 * 
+	 *
 	 * @since 12
 	 */
 	public Optional<String> describeConstable() {
@@ -8293,12 +8261,12 @@ written authorization of the copyright holder.
 
 	/**
 	 * Resolves this ConstantDesc instance.
-	 * 
-	 * @param lookup 
-	 *			  parameter is ignored
-	 * 
+	 *
+	 * @param lookup
+	 *          parameter is ignored
+	 *
 	 * @return the resolved Constable value
-	 * 
+	 *
 	 * @since 12
 	 */
 	public String resolveConstantDesc(MethodHandles.Lookup lookup) {
@@ -8308,12 +8276,12 @@ written authorization of the copyright holder.
 	/**
 	 * Indents each line of the string depending on the value of n, and normalizes
 	 * line terminators to the newline character "\n".
-	 * 
-	 * @param n 
-	 *			  the number of spaces to indent the string
+	 *
+	 * @param n
+	 *          the number of spaces to indent the string
 	 *
 	 * @return the indented string with normalized line terminators
-	 * 
+	 *
 	 * @since 12
 	 */
 	public String indent(int n) {
@@ -8332,7 +8300,7 @@ written authorization of the copyright holder.
 			} else if (n < 0) {
 				int start = 0;
 
-				while ((currentLine.length() > start) 
+				while ((currentLine.length() > start)
 					&& (Character.isWhitespace(currentLine.charAt(start)))
 				) {
 					start++;
@@ -8353,13 +8321,13 @@ written authorization of the copyright holder.
 		}
 
 		return builder.toString();
-	}	
+	}
 /*[ENDIF] Java12 */
-	
+
 /*[IF Java13]*/
 	/*
 	 * Determine if current String object is LATIN1.
-	 * 
+	 *
 	 * @return true if it is LATIN1, otherwise false.
 	 */
 	boolean isLatin1() {
