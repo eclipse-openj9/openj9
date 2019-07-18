@@ -420,9 +420,7 @@ createIdiomArrayStoreBodyInLoop(TR_PCISCGraph *tgt, int32_t ctrl, int dagId, TR_
       }
    else
       {
-            i2c = new (PERSISTENT_NEW) TR_PCISCNode(tgt->trMemory(),
-                                              (opcode == TR::cstorei) ? (TR_CISCOps)TR::i2s : TR_conversion,
-                                              (opcode == TR::cstorei) ? TR::Int16 : TR::NoType,
+            i2c = new (PERSISTENT_NEW) TR_PCISCNode(tgt->trMemory(), TR_conversion, TR::NoType,
                                               tgt->incNumNodes(),  dagId,   1,   1, pred); tgt->addNode(i2c);
       i2c->setIsOptionalNode();
       pred = i2c;
