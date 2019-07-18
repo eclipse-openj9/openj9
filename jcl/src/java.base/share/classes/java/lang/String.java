@@ -3190,8 +3190,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * possible and there is no size limit in the returned array.
 	 * If max is 0, all the empty string(s) at the end of the returned array will be discarded.
 	 *
-	 *
-	 *
 	 * @param regex Regular expression that is used as a delimiter
 	 * @param max The threshold of the returned array
 	 * @return The array of strings which are split around the regex
@@ -4215,7 +4213,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @see #valueOf(int)
 	 * @see #valueOf(long)
 	 * @see #valueOf(Object)
-	 *
 	 */
 	public String(byte[] data) {
 		this(data, 0, data.length);
@@ -4267,7 +4264,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @see #valueOf(int)
 	 * @see #valueOf(long)
 	 * @see #valueOf(Object)
-	 *
 	 */
 	public String(byte[] data, int start, int length) {
 		data.getClass(); // Implicit null check
@@ -5975,7 +5971,6 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 * @see #lastIndexOf(int, int)
 	 * @see #lastIndexOf(String)
 	 * @see #lastIndexOf(String, int)
-	 *
 	 */
 	public int indexOf(String string) {
 		return indexOf(string, 0);
@@ -7512,8 +7507,6 @@ written authorization of the copyright holder.
 	 * possible and there is no size limit in the returned array.
 	 * If max is 0, all the empty string(s) at the end of the returned array will be discarded.
 	 *
-	 *
-	 *
 	 * @param regex Regular expression that is used as a delimiter
 	 * @param max The threshold of the returned array
 	 * @return The array of strings which are split around the regex
@@ -8218,7 +8211,6 @@ written authorization of the copyright holder.
 	 * @return string of joined elements by delimiter
 	 * @throws NullPointerException
 	 *          if one of the arguments is null
-	 *
 	 */
 	public static String join(CharSequence delimiter, CharSequence... elements) {
 		StringJoiner stringJoiner = new StringJoiner(delimiter);
@@ -8240,7 +8232,6 @@ written authorization of the copyright holder.
 	 * @return string of joined elements by delimiter
 	 * @throws NullPointerException
 	 *          if one of the arguments is null
-	 *
 	 */
 	public static String join(CharSequence delimiter, Iterable<? extends CharSequence> elements) {
 		StringJoiner stringJoiner = new StringJoiner(delimiter);
