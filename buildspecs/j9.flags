@@ -1835,10 +1835,6 @@ Only available on zOS</description>
 			<require flag="interp_jniSupport"/>
 		</requires>
 	</flag>
-	<flag id="opt_remoteConsoleSupport">
-		<description>Include support for remote console (via the -io: cmdline opt).</description>
-		<ifRemoved>No -io: support</ifRemoved>
-	</flag>
 	<flag id="opt_romImageSupport">
 		<description>Controls if the VM includes basic support for linked rom images</description>
 		<ifRemoved>No facility for finding rom image from jxe pointer</ifRemoved>

@@ -85,10 +85,6 @@ UDATA signalProtectedMain(struct J9PortLibrary *portLibrary, void *arg)
 		return 0;
 	}
 
-#ifdef J9VM_OPT_REMOTE_CONSOLE_SUPPORT
-	remoteConsole_parseCmdLine( PORTLIB, argc - 1, argv );
-#endif
-
 #ifdef J9VM_OPT_MEMORY_CHECK_SUPPORT
 	/* This should happen before anybody allocates memory!  Otherwise, shutdown will not work properly. */
 	memoryCheck_parseCmdLine( PORTLIB, argc-1, argv );

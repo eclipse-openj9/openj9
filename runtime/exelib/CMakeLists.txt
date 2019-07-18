@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,10 +28,6 @@ add_library(j9exelib STATIC
 
 if(J9VM_OPT_MEMORY_CHECK_SUPPORT)
 	target_sources(j9exelib PRIVATE common/memcheck.c)
-endif()
-
-if(J9VM_OPT_REMOTE_CONSOLE_SUPPORT)
-	target_sources(j9exelib PRIVATE common/rconsole.c)
 endif()
 
 target_link_libraries(j9exelib
