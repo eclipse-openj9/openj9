@@ -36,7 +36,6 @@ import javax.imageio.stream.ImageInputStream;
 
 import com.ibm.j9ddr.corereaders.ICoreFileReader.DumpTestResult;
 import com.ibm.j9ddr.corereaders.aix.AIXDumpReaderFactory;
-import com.ibm.j9ddr.corereaders.debugger.JniReader;
 import com.ibm.j9ddr.corereaders.elf.ELFDumpReaderFactory;
 import com.ibm.j9ddr.corereaders.macho.MachoDumpReaderFactory;
 import com.ibm.j9ddr.corereaders.minidump.MiniDumpReader;
@@ -55,11 +54,10 @@ public class CoreReader
 	private static final List<Class<? extends ICoreFileReader>> coreReaders;
 
 	static {
-		List<Class<? extends ICoreFileReader>> localReaders = new ArrayList<Class<? extends ICoreFileReader>>();
+		List<Class<? extends ICoreFileReader>> localReaders = new ArrayList<>();
 
 		// AIX must be the last one, since its validation condition is very
 		// weak.
-		localReaders.add(JniReader.class);
 		localReaders.add(MiniDumpReader.class);
 		localReaders.add(ELFDumpReaderFactory.class);
 		localReaders.add(MachoDumpReaderFactory.class);
@@ -82,7 +80,7 @@ public class CoreReader
 		localReaders.add(AIXDumpReaderFactory.class);
 
 		coreReaders = Collections.unmodifiableList(localReaders);
-	};
+	}
 
 	/**
 	 * Create a ICore object for a core file.
