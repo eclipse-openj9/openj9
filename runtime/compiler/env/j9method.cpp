@@ -6252,6 +6252,12 @@ TR_ResolvedJ9Method::varHandleMethodTypeTableEntryAddress(int32_t cpIndex)
    return ramClass->varHandleMethodTypes + methodTypeIndex;
    }
 
+bool
+TR_ResolvedJ9Method::isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex)
+   {
+   return *(j9object_t*)varHandleMethodTypeTableEntryAddress(cpIndex) == NULL;
+   }
+
 #if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
 void *
 TR_ResolvedJ9Method::methodTypeTableEntryAddress(int32_t cpIndex)

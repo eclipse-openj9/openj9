@@ -424,6 +424,7 @@ public:
    virtual void *                methodTypeTableEntryAddress(int32_t cpIndex);
 #endif
    // J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING is always true and is planed to be cleaned up, always assume it's true
+   virtual bool                  isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex);
    virtual void *                varHandleMethodTypeTableEntryAddress(int32_t cpIndex);
 
    virtual bool                  fieldsAreSame(int32_t, TR_ResolvedMethod *, int32_t, bool &sigSame);
