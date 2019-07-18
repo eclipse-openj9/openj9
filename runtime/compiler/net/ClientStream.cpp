@@ -81,7 +81,7 @@ void ClientStream::static_init(TR::PersistentInfo *info)
    auto &sslCerts = compInfo->getJITServerSslCerts();
    auto &sslRootCerts = compInfo->getJITServerSslRootCerts();
 
-   // TODO: we could also set up keys and certs here, if it's necessary to use TLS client keys
+   // We could also set up keys and certs here, if it's necessary to use TLS client keys
    // it's not needed for a basic setup.
    TR_ASSERT_FATAL(sslKeys.size() == 0 && sslCerts.size() == 0, "client keypairs are not yet supported, use a root cert chain instead");
 

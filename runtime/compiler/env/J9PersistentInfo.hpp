@@ -33,7 +33,9 @@ namespace J9 { typedef J9::PersistentInfo PersistentInfoConnector; }
 #include "env/RuntimeAssumptionTable.hpp"
 
 #include <stdint.h>
+#if defined(JITSERVER_SUPPORT)
 #include <string>
+#endif
 #include "env/jittypes.h"
 
 class TR_FrontEnd;
