@@ -1249,13 +1249,7 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 			U_8* end = entries + length;
 			UDATA j = 0;
 			UDATA offset = (UDATA) -1;
-			IDATA localSlots;
 			J9CfrConstantPoolInfo* info = &classfile->constantPool[method->descriptorIndex];
-
-			localSlots = j9bcv_checkMethodSignature(info, TRUE);
-			if ((method->accessFlags & CFR_ACC_STATIC) == 0) {
-				localSlots++;
-			}
 
 			for (j = 0; j < stackMap->numberOfEntries; j++) {
 				U_8 frameType;
@@ -1322,7 +1316,6 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 					}
 					if (frameType >= CFR_STACKMAP_CHOP_3) {
 						slotCount = (IDATA) frameType - CFR_STACKMAP_APPEND_BASE;
-						localSlots += slotCount;
 						if (slotCount < 0) {
 							slotCount = 0;
 						}
@@ -1332,7 +1325,6 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 					/* full frame */
 					/* Executed with StackMap or StackMapTable */
 					NEXT_U16(slotCount, entries);
-					localSlots = slotCount;
 					errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end);
 					if (0 != errorCode) {
 						goto _failedCheck;
