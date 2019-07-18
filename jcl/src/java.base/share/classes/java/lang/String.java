@@ -31,19 +31,16 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.Formatter;
 import java.util.StringJoiner;
-import java.util.function.IntConsumer;
-import java.util.function.IntFunction;
-import java.util.function.IntUnaryOperator;
 import java.util.Iterator;
 import java.nio.charset.Charset;
 /*[IF Java12]*/
 import java.util.function.Function;
 import java.util.Optional;
 /*[ENDIF]*/
+/*[IF Sidecar19-SE]*/
 import java.util.Spliterator;
 import java.util.stream.StreamSupport;
 
-/*[IF Sidecar19-SE]*/
 import jdk.internal.misc.Unsafe;
 import java.util.stream.IntStream;
 /*[ELSE] Sidecar19-SE*/
