@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -60,7 +59,7 @@ private:
 	 * @param object[in] the object to examine
 	 * @return one of J9AccClassReferenceWeak, J9AccClassReferenceSoft or J9AccClassReferencePhantom
 	 */
-	UDATA getReferenceObjectType(j9object_t object);
+	UDATA getReferenceObjectType(MM_EnvironmentBase* env, j9object_t object);
 	
 protected:
 	

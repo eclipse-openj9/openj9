@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2013, 2018 IBM Corp. and others
+ * Copyright (c) 2013, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -137,11 +137,11 @@ final class BruteArgumentMoverHandle extends ArgumentMoverHandle {
 	final Object[] extra;
 
 	// Save a level of indirection for the first few objects.
-	Object   extra_L0;
-	Object   extra_L1;
-	Object   extra_L2;
-	Object   extra_L3;
-	Object   extra_L4;
+	final Object   extra_L0;
+	final Object   extra_L1;
+	final Object   extra_L2;
+	final Object   extra_L3;
+	final Object   extra_L4;
 
 	// Save a couple of levels of indirection for inserted ints.
 	// Also, mark as non-final so we leave the loads in the residual code.
@@ -278,6 +278,10 @@ final class BruteArgumentMoverHandle extends ArgumentMoverHandle {
 	}
 
 	final MethodHandle permuteArguments(MethodType permuteType, int... outerPermute) throws NullPointerException, IllegalArgumentException {
+		if (isUnnecessaryPermute(permuteType, outerPermute)) {
+			return this;
+		}
+
 		return new BruteArgumentMoverHandle(
 			permuteType,
 			next,
@@ -389,6 +393,8 @@ final class BruteArgumentMoverHandle extends ArgumentMoverHandle {
 		return result;
 	}
 
+	static native int permuteArgs(int argPlaceholder, Object extra_L0, Object extra_L1, Object extra_L2, Object extra_L3, Object extra_L4, Object[] extra);
+
 	@FrameIteratorSkip
 	private final int invokeExact_thunkArchetype_X(int argPlaceholder) {
 		if (ILGenMacros.isShareableThunk()) {
@@ -399,7 +405,7 @@ final class BruteArgumentMoverHandle extends ArgumentMoverHandle {
 		}
 		return ILGenMacros.invokeExact_X(
 			next,
-			permuteArgs(argPlaceholder));
+			permuteArgs(argPlaceholder, this.extra_L0, this.extra_L1, this.extra_L2, this.extra_L3, this.extra_L4, this.extra));
 	}
 
 	// }}} JIT support

@@ -50,6 +50,7 @@
 		<impls>
 			<impl>ibm</impl>
 		</impls>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests1_openj9</testCaseName>
@@ -78,6 +79,7 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
+		<aot>explicit</aot>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests2</testCaseName>
@@ -103,6 +105,11 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests3</testCaseName>
@@ -120,14 +127,14 @@
 	true DataHelperTests.jar ;\
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf DataHelperTests.jar; \
 	$(CONVERT_TO_EBCDIC_CMD) \
-	$(CD) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)dataone.contents$(Q); \
+	$(CD) $(Q)$(REPORTDIR_NQ)$(D)datacaching$(D)dataone.contents$(Q); \
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) cf dataone.jar *.txt; \
 	$(CD) $(REPORTDIR); \
-	$(CD) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)datatwo.contents$(Q); \
+	$(CD) $(Q)$(REPORTDIR_NQ)$(D)datacaching$(D)datatwo.contents$(Q); \
 	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) cf datatwo.jar *.txt; \
 	$(CD) $(REPORTDIR); \
-	mv $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)dataone.contents$(D)dataone.jar$(Q) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(Q); \
-	mv $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(D)datatwo.contents$(D)datatwo.jar$(Q) $(Q)$(TESTOUTPUT)$(D)$@$(D)datacaching$(Q); \
+	mv $(Q)$(REPORTDIR_NQ)$(D)datacaching$(D)dataone.contents$(D)dataone.jar$(Q) $(Q)$(REPORTDIR_NQ)$(D)datacaching$(Q); \
+	mv $(Q)$(REPORTDIR_NQ)$(D)datacaching$(D)datatwo.contents$(D)datatwo.jar$(Q) $(Q)$(REPORTDIR_NQ)$(D)datacaching$(Q); \
 	$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
@@ -143,6 +150,11 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests4</testCaseName>
@@ -169,6 +181,11 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests5</testCaseName>
@@ -195,6 +212,11 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>testSCCMLTests6</testCaseName>
@@ -218,6 +240,11 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>testSCCMLSnapshot</testCaseName>
@@ -240,6 +267,11 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>testSCCMLSoftmx</testCaseName>
@@ -266,6 +298,11 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>testSCCMLAotMethodOperation</testCaseName>
@@ -288,6 +325,11 @@
 		<groups>
 			<group>functional</group>
 		</groups>
+		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>testSCCMLModularity</testCaseName>
@@ -316,14 +358,14 @@
 		<subsets>
 			<subset>9+</subset>
 		</subsets>
+		<aot>explicit</aot>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>ShareClassesCMLOpenJ9</testCaseName>
-		<disabled>
-			SharedClasses by default is disabled from the 0.12.0 release while we
-			work through some performance issues related to lost iprofiler data.
-			See issue: https://github.com/eclipse/openj9/issues/4222
-		</disabled>
 		<variations>
 			<variation>Mode110</variation>
 			<variation>Mode610</variation>
@@ -352,5 +394,6 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
+		<aot>explicit</aot>
 	</test>
 </playlist>

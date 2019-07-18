@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -50,6 +49,7 @@
 #include "ClassLoaderClassesIterator.hpp"
 #include "ClassLoaderIterator.hpp"
 #include "ClassLoaderRememberedSet.hpp"
+#include "CopyForwardSchemeTask.hpp"
 #include "CompactGroupManager.hpp"
 #include "CompactGroupPersistentStats.hpp"
 #include "CompressedCardTable.hpp"
@@ -126,170 +126,6 @@
  * if the common context disappears or becomes defined in a more complicated fashion
  */
 #define COMMON_CONTEXT_INDEX 0
-
-class MM_CopyForwardSchemeTask : public MM_ParallelTask
-{
-private:
-	MM_CopyForwardScheme *_copyForwardScheme;  /**< Tasks controlling scheme instance */
-	MM_CycleState *_cycleState;  /**< Collection cycle state active for the task */
-
-public:
-	virtual UDATA getVMStateID() { return OMRVMSTATE_GC_SCAVENGE; };
-
-	virtual void run(MM_EnvironmentBase *envBase)
-	{
-		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-		_copyForwardScheme->workThreadGarbageCollect(env);
-	}
-
-	void setup(MM_EnvironmentBase *envBase)
-	{
-		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-		if (env->isMasterThread()) {
-			Assert_MM_true(_cycleState == env->_cycleState);
-		} else {
-			Assert_MM_true(NULL == env->_cycleState);
-			env->_cycleState = _cycleState;
-		}
-		
-		env->_workPacketStats.clear();
-		env->_copyForwardStats.clear();
-		
-		/* record that this thread is participating in this cycle */
-		env->_copyForwardStats._gcCount = MM_GCExtensions::getExtensions(env)->globalVLHGCStats.gcCount;
-		env->_workPacketStats._gcCount = MM_GCExtensions::getExtensions(env)->globalVLHGCStats.gcCount;
-	}
-
-	void cleanup(MM_EnvironmentBase *envBase)
-	{
-		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-
-		if (env->isMasterThread()) {
-			Assert_MM_true(_cycleState == env->_cycleState);
-		} else {
-			env->_cycleState = NULL;
-		}
-
-		env->_lastOverflowedRsclWithReleasedBuffers = NULL;
-	}
-
-	void masterCleanup(MM_EnvironmentBase *envBase)
-	{
-		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-
-		MM_GCExtensions::getExtensions(env)->interRegionRememberedSet->resetOverflowedList();
-	}
-
-#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
-	void synchronizeGCThreads(MM_EnvironmentBase *env, const char *id);
-	bool synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *env, const char *id);
-	bool synchronizeGCThreadsAndReleaseSingleThread(MM_EnvironmentBase *env, const char *id);
-	
-	bool synchronizeGCThreadsAndReleaseMasterForAbort(MM_EnvironmentBase *env, const char *id);
-	void synchronizeGCThreadsForMark(MM_EnvironmentBase *env, const char *id);
-	bool synchronizeGCThreadsAndReleaseMasterForMark(MM_EnvironmentBase *env, const char *id);
-	void synchronizeGCThreadsForInterRegionRememberedSet(MM_EnvironmentBase *env, const char *id);
-#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
-
-	/**
-	 * Create a CopyForwardSchemeTask object.
-	 */
-	MM_CopyForwardSchemeTask(MM_EnvironmentVLHGC *env, MM_Dispatcher *dispatcher, MM_CopyForwardScheme *copyForwardScheme, MM_CycleState *cycleState) :
-		MM_ParallelTask((MM_EnvironmentBase *)env, dispatcher)
-		, _copyForwardScheme(copyForwardScheme)
-		, _cycleState(cycleState)
-	{
-		_typeId = __FUNCTION__;
-	}
-};
-
-#if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
-void
-MM_CopyForwardSchemeTask::synchronizeGCThreads(MM_EnvironmentBase *envBase, const char *id)
-{
-	PORT_ACCESS_FROM_ENVIRONMENT(envBase);
-	MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	U_64 startTime = j9time_hires_clock();
-	MM_ParallelTask::synchronizeGCThreads(env, id);
-	U_64 endTime = j9time_hires_clock();
-	env->_copyForwardStats.addToSyncStallTime(startTime, endTime);
-}
-
-bool
-MM_CopyForwardSchemeTask::synchronizeGCThreadsAndReleaseMaster(MM_EnvironmentBase *envBase, const char *id)
-{
-	PORT_ACCESS_FROM_ENVIRONMENT(envBase);
-	MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	U_64 startTime = j9time_hires_clock();
-	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMaster(env, id);
-	U_64 endTime = j9time_hires_clock();
-	env->_copyForwardStats.addToSyncStallTime(startTime, endTime);
-
-	return result;
-}
-
-bool
-MM_CopyForwardSchemeTask::synchronizeGCThreadsAndReleaseSingleThread(MM_EnvironmentBase *envBase, const char *id)
-{
-	PORT_ACCESS_FROM_ENVIRONMENT(envBase);
-	MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	U_64 startTime = j9time_hires_clock();
-	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseSingleThread(env, id);
-	U_64 endTime = j9time_hires_clock();
-	env->_copyForwardStats.addToSyncStallTime(startTime, endTime);
-
-	return result;
-}
-
-bool
-MM_CopyForwardSchemeTask::synchronizeGCThreadsAndReleaseMasterForAbort(MM_EnvironmentBase *envBase, const char *id)
-{
-	PORT_ACCESS_FROM_ENVIRONMENT(envBase);
-	MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	U_64 startTime = j9time_hires_clock();
-	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMaster(env, id);
-	U_64 endTime = j9time_hires_clock();
-	env->_copyForwardStats.addToAbortStallTime(startTime, endTime);
-
-	return result;
-}
-
-void
-MM_CopyForwardSchemeTask::synchronizeGCThreadsForMark(MM_EnvironmentBase *envBase, const char *id)
-{
-	PORT_ACCESS_FROM_ENVIRONMENT(envBase);
-	MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	U_64 startTime = j9time_hires_clock();
-	MM_ParallelTask::synchronizeGCThreads(env, id);
-	U_64 endTime = j9time_hires_clock();
-	env->_copyForwardStats.addToMarkStallTime(startTime, endTime);
-}
-
-bool
-MM_CopyForwardSchemeTask::synchronizeGCThreadsAndReleaseMasterForMark(MM_EnvironmentBase *envBase, const char *id)
-{
-	PORT_ACCESS_FROM_ENVIRONMENT(envBase);
-	MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	U_64 startTime = j9time_hires_clock();
-	bool result = MM_ParallelTask::synchronizeGCThreadsAndReleaseMaster(env, id);
-	U_64 endTime = j9time_hires_clock();
-	env->_copyForwardStats.addToMarkStallTime(startTime, endTime);
-
-	return result;
-}
-
-void
-MM_CopyForwardSchemeTask::synchronizeGCThreadsForInterRegionRememberedSet(MM_EnvironmentBase *envBase, const char *id)
-{
-	PORT_ACCESS_FROM_ENVIRONMENT(envBase);
-	MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
-	U_64 startTime = j9time_hires_clock();
-	MM_ParallelTask::synchronizeGCThreads(env, id);
-	U_64 endTime = j9time_hires_clock();
-	env->_copyForwardStats.addToInterRegionRememberedSetStallTime(startTime, endTime);
-}
-
-#endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
 
 MM_CopyForwardScheme::MM_CopyForwardScheme(MM_EnvironmentVLHGC *env, MM_HeapRegionManager *manager)
 	: MM_BaseNonVirtual()
@@ -1534,7 +1370,7 @@ MM_CopyForwardScheme::copyAndForwardObjectClass(MM_EnvironmentVLHGC *env, MM_All
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	_extensions->classLoaderRememberedSet->rememberInstance(env, objectPtr);
 	if(isDynamicClassUnloadingEnabled()) {
-		j9object_t classObject = (j9object_t)J9GC_J9OBJECT_CLAZZ(objectPtr)->classObject;
+		j9object_t classObject = (j9object_t)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->classObject;
 		Assert_MM_true(J9_INVALID_OBJECT != classObject);
 		if (copyAndForward(env, reservingContext, &classObject)) {
 			/* we don't need to update anything with the new address of the class object since objectPtr points at the immobile J9Class */
@@ -2216,9 +2052,9 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 void
 MM_CopyForwardScheme::copyLeafChildren(MM_EnvironmentVLHGC* env, MM_AllocationContextTarok *reservingContext, J9Object* objectPtr)
 {
-	J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+	J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
 	if (GC_ObjectModel::SCAN_MIXED_OBJECT == _extensions->objectModel.getScanType(clazz)) {
-		UDATA instanceLeafDescription = (UDATA)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
+		UDATA instanceLeafDescription = (UDATA)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 		/* For now we only support leaf children in small objects. If the leaf description isn't immediate, ignore it to keep the code simple. */
 		if (1 == (instanceLeafDescription & 1)) {
 			fj9object_t* scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
@@ -2408,7 +2244,7 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 	UDATA descriptionBits;
 	UDATA descriptionIndex;
 #if defined(J9VM_GC_LEAF_BITS)
-	UDATA *leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
+	UDATA *leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 	UDATA leafBits;
 #endif /* J9VM_GC_LEAF_BITS */
 
@@ -2417,7 +2253,7 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 	UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
 
 	endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
-	descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceDescription;
+	descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceDescription;
 
 	if (((UDATA)descriptionPtr) & 1) {
 		descriptionBits = ((UDATA)descriptionPtr) >> 1;
@@ -2492,7 +2328,7 @@ MM_CopyForwardScheme::scanReferenceObjectSlots(MM_EnvironmentVLHGC *env, MM_Allo
 	bool referentMustBeCleared = false;
 	if (isReferenceInCollectionSet) {
 		UDATA referenceObjectOptions = env->_cycleState->_referenceObjectOptions;
-		UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9AccClassReferenceMask;
+		UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr, env)) & J9AccClassReferenceMask;
 		switch (referenceObjectType) {
 		case J9AccClassReferenceWeak:
 			referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_weak)) ;
@@ -2982,9 +2818,10 @@ MM_CopyForwardScheme::aliasToCopyCache(MM_EnvironmentVLHGC *env, MM_CopyScanCach
 MMINLINE void
 MM_CopyForwardScheme::scanObject(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, J9Object *objectPtr, ScanReason reason)
 {
-	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
 	Assert_MM_mustBeClass(clazz);
 	switch(_extensions->objectModel.getScanType(clazz)) {
+	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
 		scanMixedObjectSlots(env, reservingContext, objectPtr, reason);
@@ -3220,7 +3057,7 @@ MM_CopyForwardScheme::incrementalScanReferenceObjectSlots(MM_EnvironmentVLHGC *e
 		mixedObjectIterator.restore(&(scanCache->_objectIteratorState));
 	}
 
-	if (J9AccClassReferenceSoft == (J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9AccClassReferenceMask)) {
+	if (J9AccClassReferenceSoft == (J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr, env)) & J9AccClassReferenceMask)) {
 		/* Object is a Soft Reference: mark it if not expired */
 		U_32 age = J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, objectPtr);
 		referentMustBeMarked = age < _extensions->getDynamicMaxSoftReferenceAge();
@@ -3271,6 +3108,7 @@ MM_CopyForwardScheme::incrementalScanCacheBySlot(MM_EnvironmentVLHGC *env)
 			while ((objectPtr = heapChunkIterator.nextObject()) != NULL) {
 				/* retrieve scan state of the scan cache */
 				switch(_extensions->objectModel.getScanType(objectPtr)) {
+				case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 				case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 				case GC_ObjectModel::SCAN_MIXED_OBJECT:
 				case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
@@ -3714,13 +3552,13 @@ MM_CopyForwardScheme::updateOrDeleteObjectsFromExternalCycle(MM_EnvironmentVLHGC
 						if(isLiveObject(object)) {
 							Assert_MM_true(externalMarkMap->isBitSet(object));
 							Assert_MM_true(_markMap->isBitSet(object));
-							Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(object));
+							Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(object, env));
 						} else {
 							Assert_MM_true(isObjectInEvacuateMemory(object));
 							J9Object *forwardedObject = updateForwardedPointer(object);
 							if(externalMarkMap->isBitSet(forwardedObject)) {
 								Assert_MM_true(_markMap->isBitSet(forwardedObject));
-								Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(forwardedObject));
+								Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(forwardedObject, env));
 								preservedCount += 1;
 								*slot = forwardedObject;
 							} else {
@@ -4473,7 +4311,7 @@ private:
 			/* heap object - validate and mark */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::COULD_BE_FORWARDED, *slotPtr, stackLocation, walkState).validate(_env));
 			verifyObject(slotPtr);
-			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(*slotPtr));
+			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ_THREAD(*slotPtr, ((J9StackWalkState*)walkState)->walkThread));
 		} else if (NULL != *slotPtr) {
 			/* stack object - just validate */
 			Assert_MM_validStackSlot(MM_StackSlotValidator(MM_StackSlotValidator::NOT_ON_HEAP, *slotPtr, stackLocation, walkState).validate(_env));
@@ -4483,10 +4321,10 @@ private:
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator) {
 		if (_copyForwardScheme->isHeapObject(*slotPtr)) {
 			verifyObject(slotPtr);
-			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(*slotPtr));
+			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ_THREAD(*slotPtr, vmThreadIterator->getVMThread()));
 		} else if (NULL != *slotPtr) {
 			Assert_MM_true(vmthreaditerator_state_monitor_records == vmThreadIterator->getState());
-			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ(*slotPtr));
+			Assert_MM_mustBeClass(J9GC_J9OBJECT_CLAZZ_THREAD(*slotPtr, vmThreadIterator->getVMThread()));
 		}
 	}
 
@@ -4634,9 +4472,10 @@ MM_CopyForwardScheme::verifyCopyForwardResult(MM_EnvironmentVLHGC *env)
 void
 MM_CopyForwardScheme::verifyObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr)
 {
-	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+	J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
 	Assert_MM_mustBeClass(clazz);
 	switch(_extensions->objectModel.getScanType(clazz)) {
+	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
 	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
@@ -5096,7 +4935,7 @@ MM_CopyForwardScheme::processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegi
 		GC_SlotObject referentSlotObject(_extensions->getOmrVM(), &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, referenceObj));
 		J9Object *referent = referentSlotObject.readReferenceFromSlot();
 		if (NULL != referent) {
-			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9AccClassReferenceMask;
+			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj, env)) & J9AccClassReferenceMask;
 			
 			/* update the referent if it's been forwarded */
 			MM_ScavengerForwardedHeader forwardedReferent(referent);

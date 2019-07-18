@@ -501,12 +501,12 @@ setCurrentException(J9VMThread *currentThread, UDATA exceptionNumber, UDATA *det
 static void
 internalSetCurrentExceptionWithCause(J9VMThread *currentThread, UDATA exceptionNumber, UDATA *detailMessage, const char *utfMessage, j9object_t cause)
 {
-	UDATA index;
-	UDATA * preservedMessage;
-	UDATA resetOutOfMemory;
-	j9object_t exception;
-	J9Class * exceptionClass;
-	UDATA constructorIndex;
+	UDATA index = 0;
+	UDATA * preservedMessage = NULL;
+	UDATA resetOutOfMemory = 0;
+	j9object_t exception = NULL;
+	J9Class * exceptionClass = NULL;
+	UDATA constructorIndex = 0;
 	UDATA exceptionFlags = 0;
 
 	index = exceptionNumber & J9_EXCEPTION_INDEX_MASK;
@@ -535,6 +535,16 @@ internalSetCurrentExceptionWithCause(J9VMThread *currentThread, UDATA exceptionN
 			break;
 	}
 	PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, (j9object_t) preservedMessage);
+
+	if (J9VMCONSTANTPOOL_JAVALANGUNSUPPORTEDCLASSVERSIONERROR == index) {
+		J9JavaVM *vm = currentThread->javaVM;
+		if (J9_ARE_NO_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_CLASS_OBJECT_ASSIGNED)) {
+			/* This is JVM startup stage, exit with message now. */
+			PORT_ACCESS_FROM_JAVAVM(vm);
+			j9tty_err_printf(PORTLIB, "%s\n", utfMessage);
+			goto done;
+		}
+	}
 
 #ifdef J9VM_INTERP_GROWABLE_STACKS
 	/*  If we are throwing StackOverflowError for the first time in this thread, grow the stack once more */

@@ -224,6 +224,7 @@ enum MessageType
    VM_dereferenceStaticAddress = 303;
    VM_getClassFromCP = 304;
    VM_getROMMethodFromRAMMethod = 305;
+   VM_getReferenceFieldAt = 306;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 400;

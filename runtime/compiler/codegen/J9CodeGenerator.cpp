@@ -76,7 +76,8 @@ J9::CodeGenerator::CodeGenerator() :
    _uncommonedNodes(self()->comp()->trMemory(), stackAlloc),
    _liveMonitors(NULL),
    _nodesSpineCheckedList(getTypedAllocator<TR::Node*>(TR::comp()->allocator())),
-   _jniCallSites(getTypedAllocator<TR_Pair<TR_ResolvedMethod,TR::Instruction> *>(TR::comp()->allocator()))
+   _jniCallSites(getTypedAllocator<TR_Pair<TR_ResolvedMethod,TR::Instruction> *>(TR::comp()->allocator())),
+   _dummyTempStorageRefNode(NULL)
    {
    }
 
@@ -2746,7 +2747,6 @@ J9::CodeGenerator::processRelocations()
                case TR_InlinedVirtualMethodWithNopGuard:
                case TR_InlinedInterfaceMethodWithNopGuard:
                case TR_InlinedAbstractMethodWithNopGuard:
-               case TR_InlinedHCRMethod:
                case TR_ProfiledClassGuardRelocation:
                case TR_ProfiledMethodGuardRelocation:
                case TR_ProfiledInlinedMethodRelocation:
@@ -3995,6 +3995,37 @@ J9::CodeGenerator::collectSymRefs(
    return true;
    }
 
+bool
+J9::CodeGenerator::willGenerateNOPForVirtualGuard(TR::Node *node)
+   {
+   TR::Compilation *comp = self()->comp();
+
+   if (!(node->isNopableInlineGuard() || node->isHCRGuard() || node->isOSRGuard())
+           || !self()->getSupportsVirtualGuardNOPing())
+      return false;
+
+   TR_VirtualGuard *virtualGuard = comp->findVirtualGuardInfo(node);
+
+   if (!((comp->performVirtualGuardNOPing() || node->isHCRGuard() || node->isOSRGuard() || self()->needClassAndMethodPointerRelocations()) &&
+         comp->isVirtualGuardNOPingRequired(virtualGuard)) &&
+         virtualGuard->canBeRemoved())
+      return false;
+
+   if (   node->getOpCodeValue() != TR::ificmpne
+       && node->getOpCodeValue() != TR::ifacmpne
+       && node->getOpCodeValue() != TR::iflcmpne)
+      {
+      // not expecting reversed comparison
+      // Raise an assume if the optimizer requested that this virtual guard must be NOPed
+      //
+      TR_ASSERT(virtualGuard->canBeRemoved(), "virtualGuardHelper: a non-removable virtual guard cannot be NOPed");
+
+      return false;
+      }
+
+   return true;
+   }
+
   /** \brief
     *       Following codegen phase walks the blocks in the CFG and checks for the virtual guard performing TR_MethodTest
     *       and guarding an inlined interface call.
@@ -4050,8 +4081,7 @@ J9::CodeGenerator::fixUpProfiledInterfaceGuardTest()
          {
          TR_VirtualGuard *vg = comp->findVirtualGuardInfo(node);
          // Mainly we need to make sure that virtual guard which performs the TR_MethodTest and can be NOP'd are needed the range check.
-         if (vg && vg->getTestType() == TR_MethodTest &&
-            !(comp->performVirtualGuardNOPing() && (node->isNopableInlineGuard() || comp->isVirtualGuardNOPingRequired(vg))))
+         if (vg && vg->getTestType() == TR_MethodTest && !(self()->willGenerateNOPForVirtualGuard(node)))
             {
             TR::SymbolReference *callSymRef = vg->getSymbolReference();
             TR_ASSERT_FATAL(callSymRef != NULL, "Guard n%dn for the inlined call should have stored symbol reference for the call", node->getGlobalIndex());

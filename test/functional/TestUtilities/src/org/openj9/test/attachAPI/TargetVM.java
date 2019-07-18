@@ -30,12 +30,21 @@ import java.util.Properties;
 public class TargetVM {
 
 	public static final String WAITING_FOR_INITIALIZATION = "STATUS_WAIT_INITIALIZATION"; //$NON-NLS-1$
+	private static final String propertyKey = "j9vm.test.attach.testproperty2"; //$NON-NLS-1$
+	private static final String propertyValue = "5678def"; //$NON-NLS-1$
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
 
+		/* create a dummy Properties object for testing the heap scanner. */
+		Properties p = new Properties();
+		p.setProperty(propertyKey, propertyValue);
+		/* use the object so the code cannot be reordered */
+		if (!propertyValue.equals(p.getProperty(propertyKey))) {
+			System.err.println("This should never happen"); //$NON-NLS-1$
+		}
 		BufferedReader inRdr = new BufferedReader(new InputStreamReader(
 				System.in));
 		System.err.println("starting");
@@ -60,14 +69,16 @@ public class TargetVM {
 									 */
 				return;
 			}
-			Properties p = new Properties();
-			p.setProperty("j9vm.test.attach.testproperty2", "5678def");
 			String cmd = "";
 			cmd = waitForTermination(inRdr, pid, cmd);
 			if (null == cmd) {
 				System.out.println(pid + " stdin closed unexpectedly");
 			} else {
 				System.out.println(pid + " terminated by \"" + cmd + "\"");
+			}
+			/* force a reference to keep the Properties object alive */
+			if (!propertyValue.equals(p.getProperty(propertyKey))) {
+				System.err.println("This should never happen"); //$NON-NLS-1$
 			}
 		} catch (Throwable e) {
 			System.out.println(pid + " failed");

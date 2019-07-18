@@ -510,9 +510,10 @@ copyMemory(J9VMThread* currentThread, j9object_t sourceObject, UDATA sourceOffse
 		UDATA destOffset, UDATA actualSize)
 {
 	/* Because array data is always 8-aligned, only the alignment of the offsets (and byte size) need be considered */
+	UDATA const headerSize = J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(currentThread);
 	UDATA logElementSize = determineCommonAlignment(sourceOffset, destOffset, actualSize);
-	UDATA sourceIndex = (sourceOffset - sizeof(J9IndexableObjectContiguous)) >> logElementSize;
-	UDATA destIndex = (destOffset - sizeof(J9IndexableObjectContiguous)) >> logElementSize;
+	UDATA sourceIndex = (sourceOffset - headerSize) >> logElementSize;
+	UDATA destIndex = (destOffset - headerSize) >> logElementSize;
 	UDATA elementCount = actualSize >> logElementSize;
 
 	copyMemorySub(currentThread, sourceObject, sourceOffset, destObject, destOffset, actualSize, logElementSize, sourceIndex,
@@ -532,8 +533,9 @@ static VMINLINE void
 copyMemoryByte(J9VMThread* currentThread, j9object_t sourceObject, UDATA sourceOffset, j9object_t destObject,
 		UDATA destOffset)
 {
-	UDATA sourceIndex = sourceOffset - sizeof(J9IndexableObjectContiguous);
-	UDATA destIndex = destOffset - sizeof(J9IndexableObjectContiguous);
+	UDATA const headerSize = J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(currentThread);
+	UDATA sourceIndex = sourceOffset - headerSize;
+	UDATA destIndex = destOffset - headerSize;
 
 	copyMemorySub(currentThread, sourceObject, sourceOffset, destObject, destOffset,
 			(UDATA)1, (UDATA)0, sourceIndex, destIndex, (UDATA)1);
@@ -600,7 +602,7 @@ Java_sun_misc_Unsafe_objectFieldOffset(JNIEnv *env, jobject receiver, jobject fi
 		} else if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		} else {
-			offset = (jlong)fieldID->offset + J9_OBJECT_HEADER_SIZE;
+			offset = (jlong)fieldID->offset + J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 		}
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
@@ -631,7 +633,7 @@ illegal:
 		if (!J9ROMCLASS_IS_PRIMITIVE_TYPE(((J9ArrayClass*)clazz)->componentType->romClass)) {
 			goto illegal;
 		}
-		offset -= sizeof(J9IndexableObjectContiguous);
+		offset -= J9VMTHREAD_CONTIGUOUS_HEADER_SIZE(currentThread);
 		VM_ArrayCopyHelpers::primitiveArrayFill(currentThread, object, (UDATA)offset, actualSize, (U_8)value);
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
@@ -778,7 +780,7 @@ Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, 
 		} else if (J9_ARE_ANY_BITS_SET(romField->modifiers, J9AccStatic)) {
 			vmFuncs->setCurrentExceptionUTF(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
 		} else {
-			offset = (jlong)fieldID->offset + J9_OBJECT_HEADER_SIZE;
+			offset = (jlong)fieldID->offset + J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 		}
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,23 @@
 #include "jclglob.h"
 #include "jclprots.h"
 
+#if JAVA_SPEC_VERSION == 8
+static BOOLEAN isProxyExemptFromVerification(JNIEnv * env, jstring className) {
+	BOOLEAN result = FALSE;
+	if (NULL != className) {
+		const char * utf8Name = (const char *) (*env)->GetStringUTFChars(env, className, NULL);
+		if (NULL != utf8Name) {
+			/* check if class name matches the generated implementation class name excluding the generated characters */
+			if ((0 == strncmp(utf8Name, "com.sun.proxy.$Proxy", 20))) {
+				result = TRUE;
+			}
+			(*env)->ReleaseStringUTFChars(env, className, utf8Name);
+		}
+	}
+	return result;
+}
+#endif /* JAVA_SPEC_VERSION == 8 */
+
 static jclass proxyDefineClass(
 		JNIEnv * env,
 		jobject classLoader,
@@ -37,6 +54,7 @@ static jclass proxyDefineClass(
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 	J9StackWalkState walkState;
 	J9Class * clazz = NULL;
+	UDATA defineClassOptions = 0;
 
 	/* Walk the stack to find the caller class loader and protection domain */
 	vmFuncs->internalEnterVMFromJNI(currentThread);
@@ -65,7 +83,12 @@ static jclass proxyDefineClass(
 
 	vmFuncs->internalExitVMToJNI(currentThread);
 
-	return defineClassCommon(env, classLoader, className, classBytes, offset, length, pd, 0, NULL);
+#if JAVA_SPEC_VERSION == 8
+	if (isProxyExemptFromVerification(env, className)) {
+		defineClassOptions |= J9_FINDCLASS_FLAG_UNSAFE;
+	}
+#endif /* JAVA_SPEC_VERSION == 8 */
+	return defineClassCommon(env, classLoader, className, classBytes, offset, length, pd, defineClassOptions, NULL);
 }
 
 jclass JNICALL Java_java_lang_reflect_Proxy_defineClassImpl(JNIEnv * env, jclass recvClass, jobject classLoader, jstring className, jbyteArray classBytes)
@@ -90,7 +113,13 @@ Java_java_lang_reflect_Proxy_defineClass0__Ljava_lang_ClassLoader_2Ljava_lang_St
 	if (classLoader == NULL || pd == NULL) {
 		return proxyDefineClass(env, classLoader, className, classBytes, offset, length, pd);
 	} else {
-		return defineClassCommon(env, classLoader, className, classBytes, offset, length, pd, 0, NULL);
+		UDATA defineClassOptions = 0;
+#if JAVA_SPEC_VERSION == 8
+		if (isProxyExemptFromVerification(env, className)) {
+			defineClassOptions |= J9_FINDCLASS_FLAG_UNSAFE;
+		}
+#endif /* JAVA_SPEC_VERSION == 8 */
+		return defineClassCommon(env, classLoader, className, classBytes, offset, length, pd, defineClassOptions, NULL);
 	}
 }
 

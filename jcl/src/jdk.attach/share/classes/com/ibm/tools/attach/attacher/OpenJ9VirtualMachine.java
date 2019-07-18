@@ -1,6 +1,4 @@
 /*[INCLUDE-IF Sidecar16]*/
-package com.ibm.tools.attach.attacher;
-
 /*******************************************************************************
  * Copyright (c) 2009, 2019 IBM Corp. and others
  *
@@ -23,19 +21,27 @@ package com.ibm.tools.attach.attacher;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+package com.ibm.tools.attach.attacher;
+
+import static com.ibm.oti.util.Msg.getString;
+
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.List;
 import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import com.sun.tools.attach.VirtualMachine;
-import com.sun.tools.attach.VirtualMachineDescriptor;
-import com.sun.tools.attach.spi.AttachProvider;
+
 import com.ibm.tools.attach.target.AttachHandler;
 import com.ibm.tools.attach.target.AttachmentConnection;
 import com.ibm.tools.attach.target.Command;
@@ -45,12 +51,16 @@ import com.ibm.tools.attach.target.IPC;
 import com.ibm.tools.attach.target.Reply;
 import com.ibm.tools.attach.target.Response;
 import com.ibm.tools.attach.target.TargetDirectory;
-import com.sun.tools.attach.AttachOperationFailedException;
-import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
+import com.sun.tools.attach.AttachNotSupportedException;
+import com.sun.tools.attach.AttachOperationFailedException;
+import com.sun.tools.attach.VirtualMachine;
+import com.sun.tools.attach.VirtualMachineDescriptor;
+import com.sun.tools.attach.spi.AttachProvider;
 
-import static com.ibm.oti.util.Msg.getString;
+import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
+import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 
 /**
  * Handles the initiator end of an attachment to a target VM
@@ -64,15 +74,12 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	 * Allow enough for ~100 40-character lines.
 	 */
 	private static final int ATTACH_CONNECTED_MESSAGE_LENGTH_LIMIT = 4000;
-	/*[PR Jazz 35291 Remove socket timeout after attachment established]*/
-	static final String COM_IBM_TOOLS_ATTACH_TIMEOUT = "com.ibm.tools.attach.timeout"; //$NON-NLS-1$
-	static final String COM_IBM_TOOLS_COMMAND_TIMEOUT = "com.ibm.tools.attach.command_timeout"; //$NON-NLS-1$
 	/* The units for timeouts are milliseconds, Set to 0 for no timeout. */	
 	private static final int DEFAULT_ATTACH_TIMEOUT = 120000;	/* should be ~2* the TCP timeout, i.e. /proc/sys/net/ipv4/tcp_fin_timeout on Linux */
 	private static final int DEFAULT_COMMAND_TIMEOUT = 0;
 
-	private static int MAXIMUM_ATTACH_TIMEOUT = Integer.getInteger(COM_IBM_TOOLS_ATTACH_TIMEOUT, DEFAULT_ATTACH_TIMEOUT).intValue();
-	private static int COMMAND_TIMEOUT = Integer.getInteger(COM_IBM_TOOLS_COMMAND_TIMEOUT, DEFAULT_COMMAND_TIMEOUT).intValue();
+	private static int MAXIMUM_ATTACH_TIMEOUT;
+	private static int COMMAND_TIMEOUT;
 	
 	private static final String INSTRUMENT_LIBRARY = "instrument"; //$NON-NLS-1$
 	private OutputStream commandStream;
@@ -85,6 +92,15 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	private FileLock[] targetLocks;
 	private ServerSocket targetServer;
 	private Socket targetSocket;
+	
+	static {
+		PrivilegedAction<Object> action = () -> {
+			MAXIMUM_ATTACH_TIMEOUT = Integer.getInteger("com.ibm.tools.attach.timeout", DEFAULT_ATTACH_TIMEOUT).intValue(); //$NON-NLS-1$
+			COMMAND_TIMEOUT = Integer.getInteger("com.ibm.tools.attach.command_timeout", DEFAULT_COMMAND_TIMEOUT).intValue(); //$NON-NLS-1$
+			return null;
+		};
+		AccessController.doPrivileged(action);
+	}
 
 	/**
 	 * @param provider
@@ -111,6 +127,26 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	 *             if the descriptor is null the target does not respond.
 	 */
 	void attachTarget() throws IOException, AttachNotSupportedException {
+		PrivilegedExceptionAction<Object> action = () -> {attachTargetImpl(); return null;};
+		try {
+			AccessController.doPrivileged(action);
+		} catch (PrivilegedActionException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof AttachNotSupportedException) {
+				throw (AttachNotSupportedException) cause;
+			} else if (cause instanceof IOException) {
+				throw (IOException) cause;
+			} else if (cause instanceof RuntimeException) {
+				throw (RuntimeException) cause;
+			} else if (cause instanceof Error) {
+				throw (Error) cause;
+			} else {
+				throw new RuntimeException(cause);
+			}
+		}
+	}
+
+	private void attachTargetImpl() throws AttachNotSupportedException, IOException {
 		if (null == descriptor) {
 			/*[MSG "K0531", "target not found"]*/
 			throw new AttachNotSupportedException(getString("K0531")); //$NON-NLS-1$
@@ -266,14 +302,15 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	}
 
 	/**
-	 * Request thread information, including stack traces, from a target VM.
+	 * Execute a diagnostic command on a target VM.
 	 * 
-	 * @return properties object containing serialized thread information
+	 * @param diagnosticCommand name of command to execute
+	 * @return properties object containing serialized result
 	 * @throws IOException in case of a communication error
 	 */
-	public Properties getThreadInfo() throws IOException {
-		IPC.logMessage("enter getThreadInfo"); //$NON-NLS-1$
-		AttachmentConnection.streamSend(commandStream, Command.GET_THREAD_GROUP_INFO);
+	public Properties executeDiagnosticCommand(String diagnosticCommand) throws IOException {
+		IPC.logMessage("enter executeDiagnosticCommand ", diagnosticCommand); //$NON-NLS-1$
+		AttachmentConnection.streamSend(commandStream, Command.ATTACH_DIAGNOSTICS_PREFIX + diagnosticCommand);
 		return IPC.receiveProperties(responseStream, true);
 	}
 
@@ -358,24 +395,26 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 	}
 
 	/**
-	 * parse the status value from the end of the response string: this will be a numeric string at the end of the string.
+	 * parse the status value from the end of the response string: this will be a
+	 * numeric string at the end of the string.
+	 * 
 	 * @param response
-	 * @return Integer value of status, or null if the string does not end in a number
+	 * @return Integer value of status, or null if the string does not end in a
+	 *         number
 	 */
 	private static Integer getStatusValue(String response) {
-		Pattern rvPattern = Pattern.compile("(-?\\d+)\\s*$");  //$NON-NLS-1$
+		Pattern rvPattern = Pattern.compile("(-?\\d+)\\s*$"); //$NON-NLS-1$
 		Matcher rvMatcher = rvPattern.matcher(response);
+		Integer ret = null;
 		if (rvMatcher.find()) {
 			String status = rvMatcher.group(1);
 			try {
-				return Integer.getInteger(status);
+				ret = Integer.valueOf(status);
 			} catch (NumberFormatException e) {
 				IPC.logMessage("Error parsing response", response); //$NON-NLS-1$
-				return null;
 			}
-		} else {
-			return null;
 		}
+		return ret;
 	}
 
 
@@ -554,6 +593,60 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 		}
 		return result;
 
+	}
+	
+	/**
+	 * Generate a text description of a target JVM's heap, including the number and
+	 * sizes of instances of each class.
+	 * 
+	 * @param opts
+	 *            String options: "-live" for live object only, or "-all" for all
+	 *            objects. Default is "live".
+	 * @return byte stream containing the UTF-8 text of the formatted output
+	 */
+	public InputStream heapHisto(Object... opts) {
+		InputStream ret = null;
+		PrivilegedExceptionAction<InputStream> action = () -> heapHistoImpl(opts);
+		try {
+			ret = AccessController.doPrivileged(action);
+		} catch (PrivilegedActionException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof RuntimeException) {
+				throw (RuntimeException) cause;
+			} else if (cause instanceof Error) {
+				throw (Error) cause;
+			} else {
+				throw new RuntimeException(cause);
+			}
+		}
+		return ret;
+	}
+
+	private InputStream heapHistoImpl(Object... opts) {
+		String responseString = null;
+		IPC.logMessage("heapHisto called"); //$NON-NLS-1$
+		boolean live = true;
+		for (Object opt : opts) {
+			IPC.logMessage("heapHisto option: ", opt.toString()); //$NON-NLS-1$
+			if ("-live".equals(opt)) { //$NON-NLS-1$
+				live = true;
+			} else if ("-all".equals(opt)) { //$NON-NLS-1$
+				live = false;
+			} else {
+				responseString = "unrecognized option: " + opt.toString(); //$NON-NLS-1$
+			}
+		}
+		if (null == responseString) {
+			String cmd = DiagnosticUtils.makeHeapHistoCommand(live);
+			try {
+				DiagnosticProperties props = new DiagnosticProperties(executeDiagnosticCommand(cmd));
+				responseString = props.printStringResult();
+			} catch (IOException e) {
+				responseString = "Error executing heapHisto command: " + e.toString(); //$NON-NLS-1$
+			}
+		}
+		IPC.logMessage("heapHisto result: ", responseString); //$NON-NLS-1$
+		return new ByteArrayInputStream(responseString.getBytes(StandardCharsets.UTF_8));
 	}
 
 	/**

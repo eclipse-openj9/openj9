@@ -24,23 +24,21 @@ cmake_minimum_required(VERSION 3.4 FATAL_ERROR)
 
 project(openj9)
 
-if(NOT $ENV{BOOT_JDK} STREQUAL "")
-    set(JAVA_HOME $ENV{BOOT_JDK})
-
-    # These variables are consumed when the "Java" language is enabled
-    set(CMAKE_Java_COMPILER ${JAVA_HOME}/bin/javac)
-    set(CMAKE_Java_RUNTIME ${JAVA_HOME}/bin/java)
-    set(CMAKE_Java_AR ${JAVA_HOME}/bin/jar)
-
-    set(Java_JAVA_EXECUTABLE ${JAVA_HOME}/bin/java)
-else()
-    message(STATUS "BOOT_JDK is not set, default jdk will be used")
-    include(FindJava)
+if("${BOOT_JDK}" STREQUAL "")
+	message(FATAL_ERROR "BOOT_JDK must be defined")
 endif()
 
-# Note: this is a temporary transition variable
-set(J9VM_IS_NON_STAGING TRUE)
+message(STATUS "Using BOOT_JDK: '${BOOT_JDK}'")
 
+# These variables are used by "Java" language support.
+find_program(CMAKE_Java_COMPILER NAMES javac PATHS ${BOOT_JDK}/bin NO_DEFAULT_PATH)
+find_program(CMAKE_Java_RUNTIME  NAMES java  PATHS ${BOOT_JDK}/bin NO_DEFAULT_PATH)
+find_program(CMAKE_Java_AR       NAMES jar   PATHS ${BOOT_JDK}/bin NO_DEFAULT_PATH)
+
+set(Java_JAVA_EXECUTABLE ${CMAKE_Java_RUNTIME})
+
+# Note: this is a temporary transition variable.
+set(J9VM_IS_NON_STAGING TRUE)
 
 add_subdirectory(sourcetools)
 add_subdirectory(runtime)

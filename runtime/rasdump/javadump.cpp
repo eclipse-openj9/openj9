@@ -3479,11 +3479,10 @@ JavaCoreDumpWriter::writeSegments(J9MemorySegmentList* list, BOOLEAN isCodeCache
 	UDATA sizeTotal = 0;
 	UDATA allocTotal = 0;
 	UDATA freeTotal = 0;
-	UDATA *mccCodeCache;
-	UDATA *warmAlloc;
-	UDATA *coldAlloc;
-
+	
 	while (segment != 0) {
+		UDATA warmAlloc;
+		UDATA coldAlloc;
 	
 		if (segment->type == MEMORY_TYPE_SHARED_META) {
 			/* Discard the class cache metadata segment (it overlaps the last shared ROM class segment in the cache) */
@@ -3491,21 +3490,25 @@ JavaCoreDumpWriter::writeSegments(J9MemorySegmentList* list, BOOLEAN isCodeCache
 			continue;
 		}
 		if (isCodeCacheSegment) {
+			/* Set default values for warmAlloc and coldAlloc pointers */
+			warmAlloc = (UDATA)segment->heapBase;
+			coldAlloc = (UDATA)segment->heapTop;
+
 			/* The JIT code cache grows from both ends of the segment: the warmAlloc pointer upwards from the start of the segment
 			 * and the coldAlloc pointer downwards from the end of the segment. The free space in a JIT code cache segment is the 
 			 * space between the warmAlloc and coldAlloc pointers. See jit/codert/MultiCodeCache.hpp, the contract with the JVM is
-			 * that the address of the TR_MCCCodeCache structure is stored at the beginning of the segment, and that the warmAlloc
-			 * and coldAlloc pointers are the first two fields in TR_MCCCodeCache.
+			 * that the address of the TR_MCCCodeCache structure is stored at the beginning of the segment.
 			 */
-			mccCodeCache = *((UDATA**)segment->heapBase);
-			if (mccCodeCache) {
-				warmAlloc = (UDATA *)(*mccCodeCache);
-				coldAlloc = (UDATA *)(*(++mccCodeCache));
-			} else {
-				/* sanity check, if the TR_MCCCodeCache pointer was null, set default values for warmAlloc and coldAlloc pointers */
-				warmAlloc = (UDATA *)segment->heapBase;
-				coldAlloc = (UDATA *)segment->heapTop;
+#ifdef J9VM_INTERP_NATIVE_SUPPORT
+			UDATA *mccCodeCache = *((UDATA**)segment->heapBase);
+			if (mccCodeCache ) {
+				J9JITConfig* jitConfig = _VirtualMachine->jitConfig;
+				if (jitConfig) {
+					warmAlloc = (UDATA)jitConfig->codeCacheWarmAlloc(mccCodeCache);
+					coldAlloc = (UDATA)jitConfig->codeCacheColdAlloc(mccCodeCache);
+				}
 			}
+#endif
 		}
 		_OutputStream.writeCharacters("1STSEGMENT     ");     
 		_OutputStream.writePointer(segment, true);
@@ -3514,7 +3517,7 @@ JavaCoreDumpWriter::writeSegments(J9MemorySegmentList* list, BOOLEAN isCodeCache
 		_OutputStream.writeCharacters(" ");
 		if (isCodeCacheSegment) {
 			/* For the JIT code cache segments, we fake up the allocation pointer as the sum of the cold and warm allocations */
-			_OutputStream.writePointer((UDATA *)((UDATA)segment->heapTop - ((UDATA)coldAlloc - (UDATA)warmAlloc)), true);
+			_OutputStream.writePointer((UDATA *)((UDATA)segment->heapTop - (coldAlloc - warmAlloc)), true);
 		} else {
 			_OutputStream.writePointer(segment->heapAlloc, true);
 		}
@@ -3529,8 +3532,8 @@ JavaCoreDumpWriter::writeSegments(J9MemorySegmentList* list, BOOLEAN isCodeCache
 		/* accumulate the totals */
 		sizeTotal += segment->size;
 		if (isCodeCacheSegment) {
-			allocTotal += segment->size - ((UDATA)coldAlloc - (UDATA)warmAlloc);
-			freeTotal += (UDATA)coldAlloc - (UDATA)warmAlloc;
+			allocTotal += segment->size - (coldAlloc - warmAlloc);
+			freeTotal += coldAlloc - warmAlloc;
 		} else {
 			allocTotal += ((UDATA)segment->heapAlloc - (UDATA)segment->heapBase);
 			freeTotal += (segment->size - ((UDATA)segment->heapAlloc - (UDATA)segment->heapBase));

@@ -1156,11 +1156,6 @@ TR::Register *J9::X86::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeG
    return TR::TreeEvaluator::VMmonexitEvaluator(node, cg);
    }
 
-TR::Register *J9::X86::TreeEvaluator::monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   return NULL;
-   }
-
 TR::Register *J9::X86::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    // Generate the test and branch for async message processing.
@@ -2073,36 +2068,6 @@ TR::Register *J9::X86::TreeEvaluator::NULLCHKEvaluator(TR::Node *node, TR::CodeG
 TR::Register *J9::X86::TreeEvaluator::resolveAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    return TR::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(node, true, cg);
-   }
-
-TR::Register *J9::X86::TreeEvaluator::resolveCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   // No code is generated for the resolve check. The child will reference an
-   // unresolved symbol and all check handling is done via the corresponding
-   // snippet.
-   //
-   TR::Node *firstChild = node->getFirstChild();
-   TR::Compilation *comp = cg->comp();
-   bool fixRefCount = false;
-   if (comp->useCompressedPointers())
-      {
-      // for stores under ResolveCHKs, artificially bump
-      // down the reference count before evaluation (since stores
-      // return null as registers)
-      //
-      if (node->getFirstChild()->getOpCode().isStoreIndirect() &&
-            node->getFirstChild()->getReferenceCount() > 1)
-         {
-         node->getFirstChild()->decReferenceCount();
-         fixRefCount = true;
-         }
-      }
-   cg->evaluate(firstChild);
-   if (fixRefCount)
-      firstChild->incReferenceCount();
-
-   cg->decReferenceCount(firstChild);
-   return NULL;
    }
 
 
@@ -5523,9 +5488,6 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
 
    if (!node->isReadMonitor() && !reservingLock)
       {
-#ifdef J9VM_TASUKI_LOCKS_DOUBLE_SLOT
-      TR_ASSERT(TR::Compiler->target.is32Bit(), "This code-piece should never be reached");
-#endif
       if (cg->getX86ProcessorInfo().supportsHLE() && comp->getOption(TR_X86HLE))
          generateMemImmInstruction(XRSMemImm4(gen64BitInstr),
             node, getMemoryReference(objectClassReg, objectReg, lwOffset, cg), 0, cg);
@@ -8981,115 +8943,6 @@ inlineNanoTime(
 #endif
 #endif // LINUX
 
-static bool
-inlineMathSQRT(
-      TR::Node *node,
-      TR::CodeGenerator *cg)
-   {
-   // Sometimes the call can have 2 children, where the first one is loadaddr
-   TR::Node *operand = NULL;
-   TR::Node *firstChild = NULL;
-   TR::Register *targetRegister = NULL;
-
-   if (node->getNumChildren() == 1)
-      {
-      operand = node->getFirstChild();
-      }
-   else
-      {
-      firstChild = node->getFirstChild();
-      operand    = node->getSecondChild();
-      }
-
-   if (node->getReferenceCount()==1)
-      {
-      if (firstChild)
-         cg->recursivelyDecReferenceCount(firstChild);
-
-      cg->recursivelyDecReferenceCount(operand);
-      return true;
-      }
-
-
-   // The current Neutrino sqrt() runtime function does not always return
-   // a result in the expected precision.  Hence, do not fold constants
-   // at compile time.
-   //
-   // TODO: Instead of avoiding it altogether the preferred fix is to call
-   // the fdlibm version of sqrt (involves linking in the fdlibm library).
-   //
-   if (operand->getOpCode().isLoadConst())
-      {
-      union
-         {
-         struct
-            {
-            uint32_t lower;
-            uint32_t upper;
-            } s;
-         double   doubleVal;
-         int64_t  rawBits;
-         } d;
-
-      d.doubleVal = operand->getDouble();
-
-      // Do not assume that the C runtime will return the correct values that Java requires
-      // for a j/l/Math.sqrt() call.  Provide the correct values for the special cases.
-      //
-      if (d.s.upper & 0x80000000)
-         {
-         if (d.s.upper != 0x80000000 || d.s.lower != 0x00000000)
-            {
-            // -ve number other than -0.0 returns NaN.
-            // -0.0 returns -0.0.
-            //
-            d.s.lower = 0;
-            d.s.upper = 0x7ff80000;
-            }
-         }
-      else if (! ((d.s.lower == 0) && (d.s.upper == 0 || d.s.upper == 0x7ff00000 || d.s.upper == 0x7ff80000)))
-         {
-         // +0.0 or +INF or NaN returns the argument.
-         // Anything else can be computed from the sqrt() function.
-         //
-         d.doubleVal = sqrt(d.doubleVal);
-         }
-
-      auto cds = cg->findOrCreate8ByteConstant(operand, d.rawBits);
-
-      targetRegister = cg->allocateRegister(TR_FPR);
-      generateRegMemInstruction(MOVSDRegMem, node, targetRegister, generateX86MemoryReference(cds, cg), cg);
-      }
-   else
-      {
-      TR::Register *opRegister = NULL;
-      opRegister = cg->evaluate(operand);
-
-      if (opRegister->getKind() == TR_FPR)
-         {
-         if (operand->getReferenceCount()==1)
-            targetRegister = opRegister;
-         else
-            targetRegister = cg->allocateRegister(TR_FPR);
-
-         generateRegRegInstruction(SQRTSDRegReg, node, targetRegister, opRegister, cg);
-         }
-      else
-         {
-         targetRegister = cg->doubleClobberEvaluate(operand);
-         generateFPRegInstruction(DSQRTReg, node, targetRegister, cg);
-         }
-      }
-
-   node->setRegister(targetRegister);
-   if (firstChild)
-      cg->recursivelyDecReferenceCount(firstChild);
-
-   cg->decReferenceCount(operand);
-   return true;
-
-   }
-
 // Convert serial String.hashCode computation into vectorization copy and implement with SSE instruction
 //
 // Conversion process example:
@@ -9331,15 +9184,15 @@ TR::Register *intOrLongClobberEvaluate(
  * \param node
  *   The tree node
  *
- * \param isLatin1
- *   True when the string is Latin1, False when the string is UTF16
- *
  * \param cg
  *   The Code Generator
  *
+ * \param isLatin1
+ *   True when the string is Latin1, False when the string is UTF16
+ *
  * Note that this version does not support discontiguous arrays
  */
-static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::CodeGenerator* cg)
+static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isLatin1)
    {
    static uint8_t MASKOFSIZEONE[] =
       {
@@ -9373,10 +9226,10 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::C
       shift = 1;
       }
 
-   auto address = cg->evaluate(node->getChild(1));
-   auto value = cg->evaluate(node->getChild(2));
+   auto array = cg->evaluate(node->getChild(1));
+   auto ch = cg->evaluate(node->getChild(2));
    auto offset = cg->evaluate(node->getChild(3));
-   auto size = cg->evaluate(node->getChild(4));
+   auto length = cg->evaluate(node->getChild(4));
 
    auto ECX = cg->allocateRegister();
    auto result = cg->allocateRegister();
@@ -9386,15 +9239,15 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::C
 
    auto dependencies = generateRegisterDependencyConditions((uint8_t)7, (uint8_t)7, cg);
    dependencies->addPreCondition(ECX, TR::RealRegister::ecx, cg);
-   dependencies->addPreCondition(address, TR::RealRegister::NoReg, cg);
-   dependencies->addPreCondition(size, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(array, TR::RealRegister::NoReg, cg);
+   dependencies->addPreCondition(length, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(result, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(scratch, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(scratchXMM, TR::RealRegister::NoReg, cg);
    dependencies->addPreCondition(valueXMM, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(ECX, TR::RealRegister::ecx, cg);
-   dependencies->addPostCondition(address, TR::RealRegister::NoReg, cg);
-   dependencies->addPostCondition(size, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(array, TR::RealRegister::NoReg, cg);
+   dependencies->addPostCondition(length, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(result, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(scratch, TR::RealRegister::NoReg, cg);
    dependencies->addPostCondition(scratchXMM, TR::RealRegister::NoReg, cg);
@@ -9406,13 +9259,13 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::C
    begLabel->setStartInternalControlFlow();
    endLabel->setEndInternalControlFlow();
 
-   generateRegRegInstruction(MOVDRegReg4, node, valueXMM, value, cg);
+   generateRegRegInstruction(MOVDRegReg4, node, valueXMM, ch, cg);
    generateRegMemInstruction(PSHUFBRegMem, node, valueXMM, generateX86MemoryReference(cg->findOrCreate16ByteConstant(node, shuffleMask), cg), cg);
 
    generateRegRegInstruction(MOV4RegReg, node, result, offset, cg);
 
    generateLabelInstruction(LABEL, node, begLabel, cg);
-   generateRegMemInstruction(LEARegMem(), node, scratch, generateX86MemoryReference(address, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+   generateRegMemInstruction(LEARegMem(), node, scratch, generateX86MemoryReference(array, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
    generateRegRegInstruction(MOVRegReg(), node, ECX, scratch, cg);
    generateRegImmInstruction(ANDRegImms(), node, scratch, ~(width - 1), cg);
    generateRegImmInstruction(ANDRegImms(), node, ECX, width - 1, cg);
@@ -9430,17 +9283,17 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::C
       }
    generateRegImmInstruction(ADD4RegImms, node, result, width >> shift, cg);
    generateRegRegInstruction(SUB4RegReg, node, result, ECX, cg);
-   generateRegRegInstruction(CMP4RegReg, node, result, size, cg);
+   generateRegRegInstruction(CMP4RegReg, node, result, length, cg);
    generateLabelInstruction(JGE1, node, endLabel, cg);
 
    generateLabelInstruction(LABEL, node, loopLabel, cg);
-   generateRegMemInstruction(MOVDQURegMem, node, scratchXMM, generateX86MemoryReference(address, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
+   generateRegMemInstruction(MOVDQURegMem, node, scratchXMM, generateX86MemoryReference(array, result, shift, TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cg), cg);
    generateRegRegInstruction(compareOp, node, scratchXMM, valueXMM, cg);
    generateRegRegInstruction(PMOVMSKB4RegReg, node, scratch, scratchXMM, cg);
    generateRegRegInstruction(TEST4RegReg, node, scratch, scratch, cg);
    generateLabelInstruction(JNE1, node, endLabel, cg);
    generateRegImmInstruction(ADD4RegImms, node, result, width >> shift, cg);
-   generateRegRegInstruction(CMP4RegReg, node, result, size, cg);
+   generateRegRegInstruction(CMP4RegReg, node, result, length, cg);
    generateLabelInstruction(JL1, node, loopLabel, cg);
    generateLabelInstruction(LABEL, node, endLabel, dependencies, cg);
 
@@ -9450,7 +9303,7 @@ static TR::Register* inlineIntrinsicIndexOf(TR::Node* node, bool isLatin1, TR::C
       generateRegImmInstruction(SHR4RegImm1, node, scratch, shift, cg);
       }
    generateRegRegInstruction(ADDRegReg(), node, result, scratch, cg);
-   generateRegRegInstruction(CMPRegReg(), node, result, size, cg);
+   generateRegRegInstruction(CMPRegReg(), node, result, length, cg);
    generateRegMemInstruction(CMOVGERegMem(), node, result, generateX86MemoryReference(TR::Compiler->target.is32Bit() ? cg->findOrCreate4ByteConstant(node, -1) : cg->findOrCreate8ByteConstant(node, -1), cg), cg);
 
    cg->stopUsingRegister(ECX);
@@ -10041,11 +9894,6 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             }
             break;
 
-         case TR::java_lang_Math_sqrt:
-         case TR::java_lang_StrictMath_sqrt:
-            {
-            return inlineMathSQRT(node, cg);
-            }
 
          case TR::java_lang_Long_reverseBytes:
          case TR::java_lang_Integer_reverseBytes:
@@ -11640,12 +11488,12 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
          if (!cg->getSupportsInlineStringIndexOf())
             break;
          else
-            return inlineIntrinsicIndexOf(node, true, cg);
+            return inlineIntrinsicIndexOf(node, cg, true);
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
          if (!cg->getSupportsInlineStringIndexOf())
             break;
          else
-            return inlineIntrinsicIndexOf(node, false, cg);
+            return inlineIntrinsicIndexOf(node, cg, false);
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big:
       case TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Little:
          return TR::TreeEvaluator::encodeUTF16Evaluator(node, cg);
@@ -12434,6 +12282,9 @@ J9::X86::TreeEvaluator::andORStringEvaluator(TR::Node *node, TR::CodeGenerator *
    }
 
 /*
+ *
+ * Generates instructions to fill in the J9JITWatchedStaticFieldData.fieldAddress, J9JITWatchedStaticFieldData.fieldClass for static fields,
+ * and J9JITWatchedInstanceFieldData.offset for instance fields at runtime. Used for fieldwatch support.
  * Fill in the J9JITWatchedStaticFieldData.fieldAddress, J9JITWatchedStaticFieldData.fieldClass for static field
  * and J9JITWatchedInstanceFieldData.offset for instance field
  *
@@ -12449,7 +12300,7 @@ J9::X86::TreeEvaluator::andORStringEvaluator(TR::Node *node, TR::CodeGenerator *
  * jmp restartLabel
  */
 void
-J9::X86::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField (TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister)
+J9::X86::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField (TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *dataSnippetRegister)
    {
    TR::SymbolReference *symRef = node->getSymbolReference();
    bool is64Bit = TR::Compiler->target.is64Bit();
@@ -12714,7 +12565,7 @@ static uint8_t getNumOfConditionsForReportFieldAccess(TR::Node *node, bool isRes
    }
 
 void
-J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg)
+J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg, TR::Register *dataSnippetRegister)
    {
    bool isResolved = !node->getSymbolReference()->isUnresolved();
    TR::LabelSymbol* startLabel = generateLabelSymbol(cg);
@@ -12760,10 +12611,14 @@ J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGene
          }
       else
          {
-         fieldClassReg = cg->allocateRegister();
          if (isWrite)
             {
+            fieldClassReg = cg->allocateRegister();
             generateRegMemInstruction(LRegMem(), node, fieldClassReg, generateX86MemoryReference(sideEffectRegister, fej9->getOffsetOfClassFromJavaLangClassField(), cg), cg);
+            }
+         else
+            {
+            fieldClassReg = sideEffectRegister;
             }
          classFlagsMemRef = generateX86MemoryReference(fieldClassReg, fej9->getOffsetOfClassFlags(), cg);
          }
@@ -12787,7 +12642,7 @@ J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGene
    deps->stopAddingConditions();
    generateLabelInstruction(LABEL, node, endLabel, deps, cg);
 
-   if (isInstanceField || (!isResolved) || isAOTCompile)
+   if (isInstanceField || (!isResolved && isWrite) || isAOTCompile)
       {
       cg->stopUsingRegister(fieldClassReg);
       }

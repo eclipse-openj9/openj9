@@ -25,7 +25,6 @@ use Data::Dumper;
 use feature 'say';
 use strict;
 use warnings;
-use XML::Parser;
 
 my $headerComments =
 	"########################################################\n"
@@ -72,6 +71,9 @@ sub runmkgen {
 	}
 
 	my $includeModesService = 1;
+	if ( $graphSpecs =~ /zos/ ) {
+		$includeModesService = 0;
+	}
 	eval qq{require "modesService.pl"; 1;} or $includeModesService = 0;
 	my $serviceResponse;
 	if ($includeModesService) {
@@ -83,8 +85,14 @@ sub runmkgen {
 
 	if (!(($serviceResponse) && (%{$modes_hs}) && (%{$sp_hs}))) {
 		print "Getting modes data from modes.xml and ottawa.csv...\n";
-		require "parseFiles.pl";
-		my $data = getFileData($modesxml, $ottawacsv);
+		my $data;
+		if ( $graphSpecs =~ /zos/ ) {
+			require "modesData.pl";
+			$data = getModesData();
+		} else {
+			require "parseFiles.pl";
+			$data = getFileData($modesxml, $ottawacsv);
+		}
 		$modes_hs = $data->{'modes'};
 		$sp_hs = $data->{'specPlatMapping'};
 	} else {
@@ -226,7 +234,14 @@ sub xml2mk {
 	my ($makeFile, $playlistXML, $currentdirs) = @_;
 	$parseTest = {};
 	$parseResult = {};
-	parseXML($playlistXML);
+	$parseResult->{'tests'} = [];
+
+	if ( $graphSpecs =~ /zos/ ) {
+		parseXMLForZos($playlistXML);
+	} else {
+		parseXML($playlistXML);
+	}
+
 	if (!%{$parseResult}) {
 		return 0;
 	}
@@ -234,7 +249,177 @@ sub xml2mk {
 	return 1;
 }
 
+sub parseXMLForZos {
+	my ($playlistXML) = @_;
+	open( my $fhIn, '<', $playlistXML ) or die "Cannot open file $_[0]";
+	while ( my $line = <$fhIn> ) {
+		my $testlines;
+		if ( $line =~ /\<include\>/ ) {
+			my $include = getElementByTag( $line, 'include' );
+			$parseResult->{'include'} = $include;
+		} elsif ( $line =~ /\<test\>/ ) {
+			$parseTest = {};
+			$testlines .= $line;
+			while ( my $testline = <$fhIn> ) {
+				$testlines .= $testline;
+				if ( $testline =~ /\<\/test\>/ ) {
+					last;
+				}
+			}
+
+ 			$parseTest->{'disabled'} = getElementByTag( $testlines, 'disabled' );
+ 			$parseTest->{'testCaseName'} = getElementByTag( $testlines, 'testCaseName' );
+			$parseTest->{'command'} = getElementByTag( $testlines, 'command' );
+			$parseTest->{'platformRequirements'} = getElementByTag( $testlines, 'platformRequirements' );
+			$parseTest->{'capabilities'} = getElementByTag( $testlines, 'capabilities');
+			my $variations = getElementByTag( $testlines, 'variations' );
+			$parseTest->{'variation'} = getElementsByTag( $variations, 'variation' );
+			# variation defaults to noOption
+			if ( !@{$parseTest->{'variation'}} ) {
+				$parseTest->{'variation'} = ['NoOptions'];
+			}
+
+			my $levels = getElementByTag( $testlines, 'levels' );
+ 			$parseTest->{'levels'} = getElementsByTag( $levels, 'level' );
+			# level defaults to extended
+			if (!@{$parseTest->{'levels'}}) {
+				$parseTest->{'levels'} = ['extended'];
+			}	
+			foreach my $level ( @{$parseTest->{'levels'}} ) {
+				if ( !grep(/^$level$/, @{$allLevels}) ) {
+					die "The level: " . $level . " for test " . $parseTest->{'testCaseName'} . " is not valid, the valid level strings are " . join(",", @{$allLevels}) . ".";
+				}	
+			}	
+
+			my $groups = getElementByTag( $testlines, 'groups' );
+ 			$parseTest->{'groups'} = getElementsByTag( $groups, 'group' );
+			# group defaults to functional
+			if (!@{$parseTest->{'groups'}}) {
+				$parseTest->{'groups'} = ['functional'];
+			}
+			foreach my $group ( @{$parseTest->{'groups'}} ) {
+				if ( !grep(/^$group$/, @{$allGroups}) ) {
+					die "The group: " . $group . " for test " . $parseTest->{'testCaseName'} . " is not valid, the valid group strings are " . join(",", @{$allGroups}) . ".";
+				}
+			}
+
+			my $types = getElementByTag( $testlines, 'types' );
+ 			$parseTest->{'types'} = getElementsByTag( $types, 'type' );
+			# type defaults to regular
+			if (!@{$parseTest->{'types'}}) {
+				$parseTest->{'types'} = ['regular'];
+			}
+			foreach my $type ( @{$parseTest->{'types'}} ) {
+				if ( !grep(/^$type$/, @{$allTypes}) ) {
+					die "The type: " . $type . " for test " . $parseTest->{'testCaseName'} . " is not valid, the valid type strings are " . join(",", @{$allTypes}) . ".";
+				}
+			}
+
+			my $impls = getElementByTag( $testlines, 'impls' );
+ 			$parseTest->{'impls'} = getElementsByTag( $impls, 'impl' );
+			# impl defaults to all impls
+			if (!@{$parseTest->{'impls'}}) {
+				$parseTest->{'impls'} = $allImpls;
+			}
+			foreach my $impl ( @{$parseTest->{'impls'}} ) {
+				if ( !grep(/^$impl$/, @{$allImpls}) ) {
+					die "The impl: " . $impl . " for test " . $parseTest->{'testCaseName'} . " is not valid, the valid impl strings are " . join(",", @{$allImpls}) . ".";
+				}
+			}
+			# do not generate make taget if impl doesn't match the exported JDK_IMPL
+			if ( !grep(/^$impl$/, @{$parseTest->{'impls'}}) ) {
+				next;
+			}
+
+ 			my $isSubsetValid = 0;
+			my $subsets = getElementByTag( $testlines, 'subsets' );
+			$parseTest->{'subsets'} = getElementsByTag( $subsets, 'subset' );
+			if ( !@{$parseTest->{'subsets'}} ) {
+				# if subset is not specified, it matches all exported JDK_VERSION
+				$isSubsetValid = 1;
+			} else {
+				# do not generate make taget if subset doesn't match the exported JDK_VERSION
+				foreach my $eachSubset ( @{$parseTest->{'subsets'}} ) {
+					if ( $eachSubset =~ /^(.*)\+$/ ) {
+						if ( $1 <=  $jdkVersion ) {
+							$isSubsetValid = 1;
+							last;
+						}
+					} elsif ( $eachSubset eq $jdkVersion) {
+						$isSubsetValid = 1;
+						last;
+					}
+				}
+			}
+			if ( $isSubsetValid == 0 ) {
+				next;
+			}
+
+ 			if ( $testFlag =~ /AOT/ ) {
+				my $aotTag = getElementByTag( $testlines, 'aot' );
+				if ( !defined $aotTag ) {
+					# default to aot applicable
+					$parseTest->{'aot'} = 'applicable';
+				} elsif ( $aotTag eq 'nonapplicable' ) {
+					# Do not generate make taget if the test is aot not applicable when test flag is set to AOT.
+					next;
+				} elsif ( $aotTag eq 'applicable' ) {
+					$parseTest->{'aot'} = $aotTag;
+				} elsif ( $aotTag eq 'explicit' ) {
+					$parseTest->{'aot'} = $aotTag;
+				} else {
+					die "The aot tag: " . $aotTag . " for test " . $parseTest->{'testCaseName'} . " is not valid, the valid subset strings are nonapplicable, applicable and explicit.";
+				}
+			}
+#			say Dumper $parseTest;
+ 			push( @{$parseResult->{'tests'}}, $parseTest );
+		}
+	}
+	close $fhIn;
+}
+
+ sub getElementByTag {
+	if ( !defined $_[0] ) {
+		return $_[0];
+	}
+	my ($element) = $_[0] =~ /\<$_[1]\>(.*)\<\/$_[1]\>/s;
+	$element = handleSpecialChar($element);
+	return $element;
+}
+
+ sub getElementsByTag {
+	if ( !defined $_[0] ) {
+		return [];
+	}
+	my (@elements) = $_[0] =~ /\<$_[1]\>(.*?)\<\/$_[1]\>/sg;
+	for (my $i = 0; $i < @elements; $i++) {
+		$elements[$i] = handleSpecialChar($elements[$i]);
+	}
+	return \@elements;
+}
+
+sub handleSpecialChar {
+	my $spcialText = $_[0];
+	if ( $spcialText ) {
+		for ( $spcialText ) {
+			s/&lt;/</g;
+			s/&gt;/>/g;
+			s/&amp;/&/g;
+			s/&quot;/"/g;
+			s/&lapos;/'/g;
+		}
+	}
+	return $spcialText;
+}
+
 sub parseXML {
+	my $module = "XML::Parser";
+	my $file = $module;
+	$file =~ s[::][/]g;
+	$file .= '.pm';
+	require $file;
+	$module->import;
+
 	my ( $playlistXML ) = @_;
 	my $parser = new XML::Parser(Handlers => {Start => \&handle_start,
 										End   => \&handle_end,

@@ -629,7 +629,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getMultiThreadInfoIm
 	 * so skip doing anything extra and just return the new array
 	 */
 	if (0 == numThreads){
-		jclass cls = JCL_CACHE_GET(env, CLS_java_lang_management_ThreadInfo);
+		jclass cls = JCL_CACHE_GET(env, CLS_openj9_management_internal_ThreadInfoBase);
 		result = (*env)->NewObjectArray(env, 0, cls, NULL);
 	} else {
 		threadIDs = (*env)->GetLongArrayElements(env, ids, &isCopy);
@@ -656,7 +656,7 @@ Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getMultiThreadInfoIm
 }
 
 jobjectArray JNICALL
-Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl(JNIEnv *env, jobject beanInstance,
+Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_dumpAllThreadsImpl(JNIEnv *env, jobject beanInstance,
 	jboolean getLockedMonitors, jboolean getLockedSynchronizers, jint maxDepth)
 {
 	J9VMThread *currentThread = (J9VMThread *)env;
@@ -765,6 +765,16 @@ dumpAll_failWithExclusive:
 	return NULL;
 }
 
+/* This is an alias for the private native method DiagnosticUtils.dumpAllThreadsImpl() */
+jobjectArray JNICALL
+Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl
+(JNIEnv *env, jobject beanInstance,
+	jboolean getLockedMonitors, jboolean getLockedSynchronizers, jint maxDepth)
+{
+	return Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_dumpAllThreadsImpl(
+			env, beanInstance, getLockedMonitors, getLockedSynchronizers,
+			maxDepth);
+}
 
 /**
  * Allocate and populate an array of ThreadInfo for a given array of threadIDs
@@ -1131,7 +1141,7 @@ initIDCache(JNIEnv *env)
 		goto initIDCache_fail;
 	}
 	
-	cls = (*env)->FindClass(env, "java/lang/management/ThreadInfo");
+	cls = (*env)->FindClass(env, "openj9/management/internal/ThreadInfoBase");
 	if (!cls) {
 		err = JNI_ERR;
 		goto initIDCache_fail;
@@ -1141,20 +1151,20 @@ initIDCache(JNIEnv *env)
 		goto initIDCache_fail;
 	}
 	(*env)->DeleteLocalRef(env, cls);
-	JCL_CACHE_SET(env, CLS_java_lang_management_ThreadInfo, gcls);
+	JCL_CACHE_SET(env, CLS_openj9_management_internal_ThreadInfoBase, gcls);
 
 	mid = (*env)->GetMethodID(env, gcls, "<init>", 
-		"(Ljava/lang/Thread;JIZZJJJJ[Ljava/lang/StackTraceElement;Ljava/lang/Object;Ljava/lang/Thread;[Ljava/lang/management/MonitorInfo;[Ljava/lang/management/LockInfo;)V");
+		"(Ljava/lang/Thread;JIZZJJJJ[Ljava/lang/StackTraceElement;Ljava/lang/Object;Ljava/lang/Thread;[Lopenj9/management/internal/MonitorInfoBase;[Lopenj9/management/internal/LockInfoBase;)V");
 	if (mid) {
-		JCL_CACHE_SET(env, MID_java_lang_management_ThreadInfo_init, mid);
-		JCL_CACHE_SET(env, MID_java_lang_management_ThreadInfo_init_nolocks, NULL);
+		JCL_CACHE_SET(env, MID_openj9_management_internal_ThreadInfoBase_init, mid);
+		JCL_CACHE_SET(env, MID_openj9_management_internal_ThreadInfoBase_init_nolocks, NULL);
 	}
 	if (!mid) {
 		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
 
-	cls = (*env)->FindClass(env, "java/lang/management/MonitorInfo");
+	cls = (*env)->FindClass(env, "openj9/management/internal/MonitorInfoBase");
 	if (!cls) {
 		err = JNI_ERR;
 		goto initIDCache_fail;
@@ -1164,7 +1174,7 @@ initIDCache(JNIEnv *env)
 		goto initIDCache_fail;
 	}
 	(*env)->DeleteLocalRef(env, cls);
-	JCL_CACHE_SET(env, CLS_java_lang_management_MonitorInfo, gcls);
+	JCL_CACHE_SET(env, CLS_openj9_management_internal_MonitorInfoBase, gcls);
 
 	mid = (*env)->GetMethodID(env, gcls, "<init>",
 			"(Ljava/lang/String;IILjava/lang/StackTraceElement;)V");
@@ -1172,7 +1182,7 @@ initIDCache(JNIEnv *env)
 		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
-	JCL_CACHE_SET(env, MID_java_lang_management_MonitorInfo_init, mid);
+	JCL_CACHE_SET(env, MID_openj9_management_internal_MonitorInfoBase_init, mid);
 
 	cls = (*env)->FindClass(env, "java/lang/Class");
 	if (!cls) {
@@ -1187,7 +1197,7 @@ initIDCache(JNIEnv *env)
 	(*env)->DeleteLocalRef(env, cls);
 	JCL_CACHE_SET(env, MID_java_lang_Class_getName, mid);
 
-	cls = (*env)->FindClass(env, "java/lang/management/LockInfo");
+	cls = (*env)->FindClass(env, "openj9/management/internal/LockInfoBase");
 	if (!cls) {
 		err = JNI_ERR;
 		goto initIDCache_fail;
@@ -1197,14 +1207,14 @@ initIDCache(JNIEnv *env)
 		goto initIDCache_fail;
 	}
 	(*env)->DeleteLocalRef(env, cls);
-	JCL_CACHE_SET(env, CLS_java_lang_management_LockInfo, gcls);
+	JCL_CACHE_SET(env, CLS_openj9_management_internal_LockInfoBase, gcls);
 
 	mid = (*env)->GetMethodID(env, gcls, "<init>", "(Ljava/lang/Object;)V");
 	if (!mid) {
 		err = JNI_ERR;
 		goto initIDCache_fail;
 	}
-	JCL_CACHE_SET(env, MID_java_lang_management_LockInfo_init, mid);
+	JCL_CACHE_SET(env, MID_openj9_management_internal_LockInfoBase_init, mid);
 
 	cls = (*env)->FindClass(env, "java/lang/StackTraceElement");
 	if (!cls) {
@@ -1233,15 +1243,15 @@ initIDCache_fail:
 	if (NULL != gcls) {
 		(*env)->DeleteGlobalRef(env, gcls);
 	}
-	gcls = JCL_CACHE_GET(env, CLS_java_lang_management_LockInfo);
+	gcls = JCL_CACHE_GET(env, CLS_openj9_management_internal_LockInfoBase);
 	if (NULL != gcls) {
 		(*env)->DeleteGlobalRef(env, gcls);
 	}
-	gcls = JCL_CACHE_GET(env, CLS_java_lang_management_MonitorInfo);
+	gcls = JCL_CACHE_GET(env, CLS_openj9_management_internal_MonitorInfoBase);
 	if (NULL != gcls) {
 		(*env)->DeleteGlobalRef(env, gcls);
 	}
-	gcls = JCL_CACHE_GET(env, CLS_java_lang_management_ThreadInfo);
+	gcls = JCL_CACHE_GET(env, CLS_openj9_management_internal_ThreadInfoBase);
 	if (NULL != gcls) {
 		(*env)->DeleteGlobalRef(env, gcls);
 	}
@@ -1603,13 +1613,13 @@ getMonitors(J9VMThread *currentThread, J9VMThread *targetThread, ThreadInfo *tin
 }
 
 /**
- * Allocate and populate an array of java/lang/management/ThreadInfo.
+ * Allocate and populate an array of openj9/management/internal/ThreadInfoBase.
  * @pre must not have VM access
  * @post temp memory in allinfo[] is freed
  * @param[in] env
  * @param[in] allinfo
  * @param[in] allinfolen
- * @return java/lang/management/ThreadInfo[]
+ * @return openj9/management/internal/ThreadInfoBase[]
  * @retval non-null success
  * @retval null error, an exception is set
  */
@@ -1620,7 +1630,7 @@ createThreadInfoArray(JNIEnv *env, ThreadInfo *allinfo, UDATA allinfolen, jsize 
 	jobjectArray result;
 	UDATA i;
 
-	cls = JCL_CACHE_GET(env, CLS_java_lang_management_ThreadInfo);
+	cls = JCL_CACHE_GET(env, CLS_openj9_management_internal_ThreadInfoBase);
 	Assert_JCL_notNull(cls);
 
 	result = (*env)->NewObjectArray(env, (jsize)allinfolen, cls, NULL);
@@ -1647,13 +1657,13 @@ createThreadInfoArray(JNIEnv *env, ThreadInfo *allinfo, UDATA allinfolen, jsize 
 }
 
 /**
- * Allocate and populate a single java/lang/management/ThreadInfo object.
+ * Allocate and populate a single openj9/management/internal/ThreadInfoBase object.
  * @pre must not have VM access
  * @post temp memory in tinfo is freed
  * @param[in] env
  * @param[in] tinfo
  * @param[in] maxStackDepth The stack trace is pruned to this depth.
- * @return java/lang/management/ThreadInfo object
+ * @return openj9/management/internal/ThreadInfoBase object
  * @retval non-null success
  * @retval null error, an exception is set
  */
@@ -1671,13 +1681,13 @@ createThreadInfo(JNIEnv *env, ThreadInfo *tinfo, jsize maxStackDepth)
 	jboolean isNative;
 	jboolean getOwnedLocks = JNI_TRUE;
 
-	cls = JCL_CACHE_GET(env, CLS_java_lang_management_ThreadInfo);
+	cls = JCL_CACHE_GET(env, CLS_openj9_management_internal_ThreadInfoBase);
 	Assert_JCL_notNull(cls);
 
 	/* look for Java 6 version of the constructor */
-	ctor = JCL_CACHE_GET(env, MID_java_lang_management_ThreadInfo_init);
+	ctor = JCL_CACHE_GET(env, MID_openj9_management_internal_ThreadInfoBase_init);
 	if (!ctor) {
-		ctor = JCL_CACHE_GET(env, MID_java_lang_management_ThreadInfo_init_nolocks);
+		ctor = JCL_CACHE_GET(env, MID_openj9_management_internal_ThreadInfoBase_init_nolocks);
 		getOwnedLocks = JNI_FALSE;
 	}
 	Assert_JCL_notNull(ctor);
@@ -1754,7 +1764,7 @@ createThreadInfo(JNIEnv *env, ThreadInfo *tinfo, jsize maxStackDepth)
  * @post frees tinfo->lockedMonitors.arr_safe.
  * @param[in] env
  * @param[in] tinfo
- * @return java/lang/management/MonitorInfo[]
+ * @return openj9/management/internal/MonitorInfoBase[]
  * @retval non-null success
  * @retval null error, an exception is set
  */ 
@@ -1769,10 +1779,10 @@ createLockedMonitors(JNIEnv *env, ThreadInfo *tinfo)
 	UDATA count;
 	UDATA i, j;
 
-	cls = JCL_CACHE_GET(env, CLS_java_lang_management_MonitorInfo);
+	cls = JCL_CACHE_GET(env, CLS_openj9_management_internal_MonitorInfoBase);
 	Assert_JCL_notNull(cls);
 
-	ctor = JCL_CACHE_GET(env, MID_java_lang_management_MonitorInfo_init);
+	ctor = JCL_CACHE_GET(env, MID_openj9_management_internal_MonitorInfoBase_init);
 	Assert_JCL_notNull(ctor);
 
 	getName = JCL_CACHE_GET(env, MID_java_lang_Class_getName);
@@ -1854,7 +1864,7 @@ createLockedMonitors(JNIEnv *env, ThreadInfo *tinfo)
  * 
  * @param[in] env
  * @param[in] tinfo
- * @return java/lang/management/LockInfo[]
+ * @return openj9/management/internal/LockInfoBase[]
  * @retval non-null success
  * @retval null error, an exception is set
  */ 
@@ -1868,10 +1878,10 @@ createLockedSynchronizers(JNIEnv *env, ThreadInfo *tinfo)
 	jmethodID ctor;
 	UDATA i;
 
-	cls = JCL_CACHE_GET(env, CLS_java_lang_management_LockInfo);
+	cls = JCL_CACHE_GET(env, CLS_openj9_management_internal_LockInfoBase);
 	Assert_JCL_notNull(cls);
 
-	ctor = JCL_CACHE_GET(env, MID_java_lang_management_LockInfo_init);
+	ctor = JCL_CACHE_GET(env, MID_openj9_management_internal_LockInfoBase_init);
 	Assert_JCL_notNull(ctor);
 
 	lockedSyncs = (*env)->NewObjectArray(env, (jsize)tinfo->lockedSynchronizers.len, cls, NULL);

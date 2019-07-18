@@ -31,6 +31,7 @@
 #include "codegen/RegisterPair.hpp"
 #include "codegen/Snippet.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
 #include "env/CHTable.hpp"
@@ -155,7 +156,7 @@ void TR::X86PrivateLinkage::copyGlRegDepsToParameterSymbols(TR::Node *bbStart, T
          {
          TR::Node *child = glRegDeps->getChild(childNum);
          TR::ParameterSymbol *sym = child->getSymbol()->getParmSymbol();
-         sym->setAllocatedIndex(cg->getGlobalRegister(child->getGlobalRegisterNumber()));
+         sym->setAssignedGlobalRegisterIndex(cg->getGlobalRegister(child->getGlobalRegisterNumber()));
          }
       }
    }
@@ -249,7 +250,7 @@ TR::Instruction *TR::X86PrivateLinkage::copyParametersToHomeLocation(TR::Instruc
       {
       int8_t lri = paramCursor->getLinkageRegisterIndex();     // How the parameter enters the method
       TR::RealRegister::RegNum ai                               // Where method body expects to find it
-         = (TR::RealRegister::RegNum)paramCursor->getAllocatedIndex();
+         = (TR::RealRegister::RegNum)paramCursor->getAssignedGlobalRegisterIndex();
       int32_t offset = paramCursor->getParameterOffset();      // Location of the parameter's stack slot
       TR_MovDataTypes movDataType = paramMovType(paramCursor); // What sort of MOV instruction does it need?
 
@@ -676,7 +677,7 @@ void TR::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
       paramCursor != NULL;
       paramCursor = paramIterator.getNext()
       ){
-      TR::RealRegister::RegNum ai = (TR::RealRegister::RegNum)paramCursor->getAllocatedIndex();
+      TR::RealRegister::RegNum ai = (TR::RealRegister::RegNum)paramCursor->getAssignedGlobalRegisterIndex();
       debugFrameSlotInfo = new (trHeapMemory()) TR_DebugFrameSegmentInfo(comp(),
          paramCursor->getOffset(), paramCursor->getSize(), "Parameter",
          debugFrameSlotInfo,
@@ -1174,7 +1175,7 @@ TR::X86CallSite::X86CallSite(TR::Node *callNode, TR::Linkage *calleeLinkage)
       // Find the class pointer to the interface class if it is already loaded.
       // This is needed by both static PICs
       //
-      TR_Method *interfaceMethod = getMethodSymbol()->getMethod();
+      TR::Method *interfaceMethod = getMethodSymbol()->getMethod();
       int32_t len = interfaceMethod->classNameLength();
       char * s = classNameToSignature(interfaceMethod->classNameChars(), len, comp());
       _interfaceClassOfMethod = fej9->getClassFromSignature(s, len, getSymbolReference()->getOwningMethod(comp()));
@@ -1731,7 +1732,7 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    if (getProperties().getNeedsThunksForIndirectCalls())
       {
       TR::MethodSymbol *methodSymbol = callNode->getSymbol()->castToMethodSymbol();
-      TR_Method       *method       = methodSymbol->getMethod();
+      TR::Method       *method       = methodSymbol->getMethod();
       if (methodSymbol->isComputed())
          {
          switch (method->getMandatoryRecognizedMethod())

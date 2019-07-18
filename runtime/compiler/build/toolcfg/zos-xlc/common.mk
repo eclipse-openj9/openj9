@@ -76,6 +76,7 @@ CX_DEFINES+=\
     _ISOC99_SOURCE \
     J9VM_TIERED_CODE_CACHE \
     MAXMOVE \
+    COMPRESS_AOT_DATA \
     SUPPORTS_THREAD_LOCAL
 
 CX_FLAGS+=\
@@ -94,12 +95,17 @@ CX_FLAGS+=\
     -Wc,"TARGET($(TGTLEVEL))"
 
 # Now we get to do this awesome thing because of EBCDIC
+PRODUCT_INCLUDES:=\
+    $(J9SRC)/zos_zlib/hzc/include \
+    $(PRODUCT_INCLUDES)
+
 CX_FLAGS+=\
     -qnosearch \
     $(patsubst %,-I%,$(PRODUCT_INCLUDES)) \
     -DIBM_ATOE \
     -Wc,"convlit(ISO8859-1)" \
     -qsearch=$(J9SRC)/a2e/headers \
+    -qsearch=$(J9SRC)/zos_zlib/hzc/include \
     -qsearch=/usr/include \
     -qsearch=$(A2E_INCLUDE_PATH)
 
@@ -222,7 +228,9 @@ SOLINK_SLINK+=$(PRODUCT_SLINK)
 SOLINK_EXTRA_ARGS+=\
     $(J9SRC)/lib/libj9a2e.x \
     $(J9SRC)/lib/libj9thr$(J9_VERSION).x \
-    $(J9SRC)/lib/libj9hookable$(J9_VERSION).x
+    $(J9SRC)/lib/libj9hookable$(J9_VERSION).x \
+    $(J9SRC)/zos_zlib/hzc/lib/libzz.a
+
 
 ifeq ($(HOST_BITS),64)
     SOLINK_FLAGS+=-Wl,lp64

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,7 +49,7 @@ public class SetClasspathTestRunner extends Runner {
 	String invalidURLMsgFromValidateURL = "URL "+ SetClasspathTest.INVALID_URL1 + " does not have required file or jar protocol.";
 	String invalidURLMsgFromFind = "Classpath contains an invalid URL. Returning null.";
 	String invalidURLMsgFromStore = "Classpath contains an invalid URL. Returning false.";
-	String invalidURLMsgFromNative = "j9jcl.423";	/* Trc_JCL_com_ibm_oti_shared_getCpeTypeForProtocol_UnknownProtocol */
+	String invalidURLMsgFromNative = "j9jcl.113";	/* Trc_JCL_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl_Entry */
 	
 	/* Following classes are loaded by SetClasspathTest and get stored in shared cache as ROMCLASS */ 
 	private static String romClassList[] = { "TestA1", "TestB3", "TestA4" };

@@ -24,13 +24,6 @@
 
 #include "j9cfg.h" /* for JAVA_SPEC_VERSION */
 
-/**
- * Constants for supported J2SE versions.
- */
-#define J2SE_18   0x0800
-#define J2SE_V11  0x0B00            /* This refers Java 11 */
-#define J2SE_V12  0x0C00            /* This refers Java 12 */
-#define J2SE_V13  0x0D00            /* This refers Java 13 */
 /* Shared class cache is using JAVA_SPEC_VERSION_FROM_J2SE(j2seVersion) to get the Java version.
  * So bits 9 to 16 of the J2SE constant should match the java version number.
  */
@@ -43,6 +36,16 @@
 #define J2SE_SERVICE_RELEASE_MASK 0xFFFF
 
 #define J2SE_JAVA_SPEC_VERSION_SHIFT 8
+
+/**
+ * Constants for supported J2SE versions.
+ */
+#define J2SE_18   ( 8 << J2SE_JAVA_SPEC_VERSION_SHIFT)
+#define J2SE_V11  (11 << J2SE_JAVA_SPEC_VERSION_SHIFT)
+#define J2SE_V12  (12 << J2SE_JAVA_SPEC_VERSION_SHIFT)
+#define J2SE_V13  (13 << J2SE_JAVA_SPEC_VERSION_SHIFT)
+#define J2SE_V14  (14 << J2SE_JAVA_SPEC_VERSION_SHIFT)
+
 /* J2SE_CURRENT_VERSION is the current Java version supported by VM for a JCL level. */
 #define J2SE_CURRENT_VERSION (JAVA_SPEC_VERSION << J2SE_JAVA_SPEC_VERSION_SHIFT)
 

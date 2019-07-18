@@ -1,5 +1,5 @@
 <!-- 
-	Copyright (c) 2009, 2018 IBM Corp. and others
+	Copyright (c) 2009, 2019 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -194,6 +194,7 @@
 	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_findDeadlockedThreadsImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getMultiThreadInfoImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl" />
+	<export name="Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_getHeapClassStatisticsImpl" />
 	<export name="Java_com_ibm_oti_reflect_AnnotationParser_getAnnotationsData__Ljava_lang_reflect_Field_2" />
 	<export name="Java_com_ibm_oti_reflect_AnnotationParser_getAnnotationsData__Ljava_lang_reflect_Constructor_2" />
 	<export name="Java_com_ibm_oti_reflect_AnnotationParser_getAnnotationsData__Ljava_lang_reflect_Method_2" />
@@ -210,6 +211,7 @@
 	<export name="Java_com_ibm_oti_shared_SharedClassTokenHelperImpl_storeSharedClassImpl2" />
 	<export name="Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_findSharedClassImpl2" />
 	<export name="Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange2" />
+	<export name="Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3" />
 	<export name="Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_storeSharedClassImpl2" />
 	<export name="Java_com_ibm_oti_shared_SharedClassURLHelperImpl_findSharedClassImpl3" />
 	<export name="Java_com_ibm_oti_shared_SharedClassURLHelperImpl_storeSharedClassImpl3" />
@@ -314,4 +316,6 @@
 	<export name="Java_com_ibm_virtualization_management_internal_GuestOS_retrieveMemoryUsageImpl"/>
 	
 	<export name="Java_com_ibm_jvm_Stats_getStats" />
+	<export name="Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_dumpAllThreadsImpl" />
+	
 </exports>

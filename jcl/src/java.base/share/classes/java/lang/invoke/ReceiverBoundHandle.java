@@ -90,11 +90,7 @@ final class ReceiverBoundHandle extends DirectHandle {
 	 */
 	/*[ENDIF]*/
 	MethodHandle permuteArguments(MethodType permuteType, int... permute) throws NullPointerException, IllegalArgumentException {
-		MethodHandle result = new PermuteHandle(permuteType, this, permute);
-		if (true) {
-			result = combinableVersion.permuteArguments(permuteType, permute);
-		}
-		return result;
+		return combinableVersion.permuteArguments(permuteType, permute);
 	}
 
 	MethodHandle insertArguments(MethodHandle equivalent, MethodHandle unboxingHandle, int location, Object... values) {
@@ -110,25 +106,9 @@ final class ReceiverBoundHandle extends DirectHandle {
 	private static final ThunkTable _thunkTable = new ThunkTable();
 	protected final ThunkTable thunkTable(){ return _thunkTable; }
 	
-	/*[IF ]*/
-	/* Null check the receiver if the handle isn't for a static method.
-	 * This is the lowest risk change for this failure.
-	 * TODO: Investigate introducing a new handle subclass: 
-	 * NullReceiverBoundHandle as a subclass of RBH that only
-	 * throws NPE.  We should always know at creation time
-	 * which kind of handle it will be - NRBH or RBH.
-	 * 
-	 */
-	/*[ENDIF]*/
-	final void nullCheckReceiverIfNonStatic(){
-		if ((receiver == null) && !Modifier.isStatic(final_modifiers)) {
-			receiver.getClass(); // Deliberate NPE
-		}
-	}
-	
 	@FrameIteratorSkip
 	private final void invokeExact_thunkArchetype_V(int argPlaceholder) {
-		nullCheckReceiverIfNonStatic();
+		nullCheckIfRequired(receiver);
 		if (ILGenMacros.isCustomThunk()) {
 			directCall_V(receiver, argPlaceholder); 
 		} else if (isAlreadyCompiled(vmSlot))
@@ -140,7 +120,7 @@ final class ReceiverBoundHandle extends DirectHandle {
 	
 	@FrameIteratorSkip
 	private final int invokeExact_thunkArchetype_I(int argPlaceholder) {
-		nullCheckReceiverIfNonStatic();
+		nullCheckIfRequired(receiver);
 		if (ILGenMacros.isCustomThunk()) {
 			return directCall_I(receiver, argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot))
@@ -152,7 +132,7 @@ final class ReceiverBoundHandle extends DirectHandle {
 	
 	@FrameIteratorSkip
 	private final long invokeExact_thunkArchetype_J(int argPlaceholder) {
-		nullCheckReceiverIfNonStatic();
+		nullCheckIfRequired(receiver);
 		if (ILGenMacros.isCustomThunk()) {
 			return directCall_J(receiver, argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot))
@@ -164,7 +144,7 @@ final class ReceiverBoundHandle extends DirectHandle {
 	
 	@FrameIteratorSkip
 	private final float invokeExact_thunkArchetype_F(int argPlaceholder) {
-		nullCheckReceiverIfNonStatic();
+		nullCheckIfRequired(receiver);
 		if (ILGenMacros.isCustomThunk()) {
 			return directCall_F(receiver, argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot))
@@ -176,7 +156,7 @@ final class ReceiverBoundHandle extends DirectHandle {
 	
 	@FrameIteratorSkip
 	private final double invokeExact_thunkArchetype_D(int argPlaceholder) {
-		nullCheckReceiverIfNonStatic();
+		nullCheckIfRequired(receiver);
 		if (ILGenMacros.isCustomThunk()) {
 			return directCall_D(receiver, argPlaceholder);
 		} else if (isAlreadyCompiled(vmSlot))
@@ -188,7 +168,7 @@ final class ReceiverBoundHandle extends DirectHandle {
 	
 	@FrameIteratorSkip
 	private final Object invokeExact_thunkArchetype_L(int argPlaceholder) { 
-		nullCheckReceiverIfNonStatic();
+		nullCheckIfRequired(receiver);
 		if (ILGenMacros.isCustomThunk()) {
 			return directCall_L(receiver, argPlaceholder); 
 		} else if (isAlreadyCompiled(vmSlot))

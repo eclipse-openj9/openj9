@@ -163,11 +163,11 @@ sub read_lines_from_file {
 
 # get the command to list all caches
 sub get_listAllCaches_command{
-	my ($java_bin,$test_name) = @_;
+	my ($java_exe,$test_name) = @_;
 	my $postfix_string="";
 	my $cmd_to_execute="";
 	my $dump_file = get_dump_file($test_name) ;
-	my $cmd = "$java_bin -Xshareclasses:listAllCaches";
+	my $cmd = "$java_exe -Xshareclasses:listAllCaches";
 
 	$postfix_string = get_postfix_string(1,1, $dump_file);
 	$cmd_to_execute=$cmd . $postfix_string;
@@ -177,11 +177,11 @@ sub get_listAllCaches_command{
 
 # get the command to create cache
 sub get_createCache_command {
-	my ($java_bin,$cache_name,$test_name,$is_err_stream_needed,$is_output_stream_needed) = @_;
+	my ($java_exe,$cache_name,$test_name,$is_err_stream_needed,$is_output_stream_needed) = @_;
 	my $postfix_string="";
 	my $cmd_to_execute="";
 	my $dump_file = get_dump_file($test_name);
-	my $cmd = $java_bin;
+	my $cmd = $java_exe;
 
 	$cmd = $cmd . " -Xshareclasses:name=$cache_name HelloWorld ";
 
@@ -193,13 +193,13 @@ sub get_createCache_command {
 
 # get the command to print cache stats
 sub get_printStats_command {
-	my ($java_bin,$cache_name,$test_name) = @_;
+	my ($java_exe,$cache_name,$test_name) = @_;
 	my $postfix_string="";
 	my $cmd_to_execute="";
 	my $is_output_stream_needed = 1;
   	my $is_err_stream_needed = 1;
 	my $dump_file = get_dump_file($test_name) ;
-	my $cmd = "$java_bin -Xshareclasses:name=$cache_name,printStats ";
+	my $cmd = "$java_exe -Xshareclasses:name=$cache_name,printStats ";
 
 	$postfix_string = get_postfix_string($is_output_stream_needed, $is_err_stream_needed, $dump_file);
 	$cmd_to_execute=$cmd . $postfix_string;
@@ -209,13 +209,13 @@ sub get_printStats_command {
 
 # create a cache with the given cache_name
 sub do_create_cache {
-	my ($java_bin,$cache_name,$test_name,$is_err_stream_needed,$is_output_stream_needed) = @_;
+	my ($java_exe,$cache_name,$test_name,$is_err_stream_needed,$is_output_stream_needed) = @_;
 	my @lines = undef;
 	my $dump_file = get_dump_file($test_name);
 
 	my $cmd_to_execute = " ";
 
-	$cmd_to_execute = get_createCache_command($java_bin,$cache_name,
+	$cmd_to_execute = get_createCache_command($java_exe,$cache_name,
 						$test_name,$is_err_stream_needed
 						,$is_output_stream_needed);
 
@@ -238,16 +238,16 @@ sub do_create_cache {
 
 # destroy the specified shared class cache
 sub do_destroy_cache {
-	my ($java_bin,$test_name, $cache_name) = @_;
-	my $cmd = "$java_bin -Xshareclasses:name=$cache_name,destroy " . " > "  . get_dump_file($test_name) . " 2>&1";
+	my ($java_exe,$test_name, $cache_name) = @_;
+	my $cmd = "$java_exe -Xshareclasses:name=$cache_name,destroy " . " > "  . get_dump_file($test_name) . " 2>&1";
 
 	`$cmd`;
 }
 
 # returns true if a shared class cache name is present
 sub is_cache_present {
-	my ($java_bin,$cache_name,$test_name) = @_;
-	my $cmd_to_execute = get_listAllCaches_command($java_bin, $test_name);
+	my ($java_exe,$cache_name,$test_name) = @_;
+	my $cmd_to_execute = get_listAllCaches_command($java_exe, $test_name);
 	my $dump_file = get_dump_file($test_name);
 
 	remove_file_if_not_writable($dump_file);
@@ -259,8 +259,8 @@ sub is_cache_present {
 
 # returns true if a shared class cache name is no more in the list of available caches.
 sub is_cache_absent{
-	my ($java_bin,$cache_name,$test_name) = @_;
-	my $cmd_to_execute = get_printStats_command($java_bin,$cache_name, $test_name);
+	my ($java_exe,$cache_name,$test_name) = @_;
+	my $cmd_to_execute = get_printStats_command($java_exe,$cache_name, $test_name);
 	my $dump_file = get_dump_file($test_name);
 
 	remove_file_if_not_writable($dump_file);
@@ -288,15 +288,15 @@ sub get_path_separator {
 # Given a cache name it validates that the fact creating the cache with the given name
 # fails with the error message specified in the argument list
 sub test_unsuccessful_cache_creation {
-	my ($java_bin, $test_name, $cache_name, $error_msg)=@_;
-	$java_bin =~ s/\\/\\\\/g;
+	my ($java_exe, $test_name, $cache_name, $error_msg)=@_;
+	$java_exe =~ s/\\/\\\\/g;
 	my $return_status;
 	my $create_status;
 	my $destroy_status;
 	my $dump_file = get_dump_file($test_name);
 	my $is_create_failed=0;
 
-	do_create_cache($java_bin, $cache_name, $test_name, 1, 1);
+	do_create_cache($java_exe, $cache_name, $test_name, 1, 1);
 
 	$is_create_failed =words_grep_from_file($dump_file, $error_msg, 1);
 
@@ -313,19 +313,19 @@ sub test_unsuccessful_cache_creation {
 
 # Given a cache name it checks for the creation of the cache and declares pass/fail.
 sub test_successful_cache_creation {
-	my ($java_bin, $test_name, $cache_name, $cache_grep_name)=@_;
-	$java_bin =~ s/\\/\\\\/g;
+	my ($java_exe, $test_name, $cache_name, $cache_grep_name)=@_;
+	$java_exe =~ s/\\/\\\\/g;
 	my $return_status=0;
 	my $create_status=0;
 	my $destroy_status=0;
 
-	do_create_cache($java_bin, $cache_name,$test_name, 1, 0);
+	do_create_cache($java_exe, $cache_name,$test_name, 1, 0);
 
-	$create_status=is_cache_present($java_bin, $cache_grep_name,$test_name);
+	$create_status=is_cache_present($java_exe, $cache_grep_name,$test_name);
 
 	if ($create_status) {
-		do_destroy_cache($java_bin, $test_name, $cache_name) ;
-		$destroy_status = is_cache_absent($java_bin, $cache_name,$test_name);
+		do_destroy_cache($java_exe, $test_name, $cache_name) ;
+		$destroy_status = is_cache_absent($java_exe, $cache_name,$test_name);
 	}
 
 	if ($create_status && $destroy_status) {
@@ -393,7 +393,7 @@ sub get_cache_name {
 # test successful cache creation/deletion scenario where cache name is equal to the
 # length of cache_name_len passed in as arg.
 sub cache_name_with_fixed_length_test {
-	my ($java_bin, $test_name, $cache_max_len_string, $add_token, $expanded_token) = @_;
+	my ($java_exe, $test_name, $cache_max_len_string, $add_token, $expanded_token) = @_;
 
 	my $specified_cache_name = "" ;
 	my $expanded_cache_name = "" ;
@@ -414,12 +414,12 @@ sub cache_name_with_fixed_length_test {
 	$expanded_cache_name = $arr[1];
 
 	print "cache name to create: " . $specified_cache_name . ":to grep: " . "$expanded_cache_name  \n";
-	test_successful_cache_creation ($java_bin , $test_name, $specified_cache_name, $expanded_cache_name);
+	test_successful_cache_creation ($java_exe , $test_name, $specified_cache_name, $expanded_cache_name);
 }
 
 # tests the failures in cache creation where cache name exceeds the max length
 sub long_cache_name_fail_cases_test {
-	my ($java_bin, $test_name, $cache_max_len_string, $error_msg, $add_token, $expanded_token) = @_;
+	my ($java_exe, $test_name, $cache_max_len_string, $error_msg, $add_token, $expanded_token) = @_;
 
 	my $specified_cache_name = "" ;
 	my $cache_max_len = 0;
@@ -443,7 +443,7 @@ sub long_cache_name_fail_cases_test {
 
 	#leaving debug messages commented
 	#printf "\ncache name to create & grep :$arr[0]:  grep:$arr[1]\n";
-	test_unsuccessful_cache_creation ($java_bin , $test_name, $specified_cache_name, $error_msg);
+	test_unsuccessful_cache_creation ($java_exe , $test_name, $specified_cache_name, $error_msg);
 }
 
 # error msg to indicate cache name is too long

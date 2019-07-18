@@ -402,6 +402,7 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 			goto runMethod;
 		}
 		case J9_METHOD_HANDLE_KIND_GET_FIELD: {
+			UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread);
 			j9object_t type = getMethodHandleMethodType(methodHandle);
 			UDATA fieldOffset = getVMSlot(methodHandle);
 			J9Class *fieldClass = getMethodTypeReturnClass(type);
@@ -413,7 +414,7 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 				goto done;
 			}
 			bool isVolatile = (J9AccVolatile == (modifiers & J9AccVolatile));
-			fieldOffset += J9_OBJECT_HEADER_SIZE;
+			fieldOffset += objectHeaderSize;
 			if (J9ROMCLASS_IS_PRIMITIVE_TYPE(fieldClass->romClass)) {
 				if (8 == ((J9ROMReflectClass *)(fieldClass->romClass))->elementSize) {
 					_currentThread->sp -= 1;
@@ -430,6 +431,7 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 			goto returnFromSend;
 		}
 		case J9_METHOD_HANDLE_KIND_PUT_FIELD: {
+			UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread);
 			j9object_t type = getMethodHandleMethodType(methodHandle);
 			UDATA fieldOffset = getVMSlot(methodHandle);
 			/* Loading index 1 because MethodType has form: (instanceClass, fieldClass)V */
@@ -437,7 +439,7 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 				_objectAccessBarrier->inlineIndexableObjectReadObject(_currentThread, getMethodTypeArguments(type), 1);
 			J9Class *fieldClass = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, fieldClassObject);
 			U_32 modifiers = getPrimitiveHandleModifiers(methodHandle);
-			fieldOffset += J9_OBJECT_HEADER_SIZE;
+			fieldOffset += objectHeaderSize;
 			bool isVolatile = (J9AccVolatile == (modifiers & J9AccVolatile));
 			if (J9ROMCLASS_IS_PRIMITIVE_TYPE(fieldClass->romClass)) {
 				if (8 == ((J9ROMReflectClass *)(fieldClass->romClass))->elementSize) {

@@ -37,6 +37,7 @@ TestConfig/machineConfigure.mk
 TestConfig/tempTestTargetResult
 TestConfig/failedtargets.mk
 TestConfig/autoGenEnv.mk
+TestConfig/SHA.txt
 
 .DS_Store
 

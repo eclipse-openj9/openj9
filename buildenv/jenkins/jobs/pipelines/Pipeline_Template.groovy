@@ -32,9 +32,9 @@ if (!binding.hasVariable('SCM_BRANCH')) SCM_BRANCH = 'refs/heads/master'
 if (!binding.hasVariable('LIGHTWEIGHT_CHECKOUT')) LIGHTWEIGHT_CHECKOUT = false
 
 if (jobType == 'build') {
-    pipelineScript = 'buildenv/jenkins/jobs/builds/Build-Test-Any-Platform'
+    pipelineScript = 'buildenv/jenkins/jobs/pipelines/Build-Any-Platform.groovy'
 } else if (jobType == 'pipeline') {
-    pipelineScript = 'buildenv/jenkins/jobs/pipelines/Pipeline-Build-Test-Any-Platform'
+    pipelineScript = 'buildenv/jenkins/jobs/pipelines/Pipeline-Build-Test-Any-Platform.groovy'
 } else {
     error "Unknown build type:'${jobType}'"
 }
@@ -50,9 +50,6 @@ pipelineJob("$JOB_NAME") {
                         refspec('$SCM_REFSPEC')
                     }
                     branch('$SCM_BRANCH')
-                    extensions {
-                        cleanBeforeCheckout()
-                    }
                 }
             }
             scriptPath(pipelineScript)
@@ -103,7 +100,6 @@ pipelineJob("$JOB_NAME") {
             stringParam('SLACK_CHANNEL')
             stringParam('RESTART_TIMEOUT')
             stringParam('RESTART_TIMEOUT_UNITS')
-            stringParam('BUILD_LIST')
             choiceParam('AUTOMATIC_GENERATION', ['true', 'false'])
         } else if (jobType == 'build'){
             stringParam('NODE')

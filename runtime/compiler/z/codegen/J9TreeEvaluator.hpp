@@ -51,7 +51,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    static TR::Register *monentEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *monexitfenceEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *instanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *checkcastEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -62,7 +61,6 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *anewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *multianewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *resolveCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ArrayCopyBNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -448,13 +446,7 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static void         genGuardedLoadOOL(TR::Node *node, TR::CodeGenerator *cg, TR::Register *byteSrcReg, TR::Register *byteDstReg, TR::Register *byteLenReg, TR::LabelSymbol *mergeLabel, TR_S390ScratchRegisterManager *srm, bool isForward);
    static void         genArrayCopyWithArrayStoreCHK(TR::Node *node, TR::Register *srcObjReg, TR::Register *dstObjReg, TR::Register *srcAddrReg, TR::Register *dstAddrReg, TR::Register *lengthReg, TR::CodeGenerator *cg);
    static void         genWrtbarForArrayCopy(TR::Node *node, TR::Register *srcObjReg, TR::Register *dstObjReg, bool srcNonNull, TR::CodeGenerator *cg);
-   static TR::Register *VMgenCoreInstanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol * falseLabel, TR::LabelSymbol * trueLabel, bool needsResult, bool trueFallThrough, TR::RegisterDependencyConditions * conditions, bool isIfInstanceOf=false);
-   static TR::Register *VMgenCoreInstanceofEvaluator2(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol * trueLabel, TR::LabelSymbol * falseLabel, bool initialResult, bool needResult, TR::RegisterDependencyConditions * conditions, bool ifInstanceOf=false);
-   static TR::Register *VMinstanceOfEvaluator(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *VMinstanceOfEvaluator2(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *VMifInstanceOfEvaluator2(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *VMcheckcastEvaluator2(TR::Node *node, TR::CodeGenerator *cg);
-   static TR::Register *VMcheckcastEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *VMgenCoreInstanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg, TR::LabelSymbol * trueLabel, TR::LabelSymbol * falseLabel, bool initialResult, bool needResult, TR::RegisterDependencyConditions * conditions, bool ifInstanceOf=false);
    static TR::Register *VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMmonexitEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg);
@@ -463,14 +455,17 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
 
    /*
     * Generate instructions for static/instance field access report.
+    * @param dataSnippetRegister: Optional, can be used to pass the address of the snippet inside the register.
     */ 
-   static void generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg);
+   static void generateTestAndReportFieldWatchInstructions(TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *valueReg, TR::Register *dataSnippetRegister);
+
 
    /*
     * Generate instructions to fill in the J9JITWatchedStaticFieldData.fieldAddress, J9JITWatchedStaticFieldData.fieldClass for static fields,
     * and J9JITWatchedInstanceFieldData.offset for instance fields at runtime. Used for fieldwatch support.
+    * @param dataSnippetRegister: Optional, can be used to pass the address of the snippet inside the register.  
     */
-   static void generateFillInDataBlockSequenceForUnresolvedField (TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister);
+   static void generateFillInDataBlockSequenceForUnresolvedField (TR::CodeGenerator *cg, TR::Node *node, TR::Snippet *dataSnippet, bool isWrite, TR::Register *sideEffectRegister, TR::Register *dataSnippetRegister);
    static TR::Register *irdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *irdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *ardbarEvaluator(TR::Node *node, TR::CodeGenerator *cg);

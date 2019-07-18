@@ -932,6 +932,7 @@
    x10JITHelpers_checkHighBounds,
 
    // JSR292
+   java_lang_invoke_BruteArgumentMoverHandle_permuteArgs,
    java_lang_invoke_ArgumentMoverHandle_permuteArgs,
    java_lang_invoke_AsTypeHandle_convertArgs,
    java_lang_invoke_CatchHandle_numCatchTargetArgsToPassThrough,
@@ -939,6 +940,7 @@
    java_lang_invoke_CollectHandle_numArgsToPassThrough,
    java_lang_invoke_CollectHandle_collectionStart,
    java_lang_invoke_CollectHandle_numArgsAfterCollectArray,
+   java_lang_invoke_CollectHandle_invokeExact,
    java_lang_invoke_ComputedCalls_dispatchDirect,
    java_lang_invoke_ComputedCalls_dispatchJ9Method,
    java_lang_invoke_ComputedCalls_dispatchVirtual,
@@ -1005,6 +1007,11 @@
    java_lang_invoke_SpreadHandle_numArgsToSpread,
    java_lang_invoke_SpreadHandle_numArgsAfterSpreadArray,
    java_lang_invoke_SpreadHandle_spreadStart,
+   java_lang_invoke_StaticFieldGetterHandle_invokeExact,
+   java_lang_invoke_StaticFieldSetterHandle_invokeExact,
+   java_lang_invoke_FieldGetterHandle_invokeExact,
+   java_lang_invoke_FieldSetterHandle_invokeExact,
+   java_lang_invoke_FilterArgumentsHandle_invokeExact,
    java_lang_invoke_VarHandle_get,
    java_lang_invoke_VarHandle_set,
    java_lang_invoke_VarHandle_getVolatile,

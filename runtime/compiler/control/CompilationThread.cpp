@@ -45,6 +45,7 @@
 #include "jitprotos.h"
 #include "vmaccess.h"
 #include "objhelp.h"
+#include "shcdatatypes.h"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/AheadOfTimeCompile.hpp"
@@ -96,7 +97,6 @@
 #include "env/SystemSegmentProvider.hpp"
 #include "env/DebugSegmentProvider.hpp"
 #include "env/ClassLoaderTable.hpp"
-#include "shcdatatypes.h" // for CompiledMethodWrapper
 #include "runtime/ArtifactManager.hpp"
 #include "runtime/CodeCacheMemorySegment.hpp"
 #include "env/j9methodServer.hpp"
@@ -104,6 +104,20 @@
 #include "env/JITaaSPersistentCHTable.hpp"
 #include "runtime/JITaaSIProfiler.hpp"
 
+#ifdef COMPRESS_AOT_DATA
+#ifdef J9ZOS390
+// inflateInit checks the version of the zlib with which data was deflated. 
+// Reason we need to avoid conversion here is because, we are statically linking
+// system zlib which would have encoded String literals in some version which is not 
+// same as the version we are converting out string literals in. This leads to issue
+// where we fail inflating data with version mismatch. 
+#pragma convlit(suspend)
+#include <zlib.h>
+#pragma convlit(resume)
+#else
+#include "zlib.h"
+#endif
+#endif
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
 #endif
@@ -136,6 +150,9 @@ extern TR::OptionSet *findOptionSet(J9Method *, bool);
 
 #define VM_STATE_COMPILING 64
 #define MAX_NUM_CRASHES 4
+#define COMPRESSION_FAILED -1
+#define DECOMPRESSION_FAILED -1
+#define DECOMPRESSION_SUCCEEDED 0
 
 #if defined(WINDOWS)
 void setThreadAffinity(unsigned _int64 handle, unsigned long mask)
@@ -270,7 +287,126 @@ jitSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, v
 
    return J9PORT_SIG_EXCEPTION_CONTINUE_SEARCH;
    }
+#ifdef COMPRESS_AOT_DATA
+#ifdef J9ZOS390
+#pragma convlit(suspend)
+#endif
+/*
+ * \brief
+ *    Inflates the data buffer using zlib into output buffer
+ *
+ * \param 
+ *    buffer Input buffer that is going to be inflated 
+ * 
+ * \param 
+ *    numberOfBytes Size of the data in the input buffer to inflate
+ * 
+ * \param
+ *    outBuffer Output buffer to hold the deflated data
+ * 
+ * \param
+ *    unCompressedSize Size of the original data
+ * 
+ * \return
+ *    Returns DECOMPRESSION_FAILED if it can not inflate the buffer
+ * 
+ */
+static
+int inflateBuffer(U_8 *buffer, int numberOfBytes, U_8 *outBuffer, int unCompressedSize)
+   {
+   Bytef *in = (Bytef*)buffer;
+   Bytef *out = (Bytef*)outBuffer;
+   z_stream _stream;
+   _stream.zalloc = Z_NULL;
+   _stream.zfree = Z_NULL;
+   _stream.opaque = Z_NULL;
+   _stream.avail_in = 0;
+   _stream.next_in = Z_NULL;
+   int ret = inflateInit(&_stream);
+   if (ret != Z_OK)
+      return DECOMPRESSION_FAILED;
+   _stream.avail_out = unCompressedSize;
+   _stream.next_out = out;
+   _stream.next_in = in;
+   _stream.avail_in = numberOfBytes;
+   ret = inflate(&_stream, Z_NO_FLUSH);
+   /**
+    * ZLIB returns Z_STREAM_END if the buffer stream to be inflated is finished.
+    * In this case it returns DECOMPRESSION_FAILED.
+    * Caller of this routine can then decide if they want to retry deflating
+    * Using larger output buffer. 
+    */
+   if (ret != Z_STREAM_END)
+      {
+      TR_ASSERT(0, "Fails while inflating buffer");
+      ret = DECOMPRESSION_FAILED;
+      }
+   else
+      {
+      ret = DECOMPRESSION_SUCCEEDED;
+      }
+   inflateEnd(&_stream);
+   return ret;
+   }
 
+/*
+ * \brief
+ *    Deflates the data buffer using zlib into output buffer
+ *
+ * \param 
+ *    buffer Input buffer that is going to be deflated 
+ * 
+ * \param 
+ *    numberOfBytes Size of the data in the input buffer to deflate
+ * 
+ * \param
+ *    outBuffer Output buffer to hold the deflated data
+ * 
+ * \param
+ *    level Level of compression
+ * 
+ * \return
+ *    If successful, returns Size of data in the deflated bufer
+ *    else returns COMPRESSION_FAILED
+ * 
+ */
+static
+int deflateBuffer(const U_8 *buffer, int numberOfBytes, U_8 *outBuffer, int level)
+   {
+   z_stream _stream;
+   _stream.zalloc = Z_NULL;
+   _stream.zfree = Z_NULL;
+   _stream.opaque = Z_NULL;
+   int ret=deflateInit(&_stream, level);
+   if (ret != Z_OK)
+      return COMPRESSION_FAILED;
+   // Start deflating
+   _stream.avail_in = numberOfBytes;
+   _stream.next_in = (Bytef*) buffer;
+   _stream.avail_out = numberOfBytes;
+   _stream.next_out = (Bytef*) outBuffer;
+   ret = deflate(&_stream, Z_FINISH);
+   /**
+    * ZLIB returns Z_STREAM_END if the buffer stream to be deflated is finished.
+    * That Return COMPRESSION_FAILED in case we are ending up inflating the data.
+    * Caller of this routine can then decide if they want to retry deflating
+    * Using larger output buffer. 
+    */
+   if ( ret != Z_STREAM_END )
+      {
+      TR_ASSERT(0, "Deflated data is larger than original data.");
+      deflateEnd(&_stream);
+      return COMPRESSION_FAILED;
+      }
+   
+   int compressedSize = numberOfBytes - _stream.avail_out;
+   deflateEnd(&_stream);
+   return compressedSize;
+   }
+#ifdef J9ZOS390
+#pragma convlit(resume)
+#endif
+#endif
 inline void
 TR::CompilationInfo::incrementMethodQueueSize()
    {
@@ -1129,10 +1265,8 @@ void TR::CompilationInfo::setAllCompilationsShouldBeInterrupted()
 
 bool TR::CompilationInfo::useSeparateCompilationThread()
    {
-#if (defined(TR_HOST_X86) || defined(TR_HOST_S390) || (defined(TR_HOST_POWER)) || defined(TR_HOST_ARM))
    if (!TR::Options::getCmdLineOptions()->getOption(TR_AOT))
       return !TR::Options::getCmdLineOptions()->getOption(TR_DisableCompilationThread);
-#endif
    return TR::Options::getCmdLineOptions()->getOption(TR_EnableCompilationThread);
    }
 
@@ -6861,10 +6995,77 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             findAotBodyInSCC(vmThread, method);
          if (*aotCachedMethod)
             {
-            // All conditions are met for doing an AOT load. Mark this fact on the entry.
-            entry->_doAotLoad = true;
-            entry->setAotCodeToBeRelocated(*aotCachedMethod);
-            reloRuntime->setReloStartTime(getTimeWhenCompStarted());
+#ifdef COMPRESS_AOT_DATA
+            TR_AOTMethodHeader *aotMethodHeader = (TR_AOTMethodHeader*)(((J9JITDataCacheHeader*)*aotCachedMethod) + 1);
+            if (aotMethodHeader->flags & TR_AOTMethodHeader_CompressedMethodInCache)
+               {
+               /**
+                 * For each AOT compiled method we store in the shareclass cache we have following layout.
+                 * ---------------------------------------------------------------------------------------
+                 * | CompiledMethodWrapper | J9JITDataCacheHeader | AOTMethodHeader | Metadata | Codedata|
+                 * ---------------------------------------------------------------------------------------
+                 * When we compile and store a method, it stores J9RomMethod for the method in the CompiledMethodWrapper along side
+                 * size of metadata and codedata in the cache. Now when we request a method from shared class cache
+                 * it returns address that points to J9JITDataCacheHeader. As while decompressing the data, we need information about
+                 * the size of original data (We get that information from AOTMethodHeader) and size of deflated data in the cache (Which is stored in
+                 * CompiledMethodWrapper)
+                 * So to access data size in shared class cache, we need to access CompiledMethodWrapper.
+                 */
+               CompiledMethodWrapper *wrapper = ((CompiledMethodWrapper*)(*aotCachedMethod))-1;
+               int sizeOfCompressedDataInCache = wrapper->dataLength;
+               int originalDataSize = aotMethodHeader->compileMethodDataSize + aotMethodHeader->compileMethodCodeSize;
+               void *originalData = trMemory.allocateHeapMemory(originalDataSize);
+               int aotMethodHeaderSize = sizeof(J9JITDataCacheHeader) + sizeof(TR_AOTMethodHeader);
+               memcpy(originalData, *aotCachedMethod, aotMethodHeaderSize);
+               if (inflateBuffer((U_8 *)(*aotCachedMethod)+aotMethodHeaderSize, sizeOfCompressedDataInCache-aotMethodHeaderSize, (U_8* )(originalData)+aotMethodHeaderSize, originalDataSize-aotMethodHeaderSize) == DECOMPRESSION_FAILED)
+                  {
+                  if (TR::Options::getVerboseOption(TR_VerboseAOTCompression))
+                     {
+                     J9UTF8 *className;
+                     J9UTF8 *name;
+                     J9UTF8 *signature;
+                     getClassNameSignatureFromMethod(method, className, name, signature);
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "!%.*s.%.*s%.*s : Decompression of method data failed - Compressed Method Size = %d bytes, Stored original method size = %d bytes",
+                        J9UTF8_LENGTH(className), (char *) J9UTF8_DATA(className),
+                        J9UTF8_LENGTH(name), (char *) J9UTF8_DATA(name),
+                        J9UTF8_LENGTH(signature), (char *) J9UTF8_DATA(signature),
+                        sizeOfCompressedDataInCache, originalDataSize);
+                     }
+                  // If we can not inflate the method data, JIT compile the method.
+                  canRelocateMethod = false;
+                  *aotCachedMethod = NULL;
+                  entry->_doNotUseAotCodeFromSharedCache = false;
+                  }
+               else
+                  {
+                  if (TR::Options::getVerboseOption(TR_VerboseAOTCompression))
+                     {
+                     J9UTF8 *className;
+                     J9UTF8 *name;
+                     J9UTF8 *signature;
+                     getClassNameSignatureFromMethod(method, className, name, signature);
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "%.*s.%.*s%.*s : Decompression of method data Successful - Compressed Method Size = %d bytes, Stored original method size = %d bytes",
+                        J9UTF8_LENGTH(className), (char *) J9UTF8_DATA(className),
+                        J9UTF8_LENGTH(name), (char *) J9UTF8_DATA(name),
+                        J9UTF8_LENGTH(signature), (char *) J9UTF8_DATA(signature),
+                        sizeOfCompressedDataInCache, originalDataSize);
+                     }
+                  *aotCachedMethod = originalData;
+                  }
+               }
+            if (canRelocateMethod)
+               {
+               // All conditions are met for doing an AOT load. Mark this fact on the entry.
+               entry->_doAotLoad = true;
+               entry->setAotCodeToBeRelocated(*aotCachedMethod);
+               reloRuntime->setReloStartTime(getTimeWhenCompStarted());
+               }
+#else
+               // All conditions are met for doing an AOT load. Mark this fact on the entry.
+               entry->_doAotLoad = true;
+               entry->setAotCodeToBeRelocated(*aotCachedMethod);
+               reloRuntime->setReloStartTime(getTimeWhenCompStarted());
+#endif
             }
          }
       else if (entry->_oldStartPC)
@@ -9621,6 +9822,7 @@ TR::CompilationInfo::emitJvmpiExtendedDataBuffer(TR::Compilation *&compiler, J9V
 extern J9_CFUNC void  jitMethodHandleTranslated (J9VMThread *currentThread, j9object_t methodHandle, j9object_t arg, void *jitEntryPoint, void *intrpEntryPoint);
 #endif
 
+
 // static method
 void *
 TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethodDetails & details, J9JITConfig *jitConfig, void *startPC,
@@ -11410,15 +11612,99 @@ TR::CompilationInfo::storeAOTInSharedCache(
 
    if (safeToStore)
       {
+      const U_8 *metadataToStore = dataStart;
+      const U_8 *codedataToStore = codeStart;
+      int metadataToStoreSize = dataSize;
+      int codedataToStoreSize = codeSize;
+#ifdef COMPRESS_AOT_DATA
+      try 
+         {
+         if (!comp->getOption(TR_DisableAOTBytesCompression))
+            {
+            /**
+             * For each compiled method data we store in the shareclass cache looks like following.
+             * -----------------------------------------------------------------------------------------------------
+             * | CompiledMethodWrapper | J9JITDataCacheHeader | TR_AOTMethodHeader | Metadata | Compiled Code Data |
+             * -----------------------------------------------------------------------------------------------------
+             * 
+             * When we compile a method, we send data from J9JITDataCacheHeader to store in the cache.
+             * For each method Shared Class Cache API adds CompiledMethodWrapper header which holds the size of data in cache, 
+             * as well as J9ROMMethod of compiled method. 
+             * Size of the original data is extracted from the TR_AOTMethodHeader while size of compressed data is extracted from
+             * CompiledMethodWrapper. 
+             * That is why We do not compress header as we can extract the original data size 
+             * which is useful information while inflating the method data while loading compiled method. 
+             * 
+             * Compressed data stored in the cache looks like following
+             * ------------------------------------------------------------------------------------------------------------------------------------------------
+             * | CompiledMethodWrapper | J9JITDataCacheHeader (UnCompressed)| TR_AOTMethodHeader (UnCompressed)| (Metadata + Compiled Code Data) (Compressed) |
+             * ------------------------------------------------------------------------------------------------------------------------------------------------
+             *  
+             */
+            void * originalData = comp->trMemory()->allocateHeapMemory(codeSize+dataSize);
+            void * compressedData = comp->trMemory()->allocateHeapMemory(codeSize+dataSize);
+
+            // Copy the metadata and codedata combined into single buffer so that we can compress it together
+            memcpy(originalData, dataStart, dataSize);
+            memcpy((U_8*)(originalData)+dataSize, codeStart, codeSize);
+            int aotMethodHeaderSize = sizeof(J9JITDataCacheHeader)+sizeof(TR_AOTMethodHeader);
+            int compressedDataSize = deflateBuffer((U_8*)(originalData)+aotMethodHeaderSize, dataSize+codeSize-aotMethodHeaderSize, (U_8*)(compressedData)+aotMethodHeaderSize, Z_DEFAULT_COMPRESSION);
+            if (compressedDataSize != COMPRESSION_FAILED)
+               {
+               /**
+                * We are going to store both metadata and code in contiguous memory in shared class cache.
+                * In load run we get the whole buffer from the cache and use the information from header to
+                * Get the relocation data and compiled code.
+                * Because of this reason we copy both metadata and compiled code in one buffer and deflate it together.
+                * TODO: We will always query the shared class cache to get full data for stored AOT compiled method 
+                * that is combined meta data and code data. Even if compression of AOT bytes is disabled, we do not need
+                * to send two different buffers to store in cache and also as no one queries either code data / metadata for
+                * method, clean up the share classs cache API.
+                */
+               aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_CompressedMethodInCache;
+               memcpy(compressedData, dataStart, aotMethodHeaderSize);
+               metadataToStore = (const U_8*) compressedData;
+               metadataToStoreSize = compressedDataSize+aotMethodHeaderSize;
+               codedataToStore = NULL;
+               codedataToStoreSize = 0;  
+               if (TR::Options::getVerboseOption(TR_VerboseAOTCompression))
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "%s : Compression of method data Successful - Original method size = %d bytes, Compressed Method Size = %d bytes",
+                     comp->signature(),
+                     dataSize+codeSize, metadataToStoreSize);
+                  }
+               }
+            else
+               {
+               if (TR::Options::getVerboseOption(TR_VerboseAOTCompression))
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "!%s : Compression of method data Failed - Original method size = %d bytes",
+                     comp->signature(),
+                     dataSize+codeSize);
+                  }
+               }
+            }
+         }
+      catch (const std::bad_alloc &allocationFailure)
+         {
+         // In case we can not allocate extra memory to hold temp data for compressing, we still the uncompressed data into the cache
+         if (TR::Options::getVerboseOption(TR_VerboseAOTCompression))
+            {
+            TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "!%s : Method will not be compressed as necessary memory can not be allocated, Method Size = %d bytes",
+               comp->signature(),
+               dataSize+codeSize);   
+            }   
+         }
+#endif
       storedCompiledMethod =
          reinterpret_cast<const J9JITDataCacheHeader*>(
             jitConfig->javaVM->sharedClassConfig->storeCompiledMethod(
                vmThread,
                romMethod,
-               dataStart,
-               dataSize,
-               codeStart,
-               codeSize,
+               (const U_8*)metadataToStore,
+               metadataToStoreSize,
+               (const U_8*)codedataToStore,
+               codedataToStoreSize,
                0));
       switch(reinterpret_cast<uintptr_t>(storedCompiledMethod))
          {

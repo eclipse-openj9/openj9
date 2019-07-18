@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +56,8 @@ private:
 	calculateRequiredSize(MM_EnvironmentBase *env, J9Class *clazz, uintptr_t allocateFlags)
 	{
 		/* Calculate the size in bytes required for the object being allocated */
-		uintptr_t sizeInBytesRequired = clazz->totalInstanceSize + sizeof(J9Object);
+		uintptr_t const objectHeaderSize = J9GC_OBJECT_HEADER_SIZE(env);
+		uintptr_t sizeInBytesRequired = clazz->totalInstanceSize + objectHeaderSize;
 
 #if defined (J9VM_GC_MODRON_COMPACTION) || defined (J9VM_GC_GENERATIONAL)
 		if (OMR_GC_ALLOCATE_OBJECT_HASHED == (OMR_GC_ALLOCATE_OBJECT_HASHED & allocateFlags)) {

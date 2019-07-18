@@ -1579,6 +1579,7 @@ wrap_primitiveFieldCallback(J9JavaVM * vm, J9JVMTIHeapData * iteratorData, IDATA
 	jvmtiError rc;
 	jvmtiIterationControl visitRc = JVMTI_ITERATION_ABORT;
 	jint fieldIndex = 0;
+	UDATA const objectHeaderSize = J9JAVAVM_OBJECT_HEADER_SIZE(vm);
 
 	/* Check if the referee was already visited and had its primitive fields callback issued. Duplicate SUN behavior
 	 * by issuing the callback only ONCE, even if there are multiple references to the referee. The spec is of course 
@@ -1666,7 +1667,7 @@ wrap_primitiveFieldCallback(J9JavaVM * vm, J9JVMTIHeapData * iteratorData, IDATA
 			}
 
 			offset = state.fieldOffset;
-			valuePtr = (U_8*) iteratorData->object + offset + sizeof(J9Object);
+			valuePtr = (U_8*) iteratorData->object + offset + objectHeaderSize;
 		}
 
  		

@@ -376,7 +376,7 @@ public:
       return getVolatileReferenceFieldAt(objectPointer, getInstanceFieldOffset(getObjectClass(objectPointer), fieldName, fieldSignature));
       }
 
-   virtual TR_Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
+   virtual TR::Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t);
    virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory *, TR_OpaqueMethodBlock *, TR_ResolvedMethod * = 0, TR_OpaqueClassBlock * = 0);
    virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory *, TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *, char *signature, int32_t signatureLength, TR_ResolvedMethod *);
    virtual void * getStaticFieldAddress(TR_OpaqueClassBlock *, unsigned char *, uint32_t, unsigned char *, uint32_t);
@@ -691,7 +691,7 @@ public:
 
    virtual bool               isInlineableNativeMethod( TR::Compilation *, TR::ResolvedMethodSymbol * methodSymbol);
    //receiverClass is for specifying a more specific receiver type. otherwise it is determined from the call.
-   virtual bool               maybeHighlyPolymorphic(TR::Compilation *, TR_ResolvedMethod *caller, int32_t cpIndex, TR_Method *callee, TR_OpaqueClassBlock *receiverClass = NULL);
+   virtual bool               maybeHighlyPolymorphic(TR::Compilation *, TR_ResolvedMethod *caller, int32_t cpIndex, TR::Method *callee, TR_OpaqueClassBlock *receiverClass = NULL);
    virtual bool isQueuedForVeryHotOrScorching(TR_ResolvedMethod *calleeMethod, TR::Compilation *comp);
 
    //getSymbolAndFindInlineTarget queries
@@ -734,13 +734,13 @@ public:
 
    virtual void *getJ2IThunk(char *signatureChars, uint32_t signatureLength,  TR::Compilation *comp);
    virtual void *setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr,  TR::Compilation *comp);
-   virtual void *setJ2IThunk(TR_Method *method, void *thunkptr, TR::Compilation *comp);  // DMDM: J9 now
+   virtual void *setJ2IThunk(TR::Method *method, void *thunkptr, TR::Compilation *comp);  // DMDM: J9 now
 
    // JSR292 {{{
 
    // J2I thunk support
    //
-   virtual void * getJ2IThunk(TR_Method *method, TR::Compilation *comp);  // DMDM: J9 now
+   virtual void * getJ2IThunk(TR::Method *method, TR::Compilation *comp);  // DMDM: J9 now
 
    virtual char    *getJ2IThunkSignatureForDispatchVirtual(char *invokeHandleSignature, uint32_t signatureLength,  TR::Compilation *comp);
    virtual TR::Node *getEquivalentVirtualCallNodeForDispatchVirtual(TR::Node *node,  TR::Compilation *comp);
@@ -796,7 +796,6 @@ public:
    virtual void restoreCompilationPhase(int32_t phase);
 
    virtual void reportPrexInvalidation(void * startPC);
-   virtual void traceAssumeFailure(int32_t line, const char * file);
 
    virtual bool compilationShouldBeInterrupted( TR::Compilation *, TR_CallingContext);
    bool checkForExclusiveAcquireAccessRequest( TR::Compilation *);

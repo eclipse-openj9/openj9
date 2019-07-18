@@ -40,6 +40,10 @@
 		<subsets>
 			<subset>10+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>threadMXBeanTestSuiteJava10</testCaseName>
@@ -61,5 +65,9 @@
 		<subsets>
 			<subset>10+</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 </playlist>

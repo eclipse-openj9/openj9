@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -87,7 +86,7 @@ public:
 	{
 		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(omrVM);
 		_objectPtr = objectPtr;
-		J9Class *clazzPtr = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class *clazzPtr = J9GC_J9OBJECT_CLAZZ(objectPtr, extensions);
 		initializeDescriptionBits(clazzPtr);
 
 		/* Set current and end scan pointers */

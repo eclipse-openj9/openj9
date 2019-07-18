@@ -24,6 +24,7 @@
 
 #include <stdint.h>
 #include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "il/Symbol.hpp"
@@ -385,7 +386,7 @@ SymbolReference::getTypeSignature(int32_t & len, TR_AllocationKind allocKind, bo
       case TR::Symbol::IsMethod:
       case TR::Symbol::IsResolvedMethod:
          {
-         TR_Method * method = _symbol->castToMethodSymbol()->getMethod();
+         TR::Method * method = _symbol->castToMethodSymbol()->getMethod();
          if (method)
             {
             char * sig   = method->signatureChars();

@@ -26,6 +26,8 @@ add_library(j9thr SHARED
 	$<TARGET_OBJECTS:j9thr_obj>
 )
 target_link_libraries(j9thr
+	PUBLIC
+		${OMR_PLATFORM_THREAD_LIBRARY}
 	PRIVATE
 		j9pool
 		j9utilcore
@@ -34,10 +36,6 @@ target_link_libraries(j9thr
 
 if(OMR_NEED_LIBRT)
 	target_link_libraries(j9thr PRIVATE rt)
-endif()
-
-if(OMR_HOST_OS STREQUAL "linux")
-	target_link_libraries(j9thr PUBLIC pthread)
 endif()
 
 # OMR keeps track of the exported symbols, and attaches them to j9thr_obj

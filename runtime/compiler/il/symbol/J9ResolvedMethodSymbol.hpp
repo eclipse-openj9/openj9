@@ -43,6 +43,15 @@ namespace J9
 
 class OMR_EXTENSIBLE ResolvedMethodSymbol : public OMR::ResolvedMethodSymbolConnector
    {
+public:
+   /*
+    * \brief Get known object index of a parameter if there is any known object information available
+    *
+    * \parm ordinal
+    *     the ordinal of a parameter starting from 0 for the first parameter of a method
+    */
+   TR::KnownObjectTable::Index getKnownObjectIndexForParm(int32_t ordinal);
+
 protected:
 
    ResolvedMethodSymbol(TR_ResolvedMethod *method, TR::Compilation *comp);

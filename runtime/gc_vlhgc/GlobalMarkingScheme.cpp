@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -458,7 +457,7 @@ MM_GlobalMarkingScheme::markObjectClass(MM_EnvironmentVLHGC *env, J9Object *obje
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	_extensions->classLoaderRememberedSet->rememberInstance(env, objectPtr);
 	if(isDynamicClassUnloadingEnabled()) {
-		j9object_t classObject = (j9object_t)J9GC_J9OBJECT_CLAZZ(objectPtr)->classObject;
+		j9object_t classObject = (j9object_t)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->classObject;
 		Assert_MM_true(J9_INVALID_OBJECT != classObject);
 		markObjectNoCheck(env, classObject, false);
 	}
@@ -505,9 +504,9 @@ MM_GlobalMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, J9Object *obje
 	updateScanStats(env, objectSize, reason);
 
 	endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
-	descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceDescription;
+	descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceDescription;
 #if defined(J9VM_GC_LEAF_BITS)
-	leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
+	leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 #endif /* J9VM_GC_LEAF_BITS */
 
 	if (((UDATA)descriptionPtr) & 1) {
@@ -577,7 +576,7 @@ MM_GlobalMarkingScheme::scanReferenceMixedObject(MM_EnvironmentVLHGC *env, J9Obj
 	bool referentMustBeMarked = isReferenceCleared;
 	bool referentMustBeCleared = false;
 	UDATA referenceObjectOptions = env->_cycleState->_referenceObjectOptions;
-	UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9AccClassReferenceMask;
+	UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr, env)) & J9AccClassReferenceMask;
 	switch (referenceObjectType) {
 	case J9AccClassReferenceWeak:
 		referentMustBeCleared = (0 != (referenceObjectOptions & MM_CycleState::references_clear_weak));
@@ -621,9 +620,9 @@ MM_GlobalMarkingScheme::scanReferenceMixedObject(MM_EnvironmentVLHGC *env, J9Obj
 
 	updateScanStats(env, objectSize, reason);
 
-	descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceDescription;
+	descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceDescription;
 #if defined(J9VM_GC_LEAF_BITS)
-	leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
+	leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 #endif /* J9VM_GC_LEAF_BITS */
 
 	if(((UDATA)descriptionPtr) & 1) {
@@ -864,9 +863,10 @@ MM_GlobalMarkingScheme::scanObject(MM_EnvironmentVLHGC *env, J9Object *objectPtr
 		/* This means that the object was pushed during a GMP cycle but collected by an intervening PGC cycle and invalidated */
 		Assert_MM_true(SCAN_REASON_PACKET == reason);
 	} else {
-		J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class* clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
 		Assert_MM_mustBeClass(clazz);
 		switch(_extensions->objectModel.getScanType(clazz)) {
+			case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 			case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 			case GC_ObjectModel::SCAN_MIXED_OBJECT:
 			case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
@@ -1614,7 +1614,7 @@ MM_GlobalMarkingScheme::processReferenceList(MM_EnvironmentVLHGC *env, J9Object*
 		GC_SlotObject referentSlotObject(_extensions->getOmrVM(), &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, referenceObj));
 		J9Object *referent = referentSlotObject.readReferenceFromSlot();
 		if (NULL != referent) {
-			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj)) & J9AccClassReferenceMask;
+			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj, env)) & J9AccClassReferenceMask;
 			if (isMarked(referent)) {
 				if (J9AccClassReferenceSoft == referenceObjectType) {
 					U_32 age = J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, referenceObj);

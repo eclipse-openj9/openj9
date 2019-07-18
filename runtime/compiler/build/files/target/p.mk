@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,6 +57,8 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/p/codegen/J9CodeGenerator.cpp \
     compiler/p/codegen/J9PPCInstruction.cpp \
     compiler/p/codegen/J9PPCSnippet.cpp \
+    compiler/p/codegen/J9PPCWatchedInstanceFieldSnippet.cpp \
+    compiler/p/codegen/J9PPCWatchedStaticFieldSnippet.cpp \
     compiler/p/codegen/J9TreeEvaluator.cpp \
     compiler/p/codegen/J9UnresolvedDataSnippet.cpp \
     compiler/p/codegen/PPCJNILinkage.cpp \

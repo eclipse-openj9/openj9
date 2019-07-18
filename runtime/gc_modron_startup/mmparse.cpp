@@ -1209,19 +1209,45 @@ gcParseSovereignArguments(J9JavaVM *vm)
 		}
 	}
 
-	if (-1 != FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+HeapManagementMXBeanCompatibility", NULL)) {
-
-		extensions->_HeapManagementMXBeanBackCompatibilityEnabled = true;
-	}
-	
-	if (-1 != FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-HeapManagementMXBeanCompatibility", NULL)) {
-		extensions->_HeapManagementMXBeanBackCompatibilityEnabled = false;
-	}
 	return 1;
 
 _error:
 	return 0;
 
+}
+
+static UDATA
+gcParseXXArguments(J9JavaVM *vm)
+{
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm);
+
+	{
+		IDATA heapManagementMXBeanCompatibilityIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+HeapManagementMXBeanCompatibility", NULL);
+		IDATA noHheapManagementMXBeanCompatibilityIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-HeapManagementMXBeanCompatibility", NULL);
+		if (heapManagementMXBeanCompatibilityIndex != noHheapManagementMXBeanCompatibilityIndex) {
+			/* At least one option is set. Find the right most one. */
+			if (heapManagementMXBeanCompatibilityIndex > noHheapManagementMXBeanCompatibilityIndex) {
+				extensions->_HeapManagementMXBeanBackCompatibilityEnabled = true;
+			} else {
+				extensions->_HeapManagementMXBeanBackCompatibilityEnabled = false;
+			}
+		}
+	}
+
+	{
+		IDATA useGCStartupHintsIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:+UseGCStartupHints", NULL);
+		IDATA noUseGCStartupHintsIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, "-XX:-UseGCStartupHints", NULL);
+		if (useGCStartupHintsIndex != noUseGCStartupHintsIndex) {
+			/* At least one option is set. Find the right most one. */
+			if (useGCStartupHintsIndex > noUseGCStartupHintsIndex) {
+				extensions->useGCStartupHints = true;
+			} else {
+				extensions->useGCStartupHints = false;
+			}
+		}
+	}
+
+	return 1;
 }
 
 /**
@@ -1651,6 +1677,11 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 	 * easily disallow -Xgcpolicy options.
 	 */
 	if (0 == gcParseSovereignArguments(vm)) {
+		return JNI_EINVAL;
+	}
+
+	/* parse -XX: option that logicially belong to GC */
+	if (0 == gcParseXXArguments(vm)) {
 		return JNI_EINVAL;
 	}
 

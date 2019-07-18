@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -196,7 +195,7 @@ public:
 		, _leafDescription(0)
 	  {
 		_objectPtr = objectPtr;
-		J9Class *clazzPtr = J9GC_J9OBJECT_CLAZZ(objectPtr);
+		J9Class *clazzPtr = J9GC_J9OBJECT_CLAZZ_VM(objectPtr, vm);
 		/* Set up the description bits */
 		UDATA tempDescription = (UDATA)clazzPtr->instanceDescription;
 		UDATA tempLeafDescription = (UDATA)clazzPtr->instanceLeafDescription;

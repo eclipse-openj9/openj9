@@ -42,6 +42,7 @@
 			<include path="j9gcbase"/>
 			<include path="$(OMR_DIR)/gc/base" type="relativepath"/>
 			<include path="$(OMR_DIR)/gc/base/standard" type="relativepath"/>
+			<include path="$(OMR_DIR)/gc/base/vlhgc" type="relativepath"/>
 			<include path="j9gcstructs"/>
 			<include path="$(OMR_DIR)/gc/structs" type="relativepath"/>
 			<include path="j9gcstats"/>

@@ -44,72 +44,12 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
 
-import openj9.tools.attach.diagnostics.info.JvmThreadInfo;
-import openj9.tools.attach.diagnostics.info.ThreadGroupInfo;
-
 @Test(groups = { "level.extended" })
 public class TestJstack extends AttachApiTest {
 
 	private static final String JSTACK_COMMAND = "jstack"; //$NON-NLS-1$
 	Object syncObject = new Object();
 
-	@Test
-	public void testSingleThread() throws IOException {
-		try {
-			Thread testThread = new Thread(this::method1);
-			testThread.start();
-			while (testThread.getState() != State.WAITING) {
-				try {
-					Thread.sleep(1); /* sleep the minimum practical time */
-				} catch (InterruptedException e) {
-					/* ignore */
-				}
-			}
-			long[] threadIds = new long[] { testThread.getId() };
-			Properties props = ThreadGroupInfo.getThreadInfoProperties(threadIds).toProperties();
-			logProperties(props);
-			JvmThreadInfo jvmThrInfo = new JvmThreadInfo(props, 0);
-			ThreadInfo thrInfo = jvmThrInfo.getThreadInfo();
-			log(thrInfo.toString());
-			compareThreadInfo(thrInfo, testThread);
-		} finally {
-			synchronized (syncObject) {
-				syncObject.notifyAll();
-			}
-		}
-	}
-
-	@Test
-	/* basic sanity: fetch and print the thread information */
-	public void testAllThreads() throws IOException {
-		Properties props = ThreadGroupInfo.getThreadInfoProperties().toProperties();
-		logProperties(props);
-		ThreadGroupInfo grpInfo = new ThreadGroupInfo(props, false);
-		log(grpInfo.toString());
-	}
-
-	@Test
-	public void testMonitors() throws IOException {
-		synchronized (syncObject) {
-			Thread testThread = new Thread(this::syncMethod, "testMonitorsThread"); //$NON-NLS-1$
-			testThread.start();
-			while (testThread.getState() != State.BLOCKED) {
-				try {
-					Thread.sleep(1); /* sleep the minimum practical time */
-				} catch (InterruptedException e) {
-					/* ignore */
-				}
-			}
-			Properties props = ThreadGroupInfo.getThreadInfoProperties().toProperties();
-			logProperties(props);
-			ThreadGroupInfo grpInfo = new ThreadGroupInfo(props, false);
-			String jstackOutput = grpInfo.toString();
-			log("jstack output:\n" + jstackOutput); //$NON-NLS-1$
-			assertTrue(jstackOutput.toLowerCase().contains("locked java.lang.object"), "missing 'locked' information"); //$NON-NLS-1$//$NON-NLS-2$
-			assertTrue(jstackOutput.toLowerCase().contains("blocked on java.lang.object"), //$NON-NLS-1$
-					"missing 'blocked' information"); //$NON-NLS-1$
-		}
-	}
 
 	@Test
 	public void testRemote() throws IOException {
@@ -173,29 +113,6 @@ public class TestJstack extends AttachApiTest {
 	protected void setupSuite() {
 		assertTrue(PlatformInfo.isOpenJ9(), "This test is valid only on OpenJ9"); //$NON-NLS-1$
 		getJdkUtilityPath(JSTACK_COMMAND);
-	}
-
-	protected void compareThreadInfo(ThreadInfo thrInfo, Thread testThread) {
-		assertEquals(thrInfo.getThreadId(), testThread.getId(), "wrong ID:"); //$NON-NLS-1$
-		assertEquals(thrInfo.getThreadName(), testThread.getName(), "wrong name:"); //$NON-NLS-1$
-		assertEquals(thrInfo.getThreadState(), testThread.getState(), "wrong state:"); //$NON-NLS-1$
-		StackTraceElement[] expectedStackTrace = testThread.getStackTrace();
-		StackTraceElement[] actualStackTrace = testThread.getStackTrace();
-		compareStackTraces(expectedStackTrace, actualStackTrace);
-	}
-
-	protected void compareStackTraces(StackTraceElement[] expectedStackTrace, StackTraceElement[] actualStackTrace) {
-		boolean match = Arrays.equals(expectedStackTrace, actualStackTrace);
-		if (!match) {
-			PrintStream expectedStream = StringPrintStream.factory();
-			Arrays.stream(expectedStackTrace).forEach(e -> expectedStream.println(e.toString()));
-			logger.error("expected:\n" + expectedStream.toString()); //$NON-NLS-1$
-
-			PrintStream actualStream = StringPrintStream.factory();
-			Arrays.stream(actualStackTrace).forEach(e -> actualStream.println(e.toString()));
-			logger.error("actual:\n" + actualStream.toString()); //$NON-NLS-1$
-			logger.error("Wrong stack trace"); //$NON-NLS-1$
-		}
 	}
 
 	void method1() {

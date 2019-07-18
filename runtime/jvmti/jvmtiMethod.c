@@ -524,7 +524,7 @@ jvmtiGetBytecodes(jvmtiEnv* env,
 	ENSURE_NON_NULL(bytecode_count_ptr);
 	ENSURE_NON_NULL(bytecodes_ptr);
 
-	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(((J9JNIMethodID *) method)->method);
+	romMethod = getOriginalROMMethod(((J9JNIMethodID *) method)->method);
 	if (romMethod->modifiers & J9AccNative) {
 		JVMTI_ERROR(JVMTI_ERROR_NATIVE_METHOD);
 	}

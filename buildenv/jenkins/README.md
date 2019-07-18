@@ -68,14 +68,16 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
         - ppc64le_linux, s390x_linux, x86-64_linux, x86-64_linux_xl, ppc64_aix, x86-64_windows, x86-32_windows, x86-64_mac
 
 - OpenJ9 committers can request builds by commenting in a pull request
-    - Format: `Jenkins <build type> <level>.<group> <platform>[,<platform>,...,<platform>] jdk<version>[,jdk<version>,...,jdk<version>]`
+    - Format: `Jenkins <build type> <level>.<group>[+<test_flag>] <platform>[,<platform>,...,<platform>] jdk<version>[,jdk<version>,...,jdk<version>]`
     - `<build type>` is compile | test
     - `<level>` is sanity | extended (required only for "test" `<build type>`)
     - `<group>` is functional | system
+    - `<test_flag>` Optional: any TEST_FLAG is supported. See notes below.
     - `<platform>` is one of the platform shorthands above
     - `<version>` is the number of the supported release, e.g. 8 | 11 | next
 - Note: You can use keyword `all` for platform but not for test level/type or JDK versions.
 - Note: For backward compatibility `<level>.<test type>` equal to `sanity` or `extended` is acceptable and will map to `sanity.functional` and `extended.functional` respectively.
+- Note: TEST_FLAG is an optional argument to the test target. It is recommended to only launch 1 test target with 1 TEST_FLAG per comment/build. At the time of writing, the two supported test flags are `+jitaas` and `+aot`. Ex. `Jenkins test sanity.functional+jitaas xlinux jdk8`.
 
 ###### Examples
 - Request a Compile-only build on all platforms and multiple versions by commenting in a PR
@@ -112,6 +114,10 @@ You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj
     - `Jenkins test sanity zlinux jdk8 depends eclipse/omr#123`
 
 ###### Note: When specifying a dependent change in an OpenJDK extensions repo, you can only build the SDK version that matches the repo where the dependent change lives. Eg. You cannot build JDK8 with a PR in openj9-openjdk-jdk11.
+
+##### Testing Changes to Pipeline code
+
+- If you have changes to Jenkins Pipeline code (including the defaults.yml variable file), you can test most code paths via a PR build. Your PR build will load the Pipeline code from your PR (merge ref). Also note if you have dependent changes you have to launch your PR build through the OpenJ9 repo in order for the Pipeline changes to be loaded in your build.
 
 ##### Other Pull Requests builds
 

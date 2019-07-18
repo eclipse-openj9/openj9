@@ -259,9 +259,6 @@ TR_RelocationRecord::create(TR_RelocationRecord *storage, TR_RelocationRuntime *
       case TR_InlinedAbstractMethodWithNopGuard:
          reloRecord = new (storage) TR_RelocationRecordInlinedAbstractMethodWithNopGuard(reloRuntime, record);
          break;
-      case TR_InlinedHCRMethod:
-         reloRecord = new (storage) TR_RelocationRecordInlinedMethod(reloRuntime, record);
-         break;
       case TR_ProfiledInlinedMethodRelocation:
          reloRecord = new (storage) TR_RelocationRecordProfiledInlinedMethod(reloRuntime, record);
          break;
@@ -4652,7 +4649,7 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordNopGuardBinaryTemplate),                                // TR_InlinedVirtualMethodWithNopGuard             = 34
    sizeof(TR_RelocationRecordNopGuardBinaryTemplate),                                // TR_InlinedInterfaceMethodWithNopGuard           = 35
    sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_SpecialRamMethodConst                        = 36
-   48,                                                                               // TR_InlinedHCRMethod                             = 37
+   0,                                                                                // TR_InlinedHCRMethod                             = 37
    sizeof(TR_RelocationRecordValidateStaticFieldBinaryTemplate),                     // TR_ValidateStaticField                          = 38
    sizeof(TR_RelocationRecordValidateClassBinaryTemplate),                           // TR_ValidateClass                                = 39
    sizeof(TR_RelocationRecordConstantPoolWithIndexBinaryTemplate),                   // TR_ClassAddress                                 = 40

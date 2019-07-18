@@ -128,7 +128,6 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    TR_OpaquePseudoRegister * evaluateOPRNode(TR::Node* node);
    TR_PseudoRegister * evaluateBCDNode(TR::Node * node);
 
-
    // --------------------------------------------------------------------------
    // Storage references
    //

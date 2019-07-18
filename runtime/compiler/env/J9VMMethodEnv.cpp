@@ -100,7 +100,18 @@ J9::VMMethodEnv::startPC(TR_OpaqueMethodBlock *method)
 uintptr_t
 J9::VMMethodEnv::bytecodeStart(TR_OpaqueMethodBlock *method)
    {
-   J9ROMMethod *romMethod = romMethodOfRamMethod((J9Method*) method);
+
+   J9ROMMethod *romMethod = NULL;
+   auto stream = TR::CompilationInfo::getStream();
+   if (stream)
+      // Don't need to call getOriginalROMMethod, because
+      // in JITaaS romMethodOfRamMethod already fetches
+      // ROM method from its ROM class.
+      // Also, the return value of this function might be 
+      // dereferenced later on, so need ROM method to be on the server.
+      romMethod = romMethodOfRamMethod((J9Method *) method);
+   else
+      romMethod = getOriginalROMMethod((J9Method *)method);
    return (uintptr_t)(J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
    }
 

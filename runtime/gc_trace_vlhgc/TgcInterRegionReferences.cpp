@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,7 +89,7 @@ tgcHookReportInterRegionReferenceCounting(J9HookInterface** hookInterface, UDATA
 				bool cardDoesPointOut = false;
 				objectCount += 1;
 				/* first, check the validity of the object's class */
-				J9Class *clazz = J9GC_J9OBJECT_CLAZZ(object);
+				J9Class *clazz = J9GC_J9OBJECT_CLAZZ(object, env);
 				Assert_MM_true((UDATA)0x99669966 == clazz->eyecatcher);
 				/* second, verify that it is an instance of a marked class */
 				J9Object *classObject = (J9Object *)clazz->classObject;
@@ -101,6 +100,7 @@ tgcHookReportInterRegionReferenceCounting(J9HookInterface** hookInterface, UDATA
 				case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
 					Assert_MM_true(GC_ObjectModel::REF_STATE_REMEMBERED != J9GC_J9VMJAVALANGREFERENCE_STATE(env, object));
 					/* fall through */
+				case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 				case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 				case GC_ObjectModel::SCAN_MIXED_OBJECT:
 				case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:

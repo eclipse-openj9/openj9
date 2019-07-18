@@ -28,6 +28,7 @@ j9jit_files(
 	aarch64/codegen/J9ARM64Snippet.cpp
 	aarch64/codegen/J9AheadOfTimeCompile.cpp
 	aarch64/codegen/J9CodeGenerator.cpp
+	aarch64/codegen/J9MemoryReference.cpp
 	aarch64/codegen/J9TreeEvaluator.cpp
 	aarch64/codegen/J9UnresolvedDataSnippet.cpp
 	aarch64/codegen/StackCheckFailureSnippet.cpp

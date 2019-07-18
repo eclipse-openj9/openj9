@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,8 +126,9 @@ referenceArrayCopy(J9VMThread *vmThread, J9IndexableObject *srcObject, J9Indexab
 
 		uintptr_t srcHeaderSize = ext->indexableObjectModel.getHeaderSize(srcObject);
 		uintptr_t destHeaderSize = ext->indexableObjectModel.getHeaderSize(destObject);
-		I_32 srcIndex = (I_32)(((uintptr_t)srcAddress - (srcHeaderSize + (uintptr_t)srcObject)) / sizeof(fj9object_t));
-		I_32 destIndex = (I_32)(((uintptr_t)destAddress - (destHeaderSize + (uintptr_t)destObject)) / sizeof(fj9object_t));
+		uintptr_t const referenceSize = J9VMTHREAD_REFERENCE_SIZE(vmThread);
+		I_32 srcIndex = (I_32)(((uintptr_t)srcAddress - (srcHeaderSize + (uintptr_t)srcObject)) / referenceSize);
+		I_32 destIndex = (I_32)(((uintptr_t)destAddress - (destHeaderSize + (uintptr_t)destObject)) / referenceSize);
 
 		return referenceArrayCopyIndex(vmThread, srcObject, destObject, srcIndex, destIndex, lengthInSlots);
 	}

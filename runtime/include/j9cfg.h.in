@@ -43,6 +43,7 @@ extern "C" {
 #define EsExtraVersionString ""
 
 #define JAVA_SPEC_VERSION ${JAVA_SPEC_VERSION}
+#define JAVA_SPEC_VERSION_STRING "${JAVA_SPEC_VERSION}"
 
 /* Note: The following defines record flags used to build the VM. */
 /* Changing them here does not remove the feature and may cause linking problems. */
@@ -202,7 +203,6 @@ extern "C" {
 #cmakedefine J9VM_JIT_SUPPORTS_DIRECT_JNI
 #cmakedefine J9VM_JIT_TRANSACTION_DIAGNOSTIC_THREAD_BLOCK
 #cmakedefine J9VM_MATH_DIRECT_HELPERS
-#cmakedefine J9VM_MATH_USE_DIV_REM
 #cmakedefine J9VM_OPT_ANNOTATIONS
 #cmakedefine J9VM_OPT_BIG_INTEGER
 #cmakedefine J9VM_OPT_CUDA

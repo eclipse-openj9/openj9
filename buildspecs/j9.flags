@@ -1192,10 +1192,6 @@ Only available on zOS</description>
 			<require flag="interp_floatSupport"/>
 		</requires>
 	</flag>
-	<flag id="math_useDivRem">
-		<description>Divide, remainder operations are implemented via C helpers (divrem.c) rather than assembly. </description>
-		<ifRemoved>An assembly implementation of all math operations must exist.</ifRemoved>
-	</flag>
 	<flag id="module_a2e">
 		<description>Enables compilation of the a2e module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>

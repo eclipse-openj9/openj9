@@ -114,11 +114,19 @@
 	
 	<target name="build" >
 		<if>
-			<not>
-				<matches string="${JDK_VERSION}" pattern="^(8|9|10)$$" />
-			</not>
+			<or>
+				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="openj9" />
+			</or>
 			<then>
-				<antcall target="clean" inheritall="true" />
+				<if>
+					<not>
+						<matches string="${JDK_VERSION}" pattern="^(8|9|10)$$" />
+					</not>
+					<then>
+						<antcall target="clean" inheritall="true" />
+					</then>
+				</if>
 			</then>
 		</if>
 	</target>

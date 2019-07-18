@@ -780,7 +780,17 @@ done:
 	static VMINLINE j9object_t
 	allocateIndexableObject(J9VMThread *currentThread, MM_ObjectAllocationAPI *objectAllocate, J9Class *arrayClass, U_32 size, bool initializeSlots = true, bool memoryBarrier = true, bool sizeCheck = true)
 	{
-		j9object_t instance = objectAllocate->inlineAllocateIndexableObject(currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
+		j9object_t instance = NULL;
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
+			instance = objectAllocate->inlineAllocateIndexableValueTypeObject(currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
+		} else
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+		{
+			instance = objectAllocate->inlineAllocateIndexableObject(currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
+		}
+
 		if (NULL == instance) {
 			instance = currentThread->javaVM->memoryManagerFunctions->J9AllocateIndexableObject(currentThread, arrayClass, size, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 			if (J9_UNEXPECTED(NULL == instance)) {

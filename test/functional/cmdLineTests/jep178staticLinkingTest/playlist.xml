@@ -26,7 +26,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
 	-DJAVATEST_ROOT=$(Q)$(JAVATEST_ROOT)$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
-	-DJAVA_EXECUTABLE_DIR=$(Q)$(JAVA_BIN)$(Q) \
+	-DJAVA_EXECUTABLE_DIR=$(Q)$(TEST_JDK_HOME)$(D)bin$(Q) \
 	-DSTATLNKJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)jep178staticLinkingTest$(D)jep178staticLinkingTest.jar$(Q) \
 	-DTESTJEP178_STATIC=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_static$(Q) \
 	-DTESTJEP178_DYNAMIC=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_dynamic$(Q) \
@@ -35,7 +35,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DJVMLIBPATH=$(Q)$(J9VM_PATH)$(Q) \
 	-DJEPTESTCLASS=$(Q)com/ibm/j9/tests/jeptests/StaticLinking$(Q) \
 	-DJVMTITESTCLASS=$(Q)com/ibm/j9/tests/jeptests/StaticAgents$(Q) \
-	-DATTACHTOOLSJAR=$(Q)$(JAVA_BIN)$(D)..$(D)..$(D)lib$(D)tools.jar$(Q) \
+	-DATTACHTOOLSJAR=$(Q)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(Q) \
 	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jep178.xml$(Q) \
@@ -55,13 +55,17 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 	<test>
 		<testCaseName>cmdLineTester_jep178_staticLinking</testCaseName>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
 	-DJAVATEST_ROOT=$(Q)$(JAVATEST_ROOT)$(Q) \
 	-DRESJAR=$(CMDLINETESTER_RESJAR) \
-	-DJAVA_EXECUTABLE_DIR=$(Q)$(JAVA_BIN)$(Q) \
+	-DJAVA_EXECUTABLE_DIR=$(Q)$(TEST_JDK_HOME)$(D)bin$(Q) \
 	-DSTATLNKJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)jep178staticLinkingTest$(D)jep178staticLinkingTest.jar$(Q) \
 	-DTESTJEP178_STATIC=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_static$(Q) \
 	-DTESTJEP178_DYNAMIC=$(Q)$(JAVA_SHARED_LIBRARIES_DIR)$(D)testjep178_dynamic$(Q) \
@@ -70,7 +74,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	-DJVMLIBPATH=$(Q)$(J9VM_PATH)$(Q) \
 	-DJEPTESTCLASS=$(Q)com/ibm/j9/tests/jeptests/StaticLinking$(Q) \
 	-DJVMTITESTCLASS=$(Q)com/ibm/j9/tests/jeptests/StaticAgents$(Q) \
-	-DATTACHTOOLSJAR=$(Q)$(JAVA_BIN)$(D)..$(D)lib$(D)tools.jar$(Q) \
+	-DATTACHTOOLSJAR=$(Q)$(TEST_JDK_HOME)$(D)lib$(D)tools.jar$(Q) \
 	-DJVM_OPTIONS=$(Q)$(JVM_OPTIONS)$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)jep178.xml$(Q) \
@@ -92,5 +96,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<subset>11+</subset>
 		</subsets>
 		<disabled>https://github.com/eclipse/openj9/issues/3560</disabled>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
 	</test>
 </playlist>

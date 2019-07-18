@@ -190,6 +190,7 @@ MM_RealtimeAccessBarrier::validateWriteBarrier(J9VMThread *vmThread, J9Object *d
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
 	switch(_extensions->objectModel.getScanType(dstObject)) {
+	case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 	case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 	case GC_ObjectModel::SCAN_MIXED_OBJECT:
 	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
@@ -204,7 +205,7 @@ MM_RealtimeAccessBarrier::validateWriteBarrier(J9VMThread *vmThread, J9Object *d
 		UDATA dataSizeInSlots = MM_Bits::convertBytesToSlots(_extensions->objectModel.getSizeInBytesWithHeader(dstObject));
 		if (slotIndex >= dataSizeInSlots) {
 			j9tty_printf(PORTLIB, "validateWriteBarrier: slotIndex (%d) >= object size in slots (%d)", slotIndex, dataSizeInSlots);
-			printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+			printClass(javaVM, J9GC_J9OBJECT_CLAZZ_VM(dstObject, javaVM));
 			j9tty_printf(PORTLIB, "\n");
 		}
 		/* Also consider validating that slot is a ptr slot */
@@ -223,7 +224,7 @@ MM_RealtimeAccessBarrier::validateWriteBarrier(J9VMThread *vmThread, J9Object *d
 				UDATA* dataEnd = dataStart + _extensions->indexableObjectModel.getSizeInElements((J9IndexableObject*)dstObject);
 				if ((UDATA*)dstAddress < dataStart || (UDATA*)dstAddress >= dataEnd) {
 					j9tty_printf(PORTLIB, "validateWriteBarrier: IC: store to %p not in data section of array %p to %p", dstAddress, dataStart, dataEnd);
-					printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+					printClass(javaVM, J9GC_J9OBJECT_CLAZZ_VM(dstObject, javaVM));
 					j9tty_printf(PORTLIB, "\n");
 				}
 				break;
@@ -232,14 +233,14 @@ MM_RealtimeAccessBarrier::validateWriteBarrier(J9VMThread *vmThread, J9Object *d
 				MM_HeapRegionDescriptorRealtime *region = (MM_HeapRegionDescriptorRealtime *)regionManager->tableDescriptorForAddress(dstAddress);
 				if (!region->isArraylet()) {
 					j9tty_printf(PORTLIB, "validateWriteBarrier: D: dstAddress (%p) is not on an arraylet region", dstAddress);
-					printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+					printClass(javaVM, J9GC_J9OBJECT_CLAZZ_VM(dstObject, javaVM));
 					j9tty_printf(PORTLIB, "\n");
 				}
 				else {
 					UDATA* arrayletParent = region->getArrayletParent(region->whichArraylet((UDATA*)dstAddress, javaVM->arrayletLeafLogSize));
 					if (arrayletParent != (UDATA*)dstObject) {
 						j9tty_printf(PORTLIB, "validateWriteBarrier: D: parent of arraylet (%p) is not destObject (%p)", arrayletParent, dstObject);
-						printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+						printClass(javaVM, J9GC_J9OBJECT_CLAZZ_VM(dstObject, javaVM));
 						j9tty_printf(PORTLIB, "\n");
 					}
 				}
@@ -259,13 +260,13 @@ MM_RealtimeAccessBarrier::validateWriteBarrier(J9VMThread *vmThread, J9Object *d
 					MM_HeapRegionDescriptorRealtime *region = (MM_HeapRegionDescriptorRealtime *)regionManager->tableDescriptorForAddress(dstAddress);
 					if (!region->isArraylet()) {
 						j9tty_printf(PORTLIB, "validateWriteBarrier: H: dstAddress (%p) is not on an arraylet region", dstAddress);
-						printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+						printClass(javaVM, J9GC_J9OBJECT_CLAZZ_VM(dstObject, javaVM));
 					}
 					else {
 						UDATA* arrayletParent = region->getArrayletParent(region->whichArraylet((UDATA*)dstAddress, javaVM->arrayletLeafLogSize));
 						if (arrayletParent != (UDATA*)dstObject) {
 							j9tty_printf(PORTLIB, "validateWriteBarrier: H: parent of arraylet (%p) is not destObject (%p)", arrayletParent, dstObject);
-							printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+							printClass(javaVM, J9GC_J9OBJECT_CLAZZ_VM(dstObject, javaVM));
 							j9tty_printf(PORTLIB, "\n");
 						}
 					}
@@ -282,7 +283,7 @@ MM_RealtimeAccessBarrier::validateWriteBarrier(J9VMThread *vmThread, J9Object *d
 		UDATA* dataEnd = dataStart + _extensions->indexableObjectModel.getSizeInElements((J9IndexableObject*)dstObject);
 		if ((UDATA*)dstAddress < dataStart || (UDATA*)dstAddress >= dataEnd) {
 			j9tty_printf(PORTLIB, "validateWriteBarrier: store to %p not in data section of array %p to %p", dstAddress, dataStart, dataEnd);
-			printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+			printClass(javaVM, J9GC_J9OBJECT_CLAZZ_VM(dstObject, javaVM));
 			j9tty_printf(PORTLIB, "\n");
 		}
 #endif /* defined(J9VM_GC_ARRAYLETS) */
@@ -293,7 +294,7 @@ MM_RealtimeAccessBarrier::validateWriteBarrier(J9VMThread *vmThread, J9Object *d
 	case GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT:
 		j9tty_printf(PORTLIB, "validateWriteBarrier: writeBarrier called on array of primitive\n");
 		j9tty_printf(PORTLIB, "value being overwritten is %d\n", *dstAddress);
-		printClass(javaVM, J9GC_J9OBJECT_CLAZZ(dstObject));
+		printClass(javaVM, J9GC_J9OBJECT_CLAZZ_VM(dstObject, javaVM));
 		j9tty_printf(PORTLIB, "\n");
 		break;
 

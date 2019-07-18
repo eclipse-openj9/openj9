@@ -691,6 +691,14 @@ bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->getReferenceFieldAtAddress(fieldAddress));
          }
          break;
+      case MessageType::VM_getReferenceFieldAt:
+         {
+         auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
+         uintptrj_t objectPointer = std::get<0>(recv);
+         uintptrj_t fieldOffset = std::get<1>(recv);
+         client->write(response, fe->getReferenceFieldAt(objectPointer, fieldOffset));
+         }
+         break;
       case MessageType::VM_getVolatileReferenceFieldAt:
          {
          auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
@@ -2127,15 +2135,21 @@ bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
          int32_t argIndex = std::get<1>(recv);
          TR::VMAccessCriticalSection targetTypeL(fe);
          uintptrj_t methodHandle = *std::get<0>(recv);
-         // We've already loaded the handle once, but must reload it because we released VM access in between.
-         uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
-                                                      methodHandle,
-                                                      "next",             "Ljava/lang/invoke/MethodHandle;"),
-                                                      "type",             "Ljava/lang/invoke/MethodType;"),
-                                                      "arguments",        "[Ljava/lang/Class;");
-         TR_OpaqueClassBlock *parmClass = (TR_OpaqueClassBlock*)(intptrj_t)fe->getInt64Field(fe->getReferenceElement(arguments, argIndex),
+         uintptrj_t targetArguments = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
+            methodHandle,
+            "next",             "Ljava/lang/invoke/MethodHandle;"),
+            "type",             "Ljava/lang/invoke/MethodType;"),
+            "arguments",        "[Ljava/lang/Class;");
+         TR_OpaqueClassBlock *targetParmClass = (TR_OpaqueClassBlock*)(intptrj_t)fe->getInt64Field(fe->getReferenceElement(targetArguments, argIndex),
                                                                           "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
-         client->write(response, parmClass);
+         // Load callsite type and check if two types are compatible
+         uintptrj_t sourceArguments = fe->getReferenceField(fe->getReferenceField(
+            methodHandle,
+            "type",             "Ljava/lang/invoke/MethodType;"),
+            "arguments",        "[Ljava/lang/Class;");
+         TR_OpaqueClassBlock *sourceParmClass = (TR_OpaqueClassBlock*)(intptrj_t)fe->getInt64Field(fe->getReferenceElement(sourceArguments, argIndex),
+                                                                          "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
+         client->write(response, sourceArguments, targetArguments);
          }
          break;
       case MessageType::runFEMacro_invokeDirectHandleDirectCall:

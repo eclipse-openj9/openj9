@@ -176,7 +176,7 @@ public:
 	MMINLINE void
 	markClassOfObject(MM_EnvironmentRealtime *env, J9Object *objectPtr)
 	{
-		markClassNoCheck(env, J9GC_J9OBJECT_CLAZZ(objectPtr));
+		markClassNoCheck(env, J9GC_J9OBJECT_CLAZZ(objectPtr, env));
 	}
 
 	MMINLINE bool
@@ -210,6 +210,7 @@ public:
 	{
 		UDATA pointersScanned = 0;
 		switch(_extensions->objectModel.getScanType(objectPtr)) {
+		case GC_ObjectModel::SCAN_MIXED_OBJECT_LINKED:
 		case GC_ObjectModel::SCAN_ATOMIC_MARKABLE_REFERENCE_OBJECT:
 		case GC_ObjectModel::SCAN_MIXED_OBJECT:
 		case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
@@ -273,9 +274,9 @@ public:
 		}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 
-		descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceDescription;
+		descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceDescription;
 #if defined(J9VM_GC_LEAF_BITS)
-		leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
+		leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 #endif /* J9VM_GC_LEAF_BITS */
 
 		if(((UDATA)descriptionPtr) & 1) {
@@ -408,9 +409,9 @@ public:
 		}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */
 		
-		descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceDescription;
+		descriptionPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceDescription;
 #if defined(J9VM_GC_LEAF_BITS)
-		leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr)->instanceLeafDescription;
+		leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 #endif /* J9VM_GC_LEAF_BITS */
 
 		if(((UDATA)descriptionPtr) & 1) {
@@ -427,7 +428,7 @@ public:
 		descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 
 		I_32 referenceState = J9GC_J9VMJAVALANGREFERENCE_STATE(env, objectPtr);
-		UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr)) & J9AccClassReferenceMask;
+		UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(objectPtr, env)) & J9AccClassReferenceMask;
 		UDATA referenceObjectOptions = env->_cycleState->_referenceObjectOptions;
 		bool isReferenceCleared = (GC_ObjectModel::REF_STATE_CLEARED == referenceState) || (GC_ObjectModel::REF_STATE_ENQUEUED == referenceState);
 		bool referentMustBeMarked = isReferenceCleared;

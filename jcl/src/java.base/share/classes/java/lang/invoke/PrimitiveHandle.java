@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2010, 2017 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,7 +192,9 @@ abstract class PrimitiveHandle extends MethodHandle {
 			String signature = oldType.toMethodDescriptorString();
 			return lookupMethod(referenceClass, name, signature, kind, specialToken);
 		} catch (NoSuchMethodError e) {
-			throw new NoSuchMethodException(e.getMessage());
+			NoSuchMethodException eWrapper = new NoSuchMethodException();
+			eWrapper.initCause(e);
+			throw eWrapper;
 		} catch (IncompatibleClassChangeError e) {
 			throw new IllegalAccessException(e.getMessage());
 		}

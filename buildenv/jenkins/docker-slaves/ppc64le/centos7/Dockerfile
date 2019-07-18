@@ -262,6 +262,8 @@ RUN mkdir /home/${USER}/openjdk_cache \
   && git init --bare \
   && git remote add jdk8 https://github.com/ibmruntimes/openj9-openjdk-jdk8.git \
   && git remote add jdk11 https://github.com/ibmruntimes/openj9-openjdk-jdk11.git \
+  && git remote add jdk12 https://github.com/ibmruntimes/openj9-openjdk-jdk12.git \
+  && git remote add jdk13 https://github.com/ibmruntimes/openj9-openjdk-jdk13.git \
   && git remote add jdk https://github.com/ibmruntimes/openj9-openjdk-jdk.git \
   && git remote add openj9 https://github.com/eclipse/openj9.git \
   && git remote add omr https://github.com/eclipse/openj9-omr.git \
@@ -277,8 +279,13 @@ RUN mkdir /var/run/sshd \
 # SSH login fix. Otherwise user is kicked off after login
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 
+# Expose SSH port and run SSHD
+EXPOSE 22
+
 # Generate ssh host keys
 RUN /usr/bin/ssh-keygen -A
 
-# Expose SSH port and run SSHD
-EXPOSE 22
+# Adding bash profile so ${USER} max user processes will be unlimited
+RUN echo >> /home/${USER}/.bashrc \
+  && echo "# Change max user processes in ${USER}" >> /home/${USER}/.bashrc \
+  && echo "ulimit -u unlimited" >> /home/${USER}/.bashrc

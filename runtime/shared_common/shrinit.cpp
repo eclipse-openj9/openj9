@@ -252,6 +252,8 @@ J9SharedClassesHelpText J9SHAREDCLASSESHELPTEXT[] = {
 	{HELPTEXT_ADJUST_MAXJITDATA_EQUALS, J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXJIT_EQUALS, 0, 0},
 #endif
 	{OPTION_NO_TIMESTAMP_CHECKS, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS},
+	{OPTION_NO_URL_TIMESTAMP_CHECK, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK},
+	{OPTION_URL_TIMESTAMP_CHECK, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK},
 	{OPTION_NO_CLASSPATH_CACHEING, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_NO_CLASSPATH_CACHEING},
 	{OPTION_NO_REDUCE_STORE_CONTENTION, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_NO_REDUCE_STORE_CONTENTION},
 	{OPTION_NO_ROUND_PAGES, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_NO_ROUND_PAGES},
@@ -362,6 +364,8 @@ J9SharedClassesOptions J9SHAREDCLASSESOPTIONS[] = {
 	{ OPTION_INVALIDATE_AOT_METHODS_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_INVALIDATE_AOT_METHODS_EQUALS, J9SHR_RUNTIMEFLAG_DO_NOT_CREATE_CACHE},
 	{ OPTION_REVALIDATE_AOT_METHODS_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_REVALIDATE_AOT_METHODS_EQUALS, J9SHR_RUNTIMEFLAG_DO_NOT_CREATE_CACHE},
 	{ OPTION_FIND_AOT_METHODS_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_FIND_AOT_METHODS_EQUALS, J9SHR_RUNTIMEFLAG_DO_NOT_CREATE_CACHE},
+	{ OPTION_NO_URL_TIMESTAMP_CHECK, PARSE_TYPE_EXACT, RESULT_DO_REMOVE_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_ENABLE_URL_TIMESTAMP_CHECK},
+	{ OPTION_URL_TIMESTAMP_CHECK, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_ENABLE_URL_TIMESTAMP_CHECK},
 	{ NULL, 0, 0 }
 };
 
@@ -407,15 +411,16 @@ j9shr_hookZipLoadEvent(J9HookInterface** hook, UDATA eventNum, void* eventData, 
 	J9VMThread* currentThread = vm->internalVMFunctions->currentVMThread(vm);
 	U_64 localRuntimeFlags = vm->sharedClassConfig->runtimeFlags;
 	
-	if (!(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE) ||
-		(localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_ACCESS)
-	   )
-	{
+	/* Don't call notifyClasspathEntryStateChange for JCL(non-bootstrap) callers with checkURLTimestamps specified */
+	if (!(localRuntimeFlags & J9SHR_RUNTIMEFLAG_CACHE_INITIALIZATION_COMPLETE)
+	|| (localRuntimeFlags & J9SHR_RUNTIMEFLAG_DENY_CACHE_ACCESS)
+	|| ((NULL == event->zipfile) && (localRuntimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_URL_TIMESTAMP_CHECK))
+	) {
 		return;
 	}
 
 	/* Only trigger notifyClasspathEntryStateChange if the returnCode indicates success */
-	if (vm && vm->sharedClassConfig && (event->returnCode == 0)) {
+	if (vm && vm->sharedClassConfig && (0 == event->returnCode)) {
 		((SH_CacheMap*)(vm->sharedClassConfig->sharedClassCache))->notifyClasspathEntryStateChange(currentThread, (const char*)filename, state);
 	}
 }
@@ -1183,6 +1188,32 @@ j9shr_dump_help(J9JavaVM* vm, UDATA more)
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "\n\n");
+}
+
+/**
+ * Notify the open/close state of jar/zip files so as to force a timestamp check.
+ *
+ * @param [in] vm The current J9JavaVM
+ * @param [in] classPathEntries  A pointer to the J9ClassPathEntry
+ * @param [in] entryCount  The count of entries on the classpath
+ * @param [in] isOpen  A flag indicating the open state for jar/zip files
+ */
+void
+j9shr_updateClasspathOpenState(J9JavaVM* vm, J9ClassPathEntry* classPathEntries, UDATA entryIndex, UDATA entryCount, BOOLEAN isOpen)
+{
+	J9SharedClassConfig* sharedClassConfig = vm->sharedClassConfig;
+	J9VMThread* currentThread = vm->internalVMFunctions->currentVMThread(vm);
+	UDATA newState = ((isOpen)? J9ZIP_STATE_OPEN : J9ZIP_STATE_CLOSED);
+	UDATA i = 0;
+
+	Trc_SHR_INIT_updateClasspathOpenState_entry(currentThread);
+
+	for (i = entryIndex; i< entryCount; i++) {
+		if (CPE_TYPE_JAR == classPathEntries[i].type) {
+			((SH_CacheMap*)(sharedClassConfig->sharedClassCache))->notifyClasspathEntryStateChange(currentThread, (const char*)classPathEntries[i].path, newState);
+		}
+	}
+	Trc_SHR_INIT_updateClasspathOpenState_exit(currentThread);
 }
 
 /* classNameLength is the expected length of the utf8 string */
@@ -3091,6 +3122,16 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 
 	Trc_SHR_INIT_j9shr_init_Entry(currentThread);
 
+	/* noTimestampChecks and checkURLTimestamps shouldn't coexist no matter what order
+	 * they are specified on the command line. Thus, checkURLTimestamps will be ignored if specified.
+	 */
+	if (J9_ARE_NO_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_TIMESTAMP_CHECKS)
+	&& J9_ARE_ALL_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_URL_TIMESTAMP_CHECK)
+	) {
+		SHRINIT_WARNING_TRACE2(1, J9NLS_SHRC_SHRINIT_INCOMPATIBLE_OPTION, OPTION_NO_TIMESTAMP_CHECKS, OPTION_URL_TIMESTAMP_CHECK);
+		vm->sharedCacheAPI->runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_URL_TIMESTAMP_CHECK;
+	}
+
 	if (FALSE == vm->sharedCacheAPI->xShareClassesPresent) {
 		Trc_SHR_Assert_True(vm->sharedCacheAPI->sharedCacheEnabled);
 		Trc_SHR_Assert_True(J9_ARE_ALL_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_NONFATAL));
@@ -3358,6 +3399,7 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 		config->jvmPhaseChange = j9shr_jvmPhaseChange;
 		config->findGCHints = j9shr_findGCHints;
 		config->storeGCHints = j9shr_storeGCHints;
+		config->updateClasspathOpenState = j9shr_updateClasspathOpenState;
 		
 		config->sharedAPIObject = initializeSharedAPI(vm);
 		if (config->sharedAPIObject == NULL) {

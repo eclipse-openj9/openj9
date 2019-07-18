@@ -161,7 +161,7 @@ disposeEnvironment(J9JVMTIEnv * j9env, UDATA freeData)
 
 	/* Mark this env as disposed - this prevents any further events being reported */
 
-	if ((j9env->flags & J9JVMTIENV_FLAG_DISPOSED) == 0) {
+	if (J9_ARE_NO_BITS_SET(j9env->flags, J9JVMTIENV_FLAG_DISPOSED)) {
 		J9HookInterface ** vmHook = j9env->vmHook.hookInterface;
 		J9HookInterface ** gcHook = j9env->gcHook.hookInterface;
 		J9HookInterface ** gcOmrHook = j9env->gcOmrHook.hookInterface;
@@ -171,12 +171,18 @@ disposeEnvironment(J9JVMTIEnv * j9env, UDATA freeData)
 
 		j9env->flags |= J9JVMTIENV_FLAG_DISPOSED;
 
+#if JAVA_SPEC_VERSION >= 11
+		if (j9env->capabilities.can_generate_sampled_object_alloc_events) {
+			J9JVMTI_DATA_FROM_VM(vm)->flags &= ~J9JVMTI_FLAG_SAMPLED_OBJECT_ALLOC_ENABLED;
+		}
+#endif /* JAVA_SPEC_VERSION >= 11 */
+
 		/* Remove all breakpoints */
 
 		if (j9env->breakpoints != NULL) {
 			J9VMThread * currentThread = vm->internalVMFunctions->currentVMThread(vm);
 			pool_state poolState;
-			J9JVMTIAgentBreakpoint * agentBreakpoint;
+			J9JVMTIAgentBreakpoint * agentBreakpoint = NULL;
 
 			agentBreakpoint = pool_startDo(j9env->breakpoints, &poolState);
 			while (agentBreakpoint != NULL) {

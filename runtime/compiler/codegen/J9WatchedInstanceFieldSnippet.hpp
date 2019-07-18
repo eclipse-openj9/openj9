@@ -30,7 +30,7 @@ namespace TR {
 
 class J9WatchedInstanceFieldSnippet : public TR::Snippet
    {
-   private :
+   protected :
 
    J9JITWatchedInstanceFieldData instanceFieldData;
 
