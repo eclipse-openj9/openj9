@@ -257,7 +257,6 @@ compareStringToUTF8(J9VMThread *vmThread, j9object_t string, UDATA translateDots
 	return ((tmpUtfLength == 0) && (tmpStringLength == 0));
 }
 
-#if !defined(J9VM_OUT_OF_PROCESS)
 UDATA
 copyStringToUTF8Helper(J9VMThread *vmThread, j9object_t string, UDATA stringFlags, UDATA stringOffset, UDATA stringLength, U_8 *utf8Data, UDATA utf8DataLength)
 {
@@ -449,7 +448,6 @@ verifyQualifiedName(J9VMThread *vmThread, j9object_t string)
 	}
 	return rc;
 }
-#endif /* !defined(J9VM_OUT_OF_PROCESS) */
 
 /**
  * Check that each UTF8 character is well-formed.

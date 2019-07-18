@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,13 +36,8 @@ extern "C" {
  * When adding debug extensions, you may need to convert additional macros.
  * Use the J9SHR_READMEM() helper below.
  */
-#if defined(J9VM_OUT_OF_PROCESS) 
-#define J9SHR_READMEM(x_) dbgReadPrimitiveType((UDATA)&(x_), sizeof(x_))
-#define J9SHR_READSRP(x_) shcDbgReadSRP((UDATA)&(x_))
-#else
 #define J9SHR_READMEM(x_) (x_)
 #define J9SHR_READSRP(x_) (x_)
-#endif
 
 /**
  * CACHE ENTRIES

@@ -59,16 +59,16 @@ checkJ9MethodSanity(J9JavaVM *vm)
 
 	vmchkPrintf(vm, "  %s Checking methods>\n", VMCHECK_PREFIX);
 
-	clazz = vmchkAllClassesStartDo(vm, &walkState);
+	clazz = vm->internalVMFunctions->allClassesStartDo(&walkState, vm, NULL);
 	while (NULL != clazz) {
 
-		if (!VMCHECK_IS_CLASS_OBSOLETE(clazz)) {
+		if (!J9_IS_CLASS_OBSOLETE(clazz)) {
 			count += verifyClassMethods(vm, clazz);
 		}
 
-		clazz = vmchkAllClassesNextDo(vm, &walkState);
+		clazz = vm->internalVMFunctions->allClassesNextDo(&walkState);
 	}
-	vmchkAllClassesEndDo(vm, &walkState);
+	vm->internalVMFunctions->allClassesEndDo(&walkState);
 
 	vmchkPrintf(vm, "  %s Checking %d methods done>\n", VMCHECK_PREFIX, count);
 }
@@ -76,19 +76,19 @@ checkJ9MethodSanity(J9JavaVM *vm)
 static U_32
 verifyClassMethods(J9JavaVM *vm, J9Class *clazz)
 {
-	J9ROMClass *romClass = (J9ROMClass *)DBG_ARROW(clazz, romClass);
-	UDATA romClassModifiers = (UDATA)DBG_ARROW(romClass, modifiers);
+	J9ROMClass *romClass = clazz->romClass;
+	UDATA romClassModifiers = romClass->modifiers;
 	BOOLEAN isInterfaceClass = (J9AccInterface == (romClassModifiers & J9AccInterface));
-	J9ConstantPool *ramConstantPool = (J9ConstantPool *)DBG_ARROW(clazz, ramConstantPool);
-	U_32 methodCount = (U_32)DBG_ARROW(romClass, romMethodCount);
-	J9Method *methods = (J9Method *)DBG_ARROW(clazz, ramMethods);
+	J9ConstantPool *ramConstantPool = (J9ConstantPool*)clazz->ramConstantPool;
+	U_32 methodCount = romClass->romMethodCount;
+	J9Method *methods = clazz->ramMethods;
 	U_32 i;
 
 	for (i = 0; i < methodCount; i++) {
 		J9Method *method = &methods[i];
-		U_8 *bytecodes = (U_8*)DBG_ARROW(method, bytecodes);
+		U_8 *bytecodes = method->bytecodes;
 		J9ROMMethod *romMethod = (J9ROMMethod *)(bytecodes - sizeof(J9ROMMethod));
-		UDATA romMethodModifiers = (UDATA)DBG_ARROW(romMethod, modifiers);
+		UDATA romMethodModifiers = romMethod->modifiers;
 		BOOLEAN methodInVTable = (J9AccMethodVTable == (romMethodModifiers & J9AccMethodVTable));
 
 		if (FALSE == findROMMethodInClass(vm, romClass, romMethod, methodCount)) {
@@ -103,9 +103,9 @@ verifyClassMethods(J9JavaVM *vm, J9Class *clazz)
 			}
 		}
 
-		if (ramConstantPool != VMCHECK_J9_CP_FROM_METHOD(method)) {
+		if (ramConstantPool != J9_CP_FROM_METHOD(method)) {
 			vmchkPrintf(vm, "%s - Error ramConstantPool=0x%p on ramMethod=0x%p not equal to ramConstantPool=0x%p on ramClass=0x%p>\n",
-				VMCHECK_FAILED, VMCHECK_J9_CP_FROM_METHOD(method), method, ramConstantPool, clazz);
+				VMCHECK_FAILED, J9_CP_FROM_METHOD(method), method, ramConstantPool, clazz);
 		}
 	}
 
@@ -138,9 +138,9 @@ findROMMethodInClass(J9JavaVM *vm, J9ROMClass *romClass, J9ROMMethod *romMethodT
 
 	for (i = 0; i < methodCount; i++) {
 		if (0 == i) {
-			romMethod = VMCHECK_J9ROMCLASS_ROMMETHODS(romClass);
+			romMethod = J9ROMCLASS_ROMMETHODS(romClass);
 		} else {
-			romMethod = VMCHECK_J9_NEXT_ROM_METHOD(romMethod);
+			romMethod = J9_NEXT_ROM_METHOD(romMethod);
 		}
 		if (romMethodToFind == romMethod) {
 			return TRUE;

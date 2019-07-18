@@ -2948,7 +2948,7 @@ freeStackWalkCaches(J9VMThread * currentThread, J9StackWalkState * walkState);
 #endif /* J9VM_!INTERP_STACKWALK_TRACING */
 
 
-#if (defined(J9VM_INTERP_STACKWALK_TRACING)  && !defined(J9VM_OUT_OF_PROCESS))
+#if defined(J9VM_INTERP_STACKWALK_TRACING)
 /**
 * @brief
 * @param walkState
@@ -2957,7 +2957,7 @@ freeStackWalkCaches(J9VMThread * currentThread, J9StackWalkState * walkState);
 */
 void
 swMarkSlotAsObject(J9StackWalkState * walkState, j9object_t * objectSlot);
-#endif /* J9VM_INTERP_STACKWALK_TRACING && !OUT_OF_PROCESS */
+#endif /* J9VM_INTERP_STACKWALK_TRACING */
 
 
 #if (defined(J9VM_INTERP_STACKWALK_TRACING))

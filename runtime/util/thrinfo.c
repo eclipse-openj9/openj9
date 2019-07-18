@@ -22,40 +22,6 @@
 
 /* #define J9VM_DBG */
 
-#if defined(J9VM_OUT_OF_PROCESS)
-#include "j9dbgext.h"
-#define READU(field) dbgReadUDATA((UDATA *)&(field))
-#define READU_ADDR(fieldAddr) dbgReadUDATA((UDATA *)(fieldAddr))
-#define READP(field) ((void *)READU(field))
-#define READP_ADDR(fieldAddr) ((void *)READU_ADDR(fieldAddr))
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-#define READMON(field) dbgReadU32((U_32 *)&(field))
-#define READMON_ADDR(fieldAddr) dbgReadU32((U_32 *)(fieldAddr))
-#else
-#define READMON(field) READU(field)
-#define READMON_ADDR(fieldAddr) READU_ADDR(fieldAddr)
-#endif
-#define READCLAZZ(vmThread, obj) readObjectClass(vmThread, obj)
-#define LOCAL_TO_TARGET(addr) dbgLocalToTarget(addr)
-
-/* This explicit conversion breaks the GC abstraction. Don't use this for in-process code. */
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-#define J9OBJECT_FROM_FJ9OBJECT(vm, fobj) ((j9object_t)(((UDATA)(fobj)) << (vm)->compressedPointersShift))
-#else
-#define J9OBJECT_FROM_FJ9OBJECT(vm, fobj) ((j9object_t)(UDATA)(fobj))
-#endif
-
-#else /* not J9VM_OUT_OF_PROCESS */
-#define READU(field) (field)
-#define READU_ADDR(fieldAddr) (*(UDATA *)(fieldAddr))
-#define READP(field) (field)
-#define READP_ADDR(fieldAddr) (*(fieldAddr))
-#define READMON(field) ((j9objectmonitor_t) (field))
-#define READMON_ADDR(fieldAddr) (*(j9objectmonitor_t *) (fieldAddr))
-#define READCLAZZ(vmThread, obj) J9OBJECT_CLAZZ((vmThread), (obj))
-#define LOCAL_TO_TARGET(addr) (addr)
-#endif
-
 #include <string.h>
 #include "j9.h"
 #include "j9cfg.h"
@@ -66,19 +32,13 @@
 #include "util_internal.h"
 #include "ut_j9vmutil.h"
 #include "monhelp.h"
-#if defined(J9VM_OUT_OF_PROCESS)
-
-/* include the debug extension prototypes if we are being recompiled in dbgext/ */
-#include "dbggen.h"
-
-#endif /* J9VM_OUT_OF_PROCESS */
 
 
 #define INCLUDE_RAW_MONITORS		TRUE
 #define DONT_INCLUDE_RAW_MONITORS	FALSE
 
 
-#define J9THREAD_MONITOR_FROM_LOCKWORD(lockWord) ((J9ThreadAbstractMonitor *)READU(J9_INFLLOCK_OBJECT_MONITOR(lockWord)->monitor))
+#define J9THREAD_MONITOR_FROM_LOCKWORD(lockWord) ((J9ThreadAbstractMonitor *)(J9_INFLLOCK_OBJECT_MONITOR(lockWord)->monitor))
 
 static j9objectmonitor_t getLockWord(J9VMThread *vmThread, j9object_t object);
 static UDATA getVMThreadStateHelper(J9VMThread *targetThread, 
@@ -88,36 +48,7 @@ static void getInflatedMonitorState(const J9VMThread *targetThread,
 		const omrthread_t j9self, const omrthread_state_t *j9state,
 		UDATA *vmstate, omrthread_monitor_t *rawLock,
 		J9VMThread **lockOwner, UDATA *count);
-#if defined(J9VM_OUT_OF_PROCESS)
-static U_64 readObjectField(j9object_t object, J9Class *clazz, U_8 *fieldName, U_8 *fieldSig, UDATA fieldBytes);
-static J9Class *readObjectClass(J9VMThread *vmtoken, j9object_t object);
-#endif
 
-#if defined(J9VM_OUT_OF_PROCESS)
-/*
- * WrappedJ9ObjectMonitor and the hashWrappedMonitorHash and hashWrappedMonitorCompare functions are used
- * to create an in-memory copy of the monitor table when we are running out of process
- */
-
-#define TAGGED_MONITOR_TABLE 0x1
-
-typedef struct WrappedJ9ObjectMonitor {
-	J9ObjectMonitor* objectMonitor;
-	J9Object*        object;
-} WrappedJ9ObjectMonitor;
-
-static UDATA
-hashWrappedMonitorHash(void *key, void *userData)
-{
-	return ((UDATA) ((WrappedJ9ObjectMonitor *) key )->object );
-}
-
-static UDATA
-hashWrappedMonitorCompare(void *leftKey, void *rightKey, void *userData)
-{
-	return (((WrappedJ9ObjectMonitor *) leftKey )->object == ((WrappedJ9ObjectMonitor *) rightKey )->object);
-}
-#endif /*defined(J9VM_OUT_OF_PROCESS)*/
 
 /**
  * CMVC 135066
@@ -322,8 +253,8 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 				if (objmon) {
 					omrthread_t j9owner;
 					
-					j9owner = READP(objmon->owner);
-					count = READU(objmon->count);
+					j9owner = objmon->owner;
+					count = objmon->count;
 					
 					if (publicFlags & J9_PUBLIC_FLAGS_THREAD_BLOCKED) {
 						if (j9owner && (j9owner != j9self)) {
@@ -366,7 +297,7 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 				
 				lockOwner = (J9VMThread *)J9_FLATLOCK_OWNER(lockWord);
 	
-				if (lockOwner && (lockOwner != LOCAL_TO_TARGET(targetThread))) {
+				if (lockOwner && (lockOwner != targetThread)) {
 					count = J9_FLATLOCK_COUNT(lockWord);
 					rawLock = (omrthread_monitor_t)monitorTablePeekMonitor(targetThread->javaVM, targetThread, lockObject);
 					vmstate = J9VMTHREAD_STATE_BLOCKED;
@@ -400,29 +331,15 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 					aosClazz = J9VMJAVAUTILCONCURRENTLOCKSABSTRACTOWNABLESYNCHRONIZER_OR_NULL(targetThread->javaVM);
 					/* skip this step if aosClazz doesn't exist */
 					if (aosClazz) {
-						clazz = READCLAZZ(targetThread, lockObject);
+						clazz = J9OBJECT_CLAZZ(targetThread, lockObject);
 
 						/* PR 80305 : Do not write back to the castClassCache as this code may be running while the GC is unloading the class */
 						if (instanceOfOrCheckCastNoCacheUpdate(clazz, aosClazz)) {
-#if defined(J9VM_OUT_OF_PROCESS)
-							{
-								U_64 fobj;
-
-								/* don't cast to fj9object_t to avoid compiler type width warnings */
-								fobj = readObjectField(lockObject, clazz, "exclusiveOwnerThread", "Ljava/lang/Thread;", sizeof(fj9object_t));
-								lockOwnerObject = J9OBJECT_FROM_FJ9OBJECT(targetThread->javaVM, fobj);
-							}
-#else
 							/* Simplify the macro usage by using the _VM version so we do not need to pass in the current thread */
 							lockOwnerObject =
 								J9VMJAVAUTILCONCURRENTLOCKSABSTRACTOWNABLESYNCHRONIZER_EXCLUSIVEOWNERTHREAD_VM(targetThread->javaVM, lockObject);
-#endif
 							if (lockOwnerObject) {
-#if defined(J9VM_OUT_OF_PROCESS)
-								lockOwner = (J9VMThread *)(UDATA)readObjectField(lockOwnerObject, READCLAZZ(targetThread, lockOwnerObject), "threadRef", "J", sizeof(jlong));
-#else
 								lockOwner = (J9VMThread *)J9VMJAVALANGTHREAD_THREADREF_VM(targetThread->javaVM, lockOwnerObject);
-#endif
 							}
 						}
 					}
@@ -473,8 +390,8 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 		}
 		
 		if (rawLock && pLockObject && (!lockObject)) {
-			if ((READU(((J9ThreadAbstractMonitor *)rawLock)->flags) & J9THREAD_MONITOR_OBJECT) == J9THREAD_MONITOR_OBJECT) {
-				lockObject = (j9object_t)READP(((J9ThreadAbstractMonitor *)rawLock)->userData);
+			if (((((J9ThreadAbstractMonitor *)rawLock)->flags) & J9THREAD_MONITOR_OBJECT) == J9THREAD_MONITOR_OBJECT) {
+				lockObject = (j9object_t)(((J9ThreadAbstractMonitor *)rawLock)->userData);
 			}
 		}
 
@@ -575,7 +492,7 @@ getVMThreadStatus_DEPRECATED(J9VMThread* thread, J9ThreadAbstractMonitor** pmoni
 			 * so the target thread is still runnable.
 			 */
 			if (monitorStruct) {
-				j9ThreadOwner = (omrthread_t)READU(monitorStruct->owner);
+				j9ThreadOwner = (omrthread_t)(monitorStruct->owner);
 				blockingMonitor = (omrthread_monitor_t)monitorStruct;
 				status = J9VMTHREAD_STATE_BLOCKED;
 			}
@@ -593,7 +510,7 @@ getVMThreadStatus_DEPRECATED(J9VMThread* thread, J9ThreadAbstractMonitor** pmoni
 					owner = NULL;
 					status = J9VMTHREAD_STATE_RUNNING;
 				} else {
-					count = READU(monitorStruct->count);
+					count = monitorStruct->count;
 				}
 			} else {
 				/*
@@ -621,8 +538,8 @@ getVMThreadStatus_DEPRECATED(J9VMThread* thread, J9ThreadAbstractMonitor** pmoni
 		 */
 		UDATA flags = omrthread_get_flags(thread->osThread, &blockingMonitor);
 		if (blockingMonitor) {
-			omrthread_t osOwner = (omrthread_t)READU(((J9ThreadAbstractMonitor*)blockingMonitor)->owner);
-			count = READU(((J9ThreadAbstractMonitor*)blockingMonitor)->count);
+			omrthread_t osOwner = (omrthread_t)(((J9ThreadAbstractMonitor*)blockingMonitor)->owner);
+			count = ((J9ThreadAbstractMonitor*)blockingMonitor)->count;
 			owner = getVMThreadFromOMRThread(thread->javaVM, osOwner);
 		}
 
@@ -768,7 +685,7 @@ getLockWord(J9VMThread *vmThread, j9object_t object)
 	j9objectmonitor_t lockWord;
 
 	if (LN_HAS_LOCKWORD(vmThread,object)) {
-		lockWord = READMON_ADDR(J9OBJECT_MONITOR_EA(vmThread, object));
+		lockWord = *J9OBJECT_MONITOR_EA(vmThread, object);
 	} else {
 		J9ObjectMonitor *objectMonitor = monitorTablePeek(vmThread->javaVM, vmThread, object);
 		if (objectMonitor != NULL){
@@ -829,10 +746,6 @@ monitorTablePeekMonitor(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t obj
 J9ObjectMonitor *
 monitorTablePeek(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t object)
 {
-#if defined (J9VM_OUT_OF_PROCESS)
-	/* No longer supported out of process */
-	return NULL;
-#else /* defined (J9VM_OUT_OF_PROCESS) */
 
 	J9ObjectMonitor *monitor = NULL;
 	/*
@@ -867,72 +780,6 @@ monitorTablePeek(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t object)
 		omrthread_monitor_exit(mutex);
 	}
 	return monitor;
-#endif /* defined (J9VM_OUT_OF_PROCESS) */
 }
 
-#if defined(J9VM_OUT_OF_PROCESS)
-/**
- * Out-of-process equivalent of an object field access macro,
- * such as J9VMJAVALANGTHREAD_THREADREF()
- *
- * @param[in] object Target j9object_t value.
- * @param[in] clazz Target J9Class pointer.
- * @param[in] fieldName Name of the object field. \0-terminated.
- * @param[in] fieldSig Signature of the object field. \0-terminated.
- * @param[in] fieldBytes Width of the object field in bytes.
- * @returns Content of the object field, extended to 64-bits.
- */
-static U_64
-readObjectField(j9object_t object, J9Class *clazz, U_8 *fieldName, U_8 *fieldSig, UDATA fieldBytes)
-{
-	U_64 field = 0;
-	IDATA offset;
-
-	offset = instanceFieldOffset(NULL, clazz, fieldName, strlen(fieldName), fieldSig, strlen(fieldSig), NULL, NULL, J9_LOOK_NO_JAVA);
-	if (offset >= 0) {
-		void *remoteAddr = (U_8 *)object + offset + sizeof(J9Object);
-
-		switch (fieldBytes) {
-		case 1:
-			field = (U_64)dbgReadByte(remoteAddr);
-			break;
-		case 2:
-			field = (U_64)dbgReadU16(remoteAddr);
-			break;
-		case 4:
-			field = (U_64)dbgReadU32(remoteAddr);
-			break;
-		case 8:
-			field = dbgReadU64(remoteAddr);
-			break;
-		default:
-			dbgError("readObjectField: %s Unexpected field width: %d", fieldName, fieldBytes);
-			break;
-		}
-	}
-	return field;
-}
-
-/**
- * Out-of-process equivalent of J9OBJECT_CLAZZ()
- *
- * @param[in] vmtoken Is passed a local vmtoken pointer. Unused.
- * @param[in] object Target j9object_t value.
- * @returns Target address of a J9Class.
- */
-static J9Class *
-readObjectClass(J9VMThread *vmtoken, j9object_t object)
-{
-	J9Class *clazz = NULL;
-	void *remoteAddr = &(object->clazz);
-
-	/* read class slot and mask flags located in low bits */
-	if (sizeof(j9objectclass_t) == sizeof(U_32)) {
-		clazz = (J9Class *)((UDATA)dbgReadU32(remoteAddr) & ((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1)));
-	} else {
-		clazz = (J9Class *)(dbgReadUDATA(remoteAddr) & ((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1)));
-	}
-	return clazz;
-}
-#endif
 
