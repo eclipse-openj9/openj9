@@ -1545,12 +1545,6 @@ checkMethodStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, UDATA
 		}
 	}
 
-	result = checkBytecodeStructure (classfile, methodIndex, length, map, error, flags, hasRET);
-
-	if (result) {
-		goto _leaveProc;
-	}
-
 	if ((flags & J9_VERIFY_IGNORE_STACK_MAPS) == 0) {
 		StackmapExceptionDetails exceptionDetails;
 		memset(&exceptionDetails, 0, sizeof(exceptionDetails));
@@ -1578,6 +1572,12 @@ checkMethodStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, UDATA
 				goto _formatError;
 			}
 		}
+	}
+
+	result = checkBytecodeStructure (classfile, methodIndex, length, map, error, flags, hasRET);
+
+	if (result) {
+		goto _leaveProc;
 	}
 
 	/* Should check thrown exceptions.  */
