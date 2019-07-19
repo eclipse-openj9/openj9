@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -191,7 +191,7 @@ J9NLS_JNICHK_GLOBAL_REF.system_action=
 J9NLS_JNICHK_GLOBAL_REF.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_JNICHK_WEAK_GLOBAL_REF=r\u00e9f\u00e9rence globale faible
+J9NLS_JNICHK_WEAK_GLOBAL_REF=r\u00e9f\u00e9rence globale faible (weak)
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_WEAK_GLOBAL_REF.explanation=NOTAG
 J9NLS_JNICHK_WEAK_GLOBAL_REF.system_action=
@@ -342,7 +342,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_GLOBAL_REF.user_response=Correct the JNI function c
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF=Erreur JNI dans %1$s : L'argument #%2$d (0x%3$p) n'est pas une r\u00e9f\u00e9rence globale faible. Son type est : %4$s
+J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF=Erreur JNI dans %1$s : L'argument #%2$d (0x%3$p) n'est pas une r\u00e9f\u00e9rence globale faible (weak). Son type est : %4$s
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF.sample_input_1=methodName
 J9NLS_JNICHK_ARGUMENT_IS_NOT_WEAK_GLOBAL_REF.sample_input_2=4
@@ -637,7 +637,7 @@ J9NLS_JNICHK_GREW_GLOBAL_REF_POOL.user_response=Check and correct the JNI applic
 # END NON-TRANSLATABLE
 
 # JNI is not translatable
-J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL=Avertissement JNI dans %1$s : Passage automatique de la capacit\u00e9 du pool de r\u00e9f\u00e9rences faibles globales de %2$d en %3$d.\nCela peut indiquer une fuite de m\u00e9moire.
+J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL=Avertissement JNI dans %1$s : la capacit\u00e9 du pool de r\u00e9f\u00e9rences globales faibles (weak) a augment\u00e9 automatiquement de %2$d \u00e0 %3$d.\nCela peut indiquer une fuite de m\u00e9moire.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.sample_input_1=methodName
 J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.sample_input_2=64
@@ -648,7 +648,7 @@ J9NLS_JNICHK_GREW_WEAK_GLOBAL_REF_POOL.user_response=Check and correct the JNI a
 # END NON-TRANSLATABLE
 
 # JNI, EnsureLocalCapacity and PushLocalFrame are not translatable
-J9NLS_JNICHK_GREW_LOCAL_REF_FRAME=Avertissement JNI dans %1$s : Passage automatique de la capacit\u00e9 de cadre de r\u00e9f\u00e9rences locales de %2$d \u00e0 %3$d. Les r\u00e9f\u00e9rences %4$d sont utilis\u00e9es.\nUtilisez EnsureLocalCapacity ou PushLocalFrame pour augmenter de mani\u00e8re explicite le cadre.
+J9NLS_JNICHK_GREW_LOCAL_REF_FRAME=Avertissement JNI dans %1$s : la capacit\u00e9 du cadre de r\u00e9f\u00e9rences locales a augment\u00e9 automatiquement de %2$d \u00e0 %3$d. %4$d r\u00e9f\u00e9rences sont utilis\u00e9es.\nUtilisez EnsureLocalCapacity ou PushLocalFrame pour augmenter explicitement la capacit\u00e9 du cadre.
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.sample_input_1=methodName
 J9NLS_JNICHK_GREW_LOCAL_REF_FRAME.sample_input_2=64
@@ -888,7 +888,7 @@ J9NLS_JNICHK_ARGUMENT_IS_NOT_REFLECTMETHOD.user_response=Check and correct the J
 # END NON-TRANSLATABLE
 
 # JNI, NewLocalRef and NewGlobalRef are not translatable
-J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL=Avertissement JNI dans %1$s : Argument #%2$d est une r\u00e9f\u00e9rence faible. Une r\u00e9f\u00e9rence faible peut \u00eatre vide \u00e0 tout moment. La r\u00e9f\u00e9rence doit \u00eatre promue en utilisant NewLocalRef ou NewGlobalRef et doit \u00eatre compar\u00e9e \u00e0 NULL avant l'appel \u00e0 %3$s
+J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL=Avertissement JNI dans %1$s : Argument #%2$d est une r\u00e9f\u00e9rence faible (weak). Une r\u00e9f\u00e9rence faible (weak) peut devenir NULL \u00e0 tout moment. La r\u00e9f\u00e9rence doit \u00eatre promue en utilisant NewLocalRef ou NewGlobalRef et doit \u00eatre compar\u00e9e \u00e0 NULL avant l'appel \u00e0 %3$s
 # START NON-TRANSLATABLE
 J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL.sample_input_1=methodName
 J9NLS_JNICHK_WEAK_GLOBAL_REF_COULD_BE_NULL.sample_input_2=3
