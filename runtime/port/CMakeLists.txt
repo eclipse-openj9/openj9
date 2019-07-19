@@ -29,6 +29,13 @@
 # The final step is where the differences are. While vpaths under make handle everything automatically,
 # we have to actually resolve the full paths to the source files (via omr_find_files and output in resolvedPaths)
 
+add_tracegen(common/j9prt.tdf)
+add_library(j9prt SHARED
+	${CMAKE_CURRENT_BINARY_DIR}/ut_j9prt.c
+
+	# Pull in the objects compiled as part of the OMR port library
+	$<TARGET_OBJECTS:omrport_obj>
+)
 
 set(OBJECTS "")
 list(APPEND OBJECTS
@@ -98,6 +105,7 @@ if(OMR_OS_LINUX)
 		list(APPEND VPATH linuxppc)
 	elseif(OMR_ARCH_S390)
 		list(APPEND VPATH linuxs390)
+		target_include_directories(j9prt PRIVATE linuxs390)
 	endif()
 	list(APPEND VPATH linux)
 elseif(OMR_OS_WINDOWS)
@@ -124,15 +132,12 @@ omr_find_files(resolvedPaths
 	${OBJECTS}
 )
 
-add_tracegen(common/j9prt.tdf)
 
-add_library(j9prt SHARED
-	${CMAKE_CURRENT_BINARY_DIR}/ut_j9prt.c
-	${resolvedPaths}
-
-	# Pull in the objects compiled as part of the OMR port library
-	$<TARGET_OBJECTS:omrport_obj>
+target_sources(j9prt
+	PRIVATE
+		${resolvedPaths}
 )
+
 
 target_link_libraries(j9prt 
 	PUBLIC
