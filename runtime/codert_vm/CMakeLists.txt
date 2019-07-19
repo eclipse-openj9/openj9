@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,33 +38,39 @@ add_library(j9codert_vm STATIC
 )
 
 target_include_directories(j9codert_vm
-    PRIVATE
-    .
-	${CMAKE_CURRENT_BINARY_DIR}
-    ${j9vm_SOURCE_DIR}/gc_include
-    ${omr_SOURCE_DIR}/gc/include
-	${j9vm_SOURCE_DIR}/compiler/runtime/
+	PRIVATE
+		.
+		${CMAKE_CURRENT_BINARY_DIR}
+		${j9vm_SOURCE_DIR}/gc_include
+		${omr_SOURCE_DIR}/gc/include
+		${j9vm_SOURCE_DIR}/compiler/runtime/
 )
 
 if(OMR_ARCH_X86)
-  j9vm_gen_asm(xnathelp.m4)
+	j9vm_gen_asm(xnathelp.m4)
 
-  # conditionalize this in the future
-  target_sources(j9codert_vm PRIVATE
-	  xnathelp.s
-  )
+	target_sources(j9codert_vm PRIVATE
+		xnathelp.s
+	)
 elseif(OMR_ARCH_POWER)
-  j9vm_gen_asm(pnathelp.m4)
+	j9vm_gen_asm(pnathelp.m4)
 
-  # conditionalize this in the future
-  target_sources(j9codert_vm PRIVATE
-	  pnathelp.s
-  )
+	target_sources(j9codert_vm PRIVATE
+		pnathelp.s
+	)
+elseif(OMR_ARCH_S390)
+	j9vm_gen_asm(znathelp.m4)
+
+	target_sources(j9codert_vm PRIVATE
+		znathelp.s
+	)
+else()
+	message(SEND_ERROR "Unsupported platform")
 endif()
 
 
 if(J9VM_JIT_RUNTIME_INSTRUMENTATION)
-  target_sources(j9codert_vm PRIVATE runtimeInstrumentation.c)
+	target_sources(j9codert_vm PRIVATE runtimeInstrumentation.c)
 endif()
 
 target_link_libraries(j9codert_vm
