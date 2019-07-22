@@ -28,11 +28,14 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 
 import org.openj9.test.util.PlatformInfo;
@@ -200,6 +203,7 @@ abstract class AttachApiTest {
 		ArrayList<String> cmdLine = new ArrayList<>();
 		cmdLine.add(commandName);
 		cmdLine.addAll(args);
+		log(cmdLine.stream().collect(Collectors.joining(" ", "command line: ", "")));
 		ProcessBuilder jpsProcess = new ProcessBuilder(cmdLine);
 		Process proc = jpsProcess.start();
 		List<String> outputLines = Collections.emptyList();
@@ -210,6 +214,18 @@ abstract class AttachApiTest {
 			/* ignore */
 		}
 		return outputLines;
+	}
+
+	protected List<String> runCommandAndLogOutput(List<String> commandLineOptions) throws IOException {
+		List<String> jpsOutput = runCommand(commandLineOptions);
+		StringWriter buff = new StringWriter();
+		PrintWriter buffWriter = new PrintWriter(buff);
+		jpsOutput.forEach(s -> {
+			buffWriter.println(s);
+		});
+		buffWriter.flush();
+		log(buff.toString());
+		return jpsOutput;
 	}
 
 	/**

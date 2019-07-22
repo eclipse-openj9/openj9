@@ -349,7 +349,9 @@ public class DiagnosticProperties {
 	 * @return DiagnosticProperties object
 	 */
 	public static DiagnosticProperties makeCommandSucceeded() {
-		return makeStatusProperties(false, null); // $NON-NLS-1$
+		DiagnosticProperties props = makeStatusProperties(false, null);
+		props.put(DIAGNOSTICS_STRING_RESULT, "Command succeeded"); //$NON-NLS-1$
+		return props; // $NON-NLS-1$
 	}
 
 	/**
