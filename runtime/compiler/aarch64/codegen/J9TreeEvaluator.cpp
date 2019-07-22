@@ -76,7 +76,15 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
 
 void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceInstruction, TR::CodeGenerator *cg)
    {
-   TR_UNIMPLEMENTED();
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+
+   TR::Block *block = node->getBlock();
+
+   if (fej9->shouldPerformEDO(block, comp))
+      {
+      TR_UNIMPLEMENTED();
+      }
    }
 
 void
