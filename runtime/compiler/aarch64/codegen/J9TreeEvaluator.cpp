@@ -68,10 +68,11 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCHK] = TR::TreeEvaluator::ArrayCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::MethodEnterHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::MethodExitHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::allocationFence] = TR::TreeEvaluator::flushEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::loadFence] = TR::TreeEvaluator::flushEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::storeFence] = TR::TreeEvaluator::flushEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::fullFence] = TR::TreeEvaluator::flushEvaluator;
+   tet[TR::allocationFence] = TR::TreeEvaluator::flushEvaluator;
+   tet[TR::loadFence] = TR::TreeEvaluator::flushEvaluator;
+   tet[TR::storeFence] = TR::TreeEvaluator::flushEvaluator;
+   tet[TR::fullFence] = TR::TreeEvaluator::flushEvaluator;
+
    }
 
 void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceInstruction, TR::CodeGenerator *cg)
@@ -171,6 +172,43 @@ J9::ARM64::TreeEvaluator::checkcastEvaluator(TR::Node *node, TR::CodeGenerator *
    TR::Node::recreate(node, opCode);
 
    return targetRegister;
+   }
+	
+TR::Register *
+J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::ILOpCodes op = node->getOpCodeValue();
+
+   if (op == TR::allocationFence)
+      {
+      if (!node->canOmitSync())
+         {
+         // Data synchronization barrier -- 0xF to turn on option for both reads and writes
+         generateSynchronizationInstruction(cg, TR::InstOpCode::dsb, node, 0xF);
+         }
+      }
+   else
+      {
+      uint32_t imm;
+      if (op == TR::loadFence)
+         {
+         // 0xD to turn on option for reads
+         imm = 0xD;
+         }
+      else if (op == TR::storeFence)
+         {
+         // 0xE to turn on option for writes
+         imm = 0xE;
+         }
+      else
+         {
+         // 0xF to turn on option for both reads and writes
+         imm = 0xF;
+         }
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dsb, node, imm);
+      }
+
+   return NULL;
    }
 
 TR::Register *
