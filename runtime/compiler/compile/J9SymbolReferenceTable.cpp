@@ -1688,6 +1688,76 @@ J9::SymbolReferenceTable::findOrCreateGlobalFragmentSymbolRef()
 
 
 TR::SymbolReference *
+J9::SymbolReferenceTable::createKnownStaticReferenceSymbolRef(void *dataAddress, TR::KnownObjectTable::Index knownObjectIndex)
+   {
+   char *name = "<known-static-reference>";
+   if (knownObjectIndex != TR::KnownObjectTable::UNKNOWN)
+      {
+      name = (char*)trMemory()->allocateMemory(25, heapAlloc);
+      sprintf(name, "<known-obj%d>", knownObjectIndex);
+      }
+   TR::StaticSymbol * sym = TR::StaticSymbol::createNamed(trHeapMemory(), TR::Address, dataAddress,name);
+   return TR::SymbolReference::create(self(), sym, knownObjectIndex);
+   }
+
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateCurrentTimeMaxPrecisionSymbol()
+   {
+   if (!element(currentTimeMaxPrecisionSymbol))
+      {
+      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
+      sym->setHelper();
+
+      element(currentTimeMaxPrecisionSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), currentTimeMaxPrecisionSymbol, sym);
+      }
+   return element(currentTimeMaxPrecisionSymbol);
+   }
+
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateSinglePrecisionSQRTSymbol()
+   {
+   if (!element(singlePrecisionSQRTSymbol))
+      {
+      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
+      sym->setHelper();
+
+      element(singlePrecisionSQRTSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), singlePrecisionSQRTSymbol, sym);
+      }
+   return element(singlePrecisionSQRTSymbol);
+   }
+
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreatelong2StringSymbol()
+   {
+   if (!element(long2StringSymbol))
+      {
+      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
+      sym->setHelper();
+
+      element(long2StringSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), long2StringSymbol, sym);
+      }
+   return element(long2StringSymbol);
+   }
+
+
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreatebitOpMemSymbol()
+   {
+   if (!element(bitOpMemSymbol))
+      {
+      TR::MethodSymbol * sym = TR::MethodSymbol::create(trHeapMemory(),TR_Helper);
+      sym->setHelper();
+
+      element(bitOpMemSymbol) = new (trHeapMemory()) TR::SymbolReference(self(), bitOpMemSymbol, sym);
+      }
+   return element(bitOpMemSymbol);
+   }
+
+
+TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateFragmentParentSymbolRef()
    {
    if (!element(fragmentParentSymbol))
