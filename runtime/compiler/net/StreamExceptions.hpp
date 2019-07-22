@@ -19,12 +19,10 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+#ifndef STREAM_EXCEPTIONS_H
+#define STREAM_EXCEPTIONS_H
 
 #include "net/gen/compile.pb.h"
-
-#ifndef RPC_TYPES_H
-#define RPC_TYPES_H
-
 #include "infra/Assert.hpp"
 
 namespace JITServer
@@ -122,4 +120,4 @@ private:
    std::string _message;
    };
 }
-#endif // RPC_TYPES_H
+#endif // STREAM_EXCEPTIONS_H

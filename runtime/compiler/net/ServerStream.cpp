@@ -26,7 +26,7 @@
 #include <sys/un.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>	/* for tcp_nodelay option */
+#include <netinet/tcp.h>	/* for TCP_NODELAY option */
 #include <fcntl.h>
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -234,18 +234,6 @@ ServerStream::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR
       exit(-1);
       }
 
-   struct timeval timeoutForListening = {0, 0}; // Wait forever
-   if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeoutForListening, sizeof(timeoutForListening)) < 0)
-      {
-      perror("Can't set option SO_RCVTIMEO on sockfd socket");
-      exit(-1);
-      }
-   if (setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, (void *)&timeoutForListening, sizeof(timeoutForListening)) < 0)
-      {
-      perror("Can't set option SO_SNDTIMEO on sockfd socket");
-      exit(-1);
-      }
-
    struct sockaddr_in serv_addr;
    memset((char *)&serv_addr, 0, sizeof(serv_addr));
    serv_addr.sin_family = AF_INET;
@@ -276,7 +264,7 @@ ServerStream::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR
          continue;
          }
 
-      struct timeval timeoutMsForConnection = {timeoutMs/1000, timeoutMs*1000%1000000};
+      struct timeval timeoutMsForConnection = {(timeoutMs / 1000), ((timeoutMs % 1000) * 1000)};
       if (setsockopt(connfd, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeoutMsForConnection, sizeof(timeoutMsForConnection)) < 0)
          {
          perror("Can't set option SO_RCVTIMEO on connfd socket");

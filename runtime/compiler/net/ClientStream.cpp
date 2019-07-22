@@ -29,7 +29,7 @@
 #include <sys/un.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <netinet/tcp.h>	/* for tcp_nodelay option */
+#include <netinet/tcp.h>	/* for TCP_NODELAY option */
 #include <fcntl.h>
 #include <arpa/inet.h>
 #include <stdio.h>
@@ -48,16 +48,16 @@ int ClientStream::_numConnectionsClosed = 0;
 // used for checking server compatibility
 int ClientStream::_incompatibilityCount = 0;
 uint64_t ClientStream::_incompatibleStartTime = 0;
-const uint64_t ClientStream::RETRY_COMPATIBILITY_INTERVAL = 10000; //ms
+const uint64_t ClientStream::RETRY_COMPATIBILITY_INTERVAL_MS = 10000; //ms
 const int ClientStream::INCOMPATIBILITY_COUNT_LIMIT = 5;
 
 // Create SSL context, load certs and keys. Only needs to be done once.
 // This is called during startup from rossa.cpp
-void ClientStream::static_init(TR::PersistentInfo *info)
+int ClientStream::static_init(TR::PersistentInfo *info)
    {
 #if defined(JITSERVER_ENABLE_SSL)
    if (!CommunicationStream::useSSL())
-      return;
+      return 0;
 
    CommunicationStream::initSSL();
 
@@ -66,14 +66,14 @@ void ClientStream::static_init(TR::PersistentInfo *info)
       {
       perror("can't create SSL context");
       ERR_print_errors_fp(stderr);
-      exit(1);
+      return -1;
       }
 
    if (SSL_CTX_set_ecdh_auto(ctx, 1) != 1)
       {
       perror("failed to configure SSL ecdh");
       ERR_print_errors_fp(stderr);
-      exit(1);
+      return -1;
       }
 
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
@@ -91,21 +91,21 @@ void ClientStream::static_init(TR::PersistentInfo *info)
       {
       perror("cannot create memory buffer for cert (OOM?)");
       ERR_print_errors_fp(stderr);
-      exit(1);
+      return -1;
       }
    STACK_OF(X509_INFO) *certificates = PEM_X509_INFO_read_bio(certMem, NULL, NULL, NULL);
    if (!certificates)
       {
       perror("cannot parse cert");
       ERR_print_errors_fp(stderr);
-      exit(1);
+      return -1;
       }
    X509_STORE *certStore = SSL_CTX_get_cert_store(ctx);
    if (!certStore)
       {
       perror("cannot get cert store");
       ERR_print_errors_fp(stderr);
-      exit(1);
+      return -1;
       }
    // add all certificates in the chain to the cert store
    for (size_t i = 0; i < sk_X509_INFO_num(certificates); i++)
@@ -126,17 +126,18 @@ void ClientStream::static_init(TR::PersistentInfo *info)
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Successfully initialized SSL context: OPENSSL_VERSION_NUMBER 0x%lx\n", OPENSSL_VERSION_NUMBER);
 #endif
+   return 0;
    }
 
 #if defined(JITSERVER_ENABLE_SSL)
-SSL_CTX *ClientStream::_sslCtx;
+SSL_CTX *ClientStream::_sslCtx = NULL;
 #endif
 
 int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs)
    {
    // TODO consider using newer API like getaddrinfo to support IPv6
-   struct hostent *entSer;
-   if ((entSer = gethostbyname(address.c_str())) == NULL)
+   struct hostent *entSer = gethostbyname(address.c_str());
+   if (!entSer)
       throw StreamFailure("Cannot resolve server name");
 
    struct sockaddr_in servAddr;
@@ -146,11 +147,11 @@ int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs
    servAddr.sin_port = htons(port);
 
    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-   if(sockfd < 0)
+   if (sockfd < 0)
       throw StreamFailure("Cannot create socket for JITaaS");
 
    int flag = 1;
-   if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE , (void*)&flag, sizeof(flag)) <0)
+   if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*)&flag, sizeof(flag)) < 0)
       {
       close(sockfd);
       throw StreamFailure("Cannot set option SO_KEEPALIVE on socket");
@@ -163,7 +164,7 @@ int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs
       throw StreamFailure("Cannot set option SO_LINGER on socket");
       }
 
-   struct timeval timeout = {timeoutMs/1000, timeoutMs*1000%1000000};
+   struct timeval timeout = {(timeoutMs / 1000), ((timeoutMs % 1000) * 1000)};
    if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (void *)&timeout, sizeof(timeout)) < 0)
       {
       close(sockfd);
@@ -182,7 +183,7 @@ int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs
       throw StreamFailure("Cannot set option TCP_NODELAY on socket");
       }
 
-   if(connect(sockfd, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0)
+   if (connect(sockfd, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0)
       {
       close(sockfd);
       throw StreamFailure("Connect failed");
@@ -266,7 +267,7 @@ ClientStream::ClientStream(TR::PersistentInfo *info)
    }
 #else // JITSERVER_ENABLE_SSL
 ClientStream::ClientStream(TR::PersistentInfo *info)
-   : CommunicationStream(),  _versionCheckStatus(NOT_DONE)
+   : CommunicationStream(), _versionCheckStatus(NOT_DONE)
    {
    int connfd = openConnection(info->getJITServerAddress(), info->getJITServerPort(), info->getSocketTimeout());
    initStream(connfd);

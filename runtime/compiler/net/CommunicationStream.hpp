@@ -56,7 +56,7 @@ public:
 
    static uint64_t getJITaaSVersion()
       {
-      return ((uint64_t) CONFIGURATION_FLAGS << 32) | MAJOR_NUMBER << 24 | MINOR_NUMBER << 8;
+      return ((((uint64_t)CONFIGURATION_FLAGS) << 32) | (MAJOR_NUMBER << 24) | (MINOR_NUMBER << 8));
       }
 
 protected:

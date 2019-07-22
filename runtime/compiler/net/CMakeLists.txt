@@ -1,4 +1,5 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+################################################################################
+# Copyright (c) 2019, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,28 +18,11 @@
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+################################################################################
 
-# Add our targets to the global targets
-all: jit
-clean: jit_cleanobjs jit_cleandeps jit_cleandll
-cleanobjs: jit_cleanobjs
-cleandeps: jit_cleandeps
-cleandll: jit_cleandll
-ifneq ($(JITSERVER_SUPPORT),)
-proto: protoc
-endif
-#
-# Define our targets. "jit_cleanobjs" "jit_cleandeps" and "jit_cleandll" are double-colon so they can be appended to
-# throughout the makefile.
-#
-.PHONY: jit jit_createdirs jit_cleanobjs jit_cleandeps jit_cleandll
-jit:
-jit_createdirs::
-jit_cleanobjs::
-jit_cleandeps::
-jit_cleandll::
-ifneq ($(JITSERVER_SUPPORT),)
-protoc:
-endif
-
-include $(JIT_MAKE_DIR)/rules/$(TOOLCHAIN)/common.mk
+j9jit_files(
+	net/ClientStream.cpp
+	net/CommunicationStream.cpp
+	net/ProtobufTypeConvert.cpp
+	net/ServerStream.cpp
+)
