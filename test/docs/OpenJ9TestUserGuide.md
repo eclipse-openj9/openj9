@@ -30,9 +30,10 @@ run tests. Details are explained in *Tasks in OpenJ9 Test* section below.
 ```
 cd openj9/test/TestConfig
 export TEST_JDK_HOME=<path to JDK directory that you wish to test>
-export SPEC=linux_x86-64_cmprssptrs
+export BUILD_LIST=functional
 make -f run_configure.mk
-make _sanity
+make compile
+make _sanity.regular
 ```
 
 ## Prerequisites:
