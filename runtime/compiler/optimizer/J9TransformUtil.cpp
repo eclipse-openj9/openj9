@@ -2243,3 +2243,23 @@ J9::TransformUtil::truncateBooleanForUnsafeGetPut(TR::Compilation *comp, TR::Tre
       dumpOptDetails(comp, "Truncate the return of unsafe get %p n%dn, resulting in %p n%dn\n", unsafeCall, unsafeCall->getGlobalIndex(), truncatedReturn, truncatedReturn->getGlobalIndex());
       }
    }
+
+bool
+J9::TransformUtil::specializeInvokeExactSymbol(TR::Compilation *comp, TR::Node *callNode, uintptrj_t *methodHandleLocation)
+   {
+   TR::SymbolReference      *symRef         = callNode->getSymbolReference();
+   TR::ResolvedMethodSymbol *owningMethod   = callNode->getSymbolReference()->getOwningMethodSymbol(comp);
+   TR_ResolvedMethod       *resolvedMethod = comp->fej9()->createMethodHandleArchetypeSpecimen(comp->trMemory(), methodHandleLocation, owningMethod->getResolvedMethod());
+   if (resolvedMethod)
+      {
+      TR::SymbolReference      *specimenSymRef = comp->getSymRefTab()->findOrCreateMethodSymbol(owningMethod->getResolvedMethodIndex(), -1, resolvedMethod, TR::MethodSymbol::ComputedVirtual);
+      if (performTransformation(comp, "Substituting more specific method symbol on %p: %s <- %s\n", callNode,
+            specimenSymRef->getName(comp->getDebug()),
+            callNode->getSymbolReference()->getName(comp->getDebug())))
+         {
+         callNode->setSymbolReference(specimenSymRef);
+         return true;
+         }
+      }
+      return false;
+   }
