@@ -190,6 +190,19 @@ public:
     *
     */
    static void truncateBooleanForUnsafeGetPut(TR::Compilation *comp, TR::TreeTop* tree);
+
+   /*
+    * \brief
+    *    Speclize `MethodHandle.invokeExact` with a known receiver handle to a thunk archetype specimen.
+    *    This will allow inliner inline the call.
+    *
+    *   \param comp  The compilation Object
+    *   \param callNode The node with `MethodHandle.invokeExact` call
+    *   \param methodHandleLocation A pointer to the MethodHandle object reference
+    *
+    *   \return True if specialization succeeds, false otherwise
+    */
+   static bool specializeInvokeExactSymbol(TR::Compilation *comp, TR::Node *callNode, uintptrj_t *methodHandleLocation);
 protected:
    /**
     * \brief
