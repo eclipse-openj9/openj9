@@ -965,6 +965,17 @@ ClassFileOracle::walkMethodMethodParametersAttribute(U_16 methodIndex)
 
 }
 
+void
+ClassFileOracle::throwGenericErrorCustom(UDATA code, UDATA offset)
+{
+	PORT_ACCESS_FROM_PORT(_context->portLibrary());
+	_context->javaVM()->dynamicLoadBuffers->classFileError = (U_8 *)j9mem_allocate_memory(sizeof(J9CfrError), J9MEM_CATEGORY_CLASSES);
+	if (NULL == _context->javaVM()->dynamicLoadBuffers->classFileError) {
+		_buildResult = OutOfMemory;
+	}
+	buildError((J9CfrError*)_context->javaVM()->dynamicLoadBuffers->classFileError, code, GenericErrorCustom, offset);
+	_buildResult = GenericErrorCustom;
+}
 
 void
 ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
@@ -1127,11 +1138,8 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 						if (codeAttribute->maxLocals <= index) {
 							Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_LocalVariableTableIndexOutOfBounds(
 									index, codeAttribute->maxLocals, (U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex));
-							/* throw error */
-							PORT_ACCESS_FROM_PORT(_context->portLibrary());
-							_context->javaVM()->dynamicLoadBuffers->classFileError = (U_8 *)j9mem_allocate_memory(sizeof(J9CfrError), J9MEM_CATEGORY_CLASSES);
-							buildError((J9CfrError*)_context->javaVM()->dynamicLoadBuffers->classFileError, J9NLS_CFR_LVT_INDEX_OUTOFRANGE__ID, GenericErrorCustom, index);
-							_buildResult = GenericErrorCustom;
+
+							throwGenericErrorCustom(J9NLS_CFR_LVT_INDEX_OUTOFRANGE__ID, index);
 							break;
 						} else if (NULL == _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTable) {
 							_methodsInfo[methodIndex].localVariablesInfo[index].localVariableTable = localVariableTable;
@@ -1168,11 +1176,7 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 						if (codeAttribute->maxLocals <= lvttEntry.index) {
 							Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_LocalVariableTypeTableIndexOutOfBounds(
 									lvttEntry.index, codeAttribute->maxLocals, (U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex));
-							/* throw error */
-							PORT_ACCESS_FROM_PORT(_context->portLibrary());
-							_context->javaVM()->dynamicLoadBuffers->classFileError = (U_8 *)j9mem_allocate_memory(sizeof(J9CfrError), J9MEM_CATEGORY_CLASSES);
-							buildError((J9CfrError*)_context->javaVM()->dynamicLoadBuffers->classFileError, J9NLS_CFR_LVTT_INDEX_OUTOFRANGE__ID, GenericErrorCustom, lvttEntry.index);
-							_buildResult = GenericErrorCustom;
+							throwGenericErrorCustom(J9NLS_CFR_LVTT_INDEX_OUTOFRANGE__ID, lvttEntry.index);
 							break;
 						} else if (NULL == _methodsInfo[methodIndex].localVariablesInfo[lvttEntry.index].localVariableTypeTable) {
 							_methodsInfo[methodIndex].localVariablesInfo[lvttEntry.index].localVariableTypeTable = localVariableTypeTable;
@@ -1220,11 +1224,7 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 							}
 						}
 						if (!entryFound) {
-							/* throw error */
-							PORT_ACCESS_FROM_PORT(_context->portLibrary());
-							_context->javaVM()->dynamicLoadBuffers->classFileError = (U_8 *)j9mem_allocate_memory(sizeof(J9CfrError), J9MEM_CATEGORY_CLASSES);
-							buildError((J9CfrError*)_context->javaVM()->dynamicLoadBuffers->classFileError, J9NLS_CFR_LVTT_DOESNT_HAVE_LVT__ID, GenericErrorCustom, lvttEntry.index);
-							_buildResult = GenericErrorCustom;
+							throwGenericErrorCustom(J9NLS_CFR_LVTT_DOESNT_HAVE_LVT__ID, lvttEntry.index);
 							break;
 						}
 

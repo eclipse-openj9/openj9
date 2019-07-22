@@ -1029,6 +1029,7 @@ private:
 	void walkMethodAttributes(U_16 methodIndex);
 	void walkMethodThrownExceptions(U_16 methodIndex);
 	void walkMethodCodeAttribute(U_16 methodIndex);
+	void throwGenericErrorCustom(UDATA code, UDATA offset);
 	void walkMethodCodeAttributeAttributes(U_16 methodIndex);
 	void walkMethodCodeAttributeCaughtExceptions(U_16 methodIndex);
 	void walkMethodCodeAttributeCode(U_16 methodIndex);
