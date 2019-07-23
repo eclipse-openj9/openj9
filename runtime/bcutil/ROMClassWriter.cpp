@@ -1195,7 +1195,7 @@ ROMClassWriter::writeMethods(Cursor *cursor, Cursor *lineNumberCursor, Cursor *v
 			 *            + AccMethodObjectConstructor
 			 *           + AccMethodHasMethodParameters
 			 *
-			 *         + UNUSED
+			 *         + AccMethodAllowFinalFieldWrites
 			 *        + AccMethodHasGenericSignature
 			 *       + AccMethodHasExtendedModifiers
 			 *      + AccMethodHasMethodHandleInvokes
@@ -1205,6 +1205,14 @@ ROMClassWriter::writeMethods(Cursor *cursor, Cursor *lineNumberCursor, Cursor *v
 			 *  + AccMethodHasParameterAnnotations
 			 * + AccMethodHasDefaultAnnotation
 			 */
+
+			/* In class files prior to version 53, any method in the declaring class of a final field
+			 * may write to it. For 53 and later, only initializers (<init> for instance fields, <clinit>
+			 * for static fields) are allowed to write to final fields.
+			 */
+			if ((_classFileOracle->getMajorVersion() < 53) || ('<' == *_classFileOracle->getUTF8Data(iterator.getNameIndex()))) {
+				modifiers |= J9AccMethodAllowFinalFieldWrites;
+			}
 
 			if (iterator.hasFrameIteratorSkipAnnotation()) {
 				modifiers |= J9AccMethodFrameIteratorSkip;
