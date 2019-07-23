@@ -772,9 +772,9 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                      && mhConstraint->isNonNullObject())
                {
                TR_OpaqueClassBlock* mhClass = mhConstraint->getClass();
-               int32_t modifierOffset = comp()->fej9()->getInstanceFieldOffset(mhClass, "final_modifiers", 15, "I", 1);
-               if (modifierOffset < 0)
-                  break;
+               int32_t isStaticOffset = comp()->fej9()->getInstanceFieldOffset(mhClass, "isStatic", "Z");
+               TR_ASSERT(isStaticOffset >= 0, "Can't find field isStatic in MethodHandle %p\n", mh);
+
                uintptrj_t* mhLocation = getObjectLocationFromConstraint(mhConstraint);
 
                TR::VMAccessCriticalSection nullCheckIfRequired(comp(),
@@ -782,13 +782,13 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                if (!nullCheckIfRequired.hasVMAccess())
                   break;
                uintptrj_t mhObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)mhLocation);
-               int32_t modifier = comp()->fej9()->getInt32FieldAt(mhObject, modifierOffset);
-               if (modifier & J9AccStatic)
+               int32_t isStatic = comp()->fej9()->getInt32FieldAt(mhObject, isStaticOffset);
+               if (isStatic)
                   {
                   removeCall = true;
                   if (trace())
                      {
-                     traceMsg(comp(), "Modifier in MethodHandle %p is %d and is static\n", mh, modifier);
+                     traceMsg(comp(), "DirectHandle %p refers to a static method\n", mh);
                      }
                   }
                else
