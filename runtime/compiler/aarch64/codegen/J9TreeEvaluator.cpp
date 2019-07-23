@@ -25,6 +25,7 @@
 #include "codegen/ARM64PrivateLinkage.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GenerateInstructions.hpp"
+#include "codegen/ARM64Instruction.hpp"
 #include "codegen/J9ARM64Snippet.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "il/DataTypes.hpp"
@@ -60,7 +61,7 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::arraylength] = TR::TreeEvaluator::arraylengthEvaluator;
    tet[TR::ResolveCHK] = TR::TreeEvaluator::resolveCHKEvaluator;
    tet[TR::DIVCHK] = TR::TreeEvaluator::DIVCHKEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::BNDCHK] = TR::TreeEvaluator::BNDCHKEvaluator;
+   tet[TR::BNDCHK] = TR::TreeEvaluator::BNDCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCopyBNDCHK] = TR::TreeEvaluator::ArrayCopyBNDCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::BNDCHKwithSpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::SpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
@@ -294,4 +295,65 @@ J9::ARM64::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator
    node->setRegister(lengthReg);
 
    return lengthReg;
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Register *src1Reg;
+   TR::Register *src2Reg = NULL;
+   uint64_t value;
+   TR::LabelSymbol *snippetLabel;
+   TR::Instruction *gcPoint;
+   bool reversed = false;
+
+   if ((firstChild->getOpCode().isLoadConst())
+         && (constantIsUnsignedImm12(firstChild->get64bitIntegralValueAsUnsigned()))
+         && (NULL == firstChild->getRegister()))
+      {
+      src2Reg = cg->evaluate(secondChild);
+      reversed = true;
+      }
+   else
+      {
+      src1Reg = cg->evaluate(firstChild);
+
+      if ((secondChild->getOpCode().isLoadConst())
+            && (NULL == secondChild->getRegister()))
+         {
+         value = secondChild->get64bitIntegralValueAsUnsigned();
+         if (!constantIsUnsignedImm12(value))
+            {
+            src2Reg = cg->evaluate(secondChild);
+            }
+         }
+      else
+         src2Reg = cg->evaluate(secondChild);
+      }
+
+   if (reversed)
+      {
+      generateCompareImmInstruction(cg, node, src2Reg, firstChild->get64bitIntegralValueAsUnsigned());
+      }
+   else
+      {
+      if (NULL == src2Reg)
+         generateCompareImmInstruction(cg, node, src1Reg, value);
+      else
+         generateCompareInstruction(cg, node, src1Reg, src2Reg);
+      }
+
+   snippetLabel = generateLabelSymbol(cg);
+   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+   
+   gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_CS);
+
+   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   secondChild->setIsNonNegative(true);
+   return (NULL);
    }
