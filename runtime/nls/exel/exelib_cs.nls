@@ -599,16 +599,8 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.system_action=
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.user_response=
 # END NON-TRANSLATABLE
 
-# J9SourceMainRemoteConsole - remoteConsole_startup
-
-J9NLS_EXELIB_UNABLE_REDIRECT_IO=Nelze p\u0159esm\u011brovat konzolu na: %1$s:%2$d
-# START NON-TRANSLATABLE
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_1=localhost
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_2=8080
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.explanation=Failed to establish socket connection to target remote console.
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.system_action=JVM console output will not be redirected to target console.
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.user_response=Ensure remote console is reachable and accessible.
-# END NON-TRANSLATABLE
+# J9SourceMainRemoteConsole - unused
+J9NLS_EXELIB_UNABLE_REDIRECT_IO=
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 J9NLS_EXELIB_INTERNAL_HELP_1_10=\  -Xquickstart    Odlo\u017e\u00ed optimalizace a zkr\u00e1t\u00ed tak \u010das spu\u0161t\u011bn\u00ed.
