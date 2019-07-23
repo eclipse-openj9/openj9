@@ -6336,15 +6336,15 @@ resolve:
 			/* Put resolved for a non-final field means fully resolved */
 			if (J9_UNEXPECTED(resolvedBit != bits)) {
 				/* If not put resolved for a final field, resolve is necessary */
-				if (testBits != bits) {
+				if (J9_UNEXPECTED(testBits != bits)) {
 					goto resolve;
 				}
 				/* Final field - ensure the running method is allowed to store */
-				if (J9_UNEXPECTED(VM_VMHelpers::ramClassChecksFinalStores(ramConstantPool->ramClass)
-					          && !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
-				)) {
-					/* Store not allowed - run the resolve code to throw the exception */
-					goto resolve;
+				if (J9_UNEXPECTED(!J9ROMMETHOD_ALLOW_FINAL_FIELD_WRITES(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), J9AccStatic))) {
+					if (J9_UNEXPECTED(!J9CLASS_IS_EXEMPT_FROM_VALIDATION(ramConstantPool->ramClass))) {
+						/* Store not allowed - run the resolve code to throw the exception */
+						goto resolve;
+					}
 				}
 			}
 		}
@@ -6546,15 +6546,15 @@ resolve:
 			/* Put resolved for a non-final field means fully resolved */
 			if (J9_UNEXPECTED(resolvedBit != bits)) {
 				/* If not put resolved for a final field, resolve is necessary */
-				if (testBits != bits) {
+				if (J9_UNEXPECTED(testBits != bits)) {
 					goto resolve;
 				}
 				/* Final field - ensure the running method is allowed to store */
-				if (J9_UNEXPECTED(VM_VMHelpers::ramClassChecksFinalStores(ramConstantPool->ramClass)
-					          && !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
-				)) {
-					/* Store not allowed - run the resolve code to throw the exception */
-					goto resolve;
+				if (J9_UNEXPECTED(!J9ROMMETHOD_ALLOW_FINAL_FIELD_WRITES(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), 0))) {
+					if (J9_UNEXPECTED(!J9CLASS_IS_EXEMPT_FROM_VALIDATION(ramConstantPool->ramClass))) {
+						/* Store not allowed - run the resolve code to throw the exception */
+						goto resolve;
+					}
 				}
 			}
 		}

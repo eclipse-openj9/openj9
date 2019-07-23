@@ -53,7 +53,8 @@ threadEventsPending(J9VMThread *currentThread)
 
 /**
 * @brief In class files with version 53 or later, setting of final fields is only allowed from initializer methods.
-* Note that this is called only after verifying that the calling class and declaring class share private access.
+* Note that this is called only after verifying that the calling class and declaring class are identical (or that the
+* caller class is exempt from verification).
 *
 * @param currentThread the current J9VMThread
 * @param isStatic true for static fields, false for instance
@@ -70,19 +71,9 @@ finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method,
 	bool legal = true;
 	/* NULL method means do not do the access check */
 	if (NULL != method) {
-		/* Handle the scenario where the callerClass is redefeined during <clinit> or <init>.
-		 * In that case, callerClass will be the obsolete version of the class and fieldClass
-		 * will be the current version (assuming that they represent the same class - if they
-		 * don't, this check fails anyway). It's safe to simply update both classes to their
-		 * current versions, as the classfile version check on fieldClass should take place on
-		 * the current version, and the Unsafe flag is preserved during redefinition, so it
-		 * doesn't matter which version is checked.
-		 */
-		fieldClass = J9_CURRENT_CLASS(fieldClass);
-		callerClass = J9_CURRENT_CLASS(callerClass);
-		if (VM_VMHelpers::ramClassChecksFinalStores(callerClass)) {
+		if (!J9CLASS_IS_EXEMPT_FROM_VALIDATION(callerClass)) {
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-			if ((fieldClass != callerClass) || !VM_VMHelpers::romMethodIsInitializer(romMethod, isStatic)) {
+			if (!J9ROMMETHOD_ALLOW_FINAL_FIELD_WRITES(romMethod, isStatic ? J9AccStatic : 0)) {
 				if (canRunJavaCode) {
 					setIllegalAccessErrorFinalFieldSet(currentThread, isStatic, fieldClass->romClass, field, romMethod);
 				}
@@ -695,7 +686,7 @@ tryAgain:
 			}
 
 			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9AccFinal) != 0) {
-				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9AccPrivate, lookupOptions);
+				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9AccPrivate, lookupOptions | J9_LOOK_NO_NESTMATES);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
 					targetClass = definingClass;
 					badMemberModifier = J9AccPrivate;
@@ -720,8 +711,8 @@ illegalAccess:
 				} else { /* finalFieldSetAllowed */
 					if (jitCompileTimeResolve) {
 						/* Don't report the final field modification for JIT compile-time resolves.
-					 	 * Reporting may deadlock due to interaction between safepoint and ClassUnloadMutex.
-					 	 */
+						 * Reporting may deadlock due to interaction between safepoint and ClassUnloadMutex.
+						 */
 						staticAddress = NULL;
 						goto done;
 					}
@@ -897,14 +888,14 @@ resolveInstanceFieldRefInto(J9VMThread *vmStruct, J9Method *method, J9ConstantPo
 			}
 
 			if ((resolveFlags & J9_RESOLVE_FLAG_FIELD_SETTER) != 0 && (modifiers & J9AccFinal) != 0) {
-				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9AccPrivate, lookupOptions);
+				checkResult = checkVisibility(vmStruct, classFromCP, definingClass, J9AccPrivate, lookupOptions | J9_LOOK_NO_NESTMATES);
 				if (checkResult < J9_VISIBILITY_ALLOWED) {
 					badMemberModifier = J9AccPrivate;
 					targetClass = definingClass;
 illegalAccess:
 					fieldOffset = -1;
 					if (throwException) {
-						PORT_ACCESS_FROM_VMC(vmStruct);
+					PORT_ACCESS_FROM_VMC(vmStruct);
 						if (J9_VISIBILITY_NON_MODULE_ACCESS_ERROR == checkResult) {
 							nlsStr = illegalAccessMessage(vmStruct, badMemberModifier, classFromCP, targetClass, J9_VISIBILITY_NON_MODULE_ACCESS_ERROR);
 						} else {
@@ -924,7 +915,6 @@ illegalAccess:
 #endif
 				!finalFieldSetAllowed(vmStruct, false, method, definingClass, classFromCP, field, canRunJavaCode)
 			) {
-
 					fieldOffset = -1;
 					goto done;
 				}
