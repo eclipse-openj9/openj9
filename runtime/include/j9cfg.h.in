@@ -236,7 +236,6 @@ extern "C" {
 #cmakedefine J9VM_OPT_PANAMA
 #cmakedefine J9VM_OPT_PHP_SUPPORT
 #cmakedefine J9VM_OPT_REFLECT
-#cmakedefine J9VM_OPT_REMOTE_CONSOLE_SUPPORT
 #cmakedefine J9VM_OPT_RESOURCE_MANAGED
 #cmakedefine J9VM_OPT_ROM_IMAGE_SUPPORT
 #cmakedefine J9VM_OPT_SHARED_CLASSES
