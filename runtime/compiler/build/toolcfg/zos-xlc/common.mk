@@ -97,6 +97,7 @@ CX_FLAGS+=\
 # Now we get to do this awesome thing because of EBCDIC
 PRODUCT_INCLUDES:=\
     $(J9SRC)/zos_zlib/hzc/include \
+    /usr/lpp/hzc/include \
     $(PRODUCT_INCLUDES)
 
 CX_FLAGS+=\
@@ -106,6 +107,7 @@ CX_FLAGS+=\
     -Wc,"convlit(ISO8859-1)" \
     -qsearch=$(J9SRC)/a2e/headers \
     -qsearch=$(J9SRC)/zos_zlib/hzc/include \
+    -qsearch=/usr/lpp/hzc/include \
     -qsearch=/usr/include \
     -qsearch=$(A2E_INCLUDE_PATH)
 
@@ -223,13 +225,16 @@ AR_CMD?=$(AR)
 SOLINK_CMD?=$(CXX)
 
 SOLINK_FLAGS+=-g -Wl,xplink,dll,map,list,compat=$(TGTLEVEL)
-SOLINK_LIBPATH+=$(J9SRC) $(J9SRC)/lib
-SOLINK_SLINK+=$(PRODUCT_SLINK)
+SOLINK_LIBPATH+=$(J9SRC) \
+                $(J9SRC)/lib \
+                $(J9SRC)/zos_zlib/hzc/lib \
+                /usr/lpp/hzc/lib
+SOLINK_SLINK+=$(PRODUCT_SLINK) \
+              zz
 SOLINK_EXTRA_ARGS+=\
     $(J9SRC)/lib/libj9a2e.x \
     $(J9SRC)/lib/libj9thr$(J9_VERSION).x \
     $(J9SRC)/lib/libj9hookable$(J9_VERSION).x \
-    $(J9SRC)/zos_zlib/hzc/lib/libzz.a
 
 
 ifeq ($(HOST_BITS),64)
