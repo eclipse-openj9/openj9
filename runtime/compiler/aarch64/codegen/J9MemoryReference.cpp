@@ -43,6 +43,7 @@ J9::ARM64::MemoryReference::generateBinaryEncoding(TR::Instruction *currentInstr
          TR::RealRegister *x9reg = cg->machine()->getRealRegister(TR::RealRegister::x9);
          uint32_t *wcursor = (uint32_t *)cursor;
          uint32_t preserve = *wcursor; // original instruction
+         TR::InstOpCode::Mnemonic op = currentInstruction->getOpCodeValue();
          snippet->setAddressOfDataReference(cursor);
          snippet->setMemoryReference(self());
          cg->addRelocation(new (cg->trHeapMemory()) TR::LabelRelative32BitRelocation(cursor, snippet->getSnippetLabel()));
@@ -75,15 +76,34 @@ J9::ARM64::MemoryReference::generateBinaryEncoding(TR::Instruction *currentInstr
          // finally, encode the original instruction
          *wcursor = preserve;
          TR::RealRegister *base = self()->getBaseRegister() ? toRealRegister(self()->getBaseRegister()) : NULL;
-         if (base)
+         if (op != TR::InstOpCode::addx)
             {
-            // if the load or store had a base, add it in as an index.
-            base->setRegisterFieldRN(wcursor);
-            x9reg->setRegisterFieldRM(wcursor);
+            // load/store instruction
+            if (base)
+               {
+               // if the load or store had a base, add it in as an index.
+               base->setRegisterFieldRN(wcursor);
+               x9reg->setRegisterFieldRM(wcursor);
+               }
+            else
+               {
+               x9reg->setRegisterFieldRN(wcursor);
+               }
             }
          else
             {
-            x9reg->setRegisterFieldRN(wcursor);
+            // loadaddrEvaluator() uses addx in generateTrgMemInstruction
+            if (base)
+               {
+               base->setRegisterFieldRN(wcursor);
+               x9reg->setRegisterFieldRM(wcursor);
+               }
+            else
+               {
+               x9reg->setRegisterFieldRN(wcursor);
+               // Rewrite the instruction from "addx Rd, Rn, Rm" to "addimmx Rd, Rn, #0"
+               cursor[3] = (uint8_t)0x91;
+               }
             }
          cursor += ARM64_INSTRUCTION_LENGTH;
 

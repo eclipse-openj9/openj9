@@ -75,7 +75,6 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::loadFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::storeFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::fullFence] = TR::TreeEvaluator::flushEvaluator;
-
    }
 
 void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceInstruction, TR::CodeGenerator *cg)
@@ -783,4 +782,70 @@ TR::Instruction *J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGe
 TR::Instruction *J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::Instruction *preced)
    {
    return J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(cg, node, reg, reg, preced);
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::loadaddrEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Register *resultReg;
+   TR::Symbol *sym = node->getSymbol();
+   TR::Compilation *comp = cg->comp();
+   TR::MemoryReference *mref = new (cg->trHeapMemory()) TR::MemoryReference(node, node->getSymbolReference(), 0, cg);
+
+   if (mref->getUnresolvedSnippet() != NULL)
+      {
+      resultReg = sym->isLocalObject() ? cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
+      if (mref->useIndexedForm())
+         {
+         TR_ASSERT(false, "Unresolved indexed snippet is not supported");
+         }
+      else
+         {
+         generateTrg1MemInstruction(cg, TR::InstOpCode::addx, node, resultReg, mref);
+         }
+      }
+   else
+      {
+      if (mref->useIndexedForm())
+         {
+         resultReg = sym->isLocalObject() ? cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, resultReg, mref->getBaseRegister(), mref->getIndexRegister());
+         }
+      else
+         {
+         int32_t offset = mref->getOffset();
+         if (mref->hasDelayedOffset() || offset != 0)
+            {
+            resultReg = sym->isLocalObject() ? cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
+            if (mref->hasDelayedOffset())
+               {
+               generateTrg1MemInstruction(cg, TR::InstOpCode::addimmx, node, resultReg, mref);
+               }
+            else
+               {
+               if (offset >= 0 && constantIsUnsignedImm12(offset))
+                  {
+                  generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, resultReg, mref->getBaseRegister(), offset);
+                  }
+               else
+                  {
+                  loadConstant64(cg, node, offset, resultReg);
+                  generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, resultReg, mref->getBaseRegister(), resultReg);
+                  }
+               }
+            }
+         else
+            {
+            resultReg = mref->getBaseRegister();
+            if (resultReg == cg->getMethodMetaDataRegister())
+               {
+               resultReg = cg->allocateRegister();
+               generateMovInstruction(cg, node, resultReg, mref->getBaseRegister());
+               }
+            }
+         }
+      }
+   node->setRegister(resultReg);
+   mref->decNodeReferenceCounts(cg);
+   return resultReg;
    }
