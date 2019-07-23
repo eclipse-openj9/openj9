@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,10 +36,6 @@ UDATA signalProtectedMain(struct J9PortLibrary *portLibrary, void *arg)
 	char **argv = args->argv;
 	PORT_ACCESS_FROM_PORT(args->portLibrary);
 	cTestPortLib = args->portLibrary;
-
-#ifdef J9VM_OPT_REMOTE_CONSOLE_SUPPORT
-	remoteConsole_parseCmdLine( cTestPortLib, argc - 1, argv );
-#endif
 
 #ifdef J9VM_OPT_MEMORY_CHECK_SUPPORT
 	/* This should happen before anybody allocates memory!  Otherwise, shutdown will not work properly. */

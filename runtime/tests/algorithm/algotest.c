@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,10 +30,10 @@ J9PortLibrary *algoTestPortLib = NULL;
 UDATA signalProtectedMain(struct J9PortLibrary *portLibrary, void *arg)
 {
 	struct j9cmdlineOptions * args = arg;
-#if (defined(J9VM_OPT_REMOTE_CONSOLE_SUPPORT) || defined(J9VM_OPT_MEMORY_CHECK_SUPPORT))
+#if defined(J9VM_OPT_MEMORY_CHECK_SUPPORT)
 	int argc = args->argc;
 	char **argv = args->argv;
-#endif /* (defined(J9VM_OPT_REMOTE_CONSOLE_SUPPORT) || defined(J9VM_OPT_MEMORY_CHECK_SUPPORT)) */
+#endif /* defined(J9VM_OPT_MEMORY_CHECK_SUPPORT) */
 	I_32 numSuitesNotRun = 0;
 	UDATA passCount = 0;
 	UDATA failCount = 0;
@@ -41,10 +41,6 @@ UDATA signalProtectedMain(struct J9PortLibrary *portLibrary, void *arg)
 	PORT_ACCESS_FROM_PORT(args->portLibrary);
 
 	algoTestPortLib = args->portLibrary;
-
-#ifdef J9VM_OPT_REMOTE_CONSOLE_SUPPORT
-	remoteConsole_parseCmdLine( algoTestPortLib, argc - 1, argv );
-#endif
 
 #ifdef J9VM_OPT_MEMORY_CHECK_SUPPORT
 	/* This should happen before anybody allocates memory!  Otherwise, shutdown will not work properly. */
