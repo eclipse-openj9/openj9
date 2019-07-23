@@ -31,7 +31,7 @@
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
 # etc. will be substituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or 
+# It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -518,7 +518,7 @@ J9NLS_EXELIB_MUST_BE_PSV=The method main must be declared public, static and voi
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_MUST_BE_PSV.explanation=main method should always be public, static and void
 J9NLS_EXELIB_MUST_BE_PSV.system_action=The JVM will terminate.
-J9NLS_EXELIB_MUST_BE_PSV.user_response=Ensure main method is declared correctly. 
+J9NLS_EXELIB_MUST_BE_PSV.user_response=Ensure main method is declared correctly.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY=Internal VM error: Failed to create argument array
@@ -589,16 +589,8 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.system_action=
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.user_response=
 # END NON-TRANSLATABLE
 
-# J9SourceMainRemoteConsole - remoteConsole_startup
-
-J9NLS_EXELIB_UNABLE_REDIRECT_IO=Unable to redirect console to: %1$s:%2$d
-# START NON-TRANSLATABLE
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_1=localhost
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_2=8080
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.explanation=Failed to establish socket connection to target remote console.  
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.system_action=JVM console output will not be redirected to target console.
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.user_response=Ensure remote console is reachable and accessible.
-# END NON-TRANSLATABLE
+# J9SourceMainRemoteConsole - unused
+J9NLS_EXELIB_UNABLE_REDIRECT_IO=
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 J9NLS_EXELIB_INTERNAL_HELP_1_10=\  -Xquickstart    improve startup time by delaying optimizations
@@ -675,7 +667,7 @@ J9NLS_EXELIB_COULD_NOT_OPEN_FILE.user_response=Ensure target file is reachable a
 J9NLS_EXELIB_LOGFILE_BACKUP_FAILED=Unable to make a backup copy of file: %s
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.sample_input_1=logfile.txt
-J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.explanation=JVM's attempt to back up existing file has failed. 
+J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.explanation=JVM's attempt to back up existing file has failed.
 J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.system_action=JVM execution continues without backing up the old file.
 J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.user_response=Ensure target file has the right access permission.
 # END NON-TRANSLATABLE
