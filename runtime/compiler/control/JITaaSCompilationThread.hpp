@@ -121,6 +121,7 @@ class ClientSessionData
       J9ConstantPool *_constantPool;
       TR_JitFieldsCache *_jitFieldsCache;
       uintptrj_t classFlags;
+      PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> *_fieldOrStaticDeclaringClassCache;
       };
 
    struct J9MethodInfo

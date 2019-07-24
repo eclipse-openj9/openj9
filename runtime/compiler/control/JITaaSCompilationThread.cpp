@@ -3392,6 +3392,11 @@ ClientSessionData::ClassInfo::freeClassInfo()
       _jitFieldsCache->~TR_JitFieldsCache();
       jitPersistentFree(_jitFieldsCache);
       }
+   if (_fieldOrStaticDeclaringClassCache)
+      {
+      _fieldOrStaticDeclaringClassCache->~PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>();
+      jitPersistentFree(_fieldOrStaticDeclaringClassCache);
+      }
    }
 
 ClientSessionData::VMInfo *
@@ -3664,6 +3669,7 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    classInfoStruct._constantPool = (J9ConstantPool *)std::get<18>(classInfo);
    classInfoStruct._jitFieldsCache = NULL;
    classInfoStruct.classFlags = std::get<19>(classInfo);
+   classInfoStruct._fieldOrStaticDeclaringClassCache = NULL;
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
 
    uint32_t numMethods = romClass->romMethodCount;
