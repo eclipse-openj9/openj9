@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -339,7 +339,7 @@ J9NLS_PORT_MMAP_INVALID_FILE_HANDLE.user_response=Contact your service represent
 
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_LINUXDUMP_PIPE_CORE=A(z) %s \"%s\" be\u00e1ll\u00edt\u00e1sa szerint a rendszermem\u00f3ria-ki\u00edrat\u00e1st egy k\u00fcls\u0151 programhoz kell tov\u00e1bb\u00edtani.  K\u00eds\u00e9rlet core vagy core.%d \u00e1tnevez\u00e9s\u00e9re.\n
+J9NLS_PORT_LINUXDUMP_PIPE_CORE=A(z) %s \"%s\" be\u00e1ll\u00edt\u00e1sa szerint a t\u00e1rki\u00edrat\u00e1st egy k\u00fcls\u0151 programhoz kell tov\u00e1bb\u00edtani.  K\u00eds\u00e9rlet core vagy core.%d \u00e1tnevez\u00e9s\u00e9re.\n
 # START NON-TRANSLATABLE
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_1=/proc/sys/kernel/core_pattern
 J9NLS_PORT_LINUXDUMP_PIPE_CORE.sample_input_2=|/usr/libexec/abrt-hook-ccpp /var/spool/abrt %p %s %u %c
