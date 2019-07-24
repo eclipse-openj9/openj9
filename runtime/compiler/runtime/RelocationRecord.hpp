@@ -1524,6 +1524,14 @@ class TR_RelocationRecordValidateArrayClassFromComponentClass : public TR_Reloca
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateArrayFromCompBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setArrayClassID(TR_RelocationTarget *reloTarget, uint16_t arrayClassID);
+      uint16_t arrayClassID(TR_RelocationTarget *reloTarget);
+
+      void setComponentClassID(TR_RelocationTarget *reloTarget, uint16_t componentClassID);
+      uint16_t componentClassID(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordValidateSuperClassFromClass : public TR_RelocationRecord

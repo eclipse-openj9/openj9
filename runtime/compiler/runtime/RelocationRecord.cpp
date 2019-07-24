@@ -3607,20 +3607,47 @@ TR_RelocationRecordValidateStaticClassFromCP::applyRelocation(TR_RelocationRunti
 int32_t
 TR_RelocationRecordValidateArrayClassFromComponentClass::applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation)
    {
-   uint16_t arrayClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateArrayFromCompBinaryTemplate *)_record)->_arrayClassID);
-   uint16_t componentClassID = reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateArrayFromCompBinaryTemplate *)_record)->_componentClassID);
-
-   if (reloRuntime->reloLogger()->logEnabled())
-      {
-      reloRuntime->reloLogger()->printf("%s\n", name());
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: arrayClassID %d\n", arrayClassID);
-      reloRuntime->reloLogger()->printf("\tapplyRelocation: componentClassID %d\n", componentClassID);
-      }
+   uint16_t arrayClassID = this->arrayClassID(reloTarget);
+   uint16_t componentClassID = this->componentClassID(reloTarget);
 
    if (reloRuntime->comp()->getSymbolValidationManager()->validateArrayClassFromComponentClassRecord(arrayClassID, componentClassID))
       return 0;
    else
       return compilationAotClassReloFailure;
+   }
+
+void
+TR_RelocationRecordValidateArrayClassFromComponentClass::print(TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RelocationTarget *reloTarget = reloRuntime->reloTarget();
+   TR_RelocationRuntimeLogger *reloLogger = reloRuntime->reloLogger();
+   TR_RelocationRecord::print(reloRuntime);
+   reloLogger->printf("\tarrayClassID %d\n", arrayClassID(reloTarget));
+   reloLogger->printf("\tcomponentClassID %d\n", componentClassID(reloTarget));
+   }
+
+void
+TR_RelocationRecordValidateArrayClassFromComponentClass::setArrayClassID(TR_RelocationTarget *reloTarget, uint16_t arrayClassID)
+   {
+   reloTarget->storeUnsigned16b(arrayClassID, (uint8_t *) &((TR_RelocationRecordValidateArrayFromCompBinaryTemplate *)_record)->_arrayClassID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateArrayClassFromComponentClass::arrayClassID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateArrayFromCompBinaryTemplate *)_record)->_arrayClassID);
+   }
+
+void
+TR_RelocationRecordValidateArrayClassFromComponentClass::setComponentClassID(TR_RelocationTarget *reloTarget, uint16_t componentClassID)
+   {
+   reloTarget->storeUnsigned16b(componentClassID, (uint8_t *) &((TR_RelocationRecordValidateArrayFromCompBinaryTemplate *)_record)->_componentClassID);
+   }
+
+uint16_t
+TR_RelocationRecordValidateArrayClassFromComponentClass::componentClassID(TR_RelocationTarget *reloTarget)
+   {
+   return reloTarget->loadUnsigned16b((uint8_t *) &((TR_RelocationRecordValidateArrayFromCompBinaryTemplate *)_record)->_componentClassID);
    }
 
 int32_t

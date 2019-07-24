@@ -636,6 +636,17 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          }
          break;
 
+      case TR_ValidateArrayClassFromComponentClass:
+         {
+         TR_RelocationRecordValidateArrayClassFromComponentClass *acRecord = reinterpret_cast<TR_RelocationRecordValidateArrayClassFromComponentClass *>(reloRecord);
+
+         TR::ArrayClassFromComponentClassRecord *svmRecord = reinterpret_cast<TR::ArrayClassFromComponentClassRecord *>(relocation->getTargetAddress());
+
+         acRecord->setArrayClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_arrayClass));
+         acRecord->setComponentClassID(reloTarget, symValManager->getIDFromSymbol(svmRecord->_componentClass));
+         }
+         break;
+
       default:
          return cursor;
       }
@@ -1033,6 +1044,20 @@ J9::AheadOfTimeCompile::dumpRelocationHeaderData(uint8_t *cursor, bool isVerbose
                                       (uint32_t)dcpRecord->beholderID(reloTarget),
                                       dcpRecord->cpIndex(reloTarget),
                                       dcpRecord->isStatic(reloTarget) ? "true" : "false");
+            }
+         }
+         break;
+
+      case TR_ValidateArrayClassFromComponentClass:
+         {
+         TR_RelocationRecordValidateArrayClassFromComponentClass *acRecord = reinterpret_cast<TR_RelocationRecordValidateArrayClassFromComponentClass *>(reloRecord);
+
+         self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
+         if (isVerbose)
+            {
+            traceMsg(self()->comp(), "\n Validate Array Class From Component: arrayClassID=%d, componentClassID=%d ",
+                                      (uint32_t)acRecord->arrayClassID(reloTarget),
+                                      (uint32_t)acRecord->componentClassID(reloTarget));
             }
          }
          break;
@@ -1517,25 +1542,6 @@ J9::AheadOfTimeCompile::dumpRelocationData()
                                    *(int32_t *)ep1, *(int32_t *)ep2, *(UDATA *)ep3, *(int32_t *)ep4, *(int32_t *)ep5);
                   }
                }
-            break;
-
-         case TR_ValidateArrayClassFromComponentClass:
-            {
-            cursor++;
-            if (is64BitTarget)
-               cursor += 4;     // padding
-            cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-            TR_RelocationRecordValidateArrayFromCompBinaryTemplate *binaryTemplate =
-                  reinterpret_cast<TR_RelocationRecordValidateArrayFromCompBinaryTemplate *>(cursor);
-            if (isVerbose)
-               {
-               traceMsg(self()->comp(), "\n Validate Array Class From Component: arrayClassID=%d, componentClassID=%d ",
-                        (uint32_t)binaryTemplate->_arrayClassID,
-                        (uint32_t)binaryTemplate->_componentClassID);
-               }
-            cursor += sizeof(TR_RelocationRecordValidateArrayFromCompBinaryTemplate);
-            self()->traceRelocationOffsets(cursor, offsetSize, endOfCurrentRecord, orderedPair);
-            }
             break;
 
          case TR_ValidateSuperClassFromClass:
