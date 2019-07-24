@@ -1187,6 +1187,20 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 							break;
 						}
 
+						/* 4.7.14: There may be no more than one LocalVariableTypeTable attribute per local variable in the attributes table of a Code attribute. */
+						for (U_16 localVariableTypeTableCompareIndex = 0; localVariableTypeTableCompareIndex < localVariableTypeTableIndex; ++localVariableTypeTableCompareIndex) {
+							J9CfrLocalVariableTypeTableEntry lvttCompareEntry = localVariableTypeTable->localVariableTypeTable[localVariableTypeTableCompareIndex];
+							if ((lvttEntry.index == lvttCompareEntry.index)
+								&& (lvttEntry.startPC == lvttCompareEntry.startPC)
+								&& (lvttEntry.length == lvttCompareEntry.length)
+								&& (lvttEntry.nameIndex == lvttCompareEntry.nameIndex)
+								&& (lvttEntry.signatureIndex == lvttCompareEntry.signatureIndex)
+							) {
+								throwGenericErrorCustom(J9NLS_CFR_LVTT_DUPLICATE__ID, lvttEntry.index);
+								break;
+							}
+						}
+
 						/* Verify that a matching entry exists in a LocalVariableTable entry. */
 						if  (NULL != _methodsInfo[methodIndex].localVariablesInfo[lvttEntry.index].localVariableTable) {
 							/* Check to see if an entry at the lvtt index has been recorded. This should be the common case.

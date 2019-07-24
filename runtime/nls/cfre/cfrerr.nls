@@ -1472,3 +1472,10 @@ J9NLS_CFR_LVTT_DOESNT_HAVE_LVT.explanation=Please consult the Java Virtual Machi
 J9NLS_CFR_LVTT_DOESNT_HAVE_LVT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_LVTT_DOESNT_HAVE_LVT.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
+
+J9NLS_CFR_LVTT_DUPLICATE=Duplicate entries in LocalVariableTypeTable are not allowed
+# START NON-TRANSLATABLE
+J9NLS_CFR_LVTT_DUPLICATE.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_LVTT_DUPLICATE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_LVTT_DUPLICATE.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
