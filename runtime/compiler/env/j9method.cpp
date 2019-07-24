@@ -4708,7 +4708,9 @@ void TR_ResolvedJ9Method::construct()
          {
          Y * cl = recognizedClasses[classNameLen - minRecognizedClassLength];
          if (cl)
+            {
             for (; cl->_class; ++cl)
+               {
                if (!strncmp(cl->_class, className, classNameLen))
                   {
                   for (X * m =  cl->_methods; m->_enum != TR::unknownMethod; ++m)
@@ -4717,11 +4719,32 @@ void TR_ResolvedJ9Method::construct()
                          !strncmp(m->_name, name, nameLen) &&
                          (m->_sigLen == (int16_t)-1 || !strncmp(m->_sig,  sig,  sigLen)))
                         {
-                        setRecognizedMethodInfo(m->_enum);
-                        break;
+                        bool expectNative = m->_nativeMinVersion <= JAVA_SPEC_VERSION &&
+                           JAVA_SPEC_VERSION <= m->_nativeMaxVersion;
+
+                        // Sanity check that the expectation of whether this
+                        // method is native matches the reality?
+                        static char *tryIsNativeAssert = feGetEnv("TR_CheckRecognizedMethodNativeness");
+                        if (tryIsNativeAssert)
+                           {
+                           TR_ASSERT_FATAL(expectNative == isNative(), "Java method %s.%s%s - setting of isNative() == %d did not match expectNative == %d (native version range == [%d,%d] - JAVA_SPEC_VERSION == %d)\n", cl->_class, m->_name, m->_sig, isNative(), expectNative, m->_nativeMinVersion, m->_nativeMaxVersion, JAVA_SPEC_VERSION);
+                           }
+
+                        // If the method is expected to be native, but it isn't,
+                        // don't mark it as recognized.  Otherwise (i.e., if it
+                        // is expected to be native and is native, or it is not
+                        // expected to be native, and regardless of wheter it is),
+                        // mark it as recognized.
+                        if (!expectNative || isNative())
+                           {
+                           setRecognizedMethodInfo(m->_enum);
+                           break;
+                           }
                         }
                      }
                   }
+               }
+            }
          }
 
       if (TR::Method::getMandatoryRecognizedMethod() == TR::unknownMethod)
