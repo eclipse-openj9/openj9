@@ -167,7 +167,23 @@ try {
         timestamps {
             node(SETUP_LABEL) {
                 try {
-                    checkout scm
+                    def gitConfig = scm.getUserRemoteConfigs().get(0)
+                    def remoteConfigParameters = [url: "${gitConfig.getUrl()}"]
+
+                    if (gitConfig.getCredentialsId()) {
+                        remoteConfigParameters.put("credentialsId", "${gitConfig.getCredentialsId()}")
+                    }
+
+                    checkout changelog: false,
+                            poll: false,
+                            scm: [$class: 'GitSCM',
+                            branches: [[name: scm.branches[0].name]],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [[$class: 'CloneOption',
+                                          reference: "${HOME}/openjdk_cache"]],
+                            submoduleCfg: [],
+                            userRemoteConfigs: [remoteConfigParameters]]
+
                     variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
                     buildFile = load 'buildenv/jenkins/common/pipeline-functions.groovy'
 
