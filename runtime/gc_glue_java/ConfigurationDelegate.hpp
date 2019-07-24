@@ -93,9 +93,9 @@ public:
 		if (extensions->alwaysCallReadBarrier) {
 			/* AlwaysCallReadBarrier takes precedence over other read barrier types */
 			javaVM->gcReadBarrierType = gc_modron_readbar_always;
-		} else if (extensions->isConcurrentScavengerEnabled()) {
+		} else if (extensions->isScavengerEnabled() && extensions->isConcurrentScavengerEnabled()) {
 			javaVM->gcReadBarrierType = gc_modron_readbar_range_check;
-		} else if (extensions->isConcurrentCopyForwardEnabled()) {
+		} else if (extensions->isVLHGC() && extensions->isConcurrentCopyForwardEnabled()) {
 			javaVM->gcReadBarrierType = gc_modron_readbar_region_check;
 		} else {
 			javaVM->gcReadBarrierType = gc_modron_readbar_none;
