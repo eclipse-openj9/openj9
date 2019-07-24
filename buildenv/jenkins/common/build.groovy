@@ -23,22 +23,20 @@ import groovy.json.JsonSlurper;
 
 def get_source() {
     stage('Get Source') {
-        timestamps {
-            // Setup REPO variables
-            OPENJ9_REPO_OPTION = (OPENJ9_REPO != "") ? "-openj9-repo=${OPENJ9_REPO}" : ""
-            OPENJ9_BRANCH_OPTION = (OPENJ9_BRANCH != "") ? "-openj9-branch=${OPENJ9_BRANCH}" : ""
-            OPENJ9_SHA_OPTION = (OPENJ9_SHA != "") ? "-openj9-sha=${OPENJ9_SHA}" : ""
-            OMR_REPO_OPTION = (OMR_REPO != "") ? "-omr-repo=${OMR_REPO}" : ""
-            OMR_BRANCH_OPTION = (OMR_BRANCH != "")? "-omr-branch=${OMR_BRANCH}" : ""
-            OMR_SHA_OPTION = (OMR_SHA != "") ? "-omr-sha=${OMR_SHA}" : ""
+        // Setup REPO variables
+        OPENJ9_REPO_OPTION = (OPENJ9_REPO != "") ? "-openj9-repo=${OPENJ9_REPO}" : ""
+        OPENJ9_BRANCH_OPTION = (OPENJ9_BRANCH != "") ? "-openj9-branch=${OPENJ9_BRANCH}" : ""
+        OPENJ9_SHA_OPTION = (OPENJ9_SHA != "") ? "-openj9-sha=${OPENJ9_SHA}" : ""
+        OMR_REPO_OPTION = (OMR_REPO != "") ? "-omr-repo=${OMR_REPO}" : ""
+        OMR_BRANCH_OPTION = (OMR_BRANCH != "")? "-omr-branch=${OMR_BRANCH}" : ""
+        OMR_SHA_OPTION = (OMR_SHA != "") ? "-omr-sha=${OMR_SHA}" : ""
 
-            // use sshagent with Jenkins credentials ID for all platforms except zOS
-            // on zOS use the user's ssh key
-            if (!SPEC.contains('zos') && (USER_CREDENTIALS_ID != '')) {
-                get_sources_with_authentication()
-            } else {
-                get_sources()
-            }
+        // use sshagent with Jenkins credentials ID for all platforms except zOS
+        // on zOS use the user's ssh key
+        if (!SPEC.contains('zos') && (USER_CREDENTIALS_ID != '')) {
+            get_sources_with_authentication()
+        } else {
+            get_sources()
         }
     }
 }
@@ -257,90 +255,110 @@ def checkoutRef (REF) {
 
 def build() {
     stage('Compile') {
-        timestamps {
-            // 'all' target dependencies broken for zos, use 'images test-image-openj9'
-            def make_target = SPEC.contains('zos') ? 'images test-image-openj9' : 'all'
-            OPENJDK_CLONE_DIR = "${env.WORKSPACE}/${OPENJDK_CLONE_DIR}"
-            withEnv(BUILD_ENV_VARS_LIST) {
-                dir(OPENJDK_CLONE_DIR) {
+        // 'all' target dependencies broken for zos, use 'images test-image-openj9'
+        def make_target = SPEC.contains('zos') ? 'images test-image-openj9' : 'all'
+        OPENJDK_CLONE_DIR = "${env.WORKSPACE}/${OPENJDK_CLONE_DIR}"
+        withEnv(BUILD_ENV_VARS_LIST) {
+            dir(OPENJDK_CLONE_DIR) {
+                try {
                     sh "${BUILD_ENV_CMD} bash configure --with-freemarker-jar='$FREEMARKER' --with-boot-jdk='$BOOT_JDK' $EXTRA_CONFIGURE_OPTIONS && make $EXTRA_MAKE_OPTIONS ${make_target}"
+                } catch(e) {
+                    archive_diagnostics()
+                    throw e
                 }
             }
         }
     }
     stage('Java Version') {
-        timestamps {
-            dir(OPENJDK_CLONE_DIR) {
-                sh "build/$RELEASE/images/$JDK_FOLDER/bin/java -version"
+        dir(OPENJDK_CLONE_DIR) {
+            sh "build/$RELEASE/images/$JDK_FOLDER/bin/java -version"
+        }
+    }
+}
+
+def archive_sdk() {
+    stage('Archive') {
+        def buildDir = "build/${RELEASE}/images/"
+        def testDir = "test/openj9"
+
+        dir(OPENJDK_CLONE_DIR) {
+            sh "tar -C ${buildDir} -zcvf ${SDK_FILENAME} ${JDK_FOLDER}"
+            // test if the test natives directory is present, only in JDK11+
+            if (fileExists("${buildDir}${testDir}")) {
+                if (SPEC.contains('zos')) {
+                    // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
+                    sh "pax  -wvz -s#${buildDir}${testDir}#native-test-libs#g -f ${TEST_FILENAME} ${buildDir}${testDir}"
+                } else {
+                    sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},native-test-libs,'"
+                }
+            }
+            if (ARTIFACTORY_SERVER) {
+                def uploadSpec = """{
+                        "files":[
+                            {
+                                "pattern": "${OPENJDK_CLONE_DIR}/${SDK_FILENAME}",
+                                "target": "${ARTIFACTORY_UPLOAD_DIR}",
+                                "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"
+                            },
+                            {
+                                "pattern": "${OPENJDK_CLONE_DIR}/${TEST_FILENAME}",
+                                "target": "${ARTIFACTORY_UPLOAD_DIR}",
+                                "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"
+                            }
+                        ]
+                    }"""
+                upload_artifacts(uploadSpec)
+                env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_URL}/${ARTIFACTORY_UPLOAD_DIR}${SDK_FILENAME}"
+                currentBuild.description += "<br><a href=${CUSTOMIZED_SDK_URL}>${SDK_FILENAME}</a>"
+                if (fileExists("${TEST_FILENAME}")) {
+                    TEST_LIB_URL = "${ARTIFACTORY_URL}/${ARTIFACTORY_UPLOAD_DIR}${TEST_FILENAME}"
+                    env.CUSTOMIZED_SDK_URL += " " + TEST_LIB_URL
+                    currentBuild.description += "<br><a href=${TEST_LIB_URL}>${TEST_FILENAME}</a>"
+                }
+                echo "CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
+            } else {
+                echo "ARTIFACTORY server is not set saving artifacts on jenkins."
+                archiveArtifacts artifacts: "**/${SDK_FILENAME},**/${TEST_FILENAME}", fingerprint: false, onlyIfSuccessful: true
             }
         }
     }
 }
 
-def archive() {
-    stage('Archive') {
-        timestamps {
-            def buildDir = "build/${RELEASE}/images/"
-            def testDir = "test/openj9"
-
-            dir(OPENJDK_CLONE_DIR) {
-                sh "tar -C ${buildDir} -zcvf ${SDK_FILENAME} ${JDK_FOLDER}"
-                // test if the test natives directory is present, only in JDK11+
-                if (fileExists("${buildDir}${testDir}")) {
-                    if (SPEC.contains('zos')) {
-                        // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
-                        sh "pax  -wvz -s#${buildDir}${testDir}#native-test-libs#g -f ${TEST_FILENAME} ${buildDir}${testDir}"
-                    } else {
-                        sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},native-test-libs,'"
-                    }
+def archive_diagnostics() {
+    sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"
+    if (ARTIFACTORY_SERVER) {
+        def uploadSpec = """{
+            "files":[
+                {
+                    "pattern": "${DIAGNOSTICS_FILENAME}",
+                    "target": "${ARTIFACTORY_UPLOAD_DIR}",
+                    "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"
                 }
-                if (ARTIFACTORY_SERVER) {
-                    def server = Artifactory.server ARTIFACTORY_SERVER
-                    // set connection timeout to 10 mins to avoid timeout on slow platforms
-                    server.connection.timeout = 600
-                    def artifactory_upload_dir = "${ARTIFACTORY_REPO}/${JOB_NAME}/${BUILD_ID}/"
-                    def uploadSpec = """{
-                        "files":[
-                            {
-                                "pattern": "${OPENJDK_CLONE_DIR}/${SDK_FILENAME}",
-                                "target": "${artifactory_upload_dir}",
-                                "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"
-                            },
-                            {
-                                "pattern": "${OPENJDK_CLONE_DIR}/${TEST_FILENAME}",
-                                "target": "${artifactory_upload_dir}",
-                                "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"
-                            }
-                        ]
-                    }"""
-
-                    def buildInfo = Artifactory.newBuildInfo()
-                    buildInfo.retention maxBuilds: ARTIFACTORY_NUM_ARTIFACTS, deleteBuildArtifacts: true
-                    // Add BUILD_IDENTIFIER to the buildInfo. The UploadSpec adds it to the Artifact info
-                    buildInfo.env.filter.addInclude("BUILD_IDENTIFIER")
-                    buildInfo.env.capture = true
-                    server.upload spec: uploadSpec, buildInfo: buildInfo
-                    server.publishBuildInfo buildInfo
-                    // Write URL to env so that we can pull it from the upstream pipeline job
-                    ARTIFACTORY_URL = server.getUrl()
-                    env.ARTIFACTORY_CREDS = server.getCredentialsId()
-                    SDK_URL = "${ARTIFACTORY_URL}/${artifactory_upload_dir}${SDK_FILENAME}"
-                    env.CUSTOMIZED_SDK_URL = SDK_URL
-                    currentBuild.description += "<br><a href=${SDK_URL}>${SDK_FILENAME}</a>"
-                    if (fileExists("${TEST_FILENAME}")) {
-                        TEST_LIB_URL = "${ARTIFACTORY_URL}/${artifactory_upload_dir}${TEST_FILENAME}"
-                        env.CUSTOMIZED_SDK_URL += " " + TEST_LIB_URL
-                        currentBuild.description += "<br><a href=${TEST_LIB_URL}>${TEST_FILENAME}</a>"
-                    }
-                    echo "CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
-                    echo "ARTIFACTORY_CREDS:'${ARTIFACTORY_CREDS}'"
-                } else {
-                    echo "ARTIFACTORY server is not set saving artifacts on jenkins."
-                    archiveArtifacts artifacts: "**/${SDK_FILENAME},**/${TEST_FILENAME}", fingerprint: false, onlyIfSuccessful: true
-                }
-            }
-        }
+            ]
+        }"""
+        upload_artifactory(uploadSpec)
+        DIAGNOSTICS_FILE_URL = "${ARTIFACTORY_URL}/${ARTIFACTORY_UPLOAD_DIR}${DIAGNOSTICS_FILENAME}"
+        currentBuild.description += "<br><a href=${DIAGNOSTICS_FILE_URL}>${DIAGNOSTICS_FILENAME}</a>"
+    } else {
+        archiveArtifacts artifacts: "${DIAGNOSTICS_FILENAME}", fingerprint: false
     }
+}
+
+def upload_artifactory(uploadSpec) {
+    def server = Artifactory.server ARTIFACTORY_SERVER
+    // set connection timeout to 10 mins to avoid timeout on slow platforms
+    server.connection.timeout = 600
+
+    def buildInfo = Artifactory.newBuildInfo()
+    buildInfo.retention maxBuilds: ARTIFACTORY_NUM_ARTIFACTS, deleteBuildArtifacts: true
+    // Add BUILD_IDENTIFIER to the buildInfo. The UploadSpec adds it to the Artifact info
+    buildInfo.env.filter.addInclude("BUILD_IDENTIFIER")
+    buildInfo.env.capture = true
+    server.upload spec: uploadSpec, buildInfo: buildInfo
+    server.publishBuildInfo buildInfo
+    // Write URL to env so that we can pull it from the upstream pipeline job
+    env.ARTIFACTORY_URL = server.getUrl()
+    env.ARTIFACTORY_CREDS = server.getCredentialsId()
 }
 
 def add_node_to_description() {
@@ -356,7 +374,7 @@ def build_all() {
             add_node_to_description()
             get_source()
             build()
-            archive()
+            archive_sdk()
         } finally {
             // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
             cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
