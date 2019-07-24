@@ -169,15 +169,23 @@ try {
                 try {
                     def gitConfig = scm.getUserRemoteConfigs().get(0)
                     def remoteConfigParameters = [url: "${gitConfig.getUrl()}"]
+                    def scmBranch = scm.branches[0].name
+                    if (params.sha1) {
+                        scmBranch = params.sha1
+                    }
 
                     if (gitConfig.getCredentialsId()) {
                         remoteConfigParameters.put("credentialsId", "${gitConfig.getCredentialsId()}")
                     }
 
+                    if (ghprbPullId) {
+                        remoteConfigParameters.put("refspec", "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge")
+                    }
+
                     checkout changelog: false,
                             poll: false,
                             scm: [$class: 'GitSCM',
-                            branches: [[name: scm.branches[0].name]],
+                            branches: [[name: "${scmBranch}"]],
                             doGenerateSubmoduleConfigurations: false,
                             extensions: [[$class: 'CloneOption',
                                           reference: "${HOME}/openjdk_cache"]],
