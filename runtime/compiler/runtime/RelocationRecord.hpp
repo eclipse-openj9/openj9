@@ -1544,6 +1544,14 @@ class TR_RelocationRecordValidateSuperClassFromClass : public TR_RelocationRecor
       virtual int32_t bytesInHeaderAndPayload() { return sizeof(TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate); }
       virtual void preparePrivateData(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget) {}
       virtual int32_t applyRelocation(TR_RelocationRuntime *reloRuntime, TR_RelocationTarget *reloTarget, uint8_t *reloLocation);
+
+      virtual void print(TR_RelocationRuntime *reloRuntime);
+
+      void setSuperClassID(TR_RelocationTarget *reloTarget, uint16_t superClassID);
+      uint16_t superClassID(TR_RelocationTarget *reloTarget);
+
+      void setChildClassID(TR_RelocationTarget *reloTarget, uint16_t childClassID);
+      uint16_t childClassID(TR_RelocationTarget *reloTarget);
    };
 
 class TR_RelocationRecordValidateClassInstanceOfClass : public TR_RelocationRecord

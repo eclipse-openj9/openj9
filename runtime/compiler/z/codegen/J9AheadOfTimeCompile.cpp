@@ -272,17 +272,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          }
          break;
 
-      case TR_ValidateSuperClassFromClass:
-         {
-         TR::SuperClassFromClassRecord *record = reinterpret_cast<TR::SuperClassFromClassRecord *>(relocation->getTargetAddress());
-         cursor -= sizeof(TR_RelocationRecordBinaryTemplate);
-         TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate *binaryTemplate =
-               reinterpret_cast<TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate *>(cursor);
-         binaryTemplate->_superClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_superClass));
-         binaryTemplate->_childClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->_childClass));
-         cursor += sizeof(TR_RelocationRecordValidateSuperClassFromClassBinaryTemplate);
-         }
-         break;
       case TR_ValidateClassInstanceOfClass:
          {
          TR::ClassInstanceOfClassRecord *record = reinterpret_cast<TR::ClassInstanceOfClassRecord *>(relocation->getTargetAddress());
