@@ -406,24 +406,25 @@ disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
 
 # How-to Reproduce Test Failures
 A common scenario is that automated testing finds a failure and a developer is asked to reproduce it.  An openj9 issue is created reporting a failing test.  The issue should contain:
-* the link to the Jenkins job (which contains all of the info you need, if you get to it before the Jenkins job is deleted)
-* test target name
-* test group (one of the following, functional, system, openjdk, external, perf)
+* link(s) to Jenkins job (which contains all of the info you need, if you get to it before the Jenkins job is deleted, which is quickly to save space on Jenkins master)
+* test target name (TARGET)
+* test group / test directory name (one of the following, functional, systemtest, openjdk, external, perf) (BUILD_LIST)
 * test level (one of the following, sanity, extended, special)
-* platform(s) the test fails on
-* version the test fails in
-* SDK build that was used by the test (java -version output)
+* platform(s) the test fails on (Jenkinsfile)
+* version the test fails in (JDK_VERSION)
+* implementation the test fails against (JDK_IMPL)
+* SDK build that was used by the test (in the console output of the Jenkins job, there is java -version info and a link to the SDK used)
 
 A specific example, [Issue 6555](https://github.com/eclipse/openj9/issues/6555) Test_openjdk13_j9_sanity.system_ppc64le_linux TestIBMJlmRemoteMemoryAuth_0 crash 
 we get the following info (captured in the name of the issue):
-* target = TestIBMJlmRemoteMemoryAuth_0
-* group = system
-* level = sanity
-* platform = ppc64le_linux
-Since only a link to the Jenkins job was provided in this issue, we do not have java -version info, we will have to go to the job link to find out the exact SDK build.  
+* TARGET = TestIBMJlmRemoteMemoryAuth_0
+* BUILD_LIST = systemtest
+* JDK_VERSION = 13
+* JDK_IMPL = openj9 (its implied if the failure was found in openj9 testing at ci.eclipse.org/openj9)
+* Jenkinsfile = openjdk_ppc64le_linux (corresponds to platform to run on)
 
-Given those pieces of information, we have enough to try and rerun this test, either in a Grinder job in Jenkins, or locally on a machine (on the same platform as the test failure).
+Since only a link to the Jenkins job was provided in the example issue 6555, we do not have java -version info, we will have to go to the job link to find out the exact SDK build, though it may be sufficient just to rerun the test with the latest nightly build to reproduce.  Given those pieces of information, we have enough to try and rerun this test, either in a Grinder job in Jenkins, or locally on a machine (on the same platform as the test failure).
 
-We can try to reproduce the failure by launching a Grinder job to try and using the latest nightly build from AdoptOpenJDK.  You can follow these instructions on [how to run a grinder job](https://github.com/AdoptOpenJDK/openjdk-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins).  
+For more details on launching a Grinder job, you can see these instructions on [how to run a grinder job](https://github.com/AdoptOpenJDK/openjdk-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins).  
 
-To try and reproduce the failure locally, please check out this [wiki for guidance on reproducing failures locally](https://github.com/eclipse/openj9/wiki/Reproducing-Test-Failures-Locally).  
+To try and reproduce the failure locally, please check out this [wiki for guidance on reproducing failures locally](https://github.com/eclipse/openj9/wiki/Reproducing-Test-Failures-Locally) for details.
