@@ -307,7 +307,7 @@ def archive_sdk() {
                             }
                         ]
                     }"""
-                upload_artifacts(uploadSpec)
+                upload_artifactory(uploadSpec)
                 env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_URL}/${ARTIFACTORY_UPLOAD_DIR}${SDK_FILENAME}"
                 currentBuild.description += "<br><a href=${CUSTOMIZED_SDK_URL}>${SDK_FILENAME}</a>"
                 if (fileExists("${TEST_FILENAME}")) {
