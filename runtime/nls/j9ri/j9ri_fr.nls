@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -221,7 +221,7 @@ J9NLS_RI_RUNDUMPROUTINE_NOT_SUPPORTED.user_response=Remove the JVMRI RunDumpRout
 # END NON-TRANSLATABLE
 
 # JVMRI is not translatable
-J9NLS_RI_INITIALIZE_CANT_ALLOCATE_MONITOR=JVMRI en cous d'initialisation ne peut pas allouer de moniteur dump jvri
+J9NLS_RI_INITIALIZE_CANT_ALLOCATE_MONITOR=JVMRI en cours d'initialisation ne peut pas allouer de moniteur dump jvri
 # START NON-TRANSLATABLE
 J9NLS_RI_INITIALIZE_CANT_ALLOCATE_MONITOR.explanation=The JVM failed to initialize the JVMRI interface because the JVM was unable to allocate a monitor.
 J9NLS_RI_INITIALIZE_CANT_ALLOCATE_MONITOR.system_action=The JVM terminates.

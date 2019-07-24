@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -55,7 +55,7 @@ J9NLS_DMP_UNRECOGNISED_OPTION_STR.sample_input_1=java:...events=bogus
 J9NLS_DMP_UNRECOGNISED_OPTION_STR.link=dita:///diag/tools/dumpagents_syntax.dita
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_UNRECOGNISED_EVENT_STR=Nierozpoznane zdarzenie zrzutu: ...%s
+J9NLS_DMP_UNRECOGNISED_EVENT_STR=Nierozpoznane zdarzenie zrzutu:...%s
 # START NON-TRANSLATABLE
 J9NLS_DMP_UNRECOGNISED_EVENT_STR.explanation=The event name provided with the -Xdump parameter is unknown.
 J9NLS_DMP_UNRECOGNISED_EVENT_STR.system_action=The JVM terminates.
@@ -191,7 +191,7 @@ J9NLS_DMP_PROCESSED_EVENT_STR.link=
 
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_UNRECOGNISED_REQUEST_STR=Nierozpoznane dzia\u0142anie maszyny VM: ...%s
+J9NLS_DMP_UNRECOGNISED_REQUEST_STR=Nierozpoznane dzia\u0142anie maszyny VM:...%s
 # START NON-TRANSLATABLE
 J9NLS_DMP_UNRECOGNISED_REQUEST_STR.explanation=A specified dump request action was not understood by the JVM.
 J9NLS_DMP_UNRECOGNISED_REQUEST_STR.system_action=The JVM produces help information and terminates.
@@ -505,4 +505,12 @@ J9NLS_DMP_INVALID_OR_RESERVED.system_action=The JVM exits.
 J9NLS_DMP_INVALID_OR_RESERVED.user_response=select a different value.
 J9NLS_DMP_INVALID_OR_RESERVED.sample_input_1=suspendwith
 J9NLS_DMP_INVALID_OR_RESERVED.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS=Liczba opcji musi by\u0107 mniejsza od %d, w\u0142\u0105czaj\u0105c w to opcje ustawione domy\u015blnie.
+# START NON-TRANSLATABLE
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.explanation=The number of -Xdump: options exceeds the VM limit
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.system_action=The JVM exits.
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.user_response=Combine dump types, event types, and filters using '+' into a single option
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.link=
 # END NON-TRANSLATABLE
