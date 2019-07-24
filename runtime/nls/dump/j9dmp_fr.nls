@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -232,7 +232,7 @@ J9NLS_DMP_NO_COMPRESS.link=
 # END NON-TRANSLATABLE
 
 # -Xdump:dynamic is not translatable
-J9NLS_DMP_HOOK_IS_DISABLED_STR=L'\u00e9v\u00e9nement demand\u00e9 n'est pas disponible : ex\u00e9cutez la commande avec -Xdump:indicateur dynamique
+J9NLS_DMP_HOOK_IS_DISABLED_STR=L'\u00e9v\u00e9nement demand\u00e9 n'est pas disponible : lancez l'ex\u00e9cution avec l'option -Xdump:dynamic
 # START NON-TRANSLATABLE
 J9NLS_DMP_HOOK_IS_DISABLED_STR.explanation=A dump has been requested on an event type that is not supported.
 J9NLS_DMP_HOOK_IS_DISABLED_STR.system_action=INTERNAL USE ONLY
@@ -505,4 +505,12 @@ J9NLS_DMP_INVALID_OR_RESERVED.system_action=The JVM exits.
 J9NLS_DMP_INVALID_OR_RESERVED.user_response=select a different value.
 J9NLS_DMP_INVALID_OR_RESERVED.sample_input_1=suspendwith
 J9NLS_DMP_INVALID_OR_RESERVED.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS=Le nombre d'options de vidage (dump), y compris les options appliqu\u00e9es par d\u00e9faut, doit \u00eatre inf\u00e9rieur \u00e0 %d.
+# START NON-TRANSLATABLE
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.explanation=The number of -Xdump: options exceeds the VM limit
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.system_action=The JVM exits.
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.user_response=Combine dump types, event types, and filters using '+' into a single option
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.link=
 # END NON-TRANSLATABLE
