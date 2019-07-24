@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,31 +21,21 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-package com.ibm.jvm;
-
-import openj9.management.internal.DumpConfigurationUnavailableExceptionBase;
+package openj9.management.internal;
 
 /**
  * This exception is thrown when the dump configuration cannot be
  * updated through the methods on com.ibm.jvm.Dump because it is
- * in use. This is usually because a dump is in progress and the
- * configuration is locked. A dump may take some time to complete
- * so this exception is thrown instead of blocking the calling
- * thread indefinitely.
+ * in use.
  */
-public class DumpConfigurationUnavailableException extends Exception {
+public class DumpConfigurationUnavailableExceptionBase extends Exception {
 
-	private static final long serialVersionUID = -5355657048034576194L;
-
-	public DumpConfigurationUnavailableException(String message) {
-		super(message);
-	}
-
+	private static final long serialVersionUID = -4576359433734094169L;
 	/**
-	 * @param cause root exception
+	 * @param message description of error
 	 */
-	public DumpConfigurationUnavailableException(DumpConfigurationUnavailableExceptionBase cause) {
-		super(cause.getMessage(), cause);
+	public DumpConfigurationUnavailableExceptionBase(String message) {
+		super(message);
 	}
 
 }
