@@ -72,6 +72,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
 
 TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
    {
@@ -441,6 +442,14 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
    _newMethodCodeStart = codeStart;
 
    reloLogger()->relocationDump();
+
+   if (_comp->isRemoteCompilation())
+      {
+      if (!_comp->compileRelocatableCode() || TR::CompilationInfo::canRelocateMethod(_comp))
+         {
+         fej9()->_compInfoPT->relocateThunks();
+         }
+      }
 
    if (_exceptionTableCacheEntry->type == J9_JIT_DCE_EXCEPTION_INFO)
       {

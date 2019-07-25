@@ -1784,12 +1784,6 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
    uintptr_t cpIndex,
    uint8_t *reloLocation)
    {
-   // XXX: Currently all thunks are batch-relocated elsewhere for JITaaS
-   if (reloRuntime->fej9()->_compInfoPT->getMethodBeingCompiled()->isRemoteCompReq() && 
-      !reloRuntime->fej9()->_compInfoPT->getMethodBeingCompiled()->isAotLoad())
-      {
-      return 0;
-      }
 
    J9JITConfig *jitConfig = reloRuntime->jitConfig();
    J9JavaVM *javaVM = reloRuntime->jitConfig()->javaVM;

@@ -824,18 +824,40 @@ bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
          break;
       case MessageType::VM_setJ2IThunk:
          {
-         auto recv = client->getRecvData<void*, std::string>();
-         void *thunk = std::get<0>(recv);
-         std::string signature = std::get<1>(recv);
-         TR::compInfoPT->addThunkToBeRelocated(thunk, signature);
+         auto recv = client->getRecvData<std::string, std::string>();
+         std::string signature = std::get<0>(recv);
+         std::string serializedThunk = std::get<1>(recv);
+
+         if (comp->compileRelocatableCode())
+            {
+            // For AOT, store thunk to SCC immediately, in case relocations get delayed
+            // Ideally, should use signature.data() here, but setJ2IThunk has non-const pointer
+            // as argument, and it uses it to invoke a VM function that also takes non-const pointer.
+            static_cast<TR_J9SharedCacheVM *>(fe)->persistThunk(
+               &signature[0],
+               signature.size(),
+               reinterpret_cast<uint8_t *>(&serializedThunk[0]),
+               serializedThunk.size());
+            }
+         // Cannot recreate thunk on the client because code cache is not yet allocated.
+         // Save it until compilation ends and relocateThunks is called
+         compInfoPT->addThunkToBeRelocated(serializedThunk, signature);
          client->write(response, JITServer::Void());
          }
          break;
       case MessageType::VM_setInvokeExactJ2IThunk:
          {
-         auto recv = client->getRecvData<void*>();
-         void *thunk = std::get<0>(recv);
-         TR::compInfoPT->addInvokeExactThunkToBeRelocated((TR_J2IThunk*) thunk);
+         auto recv = client->getRecvData<std::string>();
+         std::string &serializedThunk = std::get<0>(recv);
+
+         if (comp->compileRelocatableCode())
+            {
+            // For AOT, store thunk to SCC immediately, in case relocations get delayed
+            static_cast<TR_J9SharedCacheVM *>(fe)->persistJ2IThunk(reinterpret_cast<void *>(&serializedThunk[0]));
+            }
+         // Cannot recreate thunk on the client because code cache is not yet allocated.
+         // Save it until compilation ends and relocateThunks is called
+         TR::compInfoPT->addInvokeExactThunkToBeRelocated(serializedThunk);
          client->write(response, JITServer::Void());
          }
          break;
@@ -2727,16 +2749,6 @@ remoteCompile(
                }
             }
 
-         if (!useAotCompilation || TR::CompilationInfo::canRelocateMethod(compiler))
-            {
-            TR::compInfoPT->relocateThunks();
-            }
-         else
-            {
-            // metaData == NULL indicates AOT relocation is delayed
-            // we need to persist the thunks to SCC
-            TR::compInfoPT->persistThunksToSCC((J9JITDataCacheHeader *)&dataCacheStr[0], (uint8_t *)&codeCacheStr[0]);
-            }
 
          TR_ASSERT(!metaData || !metaData->startColdPC, "coldPC should be null");
 

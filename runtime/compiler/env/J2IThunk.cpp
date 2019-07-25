@@ -52,10 +52,11 @@ TR_J2IThunk::allocate(
    int16_t terseSignatureBufLength = thunkTable->terseSignatureLength(signature)+1;
    int16_t totalSize = (int16_t)sizeof(TR_J2IThunk) + codeSize + terseSignatureBufLength;
    TR_J2IThunk *result;
-   if (TR::comp()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-       result = (TR_J2IThunk*)cg->allocateCodeMemory(totalSize, false, true);
+   if (cg->comp()->isOutOfProcessCompilation())
+      // Don't need to use code cache because the entire thunk will be copied and sent to the client 
+      result = (TR_J2IThunk*)cg->comp()->trMemory()->allocateMemory(totalSize, heapAlloc);
    else
-       result = (TR_J2IThunk*)cg->allocateCodeMemory(totalSize, true, false);
+      result = (TR_J2IThunk*)cg->allocateCodeMemory(totalSize, true, false);
    result->_codeSize  = codeSize;
    result->_totalSize = totalSize;
    thunkTable->getTerseSignature(result->terseSignature(), terseSignatureBufLength, signature);

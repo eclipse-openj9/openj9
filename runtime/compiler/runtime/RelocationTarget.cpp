@@ -240,6 +240,12 @@ TR_RelocationTarget::performThunkRelocation(uint8_t *thunkAddress, uintptr_t vmH
    TR_ASSERT(0, "Error: performThunkRelocation not implemented in relocation target base class");
    }
 
+void
+TR_RelocationTarget::performInvokeExactJ2IThunkRelocation(TR_J2IThunk *thunk)
+   {
+   TR_ASSERT(0, "Error: performInvokeExactJ2IThunkRelocation not implemented in relocation target base class");
+   }
+
 uint8_t *
 TR_RelocationTarget::arrayCopyHelperAddress(J9JavaVM *javaVM)
    {

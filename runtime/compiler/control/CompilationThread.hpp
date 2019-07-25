@@ -381,10 +381,9 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    JITServer::ServerStream  *getStream();
    J9ROMClass            *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=NULL);
    J9ROMClass            *getRemoteROMClassIfCached(J9Class *);
-   void                   addThunkToBeRelocated(void *thunk, std::string signature);
-   void                   addInvokeExactThunkToBeRelocated(TR_J2IThunk *thunk);
+   void                   addThunkToBeRelocated(const std::string &serializedThunk, const std::string &signature);
+   void                   addInvokeExactThunkToBeRelocated(const std::string &serializedThunk);
    void                   relocateThunks();
-   void                   persistThunksToSCC(const J9JITDataCacheHeader *cacheEntry, uint8_t * existingCode);
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *getClassesThatShouldNotBeNewlyExtended() { return _classesThatShouldNotBeNewlyExtended; }
    uint32_t               getLastLocalGCCounter() { return _lastLocalGCCounter; }
    void                   updateLastLocalGCCounter(); 
@@ -406,10 +405,10 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   _initializationSucceeded;
    bool                   _isDiagnosticThread;
    CpuSelfThreadUtilization _compThreadCPU;
-   typedef TR::typed_allocator<std::pair<void *, std::string>, TR::PersistentAllocator&> ThunkVectorAllocator;
-   std::vector<std::pair<void *, std::string>, ThunkVectorAllocator> _thunksToBeRelocated;
-   typedef TR::typed_allocator<TR_J2IThunk *, TR::PersistentAllocator&> InvokeExactThunkVectorAllocator;
-   std::vector<TR_J2IThunk *, InvokeExactThunkVectorAllocator> _invokeExactThunksToBeRelocated;
+   typedef TR::typed_allocator<std::pair<std::string, std::string>, TR::PersistentAllocator&> ThunkVectorAllocator;
+   std::vector<std::pair<std::string, std::string>, ThunkVectorAllocator> _thunksToBeRelocated;
+   typedef TR::typed_allocator<std::string, TR::PersistentAllocator&> InvokeExactThunkVectorAllocator;
+   std::vector<std::string, InvokeExactThunkVectorAllocator> _invokeExactThunksToBeRelocated;
    // The following hastable caches <classLoader,classname> --> <J9Class> mappings
    // The cache only lives during a compilation due to class unloading concerns
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *_classesThatShouldNotBeNewlyExtended;
