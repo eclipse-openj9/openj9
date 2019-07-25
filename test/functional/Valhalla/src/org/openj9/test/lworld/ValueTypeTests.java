@@ -109,9 +109,11 @@ public class ValueTypeTests {
 	static int[] defaultPointPositions1 = {0xFFEEFFEE, 0xAABBAABB};
 	static int[] defaultPointPositions2 = {0xCCDDCCDD, 0x33443344};
 	static int[] defaultPointPositions3 = {0x43211234, 0xABCDDCBA};
+	static int[] defaultPointPositionsEmpty = {0, 0};
 	static int[][] defaultLinePositions1 = {defaultPointPositions1, defaultPointPositions2};
 	static int[][] defaultLinePositions2 = {defaultPointPositions2, defaultPointPositions3};
 	static int[][] defaultLinePositions3 = {defaultPointPositions1, defaultPointPositions3};
+	static int[][] defaultLinePositionsEmpty = {defaultPointPositionsEmpty, defaultPointPositionsEmpty};
 	static int[][][] defaultTrianglePositions = {defaultLinePositions1, defaultLinePositions2, defaultLinePositions3};
 	static long defaultLong = Long.MAX_VALUE;
 	static int defaultInt = Integer.MAX_VALUE;
@@ -121,6 +123,7 @@ public class ValueTypeTests {
 	static int[] defaultPointPositionsNew = {0xFF112233, 0xFF332211};
 	static int[][] defaultLinePositionsNew = {defaultPointPositionsNew, defaultPointPositions1};
 	static int[][][] defaultTrianglePositionsNew = {defaultLinePositionsNew, defaultLinePositions3, defaultLinePositions1};
+	static int[][][] defaultTrianglePositionsEmpty = {defaultLinePositionsEmpty, defaultLinePositionsEmpty, defaultLinePositionsEmpty};
 	static long defaultLongNew = -1234123L;
 	static int defaultIntNew = -1234123234;
 	static double defaultDoubleNew = -123412341.21341234d;
@@ -692,6 +695,37 @@ public class ValueTypeTests {
 		}
 		
 		checkEqualTriangle2D(triangle2D, defaultTrianglePositionsNew);
+	}
+	
+	
+	@Test(priority=4)
+	static public void testCreateArrayTriangle2D() throws Throwable {
+		Object arrayObject = Array.newInstance(triangle2DClass, 10);
+		Object triangle1 = createTriangle2D(defaultTrianglePositions);
+		Object triangle2 = createTriangle2D(defaultTrianglePositionsNew);
+		Object triangleEmpty = createTriangle2D(defaultTrianglePositionsEmpty);
+		
+		Array.set(arrayObject, 0, triangle1);
+		Array.set(arrayObject, 1, triangleEmpty);
+		Array.set(arrayObject, 2, triangle2);
+		Array.set(arrayObject, 3, triangleEmpty);
+		Array.set(arrayObject, 4, triangle1);
+		Array.set(arrayObject, 5, triangleEmpty);
+		Array.set(arrayObject, 6, triangle2);
+		Array.set(arrayObject, 7, triangleEmpty);
+		Array.set(arrayObject, 8, triangle1);
+		Array.set(arrayObject, 9, triangleEmpty);
+		
+		checkEqualTriangle2D(Array.get(arrayObject, 0), defaultTrianglePositions);
+		checkEqualTriangle2D(Array.get(arrayObject, 1), defaultTrianglePositionsEmpty);
+		checkEqualTriangle2D(Array.get(arrayObject, 2), defaultTrianglePositionsNew);
+		checkEqualTriangle2D(Array.get(arrayObject, 3), defaultTrianglePositionsEmpty);
+		checkEqualTriangle2D(Array.get(arrayObject, 4), defaultTrianglePositions);
+		checkEqualTriangle2D(Array.get(arrayObject, 5), defaultTrianglePositionsEmpty);
+		checkEqualTriangle2D(Array.get(arrayObject, 6), defaultTrianglePositionsNew);
+		checkEqualTriangle2D(Array.get(arrayObject, 7), defaultTrianglePositionsEmpty);
+		checkEqualTriangle2D(Array.get(arrayObject, 8), defaultTrianglePositions);
+		checkEqualTriangle2D(Array.get(arrayObject, 9), defaultTrianglePositionsEmpty);
 	}
 
 	/*

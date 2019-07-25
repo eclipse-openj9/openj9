@@ -378,6 +378,19 @@ public:
 		copyObjectFields(currentThread, objectClass, original, mixedObjectGetHeaderSize(), copy, mixedObjectGetHeaderSize());
 	}
 
+	VMINLINE void 
+	copyObjectFieldsToArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t srcObject, J9IndexableObject *arrayRef, UDATA index)
+	{
+		/* TODO optimizations for non-arraylet path will be added in the future */
+		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFieldsToArrayElement(vmThread, arrayClazz, srcObject, arrayRef, (I_32)index);
+	}
+	
+	VMINLINE void 
+	copyObjectFieldsFromArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t destObject, J9IndexableObject *arrayRef, UDATA index)
+	{
+		/* TODO optimizations for non-arraylet path will be added in the future */
+		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFieldsFromArrayElement(vmThread, arrayClazz, destObject, arrayRef, (I_32)index);
+	}
 
 	/**
 	 * Copy valueType from sourceObject to destObject
