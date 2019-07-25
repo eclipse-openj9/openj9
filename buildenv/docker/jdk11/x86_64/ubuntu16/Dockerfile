@@ -48,6 +48,7 @@ RUN apt-get update \
     libnuma-dev \
     libx11-dev \
     libxext-dev \
+    libxrandr-dev \
     libxrender-dev \
     libxt-dev \
     libxtst-dev \
