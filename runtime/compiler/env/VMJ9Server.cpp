@@ -1177,20 +1177,55 @@ TR_J9ServerVM::isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBl
 void *
 TR_J9ServerVM::getJ2IThunk(char *signatureChars, uint32_t signatureLength, TR::Compilation *comp)
    {
-   // Return NULL, since thunk will be recreated on the server whether or not it already exists.
-   // TODO: Track which thunks were created per-client, so that we don't need to recreate them.
-   return NULL;
+   // Check a map of registered thunks for this client.
+   // If a pointer to client-side thunk is there, return it.
+   // If a thunk is not registered, send a message to the client to check if it's registered there,
+   // cache the result if it is. Note that it's possible to have a thunk registered on the client
+   // but not in this map, when client reconnects to a different server.
+   std::string signature(signatureChars, signatureLength);
+      {
+      OMR::CriticalSection thunkMonitor(_compInfoPT->getClientData()->getThunkSetMonitor());
+      auto &thunkMap = _compInfoPT->getClientData()->getRegisteredJ2IThunkMap();
+      auto it = thunkMap.find(std::make_pair(signature, comp->compileRelocatableCode()));
+      if (it != thunkMap.end())
+         return it->second;
+      }
+
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_getJ2IThunk, signature);
+   void *thunkPtr = std::get<0>(stream->read<void *>());
+   if (thunkPtr)
+      {
+      // Cache client-side pointer to the thunk
+      OMR::CriticalSection thunkMonitor(_compInfoPT->getClientData()->getThunkSetMonitor());
+      auto &thunkMap = _compInfoPT->getClientData()->getRegisteredJ2IThunkMap();
+      thunkMap.insert(std::make_pair(std::make_pair(signature, comp->compileRelocatableCode()), thunkPtr));
+      }
+
+   return thunkPtr;
    }
 
 void *
 TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr, TR::Compilation *comp)
    {
-   TR_J9VMBase::setJ2IThunk(signatureChars, signatureLength, thunkptr, comp);
+   // Serialize thunk and send it to the client to be registered with the VM.
+   // Also add this thunk to a per-client set of registered thunks, so that we don't
+   // register duplicate thunks.
    std::string signature(signatureChars, signatureLength);
-   std::string serializedThunk((char *) ((U_8 *) thunkptr - 8), *((U_32 *)((U_8*) thunkptr - 8)) + 8);
+   uint8_t *thunkStart = reinterpret_cast<uint8_t *>(thunkptr) - 8;
+   uint32_t thunkSize = *reinterpret_cast<uint32_t *>(thunkStart) + 8;
+   std::string serializedThunk(reinterpret_cast<char *>(thunkStart), thunkSize);
+
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_setJ2IThunk, signature, serializedThunk);
-   stream->read<JITServer::Void>();
+   void *clientThunkPtr = std::get<0>(stream->read<void *>());
+
+      {
+      // Add clientThunkPtr to the map of thunks registered
+      OMR::CriticalSection thunkMonitor(_compInfoPT->getClientData()->getThunkSetMonitor());
+      auto &thunkMap = _compInfoPT->getClientData()->getRegisteredJ2IThunkMap();
+      thunkMap.insert(std::make_pair(std::make_pair(signature, comp->compileRelocatableCode()), clientThunkPtr));
+      }
    return thunkptr;
    }
 
@@ -1366,11 +1401,17 @@ TR_J9ServerVM::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
 void
 TR_J9ServerVM::setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp)
    {
-   TR_J9VMBase::setInvokeExactJ2IThunk(thunkptr, comp);
    std::string serializedThunk((char *) thunkptr, ((TR_J2IThunk *) thunkptr)->totalSize());
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_setInvokeExactJ2IThunk, serializedThunk);
    stream->read<JITServer::Void>();
+
+   // Add terse signature of the thunk to the set of registered thunks
+   OMR::CriticalSection thunkMonitor(_compInfoPT->getClientData()->getThunkSetMonitor());
+   TR_J2IThunk *thunk = reinterpret_cast<TR_J2IThunk *>(thunkptr);
+   std::string signature(thunk->terseSignature(), strlen(thunk->terseSignature()));
+   auto &thunkSet = _compInfoPT->getClientData()->getRegisteredInvokeExactJ2IThunkSet();
+   thunkSet.insert(std::make_pair(signature, comp->compileRelocatableCode()));
    }
 
 bool
@@ -1379,18 +1420,43 @@ TR_J9ServerVM::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *com
    TR_ASSERT(callNode->getOpCode().isCall(), "needsInvokeExactJ2IThunk expects call node; found %s", callNode->getOpCode().getName());
 
    TR::MethodSymbol *methodSymbol = callNode->getSymbol()->castToMethodSymbol();
-   TR::Method       *method       = methodSymbol->getMethod();
-   if (  methodSymbol->isComputed()
-      && (  method->getMandatoryRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact
+   TR::Method *method = methodSymbol->getMethod();
+   if (methodSymbol->isComputed()
+      && (method->getMandatoryRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact
          || method->isArchetypeSpecimen()))
       {
       if (isAOT_DEPRECATED_DO_NOT_USE()) // While we're here... we need an AOT relocation for this call
-         comp->cg()->addExternalRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(NULL, (uint8_t *)callNode, (uint8_t *)methodSymbol->getMethod()->signatureChars(), TR_J2IThunks, comp->cg()), __FILE__, __LINE__, callNode);
-      // for JITaaS always need to regenerate a thunk, when it's needed
-      return true;
+         comp->cg()->addExternalRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(NULL, (uint8_t *) callNode, (uint8_t *) methodSymbol->getMethod()->signatureChars(), TR_J2IThunks, comp->cg()), __FILE__, __LINE__, callNode);
+
+      char terseSignature[260]; // 256 args + 1 return type + null terminator
+      TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
+      thunkTable->getTerseSignature(terseSignature, sizeof(terseSignature), methodSymbol->getMethod()->signatureChars());
+      std::string terseSignatureStr(terseSignature, strlen(terseSignature));
+         {
+         OMR::CriticalSection thunkMonitor(_compInfoPT->getClientData()->getThunkSetMonitor());
+         auto &thunkSet = _compInfoPT->getClientData()->getRegisteredInvokeExactJ2IThunkSet();
+
+         if (thunkSet.find(std::make_pair(terseSignatureStr, comp->compileRelocatableCode())) != thunkSet.end())
+            return false;
+         }
+      // Check if the client has this thunk registered. Possible when client reconnects to a different server
+      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      std::string signature(methodSymbol->getMethod()->signatureChars(), methodSymbol->getMethod()->signatureLength());
+      stream->write(JITServer::MessageType::VM_needsInvokeExactJ2IThunk, signature);
+      bool needSignature = std::get<0>(stream->read<bool>());
+
+      auto &thunkSet = _compInfoPT->getClientData()->getRegisteredInvokeExactJ2IThunkSet();
+      if (!needSignature)
+         {
+         OMR::CriticalSection thunkMonitor(_compInfoPT->getClientData()->getThunkSetMonitor());
+         thunkSet.insert(std::make_pair(terseSignatureStr, comp->compileRelocatableCode()));
+         }
+      return needSignature;
       }
    else
+      {
       return false;
+      }
    }
 
 TR_ResolvedMethod *
@@ -1641,6 +1707,38 @@ TR_J9ServerVM::getReportByteCodeInfoAtCatchBlock()
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    return _compInfoPT->getClientData()->getOrCacheVMInfo(stream)->_reportByteCodeInfoAtCatchBlock;
+   }
+
+void *
+TR_J9ServerVM::getInvokeExactThunkHelperAddress(TR::Compilation *comp, TR::SymbolReference *glueSymRef, TR::DataType dataType)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   void *helper = NULL;
+   switch (dataType)
+      {
+      case TR::NoType:
+         helper = vmInfo->_noTypeInvokeExactThunkHelper;
+         break;
+      case TR::Int64:
+         helper = vmInfo->_int64InvokeExactThunkHelper;
+         break;
+      case TR::Address:
+         helper = vmInfo->_addressInvokeExactThunkHelper;
+         break;
+      case TR::Int32:
+         helper = vmInfo->_int32InvokeExactThunkHelper;
+         break;
+      case TR::Float:
+         helper = vmInfo->_floatInvokeExactThunkHelper;
+         break;
+      case TR::Double:
+         helper = vmInfo->_doubleInvokeExactThunkHelper;
+         break;
+      default:
+         TR_ASSERT(0, "Invalid data type");
+      }
+   return helper;
    }
 
 bool

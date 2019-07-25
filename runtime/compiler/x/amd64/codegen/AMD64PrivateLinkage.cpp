@@ -660,7 +660,7 @@ TR_J2IThunk *TR::AMD64PrivateLinkage::generateInvokeExactJ2IThunk(TR::Node *call
    //
    *(uint16_t *)cursor = 0xbf48;
    cursor += 2;
-   *(uint64_t *)cursor = (uintptrj_t)glueSymRef->getMethodAddress();
+   *(uint64_t *)cursor = (uintptrj_t) cg()->fej9()->getInvokeExactThunkHelperAddress(comp, glueSymRef, callNode->getDataType());
    cursor += 8;
 
    // Arg stores

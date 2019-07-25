@@ -233,7 +233,7 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
       cursor += 2;
       }
 
-   *(uintptrj_t *) cursor = (uintptrj_t) dispatcherSymbol->getMethodAddress();
+   *(uintptrj_t *) cursor = (uintptrj_t) cg->fej9()->getInvokeExactThunkHelperAddress(comp, dispatcherSymbol, callNode->getDataType());
    cursor += sizeof(uintptrj_t);
 
    diagnostic("\n-- ( Created invokeExact J2I thunk " POINTER_PRINTF_FORMAT " for node " POINTER_PRINTF_FORMAT " )", thunk, callNode);

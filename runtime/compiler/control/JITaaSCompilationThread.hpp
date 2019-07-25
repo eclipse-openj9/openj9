@@ -159,6 +159,12 @@ class ClientSessionData
       bool _compressObjectReferences;
       TR_ProcessorFeatureFlags _processorFeatureFlags;
       J9Method *_invokeWithArgumentsHelperMethod;
+      void *_noTypeInvokeExactThunkHelper;
+      void *_int64InvokeExactThunkHelper;
+      void *_int32InvokeExactThunkHelper;
+      void *_addressInvokeExactThunkHelper;
+      void *_floatInvokeExactThunkHelper;
+      void *_doubleInvokeExactThunkHelper;
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
@@ -219,6 +225,10 @@ class ClientSessionData
    bool getRtResolve() { return _rtResolve; }
    void setRtResolve(bool rtResolve) { _rtResolve = rtResolve; }
 
+   TR::Monitor *getThunkSetMonitor() { return _thunkSetMonitor; }
+   PersistentUnorderedMap<std::pair<std::string, bool>, void *> &getRegisteredJ2IThunkMap() { return _registeredJ2IThunksMap; }
+   PersistentUnorderedSet<std::pair<std::string, bool>> &getRegisteredInvokeExactJ2IThunkSet() { return _registeredInvokeExactJ2IThunksSet; }
+
    private:
    const uint64_t _clientUID;
    int64_t  _timeOfLastAccess; // in ms
@@ -260,6 +270,9 @@ class ClientSessionData
    TR::Monitor *_staticMapMonitor;
    PersistentUnorderedMap<void *, TR_StaticFinalData> _staticFinalDataMap; // stores values at static final addresses in JVM
    bool _rtResolve; // treat all data references as unresolved
+   TR::Monitor *_thunkSetMonitor;
+   PersistentUnorderedMap<std::pair<std::string, bool>, void *> _registeredJ2IThunksMap; // stores a map of J2I thunks created for this client
+   PersistentUnorderedSet<std::pair<std::string, bool>> _registeredInvokeExactJ2IThunksSet; // stores a set of invoke exact J2I thunks created for this client
    }; // ClientSessionData
 
 // Hashtable that maps clientUID to a pointer that points to ClientSessionData

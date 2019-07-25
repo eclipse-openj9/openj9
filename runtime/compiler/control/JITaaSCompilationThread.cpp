@@ -39,6 +39,10 @@
 #include "env/j9methodServer.hpp"
 #include "exceptions/AOTFailure.hpp" // for AOTFailure
 #include "env/TRMemory.hpp" // for jitPersistentAlloc and jitPersistentFree
+#include "runtime/CodeCacheManager.hpp"
+#include "runtime/CodeCacheExceptions.hpp"
+#include "runtime/RelocationTarget.hpp"
+#include "jitprotos.h"
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -563,6 +567,13 @@ bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
          vmInfo._compressObjectReferences = TR::Compiler->om.compressObjectReferences();
          vmInfo._processorFeatureFlags = TR::Compiler->target.cpu.getProcessorFeatureFlags();
          vmInfo._invokeWithArgumentsHelperMethod = J9VMJAVALANGINVOKEMETHODHANDLE_INVOKEWITHARGUMENTSHELPER_METHOD(fe->getJ9JITConfig()->javaVM);
+
+         vmInfo._noTypeInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact0, false, false, false)->getMethodAddress();
+         vmInfo._int64InvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactJ, false, false, false)->getMethodAddress();
+         vmInfo._int32InvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1, false, false, false)->getMethodAddress();
+         vmInfo._addressInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactL, false, false, false)->getMethodAddress();
+         vmInfo._floatInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactF, false, false, false)->getMethodAddress();
+         vmInfo._doubleInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD, false, false, false)->getMethodAddress();
          client->write(response, vmInfo);
          }
          break;
@@ -815,27 +826,54 @@ bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
          client->write(response, fe->getResolvedVirtualMethod(clazz, offset, ignoreRTResolve));
          }
          break;
+      case MessageType::VM_getJ2IThunk:
+         {
+         auto recv = client->getRecvData<std::string>();
+         std::string signature = std::get<0>(recv);
+         client->write(response, fe->getJ2IThunk(&signature[0], signature.size(), comp));
+         }
+         break;
       case MessageType::VM_setJ2IThunk:
          {
          auto recv = client->getRecvData<std::string, std::string>();
          std::string signature = std::get<0>(recv);
          std::string serializedThunk = std::get<1>(recv);
 
-         if (comp->compileRelocatableCode())
+         void *thunkAddress;
+         if (!comp->compileRelocatableCode())
             {
-            // For AOT, store thunk to SCC immediately, in case relocations get delayed
-            // Ideally, should use signature.data() here, but setJ2IThunk has non-const pointer
-            // as argument, and it uses it to invoke a VM function that also takes non-const pointer.
-            static_cast<TR_J9SharedCacheVM *>(fe)->persistThunk(
-               &signature[0],
-               signature.size(),
-               reinterpret_cast<uint8_t *>(&serializedThunk[0]),
-               serializedThunk.size());
+            // For non-AOT, copy thunk to code cache and relocate the vm helper address right away
+            uint8_t *thunkStart = TR_JITaaSRelocationRuntime::copyDataToCodeCache(serializedThunk.data(), serializedThunk.size(), fe);
+            if (!thunkStart)
+               compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate space in the code cache");
+
+            thunkAddress = thunkStart + 8;
+            void *vmHelper = j9ThunkVMHelperFromSignature(fe->_jitConfig, signature.size(), &signature[0]);
+            compInfoPT->reloRuntime()->reloTarget()->performThunkRelocation(reinterpret_cast<uint8_t *>(thunkAddress), (UDATA)vmHelper);
             }
-         // Cannot recreate thunk on the client because code cache is not yet allocated.
-         // Save it until compilation ends and relocateThunks is called
-         compInfoPT->addThunkToBeRelocated(serializedThunk, signature);
-         client->write(response, JITServer::Void());
+         else
+            {
+            // For AOT, set address to received string, because it will be stored to SCC, so
+            // no need for code cache allocation
+            thunkAddress = reinterpret_cast<void *>(&serializedThunk[0] + 8);
+            }
+
+         // Ideally, should use signature.data() here, but setJ2IThunk has non-const pointer
+         // as argument, and it uses it to invoke a VM function that also takes non-const pointer.
+         thunkAddress = fe->setJ2IThunk(&signature[0], signature.size(), thunkAddress, comp);
+
+         client->write(response, thunkAddress);
+         }
+         break;
+      case MessageType::VM_needsInvokeExactJ2IThunk:
+         {
+         auto recv = client->getRecvData<std::string>();
+         std::string signature = std::get<0>(recv);
+
+         TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
+         // Ideally, should use signature.data() here, but findThunk takes non-const pointer
+         TR_J2IThunk *thunk = thunkTable->findThunk(&signature[0], fe);
+         client->write(response, thunk == NULL);
          }
          break;
       case MessageType::VM_setInvokeExactJ2IThunk:
@@ -843,14 +881,14 @@ bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
          auto recv = client->getRecvData<std::string>();
          std::string &serializedThunk = std::get<0>(recv);
 
-         if (comp->compileRelocatableCode())
-            {
-            // For AOT, store thunk to SCC immediately, in case relocations get delayed
-            static_cast<TR_J9SharedCacheVM *>(fe)->persistJ2IThunk(reinterpret_cast<void *>(&serializedThunk[0]));
-            }
-         // Cannot recreate thunk on the client because code cache is not yet allocated.
-         // Save it until compilation ends and relocateThunks is called
-         TR::compInfoPT->addInvokeExactThunkToBeRelocated(serializedThunk);
+         // Do not need relocation here, because helper address should have been originally
+         // fetched from the client.
+         uint8_t *thunkStart = TR_JITaaSRelocationRuntime::copyDataToCodeCache(serializedThunk.data(), serializedThunk.size(), fe);
+         if (!thunkStart)
+            compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate space in the code cache");
+
+         void *thunkAddress = reinterpret_cast<void *>(thunkStart);
+         fe->setInvokeExactJ2IThunk(thunkAddress, comp);
          client->write(response, JITServer::Void());
          }
          break;
@@ -2178,7 +2216,7 @@ bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
             "arguments",        "[Ljava/lang/Class;");
          TR_OpaqueClassBlock *sourceParmClass = (TR_OpaqueClassBlock*)(intptrj_t)fe->getInt64Field(fe->getReferenceElement(sourceArguments, argIndex),
                                                                           "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
-         client->write(response, sourceArguments, targetArguments);
+         client->write(response, sourceParmClass, targetParmClass);
          }
          break;
       case MessageType::runFEMacro_invokeDirectHandleDirectCall:
@@ -3108,7 +3146,9 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _unloadedClassAddresses(NULL),
    _requestUnloadedClasses(true),
    _staticFinalDataMap(decltype(_staticFinalDataMap)::allocator_type(TR::Compiler->persistentAllocator())),
-   _rtResolve(false)
+   _rtResolve(false),
+   _registeredJ2IThunksMap(decltype(_registeredJ2IThunksMap)::allocator_type(TR::Compiler->persistentAllocator())),
+   _registeredInvokeExactJ2IThunksSet(decltype(_registeredInvokeExactJ2IThunksSet)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = NULL;
@@ -3122,6 +3162,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _vmInfo = NULL;
    _staticMapMonitor = TR::Monitor::create("JIT-JITaaSStaticMapMonitor");
    _markedForDeletion = false;
+   _thunkSetMonitor = TR::Monitor::create("JIT-JITaaSThunkSetMonitor");
    }
 
 ClientSessionData::~ClientSessionData()
@@ -3140,6 +3181,7 @@ ClientSessionData::~ClientSessionData()
    _staticMapMonitor->destroy();
    if (_vmInfo)
       jitPersistentFree(_vmInfo);
+   _thunkSetMonitor->destroy();
    }
 
 void
@@ -3465,6 +3507,8 @@ ClientSessionData::clearCaches()
       }
    _chTableClassMap.clear();
    _requestUnloadedClasses = true;
+   _registeredJ2IThunksMap.clear();
+   _registeredInvokeExactJ2IThunksSet.clear();
    }
 
 void 
@@ -4516,10 +4560,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          }
       return;
       }
-
-   _thunksToBeRelocated.clear();
-   _invokeExactThunksToBeRelocated.clear();
-
 
    // Do the hack for newInstance thunks
    // Also make the method appear as interpreted, otherwise we might want to access recompilation info

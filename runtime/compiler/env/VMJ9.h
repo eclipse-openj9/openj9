@@ -1014,6 +1014,7 @@ public:
    virtual bool instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass);
    virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr) { return false; }
    virtual bool isStringCompressionEnabledVM();
+   virtual void *getInvokeExactThunkHelperAddress(TR::Compilation *comp, TR::SymbolReference *glueSymRef, TR::DataType dataType);
 
 protected:
 

@@ -402,6 +402,7 @@ public:
       virtual bool isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
       virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!");  return TR_no; }
       virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9JavaVM *javaVM, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
+      static uint8_t *copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe);
 
 private:
       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize);
