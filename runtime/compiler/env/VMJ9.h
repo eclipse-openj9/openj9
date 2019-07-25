@@ -547,6 +547,7 @@ public:
    virtual uintptrj_t           getReferenceElement(uintptrj_t objectPointer, intptrj_t elementIndex);
 
    virtual TR_OpaqueClassBlock *getClassFromJavaLangClass(uintptrj_t objectPointer);
+   virtual TR_arrayTypeCode    getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz);
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool callSiteVettedForAOT=false) { return 0; }
 
    virtual uintptrj_t         getOffsetOfLastITableFromClassField();

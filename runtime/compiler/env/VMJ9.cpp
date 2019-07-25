@@ -84,6 +84,7 @@
 #include "infra/Monitor.hpp"
 #include "infra/MonitorTable.hpp"
 #include "il/DataTypes.hpp"
+#include "il/J9DataTypes.hpp"
 #include "il/Node.hpp"
 #include "il/NodePool.hpp"
 #include "il/Node_inlines.hpp"
@@ -1359,6 +1360,29 @@ TR_J9VMBase::getReferenceElement(uintptrj_t objectPointer, intptrj_t elementInde
    {
    TR_ASSERT(haveAccess(), "getReferenceElement requires VM access");
    return (uintptrj_t)J9JAVAARRAYOFOBJECT_LOAD(vmThread(), objectPointer, elementIndex);
+   }
+
+TR_arrayTypeCode TR_J9VMBase::getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz)
+   {
+   TR_ASSERT(isPrimitiveClass(clazz), "Expect primitive class in TR_J9VMBase::getPrimitiveArrayType");
+
+   J9Class* j9clazz = (J9Class*)clazz;
+   if (j9clazz == jitConfig->javaVM->booleanReflectClass)
+      return atype_boolean;
+   else if (j9clazz == jitConfig->javaVM->charReflectClass)
+      return atype_char;
+   else if (j9clazz == jitConfig->javaVM->floatReflectClass)
+      return atype_float;
+   else if (j9clazz == jitConfig->javaVM->doubleReflectClass)
+      return atype_double;
+   else if (j9clazz == jitConfig->javaVM->byteReflectClass)
+      return atype_byte;
+   else if (j9clazz == jitConfig->javaVM->shortReflectClass)
+      return atype_short;
+   else if (j9clazz == jitConfig->javaVM->intReflectClass)
+      return atype_int;
+   else if (j9clazz == jitConfig->javaVM->longReflectClass)
+      return atype_long;
    }
 
 TR_OpaqueClassBlock *
