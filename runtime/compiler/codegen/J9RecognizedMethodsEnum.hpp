@@ -941,6 +941,7 @@
    java_lang_invoke_CollectHandle_collectionStart,
    java_lang_invoke_CollectHandle_numArgsAfterCollectArray,
    java_lang_invoke_CollectHandle_invokeExact,
+   java_lang_invoke_CollectHandle_allocateArray,
    java_lang_invoke_ComputedCalls_dispatchDirect,
    java_lang_invoke_ComputedCalls_dispatchJ9Method,
    java_lang_invoke_ComputedCalls_dispatchVirtual,
