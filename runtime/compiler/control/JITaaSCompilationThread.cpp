@@ -4052,7 +4052,7 @@ TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::Compilati
    _resolvedMirrorMethodsPersistIPInfo(NULL)
    {}
 
-// waitForMyTurn needs to be exeuted with sequencingMonitor in hand
+// waitForMyTurn needs to be executed with sequencingMonitor in hand
 void
 TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSession, TR_MethodToBeCompiled &entry)
    {
@@ -4146,6 +4146,29 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
       } while (seqNo > clientSession->getExpectedSeqNo());
    }
 
+// Needs to be executed with clientSession->getSequencingMonitor() in hand
+void
+TR::CompilationInfoPerThreadRemote::updateSeqNo(ClientSessionData *clientSession)
+   {
+   uint32_t newSeqNo = clientSession->getExpectedSeqNo() + 1;
+   clientSession->setExpectedSeqNo(newSeqNo);
+
+   // Notify a possible waiting thread that arrived out of sequence
+   // and take that entry out of the OOSequenceEntryList
+   TR_MethodToBeCompiled *nextEntry = clientSession->getOOSequenceEntryList();
+   if (nextEntry)
+      {
+      uint32_t nextWaitingSeqNo = ((CompilationInfoPerThreadRemote*)(nextEntry->_compInfoPT))->getSeqNo();
+      if (nextWaitingSeqNo == newSeqNo)
+         {
+         clientSession->notifyAndDetachFirstWaitingThread();
+
+         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d notifying out-of-sequence thread %d for clientUID=%llu seqNo=%u (entry=%p)",
+               getCompThreadId(), nextEntry->_compInfoPT->getCompThreadId(), (unsigned long long)clientSession->getClientUID(), nextWaitingSeqNo, nextEntry);
+         }
+      }
+   }
 
 void
 TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider)
@@ -4171,6 +4194,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    TR_OptimizationPlan *optPlan = NULL;
    _vm = NULL;
    bool useAotCompilation = false;
+   uint32_t seqNo = 0;
+   ClientSessionData *clientSession = NULL;
    try
       {
       auto req = stream->readCompileRequest<uint64_t, uint32_t, J9Method *, J9Class*, TR_OptimizationPlan, std::string,
@@ -4188,7 +4213,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       auto &classInfoTuple               = std::get<8>(req);
       std::string clientOptStr           = std::get<9>(req);
       std::string recompInfoStr          = std::get<10>(req);
-      uint32_t seqNo                     = std::get<11>(req); // sequence number at the client
+      seqNo                              = std::get<11>(req); // sequence number at the client
       useAotCompilation                  = std::get<12>(req);
 
       if (useAotCompilation)
@@ -4213,7 +4238,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       setSeqNo(seqNo); // memorize the sequence number of this request
 
       bool sessionDataWasEmpty = false;
-      ClientSessionData *clientSession = NULL;
       {
       // Get a pointer to this client's session data
       // Obtain monitor RAII style because creating a new hastable entry may throw bad_alloc
@@ -4288,24 +4312,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // Update the expecting sequence number. This will allow subsequent
       // threads to pass through once we've released the sequencing monitor.
       TR_ASSERT(seqNo == clientSession->getExpectedSeqNo(), "Unexpected seqNo");
-      uint32_t newSeqNo = std::max(seqNo + 1, clientSession->getExpectedSeqNo());
-      clientSession->setExpectedSeqNo(newSeqNo);
-
-      // Notify a possible waiting thread that arrived out of sequence
-      // and take that entry out of the OOSequenceEntryList
-      TR_MethodToBeCompiled *nextEntry = clientSession->getOOSequenceEntryList();
-      if (nextEntry)
-         {
-         uint32_t nextWaitingSeqNo = ((CompilationInfoPerThreadRemote*)(nextEntry->_compInfoPT))->getSeqNo();
-         if (nextWaitingSeqNo == seqNo + 1)
-            {
-            clientSession->notifyAndDetachFirstWaitingThread();
-
-            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d notifying out-of-sequence thread %d for clientUID=%llu seqNo=%u (entry=%p)",
-                  getCompThreadId(), nextEntry->_compInfoPT->getCompThreadId(), (unsigned long long)clientId, nextWaitingSeqNo, nextEntry);
-            }
-         }
+      updateSeqNo(clientSession);
       // Increment the number of active threads before issuing the read for ramClass
       clientSession->incNumActiveThreads();
       // Finally, release the sequencing monitor so that other threads
@@ -4404,6 +4411,17 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream cancelled by client while compThreadID=%d was reading the compilation request: %s",
             getCompThreadId(), e.what());
+      // If the client aborted this compilation it could have happened only while
+      // asking for CHTable updates and at that point the seqNo was not updated.
+      // We must update it now to allow for blocking threads to pass through.
+      if (e.getType() == JITServer::MessageType::compilationAbort)
+         {
+         clientSession->getSequencingMonitor()->enter();
+         TR_ASSERT(seqNo == clientSession->getExpectedSeqNo(), "Unexpected seqNo");
+         updateSeqNo(clientSession);
+         // Release the sequencing monitor so that other threads can process their lists of unloaded classes
+         clientSession->getSequencingMonitor()->exit();
+         }
       abortCompilation = true;
       if (!enableJITaaSPerCompConn)
          {
@@ -4509,17 +4527,21 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    //
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
 
-   // Decrement number of active threads before _inUse
-   getClientData()->decNumActiveThreads(); // We hold compMonitor so there is no accounting problem
+   // Release the queue slot monitor because we don't need it anymore
+   // This will allow us to acquire the sequencing monitor later
+   entry.releaseSlotMonitor(compThread);
+
+   // Decrement number of active threads before _inUse, but we
+   // need to acquire the sequencing monitor when accessing numActiveThreads
+   getClientData()->getSequencingMonitor()->enter();
+   getClientData()->decNumActiveThreads(); 
+   getClientData()->getSequencingMonitor()->exit();
    getClientData()->decInUse();  // We have the compMonitor so it's safe to access the inUse counter
    if (getClientData()->getInUse() == 0)
       {
-      bool result = compInfo->getClientSessionHT()->deleteClientSession(clientId, false);
-      if (result)
-         {
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,"client (%llu) deleted", (unsigned long long)clientId);
-         }
+      bool deleted = compInfo->getClientSessionHT()->deleteClientSession(clientId, false);
+      if (deleted && TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,"client (%llu) deleted", (unsigned long long)clientId);
       }
 
    setClientData(NULL); // Reset the pointer to the cached client session data
@@ -4536,9 +4558,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    compInfo->requeueOutOfProcessEntry(&entry);
    compInfo->printQueue();
 
-   // Release the queue slot monitor
-   //
-   entry.releaseSlotMonitor(compThread);
 
    // At this point we should always have VMAccess
    // We should always have the compilation monitor
