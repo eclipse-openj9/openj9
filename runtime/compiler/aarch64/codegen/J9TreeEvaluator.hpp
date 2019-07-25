@@ -88,6 +88,8 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *multianewArrayEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Register *asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    };
 
 }

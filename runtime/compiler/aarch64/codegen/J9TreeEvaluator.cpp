@@ -45,10 +45,8 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::awrtbari] = TR::TreeEvaluator::awrtbariEvaluator;
    tet[TR::monexit] = TR::TreeEvaluator::monexitEvaluator;
    tet[TR::monent] = TR::TreeEvaluator::monentEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::awrtbar] = TR::TreeEvaluator::awrtbarEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::awrtbari] = TR::TreeEvaluator::awrtbariEvaluator;
    tet[TR::monexitfence] = TR::TreeEvaluator::monexitfenceEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::asynccheck] = TR::TreeEvaluator::asynccheckEvaluator;
+   tet[TR::asynccheck] = TR::TreeEvaluator::asynccheckEvaluator;
    tet[TR::instanceof] = TR::TreeEvaluator::instanceofEvaluator;
    tet[TR::checkcast] = TR::TreeEvaluator::checkcastEvaluator;
    tet[TR::checkcastAndNULLCHK] = TR::TreeEvaluator::checkcastAndNULLCHKEvaluator;
@@ -153,6 +151,36 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
    TR::Register *targetRegister = directCallEvaluator(node, cg);
    TR::Node::recreate(node, opCode);
    return targetRegister;
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The child contains an inline test. If it succeeds, the helper is called.
+   // The address of the helper is contained as a long in this node.
+   //
+   TR::Node *testNode = node->getFirstChild();
+   TR::Node *firstChild = testNode->getFirstChild();
+   TR::Register *src1Reg = cg->evaluate(firstChild);
+   TR::Node *secondChild = testNode->getSecondChild();
+   TR::Register *src2Reg = cg->evaluate(secondChild);
+
+   TR_ASSERT(testNode->getOpCodeValue() == TR::lcmpeq, "asynccheck bad format");
+
+   TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
+   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+
+   // ToDo:
+   // Optimize this using "cmp (immediate)" instead of "cmp (register)" when possible
+   generateCompareInstruction(cg, node, src1Reg, src2Reg, true); // 64-bit compare
+
+   TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_EQ);
+   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   cg->decReferenceCount(testNode);
+   return NULL;
    }
 
 TR::Register *
