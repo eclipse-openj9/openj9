@@ -314,6 +314,7 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
       uint32_t getSeqNo() const { return _seqNo; }; // for ordering requests at the server
       void setSeqNo(uint32_t seqNo) { _seqNo = seqNo; }
       void waitForMyTurn(ClientSessionData *clientSession, TR_MethodToBeCompiled &entry); // return false if timeout
+      void updateSeqNo(ClientSessionData *clientSession);
       bool getWaitToBeNotified() const { return _waitToBeNotified; }
       void setWaitToBeNotified(bool b) { _waitToBeNotified = b; }
 
