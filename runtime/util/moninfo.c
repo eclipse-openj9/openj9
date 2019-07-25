@@ -67,7 +67,7 @@ getObjectMonitorOwner(J9JavaVM *vm, J9VMThread *vmThread, j9object_t object, UDA
 	if (!LN_HAS_LOCKWORD(vmThread,object)) {
 		J9ObjectMonitor *objectMonitor = monitorTablePeek(vm, vmThread, object);
 		if (objectMonitor != NULL){
-			lock = objectMonitor->alternateLockword;
+			lock = J9_LOAD_LOCKWORD(vmThread, &objectMonitor->alternateLockword);
 		} else {
 			lock = 0;
 		}

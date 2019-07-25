@@ -63,7 +63,7 @@ Java_j9vm_test_monitor_Helpers_monitorReserve(JNIEnv * env, jclass clazz, jobjec
 
 	J9VMThread* vmThread = (J9VMThread*)env;
 	j9object_t obj;
-	UDATA lock;
+	j9objectmonitor_t lock;
 	j9objectmonitor_t* lockEA;
 	jclass errorClazz;
 
@@ -81,12 +81,7 @@ Java_j9vm_test_monitor_Helpers_monitorReserve(JNIEnv * env, jclass clazz, jobjec
 		return;
 	}
 
-	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
-		lock = *(U_32*)lockEA;
-	} else {
-		lock = *(UDATA*)lockEA;
-	}
-
+	lock = J9_LOAD_LOCKWORD(vmThread, lockEA);
 	if (lock != 0) {
 		vmThread->javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);		
 		errorClazz = (*env)->FindClass(env, "java/lang/Error");
@@ -96,12 +91,9 @@ Java_j9vm_test_monitor_Helpers_monitorReserve(JNIEnv * env, jclass clazz, jobjec
 		return;
 	}
 
-	lock = (UDATA)vmThread | OBJECT_HEADER_LOCK_RESERVED;
-	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
-		*(U_32*)lockEA = (U_32)lock;
-	} else {
-		*(UDATA*)lockEA = lock;
-	}
+	lock = (j9objectmonitor_t)((UDATA)vmThread | OBJECT_HEADER_LOCK_RESERVED);
+	J9_STORE_LOCKWORD(vmThread, lockEA, lock);
+
 	vmThread->javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);
 
 #endif

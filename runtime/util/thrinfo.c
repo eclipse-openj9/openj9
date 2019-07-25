@@ -682,16 +682,15 @@ getInflatedObjectMonitor(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t ob
 static j9objectmonitor_t
 getLockWord(J9VMThread *vmThread, j9object_t object)
 {
-	j9objectmonitor_t lockWord;
+	j9objectmonitor_t lockWord = 0;
 
 	if (LN_HAS_LOCKWORD(vmThread,object)) {
-		lockWord = *J9OBJECT_MONITOR_EA(vmThread, object);
+		j9objectmonitor_t *lwEA = J9OBJECT_MONITOR_EA(vmThread, object);
+		lockWord = J9_LOAD_LOCKWORD(vmThread, lwEA);
 	} else {
 		J9ObjectMonitor *objectMonitor = monitorTablePeek(vmThread->javaVM, vmThread, object);
 		if (objectMonitor != NULL){
-			lockWord = objectMonitor->alternateLockword;
-		} else {
-			lockWord = 0;
+			lockWord = J9_LOAD_LOCKWORD(vmThread, &objectMonitor->alternateLockword);
 		}
 	}
 
