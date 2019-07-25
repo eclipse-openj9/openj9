@@ -2877,8 +2877,9 @@ fail:
 				ramArrayClass->arity = arity;
 				ramArrayClass->componentType = elementClass;
 				ramArrayClass->module = leafComponentType->module;
+				ramArrayClass->classFlags |= ((J9ClassIsValueType | J9ClassIsFlattened) & elementClass->classFlags);
 				
-				if (J9_IS_J9CLASS_VALUETYPE(elementClass) && J9_IS_J9CLASS_FLATTENED(elementClass)) {
+				if (J9_IS_J9CLASS_FLATTENED(elementClass)) {
 					if (J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {
 						J9ARRAYCLASS_SET_STRIDE(ramClass, ROUND_UP_TO_POWEROF2(J9_VALUETYPE_FLATTENED_SIZE(elementClass), sizeof(U_64)));
 					} else if (J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintReference)) {
