@@ -1179,17 +1179,37 @@ TR_J9ServerVM::isClassVisible(TR_OpaqueClassBlock *sourceClass, TR_OpaqueClassBl
 void *
 TR_J9ServerVM::getJ2IThunk(char *signatureChars, uint32_t signatureLength, TR::Compilation *comp)
    {
-   // Return NULL, since thunk will be recreated on the server whether or not it already exists.
-   // TODO: Track which thunks were created per-client, so that we don't need to recreate them.
+   // Check a set of thunks already registered (or about to be registered) for this client.
+   // If a thunk is there, return -1 to indicate that we don't need to regenerate thunk on
+   // the server and send it to client again. -1 is fine here, because the address will be relocated
+   // on the client anyway.
+   // If a thunk is not registered, return NULL to indicate that we need to generate and register it.
+      {
+      OMR::CriticalSection thunkMonitor(_compInfoPT->getClientData()->getThunkSetMonitor());
+      auto &thunkSet = _compInfoPT->getClientData()->getRegisteredJ2IThunkSet();
+      std::string signature(signatureChars, signatureLength);
+      if (thunkSet.find(signature) != thunkSet.end())
+         return reinterpret_cast<void *>(-1);
+      }
    return NULL;
    }
 
 void *
 TR_J9ServerVM::setJ2IThunk(char *signatureChars, uint32_t signatureLength, void *thunkptr, TR::Compilation *comp)
    {
-   TR_J9VMBase::setJ2IThunk(signatureChars, signatureLength, thunkptr, comp);
+   // Serialize thunk and send it to the client to be registered with the VM.
+   // Also add this thunk to a per-client set of registered thunks, so that we don't
+   // register duplicate thunks.
    std::string signature(signatureChars, signatureLength);
    std::string serializedThunk((char *) ((U_8 *) thunkptr - 8), *((U_32 *)((U_8*) thunkptr - 8)) + 8);
+
+      {
+      // Add thunkptr to the set of thunks registered
+      OMR::CriticalSection thunkMonitor(_compInfoPT->getClientData()->getThunkSetMonitor());
+      auto &thunkSet = _compInfoPT->getClientData()->getRegisteredJ2IThunkSet();
+      thunkSet.insert(signature);
+      }
+   
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_setJ2IThunk, signature, serializedThunk);
    stream->read<JITServer::Void>();
@@ -1368,7 +1388,14 @@ TR_J9ServerVM::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
 void
 TR_J9ServerVM::setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp)
    {
-   TR_J9VMBase::setInvokeExactJ2IThunk(thunkptr, comp);
+      {
+      // Add thunkptr to the set of thunks registered, using terse signature as identifier
+      OMR::CriticalSection thunkMonitor(_compInfoPT->getClientData()->getThunkSetMonitor());
+      TR_J2IThunk *thunk = reinterpret_cast<TR_J2IThunk *>(thunkptr);
+      std::string signature(thunk->terseSignature(), strlen(thunk->terseSignature()));
+      auto &thunkSet = _compInfoPT->getClientData()->getRegisteredInvokeExactJ2IThunkSet();
+      thunkSet.insert(signature);
+      }
    std::string serializedThunk((char *) thunkptr, ((TR_J2IThunk *) thunkptr)->totalSize());
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_setInvokeExactJ2IThunk, serializedThunk);
@@ -1388,8 +1415,14 @@ TR_J9ServerVM::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *com
       {
       if (isAOT_DEPRECATED_DO_NOT_USE()) // While we're here... we need an AOT relocation for this call
          comp->cg()->addExternalRelocation(new (comp->trHeapMemory()) TR::ExternalRelocation(NULL, (uint8_t *)callNode, (uint8_t *)methodSymbol->getMethod()->signatureChars(), TR_J2IThunks, comp->cg()), __FILE__, __LINE__, callNode);
-      // for JITaaS always need to regenerate a thunk, when it's needed
-      return true;
+
+      OMR::CriticalSection thunkMonitor(_compInfoPT->getClientData()->getThunkSetMonitor());
+      auto &thunkSet = _compInfoPT->getClientData()->getRegisteredInvokeExactJ2IThunkSet();
+
+      char terseSignature[260]; // 256 args + 1 return type + null terminator
+      TR_J2IThunkTable *thunkTable = comp->getPersistentInfo()->getInvokeExactJ2IThunkTable();
+      thunkTable->getTerseSignature(terseSignature, sizeof(terseSignature), methodSymbol->getMethod()->signatureChars());
+      return thunkSet.find(std::string(terseSignature)) != thunkSet.end();
       }
    else
       return false;

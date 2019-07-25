@@ -3114,7 +3114,9 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _unloadedClassAddresses(NULL),
    _requestUnloadedClasses(true),
    _staticFinalDataMap(decltype(_staticFinalDataMap)::allocator_type(TR::Compiler->persistentAllocator())),
-   _rtResolve(false)
+   _rtResolve(false),
+   _registeredJ2IThunksSet(decltype(_registeredJ2IThunksSet)::allocator_type(TR::Compiler->persistentAllocator())),
+   _registeredInvokeExactJ2IThunksSet(decltype(_registeredInvokeExactJ2IThunksSet)::allocator_type(TR::Compiler->persistentAllocator()))
    {
    updateTimeOfLastAccess();
    _javaLangClassPtr = NULL;
@@ -3128,6 +3130,7 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _vmInfo = NULL;
    _staticMapMonitor = TR::Monitor::create("JIT-JITaaSStaticMapMonitor");
    _markedForDeletion = false;
+   _thunkSetMonitor = TR::Monitor::create("JIT-JITaaSThunkSetMonitor");
    }
 
 ClientSessionData::~ClientSessionData()
@@ -3146,6 +3149,7 @@ ClientSessionData::~ClientSessionData()
    _staticMapMonitor->destroy();
    if (_vmInfo)
       jitPersistentFree(_vmInfo);
+   _thunkSetMonitor->destroy();
    }
 
 void
@@ -3471,6 +3475,8 @@ ClientSessionData::clearCaches()
       }
    _chTableClassMap.clear();
    _requestUnloadedClasses = true;
+   _registeredJ2IThunksSet.clear();
+   _registeredInvokeExactJ2IThunksSet.clear();
    }
 
 void 
