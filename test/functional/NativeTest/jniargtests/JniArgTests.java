@@ -53,7 +53,7 @@ public class JniArgTests {
 	final boolean test_jboolean[] = {true, false};
 	
 	public static void main(String[] args) {
-		System.loadLibrary( "jniargtests" );
+		System.loadLibrary(args[0]);
 		JniArgTests jniArgTests = new JniArgTests();
 		jniArgTests.testBlock();
 		jniArgTests.testBlock();
