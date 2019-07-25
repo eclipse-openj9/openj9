@@ -640,7 +640,7 @@ static U_32 vftOffsetFromPC (J9Method *method, uintptrj_t pc)
    UDATA vTableSlot = ((J9RAMVirtualMethodRef *)literals)[cpIndex].methodIndexAndArgCount >> 8;
    TR_ASSERT(vTableSlot, "vTableSlot called for unresolved method");
 
-   return (U_32) (J9JIT_INTERP_VTABLE_OFFSET - vTableSlot);
+   return (U_32) (TR::Compiler->vm.getInterpreterVTableOffset() - vTableSlot);
    }
 
 
