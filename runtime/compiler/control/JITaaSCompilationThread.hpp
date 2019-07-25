@@ -165,6 +165,7 @@ class ClientSessionData
       void *_addressInvokeExactThunkHelper;
       void *_floatInvokeExactThunkHelper;
       void *_doubleInvokeExactThunkHelper;
+      size_t _interpreterVTableOffset;
       };
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
