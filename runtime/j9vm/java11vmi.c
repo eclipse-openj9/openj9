@@ -389,7 +389,11 @@ addMulPackageDefinitions(J9VMThread * currentThread, J9Module * fromModule, cons
 				if (!addPackageDefinition(currentThread, fromModule, packageName)) {
 					J9ClassLoader * const classLoader = fromModule->classLoader;
 
-					if (isPackageDefined(currentThread, classLoader, packageName)) {
+					/* check if the class loader has already loaded this packages in a named module */
+					if (isPackageDefined(currentThread, classLoader, packageName)
+							/* check if the class loader has already loaded this packages in an unnamed module */
+							|| isAnyClassLoadedFromPackage(classLoader, (U_8*) packageName, strlen(packageName))
+					) {
 						retval = ERRCODE_DUPLICATE_PACKAGE_IN_LIST;
 					}
 					break;
