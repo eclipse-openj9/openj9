@@ -51,8 +51,6 @@ final class CollectHandle extends MethodHandle {
 		this.next = next;
 		if (collectArraySize == 0) {
 			emptyArray = Array.newInstance(next.type.arguments[collectPosition].getComponentType(), 0);
-		} else {
-			emptyArray = null;
 		}
 	}
 	
