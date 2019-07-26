@@ -5405,7 +5405,7 @@ TR_ResolvedJ9Method::startAddressForJITInternalNativeMethod()
 int32_t
 TR_ResolvedJ9Method::virtualCallSelector(U_32 cpIndex)
    {
-   return -(int32_t)(vTableSlot(cpIndex) - J9JIT_INTERP_VTABLE_OFFSET);
+   return -(int32_t)(vTableSlot(cpIndex) - TR::Compiler->vm.getInterpreterVTableOffset());
    }
 
 bool
@@ -6445,7 +6445,7 @@ TR_ResolvedJ9Method::getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * clas
       vTableOffset = jitGetInterfaceVTableOffsetFromCP(_fe->vmThread(), cp(), cpIndex, TR::Compiler->cls.convertClassOffsetToClassPtr(classObject));
       }
 
-   return (J9JIT_INTERP_VTABLE_OFFSET - vTableOffset);
+   return (TR::Compiler->vm.getInterpreterVTableOffset() - vTableOffset);
 #endif
    }
 
@@ -7223,7 +7223,7 @@ TR_J9VMBase::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 vi
    // the classObject is the fixed type of the this pointer.  The result of this method is going to be
    // used to call the virtual function directly.
    //
-   // virtualCallOffset = -(vTableSlot(vmMethod, cpIndex) - J9JIT_INTERP_VTABLE_OFFSET);
+   // virtualCallOffset = -(vTableSlot(vmMethod, cpIndex) - TR::Compiler->vm.getInterpreterVTableOffset());
    //
    if (isInterfaceClass(classObject))
       return 0;
@@ -8126,8 +8126,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                 }
             else if (isVirtual)
                {
-               TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptrj_t)fej9->getClassFromJavaLangClass(jlClass)) + J9JIT_INTERP_VTABLE_OFFSET);
-               int32_t index = (int32_t)((vmSlot - J9JIT_INTERP_VTABLE_OFFSET) / sizeof(vtable[0]));
+               TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptrj_t)fej9->getClassFromJavaLangClass(jlClass)) + TR::Compiler->vm.getInterpreterVTableOffset());
+               int32_t index = (int32_t)((vmSlot - TR::Compiler->vm.getInterpreterVTableOffset()) / sizeof(vtable[0]));
                j9method = vtable[index];
                }
             else
@@ -8176,7 +8176,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (isVirtual)
             {
-            callNode->getSymbolReference()->setOffset(-(vmSlot - J9JIT_INTERP_VTABLE_OFFSET));
+            callNode->getSymbolReference()->setOffset(-(vmSlot - TR::Compiler->vm.getInterpreterVTableOffset()));
             genTreeTop(genNullCheck(callNode));
             }
          else
