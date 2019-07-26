@@ -142,9 +142,9 @@ ppc64le_linux:
       13: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
   excluded_tests:
-    11:
-      ? special.system
     12:
+      ? special.system
+    13:
       ? special.system
 #========================================#
 # Linux S390 64bits Compressed Pointers
@@ -193,11 +193,11 @@ s390x_linux:
     13: '--with-openssl=fetched'
     next: '--with-openssl=fetched'
   excluded_tests:
-    8:
-      ? special.system
     11:
       ? special.system
     12:
+      ? special.system
+    13:
       ? special.system
 #========================================#
 # AIX PPC 64bits Compressed Pointers
@@ -250,6 +250,8 @@ ppc64_aix:
       ? special.system
     12:
       ? special.system
+    13:
+      ? special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
@@ -300,6 +302,8 @@ x86-64_linux:
     11:
       ? special.system
     12:
+      ? special.system
+    13:
       ? special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers /w CMake
@@ -361,6 +365,9 @@ x86-64_linux_cm:
     12:
       <<: *defaultTests
       ? special.system
+    13:
+      <<: *defaultTests
+      ? special.system
     next:
       <<: *defaultTests
       ? special.system
@@ -415,6 +422,8 @@ x86-64_linux_xl:
       ? special.system
     12:
       ? special.system
+    13:
+      ? special.system
 #========================================#
 # Windows x86 64bits Compressed Pointers
 #========================================#
@@ -454,11 +463,11 @@ x86-64_windows:
       13: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
       next: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
   excluded_tests:
-    8:
-      ? special.system
     11:
       ? special.system
     12:
+      ? special.system
+    13:
       ? special.system
 #========================================#
 # Windows x86 64bits Large Heap
@@ -505,6 +514,8 @@ x86-64_windows_xl:
       ? special.system
     12:
       ? special.system
+    13:
+      ? special.system
 #========================================#
 # Windows x86 32bits
 #========================================#
@@ -529,6 +540,8 @@ x86-32_windows:
     11:
       ? special.system
     12:
+      ? special.system
+    13:
       ? special.system
 #========================================#
 # OSX x86 64bits Compressed Pointers
@@ -577,6 +590,8 @@ x86-64_mac:
       ? special.system
     12:
       ? special.system
+    13:
+      ? special.system
 #========================================#
 # OSX x86 64bits Large Heap
 #========================================#
@@ -623,4 +638,6 @@ x86-64_mac_xl:
     11:
       ? special.system
     12:
+      ? special.system
+    13:
       ? special.system
