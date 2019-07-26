@@ -24,9 +24,11 @@
 #include "codegen/ARM64JNILinkage.hpp"
 #include "codegen/ARM64PrivateLinkage.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/ARM64Instruction.hpp"
 #include "codegen/J9ARM64Snippet.hpp"
+#include "codegen/RegisterDependency.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "il/DataTypes.hpp"
 #include "il/Node.hpp"
@@ -63,7 +65,7 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCopyBNDCHK] = TR::TreeEvaluator::ArrayCopyBNDCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::BNDCHKwithSpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::SpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::ArrayStoreCHK] = TR::TreeEvaluator::ArrayStoreCHKEvaluator;
+   tet[TR::ArrayStoreCHK] = TR::TreeEvaluator::ArrayStoreCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCHK] = TR::TreeEvaluator::ArrayCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::MethodEnterHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::MethodExitHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
@@ -210,7 +212,7 @@ J9::ARM64::TreeEvaluator::checkcastEvaluator(TR::Node *node, TR::CodeGenerator *
 
    return targetRegister;
    }
-	
+
 TR::Register *
 J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
@@ -384,4 +386,77 @@ J9::ARM64::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->decReferenceCount(secondChild);
    secondChild->setIsNonNegative(true);
    return (NULL);
+   }
+
+static void VMoutlinedHelperArrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, TR::CodeGenerator *cg)
+   {
+   TR::SymbolReference *arrayStoreChkHelper = node->getSymbolReference();
+
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
+   TR::addDependency(deps, dstReg, TR::RealRegister::x0, TR_GPR, cg);
+   TR::addDependency(deps, srcReg, TR::RealRegister::x1, TR_GPR, cg);
+
+   TR::Instruction *gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::bl, node,
+                                                        (uintptr_t)arrayStoreChkHelper->getMethodAddress(),
+                                                        deps, arrayStoreChkHelper, NULL);
+   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+
+   cg->machine()->setLinkRegisterKilled(true);
+   }
+
+static void VMoutlinedHelperWrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, TR::CodeGenerator *cg)
+   {
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   if (gcMode == gc_modron_wrtbar_none)
+      return;
+
+   TR::Compilation *comp = cg->comp();
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::SymbolReference *wbref = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef(comp->getMethodSymbol());
+
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
+   TR::addDependency(deps, dstReg, TR::RealRegister::x0, TR_GPR, cg);
+   TR::addDependency(deps, srcReg, TR::RealRegister::x1, TR_GPR, cg);
+
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, srcReg, doneLabel);
+
+   TR::Instruction *gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::bl, node,
+                                                        (uintptr_t)wbref->getMethodAddress(),
+                                                        new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t)0, 0, cg->trMemory()),
+                                                        wbref, NULL);
+   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
+
+   cg->machine()->setLinkRegisterKilled(true);
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node *wrtBarNode = node->getFirstChild();
+   TR::Node *srcNode = wrtBarNode->getSecondChild();
+   TR::Node *dstNode = wrtBarNode->getThirdChild();
+   TR::Register *srcReg = cg->evaluate(srcNode);
+   TR::Register *dstReg = cg->evaluate(dstNode);
+
+   if (!srcNode->isNull())
+      {
+      VMoutlinedHelperArrayStoreCHKEvaluator(node, srcReg, dstReg, cg);
+      }
+
+   TR::MemoryReference *storeMR = new (cg->trHeapMemory()) TR::MemoryReference(wrtBarNode, TR::Compiler->om.sizeofReferenceAddress(), cg);
+   generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, storeMR, srcReg);
+
+   if (!srcNode->isNull())
+      {
+      VMoutlinedHelperWrtbarEvaluator(wrtBarNode, srcReg, dstReg, cg);
+      }
+
+   cg->decReferenceCount(srcNode);
+   cg->decReferenceCount(dstNode);
+   storeMR->decNodeReferenceCounts(cg);
+   cg->decReferenceCount(wrtBarNode);
+
+   return NULL;
    }
