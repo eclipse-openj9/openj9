@@ -5870,7 +5870,7 @@ TR_J9VMBase::isBeingCompiled(TR_OpaqueMethodBlock * method, void * startPC)
 U_32
 TR_J9VMBase:: virtualCallOffsetToVTableSlot(U_32 offset)
    {
-   return J9JIT_INTERP_VTABLE_OFFSET - offset;
+   return TR::Compiler->vm.getInterpreterVTableOffset() - offset;
    }
 
 void *
@@ -5905,7 +5905,7 @@ TR_J9VMBase::getInterpreterVTableSlot(TR_OpaqueMethodBlock * mBlock, TR_OpaqueCl
 int32_t
 TR_J9VMBase::getVTableSlot(TR_OpaqueMethodBlock * mBlock, TR_OpaqueClassBlock * clazz)
    {
-   return J9JIT_INTERP_VTABLE_OFFSET - getInterpreterVTableSlot(mBlock, clazz);
+   return TR::Compiler->vm.getInterpreterVTableOffset() - getInterpreterVTableSlot(mBlock, clazz);
    }
 uint64_t
 TR_J9VMBase::getUSecClock()
