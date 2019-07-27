@@ -142,6 +142,8 @@ ppc64le_linux:
       13: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
   excluded_tests:
+    11:
+      ? special.system
     12:
       ? special.system
     13:
@@ -297,8 +299,6 @@ x86-64_linux:
       13: 'source /opt/rh/devtoolset-7/enable'
       next: 'source /opt/rh/devtoolset-7/enable'
   excluded_tests:
-    8:
-      ? special.system
     11:
       ? special.system
     12:
