@@ -233,6 +233,17 @@ j9gc_initialize_parse_gc_colon(J9JavaVM *javaVM, char **scan_start)
 	}
 
 #if defined(J9VM_GC_MODRON_SCAVENGER)
+
+	if(try_scan(scan_start, "tenureBytesDeviationBoost=")) {
+		UDATA value;
+		if(!scan_udata_helper(javaVM, scan_start, &value, "tenureBytesDeviationBoost=")) {
+			goto _error;
+		}
+
+		extensions->tenureBytesDeviationBoost = value / (float)10.0; 
+		goto _exit;
+	}
+
 	if(try_scan(scan_start, "scavenge")) {
 		extensions->configurationOptions._forceOptionScavenge = true;
 		extensions->scavengerEnabled = true;
