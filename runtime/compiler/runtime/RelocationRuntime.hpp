@@ -184,14 +184,14 @@ class TR_RelocationRuntime {
                                                          TR::Compilation *compilation,
                                                          TR_ResolvedMethod *resolvedMethod);
 
-      virtual bool storeAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread);
-      virtual TR_AOTHeader *createAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe);
-      virtual bool validateAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
+      virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
 
-      virtual void *isROMClassInSharedCaches(UDATA romClassValue, J9JavaVM *javaVM);
-      virtual bool isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *javaVM);
-      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method, J9JavaVM *javaVM);
-      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9JavaVM *javaVM, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
+      virtual void *isROMClassInSharedCaches(UDATA romClassValue);
+      virtual bool isRomClassForMethodInSharedCache(J9Method *method);
+      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method);
+      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
 
       static uintptr_t    getGlobalValue(uint32_t g)
          {
@@ -355,15 +355,15 @@ public:
       TR_SharedCacheRelocationRuntime(J9JITConfig *jitCfg) :
          _sharedCacheIsFull(false), TR_RelocationRuntime(jitCfg) {}
 
-      virtual bool storeAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread);
-      virtual TR_AOTHeader *createAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe);
-      virtual bool validateAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
+      virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
 
-      virtual void *isROMClassInSharedCaches(UDATA romClassValue, J9JavaVM *javaVM);
-      virtual bool isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *javaVM);
-      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method, J9JavaVM *javaVM);
+      virtual void *isROMClassInSharedCaches(UDATA romClassValue);
+      virtual bool isRomClassForMethodInSharedCache(J9Method *method);
+      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method);
 
-      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9JavaVM *javaVM, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
+      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
 
 private:
       uint32_t getCurrentLockwordOptionHashValue(J9JavaVM *vm) const;

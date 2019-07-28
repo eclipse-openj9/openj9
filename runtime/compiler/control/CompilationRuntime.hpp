@@ -834,8 +834,8 @@ public:
    void     setAotRelocationTime(uint32_t reloTime) { _statTotalAotRelocationTime = reloTime; }
    void    incrementNumMethodsFoundInSharedCache() { _numMethodsFoundInSharedCache++; }
    int32_t numMethodsFoundInSharedCache() { return _numMethodsFoundInSharedCache; }
-   bool isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *vm);
-   TR_YesNoMaybe isMethodInSharedCache(J9Method *method, J9JavaVM *vm);
+   bool isRomClassForMethodInSharedCache(J9Method *method);
+   TR_YesNoMaybe isMethodInSharedCache(J9Method *method);
    int32_t getNumInvRequestsInCompQueue() const { return _numInvRequestsInCompQueue; }
    TR::CompilationInfoPerThreadBase *getCompInfoForCompOnAppThread() const { return _compInfoForCompOnAppThread; }
    J9JITConfig *getJITConfig() { return _jitConfig; }
@@ -963,7 +963,7 @@ public:
                              or OMRPORT_MEMINFO_NOT_AVAILABLE in case of error
    */
    uint64_t computeFreePhysicalMemory(bool &incompleteInfo);
- 
+
    /**
    * @brief Compute free physical memory taking into account container limits and caches it for later use
    *
@@ -973,7 +973,7 @@ public:
    *
    * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered memory couldn't be read
    * @param updatePeriodMs   Indicates how often the cached values are refreshed
-   * @return                 A value representing the free physicalMemory 
+   * @return                 A value representing the free physicalMemory
                              or OMRPORT_MEMINFO_NOT_AVAILABLE in case of error
    */
    uint64_t computeAndCacheFreePhysicalMemory(bool &incompleteInfo, int64_t updatePeriodMs=-1);
