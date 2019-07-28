@@ -1502,15 +1502,15 @@ TR::CompilationInfo::disableAOTCompilations()
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 
 // Note: this method must be called only when we know that AOT mode for shared classes is enabled !!
-bool TR::CompilationInfo::isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)
+bool TR::CompilationInfo::isRomClassForMethodInSharedCache(J9Method *method)
    {
    J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
-   return _sharedCacheReloRuntime.isRomClassForMethodInSharedCache(method, javaVM) ? true : false;
+   return _sharedCacheReloRuntime.isRomClassForMethodInSharedCache(method);
    }
 
-TR_YesNoMaybe TR::CompilationInfo::isMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)
+TR_YesNoMaybe TR::CompilationInfo::isMethodInSharedCache(J9Method *method)
    {
-   if (isRomClassForMethodInSharedCache(method, javaVM))
+   if (isRomClassForMethodInSharedCache(method))
       return TR_maybe;
    else
       return TR_no;
@@ -5869,7 +5869,6 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
    // Check to see if we find the method in the shared cache
    // If yes, raise the priority to be processed ahead of other methods
    //
-   J9JavaVM *javaVM = vmThread->javaVM;
 
    if (TR::Options::sharedClassCache() && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) && details.isOrdinaryMethod())
       {
@@ -5881,14 +5880,14 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
          // other JVM added the method to the cache meanwhile. The net effect is that the said
          // method may have its count bumped up and compiled later
          //
-         if (javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, details.getRomMethod()))
+         if (vmThread->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, details.getRomMethod()))
             {
             TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
             if (
                static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
                || (
                   static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
-                  && _sharedCacheReloRuntime.validateAOTHeader(javaVM, fe, vmThread)
+                  && _sharedCacheReloRuntime.validateAOTHeader(fe, vmThread)
                   )
                )
                {
@@ -6323,7 +6322,7 @@ void *TR::CompilationInfo::compileOnApplicationThread(J9VMThread * vmThread, TR:
             static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
             || (
                static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
-               && _sharedCacheReloRuntime.validateAOTHeader(jitConfig->javaVM, fe, vmThread)
+               && _sharedCacheReloRuntime.validateAOTHeader(fe, vmThread)
                )
             )
             {
@@ -6876,7 +6875,6 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
 /**
  * @brief TR::CompilationInfoPerThreadBase::preCompilationTasks
  * @param vmThread Pointer to the current J9VMThread (input)
- * @param javaVM Pointer to the J9JavaVM (input)
  * @param entry Pointer to the TR_MethodToBeCompiled entry (input)
  * @param method Pointer to the J9Method (input)
  * @param aotCachedMethod Pointer to a pointer to the AOT code to be relocated (if it exists) (output)
@@ -6891,7 +6889,6 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
  */
 void
 TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
-                                                      J9JavaVM *javaVM,
                                                       TR_MethodToBeCompiled *entry,
                                                       J9Method *method,
                                                       const void **aotCachedMethod,
@@ -7073,7 +7070,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             !TR::CompilationInfo::isCompiled(method) &&
             !entry->isDLTCompile() &&
             !entry->_doNotUseAotCodeFromSharedCache &&
-            reloRuntime->isRomClassForMethodInSharedCache(method, javaVM) &&
+            reloRuntime->isRomClassForMethodInSharedCache(method) &&
             !isMethodIneligibleForAot(method) &&
             (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) ||
                TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true);
@@ -7532,7 +7529,6 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
       setTimeWhenCompStarted(j9time_usec_clock());
       }
 
-   J9JavaVM *javaVM = vmThread->javaVM;
    TR_MethodMetaData *metaData = NULL;
    void *startPC = NULL;
    const void *aotCachedMethod = NULL;
@@ -7554,7 +7550,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
    try
       {
-      TR::RawAllocator rawAllocator(javaVM);
+      TR::RawAllocator rawAllocator(vmThread->javaVM);
       J9::SystemSegmentProvider defaultSegmentProvider(
          1 << 16,
          (0 != scratchSegmentProvider.getPreferredSegmentSize()) ? scratchSegmentProvider.getPreferredSegmentSize()
@@ -7574,7 +7570,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
       TR::Region dispatchRegion(regionSegmentProvider, rawAllocator);
       TR_Memory trMemory(*_compInfo.persistentMemory(), dispatchRegion);
 
-      preCompilationTasks(vmThread, javaVM, entry,
+      preCompilationTasks(vmThread, entry,
                           method, &aotCachedMethod, trMemory,
                           canDoRelocatableCompile, eligibleForRelocatableCompile, 
                           reloRuntime);
@@ -9972,7 +9968,6 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   );
 
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
-
                bool canRelocateMethod = TR::CompilationInfo::canRelocateMethod(comp);
 
                if (canRelocateMethod)
