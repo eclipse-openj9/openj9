@@ -160,7 +160,6 @@ class CompilationInfoPerThreadBase
    TR_MethodMetaData *performAOTLoad(J9VMThread *context, TR::Compilation *, TR_ResolvedMethod *compilee, TR_J9VMBase *vm, J9Method *method);
 
    void preCompilationTasks(J9VMThread * vmThread,
-                            J9JavaVM *javaVM,
                             TR_MethodToBeCompiled *entry,
                             J9Method *method,
                             const void **aotCachedMethod,

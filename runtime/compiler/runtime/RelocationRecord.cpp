@@ -3166,7 +3166,7 @@ TR_RelocationRecordValidateInstanceField::getClassFromCP(TR_RelocationRuntime *r
    if (void_cp)
       {
       J9JavaVM *javaVM = reloRuntime->javaVM();
-      definingClass = reloRuntime->getClassFromCP(javaVM->internalVMFunctions->currentVMThread(javaVM), javaVM, (J9ConstantPool *) void_cp, cpIndex(reloTarget), false);
+      definingClass = reloRuntime->getClassFromCP(javaVM->internalVMFunctions->currentVMThread(javaVM), (J9ConstantPool *) void_cp, cpIndex(reloTarget), false);
       }
 
    return definingClass;
@@ -3219,7 +3219,7 @@ TR_RelocationRecordValidateStaticField::getClass(TR_RelocationRuntime *reloRunti
    if (void_cp)
       {
       J9JavaVM *javaVM = reloRuntime->javaVM();
-      definingClass = reloRuntime->getClassFromCP(javaVM->internalVMFunctions->currentVMThread(javaVM), javaVM, (J9ConstantPool *) void_cp, cpIndex(reloTarget), true);
+      definingClass = reloRuntime->getClassFromCP(javaVM->internalVMFunctions->currentVMThread(javaVM), (J9ConstantPool *) void_cp, cpIndex(reloTarget), true);
       }
 
    return definingClass;

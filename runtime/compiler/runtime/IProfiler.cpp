@@ -403,9 +403,9 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
       bool doit = true;
 
       // can only persist profile info if the method is in the shared cache
-      if (doit && _compInfo->reloRuntime()->isROMClassInSharedCaches((uintptrj_t)romMethod, _compInfo->getJITConfig()->javaVM))
+      if (doit && _compInfo->reloRuntime()->isROMClassInSharedCaches((uintptrj_t)romMethod))
         {
-         TR_ASSERT(_compInfo->reloRuntime()->isROMClassInSharedCaches((uintptrj_t)methodStart, _compInfo->getJITConfig()->javaVM), "bytecodes not in shared cache");
+         TR_ASSERT(_compInfo->reloRuntime()->isROMClassInSharedCaches((uintptrj_t)methodStart), "bytecodes not in shared cache");
          // check if there is already an entry
          unsigned char storeBuffer[1000];
          uint32_t bufferLength = 1000;
@@ -1824,7 +1824,7 @@ static TR::ILOpCodes opCodeForBranchFromBytecode (uint8_t byteCodeOpCode)
            TR::ILOpCode::isEqualCmp(nodeOpCode))
           return true;
 
-       if (TR::ILOpCode::isNotEqualCmp(byteCodeOpCode) &&     
+       if (TR::ILOpCode::isNotEqualCmp(byteCodeOpCode) &&
            TR::ILOpCode::isNotEqualCmp(nodeOpCode))
           return true;
        }
@@ -4396,11 +4396,11 @@ CallSiteProfileInfo::getDominantClass(int32_t &sumW, int32_t &maxW)
    return data;
    }
 
-// Supporting code for dumping IProfiler data to stderr to track possible 
+// Supporting code for dumping IProfiler data to stderr to track possible
 // performance issues due to insufficient or wrong IProfiler info
 // Code is currently inactive. To actually use one must issue
 // iProfiler->dumpIPBCDataCallGraph(vmThread)
-// in some part of the code (typically at shutdown time) 
+// in some part of the code (typically at shutdown time)
 class TR_AggregationHT
    {
    public:
@@ -4512,7 +4512,7 @@ class TR_AggregationHT
                      return;
                      }
                   if (crtEntry->getPC() > cgEntry->getPC())
-                     break; // found the position   
+                     break; // found the position
                   prevEntry = crtEntry;
                   crtEntry = crtEntry->getNext();
                   }
