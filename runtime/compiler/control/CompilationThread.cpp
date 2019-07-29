@@ -102,7 +102,7 @@
 #include "env/j9methodServer.hpp"
 #include "control/JITServerCompilationThread.hpp"
 #include "env/JITaaSPersistentCHTable.hpp"
-#include "runtime/JITaaSIProfiler.hpp"
+#include "runtime/JITServerIProfiler.hpp"
 
 #ifdef COMPRESS_AOT_DATA
 #ifdef J9ZOS390
@@ -3309,13 +3309,13 @@ void TR::CompilationInfo::stopCompilationThreads()
       fprintf(stderr, "NumQueuePromotions=%u\n", _statNumQueuePromotions);
       }
 
-   if (feGetEnv("TR_PrintJITaaSIPMsgStats"))
+   if (feGetEnv("TR_PrintJITServerIPMsgStats"))
       {
       if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          TR_J9VMBase * vmj9 = (TR_J9VMBase *)(TR_J9VMBase::get(_jitConfig, 0));
-         TR_JITaaSIProfiler *JITaaSIProfiler = (TR_JITaaSIProfiler *)vmj9->getIProfiler();
-         JITaaSIProfiler->printStats();
+         JITServerIProfiler *iProfiler = (JITServerIProfiler *)vmj9->getIProfiler();
+         iProfiler->printStats();
          }
       }
 

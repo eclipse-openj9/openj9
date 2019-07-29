@@ -79,7 +79,7 @@
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #include "control/JITServerCompilationThread.hpp"
-#include "runtime/JITaaSIProfiler.hpp"
+#include "runtime/JITServerIProfiler.hpp"
 #include "runtime/Listener.hpp"
 #include "runtime/StatisticsThread.hpp"
 
@@ -1975,13 +1975,13 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
          if (feGetEnv("TR_PrintJITaaSCHTableStats"))
             printJITaaSCHTableStats(jitConfig, compInfo);
 
-         if (feGetEnv("TR_PrintJITaaSIPMsgStats"))
+         if (feGetEnv("TR_PrintJITServerIPMsgStats"))
             {
             if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
                {
                TR_J9VMBase * vmj9 = (TR_J9VMBase *)(TR_J9VMBase::get(context->javaVM->jitConfig, 0));
-               TR_JITaaSIProfiler *JITaaSIProfiler = (TR_JITaaSIProfiler *)vmj9->getIProfiler();
-               JITaaSIProfiler->printStats();
+               JITServerIProfiler *iProfiler = (JITServerIProfiler *)vmj9->getIProfiler();
+               iProfiler->printStats();
                }
             }
          }

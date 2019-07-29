@@ -20,7 +20,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-The IProfiler is specialized for JITServer in two classes: `TR_JITaaSIProfiler` and `TR_JITaaSClientIProfiler`. They are allocated in the method `onLoadInternal` in `rossa.cpp`.
+The IProfiler is specialized for JITServer in two classes: `JITServerIProfiler` and `JITClientIProfiler`. They are allocated in the method `onLoadInternal` in `rossa.cpp`.
 
 There are two different kinds of entries that we handle: method entries and bytecode entries.
 
@@ -34,6 +34,6 @@ Profiling data for individual bytecodes. This data is retrieved during compilati
 
 To reduce the number of messages sent, the client will sometimes decide to send the data for the entire method even when the server only asks for a single bytecode. This is done because it is likely that the server will continue on to request other bytecodes in the same method as the compilation progresses. Currently, this will happen if the method is already compiled or is currently being compiled, but otherwise not (for example, if it is being inlined early). This decision is made by the function `handler_IProfiler_profilingSample` in `JITServerCompilationThread.cpp`.
 
-In a debug build, extra messages will be sent to verify that the cached data is (mostly) correct. Often, the profiled counters may be slightly wrong and this can produce warnings, but they are safe to ignore as long as the cached value differs only slightly and does not appear to be corrupted. This validation is performed in `TR_JITaaSIProfiler::validateCachedIPEntry`.
+In a debug build, extra messages will be sent to verify that the cached data is (mostly) correct. Often, the profiled counters may be slightly wrong and this can produce warnings, but they are safe to ignore as long as the cached value differs only slightly and does not appear to be corrupted. This validation is performed in `JITServerIProfiler::validateCachedIPEntry`.
 
-Serialization is performed by `TR_JITaaSClientIProfiler::serializeAndSendIProfileInfoForMethod` and deserialization from within `profilingSample`. The code appears quite complex because there are special cases for different types of samples, but if you ignore those cases it's fairly straightforward.
+Serialization is performed by `JITClientIProfiler::serializeAndSendIProfileInfoForMethod` and deserialization from within `profilingSample`. The code appears quite complex because there are special cases for different types of samples, but if you ignore those cases it's fairly straightforward.

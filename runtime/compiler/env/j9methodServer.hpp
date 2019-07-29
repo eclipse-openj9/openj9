@@ -25,7 +25,7 @@
 
 #include "env/j9method.h"
 #include "env/PersistentCollections.hpp"
-#include "runtime/JITaaSIProfiler.hpp"
+#include "runtime/JITServerIProfiler.hpp"
 #include "runtime/JITClientSession.hpp"
 
 struct
