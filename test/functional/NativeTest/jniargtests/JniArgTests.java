@@ -58,7 +58,8 @@ public class JniArgTests {
 		jniArgTests.testBlock();
 		jniArgTests.testBlock();
 		jniArgTests.testBlock();
-		jniArgTests.summary();
+		int rc = jniArgTests.summary();
+		System.exit(rc);
 	}
 
 	void testBlock() {
@@ -2805,8 +2806,7 @@ public class JniArgTests {
 
 	native void logRetValError(String arg);
 
- native void summary();
-
+ 	native int summary();
 
 	native byte nativeBBrB(byte arg1, byte arg2 );
 

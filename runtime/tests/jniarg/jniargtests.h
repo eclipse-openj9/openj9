@@ -48,7 +48,7 @@ extern void cFailure_jboolean(J9PortLibrary *portLib, char *functionName, int in
 extern J9JavaVM *getJ9JavaVM(JNIEnv * env);
 
 void JNICALL Java_JniArgTests_logRetValError( JNIEnv *p_env, jobject p_this, jstring error_message );
-void JNICALL Java_JniArgTests_summary( JNIEnv *p_env, jobject p_this );
+jint JNICALL Java_JniArgTests_summary( JNIEnv *p_env, jobject p_this );
 
 /* Prototypes from args_01.c */
 jbyte JNICALL Java_JniArgTests_nativeBBrB( JNIEnv *p_env, jobject p_this, jbyte arg1, jbyte arg2 );
