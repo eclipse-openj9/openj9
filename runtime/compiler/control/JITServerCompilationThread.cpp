@@ -34,7 +34,7 @@
 #include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
 #include "exceptions/RuntimeFailure.hpp"       // for CHTableCommitFailure
 #include "runtime/IProfiler.hpp"               // for TR_IProfiler
-#include "runtime/JITaaSIProfiler.hpp"         // for TR_ContiguousIPMethodHashTableEntry
+#include "runtime/JITServerIProfiler.hpp"      // for TR_ContiguousIPMethodHashTableEntry
 #include "j9port.h"                            // for j9time_current_time_millis
 #include "env/j9methodServer.hpp"
 #include "exceptions/AOTFailure.hpp"           // for AOTFailure
@@ -204,7 +204,7 @@ void handler_IProfiler_profilingSample(JITServer::ClientStream *client, TR_J9VM 
    auto bcIndex = std::get<1>(recv);
    auto data = std::get<2>(recv); // data==1 means 'send info for 1 bytecode'; data==0 means 'send info for entire method if possible'
 
-   TR_JITaaSClientIProfiler *iProfiler = (TR_JITaaSClientIProfiler *)fe->getIProfiler();
+   JITClientIProfiler *iProfiler = (JITClientIProfiler *)fe->getIProfiler();
 
    bool isCompiled = TR::CompilationInfo::isCompiled((J9Method*)method);
    bool isInProgress = comp->getMethodBeingCompiled()->getPersistentIdentifier() == method;
@@ -2511,7 +2511,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          {
          auto recv = client->getRecvData<TR_OpaqueMethodBlock*>();
          auto method = std::get<0>(recv);
-         TR_JITaaSClientIProfiler *iProfiler = (TR_JITaaSClientIProfiler *) fe->getIProfiler();
+         JITClientIProfiler *iProfiler = (JITClientIProfiler *) fe->getIProfiler();
          client->write(response, iProfiler->serializeIProfilerMethodEntry(method));
          }
          break;

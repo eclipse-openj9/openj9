@@ -20,8 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JITaaS_IPROFILER_HPP
-#define JITaaS_IPROFILER_HPP
+#ifndef JITSERVER_IPROFILER_HPP
+#define JITSERVER_IPROFILER_HPP
 
 #include "runtime/J9Profiler.hpp"
 #include "runtime/IProfiler.hpp"
@@ -47,15 +47,15 @@ struct TR_ContiguousIPMethodHashTableEntry
    TR_DummyBucket _otherBucket;
    };
 
-class TR_JITaaSIProfiler : public TR_IProfiler
+class JITServerIProfiler : public TR_IProfiler
    {
 public:
 
    TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
-   static TR_JITaaSIProfiler * allocate(J9JITConfig *jitConfig);
-   TR_JITaaSIProfiler(J9JITConfig *);
+   static JITServerIProfiler * allocate(J9JITConfig *jitConfig);
+   JITServerIProfiler(J9JITConfig *);
 
-   // Data accessors, overridden for JITaaS
+   // Data accessors, overridden for JITServer
    //
    virtual TR_IPMethodHashTableEntry *searchForMethodSample(TR_OpaqueMethodBlock *omb, int32_t bucket) override;
 
@@ -88,14 +88,14 @@ private:
    uint32_t _statsIProfilerInfoCachingFailures;
    };
 
-class TR_JITaaSClientIProfiler : public TR_IProfiler
+class JITClientIProfiler : public TR_IProfiler
    {
    public:
 
       TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
-      static TR_JITaaSClientIProfiler * allocate(J9JITConfig *jitConfig);
-      TR_JITaaSClientIProfiler(J9JITConfig *);
-      // NOTE: since the JITaaS client can act as a regular JVM compiling methods 
+      static JITClientIProfiler * allocate(J9JITConfig *jitConfig);
+      JITClientIProfiler(J9JITConfig *);
+      // NOTE: since the JITClient can act as a regular JVM compiling methods 
       // locally, we must not change the behavior of functions used in TR_IProfiler
       // Thus, any virtual function here must call the corresponding method in
       // the base class. It may be better not to override any methods though

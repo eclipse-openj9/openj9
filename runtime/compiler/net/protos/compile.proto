@@ -286,13 +286,13 @@ enum MessageType
    runFEMacro_invokeILGenMacros = 717;
    runFEMacro_derefUintptrjPtr = 718;
 
-   // for JITaaSPersistentCHTable
+   // for JITServerPersistentCHTable
    CHTable_getAllClassInfo = 800;
    CHTable_getClassInfoUpdates = 801;
    CHTable_commit = 802;
    CHTable_clearReservable = 803;
 
-   // for JITaaSIProfiler
+   // for JITServerIProfiler
    IProfiler_profilingSample = 900;
    IProfiler_searchForMethodSample = 901;
    IProfiler_getMaxCallCount = 902;
