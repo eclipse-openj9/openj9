@@ -20,9 +20,9 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-# Guidelines on the JITaaS Dockerfiles
+# Guidelines on the JITServer Dockerfiles
 
-## A Quick Start Demo on Building JITaaS for JDK8 in Ubuntu 18.04 on x86_64
+## A Quick Start Demo on Building JITServer for JDK8 in Ubuntu 18.04 on x86_64
 1. Retrieve OpenJ9 Repo
    ```
    git clone git@github.com:eclipse/openj9.git
@@ -38,26 +38,26 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
    cd openj9/buildenv/docker/jdk8/x86_64/ubuntu18
    docker build -f Dockerfile -t=openj9 .
    ```
-3. Build JITaaS
+3. Build JITServer
    ```
    cd openj9/buildenv/docker/jdk8/x86_64/ubuntu18/jitaas/build
    docker build -f Dockerfile -t=openj9-jitaas .
    ```
 
-## Details on the JITaaS Dockerfiles
-JITaaS Dockerfiles are located under: `openj9/buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas`
+## Details on the JITServer Dockerfiles
+JITServer Dockerfiles are located under: `openj9/buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas`
 - `build/Dockerfile`
-   - Sets up the build environment for JITaaS
+   - Sets up the build environment for JITServer
    - Pulls the source code from OpenJDK, OpenJ9, and OMR repos. By default, `jitaas` branch is used for OpenJ9 and OMR.
-   - Runs make commands to build JITaaS
+   - Runs make commands to build JITServer
 - `buildenv/Dockerfile`
-    - Similar to `jitaas/build/Dockerfile`. The difference is that it does not build JITaaS. It only pulls the source code and sets up the environment for JITaaS build
+    - Similar to `jitaas/build/Dockerfile`. The difference is that it does not build JITServer. It only pulls the source code and sets up the environment for JITServer build
 - `run/Dockerfile`
-   - Starts up a JITaaS server
+   - Starts up a JITServer server
 - `test/Dockerfile`
-   - Sets up the OpenJ9 test environment for JITaaS
+   - Sets up the OpenJ9 test environment for JITServer
 
-## How to use the JITaaS Dockerfiles
+## How to use the JITServer Dockerfiles
 ### [build/Dockerfile](https://github.com/eclipse/openj9/blob/jitaas/buildenv/docker/jdk8/x86_64/ubuntu18/jitaas/build/Dockerfile)
 - **Prerequisite**: obtain `openj9` image first
    ```
@@ -90,7 +90,7 @@ JITaaS Dockerfiles are located under: `openj9/buildenv/docker/jdk<version>/<plat
    buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/run/Dockerfile \
    -t=openj9-jitaas-run-server .
    ```
-- <a name="openj9-jitaas-run-server"></a>Use the image to start up a JITaaS server:
+- <a name="openj9-jitaas-run-server"></a>Use the image to start up a JITServer server:
    ```
    docker run -it -d openj9-jitaas-run-server
    ```
@@ -117,14 +117,14 @@ JITaaS Dockerfiles are located under: `openj9/buildenv/docker/jdk<version>/<plat
    ```
    docker run -it openj9-jitaas-test
    // once you're inside the container
-   make _sanity EXTRA_OPTIONS=" -XX:JITaaSClient:server=<IPAddress> " 
-   // make sure to put spaces before and after " -XX:JITaaSClient:server=<IPAddress> "
+   make _sanity EXTRA_OPTIONS=" -XX:+UseJITServer:server=<IPAddress> "
+   // make sure to put spaces before and after " -XX:+UseJITServer:server=<IPAddress> "
 
    // Rerun failed tests
-   make _failed EXTRA_OPTIONS=" -XX:JITaaSClient:server=<IPAddress> "
+   make _failed EXTRA_OPTIONS=" -XX:+UseJITServer:server=<IPAddress> "
 
    // Run individual test case
-   make _<test_name> EXTRA_OPTIONS=" -XX:JITaaSClient:server=<IPAddress> " 
+   make _<test_name> EXTRA_OPTIONS=" -XX:+UseJITServer:server=<IPAddress> "
    ```
 
 ### [buildenv/Dockerfile](https://github.com/eclipse/openj9/blob/jitaas/buildenv/docker/jdk8/x86_64/ubuntu18/jitaas/buildenv/Dockerfile)

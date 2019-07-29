@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2018 IBM Corp. and others
+Copyright (c) 2018, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,7 +20,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-The IProfiler is specialized for JITaaS in two classes: `TR_JITaaSIProfiler` and `TR_JITaaSClientIProfiler`. They are allocated in the method `onLoadInternal` in `rossa.cpp`.
+The IProfiler is specialized for JITServer in two classes: `TR_JITaaSIProfiler` and `TR_JITaaSClientIProfiler`. They are allocated in the method `onLoadInternal` in `rossa.cpp`.
 
 There are two different kinds of entries that we handle: method entries and bytecode entries.
 
