@@ -3591,20 +3591,8 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *src, TR::Regi
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
 
-#ifdef OMR_GC_COMPRESSED_POINTERS
-   // must read only 32 bits
-   generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, t1Reg,
-         new (cg->trHeapMemory()) TR::MemoryReference(dst, (int32_t)TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-   generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, t2Reg,
-         new (cg->trHeapMemory()) TR::MemoryReference(src, (int32_t)TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-#else
-   generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, t1Reg,
-         new (cg->trHeapMemory()) TR::MemoryReference(dst, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), TR::Compiler->om.sizeofReferenceAddress(), cg));
-   generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, t2Reg,
-         new (cg->trHeapMemory()) TR::MemoryReference(src, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), TR::Compiler->om.sizeofReferenceAddress(), cg));
-#endif
-   TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, t1Reg);
-   TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, t2Reg);
+   generateLoadJ9Class(node, t1Reg, dst, cg);
+   generateLoadJ9Class(node, t2Reg, src, cg);
 
    generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, t1Reg,
          new (cg->trHeapMemory()) TR::MemoryReference(t1Reg, (int32_t)offsetof(J9ArrayClass, componentType), TR::Compiler->om.sizeofReferenceAddress(), cg));
@@ -4436,14 +4424,7 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator2(TR::Node *node, TR
          case LoadObjectClass:
             TR_ASSERT(!objectClassReg, "Object class already loaded");
             objectClassReg = srm->findOrCreateScratchRegister();
-            generateTrg1MemInstruction(cg,
-#ifdef OMR_GC_COMPRESSED_POINTERS
-                                       TR::InstOpCode::lwz,
-#else
-                                       TR::InstOpCode::Op_load,
-#endif
-                                       node, objectClassReg, new (cg->trHeapMemory()) TR::MemoryReference(objectReg, TR::Compiler->om.offsetOfObjectVftField(), TR::Compiler->om.sizeofReferenceField(), cg));
-	    TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, objectClassReg);
+            generateLoadJ9Class(node, objectClassReg, objectReg, cg);
             break;
          case NullTest:
             if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting NullTest\n", node->getOpCode().getName());
@@ -4606,14 +4587,7 @@ TR::Register *J9::Power::TreeEvaluator::VMinstanceOfEvaluator2(TR::Node *node, T
          case LoadObjectClass:
             TR_ASSERT(!objectClassReg, "Object class already loaded");
             objectClassReg = srm->findOrCreateScratchRegister();
-            generateTrg1MemInstruction(cg,
-#ifdef OMR_GC_COMPRESSED_POINTERS
-                                       TR::InstOpCode::lwz,
-#else
-                                       TR::InstOpCode::Op_load,
-#endif
-                                       node, objectClassReg, new (cg->trHeapMemory()) TR::MemoryReference(objectReg, TR::Compiler->om.offsetOfObjectVftField(), TR::Compiler->om.sizeofReferenceField(), cg));
-	    TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, objectClassReg);
+            generateLoadJ9Class(node, objectClassReg, objectReg, cg);
             break;
          case NullTest:
             if (comp->getOption(TR_TraceCG)) traceMsg(comp, "%s: Emitting NullTest\n", node->getOpCode().getName());
@@ -4883,15 +4857,7 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR:
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, doneLabel, cndReg);
       }
 
-#ifdef OMR_GC_COMPRESSED_POINTERS
-   // read only 32 bits
-   generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, objClassReg,
-         new (cg->trHeapMemory()) TR::MemoryReference(objReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-#else
-   generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, objClassReg,
-         new (cg->trHeapMemory()) TR::MemoryReference(objReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), TR::Compiler->om.sizeofReferenceAddress(), cg));
-#endif
-   TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, objClassReg);
+   generateLoadJ9Class(node, objClassReg, objReg, cg);
 
    if (testEqualClass)
       {
@@ -5884,15 +5850,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::C
       objectClassReg = cg->allocateRegister();
       condReg = cg->allocateRegister(TR_CCR);
 
-#ifdef OMR_GC_COMPRESSED_POINTERS
-      // must read only 32 bits
-      generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, objectClassReg,
-            new (cg->trHeapMemory()) TR::MemoryReference(objReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-#else
-      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, objectClassReg,
-            new (cg->trHeapMemory()) TR::MemoryReference(objReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), TR::Compiler->om.sizeofReferenceAddress(), cg));
-#endif
-      TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, objectClassReg);
+      generateLoadJ9Class(node, objectClassReg, objReg, cg);
 
       int32_t offsetOfLockOffset = offsetof(J9Class, lockOffset);
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(objectClassReg, offsetOfLockOffset, TR::Compiler->om.sizeofReferenceAddress(), cg);
@@ -8520,15 +8478,7 @@ TR::Register *J9::Power::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::Co
       objectClassReg = cg->allocateRegister();
       condReg = cg->allocateRegister(TR_CCR);
 
-#ifdef OMR_GC_COMPRESSED_POINTERS
-      // must read only 32 bits
-      generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, objectClassReg,
-            new (cg->trHeapMemory()) TR::MemoryReference(objReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-#else
-      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, objectClassReg,
-            new (cg->trHeapMemory()) TR::MemoryReference(objReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), TR::Compiler->om.sizeofReferenceAddress(), cg));
-#endif
-      TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, objectClassReg);
+      generateLoadJ9Class(node, objectClassReg, objReg, cg);
 
       int32_t offsetOfLockOffset = offsetof(J9Class, lockOffset);
       TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(objectClassReg, offsetOfLockOffset, TR::Compiler->om.sizeofReferenceAddress(), cg);
@@ -8875,14 +8825,9 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
    //
    if (!node->isArrayChkPrimitiveArray1() && !node->isArrayChkReferenceArray1() && !node->isArrayChkPrimitiveArray2() && !node->isArrayChkReferenceArray2())
       {
-#ifdef OMR_GC_COMPRESSED_POINTERS
-      generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, tmp1Reg,
-            new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-#else
-      generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, tmp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-#endif
+      
+      generateLoadJ9Class(node, tmp1Reg, obj1Reg, cg);
 
-      TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tmp1Reg);
       generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, tmp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(tmp1Reg, (int32_t) offsetof(J9Class, classDepthAndFlags), 4, cg));
 
       loadConstant(cg, node, (int32_t) J9AccClassRAMArray, tmp2Reg);
@@ -8898,20 +8843,9 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
 
    // One of the object is array. Test equality of two objects' classes.
    //
-#ifdef OMR_GC_COMPRESSED_POINTERS
-   // must read only 32 bits
-   generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, tmp2Reg,
-         new (cg->trHeapMemory()) TR::MemoryReference(obj2Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-   generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, tmp1Reg,
-         new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-#else
-   generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, tmp2Reg,
-         new (cg->trHeapMemory()) TR::MemoryReference(obj2Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), TR::Compiler->om.sizeofReferenceAddress(), cg));
-   generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, tmp1Reg,
-         new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), TR::Compiler->om.sizeofReferenceAddress(), cg));
-#endif
-   TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tmp2Reg);
-   TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tmp1Reg);
+   generateLoadJ9Class(node, tmp2Reg, obj2Reg, cg);
+   generateLoadJ9Class(node, tmp1Reg, obj1Reg, cg);
+
    generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, cndReg, tmp1Reg, tmp2Reg);
 
    // If either object is known to be of primitive component type,
@@ -8938,14 +8872,8 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
          {
 
          // Loading the Class Pointer -> classDepthAndFlags
-#ifdef OMR_GC_COMPRESSED_POINTERS
-         generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, tmp1Reg,
-               new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-#else
-         generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, tmp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-#endif
+         generateLoadJ9Class(node, tmp1Reg, obj1Reg, cg);
 
-         TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tmp1Reg);
          generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, tmp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(tmp1Reg, (int32_t) offsetof(J9Class, classDepthAndFlags), 4, cg));
 
          // We already have classDepth&Flags in tmp1Reg.  X = (ramclass->ClassDepthAndFlags)>>J9AccClassRAMShapeShift
@@ -8970,14 +8898,8 @@ TR::Register *J9::Power::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR
       // Object2 must be of reference component type array, otherwise throw exception
       if (!node->isArrayChkReferenceArray2())
          {
-#ifdef OMR_GC_COMPRESSED_POINTERS
-         generateTrg1MemInstruction(cg, TR::InstOpCode::lwz, node, tmp1Reg,
-               new (cg->trHeapMemory()) TR::MemoryReference(obj2Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-#else
-         generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, tmp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(obj2Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), 4, cg));
-#endif
-
-         TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tmp1Reg);
+         
+         generateLoadJ9Class(node, tmp1Reg, obj2Reg, cg);
          generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, tmp1Reg, new (cg->trHeapMemory()) TR::MemoryReference(tmp1Reg, (int32_t) offsetof(J9Class, classDepthAndFlags), 4, cg));
 
          loadConstant(cg, node, (int32_t) J9AccClassRAMArray, tmp2Reg);
