@@ -57,21 +57,22 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
    listener->getListenerMonitor()->notifyAll();
    listener->getListenerMonitor()->exit();
    if (rc != JNI_OK)
-      return JNI_ERR; // attaching the JITaaS Listener thread failed
+      return JNI_ERR; // attaching the JITServer Listener thread failed
 
-   j9thread_set_name(j9thread_self(), "JITaaS Server Listener");
+   j9thread_set_name(j9thread_self(), "JITServer Listener");
 
    J9CompileDispatcher handler(jitConfig);
    TR::PersistentInfo *info = getCompilationInfo(jitConfig)->getPersistentInfo();
    JITServer::ServerStream::serveRemoteCompilationRequests(&handler, info);
 
+   // Note: the following code will never be executed, because 
+   // serveRemoteCompilationRequests() is executed "forever"
    if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Detaching JITaaSServer listening thread");
 
    vm->internalVMFunctions->DetachCurrentThread((JavaVM *) vm);
-   listener->setListenerThread(NULL);
    listener->getListenerMonitor()->enter();
-   listener->setListenerThreadExitFlag();
+   listener->setListenerThread(NULL);
    listener->getListenerMonitor()->notifyAll();
    j9thread_exit((J9ThreadMonitor*)listener->getListenerMonitor()->getVMMonitor());
 
@@ -85,10 +86,10 @@ void TR_Listener::startListenerThread(J9JavaVM *javaVM)
    UDATA priority;
    priority = J9THREAD_PRIORITY_NORMAL;
 
-   _listenerMonitor = TR::Monitor::create("JITaaS-ListenerMonitor");
+   _listenerMonitor = TR::Monitor::create("JITServer-ListenerMonitor");
    if (_listenerMonitor)
       {
-      // create the thread for listening to JITaaS Client compilation request
+      // create the thread for listening to a Client compilation request
       const UDATA defaultOSStackSize = javaVM->defaultOSStackSize; //256KB stack size
       if (javaVM->internalVMFunctions->createThreadWithCategory(&_listenerOSThread, 
                                                                defaultOSStackSize,
@@ -98,7 +99,7 @@ void TR_Listener::startListenerThread(J9JavaVM *javaVM)
                                                                javaVM->jitConfig,
                                                                J9THREAD_CATEGORY_SYSTEM_JIT_THREAD))
          { // cannot create the listener thread
-         j9tty_printf(PORTLIB, "Error: Unable to create JITaaS Listener Thread.\n"); 
+         j9tty_printf(PORTLIB, "Error: Unable to create JITServer Listener Thread.\n"); 
          TR::Monitor::destroy(_listenerMonitor);
          _listenerMonitor = NULL;
          }
@@ -110,12 +111,12 @@ void TR_Listener::startListenerThread(J9JavaVM *javaVM)
          _listenerMonitor->exit();
          if (!getListenerThread())
             {
-            j9tty_printf(PORTLIB, "Error: JITaaS Listener Thread attach failed.\n");
+            j9tty_printf(PORTLIB, "Error: JITServer Listener Thread attach failed.\n");
             }
          }
       }
    else
       {
-      j9tty_printf(PORTLIB, "Error: Unable to create JITaaS Listener Monitor\n");
+      j9tty_printf(PORTLIB, "Error: Unable to create JITServer Listener Monitor\n");
       }
    }

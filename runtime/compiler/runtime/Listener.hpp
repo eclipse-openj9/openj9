@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,17 @@
 #include "j9.h"
 #include "infra/Monitor.hpp"  // TR::Monitor
 
+ /**
+    @class TR_Listener
+    @brief Implementation of a "listener" thread that waits for network connection requests 
+
+    This thread will be created at the JITServer. 
+    Typical sequence executed by a JITServer is:
+    (1) Create a TR_Listener object with "allocate()" function
+    (2) Start a listener thread with  listener->startListenerThread(javaVM);
+ 
+    The current implementation does not provide code for nicely terminating the listener thread.
+ */
 class TR_Listener
    {
 public:
@@ -33,22 +44,22 @@ public:
    static TR_Listener* allocate();
    void startListenerThread(J9JavaVM *javaVM);
    void setAttachAttempted(bool b) { _listenerThreadAttachAttempted = b; }
-   bool getAttachAttempted() { return _listenerThreadAttachAttempted; }
+   bool getAttachAttempted() const { return _listenerThreadAttachAttempted; }
 
-   J9VMThread* getListenerThread() { return _listenerThread; }
+   J9VMThread* getListenerThread() const { return _listenerThread; }
    void setListenerThread(J9VMThread* thread) { _listenerThread = thread; }
-   j9thread_t getListenerOSThread() { return _listenerOSThread; }
-   TR::Monitor* getListenerMonitor() { return _listenerMonitor; }
+   j9thread_t getListenerOSThread() const { return _listenerOSThread; }
+   TR::Monitor* getListenerMonitor() const { return _listenerMonitor; }
 
-   uint32_t getListenerThreadExitFlag() { return _listenerThreadExitFlag; }
-   void setListenerThreadExitFlag() { _listenerThreadExitFlag = 1; }
+   bool getListenerThreadExitFlag() const { return _listenerThreadExitFlag; }
+   void setListenerThreadExitFlag() { _listenerThreadExitFlag = true; }
 
 private:
    J9VMThread *_listenerThread;
    TR::Monitor *_listenerMonitor;
    j9thread_t _listenerOSThread;
    volatile bool _listenerThreadAttachAttempted;
-   volatile uint32_t _listenerThreadExitFlag;
+   volatile bool _listenerThreadExitFlag;
    };
 
 #endif
