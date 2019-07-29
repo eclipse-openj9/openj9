@@ -2147,7 +2147,7 @@ void TR_StringPeepholes::removeAllocationFenceOfNew(TR::TreeTop *newTreeTop)
    TR::TreeTop *cursor = newTreeTop->getNextTreeTop();
    if (cursor
        && cursor->getNode()->getOpCodeValue() == TR::allocationFence
-       && cursor->getNode()->getFirstChild() == newTreeTop->getNode()->getFirstChild())
+       && cursor->getNode()->getAllocation() == newTreeTop->getNode()->getFirstChild())
       {
       TR::TransformUtil::removeTree(comp(), cursor);
       }
