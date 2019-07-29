@@ -763,13 +763,6 @@ TR_RelocationRuntime::isRomClassForMethodInSharedCache(J9Method *method)
    return false;
    }
 
-TR_YesNoMaybe
-TR_RelocationRuntime::isMethodInSharedCache(J9Method *method)
-   {
-   TR_ASSERT(0, "Error: isMethodInSharedCache not supported in this relocation runtime");
-   return TR_no;
-   }
-
 TR_OpaqueClassBlock *
 TR_RelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)
    {
@@ -1225,15 +1218,6 @@ TR_SharedCacheRelocationRuntime::isRomClassForMethodInSharedCache(J9Method *meth
    {
    J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
    return isROMClassInSharedCaches((UDATA)romClass);
-   }
-
-TR_YesNoMaybe
-TR_SharedCacheRelocationRuntime::isMethodInSharedCache(J9Method *method)
-   {
-   if (isRomClassForMethodInSharedCache(method))
-      return TR_maybe;
-   else
-      return TR_no;
    }
 
 TR_OpaqueClassBlock *
