@@ -30,9 +30,10 @@
 
 namespace JITServer
 {
-enum JITaaSCompatibilityFlags
+enum JITServerCompatibilityFlags
    {
-   JITaaSCompressedRef = 0x00000001,
+   JITServerJavaVersionMask    = 0x00000FFF,
+   JITServerCompressedRef      = 0x00001000,
    };
 // list of features that client and server must match in order for remote compilations to work
 
