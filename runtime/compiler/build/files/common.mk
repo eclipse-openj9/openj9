@@ -380,8 +380,19 @@ JIT_PRODUCT_SOURCE_FILES+=\
     omr/compiler/runtime/OMRCodeCacheMemorySegment.cpp \
     omr/compiler/runtime/OMRRuntimeAssumptions.cpp
 
+ifneq ($(JITSERVER_SUPPORT),)
+JIT_PRODUCT_SOURCE_FILES+=\
+    compiler/net/ClientStream.cpp \
+    compiler/net/CommunicationStream.cpp \
+    compiler/net/ProtobufTypeConvert.cpp \
+    compiler/net/ServerStream.cpp
+endif
+
 -include $(JIT_MAKE_DIR)/files/extra.mk
 include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH).mk
 include $(JIT_MAKE_DIR)/files/target/$(TARGET_ARCH).mk
 -include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH)-extra.mk
 -include $(JIT_MAKE_DIR)/files/target/$(TARGET_ARCH)-extra.mk
+ifneq ($(JITSERVER_SUPPORT),)
+include $(JIT_MAKE_DIR)/files/net.mk
+endif

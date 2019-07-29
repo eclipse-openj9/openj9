@@ -95,17 +95,30 @@ endif
 #
 .PHONY: all clean cleanobjs cleandeps cleandll
 all: ; @echo SUCCESS - All files are up-to-date
+ifneq ($(JITSERVER_SUPPORT),)
+.PHONY : proto
+all : proto
+endif
 clean: ; @echo SUCCESS - All files are cleaned
 cleanobjs: ; @echo SUCCESS - All objects are cleaned
 cleandeps: ; @echo SUCCESS - All dependencies are cleaned
 cleandll: ; @echo SUCCESS - All shared libraries are cleaned
+ifneq ($(JITSERVER_SUPPORT),)
+proto: ; @echo SUCCESS - All proto files are recompiled
+endif
 
 # Handy macro to check to make sure variables are set
 REQUIRE_VARS=$(foreach VAR,$(1),$(if $($(VAR)),,$(error $(VAR) must be set)))
 
 # Verify SDK pointer for non-cleaning targets
-ifeq (,$(filter clean cleandeps cleandll,$(MAKECMDGOALS)))
-    $(call REQUIRE_VARS,J9SRC)
+ifneq ($(JITSERVER_SUPPORT),)
+    ifeq (,$(filter proto clean cleandeps cleandll,$(MAKECMDGOALS)))
+        $(call REQUIRE_VARS,J9SRC)
+    endif
+else
+    ifeq (,$(filter clean cleandeps cleandll,$(MAKECMDGOALS)))
+        $(call REQUIRE_VARS,J9SRC)
+    endif
 endif
 
 #

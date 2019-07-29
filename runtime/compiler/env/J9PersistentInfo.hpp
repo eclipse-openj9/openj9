@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,10 +33,10 @@ namespace J9 { typedef J9::PersistentInfo PersistentInfoConnector; }
 #include "env/RuntimeAssumptionTable.hpp"
 
 #include <stdint.h>
+#if defined(JITSERVER_SUPPORT)
+#include <string>
+#endif /* defined(JITSERVER_SUPPORT) */
 #include "env/jittypes.h"
-
-
-
 
 class TR_FrontEnd;
 class TR_PersistentMemory;
@@ -61,6 +61,17 @@ enum IprofilerStates {
    IPROFILING_STATE_OFF,
 };
 
+#if defined(JITSERVER_SUPPORT)
+namespace JITServer
+{
+enum RemoteCompilationModes
+   {
+   NONE = 0,
+   CLIENT,
+   SERVER,
+   };
+}
+#endif /* defined(JITSERVER_SUPPORT) */
 
 #define MAX_SUPERCLASSES (20000)
 namespace J9
@@ -118,6 +129,12 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _gpuInitMonitor(NULL),
          _runtimeInstrumentationEnabled(false),
          _runtimeInstrumentationRecompilationEnabled(false),
+#if defined(JITSERVER_SUPPORT)
+         _remoteCompilationMode(JITServer::NONE),
+         _JITServerAddress("localhost"),
+         _JITServerPort(38400),
+         _socketTimeoutMs(1000),
+#endif /* defined(JITSERVER_SUPPORT) */
       OMR::PersistentInfoConnector(pm)
       {}
 
@@ -148,6 +165,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    bool isUnloadedClass(void *v, bool yesIReallyDontCareAboutHCR); // You probably want isObsoleteClass
    bool isInUnloadedMethod(uintptrj_t address);
    int32_t getNumUnloadedClasses() const { return _numUnloadedClasses; }
+   TR_AddressSet* getUnloadedClassAddresses() const { return _unloadedClassAddresses; }
 
    void incNumLoadedClasses() {_numLoadedClasses++;}
 
@@ -277,6 +295,18 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint8_t _paddingBefore[128];
    int32_t _countForRecompile;
 
+#if defined(JITSERVER_SUPPORT)
+   JITServer::RemoteCompilationModes getRemoteCompilationMode() const { return _remoteCompilationMode; }
+   void setRemoteCompilationMode(JITServer::RemoteCompilationModes m) { _remoteCompilationMode = m; }
+   const std::string &getJITServerAddress() const { return _JITServerAddress; }
+   void setJITServerAddress(char *addr) { _JITServerAddress = addr; }
+   uint32_t getSocketTimeout() const { return _socketTimeoutMs; }
+   void setSocketTimeout(uint32_t t) { _socketTimeoutMs = t; }
+   uint32_t getJITServerPort() const { return _JITServerPort; }
+   void setJITServerPort(uint32_t port) { _JITServerPort = port; }
+   uint64_t getClientUID() const { return _clientUID; }
+   void setClientUID(uint64_t val) { _clientUID = val; }
+#endif /* defined(JITSERVER_SUPPORT) */
 
    private:
    TR_AddressSet *_unloadedClassAddresses;
@@ -360,6 +390,13 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
 
    int32_t _numLoadedClasses; ///< always increasing
+#if defined(JITSERVER_SUPPORT)
+   JITServer::RemoteCompilationModes _remoteCompilationMode; // JITServer::NONE, JITServer::CLIENT, JITServer::SERVER
+   std::string _JITServerAddress;
+   uint32_t    _JITServerPort;
+   uint64_t    _clientUID;
+   uint32_t    _socketTimeoutMs; // timeout for communication sockets used in out-of-process JIT compilation
+#endif /* defined(JITSERVER_SUPPORT) */
    };
 
 }
