@@ -1485,14 +1485,6 @@ bool TR::CompilationInfo::isRomClassForMethodInSharedCache(J9Method *method)
    J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
    return _sharedCacheReloRuntime.isRomClassForMethodInSharedCache(method);
    }
-
-TR_YesNoMaybe TR::CompilationInfo::isMethodInSharedCache(J9Method *method)
-   {
-   if (isRomClassForMethodInSharedCache(method))
-      return TR_maybe;
-   else
-      return TR_no;
-   }
 #endif
 
 // Print the entire qualified name of the given method to the vlog
