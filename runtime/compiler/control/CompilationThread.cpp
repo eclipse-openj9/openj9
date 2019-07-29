@@ -920,6 +920,10 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
    }
 
 TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
+#if defined(JITSERVER_SUPPORT)
+   _sslKeys(decltype(_sslKeys)::allocator_type(TR::Compiler->persistentAllocator())),
+   _sslCerts(decltype(_sslCerts)::allocator_type(TR::Compiler->persistentAllocator())),
+#endif /* defined(JITSERVER_SUPPORT) */
    _persistentMemory(pointer_cast<TR_PersistentMemory *>(jitConfig->scratchSegment)),
    _reloRuntime(jitConfig),
    _samplingThreadWaitTimeInDeepIdleToNotifyVM(-1)

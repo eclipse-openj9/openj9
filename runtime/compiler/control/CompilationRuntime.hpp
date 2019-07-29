@@ -40,6 +40,9 @@
 #include "infra/Statistics.hpp"
 #include "control/rossa.h"
 #include "runtime/RelocationRuntime.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "env/PersistentCollections.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
 
 extern "C" {
 struct J9Method;
@@ -880,6 +883,14 @@ public:
    bool getSuspendThreadDueToLowPhysicalMemory() const { return _suspendThreadDueToLowPhysicalMemory; }
    void setSuspendThreadDueToLowPhysicalMemory(bool b) { _suspendThreadDueToLowPhysicalMemory = b; }
 
+#if defined(JITSERVER_SUPPORT)
+   const PersistentVector<std::string> &getJITServerSslKeys() const { return _sslKeys; }
+   void  addJITServerSslKey(const std::string &key) { _sslKeys.push_back(key); }
+   const PersistentVector<std::string> &getJITServerSslCerts() const { return _sslCerts; }
+   void  addJITServerSslCert(const std::string &cert) { _sslCerts.push_back(cert); }
+   const std::string &getJITServerSslRootCerts() const { return _sslRootCerts; }
+   void  setJITServerSslRootCerts(const std::string &cert) { _sslRootCerts = cert; }
+#endif /* defined(JITSERVER_SUPPORT) */
    static int32_t         VERY_SMALL_QUEUE;
    static int32_t         SMALL_QUEUE;
    static int32_t         MEDIUM_LARGE_QUEUE;
@@ -1059,6 +1070,11 @@ private:
    // freeing scratch segments it holds to
    bool _suspendThreadDueToLowPhysicalMemory;
    TR_InterpreterSamplingTracking *_interpSamplTrackingInfo;
+#if defined(JITSERVER_SUPPORT)
+   std::string                   _sslRootCerts;
+   PersistentVector<std::string> _sslKeys;
+   PersistentVector<std::string> _sslCerts;
+#endif /* defined(JITSERVER_SUPPORT) */
    }; // CompilationInfo
 }
 

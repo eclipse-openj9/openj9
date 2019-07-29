@@ -67,6 +67,46 @@ add_custom_command(
 )
 add_custom_target(j9jit_tracegen DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/env/ut_j9jit.h)
 
+# JITSERVER_SUPPORT and protobuf
+if(JITSERVER_SUPPORT)
+	message(STATUS "JITServer is supported")
+	add_definitions(-DJITSERVER_SUPPORT)
+
+	include(FindProtobuf)
+	set(Protobuf_USE_STATIC_LIBS ON)
+	find_package(Protobuf REQUIRED)
+
+	if(Protobuf_FOUND)
+		include_directories(${Protobuf_INCLUDE_DIRS})
+		string(REPLACE
+			"${CMAKE_SHARED_LIBRARY_PREFIX}protobuf${J9VM_OLD_SHARED_SUFFIX}"
+			"${CMAKE_STATIC_LIBRARY_PREFIX}protobuf${CMAKE_STATIC_LIBRARY_SUFFIX}"
+			Protobuf_LIBRARIES
+			${Protobuf_LIBRARIES})
+		message(STATUS "Protobuf found version : ${Protobuf_VERSION}")
+		message(STATUS "Protobuf include path : ${Protobuf_INCLUDE_DIRS}" )
+		message(STATUS "Protobuf libraries : ${Protobuf_LIBRARIES}" )
+	else()
+		message(FATAL_ERROR "Protobuf not found")
+	endif()
+
+	find_program(PROTOC "protoc")
+	if(PROTOC-NOTFOUND)
+		message(FATAL_ERROR "'protoc' not found")
+	endif(PROTOC-NOTFOUND)
+
+	add_custom_command(
+			OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.h ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.cpp
+			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/net/protos/compile.proto
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/net/gen
+			COMMAND ${PROTOC} -I=${CMAKE_CURRENT_SOURCE_DIR}/net/protos --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/net/gen ${CMAKE_CURRENT_SOURCE_DIR}/net/protos/compile.proto
+			COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.cc ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.cpp
+			VERBATIM
+	)
+
+	add_custom_target(j9jit_proto DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.h ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.cpp)
+endif()
+
 #TODO We should get rid of this, but its still required by the compiler_support module in omr
 set(J9SRC  ${j9vm_SOURCE_DIR})
 
@@ -102,6 +142,11 @@ add_subdirectory(infra)
 add_subdirectory(optimizer)
 add_subdirectory(ras)
 add_subdirectory(runtime)
+
+if(JITSERVER_SUPPORT)
+	j9jit_files(${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.cpp)
+	add_subdirectory(net)
+endif()
 
 # Should this be conditional?
 if(TR_HOST_ARCH STREQUAL "x" OR TR_TARGET_ARCH STREQUAL "x")
@@ -211,10 +256,16 @@ if(OMR_OS_LINUX OR OMR_OS_OSX)
 	# Makefiles
 	set(J9_CXXFLAGS
 		${J9_CXXFLAGS}
-		-fno-rtti
 		-fno-threadsafe-statics
 		-Wno-invalid-offsetof
 	)
+	if(NOT JITSERVER_SUPPORT)
+		set(J9_CXXFLAGS
+			${J9_CXXFLAGS}
+			-fno-rtti
+		)
+	endif()
+
 	set(J9_CFLAGS
 		${J9_CFLAGS}
 		-std=gnu89
@@ -252,6 +303,10 @@ add_dependencies(j9jit
 	j9jit_tracegen
 )
 
+if(JITSERVER_SUPPORT)
+	add_dependencies(j9jit j9jit_proto)
+endif()
+
 target_link_libraries(j9jit
 	PRIVATE
 		j9vm_interface
@@ -267,6 +322,10 @@ target_link_libraries(j9jit
 		j9thr
 		${CMAKE_DL_LIBS}
 )
+
+if(JITSERVER_SUPPORT)
+	target_link_libraries(j9jit PRIVATE ${Protobuf_LIBRARIES})
+endif()
 
 if(OMR_OS_LINUX)
 	set_property(TARGET j9jit APPEND_STRING PROPERTY
