@@ -78,7 +78,7 @@ public:
 
    TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader);
 
-   bool isPointerInSharedCache(void *ptr, void * & cacheOffset);
+   bool isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset = NULL);
 
    J9ROMClass *startingROMClassOfClassChain(UDATA *classChain);
 

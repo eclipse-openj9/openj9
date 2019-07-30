@@ -1121,10 +1121,9 @@ static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *m, TR::Compilation 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM)) && !defined(SMALL)
    if (TR::Options::sharedClassCache())
       {
-      TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
       J9Method *method = (J9Method *) m->getPersistentIdentifier();
 
-      if (!compInfo->isRomClassForMethodInSharedCache(method))
+      if (!comp->fej9()->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass))
          {
 #if defined(J9ZOS390)
           // Do not change the counts on zos at the moment since the shared cache capacity is higher on this platform
@@ -2196,7 +2195,8 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
          isSystemClassLoader = ((void*)_fe->vmThread()->javaVM->systemClassLoader->classLoaderObject ==  (void*)_fe->getClassLoader(clazzOfInlinedMethod));
          }
 
-      if (TR::CompilationInfo::get(_fe->_jitConfig)->isRomClassForMethodInSharedCache(j9method))
+      bool methodInSCC = _fe->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(j9method)->romClass);
+      if (methodInSCC)
          {
          bool sameLoaders = false;
          TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
@@ -2228,7 +2228,7 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
             }
          }
       else if (aotStats &&
-               !TR::CompilationInfo::get(_fe->_jitConfig)->isRomClassForMethodInSharedCache(j9method))
+               !methodInSCC)
          {
          aotStats->numMethodROMMethodNotInSC++;
          }

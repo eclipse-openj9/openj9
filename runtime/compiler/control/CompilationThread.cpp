@@ -1476,17 +1476,6 @@ TR::CompilationInfo::disableAOTCompilations()
       }
 #endif
 
-
-#if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-
-// Note: this method must be called only when we know that AOT mode for shared classes is enabled !!
-bool TR::CompilationInfo::isRomClassForMethodInSharedCache(J9Method *method)
-   {
-   J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
-   return _sharedCacheReloRuntime.isRomClassForMethodInSharedCache(method);
-   }
-#endif
-
 // Print the entire qualified name of the given method to the vlog
 // Caller must acquire vlog mutex
 //
@@ -6633,7 +6622,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          !TR::CompilationInfo::isCompiled(method) &&
          !entry->isDLTCompile() &&
          !entry->_doNotUseAotCodeFromSharedCache &&
-         reloRuntime->isRomClassForMethodInSharedCache(method) &&
+         TR_J9VMBase::get(_jitConfig, vmThread)->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass) &&
          (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) ||
            TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true);
 

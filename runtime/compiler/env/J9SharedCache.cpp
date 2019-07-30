@@ -403,12 +403,13 @@ TR_J9SharedCache::offsetInSharedCacheFromPointer(void *ptr)
    }
 
 bool
-TR_J9SharedCache::isPointerInSharedCache(void *ptr, void * & cacheOffset)
+TR_J9SharedCache::isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset)
    {
    UDATA offset = (UDATA) offsetInSharedCacheFromPointer(ptr);
    if (offset < _cacheSizeInBytes)
       {
-      cacheOffset = (void*)offset;
+      if (cacheOffset)
+         *cacheOffset = offset;
       return true;
       }
    return false;
@@ -452,8 +453,8 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(clazz->romClass);
    LOG(5,{ log("rememberClass class %p %.*s\n", clazz, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
 
-   void * classOffsetInCache;
-   if (! isPointerInSharedCache(clazz->romClass, classOffsetInCache))
+   uintptrj_t classOffsetInCache;
+   if (!isPointerInSharedCache(clazz->romClass, &classOffsetInCache))
       {
       LOG(5,{ log("\trom class not in shared cache, returning\n"); });
       return NULL;
@@ -461,7 +462,7 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
 
    char key[17]; // longest possible key length is way less than 16 digits
    uint32_t keyLength;
-   createClassKey((UDATA)classOffsetInCache, key, keyLength);
+   createClassKey(classOffsetInCache, key, keyLength);
 
    LOG(9, { log("\tkey created: %.*s\n", keyLength, key); });
 
@@ -580,8 +581,8 @@ TR_J9SharedCache::numInterfacesImplemented(J9Class *clazz)
 bool
 TR_J9SharedCache::writeClassToChain(J9ROMClass *romClass, UDATA * & chainPtr)
    {
-   void *classOffsetInCache;
-   if (!isPointerInSharedCache(romClass, classOffsetInCache))
+   uintptrj_t classOffsetInCache;
+   if (!isPointerInSharedCache(romClass, &classOffsetInCache))
       {
       LOG(9, { log("\t\tromclass %p not in shared cache, writeClassToChain returning false\n", romClass); });
       return false;
@@ -589,7 +590,7 @@ TR_J9SharedCache::writeClassToChain(J9ROMClass *romClass, UDATA * & chainPtr)
 
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
    LOG(9, {log("\t\tChain %p storing romclass %p (%.*s) offset %d\n", chainPtr, romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className), classOffsetInCache); });
-   *chainPtr++ = (UDATA) classOffsetInCache;
+   *chainPtr++ = classOffsetInCache;
    return true;
    }
 
@@ -685,8 +686,8 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(clazz->romClass);
    LOG(5, { log("classMatchesCachedVersion class %p %.*s\n", clazz, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
 
-   void *classOffsetInCache;
-   if (! isPointerInSharedCache(clazz->romClass, classOffsetInCache))
+   uintptrj_t classOffsetInCache;
+   if (!isPointerInSharedCache(clazz->romClass, &classOffsetInCache))
       {
       LOG(5, { log("\tclass not in shared cache, returning false\n"); });
       return false;
@@ -696,7 +697,7 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
       {
       char key[17]; // longest possible key length is way less than 16 digits
       uint32_t keyLength;
-      createClassKey((UDATA)classOffsetInCache, key, keyLength);
+      createClassKey(classOffsetInCache, key, keyLength);
       LOG(9, { log("\tno chain specific, so looking up for key %.*s\n", keyLength, key); });
       chainData = findChainForClass(clazz, key, keyLength);
       if (chainData == NULL)
