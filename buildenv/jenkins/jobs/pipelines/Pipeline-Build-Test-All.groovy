@@ -170,16 +170,14 @@ try {
                     def gitConfig = scm.getUserRemoteConfigs().get(0)
                     def remoteConfigParameters = [url: "${gitConfig.getUrl()}"]
                     def scmBranch = scm.branches[0].name
-                    if (params.sha1) {
+                    if (ghprbGhRepository == 'eclipse/openj9') {
+                        // OpenJ9 PR build
                         scmBranch = params.sha1
+                        remoteConfigParameters.put("refspec", "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge")
                     }
 
                     if (gitConfig.getCredentialsId()) {
                         remoteConfigParameters.put("credentialsId", "${gitConfig.getCredentialsId()}")
-                    }
-
-                    if (ghprbPullId) {
-                        remoteConfigParameters.put("refspec", "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge")
                     }
 
                     checkout changelog: false,
