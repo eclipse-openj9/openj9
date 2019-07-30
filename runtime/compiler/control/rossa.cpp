@@ -65,7 +65,7 @@
 #include "env/ClassLoaderTable.hpp"
 #include "env/J2IThunk.hpp"
 #include "env/PersistentCHTable.hpp"
-#include "env/JITaaSPersistentCHTable.hpp"
+#include "env/JITServerPersistentCHTable.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
 #include "env/ClassTableCriticalSection.hpp"
@@ -1609,11 +1609,11 @@ onLoadInternal(
    TR_PersistentCHTable *chtable;
    if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      chtable = new (PERSISTENT_NEW) TR_JITaaSServerPersistentCHTable(persistentMemory);
+      chtable = new (PERSISTENT_NEW) JITServerPersistentCHTable(persistentMemory);
       }
    else if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
-      chtable = new (PERSISTENT_NEW) TR_JITaaSClientPersistentCHTable(persistentMemory);
+      chtable = new (PERSISTENT_NEW) JITClientPersistentCHTable(persistentMemory);
       }
    else
       {

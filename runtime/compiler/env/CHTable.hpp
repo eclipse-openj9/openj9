@@ -33,7 +33,7 @@
 #include "env/jittypes.h"
 #include "infra/Link.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
-#include "env/JITaaSCHTable.hpp"
+#include "env/JITServerCHTable.hpp"
 
 class TR_FrontEnd;
 class TR_OpaqueClassBlock;
