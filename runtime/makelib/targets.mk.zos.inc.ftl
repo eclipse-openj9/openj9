@@ -100,18 +100,6 @@ ifdef j9vm_jit_freeSystemStackPointer
   UMA_M4_FLAGS += -DJ9VM_JIT_FREE_SYSTEM_STACK_POINTER
 endif
 
-# Static libraries that are included in a shared library require the
-# EXPORTALL option in order to export their symbols (e.g. JNI). This applies to zOS only.
-# The change is not made globally as it will export undesired symbols. Additional
-# target names may be added as needed.
-
-ifeq ($(UMA_TARGET_NAME),jvmti_test_agent)
-  UMA_ZOS_FLAGS += -Wc,DLL,EXPORTALL
-endif
-ifeq ($(UMA_TARGET_NAME),jvmti_test_src)
-  UMA_ZOS_FLAGS += -Wc,DLL,EXPORTALL
-endif
-
 ifndef j9vm_env_data64
 ASFLAGS += -mzarch
 endif
