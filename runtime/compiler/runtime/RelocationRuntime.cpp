@@ -749,20 +749,6 @@ TR_RelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)
    return false;
    }
 
-void *
-TR_RelocationRuntime::isROMClassInSharedCaches(UDATA romClassValue)
-   {
-   TR_ASSERT(0, "Error: isROMClassInSharedCaches not supported in this relocation runtime");
-   return NULL;
-   }
-
-bool
-TR_RelocationRuntime::isRomClassForMethodInSharedCache(J9Method *method)
-   {
-   TR_ASSERT(0, "Error: isRomClassForMethodInSharedCache not supported in this relocation runtime");
-   return false;
-   }
-
 TR_OpaqueClassBlock *
 TR_RelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)
    {
@@ -1179,45 +1165,6 @@ TR_SharedCacheRelocationRuntime::storeAOTHeader(TR_FrontEnd *fe, J9VMThread *cur
       TR_J9SharedCache::setStoreSharedDataFailedLength(aotHeaderLen);
       return false;
       }
-   }
-
-
-void *
-TR_SharedCacheRelocationRuntime::isROMClassInSharedCaches(UDATA romClassValue)
-   {
-   j9thread_monitor_enter(javaVM()->sharedClassConfig->configMonitor);
-   J9SharedClassCacheDescriptor *currentCacheDescriptor = javaVM()->sharedClassConfig->cacheDescriptorList;
-   bool matchFound = false;
-
-   while (!matchFound && currentCacheDescriptor)
-      {
-      //printf("currentCacheDescriptor: %p, currentCacheDescriptor->cacheStartAddress: %p, cacheSizeBytes: %x, romClassStartAddress: %p, romClassValue :%p, descriptor->next: %p\n", currentCacheDescriptor, currentCacheDescriptor->cacheStartAddress, currentCacheDescriptor->cacheSizeBytes, currentCacheDescriptor->romclassStartAddress, romClassValue, currentCacheDescriptor->next);
-      //if (((romClassValue < (UDATA)currentCacheDescriptor->romclassStartAddress + currentCacheDescriptor->cacheSizeBytes)&& (romClassValue >= (UDATA)currentCacheDescriptor->romclassStartAddress))) // Temporarily use romclassStartAddress because cachStartAddress is NULL for new cache
-      if (((romClassValue < (UDATA)currentCacheDescriptor->metadataStartAddress)&& (romClassValue >= (UDATA)currentCacheDescriptor->romclassStartAddress)))
-         {
-         matchFound = true;
-         break;
-         }
-      if (currentCacheDescriptor->next == javaVM()->sharedClassConfig->cacheDescriptorList)
-         break; // Since list is circular, break if we are about to loop back
-      currentCacheDescriptor = currentCacheDescriptor->next;
-      }
-   j9thread_monitor_exit(javaVM()->sharedClassConfig->configMonitor);
-   if (matchFound)
-      {
-      return (void *)currentCacheDescriptor;
-      }
-   else
-      {
-      return NULL;
-      }
-   }
-
-bool
-TR_SharedCacheRelocationRuntime::isRomClassForMethodInSharedCache(J9Method *method)
-   {
-   J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
-   return isROMClassInSharedCaches((UDATA)romClass);
    }
 
 TR_OpaqueClassBlock *

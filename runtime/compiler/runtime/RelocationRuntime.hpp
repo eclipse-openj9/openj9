@@ -187,8 +187,6 @@ class TR_RelocationRuntime {
       virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
 
-      virtual void *isROMClassInSharedCaches(UDATA romClassValue);
-      virtual bool isRomClassForMethodInSharedCache(J9Method *method);
       virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
 
       static uintptr_t    getGlobalValue(uint32_t g)
@@ -356,9 +354,6 @@ public:
       virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
       virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
-
-      virtual void *isROMClassInSharedCaches(UDATA romClassValue);
-      virtual bool isRomClassForMethodInSharedCache(J9Method *method);
 
       virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
 
