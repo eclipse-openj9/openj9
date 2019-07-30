@@ -469,8 +469,9 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                   if (isInstanceOfResult == TR_yes)
                      assignable = 1;
                   }
-               else
+               else if (secondClassChildConstraint->getClassType()->asResolvedClass())
                   {
+                  TR_ASSERT_FATAL(firstClass != NULL && secondClass != NULL, "isAssignableFrom replacement at compile-time requires two class pointers - got %p and %p", firstClass, secondClass);
                   TR_YesNoMaybe isInstanceOfResult = comp()->fej9()->isInstanceOf(secondClass, firstClass, false, true);
                   if (isInstanceOfResult == TR_maybe)
                      {
@@ -480,6 +481,12 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                      }
                   else if (isInstanceOfResult == TR_yes)
                      assignable = 1;
+                  }
+               else
+                  {
+                  if (trace())
+                     traceMsg(comp(), "The second child class type is not resolved at compile-time, quit transforming Class.isAssignableFrom\n");
+                  return;
                   }
                transformCallToIconstInPlaceOrInDelayedTransformations(_curTree, assignable, firstClassChildGlobal && secondClassChildGlobal, true);
                TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "constrainCall/(%s)", signature));
