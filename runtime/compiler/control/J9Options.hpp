@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,9 @@ namespace J9 { typedef J9::Options OptionsConnector; }
 #include <stdint.h>
 #include "control/OptionsUtil.hpp"
 #include "env/jittypes.h"
+#if defined(JITSERVER_SUPPORT)
+namespace TR { class CompilationInfoPerThreadBase; }
+#endif /* defined(JITSERVER_SUPPORT) */
 
 namespace J9
 {
@@ -81,6 +84,13 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
 
    static int32_t _samplingFrequencyInIdleMode;
    static int32_t getSamplingFrequencyInIdleMode() {return _samplingFrequencyInIdleMode;}
+
+#if defined(JITSERVER_SUPPORT)
+   static int32_t _statisticsFrequency;
+   static int32_t getStatisticsFrequency() {return _statisticsFrequency;}
+
+   static uint32_t _compilationSequenceNumber;
+#endif /* defined(JITSERVER_SUPPORT) */
 
    static int32_t _samplingFrequencyInDeepIdleMode;
    static int32_t getSamplingFrequencyInDeepIdleMode() {return _samplingFrequencyInDeepIdleMode;}
@@ -333,6 +343,18 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    bool  showOptionsInEffect();
    bool  showPID();
    void openLogFiles(J9JITConfig *jitConfig);
+
+#if defined(JITSERVER_SUPPORT)
+   void setupJITServerOptions();
+
+   static std::string packOptions(const TR::Options *origOptions);
+   static TR::Options *unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::CompilationInfoPerThreadBase* compInfoPT,
+                                    TR_J9VMBase *fe, TR_Memory *trMemory);
+   static std::string packLogFile(TR::FILE *fp);
+   int writeLogFileFromServer(const std::string& logFileContent);
+   void setLogFileForClientOptions(int suffixNumber = 0);
+   void closeLogFileForClientOptions();
+#endif /* defined(JITSERVER_SUPPORT) */
    };
 
 }
