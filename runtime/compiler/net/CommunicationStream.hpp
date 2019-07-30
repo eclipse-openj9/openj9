@@ -54,7 +54,7 @@ public:
    static void initVersion();
   
 
-   static uint64_t getJITaaSVersion()
+   static uint64_t getJITServerVersion()
       {
       return ((((uint64_t)CONFIGURATION_FLAGS) << 32) | (MAJOR_NUMBER << 24) | (MINOR_NUMBER << 8));
       }
@@ -134,12 +134,12 @@ protected:
       CodedInputStream codedInputStream(_inputStream);
       uint32_t messageSize;
       if (!codedInputStream.ReadLittleEndian32(&messageSize))
-         throw JITServer::StreamFailure("JITaaS I/O error: reading message size");
+         throw JITServer::StreamFailure("JITServer I/O error: reading message size");
       auto limit = codedInputStream.PushLimit(messageSize);
       if (!val.ParseFromCodedStream(&codedInputStream))
-         throw JITServer::StreamFailure("JITaaS I/O error: reading from stream");
+         throw JITServer::StreamFailure("JITServer I/O error: reading from stream");
       if (!codedInputStream.ConsumedEntireMessage())
-         throw JITServer::StreamFailure("JITaaS I/O error: did not receive entire message");
+         throw JITServer::StreamFailure("JITServer I/O error: did not receive entire message");
       codedInputStream.PopLimit(limit);
       }
    template <typename T>
@@ -152,7 +152,7 @@ protected:
          codedOutputStream.WriteLittleEndian32(messageSize);
          val.SerializeWithCachedSizes(&codedOutputStream);
          if (codedOutputStream.HadError())
-            throw JITServer::StreamFailure("JITaaS I/O error: writing to stream");
+            throw JITServer::StreamFailure("JITServer I/O error: writing to stream");
          // codedOutputStream must be dropped before calling flush
          }
 #if defined(JITSERVER_ENABLE_SSL)
@@ -161,7 +161,7 @@ protected:
 #else
       if (!((FileOutputStream*)_outputStream)->Flush())
 #endif
-         throw JITServer::StreamFailure("JITaaS I/O error: flushing stream");
+         throw JITServer::StreamFailure("JITServer I/O error: flushing stream");
       }
 
    int _connfd; // connection file descriptor

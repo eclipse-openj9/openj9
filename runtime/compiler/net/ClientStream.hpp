@@ -90,7 +90,7 @@ public:
       {
       if (getVersionCheckStatus() == NOT_DONE)
          {
-         _cMsg.set_version(getJITaaSVersion());
+         _cMsg.set_version(getJITServerVersion());
          write(MessageType::compilationRequest, args...);
          _cMsg.clear_version();
          }
@@ -143,13 +143,13 @@ public:
 
       Examples of error messages include 'compilationAbort' (e.g. when class unloading happens),
       'clientTerminate' (e.g. when the client is about to exit), 
-      and 'compilationTerminate' (e.g. when the client is closing the connection)
+      and 'connectionTerminate' (e.g. when the client is closing the connection)
    */
    template <typename ...T>
    void writeError(MessageType type, T... args)
       {
       _cMsg.set_type(type);
-      if (type == MessageType::compilationAbort)
+      if (type == MessageType::compilationAbort || type == MessageType::connectionTerminate)
          _cMsg.mutable_data()->clear_data();
       else
          setArgs<T...>(_cMsg.mutable_data(), args...);
