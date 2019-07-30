@@ -31,8 +31,7 @@
 	<property name="ascii.workspace.dir" value="${TEST_ROOT}" />
 	<property name="ascii.test.dir" value="${BUILD_ROOT}" />
 	<property name="JDK_VERSION" value=""/>
-	<property name="JAVA_BIN" value="${JAVA_BIN}" />
-	<echo> JAVA_BIN is ${JAVA_BIN} </echo>
+	<property name="TEST_JDK_HOME" value="${TEST_JDK_HOME}" />
 	<property name="JAVAC" value="${TEST_JDK_HOME}/bin/javac" />
 
 	<var name="build.list" value= "" />
@@ -97,39 +96,5 @@
 		<chmod dir="${ascii.test.dir}/TestConfig" perm="755"/>
 
 		<chmod file="${ascii.test.dir}/*.mk" perm="755"/>
-	</target>
-
-
-	<target name="check_sdk">
-		<available file="${JAVA_BIN}" property="sdk.present" />
-		<if>
-			<istrue value="${sdk.present}" />
-			<then>
-				<antcall target="build" />
-			</then>
-			<else>
-				<if>
-					<isfalse value="${sdk.present}" />
-					<then>
-						<echo>${JDK_VERSION} ${JAVA_BIN} is missing</echo>
-						<mkdir dir="${TMP_DIR}/${JDK_VERSION}"/>
-						<property name="tmp.java.dir" value="${TMP_DIR}/${JDK_VERSION}" />
-						<delete dir="${tmp.java.dir}"/>
-						<basename property="jar.filename" file="${SDK_JAR}"/>
-						<copy file="${SDK_JAR}" todir="${tmp.java.dir}"/>
-						<unzip src="${tmp.java.dir}/${jar.filename}" dest="${tmp.java.dir}" />
-						<exec executable="chmod">
-							<arg value="-R" />
-							<arg value="755" />
-							<arg value="${tmp.java.dir}" />
-						</exec>
-						<var name="JAVA_BIN" unset="true"/>
-						<property name="JAVA_BIN" value="${tmp.java.dir}/sdk/bin" />
-						<echo>set JAVA_BIN=${JAVA_BIN}</echo>
-					</then>
-				</if>
-				<antcall target="build" />
-			</else>
-		</if>
 	</target>
 </project>
