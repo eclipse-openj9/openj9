@@ -102,12 +102,11 @@ endif
 #
 # "all" should be the first target to appear so it's the default
 #
-ifneq ($(JITSERVER_SUPPORT),)
-.PHONY: all clean cleanobjs cleandeps cleandll proto
-all: proto ; @echo SUCCESS - All files are up-to-date
-else
 .PHONY: all clean cleanobjs cleandeps cleandll
 all: ; @echo SUCCESS - All files are up-to-date
+ifneq ($(JITSERVER_SUPPORT),)
+.PHONY : proto
+all : proto
 endif
 clean: ; @echo SUCCESS - All files are cleaned
 cleanobjs: ; @echo SUCCESS - All objects are cleaned

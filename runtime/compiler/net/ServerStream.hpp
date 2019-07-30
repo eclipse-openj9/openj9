@@ -63,7 +63,7 @@ class BaseCompileDispatcher;
    7) When compilation is complete, the server responds with
          finishCompilation(uint32_t statusCode, T... args)
  */
-class ServerStream : CommunicationStream
+class ServerStream : public CommunicationStream
    {
 public:
    /**
@@ -74,9 +74,9 @@ public:
       @param timeout timeout value (ms) to be set for connfd
    */
 #if defined(JITSERVER_ENABLE_SSL)
-   ServerStream(int connfd, BIO *ssl);
+   explicit ServerStream(int connfd, BIO *ssl);
 #else
-   ServerStream(int connfd);
+   explicit ServerStream(int connfd);
 #endif
    virtual ~ServerStream() 
       {
@@ -211,10 +211,12 @@ public:
    static void serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::PersistentInfo *info);
 
    // Statistics
-   static int _numConnectionsOpened;
-   static int _numConnectionsClosed;
+   static int getNumConnectionsOpened() { return _numConnectionsOpened; }
+   static int getNumConnectionsClosed() { return _numConnectionsClosed; }
 
 private:
+   static int _numConnectionsOpened;
+   static int _numConnectionsClosed;
    uint64_t _clientId;  // UID of client connected to this communication stream
    };
 

@@ -26,7 +26,6 @@
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include "compile/CompilationTypes.hpp"
 #include "ilgen/J9IlGeneratorMethodDetails.hpp"
-#include "net/StreamTypes.hpp"
 #include "net/ProtobufTypeConvert.hpp"
 #include "net/CommunicationStream.hpp"
 
@@ -60,19 +59,21 @@ enum VersionCheckStatus
           auto recv = client->getRecvData<uint32_t, std::string, std::string, .......>();
    (5) install compiled code into code cache
 */
-class ClientStream : CommunicationStream
+class ClientStream : public CommunicationStream
    {
 public:
    /**
        @brief Function called to perform static initialization of ClientStream
 
-       Creates SSL context, load certificates and keys. 
+       This is called during startup from rossa.cpp.
+       Creates SSL context, loads certificates and keys.
        Only needs to be done once during JVM initialization.
-   */
-// This is called during startup from rossa.cpp
-   static void static_init(TR::PersistentInfo *info);
 
-   ClientStream(TR::PersistentInfo *info);
+       Returns 0 if successful;; Otherwise, returns -1.
+   */
+   static int static_init(TR::PersistentInfo *info);
+
+   explicit ClientStream(TR::PersistentInfo *info);
    virtual ~ClientStream()
       {
       _numConnectionsClosed++;
@@ -190,24 +191,26 @@ public:
       OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
       uint64_t current_time = omrtime_current_time_millis();
       // the client periodically checks whether the server is compatible or not
-      // the retry interval is defined by RETRY_COMPATIBILITY_INTERVAL
+      // the retry interval is defined by RETRY_COMPATIBILITY_INTERVAL_MS
       // we set _incompatibilityCount to 0 when it's time to retry for compatibility check
       // otherwise, check if we exceed the number of incompatible connections
-      if ((current_time - _incompatibleStartTime) > RETRY_COMPATIBILITY_INTERVAL)
+      if ((current_time - _incompatibleStartTime) > RETRY_COMPATIBILITY_INTERVAL_MS)
          _incompatibilityCount = 0;
 
       return _incompatibilityCount < INCOMPATIBILITY_COUNT_LIMIT;
       }
 
    // Statistics
-   static int _numConnectionsOpened;
-   static int _numConnectionsClosed;
+   static int getNumConnectionsOpened() { return _numConnectionsOpened; }
+   static int getNumConnectionsClosed() { return _numConnectionsClosed; }
 
 private:
+   static int _numConnectionsOpened;
+   static int _numConnectionsClosed;
    VersionCheckStatus _versionCheckStatus; // indicates whether a version checking has been performed
    static int _incompatibilityCount;
    static uint64_t _incompatibleStartTime; // Time when version incomptibility has been detected
-   static const uint64_t RETRY_COMPATIBILITY_INTERVAL; // (ms) When we should perform again a version compatibilty check
+   static const uint64_t RETRY_COMPATIBILITY_INTERVAL_MS; // (ms) When we should perform again a version compatibilty check
    static const int INCOMPATIBILITY_COUNT_LIMIT;
 
 #if defined(JITSERVER_ENABLE_SSL)

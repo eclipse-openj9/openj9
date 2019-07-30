@@ -26,7 +26,7 @@
 #include <cstdint>
 #include <utility>
 #include <type_traits>
-#include "StreamTypes.hpp"
+#include "StreamExceptions.hpp"
 
 namespace JITServer
    {
@@ -47,14 +47,12 @@ namespace JITServer
    // Every instance of this struct gets a unique ID assigned to it (assuming constructors run serially)
    // It is intended to be used by holding a static instance of it within a templated class, 
    // so that each template instantiation gets a different unique ID.
-   extern uint64_t typeCount;
    struct TypeID
       {
-      uint64_t id;
-      TypeID()
-         {
-         id = typeCount++;
-         }
+      const uint64_t id;
+      TypeID():id(typeCount++) {}
+      private:
+         static uint64_t typeCount;
       };
 
    // used to unpack a tuple into variadic args
@@ -108,13 +106,13 @@ namespace JITServer
          {
          char data[sizeof(T)];
          const std::string &strVal = msg->bytes_v();
-         memcpy(data, &strVal[0], sizeof(T));
+         memcpy(data, strVal.data(), sizeof(T));
          T &val = (T&) data;
          return val;
          }
       static inline void write(Any *msg, const T &val)
          {
-         std::string strVal((char*) &val, sizeof(T));
+         std::string strVal((const char *) &val, sizeof(T));
          msg->set_bytes_v(strVal);
          }
       static inline Any::TypeCase typeCase() { return Any::kBytesV; }

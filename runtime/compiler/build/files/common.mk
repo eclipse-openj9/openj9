@@ -382,19 +382,19 @@ JIT_PRODUCT_SOURCE_FILES+=\
 
 ifneq ($(JITSERVER_SUPPORT),)
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/runtime/Listener.cpp \
-    compiler/runtime/StatisticsThread.cpp \
-    compiler/env/VMJ9Server.cpp \
+    compiler/control/JITaaSCompilationThread.cpp \
     compiler/env/j9methodServer.cpp \
-    compiler/net/ServerStream.cpp \
+    compiler/env/JITaaSCHTable.cpp \
+    compiler/env/JITaaSPersistentCHTable.cpp \
+    compiler/env/VMJ9Server.cpp \
     compiler/net/ClientStream.cpp \
     compiler/net/CommunicationStream.cpp \
     compiler/net/ProtobufTypeConvert.cpp \
-    compiler/control/JITaaSCompilationThread.cpp \
-    compiler/env/JITaaSPersistentCHTable.cpp \
-    compiler/env/JITaaSCHTable.cpp \
+    compiler/net/ServerStream.cpp \
+    compiler/runtime/CompileService.cpp \
+    compiler/runtime/Listener.cpp \
     compiler/runtime/JITaaSIProfiler.cpp \
-    compiler/runtime/CompileService.cpp
+    compiler/runtime/StatisticsThread.cpp
 endif
 
 -include $(JIT_MAKE_DIR)/files/extra.mk

@@ -24,5 +24,5 @@
 
 namespace JITServer
    {
-   uint64_t typeCount = 0;
+   uint64_t TypeID::typeCount = 0;
    }

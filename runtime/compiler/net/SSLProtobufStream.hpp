@@ -40,7 +40,7 @@ public:
       }
    virtual bool Write(const void *buffer, int size) override
       {
-      TR_ASSERT(size, "writing zero bytes is undefined behavior");
+      TR_ASSERT(size > 0, "writing zero bytes is undefined behavior");
       int n = BIO_write(_ssl, buffer, size);
       if (n <= 0)
          {
@@ -73,7 +73,7 @@ public:
       }
    virtual int Read(void *buffer, int size) override
       {
-      TR_ASSERT(size, "reading zero bytes is undefined behavior");
+      TR_ASSERT(size > 0, "reading zero bytes is undefined behavior");
       int n = BIO_read(_ssl, buffer, size);
       if (n <= 0)
          {

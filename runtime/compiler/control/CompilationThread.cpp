@@ -1060,7 +1060,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
 #if defined(JITSERVER_SUPPORT)
    _sslKeys(decltype(_sslKeys)::allocator_type(TR::Compiler->persistentAllocator())),
    _sslCerts(decltype(_sslCerts)::allocator_type(TR::Compiler->persistentAllocator())),
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    _arrayOfCompilationInfoPerThread(NULL)
    {
    // The object is zero-initialized before this method is called
@@ -3390,13 +3390,13 @@ void TR::CompilationInfo::stopCompilationThreads()
       {
       if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
-         fprintf(stderr, "Number of connections opened = %u\n", JITServer::ServerStream::_numConnectionsOpened);
-         fprintf(stderr, "Number of connections closed = %u\n", JITServer::ServerStream::_numConnectionsClosed);
+         fprintf(stderr, "Number of connections opened = %u\n", JITServer::ServerStream::getNumConnectionsOpened());
+         fprintf(stderr, "Number of connections closed = %u\n", JITServer::ServerStream::getNumConnectionsClosed());
          }
       else if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          {
-         fprintf(stderr, "Number of connections opened = %u\n", JITServer::ClientStream::_numConnectionsOpened);
-         fprintf(stderr, "Number of connections closed = %u\n", JITServer::ClientStream::_numConnectionsClosed);
+         fprintf(stderr, "Number of connections opened = %u\n", JITServer::ClientStream::getNumConnectionsOpened());
+         fprintf(stderr, "Number of connections closed = %u\n", JITServer::ClientStream::getNumConnectionsClosed());
          }
       }
 

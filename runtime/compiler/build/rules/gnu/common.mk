@@ -70,8 +70,8 @@ jit_cleanobjs::
 	rm -f $(JIT_PRODUCT_BUILDNAME_SRC)
 
 ifneq ($(JITSERVER_SUPPORT),)
-   protoc: $(PROTO_GEN_DIR)/compile.pb.h
-   $(call RULE.proto,$(PROTO_GEN_DIR)/compile,$(PROTO_DIR)/compile.proto)
+protoc: $(PROTO_GEN_DIR)/compile.pb.h
+$(call RULE.proto,$(PROTO_GEN_DIR)/compile,$(PROTO_DIR)/compile.proto)
 endif
 
 #

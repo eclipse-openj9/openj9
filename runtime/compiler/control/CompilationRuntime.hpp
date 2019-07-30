@@ -42,7 +42,7 @@
 #include "runtime/RelocationRuntime.hpp"
 #if defined(JITSERVER_SUPPORT)
 #include "env/PersistentCollections.hpp"
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
 extern "C" {
 struct J9Method;
@@ -984,7 +984,7 @@ public:
    void  addJITServerSslCert(const std::string &cert) { _sslCerts.push_back(cert); }
    const std::string &getJITServerSslRootCerts() const { return _sslRootCerts; }
    void  setJITServerSslRootCerts(const std::string &cert) { _sslRootCerts = cert; }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
    static int32_t         VERY_SMALL_QUEUE;
    static int32_t         SMALL_QUEUE;
@@ -1189,7 +1189,7 @@ private:
    std::string                   _sslRootCerts;
    PersistentVector<std::string> _sslKeys;
    PersistentVector<std::string> _sslCerts;
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    }; // CompilationInfo
 }
 

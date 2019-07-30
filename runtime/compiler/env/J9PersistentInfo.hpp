@@ -35,7 +35,7 @@ namespace J9 { typedef J9::PersistentInfo PersistentInfoConnector; }
 #include <stdint.h>
 #if defined(JITSERVER_SUPPORT)
 #include <string>
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 #include "env/jittypes.h"
 
 class TR_FrontEnd;
@@ -71,7 +71,7 @@ enum RemoteCompilationModes
    SERVER,
    };
 }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
 #define MAX_SUPERCLASSES (20000)
 namespace J9
@@ -134,7 +134,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _JITServerAddress("localhost"),
          _JITServerPort(38400),
          _socketTimeoutMs(1000),
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
       OMR::PersistentInfoConnector(pm)
       {}
 
@@ -306,7 +306,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setJITServerPort(uint32_t port) { _JITServerPort = port; }
    uint64_t getClientUID() const { return _clientUID; }
    void setClientUID(uint64_t val) { _clientUID = val; }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
    private:
    TR_AddressSet *_unloadedClassAddresses;
@@ -396,7 +396,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint32_t    _JITServerPort;
    uint64_t    _clientUID;
    uint32_t    _socketTimeoutMs; // timeout for communication sockets used in out-of-process JIT compilation
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    };
 
 }

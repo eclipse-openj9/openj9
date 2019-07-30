@@ -41,7 +41,7 @@ ifneq ($(JITSERVER_SUPPORT),)
    JIT_DIR_LIST+=$(dir $(1))
 
    jit_cleanobjs::
-	   rm -f $(1).pb.cpp $(1).pb.h
+	   rm -f $(1).pb.cpp $(1).pb.cc $(1).pb.h
 
    endef # DEF_RULE.proto
 
