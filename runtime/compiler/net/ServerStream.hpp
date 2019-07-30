@@ -175,7 +175,7 @@ public:
             {
             throw StreamMessageTypeMismatch(MessageType::compilationRequest, _cMsg.type());
             }
-         }
+         }      
       }
 
    /**

@@ -27,7 +27,6 @@
 #include "control/CompilationRuntime.hpp"
 #include "j9cfg.h" // for JAVA_SPEC_VERSION
 
-
 namespace JITServer
 {
 uint32_t CommunicationStream::CONFIGURATION_FLAGS = 0;

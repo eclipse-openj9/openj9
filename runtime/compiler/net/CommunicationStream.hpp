@@ -54,7 +54,6 @@ public:
 
    static void initVersion();
 
-
    static uint64_t getJITServerVersion()
       {
       return ((((uint64_t)CONFIGURATION_FLAGS) << 32) | (MAJOR_NUMBER << 24) | (MINOR_NUMBER << 8));

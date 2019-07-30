@@ -141,8 +141,8 @@ public:
    /**
       @brief Send an error message to the JITServer
 
-      Examples of error messages include 'compilationInterrupted' (e.g. when class unloading happens),
-      'clientSessionTerminate' (e.g. when the client is about to exit), 
+      Examples of error messages include 'compilationInterrupted' (e.g. when class unloading happens)
+      and 'clientSessionTerminate' (e.g. when the client is about to exit), 
       and 'connectionTerminate' (e.g. when the client is closing the connection)
    */
    template <typename ...T>
