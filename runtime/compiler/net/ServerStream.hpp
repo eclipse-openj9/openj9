@@ -139,19 +139,25 @@ public:
    std::tuple<T...> readCompileRequest()
       {
       readBlocking(_cMsg);
-      if (_cMsg.type() == JITServer::MessageType::clientTerminate)
+      if (_cMsg.type() == MessageType::clientTerminate)
          {
          uint64_t clientId = std::get<0>(getRecvData<uint64_t>());
-         throw JITServer::StreamCancel(_cMsg.type(), clientId);
+         throw StreamCancel(_cMsg.type(), clientId);
          }
+      else if (_cMsg.type() == MessageType::compilationAbort || _cMsg.type() == MessageType::connectionTerminate)
+         {
+         throw StreamCancel(_cMsg.type());
+         }
+      else if (_cMsg.type() != MessageType::compilationRequest)
+         {
+         throw StreamMessageTypeMismatch(MessageType::compilationRequest, _cMsg.type());
+         }
+
       if (_cMsg.version() != 0 && _cMsg.version() != getJITaaSVersion())
          {
          throw StreamVersionIncompatible(getJITaaSVersion(), _cMsg.version());
          }
-      if (_cMsg.type() != JITServer::MessageType::compilationRequest)
-         {
-         throw JITServer::StreamMessageTypeMismatch(JITServer::MessageType::compilationRequest, _cMsg.type());
-         }
+      
       return getArgs<T...>(_cMsg.mutable_data());
       }
    

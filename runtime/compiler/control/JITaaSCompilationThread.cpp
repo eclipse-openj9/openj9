@@ -254,13 +254,6 @@ bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in handleServerMessage of %s @ %s", 
                                                           interruptReason, comp->signature(), comp->getHotnessName());
-
-      // We want to break the connection when the compilation failed midway
-      // as a way to inform the server that this compilation has failed and it should abort
-      client->~ClientStream();
-      TR_Memory::jitPersistentFree(client);
-      compInfoPT->setClientStream(NULL);
-
       comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
       }
 
@@ -2628,21 +2621,13 @@ remoteCompile(
       uint8_t interruptReason = compInfoPT->compilationShouldBeInterrupted();
       if (interruptReason)
          {
-         // JITaaS FIXME: The server is not informed that the client is going to abort
-         // Is it better to let the code flow into handleServerMessage() wait for a 
-         // query from the server and then abort sending a "cancel" message back?
          auto comp = compInfoPT->getCompilation();
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
              TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in remoteCompile of %s @ %s",
                  interruptReason, comp->signature(), comp->getHotnessName());
 
+         // Inform server that client is going to abort with a compilationAbort message 
          client->writeError(JITServer::MessageType::compilationAbort, 0 /* placeholder */);
-         // We want to break the connection when the compilation failed midway
-         // as a way to inform the server that this compilation has failed and it should abort
-         client->~ClientStream();
-         TR_Memory::jitPersistentFree(client);
-         compInfoPT->setClientStream(NULL);
-
          comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in remoteCompile");
          }
 
@@ -4423,7 +4408,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          clientSession->getSequencingMonitor()->exit();
          }
       abortCompilation = true;
-      if (!enableJITaaSPerCompConn)
+      if (!enableJITaaSPerCompConn || e.getType() == JITServer::MessageType::connectionTerminate)
          {
          // Delete server stream
          stream->~ServerStream();
@@ -4433,6 +4418,10 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (e.getType() == JITServer::MessageType::clientTerminate)
          {
          deleteClientSessionData(e.getClientId(), compInfo, compThread);
+         // Delete server stream
+         stream->~ServerStream();
+         TR_Memory::jitPersistentFree(stream);
+         entry._stream = NULL;
          }
       }
    catch (const JITServer::StreamOOO &e)

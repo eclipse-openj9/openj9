@@ -4074,6 +4074,8 @@ TR::CompilationInfoPerThread::processEntries()
       JITServer::ClientStream *client = getClientStream();
       if (client)
          {
+         // Inform the server that client is closing the connection with a connectionTerminate message
+         client->writeError(JITServer::MessageType::connectionTerminate, 0 /* placeholder */);
          client->~ClientStream();
          TR_Memory::jitPersistentFree(client);
          setClientStream(NULL);
