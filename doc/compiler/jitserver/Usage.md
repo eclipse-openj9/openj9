@@ -20,12 +20,12 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-JITServer adds an additional two *personas* to the `java` executable: client mode and server mode. There are two new command line options that can be used to select a persona: `-XX:+StartAsJITServer` and `-XX:+UseJITServer`.
+JITServer adds an additional two *personas* to the `java` executable: client mode and server mode. There are two new command line options that can be used to select a persona: `-XX:StartAsJITServer` and `-XX:+UseJITServer`.
 
 In server mode, the JVM will halt after startup and begin listening for compilation requests from clients. No Java application is given to the server on the command line.
 
 ```
-$ java -XX:+StartAsJITServer
+$ java -XX:StartAsJITServer
 
 JITServer ready to accept incoming requests
 ```
@@ -47,7 +47,7 @@ You might have noticed that running the client without any server to connect to 
 
 With verbose logging, if a client connects successfully then server output should look something like this:
 ```
-$ java -XX:+StartAsJITServer -Xjit:verbose=\{JITServer\}
+$ java -XX:StartAsJITServer -Xjit:verbose=\{JITServer\}
 
 #JITServer: JITServer in Server Mode. Port: 38400
 #JITServer: Started JITServer listener thread: 0000000001B8DE00
@@ -77,15 +77,15 @@ $ java -XX:+UseJITServer:server=example.com
 #### Port
 By default, communication occurs on port 38400. You can change this by specifying the `port` suboption as follows:
 ```
-$ java -XX:+StartAsJITServer:port=1234
-$ java -XX:+UseJITServer:port=1234 MyApplication
+$ java -XX:StartAsJITServer -XX:JITServerPort=1234
+$ java -XX:+UseJITServer -XX:JITServerPort=1234 MyApplication
 ```
 
 #### Timeout
 If your network connection is flaky, you may want to specify a timeout. By default there is no timeout. Timeout is given in milliseconds. Client and server timeouts do not need to match, but there's usually no reason for them to differ.
 ```
-$ java -XX:+StartAsJITServer:timeout=5000
-$ java -XX:+UseJITServer:timeout=5000 MyApplication
+$ java -XX:StartAsJITServer -XX:JITServerTimeout=5000
+$ java -XX:+UseJITServer -XX:JITServerTimeout=5000 MyApplication
 ```
 
 #### Encryption (TLS)
@@ -102,9 +102,9 @@ Make sure you specify localhost for the common name, but other fields don't matt
 
 On the server, there are two options `sslKey` and `sslCert`, which are used to specify the filenames of PEM-encoded keypair.
 ```
-$ java -XX:+StartAsJITServer:sslKey=key.pem,sslCert=cert.pem
+$ java -XX:StartAsJITServer -XX:JITServerSSLKey=key.pem -XX:JITServerSSLCert=cert.pem
 ```
 The client currently accepts a single option `sslRootCerts`, which is the filename of a PEM-encoded certificate chain.
 ```
-$ java -XX:+UseJITServer:sslRootCerts=cert.pem -version
+$ java -XX:+UseJITServer -XX:JITServerSSLRootCerts=cert.pem -version
 ```

@@ -68,7 +68,7 @@ These are the steps to run the tests on your machine.
 
    Manually start the server if `JITAAS` TEST_FLAG is not used.
    ```
-   $JAVA_BIN/java -XX:+StartAsJITServer
+   $JAVA_BIN/java -XX:StartAsJITServer
    ```
    ```
    make _sanity
