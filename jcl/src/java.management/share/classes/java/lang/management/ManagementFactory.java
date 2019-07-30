@@ -246,7 +246,7 @@ public class ManagementFactory {
 			security.checkPermission(new MBeanServerPermission("createMBeanServer")); //$NON-NLS-1$
 		}
 
-		return ServerHolder.platformServer;
+		return ServerHolder.instance.get();
 	}
 
 	/**
@@ -466,51 +466,65 @@ public class ManagementFactory {
 		return ManagementUtils.getPlatformManagementInterfaces();
 	}
 
-	private static final class ServerHolder {
+	/**
+	 * This singleton class holds a lazily initialized instance of a {@code MBeanServer}.
+	 * It implements {@code PrivilegedAction} to avoid the cost of an extra class
+	 * to capture the initialization action. Because creating the server may throw
+	 * exceptions, that should be propagated to the caller, we cannot use a static
+	 * initializer which would propagate an {@code Error} to the caller.
+	 */
+	private static final class ServerHolder implements PrivilegedAction<MBeanServer> {
 
-		static final MBeanServer platformServer;
+		static final ServerHolder instance = new ServerHolder();
 
-		static {
-			platformServer = MBeanServerFactory.createMBeanServer();
+		private volatile MBeanServer platformServer;
 
-			final class Registration implements PrivilegedAction<Void> {
+		/**
+		 * Get the {@code MBeanServer}, lazily creating it if necessary.
+		 */
+		MBeanServer get() {
+			MBeanServer server = platformServer;
 
-				private final MBeanServer server;
+			if (server == null) {
+				synchronized (this) {
+					server = platformServer;
 
-				Registration(MBeanServer server) {
-					super();
-					this.server = server;
-				}
-
-				@Override
-				public Void run() {
-					for (PlatformManagedObject bean : ManagementUtils.getAllAvailableMXBeans()) {
-						ObjectName objectName = bean.getObjectName();
-
-						if (server.isRegistered(objectName)) {
-							continue;
-						}
-
-						try {
-							server.registerMBean(bean, objectName);
-						} catch (InstanceAlreadyExistsException | MBeanRegistrationException | NullPointerException e) {
-							if (ManagementUtils.VERBOSE_MODE) {
-								e.printStackTrace(System.err);
-							}
-						} catch (NotCompliantMBeanException e) {
-							e.printStackTrace();
-							if (ManagementUtils.VERBOSE_MODE) {
-								e.printStackTrace(System.err);
-							}
-						}
+					if (server == null) {
+						server = AccessController.doPrivileged(this);
+						platformServer = server;
 					}
-
-					return null;
 				}
-
 			}
 
-			AccessController.doPrivileged(new Registration(platformServer));
+			return server;
+		}
+
+		@Override
+		public MBeanServer run() {
+			MBeanServer server = MBeanServerFactory.createMBeanServer();
+
+			for (PlatformManagedObject bean : ManagementUtils.getAllAvailableMXBeans()) {
+				ObjectName objectName = bean.getObjectName();
+
+				if (server.isRegistered(objectName)) {
+					continue;
+				}
+
+				try {
+					server.registerMBean(bean, objectName);
+				} catch (InstanceAlreadyExistsException | MBeanRegistrationException | NullPointerException e) {
+					if (ManagementUtils.VERBOSE_MODE) {
+						e.printStackTrace(System.err);
+					}
+				} catch (NotCompliantMBeanException e) {
+					e.printStackTrace();
+					if (ManagementUtils.VERBOSE_MODE) {
+						e.printStackTrace(System.err);
+					}
+				}
+			}
+
+			return server;
 		}
 
 	}
