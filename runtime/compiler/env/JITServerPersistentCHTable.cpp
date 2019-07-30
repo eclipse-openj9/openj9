@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "JITaaSPersistentCHTable.hpp"
+#include "JITServerPersistentCHTable.hpp"
 #include "compile/Compilation.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "net/ServerStream.hpp"
@@ -36,19 +36,19 @@
 
 // SERVER
 
-TR_JITaaSServerPersistentCHTable::TR_JITaaSServerPersistentCHTable(TR_PersistentMemory *trMemory)
+JITServerPersistentCHTable::JITServerPersistentCHTable(TR_PersistentMemory *trMemory)
    : TR_PersistentCHTable(trMemory)
    {
    }
 
-PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &TR_JITaaSServerPersistentCHTable::getData()
+PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &JITServerPersistentCHTable::getData()
    {
    auto &data = TR::compInfoPT->getClientData()->getCHTableClassMap();
    return data;
    }
 
 bool
-TR_JITaaSServerPersistentCHTable::initializeIfNeeded(TR_J9VMBase *fej9)
+JITServerPersistentCHTable::initializeIfNeeded(TR_J9VMBase *fej9)
    {
       {
       TR::ClassTableCriticalSection initializeIfNeeded(fej9);
@@ -76,7 +76,7 @@ TR_JITaaSServerPersistentCHTable::initializeIfNeeded(TR_J9VMBase *fej9)
    }
 
 void 
-TR_JITaaSServerPersistentCHTable::doUpdate(TR_J9VMBase *fej9, const std::string &removeStr, const std::string &modifyStr)
+JITServerPersistentCHTable::doUpdate(TR_J9VMBase *fej9, const std::string &removeStr, const std::string &modifyStr)
    {
    TR::ClassTableCriticalSection doUpdate(fej9);
    if (!modifyStr.empty())
@@ -96,7 +96,7 @@ TR_JITaaSServerPersistentCHTable::doUpdate(TR_J9VMBase *fej9, const std::string 
    }
 
 void 
-TR_JITaaSServerPersistentCHTable::commitRemoves(const std::string &rawData)
+JITServerPersistentCHTable::commitRemoves(const std::string &rawData)
    {
    auto &data = getData();
    TR_OpaqueClassBlock **ptr = (TR_OpaqueClassBlock**)&rawData[0];
@@ -112,7 +112,7 @@ TR_JITaaSServerPersistentCHTable::commitRemoves(const std::string &rawData)
    }
 
 void 
-TR_JITaaSServerPersistentCHTable::commitModifications(const std::string &rawData)
+JITServerPersistentCHTable::commitModifications(const std::string &rawData)
    {
    auto &data = getData();
    std::unordered_map<TR_OpaqueClassBlock*, std::pair<FlatPersistentClassInfo*, TR_PersistentClassInfo*>> infoMap;
@@ -163,7 +163,7 @@ TR_JITaaSServerPersistentCHTable::commitModifications(const std::string &rawData
    }
 
 TR_PersistentClassInfo *
-TR_JITaaSServerPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
+JITServerPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
    CHTABLE_UPDATE_COUNTER(_numQueries, 1);
    auto& data = getData();
@@ -179,7 +179,7 @@ TR_JITaaSServerPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    }
 
 TR_PersistentClassInfo *
-TR_JITaaSServerPersistentCHTable::findClassInfoAfterLocking(
+JITServerPersistentCHTable::findClassInfoAfterLocking(
       TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
       bool returnClassInfoForAOT,
@@ -208,7 +208,7 @@ TR_JITaaSServerPersistentCHTable::findClassInfoAfterLocking(
    }
 
 std::string
-TR_JITaaSClientPersistentCHTable::serializeRemoves()
+JITClientPersistentCHTable::serializeRemoves()
    {
    size_t outputSize = _remove.size() * sizeof(TR_OpaqueClassBlock*);
    std::string data(outputSize, '\0');
@@ -227,7 +227,7 @@ TR_JITaaSClientPersistentCHTable::serializeRemoves()
    }
 
 std::string
-TR_JITaaSClientPersistentCHTable::serializeModifications()
+JITClientPersistentCHTable::serializeModifications()
    {
    size_t numBytes = 0;
    for (auto classId : _dirty)
@@ -257,7 +257,7 @@ TR_JITaaSClientPersistentCHTable::serializeModifications()
    }
 
 std::pair<std::string, std::string> 
-TR_JITaaSClientPersistentCHTable::serializeUpdates()
+JITClientPersistentCHTable::serializeUpdates()
    {
    TR::ClassTableCriticalSection serializeUpdates(TR::comp()->fe());
    std::string removes = serializeRemoves(); // must be called first
@@ -393,7 +393,7 @@ FlatPersistentClassInfo::deserializeHierarchy(std::string& data)
 // CLIENT
 // TODO: check for race conditions with _dirty/_remove
 
-TR_JITaaSClientPersistentCHTable::TR_JITaaSClientPersistentCHTable(TR_PersistentMemory *trMemory)
+JITClientPersistentCHTable::JITClientPersistentCHTable(TR_PersistentMemory *trMemory)
    : TR_PersistentCHTable(trMemory)
    , _dirty(decltype(_dirty)::allocator_type(TR::Compiler->persistentAllocator()))
    , _remove(decltype(_remove)::allocator_type(TR::Compiler->persistentAllocator()))
@@ -401,13 +401,13 @@ TR_JITaaSClientPersistentCHTable::TR_JITaaSClientPersistentCHTable(TR_Persistent
    }
 
 TR_PersistentClassInfo *
-TR_JITaaSClientPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
+JITClientPersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
    {
    return TR_PersistentCHTable::findClassInfo(classId);
    }
 
 TR_PersistentClassInfo *
-TR_JITaaSClientPersistentCHTable::findClassInfoAfterLocking(
+JITClientPersistentCHTable::findClassInfoAfterLocking(
       TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
       bool returnClassInfoForAOT,
@@ -417,7 +417,7 @@ TR_JITaaSClientPersistentCHTable::findClassInfoAfterLocking(
    }
 
 void
-TR_JITaaSClientPersistentCHTable::classGotUnloaded(
+JITClientPersistentCHTable::classGotUnloaded(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId)
    {
@@ -425,7 +425,7 @@ TR_JITaaSClientPersistentCHTable::classGotUnloaded(
    }
 
 void
-TR_JITaaSClientPersistentCHTable::classGotUnloadedPost(
+JITClientPersistentCHTable::classGotUnloadedPost(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId)
    {
@@ -433,7 +433,7 @@ TR_JITaaSClientPersistentCHTable::classGotUnloadedPost(
    }
 
 void
-TR_JITaaSClientPersistentCHTable::classGotRedefined(
+JITClientPersistentCHTable::classGotRedefined(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *oldClassId,
       TR_OpaqueClassBlock *newClassId)
@@ -442,7 +442,7 @@ TR_JITaaSClientPersistentCHTable::classGotRedefined(
    }
 
 void
-TR_JITaaSClientPersistentCHTable::removeClass(
+JITClientPersistentCHTable::removeClass(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId,
       TR_PersistentClassInfo *info,
@@ -455,7 +455,7 @@ TR_JITaaSClientPersistentCHTable::removeClass(
    }
 
 TR_PersistentClassInfo *
-TR_JITaaSClientPersistentCHTable::classGotLoaded(
+JITClientPersistentCHTable::classGotLoaded(
       TR_FrontEnd *fe,
       TR_OpaqueClassBlock *classId)
    {
@@ -470,7 +470,7 @@ TR_JITaaSClientPersistentCHTable::classGotLoaded(
    }
 
 bool
-TR_JITaaSClientPersistentCHTable::classGotInitialized(
+JITClientPersistentCHTable::classGotInitialized(
       TR_FrontEnd *fe,
       TR_PersistentMemory *persistentMemory,
       TR_OpaqueClassBlock *classId,
@@ -480,7 +480,7 @@ TR_JITaaSClientPersistentCHTable::classGotInitialized(
    }
 
 bool
-TR_JITaaSClientPersistentCHTable::classGotExtended(
+JITClientPersistentCHTable::classGotExtended(
       TR_FrontEnd *fe,
       TR_PersistentMemory *persistentMemory,
       TR_OpaqueClassBlock *superClassId,
@@ -492,14 +492,14 @@ TR_JITaaSClientPersistentCHTable::classGotExtended(
 
 // these two tables should be mutually exclusive - we only keep the most recent entry.
 void 
-TR_JITaaSClientPersistentCHTable::markForRemoval(TR_OpaqueClassBlock *clazz)
+JITClientPersistentCHTable::markForRemoval(TR_OpaqueClassBlock *clazz)
    {
    _remove.insert(clazz);
    _dirty.erase(clazz);
    }
 
 void 
-TR_JITaaSClientPersistentCHTable::markDirty(TR_OpaqueClassBlock *clazz)
+JITClientPersistentCHTable::markDirty(TR_OpaqueClassBlock *clazz)
    {
    _dirty.insert(clazz);
    _remove.erase(clazz);
@@ -507,9 +507,9 @@ TR_JITaaSClientPersistentCHTable::markDirty(TR_OpaqueClassBlock *clazz)
 
 
 // TR_JITaaSPersistentClassInfo
-TR_JITaaSClientPersistentCHTable *TR_JITaaSPersistentClassInfo::_chTable = NULL;
+JITClientPersistentCHTable *TR_JITaaSPersistentClassInfo::_chTable = NULL;
 
-TR_JITaaSPersistentClassInfo::TR_JITaaSPersistentClassInfo(TR_OpaqueClassBlock *id, TR_JITaaSClientPersistentCHTable *chTable) : 
+TR_JITaaSPersistentClassInfo::TR_JITaaSPersistentClassInfo(TR_OpaqueClassBlock *id, JITClientPersistentCHTable *chTable) : 
    TR_PersistentClassInfo(id)
    {
    // assign pointer to the CH table, if it's the first class info created

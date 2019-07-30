@@ -21,7 +21,7 @@
  *******************************************************************************/
 
 #include "env/CHTable.hpp"
-#include "env/JITaaSPersistentCHTable.hpp"
+#include "env/JITServerPersistentCHTable.hpp"
 #include "env/j9methodServer.hpp"
 #include "infra/List.hpp"                      // for TR::list
 #include "compile/VirtualGuard.hpp"            // for TR_VirtualGuard
@@ -216,7 +216,7 @@ void cleanupNewlyExtendedInfo(TR::Compilation *comp, std::vector<TR_OpaqueClassB
 
 
 
-bool JITaaSCHTableCommit(
+bool JITServerCHTableCommit(
       TR::Compilation *comp,
       TR_MethodMetaData *metaData,
       CHTableCommitData &data)
@@ -241,7 +241,7 @@ bool JITaaSCHTableCommit(
    if (comp->getFailCHTableCommit())
       return false;
 
-   TR_JITaaSClientPersistentCHTable *table = (TR_JITaaSClientPersistentCHTable*) comp->getPersistentInfo()->getPersistentCHTable();
+   JITClientPersistentCHTable *table = (JITClientPersistentCHTable*) comp->getPersistentInfo()->getPersistentCHTable();
    TR_ResolvedMethod  *currentMethod = comp->getCurrentMethod();
    TR_Hotness hotness                = comp->getMethodHotness();
 

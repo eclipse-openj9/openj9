@@ -50,7 +50,7 @@ TR_MethodMetaData *remoteCompilationEnd(J9VMThread * vmThread, TR::Compilation *
    TR::CompilationInfoPerThreadBase *compInfoPT, const std::string& codeCacheStr, const std::string& dataCacheStr);
 void outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp);
 void printJITaaSMsgStats(J9JITConfig *);
-void printJITaaSCHTableStats(J9JITConfig *, TR::CompilationInfo *);
+void printJITServerCHTableStats(J9JITConfig *, TR::CompilationInfo *);
 void printJITaaSCacheStats(J9JITConfig *, TR::CompilationInfo *);
 
 namespace TR
