@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2018 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,7 +80,7 @@ public abstract class LineRule implements ILineRule {
 	
 	// Support for offset calculation of a token, but 
 	// not currently used.
-	protected int fOffSet;
+	protected int fOffset;
 	private HashMap fTokenList;
 
 
@@ -88,7 +88,7 @@ public abstract class LineRule implements ILineRule {
 		fSource = new StringBuffer();
 		fCharSubSet = new StringBuffer();
 		fLineNumber = 0;
-		fOffSet = 0;
+		fOffset = 0;
 	}
 	
 	/**
@@ -167,7 +167,7 @@ public abstract class LineRule implements ILineRule {
 	 * @return generated token.
 	 */
 	protected IParserToken addToken(String type, String value) {
-		IParserToken token = TokenManager.getToken(value.length(), fOffSet, fLineNumber, type, value);
+		IParserToken token = TokenManager.getToken(value.length(), fOffset, fLineNumber, type, value);
 		addToken(token);
 		return token;
 	}
@@ -245,7 +245,7 @@ public abstract class LineRule implements ILineRule {
 			fCharSubSet.append(fSource.charAt(i));
 		}
 		fSource.delete(0, endIndex);
-		IParserToken token = TokenManager.getToken(fCharSubSet.length(), fOffSet, fLineNumber, type, fCharSubSet.toString());
+		IParserToken token = TokenManager.getToken(fCharSubSet.length(), fOffset, fLineNumber, type, fCharSubSet.toString());
 		addToken(token);
 		return token;
 	}
@@ -307,7 +307,7 @@ public abstract class LineRule implements ILineRule {
 	private IParserToken internalAddToken(String type, Matcher matcher) {
 		String value = null;
 		IParserToken token = null;
-		int offset = fOffSet;
+		int offset = fOffset;
 		if ((value = matchAndConsumeValue(matcher)) != null) {
 			token = TokenManager.getToken(value.length(), offset, fLineNumber, type, value);
 			fTokenList.put(token.getType(), token);
