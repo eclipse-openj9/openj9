@@ -54,9 +54,18 @@ ifeq ($(PLATFORM),ppc64-linux64-clang)
     endif
 endif
 
+ifeq ($(PLATFORM),s390-linux-gcc)
+     export JITSERVER_SUPPORT=1
+endif
+
+ifeq ($(PLATFORM),s390-linux64-gcc)
+    export JITSERVER_SUPPORT=1
+endif
+
 ifeq ($(PLATFORM),s390-zos-vacpp)
     export JITSERVER_SUPPORT=1
 endif
+
 ifeq ($(PLATFORM),s390-zos64-vacpp)
     export JITSERVER_SUPPORT=1
 
