@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,9 @@ extern const J9DDRStructDefinition *getJITAutomatedStructTable(struct OMRPortLib
 extern const J9DDRStructDefinition *getOmrStructTable(struct OMRPortLibrary *portLib);
 extern const J9DDRStructDefinition *getVMStructTable(struct OMRPortLibrary *portLib);
 extern const J9DDRStructDefinition *getStackWalkerStructTable(struct OMRPortLibrary *portLib);
+#if defined(J9VM_OPT_HARMONY)
 extern const J9DDRStructDefinition *getHyPortStructTable(struct OMRPortLibrary *portLib);
+#endif /* J9VM_OPT_HARMONY */
 extern const J9DDRStructDefinition *getJ9PortStructTable(struct OMRPortLibrary *portLib);
 extern const J9DDRStructDefinition *getGCStructTable(struct OMRPortLibrary *portLib);
 extern const J9DDRStructDefinition *getDDR_CPPStructTable(struct OMRPortLibrary *portLib);
@@ -54,7 +56,9 @@ initializeDDRComponents(OMRPortLibrary *portLib)
 		list[i++] = getVMStructTable(portLib);
 		list[i++] = getStackWalkerStructTable(portLib);
 		list[i++] = getGCStructTable(portLib);
+#if defined(J9VM_OPT_HARMONY)
 		list[i++] = getHyPortStructTable(portLib);
+#endif /* J9VM_OPT_HARMONY */
 		list[i++] = getJ9PortStructTable(portLib);
 		list[i++] = getAlgorithmVersionStructTable();
 		list[i++] = getJITStructTable();
