@@ -830,8 +830,6 @@ TR_SharedCacheRelocationRuntime::allocateSpaceInDataCache(uintptr_t metaDataSize
 void
 TR_SharedCacheRelocationRuntime::initializeAotRuntimeInfo()
    {
-   _baseAddress = (U_8 *) javaVM()->sharedClassConfig->cacheDescriptorList->romclassStartAddress;
-   _compileFirstClassLocation = _aotMethodHeaderEntry->compileFirstClassLocation;
    if (!useCompiledCopy())
       _classReloAmount = 1;
    }

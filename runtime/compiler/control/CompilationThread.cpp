@@ -9364,7 +9364,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   codeStart = (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC;
                   codeSize  = aotMethodHeaderEntry->compileMethodCodeSize;
 
-                  aotMethodHeaderEntry->compileFirstClassLocation = (UDATA)jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->romclassStartAddress;
+                  aotMethodHeaderEntry->unused = TR::Compiler->host.is64Bit() ? 0xDEADC0DEDEADC0DEULL : 0xDEADC0DE;
 
                   if (safeToStore)
                      {

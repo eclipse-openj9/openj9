@@ -158,7 +158,7 @@ typedef struct TR_AOTMethodHeader {
    uintptr_t compileMethodCodeSize;
    uintptr_t compileMethodDataStartPC;
    uintptr_t compileMethodDataSize;
-   uintptr_t compileFirstClassLocation;
+   uintptr_t unused;
    uint32_t flags;
    } TR_AOTMethodHeader;
 
