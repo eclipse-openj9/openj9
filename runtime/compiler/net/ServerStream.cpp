@@ -72,7 +72,8 @@ SSL_CTX *createSSLContext(TR::PersistentInfo *info)
       exit(1);
       }
 
-   SSL_CTX_set_session_id_context(ctx, (const unsigned char*) "JITaaS", 6);
+   const char *sessionIDContext = "JITServer";
+   SSL_CTX_set_session_id_context(ctx, (const unsigned char*)sessionIDContext, strlen(sessionIDContext));
 
    if (SSL_CTX_set_ecdh_auto(ctx, 1) != 1)
       {
@@ -144,8 +145,8 @@ SSL_CTX *createSSLContext(TR::PersistentInfo *info)
    // verify server identity using standard method
    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
 
-   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Successfully initialized SSL context: OPENSSL_VERSION_NUMBER 0x%lx\n", OPENSSL_VERSION_NUMBER);
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Successfully initialized SSL context: OPENSSL_VERSION_NUMBER 0x%lx\n", OPENSSL_VERSION_NUMBER);
 
    return ctx;
    }
@@ -153,8 +154,8 @@ SSL_CTX *createSSLContext(TR::PersistentInfo *info)
 static bool
 handleOpenSSLConnectionError(int connfd, SSL *&ssl, BIO *&bio, const char *errMsg)
 {
-   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-       TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "%s: errno=%d", errMsg, errno);
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "%s: errno=%d", errMsg, errno);
    ERR_print_errors_fp(stderr);
 
    close(connfd);
@@ -193,8 +194,8 @@ acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio)
    if (BIO_set_ssl(bio, ssl, true) != 1)
       return handleOpenSSLConnectionError(connfd, ssl, bio, "Error setting BIO SSL");
 
-   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "SSL connection on socket 0x%x, Version: %s, Cipher: %s\n",
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "SSL connection on socket 0x%x, Version: %s, Cipher: %s\n",
                                                      connfd, SSL_get_version(ssl), SSL_get_cipher(ssl));
    return true;
    }
@@ -259,8 +260,8 @@ ServerStream::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR
       int connfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
       if (connfd < 0)
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Error accepting connection: errno=%d", errno);
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Error accepting connection: errno=%d", errno);
          continue;
          }
 

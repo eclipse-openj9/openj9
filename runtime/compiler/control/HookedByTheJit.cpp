@@ -7072,8 +7072,8 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener;
       listener->startListenerThread(javaVM);
 
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Started JITServer listener thread: %p ", listener->getListenerThread());
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Started JITServer listener thread: %p ", listener->getListenerThread());
 
       if (jitConfig->samplingFrequency != 0)
          {

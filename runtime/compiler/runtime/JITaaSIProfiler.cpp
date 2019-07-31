@@ -164,7 +164,7 @@ TR_JITaaSIProfiler::profilingSample(uintptrj_t pc, uintptrj_t data, bool addIt, 
    if (addIt)
       return NULL; // Server should not create any samples
 
-   TR_ASSERT(false, "not implemented for JITaaS");
+   TR_ASSERT(false, "not implemented for JITServer");
    return NULL;
    }
 

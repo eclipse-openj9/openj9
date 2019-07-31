@@ -74,7 +74,7 @@ struct TR_JitPrivateConfig;
 struct TR_MethodToBeCompiled;
 template <typename T> class TR_PersistentArray;
 typedef J9JITExceptionTable TR_MethodMetaData;
-class ClientSessionHT; // JITaaS TODO: maybe move all JITaaS specific stuff in an extension for CompInfo
+class ClientSessionHT; // JITaaS TODO: maybe move all JITServer specific stuff in an extension for CompInfo
 
 #if defined(JITSERVER_SUPPORT)
 namespace JITServer { class ServerStream; }
@@ -501,11 +501,11 @@ public:
       return (intptrj_t)method->extra;
       }
    static int32_t getJ9MethodVMExtra(J9Method *method) {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
       return (int32_t)((intptrj_t)method->extra);
       }
    static uint32_t getJ9MethodJITExtra(J9Method *method) {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
       TR_ASSERT((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED, "MethodExtra Already Jitted!");
       return (uint32_t)((uintptrj_t)method->extra >> 32);
       }
@@ -533,16 +533,16 @@ public:
          }
       }
    static bool setJ9MethodExtraAtomic(J9Method *method, intptrj_t oldValue, intptrj_t newValue) {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
       return oldValue == VM_AtomicSupport::lockCompareExchange((UDATA*)&method->extra, oldValue, newValue);
       }
    static bool setJ9MethodExtraAtomic(J9Method *method, intptrj_t newValue) {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
       intptrj_t oldValue = (intptrj_t)method->extra;
       return setJ9MethodExtraAtomic(method, oldValue, newValue);
       }
    static bool setJ9MethodVMExtra(J9Method *method, int32_t value) {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
       intptrj_t oldValue = (intptrj_t)method->extra;
       //intptrj_t newValue = oldValue & (intptrj_t)~J9_INVOCATION_COUNT_MASK;
       //newValue |= (intptrj_t)value;
@@ -584,7 +584,7 @@ public:
       return success;
       }
    static void setInitialInvocationCountUnsynchronized(J9Method *method, int32_t value) {
-   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITaaS server");
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
       value = (value << 1) | 1;
       if (value < 0)
           value = INT_MAX;
@@ -644,7 +644,7 @@ public:
    static int32_t getCompThreadSuspensionThreshold(int32_t threadID) { return _compThreadSuspensionThresholds[threadID]; }
 
    // updateNumUsableCompThreads() is called before startCompilationThread() to update TR::Options::_numUsableCompilationThreads
-   // based on if it is on the JITaas client side or the server side.
+   // based on if it is on the JITClient side or the JITServer side.
    void updateNumUsableCompThreads(int32_t &numUsableCompThreads);
    bool allocateCompilationThreads(int32_t numUsableCompThreads);
    void freeAllCompilationThreads();
@@ -954,7 +954,7 @@ public:
    bool getSuspendThreadDueToLowPhysicalMemory() const { return _suspendThreadDueToLowPhysicalMemory; }
    void setSuspendThreadDueToLowPhysicalMemory(bool b) { _suspendThreadDueToLowPhysicalMemory = b; }
 
-   // for JITaaS
+   // for JITServer
    ClientSessionHT *getClientSessionHT() { return _clientSessionHT; }
    void setClientSessionHT(ClientSessionHT *ht) { _clientSessionHT = ht; }
    PersistentVector<TR_OpaqueClassBlock*> *getUnloadedClassesTempList() { return _unloadedClassesTempList; }
@@ -1181,13 +1181,13 @@ private:
    bool _suspendThreadDueToLowPhysicalMemory;
    TR_InterpreterSamplingTracking *_interpSamplTrackingInfo;
 
-   // JITaaS hashtable that holds session information about JITaaS clients
+   // JITServer hashtable that holds session information about JITClients
    ClientSessionHT *_clientSessionHT;
-   // JITaaS list of classes unloaded 
+   // JITServer list of classes unloaded 
    PersistentVector<TR_OpaqueClassBlock*> *_unloadedClassesTempList;
    TR::Monitor *_sequencingMonitor; // used for ordering outgoing messages at the client
    uint32_t _compReqSeqNo; // seqNo for outgoing messages at the client
-   // JITaaS table of newly extended classes
+   // JITServer table of newly extended classes
    PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t> *_newlyExtendedClasses;
    uint8_t _chTableUpdateFlags;
    // number of local gc cycles done

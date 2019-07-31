@@ -1123,7 +1123,7 @@ onLoadInternal(
    if (persistentMemory == NULL)
       return -1;
 
-   // JITaaS: persistentCHTable used to be inited here, but we have to move it after JITaaS commandline opts
+   // JITServer: persistentCHTable used to be inited here, but we have to move it after JITServer commandline opts
    // setting it to null here to catch anything that assumes it's set between here and the new init code.
    persistentMemory->getPersistentInfo()->setPersistentCHTable(NULL);
 
@@ -1634,14 +1634,14 @@ onLoadInternal(
       if (!((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener)
          {
          // warn that Listener was not allocated
-         j9tty_printf(PORTLIB, "JITaaS Listener not allocated, abort.\n");
+         j9tty_printf(PORTLIB, "JITServer Listener not allocated, abort.\n");
          return -1; 
          }
       ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThread = TR_StatisticsThread::allocate();
       if (!((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThread)
          {
          // warn that Statistics Thread was not allocated
-         j9tty_printf(PORTLIB, "JITaaS Statistics thread not allocated, abort.\n");
+         j9tty_printf(PORTLIB, "JITServer Statistics thread not allocated, abort.\n");
          return -1;
          }
       }

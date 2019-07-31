@@ -63,10 +63,10 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
 
    if (rc != JNI_OK)
       {
-      return JNI_ERR; // attaching the JITaaS Statistics thread failed
+      return JNI_ERR; // attaching the JITServer Statistics thread failed
       }
 
-   j9thread_set_name(j9thread_self(), "JITaaS Server Statistics Thread");
+   j9thread_set_name(j9thread_self(), "JITServer Statistics Thread");
 
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
    TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
@@ -99,12 +99,12 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
                vmCpuUsage = cpuUtil->getVmCpuUsage();
                }
             TR_VerboseLog::vlogAcquire();
-            TR_VerboseLog::writeLine(TR_Vlog_JITaaS, "Number of clients : %u", compInfo->getClientSessionHT()->size());
-            TR_VerboseLog::writeLine(TR_Vlog_JITaaS, "Total compilation threads : %d", compInfo->getNumUsableCompilationThreads());
-            TR_VerboseLog::writeLine(TR_Vlog_JITaaS, "Active compilation threads : %d",compInfo->getNumCompThreadsActive());
+            TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Number of clients : %u", compInfo->getClientSessionHT()->size());
+            TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Total compilation threads : %d", compInfo->getNumUsableCompilationThreads());
+            TR_VerboseLog::writeLine(TR_Vlog_JITServer, "Active compilation threads : %d",compInfo->getNumCompThreadsActive());
             if (cpuUtil->isFunctional())
                {
-               TR_VerboseLog::writeLine(TR_Vlog_JITaaS, "CpuLoad %d%% (AvgUsage %d%%) JvmCpu %d%%", cpuUsage, avgCpuUsage, vmCpuUsage);
+               TR_VerboseLog::writeLine(TR_Vlog_JITServer, "CpuLoad %d%% (AvgUsage %d%%) JvmCpu %d%%", cpuUsage, avgCpuUsage, vmCpuUsage);
                }
             TR_VerboseLog::vlogRelease();
             lastStatistics = crtTime;
@@ -113,8 +113,8 @@ static int32_t J9THREAD_PROC statisticsThreadProc(void * entryarg)
       // This thread has been interrupted or StatisticsThreadExitFlag flag was set
       }
 
-   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Detaching JITaaSServer statistics thread");
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Detaching JITServer statistics thread");
 
    // Will reach here only if the StatisticsThreadExitFlag is set from the StopStatisticsThread.
    vm->internalVMFunctions->DetachCurrentThread((JavaVM *) vm);
@@ -145,7 +145,7 @@ TR_StatisticsThread::startStatisticsThread(J9JavaVM *javaVM)
                                                                javaVM->jitConfig,
                                                                J9THREAD_CATEGORY_SYSTEM_JIT_THREAD))
          { // cannot create the statistics thread
-         j9tty_printf(PORTLIB, "Error: Unable to create JITaaS Statistics Thread.\n");
+         j9tty_printf(PORTLIB, "Error: Unable to create JITServer Statistics Thread.\n");
          TR::Monitor::destroy(_statisticsThreadMonitor);
          _statisticsThreadMonitor = NULL;
          }
@@ -157,13 +157,13 @@ TR_StatisticsThread::startStatisticsThread(J9JavaVM *javaVM)
          _statisticsThreadMonitor->exit();
          if (!getStatisticsThread())
             {
-            j9tty_printf(PORTLIB, "Error: JITaaS Statistics Thread attach failed.\n");
+            j9tty_printf(PORTLIB, "Error: JITServer Statistics Thread attach failed.\n");
             }
          }
       }
    else
       {
-      j9tty_printf(PORTLIB, "Error: Unable to create JITaaS Statistics Monitor\n");
+      j9tty_printf(PORTLIB, "Error: Unable to create JITServer Statistics Monitor\n");
       }
    }
 

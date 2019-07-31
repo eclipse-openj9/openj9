@@ -40,6 +40,6 @@
 
 FROM openj9-jitaas-build:latest
 
-ENTRYPOINT ["/root/j2sdk-image/jre/bin/java", "-XX:+StartAsJITServer", "-Xjit:verbose={jitaas}"]
+ENTRYPOINT ["/root/j2sdk-image/jre/bin/java", "-XX:+StartAsJITServer", "-Xjit:verbose={JITServer}"]
 
 EXPOSE 38400

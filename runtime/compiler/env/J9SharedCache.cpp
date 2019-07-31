@@ -817,8 +817,8 @@ TR_J9JITaaSServerSharedCache::rememberClass(J9Class *clazz, bool create)
       auto it = cache.find(clazz);
       if (it != cache.end())
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Chain exists (%p) so nothing to store \n", it->second);
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Chain exists (%p) so nothing to store \n", it->second);
          return it->second;
          }
       }
@@ -828,8 +828,8 @@ TR_J9JITaaSServerSharedCache::rememberClass(J9Class *clazz, bool create)
       {
       if (!create)
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "not asked to create but could create, returning non-null \n");
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "not asked to create but could create, returning non-null \n");
          }
       else
          {
