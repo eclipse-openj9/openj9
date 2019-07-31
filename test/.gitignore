@@ -26,6 +26,7 @@ bin
 test_output_*
 
 # misc auto generated files
+*.mk.tkgj
 autoGen.mk
 TestConfig/dependencies.mk
 TestConfig/utils.mk
