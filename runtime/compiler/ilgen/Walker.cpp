@@ -2013,20 +2013,6 @@ TR_J9ByteCodeIlGenerator::expandPlaceholderCalls(int32_t depthLimit)
       }
    }
 
-bool TR_J9ByteCodeIlGenerator::isFinalFieldFromSuperClasses(J9Class *methodClass, int32_t subClassFieldOffset)
-   {
-   J9Class *superClass = (J9Class *) fej9()->getSuperClass( (TR_OpaqueClassBlock *) methodClass);
-
-   if (superClass == NULL)
-      return false;
-
-   int32_t superClassInstanceSize = TR::Compiler->cls.classInstanceSize((TR_OpaqueClassBlock *) superClass);
-   if (subClassFieldOffset < superClassInstanceSize)
-      return true;
-   else
-      return false;
-   }
-
 TR::Node *
 TR_J9ByteCodeIlGenerator::genNodeAndPopChildren(TR::ILOpCodes opcode, int32_t numChildren, TR::SymbolReference * symRef, int32_t firstIndex, int32_t lastIndex)
    {
@@ -5609,8 +5595,10 @@ break
          ListIterator<TR_VMField> fieldIter(fieldsInfoByIndex->getFields());
          for (TR_VMField *field = fieldIter.getFirst(); field; field = fieldIter.getNext())
             {
-            if ((field->modifiers & J9AccFinal) && !isFinalFieldFromSuperClasses(methodClass, field->offset))
+            if ((field->modifiers & J9AccFinal) && methodClass == jitGetDeclaringClassOfROMField(comp()->j9VMThread(), methodClass, field->shape))
                {
+               if (comp()->getOption(TR_TraceILGen))
+                  traceMsg(comp(), "added fence due to field %s \n", field->name);
                push(callNode->getFirstChild());
                genFlush(0);
                pop();
