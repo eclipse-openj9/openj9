@@ -3526,7 +3526,7 @@ void TR::CompilationInfo::stopCompilationThreads()
       try
          {
          JITServer::ClientStream client(getPersistentInfo());
-         client.writeError(JITServer::MessageType::clientTerminate, getPersistentInfo()->getClientUID());
+         client.writeError(JITServer::MessageType::clientSessionTerminate, getPersistentInfo()->getClientUID());
          }
       catch (const JITServer::StreamFailure &e)
          {
@@ -9869,15 +9869,16 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             jitMarkMethodReadyForDLT(vmThread, dltDetails.getMethod());
             }
          }
-      else if (entry && entry->_stream)
+      else if (entry && entry->isOutOfProcessCompReq())
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
                   "compThreadID=%d has failed to compile a DLT method", entry->_compInfoPT->getCompThreadId());
             }
-         int8_t compErrCode = entry->_compInfoPT->_methodBeingCompiled->_compErrCode;
-         entry->_stream->finishCompilation(compErrCode);
+         int8_t compErrCode = entry->_compErrCode;
+         if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
+            entry->_stream->finishCompilation(compErrCode);
          }
 #endif // ifdef J9VM_JIT_DYNAMIC_LOOP_TRANSFER
       if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
@@ -9933,10 +9934,11 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       else
          {
          // TODO:JSR292: Handle compile failures gracefully
-         if (entry && entry->_stream)
+         if (entry && entry->isOutOfProcessCompReq())
             {
-            int8_t compErrCode = entry->_compInfoPT->_methodBeingCompiled->_compErrCode;
-            entry->_stream->finishCompilation(compErrCode);
+            int8_t compErrCode = entry->_compErrCode;
+            if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
+               entry->_stream->finishCompilation(compErrCode);
             }
          }
       return startPC;
@@ -10237,7 +10239,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       if (vmThread && entry && !entry->isOutOfProcessCompReq())
          jitMethodFailedTranslation(vmThread, method);
 
-      if (entry && entry->_stream)
+      if (entry && entry->isOutOfProcessCompReq())
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             {
@@ -10247,11 +10249,12 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          static bool breakAfterFailedCompile = feGetEnv("TR_breakAfterFailedCompile") != NULL;
          if (breakAfterFailedCompile)
             {
-                 fprintf(stderr, "\n=== Failed to compile %s  ===\n", comp->signature());
-                 TR::Compiler->debug.breakPoint();
+            fprintf(stderr, "\n=== Failed to compile %s  ===\n", comp->signature());
+            TR::Compiler->debug.breakPoint();
             }
-         int8_t compErrCode = entry->_compInfoPT->_methodBeingCompiled->_compErrCode;
-         entry->_stream->finishCompilation(compErrCode);
+         int8_t compErrCode = entry->_compErrCode;
+         if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
+            entry->_stream->finishCompilation(compErrCode);
          }
       }
    else
@@ -10260,18 +10263,20 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       // again and return the oldStartPC as the new startPC so the old (fixed up)
       // method body is run
       //
-      if (entry && !entry->_stream)
+      if (entry && !entry->isOutOfProcessCompReq())
          TR::Recompilation::methodCannotBeRecompiled(oldStartPC, trvm);
       startPC = oldStartPC;
 
-      if (entry && entry->_stream)
+      if (entry && entry->isOutOfProcessCompReq())
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
                   "compThreadID=%d has failed to recompile", entry->_compInfoPT->getCompThreadId());
             }
-         entry->_stream->finishCompilation(compilationNotNeeded);
+         int8_t compErrCode = entry->_compErrCode;
+         if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
+            entry->_stream->finishCompilation(compilationNotNeeded);
          }
       }
 
@@ -10975,12 +10980,6 @@ TR::CompilationInfoPerThreadBase::processException(
       {
       _methodBeingCompiled->_compErrCode = compilationInterrupted;
       }
-   catch (const JITServer::StreamCancel &e)
-      {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamCancel: %s", e.what());
-      _methodBeingCompiled->_compErrCode = compilationInterrupted;
-      }
    catch (const TR::UnimplementedOpCode &e)
       {
       _methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
@@ -11033,14 +11032,26 @@ TR::CompilationInfoPerThreadBase::processException(
    catch (const JITServer::StreamFailure &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamFailure: %s", e.what());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITServer StreamFailure: %s", e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamFailure;
+      }
+   catch (const JITServer::StreamInterrupted &e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITServer StreamInterrupted: %s", e.what());
+      _methodBeingCompiled->_compErrCode = compilationStreamInterrupted;
       }
    catch (const JITServer::StreamVersionIncompatible &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamVersionIncompatible: %s", e.what());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITServer StreamVersionIncompatible: %s", e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamVersionIncompatible;
+      }
+   catch (const JITServer::StreamMessageTypeMismatch &e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITServer StreamMessageTypeMismatch: %s", e.what());
+      _methodBeingCompiled->_compErrCode = compilationStreamMessageTypeMismatch;
       }
    catch (const JITServer::ServerCompilationFailure &e)
       {

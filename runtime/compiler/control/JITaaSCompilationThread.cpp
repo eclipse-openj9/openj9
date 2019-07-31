@@ -249,7 +249,7 @@ bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
    if (interruptReason)
       {
       if (response != MessageType::compilationCode)
-         client->writeError(JITServer::MessageType::compilationAbort, 0 /* placeholder */); // inform the server if compilation is not yet complete
+         client->writeError(JITServer::MessageType::compilationInterrupted, 0 /* placeholder */); // inform the server if compilation is not yet complete
 
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in handleServerMessage of %s @ %s", 
@@ -2626,8 +2626,8 @@ remoteCompile(
              TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in remoteCompile of %s @ %s",
                  interruptReason, comp->signature(), comp->getHotnessName());
 
-         // Inform server that client is going to abort with a compilationAbort message 
-         client->writeError(JITServer::MessageType::compilationAbort, 0 /* placeholder */);
+         // Inform server that the compilation has been interrupted 
+         client->writeError(JITServer::MessageType::compilationInterrupted, 0 /* placeholder */);
          comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in remoteCompile");
          }
 
@@ -2646,8 +2646,10 @@ remoteCompile(
 
       if (statusCode >= compilationMaxError)
          throw JITServer::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
-      if (statusCode == compilationStreamVersionIncompatible)
+      else if (statusCode == compilationStreamVersionIncompatible)
          throw JITServer::StreamVersionIncompatible();
+      else if (statusCode == compilationStreamMessageTypeMismatch)
+         throw JITServer::StreamMessageTypeMismatch();
       client->setVersionCheckStatus();
       }
    catch (const JITServer::StreamFailure &e)
@@ -2674,6 +2676,13 @@ remoteCompile(
           TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
             "JITServer::StreamVersionIncompatible: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
       compiler->failCompilation<JITServer::StreamVersionIncompatible>(e.what());
+      }
+   catch (const JITServer::StreamMessageTypeMismatch &e)
+      {
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
+            "JITServer::StreamMessageTypeMismatch: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
+      compiler->failCompilation<JITServer::StreamMessageTypeMismatch>(e.what());
       }
 
    TR_MethodMetaData *metaData = NULL;
@@ -4391,43 +4400,50 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       stream->finishCompilation(compilationStreamMessageTypeMismatch);
       abortCompilation = true;
       }
-   catch (const JITServer::StreamCancel &e)
+   catch (const JITServer::StreamConnectionTerminate &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream cancelled by client while compThreadID=%d was reading the compilation request: %s",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream connection terminated by JITClient on stream %p while compThreadID=%d was reading the compilation request: %s",
+            stream, getCompThreadId(), e.what());
+
+      abortCompilation = true;
+      if (!enableJITaaSPerCompConn) // JITServer TODO: remove the perCompConn mode
+         {
+         stream->~ServerStream();
+         TR_Memory::jitPersistentFree(stream);
+         entry._stream = NULL;
+         }
+      }
+   catch (const JITServer::StreamClientSessionTerminate &e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream client session terminated by JITClient on compThreadID=%d: %s", e.what());
+
+      abortCompilation = true;
+      deleteClientSessionData(e.getClientId(), compInfo, compThread);
+
+      if (!enableJITaaSPerCompConn)
+         {
+         stream->~ServerStream();
+         TR_Memory::jitPersistentFree(stream);
+         entry._stream = NULL;
+         }
+      }
+   catch (const JITServer::StreamInterrupted &e)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream interrupted by JITClient while compThreadID=%d was reading the compilation request: %s",
             getCompThreadId(), e.what());
+
+      abortCompilation = true;
       // If the client aborted this compilation it could have happened only while
       // asking for CHTable updates and at that point the seqNo was not updated.
       // We must update it now to allow for blocking threads to pass through.
-      if (e.getType() == JITServer::MessageType::compilationAbort)
-         {
-         clientSession->getSequencingMonitor()->enter();
-         TR_ASSERT(seqNo == clientSession->getExpectedSeqNo(), "Unexpected seqNo");
-         updateSeqNo(clientSession);
-         // Release the sequencing monitor so that other threads can process their lists of unloaded classes
-         clientSession->getSequencingMonitor()->exit();
-         }
-      abortCompilation = true;
-      if (!enableJITaaSPerCompConn) // JITServer TODO: remove the perCompConn mode
-         { 
-         if (e.getType() == JITServer::MessageType::connectionTerminate)
-            {
-            // Delete server stream
-            stream->~ServerStream();
-            TR_Memory::jitPersistentFree(stream);
-            entry._stream = NULL;
-            }
-         else if (e.getType() == JITServer::MessageType::clientTerminate)
-            {
-            deleteClientSessionData(e.getClientId(), compInfo, compThread);
-            // Delete server stream
-            stream->~ServerStream();
-            TR_Memory::jitPersistentFree(stream);
-            entry._stream = NULL;
-            }
-         // else e.getType() == JITServer::MessageType::compilationAbort
-         // we do not kill the connection in this case
-         }
+      clientSession->getSequencingMonitor()->enter();
+      TR_ASSERT(seqNo == clientSession->getExpectedSeqNo(), "Unexpected seqNo");
+      updateSeqNo(clientSession);
+      // Release the sequencing monitor so that other threads can process their lists of unloaded classes
+      clientSession->getSequencingMonitor()->exit();
       }
    catch (const JITServer::StreamOOO &e)
       {
@@ -4520,6 +4536,17 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    // The following call will return with compilation monitor in hand
    //
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
+   if (entry._compErrCode == compilationStreamFailure)
+      {
+      if (!enableJITaaSPerCompConn)
+         {
+         TR_ASSERT(entry._stream, "stream should still exist after compilation even if it encounters a streamFailure.");
+         // Clean up server stream because the stream is already dead
+         stream->~ServerStream();
+         TR_Memory::jitPersistentFree(stream);
+         entry._stream = NULL;
+         }
+      }
 
    // Release the queue slot monitor because we don't need it anymore
    // This will allow us to acquire the sequencing monitor later

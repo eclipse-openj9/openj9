@@ -52,8 +52,8 @@ enum MessageType
    get_params_to_construct_TR_j9method = 2;
    getUnloadedClassRanges = 3;
    compilationRequest = 4; // type used when client sends remote compilation requests
-   compilationAbort = 5; // type used when client informs the server to abort the remote compilation
-   clientTerminate = 6; // type used when client process is about to terminate
+   compilationInterrupted = 5; // type used when client informs the server to abort the remote compilation
+   clientSessionTerminate = 6; // type used when client process is about to terminate
    connectionTerminate = 7; // type used when client informs the server to close the connection
 
    // For TR_ResolvedJ9JITaaSServerMethod methods

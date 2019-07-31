@@ -207,6 +207,7 @@ char *compilationErrorNames[]={
    "compilationStreamLostMessage", // 54
    "compilationStreamMessageTypeMismatch", // 55
    "compilationStreamVersionIncompatible", // 56
+   "compilationStreamInterrupted", // 57
    "compilationMaxError"
 };
 
