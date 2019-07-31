@@ -55,20 +55,14 @@ ifeq ($(PLATFORM),ppc64-linux64-clang)
 endif
 
 ifeq ($(PLATFORM),s390-linux-gcc)
-     export JITSERVER_SUPPORT=1
+    export JITSERVER_SUPPORT=1
 endif
 
 ifeq ($(PLATFORM),s390-linux64-gcc)
     export JITSERVER_SUPPORT=1
 endif
 
-ifeq ($(PLATFORM),s390-zos-vacpp)
-    export JITSERVER_SUPPORT=1
-endif
-
 ifeq ($(PLATFORM),s390-zos64-vacpp)
-    export JITSERVER_SUPPORT=1
-
     ifeq (default,$(origin CC))
         export CC=/usr/lpp/cbclib/xlc/bin/xlc
     endif
