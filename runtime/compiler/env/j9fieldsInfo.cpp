@@ -54,6 +54,7 @@ TR_VMField::TR_VMField(TR::Compilation * comp, J9Class *aClazz, J9ROMFieldShape 
    ramClass = aClazz;
    modifiers = fieldShape->modifiers;
 
+   shape = fieldShape;
    nameUtf8 = J9ROMFIELDSHAPE_NAME(fieldShape);
    nPtr = (char *) J9UTF8_DATA(nameUtf8);
    sigUtf8 =  J9ROMFIELDSHAPE_SIGNATURE(fieldShape);

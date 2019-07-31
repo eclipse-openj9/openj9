@@ -344,8 +344,6 @@ private:
       return TR::Compiler->cls.jitStaticsAreSame(_compilation, s1->getOwningMethod(_compilation), s1->getCPIndex(), s2->getOwningMethod(_compilation), s2->getCPIndex());
       }
 
-   bool isFinalFieldFromSuperClasses(J9Class *, int32_t);
-
    TR::Node * genNodeAndPopChildren(TR::ILOpCodes, int32_t, TR::SymbolReference *, int32_t = 0);
    TR::Node * genNodeAndPopChildren(TR::ILOpCodes, int32_t, TR::SymbolReference *, int32_t firstIndex, int32_t lastIndex);
 
