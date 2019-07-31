@@ -4408,20 +4408,25 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          clientSession->getSequencingMonitor()->exit();
          }
       abortCompilation = true;
-      if (!enableJITaaSPerCompConn || e.getType() == JITServer::MessageType::connectionTerminate)
-         {
-         // Delete server stream
-         stream->~ServerStream();
-         TR_Memory::jitPersistentFree(stream);
-         entry._stream = NULL;
-         }
-      if (e.getType() == JITServer::MessageType::clientTerminate)
-         {
-         deleteClientSessionData(e.getClientId(), compInfo, compThread);
-         // Delete server stream
-         stream->~ServerStream();
-         TR_Memory::jitPersistentFree(stream);
-         entry._stream = NULL;
+      if (!enableJITaaSPerCompConn) // JITServer TODO: remove the perCompConn mode
+         { 
+         if (e.getType() == JITServer::MessageType::connectionTerminate)
+            {
+            // Delete server stream
+            stream->~ServerStream();
+            TR_Memory::jitPersistentFree(stream);
+            entry._stream = NULL;
+            }
+         else if (e.getType() == JITServer::MessageType::clientTerminate)
+            {
+            deleteClientSessionData(e.getClientId(), compInfo, compThread);
+            // Delete server stream
+            stream->~ServerStream();
+            TR_Memory::jitPersistentFree(stream);
+            entry._stream = NULL;
+            }
+         // else e.getType() == JITServer::MessageType::compilationAbort
+         // we do not kill the connection in this case
          }
       }
    catch (const JITServer::StreamOOO &e)

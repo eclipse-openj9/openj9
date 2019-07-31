@@ -112,7 +112,7 @@ public:
    std::tuple<T...> read()
       {
       readBlocking(_cMsg);
-      if (_cMsg.type() == MessageType::compilationAbort)
+      if (_cMsg.type() == MessageType::compilationAbort || _cMsg.type() == MessageType::connectionTerminate)
          throw StreamCancel(_cMsg.type());
       // We are expecting the response type (_cMsg.type()) to be the same as the request type (_sMsg.type())
       if (_cMsg.type() != _sMsg.type())
@@ -153,9 +153,9 @@ public:
          throw StreamMessageTypeMismatch(MessageType::compilationRequest, _cMsg.type());
          }
 
-      if (_cMsg.version() != 0 && _cMsg.version() != getJITaaSVersion())
+      if (_cMsg.version() != 0 && _cMsg.version() != getJITServerVersion())
          {
-         throw StreamVersionIncompatible(getJITaaSVersion(), _cMsg.version());
+         throw StreamVersionIncompatible(getJITServerVersion(), _cMsg.version());
          }
       
       return getArgs<T...>(_cMsg.mutable_data());
