@@ -334,7 +334,6 @@ static Block * getBlock(TR::Compilation *comp, Block * * blocks,
       blocks[i] = new (comp->trStackMemory()) Block (startTree, endTree,
             comp->trMemory());
 
-      blocks[i]->setJ9EstimateCodeSizeMethod(feMethod);
       blocks[i]->setBlockBCIndex(i);
       blocks[i]->setNumber(cfg.getNextNodeNumber());
 
@@ -466,120 +465,6 @@ TR_J9EstimateCodeSize::estimateCodeSize(TR_CallTarget *calltarget, TR_CallStack 
       }
 
    return false;
-   }
-
-
-static TR::Node* getCallNode (TR::ResolvedMethodSymbol* methodSymbol, uint32_t bci)
-   {
-   for (TR::TreeTop* tt = methodSymbol->getFirstTreeTop(); tt; tt=tt->getNextTreeTop())
-      {
-      if (tt->getNode()->getNumChildren()>0 &&
-          tt->getNode()->getFirstChild()->getOpCode().isCall() &&
-          tt->getNode()->getFirstChild()->getByteCodeIndex() == bci)
-         {
-         return tt->getNode()->getFirstChild();
-         }
-      }
-
-   return NULL;
-   }
-
-
-static bool hasArgInfoForChild (TR::Node* child)
-   {
-
-   return child->getOpCode().hasSymbolReference() &&
-          child->getSymbolReference()->getSymbol()->isParm() &&
-          child->getSymbolReference()->getSymbol()->getParmSymbol()->getFixedType();
-   }
-
-
-static void propagateReceiverInfoIfAvailable (TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite,
-                                              TR_PrexArgInfo * argInfo, TR_InlinerTracer *tracer)
-   {
-
-   //this implies we have some argInfo available
-   TR_ASSERT(argInfo, "otherwise we shouldn't even peek");
-   TR::Node* callNode = getCallNode(methodSymbol, callsite->_bcInfo.getByteCodeIndex());
-   heuristicTrace(tracer, "ECS CSI -- trying to propagate receiver's info for callsite %p at %p", callsite, callNode);
-   if (!callNode)
-      return;
-
-   //do not handle interface calls for now
-   //as there is no obvious way to figure out the number of parameters
-   if (callsite->_interfaceMethod)
-      return;
-
-   TR::Node* child = callNode->getChild(callNode->getFirstArgumentIndex());
-   uint32_t numOfArgs = callsite->_initialCalleeMethod->numberOfParameters();
-
-   if (callNode->getNumChildren()-callNode->getFirstArgumentIndex() != numOfArgs)
-      {
-      return;
-      }
-
-   if (hasArgInfoForChild(child))
-      {
-      heuristicTrace(tracer, "ECS CSI -- the receiver for callsite %p is also one of the caller's args");
-      TR_PrexArgInfo *myPrexArgInfo = new (tracer->trHeapMemory()) TR_PrexArgInfo(numOfArgs, tracer->trMemory());
-      TR_OpaqueClassBlock* argClass = (TR_OpaqueClassBlock*) child->getSymbolReference()->getSymbol()->getParmSymbol()->getFixedType();
-      myPrexArgInfo->set(0, new (tracer->trHeapMemory()) TR_PrexArgument(TR_PrexArgument::ClassIsFixed, argClass));
-      callsite->_ecsPrexArgInfo = myPrexArgInfo;
-      }
-
-   }
-
-
-static void propagateArgs (TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite,
-                           TR_PrexArgInfo * argInfo, TR_InlinerTracer *tracer)
-   {
-
-   TR_ASSERT(argInfo, "otherwise we shouldn't even peek");
-   TR::Node* callNode = getCallNode(methodSymbol, callsite->_bcInfo.getByteCodeIndex());
-   heuristicTrace(tracer, "ECS CSI -- trying to propagate receiver's info for callsite %p at %p", callsite, callNode);
-   if (!callNode)
-      return;
-
-
-
-   if (tracer->heuristicLevel())
-      {
-      heuristicTrace(tracer, "ECS CSI -- ArgInfo before args propagation");
-      for (int i = 0; i < callsite->numTargets(); i++)
-         tracer->dumpPrexArgInfo(callsite->getTarget(i)->_ecsPrexArgInfo);
-      }
-
-
-   for (int i = callNode->getFirstArgumentIndex(); i < callNode->getNumChildren(); i++)
-      {
-      TR::Node* child = callNode->getChild(i);
-      if (hasArgInfoForChild(child)) //do we have any type info in caller for this parameter?
-         {
-         heuristicTrace(tracer, "ECS CSI -- arg %d at callsite %p matches caller's arg %d", i, callsite, child->getSymbolReference()->getSymbol()->getParmSymbol()->getOrdinal());
-
-         for (int j = 0; j < callsite->numTargets(); j++)
-            {
-            TR_ASSERT(callsite->getTarget(j)->_ecsPrexArgInfo, "shouldn't be null! always initialize it in calltarget");
-
-            //ILGen did something funky with this call, skip arg propagation
-            if (callsite->getTarget(j)->_ecsPrexArgInfo->getNumArgs() != callNode->getNumChildren()-callNode->getFirstArgumentIndex())
-               {
-               continue;
-               }
-
-            TR_OpaqueClassBlock* argClass = (TR_OpaqueClassBlock*) child->getSymbolReference()->getSymbol()->getParmSymbol()->getFixedType();
-            callsite->getTarget(j)->_ecsPrexArgInfo->set(i-callNode->getFirstArgumentIndex(), new (tracer->trHeapMemory()) TR_PrexArgument(TR_PrexArgument::ClassIsFixed, argClass));
-            }
-         }
-      }
-
-   if (tracer->heuristicLevel())
-      {
-      heuristicTrace(tracer, "ECS CSI -- ArgInfo after args propagation");
-      for (int i = 0; i < callsite->numTargets(); i++)
-         tracer->dumpPrexArgInfo(callsite->getTarget(i)->_ecsPrexArgInfo);
-      }
-
    }
 
 bool
@@ -1110,10 +995,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       cfg.getEnd()->asBlock()->setIsEndBlock();
 
       TR::Block * currentBlock = cfg.getStart()->asBlock();
-      currentBlock->setJ9EstimateCodeSizeMethod(calltarget->_calleeMethod);
       currentBlock->setBlockBCIndex(0);
-      cfg.getStart()->asBlock()->setJ9EstimateCodeSizeMethod(calltarget->_calleeMethod);
-      cfg.getStart()->asBlock()->setBlockBCIndex(0);
 
       int32_t endNodeIndex = bci.maxByteCodeIndex() - 1;
       if (endNodeIndex < 0)
@@ -1161,14 +1043,11 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
             if (addFallThruEdge)
                {
                debugTrace(tracer(),"adding a fallthrough edge between block %p %d and %p %d", currentBlock, currentBlock->getNumber(), newBlock, newBlock->getNumber());
-
                debugTrace(tracer(),"joining nodes between blocks %p %d and %p %d", currentBlock, currentBlock->getNumber(), newBlock, newBlock->getNumber());
                currentBlock->getExit()->join(newBlock->getEntry());
-
                cfg.addEdge(currentBlock, newBlock, stackAlloc);
-               addFallThruEdge = true;
-               }
-            else
+               } 
+            else 
                {
                addFallThruEdge = true;
                }
@@ -1188,12 +1067,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
             {
             partialTrace(tracer(), "Setting unsanitizeable flag on block %p[%d] blocks[%d]=%p",currentBlock, currentBlock->getNumber(), i, blocks[i]);
             currentBlock->setIsUnsanitizeable();
-            }
-
-         if (callSites[i])
-            {
-            for (int kk = 0; kk < callSites[i]->numTargets(); kk++)
-               callSites[i]->getTarget(kk)->_originatingBlock = currentBlock;
             }
 
          if (flags[i].testAny(isBranch))
@@ -1463,11 +1336,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   if(tracer()->debugLevel())
                      {
                      pca.printIndexes(comp());
-                     }
-                  if(pca.isArgAtIndexReceiverObject(resolvedMethod->numberOfExplicitParameters()))
-                     {
-                     //heuristicTrace(tracer(),"Arg at index %d is receiver object.  Propagating prexarginfo",resolvedMethod->numberOfExplicitParameters());
-                     //callsite->_ecsPrexArgInfo = calltarget->_ecsPrexArgInfo;
                      }
 
                   TR_PrexArgInfo *argInfo = calltarget->_ecsPrexArgInfo;
@@ -1908,7 +1776,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   // central place so everyone agrees on it.  It shouldn't just be
                   // for inliner.
                   //
-                  bool coldCallInfoIsReliable = !cameFromArchetypeSpecimen( currentBlock->getJ9EstimateCodeSizeMethod());
+                  bool coldCallInfoIsReliable = !cameFromArchetypeSpecimen(calltarget->_calleeMethod);
 
                   if (_inliner->getPolicy()->tryToInline(targetCallee, &callStack, true))
                      {
