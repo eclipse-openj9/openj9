@@ -24,6 +24,7 @@ j9jit_files(
 	${omr_SOURCE_DIR}/compiler/aarch64/runtime/CodeSync.cpp
 	${omr_SOURCE_DIR}/compiler/aarch64/runtime/VirtualGuardRuntime.cpp
 	aarch64/runtime/ARM64ArrayCopy.spp
+	aarch64/runtime/ARM64RelocationTarget.cpp
 	aarch64/runtime/FlushICache.spp
 	aarch64/runtime/PicBuilder.spp
 	aarch64/runtime/Recomp.cpp
