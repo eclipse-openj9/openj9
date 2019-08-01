@@ -53,8 +53,11 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMClassHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
 import com.ibm.j9ddr.vm29.structure.J9Object;
 import com.ibm.j9ddr.vm29.types.IDATA;
+import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
 import com.ibm.j9ddr.vm29.types.UDATA;
@@ -66,6 +69,7 @@ import com.ibm.j9ddr.vm29.types.UDATA;
  * description.c
  */
 public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator {
+	private ValueTypeHelper valueTypeHelper = ValueTypeHelper.getValueTypeHelper();
 
 	private J9JavaVMPointer vm;
 	private J9ROMClassPointer romClass;
@@ -78,6 +82,14 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	private UDATA firstDoubleOffset = new UDATA(0);
 	private UDATA firstSingleOffset = new UDATA(0);
 	private UDATA firstObjectOffset = new UDATA(0);
+
+	private UDATA firstFlatDoubleOffset = new UDATA(0);
+	private UDATA firstFlatObjectOffset = new UDATA(0);
+	private UDATA firstFlatSingleOffset = new UDATA(0);
+	private UDATA currentFlatDoubleOffset = new UDATA(0);
+	private UDATA currentFlatObjectOffset = new UDATA(0);
+	private UDATA currentFlatSingleOffset = new UDATA(0);
+
 	private U32 objectsSeen = new U32(0);
 	private U32 objectStaticsSeen = new U32(0);
 	private U32 singlesSeen = new U32(0);
@@ -200,8 +212,28 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 							offset = new UDATA(backfillOffsetToUse);
 							walkFlags = walkFlags.bitAnd(new U32(new UDATA(J9VM_FIELD_OFFSET_WALK_BACKFILL_OBJECT_FIELD).bitNot()));
 						} else {
-							offset = firstObjectOffset.add(objectsSeen.mult(fj9object_t_SizeOf));
-							objectsSeen = objectsSeen.add(1);
+							if (valueTypeHelper.isFlattenableFieldSignature(J9ROMFieldShapeHelper.getSignature(localField))) {
+								J9ClassPointer fieldClass = valueTypeHelper.findJ9ClassInFlattenedClassCacheWithFieldName(instanceClass, J9ROMFieldShapeHelper.getName(localField));
+								if (null != fieldClass) {
+									IDATA firstFieldOffset = fieldClass.backfillOffset();
+									if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintDouble(fieldClass)) {
+										offset = firstFlatDoubleOffset.add(currentFlatDoubleOffset).sub(firstFieldOffset);
+										currentFlatDoubleOffset = currentFlatDoubleOffset.add(Scalar.roundToSizeofU64(fieldClass.totalInstanceSize().sub(firstFieldOffset)));
+									} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintReference(fieldClass)) {
+										offset = firstFlatObjectOffset.add(currentFlatObjectOffset).sub(firstFieldOffset);
+										currentFlatObjectOffset = currentFlatObjectOffset.add(Scalar.roundToSizeToFJ9object(fieldClass.totalInstanceSize().sub(firstFieldOffset)));
+									} else {
+										offset = firstFlatSingleOffset.add(currentFlatSingleOffset).sub(firstFieldOffset);
+										currentFlatSingleOffset = currentFlatSingleOffset.add(fieldClass.totalInstanceSize().sub(firstFieldOffset));
+									}
+								} else {
+									offset = firstObjectOffset.add(objectsSeen.mult(fj9object_t_SizeOf));
+									objectsSeen = objectsSeen.add(1);
+								}
+							} else {
+								offset = firstObjectOffset.add(objectsSeen.mult(fj9object_t_SizeOf));
+								objectsSeen = objectsSeen.add(1);
+							}
 						}
 						field = localField;
 						break;
@@ -248,7 +280,12 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		if (!walkFlags.anyBitsIn(J9VM_FIELD_OFFSET_WALK_INCLUDE_INSTANCE | J9VM_FIELD_OFFSET_WALK_CALCULATE_INSTANCE_SIZE)) {
 			return;
 		}
-		ObjectFieldInfo fieldInfo = new ObjectFieldInfo(romClass);
+		ObjectFieldInfo fieldInfo = null;
+		if (valueTypeHelper.areValueTypesSupported()) {
+			fieldInfo = new ObjectFieldInfo(romClass, instanceClass);
+		} else {
+			fieldInfo = new ObjectFieldInfo(romClass);
+		}
 
 		/*
 		 * Step 1: Calculate the size of the superclass and backfill offset.
@@ -328,9 +365,18 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		fieldInfo.countAndCopyHiddenFields(extraHiddenFields, hiddenInstanceFieldList);
 
 		new UDATA(fieldInfo.calculateTotalFieldsSizeAndBackfill());
-		firstDoubleOffset = new UDATA(fieldInfo.calculateFieldDataStart());
-		firstObjectOffset = new UDATA(fieldInfo.addDoublesArea(firstDoubleOffset.intValue()));
-		firstSingleOffset = new UDATA(fieldInfo.addObjectsArea(firstObjectOffset.intValue()));
+		if (valueTypeHelper.areValueTypesSupported()) {
+			firstFlatDoubleOffset = new UDATA(fieldInfo.calculateFieldDataStart());
+			firstDoubleOffset = new UDATA(fieldInfo.addFlatDoublesArea(firstFlatDoubleOffset.intValue()));
+			firstFlatObjectOffset = new UDATA(fieldInfo.addDoublesArea(firstDoubleOffset.intValue()));
+			firstObjectOffset = new UDATA(fieldInfo.addFlatObjectsArea(firstFlatObjectOffset.intValue()));
+			firstFlatSingleOffset = new UDATA(fieldInfo.addObjectsArea(firstObjectOffset.intValue()));
+			firstSingleOffset = new UDATA(fieldInfo.addFlatSinglesArea(firstFlatSingleOffset.intValue()));
+		} else {
+			firstDoubleOffset = new UDATA(fieldInfo.calculateFieldDataStart());
+			firstObjectOffset = new UDATA(fieldInfo.addDoublesArea(firstDoubleOffset.intValue()));
+			firstSingleOffset = new UDATA(fieldInfo.addObjectsArea(firstObjectOffset.intValue()));
+		}
 
 		if (fieldInfo.isMyBackfillSlotAvailable() && fieldInfo.isBackfillSuitableFieldAvailable() ) {
 			if (fieldInfo.isBackfillSuitableInstanceSingleAvailable()) {
@@ -405,6 +451,10 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 	 * @throws CorruptDataException
 	 */
 	private UDATA checkLockwordNeeded(J9ROMClassPointer romClass, J9ClassPointer ramSuperClass,J9ClassPointer instanceClass) throws CorruptDataException {
+		if (valueTypeHelper.isRomClassAValueType(romClass)) {
+			return NO_LOCKWORD_NEEDED;
+		}
+
 		J9ClassPointer ramClassForRomClass = instanceClass;
 		while (!ramClassForRomClass.isNull() && (!romClass.equals(ramClassForRomClass.romClass()))) {
 			ramClassForRomClass = J9ClassHelper.superclass(ramClassForRomClass);
@@ -423,6 +473,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		return LOCKWORD_NEEDED;
 	}
 
+	@Override
 	public boolean hasNext() {
 		if (next != null) {
 			return true;
@@ -472,6 +523,7 @@ public class J9ObjectFieldOffsetIterator_V1 extends J9ObjectFieldOffsetIterator 
 		}
 	}
 
+	@Override
 	public J9ObjectFieldOffset next() {
 		if (!hasNext()) {
 			throw new NoSuchElementException();
