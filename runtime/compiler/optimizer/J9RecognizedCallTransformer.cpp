@@ -106,13 +106,16 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
 
 void J9::RecognizedCallTransformer::process_java_lang_StrictMath_and_Math_sqrt(TR::TreeTop* treetop, TR::Node* node)
    {
-      TR::Node* valueNode = node->getLastChild();
+   TR::Node* valueNode = node->getLastChild();
 
-      anchorAllChildren(node, treetop);
-      prepareToReplaceNode(node);
+   anchorAllChildren(node, treetop);
+   prepareToReplaceNode(node);
 
-      TR::Node::recreateWithoutProperties(node, TR::dsqrt, 1, valueNode, getSymRefTab()->findOrCreateNewArraySymbolRef(node->getSymbolReference()->getOwningMethodSymbol(comp())));
-      TR::TransformUtil::removeTree(comp(), treetop);
+   TR::Node::recreate(node, TR::dsqrt);
+   node->setNumChildren(1);
+   node->setAndIncChild(0, valueNode);
+
+   TR::TransformUtil::removeTree(comp(), treetop);
    }
 /*
 Transform an Unsafe atomic call to diamonds with equivalent semantics
