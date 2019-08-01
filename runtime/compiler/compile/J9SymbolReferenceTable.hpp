@@ -187,6 +187,9 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
    TR::SymbolReference * findOrCreateRamStaticsFromClassSymbolRef();
    TR::SymbolReference * findOrCreateGlobalFragmentSymbolRef();
    TR::SymbolReference * findOrCreateThreadDebugEventData(int32_t index);
+   TR::SymbolReference * findOrCreatelong2StringSymbol();
+   TR::SymbolReference * findOrCreatebitOpMemSymbol();
+   TR::SymbolReference * findOrCreateCurrentTimeMaxPrecisionSymbol();
 
    // optimizer (loop versioner)
    TR::SymbolReference * findOrCreateThreadLowTenureAddressSymbolRef();
