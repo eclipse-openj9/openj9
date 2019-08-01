@@ -60,6 +60,9 @@ class TR_ExternalProfiler;
 class TR_JitPrivateConfig;
 class TR_DataCacheManager;
 class TR_EstimateCodeSize;
+#if defined(JITSERVER_SUPPORT)
+class TR_Listener;
+#endif /* defined(JITSERVER_SUPPORT) */
 struct TR_CallSite;
 struct TR_CallTarget;
 namespace J9 { class ObjectModel; }
@@ -137,6 +140,9 @@ typedef struct TR_JitPrivateConfig
    TR_IProfiler  *iProfiler;
    TR_HWProfiler *hwProfiler;
    TR_JProfilerThread  *jProfiler;
+#if defined(JITSERVER_SUPPORT)
+   TR_Listener   *listener;
+#endif /* defined(JITSERVER_SUPPORT) */
    TR_LMGuardedStorage *lmGuardedStorage;
    TR::CodeCacheManager *codeCacheManager; // reachable from JitPrivateConfig for kca's benefit
    TR_DataCacheManager *dcManager;  // reachable from JitPrivateConfig for kca's benefit
