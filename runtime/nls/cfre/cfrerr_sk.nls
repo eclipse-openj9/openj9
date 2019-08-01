@@ -1443,8 +1443,9 @@ J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED=ValueTypes s\u00fa povolen\u00e9 iba 
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.explanation=ValueTypes is an experimental feature and is not officially supported.
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.user_response=Contact the provider of the classfile for a corrected version or use the -XX:+EnableValhalla option.
+# END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PREVIEW_VERSION=Class file is a preview version but has the wrong major version or preview is not enabled.
+J9NLS_CFR_ERR_PREVIEW_VERSION=S\u00fabor tried je verzia n\u00e1h\u013eadu, ale m\u00e1 nespr\u00e1vnu hlavn\u00fa verziu alebo nie je povolen\u00fd n\u00e1h\u013ead.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PREVIEW_VERSION.explanation=Classfiles with minor version 65535 must have the same major version as the VM rumtime version and preview must be enabled
 J9NLS_CFR_ERR_PREVIEW_VERSION.system_action=The JVM will throw a verification or classloading-related exception.
