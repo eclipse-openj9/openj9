@@ -1,3 +1,25 @@
+<!--
+Copyright (c) 2019 IBM Corp. and others
+
+This program and the accompanying materials are made available under
+the terms of the Eclipse Public License 2.0 which accompanies this
+distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+or the Apache License, Version 2.0 which accompanies this distribution and
+is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+This Source Code may also be made available under the following
+Secondary Licenses when the conditions for such availability set
+forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+General Public License, version 2 with the GNU Classpath
+Exception [1] and GNU General Public License, version 2 with the
+OpenJDK Assembly Exception [2].
+
+[1] https://www.gnu.org/software/classpath/license.html
+[2] http://openjdk.java.net/legal/assembly-exception.html
+
+SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
 # GPU Code Generation and Execution with OpenJ9
 
 ## Summary
@@ -12,27 +34,52 @@ void heavy() {
 ```
 
 The ```heavy()``` method contains Java's Parallel Stream API and is at first interpreted on the JVM. The JVM periodically monitors the *hotness* of the method, and, when needed, generates an optimized native CPU program. The JIT compiler at first performs a limited set of compiler optimizations over intermediate representation (IR) so as not to hinder the main program execution. However, depending on the hotness, it may recompile the method with more aggressive optimizations including GPU code generation. The figure below illustrates an overview of the GPU code generation:
-
-![An overview of the GPU code generation.](./figs/gpucodegen.png "An overview of the GPU code generation." )
+```
+   +----------------+
+   | Java Bytecode  |
+   +----------------+
+           |
++----------|---------------------------------------------------------------------------------------+
+|          v                                                                                       |
+|  +----------------+       +----------------+       +----------------+       +----------------+   |   +-----------+
+|  |  Translation   | +---> |    Existing    | +---> |Parallel Streams| +---> |Target Machine  | +---> |    CPU    |
+|  |   to our IR    |       | Optimizations  |       | Identification |   +-> |Code Generation |   |   |   Binary  |
+|  +----------------+       +----------------+       +----------------+   |   +----------------+   |   +-----------+
+|                                                            |            |                        |   |GPU Runtime|
+|                                                            v            |                        |   +-----------+
+|                                                    +----------------+   |                        |
+|                                                    |  Optimization  +---+                        |
+|                                                    |    for GPUs    |                            |
+| Our JIT Compiler                                   +----------------+                            |
+|                                                            |                                     |
++------------------------------------------------------------|-------------------------------------+
+                                                             |
++------------------------------------------------------------v-------------------------------------+
+|                                                    +----------------+       +----------------+   |   +-----------+
+|                                                    |    NVVM IR     | +---> |    libNVVM     | +---> |    GPU    |
+| NVIDIA's Tool Chain                                |                |       |                |   |   |   Binary  |
+|                                                    +----------------+       +----------------+   |   +-----------+
++--------------------------------------------------------------------------------------------------+
+```
 
 When the JIT compiler identifies the parallel stream API in the IR, it first applies a set of GPU-aware optimizations, then generates [NVVM IR](https://docs.nvidia.com/cuda/nvvm-ir-spec/index.html), and eventually generates a GPU kernel binary through [the ```libNVVM``` library](https://docs.nvidia.com/cuda/libnvvm-api/index.html) as well as the host CPU code (```GPU Runtime``` in the figure) that is responsible for device memory allocations, data transfers between the host and the device, and kernel invocations.
 
 For more details, refer to our paper on compiling and optimizing Java 8 programs for GPU execution: [link](https://ieeexplore.ieee.org/document/7429325).
 
 ## How to build OpenJ9 with the GPU code generation enabled
-To build OpenJ9 with the GPU code generation enabled, it requires a few more steps than [the original OpenJ9 build instruction](https://www.eclipse.org/openj9/oj9_build.html). Essentially, you need to 1) modify the Dockerfile to build a GPU-aware docker image, and 2) give a few variables when building OpenJDK with OpenJ9 (when doing ```make all```). The followings describe the steps to building OpenJ9 with the GPU code generation enabled:
+The followings describe the steps to building OpenJ9 with the GPU code generation enabled. The steps are mostly the same as [the original OpenJ9 build instruction](https://www.eclipse.org/openj9/oj9_build.html). However, essentially there are two differences: 1) if you choose to use Docker, you need to pick an appropriate Dockerfile that installs required NVIDIA's tool chain, and 2) regardless of the use of Docker, you need to give the ```--enable-cuda``` and ```--with-cuda=path_to_cuda``` options to the configure script.
 
 ### Prepare your system
 
 #### Enable a GPU-aware docker image
 First of all, when preparing your system, make sure that you have installed [the NVIDIA Container Runtime for Docker](https://github.com/NVIDIA/nvidia-docker) as well as [the NVIDIA driver](https://github.com/NVIDIA/nvidia-docker/wiki/Frequently-Asked-Questions#how-do-i-install-the-nvidia-driver) and [a supported version of Docker](https://github.com/NVIDIA/nvidia-docker/wiki/Frequently-Asked-Questions#which-docker-packages-are-supported).
 
-Before proceeding to the next step, it is a good idea to make sure the installations are successfull. Let's make sure that your GPUs are recognized and the CUDA compiler ```nvcc``` is available within a docker container. In the following example, we create a docker container based on the ```nvidia/cuda:9.2-devel-ubuntu16.04``` image, and perform two commands: 1) the ```nvidia-smi``` command, which gives you detailed information on NVIDIA GPU devices, and 2) the ```nvcc``` command with the ```--version``` option. In this case, ```nvidia-smi``` shows the NVIDIA driver version 410.48 and the TITAN Xp GPU are found. Also, the version of the ```nvcc``` compiler is 9.2.
+Before proceeding to the next step, it is a good idea to make sure the installations are successfull. Let's make sure that your GPUs are recognized, and ```nvvm.h``` and ```libnvvm.so``` are in your docker container. In the following example, we create a docker container based on the ```nvidia/cuda:9.2-devel-ubuntu16.04``` image, and perform two kinds of commands: 1) the ```nvidia-smi``` command, which gives you detailed information on NVIDIA GPU devices, and 2) the ```ls``` command to locate ```nvvm.h``` and ```libnvvm.so```. In this case, ```nvidia-smi``` shows the NVIDIA driver version 410.48 and the TITAN Xp GPU are found. Also, ```nvvm.h``` and ```libnvvm.so``` are located at ```/usr/local/cuda/nvvm/include/nvvm.h``` and ```/usr/local/cuda/nvvm/lib64/libnvvm.so``` respectively.
 
-**Note:** you can pick any CUDA version that is supported in your GPU, but always make sure you pick a ```devel``` image because the GPU code generation feature requires the CUDA compiler toolchain. A full list of the available CUDA docker images can be found at [the Docker Hub](https://hub.docker.com/r/nvidia/cuda/). For ```ppc64le``` users, see [here](https://hub.docker.com/r/nvidia/cuda-ppc64le/).
+**Note:** you can pick any CUDA version that is supported in your GPU, but always make sure you pick a ```devel``` image because the GPU code generation feature requires the NVVM header and library. A full list of the available CUDA docker images can be found at [the Docker Hub](https://hub.docker.com/r/nvidia/cuda/). For ```ppc64le``` users, see [here](https://hub.docker.com/r/nvidia/cuda-ppc64le/).
 
 ```
-$ docker run --runtime=nvidia --rm nvidia/cuda:9.2-devel-ubuntu16.04 /bin/bash -c "nvidia-smi; nvcc --version"
+$ docker run --runtime=nvidia --rm nvidia/cuda:9.2-devel-ubuntu16.04 /bin/bash -c "nvidia-smi; ls /usr/local/cuda/nvvm/include; ls /usr/local/cuda/nvvm/lib64"
 Tue May 21 20:59:06 2019
 +-----------------------------------------------------------------------------+
 | NVIDIA-SMI 410.48                 Driver Version: 410.48                    |
@@ -50,45 +97,25 @@ Tue May 21 20:59:06 2019
 |=============================================================================|
 |  No running processes found                                                 |
 +-----------------------------------------------------------------------------+
-nvcc: NVIDIA (R) Cuda compiler driver
-Copyright (c) 2005-2018 NVIDIA Corporation
-Built on Tue_Jun_12_23:07:04_CDT_2018
-Cuda compilation tools, release 9.2, V9.2.148
+nvvm.h
+libnvvm.so  libnvvm.so.3  libnvvm.so.3.2.0
 ```
 
-#### Edit the Dockerfile
-Once you have confirmed that your GPU is recognized and the CUDA compiler ```nvcc``` is available within a docker container, pick one of the JDK Dockerfiles in "Prepare your system" in [the original OpenJ9 build instruction](https://www.eclipse.org/openj9/oj9_build.html). Then, edit the picked Dockerfile to change the base image to GPU-aware one.
+#### Pick and (edit) the Dockerfile
+Once you have confirmed that your GPU is recognized and the ```nvvm``` is available within your docker container, pick one of the JDK Dockerfiles in "Prepare your system" in [the original OpenJ9 build instruction](https://www.eclipse.org/openj9/oj9_build.html)
 
-For example, if you choose the Dockerfile for [Linux 64-bit (x86_64)](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk8/x86_64/ubuntu16/Dockerfile), look for ```FROM``` and update the line like this:
-```
-(Original) FROM ubuntu:16.04
-(Updated)  FROM nvidia/cuda:9.2-devel-ubuntu16.04
-```
+**Note:** the current Dockerfiles assumes that we use CUDA 9.2, however, if you want to use a specific version of CUDA, please edit the line starting with ```FROM```. Again, always make sure that you pick a ```devel``` image. Also see the full list of the available CUDA docker images above.
 
-For [Linux on Power systems 64-bit (ppc64)](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk8/ppc64le/ubuntu16/Dockerfile), look for ```FROM``` and update the line like this:
+For example, if you choose the Dockerfile for [Linux 64-bit (x86_64)](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk8/x86_64/ubuntu16/Dockerfile), look for ```FROM``` and replace ```9.2``` with your preferred version:
 ```
-(Original) FROM ubuntu:16.04
-(Updated)  FROM nvidia/cuda-ppc64le:9.2-devel-ubuntu16.04
+FROM nvidia/cuda:9.2-devel-ubuntu16.04
 ```
 
-Again, you can pick any CUDA version that is supported in your GPU, but always make sure you pick a ```devel``` image because the GPU code generation feature requires the CUDA compiler toolchain. A full list of the available CUDA docker images can be found at [the Docker Hub](https://hub.docker.com/r/nvidia/cuda/). For ```ppc64le``` users, see [here](https://hub.docker.com/r/nvidia/cuda-ppc64le/).
-
-Also, look for "Create links for c++,g++,cc,gcc" and update the line like this:
+Similarly, for [Linux on Power systems 64-bit (ppc64)](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk8/ppc64le/ubuntu16/Dockerfile), look for ```FROM``` and replace ```9.2``` with your preferred version:
 ```
-# Create links for c++,g++,cc,gcc
-(Original)
-RUN ln -s g++ /usr/bin/c++ \
-  && ln -s g++-4.8 /usr/bin/g++ \
-  && ln -s gcc /usr/bin/cc \
-  && ln -s gcc-4.8 /usr/bin/gcc
-
-(Updated)
-RUN ln -sf g++ /usr/bin/c++ \
-  && ln -sf g++-4.8 /usr/bin/g++ \
-  && ln -sf gcc /usr/bin/cc \
-  && ln -sf gcc-4.8 /usr/bin/gcc
+FROM nvidia/cuda-ppc64le:9.2-devel-ubuntu16.04
 ```
-
+ 
 #### Build and run a GPU-aware docker image
 Now you're ready to build the Dockerfile and run a container from the image:
 ```
@@ -96,30 +123,36 @@ $ docker build -t openj9.cuda9 -f Dockerfile .
 $ docker run --runtime=nvidia -it openj9.cuda9
 ```
 
-Also, it is a good idea to double check if the GPU and ```nvcc``` are visible in the container:
+Also, it is a good idea to double check if the GPU and ```nvvm`` are visible in the container:
 ```
 // Within the docker container
 # nvidia-smi
-# nvcc --version
+# ls /usr/loca/cuda/nvvm
 ```
 
 ### Get the source
-Follow the steps described in "Get the source" in [the original build instruction](https://www.eclipse.org/openj9/oj9_build.html).
+Follow the steps described in "Get the source" in [the original build instruction](https://www.eclipse.org/openj9/oj9_build.html):
+```
+$ git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8
+$ cd openj9-openjdk-jdk8
+$ bash get_source.sh
+```
 
 ### Configure
-Follow the steps described in "Configure" in [the original build instruction](https://www.eclipse.org/openj9/oj9_build.html).
+
+When running the configure script described in [the original build instruction](https://www.eclipse.org/openj9/oj9_build.html), add the ```--enable-cuda``` option and ```--with-cuda``` to tell the location of CUDA:
+
+```
+$ bash configure --with-freemarker-jar=/root/freemarker.jar --enable-cuda --with-cuda=/usr/local/cuda
+```
 
 ### Build
-Now you're ready to build OpenJDK with OpenJ9 with the GPU code generation capability enabled. When doing ```make```, you essentially need to give ```ENABLE_GPU=1``` and the path to ```CUDA_HOME``` and ```GDK_HOME```:
+Now you're ready to build OpenJDK with OpenJ9 with the GPU code generation capability enabled.
+
+Make sure that they CUDA is recoginized by the ```make``` command:
 
 ```
-make all ENABLE_GPU=1 CUDA_HOME=/usr/local/cuda GDK_HOME=/usr/include/nvidia/gdk
-```
-
-Make sure that they are recoginized by the ```make``` command:
-
-```
-$ make all ENABLE_GPU=1 CUDA_HOME=/usr/local/cuda GDK_HOME=/usr/include/nvidia/gdk
+$ make all
 ...
 Compiling OpenJ9 in /openj9-openjdk-jdk8/build/linux-ppc64le-normal-server-release/vm
 ...
