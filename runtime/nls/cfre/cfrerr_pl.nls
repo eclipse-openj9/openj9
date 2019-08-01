@@ -1443,8 +1443,9 @@ J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED=Obs\u0142uga ValueType jest mo\u017cl
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.explanation=ValueTypes is an experimental feature and is not officially supported.
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.user_response=Contact the provider of the classfile for a corrected version or use the -XX:+EnableValhalla option.
+# END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PREVIEW_VERSION=Class file is a preview version but has the wrong major version or preview is not enabled.
+J9NLS_CFR_ERR_PREVIEW_VERSION=Plik klasy jest w wersji przedpremierowej, ma jednak b\u0142\u0119dn\u0105 g\u0142\u00f3wn\u0105 wersj\u0119 albo opcja dost\u0119pu przedpremierowego nie zosta\u0142a w\u0142\u0105czona.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PREVIEW_VERSION.explanation=Classfiles with minor version 65535 must have the same major version as the VM rumtime version and preview must be enabled
 J9NLS_CFR_ERR_PREVIEW_VERSION.system_action=The JVM will throw a verification or classloading-related exception.
