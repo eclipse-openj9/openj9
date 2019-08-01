@@ -448,6 +448,13 @@ portLibCall_getARMProcessorType()
    return tp;
    }
 
+static TR_Processor
+portLibCall_getARM64ProcessorType()
+   {
+   // ToDo: Add code for detecting processor type (Issue #6637)
+   return TR_DefaultARM64Processor;
+   }
+
 TR_Processor
 TR_J9VMBase::getPPCProcessorType()
    {
@@ -690,6 +697,13 @@ TR_J9VM::initializeProcessorType()
 
       TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_FirstARMProcessor
              && TR::Compiler->target.cpu.id() <= TR_LastARMProcessor, "Not a valid ARM Processor Type");
+      }
+   else if (TR::Compiler->target.cpu.isARM64())
+      {
+      TR::Compiler->target.cpu.setProcessor(portLibCall_getARM64ProcessorType());
+
+      TR_ASSERT(TR::Compiler->target.cpu.id() >= TR_FirstARM64Processor
+             && TR::Compiler->target.cpu.id() <= TR_LastARM64Processor, "Not a valid ARM64 Processor Type");
       }
    else if (TR::Compiler->target.cpu.isPower())
       {
