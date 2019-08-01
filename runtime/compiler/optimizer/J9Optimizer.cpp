@@ -56,6 +56,8 @@
 #include "optimizer/SwitchAnalyzer.hpp"
 #include "optimizer/DynamicLiteralPool.hpp"
 #include "optimizer/EscapeAnalysis.hpp"
+#include "optimizer/PreEscapeAnalysis.hpp"
+#include "optimizer/PostEscapeAnalysis.hpp"
 #include "optimizer/DataAccessAccelerator.hpp"
 #include "optimizer/IsolatedStoreElimination.hpp"
 #include "optimizer/LoopAliasRefiner.hpp"
@@ -763,8 +765,12 @@ J9::Optimizer::Optimizer(TR::Compilation *comp, TR::ResolvedMethodSymbol *method
       new (comp->allocator()) TR::OptimizationManager(self(), TR_LocalNewInitialization::create, OMR::explicitNewInitialization);
    _opts[OMR::redundantMonitorElimination] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR::MonitorElimination::create, OMR::redundantMonitorElimination);
+   _opts[OMR::preEscapeAnalysis] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_PreEscapeAnalysis::create, OMR::preEscapeAnalysis);
    _opts[OMR::escapeAnalysis] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_EscapeAnalysis::create, OMR::escapeAnalysis);
+   _opts[OMR::postEscapeAnalysis] =
+      new (comp->allocator()) TR::OptimizationManager(self(), TR_PostEscapeAnalysis::create, OMR::postEscapeAnalysis);
    _opts[OMR::isolatedStoreElimination] =
       new (comp->allocator()) TR::OptimizationManager(self(), TR_IsolatedStoreElimination::create, OMR::isolatedStoreElimination);
    _opts[OMR::localLiveVariablesForGC] =
