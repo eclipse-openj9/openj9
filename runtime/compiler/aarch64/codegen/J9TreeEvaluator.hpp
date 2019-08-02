@@ -52,10 +52,13 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   
+   static TR::Register *arrayCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *flushEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    
+   static TR::Register *VMarrayCheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    /*
     * Generates instructions to fill in the J9JITWatchedStaticFieldData.fieldAddress, J9JITWatchedStaticFieldData.fieldClass for static fields,
     * and J9JITWatchedInstanceFieldData.offset for instance fields at runtime. Used for fieldwatch support.
