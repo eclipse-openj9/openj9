@@ -2462,6 +2462,13 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    // OpenJ9 issue #6606 tracks the work to enable.
    //
    self()->setDisabled(OMR::tacticalGlobalRegisterAllocator, true);
+
+   // Support for shuffling linkage registers to GRA registers is not
+   // available on AArch64 yet.
+   //
+   // OpenJ9 issue #6657 tracks the work to enable.
+   //
+   self()->setOption(TR_DisableLinkageRegisterAllocation);
 #endif
 
    return true;
