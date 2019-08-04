@@ -195,6 +195,7 @@
 	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_getMultiThreadInfoImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_ThreadMXBeanImpl_dumpAllThreadsImpl" />
 	<export name="Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_getHeapClassStatisticsImpl" />
+	<export name="Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_triggerDumpsImpl" />
 	<export name="Java_com_ibm_oti_reflect_AnnotationParser_getAnnotationsData__Ljava_lang_reflect_Field_2" />
 	<export name="Java_com_ibm_oti_reflect_AnnotationParser_getAnnotationsData__Ljava_lang_reflect_Constructor_2" />
 	<export name="Java_com_ibm_oti_reflect_AnnotationParser_getAnnotationsData__Ljava_lang_reflect_Method_2" />

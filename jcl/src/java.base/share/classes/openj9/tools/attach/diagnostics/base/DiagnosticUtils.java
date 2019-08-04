@@ -34,6 +34,7 @@ import java.util.function.Predicate;
 import com.ibm.oti.vm.VM;
 import com.ibm.tools.attach.target.IPC;
 
+import openj9.management.internal.InvalidDumpOptionExceptionBase;
 import openj9.management.internal.LockInfoBase;
 import openj9.management.internal.ThreadInfoBase;
 
@@ -126,6 +127,7 @@ public class DiagnosticUtils {
 	}
 
 	private static native String getHeapClassStatisticsImpl();
+	private static native String triggerDumpsImpl(String dumpOptions, String event) throws InvalidDumpOptionExceptionBase;
 
 	/**
 	 * Run a diagnostic command and return the result in a properties file

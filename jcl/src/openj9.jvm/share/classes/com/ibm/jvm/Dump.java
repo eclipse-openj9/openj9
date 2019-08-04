@@ -1,8 +1,6 @@
-/*[INCLUDE-IF Sidecar16]*/
-package com.ibm.jvm;
-
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2006, 2018 IBM Corp. and others
+ * Copyright (c) 2006, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +20,11 @@ package com.ibm.jvm;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+
+package com.ibm.jvm;
+
+import openj9.management.internal.DumpConfigurationUnavailableExceptionBase;
+import openj9.management.internal.InvalidDumpOptionExceptionBase;
 
 /**
  * This class is used to trigger and configure the options used to produce different
@@ -99,6 +102,7 @@ package com.ibm.jvm;
  * configuration.
  */
 public class Dump {
+	@SuppressWarnings("nls")
 	private static final String SystemRequestPrefix = "z/OS".equalsIgnoreCase(System.getProperty("os.name")) ? "system:dsn=" : "system:file=";
   
 	/**
@@ -153,13 +157,10 @@ public class Dump {
 	/*
 	 * Dump should not be instantiated.
 	 */
-	private Dump() {	
+	private Dump() {
+		/* empty */
 	}
 	
-	private static native int JavaDumpImpl();
-	private static native int HeapDumpImpl();
-	private static native int SystemDumpImpl();
-
 	/**
      * Trigger a snap dump. The snap dump format is not human-readable
      * and must be processed using the trace formatting tool supplied
@@ -177,13 +178,15 @@ public class Dump {
     	SnapDumpImpl();
     }
     
-	private static native int SnapDumpImpl();
-    
 	private static final DumpPermission DUMP_PERMISSION = new DumpPermission();
 	private static final ToolDumpPermission TOOL_DUMP_PERMISSION = new ToolDumpPermission();
 	private static final String LEGACY_DUMP_PERMISSION_PROPERTY = "com.ibm.jvm.enableLegacyDumpSecurity"; //$NON-NLS-1$
 	
-    private static final class DumpOptionsLock {}
+	private static final class DumpOptionsLock {
+		DumpOptionsLock() {
+			super();
+		}
+    }
     private static final DumpOptionsLock dumpLock = new DumpOptionsLock();
 	
 	/**
@@ -373,7 +376,7 @@ public class Dump {
     	if( fileNamePattern != null ) {
     		// Check no-one has tried to sneak options onto the end.
     		checkForExtraOptions(fileNamePattern);
-    		request = SystemRequestPrefix + fileNamePattern; //$NON-NLS-1$
+    		request = SystemRequestPrefix + fileNamePattern;
     	} else {
     		// This is equivalent the to SystemDump() call.
     		request = "system"; //$NON-NLS-1$
@@ -486,7 +489,7 @@ public class Dump {
 
     private static void checkForExtraOptions(String fileNamePattern) throws InvalidDumpOptionException {
 		// Check no-one has tried to sneak options onto the end of a filename.
-    	if( fileNamePattern.contains(",")) { //$NON-NLS-1$
+    	if (fileNamePattern.contains(",")) { //$NON-NLS-1$
     		throw new InvalidDumpOptionException("Invalid dump filename specified."); //$NON-NLS-1$
     	}
 	}
@@ -553,7 +556,7 @@ public class Dump {
 			throw new NullPointerException();
 		}
 		// All the other permissions will be checked in triggerDump(dumpSettings, event);
-		if( isToolDump(dumpOptions) ) {
+		if (isToolDump(dumpOptions)) {
 			checkToolSecurityPermssion();
 		}
 		return triggerDump(dumpOptions, "triggerDump"); //$NON-NLS-1$
@@ -564,7 +567,11 @@ public class Dump {
 		/* Check the caller is allowed to trigger a dump. */
 		checkDumpSecurityPermssion();
 	
-		return triggerDumpsImpl(dumpSettings, event);
+		try {
+			return triggerDumpsImpl(dumpSettings, event);
+		} catch (InvalidDumpOptionExceptionBase e) {
+			throw new InvalidDumpOptionException(e);
+		}
 	}
 
 	/**
@@ -595,7 +602,7 @@ public class Dump {
 		/* Check the caller is allowed to trigger a dump. */
     	checkDumpSecurityPermssion();
     	
-		if( isToolDump(dumpOptions) ) {
+		if (isToolDump(dumpOptions)) {
 			checkToolSecurityPermssion();
 		}
 		
@@ -608,8 +615,14 @@ public class Dump {
 		 * A DumpConfigurationUnavailableException can still be thrown if a dump was in 
 		 * progress and the dump configuration could not be updated.
 		 */
-		synchronized (dumpLock) {
-			setDumpOptionsImpl(dumpOptions);
+		try {
+			synchronized (dumpLock) {
+				setDumpOptionsImpl(dumpOptions);
+			}
+		} catch (InvalidDumpOptionExceptionBase e) {
+			throw new InvalidDumpOptionException(e);
+		} catch (DumpConfigurationUnavailableExceptionBase e) {
+			throw new DumpConfigurationUnavailableException(e);
 		}
     }
     
@@ -666,14 +679,22 @@ public class Dump {
     	 * setDumpOptions is also synchronised in this way.
     	 * A DumpConfigurationUnavailableException can still be thrown if a dump was in 
     	 * progress and the dump configuration could not be updated. */
-    	synchronized (dumpLock) {
-    		resetDumpOptionsImpl();
+    	try {
+    		synchronized (dumpLock) {
+    			resetDumpOptionsImpl();
+    		}
+    	} catch (DumpConfigurationUnavailableExceptionBase e) {
+    		throw new DumpConfigurationUnavailableException(e);
     	}
     }
 
-	private static native void setDumpOptionsImpl(String options) throws InvalidDumpOptionException, DumpConfigurationUnavailableException;
+	private static native int JavaDumpImpl();
+	private static native int HeapDumpImpl();
+	private static native int SnapDumpImpl();
+	private static native int SystemDumpImpl();
+	private static native void setDumpOptionsImpl(String options) throws InvalidDumpOptionExceptionBase, DumpConfigurationUnavailableExceptionBase;
 	private static native String queryDumpOptionsImpl();
-	private static native void resetDumpOptionsImpl() throws DumpConfigurationUnavailableException;
-	private static native String triggerDumpsImpl(String dumpOptions, String event) throws InvalidDumpOptionException;
+	private static native void resetDumpOptionsImpl() throws DumpConfigurationUnavailableExceptionBase;
+	private static native String triggerDumpsImpl(String dumpOptions, String event) throws InvalidDumpOptionExceptionBase;
 	private static native boolean isToolDump(String dumpOptions);
 }
