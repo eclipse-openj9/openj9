@@ -116,7 +116,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<objects>
 			<object name="algorithm_versions"/>
 			<object name="ddrcppsupportblob"/>
-			<object name="hyportddrblob"/>
+			<object name="hyportddrblob">
+				<include-if condition="spec.flags.opt_harmony"/>
+			</object>
 			<object name="jitddrblob"/>
 			<object name="jitflagsddr"/>
 			<object name="omrddrblob"/>
