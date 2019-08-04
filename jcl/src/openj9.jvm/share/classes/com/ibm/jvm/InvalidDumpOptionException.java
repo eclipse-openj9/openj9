@@ -1,8 +1,6 @@
-/*[INCLUDE-IF Sidecar17]*/
-package com.ibm.jvm;
-
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2014 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +21,10 @@ package com.ibm.jvm;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+package com.ibm.jvm;
+
+import openj9.management.internal.InvalidDumpOptionExceptionBase;
+
 /**
  * This exception is thrown when an invalid option is passed
  * to methods on the com.ibm.jvm.Dump class.
@@ -31,8 +33,18 @@ public class InvalidDumpOptionException extends Exception {
 
 	private static final long serialVersionUID = -507148799087920306L;
 
+	/**
+	 * @param message description of error
+	 */
 	public InvalidDumpOptionException(String message) {
 		super(message);
+	}
+
+	/**
+	 * @param cause root exception
+	 */
+	public InvalidDumpOptionException(InvalidDumpOptionExceptionBase cause) {
+		super(cause.getMessage(), cause);
 	}
 	
 }

@@ -700,6 +700,7 @@ jboolean JNICALL Java_com_ibm_oti_vm_VM_isApplicationClassLoaderPresent(JNIEnv *
 jstring JNICALL Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_getHeapClassStatisticsImpl(JNIEnv * env, jclass unused);
 jobjectArray JNICALL Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_dumpAllThreadsImpl(JNIEnv *env, jobject beanInstance,
 	jboolean getLockedMonitors, jboolean getLockedSynchronizers, jint maxDepth);
+jstring JNICALL Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_triggerDumpsImpl(JNIEnv *env, jclass clazz, jstring opts, jstring event);
 
 /* J9SourceJclCommonInit*/
 jint computeFullVersionString (J9JavaVM* vm);
