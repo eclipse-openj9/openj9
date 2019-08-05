@@ -7529,21 +7529,30 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          TR::Node* methodHandleNode = top();
 
          if (methodHandleNode->getOpCode().hasSymbolReference() &&
-             methodHandleNode->getSymbolReference()->hasKnownObjectIndex())
+             methodHandleNode->getSymbolReference()->hasKnownObjectIndex() &&
+             methodHandleNode->isNonNull())
             {
             pop();
             TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
-            uintptrj_t methodHandle = *knot->getPointerLocation(methodHandleNode->getSymbolReference()->getKnownObjectIndex());
-            int32_t collectArraySize = fej9->getInt32Field(methodHandle, "collectArraySize");
-            loadConstant(TR::iconst, collectArraySize);
+            int32_t collectArraySize = -1;
+            int32_t collectPosition = -1;
+            TR_OpaqueClassBlock* componentClazz = NULL;
 
-            uintptrj_t arguments = fej9->getReferenceField(fej9->getReferenceField(fej9->getReferenceField(
-               methodHandle,
-               "next",             "Ljava/lang/invoke/MethodHandle;"),
-               "type",             "Ljava/lang/invoke/MethodType;"),
-               "arguments",        "[Ljava/lang/Class;");
-            int32_t collectPosition = fej9->getInt32Field(methodHandle, "collectPosition");
-            TR_OpaqueClassBlock* componentClazz = fej9->getComponentClassFromArrayClass(fej9->getClassFromJavaLangClass(fej9->getReferenceElement(arguments, collectPosition)));
+               {
+               TR::VMAccessCriticalSection invokeCollectHandleAllocateArray(fej9);
+               uintptrj_t methodHandle = *knot->getPointerLocation(methodHandleNode->getSymbolReference()->getKnownObjectIndex());
+               collectArraySize = fej9->getInt32Field(methodHandle, "collectArraySize");
+               collectPosition = fej9->getInt32Field(methodHandle, "collectPosition");
+
+               uintptrj_t arguments = fej9->getReferenceField(fej9->getReferenceField(fej9->getReferenceField(
+                  methodHandle,
+                  "next",             "Ljava/lang/invoke/MethodHandle;"),
+                  "type",             "Ljava/lang/invoke/MethodType;"),
+                  "arguments",        "[Ljava/lang/Class;");
+               componentClazz = fej9->getComponentClassFromArrayClass(fej9->getClassFromJavaLangClass(fej9->getReferenceElement(arguments, collectPosition)));
+               }
+
+            loadConstant(TR::iconst, collectArraySize);
             if (fej9->isPrimitiveClass(componentClazz))
                {
                TR_arrayTypeCode typeIndex = fej9->getPrimitiveArrayTypeCode(componentClazz);
