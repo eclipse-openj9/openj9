@@ -23,6 +23,7 @@
 #include "env/j9method.h"
 
 #include <stddef.h>
+#include <limits>
 #include "bcnames.h"
 #include "fastJNI.h"
 #include "j9.h"
@@ -2387,8 +2388,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
 
 void TR_ResolvedJ9Method::construct()
    {
-#define x(a, b, c) a, sizeof(b) - 1, b, (int16_t)strlen(c), c
-
    struct X
       {
       TR::RecognizedMethod _enum;
@@ -2396,6 +2395,41 @@ void TR_ResolvedJ9Method::construct()
       const char * _name;
       int16_t _sigLen;
       const char * _sig;
+
+      typedef int8_t javaVersion_t;
+
+      javaVersion_t _nativeMinVersion;
+      javaVersion_t _nativeMaxVersion;
+
+// AllPastJavaVer and AllFutureJavaVer are used as lower and upper bounds for
+// ranges of Java versions over which a recognized method is expected to be
+// native, where that range is (currently) unbounded.  An upper bound of
+// AllPastJaveVer is used if the method has never been expected to be native.
+#define AllPastJavaVer (std::numeric_limits<int8_t>::min())
+#define AllFutureJavaVer (std::numeric_limits<int8_t>::max())
+
+// xClMeth, xSig, xWCSig and xNonNativeRange are intermediate macros used in
+// the macros used to initialize entries in the tables of recognized methods
+#define xClMeth(cl, meth) cl, sizeof(meth) - 1, meth
+#define xSig(sig)         (int16_t) strlen(sig), sig
+#define xWCSig            (int16_t) -1, "*"
+#define xNonNativeRange   AllPastJavaVer, AllPastJavaVer
+
+// The following four macros are used to intialize entries in the tables
+// of recognized methods:
+//
+//   - x is used for methods that with specific signatures that are not expected
+//     to be native
+//   - xAnySig is used for methods with a specific name, but arbitrary
+//     signature, that are not expected to be native
+//   - xNative is used for methods that with specific signatures that are
+//     expected to be native
+//   - xAnySigNative is used for methods with a specific name, but arbitrary/
+//     signature, that are expected to be native
+#define x(cl, meth, sig) xClMeth(cl, meth), xSig(sig), xNonNativeRange
+#define xAnySig(cl, meth) xClMeth(cl, meth), xWCSig, xNonNativeRange
+#define xNative(cl, meth, sig, lb, ub) xClMeth(cl, meth), xSig(sig), (lb), (ub)
+#define xAnySigNative(cl, meth, lb, ub) xClMeth(cl, meth), xWCSig, (lb), (ub)
       };
 
    static X ArrayListMethods[] =
