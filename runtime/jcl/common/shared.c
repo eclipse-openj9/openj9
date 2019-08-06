@@ -239,7 +239,8 @@ createCPEntries(JNIEnv* env, jint helperID, jint urlCount, J9ClassPathEntry** cp
 	PORT_ACCESS_FROM_VMC((J9VMThread*)env);
 
 	Trc_JCL_com_ibm_oti_shared_createCPEntries_Entry(env, helperID, urlCount);
-	
+	Assert_JCL_true(urlCount > 0);
+
 	cpEntrySize = urlCount * sizeof(struct J9ClassPathEntry);
 	cpEntries = j9mem_allocate_memory(cpEntrySize, J9MEM_CATEGORY_VM_JCL);
 	if (NULL == cpEntries) {
@@ -1971,6 +1972,11 @@ Java_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3
 	PORT_ACCESS_FROM_VMC((J9VMThread*)env);
 
 	Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3_Entry(env);
+
+	if (0 == urlCount) {
+		Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3_ExitUrlCountZero(env);
+		return;
+	}
 
 	if (vm->sharedClassConfig->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_URL_TIMESTAMP_CHECK) {
 		Trc_JCL_com_ibm_oti_shared_SharedClassURLClasspathHelperImpl_notifyClasspathChange3_ExitEnableCheck(env);
