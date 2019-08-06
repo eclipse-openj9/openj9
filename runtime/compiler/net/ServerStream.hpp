@@ -101,7 +101,8 @@ public:
       @brief Read a message from the client
 
       The read operation is blocking, subject to a timeout.
-      If the message received is `compilationAbort` then an exception of type Streamcancel is thrown.
+      If the message received is `compilationInterrupted` then an exception of type StreamInterrupted is thrown.
+      If the message received is `connectionTerminate` then an exception of type StreamConnectionTerminate is thrown.
       If the server detects an incompatibility with the client then a StreamMessageTypeMissmatch
       exception is thrown.
       Otherwise, the arguments sent by the client are returned as a tuple
@@ -112,12 +113,23 @@ public:
    std::tuple<T...> read()
       {
       readBlocking(_cMsg);
-      if (_cMsg.type() == MessageType::compilationAbort || _cMsg.type() == MessageType::connectionTerminate)
-         throw StreamCancel(_cMsg.type());
-      // We are expecting the response type (_cMsg.type()) to be the same as the request type (_sMsg.type())
-      if (_cMsg.type() != _sMsg.type())
-         throw StreamMessageTypeMismatch(_sMsg.type(), _cMsg.type());
-         
+      switch (_cMsg.type())
+         {
+         case MessageType::compilationInterrupted:
+            {
+            throw StreamInterrupted();
+            }
+         case MessageType::connectionTerminate:
+            {
+            throw StreamConnectionTerminate();
+            }
+         default:
+            {
+            // We are expecting the response type (_cMsg.type()) to be the same as the request type (_sMsg.type())
+            if (_cMsg.type() != _sMsg.type())
+               throw StreamMessageTypeMismatch(_sMsg.type(), _cMsg.type());
+            }
+         }
       return getArgs<T...>(_cMsg.mutable_data());
       }
 
@@ -129,9 +141,9 @@ public:
       the one sent by the client. In order to ensure this, the client will embed
       version information in the first message it sends after a connection is established.
       The server will check whether its version matches the client's version and throw
-      `StreamVersionIncompatible` it is doesn't.
+      `StreamVersionIncompatible` if it doesn't.
 
-      Exceptions thrown: StreamCancel, StreamVersionIncompatible,StreamMessageTypeMismatch
+      Exceptions thrown: StreamInterrupted, StreamConnectionTerminate, StreamClientSessionTerminate, StreamVersionIncompatible, StreamMessageTypeMismatch
  
       @return Returns a tuple with information sent by the client
    */
@@ -139,26 +151,35 @@ public:
    std::tuple<T...> readCompileRequest()
       {
       readBlocking(_cMsg);
-      if (_cMsg.type() == MessageType::clientTerminate)
-         {
-         uint64_t clientId = std::get<0>(getRecvData<uint64_t>());
-         throw StreamCancel(_cMsg.type(), clientId);
-         }
-      else if (_cMsg.type() == MessageType::compilationAbort || _cMsg.type() == MessageType::connectionTerminate)
-         {
-         throw StreamCancel(_cMsg.type());
-         }
-      else if (_cMsg.type() != MessageType::compilationRequest)
-         {
-         throw StreamMessageTypeMismatch(MessageType::compilationRequest, _cMsg.type());
-         }
-
       if (_cMsg.version() != 0 && _cMsg.version() != getJITServerVersion())
          {
          throw StreamVersionIncompatible(getJITServerVersion(), _cMsg.version());
          }
-      
-      return getArgs<T...>(_cMsg.mutable_data());
+
+      switch (_cMsg.type())
+         {
+         case MessageType::compilationInterrupted:
+            {
+            throw StreamInterrupted();
+            }
+         case MessageType::connectionTerminate:
+            {
+            throw StreamConnectionTerminate();
+            }
+         case MessageType::clientSessionTerminate:
+            {
+            uint64_t clientId = std::get<0>(getRecvData<uint64_t>());
+            throw StreamClientSessionTerminate(clientId);
+            }
+         case MessageType::compilationRequest:
+            {
+            return getArgs<T...>(_cMsg.mutable_data());
+            }
+         default:
+            {
+            throw StreamMessageTypeMismatch(MessageType::compilationRequest, _cMsg.type());
+            }
+         }      
       }
    
    /**

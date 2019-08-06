@@ -141,15 +141,15 @@ public:
    /**
       @brief Send an error message to the JITServer
 
-      Examples of error messages include 'compilationAbort' (e.g. when class unloading happens),
-      'clientTerminate' (e.g. when the client is about to exit), 
+      Examples of error messages include 'compilationInterrupted' (e.g. when class unloading happens),
+      'clientSessionTerminate' (e.g. when the client is about to exit), 
       and 'connectionTerminate' (e.g. when the client is closing the connection)
    */
    template <typename ...T>
    void writeError(MessageType type, T... args)
       {
       _cMsg.set_type(type);
-      if (type == MessageType::compilationAbort || type == MessageType::connectionTerminate)
+      if (type == MessageType::compilationInterrupted || type == MessageType::connectionTerminate)
          _cMsg.mutable_data()->clear_data();
       else
          setArgs<T...>(_cMsg.mutable_data(), args...);

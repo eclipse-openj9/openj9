@@ -80,6 +80,7 @@ typedef enum {
    compilationStreamLostMessage                    = 54,
    compilationStreamMessageTypeMismatch            = 55,
    compilationStreamVersionIncompatible            = 56,
+   compilationStreamInterrupted                    = 57,
    /* please insert new codes before compilationMaxError which is used in jar2jxe to test the error codes range */
    /* If new codes are added then add the corresponding names in compilationErrorNames table in rossa.cpp */
    compilationMaxError /* must be the last one */
