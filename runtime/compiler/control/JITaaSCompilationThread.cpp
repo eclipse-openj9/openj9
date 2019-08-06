@@ -4417,7 +4417,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    catch (const JITServer::StreamClientSessionTerminate &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream client session terminated by JITClient on compThreadID=%d: %s", e.what());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream client session terminated by JITClient on compThreadID=%d: %s", getCompThreadId(), e.what());
 
       abortCompilation = true;
       deleteClientSessionData(e.getClientId(), compInfo, compThread);
