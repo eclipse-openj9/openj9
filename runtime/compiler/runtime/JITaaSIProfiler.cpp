@@ -294,8 +294,14 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
             if (storage->ID == TR_IPBCD_CALL_GRAPH)
                {
                U_8* pc = (U_8*)entry->getPC();
-               if ((*pc == JBinvokeinterface2) && (*(pc + 2) == JBinvokeinterface)) // FIXME: must test the length of the method
-                  bci += 2;
+               uint32_t methodSize = TR::Compiler->mtd.bytecodeSize(method); 
+               TR_ASSERT(bci < methodSize, "Bytecode index can't be higher than the methodSize: bci=%u methodSize=%u", bci, methodSize);
+               if (*pc == JBinvokeinterface2)
+                  {
+                  TR_ASSERT(bci + 2 < methodSize, "Bytecode index can't be higher than the methodSize: bci=%u methodSize=%u", bci, methodSize);
+                  if (*(pc + 2) == JBinvokeinterface)
+                     bci += 2;
+                  }
                }
             if (usePersistentCache && !clientSessionData->cacheIProfilerInfo(method, bci, entry))
                {
@@ -345,8 +351,14 @@ TR_JITaaSIProfiler::profilingSample(TR_OpaqueMethodBlock *method, uint32_t byteC
             if (storage->ID == TR_IPBCD_CALL_GRAPH)
                {
                U_8* pc = (U_8*)entry->getPC();
-               if ((*pc == JBinvokeinterface2) && (*(pc + 2) == JBinvokeinterface)) // FIXME: must test the length of the method
-                  bci += 2;
+               uint32_t methodSize = TR::Compiler->mtd.bytecodeSize(method); 
+               TR_ASSERT(bci < methodSize, "Bytecode index can't be higher than the methodSize: bci=%u methodSize=%u", bci, methodSize);
+               if (*pc == JBinvokeinterface2)
+                  {
+                  TR_ASSERT(bci + 2 < methodSize, "Bytecode index can't be higher than the methodSize: bci=%u methodSize=%u", bci, methodSize);
+                  if (*(pc + 2) == JBinvokeinterface)
+                     bci += 2;
+                  }
                }
             if (bci == byteCodeIndex)
                {

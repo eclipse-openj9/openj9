@@ -1409,7 +1409,8 @@ TR_JITaaSRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
 
    uint8_t *coldCode;
    U_8 *codeStart = manager->allocateCodeMemory(codeSize, 0, &_codeCache, &coldCode, false);
-   // JITaaS FIXME: I think this code is needed too
+
+   // JITServer FIXME: this code is probably needed, but everything works without it, so don't run it for now.
 #if 0
    // FIXME: the GC may unload classes if code caches have been switched
    if (compThreadID >= 0 && fej9->getCompilationShouldBeInterruptedFlag())

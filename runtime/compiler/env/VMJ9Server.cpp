@@ -1056,9 +1056,7 @@ uint8_t *
 TR_J9ServerVM::allocateCodeMemory(TR::Compilation * comp, uint32_t warmCodeSize, uint32_t coldCodeSize, uint8_t ** coldCode, bool isMethodHeaderNeeded)
    {
    uint8_t *warmCode = TR_J9VM::allocateCodeMemory(comp, warmCodeSize, coldCodeSize, coldCode, isMethodHeaderNeeded);
-   // JITaaS FIXME: why is this code needed? Shouldn't this be done when reserving?
-   if (!comp->getRelocatableMethodCodeStart())
-      comp->setRelocatableMethodCodeStart(warmCode - sizeof(OMR::CodeCacheMethodHeader));
+   TR_ASSERT_FATAL(comp->getRelocatableMethodCodeStart(), "Should have set relocatable method code start by this point");
    return warmCode;
    }
 

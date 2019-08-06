@@ -277,8 +277,7 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
                      genTreeTop(TR::Node::create(method()->returnOpCode(), 1, pop()));
                      return true;
                      }
-                  // JITaaS FIXME: Bypass bug where this doesn't work if it's not the system class loader.
-                  else if (comp()->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
+                  else
                      {
                      createGeneratedFirstBlock();
                      loadSymbol(TR::aload, symRefTab()->findOrCreateClassLoaderSymbolRef(caller));
