@@ -110,7 +110,7 @@
 	</test>
 	
 	<test id="Test 3-a: Add ROMClasses, AOT methods and JITHints into the cache" timeout="600" runPath=".">
-		<command>$JAVA_EXE$ $currentMode$,verboseAOT,verboseJITDATA,addtestjithints -Xaot:forceAot,count=1 -Xjit:disableAsyncCompilation -version</command>
+		<command>$JAVA_EXE$ $currentMode$,verboseAOT,verboseJITDATA,addtestjithints -Xaot:forceAot,count=1 -Xjit:disableAsyncCompilation,memExpensiveCompThreshold=65536 -version</command>
 		
 		<output type="required" caseSensitive="yes" regex="no">Stored AOT code for ROMMethod</output>
 		<output type="required" caseSensitive="yes" regex="no">Stored JITHINT attached data</output>
