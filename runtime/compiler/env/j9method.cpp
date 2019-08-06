@@ -2470,7 +2470,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Double_longBitsToDouble, "longBitsToDouble", "(J)D")},
       {x(TR::java_lang_Double_doubleToLongBits, "doubleToLongBits", "(D)J")},
       {x(TR::java_lang_Double_doubleToRawLongBits, "doubleToRawLongBits", "(D)J")},
-      {  TR::java_lang_Double_init,                  6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Double_init, "<init>")},
       {  TR::unknownMethod}
       };
 
@@ -2479,7 +2479,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Float_intBitsToFloat, "intBitsToFloat", "(I)F")},
       {x(TR::java_lang_Float_floatToIntBits, "floatToIntBits", "(F)I")},
       {x(TR::java_lang_Float_floatToRawIntBits, "floatToRawIntBits", "(F)I")},
-      {  TR::java_lang_Float_init,                  6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Float_init, "<init>")},
       {  TR::unknownMethod}
       };
 
@@ -2665,7 +2665,7 @@ void TR_ResolvedJ9Method::construct()
 
    static X ObjectMethods[] =
       {
-      {TR::java_lang_Object_init,                 6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Object_init, "<init>")},
       {x(TR::java_lang_Object_getClass,             "getClass",             "()Ljava/lang/Class;")},
       {x(TR::java_lang_Object_clone,                "clone",                "()Ljava/lang/Object;")},
       {x(TR::java_lang_Object_newInstancePrototype, "newInstancePrototype", "(Ljava/lang/Class;)Ljava/lang/Object;")},
@@ -3071,15 +3071,15 @@ void TR_ResolvedJ9Method::construct()
 
    static X otivmMethods[] =
       {
-      {  TR::com_ibm_oti_vm_VM_callerClass,      11, "callerClass",  (int16_t)-1, "*"},
+      {xAnySig(TR::com_ibm_oti_vm_VM_callerClass, "callerClass")},
       {x(TR::java_lang_ClassLoader_callerClassLoader, "callerClassLoader", "()Ljava/lang/ClassLoader;")},
       {  TR::unknownMethod}
       };
 
    static X ArraysMethods[] =
       {
-      {  TR::java_util_Arrays_fill,      4, "fill",    (int16_t)-1, "*"},
-      {  TR::java_util_Arrays_equals,    6, "equals",  (int16_t)-1, "*"},
+      {xAnySig(TR::java_util_Arrays_fill, "fill")},
+      {xAnySig(TR::java_util_Arrays_equals, "equals")},
       {x(TR::java_util_Arrays_copyOf_byte,   "copyOf",     "([BI)[B")},
       {x(TR::java_util_Arrays_copyOf_short,  "copyOf",     "([SI)[S")},
       {x(TR::java_util_Arrays_copyOf_char,   "copyOf",     "([CI)[C")},
@@ -3111,7 +3111,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_String_init_String_char,    "<init>",              "(Ljava/lang/String;C)V")},
       {x(TR::java_lang_String_init_int_String_int_String_String, "<init>","(ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;)V")},
       {x(TR::java_lang_String_init_int_int_char_boolean, "<init>",       "(II[CZ)V")},
-      {  TR::java_lang_String_init,          6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_String_init, "<init>")},
       {x(TR::java_lang_String_charAt,              "charAt",              "(I)C")},
       {x(TR::java_lang_String_charAtInternal_I,    "charAtInternal",      "(I)C")},
       {x(TR::java_lang_String_charAtInternal_IB,   "charAtInternal",      "(I[B)C")},
@@ -3148,7 +3148,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_String_toCharArray,         "toCharArray",         "()[C")},
       {x(TR::java_lang_String_regionMatches,       "regionMatches",       "(ILjava/lang/String;II)Z")},
       {x(TR::java_lang_String_regionMatches_bool,  "regionMatches",       "(ZILjava/lang/String;II)Z")},
-      {  TR::java_lang_String_regionMatchesInternal, 21, "regionMatchesInternal", (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_String_regionMatchesInternal, "regionMatchesInternal")},
       {x(TR::java_lang_String_equalsIgnoreCase,    "equalsIgnoreCase",    "(Ljava/lang/String;)Z")},
       {x(TR::java_lang_String_compareToIgnoreCase, "compareToIgnoreCase", "(Ljava/lang/String;)I")},
       {x(TR::java_lang_String_compress,            "compress",            "([C[BII)I")},
@@ -3238,7 +3238,7 @@ void TR_ResolvedJ9Method::construct()
 
    static X ThrowableMethods[] =
       {
-      {  TR::java_lang_Throwable_printStackTrace,     15, "printStackTrace",   (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_Throwable_printStackTrace, "printStackTrace")},
       {x(TR::java_lang_Throwable_fillInStackTrace,    "fillInStackTrace",  "()Ljava/lang/Throwable;")},
       {  TR::unknownMethod}
       };
@@ -3388,7 +3388,7 @@ void TR_ResolvedJ9Method::construct()
 
    static X VectorMethods[] =
       {
-      {  TR::java_util_Vector_subList,    7, "subList",  (int16_t)-1, "*"},
+      {xAnySig(TR::java_util_Vector_subList, "subList")},
       {x(TR::java_util_Vector_contains,      "contains",     "(Ljava/lang/Object;)Z")},
       {x(TR::java_util_Vector_addElement,    "addElement",   "(Ljava/lang/Object;)V")},
       {  TR::unknownMethod}
@@ -3574,7 +3574,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Integer_rotateLeft,              "rotateLeft",            "(II)I")},
       {x(TR::java_lang_Integer_rotateRight,             "rotateRight",           "(II)I")},
       {x(TR::java_lang_Integer_valueOf,                 "valueOf",               "(I)Ljava/lang/Integer;")},
-      {  TR::java_lang_Integer_init,              6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Integer_init, "<init>")},
       {x(TR::java_lang_Integer_toUnsignedLong,          "toUnsignedLong",         "(I)J")},
       {  TR::unknownMethod}
       };
@@ -3589,19 +3589,19 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Long_reverseBytes,              "reverseBytes",           "(J)J")},
       {x(TR::java_lang_Long_rotateLeft,                 "rotateLeft",            "(JI)J")},
       {x(TR::java_lang_Long_rotateRight,                "rotateRight",           "(JI)J")},
-      {  TR::java_lang_Long_init,                  6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Long_init, "<init>")},
       {  TR::unknownMethod}
       };
 
    static X BooleanMethods[] =
       {
-      {  TR::java_lang_Boolean_init,          6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Boolean_init, "<init>")},
       {  TR::unknownMethod}
       };
 
    static X CharacterMethods[] =
       {
-      {  TR::java_lang_Character_init,          6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Character_init, "<init>")},
       {x(TR::java_lang_Character_isDigit,             "isDigit",              "(I)Z")},
       {x(TR::java_lang_Character_isLetter,            "isLetter",             "(I)Z")},
       {x(TR::java_lang_Character_isUpperCase,         "isUpperCase",          "(I)Z")},
@@ -3621,14 +3621,14 @@ void TR_ResolvedJ9Method::construct()
 
    static X ByteMethods[] =
       {
-      {  TR::java_lang_Byte_init,          6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Byte_init, "<init>")},
       {  TR::unknownMethod}
       };
 
    static X ShortMethods[] =
       {
       {x(TR::java_lang_Short_reverseBytes,             "reverseBytes",         "(S)S")},
-      {  TR::java_lang_Short_init,          6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Short_init, "<init>")},
       {  TR::unknownMethod}
       };
 
@@ -3898,12 +3898,12 @@ void TR_ResolvedJ9Method::construct()
 
    static X MethodHandleMethods[] =
       {
-      {  TR::java_lang_invoke_MethodHandle_doCustomizationLogic     ,   20, "doCustomizationLogic",       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_MethodHandle_undoCustomizationLogic   ,   22, "undoCustomizationLogic",     (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_MethodHandle_invoke                   ,    6, "invoke",                     (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_MethodHandle_invoke                   ,   13, "invokeGeneric",              (int16_t)-1, "*"}, // Older name from early versions of the jsr292 spec
-      {  TR::java_lang_invoke_MethodHandle_invokeExact              ,   11, "invokeExact",                (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress ,   24, "invokeExactTargetAddress",   (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_MethodHandle_doCustomizationLogic     , "doCustomizationLogic")},
+      {xAnySig(TR::java_lang_invoke_MethodHandle_undoCustomizationLogic   , "undoCustomizationLogic")},
+      {xAnySig(TR::java_lang_invoke_MethodHandle_invoke                   , "invoke")},
+      {xAnySig(TR::java_lang_invoke_MethodHandle_invoke                   , "invokeGeneric")}, // Older name from early versions of the jsr292 spec
+      {xAnySig(TR::java_lang_invoke_MethodHandle_invokeExact              , "invokeExact")},
+      {xAnySig(TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress , "invokeExactTargetAddress")},
       {x(TR::java_lang_invoke_MethodHandle_type                     ,   "type",                       "()Ljava/lang/invoke/MethodType;")},
       {x(TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper,   "invokeWithArgumentsHelper",  "(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;")},
       {x(TR::java_lang_invoke_MethodHandle_asType, "asType", "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")},
@@ -3923,64 +3923,64 @@ void TR_ResolvedJ9Method::construct()
       // Resolved VarHandle access methods are suffixed with _impl in their names
       // A list for unresolved VarHandle access methods is in VarHandleTransformer.cpp,
       // changes in the following list need to be reflected in the other
-      {  TR::java_lang_invoke_VarHandle_get                       ,    8, "get_impl",                             (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_set                       ,    8, "set_impl",                             (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getVolatile               ,   16, "getVolatile_impl",                     (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_setVolatile               ,   16, "setVolatile_impl",                     (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getOpaque                 ,   14, "getOpaque_impl",                       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_setOpaque                 ,   14, "setOpaque_impl",                       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAcquire                ,   15, "getAcquire_impl",                      (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_setRelease                ,   15, "setRelease_impl",                      (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_compareAndSet             ,   18, "compareAndSet_impl",                   (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_compareAndExchange        ,   23, "compareAndExchange_impl",              (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_compareAndExchangeAcquire ,   30, "compareAndExchangeAcquire_impl",       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_compareAndExchangeRelease ,   30, "compareAndExchangeRelease_impl",       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_weakCompareAndSet         ,   22, "weakCompareAndSet_impl",               (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_weakCompareAndSetAcquire  ,   29, "weakCompareAndSetAcquire_impl",        (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_weakCompareAndSetRelease  ,   29, "weakCompareAndSetRelease_impl",        (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_weakCompareAndSetPlain    ,   27, "weakCompareAndSetPlain_impl",          (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndSet                 ,   14, "getAndSet_impl",                       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndSetAcquire          ,   21, "getAndSetAcquire_impl",                (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndSetRelease          ,   21, "getAndSetRelease_impl",                (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndAdd                 ,   14, "getAndAdd_impl",                       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndAddAcquire          ,   21, "getAndAddAcquire_impl",                (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndAddRelease          ,   21, "getAndAddRelease_impl",                (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseAnd          ,   21, "getAndBitwiseAnd_impl",                (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseAndAcquire   ,   28, "getAndBitwiseAndAcquire_impl",         (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseAndRelease   ,   28, "getAndBitwiseAndRelease_impl",         (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseOr           ,   20, "getAndBitwiseOr_impl",                 (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseOrAcquire    ,   27, "getAndBitwiseOrAcquire_impl",         (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseOrRelease    ,   27, "getAndBitwiseOrRelease_impl",         (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXor          ,   21, "getAndBitwiseXor_impl",                 (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXorAcquire   ,   28, "getAndBitwiseXorAcquire_impl",         (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXorRelease   ,   28, "getAndBitwiseXorRelease_impl",         (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_VarHandle_get                       , "get_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_set                       , "set_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getVolatile               , "getVolatile_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_setVolatile               , "setVolatile_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getOpaque                 , "getOpaque_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_setOpaque                 , "setOpaque_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAcquire                , "getAcquire_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_setRelease                , "setRelease_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_compareAndSet             , "compareAndSet_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_compareAndExchange        , "compareAndExchange_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_compareAndExchangeAcquire , "compareAndExchangeAcquire_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_compareAndExchangeRelease , "compareAndExchangeRelease_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_weakCompareAndSet         , "weakCompareAndSet_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_weakCompareAndSetAcquire  , "weakCompareAndSetAcquire_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_weakCompareAndSetRelease  , "weakCompareAndSetRelease_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_weakCompareAndSetPlain    , "weakCompareAndSetPlain_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndSet                 , "getAndSet_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndSetAcquire          , "getAndSetAcquire_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndSetRelease          , "getAndSetRelease_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndAdd                 , "getAndAdd_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndAddAcquire          , "getAndAddAcquire_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndAddRelease          , "getAndAddRelease_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndBitwiseAnd          , "getAndBitwiseAnd_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndBitwiseAndAcquire   , "getAndBitwiseAndAcquire_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndBitwiseAndRelease   , "getAndBitwiseAndRelease_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndBitwiseOr           , "getAndBitwiseOr_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndBitwiseOrAcquire    , "getAndBitwiseOrAcquire_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndBitwiseOrRelease    , "getAndBitwiseOrRelease_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndBitwiseXor          , "getAndBitwiseXor_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndBitwiseXorAcquire   , "getAndBitwiseXorAcquire_impl")},
+      {xAnySig(TR::java_lang_invoke_VarHandle_getAndBitwiseXorRelease   , "getAndBitwiseXorRelease_impl")},
       {  TR::unknownMethod}
       };
 
    static X ILGenMacrosMethods[] =
       {
-      {  TR::java_lang_invoke_ILGenMacros_placeholder ,      11, "placeholder",      (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_numArguments,      12, "numArguments",     (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_populateArray,     13, "populateArray",    (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_arrayElements,     13, "arrayElements",    (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_placeholder , "placeholder")},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_numArguments, "numArguments")},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_populateArray, "populateArray")},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_arrayElements, "arrayElements")},
       {x(TR::java_lang_invoke_ILGenMacros_arrayLength,           "arrayLength",      "(Ljava/lang/Object;)I")},
-      {  TR::java_lang_invoke_ILGenMacros_firstN,             6, "firstN",           (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_dropFirstN,        10, "dropFirstN",       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_getField,           8, "getField",         (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_firstN, "firstN")},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_dropFirstN, "dropFirstN")},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_getField, "getField")},
       {x(TR::java_lang_invoke_ILGenMacros_invokeExact_X,         "invokeExact_X",    "(Ljava/lang/invoke/MethodHandle;I)I")},
       {x(TR::java_lang_invoke_ILGenMacros_invokeExactAndFixup,   "invokeExact",      "(Ljava/lang/invoke/MethodHandle;I)I")},
       {x(TR::java_lang_invoke_ILGenMacros_isCustomThunk,         "isCustomThunk",    "()Z")},
       {x(TR::java_lang_invoke_ILGenMacros_isShareableThunk,      "isShareableThunk", "()Z")},
-      {  TR::java_lang_invoke_ILGenMacros_lastN,              5, "lastN",            (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_middleN,            7, "middleN",          (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_lastN, "lastN")},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_middleN, "middleN")},
       {x(TR::java_lang_invoke_ILGenMacros_rawNew,                "rawNew",           "(Ljava/lang/Class;)Ljava/lang/Object;")},
       {x(TR::java_lang_invoke_ILGenMacros_parameterCount,        "parameterCount",   "(Ljava/lang/invoke/MethodHandle;)I")},
-      {  TR::java_lang_invoke_ILGenMacros_push,               4, "push",             (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_pop,                5, "pop_I",            (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_pop,                5, "pop_J",            (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_pop,                5, "pop_F",            (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_pop,                5, "pop_D",            (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_pop,                5, "pop_L",            (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_push, "push")},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_pop, "pop_I")},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_pop, "pop_J")},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_pop, "pop_F")},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_pop, "pop_D")},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_pop, "pop_L")},
       {x(TR::java_lang_invoke_ILGenMacros_typeCheck,             "typeCheck",        "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)V")},
       {  TR::unknownMethod}
       };
@@ -3992,13 +3992,13 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_invoke_CollectHandle_numArgsToCollect,              "numArgsToCollect",            "()I")},
       {x(TR::java_lang_invoke_CollectHandle_collectionStart,               "collectionStart",             "()I")},
       {x(TR::java_lang_invoke_CollectHandle_numArgsAfterCollectArray,      "numArgsAfterCollectArray",    "()I")},
-      {  TR::java_lang_invoke_CollectHandle_invokeExact,          28,  "invokeExact_thunkArchetype_X",    (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_CollectHandle_invokeExact, "invokeExact_thunkArchetype_X")},
       {  TR::unknownMethod}
       };
 
    static X AsTypeHandleMethods[] =
       {
-      {  TR::java_lang_invoke_AsTypeHandle_convertArgs,   11, "convertArgs",     (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_AsTypeHandle_convertArgs, "convertArgs")},
       {  TR::unknownMethod}
       };
 
@@ -4026,7 +4026,7 @@ void TR_ResolvedJ9Method::construct()
 
    static X ExplicitCastHandleMethods[] =
       {
-      {  TR::java_lang_invoke_ExplicitCastHandle_convertArgs,   11, "convertArgs",     (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_ExplicitCastHandle_convertArgs, "convertArgs")},
       {  TR::unknownMethod}
       };
 
@@ -4038,7 +4038,7 @@ void TR_ResolvedJ9Method::construct()
 
    static X BruteArgumentMoverHandleMethods[] =
       {
-      {  TR::java_lang_invoke_BruteArgumentMoverHandle_permuteArgs,     11, "permuteArgs",   (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_BruteArgumentMoverHandle_permuteArgs, "permuteArgs")},
       {  TR::unknownMethod}
       };
 
@@ -4076,7 +4076,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_invoke_SpreadHandle_numArgsToSpread,       "numArgsToSpread",        "()I")},
       {x(TR::java_lang_invoke_SpreadHandle_spreadStart,           "spreadStart",            "()I")},
       {x(TR::java_lang_invoke_SpreadHandle_numArgsAfterSpreadArray,       "numArgsAfterSpreadArray",        "()I")},
-      {  TR::java_lang_invoke_SpreadHandle_arrayArg,           8, "arrayArg",  (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_SpreadHandle_arrayArg, "arrayArg")},
       {  TR::unknownMethod}
       };
 
@@ -4084,7 +4084,7 @@ void TR_ResolvedJ9Method::construct()
       {
       {x(TR::java_lang_invoke_FoldHandle_foldPosition,               "foldPosition",            "()I")},
       {x(TR::java_lang_invoke_FoldHandle_argIndices,                 "argIndices",               "()I")},
-      {  TR::java_lang_invoke_FoldHandle_argumentsForCombiner,  20,  "argumentsForCombiner",    (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_FoldHandle_argumentsForCombiner, "argumentsForCombiner")},
       {  TR::unknownMethod}
       };
    static X FilterArgumentsWithCombinerHandleMethods[] =
@@ -4092,7 +4092,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_filterPosition,               "filterPosition",            "()I")},
       {x(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentIndices,               "argumentIndices",            "()I")},
       {x(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_numSuffixArgs,      "numSuffixArgs",     "()I")},
-      {  TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentsForCombiner,  20,  "argumentsForCombiner",    (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentsForCombiner, "argumentsForCombiner")},
       {  TR::unknownMethod}
       };
 
@@ -4108,7 +4108,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_invoke_FilterArgumentsHandle_numSuffixArgs,         "numSuffixArgs",    "()I")},
       {x(TR::java_lang_invoke_FilterArgumentsHandle_numArgsToFilter,       "numArgsToFilter",  "()I")},
       {x(TR::java_lang_invoke_FilterArgumentsHandle_filterArguments,       "filterArguments",  "([Ljava/lang/invoke/MethodHandle;I)I")},
-      {  TR::java_lang_invoke_FilterArgumentsHandle_invokeExact,  28,  "invokeExact_thunkArchetype_X",    (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_FilterArgumentsHandle_invokeExact, "invokeExact_thunkArchetype_X")},
       {  TR::unknownMethod}
       };
 
