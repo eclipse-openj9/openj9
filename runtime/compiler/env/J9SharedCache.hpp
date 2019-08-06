@@ -35,6 +35,22 @@ class TR_J9VMBase;
 class TR_ResolvedMethod;
 namespace TR { class CompilationInfo; }
 
+/**
+ * \brief An interface to the VM's shared class cache.
+ *
+ * This class provides an interface to the VM's shared class cache as represented by the the descriptors in J9SharedClassConfig::cacheDescriptorList.
+ * The cache descriptor list is a circular linked list. It is doubly linked when J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE is defined
+ * or singly linked otherwise.
+ *
+ * If J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE is not defined, the list consists of a single element who's next pointer refers back to itself.
+ * Offsets into the shared cache represent the distance from the start of the cache. Converting between pointers and offsets can be done with
+ * simple pointer arithmetic.
+ *
+ * If J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE is defined, the head of the list represents the top-most (and therefore writable)
+ * layer of the shared class cache, the next element represents the (N-1)th layer, and so on. The element previous to the head represents the base layer.
+ * The list of cache layers can be thought of as a single logical cache starting at layer 0 and ending at layer N. Offsets into the shared cache
+ * represent the distance from the start of the cache. Converting between pointers and offsets requires traversing the list starting at the base layer.
+ */
 class TR_J9SharedCache : public TR_SharedCache
    {
 public:
@@ -49,7 +65,20 @@ public:
    void addHint(TR_ResolvedMethod *, TR_SharedCacheHint);
    bool isMostlyFull();
 
+   /**
+    * \brief Converts a shared cache offset into a pointer.
+    *
+    * \param[in] offset The offset to convert.
+    * \return A pointer. Raises a fatal assertion before returning NULL if the offset is invalid.
+    */
    virtual void *pointerFromOffsetInSharedCache(void *offset);
+   
+   /**
+    * \brief Converts a pointer into the shared cache into an offset.
+    *
+    * \param[in] ptr The pointer to convert.
+    * \return An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
+    */
    virtual void *offsetInSharedCacheFromPointer(void *ptr);
 
    void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp);
@@ -78,6 +107,13 @@ public:
 
    TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader);
 
+   /**
+    * \brief Checks whether the specified pointer points into the shared cache.
+    *
+    * \param[in] ptr The pointer to check.
+    * \param[out] cacheOffset If ptr points into the shared cache and this parameter is not NULL the result of converting ptr into an offset will be returned here. If ptr does not point into the shared cache this parameter is ignored.
+    * \return True if the pointer points into the shared cache, false otherwise.
+    */
    bool isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset = NULL);
 
    J9ROMClass *startingROMClassOfClassChain(UDATA *classChain);
@@ -141,8 +177,6 @@ private:
 
    TR_AOTStats *_aotStats;
    J9SharedClassConfig *_sharedCacheConfig;
-   UDATA _cacheStartAddress;
-   UDATA _cacheSizeInBytes;
    UDATA _numDigitsForCacheOffsets;
 
    uint32_t _logLevel;
