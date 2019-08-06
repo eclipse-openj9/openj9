@@ -23,14 +23,11 @@
 #ifndef COMPILE_SERVICE_H
 #define COMPILE_SERVICE_H
 
-#include "net/ServerStream.hpp"
-#include "j9.h"
-#include "j9nonbuilder.h"
-#include "vmaccess.h"
-#include "infra/Monitor.hpp"  // TR::Monitor
-#include "control/CompilationRuntime.hpp"
-#include "control/CompilationController.hpp"
-#include "env/ClassLoaderTable.hpp"
+#include "vmaccess.h" // for acquireVMAccess and releaseVMAccess
+#include "net/ServerStream.hpp" // for JITServer::BaseCompileDispatcher
+
+struct J9JITConfig;
+struct J9VMThread;
 
 class VMAccessHolder
    {
@@ -49,6 +46,12 @@ private:
    J9VMThread *_vm;
    };
 
+/**
+   @class J9CompileDispatcher
+   @brief Implementation of the compilation handler which gets invoked every time a connection request from the JITClient is accepted
+
+   This handler, 'compile(ServerStream *)', is executed by the listener thread when a new connection request has been received by JITServer
+*/
 
 class J9CompileDispatcher : public JITServer::BaseCompileDispatcher
 {
@@ -60,8 +63,5 @@ public:
 private:
    J9JITConfig *_jitConfig;
 };
-
-
-
 
 #endif
