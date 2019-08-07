@@ -8231,6 +8231,12 @@ TR_J9VMBase::isStringCompressionEnabledVM()
    return IS_STRING_COMPRESSION_ENABLED_VM(getJ9JITConfig()->javaVM);
    }
 
+void *
+TR_J9VMBase::getInvokeExactThunkHelperAddress(TR::Compilation *comp, TR::SymbolReference *glueSymRef, TR::DataType dataType)
+   {
+   return glueSymRef->getMethodAddress();
+   }
+
 TR_OpaqueClassBlock *
 TR_J9VM::getClassClassPointer(TR_OpaqueClassBlock *objectClassPointer)
    {

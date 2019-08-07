@@ -443,14 +443,6 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
 
    reloLogger()->relocationDump();
 
-   if (_comp->isRemoteCompilation())
-      {
-      if (!_comp->compileRelocatableCode() || TR::CompilationInfo::canRelocateMethod(_comp))
-         {
-         fej9()->_compInfoPT->relocateThunks();
-         }
-      }
-
    if (_exceptionTableCacheEntry->type == J9_JIT_DCE_EXCEPTION_INFO)
       {
       /* Adjust exception table entires */
@@ -1435,3 +1427,32 @@ TR_JITaaSRelocationRuntime::allocateSpaceInDataCache(uintptr_t metaDataSize,
    return newDataStart;
    }
 
+uint8_t *
+TR_JITaaSRelocationRuntime::copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe)
+   {
+   TR::CompilationInfoPerThreadBase *compInfoPT = fe->_compInfoPT;
+   int32_t numReserved;
+   TR::CodeCache *codeCache = NULL;
+   TR::CodeCacheManager *manager = TR::CodeCacheManager::instance();
+   TR_ASSERT(!compInfoPT->getCompilation()->cg()->getCodeCache(), "No code caches should be reserved when copying a thunk");
+   codeCache = manager->reserveCodeCache(false, totalSize, compInfoPT->getCompThreadId(), &numReserved);
+   if (!codeCache)
+      return NULL;
+
+   if (compInfoPT->getCompThreadId() >= 0 && fe->getCompilationShouldBeInterruptedFlag())
+      {
+      codeCache->unreserve();
+      return NULL;
+      }
+
+   uint8_t *coldCodeStart = NULL;
+   manager->allocateCodeMemory(0, totalSize, &codeCache, &coldCodeStart, false, false);
+   if (coldCodeStart)
+      {
+      memcpy(coldCodeStart, startAddress, totalSize);
+      }
+   // Unreserve code cache so that the next thunk will have to reserve it again
+   codeCache->unreserve();
+
+   return coldCodeStart;
+   }
