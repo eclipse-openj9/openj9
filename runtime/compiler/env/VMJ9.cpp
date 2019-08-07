@@ -3456,7 +3456,7 @@ TR_J9VMBase::fetchMethodExtendedFlagsPointer(J9Method *method)
 void *
 TR_J9VMBase::getStaticHookAddress(int32_t event)
    {
-   return &vmThread()->javaVM->hookInterface.flags[event]; 
+   return &vmThread()->javaVM->hookInterface.flags[event];
    }
 
 static void lowerContiguousArrayLength(TR::Compilation *comp, TR::Node *root)
@@ -4120,6 +4120,52 @@ static bool foldFinalFieldsIn(const char *className, int32_t classNameLength, TR
       return false;
    }
 
+bool
+TR_J9VMBase::canDereferenceAtCompileTimeWithFieldSymbol(TR::Symbol * fieldSymbol, int32_t cpIndex, TR_ResolvedMethod *owningMethod)
+   {
+   TR::Compilation *comp = TR::comp();
+   switch (fieldSymbol->getRecognizedField())
+      {
+      case TR::Symbol::Java_lang_invoke_PrimitiveHandle_rawModifiers:
+      case TR::Symbol::Java_lang_invoke_PrimitiveHandle_defc:
+      case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
+         {
+         return true;
+         }
+      default:
+         {
+         if (!fieldSymbol->isFinal())
+            return false;
+
+         // Sadly, it's common for deserialization-like code to strip final
+         // specifiers off instance fields so they can be filled in during
+         // deserialization.  To support these shenanigans, we must restrict
+         // ourselves to fold instance fields only in classes classes where
+         // this is known to be safe.
+
+         const char* name;
+         int32_t len;
+
+         // Get class name for fabricated java field
+         if (cpIndex < 0 &&
+             fieldSymbol->getRecognizedField() != TR::Symbol::UnknownField)
+            {
+            name = fieldSymbol->owningClassNameCharsForRecognizedField(len);
+            }
+         else
+            {
+            TR_OpaqueClassBlock *fieldClass = owningMethod->getClassFromFieldOrStatic(comp, cpIndex);
+            if (!fieldClass)
+               return false;
+
+            name = getClassNameChars((TR_OpaqueClassBlock*)fieldClass, len);
+            }
+
+         return foldFinalFieldsIn(name, len, comp);
+         }
+      }
+   return false;
+   }
 
 bool
 TR_J9VMBase::canDereferenceAtCompileTime(TR::SymbolReference *fieldRef, TR::Compilation *comp)
@@ -4140,51 +4186,10 @@ TR_J9VMBase::canDereferenceAtCompileTime(TR::SymbolReference *fieldRef, TR::Comp
          {
          return isFinalFieldOfNativeStruct(fieldRef, comp) || isFinalFieldPointingAtNativeStruct(fieldRef, comp);
          }
-      else switch (fieldRef->getSymbol()->getRecognizedField())
-         {
-         case TR::Symbol::Java_lang_invoke_PrimitiveHandle_rawModifiers:
-         case TR::Symbol::Java_lang_invoke_PrimitiveHandle_defc:
-         case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
-            {
-            return true;
-            }
-         default:
-            {
-            if (!fieldRef->getSymbol()->isFinal())
-               return false;
-
-            // Sadly, it's common for deserialization-like code to strip final
-            // specifiers off instance fields so they can be filled in during
-            // deserialization.  To support these shenanigans, we must restrict
-            // ourselves to fold instance fields only in classes classes where
-            // this is known to be safe.
-
-            const char* name;
-            int32_t len;
-
-            // Get class name for fabricated java field
-            if (fieldRef->getCPIndex() < 0 &&
-               fieldRef->getSymbol()->getRecognizedField() != TR::Symbol::UnknownField)
-               {
-               name = fieldRef->getSymbol()->owningClassNameCharsForRecognizedField(len);
-               }
-            else
-               {
-               TR_OpaqueClassBlock *fieldClass = fieldRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, fieldRef->getCPIndex());
-               if (!fieldClass)
-                  return false;
-
-               name = getClassNameChars((TR_OpaqueClassBlock*)fieldClass, len);
-               }
-
-            return foldFinalFieldsIn(name, len, comp);
-            }
-         }
+      else return canDereferenceAtCompileTimeWithFieldSymbol(fieldRef->getSymbol(), fieldRef->getCPIndex(), fieldRef->getOwningMethodSymbol(comp)->getResolvedMethod());
       }
    else
-      {
       return false;
-      }
    }
 
 
