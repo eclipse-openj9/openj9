@@ -1045,6 +1045,25 @@ obj:;
 		return instance;
 	}
 
+	/* Allocate an array instance
+	 * 
+	 * @returns the allocated array instance
+	 */
+	VMINLINE j9object_t
+	inlineArrayAllocation(J9Class *arrayClass, U_32 size, bool initializeSlots = true, bool memoryBarrier = true, bool sizeCheck = true)
+	{
+		j9object_t instance = NULL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
+			instance = _objectAllocate.inlineAllocateIndexableValueTypeObject(_currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
+		} else
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+		{
+			instance = _objectAllocate.inlineAllocateIndexableObject(_currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
+		}
+		return instance;
+	}
+
 	/**
 	 * Perform a non-instrumentable allocation of an indexable class.
 	 * If inline allocation fails, the out of line allocator will be called.
@@ -1062,14 +1081,11 @@ obj:;
 	allocateIndexableObject(REGISTER_ARGS_LIST, J9Class *arrayClass, U_32 size, bool initializeSlots = true, bool memoryBarrier = true, bool sizeCheck = true)
 	{
 		j9object_t instance = NULL;
-
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
-			instance = _objectAllocate.inlineAllocateIndexableValueTypeObject(_currentThread, arrayClass, (U_32)size, initializeSlots, memoryBarrier, sizeCheck);
-		} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables)) 
+#endif
 		{
-			instance = _objectAllocate.inlineAllocateIndexableObject(_currentThread, arrayClass, (U_32)size, initializeSlots, memoryBarrier, sizeCheck);
+			instance = inlineArrayAllocation(arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
 		}
 
 		if (NULL == instance) {
@@ -3112,14 +3128,7 @@ done:
 		if (flags & J9AccClassArray) {
 			U_32 size = J9INDEXABLEOBJECT_SIZE(_currentThread, original);
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			if (J9_IS_J9CLASS_FLATTENED(objectClass)) {
-				copy = _objectAllocate.inlineAllocateIndexableValueTypeObject(_currentThread, objectClass, size, false, false, false);
-			} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-			{
-				copy = _objectAllocate.inlineAllocateIndexableObject(_currentThread, objectClass, size, false, false, false);
-			}
+			copy = inlineArrayAllocation(objectClass, size, false, false, false);
 
 			if (NULL == copy) {
 				pushObjectInSpecialFrame(REGISTER_ARGS, original);
@@ -7539,12 +7548,10 @@ retry:
 			if (J9_EXPECTED(NULL != arrayClass)) {
 				j9object_t instance = NULL;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
-					instance = _objectAllocate.inlineAllocateIndexableValueTypeObject(_currentThread, arrayClass, (U_32)size);
-				} else
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+				if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables)) 
+#endif
 				{
-					instance = _objectAllocate.inlineAllocateIndexableObject(_currentThread, arrayClass, (U_32)size);
+					instance = inlineArrayAllocation(arrayClass, (U_32) size);
 				}
 
 				if (NULL == instance) {
