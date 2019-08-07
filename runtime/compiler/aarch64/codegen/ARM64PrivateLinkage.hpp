@@ -82,7 +82,7 @@ class ARM64PrivateLinkage : public TR::Linkage
     */
    virtual void createPrologue(TR::Instruction *cursor);
    /**
-    * @brief Creates method prologue
+    * @brief Creates method epilogue
     * @param[in] cursor : instruction cursor
     */
    virtual void createEpilogue(TR::Instruction *cursor);
