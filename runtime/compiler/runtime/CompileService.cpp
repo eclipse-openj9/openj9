@@ -21,13 +21,12 @@
  *******************************************************************************/
 
 #include "runtime/CompileService.hpp"
+#include "infra/CriticalSection.hpp"
 #include "control/CompilationRuntime.hpp"
-#include "control/JITaaSCompilationThread.hpp"
 #include "control/MethodToBeCompiled.hpp"
 
-
 // Routine called when a new connection request has been received at the server
-// Executed by the dispatcher thread
+// Executed by the listener thread
 void J9CompileDispatcher::compile(JITServer::ServerStream *stream)
    {
    TR::CompilationInfo * compInfo = getCompilationInfo(_jitConfig);

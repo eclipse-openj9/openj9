@@ -61,7 +61,9 @@ class TR_ExternalProfiler;
 class TR_JitPrivateConfig;
 class TR_DataCacheManager;
 class TR_EstimateCodeSize;
+#if defined(JITSERVER_SUPPORT)
 class TR_Listener;
+#endif /* defined(JITSERVER_SUPPORT) */
 class TR_StatisticsThread;
 struct TR_CallSite;
 struct TR_CallTarget;
@@ -139,7 +141,9 @@ typedef struct TR_JitPrivateConfig
    TR_IProfiler  *iProfiler;
    TR_HWProfiler *hwProfiler;
    TR_JProfilerThread  *jProfiler;
+#if defined(JITSERVER_SUPPORT)
    TR_Listener   *listener;
+#endif /* defined(JITSERVER_SUPPORT) */
    TR_StatisticsThread   *statisticsThread;
    TR_LMGuardedStorage *lmGuardedStorage;
    TR::CodeCacheManager *codeCacheManager; // reachable from JitPrivateConfig for kca's benefit

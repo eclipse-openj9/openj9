@@ -76,6 +76,10 @@ template <typename T> class TR_PersistentArray;
 typedef J9JITExceptionTable TR_MethodMetaData;
 class ClientSessionHT; // JITaaS TODO: maybe move all JITaaS specific stuff in an extension for CompInfo
 
+#if defined(JITSERVER_SUPPORT)
+namespace JITServer { class ServerStream; }
+#endif /* defined(JITSERVER_SUPPORT) */
+
 struct TR_SignatureCountPair
 {
    TR_PERSISTENT_ALLOC(TR_Memory::OptimizationPlan)
@@ -614,7 +618,9 @@ public:
 
    TR_MethodToBeCompiled *addMethodToBeCompiled(TR::IlGeneratorMethodDetails &details, void *pc, CompilationPriority priority,
       bool async, TR_OptimizationPlan *optPlan, bool *queued, TR_YesNoMaybe methodIsInSharedCache);
+#if defined(JITSERVER_SUPPORT)
    TR_MethodToBeCompiled *addOutOfProcessMethodToBeCompiled(JITServer::ServerStream *stream);
+#endif /* defined(JITSERVER_SUPPORT) */
    void                   queueEntry(TR_MethodToBeCompiled *entry);
    void                   recycleCompilationEntry(TR_MethodToBeCompiled *cur);
    void                   requeueOutOfProcessEntry(TR_MethodToBeCompiled *entry);

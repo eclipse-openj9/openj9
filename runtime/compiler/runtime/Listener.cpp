@@ -24,6 +24,7 @@
 #include "net/ServerStream.hpp"
 #include "env/VMJ9.h"
 #include "runtime/CompileService.hpp"
+#include "control/CompilationRuntime.hpp"
 
 TR_Listener::TR_Listener()
    : _listenerThread(NULL), _listenerMonitor(NULL), _listenerOSThread(NULL), 

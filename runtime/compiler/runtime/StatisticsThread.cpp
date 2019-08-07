@@ -23,6 +23,7 @@
 #include "runtime/StatisticsThread.hpp"
 #include "env/VMJ9.h"
 #include "runtime/CompileService.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "control/JITaaSCompilationThread.hpp"
 
 TR_StatisticsThread::TR_StatisticsThread()
