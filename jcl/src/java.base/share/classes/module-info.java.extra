@@ -30,7 +30,7 @@ exports com.ibm.sharedclasses.spi to openj9.sharedclasses, java.management, java
 exports com.ibm.oti.vm to java.management, jdk.attach, jdk.management, openj9.jvm, openj9.sharedclasses;
 exports com.ibm.oti.util to java.management, jdk.attach, jdk.jcmd, jdk.management, openj9.sharedclasses;
 exports com.ibm.tools.attach.target to jdk.attach, jdk.jcmd, jdk.management;
-exports openj9.management.internal to java.management;
+exports openj9.management.internal to java.management, openj9.jvm;
 exports openj9.tools.attach.diagnostics.base to jdk.attach, jdk.jcmd;
 exports jdk.internal.org.objectweb.asm to openj9.dtfj, openj9.dtfjview;
 // Following allows dtfj/dtfjview modules invoke module addReads & addExports programmatically via reflection APIs

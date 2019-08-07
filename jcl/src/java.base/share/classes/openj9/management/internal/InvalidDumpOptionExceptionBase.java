@@ -1,5 +1,6 @@
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,25 +21,20 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef DDRIO_H_
-#define DDRIO_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include <jni.h>
-#include "j9.h"
-#include "j9protos.h"
-#include "j9port.h"
+package openj9.management.internal;
 
 /**
- * Flush output produced by running a debug extension via JNI
+ * This exception is thrown when an invalid option is passed
+ * to methods on the com.ibm.jvm.Dump class.
  */
-void dbgext_flushoutput();
+public class InvalidDumpOptionExceptionBase extends Exception {
+	private static final long serialVersionUID = 2015896235978447610L;
 
-#ifdef __cplusplus
+	/**
+	 * @param message description of error
+	 */
+	public InvalidDumpOptionExceptionBase(String message) {
+		super(message);
+	}
+	
 }
-#endif
-
-#endif /* DDRIO_H_ */

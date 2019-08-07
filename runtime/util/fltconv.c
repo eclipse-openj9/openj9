@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -293,7 +293,7 @@ helperCConvertIntegerToFloat(I_32 src)
 		}
 	
 		if (src < 0) {
-			spfInt = (U_32)(0 - src);
+			spfInt = (U_32)0 - (U_32)src;
 			sign = 1;
 		} else {
 			spfInt = (U_32)src;

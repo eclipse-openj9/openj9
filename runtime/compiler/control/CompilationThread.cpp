@@ -979,15 +979,15 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
    }
 
 TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
+#if defined(JITSERVER_SUPPORT)
+   _sslKeys(decltype(_sslKeys)::allocator_type(TR::Compiler->persistentAllocator())),
+   _sslCerts(decltype(_sslCerts)::allocator_type(TR::Compiler->persistentAllocator())),
+#endif /* defined(JITSERVER_SUPPORT) */
    _persistentMemory(pointer_cast<TR_PersistentMemory *>(jitConfig->scratchSegment)),
    _sharedCacheReloRuntime(jitConfig),
    _samplingThreadWaitTimeInDeepIdleToNotifyVM(-1),
    _numDiagnosticThreads(0),
    _numCompThreads(0),
-#if defined(JITSERVER_SUPPORT)
-   _sslKeys(decltype(_sslKeys)::allocator_type(TR::Compiler->persistentAllocator())),
-   _sslCerts(decltype(_sslCerts)::allocator_type(TR::Compiler->persistentAllocator())),
-#endif /* defined(JITSERVER_SUPPORT) */
    _arrayOfCompilationInfoPerThread(NULL)
    {
    // The object is zero-initialized before this method is called

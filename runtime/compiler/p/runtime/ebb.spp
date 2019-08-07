@@ -1,4 +1,4 @@
-!! Copyright (c) 2000, 2017 IBM Corp. and others
+!! Copyright (c) 2000, 2019 IBM Corp. and others
 !!
 !! This program and the accompanying materials are made available under
 !! the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,11 +23,11 @@
 #include "p/runtime/ppcasmdefines.inc"
 
 #if defined(AIXPPC)
-#define FUNCTION_GLOBAL(name) .globl .##name
-#define FUNCTION_START(name)                                                            ;\
-   .##name:                                                                             ;\
-   .function .##name, startproc.##name, 16, 0, (endproc.##name - startproc.##name)      ;\
-   startproc.##name:
+#define FUNCTION_GLOBAL(name) .globl .name
+#define FUNCTION_START(name)                                                    ;\
+   .name:                                                                       ;\
+   .function .name, startproc.name, 16, 0, (endproc.name - startproc.name)      ;\
+   startproc.name:
 #elif defined(LINUXPPC64)
 #define STARTPROC_CONC(name) startproc.name
 #define NAME_COMMA_CONC(name) name,

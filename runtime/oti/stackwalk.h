@@ -54,7 +54,7 @@ extern "C" {
 #define WALK_NAMED_INDIRECT_O_SLOT(slot, ind, tag) swWalkObjectSlot(walkState, (slot), (ind), (tag))
 #define WALK_NAMED_INDIRECT_I_SLOT(slot, ind, tag) swWalkIntSlot(walkState, (slot), (ind), (tag))
 #else
-#define WALK_NAMED_INDIRECT_O_SLOT(slot, ind, tag) walkState->objectSlotWalkFunction(walkState->currentThread, walkState, (slot), REMOTE_ADDR(slot))
+#define WALK_NAMED_INDIRECT_O_SLOT(slot, ind, tag) walkState->objectSlotWalkFunction(walkState->currentThread, walkState, (slot), (slot))
 #define WALK_NAMED_INDIRECT_I_SLOT(slot, ind, tag)
 #endif
 #define WALK_INDIRECT_O_SLOT(slot, ind) WALK_NAMED_INDIRECT_O_SLOT((slot), (ind), NULL)
@@ -64,29 +64,7 @@ extern "C" {
 #define WALK_O_SLOT(slot) WALK_INDIRECT_O_SLOT((slot), NULL)
 #define WALK_I_SLOT(slot) WALK_INDIRECT_I_SLOT((slot), NULL)
 
-#ifdef J9VM_OUT_OF_PROCESS
-#define DONT_REDIRECT_SRP
-#include "j9dbgext.h"
-#define LOCAL_ADDR(remoteAddr) dbgTargetToLocal(remoteAddr)
-#define REMOTE_ADDR(localAddr) dbgLocalToTarget(localAddr)
-#define READ_BYTE(addr) dbgReadByte(addr)
-#define READ_METHOD(remoteMethod) dbgReadMethod(remoteMethod)
-#define READ_CP(remoteCP) dbgReadCP(remoteCP)
-#define READ_CLASS(remoteClass) dbgReadClass(remoteClass)
-#define READ_OBJECT(remoteObject) dbgReadObject(remoteObject)
-#define READ_UDATA(addr) dbgReadUDATA(addr)
-#else
-#define LOCAL_ADDR(remoteAddr) ((void *) (remoteAddr))
-#define REMOTE_ADDR(localAddr) ((void *) (localAddr))
-#define READ_BYTE(addr) (*(addr))
-#define READ_METHOD(remoteMethod) (remoteMethod)
-#define READ_CP(remoteCP) (remoteCP)
-#define READ_CLASS(remoteClass) (remoteClass)
-#define READ_OBJECT(remoteObject) (remoteObject)
-#define READ_UDATA(addr) (*(addr))
-#endif
-
-#if defined(J9VM_INTERP_STACKWALK_TRACING) && !defined(J9VM_OUT_OF_PROCESS)
+#if defined(J9VM_INTERP_STACKWALK_TRACING) 
 #define MARK_SLOT_AS_OBJECT(walkState, slot) swMarkSlotAsObject((walkState), (slot))
 #else
 #define MARK_SLOT_AS_OBJECT(walkState, slot)

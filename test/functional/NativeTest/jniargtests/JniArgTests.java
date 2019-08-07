@@ -56,6 +56,8 @@ public class JniArgTests {
 		System.loadLibrary( "jniargtests" );
 		JniArgTests jniArgTests = new JniArgTests();
 		jniArgTests.testBlock();
+		jniArgTests.testBlock();
+		jniArgTests.testBlock();
 		jniArgTests.summary();
 	}
 

@@ -269,7 +269,7 @@ TR::PPCMonitorEnterSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
       cursor += 4;
 
       debug->printPrefix(pOutFile, NULL, cursor, 4);
-      trfprintf(pOutFile, "%s\t%s, %s, %s\t;", ppcOpCodeToNameMap[TR::InstOpCode::Op_cmpl][1], debug->getName(condReg), debug->getName(tempReg), debug->getName(threadReg));
+      trfprintf(pOutFile, "%s\t%s, %s, %s\t;", TR::InstOpCode::metadata[TR::InstOpCode::Op_cmpl].name, debug->getName(condReg), debug->getName(tempReg), debug->getName(threadReg));
       cursor += 4;
       }
    else
@@ -640,7 +640,7 @@ TR::PPCMonitorExitSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
       cursor += 4;
 
       debug->printPrefix(pOutFile, NULL, cursor, 4);
-      trfprintf(pOutFile, "%s\t%s, %s, %s\t;", ppcOpCodeToNameMap[TR::InstOpCode::Op_cmpl][1], debug->getName(condReg), debug->getName(threadReg), debug->getName(metaReg));
+      trfprintf(pOutFile, "%s\t%s, %s, %s\t;", TR::InstOpCode::metadata[TR::InstOpCode::Op_cmpl].name, debug->getName(condReg), debug->getName(threadReg), debug->getName(metaReg));
       cursor += 4;
 
       debug->printPrefix(pOutFile, NULL, cursor, 4);
@@ -1056,11 +1056,11 @@ TR::PPCLockReservationEnterSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
       }
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, "%s\t%s, [%s, %s]\t;", ppcOpCodeToNameMap[TR::InstOpCode::Op_larx][1], debug->getName(monitorReg), debug->getName(objReg), debug->getName(tempReg));
+   trfprintf(pOutFile, "%s\t%s, [%s, %s]\t;", TR::InstOpCode::metadata[TR::InstOpCode::Op_larx].name, debug->getName(monitorReg), debug->getName(objReg), debug->getName(tempReg));
    cursor += 4;
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, "%s %s, %s, 0\t;", ppcOpCodeToNameMap[TR::InstOpCode::Op_cmpli][1], debug->getName(condReg), debug->getName(monitorReg));
+   trfprintf(pOutFile, "%s %s, %s, 0\t;", TR::InstOpCode::metadata[TR::InstOpCode::Op_cmpli].name, debug->getName(condReg), debug->getName(monitorReg));
    cursor += 4;
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
@@ -1068,7 +1068,7 @@ TR::PPCLockReservationEnterSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    cursor += 4;
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, "%s\t[%s,%s], %s\t;", ppcOpCodeToNameMap[TR::InstOpCode::Op_stcx_r][1], debug->getName(objReg), debug->getName(tempReg), debug->getName(valReg));
+   trfprintf(pOutFile, "%s\t[%s,%s], %s\t;", TR::InstOpCode::metadata[TR::InstOpCode::Op_stcx_r].name, debug->getName(objReg), debug->getName(tempReg), debug->getName(valReg));
    cursor += 4;
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
@@ -1102,7 +1102,7 @@ TR::PPCLockReservationEnterSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
       }
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, "%s\t%s, %s, %s\t;", ppcOpCodeToNameMap[TR::InstOpCode::Op_cmpl][1], debug->getName(condReg), debug->getName(tempReg), debug->getName(valReg));
+   trfprintf(pOutFile, "%s\t%s, %s, %s\t;", TR::InstOpCode::metadata[TR::InstOpCode::Op_cmpl].name, debug->getName(condReg), debug->getName(tempReg), debug->getName(valReg));
    cursor += 4;
 
    if (isPrimitive)
@@ -1124,7 +1124,7 @@ TR::PPCLockReservationEnterSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
       cursor += 4;
 
       debug->printPrefix(pOutFile, NULL, cursor, 4);
-      trfprintf(pOutFile, "%s\t[%s,%d], %s\t;", ppcOpCodeToNameMap[TR::InstOpCode::Op_st][1], debug->getName(objReg), getLockWordOffset(), debug->getName(monitorReg));
+      trfprintf(pOutFile, "%s\t[%s,%d], %s\t;", TR::InstOpCode::metadata[TR::InstOpCode::Op_st].name, debug->getName(objReg), getLockWordOffset(), debug->getName(monitorReg));
       cursor += 4;
 
       debug->printPrefix(pOutFile, NULL, cursor, 4);
@@ -1354,7 +1354,7 @@ TR::PPCLockReservationExitSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    cursor += 4;
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, "%s\t%s, %s, %s\t;", ppcOpCodeToNameMap[TR::InstOpCode::Op_cmpl][1], debug->getName(condReg), debug->getName(tempReg), debug->getName(valReg));
+   trfprintf(pOutFile, "%s\t%s, %s, %s\t;", TR::InstOpCode::metadata[TR::InstOpCode::Op_cmpl].name, debug->getName(condReg), debug->getName(tempReg), debug->getName(valReg));
    cursor += 4;
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
@@ -1383,7 +1383,7 @@ TR::PPCLockReservationExitSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    cursor += 4;
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, "%s\t[%s,%d], %s\t;", ppcOpCodeToNameMap[TR::InstOpCode::Op_st][1], debug->getName(objReg), getLockWordOffset(), debug->getName(monitorReg));
+   trfprintf(pOutFile, "%s\t[%s,%d], %s\t;", TR::InstOpCode::metadata[TR::InstOpCode::Op_st].name, debug->getName(objReg), getLockWordOffset(), debug->getName(monitorReg));
    cursor += 4;
 
    if (!isPrimitive)
@@ -1609,7 +1609,7 @@ TR::PPCReadMonitorSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    cursor+= 4;
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, "%s \t%s, [%s, %d]\t; Load", ppcOpCodeToNameMap[getLoadOpCode()][1], debug->getName(loadResultReg), debug->getName(loadBaseReg), getLoadOffset());
+   trfprintf(pOutFile, "%s \t%s, [%s, %d]\t; Load", TR::InstOpCode::metadata[getLoadOpCode()].name, debug->getName(loadResultReg), debug->getName(loadBaseReg), getLoadOffset());
    cursor+= 4;
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
@@ -1628,7 +1628,7 @@ TR::PPCReadMonitorSnippet::print(TR::FILE *pOutFile, TR_Debug *debug)
    cursor+= 4;
 
    debug->printPrefix(pOutFile, NULL, cursor, 4);
-   trfprintf(pOutFile, "%s \t%s, [%s, %d]\t; Load", ppcOpCodeToNameMap[getLoadOpCode()][1], debug->getName(loadResultReg), debug->getName(loadBaseReg), getLoadOffset());
+   trfprintf(pOutFile, "%s \t%s, [%s, %d]\t; Load", TR::InstOpCode::metadata[getLoadOpCode()].name, debug->getName(loadResultReg), debug->getName(loadBaseReg), getLoadOffset());
 
    debug->print(pOutFile, (TR::PPCHelperCallSnippet *)this);
    }

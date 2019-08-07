@@ -192,10 +192,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="module_codert_s390" value="true"/>
 		<flag id="module_codert_vm" value="true"/>
 		<flag id="module_ddr" value="true"/>
-		<flag id="module_ddr_gdb_plugin" value="true"/>
-		<flag id="module_ddrext" value="true"/>
-		<flag id="module_gdb" value="true"/>
-		<flag id="module_gdb_plugin" value="true"/>
 		<flag id="module_gptest" value="true"/>
 		<flag id="module_j9vm" value="true"/>
 		<flag id="module_j9vmtest" value="true"/>
@@ -238,7 +234,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="opt_multiVm" value="true"/>
 		<flag id="opt_panama" value="false"/>
 		<flag id="opt_reflect" value="true"/>
-		<flag id="opt_remoteConsoleSupport" value="true"/>
 		<flag id="opt_sharedClasses" value="true"/>
 		<flag id="opt_sidecar" value="true"/>
 		<flag id="opt_srpAvlTreeSupport" value="true"/>

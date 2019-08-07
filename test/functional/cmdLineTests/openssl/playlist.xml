@@ -31,29 +31,6 @@
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		-DTEST_RESROOT=$(Q)$(TEST_RESROOT)$(D)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
-		-DEXE=$(SQ)$(TEST_JDK_HOME)$(D)jre$(D)bin$(D)java $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)openssl.xml$(Q) \
-		-verbose -explainExcludes -nonZeroExitWhenError; \
-		$(TEST_STATUS)</command>
-		<levels>
-			<level>sanity</level>
-		</levels>
-		<groups>
-			<group>functional</group>
-		</groups>
-		<impls>
-			<impl>openj9</impl>
-		</impls>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
-	</test>
-	<test>
-		<testCaseName>cmdLineTester_CryptoTest</testCaseName>
-		<variations>
-			<variation>NoOptions</variation>
-		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
-		-DTEST_RESROOT=$(Q)$(TEST_RESROOT)$(D)$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) \
 		-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)openssl.xml$(Q) \
 		-verbose -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
@@ -66,10 +43,5 @@
 		<impls>
 			<impl>openj9</impl>
 		</impls>
-		<subsets>
-			<subset>9</subset>
-			<subset>11+</subset>
-		</subsets>
 	</test>
-
 </playlist>

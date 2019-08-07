@@ -56,6 +56,18 @@ enum TR_BCDSignCode
    num_bcd_sign_codes = 4
    };
 
+enum TR_arrayTypeCode
+   {
+   atype_boolean = 4,
+   atype_char    = 5,
+   atype_float   = 6,
+   atype_double  = 7,
+   atype_byte    = 8,
+   atype_short   = 9,
+   atype_int     = 10,
+   atype_long    = 11
+   };
+
 #define TR_NUM_DECIMAL_CODES 16
 const extern TR_BCDSignCode    decimalSignCodeMap[TR_NUM_DECIMAL_CODES];
 const extern TR_RawBCDSignCode rawSignCodeMap[TR_NUM_DECIMAL_CODES];

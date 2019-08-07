@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,16 +19,20 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
-cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
+
+# set JAVA_HOME to guide FindJava
+set(JAVA_HOME ${BOOT_JDK})
+
 include(FindJava)
 include(UseJava)
+
 project(j9_sourcetools VERSION 1.0)
 
 set(CMAKE_JAVA_TARGET_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
-#TODO this needs to be named and handled better
+# TODO this needs to be named and handled better
 set(SPEC_LEVEL 8 CACHE STRING "")
-set(CMAKE_JAVA_COMPILE_FLAGS -nowarn -source ${SPEC_LEVEL} -target ${SPEC_LEVEL} )
+set(CMAKE_JAVA_COMPILE_FLAGS -nowarn -source ${SPEC_LEVEL} -target ${SPEC_LEVEL})
 
 # Note add_jar isn't as good at tracking target dependencies as regular cmake
 # In particular it will not let you link against a target which will be defined later.

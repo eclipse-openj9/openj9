@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,7 +33,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -505,4 +505,12 @@ J9NLS_DMP_INVALID_OR_RESERVED.system_action=The JVM exits.
 J9NLS_DMP_INVALID_OR_RESERVED.user_response=select a different value.
 J9NLS_DMP_INVALID_OR_RESERVED.sample_input_1=suspendwith
 J9NLS_DMP_INVALID_OR_RESERVED.link=
+# END NON-TRANSLATABLE
+
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS=\uae30\ubcf8\uc801\uc73c\ub85c \uc124\uc815\ub418\ub294 \uc635\uc158\uc744 \ube44\ub86f\ud55c \ub364\ud504 \uc635\uc158\uc758 \uc218\ub294 %d\uac1c\ubcf4\ub2e4 \uc791\uc544\uc57c \ud569\ub2c8\ub2e4.
+# START NON-TRANSLATABLE
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.explanation=The number of -Xdump: options exceeds the VM limit
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.system_action=The JVM exits.
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.user_response=Combine dump types, event types, and filters using '+' into a single option
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.link=
 # END NON-TRANSLATABLE

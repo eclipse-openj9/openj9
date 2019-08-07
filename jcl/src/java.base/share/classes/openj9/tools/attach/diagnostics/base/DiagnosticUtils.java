@@ -34,6 +34,7 @@ import java.util.function.Predicate;
 import com.ibm.oti.vm.VM;
 import com.ibm.tools.attach.target.IPC;
 
+import openj9.management.internal.InvalidDumpOptionExceptionBase;
 import openj9.management.internal.LockInfoBase;
 import openj9.management.internal.ThreadInfoBase;
 
@@ -46,6 +47,11 @@ public class DiagnosticUtils {
 	/**
 	 * Command strings for executeDiagnosticCommand()
 	 */
+
+	/**
+	 * Print help text
+	 */
+	public static final String DIAGNOSTICS_HELP = "help"; //$NON-NLS-1$
 
 	/**
 	 * Run Get the stack traces and other thread information.
@@ -79,6 +85,7 @@ public class DiagnosticUtils {
 	private static final String THREAD_LOCKED_SYNCHRONIZERS_OPTION = "-l"; //$NON-NLS-1$
 
 	private static final Map<String, Function<String, DiagnosticProperties>> commandTable;
+	private static final Map<String, String> helpTable;
 
 	/**
 	 * Create the command to run the heapHisto command
@@ -107,7 +114,20 @@ public class DiagnosticUtils {
 		return cmd;
 	}
 
+	/**
+	 * Convert the command line options into attach API diagnostic command format
+	 * @param options List of command line arguments
+	 * @param skip Number of options to omit from the beginning of the list
+	 * 
+	 * @return formatted string
+	 */
+	public static String makeJcmdCommand(String[] options, int skip) {
+		String cmd = String.join(DIAGNOSTICS_OPTION_SEPARATOR, Arrays.asList(options).subList(skip, options.length));
+		return cmd;
+	}
+
 	private static native String getHeapClassStatisticsImpl();
+	private static native String triggerDumpsImpl(String dumpOptions, String event) throws InvalidDumpOptionExceptionBase;
 
 	/**
 	 * Run a diagnostic command and return the result in a properties file
@@ -199,12 +219,67 @@ public class DiagnosticUtils {
 		VM.globalGC();
 		return DiagnosticProperties.makeCommandSucceeded();
 	}
+	
+	private static DiagnosticProperties doHelp(String diagnosticCommand) {
+		String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
+		/* print a list of the available commands */
+		StringWriter buffer = new StringWriter(500);
+		PrintWriter bufferPrinter = new PrintWriter(buffer);
+		if (DIAGNOSTICS_HELP.equals(parts[0])) {
+			if (parts.length == 1) {
+				/* print a list of commands */
+				commandTable.keySet().stream().sorted().forEach(s -> bufferPrinter.println(s));
+			} else if (parts.length == 2) {
+				String helpText = helpTable.getOrDefault(parts[1], "No help available"); //$NON-NLS-1$
+				bufferPrinter.printf("%s: ", parts[1]); //$NON-NLS-1$
+				bufferPrinter.printf(helpText);
+			}
+		} else {
+			bufferPrinter.print("Invalid command: " + diagnosticCommand); //$NON-NLS-1$
+		}
+		return DiagnosticProperties.makeStringResult(buffer.toString());
 
+	}
+
+	/* Help strings for the jcmd utilities */
+	@SuppressWarnings("nls")
+	private static final String DIAGNOSTICS_HELP_HELP = "Show help for a command%n"
+			+ " Format: help <command>%n"
+			+ " If no command is supplied, print the list of available commands on the target JVM.%n";
+	
+	@SuppressWarnings("nls")
+	private static final String DIAGNOSTICS_GC_CLASS_HISTOGRAM_HELP = "Obtain heap information about a Java process%n"
+			+ " Format: " + DIAGNOSTICS_GC_CLASS_HISTOGRAM + " [options]%n"
+			+ " Options: -all : include all objects, including dead objects%n"
+			+ "NOTE: this utility may significantly affect the performance of the target VM.%n";
+	
+	@SuppressWarnings("nls")
+	private static final String DIAGNOSTICS_GC_RUN_HELP = "Run the garbage collector.%n"
+			+ " Format: " + DIAGNOSTICS_GC_RUN + "%n"
+			+ "NOTE: this utility may significantly affect the performance of the target VM.%n";
+	
+	@SuppressWarnings("nls")
+	private static final String DIAGNOSTICS_THREAD_PRINT_HELP = "List thread information.%n"
+			+ " Format: " + DIAGNOSTICS_THREAD_PRINT + " [options]%n"
+			+ " Options: -l : print information about ownable synchronizers%n";
+	
+	/* Initialize the command and help text tables */
 	static {
 		commandTable = new HashMap<>();
+		helpTable = new HashMap<>();
+		
+		commandTable.put(DIAGNOSTICS_HELP, DiagnosticUtils::doHelp);
+		helpTable.put(DIAGNOSTICS_HELP, DIAGNOSTICS_HELP_HELP);
+		
 		commandTable.put(DIAGNOSTICS_GC_CLASS_HISTOGRAM, DiagnosticUtils::getHeapStatistics);
+		helpTable.put(DIAGNOSTICS_GC_CLASS_HISTOGRAM, DIAGNOSTICS_GC_CLASS_HISTOGRAM_HELP);
+		
 		commandTable.put(DIAGNOSTICS_GC_RUN, s -> runGC());
+		helpTable.put(DIAGNOSTICS_GC_RUN, DIAGNOSTICS_GC_RUN_HELP);
+		
 		commandTable.put(DIAGNOSTICS_THREAD_PRINT, DiagnosticUtils::getThreadInfo);
+		helpTable.put(DIAGNOSTICS_THREAD_PRINT, DIAGNOSTICS_THREAD_PRINT_HELP);
 	}
+
 
 }

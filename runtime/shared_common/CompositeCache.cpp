@@ -6610,13 +6610,6 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 	if (J9_ARE_NO_BITS_SET(cacheFullFlags, J9SHR_AVAILABLE_SPACE_FULL)) {
 		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL)) {
 			if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) {
-				/* J9SHR_BLOCK_SPACE_FULL is always unset together with J9SHR_AVAILABLE_SPACE_FULL, do not need to remove J9AVLTREE_DISABLE_SHARED_TREE_UPDATES
-				 * when unsetting J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL, do it here is enough.
-				 */
-				if (NULL != currentThread->javaVM->sharedInvariantInternTable) {
-					Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9AVLTREE_DISABLE_SHARED_TREE_UPDATES);
-					currentThread->javaVM->sharedInvariantInternTable->flags &= ~J9AVLTREE_DISABLE_SHARED_TREE_UPDATES;
-				}
 				if (_reduceStoreContentionDisabled) {
 					Trc_SHR_CC_updateRuntimeFullFlags_flagSet(currentThread, J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION);
 					*_runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION;

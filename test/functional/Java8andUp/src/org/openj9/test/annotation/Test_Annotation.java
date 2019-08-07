@@ -34,6 +34,8 @@ import java.util.Vector;
 import org.openj9.test.annotation.defaults.AnnotationTestClassDefaults;
 import org.openj9.test.annotationPackage.Test_PackageAnnotation2;
 
+import org.openj9.test.util.VersionCheck;
+
 @Test(groups = { "level.sanity" })
 public class Test_Annotation {
 	private Class<?> testClass = AnnotationTestClass.class;
@@ -93,12 +95,15 @@ public class Test_Annotation {
 	private final String[] annotationArrayValueDefault = new String[] {
 			"ClassAnnotationDefault",
 			"ClassAnnotationDefault" };
-	private final String[][] parameterValueJava8 = new String[][] {
-			{ "@org.openj9.test.annotation.ParameterAnnotation(value=ParameterAnnotation)", "@java.lang.Deprecated()" },
-			{ "@org.openj9.test.annotation.ParameterAnnotation(value=ParameterAnnotation)" } };
-	private final String[][] parameterValueJava9 = new String[][] {
-				{ "@org.openj9.test.annotation.ParameterAnnotation(value=\"ParameterAnnotation\")", "@java.lang.Deprecated(forRemoval=false, since=\"\")" },
-				{ "@org.openj9.test.annotation.ParameterAnnotation(value=\"ParameterAnnotation\")" } };
+	private static final String[][] parameterValueJava8 = new String[][] {
+		{ "@org.openj9.test.annotation.ParameterAnnotation(value=ParameterAnnotation)", "@java.lang.Deprecated()" },
+		{ "@org.openj9.test.annotation.ParameterAnnotation(value=ParameterAnnotation)" } };
+	private static final String[][] parameterValueJava11 = new String[][] {
+		{ "@org.openj9.test.annotation.ParameterAnnotation(value=\"ParameterAnnotation\")", "@java.lang.Deprecated(forRemoval=false, since=\"\")" },
+		{ "@org.openj9.test.annotation.ParameterAnnotation(value=\"ParameterAnnotation\")" } };
+	private static final String[][] parameterValueJava14 = new String[][] {
+		{ "@org.openj9.test.annotation.ParameterAnnotation(\"ParameterAnnotation\")", "@java.lang.Deprecated(forRemoval=false, since=\"\")" },
+		{ "@org.openj9.test.annotation.ParameterAnnotation(\"ParameterAnnotation\")" } };
 	private final String[][] noParameterValue = new String[][] { {} };
 	private final String[][] emptyParameterListValue = new String[][] {};
 	private final String[] noAnnotations = new String[] {};
@@ -927,7 +932,7 @@ public class Test_Annotation {
 	public void test_constructor_parameter_annotations() throws Exception {
 		Constructor<?> constructor = testClass.getConstructor(String.class, String.class);
 		Annotation[][] annotation = constructor.getParameterAnnotations();
-		myAssert(parameterValueJava8, parameterValueJava9, annotation);
+		myAssert(annotation);
 	}
 
 	@Test
@@ -1402,7 +1407,7 @@ public class Test_Annotation {
 	public void test_method_parameter_annotations() throws Exception {
 		Method method = testClass.getMethod("method", String.class, String.class);
 		Annotation[][] annotation = method.getParameterAnnotations();
-		myAssert(parameterValueJava8, parameterValueJava9, annotation);
+		myAssert(annotation);
 	}
 
 	@Test
@@ -2077,5 +2082,19 @@ public class Test_Annotation {
 		}
 		AssertJUnit.assertTrue(value);
 		return value;
+	}
+	
+	private boolean myAssert(Annotation[][] annots) {
+		boolean result = true;
+		int javaVersion = VersionCheck.major();
+
+		if (javaVersion == 8) {
+			result = myAssert(parameterValueJava8, annots);
+		} else if (javaVersion >= 14) {
+			result = myAssert(parameterValueJava14, annots);
+		} else {
+			result = myAssert(parameterValueJava11, annots);
+		}
+		return result;
 	}
 }

@@ -25,6 +25,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/p/codegen/GenerateInstructions.cpp \
     omr/compiler/p/codegen/OMRCodeGenerator.cpp \
     omr/compiler/p/codegen/OMRConstantDataSnippet.cpp \
+    omr/compiler/p/codegen/OMRInstOpCode.cpp \
     omr/compiler/p/codegen/OMRInstruction.cpp \
     omr/compiler/p/codegen/OMRLinkage.cpp \
     omr/compiler/p/codegen/OMRMachine.cpp \
@@ -33,8 +34,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/p/codegen/OMRRegisterDependency.cpp \
     omr/compiler/p/codegen/OMRSnippet.cpp \
     omr/compiler/p/codegen/OMRTreeEvaluator.cpp \
-    omr/compiler/p/codegen/OpBinary.cpp \
-    omr/compiler/p/codegen/OpProperties.cpp \
     omr/compiler/p/codegen/PPCAOTRelocation.cpp \
     omr/compiler/p/codegen/PPCBinaryEncoding.cpp \
     omr/compiler/p/codegen/PPCDebug.cpp \

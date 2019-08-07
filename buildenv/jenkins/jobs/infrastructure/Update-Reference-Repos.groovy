@@ -34,6 +34,11 @@ if ((CLEAN_CACHE_DIR == null) || (CLEAN_CACHE_DIR == '')) {
     CLEAN_CACHE_DIR = false
 }
 
+UPDATE_SETUP_NODES = params.UPDATE_SETUP_NODES
+UPDATE_BUILD_NODES = params.UPDATE_BUILD_NODES
+
+EXTENSIONS_REPOS = [[name: "openj9", url: "https://github.com/eclipse/openj9.git"]]
+
 properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10')),
             pipelineTriggers([cron('''# Daily at 11:00pm
                                         0 23 * * *''')])])
@@ -44,40 +49,110 @@ timeout(time: 6, unit: 'HOURS') {
     timestamps {
         node(SETUP_LABEL) {
             try{
-                checkout scm
+                def gitConfig = scm.getUserRemoteConfigs().get(0)
+                def remoteConfigParameters = [url: "${gitConfig.getUrl()}"]
+
+                if (gitConfig.getCredentialsId()) {
+                    remoteConfigParameters.put("credentialsId", "${gitConfig.getCredentialsId()}")
+                }
+
+                checkout changelog: false,
+                        poll: false,
+                        scm: [$class: 'GitSCM',
+                        branches: [[name: scm.branches[0].name]],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [[$class: 'CloneOption',
+                                      reference: "${HOME}/openjdk_cache"]],
+                        submoduleCfg: [],
+                        userRemoteConfigs: [remoteConfigParameters]]
+
                 def variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
                 variableFile.parse_variables_file()
                 variableFile.set_user_credentials()
 
-                def osLabels = ['sw.os.aix', 'sw.os.linux', 'sw.os.osx', 'sw.os.windows']
-                for (aNode in jenkins.model.Jenkins.instance.getLabel(LABEL).getNodes()) {
-                    def nodeName = aNode.getDisplayName()
+                def buildNodes = jenkins.model.Jenkins.instance.getLabel(LABEL).getNodes()
+                def slaveNodes = []
+                def setupNodesNames = []
+                def buildNodesNames = []
 
-                    if (aNode.toComputer().isOffline()) {
-                        // skip offline slave
-                        continue
+                if (UPDATE_SETUP_NODES) {
+                    // update openj9 repo cache on slaves that have SETUP_LABEL
+                    if (UPDATE_BUILD_NODES) {
+                        // remove build nodes from the setup nodes collection
+                        slaveNodes.addAll(jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes().minus(buildNodes))
+                    } else {
+                        slaveNodes.addAll(jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes())
                     }
 
-                    def foundLabel = false
-                    def nodeLabels = aNode.getLabelString().tokenize(' ')
-                    for (osLabel in osLabels) {
-                        if (nodeLabels.contains(osLabel)) {
-                            foundLabel = true
-                            break
+                    //add master if slaveNodes does not contain it already
+                    if (slaveNodes.intersect(jenkins.model.Jenkins.instance.getLabel('master').getNodes()).isEmpty()) {
+                        slaveNodes.addAll(jenkins.model.Jenkins.instance.getLabel('master').getNodes())
+                    }
+
+                    for (sNode in slaveNodes) {
+                        if (sNode.toComputer().isOffline()) {
+                            // skip offline slave
+                            continue
                         }
-                    }
 
-                    // get Eclipse OpenJ9 extensions repositories from variables file
-                    def repos = get_openjdk_repos(VARIABLES.openjdk, foundLabel)
+                        def sNodeName = sNode.getDisplayName()
+                        if (sNodeName == 'Jenkins') {
+                            sNodeName = 'master'
+                        }
+                        setupNodesNames.add(sNodeName)
 
-                    jobs["${nodeName}"] = {
-                        node("${nodeName}"){
-                            stage("${nodeName} - Update Reference Repo") {
-                                refresh(nodeName, "${HOME}/openjdk_cache", repos, foundLabel)
+                        jobs["${sNodeName}"] = {
+                            node("${sNodeName}"){
+                                stage("${sNodeName} - Update Reference Repo") {
+                                    refresh(sNodeName, "${HOME}/openjdk_cache", EXTENSIONS_REPOS, true)
+                                }
                             }
                         }
                     }
                 }
+
+                if (UPDATE_BUILD_NODES) {
+                    // update openjdk and openj9 repos cache on slaves
+                    for (aNode in buildNodes) {
+                        if (aNode.toComputer().isOffline()) {
+                            // skip offline slave
+                            continue
+                        }
+
+                        def nodeName = aNode.getDisplayName()
+                        buildNodesNames.add(nodeName)
+
+                        def osLabels = ['sw.os.aix', 'sw.os.linux', 'sw.os.osx', 'sw.os.windows']
+                        def foundLabel = false
+                        def nodeLabels = aNode.getLabelString().tokenize(' ')
+                        for (osLabel in osLabels) {
+                            if (nodeLabels.contains(osLabel)) {
+                                foundLabel = true
+                                break
+                            }
+                        }
+
+                        // get Eclipse OpenJ9 extensions repositories from variables file
+                        def repos = get_openjdk_repos(VARIABLES.openjdk, foundLabel)
+                        if (jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes().contains(aNode)) {
+                            // add OpenJ9 repo
+                            repos.addAll(EXTENSIONS_REPOS)
+                            setupNodesNames.add(aNode)
+                        }
+
+                        jobs["${nodeName}"] = {
+                            node("${nodeName}"){
+                                stage("${nodeName} - Update Reference Repo") {
+                                    refresh(nodeName, "${HOME}/openjdk_cache", repos, foundLabel)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                echo "Setup nodes: ${setupNodesNames.toString()}"
+                echo "Build nodes: ${buildNodesNames.toString()}"
+
             } finally {
                 cleanWs()
             }
@@ -148,6 +223,5 @@ def get_openjdk_repos(openJdkMap, useDefault) {
         }
     }
 
-    echo "Eclipse OpenJ9 extensions repositories: ${repos.toString()}"
     return repos
 }

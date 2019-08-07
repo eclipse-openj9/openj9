@@ -1108,6 +1108,43 @@ MM_ObjectAccessBarrier::indexableStoreI64(J9VMThread *vmThread, J9IndexableObjec
 }
 
 /**
+ * Copy object fields into flattened array element
+ *
+ * @param vmThread thread token
+ * @param arrayClazz array J9Class
+ * @param srcObject object whose fields will be copied
+ * @param arrayRef array object
+ * @param index index of array element where fields are copied to
+ */
+void
+MM_ObjectAccessBarrier::copyObjectFieldsToArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t srcObject, J9IndexableObject *arrayRef, I_32 index)
+{
+	UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread);
+	U_8 *elementAddress = (U_8*)indexableEffectiveAddress(vmThread, arrayRef, index, J9ARRAYCLASS_GET_STRIDE(arrayClazz));
+	IDATA elementOffset = (elementAddress - (U_8*)arrayRef);
+	copyObjectFields(vmThread, J9GC_J9OBJECT_CLAZZ_THREAD(srcObject, vmThread), srcObject, objectHeaderSize, (j9object_t) arrayRef, elementOffset);
+}
+
+/**
+ * Copy object fields into flattened array element
+ *
+ * @param vmThread thread token
+ * @param arrayClazz array J9Class
+ * @param destObject object where array element fields will be copied to
+ * @param arrayRef array object
+ * @param index index of array element where fields are copied to
+ */
+void
+MM_ObjectAccessBarrier::copyObjectFieldsFromArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t destObject, J9IndexableObject *arrayRef, I_32 index)
+{
+	UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread);
+	U_8 *elementAddress = (U_8*)indexableEffectiveAddress(vmThread, arrayRef, index, J9ARRAYCLASS_GET_STRIDE(arrayClazz));
+	IDATA elementOffset = (elementAddress - (U_8*)arrayRef);
+	copyObjectFields(vmThread, J9GC_J9OBJECT_CLAZZ_THREAD(destObject, vmThread), (j9object_t) arrayRef, elementOffset, destObject, objectHeaderSize);
+}
+
+
+/**
  * Read a static field.
  * @param srcSlot The static field slot.
  * @param isVolatile non-zero if the field is volatile.
@@ -1315,15 +1352,11 @@ MM_ObjectAccessBarrier::getArrayObjectDataAddress(J9VMThread *vmThread, J9Indexa
  j9objectmonitor_t *
 MM_ObjectAccessBarrier::getLockwordAddress(J9VMThread *vmThread, J9Object *object)
 {
-#if defined(J9VM_THR_LOCK_NURSERY)
 	UDATA lockOffset = J9OBJECT_CLAZZ(vmThread, object)->lockOffset;
 	if ((IDATA) lockOffset < 0) {
 		return NULL;	
 	}
 	return (j9objectmonitor_t *)(((U_8 *)object) + lockOffset);
-#else /* J9VM_THR_LOCK_NURSERY */
-	return &(object->monitor);
-#endif /* J9VM_THR_LOCK_NURSERY */
 }
 
 /**
@@ -1423,7 +1456,6 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 			}
 		}
 
-#if defined(J9VM_THR_LOCK_NURSERY)
 		/* initialize lockword, if present */
 		lockwordAddress = getLockwordAddress(vmThread, destObject);
 		if (NULL != lockwordAddress) {
@@ -1433,7 +1465,6 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 				*lockwordAddress = 0;
 			}
 		}
-#endif /* J9VM_THR_LOCK_NURSERY */
 	}
 }
 
@@ -1463,13 +1494,11 @@ MM_ObjectAccessBarrier::cloneIndexableObject(J9VMThread *vmThread, J9IndexableOb
 		_extensions->indexableObjectModel.memcpyArray(destObject, srcObject);
 	}
 
-#if defined(J9VM_THR_LOCK_NURSERY)
 	/* zero lockword, if present */
 	lockwordAddress = getLockwordAddress(vmThread, (J9Object*) destObject);
 	if (NULL != lockwordAddress) {
 		*lockwordAddress = 0;
 	}
-#endif /* J9VM_THR_LOCK_NURSERY */
 
 	return;
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,13 +36,14 @@ public:
    TR_ALLOC(TR_Memory::VMField)
    TR_VMField( TR::Compilation * comp, J9Class *aClazz, J9ROMFieldShape *fieldShape, TR_AllocationKind allocKind);
    int isReference();
-   void           print(TR_FrontEnd *fe, TR::FILE *outFile);
+   void              print(TR_FrontEnd *fe, TR::FILE *outFile);
 
-   char *         name;
-   char *         signature;
-   U_32           modifiers;
-   IDATA          offset;
-   J9Class *      ramClass;
+   char *            name;
+   char *            signature;
+   J9ROMFieldShape * shape;
+   U_32              modifiers;
+   IDATA             offset;
+   J9Class *         ramClass;
    };
 #endif
 

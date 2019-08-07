@@ -25,6 +25,7 @@ j9jit_files(
 	aarch64/codegen/ARM64PrivateLinkage.cpp
 	aarch64/codegen/ARM64Recompilation.cpp
 	aarch64/codegen/CallSnippet.cpp
+	aarch64/codegen/ForceRecompilationSnippet.cpp
 	aarch64/codegen/J9ARM64Snippet.cpp
 	aarch64/codegen/J9AheadOfTimeCompile.cpp
 	aarch64/codegen/J9CodeGenerator.cpp

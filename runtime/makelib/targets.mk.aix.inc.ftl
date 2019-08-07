@@ -128,7 +128,7 @@ else
   UMA_DLL_LINK_FLAGS += -q32
 endif
 # Link options like '-brtl', '-G', etc. must be prefixed by '-Wl,' to make xlc_r pass them through.
-UMA_DLL_LINK_FLAGS += -qmkshrobj -Wl,-brtl -Wl,-G -Wl,-bernotok -Wl,-bnoentry
+UMA_DLL_LINK_FLAGS += -qmkshrobj -Wl,-brtl -Wl,-G -Wl,-bernotok -Wl,-bnoentry -Wl,-bnolibpath
 UMA_DLL_LINK_FLAGS += -Wl,-bmap:$(UMA_TARGET_NAME).map
 UMA_DLL_LINK_FLAGS += -Wl,-bE:$(UMA_TARGET_NAME).exp
 
@@ -146,9 +146,7 @@ UMA_EXE_LINK_POSTFLAGS += -lc_r -lm -lpthreads
 
 ifdef UMA_IS_C_PLUS_PLUS
   UMA_DLL_LINK_POSTFLAGS += -lC_r -lC
-  UMA_EXE_LINK_POSTFLAGS := -lC_r -lC
-else
-  UMA_EXE_LINK_POSTFLAGS :=
+  UMA_EXE_LINK_POSTFLAGS += -lC_r -lC
 endif
 
 $(patsubst %.s,%.o,$(filter %.s,$(UMA_FILES_TO_PREPROCESS))) : %$(UMA_DOT_O) : %.s

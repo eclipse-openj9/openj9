@@ -30,9 +30,7 @@
 #include "rommeth.h"
 #include "env/jittypes.h"
 
-#ifndef J9VM_OUT_OF_PROCESS
 #define FASTWALK 1
-#endif /* ndef J9VM_OUT_OF_PROCESS */
 
 #define FASTWALK_CACHESIZE 2
 
@@ -579,7 +577,7 @@ void markClassesInInlineRanges(void * methodMetaData, J9StackWalkState * walkSta
       J9Method *inlinedMethod = getInlinedMethod(inlinedCallSite);
       if (!isPatchedValue(inlinedMethod))
          {
-         walkState->method = READ_METHOD(inlinedMethod);
+         walkState->method = inlinedMethod;
          walkState->constantPool = UNTAGGED_METHOD_CP(walkState->method);
          /*
          walkState->bytecodePCOffset = (IDATA) getCurrentByteCodeIndexAndIsSameReceiver(walkState->jitInfo, inlineMap, inlinedCallSite, NULL);
@@ -1285,7 +1283,7 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
    tempJitDescriptionCursor += sizeof(UDATA);
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-   swPrintf(walkState, 6, "Address %p\n", REMOTE_ADDR(tempJitDescriptionCursor));
+   swPrintf(walkState, 6, "Address %p\n", tempJitDescriptionCursor);
 #endif
    numInternalPtrMapBytes = *((tempJitDescriptionCursor)++);
 
@@ -1299,7 +1297,7 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
    indexOfFirstInternalPtr = (I_16) *((U_16 *) tempJitDescriptionCursor);
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-   swPrintf(walkState, 6, "Address %p\n", REMOTE_ADDR(tempJitDescriptionCursor));
+   swPrintf(walkState, 6, "Address %p\n", tempJitDescriptionCursor);
 #endif
    tempJitDescriptionCursor += 2;
 
@@ -1312,7 +1310,7 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
    offsetOfFirstInternalPtr = (I_16) *((U_16 *) tempJitDescriptionCursor);
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-   swPrintf(walkState, 6, "Address %p\n", REMOTE_ADDR(tempJitDescriptionCursor));
+   swPrintf(walkState, 6, "Address %p\n", tempJitDescriptionCursor);
 #endif
 
 
@@ -1325,7 +1323,7 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
 
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-   swPrintf(walkState, 6, "Address %p\n", REMOTE_ADDR(tempJitDescriptionCursor));
+   swPrintf(walkState, 6, "Address %p\n", tempJitDescriptionCursor);
 #endif
    numDistinctPinningArrays = *((tempJitDescriptionCursor)++);
 
@@ -1350,15 +1348,15 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
 
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-      swPrintf(walkState, 6, "Before object slot walk &address : %p address : %p bp %p offset of first internal ptr %d\n", REMOTE_ADDR(currPinningArrayCursor), oldPinningArrayAddress, REMOTE_ADDR(walkState->bp), offsetOfFirstInternalPtr);
+      swPrintf(walkState, 6, "Before object slot walk &address : %p address : %p bp %p offset of first internal ptr %d\n", currPinningArrayCursor, oldPinningArrayAddress, walkState->bp, offsetOfFirstInternalPtr);
 #endif
-      walkState->objectSlotWalkFunction(walkState->walkThread, walkState, currPinningArrayCursor, REMOTE_ADDR(currPinningArrayCursor));
+      walkState->objectSlotWalkFunction(walkState->walkThread, walkState, currPinningArrayCursor, currPinningArrayCursor);
       newPinningArrayAddress = *((J9Object **) currPinningArrayCursor);
       displacement = (IDATA) (((UDATA)newPinningArrayAddress) - ((UDATA)oldPinningArrayAddress));
       ++(walkState->slotIndex);
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-      swPrintf(walkState, 6, "After object slot walk for pinning array with &address : %p old address %p new address %p displacement %p\n", REMOTE_ADDR(currPinningArrayCursor), oldPinningArrayAddress, newPinningArrayAddress, displacement);
+      swPrintf(walkState, 6, "After object slot walk for pinning array with &address : %p old address %p new address %p displacement %p\n", currPinningArrayCursor, oldPinningArrayAddress, newPinningArrayAddress, displacement);
 #endif
 
 
@@ -1369,7 +1367,7 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
 
        /* If base array was moved by a non zero displacement
        */
-#if defined(J9VM_INTERP_STACKWALK_TRACING) && !defined(J9VM_OUT_OF_PROCESS)
+#if defined(J9VM_INTERP_STACKWALK_TRACING) 
       if ((displacement != 0) || (walkState->walkThread->javaVM->runtimeFlags & J9_RUNTIME_SNIFF_AND_WHACK))
 #else
       if (displacement != 0)

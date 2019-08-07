@@ -79,7 +79,7 @@
 #define J9AccInterface 0x200
 #define J9AccMandated 0x8000
 #define J9AccMethodCallerSensitive 0x100000
-#define J9AccMethodUnused0x1000000 0x1000000
+#define J9AccMethodAllowFinalFieldWrites 0x1000000
 #define J9AccMethodFrameIteratorSkip 0x80000
 #define J9AccMethodHasBackwardBranches 0x200000
 #define J9AccMethodHasDebugInfo 0x40000

@@ -50,18 +50,17 @@ checkLocalInternTableSanity(J9JavaVM *vm)
 
 	vmchkPrintf(vm, "  %s Checking ROM intern string nodes>\n", VMCHECK_PREFIX);
 
-	dynamicLoadBuffers = (J9TranslationBufferSet *)DBG_ARROW(vm, dynamicLoadBuffers);
+	dynamicLoadBuffers = vm->dynamicLoadBuffers;
 	if (NULL != dynamicLoadBuffers) {
-		J9DbgROMClassBuilder *romClassBuilder = (J9DbgROMClassBuilder *)DBG_ARROW(dynamicLoadBuffers, romClassBuilder);
+		J9DbgROMClassBuilder *romClassBuilder = dynamicLoadBuffers->romClassBuilder;
 		if (NULL != romClassBuilder) {
-			/* We don't need to use DBG_ARROW() below because we are taking its address (not dereferencing it).. */
 			J9DbgStringInternTable *stringInternTable = &(romClassBuilder->stringInternTable);
-			J9InternHashTableEntry *node = (J9InternHashTableEntry*)DBG_ARROW(stringInternTable, headNode);
+			J9InternHashTableEntry *node = stringInternTable->headNode;
 
 			while (NULL != node) {
-				J9ClassLoader *classLoader = (J9ClassLoader *)DBG_ARROW(node, classLoader);
-				if (J9_ARE_NO_BITS_SET(DBG_ARROW(classLoader, gcFlags), J9_GC_CLASS_LOADER_DEAD)) {
-					J9UTF8 *utf8 = (J9UTF8 *)DBG_ARROW(node, utf8);
+				J9ClassLoader *classLoader = node->classLoader;
+				if (J9_ARE_NO_BITS_SET(classLoader->gcFlags, J9_GC_CLASS_LOADER_DEAD)) {
+					J9UTF8 *utf8 = node->utf8;
 					if (FALSE == verifyUTF8(utf8)) {
 						vmchkPrintf(vm, " %s - Invalid utf8=0x%p for node=0x%p>\n",
 								VMCHECK_FAILED, utf8, node);
@@ -73,7 +72,7 @@ checkLocalInternTableSanity(J9JavaVM *vm)
 					}
 				}
 				count += 1;
-				node = (J9InternHashTableEntry *)DBG_ARROW(node, nextNode);
+				node = node->nextNode;
 			}
 		}
 	}
@@ -116,15 +115,15 @@ verifyJ9ClassLoader(J9JavaVM *vm, J9ClassLoader *classLoader)
 	J9ClassLoader *walk;
 	J9ClassLoaderWalkState walkState;
 
-	walk = vmchkAllClassLoadersStartDo(vm, &walkState);
+	walk = vm->internalVMFunctions->allClassLoadersStartDo(&walkState, vm, 0);
 	while (NULL != walk) {
 		if (walk == classLoader) {
 			valid = TRUE;
 			break;
 		}
-		walk = vmchkAllClassLoadersNextDo(vm, &walkState);
+		walk = vm->internalVMFunctions->allClassLoadersNextDo(&walkState);
 	}
-	vmchkAllClassLoadersEndDo(vm, &walkState);
+	vm->internalVMFunctions->allClassLoadersEndDo(&walkState);
 
 	return valid;
 }

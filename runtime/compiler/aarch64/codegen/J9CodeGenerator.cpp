@@ -48,6 +48,8 @@ J9::ARM64::CodeGenerator::CodeGenerator() :
       TEMPORARY_initJ9ARM64TreeEvaluatorTable(cg);
       initTreeEvaluatorTable = true;
       }
+
+   cg->setSupportsDivCheck();
    }
 
 TR::Linkage *

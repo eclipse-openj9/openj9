@@ -118,4 +118,7 @@
 #define J9ROMMETHOD_IN_ITABLE(romMethod) \
 	J9_ARE_ALL_BITS_SET((romMethod)->modifiers, J9AccMethodVTable | J9AccPublic)
 
+#define J9ROMMETHOD_ALLOW_FINAL_FIELD_WRITES(romMethod, staticBit) \
+	((J9AccMethodAllowFinalFieldWrites | (staticBit)) == ((romMethod)->modifiers & (J9AccMethodAllowFinalFieldWrites | J9AccStatic)))
+
 #endif	/* _J9MODIFIERS_API_H */

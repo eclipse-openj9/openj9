@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2018 IBM Corp. and others
+Copyright (c) 2006, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -202,7 +202,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="module_codert_ia32" value="true"/>
 		<flag id="module_codert_vm" value="true"/>
 		<flag id="module_ddr" value="true"/>
-		<flag id="module_ddrext" value="true"/>
 		<flag id="module_gptest" value="true"/>
 		<flag id="module_j9vm" value="true"/>
 		<flag id="module_j9vmtest" value="true"/>
@@ -229,7 +228,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="module_shared_util" value="true"/>
 		<flag id="module_thrtrace" value="true"/>
 		<flag id="module_verbose" value="true"/>
-		<flag id="module_windbg" value="true"/>
 		<flag id="module_zip" value="true"/>
 		<flag id="module_zlib" value="true"/>
 		<flag id="opt_annotations" value="true"/>
@@ -249,7 +247,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="opt_panama" value="false"/>
 		<flag id="opt_nativeCharacterConverter" value="true"/>
 		<flag id="opt_reflect" value="true"/>
-		<flag id="opt_remoteConsoleSupport" value="true"/>
 		<flag id="opt_sharedClasses" value="true"/>
 		<flag id="opt_sidecar" value="true"/>
 		<flag id="opt_srpAvlTreeSupport" value="true"/>

@@ -124,4 +124,25 @@ elseif(OMR_ARCH_POWER)
 		endif()
 	endif()
 	target_include_directories(ffi PUBLIC powerpc)
+elseif(OMR_ARCH_S390)
+
+	if(OMR_OS_LINUX)
+		target_sources(ffi
+			PRIVATE
+				s390/ffi.c
+				s390/sysv.S
+		)
+		if(OMR_ENV_DATA64)
+			target_include_directories(ffi PUBLIC preconf/xz64)
+			set(CMAKE_ASM_FLAGS "-z noexecstack -march=z9-109")
+		else()
+			target_include_directories(ffi PUBLIC preconf/xz31)
+			set(CMAKE_ASM_FLAGS "-z noexecstack -mzarch -march=z9-109 -m31")
+		endif()
+		target_include_directories(ffi PUBLIC s390)
+	else()
+		message(SEND_ERROR "Unsupported platform")
+	endif()
+else()
+	message(SEND_ERROR "Unsupported platform")
 endif()

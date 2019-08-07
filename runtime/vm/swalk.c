@@ -30,10 +30,8 @@
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
 #include "linearswalk.h"
 #endif
-#ifndef J9VM_OUT_OF_PROCESS
 #include "j9modron.h"
 #include "ut_j9vrb.h"
-#endif
 #else
 #include "ut_j9vm.h"
 #endif
@@ -60,7 +58,6 @@
 #if (defined(J9VM_INTERP_STACKWALK_TRACING))
 static void printFrameType (J9StackWalkState * walkState, char * frameType);
 
-#if (!defined(J9VM_OUT_OF_PROCESS))
 static void initializeObjectSlotBitVector (J9StackWalkState * walkState);
 static void sniffAndWhack (J9StackWalkState * walkState);
 static void sniffAndWhackPointer (J9StackWalkState * walkState, j9object_t *slotPointer);
@@ -69,7 +66,6 @@ static void emptySniffAndWhackIterator (J9VMThread * currentThread, J9StackWalkS
 #if (defined(J9VM_INTERP_NATIVE_SUPPORT))
 static void sniffAndWhackELS (J9StackWalkState * walkState);
 #endif /* INTERP_NATIVE_SUPPORT */
-#endif /* J9VM_!OUT_OF_PROCESS */
 #endif /* J9VM_INTERP_STACKWALK_TRACING */
 
 #if (defined(J9VM_INTERP_NATIVE_SUPPORT))
@@ -89,10 +85,8 @@ static void walkObjectPushes (J9StackWalkState * walkState);
 static void walkPushedJNIRefs (J9StackWalkState * walkState);
 static void getStackMap (J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA offsetPC, UDATA pushCount, U_32 *result);
 static void getLocalsMap (J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA offsetPC, U_32 * result, UDATA argTempCount, UDATA alwaysLocalMap);
-#if (!defined(J9VM_OUT_OF_PROCESS)) 
 static UDATA allocateCache (J9StackWalkState * walkState);
 static void dropToCurrentFrame (J9StackWalkState * walkState);
-#endif /* J9VM_!OUT_OF_PROCESS */
 
 /* The minimum number of stack slots that a stack frame can occupy */
 #define J9_STACKWALK_MIN_FRAME_SLOTS (OMR_MIN(sizeof(J9JITFrame), sizeof(J9SFStackFrame)) / sizeof(UDATA))
@@ -104,7 +98,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	UDATA * nextA0;
 	UDATA savedFlags = walkState->flags;
 	J9StackWalkState * oldState = NULL;
-#if defined(J9VM_INTERP_STACKWALK_TRACING) && !defined(J9VM_OUT_OF_PROCESS)
+#if defined(J9VM_INTERP_STACKWALK_TRACING) 
 	void  (*savedOSlotIterator) (struct J9VMThread * vmThread, struct J9StackWalkState * walkState, j9object_t * objectSlot, const void * stackLocation) =
 		walkState->objectSlotWalkFunction;
 
@@ -155,7 +149,7 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	swPrintf(walkState, 1, "\n");
-	swPrintf(walkState, 1, "*** BEGIN STACK WALK, flags = %p, walkThread = %p, walkState = %p ***\n", walkState->flags, REMOTE_ADDR(walkState->walkThread), walkState);
+	swPrintf(walkState, 1, "*** BEGIN STACK WALK, flags = %p, walkThread = %p, walkState = %p ***\n", walkState->flags, walkState->walkThread, walkState);
 
 	if (walkState->flags & J9_STACKWALK_RESUME) swPrintf(walkState, 2, "\tJ9_STACKWALK_RESUME\n");
 	if (walkState->flags & J9_STACKWALK_START_AT_JIT_FRAME) swPrintf(walkState, 2, "\tSTART_AT_JIT_FRAME\n");
@@ -179,7 +173,6 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	if (walkState->flags & J9_STACKWALK_CHECK_I_SLOTS_FOR_OBJECTS) swPrintf(walkState, 2, "\tCHECK_I_SLOTS_FOR_OBJECTS\n");
 	if (walkState->flags & J9_STACKWALK_SAVE_STACKED_REGISTERS) swPrintf(walkState, 2, "\tSAVE_STACKED_REGISTERS\n");
 
-#ifndef J9VM_OUT_OF_PROCESS
 	if ((walkState->flags & (J9_STACKWALK_MAINTAIN_REGISTER_MAP | J9_STACKWALK_INCLUDE_CALL_IN_FRAMES)) == (J9_STACKWALK_MAINTAIN_REGISTER_MAP | J9_STACKWALK_INCLUDE_CALL_IN_FRAMES)) {
 		PORT_ACCESS_FROM_WALKSTATE(walkState);
 		J9UTF8 * className = J9ROMCLASS_CLASSNAME(((J9Class *) walkState->userData4)->romClass);
@@ -195,14 +188,13 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 			j9mem_free_memory(detail);
 		}
 	}
-#endif
 
-	swPrintf(walkState, 2, "Initial values: walkSP = %p, PC = %p, literals = %p, A0 = %p, j2iFrame = %p, ELS = %p, decomp = %p\n", REMOTE_ADDR(walkState->walkSP), walkState->pc, walkState->literals, REMOTE_ADDR(walkState->arg0EA),
+	swPrintf(walkState, 2, "Initial values: walkSP = %p, PC = %p, literals = %p, A0 = %p, j2iFrame = %p, ELS = %p, decomp = %p\n", walkState->walkSP, walkState->pc, walkState->literals, walkState->arg0EA,
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
-		REMOTE_ADDR(walkState->j2iFrame),
-		REMOTE_ADDR(walkState->walkedEntryLocalStorage),
+		walkState->j2iFrame,
+		walkState->walkedEntryLocalStorage,
 #ifdef J9VM_JIT_FULL_SPEED_DEBUG
-		REMOTE_ADDR(walkState->decompilationStack)
+		walkState->decompilationStack
 #else
 		0
 #endif
@@ -223,7 +215,6 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 		goto terminationPoint;
 	} 
 
-#ifndef J9VM_OUT_OF_PROCESS
 	walkState->dropToCurrentFrame = dropToCurrentFrame;
 	if (walkState->flags & J9_STACKWALK_CACHE_MASK) {
 		rc = allocateCache(walkState);
@@ -231,9 +222,8 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 			goto terminationPoint;
 		}
 	}
-#endif
 
-#if defined(J9VM_INTERP_STACKWALK_TRACING) && !defined(J9VM_OUT_OF_PROCESS)
+#if defined(J9VM_INTERP_STACKWALK_TRACING) 
 	initializeObjectSlotBitVector(walkState);
 #endif
 
@@ -244,11 +234,6 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 	if (walkState->flags & J9_STACKWALK_ITERATE_O_SLOTS) {
 		walkState->flags |= J9_STACKWALK_MAINTAIN_REGISTER_MAP;
 	}
-#ifdef J9VM_OUT_OF_PROCESS
-	if (walkState->flags & J9_STACKWALK_START_AT_JIT_FRAME) {
-		goto jitFrame;
-	}
-#endif
 #endif
 
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
@@ -307,18 +292,10 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 				if ((UDATA) walkState->pc <= J9SF_MAX_SPECIAL_FRAME_TYPE) {
 					printFrameType(walkState, "Unknown");
-#ifdef J9VM_OUT_OF_PROCESS
-					swPrintf(walkState, 0, "Aborting walk due to unknown special frame type\n");
-					goto terminationPoint;
-#endif
 				}
 #endif
 
-#ifdef J9VM_OUT_OF_PROCESS
-				if ((walkState->pc == walkState->walkThread->javaVM->callInReturnPC) || (walkState->pc == (walkState->walkThread->javaVM->callInReturnPC + 3)))
-#else
-				if (READ_BYTE(walkState->pc) == 0xFF) /* impdep2 = 0xFF - indicates a JNI call-in frame */
-#endif
+				if (*(walkState->pc) == 0xFF) /* impdep2 = 0xFF - indicates a JNI call-in frame */
 				{
 					walkJNICallInFrame(walkState);
 				} else {
@@ -328,12 +305,12 @@ UDATA  walkStackFrames(J9VMThread *currentThread, J9StackWalkState *walkState)
 		}
 
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
-		lswRecord(walkState, LSW_TYPE_BP, REMOTE_ADDR(walkState->bp));
+		lswRecord(walkState, LSW_TYPE_BP, walkState->bp);
 		lswRecord(walkState, LSW_TYPE_ARG_COUNT, (void*)(UDATA)walkState->argCount);
-		lswRecord(walkState, LSW_TYPE_METHOD, REMOTE_ADDR(walkState->method));
-		lswRecord(walkState, LSW_TYPE_UNWIND_SP, REMOTE_ADDR(walkState->unwindSP)); 
+		lswRecord(walkState, LSW_TYPE_METHOD, walkState->method);
+		lswRecord(walkState, LSW_TYPE_UNWIND_SP, walkState->unwindSP); 
 		if ((UDATA) walkState->pc != J9SF_FRAME_TYPE_JIT_RESOLVE) {
-			lswRecord(walkState, LSW_TYPE_FIXED_SLOTS, REMOTE_ADDR(walkState->bp));
+			lswRecord(walkState, LSW_TYPE_FIXED_SLOTS, walkState->bp);
 		}
 #endif
 
@@ -354,9 +331,6 @@ resumeInterpreterWalk:
 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 		if (walkState->frameFlags & J9_STACK_FLAGS_JIT_TRANSITION_TO_INTERPRETER_MASK) {
-#ifdef J9VM_OUT_OF_PROCESS
-jitFrame:
-#endif
 resumeJitWalk:
 			if (jitWalkStackFrames(walkState) != J9_STACKWALK_KEEP_ITERATING) {
 				goto terminationPoint;
@@ -370,7 +344,7 @@ resumeJitWalk:
 
 		fixedStackFrame = (J9SFStackFrame *) ((U_8 *) walkState->bp - sizeof(J9SFStackFrame) + sizeof(UDATA));
 		nextLiterals = fixedStackFrame->savedCP;
-		nextA0 = (UDATA *) LOCAL_ADDR(UNTAGGED_A0(fixedStackFrame));
+		nextA0 = (UDATA *) UNTAGGED_A0(fixedStackFrame);
 
 		/* Move to next frame */
 
@@ -396,7 +370,7 @@ endOfStack:
 
 terminationPoint:
 
-#if defined(J9VM_INTERP_STACKWALK_TRACING) && !defined(J9VM_OUT_OF_PROCESS)
+#if defined(J9VM_INTERP_STACKWALK_TRACING) 
 	sniffAndWhack(walkState);
 #endif
 
@@ -405,7 +379,7 @@ terminationPoint:
 #endif
 
 	walkState->flags = savedFlags | (walkState->flags & J9_STACKWALK_CACHE_ALLOCATED);
-#if defined(J9VM_INTERP_STACKWALK_TRACING) && !defined(J9VM_OUT_OF_PROCESS)
+#if defined(J9VM_INTERP_STACKWALK_TRACING) 
 	walkState->objectSlotWalkFunction = savedOSlotIterator;
 	Trc_VRB_WalkStackFrames_Exit(currentThread, walkState->walkThread, rc);
 #endif
@@ -525,7 +499,6 @@ walkIt:
 
 
 
-#if (!defined(J9VM_OUT_OF_PROCESS)) 
 static UDATA allocateCache(J9StackWalkState * walkState)
 {
 	PORT_ACCESS_FROM_WALKSTATE(walkState);
@@ -583,7 +556,6 @@ static UDATA allocateCache(J9StackWalkState * walkState)
 	return J9_STACKWALK_RC_NONE;
 }
 
-#endif /* J9VM_!OUT_OF_PROCESS */
 
 
 #if (!defined(J9VM_INTERP_STACKWALK_TRACING)) 
@@ -607,7 +579,7 @@ static void walkObjectPushes(J9StackWalkState * walkState)
 	j9object_t * currentSlot = (j9object_t*) walkState->walkSP;
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-	swPrintf(walkState, 4, "\tObject pushes starting at %p for %d slots\n", REMOTE_ADDR(currentSlot), byteCount / sizeof(UDATA));
+	swPrintf(walkState, 4, "\tObject pushes starting at %p for %d slots\n", currentSlot, byteCount / sizeof(UDATA));
 #endif
 
 	walkState->slotType = J9_STACKWALK_SLOT_TYPE_INTERNAL;
@@ -677,12 +649,12 @@ walkMethodFrame(J9StackWalkState * walkState)
 	walkState->bp = (UDATA *) &(methodFrame->savedA0);
 	walkState->frameFlags = methodFrame->specialFrameFlags;
 	MARK_SLOT_AS_OBJECT(walkState, (j9object_t*) &(methodFrame->specialFrameFlags));
-	walkState->method = READ_METHOD(methodFrame->method);
+	walkState->method = methodFrame->method;
 	walkState->unwindSP = (UDATA *) methodFrame;
 
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
 	{
-		J9SFMethodFrame * mf = (J9SFMethodFrame *) REMOTE_ADDR(methodFrame);
+		J9SFMethodFrame * mf = (J9SFMethodFrame *) methodFrame;
 		lswRecordSlot(walkState, &mf->specialFrameFlags, LSW_TYPE_FLAGS, "Special Flags");
 		lswRecordSlot(walkState, &mf->method, LSW_TYPE_METHOD, "Method");
 	}
@@ -731,7 +703,7 @@ walkMethodFrame(J9StackWalkState * walkState)
 				j9localmap_ArgBitsForPC0(UNTAGGED_METHOD_CP(walkState->method)->ramClass->romClass, romMethod, result);
 
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-				swPrintf(walkState, 4, "\tArguments starting at %p for %d slots\n", REMOTE_ADDR(walkState->arg0EA), walkState->argCount);
+				swPrintf(walkState, 4, "\tArguments starting at %p for %d slots\n", walkState->arg0EA, walkState->argCount);
 #endif
 				walkState->slotType = J9_STACKWALK_SLOT_TYPE_METHOD_LOCAL;
 				walkState->slotIndex = 0;
@@ -785,7 +757,7 @@ walkMethodTypeFrame(J9StackWalkState * walkState)
 
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
 	{
-		J9SFMethodTypeFrame * mf = (J9SFMethodTypeFrame *) REMOTE_ADDR(methodTypeFrame);
+		J9SFMethodTypeFrame * mf = (J9SFMethodTypeFrame *) methodTypeFrame;
 		lswRecordSlot(walkState, &mf->specialFrameFlags, LSW_TYPE_FLAGS, "Special Flags");
 		lswRecordSlot(walkState, &mf->descriptionIntCount, LSW_TYPE_DESCRIPTION_INT_COUNT, "descriptionIntCount");
 		lswRecordSlot(walkState, &mf->argStackSlots, LSW_TYPE_ARG_COUNT, "argStackSlots");
@@ -815,7 +787,7 @@ walkMethodTypeFrame(J9StackWalkState * walkState)
 		/* Add 1 for MH or NULL "receiver" that will always be on the stack */
 		walkState->argCount = methodTypeFrame->argStackSlots + 1;
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-		swPrintf(walkState, 4, "\tArguments starting at %p for %d slots\n", REMOTE_ADDR(walkState->arg0EA), walkState->argCount);
+		swPrintf(walkState, 4, "\tArguments starting at %p for %d slots\n", walkState->arg0EA, walkState->argCount);
 #endif
 		walkState->slotType = J9_STACKWALK_SLOT_TYPE_METHOD_LOCAL;
 		walkState->slotIndex = 0;
@@ -892,7 +864,7 @@ walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offs
 	if (0 != numberOfMappedLocals) {
 		getLocalsMap(walkState, romClass, romMethod, offsetPC, result, numberOfMappedLocals, alwaysLocalMap);
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-		swPrintf(walkState, 4, "\tLocals starting at %p for %d slots\n", REMOTE_ADDR(localBase), numberOfMappedLocals);
+		swPrintf(walkState, 4, "\tLocals starting at %p for %d slots\n", localBase, numberOfMappedLocals);
 #endif
 		walkState->slotType = J9_STACKWALK_SLOT_TYPE_METHOD_LOCAL;
 		walkState->slotIndex = 0;
@@ -902,7 +874,7 @@ walkBytecodeFrameSlots(J9StackWalkState *walkState, J9Method *method, UDATA offs
 	if (0 != pendingStackHeight) {
 		getStackMap(walkState, romClass, romMethod, offsetPC, pendingStackHeight, result);
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-		swPrintf(walkState, 4, "\tPending stack starting at %p for %d slots\n", REMOTE_ADDR(pendingBase), pendingStackHeight);
+		swPrintf(walkState, 4, "\tPending stack starting at %p for %d slots\n", pendingBase, pendingStackHeight);
 #endif
 		walkState->slotType = J9_STACKWALK_SLOT_TYPE_PENDING;
 		walkState->slotIndex = 0;
@@ -926,7 +898,7 @@ walkBytecodeFrame(J9StackWalkState * walkState)
 	lswRecord(walkState, LSW_TYPE_FRAME_TYPE, (void*)(UDATA)LSW_FRAME_TYPE_BYTECODE);
 #endif
 
-	walkState->method = READ_METHOD(walkState->literals);
+	walkState->method = walkState->literals;
 	if (NULL == walkState->method) {
 		walkState->constantPool = NULL;
 		walkState->bytecodePCOffset = -1;
@@ -956,7 +928,7 @@ walkBytecodeFrame(J9StackWalkState * walkState)
 
 		/* If PC = impdep1, we haven't run the method (and never will) its just a placeholder */
 		if ((walkState->pc != vm->impdep1PC) && (walkState->pc != (vm->impdep1PC + 3))) {
-			walkState->bytecodePCOffset = walkState->pc - (U_8 *) REMOTE_ADDR(J9_BYTECODE_START_FROM_RAM_METHOD(walkState->method));
+			walkState->bytecodePCOffset = walkState->pc - (U_8 *) J9_BYTECODE_START_FROM_RAM_METHOD(walkState->method);
 		} else {
 			walkState->bytecodePCOffset = 0;
 		}
@@ -966,14 +938,14 @@ walkBytecodeFrame(J9StackWalkState * walkState)
 		walkState->bp = walkState->arg0EA - argTempCount;
 		if (romMethod->modifiers & J9AccSynchronized) {
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
-			lswRecordSlot(walkState, REMOTE_ADDR(walkState->bp), LSW_TYPE_O_SLOT, "Sync Object");
+			lswRecordSlot(walkState, walkState->bp, LSW_TYPE_O_SLOT, "Sync Object");
 #endif
 			argTempCount += 1;
 			walkState->bp -= 1;
 		} else if (J9ROMMETHOD_IS_NON_EMPTY_OBJECT_CONSTRUCTOR(romMethod)) {
 			/* Non-empty java.lang.Object.<init> has one hidden temp to hold a copy of the receiver */
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
-			lswRecordSlot(walkState, REMOTE_ADDR(walkState->bp), LSW_TYPE_O_SLOT, "Receiver Object");
+			lswRecordSlot(walkState, walkState->bp, LSW_TYPE_O_SLOT, "Receiver Object");
 #endif
 			argTempCount += 1;
 			walkState->bp -= 1;
@@ -1022,7 +994,7 @@ static void walkJNICallInFrame(J9StackWalkState * walkState)
 #endif	
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING	
 	{
-		J9SFJNICallInFrame * jf = REMOTE_ADDR(callInFrame);
+		J9SFJNICallInFrame * jf = callInFrame;
 		lswRecordSlot(walkState, &jf->specialFrameFlags, LSW_TYPE_FLAGS, "Special Flags");
 		lswRecordSlot(walkState, &jf->exitAddress, LSW_TYPE_ADDRESS, "Exit Address"); 
 		lswRecord(walkState, LSW_TYPE_ELS, walkState->walkedEntryLocalStorage->oldEntryLocalStorage); 
@@ -1047,7 +1019,7 @@ static void walkJNICallInFrame(J9StackWalkState * walkState)
 			}
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 			else {
-				swPrintf(walkState, 2, "\tCall-in return value (non-object) takes %d slots at %p\n", walkState->unwindSP - walkState->walkSP, REMOTE_ADDR(walkState->walkSP));
+				swPrintf(walkState, 2, "\tCall-in return value (non-object) takes %d slots at %p\n", walkState->unwindSP - walkState->walkSP, walkState->walkSP);
 			}
 #endif
 			walkState->walkSP = walkState->unwindSP;	/* so walkObjectPushes works correctly */
@@ -1057,13 +1029,13 @@ static void walkJNICallInFrame(J9StackWalkState * walkState)
 		}
 	}
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
-#if defined(J9VM_INTERP_STACKWALK_TRACING) && !defined(J9VM_OUT_OF_PROCESS)
+#if defined(J9VM_INTERP_STACKWALK_TRACING) 
 	sniffAndWhackELS(walkState);
 #endif
 	walkState->walkedEntryLocalStorage = walkState->walkedEntryLocalStorage->oldEntryLocalStorage;
 	walkState->i2jState = walkState->walkedEntryLocalStorage ? &(walkState->walkedEntryLocalStorage->i2jState) : NULL;
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-	swPrintf(walkState, 2, "\tNew ELS = %p\n", REMOTE_ADDR(walkState->walkedEntryLocalStorage));
+	swPrintf(walkState, 2, "\tNew ELS = %p\n", walkState->walkedEntryLocalStorage);
 #endif
 #endif
 	walkState->argCount = 0;
@@ -1096,7 +1068,7 @@ static void walkJITResolveFrame(J9StackWalkState * walkState)
 
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING 
 	{
-		J9SFJITResolveFrame * rf = REMOTE_ADDR(jitResolveFrame);
+		J9SFJITResolveFrame * rf = jitResolveFrame;
 		lswRecordSlot(walkState, &rf->savedJITException, LSW_TYPE_O_SLOT, "Saved JIT Excptn");
 		lswRecordSlot(walkState, &rf->specialFrameFlags, LSW_TYPE_FLAGS, "Flags");
 		lswRecordSlot(walkState, &rf->parmCount, LSW_TYPE_ARG_COUNT, "Arg Count");
@@ -1112,7 +1084,7 @@ static void walkJITResolveFrame(J9StackWalkState * walkState)
 #if (defined(J9VM_INTERP_STACKWALK_TRACING)) 
 static void printFrameType(J9StackWalkState * walkState, char * frameType)
 {
-	swPrintf(walkState, 2, "%s frame: bp = %p, sp = %p, pc = %p, cp = %p, arg0EA = %p, flags = %p\n", frameType, REMOTE_ADDR(walkState->bp), REMOTE_ADDR(walkState->walkSP), walkState->pc, REMOTE_ADDR(walkState->constantPool), REMOTE_ADDR(walkState->arg0EA), walkState->frameFlags);
+	swPrintf(walkState, 2, "%s frame: bp = %p, sp = %p, pc = %p, cp = %p, arg0EA = %p, flags = %p\n", frameType, walkState->bp, walkState->walkSP, walkState->pc, walkState->constantPool, walkState->arg0EA, walkState->frameFlags);
 	swPrintMethod(walkState);
 
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING	
@@ -1135,12 +1107,8 @@ void swPrintMethod(J9StackWalkState * walkState) {
 		J9UTF8 * sig = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
 
 		swPrintf(walkState, 2, "\tMethod: %.*s.%.*s%.*s "
-#ifdef J9VM_OUT_OF_PROCESS
-			"!j9method  0x%zx"
-#else
 			"(%p)"
-#endif
-			"\n", (U_32) J9UTF8_LENGTH(className), J9UTF8_DATA(className), (U_32) J9UTF8_LENGTH(name), J9UTF8_DATA(name), (U_32) J9UTF8_LENGTH(sig), J9UTF8_DATA(sig), REMOTE_ADDR(walkState->method));
+			"\n", (U_32) J9UTF8_LENGTH(className), J9UTF8_DATA(className), (U_32) J9UTF8_LENGTH(name), J9UTF8_DATA(name), (U_32) J9UTF8_LENGTH(sig), J9UTF8_DATA(sig), walkState->method);
 	}
 }
 #endif /* J9VM_INTERP_STACKWALK_TRACING */
@@ -1155,7 +1123,7 @@ static void walkJITJNICalloutFrame(J9StackWalkState * walkState)
 	walkState->bp = (UDATA *) &(methodFrame->savedA0);
 	walkState->frameFlags = methodFrame->specialFrameFlags;
 	MARK_SLOT_AS_OBJECT(walkState, (j9object_t*) &(methodFrame->specialFrameFlags));
-	walkState->method = READ_METHOD(methodFrame->method);
+	walkState->method = methodFrame->method;
 	walkState->constantPool = UNTAGGED_METHOD_CP(walkState->method);
 #ifdef J9VM_INTERP_STACKWALK_TRACING
 	printFrameType(walkState, "JIT JNI call-out");
@@ -1168,7 +1136,7 @@ static void walkJITJNICalloutFrame(J9StackWalkState * walkState)
 	}
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING
 	{
-		J9SFMethodFrame * mf = REMOTE_ADDR(methodFrame);
+		J9SFMethodFrame * mf = methodFrame;
 		lswRecordSlot(walkState, &mf->specialFrameFlags, LSW_TYPE_FLAGS, "Special Flags");
 		lswRecordSlot(walkState, &mf->method, LSW_TYPE_METHOD, "Method");
 		lswRecord(walkState, LSW_TYPE_FRAME_BOTTOM, walkState->bp);
@@ -1228,20 +1196,16 @@ void swPrintf(J9StackWalkState * walkState, UDATA level, char * format, ...)
 	if (walkState->walkThread->javaVM->stackWalkVerboseLevel >= level) {
 		PORT_ACCESS_FROM_WALKSTATE(walkState);
 		va_list args;
-#ifdef J9VM_OUT_OF_PROCESS
-		static char buf[4096];
-#else
 		char buf[1024];
-#endif
 
 		va_start(args, format);
 		j9str_vprintf(buf, sizeof(buf), format, args);
 
-#if defined(J9VM_INTERP_STACKWALK_TRACING) && !defined(J9VM_OUT_OF_PROCESS)
+#if defined(J9VM_INTERP_STACKWALK_TRACING) 
 /*	Trc_VRB_WalkStackFrames_swPrintf(walkState->walkThread, buf); */
 #endif
 
-		j9tty_printf(PORTLIB, "<%p> %s", REMOTE_ADDR(walkState->walkThread), buf);
+		j9tty_printf(PORTLIB, "<%p> %s", walkState->walkThread, buf);
 		va_end(args);
 	}
 }
@@ -1256,24 +1220,13 @@ swWalkObjectSlot(J9StackWalkState * walkState, j9object_t * objectSlot, void * i
 {
 	UDATA oldValue;
 	UDATA newValue;
-	j9object_t * localObjectSlot;
 
-	/* If indirectSlot is NULL, then objectSlot is a pointer onto the local copy of the stack.
-	 * If it is non-NULL, then objectSlot is a pointer into remote memory, and indirectSlot is a pointer onto the local stack
-	 */
-	if (indirectSlot == NULL) {
-		localObjectSlot = objectSlot;
-		objectSlot = REMOTE_ADDR(objectSlot);
-	} else {
-		localObjectSlot = LOCAL_ADDR(objectSlot);
-	}
-
-	oldValue = READ_UDATA((UDATA *) objectSlot);
+	oldValue = *((UDATA *) objectSlot);
 
 	if (indirectSlot != NULL) {
-		swPrintf(walkState, 4, "\t\t%s[%p -> %p] = %p\n", (tag ? tag : "O-Slot"), REMOTE_ADDR(indirectSlot), objectSlot, oldValue);
+		swPrintf(walkState, 4, "\t\t%s[%p -> %p] = %p\n", (tag ? tag : "O-Slot"), indirectSlot, objectSlot, oldValue);
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING 
-		lswRecordSlot(walkState, REMOTE_ADDR((void*)(((UDATA) indirectSlot) & ~(UDATA)1)), LSW_TYPE_INDIRECT_O_SLOT, tag ? tag : "O-Slot");
+		lswRecordSlot(walkState, (void*)(((UDATA) indirectSlot) & ~(UDATA)1), LSW_TYPE_INDIRECT_O_SLOT, tag ? tag : "O-Slot");
 #endif 
 	} else {
 		swPrintf(walkState, 4, "\t\t%s[%p] = %p\n", (tag ? tag : "O-Slot"), objectSlot, oldValue);
@@ -1281,8 +1234,8 @@ swWalkObjectSlot(J9StackWalkState * walkState, j9object_t * objectSlot, void * i
 		lswRecordSlot(walkState, objectSlot, LSW_TYPE_O_SLOT, tag ? tag : "O-Slot");
 #endif  
 	}
-	walkState->objectSlotWalkFunction(walkState->currentThread, walkState, localObjectSlot, objectSlot);
-	newValue = READ_UDATA((UDATA *) objectSlot);
+	walkState->objectSlotWalkFunction(walkState->currentThread, walkState, objectSlot, objectSlot);
+	newValue = *((UDATA *) objectSlot);
 	if (oldValue != newValue) {
 		swPrintf(walkState, 4, "\t\t\t-> %p\n", newValue);
 	}
@@ -1294,19 +1247,19 @@ swWalkObjectSlot(J9StackWalkState * walkState, j9object_t * objectSlot, void * i
 #if (defined(J9VM_INTERP_STACKWALK_TRACING)) 
 void swWalkIntSlot(J9StackWalkState * walkState, UDATA * intSlot, void * indirectSlot, void * tag) {
 	if (indirectSlot) {
-		swPrintf(walkState, 5, "\t\t%s[%p -> %p] = %p\n", (tag ? tag : "I-Slot"), REMOTE_ADDR(indirectSlot), REMOTE_ADDR(intSlot), *intSlot);
+		swPrintf(walkState, 5, "\t\t%s[%p -> %p] = %p\n", (tag ? tag : "I-Slot"), indirectSlot, intSlot, *intSlot);
 	} else {
-		swPrintf(walkState, 5, "\t\t%s[%p] = %p\n", (tag ? tag : "I-Slot"), REMOTE_ADDR(intSlot), *intSlot);
+		swPrintf(walkState, 5, "\t\t%s[%p] = %p\n", (tag ? tag : "I-Slot"), intSlot, *intSlot);
 	}
 #ifdef J9VM_INTERP_LINEAR_STACKWALK_TRACING	
-	lswRecordSlot(walkState, REMOTE_ADDR(intSlot), LSW_TYPE_I_SLOT, tag ? tag : "I-Slot");
+	lswRecordSlot(walkState, intSlot, LSW_TYPE_I_SLOT, tag ? tag : "I-Slot");
 #endif
 }
 
 #endif /* J9VM_INTERP_STACKWALK_TRACING */
 
 
-#if (defined(J9VM_INTERP_STACKWALK_TRACING)  && !defined(J9VM_OUT_OF_PROCESS)) 
+#if defined(J9VM_INTERP_STACKWALK_TRACING)   
 static void initializeObjectSlotBitVector(J9StackWalkState * walkState)
 {
 	walkState->objectSlotBitVector = NULL;
@@ -1334,10 +1287,10 @@ static void initializeObjectSlotBitVector(J9StackWalkState * walkState)
 	}
 }
 
-#endif /* J9VM_INTERP_STACKWALK_TRACING && !OUT_OF_PROCESS */
+#endif /* J9VM_INTERP_STACKWALK_TRACING */
 
 
-#if (defined(J9VM_INTERP_STACKWALK_TRACING)  && !defined(J9VM_OUT_OF_PROCESS)) 
+#if defined(J9VM_INTERP_STACKWALK_TRACING)   
 static void sniffAndWhack(J9StackWalkState * walkState)
 {
 	if (walkState->objectSlotBitVector) {
@@ -1375,10 +1328,10 @@ static void sniffAndWhack(J9StackWalkState * walkState)
 	}
 }
 
-#endif /* J9VM_INTERP_STACKWALK_TRACING && !OUT_OF_PROCESS */
+#endif /* J9VM_INTERP_STACKWALK_TRACING */
 
 
-#if (defined(J9VM_INTERP_STACKWALK_TRACING)  && !defined(J9VM_OUT_OF_PROCESS)) 
+#if defined(J9VM_INTERP_STACKWALK_TRACING)   
 static void sniffAndWhackIterator(J9VMThread * currentThread, J9StackWalkState * walkState, j9object_t * objectSlot, const void * stackLocation)
 {
 	MARK_SLOT_AS_OBJECT(walkState, (j9object_t *)stackLocation);
@@ -1386,10 +1339,10 @@ static void sniffAndWhackIterator(J9VMThread * currentThread, J9StackWalkState *
 }
 
 
-#endif /* J9VM_INTERP_STACKWALK_TRACING && !OUT_OF_PROCESS */
+#endif /* J9VM_INTERP_STACKWALK_TRACING */
 
 
-#if (defined(J9VM_INTERP_STACKWALK_TRACING)  && !defined(J9VM_OUT_OF_PROCESS)) 
+#if defined(J9VM_INTERP_STACKWALK_TRACING)   
 static void sniffAndWhackPointer(J9StackWalkState * walkState, j9object_t *slotPointer)
 {
 	j9object_t object = *slotPointer;
@@ -1410,10 +1363,10 @@ static void sniffAndWhackPointer(J9StackWalkState * walkState, j9object_t *slotP
 	}
 }
 
-#endif /* J9VM_INTERP_STACKWALK_TRACING && !OUT_OF_PROCESS */
+#endif /* J9VM_INTERP_STACKWALK_TRACING */
 
 
-#if (defined(J9VM_INTERP_STACKWALK_TRACING)  && !defined(J9VM_OUT_OF_PROCESS)  && defined(J9VM_INTERP_NATIVE_SUPPORT)) 
+#if defined(J9VM_INTERP_STACKWALK_TRACING)  && defined(J9VM_INTERP_NATIVE_SUPPORT) 
 static void sniffAndWhackELS(J9StackWalkState * walkState)
 {
 	if (walkState->objectSlotBitVector) {
@@ -1429,10 +1382,10 @@ static void sniffAndWhackELS(J9StackWalkState * walkState)
 	walkState->elsBitVector = 0;
 }
 
-#endif /* J9VM_INTERP_STACKWALK_TRACING && !OUT_OF_PROCESS && INTERP_NATIVE_SUPPORT */
+#endif /* J9VM_INTERP_STACKWALK_TRACING && INTERP_NATIVE_SUPPORT */
 
 
-#if (defined(J9VM_INTERP_STACKWALK_TRACING)  && !defined(J9VM_OUT_OF_PROCESS)) 
+#if defined(J9VM_INTERP_STACKWALK_TRACING)   
 void swMarkSlotAsObject(J9StackWalkState * walkState, j9object_t * objectSlot)
 {
 	if (!walkState->objectSlotBitVector) return;
@@ -1465,16 +1418,16 @@ void swMarkSlotAsObject(J9StackWalkState * walkState, j9object_t * objectSlot)
 #endif
 }
 
-#endif /* J9VM_INTERP_STACKWALK_TRACING && !OUT_OF_PROCESS */
+#endif /* J9VM_INTERP_STACKWALK_TRACING */
 
 
-#if (defined(J9VM_INTERP_STACKWALK_TRACING)  && !defined(J9VM_OUT_OF_PROCESS)) 
+#if defined(J9VM_INTERP_STACKWALK_TRACING)   
 static void emptySniffAndWhackIterator(J9VMThread * currentThread, J9StackWalkState * walkState, j9object_t * objectSlot, const void * stackLocation)
 {
 }
 
 
-#endif /* J9VM_INTERP_STACKWALK_TRACING && !OUT_OF_PROCESS */
+#endif /* J9VM_INTERP_STACKWALK_TRACING */
 
 
 static void 
@@ -1515,16 +1468,12 @@ getLocalsMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * 
 	errorCode = vm->localMapFunction(PORTLIB, romClass, romMethod, offsetPC, result, vm, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer);
 
 	if (errorCode < 0) {
-#ifdef J9VM_OUT_OF_PROCESS
-		dbgError("Local map failed, result = %p\n", errorCode);
-#else
 		/* Local map failed, result = %p - aborting VM - needs new message TBD */
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_STACK_MAP_FAILED, errorCode);
 #if defined(J9VM_INTERP_STACKWALK_TRACING)
 		Assert_VRB_stackMapFailed();
 #else
 		Assert_VM_stackMapFailed();
-#endif
 #endif
 	}
 
@@ -1540,16 +1489,12 @@ getStackMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * r
 
 	errorCode = j9stackmap_StackBitsForPC(PORTLIB, offsetPC, romClass, romMethod, result, pushCount, walkState->walkThread->javaVM, j9mapmemory_GetBuffer, j9mapmemory_ReleaseBuffer);
 	if (errorCode < 0) {
-#ifdef J9VM_OUT_OF_PROCESS
-		dbgError("Stack map failed, result = %p\n", errorCode);
-#else
 		/* Local map failed, result = %p - aborting VM */
 		j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_STACK_MAP_FAILED, errorCode);
 #if defined(J9VM_INTERP_STACKWALK_TRACING)
 		Assert_VRB_stackMapFailed();
 #else
 		Assert_VM_stackMapFailed();
-#endif
 #endif
 	}
 	return;
@@ -1559,7 +1504,7 @@ getStackMap(J9StackWalkState * walkState, J9ROMClass * romClass, J9ROMMethod * r
 static void walkJNIRefs(J9StackWalkState * walkState, UDATA * currentRef, UDATA refCount)
 {
 #ifdef J9VM_INTERP_STACKWALK_TRACING
-	swPrintf(walkState, 4, "\tJNI local ref pushes starting at %p for %d slots\n", REMOTE_ADDR(currentRef), refCount);
+	swPrintf(walkState, 4, "\tJNI local ref pushes starting at %p for %d slots\n", currentRef, refCount);
 #endif
 
 	walkState->slotType = J9_STACKWALK_SLOT_TYPE_JNI_LOCAL;
@@ -1581,7 +1526,6 @@ static void walkJNIRefs(J9StackWalkState * walkState, UDATA * currentRef, UDATA 
 
 
 
-#if (!defined(J9VM_OUT_OF_PROCESS)) 
 /* Only callable from inside a visible-only walk on the current thread (with VM access) */
 /* Must not be called when a native callout frame is on TOS */
 
@@ -1610,7 +1554,6 @@ dropToCurrentFrame(J9StackWalkState * walkState)
 #endif
 }
 
-#endif /* J9VM_!OUT_OF_PROCESS */
 
 /* Ensure that this assertion code only appears in the VM DLL */
 #if !defined(J9VM_INTERP_STACKWALK_TRACING)

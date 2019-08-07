@@ -5802,7 +5802,34 @@ done:
 				_currentThread->tempSlot = (UDATA)index;
 				rc = THROW_AIOB;
 			} else {
-				j9object_t value = _objectAccessBarrier.inlineIndexableObjectReadObject(_currentThread, arrayref, index);
+				j9object_t value = NULL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				J9Class *arrayrefClass = J9OBJECT_CLAZZ(_currentThread, arrayref);
+				if (J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
+					j9object_t newObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, false, false);
+
+					if (NULL == newObjectRef) {
+						buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
+						pushObjectInSpecialFrame(REGISTER_ARGS, arrayref);
+						updateVMStruct(REGISTER_ARGS);
+						newObjectRef = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+						VMStructHasBeenUpdated(REGISTER_ARGS);
+						arrayref = popObjectInSpecialFrame(REGISTER_ARGS);
+						restoreGenericSpecialStackFrame(REGISTER_ARGS);
+						if (J9_UNEXPECTED(NULL == newObjectRef)) {
+							rc = THROW_HEAP_OOM;
+							return rc;
+						}
+						arrayrefClass = VM_VMHelpers::currentClass(arrayrefClass);
+					}
+
+					_objectAccessBarrier.copyObjectFieldsFromArrayElement(_currentThread, arrayrefClass, newObjectRef, (J9IndexableObject *) arrayref, index);
+					value = newObjectRef;
+				} else
+#endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+				{
+					value = _objectAccessBarrier.inlineIndexableObjectReadObject(_currentThread, arrayref, index);
+				}
 				_pc += 1;
 				_sp += 1;
 				*(j9object_t*)_sp = value;
@@ -5834,7 +5861,15 @@ done:
 				if (false == objectArrayStoreAllowed(arrayref, value)) {
 					rc = THROW_ARRAY_STORE;
 				} else {
-					_objectAccessBarrier.inlineIndexableObjectStoreObject(_currentThread, arrayref, index, value);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+					J9Class *arrayrefClass = J9OBJECT_CLAZZ(_currentThread, arrayref);
+					if (J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
+						_objectAccessBarrier.copyObjectFieldsToArrayElement(_currentThread, arrayrefClass, value, (J9IndexableObject *) arrayref, index);
+					} else 
+#endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+					{
+						_objectAccessBarrier.inlineIndexableObjectStoreObject(_currentThread, arrayref, index, value);
+					}
 					_pc += 1;
 					_sp += 3;
 				}
@@ -6336,15 +6371,15 @@ resolve:
 			/* Put resolved for a non-final field means fully resolved */
 			if (J9_UNEXPECTED(resolvedBit != bits)) {
 				/* If not put resolved for a final field, resolve is necessary */
-				if (testBits != bits) {
+				if (J9_UNEXPECTED(testBits != bits)) {
 					goto resolve;
 				}
 				/* Final field - ensure the running method is allowed to store */
-				if (J9_UNEXPECTED(VM_VMHelpers::ramClassChecksFinalStores(ramConstantPool->ramClass)
-					          && !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
-				)) {
-					/* Store not allowed - run the resolve code to throw the exception */
-					goto resolve;
+				if (J9_UNEXPECTED(!J9ROMMETHOD_ALLOW_FINAL_FIELD_WRITES(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), J9AccStatic))) {
+					if (J9_UNEXPECTED(!J9CLASS_IS_EXEMPT_FROM_VALIDATION(ramConstantPool->ramClass))) {
+						/* Store not allowed - run the resolve code to throw the exception */
+						goto resolve;
+					}
 				}
 			}
 		}
@@ -6546,15 +6581,15 @@ resolve:
 			/* Put resolved for a non-final field means fully resolved */
 			if (J9_UNEXPECTED(resolvedBit != bits)) {
 				/* If not put resolved for a final field, resolve is necessary */
-				if (testBits != bits) {
+				if (J9_UNEXPECTED(testBits != bits)) {
 					goto resolve;
 				}
 				/* Final field - ensure the running method is allowed to store */
-				if (J9_UNEXPECTED(VM_VMHelpers::ramClassChecksFinalStores(ramConstantPool->ramClass)
-					          && !VM_VMHelpers::romMethodIsInitializer(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), true)
-				)) {
-					/* Store not allowed - run the resolve code to throw the exception */
-					goto resolve;
+				if (J9_UNEXPECTED(!J9ROMMETHOD_ALLOW_FINAL_FIELD_WRITES(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), 0))) {
+					if (J9_UNEXPECTED(!J9CLASS_IS_EXEMPT_FROM_VALIDATION(ramConstantPool->ramClass))) {
+						/* Store not allowed - run the resolve code to throw the exception */
+						goto resolve;
+					}
 				}
 			}
 		}

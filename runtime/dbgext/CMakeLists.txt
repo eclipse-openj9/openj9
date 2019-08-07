@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,6 @@ target_compile_definitions(j9dbgext
 	PRIVATE
 		J9VM_INTERP_STACKWALK_TRACING
 		J9VM_INTERP_LINEAR_STACKWALK_TRACING
-		J9VM_OUT_OF_PROCESS
 		UT_TRACE_OVERHEAD=0
 )
 

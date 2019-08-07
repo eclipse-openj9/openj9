@@ -193,7 +193,7 @@ IPP_FLAGS+=$(IPP_FLAGS_EXTRA)
 #
 SOLINK_CMD?=$(SHAREDLIB)
 
-SOLINK_FLAGS+=-p0 -bloadmap:lmap -brtl -bnoentry
+SOLINK_FLAGS+=-p0 -bloadmap:lmap -brtl -bnoentry -bnolibpath
 
 ifeq ($(HOST_BITS),64)
     SOLINK_FLAGS+=-X64

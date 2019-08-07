@@ -247,7 +247,6 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/ras/LimitFile.cpp \
     omr/compiler/ras/LogTracer.cpp \
     omr/compiler/ras/OptionsDebug.cpp \
-    omr/compiler/ras/PPCOpNames.cpp \
     omr/compiler/ras/Tree.cpp
 
 JIT_PRODUCT_SOURCE_FILES+=\
@@ -392,8 +391,8 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/net/ProtobufTypeConvert.cpp \
     compiler/net/ServerStream.cpp \
     compiler/runtime/CompileService.cpp \
-    compiler/runtime/Listener.cpp \
     compiler/runtime/JITaaSIProfiler.cpp \
+    compiler/runtime/Listener.cpp \
     compiler/runtime/StatisticsThread.cpp
 endif
 

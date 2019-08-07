@@ -438,6 +438,7 @@ def set_sdk_variables() {
     TEST_FILENAME = "native-test-libs.tar.gz"
     echo "Using SDK_FILENAME = ${SDK_FILENAME}"
     echo "Using TEST_FILENAME = ${TEST_FILENAME}"
+    DIAGNOSTICS_FILENAME = "${JOB_NAME}-${BUILD_NUMBER}-${DATESTAMP}-diagnostics.tar.gz"
 }
 
 def get_date() {
@@ -494,6 +495,7 @@ def set_artifactory_config() {
         env.ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
         env.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS = VARIABLES.artifactory_days_to_keep_artifacts // This is being used by the cleanup script
         env.ARTIFACTORY_MANUAL_CLEANUP = VARIABLES.artifactory_manual_cleanup // This is being used by the cleanup script
+        env.ARTIFACTORY_UPLOAD_DIR = "${ARTIFACTORY_REPO}/${JOB_NAME}/${BUILD_ID}/"
         echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER} / ${ARTIFACTORY_REPO}"
         echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
         echo "Artifactory Manual Cleanup: ${env.ARTIFACTORY_MANUAL_CLEANUP}"

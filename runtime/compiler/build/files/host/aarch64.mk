@@ -24,6 +24,7 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
 
 JIT_PRODUCT_SOURCE_FILES+= \
     compiler/aarch64/runtime/ARM64ArrayCopy.spp \
+    compiler/aarch64/runtime/ARM64RelocationTarget.cpp \
     compiler/aarch64/runtime/FlushICache.spp \
     compiler/aarch64/runtime/PicBuilder.spp \
     compiler/aarch64/runtime/Recomp.cpp \

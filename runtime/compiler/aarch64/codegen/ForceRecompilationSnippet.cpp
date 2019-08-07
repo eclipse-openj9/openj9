@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,39 +19,22 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package com.ibm.j9ddr.corereaders.debugger;
 
-import java.io.IOException;
+#include "codegen/ForceRecompilationSnippet.hpp"
 
-import javax.imageio.stream.ImageInputStreamImpl;
+#include "codegen/CodeGenerator.hpp"
 
-import com.ibm.j9ddr.corereaders.memory.MemoryFault;
+uint8_t *
+TR::ARM64ForceRecompilationSnippet::emitSnippetBody()
+   {
+   TR_UNIMPLEMENTED();
+   uint8_t *buffer = cg()->getBinaryBufferCursor();
+   return buffer;
+   }
 
-public class JniImageInputStream extends ImageInputStreamImpl {
-	
-	private final JniMemory memory;
-
-	public JniImageInputStream(JniMemory memory) {
-		this.memory = memory;		
-	}
-
-	@Override
-	public int read() throws IOException {
-		try {
-			byte readAddress = memory.getByteAt(streamPos);
-			streamPos++;
-			return readAddress; 
-		} catch (MemoryFault e) {
-			throw new IOException(e.getMessage() + ":" + e.getAddress());
-		}
-	}
-
-	@Override
-	public int read(byte[] b, int off, int len) throws IOException {
-		try {
-			return memory.getBytesAt(streamPos, b, off, len);
-		} catch (MemoryFault e) {
-			throw new IOException(e.getMessage() + ":" + e.getAddress());
-		}		
-	}	
-}
+uint32_t
+TR::ARM64ForceRecompilationSnippet::getLength(int32_t estimatedSnippetStart)
+   {
+   TR_UNIMPLEMENTED();
+   return 0;
+   }

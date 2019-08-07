@@ -31,7 +31,31 @@ timeout(time: 10, unit: 'HOURS') {
     timestamps {
         node(SETUP_LABEL) {
             try{
-                checkout scm
+                def gitConfig = scm.getUserRemoteConfigs().get(0)
+                def remoteConfigParameters = [url: "${gitConfig.getUrl()}"]
+                def scmBranch = params.SCM_BRANCH
+                if (!scmBranch) {
+                    scmBranch = scm.branches[0].name
+                }
+
+                if (gitConfig.getCredentialsId()) {
+                    remoteConfigParameters.put("credentialsId", "${gitConfig.getCredentialsId()}")
+                }
+
+                if (params.SCM_REFSPEC) {
+                    remoteConfigParameters.put("refspec", params.SCM_REFSPEC)
+                }
+
+                checkout changelog: false,
+                        poll: false,
+                        scm: [$class: 'GitSCM',
+                        branches: [[name: "${scmBranch}"]],
+                        doGenerateSubmoduleConfigurations: false,
+                        extensions: [[$class: 'CloneOption',
+                                      reference: "${HOME}/openjdk_cache"]],
+                        submoduleCfg: [],
+                        userRemoteConfigs: [remoteConfigParameters]]
+
                 variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
                 variableFile.set_job_variables('build')
                 buildFile = load 'buildenv/jenkins/common/build.groovy'
@@ -40,10 +64,11 @@ timeout(time: 10, unit: 'HOURS') {
                 cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
             }
         }
-    }
-    stage ('Queue') {
-        node("${NODE}") {
-            buildFile.build_all()
+
+        stage ('Queue') {
+            node("${NODE}") {
+                buildFile.build_all()
+            }
         }
     }
 }

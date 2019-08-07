@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -304,24 +304,6 @@ void
 memoryCheck_print_report(J9PortLibrary * portLib);
 
 #endif /* J9VM_OPT_MEMORY_CHECK_SUPPORT */ /* End File Level Build Flags */
-
-
-/* ---------------- rconsole.c ---------------- */
-
-#if (defined(J9VM_OPT_REMOTE_CONSOLE_SUPPORT))  /* File Level Build Flags */
-
-/**
-* @brief
-* @param *portLibrary
-* @param lastLegalArg
-* @param **argv
-* @return UDATA
-*/
-UDATA
-remoteConsole_parseCmdLine(J9PortLibrary *portLibrary, UDATA lastLegalArg, char **argv);
-
-#endif /* J9VM_OPT_REMOTE_CONSOLE_SUPPORT */ /* End File Level Build Flags */
-
 
 /* ---------------- strbuf.c ---------------- */
 

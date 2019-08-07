@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -283,6 +283,12 @@ Java_com_ibm_jvm_Dump_triggerDumpsImpl (JNIEnv *env, jclass clazz, jstring jopts
 #endif
 }
 
+jstring JNICALL
+Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_triggerDumpsImpl(JNIEnv *env, jclass clazz, jstring jopts, jstring jevent)
+{
+	return Java_com_ibm_jvm_Dump_triggerDumpsImpl(env, clazz, jopts, jevent);
+}
+
 void JNICALL
 Java_com_ibm_jvm_Dump_setDumpOptionsImpl (JNIEnv *env, jclass clazz, jstring jopts)
 {
@@ -446,7 +452,7 @@ raiseExceptionFor(JNIEnv *env, omr_error_t result)
 
 	switch (result) {
 	case OMR_ERROR_INTERNAL:
-		exceptionClass = (*env)->FindClass(env, "com/ibm/jvm/InvalidDumpOptionException");
+		exceptionClass = (*env)->FindClass(env, "openj9/management/internal/InvalidDumpOptionExceptionBase");
 		if (exceptionClass != NULL) {
 			(*env)->ThrowNew(env, exceptionClass, "Error in dump options.");
 		}
@@ -460,7 +466,7 @@ raiseExceptionFor(JNIEnv *env, omr_error_t result)
 		/* Just return if we can't load the exception class. */
 		break;
 	case OMR_ERROR_NOT_AVAILABLE:
-		exceptionClass = (*env)->FindClass(env, "com/ibm/jvm/DumpConfigurationUnavailableException");
+		exceptionClass = (*env)->FindClass(env, "openj9/management/internal/DumpConfigurationUnavailableExceptionBase");
 		if (exceptionClass != NULL) {
 			(*env)->ThrowNew(env, exceptionClass, "Dump configuration cannot be changed while a dump is in progress.");
 		}

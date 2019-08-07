@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +41,6 @@
 #include "ObjectAccessBarrier.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "StringTable.hpp"
-
 
 #include "OwnableSynchronizerObjectList.hpp"
 #include "ReferenceObjectList.hpp"
@@ -93,13 +91,14 @@ public:
 		javaVM->gcWriteBarrierType = writeBarrierType;
 
 		if (extensions->alwaysCallReadBarrier) {
+			/* AlwaysCallReadBarrier takes precedence over other read barrier types */
 			javaVM->gcReadBarrierType = gc_modron_readbar_always;
+		} else if (extensions->isScavengerEnabled() && extensions->isConcurrentScavengerEnabled()) {
+			javaVM->gcReadBarrierType = gc_modron_readbar_range_check;
+		} else if (extensions->isVLHGC() && extensions->isConcurrentCopyForwardEnabled()) {
+			javaVM->gcReadBarrierType = gc_modron_readbar_region_check;
 		} else {
-			if (extensions->isConcurrentScavengerEnabled()) {
-				javaVM->gcReadBarrierType = gc_modron_readbar_range_check;
-			} else {
-				javaVM->gcReadBarrierType = gc_modron_readbar_none;
-			}
+			javaVM->gcReadBarrierType = gc_modron_readbar_none;
 		}
 
 		/* set allocation type for J9 VM */

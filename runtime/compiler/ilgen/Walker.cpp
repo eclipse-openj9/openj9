@@ -2013,20 +2013,6 @@ TR_J9ByteCodeIlGenerator::expandPlaceholderCalls(int32_t depthLimit)
       }
    }
 
-bool TR_J9ByteCodeIlGenerator::isFinalFieldFromSuperClasses(J9Class *methodClass, int32_t subClassFieldOffset)
-   {
-   J9Class *superClass = (J9Class *) fej9()->getSuperClass( (TR_OpaqueClassBlock *) methodClass);
-
-   if (superClass == NULL)
-      return false;
-
-   int32_t superClassInstanceSize = TR::Compiler->cls.classInstanceSize((TR_OpaqueClassBlock *) superClass);
-   if (subClassFieldOffset < superClassInstanceSize)
-      return true;
-   else
-      return false;
-   }
-
 TR::Node *
 TR_J9ByteCodeIlGenerator::genNodeAndPopChildren(TR::ILOpCodes opcode, int32_t numChildren, TR::SymbolReference * symRef, int32_t firstIndex, int32_t lastIndex)
    {
@@ -3592,8 +3578,12 @@ TR_J9ByteCodeIlGenerator::genIfImpl(TR::ILOpCodes nodeop)
    TR::Node * second = pop();
    TR::Node * first = pop();
 
+   static char *disableIfFolding = feGetEnv("TR_DisableIfFolding");
+   bool trace = comp()->getOption(TR_TraceILGen);
+
    TR::DataType type = first->getDataType();
-   if (branchBC > _bcIndex &&
+   if (!disableIfFolding &&
+       branchBC > _bcIndex &&
        first->getOpCode().isLoadConst() &&
        second->getOpCode().isLoadConst() &&
        type != TR::Address &&
@@ -3629,15 +3619,30 @@ TR_J9ByteCodeIlGenerator::genIfImpl(TR::ILOpCodes nodeop)
 
       if (_blocksToInline)
          {
-         if (comp()->getOption(TR_TraceILGen))
+         if (trace)
             traceMsg(comp(), "Not folding the if because of partial inlining\n");
          }
       else
          {
-         if (comp()->getOption(TR_TraceILGen))
+         if (trace)
             traceMsg(comp(), "%s\n", branchTaken ? "taking the branch" : "fall through");
 
-         return branchTaken ? branchBC : fallThruBC;
+         if (branchTaken)
+            {
+            // Folding the if is equivalent to turning it into a goto. We can't just return
+            // branchBC because there can be arbitrary bytecodes between the `if` and branchBC.
+            // To get a correct CFG, a goto is required.
+            //
+            return genGoto(branchBC);
+            }
+         else
+            {
+            // In this case, folding the if is equivalent to removing the if bytecode. The fall
+            // through bytecodes can live in the same block as there is no branch out after the
+            // folding.
+            //
+            return fallThruBC;
+            }
          }
       }
 
@@ -5588,8 +5593,10 @@ break
          ListIterator<TR_VMField> fieldIter(fieldsInfoByIndex->getFields());
          for (TR_VMField *field = fieldIter.getFirst(); field; field = fieldIter.getNext())
             {
-            if ((field->modifiers & J9AccFinal) && !isFinalFieldFromSuperClasses(methodClass, field->offset))
+            if ((field->modifiers & J9AccFinal) && methodClass == jitGetDeclaringClassOfROMField(comp()->j9VMThread(), methodClass, field->shape))
                {
+               if (comp()->getOption(TR_TraceILGen))
+                  traceMsg(comp(), "added fence due to field %s \n", field->name);
                push(callNode->getFirstChild());
                genFlush(0);
                pop();

@@ -81,9 +81,7 @@ typedef struct J9ClassLoaderWalkState {
 #include "j9generated.h"
 #include "j9cfg_builder.h"
 
-#if !defined(J9VM_OUT_OF_PROCESS)
 #include "j9accessbarrierhelpers.h"
-#endif
 
 /*------------------------------------------------------------------
  * AOT version defines

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,10 +135,6 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void *arg)
 	/* This should happen before anybody allocates memory!  Otherwise, shutdown will not work properly. */
 	memoryCheck_parseCmdLine(PORTLIB, argc-1, argv);
 #endif /* J9VM_OPT_MEMORY_CHECK_SUPPORT */
-
-#ifdef J9VM_OPT_REMOTE_CONSOLE_SUPPORT
-	remoteConsole_parseCmdLine(PORTLIB, argc-1, argv);
-#endif /* J9VM_OPT_REMOTE_CONSOLE_SUPPORT */
 
 	/* set up nls */
 	j9nls_set_catalog(paths, 1, "java", "properties");

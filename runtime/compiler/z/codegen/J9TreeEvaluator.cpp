@@ -6512,7 +6512,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    int32_t numDeps = 4;
 
-#if defined (J9VM_THR_LOCK_NURSERY)
    if (lwOffset <=0)
       {
       numDeps +=2;
@@ -6521,7 +6520,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          numDeps +=2; // extra one for lit pool reg in disableZ9 mode
          }
       }
-#endif
 
    if (comp->getOptions()->enableDebugCounters())
       numDeps += 5;
@@ -6544,7 +6542,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    static const char * peekFirst = feGetEnv("TR_PeekingMonEnter");
    // This debug option is for printing the locking mechanism.
    static int printMethodSignature = feGetEnv("PrintMethodSignatureForLockResEnt")? 1 : 0;
-#if defined (J9VM_THR_LOCK_NURSERY)
    if (lwOffset <= 0)
       {
       inlineRecursive = false;
@@ -6699,7 +6696,6 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       lwOffset = 0;
       baseReg = tempRegister;
    }
-#endif
 
    // Lock Reservation happens only for objects with lockword.
    // evaluateLockForReservation may output three different results:
@@ -6875,17 +6871,13 @@ J9::Z::TreeEvaluator::VMmonentEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          }
 
    bool needDeps = false;
-#if defined (J9VM_THR_LOCK_NURSERY)
    if (lwOffset <= 0 && disableOOL)
       needDeps = true;
-#endif
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionEnd, conditions);
 
-#if defined (J9VM_THR_LOCK_NURSERY)
    if (lwOffset <= 0 && disableOOL)
       cFlowRegionEnd->setEndInternalControlFlow();
-#endif
    cg->stopUsingRegister(monitorReg);
    if (wasteReg)
       cg->stopUsingRegister(wasteReg);
@@ -6947,7 +6939,6 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    TR::LabelSymbol *returnLabel                    = generateLabelSymbol(cg);
 
    int32_t numDeps = 4;
-#if defined (J9VM_THR_LOCK_NURSERY)
    if (lwOffset <=0)
       {
       numDeps +=2;
@@ -6956,7 +6947,6 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
          numDeps +=2; // extra one for lit pool reg in disableZ9 mode
          }
       }
-#endif
 
    if (comp->getOptions()->enableDebugCounters())
          numDeps += 4;
@@ -6977,7 +6967,6 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
    conditions->addPostCondition(monitorReg, TR::RealRegister::AssignAny);
 
 
-#if defined (J9VM_THR_LOCK_NURSERY)
    if (lwOffset <= 0)
       {
       inlineRecursive = false; // should not happen often, only on a subset of objects that don't have a lockword, set with option -Xlockword
@@ -7148,7 +7137,6 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       baseReg = tempRegister;
       simpleLocking = true;
       }
-#endif
 
    // Lock Reservation happens only for objects with lockword.
    if (!simpleLocking && comp->getOption(TR_ReservingLocks))
@@ -7307,17 +7295,13 @@ J9::Z::TreeEvaluator::VMmonexitEvaluator(TR::Node * node, TR::CodeGenerator * cg
       outlinedHelperCall->swapInstructionListsWithCompilation();
       }
    bool needDeps = false;
-#if defined (J9VM_THR_LOCK_NURSERY)
    if (lwOffset <= 0 && disableOOL)
       needDeps = true;
-#endif
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, cFlowRegionEnd, conditions);
 
-#if defined (J9VM_THR_LOCK_NURSERY)
    if (lwOffset <= 0 && disableOOL)
       cFlowRegionEnd->setEndInternalControlFlow();
-#endif
 
 
    cg->stopUsingRegister(monitorReg);
@@ -7793,38 +7777,6 @@ genInitObjectHeader(TR::Node * node, TR::Instruction *& iCursor, TR_OpaqueClassB
          }
 #endif /* J9VM_OPT_NEW_OBJECT_HASH */
 #endif /* FLAGS_IN_CLASS_SLOT */
-
-
-#if !defined(J9VM_THR_LOCK_NURSERY)
-      // Init monitor
-      if (zeroReg != NULL)
-         {
-
-         if (TR::Compiler->target.is64Bit() && fej9->generateCompressedLockWord())
-            iCursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, zeroReg,
-                  generateS390MemoryReference(resReg, TMP_OFFSETOF_J9OBJECT_MONITOR, cg), iCursor);
-         else
-            iCursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, zeroReg,
-                  generateS390MemoryReference(resReg, TMP_OFFSETOF_J9OBJECT_MONITOR, cg), iCursor);
-         }
-#endif
-#if defined(J9VM_THR_LOCK_NURSERY) && defined(J9VM_THR_LOCK_NURSERY_FAT_ARRAYS)
-      // Initialize monitor slots
-      // for arrays that have a lock
-      // word
-      int32_t lwOffset = fej9->getByteOffsetToLockword(classAddress);
-      if ((zeroReg != NULL) &&
-            (node->getOpCodeValue() != TR::New) &&
-            (lwOffset > 0))
-         {
-         if (TR::Compiler->target.is64Bit() && fej9->generateCompressedLockWord())
-            iCursor = generateRXInstruction(cg, TR::InstOpCode::ST, node, zeroReg,
-                  generateS390MemoryReference(resReg, TMP_OFFSETOF_J9INDEXABLEOBJECT_MONITOR, cg), iCursor);
-         else
-            iCursor = generateRXInstruction(cg, TR::InstOpCode::getStoreOpCode(), node, zeroReg,
-                  generateS390MemoryReference(resReg, TMP_OFFSETOF_J9INDEXABLEOBJECT_MONITOR, cg), iCursor);
-         }
-#endif
       }
    else
       {

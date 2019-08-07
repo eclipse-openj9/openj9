@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 1998 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,10 +30,6 @@ extern "C" {
 #define EsBuildVersionString "${uma.buildinfo.build_date}_${uma.spec.properties.buildid.value}"
 #define J9UniqueBuildID ((uint64_t)J9CONST64(${uma.buildinfo.unique_build_id}))
 #define J9VM_VERSION_STRING "${uma.buildinfo.vm_buildtag}"
-
-#define J9_ImportString     "${uma.buildinfo.vm_buildtag}"
-#define Modron_ImportString "${uma.buildinfo.gc_buildtag}"
-#define TR_AutoImportString "${uma.buildinfo.jit_buildtag}"
 
 #ifdef __cplusplus
 }

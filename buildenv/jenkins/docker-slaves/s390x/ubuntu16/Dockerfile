@@ -175,10 +175,10 @@ EXPOSE 22
 RUN mkdir /home/${USER}/openjdk_cache \
   && cd /home/${USER}/openjdk_cache \
   && git init --bare \
+  && git remote add jdk13 https://github.com/ibmruntimes/openj9-openjdk-jdk13.git \
   && git remote add jdk8 https://github.com/ibmruntimes/openj9-openjdk-jdk8.git \
   && git remote add jdk11 https://github.com/ibmruntimes/openj9-openjdk-jdk11.git \
   && git remote add jdk12 https://github.com/ibmruntimes/openj9-openjdk-jdk12.git \
-  && git remote add jdk13 https://github.com/ibmruntimes/openj9-openjdk-jdk13.git \
   && git remote add jdk https://github.com/ibmruntimes/openj9-openjdk-jdk.git \
   && git remote add openj9 https://github.com/eclipse/openj9.git \
   && git remote add omr https://github.com/eclipse/openj9-omr.git \

@@ -59,6 +59,7 @@
 #include "runtime/RelocationRuntimeLogger.hpp"
 #include "runtime/RelocationRecord.hpp"
 #include "runtime/RelocationTarget.hpp"
+#include "aarch64/runtime/ARM64RelocationTarget.hpp"
 #include "arm/runtime/ARMRelocationTarget.hpp"
 #include "x/runtime/X86RelocationTarget.hpp"
 #include "p/runtime/PPCRelocationTarget.hpp"
@@ -111,6 +112,8 @@ TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
       _reloTarget = new (PERSISTENT_NEW) TR_S390RelocationTarget(this);
    #elif defined(TR_HOST_ARM)
       _reloTarget = new (PERSISTENT_NEW) TR_ARMRelocationTarget(this);
+   #elif defined(TR_HOST_ARM64)
+      _reloTarget = new (PERSISTENT_NEW) TR_ARM64RelocationTarget(this);
    #else
       TR_ASSERT(0, "Unsupported relocation target");
    #endif

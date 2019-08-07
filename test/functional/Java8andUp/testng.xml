@@ -102,6 +102,12 @@
 		</classes>
 	</test>
 	
+	<test name="TestJcmd">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestJcmd"/>
+		</classes>
+	</test>
+	
 	<test name="TestFileLocking">
 		<classes>
 			<class name="org.openj9.test.fileLock.TestFileLocking"/>

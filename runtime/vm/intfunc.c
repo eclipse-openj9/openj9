@@ -291,9 +291,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	queryLogOptions,
 	setLogOptions,
 	exitJavaThread,
-#if defined(J9VM_THR_LOCK_NURSERY)
 	cacheObjectMonitorForLookup,
-#endif /* J9VM_THR_LOCK_NURSERY */
 	jniArrayAllocateMemoryFromThread,
 	jniArrayFreeMemoryFromThread,
 	sendForGenericInvoke,

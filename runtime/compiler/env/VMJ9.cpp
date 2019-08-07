@@ -86,6 +86,7 @@
 #include "infra/Monitor.hpp"
 #include "infra/MonitorTable.hpp"
 #include "il/DataTypes.hpp"
+#include "il/J9DataTypes.hpp"
 #include "il/Node.hpp"
 #include "il/NodePool.hpp"
 #include "il/Node_inlines.hpp"
@@ -1179,6 +1180,29 @@ TR_J9VMBase::getReferenceElement(uintptrj_t objectPointer, intptrj_t elementInde
    return (uintptrj_t)J9JAVAARRAYOFOBJECT_LOAD(vmThread(), objectPointer, elementIndex);
    }
 
+TR_arrayTypeCode TR_J9VMBase::getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* clazz)
+   {
+   TR_ASSERT(isPrimitiveClass(clazz), "Expect primitive class in TR_J9VMBase::getPrimitiveArrayType");
+
+   J9Class* j9clazz = (J9Class*)clazz;
+   if (j9clazz == jitConfig->javaVM->booleanReflectClass)
+      return atype_boolean;
+   else if (j9clazz == jitConfig->javaVM->charReflectClass)
+      return atype_char;
+   else if (j9clazz == jitConfig->javaVM->floatReflectClass)
+      return atype_float;
+   else if (j9clazz == jitConfig->javaVM->doubleReflectClass)
+      return atype_double;
+   else if (j9clazz == jitConfig->javaVM->byteReflectClass)
+      return atype_byte;
+   else if (j9clazz == jitConfig->javaVM->shortReflectClass)
+      return atype_short;
+   else if (j9clazz == jitConfig->javaVM->intReflectClass)
+      return atype_int;
+   else if (j9clazz == jitConfig->javaVM->longReflectClass)
+      return atype_long;
+   }
+
 TR_OpaqueClassBlock *
 TR_J9VMBase::getClassFromJavaLangClass(uintptrj_t objectPointer)
    {
@@ -1202,7 +1226,7 @@ void TR_J9VMBase::printVerboseLogHeader(TR::Options *cmdLineOptions)
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"Version Information:");
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     JIT Level  - %s", getJ9JITConfig()->jitLevelName);
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"     JVM Level  - %s", EsBuildVersionString);
-   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     GC Level   - %s", Modron_ImportString);
+   TR_VerboseLog::writeLine(TR_Vlog_INFO,"     GC Level   - %s", J9VM_VERSION_STRING);
    TR_VerboseLog::writeLine(TR_Vlog_INFO,"");
 
    const char *vendorId;
@@ -1371,13 +1395,8 @@ bool TR_J9VMBase::generateCompressedPointers()
 
 bool TR_J9VMBase::generateCompressedLockWord()
    {
-#if defined(J9VM_THR_LOCK_NURSERY)
    if (sizeof(j9objectmonitor_t) == 4)
       return true;
-#else
-   if (sizeof((((J9Object *)NULL)->monitor)) == 4)
-      return true;
-#endif
    return false;
    }
 
@@ -1931,16 +1950,12 @@ TR_J9VMBase::getWriteBarrierGCFlagMaskAsByte()
 int32_t
 TR_J9VMBase::getByteOffsetToLockword(TR_OpaqueClassBlock * clazzPointer)
    {
-#if defined (J9VM_THR_LOCK_NURSERY)
    J9JavaVM * jvm = _jitConfig->javaVM;
 
    if (clazzPointer == NULL)
       return 0;
 
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)->lockOffset;
-#else
-   return TMP_OFFSETOF_J9OBJECT_MONITOR;
-#endif
    }
 
 bool
@@ -4248,10 +4263,7 @@ TR_J9VMBase::initializeLocalObjectFlags(TR::Compilation * comp, TR::Node * alloc
 
 bool TR_J9VMBase::hasTwoWordObjectHeader()
   {
-#if defined(J9VM_THR_LOCK_NURSERY)
   return true;
-#endif
-  return false;;
   }
 
 // Create trees to initialize the header of an object that is being created
@@ -5709,7 +5721,7 @@ TR_J9VMBase::isBeingCompiled(TR_OpaqueMethodBlock * method, void * startPC)
 U_32
 TR_J9VMBase:: virtualCallOffsetToVTableSlot(U_32 offset)
    {
-   return J9JIT_INTERP_VTABLE_OFFSET - offset;
+   return TR::Compiler->vm.getInterpreterVTableOffset() - offset;
    }
 
 void *
@@ -5744,7 +5756,7 @@ TR_J9VMBase::getInterpreterVTableSlot(TR_OpaqueMethodBlock * mBlock, TR_OpaqueCl
 int32_t
 TR_J9VMBase::getVTableSlot(TR_OpaqueMethodBlock * mBlock, TR_OpaqueClassBlock * clazz)
    {
-   return J9JIT_INTERP_VTABLE_OFFSET - getInterpreterVTableSlot(mBlock, clazz);
+   return TR::Compiler->vm.getInterpreterVTableOffset() - getInterpreterVTableSlot(mBlock, clazz);
    }
 uint64_t
 TR_J9VMBase::getUSecClock()

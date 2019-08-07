@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,11 +73,6 @@ static IDATA dbg_write_text (OMRPortLibrary *portLibrary, IDATA fd, const char *
 #endif
 
 static IDATA hexValue(char c);
-
-#define READU(field) dbgReadUDATA((UDATA*)&(field))
-#define READP(field) ((void*)dbgReadUDATA((UDATA*)&(field)))
-
-#define DBG_ARROW(base, item) dbgReadSlot((UDATA)&((base)->item), sizeof((base)->item))
 
 #define LOCAL_MEMORY_ALIGNMENT 16
 
