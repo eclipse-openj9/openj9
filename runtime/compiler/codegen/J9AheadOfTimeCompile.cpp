@@ -41,7 +41,7 @@ J9::AheadOfTimeCompile::emitClassChainOffset(uint8_t* cursor, TR_OpaqueClassBloc
    void *classChainForInlinedMethod = sharedCache->rememberClass(classToRemember);
    if (!classChainForInlinedMethod)
       self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("classChainForInlinedMethod == NULL");
-   uintptrj_t classChainForInlinedMethodOffsetInSharedCache = reinterpret_cast<uintptrj_t>( sharedCache->offsetInSharedCacheFromPointer(classChainForInlinedMethod) );
+   uintptrj_t classChainForInlinedMethodOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(classChainForInlinedMethod);
    *pointer_cast<uintptrj_t *>(cursor) = classChainForInlinedMethodOffsetInSharedCache;
    return cursor + SIZEPOINTER;
    }
@@ -316,12 +316,12 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR_RelocationRecordValidateInstanceField *fieldRecord = reinterpret_cast<TR_RelocationRecordValidateInstanceField *>(reloRecord);
          uintptrj_t inlinedSiteIndex = reinterpret_cast<uintptrj_t>(relocation->getTargetAddress());
          TR::AOTClassInfo *aotCI = reinterpret_cast<TR::AOTClassInfo*>(relocation->getTargetAddress2());
-         void *classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(aotCI->_classChain);
+         uintptr_t classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(aotCI->_classChain);
 
          fieldRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          fieldRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(aotCI->_constantPool));
          fieldRecord->setCpIndex(reloTarget, static_cast<uintptrj_t>(aotCI->_cpIndex));
-         fieldRecord->setClassChainOffsetInSharedCache(reloTarget, reinterpret_cast<uintptrj_t>(classChainOffsetInSharedCache));
+         fieldRecord->setClassChainOffsetInSharedCache(reloTarget, classChainOffsetInSharedCache);
          }
          break;
 
@@ -376,13 +376,13 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
          void *romClass = reinterpret_cast<void *>(fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass));
-         void *romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
+         uintptr_t romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
 
          inlinedMethod->setReloFlags(reloTarget, flags);
          inlinedMethod->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          inlinedMethod->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(guard->getSymbolReference()->getOwningMethod(comp)->constantPool()));
          inlinedMethod->setCpIndex(reloTarget, cpIndexOrData);
-         inlinedMethod->setRomClassOffsetInSharedCache(reloTarget, reinterpret_cast<uintptrj_t>(romClassOffsetInSharedCache));
+         inlinedMethod->setRomClassOffsetInSharedCache(reloTarget, romClassOffsetInSharedCache);
          inlinedMethod->setDestinationAddress(reloTarget, destinationAddress);
          }
          break;

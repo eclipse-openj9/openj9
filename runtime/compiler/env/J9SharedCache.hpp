@@ -75,15 +75,15 @@ public:
     * \param[in] offset The offset to convert.
     * \return A pointer. Raises a fatal assertion before returning NULL if the offset is invalid.
     */
-   virtual void *pointerFromOffsetInSharedCache(void *offset);
-   
+   virtual void *pointerFromOffsetInSharedCache(uintptr_t offset);
+
    /**
     * \brief Converts a pointer into the shared cache into an offset.
     *
     * \param[in] ptr The pointer to convert.
     * \return An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
     */
-   virtual void *offsetInSharedCacheFromPointer(void *ptr);
+   virtual uintptr_t offsetInSharedCacheFromPointer(void *ptr);
 
    virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp);
    virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *comp);
