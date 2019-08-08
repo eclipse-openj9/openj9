@@ -55,26 +55,6 @@ include $(TEST_ROOT)$(D)TestConfig$(D)utils.mk
 include $(TEST_ROOT)$(D)TestConfig$(D)testEnv.mk
 include $(TEST_ROOT)$(D)TestConfig$(D)featureSettings.mk
 
-# temporarily support both JAVA_VERSION and JDK_VERSION
-ifeq ($(JAVA_VERSION), SE80)
-	JDK_VERSION:=8
-endif
-ifeq ($(JAVA_VERSION), SE90)
-	JDK_VERSION:=9
-endif
-ifeq ($(JAVA_VERSION), SE100)
-	JDK_VERSION:=10
-endif
-ifeq ($(JAVA_VERSION), SE110)
-	JDK_VERSION:=11
-endif
-ifeq ($(JAVA_VERSION), SE120)
-	JDK_VERSION:=12
-endif
-ifeq ($(JAVA_VERSION), SE130)
-	JDK_VERSION:=13
-endif
-
 ifndef JDK_VERSION
 	export JDK_VERSION:=8
 else
