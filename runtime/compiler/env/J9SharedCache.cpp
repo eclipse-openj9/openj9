@@ -386,18 +386,17 @@ TR_J9SharedCache::isMostlyFull()
    }
 
 void *
-TR_J9SharedCache::pointerFromOffsetInSharedCache(void *offset)
+TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
    {
-   UDATA offsetValue = (UDATA)offset;
    J9SharedClassCacheDescriptor *firstCache = _sharedCacheConfig->cacheDescriptorList->previous;
    J9SharedClassCacheDescriptor *curCache = firstCache;
    do
       {
-      if (offsetValue < curCache->cacheSizeBytes)
+      if (offset < curCache->cacheSizeBytes)
          {
-         return (void *)(offsetValue + (UDATA)curCache->cacheStartAddress);
+         return (void *)(offset + (uintptr_t)curCache->cacheStartAddress);
          }
-      offsetValue -= curCache->cacheSizeBytes;
+      offset -= curCache->cacheSizeBytes;
       curCache = curCache->previous;
       }
    while (curCache != firstCache);
@@ -405,47 +404,47 @@ TR_J9SharedCache::pointerFromOffsetInSharedCache(void *offset)
    return NULL;
    }
 
-void *
+uintptr_t
 TR_J9SharedCache::offsetInSharedCacheFromPointer(void *ptr)
    {
-   UDATA ptrValue = (UDATA)ptr;
-   UDATA offsetValue = 0;
+   uintptr_t ptrValue = (uintptr_t)ptr;
+   uintptr_t offset = 0;
    J9SharedClassCacheDescriptor *firstCache = _sharedCacheConfig->cacheDescriptorList->previous;
    J9SharedClassCacheDescriptor *curCache = firstCache;
    do
       {
-      UDATA cacheStart = (UDATA)curCache->cacheStartAddress; // Inclusive
-      UDATA cacheEnd = cacheStart + curCache->cacheSizeBytes; // Exclusive
+      uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress; // Inclusive
+      uintptr_t cacheEnd = cacheStart + curCache->cacheSizeBytes; // Exclusive
       if ((ptrValue >= cacheStart) && (ptrValue < cacheEnd))
          {
-         return (void *)(ptrValue - cacheStart + offsetValue);
+         return ptrValue - cacheStart + offset;
          }
-      offsetValue += curCache->cacheSizeBytes;
+      offset += curCache->cacheSizeBytes;
       curCache = curCache->previous;
       }
    while (curCache != firstCache);
    TR_ASSERT_FATAL(false, "Shared cache pointer out of bounds");
-   return NULL;
+   return 0;
    }
 
 bool
 TR_J9SharedCache::isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset)
    {
-   UDATA ptrValue = (UDATA)ptr;
-   UDATA offsetValue = 0;
+   uintptr_t ptrValue = (uintptr_t)ptr;
+   uintptr_t offset = 0;
    J9SharedClassCacheDescriptor *firstCache = _sharedCacheConfig->cacheDescriptorList->previous;
    J9SharedClassCacheDescriptor *curCache = firstCache;
    do
       {
-      UDATA cacheStart = (UDATA)curCache->cacheStartAddress; // Inclusive
-      UDATA cacheEnd = cacheStart + curCache->cacheSizeBytes; // Exclusive
+      uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress; // Inclusive
+      uintptr_t cacheEnd = cacheStart + curCache->cacheSizeBytes; // Exclusive
       if ((ptrValue >= cacheStart) && (ptrValue < cacheEnd))
          {
          if (cacheOffset)
-            *cacheOffset = ptrValue - cacheStart + offsetValue;
+            *cacheOffset = ptrValue - cacheStart + offset;
          return true;
          }
-      offsetValue += curCache->cacheSizeBytes;
+      offset += curCache->cacheSizeBytes;
       curCache = curCache->previous;
       }
    while (curCache != firstCache);
@@ -459,7 +458,7 @@ TR_J9SharedCache::startingROMClassOfClassChain(UDATA *classChain)
    UDATA lengthInBytes = classChain[0];
    TR_ASSERT_FATAL(lengthInBytes >= 2 * sizeof (UDATA), "class chain is too short!");
 
-   void *romClassOffset = reinterpret_cast<void*>(classChain[1]);
+   UDATA romClassOffset = classChain[1];
    void *romClass = pointerFromOffsetInSharedCache(romClassOffset);
    return static_cast<J9ROMClass*>(romClass);
    }
@@ -588,7 +587,7 @@ TR_J9SharedCache::rememberDebugCounterName(const char *name)
                                         0,
                                         &dataDescriptor);
 
-   UDATA offset = data ? (UDATA)offsetInSharedCacheFromPointer((void *)data) : (UDATA)-1;
+   UDATA offset = data ? offsetInSharedCacheFromPointer((void *)data) : (UDATA)-1;
 
    //printf("\nrememberDebugCounterName: Tried to store %s (%p), data=%p, offset=%p\n", name, name, data, offset);
 
@@ -598,7 +597,7 @@ TR_J9SharedCache::rememberDebugCounterName(const char *name)
 const char *
 TR_J9SharedCache::getDebugCounterName(UDATA offset)
    {
-   const char *name = (offset != (UDATA)-1) ? (const char *)pointerFromOffsetInSharedCache((void *)offset) : NULL;
+   const char *name = (offset != (UDATA)-1) ? (const char *)pointerFromOffsetInSharedCache(offset) : NULL;
 
    //printf("\ngetDebugCounterName: Tried to find %p, name=%s (%p)\n", offset, (name ? name : ""), name);
 
@@ -695,9 +694,9 @@ bool
 TR_J9SharedCache::romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & chainPtr, UDATA *chainEnd)
    {
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-   void *romClassOffset = offsetInSharedCacheFromPointer(romClass);
+   UDATA romClassOffset = offsetInSharedCacheFromPointer(romClass);
    LOG(9, { log("\t\tExamining romclass %p (%.*s) offset %d, comparing to %d\n", romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className), romClassOffset, *chainPtr); });
-   if ((chainPtr > chainEnd) || ((UDATA)romClassOffset != *chainPtr++))
+   if ((chainPtr > chainEnd) || (romClassOffset != *chainPtr++))
       return false;
    return true;
    }
@@ -798,7 +797,7 @@ TR_OpaqueClassBlock *
 TR_J9SharedCache::lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader)
    {
    UDATA *ptrToRomClassOffset = chainData+1;
-   J9ROMClass *romClass = (J9ROMClass *)pointerFromOffsetInSharedCache((void *)*ptrToRomClassOffset);
+   J9ROMClass *romClass = (J9ROMClass *)pointerFromOffsetInSharedCache(*ptrToRomClassOffset);
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    J9VMThread *vmThread = fej9->getCurrentVMThread();
@@ -817,7 +816,7 @@ TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR
    {
    void *loaderForClazz = _fe->getClassLoader(clazz);
    void *classChainIdentifyingLoaderForClazz = persistentClassLoaderTable()->lookupClassChainAssociatedWithClassLoader(loaderForClazz);
-   uintptrj_t classChainOffsetInSharedCache = (uintptrj_t) offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
+   uintptrj_t classChainOffsetInSharedCache = offsetInSharedCacheFromPointer(classChainIdentifyingLoaderForClazz);
    return classChainOffsetInSharedCache;
    }
 

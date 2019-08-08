@@ -230,7 +230,7 @@ TR::SymbolValidationManager::validateWellKnownClasses(const uintptrj_t *wellKnow
    int classCount = static_cast<int>(wellKnownClassChainOffsets[0]);
    for (int i = 1; i <= classCount; i++)
       {
-      void *classChainOffset = reinterpret_cast<void*>(wellKnownClassChainOffsets[i]);
+      uintptr_t classChainOffset = wellKnownClassChainOffsets[i];
       uintptrj_t *classChain = reinterpret_cast<uintptrj_t*>(
          _fej9->sharedCache()->pointerFromOffsetInSharedCache(classChainOffset));
       J9ROMClass *romClass = _fej9->sharedCache()->startingROMClassOfClassChain(classChain);
