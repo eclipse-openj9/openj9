@@ -167,6 +167,8 @@ private:
    bool romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & chainPtr, UDATA *chainEnd);
    UDATA *findChainForClass(J9Class *clazz, const char *key, uint32_t keyLength);
 
+   static bool isPointerInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
+
    uint16_t _initialHintSCount;
    uint16_t _hintsEnabledMask;
 

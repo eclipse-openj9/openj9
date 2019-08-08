@@ -395,9 +395,19 @@ TR_J9SharedCache::isMostlyFull()
    return (double) sharedCacheConfig()->getFreeSpaceBytes(_javaVM) / sharedCacheConfig()->getCacheSizeBytes(_javaVM) < 0.8;
    }
 
+bool
+TR_J9SharedCache::isPointerInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr)
+   {
+   uintptr_t ptrValue = (uintptr_t)ptr;
+   uintptr_t cacheStart = (uintptr_t)cacheDesc->cacheStartAddress; // Inclusive
+   uintptr_t cacheEnd = cacheStart + cacheDesc->cacheSizeBytes; // Exclusive
+   return (ptrValue >= cacheStart) && (ptrValue < cacheEnd);
+   }
+
 void *
 TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
    {
+   // The cache descriptor list is linked last to first and is circular, so last->previous == first.
    J9SharedClassCacheDescriptor *firstCache = _sharedCacheConfig->cacheDescriptorList->previous;
    J9SharedClassCacheDescriptor *curCache = firstCache;
    do
@@ -417,41 +427,31 @@ TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
 uintptr_t
 TR_J9SharedCache::offsetInSharedCacheFromPointer(void *ptr)
    {
-   uintptr_t ptrValue = (uintptr_t)ptr;
    uintptr_t offset = 0;
-   J9SharedClassCacheDescriptor *firstCache = _sharedCacheConfig->cacheDescriptorList->previous;
-   J9SharedClassCacheDescriptor *curCache = firstCache;
-   do
+   if (isPointerInSharedCache(ptr, &offset))
       {
-      uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress; // Inclusive
-      uintptr_t cacheEnd = cacheStart + curCache->cacheSizeBytes; // Exclusive
-      if ((ptrValue >= cacheStart) && (ptrValue < cacheEnd))
-         {
-         return ptrValue - cacheStart + offset;
-         }
-      offset += curCache->cacheSizeBytes;
-      curCache = curCache->previous;
+      return offset;
       }
-   while (curCache != firstCache);
    TR_ASSERT_FATAL(false, "Shared cache pointer out of bounds");
-   return 0;
+   return offset;
    }
 
 bool
 TR_J9SharedCache::isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset)
    {
-   uintptr_t ptrValue = (uintptr_t)ptr;
    uintptr_t offset = 0;
+   // The cache descriptor list is linked last to first and is circular, so last->previous == first.
    J9SharedClassCacheDescriptor *firstCache = _sharedCacheConfig->cacheDescriptorList->previous;
    J9SharedClassCacheDescriptor *curCache = firstCache;
    do
       {
-      uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress; // Inclusive
-      uintptr_t cacheEnd = cacheStart + curCache->cacheSizeBytes; // Exclusive
-      if ((ptrValue >= cacheStart) && (ptrValue < cacheEnd))
+      if (isPointerInCache(curCache, ptr))
          {
          if (cacheOffset)
-            *cacheOffset = ptrValue - cacheStart + offset;
+            {
+            uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress;
+            *cacheOffset = (uintptr_t)ptr - cacheStart + offset;
+            }
          return true;
          }
       offset += curCache->cacheSizeBytes;
