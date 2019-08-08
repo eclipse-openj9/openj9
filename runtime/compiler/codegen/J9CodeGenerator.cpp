@@ -4839,13 +4839,6 @@ J9::CodeGenerator::needClassAndMethodPointerRelocations()
    return self()->fej9()->needClassAndMethodPointerRelocations();
    }
 
-
-bool
-J9::CodeGenerator::needRelocationsForStatics()
-   {
-   return self()->fej9()->needRelocationsForStatics();
-   }
-
 bool
 J9::CodeGenerator::needRelocationsForBodyInfoData()
    {

@@ -169,7 +169,6 @@ public:
                                           TR::Node *node);
 
    bool needClassAndMethodPointerRelocations();
-   bool needRelocationsForStatics();
    bool needRelocationsForBodyInfoData();
    bool needRelocationsForPersistentInfoData();
 
