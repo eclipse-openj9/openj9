@@ -143,7 +143,7 @@ public:
       The server will check whether its version matches the client's version and throw
       `StreamVersionIncompatible` if it doesn't.
 
-      Exceptions thrown: StreamInterrupted, StreamConnectionTerminate, StreamClientSessionTerminate, StreamVersionIncompatible, StreamMessageTypeMismatch
+      Exceptions thrown: StreamConnectionTerminate, StreamClientSessionTerminate, StreamVersionIncompatible, StreamMessageTypeMismatch
  
       @return Returns a tuple with information sent by the client
    */
@@ -158,10 +158,6 @@ public:
 
       switch (_cMsg.type())
          {
-         case MessageType::compilationInterrupted:
-            {
-            throw StreamInterrupted();
-            }
          case MessageType::connectionTerminate:
             {
             throw StreamConnectionTerminate();
