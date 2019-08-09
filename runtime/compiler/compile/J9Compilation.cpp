@@ -1415,3 +1415,8 @@ J9::Compilation::incompleteOptimizerSupportForReadWriteBarriers()
    return self()->getOption(TR_EnableFieldWatch);
    }
 
+bool
+J9::Compilation::needRelocationsForStatics()
+   {
+   return self()->fej9()->needRelocationsForStatics();
+   }
