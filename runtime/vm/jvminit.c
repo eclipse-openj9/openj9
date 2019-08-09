@@ -1821,7 +1821,12 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				if (argIndex2 > argIndex) {
 					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 1);
 				} else {
+#if defined(LINUX) && !defined(LINUXPPC) && !defined(J9ZTPF)
+					/* Enable THP on xLinux by default */
+					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 1);
+#else
 					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 0);
+#endif /* defined(LINUX) && !defined(LINUXPPC) && !defined(J9ZTPF) */
 				}
 			}
 
