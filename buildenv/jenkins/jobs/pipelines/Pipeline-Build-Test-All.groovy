@@ -252,7 +252,7 @@ try {
 
                                 builds["${job_name}"] = {
                                     if (AUTOMATIC_GENERATION != 'false') {
-                                        node('master') {
+                                        node(SETUP_LABEL) {
                                             unstash 'DSL'
                                             variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline', 'Pipeline')
                                         }
