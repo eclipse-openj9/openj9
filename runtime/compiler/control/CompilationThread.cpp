@@ -45,7 +45,6 @@
 #include "jitprotos.h"
 #include "vmaccess.h"
 #include "objhelp.h"
-#include "shcdatatypes.h"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/AheadOfTimeCompile.hpp"
@@ -111,6 +110,7 @@
 #endif
 
 #ifdef COMPRESS_AOT_DATA
+#include "shcdatatypes.h" // For CompiledMethodWrapper
 #ifdef J9ZOS390
 // inflateInit checks the version of the zlib with which data was deflated. 
 // Reason we need to avoid conversion here is because, we are statically linking
@@ -12763,7 +12763,7 @@ TR::CompilationInfo::addOutOfProcessMethodToBeCompiled(JITServer::ServerStream *
       else
          {
          int32_t numCompThreadsSuspended = getNumUsableCompilationThreads() - getNumCompThreadsActive();
-         TR_ASSERT(numCompThreadsSuspended >= 0, "Accounting error for suspendedCompThreads usable=%d active=%d\n", 
+         TR_ASSERT(numCompThreadsSuspended >= 0, "Accounting error for suspendedCompThreads usable=%d active=%d\n",
                    getNumUsableCompilationThreads(), getNumCompThreadsActive());
          // Cannot activate if there is nothing to activate
          activate = (numCompThreadsSuspended <= 0) ? TR_no : TR_yes;
