@@ -397,6 +397,7 @@ TR_J9SharedCache::isPointerInCache(const J9SharedClassCacheDescriptor *cacheDesc
 void *
 TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
    {
+#if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
    // The cache descriptor list is linked last to first and is circular, so last->previous == first.
    J9SharedClassCacheDescriptor *firstCache = _sharedCacheConfig->cacheDescriptorList->previous;
    J9SharedClassCacheDescriptor *curCache = firstCache;
@@ -410,6 +411,14 @@ TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
       curCache = curCache->previous;
       }
    while (curCache != firstCache);
+#else // !J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
+   J9SharedClassCacheDescriptor *curCache = _sharedCacheConfig->cacheDescriptorList;
+   if (offset < curCache->cacheSizeBytes)
+      {
+      return (void *)(offset + (uintptr_t)curCache->cacheStartAddress);
+      }
+#endif // J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
+
    TR_ASSERT_FATAL(false, "Shared cache offset out of bounds");
    return NULL;
    }
@@ -429,6 +438,7 @@ TR_J9SharedCache::offsetInSharedCacheFromPointer(void *ptr)
 bool
 TR_J9SharedCache::isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset)
    {
+#if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
    uintptr_t offset = 0;
    // The cache descriptor list is linked last to first and is circular, so last->previous == first.
    J9SharedClassCacheDescriptor *firstCache = _sharedCacheConfig->cacheDescriptorList->previous;
@@ -448,6 +458,18 @@ TR_J9SharedCache::isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset)
       curCache = curCache->previous;
       }
    while (curCache != firstCache);
+#else // !J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
+   J9SharedClassCacheDescriptor *curCache = _sharedCacheConfig->cacheDescriptorList;
+   if (isPointerInCache(curCache, ptr))
+      {
+      if (cacheOffset)
+         {
+         uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress;
+         *cacheOffset = (uintptr_t)ptr - cacheStart;
+         }
+      return true;
+      }
+#endif // J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
    LOG(5,{ log("isPointerInSharedCache FAIL offset %d size %d\n", offset, _cacheSizeInBytes);});
    return false;
    }
