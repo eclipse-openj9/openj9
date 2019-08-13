@@ -53,7 +53,7 @@ public:
 #endif
 
    static void initVersion();
-  
+
 
    static uint64_t getJITServerVersion()
       {
@@ -162,7 +162,9 @@ protected:
 #else
       if (!((FileOutputStream*)_outputStream)->Flush())
 #endif
-         throw JITServer::StreamFailure("JITServer I/O error: flushing stream");
+         {
+         throw JITServer::StreamFailure("JITServer I/O error: flushing stream: GetErrno " + std::to_string(((FileOutputStream*)_outputStream)->GetErrno()));
+         }
       }
 
    int _connfd; // connection file descriptor

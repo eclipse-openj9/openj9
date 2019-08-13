@@ -23,7 +23,7 @@
 #ifndef SERVER_STREAM_H
 #define SERVER_STREAM_H
 
-#include <google/protobuf/io/zero_copy_stream_impl.h> 
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 #include "net/ProtobufTypeConvert.hpp"
 #include "net/CommunicationStream.hpp"
 #include "env/VerboseLog.hpp"
@@ -35,7 +35,7 @@ class SSLOutputStream;
 class SSLInputStream;
 #endif
 
-namespace JITServer 
+namespace JITServer
 {
 class BaseCompileDispatcher;
 
@@ -51,7 +51,7 @@ class BaseCompileDispatcher;
    3) In this thread, instantiate a CompileDispatcher from a class defined in step (1)
       E.g.:    J9CompileDispatcher handler(jitConfig);
    4) Call  "ServerStream::serveRemoteCompilationRequests(&handler, persistentInfo);"
-      which will wait for a connection, accept the connection, create a ServerStream and call 
+      which will wait for a connection, accept the connection, create a ServerStream and call
       handler->compile(stream) for further processing, e.g. add the stream
       to a compilation queue
    5) On a different thread, extract the compilation entry from  the queue (which contains
@@ -60,8 +60,8 @@ class BaseCompileDispatcher;
    6) At this point the server could query the client with:
          stream->write(MessageType type, T... args);
          auto recv = stream->read<....>();
-   7) When compilation is complete, the server responds with
-         finishCompilation(uint32_t statusCode, T... args)
+   7) When compilation is completed successfully, the server responds with finishCompilation(T... args).
+      When compilation is aborted, the sever responds with writeError(uint32_t statusCode).
  */
 class ServerStream : public CommunicationStream
    {
@@ -78,11 +78,11 @@ public:
 #else
    explicit ServerStream(int connfd);
 #endif
-   virtual ~ServerStream() 
+   virtual ~ServerStream()
       {
       _numConnectionsClosed++;
       }
- 
+
    /**
       @brief Send a message to the client
 
@@ -144,7 +144,7 @@ public:
       `StreamVersionIncompatible` if it doesn't.
 
       Exceptions thrown: StreamConnectionTerminate, StreamClientSessionTerminate, StreamVersionIncompatible, StreamMessageTypeMismatch
- 
+
       @return Returns a tuple with information sent by the client
    */
    template <typename... T>
@@ -175,9 +175,9 @@ public:
             {
             throw StreamMessageTypeMismatch(MessageType::compilationRequest, _cMsg.type());
             }
-         }      
+         }
       }
-   
+
    /**
       @brief Extract the data from the received message and return it
    */
@@ -188,23 +188,40 @@ public:
       }
 
    /**
-      @brief Function invoked by server when compilation is completed
+      @brief Function invoked by server when compilation is completed successfully
 
       This should be the last message sent by a server as a response to a compilation request.
-      It must include a `statusCode` which can be indicative of an error and could include a 
-      variable number of parameters with compilation artifacts (including the compiled body).
+      It includes a variable number of parameters with compilation artifacts (including the compiled body).
    */
    template <typename... T>
-   void finishCompilation(uint32_t statusCode, T... args)
+   void finishCompilation(T... args)
       {
       try
          {
-         write(MessageType::compilationCode, statusCode, args...);
+         write(MessageType::compilationCode, args...);
          }
       catch (std::exception &e)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Could not finish compilation: %s", e.what());
+         }
+      }
+
+   /**
+      @brief Function invoked by server when compilation is aborted
+   */
+   void writeError(uint32_t statusCode)
+      {
+      try
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "MessageType::compilationFailure: statusCode %u", statusCode);
+         write(MessageType::compilationFailure, statusCode);
+         }
+      catch (std::exception &e)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Could not write error code: %s", e.what());
          }
       }
 

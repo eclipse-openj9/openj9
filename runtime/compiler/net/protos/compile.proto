@@ -47,14 +47,15 @@ message AnyData
 
 enum MessageType
    {
-   compilationCode = 0;
-   mirrorResolvedJ9Method = 1;
-   get_params_to_construct_TR_j9method = 2;
-   getUnloadedClassRanges = 3;
-   compilationRequest = 4; // type used when client sends remote compilation requests
-   compilationInterrupted = 5; // type used when client informs the server to abort the remote compilation
-   clientSessionTerminate = 6; // type used when client process is about to terminate
-   connectionTerminate = 7; // type used when client informs the server to close the connection
+   compilationCode = 0; // Send the compiled code back to the client
+   compilationFailure = 1;
+   mirrorResolvedJ9Method = 2;
+   get_params_to_construct_TR_j9method = 3;
+   getUnloadedClassRanges = 4;
+   compilationRequest = 5; // type used when client sends remote compilation requests
+   compilationInterrupted = 6; // type used when client informs the server to abort the remote compilation
+   clientSessionTerminate = 7; // type used when client process is about to terminate
+   connectionTerminate = 8; // type used when client informs the server to close the connection
 
    // For TR_ResolvedJ9JITaaSServerMethod methods
    ResolvedMethod_isJNINative = 100;
