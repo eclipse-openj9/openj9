@@ -1510,9 +1510,7 @@ typedef struct J9ObjectMonitor {
 	UDATA proDeflationCount;
 	UDATA antiDeflationCount;
 #endif /* J9VM_THR_SMART_DEFLATION */
-#if defined(J9VM_THR_LOCK_NURSERY)
 	j9objectmonitor_t alternateLockword;
-#endif /* J9VM_THR_LOCK_NURSERY */
 	U_32 hash;
 } J9ObjectMonitor;
 
@@ -2899,11 +2897,13 @@ typedef struct J9VMInterface {
 	struct J9PortLibrary * portLibrary;
 } J9VMInterface;
 
+#if defined(J9VM_OPT_HARMONY)
 typedef struct HarmonyVMInterface {
 	struct VMInterfaceFunctions_* functions;
 	struct J9JavaVM* javaVM;
 	struct HyPortLibrary* portLibrary;
 } HarmonyVMInterface;
+#endif /* J9VM_OPT_HARMONY */
 
 typedef struct J9CheckJNIData {
 	UDATA options;
@@ -4361,6 +4361,8 @@ typedef struct J9MemoryManagerFunctions {
 	j9objectmonitor_t*  ( *j9gc_objaccess_getLockwordAddress)(struct J9VMThread *vmThread, j9object_t object) ;
 	void  ( *j9gc_objaccess_cloneObject)(struct J9VMThread *vmThread, j9object_t srcObject, j9object_t destObject) ;
 	void ( *j9gc_objaccess_copyObjectFields)(struct J9VMThread *vmThread, J9Class* valueClass, j9object_t srcObject, UDATA srcOffset, j9object_t destObject, UDATA destOffset) ;
+	void ( *j9gc_objaccess_copyObjectFieldsToArrayElement)(struct J9VMThread *vmThread, J9Class *arrayClazz, j9object_t srcObject, J9IndexableObject *arrayRef, I_32 index) ;
+	void ( *j9gc_objaccess_copyObjectFieldsFromArrayElement)(struct J9VMThread *vmThread, J9Class *arrayClazz, j9object_t destObject, J9IndexableObject *arrayRef, I_32 index) ;
 	void  ( *j9gc_objaccess_cloneIndexableObject)(struct J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject) ;
 	j9object_t  ( *j9gc_objaccess_asConstantPoolObject)(struct J9VMThread *vmThread, j9object_t toConvert, UDATA allocationFlags) ;
 #if defined(J9VM_GC_REALTIME)
@@ -4704,9 +4706,7 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *queryLogOptions)(struct J9JavaVM *vm, I_32 buffer_size, void *options_buffer, I_32 *data_size) ;
 	UDATA  ( *setLogOptions)(struct J9JavaVM *vm, char *options) ;
 	void  ( *exitJavaThread)(struct J9JavaVM * vm) ;
-#if defined(J9VM_THR_LOCK_NURSERY)
 	void  ( *cacheObjectMonitorForLookup)(struct J9JavaVM* vm, struct J9VMThread* vmStruct, struct J9ObjectMonitor* objectMonitor) ;
-#endif /* J9VM_THR_LOCK_NURSERY */
 	void*  ( *jniArrayAllocateMemoryFromThread)(struct J9VMThread* vmThread, UDATA sizeInBytes) ;
 	void  ( *jniArrayFreeMemoryFromThread)(struct J9VMThread* vmThread, void* location) ;
 	void  (JNICALL *sendForGenericInvoke)(struct J9VMThread *vmThread, j9object_t methodHandle, j9object_t methodType, UDATA dropFirstArg) ;
@@ -5098,7 +5098,9 @@ typedef struct J9JavaVM {
 	UDATA j2seVersion;
 	void* zipCachePool;
 	struct J9VMInterface vmInterface;
+#if defined(J9VM_OPT_HARMONY)
 	struct HarmonyVMInterface harmonyVMInterface;
+#endif /* J9VM_OPT_HARMONY */
 	UDATA dynamicLoadClassAllocationIncrement;
 	struct J9TranslationBufferSet* dynamicLoadBuffers;
 	struct J9JImageIntf *jimageIntf;

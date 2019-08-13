@@ -3291,6 +3291,16 @@ void TR_J9ByteCodeIlGenerator::expandMethodHandleInvokeCall(TR::TreeTop *tree)
       TR_ASSERT(comp(), "Unexpected MethodHandle invoke call at n%dn %p", callNode->getGlobalIndex(), callNode);
       }
 
+   // Specialize MethodHandle.invokeExact if the receiver handle is a known object
+   TR::Node* methodHandle = callNode->getFirstArgument();
+   if (methodHandle->getOpCode().hasSymbolReference()
+       && methodHandle->getSymbolReference()->hasKnownObjectIndex())
+      {
+      TR::KnownObjectTable::Index index = methodHandle->getSymbolReference()->getKnownObjectIndex();
+      uintptrj_t* objectLocation = comp()->getKnownObjectTable()->getPointerLocation(index);
+      TR::TransformUtil::specializeInvokeExactSymbol(comp(), callNode,  objectLocation);
+      }
+
    _bcIndex = oldBCIndex;
 
    if (comp()->getOption(TR_TraceILGen))

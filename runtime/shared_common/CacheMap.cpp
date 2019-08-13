@@ -5251,9 +5251,11 @@ SH_CacheMap::enterStringTableMutex(J9VMThread* currentThread, BOOLEAN readOnly, 
 				table->tailNode = SRP_PTR_GET(table->sharedTailNodePtr, J9SharedInternSRPHashTableEntry *);
 			}
 
-			if (J9_ARE_ANY_BITS_SET(_sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL | J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL)) {
+			if (readOnly || J9_ARE_ANY_BITS_SET(_sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL | J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL)) {
 				/* Disable all updates to the shared tree */
 				table->flags |= J9AVLTREE_DISABLE_SHARED_TREE_UPDATES;
+			} else {
+				table->flags &= ~J9AVLTREE_DISABLE_SHARED_TREE_UPDATES;
 			}
 		}
 	}

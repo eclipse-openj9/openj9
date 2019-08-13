@@ -72,7 +72,7 @@ if test "x$RUN_LINT" = "xyes"; then
 fi
 
 if test "x$RUN_BUILD" = "xyes"; then
-  if [ ! `wget https://ci.eclipse.org/openj9/userContent/freemarker-2.3.8.jar -O freemarker.jar` ]; then
+  if ! wget https://ci.eclipse.org/openj9/userContent/freemarker-2.3.8.jar -O freemarker.jar ; then
     wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
     tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
   fi

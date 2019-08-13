@@ -24,8 +24,11 @@
 #include "codegen/ARM64JNILinkage.hpp"
 #include "codegen/ARM64PrivateLinkage.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/GenerateInstructions.hpp"
+#include "codegen/ARM64Instruction.hpp"
 #include "codegen/J9ARM64Snippet.hpp"
+#include "codegen/RegisterDependency.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "il/DataTypes.hpp"
 #include "il/Node.hpp"
@@ -44,10 +47,8 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::awrtbari] = TR::TreeEvaluator::awrtbariEvaluator;
    tet[TR::monexit] = TR::TreeEvaluator::monexitEvaluator;
    tet[TR::monent] = TR::TreeEvaluator::monentEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::awrtbar] = TR::TreeEvaluator::awrtbarEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::awrtbari] = TR::TreeEvaluator::awrtbariEvaluator;
    tet[TR::monexitfence] = TR::TreeEvaluator::monexitfenceEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::asynccheck] = TR::TreeEvaluator::asynccheckEvaluator;
+   tet[TR::asynccheck] = TR::TreeEvaluator::asynccheckEvaluator;
    tet[TR::instanceof] = TR::TreeEvaluator::instanceofEvaluator;
    tet[TR::checkcast] = TR::TreeEvaluator::checkcastEvaluator;
    tet[TR::checkcastAndNULLCHK] = TR::TreeEvaluator::checkcastAndNULLCHKEvaluator;
@@ -60,23 +61,32 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::arraylength] = TR::TreeEvaluator::arraylengthEvaluator;
    tet[TR::ResolveCHK] = TR::TreeEvaluator::resolveCHKEvaluator;
    tet[TR::DIVCHK] = TR::TreeEvaluator::DIVCHKEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::BNDCHK] = TR::TreeEvaluator::BNDCHKEvaluator;
+   tet[TR::BNDCHK] = TR::TreeEvaluator::BNDCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCopyBNDCHK] = TR::TreeEvaluator::ArrayCopyBNDCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::BNDCHKwithSpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::SpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::ArrayStoreCHK] = TR::TreeEvaluator::ArrayStoreCHKEvaluator;
+   tet[TR::ArrayStoreCHK] = TR::TreeEvaluator::ArrayStoreCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCHK] = TR::TreeEvaluator::ArrayCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::MethodEnterHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::MethodExitHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::allocationFence] = TR::TreeEvaluator::flushEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::loadFence] = TR::TreeEvaluator::flushEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::storeFence] = TR::TreeEvaluator::flushEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::fullFence] = TR::TreeEvaluator::flushEvaluator;
+   tet[TR::allocationFence] = TR::TreeEvaluator::flushEvaluator;
+   tet[TR::loadFence] = TR::TreeEvaluator::flushEvaluator;
+   tet[TR::storeFence] = TR::TreeEvaluator::flushEvaluator;
+   tet[TR::fullFence] = TR::TreeEvaluator::flushEvaluator;
+
    }
 
 void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceInstruction, TR::CodeGenerator *cg)
    {
-   TR_UNIMPLEMENTED();
+   TR::Compilation *comp = cg->comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+
+   TR::Block *block = node->getBlock();
+
+   if (fej9->shouldPerformEDO(block, comp))
+      {
+      TR_UNIMPLEMENTED();
+      }
    }
 
 void
@@ -146,6 +156,36 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
    }
 
 TR::Register *
+J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   // The child contains an inline test. If it succeeds, the helper is called.
+   // The address of the helper is contained as a long in this node.
+   //
+   TR::Node *testNode = node->getFirstChild();
+   TR::Node *firstChild = testNode->getFirstChild();
+   TR::Register *src1Reg = cg->evaluate(firstChild);
+   TR::Node *secondChild = testNode->getSecondChild();
+   TR::Register *src2Reg = cg->evaluate(secondChild);
+
+   TR_ASSERT(testNode->getOpCodeValue() == TR::lcmpeq, "asynccheck bad format");
+
+   TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
+   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+
+   // ToDo:
+   // Optimize this using "cmp (immediate)" instead of "cmp (register)" when possible
+   generateCompareInstruction(cg, node, src1Reg, src2Reg, true); // 64-bit compare
+
+   TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_EQ);
+   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   cg->decReferenceCount(testNode);
+   return NULL;
+   }
+
+TR::Register *
 J9::ARM64::TreeEvaluator::instanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    // Call helper
@@ -171,6 +211,43 @@ J9::ARM64::TreeEvaluator::checkcastEvaluator(TR::Node *node, TR::CodeGenerator *
    TR::Node::recreate(node, opCode);
 
    return targetRegister;
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::flushEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::ILOpCodes op = node->getOpCodeValue();
+
+   if (op == TR::allocationFence)
+      {
+      if (!node->canOmitSync())
+         {
+         // Data synchronization barrier -- 0xF to turn on option for both reads and writes
+         generateSynchronizationInstruction(cg, TR::InstOpCode::dsb, node, 0xF);
+         }
+      }
+   else
+      {
+      uint32_t imm;
+      if (op == TR::loadFence)
+         {
+         // 0xD to turn on option for reads
+         imm = 0xD;
+         }
+      else if (op == TR::storeFence)
+         {
+         // 0xE to turn on option for writes
+         imm = 0xE;
+         }
+      else
+         {
+         // 0xF to turn on option for both reads and writes
+         imm = 0xF;
+         }
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dsb, node, imm);
+      }
+
+   return NULL;
    }
 
 TR::Register *
@@ -248,4 +325,138 @@ J9::ARM64::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator
    node->setRegister(lengthReg);
 
    return lengthReg;
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Register *src1Reg;
+   TR::Register *src2Reg = NULL;
+   uint64_t value;
+   TR::LabelSymbol *snippetLabel;
+   TR::Instruction *gcPoint;
+   bool reversed = false;
+
+   if ((firstChild->getOpCode().isLoadConst())
+         && (constantIsUnsignedImm12(firstChild->get64bitIntegralValueAsUnsigned()))
+         && (NULL == firstChild->getRegister()))
+      {
+      src2Reg = cg->evaluate(secondChild);
+      reversed = true;
+      }
+   else
+      {
+      src1Reg = cg->evaluate(firstChild);
+
+      if ((secondChild->getOpCode().isLoadConst())
+            && (NULL == secondChild->getRegister()))
+         {
+         value = secondChild->get64bitIntegralValueAsUnsigned();
+         if (!constantIsUnsignedImm12(value))
+            {
+            src2Reg = cg->evaluate(secondChild);
+            }
+         }
+      else
+         src2Reg = cg->evaluate(secondChild);
+      }
+
+   if (reversed)
+      {
+      generateCompareImmInstruction(cg, node, src2Reg, firstChild->get64bitIntegralValueAsUnsigned());
+      }
+   else
+      {
+      if (NULL == src2Reg)
+         generateCompareImmInstruction(cg, node, src1Reg, value);
+      else
+         generateCompareInstruction(cg, node, src1Reg, src2Reg);
+      }
+
+   snippetLabel = generateLabelSymbol(cg);
+   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+   
+   gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_CS);
+
+   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   secondChild->setIsNonNegative(true);
+   return (NULL);
+   }
+
+static void VMoutlinedHelperArrayStoreCHKEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, TR::CodeGenerator *cg)
+   {
+   TR::SymbolReference *arrayStoreChkHelper = node->getSymbolReference();
+
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
+   TR::addDependency(deps, dstReg, TR::RealRegister::x0, TR_GPR, cg);
+   TR::addDependency(deps, srcReg, TR::RealRegister::x1, TR_GPR, cg);
+
+   TR::Instruction *gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::bl, node,
+                                                        (uintptr_t)arrayStoreChkHelper->getMethodAddress(),
+                                                        deps, arrayStoreChkHelper, NULL);
+   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+
+   cg->machine()->setLinkRegisterKilled(true);
+   }
+
+static void VMoutlinedHelperWrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, TR::CodeGenerator *cg)
+   {
+   auto gcMode = TR::Compiler->om.writeBarrierType();
+   if (gcMode == gc_modron_wrtbar_none)
+      return;
+
+   TR::Compilation *comp = cg->comp();
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::SymbolReference *wbref = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef(comp->getMethodSymbol());
+
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
+   TR::addDependency(deps, dstReg, TR::RealRegister::x0, TR_GPR, cg);
+   TR::addDependency(deps, srcReg, TR::RealRegister::x1, TR_GPR, cg);
+
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, srcReg, doneLabel);
+
+   TR::Instruction *gcPoint = generateImmSymInstruction(cg, TR::InstOpCode::bl, node,
+                                                        (uintptr_t)wbref->getMethodAddress(),
+                                                        new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t)0, 0, cg->trMemory()),
+                                                        wbref, NULL);
+   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
+
+   cg->machine()->setLinkRegisterKilled(true);
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node *wrtBarNode = node->getFirstChild();
+   TR::Node *srcNode = wrtBarNode->getSecondChild();
+   TR::Node *dstNode = wrtBarNode->getThirdChild();
+   TR::Register *srcReg = cg->evaluate(srcNode);
+   TR::Register *dstReg = cg->evaluate(dstNode);
+
+   if (!srcNode->isNull())
+      {
+      VMoutlinedHelperArrayStoreCHKEvaluator(node, srcReg, dstReg, cg);
+      }
+
+   TR::MemoryReference *storeMR = new (cg->trHeapMemory()) TR::MemoryReference(wrtBarNode, TR::Compiler->om.sizeofReferenceAddress(), cg);
+   generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, storeMR, srcReg);
+
+   if (!srcNode->isNull())
+      {
+      VMoutlinedHelperWrtbarEvaluator(wrtBarNode, srcReg, dstReg, cg);
+      }
+
+   cg->decReferenceCount(srcNode);
+   cg->decReferenceCount(dstNode);
+   storeMR->decNodeReferenceCounts(cg);
+   cg->decReferenceCount(wrtBarNode);
+
+   return NULL;
    }

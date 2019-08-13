@@ -1,8 +1,6 @@
-/*[INCLUDE-IF Sidecar17]*/
-package com.ibm.jvm;
-
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2014 IBM Corp. and others
+ * Copyright (c) 2012, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +21,10 @@ package com.ibm.jvm;
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+package com.ibm.jvm;
+
+import openj9.management.internal.DumpConfigurationUnavailableExceptionBase;
+
 /**
  * This exception is thrown when the dump configuration cannot be
  * updated through the methods on com.ibm.jvm.Dump because it is
@@ -38,5 +40,12 @@ public class DumpConfigurationUnavailableException extends Exception {
 	public DumpConfigurationUnavailableException(String message) {
 		super(message);
 	}
-	
+
+	/**
+	 * @param cause root exception
+	 */
+	public DumpConfigurationUnavailableException(DumpConfigurationUnavailableExceptionBase cause) {
+		super(cause.getMessage(), cause);
+	}
+
 }

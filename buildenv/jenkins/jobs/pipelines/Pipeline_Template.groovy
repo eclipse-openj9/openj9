@@ -29,7 +29,7 @@ if (!binding.hasVariable('VENDOR_CREDENTIALS_ID_DEFAULT')) VENDOR_CREDENTIALS_ID
 if (!binding.hasVariable('DISCARDER_NUM_BUILDS')) DISCARDER_NUM_BUILDS = '1'
 if (!binding.hasVariable('SCM_URL')) SCM_URL = 'https://github.com/eclipse/openj9.git'
 if (!binding.hasVariable('SCM_BRANCH')) SCM_BRANCH = 'refs/heads/master'
-if (!binding.hasVariable('LIGHTWEIGHT_CHECKOUT')) LIGHTWEIGHT_CHECKOUT = false
+if (!binding.hasVariable('SCM_REFSPEC')) SCM_REFSPEC = 'refs/heads/*:refs/remotes/origin/*'
 
 if (jobType == 'build') {
     pipelineScript = 'buildenv/jenkins/jobs/pipelines/Build-Any-Platform.groovy'
@@ -50,10 +50,15 @@ pipelineJob("$JOB_NAME") {
                         refspec('$SCM_REFSPEC')
                     }
                     branch('$SCM_BRANCH')
+                    extensions {
+                        cloneOptions {
+                            reference('$HOME/openjdk_cache')
+                        }
+                        wipeOutWorkspace()
+                    }
                 }
             }
             scriptPath(pipelineScript)
-            lightweight(LIGHTWEIGHT_CHECKOUT)
         }
     }
     logRotator {
@@ -91,7 +96,7 @@ pipelineJob("$JOB_NAME") {
         stringParam('PERSONAL_BUILD')
         stringParam('CUSTOM_DESCRIPTION')
         stringParam('SCM_BRANCH', SCM_BRANCH)
-        stringParam('SCM_REFSPEC')
+        stringParam('SCM_REFSPEC', SCM_REFSPEC)
 
         if (jobType == 'pipeline'){
             stringParam('TESTS_TARGETS')

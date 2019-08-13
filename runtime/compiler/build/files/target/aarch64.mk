@@ -48,6 +48,7 @@ JIT_PRODUCT_SOURCE_FILES+= \
     compiler/aarch64/codegen/ARM64PrivateLinkage.cpp \
     compiler/aarch64/codegen/ARM64Recompilation.cpp \
     compiler/aarch64/codegen/CallSnippet.cpp \
+    compiler/aarch64/codegen/ForceRecompilationSnippet.cpp \
     compiler/aarch64/codegen/J9ARM64Snippet.cpp \
     compiler/aarch64/codegen/J9AheadOfTimeCompile.cpp \
     compiler/aarch64/codegen/J9CodeGenerator.cpp \

@@ -2721,6 +2721,11 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
       }
 
 #if defined(TR_HOST_ARM64)
+   // Recompilation support is not available in AArch64 yet.
+   // OpenJ9 issue #6607 tracks the work to enable.
+   //
+   self()->setAllowRecompilation(false);
+
    // Internal Pointers support is not available in AArch64 yet.
    // OpenJ9 issue #6367 tracks the work to enable.
    //
@@ -2730,6 +2735,25 @@ bool J9::Options::feLatePostProcess(void * base, TR::OptionSet * optionSet)
    // OpenJ9 issue #6443 tracks the work to enable.
    //
    self()->setOption(TR_DisableArraySetOpts);
+
+   // EDO catch block profiling support is not available in AArch64 yet.
+   // OpenJ9 issue #6538 tracks the work to enable.
+   //
+   self()->setOption(TR_DisableEDO);
+
+   // Full support for GRA is not available on AArch64 yet, mainly to
+   // work out all the subtleties with GlRegDeps.
+   //
+   // OpenJ9 issue #6606 tracks the work to enable.
+   //
+   self()->setDisabled(OMR::tacticalGlobalRegisterAllocator, true);
+
+   // Support for shuffling linkage registers to GRA registers is not
+   // available on AArch64 yet.
+   //
+   // OpenJ9 issue #6657 tracks the work to enable.
+   //
+   self()->setOption(TR_DisableLinkageRegisterAllocation);
 #endif
 
    return true;

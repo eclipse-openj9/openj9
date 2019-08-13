@@ -23,13 +23,9 @@
 
 package openj9.tools.attach.diagnostics.tools;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.List;
-import java.util.Properties;
-import com.sun.tools.attach.AttachNotSupportedException;
+
 import com.sun.tools.attach.spi.AttachProvider;
-import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 
 /**
@@ -39,8 +35,6 @@ import com.sun.tools.attach.VirtualMachineDescriptor;
  */
 public class Jps {
 
-	private static final String SUN_JAVA_COMMAND = "sun.java.command"; //$NON-NLS-1$
-	private static final String SUN_JVM_ARGS = "sun.jvm.args"; //$NON-NLS-1$
 	private static boolean printApplicationArguments;
 	private static boolean printJvmArguments;
 	private static boolean noPackageName;
@@ -62,57 +56,18 @@ public class Jps {
 			rc = 1;
 		} else {
 			List<VirtualMachineDescriptor> vmds = theProvider.listVirtualMachines();
-			for (VirtualMachineDescriptor vmd: vmds) {
+			for (VirtualMachineDescriptor vmd : vmds) {
 				StringBuilder outputBuffer = new StringBuilder(vmd.id());
 				if (!vmidOnly) {
-					try {
-						VirtualMachine theVm = theProvider.attachVirtualMachine(vmd);
-						try {
-							Properties vmProperties = theVm.getSystemProperties();
-							String theCommand = vmProperties.getProperty(SUN_JAVA_COMMAND, ""); //$NON-NLS-1$
-							String parts[] = theCommand.split("\\s+", 2); /* split into at most 2 parts: command and argument string */  //$NON-NLS-1$
-							if (noPackageName) {
-								String commandString = parts[0];
-								int finalSeparatorPosition = -1;
-								if (commandString.toLowerCase().endsWith(".jar")) { //$NON-NLS-1$
-									/* the application was launched via '-jar'.  Get the file name, without directory path. */
-									finalSeparatorPosition = commandString.lastIndexOf(File.pathSeparatorChar);
-								} else {
-									/* the application was launched using a class name */
-									finalSeparatorPosition = commandString.lastIndexOf('.');
-								}
-								parts[0] = commandString.substring(finalSeparatorPosition + 1);
-							}
-							if (printApplicationArguments) {
-								for (String p:parts) {
-									outputBuffer.append(' ');
-									outputBuffer.append(p);
-								}
-							} else if (parts.length > 0) { /* some Java processes do not use the Java launcher */
-								outputBuffer.append(' ');
-								outputBuffer.append(parts[0]);
-							}
-							if (printJvmArguments) {
-								String jvmArguments = vmProperties.getProperty(SUN_JVM_ARGS);
-								if ((null != jvmArguments) && !jvmArguments.isEmpty()) {
-									outputBuffer.append(' ');
-									outputBuffer.append(jvmArguments);
-								}
-							}
-						} finally {
-							theVm.detach();
-						}
-					} catch (AttachNotSupportedException | IOException e) {
-						outputBuffer.append(' ');
-						outputBuffer.append("<no information available>"); //$NON-NLS-1$
-					}
+					Util.getTargetInformation(theProvider, vmd, 
+							printJvmArguments, noPackageName, printApplicationArguments, outputBuffer);
 				}
 				System.out.println(outputBuffer.toString());
 			}
 		}
 		System.exit(rc);
 	}
-
+	
 	@SuppressWarnings("nls")
 	private static void parseArguments(String[] args) {
 		printApplicationArguments = false;
@@ -125,7 +80,7 @@ public class Jps {
 				+ "    -q: print only the virtual machine identifiers%n"
 				+ "    -m: print the application arguments%n"
 				+ "    -v: print the Java VM arguments, including those produced automatically%n";
-		for (String a: args) {
+		for (String a : args) {
 			switch (a) {
 			case "-l":
 				noPackageName = false;

@@ -30,8 +30,6 @@ FROM centos:centos6.9
 
 # Install required OS tools
 
-ENV USER="jenkins"
-
 RUN yum -y update \
   && yum -y install \
     alsa-lib-devel \
@@ -116,9 +114,10 @@ RUN yum -y update \
   && yum -y install devtoolset-7-gcc-7.3* devtoolset-7-binutils \
   && yum -y install devtoolset-7-gcc-c++-7.3* devtoolset-2-gcc-gfortran-7.3* \
   && yum clean all \
-  && ln -s /opt/rh/devtoolset-7/root/usr/bin/gcc /usr/bin/cc \
-  && ln -s /opt/rh/devtoolset-7/root/usr/bin/gcc /usr/bin/gcc \
-  && ln -s /opt/rh/devtoolset-7/root/usr/bin/g++ /usr/bin/g++
+  && echo "source /opt/rh/devtoolset-7/enable" > /etc/profile.d/gcc-7.sh
+
+# Any commands that require gcc need to be run after this SHELL command and before the next SHELL
+SHELL ["/bin/sh","-lc"]
 
 # Dependency required by test framework
 RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
@@ -193,15 +192,6 @@ RUN cd /usr/src/ \
   && /usr/src/cuda_7.5.18_linux.run --silent --toolkit --override \
   && rm -f /usr/src/cuda_7.5.18_linux.run
 
-# add user home/jenkins
-RUN useradd -ms /bin/bash ${USER} \
-  && mkdir /home/${USER}/.ssh/
-COPY authorized_keys /home/${USER}/.ssh/authorized_keys
-COPY known_hosts /home/${USER}/.ssh/known_hosts
-RUN chown -R ${USER}:${USER} /home/${USER} \
-  && chmod 644 /home/${USER}/.ssh/authorized_keys \
-  && chmod 644 /home/${USER}/.ssh/known_hosts
-
 # set up sshd config
 RUN mkdir /var/run/sshd \
   && sed -i 's/#PermitRootLogin/PermitRootLogin/' /etc/ssh/sshd_config \
@@ -234,12 +224,6 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-12 \
   && mv bootjdk12/* /usr/lib/jvm/adoptojdk-java-12 \
   && rm -rf bootjdk12
 
-# Install Freemaker for building OpenJ9. Used in bash ./configure --with-freemarker-jar=<path-to-freemaker-jar>
-RUN cd /home/${USER} \
-  && wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz \
-  && tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
-  && rm -f freemarker.tgz
-
 # Install Curl version 7.24.0.
 RUN cd /usr/src \
   && wget http://curl.haxx.se/download/curl-7.24.0.tar.bz2 \
@@ -252,22 +236,11 @@ RUN cd /usr/src \
   && cd .. \
   && rm -rf /usr/src/curl-7.24.0
 
-# Setup a reference repository cache for faster clones in the container
-RUN mkdir /home/${USER}/openjdk_cache \
-  && cd /home/${USER}/openjdk_cache \
-  && git init --bare \
-  && git remote add jdk8 https://github.com/ibmruntimes/openj9-openjdk-jdk8.git \
-  && git remote add jdk11 https://github.com/ibmruntimes/openj9-openjdk-jdk11.git \
-  && git remote add jdk12 https://github.com/ibmruntimes/openj9-openjdk-jdk12.git \
-  && git remote add jdk13 https://github.com/ibmruntimes/openj9-openjdk-jdk13.git \
-  && git remote add jdk https://github.com/ibmruntimes/openj9-openjdk-jdk.git \
-  && git remote add openj9 https://github.com/eclipse/openj9.git \
-  && git remote add omr https://github.com/eclipse/openj9-omr.git \
-  && git fetch --all \
-  && git gc --aggressive --prune=all
-
 # Install OpenSSL v1.1.1b
 # Required for JITaaS  & Crypto functional testing
+# OpenSSL requires ldconfig to be run in order to function properly
+# however ldconfig is not included here because it will be run
+# after the other sections that depend on ldconfig
 RUN cd /tmp \
   && wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1b.tar.gz \
   && tar -xzf OpenSSL_1_1_1b.tar.gz \
@@ -279,7 +252,7 @@ RUN cd /tmp \
   && cd .. \
   && rm -rf openssl-OpenSSL_1_1_1b \
   && echo "/usr/local/openssl-1.1.1b/lib" > /etc/ld.so.conf.d/openssl-1.1.1b.conf \
-  && echo "PATH=/usr/local/openssl-1.1.1b/bin:$PATH" > /etc/environment
+  && echo "PATH=/usr/local/openssl-1.1.1b/bin:\$PATH" > /etc/profile.d/openssl.sh
 
 # Install Protobuf v3.5.1
 # Required for JITaaS
@@ -293,7 +266,9 @@ RUN cd /tmp \
   && make install \
   && cd .. \
   && rm -rf protobuf-3.5.1
+
 # Run ldconfig to create necessary links and cache to protobuf libraries
+# Both OpenSSL and Protobuf rely on this step to work properly
 RUN echo "/usr/local/lib" > /etc/ld.so.conf.d/usr-local.conf \
   && echo "/usr/local/lib64" >> /etc/ld.so.conf.d/usr-local.conf \
   && ldconfig
@@ -314,6 +289,40 @@ RUN yum -y update \
   && make install \
   && cd .. \
   && rm -rf Python-3.7.3
+
+# Any commands that require gcc need to be run before this SHELL command and after the previous SHELL
+SHELL ["/bin/sh","-c"]
+
+ENV USER="jenkins"
+
+# add user home/jenkins
+RUN useradd -ms /bin/bash ${USER} \
+  && mkdir /home/${USER}/.ssh/
+COPY authorized_keys /home/${USER}/.ssh/authorized_keys
+COPY known_hosts /home/${USER}/.ssh/known_hosts
+RUN chown -R ${USER}:${USER} /home/${USER} \
+  && chmod 644 /home/${USER}/.ssh/authorized_keys \
+  && chmod 644 /home/${USER}/.ssh/known_hosts
+
+# Install Freemaker for building OpenJ9. Used in bash ./configure --with-freemarker-jar=<path-to-freemaker-jar>
+RUN cd /home/${USER} \
+  && wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz \
+  && tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
+  && rm -f freemarker.tgz
+
+# Setup a reference repository cache for faster clones in the container
+RUN mkdir /home/${USER}/openjdk_cache \
+  && cd /home/${USER}/openjdk_cache \
+  && git init --bare \
+  && git remote add jdk13 https://github.com/ibmruntimes/openj9-openjdk-jdk13.git \
+  && git remote add jdk8 https://github.com/ibmruntimes/openj9-openjdk-jdk8.git \
+  && git remote add jdk11 https://github.com/ibmruntimes/openj9-openjdk-jdk11.git \
+  && git remote add jdk12 https://github.com/ibmruntimes/openj9-openjdk-jdk12.git \
+  && git remote add jdk https://github.com/ibmruntimes/openj9-openjdk-jdk.git \
+  && git remote add openj9 https://github.com/eclipse/openj9.git \
+  && git remote add omr https://github.com/eclipse/openj9-omr.git \
+  && git fetch --all \
+  && git gc --aggressive --prune=all
 
 # Expose SSH port and run SSHD
 EXPOSE 22

@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -250,8 +250,8 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 	tgcExtensions->printf("\n");
 	tgcExtensions->printf("Scavenger parallel and progress stats, timestamp=\"%s.%ld\"\n", timestamp, timeInMillis % 1000);
 
-	tgcExtensions->printf("          gc thrID     busy    stall   acquire   release   acquire   release   acquire     split avg split  alias to\n");
-	tgcExtensions->printf("                   (micros) (micros)  freelist  freelist  scanlist  scanlist      lock    arrays arraysize copycache\n");
+	tgcExtensions->printf("          gc thrID     busy    stall   acquire   release   acquire   release   acquire     split avg split  alias to    deep      total deepest\n");
+	tgcExtensions->printf("                   (micros) (micros)  freelist  freelist  scanlist  scanlist      lock    arrays arraysize copycache   lists  deep objs    list\n");
 
 	scavengeTotalTime = extensions->scavengerStats._endTime - extensions->scavengerStats._startTime;
 	uintptr_t gcCount = extensions->scavengerStats._gcCount;
@@ -267,7 +267,7 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 				if (0 != env->_scavengerStats._arraySplitCount) {
 					avgArraySplitAmount = env->_scavengerStats._arraySplitAmount / env->_scavengerStats._arraySplitCount;
 				}
-				tgcExtensions->printf("SCV.T %6zu  %4zu %8llu %8llu     %5zu     %5zu     %5zu     %5zu     %5zu     %5zu     %5zu   %7zu\n",
+				tgcExtensions->printf("SCV.T %6zu  %4zu %8llu %8llu     %5zu     %5zu     %5zu     %5zu     %5zu     %5zu     %5zu   %7zu  %6zu     %6zu  %6zu \n",
 					gcCount,
 					env->getSlaveID(),
 					j9time_hires_delta(0, scavengeTotalTime - env->_scavengerStats.getStallTime(), J9PORT_TIME_DELTA_IN_MICROSECONDS),
@@ -279,7 +279,10 @@ tgcHookLocalGcEnd(J9HookInterface** hook, uintptr_t eventNum, void* eventData, v
 					env->_scavengerStats._acquireListLockCount,
 					env->_scavengerStats._arraySplitCount,
 					avgArraySplitAmount,
-					env->_scavengerStats._aliasToCopyCacheCount);
+					env->_scavengerStats._aliasToCopyCacheCount,
+					env->_scavengerStats._totalDeepStructures,
+					env->_scavengerStats._totalObjsDeepScanned,
+					env->_scavengerStats._depthDeepestStructure);
 			}
 		}
 	}

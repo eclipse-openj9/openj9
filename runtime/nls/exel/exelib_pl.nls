@@ -30,7 +30,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -438,7 +438,7 @@ J9NLS_EXELIB_CMDLINE_CP_WARN.system_action=
 J9NLS_EXELIB_CMDLINE_CP_WARN.user_response=
 # END NON-TRANSLATABLE
 
-#J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numberic1024_WARN
+#J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numeric1024_WARN
 J9NLS_EXELIB_CMDLINE_PREPEND_WARN=\n\
 OSTRZE\u017bENIE: Argument wiersza komend \"%s\" jest nieaktualny.\n\
 OSTRZE\u017bENIE: Nale\u017cy u\u017cywa\u0107 odpowiednika -X.
@@ -612,16 +612,8 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.system_action=
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.user_response=
 # END NON-TRANSLATABLE
 
-# J9SourceMainRemoteConsole - remoteConsole_startup
-
-J9NLS_EXELIB_UNABLE_REDIRECT_IO=Nie mo\u017cna przekierowa\u0107 konsoli do: %1$s:%2$d
-# START NON-TRANSLATABLE
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_1=localhost
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_2=8080
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.explanation=Failed to establish socket connection to target remote console.
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.system_action=JVM console output will not be redirected to target console.
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.user_response=Ensure remote console is reachable and accessible.
-# END NON-TRANSLATABLE
+# J9SourceMainRemoteConsole - unused
+J9NLS_EXELIB_UNABLE_REDIRECT_IO=
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 J9NLS_EXELIB_INTERNAL_HELP_1_10=\  -Xquickstart    Poprawienie czasu uruchamiania poprzez op\u00f3\u017anienie \n\

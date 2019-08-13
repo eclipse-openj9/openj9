@@ -687,3 +687,32 @@ jitResolveSpecialMethodRef(J9VMThread *vmStruct, J9ConstantPool *constantPool, U
 	}
 	return method;
 }
+
+
+/**
+ * This function returns the J9Class which declares the given ROM field.
+ * Searching begins at the provided class, and if the field is not declared
+ * within that hierarchy, NULL is returned.
+ *
+ * @param vmStruct			The current J9VMThread
+ * @param clazz				Class in which to being the field lookup
+ * @param romField			The ROM field
+ *
+ * @return 					J9Class which declares the field, NULL if not found
+ */
+J9Class *
+jitGetDeclaringClassOfROMField(J9VMThread *vmStruct, J9Class *clazz, J9ROMFieldShape *romField)
+{
+	J9Class *currentClass = clazz;
+	UDATA field = (UDATA)romField;
+	do {
+		J9ROMClass *romClass = currentClass->romClass;
+		UDATA low = (UDATA)romClass;
+		UDATA high = low + romClass->romSize;
+		if ((field >= low) && (field < high)) {
+			break;
+		}
+		currentClass = currentClass->superclasses[J9CLASS_DEPTH(currentClass) - 1];
+	} while (NULL != currentClass);
+	return currentClass;
+}

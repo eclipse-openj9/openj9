@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,8 +23,6 @@
 #ifndef locknursery_h
 #define locknursery_h
 
-#if defined(J9VM_THR_LOCK_NURSERY)
-
 #define JAVA_LANG_CLASS_CLASSNAME 	"java/lang/Class"
 #define JAVA_LANG_STRING_CLASSNAME 	"java/lang/String"
 
@@ -38,14 +36,6 @@
 #define SET_LOCKNURSERY_HASHTABLE_ENTRY_MASK(entry) (((UDATA) entry)| LOCKNURSERY_HASHTABLE_ENTRY_MASK )
 #define IS_LOCKNURSERY_HASHTABLE_ENTRY_MASKED(entry) (((UDATA) entry) & LOCKNURSERY_HASHTABLE_ENTRY_MASK )
 
-#if !defined(J9VM_OUT_OF_PROCESS)
 #define ROM_FIELD_WALK_MODIFIERS(javavm) ((javavm)->romFieldsWalkModifiers)
-#else /* !defined(J9VM_OUT_OF_PROCESS) */
-#define ROM_FIELD_WALK_MODIFIERS(javavm) dbgReadU32((U_32*)&(javavm)->romFieldsWalkModifiers)
-#endif /* !defined(J9VM_OUT_OF_PROCESS) */
-#else /* defined(J9VM_THR_LOCK_NURSERY) */
-#define ROM_FIELD_WALK_MODIFIERS(javavm) 0
-
-#endif /* defined(J9VM_THR_LOCK_NURSERY) */
 
 #endif /* locknursery_h */

@@ -2008,7 +2008,6 @@ J9ObjectMonitor *
 monitorTableAt(J9VMThread* vmStruct, j9object_t object);
 
 
-#ifdef J9VM_THR_LOCK_NURSERY
 /**
 * @brief used to cache an J9ObjectMonitor in the vmthread structure so that
 *        we don't have to go to the monitor table to get it
@@ -2020,7 +2019,6 @@ monitorTableAt(J9VMThread* vmStruct, j9object_t object);
 void
 cacheObjectMonitorForLookup(J9JavaVM* vm, J9VMThread* vmStruct, J9ObjectMonitor* objectMonitor);
 
-#endif
 
 /* ---------------- PackageIDHashTable.c ---------------- */
 
@@ -2950,7 +2948,7 @@ freeStackWalkCaches(J9VMThread * currentThread, J9StackWalkState * walkState);
 #endif /* J9VM_!INTERP_STACKWALK_TRACING */
 
 
-#if (defined(J9VM_INTERP_STACKWALK_TRACING)  && !defined(J9VM_OUT_OF_PROCESS))
+#if defined(J9VM_INTERP_STACKWALK_TRACING)
 /**
 * @brief
 * @param walkState
@@ -2959,7 +2957,7 @@ freeStackWalkCaches(J9VMThread * currentThread, J9StackWalkState * walkState);
 */
 void
 swMarkSlotAsObject(J9StackWalkState * walkState, j9object_t * objectSlot);
-#endif /* J9VM_INTERP_STACKWALK_TRACING && !OUT_OF_PROCESS */
+#endif /* J9VM_INTERP_STACKWALK_TRACING */
 
 
 #if (defined(J9VM_INTERP_STACKWALK_TRACING))

@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,10 +31,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "modron.h"
-
-#ifdef J9VM_THR_LOCK_NURSERY
 #include "locknursery.h"
-#endif
 
 #include "GCExtensions.hpp"
 

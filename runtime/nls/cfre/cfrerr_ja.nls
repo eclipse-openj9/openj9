@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -413,7 +413,7 @@ J9NLS_CFR_ERR_LENGTH_TOO_SMALL.user_response=Contact the provider of the classfi
 
 J9NLS_CFR_ERR_MINOR_VERSION=\u30de\u30a4\u30ca\u30fc\u30fb\u30d0\u30fc\u30b8\u30e7\u30f3\u304c\u6b63\u3057\u304f\u3042\u308a\u307e\u305b\u3093
 # START NON-TRANSLATABLE
-J9NLS_CFR_ERR_MINOR_VERSION.explanation=THIS MESSAGE IS RESERVED FOR FUTURE USE
+J9NLS_CFR_ERR_MINOR_VERSION.explanation=An invalid minor version has been specified.
 J9NLS_CFR_ERR_MINOR_VERSION.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_MINOR_VERSION.user_response=Contact the provider of the classfile for a corrected version.
 
@@ -1361,4 +1361,94 @@ J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55=\u5b9a\u6570\u30d7\u30fc\u30eb\u9805\u
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.user_response=Contact the provider of the classfile for a corrected version.
+
 # END NON-TRANSLATABLE
+
+#ldc and ldc_w are not translatable
+J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT_OR_CONSTANT_DYNAMIC=ldc \u30d0\u30a4\u30c8\u30b3\u30fc\u30c9\u304a\u3088\u3073 ldc_2 \u30d0\u30a4\u30c8\u30b3\u30fc\u30c9\u306f\u5b9a\u6570 (\u3059\u306a\u308f\u3061 Constant_Dynamic) \u3092\u53c2\u7167\u3057\u306a\u3051\u308c\u3070\u306a\u308a\u307e\u305b\u3093
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.explanation=An 'ldc' or 'ldc_w' bytecode can only reference constant values or a Constant_Dynamic entry.
+J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_BC_LDC_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+#ldc2_w is not translatable
+J9NLS_CFR_ERR_BC_LDC2W_NOT_CONSTANT_OR_CONSTANT_DYNAMIC=ldc2_w \u30d0\u30a4\u30c8\u30b3\u30fc\u30c9\u306f\u5b9a\u6570 (\u3059\u306a\u308f\u3061 Constant_Dynamic) \u3092\u53c2\u7167\u3057\u306a\u3051\u308c\u3070\u306a\u308a\u307e\u305b\u3093
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_BC_LDC2W_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.explanation=An 'ldc2_w' bytecode can only reference constant values or a Constant_Dynamic entry.
+J9NLS_CFR_ERR_BC_LDC2W_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_BC_LDC2W_NOT_CONSTANT_OR_CONSTANT_DYNAMIC.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+#ldc and ldc_w are not translatable
+J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE=ldc \u30d0\u30a4\u30c8\u30b3\u30fc\u30c9\u304a\u3088\u3073 ldc_w \u30d0\u30a4\u30c8\u30b3\u30fc\u30c9\u306b\u3088\u3063\u3066\u53c2\u7167\u3055\u308c\u308b Constant_Dynamic \u9805\u76ee\u306f\u300clong\u300d\u3084\u300cdouble\u300d\u3092\u8fd4\u3057\u3066\u306f\u306a\u308a\u307e\u305b\u3093
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE.explanation=An 'ldc' or 'ldc_w' bytecode cannot reference constant values or Constant_Dynamic entry of type 'long' or 'double'.
+J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_BC_LDC_CONSTANT_DYNAMIC_RETURNS_LONG_OR_DOUBLE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+#ldc2_w is not translatable
+J9NLS_CFR_ERR_BC_LDC2W_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE=ldc2_w \u30d0\u30a4\u30c8\u30b3\u30fc\u30c9\u306b\u3088\u3063\u3066\u53c2\u7167\u3055\u308c\u308b Constant_Dynamic \u9805\u76ee\u306f\u300clong\u300d\u307e\u305f\u306f\u300cdouble\u300d\u3092\u8fd4\u3055\u306a\u3051\u308c\u3070\u306a\u308a\u307e\u305b\u3093
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_BC_LDC2W_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE.explanation=An 'ldc2_w' bytecode can only reference constant values or Constant_Dynamic entry of type 'long' or 'double'.
+J9NLS_CFR_ERR_BC_LDC2W_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_BC_LDC2W_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49=\u5b9a\u6570\u30d7\u30fc\u30eb\u9805\u76ee\u306f\u3001\u30d0\u30fc\u30b8\u30e7\u30f3 49.0 \u672a\u6e80\u306e\u30af\u30e9\u30b9\u30fb\u30d5\u30a1\u30a4\u30eb\u3067\u306f\u7121\u52b9\u3067\u3059
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51=\u5b9a\u6570\u30d7\u30fc\u30eb\u9805\u76ee\u306f\u3001\u30d0\u30fc\u30b8\u30e7\u30f3 51.0 \u672a\u6e80\u306e\u30af\u30e9\u30b9\u30fb\u30d5\u30a1\u30a4\u30eb\u3067\u306f\u7121\u52b9\u3067\u3059
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55=\u5b9a\u6570\u30d7\u30fc\u30eb\u9805\u76ee\u306f\u3001\u30d0\u30fc\u30b8\u30e7\u30f3\u304c 55.0 \u3088\u308a\u524d\u306e\u30af\u30e9\u30b9\u30fb\u30d5\u30a1\u30a4\u30eb\u3067\u306f\u7121\u52b9\u3067\u3059
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.user_response=Contact the provider of the classfile for a corrected version.
+
+# END NON-TRANSLATABLE
+
+#Example: JVMCFRE154 BootstrapMethod (0) arguments contain invalid constantpool entry at index (#20) of type (9); class=Foo, offset=492
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY=BootstrapMethod (%1$d) \u5f15\u6570\u306f\u3001\u30bf\u30a4\u30d7 (%3$u) \u306e\u7d22\u5f15 (#%2$u) (\u30af\u30e9\u30b9=%5$.*4$s\u3001\u30aa\u30d5\u30bb\u30c3\u30c8=%6$u) \u306b\u3001\u7121\u52b9\u306a\u56fa\u5b9a\u30d7\u30fc\u30eb\u9805\u76ee\u3092\u542b\u3093\u3067\u3044\u307e\u3059
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_1=1
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_2=3
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_3=20
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_4=3
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_5=Foo
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_6=492
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.user_response=Contact the provider of the classfile for a corrected version.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED=ValueTypes \u306f -XX:+EnableValhalla \u30aa\u30d7\u30b7\u30e7\u30f3\u3068\u4e00\u7dd2\u306e\u5834\u5408\u306b\u306e\u307f\u6709\u52b9\u306b\u3055\u308c\u307e\u3059
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.explanation=ValueTypes is an experimental feature and is not officially supported.
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
+J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.user_response=Contact the provider of the classfile for a corrected version or use the -XX:+EnableValhalla option.
+# END NON-TRANSLATABLE
+
+J9NLS_CFR_ERR_PREVIEW_VERSION=\u30af\u30e9\u30b9\u30fb\u30d5\u30a1\u30a4\u30eb\u306f\u30d7\u30ec\u30d3\u30e5\u30fc\u30fb\u30d0\u30fc\u30b8\u30e7\u30f3\u3067\u3059\u304c\u3001\u30e1\u30b8\u30e3\u30fc\u30fb\u30d0\u30fc\u30b8\u30e7\u30f3\u304c\u8aa4\u3063\u3066\u3044\u308b\u304b\u3001\u30d7\u30ec\u30d3\u30e5\u30fc\u4e0d\u53ef\u3067\u3059\u3002
+# START NON-TRANSLATABLE
+J9NLS_CFR_ERR_PREVIEW_VERSION.explanation=Classfiles with minor version 65535 must have the same major version as the VM rumtime version and preview must be enabled
+J9NLS_CFR_ERR_PREVIEW_VERSION.system_action=The JVM will throw a verification or classloading-related exception.
+J9NLS_CFR_ERR_PREVIEW_VERSION.user_response=Run with the correct Java runtime version and use --enable-preview.
+# END NON-TRANSLATABLE
+

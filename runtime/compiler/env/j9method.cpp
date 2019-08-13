@@ -3961,6 +3961,7 @@ void TR_ResolvedJ9Method::construct()
 
    static X CollectHandleMethods[] =
       {
+      {x(TR::java_lang_invoke_CollectHandle_allocateArray,                 "allocateArray",               "(Ljava/lang/invoke/CollectHandle;)Ljava/lang/Object;")},
       {x(TR::java_lang_invoke_CollectHandle_numArgsToPassThrough,          "numArgsToPassThrough",        "()I")},
       {x(TR::java_lang_invoke_CollectHandle_numArgsToCollect,              "numArgsToCollect",            "()I")},
       {x(TR::java_lang_invoke_CollectHandle_collectionStart,     	       "collectionStart",             "()I")},
@@ -5441,7 +5442,7 @@ TR_ResolvedJ9Method::getExistingJittedBodyInfo()
 int32_t
 TR_ResolvedJ9Method::virtualCallSelector(U_32 cpIndex)
    {
-   return -(int32_t)(vTableSlot(cpIndex) - J9JIT_INTERP_VTABLE_OFFSET);
+   return -(int32_t)(vTableSlot(cpIndex) - TR::Compiler->vm.getInterpreterVTableOffset());
    }
 
 bool
@@ -6497,7 +6498,7 @@ TR_ResolvedJ9Method::getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * clas
       vTableOffset = jitGetInterfaceVTableOffsetFromCP(_fe->vmThread(), cp(), cpIndex, TR::Compiler->cls.convertClassOffsetToClassPtr(classObject));
       }
 
-   return (J9JIT_INTERP_VTABLE_OFFSET - vTableOffset);
+   return (TR::Compiler->vm.getInterpreterVTableOffset() - vTableOffset);
 #endif
    }
 
@@ -7192,7 +7193,8 @@ TR_ResolvedJ9Method::makeParameterList(TR::ResolvedMethodSymbol *methodSym)
       }
    else
       {
-      parmSymbol = methodSym->comp()->getSymRefTab()->createParameterSymbol(methodSym, 0, TR::Address);
+      TR::KnownObjectTable::Index knownObjectIndex = methodSym->getKnownObjectIndexForParm(0);
+      parmSymbol = methodSym->comp()->getSymRefTab()->createParameterSymbol(methodSym, 0, TR::Address, knownObjectIndex);
       parmSymbol->setOrdinal(ordinal++);
 
       int32_t len = classNameLen; // len is passed by reference and changes during the call
@@ -7274,7 +7276,7 @@ TR_J9VMBase::getResolvedVirtualMethod(TR_OpaqueClassBlock * classObject, I_32 vi
    // the classObject is the fixed type of the this pointer.  The result of this method is going to be
    // used to call the virtual function directly.
    //
-   // virtualCallOffset = -(vTableSlot(vmMethod, cpIndex) - J9JIT_INTERP_VTABLE_OFFSET);
+   // virtualCallOffset = -(vTableSlot(vmMethod, cpIndex) - TR::Compiler->vm.getInterpreterVTableOffset());
    //
    if (isInterfaceClass(classObject))
       return 0;
@@ -7575,6 +7577,49 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
    switch (rm)
       {
+      case TR::java_lang_invoke_CollectHandle_allocateArray:
+         {
+         TR::Node* methodHandleNode = top();
+
+         if (methodHandleNode->getOpCode().hasSymbolReference() &&
+             methodHandleNode->getSymbolReference()->hasKnownObjectIndex() &&
+             methodHandleNode->isNonNull())
+            {
+            pop();
+            TR::KnownObjectTable *knot = comp()->getKnownObjectTable();
+            int32_t collectArraySize = -1;
+            int32_t collectPosition = -1;
+            TR_OpaqueClassBlock* componentClazz = NULL;
+
+               {
+               TR::VMAccessCriticalSection invokeCollectHandleAllocateArray(fej9);
+               uintptrj_t methodHandle = *knot->getPointerLocation(methodHandleNode->getSymbolReference()->getKnownObjectIndex());
+               collectArraySize = fej9->getInt32Field(methodHandle, "collectArraySize");
+               collectPosition = fej9->getInt32Field(methodHandle, "collectPosition");
+
+               uintptrj_t arguments = fej9->getReferenceField(fej9->getReferenceField(fej9->getReferenceField(
+                  methodHandle,
+                  "next",             "Ljava/lang/invoke/MethodHandle;"),
+                  "type",             "Ljava/lang/invoke/MethodType;"),
+                  "arguments",        "[Ljava/lang/Class;");
+               componentClazz = fej9->getComponentClassFromArrayClass(fej9->getClassFromJavaLangClass(fej9->getReferenceElement(arguments, collectPosition)));
+               }
+
+            loadConstant(TR::iconst, collectArraySize);
+            if (fej9->isPrimitiveClass(componentClazz))
+               {
+               TR_arrayTypeCode typeIndex = fej9->getPrimitiveArrayTypeCode(componentClazz);
+               genNewArray(typeIndex);
+               }
+            else
+               {
+               loadClassObject(componentClazz);
+               genANewArray();
+               }
+            return true;
+            }
+         return false;
+         }
       case TR::java_lang_invoke_CollectHandle_numArgsToPassThrough:
       case TR::java_lang_invoke_CollectHandle_numArgsToCollect:
       case TR::java_lang_invoke_CollectHandle_collectionStart:
@@ -8280,8 +8325,8 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                 }
             else if (isVirtual)
                {
-               TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptrj_t)fej9->getClassFromJavaLangClass(jlClass)) + J9JIT_INTERP_VTABLE_OFFSET);
-               int32_t index = (int32_t)((vmSlot - J9JIT_INTERP_VTABLE_OFFSET) / sizeof(vtable[0]));
+               TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptrj_t)fej9->getClassFromJavaLangClass(jlClass)) + TR::Compiler->vm.getInterpreterVTableOffset());
+               int32_t index = (int32_t)((vmSlot - TR::Compiler->vm.getInterpreterVTableOffset()) / sizeof(vtable[0]));
                j9method = vtable[index];
                }
             else
@@ -8330,7 +8375,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          if (isVirtual)
             {
-            callNode->getSymbolReference()->setOffset(-(vmSlot - J9JIT_INTERP_VTABLE_OFFSET));
+            callNode->getSymbolReference()->setOffset(-(vmSlot - TR::Compiler->vm.getInterpreterVTableOffset()));
             genTreeTop(genNullCheck(callNode));
             }
          else

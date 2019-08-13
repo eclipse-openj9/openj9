@@ -96,9 +96,7 @@
 
 #include "j2sever.h"
 
-#ifdef J9VM_THR_LOCK_NURSERY
 #include "locknursery.h"
-#endif
 
 #include "vmargs_api.h"
 #include "rommeth.h"
@@ -694,9 +692,7 @@ freeJavaVM(J9JavaVM * vm)
 
 	freeNativeMethodBindTable(vm);
 	freeHiddenInstanceFieldsList(vm);
-#ifdef J9VM_THR_LOCK_NURSERY
 	cleanupLockwordConfig(vm);
-#endif
 
 	destroyJvmInitArgs(vm->portLibrary, vm->vmArgsArray);
 	vm->vmArgsArray = NULL;
@@ -2189,7 +2185,6 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			}
 #endif
 
-#ifdef J9VM_THR_LOCK_NURSERY
 			/* set the default mode */
 			vm->lockwordMode =LOCKNURSERY_ALGORITHM_ALL_BUT_ARRAY;
 
@@ -2207,7 +2202,6 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				printLockwordWhat(vm);
 			}
 
-#endif
 			break;
 
 		case BYTECODE_TABLE_SET:

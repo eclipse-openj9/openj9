@@ -564,10 +564,6 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void *arg)
 	const char * directorySep = J9JAVA_DIR_SEPARATOR;
 	void *vmOptionsTable = NULL;
 
-#ifdef J9VM_OPT_REMOTE_CONSOLE_SUPPORT
-	remoteConsole_parseCmdLine(PORTLIB, argc-1, argv);
-#endif
-
 #ifdef J9VM_OPT_MEMORY_CHECK_SUPPORT
 	/* This should happen before anybody allocates memory.
 	 * Otherwise, shutdown will not work properly.

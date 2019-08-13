@@ -33,7 +33,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -2961,7 +2961,7 @@ J9NLS_SHRC_CM_PRINTSTATS_CACHE_CREATED_WITH.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_CACHE_CREATED_WITH.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG=N\u00e1zov pam\u00e4te cache je pridlh\u00fd, ak sa zahrnie meno u\u017e\u00edvate\u013ea. V tejto vyrovn\u00e1vacej pam\u00e4ti zost\u00e1va %d vo\u013en\u00fdch bajtov a va\u0161e meno u\u017e\u00edvate\u013ea m\u00e1 %d bajtov.
+J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG=N\u00e1zov pam\u00e4te cache je pridlh\u00fd, ak sa zahrnie meno pou\u017e\u00edvate\u013ea. V tejto vyrovn\u00e1vacej pam\u00e4ti zost\u00e1va %d vo\u013en\u00fdch bajtov a va\u0161e meno u\u017e\u00edvate\u013ea m\u00e1 %d bajtov.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.sample_input_1=23
 J9NLS_SHRC_SHRINIT_FAILURE_COPYING_USERNAME_TOOLONG.sample_input_2=45
@@ -5469,7 +5469,7 @@ J9NLS_SHRC_OSCACHE_HANDLE_ERROR_ACTION_DESTROYSM_ERROR_V1.user_response=Contact 
 
 J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY=Obnova po chybe: pokus o pou\u017eitie zdie\u013eanej pam\u00e4te cache v re\u017eime len na \u010d\u00edtanie, ak existuje regi\u00f3n zdie\u013eanej pam\u00e4te, ako reakcia na vo\u013ebu "-Xshareclasses:nonfatal".
 # START NON-TRANSLATABLE
-J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY.explanation=An error occurred in shared class processing. Presence of "-Xshareclasses:nonfatal" option causes JVM to attemp to use shared cache in readonly mode.
+J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY.explanation=An error occurred in shared class processing. Presence of "-Xshareclasses:nonfatal" option causes JVM to attempt to use shared cache in readonly mode.
 J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY.system_action=The JVM attempts to attach to the shared memory segment of the shared class cache in the readonly mode if it exists.
 J9NLS_SHRC_OSCACHE_STARTUP_NONFATAL_TRY_READONLY.user_response=No action required.
 # END NON-TRANSLATABLE
@@ -5749,7 +5749,7 @@ J9NLS_SHRC_ERROR_SNAPSHOT_FILE_LOCK.user_response=Previous error messages may in
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX=Zlyhalo z\u00edskavanie mutexu pam\u00e4te cache \"%s\"
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.sample_input_1=myCaches
-J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.explanation=An error occurred while aqcuiring a cache mutex.
+J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.explanation=An error occurred while acquiring a cache mutex.
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.system_action=The JVM fails to complete the operation of creating the snapshot of a non-persistent shared cache.
 J9NLS_SHRC_SHRINIT_ERROR_ENTER_MUTEX.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
@@ -6115,7 +6115,7 @@ J9NLS_SHRC_CM_PARSE_METHOD_SPECS_ERROR.user_response=Correct the format of the m
 
 J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX=Zlyhalo z\u00edskavanie mutexu z\u00e1pisu pre pam\u00e4\u0165 cache
 # START NON-TRANSLATABLE
-J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX.explanation=An error has occurred in acquring the write mutex of the cache.
+J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX.explanation=An error has occurred in acquiring the write mutex of the cache.
 J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX.system_action=The JVM failed to perform the required operation on the AOT methods.
 J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX.user_response=Verify that the system has enough native resources for the JVM to work properly. If the situation persists, contact your service representative.
 # END NON-TRANSLATABLE
@@ -6643,4 +6643,125 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1=Zak\u00e1\u017ete pou\u017eitie p
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_BOOTCLASSESONLY=Zak\u00e1za\u0165 pou\u017eitie pam\u00e4te cache pre triedy na\u010d\u00edtan\u00e9 zav\u00e1dza\u010dmi in\u00fdmi ako bootstrap. T\u00e1to vo\u013eba tie\u017e aktivuje vo\u013ebu "nonfatal".
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_BOOTCLASSESONLY.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_BOOTCLASSESONLY.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_BOOTCLASSESONLY.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_FATAL=Nespusti\u0165 zdie\u013ean\u00fa pam\u00e4\u0165 cache pri v\u00fdskyte chyby.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_FATAL.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_FATAL.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_FATAL.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY=%1$d: 0x%2$p STARTUP HINTS KEY: %4$.*3$s, adresa: 0x%5$p, ve\u013ekos\u0165: %6$d
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.sample_input_1=1
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.sample_input_2=042F71F8
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.sample_input_3=26
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.sample_input_4=-Xshareclasses:name=Cache1
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.sample_input_5=042FE094
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.sample_input_6=88
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL=Pr\u00edznaky STARTUP HINTS DETAIL: %1$zu DATA1: %2$zu DATA2: %3$zu
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.sample_input_1=1
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.sample_input_2=1024
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.sample_input_3=1024
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT=\t startuphint       Vytla\u010d\u00ed iba typy r\u00e1d pri sp\u00fa\u0161\u0165an\u00ed v zdie\u013eanej pam\u00e4ti cache.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES=Bajty r\u00e1d pri sp\u00fa\u0161\u0165an\u00ed %*c= %d
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.sample_input_1=0
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.sample_input_2=
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.sample_input_3=112
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS=# Rady pri sp\u00fa\u0161\u0165an\u00ed  %*c= %d
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.sample_input_1=0
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.sample_input_2=
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.sample_input_3=345876
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_BUF_OVERFLOW=Cesta k adres\u00e1ru zdie\u013eanej pam\u00e4te cache je pridlh\u00e1.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.explanation=The directory path requested is bigger than the internal buffer space
+J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.user_response=Please try using a shorter shared cache directory.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME=Zlyhalo pou\u017eitie domovsk\u00e9ho adres\u00e1ra pou\u017e\u00edvate\u013ea ako predvolen\u00e9ho adres\u00e1ra zdie\u013eanej pam\u00e4te cache. Nemo\u017eno z\u00edska\u0165 domovsk\u00fd adres\u00e1r. Nastavte in\u00fd adres\u00e1r cez premenn\u00fa prostredia "HOME" alebo vo\u013ebu pr\u00edkazov\u00e9ho riadka "cacheDir=" alebo opravte domovsk\u00fd adres\u00e1r v polo\u017eke s\u00faboru hesiel.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.explanation=An error occurred getting user's home directory.
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW=Zlyhalo pou\u017eitie domovsk\u00e9ho adres\u00e1ra pou\u017e\u00edvate\u013ea ako predvolen\u00e9ho adres\u00e1ra zdie\u013eanej pam\u00e4te cache. Cesta je pridlh\u00e1. Nemo\u017eno z\u00edska\u0165 domovsk\u00fd adres\u00e1r. Nastavte in\u00fd adres\u00e1r cez premenn\u00fa prostredia "HOME" alebo vo\u013ebu pr\u00edkazov\u00e9ho riadka "cacheDir=" alebo opravte domovsk\u00fd adres\u00e1r v polo\u017eke s\u00faboru hesiel.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.explanation=The length of user's home directory is greater than the internal buffer space.
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS=Zlyhalo pou\u017eitie domovsk\u00e9ho adres\u00e1ra pou\u017e\u00edvate\u013ea ako predvolen\u00e9ho adres\u00e1ra zdie\u013eanej pam\u00e4te cache. Je v sie\u0165ovom s\u00faborovom syst\u00e9me. Nemo\u017eno z\u00edska\u0165 domovsk\u00fd adres\u00e1r. Nastavte in\u00fd adres\u00e1r cez premenn\u00fa prostredia "HOME" alebo vo\u013ebu pr\u00edkazov\u00e9ho riadka "cacheDir=" alebo opravte domovsk\u00fd adres\u00e1r v polo\u017eke s\u00faboru hesiel.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS.explanation=The shared cache directory cannot be on a Network File System.
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME=Zlyhalo pou\u017eitie domovsk\u00e9ho adres\u00e1ra pou\u017e\u00edvate\u013ea ako predvolen\u00e9ho adres\u00e1ra zdie\u013eanej pam\u00e4te cache. K\u00f3d chyby je %1$d.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.sample_input_1=-1
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.explanation=An error occurred checking the attributes of the directory.
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.user_response=Please fix the setting of home directory according to the error code and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_GET_DIR_NO_SPACE=Zlyhalo vyhradzovanie nat\u00edvnej pam\u00e4te vy\u017eadovanej na z\u00edskanie adres\u00e1ra zdie\u013eanej pam\u00e4te cache.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_GET_DIR_NO_SPACE.explanation=Cannot allocate native memory.
+J9NLS_SHRC_GET_DIR_NO_SPACE.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
+J9NLS_SHRC_GET_DIR_NO_SPACE.user_response=Ensure the process has enough native memory to run.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK=Minimalizova\u0165 kontrolu \u010dasovej zna\u010dky s\u00faborov jar/zip v adrese URL.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=Skontrolova\u0165 \u010dasov\u00e9 zna\u010dky s\u00faborov jar/zip v adrese URL inej ako bootstrap pri ka\u017edom na\u010d\u00edtavan\u00ed triedy.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.user_response=
 # END NON-TRANSLATABLE

@@ -114,37 +114,40 @@ checkVisibility(J9VMThread *currentThread, J9Class* sourceClass, J9Class* destCl
 			/* Private */
 			if (sourceClass != destClass) {
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
-				/* loadAndVerifyNestHost returns an error code if setting the
-				 * nest host field fails.
-				 *
-				 * Note that the specification asserts an order for nest host
-				 * loading during access checking. The accessing class's nest
-				 * host is loaded first and the class being accessed loads its
-				 * nest host after.
-				 */
-				if (NULL == sourceClass->nestHost) {
-					result = loadAndVerifyNestHost(currentThread, sourceClass, lookupOptions);
-					if (J9_VISIBILITY_ALLOWED != result) {
-						goto _exit;
+				if (J9_ARE_NO_BITS_SET(lookupOptions, J9_LOOK_NO_NESTMATES)) {
+					/* loadAndVerifyNestHost returns an error code if setting the
+					 * nest host field fails.
+					 *
+					 * Note that the specification asserts an order for nest host
+					 * loading during access checking. The accessing class's nest
+					 * host is loaded first and the class being accessed loads its
+					 * nest host after.
+					 */
+					if (NULL == sourceClass->nestHost) {
+						result = loadAndVerifyNestHost(currentThread, sourceClass, lookupOptions);
+						if (J9_VISIBILITY_ALLOWED != result) {
+							goto _exit;
+						}
+						sourceClass = J9_CURRENT_CLASS(sourceClass);
+						destClass = J9_CURRENT_CLASS(destClass);
 					}
-					sourceClass = J9_CURRENT_CLASS(sourceClass);
-					destClass = J9_CURRENT_CLASS(destClass);
-				}
-				if (NULL == destClass->nestHost) {
-					result = loadAndVerifyNestHost(currentThread, destClass, lookupOptions);
-					if (J9_VISIBILITY_ALLOWED != result) {
-						goto _exit;
+					if (NULL == destClass->nestHost) {
+						result = loadAndVerifyNestHost(currentThread, destClass, lookupOptions);
+						if (J9_VISIBILITY_ALLOWED != result) {
+							goto _exit;
+						}
+						sourceClass = J9_CURRENT_CLASS(sourceClass);
+						destClass = J9_CURRENT_CLASS(destClass);
 					}
-					sourceClass = J9_CURRENT_CLASS(sourceClass);
-					destClass = J9_CURRENT_CLASS(destClass);
-				}
-
-				if (sourceClass->nestHost != destClass->nestHost) {
+	
+					if (sourceClass->nestHost != destClass->nestHost) {
+						result = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
+					}
+				} else
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
+				{
 					result = J9_VISIBILITY_NON_MODULE_ACCESS_ERROR;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 				}
-#endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 			}
 		} else if (modifiers & J9AccProtected) {
 			/* Protected */

@@ -30,7 +30,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -424,7 +424,7 @@ J9NLS_EXELIB_CMDLINE_CP_WARN.system_action=
 J9NLS_EXELIB_CMDLINE_CP_WARN.user_response=
 # END NON-TRANSLATABLE
 
-#J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numberic1024_WARN
+#J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numeric1024_WARN
 J9NLS_EXELIB_CMDLINE_PREPEND_WARN=\n\
 \uacbd\uace0: \uba85\ub839\ud589 \uc778\uc218 \"%s\"\ub294 \uc0ac\uc6a9\ub418\uc9c0 \uc54a\uc2b5\ub2c8\ub2e4.\n\
 \uacbd\uace0: -X \ub3d9\ub4f1 \uae30\ub2a5\uc744 \uc0ac\uc6a9\ud558\uc2ed\uc2dc\uc624.
@@ -598,16 +598,8 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.system_action=
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.user_response=
 # END NON-TRANSLATABLE
 
-# J9SourceMainRemoteConsole - remoteConsole_startup
-
-J9NLS_EXELIB_UNABLE_REDIRECT_IO=\ucf58\uc194 \uacbd\ub85c\ub97c \ub2e4\uc74c \uc704\uce58\ub85c \uc7ac\uc9c0\uc815\ud560 \uc218 \uc5c6\uc74c: %1$s:%2$d
-# START NON-TRANSLATABLE
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_1=localhost
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_2=8080
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.explanation=Failed to establish socket connection to target remote console.
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.system_action=JVM console output will not be redirected to target console.
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.user_response=Ensure remote console is reachable and accessible.
-# END NON-TRANSLATABLE
+# J9SourceMainRemoteConsole - unused
+J9NLS_EXELIB_UNABLE_REDIRECT_IO=
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 J9NLS_EXELIB_INTERNAL_HELP_1_10=\  -Xquickstart    \ucd5c\uc801\ud654\ub97c \uc9c0\uc5f0\ud558\uc5ec \uc2dc\uc791 \uc2dc\uac04\uc744 \ud5a5\uc0c1\uc2dc\ud0b5\ub2c8\ub2e4.

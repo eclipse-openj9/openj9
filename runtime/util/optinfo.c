@@ -20,9 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#if defined(J9VM_OUT_OF_PROCESS)
-#include "j9dbgext.h"
-#endif
 
 #include "j9.h"
 #include "j9cp.h"
@@ -37,32 +34,10 @@
 
 #define COUNT_MASK(value, mask) ((value) & ((mask) << 1) - 1)
 
-#if defined(J9VM_OUT_OF_PROCESS)
-
-static UDATA readLocation = DBGEXT_READFROMMEMORY;
-
-static void
-setReadLocation(UDATA readLoc)
-{
-	readLocation = readLoc;
-}
-
-static UDATA
-getReadLocation()
-{
-	return readLocation;
-}
-
-#define READ_U8(ptr) (DBGEXT_READFROMCOREFILE == getReadLocation())? dbgReadByte((U_8 *)(ptr)) : *(U_8 *)ptr
-#define READ_U16(ptr) (DBGEXT_READFROMCOREFILE == getReadLocation())? dbgReadU16((U_16 *)(ptr)) : *(U_16 *)ptr
-#define READ_I32(ptr) (DBGEXT_READFROMCOREFILE == getReadLocation())? (I_32)dbgReadU32((U_32 *)(ptr)) : *(I_32 *)ptr
-#define READ_SRP(ptr, type) (DBGEXT_READFROMCOREFILE == getReadLocation())? (type)dbgReadSRP((J9SRP *)(ptr)) : SRP_GET(*((J9SRP *)ptr), type)
-#else
 #define READ_U8(ptr) *(U_8 *)ptr
 #define READ_U16(ptr) *(U_16 *)ptr
 #define READ_I32(ptr) *(I_32 *)ptr
 #define READ_SRP(ptr, type)  SRP_GET(*((J9SRP *)ptr), type)
-#endif
 
 static U_32* getSRPPtr (U_32 *ptr, U_32 flags, U_32 option);
 static UDATA reloadClass (J9VMThread *vmThread, J9Class *originalClass, U_8 *classFileBytes, UDATA classFileSize, J9ROMClass **result);
@@ -497,34 +472,6 @@ getVariableTableForMethodDebugInfo(J9MethodDebugInfo *methodInfo) {
 	return NULL;
 }
 
-#if defined(J9VM_OUT_OF_PROCESS)
-/**
- * This function is only used by the debug extension code.
- * When this function is called, variable info might have been copied to local memory or not.
- * If it is not copied, then readLocation is set to DBGEXT_READFROMCOREFILE,
- * if it is copied, then readLocation is set to DBGEXT_READFROMMEMORY
- */
-J9VariableInfoValues *
-debugVariableInfoStartDo(U_8 * variableInfo, U_32 variableInfoCount, J9VariableInfoWalkState* state, UDATA readLocation)
-{
-	state->variablesLeft = variableInfoCount;
-
-	if (state->variablesLeft == 0) {
-		return NULL;
-	}
-
-	setReadLocation(readLocation);
-
-	state->variableTablePtr = variableInfo;
-	state->values.slotNumber = 0;
-	state->values.startVisibility = 0;
-	state->values.visibilityLength = 0;
-
-
-	return variableInfoNextDo(state);
-}
-#endif
-
 J9VariableInfoValues * 
 variableInfoStartDo(J9MethodDebugInfo * methodInfo, J9VariableInfoWalkState* state)
 {
@@ -533,10 +480,6 @@ variableInfoStartDo(J9MethodDebugInfo * methodInfo, J9VariableInfoWalkState* sta
 		return NULL;
 	}
 	
-#if defined(J9VM_OUT_OF_PROCESS)
-	setReadLocation(DBGEXT_READFROMMEMORY);
-#endif
-
 	state->variableTablePtr = getVariableTableForMethodDebugInfo(methodInfo);
 	state->values.slotNumber = 0;
 	state->values.startVisibility = 0;

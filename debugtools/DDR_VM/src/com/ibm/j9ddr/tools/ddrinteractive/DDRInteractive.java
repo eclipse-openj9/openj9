@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,11 +21,8 @@
  *******************************************************************************/
 package com.ibm.j9ddr.tools.ddrinteractive;
 
-import static java.util.logging.Level.FINE;
-
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -37,6 +34,7 @@ import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.Vector;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.ibm.j9ddr.IVMData;
@@ -44,10 +42,8 @@ import com.ibm.j9ddr.VMDataFactory;
 import com.ibm.j9ddr.command.CommandParser;
 import com.ibm.j9ddr.command.CommandReader;
 import com.ibm.j9ddr.command.ConsoleCommandReader;
-import com.ibm.j9ddr.command.JNICommandReader;
 import com.ibm.j9ddr.corereaders.CoreReader;
 import com.ibm.j9ddr.corereaders.ICore;
-import com.ibm.j9ddr.corereaders.debugger.JniOutputStream;
 import com.ibm.j9ddr.corereaders.memory.IAddressSpace;
 import com.ibm.j9ddr.corereaders.memory.IProcess;
 import com.ibm.j9ddr.exceptions.JVMNotDDREnabledException;
@@ -69,7 +65,7 @@ public class DDRInteractive implements Runnable
 	private final PrintStream out;
 	private final CommandReader commandReader;
 	private static String path;
-	private final List<Context> contexts = new LinkedList<Context>();
+	private final List<Context> contexts = new LinkedList<>();
 	private Context currentContext;
 	private ICore currentCore;
 	
@@ -80,7 +76,7 @@ public class DDRInteractive implements Runnable
 	 */
 	private final List<ICommand> nonVMCommands;
 	{
-		List<ICommand> localCommandList = new LinkedList<ICommand>();
+		List<ICommand> localCommandList = new LinkedList<>();
 
 		localCommandList.add(new J9XCommand());
 		localCommandList.add(new ContextCommand());
@@ -289,31 +285,6 @@ public class DDRInteractive implements Runnable
 	}
 
 	/*
-	 * Entry point used by GDB/DBX/Windbg to start a DDR session within native debuggers
-	 */
-	public static DDRInteractive instantiateDDR()
-	{
-		DDRInteractive app = null;
-		OutputStream outputStream = new JniOutputStream();
-		PrintStream printStream = new PrintStream(outputStream);
-		CommandReader commandReader = new JNICommandReader(printStream);
-
-		try {
-			app = new DDRInteractive(null, commandReader, printStream);
-		} catch (Exception e) {
-			e.printStackTrace();
-			// put the stack trace to the log
-			Logger logger = Logger.getLogger(LoggerNames.LOGGER_INTERACTIVE_CONTEXT);
-			StringWriter sw = new StringWriter();
-			PrintWriter pw = new PrintWriter(sw);
-			e.printStackTrace(pw);
-			logger.logp(FINE, null, null, sw.toString());
-		}
-
-		return app;
-	}
-
-	/*
 	 * Used by native debuggers to retrieve a list of known commands for command aliasing purposes 
 	 */
 	public Object[] getCommandNames()
@@ -434,7 +405,7 @@ public class DDRInteractive implements Runnable
 					StringWriter sw = new StringWriter();
 					PrintWriter pw = new PrintWriter(sw);
 					e.printStackTrace(pw);
-					logger.logp(FINE, null, null, sw.toString());
+					logger.logp(Level.FINE, null, null, sw.toString());
 				}
 			}
 			if(!hasCtxBeenAddedForAS) {
@@ -480,7 +451,7 @@ public class DDRInteractive implements Runnable
 
 		public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 		{
-			SortedSet<String> helpTable = new TreeSet<String>();
+			SortedSet<String> helpTable = new TreeSet<>();
 
 			for (ICommand thisCommand : nonVMCommands) {
 				for (String thisEntry : thisCommand.getCommandDescriptions()) {

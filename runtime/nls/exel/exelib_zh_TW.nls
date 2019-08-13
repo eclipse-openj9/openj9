@@ -30,7 +30,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -424,7 +424,7 @@ J9NLS_EXELIB_CMDLINE_CP_WARN.system_action=
 J9NLS_EXELIB_CMDLINE_CP_WARN.user_response=
 # END NON-TRANSLATABLE
 
-#J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numberic1024_WARN
+#J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numeric1024_WARN
 J9NLS_EXELIB_CMDLINE_PREPEND_WARN=\n\
 \u8b66\u544a\uff1a\u6307\u4ee4\u884c\u5f15\u6578 \"%s\" \u5df2\u6dd8\u6c70\u3002\n\
 \u8b66\u544a\uff1a\u4f7f\u7528 -X \u76f8\u7b49\u9805\u76ee\u3002
@@ -598,16 +598,8 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.system_action=
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.user_response=
 # END NON-TRANSLATABLE
 
-# J9SourceMainRemoteConsole - remoteConsole_startup
-
-J9NLS_EXELIB_UNABLE_REDIRECT_IO=\u7121\u6cd5\u5c07\u4e3b\u63a7\u53f0\u91cd\u65b0\u5c0e\u5411\uff1a%1$s:%2$d
-# START NON-TRANSLATABLE
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_1=localhost
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_2=8080
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.explanation=Failed to establish socket connection to target remote console.
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.system_action=JVM console output will not be redirected to target console.
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.user_response=Ensure remote console is reachable and accessible.
-# END NON-TRANSLATABLE
+# J9SourceMainRemoteConsole - unused
+J9NLS_EXELIB_UNABLE_REDIRECT_IO=
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 J9NLS_EXELIB_INTERNAL_HELP_1_10=\  -Xquickstart    \u5ef6\u9072\u6700\u4f73\u5316\uff0c\u4ee5\u589e\u9032\u555f\u52d5\u6642\u9593

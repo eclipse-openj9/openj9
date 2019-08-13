@@ -26,6 +26,27 @@ import java.lang.reflect.Modifier;
 
 public final class J9ConstantHelper {
 
+	private static Field getStaticFinalField(Class<?> clazz, String name, Class<?> expectedFieldType) throws NoSuchFieldException {
+		try {
+			Field field = clazz.getField(name);
+			int modifiers = field.getModifiers();
+
+			// check that the field has the expected modifiers and type
+			if (!Modifier.isPublic(modifiers) || !Modifier.isStatic(modifiers) || !Modifier.isFinal(modifiers)) {
+				String message = String.format("%s.%s is not public static final", clazz.getName(), name);
+				throw new IllegalArgumentException(message);
+			}
+
+			if (field.getType() != expectedFieldType) {
+				String message = String.format("%s.%s is not type %s", clazz.getName(), name, expectedFieldType.getName());
+				throw new IllegalArgumentException(message);
+			}
+			return field;
+		} catch (SecurityException e) {
+			throw new InternalError("unexpected exception", e);
+		}
+	}
+	
 	/**
 	 * Using reflection, read the value of a public static final long field from the given
 	 * class or, if the field is not present, return the default value provided.
@@ -37,31 +58,33 @@ public final class J9ConstantHelper {
 	 */
 	public static long getLong(Class<?> clazz, String name, long defaultValue) {
 		try {
-			Field field = clazz.getField(name);
-			int modifiers = field.getModifiers();
-
-			// check that the field has the expected modifiers and type
-			if (!Modifier.isPublic(modifiers) || !Modifier.isStatic(modifiers) || !Modifier.isFinal(modifiers)) {
-				String message = String.format("%s.%s is not public static final", clazz.getName(), name);
-
-				throw new IllegalArgumentException(message);
-			}
-
-			if (field.getType() != long.class) {
-				String message = String.format("%s.%s is not type long", clazz.getName(), name);
-
-				throw new IllegalArgumentException(message);
-			}
-
-			return field.getLong(null);
+			return getStaticFinalField(clazz, name, long.class).getLong(null);
 		} catch (IllegalAccessException e) {
 			// this should not happen - the field is public static
 			throw new InternalError("unexpected exception", e);
 		} catch (NoSuchFieldException e) {
 			return defaultValue;
-		} catch (SecurityException e) {
-			throw new InternalError("unexpected exception", e);
 		}
 	}
 
+	/**
+	 * Using reflection, read the value of a public static final boolean field from the given
+	 * class or, if the field is not present, return the default value provided.
+	 *
+	 * @param clazz the class which owns the field of interest
+	 * @param name the name of the field
+	 * @param defaultValue the value to be returned if the field is not present
+	 * @return the value of the boolean field, or the default value
+	 */
+	public static boolean getBoolean(Class<?> clazz, String name, boolean defaultValue) {
+		try {
+			return getStaticFinalField(clazz, name, boolean.class).getBoolean(null);
+		} catch (IllegalAccessException e) {
+			// this should not happen - the field is public static
+			throw new InternalError("unexpected exception", e);
+		} catch (NoSuchFieldException e) {
+			return defaultValue;
+		}
+	}
+	
 }

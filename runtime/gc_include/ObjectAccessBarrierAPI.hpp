@@ -330,15 +330,11 @@ public:
 		if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
 			return NULL;
 		}
-#if defined(J9VM_THR_LOCK_NURSERY)
 		UDATA lockOffset = clazz->lockOffset;
 		if ((IDATA) lockOffset < 0) {
 			return NULL;
 		}
 		return (j9objectmonitor_t *)(((U_8 *)object) + lockOffset);
-#else /* J9VM_THR_LOCK_NURSERY */
-		return &(object->monitor);
-#endif /* J9VM_THR_LOCK_NURSERY */
 	}
 
 	VMINLINE void
@@ -354,7 +350,6 @@ public:
 		} else {
 			VM_ArrayCopyHelpers::primitiveArrayCopy(currentThread, original, 0, copy, 0, size, (((J9ROMArrayClass*)objectClass->romClass)->arrayShape & 0x0000FFFF));
 		}
-#if defined(J9VM_THR_LOCK_NURSERY)
 		if (copyLockword) {
 			/* zero lockword, if present */
 			j9objectmonitor_t *lockwordAddress = getLockwordAddress(currentThread, copy);
@@ -362,7 +357,6 @@ public:
 				*lockwordAddress = 0;
 			}
 		}
-#endif /* J9VM_THR_LOCK_NURSERY */
 #endif /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
 	}
 
@@ -384,6 +378,19 @@ public:
 		copyObjectFields(currentThread, objectClass, original, mixedObjectGetHeaderSize(), copy, mixedObjectGetHeaderSize());
 	}
 
+	VMINLINE void 
+	copyObjectFieldsToArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t srcObject, J9IndexableObject *arrayRef, UDATA index)
+	{
+		/* TODO optimizations for non-arraylet path will be added in the future */
+		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFieldsToArrayElement(vmThread, arrayClazz, srcObject, arrayRef, (I_32)index);
+	}
+	
+	VMINLINE void 
+	copyObjectFieldsFromArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t destObject, J9IndexableObject *arrayRef, UDATA index)
+	{
+		/* TODO optimizations for non-arraylet path will be added in the future */
+		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFieldsFromArrayElement(vmThread, arrayClazz, destObject, arrayRef, (I_32)index);
+	}
 
 	/**
 	 * Copy valueType from sourceObject to destObject
@@ -418,13 +425,11 @@ public:
 				offset += referenceSize;
 			}
 		
-#if defined(J9VM_THR_LOCK_NURSERY)
 			/* zero lockword, if present */
 			j9objectmonitor_t *lockwordAddress = getLockwordAddress(vmThread, destObject);
 			if (NULL != lockwordAddress) {
 				*lockwordAddress = 0;
 			}
-#endif /* J9VM_THR_LOCK_NURSERY */
 
 			postBatchStoreObject(vmThread, destObject);
 		}

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2018 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
 # It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
@@ -399,7 +399,7 @@ J9NLS_BCV_ERR_VERIFY_OUT_OF_MEMORY.user_response=Ensure the system has sufficien
 
 # END NON-TRANSLATABLE
 
-J9NLS_BCV_ERR_WRONG_INIT_METHOD=invokespecial d'un initializeur incorrect
+J9NLS_BCV_ERR_WRONG_INIT_METHOD=invokespecial d'un initialiseur incorrect
 # START NON-TRANSLATABLE
 J9NLS_BCV_ERR_WRONG_INIT_METHOD.explanation=An 'invokespecial' bytecode targets an <init> method of the wrong class for the uninitialized object being constructed.
 J9NLS_BCV_ERR_WRONG_INIT_METHOD.system_action=The JVM will throw a verification or classloading related exception such as java.lang.VerifyError.

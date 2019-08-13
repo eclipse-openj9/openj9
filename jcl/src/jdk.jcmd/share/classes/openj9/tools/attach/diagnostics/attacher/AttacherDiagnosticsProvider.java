@@ -38,8 +38,6 @@ import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
 /**
  * This class allows a Attach API attacher to query a target JVM about
  * diagnostic information such as JIT compilation, threads, classes, etc.
- * Instances must be created using the getDiagnostics() factory method.
- *
  */
 public class AttacherDiagnosticsProvider {
 

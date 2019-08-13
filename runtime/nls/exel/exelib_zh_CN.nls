@@ -30,8 +30,8 @@
 # Note to translators:
 #
 # This file uses printf style substitutions. Sequences such as %s, %.*s, %10d
-# etc. will be subsituted at runtime. The special case of %% is not a substitution.
-# It indicates a single percent sign. Please do not modify the format specifiers, or 
+# etc. will be substituted at runtime. The special case of %% is not a substitution.
+# It indicates a single percent sign. Please do not modify the format specifiers, or
 # change their order. For instance, in a message like "from %d to %s", %d
 # MUST appear before %s in any translated message, or a run-time crash
 # could occur. This is a known limitation of the product.
@@ -424,7 +424,7 @@ J9NLS_EXELIB_CMDLINE_CP_WARN.system_action=
 J9NLS_EXELIB_CMDLINE_CP_WARN.user_response=
 # END NON-TRANSLATABLE
 
-#J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numberic1024_WARN
+#J9SourceExeLibArgumentsParsing - cmdline_prepend_internal_WARN/cmdline_perpend_numeric1024_WARN
 J9NLS_EXELIB_CMDLINE_PREPEND_WARN=\n\
 \u8b66\u544a\uff1a\u4e0d\u63a8\u8350\u4f7f\u7528\u547d\u4ee4\u884c\u53c2\u6570\u201c%s\u201d\u3002\n\
 \u8b66\u544a\uff1a\u8bf7\u4f7f\u7528 -X \u7684\u7b49\u4ef7\u9009\u9879\u3002
@@ -527,7 +527,7 @@ J9NLS_EXELIB_MUST_BE_PSV=\u65b9\u6cd5 main \u5fc5\u987b\u58f0\u660e\u4e3a public
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_MUST_BE_PSV.explanation=main method should always be public, static and void
 J9NLS_EXELIB_MUST_BE_PSV.system_action=The JVM will terminate.
-J9NLS_EXELIB_MUST_BE_PSV.user_response=Ensure main method is declared correctly. 
+J9NLS_EXELIB_MUST_BE_PSV.user_response=Ensure main method is declared correctly.
 # END NON-TRANSLATABLE
 
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_ARG_ARRAY=\u5185\u90e8 VM \u9519\u8bef\uff1a\u672a\u80fd\u521b\u5efa\u53c2\u6570\u6570\u7ec4
@@ -598,16 +598,8 @@ J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.system_action=
 J9NLS_EXELIB_INTERNAL_VM_ERR_FAILED_CREATE_JAVA_VM.user_response=
 # END NON-TRANSLATABLE
 
-# J9SourceMainRemoteConsole - remoteConsole_startup
-
-J9NLS_EXELIB_UNABLE_REDIRECT_IO=\u65e0\u6cd5\u5c06\u63a7\u5236\u53f0\u91cd\u5b9a\u5411\u5230 %1$s:%2$d
-# START NON-TRANSLATABLE
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_1=localhost
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.sample_input_2=8080
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.explanation=Failed to establish socket connection to target remote console.  
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.system_action=JVM console output will not be redirected to target console.
-J9NLS_EXELIB_UNABLE_REDIRECT_IO.user_response=Ensure remote console is reachable and accessible.
-# END NON-TRANSLATABLE
+# J9SourceMainRemoteConsole - unused
+J9NLS_EXELIB_UNABLE_REDIRECT_IO=
 
 # J9SourceExeLibArgumentsParsing - describeInternalOptions
 J9NLS_EXELIB_INTERNAL_HELP_1_10=\  -Xquickstart    \u901a\u8fc7\u5ef6\u8fdf\u4f18\u5316\u6765\u51cf\u5c11\u542f\u52a8\u65f6\u95f4
@@ -684,7 +676,7 @@ J9NLS_EXELIB_COULD_NOT_OPEN_FILE.user_response=Ensure target file is reachable a
 J9NLS_EXELIB_LOGFILE_BACKUP_FAILED=\u65e0\u6cd5\u5efa\u7acb\u6587\u4ef6 %s \u7684\u5907\u4efd\u526f\u672c
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.sample_input_1=logfile.txt
-J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.explanation=JVM's attempt to back up existing file has failed. 
+J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.explanation=JVM's attempt to back up existing file has failed.
 J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.system_action=JVM execution continues without backing up the old file.
 J9NLS_EXELIB_LOGFILE_BACKUP_FAILED.user_response=Ensure target file has the right access permission.
 # END NON-TRANSLATABLE

@@ -908,11 +908,14 @@ J9::Compilation::verifyCompressedRefsAnchors(bool anchorize)
 #if 0 ///#ifdef DEBUG
                TR_ASSERT(0, "No anchor found for load/store [%p]", n);
 #else
-               // place anchor after tt if its a check
-               // otherwise before
+               // For the child of null check or resolve check, the side effect doesn't rely on the
+               // value of the child, thus the anchor needs to be placed after tt. For other nodes,
+               // place the anchor before tt.
                //
                TR::TreeTop *next = tt->getNextTreeTop();
-               if (tt->getNode()->getOpCode().isCheck())
+               if ((tt->getNode()->getOpCode().isNullCheck()
+                   || tt->getNode()->getOpCode().isResolveCheck())
+                   && n == tt->getNode()->getFirstChild())
                   {
                   tt->join(newTT);
                   newTT->join(next);

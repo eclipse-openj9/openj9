@@ -1,5 +1,6 @@
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,28 +20,22 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package com.ibm.j9ddr.corereaders.debugger;
 
+package openj9.management.internal;
 
-public class JniRegistersAMD64 extends JniRegisters 
-{
-	protected long getInstructionPointer()
-	{
-		return _registers.get("rip").longValue();
+/**
+ * This exception is thrown when the dump configuration cannot be
+ * updated through the methods on com.ibm.jvm.Dump because it is
+ * in use.
+ */
+public class DumpConfigurationUnavailableExceptionBase extends Exception {
+
+	private static final long serialVersionUID = -4576359433734094169L;
+	/**
+	 * @param message description of error
+	 */
+	public DumpConfigurationUnavailableExceptionBase(String message) {
+		super(message);
 	}
 
-	protected long getLinkRegister()
-	{
-		return 0;
-	}
-
-	protected long getStackPointer()
-	{
-		return _registers.get("rsp").longValue();
-	}
-	
-	protected long getBasePointer()
-	{
-		return _registers.get("rbp").longValue();
-	}
 }

@@ -87,12 +87,6 @@ else
 export TEST_JDK_HOME := $(subst \,/,$(TEST_JDK_HOME))
 endif
 
-ifeq ($(JDK_VERSION), 8)
-export JAVA_BIN := $(TEST_JDK_HOME)/jre/bin
-else
-export JAVA_BIN := $(TEST_JDK_HOME)/bin
-endif
-
 OLD_JAVA_HOME := $(JAVA_HOME)
 export JAVA_HOME := $(TEST_JDK_HOME)
 
@@ -305,7 +299,6 @@ setup_%: testEnvSetup
 		$(ECHO) JAVA_HOME was originally set to $(OLD_JAVA_HOME); \
 	fi
 	@$(ECHO) set JAVA_HOME to $(JAVA_HOME)
-	@$(ECHO) set JAVA_BIN to $(JAVA_BIN)
 	@$(ECHO) set SPEC to $(SPEC)
 	@$(MKTREE) $(Q)$(TESTOUTPUT)$(Q)
 	@$(ECHO) Running $(TESTTARGET) ...

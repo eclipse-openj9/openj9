@@ -469,8 +469,9 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                   if (isInstanceOfResult == TR_yes)
                      assignable = 1;
                   }
-               else
+               else if (secondClassChildConstraint->getClassType()->asResolvedClass())
                   {
+                  TR_ASSERT_FATAL(firstClass != NULL && secondClass != NULL, "isAssignableFrom replacement at compile-time requires two class pointers - got %p and %p", firstClass, secondClass);
                   TR_YesNoMaybe isInstanceOfResult = comp()->fej9()->isInstanceOf(secondClass, firstClass, false, true);
                   if (isInstanceOfResult == TR_maybe)
                      {
@@ -480,6 +481,12 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                      }
                   else if (isInstanceOfResult == TR_yes)
                      assignable = 1;
+                  }
+               else
+                  {
+                  if (trace())
+                     traceMsg(comp(), "The second child class type is not resolved at compile-time, quit transforming Class.isAssignableFrom\n");
+                  return;
                   }
                transformCallToIconstInPlaceOrInDelayedTransformations(_curTree, assignable, firstClassChildGlobal && secondClassChildGlobal, true);
                TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "constrainCall/(%s)", signature));
@@ -772,9 +779,9 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                      && mhConstraint->isNonNullObject())
                {
                TR_OpaqueClassBlock* mhClass = mhConstraint->getClass();
-               int32_t modifierOffset = comp()->fej9()->getInstanceFieldOffset(mhClass, "final_modifiers", 15, "I", 1);
-               if (modifierOffset < 0)
-                  break;
+               int32_t isStaticOffset = comp()->fej9()->getInstanceFieldOffset(mhClass, "isStatic", "Z");
+               TR_ASSERT(isStaticOffset >= 0, "Can't find field isStatic in MethodHandle %p\n", mh);
+
                uintptrj_t* mhLocation = getObjectLocationFromConstraint(mhConstraint);
 
                TR::VMAccessCriticalSection nullCheckIfRequired(comp(),
@@ -782,13 +789,13 @@ J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
                if (!nullCheckIfRequired.hasVMAccess())
                   break;
                uintptrj_t mhObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)mhLocation);
-               int32_t modifier = comp()->fej9()->getInt32FieldAt(mhObject, modifierOffset);
-               if (modifier & J9AccStatic)
+               int32_t isStatic = comp()->fej9()->getInt32FieldAt(mhObject, isStaticOffset);
+               if (isStatic)
                   {
                   removeCall = true;
                   if (trace())
                      {
-                     traceMsg(comp(), "Modifier in MethodHandle %p is %d and is static\n", mh, modifier);
+                     traceMsg(comp(), "DirectHandle %p refers to a static method\n", mh);
                      }
                   }
                else
@@ -1397,10 +1404,10 @@ J9::ValuePropagation::innerConstrainAcall(TR::Node *node)
                         }
                      }
                   }
-               // Dynamic object clone is enabled only with FLAGS_IN_CLASS_SLOT and LOCK_NURSERY enabled
+               // Dynamic object clone is enabled only with FLAGS_IN_CLASS_SLOT enabled
                // as currenty codegen anewarray evaluator only supports this case for object header initialization.
-               // Even though all existing supported build config has these 2 falgs set, this ifdef serves as a safety precaution.
-#if defined(J9VM_INTERP_FLAGS_IN_CLASS_SLOT) && defined(J9VM_THR_LOCK_NURSERY)
+               // Even though all existing supported build config have this flag set, this ifdef serves as a safety precaution.
+#if defined(J9VM_INTERP_FLAGS_IN_CLASS_SLOT)
                else if ( constraint->getClassType()
                          && constraint->getClassType()->asResolvedClass() )
                   {
