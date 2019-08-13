@@ -5169,12 +5169,26 @@ static TR_PrexArgument *stronger(TR_PrexArgument *left, TR_PrexArgument *right, 
    {
    if (TR_PrexArgument::knowledgeLevel(left) > TR_PrexArgument::knowledgeLevel(right))
       return left;
-   else if (left && right
-         && TR_PrexArgument::knowledgeLevel(left) == TR_PrexArgument::knowledgeLevel(right)
-         && comp->fe()->isInstanceOf(left->getClass(), right->getClass(), true, true, true))
-      return left;
-   else
+   else if (TR_PrexArgument::knowledgeLevel(right) > TR_PrexArgument::knowledgeLevel(left))
       return right;
+   else if (left && right)
+      {
+      if (left->getClass() && right->getClass())
+         {
+         if (comp->fe()->isInstanceOf(left->getClass(), right->getClass(), true, true, true))
+            return left;
+         else if (comp->fe()->isInstanceOf(right->getClass(), left->getClass(), true, true, true))
+            return right;
+         }
+      else if (left->getClass())
+         return left;
+      else if (right->getClass())
+         return right;
+
+      return NULL;
+      }
+   else
+      return left ? left : right;  // Return non-null prex argument when possible
    }
 
 static void populateClassNameSignature(TR::Method *m, TR_ResolvedMethod* caller, TR_OpaqueClassBlock* &c, char* &nc, int32_t &nl, char* &sc, int32_t &sl)
@@ -5497,7 +5511,11 @@ TR_PrexArgInfo::enhance(TR_PrexArgInfo *dest, TR_PrexArgInfo *source, TR::Compil
 
    int32_t numArgsToEnhance = std::min(dest->getNumArgs(), source->getNumArgs());
    for (int32_t i = 0; i < numArgsToEnhance; i++)
-      dest->set(i, stronger(dest->get(i), source->get(i), comp));
+      {
+      TR_PrexArgument* result = stronger(dest->get(i), source->get(i), comp);
+      if (result)
+         dest->set(i, result);
+      }
 
    return dest;
    }
