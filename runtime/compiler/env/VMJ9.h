@@ -128,7 +128,6 @@ inline void getClassNameSignatureFromMethod(J9Method *method, J9UTF8 *& methodCl
    methodSignature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
    }
 
-
 typedef struct TR_JitPrivateConfig
    {
    TR::FILE      *vLogFile;
@@ -894,6 +893,7 @@ public:
    bool shouldSleep() { _shouldSleep = !_shouldSleep; return _shouldSleep; } // no need for virtual; we need this per thread
 
    virtual bool isAnonymousClass(TR_OpaqueClassBlock *j9clazz) { return (J9_ARE_ALL_BITS_SET(((J9Class*)j9clazz)->romClass->extraModifiers, J9AccClassAnonClass)); }
+   virtual bool isAnonymousClass(J9ROMClass *romClass) { return (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass)); }
    virtual int64_t getCpuTimeSpentInCompThread(TR::Compilation * comp); // resolution is 0.5 sec or worse. Returns -1 if unavailable
 
    virtual void *             getClassLoader(TR_OpaqueClassBlock * classPointer);
@@ -924,14 +924,6 @@ public:
 
    static char            x86VendorID[13];
    static bool            x86VendorIDInitialized;
-
-#if !defined(HINTS_IN_SHAREDCACHE_OBJECT)
-   bool isSharedCacheHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
-   void addSharedCacheHint(TR_ResolvedMethod *, TR_SharedCacheHint);
-   virtual uint16_t getAllSharedCacheHints(J9Method *method);
-   bool isSharedCacheHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL);
-   void addSharedCacheHint(J9Method *, TR_SharedCacheHint);
-#endif
 
    virtual J9Class * matchRAMclassFromROMclass(J9ROMClass * clazz,  TR::Compilation * comp);
    virtual J9VMThread * getCurrentVMThread();
@@ -988,10 +980,6 @@ public:
    virtual bool isMethodBreakpointed(TR_OpaqueMethodBlock *method);
 
    virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr) { return false; }
-   private:
-#if !defined(HINTS_IN_SHAREDCACHE_OBJECT)
-   uint32_t     getSharedCacheHint(J9VMThread * vmThread, J9Method *romMethod, J9SharedClassConfig * scConfig);
-#endif
 
 protected:
 

@@ -141,7 +141,6 @@ TR_J9SharedCache::log(char *format, ...)
    JITRT_UNLOCK_LOG(jitConfig());
    }
 
-
 uint32_t
 TR_J9SharedCache::getHint(J9VMThread * vmThread, J9Method *method)
    {
@@ -255,7 +254,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
       uint16_t *hintCount = ((uint16_t *)&scHintData) + 1; // Flags and new count field needs to be in contiguous location to be stored into sharecache
 
       bool hintDidNotExist = ((newHint & *hintFlags) == 0);
-      const uint32_t scHintDataLength = 4;
+      const uint32_t scHintDataLength = sizeof(scHintData);
 
       if (hintDidNotExist)
          {
@@ -267,7 +266,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
                *hintCount = 10 * _initialHintSCount;
 
             J9SharedDataDescriptor descriptor;
-            descriptor.address = (U_8 *)(uintptrj_t)scHintData;
+            descriptor.address = (U_8*)hintFlags;
             descriptor.length = scHintDataLength; // Size includes the 2nd data field, currently only used for TR_HintFailedValidation
             descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITHINT;
             descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
@@ -305,11 +304,12 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
          }
       else
          {
-         bool updateHint = true;
+         bool updateHint = false;
          if (isFailedValidationHint)
             {
             uint16_t oldCount = *hintCount;
             uint16_t newCount = std::min(oldCount * 10, TR_DEFAULT_INITIAL_COUNT);
+            updateHint = true;
             if (newCount == oldCount)
                {
                updateHint = false;
@@ -323,7 +323,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
          if (updateHint)
             {
             J9SharedDataDescriptor descriptor;
-            descriptor.address = (U_8 *)(uintptrj_t)scHintData;
+            descriptor.address = (U_8*)hintFlags;
             descriptor.length = scHintDataLength; // Size includes the 2nd data field, currently only used for TR_HintFailedValidation
             descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITHINT;
             descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
@@ -353,6 +353,7 @@ TR_J9SharedCache::addHint(TR_ResolvedMethod * method, TR_SharedCacheHint hint)
    addHint(((TR_ResolvedJ9Method *) method)->ramMethod(), hint);
    }
 
+
 void
 TR_J9SharedCache::persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, TR::Compilation *comp)
    {
@@ -372,30 +373,6 @@ bool
 TR_J9SharedCache::isMostlyFull()
    {
    return (double) sharedCacheConfig()->getFreeSpaceBytes(_javaVM) / sharedCacheConfig()->getCacheSizeBytes(_javaVM) < 0.8;
-   }
-
-J9Class *
-TR_J9SharedCache::matchRAMclassFromROMclass(J9ROMClass * clazz, TR::Compilation * comp)
-   {
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
-   J9VMThread *vmThread = fej9->getCurrentVMThread();
-   J9UTF8 *className = J9ROMCLASS_CLASSNAME(clazz);
-   J9Class *ramClass = NULL;
-
-      {
-      TR::VMAccessCriticalSection matchRAMclassFromROMclass(fej9);
-      ramClass = jitGetClassInClassloaderFromUTF8(vmThread,
-                                                  ((TR_ResolvedJ9Method *)comp->getCurrentMethod())->getClassLoader(),
-                                                  (char *) J9UTF8_DATA(className),
-                                                  J9UTF8_LENGTH(className));
-      if (!ramClass)
-         {
-         ramClass = jitGetClassInClassloaderFromUTF8(vmThread, (J9ClassLoader *) javaVM()->systemClassLoader,
-            (char *) J9UTF8_DATA(className), J9UTF8_LENGTH(className));
-         }
-      }
-
-   return ramClass;
    }
 
 void *

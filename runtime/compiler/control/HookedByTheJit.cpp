@@ -459,6 +459,9 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
          }
       else if (TR::Options::sharedClassCache())
          {
+         // The default FE may not have TR_J9SharedCache object because the FE may have
+         // been created before options were processed.
+         TR_J9SharedCache *sc = TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM)->sharedCache();
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
          if (compInfo->reloRuntime()->isRomClassForMethodInSharedCache(method, jitConfig->javaVM))
             {
@@ -471,11 +474,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                {
                int32_t scount = optionsAOT->getInitialSCount();
                uint16_t newScount = 0;
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-               if ((TR_J9SharedCache *)(((TR_J9VMBase *) fe)->sharedCache())->isHint(method, TR_HintFailedValidation, &newScount))
-#else
-               if (((TR_J9VMBase *) fe)->isSharedCacheHint(method, TR_HintFailedValidation, &newScount))
-#endif
+               if (sc->isHint(method, TR_HintFailedValidation, &newScount))
                   {
                   if ((scount == TR_QUICKSTART_INITIAL_SCOUNT) || (scount == TR_INITIAL_SCOUNT))
                      { // If scount is not user specified (coarse way due to info being lost from options parsing)
@@ -550,11 +549,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                    jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
                    (TR_HintMethodCompiledDuringStartup & TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags()))
                   {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-                  bool wasCompiledDuringStartup = (TR_J9SharedCache *)(fe->sharedCache())->isHint(method, TR_HintMethodCompiledDuringStartup);
-#else
-                  bool wasCompiledDuringStartup = fe->isSharedCacheHint(method, TR_HintMethodCompiledDuringStartup);
-#endif
+                  bool wasCompiledDuringStartup = sc->isHint(method, TR_HintMethodCompiledDuringStartup);
                   if (wasCompiledDuringStartup)
                      {
                      // Lower the counts for any method that doesn't have an AOT body,
@@ -7122,4 +7117,3 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
 
 
 } /* extern "C" */
-

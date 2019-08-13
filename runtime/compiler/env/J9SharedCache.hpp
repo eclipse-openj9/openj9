@@ -55,8 +55,6 @@ public:
    void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp);
    void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *comp);
 
-   J9Class * matchRAMclassFromROMclass(J9ROMClass * clazz, TR::Compilation * comp);
-
    bool canRememberClass(TR_OpaqueClassBlock *classPtr)
       {
       return (rememberClass((J9Class *) classPtr, false) != NULL);
@@ -96,17 +94,17 @@ public:
       J9_SHARED_CACHE_FAILED_TO_ALLOCATE,
       SHARED_CACHE_STORE_ERROR,
       SHARED_CACHE_FULL,
-      // The following are probably equivalent to SHARED_CACHE_FULL - 
+      // The following are probably equivalent to SHARED_CACHE_FULL -
       // they could have failed because of no space but no error code is returned.
       SHARED_CACHE_CLASS_CHAIN_STORE_FAILED,
       AOT_HEADER_STORE_FAILED
       };
-   
+
    static void setSharedCacheDisabledReason(TR_J9SharedCacheDisabledReason state) { _sharedCacheState = state; }
    static TR_J9SharedCacheDisabledReason getSharedCacheDisabledReason() { return _sharedCacheState; }
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo);
    static void setStoreSharedDataFailedLength(UDATA length) {_storeSharedDataFailedLength = length; }
-   
+
 private:
    J9JITConfig *jitConfig() { return _jitConfig; }
    J9JavaVM *javaVM() { return _javaVM; }
@@ -149,7 +147,7 @@ private:
 
    uint32_t _logLevel;
    bool _verboseHints;
-   
+
    static TR_J9SharedCacheDisabledReason _sharedCacheState;
    static TR_YesNoMaybe                  _sharedCacheDisabledBecauseFull;
    static UDATA                          _storeSharedDataFailedLength;
