@@ -230,6 +230,7 @@ public:
    virtual ~TR_J9VMBase() {}
 
    virtual bool isAOT_DEPRECATED_DO_NOT_USE() { return false; }
+   virtual bool needsContiguousCodeAndDataCacheAllocation() { return false; }
    virtual bool supportsMethodEntryPadding() { return true; }
    virtual bool canUseSymbolValidationManager() { return false; }
 
@@ -1102,6 +1103,7 @@ public:
    virtual bool               hardwareProfilingInstructionsNeedRelocation()   { return true; }
    virtual bool               supportsMethodEntryPadding()                    { return false; }
    virtual bool               isBenefitInliningCheckIfFinalizeObject()          { return true; }
+   virtual bool               needsContiguousCodeAndDataCacheAllocation()     { return true; }
    virtual bool               shouldDelayAotLoad();
 
    virtual bool               isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false);
