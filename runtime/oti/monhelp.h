@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2019 IBM Corp. and others
+ * Copyright (c) 2007, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,11 +26,18 @@
 /*
  * Calculate the flatlock recursion count for an owned or reserved flat lock.
  * NOTE: this will return an incorrect value if the flat lock is unowned or for an inflated lock
+ * The location of the RC field is slightly different under the Learning state so a check is done to deteremine the shift value.
+ * Flat state has a different internal representation of the same nested locking depth compared to Reserved and Learning. Under Flat, 1 needs to be added before returning the value.
  */
 #if defined(J9VM_THR_LOCK_RESERVATION)
-#define J9_FLATLOCK_COUNT(lock)  ((((lock) & OBJECT_HEADER_LOCK_BITS_MASK) >> OBJECT_HEADER_LOCK_RECURSION_OFFSET) + (((lock) & OBJECT_HEADER_LOCK_RESERVED) ? 0 : 1))
+#define J9_FLATLOCK_COUNT(lock) \
+	((((lock) & OBJECT_HEADER_LOCK_BITS_MASK) >> \
+		(((lock) & OBJECT_HEADER_LOCK_LEARNING) \
+			? OBJECT_HEADER_LOCK_LEARNING_RECURSION_OFFSET \
+			: OBJECT_HEADER_LOCK_V2_RECURSION_OFFSET)) \
+	+ (((lock) & (OBJECT_HEADER_LOCK_RESERVED | OBJECT_HEADER_LOCK_LEARNING)) ? 0 : 1))
 #else
-#define J9_FLATLOCK_COUNT(lock)  ((((lock) & OBJECT_HEADER_LOCK_BITS_MASK) >> OBJECT_HEADER_LOCK_RECURSION_OFFSET) + 1)
+#define J9_FLATLOCK_COUNT(lock)  ((((lock) & OBJECT_HEADER_LOCK_BITS_MASK) >> OBJECT_HEADER_LOCK_V2_RECURSION_OFFSET) + 1)
 #endif
 
 #define J9_FLATLOCK_OWNER(lockWord) ((J9VMThread *)((UDATA)(lockWord) & (~(UDATA)OBJECT_HEADER_LOCK_BITS_MASK)))

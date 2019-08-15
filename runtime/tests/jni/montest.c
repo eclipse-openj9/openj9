@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,11 +82,11 @@ Java_j9vm_test_monitor_Helpers_monitorReserve(JNIEnv * env, jclass clazz, jobjec
 	}
 
 	lock = J9_LOAD_LOCKWORD(vmThread, lockEA);
-	if (lock != 0) {
+	if ((lock != 0) && (lock != OBJECT_HEADER_LOCK_LEARNING) && (lock != OBJECT_HEADER_LOCK_RESERVED)) {
 		vmThread->javaVM->internalVMFunctions->internalExitVMToJNI(vmThread);		
 		errorClazz = (*env)->FindClass(env, "java/lang/Error");
 		if (errorClazz != NULL) {
-			(*env)->ThrowNew(env, errorClazz, "Object's lock word is not 0");
+			(*env)->ThrowNew(env, errorClazz, "Object's lockword state is not Flat-Unlocked, New-PreLearning or New-AutoReserve.");
 		}
 		return;
 	}

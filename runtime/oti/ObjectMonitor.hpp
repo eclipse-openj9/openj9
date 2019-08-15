@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,14 +24,13 @@
 #define OBJECTMONITOR_HPP_
 
 #include "j9.h"
-#include "j9modron.h"
-#include "j9consts.h"
-#include "vm_api.h"
 #include "j9accessbarrier.h"
+#include "j9consts.h"
+#include "j9modron.h"
 #include "monhelp.h"
 #include "stackwalk.h"
+#include "vm_api.h"
 
-#include "VMHelpers.hpp"
 #include "AtomicSupport.hpp"
 
 class VM_ObjectMonitor
@@ -123,7 +122,9 @@ public:
 					goto done;
 				}
 #ifdef J9VM_THR_LOCK_RESERVATION
-				if (OBJECT_HEADER_LOCK_RESERVED == (lock & (OBJECT_HEADER_LOCK_RECURSION_MASK | OBJECT_HEADER_LOCK_RESERVED))) {
+				if ((OBJECT_HEADER_LOCK_RESERVED == (lock & (OBJECT_HEADER_LOCK_RECURSION_MASK | OBJECT_HEADER_LOCK_RESERVED))) ||
+				    (OBJECT_HEADER_LOCK_LEARNING == (lock & (OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK | OBJECT_HEADER_LOCK_LEARNING)))
+				) {
 					goto done;
 				}
 #endif
@@ -172,8 +173,10 @@ done:
 		if (((UDATA)lock & ~(UDATA)OBJECT_HEADER_LOCK_BITS_MASK) == (UDATA)currentThread) {
 #if defined(J9VM_THR_LOCK_RESERVATION)
 			if (checkOwner) {
-				/* If the RESERVED bit is set, then the recursion count must be non-zero */
-				if (OBJECT_HEADER_LOCK_RESERVED == (lock & (OBJECT_HEADER_LOCK_RECURSION_MASK | OBJECT_HEADER_LOCK_RESERVED))) {
+				/* If the RESERVED bit or Learning bit are set, then the recursion count must be non-zero */
+				if ((OBJECT_HEADER_LOCK_RESERVED == (lock & (OBJECT_HEADER_LOCK_RECURSION_MASK | OBJECT_HEADER_LOCK_RESERVED))) ||
+				    (OBJECT_HEADER_LOCK_LEARNING == (lock & (OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK | OBJECT_HEADER_LOCK_LEARNING)))
+				) {
 					goto done;
 				}
 			}
@@ -225,7 +228,7 @@ done:
 	 * @param currentThread[in] the current J9VMThread
 	 * @param lockEA[in] the location of the lockword
 	 * @param readBeforeCAS[in] Controls whether a pre-read occurs before the CAS attempt (default false)
-	 * @param lock[in] the value expected in lockEA when uncontended - either 0 or OBJECT_HEADER_LOCK_RESERVED
+	 * @param lock[in] the value expected in lockEA when uncontended - either 0, OBJECT_HEADER_LOCK_RESERVED or OBJECT_HEADER_LOCK_LEARNING
 	 *
 	 * @returns	true if the lock was acquired, false if not
 	 */
@@ -234,12 +237,17 @@ done:
 	{
 		bool locked = false;
 		j9objectmonitor_t mine = (j9objectmonitor_t)(UDATA)currentThread;
-		if (0 != lock) {
-			/* Monitor is reservable. Make a reservation to give long-lived
-			 * objects a chance even if first locked in the interpreter
-			 */
+
+		/*
+		 * For the Reserved and Learning states, the RC field starts at 1 when an unlocked objected gets locked.
+		 * For the Flat state, the RC field starts at 0 so nothing extra needs to be done.
+		 */
+		if (OBJECT_HEADER_LOCK_RESERVED == lock) {
 			mine |= (lock | OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT);
+		} else if (OBJECT_HEADER_LOCK_LEARNING == lock) {
+			mine |= (lock | OBJECT_HEADER_LOCK_LEARNING_FIRST_RECURSION_BIT);
 		}
+
 		if (lock == compareAndSwapLockword(currentThread, lockEA, lock, mine, readBeforeCAS)) {
 			VM_AtomicSupport::monitorEnterBarrier();
 			locked = true;
@@ -473,6 +481,115 @@ done:
 		recordMonitorExit(currentThread, object, &currentThread->jniMonitorEnterRecords);
 	}
 
+	/**
+	 * Increment reservedCounter stored in the J9Class.
+	 *
+	 * @param clazz[in] the object's J9Class
+	 */
+	static VMINLINE void
+	incrementReservedCounter(J9Class *clazz)
+	{
+		/*
+		 * reservedCounter is a per class counter that tracks lockword state transitions to Reserved.
+		 * It is later used to help determine what the initial lockword for a created object should be.
+		 */
+		U_16 reservedCounter = clazz->reservedCounter;
+
+		/* If incrementing the reservedCounter would cause an overflow, first divide cancelCounter and reservedCounter by 2. */
+		if (reservedCounter < (U_16)0xFFFF) {
+			clazz->reservedCounter = reservedCounter + 1;
+		} else {
+			/*
+			 * cancelCounter is a per class counter that tracks lockword state transitions to Flat.
+			 * It is later used to help determine what the initial lockword for a created object should be.
+			 */
+			U_16 cancelCounter = clazz->cancelCounter;
+
+			clazz->reservedCounter = (reservedCounter >> 1) + 1;
+			clazz->cancelCounter = (cancelCounter >> 1);
+		}
+	}
+
+	/**
+	 * Increment cancelCounter stored in the J9Class.
+	 *
+	 * @param clazz[in] the object's J9Class
+	 */
+	static VMINLINE void
+	incrementCancelCounter(J9Class *clazz)
+	{
+		/*
+		 * cancelCounter is a per class counter that tracks lockword state transitions to Flat.
+		 * It is later used to help determine what the initial lockword for a created object should be.
+		 */
+		U_16 cancelCounter = clazz->cancelCounter;
+
+		/* If incrementing the cancelCounter would cause an overflow, first divide cancelCounter and reservedCounter by 2. */
+		if (cancelCounter < (U_16)0xFFFF) {
+			clazz->cancelCounter = cancelCounter + 1;
+		} else {
+			/*
+			 * reservedCounter is a per class counter that tracks lockword state transitions to Reserved.
+			 * It is later used to help determine what the initial lockword for a created object should be.
+			 */
+			U_16 reservedCounter = clazz->reservedCounter;
+
+			clazz->cancelCounter = (cancelCounter >> 1) + 1;
+			clazz->reservedCounter = (reservedCounter >> 1);
+		}
+	}
+
+	/**
+	 * Determine initial lockword value based on reservedCounter and cancelCounter in the J9Class.
+	 *
+	 * @param javaVM[in] the J9JavaVM
+	 * @param clazz[in] the object's J9Class
+	 *
+	 * @returns The initial lockword value for the object
+	 */
+	static VMINLINE j9objectmonitor_t
+	getInitialLockword(J9JavaVM *javaVM, J9Class *clazz)
+	{
+		j9objectmonitor_t initialLockword = 0;
+
+		if (javaVM->enableGlobalLockReservation) {
+			/*
+			 * This path is taken when Global Lock Reservation is enabled.
+			 * reservedCounter is a per class counter that tracks lockword state transitions to Reserved.
+			 * cancelCounter is a per class counter that tracks lockword state transitions to Flat.
+			 */
+			U_32 reservedCounter = clazz->reservedCounter;
+			U_32 cancelCounter = clazz->cancelCounter;
+
+			U_32 reservedAbsoluteThreshold = javaVM->reservedAbsoluteThreshold;
+			U_32 minimumReservedRatio = javaVM->minimumReservedRatio;
+
+			U_32 cancelAbsoluteThreshold = javaVM->cancelAbsoluteThreshold;
+			U_32 minimumLearningRatio = javaVM->minimumLearningRatio;
+
+			/*
+			 * Check reservedCounter and cancelCounter against different thresholds to determine what to initialize the lockword to.
+			 * First check if the ratio of resevation to cancellations is high enough to set the lockword to the New-AutoReserve state.
+			 * If so, the initial lockword value is OBJECT_HEADER_LOCK_RESERVED.
+			 * Second check if the ratio is high enough to set the lockword to the New-PreLearning state.
+			 * If so, the initial lockword value is OBJECT_HEADER_LOCK_LEARNING.
+			 * If the ratio is too low, the lockword starts in the Flat-Unlocked state and 0 is returned for the lockword value.
+			 *
+			 * Start as New-AutoReserve -> Initial lockword: OBJECT_HEADER_LOCK_RESERVED
+			 * Start as New-PreLearning -> Initial lockword: OBJECT_HEADER_LOCK_LEARNING
+			 * Start as Flat-Unlocked   -> Initial lockword: 0
+			 */
+			if ((reservedCounter >= reservedAbsoluteThreshold) && (reservedCounter > (cancelCounter * minimumReservedRatio))) {
+				initialLockword = OBJECT_HEADER_LOCK_RESERVED;
+			} else if ((cancelCounter < cancelAbsoluteThreshold) || (reservedCounter > (cancelCounter * minimumLearningRatio))) {
+				initialLockword = OBJECT_HEADER_LOCK_LEARNING;
+			}
+		} else if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit)) {
+			/* Initialize lockword to New-ReserveOnce. This path is x86 only. */
+			initialLockword = OBJECT_HEADER_LOCK_RESERVED;
+		}
+		return initialLockword;
+	}
 };
 
 #endif /* OBJECTMONITOR_HPP_ */

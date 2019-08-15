@@ -2,7 +2,7 @@
 
 package com.ibm.oti.vm;
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,6 +73,8 @@ public final class VM {
 	public static final int J9CLASS_INSTANCESIZE_OFFSET;
 	public static final int J9CLASS_INSTANCE_DESCRIPTION_OFFSET;
 	public static final int J9CLASS_LOCK_OFFSET_OFFSET;
+	public static final int J9CLASS_LOCK_RESERVATION_HISTORY_RESERVED_COUNTER_OFFSET;
+	public static final int J9CLASS_LOCK_RESERVATION_HISTORY_CANCEL_COUNTER_OFFSET;
 	public static final int J9CLASS_INITIALIZE_STATUS_OFFSET;
 	public static final int J9CLASS_CLASS_DEPTH_AND_FLAGS_OFFSET;
 	public static final int J9CLASS_SUPERCLASSES_OFFSET;
@@ -118,6 +120,13 @@ public final class VM {
 	/* Lock reservation */
 	public static final int J9CLASS_RESERVABLE_LOCK_WORD_INIT;
 	public static final int OBJECT_HEADER_LOCK_RESERVED;
+	public static final int OBJECT_HEADER_LOCK_LEARNING;
+
+	public static final int GLR_ENABLE_GLOBAL_LOCK_RESERVATION;
+	public static final int GLR_RESERVED_ABSOLUTE_THRESHOLD;
+	public static final int GLR_MINIMUM_RESERVED_RATIO;
+	public static final int GLR_CANCEL_ABSOLUTE_THRESHOLD;
+	public static final int GLR_MINIMUM_LEARNING_RATIO;
 
 	private static String[] cachedVMArgs;
 	/*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
@@ -160,6 +169,8 @@ public final class VM {
 		J9CLASS_INSTANCESIZE_OFFSET = 0;
 		J9CLASS_INSTANCE_DESCRIPTION_OFFSET = 0;
 		J9CLASS_LOCK_OFFSET_OFFSET = 0;
+		J9CLASS_LOCK_RESERVATION_HISTORY_RESERVED_COUNTER_OFFSET = 0;
+		J9CLASS_LOCK_RESERVATION_HISTORY_CANCEL_COUNTER_OFFSET = 0;
 		J9CLASS_INITIALIZE_STATUS_OFFSET = 0;
 		J9CLASS_CLASS_DEPTH_AND_FLAGS_OFFSET = 0;
 		J9CLASS_SUPERCLASSES_OFFSET = 0;
@@ -191,6 +202,13 @@ public final class VM {
 
 		J9CLASS_RESERVABLE_LOCK_WORD_INIT = 0;
 		OBJECT_HEADER_LOCK_RESERVED = 0;
+		OBJECT_HEADER_LOCK_LEARNING = 0;
+
+		GLR_ENABLE_GLOBAL_LOCK_RESERVATION = 0;
+		GLR_RESERVED_ABSOLUTE_THRESHOLD = 0;
+		GLR_MINIMUM_RESERVED_RATIO = 0;
+		GLR_CANCEL_ABSOLUTE_THRESHOLD = 0;
+		GLR_MINIMUM_LEARNING_RATIO = 0;
 }
 /**
  * Prevents this class from being instantiated.

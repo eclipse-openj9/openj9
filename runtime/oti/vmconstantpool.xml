@@ -393,6 +393,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_INSTANCESIZE_OFFSET" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_INSTANCE_DESCRIPTION_OFFSET" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_LOCK_OFFSET_OFFSET" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_LOCK_RESERVATION_HISTORY_RESERVED_COUNTER_OFFSET" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_LOCK_RESERVATION_HISTORY_CANCEL_COUNTER_OFFSET" signature="I"/>
 
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_INITIALIZE_STATUS_OFFSET" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="OBJECT_HEADER_SIZE" signature="I"/>
@@ -419,4 +421,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<staticfieldref class="com/ibm/oti/vm/VM" name="J9CLASS_RESERVABLE_LOCK_WORD_INIT" signature="I"/>
 	<staticfieldref class="com/ibm/oti/vm/VM" name="OBJECT_HEADER_LOCK_RESERVED" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="OBJECT_HEADER_LOCK_LEARNING" signature="I"/>
+
+	<staticfieldref class="com/ibm/oti/vm/VM" name="GLR_ENABLE_GLOBAL_LOCK_RESERVATION" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="GLR_RESERVED_ABSOLUTE_THRESHOLD" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="GLR_MINIMUM_RESERVED_RATIO" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="GLR_CANCEL_ABSOLUTE_THRESHOLD" signature="I"/>
+	<staticfieldref class="com/ibm/oti/vm/VM" name="GLR_MINIMUM_LEARNING_RATIO" signature="I"/>
 </vmconstantpool>
