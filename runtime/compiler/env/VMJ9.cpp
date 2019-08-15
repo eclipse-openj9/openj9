@@ -4131,6 +4131,8 @@ static bool foldFinalFieldsIn(const char *className, int32_t classNameLength, TR
       return true;
    else if (classNameLength >= 38 && !strncmp(className, "java/util/concurrent/ThreadLocalRandom", 38))
       return true;
+   else if (classNameLength == 16 && !strncmp(className, "java/lang/String", 16))
+      return true;
    else
       return false;
    }
