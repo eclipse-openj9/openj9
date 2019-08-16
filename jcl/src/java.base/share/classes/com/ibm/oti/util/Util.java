@@ -283,25 +283,26 @@ public static void appendLnTo(Appendable buf) {
 /**
  * Print a stack frame without allocating memory directly.
  * @param e StackTraceElement to add
- * @param elementSource location of the source file.  May be null.
+ * @param elementSource location of the source file. May be null.
  * @param buf Receiver for the text
- * @param extended add additional information
  */
-public static void printStackTraceElement(StackTraceElement e, Object elementSource, Appendable buf, boolean extended) {
+public static void printStackTraceElement(StackTraceElement e, Object elementSource, Appendable buf) {
 	/*[IF Sidecar19-SE]*/
-	final java.lang.String modName = e.getModuleName();
+	String classLoaderName = e.getClassLoaderName();
+	if (null != classLoaderName) {
+		appendTo(buf, classLoaderName);
+		appendTo(buf, "/"); //$NON-NLS-1$
+	}
+	String modName = e.getModuleName();
 	if (null != modName) {
 		appendTo(buf, modName);
-		if (extended) {
-			String mVer = e.getModuleVersion();
-			if (null != mVer) {
-				appendTo(buf, "@"); //$NON-NLS-1$
-				appendTo(buf, mVer);
-			}
+
+		String mVer = e.getModuleVersion();
+		if (null != mVer) {
+			appendTo(buf, "@"); //$NON-NLS-1$
+			appendTo(buf, mVer);
 		}
 		appendTo(buf, "/"); //$NON-NLS-1$
-	} else if (extended) {
-		appendTo(buf, "app//"); //$NON-NLS-1$
 	}
 	/*[ENDIF] Sidecar19-SE*/
 	appendTo(buf, e.getClassName());

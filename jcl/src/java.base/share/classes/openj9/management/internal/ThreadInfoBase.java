@@ -190,7 +190,7 @@ public class ThreadInfoBase {
 				int stackDepth = 0;
 				for (StackTraceElement element : stackTrace) {
 					result.append("\tat "); //$NON-NLS-1$
-					Util.printStackTraceElement(element, null, result, true);
+					Util.printStackTraceElement(element, null, result);
 					result.append(ls);
 					MonitorInfoBase mi = lockArray[stackDepth];
 					if (null != mi) {
