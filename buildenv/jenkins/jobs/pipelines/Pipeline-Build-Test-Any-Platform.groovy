@@ -76,7 +76,7 @@ timestamps {
 
     try {
         if (params.AUTOMATIC_GENERATION != 'false'){
-            node('master') {
+            node(SETUP_LABEL) {
                 unstash 'DSL'
                 variableFile.create_job(BUILD_NAME, SDK_VERSION, SPEC, 'build', buildFile.convert_build_identifier(BUILD_IDENTIFIER))
             }

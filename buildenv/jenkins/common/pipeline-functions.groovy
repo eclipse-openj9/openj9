@@ -285,7 +285,7 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
     GITHUB_REPO = "https://${GITHUB_SERVER}/${ghprbGhRepository}"
     // Set Github Commit Status
     if (ghprbActualCommit) {
-        node('master') {
+        node(SETUP_LABEL) {
             set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, BUILD_URL, 'PENDING', "Build Started")
         }
     }
@@ -315,7 +315,7 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
             }
             // Set Github Commit Status
             if (ghprbActualCommit) {
-                node('master') {
+                node(SETUP_LABEL) {
                     set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build ${JOB.result}")
                 }
             }
@@ -325,7 +325,7 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
             }
             // Set Github Commit Status
             if (ghprbActualCommit) {
-                node('master') {
+                node(SETUP_LABEL) {
                     set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build FAILED")
                 }
             }
@@ -340,7 +340,7 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
         echo "Downstream job ${DOWNSTREAM_JOB_NAME} PASSED after ${DOWNSTREAM_JOB_TIME}"
         // Set Github Commit Status
         if (ghprbActualCommit) {
-            node('master') {
+            node(SETUP_LABEL) {
                 set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'SUCCESS', "Build PASSED")
             }
         }
