@@ -71,7 +71,7 @@ finalFieldSetAllowed(J9VMThread *currentThread, bool isStatic, J9Method *method,
 	bool legal = true;
 	/* NULL method means do not do the access check */
 	if (NULL != method) {
-		if (!J9CLASS_IS_EXEMPT_FROM_VALIDATION(callerClass)) {
+		if (VM_VMHelpers::ramClassChecksFinalStores(callerClass)) {
 			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 			if (!J9ROMMETHOD_ALLOW_FINAL_FIELD_WRITES(romMethod, isStatic ? J9AccStatic : 0)) {
 				if (canRunJavaCode) {
