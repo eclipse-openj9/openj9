@@ -454,6 +454,7 @@ TR_ResolvedJ9JITaaSServerMethod::staticsAreSame(int32_t cpIndex1, TR_ResolvedMet
 TR_FieldAttributesCache *
 TR_ResolvedJ9JITaaSServerMethod::getAttributesCache(bool isStatic, bool unresolvedInCP)
    {
+   // Return a persistent attributes cache for regular JIT compilations
    TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
    auto &attributesCache = isStatic ? 
       getJ9ClassInfo(compInfoPT, _ramClass)._staticAttributesCache :
@@ -498,6 +499,12 @@ TR_ResolvedJ9JITaaSServerMethod::getCachedFieldAttributes(int32_t cpIndex, TR_J9
 void
 TR_ResolvedJ9JITaaSServerMethod::cacheFieldAttributes(int32_t cpIndex, const TR_J9MethodFieldAttributes &attributes, bool isStatic)
    {
+   // When caching field or static attributes, there are 2 caches where they can go:
+   // 1. Persistent cache - stores attributes of all resolved fields. Since the field is resolved,
+   // the attributes should not change, so the contents should be valid.
+   // 2. Per-compilation cache - stores attributes of unresolved fields, which might become resolved
+   // during the current compilation, but assuming they are unresolved until the end of the compilation
+   // is still functionally correct and does not seem to affect performance.
    TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
    if (attributes.isUnresolvedInCP())
       {
@@ -1818,7 +1825,10 @@ TR_ResolvedJ9JITaaSServerMethod::cacheResolvedMethodsCallees()
 bool
 TR_ResolvedJ9JITaaSServerMethod::validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation)
    {
-   // Validation should not be done against attributes cached per-resolved method
+   // Validation should not be done against attributes cached per-resolved method,
+   // because unresolved attribute might have become resolved during the current compilation
+   // so validation would fail, but since it does not affect functional correctness,
+   // we'll just keep the cached result until the end of the compilation.
    if (attributes.isUnresolvedInCP()) 
       return true;
    if (!isStatic)
@@ -1827,7 +1837,7 @@ TR_ResolvedJ9JITaaSServerMethod::validateMethodFieldAttributes(const TR_J9Method
       _stream->write(JITServer::MessageType::ResolvedMethod_staticAttributes, _remoteMirror, cpIndex, isStore, needAOTValidation);
    auto recv = _stream->read<TR_J9MethodFieldAttributes>();
    auto clientAttributes = std::get<0>(recv);
-   bool equal = attributes == clientAttributes;
+   bool equal = (attributes == clientAttributes);
    return equal;
    }
 
@@ -2405,9 +2415,8 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * co
    if (!getCachedFieldAttributes(cpIndex, attributes, isStatic))
       {
       _stream->write(JITServer::MessageType::ResolvedRelocatableMethod_fieldAttributes, getRemoteMirror(), cpIndex, isStore, needAOTValidation);
-      auto recv = _stream->read<TR_J9MethodFieldAttributes, TR_OpaqueClassBlock *>();
+      auto recv = _stream->read<TR_J9MethodFieldAttributes>();
       attributes = std::get<0>(recv);
-      definingClass = std::get<1>(recv);
       
       cacheFieldAttributes(cpIndex, attributes, isStatic);
       }
@@ -2415,7 +2424,7 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::fieldAttributes(TR::Compilation * co
       {
       TR_ASSERT(validateMethodFieldAttributes(attributes, isStatic, cpIndex, isStore, constantPool), "static attributes from client and cache do not match");
       }
-   attributes.setMethodFieldAttributesResult(fieldOffset, type, volatileP, isFinal, isPrivate, unresolvedInCP, &theFieldIsFromLocalClass);
+   attributes.setMethodFieldAttributesResult(fieldOffset, type, volatileP, isFinal, isPrivate, unresolvedInCP, &theFieldIsFromLocalClass, &definingClass);
 
    bool fieldInfoCanBeUsed = false;
    bool resolveField = true;
@@ -2488,9 +2497,8 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::staticAttributes(TR::Compilation * c
    if(!getCachedFieldAttributes(cpIndex, attributes, isStatic))
       {
       _stream->write(JITServer::MessageType::ResolvedRelocatableMethod_staticAttributes, getRemoteMirror(), cpIndex, isStore, needAOTValidation);
-      auto recv = _stream->read<TR_J9MethodFieldAttributes, TR_OpaqueClassBlock *>();
+      auto recv = _stream->read<TR_J9MethodFieldAttributes>();
       attributes = std::get<0>(recv);
-      definingClass = std::get<1>(recv);
       
       cacheFieldAttributes(cpIndex, attributes, isStatic);
       }
@@ -2498,7 +2506,7 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::staticAttributes(TR::Compilation * c
       {
       TR_ASSERT(validateMethodFieldAttributes(attributes, isStatic, cpIndex, isStore, constantPool), "static attributes from client and cache do not match");
       }
-   attributes.setMethodFieldAttributesResult(address, type, volatileP, isFinal, isPrivate, unresolvedInCP, &theFieldIsFromLocalClass);
+   attributes.setMethodFieldAttributesResult(address, type, volatileP, isFinal, isPrivate, unresolvedInCP, &theFieldIsFromLocalClass, &definingClass);
 
    bool fieldInfoCanBeUsed = false;
    bool resolveField = true;
@@ -2548,6 +2556,7 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::staticAttributes(TR::Compilation * c
 TR_FieldAttributesCache *
 TR_ResolvedRelocatableJ9JITaaSServerMethod::getAttributesCache(bool isStatic, bool unresolvedInCP)
    {
+   // Return persistent attributes cache for AOT compilations
    TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
    auto &attributesCache = isStatic ? 
       getJ9ClassInfo(compInfoPT, _ramClass)._staticAttributesCacheAOT :
@@ -2558,4 +2567,23 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::getAttributesCache(bool isStatic, bo
       attributesCache = new (PERSISTENT_NEW) TR_FieldAttributesCache(TR_FieldAttributesCache::allocator_type(TR::Compiler->persistentAllocator()));
       }
    return attributesCache;
+   }
+
+bool
+TR_ResolvedRelocatableJ9JITaaSServerMethod::validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation)
+   {
+   // Validation should not be done against attributes cached per-resolved method,
+   // because unresolved attribute might have become resolved during the current compilation
+   // so validation would fail, but since it does not affect functional correctness,
+   // we'll just keep the cached result until the end of the compilation.
+   if (attributes.isUnresolvedInCP()) 
+      return true;
+   if (!isStatic)
+      _stream->write(JITServer::MessageType::ResolvedRelocatableMethod_fieldAttributes, getRemoteMirror(), cpIndex, isStore, needAOTValidation);
+   else
+      _stream->write(JITServer::MessageType::ResolvedRelocatableMethod_staticAttributes, getRemoteMirror(), cpIndex, isStore, needAOTValidation);
+   auto recv = _stream->read<TR_J9MethodFieldAttributes>();
+   auto clientAttributes = std::get<0>(recv);
+   bool equal = (attributes == clientAttributes);
+   return equal;
    }

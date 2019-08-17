@@ -40,14 +40,16 @@ public:
                               bool isFinal,
                               bool isPrivate,
                               bool unresolvedInCP,
-                              bool result) :
+                              bool result,
+                              TR_OpaqueClassBlock *definingClass = NULL) :
       _fieldOffsetOrAddress(fieldOffsetOrAddress),
       _type(type),
       _volatileP(volatileP),
       _isFinal(isFinal),
       _isPrivate(isPrivate),
       _unresolvedInCP(unresolvedInCP),
-      _result(result)
+      _result(result),
+      _definingClass(definingClass)
       {}
 
    bool operator==(const TR_J9MethodFieldAttributes &other) const
@@ -60,25 +62,26 @@ public:
       if (_isPrivate != other._isPrivate) return false;
       if (_unresolvedInCP != other._unresolvedInCP) return false;
       if (_result != other._result) return false;
+      if (_definingClass != other._definingClass) return false;
       return true;
       }
    
-   void setMethodFieldAttributesResult(uint32_t *fieldOffset, TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result)
+   void setMethodFieldAttributesResult(uint32_t *fieldOffset, TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result, TR_OpaqueClassBlock **definingClass = NULL)
       {
-      setMethodFieldAttributesResult(type, volatileP, isFinal, isPrivate, unresolvedInCP, result);
+      setMethodFieldAttributesResult(type, volatileP, isFinal, isPrivate, unresolvedInCP, result, definingClass);
       if (fieldOffset) *fieldOffset = static_cast<uint32_t>(_fieldOffsetOrAddress);
       }
 
-   void setMethodFieldAttributesResult(void **address, TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result)
+   void setMethodFieldAttributesResult(void **address, TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result, TR_OpaqueClassBlock **definingClass = NULL)
       {
-      setMethodFieldAttributesResult(type, volatileP, isFinal, isPrivate, unresolvedInCP, result);
+      setMethodFieldAttributesResult(type, volatileP, isFinal, isPrivate, unresolvedInCP, result, definingClass);
       if (address) *address = reinterpret_cast<void *>(_fieldOffsetOrAddress);
       }
 
    bool isUnresolvedInCP() const { return _unresolvedInCP; }
 
 private:
-   void setMethodFieldAttributesResult(TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result)
+   void setMethodFieldAttributesResult(TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result, TR_OpaqueClassBlock **definingClass = NULL)
       {
       if (type) *type = _type;
       if (volatileP) *volatileP = _volatileP;
@@ -86,6 +89,7 @@ private:
       if (isPrivate) *isPrivate = _isPrivate;
       if (unresolvedInCP) *unresolvedInCP = _unresolvedInCP;
       if (result) *result = _result;
+      if (definingClass) *definingClass = _definingClass;
       }
 
    uintptr_t _fieldOffsetOrAddress; // Stores a uint32_t representing an offset for non-static fields, or an address for static fields.
@@ -95,6 +99,7 @@ private:
    bool _isPrivate;
    bool _unresolvedInCP;
    bool _result;
+   TR_OpaqueClassBlock *_definingClass; // only needed for AOT compilations
    };
 
 using TR_FieldAttributesCache = PersistentUnorderedMap<int32_t, TR_J9MethodFieldAttributes>;
@@ -370,6 +375,7 @@ protected:
    virtual void                  handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;
    virtual char *                fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override;
    virtual TR_FieldAttributesCache *getAttributesCache(bool isStatic, bool unresolvedInCP=false) override;
+   virtual bool validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation) override;
    UDATA getFieldType(J9ROMConstantPoolItem * CP, int32_t cpIndex);
    };
 #endif // J9METHODSERVER_H
