@@ -96,12 +96,12 @@ class ClientSessionData
       J9ROMClass *remoteRomClass; // pointer to the corresponding ROM class on the client
       J9Method *methodsOfClass;
       // Fields meaningful for arrays
-      TR_OpaqueClassBlock *baseComponentClass; 
+      TR_OpaqueClassBlock *baseComponentClass;
       int32_t numDimensions;
       PersistentUnorderedMap<TR_RemoteROMStringKey, std::string> *_remoteROMStringsCache; // cached strings from the client
       PersistentUnorderedMap<int32_t, std::string> *_fieldOrStaticNameCache;
       TR_OpaqueClassBlock *parentClass;
-      PersistentVector<TR_OpaqueClassBlock *> *interfaces; 
+      PersistentVector<TR_OpaqueClassBlock *> *interfaces;
       bool classHasFinalFields;
       uintptrj_t classDepthAndFlags;
       bool classInitialized;
@@ -249,16 +249,16 @@ class ClientSessionData
    TR::Monitor *_romMapMonitor;
    TR::Monitor *_classMapMonitor;
    TR::Monitor *_classChainDataMapMonitor;
-   // The following monitor is used to protect access to _expectedSeqNo and 
+   // The following monitor is used to protect access to _expectedSeqNo and
    // the list of out-of-sequence compilation requests (_OOSequenceEntryList)
    TR::Monitor *_sequencingMonitor;
    TR::Monitor *_constantPoolMapMonitor;
-   // Compilation requests that arrived out-of-sequence wait in 
+   // Compilation requests that arrived out-of-sequence wait in
    // _OOSequenceEntryList for their turn to be processed
    TR_MethodToBeCompiled *_OOSequenceEntryList;
    uint32_t _expectedSeqNo; // used for ordering compilation requests from the same client
    uint32_t _maxReceivedSeqNo; // the largest seqNo received from this client
-   int8_t  _inUse;  // Number of concurrent compilations from the same client 
+   int8_t  _inUse;  // Number of concurrent compilations from the same client
                     // Accessed with compilation monitor in hand
    int8_t _numActiveThreads; // Number of threads working on compilations for this client
                              // This is smaller or equal to _inUse because some threads
@@ -279,7 +279,7 @@ class ClientSessionData
 // This indirection is needed so that we can cache the value of the pointer so
 // that we can access client session data without going through the hashtable.
 // Accesss to this hashtable must be protected by the compilation monitor.
-// Compilation threads may purge old entries periodically at the beginning of a 
+// Compilation threads may purge old entries periodically at the beginning of a
 // compilation. Entried with inUse > 0 must not be purged.
 class ClientSessionHT
    {
@@ -304,7 +304,6 @@ class ClientSessionHT
 
 size_t methodStringLength(J9ROMMethod *);
 std::string packROMClass(J9ROMClass *, TR_Memory *);
-bool handleServerMessage(JITServer::ClientStream *, TR_J9VM *);
 TR_MethodMetaData *remoteCompile(J9VMThread *, TR::Compilation *, TR_ResolvedMethod *,
       J9Method *, TR::IlGeneratorMethodDetails &, TR::CompilationInfoPerThreadBase *);
 TR_MethodMetaData *remoteCompilationEnd(J9VMThread * vmThread, TR::Compilation *comp, TR_ResolvedMethod * compilee, J9Method * method,
@@ -462,7 +461,7 @@ class JITaaSHelpers
       static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2);
       static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
       //purgeCache function can only be used inside the JITaaSCompilationThread.cpp file.
-      //It is a templated function, calling it outside the JITaaSCompilationThread.cpp will give linking error. 
+      //It is a templated function, calling it outside the JITaaSCompilationThread.cpp will give linking error.
       template <typename map, typename key>
       static void purgeCache (std::vector<ClassUnloadedData> *unloadedClasses, map m, key ClassUnloadedData::*k);
 

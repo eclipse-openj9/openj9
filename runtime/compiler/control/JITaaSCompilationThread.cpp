@@ -226,7 +226,7 @@ void handler_IProfiler_profilingSample(JITServer::ClientStream *client, TR_J9VM 
       }
    }
 
-bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
+static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::MessageType &response)
    {
    using JITServer::MessageType;
    TR::CompilationInfoPerThread *compInfoPT = fe->_compInfoPT;
@@ -242,32 +242,34 @@ bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe)
 
    releaseVMAccess(vmThread);
 
-   auto response = client->read();
-
+   response = client->read();
 
    // re-acquire VM access and check for possible class unloading
    acquireVMAccessNoSuspend(vmThread);
+
+   // Update statistics for server message type
+   serverMsgTypeCount[response] += 1;
 
    // If JVM has unloaded classes inform the server to abort this compilation
    uint8_t interruptReason = compInfoPT->compilationShouldBeInterrupted();
    if (interruptReason)
       {
-      if (response != MessageType::compilationCode)
-         client->writeError(JITServer::MessageType::compilationInterrupted, 0 /* placeholder */); // inform the server if compilation is not yet complete
+      // Inform the server if compilation is not yet complete
+      if ((response != MessageType::compilationCode) &&
+          (response != MessageType::compilationFailure))
+         client->writeError(JITServer::MessageType::compilationInterrupted, 0 /* placeholder */);
 
       if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in handleServerMessage of %s @ %s", 
+         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in handleServerMessage of %s @ %s",
                                                           interruptReason, comp->signature(), comp->getHotnessName());
       comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
       }
-
-   // update statistics for server message type
-   serverMsgTypeCount[response] += 1;
 
    bool done = false;
    switch (response)
       {
       case MessageType::compilationCode:
+      case MessageType::compilationFailure:
          done = true;
          break;
 
@@ -2664,23 +2666,36 @@ remoteCompile(
              TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in remoteCompile of %s @ %s",
                  interruptReason, comp->signature(), comp->getHotnessName());
 
-         // Inform server that the compilation has been interrupted 
+         // Inform server that the compilation has been interrupted
          client->writeError(JITServer::MessageType::compilationInterrupted, 0 /* placeholder */);
          comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in remoteCompile");
          }
 
-      while(!handleServerMessage(client, compiler->fej9vm()));
-      auto recv = client->getRecvData<uint32_t, std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>,
+      JITServer::MessageType response;
+      while(!handleServerMessage(client, compiler->fej9vm(), response));
+
+      if (JITServer::MessageType::compilationCode == response)
+         {
+         auto recv = client->getRecvData<std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>,
                                       std::string, std::string, std::vector<TR_ResolvedJ9Method*>, TR_OptimizationPlan>();
-      statusCode = std::get<0>(recv);
-      codeCacheStr = std::get<1>(recv);
-      dataCacheStr = std::get<2>(recv);
-      chTableData = std::get<3>(recv);
-      classesThatShouldNotBeNewlyExtended = std::get<4>(recv);
-      logFileStr = std::get<5>(recv);
-      svmSymbolToIdStr = std::get<6>(recv);
-      resolvedMirrorMethodsPersistIPInfo = std::get<7>(recv);
-      modifiedOptPlan = std::get<8>(recv);
+         statusCode = compilationOK;
+         codeCacheStr = std::get<0>(recv);
+         dataCacheStr = std::get<1>(recv);
+         chTableData = std::get<2>(recv);
+         classesThatShouldNotBeNewlyExtended = std::get<3>(recv);
+         logFileStr = std::get<4>(recv);
+         svmSymbolToIdStr = std::get<5>(recv);
+         resolvedMirrorMethodsPersistIPInfo = std::get<6>(recv);
+         modifiedOptPlan = std::get<7>(recv);
+         }
+      else
+         {
+         TR_ASSERT(JITServer::MessageType::compilationFailure == response, "Received %u but expect JITServer::MessageType::compilationFailure message type", response);
+         auto recv = client->getRecvData<uint32_t>();
+         statusCode = std::get<0>(recv);
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "remoteCompile: JITServer::MessageType::compilationFailure statusCode %u\n", statusCode);
+         }
 
       if (statusCode >= compilationMaxError)
          throw JITServer::StreamTypeMismatch("Did not receive a valid TR_CompilationErrorCode as the final message on the stream.");
@@ -3056,7 +3071,7 @@ outOfProcessCompilationEnd(
       }
 
    auto resolvedMirrorMethodsPersistIPInfo = compInfoPT->getCachedResolvedMirrorMethodsPersistIPInfo();
-   entry->_stream->finishCompilation(compilationOK, codeCacheStr, dataCacheStr, chTableData,
+   entry->_stream->finishCompilation(codeCacheStr, dataCacheStr, chTableData,
                                      std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()),
                                      logFileStr, svmSymbolToIdStr,
                                      (resolvedMirrorMethodsPersistIPInfo) ?
@@ -4426,7 +4441,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream version incompatible: %s", e.what()); 
 
-      stream->finishCompilation(compilationStreamVersionIncompatible);
+      stream->writeError(compilationStreamVersionIncompatible);
       abortCompilation = true;
       if (!enableJITaaSPerCompConn)
          {
@@ -4441,7 +4456,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream message type mismatch: %s", e.what());
 
-      stream->finishCompilation(compilationStreamMessageTypeMismatch);
+      stream->writeError(compilationStreamMessageTypeMismatch);
       abortCompilation = true;
       }
    catch (const JITServer::StreamConnectionTerminate &e)
@@ -4493,14 +4508,14 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       {
       // Error message was printed when the exception was thrown
       // TODO: the client should handle this error code
-      stream->finishCompilation(compilationStreamLostMessage); // the client should recognize this code and retry
+      stream->writeError(compilationStreamLostMessage); // the client should recognize this code and retry
       abortCompilation = true;
       }
    catch (const std::bad_alloc &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server out of memory in processEntry: %s", e.what());
-      stream->finishCompilation(compilationLowPhysicalMemory);
+      stream->writeError(compilationLowPhysicalMemory);
       abortCompilation = true;
       }
 

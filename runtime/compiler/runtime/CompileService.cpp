@@ -45,5 +45,5 @@ void J9CompileDispatcher::compile(JITServer::ServerStream *stream)
          }
       } // end critical section
    // If we reached this point there was a memory allocation failure
-   stream->finishCompilation(compilationLowPhysicalMemory);
+   stream->writeError(compilationLowPhysicalMemory);
    }

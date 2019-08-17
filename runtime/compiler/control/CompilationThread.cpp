@@ -2033,7 +2033,7 @@ bool TR::CompilationInfo::shouldAbortCompilation(TR_MethodToBeCompiled *entry, T
 
    if (entry->_unloadedMethod) // method was unloaded while we were trying to compile it
       {
-      TR_ASSERT(entry->_compErrCode == compilationInterrupted, "if method was unloaded we must return we an error code of compilationInterrupted");
+      TR_ASSERT(entry->_compErrCode == compilationInterrupted, "Received error code %u, expect compilationInterrupted when the method was unloaded", entry->_compErrCode);
       entry->_compErrCode = compilationNotNeeded; // change error code
       return true;
       }
@@ -9802,7 +9802,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             }
          int8_t compErrCode = entry->_compErrCode;
          if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
-            entry->_stream->finishCompilation(compErrCode);
+            entry->_stream->writeError(compErrCode);
          }
 #endif // ifdef J9VM_JIT_DYNAMIC_LOOP_TRANSFER
       if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) ||
@@ -9862,7 +9862,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             {
             int8_t compErrCode = entry->_compErrCode;
             if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
-               entry->_stream->finishCompilation(compErrCode);
+               entry->_stream->writeError(compErrCode);
             }
          }
       return startPC;
@@ -10178,7 +10178,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             }
          int8_t compErrCode = entry->_compErrCode;
          if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
-            entry->_stream->finishCompilation(compErrCode);
+            entry->_stream->writeError(compErrCode);
          }
       }
    else
@@ -10200,7 +10200,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             }
          int8_t compErrCode = entry->_compErrCode;
          if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
-            entry->_stream->finishCompilation(compilationNotNeeded);
+            entry->_stream->writeError(compilationNotNeeded);
          }
       }
 
