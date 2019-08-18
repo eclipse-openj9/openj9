@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,10 +23,10 @@
 #include "j9cfg.h"
 #include <jni.h>
 
-#if JAVA_SPEC_VERSION >= 12
+#if JAVA_SPEC_VERSION >= 11
 JNIEXPORT void JNICALL
 JVM_InitializeFromArchive(JNIEnv *env, jclass clz)
 {
 	/* A no-op implementation is ok. */
 }
-#endif /* JAVA_SPEC_VERSION >= 12 */
+#endif /* JAVA_SPEC_VERSION >= 11 */
