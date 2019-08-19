@@ -1473,10 +1473,11 @@ static J9JITExceptionTable * jitGetExceptionTable(J9StackWalkState * walkState)
 #define JIT_ARTIFACT_SEARCH_CACHE_HASH_RESULT(key) \
     (((key) * JIT_ARTIFACT_SEARCH_CACHE_HASH_VALUE) >> (BITS_IN_INTEGER - JIT_ARTIFACT_SEARCH_CACHE_DIMENSION))
 
+/* Cache entries may be used by multiple threads, so make the fields volatile */
 typedef struct TR_jit_artifact_search_cache
 {
-	UDATA searchValue;
-	J9JITExceptionTable * exceptionTable;
+	UDATA volatile searchValue;
+	J9JITExceptionTable * volatile exceptionTable;
 } TR_jit_artifact_search_cache;
 
 J9JITExceptionTable * jitGetExceptionTableFromPC(J9VMThread * vmThread, UDATA jitPC)
@@ -1487,18 +1488,39 @@ J9JITExceptionTable * jitGetExceptionTableFromPC(J9VMThread * vmThread, UDATA ji
 	TR_jit_artifact_search_cache *artifactSearchCache = vmThread->jitArtifactSearchCache;
 	TR_jit_artifact_search_cache *cacheEntry = NULL;
 	if (NULL == artifactSearchCache) {
+		TR_jit_artifact_search_cache *existingCache = NULL;
 		PORT_ACCESS_FROM_JAVAVM(vmThread->javaVM);
 		artifactSearchCache = j9mem_allocate_memory(JIT_ARTIFACT_SEARCH_CACHE_SIZE * sizeof (TR_jit_artifact_search_cache), OMRMEM_CATEGORY_JIT);
 		if (NULL == artifactSearchCache) {
 			return jit_artifact_search(vmThread->javaVM->jitConfig->translationArtifacts, maskedPC);
 		}
 		memset(artifactSearchCache, 0, JIT_ARTIFACT_SEARCH_CACHE_SIZE * sizeof(TR_jit_artifact_search_cache));
-		vmThread->jitArtifactSearchCache = artifactSearchCache;
+		/* The vmThread parameter to this function may not be the current thread, so ensure that only a single
+		 * instance of the cache is allocated for the thread, and make sure the empty cache entries for a new
+		 * cache are visible to other threads before the cache pointer is visible.
+		 */
+		issueWriteBarrier();
+		existingCache = (TR_jit_artifact_search_cache*)compareAndSwapUDATA((uintptr_t*)&vmThread->jitArtifactSearchCache, (uintptr_t)existingCache, (uintptr_t)artifactSearchCache);
+		if (NULL != existingCache) {
+			j9mem_free_memory(artifactSearchCache);
+			artifactSearchCache = existingCache;
+		}
 	}
 	cacheEntry = &(artifactSearchCache[JIT_ARTIFACT_SEARCH_CACHE_HASH_RESULT(maskedPC)]);
 	if (cacheEntry->searchValue == maskedPC) {
 		exceptionTable = cacheEntry->exceptionTable;
-	} else {
+		/* The cache is not thread-safe - it's possible to view an inconsistent pc/metadata pair from one
+		 * thread while another thread is updating the cache entry. To counteract this, verify that the
+		 * found metadata is valid for the input PC. If not, ignore the cache and go to the underlying
+		 * hash table.
+		 */
+		if ((NULL == exceptionTable)
+		|| !(((maskedPC >= exceptionTable->startPC) && (maskedPC < exceptionTable->endWarmPC))
+			|| ((0 != exceptionTable->startColdPC) && (maskedPC >= exceptionTable->startColdPC) && (maskedPC < exceptionTable->endPC)))
+		) {
+			exceptionTable = jit_artifact_search(vmThread->javaVM->jitConfig->translationArtifacts, maskedPC);
+		}
+ 	} else {
 		exceptionTable = jit_artifact_search(vmThread->javaVM->jitConfig->translationArtifacts, maskedPC);
 		if (NULL != exceptionTable) {
 			cacheEntry->searchValue = maskedPC;
