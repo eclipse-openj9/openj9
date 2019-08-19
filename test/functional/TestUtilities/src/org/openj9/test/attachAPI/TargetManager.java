@@ -232,13 +232,13 @@ class TargetManager {
 	}
 
 	public TargetManager(String cmdName, String targetId,
-			List<String> vmArgs, ArrayList<String> appArgs) {
+			List<String> vmArgs, List<String> appArgs) {
 		this.targetId = targetId;
 		this.proc = launchTarget(cmdName, targetId, null, vmArgs, appArgs);
 	}
 
 	public TargetManager(String cmdName, String targetId, String displayName,
-			List<String> vmArgs, ArrayList<String> appArgs) {
+			List<String> vmArgs, List<String> appArgs) {
 		this.targetId = targetId;
 		this.proc = launchTarget(cmdName, targetId, displayName, vmArgs,
 				appArgs);

@@ -44,6 +44,14 @@ import openj9.management.internal.ThreadInfoBase;
  */
 public class DiagnosticUtils {
 
+	private static final String FORMAT_PREFIX = " Format: "; //$NON-NLS-1$
+
+	@SuppressWarnings("nls")
+	private static final String FILE_PATH_HELP = " <file path>%n"
+				+ " <file path> is mandatory: there is no default.%n"
+				+ " Relative paths are resolved to the target's working directory.%n"
+				+ " The dump agent may choose a different file path if the requested file exists.%n";
+
 	/**
 	 * Command strings for executeDiagnosticCommand()
 	 */
@@ -51,22 +59,31 @@ public class DiagnosticUtils {
 	/**
 	 * Print help text
 	 */
-	public static final String DIAGNOSTICS_HELP = "help"; //$NON-NLS-1$
+	private static final String DIAGNOSTICS_HELP = "help"; //$NON-NLS-1$
 
 	/**
 	 * Run Get the stack traces and other thread information.
 	 */
-	public static final String DIAGNOSTICS_THREAD_PRINT = "Thread.print"; //$NON-NLS-1$
+	private static final String DIAGNOSTICS_THREAD_PRINT = "Thread.print"; //$NON-NLS-1$
 
 	/**
 	 * Run System.gc();
 	 */
-	public static final String DIAGNOSTICS_GC_RUN = "GC.run"; //$NON-NLS-1$
+	private static final String DIAGNOSTICS_GC_RUN = "GC.run"; //$NON-NLS-1$
 
 	/**
 	 * Get the heap object statistics.
 	 */
-	public static final String DIAGNOSTICS_GC_CLASS_HISTOGRAM = "GC.class_histogram"; //$NON-NLS-1$
+	private static final String DIAGNOSTICS_GC_CLASS_HISTOGRAM = "GC.class_histogram"; //$NON-NLS-1$
+
+	/**
+	 * Commands to generate dumps of various types
+	 */
+	private static final String DIAGNOSTICS_DUMP_HEAP = "Dump.heap"; //$NON-NLS-1$
+	private static final String DIAGNOSTICS_GC_HEAP_DUMP = "GC.heap_dump"; //$NON-NLS-1$
+	private static final String DIAGNOSTICS_DUMP_JAVA = "Dump.java"; //$NON-NLS-1$
+	private static final String DIAGNOSTICS_DUMP_SNAP = "Dump.snap"; //$NON-NLS-1$
+	private static final String DIAGNOSTICS_DUMP_SYSTEM = "Dump.system"; //$NON-NLS-1$
 
 	/**
 	 * Key for the command sent to executeDiagnosticCommand()
@@ -89,7 +106,7 @@ public class DiagnosticUtils {
 
 	/**
 	 * Create the command to run the heapHisto command
-	 * 
+	 *
 	 * @param liveObjects add the option to run a GC before listing the objects
 	 * @return formatted string
 	 */
@@ -103,7 +120,7 @@ public class DiagnosticUtils {
 
 	/**
 	 * Create the command to run the Thread.print command
-	 * 
+	 *
 	 * @param lockedSynchronizers print the locked ownable synchronizers
 	 * @return formatted string
 	 */
@@ -118,7 +135,7 @@ public class DiagnosticUtils {
 	 * Convert the command line options into attach API diagnostic command format
 	 * @param options List of command line arguments
 	 * @param skip Number of options to omit from the beginning of the list
-	 * 
+	 *
 	 * @return formatted string
 	 */
 	public static String makeJcmdCommand(String[] options, int skip) {
@@ -131,7 +148,7 @@ public class DiagnosticUtils {
 
 	/**
 	 * Run a diagnostic command and return the result in a properties file
-	 * 
+	 *
 	 * @param diagnosticCommand String containing the command and options
 	 * @return command result or diagnostic information in case of error
 	 */
@@ -165,7 +182,7 @@ public class DiagnosticUtils {
 		}
 		return DiagnosticProperties.makeStringResult(result);
 	}
-	
+
 	private static DiagnosticProperties getThreadInfo(String diagnosticCommand) {
 		DiagnosticProperties result = null;
 		boolean okay = true;
@@ -212,6 +229,41 @@ public class DiagnosticUtils {
 		return result;
 	}
 
+	private static DiagnosticProperties doDump(String diagnosticCommand) {
+		DiagnosticProperties result = null;
+		String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
+		IPC.logMessage("doDump: ", diagnosticCommand); //$NON-NLS-1$
+		if (parts.length != 2) {
+			result = DiagnosticProperties.makeErrorProperties("Error: wrong number of arguments"); //$NON-NLS-1$
+		} else {
+			String dumpType = ""; //$NON-NLS-1$
+			/* handle legacy form of Dump.heap for compatibility with reference implementation */
+			if (DIAGNOSTICS_GC_HEAP_DUMP.equals(parts[0])) {
+				dumpType = "heap"; //$NON-NLS-1$
+			} else {
+				String[] dumpCommandAndType = parts[0].split("\\."); //$NON-NLS-1$
+				if (dumpCommandAndType.length != 2) {
+					result = DiagnosticProperties.makeErrorProperties(String.format("Error: invalid command %s", parts[0])); //$NON-NLS-1$
+				} else {
+					dumpType = dumpCommandAndType[1];
+				}
+			}
+			if (!dumpType.isEmpty()) {
+				String fileDirective = ("system".equals(dumpType) && IPC.isZOS) ? ":dsn=" : ":file="; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+
+				String request = dumpType + fileDirective + parts[1];
+				try {
+					String actualDumpFile = triggerDumpsImpl(request, dumpType + "DumpToFile"); //$NON-NLS-1$
+					result = DiagnosticProperties.makeStringResult("Dump written to " + actualDumpFile); //$NON-NLS-1$
+				} catch (InvalidDumpOptionExceptionBase e) {
+					IPC.logMessage("doDump exception: ", e.getMessage()); //$NON-NLS-1$
+					DiagnosticProperties.makeExceptionProperties(e);
+				}
+			}
+		}
+		return result;
+	}
+
 	private static native ThreadInfoBase[] dumpAllThreadsImpl(boolean lockedMonitors,
 			boolean lockedSynchronizers, int maxDepth);
 
@@ -219,7 +271,7 @@ public class DiagnosticUtils {
 		VM.globalGC();
 		return DiagnosticProperties.makeCommandSucceeded();
 	}
-	
+
 	private static DiagnosticProperties doHelp(String diagnosticCommand) {
 		String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
 		/* print a list of the available commands */
@@ -244,42 +296,69 @@ public class DiagnosticUtils {
 	/* Help strings for the jcmd utilities */
 	@SuppressWarnings("nls")
 	private static final String DIAGNOSTICS_HELP_HELP = "Show help for a command%n"
-			+ " Format: help <command>%n"
+			+ FORMAT_PREFIX + " help <command>%n"
 			+ " If no command is supplied, print the list of available commands on the target JVM.%n";
-	
+
 	@SuppressWarnings("nls")
 	private static final String DIAGNOSTICS_GC_CLASS_HISTOGRAM_HELP = "Obtain heap information about a Java process%n"
-			+ " Format: " + DIAGNOSTICS_GC_CLASS_HISTOGRAM + " [options]%n"
+			+ FORMAT_PREFIX + DIAGNOSTICS_GC_CLASS_HISTOGRAM + " [options]%n"
 			+ " Options: -all : include all objects, including dead objects%n"
 			+ "NOTE: this utility may significantly affect the performance of the target VM.%n";
-	
+
 	@SuppressWarnings("nls")
 	private static final String DIAGNOSTICS_GC_RUN_HELP = "Run the garbage collector.%n"
-			+ " Format: " + DIAGNOSTICS_GC_RUN + "%n"
+			+ FORMAT_PREFIX + DIAGNOSTICS_GC_RUN + "%n"
 			+ "NOTE: this utility may significantly affect the performance of the target VM.%n";
-	
+
 	@SuppressWarnings("nls")
 	private static final String DIAGNOSTICS_THREAD_PRINT_HELP = "List thread information.%n"
-			+ " Format: " + DIAGNOSTICS_THREAD_PRINT + " [options]%n"
+			+ FORMAT_PREFIX + DIAGNOSTICS_THREAD_PRINT + " [options]%n"
 			+ " Options: -l : print information about ownable synchronizers%n";
-	
+
+	private static final String DIAGNOSTICS_DUMP_HEAP_HELP = "Create a heap dump.%n" //$NON-NLS-1$
+			+ FORMAT_PREFIX + DIAGNOSTICS_DUMP_HEAP + FILE_PATH_HELP
+			+ DIAGNOSTICS_GC_HEAP_DUMP + " is an alias for " + DIAGNOSTICS_DUMP_HEAP; //$NON-NLS-1$
+
+	private static final String DIAGNOSTICS_DUMP_JAVA_HELP = "Create a javacore file.%n" //$NON-NLS-1$
+			+ FORMAT_PREFIX + DIAGNOSTICS_DUMP_JAVA + FILE_PATH_HELP;
+
+	private static final String DIAGNOSTICS_DUMP_SNAP_HELP = "Dump the snap trace buffer.%n" //$NON-NLS-1$
+			+ FORMAT_PREFIX + DIAGNOSTICS_DUMP_SNAP + FILE_PATH_HELP;
+
+	private static final String DIAGNOSTICS_DUMP_SYSTEM_HELP = "Create a native core file.%n" //$NON-NLS-1$
+			+ FORMAT_PREFIX + DIAGNOSTICS_DUMP_SYSTEM + FILE_PATH_HELP;
+
 	/* Initialize the command and help text tables */
 	static {
 		commandTable = new HashMap<>();
 		helpTable = new HashMap<>();
-		
+
 		commandTable.put(DIAGNOSTICS_HELP, DiagnosticUtils::doHelp);
 		helpTable.put(DIAGNOSTICS_HELP, DIAGNOSTICS_HELP_HELP);
-		
+
 		commandTable.put(DIAGNOSTICS_GC_CLASS_HISTOGRAM, DiagnosticUtils::getHeapStatistics);
 		helpTable.put(DIAGNOSTICS_GC_CLASS_HISTOGRAM, DIAGNOSTICS_GC_CLASS_HISTOGRAM_HELP);
-		
+
 		commandTable.put(DIAGNOSTICS_GC_RUN, s -> runGC());
 		helpTable.put(DIAGNOSTICS_GC_RUN, DIAGNOSTICS_GC_RUN_HELP);
-		
+
 		commandTable.put(DIAGNOSTICS_THREAD_PRINT, DiagnosticUtils::getThreadInfo);
 		helpTable.put(DIAGNOSTICS_THREAD_PRINT, DIAGNOSTICS_THREAD_PRINT_HELP);
-	}
 
+		commandTable.put(DIAGNOSTICS_DUMP_HEAP, DiagnosticUtils::doDump);
+		helpTable.put(DIAGNOSTICS_DUMP_HEAP, DIAGNOSTICS_DUMP_HEAP_HELP);
+
+		commandTable.put(DIAGNOSTICS_GC_HEAP_DUMP, DiagnosticUtils::doDump);
+		helpTable.put(DIAGNOSTICS_GC_HEAP_DUMP, DIAGNOSTICS_DUMP_HEAP_HELP);
+
+		commandTable.put(DIAGNOSTICS_DUMP_JAVA, DiagnosticUtils::doDump);
+		helpTable.put(DIAGNOSTICS_DUMP_JAVA, DIAGNOSTICS_DUMP_JAVA_HELP);
+
+		commandTable.put(DIAGNOSTICS_DUMP_SNAP, DiagnosticUtils::doDump);
+		helpTable.put(DIAGNOSTICS_DUMP_SNAP, DIAGNOSTICS_DUMP_SNAP_HELP);
+
+		commandTable.put(DIAGNOSTICS_DUMP_SYSTEM, DiagnosticUtils::doDump);
+		helpTable.put(DIAGNOSTICS_DUMP_SYSTEM, DIAGNOSTICS_DUMP_SYSTEM_HELP);
+	}
 
 }
