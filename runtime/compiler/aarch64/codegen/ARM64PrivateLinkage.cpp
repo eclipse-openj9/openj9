@@ -646,17 +646,173 @@ TR::Register *TR::ARM64PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
          break;
       default:
          retReg = NULL;
-         TR_ASSERT(false, "Unsupported direct call Opcode.");
+         TR_ASSERT_FATAL(false, "Unsupported direct call Opcode.");
       }
 
    callNode->setRegister(retReg);
    return retReg;
    }
 
+static TR::Register *evaluateUpToVftChild(TR::Node *callNode, TR::CodeGenerator *cg)
+   {
+   TR::Register *vftReg = NULL;
+   if (callNode->getFirstArgumentIndex() == 1)
+      {
+      TR::Node *child = callNode->getFirstChild();
+      vftReg = cg->evaluate(child);
+      cg->decReferenceCount(child);
+      }
+   TR_ASSERT_FATAL(vftReg != NULL, "Failed to find vft child.");
+   return vftReg;
+   }
+
+void TR::ARM64PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
+   TR::RegisterDependencyConditions *dependencies,
+   uint32_t argSize)
+   {
+   TR::Register *x0 = dependencies->searchPreConditionRegister(TR::RealRegister::x0);
+   TR::Register *x9 = dependencies->searchPreConditionRegister(TR::RealRegister::x9);
+
+   TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
+   TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+   TR::LabelSymbol *doneLabel = NULL;
+
+   TR::Instruction *gcPoint;
+
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
+
+   // Computed calls
+   //
+   if (methodSymbol->isComputed())
+      {
+      // ToDo: Implement this path (Eclipse OpenJ9 Issue #7023)
+      comp()->failCompilation<TR::AssertionFailure>("ComputedCall");
+      }
+
+   // Virtual and interface calls
+   //
+   TR_ASSERT_FATAL(methodSymbol->isVirtual() || methodSymbol->isInterface(), "Unexpected method type");
+
+   void *thunk = fej9->getJ2IThunk(methodSymbol->getMethod(), comp());
+   if (!thunk)
+      thunk = fej9->setJ2IThunk(methodSymbol->getMethod(), TR::ARM64CallSnippet::generateVIThunk(callNode, argSize, cg()), comp());
+
+   if (methodSymbol->isVirtual())
+      {
+      TR::MemoryReference *tempMR;
+      TR::Register *vftReg = evaluateUpToVftChild(callNode, cg());
+      TR::addDependency(dependencies, vftReg, TR::RealRegister::NoReg, TR_GPR, cg());
+
+      if (methodSymRef->isUnresolved() || comp()->compileRelocatableCode())
+         {
+         doneLabel = generateLabelSymbol(cg());
+
+         TR::LabelSymbol *vcSnippetLabel = generateLabelSymbol(cg());
+         TR::ARM64VirtualUnresolvedSnippet *vcSnippet =
+            new (trHeapMemory())
+            TR::ARM64VirtualUnresolvedSnippet(cg(), callNode, vcSnippetLabel, argSize, doneLabel, (uint8_t *)thunk);
+         cg()->addSnippet(vcSnippet);
+
+         TR::Register *dstReg = cg()->allocateRegister();
+
+         // The following instructions are modified by _virtualUnresolvedHelper
+         // in aarch64/runtime/PicBuilder.spp to load the vTable index in x9
+         generateTrg1ImmInstruction(cg(), TR::InstOpCode::movzx, callNode, x9, 0);
+         generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, x9, TR::MOV_LSL16);
+         generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::sbfmx, callNode, x9, x9, 0x1F); // sxtw x9, w9
+         tempMR = new (trHeapMemory()) TR::MemoryReference(vftReg, x9, cg());
+         generateTrg1MemInstruction(cg(), TR::InstOpCode::ldroffx, callNode, dstReg, tempMR);
+         gcPoint = generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, vcSnippetLabel, dependencies);
+
+         cg()->stopUsingRegister(dstReg);
+         }
+      else
+         {
+         int32_t offset = methodSymRef->getOffset();
+         TR_ASSERT(offset < 0, "Unexpected positive offset for virtual call");
+
+         // jitVTableIndex() in oti/JITInterface.hpp assumes the instruction sequence below
+         if (offset >= -65536)
+            {
+            generateTrg1ImmInstruction(cg(), TR::InstOpCode::movnx, callNode, x9, ~offset & 0xFFFF);
+            }
+         else
+            {
+            generateTrg1ImmInstruction(cg(), TR::InstOpCode::movzx, callNode, x9, offset & 0xFFFF);
+            generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, x9,
+                                       (((offset >> 16) & 0xFFFF) | TR::MOV_LSL16));
+            generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::sbfmx, callNode, x9, x9, 0x1F); // sxtw x9, w9
+            }
+         tempMR = new (trHeapMemory()) TR::MemoryReference(vftReg, x9, cg());
+         generateTrg1MemInstruction(cg(), TR::InstOpCode::ldroffx, callNode, x9, tempMR);
+         gcPoint = generateRegBranchInstruction(cg(), TR::InstOpCode::blr, callNode, x9, dependencies);
+         }
+      }
+   else
+      {
+      // interface calls
+      // ToDo: Inline interface dispatch
+      doneLabel = generateLabelSymbol(cg());
+
+      TR::LabelSymbol *ifcSnippetLabel = generateLabelSymbol(cg());
+      TR::ARM64InterfaceCallSnippet *ifcSnippet =
+         new (trHeapMemory())
+         TR::ARM64InterfaceCallSnippet(cg(), callNode, ifcSnippetLabel, argSize, doneLabel, (uint8_t *)thunk);
+      cg()->addSnippet(ifcSnippet);
+
+      gcPoint = generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, ifcSnippetLabel, dependencies);
+      }
+
+   gcPoint->ARM64NeedsGCMap(cg(), getProperties().getPreservedRegisterMapForGC());
+
+   if (doneLabel)
+      generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, doneLabel, dependencies);
+
+   return;
+   }
+
 TR::Register *TR::ARM64PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    {
-   TR_UNIMPLEMENTED();
-   return NULL;
+   const TR::ARM64LinkageProperties &pp = getProperties();
+   TR::RealRegister *sp = cg()->machine()->getRealRegister(pp.getStackPointerRegister());
+
+   TR::RegisterDependencyConditions *dependencies =
+      new (trHeapMemory()) TR::RegisterDependencyConditions(
+         pp.getNumberOfDependencyGPRegisters(),
+         pp.getNumberOfDependencyGPRegisters(), trMemory());
+
+   int32_t argSize = buildArgs(callNode, dependencies);
+
+   buildVirtualDispatch(callNode, dependencies, argSize);
+   cg()->machine()->setLinkRegisterKilled(true);
+
+   TR::Register *retReg;
+   switch(callNode->getOpCodeValue())
+      {
+      case TR::icalli:
+         retReg = dependencies->searchPostConditionRegister(
+                     pp.getIntegerReturnRegister());
+         break;
+      case TR::lcalli:
+      case TR::acalli:
+         retReg = dependencies->searchPostConditionRegister(
+                     pp.getLongReturnRegister());
+         break;
+      case TR::fcalli:
+      case TR::dcalli:
+         retReg = dependencies->searchPostConditionRegister(
+                     pp.getFloatReturnRegister());
+         break;
+      case TR::calli:
+         retReg = NULL;
+         break;
+      default:
+         retReg = NULL;
+         TR_ASSERT_FATAL(false, "Unsupported indirect call Opcode.");
+      }
+
+   callNode->setRegister(retReg);
+   return retReg;
    }
 
 int32_t TR::ARM64HelperLinkage::buildArgs(TR::Node *callNode,
