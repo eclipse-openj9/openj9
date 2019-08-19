@@ -37,7 +37,7 @@ import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
 import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 
 /**
- * JStack 
+ * JStack
  * A tool for listing thread information about another Java process
  *
  */
@@ -78,9 +78,11 @@ public class Jstack {
 
 				if (printProperties) {
 					out.println("System properties:"); //$NON-NLS-1$
-					out.println(diagProvider.getSystemProperties());
+					Util.printProperties(out, diagProvider.getSystemProperties());
+					out.println();
 					out.println("Agent properties:"); //$NON-NLS-1$
-					out.println(diagProvider.getAgentProperties());
+					Util.printProperties(out, diagProvider.getAgentProperties());
+					out.println();
 				}
 			} catch (Exception e) {
 				Util.handleCommandException(vmid, e);
