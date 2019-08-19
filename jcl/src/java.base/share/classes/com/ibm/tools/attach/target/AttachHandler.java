@@ -1,10 +1,4 @@
 /*[INCLUDE-IF Sidecar16]*/
-package com.ibm.tools.attach.target;
-
-import static com.ibm.tools.attach.target.IPC.LOGGING_DISABLED;
-import static com.ibm.tools.attach.target.IPC.LOGGING_ENABLED;
-import static com.ibm.tools.attach.target.IPC.loggingStatus;
-
 /*******************************************************************************
  * Copyright (c) 2009, 2019 IBM Corp. and others
  *
@@ -26,6 +20,12 @@ import static com.ibm.tools.attach.target.IPC.loggingStatus;
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+
+package com.ibm.tools.attach.target;
+
+import static com.ibm.tools.attach.target.IPC.LOGGING_DISABLED;
+import static com.ibm.tools.attach.target.IPC.LOGGING_ENABLED;
+import static com.ibm.tools.attach.target.IPC.loggingStatus;
 
 import java.io.File;
 import java.io.IOException;
@@ -145,15 +145,7 @@ public class AttachHandler extends Thread {
 		 *  Java 5: disabled by default on all platforms 
 		 */
 		/*[PR Jazz 59196 LIR: Disable attach API by default on z/OS (31972)]*/
-		boolean enableAttach = true;
-		String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
-		if (null != osName) {
-			if (osName.equalsIgnoreCase("z/OS")) { //$NON-NLS-1$
-				enableAttach = false;
-			} else if (osName.startsWith("Windows")) { //$NON-NLS-1$
-				IPC.isWindows = true;
-			}
-		}
+		boolean enableAttach = !IPC.isZOS;
 		/* the system property overrides the default */
 		String enableAttachProp = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("com.ibm.tools.attach.enable");  //$NON-NLS-1$
 		if (null != enableAttachProp) {

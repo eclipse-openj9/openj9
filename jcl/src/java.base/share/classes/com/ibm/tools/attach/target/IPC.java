@@ -79,8 +79,28 @@ public class IPC {
 	/**
 	 * True if operating system is Windows.
 	 */
-	public static boolean isWindows = false;
+	public final static boolean isWindows;
 
+	/**
+	 * True if operating system is z/OS.
+	 */
+	public final static boolean isZOS;
+
+	static {
+		String osName = com.ibm.oti.vm.VM.getVMLangAccess().internalGetProperties().getProperty("os.name"); //$NON-NLS-1$
+		boolean tempIsZos = false;
+		boolean tempIsWindows = false;
+		if (null != osName) {
+			if (osName.equalsIgnoreCase("z/OS")) { //$NON-NLS-1$
+				tempIsZos = true;
+			} else if (osName.startsWith("Windows")) { //$NON-NLS-1$
+				tempIsWindows = true;
+			}
+		}
+		isZOS = tempIsZos;
+		isWindows = tempIsWindows;
+	}
+	
 	private static Random randomGen; /* Cleanup. this is used by multiple threads */
 	
 	/* loggingStatus may be seen to be LOGGING_ENABLED before logStream is initialized,
