@@ -255,7 +255,9 @@ jobject getPropertyList(JNIEnv *env)
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 	strings[propIndex++] = "com.ibm.oti.shared.enabled";
-	if (((J9VMThread *) env)->javaVM->sharedClassConfig != NULL) {
+	if ((((J9VMThread *) env)->javaVM->sharedClassConfig != NULL)
+		&& (J9_ARE_ALL_BITS_SET(((J9VMThread *) env)->javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES))
+	) {
 		strings[propIndex++] = "true";
 	} else {
 		strings[propIndex++] = "false";
