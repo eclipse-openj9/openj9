@@ -71,7 +71,8 @@ public:
 		_doDebugCompare(false),
 		_existingRomMethod(NULL),
 		_reusingIntermediateClassData(false),
-		_creatingIntermediateROMClass(false)
+		_creatingIntermediateROMClass(false),
+		_isLambda(false)
 	{
 	}
 
@@ -107,7 +108,8 @@ public:
 		_doDebugCompare(false),
 		_existingRomMethod(NULL),
 		_reusingIntermediateClassData(false),
-		_creatingIntermediateROMClass(false)
+		_creatingIntermediateROMClass(false),
+		_isLambda(false)
 	{
 	}
 
@@ -150,7 +152,8 @@ public:
 		_doDebugCompare(false),
 		_existingRomMethod(NULL),
 		_reusingIntermediateClassData(false),
-		_creatingIntermediateROMClass(creatingIntermediateROMClass)
+		_creatingIntermediateROMClass(creatingIntermediateROMClass),
+		_isLambda(false)
 	{
 		if ((NULL != _javaVM) && (NULL != _javaVM->dynamicLoadBuffers)) {
 			/* localBuffer should not be NULL */
@@ -271,14 +274,14 @@ public:
 		 * Any of the following conditions prevent the sharing of a ROMClass:
 		 *  - classloader is not shared classes enabled
 		 *  - cache is full
-		 *  - Unsafe classes are not shared
+		 *  - Unsafe classes except lambda classes are not shared
 		 *  - shared cache is BCI enabled and class is modified by BCI agent
 		 *  - shared cache is BCI enabled and ROMClass being store is intermediate ROMClass
 		 *  - the class is loaded from a patch path
 		 */
 		if (isSharedClassesEnabled()
 			&& isClassLoaderSharedClassesEnabled()
-			&& !isClassUnsafe()
+			&& (!isClassUnsafe() || _isLambda)
 			&& !(isSharedClassesBCIEnabled()
 			&& (classFileBytesReplaced() || isCreatingIntermediateROMClass()))
 			&& (LOAD_LOCATION_PATCH_PATH != loadLocation())
@@ -288,6 +291,8 @@ public:
 			return false;
 		}
 	}
+
+	void setIsLambda(bool isLambda) { _isLambda = isLambda; }
 
 	/*
 	 * Returns true if any of the following conditions is true
@@ -712,6 +717,7 @@ private:
 	J9ROMMethod * _existingRomMethod;
 	bool _reusingIntermediateClassData;
 	bool _creatingIntermediateROMClass;
+	bool _isLambda;
 	
 	J9ROMMethod * romMethodFromOffset(IDATA offset);
 };

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,7 +39,7 @@
 
 ComparingCursor::ComparingCursor(J9JavaVM *javaVM, SRPOffsetTable *srpOffsetTable,
 		SRPKeyProducer *srpKeyProducer, ClassFileOracle *classFileOracle, U_8 *romClass, 
-		bool romClassIsShared, ROMClassCreationContext * context) :
+		bool romClassIsShared, ROMClassCreationContext * context, bool isComparingLambdaFromSCC) :
 	Cursor(0, srpOffsetTable, context),
 	_javaVM(javaVM),
 	_checkRangeInSharedCache(romClassIsShared),
@@ -52,7 +52,8 @@ ComparingCursor::ComparingCursor(J9JavaVM *javaVM, SRPOffsetTable *srpOffsetTabl
 	_mainHelper(srpOffsetTable, romClass, context),
 	_lineNumberHelper(srpOffsetTable, romClass, context),
 	_varInfoHelper(srpOffsetTable, romClass, context),
-	_isEqual(true)
+	_isEqual(true),
+	_isComparingLambdaFromSCC(isComparingLambdaFromSCC)
 {
 	if (!_checkRangeInSharedCache && (NULL != javaVM)) {
 		/* Enter mutex in order to safely iterate over the segments in getMaximumValidLengthForPtrInSegment(). */
@@ -109,7 +110,23 @@ ComparingCursor::writeU32(U_32 u32Value, DataType dataType)
 	ComparingCursorHelper * countingcursor = getCountingCursor(dataType);
 	if ( shouldCheckForEquality(dataType, u32Value) ) {
 		U_32 * tmpu32 = (U_32 *)(countingcursor->getBaseAddress() + countingcursor->getCount());
-		if ( !isRangeValid(sizeof(U_32), dataType) || (u32Value != *tmpu32) ) {
+		if ((CLASS_FILE_SIZE == dataType) && isComparingLambdaFromSCC()) {
+			if (sizeof(U_32) < abs((int)(u32Value - *tmpu32))) {
+				/* Lambda class names are in the format of HostClassName$$Lambda$<IndexNumber>/0000000000000000.
+				 * When we reach this check, the host class names will be the same for both the classes because
+				 * of the hash key check earlier so the only difference in the size will be the difference
+				 * between the number of digits of the index number. The same lambda class might have a
+				 * different index number from run to run and when the number of digits of the index number
+				 * increases by 1, classFileSize also increases by 1. We check if the difference between
+				 * classFileSizes is bigger than sizeof(U_32) because this will allow exactly 4 digits difference.
+				 * (eg. HostClassName$$Lambda$[1-9] can get matched up to HostClassName$$Lambda$99999,
+				 * HostClassName$$Lambda$[10-99] can get matched up to HostClassName$$Lambda$999999)
+				 * This check is different than the romSize check because when the number of digits of the index
+				 * number increases by 1, classFileSize also increases by 1 but romSize increases by 2.
+				 */
+				markUnEqual();
+			}
+		} else if (!isRangeValid(sizeof(U_32), dataType) || (u32Value != *tmpu32)) {
 			markUnEqual();
 		}
 	}
@@ -198,6 +215,7 @@ ComparingCursor::writeSRP(UDATA srpKey, DataType dataType)
 			}
 			case Cursor::LOCAL_VARIABLE_DATA_SRP_TO_UTF8:
 			case Cursor::OPTINFO_SOURCE_FILE_NAME:
+			case Cursor::SRP_TO_UTF8_CLASS_NAME:
 			case Cursor::SRP_TO_UTF8: {
 				/* test that the UTF8's are identical */
 				J9UTF8 * utf8 = SRP_PTR_GET(currentAddr, J9UTF8 *);
@@ -417,8 +435,15 @@ ComparingCursor::shouldCheckForEquality(DataType dataType, U_32 u32Value)
 	}
 
 	switch (dataType) {
+	case SRP_TO_UTF8_CLASS_NAME:
+		if (isComparingLambdaFromSCC()) {
+			/* if the class is a lambda class don't compare the class names because lambda classes might have different index numbers from run to run */
+			return false;
+		}
+		break;
 	case BYTECODE: /* fall through */
 	case GENERIC: /* fall through */
+	case CLASS_FILE_SIZE: /* fall through */
 	case SRP_TO_DEBUG_DATA: /* fall through */
 	case SRP_TO_GENERIC: /* fall through */
 	case SRP_TO_UTF8: /* fall through */
