@@ -682,11 +682,11 @@ dumpAnnotationInfo( J9PortLibrary *portLib, J9ROMClass *romClass, U_32 flags)
 			U_32 *codeTypeAnnotationData = getCodeTypeAnnotationsDataFromROMMethod(romMethod);
 			if ((NULL != methodAnnotationData) || (NULL != parametersAnnotationData) || (NULL != defaultAnnotationData)) {
 				j9tty_printf(PORTLIB, "      Name: ");
-				dumpUTF( (J9UTF8 *) J9ROMMETHOD_GET_NAME(romClass, romMethod), portLib, flags );
+				dumpUTF( (J9UTF8 *) J9ROMMETHOD_NAME(romMethod), portLib, flags );
 				j9tty_printf( PORTLIB, "\n");
 
 				j9tty_printf(PORTLIB, "      Signature: ");
-				dumpUTF( (J9UTF8 *) J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod), portLib, flags );
+				dumpUTF( (J9UTF8 *) J9ROMMETHOD_SIGNATURE(romMethod), portLib, flags );
 				j9tty_printf(PORTLIB, "\n");
 			}
 			if (NULL != methodAnnotationData) {
@@ -878,11 +878,11 @@ I_32 j9bcutil_dumpRomMethod( J9ROMMethod *romMethod, J9ROMClass *romClass, J9Por
 	PORT_ACCESS_FROM_PORT( portLib );
 
 	j9tty_printf( PORTLIB,  "  Name: ");
-	dumpUTF( (J9UTF8 *) J9ROMMETHOD_GET_NAME(romClass, romMethod), portLib, flags );
+	dumpUTF( (J9UTF8 *) J9ROMMETHOD_NAME(romMethod), portLib, flags );
 	j9tty_printf( PORTLIB,  "\n");
 
 	j9tty_printf( PORTLIB,  "  Signature: ");
-	dumpUTF( (J9UTF8 *) J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod), portLib, flags );
+	dumpUTF( (J9UTF8 *) J9ROMMETHOD_SIGNATURE(romMethod), portLib, flags );
 	j9tty_printf( PORTLIB,  "\n");
 
 	j9tty_printf( PORTLIB, "  Access Flags (%X): ", romMethod->modifiers);

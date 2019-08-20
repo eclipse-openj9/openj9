@@ -403,7 +403,7 @@ jniCheckCallV(const char* function, JNIEnv* env, jobject receiver, UDATA methodT
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9Method *ramMethod = ((J9JNIMethodID*)method)->method;
 	J9ROMMethod* romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
-	J9UTF8* sig = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(ramMethod)->ramClass->romClass, romMethod);
+	J9UTF8* sig = J9ROMMETHOD_SIGNATURE(romMethod);
 	char* sigArgs;
 	va_list args;
 	UDATA argNum;
@@ -464,7 +464,7 @@ jniCheckCallA(const char* function, JNIEnv* env, jobject receiver, UDATA methodT
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	J9Method *ramMethod = ((J9JNIMethodID*)method)->method;
 	J9ROMMethod* romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
-	J9UTF8* sig = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(ramMethod)->ramClass->romClass, romMethod);
+	J9UTF8* sig = J9ROMMETHOD_SIGNATURE(romMethod);
 	char* sigArgs;
 	UDATA argNum;
 	UDATA trace = vm->checkJNIData.options & JNICHK_TRACE;
@@ -1005,8 +1005,8 @@ jniCheckPrintMethod(JNIEnv* env, U_32 level)
 	if (method != NULL) {
 		J9UTF8 * className = J9ROMCLASS_CLASSNAME(UNTAGGED_METHOD_CP(method)->ramClass->romClass);
 		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-		J9UTF8 * name = J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
-		J9UTF8 * sig = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
+		J9UTF8 * name = J9ROMMETHOD_NAME(romMethod);
+		J9UTF8 * sig = J9ROMMETHOD_SIGNATURE(romMethod);
 
 		/* special case for JNI_OnLoad */
 		if (isLoadLibraryWithPath(className, name)) {
@@ -1178,8 +1178,8 @@ static void jniIsLocalRefOSlotWalkFunction(J9VMThread* aThread, J9StackWalkState
 	if (method != NULL) {
 		J9UTF8 * className = J9ROMCLASS_CLASSNAME(UNTAGGED_METHOD_CP(method)->ramClass->romClass);
 		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-		J9UTF8 * name = J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
-		J9UTF8 * sig = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
+		J9UTF8 * name = J9ROMMETHOD_NAME(romMethod);
+		J9UTF8 * sig = J9ROMMETHOD_SIGNATURE(romMethod);
 		printf("Found in frame %d in %.*s.%.*s%.*s\n", walkState->framesWalked + 1, J9UTF8_LENGTH(className), J9UTF8_DATA(className), J9UTF8_LENGTH(name), J9UTF8_DATA(name), J9UTF8_LENGTH(sig), J9UTF8_DATA(sig));
 	}
 }
@@ -1388,8 +1388,8 @@ static void jniTraceMethodID(JNIEnv* env, jmethodID mid) {
 
 	J9Method* method = ((J9JNIMethodID*)mid)->method;
 	J9ROMMethod* romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-	J9UTF8* name = J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
-	J9UTF8* sig = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
+	J9UTF8* name = J9ROMMETHOD_NAME(romMethod);
+	J9UTF8* sig = J9ROMMETHOD_SIGNATURE(romMethod);
 
 	j9tty_printf(PORTLIB, "%.*s%.*s", J9UTF8_LENGTH(name), J9UTF8_DATA(name), J9UTF8_LENGTH(sig), J9UTF8_DATA(sig));
 
@@ -1672,8 +1672,8 @@ methodEnterHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* u
 	if (trace) {
 		PORT_ACCESS_FROM_VMC(vmThread);
 		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-		J9UTF8 * nameUTF = J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
-		J9UTF8 * sigUTF = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
+		J9UTF8 * nameUTF = J9ROMMETHOD_NAME(romMethod);
+		J9UTF8 * sigUTF = J9ROMMETHOD_SIGNATURE(romMethod);
 		J9UTF8 * classNameUTF = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass);
 		char argBuffer[2048 + 3];
 		UDATA remainingSize = sizeof(argBuffer) - 3;
@@ -1725,7 +1725,7 @@ methodExitHook(J9HookInterface** hook, UDATA eventNum, void* eventData, void* us
 	UDATA* returnValues = event->returnValuePtr;
 	jobject returnRef = event->poppedByException ? (jobject)NULL : event->returnRef;
 	J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-	J9UTF8 * sigUTF = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
+	J9UTF8 * sigUTF = J9ROMMETHOD_SIGNATURE(romMethod);
 	U_8 * sigData = J9UTF8_DATA(sigUTF) + 1;
     UDATA sigChar;
 
@@ -2064,7 +2064,7 @@ inBootstrapClass(JNIEnv* env)
 				if (cpEntry.flags & CPE_FLAG_BOOTSTRAP) {
 					J9UTF8 * className = J9ROMCLASS_CLASSNAME(clazz->romClass);
 					J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-					J9UTF8 * name = J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
+					J9UTF8 * name = J9ROMMETHOD_NAME(romMethod);
 
 					/* special case for JNI_OnLoad */
 					if (isLoadLibraryWithPath(className, name)) {
@@ -2240,7 +2240,7 @@ jniCheckCall(const char* function, JNIEnv* env, jobject receiver, UDATA methodTy
 	J9Class *declaringClass = J9_CLASS_FROM_METHOD(ramMethod);
 	jclass declaringClassRef;
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
-	J9UTF8 *sig = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(ramMethod)->ramClass->romClass,romMethod);
+	J9UTF8 *sig = J9ROMMETHOD_SIGNATURE(romMethod);
 	char *returnSig;
 	UDATA novalist = vm->checkJNIData.options & JNICHK_NOVALIST;
 
@@ -2249,7 +2249,7 @@ jniCheckCall(const char* function, JNIEnv* env, jobject receiver, UDATA methodTy
 	jniCallIn((J9VMThread *) env);
 
 	if (methodType == METHOD_CONSTRUCTOR) {
-		J9UTF8* name = J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(ramMethod)->ramClass->romClass,romMethod);
+		J9UTF8* name = J9ROMMETHOD_NAME(romMethod);
 		if ( (J9UTF8_DATA(name)[0] != '<') || (J9UTF8_LENGTH(name) != sizeof("<init>") - 1) ) {
 			jniCheckFatalErrorNLS(env, J9NLS_JNICHK_METHOD_IS_NOT_CONSTRUCTOR, function);
 		}

@@ -2712,9 +2712,9 @@ void printAllCounts(J9JavaVM *javaVM)
                J9UTF8 *utf8;
                utf8 = J9ROMCLASS_CLASSNAME(clazz->romClass);
                fprintf(stderr, "%.*s", J9UTF8_LENGTH(utf8), (char *) J9UTF8_DATA(utf8));
-               utf8 = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+               utf8 = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
                fprintf(stderr, ".%.*s", J9UTF8_LENGTH(utf8), (char *) J9UTF8_DATA(utf8));
-               utf8 = J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+               utf8 = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
                fprintf(stderr, "%.*s", J9UTF8_LENGTH(utf8), (char *) J9UTF8_DATA(utf8));
                   */
                intptrj_t count = (intptrj_t) TR::CompilationInfo::getInvocationCount(method);
@@ -5378,7 +5378,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
             if (J9UTF8_LENGTH(className) == 36 &&
                 0==memcmp(utf8Data(className), "com/ibm/rmi/io/FastPathForCollocated", 36))
                {
-               J9UTF8 *utf8 = J9ROMMETHOD_GET_NAME(declaringClazz, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+               J9UTF8 *utf8 = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
                if (J9UTF8_LENGTH(utf8)==21 &&
                    0==memcmp(J9UTF8_DATA(utf8), "isVMDeepCopySupported", 21))
                   isORB = true;
@@ -6582,7 +6582,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             0 == memcmp(utf8Data(className), "com/ibm/rmi/io/FastPathForCollocated", 36)
             )
             {
-            J9UTF8 *utf8 = J9ROMMETHOD_GET_NAME(declaringClazz, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+            J9UTF8 *utf8 = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
             if (
                J9UTF8_LENGTH(utf8)==21 &&
                0 == memcmp(J9UTF8_DATA(utf8), "isVMDeepCopySupported", 21)

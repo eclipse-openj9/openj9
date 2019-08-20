@@ -57,7 +57,7 @@ jvmtiGetMethodName(jvmtiEnv* env,
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(((J9JNIMethodID *) method)->method);
 
 	if (name_ptr != NULL) {
-		J9UTF8 * utf = J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(((J9JNIMethodID *) method)->method)->ramClass->romClass, romMethod);
+		J9UTF8 * utf = J9ROMMETHOD_NAME(romMethod);
 		UDATA length = J9UTF8_LENGTH(utf);
 
 		name = j9mem_allocate_memory(length + 1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
@@ -71,7 +71,7 @@ jvmtiGetMethodName(jvmtiEnv* env,
 	}
 
 	if (signature_ptr != NULL) {
-		J9UTF8 * utf = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(((J9JNIMethodID *) method)->method)->ramClass->romClass, romMethod);
+		J9UTF8 * utf = J9ROMMETHOD_SIGNATURE(romMethod);
 		UDATA length = J9UTF8_LENGTH(utf);
 
 		signature = j9mem_allocate_memory(length + 1, J9MEM_CATEGORY_JVMTI_ALLOCATE);
@@ -692,7 +692,7 @@ readdWide:
 				case JBsyncReturn0:
 				case JBsyncReturn1:
 				case JBsyncReturn2: {
-					J9UTF8 * signature = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(((J9JNIMethodID *) method)->method)->ramClass->romClass, romMethod);
+					J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(romMethod);
 					U_8 * sigData = J9UTF8_DATA(signature);
 					U_16 sigLength = J9UTF8_LENGTH(signature);
 

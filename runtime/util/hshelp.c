@@ -58,8 +58,8 @@ const J9ITable invalidITable = { (J9Class *) (UDATA) 0xDEADBEEF, 0, (J9ITable *)
 #define NAME_AND_SIG_IDENTICAL(o1, o2, getNameMacro, getSigMacro) \
 	areUTFPairsIdentical(getNameMacro(o1), getSigMacro(o1), getNameMacro(o2), getSigMacro(o2))
 
-#define J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(romClass1, romClass2, o1, o2) \
-	areUTFPairsIdentical(J9ROMMETHOD_GET_NAME(romClass1, o1), J9ROMMETHOD_GET_SIGNATURE(romClass1, o1), J9ROMMETHOD_GET_NAME(romClass2, o2), J9ROMMETHOD_GET_SIGNATURE(romClass2, o2))
+#define J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(o1, o2) \
+	areUTFPairsIdentical(J9ROMMETHOD_NAME(o1), J9ROMMETHOD_SIGNATURE(o1), J9ROMMETHOD_NAME(o2), J9ROMMETHOD_SIGNATURE(o2))
 
 static UDATA equivalenceHash (void *key, void *userData);
 static UDATA equivalenceEquals (void *leftKey, void *rightKey, void *userData);
@@ -123,7 +123,7 @@ static char *
 getMethodName(J9Method * m)
 {
 	static char buf[512];
-	J9UTF8 * n = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(m)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(m));
+	J9UTF8 * n = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(m));
 	memcpy(buf, J9UTF8_DATA(n), J9UTF8_LENGTH(n));
 	buf[J9UTF8_LENGTH(n)] = 0;
 	return buf;
@@ -1192,7 +1192,7 @@ findMethodInVTable(J9Method *method, UDATA *vTable)
 		J9ROMMethod *vTableRomMethod = J9_ROM_METHOD_FROM_RAM_METHOD(vTableMethod);
 
 		if (vTableRomMethod->modifiers & J9AccPublic) {
-			if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(J9_CLASS_FROM_METHOD(method)->romClass, J9_CLASS_FROM_METHOD(vTableRomMethod)->romClass, romMethod, vTableRomMethod)) {
+			if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(romMethod, vTableRomMethod)) {
 				return searchIndex;
 			}
 		}
@@ -1662,7 +1662,7 @@ fixJNIMethodIDs(J9VMThread * currentThread, J9Class *originalRAMClass, J9Class *
 				newMethod = replacementRAMClass->ramMethods + newMethodIndex;
 				newROMMethod = J9_ROM_METHOD_FROM_RAM_METHOD(newMethod);
 
-				if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(originalROMClass, replacementROMClass, oldROMMethod, newROMMethod)) {
+				if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(oldROMMethod, newROMMethod)) {
 					deleted = FALSE;
 					equivalent = areMethodsEquivalent(oldROMMethod, originalROMClass, newROMMethod, replacementROMClass);
 					break;
@@ -3078,7 +3078,7 @@ verifyMethodsAreSame(J9VMThread * currentThread, J9JVMTIClassPair * classPair, U
 			J9ROMMethod * replacementROMMethod = J9ROMCLASS_ROMMETHODS(replacementROMClass);
 
 			for (k = 0; k < replacementROMClass->romMethodCount; ++k) {
-				if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(originalROMClass, replacementROMClass, originalROMMethod, replacementROMMethod)) {
+				if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(originalROMMethod, replacementROMMethod)) {
 					/* Populate the method remap array using ROM methods. The mapping happens between the current
 					 * and _oldest_ class version */
 					classPair->methodRemap[j] = replacementROMMethod;
@@ -3118,7 +3118,7 @@ verifyMethodsAreSame(J9VMThread * currentThread, J9JVMTIClassPair * classPair, U
 			J9ROMMethod * replacementROMMethod = J9ROMCLASS_ROMMETHODS(replacementROMClass);
 
 			for (k = 0; k < replacementROMClass->romMethodCount; ++k) {
-				if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(originalROMClass, replacementROMClass, originalROMMethod, replacementROMMethod)) {
+				if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(originalROMMethod, replacementROMMethod)) {
 					classPair->methodRemapIndices[j] = k;
 					if (j != k) {
 						identityRemap = FALSE;
@@ -3690,7 +3690,7 @@ fixMethodEquivalencesAndCallSites(J9VMThread * currentThread,
 					newMethod = replacementRAMClass->ramMethods + newMethodIndex;
 					newROMMethod = J9_ROM_METHOD_FROM_RAM_METHOD(newMethod);
 
-					if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(originalROMClass, replacementROMClass, oldROMMethod, newROMMethod)) {
+					if (J9ROMMETHOD_NAME_AND_SIG_IDENTICAL(oldROMMethod, newROMMethod)) {
 						equivalent = areMethodsEquivalentPropagateCallSites
 							(oldROMMethod, originalRAMClass, newROMMethod, replacementRAMClass);
 #ifdef J9VM_INTERP_NATIVE_SUPPORT

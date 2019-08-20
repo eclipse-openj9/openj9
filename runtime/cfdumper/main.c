@@ -5379,15 +5379,15 @@ static void j9_formatMethod(J9ROMClass* romClass, J9ROMMethod* method, char *for
 
 					case 'n':
 						/* method name */
-						utfLength = J9UTF8_LENGTH(J9ROMMETHOD_GET_NAME(romClass, method));
-						string = ((U_8*) J9ROMMETHOD_GET_NAME(romClass, method)) + 2;
+						utfLength = J9UTF8_LENGTH(J9ROMMETHOD_NAME(method));
+						string = ((U_8*) J9ROMMETHOD_NAME(method)) + 2;
 						for(j = 0; j < utfLength; j++) j9tty_output_char(string[j]);
 						break;
 
 					case 's':
 						/* type signature */
-						utfLength = J9UTF8_LENGTH(J9ROMMETHOD_GET_SIGNATURE(romClass, method));
-						string = ((U_8*) J9ROMMETHOD_GET_SIGNATURE(romClass, method)) + 2;
+						utfLength = J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(method));
+						string = ((U_8*) J9ROMMETHOD_SIGNATURE(method)) + 2;
 						for(j = 0; j < utfLength; j++)
 						{
 							ch2 = string[j];
@@ -5398,8 +5398,8 @@ static void j9_formatMethod(J9ROMClass* romClass, J9ROMMethod* method, char *for
 
 					case 'r':
 						/* qualified return type name */
-						utfLength = J9UTF8_LENGTH(J9ROMMETHOD_GET_SIGNATURE(romClass, method));
-						string = ((U_8*) J9ROMMETHOD_GET_SIGNATURE(romClass, method)) + 2;
+						utfLength = J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(method));
+						string = ((U_8*) J9ROMMETHOD_SIGNATURE(method)) + 2;
 						j = 0;
 						arity = 0;
 						while(string[j++] != ')');
@@ -5463,8 +5463,8 @@ static void j9_formatMethod(J9ROMClass* romClass, J9ROMMethod* method, char *for
 
 					case 'p':
 						/* qualified parameter type names */
-						utfLength = J9UTF8_LENGTH(J9ROMMETHOD_GET_SIGNATURE(romClass, method));
-						string = ((U_8*) J9ROMMETHOD_GET_SIGNATURE(romClass, method)) + 2;
+						utfLength = J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(method));
+						string = ((U_8*) J9ROMMETHOD_SIGNATURE(method)) + 2;
 						j = 1;
 						while(string[j] != ')')
 						{
@@ -5718,15 +5718,15 @@ static void j9_formatBytecode(J9ROMClass* romClass, J9ROMMethod* method, U_8* bc
 
 					case 'n':
 						/* method name */
-						utfLength = J9UTF8_LENGTH(J9ROMMETHOD_GET_NAME(romClass, method));
-						string = ((U_8*) J9ROMMETHOD_GET_NAME(romClass, method)) + 2;
+						utfLength = J9UTF8_LENGTH(J9ROMMETHOD_NAME(method));
+						string = ((U_8*) J9ROMMETHOD_NAME(method)) + 2;
 						for(j = 0; j < utfLength; j++) j9tty_output_char(string[j]);
 						break;
 
 					case 's':
 						/* type signature */
-						utfLength = J9UTF8_LENGTH(J9ROMMETHOD_GET_SIGNATURE(romClass, method));
-						string = ((U_8*) J9ROMMETHOD_GET_SIGNATURE(romClass, method)) + 2;
+						utfLength = J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(method));
+						string = ((U_8*) J9ROMMETHOD_SIGNATURE(method)) + 2;
 						for(j = 0; j < utfLength; j++)
 						{
 							ch2 = string[j];
