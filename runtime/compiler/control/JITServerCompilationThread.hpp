@@ -40,6 +40,7 @@ using IPTableHeapEntry = UnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>;
 using IPTableHeap_t = UnorderedMap<J9Method *, IPTableHeapEntry *>;
 using ResolvedMirrorMethodsPersistIP_t = Vector<TR_ResolvedJ9Method *>;
 using ClassOfStatic_t = UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_OpaqueClassBlock *>;
+using FieldOrStaticAttrTable_t = UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_J9MethodFieldAttributes>;
 
 
 size_t methodStringLength(J9ROMMethod *);
@@ -81,6 +82,12 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
 
    void cacheNullClassOfStatic(TR_OpaqueClassBlock *ramClass, int32_t cpIndex);
    bool getCachedNullClassOfStatic(TR_OpaqueClassBlock *ramClass, int32_t cpIndex);
+
+   void cacheFieldOrStaticAttributes(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, const TR_J9MethodFieldAttributes &attrs, bool isStatic);
+   bool getCachedFieldOrStaticAttributes(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_J9MethodFieldAttributes &attrs, bool isStatic);
+
+   void cacheIsUnresolvedStr(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, const TR_IsUnresolvedString &stringAttrs);
+   bool getCachedIsUnresolvedStr(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_IsUnresolvedString &stringAttrs);
 
    void clearPerCompilationCaches();
    void deleteClientSessionData(uint64_t clientId, TR::CompilationInfo* compInfo, J9VMThread* compThread);
@@ -147,6 +154,9 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    TR_ResolvedMethodInfoCache *_resolvedMethodInfoMap;
    ResolvedMirrorMethodsPersistIP_t *_resolvedMirrorMethodsPersistIPInfo; //list of mirrors of resolved methods for persisting IProfiler info
    ClassOfStatic_t *_classOfStaticMap;
+   FieldOrStaticAttrTable_t *_fieldAttributesCache;
+   FieldOrStaticAttrTable_t *_staticAttributesCache;
+   UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_IsUnresolvedString> *_isUnresolvedStrCache;
    }; // class CompilationInfoPerThreadRemote
 } // namespace TR
 
