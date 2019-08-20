@@ -327,6 +327,16 @@ freeClassLoader(J9ClassLoader *classLoader, J9JavaVM *javaVM, J9VMThread *vmThre
 UDATA
 calculateArity(J9VMThread* vmThread, U_8* name, UDATA length);
 
+/**
+* @brief
+* @param currentThread
+* @param classLoader
+* @param className
+* @param classNameLength
+* @return UDATA
+*/
+J9Class*
+peekClassHashTable(J9VMThread* currentThread, J9ClassLoader* classLoader, U_8* className, UDATA classNameLength);
 
 /**
 * @brief

@@ -93,9 +93,9 @@ findField(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameL
 #endif
 
 	do {        
-		J9ROMClass* romClass;
-		J9SRP *interfaces;
-		UDATA i;
+		J9ROMClass* romClass = NULL;
+		J9SRP *interfaces = NULL;
+		UDATA i = 0;
 
 		field = findFieldInClass(vmStruct, 
 			currentClass, 
@@ -110,18 +110,16 @@ findField(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameL
 		romClass = currentClass->romClass;
 		interfaces = J9ROMCLASS_INTERFACES(romClass);
 		for (i = 0; i < romClass->interfaceCount; i++, interfaces++) {
+			/* By definition, the interfaces MUST already have been loaded as
+			 * all superclasses & interfaces are loaded before the current class
+			 */
 			J9UTF8 * interfaceName = NNSRP_PTR_GET(interfaces, J9UTF8 *);
-			J9Class* interfaceClass = internalFindClassUTF8(
-				vmStruct,
-				J9UTF8_DATA(interfaceName),
-				J9UTF8_LENGTH(interfaceName),
-				currentClass->classLoader, 
-				J9_FINDCLASS_FLAG_EXISTING_ONLY);
+			J9Class* interfaceClass = peekClassHashTable(vmStruct, currentClass->classLoader, J9UTF8_DATA(interfaceName), J9UTF8_LENGTH(interfaceName));
 
-			if (interfaceClass != NULL) { /* shouldn't be NULL, but be safe */
+			if (J9_EXPECTED(interfaceClass != NULL)) { /* shouldn't be NULL, but be safe */
 				J9ITable* iTable = NULL;
 				for(;;) {
-					field = findFieldInClass( vmStruct,
+					field = findFieldInClass(vmStruct,
 						interfaceClass, 
 						fieldName, fieldNameLength, 
 						signature, signatureLength, 
@@ -133,6 +131,9 @@ findField(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameL
 					if (iTable == NULL) break;
 					interfaceClass = iTable->interfaceClass;
 				}
+			} else {
+				/* This should never happen as the interfaces need to have already been loaded */
+				Assert_VM_unreachable();
 			}
 		}
 

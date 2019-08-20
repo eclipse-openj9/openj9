@@ -167,6 +167,7 @@ findPrimitiveArrayClass(J9JavaVM* vm, jchar sigChar)
 	switch (sigChar) {
 	case 'B':
 		return vm->byteArrayClass;
+		break;
 	case 'C':
 		return vm->charArrayClass;
 		break;
@@ -236,6 +237,32 @@ internalCreateArrayClass(J9VMThread* vmThread, J9ROMArrayClass* romClass, J9Clas
 	return result;
 }
 
+/**
+ * Peek the classHashTable to see if the `className` class has already been loaded by `classLoader`.
+ *
+ * @param currentThread pointer to the current J9VMThread
+ * @param classLoader pointer to the J9ClassLoader being probed
+ * @param className pointer to the U_8 representation of the classaname.  Doesn't need to be null terminated
+ * @param classNameLength length of the className
+ * @return a J9Class pointer if the class has already been loaded in this loader.  Null otherwise.
+ */
+J9Class*
+peekClassHashTable(J9VMThread* currentThread, J9ClassLoader* classLoader, U_8* className, UDATA classNameLength)
+{
+	J9Class * ramClass = NULL;
+	J9JavaVM* vm = currentThread->javaVM;
+	BOOLEAN fastMode = J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE);
+
+	/* If -XX:+FastClassHashTable is enabled, do not lock anything to do the initial table peek */
+	if (!fastMode) {
+		omrthread_monitor_enter(vm->classTableMutex);
+	}
+	ramClass = hashClassTableAt(classLoader, className, classNameLength);
+	if (!fastMode) {
+		omrthread_monitor_exit(vm->classTableMutex);
+	}
+	return ramClass;
+}
 
 J9Class*  
 internalFindClassString(J9VMThread* currentThread, j9object_t moduleName, j9object_t className, J9ClassLoader* classLoader, UDATA options)
@@ -689,7 +716,7 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
  			Trc_VM_internalFindClass_sentLoadClass(vmThread, classNameLength, className, sendLoadClassResult);
  			Assert_VM_true(J9VM_IS_INITIALIZED_HEAPCLASS(vmThread, sendLoadClassResult));
 			foundClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, sendLoadClassResult);
-			omrthread_monitor_enter(vmThread->javaVM->classTableMutex);
+			omrthread_monitor_enter(vm->classTableMutex);
 			/* Verify that the actual name matches the expected */
 			foundClassName = J9ROMCLASS_CLASSNAME(foundClass->romClass);
 			if (!J9UTF8_DATA_EQUALS(className, classNameLength, J9UTF8_DATA(foundClassName), J9UTF8_LENGTH(foundClassName))) {
@@ -706,7 +733,7 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 			 			J9Class * loadingConstraintError = j9bcv_satisfyClassLoadingConstraint(vmThread, classLoader, foundClass);
 
 						if (loadingConstraintError != NULL) {
-							omrthread_monitor_exit(vmThread->javaVM->classTableMutex);
+							omrthread_monitor_exit(vm->classTableMutex);
 							setClassLoadingConstraintError(vmThread, classLoader, loadingConstraintError);
 							return NULL;
 						}
@@ -718,9 +745,9 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 					if (hashClassTableAtPut(vmThread, classLoader, className, classNameLength, foundClass)) {
 						/* Failed to store the class - GC and retry */
 
-						omrthread_monitor_exit(vmThread->javaVM->classTableMutex);
-						vmThread->javaVM->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(vmThread, J9MMCONSTANT_EXPLICIT_GC_NATIVE_OUT_OF_MEMORY);
-						omrthread_monitor_enter(vmThread->javaVM->classTableMutex);
+						omrthread_monitor_exit(vm->classTableMutex);
+						vm->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(vmThread, J9MMCONSTANT_EXPLICIT_GC_NATIVE_OUT_OF_MEMORY);
+						omrthread_monitor_enter(vm->classTableMutex);
 
 						/* See if a class of this name is already in the table - if not, try the add again */
 
@@ -729,7 +756,7 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 							if (hashClassTableAtPut(vmThread, classLoader, className, classNameLength, foundClass)) {
 								/* Add failed again, throw native OOM */
 
-								omrthread_monitor_exit(vmThread->javaVM->classTableMutex);
+								omrthread_monitor_exit(vm->classTableMutex);
 								setNativeOutOfMemoryError(vmThread, 0, 0);
 								return NULL;
 							}
@@ -749,7 +776,7 @@ callLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9Cla
 					}
 				}
 			}
-			omrthread_monitor_exit(vmThread->javaVM->classTableMutex);
+			omrthread_monitor_exit(vm->classTableMutex);
  		}
 	} else {
 		foundClass = NULL;
@@ -917,9 +944,10 @@ arbitratedLoadClass(J9VMThread* vmThread, U_8* className, UDATA classNameLength,
 static VMINLINE J9Class *  
 loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader, UDATA options, j9object_t *exception)
 {
+	J9JavaVM * const vm = vmThread->javaVM;
 	J9Class * foundClass = NULL;
 	BOOLEAN lockLoaderMonitor = FALSE;
-	BOOLEAN fastMode = J9_ARE_ALL_BITS_SET(vmThread->javaVM->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE);
+	BOOLEAN fastMode = J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_FAST_CLASS_HASH_TABLE);
 	BOOLEAN loaderMonitorLocked = FALSE;
 
 	vmThread->privateFlags &= ~J9_PRIVATE_FLAGS_CLOAD_NO_MEM;
@@ -931,11 +959,11 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 		 * Test in decreasing probability of failure.
 		 * J9_EXTENDED_RUNTIME_CLASSLOADER_LOCKING_ENABLED is true by default
 		 */
-		lockLoaderMonitor = (classLoader != vmThread->javaVM->systemClassLoader)
+		lockLoaderMonitor = (classLoader != vm->systemClassLoader)
 				&& (NULL != classLoader->classLoaderObject)
 				&& (0 == (options & J9_FINDCLASS_FLAG_EXISTING_ONLY))
 				&& (J9_EXTENDED_RUNTIME_CLASSLOADER_LOCKING_ENABLED ==
-						(vmThread->javaVM->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_CLASSLOADER_LOCKING_ENABLED));
+						(vm->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_CLASSLOADER_LOCKING_ENABLED));
 	}
 
 	/* If -XX:+FastClassHashTable is enabled, do not lock anything to do the initial table peek */
@@ -943,23 +971,23 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 		/* Match RI behaviour by implicitly locking the classloader */
 		if (lockLoaderMonitor) {
 			/* Must lock the classloader before the classTableMutex, otherwise we deadlock */
-			Assert_VM_mustNotOwnMonitor(vmThread->javaVM->classTableMutex);
+			Assert_VM_mustNotOwnMonitor(vm->classTableMutex);
 			Trc_VM_loadNonArrayClass_enter_object_monitor(vmThread, classLoader, classNameLength, className);
 			objectMonitorEnter(vmThread, classLoader->classLoaderObject);
 			loaderMonitorLocked = TRUE;
 		}
-		omrthread_monitor_enter(vmThread->javaVM->classTableMutex);
+		omrthread_monitor_enter(vm->classTableMutex);
 	}
 
 	foundClass = hashClassTableAt(classLoader, className, classNameLength);
 	if (NULL != foundClass) {
 		if (!fastMode) {
-			omrthread_monitor_exit(vmThread->javaVM->classTableMutex);
+			omrthread_monitor_exit(vm->classTableMutex);
 		}
 	} else {
 		if (options & J9_FINDCLASS_FLAG_EXISTING_ONLY) {
 			if (!fastMode) {
-				omrthread_monitor_exit(vmThread->javaVM->classTableMutex);
+				omrthread_monitor_exit(vm->classTableMutex);
 			}
 		} else {
 			/* If -XX:+FastClassHashTable is enabled, do the locking now */
@@ -967,28 +995,28 @@ loadNonArrayClass(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDAT
 				/* Match RI behaviour by implicitly locking the classloader */
 				if (lockLoaderMonitor) {
 					/* Must lock the classloader before the classTableMutex, otherwise we deadlock */
-					Assert_VM_mustNotOwnMonitor(vmThread->javaVM->classTableMutex);
+					Assert_VM_mustNotOwnMonitor(vm->classTableMutex);
 					Trc_VM_loadNonArrayClass_enter_object_monitor(vmThread, classLoader, classNameLength, className);
 					objectMonitorEnter(vmThread, classLoader->classLoaderObject);
 					loaderMonitorLocked = TRUE;
 				}
-				omrthread_monitor_enter(vmThread->javaVM->classTableMutex);
+				omrthread_monitor_enter(vm->classTableMutex);
 
 				/* check again if somebody else already loaded the class */
 				foundClass = hashClassTableAt(classLoader, className, classNameLength);
 				if (NULL != foundClass) {
-					omrthread_monitor_exit(vmThread->javaVM->classTableMutex);
+					omrthread_monitor_exit(vm->classTableMutex);
 					goto done;
 				}
 			}
 			/* Do not do the primitive type optimization if -Xfuture is on */
-			if (0 == (vmThread->javaVM->runtimeFlags & J9_RUNTIME_XFUTURE)) {
-				if ((classNameLength <= 7) && ((classLoader == vmThread->javaVM->systemClassLoader) || (classLoader == vmThread->javaVM->applicationClassLoader))) {
+			if (0 == (vm->runtimeFlags & J9_RUNTIME_XFUTURE)) {
+				if ((classNameLength <= 7) && ((classLoader == vm->systemClassLoader) || (classLoader == vm->applicationClassLoader))) {
 					switch(classNameLength) {
 						case 3:
 							if (memcmp(className, "int" , 3) == 0) {
 primitiveClass:
-								omrthread_monitor_exit(vmThread->javaVM->classTableMutex);
+								omrthread_monitor_exit(vm->classTableMutex);
 								if (loaderMonitorLocked) {
 									Trc_VM_loadNonArrayClass_exit_object_monitor(vmThread, classLoader, classNameLength, className);
 									objectMonitorExit(vmThread, classLoader->classLoaderObject);
@@ -1033,7 +1061,7 @@ primitiveClass:
 			}
 			/* class table mutex is locked */
 			/* go directly to the dynamic loader if the flag is set or we are the bootstrap loader and we do not have a Java object to send loadClass() to */
-			if (((classLoader == vmThread->javaVM->systemClassLoader) && (NULL == classLoader->classLoaderObject))
+			if (((classLoader == vm->systemClassLoader) && (NULL == classLoader->classLoaderObject))
 				|| (options & J9_FINDCLASS_FLAG_USE_LOADER_CP_ENTRIES)
 			) {
 #ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
@@ -1042,7 +1070,7 @@ primitiveClass:
 #endif
 			} else {
 				foundClass = arbitratedLoadClass(vmThread, className, classNameLength, classLoader, exception);
-				omrthread_monitor_exit(vmThread->javaVM->classTableMutex);
+				omrthread_monitor_exit(vm->classTableMutex);
 			}
 			/* class table mutex is now unlocked */
 		}
