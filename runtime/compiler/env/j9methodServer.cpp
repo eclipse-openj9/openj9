@@ -50,11 +50,7 @@ romMethodAtClassIndex(J9ROMClass *romClass, uint64_t methodIndex)
    }
 
 TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
-   : TR_ResolvedJ9Method(fe, owningMethod),
-   _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
-   _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
-   _resolvedMethodsCache(decltype(_resolvedMethodsCache)::allocator_type(trMemory->heapMemoryRegion())),
-   _isUnresolvedStr(decltype(_isUnresolvedStr)::allocator_type(trMemory->heapMemoryRegion()))
+   : TR_ResolvedJ9Method(fe, owningMethod)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get(fej9->getJ9JITConfig());
@@ -73,11 +69,7 @@ TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethod
    }
 
 TR_ResolvedJ9JITaaSServerMethod::TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
-   : TR_ResolvedJ9Method(fe, owningMethod),
-   _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
-   _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(trMemory->heapMemoryRegion())),
-   _resolvedMethodsCache(decltype(_resolvedMethodsCache)::allocator_type(trMemory->heapMemoryRegion())),
-   _isUnresolvedStr(decltype(_isUnresolvedStr)::allocator_type(trMemory->heapMemoryRegion()))
+   : TR_ResolvedJ9Method(fe, owningMethod)
    {
    // Mirror has already been created, its parameters are passed in methodInfo
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
@@ -470,9 +462,9 @@ TR_ResolvedJ9JITaaSServerMethod::getAttributesCache(bool isStatic, bool unresolv
 bool
 TR_ResolvedJ9JITaaSServerMethod::getCachedFieldAttributes(int32_t cpIndex, TR_J9MethodFieldAttributes &attributes, bool isStatic)
    {
+   auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(_fe->_compInfoPT);
       {
       // First, search a global cache
-      TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor()); 
       auto attributesCache = getAttributesCache(isStatic);
       auto it = attributesCache->find(cpIndex);
@@ -486,14 +478,7 @@ TR_ResolvedJ9JITaaSServerMethod::getCachedFieldAttributes(int32_t cpIndex, TR_J9
    // If global cache is empty, search local cache
    // Local cache is searched after global, because it only stores
    // unresolved field attributes, so most attributes should be stored globally
-   auto &localCache = isStatic ? _staticAttributesCache : _fieldAttributesCache;
-   auto it = localCache.find(cpIndex);
-   if (it != localCache.end())
-      {
-      attributes = it->second;
-      return true;
-      }
-   return false;
+   return compInfoPT->getCachedFieldOrStaticAttributes((TR_OpaqueClassBlock *) _ramClass, cpIndex, attributes, isStatic);
    }
 
 void
@@ -505,12 +490,11 @@ TR_ResolvedJ9JITaaSServerMethod::cacheFieldAttributes(int32_t cpIndex, const TR_
    // 2. Per-compilation cache - stores attributes of unresolved fields, which might become resolved
    // during the current compilation, but assuming they are unresolved until the end of the compilation
    // is still functionally correct and does not seem to affect performance.
-   TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
+   auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(_fe->_compInfoPT);
    if (attributes.isUnresolvedInCP())
       {
       // field is unresolved in CP, can later become resolved, can only be cached per resolved method.
-      auto &attributesCache = isStatic ? _staticAttributesCache : _fieldAttributesCache;
-      attributesCache.insert({cpIndex, attributes});
+      compInfoPT->cacheFieldOrStaticAttributes((TR_OpaqueClassBlock *) _ramClass, cpIndex, attributes, isStatic);
       }
    else
       {
@@ -1168,17 +1152,19 @@ TR_ResolvedJ9JITaaSServerMethod::stringConstant(I_32 cpIndex)
    _stream->write(JITServer::MessageType::ResolvedMethod_stringConstant, _remoteMirror, cpIndex);
    auto recv = _stream->read<void *, bool, bool>();
 
-   _isUnresolvedStr.insert({cpIndex, TR_IsUnresolvedString(std::get<1>(recv), std::get<2>(recv))});
+   auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(_fe->_compInfoPT);
+   compInfoPT->cacheIsUnresolvedStr((TR_OpaqueClassBlock *) _ramClass, cpIndex, TR_IsUnresolvedString(std::get<1>(recv), std::get<2>(recv)));
    return std::get<0>(recv);
    }
 
 bool
 TR_ResolvedJ9JITaaSServerMethod::isUnresolvedString(I_32 cpIndex, bool optimizeForAOT)
    {
-   auto it = _isUnresolvedStr.find(cpIndex);
-   if (it != _isUnresolvedStr.end())
+   auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(_fe->_compInfoPT);
+   TR_IsUnresolvedString stringAttrs;
+   if (compInfoPT->getCachedIsUnresolvedStr((TR_OpaqueClassBlock *) _ramClass, cpIndex, stringAttrs))
       {
-      return optimizeForAOT ? it->second._optimizeForAOTTrueResult : it->second._optimizeForAOTFalseResult;
+      return optimizeForAOT ? stringAttrs._optimizeForAOTTrueResult : stringAttrs._optimizeForAOTFalseResult;
       }
    else
       {
