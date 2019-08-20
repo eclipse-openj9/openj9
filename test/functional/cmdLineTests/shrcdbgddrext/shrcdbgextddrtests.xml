@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2018, 2018 IBM Corp. and others
+  Copyright (c) 2018, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,19 +53,20 @@
 
  
  <test id="Create new shared cache with partition">
-  <command>$EXE$ $JIT_OPTIONS$ $SHARECLASSESOPTION$ $CP$ $PROGRAM$</command>
+  <command>$EXE$ $JIT_OPTIONS$ $SHARECLASSESOPTION$ -XX:-ShareAnonymousClasses $CP$ $PROGRAM$</command>
+  <!-- We are adding the option "-XX:-ShareAnonymousClasses" to disable the shared class cache for anonymous classes so no more orphans are stored in the cache than that we know of. -->
   <output regex="no" type="success">Puzzle solved!</output>
  </test>
  
  <test id="Add another class in the cache" >
-  <command>$EXE$ $JIT_OPTIONS$ -Xshareclasses:name=$CACHENAME$ $PROGRAM1$</command>
+  <command>$EXE$ $JIT_OPTIONS$ -Xshareclasses:name=$CACHENAME$ -XX:-ShareAnonymousClasses $PROGRAM1$</command>
   <output regex="no" type="success">OpenJ9</output>
  </test>
  
  <exec command="touch $PROGRAM1$.class" />
 
  <test id="Mark previous class entry as stale" >
-  <command>$EXE$ $JIT_OPTIONS$ -Xshareclasses:name=$CACHENAME$ $PROGRAM1$</command>
+  <command>$EXE$ $JIT_OPTIONS$ -Xshareclasses:name=$CACHENAME$ -XX:-ShareAnonymousClasses $PROGRAM1$</command>
   <output regex="no" type="success">OpenJ9</output>
  </test>
  
@@ -73,7 +74,7 @@
   <exec command="tso delete J9CORE1.DMP.*" platforms="zos_390-64.*" />
   <exec command="tso delete J9CORE1.DMP" platforms="zos_390-31.*" />
   <exec command="rm -f $DUMPFILE1$" />
-  <command>$EXE$ -Xshareclasses:name=$CACHENAME$ $CP$ $XDUMP$ $PROGRAM$</command>
+  <command>$EXE$ -Xshareclasses:name=$CACHENAME$ -XX:-ShareAnonymousClasses $CP$ $XDUMP$ $PROGRAM$</command>
   <output regex="no" type="success">Moved disk 0 to 1</output>
   <output regex="no" type="success">System dump written</output>
   <!-- check for unexpected core dumps -->

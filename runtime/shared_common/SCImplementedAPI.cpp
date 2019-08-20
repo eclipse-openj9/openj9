@@ -771,7 +771,15 @@ j9shr_classStoreTransaction_nextSharedClassForCompare(void * tobj)
 		return NULL;
 	}
 
-	obj->findNextRomClass = (J9ROMClass *) cachemap->findNextROMClass(currentThread, obj->findNextIterator, obj->firstFound, obj->classnameLength, (const char*)obj->classnameData);
+	const char *stringBytes = (const char*)obj->classnameData;
+	U_16 stringLength = obj->classnameLength;
+
+	char *end = getLastDollarSignOfLambdaClassName(stringBytes, obj->classnameLength);
+	if (NULL != end) {
+		stringLength = (U_16)(end - stringBytes + 1);
+	}
+
+	obj->findNextRomClass = (J9ROMClass *) cachemap->findNextROMClass(currentThread, obj->findNextIterator, obj->firstFound, stringLength, (const char*)obj->classnameData);
 
 	Trc_SHR_API_j9shr_nextSharedClassForCompare_Exit(currentThread);
 	return (J9ROMClass *)(obj->findNextRomClass);
