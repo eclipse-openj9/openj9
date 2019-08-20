@@ -39,22 +39,22 @@ public class Test1 {
     
     public static void main(String[] args) {
         
-		int input = 0;
-		boolean inputError = false;
+        int input = 0;
+        boolean inputError = false;
 
-		if (args.length > 0) {
-			try {
-				input = Integer.parseInt(args[0]);
-			} catch (NumberFormatException localNumberFormatException) {
-				inputError = true;
-			}
-		}
-		if ((inputError | input < 0 | input > 4)) {
-			System.out.println("Invalid argument");
-			input = 0;
-		}
-		
-    	if (input < 2) {
+        if (args.length > 0) {
+            try {
+                input = Integer.parseInt(args[0]);
+            } catch (NumberFormatException localNumberFormatException) {
+                inputError = true;
+            }
+        }
+        if ((inputError | input < 0 | input > 4)) {
+            System.out.println("Invalid argument");
+            input = 0;
+        }
+
+        if (input < 2) {
             if (0 == input) {
                 Comparator<String> stringComparatorLambda = (String o1, String o2) -> {
                     return o1.compareTo(o2) + o2.compareTo(o1) + 15 + (int)Math.sqrt(122324);
@@ -63,11 +63,11 @@ public class Test1 {
                 System.out.println(lambdaComparison);
             }
     		
-    		Comparator<String> stringComparatorLambda2 = (String o1, String o2) -> {
-    			return o1.compareTo(o2) + 42 + (int)Math.toRadians(95402.134);
-    		};
-    		int lambdaComparison2 = stringComparatorLambda2.compare("qqqsdasfds", "dsfkopvwqp");
-    		System.out.println(lambdaComparison2);
+            Comparator<String> stringComparatorLambda2 = (String o1, String o2) -> {
+                return o1.compareTo(o2) + 42 + (int)Math.toRadians(95402.134);
+            };
+            int lambdaComparison2 = stringComparatorLambda2.compare("qqqsdasfds", "dsfkopvwqp");
+            System.out.println(lambdaComparison2);
     	} else if (input < 4) {
             
             int x = 99;
@@ -136,23 +136,22 @@ public class Test1 {
             System.out.println(lambdaComparison10);
     	} else {
             int x = 99;
-    		Comparator<String> stringComparatorLambda = (String o1, String o2) -> {
-    			return str1.compareTo(o1) + o1.compareTo(o2) + o2.compareTo(o1) + 15 + x;
-    		};
-    		int lambdaComparison = stringComparatorLambda.compare("world", "hello");
-    		System.out.println(lambdaComparison);
-    		
-    		Test2 tobj = new Test2();
+            Comparator<String> stringComparatorLambda = (String o1, String o2) -> {
+                return str1.compareTo(o1) + o1.compareTo(o2) + o2.compareTo(o1) + 15 + x;
+            };
+            int lambdaComparison = stringComparatorLambda.compare("world", "hello");
+            System.out.println(lambdaComparison);
+
+            Test2 tobj = new Test2();
             tobj.func();
             
-    		Comparator<String> stringComparatorLambda2 = (String o1, String o2) -> {
-    			return str1.compareTo(o1) + o1.compareTo(o2) + o2.compareTo(o1) + 42 + x;
-    		};
-    		int lambdaComparison2 = stringComparatorLambda2.compare("qqqsdasfds", "dsfkopvwqp");
-    		System.out.println(lambdaComparison2);
-    	}
+            Comparator<String> stringComparatorLambda2 = (String o1, String o2) -> {
+                return str1.compareTo(o1) + o1.compareTo(o2) + o2.compareTo(o1) + 42 + x;
+            };
+            int lambdaComparison2 = stringComparatorLambda2.compare("qqqsdasfds", "dsfkopvwqp");
+            System.out.println(lambdaComparison2);
+        }
         
         System.out.println("Lambda test done!");
     }
 }
-

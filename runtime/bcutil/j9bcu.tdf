@@ -373,4 +373,4 @@ TraceException=Trc_BCU_j9bcutil_readClassFileBytes_MaxCPCount NoEnv Overhead=1 L
 
 TraceException=Trc_BCU_internalDefineClass_orphanNotFound Overhead=1 Level=1 Template="orphan ROM class %p not found in table, table entry was %p"
 
-TraceEvent=Trc_BCU_compareROMClassForEquality_event NoEnv Overhead=1 Level=7 Template="compareROMClassForEquality returns %d for class name %.*s"
+TraceEvent=Trc_BCU_compareROMClassForEquality_event NoEnv Overhead=1 Level=7 Template="compareROMClassForEquality returns %d for class name '%.*s'"
