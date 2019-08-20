@@ -272,7 +272,7 @@ namespace JITServer
          {
          auto data = message->data(n);
          if (data.type_case() != AnyPrimitive<typename ProtobufTypeConvert<Arg>::ProtoType>::typeCase())
-            throw StreamTypeMismatch("Recevied type " + std::to_string(data.type_case()) + " but expect type " + std::to_string(AnyPrimitive<typename ProtobufTypeConvert<Arg>::ProtoType>::typeCase()));
+            throw StreamTypeMismatch("Received type " + std::to_string(data.type_case()) + " but expect type " + std::to_string(AnyPrimitive<typename ProtobufTypeConvert<Arg>::ProtoType>::typeCase()));
          return std::make_tuple(ProtobufTypeConvert<Arg>::onRecv(&data));
          }
       };
