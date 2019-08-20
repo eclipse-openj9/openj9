@@ -51,7 +51,7 @@ public class UnwindCode {
 		this.address = address;
 	}
 	
-	private byte getOffSet() throws MemoryFault {
+	private byte getOffset() throws MemoryFault {
 		byte offset = (byte)(process.getByteAt(OFFSET_CODEOFFSET + module.getLoadAddress() + address));
 		return offset;
 	}
@@ -204,7 +204,7 @@ public class UnwindCode {
 	
 	public String toString() {
 		try {
-			return String.format("Offset 0x%02x : ", getOffSet()) + formatOp();
+			return String.format("Offset 0x%02x : ", getOffset()) + formatOp();
 		} catch (MemoryFault e) {
 			return "MemoryFault: " + e.getMessage();
 		} catch (CorruptDataException e) {
