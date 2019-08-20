@@ -606,12 +606,14 @@ UDATA
 findIndexInFlattenedClassCache(J9FlattenedClassCache *flattenedClassCache, J9ROMNameAndSignature *nameAndSignature)
 {
 	/* first field indicates the number of classes in the cache */
+	UDATA index = UDATA_MAX;
 	UDATA length = flattenedClassCache->numberOfEntries;
-	UDATA index = 0;
+	J9ROMFieldShape *fccEntryField = NULL;
 
 	for (UDATA i = 0; i < length; i++) {
-		if (J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature), J9ROMNAMEANDSIGNATURE_NAME(J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->nameAndSignature))
-			&& J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature), J9ROMNAMEANDSIGNATURE_SIGNATURE(J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->nameAndSignature))
+		fccEntryField = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, i)->field;
+		if (J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature), J9ROMFIELDSHAPE_NAME(fccEntryField))
+			&& J9UTF8_EQUALS(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature), J9ROMFIELDSHAPE_SIGNATURE(fccEntryField))
 		) {
 			index = i;
 			break;
