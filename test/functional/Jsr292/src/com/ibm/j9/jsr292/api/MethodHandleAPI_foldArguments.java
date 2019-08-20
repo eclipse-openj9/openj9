@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,22 @@ import java.lang.reflect.Method;
 public class MethodHandleAPI_foldArguments {
 	final Lookup lookup = lookup();
 	final String MHClassName = "java.lang.invoke.MethodHandles";
+
+
+	/**
+	 * foldArguments test with target and combiner that takes no arguments with
+	 * foldPosition at 0
+	 * @throws Throwable
+	 */
+	@Test(groups = { "level.extended" }, invocationCount=2)
+	public void test_foldArguments_NoArgs() throws Throwable {
+		MethodHandle mhCombiner = lookup.findStatic(SamePackageExample.class, "combinerMethod", methodType(void.class));
+		MethodHandle mhTarget = lookup.findStatic(SamePackageExample.class, "targetMethod", methodType(String.class));
+
+		/* The fold position is specified at the head of argument list */
+		MethodHandle mhResult = foldArguments(mhTarget, 0, mhCombiner);
+		AssertJUnit.assertEquals("[]", (String)mhResult.invokeExact());
+	}
 
 	/**
 	 * foldArguments test with foldPosition specified at the head of the argument list
