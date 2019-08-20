@@ -238,10 +238,8 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
       }
 
    // Check the flags related to the symbol validation manager
-   if (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_UsesSymbolValidationManager)
-      {
-      comp->setOption(TR_UseSymbolValidationManager);
-      }
+   bool usesSVM = _aotMethodHeaderEntry->flags & TR_AOTMethodHeader_UsesSymbolValidationManager;
+   options->setOption(TR_UseSymbolValidationManager, usesSVM);
 
    if ((_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_TMDisabled) && !comp->getOption(TR_DisableTM))
       {
