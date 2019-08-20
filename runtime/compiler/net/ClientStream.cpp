@@ -123,8 +123,8 @@ int ClientStream::static_init(TR::PersistentInfo *info)
 
    _sslCtx = ctx;
 
-   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Successfully initialized SSL context: OPENSSL_VERSION_NUMBER 0x%lx\n", OPENSSL_VERSION_NUMBER);
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Successfully initialized SSL context: OPENSSL_VERSION_NUMBER 0x%lx\n", OPENSSL_VERSION_NUMBER);
 #endif
    return 0;
    }
@@ -148,7 +148,7 @@ int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs
 
    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
    if (sockfd < 0)
-      throw StreamFailure("Cannot create socket for JITaaS");
+      throw StreamFailure("Cannot create socket for JITServer");
 
    int flag = 1;
    if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, (void*)&flag, sizeof(flag)) < 0)
@@ -251,8 +251,8 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
       throw JITServer::StreamFailure("Failed to set BIO SSL");
       }
 
-   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "SSL connection on socket 0x%x, Version: %s, Cipher: %s\n",
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "SSL connection on socket 0x%x, Version: %s, Cipher: %s\n",
                                                       connfd, SSL_get_version(ssl), SSL_get_cipher(ssl));
    return bio;
    }
