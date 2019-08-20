@@ -99,12 +99,14 @@ getOpenJ9Sha()
 char*
 getLastDollarSignOfLambdaClassName(const char *className, UDATA classNameLength)
 {
+	char *end = NULL;
+
 	if ((NULL == className) || (0 == classNameLength)) {
 		return NULL;
 	}
 
 	/* Get the pointer to the last '$' sign */
-	char* end = strnrchrHelper(className, '$', classNameLength);
+	end = strnrchrHelper(className, '$', classNameLength);
 
 	if ((NULL != end) && ((end - 8) - className > 0)) {
 		if (0 == memcmp(end - 8, "$$Lambda", sizeof("$$Lambda") - 1)) {
