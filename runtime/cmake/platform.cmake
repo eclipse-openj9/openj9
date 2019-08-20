@@ -50,9 +50,6 @@ if(OMR_ARCH_POWER)
     set(J9VM_PORT_RUNTIME_INSTRUMENTATION ON CACHE BOOL "")
 endif()
 
-add_definitions(
-	-DUT_DIRECT_TRACE_REGISTRATION
-)
 
 if(NOT OMR_OS_OSX)
     add_definitions(-DIPv6_FUNCTION_SUPPORT)
