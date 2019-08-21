@@ -295,30 +295,30 @@ ifdef j9vm_uma_supportsIpv6
 endif
 
 <#if uma.spec.processor.amd64>
-  CFLAGS += -DJ9HAMMER -m64
-  CXXFLAGS += -DJ9HAMMER -m64
-  CPPFLAGS += -DJ9HAMMER -m64
+  CFLAGS += -DJ9HAMMER -m64 -fstack-protector
+  CXXFLAGS += -DJ9HAMMER -m64 -fstack-protector
+  CPPFLAGS += -DJ9HAMMER -m64 -fstack-protector
 <#elseif uma.spec.processor.arm>
-  CFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include
-  CXXFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include -fno-threadsafe-statics
-  CPPFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED-I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include
+  CFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include -fstack-protector
+  CXXFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include -fno-threadsafe-statics -fstack-protector
+  CPPFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED-I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include -fstack-protector
 <#elseif uma.spec.processor.aarch64>
-  CFLAGS += -DJ9AARCH64
-  CXXFLAGS += -DJ9AARCH64
-  CPPFLAGS += -DJ9AARCH64
+  CFLAGS += -DJ9AARCH64 -fstack-protector
+  CXXFLAGS += -DJ9AARCH64 -fstack-protector
+  CPPFLAGS += -DJ9AARCH64 -fstack-protector
 <#elseif uma.spec.processor.ppc>
   CFLAGS += -DLINUXPPC
   CXXFLAGS += -DLINUXPPC
   CPPFLAGS += -DLINUXPPC
   <#if uma.spec.flags.env_gcc.enabled>
     ifdef j9vm_env_data64
-      CFLAGS += -m64 -DLINUXPPC64 -DPPC64
-      CXXFLAGS += -m64 -DLINUXPPC64 -DPPC64
-      CPPFLAGS += -m64 -DLINUXPPC64 -DPPC64
+      CFLAGS += -m64 -DLINUXPPC64 -DPPC64 -fstack-protector
+      CXXFLAGS += -m64 -DLINUXPPC64 -DPPC64 -fstack-protector
+      CPPFLAGS += -m64 -DLINUXPPC64 -DPPC64 -fstack-protector
     else
-      CFLAGS += -m32
-      CXXFLAGS += -m32
-      CPPFLAGS += -m32
+      CFLAGS += -m32 -fstack-protector
+      CXXFLAGS += -m32 -fstack-protector
+      CPPFLAGS += -m32 -fstack-protector
     endif
   <#else>
     CFLAGS += -qalias=noansi -qxflag=LTOL:LTOL0 -qxflag=selinux
@@ -341,11 +341,11 @@ endif
   </#if>
   ifdef j9vm_env_data64
     ifdef USE_PPC_GCC
-      PPC_GCC_CXXFLAGS += -DLINUXPPC -DLINUXPPC64 -DPPC64 -m64
+      PPC_GCC_CXXFLAGS += -DLINUXPPC -DLINUXPPC64 -DPPC64 -m64 -fstack-protector
     endif
   else
     ifdef USE_PPC_GCC
-      PPC_GCC_CXXFLAGS += -DLINUXPPC -m32
+      PPC_GCC_CXXFLAGS += -DLINUXPPC -m32 -fstack-protector
     endif
   endif
 <#elseif uma.spec.processor.s390>
@@ -358,9 +358,9 @@ endif
     CPPFLAGS += -DS39064
   endif
 <#elseif uma.spec.processor.x86>
-  CFLAGS += -DJ9X86 -m32 -msse2
-  CXXFLAGS += -DJ9X86 -m32 -msse2 -I/usr/include/nptl -fno-threadsafe-statics
-  CPPFLAGS += -DJ9X86 -m32 -msse2 -I/usr/include/nptl
+  CFLAGS += -DJ9X86 -m32 -msse2 -fstack-protector
+  CXXFLAGS += -DJ9X86 -m32 -msse2 -I/usr/include/nptl -fno-threadsafe-statics -fstack-protector
+  CPPFLAGS += -DJ9X86 -m32 -msse2 -I/usr/include/nptl -fstack-protector
 </#if>
 
 <#if uma.spec.processor.ppc && !uma.spec.flags.env_gcc.enabled>
