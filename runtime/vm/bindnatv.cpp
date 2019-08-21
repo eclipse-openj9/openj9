@@ -364,10 +364,10 @@ buildNativeFunctionNames(J9JavaVM * javaVM, J9Method* ramMethod, J9Class* ramCla
 	classNameData = J9UTF8_DATA(className);
 	classNameLength = J9UTF8_LENGTH(className);
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
-	methodName = J9ROMMETHOD_GET_NAME(ramClass->romClass, romMethod);
+	methodName = J9ROMMETHOD_NAME(romMethod);
 	methodNameData = J9UTF8_DATA(methodName) + nameOffset;
 	methodNameLength = J9UTF8_LENGTH(methodName) - (U_16) nameOffset;
-	methodSig = J9ROMMETHOD_GET_SIGNATURE(ramClass->romClass, romMethod);
+	methodSig = J9ROMMETHOD_SIGNATURE(romMethod);
 	methodSigData = J9UTF8_DATA(methodSig);
 	methodSigLength = J9UTF8_LENGTH(methodSig);
 
@@ -566,7 +566,7 @@ nativeSignature(J9Method* nativeMethod, char *resultBuffer)
 	BOOLEAN parsingReturnType = FALSE, processingBracket = FALSE;
 	char nextType = '\0';
 
-	methodSig = J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(nativeMethod)->romClass,J9_ROM_METHOD_FROM_RAM_METHOD(nativeMethod));
+	methodSig = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(nativeMethod));
 
 	i = 0;
 	arg = 3; /* skip the return type slot and JNI standard slots, they will be filled in later. */

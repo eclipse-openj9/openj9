@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,7 +97,7 @@ computeArgsCRC(const jvalue *args, jmethodID methodID)
 	ramMethod = ((J9JNIMethodID*)methodID)->method;
 	methodClass = J9_CLASS_FROM_METHOD(ramMethod);
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
-	sig = J9ROMMETHOD_GET_SIGNATURE(methodClass->romClass, romMethod);
+	sig = J9ROMMETHOD_SIGNATURE(romMethod);
 
 	/* count the args */
 	length = 0;

@@ -704,7 +704,7 @@ bool
 TR_J9MethodBase::isBigDecimalMethod(J9ROMMethod * romMethod, J9ROMClass * romClass)
    {
    return TR_J9VMBase::isBigDecimalClass(J9ROMCLASS_CLASSNAME(romClass)) &&
-          isBigDecimalNameAndSignature(J9ROMMETHOD_GET_NAME(romClass, romMethod), J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod));
+          isBigDecimalNameAndSignature(J9ROMMETHOD_NAME(romMethod), J9ROMMETHOD_SIGNATURE(romMethod));
    }
 
 bool
@@ -766,7 +766,7 @@ bool
 TR_J9MethodBase::isBigDecimalConvertersMethod(J9ROMMethod * romMethod, J9ROMClass * romClass)
    {
    return TR_J9VMBase::isBigDecimalConvertersClass(J9ROMCLASS_CLASSNAME(romClass)) &&
-          isBigDecimalConvertersNameAndSignature(J9ROMMETHOD_GET_NAME(romClass, romMethod), J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod));
+          isBigDecimalConvertersNameAndSignature(J9ROMMETHOD_NAME(romMethod), J9ROMMETHOD_SIGNATURE(romMethod));
    }
 
 bool
@@ -2309,8 +2309,8 @@ TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, TR_OpaqueMethod
 
    J9ROMClass *romClass = J9_CLASS_FROM_METHOD(((J9Method *)aMethod))->romClass;
    _className = J9ROMCLASS_CLASSNAME(romClass);
-   _name = J9ROMMETHOD_GET_NAME(romClass, romMethod);
-   _signature = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
+   _name = J9ROMMETHOD_NAME(romMethod);
+   _signature = J9ROMMETHOD_SIGNATURE(romMethod);
 
    parseSignature(trMemory);
    _fullSignature = NULL;
@@ -5188,7 +5188,7 @@ bool TR_ResolvedJ9Method::isSubjectToPhaseChange(TR::Compilation *comp)
          for (int i = 0; i < numMethods; ++i)
             {
             J9Method *method = &(methods[i]);
-            J9UTF8 *name = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+            J9UTF8 *name = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
 
             if (J9UTF8_LENGTH(name) == 13)
                {
@@ -5875,8 +5875,8 @@ TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
 
    #if defined(J9VM_RAS_EYECATCHERS)
    eTbl->className       = J9ROMCLASS_CLASSNAME(romClassPtr());
-   eTbl->methodName      = J9ROMMETHOD_GET_NAME(romClassPtr(), romMethod());// J9ROMMETHOD_NAME(romMethod());
-   eTbl->methodSignature = J9ROMMETHOD_GET_SIGNATURE(romClassPtr(), romMethod());   //J9ROMMETHOD_SIGNATURE(romMethod());
+   eTbl->methodName      = J9ROMMETHOD_NAME(romMethod());
+   eTbl->methodSignature = J9ROMMETHOD_SIGNATURE(romMethod());
    #endif
 
    J9ConstantPool *cpool;

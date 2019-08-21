@@ -444,7 +444,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       if (J9UTF8_LENGTH(className) == 36
           && J9UTF8_LENGTH(name) == 21
           && 0==memcmp(utf8Data(className), "com/ibm/rmi/io/FastPathForCollocated", 36)
-          && 0==memcmp(utf8Data(J9ROMMETHOD_GET_NAME(declaringClazz, romMethod)), "isVMDeepCopySupported", 21)
+          && 0==memcmp(utf8Data(J9ROMMETHOD_NAME(romMethod)), "isVMDeepCopySupported", 21)
          )
          {
          count = 0;
@@ -452,7 +452,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       else if (J9UTF8_LENGTH(className) == 39
           && J9UTF8_LENGTH(name) == 9
           && 0 == memcmp(utf8Data(className), "java/util/concurrent/ThreadPoolExecutor", 39)
-          && 0 == memcmp(utf8Data(J9ROMMETHOD_GET_NAME(declaringClazz, romMethod)), "runWorker", 9)
+          && 0 == memcmp(utf8Data(J9ROMMETHOD_NAME(romMethod)), "runWorker", 9)
           )
          {
          count = 0;
@@ -3189,14 +3189,14 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
             {
          char *classNameChars = (char *)J9UTF8_DATA(J9ROMCLASS_CLASSNAME(ROMCl));
          int32_t classNameLen = (int32_t)J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(ROMCl));
-         char *superSignature = (char*)J9UTF8_DATA(J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(superMethod)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(superMethod)));
-         int32_t superSigLen = (int32_t)J9UTF8_LENGTH(J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(superMethod)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(superMethod)));
-         char *superName = (char*)J9UTF8_DATA(J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(superMethod)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(superMethod)));
-         int32_t superNameLen = (int32_t) J9UTF8_LENGTH(J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(superMethod)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(superMethod)));
-         char *subSignature = (char*)J9UTF8_DATA(J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(subMethod)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(subMethod)));
-         int32_t subSigLen = (int32_t)J9UTF8_LENGTH(J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(subMethod)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(subMethod)));
-         char *subName = (char*)J9UTF8_DATA(J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(subMethod)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(subMethod)));
-         int32_t subNameLen = (int32_t)J9UTF8_LENGTH(J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(subMethod)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(subMethod)));
+         char *superSignature = (char*)J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(superMethod)));
+         int32_t superSigLen = (int32_t)J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(superMethod)));
+         char *superName = (char*)J9UTF8_DATA(J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(superMethod)));
+         int32_t superNameLen = (int32_t) J9UTF8_LENGTH(J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(superMethod)));
+         char *subSignature = (char*)J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(subMethod)));
+         int32_t subSigLen = (int32_t)J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(subMethod)));
+         char *subName = (char*)J9UTF8_DATA(J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(subMethod)));
+         int32_t subNameLen = (int32_t)J9UTF8_LENGTH(J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(subMethod)));
 
          printf("class = %.*s superSignature = %.*s, superName = %.*s, supermodifers = %x , subSignature = %.*s, subName = %.*s, submodifiers = %x subMethod = %p methodModifiersAreSafe = %d\n"
                ,classNameLen,classNameChars,superSigLen,superSignature,superNameLen,superName,(int)superROM->modifiers,subSigLen,subSignature,subNameLen,subName,(int)subROM->modifiers,subMethod,methodModifiersAreSafe );
@@ -3368,8 +3368,8 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
                callSignature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
                callName = J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature);
 
-               J9UTF8 *superSignature = J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(superMethod)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(superMethod));
-               J9UTF8 *superName = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(superMethod)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(superMethod));
+               J9UTF8 *superSignature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(superMethod));
+               J9UTF8 *superName = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(superMethod));
 
                if(   J9UTF8_LENGTH(superSignature) != J9UTF8_LENGTH(callSignature)
                    || J9UTF8_LENGTH(superName) != J9UTF8_LENGTH(callName)

@@ -113,8 +113,8 @@ searchClassForMethodCommon(J9Class * clazz, U_8 * name, UDATA nameLength, U_8 * 
 
 			do {
 				J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(&(methods[midIndex]));
-				J9UTF8 * nameUTF = J9ROMMETHOD_GET_NAME(romClass, romMethod);
-				J9UTF8 * sigUTF = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
+				J9UTF8 * nameUTF = J9ROMMETHOD_NAME(romMethod);
+				J9UTF8 * sigUTF = J9ROMMETHOD_SIGNATURE(romMethod);
 				IDATA result = partialMatch ?
 						compareMethodNameAndPartialSignature(name, (U_16) nameLength, sig, (U_16) sigLength, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF))
 						: compareMethodNameAndSignature(name, (U_16) nameLength, sig, (U_16) sigLength, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF));
@@ -135,8 +135,8 @@ searchClassForMethodCommon(J9Class * clazz, U_8 * name, UDATA nameLength, U_8 * 
 
 			do {
 				J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methods);
-				J9UTF8 * nameUTF = J9ROMMETHOD_GET_NAME(romClass, romMethod);
-				J9UTF8 * sigUTF = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
+				J9UTF8 * nameUTF = J9ROMMETHOD_NAME(romMethod);
+				J9UTF8 * sigUTF = J9ROMMETHOD_SIGNATURE(romMethod);
 				IDATA result = partialMatch ?
 						compareMethodNameAndPartialSignature(name, (U_16) nameLength, sig, (U_16) sigLength, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF))
 						: compareMethodNameAndSignature(name, (U_16) nameLength, sig, (U_16) sigLength, J9UTF8_DATA(nameUTF), J9UTF8_LENGTH(nameUTF), J9UTF8_DATA(sigUTF), J9UTF8_LENGTH(sigUTF));
@@ -235,7 +235,7 @@ processMethod(J9VMThread * currentThread, UDATA lookupOptions, J9Method * method
 
 			if (cl1 != cl2) {
 				J9UTF8 * lookupSig;
-				J9UTF8 * methodSig = J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(method)->romClass, romMethod);
+				J9UTF8 * methodSig = J9ROMMETHOD_SIGNATURE(romMethod);
 				if (lookupOptions & J9_LOOK_DIRECT_NAS) {
 					J9NameAndSignature * nas = (J9NameAndSignature *) nameAndSig;
 					lookupSig = nas->signature;
