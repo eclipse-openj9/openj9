@@ -7317,6 +7317,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             options->setOption(TR_UseSymbolValidationManager);
             options->setOption(TR_DisableKnownObjectTable);
             }
+         else if (!vm->canUseSymbolValidationManager())
+            {
+            // disable SVM in case it was enabled explicitly with -Xjit:useSymbolValidationManager
+            options->setOption(TR_UseSymbolValidationManager, false);
+            }
 
          // Set jitDump specific options
          TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
