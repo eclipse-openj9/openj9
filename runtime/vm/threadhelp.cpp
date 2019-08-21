@@ -240,6 +240,7 @@ omrthread_monitor_t
 getMonitorForWait(J9VMThread* vmThread, j9object_t object)
 {
 	j9objectmonitor_t lock;
+	j9objectmonitor_t *lockEA = NULL;
 	omrthread_monitor_t monitor;
 	J9ObjectMonitor * objectMonitor;
 
@@ -252,11 +253,12 @@ getMonitorForWait(J9VMThread* vmThread, j9object_t object)
 			setNativeOutOfMemoryError(vmThread, J9NLS_JCL_FAILED_TO_INFLATE_MONITOR);
 			return NULL;
 		}
-		lock = objectMonitor->alternateLockword;
+		lockEA = &objectMonitor->alternateLockword;
 	} 
 	else {
-		lock = J9OBJECT_MONITOR(vmThread, object);
+		lockEA = J9OBJECT_MONITOR_EA(vmThread, object);
 	}
+	lock = J9_LOAD_LOCKWORD(vmThread, lockEA);
 
 	if (J9_LOCK_IS_INFLATED(lock)) {
 		objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);

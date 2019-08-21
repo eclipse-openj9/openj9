@@ -1565,15 +1565,13 @@ UDATA TR_J9VMBase::getHighTenureAddress()
 
 bool TR_J9VMBase::generateCompressedPointers()
    {
-   return TR::Options::useCompressedPointers();
+   return TR::Compiler->om.compressObjectReferences();
    }
 
 
 bool TR_J9VMBase::generateCompressedLockWord()
    {
-   if (sizeof(j9objectmonitor_t) == 4)
-      return true;
-   return false;
+   return TR::Compiler->om.compressObjectReferences();
    }
 
 

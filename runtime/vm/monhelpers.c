@@ -54,11 +54,11 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 	} else {
 		lockEA = J9OBJECT_MONITOR_EA(vmStruct, object);
 	}
-	lock = *lockEA;
+	lock = J9_LOAD_LOCKWORD(vmStruct, lockEA);
 
 	if (J9_FLATLOCK_OWNER(lock) == vmStruct) {
 		/* the current thread owns the monitor, and it's a flat lock */
-		UDATA count = lock & OBJECT_HEADER_LOCK_BITS_MASK;
+		UDATA count = (UDATA)lock & OBJECT_HEADER_LOCK_BITS_MASK;
 		/* low bits may be:
 		 * 	 00 (no flatlock recursion, flatlock contention bit (FLC) is clear), 
 		 *	 01 (inflated -- impossible)
@@ -79,7 +79,7 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 		} else if (count >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) {
 			/* just decrement the flatlock recursion count */
 			lock -= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT;
-			*lockEA = lock;
+			J9_STORE_LOCKWORD(vmStruct, lockEA, lock);
 #ifdef J9VM_THR_LOCK_RESERVATION
 		} else if (count & OBJECT_HEADER_LOCK_RESERVED) {
 			/* lock is reserved but unowned (if it were owned the count would be >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) */
@@ -182,7 +182,7 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 		return rc;
 	} else {
 		/* flat lock, but wrong thread */
-		Assert_VM_true( (lock == 0) || (lock & ~(j9objectmonitor_t)OBJECT_HEADER_LOCK_BITS_MASK) );
+		Assert_VM_true( (lock == 0) || ((UDATA)lock & ~(UDATA)OBJECT_HEADER_LOCK_BITS_MASK) );
 		Trc_VM_objectMonitorExit_Exit_IllegalFlatLock(vmStruct, lock, object);
 		return J9THREAD_ILLEGAL_MONITOR_STATE;
 	}
@@ -216,9 +216,9 @@ objectMonitorInflate(J9VMThread* vmStruct, j9object_t object, UDATA lock)
 	((J9ThreadAbstractMonitor*)monitor)->count = J9_FLATLOCK_COUNT(lock);	
 
 	if (!LN_HAS_LOCKWORD(vmStruct,object)) {
-			objectMonitor->alternateLockword = (j9objectmonitor_t)(UDATA)objectMonitor | OBJECT_HEADER_LOCK_INFLATED;
+		objectMonitor->alternateLockword = (j9objectmonitor_t)((UDATA)objectMonitor | OBJECT_HEADER_LOCK_INFLATED);
 	} else {
-		J9OBJECT_SET_MONITOR(vmStruct, object, (j9objectmonitor_t)(UDATA)objectMonitor | OBJECT_HEADER_LOCK_INFLATED);
+		J9OBJECT_SET_MONITOR(vmStruct, object, (j9objectmonitor_t)((UDATA)objectMonitor | OBJECT_HEADER_LOCK_INFLATED));
 	}
 
 	((J9ThreadAbstractMonitor*)monitor)->flags |= J9THREAD_MONITOR_INFLATED;
@@ -251,6 +251,7 @@ cancelLockReservation(J9VMThread* vmStruct)
 {
 	j9object_t object = NULL;
 	j9objectmonitor_t lock = 0;
+	j9objectmonitor_t *lockEA = NULL;
 
 	Trc_VM_cancelLockReservation_Entry(vmStruct, vmStruct->blockingEnterObject);
 	Assert_VM_mustHaveVMAccess(vmStruct);
@@ -261,15 +262,15 @@ cancelLockReservation(J9VMThread* vmStruct)
 
 		Assert_VM_true(objectMonitor != NULL);
 
-		lock = objectMonitor->alternateLockword;
+		lockEA = &objectMonitor->alternateLockword;
 	} else {
-		lock = *J9OBJECT_MONITOR_EA(vmStruct, object);
+		lockEA = J9OBJECT_MONITOR_EA(vmStruct, object);
 	}
+	lock = J9_LOAD_LOCKWORD(vmStruct, lockEA);
 
 	if ( (lock & (OBJECT_HEADER_LOCK_INFLATED | OBJECT_HEADER_LOCK_RESERVED)) == OBJECT_HEADER_LOCK_RESERVED) {
 		j9objectmonitor_t oldLock = 0;
 		j9objectmonitor_t newLock = 0;
-		j9objectmonitor_t *lockEA = NULL;
 		J9VMThread* reservationOwner = J9_FLATLOCK_OWNER(lock);
 
 		Trc_VM_cancelLockReservation_reservationOwner(vmStruct, reservationOwner);
@@ -291,7 +292,7 @@ cancelLockReservation(J9VMThread* vmStruct)
 
 		/* swap in an unreserved lock word */
 		/* (must use atomics since another thread might be doing this too) */
-		oldLock = *lockEA;
+		oldLock = J9_LOAD_LOCKWORD(vmStruct, lockEA);
 
 		/* must verify that the halted thread still owns the reservation */
 		if ( J9_FLATLOCK_OWNER(oldLock) == reservationOwner ) {
@@ -306,6 +307,7 @@ cancelLockReservation(J9VMThread* vmStruct)
 					Assert_VM_true(J9_FLATLOCK_COUNT(oldLock) == 0);
 				}
 
+				/* TODO: Move file to C++, use VM_ObjectMonitor::compareAndSwapLockWord */
 				if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmStruct)) {
 					compareAndSwapU32((uint32_t*)lockEA, (uint32_t)oldLock, (uint32_t)newLock);
 				} else {

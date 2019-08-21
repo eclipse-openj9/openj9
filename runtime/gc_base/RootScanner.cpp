@@ -184,8 +184,16 @@ MM_RootScanner::scanMonitorReferencesComplete(MM_EnvironmentBase *env)
 void
 MM_RootScanner::doMonitorLookupCacheSlot(j9objectmonitor_t* slotPtr)
 {
-	if(0 != *slotPtr) {
-		*slotPtr = 0;
+	// TODO: Local version of compressObjectReferences() ?
+	// TODO: Add new lockword macros (pass boolean)
+	if (_env->compressObjectReferences()) {
+		if (0 != *(U_32*)slotPtr) {
+			*(U_32*)slotPtr = 0;
+		}
+	} else {
+		if (0 != *(UDATA*)slotPtr) {
+			*(UDATA*)slotPtr = 0;
+		}
 	}
 }
 
