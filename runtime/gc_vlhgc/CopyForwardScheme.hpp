@@ -515,6 +515,17 @@ private:
 	void insertTailCandidate(MM_EnvironmentVLHGC* env, MM_ReservedRegionListHeader* regionList, MM_HeapRegionDescriptorVLHGC *tailRegion);
 
 	/**
+	 * Insert the specified tail candidate into the tail candidate list and sort the list by tail size ascending order.
+	 * The implementation assumes that the calling thread can modify
+	 * regionList without locking it so the callsite either needs to have locked the list or be single-threaded.
+	 * @param env[in] The GC thread
+	 * @param regionList[in] The region list to which tailRegion should be added as a a tail candidate
+	 * @param tailRegion[in] The region to add
+	 * @param isAscending
+	 */
+	void insertAndSortTailCandidate(MM_EnvironmentVLHGC* env, MM_ReservedRegionListHeader* regionList, MM_HeapRegionDescriptorVLHGC* tailRegion, bool isAscending);
+
+	/**
 	 * Remove the specified tail candidate from the tail candidate list.  The implementation assumes that the calling thread can modify 
 	 * regionList without locking it so the callsite either needs to have locked the list or be single-threaded.
 	 * @param env[in] The GC thread

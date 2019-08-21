@@ -4022,7 +4022,12 @@ MM_CopyForwardScheme::workThreadGarbageCollect(MM_EnvironmentVLHGC *env)
 						Assert_MM_true(pool->getActualFreeMemorySize() < region->getSize());
 						Assert_MM_false(region->isSurvivorRegion());
 						Assert_MM_true(NULL == region->_copyForwardData._survivorBase);
-						insertTailCandidate(env, &_reservedRegionList[compactGroup], region);
+						if (MM_GCExtensionsBase::SORT_ORDER_NOORDER == _extensions->tarokTailCandidateListSortOrder) {
+							insertTailCandidate(env, &_reservedRegionList[compactGroup], region);
+						} else {
+							/* insert and sort tail candidate list ascendingly */
+							insertAndSortTailCandidate(env, &_reservedRegionList[compactGroup], region, (MM_GCExtensionsBase::SORT_ORDER_ASCENDING == _extensions->tarokTailCandidateListSortOrder));
+						}
 					}
 				}
 			}
@@ -5237,6 +5242,46 @@ MM_CopyForwardScheme::insertTailCandidate(MM_EnvironmentVLHGC* env, MM_ReservedR
 		regionList->_tailCandidates->_copyForwardData._previousRegion = tailRegion;
 	}
 	regionList->_tailCandidates = tailRegion;
+	regionList->_tailCandidateCount += 1;
+}
+
+void
+MM_CopyForwardScheme::insertAndSortTailCandidate(MM_EnvironmentVLHGC* env, MM_ReservedRegionListHeader* regionList, MM_HeapRegionDescriptorVLHGC* tailRegion, bool isAscending)
+{
+	/* Sort regionList by AllocatableByte low to high */
+	if (NULL == regionList->_tailCandidates) {
+		regionList->_tailCandidates = tailRegion;
+		tailRegion->_copyForwardData._nextRegion = NULL;
+		tailRegion->_copyForwardData._previousRegion = NULL;
+	} else {
+		MM_HeapRegionDescriptorVLHGC* current = regionList->_tailCandidates;
+		UDATA insertAllocatableBytes = ((MM_MemoryPoolBumpPointer *)tailRegion->getMemoryPool())->getAllocatableBytes();
+		UDATA currentAllocatableBytes = 0;
+		while (NULL != current) {
+			currentAllocatableBytes = ((MM_MemoryPoolBumpPointer *)current->getMemoryPool())->getAllocatableBytes();
+			if ((isAscending && (insertAllocatableBytes <= currentAllocatableBytes)) ||
+				(!isAscending && (insertAllocatableBytes >= currentAllocatableBytes))) {
+				MM_HeapRegionDescriptorVLHGC* previous = current->_copyForwardData._previousRegion;
+				if (NULL == previous) {
+					regionList->_tailCandidates = tailRegion;
+				} else {
+					previous->_copyForwardData._nextRegion = tailRegion;
+				}
+				tailRegion->_copyForwardData._previousRegion = previous;
+				tailRegion->_copyForwardData._nextRegion = current;
+				current->_copyForwardData._previousRegion = tailRegion;
+				break;
+			}
+			if (NULL != current->_copyForwardData._nextRegion) {
+				current = current->_copyForwardData._nextRegion;
+			} else {
+				current->_copyForwardData._nextRegion = tailRegion;
+				tailRegion->_copyForwardData._previousRegion = current;
+				tailRegion->_copyForwardData._nextRegion = NULL;
+				break;
+			}
+		}
+	}
 	regionList->_tailCandidateCount += 1;
 }
 

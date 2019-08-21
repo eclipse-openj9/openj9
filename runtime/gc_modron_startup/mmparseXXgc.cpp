@@ -638,6 +638,14 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->tarokEnableCopyForwardHybrid = false;
 			continue;
 		}
+		if (try_scan(&scan_start, "tarokSortTailCandidateAscending")) {
+			extensions->tarokTailCandidateListSortOrder = MM_GCExtensionsBase::SORT_ORDER_ASCENDING;
+			continue;
+		}
+		if (try_scan(&scan_start, "tarokSortTailCandidateDescending")) {
+			extensions->tarokTailCandidateListSortOrder = MM_GCExtensionsBase::SORT_ORDER_DESCENDING;
+			continue;
+		}
 
 #endif /* defined (J9VM_GC_VLHGC) */
 
