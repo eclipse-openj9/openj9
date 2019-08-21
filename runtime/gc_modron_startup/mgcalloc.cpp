@@ -115,11 +115,7 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 				Assert_MM_true(allocatedBytes == mixedOAM.getAllocateDescription()->getContiguousBytes());
 				if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit)) {
 					j9objectmonitor_t *lockEA = J9OBJECT_MONITOR_EA(vmThread, objectPtr);
-					if (env->compressObjectReferences()) {
-						*(U_32*)lockEA = OBJECT_HEADER_LOCK_RESERVED;						
-					} else {
-						*(UDATA*)lockEA = OBJECT_HEADER_LOCK_RESERVED;
-					}
+					J9_STORE_LOCKWORD(vmThread, lockEA, OBJECT_HEADER_LOCK_RESERVED);
 				}
 			}
 			env->_isInNoGCAllocationCall = false;
@@ -377,11 +373,7 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 			Assert_MM_true(allocatedBytes == mixedOAM.getAllocateDescription()->getContiguousBytes());
 			if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit)) {
 				j9objectmonitor_t *lockEA = J9OBJECT_MONITOR_EA(vmThread, objectPtr);
-				if (env->compressObjectReferences()) {
-					*(U_32*)lockEA = OBJECT_HEADER_LOCK_RESERVED;						
-				} else {
-					*(UDATA*)lockEA = OBJECT_HEADER_LOCK_RESERVED;
-				}
+				J9_STORE_LOCKWORD(vmThread, lockEA, OBJECT_HEADER_LOCK_RESERVED);
 			}
 		}
 	}

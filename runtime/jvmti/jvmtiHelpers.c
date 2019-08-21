@@ -1025,10 +1025,10 @@ createBreakpointedMethod(J9VMThread * currentThread, J9Method * ramMethod)
 #ifdef J9VM_ENV_DATA64
 	/* Account for the space taken by the name and signature UTF8s */
 
-	methodName = J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(ramMethod)->ramClass->romClass, originalROMMethod);
+	methodName = J9ROMMETHOD_NAME(originalROMMethod);
 	/* allocSize guaranteed to be 4-aligned at this point, so no need to align for UTF */
 	allocSize += ((sizeof(U_16) + J9UTF8_LENGTH(methodName) + 1) & ~1);
-	methodSignature = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(ramMethod)->ramClass->romClass, originalROMMethod);
+	methodSignature = J9ROMMETHOD_SIGNATURE(originalROMMethod);
 	allocSize += ((sizeof(U_16) + J9UTF8_LENGTH(methodSignature) + 1) & ~1);
 	genericSignature = J9_GENERIC_SIGNATURE_FROM_ROM_METHOD(originalROMMethod);
 	if (genericSignature != NULL) {

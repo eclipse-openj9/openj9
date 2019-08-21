@@ -525,8 +525,8 @@ static void jitWalkFrame(J9StackWalkState *walkState, UDATA walkLocals, void *st
 			PORT_ACCESS_FROM_WALKSTATE(walkState);
 			J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
 			J9UTF8 * className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(walkState->method)->romClass);
-			J9UTF8 * name = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(walkState->method)->romClass, romMethod);
-			J9UTF8 * sig = J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(walkState->method)->romClass, romMethod);
+			J9UTF8 * name = J9ROMMETHOD_NAME(romMethod);
+			J9UTF8 * sig = J9ROMMETHOD_SIGNATURE(romMethod);
 
 			j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_BEGIN_MULTI_LINE, J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP);
 			j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_MULTI_LINE, J9NLS_CODERT_UNABLE_TO_LOCATE_JIT_STACKMAP_METHOD, (U_32) J9UTF8_LENGTH(className), J9UTF8_DATA(className), (U_32) J9UTF8_LENGTH(name), J9UTF8_DATA(name), (U_32) J9UTF8_LENGTH(sig), J9UTF8_DATA(sig), walkState->method);
@@ -976,7 +976,7 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 		J9Method * method = (J9Method *) JIT_RESOLVE_PARM(1);
 		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 
-		signature = J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(method)->romClass,romMethod);
+		signature = J9ROMMETHOD_SIGNATURE(romMethod);
 		pendingSendSlots = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod); /* receiver is already included in this arg count */
 		walkStackedReceiver = ((romMethod->modifiers & J9AccStatic) == 0);
 #ifdef J9SW_ARGUMENT_REGISTER_COUNT
@@ -1016,7 +1016,7 @@ static void jitWalkResolveMethodFrame(J9StackWalkState *walkState)
 			}
 		}
 		romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
-		signature = J9ROMMETHOD_GET_SIGNATURE(interfaceClass->romClass, romMethod);
+		signature = J9ROMMETHOD_SIGNATURE(romMethod);
 		pendingSendSlots = J9_ARG_COUNT_FROM_ROM_METHOD(romMethod); /* receiver is already included in this arg count */
 		walkStackedReceiver = TRUE;
 #ifdef J9SW_ARGUMENT_REGISTER_COUNT

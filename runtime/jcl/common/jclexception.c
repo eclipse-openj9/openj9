@@ -175,7 +175,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 
 			/* Fill in method name */
 
-			utf = J9ROMMETHOD_GET_NAME(romClass, romMethod);
+			utf = J9ROMMETHOD_NAME(romMethod);
 			string = vm->memoryManagerFunctions->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utf), (U_32) J9UTF8_LENGTH(utf), J9_STR_XLAT);
 			if (string == NULL) {
 				rc = FALSE;

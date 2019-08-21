@@ -129,18 +129,10 @@ public:
 		_subclassBackfillOffset(NO_BACKFILL_AVAILABLE)
 	{
 		if (J9ROMCLASS_IS_CONTENDED(romClass)) {
-			PORT_ACCESS_FROM_VMC(vm);
-			J9CacheInfoQuery cQuery;
-			memset(&cQuery, 0, sizeof(cQuery));
-			cQuery.cmd = J9PORT_CACHEINFO_QUERY_LINESIZE;
-			cQuery.level = 1;
-			cQuery.cacheType = J9PORT_CACHEINFO_DCACHE;
-			IDATA queryResult = j9sysinfo_get_cache_info(&cQuery);
-			if (queryResult > 0) {
-				_cacheLineSize = (U_32) queryResult;
+			UDATA dCacheLineSize = vm->dCacheLineSize;
+			if (dCacheLineSize > 0) {
+				_cacheLineSize = (U_32) dCacheLineSize;
 				_useContendedClassLayout = true;
-			} else {
-				Trc_VM_contendedLinesizeFailed(queryResult);
 			}
 		}
 	}

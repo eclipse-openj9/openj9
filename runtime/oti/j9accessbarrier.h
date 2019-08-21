@@ -25,24 +25,25 @@
 
 #include "j9cfg.h"
 #include "j9comp.h"
+#include "omr.h"
 
 /*
  * Define type used to represent the class in the 'clazz' slot of an object's header
  */
-#ifdef OMR_GC_COMPRESSED_POINTERS
-typedef U_32 j9objectclass_t;
-#else /* OMR_GC_COMPRESSED_POINTERS */
+#if defined(OMR_GC_FULL_POINTERS)
 typedef UDATA j9objectclass_t;
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+#else /* OMR_GC_FULL_POINTERS */
+typedef U_32 j9objectclass_t;
+#endif /* OMR_GC_FULL_POINTERS */
 
 /*
  * Define type used to represent the lock in the 'monitor' slot of an object's header
  */
-#ifdef OMR_GC_COMPRESSED_POINTERS
-typedef U_32 j9objectmonitor_t;
-#else /* OMR_GC_COMPRESSED_POINTERS */
+#if defined(OMR_GC_FULL_POINTERS)
 typedef UDATA j9objectmonitor_t;
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+#else /* OMR_GC_FULL_POINTERS */
+typedef U_32 j9objectmonitor_t;
+#endif /* OMR_GC_FULL_POINTERS */
 
 /*
  * Define the type system for object pointers.
@@ -67,13 +68,13 @@ typedef struct J9IndexableObject* j9array_t;
  * Object reference fields that point to other objects require a different type from root references.  
  * In concrete terms (compressed pointers), this is the 32 bit representation of a pointer.
  */
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-typedef U_32 fj9object_t;
-typedef U_32 fj9array_t;
-#else
+#if defined(OMR_GC_FULL_POINTERS)
 typedef UDATA fj9object_t;
 typedef UDATA fj9array_t;
-#endif
+#else /* OMR_GC_FULL_POINTERS */
+typedef U_32 fj9object_t;
+typedef U_32 fj9array_t;
+#endif /* OMR_GC_FULL_POINTERS */
 
 /**
  * Internal references.  
@@ -599,42 +600,73 @@ typedef struct J9IndexableObject* mm_j9array_t;
  * Macros for accessing object header fields
  */
 
+/* clazz is the first field in all objects, so no need to split this macro */
+#define TMP_OFFSETOF_J9OBJECT_CLAZZ (offsetof(J9Object, clazz))
+
 #define J9OBJECT_CLAZZ(vmThread, object) \
 		(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
-				? (struct J9Class*)((UDATA)J9OBJECT_U32_LOAD(vmThread, object, offsetof(J9Object,clazz)) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) \
-				: (struct J9Class*)((UDATA)J9OBJECT_UDATA_LOAD(vmThread, object, offsetof(J9Object,clazz)) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
+				? (struct J9Class*)((UDATA)J9OBJECT_U32_LOAD(vmThread, object, TMP_OFFSETOF_J9OBJECT_CLAZZ) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) \
+				: (struct J9Class*)((UDATA)J9OBJECT_UDATA_LOAD(vmThread, object, TMP_OFFSETOF_J9OBJECT_CLAZZ) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
 
 #define J9OBJECT_CLAZZ_VM(javaVM, object) \
 		(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM) \
-				? (struct J9Class*)((UDATA)J9OBJECT_U32_LOAD_VM(javaVM, object, offsetof(J9Object,clazz)) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) \
-				: (struct J9Class*)((UDATA)J9OBJECT_UDATA_LOAD_VM(javaVM, object, offsetof(J9Object,clazz)) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
+				? (struct J9Class*)((UDATA)J9OBJECT_U32_LOAD_VM(javaVM, object, TMP_OFFSETOF_J9OBJECT_CLAZZ) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) \
+				: (struct J9Class*)((UDATA)J9OBJECT_UDATA_LOAD_VM(javaVM, object, TMP_OFFSETOF_J9OBJECT_CLAZZ) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
 
 #define J9OBJECT_FLAGS_FROM_CLAZZ(vmThread, object) \
 		(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
-				? ((UDATA)J9OBJECT_U32_LOAD(vmThread, object, offsetof(J9Object,clazz)) & ((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) \
-				: ((UDATA)J9OBJECT_UDATA_LOAD(vmThread, object, offsetof(J9Object,clazz)) & ((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
+				? ((UDATA)J9OBJECT_U32_LOAD(vmThread, object, TMP_OFFSETOF_J9OBJECT_CLAZZ) & ((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) \
+				: ((UDATA)J9OBJECT_UDATA_LOAD(vmThread, object, TMP_OFFSETOF_J9OBJECT_CLAZZ) & ((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
 
 #define J9OBJECT_FLAGS_FROM_CLAZZ_VM(javaVM, object)\
 		(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM) \
-				? ((UDATA)J9OBJECT_U32_LOAD_VM(javaVM, object, offsetof(J9Object,clazz)) & ((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) \
-				: ((UDATA)J9OBJECT_UDATA_LOAD_VM(javaVM, object, offsetof(J9Object,clazz)) & ((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
+				? ((UDATA)J9OBJECT_U32_LOAD_VM(javaVM, object, TMP_OFFSETOF_J9OBJECT_CLAZZ) & ((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) \
+				: ((UDATA)J9OBJECT_UDATA_LOAD_VM(javaVM, object, TMP_OFFSETOF_J9OBJECT_CLAZZ) & ((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))))
 
 #define J9OBJECT_SET_CLAZZ(vmThread, object, value) \
 		(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
-				? J9OBJECT_U32_STORE(vmThread, object, offsetof(J9Object,clazz), (U_32)(((UDATA)(value) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) | J9OBJECT_FLAGS_FROM_CLAZZ((vmThread), (object)))) \
-				: J9OBJECT_UDATA_STORE(vmThread, object, offsetof(J9Object,clazz), (UDATA)(((UDATA)(value) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) | J9OBJECT_FLAGS_FROM_CLAZZ((vmThread), (object)))))
+				? J9OBJECT_U32_STORE(vmThread, object, TMP_OFFSETOF_J9OBJECT_CLAZZ, (U_32)(((UDATA)(value) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) | J9OBJECT_FLAGS_FROM_CLAZZ((vmThread), (object)))) \
+				: J9OBJECT_UDATA_STORE(vmThread, object, TMP_OFFSETOF_J9OBJECT_CLAZZ, (UDATA)(((UDATA)(value) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) | J9OBJECT_FLAGS_FROM_CLAZZ((vmThread), (object)))))
 
 #define J9OBJECT_SET_CLAZZ_VM(javaVM, object, value) \
 		(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM) \
-				? J9OBJECT_U32_STORE_VM(javaVM, object, offsetof(J9Object,clazz), (U_32)(((UDATA)(value) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) | J9OBJECT_FLAGS_FROM_CLAZZ_VM((javaVM), (object)))) \
-				: J9OBJECT_UDATA_STORE_VM(javaVM, object, offsetof(J9Object,clazz), (UDATA)(((UDATA)(value) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) | J9OBJECT_FLAGS_FROM_CLAZZ_VM((javaVM), (object)))))
-
-/* clazz is the first field in all objects, so no need to split this macro */
-#define TMP_OFFSETOF_J9OBJECT_CLAZZ (offsetof(J9Object, clazz))
+				? J9OBJECT_U32_STORE_VM(javaVM, object, TMP_OFFSETOF_J9OBJECT_CLAZZ, (U_32)(((UDATA)(value) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) | J9OBJECT_FLAGS_FROM_CLAZZ_VM((javaVM), (object)))) \
+				: J9OBJECT_UDATA_STORE_VM(javaVM, object, TMP_OFFSETOF_J9OBJECT_CLAZZ, (UDATA)(((UDATA)(value) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) | J9OBJECT_FLAGS_FROM_CLAZZ_VM((javaVM), (object)))))
 
 #define J9OBJECT_MONITOR_OFFSET(vmThread,object) (J9OBJECT_CLAZZ(vmThread, object)->lockOffset)
 #define LN_HAS_LOCKWORD(vmThread,obj) (((IDATA)J9OBJECT_MONITOR_OFFSET(vmThread, obj)) >= 0)
 #define J9OBJECT_MONITOR_EA(vmThread, object) ((j9objectmonitor_t*)(((U_8 *)(object)) + J9OBJECT_MONITOR_OFFSET(vmThread, object)))
+
+/* Note the volatile in these macros may be unncessary, but they replace hard-coded volatile operations in the
+ * source, so maintaining the volatility is safest.
+ */
+#define J9_LOAD_LOCKWORD(vmThread, lwEA) \
+	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
+		? (j9objectmonitor_t)*(U_32 volatile *)(lwEA) \
+		: (j9objectmonitor_t)*(UDATA volatile *)(lwEA))
+
+#define J9_LOAD_LOCKWORD_VM(vm, lwEA) \
+	(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) \
+		? (j9objectmonitor_t)*(U_32 volatile *)(lwEA) \
+		: (j9objectmonitor_t)*(UDATA volatile *)(lwEA))
+
+#define J9_STORE_LOCKWORD(vmThread, lwEA, lock) \
+	do { \
+		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) { \
+			*(U_32 volatile *)(lwEA) = (U_32)(UDATA)(lock); \
+		} else { \
+			*(UDATA volatile *)(lwEA) = (UDATA)(lock); \
+		} \
+	} while(0)
+
+#define J9_STORE_LOCKWORD_VM(vm, lwEA, lock) \
+	do { \
+		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) { \
+			*(U_32 volatile *)(lwEA) = (U_32)(UDATA)(lock); \
+		} else { \
+			*(UDATA volatile *)(lwEA) = (UDATA)(lock); \
+		} \
+	} while(0)
 
 #define J9OBJECT_MONITOR(vmThread, object) \
 	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \

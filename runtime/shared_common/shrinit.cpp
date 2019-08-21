@@ -4367,7 +4367,7 @@ addTestJitHint(J9HookInterface** hookInterface, UDATA eventNum, void* voidData, 
 	J9UTF8* romclassName = J9ROMCLASS_CLASSNAME(romclass);
 	J9ROMMethod *romMethod = J9ROMCLASS_ROMMETHODS(romclass);
 	if (NULL != romMethod) {
-		J9UTF8 *methodName = J9ROMMETHOD_GET_NAME(romclass, romMethod);
+		J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
 
 		j9file_printf(PORTLIB, J9PORT_TTY_OUT, "addTestJitHint adding hint to %.*s.%.*s\n",
 				J9UTF8_LENGTH(romclassName), J9UTF8_DATA(romclassName), J9UTF8_LENGTH(methodName), J9UTF8_DATA(methodName));

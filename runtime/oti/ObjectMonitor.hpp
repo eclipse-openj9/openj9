@@ -97,7 +97,8 @@ public:
 	{
 		bool wait = false;
 		omrthread_monitor_t monitor = (omrthread_monitor_t)(UDATA)1; // invalid but non-NULL value
-		j9objectmonitor_t lock = (j9objectmonitor_t)NULL;
+		j9objectmonitor_t lock = 0;
+		j9objectmonitor_t *lwEA = NULL;
 		J9ObjectMonitor *objectMonitor = NULL;
 
 		if (!LN_HAS_LOCKWORD(currentThread, object)) {
@@ -107,11 +108,12 @@ public:
 				monitor = NULL;
 				goto done;
 			}
-			lock = objectMonitor->alternateLockword;
+			lwEA = &objectMonitor->alternateLockword;
 		}
 		else {
-			lock = J9OBJECT_MONITOR(currentThread, object);
+			lwEA = J9OBJECT_MONITOR_EA(currentThread, object);
 		}
+		lock = J9_LOAD_LOCKWORD(currentThread, lwEA);
 
 		if (J9_LOCK_IS_INFLATED(lock)) {
 			objectMonitor = J9_INFLLOCK_OBJECT_MONITOR(lock);
@@ -159,15 +161,15 @@ done:
 	{
 		bool notify = false;
 		omrthread_monitor_t monitor = (omrthread_monitor_t)(UDATA)1; // invalid but non-NULL value
-		j9objectmonitor_t lock = (j9objectmonitor_t)NULL;
+		j9objectmonitor_t lock = 0;
 		j9objectmonitor_t *lockEA = inlineGetLockAddress(currentThread, object);
 		if (NULL == lockEA) {
 			goto done;
 		}
 
-		lock = *lockEA;
+		lock = J9_LOAD_LOCKWORD(currentThread, lockEA);
 
-		if ((lock & ~(j9objectmonitor_t)OBJECT_HEADER_LOCK_BITS_MASK) == (j9objectmonitor_t)(UDATA)currentThread) {
+		if (((UDATA)lock & ~(UDATA)OBJECT_HEADER_LOCK_BITS_MASK) == (UDATA)currentThread) {
 #if defined(J9VM_THR_LOCK_RESERVATION)
 			if (checkOwner) {
 				/* If the RESERVED bit is set, then the recursion count must be non-zero */
@@ -197,6 +199,7 @@ done:
 	/**
 	 * Perform a compare and swap operation on the lockword of an object.
 	 *
+	 * @param currentThread[in] the current J9VMThread
 	 * @param lockEA[in] the location of the lockword
 	 * @param oldValue[in] the compare value
 	 * @param newValue[in] the swap value
@@ -205,13 +208,14 @@ done:
 	 * @returns	the contents of the lockword before the CAS whether it succeeds or not
 	 */
 	static VMINLINE j9objectmonitor_t
-	compareAndSwapLockword(j9objectmonitor_t volatile *lockEA, j9objectmonitor_t oldValue, j9objectmonitor_t newValue, bool readBeforeCAS = false)
+	compareAndSwapLockword(J9VMThread *currentThread, j9objectmonitor_t volatile *lockEA, j9objectmonitor_t oldValue, j9objectmonitor_t newValue, bool readBeforeCAS = false)
 	{
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-		j9objectmonitor_t contents = VM_AtomicSupport::lockCompareExchangeU32(lockEA, oldValue, newValue, readBeforeCAS);
-#else /* OMR_GC_COMPRESSED_POINTERS */
-		j9objectmonitor_t contents = VM_AtomicSupport::lockCompareExchange(lockEA, oldValue, newValue, readBeforeCAS);
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+		j9objectmonitor_t contents = 0;
+		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread)) {
+			contents = (j9objectmonitor_t)(UDATA)VM_AtomicSupport::lockCompareExchangeU32((U_32*)lockEA, (U_32)(UDATA)oldValue, (U_32)(UDATA)newValue, readBeforeCAS);
+		} else {
+			contents = (j9objectmonitor_t)VM_AtomicSupport::lockCompareExchange((UDATA*)lockEA, (UDATA)oldValue, (UDATA)newValue, readBeforeCAS);
+		}
 		return contents;
 	}
 
@@ -236,7 +240,7 @@ done:
 			 */
 			mine |= (lock | OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT);
 		}
-		if (lock == compareAndSwapLockword(lockEA, lock, mine, readBeforeCAS)) {
+		if (lock == compareAndSwapLockword(currentThread, lockEA, lock, mine, readBeforeCAS)) {
 			VM_AtomicSupport::monitorEnterBarrier();
 			locked = true;
 		}
@@ -276,9 +280,9 @@ done:
 		if (LN_HAS_LOCKWORD(currentThread, object)) {
 			j9objectmonitor_t *lockEA = J9OBJECT_MONITOR_EA(currentThread, object);
 
-			if ((j9objectmonitor_t)(UDATA)currentThread == *lockEA) {
+			if ((j9objectmonitor_t)(UDATA)currentThread == J9_LOAD_LOCKWORD(currentThread, lockEA)) {
 				VM_AtomicSupport::writeBarrier();
-				*lockEA = 0;
+				J9_STORE_LOCKWORD(currentThread, lockEA, 0);
 				unlocked = true;
 			}
 		}

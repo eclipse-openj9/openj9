@@ -96,7 +96,7 @@ fixReturnBytecodes(J9PortLibrary * portLib, struct J9ROMClass* romClass)
 		if ((romMethod->modifiers & (CFR_ACC_NATIVE | CFR_ACC_ABSTRACT)) == 0) {
 			if (isJavaLangObject) {
 				/* Avoid rewriting genericReturn for Object.<init>() */
-				U_8 * nameData = J9UTF8_DATA(J9ROMMETHOD_GET_NAME(romClass, romMethod));
+				U_8 * nameData = J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod));
 				if (('<' == nameData[0]) && ('i' == nameData[1]) && (1 == romMethod->argCount)) {
 					continue;
 				}
@@ -123,8 +123,8 @@ getReturnBytecode(J9ROMClass * romClass, J9ROMMethod * romMethod, UDATA * return
 
 	U_8 sigChar, returnBytecode;
 
-	J9UTF8 * name = J9ROMMETHOD_GET_NAME(romClass, romMethod);
-	J9UTF8 * signature = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
+	J9UTF8 * name = J9ROMMETHOD_NAME(romMethod);
+	J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(romMethod);
 
 	U_8 * sigData = J9UTF8_DATA(signature);
 	UDATA sigLength = J9UTF8_LENGTH(signature);

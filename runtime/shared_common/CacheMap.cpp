@@ -3182,8 +3182,8 @@ SH_CacheMap::storeAttachedData(J9VMThread* currentThread, const void* addressInC
 			J9ClassLoader* loader;
 			J9InternalVMFunctions *vmFunctions = currentThread->javaVM->internalVMFunctions;
 			J9ROMClass* romClass = vmFunctions->findROMClassFromPC(currentThread, (UDATA)addressInCache, &loader);
-			J9UTF8* methodName = J9ROMMETHOD_GET_NAME(romClass, (J9ROMMethod *)addressInCache);
-			J9UTF8* methodSig = J9ROMMETHOD_GET_SIGNATURE(romClass, (J9ROMMethod *)addressInCache);
+			J9UTF8* methodName = J9ROMMETHOD_NAME((J9ROMMethod *)addressInCache);
+			J9UTF8* methodSig = J9ROMMETHOD_SIGNATURE((J9ROMMethod *)addressInCache);
  			J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
 
 			if ( 0 == result ) {
@@ -3258,8 +3258,8 @@ SH_CacheMap::updateAttachedData(J9VMThread* currentThread, const void* addressIn
 			J9ClassLoader* loader;
 			J9InternalVMFunctions *vmFunctions = currentThread->javaVM->internalVMFunctions;
 			J9ROMClass* romClass = vmFunctions->findROMClassFromPC(currentThread, (UDATA)addressInCache, &loader);
-			J9UTF8* methodName = J9ROMMETHOD_GET_NAME(romClass, (J9ROMMethod *)addressInCache);
-			J9UTF8* methodSig = J9ROMMETHOD_GET_SIGNATURE(romClass, (J9ROMMethod *)addressInCache);
+			J9UTF8* methodName = J9ROMMETHOD_NAME((J9ROMMethod *)addressInCache);
+			J9UTF8* methodSig = J9ROMMETHOD_SIGNATURE((J9ROMMethod *)addressInCache);
 			J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
 
 			if (0 == result) {
@@ -3336,8 +3336,8 @@ SH_CacheMap::updateAttachedUDATA(J9VMThread* currentThread, const void* addressI
 			J9ClassLoader* loader;
 			J9InternalVMFunctions *vmFunctions = currentThread->javaVM->internalVMFunctions;
 			J9ROMClass* romClass = vmFunctions->findROMClassFromPC(currentThread, (UDATA)addressInCache, &loader);
-			J9UTF8* methodName = J9ROMMETHOD_GET_NAME(romClass, (J9ROMMethod *)addressInCache);
-			J9UTF8* methodSig = J9ROMMETHOD_GET_SIGNATURE(romClass, (J9ROMMethod *)addressInCache);
+			J9UTF8* methodName = J9ROMMETHOD_NAME((J9ROMMethod *)addressInCache);
+			J9UTF8* methodSig = J9ROMMETHOD_SIGNATURE((J9ROMMethod *)addressInCache);
 			J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
 
 			if (0 == result) {
@@ -3401,8 +3401,8 @@ SH_CacheMap::findAttachedDataAPI(J9VMThread* currentThread, const void* addressI
 			J9ClassLoader* loader;
 			J9InternalVMFunctions *vmFunctions = currentThread->javaVM->internalVMFunctions;
 			J9ROMClass* romClass = vmFunctions->findROMClassFromPC(currentThread, (UDATA)addressInCache, &loader);
-			J9UTF8* methodName = J9ROMMETHOD_GET_NAME(romClass, (J9ROMMethod *)addressInCache);
-			J9UTF8* methodSig = J9ROMMETHOD_GET_SIGNATURE(romClass, (J9ROMMethod *)addressInCache);
+			J9UTF8* methodName = J9ROMMETHOD_NAME((J9ROMMethod *)addressInCache);
+			J9UTF8* methodSig = J9ROMMETHOD_SIGNATURE((J9ROMMethod *)addressInCache);
 			J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
 
 			if (( NULL == result) || (J9SHR_RESOURCE_MAX_ERROR_VALUE >= (UDATA)result)) {
@@ -4660,8 +4660,8 @@ SH_CacheMap::printAllCacheStats(J9VMThread* currentThread, UDATA showFlags, SH_C
 								break;
 							}
 						
-							romMethodName = J9ROMMETHOD_GET_NAME(romClass, romMethod);
-							romMethodSig = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
+							romMethodName = J9ROMMETHOD_NAME(romMethod);
+							romMethodSig = J9ROMMETHOD_SIGNATURE(romMethod);
 							if (romMethodName && romMethodSig) {
 								CACHEMAP_PRINT5(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_ROMMETHOD_DISPLAY,
 										J9UTF8_LENGTH(romMethodName), J9UTF8_DATA(romMethodName), J9UTF8_LENGTH(romMethodSig), J9UTF8_DATA(romMethodSig), romMethod);
@@ -4712,8 +4712,8 @@ SH_CacheMap::printAllCacheStats(J9VMThread* currentThread, UDATA showFlags, SH_C
 					J9ClassLoader* loader;
 					J9UTF8* romClassName = NULL;
 					J9ROMClass* romClass = vmFunctions->findROMClassFromPC(currentThread, (UDATA)romMethod, &loader);
- 					J9UTF8* romMethodName = J9ROMMETHOD_GET_NAME(romClass, romMethod);
-					J9UTF8* romMethodSig = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
+ 					J9UTF8* romMethodName = J9ROMMETHOD_NAME(romMethod);
+					J9UTF8* romMethodSig = J9ROMMETHOD_SIGNATURE(romMethod);
 					
  					if (romClass) {
 						romClassName = J9ROMCLASS_CLASSNAME(romClass);
@@ -4757,8 +4757,8 @@ SH_CacheMap::printAllCacheStats(J9VMThread* currentThread, UDATA showFlags, SH_C
 						J9ClassLoader* loader;
 						J9UTF8* romClassName = NULL;
 						J9ROMClass* romClass = vmFunctions->findROMClassFromPC(currentThread, (UDATA)romMethod, &loader);
-						J9UTF8* romMethodName = J9ROMMETHOD_GET_NAME(romClass, romMethod);
-						J9UTF8* romMethodSig = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
+						J9UTF8* romMethodName = J9ROMMETHOD_NAME(romMethod);
+						J9UTF8* romMethodSig = J9ROMMETHOD_SIGNATURE(romMethod);
 
 						if (romClass) {
 							romClassName = J9ROMCLASS_CLASSNAME(romClass);
@@ -6881,8 +6881,8 @@ SH_CacheMap::aotMethodOperationHelper(J9VMThread* currentThread, MethodSpecTable
 			J9UTF8* romClassName = NULL;
 			J9ClassLoader* loader = NULL;
 			J9ROMClass* romClass = vmFunctions->findROMClassFromPC(currentThread, (UDATA)romMethod, &loader);
-	 		J9UTF8* romMethodName = J9ROMMETHOD_GET_NAME(romClass, romMethod);
-			J9UTF8* romMethodSig = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
+	 		J9UTF8* romMethodName = J9ROMMETHOD_NAME(romMethod);
+			J9UTF8* romMethodSig = J9ROMMETHOD_SIGNATURE(romMethod);
 
 			if (NULL != romClass) {
 				romClassName = J9ROMCLASS_CLASSNAME(romClass);

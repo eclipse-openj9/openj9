@@ -136,10 +136,10 @@ rasTriggerMethod(J9VMThread *thr, J9Method *method, I_32 entry, const TriggerPha
 					entry ? "entry" : "return",
 					J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass)->length,
 					J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass)->data,
-					J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method))->length,
-					J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method))->data,
-					J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method))->length,
-					J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method))->data);
+					J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method))->length,
+					J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method))->data,
+					J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method))->length,
+					J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method))->data);
 
 	/*
 	 * Go through each of the rules seeing if this method is one of theirs
@@ -948,7 +948,7 @@ traceFrameCallBack(J9VMThread *vmThread, J9StackWalkState *state)
 	methodClass = J9_CLASS_FROM_METHOD(method);
 	className = J9ROMCLASS_CLASSNAME(methodClass->romClass);
 	romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-	methodName = J9ROMMETHOD_GET_NAME(methodClass->romClass, romMethod);
+	methodName = J9ROMMETHOD_NAME(romMethod);
 
 	if (romMethod->modifiers & J9AccNative) {
 		frameType = NATIVE_METHOD;

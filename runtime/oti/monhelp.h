@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,10 +33,10 @@
 #define J9_FLATLOCK_COUNT(lock)  ((((lock) & OBJECT_HEADER_LOCK_BITS_MASK) >> OBJECT_HEADER_LOCK_RECURSION_OFFSET) + 1)
 #endif
 
-#define J9_FLATLOCK_OWNER(lockWord) ((J9VMThread *)(UDATA)((lockWord) & (~(j9objectmonitor_t)OBJECT_HEADER_LOCK_BITS_MASK)))
+#define J9_FLATLOCK_OWNER(lockWord) ((J9VMThread *)((UDATA)(lockWord) & (~(UDATA)OBJECT_HEADER_LOCK_BITS_MASK)))
 
 #define J9_LOCK_IS_INFLATED(lockWord) ((lockWord) & OBJECT_HEADER_LOCK_INFLATED)
-#define J9_INFLLOCK_OBJECT_MONITOR(lockWord) ((J9ObjectMonitor *)(UDATA)((lockWord) & (~(j9objectmonitor_t)OBJECT_HEADER_LOCK_INFLATED)))
+#define J9_INFLLOCK_OBJECT_MONITOR(lockWord) ((J9ObjectMonitor *)((UDATA)(lockWord) & (~(UDATA)OBJECT_HEADER_LOCK_INFLATED)))
 #define J9_INFLLOCK_MONITOR(lockWord) (J9_INFLLOCK_OBJECT_MONITOR(lockWord)->monitor)
 
 #define J9_INFLLOCK_ABSTRACT_MONITOR(lockWord) ((J9ThreadAbstractMonitor*)J9_INFLLOCK_MONITOR(lockWord))
