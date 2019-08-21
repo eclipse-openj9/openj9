@@ -134,6 +134,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _JITServerAddress("localhost"),
          _JITServerPort(38400),
          _socketTimeoutMs(1000),
+         _clientUID(0),
 #endif /* defined(JITSERVER_SUPPORT) */
       OMR::PersistentInfoConnector(pm)
       {}
@@ -394,8 +395,8 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    JITServer::RemoteCompilationModes _remoteCompilationMode; // JITServer::NONE, JITServer::CLIENT, JITServer::SERVER
    std::string _JITServerAddress;
    uint32_t    _JITServerPort;
-   uint64_t    _clientUID;
    uint32_t    _socketTimeoutMs; // timeout for communication sockets used in out-of-process JIT compilation
+   uint64_t    _clientUID;
 #endif /* defined(JITSERVER_SUPPORT) */
    };
 
