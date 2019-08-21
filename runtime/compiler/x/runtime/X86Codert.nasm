@@ -26,11 +26,6 @@ eq_floats_Offset              equ 128
 eq_gprs_Offset                equ 0
 
 eq_gpr_size                   equ 8
-%ifdef ASM_OMR_GC_COMPRESSED_POINTERS
-   eq_vft_pointer_size        equ 4
-%else
-   eq_vft_pointer_size        equ 8
-%endif
 
 
    ; Hack marker:
@@ -41,7 +36,6 @@ eq_gpr_size                   equ 8
         ; 32-bit
 
 eq_gpr_size                   equ 4
-eq_vft_pointer_size           equ 4
 
 %endif
 

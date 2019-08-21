@@ -808,7 +808,7 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
             }
          else if (sym->isFinal() && !comp->compileRelocatableCode()) // Constructor can set different values for the same field in different runs on AOT
             {
-            int32_t fieldOffset = symRef->getOffset() - sizeof(J9Object); // blah
+            int32_t fieldOffset = symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes(); // blah
             if (typeIsConstible)
                {
                if (performTransformation(comp, "O^O transformIndirectLoad: [%p] turn final %s %s into load const\n", node, node->getOpCode().getName(), symRef->getName(comp->getDebug())))

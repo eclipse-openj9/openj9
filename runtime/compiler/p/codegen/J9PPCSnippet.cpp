@@ -2530,7 +2530,7 @@ static uint8_t* initializeCCPreLoadedArrayAlloc(uint8_t *buffer, void **CCPreLoa
    cursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, n, zeroed_branchToHelperLabel, cr0, cursor);
 
    // Add header to size and align to OBJECT_ALIGNMENT
-   cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, n, r5, r5, sizeof(J9IndexableObjectContiguous) + fej9->getObjectAlignmentInBytes() - 1, cursor);
+   cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, n, r5, r5, TR::Compiler->om.contiguousArrayHeaderSizeInBytes() + fej9->getObjectAlignmentInBytes() - 1, cursor);
    cursor = generateTrg1Src1Imm2Instruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::rldicr : TR::InstOpCode::rlwinm, n, r5, r5, 0, -fej9->getObjectAlignmentInBytes(), cursor);
    // Check if size < J9_GC_MINIMUM_OBJECT_SIZE and set size = J9_GC_MINIMUM_OBJECT_SIZE if so
    cursor = generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpli, n, cr0, r5, J9_GC_MINIMUM_OBJECT_SIZE, cursor);
@@ -2551,7 +2551,7 @@ static uint8_t* initializeCCPreLoadedArrayAlloc(uint8_t *buffer, void **CCPreLoa
    // Trap if size less than minimum object size
    cursor = generateSrc1Instruction(cg, TR::InstOpCode::twlti, n, r5, J9_GC_MINIMUM_OBJECT_SIZE, cursor);
    // Trap if data size not word aligned
-   cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, n, r10, r5, -sizeof(J9IndexableObjectContiguous), cursor);
+   cursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, n, r10, r5, -TR::Compiler->om.contiguousArrayHeaderSizeInBytes(), cursor);
    cursor = generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, n, r10, r10, 0, 3, cursor);
    cursor = generateSrc1Instruction(cg, TR::InstOpCode::twneqi, n, r10, 0, cursor);
 #endif

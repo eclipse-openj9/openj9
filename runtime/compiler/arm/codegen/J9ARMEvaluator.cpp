@@ -1243,12 +1243,12 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
          iCursor = generateTrg1Src1Instruction(cg, ARMOp_mov, node, copyReg, classReg, iCursor);
          classReg = copyReg;
          }
-      dataBegin = sizeof(J9Object);
+      dataBegin = TR::Compiler->om.objectHeaderSizeInBytes();
       }
    else
       {
       isArray = true;
-      dataBegin = sizeof(J9IndexableObjectContiguous);
+      dataBegin = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
       secondChild = node->getSecondChild();
 #ifndef J9VM_GC_ALIGN_OBJECTS
       if (opCode == TR::newarray)
