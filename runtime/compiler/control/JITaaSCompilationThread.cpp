@@ -569,13 +569,13 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          vmInfo._compressObjectReferences = TR::Compiler->om.compressObjectReferences();
          vmInfo._processorFeatureFlags = TR::Compiler->target.cpu.getProcessorFeatureFlags();
          vmInfo._invokeWithArgumentsHelperMethod = J9VMJAVALANGINVOKEMETHODHANDLE_INVOKEWITHARGUMENTSHELPER_METHOD(fe->getJ9JITConfig()->javaVM);
-
          vmInfo._noTypeInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact0, false, false, false)->getMethodAddress();
          vmInfo._int64InvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactJ, false, false, false)->getMethodAddress();
          vmInfo._int32InvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1, false, false, false)->getMethodAddress();
          vmInfo._addressInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactL, false, false, false)->getMethodAddress();
          vmInfo._floatInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactF, false, false, false)->getMethodAddress();
          vmInfo._doubleInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD, false, false, false)->getMethodAddress();
+         vmInfo._interpreterVTableOffset = TR::Compiler->vm.getInterpreterVTableOffset();
          client->write(response, vmInfo);
          }
          break;
@@ -1349,7 +1349,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          J9Method * ramMethod = 0;
          UDATA vTableIndex = (((J9RAMVirtualMethodRef*) literals)[cpIndex]).methodIndexAndArgCount;
          vTableIndex >>= 8;
-         if ((J9JIT_INTERP_VTABLE_OFFSET + sizeof(uintptrj_t)) == vTableIndex)
+         if ((TR::Compiler->vm.getInterpreterVTableOffset() + sizeof(uintptrj_t)) == vTableIndex)
             {
             TR::VMAccessCriticalSection resolveVirtualMethodRef(fe);
             vTableIndex = fe->_vmFunctionTable->resolveVirtualMethodRefInto(fe->vmThread(), cp, cpIndex,
@@ -2240,8 +2240,8 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
              }
          else if (isVirtual)
             {
-            TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptrj_t)fe->getClassFromJavaLangClass(jlClass)) + J9JIT_INTERP_VTABLE_OFFSET);
-            int32_t index = (int32_t)((vmSlot - J9JIT_INTERP_VTABLE_OFFSET) / sizeof(vtable[0]));
+            TR_OpaqueMethodBlock **vtable = (TR_OpaqueMethodBlock**)(((uintptrj_t)fe->getClassFromJavaLangClass(jlClass)) + TR::Compiler->vm.getInterpreterVTableOffset());
+            int32_t index = (int32_t)((vmSlot - TR::Compiler->vm.getInterpreterVTableOffset()) / sizeof(vtable[0]));
             j9method = vtable[index];
             }
          else

@@ -38,6 +38,7 @@
 #include "j9cfg.h"
 #include "jilconsts.h"
 #include "vmaccess.h"
+#include "control/JITaaSCompilationThread.hpp"
 
 int64_t
 J9::VMEnv::maxHeapSizeInBytes()
@@ -488,5 +489,10 @@ J9::VMEnv::isSelectiveMethodEnterExitEnabled(TR::Compilation *comp)
 size_t
 J9::VMEnv::getInterpreterVTableOffset()
    {
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_interpreterVTableOffset;
+      }
    return sizeof(J9Class);
    }
