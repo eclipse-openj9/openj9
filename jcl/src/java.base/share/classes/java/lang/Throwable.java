@@ -440,7 +440,7 @@ private void readObject(ObjectInputStream s)
 	if (suppressedExceptions != null) {
 		List<Throwable> newList = Collections.EMPTY_LIST;;
 		try {
-/*[IF Sidecar18-SE-OpenJ9&!Sidecar19-SE-OpenJ9]*/
+/*[IF Sidecar18-SE&!Sidecar19-SE-OpenJ9]*/
 			ClassLoader listClassLoader = suppressedExceptions.getClass().getClassLoader();
 			/* null ClassLoader from getClassLoader() call represents the bootstrap ClassLoader */
 			if (listClassLoader == null) {
