@@ -20,7 +20,7 @@
  *******************************************************************************/
 
 #ifndef PREESCAPEANALYSIS_INCL
-#define PREESCAPEANLAYSIS_INCL
+#define PREESCAPEANALYSIS_INCL
 
 #include <stdint.h>                           // for int32_t
 #include "optimizer/Optimization.hpp"         // for Optimization
