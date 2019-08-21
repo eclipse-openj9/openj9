@@ -40,17 +40,24 @@ import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 public class Jcmd {
 
 	@SuppressWarnings("nls")
-	private static final String HELPTEXT = "jcmd: run diagnostic command on another Java process%n"
-			+ " Format:%n"
-			+ "    jcmd <vmid> <arguments>%n"
-			+ " Arguments:%n"
-			+ "    <vmid>: Attach API VM ID as shown in jps or other Attach API-based tools.%n"
-			+ "    command[command arguments]: command from the list returned by \"-help\"%n"
-			+ "    -help: print the list of diagnostic commands%n"
-			+ "    -J: supply arguments to the Java VM running jcmd%n"
-			+ " NOTE: this utility may significantly affect the performance of the target JVM.%n"
-			+ "     The available diagnostic commands is determined by%n"
-			+ "     the target VM and may vary between VMs.%n";
+	private static final String HELPTEXT = "Usage : jcmd <vmid> <arguments>%n"
+			+ "%n"
+			+ "   -J : supply arguments to the Java VM running jcmd%n" 
+			+ "   -l : list JVM processes on the local machine%n"
+			+ "   -h : print this help message%n"
+			+ "%n"
+			+ "   <vmid> : Attach API VM ID as shown in jps or other Attach API-based tools%n"
+			+ "%n"
+			+ "   arguments:%n" 
+			+ "      help : print the list of diagnostic commands%n"
+			+ "      help <command> : print help for the specific command%n"
+			+ "      <command> [command arguments] : command from the list returned by \"help\"%n"
+			+ "%n"
+			+ "list JVM processes on the local machine. Default behavior when no options are specified.%n"
+			+ "%n"
+			+ "NOTE: this utility may significantly affect the performance of the target JVM.%n"
+			+ "    The available diagnostic commands are determined by%n"
+			+ "    the target VM and may vary between VMs.%n";
 	@SuppressWarnings("nls")
 	private static final String[] HELP_OPTIONS = {"-h", "help", "-help", "--help"};
 
