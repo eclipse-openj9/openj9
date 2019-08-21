@@ -314,7 +314,7 @@ public:
    virtual bool                  isSameMethod(TR_ResolvedMethod *);
 
    virtual uint16_t              numberOfParameterSlots();
-   virtual uint16_t              archetypeArgPlaceholderSlot(TR_Memory *);
+   virtual uint16_t              archetypeArgPlaceholderSlot();
    virtual uint16_t              numberOfTemps();
    virtual uint16_t              numberOfPendingPushes();
 
