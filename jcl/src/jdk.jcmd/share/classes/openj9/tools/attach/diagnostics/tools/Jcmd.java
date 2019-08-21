@@ -86,19 +86,24 @@ public class Jcmd {
 		} else if ((args.length == 1) && (null != firstArgument) && Arrays.stream(HELP_OPTIONS).anyMatch(firstArgument::equals)) {	
 			System.out.printf(HELPTEXT);
 		} else {
-			String vmid = firstArgument;
-			AttacherDiagnosticsProvider diagProvider = new AttacherDiagnosticsProvider();
 			command = DiagnosticUtils.makeJcmdCommand(args, 1);
-			try {
-				diagProvider.attach(vmid);
-				try {
-					Util.runCommandAndPrintResult(diagProvider, command, command); // $NON-NLS-1$
-				} finally {
-					diagProvider.detach();
-				}
-			} catch (IOException e) {
-				Util.handleCommandException(vmid, e);
+			if (command.isEmpty()) {
+				System.err.printf("There is no jcmd command.%n"); //$NON-NLS-1$
 				System.out.printf(HELPTEXT);
+			} else {
+				String vmid = firstArgument;
+				AttacherDiagnosticsProvider diagProvider = new AttacherDiagnosticsProvider();
+				try {
+					diagProvider.attach(vmid);
+					try {
+						Util.runCommandAndPrintResult(diagProvider, command, command); // $NON-NLS-1$
+					} finally {
+						diagProvider.detach();
+					}
+				} catch (IOException e) {
+					Util.handleCommandException(vmid, e);
+					System.out.printf(HELPTEXT);
+				}
 			}
 		}
 	}
