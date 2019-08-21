@@ -438,37 +438,18 @@ private void readObject(ObjectInputStream s)
 	
 	
 	if (suppressedExceptions != null) {
-		List<Throwable> newList = Collections.EMPTY_LIST;;
-		try {
-/*[IF Sidecar18-SE-OpenJ9&!Sidecar19-SE-OpenJ9]*/
-			ClassLoader listClassLoader = suppressedExceptions.getClass().getClassLoader();
-			/* null ClassLoader from getClassLoader() call represents the bootstrap ClassLoader */
-			if (listClassLoader == null) {
-/*[ELSE]*/
-			Module classModule = suppressedExceptions.getClass().getModule();
-			if (Object.class.getModule().equals(classModule)) {
-/*[ENDIF]*/
-				int listSize = suppressedExceptions.size();
-				if (listSize != 0) {
-					newList = new ArrayList<Throwable>(listSize);
-					for (Throwable t : suppressedExceptions) {
-						if (t == null) {
-							/*[MSG "K0561", "Null entries not permitted in suppressedExceptions serial stream"]*/
-							throw new NullPointerException(com.ibm.oti.util.Msg.getString("K0561")); //$NON-NLS-1$
-						} else if (t == this) {
-							/*[MSG "K0562", "Self-pointers not permitted in suppressedExceptions serial stream"]*/
-							throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0562")); //$NON-NLS-1$
-						} else {
-							newList.add(t);
-						}
-					}
+		if (suppressedExceptions.size() == 0) {
+			suppressedExceptions = Collections.EMPTY_LIST;
+		} else {
+			for (Throwable t : suppressedExceptions) {
+				if (t == null) {
+					/*[MSG "K0561", "Null entries not permitted in suppressedExceptions serial stream"]*/
+					throw new NullPointerException(com.ibm.oti.util.Msg.getString("K0561")); //$NON-NLS-1$
+				} else if (t == this) {
+					/*[MSG "K0562", "Self-pointers not permitted in suppressedExceptions serial stream"]*/
+					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0562")); //$NON-NLS-1$
 				}
-			} else {
-				/*[MSG "K0C00", "Non-standard List class not permitted in suppressedExceptions serial stream"]*/
-				throw new java.io.StreamCorruptedException(com.ibm.oti.util.Msg.getString("K0C00")); //$NON-NLS-1$
 			}
-		} finally {
-			suppressedExceptions = newList;
 		}
 	}
 }
