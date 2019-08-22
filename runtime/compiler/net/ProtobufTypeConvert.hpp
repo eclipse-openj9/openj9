@@ -272,7 +272,7 @@ namespace JITServer
          {
          auto data = message->data(n);
          if (data.type_case() != AnyPrimitive<typename ProtobufTypeConvert<Arg>::ProtoType>::typeCase())
-            throw StreamTypeMismatch("Expected type " + std::to_string(data.type_case()) + " but got type " + std::to_string(AnyPrimitive<typename ProtobufTypeConvert<Arg>::ProtoType>::typeCase()));
+            throw StreamTypeMismatch("Received type " + std::to_string(data.type_case()) + " but expect type " + std::to_string(AnyPrimitive<typename ProtobufTypeConvert<Arg>::ProtoType>::typeCase()));
          return std::make_tuple(ProtobufTypeConvert<Arg>::onRecv(&data));
          }
       };
@@ -280,7 +280,7 @@ namespace JITServer
    std::tuple<Args...> getArgs(const AnyData *message)
       {
       if (sizeof...(Args) != message->data_size())
-         throw StreamArityMismatch("Expected " + std::to_string(message->data_size()) + " args to unpack but got " + std::to_string(sizeof...(Args)) + "-tuple");
+         throw StreamArityMismatch("Received " + std::to_string(message->data_size()) + " args to unpack but expect " + std::to_string(sizeof...(Args)) + "-tuple");
       return GetArgs<Args...>::getArgs(message, 0);
       }
 

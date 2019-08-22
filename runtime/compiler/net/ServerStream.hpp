@@ -23,7 +23,7 @@
 #ifndef SERVER_STREAM_H
 #define SERVER_STREAM_H
 
-#include <google/protobuf/io/zero_copy_stream_impl.h> 
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 #include "net/ProtobufTypeConvert.hpp"
 #include "net/CommunicationStream.hpp"
 #include "env/VerboseLog.hpp"
@@ -35,7 +35,7 @@ class SSLOutputStream;
 class SSLInputStream;
 #endif
 
-namespace JITServer 
+namespace JITServer
 {
 class BaseCompileDispatcher;
 
@@ -51,7 +51,7 @@ class BaseCompileDispatcher;
    3) In this thread, instantiate a CompileDispatcher from a class defined in step (1)
       E.g.:    J9CompileDispatcher handler(jitConfig);
    4) Call  "ServerStream::serveRemoteCompilationRequests(&handler, persistentInfo);"
-      which will wait for a connection, accept the connection, create a ServerStream and call 
+      which will wait for a connection, accept the connection, create a ServerStream and call
       handler->compile(stream) for further processing, e.g. add the stream
       to a compilation queue
    5) On a different thread, extract the compilation entry from  the queue (which contains
@@ -60,8 +60,8 @@ class BaseCompileDispatcher;
    6) At this point the server could query the client with:
          stream->write(MessageType type, T... args);
          auto recv = stream->read<....>();
-   7) When compilation is complete, the server responds with
-         finishCompilation(uint32_t statusCode, T... args)
+   7) When compilation is completed successfully, the server responds with finishCompilation(T... args).
+      When compilation is aborted, the sever responds with writeError(uint32_t statusCode).
  */
 class ServerStream : public CommunicationStream
    {
@@ -78,11 +78,11 @@ public:
 #else
    explicit ServerStream(int connfd);
 #endif
-   virtual ~ServerStream() 
+   virtual ~ServerStream()
       {
       _numConnectionsClosed++;
       }
- 
+
    /**
       @brief Send a message to the client
 
@@ -101,7 +101,8 @@ public:
       @brief Read a message from the client
 
       The read operation is blocking, subject to a timeout.
-      If the message received is `compilationAbort` then an exception of type Streamcancel is thrown.
+      If the message received is `compilationInterrupted` then an exception of type StreamInterrupted is thrown.
+      If the message received is `connectionTerminate` then an exception of type StreamConnectionTerminate is thrown.
       If the server detects an incompatibility with the client then a StreamMessageTypeMissmatch
       exception is thrown.
       Otherwise, the arguments sent by the client are returned as a tuple
@@ -112,12 +113,23 @@ public:
    std::tuple<T...> read()
       {
       readBlocking(_cMsg);
-      if (_cMsg.type() == MessageType::compilationAbort)
-         throw StreamCancel(_cMsg.type());
-      // We are expecting the response type (_cMsg.type()) to be the same as the request type (_sMsg.type())
-      if (_cMsg.type() != _sMsg.type())
-         throw StreamMessageTypeMismatch(_sMsg.type(), _cMsg.type());
-         
+      switch (_cMsg.type())
+         {
+         case MessageType::compilationInterrupted:
+            {
+            throw StreamInterrupted();
+            }
+         case MessageType::connectionTerminate:
+            {
+            throw StreamConnectionTerminate();
+            }
+         default:
+            {
+            // We are expecting the response type (_cMsg.type()) to be the same as the request type (_sMsg.type())
+            if (_cMsg.type() != _sMsg.type())
+               throw StreamMessageTypeMismatch(_sMsg.type(), _cMsg.type());
+            }
+         }
       return getArgs<T...>(_cMsg.mutable_data());
       }
 
@@ -129,32 +141,43 @@ public:
       the one sent by the client. In order to ensure this, the client will embed
       version information in the first message it sends after a connection is established.
       The server will check whether its version matches the client's version and throw
-      `StreamVersionIncompatible` it is doesn't.
+      `StreamVersionIncompatible` if it doesn't.
 
-      Exceptions thrown: StreamCancel, StreamVersionIncompatible,StreamMessageTypeMismatch
- 
+      Exceptions thrown: StreamConnectionTerminate, StreamClientSessionTerminate, StreamVersionIncompatible, StreamMessageTypeMismatch
+
       @return Returns a tuple with information sent by the client
    */
    template <typename... T>
    std::tuple<T...> readCompileRequest()
       {
       readBlocking(_cMsg);
-      if (_cMsg.type() == JITServer::MessageType::clientTerminate)
+      if (_cMsg.version() != 0 && _cMsg.version() != getJITServerVersion())
          {
-         uint64_t clientId = std::get<0>(getRecvData<uint64_t>());
-         throw JITServer::StreamCancel(_cMsg.type(), clientId);
+         throw StreamVersionIncompatible(getJITServerVersion(), _cMsg.version());
          }
-      if (_cMsg.version() != 0 && _cMsg.version() != getJITaaSVersion())
+
+      switch (_cMsg.type())
          {
-         throw StreamVersionIncompatible(getJITaaSVersion(), _cMsg.version());
+         case MessageType::connectionTerminate:
+            {
+            throw StreamConnectionTerminate();
+            }
+         case MessageType::clientSessionTerminate:
+            {
+            uint64_t clientId = std::get<0>(getRecvData<uint64_t>());
+            throw StreamClientSessionTerminate(clientId);
+            }
+         case MessageType::compilationRequest:
+            {
+            return getArgs<T...>(_cMsg.mutable_data());
+            }
+         default:
+            {
+            throw StreamMessageTypeMismatch(MessageType::compilationRequest, _cMsg.type());
+            }
          }
-      if (_cMsg.type() != JITServer::MessageType::compilationRequest)
-         {
-         throw JITServer::StreamMessageTypeMismatch(JITServer::MessageType::compilationRequest, _cMsg.type());
-         }
-      return getArgs<T...>(_cMsg.mutable_data());
       }
-   
+
    /**
       @brief Extract the data from the received message and return it
    */
@@ -165,23 +188,40 @@ public:
       }
 
    /**
-      @brief Function invoked by server when compilation is completed
+      @brief Function invoked by server when compilation is completed successfully
 
       This should be the last message sent by a server as a response to a compilation request.
-      It must include a `statusCode` which can be indicative of an error and could include a 
-      variable number of parameters with compilation artifacts (including the compiled body).
+      It includes a variable number of parameters with compilation artifacts (including the compiled body).
    */
    template <typename... T>
-   void finishCompilation(uint32_t statusCode, T... args)
+   void finishCompilation(T... args)
       {
       try
          {
-         write(MessageType::compilationCode, statusCode, args...);
+         write(MessageType::compilationCode, args...);
          }
       catch (std::exception &e)
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Could not finish compilation: %s", e.what());
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Could not finish compilation: %s", e.what());
+         }
+      }
+
+   /**
+      @brief Function invoked by server when compilation is aborted
+   */
+   void writeError(uint32_t statusCode)
+      {
+      try
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "MessageType::compilationFailure: statusCode %u", statusCode);
+         write(MessageType::compilationFailure, statusCode);
+         }
+      catch (std::exception &e)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Could not write error code: %s", e.what());
          }
       }
 

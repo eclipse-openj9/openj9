@@ -37,27 +37,43 @@ private:
    std::string _message;
    };
 
-class StreamCancel: public virtual std::exception
+class StreamInterrupted: public virtual std::exception
    {
 public:
-   StreamCancel(MessageType type, uint64_t clientId=0) : _type(type), _clientId(clientId) { }
+   StreamInterrupted() { }
    virtual const char* what() const throw()
       {
-      if (_type == MessageType::clientTerminate)
-         return "Client session terminated at client's request";
-      else
-         return "Compilation cancelled by client";
+      return "Compilation interrupted at JITClient's request";
       }
-   MessageType getType() const
+   };
+
+class StreamConnectionTerminate: public virtual std::exception
+   {
+public:
+   StreamConnectionTerminate() { }
+   virtual const char* what() const throw()
       {
-      return _type;
+      return "Connection terminated at JITClient's request";
+      }
+   };
+
+class StreamClientSessionTerminate: public virtual std::exception
+   {
+public:
+   StreamClientSessionTerminate(uint64_t clientId) : _clientId(clientId)
+      {
+      _message = "JITClient session " + std::to_string(_clientId) + " terminated at JITClient's request";
+      }
+   virtual const char* what() const throw()
+      {
+      return _message.c_str();
       }
    uint64_t getClientId() const
       {
       return _clientId;
       }
 private:
-   MessageType _type;
+   std::string _message;
    uint64_t _clientId;
    };
 
@@ -76,9 +92,10 @@ public:
 class StreamMessageTypeMismatch: public virtual std::exception
    {
 public:
+   StreamMessageTypeMismatch() : _message("JITServer/JITClient message type mismatch detected") { }
    StreamMessageTypeMismatch(MessageType serverType, MessageType clientType)
       {
-      _message = "server expected mesasge type " + std::to_string(serverType) + " received " + std::to_string(clientType);
+      _message = "JITServer expected mesasge type " + std::to_string(serverType) + " received " + std::to_string(clientType);
       }
    virtual const char* what() const throw() 
       {
@@ -91,10 +108,10 @@ private:
 class StreamVersionIncompatible: public virtual std::exception
    {
 public:
-   StreamVersionIncompatible() : _message("client/server incompatibility detected") { }
+   StreamVersionIncompatible() : _message("JITServer/JITClient incompatibility detected") { }
    StreamVersionIncompatible(uint64_t serverVersion, uint64_t clientVersion)
       {
-      _message = "server expected version " + std::to_string(serverVersion) + " received " + std::to_string(clientVersion);
+      _message = "JITServer expected version " + std::to_string(serverVersion) + " received " + std::to_string(clientVersion);
       }
    virtual const char* what() const throw()
       {
@@ -113,7 +130,7 @@ public:
 class ServerCompilationFailure: public virtual std::exception
    {
 public:
-   ServerCompilationFailure() : _message("Generic JITaaS server compilation failure") { }
+   ServerCompilationFailure() : _message("Generic JITServer compilation failure") { }
    ServerCompilationFailure(const std::string &message) : _message(message) { }
    virtual const char* what() const throw() { return _message.c_str(); }
 private:

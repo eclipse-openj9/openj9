@@ -32,8 +32,8 @@ void J9CompileDispatcher::compile(JITServer::ServerStream *stream)
    TR::CompilationInfo * compInfo = getCompilationInfo(_jitConfig);
 
    TR_MethodToBeCompiled *entry = NULL;
-   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server received request for stream %p", stream);
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server received request for stream %p", stream);
       {
       // Grab the compilation monitor to queue this entry and notify a compilation thread
       OMR::CriticalSection compilationMonitorLock(compInfo->getCompilationMonitor());
@@ -45,5 +45,5 @@ void J9CompileDispatcher::compile(JITServer::ServerStream *stream)
          }
       } // end critical section
    // If we reached this point there was a memory allocation failure
-   stream->finishCompilation(compilationLowPhysicalMemory);
+   stream->writeError(compilationLowPhysicalMemory);
    }
