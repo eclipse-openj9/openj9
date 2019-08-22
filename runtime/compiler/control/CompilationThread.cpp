@@ -11590,6 +11590,8 @@ TR::CompilationInfo::storeAOTInSharedCache(
                 * to send two different buffers to store in cache and also as no one queries either code data / metadata for
                 * method, clean up the share classs cache API.
                 */
+               const J9JITDataCacheHeader *aotMethodHeader = reinterpret_cast<const J9JITDataCacheHeader *>(dataStart);
+               TR_AOTMethodHeader *aotMethodHeaderEntry = const_cast<TR_AOTMethodHeader *>(reinterpret_cast<const TR_AOTMethodHeader *>(aotMethodHeader + 1));
                aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_CompressedMethodInCache;
                memcpy(compressedData, dataStart, aotMethodHeaderSize);
                metadataToStore = (const U_8*) compressedData;
