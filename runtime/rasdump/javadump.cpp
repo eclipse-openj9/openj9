@@ -2021,9 +2021,9 @@ JavaCoreDumpWriter::writeHookInfo(struct OMRHookInfo4Dump *hookInfo)
 	_OutputStream.writeCharacters(timeStamp);
 	_OutputStream.writeInteger64(hookInfo->startTime % 1000, ".%03llu");
 	_OutputStream.writeCharacters("\n");
-	_OutputStream.writeCharacters("4HKDURATION           DurationMs: ");
+	_OutputStream.writeCharacters("4HKDURATION           Duration  : ");
 	_OutputStream.writeInteger64(hookInfo->duration, "%llu");
-	_OutputStream.writeCharacters("\n");
+	_OutputStream.writeCharacters("us\n");
 }
 
 void
@@ -2043,6 +2043,11 @@ JavaCoreDumpWriter::writeHookInterface(struct J9HookInterface **hookInterface)
 			_OutputStream.writeCharacters("3HKCALLCOUNT       ");
 			_OutputStream.writeInteger(eventDump->count, "%zu");
 			_OutputStream.writeCharacters("\n");
+
+			_OutputStream.writeCharacters("3HKTOTALTIME       ");
+			_OutputStream.writeInteger(eventDump->totalTime, "%zu");
+			_OutputStream.writeCharacters("us\n"); 
+
 			if ((NULL != eventDump->lastHook.callsite) || (NULL != eventDump->lastHook.func_ptr)) {
 				_OutputStream.writeCharacters("3HKLAST            Last Callback\n");
 				writeHookInfo(&eventDump->lastHook);
@@ -2051,6 +2056,20 @@ JavaCoreDumpWriter::writeHookInterface(struct J9HookInterface **hookInterface)
 			}
 			_OutputStream.writeCharacters("NULL\n");
 		}
+		/* reset the eventDump statistics */
+		eventDump->count = 0;
+		eventDump->totalTime = 0;
+
+		eventDump->longestHook.startTime = 0;
+		eventDump->longestHook.callsite = NULL;
+		eventDump->longestHook.func_ptr = NULL;
+		eventDump->longestHook.duration = 0;
+
+		eventDump->lastHook.startTime = 0;
+		eventDump->lastHook.callsite = NULL;
+		eventDump->lastHook.func_ptr = NULL;
+		eventDump->lastHook.duration = 0;
+
 	}
 }
 
@@ -2526,7 +2545,7 @@ JavaCoreDumpWriter::writeHookSection(void)
 	/* Write the section header */
 	_OutputStream.writeCharacters("0SECTION       HOOK subcomponent dump routine\n");
 	_OutputStream.writeCharacters("NULL           ==============================\n");
-
+	_OutputStream.writeCharacters("1NOTE          These data are reset every time a javacore is taken\n");
 	_OutputStream.writeCharacters("1HKINTERFACE   MM_OMRHookInterface\n");
 	writeHookInterface(_VirtualMachine->memoryManagerFunctions->j9gc_get_omr_hook_interface(_VirtualMachine->omrVM));
 	_OutputStream.writeCharacters("1HKINTERFACE   MM_PrivateHookInterface\n");
