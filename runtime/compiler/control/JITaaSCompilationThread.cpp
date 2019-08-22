@@ -2462,8 +2462,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          TR_PersistentClassInfo* result = table->findClassInfoAfterLocking(
                                                    rootClass,
                                                    comp,
-                                                   true,
-                                                   comp->getOption(TR_UseSymbolValidationManager));
+                                                   true);
          std::string encoded = FlatPersistentClassInfo::serializeHierarchy(result);
          client->write(response, encoded);
          }
