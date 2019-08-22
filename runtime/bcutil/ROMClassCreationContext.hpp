@@ -71,8 +71,7 @@ public:
 		_doDebugCompare(false),
 		_existingRomMethod(NULL),
 		_reusingIntermediateClassData(false),
-		_creatingIntermediateROMClass(false),
-		_isLambda(false)
+		_creatingIntermediateROMClass(false)
 	{
 	}
 
@@ -108,8 +107,7 @@ public:
 		_doDebugCompare(false),
 		_existingRomMethod(NULL),
 		_reusingIntermediateClassData(false),
-		_creatingIntermediateROMClass(false),
-		_isLambda(false)
+		_creatingIntermediateROMClass(false)
 	{
 	}
 
@@ -152,8 +150,7 @@ public:
 		_doDebugCompare(false),
 		_existingRomMethod(NULL),
 		_reusingIntermediateClassData(false),
-		_creatingIntermediateROMClass(creatingIntermediateROMClass),
-		_isLambda(false)
+		_creatingIntermediateROMClass(creatingIntermediateROMClass)
 	{
 		if ((NULL != _javaVM) && (NULL != _javaVM->dynamicLoadBuffers)) {
 			/* localBuffer should not be NULL */
@@ -275,14 +272,14 @@ public:
 		 * Any of the following conditions prevent the sharing of a ROMClass:
 		 *  - classloader is not shared classes enabled
 		 *  - cache is full
-		 *  - Unsafe classes except lambda classes are not shared
+		 *  - the class is unsafe and isUnsafeClassSharingEnabled returns false (see the function isUnsafeClassShareable() for more details)
 		 *  - shared cache is BCI enabled and class is modified by BCI agent
 		 *  - shared cache is BCI enabled and ROMClass being store is intermediate ROMClass
 		 *  - the class is loaded from a patch path
 		 */
 		if (isSharedClassesEnabled()
 			&& isClassLoaderSharedClassesEnabled()
-			&& (!isClassUnsafe() || _isLambda)
+			&& (!isClassUnsafe() || isUnsafeClassSharingEnabled())
 			&& !(isSharedClassesBCIEnabled()
 			&& (classFileBytesReplaced() || isCreatingIntermediateROMClass()))
 			&& (LOAD_LOCATION_PATCH_PATH != loadLocation())
@@ -293,7 +290,40 @@ public:
 		}
 	}
 
-	void setIsLambda(bool isLambda) { _isLambda = isLambda; }
+	bool isUnsafeClassSharingEnabled() const {
+		/*
+		 * The command line option -XX:[+/-]ShareUnsafeClasses, combined with -XX:[+/-]ShareAnonymousClasses will have 4 different behaviours:
+		 * 1. -XX:+ShareAnonymousClasses -XX:+ShareUnsafeClasses, this will share all unsafe classes
+		 * 2. -XX:+ShareAnonymousClasses -XX:-ShareUnsafeClasses, this will only share anonymous classes and not other unsafe classes
+		 * 3. -XX:-ShareAnonymousClasses -XX:+ShareUnsafeClasses, this will only share unsafe classes that are not anonymous
+		 * 4. -XX:-ShareAnonymousClasses -XX:-ShareUnsafeClasses, this will share neither.
+		 * The current default behavior is the 1st option.
+		 */
+		bool isEnabled = false;
+
+		bool isAnonDefineClassSharingEnabled = false;
+		bool isUnsafeDefineClassSharingEnabled = false;
+		if ((NULL != _javaVM)
+			&& (NULL != _javaVM->sharedClassConfig)
+		) {
+			isAnonDefineClassSharingEnabled = J9_ARE_ALL_BITS_SET(_javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES);
+			isUnsafeDefineClassSharingEnabled = J9_ARE_ALL_BITS_SET(_javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_SHAREUNSAFECLASSES);
+		}
+
+		if (isClassAnon()) {
+			/* if the class is anonymous, no need to check if ShareAnonymousClasses is enabled because the class loader flag
+			 * is already set accordingly (in the function Java_sun_misc_Unsafe_defineAnonymousClass in sun_misc_Unsafe.cpp)
+			 * and it is being checked in isRomClassShareable() before this function is called. So instead we can assert if
+			 * ShareAnonymousClasses is disabled
+			 */
+			Trc_BCU_Assert_True(isAnonDefineClassSharingEnabled);
+			isEnabled = true;
+		} else if (isUnsafeDefineClassSharingEnabled) {
+			/* Classes loaded  by Unsafe.defineClass */
+			isEnabled = true;
+		}
+		return isEnabled;
+	}
 
 	/*
 	 * Returns true if any of the following conditions is true
@@ -718,7 +748,6 @@ private:
 	J9ROMMethod * _existingRomMethod;
 	bool _reusingIntermediateClassData;
 	bool _creatingIntermediateROMClass;
-	bool _isLambda;
 	
 	J9ROMMethod * romMethodFromOffset(IDATA offset);
 };

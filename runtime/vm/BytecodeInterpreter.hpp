@@ -4135,6 +4135,12 @@ done:
 			goto done;
 		}
 		_vm->anonClassLoader->flags |= J9CLASSLOADER_ANON_CLASS_LOADER;
+		/* ShareAnonymousClasses is enabled by default so we set the class loader flag */
+		_vm->anonClassLoader->flags |= J9CLASSLOADER_SHARED_CLASSES_ENABLED;
+		if ((NULL != _vm->sharedClassConfig) && J9_ARE_NO_BITS_SET(_vm->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES)) {
+			/* if ShareAnonymousClasses is disabled, anonymous classes are not shared so we unset the flag */
+			_vm->anonClassLoader->flags &= (~J9CLASSLOADER_SHARED_CLASSES_ENABLED);
+		}
 		J9CLASSLOADER_SET_CLASSLOADEROBJECT(_currentThread, _vm->anonClassLoader, anonClassLoaderObject);
 		VM_AtomicSupport::writeBarrier();
 		J9VMJAVALANGCLASSLOADER_SET_VMREF(_currentThread, anonClassLoaderObject, _vm->anonClassLoader);

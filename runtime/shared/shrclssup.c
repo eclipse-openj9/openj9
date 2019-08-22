@@ -145,6 +145,13 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 					runtimeFlags &= (~J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES);
 				}
 
+				/* Check for -XX:+ShareUnsafeClasses and -XX:-ShareUnsafeClasses; whichever comes later wins. Enable is set by default so we just need to disable when that's the case. */
+				argIndex1 = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, VMOPT_XXENABLESHAREUNSAFECLASSES, NULL);
+				argIndex2 = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, VMOPT_XXDISABLESHAREUNSAFECLASSES, NULL);
+				if (argIndex2 > argIndex1) {
+					runtimeFlags &= (~J9SHR_RUNTIMEFLAG_ENABLE_SHAREUNSAFECLASSES);
+				}
+
 				vm->sharedCacheAPI->parseResult = parseArgs(vm, optionsBufferPtr, &runtimeFlags, &verboseFlags, &cacheName, &modContext,
 								&expireTime, &ctrlDirName, &cacheDirPermStr, &methodSpecs, &printStatsOptions, &storageKeyTesting);
 				if ((RESULT_PARSE_FAILED == vm->sharedCacheAPI->parseResult)
