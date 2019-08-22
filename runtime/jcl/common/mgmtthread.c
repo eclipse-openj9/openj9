@@ -2131,43 +2131,33 @@ findDeadlockedThreads(JNIEnv *env, UDATA findFlags)
 
 	/* spec says to return NULL array for no threads */	
 	if (deadCount <= 0) {
-		j9mem_free_memory(threads);
 		if (deadCount < 0) {
+oom:
 			javaVM->internalVMFunctions->setNativeOutOfMemoryError(currentThread, 0, 0);
 		}
 		javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
+		j9mem_free_memory(threads);
 		return NULL;
 	}
 		
 	/* Finally, ready to output the list of deadlocked threads */
 	deadIDs = (jlong *)j9mem_allocate_memory(deadCount * sizeof(jlong), J9MEM_CATEGORY_VM_JCL);
 	if (!deadIDs) {
-		j9mem_free_memory(threads);
-		javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
-		return NULL;
+		goto oom;
 	}
-	{
-		for (i = 0; (IDATA)i < deadCount; i++) {
-			deadIDs[i] = getThreadID(currentThread, threads[i]);
-		}
+	for (i = 0; (IDATA)i < deadCount; i++) {
+		deadIDs[i] = getThreadID(currentThread, threads[i]);
 	}
-
 
 	j9mem_free_memory(threads);
 	javaVM->internalVMFunctions->internalExitVMToJNI(currentThread);
 
 	resultArray = (*env)->NewLongArray(env, (jsize)deadCount);
-	if (!resultArray) {
-		j9mem_free_memory(deadIDs);
-		return NULL;
-	}
-	
-	(*env)->SetLongArrayRegion(env, resultArray, 0, (jsize)deadCount, deadIDs);
-	j9mem_free_memory(deadIDs);
-	if ((*env)->ExceptionCheck(env)) {
-		return NULL;
+	if (NULL != resultArray) {
+		(*env)->SetLongArrayRegion(env, resultArray, 0, (jsize)deadCount, deadIDs);
 	}
 
+	j9mem_free_memory(deadIDs);
 	return resultArray;
 }
 

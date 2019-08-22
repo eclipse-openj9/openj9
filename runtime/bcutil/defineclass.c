@@ -589,9 +589,10 @@ done:
 
 		/* if romClass is in shared cache, ensure its intermediateClassData also points within shared cache */
 		if ((NULL != intermediateData)
-			&& (TRUE == j9shr_Query_IsAddressInCache(vm, loadData->romClass, loadData->romClass->romSize))
+			&& (TRUE == j9shr_Query_IsAddressInReadWriteCache(vm, loadData->romClass, loadData->romClass->romSize))
 		) {
-			Trc_BCU_Assert_True(TRUE == j9shr_Query_IsAddressInCache(vm, intermediateData, intermediateDataSize));
+			/* romClass and its intermediateData should be in the same cache */
+			Trc_BCU_Assert_True(TRUE == j9shr_Query_IsAddressInReadWriteCache(vm, intermediateData, intermediateDataSize));
 		}
 
 		/* ROMClass should always have intermediate class data. */

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -182,5 +182,6 @@ SH_AttachedDataManagerImpl::getHashTableEntriesFromCacheSize(UDATA cacheSizeByte
 UDATA
 SH_AttachedDataManagerImpl::getKeyForItem(const ShcItem* cacheItem)
 {
-	return (UDATA)ADWCACHEOFFSET((AttachedDataWrapper*)ITEMDATA(cacheItem)) + (UDATA)ADWTYPE((AttachedDataWrapper*)ITEMDATA(cacheItem));
+	UDATA key = (UDATA)_cache->getAddressFromJ9ShrOffset(&(((AttachedDataWrapper*)ITEMDATA(cacheItem))->cacheOffset)) + (UDATA)ADWTYPE((AttachedDataWrapper*)ITEMDATA(cacheItem));
+	return key;
 }

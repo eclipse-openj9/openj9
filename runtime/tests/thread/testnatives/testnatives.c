@@ -533,7 +533,7 @@ jlong JNICALL
 Java_com_ibm_j9_monitor_tests_TestNatives_getLockWordValue(JNIEnv* env, jobject testNativesObject, jobject lockwordObj)
 {
 	j9object_t obj;
-	UDATA lock;
+	j9objectmonitor_t lock;
 	J9VMThread *currentThread = (J9VMThread *) env;
 	J9JavaVM *vm = currentThread->javaVM;
 
@@ -541,19 +541,15 @@ Java_com_ibm_j9_monitor_tests_TestNatives_getLockWordValue(JNIEnv* env, jobject 
 
 	obj = J9_JNI_UNWRAP_REFERENCE(lockwordObj);
 	if (!LN_HAS_LOCKWORD(currentThread, obj)) {
-		lock = 0 | OBJECT_HEADER_LOCK_INFLATED;
+		lock = (j9objectmonitor_t)((UDATA)0 | OBJECT_HEADER_LOCK_INFLATED);
 	} else {
 		j9objectmonitor_t *lockEA = J9OBJECT_MONITOR_EA(currentThread, obj);
-		if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread)) {
-			lock = *(U_32*)lockEA;
-		} else {
-			lock = *(UDATA*)lockEA;
-		}
+		lock = J9_LOAD_LOCKWORD(currentThread, lockEA);
 	}
 
 	vm->internalVMFunctions->internalExitVMToJNI((J9VMThread *)env);
 
-	return (jlong) lock;
+	return (jlong)(UDATA)lock;
 }
 
 jlong JNICALL
@@ -582,7 +578,7 @@ Java_com_ibm_j9_monitor_tests_TestNatives_getHeaderSize(JNIEnv* env, jclass claz
 jlong JNICALL
 Java_com_ibm_j9_monitor_tests_TestNatives_getLockwordSize(JNIEnv* env, jclass clazz)
 {
-	return sizeof(j9objectmonitor_t);
+	return J9VMTHREAD_REFERENCE_SIZE((J9VMThread*)env);
 }
 
 /**

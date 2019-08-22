@@ -120,21 +120,37 @@ public class Jmap {
 		int optionsSelected = 0;
 		String errorMessage = null;
 		vmids = new ArrayList<>();
-		for (String a : args) {
-			if (!a.startsWith("-")) {
-				vmids.add(a);
-			} else if (a.startsWith("-histo")) {
-				histo = true;
-				optionsSelected += 1;
-				if (a.endsWith(":live")) {
-					live = true;
-				}
+		for (String arg : args) {
+			if (!arg.startsWith("-")) {
+				vmids.add(arg);
 			} else {
-				errorMessage = "unrecognized option " + a;
-				break;
+				boolean invalidArg = false;
+				String[] parts = arg.split(":");
+				if (parts.length > 2) {
+					invalidArg = true;
+				} else if ("-histo".equalsIgnoreCase(parts[0])) {
+					if (parts.length == 2) {
+						if ("live".equalsIgnoreCase(parts[1])) {
+							live = true;
+						} else {
+							invalidArg = true;
+						}
+					}
+					if (!invalidArg) {
+						histo = true;
+						optionsSelected += 1;
+					}
+				} else {
+					invalidArg = true;
+				}
+				
+				if (invalidArg) {
+					errorMessage = "unrecognized option " + arg;
+					break;
+				}
 			}
 		}
-		if (1 != optionsSelected) {
+		if ((errorMessage == null) && (optionsSelected != 1)) {
 			errorMessage = "exactly one option must be selected";
 		}
 		if (null != errorMessage) {

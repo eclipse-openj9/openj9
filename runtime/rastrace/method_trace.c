@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,7 +81,7 @@ matchMethod(RasMethodTable * methodTable, J9Method *method)
 		 * Specific method, any class
 		 */
 
-		methodName = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+		methodName = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
 		return wildcardMatch(
 			methodTable->methodMatchFlag,
 			(const char *)J9UTF8_DATA(methodTable->methodName), J9UTF8_LENGTH(methodTable->methodName),
@@ -91,7 +91,7 @@ matchMethod(RasMethodTable * methodTable, J9Method *method)
 		 *  Specific method(s), specific class(es)
 		 */
 
-		methodName = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+		methodName = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
 		if (wildcardMatch(
 			methodTable->methodMatchFlag,
 			(const char *)J9UTF8_DATA(methodTable->methodName), J9UTF8_LENGTH(methodTable->methodName),
@@ -169,8 +169,8 @@ static void
 traceMethodEnter(J9VMThread *thr, J9Method *method, void *receiverAddress, UDATA isCompiled, UDATA doParameters)
 {
 	J9UTF8* className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass);
-	J9UTF8* methodName = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
-	J9UTF8* methodSignature = J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+	J9UTF8* methodName = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
+	J9UTF8* methodSignature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
 	UDATA modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers;
 
 	if (isCompiled) {
@@ -228,8 +228,8 @@ static void
 traceMethodExit(J9VMThread *thr, J9Method *method, UDATA isCompiled, void* returnValuePtr, UDATA doParameters)
 {
 	J9UTF8* className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass);
-	J9UTF8* methodName = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
-	J9UTF8* methodSignature = J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+	J9UTF8* methodName = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
+	J9UTF8* methodSignature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
 	UDATA modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers;
 
 	if (isCompiled) {
@@ -277,8 +277,8 @@ static void
 traceMethodExitX(J9VMThread *thr, J9Method *method, UDATA isCompiled, void* exceptionPtr,UDATA doParameters)
 {
 	J9UTF8* className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass);
-	J9UTF8* methodName = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
-	J9UTF8* methodSignature = J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+	J9UTF8* methodName = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
+	J9UTF8* methodSignature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
 	UDATA modifiers = J9_ROM_METHOD_FROM_RAM_METHOD(method)->modifiers;
 
 	if (isCompiled) {

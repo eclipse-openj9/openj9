@@ -86,3 +86,35 @@ getOpenJ9Sha()
 
 	return sha;
 }
+
+/**
+ * If the class is a lambda class get the pointer to the last '$' sign of the class name which is in the format of HostClassName$$Lambda$<IndexNumber>/0000000000000000.
+ * NULL otherwise.
+ *
+ * @param[in] className  pointer to the class name
+ * @param[in] classNameLength  length of the class name
+ * @return Pointer to the last '$' sign of the class name if it is a lambda class.
+ * 		   NULL otherwise.
+ */
+char*
+getLastDollarSignOfLambdaClassName(const char *className, UDATA classNameLength)
+{
+	char *end = NULL;
+
+	if ((NULL == className) || (0 == classNameLength)) {
+		return NULL;
+	}
+
+	/* Get the pointer to the last '$' sign */
+	end = strnrchrHelper(className, '$', classNameLength);
+
+	if ((NULL != end) && ((end - 8) - className > 0)) {
+		if (0 == memcmp(end - 8, "$$Lambda", sizeof("$$Lambda") - 1)) {
+			/* Check if $$Lambda exists in the class name right before the last '$' sign */
+			return end;
+		}
+	}
+
+	/* return NULL if it is not a lambda class */
+	return NULL;
+}

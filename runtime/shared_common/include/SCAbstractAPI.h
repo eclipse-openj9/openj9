@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,7 +68,7 @@ typedef struct SCAbstractAPI
 	/* Functions to query the state of shared classes.
 	 */
 	BOOLEAN (*isCacheFull)(J9JavaVM *vm);
-	BOOLEAN (*isAddressInCache)(J9JavaVM *vm, void *address, UDATA length);
+	BOOLEAN (*isAddressInCache)(J9JavaVM *vm, void *address, UDATA length, BOOLEAN checkReadWriteCacheOnly);
 
 	/* Get shared classes defaults for -verbose:sizes
 	 */

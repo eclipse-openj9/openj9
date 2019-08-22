@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,14 +43,14 @@
 SH_OSCachevmem::SH_OSCachevmem(J9PortLibrary* portLibrary, const char* cachedirname, const char* cacheName, J9SharedClassPreinitConfig* piconfig,
 		IDATA numLocks, UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCacheInitializer* initializer)
 {
-	initialize(portLibrary, NULL, OSCACHE_CURRENT_CACHE_GEN);
+	initialize(portLibrary, NULL, OSCACHE_CURRENT_CACHE_GEN, OSCACHE_CURRENT_LAYER_LAYER);
 	startup(cachedirname, J9SH_DIRPERM_ABSENT, cacheName, piconfig, numLocks, createFlag, verboseFlags, runtimeFlags, openMode, 0, versionData, initializer, SHR_STARTUP_REASON_NORMAL);
 }
 
 void
-SH_OSCachevmem::initialize(J9PortLibrary* portLibrary, char* memForConstructor, UDATA generation)
+SH_OSCachevmem::initialize(J9PortLibrary* portLibrary, char* memForConstructor, UDATA generation, I_8 layer)
 {	
-	commonInit(portLibrary, generation);
+	commonInit(portLibrary, generation, layer);
 	_fileHandle = -1;
 	_writeLockCounter = 0;
 	_headerStart = NULL;

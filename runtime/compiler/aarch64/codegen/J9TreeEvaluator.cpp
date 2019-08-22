@@ -67,8 +67,8 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    // TODO:ARM64: Enable when Implemented: tet[TR::SpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
    tet[TR::ArrayStoreCHK] = TR::TreeEvaluator::ArrayStoreCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCHK] = TR::TreeEvaluator::ArrayCHKEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::MethodEnterHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::MethodExitHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
+   tet[TR::MethodEnterHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
+   tet[TR::MethodExitHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
    tet[TR::allocationFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::loadFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::storeFence] = TR::TreeEvaluator::flushEvaluator;
@@ -101,17 +101,189 @@ J9::ARM64::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
    TR_ASSERT_FATAL(false, "This helper implements platform specific code for Fieldwatch, which is currently not supported on ARM64 platforms.\n");
    }
 
+static void wrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *dstReg, bool srcNonNull, bool needDeps, TR::CodeGenerator *cg)
+   {
+   TR::Compilation *comp = cg->comp();
+   // assuming gcMode == gc_modron_wrtbar_always;
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::RegisterDependencyConditions *conditions = NULL;
+
+   if (needDeps)
+      {
+      conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(2, 2, cg->trMemory());
+      TR::addDependency(conditions, dstReg,  TR::RealRegister::x0, TR_GPR, cg);
+      TR::addDependency(conditions, srcReg,  TR::RealRegister::x1, TR_GPR, cg);
+      }
+
+   TR::SymbolReference *wbRef = comp->getSymRefTab()->findOrCreateWriteBarrierStoreSymbolRef();
+   // nullcheck store - skip write barrier if null being written in
+   if (!srcNonNull)
+      {
+      generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, srcReg, doneLabel, NULL);
+      }
+   generateImmSymInstruction(cg, TR::InstOpCode::bl, node, (uintptr_t)wbRef->getMethodAddress(),
+                                        new (cg->trHeapMemory()) TR::RegisterDependencyConditions((uint8_t)0, 0, cg->trMemory()),
+                                        wbRef, NULL);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions, NULL);
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node *testNode = node->getFirstChild();
+   TR::Node *callNode = node->getSecondChild();
+   TR::Node *firstChild = testNode->getFirstChild();
+   TR::Node *secondChild = testNode->getSecondChild();
+   TR::Register *jumpReg = cg->evaluate(firstChild);
+   TR::Register *valReg = NULL;
+   int32_t i, numArgs = callNode->getNumChildren();
+   TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3, 3, cg->trMemory());
+
+   TR_ASSERT(numArgs <= 2, "Unexpected number of arguments for helper.");
+
+   // Helper arguments are in reversed order of the private linkage
+   // Argument registers are not needed to be split since the helper will
+   // preserve all of them.
+   int32_t iArgIndex = 0, fArgIndex = 0;
+   TR::Linkage *linkage = cg->createLinkage(TR_Private);
+   for (i = numArgs - 1; i >= 0; i--)
+      {
+      TR::Register *argReg = cg->evaluate(callNode->getChild(i));
+      TR::addDependency(conditions, argReg, (argReg->getKind() == TR_GPR) ? // Didn't consider Long here
+            linkage->getProperties().getIntegerArgumentRegister(iArgIndex++) : linkage->getProperties().getFloatArgumentRegister(fArgIndex++), argReg->getKind(), cg);
+      }
+
+   TR::addDependency(conditions, jumpReg, TR::RealRegister::x8, TR_GPR, cg);
+   bool is64Bit = node->getSecondChild()->getType().isInt64();
+   int64_t value = is64Bit ? secondChild->getLongInt() : secondChild->getInt();
+   if (secondChild->getOpCode().isLoadConst() && constantIsUnsignedImm12(value))
+      {
+      generateCompareImmInstruction(cg, testNode, jumpReg, value);
+      }
+   else
+      {
+      valReg = cg->evaluate(secondChild);
+      generateCompareInstruction(cg, testNode, jumpReg, valReg);
+      }
+
+   TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
+   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+   TR::ARM64ConditionCode cc = (testNode->getOpCodeValue() == TR::icmpeq) ? TR::CC_EQ : TR::CC_NE;
+   TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, cc, conditions);
+   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+
+   for (i = numArgs - 1; i >= 0; i--)
+      cg->decReferenceCount(callNode->getChild(i));
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   cg->decReferenceCount(testNode);
+   cg->decReferenceCount(callNode);
+   return NULL;
+   }
+
 TR::Register *
 J9::ARM64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_UNIMPLEMENTED();
+   TR::Compilation *comp = cg->comp();
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Register *valueReg = cg->evaluate(firstChild);
+
+   TR::Register *destinationRegister = cg->evaluate(node->getSecondChild());
+
+   TR::Register *sourceRegister;
+   bool killSource = false;
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+
+   if (node->getSymbolReference()->getSymbol()->isShadow() && node->getSymbolReference()->getSymbol()->isOrdered() && TR::Compiler->target.isSMP())
+      {
+      needSync = true;
+      }
+   if (firstChild->getReferenceCount() > 1 && firstChild->getRegister() != NULL)
+      {
+      if (!firstChild->getRegister()->containsInternalPointer())
+         sourceRegister = cg->allocateCollectedReferenceRegister();
+      else
+         {
+         sourceRegister = cg->allocateRegister();
+         sourceRegister->setPinningArrayPointer(firstChild->getRegister()->getPinningArrayPointer());
+         sourceRegister->setContainsInternalPointer();
+         }
+      generateMovInstruction(cg, node, sourceRegister, firstChild->getRegister());
+      killSource = true;
+      }
+   else
+      sourceRegister = valueReg;
+
+   TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, TR::Compiler->om.sizeofReferenceAddress(), cg);
+
+   if (needSync)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xE);
+
+   generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, tempMR, sourceRegister, NULL);
+   wrtbarEvaluator(node, sourceRegister, destinationRegister, firstChild->isNonNull(), true, cg);
+
+   if (killSource)
+      cg->stopUsingRegister(sourceRegister);
+
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   tempMR->decNodeReferenceCounts(cg);
+
    return NULL;
    }
 
 TR::Register *
 J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_UNIMPLEMENTED();
+   TR::Compilation *comp = cg->comp();
+
+   TR::Register *destinationRegister = cg->evaluate(node->getChild(2));
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Register *sourceRegister;
+   bool killSource = false;
+   // assuming usingCompressedPointers is always false for now
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+
+   if (node->getSymbolReference()->getSymbol()->isShadow() && node->getSymbolReference()->getSymbol()->isOrdered() && TR::Compiler->target.isSMP())
+      {
+      needSync = true;
+      }
+
+   if (secondChild->getReferenceCount() > 1 && secondChild->getRegister() != NULL)
+      {
+      if (!secondChild->getRegister()->containsInternalPointer())
+         sourceRegister = cg->allocateCollectedReferenceRegister();
+      else
+         {
+         sourceRegister = cg->allocateRegister();
+         sourceRegister->setPinningArrayPointer(secondChild->getRegister()->getPinningArrayPointer());
+         sourceRegister->setContainsInternalPointer();
+         }
+      generateMovInstruction(cg, node, sourceRegister, secondChild->getRegister());
+      killSource = true;
+      }
+   else
+      {
+      sourceRegister = cg->evaluate(secondChild);
+      }
+
+   TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, TR::Compiler->om.sizeofReferenceAddress(), cg);
+
+   if (needSync)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xE);
+
+   generateMemSrc1Instruction(cg,TR::InstOpCode::strimmx, node, tempMR, sourceRegister);
+
+   wrtbarEvaluator(node, sourceRegister, destinationRegister, secondChild->isNonNull(), true, cg);
+
+   if (killSource)
+      cg->stopUsingRegister(sourceRegister);
+
+   cg->decReferenceCount(node->getSecondChild());
+   cg->decReferenceCount(node->getChild(2));
+   tempMR->decNodeReferenceCounts(cg);
+
    return NULL;
    }
 

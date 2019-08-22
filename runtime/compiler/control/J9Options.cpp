@@ -1873,6 +1873,7 @@ J9::Options::fePreProcess(void * base)
       if (ret == OPTION_OK && numCompThreads <= MAX_USABLE_COMP_THREADS)
          _numUsableCompilationThreads = numCompThreads;
 #endif /* defined(JITSERVER_SUPPORT) */
+
       }
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)
@@ -2914,7 +2915,6 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
    // On JITServer, we store this value for each client in ClientSessionData
    bool rtResolve = (bool) *((uint8_t *) options + clientOptionsSize - sizeof(bool));
    compInfoPT->getClientData()->setRtResolve(rtResolve);
-
    _reportByteCodeInfoAtCatchBlock = fe->getReportByteCodeInfoAtCatchBlock();
 
    unpackRegex(options->_traceForCodeMining);

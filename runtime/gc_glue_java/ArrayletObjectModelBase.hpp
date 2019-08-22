@@ -106,13 +106,24 @@ public:
 	MMINLINE UDATA
 	getSizeInElements(J9IndexableObject *arrayPtr)
 	{
-		UDATA size = ((J9IndexableObjectContiguous *)arrayPtr)->size;
+		UDATA size = 0;
+		if (compressObjectReferences()) {
+			size = ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size;
 #if defined(J9VM_GC_HYBRID_ARRAYLETS)
-		if (0 == size) {
-			/* Discontiguous */
-			size =((J9IndexableObjectDiscontiguous *)arrayPtr)->size;
-		}
+			if (0 == size) {
+				/* Discontiguous */
+				size = ((J9IndexableObjectDiscontiguousCompressed *)arrayPtr)->size;
+			}
 #endif /* defined(J9VM_GC_HYBRID_ARRAYLETS) */
+		} else {
+			size = ((J9IndexableObjectContiguousFull *)arrayPtr)->size;
+#if defined(J9VM_GC_HYBRID_ARRAYLETS)
+			if (0 == size) {
+				/* Discontiguous */
+				size = ((J9IndexableObjectDiscontiguousFull *)arrayPtr)->size;
+			}
+#endif /* defined(J9VM_GC_HYBRID_ARRAYLETS) */
+		}
 		return size;
 	}
 
@@ -124,7 +135,11 @@ public:
 	MMINLINE void
 	setSizeInElementsForContiguous(J9IndexableObject *arrayPtr, UDATA size)
 	{
-		((J9IndexableObjectContiguous *)arrayPtr)->size = (U_32)size;
+		if (compressObjectReferences()) {
+			((J9IndexableObjectContiguousCompressed *)arrayPtr)->size = (U_32)size;
+		} else {
+			((J9IndexableObjectContiguousFull *)arrayPtr)->size = (U_32)size;
+		}
 	}
 
 	/**
@@ -135,10 +150,13 @@ public:
 	MMINLINE void
 	setSizeInElementsForDiscontiguous(J9IndexableObject *arrayPtr, UDATA size)
 	{
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
-		((J9IndexableObjectContiguous *)arrayPtr)->size = 0;
-#endif
-		((J9IndexableObjectDiscontiguous *)arrayPtr)->size = (U_32)size;
+		if (compressObjectReferences()) {
+			((J9IndexableObjectDiscontiguousCompressed *)arrayPtr)->mustBeZero = 0;
+			((J9IndexableObjectDiscontiguousCompressed *)arrayPtr)->size = (U_32)size;
+		} else {
+			((J9IndexableObjectDiscontiguousFull *)arrayPtr)->mustBeZero = 0;
+			((J9IndexableObjectDiscontiguousFull *)arrayPtr)->size = (U_32)size;
+		}
 	}
 
 	/**

@@ -164,12 +164,12 @@ constructRtvMethodContextInfo(MethodContextInfo* methodInfo, J9BytecodeVerificat
 	methodInfo->className.length = J9UTF8_LENGTH((J9ROMCLASS_CLASSNAME(romClass)));
 
 	/* Method */
-	methodInfo->methodName.bytes = J9UTF8_DATA(J9ROMMETHOD_GET_NAME(romClass, romMethod));
-	methodInfo->methodName.length = J9UTF8_LENGTH((J9ROMMETHOD_GET_NAME(romClass, romMethod)));
+	methodInfo->methodName.bytes = J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod));
+	methodInfo->methodName.length = J9UTF8_LENGTH((J9ROMMETHOD_NAME(romMethod)));
 
 	/* Signature */
-	methodInfo->signature.bytes = J9UTF8_DATA(J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod));
-	methodInfo->signature.length = J9UTF8_LENGTH((J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod)));
+	methodInfo->signature.bytes = J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod));
+	methodInfo->signature.length = J9UTF8_LENGTH((J9ROMMETHOD_SIGNATURE(romMethod)));
 
 	/* Exception handler table */
 	methodInfo->exceptionTable = NULL;

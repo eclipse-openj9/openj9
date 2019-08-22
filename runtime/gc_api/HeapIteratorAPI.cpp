@@ -168,11 +168,12 @@ j9mm_iterate_spaces(
 
 	void *defaultMemorySpace = vm->defaultMemorySpace;
 	if (NULL != defaultMemorySpace) {
+		UDATA const referenceSize = J9JAVAVM_REFERENCE_SIZE(vm);
 		J9MM_IterateSpaceDescriptor spaceDesc;
 		spaceDesc.name = MM_MemorySpace::getMemorySpace(defaultMemorySpace)->getName();
 		spaceDesc.id = (UDATA)defaultMemorySpace;
 		spaceDesc.classPointerOffset = TMP_OFFSETOF_J9OBJECT_CLAZZ;
-		spaceDesc.classPointerSize = sizeof(j9objectclass_t);
+		spaceDesc.classPointerSize = referenceSize;
 		spaceDesc.fobjectPointerDisplacement = 0;
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 		if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
@@ -182,7 +183,7 @@ j9mm_iterate_spaces(
 		{
 			spaceDesc.fobjectPointerScale = 1;
 		}
-		spaceDesc.fobjectSize = J9JAVAVM_REFERENCE_SIZE(vm);
+		spaceDesc.fobjectSize = referenceSize;
 		spaceDesc.memorySpace = defaultMemorySpace;
 
 		returnCode = func(vm, &spaceDesc, userData);

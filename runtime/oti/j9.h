@@ -210,9 +210,6 @@ typedef struct J9ClassLoaderWalkState {
 /* Important: We check both valueOffset and flagsAndClass because we do not set them atomically on resolve. */
 #define J9RAMSTATICFIELDREF_IS_RESOLVED(base) ((-1 != (base)->valueOffset) && ((base)->flagsAndClass) > 0)
 
-#define J9ROMMETHOD_GET_NAME(romClass, rommethod) J9ROMMETHOD_NAME(rommethod)
-#define J9ROMMETHOD_GET_SIGNATURE(romClass, rommethod) J9ROMMETHOD_SIGNATURE(rommethod)
-
 /* From tracehelp.c - prototyped here because the macro is here */
 
 /**

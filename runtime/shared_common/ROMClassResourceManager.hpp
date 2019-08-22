@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -114,7 +114,7 @@ class SH_ResourceDescriptor
 		virtual UDATA resourceLengthFromWrapper(const void* wrapper) = 0;
 		
 		/* Given a resource and a cache ShcItem address, populate the ShcItem and write the resource into the cache */
-		virtual void writeDataToCache(const ShcItem* newCacheItem, const void* resourceAddress) = 0;
+		virtual void writeDataToCache(const ShcItem* newCacheItem, const J9ShrOffset* resourceOffset) = 0;
 
 		/* Update the given cache item at the specified offset with the value in data */
 		virtual void updateDataInCache(const ShcItem *cacheItem, I_32 updateAtOffset, const J9SharedDataDescriptor* data) {};

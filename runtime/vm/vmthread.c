@@ -1466,8 +1466,8 @@ static UDATA printMethodInfo(J9VMThread *currentThread , J9StackWalkState *state
 	J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
 	J9UTF8 *className = J9ROMCLASS_CLASSNAME(methodClass->romClass);
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-	J9UTF8* methodName = J9ROMMETHOD_GET_NAME(methodClass->romClass, romMethod);
-	J9UTF8* sig = J9ROMMETHOD_GET_SIGNATURE(methodClass->romClass, romMethod);
+	J9UTF8* methodName = J9ROMMETHOD_NAME(romMethod);
+	J9UTF8* sig = J9ROMMETHOD_SIGNATURE(romMethod);
 	IDATA tracefd = (IDATA) state->userData1;
 	char buf[1024] = "";
 	char *cursor = buf;

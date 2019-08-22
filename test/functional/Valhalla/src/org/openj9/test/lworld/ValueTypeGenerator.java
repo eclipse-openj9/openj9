@@ -84,6 +84,7 @@ public class ValueTypeGenerator extends ClassLoader {
 		
 		if (isRef) {
 			makeRef(cw, className, makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
+			makeRefDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal);
 			if (!isVerifiable) {
 				makeGeneric(cw, className, "makeRefGeneric", "makeRef", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
 				/* makeValue is invalid on ref: Included to test if runtime error is (correctly) thrown */
@@ -98,6 +99,7 @@ public class ValueTypeGenerator extends ClassLoader {
 			testMonitorEnterAndExitWithRefType(cw, className, fields);
 		} else {
 			makeValue(cw, className, makeValueSig, fields, makeMaxLocal);
+			makeValueTypeDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal);
 			if (!isVerifiable) {
 				makeGeneric(cw, className, "makeValueGeneric", "makeValue", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
 			}
@@ -267,6 +269,24 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitEnd();
 	}
 	
+	private static void makeValueTypeDefaultValue(ClassWriter cw, String valueName, String makeValueSig, String[] fields, int makeMaxLocal) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeValueTypeDefaultValue", "()L" + valueName + ";", null, null);
+		mv.visitCode();
+		mv.visitTypeInsn(DEFAULTVALUE, valueName);
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(1, 0);
+		mv.visitEnd();
+	}
+
+	private static void makeRefDefaultValue(ClassWriter cw, String className, String makeValueSig, String[] fields, int makeMaxLocal) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "makeRefDefaultValue", "()L" + className + ";", null, null);
+		mv.visitCode();
+		mv.visitTypeInsn(NEW, className);
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(1, 0);
+		mv.visitEnd();
+	}
+
 	private static void makeGeneric(ClassWriter cw, String className, String methodName, String specificMethodName, String makeValueSig, String makeValueGenericSig, String[] fields, int makeMaxLocal) {
 		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, methodName, "(" + makeValueGenericSig + ")L" + className + ";", null, new String[] {"java/lang/Exception"});
 		mv.visitCode();

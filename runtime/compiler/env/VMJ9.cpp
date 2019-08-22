@@ -1389,15 +1389,13 @@ UDATA TR_J9VMBase::getHighTenureAddress()
 
 bool TR_J9VMBase::generateCompressedPointers()
    {
-   return TR::Options::useCompressedPointers();
+   return TR::Compiler->om.compressObjectReferences();
    }
 
 
 bool TR_J9VMBase::generateCompressedLockWord()
    {
-   if (sizeof(j9objectmonitor_t) == 4)
-      return true;
-   return false;
+   return TR::Compiler->om.compressObjectReferences();
    }
 
 
@@ -6347,8 +6345,8 @@ TR_J9VMBase::getMatchingMethodFromNameAndSignature(TR_OpaqueClassBlock * classPo
    // Iterate over all romMethods until the desired one is found
    for (uint32_t i = 0; i < numMethods; i++)
       {
-      J9UTF8 *mName = J9ROMMETHOD_GET_NAME(romClass, romMethod);
-      J9UTF8 *mSig = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
+      J9UTF8 *mName = J9ROMMETHOD_NAME(romMethod);
+      J9UTF8 *mSig = J9ROMMETHOD_SIGNATURE(romMethod);
       if (J9UTF8_LENGTH(mName) == nameLength &&
          J9UTF8_LENGTH(mSig) == sigLength &&
          memcmp(utf8Data(mName), methodName, nameLength) == 0 &&

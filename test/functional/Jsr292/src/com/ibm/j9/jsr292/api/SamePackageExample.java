@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -163,6 +163,8 @@ public class SamePackageExample {
 		return "[" + arg4 + arg5 + arg6 + "]";
 	}
 
+	public static void combinerMethod() {}
+
 	public static void combinerMethod(int arg) {
 	}
 
@@ -176,6 +178,10 @@ public class SamePackageExample {
 
 	public static String combinerMethod(String arg1, String arg2) {
 		return "[" + arg1 + arg2 + "]";
+	}
+
+	public static String targetMethod() {
+		return "[]";
 	}
 
 	public static String targetMethod(int arg1, int arg2, int arg3, int arg4, int arg5, int arg6) {
