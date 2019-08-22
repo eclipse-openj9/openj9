@@ -345,15 +345,15 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    void openLogFiles(J9JITConfig *jitConfig);
 
 #if defined(JITSERVER_SUPPORT)
-   static const size_t FILENAME_MAX_SIZE = 1025;
-   static std::string packOptions(TR::Options *origOptions);
-   static TR::Options *unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::CompilationInfoPerThreadBase* compInfoPT, TR_J9VMBase *fe, TR_Memory *trMemory);
-   static uint8_t *appendContent(char * &charPtr, uint8_t * curPos, size_t length);
-   static std::string packLogFile(TR::FILE *fp);
-   void setLogFileForClientOptions(int doubleCompile = 0);
-   void closeLogFileForClientOptions();
-   int writeLogFileFromServer(const std::string& logFileContent);
    void setupJITServerOptions();
+
+   static std::string packOptions(const TR::Options *origOptions);
+   static TR::Options *unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::CompilationInfoPerThreadBase* compInfoPT,
+                                    TR_J9VMBase *fe, TR_Memory *trMemory);
+   static std::string packLogFile(TR::FILE *fp);
+   int writeLogFileFromServer(const std::string& logFileContent);
+   void setLogFileForClientOptions(int suffixNumber = 0);
+   void closeLogFileForClientOptions();
 #endif /* defined(JITSERVER_SUPPORT) */
    };
 

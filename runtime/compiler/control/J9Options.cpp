@@ -75,6 +75,7 @@ int32_t J9::Options::_samplingFrequencyInIdleMode = 1000; // ms
 #if defined(JITSERVER_SUPPORT)
 int32_t J9::Options::_statisticsFrequency = 0; // ms
 uint32_t J9::Options::_compilationSequenceNumber = 0;
+static const size_t JITSERVER_LOG_FILENAME_MAX_SIZE = 1025;
 #endif /* defined(JITSERVER_SUPPORT) */
 int32_t J9::Options::_samplingFrequencyInDeepIdleMode = 100000; // ms
 int32_t J9::Options::_resetCountThreshold = 0; // Disable the feature
@@ -1045,113 +1046,85 @@ bool J9::Options::showPID()
    }
 
 #if defined(JITSERVER_SUPPORT)
-static bool getJITServerNumericOptionFromCommandLineOptions(char **options, char delimiter, char *option, uint32_t *out)
-   {
-   if (!try_scan(options, option))
-      return false;
-   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-
-   char *startChar = scan_to_delim(PORTLIB, options, delimiter);
-   uint32_t value = 0;
-   char *scanChar = startChar;
-   UDATA scanResult = scan_u32(&scanChar, &value);
-   j9mem_free_memory(startChar);
-   if (scanResult != 0)
-      {
-      if (scanResult == 1)
-         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_MUST_BE_NUMBER, option);
-      else
-         j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JIT_OPTIONS_VALUE_OVERFLOWED, option);
-      return false;
-      }
-   else
-      {
-      *out = value;
-      return true;
-      }
-   }
-
-static void handleUnrecognizedCommandLineOptions(char **options, char delimiter)
-   {
-   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-
-   // try to find delimiter to isolate unrecognized option
-   char *delimLocation = strchr(*options, delimiter);
-   if (delimLocation) // delimiter found, print the unrecognized option
-      {
-      char unRecognized[delimLocation - *options + 1];
-      strncpy(unRecognized, *options, delimLocation - *options);
-      unRecognized[delimLocation - *options] = '\0';
-      j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, unRecognized);
-      }
-   else // delimiter not found, unrecognized option remains until end of the string
-      j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VM_UNRECOGNISED_CMD_LINE_OPT, *options);
-
-   // skip this unknown option to search for any known options left
-   j9mem_free_memory(scan_to_delim(PORTLIB, options, delimiter));
-   }
-
 static std::string readFileToString(char *fileName)
    {
    I_32 fileId = j9jit_fopen_existing(fileName);
    if (fileId == -1)
       return "";
-   char buf[4096];
-   std::string fileStr;
-   int readSize;
+   const uint32_t BUFFER_SIZE = 4096; // 4KB
+   const uint32_t MAX_FILE_SIZE_IN_PAGES = 16; // 64KB
+   char buf[BUFFER_SIZE];
+   std::string fileStr("");
+   int readSize = 0;
+   int iter = 0;
    do {
-      readSize = j9jit_fread(fileId, buf, sizeof buf);
+      readSize = j9jit_fread(fileId, buf, BUFFER_SIZE);
       fileStr.append(buf, readSize);
-   } while (readSize == sizeof buf);
+      ++iter;
+   } while ((readSize == BUFFER_SIZE) && (iter < MAX_FILE_SIZE_IN_PAGES));
    j9jit_fcloseId(fileId);
-   return fileStr;
+
+   if (iter < MAX_FILE_SIZE_IN_PAGES)
+      return fileStr;
+   else
+      return "";
    }
 
-static bool JITServerParseOptionsCommon(char **options, char delimiter, TR::CompilationInfo *compInfo, char **unRecognizedOptions)
+static void JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compInfo)
    {
-   PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+   const char *xxJITServerPortOption = "-XX:JITServerPort=";
+   const char *xxJITServerTimeoutOption = "-XX:JITServerTimeout=";
+   const char *xxJITServerSSLKeyOption = "-XX:JITServerSSLKey=";
+   const char *xxJITServerSSLCertOption = "-XX:JITServerSSLCert=";
+   const char *xxJITServerSSLRootCertsOption = "-XX:JITServerSSLRootCerts=";
 
-   uint32_t port, timeoutMs;
-   if (try_scan(options, "sslKey="))
+   int32_t xxJITServerPortArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerPortOption, 0);
+   int32_t xxJITServerTimeoutArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerTimeoutOption, 0);
+   int32_t xxJITServerSSLKeyArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerSSLKeyOption, 0);
+   int32_t xxJITServerSSLCertArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerSSLCertOption, 0);
+   int32_t xxJITServerSSLRootCertsArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerSSLRootCertsOption, 0);
+
+   if (xxJITServerPortArgIndex >= 0)
       {
-      char * fileName = scan_to_delim(PORTLIB, options, delimiter);
-      std::string key = readFileToString(fileName);
-      j9mem_free_memory(fileName);
-      if (!key.empty())
-         compInfo->addJITServerSslKey(key);
+      uint32_t port=0;
+      IDATA ret = GET_INTEGER_VALUE(xxJITServerPortArgIndex, xxJITServerPortOption, port);
+      if (ret == OPTION_OK)
+         compInfo->getPersistentInfo()->setJITServerPort(port);
       }
-   else if (try_scan(options, "sslCert="))
+
+   if (xxJITServerTimeoutArgIndex >= 0)
       {
-      char * fileName = scan_to_delim(PORTLIB, options, delimiter);
-      std::string cert = readFileToString(fileName);
-      j9mem_free_memory(fileName);
-      if (!cert.empty())
-         compInfo->addJITServerSslCert(cert);
+      uint32_t timeoutMs=0;
+      IDATA ret = GET_INTEGER_VALUE(xxJITServerTimeoutArgIndex, xxJITServerTimeoutOption, timeoutMs);
+      if (ret == OPTION_OK)
+         compInfo->getPersistentInfo()->setSocketTimeout(timeoutMs);
       }
-   else if (try_scan(options, "sslRootCerts="))
+
+   // key and cert have to be set as a pair at the server
+   if ((xxJITServerSSLKeyArgIndex >= 0) && (xxJITServerSSLCertArgIndex >= 0))
       {
-      char * fileName = scan_to_delim(PORTLIB, options, delimiter);
-      std::string cert = readFileToString(fileName);
-      j9mem_free_memory(fileName);
-      compInfo->setJITServerSslRootCerts(cert);
-      }
-   else if (getJITServerNumericOptionFromCommandLineOptions(options, delimiter, "port=", &port))
-      compInfo->getPersistentInfo()->setJITServerPort(port);
-   else if (getJITServerNumericOptionFromCommandLineOptions(options, delimiter, "timeout=", &timeoutMs))
-      {
-      compInfo->getPersistentInfo()->setSocketTimeout(timeoutMs);
-      }
-   else // option not known
-      {
-      if (*unRecognizedOptions != *options)
+      char *keyFileName = NULL;
+      char *certFileName = NULL;
+      GET_OPTION_VALUE(xxJITServerSSLKeyArgIndex, '=', &keyFileName);
+      GET_OPTION_VALUE(xxJITServerSSLCertArgIndex, '=', &certFileName);
+      std::string key = readFileToString(keyFileName);
+      std::string cert = readFileToString(certFileName);
+
+      if (!key.empty() && !cert.empty())
          {
-         *unRecognizedOptions = *options;
-         handleUnrecognizedCommandLineOptions(options, delimiter);
+         compInfo->addJITServerSslKey(key);
+         compInfo->addJITServerSslCert(cert);
          }
-      else // no more known options, break the loop
-         return false;
       }
-   return true;
+
+   if (xxJITServerSSLRootCertsArgIndex >= 0)
+      {
+      char *fileName = NULL;
+      GET_OPTION_VALUE(xxJITServerSSLRootCertsArgIndex, '=', &fileName);
+      std::string cert = readFileToString(fileName);
+      if (!cert.empty())
+         compInfo->setJITServerSslRootCerts(cert);
+      }
    }
 #endif /* defined(JITSERVER_SUPPORT) */
 
@@ -1890,11 +1863,16 @@ J9::Options::fePreProcess(void * base)
       UDATA numCompThreads;
       IDATA ret = GET_INTEGER_VALUE(argIndex, compThreadsOption, numCompThreads);
 
+#if defined(JITSERVER_SUPPORT)
       if (ret == OPTION_OK)
          {
          _numUsableCompilationThreads = numCompThreads;
          compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
          }
+#else
+      if (ret == OPTION_OK && numCompThreads <= MAX_USABLE_COMP_THREADS)
+         _numUsableCompilationThreads = numCompThreads;
+#endif /* defined(JITSERVER_SUPPORT) */
       }
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)
@@ -2020,6 +1998,19 @@ J9::Options::fePreProcess(void * base)
    // Setting number of onsite cache slots for instanceOf node to 4 on IBM Z
    self()->setMaxOnsiteCacheSlotForInstanceOf(4);
 #endif
+   // Set a value for _safeReservePhysicalMemoryValue that is proportional
+   // to the amount of free physical memory at boot time
+   // The user can still override it with a command line option
+   bool incomplete = false;
+   uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
+   if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE && !incomplete)
+      {
+      const uint64_t reserveLimit = 32 * 1024 * 1024;
+      uint64_t proposed = phMemAvail >> 6; // 64 times less
+      if (proposed > reserveLimit)
+         proposed = reserveLimit;
+      J9::Options::_safeReservePhysicalMemoryValue = (int32_t)proposed;
+      }
 
    // Process the deterministic mode
    if (TR::Options::_deterministicMode == -1) // not yet set
@@ -2040,106 +2031,62 @@ J9::Options::fePreProcess(void * base)
       self()->setOption(TR_DisableAOTBytesCompression);
 
 #if defined(JITSERVER_SUPPORT)
-   // Check for option -XX:+UseJITServer and/or -XX:+StartAsJITServer
-   // -XX:-UseJITServer or -XX:-StartAsJITServer disables JITServer
+   // Check option -XX:+UseJITServer and/or -XX:StartAsJITServer
+   // -XX:-UseJITServer disables JITServer at the client
    static bool JITServerAlreadyParsed = false;
-   if (!JITServerAlreadyParsed) // avoid processing twice for AOT and JIT and produce duplicate messages
+   if (!JITServerAlreadyParsed) // Avoid processing twice for AOT and JIT and produce duplicate messages
       {
       JITServerAlreadyParsed = true;
 
-      char *xxUseJITServerOption = "-XX:+UseJITServer";
-      char *xxDisableUseJITServerOption = "-XX:-UseJITServer";
-      char *xxStartAsJITServerOption = "-XX:+StartAsJITServer";
-      char *xxDisableStartAsJITServerOption = "-XX:-StartAsJITServer";
+      const char *xxUseJITServerOption = "-XX:+UseJITServer";
+      const char *xxDisableUseJITServerOption = "-XX:-UseJITServer";
+      const char *xxStartAsJITServerOption = "-XX:StartAsJITServer";
 
       int32_t xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxUseJITServerOption, 0);
       int32_t xxDisableUseJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxDisableUseJITServerOption, 0);
       int32_t xxStartAsJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxStartAsJITServerOption, 0);
-      int32_t xxDisableStartAsJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxDisableStartAsJITServerOption, 0);
 
       // Check if option is at all specified
       if ((xxUseJITServerArgIndex > xxDisableUseJITServerArgIndex) ||
-          (xxStartAsJITServerArgIndex > xxDisableStartAsJITServerArgIndex))
+          (xxStartAsJITServerArgIndex >= 0))
          {
-         if (xxUseJITServerArgIndex > xxStartAsJITServerArgIndex) // client mode
+         if (xxUseJITServerArgIndex > xxStartAsJITServerArgIndex) // Client mode
             {
             compInfo->getPersistentInfo()->setRemoteCompilationMode(JITServer::CLIENT);
 
-            // parse -XX:+UseJITServer:server=<address/hostname>,port=<number> option if provided
-            char *xxUseJITServerOptionWithArgs = "-XX:+UseJITServer:"; // tail colon indicates server and port are provided
-            xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxUseJITServerOptionWithArgs, 0);
-            if (xxUseJITServerArgIndex >= 0)
-               {
-               // retrieve whole option part, i.e., server=<address/hostname>,port=<number>
-               char *options = NULL;
-               GET_OPTION_OPTION(xxUseJITServerArgIndex, ':', ':', &options);
+            const char *xxJITServerAddressOption = "-XX:JITServerAddress=";
+            int32_t xxJITServerAddressArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxJITServerAddressOption, 0);
 
-               char *scanLimit = options + strlen(options);
-               char delimiter = ',';
-               char *unRecognizedOptions = NULL;
-               while (options < scanLimit)
-                  {
-                  if (try_scan(&options, "server=")) // parse server=<address/hostname> option
-                     {
-                     char *address = scan_to_delim(PORTLIB, &options, delimiter);
-                     compInfo->getPersistentInfo()->setJITServerAddress(address);
-                     j9mem_free_memory(address);
-                     }
-                  else if (!JITServerParseOptionsCommon(&options, delimiter, compInfo, &unRecognizedOptions))
-                     break;
-                  }
+            if (xxJITServerAddressArgIndex >= 0)
+               {
+               char *address = NULL;
+               GET_OPTION_VALUE(xxJITServerAddressArgIndex, '=', &address);
+               compInfo->getPersistentInfo()->setJITServerAddress(address);
                }
             }
-         else // server mode
+         else // Server mode
             {
             compInfo->getPersistentInfo()->setRemoteCompilationMode(JITServer::SERVER);
-
-            // parse -XX:+StartAsJITServer:port=<number> option if provided
-            char *xxStartAsJITServerOptionWithArgs = "-XX:+StartAsJITServer:"; // tail colon indicates options are provided
-            xxStartAsJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxStartAsJITServerOptionWithArgs, 0);
-            if (xxStartAsJITServerArgIndex >= 0)
-               {
-               // retrieve whole option part, i.e., port=<number>
-               char *options = NULL;
-               GET_OPTION_OPTION(xxStartAsJITServerArgIndex, ':', ':', &options);
-
-               char *scanLimit = options + strlen(options);
-               char delimiter = ',';
-               char *unRecognizedOptions = NULL;
-               while (options < scanLimit && JITServerParseOptionsCommon(&options, delimiter, compInfo, &unRecognizedOptions));
-               }
             }
+
+         JITServerParseCommonOptions(vm, compInfo);
          }
-      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::NONE)
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          {
-         // generate a random identifier for this JITServer instance.
-         // TODO: prevent collisions with some kind of atomic registration algo!
+         // Generate a random identifier for this JITServer instance.
+         // Collisions are possible, but very unlikely.
+         // Using more bits for the client UID can reduce the probability of a collision further.
          std::random_device rd;
          std::mt19937_64 rng(rd());
          std::uniform_int_distribution<uint64_t> dist;
          compInfo->getPersistentInfo()->setClientUID(dist(rng));
          }
       }
-   // Set a value for _safeReservePhysicalMemoryValue that is proportional
-   // to the amount of free physical memory at boot time
-   // For JITServer we can use a 0 value because compilations are done remotely
-   // The user can still override it with a command line option
+   // _safeReservePhysicalMemoryValue is set as 0 for the JITServer client because compilations
+   // are done remotely. The user can still override it with a command line option
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       J9::Options::_safeReservePhysicalMemoryValue = 0;
-      }
-   else
-      {
-      bool incomplete = false;
-      uint64_t phMemAvail = compInfo->computeAndCacheFreePhysicalMemory(incomplete);
-      if (phMemAvail != OMRPORT_MEMINFO_NOT_AVAILABLE && !incomplete)
-         {
-         const uint64_t reserveLimit = 32 * 1024 * 1024;
-         uint64_t proposed = phMemAvail >> 6; // 64 times less
-         if (proposed > reserveLimit)
-            proposed = reserveLimit;
-         J9::Options::_safeReservePhysicalMemoryValue = (int32_t)proposed;
-         }
       }
 #endif /* defined(JITSERVER_SUPPORT) */
 
@@ -2180,6 +2127,54 @@ J9::Options::openLogFiles(J9JITConfig *jitConfig)
       ((TR_JitPrivateConfig*)jitConfig->privateConfig)->rtLogFile = fileOpen(self(), jitConfig, rtLogFileName, "wb", true, false);
    }
 
+#if defined(JITSERVER_SUPPORT)
+void
+J9::Options::setupJITServerOptions()
+   {
+   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ||
+       compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+      {
+      self()->setOption(TR_DisableSamplingJProfiling);
+      self()->setIsVariableHeapBaseForBarrierRange0(true);
+      self()->setOption(TR_DisableProfiling); // JITServer limitation, JIT profiling data is not available to remote compiles yet
+      self()->setOption(TR_DisableEDO); // JITServer limitation, EDO counters are not relocatable yet
+      self()->setOption(TR_DisableKnownObjectTable);
+      self()->setOption(TR_DisableMethodIsCold); // Shady heuristic; better to disable to reduce client/server traffic
+      self()->setOption(TR_DisableDecimalFormatPeephole);// JITServer decimalFormatPeephole,
+
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+         {
+         // The server can compile with VM access in hand because GC is not a factor here
+         // For the same reason we don't have to use TR_EnableYieldVMAccess
+         self()->setOption(TR_DisableNoVMAccess);
+
+         // IProfiler thread is not needed at JITServer because
+         // no IProfiler info is collected at the server itself
+         self()->setOption(TR_DisableIProfilerThread);
+         }
+
+      // In the JITServer world, expensive compilations are performed remotely so there is no risk of blowing the footprint limit on the JVM
+      // Setting _expensiveCompWeight to a large value so that JSR292/hot/scorching compilation are allowed to be executed concurrently
+      TR::Options::_expensiveCompWeight = TR::CompilationInfo::MAX_WEIGHT;
+
+      }
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      {
+      TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
+      if (persistentInfo->getRemoteCompilationMode() == JITServer::SERVER)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer Server Mode. Port: %d. Connection Timeout %ums",
+               persistentInfo->getJITServerPort(), persistentInfo->getSocketTimeout());
+      else if (persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT)
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer Client Mode. Server address: %s port: %d. Connection Timeout %ums",
+               persistentInfo->getJITServerAddress().c_str(), persistentInfo->getJITServerPort(),
+               persistentInfo->getSocketTimeout());
+      }
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
+
 bool
 J9::Options::fePostProcessJIT(void * base)
    {
@@ -2190,7 +2185,9 @@ J9::Options::fePostProcessJIT(void * base)
    J9JavaVM * javaVM = jitConfig->javaVM;
    PORT_ACCESS_FROM_JAVAVM(javaVM);
 
+#if defined(JITSERVER_SUPPORT)
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+#endif /* defined(JITSERVER_SUPPORT) */
    // If user has not specified a value for compilation threads, do it now.
    // This code does not have to stay in the fePostProcessAOT because in an AOT only
    // scenario we don't need more than one compilation thread to load code.
@@ -2206,7 +2203,11 @@ J9::Options::fePostProcessJIT(void * base)
          if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableRampupImprovements) &&
             !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableRampupImprovements))
             {
+#if defined(JITSERVER_SUPPORT)
             compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
+#else
+            _numUsableCompilationThreads = MAX_USABLE_COMP_THREADS;
+#endif /* defined(JITSERVER_SUPPORT) */
             }
          }
       if (_numUsableCompilationThreads <= 0)
@@ -2215,8 +2216,12 @@ J9::Options::fePostProcessJIT(void * base)
          // Do not create more than numProc-1 compilation threads, but at least one
          //
          uint32_t numOnlineCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
+#if defined(JITSERVER_SUPPORT)
          compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
          _numUsableCompilationThreads = numOnlineCPUs > 1 ? std::min((numOnlineCPUs - 1), static_cast<uint32_t>(_numUsableCompilationThreads)) : 1;
+#else
+         _numUsableCompilationThreads = numOnlineCPUs > 1 ? std::min((numOnlineCPUs - 1), static_cast<uint32_t>(MAX_USABLE_COMP_THREADS)) : 1;
+#endif /* defined(JITSERVER_SUPPORT) */
          }
       }
 
@@ -2278,54 +2283,6 @@ J9::Options::fePostProcessJIT(void * base)
 
    return true;
    }
-
-#if defined(JITSERVER_SUPPORT)
-void
-J9::Options::setupJITServerOptions()
-   {
-   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
-
-   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ||
-       compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-      {
-      self()->setOption(TR_DisableSamplingJProfiling);
-      self()->setIsVariableHeapBaseForBarrierRange0(true);
-      self()->setOption(TR_DisableProfiling); // JITServer limitation, JIT profiling data is not available to remote compiles yet
-      self()->setOption(TR_DisableEDO); // JITServer limitation, EDO counters are not relocatable yet
-      self()->setOption(TR_DisableKnownObjectTable);
-      self()->setOption(TR_DisableMethodIsCold); // shady heuristic; better to disable to reduce client/server traffic
-      self()->setOption(TR_DisableDecimalFormatPeephole);// JITServer decimalFormatPeephole,
-
-      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-         {
-         // The server can compile with VM access in hand because GC is not a factor here
-         // For the same reason we don't have to use TR_EnableYieldVMAccess
-         self()->setOption(TR_DisableNoVMAccess); 
-
-         // IProfiler thread is not needed at JITServer because
-         // no IProfiler info is collected at the server itself
-         self()->setOption(TR_DisableIProfilerThread);
-         }
-
-      // In the JITServer world, expensive compilations are performed remotely so there is no risk of blowing the footprint limit on the JVM
-      // Setting _expensiveCompWeight to a large value so that JSR292/hot/scorching compilation are allowed to be executed concurrently
-      TR::Options::_expensiveCompWeight = TR::CompilationInfo::MAX_WEIGHT;
-
-      }
-
-   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      {
-      TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
-      if (persistentInfo->getRemoteCompilationMode() == JITServer::SERVER)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer Server Mode. Port: %d. Connection Timeout %ums",
-               persistentInfo->getJITServerPort(), persistentInfo->getSocketTimeout());
-      else if (persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer Client Mode. Server address: %s port: %d. Connection Timeout %ums",
-               persistentInfo->getJITServerAddress().c_str(), persistentInfo->getJITServerPort(),
-               persistentInfo->getSocketTimeout());
-      }
-   }
-#endif /* defined(JITSERVER_SUPPORT) */
 
 bool
 J9::Options::fePostProcessAOT(void * base)
@@ -2769,7 +2726,7 @@ J9::Options::printPID()
 #if defined(JITSERVER_SUPPORT)
 void getTRPID(char *buf);
 
-void
+static void
 appendRegex(TR::SimpleRegex *&regexPtr, uint8_t *&curPos)
    {
    if (!regexPtr)
@@ -2777,12 +2734,14 @@ appendRegex(TR::SimpleRegex *&regexPtr, uint8_t *&curPos)
    size_t len = regexPtr->regexStrLen();
    memcpy(curPos, regexPtr->regexStr(), len);
    TR_ASSERT(curPos[len - 1], "not expecting null terminator");
+   // Replace the regex pointer with self-referring-pointer which is the offset of regex data
+   // with respect to the regex pointer
    regexPtr = (TR::SimpleRegex*) ((uint8_t*)curPos - (uint8_t *)&regexPtr);
    curPos[len] = '\0';
    curPos += len + 1;
    }
 
-void
+static void
 unpackRegex(TR::SimpleRegex *&regexPtr)
    {
    if (!regexPtr)
@@ -2791,24 +2750,37 @@ unpackRegex(TR::SimpleRegex *&regexPtr)
    regexPtr = TR::SimpleRegex::create(str);
    }
 
-void
+static void
 addRegexStringSize(TR::SimpleRegex *regexPtr, size_t &len)
    {
    if (regexPtr)
       len += regexPtr->regexStrLen() + 1;
    }
 
-// Packs a TR::Options object into a std::string to be transfered to the server
+static uint8_t *
+appendContent(char * &charPtr, uint8_t * curPos, size_t length)
+   {
+   if (charPtr == NULL)
+      return curPos;
+   // Copy charPtr's content to the location pointed by curPos
+   memcpy(curPos, charPtr, length);
+   // Compute the offset from the address of charPtr to curPos and store it to charPtr
+   charPtr = (char *)(curPos - (uint8_t *)&(charPtr));
+   // Update current position
+   return curPos += length;
+   }
+
+// Pack a TR::Options object into a std::string to be transfered to the server
 std::string
-J9::Options::packOptions(TR::Options *origOptions)
+J9::Options::packOptions(const TR::Options *origOptions)
    {
    size_t logFileNameLength = 0;
    size_t suffixLogsFormatLength = 0;
    size_t blockShufflingSequenceLength = 0;
    size_t induceOSRLength = 0;
 
-   char buf[FILENAME_MAX_SIZE];
-   char * origLogFileName = NULL;
+   char buf[JITSERVER_LOG_FILENAME_MAX_SIZE];
+   char *origLogFileName = NULL;
    if (origOptions->_logFileName)
       {
       origLogFileName = origOptions->_logFileName;
@@ -2816,10 +2788,11 @@ J9::Options::packOptions(TR::Options *origOptions)
       memset(pidBuf, 0, 20);
       getTRPID(pidBuf);
       logFileNameLength = strlen(origOptions->_logFileName) + strlen(".") + strlen(pidBuf) + strlen(".server") + 1;
-      if (logFileNameLength > FILENAME_MAX_SIZE)
-         logFileNameLength = FILENAME_MAX_SIZE;
+      // If logFileNameLength is greater than JITSERVER_LOG_FILENAME_MAX_SIZE, PID might not be appended to the log file name
+      // and the log file name could be truncated as well.
+      if (logFileNameLength > JITSERVER_LOG_FILENAME_MAX_SIZE)
+         logFileNameLength = JITSERVER_LOG_FILENAME_MAX_SIZE;
       snprintf(buf, logFileNameLength, "%s.%s.server", origOptions->_logFileName, pidBuf);
-      origOptions->_logFileName = buf;
       }
    if (origOptions->_suffixLogsFormat)
       suffixLogsFormatLength = strlen(origOptions->_suffixLogsFormat) + 1;
@@ -2828,8 +2801,10 @@ J9::Options::packOptions(TR::Options *origOptions)
    if (origOptions->_induceOSR)
       induceOSRLength = strlen(origOptions->_induceOSR) + 1;
 
+   // sizeof(bool) is reserved to pack J9JIT_RUNTIME_RESOLVE
    size_t totalSize = sizeof(TR::Options) + logFileNameLength + suffixLogsFormatLength + blockShufflingSequenceLength + induceOSRLength + sizeof(bool);
 
+   addRegexStringSize(origOptions->_traceForCodeMining, totalSize);
    addRegexStringSize(origOptions->_disabledOptTransformations, totalSize);
    addRegexStringSize(origOptions->_disabledInlineSites, totalSize);
    addRegexStringSize(origOptions->_disabledOpts, totalSize);
@@ -2856,7 +2831,9 @@ J9::Options::packOptions(TR::Options *origOptions)
    std::string optionsStr(totalSize, '\0');
    TR::Options * options = (TR::Options *)optionsStr.data();
    memcpy(options, origOptions, sizeof(TR::Options));
-   origOptions->_logFileName = origLogFileName;
+
+   if (origOptions->_logFileName)
+      options->_logFileName = buf;
 
    uint8_t *curPos = ((uint8_t *)options) + sizeof(TR::Options);
 
@@ -2895,15 +2872,17 @@ J9::Options::packOptions(TR::Options *origOptions)
    options->_logListForOtherCompThreads = NULL;
    options->_objectFileName = NULL;
 
-
+   // Append the data pointed by a pointer to the content and patch the pointer
+   // as a self-referring-pointer, or a relative pointer, which is
+   // the offset of the data with respect to the pointer.
    curPos = appendContent(options->_logFileName, curPos, logFileNameLength);
    curPos = appendContent(options->_suffixLogsFormat, curPos, suffixLogsFormatLength);
    curPos = appendContent(options->_blockShufflingSequence, curPos, blockShufflingSequenceLength);
    curPos = appendContent(options->_induceOSR, curPos, induceOSRLength);
 
-   // send rtResolve option to the server
-   // TODO: this is an ugly solution, come up with something better
-   // e.g. make rtResolve part of TR::Options instead of runtime flags
+   // Send rtResolve option to the server:
+   // Temporary solution until we can send jitConfig->runtimeFlags to the server
+   // or make rtResolve part of TR::Options instead of runtime flags
    auto *jitConfig = (J9JITConfig *) _feBase;
    bool rtResolve = jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE;
    char *rtResolveStr = (char *) &rtResolve;
@@ -2918,7 +2897,7 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
    TR::Options *options = (TR::Options *)trMemory->allocateHeapMemory(clientOptionsSize);
    memcpy(options, clientOptions, clientOptionsSize);
 
-   // convert relative pointers to absolute pointers
+   // Convert relative pointers to absolute pointers
    // pointer = address of field + offset
    if (options->_logFileName)
       options->_logFileName = (char *)((uint8_t *)&(options->_logFileName) + (ptrdiff_t)options->_logFileName);
@@ -2928,9 +2907,9 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
       options->_blockShufflingSequence = (char *)((uint8_t *)&(options->_blockShufflingSequence) + (ptrdiff_t)options->_blockShufflingSequence);
    if (options->_induceOSR)
       options->_induceOSR = (char *)((uint8_t *)&(options->_induceOSR) + (ptrdiff_t)options->_induceOSR);
-   
-   // receive rtResolve
-   // NOTE: this relies on rtResolve being the last option in clientOptions
+
+   // Receive rtResolve: J9JIT_RUNTIME_RESOLVE
+   // NOTE: This relies on rtResolve being the last option in clientOptions
    // the J9JIT_RUNTIME_RESOLVE flag from JITClient
    // On JITServer, we store this value for each client in ClientSessionData
    bool rtResolve = (bool) *((uint8_t *) options + clientOptionsSize - sizeof(bool));
@@ -2938,6 +2917,7 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
 
    _reportByteCodeInfoAtCatchBlock = fe->getReportByteCodeInfoAtCatchBlock();
 
+   unpackRegex(options->_traceForCodeMining);
    unpackRegex(options->_disabledOptTransformations);
    unpackRegex(options->_disabledInlineSites);
    unpackRegex(options->_disabledOpts);
@@ -2964,62 +2944,88 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
    return options;
    }
 
+// Pack the log file generated at the server to be sent to the client
 std::string
 J9::Options::packLogFile(TR::FILE *fp)
    {
    if (fp == NULL)
       return "";
-   const size_t size = 4096; // 4kb
-   char buf[size + 1];
-   ::rewind(fp->_stream);
+   const size_t BUFFER_SIZE = 4096; // 4KB
+   char buf[BUFFER_SIZE + 1];
    std::string logFileStr("");
-   int readSize;
+   int readSize = 0;
+   ::rewind(fp->_stream);
    do {
-      readSize = ::fread(buf, 1, size, fp->_stream);
+      readSize = ::fread(buf, 1, BUFFER_SIZE, fp->_stream);
       buf[readSize] = '\0';
       logFileStr.append(buf);
-   } while (readSize == size);
+      } while (readSize == BUFFER_SIZE);
 
    logFileStr.append("</jitlog>\n");
    return logFileStr;
    }
 
-uint8_t *
-J9::Options::appendContent(char * &charPtr, uint8_t * curPos, size_t length)
+// Create a log file at the client based on the log file string sent from the server
+int
+J9::Options::writeLogFileFromServer(const std::string& logFileContent)
    {
-   if (charPtr == NULL)
-      return curPos;
-   // copies charPtr's content to the location pointed by curPos
-   memcpy(curPos, charPtr, length);
-   // then compute the offset from address of charPtr to curPos and store it to charPtr
-   charPtr = (char *)(curPos - (uint8_t *)&(charPtr));
-   // update current position
-   return curPos += length;
+   if (logFileContent.empty() || !_logFileName)
+      return 0;
+
+   char buf[JITSERVER_LOG_FILENAME_MAX_SIZE];
+   _fe->acquireLogMonitor();
+   snprintf(buf, sizeof(buf), "%s.%d.REMOTE", _logFileName, ++_compilationSequenceNumber);
+   int sequenceNumber = _compilationSequenceNumber;
+   _fe->releaseLogMonitor();
+
+   int32_t len = strlen(buf);
+   // maximum length for suffix (dot + 8-digit date + dot + 6-digit time + dot + 5-digit pid + null terminator)
+   int32_t MAX_SUFFIX_LENGTH = 23;
+   if (len + MAX_SUFFIX_LENGTH > JITSERVER_LOG_FILENAME_MAX_SIZE)
+      {
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         {
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Trace log not generated due to filename being too long");
+         }
+      return 0; // may overflow the buffer
+      }
+   char tmp[JITSERVER_LOG_FILENAME_MAX_SIZE];
+   char * filename = _fe->getFormattedName(tmp, JITSERVER_LOG_FILENAME_MAX_SIZE, buf, _suffixLogsFormat, true);
+
+   TR::FILE *logFile = trfopen(filename, "wb", false);
+   ::fputs(logFileContent.c_str(), logFile->_stream);
+   trfflush(logFile);
+   trfclose(logFile);
+
+   return sequenceNumber;
    }
 
 TR_Debug *createDebugObject(TR::Compilation *);
-// JITServer: create a log file for each client compilation request
-// Used by JITServer
+
+// JITServer: Create a log file for each client compilation request
 // Side effect: set _logFile
+// At the client: Triggered when a remote compilation is followed by a local compilation.
+//                suffixNumber is the compilationSequenceNumber used for the remote compilation.
+// At the server: suffixNumber is set as 0.
 void
-J9::Options::setLogFileForClientOptions(int doubleCompile)
+J9::Options::setLogFileForClientOptions(int suffixNumber)
    {
    if (_logFileName)
       {
       _fe->acquireLogMonitor();
-      if (doubleCompile)
+      if (suffixNumber)
          {
          self()->setOption(TR_EnablePIDExtension, true);
-         self()->openLogFile(doubleCompile);
+         self()->openLogFile(suffixNumber);
          }
-      else 
+      else
          {
          _compilationSequenceNumber++;
          self()->setOption(TR_EnablePIDExtension, false);
          self()->openLogFile(_compilationSequenceNumber);
          }
 
-      if (_logFile != NULL)
+      if (!_logFile)
          {
          J9JITConfig *jitConfig = (J9JITConfig*)_feBase;
          if (!jitConfig->tracingHook)
@@ -3033,8 +3039,6 @@ J9::Options::setLogFileForClientOptions(int doubleCompile)
       }
    }
 
-// JITServer: close log file
-// Used by JITServer
 void
 J9::Options::closeLogFileForClientOptions()
    {
@@ -3043,42 +3047,6 @@ J9::Options::closeLogFileForClientOptions()
       TR::Options::closeLogFile(_fe, _logFile);
       _logFile = NULL;
       }
-   }
-
-// JITServer: create a log file on the client side
-// Used by JITClient
-int
-J9::Options::writeLogFileFromServer(const std::string& logFileContent)
-   {
-   if (logFileContent.empty() || !_logFileName)
-      return 0;
-
-   char buf[FILENAME_MAX_SIZE];
-   _fe->acquireLogMonitor();
-   snprintf(buf, sizeof(buf), "%s.%d.REMOTE", _logFileName, ++_compilationSequenceNumber);
-   int sequenceNumber = _compilationSequenceNumber;
-   _fe->releaseLogMonitor();
-
-   int32_t len = strlen(buf);
-   // maximum length for suffix (dot + 8-digit date + dot + 6-digit time + dot + 5-digit pid + null terminator)
-   int32_t MAX_SUFFIX_LENGTH = 23;
-   if (len + MAX_SUFFIX_LENGTH > FILENAME_MAX_SIZE)
-      {
-      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Trace log not genereted due to filename being too long");
-         }
-      return 0; // may overflow the buffer
-      }
-   char tmp[FILENAME_MAX_SIZE];
-   char * filename = _fe->getFormattedName(tmp, FILENAME_MAX_SIZE, buf, _suffixLogsFormat, true);
-
-   TR::FILE *logFile = trfopen(filename, "wb", false);
-   ::fputs(logFileContent.c_str(), logFile->_stream);
-   trfflush(logFile);
-   trfclose(logFile);
-
-   return sequenceNumber;
    }
 #endif /* defined(JITSERVER_SUPPORT) */
 
