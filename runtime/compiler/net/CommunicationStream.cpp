@@ -25,6 +25,8 @@
 #include "env/CompilerEnv.hpp" // for TR::Compiler->target.is64Bit()
 #include "control/Options.hpp" // TR::Options::useCompressedPointers()
 #include "control/CompilationRuntime.hpp"
+#include "j9cfg.h" // for JAVA_SPEC_VERSION
+
 
 namespace JITServer
 {
@@ -34,8 +36,9 @@ void CommunicationStream::initVersion()
    {
    if (TR::Compiler->target.is64Bit() && TR::Options::useCompressedPointers())
       {
-      CONFIGURATION_FLAGS |= JITaaSCompressedRef;
+      CONFIGURATION_FLAGS |= JITServerCompressedRef;
       }
+   CONFIGURATION_FLAGS |= JAVA_SPEC_VERSION & JITServerJavaVersionMask;
    }
 
 #if defined(JITSERVER_ENABLE_SSL)

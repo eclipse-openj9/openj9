@@ -68,8 +68,8 @@ static int32_t J9THREAD_PROC listenerThreadProc(void * entryarg)
 
    // Note: the following code will never be executed, because 
    // serveRemoteCompilationRequests() is executed "forever"
-   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Detaching JITaaSServer listening thread");
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Detaching JITServer listening thread");
 
    vm->internalVMFunctions->DetachCurrentThread((JavaVM *) vm);
    listener->getListenerMonitor()->enter();
