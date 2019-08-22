@@ -2313,14 +2313,14 @@ J9::Options::setupJITServerOptions()
 
       }
 
-   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       {
       TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
       if (persistentInfo->getRemoteCompilationMode() == JITServer::SERVER)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITServer Server Mode. Port: %d. Connection Timeout %ums",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer Server Mode. Port: %d. Connection Timeout %ums",
                persistentInfo->getJITServerPort(), persistentInfo->getSocketTimeout());
       else if (persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT)
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITServer Client Mode. Server address: %s port: %d. Connection Timeout %ums",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer Client Mode. Server address: %s port: %d. Connection Timeout %ums",
                persistentInfo->getJITServerAddress().c_str(), persistentInfo->getJITServerPort(),
                persistentInfo->getSocketTimeout());
       }
@@ -2931,7 +2931,7 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
    
    // receive rtResolve
    // NOTE: this relies on rtResolve being the last option in clientOptions
-   // the J9JIT_RUNTIME_RESOLVE flag from JITServer client
+   // the J9JIT_RUNTIME_RESOLVE flag from JITClient
    // On JITServer, we store this value for each client in ClientSessionData
    bool rtResolve = (bool) *((uint8_t *) options + clientOptionsSize - sizeof(bool));
    compInfoPT->getClientData()->setRtResolve(rtResolve);
@@ -3064,9 +3064,9 @@ J9::Options::writeLogFileFromServer(const std::string& logFileContent)
    int32_t MAX_SUFFIX_LENGTH = 23;
    if (len + MAX_SUFFIX_LENGTH > FILENAME_MAX_SIZE)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Trace log not genereted due to filename being too long");
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Trace log not genereted due to filename being too long");
          }
       return 0; // may overflow the buffer
       }

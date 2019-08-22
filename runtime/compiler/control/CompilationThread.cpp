@@ -2064,7 +2064,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
    TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
    J9Method *method = details.getMethod();
 
-   // The JITaaS server should not retry compilations on it's own,
+   // The JITServer should not retry compilations on it's own,
    // it should let the client make that decision
    if (entry->isOutOfProcessCompReq())
       return false;
@@ -3459,8 +3459,8 @@ void TR::CompilationInfo::stopCompilationThreads()
          {
          JITaaSHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary));
          // catch the stream failure exception if the server dies before the dummy message is send for termination.
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS StreamFailure (server unreachable before the termination message was sent): %s", e.what());
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer StreamFailure (server unreachable before the termination message was sent): %s", e.what());
          }
       }
    }
@@ -6828,7 +6828,7 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
    // they are supposed to be cheap with respect to memory and CPU.
    //
    if (!entry->_useAotCompilation && entry->_optimizationPlan->getOptLevel() <= cold &&
-      (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) || localColdCompilations) || 
+      (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITServerHeuristics) || localColdCompilations) ||
       !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
       (!JITaaSHelpers::isServerAvailable() && !JITaaSHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))))
       doLocalComp = true;
@@ -7093,7 +7093,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       }
    else if (!entry->isOutOfProcessCompReq())
       {
-      // This is used for JIT compilations and AOT loads on the client side or non-JITaaS
+      // This is used for JIT compilations and AOT loads on the client side or non-JITServer
       _vm = TR_J9VMBase::get(_jitConfig, vmThread);
       entry->_useAotCompilation = false;
 
@@ -7113,7 +7113,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
              !entry->isJNINative() &&
              !details.isNewInstanceThunk() &&
              !details.isMethodHandleThunk() &&
-             TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSHeuristics) &&
+             TR::Options::getCmdLineOptions()->getOption(TR_EnableJITServerHeuristics) &&
              !TR::Options::getCmdLineOptions()->getOption(TR_DisableUpgradingColdCompilations) &&
              TR::Options::getCmdLineOptions()->allowRecompilation())
             {
@@ -7189,7 +7189,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
                                                        bool eligibleForRelocatableCompile,
                                                        TR_RelocationRuntime *reloRuntime)
    {
-   // JITaaS cleanup tasks
+   // JITServer cleanup tasks
    if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       ((TR::CompilationInfoPerThread*)this)->getClassesThatShouldNotBeNewlyExtended()->clear();
@@ -7292,7 +7292,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
    else // compilation will not be retried, either because it succeeded or because we don't want to
       {
       TR_PersistentJittedBodyInfo *bodyInfo;
-      // JITaaS: Can not acquire the jitted body info on the server
+      // JITServer: Can not acquire the jitted body info on the server
       if (!entry->isOutOfProcessCompReq() && entry->isDLTCompile() && !startPC && TR::CompilationInfo::isCompiled(method) && // DLT compilation that failed too many times
          (bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(method->extra)))  // do not use entry->_oldStartPC which is probably 0. Use the most up-to-date startPC
          bodyInfo->getMethodInfo()->setHasFailedDLTCompRetrials(true);
@@ -7416,7 +7416,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       //
       if (_compiler->cg() && _compiler->cg()->getCodeCache())
          {
-         // For JITaaS SERVER we should wipe this method from the code cache
+         // For JITServer we should wipe this method from the code cache
          if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             _compiler->cg()->getCodeCache()->resetCodeCache();
             
@@ -7752,7 +7752,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       // filters to see if compilation is to be suppressed.
 
       TR_FilterBST *filterInfo = NULL;
-      // JITaaS: methodCanBeCompiled check should have been done on the client, skip it on the server.
+      // JITServer: methodCanBeCompiled check should have been done on the client, skip it on the server.
       if (!details.isRemoteMethod() && !that->methodCanBeCompiled(p->trMemory(), vm, compilee, filterInfo))
          {
          that->_methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
@@ -7800,7 +7800,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          // If the options come from a remote party, skip the setup options process
          if (that->_methodBeingCompiled->_clientOptions != NULL)
             {
-            TR_ASSERT(that->_methodBeingCompiled->isOutOfProcessCompReq(), "Options are already provided only for JITaaS server");
+            TR_ASSERT(that->_methodBeingCompiled->isOutOfProcessCompReq(), "Options are already provided only for JITServer");
             options = TR::Options::unpackOptions(that->_methodBeingCompiled->_clientOptions, that->_methodBeingCompiled->_clientOptionsSize, that, vm, p->trMemory());
             options->setLogFileForClientOptions();
             }
@@ -7908,7 +7908,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
                TR_ASSERT(vm->isAOT_DEPRECATED_DO_NOT_USE(), "assertion failure");
 
-               // Do not delay relocations for JITaaS_SERVER
+               // Do not delay relocations for JITServer
                if (that->getCompilationInfo()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
                   options->setOption(TR_DisableDelayRelocationForAOTCompilations);
                }
@@ -8778,7 +8778,7 @@ TR::CompilationInfoPerThreadBase::compile(
       // Compile the method
       //
 
-      // For local AOT and JITaaS we need to reserve a data cache to ensure contiguous memory
+      // For local AOT and JITServer we need to reserve a data cache to ensure contiguous memory
       // For TOSS_CODE we need to reserve a data cache so that we know what dataCache
       // to reset when throwing the data away
       //
@@ -9807,9 +9807,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          }
       else if (entry && entry->isOutOfProcessCompReq())
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                   "compThreadID=%d has failed to compile a DLT method", entry->_compInfoPT->getCompThreadId());
             }
          int8_t compErrCode = entry->_compErrCode;
@@ -10122,7 +10122,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   }
                }
             }
-         else // Non-AOT compilation and JITaaS remote JIT/AOT compilations
+         else // Non-AOT compilation and JITServer remote JIT/AOT compilations
             {
             if (trvm->isAOT_DEPRECATED_DO_NOT_USE() && !TR::CompilationInfo::canRelocateMethod(comp))
                {
@@ -10177,9 +10177,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
       if (entry && entry->isOutOfProcessCompReq())
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                   "compThreadID=%d has failed to compile", entry->_compInfoPT->getCompThreadId());
             }
          static bool breakAfterFailedCompile = feGetEnv("TR_breakAfterFailedCompile") != NULL;
@@ -10205,9 +10205,9 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
       if (entry && entry->isOutOfProcessCompReq())
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                   "compThreadID=%d has failed to recompile", entry->_compInfoPT->getCompThreadId());
             }
          int8_t compErrCode = entry->_compErrCode;
@@ -10967,26 +10967,26 @@ TR::CompilationInfoPerThreadBase::processException(
       }
    catch (const JITServer::StreamFailure &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITServer StreamFailure: %s", e.what());
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer StreamFailure: %s", e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamFailure;
       }
    catch (const JITServer::StreamInterrupted &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITServer StreamInterrupted: %s", e.what());
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer StreamInterrupted: %s", e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamInterrupted;
       }
    catch (const JITServer::StreamVersionIncompatible &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITServer StreamVersionIncompatible: %s", e.what());
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer StreamVersionIncompatible: %s", e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamVersionIncompatible;
       }
    catch (const JITServer::StreamMessageTypeMismatch &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITServer StreamMessageTypeMismatch: %s", e.what());
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer StreamMessageTypeMismatch: %s", e.what());
       _methodBeingCompiled->_compErrCode = compilationStreamMessageTypeMismatch;
       }
    catch (const JITServer::ServerCompilationFailure &e)
@@ -12701,7 +12701,7 @@ TR::CompilationInfoPerThread::updateLastLocalGCCounter()
    _lastLocalGCCounter = getCompilationInfo()->getLocalGCCounter();
    }
 
-// This method is executed by the JITaaS server to queue a placeholder for
+// This method is executed by the JITServer to queue a placeholder for
 // a compilation request received from the client. At the time the new
 // entry is queued we do not know any details about the compilation request.
 // The method needs to be executed with compilation monitor in hand

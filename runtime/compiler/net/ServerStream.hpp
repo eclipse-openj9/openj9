@@ -202,8 +202,8 @@ public:
          }
       catch (std::exception &e)
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Could not finish compilation: %s", e.what());
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Could not finish compilation: %s", e.what());
          }
       }
 

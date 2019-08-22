@@ -259,8 +259,8 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
           (response != MessageType::compilationFailure))
          client->writeError(JITServer::MessageType::compilationInterrupted, 0 /* placeholder */);
 
-      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in handleServerMessage of %s @ %s",
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in handleServerMessage of %s @ %s", 
                                                           interruptReason, comp->signature(), comp->getHotnessName());
       comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in handleServerMessage");
       }
@@ -2534,7 +2534,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          break;
       default:
          // It is vital that this remains a hard error during dev!
-         TR_ASSERT(false, "JITaaS: handleServerMessage received an unknown message type: %d\n", response);
+         TR_ASSERT(false, "JITServer: handleServerMessage received an unknown message type: %d\n", response);
       }
    return done;
    }
@@ -2584,7 +2584,7 @@ remoteCompile(
             }
          else
             {
-            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+            if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
                TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
                   "Server is not available. Retry with local compilation for %s @ %s", compiler->signature(), compiler->getHotnessName());
             compiler->failCompilation<JITServer::StreamFailure>("Server is not available, should retry with local compilation.");
@@ -2593,14 +2593,14 @@ remoteCompile(
       catch (const JITServer::StreamFailure &e)
          {
          JITaaSHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
-         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
                "JITServer::StreamFailure: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
          compiler->failCompilation<JITServer::StreamFailure>(e.what());
          }
       catch (const std::bad_alloc &e)
          {
-         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
                "std::bad_alloc: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
          compiler->failCompilation<std::bad_alloc>(e.what());
@@ -2648,9 +2648,9 @@ remoteCompile(
       // message just in case we block in the write operation   
       releaseVMAccess(vmThread);
 
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
             "Client sending compReq seqNo=%u to server for method %s @ %s.",
             seqNo, compiler->signature(), compiler->getHotnessName());
          }
@@ -2663,7 +2663,7 @@ remoteCompile(
       if (interruptReason)
          {
          auto comp = compInfoPT->getCompilation();
-         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
              TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in remoteCompile of %s @ %s",
                  interruptReason, comp->signature(), comp->getHotnessName());
 
@@ -2714,7 +2714,7 @@ remoteCompile(
       TR_Memory::jitPersistentFree(client);
       compInfoPT->setClientStream(NULL);
 
-      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
           TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
             "JITServer::StreamFailure: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
       compiler->failCompilation<JITServer::StreamFailure>(e.what());
@@ -2726,14 +2726,14 @@ remoteCompile(
       compInfoPT->setClientStream(NULL);
       JITServer::ClientStream::incrementIncompatibilityCount(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
 
-      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
           TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
             "JITServer::StreamVersionIncompatible: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
       compiler->failCompilation<JITServer::StreamVersionIncompatible>(e.what());
       }
    catch (const JITServer::StreamMessageTypeMismatch &e)
       {
-      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
          TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
             "JITServer::StreamMessageTypeMismatch: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
       compiler->failCompilation<JITServer::StreamMessageTypeMismatch>(e.what());
@@ -2777,7 +2777,7 @@ remoteCompile(
                auto it = newlyExtendedClasses->find(clazz);
                if (it != newlyExtendedClasses->end() && (it->second & (1 << TR::compInfoPT->getCompThreadId())))
                   {
-                  if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
+                  if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
                      TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Class that should not be newly extended was extended when compiling %s", compiler->signature());
                   compiler->failCompilation<J9::CHTableCommitFailure>("Class that should not be newly extended was extended");
                   }
@@ -2789,7 +2789,7 @@ remoteCompile(
                TR_JITaaSClientPersistentCHTable *table = (TR_JITaaSClientPersistentCHTable*) TR::comp()->getPersistentInfo()->getPersistentCHTable();
                table->_numCommitFailures += 1;
 #endif
-               if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
+               if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
                   {
                   TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Failure while committing chtable for %s", compiler->signature());
                   }
@@ -2799,14 +2799,11 @@ remoteCompile(
 
 
          TR_ASSERT(!metaData || !metaData->startColdPC, "coldPC should be null");
-
+         // As a debugging feature, a local compilation can be performed immediately after a remote compilation.
+         // Each of them has logs with the same compilationSequenceNumber
          int compilationSequenceNumber = compiler->getOptions()->writeLogFileFromServer(logFileStr);
-         if (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITaaSDoLocalCompilesForRemoteCompiles) && compilationSequenceNumber)
+         if (TR::Options::getCmdLineOptions()->getOption(TR_JITServerFollowRemoteCompileWithLocalCompile) && compilationSequenceNumber)
             {
-            // if compilationSequenceNumber is not 0, vlog from server is enabled
-            // double compile is also controlled by TR_EnableJITaaSDoubleCompile option
-            // try to perform an equivalent local compilation and generate vlog
-            // append the same compilationSequenceNumber in the filename
             intptr_t rtn = 0;
             compiler->getOptions()->setLogFileForClientOptions(compilationSequenceNumber);
             if ((rtn = compiler->compile()) != COMPILATION_SUCCEEDED)
@@ -2817,10 +2814,10 @@ remoteCompile(
             compiler->getOptions()->closeLogFileForClientOptions();
             }
 
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             {
             TR_VerboseLog::writeLineLocked(
-               TR_Vlog_JITaaS,
+               TR_Vlog_JITServer,
                "Client successfully loaded method %s @ %s following compilation request. [metaData=%p, startPC=%p]",
                compiler->signature(),
                compiler->getHotnessName(),
@@ -2830,11 +2827,11 @@ remoteCompile(
          }
       catch (const std::exception &e)
          {
-         // Log for JITaaS mode and re-throw
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         // Log for JITClient mode and re-throw
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             {
             TR_VerboseLog::writeLineLocked(
-               TR_Vlog_JITaaS,
+               TR_Vlog_JITServer,
                "Client failed to load method %s @ %s following compilation request.",
                compiler->signature(),
                compiler->getHotnessName()
@@ -2847,10 +2844,10 @@ remoteCompile(
       {
       compInfoPT->getMethodBeingCompiled()->_compErrCode = statusCode;
 
-      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITaaS, TR_VerboseCompilationDispatch))
+      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
           TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
             "JITServer::ServerCompilationFailure: errCode %u for %s @ %s", statusCode, compiler->signature(), compiler->getHotnessName());
-      compiler->failCompilation<JITServer::ServerCompilationFailure>("JITaaS compilation failed.");
+      compiler->failCompilation<JITServer::ServerCompilationFailure>("JITServer compilation failed.");
       }
 
    if (enableJITaaSPerCompConn && client)
@@ -2897,10 +2894,10 @@ remoteCompilationEnd(
 
       if (!relocatedMetaData)
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
-                                           "JITaaS Relocation failure: %d",
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                           "JITServer Relocation failure: %d",
                                            compInfoPT->reloRuntime()->returnCode());
             }
          // relocation failed, fail compilation
@@ -2936,11 +2933,11 @@ remoteCompilationEnd(
          TR_ASSERT_FATAL(comp->cg(), "CodeGenerator must be allocated");
          int32_t returnCode = 0;
 
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             {
             TR_VerboseLog::writeLineLocked(
-               TR_Vlog_JITaaS,
-               "Applying JITaaS remote AOT relocations to newly AOT compiled body for %s @ %s",
+               TR_Vlog_JITServer,
+               "Applying JITServer remote AOT relocations to newly AOT compiled body for %s @ %s",
                comp->signature(),
                comp->getHotnessName()
                );
@@ -2971,9 +2968,9 @@ remoteCompilationEnd(
 
          if (relocatedMetaData) 
             {
-            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "JITaaS Client successfully relocated metadata for %s", comp->signature());
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITClient successfully relocated metadata for %s", comp->signature());
                }
 
             if (J9_EVENT_IS_HOOKED(jitConfig->javaVM->hookInterface, J9HOOK_VM_DYNAMIC_CODE_LOAD))
@@ -2983,10 +2980,10 @@ remoteCompilationEnd(
             }
          else
             {
-            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
                {
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
-                                              "JITaaS Relocation failure: %d",
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
+                                              "JITServer Relocation failure: %d",
                                               compInfoPT->reloRuntime()->returnCode());
                }
             // relocation failed, fail compilation
@@ -3041,7 +3038,7 @@ outOfProcessCompilationEnd(
    OMR::CodeCacheMethodHeader *codeCacheHeader = (OMR::CodeCacheMethodHeader*)codeStart;
 
    TR_DataCache *dataCache = (TR_DataCache*)comp->getReservedDataCache();
-   TR_ASSERT(dataCache, "A dataCache must be reserved for JITaaS compilations\n");
+   TR_ASSERT(dataCache, "A dataCache must be reserved for JITServer compilations\n");
    J9JITDataCacheHeader *dataCacheHeader = (J9JITDataCacheHeader *)comp->getAotMethodDataStart();
    J9JITExceptionTable *metaData = compInfoPT->getMetadata();
 
@@ -3082,9 +3079,9 @@ outOfProcessCompilationEnd(
                                      );
    compInfoPT->clearPerCompilationCaches();
 
-   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       {
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d has successfully compiled %s",
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d has successfully compiled %s",
          compInfoPT->getCompThreadId(), compInfoPT->getCompilation()->signature());
       }
    }
@@ -3092,7 +3089,7 @@ outOfProcessCompilationEnd(
 void printJITaaSMsgStats(J9JITConfig *jitConfig)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-   j9tty_printf(PORTLIB, "JITaaS Server Message Type Statistics:\n");
+   j9tty_printf(PORTLIB, "JITServer Message Type Statistics:\n");
    j9tty_printf(PORTLIB, "Type# #called TypeName\n");
    const ::google::protobuf::EnumDescriptor *descriptor = JITServer::MessageType_descriptor();
    for (int i = 0; i < JITServer::MessageType_ARRAYSIZE; ++i)
@@ -3106,7 +3103,7 @@ void printJITaaSCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compIn
    {
 #ifdef COLLECT_CHTABLE_STATS
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-   j9tty_printf(PORTLIB, "JITaaS CHTable Statistics:\n");
+   j9tty_printf(PORTLIB, "JITServer CHTable Statistics:\n");
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       TR_JITaaSClientPersistentCHTable *table = (TR_JITaaSClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
@@ -3203,8 +3200,8 @@ ClientSessionData::~ClientSessionData()
 void
 ClientSessionData::processUnloadedClasses(JITServer::ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes)
    {
-   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server will process a list of %u unloaded classes for clientUID %llu", (unsigned)classes.size(), (unsigned long long)_clientUID);
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server will process a list of %u unloaded classes for clientUID %llu", (unsigned)classes.size(), (unsigned long long)_clientUID);
    //Vector to hold the list of the unloaded classes and the corresponding data needed for purging the Caches
    std::vector<ClassUnloadedData> unloadedClasses;
    unloadedClasses.reserve(classes.size());
@@ -3560,13 +3557,13 @@ ClientSessionHT::findOrCreateClientSession(uint64_t clientUID, uint32_t seqNo, b
          {
          _clientSessionMap[clientUID] = clientData;
          *newSessionWasCreated = true;
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server allocated data for a new clientUID %llu", (unsigned long long)clientUID);
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server allocated data for a new clientUID %llu", (unsigned long long)clientUID);
          }
       else
          {
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "ERROR: Server could not allocate client session data");
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "ERROR: Server could not allocate client session data");
          // should we throw bad_alloc here?
          }
       }
@@ -3657,8 +3654,8 @@ ClientSessionHT::purgeOldDataIfNeeded()
          if (iter->second->getInUse() == 0 &&
              crtTime - iter->second->getTimeOflastAccess() > OLD_AGE)
             {
-            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server will purge session data for clientUID %llu", (unsigned long long)iter->first);
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server will purge session data for clientUID %llu", (unsigned long long)iter->first);
             ClientSessionData::destroy(iter->second); // delete the client data
             _clientSessionMap.erase(iter); // delete the mapping from the hashtable
             }
@@ -4126,8 +4123,8 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
       entry.getMonitor()->enter();
       clientSession->getSequencingMonitor()->exit(); // release monitor before waiting
       const int64_t waitTimeMillis = 1000; // TODO: create an option for this
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d (entry=%p) doing a timed wait for %d ms",
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d (entry=%p) doing a timed wait for %d ms",
          getCompThreadId(), &entry, (int32_t)waitTimeMillis);
 
       intptr_t monitorStatus = entry.getMonitor()->wait_timed(waitTimeMillis, 0); // 0 or J9THREAD_TIMED_OUT
@@ -4136,8 +4133,8 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
          entry.getMonitor()->exit();
          clientSession->getSequencingMonitor()->enter();
 
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Parked compThreadID=%d (entry=%p) seqNo=%u was notified.",
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Parked compThreadID=%d (entry=%p) seqNo=%u was notified.",
                getCompThreadId(), &entry, seqNo);
          // will verify condition again to see if expectedSeqNo has advanced enough
          }
@@ -4145,8 +4142,8 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
          {
          entry.getMonitor()->exit();
          TR_ASSERT(monitorStatus == J9THREAD_TIMED_OUT, "Unexpected monitor state");
-         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseJITaaS, TR_VerbosePerformance))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d timed-out while waiting for seqNo=%d (entry=%p)", 
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseJITServer, TR_VerbosePerformance))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d timed-out while waiting for seqNo=%d (entry=%p)",
                getCompThreadId(), clientSession->getExpectedSeqNo(), &entry);
         
          // The simplest thing is to delete the cached data for the session and start fresh
@@ -4182,8 +4179,8 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
                {
                ((TR::CompilationInfoPerThreadRemote*)(nextWaitingEntry->_compInfoPT))->setWaitToBeNotified(true);
                }
-            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                   "compThreadID=%d has cleared the session caches for clientUID=%llu expectedSeqNo=%u detachedEntry=%p",
                   getCompThreadId(), clientSession->getClientUID(), clientSession->getExpectedSeqNo(), detachedEntry);
             }
@@ -4191,8 +4188,8 @@ TR::CompilationInfoPerThreadRemote::waitForMyTurn(ClientSessionData *clientSessi
             {
             // Wait until all active threads have been drained
             // and the head of the list has cleared the caches
-            if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,
+            if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,
                   "compThreadID=%d which previously timed-out will go to sleep again. Possible reasons numActiveThreads=%d waitToBeNotified=%d",
                   getCompThreadId(), clientSession->getNumActiveThreads(), getWaitToBeNotified());
             }
@@ -4217,8 +4214,8 @@ TR::CompilationInfoPerThreadRemote::updateSeqNo(ClientSessionData *clientSession
          {
          clientSession->notifyAndDetachFirstWaitingThread();
 
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d notifying out-of-sequence thread %d for clientUID=%llu seqNo=%u (entry=%p)",
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d notifying out-of-sequence thread %d for clientUID=%llu seqNo=%u (entry=%p)",
                getCompThreadId(), nextEntry->_compInfoPT->getCompThreadId(), (unsigned long long)clientSession->getClientUID(), nextWaitingSeqNo, nextEntry);
          }
       }
@@ -4301,8 +4298,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          throw std::bad_alloc();
 
       setClientData(clientSession); // Cache the session data into CompilationInfoPerThreadRemote object
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d %s clientSessionData=%p for clientUID=%llu seqNo=%u",
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d %s clientSessionData=%p for clientUID=%llu seqNo=%u",
             getCompThreadId(), sessionDataWasEmpty ? "created" : "found", clientSession, (unsigned long long)clientId, seqNo);
       } // end critical section
 
@@ -4315,8 +4312,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (seqNo > clientSession->getExpectedSeqNo()) // out of order messages
          {
          // park this request until the missing ones arrive
-         if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Out-of-sequence msg detected for clientUID=%llu seqNo=%u > expectedSeqNo=%u. Parking compThreadID=%d (entry=%p)",
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Out-of-sequence msg detected for clientUID=%llu seqNo=%u > expectedSeqNo=%u. Parking compThreadID=%d (entry=%p)",
             (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), getCompThreadId(), &entry);
 
          waitForMyTurn(clientSession, entry);
@@ -4327,8 +4324,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          // This could happen for instance for the very first message that arrives late.
          // In that case, the second message would have created the client session and 
          // written its own seqNo into expectedSeqNo. We should avoid processing stale updates
-         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseJITaaS, TR_VerbosePerformance))
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Discarding older msg for clientUID=%llu seqNo=%u < expectedSeqNo=%u compThreadID=%d",
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompFailure, TR_VerboseJITServer, TR_VerbosePerformance))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Discarding older msg for clientUID=%llu seqNo=%u < expectedSeqNo=%u compThreadID=%d",
             (unsigned long long)clientId, seqNo, clientSession->getExpectedSeqNo(), getCompThreadId());
          clientSession->getSequencingMonitor()->exit();
          throw JITServer::StreamOOO();
@@ -4424,8 +4421,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
    catch (const JITServer::StreamFailure &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream failed while compThreadID=%d was reading the compilation request: %s", 
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Stream failed while compThreadID=%d was reading the compilation request: %s",
             getCompThreadId(), e.what());
 
       abortCompilation = true;
@@ -4439,8 +4436,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
    catch (const JITServer::StreamVersionIncompatible &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream version incompatible: %s", e.what()); 
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Stream version incompatible: %s", e.what());
 
       stream->writeError(compilationStreamVersionIncompatible);
       abortCompilation = true;
@@ -4454,16 +4451,16 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
    catch (const JITServer::StreamMessageTypeMismatch &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream message type mismatch: %s", e.what());
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Stream message type mismatch: %s", e.what());
 
       stream->writeError(compilationStreamMessageTypeMismatch);
       abortCompilation = true;
       }
    catch (const JITServer::StreamConnectionTerminate &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream connection terminated by JITClient on stream %p while compThreadID=%d was reading the compilation request: %s",
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Stream connection terminated by JITClient on stream %p while compThreadID=%d was reading the compilation request: %s",
             stream, getCompThreadId(), e.what());
 
       abortCompilation = true;
@@ -4476,8 +4473,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
    catch (const JITServer::StreamClientSessionTerminate &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream client session terminated by JITClient on compThreadID=%d: %s", getCompThreadId(), e.what());
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Stream client session terminated by JITClient on compThreadID=%d: %s", getCompThreadId(), e.what());
 
       abortCompilation = true;
       deleteClientSessionData(e.getClientId(), compInfo, compThread);
@@ -4491,8 +4488,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
    catch (const JITServer::StreamInterrupted &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Stream interrupted by JITClient while compThreadID=%d was reading the compilation request: %s",
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Stream interrupted by JITClient while compThreadID=%d was reading the compilation request: %s",
             getCompThreadId(), e.what());
 
       abortCompilation = true;
@@ -4514,8 +4511,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
    catch (const std::bad_alloc &e)
       {
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "Server out of memory in processEntry: %s", e.what());
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server out of memory in processEntry: %s", e.what());
       stream->writeError(compilationLowPhysicalMemory);
       abortCompilation = true;
       }
@@ -4533,13 +4530,13 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (_recompilationMethodInfo)
          TR_Memory::jitPersistentFree(_recompilationMethodInfo);
 
-      if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          {
          if (getClientData())
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d did an early abort for clientUID=%llu seqNo=%u",
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d did an early abort for clientUID=%llu seqNo=%u",
                getCompThreadId(), getClientData()->getClientUID(), getSeqNo());
          else
-            TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS, "compThreadID=%d did an early abort",
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "compThreadID=%d did an early abort",
                getCompThreadId());
          }
 
@@ -4561,8 +4558,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             bool result = compInfo->getClientSessionHT()->deleteClientSession(clientId, false);
             if (result)
                {
-               if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,"client (%llu) deleted", (unsigned long long)clientId);
+               if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,"client (%llu) deleted", (unsigned long long)clientId);
                }
             }
          setClientData(NULL);
@@ -4617,8 +4614,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    if (getClientData()->getInUse() == 0)
       {
       bool deleted = compInfo->getClientSessionHT()->deleteClientSession(clientId, false);
-      if (deleted && TR::Options::getVerboseOption(TR_VerboseJITaaS))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,"client (%llu) deleted", (unsigned long long)clientId);
+      if (deleted && TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,"client (%llu) deleted", (unsigned long long)clientId);
       }
 
    setClientData(NULL); // Reset the pointer to the cached client session data
@@ -4871,15 +4868,15 @@ TR::CompilationInfoPerThreadRemote::deleteClientSessionData(uint64_t clientId, T
    {
    compInfo->acquireCompMonitor(compThread); //need to acquire compilation monitor for both deleting the client data and the setting the thread state to COMPTHREAD_SIGNAL_SUSPEND.
    bool result = compInfo->getClientSessionHT()->deleteClientSession(clientId, true);
-   if (TR::Options::getVerboseOption(TR_VerboseJITaaS))
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       {
       if (!result)
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,"Message to delete Client (%llu) received. Data for client not deleted", (unsigned long long)clientId);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,"Message to delete Client (%llu) received. Data for client not deleted", (unsigned long long)clientId);
          }
       else
          {
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITaaS,"Message to delete Client (%llu) received. Data for client deleted", (unsigned long long)clientId);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,"Message to delete Client (%llu) received. Data for client deleted", (unsigned long long)clientId);
          }
       }
    compInfo->releaseCompMonitor(compThread);

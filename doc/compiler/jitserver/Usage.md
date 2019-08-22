@@ -47,22 +47,22 @@ You might have noticed that running the client without any server to connect to 
 
 With verbose logging, if a client connects successfully then server output should look something like this:
 ```
-$ java -XX:+StartAsJITServer -Xjit:verbose=\{JITaaS\}
+$ java -XX:+StartAsJITServer -Xjit:verbose=\{JITServer\}
 
-#JITaaS: JITServer in Server Mode. Port: 38400
-#JITaaS: Started JITServer listener thread: 0000000001B8DE00
+#JITServer: JITServer in Server Mode. Port: 38400
+#JITServer: Started JITServer listener thread: 0000000001B8DE00
 JITServer ready to accept incoming requests
 
-#JITaaS: Server allocated data for a new clientUID 7273413081043723869
-#JITaaS: Server received request to compile sun/reflect/Reflection.getCallerClass @ cold
-#JITaaS: Server queued compilation for sun/reflect/Reflection.getCallerClass
-#JITaaS: Server cached clientSessionData=00007FFFDA1973E0 for clientUID=7273413081043723869 compThreadID=0
-#JITaaS: Server has successfully compiled sun/reflect/Reflection.getCallerClass()Ljava/lang/Class;
-#JITaaS: Server received request to compile java/lang/Double.longBitsToDouble @ cold
-#JITaaS: Server queued compilation for java/lang/Double.longBitsToDouble
-#JITaaS: Server cached clientSessionData=00007FFFDA1973E0 for clientUID=7273413081043723869 compThreadID=1
-#JITaaS: Server has successfully compiled java/lang/Double.longBitsToDouble(J)D
-#JITaaS: Server received request to compile java/lang/System.getEncoding @ cold
+#JITServer: Server allocated data for a new clientUID 7273413081043723869
+#JITServer: Server received request to compile sun/reflect/Reflection.getCallerClass @ cold
+#JITServer: Server queued compilation for sun/reflect/Reflection.getCallerClass
+#JITServer: Server cached clientSessionData=00007FFFDA1973E0 for clientUID=7273413081043723869 compThreadID=0
+#JITServer: Server has successfully compiled sun/reflect/Reflection.getCallerClass()Ljava/lang/Class;
+#JITServer: Server received request to compile java/lang/Double.longBitsToDouble @ cold
+#JITServer: Server queued compilation for java/lang/Double.longBitsToDouble
+#JITServer: Server cached clientSessionData=00007FFFDA1973E0 for clientUID=7273413081043723869 compThreadID=1
+#JITServer: Server has successfully compiled java/lang/Double.longBitsToDouble(J)D
+#JITServer: Server received request to compile java/lang/System.getEncoding @ cold
 ...
 ```
 
