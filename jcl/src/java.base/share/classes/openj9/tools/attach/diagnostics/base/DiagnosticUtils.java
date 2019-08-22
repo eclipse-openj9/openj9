@@ -96,9 +96,10 @@ public class DiagnosticUtils {
 	public static final String DIAGNOSTICS_OPTION_SEPARATOR = ","; //$NON-NLS-1$
 
 	/**
-	 * Report only live heap objects.
+	 * Report live or all heap objects.
 	 */
-	public static final String LIVE_OPTION = "live"; //$NON-NLS-1$
+	private static final String ALL_OPTION = "all"; //$NON-NLS-1$
+	private static final String LIVE_OPTION = "live"; //$NON-NLS-1$
 	private static final String THREAD_LOCKED_SYNCHRONIZERS_OPTION = "-l"; //$NON-NLS-1$
 
 	private static final Map<String, Function<String, DiagnosticProperties>> commandTable;
@@ -169,18 +170,34 @@ public class DiagnosticUtils {
 	}
 
 	private static DiagnosticProperties getHeapStatistics(String diagnosticCommand) {
-		boolean doLive = Arrays.stream(diagnosticCommand.split(DiagnosticUtils.DIAGNOSTICS_OPTION_SEPARATOR))
-				.anyMatch(Predicate.isEqual(DiagnosticUtils.LIVE_OPTION));
-		if (doLive) {
-			runGC();
+		DiagnosticProperties result = null;
+		boolean invalidArg = false;
+		boolean doLive = false;
+		String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
+		if (parts.length > 2) {
+			invalidArg = true;
+		} else if (parts.length == 2) {
+			if (LIVE_OPTION.equalsIgnoreCase(parts[1])) {
+				doLive = true;
+			} else if (!ALL_OPTION.equalsIgnoreCase(parts[1])) {
+				invalidArg = true;
+			}
 		}
-		String result = getHeapClassStatisticsImpl();
-		String lineSeparator = System.lineSeparator();
-		final String unixLineSeparator = "\n"; //$NON-NLS-1$
-		if (!unixLineSeparator.equals(lineSeparator)) {
-			result = result.replace(unixLineSeparator, lineSeparator);
+		if (invalidArg) {
+			result = DiagnosticProperties.makeErrorProperties("Command not recognized: " + diagnosticCommand); //$NON-NLS-1$
+		} else {
+			if (doLive) {
+				runGC();
+			}
+			String hcsi = getHeapClassStatisticsImpl();
+			String lineSeparator = System.lineSeparator();
+			final String unixLineSeparator = "\n"; //$NON-NLS-1$
+			if (!unixLineSeparator.equals(lineSeparator)) {
+				hcsi = hcsi.replace(unixLineSeparator, lineSeparator);
+			}
+			result = DiagnosticProperties.makeStringResult(hcsi);
 		}
-		return DiagnosticProperties.makeStringResult(result);
+		return result;
 	}
 
 	private static DiagnosticProperties getThreadInfo(String diagnosticCommand) {
@@ -302,7 +319,9 @@ public class DiagnosticUtils {
 	@SuppressWarnings("nls")
 	private static final String DIAGNOSTICS_GC_CLASS_HISTOGRAM_HELP = "Obtain heap information about a Java process%n"
 			+ FORMAT_PREFIX + DIAGNOSTICS_GC_CLASS_HISTOGRAM + " [options]%n"
-			+ " Options: -all : include all objects, including dead objects%n"
+			+ " Options:%n"
+			+ "          all : include all objects, including dead objects (this is the default option)%n"
+			+ "         live : include all objects after a global GC collection%n"
 			+ "NOTE: this utility may significantly affect the performance of the target VM.%n";
 
 	@SuppressWarnings("nls")
