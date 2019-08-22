@@ -311,8 +311,7 @@ TR_PersistentCHTable::findClassInfo(TR_OpaqueClassBlock * classId)
 TR_PersistentClassInfo *
 TR_PersistentCHTable::findClassInfoAfterLocking(TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
-      bool returnClassInfoForAOT,
-      bool validate)
+      bool returnClassInfoForAOT)
    {
    // for AOT do not use the class hierarchy
    if (comp->compileRelocatableCode() && !returnClassInfoForAOT)
@@ -324,13 +323,6 @@ TR_PersistentCHTable::findClassInfoAfterLocking(TR_OpaqueClassBlock *classId,
       return NULL;
 
    TR_PersistentClassInfo *classInfo = findClassInfoAfterLocking(classId, comp->fe(), returnClassInfoForAOT);
-   if (classInfo &&
-       comp->compileRelocatableCode() &&
-       comp->getOption(TR_UseSymbolValidationManager) &&
-       validate)
-      {
-      comp->getSymbolValidationManager()->addClassInfoIsInitializedRecord(classId, classInfo->isInitialized());
-      }
    return classInfo;
    }
 
@@ -412,7 +404,7 @@ TR_ResolvedMethod * TR_PersistentCHTable::findSingleImplementer(
 
 
 
-   TR_PersistentClassInfo * classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(thisClass, comp, true, validate);
+   TR_PersistentClassInfo * classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(thisClass, comp, true);
    if (!classInfo)
       {
       return 0;
@@ -462,7 +454,7 @@ TR_PersistentCHTable::findSingleInterfaceImplementer(
       return 0;
       }
 
-   TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(thisClass, comp, true, validate);
+   TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(thisClass, comp, true);
    if (!classInfo)
       {
       return 0;
@@ -568,7 +560,7 @@ TR_PersistentCHTable::findSingleAbstractImplementer(
    if (comp->getOption(TR_DisableCHOpts))
       return 0;
    bool allowForAOT = comp->getOption(TR_UseSymbolValidationManager);
-   TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(thisClass, comp, allowForAOT, validate);
+   TR_PersistentClassInfo * classInfo = findClassInfoAfterLocking(thisClass, comp, allowForAOT);
    if (!classInfo) return 0;
 
    if (TR::Compiler->cls.isInterfaceClass(comp, thisClass))
@@ -613,7 +605,7 @@ TR_PersistentCHTable::findSingleConcreteSubClass(
 
    bool allowForAOT = comp->getOption(TR_UseSymbolValidationManager);
 
-   TR_PersistentClassInfo *classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(opaqueClass, comp, allowForAOT, validate);
+   TR_PersistentClassInfo *classInfo = comp->getPersistentInfo()->getPersistentCHTable()->findClassInfoAfterLocking(opaqueClass, comp, allowForAOT);
    if (classInfo)
       {
       TR_ScratchList<TR_PersistentClassInfo> subClasses(comp->trMemory());
