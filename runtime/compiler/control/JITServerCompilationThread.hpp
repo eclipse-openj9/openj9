@@ -411,7 +411,7 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    };
 }
 
-class JITaaSHelpers
+class JITServerHelpers
    {
    public:
       enum ClassInfoDataType
@@ -461,8 +461,8 @@ class JITaaSHelpers
       static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType,  void *data);
       static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2);
       static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
-      //purgeCache function can only be used inside the JITaaSCompilationThread.cpp file.
-      //It is a templated function, calling it outside the JITaaSCompilationThread.cpp will give linking error.
+      //purgeCache function can only be used inside the JITServerCompilationThread.cpp file.
+      //It is a templated function, calling it outside the JITServerCompilationThread.cpp will give linking error.
       template <typename map, typename key>
       static void purgeCache (std::vector<ClassUnloadedData> *unloadedClasses, map m, key ClassUnloadedData::*k);
 

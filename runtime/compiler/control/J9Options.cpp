@@ -51,7 +51,7 @@
 #include "runtime/IProfiler.hpp"
 #if defined(JITSERVER_SUPPORT)
 #include "env/j9methodServer.hpp"
-#include "control/JITaaSCompilationThread.hpp"
+#include "control/JITServerCompilationThread.hpp"
 #endif /* defined(JITSERVER_SUPPORT) */
 
 #if defined(J9VM_OPT_SHARED_CLASSES)

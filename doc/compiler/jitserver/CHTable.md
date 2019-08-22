@@ -99,7 +99,7 @@ not have anything to check the assumptions against. So, we need to perform the c
 the server during compilation. However, the point at which the server would normally call `commit` is before the client has loaded
 and relocated the code, which prevents the runtime assumptions from being relocated. But, the client loads and relocates the code
 after the final message sent by the server. So we have to send the data required to perform the commit along with the final
-message and have the client perform the commit after loading the code. This is implemented in `JITaaSCompilationThread.cpp`. The
+message and have the client perform the commit after loading the code. This is implemented in `JITServerCompilationThread.cpp`. The
 call to `computeDataForCHTableCommit` is performed on the server and the data is transferred to the client where
 `JITaaSCHTableCommit` is called.
 

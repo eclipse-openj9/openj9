@@ -27,7 +27,7 @@
 #include "x/runtime/X86Runtime.hpp"
 #include "env/JitConfig.hpp"
 #include "control/CompilationRuntime.hpp"
-#include "control/JITaaSCompilationThread.hpp"
+#include "control/JITServerCompilationThread.hpp"
 
 // This is a workaround to avoid J9_PROJECT_SPECIFIC macros in x/env/OMRCPU.cpp
 // Without this definition, we get an undefined symbol of JITConfig::instance() at runtime
