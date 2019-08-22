@@ -2107,8 +2107,14 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                if (entry->_compilationAttemptsLeft == 1)
                   entry->_doNotUseAotCodeFromSharedCache = true;
                // Intentionally fall through next case
-            case compilationInterrupted:
             case compilationStreamFailure:
+               // This feature TR_RequireJITServer is used when we would like the client to fail when server crashes
+               if (feGetEnv("TR_RequireJITServer"))
+                  {
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "In mode TR_RequireJITServer, exit JITClient due to unavailable JITServer.");
+                  exit(25);
+                  }
+            case compilationInterrupted:
             case compilationCodeReservationFailure:
             case compilationRecoverableTrampolineFailure:
             case compilationIllegalCodeCacheSwitch:
