@@ -61,7 +61,8 @@
 #define OSCACHE_LOWEST_ACTIVE_GEN 1
 
 /* Always increment this value by 2. For testing we use the (current generation - 1) and expect the cache contents to be compatible. */
-#define OSCACHE_CURRENT_CACHE_GEN 39
+#define OSCACHE_CURRENT_CACHE_GEN 41
+#define OSCACHE_CURRENT_LAYER_LAYER 0
 
 #define J9SH_VERSION(versionMajor, versionMinor) (versionMajor*100 + versionMinor)
 
@@ -109,6 +110,7 @@ typedef struct SH_OSCache_Info {
         UDATA isCompatible; /** Is the cache compatible with this VM */
         UDATA isCorrupt; /** Is set when the cache is found to be corrupt */
         UDATA isJavaCorePopulated; /** Is set when the javacoreData contains valid data */
+        I_8 layer; /** cache layer number */
         J9SharedClassJavacoreDataDescriptor javacoreData; /** If isCompatible is true, then extra information about the cache is available in here*/
 } SH_OSCache_Info;
 
@@ -183,7 +185,7 @@ public:
 	 */
 	void *operator new(size_t size, void *memoryPtr) { return memoryPtr; };
 
-	static SH_OSCache* newInstance(J9PortLibrary* portlib, SH_OSCache* memForConstructor, const char* cacheName, UDATA generation, J9PortShcVersion* versionData);
+	static SH_OSCache* newInstance(J9PortLibrary* portlib, SH_OSCache* memForConstructor, const char* cacheName, UDATA generation, J9PortShcVersion* versionData, I_8 layer);
 
 	static UDATA getRequiredConstrBytes(void);
 	
@@ -192,7 +194,7 @@ public:
 	static IDATA createCacheDir(J9PortLibrary* portLibrary, char* cacheDirName, UDATA cacheDirPerm, bool cleanMemorySegments);
 
 	static void getCacheVersionAndGen(J9PortLibrary* portlib, J9JavaVM* vm, char* buffer, UDATA bufferSize, const char* cacheName,
-			J9PortShcVersion* versionData, UDATA generation, bool isMemoryType);
+			J9PortShcVersion* versionData, UDATA generation, bool isMemoryType, I_8 layer);
 
 	static UDATA getCurrentCacheGen(void);
 
@@ -202,6 +204,14 @@ public:
 	static IDATA getCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, const char* cacheNameWithVGen, UDATA groupPerm, UDATA localVerboseFlags, UDATA j2seVersion, SH_OSCache_Info* result, UDATA reason);
 	
 	static IDATA getCachePathName(J9PortLibrary* portLibrary, const char* cacheDirName, char* buffer, UDATA bufferSize, const char* cacheNameWithVGen);
+	
+	static void getCacheNameAndLayerFromUnqiueID(J9JavaVM* vm, const char* cacheDirName, const char* uniqueID, UDATA idLen, char* nameBuf, UDATA nameBuffLen, I_8* layer);
+	
+	static UDATA generateCacheUniqueID(J9VMThread* currentThread, const char* cacheDir, const char* cacheName, I_8 layer, U_32 cacheType, char* buf, UDATA bufLen);
+	
+	const char* getCacheUniqueID(J9VMThread* currentThread);
+
+	I_8 getLayer();
 
 	bool isRunningReadOnly();
 
@@ -255,15 +265,15 @@ protected:
 	/*This constructor should only be used by this class*/
 	SH_OSCache() {};
 
-	virtual void initialize(J9PortLibrary* portLib_, char* memForConstructor, UDATA generation) = 0;
+	virtual void initialize(J9PortLibrary* portLib_, char* memForConstructor, UDATA generation, I_8 layer) = 0;
 
 	virtual void errorHandler(U_32 moduleName, U_32 id, LastErrorInfo *lastErrorInfo) = 0;
 
 	static IDATA removeCacheVersionAndGen(char* buffer, UDATA bufferSize, UDATA versionLen, const char* cacheNameWithVGen);
 	
 	IDATA commonStartup(J9JavaVM* vm, const char* ctrlDirName, UDATA cacheDirPerm, const char* cacheName, J9SharedClassPreinitConfig* piconfig_, UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData);
-	
-	void commonInit(J9PortLibrary* portLibrary, UDATA generation);
+
+	void commonInit(J9PortLibrary* portLibrary, UDATA generation, I_8 layer = 0);
 
 	void commonCleanup();
 	
@@ -293,7 +303,9 @@ protected:
 	U_32 _dataLength;
 	char* _cacheNameWithVGen;
 	char* _cachePathName;
+	char* _cacheUniqueID;
 	UDATA _activeGeneration;
+	I_8 _layer;
 	UDATA _createFlags;
 	UDATA _verboseFlags;
 	IDATA _errorCode;

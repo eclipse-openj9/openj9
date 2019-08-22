@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -106,7 +106,7 @@ SH_CompiledMethodManagerImpl::initialize(J9JavaVM* vm, SH_SharedCache* cache_, B
 UDATA
 SH_CompiledMethodManagerImpl::getKeyForItem(const ShcItem* cacheItem)
 {
-	return (UDATA)CMWROMMETHOD((CompiledMethodWrapper*)ITEMDATA(cacheItem));
+	return (UDATA)(_cache->getAddressFromJ9ShrOffset(&((CompiledMethodWrapper*)ITEMDATA(cacheItem))->romMethodOffset));
 }
 
 U_32

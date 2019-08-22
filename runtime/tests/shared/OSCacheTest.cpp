@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,6 +29,7 @@ extern "C" {
 #include "OSCacheTestMmap.hpp"
 #include "OSCacheTestSysv.hpp"
 #include "OSCacheTestMisc.hpp"
+#include "UnitTest.hpp"
 
 extern "C" {
 
@@ -37,6 +38,8 @@ testOSCache(J9JavaVM* vm, struct j9cmdlineOptions *arg, const char *cmdline)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
 	IDATA rc = PASS;
+
+	UnitTest::unitTest = UnitTest::OSCACHE_TEST;
 
 	/* Detect children */
 	if(cmdline != NULL) {
@@ -67,6 +70,7 @@ testOSCache(J9JavaVM* vm, struct j9cmdlineOptions *arg, const char *cmdline)
 	} else {
 		j9tty_printf(PORTLIB, "OSCacheTest: FAILURE(S) DETECTED - rc = %zi\n", rc);
 	}
+	UnitTest::unitTest = UnitTest::NO_TEST;
 	return rc;
 }
 

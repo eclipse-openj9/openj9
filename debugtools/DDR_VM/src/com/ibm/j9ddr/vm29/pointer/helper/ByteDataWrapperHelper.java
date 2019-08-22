@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,22 +23,35 @@ package com.ibm.j9ddr.vm29.pointer.helper;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.AbstractPointer;
+import com.ibm.j9ddr.vm29.pointer.I32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ShrOffsetPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.ByteDataWrapperPointer;
+import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.structure.ByteDataWrapper;
 import com.ibm.j9ddr.vm29.types.I32;
 import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U8;
+import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class ByteDataWrapperHelper {
 //	#define BDWITEM(bdw) (((U_8*)(bdw)) - sizeof(ShcItem))
 
 	
 //	#define BDWEXTBLOCK(bdw) J9SHR_READMEM((bdw)->externalBlockOffset)
-	public static I32 BDWEXTBLOCK(ByteDataWrapperPointer ptr) throws CorruptDataException {
-		return new I32(ptr.externalBlockOffset());
-	}	
+	public static I32 BDWEXTBLOCK(ByteDataWrapperPointer ptr, U8Pointer[] cacheHeader) throws CorruptDataException {
+		PointerPointer externalBlockOffset = ptr.externalBlockOffsetEA();
+		if (null == cacheHeader) {
+			return new I32(I32Pointer.cast(externalBlockOffset.getAddress()).at(0));
+		} else {
+			UDATA offset = J9ShrOffsetPointer.cast(externalBlockOffset).offset();
+			if (offset.eq(0)) {
+				return new I32(0);
+			}
+			return new I32(offset);
+		}
+	}
 
 //	#define BDWLEN(bdw) J9SHR_READMEM((bdw)->dataLength)	
 	public static U32 BDWLEN(ByteDataWrapperPointer ptr) throws CorruptDataException {
@@ -50,12 +63,24 @@ public class ByteDataWrapperHelper {
 		return ptr.dataType();
 	}
 
-	// #define BDWDATA(bdw) (J9SHR_READSRP((bdw)->externalBlockOffset) ? (((U_8*)(bdw)) + J9SHR_READSRP((bdw)->externalBlockOffset)) : (((U_8*)(bdw)) + sizeof(ByteDataWrapper)))	
-	public static U8Pointer BDWDATA(ByteDataWrapperPointer ptr) throws CorruptDataException {
-		if(!ptr.externalBlockOffset().eq(0)) {
-			return U8Pointer.cast(ptr).add(ptr.externalBlockOffset()); 
+	public static U8Pointer getDataFromByteDataWrapper(ByteDataWrapperPointer ptr, U8Pointer[] cacheHeader) throws CorruptDataException {
+		PointerPointer externalBlockOffset = ptr.externalBlockOffsetEA();
+		if (null == cacheHeader) {
+			I32 externalBlockOffsetI32 = I32Pointer.cast(externalBlockOffset.getAddress()).at(0);
+			if (externalBlockOffsetI32.eq(0)) {
+				return U8Pointer.cast(ptr).add(ByteDataWrapper.SIZEOF);
+			} else {
+				return U8Pointer.cast(ptr).add(externalBlockOffsetI32); 
+			}
 		} else {
-			return U8Pointer.cast(ptr).add(ByteDataWrapper.SIZEOF);
+			UDATA offset = J9ShrOffsetPointer.cast(externalBlockOffset).offset();
+			if (offset.eq(0)) {
+				/* return ((U_8*)(bdw)) + sizeof(ByteDataWrapper) */
+				return U8Pointer.cast(ptr).add(ByteDataWrapper.SIZEOF);
+			} else {
+				/* return the same as SH_CacheMap::getDataFromByteDataWrapper(const ByteDataWrapper* bdw) */
+				return cacheHeader[0].add(offset);
+			}
 		}
 	}
 //	#define BDWINPRIVATEUSE(bdw) J9SHR_READMEM((bdw)->inPrivateUse)
@@ -66,12 +91,22 @@ public class ByteDataWrapperHelper {
 	public static U16 BDWPRIVATEOWNERID(ByteDataWrapperPointer ptr) throws CorruptDataException { 
 		return ptr.privateOwnerID();
 	}
-//	#define BDWTOKEN(bdw) (J9SHR_READSRP((bdw)->tokenOffset) ?  : NULL)
-	public static AbstractPointer BDWTOKEN(ByteDataWrapperPointer ptr) throws CorruptDataException {
-		if(!ptr.tokenOffset().eq(0)) {
-			return U8Pointer.cast(ptr).add(ptr.tokenOffset());
+
+	public static AbstractPointer BDWTOKEN(ByteDataWrapperPointer ptr, U8Pointer[] cacheHeader) throws CorruptDataException {
+		PointerPointer tokenOffset = ptr.tokenOffsetEA();
+		if (null == cacheHeader) {
+			I32 tokenOffsetI32 = I32Pointer.cast(tokenOffset.getAddress()).at(0);
+			if (tokenOffsetI32.eq(0)) {
+				return U8Pointer.NULL;
+			} else {
+				return U8Pointer.cast(ptr).add(tokenOffsetI32);
+			}
 		} else {
-			return U8Pointer.NULL;
+			UDATA offset = J9ShrOffsetPointer.cast(tokenOffset).offset();
+			if (offset.eq(0)) {
+				return U8Pointer.NULL;
+			}
+			return cacheHeader[0].add(offset);
 		}
 	}
 }

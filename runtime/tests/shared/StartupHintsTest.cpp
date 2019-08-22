@@ -106,6 +106,7 @@ IDATA storeAndFindHintsTest(J9JavaVM* vm)
 	sharedConfig->maxJIT = -1;
 	sharedConfig->cacheDescriptorList = (J9SharedClassCacheDescriptor*)((UDATA)sharedConfig + sizeof(J9SharedClassConfig));
 	sharedConfig->cacheDescriptorList->next = sharedConfig->cacheDescriptorList;
+	sharedConfig->cacheDescriptorList->previous = sharedConfig->cacheDescriptorList;
 	sharedConfig->storeGCHints = j9shr_storeGCHints;
 	sharedConfig->findGCHints = j9shr_findGCHints;
 

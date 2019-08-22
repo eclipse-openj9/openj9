@@ -130,6 +130,40 @@ getGenerationFromName(const char* cacheNameWithVGen)
 }
 
 /**
+ * Return the value of the layer number from the cache filename
+ *
+ * @param [in] cacheNameWithVGen  the cache name with layer number
+ *
+ * @return J9SH_LAYER_NUM_UNSET(-1) if an error occurred or there is no layer number in file name.
+ * 		   Otherwise return the layer number
+ */
+I_8
+getLayerFromName(const char* cacheNameWithVGen)
+{
+	char* cursor = (char*)cacheNameWithVGen;
+	IDATA nameLen = strlen(cacheNameWithVGen);
+	I_8 layerNumber = J9SH_LAYER_NUM_UNSET;
+	UDATA temp0 = 0;
+	
+	if (nameLen <= 3) {
+		goto done;
+	}
+
+	cursor += (nameLen - 3);
+	if (J9SH_LAYER_NUM_CHAR != *cursor ) {
+		goto done;
+	}
+	cursor++;
+	if (scan_udata(&cursor, &temp0) == 0) {
+		if (temp0 <= J9SH_LAYER_NUM_MAX_VALUE) {
+			layerNumber = (I_8)temp0;
+		}
+	}
+done:
+	return layerNumber;
+}
+
+/**
  * Return the value of the modLevel from the cache filename
  *
  * @param [in] cacheNameWithVGen  the cache file name
@@ -357,9 +391,30 @@ isCacheFileName(J9PortLibrary* portlib, const char* nameToTest, uintptr_t expect
 		}
 	}
 	nameToTestLen = strlen(nameToTest);
-	if ((nameToTest[nameToTestLen-3] != 'G') && (nameToTest[nameToTestLen-4] != '_')) {
-		return 0;
+	/**
+	 * For old cache file with no layer number like C290M4F1A64P_CC1_G37, 'G' is at nameToTestLen-3.
+	 * For cache file with layer number like C290M4F1A64P_CC1_G39L01, 'G' is at nameToTestLen-6.
+	 */
+	if (getLayerFromName(nameToTest) == J9SH_LAYER_NUM_UNSET) {
+		if (nameToTestLen <= 4) {
+			return 0;
+		}
+		if ((nameToTest[nameToTestLen-3] != 'G')
+			|| (nameToTest[nameToTestLen-4] != '_')
+		) {
+			return 0;
+		}
+	} else {
+		if (nameToTestLen <= 7) {
+			return 0;
+		}
+		if ((nameToTest[nameToTestLen-6] != 'G')
+			|| (nameToTest[nameToTestLen-7] != '_')
+		) {
+			return 0;
+		}
 	}
+
 	if (getValuesFromShcFilePrefix(portlib, nameToTest, &versionData) != 0) {
 		if (versionData.feature > J9SH_FEATURE_MAX_VALUE) {
 			return 0;

@@ -176,12 +176,12 @@ SH_CompositeCacheImpl::SH_SharedCacheHeaderInit::init(BlockPtr data, U_32 len, I
  * @return A pointer to the new instance
  */
 SH_CompositeCacheImpl*
-SH_CompositeCacheImpl::newInstance(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, SH_CompositeCacheImpl* memForConstructor, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats)
+SH_CompositeCacheImpl::newInstance(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, SH_CompositeCacheImpl* memForConstructor, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats, I_8 layer)
 {
 	SH_CompositeCacheImpl* newCC = (SH_CompositeCacheImpl*)memForConstructor;
 
 	new(newCC) SH_CompositeCacheImpl();
-	newCC->initializeWithCommonInfo(vm, sharedClassConfig, ((BlockPtr)memForConstructor + sizeof(SH_CompositeCacheImpl)), cacheName, cacheTypeRequired, startupForStats);
+	newCC->initializeWithCommonInfo(vm, sharedClassConfig, ((BlockPtr)memForConstructor + sizeof(SH_CompositeCacheImpl)), cacheName, cacheTypeRequired, startupForStats, layer);
 
 	return newCC;
 }
@@ -256,6 +256,7 @@ SH_CompositeCacheImpl::commonInit(J9JavaVM* vm)
 	_metadataSegmentPtr = NULL;
 	_currentROMSegment = NULL;
 	_next = NULL;
+	_previous = NULL;
 	_ccHead = NULL;
 	_cacheFullFlags = 0;
 #if defined(J9SHR_CACHELET_SUPPORT)
@@ -267,6 +268,7 @@ SH_CompositeCacheImpl::commonInit(J9JavaVM* vm)
 	_initializingNewCache = false;
 	_minimumAccessedShrCacheMetadata = 0;
 	_maximumAccessedShrCacheMetadata = 0;
+	_layer = 0;
 }
 
 #if defined(J9SHR_CACHELET_SUPPORT)
@@ -348,7 +350,7 @@ SH_CompositeCacheImpl::getFreeBlockBytes(void)
 }
 
 void
-SH_CompositeCacheImpl::initializeWithCommonInfo(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, BlockPtr memForConstructor, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats)
+SH_CompositeCacheImpl::initializeWithCommonInfo(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, BlockPtr memForConstructor, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats, I_8 layer)
 {
 	const char * ctrlDirName = NULL;
 	BlockPtr memToUse = (BlockPtr)memForConstructor;
@@ -358,23 +360,23 @@ SH_CompositeCacheImpl::initializeWithCommonInfo(J9JavaVM* vm, J9SharedClassConfi
 		ctrlDirName = sharedClassConfig->ctrlDirName;
 	}
 
-	Trc_SHR_CC_initializeWithCommonInfo_Entry1(memForConstructor, ctrlDirName, cacheName, cacheTypeRequired);
+	Trc_SHR_CC_initializeWithCommonInfo_Entry2(memForConstructor, ctrlDirName, cacheName, cacheTypeRequired, layer);
 
 	_commonCCInfo = (J9ShrCompositeCacheCommonInfo *)memToUse;
 	initCommonCCInfoHelper();
 
 	memToUse += sizeof(J9ShrCompositeCacheCommonInfo);
-	initialize(vm, memToUse, sharedClassConfig, cacheName, cacheTypeRequired, startupForStats);
+	initialize(vm, memToUse, sharedClassConfig, cacheName, cacheTypeRequired, startupForStats, layer);
 
 	Trc_SHR_CC_initializeWithCommonInfo_Exit();
 }
 
 void
-SH_CompositeCacheImpl::initialize(J9JavaVM* vm, BlockPtr memForConstructor, J9SharedClassConfig* sharedClassConfig, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats)
+SH_CompositeCacheImpl::initialize(J9JavaVM* vm, BlockPtr memForConstructor, J9SharedClassConfig* sharedClassConfig, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats, I_8 layer)
 {
 	J9PortShcVersion versionData;
 
-	Trc_SHR_CC_initialize_Entry1(memForConstructor, sharedClassConfig, cacheName, cacheTypeRequired, UnitTest::unitTest);
+	Trc_SHR_CC_initialize_Entry2(memForConstructor, sharedClassConfig, cacheName, cacheTypeRequired, layer, UnitTest::unitTest);
 
 	commonInit(vm);
 	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
@@ -401,9 +403,9 @@ SH_CompositeCacheImpl::initialize(J9JavaVM* vm, BlockPtr memForConstructor, J9Sh
 		_osPageSize = 0;
 	} else {
 		if ((sharedClassConfig->runtimeFlags & J9SHR_RUNTIMEFLAG_CREATE_OLD_GEN) != 0) {
-			_oscache = SH_OSCache::newInstance(_portlib, (SH_OSCache*)memForConstructor, cacheName, SH_OSCache::getCurrentCacheGen()-1, &versionData);
+			_oscache = SH_OSCache::newInstance(_portlib, (SH_OSCache*)memForConstructor, cacheName, SH_OSCache::getCurrentCacheGen()-1, &versionData, layer);
 		} else {
-			_oscache = SH_OSCache::newInstance(_portlib, (SH_OSCache*)memForConstructor, cacheName, SH_OSCache::getCurrentCacheGen(), &versionData);
+			_oscache = SH_OSCache::newInstance(_portlib, (SH_OSCache*)memForConstructor, cacheName, SH_OSCache::getCurrentCacheGen(), &versionData, layer);
 		}
 		_newHdrPtr = (SH_SharedCacheHeaderInit*)((BlockPtr)memForConstructor + SH_OSCache::getRequiredConstrBytes());
 		_debugData = (ClassDebugDataProvider *)((BlockPtr)memForConstructor + SH_OSCache::getRequiredConstrBytes() + sizeof(SH_CompositeCacheImpl::SH_SharedCacheHeaderInit));
@@ -413,6 +415,7 @@ SH_CompositeCacheImpl::initialize(J9JavaVM* vm, BlockPtr memForConstructor, J9Sh
 	}
 	_parent = NULL;
 	_sharedClassConfig = sharedClassConfig;
+	_layer = layer;
 	
 	Trc_SHR_CC_initialize_Exit();
 }
@@ -1467,9 +1470,10 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				_prevScan = _scan = (ShcItemHdr*)CCFIRSTENTRY(_theca);
 				/* For unit testing, there may not be a sharedClassConfig */
 				if (_sharedClassConfig && isFirstStart) {
-					_sharedClassConfig->cacheDescriptorList->cacheStartAddress = _theca;
-					/* TODO: The idea of having a single metadata segment is broken */
-					_metadataSegmentPtr = &(_sharedClassConfig->metadataMemorySegment);
+					if (NULL == _sharedClassConfig->cacheDescriptorList->cacheStartAddress) {
+						_sharedClassConfig->cacheDescriptorList->cacheStartAddress = _theca;
+						_metadataSegmentPtr = &(_sharedClassConfig->cacheDescriptorList->metadataMemorySegment);
+					}
 				}
 				/* TODO: Maybe move _commonCCInfo->vmID into CacheMap */
 				if (isFirstStart) {
@@ -3798,20 +3802,24 @@ SH_CompositeCacheImpl::isAddressInMetaDataArea(const void* address) const
 
 /**
  * Check whether given address is in the Shared Classes cache
- * Note - does not include the cache header
  *
  * @param [in] address  Address of cache item
+ * @param [in] includeHeaderReadWriteArea  Whether to check cache header and read write area.
  *
  * @return true if address is within the shared class cache boundaries, false otherwise
  */
 bool
-SH_CompositeCacheImpl::isAddressInCache(const void* address)
+SH_CompositeCacheImpl::isAddressInCache(const void* address, bool includeHeaderReadWriteArea)
 {
 	if (!_started) {
 		Trc_SHR_Assert_ShouldNeverHappen();
 		return false;
 	}
-	return ((address >= CASTART(_theca)) && (address <= getCacheLastEffectiveAddress()));
+	if (includeHeaderReadWriteArea) {
+		return ((address >= _theca) && (address <= CAEND(_theca)));
+	} else {
+		return (address >= CASTART(_theca)) && (address <= CAEND(_theca));
+	}
 }
 
 /**
@@ -4564,7 +4572,6 @@ SH_CompositeCacheImpl::checkCacheCRC(bool* cacheHasIntegrity, UDATA *crcValue)
 			 * then the crc is failed, and the test flag is disabled.
 			 */
 			if ((true == *cacheHasIntegrity) && (0 != (*_runtimeFlags & J9SHR_RUNTIMEFLAG_FAKE_CORRUPTION))) {
-				*_runtimeFlags &= ~(J9SHR_RUNTIMEFLAG_FAKE_CORRUPTION);
 				*cacheHasIntegrity = false;
 				return false;	
 			}
@@ -4643,7 +4650,9 @@ SH_CompositeCacheImpl::updateMetadataSegment(J9VMThread* currentThread)
 {
 	J9JavaVM* vm = currentThread->javaVM;
 
-	if (_metadataSegmentPtr == NULL) {
+	if ((NULL == _metadataSegmentPtr)
+		|| (NULL == (*_metadataSegmentPtr))
+	) {
 		return;
 	}
 
@@ -4690,6 +4699,24 @@ SH_CompositeCacheImpl::setNext(SH_CompositeCacheImpl* next)
 	_next = next;
 }
 
+/*
+ * Set the previous SH_CompositeCacheImpl
+ */
+void
+SH_CompositeCacheImpl::setPrevious(SH_CompositeCacheImpl* previous)
+{
+	_previous = previous;
+}
+
+/*
+ * Return the previous SH_CompositeCacheImpl
+ */
+SH_CompositeCacheImpl*
+SH_CompositeCacheImpl::getPrevious(void)
+{
+	return _previous;
+}
+
 J9MemorySegment*
 SH_CompositeCacheImpl::getCurrentROMSegment(void)
 {
@@ -4700,6 +4727,13 @@ void
 SH_CompositeCacheImpl::setCurrentROMSegment(J9MemorySegment* segment)
 {
 	_currentROMSegment = segment;
+}
+
+void
+SH_CompositeCacheImpl::setMetadataMemorySegment(J9MemorySegment** segment)
+{
+	Trc_SHR_Assert_True(NULL == _metadataSegmentPtr);
+	_metadataSegmentPtr = segment;
 }
 
 #if defined(J9SHR_CACHELET_SUPPORT)
@@ -5126,7 +5160,7 @@ SH_CompositeCacheImpl::fixupSerializedCompiledMethods(J9VMThread* currentThread,
 	while (NULL != (it = (ShcItem*)this->nextEntry(currentThread, NULL))) {
 		if (TYPE_COMPILED_METHOD == ITEMTYPE(it)) {
 			wrapper = (CompiledMethodWrapper*)ITEMDATA(it);
-			if (jitConfig->updateROMClassOffsetsInAOTMethod(currentThread->javaVM, CMWDATA(wrapper), (J9ROMMethod*)CMWROMMETHOD(wrapper), serializedROMClassStartAddress)) {
+			if (jitConfig->updateROMClassOffsetsInAOTMethod(currentThread->javaVM, CMWDATA(wrapper), (J9ROMMethod*)(wrapper->romMethodOffset + (UDATA)getCacheHeaderAddress()) , serializedROMClassStartAddress)) {
 				rc = -1;
 				break;
 			}
@@ -6988,4 +7022,49 @@ SH_CompositeCacheImpl::isAddressInReleasedMetaDataBounds(J9VMThread* currentThre
 	}
 
 	return rc;
+}
+
+/**
+ * Return the unique ID of the current cache
+ *
+ * @param [in] currentThread The current JVM thread
+ *
+ * @return NULL if the cache is not started. Otherwise, return the unique ID of the current cache.
+ *
+ */
+const char*
+SH_CompositeCacheImpl::getCacheUniqueID(J9VMThread* currentThread) const
+{
+	if (!_started) {
+		return NULL;
+	}
+	return _oscache->getCacheUniqueID(currentThread);
+}
+
+/**
+ * Compare the unique ID of the current cache to unique ID passed in
+ *
+ * @param [in] currentThread The current JVM thread
+ * @param [in] prereqCacheUniqueID The unique ID to be compared
+ *
+ * @return True if the current cache has the same unique ID as the one passed in. False otherwise.
+ *
+ */
+bool
+SH_CompositeCacheImpl::verifyCacheUniqueID(J9VMThread* currentThread, const char* expectedCacheUniqueID) const
+{
+	bool rc = (0 == strcmp(expectedCacheUniqueID, getCacheUniqueID(currentThread)));
+	if (false == rc) {
+		Trc_SHR_CC_verifyCacheUniqueID_Failed(currentThread, expectedCacheUniqueID, getCacheUniqueID(currentThread));
+	}
+	return rc;
+}
+
+/**
+ * Return the cache name
+ */
+const char*
+SH_CompositeCacheImpl::getCacheName(void) const
+{
+	return _cacheName;
 }

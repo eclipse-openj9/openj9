@@ -687,7 +687,12 @@ j9shr_classStoreTransaction_stop(void * tobj)
 			if (NULL != storedClass) {
 				U_8 *intermediateClassData = J9ROMCLASS_INTERMEDIATECLASSDATA(storedClass);
 				if (NULL != intermediateClassData) {
-					Trc_SHR_Assert_True(j9shr_isAddressInCache(vm, intermediateClassData, storedClass->intermediateClassDataLength));
+					if (j9shr_isAddressInCache(vm, storedClass, storedClass->romSize, TRUE)) {
+						/* romclass is using SPRs pointing to its intermediateClassData, so they should be in the same cache */
+						Trc_SHR_Assert_True(j9shr_isAddressInCache(vm, intermediateClassData, storedClass->intermediateClassDataLength, TRUE));
+					} else {
+						Trc_SHR_Assert_True(j9shr_isAddressInCache(vm, intermediateClassData, storedClass->intermediateClassDataLength, FALSE));
+					}
 				}
 			}
 		}

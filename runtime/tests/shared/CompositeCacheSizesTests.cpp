@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,7 +78,7 @@ createTestCompositeCache (J9JavaVM* vm, SH_CompositeCacheImpl** cc, J9SharedClas
 	memset((void*)memForCC, 0, totalSize);
 
 	/*Request non-persistent cache */
-	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myRoot", false, false);
+	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myRoot", false, false, 0);
 	cache = (char*)((char*)actualCC + requiredBytes);
 	if (actualCC->startup(vm->mainThread, piconfig, cache, &runtimeFlags, 1, "myRoot", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
 		ERRPRINTF(("Failed to start the composite cache.\n"));
@@ -349,7 +349,7 @@ test4(J9JavaVM* vm)
 	memset((void*)memForCC, 0, totalSize);
 
 	/*Request non-persistent cache */
-	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myRoot", false, false);
+	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myRoot", false, false, 0);
 	cache = (char*)((char*)actualCC + requiredBytes);
 
 	runtimeFlags = J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION;
@@ -404,7 +404,7 @@ test4(J9JavaVM* vm)
  */
 #if 0
 	memset(actualCC, 0, requiredBytes);
-	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myRoot", false, false);
+	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myRoot", false, false, 0);
 
 	runtimeFlags = J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION;
 	if (actualCC->startup(vm->mainThread, &piconfig, cache, &runtimeFlags, 1, "myRoot", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
