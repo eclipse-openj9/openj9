@@ -82,7 +82,7 @@ public class TestJcmd extends AttachApiTest {
 		for (String helpOption : HELP_OPTIONS) {
 			List<String> jcmdOutput = runCommandAndLogOutput(Collections.singletonList(helpOption));
 			/* Sample of the text from Jcmd.HELPTEXT */
-			String expectedString = "run diagnostic command"; //$NON-NLS-1$
+			String expectedString = "list JVM processes on the local machine."; //$NON-NLS-1$
 			Optional<String> searchResult = StringUtilities.searchSubstring(expectedString, jcmdOutput);
 			assertTrue(searchResult.isPresent(), "Help text corrupt: " + jcmdOutput); //$NON-NLS-1$
 		}
@@ -165,7 +165,7 @@ public class TestJcmd extends AttachApiTest {
 		List<String> args = new ArrayList<>();
 		args.add(getVmId());
 		args.add(GC_CLASS_HISTOGRAM);
-		args.add("-all"); //$NON-NLS-1$
+		args.add("all"); //$NON-NLS-1$
 		List<String> jcmdOutput = runCommandAndLogOutput(args);
 		String expectedString = commandExpectedOutputs.getOrDefault(GC_CLASS_HISTOGRAM, "Test error: expected output not defined"); //$NON-NLS-1$
 		log("Expected string: " + expectedString); //$NON-NLS-1$
