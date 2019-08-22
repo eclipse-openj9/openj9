@@ -69,7 +69,7 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
     }
 
    TR_OpaqueClassBlock *getClassId() { return (TR_OpaqueClassBlock *) (((uintptr_t) _classId) & ~(uintptr_t)1); }
-   bool isInitialized()  { return ((((uintptr_t) _classId) & 1) == 0); }
+   bool isInitialized(bool validate = true);
    void setInitialized(TR_PersistentMemory *);
 
    // HCR

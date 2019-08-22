@@ -50,7 +50,7 @@ class TR_PersistentCHTable
 
    TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId);
 
-   TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false, bool validate = true);
+   TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false);
    TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR_FrontEnd *, bool returnClassInfoForAOT = false);
 
    void dumpMethodCounts(TR_FrontEnd *fe, TR_Memory &trMemory);         // A routine to dump initial method compilation counts
