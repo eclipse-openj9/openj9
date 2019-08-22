@@ -50,7 +50,7 @@ public:
    void doUpdate(TR_J9VMBase *fej9, const std::string &removeStr, const std::string &modifyStr);
 
    virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId) override;
-   virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false, bool validate = true) override;
+   virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false) override;
 
 #ifdef COLLECT_CHTABLE_STATS
    // Statistical counters
@@ -79,7 +79,7 @@ public:
    std::pair<std::string, std::string> serializeUpdates();
 
    virtual TR_PersistentClassInfo * findClassInfo(TR_OpaqueClassBlock * classId) override;
-   virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false, bool validate = true) override;
+   virtual TR_PersistentClassInfo * findClassInfoAfterLocking(TR_OpaqueClassBlock * classId, TR::Compilation *, bool returnClassInfoForAOT = false) override;
 
    virtual TR_PersistentClassInfo *classGotLoaded(TR_FrontEnd *, TR_OpaqueClassBlock *classId) override;
    virtual bool classGotInitialized(TR_FrontEnd *fe, TR_PersistentMemory *persistentMemory, TR_OpaqueClassBlock *classId, TR_PersistentClassInfo *clazz) override;

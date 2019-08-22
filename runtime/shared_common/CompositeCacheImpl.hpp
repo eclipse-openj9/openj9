@@ -93,7 +93,7 @@ public:
 			J9SharedClassPreinitConfig* piconfig, U_32* actualSize, UDATA* localCrashCntr);
 #endif /* J9SHR_CACHELET_SUPPORT */
 	
-	static SH_CompositeCacheImpl* newInstance(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, SH_CompositeCacheImpl* memForConstructor, const char* cacheName, I_32 newPersistentCacheReqd, bool startupForStats);
+	static SH_CompositeCacheImpl* newInstance(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, SH_CompositeCacheImpl* memForConstructor, const char* cacheName, I_32 newPersistentCacheReqd, bool startupForStats, I_8 layer);
 	
 	IDATA startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* piconfig, BlockPtr cacheMemoryUT, U_64* runtimeFlags, UDATA verboseFlags,
 			const char* rootName, const char* ctrlDirName, UDATA cacheDirPerm, U_32* actualSize, UDATA* localCrashCntr, bool isFirstStart, bool* cacheHasIntegrity);
@@ -228,7 +228,7 @@ public:
 
 	bool isAddressInMetaDataArea(const void* address) const;
 
-	bool isAddressInCache(const void* address);
+	bool isAddressInCache(const void* address, bool includeHeaderReadWriteArea = true);
 
 	void runExitCode(J9VMThread *currentThread);
 	
@@ -265,6 +265,10 @@ public:
 	SH_CompositeCacheImpl* getNext(void);
 	
 	void setNext(SH_CompositeCacheImpl* next);
+
+	void setPrevious(SH_CompositeCacheImpl* previous);
+	
+	SH_CompositeCacheImpl* getPrevious(void);
 
 	U_32 getBytesRequiredForItemWithAlign(ShcItem* itemToWrite, U_32 align, U_32 alignOffset);
 
@@ -418,6 +422,14 @@ public:
 
 	bool isAddressInReleasedMetaDataBounds(J9VMThread* currentThread, UDATA metadataAddress) const;
 
+	const char* getCacheUniqueID(J9VMThread* currentThread) const;
+
+	const char* getCacheName(void) const;
+
+	bool verifyCacheUniqueID(J9VMThread* currentThread, const char* expectedCacheUniqueID) const;
+	
+	void setMetadataMemorySegment(J9MemorySegment** segment);
+
 private:
 	J9SharedClassConfig* _sharedClassConfig;
 	SH_OSCache* _oscache;
@@ -429,6 +441,7 @@ private:
 	const char* _cacheName;
 	
 	SH_CompositeCacheImpl* _next;
+	SH_CompositeCacheImpl* _previous;
 	SH_CompositeCacheImpl* _parent;
 	SH_CompositeCacheImpl* _ccHead; /* first supercache, if chained */
 	
@@ -508,6 +521,8 @@ private:
 	UDATA  _minimumAccessedShrCacheMetadata;
 
 	UDATA _maximumAccessedShrCacheMetadata;
+	
+	I_8 _layer;
 
 #if defined(J9SHR_CACHELET_SUPPORT)
 	/**
@@ -555,8 +570,8 @@ private:
 	void incReaderCount(J9VMThread* currentThread);
 	void decReaderCount(J9VMThread* currentThread);
 
-	void initialize(J9JavaVM* vm, BlockPtr memForConstructor, J9SharedClassConfig* sharedClassConfig, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats);
-	void initializeWithCommonInfo(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, BlockPtr memForConstructor, const char* cacheName, I_32 newPersistentCacheReqd, bool startupForStats);
+	void initialize(J9JavaVM* vm, BlockPtr memForConstructor, J9SharedClassConfig* sharedClassConfig, const char* cacheName, I_32 cacheTypeRequired, bool startupForStats, I_8 layer);
+	void initializeWithCommonInfo(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, BlockPtr memForConstructor, const char* cacheName, I_32 newPersistentCacheReqd, bool startupForStats, I_8 layer);
 	void initCommonCCInfoHelper();
 
 #if defined(J9SHR_CACHELET_SUPPORT)

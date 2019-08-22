@@ -1041,7 +1041,7 @@ SH_ClasspathManagerImpl2::validate(J9VMThread* currentThread, ROMClassWrapper* f
 		return -1;
 	}
 	
-	testCP = (ClasspathWrapper*)RCWCLASSPATH(foundROMClass);
+	testCP = (ClasspathWrapper*)_cache->getAddressFromJ9ShrOffset(&(foundROMClass->theCpOffset));
 	testCPIndex = foundROMClass->cpeIndex;
 	testCPI = (ClasspathItem*)CPWDATA(testCP);
 

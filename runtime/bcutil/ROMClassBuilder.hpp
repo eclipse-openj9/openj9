@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,7 +122,7 @@ private:
 	U_8 *_bufferManagerBuffer;
 	StringInternTable _stringInternTable;
 
-	BuildResult handleAnonClassName(J9CfrClassFile *classfile);
+	BuildResult handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda);
 	U_32 computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);
 	U_32 computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);
 	BuildResult prepareAndLaydown( BufferManager *bufferManager, ClassFileParser *classFileParser, ROMClassCreationContext *context );
@@ -150,7 +150,7 @@ private:
 
 	bool compareROMClassForEquality(U_8 *romClass, bool romClassIsShared,
 			ROMClassWriter *romClassWriter, SRPOffsetTable *srpOffsetTable, SRPKeyProducer *srpKeyProducer, ClassFileOracle *classFileOracle,
-			U_32 modifiers, U_32 extraModifiers, U_32 optionalFlags, ROMClassCreationContext * context);
+			U_32 modifiers, U_32 extraModifiers, U_32 optionalFlags, ROMClassCreationContext * context, U_32 romSize, bool isLambda);
 	SharedCacheRangeInfo getSharedCacheSRPRangeInfo(void *address);
 	void getSizeInfo(ROMClassCreationContext *context, ROMClassWriter *romClassWriter, SRPOffsetTable *srpOffsetTable, bool *countDebugDataOutOfLine, SizeInformation *sizeInformation);
 };

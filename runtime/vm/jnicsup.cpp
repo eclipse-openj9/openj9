@@ -458,7 +458,7 @@ UDATA JNICALL   pushArguments(J9VMThread *vmThread, J9Method* method, void *args
 #define ARG(type, sig) (jvalues ? (jvalues++->sig) : va_arg(*(va_list*)args, type))
 
 	/* process the arguments */
-	sigChar = &J9UTF8_DATA(J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method)))[1];	/* skip the opening '(' */
+	sigChar = &J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method)))[1];	/* skip the opening '(' */
 
 	sp = vmThread->sp;
 
@@ -2115,8 +2115,8 @@ findJNIMethod(J9VMThread* currentThread, J9Class* clazz, char* name, char* signa
 		J9UTF8 * methodName = NULL;
 
 		romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-		methodSignature = J9ROMMETHOD_GET_SIGNATURE(clazz->romClass, romMethod);
-		methodName = J9ROMMETHOD_GET_NAME(clazz->romClass, romMethod);
+		methodSignature = J9ROMMETHOD_SIGNATURE(romMethod);
+		methodName = J9ROMMETHOD_NAME(romMethod);
 		if ((J9UTF8_LENGTH(methodSignature) == signatureLength)
 		&& (J9UTF8_LENGTH(methodName) == nameLength)
 		&& (memcmp(J9UTF8_DATA(methodSignature), signature, signatureLength) == 0)

@@ -52,7 +52,7 @@ stackFrameFilter(J9VMThread * currentThread, J9StackWalkState * walkState)
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
 		J9ROMClass *romClass = J9_CLASS_FROM_METHOD(walkState->method)->romClass;
 
-		J9UTF8 *utf = J9ROMMETHOD_GET_NAME(romClass, romMethod);
+		J9UTF8 *utf = J9ROMMETHOD_NAME(romMethod);
 		const char  *stackWalkerMethod = (const char  *) walkState->userData2;
 		result = J9_STACKWALK_KEEP_ITERATING;
 
@@ -211,13 +211,13 @@ Java_java_lang_StackWalker_getImpl(JNIEnv *env, jobject clazz, jlong walkStateP)
 			}
 			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_CLASSNAME(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), stringObject);
 
-			stringObject = utfToStringObject(env, J9ROMMETHOD_GET_NAME(romClass, romMethod), J9_STR_INTERN);
+			stringObject = utfToStringObject(env, J9ROMMETHOD_NAME(romMethod), J9_STR_INTERN);
 			if (VM_VMHelpers::exceptionPending(vmThread)) {
 				goto _pop_frame;
 			}
 			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_METHODNAME(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), stringObject);
 
-			stringObject = utfToStringObject(env, J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod), J9_STR_INTERN);
+			stringObject = utfToStringObject(env, J9ROMMETHOD_SIGNATURE(romMethod), J9_STR_INTERN);
 			if (VM_VMHelpers::exceptionPending(vmThread)) {
 				goto _pop_frame;
 			}

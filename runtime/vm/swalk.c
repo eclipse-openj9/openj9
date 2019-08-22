@@ -421,7 +421,7 @@ UDATA walkFrame(J9StackWalkState * walkState)
 			J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState->method);
 
 			if (!(romMethod->modifiers & J9AccStatic)) {
-				if (J9UTF8_DATA(J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(walkState->method)->ramClass->romClass, romMethod))[0] == '<') {
+				if (J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod))[0] == '<') {
 					if (*walkState->arg0EA == (UDATA) walkState->restartException) {
 						return J9_STACKWALK_KEEP_ITERATING;
 					}
@@ -1103,8 +1103,8 @@ void swPrintMethod(J9StackWalkState * walkState) {
 		PORT_ACCESS_FROM_WALKSTATE(walkState);
 		J9UTF8 * className = J9ROMCLASS_CLASSNAME(UNTAGGED_METHOD_CP(method)->ramClass->romClass);
 		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-		J9UTF8 * name = J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
-		J9UTF8 * sig = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
+		J9UTF8 * name = J9ROMMETHOD_NAME(romMethod);
+		J9UTF8 * sig = J9ROMMETHOD_SIGNATURE(romMethod);
 
 		swPrintf(walkState, 2, "\tMethod: %.*s.%.*s%.*s "
 			"(%p)"

@@ -66,6 +66,10 @@ extern "C" {
 #define J9VM_OPT_VALHALLA_NESTMATES
 #endif
 
+#if defined(J9VM_ENV_DATA64)
+#define J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
+#endif
+
 #ifdef __cplusplus
 }
 #endif

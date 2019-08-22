@@ -2982,7 +2982,11 @@ public class MethodHandles {
 		final int argIndexCount = argumentIndices.length;
 		int[] passedInArgumentIndices = EMPTY_ARG_POSITIONS;
 		
-		if ((foldPosition < 0) || (foldPosition >= handleTypeParamCount)) {
+		if ((foldPosition < 0)
+		|| (foldPosition > handleTypeParamCount)
+		/* folding at handleTypeParamCount is only valid when the handle takes no arguments */
+		|| ((foldPosition == handleTypeParamCount) && (handleTypeParamCount != 0) ))
+		{
 			/*[MSG "K0637", "The value of {0}: {1} must be in a range from 0 to {2}"]*/
 			throw new IllegalArgumentException(Msg.getString("K0637", new Object[] { //$NON-NLS-1$
 							"the fold position", Integer.toString(foldPosition), //$NON-NLS-1$

@@ -77,6 +77,7 @@
 #define J9ClassLargestAlignmentConstraintReference 0x800
 #define J9ClassLargestAlignmentConstraintDouble 0x1000
 #define J9ClassIsExemptFromValidation 0x2000
+#define J9ClassContainsUnflattenedFlattenables 0x4000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
@@ -1213,13 +1214,18 @@ typedef struct J9SharedCacheHeader {
 #define J9SHAREDCACHEHEADER_SHAREDSTRINGTAIL(base) SRP_GET((base)->sharedStringTail, struct J9SharedInternSRPHashTableEntry*)
 #define J9SHAREDCACHEHEADER_UNUSED01(base) SRP_GET((base)->unused01, void*)
 
+/* Maximum length of the cache name (including NULL char) specified by user in the command line */
+#define USER_SPECIFIED_CACHE_NAME_MAXLEN 65
+
 typedef struct J9SharedClassCacheDescriptor {
 	struct J9SharedCacheHeader* cacheStartAddress;
 	void* romclassStartAddress;
 	void* metadataStartAddress;
+	struct J9MemorySegment* metadataMemorySegment;
 	UDATA cacheSizeBytes;
 	void* deployedROMClassStartAddress;
 	struct J9SharedClassCacheDescriptor* next;
+	struct J9SharedClassCacheDescriptor* previous;
 } J9SharedClassCacheDescriptor;
 
 typedef struct J9SharedCacheAPI {
@@ -1245,6 +1251,7 @@ typedef struct J9SharedCacheAPI {
 	I_32 maxJIT;
 	U_8 sharedCacheEnabled;
 	U_8 inContainer; /* It is TRUE only when xShareClassesPresent is FALSE and J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) is TRUE and the JVM is running in container */
+	I_8 layer;
 } J9SharedCacheAPI;
 
 typedef struct J9SharedClassConfig {
@@ -1302,6 +1309,9 @@ typedef struct J9SharedClassConfig {
 	I_32 minJIT;
 	I_32 maxJIT;
 	struct J9SharedLocalStartupHints localStartupHints;
+	const char* cacheName;
+	I_8 layer;
+	U_64 readOnlyCacheRuntimeFlags;
 } J9SharedClassConfig;
 
 typedef struct J9SharedClassPreinitConfig {
@@ -1730,7 +1740,7 @@ typedef struct J9ModuleExtraInfo {
  ***************************************************************/
 typedef struct J9FlattenedClassCacheEntry {
 	struct J9Class* clazz;
-	struct J9ROMNameAndSignature* nameAndSignature;
+	struct J9ROMFieldShape * field;
 	UDATA offset;
 } J9FlattenedClassCacheEntry;
 
@@ -4643,6 +4653,7 @@ typedef struct J9InternalVMFunctions {
 #else
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9ROMClass *romClass, struct J9Class *superClazz, struct J9ROMFieldOffsetWalkState *state, U_32 flags) ;
 #endif
+	void ( *defaultValueWithUnflattenedFlattenables)(struct J9VMThread *currentThread, struct J9Class *clazz, j9object_t instance) ;
 	struct J9ROMFieldOffsetWalkResult*  ( *fieldOffsetsNextDo)(struct J9ROMFieldOffsetWalkState *state) ;
 	struct J9ROMFieldShape*  ( *fullTraversalFieldOffsetsStartDo)(struct J9JavaVM *vm, struct J9Class *clazz, struct J9ROMFullTraversalFieldOffsetWalkState *state, U_32 flags) ;
 	struct J9ROMFieldShape*  ( *fullTraversalFieldOffsetsNextDo)(struct J9ROMFullTraversalFieldOffsetWalkState *state) ;
@@ -5460,6 +5471,7 @@ typedef struct J9JavaVM {
 #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
 	UDATA valueFlatteningThreshold;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+	UDATA dCacheLineSize;
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2

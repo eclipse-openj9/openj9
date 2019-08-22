@@ -88,8 +88,7 @@ void
 cacheObjectMonitorForLookup(J9JavaVM* vm, J9VMThread* vmStruct, J9ObjectMonitor* objectMonitor)
 {
 	j9object_t object = J9MONITORTABLE_OBJECT_LOAD(vmStruct, &((J9ThreadAbstractMonitor*)(objectMonitor->monitor))->userData);
-
-	vmStruct->objectMonitorLookupCache[J9_OBJECT_MONITOR_LOOKUP_SLOT(object,vm)] = (j9objectmonitor_t) ((UDATA) objectMonitor);
+	J9_STORE_LOCKWORD(vmStruct, vmStruct->objectMonitorLookupCache + J9_OBJECT_MONITOR_LOOKUP_SLOT(object,vm), objectMonitor);
 }
 
 

@@ -228,6 +228,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	structuredSignalHandlerVM,
 	addHiddenInstanceField,
 	fieldOffsetsStartDo,
+	defaultValueWithUnflattenedFlattenables,
 	fieldOffsetsNextDo,
 	fullTraversalFieldOffsetsStartDo,
 	fullTraversalFieldOffsetsNextDo,

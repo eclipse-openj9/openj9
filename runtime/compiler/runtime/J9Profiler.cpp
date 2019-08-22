@@ -748,11 +748,10 @@ TR_ValueProfiler::addHashTableProfilingTrees(
    else
       {
       // Create a placeholder, which cannot be left in the jitted body
-      TR::SymbolReference *profiler = comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_jProfile32BitValue, false, false, true);
-      TR::Node *call = TR::Node::createWithSymRef(node, TR::call, 3, profiler);
+      TR::SymbolReference* profiler = comp()->getSymRefTab()->findOrCreateJProfileValuePlaceHolderSymbolRef();
+      TR::Node *call = TR::Node::createWithSymRef(node, TR::call, 2, profiler);
       call->setAndIncChild(0, (commonNode ? node : node->duplicateTree()));
       call->setAndIncChild(1, TR::Node::aconst(node, (uintptr_t) valueInfo));
-      call->setAndIncChild(2, TR::Node::iconst(node, 1));
       TR::TreeTop *callTree = TR::TreeTop::create(comp(), cursorTree, TR::Node::create(TR::treetop, 1, call));
       callTree->getNode()->setIsProfilingCode();
       }

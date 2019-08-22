@@ -352,7 +352,7 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 		CheckSize _(cursor, sizeof(J9ROMClass));
 		cursor->writeU32(romSize, Cursor::ROM_SIZE);
 		cursor->writeU32(_classFileOracle->getSingleScalarStaticCount(), Cursor::GENERIC);
-		cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(_classFileOracle->getClassNameIndex()), Cursor::SRP_TO_UTF8);
+		cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(_classFileOracle->getClassNameIndex()), Cursor::SRP_TO_UTF8_CLASS_NAME);
 		cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(_classFileOracle->getSuperClassNameIndex()), Cursor::SRP_TO_UTF8);
 		cursor->writeU32(modifiers, Cursor::GENERIC);
 		cursor->writeU32(extraModifiers, Cursor::GENERIC);
@@ -398,7 +398,7 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 		cursor->writeU32(_classFileOracle->getBootstrapMethodCount(), Cursor::GENERIC);
 		cursor->writeU32(_constantPoolMap->getCallSiteCount(), Cursor::GENERIC);
 		cursor->writeSRP(_callSiteDataSRPKey, Cursor::SRP_TO_GENERIC);
-		cursor->writeU32(_classFileOracle->getClassFileSize(), Cursor::GENERIC);
+		cursor->writeU32(_classFileOracle->getClassFileSize(), Cursor::CLASS_FILE_SIZE);
 		cursor->writeU32((U_32)_classFileOracle->getConstantPoolCount(), Cursor::GENERIC);
 		cursor->writeU16(_constantPoolMap->getStaticSplitEntryCount(), Cursor::GENERIC);
 		cursor->writeU16(_constantPoolMap->getSpecialSplitEntryCount(), Cursor::GENERIC);
@@ -411,6 +411,8 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	/*
 	 * Write the rest of the contiguous portion of the ROMClass
 	 */
+
+	cursor->setClassNameIndex((_classFileOracle->getClassNameIndex()));
 	writeConstantPool(cursor, markAndCountOnly);
 	writeFields(cursor, markAndCountOnly);
 	writeInterfaces(cursor, markAndCountOnly);
@@ -482,7 +484,13 @@ public:
 
 	void visitClass(U_16 cfrCPIndex)
 	{
-		_cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(cfrCPIndex), Cursor::SRP_TO_UTF8);
+		/* if the cfrCPIndex is for the class name, the data type should be SRP_TO_UTF8_CLASS_NAME to avoid comparing lambda class names */
+		U_16 classNameIndex = _cursor->getClassNameIndex();
+		if (((U_16)-1 != classNameIndex) && (_srpKeyProducer->mapCfrConstantPoolIndexToKey(classNameIndex) == _srpKeyProducer->mapCfrConstantPoolIndexToKey(cfrCPIndex))) {
+			_cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(cfrCPIndex), Cursor::SRP_TO_UTF8_CLASS_NAME);
+		} else {
+			_cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(cfrCPIndex), Cursor::SRP_TO_UTF8);
+		}
 		_cursor->writeU32(BCT_J9DescriptionCpTypeClass, Cursor::GENERIC);
 	}
 

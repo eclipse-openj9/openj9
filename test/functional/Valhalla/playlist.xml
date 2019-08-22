@@ -24,6 +24,10 @@
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
 	<test>
 		<testCaseName>ValueTypeTests</testCaseName>
+		<variations>
+                  <variation>-XX:ValueTypeFlatteningThreshold=1</variation>
+		  <variation>NoOptions</variation>
+          	</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		-Xverify:none \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \

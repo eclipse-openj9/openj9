@@ -155,7 +155,7 @@ static J9Class* internalCreateRAMClassDoneNoMutex(J9VMThread *vmThread, J9ROMCla
 static J9Class* internalCreateRAMClassDone(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
 	J9UTF8 *className, J9CreateRAMClassState *state);
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-static BOOLEAN loadFlattenableFieldValueClasses(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module, UDATA *largestFieldType, J9FlattenedClassCache *flattenedClassCache);
+static BOOLEAN loadFlattenableFieldValueClasses(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module, UDATA *valueTypeFlags, J9FlattenedClassCache *flattenedClassCache);
 
 static J9Class* internalCreateRAMClassFromROMClassImpl(J9VMThread *vmThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA options, J9Class *elementClass,
 	J9ROMMethod **methodRemapArray, IDATA entryIndex, I_32 locationType, J9Class *classBeingRedefined, UDATA packageID, J9Class *superclass, J9CreateRAMClassState *state,
@@ -1699,7 +1699,7 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 /**
  * Attempts to pre-load classes of fields with Q signatures and no static
- * access modifier set. Also records largest field type in largestFieldType.
+ * access modifier set. Also records largest field type in valueTypeFlags.
  * 0 for single 1 for ref and 2 for double. Records total number of
  * flattenable instance fields in flattenableInstanceFieldCount.
  *
@@ -1709,7 +1709,7 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
  * appropriate Java error on the VM.
  */
 static BOOLEAN
-loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module, UDATA *largestFieldType, J9FlattenedClassCache *flattenedClassCache)
+loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *classLoader, J9ROMClass *romClass, UDATA classPreloadFlags, UDATA packageID, J9Module *module, UDATA *valueTypeFlags, J9FlattenedClassCache *flattenedClassCache)
 {
 	J9ROMFieldWalkState fieldWalkState = {0};
 	J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
@@ -1750,21 +1750,25 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 						goto done;
 					}
 
+					if (!J9_IS_J9CLASS_FLATTENED(valueClass)) {
+						*valueTypeFlags |= J9ClassContainsUnflattenedFlattenables;
+					}
+					
 					J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, flattenableInstanceFieldCount);
 					entry->clazz = valueClass;
-					entry->nameAndSignature = &(field->nameAndSignature);
-					entry->offset = 0;
+					entry->field = field;
+					entry->offset = UDATA_MAX;
 					flattenableInstanceFieldCount += 1;
 				}
-				*largestFieldType |= (valueClass->classFlags & (J9ClassLargestAlignmentConstraintDouble | J9ClassLargestAlignmentConstraintReference));
+				*valueTypeFlags |= (valueClass->classFlags & (J9ClassLargestAlignmentConstraintDouble | J9ClassLargestAlignmentConstraintReference));
 				break;
 			}
 			case 'J':
 			case 'D':
-				*largestFieldType |= J9ClassLargestAlignmentConstraintDouble;
+				*valueTypeFlags |= J9ClassLargestAlignmentConstraintDouble;
 				break;
 			case 'L':
-				*largestFieldType |= J9ClassLargestAlignmentConstraintReference;
+				*valueTypeFlags |= J9ClassLargestAlignmentConstraintReference;
 				break;
 			default:
 				/* Do nothing for now. If we eventually decide to pack fields smaller than 32 bits we'll
@@ -2925,7 +2929,7 @@ internalCreateRAMClassFromROMClass(J9VMThread *vmThread, J9ClassLoader *classLoa
 	J9Module* module = NULL;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	UDATA romFieldCount = romClass->romFieldCount;		
-	UDATA largestFieldType = 0;
+	UDATA valueTypeFlags = 0;
 	UDATA flattenedClassCacheAllocSize = sizeof(J9FlattenedClassCache) + (sizeof(J9FlattenedClassCacheEntry) * romFieldCount);
 	U_8 flattenedClassCacheBuffer[sizeof(J9FlattenedClassCache) + (sizeof(J9FlattenedClassCacheEntry) * DEFAULLT_NUMBER_OF_ENTRIES_IN_FLATTENED_CLASS_CACHE)] = {0};
 	J9FlattenedClassCache *flattenedClassCache = (J9FlattenedClassCache *) flattenedClassCacheBuffer;
@@ -3060,7 +3064,7 @@ retry:
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	if (!loadSuperClassAndInterfaces(vmThread, hostClassLoader, romClass, options, elementClass, packageID, hotswapping, classPreloadFlags, &superclass, module)
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		|| !loadFlattenableFieldValueClasses(vmThread, hostClassLoader, romClass, classPreloadFlags, packageID, module, &largestFieldType, flattenedClassCache)
+		|| !loadFlattenableFieldValueClasses(vmThread, hostClassLoader, romClass, classPreloadFlags, packageID, module, &valueTypeFlags, flattenedClassCache)
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
@@ -3119,11 +3123,14 @@ retry:
 				classFlags |= J9ClassIsFlattened;
 			}
 
-			if (J9_ARE_ALL_BITS_SET(largestFieldType, J9ClassLargestAlignmentConstraintDouble)) {
+			if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassLargestAlignmentConstraintDouble)) {
 				classFlags |= J9ClassLargestAlignmentConstraintDouble;
-			} else if (J9_ARE_ALL_BITS_SET(largestFieldType, J9ClassLargestAlignmentConstraintReference)) {
+			} else if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassLargestAlignmentConstraintReference)) {
 				classFlags |= J9ClassLargestAlignmentConstraintReference;
 			}
+		}
+		if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassContainsUnflattenedFlattenables)) {
+			classFlags |= J9ClassContainsUnflattenedFlattenables;
 		}
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 

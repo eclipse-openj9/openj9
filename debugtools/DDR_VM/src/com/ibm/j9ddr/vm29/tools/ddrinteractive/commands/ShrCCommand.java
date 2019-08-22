@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.tools.ddrinteractive.Command;
@@ -42,6 +44,7 @@ import com.ibm.j9ddr.tools.ddrinteractive.CommandUtils;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.vm29.j9.DataType;
+import com.ibm.j9ddr.vm29.j9.J9ConstantHelper;
 import com.ibm.j9ddr.vm29.pointer.*;
 import com.ibm.j9ddr.vm29.pointer.generated.*;
 import com.ibm.j9ddr.vm29.pointer.helper.*;
@@ -73,6 +76,7 @@ public class ShrCCommand extends Command
 	
 	private static final String rangeDelim = "..";
 	private static long cacheTotalSize = 0;
+	private static final long TYPE_PREREQ_CACHE = J9ConstantHelper.getLong(ShcdatatypesConstants.class, "TYPE_PREREQ_CACHE", -1);
 
 
 	public ShrCCommand()
@@ -382,7 +386,27 @@ public class ShrCCommand extends Command
 			}
 		}
 	}
-	
+
+	private int dbgShrcCacheTopLayer(PrintStream out, J9SharedClassConfigPointer sharedClassConfig) throws CorruptDataException {
+		SH_OSCachePointer osCache = getOSCache(out, sharedClassConfig);
+		int topLayer = 0;
+		if (osCache.notNull()) {
+			U8Pointer cacheNamePointer = osCache._cacheNameWithVGen();
+			if (cacheNamePointer.notNull()) {
+				String cacheNameString = cacheNamePointer.getCStringAtOffset(0);
+				Pattern p = Pattern.compile(".*L(\\d\\d)$");
+				Matcher m = p.matcher(cacheNameString);
+				if (m.matches()) {
+					String layerNumberString = m.group(1);
+					topLayer = Integer.parseInt(layerNumberString);
+				} else {
+					topLayer = -1;
+				}
+			}
+		}
+		return topLayer;
+	}
+
 	/**
 	 * Convenience class based on FileOutputStream that holds additionally the absolute path name of the file
 	 * the output stream is associated/created with.
@@ -647,13 +671,22 @@ public class ShrCCommand extends Command
 		long totalROMClassBytes = 0;
 		long totalStaleBytes = 0;
 		boolean showAllStaleFlag = ((statTypes & ALL_STALE_STATS) != 0);
+		int topLayer = -1;
 		
 		UDATA debugLNTUsed, debugLVTUsed;
 		UDATA romclassStartAddress, segmentPtr;
 
 		ShrcConfig config = dbgShrcReadConfig(sharedClassConfig, out);
+		topLayer = dbgShrcCacheTopLayer(out, sharedClassConfig);
 		J9SharedCacheHeaderPointer cacheHeader = config.getCacheStartAddress();
-		
+		U8Pointer[] cacheHeaderPtr = null; 
+
+		if (topLayer >= 0) {
+			cacheHeaderPtr = new U8Pointer[1];
+			/* Currently DDR !shrc commands only work on the top layer cache. To support multi-layer, all layer cacheHeaders need be set into cacheHeaderPtr.  */
+			cacheHeaderPtr[0] = U8Pointer.cast(cacheHeader);
+		}
+
 		romclassStartAddress = config.getRomclassStartAddress();
 		segmentPtr = config.getSegmentPtr();
 
@@ -694,10 +727,10 @@ public class ShrCCommand extends Command
 			
 			if (itemType.eq(TYPE_ORPHAN)) {
 				rcMetaLen += OrphanWrapper.SIZEOF + ShcItem.SIZEOF + ShcItemHdr.SIZEOF;
-				romClass = OrphanWrapperHelper.romClass(OrphanWrapperPointer.cast(ShcItemHelper.ITEMDATA(it)));
+				romClass = OrphanWrapperHelper.romClass(OrphanWrapperPointer.cast(ShcItemHelper.ITEMDATA(it)), cacheHeaderPtr);
 				romClassName = romClass.className();
 				if (romClassName.isNull()) {
-					CommandUtils.dbgPrint(out, "-- could not read SRP, OW ShcItem %s romClass %s --\n", it.getHexAddress(), romClass.getHexAddress());
+					CommandUtils.dbgPrint(out, "-- could not read romClassName, OW ShcItem %s romClass %s --\n", it.getHexAddress(), romClass.getHexAddress());
 					return;
 				}
 				romClassList.add(romClass);
@@ -719,18 +752,18 @@ public class ShrCCommand extends Command
 				} else {
 					rcMetaLen += ScopedROMClassWrapper.SIZEOF;
 					srcw = ScopedROMClassWrapperPointer.cast(rcw);
-					rcPartition = J9UTF8Pointer.cast(ScopedROMClassWrapperHelper.RCWPARTITION(srcw));
-					rcModContext = J9UTF8Pointer.cast(ScopedROMClassWrapperHelper.RCWMODCONTEXT(srcw));
+					rcPartition = J9UTF8Pointer.cast(ScopedROMClassWrapperHelper.RCWPARTITION(srcw, cacheHeaderPtr));
+					rcModContext = J9UTF8Pointer.cast(ScopedROMClassWrapperHelper.RCWMODCONTEXT(srcw, cacheHeaderPtr));
 				}
-				romClass = J9ROMClassPointer.cast(ROMClassWrapperHelper.RCWROMCLASS(rcw));
+				romClass = J9ROMClassPointer.cast(ROMClassWrapperHelper.RCWROMCLASS(rcw, cacheHeaderPtr));
 				romClassName = romClass.className();
 				if (romClassName.isNull()) {
-					CommandUtils.dbgPrint(out, "-- could not read SRP, RC ShcItem %s romClass %s --\n", it.getHexAddress(), romClass.getHexAddress());
+					CommandUtils.dbgPrint(out, "-- could not read romClassName, RC ShcItem %s romClass %s --\n", it.getHexAddress(), romClass.getHexAddress());
 					return;
 				}
 				romClassList.add(romClass);
 				if (searchAddress.isNull() || (romClass.eq(searchAddress))) {
-					cpw = ClasspathWrapperPointer.cast(ROMClassWrapperHelper.RCWCLASSPATH(ROMClassWrapperPointer.cast(ShcItemHelper.ITEMDATA(it))));
+					cpw = ClasspathWrapperPointer.cast(ROMClassWrapperHelper.RCWCLASSPATH(ROMClassWrapperPointer.cast(ShcItemHelper.ITEMDATA(it)), cacheHeaderPtr));
 					if (((statTypes & ROMCLASS_STATS) != 0)
 						|| (showAllStaleFlag && isStale)
 					) {
@@ -789,7 +822,7 @@ public class ShrCCommand extends Command
 				}
 			} else if (itemType.eq(TYPE_COMPILED_METHOD) || itemType.eq(TYPE_INVALIDATED_COMPILED_METHOD)) {
 				cmw = CompiledMethodWrapperPointer.cast(ShcItemHelper.ITEMDATA(it));
-				romMethod = J9ROMMethodPointer.cast(CompiledMethodWrapperHelper.CMWROMMETHOD(cmw));
+				romMethod = J9ROMMethodPointer.cast(CompiledMethodWrapperHelper.CMWROMMETHOD(cmw, cacheHeaderPtr));
 				dataLen = new UDATA(cmw.dataLength());
 				codeLen = new UDATA(cmw.codeLength());
 				aotDataLen += dataLen.longValue();
@@ -827,7 +860,7 @@ public class ShrCCommand extends Command
 				++numAOT;
 			} else if (itemType.eq(TYPE_ATTACHED_DATA)) {
 				adw = AttachedDataWrapperPointer.cast(ShcItemHelper.ITEMDATA(it));
-				romMethod = J9ROMMethodPointer.cast(adw.cacheOffset());
+				romMethod = J9ROMMethodPointer.cast(AttachedDataWrapperHelper.ADWCACHEOFFSET(adw, cacheHeaderPtr));
 				dataLen = new UDATA(adw.dataLength());
 				int adType = adw.type().intValue();
 				boolean jitHint = (J9SHR_ATTACHED_DATA_TYPE_JITHINT == adType);
@@ -885,7 +918,7 @@ public class ShrCCommand extends Command
 			} else if (itemType.eq(TYPE_BYTE_DATA)) {
 				bdw = ByteDataWrapperPointer.cast(ShcItemHelper.ITEMDATA(it));
 				byteMetaLen += ShcItem.SIZEOF + ShcItemHdr.SIZEOF + ByteDataWrapper.SIZEOF;
-				rwOffset = new UDATA(ByteDataWrapperHelper.BDWEXTBLOCK(bdw));
+				rwOffset = new UDATA(ByteDataWrapperHelper.BDWEXTBLOCK(bdw, cacheHeaderPtr));
 				len = new UDATA(ByteDataWrapperHelper.BDWLEN(bdw));
 				byteDataType = new UDATA(ByteDataWrapperHelper.BDWTYPE(bdw));
 				if (byteDataType.longValue() <= J9SHR_DATA_TYPE_MAX) {
@@ -897,13 +930,13 @@ public class ShrCCommand extends Command
 					byteDataLen += len.longValue();
 					if ((statTypes & BYTE_STATS) != 0) {
 						entryFound = true;
-						CommandUtils.dbgPrint(out, "%d: %s %s BYTEDATA !j9x %s,%s", it.jvmID().longValue(), it.getHexAddress(), getType(byteDataType), ByteDataWrapperHelper.BDWDATA(bdw).getHexAddress(), len.getHexValue());
+						CommandUtils.dbgPrint(out, "%d: %s %s BYTEDATA !j9x %s,%s", it.jvmID().longValue(), it.getHexAddress(), getType(byteDataType), ByteDataWrapperHelper.getDataFromByteDataWrapper(bdw, cacheHeaderPtr).getHexAddress(), len.getHexValue());
 					}
 				} else {
 					byteDataRWLen += len.longValue();
 					if ((statTypes & BYTE_STATS) != 0) {
 						entryFound = true;
-						CommandUtils.dbgPrint(out, "%d: %s BYTEDATA RW !j9x %s,%s", it.jvmID().longValue(), it.getHexAddress(), ByteDataWrapperHelper.BDWDATA(bdw).getHexAddress(), len.getHexValue());
+						CommandUtils.dbgPrint(out, "%d: %s BYTEDATA RW !j9x %s,%s", it.jvmID().longValue(), it.getHexAddress(), ByteDataWrapperHelper.getDataFromByteDataWrapper(bdw, cacheHeaderPtr).getHexAddress(), len.getHexValue());
 					}
 				}
 				if (((statTypes & BYTE_STATS) != 0)
@@ -915,7 +948,7 @@ public class ShrCCommand extends Command
 					
 					UDATA inPrivateUse = new UDATA(ByteDataWrapperHelper.BDWINPRIVATEUSE(bdw));
 					UDATA privateOwnerID = new UDATA(ByteDataWrapperHelper.BDWPRIVATEOWNERID(bdw));
-					utf8 = J9UTF8Pointer.cast(ByteDataWrapperHelper.BDWTOKEN(bdw));
+					utf8 = J9UTF8Pointer.cast(ByteDataWrapperHelper.BDWTOKEN(bdw, cacheHeaderPtr));
 					if (utf8.notNull()) {
 						CommandUtils.dbgPrint(out, "\n\tkey: !j9utf8 %s %s\n", utf8.getHexAddress(), J9UTF8Helper.stringValue(utf8));
 					}
@@ -952,6 +985,8 @@ public class ShrCCommand extends Command
 					++numCacheletsNoSegments;
 				}
 				++numCachelets;
+			} else if (itemType.eq(TYPE_PREREQ_CACHE)) { 
+				/* TODO Add support for TYPE_PREREQ_CACHE */
 			} else {
 				continue;
 			}

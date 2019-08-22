@@ -90,7 +90,7 @@ hashFn(void *key, void *userData)
  * @param 	startOffset	Starting offset of the data. If it is -1, then it is reverse order and we start from the end.
  * @param	dataLength	The size of the data array.
  * @param 	i			Number of iterations to find the next/previous offset starting from startOffset/end.
- * @return	UDATA		New offSet.
+ * @return	UDATA		New offset.
  *
  */
 static UDATA dataOffset(UDATA startOffset, UDATA dataLength, UDATA i)

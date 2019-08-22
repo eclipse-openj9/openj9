@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,8 @@ if(OMR_ARCH_X86)
 	target_compile_definitions(j9vm_compiler_defines INTERFACE TR_TARGET_X86 TR_HOST_X86)
 elseif(OMR_ARCH_POWER)
 	target_compile_definitions(j9vm_compiler_defines INTERFACE TR_TARGET_POWER TR_HOST_POWER)
+elseif(OMR_ARCH_S390)
+	target_compile_definitions(j9vm_compiler_defines INTERFACE TR_TARGET_S390 TR_HOST_S390)
 else()
-	message(FATAL_ERROR "Currently only x86 and ppc are supported under CMake")
+	message(FATAL_ERROR "Currently only x86, ppc, and s390 are supported under CMake")
 endif() #TODO OTHER PLATFORMS

@@ -306,7 +306,11 @@ public class DiagnosticProperties {
 		StringWriter buff = new StringWriter(1000);
 		try (PrintWriter buffWriter = new PrintWriter(buff)) {
 			if (Boolean.parseBoolean(getPropertyOrNull(IPC.PROPERTY_DIAGNOSTICS_ERROR))) {
-				buffWriter.printf("Error: %s%n", getString(IPC.PROPERTY_DIAGNOSTICS_ERRORTYPE)); //$NON-NLS-1$
+				String errorType = getPropertyOrNull(IPC.PROPERTY_DIAGNOSTICS_ERRORTYPE);
+				if (null == errorType) {
+					errorType = "No error type available"; //$NON-NLS-1$
+				}
+				buffWriter.printf("Error: %s%n", errorType); //$NON-NLS-1$
 				String msg = getPropertyOrNull(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG);
 				if (null != msg) {
 					buffWriter.println(msg);
@@ -374,9 +378,10 @@ public class DiagnosticProperties {
 		props.put(IPC.PROPERTY_DIAGNOSTICS_ERROR, Boolean.toString(true));
 		props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORTYPE, e.getClass().getName());
 		String msg = e.getMessage();
-		if (null != msg) {
-			props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG, msg);
+		if (null == msg) {
+			msg = String.format("Error at %s", e.getStackTrace()[0].toString()); //$NON-NLS-1$
 		}
+		props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG, msg);
 		return props;
 	}
 
@@ -390,6 +395,7 @@ public class DiagnosticProperties {
 	public static DiagnosticProperties makeStatusProperties(boolean error, String msg) {
 		DiagnosticProperties props = new DiagnosticProperties();
 		props.put(IPC.PROPERTY_DIAGNOSTICS_ERROR, Boolean.toString(error));
+		props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORTYPE, "Error in command"); //$NON-NLS-1$
 		if (null != msg) {
 			props.put(IPC.PROPERTY_DIAGNOSTICS_ERRORMSG, msg);
 		}

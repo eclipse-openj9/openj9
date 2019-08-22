@@ -102,7 +102,8 @@ CX_FLAGS+=\
     -fomit-frame-pointer \
     -fasynchronous-unwind-tables \
     -Wreturn-type \
-    -fno-strict-aliasing
+    -fno-strict-aliasing \
+    -fstack-protector
 
 ifneq ($(JITSERVER_SUPPORT),)
     CXX_FLAGS+=\

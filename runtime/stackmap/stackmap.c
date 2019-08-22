@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -123,8 +123,8 @@ j9stackmap_StackBitsForPC(J9PortLibrary * portLib, UDATA pc, J9ROMClass * romCla
 
 	Trc_Map_j9stackmap_StackBitsForPC_Method(J9_MAX_STACK_FROM_ROM_METHOD(romMethod), pc, 
 												(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)),
-												(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_GET_NAME(romClass, romMethod)), J9UTF8_DATA(J9ROMMETHOD_GET_NAME(romClass, romMethod)),
-												(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod)), J9UTF8_DATA(J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod)));
+												(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_NAME(romMethod)), J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod)),
+												(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(romMethod)), J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)));
 	
 	/* Add 2 for the J9MappingStack size */
 	stackStructSize = J9_MAX_STACK_FROM_ROM_METHOD(romMethod) + 2;

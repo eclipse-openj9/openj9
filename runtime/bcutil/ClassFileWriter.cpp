@@ -1362,7 +1362,7 @@ readdWide:
 		case JBsyncReturn0: /* Fall-through */
 		case JBsyncReturn1: /* Fall-through */
 		case JBsyncReturn2: {
-			J9UTF8 * signature = J9ROMMETHOD_GET_SIGNATURE(_romClass, method);
+			J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(method);
 			U_8 * sigData = J9UTF8_DATA(signature);
 			U_16 sigLength = J9UTF8_LENGTH(signature);
 

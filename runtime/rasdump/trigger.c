@@ -390,7 +390,7 @@ matchesExceptionFilter(J9VMThread *vmThread, J9RASdumpEventData *eventData, UDAT
 		if (throwSite.romClass && throwSite.romMethod) {
 			J9UTF8 *exceptionClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(vmThread, exception)->romClass);
 			J9UTF8 *throwClassName  = J9ROMCLASS_CLASSNAME(throwSite.romClass);
-			J9UTF8 *throwMethodName = J9ROMMETHOD_GET_NAME(throwSite.romClass, throwSite.romMethod);
+			J9UTF8 *throwMethodName = J9ROMMETHOD_NAME(throwSite.romMethod);
 			
 			if (throwClassName && throwMethodName) {
 				if (stackOffsetFilter) {

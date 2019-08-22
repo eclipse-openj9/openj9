@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -169,7 +169,7 @@ debugMapAllLocals(DebugLocalMap * mapData)
 	/* Start with the arguments configured from the signature */
 	/* A side effect is zeroing out the result array */
 	argBitsFromSignature(
-			J9UTF8_DATA(J9ROMMETHOD_GET_SIGNATURE(mapData->romClass, romMethod)),
+			J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)),
 			mapData->resultArrayBase,
 			(remainingLocals + 31) >> 5,
 			(romMethod->modifiers & J9AccStatic) != 0);
@@ -552,8 +552,8 @@ j9localmap_DebugLocalBitsForPC(J9PortLibrary * portLib, J9ROMClass * romClass, J
 
 	Trc_Map_j9localmap_DebugLocalBitsForPC_Method(J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod) + J9_ARG_COUNT_FROM_ROM_METHOD(romMethod), pc, 
 													(UDATA) J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)),
-													(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_GET_NAME(romClass, romMethod)), J9UTF8_DATA(J9ROMMETHOD_GET_NAME(romClass, romMethod)),
-													(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod)), J9UTF8_DATA(J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod)));
+													(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_NAME(romMethod)), J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod)),
+													(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(romMethod)), J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)));
 	
 	memset(&mapData, 0, sizeof(DebugLocalMap));
 	mapData.romMethod = romMethod;

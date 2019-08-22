@@ -68,7 +68,7 @@ static UDATA
 isConstructor(J9Method *ramMethod)
 {
 	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod);
-	return (0 == (romMethod->modifiers & J9AccStatic)) && ('<' == J9UTF8_DATA(J9ROMMETHOD_GET_NAME(methodClass->romClass, romMethod))[0]);
+	return (0 == (romMethod->modifiers & J9AccStatic)) && ('<' == J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod))[0]);
 }
 
 /*
@@ -310,7 +310,6 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 		char buffer[256];
 		J9MethodParameter * parameters = NULL;
 		BOOLEAN parameterListOkay = TRUE;
-		U_8 methodParametersLimit = computeArgCount(romMethod);
 		U_32 extMods = getExtendedModifiersDataFromROMMethod(romMethod);
 
 		if (NULL == parametersData) {
@@ -331,12 +330,12 @@ getMethodParametersAsArray(JNIEnv *env, jobject jlrExecutable)
 			goto finished;
 		}
 		Trc_JCL_getMethodParametersAsArray_Event5(env, parametersArray);
-		if ((NULL != parametersData) && (methodParametersLimit != parametersData->parameterCount)) {
+		if ((NULL != parametersData) && (numberOfParameters != parametersData->parameterCount)) {
 			/* PR 97987 force an error if mismatch between parameters attribute and actual argument count */
 			Trc_JCL_getMethodParametersAsArray_WrongParameterCount(env, parametersData->parameterCount);
 			parameterListOkay = FALSE;
 		}
-		for (index = 0; index < methodParametersLimit; index++) {
+		for (index = 0; index < numberOfParameters; index++) {
 		
 			U_16 flags = (NULL != parameters) ? parameters[index].flags : 0;
 			jstring nameStr = NULL;
@@ -537,7 +536,7 @@ static j9object_t
 parameterTypesForMethod(struct J9VMThread *vmThread, struct J9Method *ramMethod, struct J9Class **returnType)
 {
 	j9object_t params = NULL;
-	J9UTF8 *sigUTF = J9ROMMETHOD_GET_SIGNATURE(methodClass->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod));
+	J9UTF8 *sigUTF = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(ramMethod));
 	J9ClassLoader* classLoader = J9_CLASS_FROM_METHOD(ramMethod)->classLoader;
 	U_8 *sigData = J9UTF8_DATA(sigUTF);
 	U_32 argCount = getArgCountFromSignature(sigUTF);
@@ -673,7 +672,7 @@ fillInReflectMethod(j9object_t methodObject, struct J9Class *declaringClass, jme
 	J9VMJAVALANGREFLECTMETHOD_SET_PARAMETERTYPES(vmThread, methodObject, parameterTypes);
 	J9VMJAVALANGREFLECTMETHOD_SET_RETURNTYPE(vmThread, methodObject, J9VM_J9CLASS_TO_HEAPCLASS(returnType));
 
-	nameUTF = J9ROMMETHOD_GET_NAME(methodClass->romClass, romMethod);
+	nameUTF = J9ROMMETHOD_NAME(romMethod);
 	nameString = gcFunctions->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(nameUTF), (U_32) J9UTF8_LENGTH(nameUTF), J9_STR_INTERN);
 	if (NULL == nameString) {
 		DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* methodObject */

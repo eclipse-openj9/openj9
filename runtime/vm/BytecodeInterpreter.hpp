@@ -1028,9 +1028,15 @@ obj:;
 	 * @returns the new object, or NULL if allocation failed
 	 */
 	VMINLINE j9object_t
-	allocateObject(REGISTER_ARGS_LIST, J9Class *clazz, bool initializeSlots = true, bool memoryBarrier = true)
+	allocateObject(REGISTER_ARGS_LIST, J9Class *clazz, bool initializeSlots = true, bool memoryBarrier = true, bool skipUnflattenedFlattenableCheck = false)
 	{
-		j9object_t instance = _objectAllocate.inlineAllocateObject(_currentThread, clazz, initializeSlots, memoryBarrier);
+		j9object_t instance = NULL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (skipUnflattenedFlattenableCheck || J9_ARE_NO_BITS_SET(clazz->classFlags, J9ClassContainsUnflattenedFlattenables))
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+		{
+			instance = _objectAllocate.inlineAllocateObject(_currentThread, clazz, initializeSlots, memoryBarrier);
+		}
 		if (NULL == instance) {
 			updateVMStruct(REGISTER_ARGS);
 			instance = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, clazz, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
@@ -6376,7 +6382,7 @@ resolve:
 				}
 				/* Final field - ensure the running method is allowed to store */
 				if (J9_UNEXPECTED(!J9ROMMETHOD_ALLOW_FINAL_FIELD_WRITES(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), J9AccStatic))) {
-					if (J9_UNEXPECTED(!J9CLASS_IS_EXEMPT_FROM_VALIDATION(ramConstantPool->ramClass))) {
+					if (J9_UNEXPECTED(VM_VMHelpers::ramClassChecksFinalStores(ramConstantPool->ramClass))) {
 						/* Store not allowed - run the resolve code to throw the exception */
 						goto resolve;
 					}
@@ -6586,7 +6592,7 @@ resolve:
 				}
 				/* Final field - ensure the running method is allowed to store */
 				if (J9_UNEXPECTED(!J9ROMMETHOD_ALLOW_FINAL_FIELD_WRITES(J9_ROM_METHOD_FROM_RAM_METHOD(_literals), 0))) {
-					if (J9_UNEXPECTED(!J9CLASS_IS_EXEMPT_FROM_VALIDATION(ramConstantPool->ramClass))) {
+					if (J9_UNEXPECTED(VM_VMHelpers::ramClassChecksFinalStores(ramConstantPool->ramClass))) {
 						/* Store not allowed - run the resolve code to throw the exception */
 						goto resolve;
 					}
@@ -7406,7 +7412,13 @@ retry:
 		J9Class* volatile resolvedClass = ramCPEntry->value;
 		if ((NULL != resolvedClass) && J9ROMCLASS_ALLOCATES_VIA_NEW(resolvedClass->romClass)) {
 			if (!VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
-				j9object_t instance = _objectAllocate.inlineAllocateObject(_currentThread, resolvedClass);
+				j9object_t instance = NULL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				if (J9_ARE_NO_BITS_SET(resolvedClass->classFlags, J9ClassContainsUnflattenedFlattenables))
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+				{
+					instance = _objectAllocate.inlineAllocateObject(_currentThread, resolvedClass);
+				}
 				if (NULL == instance) {
 					updateVMStruct(REGISTER_ARGS);
 					instance = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, resolvedClass, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
@@ -8326,7 +8338,10 @@ retry:
 		J9Class * volatile resolvedClass = ramCPEntry->value;
 
 		if ((NULL != resolvedClass) && J9_IS_J9CLASS_VALUETYPE(resolvedClass) && !VM_VMHelpers::classRequiresInitialization(_currentThread, resolvedClass)) {
-			j9object_t instance = _objectAllocate.inlineAllocateObject(_currentThread, resolvedClass);
+			j9object_t instance = NULL;
+			if (J9_ARE_NO_BITS_SET(resolvedClass->classFlags, J9ClassContainsUnflattenedFlattenables)) {
+				instance = _objectAllocate.inlineAllocateObject(_currentThread, resolvedClass);
+			}
 			if (NULL == instance) {
 				updateVMStruct(REGISTER_ARGS);
 				instance = _vm->memoryManagerFunctions->J9AllocateObject(_currentThread, resolvedClass, J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE);
