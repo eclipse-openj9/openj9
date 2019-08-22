@@ -182,7 +182,54 @@ J9::ARM64::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg
 TR::Register *
 J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR_UNIMPLEMENTED();
+   TR::Compilation *comp = cg->comp();
+
+   TR::Register *destinationRegister = cg->evaluate(node->getChild(2));
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Register *sourceRegister;
+   bool killSource = false;
+   // assuming usingCompressedPointers is always false for now
+   bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && TR::Compiler->target.isSMP());
+
+   if (node->getSymbolReference()->getSymbol()->isShadow() && node->getSymbolReference()->getSymbol()->isOrdered() && TR::Compiler->target.isSMP())
+      {
+      needSync = true;
+      }
+
+   if (secondChild->getReferenceCount() > 1 && secondChild->getRegister() != NULL)
+      {
+      if (!secondChild->getRegister()->containsInternalPointer())
+         sourceRegister = cg->allocateCollectedReferenceRegister();
+      else
+         {
+         sourceRegister = cg->allocateRegister();
+         sourceRegister->setPinningArrayPointer(secondChild->getRegister()->getPinningArrayPointer());
+         sourceRegister->setContainsInternalPointer();
+         }
+      generateMovInstruction(cg, node, sourceRegister, secondChild->getRegister());
+      killSource = true;
+      }
+   else
+      {
+      sourceRegister = cg->evaluate(secondChild);
+      }
+
+   TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, TR::Compiler->om.sizeofReferenceAddress(), cg);
+
+   if (needSync)
+      generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xE);
+
+   generateMemSrc1Instruction(cg,TR::InstOpCode::strimmx, node, tempMR, sourceRegister);
+
+   wrtbarEvaluator(node, sourceRegister, destinationRegister, secondChild->isNonNull(), true, cg);
+
+   if (killSource)
+      cg->stopUsingRegister(sourceRegister);
+
+   cg->decReferenceCount(node->getSecondChild());
+   cg->decReferenceCount(node->getChild(2));
+   tempMR->decNodeReferenceCounts(cg);
+
    return NULL;
    }
 
