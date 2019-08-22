@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2014, 2018 IBM Corp. and others
+ * Copyright (c) 2014, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,7 +81,7 @@ public class FoldArgumentsTest {
     private final static double constDouble4 = (double) 7.33110759312901e+307;
     private final static boolean constBoolMax = true;
     private final static boolean constBoolMin = false;
-     
+
  	/* Test foldArguments: Combiner's data-type -> byte */
 	@Test(groups = { "level.extended" })
 	public void test_foldArguments_Byte() throws WrongMethodTypeException, Throwable {
@@ -162,6 +162,14 @@ public class FoldArgumentsTest {
 		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerByteVoid", combinerMT);
 		foldMH = MethodHandles.foldArguments(mh1, mh2);
 		AssertJUnit.assertEquals(constByte1, (byte) foldMH.invokeExact(constByte1, constByte2, constByte3, constByte4, Byte.MIN_VALUE));
+
+		/* no paramters case */
+		nextMT = methodType(byte.class);
+		combinerMT = methodType(void.class);
+		mh1 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "minByteNoArgs", nextMT);
+		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerVoidNoArgs", combinerMT);
+		foldMH = MethodHandles.foldArguments(mh1, mh2);
+		AssertJUnit.assertEquals(Byte.MIN_VALUE, (byte) foldMH.invokeExact());
 	}
 	
 	public static byte combinerByte () {
@@ -200,6 +208,10 @@ public class FoldArgumentsTest {
 			}
 		}
 		return largest;
+	}
+
+	public static byte minByteNoArgs() {
+		return Byte.MIN_VALUE;
 	}
 	
  	/* Test foldArguments: Combiner's data-type -> short */
@@ -282,6 +294,14 @@ public class FoldArgumentsTest {
 		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerShortVoid", combinerMT);
 		foldMH = MethodHandles.foldArguments(mh1, mh2);
 		AssertJUnit.assertEquals(constShort1, (short) foldMH.invokeExact(constShort1, constShort2, constShort3, constShort4, Short.MIN_VALUE));
+
+		/* no paramters case */
+		nextMT = methodType(short.class);
+		combinerMT = methodType(void.class);
+		mh1 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "minShortNoArgs", nextMT);
+		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerVoidNoArgs", combinerMT);
+		foldMH = MethodHandles.foldArguments(mh1, mh2);
+		AssertJUnit.assertEquals(Short.MIN_VALUE, (short) foldMH.invokeExact());
 	}
 	
 	public static short combinerShort () {
@@ -321,7 +341,11 @@ public class FoldArgumentsTest {
 		}
 		return largest;
 	}
-	
+
+	public static short minShortNoArgs() {
+		return Short.MIN_VALUE;
+	}
+
  	/* Test foldArguments: Combiner's data-type -> char */
 	@Test(groups = { "level.extended" })
 	public void test_foldArguments_Character() throws WrongMethodTypeException, Throwable {
@@ -402,6 +426,14 @@ public class FoldArgumentsTest {
 		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerCharacterVoid", combinerMT);
 		foldMH = MethodHandles.foldArguments(mh1, mh2);
 		AssertJUnit.assertEquals(constCharacter1, (char) foldMH.invokeExact(constCharacter1, constCharacter2, constCharacter3, constCharacter4, Character.MIN_VALUE));
+
+		/* no paramters case */
+		nextMT = methodType(char.class);
+		combinerMT = methodType(void.class);
+		mh1 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "minCharNoArgs", nextMT);
+		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerVoidNoArgs", combinerMT);
+		foldMH = MethodHandles.foldArguments(mh1, mh2);
+		AssertJUnit.assertEquals(Character.MIN_VALUE, (char) foldMH.invokeExact());
 	}
 	
 	public static char combinerCharacter () {
@@ -441,7 +473,11 @@ public class FoldArgumentsTest {
 		}
 		return largest;
 	}
-	
+
+	public static char minCharNoArgs() {
+		return Character.MIN_VALUE;
+	}
+
  	/* Test foldArguments: Combiner's data-type -> int */
 	@Test(groups = { "level.extended" })
 	public void test_foldArguments_Integer() throws WrongMethodTypeException, Throwable {
@@ -522,6 +558,14 @@ public class FoldArgumentsTest {
 		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerIntegerVoid", combinerMT);
 		foldMH = MethodHandles.foldArguments(mh1, mh2);
 		AssertJUnit.assertEquals(constInteger1, (int) foldMH.invokeExact(constInteger1, constInteger2, constInteger3, constInteger4, Integer.MIN_VALUE));
+
+		/* no paramters case */
+		nextMT = methodType(int.class);
+		combinerMT = methodType(void.class);
+		mh1 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "minIntNoArgs", nextMT);
+		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerVoidNoArgs", combinerMT);
+		foldMH = MethodHandles.foldArguments(mh1, mh2);
+		AssertJUnit.assertEquals(Integer.MIN_VALUE, (int) foldMH.invokeExact());
 	}
 	
 	public static int combinerInteger () {
@@ -561,7 +605,11 @@ public class FoldArgumentsTest {
 		}
 		return largest;
 	}
-	
+
+	public static int minIntNoArgs() {
+		return Integer.MIN_VALUE;
+	}
+
  	/* Test foldArguments: Combiner's data-type -> long */
 	@Test(groups = { "level.extended" })
 	public void test_foldArguments_Long() throws WrongMethodTypeException, Throwable {
@@ -642,6 +690,14 @@ public class FoldArgumentsTest {
 		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerLongVoid", combinerMT);
 		foldMH = MethodHandles.foldArguments(mh1, mh2);
 		AssertJUnit.assertEquals(constLong1, (long) foldMH.invokeExact(constLong1, constLong2, constLong3, constLong4, Long.MIN_VALUE));
+
+		/* no paramters case */
+		nextMT = methodType(long.class);
+		combinerMT = methodType(void.class);
+		mh1 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "minLongNoArgs", nextMT);
+		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerVoidNoArgs", combinerMT);
+		foldMH = MethodHandles.foldArguments(mh1, mh2);
+		AssertJUnit.assertEquals(Long.MIN_VALUE, (long) foldMH.invokeExact());
 	}
 	
 	public static long combinerLong () {
@@ -680,6 +736,10 @@ public class FoldArgumentsTest {
 			}
 		}
 		return largest;
+	}
+
+	public static long minLongNoArgs() {
+		return Long.MIN_VALUE;
 	}
 	
  	/* Test foldArguments: Combiner's data-type -> float */
@@ -762,6 +822,14 @@ public class FoldArgumentsTest {
 		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerFloatVoid", combinerMT);
 		foldMH = MethodHandles.foldArguments(mh1, mh2);
 		AssertJUnit.assertEquals(constFloat1, (float) foldMH.invokeExact(constFloat1, constFloat2, constFloat3, constFloat4, Float.MIN_VALUE));
+
+		/* no paramters case */
+		nextMT = methodType(float.class);
+		combinerMT = methodType(void.class);
+		mh1 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "minFloatNoArgs", nextMT);
+		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerVoidNoArgs", combinerMT);
+		foldMH = MethodHandles.foldArguments(mh1, mh2);
+		AssertJUnit.assertEquals(Float.MIN_VALUE, (float) foldMH.invokeExact());
 	}
 	
 	public static float combinerFloat () {
@@ -800,6 +868,10 @@ public class FoldArgumentsTest {
 			}
 		}
 		return largest;
+	}
+
+	public static float minFloatNoArgs() {
+		return Float.MIN_VALUE;
 	}
 	
  	/* Test foldArguments: Combiner's data-type -> double */
@@ -882,6 +954,14 @@ public class FoldArgumentsTest {
 		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerDoubleVoid", combinerMT);
 		foldMH = MethodHandles.foldArguments(mh1, mh2);
 		AssertJUnit.assertEquals(constDouble1, (double) foldMH.invokeExact(constDouble1, constDouble2, constDouble3, constDouble4, Double.MIN_VALUE));
+
+		/* no paramters case */
+		nextMT = methodType(double.class);
+		combinerMT = methodType(void.class);
+		mh1 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "minDoubleNoArgs", nextMT);
+		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerVoidNoArgs", combinerMT);
+		foldMH = MethodHandles.foldArguments(mh1, mh2);
+		AssertJUnit.assertEquals(Double.MIN_VALUE, (double) foldMH.invokeExact());
 	}
 	
 	public static double combinerDouble () {
@@ -920,6 +1000,10 @@ public class FoldArgumentsTest {
 			}
 		}
 		return largest;
+	}
+
+	public static double minDoubleNoArgs() {
+		return Double.MIN_VALUE;
 	}
 	
  	/* Test foldArguments: Combiner's data-type -> Double (Object) */
@@ -1009,6 +1093,14 @@ public class FoldArgumentsTest {
 		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerDoubleObjectVoid", combinerMT);
 		foldMH = MethodHandles.foldArguments(mh1, mh2);
 		AssertJUnit.assertEquals(d1, (Double) foldMH.invokeExact(d1, d2, d3, d4, dMin));
+
+		/* no paramters case */
+		nextMT = methodType(Double.class);
+		combinerMT = methodType(void.class);
+		mh1 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "minDoubleObjNoArgs", nextMT);
+		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerVoidNoArgs", combinerMT);
+		foldMH = MethodHandles.foldArguments(mh1, mh2);
+		AssertJUnit.assertEquals(dMin, (Double) foldMH.invokeExact());
 	}
 	
 	public static Double combinerDoubleObject () {
@@ -1049,7 +1141,12 @@ public class FoldArgumentsTest {
 		}
 		return largest;
 	}
-	
+
+	public static Double minDoubleObjNoArgs() {
+		Double ret = new Double (Double.MIN_VALUE);
+		return ret;
+	}
+
 	/* Test foldArguments: Combiner's data-type -> boolean */
 	@Test(groups = { "level.extended" })
 	public void test_foldArguments_Boolean() throws WrongMethodTypeException, Throwable {
@@ -1077,6 +1174,14 @@ public class FoldArgumentsTest {
 		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerBooleanVoid", combinerMT);
 		foldMH = MethodHandles.foldArguments(mh1, mh2);
 		AssertJUnit.assertEquals(constBoolMin, (boolean) foldMH.invokeExact(constBoolMin, constBoolMax, constBoolMin));
+
+		/* no paramters case */
+		nextMT = methodType(boolean.class);
+		combinerMT = methodType(void.class);
+		mh1 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "minBooleanNoArgs", nextMT);
+		mh2 = MethodHandles.publicLookup().findStatic(FoldArgumentsTest.class, "combinerVoidNoArgs", combinerMT);
+		foldMH = MethodHandles.foldArguments(mh1, mh2);
+		AssertJUnit.assertEquals(constBoolMin, (boolean) foldMH.invokeExact());
 	}
 	
 	public static boolean combinerBoolean () {
@@ -1106,4 +1211,11 @@ public class FoldArgumentsTest {
 		}
 		return last;
 	}
+
+	public static boolean minBooleanNoArgs() {
+		return constBoolMin;
+	}
+
+	/* if target MH takes no args, then return type of combiner needs to be void */
+	public static void combinerVoidNoArgs() {}
 }
