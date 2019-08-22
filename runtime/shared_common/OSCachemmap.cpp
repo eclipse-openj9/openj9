@@ -74,7 +74,7 @@ SH_OSCachemmap::SH_OSCachemmap(J9PortLibrary* portLibrary, J9JavaVM* vm, const c
 		IDATA numLocks, UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCacheInitializer* initializer)
 {
 	Trc_SHR_OSC_Mmap_Constructor_Entry(cacheName, piconfig->sharedClassCacheSize, numLocks, createFlag, verboseFlags);
-	initialize(portLibrary, NULL, OSCACHE_CURRENT_CACHE_GEN);
+	initialize(portLibrary, NULL, OSCACHE_CURRENT_CACHE_GEN, OSCACHE_CURRENT_LAYER_LAYER);
 	startup(vm, cacheDirName, J9SH_DIRPERM_ABSENT, cacheName, piconfig, numLocks, createFlag, verboseFlags, runtimeFlags, openMode, 0, versionData, initializer, SHR_STARTUP_REASON_NORMAL);
 	Trc_SHR_OSC_Mmap_Constructor_Exit();
 }
@@ -87,12 +87,13 @@ SH_OSCachemmap::SH_OSCachemmap(J9PortLibrary* portLibrary, J9JavaVM* vm, const c
  * @param [in]  portLibraryArg The Port library
  * @param [in]  memForConstructorArg Pointer to the memory to build the OSCachemmap into
  * @param [in]  generation The generation of this cache
+ * @param [in]  layer The layer number of this cache
  */
 void
-SH_OSCachemmap::initialize(J9PortLibrary* portLibrary, char* memForConstructor, UDATA generation)
+SH_OSCachemmap::initialize(J9PortLibrary* portLibrary, char* memForConstructor, UDATA generation, I_8 layer)
 {
 	Trc_SHR_OSC_Mmap_initialize_Entry(portLibrary, memForConstructor);
-	commonInit(portLibrary, generation);
+	commonInit(portLibrary, generation, layer);
 	_fileHandle = -1;
 	_actualFileLength = 0;
 	_finalised = 0;
@@ -1427,7 +1428,7 @@ SH_OSCachemmap::getCacheStats(J9JavaVM* vm, const char* cacheDirName, const char
 		reasonForStartup = SHR_STARTUP_REASON_EXPIRE;
 	}
 
-	cache = (SH_OSCachemmap *) SH_OSCache::newInstance(PORTLIB, &cacheStruct, cacheInfo->name, cacheInfo->generation, &versionData);
+	cache = (SH_OSCachemmap *) SH_OSCache::newInstance(PORTLIB, &cacheStruct, cacheInfo->name, cacheInfo->generation, &versionData, getLayerFromName(cacheNameWithVGen));
 	
 	/* We try to open the cache read/write */
 	if (!cache->startup(vm, cacheDirName, vm->sharedCacheAPI->cacheDirPerm, cacheInfo->name, &piconfig, SH_CompositeCacheImpl::getNumRequiredOSLocks(), J9SH_OSCACHE_OPEXIST_STATS, 0, 0/*runtime flags*/, 0, 0, &versionData, NULL, reasonForStartup)) {

@@ -1214,13 +1214,18 @@ typedef struct J9SharedCacheHeader {
 #define J9SHAREDCACHEHEADER_SHAREDSTRINGTAIL(base) SRP_GET((base)->sharedStringTail, struct J9SharedInternSRPHashTableEntry*)
 #define J9SHAREDCACHEHEADER_UNUSED01(base) SRP_GET((base)->unused01, void*)
 
+/* Maximum length of the cache name (including NULL char) specified by user in the command line */
+#define USER_SPECIFIED_CACHE_NAME_MAXLEN 65
+
 typedef struct J9SharedClassCacheDescriptor {
 	struct J9SharedCacheHeader* cacheStartAddress;
 	void* romclassStartAddress;
 	void* metadataStartAddress;
+	struct J9MemorySegment* metadataMemorySegment;
 	UDATA cacheSizeBytes;
 	void* deployedROMClassStartAddress;
 	struct J9SharedClassCacheDescriptor* next;
+	struct J9SharedClassCacheDescriptor* previous;
 } J9SharedClassCacheDescriptor;
 
 typedef struct J9SharedCacheAPI {
@@ -1246,6 +1251,7 @@ typedef struct J9SharedCacheAPI {
 	I_32 maxJIT;
 	U_8 sharedCacheEnabled;
 	U_8 inContainer; /* It is TRUE only when xShareClassesPresent is FALSE and J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(vm) is TRUE and the JVM is running in container */
+	I_8 layer;
 } J9SharedCacheAPI;
 
 typedef struct J9SharedClassConfig {
@@ -1303,6 +1309,9 @@ typedef struct J9SharedClassConfig {
 	I_32 minJIT;
 	I_32 maxJIT;
 	struct J9SharedLocalStartupHints localStartupHints;
+	const char* cacheName;
+	I_8 layer;
+	U_64 readOnlyCacheRuntimeFlags;
 } J9SharedClassConfig;
 
 typedef struct J9SharedClassPreinitConfig {

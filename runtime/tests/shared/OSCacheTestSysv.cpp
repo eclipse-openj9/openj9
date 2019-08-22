@@ -90,7 +90,7 @@ SH_OSCacheTestSysv::testBasic(J9PortLibrary* portLibrary, J9JavaVM *vm)
 		goto cleanup;
 	}
 	/* Currently explicitly requests non-persistent cache */
-	SH_OSCache::newInstance(PORTLIB, (SH_OSCache*)osc, CACHE_NAME, SH_OSCache::getCurrentCacheGen(), &versionData);
+	SH_OSCache::newInstance(PORTLIB, (SH_OSCache*)osc, CACHE_NAME, SH_OSCache::getCurrentCacheGen(), &versionData, 0);
 	if (!osc->startup(vm, cacheDir, J9SH_DIRPERM_ABSENT, CACHE_NAME, piconfig, 1, J9SH_OSCACHE_CREATE, 0, 0, 0, 0, &versionData, initObj, SHR_STARTUP_REASON_NORMAL)) {
 		j9tty_printf(PORTLIB, "testBasic: cannot create new region");
 		rc = FAIL;

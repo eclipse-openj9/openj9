@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -168,7 +168,7 @@ SH_ByteDataManagerImpl::storeNew(J9VMThread* currentThread, const ShcItem* itemI
 
 	if (itemInCache->dataType == TYPE_BYTE_DATA) {
 		ByteDataWrapper *bdw = (ByteDataWrapper*)ITEMDATA(itemInCache);
-		const J9UTF8* key = (const J9UTF8*)BDWTOKEN(bdw);
+		const J9UTF8* key = (const J9UTF8*)_cache->getAddressFromJ9ShrOffset(&(bdw->tokenOffset));
 		UDATA type = BDWTYPE(bdw);
 
 		if (type <= J9SHR_DATA_TYPE_MAX) {
@@ -283,7 +283,7 @@ SH_ByteDataManagerImpl::setDescriptorFields(const ByteDataWrapper* wrapper, J9Sh
 {
 	Trc_SHR_BDMI_setDescriptorFields_Event(wrapper, descriptor);
 
-	descriptor->address = (U_8*)BDWDATA(wrapper);
+	descriptor->address = (U_8*)_cache->getDataFromByteDataWrapper(wrapper);
 	descriptor->length = wrapper->dataLength;
 	descriptor->type = (UDATA)wrapper->dataType;
 	descriptor->flags = 0;

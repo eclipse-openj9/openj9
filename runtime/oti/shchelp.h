@@ -71,8 +71,13 @@ extern "C" {
 #define J9SH_SNAPSHOT_PREFIX_CHAR 'S'
 #define J9SH_PREFIX_SEPARATOR_CHAR '_'
 
+#define J9SH_GENERATION_37		37
 #define J9SH_GENERATION_29		29
 #define J9SH_GENERATION_07		7
+
+#define J9SH_LAYER_NUM_MAX_VALUE 99
+#define J9SH_LAYER_NUM_UNSET (-1)
+#define J9SH_LAYER_NUM_CHAR 'L'
 
 #define J9SH_VERSION_STRING_G07ANDLOWER_SPEC "C%dD%dA%d"
 #define J9SH_VERSION_STRING_G07TO29_SPEC "C%dM%dA%d"
@@ -120,6 +125,8 @@ uintptr_t
 isCacheFileName(J9PortLibrary* portlib, const char* nameToTest, uintptr_t expectPersistent, const char* optionalExtraID);
 
 intptr_t getModLevelFromName(const char* cacheNameWithVGen);
+
+I_8 getLayerFromName(const char* cacheNameWithVGen);
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -431,6 +431,7 @@ CorruptCacheTest::openTestCache(J9JavaVM *vm, I_32 cacheType, I_32 cacheSize, U_
 
 	sharedClassConfig->cacheDescriptorList = (J9SharedClassCacheDescriptor*)((UDATA)sharedClassConfig + sizeof(J9SharedClassConfig));
 	sharedClassConfig->cacheDescriptorList->next = sharedClassConfig->cacheDescriptorList;
+	sharedClassConfig->cacheDescriptorList->previous = sharedClassConfig->cacheDescriptorList;
 	sharedClassConfig->softMaxBytes = -1;
 	sharedClassConfig->minAOT = -1;
 	sharedClassConfig->maxAOT = -1;
@@ -825,7 +826,7 @@ zeroOutCache(J9JavaVM *vm, I_32 cacheType)
 	}
 	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
 	versionData.cacheType = cacheType;
-	SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, cacheName, J9SH_MAXPATH, BROKEN_TEST_CACHE, &versionData, OSCACHE_CURRENT_CACHE_GEN, true);
+	SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, cacheName, J9SH_MAXPATH, BROKEN_TEST_CACHE, &versionData, OSCACHE_CURRENT_CACHE_GEN, true, 0);
 	j9str_printf(PORTLIB, fullPath, J9SH_MAXPATH, "%s%s", baseDir, cacheName);
 
 	fd = j9file_open(fullPath, EsOpenRead | EsOpenWrite, 0644);
@@ -891,7 +892,7 @@ truncateCache(J9JavaVM *vm, I_32 cacheType)
 	}
 	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
 	versionData.cacheType = cacheType;
-	SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, cacheName, J9SH_MAXPATH, BROKEN_TEST_CACHE, &versionData, OSCACHE_CURRENT_CACHE_GEN, true);
+	SH_OSCache::getCacheVersionAndGen(PORTLIB, vm, cacheName, J9SH_MAXPATH, BROKEN_TEST_CACHE, &versionData, OSCACHE_CURRENT_CACHE_GEN, true, 0);
 	j9str_printf(PORTLIB, fullPath, J9SH_MAXPATH, "%s%s", baseDir, cacheName);
 
 	fd = j9file_open(fullPath, EsOpenRead | EsOpenWrite, 0644);

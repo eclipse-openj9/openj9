@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,24 +23,48 @@ package com.ibm.j9ddr.vm29.pointer.helper;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ShrOffsetPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.ScopedROMClassWrapperPointer;
+import com.ibm.j9ddr.vm29.pointer.I32Pointer;
+import com.ibm.j9ddr.vm29.pointer.PointerPointer;
+import com.ibm.j9ddr.vm29.types.I32;
+import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class ScopedROMClassWrapperHelper {
 //	#define RCWMODCONTEXT(srcw) (J9SHR_READSRP(srcw->modContextOffset) ? (((U_8*)(srcw)) + J9SHR_READSRP((srcw)->modContextOffset)) : 0)
-	public static U8Pointer RCWMODCONTEXT(ScopedROMClassWrapperPointer ptr) throws CorruptDataException {
-		if(!ptr.modContextOffset().eq(0)) {
-			return U8Pointer.cast(ptr).add(ptr.modContextOffset());
+	public static U8Pointer RCWMODCONTEXT(ScopedROMClassWrapperPointer ptr, U8Pointer[] cacheHeader) throws CorruptDataException {
+		PointerPointer modContextOffset = ptr.modContextOffsetEA();
+		if (null == cacheHeader) {
+			I32 modContextOffsetI32 = I32Pointer.cast(modContextOffset.getAddress()).at(0);
+			if (modContextOffsetI32.eq(0)) {
+				return U8Pointer.NULL;
+			} else {
+				return U8Pointer.cast(ptr).add(modContextOffsetI32);
+			}
 		} else {
-			return U8Pointer.NULL;
+			UDATA offset = J9ShrOffsetPointer.cast(modContextOffset).offset();
+			if (offset.eq(0)) {
+				return U8Pointer.NULL;
+			}
+			return cacheHeader[0].add(offset);
 		}
 	}
-	
-//	#define RCWPARTITION(srcw) (J9SHR_READSRP(srcw->partitionOffset) ? (((U_8*)(srcw)) + J9SHR_READSRP((srcw)->partitionOffset)) : 0)	
-	public static U8Pointer RCWPARTITION(ScopedROMClassWrapperPointer ptr) throws CorruptDataException {
-		if(!ptr.partitionOffset().eq(0)) {
-			return U8Pointer.cast(ptr).add(ptr.partitionOffset());
+
+	public static U8Pointer RCWPARTITION(ScopedROMClassWrapperPointer ptr, U8Pointer[] cacheHeader) throws CorruptDataException {
+		PointerPointer partitionOffset = ptr.partitionOffsetEA();
+		if (null == cacheHeader) {
+			I32 partitionOffsetI32 = I32Pointer.cast(partitionOffset.getAddress()).at(0);
+			if (partitionOffsetI32.eq(0)) {
+				return U8Pointer.NULL;
+			} else {
+				return U8Pointer.cast(ptr).add(partitionOffsetI32);
+			}
 		} else {
-			return U8Pointer.NULL;
+			UDATA offset = J9ShrOffsetPointer.cast(partitionOffset).offset();
+			if (offset.eq(0)) {
+				return U8Pointer.NULL;
+			}
+			return cacheHeader[0].add(offset);
 		}
 	}
 }

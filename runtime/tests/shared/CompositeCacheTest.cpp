@@ -90,7 +90,7 @@ CompositeCacheTest::createTest(J9JavaVM* vm, IDATA testCacheSize, SH_CompositeCa
 	/* Test normal scenario */
 	memset((void*)memForCC, 0, totalSize);
 	/* Currently requests non-persistent cache */
-	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myRoot", false, false);
+	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myRoot", false, false, 0);
 	cache = (char*)((char*)actualCC + requiredBytes);
 	if (actualCC->startup(vm->mainThread, piconfig, cache, runtimeFlags1, 1, "myRoot", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
 		return 2;
@@ -107,7 +107,7 @@ CompositeCacheTest::createTest(J9JavaVM* vm, IDATA testCacheSize, SH_CompositeCa
 	piconfig->sharedClassCacheSize = 10;
 	memset((void*)memForCC, 0, totalSize);
 	/* Currently requests non-persistent cache */
-	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myRoot", false, false);
+	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myRoot", false, false, 0);
 	if (actualCC->startup(vm->mainThread, piconfig, cache, runtimeFlags1, 1, "myRoot", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
 		return 5;
 	}
@@ -127,7 +127,7 @@ CompositeCacheTest::createTest(J9JavaVM* vm, IDATA testCacheSize, SH_CompositeCa
 	/* Test normal scenario */
 	memset((void*)memForCC, 0, totalSize);
 	/* Currently requests non-persistent cache */
-	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myCache1", false, false);
+	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myCache1", false, false, 0);
 	cache = (char*)((char*)actualCC + requiredBytes);
 	if (actualCC->startup(vm->mainThread, piconfig, cache, runtimeFlags1, 1, "myCache1", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
 		return 8;
@@ -139,7 +139,7 @@ CompositeCacheTest::createTest(J9JavaVM* vm, IDATA testCacheSize, SH_CompositeCa
 		return 9;
 	}
 	/* Currently requests non-persistent cache */
-	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myCache1a", false, false);
+	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myCache1a", false, false, 0);
 	if (actualCC->startup(vm->mainThread, piconfig, cache, runtimeFlags0, 1, "myCache1a", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
 		return 10;
 	}
@@ -150,7 +150,7 @@ CompositeCacheTest::createTest(J9JavaVM* vm, IDATA testCacheSize, SH_CompositeCa
 	}
 	memset((void*)memForCC, 0, totalSize);
 	/* Currently requests non-persistent cache */
-	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myCache2", false, false);
+	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myCache2", false, false, 0);
 	cache = (char*)((char*)actualCC + requiredBytes);
 	if (actualCC->startup(vm->mainThread, piconfig, cache, runtimeFlags1, 1, "myCache2", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
 		return 12;
@@ -162,7 +162,7 @@ CompositeCacheTest::createTest(J9JavaVM* vm, IDATA testCacheSize, SH_CompositeCa
 		return 13;
 	}
 	/* Currently requests non-persistent cache */
-	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myCache2a", false, false);
+	actualCC = SH_CompositeCacheImpl::newInstance(vm, NULL, memForCC, "myCache2a", false, false, 0);
 	if (actualCC->startup(vm->mainThread, piconfig, cache, runtimeFlags0, 1, "myCache2a", NULL, J9SH_DIRPERM_ABSENT, &cacheSize, &localCrashCntr, true, &cacheHasIntegrity) != 0) {
 		return 14;
 	}

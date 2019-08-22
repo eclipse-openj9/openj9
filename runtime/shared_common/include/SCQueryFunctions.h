@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@ j9shr_Query_IsCacheFull(J9JavaVM *vm)
 
 /**
  * 	Following comment is copied from
- * 	shrinit.cpp :: j9shr_isAddressInCache(J9JavaVM *vm, void *address, UDATA length)
+ * 	shrinit.cpp :: j9shr_isAddressInCache(J9JavaVM *vm, void *address, UDATA length, BOOLEAN checkReadWriteCacheOnly)
  *
  * 	This function checks whether the memory segment;
  *  which starts at the given address and with the given length,
@@ -77,7 +77,30 @@ j9shr_Query_IsAddressInCache(J9JavaVM *vm, void *address, UDATA length)
 	if ((NULL != vm) && (NULL != vm->sharedClassConfig)) {
 		SCAbstractAPI * sharedapi = (SCAbstractAPI *)(vm->sharedClassConfig->sharedAPIObject);
 		if ((NULL != sharedapi) && (NULL != sharedapi->isAddressInCache)) {
-			retval = sharedapi->isAddressInCache(vm, address, length);
+			retval = sharedapi->isAddressInCache(vm, address, length, FALSE);
+		}
+	}
+	return retval;
+}
+
+/**
+ * Check if an address range in in the readWrite (top layer) shared cache
+ *
+ * @param[in] vm  The Java VM.
+ * @param[in] address The start of the address range
+ * @param[in] length The length of the address range
+ *
+ * @return TRUE if the the address range is in the readWrite cache. False otherwise.
+ **/
+
+static BOOLEAN
+j9shr_Query_IsAddressInReadWriteCache(J9JavaVM *vm, void *address, UDATA length)
+{
+	BOOLEAN retval = FALSE;
+	if ((NULL != vm) && (NULL != vm->sharedClassConfig)) {
+		SCAbstractAPI * sharedapi = (SCAbstractAPI *)(vm->sharedClassConfig->sharedAPIObject);
+		if ((NULL != sharedapi) && (NULL != sharedapi->isAddressInCache)) {
+			retval = sharedapi->isAddressInCache(vm, address, length, TRUE);
 		}
 	}
 	return retval;

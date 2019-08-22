@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -286,7 +286,8 @@ SH_ScopeManagerImpl::initialize(J9JavaVM* vm, SH_SharedCache* cache_, BlockPtr m
 	_portlib = vm->portLibrary;
 	_htMutex = NULL;
 	_dataTypesRepresented[0] = TYPE_SCOPE;
-	_dataTypesRepresented[1] = _dataTypesRepresented[2] = 0;
+	_dataTypesRepresented[1] = TYPE_PREREQ_CACHE;
+	_dataTypesRepresented[2] = 0;
 
 	notifyManagerInitialized(_cache->managers(), "TYPE_SCOPE");
 
@@ -398,24 +399,32 @@ SH_ScopeManagerImpl::validate(J9VMThread* currentThread, const J9UTF8* partition
 	cachedModContext = findScopeForUTF(currentThread, modContext);
 	scopedMatch = (ScopedROMClassWrapper*)ITEMDATA(match);
 	if (cachedPartition) {
-		if (!(scopedMatch->partitionOffset && (cachedPartition==(const J9UTF8*)RCWPARTITION(scopedMatch)))) {
+		const J9UTF8* partition = (const J9UTF8*)_cache->getAddressFromJ9ShrOffset(&(scopedMatch->partitionOffset));
+		if ((NULL == partition)
+			|| (cachedPartition != partition)
+		) {
 			Trc_SHR_SMI_validate_ExitFailed2(currentThread);
 			return 0;
 		}
-	} else 
-	if (scopedMatch->partitionOffset) {
-		Trc_SHR_SMI_validate_ExitFailed3(currentThread);
-		return 0;
+	} else {
+		if (0 != scopedMatch->partitionOffset.offset) {
+			Trc_SHR_SMI_validate_ExitFailed3(currentThread);
+			return 0;
+		}
 	}
 	if (cachedModContext) {
-		if (!(scopedMatch->modContextOffset && (cachedModContext==(const J9UTF8*)RCWMODCONTEXT(scopedMatch)))) {
+		const J9UTF8* modContext = (const J9UTF8*)_cache->getAddressFromJ9ShrOffset(&(scopedMatch->partitionOffset));
+		if ((NULL == modContext)
+			|| (cachedModContext != modContext)
+		) {
 			Trc_SHR_SMI_validate_ExitFailed4(currentThread);
 			return 0;
 		}
-	} else
-	if (scopedMatch->modContextOffset) {
-		Trc_SHR_SMI_validate_ExitFailed5(currentThread);
-		return 0;
+	} else {
+		if (0 != scopedMatch->modContextOffset.offset) {
+			Trc_SHR_SMI_validate_ExitFailed5(currentThread);
+			return 0;
+		}
 	}
 
 	Trc_SHR_SMI_validate_ExitOK(currentThread);
