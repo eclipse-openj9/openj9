@@ -6799,7 +6799,7 @@ bool isMethodIneligibleForAot(const J9ROMMethod *romMethod, const J9ROMClass *ro
    if (J9UTF8_LENGTH(className) == 36 &&
       0 == memcmp(utf8Data(className), "com/ibm/rmi/io/FastPathForCollocated", 36))
       {
-      J9UTF8 *utf8 = J9ROMMETHOD_GET_NAME(romClass, romMethod);
+      J9UTF8 *utf8 = J9ROMMETHOD_NAME(romMethod);
       if (J9UTF8_LENGTH(utf8) == 21 &&
          0 == memcmp(J9UTF8_DATA(utf8), "isVMDeepCopySupported", 21))
          return true;

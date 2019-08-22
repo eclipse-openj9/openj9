@@ -1669,8 +1669,8 @@ TR_ResolvedJ9JITaaSServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod
  
    // initialization from TR_J9Method constructor
    _className = J9ROMCLASS_CLASSNAME(_romClass);
-   _name = J9ROMMETHOD_GET_NAME(_romClass, _romMethod);
-   _signature = J9ROMMETHOD_GET_SIGNATURE(_romClass, _romMethod);
+   _name = J9ROMMETHOD_NAME(_romMethod);
+   _signature = J9ROMMETHOD_SIGNATURE(_romMethod);
    parseSignature(trMemory);
    _fullSignature = NULL;
   
