@@ -67,8 +67,8 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    // TODO:ARM64: Enable when Implemented: tet[TR::SpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
    tet[TR::ArrayStoreCHK] = TR::TreeEvaluator::ArrayStoreCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCHK] = TR::TreeEvaluator::ArrayCHKEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::MethodEnterHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::MethodExitHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
+   tet[TR::MethodEnterHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
+   tet[TR::MethodExitHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
    tet[TR::allocationFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::loadFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::storeFence] = TR::TreeEvaluator::flushEvaluator;
@@ -126,6 +126,60 @@ static void wrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *
                                         wbRef, NULL);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions, NULL);
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::conditionalHelperEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Node *testNode = node->getFirstChild();
+   TR::Node *callNode = node->getSecondChild();
+   TR::Node *firstChild = testNode->getFirstChild();
+   TR::Node *secondChild = testNode->getSecondChild();
+   TR::Register *jumpReg = cg->evaluate(firstChild);
+   TR::Register *valReg = NULL;
+   int32_t i, numArgs = callNode->getNumChildren();
+   TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(3, 3, cg->trMemory());
+
+   TR_ASSERT(numArgs <= 2, "Unexpected number of arguments for helper.");
+
+   // Helper arguments are in reversed order of the private linkage
+   // Argument registers are not needed to be split since the helper will
+   // preserve all of them.
+   int32_t iArgIndex = 0, fArgIndex = 0;
+   TR::Linkage *linkage = cg->createLinkage(TR_Private);
+   for (i = numArgs - 1; i >= 0; i--)
+      {
+      TR::Register *argReg = cg->evaluate(callNode->getChild(i));
+      TR::addDependency(conditions, argReg, (argReg->getKind() == TR_GPR) ? // Didn't consider Long here
+            linkage->getProperties().getIntegerArgumentRegister(iArgIndex++) : linkage->getProperties().getFloatArgumentRegister(fArgIndex++), argReg->getKind(), cg);
+      }
+
+   TR::addDependency(conditions, jumpReg, TR::RealRegister::x8, TR_GPR, cg);
+   bool is64Bit = node->getSecondChild()->getType().isInt64();
+   int64_t value = is64Bit ? secondChild->getLongInt() : secondChild->getInt();
+   if (secondChild->getOpCode().isLoadConst() && constantIsUnsignedImm12(value))
+      {
+      generateCompareImmInstruction(cg, testNode, jumpReg, value);
+      }
+   else
+      {
+      valReg = cg->evaluate(secondChild);
+      generateCompareInstruction(cg, testNode, jumpReg, valReg);
+      }
+
+   TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
+   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+   TR::ARM64ConditionCode cc = (testNode->getOpCodeValue() == TR::icmpeq) ? TR::CC_EQ : TR::CC_NE;
+   TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, cc, conditions);
+   gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+
+   for (i = numArgs - 1; i >= 0; i--)
+      cg->decReferenceCount(callNode->getChild(i));
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   cg->decReferenceCount(testNode);
+   cg->decReferenceCount(callNode);
+   return NULL;
    }
 
 TR::Register *
