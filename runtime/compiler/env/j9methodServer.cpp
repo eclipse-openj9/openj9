@@ -25,7 +25,7 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "control/MethodToBeCompiled.hpp"
-#include "control/JITaaSCompilationThread.hpp"
+#include "control/JITServerCompilationThread.hpp"
 #include "exceptions/DataCacheError.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
 

@@ -26,7 +26,7 @@
 #include "net/ServerStream.hpp"
 #include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
 #include "control/CompilationThread.hpp"       // for TR::compInfoPT
-#include "control/JITaaSCompilationThread.hpp"   // for ClientSessionData
+#include "control/JITServerCompilationThread.hpp"   // for ClientSessionData
 
 
 // plan: send the whole table once,

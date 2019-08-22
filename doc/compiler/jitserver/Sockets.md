@@ -33,7 +33,7 @@ Implements basic functionality such as stream initialization (with/without TLS),
 
 ### `J9ClientStream`
 
-One instance per compilation thread. Typically, this is only interacted with through the function `handleServerMessage` in `JITaaSCompilationThread.cpp`. An instance is created for a new compilation inside `remoteCompile`, and the `buildCompileRequest` method is then called on it to begin the compilation.
+One instance per compilation thread. Typically, this is only interacted with through the function `handleServerMessage` in `JITServerCompilationThread.cpp`. An instance is created for a new compilation inside `remoteCompile`, and the `buildCompileRequest` method is then called on it to begin the compilation.
 
 ### `J9ServerStream`
 

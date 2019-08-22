@@ -20,7 +20,7 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-The server has a notion of *client sessions*: data associated with a single client which lives across multiple compilations. This data is mostly used for caching. Relevant structures (detailed below) are defined in `control/JITaaSCompilationThread.hpp`. All cached data which remains valid across compilations should be stored here.
+The server has a notion of *client sessions*: data associated with a single client which lives across multiple compilations. This data is mostly used for caching. Relevant structures (detailed below) are defined in `control/JITServerCompilationThread.hpp`. All cached data which remains valid across compilations should be stored here.
 
 ### Accessing ROM classes
 Some of the most commonly used items in the client session data are the cached ROM classes. From a `J9Class` pointer (or equivalently, `TR_OpaqueClassBlock`), you can get the corresponding ROM class by calling `TR::CompilationInfoPerThread::getAndCacheRemoteROMClass`. Since ROM classes are read-only, the copies on the server can persist across compilations, unless they are redefined or unloaded. Processing of unloaded and redefined classes happens in `ClientSessionData::processUnloadedClasses`, which is called at the beginning of every compilation from `J9CompileDispatcher::compile`.

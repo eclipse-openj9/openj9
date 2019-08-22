@@ -32,7 +32,7 @@
 #include "runtime/J9Profiler.hpp"
 #include "exceptions/RuntimeFailure.hpp"
 #include "env/j9methodServer.hpp"
-#include "control/JITaaSCompilationThread.hpp"
+#include "control/JITServerCompilationThread.hpp"
 
 bool J9::Recompilation::_countingSupported = false;
 

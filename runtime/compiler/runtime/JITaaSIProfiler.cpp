@@ -22,7 +22,7 @@
 
 #include "runtime/JITaaSIProfiler.hpp"
 #include "control/CompilationRuntime.hpp"
-#include "control/JITaaSCompilationThread.hpp"
+#include "control/JITServerCompilationThread.hpp"
 #include "infra/CriticalSection.hpp" // for OMR::CriticalSection
 #include "ilgen/J9ByteCode.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"

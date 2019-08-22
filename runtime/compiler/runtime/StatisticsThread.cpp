@@ -24,7 +24,7 @@
 #include "env/VMJ9.h"
 #include "runtime/CompileService.hpp"
 #include "control/CompilationRuntime.hpp"
-#include "control/JITaaSCompilationThread.hpp"
+#include "control/JITServerCompilationThread.hpp"
 
 TR_StatisticsThread::TR_StatisticsThread()
    : _statisticsThread(NULL), _statisticsThreadMonitor(NULL), _statisticsOSThread(NULL),

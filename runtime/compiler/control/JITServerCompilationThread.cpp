@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "control/JITaaSCompilationThread.hpp"
+#include "control/JITServerCompilationThread.hpp"
 #include "vmaccess.h"
 #include "runtime/J9VMAccess.hpp"
 #include "env/VMAccessCriticalSection.hpp"
@@ -52,10 +52,10 @@ extern TR::Monitor *assumptionTableMutex;
 
 uint32_t serverMsgTypeCount[JITServer::MessageType_ARRAYSIZE] = {};
 
-uint64_t JITaaSHelpers::_waitTime = 1000;
-bool JITaaSHelpers::_serverAvailable = true;
-uint64_t JITaaSHelpers::_nextConnectionRetryTime = 0;
-TR::Monitor * JITaaSHelpers::_clientStreamMonitor = NULL;
+uint64_t JITServerHelpers::_waitTime = 1000;
+bool JITServerHelpers::_serverAvailable = true;
+uint64_t JITServerHelpers::_nextConnectionRetryTime = 0;
+TR::Monitor * JITServerHelpers::_clientStreamMonitor = NULL;
 
 // TODO: this method is copied from runtime/jit_vm/ctsupport.c,
 // in the future it's probably better to make that method publicly accessible
@@ -1207,7 +1207,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
       case MessageType::ResolvedMethod_getRemoteROMClassAndMethods:
          {
          J9Class *clazz = std::get<0>(client->getRecvData<J9Class *>());
-         client->write(response, JITaaSHelpers::packRemoteROMClassInfo(clazz, fe->vmThread(), trMemory));
+         client->write(response, JITServerHelpers::packRemoteROMClassInfo(clazz, fe->vmThread(), trMemory));
          }
          break;
       case MessageType::ResolvedMethod_isJNINative:
@@ -2568,18 +2568,18 @@ remoteCompile(
       {
       try 
          {
-         if (JITaaSHelpers::isServerAvailable())
+         if (JITServerHelpers::isServerAvailable())
             {
             client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
             if (!enableJITaaSPerCompConn)
                compInfoPT->setClientStream(client);
             }
-         else if (JITaaSHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary)))
+         else if (JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary)))
             {
             client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
             if (!enableJITaaSPerCompConn)
                compInfoPT->setClientStream(client);
-            JITaaSHelpers::postStreamConnectionSuccess();
+            JITServerHelpers::postStreamConnectionSuccess();
             }
          else
             {
@@ -2591,7 +2591,7 @@ remoteCompile(
          }
       catch (const JITServer::StreamFailure &e)
          {
-         JITaaSHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
+         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,
                "JITServer::StreamFailure: %s for %s @ %s", e.what(), compiler->signature(), compiler->getHotnessName());
@@ -2615,7 +2615,7 @@ remoteCompile(
 
    if (compiler->isOptServer())
       compiler->setOption(TR_Server);
-   auto classInfoTuple = JITaaSHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm()->vmThread(), compiler->trMemory());
+   auto classInfoTuple = JITServerHelpers::packRemoteROMClassInfo(clazz, compiler->fej9vm()->vmThread(), compiler->trMemory());
    std::string optionsStr = TR::Options::packOptions(compiler->getOptions());
    std::string recompMethodInfoStr = compiler->isRecompilationEnabled() ? std::string((char *) compiler->getRecompilationInfo()->getMethodInfo(), sizeof(TR_PersistentMethodInfo)) : std::string();
 
@@ -2707,7 +2707,7 @@ remoteCompile(
       }
    catch (const JITServer::StreamFailure &e)
       {
-      JITaaSHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
+      JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary));
 
       client->~ClientStream();
       TR_Memory::jitPersistentFree(client);
@@ -3292,13 +3292,13 @@ ClientSessionData::processUnloadedClasses(JITServer::ServerStream *stream, const
       // purge Class by name cache
       {
       OMR::CriticalSection classMapCS(getClassMapMonitor());
-      JITaaSHelpers::purgeCache(&unloadedClasses, getClassByNameMap(), &ClassUnloadedData::_pair);
+      JITServerHelpers::purgeCache(&unloadedClasses, getClassByNameMap(), &ClassUnloadedData::_pair);
       }
 
       // purge Constant pool to class cache
       {
       OMR::CriticalSection constantPoolToClassMap(getConstantPoolMonitor());
-      JITaaSHelpers::purgeCache(&unloadedClasses, getConstantPoolToClassMap(), &ClassUnloadedData::_cp);
+      JITServerHelpers::purgeCache(&unloadedClasses, getConstantPoolToClassMap(), &ClassUnloadedData::_cp);
       }
    }
 
@@ -3682,19 +3682,19 @@ ClientSessionHT::printStats()
    }
 
 void 
-JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple)
+JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple)
    {
    ClientSessionData::ClassInfo classInfo;
    OMR::CriticalSection cacheRemoteROMClass(clientSessionData->getROMMapMonitor());
    auto it = clientSessionData->getROMClassMap().find((J9Class*)clazz);
    if (it == clientSessionData->getROMClassMap().end())
       {
-      JITaaSHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple, classInfo);
+      JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, classInfoTuple, classInfo);
       }
    }
 
 void
-JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, ClientSessionData::ClassInfo &classInfoStruct)
+JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple, ClientSessionData::ClassInfo &classInfoStruct)
    {
    ClassInfoTuple &classInfo = *classInfoTuple;
 
@@ -3745,7 +3745,7 @@ JITaaSHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class
    }
 
 J9ROMClass *
-JITaaSHelpers::getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz)
+JITServerHelpers::getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J9Class *clazz)
    {
    OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
    auto it = clientSessionData->getROMClassMap().find(clazz);
@@ -3753,7 +3753,7 @@ JITaaSHelpers::getRemoteROMClassIfCached(ClientSessionData *clientSessionData, J
    }
 
 template <typename map, typename key>
-void JITaaSHelpers::purgeCache (std::vector<ClassUnloadedData> *unloadedClasses, map m, key ClassUnloadedData::*k)
+void JITServerHelpers::purgeCache (std::vector<ClassUnloadedData> *unloadedClasses, map m, key ClassUnloadedData::*k)
    {
    ClassUnloadedData *data = unloadedClasses->data();
    std::vector<ClassUnloadedData>::iterator it = unloadedClasses->begin();
@@ -3783,8 +3783,8 @@ void JITaaSHelpers::purgeCache (std::vector<ClassUnloadedData> *unloadedClasses,
       }
    }
 
-JITaaSHelpers::ClassInfoTuple
-JITaaSHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory)
+JITServerHelpers::ClassInfoTuple
+JITServerHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory)
    {
    // Always use the base VM here.
    // If this method is called inside AOT compilation, TR_J9SharedCacheVM will
@@ -3820,7 +3820,7 @@ JITaaSHelpers::packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_M
    }
 
 J9ROMClass *
-JITaaSHelpers::romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory)
+JITServerHelpers::romClassFromString(const std::string &romClassStr, TR_PersistentMemory *trMemory)
    {
    auto romClass = (J9ROMClass *)(trMemory->allocatePersistentMemory(romClassStr.size(), TR_Memory::ROMClass));
    if (!romClass)
@@ -3830,7 +3830,7 @@ JITaaSHelpers::romClassFromString(const std::string &romClassStr, TR_PersistentM
    }
 
 J9ROMClass *
-JITaaSHelpers::getRemoteROMClass(J9Class *clazz, JITServer::ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple)
+JITServerHelpers::getRemoteROMClass(J9Class *clazz, JITServer::ServerStream *stream, TR_Memory *trMemory, ClassInfoTuple *classInfoTuple)
    {
    stream->write(JITServer::MessageType::ResolvedMethod_getRemoteROMClassAndMethods, clazz);
    const auto &recv = stream->read<ClassInfoTuple>();
@@ -3840,9 +3840,9 @@ JITaaSHelpers::getRemoteROMClass(J9Class *clazz, JITServer::ServerStream *stream
 
 // Return true if able to get data from cache, return false otherwise
 bool
-JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType, void *data)
+JITServerHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType, void *data)
    {
-   JITaaSHelpers::ClassInfoTuple classInfoTuple;
+   JITServerHelpers::ClassInfoTuple classInfoTuple;
    ClientSessionData::ClassInfo classInfo;
    if (!clazz)
       {
@@ -3853,7 +3853,7 @@ JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *client
       auto it = clientSessionData->getROMClassMap().find((J9Class*)clazz);
       if (it != clientSessionData->getROMClassMap().end())
          {
-         JITaaSHelpers::getROMClassData(it->second, dataType, data);
+         JITServerHelpers::getROMClassData(it->second, dataType, data);
          return true;
          }
       }
@@ -3866,21 +3866,21 @@ JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *client
    if (it == clientSessionData->getROMClassMap().end())
       {
       auto romClass = romClassFromString(std::get<0>(classInfoTuple), TR::comp()->trMemory()->trPersistentMemory());
-      JITaaSHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, &classInfoTuple, classInfo);
-      JITaaSHelpers::getROMClassData(classInfo, dataType, data);
+      JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, &classInfoTuple, classInfo);
+      JITServerHelpers::getROMClassData(classInfo, dataType, data);
       }
    else
       {
-      JITaaSHelpers::getROMClassData(it->second, dataType, data);
+      JITServerHelpers::getROMClassData(it->second, dataType, data);
       }
    return false;
    }
 
 // Return true if able to get data from cache, return false otherwise
 bool
-JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2)
+JITServerHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2)
    {
-   JITaaSHelpers::ClassInfoTuple classInfoTuple;
+   JITServerHelpers::ClassInfoTuple classInfoTuple;
    ClientSessionData::ClassInfo classInfo;
    if (!clazz)
       {
@@ -3891,8 +3891,8 @@ JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *client
       auto it = clientSessionData->getROMClassMap().find((J9Class*)clazz);
       if (it != clientSessionData->getROMClassMap().end())
          {
-         JITaaSHelpers::getROMClassData(it->second, dataType1, data1);
-         JITaaSHelpers::getROMClassData(it->second, dataType2, data2);
+         JITServerHelpers::getROMClassData(it->second, dataType1, data1);
+         JITServerHelpers::getROMClassData(it->second, dataType2, data2);
          return true;
          }
       }
@@ -3905,20 +3905,20 @@ JITaaSHelpers::getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *client
    if (it == clientSessionData->getROMClassMap().end())
       {
       auto romClass = romClassFromString(std::get<0>(classInfoTuple), TR::comp()->trMemory()->trPersistentMemory());
-      JITaaSHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, &classInfoTuple, classInfo);
-      JITaaSHelpers::getROMClassData(classInfo, dataType1, data1);
-      JITaaSHelpers::getROMClassData(classInfo, dataType2, data2);
+      JITServerHelpers::cacheRemoteROMClass(clientSessionData, clazz, romClass, &classInfoTuple, classInfo);
+      JITServerHelpers::getROMClassData(classInfo, dataType1, data1);
+      JITServerHelpers::getROMClassData(classInfo, dataType2, data2);
       }
    else
       {
-      JITaaSHelpers::getROMClassData(it->second, dataType1, data1);
-      JITaaSHelpers::getROMClassData(it->second, dataType2, data2);
+      JITServerHelpers::getROMClassData(it->second, dataType1, data1);
+      JITServerHelpers::getROMClassData(it->second, dataType2, data2);
       }
    return false;
    }
 
 void
-JITaaSHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data)
+JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data)
    {
    switch (dataType)
       {
@@ -4021,7 +4021,7 @@ JITaaSHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo, Cl
    }
 
 void
-JITaaSHelpers::postStreamFailure(OMRPortLibrary *portLibrary)
+JITServerHelpers::postStreamFailure(OMRPortLibrary *portLibrary)
    {
    OMR::CriticalSection handleStreamFailure(getClientStreamMonitor());
 
@@ -4036,14 +4036,14 @@ JITaaSHelpers::postStreamFailure(OMRPortLibrary *portLibrary)
    }
 
 void
-JITaaSHelpers::postStreamConnectionSuccess()
+JITServerHelpers::postStreamConnectionSuccess()
    {
    _serverAvailable = true;
    _waitTime = 1000; // ms
    }
 
 bool
-JITaaSHelpers::shouldRetryConnection(OMRPortLibrary *portLibrary)
+JITServerHelpers::shouldRetryConnection(OMRPortLibrary *portLibrary)
    {
    OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
    return omrtime_current_time_millis() > _nextConnectionRetryTime;
@@ -4250,7 +4250,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       {
       auto req = stream->readCompileRequest<uint64_t, uint32_t, J9Method *, J9Class*, TR_OptimizationPlan, std::string,
          J9::IlGeneratorMethodDetailsType, std::vector<TR_OpaqueClassBlock*>,
-         JITaaSHelpers::ClassInfoTuple, std::string, std::string, uint32_t, bool>();
+         JITServerHelpers::ClassInfoTuple, std::string, std::string, uint32_t, bool>();
 
       clientId                           = std::get<0>(req);
       uint32_t romMethodOffset           = std::get<1>(req);
@@ -4382,10 +4382,10 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // Get the ROMClass for the method to be compiled if it is already cached
       // Or read it from the compilation request and cache it otherwise
       J9ROMClass *romClass = NULL;
-      if (!(romClass = JITaaSHelpers::getRemoteROMClassIfCached(clientSession, clazz)))
+      if (!(romClass = JITServerHelpers::getRemoteROMClassIfCached(clientSession, clazz)))
          {
-         romClass = JITaaSHelpers::romClassFromString(std::get<0>(classInfoTuple), compInfo->persistentMemory());
-         JITaaSHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
+         romClass = JITServerHelpers::romClassFromString(std::get<0>(classInfoTuple), compInfo->persistentMemory());
+         JITServerHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
          }
 
       J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*)romClass + romMethodOffset);

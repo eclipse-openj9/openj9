@@ -78,7 +78,7 @@
 #include "runtime/HWProfiler.hpp"
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/SystemSegmentProvider.hpp"
-#include "control/JITaaSCompilationThread.hpp"
+#include "control/JITServerCompilationThread.hpp"
 #include "runtime/JITaaSIProfiler.hpp"
 #include "runtime/Listener.hpp"
 #include "runtime/StatisticsThread.hpp"

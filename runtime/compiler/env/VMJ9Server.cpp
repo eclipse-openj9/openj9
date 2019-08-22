@@ -29,7 +29,7 @@
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
-#include "control/JITaaSCompilationThread.hpp"
+#include "control/JITServerCompilationThread.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "exceptions/AOTFailure.hpp"
 #include "codegen/CodeGenerator.hpp"
@@ -76,7 +76,7 @@ TR_J9ServerVM::getSuperClass(TR_OpaqueClassBlock *clazz)
    TR_OpaqueClassBlock *parentClass = NULL;
 
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_PARENT_CLASS, (void *)&parentClass);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_PARENT_CLASS, (void *)&parentClass);
    return parentClass;
    }
 
@@ -267,7 +267,7 @@ TR_J9ServerVM::getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numD
    {
    TR_OpaqueClassBlock *baseComponentClass = NULL;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_NUMBER_DIMENSIONS, &numDims, JITaaSHelpers::CLASSINFO_BASE_COMPONENT_CLASS, (void *)&baseComponentClass);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_NUMBER_DIMENSIONS, &numDims, JITServerHelpers::CLASSINFO_BASE_COMPONENT_CLASS, (void *)&baseComponentClass);
 
   return baseComponentClass;
    }
@@ -277,7 +277,7 @@ TR_J9ServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayCl
    {
    TR_OpaqueClassBlock *leafComponentClass = NULL;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)arrayClass, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_LEAF_COMPONENT_CLASS, (void *)&leafComponentClass);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)arrayClass, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_LEAF_COMPONENT_CLASS, (void *)&leafComponentClass);
    return leafComponentClass;
    }
 
@@ -464,7 +464,7 @@ TR_J9ServerVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock *arrayClass)
    {
    TR_OpaqueClassBlock *componentClass = NULL;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)arrayClass, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_COMPONENT_CLASS, (void *)&componentClass);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)arrayClass, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_COMPONENT_CLASS, (void *)&componentClass);
    return componentClass;
    }
 
@@ -473,7 +473,7 @@ TR_J9ServerVM::classHasBeenReplaced(TR_OpaqueClassBlock *clazz)
    {
    uintptrj_t classDepthAndFlags = 0;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
    return ((classDepthAndFlags & J9AccClassHotSwappedOut) != 0);
    }
 
@@ -484,7 +484,7 @@ TR_J9ServerVM::classHasBeenExtended(TR_OpaqueClassBlock *clazz)
       return false;
    uintptrj_t classDepthAndFlags = 0;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   bool dataFromCache = JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
+   bool dataFromCache = JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
    
    if(dataFromCache)
       {
@@ -587,7 +587,7 @@ TR_J9ServerVM::isClassInitialized(TR_OpaqueClassBlock * clazz)
    {
    bool isClassInitialized = false;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_INITIALIZED, (void *)&isClassInitialized);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_INITIALIZED, (void *)&isClassInitialized);
 
    if (!isClassInitialized)
       {
@@ -630,7 +630,7 @@ TR_J9ServerVM::getByteOffsetToLockword(TR_OpaqueClassBlock * clazz)
 #if defined (J9VM_THR_LOCK_NURSERY)
    uint32_t byteOffsetToLockword = 0;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_BYTE_OFFSET_TO_LOCKWORD, (void *)&byteOffsetToLockword);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_BYTE_OFFSET_TO_LOCKWORD, (void *)&byteOffsetToLockword);
    return byteOffsetToLockword;
 #else
    return TMP_OFFSETOF_J9OBJECT_MONITOR;
@@ -650,7 +650,7 @@ TR_J9ServerVM::getMethods(TR_OpaqueClassBlock * clazz)
    {
    J9Method *methodsOfClass = NULL;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *) clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_METHODS_OF_CLASS, (void *) &methodsOfClass); 
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *) clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_METHODS_OF_CLASS, (void *) &methodsOfClass);
    return methodsOfClass;
    }
 
@@ -682,12 +682,12 @@ TR_J9ServerVM::isPrimitiveArray(TR_OpaqueClassBlock *clazz)
    uint32_t modifiers = 0;
    TR_OpaqueClassBlock * componentClass = NULL;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_ROMCLASS_MODIFIERS, (void *)&modifiers, JITaaSHelpers::CLASSINFO_COMPONENT_CLASS, (void *)&componentClass);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_ROMCLASS_MODIFIERS, (void *)&modifiers, JITServerHelpers::CLASSINFO_COMPONENT_CLASS, (void *)&componentClass);
 
    if (!J9_ARE_ALL_BITS_SET(modifiers, J9AccClassArray))
       return false;
 
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)componentClass, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_ROMCLASS_MODIFIERS, (void *)&modifiers);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)componentClass, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_ROMCLASS_MODIFIERS, (void *)&modifiers);
    return J9_ARE_ALL_BITS_SET(modifiers, J9AccClassInternalPrimitiveType) ? true : false;
 
    }
@@ -697,7 +697,7 @@ TR_J9ServerVM::getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock
    {
    uintptrj_t totalInstanceSize = 0;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_TOTAL_INSTANCE_SIZE, (void *)&totalInstanceSize);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_TOTAL_INSTANCE_SIZE, (void *)&totalInstanceSize);
 
    uint32_t objectSize = sizeof(J9Object) + (uint32_t)totalInstanceSize;
    return ((objectSize >= J9_GC_MINIMUM_OBJECT_SIZE) ? objectSize : J9_GC_MINIMUM_OBJECT_SIZE);
@@ -732,7 +732,7 @@ TR_J9ServerVM::hasFinalFieldsInClass(TR_OpaqueClassBlock *clazz)
    {
    bool classHasFinalFields = false;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_HAS_FINAL_FIELDS, (void *)&classHasFinalFields);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_HAS_FINAL_FIELDS, (void *)&classHasFinalFields);
 
    return classHasFinalFields;
    }
@@ -766,7 +766,7 @@ TR_J9ServerVM::getHostClass(TR_OpaqueClassBlock *clazz)
    {
    TR_OpaqueClassBlock *hostClass = NULL;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_HOST_CLASS, (void *)&hostClass);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_HOST_CLASS, (void *)&hostClass);
 
    return hostClass;
    }
@@ -815,7 +815,7 @@ TR_J9ServerVM::isCloneable(TR_OpaqueClassBlock *clazzPointer)
    {
    uintptrj_t classDepthAndFlags = 0;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
    return ((classDepthAndFlags & J9AccClassCloneable) != 0);
    }
 
@@ -825,7 +825,7 @@ TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
    uint32_t modifiers = 0;
    bool isClassInitialized = false;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_INITIALIZED, (void *)&isClassInitialized, JITaaSHelpers::CLASSINFO_ROMCLASS_MODIFIERS, (void *)&modifiers);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_INITIALIZED, (void *)&isClassInitialized, JITServerHelpers::CLASSINFO_ROMCLASS_MODIFIERS, (void *)&modifiers);
 
   if (!isClassInitialized)
      {
@@ -854,7 +854,7 @@ TR_J9ServerVM::getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentCla
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    TR_OpaqueClassBlock *arrayClass = NULL;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)componentClass, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_ARRAY_CLASS, (void *)&arrayClass);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)componentClass, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_ARRAY_CLASS, (void *)&arrayClass);
    if (!arrayClass)
       {
       stream->write(JITServer::MessageType::VM_getArrayClassFromComponentClass, componentClass);
@@ -1066,8 +1066,8 @@ TR_J9ServerVM::sameClassLoaders(TR_OpaqueClassBlock * class1, TR_OpaqueClassBloc
    void *class1Loader = NULL;
    void *class2Loader = NULL;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)class1, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_LOADER, (void *)&class1Loader);
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)class2, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_LOADER, (void *)&class2Loader);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)class1, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_LOADER, (void *)&class1Loader);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)class2, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_LOADER, (void *)&class2Loader);
 
     return (class1Loader == class2Loader);
    }
@@ -1084,7 +1084,7 @@ TR_J9ServerVM::isUnloadAssumptionRequired(TR_OpaqueClassBlock *clazz, TR_Resolve
    if (clazz == classOfMethod)
       return false;
 
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_LOADER, (void *)&classLoader,JITaaSHelpers::CLASSINFO_ROMCLASS_EXTRAMODIFIERS, (void *)&extraModifiers);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_LOADER, (void *)&classLoader,JITServerHelpers::CLASSINFO_ROMCLASS_EXTRAMODIFIERS, (void *)&extraModifiers);
 
    if (!J9_ARE_ALL_BITS_SET(extraModifiers, J9AccClassAnonClass))
       {
@@ -1094,7 +1094,7 @@ TR_J9ServerVM::isUnloadAssumptionRequired(TR_OpaqueClassBlock *clazz, TR_Resolve
          }
       else
          {
-         JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)classOfMethod, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_LOADER, (void *)&classOfMethodLoader);
+         JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)classOfMethod, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_LOADER, (void *)&classOfMethodLoader);
          return (classLoader != classOfMethodLoader);
          }
       }
@@ -1127,7 +1127,7 @@ TR_J9ServerVM::hasFinalizer(TR_OpaqueClassBlock *clazz)
    {
    uintptrj_t classDepthAndFlags = 0;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
 
    return ((classDepthAndFlags & (J9AccClassFinalizeNeeded | J9AccClassOwnableSynchronizer)) != 0);
    }
@@ -1305,7 +1305,7 @@ TR_J9ServerVM::isOwnableSyncClass(TR_OpaqueClassBlock *clazz)
    {
    uintptrj_t classDepthAndFlags = 0;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
 
    return ((classDepthAndFlags & J9AccClassOwnableSynchronizer) != 0);
    }
@@ -1393,7 +1393,7 @@ TR_J9ServerVM::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
    {
    void *classLoader = NULL;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_LOADER, (void *)&classLoader);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_LOADER, (void *)&classLoader);
 
    return (classLoader == getSystemClassLoader());
    }
@@ -1586,7 +1586,7 @@ TR_J9ServerVM::isAnonymousClass(TR_OpaqueClassBlock *j9clazz)
    {
    uintptrj_t extraModifiers = 0;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)j9clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_ROMCLASS_EXTRAMODIFIERS, (void *)&extraModifiers);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)j9clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_ROMCLASS_EXTRAMODIFIERS, (void *)&extraModifiers);
 
    return (J9_ARE_ALL_BITS_SET(extraModifiers, J9AccClassAnonClass));
    }
@@ -1674,7 +1674,7 @@ TR_J9ServerVM::getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock * c
    {
    J9ROMClass *remoteRomClass = NULL;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *) clazz, _compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_REMOTE_ROM_CLASS, (void *) &remoteRomClass);
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *) clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_REMOTE_ROM_CLASS, (void *) &remoteRomClass);
    return (uintptrj_t) remoteRomClass;
    }
 

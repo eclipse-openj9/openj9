@@ -383,7 +383,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
 
 ifneq ($(JITSERVER_SUPPORT),)
 JIT_PRODUCT_SOURCE_FILES+=\
-    compiler/control/JITaaSCompilationThread.cpp \
+    compiler/control/JITServerCompilationThread.cpp \
     compiler/env/j9methodServer.cpp \
     compiler/env/JITaaSCHTable.cpp \
     compiler/env/JITaaSPersistentCHTable.cpp \

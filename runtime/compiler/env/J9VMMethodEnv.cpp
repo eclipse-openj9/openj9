@@ -26,7 +26,7 @@
 #include "env/VMMethodEnv.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
-#include "control/JITaaSCompilationThread.hpp"
+#include "control/JITServerCompilationThread.hpp"
 #include "j9.h"
 #include "j9cfg.h"
 #include "jilconsts.h"

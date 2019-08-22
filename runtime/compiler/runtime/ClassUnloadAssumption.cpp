@@ -34,7 +34,7 @@
 #include "runtime/J9RuntimeAssumptions.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "control/CompilationThread.hpp"       // for TR::compInfoPT
-#include "control/JITaaSCompilationThread.hpp" // for ClientSessionData
+#include "control/JITServerCompilationThread.hpp" // for ClientSessionData
 
 extern TR::Monitor *assumptionTableMutex;
 

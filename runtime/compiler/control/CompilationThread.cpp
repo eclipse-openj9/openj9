@@ -100,7 +100,7 @@
 #include "runtime/ArtifactManager.hpp"
 #include "runtime/CodeCacheMemorySegment.hpp"
 #include "env/j9methodServer.hpp"
-#include "control/JITaaSCompilationThread.hpp"
+#include "control/JITServerCompilationThread.hpp"
 #include "env/JITaaSPersistentCHTable.hpp"
 #include "runtime/JITaaSIProfiler.hpp"
 
@@ -768,7 +768,7 @@ void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
 J9ROMClass *
 TR::CompilationInfoPerThread::getRemoteROMClassIfCached(J9Class *clazz)
    {
-   return JITaaSHelpers::getRemoteROMClassIfCached(getClientData(), clazz);
+   return JITServerHelpers::getRemoteROMClassIfCached(getClientData(), clazz);
    }
 
 J9ROMClass *
@@ -777,9 +777,9 @@ TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memor
    auto romClass = getRemoteROMClassIfCached(clazz);
    if (romClass == NULL)
       {
-      JITaaSHelpers::ClassInfoTuple classInfoTuple;
-      romClass = JITaaSHelpers::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory(), &classInfoTuple);
-      JITaaSHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
+      JITServerHelpers::ClassInfoTuple classInfoTuple;
+      romClass = JITServerHelpers::getRemoteROMClass(clazz, getStream(), trMemory ? trMemory : TR::comp()->trMemory(), &classInfoTuple);
+      JITServerHelpers::cacheRemoteROMClass(getClientData(), clazz, romClass, &classInfoTuple);
       }
    return romClass;
    }
@@ -3463,7 +3463,7 @@ void TR::CompilationInfo::stopCompilationThreads()
          }
       catch (const JITServer::StreamFailure &e)
          {
-         JITaaSHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary));
+         JITServerHelpers::postStreamFailure(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary));
          // catch the stream failure exception if the server dies before the dummy message is send for termination.
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer StreamFailure (server unreachable before the termination message was sent): %s", e.what());
@@ -4008,7 +4008,7 @@ TR::CompilationInfoPerThread::processEntries()
       if (client)
          {
          // Inform the server that client is closing the connection with a connectionTerminate message
-         if (JITaaSHelpers::isServerAvailable())
+         if (JITServerHelpers::isServerAvailable())
             {
             try
                {
@@ -6836,7 +6836,7 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
    if (!entry->_useAotCompilation && entry->_optimizationPlan->getOptLevel() <= cold &&
       (TR::Options::getCmdLineOptions()->getOption(TR_EnableJITServerHeuristics) || localColdCompilations) ||
       !JITServer::ClientStream::isServerCompatible(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary)) ||
-      (!JITaaSHelpers::isServerAvailable() && !JITaaSHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))))
+      (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))))
       doLocalComp = true;
 
    return doLocalComp;
