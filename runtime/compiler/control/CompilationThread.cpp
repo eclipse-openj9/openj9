@@ -4002,7 +4002,19 @@ TR::CompilationInfoPerThread::processEntries()
       if (client)
          {
          // Inform the server that client is closing the connection with a connectionTerminate message
-         client->writeError(JITServer::MessageType::connectionTerminate, 0 /* placeholder */);
+         if (JITaaSHelpers::isServerAvailable())
+            {
+            try
+               {
+               client->writeError(JITServer::MessageType::connectionTerminate, 0 /* placeholder */);
+               }
+            catch (const JITServer::StreamFailure &e)
+               {
+               if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer StreamFailure when sending connectionTerminate: %s", e.what());
+               }
+            }
+
          client->~ClientStream();
          TR_Memory::jitPersistentFree(client);
          setClientStream(NULL);
