@@ -37,11 +37,13 @@ public class AttachedDataWrapperHelper {
 		if (null == cacheHeader) {
 			return U8Pointer.cast(ptr).add(I32Pointer.cast(cacheOffset.getAddress()).at(0));
 		} else {
-			UDATA offset = J9ShrOffsetPointer.cast(cacheOffset).offset();
+			J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(cacheOffset);
+			UDATA offset = j9shrOffset.offset();
 			if (offset.eq(0)) {
 				return U8Pointer.NULL;
 			}
-			return cacheHeader[0].add(offset);
+			int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
+			return cacheHeader[layer].add(offset);
 		}
 	}
 
