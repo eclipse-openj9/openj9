@@ -23,7 +23,7 @@
 #include "compile/Compilation.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
-#include "control/JITaaSCompilationThread.hpp"
+#include "control/JITServerCompilationThread.hpp"
 #include "env/ClassEnv.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
@@ -68,7 +68,7 @@ J9::ClassEnv::isClassSpecialForStackAllocation(TR_OpaqueClassBlock * clazz)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       uintptrj_t classDepthAndFlags = 0;
-      JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, TR::compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
+      JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
       return ((classDepthAndFlags & mask)?true:false);
       }
    else
@@ -101,7 +101,7 @@ J9::ClassEnv::classFlagReservableWorldInitValue(TR_OpaqueClassBlock * classPoint
    if (auto stream = TR::CompilationInfo::getStream())
       {
       uintptrj_t classFlags = 0;
-      JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)classPointer, TR::compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_FLAGS, (void *)&classFlags);
+      JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)classPointer, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_FLAGS, (void *)&classFlags);
 #ifdef DEBUG
       stream->write(JITServer::MessageType::ClassEnv_classFlagsValue, classPointer);
       uintptrj_t classFlagsRemote = std::get<0>(stream->read<uintptrj_t>());
@@ -122,7 +122,7 @@ J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       uintptrj_t classDepthAndFlags = 0;
-      JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, TR::compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
+      JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
       return (classDepthAndFlags & J9AccClassDepthMask);
       }
    return J9CLASS_DEPTH(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer));
@@ -135,7 +135,7 @@ J9::ClassEnv::classInstanceSize(TR_OpaqueClassBlock * clazzPointer)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       uintptrj_t totalInstanceSize = 0;
-      JITaaSHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, TR::compInfoPT->getClientData(), stream, JITaaSHelpers::CLASSINFO_TOTAL_INSTANCE_SIZE, (void *)&totalInstanceSize);
+      JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_TOTAL_INSTANCE_SIZE, (void *)&totalInstanceSize);
       return totalInstanceSize;
       }
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)->totalInstanceSize;

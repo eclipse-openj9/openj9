@@ -36,7 +36,7 @@
 #include "runtime/IProfiler.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "control/CompilationThread.hpp" // for TR::compInfoPT
-#include "control/JITaaSCompilationThread.hpp" // for ClientSessionData
+#include "control/JITServerCompilationThread.hpp" // for ClientSessionData
 
 #define   LOG(n,c) \
    if (_logLevel >= (3*n)) \

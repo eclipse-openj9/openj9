@@ -38,7 +38,7 @@
 #include "j9cfg.h"
 #include "jilconsts.h"
 #include "vmaccess.h"
-#include "control/JITaaSCompilationThread.hpp"
+#include "control/JITServerCompilationThread.hpp"
 
 int64_t
 J9::VMEnv::maxHeapSizeInBytes()
