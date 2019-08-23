@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -351,21 +351,62 @@ void readBHRB(uintptr_t *bhrb)
 
 #if defined(AIXPPC)
 
-// Defined by later versions of pmapi.h
-#pragma mc_func tr_pmc_read_1to4 { "48008493" }
-#pragma mc_func tr_pmc_read_5to6 { "480084D3" }
-#pragma mc_func tr_mmcr_read { "48008503" }
-#pragma mc_func tr_sampled_regs_read { "48008533" }
-#pragma mc_func tr_pmc_write { "48008563" }
-#pragma mc_func tr_mmcr_write { "480085F3" }
+//Milli calls to functions defined by later versions of pmapi.h
+static inline __attribute__((always_inline))
+int tr_pmc_read_1to4(uint32_t buf[4])
+   {
+   register uintptr_t retval asm("r3") = (uintptr_t)buf;
+   
+   asm("bla %1" : "+r" (retval) : "i" (0x00008490) : "r4", "lr");
+   return (int)retval;
+   }
 
-// XXX: However these are defined incorrectly in some versions of pmapi.h
-#pragma reg_killed_by tr_pmc_read_1to4 gr3, gr4, lr
-#pragma reg_killed_by tr_pmc_read_5to6 gr3, gr4, lr
-#pragma reg_killed_by tr_mmcr_read gr3, gr4, lr
-#pragma reg_killed_by tr_sampled_regs_read gr3, gr4, lr
-#pragma reg_killed_by tr_pmc_write gr3, gr5, cr0, lr
-#pragma reg_killed_by tr_mmcr_write gr3, gr5, cr0, lr
+static inline __attribute__((always_inline))
+int tr_pmc_read_5to6(uint32_t buf[2])
+   {
+   register uintptr_t retval asm("r3") = (uintptr_t)buf;
+
+   asm("bla %1" : "+r" (retval) : "i" (0x000084D0) : "r4", "lr");
+   return (int)retval;
+   }
+
+static inline __attribute__((always_inline))
+int tr_mmcr_read(uint64_t buf[3])
+   {
+   register uintptr_t retval asm("r3") = (uintptr_t)buf;
+
+   asm("bla %1" : "+r" (retval) : "i" (0x00008500) : "r4", "lr");
+   return (int)retval;
+   }
+
+static inline __attribute__((always_inline))
+int tr_sampled_regs_read(uint32_t buf[3])
+   {
+   register uintptr_t retval asm("r3") = (uintptr_t)buf;
+
+   asm("bla %1" : "+r" (retval) : "i" (0x00008530) : "r4", "lr");
+   return (int)retval;
+   }
+
+static inline __attribute__((always_inline))
+int tr_pmc_write(uint32_t pmc, const uint32_t *value)
+   {
+   register uint32_t retval asm("r3") = pmc;
+   register uintptr_t input asm("r4") = (uintptr_t)value;
+
+   asm("bla %1" : "+r" (retval) : "i" (0x00008560), "r" (input): "r5", "cr0", "lr");
+   return retval;
+   }
+
+static inline __attribute__((always_inline))
+int tr_mmcr_write(uint32_t mmcr, const uint64_t *value)
+   {
+   register uint32_t retval asm("r3") = mmcr;
+   register uintptr_t input asm("r4") = (uintptr_t)value;
+
+   asm("bla %1" : "+r" (retval) : "i" (0x000085F0), "r" (input) : "r5", "cr0", "lr");
+   return retval;
+   }
 
 #elif defined(LINUXPPC)
 
