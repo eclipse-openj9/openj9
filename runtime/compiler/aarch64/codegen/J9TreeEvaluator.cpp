@@ -28,6 +28,7 @@
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/ARM64Instruction.hpp"
 #include "codegen/J9ARM64Snippet.hpp"
+#include "codegen/OMRCodeGenerator.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "il/DataTypes.hpp"
@@ -459,4 +460,117 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
    cg->decReferenceCount(wrtBarNode);
 
    return NULL;
+   }
+
+static TR::Register *
+genCAS(TR::Node *node, TR::CodeGenerator *cg, TR::Register *objReg, TR::Register *offsetReg, TR::Register *oldVReg, TR::Register *newVReg, 
+      TR::LabelSymbol *doneLabel, TR::Node *objNode, int32_t oldValue, bool oldValueInReg, bool isLong, bool casWithoutSync = false)
+   {
+   TR_ASSERT_FATAL(false, "CAS generation is currently unsupported.\n");
+   }
+
+static TR::Register *
+VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
+   {
+   TR::Compilation * comp = cg->comp();
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Node *thirdChild = node->getChild(2);
+   TR::Node *fourthChild = node->getChild(3);
+   TR::Node *fifthChild = node->getChild(4);
+   TR::Register *offsetReg = NULL;
+   TR::Register *oldVReg = NULL; 
+   TR::Register *newVReg = NULL; 
+   TR::Register *resultReg = NULL;
+   TR::Register *objReg = cg->evaluate(secondChild);
+   TR::RegisterDependencyConditions *conditions = NULL;
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   intptrj_t oldValue = 0;
+   bool oldValueInReg = true;
+   offsetReg = cg->evaluate(thirdChild);
+
+   // Obtain values to be checked for, and swapped in:
+   if (fourthChild->getOpCode().isLoadConst() && fourthChild->getRegister() == NULL)
+      {
+      if (isLong)
+         oldValue = fourthChild->getLongInt();
+      else
+         oldValue = fourthChild->getInt();
+      if (constantIsUnsignedImm12(oldValue))
+         oldValueInReg = false;
+      }
+   if (oldValueInReg)
+      oldVReg = cg->evaluate(fourthChild);
+   newVReg = cg->evaluate(fifthChild);
+
+   // Determine if synchronization needed:
+   bool casWithoutSync = false;
+   TR_OpaqueMethodBlock *caller = node->getOwningMethod();
+   if (caller)
+      {
+      TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
+      TR_ResolvedMethod *m = fej9->createResolvedMethod(cg->trMemory(), caller, node->getSymbolReference()->getOwningMethod(comp));
+      if ((m->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicInteger_weakCompareAndSet)
+            || (m->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicLong_weakCompareAndSet)
+            || (m->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicReference_weakCompareAndSet))
+         {
+         casWithoutSync = true;
+         }
+      }
+
+   // Compare and swap:
+   resultReg = genCAS(node, cg, objReg, offsetReg, oldVReg, newVReg, doneLabel, secondChild, oldValue, oldValueInReg, isLong, casWithoutSync);
+
+   conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(5, 5, cg->trMemory());
+   TR::addDependency(conditions, objReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, offsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   if (oldValueInReg)
+      TR::addDependency(conditions, oldVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+
+   cg->recursivelyDecReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   cg->decReferenceCount(thirdChild);
+   if (oldValueInReg)
+      cg->decReferenceCount(fourthChild);
+   else
+      cg->recursivelyDecReferenceCount(fourthChild);
+   cg->decReferenceCount(fifthChild);
+   return resultReg;
+   }
+
+bool
+J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
+   {
+   TR::CodeGenerator *cg = self();
+   TR::MethodSymbol * methodSymbol = node->getSymbol()->getMethodSymbol();
+
+   if (methodSymbol)
+      {
+      switch (methodSymbol->getRecognizedMethod()) 
+         {
+         case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
+            {
+            if (!methodSymbol->isNative())
+               break;
+
+            if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
+               {
+               resultReg = VMinlineCompareAndSwap(node, cg, false);
+               return true;
+               }
+            break;
+            }
+         
+         default:
+            break;
+         }
+      }
+   
+   // Nothing was done
+   resultReg = NULL;
+   return false;
    }
