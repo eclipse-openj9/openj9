@@ -1470,7 +1470,12 @@ SH_CompositeCacheImpl::startup(J9VMThread* currentThread, J9SharedClassPreinitCo
 				_prevScan = _scan = (ShcItemHdr*)CCFIRSTENTRY(_theca);
 				/* For unit testing, there may not be a sharedClassConfig */
 				if (_sharedClassConfig && isFirstStart) {
-					if (NULL == _sharedClassConfig->cacheDescriptorList->cacheStartAddress) {
+					if (NULL == _previous) {
+						/* Set _sharedClassConfig->cacheDescriptorList->cacheStartAddress to _theca of _ccHead.
+						 * Do NULL check on _previous instead of _sharedClassConfig->cacheDescriptorList->cacheStartAddress because:
+						 * 1. unit test may call into here twice with different _theca, the cacheStartAddress should be updated by the second call.
+						 * 2. JVM may call into here twice if it detected an existing cache created by another JVM with a different buildID/Sha
+						 */
 						_sharedClassConfig->cacheDescriptorList->cacheStartAddress = _theca;
 						_metadataSegmentPtr = &(_sharedClassConfig->cacheDescriptorList->metadataMemorySegment);
 					}
