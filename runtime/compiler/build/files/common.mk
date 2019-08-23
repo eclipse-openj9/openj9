@@ -394,6 +394,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/net/ServerStream.cpp \
     compiler/runtime/CompileService.cpp \
     compiler/runtime/JITaaSIProfiler.cpp \
+    compiler/runtime/JITClientSession.cpp \
     compiler/runtime/Listener.cpp \
     compiler/runtime/StatisticsThread.cpp
 endif

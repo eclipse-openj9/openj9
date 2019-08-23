@@ -26,83 +26,7 @@
 #include "env/j9method.h"
 #include "env/PersistentCollections.hpp"
 #include "runtime/JITaaSIProfiler.hpp"
-
-class TR_J9MethodFieldAttributes
-   {
-public:
-   TR_J9MethodFieldAttributes() :
-      TR_J9MethodFieldAttributes(0, TR::NoType, false, false, false, false, false)
-      {}
-
-   TR_J9MethodFieldAttributes(uintptr_t fieldOffsetOrAddress,
-                              TR::DataType type,
-                              bool volatileP,
-                              bool isFinal,
-                              bool isPrivate,
-                              bool unresolvedInCP,
-                              bool result,
-                              TR_OpaqueClassBlock *definingClass = NULL) :
-      _fieldOffsetOrAddress(fieldOffsetOrAddress),
-      _type(type),
-      _volatileP(volatileP),
-      _isFinal(isFinal),
-      _isPrivate(isPrivate),
-      _unresolvedInCP(unresolvedInCP),
-      _result(result),
-      _definingClass(definingClass)
-      {}
-
-   bool operator==(const TR_J9MethodFieldAttributes &other) const
-      {
-      if (!_result && !other._result) return true; // result is false, shouldn't compare other fields
-      if (_fieldOffsetOrAddress != other._fieldOffsetOrAddress) return false;
-      if (_type.getDataType() != other._type.getDataType()) return false;
-      if (_volatileP != other._volatileP) return false;
-      if (_isFinal != other._isFinal) return false;
-      if (_isPrivate != other._isPrivate) return false;
-      if (_unresolvedInCP != other._unresolvedInCP) return false;
-      if (_result != other._result) return false;
-      if (_definingClass != other._definingClass) return false;
-      return true;
-      }
-   
-   void setMethodFieldAttributesResult(uint32_t *fieldOffset, TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result, TR_OpaqueClassBlock **definingClass = NULL)
-      {
-      setMethodFieldAttributesResult(type, volatileP, isFinal, isPrivate, unresolvedInCP, result, definingClass);
-      if (fieldOffset) *fieldOffset = static_cast<uint32_t>(_fieldOffsetOrAddress);
-      }
-
-   void setMethodFieldAttributesResult(void **address, TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result, TR_OpaqueClassBlock **definingClass = NULL)
-      {
-      setMethodFieldAttributesResult(type, volatileP, isFinal, isPrivate, unresolvedInCP, result, definingClass);
-      if (address) *address = reinterpret_cast<void *>(_fieldOffsetOrAddress);
-      }
-
-   bool isUnresolvedInCP() const { return _unresolvedInCP; }
-
-private:
-   void setMethodFieldAttributesResult(TR::DataType *type, bool *volatileP, bool *isFinal, bool *isPrivate, bool *unresolvedInCP, bool *result, TR_OpaqueClassBlock **definingClass = NULL)
-      {
-      if (type) *type = _type;
-      if (volatileP) *volatileP = _volatileP;
-      if (isFinal) *isFinal = _isFinal;
-      if (isPrivate) *isPrivate = _isPrivate;
-      if (unresolvedInCP) *unresolvedInCP = _unresolvedInCP;
-      if (result) *result = _result;
-      if (definingClass) *definingClass = _definingClass;
-      }
-
-   uintptr_t _fieldOffsetOrAddress; // Stores a uint32_t representing an offset for non-static fields, or an address for static fields.
-   TR::DataType _type; 
-   bool _volatileP;
-   bool _isFinal;
-   bool _isPrivate;
-   bool _unresolvedInCP;
-   bool _result;
-   TR_OpaqueClassBlock *_definingClass; // only needed for AOT compilations
-   };
-
-using TR_FieldAttributesCache = PersistentUnorderedMap<int32_t, TR_J9MethodFieldAttributes>;
+#include "runtime/JITClientSession.hpp"
 
 struct
 TR_ResolvedJ9JITaaSServerMethodInfoStruct
@@ -127,32 +51,6 @@ TR_ResolvedJ9JITaaSServerMethodInfoStruct
 
 // The last 3 strings are serialized versions of jittedBodyInfo, persistentMethodInfo and TR_ContiguousIPMethodHashTableInfo
 using TR_ResolvedJ9JITaaSServerMethodInfo = std::tuple<TR_ResolvedJ9JITaaSServerMethodInfoStruct, std::string, std::string, std::string>;
-
-struct
-TR_RemoteROMStringKey
-   {
-   void *basePtr;
-   uint32_t offsets;
-   bool operator==(const TR_RemoteROMStringKey &other) const
-      {
-      return (basePtr == other.basePtr) && (offsets == other.offsets);
-      }
-   };
-
-// define a hash function for TR_RemoteROMStringKey
-namespace std 
-   {
-   template <>
-   struct hash<TR_RemoteROMStringKey>
-      {
-      std::size_t operator()(const TR_RemoteROMStringKey &k) const
-         {
-         // Compute a hash for the table of ROM strings by hashing basePtr and offsets 
-         // separately and then XORing them
-         return (std::hash<void *>()(k.basePtr)) ^ (std::hash<uint32_t>()(k.offsets));
-         }
-      };
-   }
 
 // key used to identify a resolved method in resolved methods cache.
 // Since one cache contains different types of resolved methods, need to uniquely identify
