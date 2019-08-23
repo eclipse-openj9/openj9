@@ -79,9 +79,9 @@ static void freePackage(J9VMThread * currentThread, J9Package * j9package);
 static J9ClassLoader * getModuleObjectClassLoader(J9VMThread * currentThread, j9object_t moduleObject);
 static J9Module * createModule(J9VMThread * currentThread, j9object_t moduleObject, J9ClassLoader * classLoader, j9object_t moduleName);
 static J9Module * getJ9Module(J9VMThread * currentThread, jobject module);
-static BOOLEAN isModuleNameValid(j9object_t moduleName);
+static BOOLEAN isModuleNameValid(J9VMThread * currentThread, j9object_t moduleName);
 static BOOLEAN isModuleJavaBase(j9object_t moduleName);
-static BOOLEAN isModuleNameGood(j9object_t moduleName);
+static BOOLEAN isModuleNameGood(J9VMThread * currentThread, j9object_t moduleName);
 static UDATA allowReadAccessToModule(J9VMThread * currentThread, J9Module * fromModule, J9Module * toModule);
 static void trcModulesAddReadsModule(J9VMThread *currentThread, jobject toModule, J9Module *j9FromMod, J9Module *j9ToMod);
 
@@ -556,21 +556,40 @@ isModuleJavaBase(j9object_t moduleName)
 	return FALSE;
 }
 
+/** @return if the moduleName follows Naming Rules */
 static BOOLEAN
-isModuleNameGood(j9object_t moduleName)
+isModuleNameGood(J9VMThread * currentThread, j9object_t moduleName)
 {
-	/** @todo implement this */
+	/*
+	 * Dot should not be the first char in moduleName
+	 * There should not be two consecutive dots in moduleName
+	 */
+	J9InternalVMFunctions *vmFuncs = currentThread->javaVM->internalVMFunctions;
+	UDATA stringLength = J9VMJAVALANGSTRING_LENGTH(currentThread, moduleName);
+	BOOLEAN lastCharIsDot = TRUE;
+	const U_8 utfData[1] = { 46 };
+	for (UDATA index = 0; index < stringLength; index++) {
+		UDATA isDot = vmFuncs->comparePartialStringToUTF8FromOffset(currentThread, moduleName, stringLength, 0, utfData, 1, index);
+		if (isDot) {
+			if (lastCharIsDot) {
+				return FALSE;
+			}
+			lastCharIsDot = TRUE;
+		} else {
+			lastCharIsDot = FALSE;
+		}
+	}
 	return TRUE;
 }
 
 static BOOLEAN
-isModuleNameValid(j9object_t moduleName)
+isModuleNameValid(J9VMThread * currentThread, j9object_t moduleName)
 {
 	BOOLEAN retval = FALSE;
 
 	if (NULL != moduleName) {
 		if (!isModuleJavaBase(moduleName)) {
-			retval = isModuleNameGood(moduleName);
+			retval = isModuleNameGood(currentThread, moduleName);
 		}
 	}
 
@@ -750,7 +769,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 
 		if (NULL == moduleName) {
 			vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, J9NLS_VM_MODULE_IS_UNNAMED);
-		} else if (!isModuleNameValid(moduleName)) {
+		} else if (!isModuleNameValid(currentThread, moduleName)) {
 			vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, J9NLS_VM_MODULE_NAME_IS_INVALID);
 		} else if (NULL == classLoader) {
 			/* An exception should be pending if classLoader is null */

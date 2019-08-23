@@ -2846,6 +2846,18 @@ compareStrings(J9VMThread *vmThread, j9object_t string1, j9object_t string2);
 UDATA
 compareStringToUTF8(J9VMThread * vmThread, j9object_t stringObject, UDATA stringFlags, const U_8 * utfData, UDATA utfLength);
 
+/**
+ * @brief
+ * @param *javaVM
+ * @param *stringObject
+ * @param stringFlags
+ * @param *utfData
+ * @param utfLength
+ * @param offset
+ * @returns UDATA
+ */
+UDATA
+comparePartialStringToUTF8FromOffset(J9VMThread *vmThread, j9object_t string, UDATA stringLength, UDATA translateDots, const U_8 * utfData, UDATA utfLength, UDATA offset);
 
 /**
 * @brief

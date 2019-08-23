@@ -235,6 +235,7 @@ J9InternalVMFunctions J9InternalFunctions = {
 	setClassCastException,
 	compareStrings,
 	compareStringToUTF8,
+	comparePartialStringToUTF8FromOffset,
 	prepareForExceptionThrow,
 	copyUTF8ToUnicode,
 	verifyQualifiedName,
