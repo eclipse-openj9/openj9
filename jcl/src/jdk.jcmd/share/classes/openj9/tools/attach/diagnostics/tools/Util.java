@@ -28,8 +28,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -136,6 +138,18 @@ public class Util {
 			}
 		} catch (AttachNotSupportedException | IOException e) {
 			outputBuffer.append(" <no information available>"); //$NON-NLS-1$
+		}
+	}
+
+	/**
+	 * Print the Properties object in key-value format.
+	 * This differs from Properties.list() in that it does not truncate long values.
+	 * @param out
+	 * @param props
+	 */
+	static void printProperties(PrintStream out, Properties props) {
+		for ( Entry<Object, Object> theEntry : props.entrySet()) {
+			out.printf("%s=%s%n", theEntry.getKey(), theEntry.getValue()); //$NON-NLS-1$
 		}
 	}
 
