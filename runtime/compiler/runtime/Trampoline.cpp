@@ -860,6 +860,8 @@ void armCodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *
 
 #if defined(TR_TARGET_ARM64)
 
+#define TRAMPOLINE_SIZE         16
+
 void arm64CodeCacheConfig(int32_t ccSizeInByte, int32_t *numTempTrampolines)
    {
    *numTempTrampolines = 0;
@@ -867,15 +869,15 @@ void arm64CodeCacheConfig(int32_t ccSizeInByte, int32_t *numTempTrampolines)
 
 void arm64CreateHelperTrampolines(void *trampPtr, int32_t numHelpers)
    {
-   uint32_t *buffer = (uint32_t *)((uint8_t *)trampPtr + 16);
+   uint32_t *buffer = (uint32_t *)((uint8_t *)trampPtr + TRAMPOLINE_SIZE);
    for (int32_t i=1; i<numHelpers; i++)
       {
-      *((int32_t *)buffer) = 0x58000110; //LDR R16 PC+8
+      *((int32_t *)buffer) = 0x58000050; //LDR R16 PC+8
       buffer += 1; 
       *buffer = 0xD61F0200; //BR R16
       buffer += 1;
       *((intptrj_t *)buffer) = (intptrj_t)runtimeHelperValue((TR_RuntimeHelper)i);
-      buffer += 1;
+      buffer += 2;
       }
    }
 
@@ -948,7 +950,7 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
 
 void arm64CodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *numHelpers, int32_t* CCPreLoadedCodeSize)
    {
-   *trampolineSize = 16;
+   *trampolineSize = TRAMPOLINE_SIZE;
    callBacks[0] = (void *)&arm64CodeCacheConfig;
    callBacks[1] = (void *)&arm64CreateHelperTrampolines;
    callBacks[2] = (void *)&arm64CreateMethodTrampoline;
@@ -957,6 +959,8 @@ void arm64CodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t
    *CCPreLoadedCodeSize = 0;
    *numHelpers = TR_ARM64numRuntimeHelpers;
    }
+
+#undef TRAMPOLINE_SIZE
 
 #endif /* TR_TARGET_ARM64 */
 
