@@ -75,6 +75,9 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
     * @return Endoded BL instruction
     */
    uint32_t encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node);
+   
+   bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg);
+   
    };
 
 }
