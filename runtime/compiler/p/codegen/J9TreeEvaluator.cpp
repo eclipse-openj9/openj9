@@ -962,6 +962,7 @@ J9::Power::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
    TR::Register *cpIndexReg = cg->allocateRegister();
    TR::Register *resultReg = cg->allocateRegister();
    TR::Register *scratchReg = cg->allocateRegister();
+   TR::Register *jumpReg = cg->allocateRegister();
    
    // Check if snippet has been loaded
    if (!isStatic && !static_cast<TR::J9PPCWatchedInstanceFieldSnippet *>(dataSnippet)->isSnippetLoaded() ||
@@ -971,9 +972,10 @@ J9::Power::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
  
    // Setup Dependencies
    // dataSnippetRegister is always used during OOL sequence.
-   // Requires two argument registers resultReg, and cpIndexReg. 
-   // Static requires an extra arugment fieldClassReg 
-   uint8_t numOfConditions = isStatic? 4 : 3;
+   // Requires two argument registers: resultReg and cpIndexReg. 
+   // Static requires an extra arugment fieldClassReg
+   // jumpReg used by trampoline
+   uint8_t numOfConditions = isStatic? 5 : 4;
    TR::RegisterDependencyConditions  *deps =  new (cg->trHeapMemory()) TR::RegisterDependencyConditions(numOfConditions, numOfConditions, cg->trMemory());
    
    deps->addPreCondition(dataSnippetRegister, TR::RealRegister::NoReg);
@@ -1037,6 +1039,9 @@ J9::Power::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
    // cpIndexReg is the second argument
    deps->addPreCondition(cpIndexReg, TR::RealRegister::gr4);
    deps->addPostCondition(cpIndexReg, TR::RealRegister::gr4);
+   // jumpReg is used in trampoline to store callee address
+   deps->addPreCondition(jumpReg, TR::RealRegister::gr11);
+   deps->addPostCondition(jumpReg, TR::RealRegister::gr11);
 
    // Generate helper address and branch
    TR::SymbolReference *helperSym = comp->getSymRefTab()->findOrCreateRuntimeHelper(helperIndex, false, false, false);
@@ -1064,6 +1069,7 @@ J9::Power::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
    cg->stopUsingRegister(cndReg);
    cg->stopUsingRegister(cpIndexReg);
    cg->stopUsingRegister(resultReg);
+   cg->stopUsingRegister(jumpReg);
 
    }
 
@@ -1097,9 +1103,11 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
    TR::Linkage *linkage = cg->getLinkage(runtimeHelperLinkage(helperIndex));
    auto linkageProperties = linkage->getProperties();
    TR::Register *valueReferenceReg = NULL;
+   TR::Register *jumpReg = cg->allocateRegister();
 
    // First argument is always the data block.
-   uint8_t numOfConditions = 1;
+   // One register used by trampoline
+   uint8_t numOfConditions = 2;
    // Instance field report needs the base object
    if (isInstanceField)
       numOfConditions++;
@@ -1170,6 +1178,10 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
       deps->addPostCondition(valueReferenceReg, TR::RealRegister::gr5);
       }
 
+   // Register ued by trampoline to store callee address
+   deps->addPreCondition(jumpReg, TR::RealRegister::gr11);
+   deps->addPostCondition(jumpReg, TR::RealRegister::gr11);
+
    // Generate branch instruction to jump into helper
    TR::SymbolReference *helperSym = cg->comp()->getSymRefTab()->findOrCreateRuntimeHelper(helperIndex, false, false, false);
    TR::Instruction *call = generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, reinterpret_cast<uintptrj_t>(helperSym->getMethodAddress()), deps, helperSym);
@@ -1178,6 +1190,7 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
    generateLabelInstruction(cg, TR::InstOpCode::b, node, endLabel);
 
    cg->stopUsingRegister(valueReferenceReg);
+   cg->stopUsingRegister(jumpReg);
 
    }
 
