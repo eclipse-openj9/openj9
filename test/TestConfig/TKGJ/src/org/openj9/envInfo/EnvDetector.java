@@ -66,7 +66,7 @@ public class EnvDetector {
 		 */
 		BufferedWriter output = null;
 		try {
-			output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("../autoGenEnv.mk")));
+			output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("autoGenEnv.mk")));
 			output.write("########################################################\n");
 			output.write("# This is an auto generated file. Please do NOT modify!\n");
 			output.write("########################################################\n");

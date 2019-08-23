@@ -25,6 +25,7 @@ use Data::Dumper;
 use feature 'say';
 use strict;
 use warnings;
+use File::Compare;
 
 my $headerComments =
 	"########################################################\n"
@@ -226,6 +227,7 @@ sub generateMk {
 		if ($playlistXML) {
 			$rt |= xml2mk($makeFile, $playlistXML, $currentdirs, $subdirsHavePlaylist);
 		}
+		validateTKGJ($makeFile);
 	}
 	return $rt;
 }
@@ -1072,6 +1074,7 @@ sub dependGen {
 
 	close $fhOut;
 	print "\nGenerated $dependmk\n";
+	validateTKGJ($dependmkpath);
 }
 
 sub utilsGen {
@@ -1092,6 +1095,7 @@ sub utilsGen {
 
 	close $fhOut;
 	print "\nGenerated $utilsmk\n";
+	validateTKGJ($utilsmkpath);
 }
 
 sub countGen {
@@ -1101,7 +1105,7 @@ sub countGen {
 
 	print $fhOut "_GROUPTARGET = \$(firstword \$(MAKECMDGOALS))\n\n";
 	print $fhOut "GROUPTARGET = \$(patsubst _%,%,\$(_GROUPTARGET))\n\n";
-	foreach my $lgtKey (keys %targetCount) {
+	foreach my $lgtKey (sort keys %targetCount) {
 		print $fhOut "ifeq (\$(GROUPTARGET),$lgtKey)\n";
 		print $fhOut "\tTOTALCOUNT := $targetCount{$lgtKey}\n";
 		print $fhOut "endif\n\n";
@@ -1109,7 +1113,13 @@ sub countGen {
 
 	close $fhOut;
 	print "\nGenerated $countmk\n";
+	validateTKGJ($countmkpath);
 }
 
-
+# TODO: remove 
+sub validateTKGJ {
+	if (compare($_[0], $_[0] . ".tkgj") != 0) {
+		say "Warning: tkgj failed!\n";
+	}
+}
 1;

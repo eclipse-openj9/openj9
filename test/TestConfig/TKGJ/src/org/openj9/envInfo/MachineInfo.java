@@ -27,6 +27,7 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.file.*;
 import java.lang.management.ManagementFactory;
+
 public class MachineInfo {
 	private static final int _1 = 1;
 	public static String UNAME_CMD = "uname -a";
@@ -69,7 +70,7 @@ public class MachineInfo {
 	String sysVirt = "Unknown";
 	long totalMemory = -1;
 	long freeMemory = -1;
-	
+
 	String vmVendor = "";
 	String vmVersion = "";
 	String specVendor = "";
@@ -77,22 +78,11 @@ public class MachineInfo {
 	String javaVersion = "";
 
 	public String toString() {
-		return "\nuname: " + uname
-		+ "\ncpuCores: " + cpuCores 
-		+ "\nsysArch: " + sysArch 
-		+ "\nprocArch: " + procArch 
-		+ "\nsysOS: " + sysOS
-		+ "\nulimit: " + ulimit 
-		+ "\n"
-		+ "\nvmVendor: " + vmVendor 
-		+ "\nvmVersion: " + vmVersion 
-		+ "\nspecVendor: " + specVendor 
-		+ "\nspecVersion: " + specVersion 
-		+ "\njavaVersion: " + javaVersion 
-		+ "\n"
-		+"\nTotal memory (bytes): " + totalMemory
-		+"\nFree memory (bytes): " + freeMemory
-		+ "\n";
+		return "\nuname: " + uname + "\ncpuCores: " + cpuCores + "\nsysArch: " + sysArch + "\nprocArch: " + procArch
+				+ "\nsysOS: " + sysOS + "\nulimit: " + ulimit + "\n" + "\nvmVendor: " + vmVendor + "\nvmVersion: "
+				+ vmVersion + "\nspecVendor: " + specVendor + "\nspecVersion: " + specVersion + "\njavaVersion: "
+				+ javaVersion + "\n" + "\nTotal memory (bytes): " + totalMemory + "\nFree memory (bytes): " + freeMemory
+				+ "\n";
 	}
 
 	public long getFreeMemory() {
@@ -114,7 +104,7 @@ public class MachineInfo {
 	public String getUname() {
 		return uname;
 	}
-	
+
 	public String getUlimit() {
 		return ulimit;
 	}
@@ -126,7 +116,7 @@ public class MachineInfo {
 	public void setUlimit(String ulimit) {
 		this.ulimit = ulimit;
 	}
-	
+
 	public String getVmVendor() {
 		return vmVendor;
 	}
@@ -259,18 +249,19 @@ public class MachineInfo {
 	}
 
 	public void getMachineInfo(String command) {
-		try { 
+		try {
 			Process proc = null;
-			// ulimit needs to be invoked via shell with -c option for it to work on all platforms
-			if (command.equals(MachineInfo.ULIMIT_CMD)) { 
+			// ulimit needs to be invoked via shell with -c option for it to work on all
+			// platforms
+			if (command.equals(MachineInfo.ULIMIT_CMD)) {
 				proc = Runtime.getRuntime().exec(new String[] { "bash", "-c", MachineInfo.ULIMIT_CMD });
 			} else {
 				proc = Runtime.getRuntime().exec(command);
 			}
-			
+
 			BufferedReader sout = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 			String line = sout.readLine();
-	
+
 			if (command.equals(MachineInfo.UNAME_CMD)) {
 				setUname(line);
 			} else if (command.equals(MachineInfo.ULIMIT_CMD)) {
@@ -280,7 +271,7 @@ public class MachineInfo {
 					if (rest == null) {
 						break;
 					}
-					line = line + "\n" + rest; 
+					line = line + "\n" + rest;
 				}
 				setUlimit(line);
 			} else if (command.equals(MachineInfo.SYS_ARCH_CMD)) {

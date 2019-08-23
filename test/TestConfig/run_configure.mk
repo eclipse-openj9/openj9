@@ -36,7 +36,8 @@ endif
 testconfig:
 ifneq ($(AUTO_DETECT), false)
 	@echo "AUTO_DETECT is set to true"
-	ant -f ./src/build_envInfo.xml -DTEST_JDK_HOME=$(TEST_JDK_HOME)
+	ant -f ./TKGJ/build_tools.xml -DTEST_JDK_HOME=$(TEST_JDK_HOME)
+	${TEST_JDK_HOME}/bin/java -cp ./TKGJ/TestKitGen.jar org.openj9.envInfo.EnvDetector JavaInfo
 else
 	@echo "AUTO_DETECT is set to false"
 endif
