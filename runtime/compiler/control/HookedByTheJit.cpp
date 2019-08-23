@@ -492,22 +492,45 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
             // AOT Body not in SCC, so scount was not set
             else if (!TR::Options::getCountsAreProvidedByUser())
                {
-               // Because C-interpreter is slower we need to rely more on jitted code
-               // This means compiling more, but we have to be careful
-               // Let's use some smaller than normal counts, but only if
-               // 1) Quickstart - because we don't risk losing iprofiling info
-               // 2) GracePeriod - because we want to limit the number of 'extra'
-               //                  compilations and short apps are affected more
-               // 3) Bootstrap - same as above, plus if these methods get into the
-               //                SCC I would rather have non-app specific methods
-               // 4) Cold run - we want to avoid extra compilations in warm runs
-               // The danger is that very small applications that don't even get to AOT 200 methods
-               // may think that the runs are always cold
-               if (TR::Options::getCmdLineOptions()->getOption(TR_LowerCountsForAotCold) &&
-                   compInfo->isWarmSCC() == TR_no &&
-                   compInfo->getPersistentInfo()->getElapsedTime() <= (uint64_t)compInfo->getPersistentInfo()->getClassLoadingPhaseGracePeriod() &&
-                   TR::Options::isQuickstartDetected() &&
-                   fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method)) // is this an expensive call here?
+               bool useLowerCountsForAOTCold = false;
+               if (TR::Options::getCmdLineOptions()->getOption(TR_LowerCountsForAotCold) && compInfo->isWarmSCC() == TR_no)
+                  {
+                  // Because C-interpreter is slower we need to rely more on jitted code
+                  // This means compiling more, but we have to be careful.
+                  // Let's use some smaller than normal counts in the cold run (to avoid
+                  // extra compilations in the warm runs), but only if
+                  //
+                  // 1) The Default SCC isn't used - because we don't want to increase footprint
+                  //
+                  // OR
+                  //
+                  // 1) Quickstart - because we don't risk losing iprofiling info
+                  // 2) GracePeriod - because we want to limit the number of 'extra'
+                  //                  compilations and short apps are affected more
+                  // 3) Bootstrap - same as above, plus if these methods get into the
+                  //                SCC I would rather have non-app specific methods
+                  //
+                  // The danger is that very small applications that don't even get to AOT 200 methods
+                  // may think that the runs are always cold
+
+
+                  // J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES is a good proxy for whether the
+                  // Default SCC is set because, when -Xshareclasses option is used, by default non
+                  // bootstrap loaded classes are put into the SCC. However, if the -Xshareclasses
+                  // option isn't used, then the Default SCC only contains bootstrap loaded classes.
+                  if (J9_ARE_ALL_BITS_SET(jitConfig->javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES))
+                     {
+                     useLowerCountsForAOTCold = true;
+                     }
+                  else if (compInfo->getPersistentInfo()->getElapsedTime() <= (uint64_t)compInfo->getPersistentInfo()->getClassLoadingPhaseGracePeriod() &&
+                           TR::Options::isQuickstartDetected() &&
+                           fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method))
+                     {
+                     useLowerCountsForAOTCold = true;
+                     }
+                  }
+
+               if (useLowerCountsForAOTCold)
                   {
                   // TODO: modify the function that reads a specified count such that
                   // if the user specifies a count or bcount on the command line that is obeyed
