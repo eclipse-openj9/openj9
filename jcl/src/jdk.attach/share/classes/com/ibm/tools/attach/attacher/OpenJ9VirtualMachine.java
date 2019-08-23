@@ -148,8 +148,8 @@ public final class OpenJ9VirtualMachine extends VirtualMachine implements Respon
 
 	private void attachTargetImpl() throws AttachNotSupportedException, IOException {
 		if (null == descriptor) {
-			/*[MSG "K0531", "target not found"]*/
-			throw new AttachNotSupportedException(getString("K0531")); //$NON-NLS-1$
+			/*[MSG "K0531", "target {0} not found"]*/
+			throw new AttachNotSupportedException(getString("K0531", targetId)); //$NON-NLS-1$
 		}
 		AttachNotSupportedException lastException = null;
 		/*[PR CMVC 182802 ]*/
