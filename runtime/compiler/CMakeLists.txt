@@ -68,6 +68,7 @@ add_custom_command(
 add_custom_target(j9jit_tracegen DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/env/ut_j9jit.h)
 
 # JITSERVER_SUPPORT and protobuf
+set(JITSERVER_SUPPORT ON)
 if(JITSERVER_SUPPORT)
 	message(STATUS "JITServer is supported")
 	add_definitions(-DJITSERVER_SUPPORT)
