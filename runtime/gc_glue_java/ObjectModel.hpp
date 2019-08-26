@@ -588,12 +588,10 @@ public:
 			size = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
 		}
 
-#if defined(OMR_GC_HYBRID_ARRAYLETS)
 		if (0 == size) {
 			/* Discontiguous */
 			size = ((J9IndexableObjectDiscontiguous *)forwardedHeader->getObject())->size;
 		}
-#endif
 
 		return size;
 	}

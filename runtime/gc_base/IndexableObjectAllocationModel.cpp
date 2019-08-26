@@ -119,29 +119,22 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	_allocateDescription.setSpine(spine);
 	if (NULL != spine) {
 		/* Set the array size */
-#if defined(OMR_GC_HYBRID_ARRAYLETS)
 		if (getAllocateDescription()->isChunkedArray()) {
 			extensions->indexableObjectModel.setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
 		} else {
 			extensions->indexableObjectModel.setSizeInElementsForContiguous(spine, _numberOfIndexedFields);
 		}
-#else
-		extensions->indexableObjectModel.setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
-#endif	/* defined(OMR_GC_HYBRID_ARRAYLETS) */
 	}
 
 
 	/* Lay out arraylet and arrayoid pointers */
 	switch (_layout) {
 	case GC_ArrayletObjectModel::InlineContiguous:
-#if defined(OMR_GC_HYBRID_ARRAYLETS)
 		Assert_MM_true(1 == _numberOfArraylets);
-#else /* OMR_GC_HYBRID_ARRAYLETS */
 		if (NULL != spine) {
 			/* Establish arraylet pointers */
 			spine = layoutContiguousArraylet(env, spine);
 		}
-#endif /* OMR_GC_HYBRID_ARRAYLETS */
 		break;
 
 	case GC_ArrayletObjectModel::Discontiguous:
