@@ -76,6 +76,20 @@ TR_ResolvedMethodKey
    };
 
 
+struct TR_IsUnresolvedString
+   {
+   TR_IsUnresolvedString():
+      _optimizeForAOTTrueResult(false),
+      _optimizeForAOTFalseResult(false)
+   {}
+   TR_IsUnresolvedString(bool optimizeForAOTTrueResult, bool optimizeForAOTFalseResult):
+      _optimizeForAOTTrueResult(optimizeForAOTTrueResult),
+      _optimizeForAOTFalseResult(optimizeForAOTFalseResult)
+   {}
+   bool _optimizeForAOTTrueResult;
+   bool _optimizeForAOTFalseResult;
+   };
+
 // define a hash function for TR_ResolvedMethodKey
 namespace std
    {
@@ -184,8 +198,6 @@ public:
 protected:
    JITServer::ServerStream *_stream;
    J9Class *_ramClass; // client pointer to RAM class
-   UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _fieldAttributesCache;
-   UnorderedMap<uint32_t, TR_J9MethodFieldAttributes> _staticAttributesCache;
    static void packMethodInfo(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe);
    static void setAttributeResultFromResolvedMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, U_32 * fieldOffset, void **address, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool * unresolvedInCP, bool *result, bool isStatic);
    virtual bool getCachedFieldAttributes(int32_t cpIndex, TR_J9MethodFieldAttributes &attributes, bool isStatic);
@@ -208,17 +220,7 @@ private:
    bool _virtualMethodIsOverridden; // cached information coming from client
    TR_PersistentJittedBodyInfo *_bodyInfo; // cached info coming from the client; uses heap memory
                                            // If method is not yet compiled this is null
-   UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry> _resolvedMethodsCache;
    TR_IPMethodHashTableEntry *_iProfilerMethodEntry;
-
-   struct TR_IsUnresolvedString
-      {
-      TR_IsUnresolvedString(bool optimizeForAOTTrueResult, bool optimizeForAOTFalseResult): _optimizeForAOTTrueResult(optimizeForAOTTrueResult),
-                                                                                            _optimizeForAOTFalseResult(optimizeForAOTFalseResult) {}
-      bool _optimizeForAOTTrueResult;
-      bool _optimizeForAOTFalseResult;
-      };
-   UnorderedMap<I_32, TR_IsUnresolvedString> _isUnresolvedStr;
 
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);

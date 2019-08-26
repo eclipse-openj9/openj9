@@ -4268,12 +4268,45 @@ TR::CompilationInfoPerThreadRemote::getCachedNullClassOfStatic(TR_OpaqueClassBlo
    }
 
 void
+TR::CompilationInfoPerThreadRemote::cacheFieldOrStaticAttributes(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, const TR_J9MethodFieldAttributes &attrs, bool isStatic)
+   {
+   if (isStatic)
+      cacheToPerCompilationMap(_staticAttributesCache, std::make_pair(ramClass, cpIndex), attrs);
+   else
+      cacheToPerCompilationMap(_fieldAttributesCache, std::make_pair(ramClass, cpIndex), attrs);
+   }
+
+bool
+TR::CompilationInfoPerThreadRemote::getCachedFieldOrStaticAttributes(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_J9MethodFieldAttributes &attrs, bool isStatic)
+   {
+   if (isStatic)
+      return getCachedValueFromPerCompilationMap(_staticAttributesCache, std::make_pair(ramClass, cpIndex), attrs);
+   else
+      return getCachedValueFromPerCompilationMap(_fieldAttributesCache, std::make_pair(ramClass, cpIndex), attrs);
+   }
+
+void
+TR::CompilationInfoPerThreadRemote::cacheIsUnresolvedStr(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, const TR_IsUnresolvedString &stringAttrs)
+   {
+   cacheToPerCompilationMap(_isUnresolvedStrCache, std::make_pair(ramClass, cpIndex), stringAttrs);
+   }
+
+bool
+TR::CompilationInfoPerThreadRemote::getCachedIsUnresolvedStr(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_IsUnresolvedString &stringAttrs)
+   {
+   return getCachedValueFromPerCompilationMap(_isUnresolvedStrCache, std::make_pair(ramClass, cpIndex), stringAttrs);
+   }
+
+void
 TR::CompilationInfoPerThreadRemote::clearPerCompilationCaches()
    {
    clearPerCompilationCache(_methodIPDataPerComp);
    clearPerCompilationCache(_resolvedMethodInfoMap);
    clearPerCompilationCache(_resolvedMirrorMethodsPersistIPInfo);
    clearPerCompilationCache(_classOfStaticMap);
+   clearPerCompilationCache(_fieldAttributesCache);
+   clearPerCompilationCache(_staticAttributesCache);
+   clearPerCompilationCache(_isUnresolvedStrCache);
    }
 
 void
