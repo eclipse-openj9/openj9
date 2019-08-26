@@ -190,16 +190,16 @@ class JITServerHelpers
    // to not mess with the established order.
    using ClassInfoTuple = std::tuple
       <
-      std::string, J9Method *,                                       // 0: string                  1: methodsOfClass
-      TR_OpaqueClassBlock *, int32_t,                                // 2: baseComponentClass      3: numDimensions
-      TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>,     // 4: parentClass             5: tmpInterfaces
-      std::vector<uint8_t>, bool,                                    // 6: methodTracingInfo       7: classHasFinalFields
-      uintptrj_t, bool,                                              // 8: classDepthAndFlags      9: classInitialized
-      uint32_t, TR_OpaqueClassBlock *,                               // 10: byteOffsetToLockword   11: leafComponentClass
-      void *, TR_OpaqueClassBlock *,                                 // 12: classLoader            13: hostClass
-      TR_OpaqueClassBlock *, TR_OpaqueClassBlock *,                  // 14: componentClass         15: arrayClass
-      uintptrj_t, J9ROMClass *,                                      // 16: totalInstanceSize      17: remoteRomClass
-      uintptrj_t, uintptrj_t                                         // 18: _constantPool          19: classFlags
+      std::string, J9Method *,                                       // 0: string                   1: _methodsOfClass
+      TR_OpaqueClassBlock *, int32_t,                                // 2: _baseComponentClass      3: _numDimensions
+      TR_OpaqueClassBlock *, std::vector<TR_OpaqueClassBlock *>,     // 4: _parentClass             5: _tmpInterfaces
+      std::vector<uint8_t>, bool,                                    // 6: _methodTracingInfo       7: _classHasFinalFields
+      uintptrj_t, bool,                                              // 8: _classDepthAndFlags      9: _classInitialized
+      uint32_t, TR_OpaqueClassBlock *,                               // 10: _byteOffsetToLockword   11: _leafComponentClass
+      void *, TR_OpaqueClassBlock *,                                 // 12: _classLoader            13: _hostClass
+      TR_OpaqueClassBlock *, TR_OpaqueClassBlock *,                  // 14: _componentClass         15: _arrayClass
+      uintptrj_t, J9ROMClass *,                                      // 16: _totalInstanceSize      17: _remoteRomClass
+      uintptrj_t, uintptrj_t                                         // 18: _constantPool           19: _classFlags
       >;
    static ClassInfoTuple packRemoteROMClassInfo(J9Class *clazz, J9VMThread *vmThread, TR_Memory *trMemory);
    static void cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Class *clazz, J9ROMClass *romClass, ClassInfoTuple *classInfoTuple);

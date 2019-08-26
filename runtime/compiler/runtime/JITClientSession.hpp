@@ -45,6 +45,10 @@ using IPTable_t = PersistentUnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>
 using TR_JitFieldsCacheEntry = std::pair<J9Class*, UDATA>;
 using TR_JitFieldsCache = PersistentUnorderedMap<int32_t, TR_JitFieldsCacheEntry>;
 
+/**
+   @class TR_J9MethodFieldAttributes
+   @brief Class used for caching various field attributes of a j9method
+ */
 
 class TR_J9MethodFieldAttributes
    {
@@ -137,11 +141,11 @@ struct ClassLoaderStringPair
 
 struct TR_RemoteROMStringKey
    {
-   void *basePtr;
-   uint32_t offsets;
+   void *_basePtr;
+   uint32_t _offsets;
    bool operator==(const TR_RemoteROMStringKey &other) const
       {
-      return (basePtr == other.basePtr) && (offsets == other.offsets);
+      return (_basePtr == other._basePtr) && (_offsets == other._offsets);
       }
    };
 
@@ -173,7 +177,7 @@ namespace std
          {
          // Compute a hash for the table of ROM strings by hashing basePtr and offsets 
          // separately and then XORing them
-         return (std::hash<void *>()(k.basePtr)) ^ (std::hash<uint32_t>()(k.offsets));
+         return (std::hash<void *>()(k._basePtr)) ^ (std::hash<uint32_t>()(k._offsets));
          }
       };
    }
@@ -195,33 +199,57 @@ struct J9MethodNameAndSignature
    std::string _methodSignatureStr;
    };
 
+/**
+   @class ClientSessionData
+   @brief Data structure that holds data specific to a client
+
+   An object of type ClientSessionData is created when a JITClient connects
+   for the first time to a server and it's destroyed when the client informs
+   the server that it is going to shutdown, or when the JITServer purges stale
+   data belonging to clients that haven't connected for a long time.
+   Because a ClientSessionObject can be accessed in parallel by different threads
+   (several compilation threads from the client can issue compilation requests)
+   access to most fields need to be protected by monitors.
+ */
+
 class ClientSessionData
    {
    public:
+   /**
+      @class ClassInfo
+      @brief Struct that holds cached data about a class loaded on the JITClient.
+
+      It contains the ROM class, which is copied in full to the JITServer, as well 
+      as other items which are just pointers to data on the JITClient. ClassInfo will
+      persist on the server until corresponding Java class gets unloaded or replaced by
+      HCR mechanism (which JITServer also treats as a class unload event). At that point,
+      JITServer will be notified and the cache will be purged.
+   */
+
    struct ClassInfo
       {
       void freeClassInfo(); // this method is in place of a destructor. We can't have destructor
       // because it would be called after inserting ClassInfo into the ROM map, freeing romClass
-      J9ROMClass *romClass; // romClass content exists in persistentMemory at the server
-      J9ROMClass *remoteRomClass; // pointer to the corresponding ROM class on the client
-      J9Method *methodsOfClass;
+      J9ROMClass *_romClass; // romClass content exists in persistentMemory at the server
+      J9ROMClass *_remoteRomClass; // pointer to the corresponding ROM class on the client
+      J9Method *_methodsOfClass;
       // Fields meaningful for arrays
-      TR_OpaqueClassBlock *baseComponentClass;
-      int32_t numDimensions;
+      TR_OpaqueClassBlock *_baseComponentClass;
+      int32_t _numDimensions;
       PersistentUnorderedMap<TR_RemoteROMStringKey, std::string> *_remoteROMStringsCache; // cached strings from the client
       PersistentUnorderedMap<int32_t, std::string> *_fieldOrStaticNameCache;
-      TR_OpaqueClassBlock *parentClass;
-      PersistentVector<TR_OpaqueClassBlock *> *interfaces;
-      bool classHasFinalFields;
-      uintptrj_t classDepthAndFlags;
-      bool classInitialized;
-      uint32_t byteOffsetToLockword;
-      TR_OpaqueClassBlock * leafComponentClass;
-      void *classLoader;
-      TR_OpaqueClassBlock * hostClass;
-      TR_OpaqueClassBlock * componentClass; // caching the componentType of the J9ArrayClass
-      TR_OpaqueClassBlock * arrayClass;
-      uintptrj_t totalInstanceSize;
+      TR_OpaqueClassBlock *_parentClass;
+      PersistentVector<TR_OpaqueClassBlock *> *_interfaces;
+      bool _classHasFinalFields;
+      uintptrj_t _classDepthAndFlags;
+      bool _classInitialized;
+      uint32_t _byteOffsetToLockword;
+      TR_OpaqueClassBlock * _leafComponentClass;
+      void *_classLoader;
+      TR_OpaqueClassBlock * _hostClass;
+      TR_OpaqueClassBlock * _componentClass; // caching the componentType of the J9ArrayClass
+      TR_OpaqueClassBlock * _arrayClass;
+      uintptrj_t _totalInstanceSize;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> *_classOfStaticCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> *_constantClassPoolCache;
       TR_FieldAttributesCache *_fieldAttributesCache;
@@ -230,11 +258,16 @@ class ClientSessionData
       TR_FieldAttributesCache *_staticAttributesCacheAOT;
       J9ConstantPool *_constantPool;
       TR_JitFieldsCache *_jitFieldsCache;
-      uintptrj_t classFlags;
+      uintptrj_t _classFlags;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> *_fieldOrStaticDeclaringClassCache;
       PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> *_J9MethodNameCache; // key is a cpIndex
       }; // struct ClassInfo
 
+
+   /**
+      @class J9MethodInfo
+      @brief Struct that holds relevant data for a j9method
+   */
    struct J9MethodInfo
       {
       J9ROMMethod *_romMethod; // pointer to local/server cache
@@ -246,7 +279,10 @@ class ClientSessionData
       bool _isCompiledWhenProfiling; // To record if the method is compiled when doing Profiling
       }; // struct J9MethodInfo
 
-   // This struct contains information about VM that does not change during its lifetime.
+   /**
+      @class VMInfo
+      @brief Struct which contains information about VM that does not change during its lifetime
+   */
    struct VMInfo
       {
       void *_systemClassLoader;
@@ -395,12 +431,19 @@ class ClientSessionData
    PersistentUnorderedSet<std::pair<std::string, bool>> _registeredInvokeExactJ2IThunksSet; // stores a set of invoke exact J2I thunks created for this client
    }; // class ClientSessionData
 
-// Hashtable that maps clientUID to a pointer that points to ClientSessionData
-// This indirection is needed so that we can cache the value of the pointer so
-// that we can access client session data without going through the hashtable.
-// Accesss to this hashtable must be protected by the compilation monitor.
-// Compilation threads may purge old entries periodically at the beginning of a
-// compilation. Entried with inUse > 0 must not be purged.
+
+/**
+   @class ClientSessionHT
+   @brief Hashtable that maps clientUID to a pointer that points to ClientSessionData
+
+   This indirection is needed so that we can cache the value of the pointer so
+   that we can access client session data without going through the hashtable.
+   Accesss to this hashtable must be protected by the compilation monitor.
+   Compilation threads may purge old entries periodically at the beginning of a
+   compilation. The StatistcisThread can also perform purging duties.
+   Entried with inUse > 0 must not be purged.
+ */
+
 class ClientSessionHT
    {
    public:

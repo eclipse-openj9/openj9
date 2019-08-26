@@ -943,8 +943,8 @@ TR_ResolvedJ9JITaaSServerMethod::getRemoteROMString(int32_t &len, void *basePtr,
    // create a key for hashing into a table of strings
    TR_RemoteROMStringKey key;
    uint32_t offsetKey = (offsetFirst << 16) + offsetSecond;
-   key.basePtr = basePtr;
-   key.offsets = offsetKey;
+   key._basePtr = basePtr;
+   key._offsets = offsetKey;
    
    std::string *cachedStr = NULL;
    bool isCached = false;
