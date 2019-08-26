@@ -350,7 +350,7 @@ uint8_t *TR::ARM64UnresolvedCallSnippet::emitSnippetBody()
 
 uint32_t TR::ARM64UnresolvedCallSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   return TR::ARM64CallSnippet::getLength(estimatedSnippetStart) + 12;
+   return TR::ARM64CallSnippet::getLength(estimatedSnippetStart) + 16;
    }
 
 uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
@@ -394,7 +394,7 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
 
 uint32_t TR::ARM64VirtualUnresolvedSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   return 24;
+   return 28;
    }
 
 uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
@@ -443,7 +443,7 @@ uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
 
 uint32_t TR::ARM64InterfaceCallSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   return 32;
+   return 44;
    }
 
 uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
