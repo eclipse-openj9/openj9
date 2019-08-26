@@ -599,13 +599,14 @@ MM_ReclaimDelegate::deriveCompactScore(MM_EnvironmentVLHGC *env)
 					 * especially since it will contribute to fragmentation in the resulting regions.
 					 * potentialWastedWork = the fraction of the region which consists of objects likely to die soon.
 					 * Regions which low potentialWastedWork are better candidates for compaction.
+					 * for copyforward case, Regions which high potentialWastedWork are better candidates.
 					 */
 					double weightedSurvivalRate = MM_GCExtensions::getExtensions(env)->compactGroupPersistentStats[compactGroup]._weightedSurvivalRate;
 					double potentialWastedWork = (1.0 - weightedSurvivalRate) * (1.0 - emptiness);
 					
 					if (env->_cycleState->_shouldRunCopyForward) {
 						double sparsity = (double)(freeMemory - memoryPool->getAllocatableBytes()) / (double)regionSize;
-						compactScore = 50.0 * (sparsity + emptiness) * (1.0 - potentialWastedWork);
+						compactScore = 100.0 * (sparsity + potentialWastedWork);
 					} else {
 						compactScore = 100.0 * emptiness * (1.0 - potentialWastedWork);
 					}
