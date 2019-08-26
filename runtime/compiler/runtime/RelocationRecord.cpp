@@ -55,9 +55,11 @@
 #include  "runtime/SymbolValidationManager.hpp"
 #include "env/VMJ9.h"
 #include "control/rossa.h"
+#if defined(JITSERVER_SUPPORT)
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "control/MethodToBeCompiled.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
 
 // TODO: move this someplace common for RuntimeAssumptions.cpp and here
 #if defined(__IBMCPP__) && !defined(AIXPPC) && !defined(LINUXPPC)
@@ -576,7 +578,7 @@ TR_RelocationRecord::flags(TR_RelocationTarget *reloTarget)
 void
 TR_RelocationRecord::setReloFlags(TR_RelocationTarget *reloTarget, uint8_t reloFlags)
    {
-   TR_ASSERT((reloFlags & ~FLAGS_RELOCATION_FLAG_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
+   TR_ASSERT_FATAL((reloFlags & FLAGS_RELOCATION_FLAG_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
    uint8_t crossPlatFlags = flags(reloTarget);
    uint8_t flags = crossPlatFlags | (reloFlags & ~FLAGS_RELOCATION_FLAG_MASK);
    reloTarget->storeUnsigned8b(flags, (uint8_t *) &_record->_flags);
@@ -1415,6 +1417,7 @@ TR_RelocationRecordMethodAddress::applyRelocation(TR_RelocationRuntime *reloRunt
       oldAddress = reloTarget->loadCallTarget(reloLocation);
    else
       oldAddress = reloTarget->loadAddress(reloLocation);
+
    RELO_LOG(reloRuntime->reloLogger(), 5, "\t\tapplyRelocation: old method address %p\n", oldAddress);
    uint8_t *newAddress = currentMethodAddress(reloRuntime, oldAddress);
    RELO_LOG(reloRuntime->reloLogger(), 5, "\t\tapplyRelocation: new method address %p\n", newAddress);
@@ -1587,6 +1590,7 @@ TR_RelocationRecordDataAddress::findDataAddress(TR_RelocationRuntime *reloRuntim
    if (address == NULL)
       {
       RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tfindDataAddress: unresolved\n");
+      return 0;
       }
 
    address = address + extraOffset;
@@ -1751,7 +1755,11 @@ TR_RelocationRecordBodyInfo::applyRelocation(TR_RelocationRuntime *reloRuntime, 
    {
    J9JITExceptionTable *exceptionTable = reloRuntime->exceptionTable();
    reloTarget->storeAddress((uint8_t *) exceptionTable->bodyInfo, reloLocation);
+#if defined(JITSERVER_SUPPORT)
    fixPersistentMethodInfo((void *)exceptionTable, !reloRuntime->fej9()->_compInfoPT->getMethodBeingCompiled()->isAotLoad());
+#else
+   fixPersistentMethodInfo((void *)exceptionTable);
+#endif /* defined(JITSERVER_SUPPORT) */
    return 0;
    }
 
@@ -1784,7 +1792,6 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
    uintptr_t cpIndex,
    uint8_t *reloLocation)
    {
-
    J9JITConfig *jitConfig = reloRuntime->jitConfig();
    J9JavaVM *javaVM = reloRuntime->jitConfig()->javaVM;
    J9ConstantPool *constantPool = (J9ConstantPool *)cp;

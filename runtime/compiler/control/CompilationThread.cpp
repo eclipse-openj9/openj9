@@ -5336,7 +5336,7 @@ void TR::CompilationInfo::recycleCompilationEntry(TR_MethodToBeCompiled *entry)
    entry->_freeTag |= ENTRY_IN_POOL_NOT_FREE;
    if (entry->_numThreadsWaiting == 0)
       entry->_freeTag |= ENTRY_IN_POOL_FREE;
-   entry->cleanupJITaaS();
+   entry->cleanupJITServer();
 
    entry->_next = _methodPool;
    _methodPool = entry;

@@ -172,7 +172,9 @@ class TR_PersistentMethodInfo
    uint16_t getTimeStamp() { return _timeStamp; }
 
    TR_OptimizationPlan * getOptimizationPlan() {return _optimizationPlan;}
+#if defined(JITSERVER_SUPPORT)
    void setOptimizationPlan(TR_OptimizationPlan *optPlan) { _optimizationPlan = optPlan; }
+#endif /* defined(JITSERVER_SUPPORT) */
    uint8_t getNumberOfInvalidations() {return _numberOfInvalidations;}
    void incrementNumberOfInvalidations() {_numberOfInvalidations++;}
    uint8_t getNumberOfInlinedMethodRedefinition() {return _numberOfInlinedMethodRedefinition;}
@@ -325,7 +327,11 @@ class TR_PersistentJittedBodyInfo
    friend class TR_DebugExt;
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
-   friend void fixPersistentMethodInfo(void *table, bool isJITaaS);
+#if defined(JITSERVER_SUPPORT)
+   friend void fixPersistentMethodInfo(void *table, bool isJITServer);
+#else
+   friend void fixPersistentMethodInfo(void *table);
+#endif /* defined(JITSERVER_SUPPORT) */
 #endif
 
    public:
@@ -340,8 +346,10 @@ class TR_PersistentJittedBodyInfo
    bool getIsProfilingBody()        { return _flags.testAny(IsProfilingBody); }
    bool getIsAotedBody()            { return _flags.testAny(IsAotedBody); }
    void setIsAotedBody(bool b)      { _flags.set(IsAotedBody, b); }
-   bool getIsRemoteCompileBody()    { return _flags.testAny(IsRemoteCompileBody); }
-   void setIsRemoteCompileBody(bool b){ _flags.set(IsRemoteCompileBody, b); }
+#if defined(JITSERVER_SUPPORT)
+   bool getIsRemoteCompileBody() const { return _flags.testAny(IsRemoteCompileBody); }
+   void setIsRemoteCompileBody(bool b) { _flags.set(IsRemoteCompileBody, b); }
+#endif /* defined(JITSERVER_SUPPORT) */
    bool getSamplingRecomp()         { return _flags.testAny(SamplingRecomp); }
    void setSamplingRecomp()         { _flags.set(SamplingRecomp, true); }
    bool getIsPushedForRecompilation(){ return _flags.testAny(IsPushedForRecompilation); }

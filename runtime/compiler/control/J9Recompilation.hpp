@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,13 +127,14 @@ public:
 
    virtual TR_PersistentMethodInfo *getExistingMethodInfo(TR_ResolvedMethod *method);
 
+#if defined(JITSERVER_SUPPORT)
+   static TR_PersistentJittedBodyInfo *persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory *trMemory);
+#endif /* defined(JITSERVER_SUPPORT) */
+
    static int32_t globalSampleCount;
    static int32_t hwpGlobalSampleCount;
    static int32_t jitGlobalSampleCount;
    static int32_t jitRecompilationsInduced;
-
-   // used for JITaaS
-   static TR_PersistentJittedBodyInfo * persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory * trMemory);
 
 protected:
    static int32_t limitMethodsCompiled;

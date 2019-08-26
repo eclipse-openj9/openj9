@@ -1329,21 +1329,23 @@ uint32_t isRecompMethBody(void *li)
 
 // This method MUST be used only for methods that were AOTed and then relocated
 // It marks the BodyInfo that this is an aoted method.
-void fixPersistentMethodInfo(void *table, bool isJITaaS)
+#if defined(JITSERVER_SUPPORT)
+void fixPersistentMethodInfo(void *table, bool isJITServer)
    {
    J9JITExceptionTable *exceptionTable = (J9JITExceptionTable *)table;
    TR_PersistentJittedBodyInfo *bodyInfo = (TR_PersistentJittedBodyInfo *)exceptionTable->bodyInfo;
    void *vmMethodInfo = (void *)exceptionTable->ramMethod;
-   TR_PersistentMethodInfo *methodInfo;
+   TR_PersistentMethodInfo *methodInfo = NULL;
 
-   if (!isJITaaS)
+   if (!isJITServer)
       {
       methodInfo = (TR_PersistentMethodInfo *)((char *)bodyInfo + sizeof(TR_PersistentJittedBodyInfo));
       bodyInfo->setMethodInfo(methodInfo);
       }
    else
+      {
       methodInfo = bodyInfo->getMethodInfo();
-
+      }
    methodInfo->setMethodInfo(vmMethodInfo);
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR))
@@ -1357,11 +1359,34 @@ void fixPersistentMethodInfo(void *table, bool isJITaaS)
    bodyInfo->setSampleIntervalCount(0);
    bodyInfo->setProfileInfo(NULL);
 
-   if (!isJITaaS)
+   if (!isJITServer)
       {
       bodyInfo->setIsAotedBody(true);
       }
    }
+#else
+void fixPersistentMethodInfo(void *table)
+   {
+   J9JITExceptionTable *exceptionTable = (J9JITExceptionTable *)table;
+   TR_PersistentJittedBodyInfo *bodyInfo = (TR_PersistentJittedBodyInfo *)exceptionTable->bodyInfo;
+   void *vmMethodInfo = (void *)exceptionTable->ramMethod;
+   TR_PersistentMethodInfo *methodInfo = (TR_PersistentMethodInfo *)((char *)bodyInfo + sizeof(TR_PersistentJittedBodyInfo));
+   bodyInfo->setMethodInfo(methodInfo);
+   methodInfo->setMethodInfo(vmMethodInfo);
+
+   if (TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR))
+      {
+      createClassRedefinitionPicSite(vmMethodInfo, (void *)methodInfo->getAddressOfMethodInfo(), sizeof(UDATA), 0, (OMR::RuntimeAssumption**)(&exceptionTable->runtimeAssumptionList));
+      }
+
+   bodyInfo->setStartCount(TR::Recompilation::globalSampleCount);
+   bodyInfo->setOldStartCountDelta(TR::Options::_sampleThreshold);
+   bodyInfo->setHotStartCountDelta(0);
+   bodyInfo->setSampleIntervalCount(0);
+   bodyInfo->setProfileInfo(NULL);
+   bodyInfo->setIsAotedBody(true);
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
 #endif
 
 static void printMethodHandleArgs(j9object_t methodHandle, void **stack, J9VMThread *vmThread, TR_VlogTag vlogTag, TR_FrontEnd *fe)

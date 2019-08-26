@@ -26,8 +26,10 @@
 #include "control/CompilationRuntime.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "j9.h"
-#include "net/ServerStream.hpp" // for _stream
+#if defined(JITSERVER_SUPPORT)
 #include "control/CompilationThread.hpp"
+#include "net/ServerStream.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
 
 int16_t TR_MethodToBeCompiled::_globalIndex = 0;
 
@@ -62,7 +64,9 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
    _compErrCode = compilationOK;
    _compilationAttemptsLeft = (TR::Options::canJITCompile()) ? MAX_COMPILE_ATTEMPTS : 1;
    _unloadedMethod = false;
+#if defined(JITSERVER_SUPPORT)
    _doAotLoad = false;
+#endif /* defined(JITSERVER_SUPPORT) */
    _useAotCompilation = false;
    _doNotUseAotCodeFromSharedCache = false;
    _tryCompilingAgain = false;
@@ -81,12 +85,14 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
    _entryIsCountedAsInvRequest = false;
    _GCRrequest = false;
 
+   _methodIsInSharedCache = TR_maybe;
+#if defined(JITSERVER_SUPPORT)
    _remoteCompReq = false;
    _stream = NULL;
-   _methodIsInSharedCache = TR_maybe;
    _clientOptions = NULL;
    _clientOptionsSize = 0;
    _origOptLevel = unknownHotness;
+#endif /* defined(JITSERVER_SUPPORT) */
 
    TR_ASSERT_FATAL(_freeTag & ENTRY_IN_POOL_FREE, "initializing an entry which is not free");
 
@@ -96,7 +102,9 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
 void
 TR_MethodToBeCompiled::shutdown()
    {
-   cleanupJITaaS();
+#if defined(JITSERVER_SUPPORT)
+   cleanupJITServer();
+#endif /* defined(JITSERVER_SUPPORT) */
    TR::MonitorTable *table = TR::MonitorTable::get();
    if (!table) return;
    table->removeAndDestroy(_monitor);
@@ -139,19 +147,21 @@ TR_MethodToBeCompiled::setAotCodeToBeRelocated(const void *m)
    _optimizationPlan->setIsAotLoad(m!=0);
    }
 
-uint64_t 
+#if defined(JITSERVER_SUPPORT)
+uint64_t
 TR_MethodToBeCompiled::getClientUID() const
    {
    return _stream->getClientId();
    }
 
 void
-TR_MethodToBeCompiled::cleanupJITaaS()
+TR_MethodToBeCompiled::cleanupJITServer()
    {
-   // JITaaS: clean up c-style string client options which was allocated using persistent allocator
+   // Clean up c-style string client options which were allocated using persistent allocator
    if (_clientOptions)
       {
       _compInfoPT->getCompilationInfo()->persistentMemory()->freePersistentMemory((void *)_clientOptions);
       _clientOptions = NULL;
       }
    }
+#endif /* defined(JITSERVER_SUPPORT) */
