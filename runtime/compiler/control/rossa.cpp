@@ -58,7 +58,7 @@
 #include "runtime/CodeCacheReclamation.h"
 #include "runtime/codertinit.hpp"
 #include "runtime/IProfiler.hpp"
-#include "runtime/JITaaSIProfiler.hpp"
+#include "runtime/JITServerIProfiler.hpp"
 #include "runtime/HWProfiler.hpp"
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/PersistentInfo.hpp"
@@ -1526,11 +1526,11 @@ onLoadInternal(
       {
       if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
-         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_JITaaSIProfiler::allocate(jitConfig);
+         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = JITServerIProfiler::allocate(jitConfig);
          }
       else if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          {
-         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_JITaaSClientIProfiler::allocate(jitConfig);
+         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = JITClientIProfiler::allocate(jitConfig);
          }
       else
          {

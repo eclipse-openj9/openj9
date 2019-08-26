@@ -1622,7 +1622,7 @@ TR_ResolvedJ9JITaaSServerMethod::packMethodInfo(TR_ResolvedJ9JITaaSServerMethodI
 
    // set IP method data string.
    // fanin info is not used at cold opt level, so there is no point sending this information to the server
-   TR_JITaaSClientIProfiler *iProfiler = (TR_JITaaSClientIProfiler *)((TR_J9VMBase *) fe)->getIProfiler();
+   JITClientIProfiler *iProfiler = (JITClientIProfiler *)((TR_J9VMBase *) fe)->getIProfiler();
    std::get<3>(methodInfo) = (comp && comp->getOptLevel() >= warm && iProfiler) ? iProfiler->serializeIProfilerMethodEntry(resolvedMethod->getPersistentIdentifier()) : std::string();
    }
 
@@ -1677,7 +1677,7 @@ TR_ResolvedJ9JITaaSServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod
    setMandatoryRecognizedMethod(mandatoryRm);
    setRecognizedMethod(rm);
 
-   TR_JITaaSIProfiler *iProfiler = (TR_JITaaSIProfiler *) ((TR_J9VMBase *) fe)->getIProfiler();
+   JITServerIProfiler *iProfiler = (JITServerIProfiler *) ((TR_J9VMBase *) fe)->getIProfiler();
    const std::string entryStr = std::get<3>(methodInfo);
    const auto serialEntry = (TR_ContiguousIPMethodHashTableEntry*) &entryStr[0];
    _iProfilerMethodEntry = (iProfiler && !entryStr.empty()) ? iProfiler->deserializeMethodEntry(serialEntry, trMemory) : NULL; 
