@@ -130,16 +130,16 @@ ClientSessionData::processUnloadedClasses(JITServer::ServerStream *stream, const
 
          J9ConstantPool *cp = it->second._constantPool;
 
-         J9ROMClass *romClass = it->second.romClass;
+         J9ROMClass *romClass = it->second._romClass;
 
          J9UTF8 *clazzName = NNSRP_GET(romClass->className, J9UTF8 *);
          std::string className((const char *)clazzName->data, (int32_t)clazzName->length);
-         J9ClassLoader * cl = (J9ClassLoader *)(it->second.classLoader);
+         J9ClassLoader * cl = (J9ClassLoader *)(it->second._classLoader);
          ClassLoaderStringPair key = { cl, className };
          //Class is cached, so retain the data to be used for purging the caches.
          unloadedClasses.push_back({ clazz, key, cp, true });
 
-         J9Method *methods = it->second.methodsOfClass;
+         J9Method *methods = it->second._methodsOfClass;
          // delete all the cached J9Methods belonging to this unloaded class
          for (size_t i = 0; i < romClass->romMethodCount; i++)
             {
@@ -272,7 +272,7 @@ ClientSessionData::printStats()
    j9tty_printf(PORTLIB, "\tNum cached ROM methods: %d\n", _J9MethodMap.size());
    size_t total = 0;
    for (auto it : _romClassMap)
-      total += it.second.romClass->romSize;
+      total += it.second._romClass->romSize;
 
    j9tty_printf(PORTLIB, "\tTotal size of cached ROM classes + methods: %d bytes\n", total);
    }
@@ -280,7 +280,7 @@ ClientSessionData::printStats()
 void
 ClientSessionData::ClassInfo::freeClassInfo()
    {
-   TR_Memory::jitPersistentFree(romClass);
+   TR_Memory::jitPersistentFree(_romClass);
    // If string cache exists, free it
    if (_remoteROMStringsCache)
       {
@@ -294,9 +294,9 @@ ClientSessionData::ClassInfo::freeClassInfo()
       _fieldOrStaticNameCache->~PersistentUnorderedMap<int32_t, std::string>();
       jitPersistentFree(_fieldOrStaticNameCache);
       }
-   // free cached interfaces
-   interfaces->~PersistentVector<TR_OpaqueClassBlock *>();
-   jitPersistentFree(interfaces);
+   // free cached _interfaces
+   _interfaces->~PersistentVector<TR_OpaqueClassBlock *>();
+   jitPersistentFree(_interfaces);
 
    // if class of static cache exists, free it
    if (_classOfStaticCache)

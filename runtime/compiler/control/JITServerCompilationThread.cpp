@@ -3181,39 +3181,39 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    {
    ClassInfoTuple &classInfo = *classInfoTuple;
 
-   classInfoStruct.romClass = romClass;
-   classInfoStruct.methodsOfClass = std::get<1>(classInfo);
-   J9Method *methods = classInfoStruct.methodsOfClass;
-   classInfoStruct.baseComponentClass = std::get<2>(classInfo);
-   classInfoStruct.numDimensions = std::get<3>(classInfo);
+   classInfoStruct._romClass = romClass;
+   classInfoStruct._methodsOfClass = std::get<1>(classInfo);
+   J9Method *methods = classInfoStruct._methodsOfClass;
+   classInfoStruct._baseComponentClass = std::get<2>(classInfo);
+   classInfoStruct._numDimensions = std::get<3>(classInfo);
    classInfoStruct._remoteROMStringsCache = NULL;
    classInfoStruct._fieldOrStaticNameCache = NULL;
-   classInfoStruct.parentClass = std::get<4>(classInfo);
+   classInfoStruct._parentClass = std::get<4>(classInfo);
    auto &tmpInterfaces = std::get<5>(classInfo);
-   classInfoStruct.interfaces = new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock *>
+   classInfoStruct._interfaces = new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock *>
       (tmpInterfaces.begin(), tmpInterfaces.end(),
        PersistentVector<TR_OpaqueClassBlock *>::allocator_type(TR::Compiler->persistentAllocator()));
    auto &methodTracingInfo = std::get<6>(classInfo);
-   classInfoStruct.classHasFinalFields = std::get<7>(classInfo);
-   classInfoStruct.classDepthAndFlags = std::get<8>(classInfo);
-   classInfoStruct.classInitialized = std::get<9>(classInfo);
-   classInfoStruct.byteOffsetToLockword = std::get<10>(classInfo);
-   classInfoStruct.leafComponentClass = std::get<11>(classInfo);
-   classInfoStruct.classLoader = std::get<12>(classInfo);
-   classInfoStruct.hostClass = std::get<13>(classInfo);
-   classInfoStruct.componentClass = std::get<14>(classInfo);
-   classInfoStruct.arrayClass = std::get<15>(classInfo);
-   classInfoStruct.totalInstanceSize = std::get<16>(classInfo);
+   classInfoStruct._classHasFinalFields = std::get<7>(classInfo);
+   classInfoStruct._classDepthAndFlags = std::get<8>(classInfo);
+   classInfoStruct._classInitialized = std::get<9>(classInfo);
+   classInfoStruct._byteOffsetToLockword = std::get<10>(classInfo);
+   classInfoStruct._leafComponentClass = std::get<11>(classInfo);
+   classInfoStruct._classLoader = std::get<12>(classInfo);
+   classInfoStruct._hostClass = std::get<13>(classInfo);
+   classInfoStruct._componentClass = std::get<14>(classInfo);
+   classInfoStruct._arrayClass = std::get<15>(classInfo);
+   classInfoStruct._totalInstanceSize = std::get<16>(classInfo);
    classInfoStruct._classOfStaticCache = NULL;
    classInfoStruct._constantClassPoolCache = NULL;
-   classInfoStruct.remoteRomClass = std::get<17>(classInfo);
+   classInfoStruct._remoteRomClass = std::get<17>(classInfo);
    classInfoStruct._fieldAttributesCache = NULL;
    classInfoStruct._staticAttributesCache = NULL;
    classInfoStruct._fieldAttributesCacheAOT = NULL;
    classInfoStruct._staticAttributesCacheAOT = NULL;
    classInfoStruct._constantPool = (J9ConstantPool *)std::get<18>(classInfo);
    classInfoStruct._jitFieldsCache = NULL;
-   classInfoStruct.classFlags = std::get<19>(classInfo);
+   classInfoStruct._classFlags = std::get<19>(classInfo);
    classInfoStruct._fieldOrStaticDeclaringClassCache = NULL;
    classInfoStruct._J9MethodNameCache = NULL;
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
@@ -3233,7 +3233,7 @@ JITServerHelpers::getRemoteROMClassIfCached(ClientSessionData *clientSessionData
    {
    OMR::CriticalSection getRemoteROMClass(clientSessionData->getROMMapMonitor());
    auto it = clientSessionData->getROMClassMap().find(clazz);
-   return (it == clientSessionData->getROMClassMap().end()) ? NULL : it->second.romClass;
+   return (it == clientSessionData->getROMClassMap().end()) ? NULL : it->second._romClass;
    }
 
 
@@ -3379,92 +3379,92 @@ JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo,
       {
       case CLASSINFO_ROMCLASS_MODIFIERS :
          {
-         *(uint32_t *)data = classInfo.romClass->modifiers;
+         *(uint32_t *)data = classInfo._romClass->modifiers;
          }
          break;
       case CLASSINFO_ROMCLASS_EXTRAMODIFIERS :
          {
-         *(uint32_t *)data = classInfo.romClass->extraModifiers;
+         *(uint32_t *)data = classInfo._romClass->extraModifiers;
          }
          break;
       case CLASSINFO_BASE_COMPONENT_CLASS :
          {
-         *(TR_OpaqueClassBlock **)data = classInfo.baseComponentClass;
+         *(TR_OpaqueClassBlock **)data = classInfo._baseComponentClass;
          }
          break;
       case CLASSINFO_NUMBER_DIMENSIONS :
          {
-         *(int32_t *)data = classInfo.numDimensions;
+         *(int32_t *)data = classInfo._numDimensions;
          }
          break;
       case CLASSINFO_PARENT_CLASS :
          {
-         *(TR_OpaqueClassBlock **)data = classInfo.parentClass;
+         *(TR_OpaqueClassBlock **)data = classInfo._parentClass;
          }
          break;
       case CLASSINFO_CLASS_HAS_FINAL_FIELDS :
          {
-         *(bool *)data = classInfo.classHasFinalFields;
+         *(bool *)data = classInfo._classHasFinalFields;
          }
          break;
       case CLASSINFO_CLASS_DEPTH_AND_FLAGS :
          {
-         *(uintptrj_t *)data = classInfo.classDepthAndFlags;
+         *(uintptrj_t *)data = classInfo._classDepthAndFlags;
          }
          break;
       case CLASSINFO_CLASS_INITIALIZED :
          {
-         *(bool *)data = classInfo.classInitialized;
+         *(bool *)data = classInfo._classInitialized;
          }
          break;
       case CLASSINFO_BYTE_OFFSET_TO_LOCKWORD :
          {
-         *(uint32_t *)data = classInfo.byteOffsetToLockword;
+         *(uint32_t *)data = classInfo._byteOffsetToLockword;
          }
          break;
       case CLASSINFO_LEAF_COMPONENT_CLASS :
          {
-         *(TR_OpaqueClassBlock **)data = classInfo.leafComponentClass;
+         *(TR_OpaqueClassBlock **)data = classInfo._leafComponentClass;
          }
          break;
       case CLASSINFO_CLASS_LOADER :
          {
-         *(void **)data = classInfo.classLoader;
+         *(void **)data = classInfo._classLoader;
          }
          break;
       case CLASSINFO_HOST_CLASS :
          {
-         *(TR_OpaqueClassBlock **)data = classInfo.hostClass;
+         *(TR_OpaqueClassBlock **)data = classInfo._hostClass;
          }
          break;
       case CLASSINFO_COMPONENT_CLASS :
          {
-         *(TR_OpaqueClassBlock **)data = classInfo.componentClass;
+         *(TR_OpaqueClassBlock **)data = classInfo._componentClass;
          }
          break;
       case CLASSINFO_ARRAY_CLASS :
          {
-         *(TR_OpaqueClassBlock **)data = classInfo.arrayClass;
+         *(TR_OpaqueClassBlock **)data = classInfo._arrayClass;
          }
          break;
       case CLASSINFO_TOTAL_INSTANCE_SIZE :
          {
-         *(uintptrj_t *)data = classInfo.totalInstanceSize;
+         *(uintptrj_t *)data = classInfo._totalInstanceSize;
          }
          break;
       case CLASSINFO_REMOTE_ROM_CLASS :
          {
-         *(J9ROMClass **)data = classInfo.remoteRomClass;
+         *(J9ROMClass **)data = classInfo._remoteRomClass;
          }
          break;
       case CLASSINFO_CLASS_FLAGS :
          {
-         *(uintptrj_t *)data = classInfo.classFlags;
+         *(uintptrj_t *)data = classInfo._classFlags;
          }
          break;
       case CLASSINFO_METHODS_OF_CLASS :
          {
-         *(J9Method **)data = classInfo.methodsOfClass;
+         *(J9Method **)data = classInfo._methodsOfClass;
          }
          break;
       default :

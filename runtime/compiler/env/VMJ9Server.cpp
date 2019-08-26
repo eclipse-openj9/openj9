@@ -600,7 +600,7 @@ TR_J9ServerVM::isClassInitialized(TR_OpaqueClassBlock * clazz)
          auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
          if (it != _compInfoPT->getClientData()->getROMClassMap().end())
             {
-            it->second.classInitialized = isClassInitialized;
+            it->second._classInitialized = isClassInitialized;
             }
          }
       }
@@ -838,7 +838,7 @@ TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
         auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) clazz);
         if (it != _compInfoPT->getClientData()->getROMClassMap().end())
            {
-           it->second.classInitialized = isClassInitialized;
+           it->second._classInitialized = isClassInitialized;
            }
         }
      }
@@ -866,7 +866,7 @@ TR_J9ServerVM::getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentCla
          auto it = _compInfoPT->getClientData()->getROMClassMap().find((J9Class*) componentClass);
          if (it != _compInfoPT->getClientData()->getROMClassMap().end())
             {
-            it->second.arrayClass = arrayClass;
+            it->second._arrayClass = arrayClass;
             }
          }
       }
@@ -1536,7 +1536,7 @@ TR_J9ServerVM::instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass)
          // castClass is an interface, check the cached iTable
          if (isInterfaceClass(castClassOffset))
             {
-            auto interfaces = it->second.interfaces;
+            auto interfaces = it->second._interfaces;
             return std::find(interfaces->begin(), interfaces->end(), castClassOffset) != interfaces->end();
             }
 
