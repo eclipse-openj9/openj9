@@ -88,16 +88,13 @@ public:
 	MMINLINE void initialize(J9Object *objectPtr) {
 		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_javaVM->omrVM);
 
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		/* if we are using hybrid arraylets, we need to ensure that we don't initialize the discontiguous iterator since it will try to read off the end of the header
 		 * when reading the non-existent arrayoid.  In the case of small arrays near the end of a region, this could cause us to read an uncommitted page.
 		 */
 		if (extensions->indexableObjectModel.isInlineContiguousArraylet((J9IndexableObject *)objectPtr)) {
 			_arrayPtr = NULL;
 			_index = 0;
-		} else
-#endif /* defined(J9VM_GC_HYBRID_ARRAYLETS) */
-		{
+		} else {
 			_arrayPtr = (J9IndexableObject *)objectPtr;
 
 			/* Set current and end scan pointers */

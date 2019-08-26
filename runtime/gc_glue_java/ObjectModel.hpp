@@ -607,7 +607,6 @@ public:
 	getPreservedArrayLayout(MM_ForwardedHeader *forwardedHeader)
 	{
 		GC_ArrayletObjectModel::ArrayLayout layout = GC_ArrayletObjectModel::InlineContiguous;
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		 uint32_t size = 0;
 #if defined (OMR_GC_COMPRESSED_POINTERS)
 		if (compressObjectReferences()) {
@@ -621,7 +620,6 @@ public:
 		if (0 != size) {
 			return layout;
 		}
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
 
 		/* we know we are dealing with heap object, so we don't need to check against _arrayletRangeBase/Top, like getArrayLayout does */
 		J9Class *clazz = getPreservedClass(forwardedHeader);

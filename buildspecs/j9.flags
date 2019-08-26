@@ -330,7 +330,6 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		<ifRemoved></ifRemoved>
 		<requires>
 			<require flag="gc_heapCardTable"/>
-			<require flag="gc_hybridArraylets"/>
 			<require flag="gc_modronStandard"/>
 			<require flag="gc_realtime"/>
 		</requires>
@@ -396,13 +395,6 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		<ifRemoved>The card table will not be used</ifRemoved>
 		<requires>
 			<require flag="gc_modronGC"/>
-		</requires>
-	</flag>
-	<flag id="gc_hybridArraylets">
-		<description>Arraylet header has bimodal shape in runtime, separate for contiguous and discontiguous arraylets </description>
-		<ifRemoved>Arraylet header has only one shape (same for contiguous and discontiguous arraylets)</ifRemoved>
-		<requires>
-			<require flag="gc_arraylets"/>
 		</requires>
 	</flag>
 	<flag id="gc_idleHeapManager">

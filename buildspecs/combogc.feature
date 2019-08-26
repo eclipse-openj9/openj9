@@ -38,7 +38,6 @@
 		<flag id="gc_fragmentedHeap" value="true"/>
 		<flag id="gc_generational" value="true"/>
 		<flag id="gc_heapCardTable" value="true"/>
-		<flag id="gc_hybridArraylets" value="true"/>
 		<flag id="gc_jniArrayCache" value="true"/>
 		<flag id="gc_largeObjectArea" value="true"/>
 		<flag id="gc_leafBits" value="true"/>

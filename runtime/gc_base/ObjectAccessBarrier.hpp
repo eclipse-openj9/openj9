@@ -200,6 +200,7 @@ public:
 		ARRAY_COPY_SUCCESSFUL = -1,
 		ARRAY_COPY_NOT_DONE = -2
 	};
+
 	virtual I_32 doCopyContiguousForward(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots);	
 	virtual I_32 doCopyContiguousBackward(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots);	
 	virtual I_32 backwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots) { return -2; }

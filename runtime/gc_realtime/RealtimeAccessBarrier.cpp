@@ -872,38 +872,19 @@ MM_RealtimeAccessBarrier::scanContiguousArray(MM_EnvironmentRealtime *env, J9Ind
 	}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */		
 
-#if !defined(J9VM_GC_HYBRID_ARRAYLETS)
-	/* Since we are already in gc_realtime, not defined GC_HYBRID_ARRAYLET implies GC_ARRAYLETS is defined.
-	 * first (and only) arraylet address
-	 */
-	fj9object_t *arrayoid = _extensions->indexableObjectModel.getArrayoidPointer(objectPtr);
-	GC_SlotObject slotObject(vm->omrVM, &arrayoid[0]);
-	fj9object_t *startScanPtr = (fj9object_t*) (slotObject.readReferenceFromSlot());
+	/* if NUA is enabled, separate path for contiguous arrays */
+	fj9object_t *scanPtr = (fj9object_t*) _extensions->indexableObjectModel.getDataPointerForContiguous(objectPtr);
+	fj9object_t *endScanPtr = scanPtr + _extensions->indexableObjectModel.getSizeInElements(objectPtr);
 
-	if (NULL != startScanPtr) {
-		/* Very small arrays cannot be set as scanned (no scanned bit in Mark Map reserved for them) */
-		UDATA arrayletSize = _extensions->indexableObjectModel.arrayletSize(objectPtr, /* arraylet index */ 0);		
-
-		fj9object_t *endScanPtr = startScanPtr + arrayletSize / sizeof(fj9object_t);
-		fj9object_t *scanPtr = startScanPtr;
-#else /* J9VM_GC_HYBRID_ARRAYLETS */
-		/* if NUA is enabled, separate path for contiguous arrays */
-		fj9object_t *scanPtr = (fj9object_t*) _extensions->indexableObjectModel.getDataPointerForContiguous(objectPtr);
-		fj9object_t *endScanPtr = scanPtr + _extensions->indexableObjectModel.getSizeInElements(objectPtr);
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
-		while(scanPtr < endScanPtr) {
-			/* since this is done from an external thread, we do not markObject, but rememberObject */
-			GC_SlotObject slotObject(vm->omrVM, scanPtr);
-			J9Object *field = slotObject.readReferenceFromSlot();
-			rememberObject(env, field);
-			scanPtr++;
-		}
-		
-		/* this method assumes the array is large enough to set scan bit */
-		_markingScheme->setScanAtomic((J9Object *)objectPtr);
-#if !defined(J9VM_GC_HYBRID_ARRAYLETS)
+	while(scanPtr < endScanPtr) {
+		/* since this is done from an external thread, we do not markObject, but rememberObject */
+		GC_SlotObject slotObject(vm->omrVM, scanPtr);
+		J9Object *field = slotObject.readReferenceFromSlot();
+		rememberObject(env, field);
+		scanPtr++;
 	}
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
+	/* this method assumes the array is large enough to set scan bit */
+	_markingScheme->setScanAtomic((J9Object *)objectPtr);
 }
 
 bool 

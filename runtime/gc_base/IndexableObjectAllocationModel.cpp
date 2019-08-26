@@ -131,22 +131,16 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	switch (_layout) {
 	case GC_ArrayletObjectModel::InlineContiguous:
 		Assert_MM_true(1 == _numberOfArraylets);
-		if (NULL != spine) {
-			/* Establish arraylet pointers */
-			spine = layoutContiguousArraylet(env, spine);
-		}
 		break;
 
 	case GC_ArrayletObjectModel::Discontiguous:
 	case GC_ArrayletObjectModel::Hybrid:
 		if (NULL != spine) {
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 			if(0 == _numberOfIndexedFields) {
 				/* Don't try to initialize the arrayoid for an empty NUA */
 				Trc_MM_allocateAndConnectNonContiguousArraylet_Exit(env->getLanguageVMThread(), spine);
 				break;
 			}
-#endif /* defined(J9VM_GC_HYBRID_ARRAYLETS) */
 			Trc_MM_allocateAndConnectNonContiguousArraylet_Summary(env->getLanguageVMThread(),
 					_numberOfIndexedFields, getAllocateDescription()->getContiguousBytes(), _numberOfArraylets);
 			spine = layoutDiscontiguousArraylet(env, spine);

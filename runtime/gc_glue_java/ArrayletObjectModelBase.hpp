@@ -107,20 +107,16 @@ public:
 		UDATA size = 0;
 		if (compressObjectReferences()) {
 			size = ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size;
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 			if (0 == size) {
 				/* Discontiguous */
 				size = ((J9IndexableObjectDiscontiguousCompressed *)arrayPtr)->size;
 			}
-#endif /* defined(J9VM_GC_HYBRID_ARRAYLETS) */
 		} else {
 			size = ((J9IndexableObjectContiguousFull *)arrayPtr)->size;
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 			if (0 == size) {
 				/* Discontiguous */
 				size = ((J9IndexableObjectDiscontiguousFull *)arrayPtr)->size;
 			}
-#endif /* defined(J9VM_GC_HYBRID_ARRAYLETS) */
 		}
 		return size;
 	}
