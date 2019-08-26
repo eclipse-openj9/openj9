@@ -301,8 +301,6 @@ target_link_libraries(j9vm_main_wrapper
 ### OMR configuration stuff
 ###
 
-make_ddr_set(j9ddr)
-
 # set up glue library target names
 # See https://github.com/eclipse/omr/blob/master/doc/BuildingWithCMake.md
 set(OMR_GC_GLUE_TARGET "j9vm_gc_glue" CACHE INTERNAL "")
@@ -324,6 +322,44 @@ add_subdirectory(gc_glue_java)
 # needed to grab the headers created by trace/hookgen
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_subdirectory("${J9VM_OMR_DIR}" omr)
+
+# Configure our DDR set
+if(OMR_DDR)
+	make_ddr_set(j9ddr)
+	ddr_set_add_targets(j9ddr omrddr)
+	set_target_properties(j9ddr PROPERTIES
+		BLACKLIST "${CMAKE_CURRENT_SOURCE_DIR}/ddr/blacklist"
+		OVERRIDES_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ddr/overrides"
+		BLOB "${CMAKE_CURRENT_BINARY_DIR}/j9ddr.dat"
+		SUPERSET "${CMAKE_BINARY_DIR}/superset.dat"
+	)
+
+	file(GLOB headers RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+		include/*.h
+		include/*.hpp
+		oti/*.h
+		oti/*.hpp
+	)
+	ddr_add_headers(j9ddr
+		${CMAKE_CURRENT_BINARY_DIR}/j9cfg.h
+		${CMAKE_CURRENT_BINARY_DIR}/j9vmconstantpool.h
+		${headers}
+	)
+
+	set_property(TARGET j9ddr PROPERTY INCLUDE_DIRECTORIES
+		$<TARGET_PROPERTY:j9vm_interface,INTERFACE_INCLUDE_DIRECTORIES>
+		${J9VM_OMR_DIR}/gc/include
+		${J9VM_OMR_DIR}/gc/base
+		${J9VM_OMR_DIR}/gc/stats
+		${J9VM_OMR_DIR}/gc/structs
+		${j9vm_SOURCE_DIR}/gc_glue_java
+		${j9vm_SOURCE_DIR}/gc_stats
+		${j9vm_SOURCE_DIR}/gc_base
+		${j9vm_SOURCE_DIR}/gc_include
+		${CMAKE_CURRENT_BINARY_DIR}/omr/gc
+		${CMAKE_CURRENT_BINARY_DIR}/omr
+	)
+endif()
 
 # Due to CMake technical limitations we can't properly propagate dependencies
 # to omrutil via the glue.
