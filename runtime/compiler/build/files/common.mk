@@ -388,6 +388,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/net/ProtobufTypeConvert.cpp \
     compiler/net/ServerStream.cpp \
     compiler/runtime/CompileService.cpp \
+    compiler/runtime/JITClientSession.cpp \
     compiler/runtime/Listener.cpp
 endif
 
