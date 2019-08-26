@@ -2297,25 +2297,6 @@ TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClaz
    _fullSignature = NULL;
    }
 
-TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClazz, uintptr_t cpIndex, bool JITServerMode)
-   {
-   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-
-   TR_J9ServerVM *fej9 = (TR_J9ServerVM *)fe;
-   JITServer::ServerStream *stream = fej9->_compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::get_params_to_construct_TR_j9method, aClazz, cpIndex);
-   const auto recv = stream->read<std::string, std::string, std::string>();
-   const std::string str_className = std::get<0>(recv);
-   const std::string str_name = std::get<1>(recv);
-   const std::string str_signature = std::get<2>(recv);
-   _className = str2utf8((char*)&str_className[0], str_className.length(), trMemory, heapAlloc);
-   _name = str2utf8((char*)&str_name[0], str_name.length(), trMemory, heapAlloc);
-   _signature = str2utf8((char*)&str_signature[0], str_signature.length(), trMemory, heapAlloc);
-
-   parseSignature(trMemory);
-   _fullSignature = NULL;
-   }
-
 TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod)
    {
    J9ROMMethod * romMethod;

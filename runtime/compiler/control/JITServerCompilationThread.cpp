@@ -3216,6 +3216,7 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    classInfoStruct._jitFieldsCache = NULL;
    classInfoStruct.classFlags = std::get<19>(classInfo);
    classInfoStruct._fieldOrStaticDeclaringClassCache = NULL;
+   classInfoStruct._J9MethodNameCache = NULL;
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
 
    uint32_t numMethods = romClass->romMethodCount;

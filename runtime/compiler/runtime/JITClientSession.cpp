@@ -342,6 +342,11 @@ ClientSessionData::ClassInfo::freeClassInfo()
       _fieldOrStaticDeclaringClassCache->~PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>();
       jitPersistentFree(_fieldOrStaticDeclaringClassCache);
       }
+   if (_J9MethodNameCache)
+      {
+      _J9MethodNameCache->~PersistentUnorderedMap<int32_t, J9MethodNameAndSignature>();
+      jitPersistentFree(_J9MethodNameCache);
+      }
    }
 
 ClientSessionData::VMInfo *
