@@ -24,6 +24,7 @@
 #include "codegen/ARM64JNILinkage.hpp"
 #include "codegen/ARM64PrivateLinkage.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/ARM64Instruction.hpp"
