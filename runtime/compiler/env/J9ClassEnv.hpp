@@ -57,6 +57,7 @@ public:
    J9Class *convertClassOffsetToClassPtr(TR_OpaqueClassBlock *clazzOffset);
 
    uintptrj_t classFlagsValue(TR_OpaqueClassBlock * classPointer);
+   uintptrj_t classFlagReservableWorldInitValue(TR_OpaqueClassBlock * classPointer);
    uintptrj_t classDepthOf(TR_OpaqueClassBlock *clazzPointer);
    uintptrj_t classInstanceSize(TR_OpaqueClassBlock * clazzPointer);
 

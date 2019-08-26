@@ -2911,7 +2911,7 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
 
    // Receive rtResolve: J9JIT_RUNTIME_RESOLVE
    // NOTE: This relies on rtResolve being the last option in clientOptions
-   // the J9JIT_RUNTIME_RESOLVE flag from JITServer client
+   // the J9JIT_RUNTIME_RESOLVE flag from JITClient
    // On JITServer, we store this value for each client in ClientSessionData
    bool rtResolve = (bool) *((uint8_t *) options + clientOptionsSize - sizeof(bool));
    // JITSERVER_TODO guards the code that relies on other JITServer unmerged files.

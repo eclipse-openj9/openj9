@@ -31,6 +31,10 @@
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
 #include "exceptions/RuntimeFailure.hpp"
+#if defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO)
+#include "env/j9methodServer.hpp"
+#include "control/JITServerCompilationThread.hpp"
+#endif /* defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO) */
 
 bool J9::Recompilation::_countingSupported = false;
 
@@ -62,7 +66,25 @@ J9::Recompilation::setupMethodInfo()
    //
    TR_OptimizationPlan * optimizationPlan =  _compilation->getOptimizationPlan();
 
+#if defined(JITSERVER_SUPPORT)
+   // NOTE: cannot use _compilation->isOutOfProcessCompilation here, because this
+   // method is called from within OMR::Compilation() constructor, before
+   // _isOutOfProcessCompilation is set
+   if (comp()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+#if defined(JITSERVER_TODO)
+      auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(TR::compInfoPT);
+      _methodInfo = compInfoPT->getRecompilationMethodInfo();
+      if (!_methodInfo)
+         {
+         _compilation->failCompilation<std::bad_alloc>("Unable to allocate method info");
+         }
+#endif /* defined(JITSERVER_TODO) */
+      }
+   else if (_firstCompile)
+#else
    if (_firstCompile)
+#endif /* defined(JITSERVER_SUPPORT) */
       {
       // Create the persistent method information
       // If the previous compiled version of the method is AOTed, then we need to create a new persistent method information
@@ -608,8 +630,13 @@ TR_PersistentMethodInfo::get(TR_ResolvedMethod * feMethod)
    if (feMethod->isInterpreted() || feMethod->isJITInternalNative())
       return 0;
 
+#if defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO)
+   TR_PersistentJittedBodyInfo *bodyInfo = ((TR_ResolvedJ9Method*) feMethod)->getExistingJittedBodyInfo();
+#else
    void *startPC = (void *)feMethod->startAddressForInterpreterOfJittedMethod();
    TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
+#endif /* defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO) */
+
    return bodyInfo ? bodyInfo->getMethodInfo() : 0;
    }
 
@@ -718,3 +745,25 @@ TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_Per
    if (oldPtr)
       TR_PersistentProfileInfo::decRefCount((TR_PersistentProfileInfo*)oldPtr);
    }
+
+#if defined(JITSERVER_SUPPORT)
+TR_PersistentJittedBodyInfo *
+J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory *trMemory)
+   {
+   auto bodyInfo = (TR_PersistentJittedBodyInfo*) trMemory->allocateHeapMemory(sizeof(TR_PersistentJittedBodyInfo), TR_MemoryBase::Recompilation);
+   auto methodInfo = (TR_PersistentMethodInfo*) trMemory->allocateHeapMemory(sizeof(TR_PersistentMethodInfo), TR_MemoryBase::Recompilation);
+   memcpy(bodyInfo, &bodyInfoStr[0], sizeof(TR_PersistentJittedBodyInfo));
+   memcpy(methodInfo, &methodInfoStr[0], sizeof(TR_PersistentMethodInfo));
+
+   bodyInfo->setMethodInfo(methodInfo);
+   bodyInfo->setProfileInfo(NULL);
+   bodyInfo->setMapTable(NULL);
+   methodInfo->setOptimizationPlan(NULL);
+   // cannot use setter because it calls the destructor on the old profile data,
+   // which is a client pointer
+   methodInfo->_recentProfileInfo = NULL;
+   methodInfo->_bestProfileInfo = NULL;
+
+   return bodyInfo;
+   }
+#endif /* defined(JITSERVER_SUPPORT) */

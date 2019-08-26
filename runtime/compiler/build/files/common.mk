@@ -383,6 +383,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
 
 ifneq ($(JITSERVER_SUPPORT),)
 JIT_PRODUCT_SOURCE_FILES+=\
+    compiler/env/VMJ9Server.cpp \
     compiler/net/ClientStream.cpp \
     compiler/net/CommunicationStream.cpp \
     compiler/net/ProtobufTypeConvert.cpp \
