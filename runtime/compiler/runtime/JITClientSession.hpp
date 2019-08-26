@@ -188,6 +188,13 @@ struct ClassUnloadedData
    bool _cached;
    };
 
+struct J9MethodNameAndSignature
+   {
+   std::string _classNameStr;
+   std::string _methodNameStr;
+   std::string _methodSignatureStr;
+   };
+
 class ClientSessionData
    {
    public:
@@ -225,6 +232,7 @@ class ClientSessionData
       TR_JitFieldsCache *_jitFieldsCache;
       uintptrj_t classFlags;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> *_fieldOrStaticDeclaringClassCache;
+      PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> *_J9MethodNameCache; // key is a cpIndex
       }; // struct ClassInfo
 
    struct J9MethodInfo
