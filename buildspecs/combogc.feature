@@ -30,7 +30,6 @@
 	<flags>
 		<flag id="gc_adaptiveTenuring" value="true"/>
 		<flag id="gc_allocationTax" value="true"/>
-		<flag id="gc_arraylets" value="true"/>
 		<flag id="gc_combinationSpec" value="true"/>
 		<flag id="gc_concurrentSweep" value="true"/>
 		<flag id="gc_dynamicClassUnloading" value="true"/>

@@ -25,8 +25,6 @@
 #include "ModronAssertions.h"
 #include "ObjectModel.hpp"
 
-#if defined(J9VM_GC_ARRAYLETS)
-
 bool
 GC_ArrayletObjectModel::initialize(MM_GCExtensionsBase *extensions)
 {
@@ -106,5 +104,3 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes,
 	}
 	return layout;
 }
-
-#endif /* defined(J9VM_GC_ARRAYLETS) */

@@ -318,14 +318,12 @@ MM_MemorySubSpaceTarok::allocateObject(MM_EnvironmentBase *env, MM_AllocateDescr
 /**
  * Allocate the arraylet spine in immortal or scoped memory.
  */
-#if defined(J9VM_GC_ARRAYLETS)
 void *
 MM_MemorySubSpaceTarok::allocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure)
 {
 	Assert_MM_unreachable();
 	return NULL;
 }
-#endif /* J9VM_GC_ARRAYLETS */
 
 void *
 MM_MemorySubSpaceTarok::allocationRequestFailed(MM_EnvironmentBase *env, MM_AllocateDescription *allocateDescription, AllocationType allocationType, MM_ObjectAllocationInterface *objectAllocationInterface, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace)
@@ -464,9 +462,7 @@ MM_MemorySubSpaceTarok::recycleRegion(MM_EnvironmentBase *env, MM_HeapRegionDesc
 			 * leaving _nextMarkMapCleared unchanged
 			 */
 			regionStandard->_previousMarkMapCleared = true;
-#if defined(J9VM_GC_ARRAYLETS)
 		case MM_HeapRegionDescriptor::ARRAYLET_LEAF:
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 			context->recycleRegion(envVLHGC, regionStandard);
 			break;
 		default:
@@ -777,12 +773,10 @@ MM_MemorySubSpaceTarok::lockedAllocate(MM_EnvironmentBase *env, MM_AllocationCon
 	void* result = NULL;
 	
 	/* arraylet leaves need to be allocated directly after a new region has been found so fall through to the replenish path in that case */
-#if defined(J9VM_GC_ARRAYLETS)
-	if (MM_MemorySubSpace::ALLOCATION_TYPE_LEAF != allocationType)
-#endif /* defined(J9VM_GC_ARRAYLETS) */
-	{
+	if (MM_MemorySubSpace::ALLOCATION_TYPE_LEAF != allocationType) {
 		result = ((MM_AllocationContextTarok *)context)->lockedAllocate(env, objectAllocationInterface, allocateDescription, allocationType);
 	}
+
 	if (NULL == result) {
 		/* we failed so do the locked replenish */
 		result = lockedReplenishAndAllocate(env, context, objectAllocationInterface, allocateDescription, allocationType);

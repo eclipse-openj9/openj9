@@ -39,7 +39,6 @@
 #include "ArrayObjectModel.hpp"
 #include "ArrayletObjectModel.hpp"
 
-#if defined(J9VM_GC_ARRAYLETS)
 /**
  * Defines the interface for iterating over all slots in an object which contain an object reference
  * @ingroup GC_Structs
@@ -108,7 +107,5 @@ public:
 		initialize(objectPtr);
 	}
 };
-#endif /* J9VM_GC_ARRAYLETS */
 
 #endif /* ARRAYLETLEAFITERATOR_HPP_ */
-

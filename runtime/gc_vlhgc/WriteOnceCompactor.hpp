@@ -202,13 +202,11 @@ private:
 	void fixupClassLoaderObject(MM_EnvironmentVLHGC* env, J9Object *classLoaderObject, J9MM_FixupCache *cache);
 	void fixupPointerArrayObject(MM_EnvironmentVLHGC* env, J9Object *objectPtr, J9MM_FixupCache *cache);
 	void fixupClasses(MM_EnvironmentVLHGC *env);
-    void fixupClassLoaders(MM_EnvironmentVLHGC *env);
-    void fixupStacks(MM_EnvironmentVLHGC *env);
-    void fixupRememberedSet(MM_EnvironmentVLHGC *env);
-    void fixupMonitorReferences(MM_EnvironmentVLHGC *env);
-#if defined(J9VM_GC_ARRAYLETS)
+	void fixupClassLoaders(MM_EnvironmentVLHGC *env);
+	void fixupStacks(MM_EnvironmentVLHGC *env);
+	void fixupRememberedSet(MM_EnvironmentVLHGC *env);
+	void fixupMonitorReferences(MM_EnvironmentVLHGC *env);
 	void updateInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr);
-#endif /* J9VM_GC_ARRAYLETS */
 
 	/**
      * Return the page index for an object.
@@ -246,7 +244,7 @@ private:
 	 * @param env[in] A GC thread
 	 */
 	void recycleFreeRegionsAndFixFreeLists(MM_EnvironmentVLHGC *env);
-#if defined(J9VM_GC_ARRAYLETS)
+
 	/**
 	 * Fix up the spine pointers of any arraylet leaf regions
 	 */
@@ -264,7 +262,6 @@ private:
 	 * @param env[in] A GC thread
 	 */
 	void tagArrayletLeafRegionsForFixup(MM_EnvironmentVLHGC* env);
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 
 	/**
 	 * Verify all objects in heap

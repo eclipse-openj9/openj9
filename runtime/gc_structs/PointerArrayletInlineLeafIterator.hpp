@@ -39,9 +39,6 @@
 #include "ObjectIteratorState.hpp"
 #include "SlotObject.hpp"
 
-#if defined(J9VM_GC_ARRAYLETS)
-
-
 /**
  * Iterate over all slots in a pointer array's inline leaf which contain an object reference (will iterate over nothing if the object is fully discontiguous)
  * @ingroup GC_Structs
@@ -122,8 +119,5 @@ public:
 		initialize(objectPtr);
 	}
 };
-
-#endif /* defined(J9VM_GC_ARRAYLETS) */
-
 
 #endif /* POINTERARRAYLETINLINELEAFITERATOR_HPP_ */

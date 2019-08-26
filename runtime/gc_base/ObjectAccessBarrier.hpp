@@ -107,19 +107,13 @@ protected:
 	{
 		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vmThread);
 
-#if !defined(J9VM_GC_ARRAYLETS)
-		/* non-arraylet */
-		UDATA data = (UDATA)extensions->indexableObjectModel.getDataPointerForContiguous(array);
-		return (void *)(data + (elementSize * (UDATA)index));
-#else /* J9VM_GC_ARRAYLETS */
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		/* hybrid arraylet */
 		GC_ArrayletObjectModel::ArrayLayout layout = extensions->indexableObjectModel.getArrayLayout(array);
 		if (GC_ArrayletObjectModel::InlineContiguous == layout)	{
 			UDATA data = (UDATA)extensions->indexableObjectModel.getDataPointerForContiguous(array);
 			return (void *)(data + (elementSize * (UDATA)index));
 		}
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
+
 		/* discontiguous arraylet */
 		fj9object_t *arrayoidPointer = extensions->indexableObjectModel.getArrayoidPointer(array);
 		U_32 slotsPerArrayletLeaf = (U_32)(J9VMTHREAD_JAVAVM(vmThread)->arrayletLeafSize / elementSize);
@@ -127,7 +121,6 @@ protected:
 		U_32 arrayletOffset = (U_32)index % slotsPerArrayletLeaf;
 		UDATA arrayletLeafBase = (UDATA)convertPointerFromToken(arrayoidPointer[arrayletIndex]);
 		return (void *)(arrayletLeafBase + (elementSize * (UDATA)arrayletOffset));
-#endif /* J9VM_GC_ARRAYLETS */
 	}
 	
 	virtual mm_j9object_t readObjectImpl(J9VMThread *vmThread, mm_j9object_t srcObject, fj9object_t *srcAddress, bool isVolatile=false);
@@ -203,7 +196,6 @@ public:
 	virtual void copyObjectFieldsToArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t srcObject, J9IndexableObject *arrayRef, I_32 index);
 	virtual void copyObjectFieldsFromArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t destObject, J9IndexableObject *arrayRef, I_32 index);
 
-#if defined(J9VM_GC_ARRAYLETS)
 	enum {
 		ARRAY_COPY_SUCCESSFUL = -1,
 		ARRAY_COPY_NOT_DONE = -2
@@ -212,7 +204,6 @@ public:
 	virtual I_32 doCopyContiguousBackward(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots);	
 	virtual I_32 backwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots) { return -2; }
 	virtual I_32 forwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots) { return -2; }
-#endif	
 
 	virtual J9Object *staticReadObject(J9VMThread *vmThread, J9Class *clazz, J9Object **srcSlot, bool isVolatile=false);
 	virtual void *staticReadAddress(J9VMThread *vmThread, J9Class *clazz, void **srcSlot, bool isVolatile=false);

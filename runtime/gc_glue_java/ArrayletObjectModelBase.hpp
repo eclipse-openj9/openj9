@@ -29,8 +29,6 @@
 #include "modron.h"
 #include "modronopt.h"
 
-#if defined(J9VM_GC_ARRAYLETS)
-
 #include "Bits.hpp"
 #include "Math.hpp"
 
@@ -254,5 +252,4 @@ public:
 	expandArrayletSubSpaceRange(MM_MemorySubSpace* subSpace, void* rangeBase, void* rangeTop, UDATA largestDesirableArraySpineSize);
 };
 
-#endif /*J9VM_GC_ARRAYLETS */
 #endif /* ARRAYLETOBJECTMODELBASE_ */

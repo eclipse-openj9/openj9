@@ -33,8 +33,6 @@
 #include "modron.h"
 #include "modronopt.h"
 
-#if defined(J9VM_GC_ARRAYLETS)
-
 #include "ArrayletObjectModelBase.hpp"
 #include "Bits.hpp"
 #include "Math.hpp"
@@ -919,6 +917,4 @@ public:
 	 */
 	void tearDown(MM_GCExtensionsBase *extensions);
 };
-
-#endif /*J9VM_GC_ARRAYLETS */
 #endif /* ARRAYLETOBJECTMODEL_ */

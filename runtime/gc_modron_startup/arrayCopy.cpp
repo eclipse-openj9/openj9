@@ -120,9 +120,7 @@ referenceArrayCopy(J9VMThread *vmThread, J9IndexableObject *srcObject, J9Indexab
 	if (lengthInSlots > 0) {
 		MM_GCExtensions *ext = MM_GCExtensions::getExtensions(vmThread->javaVM);
 
-#if defined(J9VM_GC_ARRAYLETS)
 		Assert_MM_true(ext->indexableObjectModel.isInlineContiguousArraylet(srcObject) && ext->indexableObjectModel.isInlineContiguousArraylet(destObject));
-#endif
 
 		uintptr_t srcHeaderSize = ext->indexableObjectModel.getHeaderSize(srcObject);
 		uintptr_t destHeaderSize = ext->indexableObjectModel.getHeaderSize(destObject);

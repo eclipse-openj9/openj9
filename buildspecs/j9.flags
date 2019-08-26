@@ -314,13 +314,6 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		<description>Always call the write barrier from the VM without checks</description>
 		<ifRemoved>Short circuit checks will be made in VM before write barrier call</ifRemoved>
 	</flag>
-	<flag id="gc_arraylets">
-		<description>Arrays are broken into an array spine and chunks of data (arraylets)</description>
-		<ifRemoved>Arrays are not represented as arraylets</ifRemoved>
-		<requires>
-			<require flag="gc_objectAccessBarrier"/>
-		</requires>
-	</flag>
 	<flag id="gc_batchClearTLH">
 		<description>Zero any TLH allocated</description>
 		<ifRemoved>Do not initial memory allocated as a TLH</ifRemoved>
@@ -336,7 +329,6 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		<description>Set on specs which implement LIR 16325:  reduce memory footprint by combining multiple sidecars into the same set of libraries.</description>
 		<ifRemoved></ifRemoved>
 		<requires>
-			<require flag="gc_arraylets"/>
 			<require flag="gc_heapCardTable"/>
 			<require flag="gc_hybridArraylets"/>
 			<require flag="gc_modronStandard"/>
@@ -526,7 +518,6 @@ Currently only available on linux_x86 and win_x96 32 bit builds.</description>
 		<description>Realtime Garbage Collection is supported</description>
 		<ifRemoved>Realtime Garbage Collection is NOT supported</ifRemoved>
 		<requires>
-			<require flag="gc_arraylets"/>
 			<require flag="gc_objectAccessBarrier"/>
 			<require flag="gc_segregatedHeap"/>
 		</requires>

@@ -92,10 +92,8 @@ public:
 	virtual void jniReleaseStringCritical(J9VMThread* vmThread, jstring str, const jchar* elems);
 	virtual void initializeForNewThread(MM_EnvironmentBase* env);
 
-#if defined(J9VM_GC_ARRAYLETS)
 	virtual I_32 backwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots);
 	virtual I_32 forwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots);
-#endif
 
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	/* heap slot (possibly compressed refs) */

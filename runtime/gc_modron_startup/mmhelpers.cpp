@@ -309,15 +309,8 @@ j9gc_modron_getConfigurationValueForKey(J9JavaVM *javaVM, UDATA key, void *value
 		keyFound = TRUE;
 		break;
 	case j9gc_modron_configuration_discontiguousArraylets:
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		*((UDATA *)value) = (UDATA_MAX != extensions->getOmrVM()->_arrayletLeafSize) ? TRUE : FALSE;
 		keyFound = TRUE;
-#elif defined(J9VM_GC_ARRAYLETS)
-		*((UDATA *)value) = TRUE;
-		keyFound = TRUE;
-#else
-		keyFound = FALSE;
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
 		break;
 	case j9gc_modron_configuration_gcThreadCount:
 		*((UDATA *)value) = extensions->gcThreadCount;

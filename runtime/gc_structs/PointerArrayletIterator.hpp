@@ -40,9 +40,6 @@
 #include "SlotObject.hpp"
 #include "ArrayletObjectModel.hpp"
 
-#if defined(J9VM_GC_ARRAYLETS)
-
-
 /**
  * Iterate over all slots in a pointer array which contain an object reference
  * @ingroup GC_Structs
@@ -198,8 +195,5 @@ public:
 		objectIteratorState->_index = _index;
 	}
 };
-
-#endif /* defined(J9VM_GC_ARRAYLETS) */
-
 
 #endif /* POINTERARRAYLETITERATOR_HPP_ */
