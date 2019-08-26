@@ -44,4 +44,5 @@ if(OMR_TOOLCONFIG STREQUAL "gnu")
 	target_compile_options(j9ddr_misc PRIVATE  -femit-class-debug-always)
 endif()
 
-target_enable_ddr(j9ddr_misc j9ddr)
+target_enable_ddr(j9ddr_misc)
+ddr_set_add_targets(j9ddr j9ddr_misc)
