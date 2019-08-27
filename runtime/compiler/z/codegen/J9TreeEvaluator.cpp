@@ -1745,7 +1745,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
             {
             generateRRInstruction(cg, opLoadReg, node, temp1Reg, owningObjectReg); //copy owning into temp
             generateRILInstruction(cg, is64Bit ? TR::InstOpCode::SLGFI : TR::InstOpCode::SLFI, node, temp1Reg, heapBase); //temp = temp - heapbase
-            generateS390CompareAndBranchInstruction(cg, is64Bit ? TR::InstOpCode::CLG : TR::InstOpCode::CL, node, temp1Reg, heapSize, TR::InstOpCode::COND_BH, doneLabel, false, false, NULL, conditions);
+            generateS390CompareAndBranchInstruction(cg, is64Bit ? TR::InstOpCode::CLG : TR::InstOpCode::CL, node, temp1Reg, static_cast<int64_t>(heapSize), TR::InstOpCode::COND_BH, doneLabel, false, false, NULL, conditions);
             }
          }
       else
@@ -1828,7 +1828,7 @@ VMnonNullSrcWrtBarCardCheckEvaluator(
             uint32_t heapBase = comp->getOptions()->getHeapBaseForBarrierRange0();
             uint32_t heapSize = comp->getOptions()->getHeapSizeForBarrierRange0();
             generateRILInstruction(cg, is64Bit ? TR::InstOpCode::SLGFI : TR::InstOpCode::SLFI, node, temp1Reg, heapBase);
-            generateS390CompareAndBranchInstruction(cg, is64Bit ? TR::InstOpCode::CLG : TR::InstOpCode::CL, node, temp1Reg, heapSize, TR::InstOpCode::COND_BL, doneLabel, false);
+            generateS390CompareAndBranchInstruction(cg, is64Bit ? TR::InstOpCode::CLG : TR::InstOpCode::CL, node, temp1Reg, static_cast<int64_t>(heapSize), TR::InstOpCode::COND_BL, doneLabel, false);
             }
          else
             {
