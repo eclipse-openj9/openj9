@@ -732,7 +732,7 @@ TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_Per
       TR_PersistentProfileInfo::decRefCount((TR_PersistentProfileInfo*)oldPtr);
    }
 
-// used for JITaaS
+// used for JITServer
 TR_PersistentJittedBodyInfo *
 J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory *trMemory)
    {

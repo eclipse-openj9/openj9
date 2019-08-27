@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@ class TR_MethodEvent
    J9VMThread * _vmThread;
    J9Class *    _classNeedingThunk; // for newInstanceImpl
    TR_Hotness   _nextOptLevel; // Used for HWP-based recompilation
-   TR_Hotness   _JITaaSClientOptLevel; // Used for JITaaS compilation
+   TR_Hotness   _JITClientOptLevel; // Used for JITServer compilation
    };
 
 

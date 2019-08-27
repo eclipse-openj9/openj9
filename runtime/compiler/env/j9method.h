@@ -204,7 +204,7 @@ public:
    TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, TR_OpaqueMethodBlock * aMethod);
 
 protected:
-   // To be used by JITaaS.
+   // To be used by JITServer.
    // Warning: some initialization must be done manually after calling this constructor
    TR_J9Method();
    };
@@ -271,9 +271,9 @@ class TR_ResolvedJ9Method : public TR_J9Method, public TR_ResolvedJ9MethodBase
 public:
    TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
-   // JITaaS: make virtual
+   // JITServer: make virtual
    //
-   // JITaaS TODO: make protected, returning Opaque versions
+   // JITServer TODO: make protected, returning Opaque versions
    J9ROMMethod *           romMethod() { return _romMethod; }
    virtual J9ROMClass *            romClassPtr();
    virtual J9ConstantPool *      cp();
@@ -520,7 +520,7 @@ protected:
    TR_ResolvedJ9Method(TR_FrontEnd *, TR_ResolvedMethod * owningMethod = 0);
    virtual void construct();
 
-// JITaaS TODO
+// JITServer TODO
 //private:
    virtual TR_ResolvedMethod *createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
 

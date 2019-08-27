@@ -65,7 +65,7 @@
  */
 bool firstCompileStarted = false;
 
-// TODO disabled to allow for JITaaS
+// TODO disabled to allow for JITServer
 /*
 void *operator new(size_t size)
    {
@@ -89,7 +89,7 @@ void *operator new(size_t size)
  * can't be used by JIT code, so we inject an assertion here.
  */
 
-// TODO disabled to allow for JITaaS
+// TODO disabled to allow for JITServer
 /*
 void operator delete(void *)
    {

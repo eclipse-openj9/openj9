@@ -1085,7 +1085,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          if (!allowedToReserve)
             {
             persistentClassInfo->setReservable(false);
-            // This is currently the only place where this flag gets cleared. For JITaaS, we should propagate it to the client,
+            // This is currently the only place where this flag gets cleared. For JITServer, we should propagate it to the client,
             // to avoid having to call scanForNativeMethodsUntilMonitorNode again.
             if (auto stream = TR::CompilationInfo::getStream())
                {
@@ -2627,11 +2627,11 @@ J9::CodeGenerator::processRelocations()
    //Project neutral non-AOT processRelocation
    OMR::CodeGenerator::processRelocations();
 
-   bool isJITaaSMode = comp()->isOutOfProcessCompilation();
+   bool isJITServerMode = comp()->isOutOfProcessCompilation();
 
    int32_t missedSite = -1;
 
-   if (self()->comp()->compileRelocatableCode() || isJITaaSMode)
+   if (self()->comp()->compileRelocatableCode() || isJITServerMode)
       {
       if (self()->comp()->compileRelocatableCode())
          {

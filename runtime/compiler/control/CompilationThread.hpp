@@ -244,7 +244,7 @@ class CompilationInfoPerThreadBase
    static TR::FILE *getPerfFile() { return _perfFile; } // used on Linux for perl tool support
    static void setPerfFile(TR::FILE *f) { _perfFile = f; }
 
-   // JITaaS
+   // JITServer
    void                   setClientData(ClientSessionData *data) { _cachedClientDataPtr = data; }
    ClientSessionData     *getClientData() { return _cachedClientDataPtr; }
 
@@ -256,7 +256,7 @@ class CompilationInfoPerThreadBase
    TR::CompilationInfo &        _compInfo;
    J9JITConfig * const          _jitConfig;
    TR_SharedCacheRelocationRuntime _sharedCacheReloRuntime;
-   TR_JITaaSRelocationRuntime      _remoteCompileReloRuntime;
+   TR_JITServerRelocationRuntime _remoteCompileReloRuntime;
    int32_t const                _compThreadId; // unique number starting from 0; Only used for compilation on separate thread
    bool const                   _onSeparateThread;
 
@@ -277,7 +277,7 @@ class CompilationInfoPerThreadBase
 
    static TR::FILE *_perfFile; // used on Linux for perl tool support
 
-   // JITaaS
+   // JITServer
    ClientSessionData * _cachedClientDataPtr;
    JITServer::ClientStream * _clientStream;
 
@@ -373,7 +373,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   isDiagnosticThread() const { return _isDiagnosticThread; }
    CpuSelfThreadUtilization& getCompThreadCPU() { return _compThreadCPU; }
 
-   // JITaaS
+   // JITServer
    TR_J9ServerVM         *getServerVM() { return _serverVM; }
    void                   setServerVM(TR_J9ServerVM *vm) { _serverVM = vm; }
    TR_J9SharedCacheServerVM *getSharedCacheServerVM() { return _sharedCacheServerVM; }

@@ -1429,7 +1429,7 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
       symRef->setReallySharesSymbol();
 
    TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
-   // check for KnownObjectTable first, in JITaaS mode, this will return NULL,
+   // check for KnownObjectTable first, in JITServer mode, this will return NULL,
    // so we never enter the critical section
    TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
    if (knot

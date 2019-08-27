@@ -67,7 +67,7 @@ struct TR_MethodToBeCompiled
    void unsetRemoteCompReq() { _remoteCompReq = false; }
    bool isOutOfProcessCompReq() const { return _stream != NULL; } // at the server
    uint64_t getClientUID() const;
-   void cleanupJITaaS();
+   void cleanupJITServer();
    bool hasChangedToLocalSyncComp() const { return _origOptLevel != unknownHotness; }
 
    TR_MethodToBeCompiled *_next;
@@ -123,7 +123,7 @@ struct TR_MethodToBeCompiled
    uint8_t                _weight; // Up to 256 levels of weight
    bool                   _hasIncrementedNumCompThreadsCompilingHotterMethods;
    uint8_t                _jitStateWhenQueued;
-   bool                   _remoteCompReq; // comp request should be sent remotely to JITaaS server
+   bool                   _remoteCompReq; // comp request should be sent remotely to JITServer
    JITServer::ServerStream  *_stream; // a non-NULL field denotes an out-of-process compilation request
    char                  *_clientOptions;
    size_t                _clientOptionsSize;

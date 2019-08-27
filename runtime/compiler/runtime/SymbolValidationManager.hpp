@@ -757,7 +757,7 @@ public:
 
    static bool assertionsAreFatal();
 
-   std::string serializeSymbolToIDMap(); // JITaaS
+   std::string serializeSymbolToIDMap(); // JITServer
    void deserializeSymbolToIDMap(const std::string &symbolToIdStr);
 
 private:

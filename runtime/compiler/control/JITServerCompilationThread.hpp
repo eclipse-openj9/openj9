@@ -20,8 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JITaaS_COMPILATION_THREAD_H
-#define JITaaS_COMPILATION_THREAD_H
+#ifndef JITSERVER_COMPILATION_THREAD_H
+#define JITSERVER_COMPILATION_THREAD_H
 
 #include <unordered_map>
 #include "control/CompilationThread.hpp"
@@ -35,13 +35,11 @@ class TR_PersistentClassInfo;
 class TR_IPBytecodeHashTableEntry;
 struct TR_RemoteROMStringKey;
 
-
 using IPTableHeapEntry = UnorderedMap<uint32_t, TR_IPBytecodeHashTableEntry*>;
 using IPTableHeap_t = UnorderedMap<J9Method *, IPTableHeapEntry *>;
 using ResolvedMirrorMethodsPersistIP_t = Vector<TR_ResolvedJ9Method *>;
 using ClassOfStatic_t = UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_OpaqueClassBlock *>;
 using FieldOrStaticAttrTable_t = UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_J9MethodFieldAttributes>;
-
 
 size_t methodStringLength(J9ROMMethod *);
 std::string packROMClass(J9ROMClass *, TR_Memory *);
@@ -50,13 +48,13 @@ TR_MethodMetaData *remoteCompile(J9VMThread *, TR::Compilation *, TR_ResolvedMet
 TR_MethodMetaData *remoteCompilationEnd(J9VMThread * vmThread, TR::Compilation *comp, TR_ResolvedMethod * compilee, J9Method * method,
    TR::CompilationInfoPerThreadBase *compInfoPT, const std::string& codeCacheStr, const std::string& dataCacheStr);
 void outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp);
-void printJITaaSMsgStats(J9JITConfig *);
+void printJITServerMsgStats(J9JITConfig *);
 void printJITServerCHTableStats(J9JITConfig *, TR::CompilationInfo *);
-void printJITaaSCacheStats(J9JITConfig *, TR::CompilationInfo *);
+void printJITServerCacheStats(J9JITConfig *, TR::CompilationInfo *);
 
 namespace TR
 {
-// Objects of this type are instantiated at JITaaS server
+// Objects of this type are instantiated at JITServer
 class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    {
    public:
@@ -73,8 +71,8 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
 
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
-   void cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo);
-   bool getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITaaSServerMethod *owningMethod, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP = NULL);
+   void cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedJ9JITServerMethodInfo &methodInfo);
+   bool getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITServerMethod *owningMethod, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP = NULL);
    TR_ResolvedMethodKey getResolvedMethodKey(TR_ResolvedMethodType type, TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_OpaqueClassBlock *classObject = NULL);
 
    void cacheResolvedMirrorMethodsPersistIPInfo(TR_ResolvedJ9Method *resolvedMethod);
@@ -233,4 +231,4 @@ class JITServerHelpers
    static TR::Monitor * _clientStreamMonitor;
    }; // class JITServerHelpers
 
-#endif // defined(JITaaS_COMPILATION_THREAD_H)
+#endif // defined(JITSERVER_COMPILATION_THREAD_H)

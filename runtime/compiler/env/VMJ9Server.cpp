@@ -39,7 +39,7 @@ TR_J9ServerVM::getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassB
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    stream->write(JITServer::MessageType::VM_getResolvedMethodsAndMirror, classPointer);
-   auto recv = stream->read<J9Method *, std::vector<TR_ResolvedJ9JITaaSServerMethodInfo>>();
+   auto recv = stream->read<J9Method *, std::vector<TR_ResolvedJ9JITServerMethodInfo>>();
    auto methodsInClass = std::get<0>(recv);
    auto &methodsInfo = std::get<1>(recv);
    if (methods)
@@ -49,7 +49,7 @@ TR_J9ServerVM::getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassB
    for (int i = 0; i < methodsInfo.size(); ++i)
       {
       // create resolved methods, using information from mirrors
-      auto resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod((TR_OpaqueMethodBlock *) &(methodsInClass[i]), this, trMemory, methodsInfo[i], 0);
+      auto resolvedMethod = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITServerMethod((TR_OpaqueMethodBlock *) &(methodsInClass[i]), this, trMemory, methodsInfo[i], 0);
       resolvedMethodsInClass->add(resolvedMethod);
       }
    }
@@ -110,7 +110,7 @@ TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_Opaque
    if (isAOT_DEPRECATED_DO_NOT_USE())
       {
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-      result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9JITaaSServerMethod(aMethod, this, trMemory, owningMethod);
+      result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9JITServerMethod(aMethod, this, trMemory, owningMethod);
       TR::Compilation *comp = _compInfoPT->getCompilation();
       if (comp && comp->getOption(TR_UseSymbolValidationManager))
          {
@@ -122,7 +122,7 @@ TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_Opaque
       }
    else
       {
-      result = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod(aMethod, this, trMemory, owningMethod);
+      result = new (trMemory->trHeapMemory()) TR_ResolvedJ9JITServerMethod(aMethod, this, trMemory, owningMethod);
       if (classForNewInstance)
          {
          result->setClassForNewInstance((J9Class*)classForNewInstance);
@@ -348,8 +348,8 @@ TR_J9ServerVM::jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_R
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
 
    // Pass pointers to client mirrors of the ResolvedMethod objects instead of local objects
-   TR_ResolvedJ9JITaaSServerMethod *serverMethod1 = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(method1);
-   TR_ResolvedJ9JITaaSServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(method2);
+   TR_ResolvedJ9JITServerMethod *serverMethod1 = static_cast<TR_ResolvedJ9JITServerMethod*>(method1);
+   TR_ResolvedJ9JITServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JITServerMethod*>(method2);
    TR_ResolvedMethod *clientMethod1 = serverMethod1->getRemoteMirror();
    TR_ResolvedMethod *clientMethod2 = serverMethod2->getRemoteMirror();
 
@@ -446,8 +446,8 @@ TR_J9ServerVM::jitStaticsAreSame(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_R
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
 
    // Pass pointers to client mirrors of the ResolvedMethod objects instead of local objects
-   TR_ResolvedJ9JITaaSServerMethod *serverMethod1 = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(method1);
-   TR_ResolvedJ9JITaaSServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JITaaSServerMethod*>(method2);
+   TR_ResolvedJ9JITServerMethod *serverMethod1 = static_cast<TR_ResolvedJ9JITServerMethod*>(method1);
+   TR_ResolvedJ9JITServerMethod *serverMethod2 = static_cast<TR_ResolvedJ9JITServerMethod*>(method2);
    TR_ResolvedMethod *clientMethod1 = serverMethod1->getRemoteMirror();
    TR_ResolvedMethod *clientMethod2 = serverMethod2->getRemoteMirror();
    
@@ -520,7 +520,7 @@ TR_J9ServerVM::compiledAsDLTBefore(TR_ResolvedMethod *method)
    {
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   auto mirror = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(method)->getRemoteMirror();
+   auto mirror = static_cast<TR_ResolvedJ9JITServerMethod *>(method)->getRemoteMirror();
    stream->write(JITServer::MessageType::VM_compiledAsDLTBefore, static_cast<TR_ResolvedMethod *>(mirror));
    return std::get<0>(stream->read<bool>());
 #else
@@ -895,7 +895,7 @@ TR_J9ServerVM::getCurrentLocalsMapForDLT(TR::Compilation *comp)
    {
    int32_t *currentBundles = NULL;
 #if defined(J9VM_JIT_DYNAMIC_LOOP_TRANSFER)
-   TR_ResolvedJ9JITaaSServerMethod *currentMethod = (TR_ResolvedJ9JITaaSServerMethod *)(comp->getCurrentMethod());
+   TR_ResolvedJ9JITServerMethod *currentMethod = (TR_ResolvedJ9JITServerMethod *)(comp->getCurrentMethod());
    int32_t numBundles = currentMethod->numberOfTemps() + currentMethod->numberOfParameterSlots();
    numBundles = (numBundles+31)/32;
    currentBundles = (int32_t *)comp->trMemory()->allocateHeapMemory(numBundles * sizeof(int32_t));
@@ -1084,7 +1084,7 @@ TR_J9ServerVM::sameClassLoaders(TR_OpaqueClassBlock * class1, TR_OpaqueClassBloc
 bool
 TR_J9ServerVM::isUnloadAssumptionRequired(TR_OpaqueClassBlock *clazz, TR_ResolvedMethod *methodBeingCompiled)
    {
-   TR_OpaqueClassBlock * classOfMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(methodBeingCompiled)->classOfMethod();
+   TR_OpaqueClassBlock * classOfMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(methodBeingCompiled)->classOfMethod();
    uint32_t extraModifiers = 0;
    void *classLoader = NULL;
    void *classOfMethodLoader = NULL;
@@ -1779,9 +1779,9 @@ TR_J9SharedCacheServerVM::getMethodFromClass(TR_OpaqueClassBlock * methodClass, 
          }
       else
          {
-         if (!((TR_ResolvedRelocatableJ9JITaaSServerMethod*) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class*)methodClass))
+         if (!((TR_ResolvedRelocatableJ9JITServerMethod*) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class*)methodClass))
             omb = NULL;
-         if (callingClass && !((TR_ResolvedRelocatableJ9JITaaSServerMethod*) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class*)callingClass))
+         if (callingClass && !((TR_ResolvedRelocatableJ9JITServerMethod*) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class*)callingClass))
             omb = NULL;
          }
       }
@@ -1805,7 +1805,7 @@ TR_J9SharedCacheServerVM::isPublicClass(TR_OpaqueClassBlock * classPointer)
       }
    else
       {
-      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+      if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
 
@@ -1833,7 +1833,7 @@ TR_J9SharedCacheServerVM::getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *
       }
    else
       {
-      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod*) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class*)classPointer))
+      if (((TR_ResolvedRelocatableJ9JITServerMethod*) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class*)classPointer))
          validated = true;
       }
 
@@ -1881,7 +1881,7 @@ TR_J9SharedCacheServerVM::getSystemClassFromClassName(const char * name, int32_t
       {
       if (isVettedForAOT)
          {
-         if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+         if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
             validated = true;
          }
       }
@@ -1910,7 +1910,7 @@ TR_J9SharedCacheServerVM::supportAllocationInlining(TR::Compilation *comp, TR::N
 TR_OpaqueClassBlock *
 TR_J9SharedCacheServerVM::getClassFromSignature(const char * sig, int32_t sigLength, TR_ResolvedMethod * method, bool isVettedForAOT)
    {
-   TR_ResolvedRelocatableJ9JITaaSServerMethod* resolvedJITaaSMethod = (TR_ResolvedRelocatableJ9JITaaSServerMethod *)method;
+   TR_ResolvedRelocatableJ9JITServerMethod* resolvedJITServerMethod = (TR_ResolvedRelocatableJ9JITServerMethod *)method;
    TR_OpaqueClassBlock* clazz = NULL;
    J9ClassLoader * cl = ((TR_ResolvedJ9Method *)method)->getClassLoader();
    ClassLoaderStringPair key = {cl, std::string(sig, sigLength)};
@@ -1924,14 +1924,14 @@ TR_J9SharedCacheServerVM::getClassFromSignature(const char * sig, int32_t sigLen
    if (!clazz)
       {
       // classname not found; ask the client and cache the answer
-      clazz = TR_J9ServerVM::getClassFromSignature(sig, sigLength, (TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), isVettedForAOT);
+      clazz = TR_J9ServerVM::getClassFromSignature(sig, sigLength, (TR_OpaqueMethodBlock *)resolvedJITServerMethod->getPersistentIdentifier(), isVettedForAOT);
       if (clazz)
          {
             {
             OMR::CriticalSection classFromSigCS(_compInfoPT->getClientData()->getClassMapMonitor());
             classByNameMap[key] = clazz;
             }
-         if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
+         if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITServerMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
             {
             clazz = NULL;
             }
@@ -1950,7 +1950,7 @@ TR_J9SharedCacheServerVM::getClassFromSignature(const char * sig, int32_t sigLen
       }
    else
       {
-      if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITaaSMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
+      if (!validateClass((TR_OpaqueMethodBlock *)resolvedJITServerMethod->getPersistentIdentifier(), clazz, isVettedForAOT))
          clazz = NULL;
       }
    return clazz;
@@ -1985,7 +1985,7 @@ TR_J9SharedCacheServerVM::validateClass(TR_OpaqueMethodBlock * method, TR_Opaque
       {
       if (isVettedForAOT)
          {
-         if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) j9class))
+         if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) j9class))
             validated = true;
          }
       }
@@ -2008,7 +2008,7 @@ TR_J9SharedCacheServerVM::hasFinalizer(TR_OpaqueClassBlock * classPointer)
       }
    else
       {
-      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+      if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
 
@@ -2034,7 +2034,7 @@ TR_J9SharedCacheServerVM::isPrimitiveClass(TR_OpaqueClassBlock * classPointer)
       }
    else
       {
-      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+      if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
 
@@ -2126,7 +2126,7 @@ TR_J9SharedCacheServerVM::getInstanceFieldOffset(TR_OpaqueClassBlock * classPoin
       }
    else
       {
-      validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod*) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class*)classPointer);
+      validated = ((TR_ResolvedRelocatableJ9JITServerMethod*) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class*)classPointer);
       }
 
    if (validated)
@@ -2150,7 +2150,7 @@ TR_J9SharedCacheServerVM::getSuperClass(TR_OpaqueClassBlock * classPointer)
       }
    else
       {
-      validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer);
+      validated = ((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer);
       }
 
    if (validated)
@@ -2174,7 +2174,7 @@ TR_J9SharedCacheServerVM::getResolvedMethods(TR_Memory *trMemory, TR_OpaqueClass
       }
    else
       {
-      validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer);
+      validated = ((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer);
       }
 
    if (validated)
@@ -2216,7 +2216,7 @@ TR_J9SharedCacheServerVM::getResolvedMethodForNameAndSignature(TR_Memory * trMem
       }
    else
       {
-      validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod *)comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *)classPointer);
+      validated = ((TR_ResolvedRelocatableJ9JITServerMethod *)comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *)classPointer);
       }
 
    if (validated)
@@ -2241,7 +2241,7 @@ TR_J9SharedCacheServerVM::isPrimitiveArray(TR_OpaqueClassBlock *classPointer)
       }
    else
       {
-      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+      if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
 
@@ -2267,7 +2267,7 @@ TR_J9SharedCacheServerVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
       }
    else
       {
-      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+      if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
 
@@ -2299,7 +2299,7 @@ TR_J9SharedCacheServerVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * class
       }
    else
       {
-      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+      if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
 
@@ -2347,8 +2347,8 @@ TR_J9SharedCacheServerVM::isClassVisible(TR_OpaqueClassBlock * sourceClass, TR_O
       }
    else
       {
-      validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) sourceClass) &&
-                  ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) destClass);
+      validated = ((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) sourceClass) &&
+                  ((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) destClass);
       }
 
    return (validated ? TR_J9ServerVM::isClassVisible(sourceClass, destClass) : false);
@@ -2372,7 +2372,7 @@ TR_J9SharedCacheServerVM::getClassOfMethod(TR_OpaqueMethodBlock *method)
          }
       else
          {
-         validated = ((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer);
+         validated = ((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer);
          }
       if (!validated)
          classPointer = NULL;
@@ -2439,7 +2439,7 @@ TR_J9SharedCacheServerVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock * 
       }
    else
       {
-      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) arrayClass))
+      if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) arrayClass))
          validated = true;
       }
 
@@ -2464,7 +2464,7 @@ TR_J9SharedCacheServerVM::getArrayClassFromComponentClass(TR_OpaqueClassBlock * 
       }
    else
       {
-      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) componentClass))
+      if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) componentClass))
          validated = true;
       }
 
@@ -2490,7 +2490,7 @@ TR_J9SharedCacheServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBloc
       }
    else
       {
-      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) arrayClass))
+      if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) arrayClass))
          validated = true;
       }
 
@@ -2516,7 +2516,7 @@ TR_J9SharedCacheServerVM::getBaseComponentClass(TR_OpaqueClassBlock * classPoint
       }
    else
       {
-      if (((TR_ResolvedRelocatableJ9JITaaSServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
+      if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
 

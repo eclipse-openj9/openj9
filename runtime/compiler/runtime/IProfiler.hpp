@@ -210,7 +210,7 @@ public:
    // returns the number of bytes the equivalent storage structure needs
    virtual uint32_t                   getBytesFootprint() = 0; 
 
-   // Serialization used for JITaaS
+   // Serialization used for JITServer
    // not sufficient for persisting to the shared cache
    virtual uint32_t canBeSerialized(TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
    virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) = 0;
@@ -518,7 +518,7 @@ public:
    /* 
    leave the TR_ResolvedMethodSymbol argument for debugging purpose when called from Ilgen
    */
-   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, TR_ResolvedMethod *method, TR::Compilation *comp); // JITaaS: mark virtual
+   virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, TR_ResolvedMethod *method, TR::Compilation *comp); // JITServer: mark virtual
    bool elgibleForPersistIprofileInfo(TR::Compilation *comp) const;
 
    void checkMethodHashTable();
@@ -574,7 +574,7 @@ public:
    bool postIprofilingBufferToWorkingQueue(J9VMThread * vmThread, const U_8* dataStart, UDATA size);
    // this is wrapper of registered version, for the helper function, from JitRunTime
 
-   // Data accessors, overridden for JITaaS
+   // Data accessors, overridden for JITServer
    //
 
    // This method is used to search only the hash table

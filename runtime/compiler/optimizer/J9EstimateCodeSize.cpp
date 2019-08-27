@@ -597,10 +597,10 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
    if (comp()->isOutOfProcessCompilation())
       {
-      // JITaaS optimization: 
+      // JITServer optimization:
       // request this resolved method to create all of its callee resolved methods
       // in a single query.
-      auto calleeMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(calltarget->_calleeMethod);
+      auto calleeMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(calltarget->_calleeMethod);
       calleeMethod->cacheResolvedMethodsCallees();
       }
 

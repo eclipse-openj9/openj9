@@ -136,11 +136,11 @@ public:
    TR_OpaqueClassBlock                *_subClasses[0];
    };
 
-class TR_JITaaSPersistentClassInfo : public TR_PersistentClassInfo
+class TR_JITServerPersistentClassInfo : public TR_PersistentClassInfo
    {
 public:
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentInfo);
-   TR_JITaaSPersistentClassInfo(TR_OpaqueClassBlock *id, JITClientPersistentCHTable *chTable);
+   TR_JITServerPersistentClassInfo(TR_OpaqueClassBlock *id, JITClientPersistentCHTable *chTable);
 
    // All of these methods mark the classInfo as dirty/removed and call a parent method
    virtual void setInitialized(TR_PersistentMemory *) override;

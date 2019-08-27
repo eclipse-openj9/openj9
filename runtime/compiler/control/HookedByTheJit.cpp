@@ -1968,9 +1968,9 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
       TR::CompilationInfo *compInfo = TR::CompilationInfo::get(context->javaVM->jitConfig);
       if (compInfo)
          {
-         static char * isPrintJITaaSMsgStats = feGetEnv("TR_PrintJITaaSMsgStats");
-         if (isPrintJITaaSMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-            printJITaaSMsgStats(jitConfig);
+         static char * isPrintJITServerMsgStats = feGetEnv("TR_PrintJITServerMsgStats");
+         if (isPrintJITServerMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+            printJITServerMsgStats(jitConfig);
 
          if (feGetEnv("TR_PrintJITServerCHTableStats"))
             printJITServerCHTableStats(jitConfig, compInfo);
@@ -2765,7 +2765,7 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
    if (table)
       table->classGotUnloaded(fej9, clazz);
 
-   // Add to JITaaS unload list
+   // Add to JITServer unload list
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       compInfo->getUnloadedClassesTempList()->push_back(clazz);
 
@@ -3002,7 +3002,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
    classPair = classList;
    for (i = 0; i < classCount; i++)
       {
-      // Add to JITaaS unload list
+      // Add to JITServer unload list
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          compInfo->getUnloadedClassesTempList()->push_back((TR_OpaqueClassBlock *) classPair->oldClass);
 
@@ -4759,9 +4759,9 @@ void JitShutdown(J9JITConfig * jitConfig)
       j9tty_printf(PORTLIB, "\tNo prof. info because timestamp expired: %10d\n", TR_IProfiler::_STATS_timestampHasExpired);
       }
 
-   static char * isPrintJITaaSMsgStats = feGetEnv("TR_PrintJITaaSMsgStats");
-   if (isPrintJITaaSMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-      printJITaaSMsgStats(jitConfig);
+   static char * isPrintJITServerMsgStats = feGetEnv("TR_PrintJITServerMsgStats");
+   if (isPrintJITServerMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+      printJITServerMsgStats(jitConfig);
 
    static char * isPrintJITServerCHTableStats = feGetEnv("TR_PrintJITServerCHTableStats");
    if (isPrintJITServerCHTableStats)

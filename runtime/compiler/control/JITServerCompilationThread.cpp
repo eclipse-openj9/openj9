@@ -149,7 +149,7 @@ size_t methodStringsLength(J9ROMMethod *method)
 // and signature are needed on the server but may be interned globally on the client.
 std::string packROMClass(J9ROMClass *origRomClass, TR_Memory *trMemory)
    {
-   //JITaaS TODO: Add comments
+   //JITServer TODO: Add comments
    J9UTF8 *className = J9ROMCLASS_CLASSNAME(origRomClass);
    size_t classNameSize = className->length + sizeof(U_16);
 
@@ -560,12 +560,12 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          J9Method *methods = (J9Method *) fe->getMethods(clazz);
 
          // create mirrors and put methodInfo for each method in a vector to be sent to the server
-         std::vector<TR_ResolvedJ9JITaaSServerMethodInfo> methodsInfo;
+         std::vector<TR_ResolvedJ9JITServerMethodInfo> methodsInfo;
          methodsInfo.reserve(numMethods);
          for (int i = 0; i < numMethods; ++i)
             {
-            TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodMirror(methodInfo, (TR_OpaqueMethodBlock *) &(methods[i]), 0, 0, fe, trMemory);
+            TR_ResolvedJ9JITServerMethodInfo methodInfo;
+            TR_ResolvedJ9JITServerMethod::createResolvedMethodMirror(methodInfo, (TR_OpaqueMethodBlock *) &(methods[i]), 0, 0, fe, trMemory);
             methodsInfo.push_back(methodInfo);
             }
          client->write(response, methods, methodsInfo);
@@ -874,7 +874,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          if (!comp->compileRelocatableCode())
             {
             // For non-AOT, copy thunk to code cache and relocate the vm helper address right away
-            uint8_t *thunkStart = TR_JITaaSRelocationRuntime::copyDataToCodeCache(serializedThunk.data(), serializedThunk.size(), fe);
+            uint8_t *thunkStart = TR_JITServerRelocationRuntime::copyDataToCodeCache(serializedThunk.data(), serializedThunk.size(), fe);
             if (!thunkStart)
                compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate space in the code cache");
 
@@ -914,7 +914,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
 
          // Do not need relocation here, because helper address should have been originally
          // fetched from the client.
-         uint8_t *thunkStart = TR_JITaaSRelocationRuntime::copyDataToCodeCache(serializedThunk.data(), serializedThunk.size(), fe);
+         uint8_t *thunkStart = TR_JITServerRelocationRuntime::copyDataToCodeCache(serializedThunk.data(), serializedThunk.size(), fe);
          if (!thunkStart)
             compInfoPT->getCompilation()->failCompilation<TR::CodeCacheError>("Failed to allocate space in the code cache");
 
@@ -1226,9 +1226,9 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          auto *owningMethod = std::get<1>(recv);
          uint32_t vTableSlot = std::get<2>(recv);
          bool isAOT = std::get<3>(recv);
-         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
+         TR_ResolvedJ9JITServerMethodInfo methodInfo;
          // if in AOT mode, create a relocatable method mirror
-         TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodMirror(methodInfo, method, vTableSlot, owningMethod, fe, trMemory);
+         TR_ResolvedJ9JITServerMethod::createResolvedMethodMirror(methodInfo, method, vTableSlot, owningMethod, fe, trMemory);
          
          client->write(response, methodInfo);
          }
@@ -1322,9 +1322,9 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
             }
         
          // create a mirror right away
-         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
+         TR_ResolvedJ9JITServerMethodInfo methodInfo;
          if (ramMethod)
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, method, fe, trMemory);
+            TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, method, fe, trMemory);
 
          client->write(response, ramMethod, methodInfo, unresolvedInCP);
          }
@@ -1335,7 +1335,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          TR_ResolvedJ9Method *method = std::get<0>(recv);
          int32_t cpIndex = std::get<1>(recv);
          J9Method *ramMethod = NULL;
-         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo;
+         TR_ResolvedJ9JITServerMethodInfo methodInfo;
          if (!((fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) &&
                !comp->ilGenRequest().details().isMethodHandleThunk() &&
                performTransformation(comp, "Setting as unresolved special call cpIndex=%d\n",cpIndex)))
@@ -1344,7 +1344,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
             ramMethod = jitResolveSpecialMethodRef(fe->vmThread(), method->cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
 
             if (ramMethod)
-               TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, method, fe, trMemory);
+               TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, method, fe, trMemory);
             }
          
          client->write(response, ramMethod, methodInfo);
@@ -1401,14 +1401,14 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
             {
             TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) ramMethod;
            
-            TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, (uint32_t) vTableIndex, owningMethod, fe, trMemory);
+            TR_ResolvedJ9JITServerMethodInfo methodInfo;
+            TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, (uint32_t) vTableIndex, owningMethod, fe, trMemory);
                         
             client->write(response, ramMethod, vTableIndex, resolvedInCP, methodInfo);
             }
          else
             {
-            client->write(response, ramMethod, vTableIndex, resolvedInCP, TR_ResolvedJ9JITaaSServerMethodInfo());
+            client->write(response, ramMethod, vTableIndex, resolvedInCP, TR_ResolvedJ9JITServerMethodInfo());
             }
          }
          break;
@@ -1420,9 +1420,9 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          auto ignoreRTResolve = std::get<2>(recv);
          auto owningMethod = std::get<3>(recv);
          TR_OpaqueMethodBlock *ramMethod = fe->getResolvedVirtualMethod(clazz, offset, ignoreRTResolve);
-         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
+         TR_ResolvedJ9JITServerMethodInfo methodInfo;
          if (ramMethod)
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodMirror(methodInfo, ramMethod, 0, owningMethod, fe, trMemory);
+            TR_ResolvedJ9JITServerMethod::createResolvedMethodMirror(methodInfo, ramMethod, 0, owningMethod, fe, trMemory);
          client->write(response, ramMethod, methodInfo);
          }
          break;
@@ -1503,9 +1503,9 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          bool resolved = ramMethod && J9_BYTECODE_START_FROM_RAM_METHOD(ramMethod);
 
          // create a mirror right away
-         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
+         TR_ResolvedJ9JITServerMethodInfo methodInfo;
          if (resolved)
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, owningMethod, fe, trMemory);
+            TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, 0, owningMethod, fe, trMemory);
 
          client->write(response, resolved, ramMethod, methodInfo);
          }
@@ -1531,9 +1531,9 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
             j9method = jitGetImproperInterfaceMethodFromCP(fe->vmThread(), mirror->cp(), cpIndex);
             }
          // create a mirror right away
-         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo;
+         TR_ResolvedJ9JITServerMethodInfo methodInfo;
          if (j9method)
-            TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, 0, mirror, fe, trMemory);
+            TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, 0, mirror, fe, trMemory);
 
          client->write(response, j9method, methodInfo);
          }
@@ -1809,14 +1809,14 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          int32_t numMethods = methodTypes.size();
          std::vector<J9Method *> ramMethods(numMethods);
          std::vector<uint32_t> vTableOffsets(numMethods);
-         std::vector<TR_ResolvedJ9JITaaSServerMethodInfo> methodInfos(numMethods);
+         std::vector<TR_ResolvedJ9JITServerMethodInfo> methodInfos(numMethods);
          for (int32_t i = 0; i < numMethods; ++i)
             {
             int32_t cpIndex = cpIndices[i];
             TR_ResolvedMethodType type = methodTypes[i];
             J9Method *ramMethod = NULL;
             uint32_t vTableOffset = 0;
-            TR_ResolvedJ9JITaaSServerMethodInfo methodInfo;
+            TR_ResolvedJ9JITServerMethodInfo methodInfo;
             bool createMethod = false;
             switch (type)
                {
@@ -1851,7 +1851,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
                   }
                }
             if (createMethod)
-               TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(
+               TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(
                   methodInfo,
                   (TR_OpaqueMethodBlock *) ramMethod,
                   vTableOffset,
@@ -1878,8 +1878,8 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          bool isRomClassForMethodInSC = false;
 
          // Create mirror, if possible
-         TR_ResolvedJ9JITaaSServerMethodInfo methodInfo; 
-         TR_ResolvedJ9JITaaSServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, vTableSlot, mirror, fe, trMemory);
+         TR_ResolvedJ9JITServerMethodInfo methodInfo;
+         TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, vTableSlot, mirror, fe, trMemory);
 
          // Collect AOT stats
          TR_ResolvedJ9Method *resolvedMethod = std::get<0>(methodInfo).remoteMirror;
@@ -2567,7 +2567,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
    return done;
    }
 
-// Method executed by the JITaaS client to schedule a remote compilation
+// Method executed by the JITClient to schedule a remote compilation
 TR_MethodMetaData *
 remoteCompile(
    J9VMThread * vmThread,
@@ -2579,9 +2579,9 @@ remoteCompile(
    )
    {
    TR_ASSERT(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS, "Client must work with VM access");
-   // JITaas: if TR_EnableJITaaSPerCompCon is set, then each remote compilation establishes a new connection 
+   // JITServer: if TR_EnableJITServerPerCompConn is set, then each remote compilation establishes a new connection
    // instead of re-using the connection shared within a compilation thread
-   static bool enableJITaaSPerCompConn = feGetEnv("TR_EnableJITaaSPerCompConn") ? true : false;
+   static bool enableJITServerPerCompConn = feGetEnv("TR_EnableJITServerPerCompConn") ? true : false;
 
    // Prepare the parameters for the compilation request
    J9Class *clazz = J9_CLASS_FROM_METHOD(method);
@@ -2592,7 +2592,7 @@ remoteCompile(
    TR::CompilationInfo *compInfo = compInfoPT->getCompilationInfo();
    bool useAotCompilation = compInfoPT->getMethodBeingCompiled()->_useAotCompilation;
 
-   JITServer::ClientStream *client = enableJITaaSPerCompConn ? NULL : compInfoPT->getClientStream();
+   JITServer::ClientStream *client = enableJITServerPerCompConn ? NULL : compInfoPT->getClientStream();
    if (!client)
       {
       try 
@@ -2600,13 +2600,13 @@ remoteCompile(
          if (JITServerHelpers::isServerAvailable())
             {
             client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
-            if (!enableJITaaSPerCompConn)
+            if (!enableJITServerPerCompConn)
                compInfoPT->setClientStream(client);
             }
          else if (JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(compInfoPT->getJitConfig()->javaVM->portLibrary)))
             {
             client = new (PERSISTENT_NEW) JITServer::ClientStream(compInfo->getPersistentInfo());
-            if (!enableJITaaSPerCompConn)
+            if (!enableJITServerPerCompConn)
                compInfoPT->setClientStream(client);
             JITServerHelpers::postStreamConnectionSuccess();
             }
@@ -2878,7 +2878,7 @@ remoteCompile(
       compiler->failCompilation<JITServer::ServerCompilationFailure>("JITServer compilation failed.");
       }
 
-   if (enableJITaaSPerCompConn && client)
+   if (enableJITServerPerCompConn && client)
       {
       client->~ClientStream();
       TR_Memory::jitPersistentFree(client);
@@ -3114,7 +3114,7 @@ outOfProcessCompilationEnd(
       }
    }
 
-void printJITaaSMsgStats(J9JITConfig *jitConfig)
+void printJITServerMsgStats(J9JITConfig *jitConfig)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    j9tty_printf(PORTLIB, "JITServer Message Type Statistics:\n");
@@ -3159,7 +3159,7 @@ void printJITServerCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *com
 #endif
    }
 
-void printJITaaSCacheStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
+void printJITServerCacheStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
    {
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
@@ -3513,10 +3513,10 @@ JITServerHelpers::shouldRetryConnection(OMRPortLibrary *portLibrary)
 J9ROMMethod *
 JITServerHelpers::romMethodOfRamMethod(J9Method* method)
    {
-   if (!TR::CompilationInfo::getStream()) // If not JITaaS server
+   if (!TR::CompilationInfo::getStream()) // Not JITServer
       return J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
 
-   // else, JITaaS
+   // JITServer
    auto clientData = TR::compInfoPT->getClientData();
    J9ROMMethod *romMethod = NULL;
 
@@ -3679,7 +3679,7 @@ TR::CompilationInfoPerThreadRemote::updateSeqNo(ClientSessionData *clientSession
 void
 TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider)
    {
-   static bool enableJITaaSPerCompConn = feGetEnv("TR_EnableJITaaSPerCompConn") ? true : false;
+   static bool enableJITServerPerCompConn = feGetEnv("TR_EnableJITServerPerCompConn") ? true : false;
 
    bool abortCompilation = false;
    uint64_t clientId = 0;
@@ -3734,8 +3734,8 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (_vm->sharedCache())
          // Set/update stream pointer in shared cache.
          // Note that if remote-AOT is enabled, even regular J9_SERVER_VM will have a shared cache
-         // This behaviour is consistent with non-JITaaS
-         ((TR_J9JITaaSServerSharedCache *) _vm->sharedCache())->setStream(stream);
+         // This behaviour is consistent with non-JITServer
+         ((TR_J9JITServerSharedCache *) _vm->sharedCache())->setStream(stream);
 
       //if (seqNo == 100)
       //   throw JITServer::StreamFailure(); // stress testing
@@ -3858,7 +3858,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       TR::IlGeneratorMethodDetails &remoteDetails = details.createRemoteMethodDetails(*clientDetails, detailsType, ramMethod, romClass, romMethod, clazz, methodsOfClass);
 
       // All entries have the same priority for now. In the future we may want to give higher priority to sync requests
-      // Also, oldStartPC is always NULL for JITaaS server
+      // Also, oldStartPC is always NULL for JITServer
       entry._freeTag = ENTRY_IN_POOL_FREE; // pretend we just got it from the pool because we need to initialize it again
       entry.initialize(remoteDetails, NULL, CP_SYNC_NORMAL, optPlan);
       entry._jitStateWhenQueued = compInfo->getPersistentInfo()->getJitState();
@@ -3866,10 +3866,10 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       entry._clientOptions = clientOptions;
       entry._clientOptionsSize = clientOptSize;
       entry._entryTime = compInfo->getPersistentInfo()->getElapsedTime(); // cheaper version
-      entry._methodIsInSharedCache = false; // no SCC for now in JITaaS
+      entry._methodIsInSharedCache = false; // no SCC for now in JITServer
       entry._compInfoPT = this; // need to know which comp thread is handling this request
       entry._async = true; // all of requests at the server are async
-      // weight is irrelevant for JITaaS. 
+      // weight is irrelevant for JITServer.
       // If we want something then we need to increaseQueueWeightBy(weight) while holding compilation monitor
       entry._weight = 0;
       entry._useAotCompilation = useAotCompilation;
@@ -3881,7 +3881,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             getCompThreadId(), e.what());
 
       abortCompilation = true;
-      if (!enableJITaaSPerCompConn)
+      if (!enableJITServerPerCompConn)
          {
          // Delete server stream
          stream->~ServerStream();
@@ -3896,7 +3896,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
       stream->writeError(compilationStreamVersionIncompatible);
       abortCompilation = true;
-      if (!enableJITaaSPerCompConn)
+      if (!enableJITServerPerCompConn)
          {
          // Delete server stream
          stream->~ServerStream();
@@ -3919,7 +3919,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             stream, getCompThreadId(), e.what());
 
       abortCompilation = true;
-      if (!enableJITaaSPerCompConn) // JITServer TODO: remove the perCompConn mode
+      if (!enableJITServerPerCompConn) // JITServer TODO: remove the perCompConn mode
          {
          stream->~ServerStream();
          TR_Memory::jitPersistentFree(stream);
@@ -3934,7 +3934,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       abortCompilation = true;
       deleteClientSessionData(e.getClientId(), compInfo, compThread);
 
-      if (!enableJITaaSPerCompConn)
+      if (!enableJITServerPerCompConn)
          {
          stream->~ServerStream();
          TR_Memory::jitPersistentFree(stream);
@@ -4019,7 +4019,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
             }
          setClientData(NULL);
          }
-      if (enableJITaaSPerCompConn)
+      if (enableJITServerPerCompConn)
          {
          // Delete server stream
          stream->~ServerStream();
@@ -4031,7 +4031,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
    // Do the hack for newInstance thunks
    // Also make the method appear as interpreted, otherwise we might want to access recompilation info
-   // JITaaS TODO: is this ever executed for JITaaS?
+   // JITServer TODO: is this ever executed for JITServer?
    //if (entry.getMethodDetails().isNewInstanceThunk())
    //   {
    //   J9::NewInstanceThunkDetails &newInstanceDetails = static_cast<J9::NewInstanceThunkDetails &>(entry.getMethodDetails());
@@ -4046,7 +4046,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
    void *startPC = compile(compThread, &entry, scratchSegmentProvider);
    if (entry._compErrCode == compilationStreamFailure)
       {
-      if (!enableJITaaSPerCompConn)
+      if (!enableJITServerPerCompConn)
          {
          TR_ASSERT(entry._stream, "stream should still exist after compilation even if it encounters a streamFailure.");
          // Clean up server stream because the stream is already dead
@@ -4144,7 +4144,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
 
    
-   if (enableJITaaSPerCompConn)
+   if (enableJITServerPerCompConn)
       {
       // Delete server stream
       stream->~ServerStream();
@@ -4200,7 +4200,7 @@ TR::CompilationInfoPerThreadRemote::getCachedIProfilerInfo(TR_OpaqueMethodBlock 
    }
 
 void
-TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo)
+TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedJ9JITServerMethodInfo &methodInfo)
    {
    static bool useCaching = !feGetEnv("TR_DisableResolvedMethodsCaching");
    if (!useCaching)
@@ -4213,7 +4213,7 @@ TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key
 // returns true if the method is cached, sets resolvedMethod and unresolvedInCP to the cached values.
 // returns false otherwise.
 bool 
-TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITaaSServerMethod *owningMethod, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP)
+TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITServerMethod *owningMethod, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP)
    {
    TR_ResolvedMethodCacheEntry methodCacheEntry;
    if (getCachedValueFromPerCompilationMap(_resolvedMethodInfoMap, key, methodCacheEntry))
@@ -4256,9 +4256,9 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
       else
          {
          if (_vm->isAOT_DEPRECATED_DO_NOT_USE())
-            *resolvedMethod = method ? new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9JITaaSServerMethod(method, _vm, comp->trMemory(), methodInfo, owningMethod) : 0;
+            *resolvedMethod = method ? new (comp->trHeapMemory()) TR_ResolvedRelocatableJ9JITServerMethod(method, _vm, comp->trMemory(), methodInfo, owningMethod) : 0;
          else
-            *resolvedMethod = method ? new (comp->trHeapMemory()) TR_ResolvedJ9JITaaSServerMethod(method, _vm, comp->trMemory(), methodInfo, owningMethod) : 0;
+            *resolvedMethod = method ? new (comp->trHeapMemory()) TR_ResolvedJ9JITServerMethod(method, _vm, comp->trMemory(), methodInfo, owningMethod) : 0;
          }
          
       if (*resolvedMethod)
