@@ -568,7 +568,8 @@ isModuleNameGood(J9VMThread * currentThread, j9object_t moduleName)
 	UDATA stringLength = J9VMJAVALANGSTRING_LENGTH(currentThread, moduleName);
 	BOOLEAN lastCharIsDot = TRUE;
 	const U_8 utfData[1] = { 46 };
-	for (UDATA index = 0; index < stringLength; index++) {
+	UDATA index;
+	for (index = 0; index < stringLength; index++) {
 		UDATA isDot = vmFuncs->comparePartialStringToUTF8FromOffset(currentThread, moduleName, stringLength, 0, utfData, 1, index);
 		if (isDot) {
 			if (lastCharIsDot) {
