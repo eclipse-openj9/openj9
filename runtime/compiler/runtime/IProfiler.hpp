@@ -480,7 +480,6 @@ public:
    void shutdown();
    void outputStats();
    void dumpIPBCDataCallGraph(J9VMThread* currentThread);
-   void resetProfiler();
    void startIProfilerThread(J9JavaVM *javaVM);
    void deallocateIProfilerBuffers();
    void stopIProfilerThread();
@@ -573,7 +572,6 @@ private:
    virtual void setBlockAndEdgeFrequencies( TR::CFG *cfg, TR::Compilation *comp);
    virtual bool hasSameBytecodeInfo(TR_ByteCodeInfo & persistentByteCodeInfo, TR_ByteCodeInfo & currentByteCodeInfo, TR::Compilation *comp);
    virtual void getBranchCounters (TR::Node *node, TR::TreeTop *fallThroughTree, int32_t *taken, int32_t *notTaken, TR::Compilation *comp);
-   int32_t getMaxCount(bool isAOT);
    virtual int32_t getSwitchCountForValue (TR::Node *node, int32_t value, TR::Compilation *comp);
    virtual int32_t getSumSwitchCount (TR::Node *node, TR::Compilation *comp);
    virtual int32_t getFlatSwitchProfileCounts (TR::Node *node, TR::Compilation *comp);
