@@ -2573,3 +2573,71 @@ TR_ResolvedRelocatableJ9JITaaSServerMethod::validateMethodFieldAttributes(const 
    bool equal = (attributes == clientAttributes);
    return equal;
    }
+
+// TR_J9ServerMethod
+static J9UTF8 *str2utf8(const char *str, int32_t length, TR_Memory *trMemory, TR_AllocationKind allocKind)
+   {
+   J9UTF8 *utf8 = (J9UTF8 *) trMemory->allocateMemory(length+sizeof(J9UTF8), allocKind); // This allocates more memory than it needs.
+   J9UTF8_SET_LENGTH(utf8, length);
+   memcpy(J9UTF8_DATA(utf8), str, length);
+   return utf8;
+   }
+
+TR_J9ServerMethod::TR_J9ServerMethod(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClazz, uintptr_t cpIndex)
+   : TR_J9Method()
+   {
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+
+   TR_J9ServerVM *fej9 = (TR_J9ServerVM *) fe;
+   TR::CompilationInfoPerThread *compInfoPT = fej9->_compInfoPT;
+   std::string classNameStr;
+   std::string methodNameStr;
+   std::string methodSignatureStr;
+   bool cached = false;
+      {
+      // look up parameters for construction of this method in a cache first
+      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+      auto &cache = getJ9ClassInfo(compInfoPT, aClazz)._J9MethodNameCache;
+      if (!cache)
+         {
+         // initialize cache, called once per ram class
+         cache = new (PERSISTENT_NEW) PersistentUnorderedMap<int32_t, J9MethodNameAndSignature>(PersistentUnorderedMap<int32_t, J9MethodNameAndSignature>::allocator_type(TR::Compiler->persistentAllocator()));
+         }
+      else
+         {
+         // search the cache for existing method parameters
+         auto it = cache->find(cpIndex);
+         if (it != cache->end())
+            {
+            const J9MethodNameAndSignature &params = it->second;
+            classNameStr = params._classNameStr;
+            methodNameStr = params._methodNameStr;
+            methodSignatureStr = params._methodSignatureStr;
+            cached = true;
+            }
+         }
+      }
+
+   if (!cached)
+      {
+      // make a remote call and cache the result
+      JITServer::ServerStream *stream = fej9->_compInfoPT->getMethodBeingCompiled()->_stream;
+      stream->write(JITServer::MessageType::get_params_to_construct_TR_j9method, aClazz, cpIndex);
+      const auto recv = stream->read<std::string, std::string, std::string>();
+      classNameStr = std::get<0>(recv);
+      methodNameStr = std::get<1>(recv);
+      methodSignatureStr = std::get<2>(recv);
+
+      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+      auto cache = getJ9ClassInfo(compInfoPT, aClazz)._J9MethodNameCache;
+      cache->insert({cpIndex, {classNameStr, methodNameStr, methodSignatureStr}});
+      }
+
+   _className = str2utf8((char*)&classNameStr[0], classNameStr.length(), trMemory, heapAlloc);
+   _name = str2utf8((char*)&methodNameStr[0], methodNameStr.length(), trMemory, heapAlloc);
+   _signature = str2utf8((char*)&methodSignatureStr[0], methodSignatureStr.length(), trMemory, heapAlloc);
+
+   parseSignature(trMemory);
+   _fullSignature = NULL;
+   }
+

@@ -83,7 +83,7 @@ TR_J9ServerVM::getSuperClass(TR_OpaqueClassBlock *clazz)
 TR::Method *
 TR_J9ServerVM::createMethod(TR_Memory * trMemory, TR_OpaqueClassBlock * clazz, int32_t refOffset)
    {
-   return new (trMemory->trHeapMemory()) TR_J9Method(this, trMemory, TR::Compiler->cls.convertClassOffsetToClassPtr(clazz), refOffset, true);
+   return new (trMemory->trHeapMemory()) TR_J9ServerMethod(this, trMemory, TR::Compiler->cls.convertClassOffsetToClassPtr(clazz), refOffset);
    }
 
 TR_ResolvedMethod *

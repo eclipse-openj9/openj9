@@ -278,4 +278,10 @@ protected:
    virtual bool validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation) override;
    UDATA getFieldType(J9ROMConstantPoolItem * CP, int32_t cpIndex);
    };
+
+class TR_J9ServerMethod : public TR_J9Method
+   {
+public:
+   TR_J9ServerMethod(TR_FrontEnd *trvm, TR_Memory *, J9Class * aClazz, uintptr_t cpIndex);
+   };
 #endif // J9METHODSERVER_H
