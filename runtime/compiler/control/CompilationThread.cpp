@@ -101,7 +101,7 @@
 #include "runtime/CodeCacheMemorySegment.hpp"
 #include "env/j9methodServer.hpp"
 #include "control/JITServerCompilationThread.hpp"
-#include "env/JITaaSPersistentCHTable.hpp"
+#include "env/JITServerPersistentCHTable.hpp"
 #include "runtime/JITServerIProfiler.hpp"
 
 #ifdef COMPRESS_AOT_DATA

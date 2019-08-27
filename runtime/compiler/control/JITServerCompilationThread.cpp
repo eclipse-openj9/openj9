@@ -29,8 +29,8 @@
 #include "control/MethodToBeCompiled.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "runtime/CodeCache.hpp"
-#include "env/JITaaSPersistentCHTable.hpp"
-#include "env/JITaaSCHTable.hpp"
+#include "env/JITServerPersistentCHTable.hpp"
+#include "env/JITServerCHTable.hpp"
 #include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
 #include "exceptions/RuntimeFailure.hpp"       // for CHTableCommitFailure
 #include "runtime/IProfiler.hpp"               // for TR_IProfiler
@@ -2480,7 +2480,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
       case MessageType::CHTable_getAllClassInfo:
          {
          client->getRecvData<JITServer::Void>();
-         auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
+         auto table = (JITClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
          TR_OpaqueClassBlock *rootClass = fe->TR_J9VM::getSystemClassFromClassName("java/lang/Object", 16);
          TR_PersistentClassInfo* result = table->findClassInfoAfterLocking(
                                                    rootClass,
@@ -2494,7 +2494,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
       case MessageType::CHTable_getClassInfoUpdates:
          {
          client->getRecvData<JITServer::Void>();
-         auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
+         auto table = (JITClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
          auto encoded = table->serializeUpdates();
          client->write(response, encoded.first, encoded.second);
          }
@@ -2502,7 +2502,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
       case MessageType::CHTable_clearReservable:
          {
          auto clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock*>());
-         auto table = (TR_JITaaSClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
+         auto table = (JITClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
          auto info = table->findClassInfoAfterLocking(clazz, comp);
          info->setReservable(false);
          }
@@ -2649,7 +2649,7 @@ remoteCompile(
    std::vector<TR_OpaqueClassBlock*> unloadedClasses(compInfo->getUnloadedClassesTempList()->begin(), compInfo->getUnloadedClassesTempList()->end());
    compInfo->getUnloadedClassesTempList()->clear();
    // Collect and encode the CHTable updates; this will acquire CHTable mutex
-   //auto table = (TR_JITaaSClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+   //auto table = (JITClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
    //std::pair<std::string, std::string> chtableUpdates = table->serializeUpdates();
    // Update the sequence number for these updates
    uint32_t seqNo = compInfo->getCompReqSeqNo();
@@ -2806,10 +2806,10 @@ remoteCompile(
                   }
                }
 
-            if (!JITaaSCHTableCommit(compiler, metaData, chTableData))
+            if (!JITServerCHTableCommit(compiler, metaData, chTableData))
                {
 #ifdef COLLECT_CHTABLE_STATS
-               TR_JITaaSClientPersistentCHTable *table = (TR_JITaaSClientPersistentCHTable*) TR::comp()->getPersistentInfo()->getPersistentCHTable();
+               JITClientPersistentCHTable *table = (JITClientPersistentCHTable*) TR::comp()->getPersistentInfo()->getPersistentCHTable();
                table->_numCommitFailures += 1;
 #endif
                if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
@@ -3122,14 +3122,14 @@ void printJITaaSMsgStats(J9JITConfig *jitConfig)
       }
    }
 
-void printJITaaSCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
+void printJITServerCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compInfo)
    {
 #ifdef COLLECT_CHTABLE_STATS
    PORT_ACCESS_FROM_JITCONFIG(jitConfig);
    j9tty_printf(PORTLIB, "JITServer CHTable Statistics:\n");
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
-      TR_JITaaSClientPersistentCHTable *table = (TR_JITaaSClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+      JITClientPersistentCHTable *table = (JITClientPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
       j9tty_printf(PORTLIB, "Num updates sent: %d (1 per compilation)\n", table->_numUpdates);
       if (table->_numUpdates)
          {
@@ -3141,7 +3141,7 @@ void printJITaaSCHTableStats(J9JITConfig *jitConfig, TR::CompilationInfo *compIn
       }
    else if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      TR_JITaaSServerPersistentCHTable *table = (TR_JITaaSServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+      JITServerPersistentCHTable *table = (JITServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
       j9tty_printf(PORTLIB, "Num updates received: %d (1 per compilation)\n", table->_numUpdates);
       if (table->_numUpdates)
          {
@@ -3753,7 +3753,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       // from the ROM class cache.
       clientSession->processUnloadedClasses(stream, unloadedClasses); // this locks getROMMapMonitor()
 
-      auto chTable = (TR_JITaaSServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
+      auto chTable = (JITServerPersistentCHTable*)compInfo->getPersistentInfo()->getPersistentCHTable();
       // TODO: is chTable always non-null?
       // TODO: we could send JVM info that is global and does not change together with CHTable
       // The following will acquire CHTable monitor and VMAccess, send a message and then release them

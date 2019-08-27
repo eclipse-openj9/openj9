@@ -383,8 +383,8 @@ ifneq ($(JITSERVER_SUPPORT),)
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/control/JITServerCompilationThread.cpp \
     compiler/env/j9methodServer.cpp \
-    compiler/env/JITaaSCHTable.cpp \
-    compiler/env/JITaaSPersistentCHTable.cpp \
+    compiler/env/JITServerCHTable.cpp \
+    compiler/env/JITServerPersistentCHTable.cpp \
     compiler/env/VMJ9Server.cpp \
     compiler/net/ClientStream.cpp \
     compiler/net/CommunicationStream.cpp \

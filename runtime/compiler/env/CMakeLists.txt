@@ -62,8 +62,8 @@ j9jit_files(
 if(JITSERVER_SUPPORT)
 	j9jit_files(
 		env/j9methodServer.cpp
-		env/JITaaSCHTable.cpp
-		env/JITaaSPersistentCHTable.cpp
+		env/JITServerCHTable.cpp
+		env/JITServerPersistentCHTable.cpp
 		env/VMJ9Server.cpp
 	)
 endif()

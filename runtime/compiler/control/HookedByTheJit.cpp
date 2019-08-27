@@ -1972,8 +1972,8 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
          if (isPrintJITaaSMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
             printJITaaSMsgStats(jitConfig);
 
-         if (feGetEnv("TR_PrintJITaaSCHTableStats"))
-            printJITaaSCHTableStats(jitConfig, compInfo);
+         if (feGetEnv("TR_PrintJITServerCHTableStats"))
+            printJITServerCHTableStats(jitConfig, compInfo);
 
          if (feGetEnv("TR_PrintJITServerIPMsgStats"))
             {
@@ -4763,9 +4763,9 @@ void JitShutdown(J9JITConfig * jitConfig)
    if (isPrintJITaaSMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       printJITaaSMsgStats(jitConfig);
 
-   static char * isPrintJITaaSCHTableStats = feGetEnv("TR_PrintJITaaSCHTableStats");
-   if (isPrintJITaaSCHTableStats)
-      printJITaaSCHTableStats(jitConfig, compInfo);
+   static char * isPrintJITServerCHTableStats = feGetEnv("TR_PrintJITServerCHTableStats");
+   if (isPrintJITServerCHTableStats)
+      printJITServerCHTableStats(jitConfig, compInfo);
 
    TRC_JIT_ShutDownEnd(vmThread, "end of JitShutdown function");
    }

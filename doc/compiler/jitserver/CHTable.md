@@ -68,27 +68,27 @@ when working with this code.
 
 4 new files were added:
 
-- env/JITaaSCHTable.{hpp,cpp}
-- env/JITaaSPersistentCHTable.{hpp,cpp}
+- env/JITServerCHTable.{hpp,cpp}
+- env/JITServerPersistentCHTable.{hpp,cpp}
 
 The architecture of CHTable functionality remains similar with JITServer support, with `env/PersistentCHTable.{hpp,cpp}` containing
-`TR_JITaaS{Server,Client}PersistentCHTable`, and `env/JITaaSCHTable.{hpp,cpp}` containing commit related functionality. Some changes
+`JIT{Server,Client}PersistentCHTable`, and `env/JITServerCHTable.{hpp,cpp}` containing commit related functionality. Some changes
 were made elsewhere in the codebase to accommodate for JITServer support.
 
 In `rossa.cpp`, `TR_PersistentCHTable` allocation was modified so that the correct JITServer subclass is allocated when in JITServer mode.
 The reason why a client override is necessary is due to the heavy use of caching by the JITServer CHTable implementation. The server
 holds a cache of each client's `TR_PersistentCHTable`, which is updated with a delta once per compilation. The cache is
 initialized with any classes that are loaded early on upon the first interaction with the CHTable. To send the delta, the client
-needs to keep track of what changes have been made to the table since the last delta was sent. `TR_JITaaSClientPersistentCHTable`
+needs to keep track of what changes have been made to the table since the last delta was sent. `JITClientPersistentCHTable`
 simply keeps track of changes while deferring functionality to the base class. (De)serialization of deltas is performed by methods
-matching `[de]serialize*` in `env/JITaaSPersistentCHTable.cpp` and is currently done manually by writing data into a string because
+matching `[de]serialize*` in `env/JITServerPersistentCHTable.cpp` and is currently done manually by writing data into a string because
 the new tuple serializer had not yet been written at the time (TODO: use the tuple serializer). This is also where the other issue
 with `findClassInfo` shows up - we don't know if the class info will be modified following a call to `findClassInfo`, so we have
 to conservatively assume it will be modified, which may lead to larger than necessary deltas. These deltas are requested by the
 server before within `wrappedCompile` before codegen starts.
 
 Since different clients can have different class hierarchies, a server needs to keep a seperate cache for each client. This is
-done by associating caches with client IDs within the `TR_JITaaSServerPersistentCHTable`. The server persistent CHTable overrides
+done by associating caches with client IDs within the `JITServerPersistentCHTable`. The server persistent CHTable overrides
 the `findClassInfo` methods to return cached class info, which gets the other query methods working for free. The table update
 related methods will never be called on the server since it never loads classes, so we ignore them. The server keeps track of the
 last time it contacted each client, and will free the associated memory if it hasn't heard from a client in over 5 minutes.
@@ -101,7 +101,7 @@ and relocated the code, which prevents the runtime assumptions from being reloca
 after the final message sent by the server. So we have to send the data required to perform the commit along with the final
 message and have the client perform the commit after loading the code. This is implemented in `JITServerCompilationThread.cpp`. The
 call to `computeDataForCHTableCommit` is performed on the server and the data is transferred to the client where
-`JITaaSCHTableCommit` is called.
+`JITServerCHTableCommit` is called.
 
 Because the vanilla `commit` code uses a bunch of linked lists of complex types including symbol references (which only exist on
 the server) and protobuf gives us vectors when deserializing, the commit code has been duplicated to make use of stripped down

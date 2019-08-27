@@ -20,8 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JITaaS_CHTABLE_H
-#define JITaaS_CHTABLE_H
+#ifndef JITSERVER_CHTABLE_H
+#define JITSERVER_CHTABLE_H
 
 #include "compile/VirtualGuard.hpp"            // for TR_VirtualGuard
 #include "il/SymbolReference.hpp"              // for SymbolReference
@@ -78,9 +78,9 @@ using CHTableCommitData = std::tuple<
       uint8_t*>; // startPC
 
 
-bool JITaaSCHTableCommit(
+bool JITServerCHTableCommit(
       TR::Compilation *comp,
       TR_MethodMetaData *metaData,
       CHTableCommitData &data);
 
-#endif // JITaaS_CHTABLE_H
+#endif // JITSERVER_CHTABLE_H

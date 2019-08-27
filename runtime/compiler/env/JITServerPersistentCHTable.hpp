@@ -20,8 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef JITaaS_PERSISTENT_CHTABLE_H
-#define JITaaS_PERSISTENT_CHTABLE_H
+#ifndef JITSERVER_PERSISTENT_CHTABLE_H
+#define JITSERVER_PERSISTENT_CHTABLE_H
 
 #include "env/PersistentCHTable.hpp"
 #include "env/PersistentCollections.hpp"
@@ -38,12 +38,12 @@
 #endif
 
 
-class TR_JITaaSServerPersistentCHTable : public TR_PersistentCHTable
+class JITServerPersistentCHTable : public TR_PersistentCHTable
    {
 public:
    TR_ALLOC(TR_Memory::PersistentCHTable)
 
-   TR_JITaaSServerPersistentCHTable(TR_PersistentMemory *);
+   JITServerPersistentCHTable(TR_PersistentMemory *);
 
    bool isInitialized() { return !getData().empty(); } // needs CHTable mutex in hand
    bool initializeIfNeeded(TR_J9VMBase *fej9);
@@ -69,12 +69,12 @@ private:
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &getData();
    };
 
-class TR_JITaaSClientPersistentCHTable : public TR_PersistentCHTable
+class JITClientPersistentCHTable : public TR_PersistentCHTable
    {
 public:
    TR_ALLOC(TR_Memory::PersistentCHTable)
 
-   TR_JITaaSClientPersistentCHTable(TR_PersistentMemory *);
+   JITClientPersistentCHTable(TR_PersistentMemory *);
 
    std::pair<std::string, std::string> serializeUpdates();
 
@@ -140,7 +140,7 @@ class TR_JITaaSPersistentClassInfo : public TR_PersistentClassInfo
    {
 public:
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentInfo);
-   TR_JITaaSPersistentClassInfo(TR_OpaqueClassBlock *id, TR_JITaaSClientPersistentCHTable *chTable);
+   TR_JITaaSPersistentClassInfo(TR_OpaqueClassBlock *id, JITClientPersistentCHTable *chTable);
 
    // All of these methods mark the classInfo as dirty/removed and call a parent method
    virtual void setInitialized(TR_PersistentMemory *) override;
@@ -163,7 +163,7 @@ public:
    virtual void setClassHasBeenRedefined(bool v = true) override;
    virtual void setNameLength(int32_t length) override;
 private:
-   static TR_JITaaSClientPersistentCHTable *_chTable;
+   static JITClientPersistentCHTable *_chTable;
    };
 
-#endif // JITaaS_PERSISTENT_CHTABLE_H
+#endif // JITSERVER_PERSISTENT_CHTABLE_H
