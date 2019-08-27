@@ -63,10 +63,7 @@ class GCContiguousArrayObjectModel_V1 extends GCArrayObjectModel
 	
 	public UDATA getHeaderSize(J9IndexableObjectPointer array)
 	{
-		if (J9BuildFlags.gc_arraylets && J9BuildFlags.gc_hybridArraylets) {
-			return new UDATA(J9IndexableObjectDiscontiguous.SIZEOF);
-		}
-		return new UDATA(J9IndexableObjectContiguous.SIZEOF);
+		return new UDATA(J9IndexableObjectDiscontiguous.SIZEOF);
 	}
 
 	/**

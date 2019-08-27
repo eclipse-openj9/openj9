@@ -91,20 +91,11 @@ public abstract class GCObjectIterator extends GCIterator
 	
 	private static GCObjectIterator getPointerArrayImpl(J9ObjectPointer object, boolean includeClassSlot) throws CorruptDataException 
 	{
-		if (J9BuildFlags.gc_arraylets) {
-			AlgorithmVersion version = AlgorithmVersion.getVersionOf(AlgorithmVersion.GC_POINTER_ARRAYLET_ITERATOR_VERSION);
-			switch (version.getAlgorithmVersion()) {
-				// Add case statements for new algorithm versions
-				default:
-					return new GCPointerArrayletIterator_V1(object, includeClassSlot);
-			}
-		} else {
-			AlgorithmVersion version = AlgorithmVersion.getVersionOf(AlgorithmVersion.GC_POINTER_ARRAY_ITERATOR_VERSION);
-			switch (version.getAlgorithmVersion()) {
-				// Add case statements for new algorithm versions
-				default:
-					return new GCPointerArrayIterator_V1(object, includeClassSlot);
-			}
+		AlgorithmVersion version = AlgorithmVersion.getVersionOf(AlgorithmVersion.GC_POINTER_ARRAYLET_ITERATOR_VERSION);
+		switch (version.getAlgorithmVersion()) {
+			// Add case statements for new algorithm versions
+			default:
+				return new GCPointerArrayletIterator_V1(object, includeClassSlot);
 		}
 	}
 

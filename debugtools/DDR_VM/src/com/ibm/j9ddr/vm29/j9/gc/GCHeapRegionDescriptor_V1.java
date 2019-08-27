@@ -245,10 +245,8 @@ class GCHeapRegionDescriptor_V1 extends GCHeapRegionDescriptor
 				return "SEGREGATED_LARGE";
 			}
 		}
-		if(J9BuildFlags.gc_arraylets) {
-			if(MM_HeapRegionDescriptor$RegionType.ARRAYLET_LEAF == regionType) {
-				return "ARRAYLET_LEAF";
-			}
+		if(MM_HeapRegionDescriptor$RegionType.ARRAYLET_LEAF == regionType) {
+			return "ARRAYLET_LEAF";
 		}
 		if(MM_HeapRegionDescriptor$RegionType.ADDRESS_ORDERED == regionType) {
 			return "ADDRESS_ORDERED";

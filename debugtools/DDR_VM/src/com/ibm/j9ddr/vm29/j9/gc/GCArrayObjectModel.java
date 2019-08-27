@@ -42,20 +42,11 @@ abstract class GCArrayObjectModel extends GCBase
 	 */
 	public static GCArrayObjectModel from() throws CorruptDataException
 	{
-		if (J9BuildFlags.gc_arraylets) {
-			AlgorithmVersion version = AlgorithmVersion.getVersionOf(AlgorithmVersion.GC_ARRAYLET_OBJECT_MODEL_VERSION);
-			switch (version.getAlgorithmVersion()) {
-				// Add case statements to handle new algorithm versions
-				default:
-					return new GCArrayletObjectModel_V1(); 
-			}
-		} else {
-			AlgorithmVersion version = AlgorithmVersion.getVersionOf(AlgorithmVersion.GC_CONTIGUOUS_ARRAY_OBJECT_MODEL_VERSION);
-			switch (version.getAlgorithmVersion()) {
-				// Add case statements to handle new algorithm versions
-				default:
-					return new GCContiguousArrayObjectModel_V1();
-			}
+		AlgorithmVersion version = AlgorithmVersion.getVersionOf(AlgorithmVersion.GC_ARRAYLET_OBJECT_MODEL_VERSION);
+		switch (version.getAlgorithmVersion()) {
+			// Add case statements to handle new algorithm versions
+			default:
+				return new GCArrayletObjectModel_V1();
 		}
 	}
 
