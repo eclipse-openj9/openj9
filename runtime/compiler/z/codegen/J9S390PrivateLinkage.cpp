@@ -2767,8 +2767,8 @@ void TR::J9S390JNILinkage::checkException(TR::Node * callNode,
    generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(), callNode, tempReg,
                new (self()->trHeapMemory()) TR::MemoryReference(methodMetaDataVirtualRegister, fej9->thisThreadGetCurrentExceptionOffset(), self()->cg()));
 
-   TR::Instruction *gcPoint = (TR::Instruction *) generateS390CompareAndBranchInstruction(self()->cg(),
-      TR::InstOpCode::getCmpOpCode(), callNode, tempReg, (signed char)0, TR::InstOpCode::COND_BNE, exceptionSnippetLabel, false, true);
+   TR::Instruction *gcPoint = generateS390CompareAndBranchInstruction(self()->cg(),
+      TR::InstOpCode::getCmpOpCode(), callNode, tempReg, 0, TR::InstOpCode::COND_BNE, exceptionSnippetLabel, false, true);
    gcPoint->setNeedsGCMap(0);
 
    self()->cg()->addSnippet(new (self()->trHeapMemory()) TR::S390HelperCallSnippet(self()->cg(), callNode, exceptionSnippetLabel,

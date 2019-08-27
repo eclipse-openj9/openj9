@@ -218,10 +218,11 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
    // Mask out the recursion and lock reservation bits
    generateRIInstruction(cg, TR::InstOpCode::NILL, node, lockRegister,  ~(OBJECT_HEADER_LOCK_RECURSION_MASK | OBJECT_HEADER_LOCK_RESERVED));
 
+   TR::Register *metaDataReg = cg->getMethodMetaDataRealRegister();
    if (is32BitLock && is32BitLoad)
       {
       // Now check if we loaded the lock of the current thread
-      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CR, node, lockRegister, cg->getMethodMetaDataRealRegister(), TR::InstOpCode::COND_BE, mergeLabel, false);
+      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CR, node, lockRegister, metaDataReg, TR::InstOpCode::COND_BE, mergeLabel, false);
 
       // Lock could be free as well
       generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node, lockRegister, 0, TR::InstOpCode::COND_BE, mergeLabel, false);
@@ -229,7 +230,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
    else
       {
       // Now check if we loaded the lock of the current thread
-      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CGR, node, lockRegister, cg->getMethodMetaDataRealRegister(), TR::InstOpCode::COND_BE, mergeLabel, false);
+      generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CGR, node, lockRegister, metaDataReg, TR::InstOpCode::COND_BE, mergeLabel, false);
 
       // Lock could be free as well
       generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CG, node, lockRegister, 0, TR::InstOpCode::COND_BE, mergeLabel, false);
