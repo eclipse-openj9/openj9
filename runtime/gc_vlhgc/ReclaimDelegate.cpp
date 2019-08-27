@@ -193,7 +193,7 @@ MM_ReclaimDelegate::tagRegionsBeforeCompactWithWorkGoal(MM_EnvironmentVLHGC *env
 	UDATA regionCount = 0;
 
 	deriveCompactScore(env);
-	
+
 	if (!isCopyForward) {
 		/* Everything already Marked should be Compacted */
 		regionCount += tagRegionsBeforeCompact(env, skippedRegionCountRequiringSweep);
@@ -474,6 +474,10 @@ done:
 void
 MM_ReclaimDelegate::runGlobalSweepBeforePGC(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *activeSubSpace, MM_GCCode gcCode)
 {
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	if (extensions->tarokEnableRecoverRegionTailsAfterSweep) {
+		_sweepScheme->setNoCompactionAfterSweep(true);
+	}
 	performAtomicSweep(env, allocDescription, activeSubSpace, gcCode);
 	
 	/* Now that dark matter and free bytes data have been updated in all memoryPools, we want to rebuild the _regionsSortedByEmptinessArray table */

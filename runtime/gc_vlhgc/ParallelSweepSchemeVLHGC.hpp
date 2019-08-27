@@ -116,7 +116,8 @@ private:
 
 	J9Pool *_poolSweepPoolState;				/**< Memory pools for SweepPoolState*/ 
 	omrthread_monitor_t _mutexSweepPoolState;	/**< Monitor to protect memory pool operations for sweepPoolState*/
-	
+	bool _noCompactionAfterSweep;	/**< if true, no compaction would be expected after current sweep */
+
 protected:
 public:
 	
@@ -124,6 +125,13 @@ public:
  * Function members
  */
 private:
+	/**
+	 * MM_MemoryPoolBumpPointer._heapFreeList hold a list of freeEntries, which is created by sweep after GMP, the free list only be used as survivor during CopyForword
+	 * adjustFreeList() try to align the freeEntries in the freelist with CARD_SIZE(for both start address and end address ) and clear dirty CARD for the free entries.
+	 * @param minimumSize4Reuse remove the freeEntries, whose size are smaller than minimumSize4Reuse, from the freelist.
+	 */
+	void adjustFreeList(MM_EnvironmentBase *env, MM_HeapRegionDescriptorVLHGC *region, UDATA minimumSize4Reuse);
+
 protected:
 	
 	virtual bool initialize(MM_EnvironmentVLHGC *env);
@@ -187,6 +195,10 @@ protected:
 
 	void recycleFreeRegions(MM_EnvironmentVLHGC *env);
 
+	/* recover region tail and find the largest free entry(if the largest != tail) for each regions in post-sweep after GMP */
+	void recoverRegionAllocationPointers(MM_EnvironmentVLHGC *env);
+	bool verifyRegionAllocationPointer(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region);
+
 	static void hookMemoryPoolNew(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 	static void hookMemoryPoolKill(J9HookInterface** hook, UDATA eventNum, void* eventData, void* userData);
 
@@ -244,6 +256,9 @@ public:
 #if defined(J9VM_GC_CONCURRENT_SWEEP)
 	virtual bool replenishPoolForAllocate(MM_EnvironmentBase *env, MM_MemoryPool *memoryPool, UDATA size);
 #endif /* J9VM_GC_CONCURRENT_SWEEP */
+
+	bool isNoCompactionAfterSweep() { return _noCompactionAfterSweep; }
+	void setNoCompactionAfterSweep(bool opt) { _noCompactionAfterSweep = opt; }
 
 	/**
 	 * Create a ParallelSweepSchemeVLHGC object.

@@ -68,6 +68,8 @@ public:
 		bool _evacuateSet;	/**< true if the region was part of the evacuate set at the beginning of the copy-forward (flag not changed during abort) */
 		bool _requiresPhantomReferenceProcessing; /**< Set to true by main thread if this region must be processed during parallel phantom reference processing */
 		volatile void *_survivorBase;  /**< The base pointer for storage used as survivor, which will NOT match the region base if tail filling has occurred */
+		volatile void *_survivorLow;   /**< The low pointer for storage used as survivor, which will NOT be NULL if the latest free memory(not be tail) filling has occurred */
+		volatile void *_survivorHigh;  /**< The high pointer for storage used as survivor, which will NOT be NULL if the latest free memory(not be tail) filling has occurred */
 		MM_HeapRegionDescriptorVLHGC *_nextRegion;  /**< Region list link for compact group resource management during a copyforward operation */
 		MM_HeapRegionDescriptorVLHGC *_previousRegion;  /**< Region list link for compact group resource management during a copyforward operation */
 	} _copyForwardData;
@@ -269,10 +271,15 @@ public:
 		return (NULL != _copyForwardData._survivorBase) && (getLowAddress() != _copyForwardData._survivorBase);
 	}
 
+	MMINLINE bool isLargestFreeMemoryFilledSurvivorRegion()
+	{
+		return (NULL != _copyForwardData._survivorLow) && (NULL != _copyForwardData._survivorHigh);
+	}
+
 	/**
-	 * @return True if region is in survivor set (there is no explicit flag, but info is inferred from _survivorBase being non-null
+	 * @return True if region is in survivor set (there is no explicit flag, but info is inferred from _survivorBase being non-null(empty region or tail region) or _survivorLow being non-null(free memory is in middle of region)
 	 */
-	MMINLINE bool isSurvivorRegion() { return NULL != _copyForwardData._survivorBase; }
+	MMINLINE bool isSurvivorRegion() { return (NULL != _copyForwardData._survivorBase) || (NULL != _copyForwardData._survivorLow); }
 
 	/**
 	 * Allocate supporting resources (large enough to justify not to preallocate them for all regions at the startup) when region is being committed.

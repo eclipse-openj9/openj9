@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,6 +81,9 @@ MM_HeapRegionDescriptorVLHGC::initialize(MM_EnvironmentBase *env, MM_HeapRegionM
 	_copyForwardData._evacuateSet = false;
 	_copyForwardData._requiresPhantomReferenceProcessing = false;
 	_copyForwardData._survivorBase = NULL;
+	_copyForwardData._survivorLow = NULL;
+	_copyForwardData._survivorHigh = NULL;
+
 	_copyForwardData._nextRegion = NULL;
 	_copyForwardData._previousRegion = NULL;
 

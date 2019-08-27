@@ -99,6 +99,9 @@ private:
 		MM_HeapRegionDescriptorVLHGC *_tailCandidates; /**< A linked list of regions in this compact group which have empty tails */
 		MM_LightweightNonReentrantLock _tailCandidatesLock; /**< Lock to protect _tailCandidates */
 		UDATA _tailCandidateCount; /**< The number of regions in the _tailCandidates list */
+		MM_HeapRegionDescriptorVLHGC *_largestFreeMemoryCandidates; /**< A linked list of regions in this compact group which have largest free memory */
+		MM_LightweightNonReentrantLock _largestFreeMemoryCandidatesLock; /**< Lock to protect _largestFreeMemoryCandidates */
+		UDATA _largestFreeMemoryCandidateCount; /**< The number of regions in the _largestFreeMemoryCandidates list */
 	protected:
 	private:
 		/* Methods */
@@ -176,6 +179,11 @@ private:
 	void verifyClassLoaderObjectSlots(MM_EnvironmentVLHGC *env, J9Object *classLoaderObject);
 	void verifyExternalState(MM_EnvironmentVLHGC *env);
 	friend class MM_CopyForwardVerifyScanner;
+
+	void verifyObjectInRange(MM_EnvironmentVLHGC *env, UDATA *lowAddress, UDATA *highAddress);
+	void verifyChunkSlotsAndMapSlotsInRange(MM_EnvironmentVLHGC *env, UDATA *lowAddress, UDATA *highAddress);
+	void checkConsistencyGMPMapAndPGCMap(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region, UDATA *lowAddress, UDATA *highAddress);
+	void cleanInRange(MM_EnvironmentVLHGC *env, UDATA *lowAddress, UDATA *highAddress);
 
 	/**
 	 * Called to retire a copy cache once a thread no longer wants to use it as a copy destination.
@@ -354,8 +362,10 @@ private:
 	 * @param env[in] the current thread
 	 * @param region[in] region to set as survivor
 	 * @param survivorBase[in] survivor base address (all object below this address, if different than low region address are not part of survivor)
+	 * @param survivorLow[in]  survior low address (for only case there is another survivor chunk beside tail)
+	 * @param survivorHigh[in] survior high address (for only case there is another survivor chunk beside tail)
 	 */
-	void setRegionAsSurvivor(MM_EnvironmentVLHGC* env, MM_HeapRegionDescriptorVLHGC *region, void* survivorBase);
+	void setRegionAsSurvivor(MM_EnvironmentVLHGC* env, MM_HeapRegionDescriptorVLHGC *region, void* survivorBase, void* survivorLow = NULL, void* survivorHigh = NULL);
 
 	/**
 	 * Process the list of reference objects recorded in the specified list.
@@ -512,7 +522,7 @@ private:
 	 * @param regionList[in] The region list to which tailRegion should be added as a a tail candidate
 	 * @param tailRegion[in] The region to add
 	 */
-	void insertTailCandidate(MM_EnvironmentVLHGC* env, MM_ReservedRegionListHeader* regionList, MM_HeapRegionDescriptorVLHGC *tailRegion);
+	void insertCandidate(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *&cadidatesListHead, UDATA &cadidatesCount,  MM_HeapRegionDescriptorVLHGC *region);
 
 	/**
 	 * Remove the specified tail candidate from the tail candidate list.  The implementation assumes that the calling thread can modify 
@@ -521,8 +531,7 @@ private:
 	 * @param regionList[in] The region list which tailRegion belongs to
 	 * @param tailRegion[in] The region to remove
 	 */
-	void removeTailCandidate(MM_EnvironmentVLHGC* env, MM_ReservedRegionListHeader* regionList, MM_HeapRegionDescriptorVLHGC *tailRegion);
-	
+	void removeCandidate(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *&cadidatesListHead, UDATA &cadidatesCount,  MM_HeapRegionDescriptorVLHGC *region);
 	/**
 	 * Reserve memory for an object to be copied to survivor space.
 	 * @param env[in] GC thread.
@@ -921,13 +930,23 @@ private:
 	/**
 	 * Align the specified memory pool so that it can be used for survivor objects.
 	 * Specifically, make sure that we can't be copying objects into the area covered by a card which is 
-	 * meant to describe objects which were already in the region.
+	 * meant to describe objects which were already in the region. align region tail only.
 	 * @param env[in] the current thread
 	 * @param memoryPool[in] the memoryPool to align
 	 * @return the number of bytes lost by aligning the pool
 	 */
 	UDATA alignMemoryPool(MM_EnvironmentVLHGC *env, MM_MemoryPoolBumpPointer *memoryPool);
 	
+	/**
+	 * Align the specified memory pool so that it can be used for survivor objects.
+	 * Specifically, make sure that we can't be copying objects into the area covered by a card which is
+	 * meant to describe objects which were already in the region. align both region tail and the largest free memory.
+	 * @param env[in] the current thread
+	 * @param memoryPool[in] the memoryPool to align
+	 * @return the number of bytes lost by aligning the pool
+	 */
+	UDATA alignMemoryPool4Collector(MM_EnvironmentVLHGC *env, MM_MemoryPoolBumpPointer *memoryPool);
+
 	/**
 	 * Set the specified tail candidate region to be a survivor region.
 	 * 1. Set its _survivorBase to survivorBase (essentially set survivorSet to true).
@@ -938,7 +957,8 @@ private:
 	 * @param region[in] the tail region to convert
 	 * @param survivorBase the lowest address in the region where survivor objects can be found
 	 */
-	void convertTailCandidateToSurvivorRegion(MM_EnvironmentVLHGC* env, MM_HeapRegionDescriptorVLHGC *region, void* survivorBase);
+	void convertCandidateToSurvivorRegion(MM_EnvironmentVLHGC* env, MM_HeapRegionDescriptorVLHGC *region, void* survivorBase, void* survivorLow, void* survivorHigh);
+
 
 	/**
 	 * Scan the root set, copying-and-forwarding any objects found.

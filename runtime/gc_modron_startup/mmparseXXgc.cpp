@@ -358,6 +358,14 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			extensions->tarokEnableExpensiveAssertions = false;
 			continue;
 		}
+		if (try_scan(&scan_start, "tarokEnableAllocationPointerAssertion")) {
+			extensions->tarokEnableAllocationPointerAssertion = true;
+			continue;
+		}
+		if (try_scan(&scan_start, "tarokDisableAllocationPointerAssertion")) {
+			extensions->tarokEnableAllocationPointerAssertion = false;
+			continue;
+		}
 		if (try_scan(&scan_start, "tarokTgcEnableRememberedSetDuplicateDetection")) {
 			extensions->tarokTgcEnableRememberedSetDuplicateDetection = true;
 			continue;
@@ -629,6 +637,16 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 
 			continue;
 		}
+		if (try_scan(&scan_start, "tarokEnableRecoverRegionTailsAfterSweep")) {
+			extensions->tarokEnableRecoverRegionTailsAfterSweep = true;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "tarokEnableRecoverRegionLargestFreeMemory")) {
+			extensions->tarokEnableRecoverRegionLargestFreeMemory = true;
+			continue;
+		}
+
 #endif /* defined (J9VM_GC_VLHGC) */
 
 		if(try_scan(&scan_start, "packetListLockSplit=")) {

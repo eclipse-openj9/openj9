@@ -187,6 +187,7 @@ public:
 	double maxRAMPercent; /**< Value of -XX:MaxRAMPercentage specified by the user */
 	double initialRAMPercent; /**< Value of -XX:InitialRAMPercentage specified by the user */
 
+	bool tarokEnableRecoverRegionLargestFreeMemory; /**< Enable recovering region largest free memory during post sweep of GMP, this flag is only available if tarokEnableRecoverRegionTailsAfterSweep == true */
 protected:
 private:
 protected:
@@ -317,6 +318,7 @@ public:
 #endif
 		, maxRAMPercent(0.0) /* this would get overwritten by user specified value */
 		, initialRAMPercent(0.0) /* this would get overwritten by user specified value */
+		, tarokEnableRecoverRegionLargestFreeMemory(false)
 	{
 		_typeId = __FUNCTION__;
 	}
