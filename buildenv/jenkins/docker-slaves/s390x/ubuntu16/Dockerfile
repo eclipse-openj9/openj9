@@ -98,8 +98,21 @@ RUN ln -s /usr/lib/s390x-linux-gnu /usr/lib64 \
   && ln -s /usr/local/bin/g++-7.4 /usr/bin/g++-7 \
   && ln -s /usr/local/bin/gcc-7.4 /usr/bin/gcc-7
 
+# Install Protobuf 3.7.1
+RUN cd /tmp \
+  && wget https://github.com/protocolbuffers/protobuf/releases/download/v3.7.1/protobuf-cpp-3.7.1.tar.gz \
+  && tar -xzf protobuf-cpp-3.7.1.tar.gz \
+  && rm -f protobuf-cpp-3.7.1.tar.gz \
+  && cd ./protobuf-3.7.1 \
+  && ./configure --disable-shared --with-pic \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf /tmp/protobuf-3.7.1
+
 # Edit ldconfig to connect the new libstdc++.so* library
 RUN echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local.conf \
+  && echo "/usr/local/lib" >> /etc/ld.so.conf.d/usr-local.conf \
   && ldconfig
 
 # Install cmake version 3.11.4
