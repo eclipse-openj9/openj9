@@ -579,7 +579,7 @@ TR_IProfiler::allocate(J9JITConfig *jitConfig)
 
 TR_IProfiler::TR_IProfiler(J9JITConfig *jitConfig)
    : _isIProfilingEnabled(true),
-     _valueProfileMethod(NULL), _maxCount(DEFAULT_PROFILING_COUNT), _lightHashTableMonitor(0), _allowedToGiveInlinedInformation(true),
+     _valueProfileMethod(NULL), _lightHashTableMonitor(0), _allowedToGiveInlinedInformation(true),
      _globalAllocationCount (0), _maxCallFrequency(0), _iprofilerThread(0), _iprofilerOSThread(NULL),
      _workingBufferTail(NULL), _numOutstandingBuffers(0), _numRequests(1), _numRequestsSkipped(0),
      _numRequestsHandedToIProfilerThread(0), _iprofilerThreadExitFlag(0), _iprofilerMonitor(NULL),
@@ -2060,14 +2060,6 @@ TR_IProfiler::getProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
    return 0;
    }
 
-int32_t
-TR_IProfiler::getMaxCount(bool isAOT)
-   {
-   if (!isIProfilingEnabled())
-      return 0;
-
-   return _maxCount;
-   }
 
 int32_t
 TR_IProfiler::getSwitchCountForValue (TR::Node *node, int32_t value, TR::Compilation *comp)
@@ -2313,7 +2305,6 @@ TR_IProfiler::setBlockAndEdgeFrequencies(TR::CFG *cfg, TR::Compilation *comp)
       return;
 
    cfg->propagateFrequencyInfoFromExternalProfiler(this);
-   _maxCount = cfg->getMaxFrequency();
 
    static bool traceIProfiling = ((debug("traceIProfiling") != NULL));
    if (traceIProfiling)
@@ -2331,11 +2322,6 @@ TR_IProfiler::setBlockAndEdgeFrequencies(TR::CFG *cfg, TR::Compilation *comp)
       }
    }
 
-void
-TR_IProfiler::resetProfiler()
-   {
-   _maxCount = DEFAULT_PROFILING_COUNT;
-   }
 
 J9Class *
 TR_IProfiler::getInterfaceClass(J9Method *aMethod, TR::Compilation *comp)

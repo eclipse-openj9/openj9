@@ -336,6 +336,17 @@ elseif(OMR_OS_WINDOWS)
 endif()
 set_property(TARGET j9jit PROPERTY LINKER_LANGUAGE CXX)
 
+# Note ddrgen can't handle the templated symbols used in the jit
+target_enable_ddr(j9jit NO_DEBUG_INFO)
+file(GLOB_RECURSE headers
+	${CMAKE_CURRENT_SOURCE_DIR}/runtime/*.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/runtime/*.h
+)
+ddr_add_headers(j9jit
+	${headers}
+)
+ddr_set_add_targets(omrddr j9jit)
+
 install(
 	TARGETS j9jit
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}

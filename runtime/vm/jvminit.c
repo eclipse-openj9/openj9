@@ -2974,10 +2974,10 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	}
 	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_OSR_SAFE_POINT; /* Enable OSR safe point by default */
 	vm->extendedRuntimeFlags |= (UDATA)J9_EXTENDED_RUNTIME_ENABLE_HCR; /* Enable HCR by default */
-#if defined(J9VM_ARCH_X86)
-	/* Enabled field watch by default on x86 platforms */
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_S390)
+	/* Enabled field watch by default on x86, Power, and S390 platforms */
 	vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_JIT_INLINE_WATCHES;
-#endif /* J9VM_ARCH_X86 */
+#endif /* J9VM_ARCH_X86, J9VM_ARCH_POWER, J9VM_ARCH_S390 */
 	{
 		IDATA noStackTraceInThrowable = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOSTACKTRACEINTHROWABLE, NULL);
 		IDATA stackTraceInThrowable = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXSTACKTRACEINTHROWABLE, NULL);

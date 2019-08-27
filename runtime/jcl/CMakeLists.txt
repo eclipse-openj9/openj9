@@ -215,7 +215,8 @@ endif()
 
 include(exports.cmake)
 
-target_enable_ddr(jclse j9ddr)
+target_enable_ddr(jclse)
+ddr_set_add_targets(j9ddr jclse)
 
 install(
 	TARGETS jclse
