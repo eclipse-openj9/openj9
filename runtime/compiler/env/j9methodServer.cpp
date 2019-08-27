@@ -111,7 +111,6 @@ TR_ResolvedJ9JITaaSServerMethod::isJNINative()
    return _isJNINative;
    }
 
-
 void
 TR_ResolvedJ9JITaaSServerMethod::setRecognizedMethodInfo(TR::RecognizedMethod rm)
    {
@@ -1839,6 +1838,23 @@ TR_ResolvedJ9JITaaSServerMethod::validateMethodFieldAttributes(const TR_J9Method
    auto clientAttributes = std::get<0>(recv);
    bool equal = (attributes == clientAttributes);
    return equal;
+   }
+
+U_16
+TR_ResolvedJ9JITaaSServerMethod::archetypeArgPlaceholderSlot()
+   {
+   TR_ASSERT(isArchetypeSpecimen(), "should not be called for non-ArchetypeSpecimen methods");
+
+   U_8 tempArgTypes[256];
+   uintptr_t    paramElements;
+   uintptr_t    paramSlots;
+   jitParseSignature(_signature, tempArgTypes, &paramElements, &paramSlots);
+   /*
+    * result should be : paramSlot + 1 -1 = paramSlot
+    * +1 :thunk archetype are always virtual method and has a receiver
+    * -1 :the placeholder is a 1-slot type (int)
+    */
+   return paramSlots;
    }
 
 TR_ResolvedRelocatableJ9JITaaSServerMethod::TR_ResolvedRelocatableJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owner, uint32_t vTableSlot)
