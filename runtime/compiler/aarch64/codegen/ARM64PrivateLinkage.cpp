@@ -217,3 +217,9 @@ TR::Register *TR::ARM64PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    TR_UNIMPLEMENTED();
    return NULL;
    }
+
+int32_t TR::ARM64HelperLinkage::buildArgs(TR::Node *callNode,
+   TR::RegisterDependencyConditions *dependencies)
+   {
+   return buildPrivateLinkageArgs(callNode, dependencies, _helperLinkage);
+   }
