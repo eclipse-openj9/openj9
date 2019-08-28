@@ -40,25 +40,6 @@ include $(CURRENT_DIR)$(D)featureSettings.mk
 -include $(CURRENT_DIR)$(D)autoGenEnv.mk
 include $(CURRENT_DIR)$(D)envSettings.mk
 
-ifeq ($(JAVA_VERSION), SE80)
-	JDK_VERSION:=8
-endif
-ifeq ($(JAVA_VERSION), SE90)
-	JDK_VERSION:=9
-endif
-ifeq ($(JAVA_VERSION), SE100)
-	JDK_VERSION:=10
-endif
-ifeq ($(JAVA_VERSION), SE110)
-	JDK_VERSION:=11
-endif
-ifeq ($(JAVA_VERSION), SE120)
-	JDK_VERSION:=12
-endif
-ifeq ($(JAVA_VERSION), SE130)
-	JDK_VERSION:=13
-endif
-
 autoconfig:
 	perl configure.pl
 
