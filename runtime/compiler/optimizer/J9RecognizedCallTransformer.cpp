@@ -207,7 +207,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
    {
    bool enableTrace = trace() || comp()->getOption(TR_TraceUnsafeInlining);
    bool isNotStaticField = !strncmp(comp()->getCurrentMethod()->classNameChars(), "java/util/concurrent/atomic/", strlen("java/util/concurrent/atomic/"));
-
+   bool fixupCommoning = true;
    TR::Node* unsafeCall = treetop->getNode()->getFirstChild();
    TR::Node* objectNode = unsafeCall->getChild(1);
    TR::Node* offsetNode = unsafeCall->getChild(2);
@@ -260,8 +260,8 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       auto isObjectNullNode = TR::Node::createif(TR::ifacmpeq, objectNode->duplicateTree(), TR::Node::aconst(0), NULL);
       auto isObjectNullTreeTop = TR::TreeTop::create(comp(), isObjectNullNode);
       treetop->insertBefore(isObjectNullTreeTop);
-      treetop->getEnclosingBlock()->split(treetop, cfg);
-
+      treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
+ 
       if (enableTrace)
          traceMsg(comp(), "Created isObjectNull test node n%dn, non-null object will fall through to Block_%d\n", isObjectNullNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
 
@@ -272,7 +272,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
                                                NULL);
       auto isNotLowTaggedTreeTop = TR::TreeTop::create(comp(), isNotLowTaggedNode);
       treetop->insertBefore(isNotLowTaggedTreeTop);
-      treetop->getEnclosingBlock()->split(treetop, cfg);
+      treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
 
       if (enableTrace)
          traceMsg(comp(), "Created isNotLowTagged test node n%dn, static field will fall through to Block_%d\n", isNotLowTaggedNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
@@ -325,7 +325,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
 
       treetop->insertBefore(TR::TreeTop::create(comp(), objectAdjustmentNode));
       treetop->insertBefore(TR::TreeTop::create(comp(), offsetAdjustmentNode));
-      treetop->getEnclosingBlock()->split(treetop, cfg);
+      treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
 
       if (enableTrace)
          traceMsg(comp(), "Block_%d contains call to atomic method helper, and is the target of isObjectNull and isNotLowTagged tests\n", treetop->getEnclosingBlock()->getNumber());
