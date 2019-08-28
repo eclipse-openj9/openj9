@@ -23,6 +23,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
 #include "compile/Compilation.hpp"
+#include "il/symbol/StaticSymbol.hpp"
 
 uint8_t *
 J9::ARM64::UnresolvedDataSnippet::emitSnippetBody()
@@ -30,6 +31,16 @@ J9::ARM64::UnresolvedDataSnippet::emitSnippetBody()
    // Implement this in OpenJ9 PR #5985
    cg()->comp()->failCompilation<TR::AssertionFailure>("UnresolvedDataSnippet");
    return NULL;
+   }
+
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
+   {
+   uint8_t            *cursor = snippet->getSnippetLabel()->getCodeLocation();
+
+   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Unresolved Data Snippet");
+
+   //TODO print snippet body
    }
 
 uint32_t
