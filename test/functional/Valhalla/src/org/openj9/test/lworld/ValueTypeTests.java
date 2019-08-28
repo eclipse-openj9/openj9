@@ -26,6 +26,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import sun.misc.Unsafe;
@@ -1347,6 +1348,84 @@ public class ValueTypeTests {
 		assertNotNull(getV3.invoke(triangleObject));
 	}
 	
+
+	@Test(priority=4)
+	static public void testClassWithOnlyStaticFieldsWithSingleAlignment() throws Throwable {
+		String fields[] = {
+			"tri:QTriangle2D;:static",
+			"point:QPoint2D;:static",
+			"line:QFlattenedLine2D;:static",
+			"i:QValueInt;:static",
+			"f:QValueFloat;:static",
+			"tri2:QTriangle2D;:static"};
+		Class ClassWithOnlyStaticFieldsWithSingleAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithSingleAlignment", fields);
+		int length = fields.length;
+		MethodHandle[][] StaticFieldsWithSingleAlignmentGenericGetterAndSetter = new MethodHandle[length][2];
+
+		/*
+		 * Getters are created in array StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][0] according to the order of fields i
+		 * Setters are created in array StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][1] according to the order of fields i
+		 */
+		for (int i = 0; i < length; i++) {
+			String fieldName = fields[i].split(":")[0];
+			StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][0] = generateStaticGenericGetter(ClassWithOnlyStaticFieldsWithSingleAlignment, fieldName);
+			StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][1] = generateStaticGenericSetter(ClassWithOnlyStaticFieldsWithSingleAlignment, fieldName);
+		}
+		//checkFieldAccessMHOfAssortedType(StaticFieldsWithSingleAlignmentGenericGetterAndSetter, ClassWithOnlyStaticFieldsWithSingleAlignment.getClass(), fields, false);
+	}
+
+	@Test(priority=4)
+	static public void testClassWithOnlyStaticFieldsWithLongAlignment() throws Throwable {
+		String fields[] = {
+			"point:QPoint2D;:static",
+			"line:QFlattenedLine2D;:static",
+			"o:QValueObject;:static",
+			"l:QValueLong;:static",
+			"d:QValueDouble;:static",
+			"i:QValueInt;:static",
+			"tri:QTriangle2D;:static"};
+		Class ClassWithOnlyStaticFieldsWithLongAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithLongAlignment", fields);
+		int length = fields.length;
+		MethodHandle[][] StaticFieldsWithLongAlignmentGenericGetterAndSetter = new MethodHandle[length][2];
+
+		/*
+		 * Getters are created in array StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][0] according to the order of fields i
+		 * Setters are created in array StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][1] according to the order of fields i
+		 */
+		for (int i = 0; i < length; i++) {
+			String fieldName = fields[i].split(":")[0];
+			StaticFieldsWithLongAlignmentGenericGetterAndSetter[i][0] = generateStaticGenericGetter(ClassWithOnlyStaticFieldsWithLongAlignment, fieldName);
+			StaticFieldsWithLongAlignmentGenericGetterAndSetter[i][1] = generateStaticGenericSetter(ClassWithOnlyStaticFieldsWithLongAlignment, fieldName);
+		}
+		//checkFieldAccessMHOfAssortedType(StaticFieldsWithLongAlignmentGenericGetterAndSetter, ClassWithOnlyStaticFieldsWithLongAlignment.getClass(), fields, false);
+	}
+
+	@Test(priority=4)
+	static public void testClassWithOnlyStaticFieldsWithObjectAlignment() throws Throwable {
+		String fields[] = {
+			"tri:QTriangle2D;:static",
+			"point:QPoint2D;:static",
+			"line:QFlattenedLine2D;:static",
+			"o:QValueObject;:static",
+			"i:QValueInt;:static",
+			"f:QValueFloat;:static",
+			"tri2:QTriangle2D;:static"};
+		Class ClassWithOnlyStaticFieldsWithObjectAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithObjectAlignment", fields);
+		int length = fields.length;
+		MethodHandle[][] StaticFieldsWithObjectAlignmentGenericGetterAndSetter = new MethodHandle[length][2];
+
+		/*
+		 * Getters are created in array StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][0] according to the order of fields i
+		 * Setters are created in array StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][1] according to the order of fields i
+		 */
+		for (int i = 0; i < length; i++) {
+			String fieldName = fields[i].split(":")[0];
+			StaticFieldsWithObjectAlignmentGenericGetterAndSetter[i][0] = generateStaticGenericGetter(ClassWithOnlyStaticFieldsWithObjectAlignment, fieldName);
+			StaticFieldsWithObjectAlignmentGenericGetterAndSetter[i][1] = generateStaticGenericSetter(ClassWithOnlyStaticFieldsWithObjectAlignment, fieldName);
+		}
+		//checkFieldAccessMHOfAssortedType(StaticFieldsWithObjectAlignmentGenericGetterAndSetter, ClassWithOnlyStaticFieldsWithObjectAlignment.getClass(), fields, false);
+	}
+
 	/*
 	 * Create large number of value types and instantiate them 
 	 * 
@@ -1359,7 +1438,7 @@ public class ValueTypeTests {
 	static public void testCreateLargeNumberOfPoint2D() throws Throwable {
 		String fields[] = {"x:I", "y:I"};
 		String className = "Point2D";
-		for(int valueIndex = 0; valueIndex < 200000; valueIndex++){
+		for(int valueIndex = 0; valueIndex < 200; valueIndex++){
 			className =  "Point2D" + valueIndex;		
 			point2DClass = ValueTypeGenerator.generateValueClass(className, fields);
 			/* findStatic will trigger class resolution */
@@ -1385,6 +1464,15 @@ public class ValueTypeTests {
 		return null;
 	}
 	
+	static MethodHandle generateStaticGenericGetter(Class<?> clazz, String fieldName) {
+		try {
+			return lookup.findStatic(clazz, "getStaticGeneric"+fieldName, MethodType.methodType(Object.class, Class.class));
+		} catch (IllegalAccessException | SecurityException | NullPointerException | NoSuchMethodException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
 	static MethodHandle generateSetter(Class clazz, String fieldName, Class fieldType) {
 		try {
 			return lookup.findVirtual(clazz, "set"+fieldName, MethodType.methodType(void.class, fieldType));
@@ -1397,6 +1485,15 @@ public class ValueTypeTests {
 	static MethodHandle generateGenericSetter(Class clazz, String fieldName) {
 		try {
 			return lookup.findVirtual(clazz, "setGeneric"+fieldName, MethodType.methodType(void.class, Object.class));
+		} catch (IllegalAccessException | SecurityException | NullPointerException | NoSuchMethodException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+
+	static MethodHandle generateStaticGenericSetter(Class clazz, String fieldName) {
+		try {
+			return lookup.findStatic(clazz, "setStaticGeneric"+fieldName, MethodType.methodType(void.class, Class.class, Object.class));
 		} catch (IllegalAccessException | SecurityException | NullPointerException | NoSuchMethodException e) {
 			e.printStackTrace();
 		}
