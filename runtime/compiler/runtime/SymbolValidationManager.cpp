@@ -33,7 +33,6 @@
 #include "runtime/SymbolValidationManager.hpp"
 
 #include "j9protos.h"
-#include "VMHelpers.hpp"
 
 #if defined (_MSC_VER) && _MSC_VER < 1900
 #define snprintf _snprintf
@@ -117,7 +116,7 @@ TR::SymbolValidationManager::isClassWorthRemembering(TR_OpaqueClassBlock *clazz)
     * ability to optimize for them) rather than risk a load failure due to a code path that was unlikely to
     * execute.
     */
-   if (_jlthrowable &&  VM_VMHelpers::isSameOrSuperclass((J9Class *)_jlthrowable, (J9Class*)clazz))
+   if (_jlthrowable && _fej9->isSameOrSuperClass((J9Class *)_jlthrowable, (J9Class *)clazz))
       {
       if (_comp->getOption(TR_TraceRelocatableDataCG))
          traceMsg(_comp, "isClassWorthRemembering: clazz %p is or inherits from jlthrowable\n", clazz);

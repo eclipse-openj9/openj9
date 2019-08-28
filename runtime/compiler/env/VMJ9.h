@@ -1065,6 +1065,7 @@ public:
    virtual bool               stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass);
 
    virtual TR_OpaqueClassBlock *             getSuperClass(TR_OpaqueClassBlock *classPointer);
+   virtual bool               isSameOrSuperClass(J9Class *superClass, J9Class *subClass);
    virtual bool               isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *);
 
    virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *);

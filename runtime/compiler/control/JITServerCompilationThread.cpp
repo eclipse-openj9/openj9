@@ -328,6 +328,12 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          client->write(response, fe->getSuperClass(clazz));
          }
          break;
+      case MessageType::VM_isSameOrSuperClass:
+         {
+         auto tup = client->getRecvData<J9Class*, J9Class*>();
+         client->write(response, fe->isSameOrSuperClass(std::get<0>(tup), std::get<1>(tup)));
+         }
+         break;
       case MessageType::VM_isInstanceOf:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_OpaqueClassBlock *, bool, bool, bool>();
