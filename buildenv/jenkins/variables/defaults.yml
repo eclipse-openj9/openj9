@@ -425,6 +425,34 @@ x86-64_linux_xl:
     13:
       ? special.system
 #========================================#
+# Linux Aarch 64bits Large Heap
+#========================================#
+aarch64_linux_xl:
+  boot_jdk:
+    11: '/usr/lib/jvm/adoptojdk-java-11'
+  release:
+    11: 'linux-aarch64-normal-server-release'
+  freemarker: '/home/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
+  extra_configure_options:
+    11: '--with-noncompressedrefs'
+  node_labels:
+    build:
+      11: 'ci.role.build && hw.arch.aarch64 && sw.os.cent.7'
+#========================================#
+# Linux Aarch 64bits Compressed Pointers
+#========================================#
+aarch64_linux:
+  boot_jdk:
+    11: '/usr/lib/jvm/adoptojdk-java-11'
+  release:
+    11: 'linux-aarch64-normal-server-release'
+  freemarker: '/home/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
+  node_labels:
+    build:
+      11: 'ci.role.build && hw.arch.aarch64 && sw.os.cent.7'
+#========================================#
 # Windows x86 64bits Compressed Pointers
 #========================================#
 x86-64_windows:
