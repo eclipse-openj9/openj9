@@ -3422,10 +3422,10 @@ TR_J9VMBase::lowerAsyncCheck(TR::Compilation * comp, TR::Node * root, TR::TreeTo
    }
 
 bool
- TR_J9VMBase::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
-    {
-    return VM_VMHelpers::methodBeingTraced(_jitConfig->javaVM, (J9Method *)method);
-    }
+TR_J9VMBase::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
+   {
+   return VM_VMHelpers::methodBeingTraced(_jitConfig->javaVM, (J9Method *)method);
+   }
 
 bool
 TR_J9VMBase::isSelectiveMethodEnterExitEnabled()
@@ -6536,6 +6536,11 @@ TR_J9VM::getSuperClass(TR_OpaqueClassBlock * classPointer)
    return convertClassPtrToClassOffset(classDepth >= 0 ? clazz->superclasses[classDepth]: 0);
    }
 
+bool
+TR_J9VM::isSameOrSuperClass(J9Class * superClass, J9Class * subClass)
+   {
+   return VM_VMHelpers::isSameOrSuperclass(superClass, subClass);
+   }
 
 bool
 TR_J9VMBase::sameClassLoaders(TR_OpaqueClassBlock * class1, TR_OpaqueClassBlock * class2)
