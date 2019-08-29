@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <stddef.h>
 #include <stdint.h>
+#include <vector>
 #include "env/RuntimeAssumptionTable.hpp"
 #include "env/TRMemory.hpp"
 #include "env/jittypes.h"
@@ -229,6 +230,14 @@ class TR_AddressSet
       _maxAddressRanges(maxAddressRanges)
       {}
 
+#if defined(JITSERVER_SUPPORT)
+   void destroy();
+   void getRanges(std::vector<TR_AddressRange> &ranges); // copies the address ranges stored in the current object into a vector
+   void setRanges(const std::vector<TR_AddressRange> &ranges); // loads the address ranges from the vector given as parameter
+   int32_t getNumberOfRanges() const { return _numAddressRanges; }
+   int32_t getMaxRanges() const { return _maxAddressRanges; }
+#endif
+
    void add        (uintptrj_t address){ add(address, address); }
    void add        (uintptrj_t start, uintptrj_t end);
    bool mayContain (uintptrj_t address)
@@ -242,7 +251,6 @@ class TR_AddressSet
       }
 
    };
-
 
 class TR_UnloadedClassPicSite : public OMR::ValueModifyRuntimeAssumption
    {

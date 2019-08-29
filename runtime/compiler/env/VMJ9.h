@@ -159,6 +159,20 @@ typedef struct TR_JitPrivateConfig
    TR_AOTStats *aotStats;
    } TR_JitPrivateConfig;
 
+#if defined(JITSERVER_SUPPORT)
+// JITServer: union containing all possible datatypes of static final fields
+union
+TR_StaticFinalData
+   {
+   int8_t dataInt8Bit;
+   int16_t dataInt16Bit;
+   int32_t dataInt32Bit;
+   int64_t dataInt64Bit;
+   float dataFloat;
+   double dataDouble;
+   uintptrj_t dataAddress;
+   };
+#endif /* defined(JITSERVER_SUPPORT) */
 
 #ifdef __cplusplus
 extern "C" {
