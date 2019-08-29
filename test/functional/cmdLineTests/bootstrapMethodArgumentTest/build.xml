@@ -67,7 +67,7 @@
 			<fileset dir="./" />
 		</jar>
 		<copy todir="${DEST}">
-			<fileset dir="${src}/../" includes="*.xml" />
+			<fileset dir="${src}/../" includes="*.xml,*.mk"/>
 		</copy>
 	</target>
 
