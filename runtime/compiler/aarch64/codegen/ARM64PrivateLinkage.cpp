@@ -193,6 +193,15 @@ void TR::ARM64PrivateLinkage::createEpilogue(TR::Instruction *cursor)
 int32_t TR::ARM64PrivateLinkage::buildArgs(TR::Node *callNode,
    TR::RegisterDependencyConditions *dependencies)
    {
+   return buildPrivateLinkageArgs(callNode, dependencies, TR_Private);
+   }
+
+int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
+   TR::RegisterDependencyConditions *dependencies,
+   TR_LinkageConventions linkage)
+   {
+   TR_ASSERT(linkage == TR_Private || linkage == TR_Helper || linkage == TR_CHelper, "Unexpected linkage convention");
+
    TR_UNIMPLEMENTED();
    return 0;
    }
