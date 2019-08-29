@@ -383,12 +383,14 @@ JIT_PRODUCT_SOURCE_FILES+=\
 
 ifneq ($(JITSERVER_SUPPORT),)
 JIT_PRODUCT_SOURCE_FILES+=\
+    compiler/control/JITServerCompilationThread.cpp \
     compiler/net/ClientStream.cpp \
     compiler/net/CommunicationStream.cpp \
     compiler/net/ProtobufTypeConvert.cpp \
     compiler/net/ServerStream.cpp \
     compiler/runtime/CompileService.cpp \
     compiler/runtime/JITClientSession.cpp \
+    compiler/runtime/JITServerIProfiler.cpp \
     compiler/runtime/JITServerStatisticsThread.cpp \
     compiler/runtime/Listener.cpp
 endif
