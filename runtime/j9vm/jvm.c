@@ -435,6 +435,9 @@ static const J9SignalMapping signalMap[] = {
 #if defined(SIGRECONFIG)
 	J9_SIGNAL_MAP_ENTRY("RECONFIG", SIGRECONFIG),
 #endif /* defined(SIGRECONFIG) */
+#if defined(SIGKILL)
+	J9_SIGNAL_MAP_ENTRY("KILL", SIGKILL),
+#endif /* defined(SIGKILL) */
 	{NULL, J9_SIG_ERR}
 };
 
