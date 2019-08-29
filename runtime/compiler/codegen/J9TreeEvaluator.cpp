@@ -573,7 +573,7 @@ void traceInstanceOfOrCheckCastProfilingInfo(TR::CodeGenerator *cg, TR::Node *no
          continue;
          }
 
-      bool isInstanceOf = instanceOfOrCheckCastNoCacheUpdate((J9Class *)profiledClass, (J9Class *)castClass);
+      bool isInstanceOf = fej9->instanceOfOrCheckCast((J9Class *)profiledClass, (J9Class *)castClass);
       traceMsg(comp, "%s:\tProfiled class [" POINTER_PRINTF_FORMAT "] is %san instance of cast class\n",
                node->getOpCode().getName(), profiledClass, isInstanceOf ? "" : "not ");
       }
@@ -646,7 +646,7 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
       // For checkcast, skip classes that will fail the cast, not much value in optimizing for those cases.
       // We also don't want to pollute the cast class cache with a failing class for the same reason.
       //
-      bool isInstanceOf = instanceOfOrCheckCastNoCacheUpdate((J9Class *)tempProfiledClass, (J9Class *)castClass);
+      bool isInstanceOf = fej9->instanceOfOrCheckCast((J9Class *)tempProfiledClass, (J9Class *)castClass);
       if (node->getOpCode().isCheckCast() && !isInstanceOf)
          {
          if (comp->getOption(TR_TraceCG))

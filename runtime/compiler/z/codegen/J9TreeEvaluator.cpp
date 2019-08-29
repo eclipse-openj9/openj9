@@ -1581,7 +1581,7 @@ static bool generateInlineTest(TR::CodeGenerator * cg, TR::Node * node, TR::Node
          {
          for (i = 0; i < numberOfGuessClasses; i++)
             {
-            if (instanceOfOrCheckCast((J9Class*)tempGuessClassArray[i], (J9Class*)castClassAddr))
+            if (fej9->instanceOfOrCheckCast((J9Class*)tempGuessClassArray[i], (J9Class*)castClassAddr))
                {
                guessClassArray[num_PICs++] = tempGuessClassArray[i];
                if (maxNum_PICS == num_PICs) break;
@@ -1617,7 +1617,7 @@ static bool generateInlineTest(TR::CodeGenerator * cg, TR::Node * node, TR::Node
       if (cg->wantToPatchClassPointer(guessClassArray[i], node))
          comp->getStaticHCRPICSites()->push_front(unloadableConstInstr[i]);
 
-      result_bool = instanceOfOrCheckCast((J9Class*)(guessClassArray[i]), (J9Class*)castClassAddr);
+      result_bool = fej9->instanceOfOrCheckCast((J9Class*)(guessClassArray[i]), (J9Class*)castClassAddr);
       result_label = (falseLabel != trueLabel ) ? (result_bool ? trueLabel : falseLabel) : doneLabel;
 
       if (needsResult)
