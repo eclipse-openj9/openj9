@@ -438,6 +438,18 @@ static const J9SignalMapping signalMap[] = {
 #if defined(SIGKILL)
 	J9_SIGNAL_MAP_ENTRY("KILL", SIGKILL),
 #endif /* defined(SIGKILL) */
+#if defined(SIGSTOP)
+	J9_SIGNAL_MAP_ENTRY("STOP", SIGSTOP),
+#endif /* defined(SIGSTOP) */
+#if defined(SIGINFO)
+	J9_SIGNAL_MAP_ENTRY("INFO", SIGINFO),
+#endif /* defined(SIGINFO) */
+#if defined(SIGIOT)
+	J9_SIGNAL_MAP_ENTRY("IOT", SIGIOT),
+#endif /* defined(SIGIOT) */
+#if defined(SIGPOLL)
+	J9_SIGNAL_MAP_ENTRY("POLL", SIGPOLL),
+#endif /* defined(SIGPOLL) */
 	{NULL, J9_SIG_ERR}
 };
 
