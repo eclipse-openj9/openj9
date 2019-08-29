@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,7 +65,7 @@ getJ9CfrErrorBsmMessage(J9PortLibrary* portLib, J9CfrError* error, const U_8* cl
 	char *errorString = NULL;
 
 	/* J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY=BootstrapMethod (%1$d) arguments contain invalid constantpool entry at index (#%2$u) of type (%3$u); class=%5$.*4$s, offset=%6$u */
-	const char *template = j9nls_lookup_message(J9NLS_ERROR | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY, "(%d)(#%u)(%u);%.*s,%u");
+	const char *template = j9nls_lookup_message(J9NLS_ERROR | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY, NULL);
 
 	allocSize = strlen(template) + classNameLength + (MAX_INT_SIZE * 4);
 	errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);

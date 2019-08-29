@@ -1,0 +1,217 @@
+/*******************************************************************************
+ * Copyright (c) 2019, 2019 IBM Corp. and others
+ *
+ * This program and the accompanying materials are made available under
+ * the terms of the Eclipse Public License 2.0 which accompanies this
+ * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+ * or the Apache License, Version 2.0 which accompanies this distribution and
+ * is available at https://www.apache.org/licenses/LICENSE-2.0.
+ *
+ * This Source Code may also be made available under the following
+ * Secondary Licenses when the conditions for such availability set
+ * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+ * General Public License, version 2 with the GNU Classpath
+ * Exception [1] and GNU General Public License, version 2 with the
+ * OpenJDK Assembly Exception [2].
+ *
+ * [1] https://www.gnu.org/software/classpath/license.html
+ * [2] http://openjdk.java.net/legal/assembly-exception.html
+ *
+ * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+ *******************************************************************************/
+
+/* This is a test template is used to generate jcod files with invalid boostrap method arguments */
+
+class org/openj9/test/bsmargs/RejectInvalidCPTestTemplate {
+  0xCAFEBABE;
+  0; // minor version
+  55; // version
+  [] { // Constant Pool
+    ; // first element is empty
+    Method #11 #22; // #1    
+    class #23; // #2    
+    Method #2 #22; // #3    
+    Method #24 #25; // #4    
+    InterfaceMethod #26 #27; // #5    
+    InvokeDynamic 0s #33; // #6    
+    InterfaceMethod #26 #34; // #7    
+    Field #35 #36; // #8    
+    Method #37 #38; // #9    
+    class #39; // #10    
+    class #40; // #11    
+    Utf8 "<init>"; // #12    
+    Utf8 "()V"; // #13    
+    Utf8 "Code"; // #14    
+    Utf8 "LineNumberTable"; // #15    
+    Utf8 "main"; // #16    
+    Utf8 "([Ljava/lang/String;)V"; // #17    
+    Utf8 "lambda$main$0"; // #18    
+    Utf8 "(Ljava/lang/Integer;)V"; // #19    
+    Utf8 "SourceFile"; // #20    
+    Utf8 "RejectInvalidCPTestTemplate.java"; // #21    
+    NameAndType #12 #13; // #22    
+    Utf8 "java/util/ArrayList"; // #23    
+    class #41; // #24    
+    NameAndType #42 #43; // #25    
+    class #44; // #26    
+    NameAndType #45 #46; // #27    
+    Utf8 "BootstrapMethods"; // #28    
+    MethodHandle 6b #47; // #29    
+    MethodType #48; // #30    
+    MethodHandle 6b #49; // #31    
+    MethodType #19; // #32    
+    NameAndType #50 #51; // #33    
+    NameAndType #52 #53; // #34    
+    class #54; // #35    
+    NameAndType #55 #56; // #36    
+    class #57; // #37    
+    NameAndType #58 #48; // #38    
+    Utf8 "org/openj9/test/bsmargs/RejectInvalidCPTestTemplate"; // #39    
+    Utf8 "java/lang/Object"; // #40    
+    Utf8 "java/lang/Integer"; // #41    
+    Utf8 "valueOf"; // #42    
+    Utf8 "(I)Ljava/lang/Integer;"; // #43    
+    Utf8 "java/util/List"; // #44    
+    Utf8 "add"; // #45    
+    Utf8 "(Ljava/lang/Object;)Z"; // #46    
+    Method #59 #60; // #47    
+    Utf8 "(Ljava/lang/Object;)V"; // #48    
+    Method #10 #61; // #49    
+    Utf8 "accept"; // #50    
+    Utf8 "()Ljava/util/function/Consumer;"; // #51    
+    Utf8 "forEach"; // #52    
+    Utf8 "(Ljava/util/function/Consumer;)V"; // #53    
+    Utf8 "java/lang/System"; // #54    
+    Utf8 "out"; // #55    
+    Utf8 "Ljava/io/PrintStream;"; // #56    
+    Utf8 "java/io/PrintStream"; // #57    
+    Utf8 "println"; // #58    
+    class #62; // #59    
+    NameAndType #63 #67; // #60    
+    NameAndType #18 #19; // #61    
+    Utf8 "java/lang/invoke/LambdaMetafactory"; // #62    
+    Utf8 "metafactory"; // #63    
+    class #69; // #64    
+    Utf8 "Lookup"; // #65    
+    Utf8 "InnerClasses"; // #66    
+    Utf8 "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"; // #67    
+    class #70; // #68    
+    Utf8 "java/lang/invoke/MethodHandles$Lookup"; // #69    
+    Utf8 "java/lang/invoke/MethodHandles"; // #70    
+  } // Constant Pool
+
+  0x0021; // access
+  #10;// this_cpx
+  #11;// super_cpx
+
+  [] { // Interfaces
+  } // Interfaces
+
+  [] { // fields
+  } // fields
+
+  [] { // methods
+    { // Member
+      0x0001; // access
+      #12; // name_cpx
+      #13; // sig_cpx
+      [] { // Attributes
+        Attr(#14) { // Code
+          1; // max_stack
+          1; // max_locals
+          Bytes[]{
+            0x2AB70001B1;
+          };
+          [] { // Traps
+          } // end Traps
+          [] { // Attributes
+            Attr(#15) { // LineNumberTable
+              [] { // LineNumberTable
+                0  27;
+              }
+            } // end LineNumberTable
+          } // Attributes
+        } // end Code
+      } // Attributes
+    } // Member
+    ;
+    { // Member
+      0x0009; // access
+      #16; // name_cpx
+      #17; // sig_cpx
+      [] { // Attributes
+        Attr(#14) { // Code
+          2; // max_stack
+          2; // max_locals
+          Bytes[]{
+            0xBB000259B700034C;
+            0x2B1064B80004B900;
+            0x050200572BBA0006;
+            0x0000B900070200B1;
+          };
+          [] { // Traps
+          } // end Traps
+          [] { // Attributes
+            Attr(#15) { // LineNumberTable
+              [] { // LineNumberTable
+                0  29;
+                8  30;
+                20  31;
+                31  32;
+              }
+            } // end LineNumberTable
+          } // Attributes
+        } // end Code
+      } // Attributes
+    } // Member
+    ;
+    { // Member
+      0x100A; // access
+      #18; // name_cpx
+      #19; // sig_cpx
+      [] { // Attributes
+        Attr(#14) { // Code
+          2; // max_stack
+          1; // max_locals
+          Bytes[]{
+            0xB200082AB60009B1;
+          };
+          [] { // Traps
+          } // end Traps
+          [] { // Attributes
+            Attr(#15) { // LineNumberTable
+              [] { // LineNumberTable
+                0  31;
+              }
+            } // end LineNumberTable
+          } // Attributes
+        } // end Code
+      } // Attributes
+    } // Member
+  } // methods
+
+  [] { // Attributes
+    Attr(#20) { // SourceFile
+      #21;
+    } // end SourceFile
+    ;
+    Attr(#66) { // InnerClasses
+      [] { // InnerClasses
+        #64 #68 #65 25;
+      }
+    } // end InnerClasses
+    ;
+    Attr(#28) { // BootstrapMethods
+      [] { // bootstrap_methods
+        {  //  bootstrap_method
+          #29; // bootstrap_method_ref
+          [] { // bootstrap_arguments
+            #30;
+            #31;
+            #32;
+          }  //  bootstrap_arguments
+        }  //  bootstrap_method
+      }
+    } // end BootstrapMethods
+  } // Attributes
+} // end class org/openj9/test/bsmargs/RejectInvalidCPTestTemplate
