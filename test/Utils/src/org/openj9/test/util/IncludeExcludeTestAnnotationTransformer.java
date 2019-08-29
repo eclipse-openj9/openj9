@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,43 +43,48 @@ public class IncludeExcludeTestAnnotationTransformer implements IAnnotationTrans
 		String excludeFile = System.getenv("EXCLUDE_FILE");
 		logger.info("exclude file is " + excludeFile);
 		if (excludeFile != null) {
-		try {
-			FileReader fileReader = new FileReader(excludeFile);
-			BufferedReader bufferedReader = new BufferedReader(fileReader);
-			while ((line = bufferedReader.readLine()) != null) {
-				if (line.startsWith("#") || line.matches("\\s") || line.isEmpty()) {
-					// comment to ignore - as the problems list from OpenJDK
-				} else {
-					// parse the line and populate the array lists
-					String[] lineParts = line.split("\\s+");
-					// expect to exclude all methods with the name that follows : at the start of a line
-					if (-1 != line.indexOf("*")) {
-						// TODO exclude all Test classes under the package?
-					} else {
-						String[] tests = lineParts[0].split(":");
-						String fileName = tests[0];
-						String methodsToExclude = "";
-						if (tests.length > 1) {
-							methodsToExclude = tests[1];
-						} else { //exclude class level
-							methodsToExclude = "ALL";
-						}
-						String defectNumber = lineParts[1];
-						String[] excludeGroups = lineParts[2].split(";");
-						for (int i = 0; i < excludeGroups.length; i++) {
-							excludeGroups[i] = "disabled." + excludeGroups[i];
-						}
-						ArrayList<String> excludeGroupNames = new ArrayList<String> (Arrays.asList(excludeGroups));
-						excludeDatas.add(new ExcludeData(methodsToExclude, fileName, defectNumber, excludeGroupNames));
-					}
-				}
+			String currentReadingFile = excludeFile;
+			File fileCheck = new File(currentReadingFile);
+			if(!fileCheck.exists()) {
+				int indexBeforeJDKVersion = excludeFile.lastIndexOf("_");
+				currentReadingFile = excludeFile.substring(0, indexBeforeJDKVersion) + "_base.txt";
+				logger.info("Unable to open file " + excludeFile + ", changed to read " + currentReadingFile);
 			}
-			bufferedReader.close();
-		} catch(FileNotFoundException ex) {
-			logger.info("Unable to open file " + excludeFile, ex);
-		} catch(IOException ex) {
-			logger.info("Error reading file " + excludeFile, ex);
-		}
+			try {
+				FileReader fileReader = new FileReader(currentReadingFile);
+				BufferedReader bufferedReader = new BufferedReader(fileReader);
+				while ((line = bufferedReader.readLine()) != null) {
+					if (line.startsWith("#") || line.matches("\\s") || line.isEmpty()) {
+						// comment to ignore - as the problems list from OpenJDK
+					} else {
+						// parse the line and populate the array lists
+						String[] lineParts = line.split("\\s+");
+						// expect to exclude all methods with the name that follows : at the start of a line
+						if (-1 != line.indexOf("*")) {
+							// TODO exclude all Test classes under the package?
+						} else {
+							String[] tests = lineParts[0].split(":");
+							String fileName = tests[0];
+							String methodsToExclude = "";
+							if (tests.length > 1) {
+								methodsToExclude = tests[1];
+							} else { //exclude class level
+								methodsToExclude = "ALL";
+							}
+							String defectNumber = lineParts[1];
+							String[] excludeGroups = lineParts[2].split(";");
+							for (int i = 0; i < excludeGroups.length; i++) {
+								excludeGroups[i] = "disabled." + excludeGroups[i];
+							}
+							ArrayList<String> excludeGroupNames = new ArrayList<String> (Arrays.asList(excludeGroups));
+							excludeDatas.add(new ExcludeData(methodsToExclude, fileName, defectNumber, excludeGroupNames));
+						}
+					}	
+				}
+				bufferedReader.close();
+			} catch(IOException ex) {
+				logger.info("Error reading file " + currentReadingFile, ex);
+			}
 		}
 	}
 
