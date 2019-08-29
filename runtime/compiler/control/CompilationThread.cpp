@@ -3146,14 +3146,14 @@ void TR::CompilationInfo::stopCompilationThreads()
    if (printCompMem)
       {
       int32_t codeCacheAllocated = TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches() * _jitConfig->codeCacheKB;
-      fprintf(stderr, "Allocated memory for code cache = %d KB\tLimit = %u KB\n",
-         codeCacheAllocated, (uint32_t)_jitConfig->codeCacheTotalKB);
+      fprintf(stderr, "Allocated memory for code cache = %d KB\tLimit = %lu KB\n",
+         codeCacheAllocated, _jitConfig->codeCacheTotalKB);
 
       TR::CodeCacheManager::instance()->printMccStats();
 
-      fprintf(stderr, "Allocated memory for data cache = %d KB\tLimit = %d KB\n",
+      fprintf(stderr, "Allocated memory for data cache = %d KB\tLimit = %lu KB\n",
          TR_DataCacheManager::getManager()->getTotalSegmentMemoryAllocated()/1024,
-          (uint32_t)_jitConfig->dataCacheTotalKB);
+          _jitConfig->dataCacheTotalKB);
 
       if (getJProfilerThread())
          fprintf(stderr, "Allocated memory for profile info = %lu KB\n", getJProfilerThread()->getProfileInfoFootprint()/1024);
@@ -5336,7 +5336,9 @@ void TR::CompilationInfo::recycleCompilationEntry(TR_MethodToBeCompiled *entry)
    entry->_freeTag |= ENTRY_IN_POOL_NOT_FREE;
    if (entry->_numThreadsWaiting == 0)
       entry->_freeTag |= ENTRY_IN_POOL_FREE;
-   entry->cleanupJITServer();
+#if defined(JITSERVER_SUPPORT)
+   entry->freeJITServerAllocations();
+#endif /* defined(JITSERVER_SUPPORT) */
 
    entry->_next = _methodPool;
    _methodPool = entry;
@@ -12714,26 +12716,27 @@ TR::CompilationInfoPerThread::updateLastLocalGCCounter()
    _lastLocalGCCounter = getCompilationInfo()->getLocalGCCounter();
    }
 
+#if defined(JITSERVER_SUPPORT)
 // This method is executed by the JITServer to queue a placeholder for
 // a compilation request received from the client. At the time the new
 // entry is queued we do not know any details about the compilation request.
-// The method needs to be executed with compilation monitor in hand
+// The method needs to be executed with compilation monitor in hand.
 TR_MethodToBeCompiled *
 TR::CompilationInfo::addOutOfProcessMethodToBeCompiled(JITServer::ServerStream *stream)
    {
-   TR_MethodToBeCompiled *entry = getCompilationQueueEntry(); // allocate a new entry
+   TR_MethodToBeCompiled *entry = getCompilationQueueEntry(); // Allocate a new entry
    if (entry)
       {
       // Initialize the entry with defaults (some, like methodDetails, are bogus)
       TR::IlGeneratorMethodDetails details;
       entry->initialize(details, NULL, CP_SYNC_NORMAL, NULL);
-      entry->_entryTime = getPersistentInfo()->getElapsedTime(); // cheaper version
+      entry->_entryTime = getPersistentInfo()->getElapsedTime(); // Cheaper version
       entry->_stream = stream; // Add the stream to the entry
-      incrementMethodQueueSize(); // one more method added to the queue
-      _numQueuedFirstTimeCompilations++; // otherwise an assert triggers when we dequeue
+      incrementMethodQueueSize(); // One more method added to the queue
+      _numQueuedFirstTimeCompilations++; // Otherwise an assert triggers when we dequeue
       queueEntry(entry);
 
-     // Determine whether we need to activate another compilation thread from the pool
+      // Determine whether we need to activate another compilation thread from the pool
       TR_YesNoMaybe activate = TR_maybe;
       if (getNumCompThreadsActive() <= 0)
          {
@@ -12741,16 +12744,17 @@ TR::CompilationInfo::addOutOfProcessMethodToBeCompiled(JITServer::ServerStream *
          }
       else if (getNumCompThreadsJobless() > 0)
          {
-         activate = TR_no; // just wake the jobless one
+         activate = TR_no; // Just wake the jobless one
          }
       else
          {
          int32_t numCompThreadsSuspended = getNumUsableCompilationThreads() - getNumCompThreadsActive();
          TR_ASSERT(numCompThreadsSuspended >= 0, "Accounting error for suspendedCompThreads usable=%d active=%d\n", 
-            getNumUsableCompilationThreads(), getNumCompThreadsActive());
+                   getNumUsableCompilationThreads(), getNumCompThreadsActive());
          // Cannot activate if there is nothing to activate
          activate = (numCompThreadsSuspended <= 0) ? TR_no : TR_yes;
          }
+
       if (activate == TR_yes)
          {
          // Must find one that is SUSPENDED/SUSPENDING
@@ -12768,6 +12772,7 @@ TR::CompilationInfo::addOutOfProcessMethodToBeCompiled(JITServer::ServerStream *
       }
    return entry;
    }
+#endif /* defined(JITSERVER_SUPPORT) */
 
 void
 TR::CompilationInfo::requeueOutOfProcessEntry(TR_MethodToBeCompiled *entry)
