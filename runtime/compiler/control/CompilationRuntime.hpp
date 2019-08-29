@@ -74,7 +74,7 @@ struct TR_JitPrivateConfig;
 struct TR_MethodToBeCompiled;
 template <typename T> class TR_PersistentArray;
 typedef J9JITExceptionTable TR_MethodMetaData;
-class ClientSessionHT; // JITServer TODO: maybe move all JITServer specific stuff in an extension for CompInfo
+class ClientSessionHT;
 
 #if defined(JITSERVER_SUPPORT)
 namespace JITServer { class ServerStream; }
@@ -955,7 +955,7 @@ public:
    void setSuspendThreadDueToLowPhysicalMemory(bool b) { _suspendThreadDueToLowPhysicalMemory = b; }
 
    // for JITServer
-   ClientSessionHT *getClientSessionHT() { return _clientSessionHT; }
+   ClientSessionHT *getClientSessionHT() const { return _clientSessionHT; }
    void setClientSessionHT(ClientSessionHT *ht) { _clientSessionHT = ht; }
    PersistentVector<TR_OpaqueClassBlock*> *getUnloadedClassesTempList() { return _unloadedClassesTempList; }
    void setUnloadedClassesTempList(PersistentVector<TR_OpaqueClassBlock*> *it) { _unloadedClassesTempList = it; }

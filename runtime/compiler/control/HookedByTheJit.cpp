@@ -43,6 +43,7 @@
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "control/CompilationController.hpp"
+#include "control/JITServerHelpers.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
@@ -1970,10 +1971,10 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
          {
          static char * isPrintJITServerMsgStats = feGetEnv("TR_PrintJITServerMsgStats");
          if (isPrintJITServerMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-            printJITServerMsgStats(jitConfig);
+            JITServerHelpers::printJITServerMsgStats(jitConfig);
 
          if (feGetEnv("TR_PrintJITServerCHTableStats"))
-            printJITServerCHTableStats(jitConfig, compInfo);
+            JITServerHelpers::printJITServerCHTableStats(jitConfig, compInfo);
 
          if (feGetEnv("TR_PrintJITServerIPMsgStats"))
             {
@@ -4761,11 +4762,11 @@ void JitShutdown(J9JITConfig * jitConfig)
 
    static char * isPrintJITServerMsgStats = feGetEnv("TR_PrintJITServerMsgStats");
    if (isPrintJITServerMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-      printJITServerMsgStats(jitConfig);
+      JITServerHelpers::printJITServerMsgStats(jitConfig);
 
    static char * isPrintJITServerCHTableStats = feGetEnv("TR_PrintJITServerCHTableStats");
    if (isPrintJITServerCHTableStats)
-      printJITServerCHTableStats(jitConfig, compInfo);
+      JITServerHelpers::printJITServerCHTableStats(jitConfig, compInfo);
 
    TRC_JIT_ShutDownEnd(vmThread, "end of JitShutdown function");
    }

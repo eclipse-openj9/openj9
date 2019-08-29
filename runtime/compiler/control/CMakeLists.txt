@@ -34,5 +34,6 @@ j9jit_files(
 if(JITSERVER_SUPPORT)
 	j9jit_files(
 		control/JITServerCompilationThread.cpp
+		control/JITServerHelpers.cpp
 	)
 endif()
