@@ -39,6 +39,17 @@ class ARM64PrivateLinkage : public TR::Linkage
 
    TR::ARM64LinkageProperties _properties;
 
+   /**
+    * @brief Builds method arguments
+    * @param[in] node : caller node
+    * @param[in] dependencies : register dependency conditions
+    * @param[in] linkage : linkage type
+    */
+   int32_t buildPrivateLinkageArgs(
+         TR::Node *callNode,
+         TR::RegisterDependencyConditions *dependencies,
+         TR_LinkageConventions linkage);
+
    public:
 
    /**
