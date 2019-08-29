@@ -1830,11 +1830,14 @@ U_16
 TR_ResolvedJ9JITaaSServerMethod::archetypeArgPlaceholderSlot()
    {
    TR_ASSERT(isArchetypeSpecimen(), "should not be called for non-ArchetypeSpecimen methods");
+   TR_OpaqueMethodBlock * aMethod = getNonPersistentIdentifier();
+   J9ROMMethod * romMethod = JITServerHelpers::romMethodOfRamMethod((J9Method *)aMethod);
+   J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(romMethod);
 
    U_8 tempArgTypes[256];
    uintptr_t    paramElements;
    uintptr_t    paramSlots;
-   jitParseSignature(_signature, tempArgTypes, &paramElements, &paramSlots);
+   jitParseSignature(signature, tempArgTypes, &paramElements, &paramSlots);
    /*
     * result should be : paramSlot + 1 -1 = paramSlot
     * +1 :thunk archetype are always virtual method and has a receiver
