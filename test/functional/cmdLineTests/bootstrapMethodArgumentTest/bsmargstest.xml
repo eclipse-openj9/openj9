@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2019, 2019 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="BootstrapMethod Arguments Tests" timeout="3000">
+
+ <variable name="CP" value="-cp $TESTSJARPATH$" />
+ <variable name="INVALID_CP_ENTRY_UTF8" value="org.openj9.test.bsmargs.RejectInvalidCPEntryUtf8" />
+ <variable name="INVALID_CP_ENTRY_FIELDREF" value="org.openj9.test.bsmargs.RejectInvalidCPEntryFieldref" />
+ <variable name="INVALID_CP_ENTRY_METHODREF" value="org.openj9.test.bsmargs.RejectInvalidCPEntryMethodref" />
+ <variable name="INVALID_CP_ENTRY_NAMEANDTYPE" value="org.openj9.test.bsmargs.RejectInvalidCPEntryNameAndType" />
+ <variable name="INVALID_CP_ENTRY_INVOKEDYNAMIC" value="org.openj9.test.bsmargs.RejectInvalidCPEntryInvokeDynamic" />
+ <variable name="INVALID_CP_ENTRY_INTERFACEMETHODREF" value="org.openj9.test.bsmargs.RejectInvalidCPEntryInterfaceMethodref" />
+
+	<test id="Test an invalid constant pool entry (UTF8) is captured during verification">
+		<command>$JAVA_EXE$ $CP$ $INVALID_CP_ENTRY_UTF8$</command>
+		<output type="success" caseSensitive="yes" regex="no">java.lang.ClassFormatError</output>
+		<output type="required" caseSensitive="yes" regex="no">arguments contain invalid constantpool entry at index</output>
+		<output type="required" caseSensitive="yes" regex="no">class=org/openj9/test/bsmargs/RejectInvalidCPEntryUtf8</output>
+		<output type="failure" caseSensitive="no" regex="no">unexpected EOF</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test an invalid constant pool entry (Fieldref) is captured during verification">
+		<command>$JAVA_EXE$ $CP$ $INVALID_CP_ENTRY_FIELDREF$</command>
+		<output type="success" caseSensitive="yes" regex="no">java.lang.ClassFormatError</output>
+		<output type="required" caseSensitive="yes" regex="no">arguments contain invalid constantpool entry at index</output>
+		<output type="required" caseSensitive="yes" regex="no">class=org/openj9/test/bsmargs/RejectInvalidCPEntryFieldref</output>
+		<output type="failure" caseSensitive="no" regex="no">unexpected EOF</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test an invalid constant pool entry (Methodref) is captured during verification">
+		<command>$JAVA_EXE$ $CP$ $INVALID_CP_ENTRY_METHODREF$</command>
+		<output type="success" caseSensitive="yes" regex="no">java.lang.ClassFormatError</output>
+		<output type="required" caseSensitive="yes" regex="no">arguments contain invalid constantpool entry at index</output>
+		<output type="required" caseSensitive="yes" regex="no">class=org/openj9/test/bsmargs/RejectInvalidCPEntryMethodref</output>
+		<output type="failure" caseSensitive="no" regex="no">unexpected EOF</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test an invalid constant pool entry (NameAndType) is captured during verification">
+		<command>$JAVA_EXE$ $CP$ $INVALID_CP_ENTRY_NAMEANDTYPE$</command>
+		<output type="success" caseSensitive="yes" regex="no">java.lang.ClassFormatError</output>
+		<output type="required" caseSensitive="yes" regex="no">arguments contain invalid constantpool entry at index</output>
+		<output type="required" caseSensitive="yes" regex="no">class=org/openj9/test/bsmargs/RejectInvalidCPEntryNameAndType</output>
+		<output type="failure" caseSensitive="no" regex="no">unexpected EOF</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+	
+	<test id="Test an invalid constant pool entry (InvokeDynamic) is captured during verification">
+		<command>$JAVA_EXE$ $CP$ $INVALID_CP_ENTRY_INVOKEDYNAMIC$</command>
+		<output type="success" caseSensitive="yes" regex="no">java.lang.ClassFormatError</output>
+		<output type="required" caseSensitive="yes" regex="no">arguments contain invalid constantpool entry at index</output>
+		<output type="required" caseSensitive="yes" regex="no">class=org/openj9/test/bsmargs/RejectInvalidCPEntryInvokeDynamic</output>
+		<output type="failure" caseSensitive="no" regex="no">unexpected EOF</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test an invalid constant pool entry (InterfaceMethodref) is captured during verification">
+		<command>$JAVA_EXE$ $CP$ $INVALID_CP_ENTRY_INTERFACEMETHODREF$</command>
+		<output type="success" caseSensitive="yes" regex="no">java.lang.ClassFormatError</output>
+		<output type="required" caseSensitive="yes" regex="no">arguments contain invalid constantpool entry at index</output>
+		<output type="required" caseSensitive="yes" regex="no">class=org/openj9/test/bsmargs/RejectInvalidCPEntryInterfaceMethodref</output>
+		<output type="failure" caseSensitive="no" regex="no">unexpected EOF</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+</suite>
