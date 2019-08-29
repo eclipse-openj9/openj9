@@ -28,12 +28,6 @@
 #include "control/CompilationThread.hpp"       // for TR::compInfoPT
 #include "runtime/JITClientSession.hpp"
 
-// plan: send the whole table once,
-// then on the client mark entires as dirty when they are modified
-// and send dirty entries to the server periodically
-
-
-// SERVER
 
 JITServerPersistentCHTable::JITServerPersistentCHTable(TR_PersistentMemory *trMemory)
    : TR_PersistentCHTable(trMemory)
@@ -90,8 +84,6 @@ JITServerPersistentCHTable::doUpdate(TR_J9VMBase *fej9, const std::string &remov
    uint32_t prevMax = _maxUpdateBytes;
    _maxUpdateBytes = std::max(nBytes, _maxUpdateBytes);
 #endif
-   //if (modifyStr.size() + removeStr.size() != 0)
-      //fprintf(stderr, "CHTable updated with %d bytes\n", modifyStr.size() + removeStr.size());
    }
 
 void 
@@ -149,9 +141,7 @@ JITServerPersistentCHTable::commitModifications(const std::string &rawData)
          {
          auto classInfo = findClassInfo(flat->_subClasses[i]);
 
-         // For some reason the subclass info is still null sometimes. This may be indicative of a larger problem or it could be harmless.
-         // JITServer TODO: figure out why this is happening
-         //TR_ASSERT(classInfo, "subclass info cannot be null: ensure subclasses are loaded before superclass");
+         TR_ASSERT(classInfo, "subclass info cannot be null: ensure subclasses are loaded before superclass");
          if (classInfo)
             persist->addSubClass(classInfo);
          else
@@ -380,8 +370,7 @@ FlatPersistentClassInfo::deserializeHierarchy(std::string& data)
    }
 
 
-
-// CLIENT
+// JITClient
 // TODO: check for race conditions with _dirty/_remove
 
 JITClientPersistentCHTable::JITClientPersistentCHTable(TR_PersistentMemory *trMemory)
@@ -450,7 +439,7 @@ JITClientPersistentCHTable::classGotLoaded(
       TR_OpaqueClassBlock *classId)
    {
    TR_ASSERT(!findClassInfo(classId), "Should not add duplicates to hash table\n");
-   TR_PersistentClassInfo *clazz = new (PERSISTENT_NEW) TR_JITServerPersistentClassInfo(classId, this);
+   TR_PersistentClassInfo *clazz = new (PERSISTENT_NEW) TR_JITClientPersistentClassInfo(classId, this);
    if (clazz)
       {
       auto classes = getClasses();
@@ -496,131 +485,131 @@ JITClientPersistentCHTable::markDirty(TR_OpaqueClassBlock *clazz)
    }
 
 
-// TR_JITServerPersistentClassInfo
-JITClientPersistentCHTable *TR_JITServerPersistentClassInfo::_chTable = NULL;
+// TR_JITClientPersistentClassInfo
+JITClientPersistentCHTable *TR_JITClientPersistentClassInfo::_chTable = NULL;
 
-TR_JITServerPersistentClassInfo::TR_JITServerPersistentClassInfo(TR_OpaqueClassBlock *id, JITClientPersistentCHTable *chTable) :
+TR_JITClientPersistentClassInfo::TR_JITClientPersistentClassInfo(TR_OpaqueClassBlock *id, JITClientPersistentCHTable *chTable) :
    TR_PersistentClassInfo(id)
    {
    // assign pointer to the CH table, if it's the first class info created
-   if (!TR_JITServerPersistentClassInfo::_chTable)
-      TR_JITServerPersistentClassInfo::_chTable = chTable;
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(id);
+   if (!TR_JITClientPersistentClassInfo::_chTable)
+      TR_JITClientPersistentClassInfo::_chTable = chTable;
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(id);
    }
 
 void
-TR_JITServerPersistentClassInfo::setInitialized(TR_PersistentMemory *persistentMemory)
+TR_JITClientPersistentClassInfo::setInitialized(TR_PersistentMemory *persistentMemory)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::setInitialized(persistentMemory);
    }
 
 void
-TR_JITServerPersistentClassInfo::setClassId(TR_OpaqueClassBlock *newClass)
+TR_JITClientPersistentClassInfo::setClassId(TR_OpaqueClassBlock *newClass)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::setClassId(newClass);
    }
 
-void TR_JITServerPersistentClassInfo::setFirstSubClass(TR_SubClass *sc)
+void TR_JITClientPersistentClassInfo::setFirstSubClass(TR_SubClass *sc)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::setFirstSubClass(sc);
    }
 
-void TR_JITServerPersistentClassInfo::setFieldInfo(TR_PersistentClassInfoForFields *i)
+void TR_JITClientPersistentClassInfo::setFieldInfo(TR_PersistentClassInfoForFields *i)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::setFieldInfo(i);
    }
 
-TR_SubClass *TR_JITServerPersistentClassInfo::addSubClass(TR_PersistentClassInfo *subClass)
+TR_SubClass *TR_JITClientPersistentClassInfo::addSubClass(TR_PersistentClassInfo *subClass)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    return TR_PersistentClassInfo::addSubClass(subClass);
    }
 
-void TR_JITServerPersistentClassInfo::removeSubClasses()
+void TR_JITClientPersistentClassInfo::removeSubClasses()
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::removeSubClasses();
    }
 
-void TR_JITServerPersistentClassInfo::removeASubClass(TR_PersistentClassInfo *subClass)
+void TR_JITClientPersistentClassInfo::removeASubClass(TR_PersistentClassInfo *subClass)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::removeASubClass(subClass);
    }
 
-void TR_JITServerPersistentClassInfo::removeUnloadedSubClasses()
+void TR_JITClientPersistentClassInfo::removeUnloadedSubClasses()
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::removeUnloadedSubClasses();
    }
 
-void TR_JITServerPersistentClassInfo::setUnloaded()
+void TR_JITClientPersistentClassInfo::setUnloaded()
    {
    // The only method that marks for removal
-   TR_JITServerPersistentClassInfo::_chTable->markForRemoval(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markForRemoval(getClassId());
    TR_PersistentClassInfo::setUnloaded();
    }
 
-void TR_JITServerPersistentClassInfo::incNumPrexAssumptions()
+void TR_JITClientPersistentClassInfo::incNumPrexAssumptions()
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::incNumPrexAssumptions();
    }
    
-void TR_JITServerPersistentClassInfo::setReservable(bool v)
+void TR_JITClientPersistentClassInfo::setReservable(bool v)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::setReservable(v);
    }
 
-void TR_JITServerPersistentClassInfo::setShouldNotBeNewlyExtended(int32_t ID)
+void TR_JITClientPersistentClassInfo::setShouldNotBeNewlyExtended(int32_t ID)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::setShouldNotBeNewlyExtended(ID);
    }
 
-void TR_JITServerPersistentClassInfo::resetShouldNotBeNewlyExtended(int32_t ID)
+void TR_JITClientPersistentClassInfo::resetShouldNotBeNewlyExtended(int32_t ID)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::resetShouldNotBeNewlyExtended(ID);
    }
 
-void TR_JITServerPersistentClassInfo::clearShouldNotBeNewlyExtended()
+void TR_JITClientPersistentClassInfo::clearShouldNotBeNewlyExtended()
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::clearShouldNotBeNewlyExtended();
    }
 
-void TR_JITServerPersistentClassInfo::setHasRecognizedAnnotations(bool v)
+void TR_JITClientPersistentClassInfo::setHasRecognizedAnnotations(bool v)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::setHasRecognizedAnnotations(v);
    }
 
-void TR_JITServerPersistentClassInfo::setAlreadyCheckedForAnnotations(bool v)
+void TR_JITClientPersistentClassInfo::setAlreadyCheckedForAnnotations(bool v)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::setAlreadyCheckedForAnnotations(v);
    }
 
-void TR_JITServerPersistentClassInfo::setCannotTrustStaticFinal(bool v)
+void TR_JITClientPersistentClassInfo::setCannotTrustStaticFinal(bool v)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::setCannotTrustStaticFinal(v);
    }
 
-void TR_JITServerPersistentClassInfo::setClassHasBeenRedefined(bool v)
+void TR_JITClientPersistentClassInfo::setClassHasBeenRedefined(bool v)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::setClassHasBeenRedefined(v);
    }
 
-void TR_JITServerPersistentClassInfo::setNameLength(int32_t length)
+void TR_JITClientPersistentClassInfo::setNameLength(int32_t length)
    {
-   TR_JITServerPersistentClassInfo::_chTable->markDirty(getClassId());
+   TR_JITClientPersistentClassInfo::_chTable->markDirty(getClassId());
    TR_PersistentClassInfo::setNameLength(length);
    }

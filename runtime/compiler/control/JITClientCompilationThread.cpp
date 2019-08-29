@@ -2871,7 +2871,7 @@ remoteCompile(
                   }
                }
 
-            if (!JITServerCHTableCommit(compiler, metaData, chTableData))
+            if (!JITClientCHTableCommit(compiler, metaData, chTableData))
                {
 #ifdef COLLECT_CHTABLE_STATS
                JITClientPersistentCHTable *table = (JITClientPersistentCHTable*) TR::comp()->getPersistentInfo()->getPersistentCHTable();

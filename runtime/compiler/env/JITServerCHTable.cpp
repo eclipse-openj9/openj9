@@ -30,17 +30,17 @@
 #include "env/VMAccessCriticalSection.hpp"     // for VMAccessCriticalSection
 
 void
-JITServerCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_VirtualGuardSite> &sites,
-                               TR_PersistentCHTable *table, TR::Compilation *comp);
+JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_VirtualGuardSite> &sites,
+                            TR_PersistentCHTable *table, TR::Compilation *comp);
 
 void
-JITServerCommitOSRVirtualGuards(TR::Compilation *comp, std::vector<VirtualGuardForCHTable> &vguards);
+JITClientCommitOSRVirtualGuards(TR::Compilation *comp, std::vector<VirtualGuardForCHTable> &vguards);
 
 void
-JITServerAddAnAssumptionForEachSubClass(TR_PersistentCHTable   *table,
-                                                TR_PersistentClassInfo *clazz,
-                                                std::vector<TR_VirtualGuardSite> &list,
-                                                TR::Compilation *comp)
+JITClientAddAnAssumptionForEachSubClass(TR_PersistentCHTable *table,
+                                        TR_PersistentClassInfo *clazz,
+                                        std::vector<TR_VirtualGuardSite> &list,
+                                        TR::Compilation *comp)
    {
    // Gather the subtree of classes rooted at clazz
    TR_ScratchList<TR_PersistentClassInfo> subTree(comp->trMemory());
@@ -56,143 +56,12 @@ JITServerAddAnAssumptionForEachSubClass(TR_PersistentCHTable   *table,
          {
          TR_ASSERT(sc == table->findClassInfo(sc->getClassId()), "Class ID mismatch");
          TR_PatchNOPedGuardSiteOnClassExtend::make(comp->fe(), comp->trPersistentMemory(), sc->getClassId(),
-                                                                  site.getLocation(),
-                                                                  site.getDestination(),
-                                                                  comp->getMetadataAssumptionList());
+                                                   site.getLocation(),
+                                                   site.getDestination(),
+                                                   comp->getMetadataAssumptionList());
          comp->setHasClassExtendAssumptions();
          }
       }
-   }
-
-VirtualGuardInfoForCHTable getImportantVGuardInfo(TR::Compilation *comp, TR_VirtualGuard *vguard)
-   {
-   VirtualGuardInfoForCHTable info;
-   info._testType = vguard->getTestType();
-   info._kind = vguard->getKind();
-   info._calleeIndex = vguard->getCalleeIndex();
-   info._byteCodeIndex = vguard->getByteCodeIndex();
-
-   // info below is not used if there are no nop sites
-   if (vguard->getNOPSites().isEmpty())
-      return info;
-
-   TR::SymbolReference *symRef = vguard->getSymbolReference();
-   if (symRef)
-      {
-      TR::MethodSymbol *methodSymbol = symRef->getSymbol()->castToMethodSymbol();
-      TR::ResolvedMethodSymbol *resolvedMethodSymbol = methodSymbol->getResolvedMethodSymbol();
-      info._hasResolvedMethodSymbol = resolvedMethodSymbol != NULL;
-      info._cpIndex = symRef->getCPIndex();
-      info._owningMethod = static_cast<TR_ResolvedJ9JITServerMethod*>(symRef->getOwningMethod(comp))->getRemoteMirror();
-      info._isInterface = methodSymbol->isInterface();
-      info._guardedMethod = resolvedMethodSymbol ? static_cast<TR_ResolvedJ9JITServerMethod*>(resolvedMethodSymbol->getResolvedMethod())->getRemoteMirror() : NULL;
-      info._offset = symRef->getOffset();
-
-      info._isInlineGuard = vguard->isInlineGuard();
-      TR_DevirtualizedCallInfo *dc;
-
-      if (resolvedMethodSymbol)
-         info._guardedMethodThisClass = vguard->isInlineGuard()
-            ? vguard->getThisClass()
-            : ((dc = comp->findDevirtualizedCall(vguard->getCallNode()))
-               ? dc->_thisType
-               : resolvedMethodSymbol->getResolvedMethod()->classOfMethod());
-      }
-
-   info._thisClass = vguard->getThisClass();
-   info._mergedWithHCRGuard = vguard->mergedWithHCRGuard();
-   info._mergedWithOSRGuard = vguard->mergedWithOSRGuard();
-
-   info._mutableCallSiteObject = info._kind == TR_MutableCallSiteTargetGuard ? vguard->mutableCallSiteObject() : NULL;
-   info._mutableCallSiteEpoch = info._kind == TR_MutableCallSiteTargetGuard ? vguard->mutableCallSiteEpoch() : -1;
-
-   info._inlinedResolvedMethod = info._kind == TR_BreakpointGuard
-      ? static_cast<TR_ResolvedJ9JITServerMethod *>(comp->getInlinedResolvedMethod(info._calleeIndex))->getRemoteMirror()
-      : NULL;
-
-   return info;
-   }
-
-CHTableCommitData
-TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
-   {
-   // collect info from TR_CHTable
-   std::vector<TR_OpaqueClassBlock*> classes = _classes
-      ? std::vector<TR_OpaqueClassBlock*>(&(_classes->element(0)), (&(_classes->element(_classes->lastIndex()))) + 1)
-      : std::vector<TR_OpaqueClassBlock*>();
-   std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended = _classesThatShouldNotBeNewlyExtended
-      ? std::vector<TR_OpaqueClassBlock*>(&_classesThatShouldNotBeNewlyExtended->element(0), &_classesThatShouldNotBeNewlyExtended->element(_classesThatShouldNotBeNewlyExtended->lastIndex()) + 1)
-      : std::vector<TR_OpaqueClassBlock*>();
-   std::vector<TR_ResolvedMethod*> preXMethods(_preXMethods ? _preXMethods->size() : 0);
-   for (size_t i = 0; i < preXMethods.size(); i++)
-      {
-      TR_ResolvedMethod *method = _preXMethods->element(i);
-      TR_ResolvedJ9JITServerMethod *JITServerMethod = static_cast<TR_ResolvedJ9JITServerMethod*>(method);
-      preXMethods[i] = JITServerMethod->getRemoteMirror();
-      }
-
-   cleanupNewlyExtendedInfo(comp);
-
-   // collect virtual guard info
-   TR::list<TR_VirtualGuard*> &vguards = comp->getVirtualGuards();
-   std::vector<VirtualGuardForCHTable> serialVGuards;
-   serialVGuards.reserve(vguards.size());
-
-   for (TR_VirtualGuard* vguard : vguards)
-      {
-      VirtualGuardInfoForCHTable info = getImportantVGuardInfo(comp, vguard);
-
-      std::vector<TR_VirtualGuardSite> nopSites;
-
-         {
-         List<TR_VirtualGuardSite> &sites = vguard->getNOPSites();
-         ListIterator<TR_VirtualGuardSite> it(&sites);
-         for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
-            nopSites.push_back(*site);
-         }
-
-      std::vector<VirtualGuardInfoForCHTable> innerAssumptions;
-         {
-         ListIterator<TR_InnerAssumption> it(&vguard->getInnerAssumptions());
-         for (TR_InnerAssumption *inner = it.getFirst(); inner; inner = it.getNext())
-            {
-            VirtualGuardInfoForCHTable innerInfo = getImportantVGuardInfo(comp, vguard);
-            innerAssumptions.push_back(innerInfo);
-            }
-         }
-
-      serialVGuards.push_back(std::make_tuple(info, nopSites, innerAssumptions));
-      }
-
-   TR::list<TR_VirtualGuardSite*> &sideEffectPatchSites = *comp->getSideEffectGuardPatchSites();
-   std::vector<TR_VirtualGuardSite> sideEffectPatchSitesVec;
-   for (TR_VirtualGuardSite *site : sideEffectPatchSites)
-      sideEffectPatchSitesVec.push_back(*site);
-
-   FlatClassLoadCheck compClassesThatShouldNotBeLoaded;
-   for (TR_ClassLoadCheck * clc = comp->getClassesThatShouldNotBeLoaded()->getFirst(); clc; clc = clc->getNext())
-      compClassesThatShouldNotBeLoaded.emplace_back(std::string(clc->_name, clc->_length));
-
-   FlatClassExtendCheck compClassesThatShouldNotBeNewlyExtended;
-   for (TR_ClassExtendCheck * cec = comp->getClassesThatShouldNotBeNewlyExtended()->getFirst(); cec; cec = cec->getNext())
-      compClassesThatShouldNotBeNewlyExtended.emplace_back(cec->_clazz);
-
-   auto *compClassesForOSRRedefinition = comp->getClassesForOSRRedefinition();
-   std::vector<TR_OpaqueClassBlock*> classesForOSRRedefinition(compClassesForOSRRedefinition->size());
-   for (int i = 0; i < compClassesForOSRRedefinition->size(); ++i)
-      classesForOSRRedefinition[i] = (*compClassesForOSRRedefinition)[i];
-
-   uint8_t *startPC = comp->cg()->getCodeStart();
-
-   return std::make_tuple(classes,
-                          classesThatShouldNotBeNewlyExtended,
-                          preXMethods,
-                          sideEffectPatchSitesVec,
-                          serialVGuards,
-                          compClassesThatShouldNotBeLoaded,
-                          compClassesThatShouldNotBeNewlyExtended,
-                          classesForOSRRedefinition,
-                          startPC);
    }
 
 // Must hold classTableMonitor when calling this method
@@ -214,12 +83,10 @@ void cleanupNewlyExtendedInfo(TR::Compilation *comp, std::vector<TR_OpaqueClassB
       }
    }
 
-
-
-bool JITServerCHTableCommit(
-      TR::Compilation *comp,
-      TR_MethodMetaData *metaData,
-      CHTableCommitData &data)
+bool JITClientCHTableCommit(
+   TR::Compilation *comp,
+   TR_MethodMetaData *metaData,
+   CHTableCommitData &data)
    {
    TR_ASSERT(!comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE(), "CHTable is not expected to be used in AOT mode");
 
@@ -351,19 +218,19 @@ bool JITServerCHTableCommit(
             }
          // Commit the virtual guard itself
          //
-         JITServerCommitVirtualGuard(&info, sites, table, comp);
+         JITClientCommitVirtualGuard(&info, sites, table, comp);
 
          // Commit any inner guards that are assuming on this guard
          //
          for (auto &inner : innerAssumptions)
-            JITServerCommitVirtualGuard(&inner, sites, table, comp);
+            JITClientCommitVirtualGuard(&inner, sites, table, comp);
          }
       
       // osr guards need to be processed after all the guards, because sites' location/destination
       // need to be patched first
       static bool dontGroupOSRAssumptions = (feGetEnv("TR_DontGroupOSRAssumptions") != NULL);
       if (!dontGroupOSRAssumptions)
-         JITServerCommitOSRVirtualGuards(comp, vguards);
+         JITClientCommitOSRVirtualGuards(comp, vguards);
       }
 
    TR::list<TR_VirtualGuardSite*> *sites = comp->getSideEffectGuardPatchSites();
@@ -391,7 +258,7 @@ bool JITServerCHTableCommit(
    }
 
 void
-JITServerCommitOSRVirtualGuards(TR::Compilation *comp, std::vector<VirtualGuardForCHTable> &vguards)
+JITClientCommitOSRVirtualGuards(TR::Compilation *comp, std::vector<VirtualGuardForCHTable> &vguards)
    {
    // Count patch sites with OSR assumptions
    int osrSites = 0;
@@ -443,8 +310,8 @@ JITServerCommitOSRVirtualGuards(TR::Compilation *comp, std::vector<VirtualGuardF
    }
 
 void
-JITServerCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_VirtualGuardSite> &sites,
-                               TR_PersistentCHTable *table, TR::Compilation *comp)
+JITClientCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<TR_VirtualGuardSite> &sites,
+                            TR_PersistentCHTable *table, TR::Compilation *comp)
    {
    // If this is an OSR guard or another kind that has been marked as necessary to patch
    // in OSR, add a runtime assumption for every class that generated fear
@@ -584,7 +451,7 @@ JITServerCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
           (info->_testType == TR_VftTest && comp->fe()->classHasBeenExtended(implementer->containingClass())))
          nopAssumptionIsValid = false;
       else
-         JITServerAddAnAssumptionForEachSubClass(table, table->findClassInfo(thisClass), sites, comp);
+         JITClientAddAnAssumptionForEachSubClass(table, table->findClassInfo(thisClass), sites, comp);
       }
    else if (info->_kind == TR_NonoverriddenGuard && info->_testType != TR_VftTest)
       {
@@ -622,7 +489,7 @@ JITServerCommitVirtualGuard(const VirtualGuardInfoForCHTable *info, std::vector<
       TR_OpaqueClassBlock *thisClass = info->_isInlineGuard ? thisClass = info->_thisClass
          : info->_guardedMethod->containingClass();
       if (table->findSingleAbstractImplementer(thisClass, info->_offset, owningMethod, comp, true))
-         JITServerAddAnAssumptionForEachSubClass(table, table->findClassInfo(thisClass), sites, comp);
+         JITClientAddAnAssumptionForEachSubClass(table, table->findClassInfo(thisClass), sites, comp);
       else
          nopAssumptionIsValid = false;
       }

@@ -37,6 +37,18 @@
 #define CHTABLE_UPDATE_COUNTER(counter, value)
 #endif
 
+/**
+ * @class JITServerPersistentCHTable
+ * @brief Class for managing PersistentCHTable data at the server side
+ *
+ * This class is an extension of the TR_PersistentCHTable class. Since the 
+ * JITServer can have multiple JITClients and each JITClient has its own class 
+ * hierarchies, the JITServer needs to keep a separate TR_PersistentCHTable
+ * cache for each JITClient. This is done by associating caches with client 
+ * IDs within the JITServerPersisentCHTable. It overrides the findClassInfo()
+ * methods to find the corresponding JITClient and return its cached class 
+ * info.
+ */
 
 class JITServerPersistentCHTable : public TR_PersistentCHTable
    {
@@ -68,6 +80,17 @@ private:
 
    PersistentUnorderedMap<TR_OpaqueClassBlock*, TR_PersistentClassInfo*> &getData();
    };
+
+/**
+ * @class JITClientPersistentCHTable
+ * @brief Class for managing PersistentCHTable data at the client side
+ *
+ * This class is an extension of the TR_PersistentCHTable class.
+ * JITClientPersistentCHTable needs to keep track of what changes have
+ * been made to its TR_PersistentCHTable since the last delta update was
+ * sent. Other functionalities are deferred to the TR_PersistentCHTable 
+ * base class.
+ */
 
 class JITClientPersistentCHTable : public TR_PersistentCHTable
    {
@@ -110,6 +133,16 @@ private:
    PersistentUnorderedSet<TR_OpaqueClassBlock*> _remove;
    };
 
+
+/**
+ * @class FlatPersistentClassInfo
+ * @brief Class for serializing and deserializing CHTable data for JITServerPersistentCHtable and JITClientPersistentCHTable
+ *
+ * This class is a utilty class for JITServerPersistentCHTable and 
+ * JITClientPersistentCHTable. It is a friend class of TR_PersistentClassInfo
+ * to make it more convenient to manipulate its fields.
+ */
+
 class FlatPersistentClassInfo
    {
 public:
@@ -136,11 +169,24 @@ public:
    TR_OpaqueClassBlock                *_subClasses[0];
    };
 
-class TR_JITServerPersistentClassInfo : public TR_PersistentClassInfo
+
+
+/**
+ * @class TR_JITClientPersistentClassInfo
+ * @brief Class for marking TR_PersistentClassInfo as dirty/removed.
+ *
+ * This class is a extension of the TR_PersistentClassInfo class that is
+ * used by JITClient to mark classInfo as dirty/removed.
+ * This is how JITClient determines what the delta update to JITServer is
+ * everytime. Once the marking operation is completed, the corresponding 
+ * parent method is called and original functionality is preserved.
+ */
+
+class TR_JITClientPersistentClassInfo : public TR_PersistentClassInfo
    {
 public:
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentInfo);
-   TR_JITServerPersistentClassInfo(TR_OpaqueClassBlock *id, JITClientPersistentCHTable *chTable);
+   TR_JITClientPersistentClassInfo(TR_OpaqueClassBlock *id, JITClientPersistentCHTable *chTable);
 
    // All of these methods mark the classInfo as dirty/removed and call a parent method
    virtual void setInitialized(TR_PersistentMemory *) override;
