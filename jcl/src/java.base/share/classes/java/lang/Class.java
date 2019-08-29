@@ -3430,7 +3430,10 @@ public String getSimpleName() {
 				simpleName = fullName;
 			}
 		}
-	} else if (!fullName.endsWith(simpleName)) {
+	}
+	/*[IF !Sidecar19-SE]*/
+	/* In Java 8, the simple name needs to match the full name*/
+	else if (!fullName.endsWith(simpleName)) {
 		Class<?> parent = baseType.getEnclosingObjectClass();
 		int index = fullName.lastIndexOf('.') + 1;
 		if (parent == null) {
@@ -3454,6 +3457,7 @@ public String getSimpleName() {
 			simpleName = fullName.substring(index);
 		}
 	}
+	/*[ENDIF] !Sidecar19-SE*/
 	if (arrayCount > 0) {
 		StringBuilder result = new StringBuilder(simpleName);
 		for (int i=0; i<arrayCount; i++) {
