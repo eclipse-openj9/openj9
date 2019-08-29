@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,8 +34,6 @@
 #include "j9hypervisor_systemp.h"
 #elif defined(J9X86) || defined(J9HAMMER) || defined(WIN32)
 #include "j9hypervisor_vmware.h"
-#elif defined(S390) || defined(J9ZOS390)
-#include "j9hypervisor_systemz.h"
 #endif
 #include "portnls.h"
 #include "portpriv.h"
