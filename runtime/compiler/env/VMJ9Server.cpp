@@ -19,7 +19,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-#include "oti/jitprotos.h"
+#include "jitprotos.h"
 #include "net/ServerStream.hpp"
 #include "VMJ9Server.hpp"
 #include "j9methodServer.hpp"
