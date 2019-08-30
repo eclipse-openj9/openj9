@@ -30,6 +30,7 @@
 namespace TR { class CodeGenerator; }
 namespace TR { class Instruction; }
 namespace TR { class Register; }
+namespace TR { class ResolvedMethodSymbol; }
 
 namespace TR {
 
@@ -86,6 +87,13 @@ class ARM64PrivateLinkage : public TR::Linkage
     * @brief Initializes ARM64 RealRegister linkage
     */
    virtual void initARM64RealRegisterLinkage();
+
+   /**
+    * @brief Copy linkage register indices to parameter symbols
+    *
+    * @param[in] method : the resolved method symbol
+    */
+   void setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method);
 
    /**
     * @brief Creates method prologue
