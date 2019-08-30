@@ -21,7 +21,9 @@
  *******************************************************************************/
 
 #include "codegen/ARM64PrivateLinkage.hpp"
+#include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage_inlines.hpp"
+#include "codegen/MemoryReference.hpp"
 
 TR::ARM64PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)
    : TR::Linkage(cg)
@@ -187,7 +189,50 @@ void TR::ARM64PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
 void TR::ARM64PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    {
-   TR_UNIMPLEMENTED();
+   const TR::ARM64LinkageProperties& properties = getProperties();
+   TR::Machine *machine = cg()->machine();
+   TR::Node *lastNode = cursor->getNode();
+   TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
+   TR::RealRegister *javaSP = machine->getRealRegister(properties.getStackPointerRegister()); // x20
+
+   // restore preserved GPRs
+   int32_t preservedRegisterOffset = cg()->getLargestOutgoingArgSize() + properties.getOffsetToFirstParm(); // outgoingArgsSize
+   TR::RealRegister::RegNum firstPreservedGPR = TR::RealRegister::x28;
+   TR::RealRegister::RegNum lastPreservedGPR = TR::RealRegister::x21;
+   for (TR::RealRegister::RegNum r = firstPreservedGPR; r >= lastPreservedGPR; r = (TR::RealRegister::RegNum)((uint32_t)r-1))
+      {
+      TR::RealRegister *rr = machine->getRealRegister(r);
+      if (rr->getHasBeenAssignedInMethod())
+         {
+         TR::MemoryReference *preservedRegMR = new (trHeapMemory()) TR::MemoryReference(javaSP, preservedRegisterOffset, cg());
+         cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, rr, preservedRegMR, cursor);
+         preservedRegisterOffset += 8;
+         }
+      }
+
+   // remove space for preserved registers
+   uint32_t frameSize = cg()->getFrameSizeInBytes();
+   if (constantIsUnsignedImm12(frameSize))
+      {
+      cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, lastNode, javaSP, javaSP, frameSize, cursor);
+      }
+   else
+      {
+      TR::RealRegister *x9Reg = machine->getRealRegister(TR::RealRegister::RegNum::x9);
+      cursor = loadConstant32(cg(), lastNode, frameSize, x9Reg, cursor);
+      cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::addx, lastNode, javaSP, javaSP, x9Reg, cursor);
+      }
+
+   // restore return address
+   TR::RealRegister *lr = machine->getRealRegister(TR::RealRegister::x30); // lr
+   if (machine->getLinkRegisterKilled())
+      {
+      TR::MemoryReference *returnAddressMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, 0, cg());
+      cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, lr, returnAddressMR, cursor);
+      }
+
+   // return
+   generateRegBranchInstruction(cg(), TR::InstOpCode::ret, lastNode, lr, cursor);
    }
 
 int32_t TR::ARM64PrivateLinkage::buildArgs(TR::Node *callNode,
