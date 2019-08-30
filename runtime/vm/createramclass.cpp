@@ -2892,6 +2892,9 @@ fail:
 						J9ARRAYCLASS_SET_STRIDE(ramClass, J9_VALUETYPE_FLATTENED_SIZE(elementClass));
 					}
 				} else {
+					if (J9_IS_J9CLASS_VALUETYPE(elementClass)) {
+						ramArrayClass->classFlags |= J9ClassContainsUnflattenedFlattenables;
+					}
 					J9ARRAYCLASS_SET_STRIDE(ramClass, (((UDATA) 1) << (((J9ROMArrayClass*)romClass)->arrayShape & 0x0000FFFF)));
 				}
 			} else if (J9ROMCLASS_IS_PRIMITIVE_TYPE(ramClass->romClass)) {
