@@ -128,6 +128,8 @@ static void wrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *
                                         wbRef, NULL);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions, NULL);
+
+   cg->machine()->setLinkRegisterKilled(true);
    }
 
 TR::Register *
