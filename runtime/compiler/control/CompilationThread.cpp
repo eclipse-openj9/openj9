@@ -95,11 +95,11 @@
 #include "env/DebugSegmentProvider.hpp"
 #ifdef COMPRESS_AOT_DATA
 #ifdef J9ZOS390
-// inflateInit checks the version of the zlib with which data was deflated. 
+// inflateInit checks the version of the zlib with which data was deflated.
 // Reason we need to avoid conversion here is because, we are statically linking
-// system zlib which would have encoded String literals in some version which is not 
+// system zlib which would have encoded String literals in some version which is not
 // same as the version we are converting out string literals in. This leads to issue
-// where we fail inflating data with version mismatch. 
+// where we fail inflating data with version mismatch.
 #pragma convlit(suspend)
 #include <zlib.h>
 #pragma convlit(resume)
@@ -272,21 +272,21 @@ jitSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, v
  * \brief
  *    Inflates the data buffer using zlib into output buffer
  *
- * \param 
- *    buffer Input buffer that is going to be inflated 
- * 
- * \param 
+ * \param
+ *    buffer Input buffer that is going to be inflated
+ *
+ * \param
  *    numberOfBytes Size of the data in the input buffer to inflate
- * 
+ *
  * \param
  *    outBuffer Output buffer to hold the deflated data
- * 
+ *
  * \param
  *    unCompressedSize Size of the original data
- * 
+ *
  * \return
  *    Returns DECOMPRESSION_FAILED if it can not inflate the buffer
- * 
+ *
  */
 static
 int inflateBuffer(U_8 *buffer, int numberOfBytes, U_8 *outBuffer, int unCompressedSize)
@@ -311,7 +311,7 @@ int inflateBuffer(U_8 *buffer, int numberOfBytes, U_8 *outBuffer, int unCompress
     * ZLIB returns Z_STREAM_END if the buffer stream to be inflated is finished.
     * In this case it returns DECOMPRESSION_FAILED.
     * Caller of this routine can then decide if they want to retry deflating
-    * Using larger output buffer. 
+    * Using larger output buffer.
     */
    if (ret != Z_STREAM_END)
       {
@@ -330,22 +330,22 @@ int inflateBuffer(U_8 *buffer, int numberOfBytes, U_8 *outBuffer, int unCompress
  * \brief
  *    Deflates the data buffer using zlib into output buffer
  *
- * \param 
- *    buffer Input buffer that is going to be deflated 
- * 
- * \param 
+ * \param
+ *    buffer Input buffer that is going to be deflated
+ *
+ * \param
  *    numberOfBytes Size of the data in the input buffer to deflate
- * 
+ *
  * \param
  *    outBuffer Output buffer to hold the deflated data
- * 
+ *
  * \param
  *    level Level of compression
- * 
+ *
  * \return
  *    If successful, returns Size of data in the deflated bufer
  *    else returns COMPRESSION_FAILED
- * 
+ *
  */
 static
 int deflateBuffer(const U_8 *buffer, int numberOfBytes, U_8 *outBuffer, int level)
@@ -367,7 +367,7 @@ int deflateBuffer(const U_8 *buffer, int numberOfBytes, U_8 *outBuffer, int leve
     * ZLIB returns Z_STREAM_END if the buffer stream to be deflated is finished.
     * That Return COMPRESSION_FAILED in case we are ending up inflating the data.
     * Caller of this routine can then decide if they want to retry deflating
-    * Using larger output buffer. 
+    * Using larger output buffer.
     */
    if ( ret != Z_STREAM_END )
       {
@@ -375,7 +375,7 @@ int deflateBuffer(const U_8 *buffer, int numberOfBytes, U_8 *outBuffer, int leve
       deflateEnd(&_stream);
       return COMPRESSION_FAILED;
       }
-   
+
    int compressedSize = numberOfBytes - _stream.avail_out;
    deflateEnd(&_stream);
    return compressedSize;
@@ -1920,9 +1920,6 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
       {
       if (entry->_compilationAttemptsLeft > 0)
          {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-         TR_J9SharedCache *sc = (TR_J9SharedCache *) (((TR_J9VMBase *)comp->fej9())->sharedCache());
-#endif
 
          TR_PersistentJittedBodyInfo *bodyInfo;
          switch (entry->_compErrCode)
@@ -1974,39 +1971,27 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                   comp->phaseMemProfiler().DumpSummary(*comp);
                   }
 
-               if (!((TR_J9VMBase *)comp->fej9())->isAOT_DEPRECATED_DO_NOT_USE()
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-                   && sc
-#endif
-                  )
+               if (!((TR_J9VMBase *)comp->fej9())->isAOT_DEPRECATED_DO_NOT_USE())
                   {
-                  switch (entry->_optimizationPlan->getOptLevel())
+                  TR_J9SharedCache *sc = (TR_J9SharedCache *) (((TR_J9VMBase *)comp->fej9())->sharedCache());
+                  if (sc)
                      {
-                     case cold:
-                     case warm:
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-                        sc->addHint(method, TR_HintFailedWarm);
-#else
-                        ((TR_J9VMBase *)comp->fej9())->addSharedCacheHint(method, TR_HintFailedWarm);
-#endif
-                        break;
-                     case hot:
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-                        sc->addHint(method, TR_HintFailedHot);
-#else
-                        ((TR_J9VMBase *)comp->fej9())->addSharedCacheHint(method, TR_HintFailedHot);
-#endif
-                        break;
-                     case scorching:
-                     case veryHot:
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-                        sc->addHint(method, TR_HintFailedScorching);
-#else
-                        ((TR_J9VMBase *)comp->fej9())->addSharedCacheHint(method, TR_HintFailedScorching);
-#endif
-                        break;
-                     default:
-                        break;
+                     switch (entry->_optimizationPlan->getOptLevel())
+                        {
+                        case cold:
+                        case warm:
+                           sc->addHint(method, TR_HintFailedWarm);
+                           break;
+                        case hot:
+                           sc->addHint(method, TR_HintFailedHot);
+                           break;
+                        case scorching:
+                        case veryHot:
+                           sc->addHint(method, TR_HintFailedScorching);
+                           break;
+                        default:
+                           break;
+                        }
                      }
                   }
 
@@ -6131,12 +6116,8 @@ TR::CompilationInfoPerThreadBase::installAotCachedMethod(
                if ((options->getInitialBCount() != 0) &&
                    (options->getInitialCount() != 0))
                   {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                   TR_J9SharedCache *sc = (TR_J9SharedCache *) (compiler->fej9()->sharedCache());
                   sc->addHint(method, TR_HintFailedValidation);
-#else
-                  ((TR_J9VMBase *)fe)->addSharedCacheHint(method, TR_HintFailedValidation);
-#endif
                   }
                 break;
             }
@@ -6834,13 +6815,8 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
          if (_onSeparateThread && entry->_async &&  // KEN need to pass in onSeparateThread?
          (TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags() & (TR_HintUpgrade | TR_HintHot | TR_HintScorching)))
             {
-            uint16_t hints =
             // read all hints at once because we may rely on more than just one type
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-               _vm->sharedCache()->getAllEnabledHints(method) & (TR_HintUpgrade | TR_HintHot | TR_HintScorching);
-#else
-               _vm->getAllSharedCacheHints(method) & (TR_HintUpgrade | TR_HintHot | TR_HintScorching);
-#endif
+            uint16_t hints = _vm->sharedCache()->getAllEnabledHints(method) & (TR_HintUpgrade | TR_HintHot | TR_HintScorching);
             // Now let's see if we need to schedule an AOT upgrade
             if (hints)
                {
@@ -7178,15 +7154,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
    that->setCompilationShouldBeInterrupted(0);
 
    if (that->_methodBeingCompiled->isDLTCompile())
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
       {
       TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
       if (sc)
         sc->addHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintDLT);
       }
-#else
-      vm->addSharedCacheHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintDLT);
-#endif
 
    if (that->_methodBeingCompiled->_optimizationPlan->isUpgradeRecompilation())
       {
@@ -7194,13 +7166,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(that->_methodBeingCompiled->_oldStartPC);
       if (bodyInfo->getIsAotedBody() || bodyInfo->getHotness() <= cold)
          {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
          TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
          if (sc)
             sc->addHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintUpgrade);
-#else
-         vm->addSharedCacheHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintUpgrade);
-#endif
          }
       }
 
@@ -7875,11 +7843,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          if (profileInfo && profileInfo->getCatchCounter() >= TR_CatchBlockProfileInfo::EDOThreshold)
             {
             isEDOCompilation = true;
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
             sc->addHint(method, TR_HintEDO);
-#else
-            fej9->addSharedCacheHint(method, TR_HintEDO);
-#endif
             }
 
          // There is the possibility that a hot/scorching compilation happened outside
@@ -7892,28 +7856,16 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             if (hotness == hot)
                {
                if (!isEDOCompilation)
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                   sc->addHint(method, TR_HintHot);
-#else
-                  fej9->addSharedCacheHint(method, TR_HintHot);
-#endif
                }
             else if (hotness == scorching)
                {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                sc->addHint(method, TR_HintScorching);
-#else
-               fej9->addSharedCacheHint(method, TR_HintScorching);
-#endif
                }
             // We also want to add a hint about methods compiled (not AOTed) during startup
             // In subsequent runs we should give such method lower counts the idea being
             // that if I take the time to compile method, why not do it sooner
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
             sc->addHint(method, TR_HintMethodCompiledDuringStartup);
-#else
-            fej9->addSharedCacheHint(method, TR_HintMethodCompiledDuringStartup);
-#endif
             }
          }
 
@@ -7929,19 +7881,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
             if (hotness <= cold)
                {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                sc->addHint(method, TR_HintLargeMemoryMethodC);
-#else
-               fej9->addSharedCacheHint(method, TR_HintLargeMemoryMethodC);
-#endif
                }
             else if (hotness == warm)
                {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                sc->addHint(method, TR_HintLargeMemoryMethodW);
-#else
-               fej9->addSharedCacheHint(method, TR_HintLargeMemoryMethodW);
-#endif
                }
             }
 
@@ -7950,19 +7894,11 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             TR_Hotness hotness = that->_methodBeingCompiled->_optimizationPlan->getOptLevel();
             if (hotness <= cold)
                {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                sc->addHint(method, TR_HintLargeCompCPUC);
-#else
-               fej9->addSharedCacheHint(method, TR_HintLargeCompCPUC);
-#endif
                }
             else if (hotness == warm)
                {
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                sc->addHint(method, TR_HintLargeCompCPUW);
-#else
-               fej9->addSharedCacheHint(method, TR_HintLargeCompCPUW);
-#endif
                }
             }
          }
@@ -8491,7 +8427,7 @@ TR::CompilationInfoPerThreadBase::compile(
 
       if (compiler->getOption(TR_BreakAfterCompile))
          {
-         fprintf(stderr, "\n=== Finished compiling %s at %p ===\n", compiler->signature(), compiler->cg()->getCodeStart());
+         fprintf(stderr, "\n=== Finished compiling %s at %p ===\n", compiler->signature(), (void *)metaData->startPC);
          TR::Compiler->debug.breakPoint();
          }
 
@@ -8526,15 +8462,11 @@ TR::CompilationInfoPerThreadBase::compile(
                }
 
             if (!compiler->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
                {
                TR_J9SharedCache *sc = (TR_J9SharedCache *) (compiler->fej9()->sharedCache());
                if (sc)
                   sc->addHint(compiler->getCurrentMethod(), TR_HintFailedCHTable);
                }
-#else
-               vm.addSharedCacheHint(compiler->getCurrentMethod(), TR_HintFailedCHTable);
-#endif
             compiler->failCompilation<J9::CHTableCommitFailure>("CHTable commit failure");
             }
          }
@@ -9331,7 +9263,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                      int metadataToStoreSize = dataSize;
                      int codedataToStoreSize = codeSize;
 #ifdef COMPRESS_AOT_DATA
-                     try 
+                     try
                         {
                         if (!comp->getOption(TR_DisableAOTBytesCompression))
                            {
@@ -9340,20 +9272,20 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                             * -----------------------------------------------------------------------------------------------------
                             * | CompiledMethodWrapper | J9JITDataCacheHeader | TR_AOTMethodHeader | Metadata | Compiled Code Data |
                             * -----------------------------------------------------------------------------------------------------
-                            * 
+                            *
                             * When we compile a method, we send data from J9JITDataCacheHeader to store in the cache.
-                            * For each method Shared Class Cache API adds CompiledMethodWrapper header which holds the size of data in cache, 
-                            * as well as J9ROMMethod of compiled method. 
+                            * For each method Shared Class Cache API adds CompiledMethodWrapper header which holds the size of data in cache,
+                            * as well as J9ROMMethod of compiled method.
                             * Size of the original data is extracted from the TR_AOTMethodHeader while size of compressed data is extracted from
-                            * CompiledMethodWrapper. 
-                            * That is why We do not compress header as we can extract the original data size 
-                            * which is useful information while inflating the method data while loading compiled method. 
-                            * 
+                            * CompiledMethodWrapper.
+                            * That is why We do not compress header as we can extract the original data size
+                            * which is useful information while inflating the method data while loading compiled method.
+                            *
                             * Compressed data stored in the cache looks like following
                             * ------------------------------------------------------------------------------------------------------------------------------------------------
                             * | CompiledMethodWrapper | J9JITDataCacheHeader (UnCompressed)| TR_AOTMethodHeader (UnCompressed)| (Metadata + Compiled Code Data) (Compressed) |
                             * ------------------------------------------------------------------------------------------------------------------------------------------------
-                            *  
+                            *
                             */
                            void * originalData = comp->trMemory()->allocateHeapMemory(codeSize+dataSize);
                            void * compressedData = comp->trMemory()->allocateHeapMemory(codeSize+dataSize);
@@ -9370,7 +9302,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                                * In load run we get the whole buffer from the cache and use the information from header to
                                * Get the relocation data and compiled code.
                                * Because of this reason we copy both metadata and compiled code in one buffer and deflate it together.
-                               * TODO: We will always query the shared class cache to get full data for stored AOT compiled method 
+                               * TODO: We will always query the shared class cache to get full data for stored AOT compiled method
                                * that is combined meta data and code data. Even if compression of AOT bytes is disabled, we do not need
                                * to send two different buffers to store in cache and also as no one queries either code data / metadata for
                                * method, clean up the share classs cache API.
@@ -9380,7 +9312,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                               metadataToStore = (const U_8*) compressedData;
                               metadataToStoreSize = compressedDataSize+aotMethodHeaderSize;
                               codedataToStore = NULL;
-                              codedataToStoreSize = 0;  
+                              codedataToStoreSize = 0;
                               if (TR::Options::getVerboseOption(TR_VerboseAOTCompression))
                                  {
                                  TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "%s : Compression of method data Successful - Original method size = %d bytes, Compressed Method Size = %d bytes",
@@ -9406,8 +9338,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                            {
                            TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "!%s : Method will not be compressed as necessary memory can not be allocated, Method Size = %d bytes",
                               comp->signature(),
-                              dataSize+codeSize);   
-                           }   
+                              dataSize+codeSize);
+                           }
                         }
 #endif
                      switch(
