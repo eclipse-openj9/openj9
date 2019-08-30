@@ -3012,11 +3012,35 @@ TR::Register *J9::X86::TreeEvaluator::BNDCHKwithSpineCHKEvaluator(TR::Node *node
             }
          else
             {
-            // Check the bounds.
-            //
-            TR::TreeEvaluator::compareIntegersForOrder(node, indexChild, arrayLengthChild, cg);
-            branchOpCode = JAE4;
-            faultingInstruction = cg->getImplicitExceptionPoint();
+            TR::DataType dt = loadOrStoreChild->getDataType();
+            int32_t elementSize = (dt == TR::Address) ?  TR::Compiler->om.sizeofReferenceField()
+                                                      : TR::Symbol::convertTypeToSize(dt);
+
+            if (TR::Compiler->om.isDiscontiguousArray(arrayLengthChild->getInt(), elementSize))
+               {
+               // Create real check failure snippet if we can prove the spine check
+               // will always fail
+               //
+               branchOpCode = JMP4;
+               cg->decReferenceCount(arrayLengthChild);
+               if (!indexChild->getOpCode().isLoadConst())
+                  {
+                  cg->evaluate(indexChild);
+                  }
+               else
+                  {
+                  cg->decReferenceCount(indexChild);
+                  }
+               faultingInstruction = cg->getImplicitExceptionPoint();
+               }
+            else
+               {
+               // Check the bounds.
+               //
+               TR::TreeEvaluator::compareIntegersForOrder(node, indexChild, arrayLengthChild, cg);
+               branchOpCode = JAE4;
+               faultingInstruction = cg->getImplicitExceptionPoint();
+               }
             }
          }
       else
