@@ -1329,7 +1329,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             cursor++;        // unused field
             if (is64BitTarget)
                {
-               cursor +=4; 
+               cursor +=4;
                }
             traceMsg(self()->comp(), "\n ClassUnloadAssumption \n");
             break;
@@ -1895,12 +1895,8 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
          default:
             traceMsg(self()->comp(), "Unknown Relocation type = %d\n", kind);
-            TR_ASSERT(false, "should be unreachable");
-            printf("Unknown Relocation type = %d\n", kind);
-            fflush(stdout);
-            exit(0);
-
-        break;
+            TR_ASSERT_FATAL(false, "Unknown Relocation type = %d", kind);
+            break;
          }
 
       traceMsg(self()->comp(), "\n");

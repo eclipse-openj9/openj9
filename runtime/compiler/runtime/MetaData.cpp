@@ -88,7 +88,7 @@ static uint8_t * allocateGCData(TR_J9VMBase * vm, uint32_t numBytes, TR::Compila
    uint8_t *gcData = NULL;
    uint32_t size = 0;
    bool shouldRetryAllocation;
-   gcData = vm->allocateDataCacheRecord(numBytes, comp, vm->isAOT_DEPRECATED_DO_NOT_USE(), &shouldRetryAllocation,
+   gcData = vm->allocateDataCacheRecord(numBytes, comp, vm->needsContiguousCodeAndDataCacheAllocation(), &shouldRetryAllocation,
                                         J9_JIT_DCE_STACK_ATLAS, &size);
    if (!gcData)
       {
@@ -1089,7 +1089,7 @@ populateBodyInfo(
          uint8_t *persistentInfo = vm->allocateDataCacheRecord(
             bytesRequested,
             comp,
-            true,
+            vm->needsContiguousCodeAndDataCacheAllocation(),
             &retryCompilation,
             J9_JIT_DCE_AOT_PERSISTENT_INFO,
             &bytesAllocated
@@ -1564,7 +1564,7 @@ createMethodMetaData(
          {
          // Insert trace point here for insertion failure
          }
-      if (vm->isAnonymousClass( (TR_OpaqueClassBlock*) ((TR_ResolvedJ9Method*)vmMethod)->constantPoolHdr()))
+      if (vm->isAnonymousClass( ((TR_ResolvedJ9Method*)vmMethod)->romClassPtr()))
          {
          J9Class *j9clazz = ((TR_ResolvedJ9Method*)vmMethod)->constantPoolHdr();
          J9CLASS_EXTENDED_FLAGS_SET(j9clazz, J9ClassContainsJittedMethods);

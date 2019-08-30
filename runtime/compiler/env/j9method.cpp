@@ -2250,7 +2250,7 @@ TR_ResolvedRelocatableJ9Method::allocateException(uint32_t numBytes, TR::Compila
    J9JITExceptionTable *eTbl = NULL;
    uint32_t size = 0;
    bool shouldRetryAllocation;
-   eTbl = (J9JITExceptionTable *)_fe->allocateDataCacheRecord(numBytes, comp, true, &shouldRetryAllocation,
+   eTbl = (J9JITExceptionTable *)_fe->allocateDataCacheRecord(numBytes, comp, _fe->needsContiguousCodeAndDataCacheAllocation(), &shouldRetryAllocation,
                                                               J9_JIT_DCE_EXCEPTION_INFO, &size);
    if (!eTbl)
       {
@@ -5874,7 +5874,7 @@ TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
    J9JITExceptionTable *eTbl;
    uint32_t size = 0;
    bool shouldRetryAllocation;
-   eTbl = (J9JITExceptionTable *)_fe->allocateDataCacheRecord(numBytes, comp, false, &shouldRetryAllocation,
+   eTbl = (J9JITExceptionTable *)_fe->allocateDataCacheRecord(numBytes, comp, _fe->needsContiguousCodeAndDataCacheAllocation(), &shouldRetryAllocation,
                                                               J9_JIT_DCE_EXCEPTION_INFO, &size);
    if (!eTbl)
       {

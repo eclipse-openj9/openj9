@@ -3376,7 +3376,7 @@ J9::CodeGenerator::rematerializeCompressedRefs(
       TR::Node *child = node->getChild(i);
       self()->rematerializeCompressedRefs(autoSymRef, tt, node, i, child, visitCount, rematerializedNodes);
       }
-   
+
    static bool disableBranchlessPassThroughNULLCHK = feGetEnv("TR_disableBranchlessPassThroughNULLCHK") != NULL;
    if (node->getOpCode().isNullCheck() && reference &&
           (!isLowMemHeap || self()->performsChecksExplicitly() || (disableBranchlessPassThroughNULLCHK && node->getFirstChild()->getOpCodeValue() == TR::PassThrough)) &&
@@ -4887,7 +4887,7 @@ J9::CodeGenerator::allocateCodeMemoryInner(
          coldCodeSizeInBytes,
          &codeCache,
          coldCode,
-         comp->compileRelocatableCode(),
+         self()->fej9()->needsContiguousCodeAndDataCacheAllocation(),
          isMethodHeaderNeeded);
 
    self()->fej9()->acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);
