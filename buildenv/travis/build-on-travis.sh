@@ -93,7 +93,7 @@ if test "x$RUN_BUILD" = "xyes"; then
   cd openj9-openjdk-jdk11 && bash get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$OPENJ9_SHA
 
   # Limit number of jobs to work around g++ internal compiler error.
-  bash configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=$MAKE_JOBS --with-num-cores=$MAKE_JOBS --enable-ccache --with-cmake --disable-ddr
+  bash configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=$MAKE_JOBS --with-num-cores=$MAKE_JOBS --enable-ccache --with-cmake
   make images EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"
   # Minimal sniff test - ensure java -version works.
   ./build/linux-x86_64-normal-server-release/images/jdk/bin/java -version
