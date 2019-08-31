@@ -456,11 +456,11 @@ void TR_RuntimeAssumptionTable::reclaimMarkedAssumptionsFromRAT(int32_t cleanupC
  */
 void TR_RuntimeAssumptionTable::markAssumptionsAndDetach(void * md, bool reclaimPrePrologueAssumptions)
    {
+   assumptionTableMutex->enter();
    J9JITExceptionTable *metaData = (J9JITExceptionTable*) md;
    OMR::RuntimeAssumption *sentry = (OMR::RuntimeAssumption*)(metaData->runtimeAssumptionList);
    OMR::RuntimeAssumption *cursor, *next;
 
-   assumptionTableMutex->enter();
    if (sentry)
       {
       TR_ASSERT(sentry->getAssumptionKind() == RuntimeAssumptionSentinel, "First assumption must be the sentinel\n");
