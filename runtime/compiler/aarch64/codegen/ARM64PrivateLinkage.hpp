@@ -127,8 +127,25 @@ class ARM64HelperLinkage : public TR::ARM64PrivateLinkage
    /**
     * @brief Constructor
     * @param[in] cg : CodeGenerator
+    * @param[in] helperLinkage : linkage convention
     */
-   ARM64HelperLinkage(TR::CodeGenerator *cg) : TR::ARM64PrivateLinkage(cg) {}
+   ARM64HelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), TR::ARM64PrivateLinkage(cg)
+      {
+      TR_ASSERT(helperLinkage == TR_Helper || helperLinkage == TR_CHelper, "Unexpected helper linkage convention");
+      }
+
+   /**
+    * @brief Builds method arguments for helper call
+    * @param[in] node : caller node
+    * @param[in] dependencies : register dependency conditions
+    * @return total size that arguments occupy on Java stack
+    */
+   virtual int32_t buildArgs(
+      TR::Node *callNode,
+      TR::RegisterDependencyConditions *dependencies);
+   protected:
+
+   TR_LinkageConventions _helperLinkage;
    };
 
 }
