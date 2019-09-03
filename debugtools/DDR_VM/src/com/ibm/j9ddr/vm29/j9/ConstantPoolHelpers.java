@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,11 +21,10 @@
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.j9;
 
-import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_STARTPC_STATUS;
-
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9_CP_BITS_PER_DESCRIPTION;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9_CP_DESCRIPTIONS_PER_U32;
 import static com.ibm.j9ddr.vm29.structure.J9ConstantPool.J9_CP_DESCRIPTION_MASK;
+import static com.ibm.j9ddr.vm29.structure.J9Consts.J9_STARTPC_STATUS;
 
 import java.util.Iterator;
 
@@ -42,7 +41,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMConstantPoolItemPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.types.U32;
-import com.ibm.j9ddr.vm29.types.UDATA;
 
 /* This class takes the place of oti/j9cp.h */
 public class ConstantPoolHelpers
@@ -59,7 +57,7 @@ public class ConstantPoolHelpers
 	
 	public static J9ConstantPoolPointer J9_CP_FROM_METHOD(J9MethodPointer method) throws CorruptDataException
 	{
-		return J9ConstantPoolPointer.cast(UDATA.cast(method.constantPool())).untag(J9_STARTPC_STATUS);
+		return method.constantPool().untag(J9_STARTPC_STATUS);
 	}
 	
 	/**
@@ -101,7 +99,7 @@ public class ConstantPoolHelpers
 	
 	public static boolean J9_IS_CLASS_OBSOLETE(J9ClassPointer clazz) throws CorruptDataException
 	{
-		if(J9BuildFlags.interp_hotCodeReplacement) {
+		if (J9BuildFlags.interp_hotCodeReplacement) {
 			return J9ClassHelper.isSwappedOut(clazz);
 		} else {
 			return false;
@@ -110,7 +108,7 @@ public class ConstantPoolHelpers
 	
 	public static J9ClassPointer J9_CURRENT_CLASS(J9ClassPointer clazz) throws CorruptDataException
 	{
-		if(J9_IS_CLASS_OBSOLETE(clazz)) {
+		if (J9_IS_CLASS_OBSOLETE(clazz)) {
 			return clazz.arrayClass();
 		} else {
 			return clazz;
@@ -119,23 +117,23 @@ public class ConstantPoolHelpers
 	
 	public static J9ClassPointer J9VM_J9CLASS_FROM_HEAPCLASS(J9ObjectPointer clazzObject) throws CorruptDataException
 	{
-		if(clazzObject.isNull()) {
+		if (clazzObject.isNull()) {
 			return J9ClassPointer.NULL;
 		}
-		if( vmRefOffset == null ) {
-			Iterator fieldIterator = J9ClassHelper.getFieldOffsets(J9ObjectHelper.clazz(clazzObject));
-			while( fieldIterator.hasNext() ) {
+		if (vmRefOffset == null) {
+			Iterator<?> fieldIterator = J9ClassHelper.getFieldOffsets(J9ObjectHelper.clazz(clazzObject));
+			while (fieldIterator.hasNext()) {
 				Object nextField = fieldIterator.next();
-				if( nextField instanceof J9ObjectFieldOffset ) {
+				if (nextField instanceof J9ObjectFieldOffset) {
 					J9ObjectFieldOffset offset = (J9ObjectFieldOffset) nextField;
-					if( "vmRef".equals(offset.getName())) {
+					if ("vmRef".equals(offset.getName())) {
 						vmRefOffset = offset;
 						break;
 					}
 				}
 			}
 		}
-		if( vmRefOffset != null ) {
+		if (vmRefOffset != null) {
 			long address = J9ObjectHelper.getLongField(clazzObject, vmRefOffset);
 			return J9ClassPointer.cast(address);
 		} else {
@@ -145,7 +143,7 @@ public class ConstantPoolHelpers
 	
 	public static J9ObjectPointer J9VM_J9CLASS_TO_HEAPCLASS(J9ClassPointer clazz) throws CorruptDataException
 	{
-		if(clazz.isNull()) {
+		if (clazz.isNull()) {
 			return J9ObjectPointer.NULL;
 		}
 		return J9ObjectPointer.cast(clazz.classObject());
@@ -166,8 +164,8 @@ public class ConstantPoolHelpers
 	 */
 	public static long J9_CP_TYPE(U32Pointer cpShapeDescription, int index) throws CorruptDataException 
 	{
-		U32 cpDescription = cpShapeDescription.at(index/J9_CP_DESCRIPTIONS_PER_U32);
-		long shapeDesc = cpDescription.rightShift((int)((index%J9_CP_DESCRIPTIONS_PER_U32)*J9_CP_BITS_PER_DESCRIPTION)).bitAnd(J9_CP_DESCRIPTION_MASK).longValue();
+		U32 cpDescription = cpShapeDescription.at(index / J9_CP_DESCRIPTIONS_PER_U32);
+		long shapeDesc = cpDescription.rightShift((int) ((index % J9_CP_DESCRIPTIONS_PER_U32) * J9_CP_BITS_PER_DESCRIPTION)).bitAnd(J9_CP_DESCRIPTION_MASK).longValue();
 		return shapeDesc;
 	}
 }
