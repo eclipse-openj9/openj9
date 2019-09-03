@@ -3726,7 +3726,7 @@ done:
 	inlUnsafePutObject(REGISTER_ARGS_LIST, bool isVolatile)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		j9object_t value = *(j9object_t*)_sp;
+		j9object_t *value = (j9object_t*)_sp;
 		UDATA offset = (UDATA)*(I_64*)(_sp + 1);
 		j9object_t obj = *(j9object_t*)(_sp + 3);
 		
@@ -3848,8 +3848,8 @@ done:
 	inlUnsafeCompareAndSwapObject(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		j9object_t swapValue = *(j9object_t*)_sp;
-		j9object_t compareValue = *(j9object_t*)(_sp + 1);
+		j9object_t *swapValue = (j9object_t*)_sp;
+		j9object_t *compareValue = (j9object_t*)(_sp + 1);
 		UDATA offset = (UDATA)*(I_64*)(_sp + 2);
 		j9object_t obj = *(j9object_t*)(_sp + 4);
 
