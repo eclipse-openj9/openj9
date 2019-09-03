@@ -240,10 +240,8 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
       }
 
    // Check the flags related to the symbol validation manager
-   if (_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_UsesSymbolValidationManager)
-      {
-      comp->setOption(TR_UseSymbolValidationManager);
-      }
+   bool usesSVM = _aotMethodHeaderEntry->flags & TR_AOTMethodHeader_UsesSymbolValidationManager;
+   options->setOption(TR_UseSymbolValidationManager, usesSVM);
 
    if ((_aotMethodHeaderEntry->flags & TR_AOTMethodHeader_TMDisabled) && !comp->getOption(TR_DisableTM))
       {
@@ -707,7 +705,7 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
       fprintf(stdout, "-> %p", _exceptionTable->ramMethod);
       if (classReloAmount())
          {
-         name = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(((J9ROMMethod *)_exceptionTable->ramMethod))->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(((J9ROMMethod *)_exceptionTable->ramMethod)));
+         name = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(((J9ROMMethod *)_exceptionTable->ramMethod)));
          fprintf(stdout, " (%.*s)", name->length, name->data);
          }
       fprintf(stdout, "\n");

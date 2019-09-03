@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -139,10 +139,10 @@ TR_RelocationRuntimeLogger::method(bool newLine)
 
    U_8 * className = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_CP(reloRuntime()->ramCP())->romClass));
    int classNameLen = J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_CP(reloRuntime()->ramCP())->romClass));
-   U_8 *methodName = J9UTF8_DATA(J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(reloRuntime()->method())->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(reloRuntime()->method())));
-   int methodNameLen = J9UTF8_LENGTH(J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(reloRuntime()->method())->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(reloRuntime()->method())));
-   U_8 *signature = J9UTF8_DATA(J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(reloRuntime()->method())->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(reloRuntime()->method())));
-   int signatureLen= J9UTF8_LENGTH(J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(reloRuntime()->method())->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(reloRuntime()->method())));
+   U_8 *methodName = J9UTF8_DATA(J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(reloRuntime()->method())));
+   int methodNameLen = J9UTF8_LENGTH(J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(reloRuntime()->method())));
+   U_8 *signature = J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(reloRuntime()->method())));
+   int signatureLen= J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(reloRuntime()->method())));
 
    bool wasLocked = lockLog();
    JITRT_PRINTF(jitConfig())(jitConfig(), patternString, classNameLen, className,

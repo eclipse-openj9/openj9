@@ -80,6 +80,15 @@ TR_J9ServerVM::getSuperClass(TR_OpaqueClassBlock *clazz)
    return parentClass;
    }
 
+bool
+TR_J9ServerVM::isSameOrSuperClass(J9Class *superClass, J9Class *subClass)
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_isSameOrSuperClass, superClass, subClass);
+   return std::get<0>(stream->read<bool>());
+   }
+
+
 TR::Method *
 TR_J9ServerVM::createMethod(TR_Memory * trMemory, TR_OpaqueClassBlock * clazz, int32_t refOffset)
    {

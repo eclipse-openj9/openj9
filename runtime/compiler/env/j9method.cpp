@@ -692,7 +692,7 @@ bool
 TR_J9MethodBase::isBigDecimalMethod(J9ROMMethod * romMethod, J9ROMClass * romClass)
    {
    return TR_J9VMBase::isBigDecimalClass(J9ROMCLASS_CLASSNAME(romClass)) &&
-          isBigDecimalNameAndSignature(J9ROMMETHOD_GET_NAME(romClass, romMethod), J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod));
+          isBigDecimalNameAndSignature(J9ROMMETHOD_NAME(romMethod), J9ROMMETHOD_SIGNATURE(romMethod));
    }
 
 bool
@@ -758,7 +758,7 @@ bool
 TR_J9MethodBase::isBigDecimalConvertersMethod(J9ROMMethod * romMethod, J9ROMClass * romClass)
    {
    return TR_J9VMBase::isBigDecimalConvertersClass(J9ROMCLASS_CLASSNAME(romClass)) &&
-          isBigDecimalConvertersNameAndSignature(J9ROMMETHOD_GET_NAME(romClass, romMethod), J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod));
+          isBigDecimalConvertersNameAndSignature(J9ROMMETHOD_NAME(romMethod), J9ROMMETHOD_SIGNATURE(romMethod));
    }
 
 bool
@@ -2309,8 +2309,8 @@ TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, TR_OpaqueMethod
 
    J9ROMClass *romClass = J9_CLASS_FROM_METHOD(((J9Method *)aMethod))->romClass;
    _className = J9ROMCLASS_CLASSNAME(romClass);
-   _name = J9ROMMETHOD_GET_NAME(romClass, romMethod);
-   _signature = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
+   _name = J9ROMMETHOD_NAME(romMethod);
+   _signature = J9ROMMETHOD_SIGNATURE(romMethod);
 
    parseSignature(trMemory);
    _fullSignature = NULL;
@@ -5199,7 +5199,7 @@ bool TR_ResolvedJ9Method::isSubjectToPhaseChange(TR::Compilation *comp)
          for (int i = 0; i < numMethods; ++i)
             {
             J9Method *method = &(methods[i]);
-            J9UTF8 *name = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+            J9UTF8 *name = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
 
             if (J9UTF8_LENGTH(name) == 13)
                {
@@ -5238,16 +5238,30 @@ TR_ResolvedJ9Method::numberOfParameterSlots()
    }
 
 U_16
-TR_ResolvedJ9Method::archetypeArgPlaceholderSlot(TR_Memory *mem)
+TR_ResolvedJ9Method::archetypeArgPlaceholderSlot()
    {
    TR_ASSERT(isArchetypeSpecimen(), "should not be called for non-ArchetypeSpecimen methods");
-   // Note that this creates and discards a TR_ResolvedMethod, so it leaks heap memory.
-   // TODO: Need a better implementation.  Probably should just re-parse the archetype's signature.
-   // Then we won't need the TR_Memory argument anymore either.
-   //
-   TR_ResolvedMethod *archetype = fej9()->createResolvedMethod(mem, getNonPersistentIdentifier());
-   //TR_ASSERT(((TR_ResolvedMethod*)this)->numberOfParameterSlots() == archetype->numberOfParameterSlots(), "not equal %d %d", ((TR_ResolvedMethod*)this)->numberOfParameterSlots(), archetype->numberOfParameterSlots());
-   return archetype->numberOfParameterSlots() - 1; // "-1" because the placeholder is a 1-slot type (int)
+   TR_OpaqueMethodBlock * aMethod = getNonPersistentIdentifier();
+   J9ROMMethod * romMethod;
+
+      {
+      TR::VMAccessCriticalSection j9method(_fe);
+      romMethod = getOriginalROMMethod((J9Method *)aMethod);
+      }
+
+   J9ROMClass *romClass = J9_CLASS_FROM_METHOD(((J9Method *)aMethod))->romClass;
+   J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(romMethod);
+
+   U_8 tempArgTypes[256];
+   uintptr_t    paramElements;
+   uintptr_t    paramSlots;
+   jitParseSignature(signature, tempArgTypes, &paramElements, &paramSlots);
+   /*
+    * result should be : paramSlot + 1 -1 = paramSlot
+    * +1 :thunk archetype are always virtual method and has a receiver
+    * -1 :the placeholder is a 1-slot type (int)
+    */
+   return paramSlots;
    }
 
 U_16
@@ -5892,8 +5906,8 @@ TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
 
    #if defined(J9VM_RAS_EYECATCHERS)
    eTbl->className       = J9ROMCLASS_CLASSNAME(romClassPtr());
-   eTbl->methodName      = J9ROMMETHOD_GET_NAME(romClassPtr(), romMethod());// J9ROMMETHOD_NAME(romMethod());
-   eTbl->methodSignature = J9ROMMETHOD_GET_SIGNATURE(romClassPtr(), romMethod());   //J9ROMMETHOD_SIGNATURE(romMethod());
+   eTbl->methodName      = J9ROMMETHOD_NAME(romMethod());
+   eTbl->methodSignature = J9ROMMETHOD_SIGNATURE(romMethod());
    #endif
 
    J9ConstantPool *cpool;

@@ -22,8 +22,10 @@
 
 package org.openj9.test.util;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 /**
  * Utility methods for String input and output.
@@ -37,11 +39,20 @@ public class StringUtilities {
 	 * @param haystack list of Strings to search
 	 * @return Optional which is either empty or contains matching string 
 	 */
-	public static Optional<String> searchSubstring(String needle, List<String> haystack) {
-		return haystack.stream().filter(s -> s.contains(needle)).findFirst();
+	public static Optional<String> searchSubstring(String needle, Collection<String> haystack) {
+		return searchSubstring(needle, haystack.stream());
 	}
 	
-
+	/**
+	 * Find the first occurrence of a substring in a list of Strings.
+	 * @param needle pattern for which to search
+	 * @param haystack list of Strings to search
+	 * @return Optional which is either empty or contains matching string 
+	 */
+	public static Optional<String> searchSubstring(String needle, Stream<String> haystack) {
+		return haystack.filter(s -> s.contains(needle)).findFirst();
+	}
+	
 	/**
 	 * Determine if a pattern (needle) matches exactly  in a list of Strings.
 	 * @param needle pattern for which to search

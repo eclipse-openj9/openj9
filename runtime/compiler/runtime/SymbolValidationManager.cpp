@@ -38,6 +38,8 @@
 #define snprintf _snprintf
 #endif
 
+static const char * const jlthrowableName = "java/lang/Throwable";
+
 TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_ResolvedMethod *compilee)
    : _symbolID(FIRST_ID),
      _heuristicRegion(0),
@@ -60,7 +62,8 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _idToSymbolTable(_region),
      _seenSymbolsSet((SeenSymbolsComparator()), _region),
      _wellKnownClasses(_region),
-     _loadersOkForWellKnownClasses(_region)
+     _loadersOkForWellKnownClasses(_region),
+     _jlthrowable(_fej9->getSystemClassFromClassName(jlthrowableName, (int32_t)strlen(jlthrowableName)))
    {
    assertionsAreFatal(); // Acknowledge the env var whether or not assertions fail
 
@@ -97,6 +100,30 @@ TR::SymbolValidationManager::defineGuaranteedID(void *symbol, TR::SymbolType typ
    _symbolToIdMap.insert(std::make_pair(symbol, id));
    setSymbolOfID(id, symbol, type);
    _seenSymbolsSet.insert(symbol);
+   }
+
+bool
+TR::SymbolValidationManager::isClassWorthRemembering(TR_OpaqueClassBlock *clazz)
+   {
+   if (!_jlthrowable)
+      _jlthrowable = _fej9->getSystemClassFromClassName(jlthrowableName, (int32_t)strlen(jlthrowableName));
+
+   /* This heuristic checks whether the class being considered is, or inherits from, java/lang/Throwable.
+    * If it is, the class is deemed not worth remembering. The reason for this is to reduce the chances
+    * of an AOT load failure. Generally, classes that inherit from java/lang/Throwable are used to indicate
+    * exception conditions; as such, they are not going be important for the performance of normal mainline
+    * code. Therefore, it is better for the compiler to not be aware of these classes (and thereby lose the
+    * ability to optimize for them) rather than risk a load failure due to a code path that was unlikely to
+    * execute.
+    */
+   if (_jlthrowable && _fej9->isSameOrSuperClass((J9Class *)_jlthrowable, (J9Class *)clazz))
+      {
+      if (_comp->getOption(TR_TraceRelocatableDataCG))
+         traceMsg(_comp, "isClassWorthRemembering: clazz %p is or inherits from jlthrowable\n", clazz);
+      return false;
+      }
+
+   return true;
    }
 
 void
@@ -512,7 +539,7 @@ TR::SymbolValidationManager::addVanillaRecord(void *symbol, TR::SymbolValidation
 bool
 TR::SymbolValidationManager::addClassRecord(TR_OpaqueClassBlock *clazz, TR::ClassValidationRecord *record)
    {
-   if (shouldNotDefineSymbol(clazz))
+   if (shouldNotDefineSymbol(clazz) || !isClassWorthRemembering(clazz))
       return abandonRecord(record);
 
    if (recordExists(record))
@@ -533,7 +560,7 @@ TR::SymbolValidationManager::addClassRecord(TR_OpaqueClassBlock *clazz, TR::Clas
 bool
 TR::SymbolValidationManager::addClassRecordWithChain(TR::ClassValidationRecordWithChain *record)
    {
-   if (shouldNotDefineSymbol(record->_class))
+   if (shouldNotDefineSymbol(record->_class) || !isClassWorthRemembering(record->_class))
       return abandonRecord(record);
 
    int arrayDims = 0;
@@ -1359,7 +1386,7 @@ TR::SymbolValidationManager::validateClassInfoIsInitializedRecord(uint16_t class
       _chTable->findClassInfoAfterLocking(clazz, _comp, true);
 
    if (classInfo)
-      initialized = classInfo->isInitialized();
+      initialized = classInfo->isInitialized(false);
 
    bool valid = (!wasInitialized || initialized);
    return valid;

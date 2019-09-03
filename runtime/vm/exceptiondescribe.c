@@ -113,7 +113,7 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, J9ROMClass *rom
 		j9tty_err_printf(PORTLIB, (char*)format);
 	} else {
 		J9UTF8* className = J9ROMCLASS_CLASSNAME(romClass);
-		J9UTF8* methodName = J9ROMMETHOD_GET_NAME(romClass, romMethod);
+		J9UTF8* methodName = J9ROMMETHOD_NAME(romMethod);
 		char *sourceFileName = NULL;
 		UDATA sourceFileNameLen = 0;
 		char *moduleNameUTF = NULL;

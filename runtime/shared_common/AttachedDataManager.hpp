@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,17 +100,19 @@ class SH_AttachedDataResourceDescriptor : public SH_ResourceDescriptor
 			return (const void*)ADWDATA(wrapper);
 		}
 
-		virtual void writeDataToCache(const ShcItem* newCacheItem, const void* resourceAddress)
+		virtual void writeDataToCache(const ShcItem* newCacheItem, const J9ShrOffset* resourceOffset)
 		{
 			AttachedDataWrapper* adwInCache = (AttachedDataWrapper*)ITEMDATA(newCacheItem);
-
-			adwInCache->cacheOffset = (J9SRP)((BlockPtr)resourceAddress - (BlockPtr)(adwInCache));
+#if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
+			adwInCache->cacheOffset.cacheLayer = resourceOffset->cacheLayer;
+#endif /* defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE) */
+			adwInCache->cacheOffset.offset = resourceOffset->offset;
 			adwInCache->dataLength = _dataSize;
 			adwInCache->type = _type;
 			/* cannot use 0 to indicate non-corrupt data; 0 is a valid cache offset */
 			adwInCache->corrupt = -1;
-			/* assert condition to ensure data is UDATA aligned */
-			Trc_SHR_Assert_False((UDATA)ADWDATA(adwInCache) % sizeof(UDATA));
+			/* size of AttachedDataWrapper U_32 aligned, assert condition to ensure data is U_32 aligned */
+			Trc_SHR_Assert_False((UDATA)ADWDATA(adwInCache) % sizeof(U_32));
 			memcpy(ADWDATA(adwInCache), (void *)_dataStart, _dataSize);
 		}
 

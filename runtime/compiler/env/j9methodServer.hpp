@@ -187,6 +187,7 @@ public:
    virtual TR_PersistentJittedBodyInfo *getExistingJittedBodyInfo() override;
    virtual void getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight = NULL) override;
    virtual bool getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0) override;
+   virtual uint16_t archetypeArgPlaceholderSlot() override;
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    bool inROMClass(void *address);

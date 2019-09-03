@@ -1428,7 +1428,7 @@ jvmtiHookMethodExit(J9HookInterface** hook, UDATA eventNum, void* eventData, voi
 		}
 
 		if (!poppedByException) {
-			J9UTF8 * signature = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(method)->ramClass->romClass,J9_ROM_METHOD_FROM_RAM_METHOD(method));
+			J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
 
 			if ((J9UTF8_DATA(signature)[J9UTF8_LENGTH(signature) - 2] == '[') || ((signatureType = J9UTF8_DATA(signature)[J9UTF8_LENGTH(signature) - 1]) == ';')) {
 				signatureType = 'L';
@@ -2568,8 +2568,8 @@ lookupNativeAddressHelper(J9VMThread * currentThread, J9JVMTIData * jvmtiData, J
 	J9Class * methodClass = J9_CLASS_FROM_METHOD(nativeMethod);
 	J9ClassLoader * classLoader = methodClass->classLoader;
 	J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(nativeMethod);
-	J9UTF8 * methodName = J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(nativeMethod)->ramClass->romClass, romMethod);
-	J9UTF8 * methodSignature = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(nativeMethod)->ramClass->romClass, romMethod);
+	J9UTF8 * methodName = J9ROMMETHOD_NAME(romMethod);
+	J9UTF8 * methodSignature = J9ROMMETHOD_SIGNATURE(romMethod);
 	U_8 * nameData = J9UTF8_DATA(methodName);
 	UDATA nameLength = J9UTF8_LENGTH(methodName);
 
@@ -2651,14 +2651,15 @@ methodExists(J9Class * methodClass, U_8 * nameData, UDATA nameLength, J9UTF8 * s
 
 	do {
 		J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-		J9UTF8 * searchName = J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
-		J9UTF8 * searchSignature = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
+		if (0 == (romMethod->modifiers & J9AccNative)) {
+			J9UTF8 * searchName = J9ROMMETHOD_NAME( romMethod);
+			J9UTF8 * searchSignature = J9ROMMETHOD_SIGNATURE( romMethod);
 
-		if ((nameLength == J9UTF8_LENGTH(searchName)) && (memcmp(nameData, J9UTF8_DATA(searchName), nameLength) == 0)) {
-			if ((signatureLength == J9UTF8_LENGTH(searchSignature)) && (memcmp(signatureData, J9UTF8_DATA(searchSignature), signatureLength) == 0)) {
-				if ((romMethod->modifiers & J9AccNative) == 0) {
-					return TRUE;
-				}
+			if ((nameLength == J9UTF8_LENGTH(searchName))
+			&& (signatureLength == J9UTF8_LENGTH(searchSignature))
+			&& (0 == memcmp(nameData, J9UTF8_DATA(searchName), nameLength))
+			&& (0 == memcmp(signatureData, J9UTF8_DATA(searchSignature), signatureLength))) {
+				return TRUE;
 			}
 		}
 
@@ -2682,8 +2683,8 @@ jvmtiHookFindNativeToRegister(J9HookInterface** hook, UDATA eventNum, void* even
 	/* If a previous listener has located a native, do nothing */
 
 	if ((nonNativeRomMethod->modifiers & J9AccNative) == 0) {
-		J9UTF8 * nonNativeMethodName = J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(nonNativeMethod)->ramClass->romClass, nonNativeRomMethod);
-		J9UTF8 * nonNativeMethodSignature = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(nonNativeMethod)->ramClass->romClass, nonNativeRomMethod);
+		J9UTF8 * nonNativeMethodName = J9ROMMETHOD_NAME(nonNativeRomMethod);
+		J9UTF8 * nonNativeMethodSignature = J9ROMMETHOD_SIGNATURE(nonNativeRomMethod);
 		U_8 * nonNativeMethodNameData = J9UTF8_DATA(nonNativeMethodName);
 		UDATA nonNativeMethodNameLength = J9UTF8_LENGTH(nonNativeMethodName);
 		U_8 * nonNativeMethodSignatureData = J9UTF8_DATA(nonNativeMethodSignature);
@@ -2698,10 +2699,10 @@ jvmtiHookFindNativeToRegister(J9HookInterface** hook, UDATA eventNum, void* even
 			J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 
 			if (romMethod->modifiers & J9AccNative) {
-				J9UTF8 * methodSignature = J9ROMMETHOD_GET_SIGNATURE(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
+				J9UTF8 * methodSignature = J9ROMMETHOD_SIGNATURE( romMethod);
 
 				if ((J9UTF8_LENGTH(methodSignature) == nonNativeMethodSignatureLength) && (memcmp(J9UTF8_DATA(methodSignature), nonNativeMethodSignatureData, nonNativeMethodSignatureLength) == 0)) {
-					J9UTF8 * methodName = J9ROMMETHOD_GET_NAME(UNTAGGED_METHOD_CP(method)->ramClass->romClass, romMethod);
+					J9UTF8 * methodName = J9ROMMETHOD_NAME( romMethod);
 					UDATA methodNameLength = J9UTF8_LENGTH(methodName);
 					U_8 * methodNameData = J9UTF8_DATA(methodName);
 

@@ -138,6 +138,7 @@ IDATA storeAndFindTest(J9JavaVM* vm)
 	sharedConfig->maxJIT = -1;
 	sharedConfig->cacheDescriptorList = (J9SharedClassCacheDescriptor*)((UDATA)sharedConfig + sizeof(J9SharedClassConfig));
 	sharedConfig->cacheDescriptorList->next = sharedConfig->cacheDescriptorList;
+	sharedConfig->cacheDescriptorList->previous = sharedConfig->cacheDescriptorList;
 
 	sharedpiConfig = (J9SharedClassPreinitConfig*)j9mem_allocate_memory(sizeof(J9SharedClassPreinitConfig), J9MEM_CATEGORY_CLASSES);
 	if (NULL == sharedpiConfig) {

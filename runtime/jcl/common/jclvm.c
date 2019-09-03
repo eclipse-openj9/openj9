@@ -457,7 +457,7 @@ hasConstructor(J9VMThread *vmThread, J9StackWalkState *state)
 	} else {
 		J9Class *methodClass = J9_CLASS_FROM_METHOD(method);
 		J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-		J9UTF8 *methodName = J9ROMMETHOD_GET_NAME(methodClass->romClass, romMethod);
+		J9UTF8 *methodName = J9ROMMETHOD_NAME(romMethod);
 	
 		/* if the method is a constructor in the class we're looking for then quit looking for more
 		 * a constructor is a non-static (to filter clinit) method which starts with '<'. 

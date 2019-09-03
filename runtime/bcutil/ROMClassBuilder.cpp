@@ -252,7 +252,7 @@ ROMClassBuilder::buildROMClass(ROMClassCreationContext *context)
 }
 
 BuildResult
-ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile)
+ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda)
 {
 	J9CfrConstantPoolInfo* constantPool = classfile->constantPool;
 	U_32 cpThisClassUTF8Slot = constantPool[classfile->thisClass].slot1;
@@ -265,6 +265,11 @@ ROMClassBuilder::handleAnonClassName(J9CfrClassFile *classfile)
 	UDATA newAnonClassNameLength = originalStringLength + 1 + ROM_ADDRESS_LENGTH + 1;
 	BuildResult result = OK;
 	PORT_ACCESS_FROM_PORT(_portLibrary);
+
+	/* check if the class is a lambda class */
+	if (NULL != getLastDollarSignOfLambdaClassName(originalStringBytes, originalStringLength)) {
+		*isLambda = true;
+	}
 
 	/* Find if there are any Constant_String or CFR_CONSTANT_NameAndType references to the className.
 	 * If there are none we don't need to make a new cpEntry, we can overwrite the existing
@@ -424,13 +429,14 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 	 */
 	Trc_BCU_Assert_False(context->isRetransforming() && !context->isRetransformAllowed());
 
+	bool isLambda = false;
 	if (context->isClassAnon()) {
-		BuildResult res = handleAnonClassName(classFileParser->getParsedClassFile());
+		BuildResult res = handleAnonClassName(classFileParser->getParsedClassFile(), &isLambda);
 		if (OK != res) {
 			return res;
 		}
 	}
-
+	context->setIsLambda(isLambda);
 
 	ConstantPoolMap constantPoolMap(bufferManager, context);
 	ClassFileOracle classFileOracle(bufferManager, classFileParser->getParsedClassFile(), &constantPoolMap, _verifyExcludeAttribute, context);
@@ -468,6 +474,15 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 	SizeInformation sizeInformation;
 	getSizeInfo(context, &romClassWriter, &srpOffsetTable, &countDebugDataOutOfLine, &sizeInformation);
 
+	U_32 romSize = 0;
+	if (isLambda) {
+		/* calculate the romSize to compare the ROM sizes in the compareROMClassForEquality method for lambda classes */
+		romSize = U_32(sizeInformation.rcWithOutUTF8sSize + sizeInformation.utf8sSize + sizeInformation.rawClassDataSize + sizeInformation.varHandleMethodTypeLookupTableSize);
+		/* round up to sizeof(U_64) */
+		romSize += (sizeof(U_64) - 1);
+		romSize &= ~(sizeof(U_64) - 1);
+	}
+
 	if ( context->shouldCompareROMClassForEquality() ) {
 		ROMClassVerbosePhase v(context, CompareHashtableROMClass);
 
@@ -481,7 +496,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 		bool romClassIsShared = (j9shr_Query_IsAddressInCache(_javaVM, romClass, romClass->romSize) ? true : false);
 
 		if (compareROMClassForEquality((U_8*)romClass, romClassIsShared, &romClassWriter,
-				&srpOffsetTable, &srpKeyProducer, &classFileOracle, modifiers, extraModifiers, optionalFlags, context)
+				&srpOffsetTable, &srpKeyProducer, &classFileOracle, modifiers, extraModifiers, optionalFlags, context, romSize, isLambda)
 		) {
 			return OK;
 		} else {
@@ -558,7 +573,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 				}
 				context->recordROMClass(existingROMClass);
 				if (compareROMClassForEquality((U_8*)existingROMClass, /* romClassIsShared = */ true, &romClassWriter,
-						&srpOffsetTable, &srpKeyProducer, &classFileOracle, modifiers, extraModifiers, optionalFlags, context)
+						&srpOffsetTable, &srpKeyProducer, &classFileOracle, modifiers, extraModifiers, optionalFlags, context, romSize, isLambda)
 				) {
 					/*
 					 * Found an existing ROMClass in the shared cache that is equivalent
@@ -605,7 +620,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 				/*
 				 * Make note that the laydown is occurring in SharedClasses
 				 */
-				U_32 romSize = finishPrepareAndLaydown(
+				romSize = finishPrepareAndLaydown(
 						(U_8*)sharedStoreClassTransaction.getRomClass(),
 						(U_8*)sharedStoreClassTransaction.getLineNumberTable(),
 						(U_8*)sharedStoreClassTransaction.getLocalVariableTable(),
@@ -721,7 +736,6 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 	 *  Use an if statement here and call finishPrepareAndLaydown() in both cases to allow the scope of SCStringTransaction() to survive the life of the call to
 	 *  finishPrepareAndLaydown(). Otherwise, the scope of SCStringTransaction() would end early and it would not be safe to us interned strings.
 	 */
-	U_32 romSize = 0;
 	if (J9_ARE_ALL_BITS_SET(context->findClassFlags(), J9_FINDCLASS_FLAG_ANON)) {
 		U_16 classNameIndex = classFileOracle.getClassNameIndex();
 		U_8* classNameBytes = classFileOracle.getUTF8Data(classNameIndex);
@@ -1281,18 +1295,51 @@ bool
 ROMClassBuilder::compareROMClassForEquality(U_8 *romClass,bool romClassIsShared,
 		ROMClassWriter *romClassWriter, SRPOffsetTable *srpOffsetTable, SRPKeyProducer *srpKeyProducer,
 		ClassFileOracle *classFileOracle, U_32 modifiers, U_32 extraModifiers, U_32 optionalFlags,
-		ROMClassCreationContext * context)
+		ROMClassCreationContext * context, U_32 romSize, bool isLambda)
 {
-	ComparingCursor compareCursor(_javaVM, srpOffsetTable, srpKeyProducer, classFileOracle, romClass, romClassIsShared, context);
-	romClassWriter->writeROMClass(&compareCursor,
-			&compareCursor,
-			&compareCursor,
-			NULL,
-			NULL,
-			0, modifiers, extraModifiers, optionalFlags,
-			ROMClassWriter::WRITE);
+	bool ret = false;
 
-	return compareCursor.isEqual();
+	if (isLambda) {
+		if (sizeof(U_64) < abs((int)(romSize - ((J9ROMClass *)romClass)->romSize))) {
+			/* If the class is a lambda class, we compare the romSizes first to save time. Lambda class names are in the format of
+			 * HostClassName$$Lambda$<IndexNumber>/0000000000000000. When we reach this check, the host class names will be the
+			 * same for both the classes because of the hash key check earlier so the only difference in the size will be the
+			 * difference between the number of digits of the index number. The same lambda class might have a different index
+			 * number from run to run and when the number of digits of the index number increases by 1, romSize increases by 2.
+			 * We check if the difference between romSizes is bigger than sizeof(U_64) because this will allow at least 4 but up
+			 * to 7 (because romSize has padding and is always multiples of 8) digits difference. (eg. HostClassName$$Lambda$[1-9]
+			 * can get matched at least up to HostClassName$$Lambda$99999, HostClassName$$Lambda$[10-99] can get matched at least
+			 * up to HostClassName$$Lambda$999999) This check is different than the classFileSize check because when the number of
+			 * digits of the index number increases by 1, romSize increases by 2 but classFileSize increases by 1.
+			 */
+			ret = false;
+		} else {
+			ComparingCursor compareCursor(_javaVM, srpOffsetTable, srpKeyProducer, classFileOracle, romClass, romClassIsShared, context, isLambda);
+			romClassWriter->writeROMClass(&compareCursor,
+					&compareCursor,
+					&compareCursor,
+					NULL,
+					NULL,
+					0, modifiers, extraModifiers, optionalFlags,
+					ROMClassWriter::WRITE);
+
+			ret = compareCursor.isEqual();
+		}
+	} else {
+		ComparingCursor compareCursor(_javaVM, srpOffsetTable, srpKeyProducer, classFileOracle, romClass, romClassIsShared, context, isLambda);
+		romClassWriter->writeROMClass(&compareCursor,
+				&compareCursor,
+				&compareCursor,
+				NULL,
+				NULL,
+				0, modifiers, extraModifiers, optionalFlags,
+				ROMClassWriter::WRITE);
+
+		ret = compareCursor.isEqual();
+	}
+	J9UTF8* name = J9ROMCLASS_CLASSNAME((J9ROMClass *)romClass);
+	Trc_BCU_compareROMClassForEquality_event(ret, J9UTF8_LENGTH(name), J9UTF8_DATA(name));
+	return ret;
 }
 
 #if defined(J9VM_OPT_SHARED_CLASSES)

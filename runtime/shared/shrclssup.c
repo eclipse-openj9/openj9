@@ -56,6 +56,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 		vm->sharedCacheAPI->maxAOT = -1;
 		vm->sharedCacheAPI->minJIT = -1;
 		vm->sharedCacheAPI->maxJIT = -1;
+		vm->sharedCacheAPI->layer = -1;
 		if ((index = FIND_ARG_IN_VMARGS( OPTIONAL_LIST_MATCH, OPT_XSHARECLASSES, NULL ))>=0) {
 			char optionsBuffer[SHR_SUBOPT_BUFLEN];
 			char* optionsBufferPtr = (char*)optionsBuffer;
@@ -135,6 +136,13 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 					runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_BCI;
 				} else if (argIndex2 > argIndex1) {
 					runtimeFlags |= J9SHR_RUNTIMEFLAG_DISABLE_BCI;
+				}
+
+				/* Check for -XX:+ShareAnonymousClasses and -XX:-ShareAnonymousClasses; whichever comes later wins. Enable is set by default so we just need to disable when that's the case. */
+				argIndex1 = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, VMOPT_XXENABLESHAREANONYMOUSCLASSES, NULL);
+				argIndex2 = FIND_ARG_IN_VMARGS(OPTIONAL_LIST_MATCH, VMOPT_XXDISABLESHAREANONYMOUSCLASSES, NULL);
+				if (argIndex2 > argIndex1) {
+					runtimeFlags &= (~J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES);
 				}
 
 				vm->sharedCacheAPI->parseResult = parseArgs(vm, optionsBufferPtr, &runtimeFlags, &verboseFlags, &cacheName, &modContext,

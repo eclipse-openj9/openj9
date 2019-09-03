@@ -1270,7 +1270,7 @@ IDATA test5(J9JavaVM* vm) {
 		rc = FAIL;
 		goto done;
 	}
-	memset(sharedClassConfig, 0, sizeof(J9SharedClassConfig));
+	memset(sharedClassConfig, 0, sizeof(J9SharedClassConfig) + sizeof(J9SharedClassCacheDescriptor));
 	sharedClassConfig->storeCompiledMethod = j9shr_storeCompiledMethod;
 
 	if (cacheHelper.openTestCache(J9PORT_SHR_CACHE_TYPE_PERSISTENT, cacheSize,
@@ -1665,7 +1665,7 @@ IDATA test6(J9JavaVM* vm) {
 		rc = FAIL;
 		goto done;
 	}
-	memset(sharedClassConfig, 0, sizeof(J9SharedClassConfig));
+	memset(sharedClassConfig, 0, sizeof(J9SharedClassConfig) + sizeof(J9SharedClassCacheDescriptor));
 	sharedClassConfig->storeAttachedData = j9shr_storeAttachedData;
 
 	if (cacheHelper.openTestCache(J9PORT_SHR_CACHE_TYPE_PERSISTENT, cacheSize,
@@ -2065,7 +2065,7 @@ IDATA test7(J9JavaVM* vm) {
 		rc = FAIL;
 		goto done;
 	}
-	memset(sharedClassConfig, 0, sizeof(J9SharedClassConfig));
+	memset(sharedClassConfig, 0, sizeof(J9SharedClassConfig) + sizeof(J9SharedClassCacheDescriptor));
 	sharedClassConfig->storeAttachedData = j9shr_storeAttachedData;
 	sharedClassConfig->updateAttachedData = j9shr_updateAttachedData;
 
@@ -2426,7 +2426,7 @@ IDATA test8(J9JavaVM* vm) {
 		rc = FAIL;
 		goto done;
 	}
-	memset(sharedClassConfig, 0, sizeof(J9SharedClassConfig));
+	memset(sharedClassConfig, 0, sizeof(J9SharedClassConfig) + sizeof(J9SharedClassCacheDescriptor));
 	sharedClassConfig->storeCompiledMethod = j9shr_storeCompiledMethod;
 	sharedClassConfig->storeAttachedData = j9shr_storeAttachedData;
 
@@ -2783,7 +2783,7 @@ IDATA test9(J9JavaVM* vm)
 		rc = FAIL;
 		goto done;
 	}
-	memset(sharedClassConfig, 0, sizeof(J9SharedClassConfig));
+	memset(sharedClassConfig, 0, sizeof(J9SharedClassConfig) + sizeof(J9SharedClassCacheDescriptor));
 	sharedClassConfig->storeAttachedData = j9shr_storeAttachedData;
 	sharedClassConfig->storeCompiledMethod = j9shr_storeCompiledMethod;
 

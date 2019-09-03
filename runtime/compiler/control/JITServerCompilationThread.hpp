@@ -210,6 +210,7 @@ class JITServerHelpers
    static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType, void *data);
    static bool getAndCacheRAMClassInfo(J9Class *clazz, ClientSessionData *clientSessionData, JITServer::ServerStream *stream, ClassInfoDataType dataType1, void *data1, ClassInfoDataType dataType2, void *data2);
    static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
+   static J9ROMMethod *romMethodOfRamMethod(J9Method* method);
 
    // functions used for allowing the client to compile locally when server is unavailable
    // should be only used on the client side

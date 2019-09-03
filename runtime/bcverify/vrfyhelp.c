@@ -247,7 +247,7 @@ buildStackFromMethodSignature( J9BytecodeVerificationData *verifyData, UDATA **s
 
 	if ((!(romMethod->modifiers & J9AccStatic)) && (argMax > 0)) {	
 		/* this is a virtual method, an object compatible with this class is on the stack */
-		J9UTF8* utf8string  = J9ROMMETHOD_GET_NAME(romClass, romMethod);
+		J9UTF8* utf8string  = J9ROMMETHOD_NAME(romMethod);
 		J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
 
 		classIndex = findClassName(verifyData, J9UTF8_DATA(className), J9UTF8_LENGTH(className));
@@ -265,7 +265,7 @@ buildStackFromMethodSignature( J9BytecodeVerificationData *verifyData, UDATA **s
 
 	/* Walk the signature of the method to determine the arg shape */
 
-	args = J9UTF8_DATA(J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod));
+	args = J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod));
  
 	for (i = 1; args[i] != ')'; i++) {
 		(*argCount)++;
@@ -796,8 +796,8 @@ j9bcv_createVerifyErrorString(J9PortLibrary * portLib, J9BytecodeVerificationDat
 	stringLength = strlen(errorString);
 
 	stringLength += J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(error->romClass));
-	stringLength += J9UTF8_LENGTH(J9ROMMETHOD_GET_NAME(error->romClass, error->romMethod));
-	stringLength += J9UTF8_LENGTH(J9ROMMETHOD_GET_SIGNATURE(error->romClass, error->romMethod));
+	stringLength += J9UTF8_LENGTH(J9ROMMETHOD_NAME(error->romMethod));
+	stringLength += J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(error->romMethod));
 	stringLength += 10; /* for the PC */
 	if (NULL != error->errorSignatureString) {
 		stringLength += 10;  /* for the argument index */
@@ -812,8 +812,8 @@ j9bcv_createVerifyErrorString(J9PortLibrary * portLib, J9BytecodeVerificationDat
 	if (NULL != verifyError) {
 		UDATA errStrLength = 0;
 		J9UTF8 * romClassName = J9ROMCLASS_CLASSNAME(error->romClass);
-		J9UTF8 * romMethodName = J9ROMMETHOD_GET_NAME(error->romClass, error->romMethod);
-		J9UTF8 * romMethodSignatureString = J9ROMMETHOD_GET_SIGNATURE(error->romClass, error->romMethod);
+		J9UTF8 * romMethodName = J9ROMMETHOD_NAME(error->romMethod);
+		J9UTF8 * romMethodSignatureString = J9ROMMETHOD_SIGNATURE(error->romMethod);
 
 		if (NULL == error->errorSignatureString) {
 			errStrLength = j9str_printf(PORTLIB, (char*) verifyError, stringLength, formatString, errorString,

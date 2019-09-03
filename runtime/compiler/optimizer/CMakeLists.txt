@@ -57,6 +57,8 @@ j9jit_files(
 	optimizer/OSRGuardAnalysis.cpp
 	optimizer/OSRGuardInsertion.cpp
 	optimizer/OSRGuardRemoval.cpp
+	optimizer/PreEscapeAnalysis.cpp
+	optimizer/PostEscapeAnalysis.cpp
 	optimizer/ProfileGenerator.cpp
 	optimizer/SequentialStoreSimplifier.cpp
 	optimizer/SignExtendLoads.cpp

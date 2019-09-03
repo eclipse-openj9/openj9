@@ -182,8 +182,7 @@ TR_PersistentClassInfo *
 JITServerPersistentCHTable::findClassInfoAfterLocking(
       TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
-      bool returnClassInfoForAOT,
-      bool validate)
+      bool returnClassInfoForAOT)
    {
    if (comp->compileRelocatableCode() && !returnClassInfoForAOT)
       return NULL;
@@ -197,13 +196,6 @@ JITServerPersistentCHTable::findClassInfoAfterLocking(
       classInfo = findClassInfo(classId);
       }
 
-   if (classInfo &&
-       comp->compileRelocatableCode() &&
-       comp->getOption(TR_UseSymbolValidationManager) &&
-       validate)
-      {
-      comp->getSymbolValidationManager()->addClassInfoIsInitializedRecord(classId, classInfo->isInitialized());
-      }
    return classInfo;
    }
 
@@ -410,10 +402,9 @@ TR_PersistentClassInfo *
 JITClientPersistentCHTable::findClassInfoAfterLocking(
       TR_OpaqueClassBlock *classId,
       TR::Compilation *comp,
-      bool returnClassInfoForAOT,
-      bool validate)
+      bool returnClassInfoForAOT)
    {
-   return TR_PersistentCHTable::findClassInfoAfterLocking(classId, comp, returnClassInfoForAOT, validate);
+   return TR_PersistentCHTable::findClassInfoAfterLocking(classId, comp, returnClassInfoForAOT);
    }
 
 void

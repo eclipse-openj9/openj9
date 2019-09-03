@@ -47,6 +47,7 @@ public:
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT) override;
    virtual bool isClassLibraryClass(TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getSuperClass(TR_OpaqueClassBlock *classPointer) override;
+   virtual bool isSameOrSuperClass(J9Class *superClass, J9Class *subClass) override;
    virtual TR::Method * createMethod(TR_Memory *, TR_OpaqueClassBlock *, int32_t) override;
    virtual TR_ResolvedMethod * createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_ResolvedMethod * owningMethod, TR_OpaqueClassBlock *classForNewInstance) override;
    virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,

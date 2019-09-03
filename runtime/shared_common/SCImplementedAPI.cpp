@@ -687,7 +687,12 @@ j9shr_classStoreTransaction_stop(void * tobj)
 			if (NULL != storedClass) {
 				U_8 *intermediateClassData = J9ROMCLASS_INTERMEDIATECLASSDATA(storedClass);
 				if (NULL != intermediateClassData) {
-					Trc_SHR_Assert_True(j9shr_isAddressInCache(vm, intermediateClassData, storedClass->intermediateClassDataLength));
+					if (j9shr_isAddressInCache(vm, storedClass, storedClass->romSize, TRUE)) {
+						/* romclass is using SPRs pointing to its intermediateClassData, so they should be in the same cache */
+						Trc_SHR_Assert_True(j9shr_isAddressInCache(vm, intermediateClassData, storedClass->intermediateClassDataLength, TRUE));
+					} else {
+						Trc_SHR_Assert_True(j9shr_isAddressInCache(vm, intermediateClassData, storedClass->intermediateClassDataLength, FALSE));
+					}
 				}
 			}
 		}
@@ -771,7 +776,15 @@ j9shr_classStoreTransaction_nextSharedClassForCompare(void * tobj)
 		return NULL;
 	}
 
-	obj->findNextRomClass = (J9ROMClass *) cachemap->findNextROMClass(currentThread, obj->findNextIterator, obj->firstFound, obj->classnameLength, (const char*)obj->classnameData);
+	const char *stringBytes = (const char*)obj->classnameData;
+	U_16 stringLength = obj->classnameLength;
+
+	char *end = getLastDollarSignOfLambdaClassName(stringBytes, obj->classnameLength);
+	if (NULL != end) {
+		stringLength = (U_16)(end - stringBytes + 1);
+	}
+
+	obj->findNextRomClass = (J9ROMClass *) cachemap->findNextROMClass(currentThread, obj->findNextIterator, obj->firstFound, stringLength, (const char*)obj->classnameData);
 
 	Trc_SHR_API_j9shr_nextSharedClassForCompare_Exit(currentThread);
 	return (J9ROMClass *)(obj->findNextRomClass);

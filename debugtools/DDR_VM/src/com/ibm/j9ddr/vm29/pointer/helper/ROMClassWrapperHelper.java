@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,16 +23,36 @@ package com.ibm.j9ddr.vm29.pointer.helper;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ShrOffsetPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.ROMClassWrapperPointer;
+import com.ibm.j9ddr.vm29.pointer.I32Pointer;
+import com.ibm.j9ddr.vm29.pointer.PointerPointer;
+import com.ibm.j9ddr.vm29.types.UDATA;
 
 public class ROMClassWrapperHelper {
-//	#define RCWCLASSPATH(rcw) (((U_8*)(rcw)) + J9SHR_READSRP((rcw)->theCpOffset))
-	public static U8Pointer RCWCLASSPATH(ROMClassWrapperPointer ptr) throws CorruptDataException {
-		return U8Pointer.cast(ptr).add(ptr.theCpOffset());
+	public static U8Pointer RCWCLASSPATH(ROMClassWrapperPointer ptr, U8Pointer[] cacheHeader) throws CorruptDataException {
+		PointerPointer theCpOffset = ptr.theCpOffsetEA();
+		if (null == cacheHeader) {
+			return U8Pointer.cast(ptr).add(I32Pointer.cast(theCpOffset.getAddress()).at(0));
+		} else {
+			UDATA offset = J9ShrOffsetPointer.cast(theCpOffset).offset();
+			if (offset.eq(0)) {
+				return U8Pointer.NULL;
+			}
+			return cacheHeader[0].add(offset);
+		}
 	}
-	
-//	#define RCWROMCLASS(rcw) (((U_8*)(rcw)) + J9SHR_READSRP((rcw)->romClassOffset))
-	public static U8Pointer RCWROMCLASS(ROMClassWrapperPointer ptr) throws CorruptDataException {
-		return U8Pointer.cast(ptr).add(ptr.romClassOffset());
+
+	public static U8Pointer RCWROMCLASS(ROMClassWrapperPointer ptr, U8Pointer[] cacheHeader) throws CorruptDataException {
+		PointerPointer romClassOffset = ptr.romClassOffsetEA();
+		if (null == cacheHeader) {
+			return U8Pointer.cast(ptr).add(I32Pointer.cast(romClassOffset.getAddress()).at(0));
+		} else {
+			UDATA offset = J9ShrOffsetPointer.cast(romClassOffset).offset();
+			if (offset.eq(0)) {
+				return U8Pointer.NULL;
+			}
+			return cacheHeader[0].add(offset);
+		}
 	}
 }

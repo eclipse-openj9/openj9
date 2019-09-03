@@ -130,6 +130,7 @@ createTestCache(J9JavaVM* vm, J9SharedClassPreinitConfig *piconfig, J9SharedClas
 
 		memset(sharedClassConfig->cacheDescriptorList, 0, sizeof(J9SharedClassCacheDescriptor));
 		sharedClassConfig->cacheDescriptorList->next = sharedClassConfig->cacheDescriptorList;
+		sharedClassConfig->cacheDescriptorList->previous = sharedClassConfig->cacheDescriptorList;
 
 		vm->sharedClassConfig = sharedClassConfig;
 		vm->sharedClassPreinitConfig = piconfig;
@@ -146,7 +147,9 @@ createTestCache(J9JavaVM* vm, J9SharedClassPreinitConfig *piconfig, J9SharedClas
 		cacheMap[i] = SH_CacheMap::newInstance(vm, sharedClassConfig, (SH_CacheMap*)memory, cacheInfoList[i].name, cacheType);
 
 		bool cacheHasIntegrity;
+		UnitTest::unitTest = UnitTest::SHAREDCACHE_API_TEST;
 		rc = cacheMap[i]->startup(vm->mainThread, piconfig, cacheInfoList[i].name, cacheInfoList[i].cacheDir, J9SH_DIRPERM_ABSENT, NULL, &cacheHasIntegrity);
+		UnitTest::unitTest = UnitTest::NO_TEST;
 		if (rc != 0) {
 			j9tty_printf(PORTLIB, "CacheMap.startup() failed\n");
 			rc = FAIL;
@@ -333,6 +336,7 @@ runTestCycle(J9JavaVM *vm, J9SharedClassPreinitConfig *piconfig, J9SharedClassCo
 	memset(sharedClassConfig, 0, sizeof(J9SharedClassConfig));
 	sharedClassConfig->ctrlDirName = cacheDir;
 
+	UDATA orgTest = UnitTest::unitTest;
 	testCacheCount = 0;
 	cacheCount = 0;
 	j9tty_printf(PORTLIB, "Existing cache information:\n");
@@ -397,7 +401,7 @@ runTestCycle(J9JavaVM *vm, J9SharedClassPreinitConfig *piconfig, J9SharedClassCo
 	}
 
 exit:
-	UnitTest::unitTest = UnitTest::NO_TEST;
+	UnitTest::unitTest = orgTest;
 	return rc;
 }
 

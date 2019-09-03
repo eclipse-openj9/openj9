@@ -1345,11 +1345,11 @@ J9::SymbolReferenceTable::isReturnTypeBool(TR::SymbolReference *symRef)
    return isSignatureReturnTypeBool(methodSignature, len);
    }
 
-static bool parmSlotCameFromExpandingAnArchetypeArgPlaceholder(int32_t slot, TR::ResolvedMethodSymbol *sym, TR_Memory *mem)
+static bool parmSlotCameFromExpandingAnArchetypeArgPlaceholder(int32_t slot, TR::ResolvedMethodSymbol *sym)
    {
-   TR_ResolvedMethod *meth = sym->getResolvedMethod();
+   TR_ResolvedJ9Method *meth = (TR_ResolvedJ9Method *) sym->getResolvedMethod();
    if (meth->convertToMethod()->isArchetypeSpecimen())
-      return slot >= meth->archetypeArgPlaceholderSlot(mem);
+      return slot >= meth->archetypeArgPlaceholderSlot();
    else
       return false;
    }
@@ -1370,7 +1370,7 @@ J9::SymbolReferenceTable::addParameters(TR::ResolvedMethodSymbol * methodSymbol)
       else
          symRef = createTempSymRefWithKnownObject(p, index, p->getSlot(), knownObjectIndex);
       methodSymbol->setParmSymRef(p->getSlot(), symRef);
-      if (!parmSlotCameFromExpandingAnArchetypeArgPlaceholder(p->getSlot(), methodSymbol, trMemory()))
+      if (!parmSlotCameFromExpandingAnArchetypeArgPlaceholder(p->getSlot(), methodSymbol))
          methodSymbol->getAutoSymRefs(p->getSlot()).add(symRef);
       }
    }
@@ -2175,7 +2175,7 @@ J9::SymbolReferenceTable::createParameterSymbol(
       symRef = createTempSymRefWithKnownObject(sym,  owningMethodSymbol->getResolvedMethodIndex(), slot, knownObjectIndex);
 
    owningMethodSymbol->setParmSymRef(slot, symRef);
-   if (!parmSlotCameFromExpandingAnArchetypeArgPlaceholder(slot, owningMethodSymbol, trMemory()))
+   if (!parmSlotCameFromExpandingAnArchetypeArgPlaceholder(slot, owningMethodSymbol))
       owningMethodSymbol->getAutoSymRefs(slot).add(symRef);
 
    return sym;

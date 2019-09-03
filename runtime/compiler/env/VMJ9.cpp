@@ -1389,15 +1389,13 @@ UDATA TR_J9VMBase::getHighTenureAddress()
 
 bool TR_J9VMBase::generateCompressedPointers()
    {
-   return TR::Options::useCompressedPointers();
+   return TR::Compiler->om.compressObjectReferences();
    }
 
 
 bool TR_J9VMBase::generateCompressedLockWord()
    {
-   if (sizeof(j9objectmonitor_t) == 4)
-      return true;
-   return false;
+   return TR::Compiler->om.compressObjectReferences();
    }
 
 
@@ -3254,10 +3252,10 @@ TR_J9VMBase::lowerAsyncCheck(TR::Compilation * comp, TR::Node * root, TR::TreeTo
    }
 
 bool
- TR_J9VMBase::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
-    {
-    return VM_VMHelpers::methodBeingTraced(_jitConfig->javaVM, (J9Method *)method);
-    }
+TR_J9VMBase::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
+   {
+   return VM_VMHelpers::methodBeingTraced(_jitConfig->javaVM, (J9Method *)method);
+   }
 
 bool
 TR_J9VMBase::isSelectiveMethodEnterExitEnabled()
@@ -6347,8 +6345,8 @@ TR_J9VMBase::getMatchingMethodFromNameAndSignature(TR_OpaqueClassBlock * classPo
    // Iterate over all romMethods until the desired one is found
    for (uint32_t i = 0; i < numMethods; i++)
       {
-      J9UTF8 *mName = J9ROMMETHOD_GET_NAME(romClass, romMethod);
-      J9UTF8 *mSig = J9ROMMETHOD_GET_SIGNATURE(romClass, romMethod);
+      J9UTF8 *mName = J9ROMMETHOD_NAME(romMethod);
+      J9UTF8 *mSig = J9ROMMETHOD_SIGNATURE(romMethod);
       if (J9UTF8_LENGTH(mName) == nameLength &&
          J9UTF8_LENGTH(mSig) == sigLength &&
          memcmp(utf8Data(mName), methodName, nameLength) == 0 &&
@@ -6470,6 +6468,12 @@ TR_J9VM::getSuperClass(TR_OpaqueClassBlock * classPointer)
    J9Class * clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer);
    UDATA classDepth = J9CLASS_DEPTH(clazz) - 1;
    return convertClassPtrToClassOffset(classDepth >= 0 ? clazz->superclasses[classDepth]: 0);
+   }
+
+bool
+TR_J9VM::isSameOrSuperClass(J9Class * superClass, J9Class * subClass)
+   {
+   return VM_VMHelpers::isSameOrSuperclass(superClass, subClass);
    }
 
 bool

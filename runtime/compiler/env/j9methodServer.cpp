@@ -103,7 +103,6 @@ TR_ResolvedJ9JITaaSServerMethod::isJNINative()
    return _isJNINative;
    }
 
-
 void
 TR_ResolvedJ9JITaaSServerMethod::setRecognizedMethodInfo(TR::RecognizedMethod rm)
    {
@@ -1655,8 +1654,8 @@ TR_ResolvedJ9JITaaSServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod
  
    // initialization from TR_J9Method constructor
    _className = J9ROMCLASS_CLASSNAME(_romClass);
-   _name = J9ROMMETHOD_GET_NAME(_romClass, _romMethod);
-   _signature = J9ROMMETHOD_GET_SIGNATURE(_romClass, _romMethod);
+   _name = J9ROMMETHOD_NAME(_romMethod);
+   _signature = J9ROMMETHOD_SIGNATURE(_romMethod);
    parseSignature(trMemory);
    _fullSignature = NULL;
   
@@ -1825,6 +1824,26 @@ TR_ResolvedJ9JITaaSServerMethod::validateMethodFieldAttributes(const TR_J9Method
    auto clientAttributes = std::get<0>(recv);
    bool equal = (attributes == clientAttributes);
    return equal;
+   }
+
+U_16
+TR_ResolvedJ9JITaaSServerMethod::archetypeArgPlaceholderSlot()
+   {
+   TR_ASSERT(isArchetypeSpecimen(), "should not be called for non-ArchetypeSpecimen methods");
+   TR_OpaqueMethodBlock * aMethod = getNonPersistentIdentifier();
+   J9ROMMethod * romMethod = JITServerHelpers::romMethodOfRamMethod((J9Method *)aMethod);
+   J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(romMethod);
+
+   U_8 tempArgTypes[256];
+   uintptr_t    paramElements;
+   uintptr_t    paramSlots;
+   jitParseSignature(signature, tempArgTypes, &paramElements, &paramSlots);
+   /*
+    * result should be : paramSlot + 1 -1 = paramSlot
+    * +1 :thunk archetype are always virtual method and has a receiver
+    * -1 :the placeholder is a 1-slot type (int)
+    */
+   return paramSlots;
    }
 
 TR_ResolvedRelocatableJ9JITaaSServerMethod::TR_ResolvedRelocatableJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owner, uint32_t vTableSlot)

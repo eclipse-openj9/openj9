@@ -37,6 +37,9 @@
 
 #define CM_READ_CACHE_FAILED -1
 #define CM_CACHE_CORRUPT -2
+#define CM_CACHE_STORE_PREREQ_ID_FAILED -3
+
+#define J9SHR_UNIQUE_CACHE_ID_BUFSIZE  (J9SH_MAXPATH + 35)
 
 typedef struct MethodSpecTable {
 	char* className;
@@ -51,6 +54,11 @@ typedef struct MethodSpecTable {
 	bool matchFlag;
 } MethodSpecTable;
 
+typedef struct CacheAddressRange {
+	void* cacheHeader;
+	void* cacheEnd;
+} CacheAddressRange;
+
 /* 
  * Implementation of SH_SharedCache interface
  */
@@ -64,7 +72,7 @@ public:
 
 	static SH_CacheMap* newInstance(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, SH_CacheMap* memForConstructor, const char* cacheName, I_32 newPersistentCacheReqd);
 
-	static SH_CacheMapStats* newInstanceForStats(J9JavaVM* vm, SH_CacheMap* memForConstructor, const char* cacheName);
+	static SH_CacheMapStats* newInstanceForStats(J9JavaVM* vm, SH_CacheMap* memForConstructor, const char* cacheName, I_8 topLayer);
 
 	static UDATA getRequiredConstrBytes(bool startupForStats);
 
@@ -207,6 +215,12 @@ public:
 
 	/* @see CacheMapStats.hpp */
 	IDATA shutdownForStats(J9VMThread* currentThread);
+	
+	/* @see CacheMapStats.hpp */
+	void* getAddressFromJ9ShrOffset(const J9ShrOffset* offset);
+	
+	/* @see CacheMapStats.hpp */
+	U_8* getDataFromByteDataWrapper(const ByteDataWrapper* bdw);
 
 
 	//New Functions To Support New ROM Class Builder
@@ -261,6 +275,8 @@ public:
 	void increaseUnstoredBytes(U_32 blockBytes, U_32 aotBytes = 0, U_32 jitBytes = 0);
 
 	void getUnstoredBytes(U_32 *softmxUnstoredBytes, U_32 *maxAOTUnstoredBytes, U_32 *maxJITUnstoredBytes) const;
+	
+	bool isAddressInCache(const void *address, UDATA length, bool includeHeaderReadWriteArea, bool useCcHeadOnly) const;
 
 private:
 	SH_CompositeCacheImpl* _cc;					/* current cache */
@@ -276,6 +292,11 @@ private:
 	SH_CompositeCacheImpl* _ccCacheletHead;		/* head of cachelet list for current cache */
 	SH_CompositeCacheImpl* _cacheletTail;		/* tail of all known cachelets */
 	SH_CompositeCacheImpl* _prevCClastCachelet;	/* Reference to the last allocated cachelet in the last supercache */
+	SH_CompositeCacheImpl* _ccTail;
+		
+	CacheAddressRange _cacheAddressRangeArray[J9SH_LAYER_NUM_MAX_VALUE + 1];
+	UDATA _numOfCacheLayers;
+	
 	SH_ClasspathManager* _cpm;
 	SH_TimestampManager* _tsm;
 	SH_ROMClassManager* _rcm;
@@ -287,6 +308,7 @@ private:
 	omrthread_monitor_t _refreshMutex;
 	bool _cacheCorruptReported;
 	U_64* _runtimeFlags;
+	U_64* _readOnlyCacheRuntimeFlags;
 	const char* _cacheName;
 	const char* _cacheDir;
 	UDATA _localCrashCntr;
@@ -331,7 +353,7 @@ private:
 	
 	SH_Managers * _managers;
 	
-	void initialize(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, BlockPtr memForConstructor, const char* cacheName, I_32 newPersistentCacheReqd, bool startupForStats);
+	void initialize(J9JavaVM* vm, J9SharedClassConfig* sharedClassConfig, BlockPtr memForConstructor, const char* cacheName, I_32 newPersistentCacheReqd, I_8 topLayer, bool startupForStats);
 
 	IDATA readCacheUpdates(J9VMThread* currentThread);
 
@@ -341,7 +363,7 @@ private:
 
 	ClasspathWrapper* addClasspathToCache(J9VMThread* currentThread, ClasspathItem* obj);
 
-	const J9UTF8* addScopeToCache(J9VMThread* currentThread, const J9UTF8* scope); 
+	const J9UTF8* addScopeToCache(J9VMThread* currentThread, const J9UTF8* scope, U_16 type = TYPE_SCOPE); 
 
 	const void* addROMClassResourceToCache(J9VMThread* currentThread, const void* romAddress, SH_ROMClassResourceManager* localRRM, SH_ROMClassResourceManager::SH_ResourceDescriptor* resourceDescriptor, const char** p_subcstr);
 
@@ -369,7 +391,7 @@ private:
 
 	IDATA checkForCrash(J9VMThread* currentThread, bool hasClassSegmentMutex);
 	
-	void reportCorruptCache(J9VMThread* currentThread);
+	void reportCorruptCache(J9VMThread* currentThread, SH_CompositeCacheImpl* _ccToUse);
 
 	void resetCorruptState(J9VMThread* currentThread, UDATA hasRefreshMutex);
 
@@ -389,6 +411,7 @@ private:
 	IDATA resetAllManagers(J9VMThread* currentThread);
 	
 	void updateAllManagersWithNewCacheArea(J9VMThread* currentThread, SH_CompositeCacheImpl* newArea);
+
 	void updateAccessedShrCacheMetadataBounds(J9VMThread* currentThread, uintptr_t const  * result);
 	
 	bool isAddressInReleasedMetaDataBounds(J9VMThread* currentThread, UDATA address) const;
@@ -416,6 +439,9 @@ private:
 
 	J9SharedClassCacheDescriptor* appendCacheDescriptorList(J9VMThread* currentThread, J9SharedClassConfig* sharedClassConfig);
 #endif
+
+	J9SharedClassCacheDescriptor* appendCacheDescriptorList(J9VMThread* currentThread, J9SharedClassConfig* sharedClassConfig, SH_CompositeCacheImpl* ccToUse);
+	
 	void resetCacheDescriptorList(J9VMThread* currentThread, J9SharedClassConfig* sharedClassConfig);
 	
 #if defined(J9SHR_CACHELET_SUPPORT)
@@ -477,6 +503,14 @@ private:
 #if defined(J9SHR_CACHELET_SUPPORT)
 	IDATA startupCacheletForStats(J9VMThread* currentThread, SH_CompositeCache* cachelet);
 #endif /*J9SHR_CACHELET_SUPPORT*/
+
+	IDATA getPrereqCache(J9VMThread* currentThread, const char* cacheDir, SH_CompositeCacheImpl* ccToUse, bool startupForStats, const char** prereqCacheID, UDATA* idLen);
+
+	void handleStartupError(J9VMThread* currentThread, SH_CompositeCacheImpl* ccToUse, IDATA errorCode, U_64 runtimeFlags, UDATA verboseFlags, bool *doRetry);
+	
+	void setCacheAddressRangeArray(void);
+	
+	void getJ9ShrOffsetFromAddress(const void* address, J9ShrOffset* offset);
 
 };
 

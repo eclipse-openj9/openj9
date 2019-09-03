@@ -1157,7 +1157,7 @@ TraceEvent=Trc_SHR_OSC_Mmap_cleanup_goodUpdateLastDetachedTime NoEnv Overhead=1 
 TraceEvent=Trc_SHR_OSC_Mmap_cleanup_badUpdateLastDetachedTime NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::cleanup: Failed to update last detached time"
 TraceExit=Trc_SHR_OSC_Mmap_cleanup_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachemmap::cleanup: Exiting"
 
-TraceEntry=Trc_SHR_OSC_newInstance_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: Entered, memForConstructor=%p, cacheName=%s, newPersistentCacheReqd=%d"
+TraceEntry=Trc_SHR_OSC_newInstance_Entry Obsolete NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: Entered, memForConstructor=%p, cacheName=%s, newPersistentCacheReqd=%d"
 TraceEvent=Trc_SHR_OSC_newInstance_mmapFilepath NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: mmap file path=%s"
 TraceEvent=Trc_SHR_OSC_newInstance_sysvFilepath NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: sysv file path=%s"
 TraceEvent=Trc_SHR_OSC_newInstance_mmapFileExists NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: mmap file exists"
@@ -1473,7 +1473,7 @@ TraceExit=Trc_SHR_CLM_j9shr_destroy_expire_cache_Exit NoEnv Overhead=1 Level=1 T
 TraceEntry=Trc_SHR_CLM_j9shr_destroy_all_cache_Entry NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_destroy_all_cache: Entry - verboseFlags=%zu"
 TraceExit=Trc_SHR_CLM_j9shr_destroy_all_cache_noCaches NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_destroy_all_cache: Exit - no caches, returning -1"
 TraceExit=Trc_SHR_CLM_j9shr_destroy_all_cache_Exit NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_destroy_all_cache: Exit - returning 0"
-TraceEntry=Trc_SHR_CLM_j9shr_destroy_cache_Entry NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_destroy_cache: Entry - verboseFlags=%zu cacheName=%s genStart=%zu genEnd=%zu"
+TraceEntry=Trc_SHR_CLM_j9shr_destroy_cache_Entry Obsolete NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_destroy_cache: Entry - verboseFlags=%zu cacheName=%s genStart=%zu genEnd=%zu"
 TraceExit=Trc_SHR_CLM_j9shr_destroy_cache_allocFailed NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_destroy_cache: Exit - allocate failed, returning -1"
 TraceExit=Trc_SHR_CLM_j9shr_destroy_cache_Exit NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_destroy_cache: Exit - returning %zi"
 TraceEntry=Trc_SHR_CLM_j9shr_stat_cache_Entry NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_stat_cache: Entry - verboseFlags=%zu cacheName=%s generation=%zu"
@@ -1481,7 +1481,7 @@ TraceExit=Trc_SHR_CLM_j9shr_stat_cache_Exit NoEnv Overhead=1 Level=1 Template="C
 TraceEntry=Trc_SHR_CLM_j9shr_report_utility_incompatible_Entry NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_report_utility_incompatible: Entry - verboseFlags=%zu cacheName=%s utility=%s"
 TraceExit=Trc_SHR_CLM_j9shr_report_utility_incompatible_Exit NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_report_utility_incompatible: Exit - returning %zi"
 
-TraceEntry=Trc_SHR_OSC_getCacheVersionAndGen_Entry NoEnv Overhead=1 Level=1 Template="OSCache::getCacheVersionAndGen: Entry - cacheName=%s generation=%zu"
+TraceEntry=Trc_SHR_OSC_getCacheVersionAndGen_Entry Obsolete NoEnv Overhead=1 Level=1 Template="OSCache::getCacheVersionAndGen: Entry - cacheName=%s generation=%zu"
 TraceExit=Trc_SHR_OSC_getCacheVersionAndGen_Exit NoEnv Overhead=1 Level=1 Template="OSCache::getCacheVersionAndGen: Exit - buffer=%s"
 TraceEntry=Trc_SHR_OSC_removeCacheVersionAndGen_Entry NoEnv Overhead=1 Level=1 Template="OSCache::removeCacheVersionAndGen: Entry - versionLen=%zu cacheNameWithVGen=%s"
 TraceExit=Trc_SHR_OSC_removeCacheVersionAndGen_overflow NoEnv Overhead=1 Level=1 Template="OSCache::removeCacheVersionAndGen: OVERFLOW"
@@ -2167,7 +2167,7 @@ TraceExit=Trc_SHR_OSC_getCacheDir_j9shmem_createDir_failed NoEnv Overhead=1 Leve
 TraceEvent=Trc_SHR_INIT_NoCoreMmapDisablePersistence NoEnv Overhead=1 Level=1 Template="Disable persistence when CORE_MMAP is not set to yes"
 TraceExit=Trc_SHR_OSC_checkOSCacheHeader_testBadBuildID NoEnv Overhead=1 Level=1 Template="OSCache::checkOSCacheHeader: Exit - In testing mode: returning different build ID"
 
-TraceEntry=Trc_SHR_CC_initialize_Entry1 NoEnv Overhead=1 Level=1 Template="CC initialize: memForConstructor=%p, sharedClassConfig=%p, cacheName=%s, newPersistentCacheReqd=%d, unitTest=%zd"
+TraceEntry=Trc_SHR_CC_initialize_Entry1 Obsolete NoEnv Overhead=1 Level=1 Template="CC initialize: memForConstructor=%p, sharedClassConfig=%p, cacheName=%s, newPersistentCacheReqd=%d, unitTest=%zd"
 
 TraceEntry=Trc_SHR_OSC_createCacheDir_Entry NoEnv Overhead=1 Level=1 Template="OSCache::createCacheDir: Entry - cacheDirName=%s, cleanMemorySegments=%d"
 TraceExit=Trc_SHR_OSC_createCacheDir_Exit NoEnv Overhead=1 Level=1 Template="OSCache::createCacheDir: Exit"
@@ -2725,7 +2725,7 @@ TraceException=Trc_SHR_CLM_deleteSnapshot_fileLockFailed NoEnv Overhead=1 Level=
 TraceException=Trc_SHR_CLM_deleteSnapshot_fileUnlinkFailed NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::deleteSnapshot: failed to delete the snapshot file %s"
 TraceExit=Trc_SHR_CLM_deleteSnapshot_Exit NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::deleteSnapshot: Exit - returning %zd"
 
-TraceEntry=Trc_SHR_CLM_j9shr_destroy_snapshot_Entry NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_destroy_snapshot: Entry - verboseFlags=%zu snapshotName=%s genStart= %zu genEnd=%zu"
+TraceEntry=Trc_SHR_CLM_j9shr_destroy_snapshot_Entry Obsolete NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_destroy_snapshot: Entry - verboseFlags=%zu snapshotName=%s genStart= %zu genEnd=%zu"
 TraceException=Trc_SHR_CLM_j9shr_destroy_snapshot_getCacheDirFailed NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_destroy_snapshot: getCacheDir() failed"
 TraceExit=Trc_SHR_CLM_j9shr_destroy_snapshot_Exit NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_destroy_snapshot: Exit - returning %zd"
 
@@ -2938,3 +2938,27 @@ TraceEvent=Trc_SHR_CM_updateLocalHintsData_WriteHeapSizes Overhead=1 Level=4 Tem
 
 TraceEntry=Trc_SHR_INIT_updateClasspathOpenState_entry Overhead=1 Level=3 Template="INIT Entering j9shr_updateClasspathOpenState"
 TraceExit=Trc_SHR_INIT_updateClasspathOpenState_exit Overhead=1 Level=3 Template="INIT Exiting j9shr_updateClasspathOpenState"
+
+TraceEntry=Trc_SHR_CLM_j9shr_destroy_cache_Entry_V1 NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_destroy_cache: Entry - verboseFlags=%zu cacheName=%s genStart=%zu genEnd=%zu layerStart=%d layerEnd=%d"
+TraceEntry=Trc_SHR_CLM_j9shr_destroy_snapshot_Entry_V1 NoEnv Overhead=1 Level=1 Template="CacheLifecycleManager::j9shr_destroy_snapshot: Entry - verboseFlags=%zu snapshotName=%s genStart= %zu genEnd=%zu layerStart=%d layerEnd=%d"
+TraceEntry=Trc_SHR_OSC_getCacheVersionAndGen_Entry_V1 NoEnv Overhead=1 Level=1 Template="OSCache::getCacheVersionAndGen: Entry - cacheName=%s generation=%zu layer=%d"
+TraceEntry=Trc_SHR_CC_initializeWithCommonInfo_Entry2 NoEnv Overhead=1 Level=3 Template="CC initializeWithCommonInfo: memForConstructor=%p, ctrlDirName=%s, cacheName=%s, newPersistentCacheReqd=%d, layer=%d"
+TraceEntry=Trc_SHR_CC_initialize_Entry2 NoEnv Overhead=1 Level=1 Template="CC initialize: memForConstructor=%p, sharedClassConfig=%p, cacheName=%s, newPersistentCacheReqd=%d, layer=%d, unitTest=%zd"
+TraceEntry=Trc_SHR_OSC_newInstance_Entry_V1 NoEnv Overhead=1 Level=1 Template="SH_OSCache::newInstance: Entered, memForConstructor=%p, cacheName=%s, newPersistentCacheReqd=%d layer=%d"
+
+TraceException=Trc_SHR_CM_getPrereqCache_InvalidType Overhead=1 Level=1 Template="CM::getPrereqCache(): Invalid data type found in the shared cache at %p. The shared cache is corrupted"
+TraceEvent=Trc_SHR_CM_getPrereqCache_Found Overhead=1 Level=6 Template="CM::getPrereqCache(): Found prerequisite cache with unique ID %.*s"
+TraceEvent=Trc_SHR_CM_getPrereqCache_NotFound Overhead=1 Level=1 Template="CM::getPrereqCache(): This shared cache does not have a prerequisite cache"
+TraceException=Trc_SHR_CM_getPrereqCache_Failed_To_Start_Manager Overhead=1 Level=1 Template="CM::getPrereqCache(): Failed to startup the corresponding manager"
+TraceException=Trc_SHR_CM_getPrereqCache_Failed_To_Add_ID Overhead=1 Level=1 Template="CM::getPrereqCache(): Failed to add unique ID of prerequisite cache"
+TraceException=Trc_SHR_CM_getPrereqCache_Failed_To_Get_Manager Overhead=1 Level=1 Template="CM::getPrereqCache(): Failed to get the corresponding manger"
+TraceException=Trc_SHR_CM_getPrereqCache_Failed_To_Store_Prereq_UniqueID Overhead=1 Level=1 Template="CM::getPrereqCache(): Failed to store the prerequisite cache unique ID %.*s"
+TraceException=Trc_SHR_CC_verifyCacheUniqueID_Failed Overhead=1 Level=1 Template="CC verify Cache Unique ID Failed. The Expected ID is %s, the current ID is %s"
+TraceExit-Exception=Trc_SHR_CM_startup_Exit8 Overhead=1 Level=1 Template="CM startup: Cache Unique ID Verification Failed"
+TraceExit-Exception=Trc_SHR_CM_startup_Exit9 Overhead=1 Level=1 Template="CM startup: Failed to get prerequisite unqiue cache ID, error is %d"
+TraceExit-Exception=Trc_SHR_CM_startup_Exit10 Overhead=1 Level=1 Template="CM startup: Failed to allocate buffer for SH_CompositeCacheImpl"
+TraceExit-Exception=Trc_SHR_CM_startup_Exit11 Overhead=1 Level=1 Template="CM startup: Failed to start up the shared cache"
+TraceExit-Exception=Trc_SHR_CM_startup_Exit12 Overhead=1 Level=1 Template="CM startup: Failed to allocate memory for the cache descriptor"
+TraceExit-Exception=Trc_SHR_CM_startup_Exit13 Overhead=1 Level=1 Template="CM startup: Failed to read the cache. Cache is corrupted"
+TraceExit-Exception=Trc_SHR_CM_updateROMClassResource_Exit7 Overhead=1 Level=1 Template="CM updateROMClassResource: The address to be updated %p (length %zu) is not in top layer cache."
+TraceException=Trc_SHR_CM_storeSharedData_OverwriteExisting_NotInTopLayer Overhead=1 Level=2 Template="CM storeSharedData: Existing data in the shared cache (data->address %p, foundDatalen %zu) is not in top layer cache."

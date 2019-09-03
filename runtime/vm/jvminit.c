@@ -1820,8 +1820,15 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				 */
 				if (argIndex2 > argIndex) {
 					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 1);
-				} else {
+				} else if (argIndex > argIndex2){
 					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 0);
+				} else {
+#if defined(LINUX) && defined(J9VM_ARCH_X86)
+					/* Enable THP on xLinux by default */
+					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 1);
+#else
+					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 0);
+#endif /* defined(LINUX) && defined(J9VM_ARCH_X86) */
 				}
 			}
 
@@ -5624,6 +5631,18 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 #endif
 
 	PORT_ACCESS_FROM_PORT(portLibrary);
+	IDATA queryResult = 0;
+	J9CacheInfoQuery cQuery = {0};
+	cQuery.cmd = J9PORT_CACHEINFO_QUERY_LINESIZE;
+	cQuery.level = 1;
+	cQuery.cacheType = J9PORT_CACHEINFO_DCACHE;
+	queryResult = j9sysinfo_get_cache_info(&cQuery);
+	if (queryResult > 0) {
+		vm->dCacheLineSize = (UDATA)queryResult;
+	} else {
+		Trc_VM_contendedLinesizeFailed(queryResult);
+	}
+
 	/* check for -Xipt flag and run the iconv_global_init accordingly.
 	 * If this function fails, bail out of VM init instead of hitting some random
 	 * weird undebuggable crash later on

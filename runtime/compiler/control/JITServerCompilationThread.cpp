@@ -328,6 +328,12 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          client->write(response, fe->getSuperClass(clazz));
          }
          break;
+      case MessageType::VM_isSameOrSuperClass:
+         {
+         auto tup = client->getRecvData<J9Class*, J9Class*>();
+         client->write(response, fe->isSameOrSuperClass(std::get<0>(tup), std::get<1>(tup)));
+         }
+         break;
       case MessageType::VM_isInstanceOf:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock *, TR_OpaqueClassBlock *, bool, bool, bool>();
@@ -2485,8 +2491,7 @@ static bool handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JI
          TR_PersistentClassInfo* result = table->findClassInfoAfterLocking(
                                                    rootClass,
                                                    comp,
-                                                   true,
-                                                   comp->getOption(TR_UseSymbolValidationManager));
+                                                   true);
          std::string encoded = FlatPersistentClassInfo::serializeHierarchy(result);
          client->write(response, encoded);
          }
@@ -3505,7 +3510,43 @@ JITServerHelpers::shouldRetryConnection(OMRPortLibrary *portLibrary)
    return omrtime_current_time_millis() > _nextConnectionRetryTime;
    }
 
+J9ROMMethod *
+JITServerHelpers::romMethodOfRamMethod(J9Method* method)
+   {
+   if (!TR::CompilationInfo::getStream()) // If not JITaaS server
+      return J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
 
+   // else, JITaaS
+   auto clientData = TR::compInfoPT->getClientData();
+   J9ROMMethod *romMethod = NULL;
+
+   // check if the method is already cached
+      {
+      OMR::CriticalSection romCache(clientData->getROMMapMonitor());
+      auto &map = clientData->getJ9MethodMap();
+      auto it = map.find((J9Method*) method);
+      if (it != map.end())
+         romMethod = it->second._romMethod;
+      }
+
+   // if not, go cache the associated ROM class and get the ROM method from it
+   if (!romMethod)
+      {
+      auto stream = TR::CompilationInfo::getStream();
+      stream->write(JITServer::MessageType::VM_getClassOfMethod, (TR_OpaqueMethodBlock*) method);
+      J9Class *clazz = (J9Class*) std::get<0>(stream->read<TR_OpaqueClassBlock *>());
+      TR::compInfoPT->getAndCacheRemoteROMClass(clazz);
+         {
+         OMR::CriticalSection romCache(clientData->getROMMapMonitor());
+         auto &map = clientData->getJ9MethodMap();
+         auto it = map.find((J9Method *) method);
+         if (it != map.end())
+            romMethod = it->second._romMethod;
+         }
+      }
+   TR_ASSERT(romMethod, "Should have acquired romMethod");
+   return romMethod;
+   }
 
 TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread)
    : CompilationInfoPerThread(compInfo, jitConfig, id, isDiagnosticThread),

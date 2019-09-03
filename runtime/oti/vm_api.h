@@ -2204,6 +2204,19 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 #endif
 
 /**
+ * Initialize fields to default values when the class
+ * contains unflattened flattenables.
+ *
+ * @param[in] *currentThread the current thread
+ * @param[in] *clazz the resolved class
+ * @param[in] instance J9Object with unflattened flattenable fields
+ * 
+ * @returns void
+ */
+void
+defaultValueWithUnflattenedFlattenables(J9VMThread *currentThread, J9Class *clazz, j9object_t instance);
+
+/**
 * @brief Iterate over fields of the specified class in JVMTI order.
 * @param state[in/out]  the walk state that was initialized via fieldOffsetsStartDo()
 * @return J9ROMFieldOffsetWalkResult *

@@ -126,8 +126,8 @@ void releaseVMaccessIfNeeded(J9VMThread *vmThread, bool haveAcquiredVMAccess);
 inline void getClassNameSignatureFromMethod(J9Method *method, J9UTF8 *& methodClazz, J9UTF8 *& methodName, J9UTF8 *& methodSignature)
    {
    methodClazz = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(method)->romClass);
-   methodName = J9ROMMETHOD_GET_NAME(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
-   methodSignature = J9ROMMETHOD_GET_SIGNATURE(J9_CLASS_FROM_METHOD(method)->romClass, J9_ROM_METHOD_FROM_RAM_METHOD(method));
+   methodName = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
+   methodSignature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
    }
 
 typedef struct TR_JitPrivateConfig
@@ -1065,6 +1065,7 @@ public:
    virtual bool               stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass);
 
    virtual TR_OpaqueClassBlock *             getSuperClass(TR_OpaqueClassBlock *classPointer);
+   virtual bool               isSameOrSuperClass(J9Class *superClass, J9Class *subClass);
    virtual bool               isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *);
 
    virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *);

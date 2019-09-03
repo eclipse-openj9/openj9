@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -176,9 +176,9 @@ SH_ROMClassManagerImpl::storeNew(J9VMThread* currentThread, const ShcItem* itemI
 	Trc_SHR_RMI_storeNew_Entry(currentThread, itemInCache);
 
 	if (ITEMTYPE(itemInCache) == TYPE_ORPHAN) {
-		romClass = (J9ROMClass*)OWROMCLASS(((OrphanWrapper*)ITEMDATA(itemInCache)));
+		romClass = (J9ROMClass*)_cache->getAddressFromJ9ShrOffset(&(((OrphanWrapper*)ITEMDATA(itemInCache))->romClassOffset));
 	} else {
-		romClass = (J9ROMClass*)RCWROMCLASS(((ROMClassWrapper*)ITEMDATA(itemInCache)));
+		romClass = (J9ROMClass*)_cache->getAddressFromJ9ShrOffset(&(((ROMClassWrapper*)ITEMDATA(itemInCache))->romClassOffset));
 	}
 
 	utf8Name = J9ROMCLASS_CLASSNAME(romClass);
@@ -229,7 +229,7 @@ SH_ROMClassManagerImpl::reuniteOrphan(J9VMThread* currentThread, const char* rom
 		const ShcItem* currentItem = walk->_item;
 
 		if (TYPE_ORPHAN == ITEMTYPE(currentItem)) {
-			J9ROMClass* orphanRc = (J9ROMClass*)OWROMCLASS(((OrphanWrapper*)ITEMDATA(currentItem)));
+			J9ROMClass* orphanRc = (J9ROMClass*)_cache->getAddressFromJ9ShrOffset(&(((OrphanWrapper*)ITEMDATA(currentItem))->romClassOffset));
 
 			if (orphanRc == romClassPtr) {
 				Trc_SHR_RMI_reuniteOrphan_Event1(currentThread, nameLen, romClassName, romClassPtr, item);
@@ -307,19 +307,23 @@ SH_ROMClassManagerImpl::findNextExisting(J9VMThread* currentThread, void * &find
 
 	if (TYPE_ORPHAN == ITEMTYPE(currentItem)) {
 		Trc_SHR_RMI_findNextROMClass_FoundOrphan_Event(currentThread);
-		returnVal = (J9ROMClass*) OWROMCLASS(((OrphanWrapper*) ITEMDATA(currentItem)));
+		OrphanWrapper* owr = (OrphanWrapper*) ITEMDATA(currentItem);
+		returnVal = (J9ROMClass*) _cache->getAddressFromJ9ShrOffset(&(owr->romClassOffset));
 	} else {
 		Trc_SHR_RMI_findNextROMClass_FoundClass_Event(currentThread);
-		returnVal = (J9ROMClass*) RCWROMCLASS(((ROMClassWrapper*) ITEMDATA(currentItem)));
+		ROMClassWrapper* rcw = (ROMClassWrapper*) ITEMDATA(currentItem);
+		returnVal = (J9ROMClass*) _cache->getAddressFromJ9ShrOffset(&(rcw->romClassOffset));
 	}
 	
 	if (prev != NULL) {
 		/*If returnVal is the same as the last one returned then move on.*/
 		prevItem = prev->_item;
 		if (TYPE_ORPHAN == ITEMTYPE(prevItem)) {
-			prevVal = (J9ROMClass*) OWROMCLASS(((OrphanWrapper*) ITEMDATA(prevItem)));
+			OrphanWrapper* owr = (OrphanWrapper*) ITEMDATA(prevItem);
+			prevVal = (J9ROMClass*) _cache->getAddressFromJ9ShrOffset(&(owr->romClassOffset));
 		} else {
-			prevVal = (J9ROMClass*) RCWROMCLASS(((ROMClassWrapper*) ITEMDATA(prevItem)));
+			ROMClassWrapper* rcw = (ROMClassWrapper*) ITEMDATA(prevItem);
+			prevVal = (J9ROMClass*) _cache->getAddressFromJ9ShrOffset(&(rcw->romClassOffset));
 		}
 		if (prevVal == returnVal) {
 			Trc_SHR_RMI_findNextROMClass_MatchPrev_Event(currentThread);
@@ -416,7 +420,7 @@ SH_ROMClassManagerImpl::locateROMClass(J9VMThread* currentThread, const char* pa
 			/*** IF AN UNMODIFIED ORPHAN IS FOUND, REMEMBER IT AND CARRY ON SEARCHING ***/
 
 			if (!localFoundUnmodifiedOrphan) {
-				J9ROMClass* orphanRC = (J9ROMClass*)OWROMCLASS(((OrphanWrapper*)ITEMDATA(currentItem)));
+				J9ROMClass* orphanRC = (J9ROMClass*)_cache->getAddressFromJ9ShrOffset(&((OrphanWrapper*)ITEMDATA(currentItem))->romClassOffset);
 				bool romClassIsModified = J9ROMCLASS_HAS_MODIFIED_BYTECODES(orphanRC);
 
 				if (!romClassIsModified) {
@@ -433,11 +437,11 @@ SH_ROMClassManagerImpl::locateROMClass(J9VMThread* currentThread, const char* pa
 				/*** IF THE ROMCLASS IS NOT STALE, PROCEED TO VALIDATE THAT IT IS THE ONE WE WANT ***/
 
 				ROMClassWrapper* wrapper = ((ROMClassWrapper*)ITEMDATA(walk->_item));
-				ClasspathItem* cpInCache = (ClasspathItem*)CPWDATA(RCWCLASSPATH(wrapper));
+				ClasspathItem* cpInCache = (ClasspathItem*)CPWDATA(_cache->getAddressFromJ9ShrOffset(&(wrapper->theCpOffset)));
 				I_16 localFoundAtIndex = -1;				/* Important to initialize to -1 as this indicates "not found" */
 
 				/* If we have a cachedROMClass (ie. the exact ROMClass we want is already in the cache) we can use that to eliminate non-matches */
-				if ((cachedROMClass != NULL) && (cachedROMClass != (J9ROMClass*)RCWROMCLASS(wrapper))) {
+				if ((cachedROMClass != NULL) && (cachedROMClass != (J9ROMClass*)_cache->getAddressFromJ9ShrOffset(&(wrapper->romClassOffset)))) {
 					/* Only interested in an exact pointer-match, keep searching */
 					Trc_SHR_RMI_locateROMClass_ElimatedWalkNext(currentThread);
 					goto _continueNext;
@@ -588,7 +592,7 @@ SH_ROMClassManagerImpl::checkTimestamp(J9VMThread* currentThread, const char* pa
 
 	Trc_SHR_RMI_checkTimestamp_Entry(currentThread, pathLen, path);
 
-	cpw = (ClasspathWrapper*)RCWCLASSPATH(rcw);
+	cpw = (ClasspathWrapper*)_cache->getAddressFromJ9ShrOffset(&(rcw->theCpOffset));
 	cpeiInCache = ((ClasspathItem*)CPWDATA(cpw))->itemAt(rcw->cpeIndex);
 
 	if (_tsm->checkROMClassTimeStamp(currentThread, path, pathLen, cpeiInCache, rcw) != TIMESTAMP_UNCHANGED) {

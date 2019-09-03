@@ -32,48 +32,10 @@
 #include "jilconsts.h"
 #include "j9protos.h"
 
-J9ROMMethod *romMethodOfRamMethod(J9Method* method)
-   {
-   if (!TR::CompilationInfo::getStream()) // If not JITaaS server
-      return J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
-
-   // else, JITaaS
-   auto clientData = TR::compInfoPT->getClientData();
-   J9ROMMethod *romMethod = NULL;
-
-   // check if the method is already cached
-      {
-      OMR::CriticalSection romCache(clientData->getROMMapMonitor());
-      auto &map = clientData->getJ9MethodMap();
-      auto it = map.find((J9Method*) method);
-      if (it != map.end())
-         romMethod = it->second._romMethod;
-      }
-
-   // if not, go cache the associated ROM class and get the ROM method from it
-   if (!romMethod)
-      {
-      auto stream = TR::CompilationInfo::getStream();
-      stream->write(JITServer::MessageType::VM_getClassOfMethod, (TR_OpaqueMethodBlock*) method);
-      J9Class *clazz = (J9Class*) std::get<0>(stream->read<TR_OpaqueClassBlock *>());
-      TR::compInfoPT->getAndCacheRemoteROMClass(clazz);
-         {
-         OMR::CriticalSection romCache(clientData->getROMMapMonitor());
-         auto &map = clientData->getJ9MethodMap();
-         auto it = map.find((J9Method *) method);
-         if (it != map.end())
-            romMethod = it->second._romMethod;
-         }
-      }
-   TR_ASSERT(romMethod, "Should have acquired romMethod");
-   return romMethod;
-   }
-
-
 bool
 J9::VMMethodEnv::hasBackwardBranches(TR_OpaqueMethodBlock *method)
    {
-   J9ROMMethod * romMethod = romMethodOfRamMethod((J9Method *)method);
+   J9ROMMethod * romMethod = JITServerHelpers::romMethodOfRamMethod((J9Method *)method);
    return (romMethod->modifiers & J9AccMethodHasBackwardBranches) != 0;
    }
 
@@ -109,7 +71,7 @@ J9::VMMethodEnv::bytecodeStart(TR_OpaqueMethodBlock *method)
       // ROM method from its ROM class.
       // Also, the return value of this function might be 
       // dereferenced later on, so need ROM method to be on the server.
-      romMethod = romMethodOfRamMethod((J9Method *) method);
+      romMethod = JITServerHelpers::romMethodOfRamMethod((J9Method *) method);
    else
       romMethod = getOriginalROMMethod((J9Method *)method);
    return (uintptr_t)(J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
@@ -119,7 +81,7 @@ J9::VMMethodEnv::bytecodeStart(TR_OpaqueMethodBlock *method)
 uint32_t
 J9::VMMethodEnv::bytecodeSize(TR_OpaqueMethodBlock *method)
    {
-   J9ROMMethod *romMethod = romMethodOfRamMethod((J9Method*) method);
+   J9ROMMethod *romMethod = JITServerHelpers::romMethodOfRamMethod((J9Method*) method);
    return (uint32_t)(J9_BYTECODE_END_FROM_ROM_METHOD(romMethod) -
                      J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
    }

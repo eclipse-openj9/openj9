@@ -139,7 +139,7 @@ objectMonitorEnterBlocking(J9VMThread *currentThread)
 #if defined(J9VM_THR_LOCK_RESERVATION)
 	{
 		j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, object);
-		while (OBJECT_HEADER_LOCK_RESERVED == (*lwEA & (OBJECT_HEADER_LOCK_RESERVED + OBJECT_HEADER_LOCK_INFLATED))) {
+		while (OBJECT_HEADER_LOCK_RESERVED == (J9_LOAD_LOCKWORD(currentThread, lwEA) & (OBJECT_HEADER_LOCK_RESERVED + OBJECT_HEADER_LOCK_INFLATED))) {
 			Trc_VM_objectMonitorEnterBlocking_reservedOnEntry(currentThread);
 			cancelLockReservation(currentThread);
 			/* calculate the new lock word, since the object may have moved */
@@ -196,10 +196,11 @@ restart:
 			/* In a Concurrent GC where monitor object can *move* in a middle of GC cycle,
 			 * we need a proper barrier to get an up-to-date location of the monitor object */
 			j9objectmonitor_t volatile *lwEA = VM_ObjectMonitor::inlineGetLockAddress(currentThread, J9MONITORTABLE_OBJECT_LOAD(currentThread, &((J9ThreadMonitor*)monitor)->userData));
-			j9objectmonitor_t lockInLoop = *lwEA;
+			j9objectmonitor_t lockInLoop = J9_LOAD_LOCKWORD(currentThread, lwEA);
 #if defined(J9VM_THR_LOCK_RESERVATION)
 			/* has the lock become reserved? */
-			if (OBJECT_HEADER_LOCK_RESERVED == (*lwEA & (OBJECT_HEADER_LOCK_RESERVED + OBJECT_HEADER_LOCK_INFLATED))) {
+			/* TODO: Use lockInLoop instead of another read? */
+			if (OBJECT_HEADER_LOCK_RESERVED == (J9_LOAD_LOCKWORD(currentThread, lwEA) & (OBJECT_HEADER_LOCK_RESERVED + OBJECT_HEADER_LOCK_INFLATED))) {
 				Trc_VM_objectMonitorEnterBlocking_reservedInLoop(currentThread);
 				SET_IGNORE_ENTER(monitor);
 				omrthread_monitor_exit_using_threadId(monitor, osThread);
@@ -212,7 +213,7 @@ restart:
 				while (0 != lockInLoop) {
 					j9objectmonitor_t const flcBitSet = lockInLoop | OBJECT_HEADER_LOCK_FLC;
 					j9objectmonitor_t const oldValue = lockInLoop;
-					lockInLoop = VM_ObjectMonitor::compareAndSwapLockword(lwEA, lockInLoop, flcBitSet);
+					lockInLoop = VM_ObjectMonitor::compareAndSwapLockword(currentThread, lwEA, lockInLoop, flcBitSet);
 					if (oldValue == lockInLoop) {
 						break;
 					}
@@ -227,7 +228,9 @@ restart:
 				 * other threads are behind us in the queue. Set the FLC bit to
 				 * make sure that this thread signals them when it is done.
 				 */
-				*lwEA |= OBJECT_HEADER_LOCK_FLC;
+				j9objectmonitor_t lock = J9_LOAD_LOCKWORD(currentThread, lwEA);
+				lock |= OBJECT_HEADER_LOCK_FLC;
+				J9_STORE_LOCKWORD(currentThread, lwEA, lock);
 				goto done;
 			}
 			internalReleaseVMAccessSetStatus(currentThread, J9_PUBLIC_FLAGS_THREAD_BLOCKED);
@@ -282,12 +285,12 @@ objectMonitorEnterNonBlocking(J9VMThread *currentThread, j9object_t object)
 		goto done;
 	} else {
 		/* check for a recursive flat lock */
-		j9objectmonitor_t const lock = *lwEA;
+		j9objectmonitor_t const lock = J9_LOAD_LOCKWORD(currentThread, lwEA);
 		/* try incrementing first to ensure that we won't overflow the recursion counter */
 		j9objectmonitor_t incremented = lock + OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT;
 		if (J9_FLATLOCK_OWNER(incremented) == currentThread) {
 			/* recursive flat lock. Still at least one bit of count left - recurse without inflating */
-			*lwEA = incremented;
+			J9_STORE_LOCKWORD(currentThread, lwEA, incremented);
 			/* no barrier is required in the recursive case */
 		} else {
 			/* check to see if object is unlocked (JIT did not do initial inline sequence due to insufficient static type info) */
@@ -399,7 +402,7 @@ spinOnFlatLock(J9VMThread *currentThread, j9objectmonitor_t volatile *lwEA, j9ob
 				goto done;
 			}
 			/* do not spin if the FLC, inflated or reserved bits are already set */
-			if (J9_ARE_NO_BITS_SET(*lwEA, bits)
+			if (J9_ARE_NO_BITS_SET(J9_LOAD_LOCKWORD(currentThread, lwEA), bits)
 					&& J9_ARE_NO_BITS_SET(currentThread->publicFlags, J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE))
 			{
 				if (nestedPath) {
@@ -517,7 +520,7 @@ spinOnTryEnter(J9VMThread *currentThread, J9ObjectMonitor *objectMonitor, j9obje
 					objectMonitor->proDeflationCount += 1;
 				}
 #endif /* J9VM_THR_SMART_DEFLATION */
-				if (J9_LOCK_IS_INFLATED(*lwEA)) {
+				if (J9_LOCK_IS_INFLATED(J9_LOAD_LOCKWORD(currentThread, lwEA))) {
 					/* try_enter succeeded - monitor is inflated */
 					rc = true;
 				} else {

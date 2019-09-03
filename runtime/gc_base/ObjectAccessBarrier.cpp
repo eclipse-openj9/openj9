@@ -39,7 +39,7 @@
 #include "VMThreadListIterator.hpp"
 #include "ModronAssertions.h"
 #include "VMHelpers.hpp"
-
+#include "ObjectAccessBarrierAPI.hpp"
 
 
 bool 
@@ -1349,14 +1349,18 @@ MM_ObjectAccessBarrier::getArrayObjectDataAddress(J9VMThread *vmThread, J9Indexa
  * Return the address of the lockword for the given object, or NULL if it 
  * does not have an inline lockword.
  */
- j9objectmonitor_t *
+j9objectmonitor_t *
 MM_ObjectAccessBarrier::getLockwordAddress(J9VMThread *vmThread, J9Object *object)
 {
-	UDATA lockOffset = J9OBJECT_CLAZZ(vmThread, object)->lockOffset;
-	if ((IDATA) lockOffset < 0) {
-		return NULL;	
+	j9objectmonitor_t *lockwordAddress = NULL;
+	J9Class *clazz = J9OBJECT_CLAZZ(vmThread, object);
+	if (!J9_IS_J9CLASS_VALUETYPE(clazz)) {
+		UDATA lockOffset = clazz->lockOffset;
+		if ((IDATA) lockOffset >= 0) {
+			lockwordAddress = (j9objectmonitor_t *)(((U_8 *)object) + lockOffset);
+		}
 	}
-	return (j9objectmonitor_t *)(((U_8 *)object) + lockOffset);
+	return lockwordAddress;
 }
 
 /**
@@ -1460,9 +1464,9 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 		lockwordAddress = getLockwordAddress(vmThread, destObject);
 		if (NULL != lockwordAddress) {
 			if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(objectClass), J9ClassReservableLockWordInit)) {
-				*lockwordAddress = OBJECT_HEADER_LOCK_RESERVED;
+				J9_STORE_LOCKWORD(vmThread, lockwordAddress, OBJECT_HEADER_LOCK_RESERVED);
 			} else {
-				*lockwordAddress = 0;
+				J9_STORE_LOCKWORD(vmThread, lockwordAddress, 0);
 			}
 		}
 	}
@@ -1497,7 +1501,7 @@ MM_ObjectAccessBarrier::cloneIndexableObject(J9VMThread *vmThread, J9IndexableOb
 	/* zero lockword, if present */
 	lockwordAddress = getLockwordAddress(vmThread, (J9Object*) destObject);
 	if (NULL != lockwordAddress) {
-		*lockwordAddress = 0;
+		J9_STORE_LOCKWORD(vmThread, lockwordAddress, OBJECT_HEADER_LOCK_RESERVED);
 	}
 
 	return;
