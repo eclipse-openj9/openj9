@@ -81,7 +81,7 @@
 #include "control/JITServerCompilationThread.hpp"
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/Listener.hpp"
-#include "runtime/StatisticsThread.hpp"
+#include "runtime/JITServerStatisticsThread.hpp"
 
 extern "C" {
 struct J9JavaVM;
@@ -4710,13 +4710,13 @@ void JitShutdown(J9JITConfig * jitConfig)
 
    if (!vm->isAOT_DEPRECATED_DO_NOT_USE())
       stopSamplingThread(jitConfig);
-
-   TR_StatisticsThread *statisticsThread = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThread;
-   if (statisticsThread)
+#if defined(JITSERVER_SUPPORT)
+   JITServerStatisticsThread *statsThreadObj = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject;
+   if (statsThreadObj)
       {
-      statisticsThread->stopStatisticsThread(jitConfig);
+      statsThreadObj->stopStatisticsThread(jitConfig);
       }
-
+#endif
    TR_DebuggingCounters::report();
    accumulateAndPrintDebugCounters(jitConfig);
 
@@ -7066,7 +7066,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          jProfiler->start(javaVM);
          }
       }
-   
+#if defined(JITSERVER_SUPPORT)   
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener;
@@ -7077,8 +7077,9 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
 
       if (jitConfig->samplingFrequency != 0)
          {
-         TR_StatisticsThread *statisticsThread = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThread;
-         statisticsThread->startStatisticsThread(javaVM);
+         JITServerStatisticsThread *statsThreadObj = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject;
+         // statsThreadObj is guaranteed to be non-null because JITServer will not start if statisticsThreadObject cannot be created
+         statsThreadObj->startStatisticsThread(javaVM); 
          }
 
       // Give the JIT a chance to do stuff after the VM is initialized
@@ -7088,7 +7089,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          return -1;
          }
       }
- 
+#endif // JITSERVER_SUPPORT
    if ((*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_START, jitHookLocalGCStart, OMR_GET_CALLSITE(), NULL) ||
        (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_END, jitHookLocalGCEnd, OMR_GET_CALLSITE(), NULL) ||
        (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GLOBAL_GC_START, jitHookGlobalGCStart, OMR_GET_CALLSITE(), NULL) ||

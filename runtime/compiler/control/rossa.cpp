@@ -109,7 +109,7 @@
 #include "ras/DebugExt.hpp"
 #include "env/exports.h"
 #include "runtime/Listener.hpp"
-#include "runtime/StatisticsThread.hpp"
+#include "runtime/JITServerStatisticsThread.hpp"
 
 extern "C" int32_t encodeCount(int32_t count);
 
@@ -1622,7 +1622,7 @@ onLoadInternal(
    if (chtable == NULL)
       return -1;
    persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
-   
+#if defined(JITSERVER_SUPPORT)
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       JITServer::CommunicationStream::initVersion();
@@ -1637,8 +1637,8 @@ onLoadInternal(
          j9tty_printf(PORTLIB, "JITServer Listener not allocated, abort.\n");
          return -1; 
          }
-      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThread = TR_StatisticsThread::allocate();
-      if (!((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThread)
+      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject = JITServerStatisticsThread::allocate();
+      if (!((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject)
          {
          // warn that Statistics Thread was not allocated
          j9tty_printf(PORTLIB, "JITServer Statistics thread not allocated, abort.\n");
@@ -1659,6 +1659,7 @@ onLoadInternal(
 
       JITServer::CommunicationStream::initVersion();
       }
+#endif // JITSERVER_SUPPORT
 
 #if defined(TR_HOST_S390)
    if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
