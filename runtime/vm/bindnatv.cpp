@@ -31,6 +31,7 @@
 #include "OutOfLineINL.hpp"
 #include "VMHelpers.hpp"
 #include "AtomicSupport.hpp"
+#include "OMR/Bytes.hpp"
 
 extern "C" {
 
@@ -680,7 +681,7 @@ alignJNIAddress(J9JavaVM * vm, void * address, J9ClassLoader * classLoader)
 		}
 		block->next = classLoader->jniRedirectionBlocks;
 		block->vmemID = identifier;
-		block->alloc = (U_8 *) ((((UDATA) (block + 1)) + (J9JNIREDIRECT_SEQUENCE_ALIGNMENT - 1)) & ~(J9JNIREDIRECT_SEQUENCE_ALIGNMENT - 1));
+		block->alloc = (U_8 *)OMR::align((UDATA)(block + 1), J9JNIREDIRECT_SEQUENCE_ALIGNMENT);
 		block->end = ((U_8 *) block) + J9JNIREDIRECT_BLOCK_SIZE;
 		classLoader->jniRedirectionBlocks = block;
 		TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(vm->hookInterface, currentVMThread(vm), NULL, block, J9JNIREDIRECT_BLOCK_SIZE, "JNI trampoline area", NULL);
