@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,8 +40,8 @@ OutOfLineINL_jdk_internal_misc_Unsafe_fullFence(J9VMThread *currentThread, J9Met
 VM_BytecodeAction
 OutOfLineINL_jdk_internal_misc_Unsafe_compareAndExchangeObjectVolatile(J9VMThread *currentThread, J9Method *method)
 {
-	j9object_t swapValue = *(j9object_t*)currentThread->sp;
-	j9object_t compareValue = *(j9object_t*)(currentThread->sp + 1);
+	j9object_t *swapValue = (j9object_t*)currentThread->sp;
+	j9object_t *compareValue = (j9object_t*)(currentThread->sp + 1);
 	UDATA offset = (UDATA)*(I_64*)(currentThread->sp + 2);
 	j9object_t obj = *(j9object_t*)(currentThread->sp + 4);
 	MM_ObjectAccessBarrierAPI _objectAccessBarrier = MM_ObjectAccessBarrierAPI(currentThread);
