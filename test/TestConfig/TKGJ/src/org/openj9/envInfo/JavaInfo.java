@@ -48,7 +48,7 @@ public class JavaInfo {
         } else if (osName.contains("z/os")) {
             spec = "zos";
         } else if (osName.contains("sunos")) {
-            spec = "osx";
+            spec = "sunos";
         } else if (osName.contains("bsd")) {
             spec = "bsd";
         } else {
