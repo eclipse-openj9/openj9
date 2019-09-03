@@ -126,9 +126,12 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
       }
    else if (_reloType==TR_DataAddress)
       {
-      AOTcgDiag1(  comp, "TR_DataAddress cursor=%x\n", cursor);
-      cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) _symbolReference, (uint8_t *)_inlinedSiteIndex, TR_DataAddress, cg),
+      if (cg->needRelocationsForStatics())
+         {
+         AOTcgDiag1(  comp, "TR_DataAddress cursor=%x\n", cursor);
+         cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) _symbolReference, (uint8_t *)_inlinedSiteIndex, TR_DataAddress, cg),
                               file, line, node);
+         }
       }
    else if (_reloType==TR_BodyInfoAddress)
       {
