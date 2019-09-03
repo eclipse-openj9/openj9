@@ -2,7 +2,7 @@
 package com.ibm.oti.shared;
 
 /*******************************************************************************
- * Copyright (c) 2010, 2018 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -135,7 +135,7 @@ public class SharedClassUtilities {
 	}
 	
 	/**
-	 * Destroys a named shared class cache of a given type in a given directory.
+	 * Destroys a named shared class cache of a given type in a given directory. If the shared class cache has multiple layers, this function will destroy the top layer only.
 	 * <p>
 	 * If <code>useCommandLineValues</code> is <code>true</code>, then use the command line value to get the shared class cache name,
 	 * its type and its directory. If any of these is not available, then use the default value.
