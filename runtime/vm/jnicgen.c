@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,8 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-
-
 #include "jnicsup.h"
 #include "j9consts.h"
 #include "vmaccess.h"
@@ -29,9 +27,6 @@
 extern const struct JNINativeInterface_ EsJNIFunctions;
 
 #define RUN_CALLIN_METHOD(env, receiver, cls, methodID, args) \
-		RUN_CALLIN_METHOD_HELPER(env, receiver, cls, methodID, args)
-
-#define RUN_CALLIN_METHOD_HELPER(env, receiver, cls, methodID, args) \
 		gpCheckCallin(env, receiver, cls, methodID, args)
 
 void JNICALL callVirtualVoidMethod (JNIEnv *env, jobject receiver, jmethodID methodID, ...)
@@ -411,4 +406,3 @@ jdouble JNICALL callStaticDoubleMethodA (JNIEnv *env, jclass cls, jmethodID meth
 	RUN_CALLIN_METHOD(env, NULL, cls, methodID, (U_8*)args + 1);
 	return *(jdouble*)(&((J9VMThread*)env)->returnValue);
 }
-
