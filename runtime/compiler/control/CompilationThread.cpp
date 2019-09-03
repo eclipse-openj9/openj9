@@ -2842,17 +2842,17 @@ void TR::CompilationInfo::stopCompilationThreads()
    if (printCompMem)
       {
       int32_t codeCacheAllocated = TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches() * _jitConfig->codeCacheKB;
-      fprintf(stderr, "Allocated memory for code cache = %d KB\tLimit = %d KB\n",
+      fprintf(stderr, "Allocated memory for code cache = %d KB\tLimit = %lu KB\n",
          codeCacheAllocated, _jitConfig->codeCacheTotalKB);
 
       TR::CodeCacheManager::instance()->printMccStats();
 
-      fprintf(stderr, "Allocated memory for data cache = %d KB\tLimit = %d KB\n",
+      fprintf(stderr, "Allocated memory for data cache = %d KB\tLimit = %lu KB\n",
          TR_DataCacheManager::getManager()->getTotalSegmentMemoryAllocated()/1024,
           _jitConfig->dataCacheTotalKB);
 
       if (getJProfilerThread())
-         fprintf(stderr, "Allocated memory for profile info = %d KB\n", getJProfilerThread()->getProfileInfoFootprint()/1024);
+         fprintf(stderr, "Allocated memory for profile info = %lu KB\n", getJProfilerThread()->getProfileInfoFootprint()/1024);
       }
 
    static char * printPersistentMem = feGetEnv("TR_PrintPersistentMem");
@@ -10578,7 +10578,7 @@ void TR::CompilationInfo::printCompQueue()
    fprintf(stderr, "\nQueue:");
    for (TR_MethodToBeCompiled *cur = _methodQueue; cur; cur = cur->_next)
       {
-      fprintf(stderr, " %x", cur);
+      fprintf(stderr, " %p", cur);
       }
    fprintf(stderr, "\n");
    }
@@ -11836,3 +11836,61 @@ bool TR::CompilationInfo::canProcessJProfilingRequest()
       return true;
       }
    }
+
+#if defined(JITSERVER_SUPPORT)
+// This method is executed by the JITServer to queue a placeholder for
+// a compilation request received from the client. At the time the new
+// entry is queued we do not know any details about the compilation request.
+// The method needs to be executed with compilation monitor in hand.
+TR_MethodToBeCompiled *
+TR::CompilationInfo::addOutOfProcessMethodToBeCompiled(JITServer::ServerStream *stream)
+   {
+   TR_MethodToBeCompiled *entry = getCompilationQueueEntry(); // Allocate a new entry
+   if (entry)
+      {
+      // Initialize the entry with defaults (some, like methodDetails, are bogus)
+      TR::IlGeneratorMethodDetails details;
+      entry->initialize(details, NULL, CP_SYNC_NORMAL, NULL);
+      entry->_entryTime = getPersistentInfo()->getElapsedTime(); // Cheaper version
+      entry->_stream = stream; // Add the stream to the entry
+      incrementMethodQueueSize(); // One more method added to the queue
+      _numQueuedFirstTimeCompilations++; // Otherwise an assert triggers when we dequeue
+      queueEntry(entry);
+
+      // Determine whether we need to activate another compilation thread from the pool
+      TR_YesNoMaybe activate = TR_maybe;
+      if (getNumCompThreadsActive() <= 0)
+         {
+         activate = TR_yes;
+         }
+      else if (getNumCompThreadsJobless() > 0)
+         {
+         activate = TR_no; // Just wake the jobless one
+         }
+      else
+         {
+         int32_t numCompThreadsSuspended = getNumUsableCompilationThreads() - getNumCompThreadsActive();
+         TR_ASSERT(numCompThreadsSuspended >= 0, "Accounting error for suspendedCompThreads usable=%d active=%d\n", 
+                   getNumUsableCompilationThreads(), getNumCompThreadsActive());
+         // Cannot activate if there is nothing to activate
+         activate = (numCompThreadsSuspended <= 0) ? TR_no : TR_yes;
+         }
+
+      if (activate == TR_yes)
+         {
+         // Must find one that is SUSPENDED/SUSPENDING
+         TR::CompilationInfoPerThread *compInfoPT = getFirstSuspendedCompilationThread();
+         if (compInfoPT)
+            {
+            compInfoPT->resumeCompilationThread();
+            if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseCompilationThreads))
+               {
+               TR_VerboseLog::writeLineLocked(TR_Vlog_INFO, "t=%6u Activate compThread %d Qweight=%d active=%d",
+                  (uint32_t)getPersistentInfo()->getElapsedTime(), compInfoPT->getCompThreadId(), getQueueWeight(), getNumCompThreadsActive());
+               }
+            }
+         }
+      }
+   return entry;
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
