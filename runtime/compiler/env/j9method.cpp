@@ -5238,7 +5238,6 @@ TR_ResolvedJ9Method::archetypeArgPlaceholderSlot()
       romMethod = getOriginalROMMethod((J9Method *)aMethod);
       }
 
-   J9ROMClass *romClass = J9_CLASS_FROM_METHOD(((J9Method *)aMethod))->romClass;
    J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(romMethod);
 
    U_8 tempArgTypes[256];
