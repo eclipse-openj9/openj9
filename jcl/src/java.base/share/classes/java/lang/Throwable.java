@@ -438,7 +438,7 @@ private void readObject(ObjectInputStream s)
 	
 	
 	if (suppressedExceptions != null) {
-		List<Throwable> newList = Collections.EMPTY_LIST;;
+		List<Throwable> newList = Collections.EMPTY_LIST;
 		try {
 /*[IF Sidecar19-SE]*/
 			Module classModule = suppressedExceptions.getClass().getModule();
