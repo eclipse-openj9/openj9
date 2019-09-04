@@ -351,7 +351,7 @@ L_StaticGlueCallFixer:
 	tst	x0, #clinit_bit					// branch if the LSB (the "clinit" bit) was set in the resolved address
 	bne	L_SGCclinitCase
 	ldr	x1, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
-	tbz	x1, #J9TR_MethodNotCompiledBit, L_StaticGlueCallFixer1	// is method now compiled?
+	tbnz	x1, #J9TR_MethodNotCompiledBit, L_StaticGlueCallFixer1	// is method now compiled?
 	ret	x2						// if not, return to static glue to call interpreter
 L_StaticGlueCallFixer1:
 	ldr	x28, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
@@ -370,7 +370,7 @@ L_StaticGlueCallFixer1:
 L_SGCclinitCase:
 	and	x0, x0, #(~clinit_bit)				// clear the "clinit" bit
 	ldr	x1, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
-	tbz	x1, #J9TR_MethodNotCompiledBit, L_SGCclinitCase1	// is method now compiled?
+	tbnz	x1, #J9TR_MethodNotCompiledBit, L_SGCclinitCase1	// is method now compiled?
 	ret	x2						// if not, return to static glue to call interpreter
 L_SGCclinitCase1:
 	br	x1						// in <clinit> case, dispatch method directly without patching
