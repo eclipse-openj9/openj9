@@ -61,7 +61,7 @@
 		</javac>
 	</target>
 
-	<target name="generate_condy" depends="compile_generator" description="Run Condugenerator to generate bytecode" >
+	<target name="generate_condy" depends="compile_generator" description="Run CondyGenerator to generate bytecode" >
 		<property name="javaexecutable.java" value="${TEST_JDK_HOME}/bin/java" />
 		<echo>Running CondyGenerator</echo>
 		<java classname="org.openj9.test.condy.CondyGenerator" fork="true" failonerror="true" logError="true" jvm="${javaexecutable.java}">

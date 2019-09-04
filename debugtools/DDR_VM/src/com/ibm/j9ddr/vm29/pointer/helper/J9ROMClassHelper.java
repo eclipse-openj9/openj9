@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,7 +125,7 @@ public class J9ROMClassHelper {
 		return romclass. extraModifiers().allBitsIn(J9AccClassFinalizeNeeded);
 	}
 
-	public static boolean isClonable(J9ROMClassPointer romclass) throws CorruptDataException {
+	public static boolean isCloneable(J9ROMClassPointer romclass) throws CorruptDataException {
 		return romclass.extraModifiers().allBitsIn(J9AccClassCloneable);
 	}
 	

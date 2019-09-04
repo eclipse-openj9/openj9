@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -623,7 +623,7 @@ testClasspathCache(J9JavaVM* vm)
 	SHC_TEST_ASSERT("freeIdentifiedClasspathArray", ClasspathCacheTest::freeTest(PORTLIB, &cp1, &cp2, &cp3), success, rc);
 	SHC_TEST_ASSERT("registerMatchFailed", ClasspathCacheTest::matchFailedTest(vm), success, rc);
 
-	REPORT_SUMMARY("ClaspathCache", success);
+	REPORT_SUMMARY("ClasspathCache", success);
 
 	return success;
 }

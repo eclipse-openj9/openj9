@@ -420,7 +420,7 @@ decodeStackmapFrameData(StackMapFrame* stackMapFrame, U_8* nextStackmapFrame, I_
 		 * as the stackmap table doesn't exist in the class file or currently in fallback verification
 		 * so the frame is pointing to internal created stackMap
 		 */
-		nextStackmapFrame = decodeConstuctedStackMapFrameData(stackMapFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);
+		nextStackmapFrame = decodeConstructedStackMapFrameData(stackMapFrame, nextStackmapFrame, stackmapFrameIndex, methodInfo, verifyData);
 	} else {
 		/* Decode the specified 'Stackmap Frame' data from the compressed stackmap table in the class file */
 		nextStackmapFrame = decodeStackFrameDataFromStackMapTable(stackMapFrame, nextStackmapFrame, methodInfo);
@@ -524,7 +524,7 @@ exit:
 
 
 U_8*
-decodeConstuctedStackMapFrameData(StackMapFrame* stackMapFrame, U_8* nextStackmapFrame, I_32 stackmapFrameIndex, MethodContextInfo* methodInfo, J9BytecodeVerificationData* verifyData)
+decodeConstructedStackMapFrameData(StackMapFrame* stackMapFrame, U_8* nextStackmapFrame, I_32 stackmapFrameIndex, MethodContextInfo* methodInfo, J9BytecodeVerificationData* verifyData)
 {
 	J9BranchTargetStack * targetStackmapFrame = BCV_INDEX_STACK((UDATA)stackmapFrameIndex);
 	IDATA stackBaseIndex = targetStackmapFrame->stackBaseIndex;

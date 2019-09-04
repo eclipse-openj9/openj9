@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,10 +26,10 @@
 #include "cfr.h"
 #include "bcutil_api.h"
 
-typedef struct RCcorrectenessMethodConfig {
+typedef struct RCcorrectnessMethodConfig {
 	UDATA testFlagON;
 	UDATA testFlagOFF;
-} RCcorrectenessMethodConfig;
+} RCcorrectnessMethodConfig;
 
 typedef struct RCCorrectnessConfig {
 	const char *classFileName;
@@ -37,7 +37,7 @@ typedef struct RCCorrectnessConfig {
 	UDATA testFlagOFF;
 	UDATA findClassFlags;
 	UDATA numMethod;
-	RCcorrectenessMethodConfig *methodInfo;
+	RCcorrectnessMethodConfig *methodInfo;
 } RCCorrectnessConfig;
 
 #define TEST_ALL_MASK                   ((UDATA)0xFFFFFFFF)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -154,7 +154,7 @@ public class CheckConversionsFromDouble {
 		testCases.add(new ConversionPair<Integer>(D.NMIN,	0));
 
 		for (ConversionPair<Integer> pair : testCases) {
-			String operation = "testing conversion: convert double " + pair.from + " to byintte";
+			String operation = "testing conversion: convert double " + pair.from + " to byte";
 			logger.debug(operation);
 			Assert.assertEquals((int)pair.from, (int)pair.to, operation);
 		}

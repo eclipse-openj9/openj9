@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,7 +84,7 @@ public class TestLambda {
 		/* Verify that the list was correctly sorted */
 		int lenghtOfPrevious = list.get(0).length();
 		for (int i = 1 ; i < list.size() ; i++) {
-			AssertJUnit.assertTrue("List was not correclty sorted in descending String.length() order." +
+			AssertJUnit.assertTrue("List was not correctly sorted in descending String.length() order." +
 					"\n\tCurrent element: " + list.get(i) + 
 					"\n\tPrevious element: " + list.get(i - 1),
 					list.get(i).length() <= lenghtOfPrevious);	

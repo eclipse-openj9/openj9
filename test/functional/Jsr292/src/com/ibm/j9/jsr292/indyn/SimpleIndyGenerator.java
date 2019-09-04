@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -622,13 +622,13 @@ public class SimpleIndyGenerator {
 		}
 		
 		{
-			mv = cw.visitMethod( ACC_PUBLIC | ACC_STATIC, "test_boostrap_return_constant_MethodType", "()Ljava/lang/invoke/MethodType;", null, null );
+			mv = cw.visitMethod( ACC_PUBLIC | ACC_STATIC, "test_bootstrap_return_constant_MethodType", "()Ljava/lang/invoke/MethodType;", null, null );
 			mv.visitCode();
-			mv.visitInvokeDynamicInsn( "boostrap_return_constant_MethodType", "()Ljava/lang/invoke/MethodType;",
+			mv.visitInvokeDynamicInsn( "bootstrap_return_constant_MethodType", "()Ljava/lang/invoke/MethodType;",
 					new Handle(
 							H_INVOKESTATIC, 
 							"com/ibm/j9/jsr292/indyn/BootstrapMethods", 
-							"boostrap_return_constant_MethodType",
+							"bootstrap_return_constant_MethodType",
 							Type.getType(
 									"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"
 									).getDescriptor() ),

@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -881,7 +881,7 @@ public class Test_Class {
 			}
 			AssertJUnit.assertTrue("Found private Constructor", false);
 		} catch (NoSuchMethodException e) {
-			AssertJUnit.assertTrue("Exception during getConstructoy test", false);
+			AssertJUnit.assertTrue("Exception during getConstructor test", false);
 		}
 	}
 
@@ -1840,20 +1840,20 @@ public class Test_Class {
 				enclosingMethodTestFunc3.equals(method));
 
 		// Test scenario #3: enclosing method is an interface default method, enclosing constructor should be null
-		Constructor<?> construtor = Class.forName("org.openj9.test.java.lang.Test_Class$TestInterface$1LocalClass")
+		Constructor<?> constructor = Class.forName("org.openj9.test.java.lang.Test_Class$TestInterface$1LocalClass")
 				.getEnclosingConstructor();
 		AssertJUnit.assertTrue(
 				"org.openj9.test.java.lang.Test_Class$TestInterface$1LocalClass enclosing constructor expected: <null>, received: <"
-						+ construtor + ">",
-				null == construtor);
+						+ constructor + ">",
+				null == constructor);
 
 		// Test scenario #4: enclosing method is an interface static method, enclosing constructor should be null
-		construtor = Class.forName("org.openj9.test.java.lang.Test_Class$TestInterface$2LocalClass")
+		constructor = Class.forName("org.openj9.test.java.lang.Test_Class$TestInterface$2LocalClass")
 				.getEnclosingConstructor();
 		AssertJUnit.assertTrue(
 				"org.openj9.test.java.lang.Test_Class$TestInterface$2LocalClass enclosing constructor expected: <null>, received: <"
-						+ construtor + ">",
-				null == construtor);
+						+ constructor + ">",
+				null == constructor);
 	}
 
 	/**

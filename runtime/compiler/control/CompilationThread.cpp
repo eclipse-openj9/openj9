@@ -1307,7 +1307,7 @@ void TR::CompilationInfo::releaseCompilationLock()
    {
    if (useSeparateCompilationThread() && _compilationMonitor)
       {
-      debugPrint("\t\texternal user releasing compilatoin monitor\n");
+      debugPrint("\t\texternal user releasing compilation monitor\n");
       releaseCompMonitor(0);
       }
    }
@@ -1399,7 +1399,7 @@ void TR::CompilationInfo::printMethodNameToVlog(J9Method *method)
 #include "infra/Statistics.hpp"
 #undef STATS
 #ifdef STATS
-TR_Stats statBudgetEpoch("Budget len at begining of epoch");
+TR_Stats statBudgetEpoch("Budget len at beginning of epoch");
 TR_Stats statBudgetSmallLag("Budget/comp when smallLag");
 TR_Stats statBudgetMediumLag("Budget/comp when mediumLag");
 TR_Stats statEpochLength("Epoch lengh (ms)");

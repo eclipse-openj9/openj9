@@ -56,7 +56,7 @@ public class DDRExtTesterBase extends TestCase {
 	 */
 	protected String exec(String ddrExtCmd, String[] arg) {
 		String output = null;
-		if (SetupConfig.getDDRContxt() != null) { // this means we are
+		if (SetupConfig.getDDRContext() != null) { // this means we are
 			// running from ddr
 			// plugin
 			DDROutputStream mps = SetupConfig.getPrintStream();
@@ -69,7 +69,7 @@ public class DDRExtTesterBase extends TestCase {
 				ddrExtCmd = "!" + ddrExtCmd;
 			}
 			currentCommand = "'" + ddrExtCmd + " " + argStr + "'";
-			SetupConfig.getDDRContxt().execute(ddrExtCmd, arg,
+			SetupConfig.getDDRContext().execute(ddrExtCmd, arg,
 					SetupConfig.getPrintStream());
 			output = mps.getOutBuffer().toString();
 			mps.clear();

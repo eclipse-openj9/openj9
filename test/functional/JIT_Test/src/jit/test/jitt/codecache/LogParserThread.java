@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -130,7 +130,7 @@ public class LogParserThread extends Thread{
 	 */
 	private void parse() {
 
-		int currentCurorPosition = 0 ;
+		int currentCursorPosition = 0 ;
 
 		try {
 			BufferedReader br = new BufferedReader( new FileReader( logFileName ) );
@@ -139,13 +139,13 @@ public class LogParserThread extends Thread{
 
 				String aLine = br.readLine();
 
-				currentCurorPosition++;
+				currentCursorPosition++;
 
 				if ( aLine == null ) {
 					break;
 				}
 
-				if ( currentCurorPosition != (lastCursorPosition + 1) ) {
+				if ( currentCursorPosition != (lastCursorPosition + 1) ) {
 					continue;
 				}
 
@@ -335,7 +335,7 @@ public class LogParserThread extends Thread{
 					unloadCount ++ ;
 				}
 
-				lastCursorPosition = currentCurorPosition;
+				lastCursorPosition = currentCursorPosition;
 			}
 		} catch ( FileNotFoundException e ) {
 			e.printStackTrace();

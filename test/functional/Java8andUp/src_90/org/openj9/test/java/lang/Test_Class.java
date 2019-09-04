@@ -791,7 +791,7 @@ public void test_getConstructor() {
 		}
 		AssertJUnit.assertTrue("Found private Constructor", false);
 	} catch (NoSuchMethodException e) {
-		AssertJUnit.assertTrue("Exception during getConstructoy test", false);
+		AssertJUnit.assertTrue("Exception during getConstructor test", false);
 	}
 }
 
@@ -1717,14 +1717,14 @@ public void test_getEnclosingMethod2() throws Throwable {
 		enclosingMethodTestFunc3.equals(method));
 
 	// Test scenario #3: enclosing method is an interface default method, enclosing constructor should be null
-	Constructor<?> construtor = Class.forName("org.openj9.test.java.lang.Test_Class$TestInterface$1LocalClass").getEnclosingConstructor();
-	AssertJUnit.assertTrue("org.openj9.test.java.lang.Test_Class$TestInterface$1LocalClass enclosing constructor expected: <null>, received: <"  + construtor + ">",
-		null == construtor);
+	Constructor<?> constructor = Class.forName("org.openj9.test.java.lang.Test_Class$TestInterface$1LocalClass").getEnclosingConstructor();
+	AssertJUnit.assertTrue("org.openj9.test.java.lang.Test_Class$TestInterface$1LocalClass enclosing constructor expected: <null>, received: <"  + constructor + ">",
+		null == constructor);
 
 	// Test scenario #4: enclosing method is an interface static method, enclosing constructor should be null
-	construtor = Class.forName("org.openj9.test.java.lang.Test_Class$TestInterface$2LocalClass").getEnclosingConstructor();
-	AssertJUnit.assertTrue("org.openj9.test.java.lang.Test_Class$TestInterface$2LocalClass enclosing constructor expected: <null>, received: <"  + construtor + ">",
-		null == construtor);
+	constructor = Class.forName("org.openj9.test.java.lang.Test_Class$TestInterface$2LocalClass").getEnclosingConstructor();
+	AssertJUnit.assertTrue("org.openj9.test.java.lang.Test_Class$TestInterface$2LocalClass enclosing constructor expected: <null>, received: <"  + constructor + ">",
+		null == constructor);
 }
 
 /**

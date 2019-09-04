@@ -2136,7 +2136,7 @@ CISCTransform2NestedArrayFindBytes(TR_CISCTransformer *trans)
       }
    else
       {
-      if (disptrace) traceMsg(comp,"TR::ificmpge for comaring the index is found!\n");
+      if (disptrace) traceMsg(comp,"TR::ificmpge for comparing the index is found!\n");
       TR_CISCNode *lenNode;
       TR::Node *lenRepNode;
       if (listT->isSingleton())

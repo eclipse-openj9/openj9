@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -364,9 +364,9 @@ public class IndyTest {
 	
 	// Test to ensure coverage of MethodType resolving code in Java_java_lang_invoke_MethodHandle_getCPMethodTypeAt()
 	@Test(groups = { "level.extended" })
-	public void test_boostrap_return_constant_MethodType() {
+	public void test_bootstrap_return_constant_MethodType() {
 		MethodType expected = MethodType.methodType(String.class, String.class, String.class, int.class);
-		MethodType mt = com.ibm.j9.jsr292.indyn.GenIndyn.test_boostrap_return_constant_MethodType();
+		MethodType mt = com.ibm.j9.jsr292.indyn.GenIndyn.test_bootstrap_return_constant_MethodType();
 		AssertJUnit.assertEquals(expected, mt);
 		AssertJUnit.assertTrue(expected == mt);
 	}

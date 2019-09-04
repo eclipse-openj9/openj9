@@ -143,14 +143,14 @@ static int testInvocation(J9PortLibrary* portLib, struct j9cmdlineOptions* args,
 
 	/* first make sure we can load the function pointers */
 	if (setupInvocationAPIMethods(args) != 0) {
-		j9tty_printf(PORTLIB, "\nCound not do required setup...\n");
+		j9tty_printf(PORTLIB, "\nCould not do required setup...\n");
 		rc = FAIL;
 		goto done;
 	}
 
 	/* now set up the arguments for JNI_CreateJavaVM */
 	if (setupArguments(args,&vm_args,&vmOptionsTable, version) != 0){
-		j9tty_printf(PORTLIB, "\nCound not create required arguments for JNI_CreateJavaVM...\n");
+		j9tty_printf(PORTLIB, "\nCould not create required arguments for JNI_CreateJavaVM...\n");
 		rc = FAIL;
 		goto done;
 	}
@@ -234,7 +234,7 @@ test12Behaviour(J9PortLibrary* portLib, struct j9cmdlineOptions* args, int argc,
 
 	/* first make sure we can load the function pointers */
 	if (setupInvocationAPIMethods(args) != 0) {
-		j9tty_printf(PORTLIB, "\nCound not do required setup...\n");
+		j9tty_printf(PORTLIB, "\nCould not do required setup...\n");
 		rc = FAIL;
 		goto done2;
 	}
@@ -242,7 +242,7 @@ test12Behaviour(J9PortLibrary* portLib, struct j9cmdlineOptions* args, int argc,
 	printf("1\n");
 	/* now set up the arguments for JNI_CreateJavaVM */
 	if (setupArguments(args,&vm_args,&vmOptionsTable, JNI_VERSION_1_2) != 0){
-		j9tty_printf(PORTLIB, "\nCound not create required arguments for JNI_CreateJavaVM...\n");
+		j9tty_printf(PORTLIB, "\nCould not create required arguments for JNI_CreateJavaVM...\n");
 		rc = FAIL;
 		goto done2;
 	}
@@ -626,14 +626,14 @@ testAttachBehaviour(J9PortLibrary* portLib, struct j9cmdlineOptions* args, int a
 
 	/* first make sure we can load the function pointers */
 	if (setupInvocationAPIMethods(args) != 0) {
-		j9tty_printf(PORTLIB, "\nCound not do required setup...\n");
+		j9tty_printf(PORTLIB, "\nCould not do required setup...\n");
 		rc = FAIL;
 		goto done2;
 	}
 
 	/* now set up the arguments for JNI_CreateJavaVM */
 	if (setupArguments(args,&vm_args,&vmOptionsTable, JNI_VERSION_1_2) != 0){
-		j9tty_printf(PORTLIB, "\nCound not create required arguments for JNI_CreateJavaVM...\n");
+		j9tty_printf(PORTLIB, "\nCould not create required arguments for JNI_CreateJavaVM...\n");
 		rc = FAIL;
 		goto done2;
 	}
@@ -784,14 +784,14 @@ static int testIFAOffload(J9PortLibrary* portLib, struct j9cmdlineOptions* args,
 
 	/* first make sure we can load the function pointers */
 	if (setupInvocationAPIMethods(args) != 0) {
-		j9tty_printf(PORTLIB, "\nCound not do required setup...\n");
+		j9tty_printf(PORTLIB, "\nCould not do required setup...\n");
 		rc = FAIL;
 		goto done;
 	}
 
 	/* now set up the arguments for JNI_CreateJavaVM */
 	if (setupArguments(args,&vm_args,&vmOptionsTable, JNI_VERSION_1_2) != 0){
-		j9tty_printf(PORTLIB, "\nCound not create required arguments for JNI_CreateJavaVM...\n");
+		j9tty_printf(PORTLIB, "\nCould not create required arguments for JNI_CreateJavaVM...\n");
 		rc = FAIL;
 		goto done;
 	}

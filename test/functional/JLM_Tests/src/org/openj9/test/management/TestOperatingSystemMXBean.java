@@ -187,7 +187,7 @@ public class TestOperatingSystemMXBean {
 					connector.close();
 					stopRemoteServer();
 				} catch (Exception e) {
-					Assert.fail("Failed to stop remote server or close connetor" + e.getMessage(), e);
+					Assert.fail("Failed to stop remote server or close connector" + e.getMessage(), e);
 				}
 			}
 			logger.info("Tests finished at: " + System.currentTimeMillis() + " ms.");

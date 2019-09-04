@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -946,7 +946,7 @@ public class TestMemoryPoolMXBean {
 				Assert.fail("Unreacheable code: should have thrown an exception");
 			} catch (Exception e) {
 				AssertJUnit.assertTrue(e instanceof UnsupportedOperationException);
-				logger.debug("Exception occurred, as expected: cannout obtain usage threshold count.");
+				logger.debug("Exception occurred, as expected: cannot obtain usage threshold count.");
 			}
 		} // end else usage threshold not supported
 	}

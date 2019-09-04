@@ -198,7 +198,7 @@ public class BootstrapMethods {
 		return new ConstantCallSite(MethodHandles.constant(long.class, value));
 	}
 	
-	public static CallSite boostrap_return_constant_MethodType(Lookup l, String name, MethodType type, MethodType result) {
+	public static CallSite bootstrap_return_constant_MethodType(Lookup l, String name, MethodType type, MethodType result) {
 		return new MutableCallSite(MethodHandles.constant(MethodType.class, result));
 	}
 	public static CallSite gwtBootstrap(Lookup ignored, String name, MethodType type) throws Throwable {

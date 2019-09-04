@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@ public class TestClassExt extends DDRExtTesterBase {
 				new String[] {});
 		assertTrue(validate(allClassesOutput,
 				Constants.ALL_CLASSES_SUCCESS_KEY,
-				Constants.ALL_CLASSESS_FAILURE_KEY, true));
+				Constants.ALL_CLASSES_FAILURE_KEY, true));
 	}
 
 	public void testJ9ClassShapeExt() {

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,7 +116,7 @@ public class CustomURLLoader extends SecureClassLoader {
 		try{
 			if (this.loadClass(name)==null)
 			{
-				System.out.println("CustomeURLLoader::loadClassFrom returned null.");
+				System.out.println("CustomURLLoader::loadClassFrom returned null.");
 			}
 		} catch(ClassNotFoundException e){
 			e.printStackTrace();
@@ -478,7 +478,7 @@ public class CustomURLLoader extends SecureClassLoader {
 				return false;
 			}
 		}
-		System.out.println("CustomeURLLoader::isClassInSharedCache scHelper is null.");
+		System.out.println("CustomURLLoader::isClassInSharedCache scHelper is null.");
 		return false;
 	}
 	

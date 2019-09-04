@@ -133,7 +133,7 @@ createJavaVM(struct j9cmdlineOptions* startupOptions, J9JavaVM** vm_, BOOLEAN us
 
 	/* now set up the arguments for JNI_CreateJavaVM */
 	if (setupArguments(startupOptions,&vm_args,&vmOptionsTable, useXshareclasses, enablebci) != 0){
-		j9tty_printf(PORTLIB, "\nCound not create required arguments for JNI_CreateJavaVM...\n");
+		j9tty_printf(PORTLIB, "\nCould not create required arguments for JNI_CreateJavaVM...\n");
 		rc = FAIL;
 		goto cleanup;
 	}
@@ -211,7 +211,7 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 		if (startsWith(argv[i],TRANSACTIONTEST_CMDLINE_STARTSWITH)!=0) {
 			IDATA procrc = 0;
 			if (createJavaVM(args, &vm, TRUE, FALSE, &env) != JNI_OK) {
-				j9tty_printf(PORTLIB,"\nCound not create jvm for transaction tests. Exiting unit test...\n");
+				j9tty_printf(PORTLIB,"\nCould not create jvm for transaction tests. Exiting unit test...\n");
 				return 1;
 			}
 			HEADING(PORTLIB, "Shared Class Store Transaction Test");
@@ -231,7 +231,7 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 		if (startsWith(argv[i],TRANSACTION_WITHBCI_TEST_CMDLINE_STARTSWITH)!=0) {
 			IDATA procrc = 0;
 			if (createJavaVM(args, &vm, TRUE, TRUE, &env) != JNI_OK) {
-				j9tty_printf(PORTLIB,"\nCound not create jvm for transaction tests. Exiting unit test...\n");
+				j9tty_printf(PORTLIB,"\nCould not create jvm for transaction tests. Exiting unit test...\n");
 				return 1;
 			}
 			HEADING(PORTLIB, "Shared Class Store With BCI Test");
@@ -250,7 +250,7 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 		if(startsWith(argv[i],OSCACHETEST_CMDLINE_STARTSWITH)!=0) {
 			IDATA procrc = 1;
 			if (createJavaVM(args, &vm, FALSE, FALSE, &env) != JNI_OK) {
-				j9tty_printf(PORTLIB,"\nCound not create jvm for testOSCache. Exiting unit test...\n");
+				j9tty_printf(PORTLIB,"\nCould not create jvm for testOSCache. Exiting unit test...\n");
 				return procrc;
 			}
 
@@ -283,7 +283,7 @@ signalProtectedMain(struct J9PortLibrary *portLibrary, void * vargs)
 #endif
 
 	if (createJavaVM(args, &vm, FALSE, FALSE, &env) != JNI_OK) {
-		j9tty_printf(PORTLIB,"\nCound not create jvm. Exiting unit test...\n");
+		j9tty_printf(PORTLIB,"\nCould not create jvm. Exiting unit test...\n");
 		return 1;
 	}
 

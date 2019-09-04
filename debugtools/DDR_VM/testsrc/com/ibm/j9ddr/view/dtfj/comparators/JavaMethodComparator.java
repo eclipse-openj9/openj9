@@ -82,7 +82,7 @@ public class JavaMethodComparator extends DTFJComparator {
 		}
 
 		if (ddrList.size() == jextractList.size()) {
-			imageSectionComparator.testComparatorIteratorEquals(ddrJavaMethod, jextractJavaMethod, "getCompiledSections", ImageSection.class, JavaMethodTest.COMPILIED_SECTIONS_SORT_ORDER, imageSectionComparator.getDefaultMask());
+			imageSectionComparator.testComparatorIteratorEquals(ddrJavaMethod, jextractJavaMethod, "getCompiledSections", ImageSection.class, JavaMethodTest.COMPILED_SECTIONS_SORT_ORDER, imageSectionComparator.getDefaultMask());
 		} else {
 		
 			// Handle case where DTFJ is correctly detected warm/cold paths and jextract is not.
@@ -103,8 +103,8 @@ public class JavaMethodComparator extends DTFJComparator {
 
 			Object[] ddrArray = newDDRList.toArray();
 			Object[] jextractArray = jextractList.toArray();
-			Arrays.sort(ddrArray, JavaMethodTest.COMPILIED_SECTIONS_SORT_ORDER);
-			Arrays.sort(jextractArray, JavaMethodTest.COMPILIED_SECTIONS_SORT_ORDER);
+			Arrays.sort(ddrArray, JavaMethodTest.COMPILED_SECTIONS_SORT_ORDER);
+			Arrays.sort(jextractArray, JavaMethodTest.COMPILED_SECTIONS_SORT_ORDER);
 			
 			for (int j = 0; j < ddrArray.length; j++) {
 				imageSectionComparator.testEquals(ddrArray[j], jextractArray[j], ImageSectionComparator.BASE_ADDRESS | ImageSectionComparator.NAME);

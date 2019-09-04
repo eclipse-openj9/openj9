@@ -282,7 +282,7 @@ public class Constants {
 	/* The following are constants related to Class related extensions */
 	public static final String ALL_CLASSES_CMD = "allclasses";
 	public static final String ALL_CLASSES_SUCCESS_KEY = "j9vm/test/corehelper/CoreGen,j9vm/test/corehelper/SimpleThread";
-	public static final String ALL_CLASSESS_FAILURE_KEY = "";
+	public static final String ALL_CLASSES_FAILURE_KEY = "";
 
 	public static final String J9CLASSSHAPE_CMD = "j9classshape";
 	public static final String J9CLASSSHAPE_TEST_CLASS = "j9vm/test/corehelper/SimpleThread";

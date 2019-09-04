@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -971,7 +971,7 @@ public class LinuxNumaTest {
 			System.exit(0);
 		}
 
-		System.out.println("Begining heap memory policy test...");
+		System.out.println("Beginning heap memory policy test...");
 
 		// Run as an instance so we have access to an object monitor so we can
 		// wait() for other processes to complete.

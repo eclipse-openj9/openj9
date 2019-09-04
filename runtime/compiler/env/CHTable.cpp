@@ -366,7 +366,7 @@ bool TR_CHTable::commit(TR::Compilation *comp)
          {
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseRuntimeAssumptions, TR_VerboseCompileEnd, TR_VerbosePerformance, TR_VerboseCompFailure))
             {
-            TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Failure while commiting static final field assumption for class %p for %s", clazz, comp->signature());
+            TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Failure while committing static final field assumption for class %p for %s", clazz, comp->signature());
             }
          comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted: Static final field of a class has been modified");
          }

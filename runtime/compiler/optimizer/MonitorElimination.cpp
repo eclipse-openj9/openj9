@@ -3015,7 +3015,7 @@ void TR::MonitorElimination::coarsenMonitorRanges()
            {
 
         if (trace())
-           traceMsg(comp(),"Coarsening: _multiplyLockedObjects->get(prevLockedObject) = %d _safeValueNumbers[prevLockedObject] = %d _coarsendMonexits->get(blockNum) = %d\n"
+           traceMsg(comp(),"Coarsening: _multiplyLockedObjects->get(prevLockedObject) = %d _safeValueNumbers[prevLockedObject] = %d _coarsenedMonexits->get(blockNum) = %d\n"
                  ,_multiplyLockedObjects->get(prevLockedObject),_safeValueNumbers[prevLockedObject],_coarsenedMonexits->get(blockNum));
 
            if (_multiplyLockedObjects->get(prevLockedObject) &&
