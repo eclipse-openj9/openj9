@@ -19,50 +19,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef J9_ARM64_INSTRUCTIONDELEGATE_INCL
-#define J9_ARM64_INSTRUCTIONDELEGATE_INCL
-
-/*
- * The following #define and typedef must appear before any #includes in this file
- */
-#ifndef J9_INSTRUCTIONDELEGATE_CONNECTOR
-#define J9_INSTRUCTIONDELEGATE_CONNECTOR
-namespace J9 { namespace ARM64 { class InstructionDelegate; } }
-namespace J9 { typedef J9::ARM64::InstructionDelegate InstructionDelegateConnector; }
-#else
-#error J9::ARM64::InstructionDelegate expected to be a primary connector, but a J9 connector is already defined
-#endif
-
 #include "codegen/ARM64Instruction.hpp"
-#include "compiler/codegen/J9InstructionDelegate.hpp"
-#include "infra/Annotations.hpp"
+#include "codegen/CallSnippet.hpp"
+#include "codegen/InstructionDelegate.hpp"
 
-namespace J9
-{
-
-namespace ARM64
-{
-
-class OMR_EXTENSIBLE InstructionDelegate : public J9::InstructionDelegate
+void
+J9::ARM64::InstructionDelegate::encodeBranchToLabel(TR::CodeGenerator *cg, TR::ARM64ImmSymInstruction *ins, uint8_t *cursor)
    {
-protected:
-
-   InstructionDelegate() {}
-
-public:
-
-   /**
-    * @brief Sets the return address to CallSnippet for Label target
-    * @param[in] cg : CodeGenerator
-    * @param[in] ins : instruction associated with CallSnippet
-    * @param[in] cursor : instruction cursor
-    */
-   static void encodeBranchToLabel(TR::CodeGenerator *cg, TR::ARM64ImmSymInstruction *ins, uint8_t *cursor);
-
-   };
-
-}
-
-}
-
-#endif
+   ((TR::ARM64CallSnippet *)ins->getCallSnippet())->setCallRA(cursor + ARM64_INSTRUCTION_LENGTH);
+   }
