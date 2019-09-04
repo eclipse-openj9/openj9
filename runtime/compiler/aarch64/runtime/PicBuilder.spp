@@ -264,17 +264,17 @@ _interfaceCallHelper:
 	stp	x2, x3, [J9SP, #16]
 	stp	x4, x5, [J9SP, #32]
 	stp	x6, x7, [J9SP, #48]
-	mov	x3, x30						// preserve LR
+	mov	x7, x30						// preserve LR
 	add	x0, x30, #J9TR_UICSnippet_CP			// get CP/index pair pointer
 	ldr	x1, [x30, #J9TR_ICSnippet_codeCacheReturnAddress]	// get code cache RA
 	mov	x28, x1						// protect RA in x28 (in L_commonLookupException, it is expected)
 	bl	jitResolveInterfaceMethod			// call the helper
 	cbz	x0, L_commonLookupException			// if resolve failed, throw the exception
-	add	x0, x3, #J9TR_Snippet_CallInstruction		// get address of BL instruction in snippet
+	add	x0, x7, #J9TR_Snippet_CallInstruction		// get address of BL instruction in snippet
 	ldr	x1, const_interfaceDispatch			// get new snippet branch target
 	mov	x2, #TR_ARM64interfaceDispatch
 	bl	L_refreshHelper					// rewrite the BL
-	mov	x30, x3						// restore LR
+	mov	x30, x7						// restore LR
 	ldr	x0, [J9SP, #0]					// refetch 'this'
 	b	L_continueInterfaceSend				// lookup interface method and send
 _interfaceDispatch:
