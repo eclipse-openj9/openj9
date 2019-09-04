@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,27 +22,16 @@
 package com.ibm.j9ddr.vm29.pointer.helper;
 
 import com.ibm.j9ddr.CorruptDataException;
-import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ShrOffsetPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.OrphanWrapperPointer;
-import com.ibm.j9ddr.vm29.pointer.PointerPointer;
-import com.ibm.j9ddr.vm29.pointer.I32Pointer;
-import com.ibm.j9ddr.vm29.types.UDATA;
 
-public class OrphanWrapperHelper {
-	public static J9ROMClassPointer romClass(OrphanWrapperPointer ptr, U8Pointer[] cacheHeader) throws CorruptDataException {
-		PointerPointer romClassOffset = ptr.romClassOffsetEA();
-		if (null == cacheHeader) {
-			return J9ROMClassPointer.cast(U8Pointer.cast(ptr).add(I32Pointer.cast(romClassOffset.getAddress()).at(0)));
-		} else {
-			J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(romClassOffset);
-			UDATA offset = j9shrOffset.offset();
-			if (offset.eq(0)) {
-				return J9ROMClassPointer.cast(U8Pointer.NULL);
-			}
-			int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
-			return J9ROMClassPointer.cast(cacheHeader[layer].add(offset));
+public class SharedClassesMetaDataHelper {
+	public static int getCacheLayerFromJ9shrOffset(J9ShrOffsetPointer j9shrOffset) throws CorruptDataException {
+		int layer;
+		try {
+			layer = j9shrOffset.cacheLayer().intValue();
+		} catch (NoSuchFieldError | NoSuchMethodError e) {
+			layer = 0;
 		}
+		return layer;
 	}
 }
