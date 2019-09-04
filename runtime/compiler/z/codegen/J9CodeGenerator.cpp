@@ -3220,6 +3220,11 @@ bool
 J9::Z::CodeGenerator::checkFieldAlignmentForAtomicLong()
    {
    TR_OpaqueClassBlock * classBlock = self()->comp()->fej9()->getSystemClassFromClassName("java/util/concurrent/atomic/AtomicLong", 38, true);
+
+   // TR_J9SharedCacheVM::getSystemClassFromClassName can return 0 when it's impossible to relocate a J9Class later for AOT loads.
+   if (!classBlock)
+      return false;
+
    char* fieldName = "value";
    int32_t fieldNameLen = 5;
    char * fieldSig = "J";

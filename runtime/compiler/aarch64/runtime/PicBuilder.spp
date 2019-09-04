@@ -117,6 +117,7 @@ L_refreshHelper:
 	bne	L_outOfRange			// distance is out of +/-128MB range
 
 L_rewriteBranch:
+	sub	x3, x1, x0			// distance = (target - callSite)
 	ldr	w2, [x0]			// fetch branch instruction
 	ubfx	x1, x3, #2, #26			// distance >> 2, masking out sign bits
 	and	w2, w2, #0xFC000000		// mask out branch distance
@@ -127,8 +128,19 @@ L_rewriteBranch:
 
 // Get a new (reachable) target address for calling the helper via trampoline
 L_outOfRange:
-	hlt	#0	// Not implemented yet -- Use mcc_lookupHelperTrampoline_unwrapper
+	sub	J9SP, J9SP, #32
+	stp	x0, x30, [J9SP, #16]		// save registers
+	stp	x0, x2, [J9SP]			// push call site addr (x0) and helper index (x2)
+	ldr	x0, const_mcc_lookupHelperTrampoline_unwrapper
+	mov	x1, J9SP			// addr of the first arg for mcc_lookupHelperTrampoline_unwrapper
+	mov	x2, J9SP			// addr of the return value from mcc_lookupHelperTrampoline_unwrapper
+	bl	jitCallCFunction
+	ldr	x1, [J9SP]
+	ldp	x0, x30, [J9SP, #16]		// restore registers
+	add	J9SP, J9SP, #32
 	b	L_rewriteBranch
+const_mcc_lookupHelperTrampoline_unwrapper:
+	.dword	mcc_lookupHelperTrampoline_unwrapper
 
 // Static glue target table is laid out as:
 //
@@ -339,7 +351,7 @@ L_StaticGlueCallFixer:
 	tst	x0, #clinit_bit					// branch if the LSB (the "clinit" bit) was set in the resolved address
 	bne	L_SGCclinitCase
 	ldr	x1, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
-	tbz	x1, #J9TR_MethodNotCompiledBit, L_StaticGlueCallFixer1	// is method now compiled?
+	tbnz	x1, #J9TR_MethodNotCompiledBit, L_StaticGlueCallFixer1	// is method now compiled?
 	ret	x2						// if not, return to static glue to call interpreter
 L_StaticGlueCallFixer1:
 	ldr	x28, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
@@ -358,7 +370,7 @@ L_StaticGlueCallFixer1:
 L_SGCclinitCase:
 	and	x0, x0, #(~clinit_bit)				// clear the "clinit" bit
 	ldr	x1, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
-	tbz	x1, #J9TR_MethodNotCompiledBit, L_SGCclinitCase1	// is method now compiled?
+	tbnz	x1, #J9TR_MethodNotCompiledBit, L_SGCclinitCase1	// is method now compiled?
 	ret	x2						// if not, return to static glue to call interpreter
 L_SGCclinitCase1:
 	br	x1						// in <clinit> case, dispatch method directly without patching

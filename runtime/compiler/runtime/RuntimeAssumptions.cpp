@@ -51,15 +51,6 @@ TR_PatchNOPedGuardSiteOnClassPreInitialize::make(
    return result;
    }
 
-
-void
-TR_PatchNOPedGuardSiteOnClassPreInitialize::compensate(TR_FrontEnd *fe, bool isSMP, void *data)
-   {
-   reclaim();
-   TR::PatchNOPedGuardSite::compensate(fe, isSMP, data);
-   }
-
-
 uintptrj_t
 TR_PatchNOPedGuardSiteOnClassPreInitialize::hashCode(char *sig, uint32_t sigLen)
    {
@@ -90,20 +81,33 @@ TR_PatchNOPedGuardSiteOnClassPreInitialize::hashCode(char *sig, uint32_t sigLen)
    return sum;
    }
 
+void
+TR_PatchNOPedGuardSiteOnClassPreInitialize::reclaim()
+   {
+   TR_ASSERT_FATAL(_key != NULL, "Attempt to reclaim an already freed _key");
+
+   jitPersistentFree((void*)_key);
+   _key = 0;
+   }
 
 bool
 TR_PatchNOPedGuardSiteOnClassPreInitialize::matches(char *sig, uint32_t sigLen)
    {
-   if (sigLen+2 != _sigLen) return false;
+   if (sigLen + 2 != _sigLen)
+      {
+      return false;
+      }
+
    char *mySig = (char*)getKey();
-   uint32_t compareIndex = sigLen-1;
-   for ( ; sigLen > 0; sigLen--)
+
+   for (uint32_t compareIndex = sigLen - 1; sigLen > 0; sigLen--)
       {
       if (mySig[compareIndex+1] != sig[compareIndex])
          return false;
 
       compareIndex--;
       }
+
    return true;
    }
 
