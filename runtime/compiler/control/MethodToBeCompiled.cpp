@@ -96,7 +96,7 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
 void
 TR_MethodToBeCompiled::shutdown()
    {
-   cleanupJITaaS();
+   cleanupJITServer();
    TR::MonitorTable *table = TR::MonitorTable::get();
    if (!table) return;
    table->removeAndDestroy(_monitor);
@@ -146,9 +146,9 @@ TR_MethodToBeCompiled::getClientUID() const
    }
 
 void
-TR_MethodToBeCompiled::cleanupJITaaS()
+TR_MethodToBeCompiled::cleanupJITServer()
    {
-   // JITaaS: clean up c-style string client options which was allocated using persistent allocator
+   // JITServer: clean up c-style string client options which was allocated using persistent allocator
    if (_clientOptions)
       {
       _compInfoPT->getCompilationInfo()->persistentMemory()->freePersistentMemory((void *)_clientOptions);

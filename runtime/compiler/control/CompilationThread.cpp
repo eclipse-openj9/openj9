@@ -3319,7 +3319,7 @@ void TR::CompilationInfo::stopCompilationThreads()
          }
       }
 
-   if (feGetEnv("TR_PrintJITaaSConnStats"))
+   if (feGetEnv("TR_PrintJITServerConnStats"))
       {
       if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
@@ -4001,8 +4001,8 @@ TR::CompilationInfoPerThread::processEntries()
          }
       }
 
-   static bool enableJITaaSPerCompConn = feGetEnv("TR_EnableJITaaSPerCompConn") ? true : false;
-   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && !enableJITaaSPerCompConn)
+   static bool enableJITServerPerCompConn = feGetEnv("TR_EnableJITServerPerCompConn") ? true : false;
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && !enableJITServerPerCompConn)
       {
       JITServer::ClientStream *client = getClientStream();
       if (client)
@@ -5336,7 +5336,7 @@ void TR::CompilationInfo::recycleCompilationEntry(TR_MethodToBeCompiled *entry)
    entry->_freeTag |= ENTRY_IN_POOL_NOT_FREE;
    if (entry->_numThreadsWaiting == 0)
       entry->_freeTag |= ENTRY_IN_POOL_FREE;
-   entry->cleanupJITaaS();
+   entry->cleanupJITServer();
 
    entry->_next = _methodPool;
    _methodPool = entry;
@@ -7147,7 +7147,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
                doLocalCompilation = true;
                entry->_optimizationPlan->setOptLevel(cold);
                entry->_optimizationPlan->setOptLevelDowngraded(true);
-               // JITaaS TODO: queue a remote upgrade right away, but at a lower priority
+               // JITServer TODO: queue a remote upgrade right away, but at a lower priority
                // If so, disable GCR trees for those cold compilations.
                }
             }
@@ -7850,7 +7850,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   (vm->isAOT_DEPRECATED_DO_NOT_USE() || that->_methodBeingCompiled->isAotLoad()),
                   that->getCompThreadId());
 
-            // JITaaS TODO determine if we care to support annotations
+            // JITServer TODO determine if we care to support annotations
             if (that->_methodBeingCompiled->isRemoteCompReq())
                options->setOption(TR_EnableAnnotations,false);
 
@@ -8269,7 +8269,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                p->_optimizationPlan,
                reloRuntime);
 
-         // JITaaS TODO: put info in optPlan so that compilation constructor can do this
+         // JITServer TODO: put info in optPlan so that compilation constructor can do this
          if (that->_methodBeingCompiled->isRemoteCompReq())
             compiler->setRemoteCompilation();
          else if (that->_methodBeingCompiled->isOutOfProcessCompReq())
@@ -8756,7 +8756,7 @@ TR::CompilationInfoPerThreadBase::compile(
          }
 
       // If we want to compile without VM access, now it's the time to release it
-      // For the JITaaS client we must not enter this path. The class unload monitor 
+      // For the JITClient we must not enter this path. The class unload monitor
       // will not be acquired/released and we'll only release VMaccess when 
       // waiting for a reply from the server
       if (!compiler->getOption(TR_DisableNoVMAccess) &&
@@ -12776,7 +12776,7 @@ TR::CompilationInfo::requeueOutOfProcessEntry(TR_MethodToBeCompiled *entry)
 
    recycleCompilationEntry(entry);
    // we do not requeue outOfProcessEntry for the Per-Compilation-Connection Mode
-   if (feGetEnv("TR_EnableJITaaSPerCompConn"))
+   if (feGetEnv("TR_EnableJITServerPerCompConn"))
       return;
 
    if (entry->_stream && addOutOfProcessMethodToBeCompiled(entry->_stream))

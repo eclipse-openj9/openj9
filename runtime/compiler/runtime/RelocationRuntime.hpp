@@ -388,11 +388,11 @@ private:
       static const UDATA aotHeaderKeyLength;
 };
 
-class TR_JITaaSRelocationRuntime : public TR_RelocationRuntime {
+class TR_JITServerRelocationRuntime : public TR_RelocationRuntime {
 public:
       TR_ALLOC(TR_Memory::Relocation)
       void * operator new(size_t, J9JITConfig *);
-      TR_JITaaSRelocationRuntime(J9JITConfig *jitCfg) : TR_RelocationRuntime(jitCfg) {}
+      TR_JITServerRelocationRuntime(J9JITConfig *jitCfg) : TR_RelocationRuntime(jitCfg) {}
 // The following public APIs should not be used with this class
       virtual bool storeAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
       virtual TR_AOTHeader *createAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}

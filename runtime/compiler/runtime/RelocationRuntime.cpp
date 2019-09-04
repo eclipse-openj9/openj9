@@ -273,7 +273,7 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
       else
          {
          _newExceptionTableStart = allocateSpaceInDataCache(_exceptionTableCacheEntry->size, _exceptionTableCacheEntry->type);
-         // JITaaS: code should always be non-NULL, should point to the code cache
+         // JITServer: code should always be non-NULL, should point to the code cache
          // received from the server.
          if (existingCode)
             tempCodeStart = existingCode;
@@ -1364,14 +1364,14 @@ void TR_RelocationRuntime::addClazzRecord(uint8_t *ia, uint32_t bcIndex, TR_Opaq
 #endif
 
 void
-TR_JITaaSRelocationRuntime::initializeCacheDeltas()
+TR_JITServerRelocationRuntime::initializeCacheDeltas()
    {
    _dataCacheDelta = 0;
    _codeCacheDelta = 0;
    }
 
 U_8 *
-TR_JITaaSRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
+TR_JITServerRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
    TR::CodeCacheManager *manager = TR::CodeCacheManager::instance();
@@ -1418,7 +1418,7 @@ TR_JITaaSRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
    }
 
 uint8_t *
-TR_JITaaSRelocationRuntime::allocateSpaceInDataCache(uintptr_t metaDataSize,
+TR_JITServerRelocationRuntime::allocateSpaceInDataCache(uintptr_t metaDataSize,
                                                    uintptr_t type)
    {
    _metaDataAllocSize = TR_DataCacheManager::alignToMachineWord(metaDataSize);
@@ -1429,7 +1429,7 @@ TR_JITaaSRelocationRuntime::allocateSpaceInDataCache(uintptr_t metaDataSize,
    }
 
 uint8_t *
-TR_JITaaSRelocationRuntime::copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe)
+TR_JITServerRelocationRuntime::copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe)
    {
    TR::CompilationInfoPerThreadBase *compInfoPT = fe->_compInfoPT;
    int32_t numReserved;

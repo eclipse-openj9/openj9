@@ -782,14 +782,14 @@ TR_J9SharedCache::storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataD
          descriptor);
    }
 
-TR_J9JITaaSServerSharedCache::TR_J9JITaaSServerSharedCache(TR_J9VMBase *fe)
+TR_J9JITServerSharedCache::TR_J9JITServerSharedCache(TR_J9VMBase *fe)
    : TR_J9SharedCache(fe)
    {
    _stream = NULL;
    }
 
 void *
-TR_J9JITaaSServerSharedCache::pointerFromOffsetInSharedCache(void *offset)
+TR_J9JITServerSharedCache::pointerFromOffsetInSharedCache(void *offset)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
    // compute pointer from client's cache start address
@@ -798,7 +798,7 @@ TR_J9JITaaSServerSharedCache::pointerFromOffsetInSharedCache(void *offset)
    }
 
 void *
-TR_J9JITaaSServerSharedCache::offsetInSharedCacheFromPointer(void *ptr)
+TR_J9JITServerSharedCache::offsetInSharedCacheFromPointer(void *ptr)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
    // return offset from client's cache start address
@@ -807,7 +807,7 @@ TR_J9JITaaSServerSharedCache::offsetInSharedCacheFromPointer(void *ptr)
    }
 
 UDATA *
-TR_J9JITaaSServerSharedCache::rememberClass(J9Class *clazz, bool create)
+TR_J9JITServerSharedCache::rememberClass(J9Class *clazz, bool create)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
    auto clientData = TR::compInfoPT->getClientData();
@@ -841,7 +841,7 @@ TR_J9JITaaSServerSharedCache::rememberClass(J9Class *clazz, bool create)
    }
 
 UDATA
-TR_J9JITaaSServerSharedCache::getCacheStartAddress()
+TR_J9JITServerSharedCache::getCacheStartAddress()
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
    auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
@@ -849,7 +849,7 @@ TR_J9JITaaSServerSharedCache::getCacheStartAddress()
    }
 
 uintptrj_t
-TR_J9JITaaSServerSharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz)
+TR_J9JITServerSharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
    _stream->write(JITServer::MessageType::SharedCache_getClassChainOffsetInSharedCache, clazz);
@@ -857,7 +857,7 @@ TR_J9JITaaSServerSharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSh
    }
 
 void
-TR_J9JITaaSServerSharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
+TR_J9JITServerSharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
    auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
@@ -869,7 +869,7 @@ TR_J9JITaaSServerSharedCache::addHint(J9Method * method, TR_SharedCacheHint theH
    }
 
 const void *
-TR_J9JITaaSServerSharedCache::storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor)
+TR_J9JITServerSharedCache::storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
    std::string dataStr((char *) descriptor->address, descriptor->length);

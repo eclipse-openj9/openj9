@@ -162,12 +162,12 @@ private:
    static UDATA                          _storeSharedDataFailedLength;
    };
 
-class TR_J9JITaaSServerSharedCache : public TR_J9SharedCache
+class TR_J9JITServerSharedCache : public TR_J9SharedCache
    {
 public:
    TR_ALLOC(TR_Memory::SharedCache)
 
-   TR_J9JITaaSServerSharedCache(TR_J9VMBase *fe);
+   TR_J9JITServerSharedCache(TR_J9VMBase *fe);
 
    virtual bool isHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT(false, "called"); return false;}
    virtual bool isHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT(false, "called"); return false;}

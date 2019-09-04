@@ -29,7 +29,7 @@
 #include "runtime/JITClientSession.hpp"
 
 struct
-TR_ResolvedJ9JITaaSServerMethodInfoStruct
+TR_ResolvedJ9JITServerMethodInfoStruct
    {
    TR_ResolvedJ9Method *remoteMirror;
    J9RAMConstantPoolItem *literals;
@@ -50,7 +50,7 @@ TR_ResolvedJ9JITaaSServerMethodInfoStruct
 
 
 // The last 3 strings are serialized versions of jittedBodyInfo, persistentMethodInfo and TR_ContiguousIPMethodHashTableInfo
-using TR_ResolvedJ9JITaaSServerMethodInfo = std::tuple<TR_ResolvedJ9JITaaSServerMethodInfoStruct, std::string, std::string, std::string>;
+using TR_ResolvedJ9JITServerMethodInfo = std::tuple<TR_ResolvedJ9JITServerMethodInfoStruct, std::string, std::string, std::string>;
 
 // key used to identify a resolved method in resolved methods cache.
 // Since one cache contains different types of resolved methods, need to uniquely identify
@@ -113,16 +113,16 @@ TR_ResolvedMethodCacheEntry
    {
    TR_OpaqueMethodBlock *method;
    uint32_t vTableSlot;
-   TR_ResolvedJ9JITaaSServerMethodInfo methodInfo;
+   TR_ResolvedJ9JITServerMethodInfo methodInfo;
    };
 
 using TR_ResolvedMethodInfoCache = UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry>;
 
-class TR_ResolvedJ9JITaaSServerMethod : public TR_ResolvedJ9Method
+class TR_ResolvedJ9JITServerMethod : public TR_ResolvedJ9Method
    {
 public:
-   TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
-   TR_ResolvedJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
+   TR_ResolvedJ9JITServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
+   TR_ResolvedJ9JITServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, const TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
    virtual J9ROMClass *romClassPtr() override;
    virtual J9RAMConstantPoolItem *literals() override;
@@ -144,7 +144,7 @@ public:
    virtual TR_ResolvedMethod * getResolvedStaticMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP) override;
    virtual TR_ResolvedMethod * getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpIndex, bool * unresolvedInCP) override;
    virtual TR_ResolvedMethod * createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats) override;
-   virtual TR_ResolvedMethod * createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo);
+   virtual TR_ResolvedMethod * createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats, const TR_ResolvedJ9JITServerMethodInfo &methodInfo);
    virtual uint32_t classCPIndexOfMethod(uint32_t methodCPIndex) override;
    virtual bool fieldsAreSame(int32_t cpIndex1, TR_ResolvedMethod *m2, int32_t cpIndex2, bool &sigSame) override;
    virtual bool staticsAreSame(int32_t cpIndex1, TR_ResolvedMethod *m2, int32_t cpIndex2, bool &sigSame) override;
@@ -191,15 +191,15 @@ public:
 
    TR_ResolvedJ9Method *getRemoteMirror() const { return _remoteMirror; }
    bool inROMClass(void *address);
-   static void createResolvedMethodMirror(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
-   static void createResolvedMethodFromJ9MethodMirror(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
+   static void createResolvedMethodMirror(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
+   static void createResolvedMethodFromJ9MethodMirror(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedMethod *owningMethod, TR_FrontEnd *fe, TR_Memory *trMemory);
    bool addValidationRecordForCachedResolvedMethod(const TR_ResolvedMethodKey &key, TR_OpaqueMethodBlock *method);
    void cacheResolvedMethodsCallees();
 
 protected:
    JITServer::ServerStream *_stream;
    J9Class *_ramClass; // client pointer to RAM class
-   static void packMethodInfo(TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe);
+   static void packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedJ9Method *resolvedMethod, TR_FrontEnd *fe);
    static void setAttributeResultFromResolvedMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, U_32 * fieldOffset, void **address, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool * unresolvedInCP, bool *result, bool isStatic);
    virtual bool getCachedFieldAttributes(int32_t cpIndex, TR_J9MethodFieldAttributes &attributes, bool isStatic);
    virtual void cacheFieldAttributes(int32_t cpIndex, const TR_J9MethodFieldAttributes &attributes, bool isStatic);
@@ -226,14 +226,14 @@ private:
    char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
    virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;
-   void unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo);
+   void unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITServerMethodInfo &methodInfo);
    };
 
-class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSServerMethod
+class TR_ResolvedRelocatableJ9JITServerMethod : public TR_ResolvedJ9JITServerMethod
    {
    public:
-   TR_ResolvedRelocatableJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
-   TR_ResolvedRelocatableJ9JITaaSServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
+   TR_ResolvedRelocatableJ9JITServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
+   TR_ResolvedRelocatableJ9JITServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, const TR_ResolvedJ9JITServerMethodInfo &methodInfo, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
    virtual void *                constantPool() override;
    virtual bool                  isInterpreted() override;
@@ -270,7 +270,7 @@ class TR_ResolvedRelocatableJ9JITaaSServerMethod : public TR_ResolvedJ9JITaaSSer
 
 protected:
    virtual TR_ResolvedMethod *   createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats) override;
-   virtual TR_ResolvedMethod * createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats, const TR_ResolvedJ9JITaaSServerMethodInfo &methodInfo) override;
+   virtual TR_ResolvedMethod * createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats, const TR_ResolvedJ9JITServerMethodInfo &methodInfo) override;
    virtual void                  handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;
    virtual void                  handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;
    virtual void                  handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;

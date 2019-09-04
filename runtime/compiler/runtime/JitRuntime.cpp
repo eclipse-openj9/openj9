@@ -1330,14 +1330,14 @@ uint32_t isRecompMethBody(void *li)
 
 // This method MUST be used only for methods that were AOTed and then relocated
 // It marks the BodyInfo that this is an aoted method.
-void fixPersistentMethodInfo(void *table, bool isJITaaS)
+void fixPersistentMethodInfo(void *table, bool isJITServer)
    {
    J9JITExceptionTable *exceptionTable = (J9JITExceptionTable *)table;
    TR_PersistentJittedBodyInfo *bodyInfo = (TR_PersistentJittedBodyInfo *)exceptionTable->bodyInfo;
    void *vmMethodInfo = (void *)exceptionTable->ramMethod;
    TR_PersistentMethodInfo *methodInfo;
 
-   if (!isJITaaS)
+   if (!isJITServer)
       {
       methodInfo = (TR_PersistentMethodInfo *)((char *)bodyInfo + sizeof(TR_PersistentJittedBodyInfo));
       bodyInfo->setMethodInfo(methodInfo);
@@ -1358,7 +1358,7 @@ void fixPersistentMethodInfo(void *table, bool isJITaaS)
    bodyInfo->setSampleIntervalCount(0);
    bodyInfo->setProfileInfo(NULL);
 
-   if (!isJITaaS)
+   if (!isJITServer)
       {
       bodyInfo->setIsAotedBody(true);
       }

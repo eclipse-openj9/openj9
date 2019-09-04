@@ -74,7 +74,7 @@ struct TR_JitPrivateConfig;
 struct TR_MethodToBeCompiled;
 template <typename T> class TR_PersistentArray;
 typedef J9JITExceptionTable TR_MethodMetaData;
-class ClientSessionHT; // JITaaS TODO: maybe move all JITServer specific stuff in an extension for CompInfo
+class ClientSessionHT; // JITServer TODO: maybe move all JITServer specific stuff in an extension for CompInfo
 
 #if defined(JITSERVER_SUPPORT)
 namespace JITServer { class ServerStream; }

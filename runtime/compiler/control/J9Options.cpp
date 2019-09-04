@@ -2083,7 +2083,7 @@ J9::Options::fePreProcess(void * base)
          compInfo->getPersistentInfo()->setClientUID(dist(rng));
          }
       }
-   // _safeReservePhysicalMemoryValue is set as 0 for the JITServer client because compilations
+   // _safeReservePhysicalMemoryValue is set as 0 for the JITClient because compilations
    // are done remotely. The user can still override it with a command line option
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {

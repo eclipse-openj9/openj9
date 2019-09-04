@@ -739,10 +739,10 @@ TR_J9VMBase::TR_J9VMBase(
    _sharedCache = NULL;
    if (TR::Options::sharedClassCache() ||
        (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER))
-      // shared classes and AOT must be enabled, or we should be on the JITaaS server with remote AOT enabled
+      // shared classes and AOT must be enabled, or we should be on the JITServer with remote AOT enabled
       {
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-         _sharedCache = new (PERSISTENT_NEW) TR_J9JITaaSServerSharedCache(this);
+         _sharedCache = new (PERSISTENT_NEW) TR_J9JITServerSharedCache(this);
       else
          _sharedCache = new (PERSISTENT_NEW) TR_J9SharedCache(this);
       if (!_sharedCache)
@@ -3826,7 +3826,7 @@ TR_J9VMBase::tryToAcquireAccess(TR::Compilation * comp, bool *haveAcquiredVMAcce
    bool hasVMAccess;
    *haveAcquiredVMAccess = false;
 
-   // JITaaS TODO: For now, we always take the "safe path" on the server
+   // JITServer TODO: For now, we always take the "safe path" on the server
    if (TR::CompilationInfo::getStream())
       return false;
 
@@ -7364,7 +7364,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
 
          TR::SymbolReference *helperSymRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, true, true, false);
          sym->setMethodAddress(helperSymRef->getMethodAddress());
-         // JITaaS: store the helper reference number in the node for use in creating TR_HelperAddress relocation
+         // JITServer: store the helper reference number in the node for use in creating TR_HelperAddress relocation
          callNode->getSymbolReference()->setReferenceNumber(helperSymRef->getReferenceNumber());
          return callNode;
          }

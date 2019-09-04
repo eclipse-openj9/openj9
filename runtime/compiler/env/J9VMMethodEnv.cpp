@@ -67,7 +67,7 @@ J9::VMMethodEnv::bytecodeStart(TR_OpaqueMethodBlock *method)
    auto stream = TR::CompilationInfo::getStream();
    if (stream)
       // Don't need to call getOriginalROMMethod, because
-      // in JITaaS romMethodOfRamMethod already fetches
+      // in JITServer romMethodOfRamMethod already fetches
       // ROM method from its ROM class.
       // Also, the return value of this function might be 
       // dereferenced later on, so need ROM method to be on the server.

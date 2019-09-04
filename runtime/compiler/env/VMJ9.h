@@ -162,7 +162,7 @@ typedef struct TR_JitPrivateConfig
    } TR_JitPrivateConfig;
 
 
-// JITaaS: union containing all possible datatypes of static final fields
+// JITServer: union containing all possible datatypes of static final fields
 union
 TR_StaticFinalData
    {
@@ -238,8 +238,8 @@ public:
       DEFAULT_VM = 0
       , J9_VM
       , AOT_VM
-      , J9_SERVER_VM // for JITaaS
-      , J9_SHARED_CACHE_SERVER_VM // for Remote AOT JITaaS
+      , J9_SERVER_VM // for JITServer
+      , J9_SHARED_CACHE_SERVER_VM // for Remote AOT JITServer
       };
 
    TR_J9VMBase(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, J9VMThread * vmContext);
@@ -911,7 +911,7 @@ public:
    TR::TreeTop * lowerContigArrayLength( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    TR::TreeTop * lowerMultiANewArray( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    TR::TreeTop * lowerToVcall( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
-   virtual U_8 * fetchMethodExtendedFlagsPointer(J9Method *method); // wrapper method of fetchMethodExtendedFlagsPointer in util/extendedmethodblockaccess.c, for JITaaS override purpose
+   virtual U_8 * fetchMethodExtendedFlagsPointer(J9Method *method); // wrapper method of fetchMethodExtendedFlagsPointer in util/extendedmethodblockaccess.c, for JITServer override purpose
    virtual void * getStaticHookAddress(int32_t event);
 
    TR::Node * initializeLocalObjectFlags( TR::Compilation *, TR::Node * allocationNode, TR_OpaqueClassBlock * ramClass);

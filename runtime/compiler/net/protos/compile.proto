@@ -57,7 +57,7 @@ enum MessageType
    clientSessionTerminate = 7; // type used when client process is about to terminate
    connectionTerminate = 8; // type used when client informs the server to close the connection
 
-   // For TR_ResolvedJ9JITaaSServerMethod methods
+   // For TR_ResolvedJ9JITServerMethod methods
    ResolvedMethod_isJNINative = 100;
    ResolvedMethod_isInterpreted = 101;
    ResolvedMethod_setRecognizedMethodInfo = 102;

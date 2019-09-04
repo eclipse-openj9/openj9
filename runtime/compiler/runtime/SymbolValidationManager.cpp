@@ -72,8 +72,8 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
    if (stream && _fej9->sharedCache())
       // because a different VM is used here, a new Shared Cache object was created, so
       // need to update stream
-      // JITaaS TODO: we update stream in multiple places, better to change it to only one
-      ((TR_J9JITaaSServerSharedCache *) _fej9->sharedCache())->setStream(stream);
+      // JITServer TODO: we update stream in multiple places, better to change it to only one
+      ((TR_J9JITServerSharedCache *) _fej9->sharedCache())->setStream(stream);
 
    defineGuaranteedID(NULL, TR::SymbolType::typeOpaque);
    defineGuaranteedID(_rootClass, TR::SymbolType::typeClass);

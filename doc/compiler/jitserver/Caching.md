@@ -51,6 +51,6 @@ It is possible for this cache to contain outdated profiling data, because IProfi
 - Persistent cache: stores data for already compiled methods, because their interpreter profiling data will definitely not change.
 Uses a slightly different hash table type `IPTable_t`, because it's located inside entries of `J9MethodInfo`, so it only takes
 bytecode index as a key.
-## `TR_ResolvedJ9JITaaSServerMethod`
+## `TR_ResolvedJ9JITServerMethod`
 Some per-compilation caches are stored inside resolved methods, they store results of some resolved method query. These caches do not need to be explicitly cleared, since resolved methods only exist for the duration of one compilation. I am not sure if it is a good thing to have local caches spread out across 2 files, maybe it would be a good idea to move all caches from resolved method to `CompilationInfoPerThreadRemote`.
 

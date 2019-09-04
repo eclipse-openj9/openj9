@@ -1364,8 +1364,8 @@ TR_ResolvedRelocatableJ9Method::TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBl
             SVM_ASSERT_ALREADY_VALIDATED(svm, aMethod);
             SVM_ASSERT_ALREADY_VALIDATED(svm, containingClass());
             }
-         else if (owner) // JITaaS: in baseline, if owner doesn't exist then comp doesn't exist, so thi case is not possible
-            // but in JITaaS client comp is initialized before creating resolved method for compilee, so need this guard.
+         else if (owner) // JITServer: in baseline, if owner doesn't exist then comp doesn't exist, so thi case is not possible
+            // but in JITClient comp is initialized before creating resolved method for compilee, so need this guard.
             {
             ((TR_ResolvedRelocatableJ9Method *) owner)->validateArbitraryClass(comp, (J9Class*)containingClass());
             }
@@ -2366,7 +2366,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
    construct();
    }
 
-// protected constructor to be used by JITaaS
+// protected constructor to be used by JITServer
 // had to reorder arguments to prevent ambiguity with above constructor (because the way constructors work in C++ is awful)
 TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * owner)
    : TR_J9Method(), TR_ResolvedJ9MethodBase(fe, owner), _pendingPushSlots(-1)

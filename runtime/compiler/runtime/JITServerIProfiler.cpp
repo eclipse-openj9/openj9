@@ -47,7 +47,7 @@ JITServerIProfiler::JITServerIProfiler(J9JITConfig *jitConfig)
 TR_IPMethodHashTableEntry *
 JITServerIProfiler::deserializeMethodEntry(TR_ContiguousIPMethodHashTableEntry *serialEntry, TR_Memory *trMemory)
    {
-   // caching is done inside TR_ResolvedJ9JITaaSServerMethod so we need to use heap memory.
+   // caching is done inside TR_ResolvedJ9JITServerMethod so we need to use heap memory.
    TR_IPMethodHashTableEntry *entry = (TR_IPMethodHashTableEntry *) trMemory->allocateHeapMemory(sizeof(TR_IPMethodHashTableEntry));
    if (entry)
       {
@@ -794,7 +794,7 @@ JITServerIProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, 
 
    if (clientSessionData->getOrCacheVMInfo(stream)->_elgibleForPersistIprofileInfo)
       {
-      auto serverMethod = static_cast<TR_ResolvedJ9JITaaSServerMethod *>(method);
+      auto serverMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(method);
       compInfoPT->cacheResolvedMirrorMethodsPersistIPInfo(serverMethod->getRemoteMirror());
       }
    }
