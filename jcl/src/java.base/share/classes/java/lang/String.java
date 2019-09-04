@@ -8360,31 +8360,40 @@ written authorization of the copyright holder.
 		if (isEmpty()) {
 			return this;
 		}
+
+		char lastChar = charAt(length() - 1);
+		boolean trailingNewLine = ('\n' == lastChar) || ('\r' == lastChar);
+
 		Iterator<String> iter = lines().iterator();
 		int min = Integer.MAX_VALUE;
 
-		while (iter.hasNext()) {
-			String line = iter.next();
+		if (trailingNewLine) {
+			min = 0;
+		} else {
+			while (iter.hasNext()) {
+				String line = iter.next();
 
-			/* The minimum indentation is calculated based on the number of leading
-			 * whitespace characters from all non-blank lines and the last line even
-			 * if it is blank.
-			 */
-			if (!line.isBlank() || !iter.hasNext()) {
-				int count = 0;
-				int limit = Math.min(min, line.length());
-				while ((count < limit) && Character.isWhitespace(line.charAt(count))) {
-					count++;
-				}
+				/* The minimum indentation is calculated based on the number of leading
+				 * whitespace characters from all non-blank lines and the last line even
+				 * if it is blank.
+				 */
+				if (!line.isBlank() || !iter.hasNext()) {
+					int count = 0;
+					int limit = Math.min(min, line.length());
+					while ((count < limit) && Character.isWhitespace(line.charAt(count))) {
+						count++;
+					}
 
-				if (min > count) {
-					min = count;
+					if (min > count) {
+						min = count;
+					}
 				}
 			}
+			/* reset iterator to beginning of the string */
+			iter = lines().iterator();
 		}
 
 		StringBuilder builder = new StringBuilder();
-		iter = lines().iterator();
 
 		while (iter.hasNext()) {
 			String line = iter.next();
@@ -8398,8 +8407,8 @@ written authorization of the copyright holder.
 			builder.append("\n");
 		}
 
-		char lastChar = charAt(length() - 1);
-		if (('\n' != lastChar) && ('\r' != lastChar)) {
+
+		if (!trailingNewLine) {
 			builder.setLength(builder.length() - 1);
 		}
 
