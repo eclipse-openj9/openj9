@@ -372,7 +372,7 @@ TR::S390J9CallSnippet::emitSnippetBody()
                                                                         cg()),
                                                                      __FILE__, __LINE__, callNode);
             }
-         else
+         else if (!comp->isOutOfProcessCompilation()) // Since we query this information from the client, remote compilations don't need to add relocation records for TR_MethodObject
             {
             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) callNode->getSymbolReference(), getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_MethodObject, cg()),
                                     __FILE__, __LINE__, callNode);
