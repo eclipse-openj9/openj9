@@ -745,7 +745,7 @@ J9NLS_EXELIB_INTERNAL_HELP_1_13.user_response=
 
 # These messages are no longer used, but should be left intact just in case an older redirector is running
 
-J9NLS_EXELIB_INTERNAL_HELP_VMSELECT=Les options suivante contr\u00f4le la configuration globale de la MV :
+J9NLS_EXELIB_INTERNAL_HELP_VMSELECT=Les options suivantes contr\u00f4lent la configuration globale de la MV :
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_VMSELECT.system_action=

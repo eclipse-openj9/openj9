@@ -713,7 +713,7 @@ J9NLS_CFR_ERR_MAGIC.user_response=Contact the provider of the classfile for a co
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT=les interfaces doivent \u00eatre abstract
+J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT=les interfaces doivent \u00eatre de type abstract
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_INTERFACE_NOT_ABSTRACT.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1148,7 +1148,7 @@ J9NLS_CFR_ERR_METHODTYPE_INVALID_SIG.system_action=The JVM will throw a verifica
 J9NLS_CFR_ERR_METHODTYPE_INVALID_SIG.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51=entr\u00e9e de pool de constantes non valide dans les fichiers de classe dont la version est ant\u00e9rieure \u00e0 la 51.0
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51=entr\u00e9e de pool de constantes non valide dans les fichiers de classe dont la version est ant\u00e9rieure \u00e0 la version 51.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V51.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1340,7 +1340,7 @@ J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.user_response=Contact the provider
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=Entr\u00e9e de pool de constantes non valide dans les fichiers de classe dont la version est ant\u00e9rieure \u00e0 la 53.0
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=Entr\u00e9e de pool de constantes non valide dans les fichiers de classe dont la version est ant\u00e9rieure \u00e0 la version 53.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1356,7 +1356,7 @@ J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.user_response=Contact the provider of the 
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55=Entr\u00e9e de pool de constantes non valide dans les fichiers de classe dont la version est ant\u00e9rieure \u00e0 la 55.0
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55=Entr\u00e9e de pool de constantes non valide dans les fichiers de classe dont la version est ant\u00e9rieure \u00e0 la version 55.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1400,7 +1400,7 @@ J9NLS_CFR_ERR_BC_LDC2W_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE.user_response=Contact
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49=Entr\u00e9e de pool de constantes non valide dans les fichiers de classe dont la version est ant\u00e9rieure \u00e0 la 49.0
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49=Entr\u00e9e de pool de constantes non valide dans les fichiers de classe dont la version est ant\u00e9rieure \u00e0 la version 49.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1408,7 +1408,7 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.user_response=Contact the provider of
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51=Entr\u00e9e de pool de constantes non valide dans les fichiers de classe dont la version est ant\u00e9rieure \u00e0 la 51.0
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51=Entr\u00e9e de pool de constantes non valide dans les fichiers de classe dont la version est ant\u00e9rieure \u00e0 la version 51.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1416,7 +1416,7 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.user_response=Contact the provider of
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55=Entr\u00e9e de pool de constantes non valide dans les fichiers de classe dont la version est ant\u00e9rieure \u00e0 la 55.0
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55=Entr\u00e9e de pool de constantes non valide dans les fichiers de classe dont la version est ant\u00e9rieure \u00e0 la version 55.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1425,7 +1425,7 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.user_response=Contact the provider of
 # END NON-TRANSLATABLE
 
 #Example: JVMCFRE154 BootstrapMethod (0) arguments contain invalid constantpool entry at index (#20) of type (9); class=Foo, offset=492
-J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY=Les arguments de BootstrapMethod (%1$d) contiennent une entr\u00e9e constantpool non valide \u00e0 l'index (#%2$u) du type (%3$u) ; classe=%5$.*4$s, offset=%6$u
+J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY=Les arguments de BootstrapMethod (%1$d) contiennent une entr\u00e9e constantpool non valide \u00e0 l'index (#%2$u) du type (%3$u) ; class=%5$.*4$s, offset=%6$u
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_1=1
 J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY.sample_input_2=3
@@ -1445,7 +1445,7 @@ J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.system_action=The JVM will throw a ve
 J9NLS_CFR_ERR_VALUE_TYPES_IS_NOT_SUPPORTED.user_response=Contact the provider of the classfile for a corrected version or use the -XX:+EnableValhalla option.
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_PREVIEW_VERSION=Le fichier de classe est une version de pr\u00e9sentation, mais son num\u00e9ro de version majeure n'est pas le bon, ou bien l'aper\u00e7u n'est pas activ\u00e9.
+J9NLS_CFR_ERR_PREVIEW_VERSION=Le fichier de classe est une version de pr\u00e9sentation, mais sa version principale n'est pas la bonne ou l'aper\u00e7u n'est pas activ\u00e9.
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_PREVIEW_VERSION.explanation=Classfiles with minor version 65535 must have the same major version as the VM rumtime version and preview must be enabled
 J9NLS_CFR_ERR_PREVIEW_VERSION.system_action=The JVM will throw a verification or classloading-related exception.
