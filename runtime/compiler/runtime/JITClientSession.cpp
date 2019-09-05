@@ -615,4 +615,3 @@ ClientSessionHT::printStats()
       session.second->printStats();
       }
    }
-
