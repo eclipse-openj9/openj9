@@ -36,11 +36,12 @@
 #include "jitregmap.h"
 #include "pcstack.h"
 #include "VMHelpers.hpp"
+#include "OMR/Bytes.hpp"
 
 extern "C" {
 
 /* Generic rounding macro - result is a UDATA */
-#define ROUND_TO(granularity, number) (((UDATA)(number) + (granularity) - 1) & ~((UDATA)(granularity) - 1))
+#define ROUND_TO(granularity, number) OMR::align((UDATA)(number), granularity)
 
 typedef struct {
 	J9JITExceptionTable * metaData;
