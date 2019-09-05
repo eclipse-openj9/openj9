@@ -34,6 +34,7 @@ my $jdkVersion = "";
 my $jdkImpl = "";
 my $buildList = "";
 my $spec = "";
+my $customTarget = "";
 my %spec2jenkinsFile = (
 	'linux_x86-64_cmprssptrs'      => 'openjdk_x86-64_linux',
 	'linux_x86-64'                 => 'openjdk_x86-64_linux_xl',
@@ -70,6 +71,8 @@ for (my $i = 0; $i < scalar(@ARGV); $i++) {
 		($buildList) = $arg =~ /^\-\-buildList=(.*)/;
 	} elsif ($arg =~ /^\-\-spec=/) {
 		($spec) = $arg =~ /^\-\-spec=(.*)/;
+	} elsif ($arg =~ /^\-\-customTarget=/) {
+		($customTarget) = $arg =~ /^\-\-customTarget=(.*)/;
 	}
 }
 
@@ -224,11 +227,15 @@ sub resultReporter {
 		if (exists $spec2jenkinsFile{$spec}) {
 			$jenkinFileParam = "&Jenkinsfile=" . $spec2jenkinsFile{$spec};
 		}
+		my $customTargetParam = "";
+		if ($customTarget ne '') {
+			$customTargetParam = "&CUSTOM_TARGET=" . $customTarget;
+		}
 		print "To rebuild the failed test in a jenkins job, copy the following link and fill out the <Jenkins URL> and <FAILED test target>:\n";
-		print "<Jenkins URL>/parambuild/?JDK_VERSION=$jdkVersion&JDK_IMPL=$jdkImpl$buildParam$jenkinFileParam&TARGET=<FAILED test target>\n\n";
+		print "<Jenkins URL>/parambuild/?JDK_VERSION=$jdkVersion&JDK_IMPL=$jdkImpl$buildParam$jenkinFileParam$customTargetParam&TARGET=<FAILED test target>\n\n";
 		print "For example, to rebuild the failed tests in <Jenkins URL>=https://ci.adoptopenjdk.net/job/Grinder, use the following links:\n";
 		foreach my $failedTarget (@failed) {
-			print "https://ci.adoptopenjdk.net/job/Grinder/parambuild/?JDK_VERSION=$jdkVersion&JDK_IMPL=$jdkImpl$buildParam$jenkinFileParam&TARGET=$failedTarget\n";
+			print "https://ci.adoptopenjdk.net/job/Grinder/parambuild/?JDK_VERSION=$jdkVersion&JDK_IMPL=$jdkImpl$buildParam$jenkinFileParam$customTargetParam&TARGET=$failedTarget\n";
 		}
 		print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
 	}
