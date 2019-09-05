@@ -107,7 +107,7 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
     TestConfig/playlist.xsd.
 
     - A test can be tagged with following elements:
-      - level:   [sanity|extended] (extended default value)
+      - level:   [sanity|extended|special] (extended default value)
       - group:   [functional|system|openjdk|external|perf|jck] (required 
                  to provide one group per test)
       - type:    [regular|native] (if a test is tagged with native, it means this
@@ -117,7 +117,7 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
                  download link in CUSTOMIZED_SDK_URL; for details, please refer to 
                  [How-to-Run-a-Grinder-Build-on-Jenkins](https://github.com/AdoptOpenJDK/openjdk-tests/wiki/How-to-Run-a-Grinder-Build-on-Jenkins); 
                  default to regular)
-      - impl:    [openj9|hotspot] (filter test based on exported JDK_IMPL 
+      - impl:    [openj9|hotspot|ibm] (filter test based on exported JDK_IMPL 
                  value; a test can be tagged with multiple impls at the 
                  same time; default to all impls)
       - subset:  [8|8+|9|9+|10|10+|11|11+|Panama|Valhalla] (filter test based on 
@@ -255,7 +255,7 @@ target
     Add 
     ```
     <disabled>Reason for disabling test, should include issue number<disabled>
-    (for example: <disabled>issue #1 test failed due to OOM<disabled>)
+    (for example: <disabled>link to issue #1 test failed due to OOM<disabled>)
     ```
     inside the
     ```
@@ -372,7 +372,7 @@ disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
 
   * TAP result files
 
-    As some of the tests are not testNG format, a simple standardized 
+    As some of the tests are not testNG or junit format, a simple standardized 
     format for test output was needed so that all tests are reported in
     the same way for a complete test summary. Depending on the 
     requirement there are three different diagnostic levels.
