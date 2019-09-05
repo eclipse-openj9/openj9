@@ -58,6 +58,10 @@ ifeq ($(PLATFORM),s390-linux-gcc)
     export JITSERVER_SUPPORT=1
 endif
 
+ifeq ($(PLATFORM),ppc64-linux64-gcc)
+    export JITSERVER_SUPPORT=1
+endif
+
 ifeq ($(PLATFORM),s390-linux64-gcc)
     export JITSERVER_SUPPORT=1
 endif

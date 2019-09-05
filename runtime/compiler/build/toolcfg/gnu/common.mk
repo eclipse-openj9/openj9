@@ -167,6 +167,14 @@ ifeq ($(HOST_ARCH),p)
         CX_DEFINES+=ENABLE_SPMD_SIMD
         CX_FLAGS+=-qaltivec -qarch=pwr7 -qtune=pwr7
     endif
+
+    ifneq ($(JITSERVER_SUPPORT),)
+        CX_DEFINES+=JITSERVER_SUPPORT
+
+        ifneq ($(JITSERVER_ENABLE_SSL),)
+            CX_DEFINES+=JITSERVER_ENABLE_SSL
+        endif
+    endif
 endif
 
 ifeq ($(HOST_ARCH),z)
