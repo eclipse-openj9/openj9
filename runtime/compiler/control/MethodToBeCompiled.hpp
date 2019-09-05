@@ -25,7 +25,9 @@
 
 #pragma once
 
+#if defined(JITSERVER_SUPPORT)
 #include "compile/CompilationTypes.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
 #include "control/CompilationPriority.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 
@@ -39,7 +41,9 @@
 
 namespace TR { class CompilationInfoPerThreadBase; }
 class TR_OptimizationPlan;
+#if defined(JITSERVER_SUPPORT)
 namespace JITServer { class ServerStream; }
+#endif /* defined(JITSERVER_SUPPORT) */
 namespace TR { class Monitor; }
 struct J9JITConfig;
 struct J9VMThread;
@@ -62,13 +66,15 @@ struct TR_MethodToBeCompiled
    void releaseSlotMonitor(J9VMThread *vmThread);
    void setAotCodeToBeRelocated(const void *m);
    bool isAotLoad() const { return _doAotLoad; }
+#if defined(JITSERVER_SUPPORT)
    bool isRemoteCompReq() const { return _remoteCompReq; } // at the client
    void setRemoteCompReq() { _remoteCompReq = true; }
    void unsetRemoteCompReq() { _remoteCompReq = false; }
    bool isOutOfProcessCompReq() const { return _stream != NULL; } // at the server
    uint64_t getClientUID() const;
-   void cleanupJITServer();
-   bool hasChangedToLocalSyncComp() const { return _origOptLevel != unknownHotness; }
+   void freeJITServerAllocations(); // Clean up client options which were allocated using persistent allocator
+   bool hasChangedToLocalSyncComp() const { return (_origOptLevel != unknownHotness); }
+#endif /* defined(JITSERVER_SUPPORT) */
 
    TR_MethodToBeCompiled *_next;
    TR::IlGeneratorMethodDetails _methodDetailsStorage;
@@ -84,7 +90,6 @@ struct TR_MethodToBeCompiled
 
    uint16_t /*CompilationPriority*/_priority;
    int16_t                _numThreadsWaiting;
-   int16_t                _index;
    int8_t                 _compilationAttemptsLeft;
    int8_t                 _compErrCode;
    int8_t                 _methodIsInSharedCache;/*TR_YesNoMaybe*/
@@ -95,7 +100,7 @@ struct TR_MethodToBeCompiled
    bool                   _unloadedMethod; // flag set by the GC thread during unloading
                                            // need to have vmaccess for accessing this flag
    bool                   _doAotLoad;// used for AOT shared cache
-   bool                   _useAotCompilation;// used for debugging purposes
+   bool                   _useAotCompilation;// used for AOT shared cache
    bool                   _doNotUseAotCodeFromSharedCache;
    bool                   _tryCompilingAgain;
 
@@ -119,15 +124,18 @@ struct TR_MethodToBeCompiled
                                        // The flag in methodInfo is not enough because it may indicate true when
                                        // the entry is queued, but change afterwards if method receives samples
                                        // to be upgraded to hot or scorching
+   int16_t                _index;
    uint8_t                _freeTag; // temporary to catch a nasty bug
    uint8_t                _weight; // Up to 256 levels of weight
    bool                   _hasIncrementedNumCompThreadsCompilingHotterMethods;
    uint8_t                _jitStateWhenQueued;
-   bool                   _remoteCompReq; // comp request should be sent remotely to JITServer
-   JITServer::ServerStream  *_stream; // a non-NULL field denotes an out-of-process compilation request
+#if defined(JITSERVER_SUPPORT)
+   bool                   _remoteCompReq; // Comp request should be sent remotely to JITServer
+   JITServer::ServerStream  *_stream; // A non-NULL field denotes an out-of-process compilation request
    char                  *_clientOptions;
-   size_t                _clientOptionsSize;
-   TR_Hotness            _origOptLevel; // used to cache original optLevel when transforming a remote sync compilation to a local cheap one
+   size_t                 _clientOptionsSize;
+   TR_Hotness             _origOptLevel; //  Cache original optLevel when transforming a remote sync compilation to a local cheap one
+#endif /* defined(JITSERVER_SUPPORT) */
    }; // TR_MethodToBeCompiled
 
 
