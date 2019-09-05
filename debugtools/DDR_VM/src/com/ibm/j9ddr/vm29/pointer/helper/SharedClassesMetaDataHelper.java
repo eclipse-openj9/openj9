@@ -23,14 +23,30 @@ package com.ibm.j9ddr.vm29.pointer.helper;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ShrOffsetPointer;
+import com.ibm.j9ddr.vm29.types.UDATA;
+import java.lang.reflect.InvocationTargetException;
 
 public class SharedClassesMetaDataHelper {
 	public static int getCacheLayerFromJ9shrOffset(J9ShrOffsetPointer j9shrOffset) throws CorruptDataException {
 		int layer;
 		try {
-			layer = j9shrOffset.cacheLayer().intValue();
-		} catch (NoSuchFieldError | NoSuchMethodError e) {
+			UDATA layerUDATA = (UDATA) j9shrOffset.getClass().getMethod("cacheLayer").invoke(j9shrOffset);
+			layer = layerUDATA.intValue();
+		} catch (NoSuchMethodException e) {
 			layer = 0;
+		} catch (InvocationTargetException e) {
+			Throwable cause = e.getCause();
+			if (cause instanceof NoSuchFieldError) {
+				layer = 0;
+			} else if (cause instanceof CorruptDataException) {
+				throw (CorruptDataException) cause;
+			} else if (cause instanceof RuntimeException) {
+				throw (RuntimeException) cause;
+			} else {
+				throw new CorruptDataException("Error getting the cache layer from J9ShrOffsetPointer", cause);
+			}
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException("Error getting the cache layer from J9ShrOffsetPointer");
 		}
 		return layer;
 	}
