@@ -36,42 +36,44 @@ make compile
 make _sanity.regular
 ```
 
-## Prerequisites:
+## Prerequisites
 Please read [Prerequisites.md](./Prerequisites.md) for details on what 
 tools should be installed on your test machine to run tests.
 
 # Tasks in OpenJ9 Test
 
-### 1. Configure environment:
+### 1. Configure environment
 
 #### Environment variables
-
-    required:
-    ```
+required:
+    
+```
     TEST_JDK_HOME=<path to JDK directory that you wish to test>
     BUILD_LIST=<comma separated projects to be compiled and executed> (default to all projects)
-    ```
-    optional:
-    ```
+```
+    
+optional:
+    
+```
     SPEC=[linux_x86-64|linux_x86-64_cmprssptrs|...] (platform on which to test, could be auto detected)
     JDK_VERSION=[8|9|10|11|12|Panama|Valhalla] (8 default value, could be auto detected)
     JDK_IMPL=[openj9|ibm|hotspot|sap] (openj9 default value, could be auto detected)
     NATIVE_TEST_LIBS=<path to native test libraries> (default to native-test-libs folder at same level as TEST_JDK_HOME)
-    ```
+```
+    
 #### Auto detection
   
-    By default, AUTO_DETECT is turned on. SPEC, JDK_VERSION, and JDK_IMPL do not need to be exported.
-    If you do not wish to use AUTO_DETECT and export SPEC, JDK_VERSION, and JDK_IMPL manually, you can export AUTO_DETECT to false.
-    ```
-    export AUTO_DETECT=false
-    ```
-    e.g.,
-    ```
+By default, AUTO_DETECT is turned on. SPEC, JDK_VERSION, and JDK_IMPL do not need to be exported.
+If you do not wish to use AUTO_DETECT and export SPEC, JDK_VERSION, and JDK_IMPL manually, you can export AUTO_DETECT to false.
+e.g.,
+    
+```
     export AUTO_DETECT=false
     export SPEC=linux_x86-64_cmprssptrs
     export JDK_VERSION=8
     export JDK_IMPL=openj9
-    ```
+```
+
 Please refer *.spec files in [buildspecs](https://github.com/eclipse/openj9/tree/master/buildspecs)
 for possible SPEC values.
 
@@ -79,34 +81,28 @@ for possible SPEC values.
 
 Please read [DependentLibs.md](./DependentLibs.md) for details.
 
-## 2. Compile tests:
+## 2. Compile tests
 
 #### Compile and run all tests (found in directories set by BUILD_LIST environment variable)
-    ```
+```
     make test
-    ```
+```
 
 #### Only compile but do not run tests (found in directories set by BUILD_LIST variable)
-    ```
+```
     make compile
-    ```
+```
 
-### 3. Add more tests:
+### 3. Add more tests
 
 #### For new functionality
 
-    - If you have added new features to OpenJ9, you will likely
-    need to add new tests. Check out [openj9/test/functional/TestExample/src/org/openj9/test/MyTest.java](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/src/org/openj9/test/example/MyTest.java) for
-    the format to use.
+- If you have added new features to OpenJ9, you will likely need to add new tests. Check out [openj9/test/functional/TestExample/src/org/openj9/test/MyTest.java](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/src/org/openj9/test/example/MyTest.java) for
+the format to use.
 
-    - If you have many new test cases to add and special build 
-    requirements, then you may want to copy the [TestExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample) project, 
-    change the name,replace the test examples with your own code, 
-    update the build.xml and playlist.xml files to match your new Test 
-    class names. The playlist.xml format is defined in 
-    TestConfig/playlist.xsd.
+- If you have many new test cases to add and special build requirements, then you may want to copy the [TestExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample) update the build.xml and playlist.xml files to match your new Test class names. The playlist.xml format is defined in TestConfig/playlist.xsd.
 
-    - A test can be tagged with following elements:
+- A test can be tagged with following elements:
       - level:   [sanity|extended|special] (extended default value)
       - group:   [functional|system|openjdk|external|perf|jck] (required 
                  to provide one group per test)
@@ -127,190 +123,178 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
                  a test tagged with a number followed by + sign, any JDK_VERSION
                  after the number will be a match; default to always match)
 
-    - Most OpenJ9 FV tests are written with TestNG. We leverage
+- Most OpenJ9 FV tests are written with TestNG. We leverage
     TestNG groups to create test make targets. This means that
     minimally your test source code should belong to either
     level.sanity or level.extended group to be included in main
     OpenJ9 builds.
 
-### 4. Run tests:
+### 4. Run tests
 
-#### Group of tests (where group can be functional|system|openjdk|external|perf) <br />
-    make _group <br />
-    e.g., 
-    ```
+#### Run a group of tests (where group can be functional|system|openjdk|external|perf) <br />
+make _group <br />
+e.g., 
+```
     make _functional
-    ```
+```
 
-#### Level of tests (where level can be sanity|extended|special) <br />
-    make _level <br />
-    e.g., 
-    ```
+#### Run a level of tests (where level can be sanity|extended|special) <br />
+make _level <br />
+e.g., 
+```
     make _sanity
-    ```
+```
 
-#### Type of tests (where type can be regular|native) <br />
-    make _type <br />
-    e.g., 
-    ```
+#### Run a type of test (where type can be regular|native) <br />
+make _type <br />
+e.g., 
+```
     make _native
-    ```
+```
 
-#### Level of tests with specified group <br />
-    make _level.group <br />
-    e.g., 
-    ```
+#### Run a level of tests with specified group <br />
+make _level.group <br />
+e.g., 
+```
     make _sanity.functional
-    ```
+```
 
-#### Level of tests with specified type <br />
-    make _level.type <br />
-    e.g., 
-    ```
+#### Run a level of tests with specified type <br />
+make _level.type <br />
+e.g., 
+```
     make _sanity.native
-    ```
+```
 
-#### Group of tests with specified type <br />
-    make _group.type <br />
-    e.g., 
-    ```
+#### Run a group of tests with specified type <br />
+make _group.type <br />
+e.g., 
+```
     make _functional.native
-    ```
+```
 
-#### Specify level, group and type together <br />
-    make _level.group.type <br />
-    e.g., 
-    ```
+#### Run a specified level, group and type together <br />
+make _level.group.type <br />
+note that with each '.' in the make target, the breadth of tests narrows (_sanity > _sanity.functional > _sanity.functional.native)
+e.g., 
+```
     make _sanity.functional.native
-    ```
+```
 
 #### A specific individual test target (where test targets are defined in playlist files, see [testExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L27)<br />
-    make _testTargetName_xxx <br />
-    e.g., 
-    ```
+make _testTargetName_xxx <br />
+e.g., the [1st variation in playlist](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L29) is suffixed by _0, 2nd variation by _1, and so forth
+```
     make _testExample_0
-    ```
+```
 The suffix number refers to the variation in the playlist.xml file
 
 #### All variations in the test target <br />
-    make _testTargetName <br />
-    e.g., 
-    ```
+make _testTargetName <br />
+e.g., 
+```
     make _testExample
-    ```
+```
 Above command will run [all possible variations in _testExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L28-L30)
 target
 
 #### A directory of tests <br />
-    cd path/to/directory; make -f autoGen.mk testTarget <br />
-    or make -C path/to/directory -f autoGen.mk testTarget <br />
-    e.g., 
-    ```
+cd path/to/directory; make -f autoGen.mk testTarget <br /> 
+or make -C path/to/directory -f autoGen.mk testTarget <br />
+e.g., 
+```
     cd test/functional/TestExample
     make -f autoGen.mk _sanity
-    ```
+```
 
 #### All tests
-    - compile & run tests
-        ```
+- compile & run tests
+```
         make test
-        ```
-    - run all tests without recompiling them
-        ```
+```
+- run all tests without recompiling them
+```
         make runtest
-        ```
+```
 
 #### Against specific (e.g., hotspot 8) SDK
 
-    impl and subset are used to annotate tests in playlist.xml, 
-    so that the tests will be run against the targeted JDK_IMPL 
-    and JDK_VERSION (and is determined by the SDK defined in TEST_JDK_HOME variable)
+impl and subset are used to annotate tests in playlist.xml, so that the tests will be run against the targeted JDK_IMPL and JDK_VERSION (and is determined by the SDK defined in TEST_JDK_HOME variable)
 
 #### Rerun the failed tests from the last run
-    ```
+```
     make _failed
-    ```
+```
 
 #### With a different set of JVM options
+There are 3 ways to add options to your test run:
 
-    There are 3 ways to add options to your test run:
+- If you simply want to add an option for a one-time run, you can either override the original options by using JVM_OPTIONS="your options".
 
-    - If you simply want to add an option for a one-time run, you can
-    either override the original options by using JVM_OPTIONS="your options".
-
-    - If you want to append options to the set that are already there,
-    use EXTRA_OPTIONS="your extra options". Below example will append
-    to those options already in the make target.
-    ```
+- If you want to append options to the set that are already there, use EXTRA_OPTIONS="your extra options". Below example will append to those options already in the make target.
+```
     make _jsr292_InDynTest_SE90_0 EXTRA_OPTIONS=-Xint
-    ```
+```
 
-    - If you want to change test options, you can update playlist.xml
-    in the corresponding test project.
+- If you want to change test options, you can update playlist.xml in the corresponding test project.
 
-### 5. Exclude tests:
+### 5. Exclude tests
 
 #### Exclude test target in playlist.xml
-
-    Add 
-    ```
+Add 
+```
     <disabled>Reason for disabling test, should include issue number<disabled>
     (for example: <disabled>link to issue #1 test failed due to OOM<disabled>)
-    ```
-    inside the
-    ```
+```
+inside the
+```
     <test>
-    ```
-    element that you want to exclude.
+```
+element that you want to exclude.
 
-    If a test is disabled using `<disabled>` tag in playlist.xml, it can be executed through specifying the test target or adding `disabled` in front of regular target.
+If a test is disabled using `<disabled>` tag in playlist.xml, it can be executed through specifying the test target or adding `disabled` in front of regular target.
 
-    ```    
+```    
         make _testA    // testA has <disabled> tag in playlist.xml  
         make _disabled.sanity.functional
         make _disabled.extended
-    ```
+```
 
-    Disabled tests and reasons can also be printed through adding `echo.disabled` in front of regular target.
+Disabled tests and reasons can also be printed through adding `echo.disabled` in front of regular target.
 
-    ```    
+```    
         make _echo.disabled.testA
         make _echo.disabled.sanity.functional
         make _echo.disabled.extended
-    ```
+```
 
-#### Temporarily on all platforms
+#### Exclude temporarily on all platforms
+Depends on the JDK_VERSION, add a line in the test/TestConfig/resources/excludes/latest_exclude_$(JDK_VERSION).txt file. It is the same format that the OpenJDK tests use, name of test, defect number, platforms to exclude.
 
-    Depends on the JDK_VERSION, add a line in the
-    test/TestConfig/resources/excludes/latest_exclude_$(JDK_VERSION).txt
-    file. It is the same format that the OpenJDK tests use, name of test,
-    defect number, platforms to exclude.
-
-    To exclude on all platforms, use generic-all.  For example:
-    ```
+To exclude on all platforms, use generic-all.  For example:
+```
     org.openj9.test.java.lang.management.TestOperatingSystemMXBean:testGetProcessCPULoad 121187 generic-all
-    ```
+```
 
 Note that we additionally added support to exclude individual methods of a
 test class, by using :methodName behind the class name (OpenJDK does not
 support this currently). In the example, only the testGetProcessCPULoad
 method from that class will be excluded (on all platforms/specs).
 
-#### Temporarily on specific platforms or architectures
-
-    Same as excluding on all platforms, you add a line to
-    latest_exclude_$(JDK_VERSION).txt file, but with specific specs to
-    exclude, for example:
-    ```
+#### Exclude temporarily on specific platforms or architectures
+Same as excluding on all platforms, you add a line to
+latest_exclude_$(JDK_VERSION).txt file, but with specific specs to
+exclude, for example:
+```
     org.openj9.test.java.lang.management.TestOperatingSystemMXBean 121187 linux_x86-64
-    ```
+```
 
 This example would exclude all test methods of the TestOperatingSystemMXBean
 from running on the linux_x86-64 platform.
 Note: in OpenJ9 the defect numbers would associate with git issue numbers
 (OpenJDK defect numbers associate with their bug tracking system).
 
-#### Permanently on all or specific platforms/archs
+#### Exclude permanently on all or specific platforms/archs
 
     For tests that should NEVER run on particular platforms or
     architectures, we should not use the default_exclude.txt file. To
@@ -330,9 +314,9 @@ disabled.bits.<bits> (e.g. disabled.bits.64)
 disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
 ```
 
-### 6. View results:
+### 6. View results
 
-#### In the console
+#### Results in the console
 
     OpenJ9 tests written in testNG format take advantage of the testNG 
     logger.
@@ -358,7 +342,7 @@ disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
 
       If a test is disabled, it means that this test is disabled using `<disabled>` tag in playlist.xml.
 
-#### In html files
+#### Results in html files
 
     TestNG tests produce html (and xml) output from the tests are 
     created and stored in a test_output_xxxtimestamp folder in the 
@@ -385,7 +369,7 @@ disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
 			No need to log any detailed information. Top level TAP test result
 			summary is enough 
 
-### 7. Attach a debugger:
+### 7. Attach a debugger
 
 #### To a particular test
 
@@ -395,7 +379,7 @@ disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
     java executable, adding any additional options, including those to
     attach a debugger.
 
-### 8. Move test into different make targets (layers):
+### 8. Move test into different make targets (layers)
 
 #### From extended to sanity (or vice versa)
 
