@@ -118,6 +118,16 @@ class ARM64PrivateLinkage : public TR::Linkage
    TR::Instruction *loadStackParametersToLinkageRegisters(TR::Instruction *cursor);
 
    /**
+    * @brief Stores parameters passed in linkage registers to the stack where the
+    *        method body expects to find them.
+    *
+    * @param[in] cursor : the instruction cursor to begin inserting copy instructions
+    *
+    * @return The instruction cursor after copies inserted.
+    */
+   TR::Instruction *copyParametersToHomeLocation(TR::Instruction *cursor);
+
+   /**
     * @brief Builds method arguments
     * @param[in] node : caller node
     * @param[in] dependencies : register dependency conditions

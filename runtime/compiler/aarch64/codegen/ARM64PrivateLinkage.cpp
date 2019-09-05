@@ -706,3 +706,50 @@ TR::ARM64PrivateLinkage::loadStackParametersToLinkageRegisters(TR::Instruction *
 
     return cursor;
     }
+
+/**
+ * A more optimal implementation of this function will be required when GRA is enabled.
+ * See OpenJ9 issue #6657.  Also consider merging with loadStackParametersToLinkageRegisters.
+ */
+TR::Instruction *
+TR::ARM64PrivateLinkage::copyParametersToHomeLocation(TR::Instruction *cursor)
+   {
+   TR::Machine *machine = cg()->machine();
+   TR::ARM64LinkageProperties& properties = getProperties();
+   TR::RealRegister *javaSP = machine->getRealRegister(properties.getStackPointerRegister());       // x20
+
+   TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
+   ListIterator<TR::ParameterSymbol> parmIterator(&(bodySymbol->getParameterList()));
+   TR::ParameterSymbol *parmCursor;
+
+   // Store to stack all parameters passed in linkage registers
+   //
+   for (parmCursor = parmIterator.getFirst();
+        parmCursor != NULL;
+        parmCursor = parmIterator.getNext())
+      {
+      if (parmCursor->isParmPassedInRegister())
+         {
+         int8_t lri = parmCursor->getLinkageRegisterIndex();
+         TR::RealRegister *linkageReg;
+         TR::InstOpCode::Mnemonic op;
+
+         if (parmCursor->getDataType() == TR::Double || parmCursor->getDataType() == TR::Float)
+            {
+            linkageReg = machine->getRealRegister(properties.getFloatArgumentRegister(lri));
+            op = (parmCursor->getDataType() == TR::Double) ? TR::InstOpCode::vstrimmd : TR::InstOpCode::vstrimms;
+            }
+         else
+            {
+            linkageReg = machine->getRealRegister(properties.getIntegerArgumentRegister(lri));
+            op = TR::InstOpCode::strimmx;
+            }
+
+         TR::MemoryReference *stackMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, parmCursor->getParameterOffset(), cg());
+         cursor = generateMemSrc1Instruction(cg(), op, NULL, stackMR, linkageReg, cursor);
+         }
+      }
+
+   return cursor;
+   }
+
