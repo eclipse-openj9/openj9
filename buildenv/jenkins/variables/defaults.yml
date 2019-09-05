@@ -146,8 +146,6 @@ ppc64le_linux:
       ? special.system
     12:
       ? special.system
-    13:
-      ? special.system
 #========================================#
 # Linux S390 64bits Compressed Pointers
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
@@ -198,8 +196,6 @@ s390x_linux:
     11:
       ? special.system
     12:
-      ? special.system
-    13:
       ? special.system
 #========================================#
 # AIX PPC 64bits Compressed Pointers
@@ -252,8 +248,6 @@ ppc64_aix:
       ? special.system
     12:
       ? special.system
-    13:
-      ? special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
@@ -302,8 +296,6 @@ x86-64_linux:
     11:
       ? special.system
     12:
-      ? special.system
-    13:
       ? special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers /w CMake
@@ -422,8 +414,6 @@ x86-64_linux_xl:
       ? special.system
     12:
       ? special.system
-    13:
-      ? special.system
 #========================================#
 # Windows x86 64bits Compressed Pointers
 #========================================#
@@ -466,8 +456,6 @@ x86-64_windows:
     11:
       ? special.system
     12:
-      ? special.system
-    13:
       ? special.system
 #========================================#
 # Windows x86 64bits Large Heap
@@ -513,8 +501,6 @@ x86-64_windows_xl:
     11:
       ? special.system
     12:
-      ? special.system
-    13:
       ? special.system
 #========================================#
 # Windows x86 32bits
@@ -590,8 +576,6 @@ x86-64_mac:
       ? special.system
     12:
       ? special.system
-    13:
-      ? special.system
 #========================================#
 # OSX x86 64bits Large Heap
 #========================================#
@@ -638,6 +622,4 @@ x86-64_mac_xl:
     11:
       ? special.system
     12:
-      ? special.system
-    13:
       ? special.system
