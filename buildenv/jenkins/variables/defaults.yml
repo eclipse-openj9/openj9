@@ -612,8 +612,6 @@ x86-64_mac:
     vars:
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
   excluded_tests:
-    8:
-      ? special.system
     11:
       ? special.system
     12:
