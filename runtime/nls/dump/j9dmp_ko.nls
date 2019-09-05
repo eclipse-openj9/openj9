@@ -507,7 +507,7 @@ J9NLS_DMP_INVALID_OR_RESERVED.sample_input_1=suspendwith
 J9NLS_DMP_INVALID_OR_RESERVED.link=
 # END NON-TRANSLATABLE
 
-J9NLS_DMP_TOO_MANY_DUMP_OPTIONS=\uae30\ubcf8\uc801\uc73c\ub85c \uc124\uc815\ub418\ub294 \uc635\uc158\uc744 \ube44\ub86f\ud55c \ub364\ud504 \uc635\uc158\uc758 \uc218\ub294 %d\uac1c\ubcf4\ub2e4 \uc791\uc544\uc57c \ud569\ub2c8\ub2e4.
+J9NLS_DMP_TOO_MANY_DUMP_OPTIONS=\uae30\ubcf8\uc801\uc73c\ub85c \uc124\uc815\ub418\ub294 \uc635\uc158\uc744 \ube44\ub86f\ud55c \ub364\ud504 \uc635\uc158\uc758 \uc218\ub294 %d\uac1c\ubcf4\ub2e4 \uc801\uc5b4\uc57c \ud569\ub2c8\ub2e4.
 # START NON-TRANSLATABLE
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.explanation=The number of -Xdump: options exceeds the VM limit
 J9NLS_DMP_TOO_MANY_DUMP_OPTIONS.system_action=The JVM exits.
