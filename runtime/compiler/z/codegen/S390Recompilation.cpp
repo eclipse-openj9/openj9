@@ -56,22 +56,9 @@ TR_PersistentMethodInfo *
 TR_S390Recompilation::getExistingMethodInfo(TR_ResolvedMethod * method)
    {
    // The method was previously compiled. Find its method info block from the
-   // start PC address. The mechanism is different depending on whether the
-   // method was compiled for sampling or counting.
-   //
-   char * startPC = (char *) method->startAddressForInterpreterOfJittedMethod();
-   if (NULL == startPC)
-      {
-      return NULL;
-      }
-   // need to pass in StartPC, which is the entry point of the interpreter ie includes the loads
-   TR_PersistentMethodInfo *info = getMethodInfoFromPC(startPC);
-   if (debug("traceRecompilation"))
-      {
-      //diagnostic("RC>>Recompiling %s at level %d\n", signature(_compilation->getCurrentMethod()), info->getHotness());
-      }
-
-   return info;
+   // its TR_PersistentJittedBodyInfo.
+   TR_PersistentJittedBodyInfo *bodyInfo = ((TR_ResolvedJ9Method*) method)->getExistingJittedBodyInfo();
+   return bodyInfo ? bodyInfo->getMethodInfo() : NULL;
    }
 
 TR_S390Recompilation::TR_S390Recompilation(TR::Compilation * comp)
