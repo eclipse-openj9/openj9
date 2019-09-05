@@ -4045,15 +4045,10 @@ TR_J9ByteCodeIlGenerator::genInvokeInterface(int32_t cpIndex)
          {
          TR::SymbolReference *symRef = symRefTab()->findOrCreateMethodSymbol(
             _methodSymbol->getResolvedMethodIndex(),
-            -1, // don't use cpIndex to find the vtable slot
+            cpIndex,
             improperMethod,
             TR::MethodSymbol::Virtual,
             /* isUnresolvedInCP = */ false);
-
-         symRef->setCPIndex(cpIndex);
-         TR_OpaqueMethodBlock *m = improperMethod->getPersistentIdentifier();
-         symRef->setOffset(
-            TR::Compiler->cls.vTableSlot(comp(), m, fej9()->getClassOfMethod(m)));
 
          callNode = genInvokeWithVFTChild(symRef);
          _methodSymbol->setMayHaveIndirectCalls(true);
