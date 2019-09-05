@@ -81,7 +81,7 @@ for possible SPEC values.
 
 Please read [DependentLibs.md](./DependentLibs.md) for details.
 
-## 2. Compile tests
+### 2. Compile tests
 
 #### Compile and run all tests (found in directories set by BUILD_LIST environment variable)
 ```
@@ -181,7 +181,7 @@ e.g.,
     make _sanity.functional.native
 ```
 
-#### A specific individual test target (where test targets are defined in playlist files, see [testExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L27)<br />
+#### Run a specific individual test target (where test targets are defined in playlist files, see [testExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L27)<br />
 make _testTargetName_xxx <br />
 e.g., the [1st variation in playlist](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L29) is suffixed by _0, 2nd variation by _1, and so forth
 ```
@@ -189,7 +189,7 @@ e.g., the [1st variation in playlist](https://github.com/eclipse/openj9/blob/mas
 ```
 The suffix number refers to the variation in the playlist.xml file
 
-#### All variations in the test target <br />
+#### Run all variations in the test target <br />
 make _testTargetName <br />
 e.g., 
 ```
@@ -198,7 +198,7 @@ e.g.,
 Above command will run [all possible variations in _testExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L28-L30)
 target
 
-#### A directory of tests <br />
+#### Run a directory of tests <br />
 cd path/to/directory; make -f autoGen.mk testTarget <br /> 
 or make -C path/to/directory -f autoGen.mk testTarget <br />
 e.g., 
@@ -207,7 +207,7 @@ e.g.,
     make -f autoGen.mk _sanity
 ```
 
-#### All tests
+#### Run all tests
 - compile & run tests
 ```
         make test
@@ -217,9 +217,9 @@ e.g.,
         make runtest
 ```
 
-#### Against specific (e.g., hotspot 8) SDK
+#### Run tests against specific (e.g., hotspot 8) SDK
 
-impl and subset are used to annotate tests in playlist.xml, so that the tests will be run against the targeted JDK_IMPL and JDK_VERSION (and is determined by the SDK defined in TEST_JDK_HOME variable)
+`<impl>` and `<subset>` elements are used to annotate tests in playlist.xml, so that the tests will be run against the targeted JDK_IMPL and JDK_VERSION (and is determined by the SDK defined in TEST_JDK_HOME variable)
 
 #### Rerun the failed tests from the last run
 ```
@@ -241,18 +241,14 @@ There are 3 ways to add options to your test run:
 ### 5. Exclude tests
 
 #### Exclude test target in playlist.xml
-Add 
+Add `<disabled>` element, with a link to the issue that describes the reason for disabling test
+for example: 
 ```
-    <disabled>Reason for disabling test, should include issue number<disabled>
-    (for example: <disabled>link to issue #1 test failed due to OOM<disabled>)
+    <disabled>[https://github.com/eclipse/openj9/issues/6777](https://github.com/eclipse/openj9/issues/6777)<disabled>
 ```
-inside the
-```
-    <test>
-```
-element that you want to exclude.
+inside the `<test>` element that you want to exclude.
 
-If a test is disabled using `<disabled>` tag in playlist.xml, it can be executed through specifying the test target or adding `disabled` in front of regular target.
+If a test is disabled using `<disabled>` tag in playlist.xml, it can be executed by specifying the test target or adding `disabled` in front of its top-level test target.
 
 ```    
         make _testA    // testA has <disabled> tag in playlist.xml  
@@ -285,6 +281,7 @@ method from that class will be excluded (on all platforms/specs).
 Same as excluding on all platforms, you add a line to
 latest_exclude_$(JDK_VERSION).txt file, but with specific specs to
 exclude, for example:
+
 ```
     org.openj9.test.java.lang.management.TestOperatingSystemMXBean 121187 linux_x86-64
 ```
@@ -296,15 +293,15 @@ Note: in OpenJ9 the defect numbers would associate with git issue numbers
 
 #### Exclude permanently on all or specific platforms/archs
 
-    For tests that should NEVER run on particular platforms or
-    architectures, we should not use the default_exclude.txt file. To
-    disable those tests, we annotate the test class to be disabled. To
-    exclude MyTest from running on the aix platform, for example:
-    ```
+For tests that should NEVER run on particular platforms or
+architectures, we should not use the default_exclude.txt file. To
+disable those tests, we annotate the test class to be disabled. To
+exclude MyTest from running on the aix platform, for example:
+```
     @Test(groups={ "level.sanity", "component.jit", "disabled.os.aix" })
         public class MyTest {
         ...
-    ```
+```
 
 We currently support the following exclusion groups:
 ```
@@ -317,49 +314,47 @@ disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
 ### 6. View results
 
 #### Results in the console
+OpenJ9 tests written in testNG format take advantage of the testNG logger.
 
-    OpenJ9 tests written in testNG format take advantage of the testNG 
-    logger.
+If you want your test to print output, you are required to use the
+testng logger (and not System.out.print statements). In this way,
+we can not only direct that output to console, but also to various
+other clients (WIP).  At the end of a test run, the results are
+summarized to show which tests are passed / failed / disabled / skipped.  This gives
+you a quick view of the test names and numbers in each category
+(passed/failed/disabled/skipped).  If you've piped the output to a file, or
+if you like scrolling up, you can search for and find the specific
+output of the tests that failed (exceptions or any other logging
+that the test produces).
 
-    If you want your test to print output, you are required to use the
-    testng logger (and not System.out.print statements). In this way,
-    we can not only direct that output to console, but also to various
-    other clients (WIP).  At the end of a test run, the results are
-    summarized to show which tests are passed / failed / disabled / skipped.  This gives
-    you a quick view of the test names and numbers in each category
-    (passed/failed/disabled/skipped).  If you've piped the output to a file, or
-    if you like scrolling up, you can search for and find the specific
-    output of the tests that failed (exceptions or any other logging
-    that the test produces).
+- `SKIPPED` tests
 
-    - `SKIPPED` tests
+If a test is skipped, it means that this test cannot be run on this
+platform due to jvm options, platform requirements and/or test
+capabilities.
 
-      If a test is skipped, it means that this test cannot be run on this
-      platform due to jvm options, platform requirements and/or test
-      capabilities.
+- `DISABLED` tests
 
-    - `DISABLED` tests
-
-      If a test is disabled, it means that this test is disabled using `<disabled>` tag in playlist.xml.
+If a test is disabled, it means that this test is disabled using `<disabled>` tag in playlist.xml.
 
 #### Results in html files
 
-    TestNG tests produce html (and xml) output from the tests are 
-    created and stored in a test_output_xxxtimestamp folder in the 
-    TestConfig directory (or from where you ran "make test"). 
+TestNG tests produce html (and xml) output from the tests are 
+created and stored in a test_output_xxxtimestamp folder in the 
+TestConfig directory (or from where you ran "make test"). 
 
-    The output is organized by tests, each test having its own set of 
-    output.  If you open the index.html file in a web browser, you will
-    be able to see which tests passed, failed or were skipped, along 
-    with other information like execution time and error messages, 
-    exceptions and logs from the individual test methods.
+The output is organized by tests, each test having its own set of 
+output.  If you open the index.html file in a web browser, you will
+be able to see which tests passed, failed or were skipped, along 
+with other information like execution time and error messages, 
+exceptions and logs from the individual test methods.
 
 #### TAP result files
 
-    As some of the tests are not testNG or junit format, a simple standardized 
-    format for test output was needed so that all tests are reported in
-    the same way for a complete test summary. Depending on the 
-    requirement there are three different diagnostic levels.
+As some of the tests are not testNG or junit format, a simple standardized 
+format for test output was needed so that all tests are reported in
+the same way for a complete test summary. Depending on the 
+requirement there are three different diagnostic levels.
 
 		* export DIAGNOSTICLEVEL=failure
 			Default level. Log all detailed failure information if test fails
@@ -373,20 +368,19 @@ disabled.spec.<spec> (e.g. disabled.spec.linux_x86-64)
 
 #### To a particular test
 
-    The command line that is run for each particular test is echo-ed to
-    the console, so you can easily copy the command that is run.
-    You can then run the command directly (which is a direct call to the
-    java executable, adding any additional options, including those to
-    attach a debugger.
+The command line that is run for each particular test is echo-ed to
+the console, so you can easily copy the command that is run.
+You can then run the command directly (which is a direct call to the
+java executable, adding any additional options, including those to
+attach a debugger.
 
 ### 8. Move test into different make targets (layers)
 
 #### From extended to sanity (or vice versa)
+- For testng tests, change the group annotated at the top of the 
+test class from `level.extended` to `level.sanity`
 
-    - For testng tests, change the group annotated at the top of the 
-    test class from `level.extended` to `level.sanity`
-
-    - Change `<level>` from `extended` to `sanity` in playlist.xml
+- Change `<level>` from `extended` to `sanity` in playlist.xml
 
 # How-to Reproduce Test Failures
 A common scenario is that automated testing finds a failure and a developer is asked to reproduce it.  An openj9 issue is created reporting a failing test.  The issue should contain:
