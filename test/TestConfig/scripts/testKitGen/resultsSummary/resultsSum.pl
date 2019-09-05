@@ -30,6 +30,27 @@ my $resultFile;
 my $failuremkarg;
 my $tapFile;
 my $diagnostic = 'failure';
+my $jdkVersion = "";
+my $jdkImpl = "";
+my $buildList = "";
+my $spec = "";
+my %spec2jenkinsFile = (
+	'linux_x86-64_cmprssptrs'      => 'openjdk_x86-64_linux',
+	'linux_x86-64'                 => 'openjdk_x86-64_linux_xl',
+	'linux_arm'                    => 'openjdk_aarch32_linux',
+	'linux_aarch64_cmprssptrs'     => 'openjdk_aarch64_linux',
+	'linux_aarch64'                => 'openjdk_aarch64_linux_xl',
+	'linux_ppc-64_cmprssptrs'      => 'openjdk_ppc64_aix',
+	'linux_ppc-64_cmprssptrs_le'   => 'openjdk_ppc64le_linux',
+	'linux_390-64_cmprssptrs'      => 'openjdk_s390x_linux',
+	'zos_390-64_cmprssptrs'        => 'openjdk_s390x_zos',
+	'osx_x86-64_cmprssptrs'        => 'openjdk_x86-64_mac',
+	'osx_x86-64'                   => 'openjdk_x86-64_mac_xl',
+	'win_x86-64_cmprssptrs'        => 'openjdk_x86-64_windows',
+	'win_x86-64'                   => 'openjdk_x86-64_windows_xl',
+	'win_x86'                      => 'openjdk_x86-32_windows',
+	'sunos_sparcv9-64_cmprssptrs'  => 'openjdk_sparcv9_solaris',
+);
 
 for (my $i = 0; $i < scalar(@ARGV); $i++) {
 	my $arg = $ARGV[$i];
@@ -41,6 +62,14 @@ for (my $i = 0; $i < scalar(@ARGV); $i++) {
 		($tapFile) = $arg =~ /^\-\-tapFile=(.*)/;
 	} elsif ($arg =~ /^\-\-diagnostic=/) {
 		($diagnostic) = $arg =~ /^\-\-diagnostic=(.*)/;
+	} elsif ($arg =~ /^\-\-jdkVersion=/) {
+		($jdkVersion) = $arg =~ /^\-\-jdkVersion=(.*)/;
+	} elsif ($arg =~ /^\-\-jdkImpl=/) {
+		($jdkImpl) = $arg =~ /^\-\-jdkImpl=(.*)/;
+	} elsif ($arg =~ /^\-\-buildList=/) {
+		($buildList) = $arg =~ /^\-\-buildList=(.*)/;
+	} elsif ($arg =~ /^\-\-spec=/) {
+		($spec) = $arg =~ /^\-\-spec=(.*)/;
 	}
 }
 
@@ -186,6 +215,23 @@ sub resultReporter {
 
 	print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
 
+	if ($numOfFailed != 0) {
+		my $buildParam =  "";
+		if ($buildList ne '') {
+			$buildParam = "&BUILD_LIST=" . $buildList;
+		}
+		my $jenkinFileParam = "";
+		if (exists $spec2jenkinsFile{$spec}) {
+			$jenkinFileParam = "&Jenkinsfile=" . $spec2jenkinsFile{$spec};
+		}
+		print "To rebuild the failed test in a jenkins job, copy the following link and fill out the <Jenkins URL> and <FAILED test target>:\n";
+		print "<Jenkins URL>/parambuild/?JDK_VERSION=$jdkVersion&JDK_IMPL=$jdkImpl$buildParam$jenkinFileParam&TARGET=<FAILED test target>\n\n";
+		print "For example, to rebuild the failed tests in <Jenkins URL>=https://ci.adoptopenjdk.net/job/Grinder, use the following links:\n";
+		foreach my $failedTarget (@failed) {
+			print "https://ci.adoptopenjdk.net/job/Grinder/parambuild/?JDK_VERSION=$jdkVersion&JDK_IMPL=$jdkImpl$buildParam$jenkinFileParam&TARGET=$failedTarget\n";
+		}
+		print "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n";
+	}
 	unlink($resultFile);
 
 	return \@failed;
