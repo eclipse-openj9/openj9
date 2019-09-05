@@ -52,6 +52,7 @@
 #include "optimizer/TransformUtil.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/J9Profiler.hpp"
+#include "OMR/Bytes.hpp"
 
 #include "j9.h"
 #include "j9cfg.h"
@@ -720,7 +721,7 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
 
    if (node->getOpCodeValue() == TR::newarray || self()->useCompressedPointers())
       {
-      size = (int32_t)((size+(TR::Compiler->om.sizeofReferenceAddress()-1)) & ~(TR::Compiler->om.sizeofReferenceAddress()-1));
+      size = (int32_t)OMR::align(size, TR::Compiler->om.sizeofReferenceAddress());
       }
 
    if (isRealTimeGC &&
