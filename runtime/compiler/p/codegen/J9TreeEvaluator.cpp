@@ -2164,53 +2164,12 @@ TR::Register *J9::Power::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::
 
 TR::Register *J9::Power::TreeEvaluator::instanceofEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::Compilation * comp = cg->comp();
-   if (comp->getOption(TR_OptimizeForSpace) || comp->getOption(TR_DisableInlineInstanceOf))
-      {
-      TR::ILOpCodes opCode = node->getOpCodeValue();
-      TR::Node::recreate(node, TR::icall);
-      TR::Register *targetRegister = directCallEvaluator(node, cg);
-      TR::Node::recreate(node, opCode);
-      return targetRegister;
-      }
-   else
-      return VMinstanceOfEvaluator(node, cg);
+   return VMinstanceOfEvaluator(node, cg);
    }
 
 TR::Register *J9::Power::TreeEvaluator::checkcastEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::Compilation * comp = cg->comp();
-   if (comp->getOption(TR_OptimizeForSpace) || comp->getOption(TR_DisableInlineCheckCast))
-      {
-      bool isCheckcastAndNullChk = (node->getOpCodeValue() == TR::checkcastAndNULLCHK);
-      TR::Node *objNode = node->getFirstChild();
-      bool needsNullTest = !objNode->isNonNull();
-
-      if (needsNullTest && isCheckcastAndNullChk)
-         {
-         TR::Instruction *gcPoint;
-         // get the bytecode info of the
-         // NULLCHK that was compacted
-         TR::Node *nullChkInfo = comp->findNullChkInfo(node);
-         TR::Register *objReg = cg->evaluate(objNode);
-
-         if (cg->getHasResumableTrapHandler())
-            gcPoint = generateNullTestInstructions(cg, objReg, nullChkInfo);
-         else
-            // a helper is needed
-            gcPoint = generateNullTestInstructions(cg, objReg, nullChkInfo, true);
-         gcPoint->PPCNeedsGCMap(0xFFFFFFFF);
-         }
-
-      TR::ILOpCodes opCode = node->getOpCodeValue();
-      TR::Node::recreate(node, TR::call);
-      TR::Register *targetRegister = directCallEvaluator(node, cg);
-      TR::Node::recreate(node, opCode);
-
-      return targetRegister;
-      }
-   else
-      return TR::TreeEvaluator::VMcheckcastEvaluator(node, cg);
+   return TR::TreeEvaluator::VMcheckcastEvaluator(node, cg);
    }
 
 TR::Register *J9::Power::TreeEvaluator::checkcastAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
