@@ -80,21 +80,24 @@ public class Options {
 
 	public static void parse(String[] args) {
 		for (int i = 0; i < args.length; i++) {
-			String arg = args[i].toLowerCase();
-			if (arg.startsWith("--spec=")) {
-				spec = arg.substring(arg.indexOf("=") + 1);
-			} else if (arg.startsWith("--jdkversion=")) {
-				jdkVersion = arg.substring(arg.indexOf("=") + 1);
-			} else if (arg.startsWith("--impl=")) {
-				impl = arg.substring(arg.indexOf("=") + 1);
-			} else if (arg.startsWith("--projectrootdir=")) {
+			String arg = args[i];
+			String arglc = arg.toLowerCase();
+			if (arglc.startsWith("--spec=")) {
+				spec = arglc.substring(arg.indexOf("=") + 1);
+			} else if (arglc.startsWith("--jdkversion=")) {
+				jdkVersion = arglc.substring(arg.indexOf("=") + 1);
+			} else if (arglc.startsWith("--impl=")) {
+				impl = arglc.substring(arg.indexOf("=") + 1);
+			} else if (arglc.startsWith("--projectrootdir=")) {
+				// projectRootDir is case sensitive
 				projectRootDir = arg.substring(arg.indexOf("=") + 1);
-			} else if (arg.startsWith("--buildlist=")) {
+			} else if (arglc.startsWith("--buildlist=")) {
+				// buildList is case sensitive
 				buildList = arg.substring(arg.indexOf("=") + 1);
-			} else if (arg.startsWith("--iterations=")) {
-				iterations = arg.substring(arg.indexOf("=") + 1);
-			} else if (arg.startsWith("--testflag=")) {
-				testFlag = arg.substring(arg.indexOf("=") + 1);
+			} else if (arglc.startsWith("--iterations=")) {
+				iterations = arglc.substring(arg.indexOf("=") + 1);
+			} else if (arglc.startsWith("--testflag=")) {
+				testFlag = arglc.substring(arg.indexOf("=") + 1);
 			} else {
 				System.err.println("Invalid option " + args[i]);
 				System.err.println(usage);
