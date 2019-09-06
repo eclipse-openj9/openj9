@@ -5864,6 +5864,33 @@ public final class Unsafe {
 	}
 /*[ENDIF] Java12 */
 
+/*[IF Java14]*/
+	/**
+	 * Make sure that the virtual memory at address "addr" for length "len" has been flushed to physical memory.
+	 * Throw RuntimeException if cache flushing not enabled on the runtime OS.
+	 * 
+	 * @param addr address to the start of the block of virtual memory to be flushed
+	 * @param len length of the block of virtual memory to be flushed
+	 * @throws RuntimeException if cache flushing not enabled
+	 * 
+	 * Temporary stub method
+	 */
+	public void writebackMemory(long addr, long len) {
+		throw new UnsupportedOperationException("Stub method"); //$NON-NLS-1$
+	}
+
+	/**
+	 * Check if cache flushing is possible on the runtime OS
+	 * 
+	 * @return true if cache flushing is possible, else false
+	 * 
+	 * Temporary stub method
+	 */
+	public static boolean isWritebackEnabled() {
+		throw new UnsupportedOperationException("Stub method"); //$NON-NLS-1$
+	}
+/*[ENDIF] Java14 */
+
 	/* 
 	 * Private methods 
 	 */
