@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2018 IBM Corp. and others
+ * Copyright (c) 2010, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,6 @@ import static com.ibm.j9ddr.StructureTypeManager.*;
 
 import java.io.PrintStream;
 import java.util.List;
-
 
 import com.ibm.j9ddr.tools.ddrinteractive.BaseStructureCommand;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
@@ -56,6 +55,7 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.base.VoidFormatte
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.CStringFieldFormatter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ClassFieldFormatter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ClassStructureFormatter;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ConstantPoolFieldFormatter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9MethodFieldFormatter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9MethodStructureFormatter;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ModuleStructureFormatter;
@@ -66,27 +66,27 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.structureformat.extensions.J9ROMM
 
 /**
  * VM-specific half of the structure formatter.
- * 
  */
 public class StructureCommand extends BaseStructureCommand
 {
-	
+
 	public StructureCommand()
 	{
 		loadDefaultFormatters();
-		
+
 		loadExtensionFormatters();
-		
+
 		registerDefaultStructureFormatter(new RuntimeResolvingStructureFormatter());
 	}
 
-	private void loadExtensionFormatters() 
+	private void loadExtensionFormatters()
 	{
 		registerFieldFormatter(new J9ClassFieldFormatter());
 		registerFieldFormatter(new J9MethodFieldFormatter());
 		registerFieldFormatter(new CStringFieldFormatter());
 		registerFieldFormatter(new J9ObjectFieldFormatter());
-		
+		registerFieldFormatter(new J9ConstantPoolFieldFormatter());
+
 		registerStructureFormatter(new J9ObjectStructureFormatter());
 		registerStructureFormatter(new J9ClassStructureFormatter());
 		registerStructureFormatter(new J9MethodStructureFormatter());
@@ -95,7 +95,7 @@ public class StructureCommand extends BaseStructureCommand
 		registerStructureFormatter(new J9PackageStructureFormatter());
 	}
 
-	private void loadDefaultFormatters() 
+	private void loadDefaultFormatters()
 	{
 		/*NOTE: If you want to add a custom structure formatter - put it in loadExtensionFormatters not here */
 		registerFieldFormatter(new StructurePointerFormatter());
@@ -107,10 +107,10 @@ public class StructureCommand extends BaseStructureCommand
 		registerFieldFormatter(new DoubleFormatter());
 		registerFieldFormatter(new EnumFormatter());
 		registerFieldFormatter(new VoidFormatter());
-		
+
 		registerFieldFormatter(new J9SRPFormatter(TYPE_J9SRP, "J9SRP(", false));
 		registerFieldFormatter(new J9SRPFormatter(TYPE_J9WSRP, "J9WSRP(", true));
-		
+
 		registerFieldFormatter(new ScalarFormatter(TYPE_I16, I16Pointer.class));
 		registerFieldFormatter(new ScalarFormatter(TYPE_I32, I32Pointer.class));
 		registerFieldFormatter(new ScalarFormatter(TYPE_I64, I64Pointer.class));
@@ -121,7 +121,7 @@ public class StructureCommand extends BaseStructureCommand
 		registerFieldFormatter(new U64ScalarFormatter(TYPE_U64, U64Pointer.class));
 		registerFieldFormatter(new ScalarFormatter(TYPE_UDATA, UDATAPointer.class));
 	}
-	
+
 	private class RuntimeResolvingStructureFormatter extends BaseStructureCommand.DefaultStructureFormatter {
 		@Override
 		public FormatWalkResult format(String type, long address, PrintStream out, Context context, List<IFieldFormatter> fieldFormatters, String[] extraArgs)  {
@@ -129,5 +129,5 @@ public class StructureCommand extends BaseStructureCommand
 			return super.format(type, address, out, context, fieldFormatters, extraArgs);
 		}
 	}
-	
+
 }
