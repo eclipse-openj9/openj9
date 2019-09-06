@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,31 +31,28 @@ import static java.util.logging.Level.FINE;
 import static java.util.logging.Level.FINER;
 import static java.util.logging.Level.FINEST;
 
+import java.io.PrintStream;
+import java.text.MessageFormat;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import java.io.PrintStream;
-import java.text.MessageFormat;
-
 import com.ibm.j9ddr.CorruptDataException;
+import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
 import com.ibm.j9ddr.vm29.j9.J9ConfigFlags;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.UDATAPointer;
 import com.ibm.j9ddr.vm29.pointer.VoidPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
-import com.ibm.j9ddr.vm29.pointer.generated.J9ConstantPoolPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
-import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
 /**
  * Utility methods shared between stack walkers.
  * 
  * @author andhall
- *
  */
 public class StackWalkerUtils
 {
@@ -138,17 +135,7 @@ public class StackWalkerUtils
 					+ "> " + message, args);
 		}
 	}
-	
-	public static J9ConstantPoolPointer UNTAGGED_METHOD_CP(
-			J9MethodPointer method) throws CorruptDataException
-	{
-		if (J9BuildFlags.interp_nativeSupport) {
-			return method.constantPool().untag(J9Consts.J9_STARTPC_STATUS);
-		} else {
-			return method.constantPool();
-		}
-	}
-	
+
 	public static void swPrintMethod(WalkState walkState)
 	throws CorruptDataException
 	{
@@ -159,8 +146,7 @@ public class StackWalkerUtils
 	throws CorruptDataException
 	{
 		if (method.notNull()) {
-			J9UTF8Pointer className = UNTAGGED_METHOD_CP(method).ramClass()
-			.romClass().className();
+			J9UTF8Pointer className = ConstantPoolHelpers.J9_CLASS_FROM_METHOD(method).romClass().className();
 			J9ROMMethodPointer romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 			J9UTF8Pointer name = romMethod.nameAndSignature().name();
 			J9UTF8Pointer sig = romMethod.nameAndSignature().signature();

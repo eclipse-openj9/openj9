@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,13 +28,13 @@ import com.ibm.j9ddr.tools.ddrinteractive.Command;
 import com.ibm.j9ddr.tools.ddrinteractive.CommandUtils;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
+import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.ROMHelp;
 import com.ibm.j9ddr.vm29.j9.stackmap.LocalMap;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9ConstantPoolPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
@@ -78,7 +78,7 @@ public class LocalMapCommand extends Command
 			UDATA offsetPC = new UDATA(pc.sub(U8Pointer.cast(localMethod.bytecodes())));
 			CommandUtils.dbgPrint(out, "Relative PC = %d\n", offsetPC.longValue());
 
-			J9ClassPointer localClass = J9_CLASS_FROM_CP(localMethod.constantPool());
+			J9ClassPointer localClass = ConstantPoolHelpers.J9_CLASS_FROM_METHOD(localMethod);
 			long methodIndex = new UDATA(localMethod.sub(localClass.ramMethods())).longValue();			
 			CommandUtils.dbgPrint(out, "Method index is %d\n", methodIndex);
 			
@@ -135,11 +135,6 @@ public class LocalMapCommand extends Command
 	private J9ROMMethodPointer J9ROMCLASS_ROMMETHODS(J9ROMClassPointer base) throws CorruptDataException 
 	{
 		return base.romMethods();		
-	}
-
-	private J9ClassPointer J9_CLASS_FROM_CP(J9ConstantPoolPointer constantPool) throws CorruptDataException 
-	{
-		return constantPool.ramClass();
 	}
 	
 //	/*
