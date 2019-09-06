@@ -92,6 +92,8 @@ class TR_ResolvedMethod;
 class TR_AbstractInfo;
 class TR_BitVector;
 class TR_J9VMBase;
+class TR_J9SharedCache;
+
 
 #if defined (_MSC_VER)
 extern "C" __declspec(dllimport) void __stdcall DebugBreak();
@@ -216,11 +218,13 @@ public:
    // returns the number of bytes the equivalent storage structure needs
    virtual uint32_t                   getBytesFootprint() = 0;
 
+#if defined(JITSERVER_SUPPORT)
    // Serialization used for JITServer
    // not sufficient for persisting to the shared cache
    virtual uint32_t canBeSerialized(TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
    virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) = 0;
    virtual void deserialize(TR_IPBCDataStorageHeader *storage) = 0;
+#endif
 
    virtual uint32_t canBePersisted(TR_J9SharedCache *sharedCache, TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)  = 0;
@@ -314,9 +318,10 @@ public:
    virtual void setInvalid() { data = IPROFILING_INVALID; }
    virtual TR_IPBCDataFourBytes  *asIPBCDataFourBytes() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataFourBytesStorage);}
-
-   virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) { createPersistentCopy(methodStartAddress, 0, storage, info); } // use cacheSize=0, because createPersistentCopy doesn't use it
-   virtual void deserialize(TR_IPBCDataStorageHeader *storage) { loadFromPersistentCopy(storage, NULL, 0); }
+#if defined(JITSERVER_SUPPORT)
+   virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
+   virtual void deserialize(TR_IPBCDataStorageHeader *storage);
+#endif
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader *storage, TR::Compilation *comp);
    int16_t getSumBranchCount();
@@ -371,12 +376,12 @@ public:
    virtual void setInvalid() { data[0] = IPROFILING_INVALID; }
    virtual TR_IPBCDataEightWords  *asIPBCDataEightWords() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof(TR_IPBCDataEightWordsStorage);}
-
-   virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) { createPersistentCopy(methodStartAddress, 0, storage, info); } // use cacheSize=0, becuase createPersistentCopy doesn't use it
-   virtual void deserialize(TR_IPBCDataStorageHeader *storage) { loadFromPersistentCopy(storage, NULL, 0); }
+#if defined(JITSERVER_SUPPORT)
+   virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
+   virtual void deserialize(TR_IPBCDataStorageHeader *storage);
+#endif
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader *storage, TR::Compilation *comp);
-
    virtual int32_t getSumSwitchCount();
    virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp);
 
@@ -422,9 +427,11 @@ public:
    virtual void setInvalid() { _csInfo.setClazz(0, IPROFILING_INVALID); }
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataCallGraphStorage);}
 
+#if defined(JITSERVER_SUPPORT)
    virtual uint32_t canBeSerialized(TR::PersistentInfo *info);
    virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void deserialize(TR_IPBCDataStorageHeader *storage);
+#endif
 
    virtual uint32_t canBePersisted(TR_J9SharedCache *sharedCache, TR::PersistentInfo *info);
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
@@ -502,7 +509,6 @@ public:
    void shutdown();
    void outputStats();
    void dumpIPBCDataCallGraph(J9VMThread* currentThread);
-   void resetProfiler();
    void startIProfilerThread(J9JavaVM *javaVM);
    void deallocateIProfilerBuffers();
    void stopIProfilerThread();
@@ -619,7 +625,6 @@ private:
    virtual void setBlockAndEdgeFrequencies( TR::CFG *cfg, TR::Compilation *comp);
    virtual bool hasSameBytecodeInfo(TR_ByteCodeInfo & persistentByteCodeInfo, TR_ByteCodeInfo & currentByteCodeInfo, TR::Compilation *comp);
    virtual void getBranchCounters (TR::Node *node, TR::TreeTop *fallThroughTree, int32_t *taken, int32_t *notTaken, TR::Compilation *comp);
-   int32_t getMaxCount(bool isAOT);
    virtual int32_t getSwitchCountForValue (TR::Node *node, int32_t value, TR::Compilation *comp);
    virtual int32_t getSumSwitchCount (TR::Node *node, TR::Compilation *comp);
    virtual int32_t getFlatSwitchProfileCounts (TR::Node *node, TR::Compilation *comp);
@@ -690,8 +695,6 @@ private:
    TR_IPBCDataAllocation         **_allocHashTable;
 #endif
 
-   // block frequency
-   int32_t                         _maxCount;
    // giving out profiling information for inlined calls
    bool                            _allowedToGiveInlinedInformation;
    int32_t                         _classLoadTimeStampGap;

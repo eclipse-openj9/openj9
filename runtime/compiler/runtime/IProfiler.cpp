@@ -399,7 +399,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
       // can only persist profile info if the method is in the shared cache
       if (comp->fej9()->sharedCache()->isPointerInSharedCache(romMethod))
         {
-         TR_ASSERT(comp->fej9()->sharedCache()->isPointerInSharedCache(methodStart), "bytecodes not in shared cache");
+         TR_ASSERT(comp->fej9()->sharedCache()->isPointerInSharedCache((void *)methodStart), "bytecodes not in shared cache");
          // check if there is already an entry
          unsigned char storeBuffer[1000];
          uint32_t bufferLength = 1000;
@@ -566,7 +566,7 @@ TR_IProfiler::allocate(J9JITConfig *jitConfig)
 
 TR_IProfiler::TR_IProfiler(J9JITConfig *jitConfig)
    : _isIProfilingEnabled(true),
-     _valueProfileMethod(NULL), _maxCount(DEFAULT_PROFILING_COUNT), _lightHashTableMonitor(0), _allowedToGiveInlinedInformation(true),
+     _valueProfileMethod(NULL), _lightHashTableMonitor(0), _allowedToGiveInlinedInformation(true),
      _globalAllocationCount (0), _maxCallFrequency(0), _iprofilerThread(0), _iprofilerOSThread(NULL),
      _workingBufferTail(NULL), _numOutstandingBuffers(0), _numRequests(1), _numRequestsSkipped(0),
      _numRequestsHandedToIProfilerThread(0), _iprofilerThreadExitFlag(0), _iprofilerMonitor(NULL),
@@ -2036,15 +2036,6 @@ TR_IProfiler::getProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
    }
 
 int32_t
-TR_IProfiler::getMaxCount(bool isAOT)
-   {
-   if (!isIProfilingEnabled())
-      return 0;
-
-   return _maxCount;
-   }
-
-int32_t
 TR_IProfiler::getSwitchCountForValue (TR::Node *node, int32_t value, TR::Compilation *comp)
    {
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
@@ -2288,7 +2279,6 @@ TR_IProfiler::setBlockAndEdgeFrequencies(TR::CFG *cfg, TR::Compilation *comp)
       return;
 
    cfg->propagateFrequencyInfoFromExternalProfiler(this);
-   _maxCount = cfg->getMaxFrequency();
 
    static bool traceIProfiling = ((debug("traceIProfiling") != NULL));
    if (traceIProfiling)
@@ -2304,12 +2294,6 @@ TR_IProfiler::setBlockAndEdgeFrequencies(TR::CFG *cfg, TR::Compilation *comp)
             }
          }
       }
-   }
-
-void
-TR_IProfiler::resetProfiler()
-   {
-   _maxCount = DEFAULT_PROFILING_COUNT;
    }
 
 TR_AbstractInfo *
@@ -2620,6 +2604,24 @@ TR_IPBCDataFourBytes::operator new (size_t size) throw()
    return TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size);
    }
 
+#if defined(JITSERVER_SUPPORT)
+void
+TR_IPBCDataFourBytes::serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
+   {
+   TR_IPBCDataFourBytesStorage * store = (TR_IPBCDataFourBytesStorage *) storage;
+   storage->pc = _pc - methodStartAddress;
+   storage->left = 0;
+   storage->right = 0;
+   storage->ID = TR_IPBCD_FOUR_BYTES;
+   store->data = data;
+   }
+void
+TR_IPBCDataFourBytes::deserialize(TR_IPBCDataStorageHeader *storage)
+   {
+   loadFromPersistentCopy(storage, NULL);
+   }
+#endif
+
 void
 TR_IPBCDataFourBytes::createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
    {
@@ -2701,7 +2703,24 @@ TR_IPBCDataEightWords::copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry
       data[i] = entry->data[i];
    }
 
-
+#if defined(JITSERVER_SUPPORT)
+void
+TR_IPBCDataEightWords::serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
+   {
+   TR_IPBCDataEightWordsStorage * store = (TR_IPBCDataEightWordsStorage *) storage;
+   storage->pc = _pc - methodStartAddress;
+   storage->ID = TR_IPBCD_EIGHT_WORDS;
+   storage->left = 0;
+   storage->right = 0;
+   for (int i = 0; i < SWITCH_DATA_COUNT; i++)
+      store->data[i] = data[i];
+   }
+void
+TR_IPBCDataEightWords::deserialize(TR_IPBCDataStorageHeader *storage)
+   {
+   loadFromPersistentCopy(storage, NULL);
+   }
+#endif
 
 int32_t
 TR_IPBCDataCallGraph::setData(uintptrj_t v, uint32_t freq)
@@ -3020,6 +3039,7 @@ TR_IPBCDataCallGraph::deserialize(TR_IPBCDataStorageHeader *storage)
    _csInfo._residueWeight = store->_csInfo._residueWeight;
    _csInfo._tooBigToBeInlined = store->_csInfo._tooBigToBeInlined;
    }
+#endif
 
 uint32_t
 TR_IPBCDataCallGraph::canBePersisted(TR_J9SharedCache *sharedCache, TR::PersistentInfo *info)
