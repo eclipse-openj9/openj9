@@ -244,6 +244,7 @@ J9SharedClassesHelpText J9SHAREDCLASSESHELPTEXT[] = {
 	{OPTION_DISABLE_BCI, J9NLS_SHRC_SHRINIT_HELPTEXT_DISABLE_BCI, 0, 0},
 	{OPTION_RESTRICT_CLASSPATHS, J9NLS_SHRC_SHRINIT_HELPTEXT_RESTRICT_CLASSPATHS, 0, 0},
 	{OPTION_ALLOW_CLASSPATHS, J9NLS_SHRC_SHRINIT_HELPTEXT_ALLOW_CLASSPATHS, 0, 0},
+	{OPTION_NO_PERSISTENT_DISK_SPACE_CHECK, J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK, 0, 0},
 	HELPTEXT_NEWLINE,
 	{HELPTEXT_INVALIDATE_AOT_METHODS_OPTION, J9NLS_SHRC_SHRINIT_HELPTEXT_INVALIDATE_AOT_METHODS, 0, 0},
 	{HELPTEXT_REVALIDATE_AOT_METHODS_OPTION, J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS, 0, 0},
@@ -379,6 +380,7 @@ J9SharedClassesOptions J9SHAREDCLASSESOPTIONS[] = {
 	{ OPTION_LAYER_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_LAYER_EQUALS, 0 },
 	{ OPTION_CREATE_LAYER, PARSE_TYPE_EXACT, RESULT_DO_CREATE_LAYER, 0 },
 #endif /* defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE) */
+	{ OPTION_NO_PERSISTENT_DISK_SPACE_CHECK, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_NO_PERSISTENT_DISK_SPACE_CHECK},
 	{ NULL, 0, 0 }
 };
 
@@ -402,7 +404,7 @@ static void adjustCacheSizes(J9PortLibrary* portlib, UDATA verboseFlags, J9Share
 static IDATA checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, const char* cacheName, J9PortShcVersion* versionData, U_32 cacheType, I_8 layer);
 static bool isClassFromPatchedModule(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader);
 static J9Module* getModule(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader);
-static bool isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize);
+static bool isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize, U_64 runtimeFlags);
 static char* generateStartupHintsKey(J9JavaVM *vm);
 static void fetchStartupHintsFromSharedCache(J9VMThread* vmThread);
 static void findExistingCacheLayerNumbers(J9JavaVM* vm, const char* ctrlDirName, const char* cacheName, U_64 runtimeFlags, I_8 *maxLayerNo);
@@ -2852,7 +2854,7 @@ ensureCorrectCacheSizes(J9JavaVM *vm, J9PortLibrary* portlib, U_64 runtimeFlags,
 		}
 	} else {
 		if (is64BitPlatDefaultSize) {
-			if (isFreeDiskSpaceLow(vm, &maxSize)) {
+			if (isFreeDiskSpaceLow(vm, &maxSize, runtimeFlags)) {
 				Trc_SHR_Assert_True(*cacheSize > maxSize);
 				adjustCacheSizes(portlib, verboseFlags, piconfig, maxSize);
 			}
@@ -5038,12 +5040,17 @@ getModule(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLo
  * @return False if the space free disk space >= SHRINIT_LOW_DISK_SIZE. True otherwise.
  */
 static bool
-isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize)
+isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize, U_64 runtimeFlags)
 {
 	char cacheDirName[J9SH_MAXPATH];
 	memset(cacheDirName, 0, J9SH_MAXPATH);
 	bool ret = true;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	if (J9_ARE_ANY_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_NO_PERSISTENT_DISK_SPACE_CHECK)) {
+		ret = false;
+		goto done;
+	}
 
 	if (-1 == j9shr_getCacheDir(vm, vm->sharedCacheAPI->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT)) {
 		/* use j9shr_getCacheDir() instead of SH_OSCache::getCacheDir() to avoid duplicated NLS message if SH_OSCache::getCacheDir() failed */
