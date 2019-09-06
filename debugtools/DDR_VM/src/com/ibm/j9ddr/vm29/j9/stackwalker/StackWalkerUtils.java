@@ -146,8 +146,7 @@ public class StackWalkerUtils
 	throws CorruptDataException
 	{
 		if (method.notNull()) {
-			J9UTF8Pointer className = ConstantPoolHelpers.J9_CP_FROM_METHOD(method).ramClass()
-					.romClass().className();
+			J9UTF8Pointer className = ConstantPoolHelpers.J9_CLASS_FROM_METHOD(method).romClass().className();
 			J9ROMMethodPointer romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 			J9UTF8Pointer name = romMethod.nameAndSignature().name();
 			J9UTF8Pointer sig = romMethod.nameAndSignature().signature();

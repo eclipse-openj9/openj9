@@ -78,7 +78,7 @@ public class LocalMapCommand extends Command
 			UDATA offsetPC = new UDATA(pc.sub(U8Pointer.cast(localMethod.bytecodes())));
 			CommandUtils.dbgPrint(out, "Relative PC = %d\n", offsetPC.longValue());
 
-			J9ClassPointer localClass = ConstantPoolHelpers.J9_CP_FROM_METHOD(localMethod).ramClass();
+			J9ClassPointer localClass = ConstantPoolHelpers.J9_CLASS_FROM_METHOD(localMethod);
 			long methodIndex = new UDATA(localMethod.sub(localClass.ramMethods())).longValue();			
 			CommandUtils.dbgPrint(out, "Method index is %d\n", methodIndex);
 			
