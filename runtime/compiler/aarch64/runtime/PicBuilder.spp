@@ -306,8 +306,8 @@ L_continueInterfaceSend:
 	mov	x28, x2						// protect LR in x28 (in L_commonLookupException, it is expected)
 	bl	jitLookupInterfaceMethod			// call the helper
 	cbz	x0, L_commonLookupException			// if resolve failed, throw the exception
-	mov	x15, #J9TR_InterpVTableOffset
-	sub	x15, x15, x0					// convert interp vTableIndex to jit index (must be in x15 for patch virtual)
+	mov	x9, #J9TR_InterpVTableOffset
+	sub	x9, x9, x0					// convert interp vTableIndex to jit index (must be in x9 for patch virtual)
 	mov	x30, x28						// set LR = code cache RA
 	ldr	x0, [J9SP, #0]					// refetch 'this'
 #ifdef J9VM_GC_COMPRESSED_POINTERS
@@ -321,8 +321,8 @@ L_continueInterfaceSend:
 	ldp	x4, x5, [J9SP, #32]
 	ldp	x6, x7, [J9SP, #48]
 	add	J9SP, J9SP, #64
-	ldr	x15, [x14, x15]					// jump thru vtable
-	br	x15
+	ldr	x14, [x14, x9]					// jump thru vtable
+	br	x14
 
 L_commonLookupException:
 	add	J9SP, J9SP, #64					// clean up stack but do not restore register values
