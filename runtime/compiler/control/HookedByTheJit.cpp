@@ -4031,7 +4031,14 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    // verify and remove  FIXME
    cl->classDepthAndFlags &= ~J9AccClassHasBeenOverridden;
 
-   J9ClassLoader *classLoader = cl->classLoader;
+   // For regular classes, cl->classLoader points to the correct class loader by the time we enter this hook.
+   // For anonymous classes however, it points to the anonymous class loader and not the correct class loader.
+   // Once the class is fully loaded the classLoader member will be updated to point to the correct class loader,
+   // which is the anonymous class's host class's class loader, but that doesn't do us any good in this hook.
+   // We need the correct class loader right now, so we grab the host class's class loader instead.
+   // For regular classes, cl->hostClass points back to the class itself, so by doing this we get the correct
+   // class loader for both regular and anonymous classes without having to check if this is an anonymous class.
+   J9ClassLoader *classLoader = cl->hostClass->classLoader;
 
    bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassLoading);
    char * className = NULL;
