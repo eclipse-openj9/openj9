@@ -89,13 +89,8 @@ MM_GCExtensions::initialize(MM_EnvironmentBase *env)
 	}
 
 #if defined(J9VM_GC_REALTIME)
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 	/* only ref slots, size in bytes: 2 * minObjectSize - header size */
 	minArraySizeToSetAsScanned = 2 * (1 << J9VMGC_SIZECLASSES_LOG_SMALLEST) - sizeof(J9IndexableObjectContiguous);
-#else /* J9VM_GC_HYBRID_ARRAYLETS */
-	/* only ref slots, size in bytes: 2 * minObjectSize - header size) - 1 * sizeof(arraylet pointer) */
-	minArraySizeToSetAsScanned = 2 * (1 << J9VMGC_SIZECLASSES_LOG_SMALLEST) - sizeof(J9IndexableObjectDiscontiguous) - sizeof(fj9object_t*);
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
 #endif /* J9VM_GC_REALTIME */
 
 #if defined(J9VM_GC_JNI_ARRAY_CACHE)

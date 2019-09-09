@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,9 +38,6 @@
 #include "GCExtensionsBase.hpp"
 #include "ObjectIteratorState.hpp"
 #include "SlotObject.hpp"
-
-#if defined(J9VM_GC_ARRAYLETS)
-
 
 /**
  * Iterate over all slots in a pointer array's inline leaf which contain an object reference (will iterate over nothing if the object is fully discontiguous)
@@ -122,8 +119,5 @@ public:
 		initialize(objectPtr);
 	}
 };
-
-#endif /* defined(J9VM_GC_ARRAYLETS) */
-
 
 #endif /* POINTERARRAYLETINLINELEAFITERATOR_HPP_ */

@@ -209,13 +209,10 @@ MM_IncrementalOverflow::fillFromOverflow(MM_EnvironmentBase *env, MM_Packet *pac
 	MM_EnvironmentRealtime *envRealtime = MM_EnvironmentRealtime::getEnvironment(env);
 	MM_HeapRegionDescriptorRealtime* region;
 	MM_RealtimeGC *realtimeGC = envRealtime->getExtensions()->realtimeGC;
-#if defined(OMR_GC_ARRAYLETS)
 	MM_RealtimeMarkingScheme *markingScheme = realtimeGC->getMarkingScheme();
-#endif /* defined(OMR_GC_ARRAYLETS) */
 	bool roomLeft = true;
 	
 	while (roomLeft && ((region = pop(envRealtime)) != NULL)) {
-#if defined(OMR_GC_ARRAYLETS)
 		if (region->isArraylet()) {
 			uintptr_t arrayletIndex = 0;
 			uintptr_t arrayletLeafLogSize = envRealtime->getOmrVM()->_arrayletLeafLogSize;
@@ -241,9 +238,7 @@ MM_IncrementalOverflow::fillFromOverflow(MM_EnvironmentBase *env, MM_Packet *pac
 				arrayletIndex += 1;
 				realtimeGC->_sched->condYieldFromGC(env);
 			}
-		} else 
-#endif /* defined(OMR_GC_ARRAYLETS) */		
-		if (region->isCanonical()) {
+		} else if (region->isCanonical()) {
 			if (region->isSmall()) {
 				/* A small region is divided into cells.
 				 * Iterate over the cells returning the objects contained within inuse cells

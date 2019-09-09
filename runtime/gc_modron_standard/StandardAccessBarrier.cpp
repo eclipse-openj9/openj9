@@ -602,7 +602,6 @@ MM_StandardAccessBarrier::getJNICriticalRegionCount(MM_GCExtensions *extensions)
 	return activeCriticals;
 }
 
-#if defined(J9VM_GC_ARRAYLETS)
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 I_32
 MM_StandardAccessBarrier::doCopyContiguousBackwardWithReadBarrier(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
@@ -715,7 +714,6 @@ MM_StandardAccessBarrier::forwardReferenceArrayCopyIndex(J9VMThread *vmThread, J
 	}
 	return retValue;
 }
-#endif /* J9VM_GC_ARRAYLETS */
 
 J9Object*
 MM_StandardAccessBarrier::asConstantPoolObject(J9VMThread *vmThread, J9Object* toConvert, UDATA allocationFlags)

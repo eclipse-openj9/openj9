@@ -54,7 +54,6 @@ MM_MemorySubSpaceMetronome::allocateObject(MM_EnvironmentBase *env, MM_AllocateD
 	return result;
 }
 
-#if defined(OMR_GC_ARRAYLETS)
 /**
  * Allocate an arraylet leaf.
  */
@@ -73,7 +72,6 @@ MM_MemorySubSpaceMetronome::allocateArrayletLeaf(MM_EnvironmentBase *env, MM_All
 	}
 	return leaf;
 }
-#endif /* OMR_GC_ARRAYLETS */
 
 void
 MM_MemorySubSpaceMetronome::collectOnOOM(MM_EnvironmentBase *env, MM_GCCode gcCode, MM_AllocateDescription *allocDescription)

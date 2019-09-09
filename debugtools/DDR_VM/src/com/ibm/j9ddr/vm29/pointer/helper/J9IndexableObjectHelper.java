@@ -67,11 +67,11 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	public static U32 size(J9IndexableObjectPointer objPointer) throws CorruptDataException 
 	{
 		UDATA size = J9IndexableObjectContiguousPointer.cast(objPointer).size();
-		if(J9BuildFlags.gc_hybridArraylets) {
-			if(size.eq(0)) {
-				size = J9IndexableObjectDiscontiguousPointer.cast(objPointer).size();	 
-			}
+
+		if (size.eq(0)) {
+			size = J9IndexableObjectDiscontiguousPointer.cast(objPointer).size();
 		}
+
 		if (size.anyBitsIn(0x80000000)) {
 			throw new CorruptDataException("java array size with sign bit set");
 		}

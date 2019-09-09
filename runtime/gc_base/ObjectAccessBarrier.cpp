@@ -1334,15 +1334,11 @@ MM_ObjectAccessBarrier::staticStoreI64(J9VMThread *vmThread, J9Class *clazz, I_6
  U_8 *
 MM_ObjectAccessBarrier::getArrayObjectDataAddress(J9VMThread *vmThread, J9IndexableObject *arrayObject)
 {
-#if defined(J9VM_GC_ARRAYLETS)
 	 if (_extensions->indexableObjectModel.isInlineContiguousArraylet(arrayObject)) {
 		 return (U_8 *)_extensions->indexableObjectModel.getDataPointerForContiguous(arrayObject);
 	 } else {
 		 return (U_8 *)_extensions->indexableObjectModel.getArrayoidPointer(arrayObject);
 	 }
-#else
-	 return (U_8 *)_extensions->indexableObjectModel.getDataPointerForContiguous(arrayObject);
-#endif /* J9VM_GC_ARRAYLETS */
 }
 
 /**
@@ -2015,8 +2011,6 @@ MM_ObjectAccessBarrier::compressedPointersShadowHeapTop(J9VMThread *vmThread)
 	return 0;
 }
 
-
-#if defined(J9VM_GC_ARRAYLETS)
 /**
  * @return this cannot fail (overloaded can) => returns ARRAY_COPY_NOT_DONE
  */
@@ -2053,7 +2047,6 @@ MM_ObjectAccessBarrier::doCopyContiguousForward(J9VMThread *vmThread, J9Indexabl
 	
 	return ARRAY_COPY_SUCCESSFUL;	
 }
-#endif /* J9VM_GC_ARRAYLETS */
 
 I_32
 MM_ObjectAccessBarrier::getObjectHashCode(J9JavaVM *vm, J9Object *object)

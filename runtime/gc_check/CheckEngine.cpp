@@ -36,9 +36,7 @@
 #define UT_TRACE_OVERHEAD -1 /* disable assertions and tracepoints since we're not in the GC module proper */
 #endif
 
-#if defined(J9VM_GC_ARRAYLETS)
 #include "ArrayletLeafIterator.hpp"
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 #include "CheckEngine.hpp"
 #include "Base.hpp"
 #include "CheckBase.hpp"
@@ -68,13 +66,6 @@ typedef struct ObjectSlotIteratorCallbackUserData {
 
 static jvmtiIterationControl check_objectSlotsCallback(J9JavaVM *javaVM, J9MM_IterateObjectDescriptor *objectDesc, J9MM_IterateObjectRefDescriptor *refDesc, void *userData);
 static bool isPointerInRegion(void *pointer, J9MM_IterateRegionDescriptor *regionDesc);
-#if defined(J9VM_GC_ARRAYLETS) && !defined(J9VM_GC_HYBRID_ARRAYLETS)
-static bool isPointerInRange(void *pointer, void *start, void *end);
-#endif /* defined(J9VM_GC_ARRAYLETS) && !defined(J9VM_GC_HYBRID_ARRAYLETS) */
-
-#if defined(J9VM_GC_ARRAYLETS) && !defined(J9VM_GC_HYBRID_ARRAYLETS)
-static J9Object* convertPointerFromToken(J9JavaVM *javaVM, fj9object_t token);
-#endif /* J9VM_GC_ARRAYLETS && !J9VM_GC_HYBRID_ARRAYLETS */
 
 /*
  * Define alignment masks for J9Objects:
@@ -492,35 +483,6 @@ GC_CheckEngine::checkJ9Object(J9JavaVM *javaVM, J9Object* objectPtr, J9MM_Iterat
 			return J9MODRON_GCCHK_RC_INVALID_RANGE;
 		}
 	}
-
-#if defined(J9VM_GC_ARRAYLETS) && !defined(J9VM_GC_HYBRID_ARRAYLETS)
-	if (extensions->objectModel.isIndexable(objectPtr) && (extensions->indexableObjectModel.isInlineContiguousArraylet((J9IndexableObject *)objectPtr))) {
-		/* only check leaf pointers if array is not zero length */
-		if (0 != extensions->indexableObjectModel.getSizeInElements((J9IndexableObject *)objectPtr)) {
-			GC_ArrayletLeafIterator leafIterator(javaVM, (J9IndexableObject *)objectPtr);
-			GC_SlotObject *currentLeafSlotObject = NULL;
-			void *endOfSpine = leafIterator.getEndOfSpine();
-			while ((currentLeafSlotObject = leafIterator.nextLeafPointer()) != NULL) {
-				fj9object_t *slotAddress = currentLeafSlotObject->readAddressFromSlot();
-				void *currentLeaf = convertPointerFromToken(_javaVM, *slotAddress);
-				if (currentLeaf == endOfSpine) {
-					 /* The last leaf may point immediately past the end of the spine area if it is an empty leaf */
-					if (NULL != leafIterator.nextLeafPointer()) {
-						return J9MODRON_GCCHK_RC_INVALID_RANGE;
-					}
-				} else {
-					/* 1) verify each arraylet leaf pointer is within its region
-					 * 2) verify each arraylet leaf pointer is within the range of the array object
-					 * (assuming an inline contiguous arraylet layout)
-					 */
-					if ((!isPointerInRegion(currentLeaf, regionDesc)) || (!isPointerInRange(currentLeaf, objectPtr, endOfSpine))) {
-						return J9MODRON_GCCHK_RC_INVALID_RANGE;
-					}
-				}
-			}
-		}
-	}
-#endif /*defined(J9VM_GC_ARRAYLETS) && !defined(J9VM_GC_HYBRID_ARRAYLETS) */
 
 	if (checkFlags & J9MODRON_GCCHK_VERIFY_FLAGS) {
 		if (!extensions->objectModel.checkIndexableFlag(objectPtr)) {
@@ -1511,33 +1473,3 @@ isPointerInRegion(void *pointer, J9MM_IterateRegionDescriptor *regionDesc)
 
 	return ((address >= regionStart) && (address < regionEnd));
 }
-
-#if defined(J9VM_GC_ARRAYLETS) && !defined(J9VM_GC_HYBRID_ARRAYLETS)
-static bool
-isPointerInRange(void *pointer, void *start, void *end)
-{
-	UDATA address = (UDATA)pointer;
-	UDATA startAddress = (UDATA)start;
-	UDATA endAddress = (UDATA)end;
-
-	return ((address >= startAddress) && (address < endAddress));
-}
-#endif /* defined(J9VM_GC_ARRAYLETS) && !defined(J9VM_GC_HYBRID_ARRAYLETS) */
-
-#if defined(J9VM_GC_ARRAYLETS) && !defined(J9VM_GC_HYBRID_ARRAYLETS)
-/* TODO we cannot call SlotObject->readReferenceFromSlot() 
- * because it calls j9gc_objaccess_pointerFromToken, which is a 
- * and pulls in additional files to be compiled. This causes linker error on AIX.
- * Eventually we need to have readReferenceFromSlot and writeToSlot call barrier->convert.
- * And this would require MM_ObjectAccessBarrier to be visible to GC_SlotObject -- merging gc_base and gc_modron_base
- */
-static J9Object* 
-convertPointerFromToken(J9JavaVM* vm, fj9object_t token)
-{
-	if (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm)) {
-		MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vm)->accessBarrier;
-		return barrier->convertPointerFromToken(token);
-	}
-	return (J9Object*)token;
-}
-#endif /* J9VM_GC_ARRAYLETS && !J9VM_GC_HYBRID_ARRAYLETS */

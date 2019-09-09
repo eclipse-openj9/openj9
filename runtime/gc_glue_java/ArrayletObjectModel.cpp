@@ -25,8 +25,6 @@
 #include "ModronAssertions.h"
 #include "ObjectModel.hpp"
 
-#if defined(J9VM_GC_ARRAYLETS)
-
 bool
 GC_ArrayletObjectModel::initialize(MM_GCExtensionsBase *extensions)
 {
@@ -52,13 +50,8 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes,
 	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 	UDATA objectAlignmentInBytes = extensions->getObjectAlignmentInBytes();
 
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 	/* the spine need not contain a pointer to the data */
 	const UDATA minimumSpineSize = 0;
-#else
-	/* the spine always contains a single pointer to the data */
-	const UDATA minimumSpineSize = J9GC_REFERENCE_SIZE(this);
-#endif
 	UDATA minimumSpineSizeAfterGrowing = minimumSpineSize;
 	if (extensions->isVLHGC()) {
 		/* CMVC 170688:  Ensure that we don't try to allocate an inline contiguous array of a size which will overflow the region if it ever grows
@@ -71,12 +64,10 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes,
 	/* CMVC 135307 : when checking for InlineContiguous layout, perform subtraction as adding to dataSizeInBytes could trigger overflow. */
 	if ((largestDesirableSpine == UDATA_MAX) || (dataSizeInBytes <= (largestDesirableSpine - minimumSpineSizeAfterGrowing - contiguousHeaderSize()))) {
 		layout = InlineContiguous;
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		if(0 == dataSizeInBytes) {
 			/* Zero sized NUA uses the discontiguous shape */
 			layout = Discontiguous;
 		}
-#endif /* defined(J9VM_GC_HYBRID_ARRAYLETS) */
 	} else {
 		UDATA arrayletLeafSize = _omrVM->_arrayletLeafSize;
 		UDATA lastArrayletBytes = dataSizeInBytes & (arrayletLeafSize - 1);
@@ -106,5 +97,3 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes,
 	}
 	return layout;
 }
-
-#endif /* defined(J9VM_GC_ARRAYLETS) */

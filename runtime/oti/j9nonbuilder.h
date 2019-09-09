@@ -4284,10 +4284,8 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_get_overflow_safe_alloc_size)(struct J9JavaVM *javaVM) ;
 	void*  ( *getVerboseGCFunctionTable)(struct J9JavaVM *javaVM) ;
 	I_32  ( *referenceArrayCopy)(struct J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, fj9object_t *srcAddress, fj9object_t *destAddress, I_32 lengthInSlots) ;
-#if defined(J9VM_GC_ARRAYLETS)
 	/* TODO: disable this entrypoint once the JIT has been updated */
 	I_32  ( *referenceArrayCopyIndex)(struct J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots) ;
-#endif /* J9VM_GC_ARRAYLETS */
 	UDATA  ( *alwaysCallReferenceArrayCopyHelper)(struct J9JavaVM *javaVM) ;
 	void  ( *j9gc_ext_reachable_objects_do)(struct J9VMThread *vmThread, jvmtiIterationControl (*func)(j9object_t *slotPtr, j9object_t sourcePtr, void *userData, IDATA type, IDATA index, IDATA wasReportedBefore), void *userData, UDATA walkFlags) ;
 	void  ( *j9gc_ext_reachable_from_object_do)(struct J9VMThread *vmThread, j9object_t objectPtr, jvmtiIterationControl (*func)(j9object_t *slotPtr, j9object_t sourcePtr, void *userData, IDATA type, IDATA index, IDATA wasReportedBefore), void *userData, UDATA walkFlags) ;
@@ -4413,10 +4411,8 @@ typedef struct J9MemoryManagerFunctions {
 	const char*  ( *omrgc_get_version)(OMR_VM *omrVM) ;
 	UDATA  ( *j9mm_abandon_object)(struct J9JavaVM *javaVM,struct  J9MM_IterateRegionDescriptor *region, struct J9MM_IterateObjectDescriptor *objectDesc) ;
 	void  ( *j9mm_get_guaranteed_nursery_range)(struct J9JavaVM* javaVM, void** start, void** end) ;
-#if defined(J9VM_GC_ARRAYLETS)
 	UDATA  ( *j9gc_arraylet_getLeafSize)(struct J9JavaVM* javaVM) ;
 	UDATA  ( *j9gc_arraylet_getLeafLogSize)(struct J9JavaVM* javaVM) ;
-#endif /* J9VM_GC_ARRAYLETS */
 	void  ( *j9gc_set_allocation_sampling_interval)(struct J9VMThread *vmThread, UDATA samplingInterval);
 	void  ( *j9gc_set_allocation_threshold)(struct J9VMThread *vmThread, UDATA low, UDATA high) ;
 	void  ( *j9gc_objaccess_recentlyAllocatedObject)(struct J9VMThread *vmThread, J9Object *dstObject) ;
