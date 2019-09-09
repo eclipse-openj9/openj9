@@ -47,7 +47,7 @@ static IDATA checkMethodStructure (J9PortLibrary * portLib, J9CfrClassFile * cla
 static IDATA buildInstructionMap (J9CfrClassFile * classfile, J9CfrAttributeCode * code, U_8 * map, UDATA methodIndex, J9CfrError * error);
 static IDATA checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA length, U_8 * map, J9CfrError * error, U_32 flags, I_32 *hasRET);
 static IDATA checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCode * code, U_8 * map, UDATA flags, StackmapExceptionDetails* exceptionDetails);
-static I_32 checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 * map, U_8 ** entries, UDATA slotCount, U_8 * end, U_16 countAppendLocals);
+static I_32 checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 * map, U_8 ** entries, UDATA slotCount, U_8 * end, UDATA checkAppendArraySize);
 
 static IDATA 
 buildInstructionMap (J9CfrClassFile * classfile, J9CfrAttributeCode * code, U_8 * map, UDATA methodIndex, J9CfrError * error)
@@ -1255,7 +1255,7 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 				U_8 frameType;
 				UDATA delta;
 				IDATA slotCount;
-				U_16 maxForEntries = code->maxStack;
+				UDATA checkAppendArraySize = FALSE;
 
 				if ((entries + 1) > end) {
 					errorCode = FATAL_CLASS_FORMAT_ERROR;
@@ -1308,6 +1308,12 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 					slotCount = 0;
 					if ((frameType >= CFR_STACKMAP_SAME_LOCALS_1_STACK) && (frameType <= CFR_STACKMAP_SAME_LOCALS_1_STACK_EXTENDED)) {
 						slotCount = 1;
+
+						/* The stackmap entry is invalid if the size of stack (1 slot) exceeds the size of the max stack.*/
+						if (code->maxStack < slotCount) {
+							errorCode = FATAL_CLASS_FORMAT_ERROR;
+							goto _failedCheck;
+						}
 					}
 					if (frameType >= CFR_STACKMAP_CHOP_3) {
 						slotCount = (IDATA) frameType - CFR_STACKMAP_APPEND_BASE;
@@ -1316,20 +1322,20 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 						}
 
 						if ((frameType >= CFR_STACKMAP_APPEND_1) && (frameType <= CFR_STACKMAP_APPEND_3)) {
-							maxForEntries = code->maxLocals;
+							checkAppendArraySize = TRUE;
 						}
 					}
 				} else {
 					/* full frame */
 					/* Executed with StackMap or StackMapTable */
 					NEXT_U16(slotCount, entries); /* number_of_locals verified in checkStackMapEntries */
-					errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end, code->maxLocals);
+					errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end, checkAppendArraySize);
 					if (0 != errorCode) {
 						goto _failedCheck;
 					}
 					NEXT_U16(slotCount, entries); /* number_of_stack_items verified in checkStackMapEntries */
 				}
-				errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end, maxForEntries);
+				errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end, checkAppendArraySize);
 				if (0 != errorCode) {
 					goto _failedCheck;
 				}
@@ -1362,7 +1368,7 @@ _failedCheck:
 
 
 static I_32
-checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 * map, U_8 ** entries, UDATA slotCount, U_8 * end, U_16 maxForEntries)
+checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 * map, U_8 ** entries, UDATA slotCount, U_8 * end, UDATA checkAppendArraySize)
 {
 	U_8* entry = *entries;
 	U_8 entryType;
@@ -1370,7 +1376,9 @@ checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 
 	U_16 cpIndex;
 	J9CfrConstantPoolInfo* cpBase = classfile->constantPool;
 	U_32 cpCount = (U_32) classfile->constantPoolCount;
+	/* append check */
 	U_16 slotTypeCounter = 0;
+	UDATA hasDoubleSlot = FALSE;
 
 	for (; slotCount; slotCount--) {
 		if ((entry + 1) > end) {
@@ -1421,19 +1429,18 @@ checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 
 			}
 		}
 
-		/* locals:
-		 * 		It is an error if, for any index i, locals[i] represents a local variable whose index is greater than the maximum 
-		 * 		number of local variables for the method. 
-		 * stack:
-		 * 		It is an error if, for any index i, stack[i] represents a stack entry whose index is greater than the maximum operand stack size for the method.
-		 */
-		slotTypeCounter += 1;
-		if ((CFR_STACKMAP_TYPE_DOUBLE == entryType) || (CFR_STACKMAP_TYPE_LONG == entryType)) {
+		/* A value of type long or double must occupy two consecutive local variables. Ensure that if there is is a long or double entry in 
+		 * an append frame maxLocals reflects the correct number of slots. An incorrect maxLocals value in all other cases will be handled 
+		 * in bcverify.c */
+		if (checkAppendArraySize) {
 			slotTypeCounter += 1;
-		}
-		/* verify index outside of maximum number of locals is not referenced. */
-		if (slotTypeCounter > maxForEntries) {
-			return FATAL_CLASS_FORMAT_ERROR;
+			if ((CFR_STACKMAP_TYPE_DOUBLE == entryType) || (CFR_STACKMAP_TYPE_LONG == entryType)) {
+				hasDoubleSlot = TRUE;
+				slotTypeCounter += 1;
+			}
+			if (hasDoubleSlot && (slotTypeCounter > code->maxLocals)) {
+				return FATAL_CLASS_FORMAT_ERROR;
+			}
 		}
 	}
 
