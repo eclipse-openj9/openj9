@@ -136,7 +136,7 @@ public:
 		/* If splitAmount is 0 the new scanner will return NULL on the first call to getNextSlot(). */
 		splitScanner = (GC_PointerArrayObjectScanner *)allocSpace;
 		/* Create new scanner for next chunk of array starting at the end of current chunk size splitAmount elements */
-		new(splitScanner) GC_PointerArrayObjectScanner(env, _parentObjectPtr, _basePtr, _limitPtr, _endPtr, _endPtr + splitAmount, _flags);
+		new(splitScanner) GC_PointerArrayObjectScanner(env, getArrayObject(), _basePtr, _limitPtr, _endPtr, _endPtr + splitAmount, _flags);
 		splitScanner->initialize(env);
 
 		return splitScanner;
