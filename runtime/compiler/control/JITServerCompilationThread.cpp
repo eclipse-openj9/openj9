@@ -110,3 +110,15 @@ TR::CompilationInfoPerThreadRemote::getCachedIProfilerInfo(TR_OpaqueMethodBlock 
    return ipEntry;
    }
 
+void
+TR::CompilationInfoPerThreadRemote::cacheResolvedMirrorMethodsPersistIPInfo(TR_ResolvedJ9Method *resolvedMethod)
+   {
+   if (!_resolvedMirrorMethodsPersistIPInfo)
+      {
+      initializePerCompilationCache(_resolvedMirrorMethodsPersistIPInfo);
+      if (!_resolvedMirrorMethodsPersistIPInfo)
+         return;
+      }
+
+   _resolvedMirrorMethodsPersistIPInfo->push_back(resolvedMethod);
+   }

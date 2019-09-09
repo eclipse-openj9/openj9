@@ -44,8 +44,14 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    public:
    friend class TR::CompilationInfo;
    CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread);
+   uint32_t getSeqNo() const { return _seqNo; }; // for ordering requests at the server
+   void setSeqNo(uint32_t seqNo) { _seqNo = seqNo; }
+
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
+
+   void cacheResolvedMirrorMethodsPersistIPInfo(TR_ResolvedJ9Method *resolvedMethod);
+   ResolvedMirrorMethodsPersistIP_t *getCachedResolvedMirrorMethodsPersistIPInfo() const { return _resolvedMirrorMethodsPersistIPInfo; }
 
    private:
    /* Template method for allocating a cache of type T on the heap.
