@@ -132,6 +132,9 @@ private:
 	SetSelectionData **_dynamicSelectionList;  /**< Pointer table used for sorting or iterating over candidate dynamic selection elements */
 
 	MM_HeapRegionDescriptorVLHGC **_dynamicSelectionRegionList;  /**< Pointer table used for sorting or iterating over regions */
+	MM_HeapRegionDescriptorVLHGC **_reservedFromCollectionSet; /**< Pointer table used for regions could be excluded from collection set per age */
+	MM_HeapRegionDescriptorVLHGC **_reservedFromCollectionSetMostFree; /**< Pointer table used for regions could be excluded from collection set per age */
+	UDATA *_projectedLiveBytes; /**< projected total live bytes per age */
 
 protected:
 public:
@@ -207,6 +210,10 @@ private:
 	 * @param[in] element2 second element to compare
 	 */
 	static int compareCoreSampleScoreFunc(const void *element1, const void *element2);
+	
+	void prepareReserveList(MM_EnvironmentVLHGC *env);
+	bool isInReserveList(MM_EnvironmentVLHGC *env, MM_HeapRegionDescriptorVLHGC *region);
+
 protected:
 public:
 	/**

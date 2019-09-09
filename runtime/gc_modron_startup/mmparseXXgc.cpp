@@ -639,6 +639,16 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 
+		if (try_scan(&scan_start, "tarokReserveRegionsFromCollectionSet=mostAllocatable")) {
+			extensions->tarokReserveRegionsFromCollectionSet = MM_GCExtensionsBase::RESERVE_REGIONS_MOST_ALLOCATABLE;
+			continue;
+		}
+
+		if (try_scan(&scan_start, "tarokReserveRegionsFromCollectionSet=mostFree")) {
+			extensions->tarokReserveRegionsFromCollectionSet = MM_GCExtensionsBase::RESERVE_REGIONS_MOST_FREE;
+			continue;
+		}
+
 #endif /* defined (J9VM_GC_VLHGC) */
 
 		if(try_scan(&scan_start, "packetListLockSplit=")) {
