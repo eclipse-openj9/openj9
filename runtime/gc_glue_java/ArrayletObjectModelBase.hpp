@@ -29,8 +29,6 @@
 #include "modron.h"
 #include "modronopt.h"
 
-#if defined(J9VM_GC_ARRAYLETS)
-
 #include "Bits.hpp"
 #include "Math.hpp"
 
@@ -109,20 +107,16 @@ public:
 		UDATA size = 0;
 		if (compressObjectReferences()) {
 			size = ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size;
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 			if (0 == size) {
 				/* Discontiguous */
 				size = ((J9IndexableObjectDiscontiguousCompressed *)arrayPtr)->size;
 			}
-#endif /* defined(J9VM_GC_HYBRID_ARRAYLETS) */
 		} else {
 			size = ((J9IndexableObjectContiguousFull *)arrayPtr)->size;
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 			if (0 == size) {
 				/* Discontiguous */
 				size = ((J9IndexableObjectDiscontiguousFull *)arrayPtr)->size;
 			}
-#endif /* defined(J9VM_GC_HYBRID_ARRAYLETS) */
 		}
 		return size;
 	}
@@ -254,5 +248,4 @@ public:
 	expandArrayletSubSpaceRange(MM_MemorySubSpace* subSpace, void* rangeBase, void* rangeTop, UDATA largestDesirableArraySpineSize);
 };
 
-#endif /*J9VM_GC_ARRAYLETS */
 #endif /* ARRAYLETOBJECTMODELBASE_ */

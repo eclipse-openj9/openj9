@@ -1822,7 +1822,7 @@ int32_t TR_J9VMBase::getArrayletFirstElementOffset(int8_t elementSize, TR::Compi
    TR_ASSERT(elementSize >= 0, "unexpected arraylet element size");
 
    int32_t offset;
-#if defined(J9VM_GC_ARRAYLETS) && defined(J9VM_GC_COMPRESSED_POINTERS)
+#if defined(J9VM_GC_COMPRESSED_POINTERS)
    offset = (getFirstArrayletPointerOffset(comp) + TR::Compiler->om.sizeofReferenceField() + sizeof(UDATA)-1) & (-(int32_t)sizeof(UDATA));
    TR_ASSERT((offset & sizeof(UDATA)-1) == 0, "unexpected alignment for first arraylet element");
 #else

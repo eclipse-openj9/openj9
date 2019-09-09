@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -313,7 +313,6 @@ MM_AllocationContextBalanced::lockedAllocateObject(MM_EnvironmentBase *env, MM_A
 	return result;
 }
 
-#if defined(J9VM_GC_ARRAYLETS)
 void *
 MM_AllocationContextBalanced::allocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocateDescription, bool shouldCollectOnFailure)
 {
@@ -378,7 +377,6 @@ MM_AllocationContextBalanced::lockedAllocateArrayletLeaf(MM_EnvironmentBase *env
 	/* store the base address of the leaf for the memset and the return */
 	return freeRegionForArrayletLeaf->getLowAddress();
 }
-#endif /* J9VM_GC_ARRAYLETS */
 
 MM_HeapRegionDescriptorVLHGC *
 MM_AllocationContextBalanced::collectorAcquireRegion(MM_EnvironmentBase *env)
@@ -434,11 +432,9 @@ MM_AllocationContextBalanced::allocate(MM_EnvironmentBase *env, MM_ObjectAllocat
 	case MM_MemorySubSpace::ALLOCATION_TYPE_OBJECT:
 		result = allocateObject(env, allocateDescription, false);
 		break;
-#if defined(J9VM_GC_ARRAYLETS)
 	case MM_MemorySubSpace::ALLOCATION_TYPE_LEAF:
 		result = allocateArrayletLeaf(env, allocateDescription, false);
 		break;
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 	default:
 		Assert_MM_unreachable();
 		break;
@@ -457,12 +453,10 @@ MM_AllocationContextBalanced::lockedAllocate(MM_EnvironmentBase *env, MM_ObjectA
 	case MM_MemorySubSpace::ALLOCATION_TYPE_TLH:
 		result = lockedAllocateTLH(env, allocateDescription, objectAllocationInterface);
 		break;
-#if defined(J9VM_GC_ARRAYLETS)
 	case MM_MemorySubSpace::ALLOCATION_TYPE_LEAF:
 		/* callers allocating an arraylet leaf should call lockedAllocateArrayletLeaf() directly */
 		Assert_MM_unreachable();
 		break;
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 	default:
 		Assert_MM_unreachable();
 	}
@@ -527,7 +521,6 @@ MM_AllocationContextBalanced::recycleRegion(MM_EnvironmentVLHGC *env, MM_HeapReg
 			}
 		}
 			break;
-#if defined(J9VM_GC_ARRAYLETS)
 		case MM_HeapRegionDescriptor::ARRAYLET_LEAF:
 			Assert_MM_true(NULL == allocateData->getNextArrayletLeafRegion());
 			Assert_MM_true(NULL == allocateData->getSpine());
@@ -539,7 +532,6 @@ MM_AllocationContextBalanced::recycleRegion(MM_EnvironmentVLHGC *env, MM_HeapReg
 			allocateData->taskAsFreePool(env);
 			/* now, return the region to our free list */
 			addRegionToFreeList(env, region);
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 			break;
 		case MM_HeapRegionDescriptor::FREE:
 			/* calling recycle on a free region implies an incorrect assumption in the caller */
@@ -927,18 +919,14 @@ MM_AllocationContextBalanced::lockedReplenishAndAllocate(MM_EnvironmentBase *env
 	UDATA regionSize = extensions->regionSize;
 	
 	UDATA contiguousAllocationSize;
-#if defined(J9VM_GC_ARRAYLETS)
 	if (MM_MemorySubSpace::ALLOCATION_TYPE_LEAF == allocationType) {
 		contiguousAllocationSize = regionSize;
-	} else 
-#endif /* defined(J9VM_GC_ARRAYLETS) */		
-	{
+	} else {
 		contiguousAllocationSize = allocateDescription->getContiguousBytes();
 	}
 
 	Trc_MM_AllocationContextBalanced_lockedReplenishAndAllocate_Entry(env->getLanguageVMThread(), regionSize, contiguousAllocationSize);
 
-#if defined(J9VM_GC_ARRAYLETS)
 	if (MM_MemorySubSpace::ALLOCATION_TYPE_LEAF == allocationType) {
 		if (_subspace->consumeFromTaxationThreshold(env, regionSize)) {
 			/* acquire a free region */
@@ -950,9 +938,7 @@ MM_AllocationContextBalanced::lockedReplenishAndAllocate(MM_EnvironmentBase *env
 				Trc_MM_AllocationContextBalanced_lockedReplenishAndAllocate_acquiredFreeRegion(env->getLanguageVMThread(), regionSize);
 			}
 		}
-	} else 
-#endif /* defined(J9VM_GC_ARRAYLETS) */
-	{
+	} else {
 		Assert_MM_true(NULL == _allocationRegion);
 		MM_HeapRegionDescriptorVLHGC *newRegion = internalReplenishActiveRegion(env, true);
 		if (NULL != newRegion) {

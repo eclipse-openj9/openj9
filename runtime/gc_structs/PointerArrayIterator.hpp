@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,12 +37,8 @@
 #include "Bits.hpp"
 #include "GCExtensionsBase.hpp"
 #include "ObjectIteratorState.hpp"
-#if defined(J9VM_GC_ARRAYLETS)
 #include "PointerArrayletIterator.hpp"
-#endif
-#if !defined(J9VM_GC_ARRAYLETS) || defined(J9VM_GC_HYBRID_ARRAYLETS)
 #include "PointerContiguousArrayIterator.hpp"
-#endif /* !defined(J9VM_GC_ARRAYLETS) || defined(J9VM_GC_HYBRID_ARRAYLETS) */
 #include "SlotObject.hpp"
 
 /**
@@ -52,15 +48,9 @@
 class GC_PointerArrayIterator
 {
 private:
-#if !defined(J9VM_GC_ARRAYLETS)
-	GC_PointerContiguousArrayIterator _contiguousArrayIterator;	/**< Iterator instance specific for Contiguous (standard) array */
-#elif defined(J9VM_GC_HYBRID_ARRAYLETS)
 	bool _contiguous;
 	GC_PointerContiguousArrayIterator _contiguousArrayIterator;
-	GC_PointerArrayletIterator _pointerArrayletIterator;		/**< Iterator instance specific for Contiguous (standard) array */
-#else
-	GC_PointerArrayletIterator _pointerArrayletIterator;		/**< Iterator instance specific for Discontiguous array (arraylet)*/
-#endif
+	GC_PointerArrayletIterator _pointerArrayletIterator;  /**< Iterator instance specific for Contiguous (standard) array */
 
 protected:
 public:
@@ -68,35 +58,21 @@ public:
 	 * @param objectPtr the array object to be processed
 	 */
 	GC_PointerArrayIterator(J9JavaVM *javaVM, J9Object *objectPtr)
-#if !defined(J9VM_GC_ARRAYLETS)
-	  :_contiguousArrayIterator(javaVM->omrVM)
-#elif defined(J9VM_GC_HYBRID_ARRAYLETS)
-	:_contiguousArrayIterator(javaVM->omrVM)
-	,_pointerArrayletIterator(javaVM)
-#else
-	  :_pointerArrayletIterator(javaVM)
-#endif
+		: _contiguousArrayIterator(javaVM->omrVM)
+		, _pointerArrayletIterator(javaVM)
 	{
 		initialize(javaVM, objectPtr);
 	}
 
 	GC_PointerArrayIterator(J9JavaVM *javaVM)
-#if !defined(J9VM_GC_ARRAYLETS)
-	  :_contiguousArrayIterator(javaVM->omrVM)
-#elif defined(J9VM_GC_HYBRID_ARRAYLETS)
-	/* It is unnecessary to initialize one of those iterators */
-	:_contiguousArrayIterator(javaVM->omrVM)
-	,_pointerArrayletIterator(javaVM)
-#else
-	  :_pointerArrayletIterator(javaVM)
-#endif
+		/* It is unnecessary to initialize one of those iterators */
+		: _contiguousArrayIterator(javaVM->omrVM)
+		, _pointerArrayletIterator(javaVM)
 	{
 	}
 
 	MMINLINE void initialize(J9JavaVM *javaVM, J9Object *objectPtr)
 	{
-#if defined(J9VM_GC_ARRAYLETS)
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(javaVM->omrVM);
 		_contiguous = extensions->indexableObjectModel.isInlineContiguousArraylet((J9IndexableObject *)objectPtr);
 		if (_contiguous) {
@@ -104,12 +80,6 @@ public:
 		} else {
 			_pointerArrayletIterator.initialize(objectPtr);
 		}
-#else
-		_pointerArrayletIterator.initialize(objectPtr);
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
-#else
-		_contiguousArrayIterator.initialize(objectPtr);
-#endif /* J9VM_GC_ARRAYLETS */
 	}
 
 	/**
@@ -118,20 +88,12 @@ public:
 	 */
 	MMINLINE void restore(GC_ObjectIteratorState *objectIteratorState)
 	{
-#if defined(J9VM_GC_ARRAYLETS)
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		_contiguous = objectIteratorState->_contiguous;
 		if (_contiguous) {
 			_contiguousArrayIterator.restore(objectIteratorState);
 		} else {
 			_pointerArrayletIterator.restore(objectIteratorState);
 		}
-#else
-		_pointerArrayletIterator.restore(objectIteratorState);
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
-#else
-		_contiguousArrayIterator.restore(objectIteratorState);
-#endif /* J9VM_GC_ARRAYLETS */
 	}
 
 	/**
@@ -140,57 +102,33 @@ public:
 	 */
 	MMINLINE void save(GC_ObjectIteratorState *objectIteratorState)
 	{
-#if defined(J9VM_GC_ARRAYLETS)
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		if (_contiguous) {
 			_contiguousArrayIterator.save(objectIteratorState);
 		} else {
 			_pointerArrayletIterator.save(objectIteratorState);
 		}
 		objectIteratorState->_contiguous = _contiguous;
-#else
-		_pointerArrayletIterator.save(objectIteratorState);
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
-#else
-		_contiguousArrayIterator.save(objectIteratorState);
-#endif /* J9VM_GC_ARRAYLETS */
 	}
 
 	MMINLINE GC_SlotObject *nextSlot()
 	{
 		GC_SlotObject *slotObject = NULL;
-
-#if !defined(J9VM_GC_ARRAYLETS)
-		slotObject = _contiguousArrayIterator.nextSlot();
-#elif defined(J9VM_GC_HYBRID_ARRAYLETS)
 		if (_contiguous) {
 			slotObject = _contiguousArrayIterator.nextSlot();
 		} else {
 			slotObject = _pointerArrayletIterator.nextSlot();
 		}
-#else
-		slotObject = _pointerArrayletIterator.nextSlot();
-#endif
-
 		return slotObject;
 	}
 
 	MMINLINE J9Object *getObject()
 	{
 		J9Object *objectPtr = NULL;
-
-#if !defined(J9VM_GC_ARRAYLETS)
-		objectPtr = _contiguousArrayIterator.getObject();
-#elif defined(J9VM_GC_HYBRID_ARRAYLETS)
 		if (_contiguous) {
 			objectPtr = _contiguousArrayIterator.getObject();
 		} else {
 			objectPtr = _pointerArrayletIterator.getObject();
 		}
-#else
-		objectPtr = _pointerArrayletIterator.getObject();
-#endif
-
 		return (J9Object *)objectPtr;
 	}
 
@@ -202,38 +140,22 @@ public:
 	MMINLINE UDATA getIndex()
 	{
 		UDATA index = 0;
-
-#if !defined(J9VM_GC_ARRAYLETS)
-		index = _contiguousArrayIterator.getIndex();
-#elif defined(J9VM_GC_HYBRID_ARRAYLETS)
 		if (_contiguous) {
 			index = _contiguousArrayIterator.getIndex();
 		} else {
 			index = _pointerArrayletIterator.getIndex();
 		}
-#else
-		index = _pointerArrayletIterator.getIndex();
-#endif
-
 		return index;
 	}
 
-
 	MMINLINE void setIndex(UDATA index)
 	{
-#if !defined(J9VM_GC_ARRAYLETS)
-		_contiguousArrayIterator.setIndex(index);
-#elif defined(J9VM_GC_HYBRID_ARRAYLETS)
 		if (_contiguous) {
 			_contiguousArrayIterator.setIndex(index);
 		} else {
 			_pointerArrayletIterator.setIndex(index);
 		}
-#else
-		_pointerArrayletIterator.setIndex(index);
-#endif
 	}
-
 };
 
 #endif /* POINTERARRAYITERATOR_HPP_ */

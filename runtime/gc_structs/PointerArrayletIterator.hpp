@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,9 +39,6 @@
 #include "ObjectIteratorState.hpp"
 #include "SlotObject.hpp"
 #include "ArrayletObjectModel.hpp"
-
-#if defined(J9VM_GC_ARRAYLETS)
-
 
 /**
  * Iterate over all slots in a pointer array which contain an object reference
@@ -91,16 +88,13 @@ public:
 	MMINLINE void initialize(J9Object *objectPtr) {
 		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_javaVM->omrVM);
 
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		/* if we are using hybrid arraylets, we need to ensure that we don't initialize the discontiguous iterator since it will try to read off the end of the header
 		 * when reading the non-existent arrayoid.  In the case of small arrays near the end of a region, this could cause us to read an uncommitted page.
 		 */
 		if (extensions->indexableObjectModel.isInlineContiguousArraylet((J9IndexableObject *)objectPtr)) {
 			_arrayPtr = NULL;
 			_index = 0;
-		} else
-#endif /* defined(J9VM_GC_HYBRID_ARRAYLETS) */
-		{
+		} else {
 			_arrayPtr = (J9IndexableObject *)objectPtr;
 
 			/* Set current and end scan pointers */
@@ -198,8 +192,5 @@ public:
 		objectIteratorState->_index = _index;
 	}
 };
-
-#endif /* defined(J9VM_GC_ARRAYLETS) */
-
 
 #endif /* POINTERARRAYLETITERATOR_HPP_ */

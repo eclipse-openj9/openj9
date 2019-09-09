@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,41 +119,28 @@ MM_IndexableObjectAllocationModel::initializeIndexableObject(MM_EnvironmentBase 
 	_allocateDescription.setSpine(spine);
 	if (NULL != spine) {
 		/* Set the array size */
-#if defined(OMR_GC_HYBRID_ARRAYLETS)
 		if (getAllocateDescription()->isChunkedArray()) {
 			extensions->indexableObjectModel.setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
 		} else {
 			extensions->indexableObjectModel.setSizeInElementsForContiguous(spine, _numberOfIndexedFields);
 		}
-#else
-		extensions->indexableObjectModel.setSizeInElementsForDiscontiguous(spine, _numberOfIndexedFields);
-#endif	/* defined(OMR_GC_HYBRID_ARRAYLETS) */
 	}
 
 
 	/* Lay out arraylet and arrayoid pointers */
 	switch (_layout) {
 	case GC_ArrayletObjectModel::InlineContiguous:
-#if defined(OMR_GC_HYBRID_ARRAYLETS)
 		Assert_MM_true(1 == _numberOfArraylets);
-#else /* OMR_GC_HYBRID_ARRAYLETS */
-		if (NULL != spine) {
-			/* Establish arraylet pointers */
-			spine = layoutContiguousArraylet(env, spine);
-		}
-#endif /* OMR_GC_HYBRID_ARRAYLETS */
 		break;
 
 	case GC_ArrayletObjectModel::Discontiguous:
 	case GC_ArrayletObjectModel::Hybrid:
 		if (NULL != spine) {
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 			if(0 == _numberOfIndexedFields) {
 				/* Don't try to initialize the arrayoid for an empty NUA */
 				Trc_MM_allocateAndConnectNonContiguousArraylet_Exit(env->getLanguageVMThread(), spine);
 				break;
 			}
-#endif /* defined(J9VM_GC_HYBRID_ARRAYLETS) */
 			Trc_MM_allocateAndConnectNonContiguousArraylet_Summary(env->getLanguageVMThread(),
 					_numberOfIndexedFields, getAllocateDescription()->getContiguousBytes(), _numberOfArraylets);
 			spine = layoutDiscontiguousArraylet(env, spine);

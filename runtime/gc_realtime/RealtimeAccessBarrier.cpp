@@ -214,7 +214,6 @@ MM_RealtimeAccessBarrier::validateWriteBarrier(J9VMThread *vmThread, J9Object *d
 
 	case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
 	{
-#if defined(J9VM_GC_ARRAYLETS)
 		MM_HeapRegionManager *regionManager = MM_GCExtensions::getExtensions(javaVM)->getHeap()->getHeapRegionManager();
 		GC_ArrayletObjectModel::ArrayLayout layout = _extensions->indexableObjectModel.getArrayLayout((J9IndexableObject*)dstObject);
 		switch (layout) {
@@ -278,16 +277,6 @@ MM_RealtimeAccessBarrier::validateWriteBarrier(J9VMThread *vmThread, J9Object *d
 				assert(0);
 			}
 		};
-#else /* defined(J9VM_GC_ARRAYLETS) */
-		UDATA* dataStart = (UDATA*)(((J9IndexableObject*)dstObject) + 1);
-		UDATA* dataEnd = dataStart + _extensions->indexableObjectModel.getSizeInElements((J9IndexableObject*)dstObject);
-		if ((UDATA*)dstAddress < dataStart || (UDATA*)dstAddress >= dataEnd) {
-			j9tty_printf(PORTLIB, "validateWriteBarrier: store to %p not in data section of array %p to %p", dstAddress, dataStart, dataEnd);
-			printClass(javaVM, J9GC_J9OBJECT_CLAZZ_VM(dstObject, javaVM));
-			j9tty_printf(PORTLIB, "\n");
-		}
-#endif /* defined(J9VM_GC_ARRAYLETS) */
-
 		break;
 	}
 
@@ -401,13 +390,9 @@ MM_RealtimeAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jar
 	bool shouldCopy = false;
 	if((javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) {
 		shouldCopy = true;
-	} else {
-#if defined(J9VM_GC_ARRAYLETS)
+	} else if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(arrayObject)) {
 		/* an array having discontiguous extents is another reason to force the critical section to be a copy */
-		if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(arrayObject)) {
-			shouldCopy = true;
-		}
-#endif
+		shouldCopy = true;
 	}
 
 	if(shouldCopy) {
@@ -447,14 +432,11 @@ MM_RealtimeAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread,
 	bool shouldCopy = false;
 	if((javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) {
 		shouldCopy = true;
-	} else {
-#if defined(J9VM_GC_ARRAYLETS)
+	} else if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(arrayObject)) {
 		/* an array having discontiguous extents is another reason to force the critical section to be a copy */
-		if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(arrayObject)) {
-			shouldCopy = true;
-		}
-#endif
+		shouldCopy = true;
 	}
+
 	if(shouldCopy) {
 		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 		if(JNI_ABORT != mode) {
@@ -500,27 +482,10 @@ MM_RealtimeAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str
 	bool shouldCopy = false;
 	bool hasVMAccess = false;
 
-#if !defined(J9VM_GC_ARRAYLETS)
-	if ((javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) {
-		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-		hasVMAccess = true;
-		shouldCopy = true;
-	} else if (IS_STRING_COMPRESSION_ENABLED_VM(javaVM)) {
-		/* If the string bytes are in compressed UNICODE, then we need to copy to decompress */
-		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-		hasVMAccess = true;
-		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
-		if (IS_STRING_COMPRESSED(javaVM, stringObject)) {
-			isCompressed = true;
-			shouldCopy = true;
-		}
-	}
-#else /* J9VM_GC_ARRAYLETS */
-	// For now only copying is supported for arraylets
+	/* For now only copying is supported for arraylets */
 	VM_VMAccess::inlineEnterVMFromJNI(vmThread);
 	hasVMAccess = true;
 	shouldCopy = true;
-#endif /* J9VM_GC_ARRAYLETS */
 
 	if (shouldCopy) {
 		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
@@ -581,21 +546,8 @@ MM_RealtimeAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring
 	bool hasVMAccess = false;
 	bool shouldCopy = false;
 
-#if !defined(J9VM_GC_ARRAYLETS)
-	if ((javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) {
-		shouldCopy = true;
-	} else if (IS_STRING_COMPRESSION_ENABLED_VM(javaVM)) {
-		VM_VMAccess::inlineEnterVMFromJNI(vmThread);
-		hasVMAccess = true;
-		J9Object *stringObject = (J9Object*)J9_JNI_UNWRAP_REFERENCE(str);
-		if (IS_STRING_COMPRESSED(vmThread, stringObject)) {
-			shouldCopy = true;
-		}
-	}
-#else /* J9VM_GC_ARRAYLETS */
-	// For now only copying is supported for arraylets
+	/* For now only copying is supported for arraylets */
 	shouldCopy = true;
-#endif /* J9VM_GC_ARRAYLETS */
 
 	if (shouldCopy) {
 		// String data is not copied back
@@ -920,38 +872,19 @@ MM_RealtimeAccessBarrier::scanContiguousArray(MM_EnvironmentRealtime *env, J9Ind
 	}
 #endif /* J9VM_GC_DYNAMIC_CLASS_UNLOADING */		
 
-#if !defined(J9VM_GC_HYBRID_ARRAYLETS)
-	/* Since we are already in gc_realtime, not defined GC_HYBRID_ARRAYLET implies GC_ARRAYLETS is defined.
-	 * first (and only) arraylet address
-	 */
-	fj9object_t *arrayoid = _extensions->indexableObjectModel.getArrayoidPointer(objectPtr);
-	GC_SlotObject slotObject(vm->omrVM, &arrayoid[0]);
-	fj9object_t *startScanPtr = (fj9object_t*) (slotObject.readReferenceFromSlot());
+	/* if NUA is enabled, separate path for contiguous arrays */
+	fj9object_t *scanPtr = (fj9object_t*) _extensions->indexableObjectModel.getDataPointerForContiguous(objectPtr);
+	fj9object_t *endScanPtr = scanPtr + _extensions->indexableObjectModel.getSizeInElements(objectPtr);
 
-	if (NULL != startScanPtr) {
-		/* Very small arrays cannot be set as scanned (no scanned bit in Mark Map reserved for them) */
-		UDATA arrayletSize = _extensions->indexableObjectModel.arrayletSize(objectPtr, /* arraylet index */ 0);		
-
-		fj9object_t *endScanPtr = startScanPtr + arrayletSize / sizeof(fj9object_t);
-		fj9object_t *scanPtr = startScanPtr;
-#else /* J9VM_GC_HYBRID_ARRAYLETS */
-		/* if NUA is enabled, separate path for contiguous arrays */
-		fj9object_t *scanPtr = (fj9object_t*) _extensions->indexableObjectModel.getDataPointerForContiguous(objectPtr);
-		fj9object_t *endScanPtr = scanPtr + _extensions->indexableObjectModel.getSizeInElements(objectPtr);
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
-		while(scanPtr < endScanPtr) {
-			/* since this is done from an external thread, we do not markObject, but rememberObject */
-			GC_SlotObject slotObject(vm->omrVM, scanPtr);
-			J9Object *field = slotObject.readReferenceFromSlot();
-			rememberObject(env, field);
-			scanPtr++;
-		}
-		
-		/* this method assumes the array is large enough to set scan bit */
-		_markingScheme->setScanAtomic((J9Object *)objectPtr);
-#if !defined(J9VM_GC_HYBRID_ARRAYLETS)
+	while(scanPtr < endScanPtr) {
+		/* since this is done from an external thread, we do not markObject, but rememberObject */
+		GC_SlotObject slotObject(vm->omrVM, scanPtr);
+		J9Object *field = slotObject.readReferenceFromSlot();
+		rememberObject(env, field);
+		scanPtr++;
 	}
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
+	/* this method assumes the array is large enough to set scan bit */
+	_markingScheme->setScanAtomic((J9Object *)objectPtr);
 }
 
 bool 

@@ -107,16 +107,11 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	protected UDATA getHeaderSize(long layout) 
 	{
 		long headerSize;
-		if (J9BuildFlags.gc_hybridArraylets) {
-			if (GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous != layout) {
-				headerSize = J9IndexableObjectDiscontiguous.SIZEOF;
-			} else {
-				headerSize = J9IndexableObjectContiguous.SIZEOF;
-			}
-		} else {
+		if (GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous != layout) {
 			headerSize = J9IndexableObjectDiscontiguous.SIZEOF;
+		} else {
+			headerSize = J9IndexableObjectContiguous.SIZEOF;
 		}
-
 		return new UDATA(headerSize);
 	}
 
@@ -129,19 +124,14 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	public UDATA getHeaderSize(J9IndexableObjectPointer array) throws CorruptDataException
 	{
 		long headerSize;
-		if (J9BuildFlags.gc_hybridArraylets) {
-			UDATA size = J9IndexableObjectContiguousPointer.cast(array).size();
-			if (size.eq(0)) {
-				headerSize = J9IndexableObjectDiscontiguous.SIZEOF;
-			} else {
-				headerSize = J9IndexableObjectContiguous.SIZEOF;
-			}
-		} else {
+		UDATA size = J9IndexableObjectContiguousPointer.cast(array).size();
+		if (size.eq(0)) {
 			headerSize = J9IndexableObjectDiscontiguous.SIZEOF;
+		} else {
+			headerSize = J9IndexableObjectContiguous.SIZEOF;
 		}
-
 		return new UDATA(headerSize);
-	}	
+	}
 	
 	/**
 	 * Get the spine size without header for an arraylet with these properties
@@ -156,27 +146,20 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 		UDATA spineArrayoidSize = new UDATA(0);
 		UDATA spinePaddingSize = new UDATA(0);
 
-		/* The spine consists of three (possibly empty) sections, not including the header:
+		/* The spine consists of three or four (possibly empty) sections, not including the header:
 		 * 1. the alignment word - padding between arrayoid and inline-data
 		 * 2. the arrayoid - an array of pointers to the leaves
 		 * 3. in-line data
-		 * In hybrid specs, the spine may also include padding for a secondary size field in empty arrays 
+		 * 4. A secondary size field, for hybrid arrays only.
 		 */
-		if (J9BuildFlags.gc_hybridArraylets) {
-			if (GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous != layout) {
-				if (!dataSize.eq(0)) {
-					/* not in-line, so there in an arrayoid */
-					if (alignData) {
-						spinePaddingSize = new UDATA(ObjectModel.getObjectAlignmentInBytes() - ObjectReferencePointer.SIZEOF);
-					}
-					spineArrayoidSize = numberArraylets.mult(ObjectReferencePointer.SIZEOF);
+		if (GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous != layout) {
+			if (!dataSize.eq(0)) {
+				/* not in-line, so there in an arrayoid */
+				if (alignData) {
+					spinePaddingSize = new UDATA(ObjectModel.getObjectAlignmentInBytes() - ObjectReferencePointer.SIZEOF);
 				}
+				spineArrayoidSize = numberArraylets.mult(ObjectReferencePointer.SIZEOF);
 			}
-		} else {
-			if (alignData) {
-				spinePaddingSize = new UDATA(ObjectReferencePointer.SIZEOF);
-			}
-			spineArrayoidSize = numberArraylets.mult(ObjectReferencePointer.SIZEOF);
 		}
 		
 		UDATA spineDataSize = new UDATA(0);
@@ -213,12 +196,11 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	 */	
 	protected long getArrayLayout(J9IndexableObjectPointer array) throws CorruptDataException 
 	{
-		if (J9BuildFlags.gc_hybridArraylets) {
-			/* Trivial check for InlineContiguous. */
-			if (!J9IndexableObjectContiguousPointer.cast(array).size().eq(0)) {
-				return GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous;
-			}
+		/* Trivial check for InlineContiguous. */
+		if (!J9IndexableObjectContiguousPointer.cast(array).size().eq(0)) {
+			return GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous;
 		}
+
 		/* Check if the objPtr is in the allowed arraylet range. */
 		if ((array.gte(arrayletRangeBase)) && (array.lt(arrayletRangeTop))) {
 			UDATA dataSizeInBytes = getDataSizeInBytes(array);
@@ -237,15 +219,9 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	protected long getArrayLayout(J9ArrayClassPointer clazz, UDATA dataSizeInBytes) throws CorruptDataException
 	{
 		long layout = GC_ArrayletObjectModelBase$ArrayLayout.Illegal;
-		UDATA minimumSpineSize;
-		if (J9BuildFlags.gc_hybridArraylets) {
-			minimumSpineSize = new UDATA(0); 
-		} else {
-			minimumSpineSize  = new UDATA(ObjectReferencePointer.SIZEOF);
-		}
-		
+		UDATA minimumSpineSize = new UDATA(0);
 		UDATA minimumSpineSizeAfterGrowing = minimumSpineSize;
-		
+
 		if (GCExtensions.isVLHGC()) {
 			/* CMVC 170688:  Ensure that we don't try to allocate an inline contiguous array of a size which will overflow the region if it ever grows
 			 * (easier to handle this case in the allocator than to special-case the collectors to know how to avoid this case)
@@ -253,19 +229,17 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 			 */
 			minimumSpineSize = minimumSpineSize.add(ObjectModel.getObjectAlignmentInBytes());
 		}
-		
+
 		/* CMVC 135307 : when checking for InlineContiguous layout, perform subtraction as adding to dataSizeInBytes could trigger overflow. */
 		if ( largestDesirableArraySpineSize.eq(UDATA.MAX) || dataSizeInBytes.lte(largestDesirableArraySpineSize.sub(minimumSpineSizeAfterGrowing).sub(J9IndexableObjectContiguous.SIZEOF))) {
 			layout = GC_ArrayletObjectModelBase$ArrayLayout.InlineContiguous;
-			if (J9BuildFlags.gc_hybridArraylets) {
-				if (dataSizeInBytes.eq(0)) {
-					/* Zero sized NUA uses the discontiguous shape */
-					layout = GC_ArrayletObjectModelBase$ArrayLayout.Discontiguous;					
-				}
-			}			
+			if (dataSizeInBytes.eq(0)) {
+				/* Zero sized NUA uses the discontiguous shape */
+				layout = GC_ArrayletObjectModelBase$ArrayLayout.Discontiguous;
+			}
 		} else {
 			UDATA lastArrayletBytes = dataSizeInBytes.bitAnd(arrayletLeafSizeMask);
-			
+
 			/* determine how large the spine would be if this were a hybrid array */
 			UDATA numberArraylets = numArraylets(dataSizeInBytes);
 			boolean align = shouldAlignSpineDataSection(clazz);
@@ -275,7 +249,7 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 			if (GCExtensions.isVLHGC()) {
 				adjustedHybridSpineBytesAfterMove.add(ObjectModel.getObjectAlignmentInBytes());
 			}
-			
+
 			if (lastArrayletBytes.gt(0) && adjustedHybridSpineBytesAfterMove.lte(largestDesirableArraySpineSize)) {
 				layout = GC_ArrayletObjectModelBase$ArrayLayout.Hybrid;
 			} else {
@@ -285,7 +259,7 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 
 		return layout;
 	}
-	
+
 	/**
 	 * Returns the size of data in an indexable object, in bytes, including leaves, excluding the header.
 	 * @param arrayPtr Pointer to the indexable object whose size is required
@@ -309,14 +283,9 @@ public abstract class GCArrayletObjectModelBase_V1 extends GCArrayObjectModel
 	@Override
 	public VoidPointer getDataPointerForContiguous(J9IndexableObjectPointer arrayPtr) throws CorruptDataException
 	{
-		if (J9BuildFlags.gc_hybridArraylets) {
-			return VoidPointer.cast(arrayPtr.addOffset(J9IndexableObjectContiguous.SIZEOF));
-		} else {
-			ObjectReferencePointer arrayoidPointer = getArrayoidPointer(arrayPtr);
-			return VoidPointer.cast(arrayoidPointer.at(0));
-		}
-	}	
-	
+		return VoidPointer.cast(arrayPtr.addOffset(J9IndexableObjectContiguous.SIZEOF));
+	}
+
 	@Override
 	public UDATA getHashcodeOffset(J9IndexableObjectPointer array) throws CorruptDataException
 	{
