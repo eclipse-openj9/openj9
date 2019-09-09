@@ -1201,6 +1201,11 @@ TR_arrayTypeCode TR_J9VMBase::getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* cla
       return atype_int;
    else if (j9clazz == jitConfig->javaVM->longReflectClass)
       return atype_long;
+   else
+      {
+      TR_ASSERT(false, "TR_arrayTypeCode is not defined for the j9clazz");
+      return (TR_arrayTypeCode)0;
+      }
    }
 
 TR_OpaqueClassBlock *
@@ -4417,7 +4422,7 @@ TR::TreeTop* TR_J9VMBase::initializeClazzFlagsMonitorFields(TR::Compilation* com
       // Initialize the monitor field
       //
       int32_t lwInitialValue = 0;
-      if (TR::Compiler->cls.classFlagReservableWorldInitValue(ramClass))
+      if (TR::Compiler->cls.classFlagReservableWordInitValue(ramClass))
          lwInitialValue = OBJECT_HEADER_LOCK_RESERVED;
 
       if (!TR::Compiler->target.is64Bit() || generateCompressedLockWord())
@@ -6063,7 +6068,6 @@ TR_J9VMBase::convertMethodPtrToMethodOffset(J9Method *methodPtr)
    {
    return J9JitMemory::convertMethodPtrToMethodOffset(methodPtr);
    }
-
 
 const char *
 TR_J9VMBase::getJ9MonitorName(J9ThreadMonitor* monitor) { return monitor->name; }
@@ -8886,13 +8890,13 @@ TR_J9SharedCacheVM::getClassFlagsValue(TR_OpaqueClassBlock * classPointer)
 
    bool validated = false;
    uintptrj_t classFlags = TR_J9VM::getClassFlagsValue(classPointer);
-   
+
    if (comp->getOption(TR_UseSymbolValidationManager))
       {
       SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
       validated = true;
       }
-   
+
    if (validated)
       return classFlags;
    else

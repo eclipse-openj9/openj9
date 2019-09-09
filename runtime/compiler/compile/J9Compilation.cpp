@@ -65,8 +65,8 @@
  */
 bool firstCompileStarted = false;
 
-// TODO disabled to allow for JITServer
-/*
+// JITSERVER_TODO: disabled to allow for JITServer
+#if !defined(JITSERVER_SUPPORT)
 void *operator new(size_t size)
    {
 #if defined(DEBUG)
@@ -82,20 +82,16 @@ void *operator new(size_t size)
 #endif
    return malloc(size);
    }
-*/
 
 /**
  * Since we are using arena allocation, heap deletions must be a no-op, and
  * can't be used by JIT code, so we inject an assertion here.
  */
-
-// TODO disabled to allow for JITServer
-/*
 void operator delete(void *)
    {
    TR_ASSERT(0, "Invalid use of global operator delete");
    }
-*/
+#endif /* !defined(JITSERVER_SUPPORT) */
 
 
 
@@ -177,9 +173,11 @@ J9::Compilation::Compilation(int32_t id,
    _profileInfo(NULL),
    _skippedJProfilingBlock(false),
    _reloRuntime(reloRuntime),
-   _osrProhibitedOverRangeOfTrees(false),
+#if defined(JITSERVER_SUPPORT)
    _outOfProcessCompilation(false),
-   _remoteCompilation(false)
+   _remoteCompilation(false),
+#endif /* defined(JITSERVER_SUPPORT) */
+   _osrProhibitedOverRangeOfTrees(false)
    {
    _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
 
@@ -543,6 +541,7 @@ J9::Compilation::canAllocateInlineOnStack(TR::Node* node, TR_OpaqueClassBlock* &
       if (clazz == NULL)
          return -1;
 
+      // Can not inline the allocation on stack if the class is special
       if (TR::Compiler->cls.isClassSpecialForStackAllocation((TR_OpaqueClassBlock *)clazz))
          return -1;
       }
@@ -651,7 +650,7 @@ J9::Compilation::canAllocateInline(TR::Node* node, TR_OpaqueClassBlock* &classIn
       if (clazz == NULL)
          return -1;
 
-      auto classOffset = self()->fej9()->getArrayClassFromComponentClass(self()->fej9()->convertClassPtrToClassOffset(clazz));
+      auto classOffset = self()->fej9()->getArrayClassFromComponentClass(TR::Compiler->cls.convertClassPtrToClassOffset(clazz));
       clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(classOffset);
       if (!clazz)
          return -1;

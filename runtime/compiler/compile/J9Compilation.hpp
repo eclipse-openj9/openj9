@@ -313,11 +313,12 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    bool incompleteOptimizerSupportForReadWriteBarriers();
 
-   // JITServer
+#if defined(JITSERVER_SUPPORT)
    bool isOutOfProcessCompilation() const { return _outOfProcessCompilation; } // server side
    void setOutOfProcessCompilation() { _outOfProcessCompilation = true; }
    bool isRemoteCompilation() const { return _remoteCompilation; } // client side
    void setRemoteCompilation() { _remoteCompilation = true; }
+#endif /* defined(JITSERVER_SUPPORT) */
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
 
@@ -408,12 +409,14 @@ private:
 
    TR_RelocationRuntime *_reloRuntime;
 
+#if defined(JITSERVER_SUPPORT)
    // The following flag is set when this compilation is performed in a
    // VM that does not have the runtime part (server side in JITServer)
-   bool _outOfProcessCompilation; 
+   bool _outOfProcessCompilation;
    // The following flag is set when a request to complete this compilation
    // has been sent to a remote VM (client side in JITServer)
-   bool _remoteCompilation; 
+   bool _remoteCompilation;
+#endif /* defined(JITSERVER_SUPPORT) */
 
    TR::SymbolValidationManager *_symbolValidationManager;
    bool _osrProhibitedOverRangeOfTrees;

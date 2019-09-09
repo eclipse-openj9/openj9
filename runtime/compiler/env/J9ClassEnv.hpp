@@ -32,11 +32,13 @@ namespace J9 { class ClassEnv; }
 namespace J9 { typedef J9::ClassEnv ClassEnvConnector; }
 #endif
 
+#if defined(JITSERVER_SUPPORT)
+#include <vector>
+#endif /* defined(JITSERVER_SUPPORT) */
+#include "env/jittypes.h"
 #include "env/OMRClassEnv.hpp"
 #include "infra/Annotations.hpp"
-#include "env/jittypes.h"
 #include "j9.h"
-#include <vector>
 
 namespace TR { class SymbolReference; }
 
@@ -47,6 +49,8 @@ class OMR_EXTENSIBLE ClassEnv : public OMR::ClassEnvConnector
    {
 public:
 
+   TR::ClassEnv *self();
+
    bool classesOnHeap() { return true; }
 
    bool classObjectsMayBeCollected() { return false; }
@@ -56,19 +60,22 @@ public:
    TR_OpaqueClassBlock *getClassFromJavaLangClass(uintptrj_t objectPointer);
 
    J9Class *convertClassOffsetToClassPtr(TR_OpaqueClassBlock *clazzOffset);
+   TR_OpaqueClassBlock *convertClassPtrToClassOffset(J9Class *clazzPtr);
 
    uintptrj_t classFlagsValue(TR_OpaqueClassBlock * classPointer);
-   uintptrj_t classFlagReservableWorldInitValue(TR_OpaqueClassBlock * classPointer);
+   uintptrj_t classFlagReservableWordInitValue(TR_OpaqueClassBlock * classPointer);
    uintptrj_t classDepthOf(TR_OpaqueClassBlock *clazzPointer);
    uintptrj_t classInstanceSize(TR_OpaqueClassBlock * clazzPointer);
 
    J9ROMClass *romClassOf(TR_OpaqueClassBlock * clazz);
    J9ROMClass *romClassOfSuperClass(TR_OpaqueClassBlock * clazz, size_t index);
-   
+
    J9ITable *iTableOf(TR_OpaqueClassBlock * clazz);
    J9ITable *iTableNext(J9ITable *current);
    J9ROMClass *iTableRomClass(J9ITable *current);
+#if defined(JITSERVER_SUPPORT)
    std::vector<TR_OpaqueClassBlock *> getITable(TR_OpaqueClassBlock *clazz);
+#endif /* defined(JITSERVER_SUPPORT) */
 
    J9Class **superClassesOf(TR_OpaqueClassBlock * clazz);
 
