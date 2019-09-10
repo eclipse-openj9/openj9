@@ -41,9 +41,9 @@ my %spec2jenkinsFile = (
 	'linux_arm'                    => 'openjdk_aarch32_linux',
 	'linux_aarch64_cmprssptrs'     => 'openjdk_aarch64_linux',
 	'linux_aarch64'                => 'openjdk_aarch64_linux_xl',
-	'linux_ppc-64_cmprssptrs'      => 'openjdk_ppc64_aix',
 	'linux_ppc-64_cmprssptrs_le'   => 'openjdk_ppc64le_linux',
 	'linux_390-64_cmprssptrs'      => 'openjdk_s390x_linux',
+	'aix_ppc-64_cmprssptrs'        => 'openjdk_ppc64_aix',
 	'zos_390-64_cmprssptrs'        => 'openjdk_s390x_zos',
 	'osx_x86-64_cmprssptrs'        => 'openjdk_x86-64_mac',
 	'osx_x86-64'                   => 'openjdk_x86-64_mac_xl',
@@ -225,7 +225,7 @@ sub resultReporter {
 		}
 		my $jenkinFileParam = "";
 		if (exists $spec2jenkinsFile{$spec}) {
-			$jenkinFileParam = "&Jenkinsfile=" . $spec2jenkinsFile{$spec};
+			$jenkinFileParam = "&JenkinsFile=" . $spec2jenkinsFile{$spec};
 		}
 		my $customTargetParam = "";
 		if ($customTarget ne '') {
