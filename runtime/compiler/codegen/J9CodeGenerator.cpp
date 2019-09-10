@@ -4942,14 +4942,12 @@ J9::CodeGenerator::allocateCodeMemoryInner(
    bool hadClassUnloadMonitor;
    bool hadVMAccess = self()->fej9()->releaseClassUnloadMonitorAndAcquireVMaccessIfNeeded(comp, &hadClassUnloadMonitor);
 
-   bool useContiguousAllocation = self()->fej9()->needsContiguousAllocation();                                                                                                                                      
-
    uint8_t *warmCode = TR::CodeCacheManager::instance()->allocateCodeMemory(
          warmCodeSizeInBytes,
          coldCodeSizeInBytes,
          &codeCache,
          coldCode,
-         useContiguousAllocation,
+         self()->fej9()->needsContiguousCodeAndDataCacheAllocation(),
          isMethodHeaderNeeded);
 
    self()->fej9()->acquireClassUnloadMonitorAndReleaseVMAccessIfNeeded(comp, hadVMAccess, hadClassUnloadMonitor);

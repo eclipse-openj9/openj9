@@ -42,6 +42,7 @@
 #include "runtime/RelocationRuntime.hpp"
 #if defined(JITSERVER_SUPPORT)
 #include "env/PersistentCollections.hpp"
+#include "net/ServerStream.hpp"
 #endif /* defined(JITSERVER_SUPPORT) */
 
 extern "C" {
@@ -76,8 +77,6 @@ template <typename T> class TR_PersistentArray;
 typedef J9JITExceptionTable TR_MethodMetaData;
 #if defined(JITSERVER_SUPPORT)
 class ClientSessionHT;
-
-namespace JITServer { class ServerStream; }
 #endif /* defined(JITSERVER_SUPPORT) */
 
 struct TR_SignatureCountPair

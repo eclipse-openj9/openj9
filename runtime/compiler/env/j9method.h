@@ -23,7 +23,6 @@
 #ifndef j9method_h
 #define j9method_h
 
-#include "net/ServerStream.hpp"
 #include "codegen/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
@@ -65,14 +64,6 @@ extern "C" J9UTF8 * getClassNameFromTR_VMMethod(TR_OpaqueMethodBlock *vmMethod);
 extern "C" J9Class * getRAMClassFromTR_ResolvedVMMethod(TR_OpaqueMethodBlock *vmMethod);
 #endif
 
-static bool supportsFastJNI(TR_FrontEnd *fe)
-   {
-#if defined(TR_TARGET_S390) || defined(TR_TARGET_X86) || defined(TR_TARGET_POWER)
-   return true;
-#else
-   return false;
-#endif
-   }
 
 UDATA getFieldType(J9ROMConstantPoolItem * cp, I_32 cpIndex);
 inline char *nextSignatureArgument(char *currentArgument)
@@ -271,9 +262,6 @@ class TR_ResolvedJ9Method : public TR_J9Method, public TR_ResolvedJ9MethodBase
 public:
    TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
-   // JITServer: make virtual
-   //
-   // JITServer TODO: make protected, returning Opaque versions
    J9ROMMethod *           romMethod() { return _romMethod; }
    virtual J9ROMClass *            romClassPtr();
    virtual J9ConstantPool *      cp();
@@ -500,10 +488,11 @@ public:
    virtual bool shouldFailSetRecognizedMethodInfoBecauseOfHCR();
    virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm);
 
-   virtual bool                  owningMethodDoesntMatter();
+   virtual bool owningMethodDoesntMatter();
    virtual bool isMethodInValidLibrary();
-
+#if defined(JITSERVER_SUPPORT)
    virtual TR_PersistentJittedBodyInfo *getExistingJittedBodyInfo();
+#endif
 
    static bool isInvokePrivateVTableOffset(UDATA vTableOffset);
 
@@ -519,11 +508,7 @@ protected:
    virtual TR_J9MethodBase *asJ9Method(){ return this; }
    TR_ResolvedJ9Method(TR_FrontEnd *, TR_ResolvedMethod * owningMethod = 0);
    virtual void construct();
-
-// JITServer TODO
-//private:
    virtual TR_ResolvedMethod *createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
-
    virtual void                  handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
    virtual void                  handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
    virtual void                  handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
