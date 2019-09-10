@@ -46,15 +46,15 @@ ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) :
    _javaLangClassPtr = NULL;
    _inUse = 1;
    _numActiveThreads = 0;
-   _romMapMonitor = TR::Monitor::create("JIT-JITaaSROMMapMonitor");
-   _classMapMonitor = TR::Monitor::create("JIT-JITaaSClassMapMonitor");
-   _classChainDataMapMonitor = TR::Monitor::create("JIT-JITaaSClassChainDataMapMonitor");
-   _sequencingMonitor = TR::Monitor::create("JIT-JITaaSSequencingMonitor");
-   _constantPoolMapMonitor = TR::Monitor::create("JIT-JITaaSConstantPoolMonitor");
+   _romMapMonitor = TR::Monitor::create("JIT-JITServerROMMapMonitor");
+   _classMapMonitor = TR::Monitor::create("JIT-JITServerClassMapMonitor");
+   _classChainDataMapMonitor = TR::Monitor::create("JIT-JITServerClassChainDataMapMonitor");
+   _sequencingMonitor = TR::Monitor::create("JIT-JITServerSequencingMonitor");
+   _constantPoolMapMonitor = TR::Monitor::create("JIT-JITServerConstantPoolMonitor");
    _vmInfo = NULL;
-   _staticMapMonitor = TR::Monitor::create("JIT-JITaaSStaticMapMonitor");
+   _staticMapMonitor = TR::Monitor::create("JIT-JITServerStaticMapMonitor");
    _markedForDeletion = false;
-   _thunkSetMonitor = TR::Monitor::create("JIT-JITaaSThunkSetMonitor");
+   _thunkSetMonitor = TR::Monitor::create("JIT-JITServerThunkSetMonitor");
    }
 
 ClientSessionData::~ClientSessionData()
@@ -601,7 +601,7 @@ ClientSessionHT::purgeOldDataIfNeeded()
    }
 
 // to print these stats,
-// set the env var `TR_PrintJITaaSCacheStats=1`
+// set the env var `TR_PrintJITServerCacheStats=1`
 // run the server with `-Xdump:jit:events=user`
 // then `kill -3` it when you want to print them 
 void
