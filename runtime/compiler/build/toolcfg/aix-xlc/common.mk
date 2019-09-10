@@ -71,9 +71,7 @@ CX_DEFINES+=\
 CX_FLAGS+=\
     -qarch=$(CX_ARCH) \
     -qtls \
-    -qnotempinc \
     -qenum=small \
-    -qmbcs \
     -qlanglvl=extended0x \
     -qfuncsect \
     -qsuppress=1540-1087:1540-1088:1540-1090:1540-029:1500-029 \
@@ -112,6 +110,20 @@ endif
 ifeq ($(BUILD_CONFIG),prod)
     CX_DEFINES+=$(CX_DEFINES_PROD)
     CX_FLAGS+=$(CX_FLAGS_PROD)
+endif
+
+ifeq (,$(findstring xlclang,$(notdir $(CC))))
+  # xlc options
+  CX_FLAGS+=-qnotempinc -qmbcs
+else
+  # xlclang
+  CX_FLAGS+=-qxlcompatmacros
+  SPP_FLAGS+=-qlanglvl=extc99
+endif
+
+ifneq (,$(findstring xlclang++,$(notdir $(CXX))))
+  # xlclang++ options
+  CXX_FLAGS+=-fno-rtti
 endif
 
 C_CMD?=$(CC)
