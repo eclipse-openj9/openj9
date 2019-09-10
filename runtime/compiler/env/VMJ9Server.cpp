@@ -413,10 +413,8 @@ TR_J9ServerVM::getCachedField(J9Class *ramClass, int32_t cpIndex, J9Class **decl
    if (it != _compInfoPT->getClientData()->getROMClassMap().end())
       {
       auto &jitFieldsCache = it->second._jitFieldsCache;
-      if (!jitFieldsCache)
-         return false;
-      auto cacheIt = jitFieldsCache->find(cpIndex);
-      if (cacheIt != jitFieldsCache->end())
+      auto cacheIt = jitFieldsCache.find(cpIndex);
+      if (cacheIt != jitFieldsCache.end())
          {
          *declaringClass = cacheIt->second.first;
          *field = cacheIt->second.second;
@@ -434,9 +432,7 @@ TR_J9ServerVM::cacheField(J9Class *ramClass, int32_t cpIndex, J9Class *declaring
    if (it != _compInfoPT->getClientData()->getROMClassMap().end())
       {
       auto &jitFieldsCache = it->second._jitFieldsCache;
-      if (!jitFieldsCache)
-         jitFieldsCache = new (PERSISTENT_NEW) TR_JitFieldsCache(TR_JitFieldsCache::allocator_type(TR::Compiler->persistentAllocator()));
-      jitFieldsCache->insert({cpIndex, std::make_pair(declaringClass, field)});
+      jitFieldsCache.insert({cpIndex, std::make_pair(declaringClass, field)});
       }
    }
 

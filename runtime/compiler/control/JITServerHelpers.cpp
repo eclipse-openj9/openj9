@@ -197,8 +197,6 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    J9Method *methods = classInfoStruct._methodsOfClass;
    classInfoStruct._baseComponentClass = std::get<2>(classInfo);
    classInfoStruct._numDimensions = std::get<3>(classInfo);
-   classInfoStruct._remoteROMStringsCache = NULL;
-   classInfoStruct._fieldOrStaticNameCache = NULL;
    classInfoStruct._parentClass = std::get<4>(classInfo);
    auto &tmpInterfaces = std::get<5>(classInfo);
    classInfoStruct._interfaces = new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock *>
@@ -215,18 +213,9 @@ JITServerHelpers::cacheRemoteROMClass(ClientSessionData *clientSessionData, J9Cl
    classInfoStruct._componentClass = std::get<14>(classInfo);
    classInfoStruct._arrayClass = std::get<15>(classInfo);
    classInfoStruct._totalInstanceSize = std::get<16>(classInfo);
-   classInfoStruct._classOfStaticCache = NULL;
-   classInfoStruct._constantClassPoolCache = NULL;
    classInfoStruct._remoteRomClass = std::get<17>(classInfo);
-   classInfoStruct._fieldAttributesCache = NULL;
-   classInfoStruct._staticAttributesCache = NULL;
-   classInfoStruct._fieldAttributesCacheAOT = NULL;
-   classInfoStruct._staticAttributesCacheAOT = NULL;
    classInfoStruct._constantPool = (J9ConstantPool *)std::get<18>(classInfo);
-   classInfoStruct._jitFieldsCache = NULL;
    classInfoStruct._classFlags = std::get<19>(classInfo);
-   classInfoStruct._fieldOrStaticDeclaringClassCache = NULL;
-   classInfoStruct._J9MethodNameCache = NULL;
    clientSessionData->getROMClassMap().insert({ clazz, classInfoStruct});
 
    uint32_t numMethods = romClass->romMethodCount;
