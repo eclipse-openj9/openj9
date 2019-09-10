@@ -139,8 +139,9 @@ void JNICALL Java_JniArgTests_logRetValError( JNIEnv *p_env, jobject p_this, jst
 	retValFailures ++;
 }
 
-void JNICALL Java_JniArgTests_summary( JNIEnv *p_env, jobject p_this )
+jint JNICALL Java_JniArgTests_summary( JNIEnv *p_env, jobject p_this )
 {
+	jint rc = 0;
 	J9JavaVM *javaVM = getJ9JavaVM(p_env);
 	PORT_ACCESS_FROM_JAVAVM(javaVM);
 
@@ -153,5 +154,11 @@ void JNICALL Java_JniArgTests_summary( JNIEnv *p_env, jobject p_this )
 	} else {
 		j9tty_printf( PORTLIB, "JNI ARG Tests PASSED\n" );
 	}
+
+	if ((argFailures + retValFailures) > 0) {
+		rc = 1;
+	}
+
+	return rc;
 }
 
