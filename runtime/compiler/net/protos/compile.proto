@@ -57,7 +57,7 @@ enum MessageType
    clientSessionTerminate = 7; // type used when client process is about to terminate
    connectionTerminate = 8; // type used when client informs the server to close the connection
 
-   // For TR_ResolvedJ9JITaaSServerMethod methods
+   // For TR_ResolvedJ9JITServerMethod methods
    ResolvedMethod_isJNINative = 100;
    ResolvedMethod_isInterpreted = 101;
    ResolvedMethod_setRecognizedMethodInfo = 102;
@@ -231,6 +231,7 @@ enum MessageType
    VM_getReferenceFieldAt = 306;
    VM_getJ2IThunk = 307;
    VM_needsInvokeExactJ2IThunk = 308;
+   VM_isSameOrSuperClass = 309;
 
    // For static TR::CompilationInfo methods
    CompInfo_isCompiled = 400;
@@ -286,13 +287,13 @@ enum MessageType
    runFEMacro_invokeILGenMacros = 717;
    runFEMacro_derefUintptrjPtr = 718;
 
-   // for JITaaSPersistentCHTable
+   // for JITServerPersistentCHTable
    CHTable_getAllClassInfo = 800;
    CHTable_getClassInfoUpdates = 801;
    CHTable_commit = 802;
    CHTable_clearReservable = 803;
 
-   // for JITaaSIProfiler
+   // for JITServerIProfiler
    IProfiler_profilingSample = 900;
    IProfiler_searchForMethodSample = 901;
    IProfiler_getMaxCallCount = 902;
