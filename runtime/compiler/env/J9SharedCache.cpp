@@ -253,15 +253,15 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
       uint16_t *hintFlags = (uint16_t *)&scHintData;
       uint16_t *hintCount = ((uint16_t *)&scHintData) + 1; // Flags and new count field needs to be in contiguous location to be stored into sharecache
 
-      bool hintDidNotExist = ((newHint & *hintFlags) == 0);
       const uint32_t scHintDataLength = sizeof(scHintData);
 
-      if (hintDidNotExist)
+      if (*hintFlags == 0) // If no prior hints exist, we can perform a "storeAttachedData" operation
          {
          uint32_t bytesToPersist = 0;
-
+ 
          if (!SCfull)
             {
+            *hintFlags |= newHint;
             if (isFailedValidationHint)
                *hintCount = 10 * _initialHintSCount;
 
@@ -302,24 +302,39 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
             _compInfo->increaseUnstoredBytes(0, bytesToPersist);
             }
          }
-      else
+      else // Some hints already exist for this method. We must perform an "updateAttachedData"
          {
          bool updateHint = false;
-         if (isFailedValidationHint)
+         bool hintDidNotExist = ((newHint & *hintFlags) == 0);
+         if (hintDidNotExist)
             {
-            uint16_t oldCount = *hintCount;
-            uint16_t newCount = std::min(oldCount * 10, TR_DEFAULT_INITIAL_COUNT);
             updateHint = true;
-            if (newCount == oldCount)
+            *hintFlags |= newHint;
+            if (isFailedValidationHint)
+               *hintCount = 10 * _initialHintSCount;
+            }
+         else 
+            {
+            // hint already exists, but maybe we need to update the count
+            if (isFailedValidationHint)
                {
-               updateHint = false;
-               if (_verboseHints)
+               uint16_t oldCount = *hintCount;
+               uint16_t newCount = std::min(oldCount * 10, TR_DEFAULT_INITIAL_COUNT);
+               
+               if (newCount != oldCount)
                   {
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint reached max count of %d", oldCount);
+                  updateHint = true;
+                  *hintCount = newCount;
+                  }
+               else
+                  {
+                  if (_verboseHints)
+                     {
+                     TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS, "hint reached max count of %d", oldCount);
+                     }
                   }
                }
             }
-
          if (updateHint)
             {
             J9SharedDataDescriptor descriptor;
