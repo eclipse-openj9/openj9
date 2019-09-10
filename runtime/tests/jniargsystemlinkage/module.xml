@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+   Copyright (c) 2019, 2019 IBM Corp. and others
+
+   This program and the accompanying materials are made available under
+   the terms of the Eclipse Public License 2.0 which accompanies this
+   distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+   or the Apache License, Version 2.0 which accompanies this distribution and
+   is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+   This Source Code may also be made available under the following
+   Secondary Licenses when the conditions for such availability set
+   forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+   General Public License, version 2 with the GNU Classpath
+   Exception [1] and GNU General Public License, version 2 with the
+   OpenJDK Assembly Exception [2].
+
+   [1] https://www.gnu.org/software/classpath/license.html
+   [2] http://openjdk.java.net/legal/assembly-exception.html
+
+   SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<module xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="../jniarg/exports.xml"/>
+
+  <exports group="all">
+    <export name="Java_JniArgTests_logRetValError"/>
+    <export name="Java_JniArgTests_summary"/>
+  </exports>
+
+  <artifact type="shared" name="jniargtestssystemlink" appendrelease="false">
+    <include-if condition="spec.flags.module_jniargtests and spec.zos_390.* and not spec.flags.J9VM_ENV_DATA64"/>
+    <options>
+      <option name="requiresPrimitiveTable"/>
+      <option name="prototypeHeaderFileNames" data="j9protos.h ../jniarg/jniargtests.h"/>
+    </options>
+    <phase>util j2se</phase>
+    <exports>
+      <group name="all"/>
+      <group name="generated"/>
+    </exports>
+    <includes>
+      <include path="j9include"/>
+      <include path="j9oti"/>
+    </includes>
+    <makefilestubs>
+      <makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
+      <makefilestub data="UMA_DISABLE_DDRGEN=1"/>
+      <makefilestub data="CFLAGS := -Wc,DLL,EXPORTALL"/>
+    </makefilestubs>
+    <vpaths>
+      <vpath path="../jniarg" pattern="args_01.c" augmentObjects="true" type="relativepath"/>
+      <vpath path="../jniarg" pattern="args_02.c" augmentObjects="true" type="relativepath"/>
+      <vpath path="../jniarg" pattern="args_03.c" augmentObjects="true" type="relativepath"/>
+      <vpath path="../jniarg" pattern="args_04.c" augmentObjects="true" type="relativepath"/>
+      <vpath path="../jniarg" pattern="args_05.c" augmentObjects="true" type="relativepath"/>
+      <vpath path="../jniarg" pattern="args_06.c" augmentObjects="true" type="relativepath"/>
+      <vpath path="../jniarg" pattern="args_07.c" augmentObjects="true" type="relativepath"/>
+      <vpath path="../jniarg" pattern="args_08.c" augmentObjects="true" type="relativepath"/>
+      <vpath path="../jniarg" pattern="args_09.c" augmentObjects="true" type="relativepath"/>
+      <vpath path="../jniarg" pattern="args_10.c" augmentObjects="true" type="relativepath"/>
+      <vpath path="../jniarg" pattern="cdefs.c" augmentObjects="true" type="relativepath"/>
+    </vpaths>
+  </artifact>
+</module>
