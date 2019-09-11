@@ -426,42 +426,6 @@ j9mm_iterate_object_slots(
 	return returnCode;
 }
 
-
-/**
- * Provide the arraylet identification bitmask.  For builds that do not
- * support arraylets all values are set to 0.
- *
- * @return arrayletLeafSize
- * @return offset
- * @return width
- * @return mask
- * @return result
- * @return 0 on success, non-0 on failure.
- */
-UDATA
-j9mm_arraylet_identification(
-	J9JavaVM *javaVM,
-	UDATA *arrayletLeafSize,
-	UDATA *offset,
-	UDATA *width,
-	UDATA *mask,
-	UDATA *result)
-{
-	/*
-	 * This a temporary fix, this place should be modified
-	 * OBJECT_HEADER_INDEXABLE is stored in RAM class in classDepthAndFlags field
-	 * and should be taken from there
-	 * (this is correct for non-SWH specifications as well)
-	 * Correspondent DTFJ code must be changed
-	 */
-	*arrayletLeafSize = javaVM->arrayletLeafSize;
-	*offset = 0;
-	*width = 0;
-	*mask = 0;
-	*result = 0;
-	return 0;
-}
-
 /**
  * Initialize a descriptor for the specified object.
  * This descriptor may subsequently be used with j9mm_iterate_object_slots or other iterator APIs.
