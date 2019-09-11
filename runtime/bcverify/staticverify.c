@@ -47,7 +47,7 @@ static IDATA checkMethodStructure (J9PortLibrary * portLib, J9CfrClassFile * cla
 static IDATA buildInstructionMap (J9CfrClassFile * classfile, J9CfrAttributeCode * code, U_8 * map, UDATA methodIndex, J9CfrError * error);
 static IDATA checkBytecodeStructure (J9CfrClassFile * classfile, UDATA methodIndex, UDATA length, U_8 * map, J9CfrError * error, U_32 flags, I_32 *hasRET);
 static IDATA checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCode * code, U_8 * map, UDATA flags, StackmapExceptionDetails* exceptionDetails);
-static I_32 checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 * map, U_8 ** entries, UDATA slotCount, U_8 * end);
+static I_32 checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 * map, U_8 ** entries, UDATA slotCount, U_8 * end, UDATA checkAppendArraySize);
 
 static IDATA 
 buildInstructionMap (J9CfrClassFile * classfile, J9CfrAttributeCode * code, U_8 * map, UDATA methodIndex, J9CfrError * error)
@@ -1249,18 +1249,13 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 			U_8* end = entries + length;
 			UDATA j = 0;
 			UDATA offset = (UDATA) -1;
-			IDATA localSlots;
 			J9CfrConstantPoolInfo* info = &classfile->constantPool[method->descriptorIndex];
-
-			localSlots = j9bcv_checkMethodSignature(info, TRUE);
-			if ((method->accessFlags & CFR_ACC_STATIC) == 0) {
-				localSlots++;
-			}
 
 			for (j = 0; j < stackMap->numberOfEntries; j++) {
 				U_8 frameType;
 				UDATA delta;
 				IDATA slotCount;
+				UDATA checkAppendArraySize = FALSE;
 
 				if ((entries + 1) > end) {
 					errorCode = FATAL_CLASS_FORMAT_ERROR;
@@ -1277,7 +1272,7 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 						errorCode = FATAL_CLASS_FORMAT_ERROR;
 						goto _failedCheck;
 					}
-					offset += NEXT_U16(delta, entries);
+					offset += NEXT_U16(delta, entries); /* move past delta */
 				} else {
 					/* illegal frame type */
 					errorCode = FATAL_CLASS_FORMAT_ERROR;
@@ -1322,25 +1317,25 @@ checkStackMap (J9CfrClassFile* classfile, J9CfrMethod * method, J9CfrAttributeCo
 					}
 					if (frameType >= CFR_STACKMAP_CHOP_3) {
 						slotCount = (IDATA) frameType - CFR_STACKMAP_APPEND_BASE;
-						localSlots += slotCount;
 						if (slotCount < 0) {
 							slotCount = 0;
 						}
+
+						if ((frameType >= CFR_STACKMAP_APPEND_1) && (frameType <= CFR_STACKMAP_APPEND_3)) {
+							checkAppendArraySize = TRUE;
+						}
 					}
-			
 				} else {
 					/* full frame */
 					/* Executed with StackMap or StackMapTable */
-					NEXT_U16(slotCount, entries);
-					localSlots = slotCount;
-					errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end);
+					NEXT_U16(slotCount, entries); /* number_of_locals verified in checkStackMapEntries */
+					errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end, checkAppendArraySize);
 					if (0 != errorCode) {
 						goto _failedCheck;
 					}
-					NEXT_U16(slotCount, entries);
+					NEXT_U16(slotCount, entries); /* number_of_stack_items verified in checkStackMapEntries */
 				}
-
-				errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end);
+				errorCode = checkStackMapEntries (classfile, code, map, &entries, slotCount, end, checkAppendArraySize);
 				if (0 != errorCode) {
 					goto _failedCheck;
 				}
@@ -1373,7 +1368,7 @@ _failedCheck:
 
 
 static I_32
-checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 * map, U_8 ** entries, UDATA slotCount, U_8 * end)
+checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 * map, U_8 ** entries, UDATA slotCount, U_8 * end, UDATA checkAppendArraySize)
 {
 	U_8* entry = *entries;
 	U_8 entryType;
@@ -1381,6 +1376,9 @@ checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 
 	U_16 cpIndex;
 	J9CfrConstantPoolInfo* cpBase = classfile->constantPool;
 	U_32 cpCount = (U_32) classfile->constantPoolCount;
+	/* append check */
+	U_16 slotTypeCounter = 0;
+	UDATA hasDoubleSlot = FALSE;
 
 	for (; slotCount; slotCount--) {
 		if ((entry + 1) > end) {
@@ -1427,6 +1425,20 @@ checkStackMapEntries (J9CfrClassFile* classfile, J9CfrAttributeCode * code, U_8 
 			}
 			/* Check index points to the right type of thing */
 			if(cpBase[cpIndex].tag != CFR_CONSTANT_Class) {
+				return FATAL_CLASS_FORMAT_ERROR;
+			}
+		}
+
+		/* A value of type long or double must occupy two consecutive local variables. Ensure that if there is is a long or double entry in 
+		 * an append frame maxLocals reflects the correct number of slots. An incorrect maxLocals value in all other cases will be handled 
+		 * in bcverify.c */
+		if (checkAppendArraySize) {
+			slotTypeCounter += 1;
+			if ((CFR_STACKMAP_TYPE_DOUBLE == entryType) || (CFR_STACKMAP_TYPE_LONG == entryType)) {
+				hasDoubleSlot = TRUE;
+				slotTypeCounter += 1;
+			}
+			if (hasDoubleSlot && (slotTypeCounter > code->maxLocals)) {
 				return FATAL_CLASS_FORMAT_ERROR;
 			}
 		}
@@ -1545,12 +1557,6 @@ checkMethodStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, UDATA
 		}
 	}
 
-	result = checkBytecodeStructure (classfile, methodIndex, length, map, error, flags, hasRET);
-
-	if (result) {
-		goto _leaveProc;
-	}
-
 	if ((flags & J9_VERIFY_IGNORE_STACK_MAPS) == 0) {
 		StackmapExceptionDetails exceptionDetails;
 		memset(&exceptionDetails, 0, sizeof(exceptionDetails));
@@ -1578,6 +1584,12 @@ checkMethodStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, UDATA
 				goto _formatError;
 			}
 		}
+	}
+
+	result = checkBytecodeStructure (classfile, methodIndex, length, map, error, flags, hasRET);
+
+	if (result) {
+		goto _leaveProc;
 	}
 
 	/* Should check thrown exceptions.  */

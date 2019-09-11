@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,10 @@
 #include "control/CompilationRuntime.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "j9.h"
+#if defined(JITSERVER_SUPPORT)
+#include "control/CompilationThread.hpp"
+#include "net/ServerStream.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
 
 int16_t TR_MethodToBeCompiled::_globalIndex = 0;
 
@@ -58,14 +62,16 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
    _priority = p;
    _numThreadsWaiting = 0;
    _compErrCode = compilationOK;
-   _compilationAttemptsLeft = MAX_COMPILE_ATTEMPTS;
+   _compilationAttemptsLeft = (TR::Options::canJITCompile()) ? MAX_COMPILE_ATTEMPTS : 1;
    _unloadedMethod = false;
+   _doAotLoad = false;
    _useAotCompilation = false;
    _doNotUseAotCodeFromSharedCache = false;
    _tryCompilingAgain = false;
    _compInfoPT = NULL;
    _aotCodeToBeRelocated = NULL;
-   _optimizationPlan->setIsAotLoad(false);
+   if (_optimizationPlan)
+      _optimizationPlan->setIsAotLoad(false);
    _async = false;
    _reqFromSecondaryQueue = TR_MethodToBeCompiled::REASON_NONE;
    _reqFromJProfilingQueue = false;
@@ -78,6 +84,13 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
    _GCRrequest = false;
 
    _methodIsInSharedCache = TR_maybe;
+#if defined(JITSERVER_SUPPORT)
+   _remoteCompReq = false;
+   _stream = NULL;
+   _clientOptions = NULL;
+   _clientOptionsSize = 0;
+   _origOptLevel = unknownHotness;
+#endif /* defined(JITSERVER_SUPPORT) */
 
    TR_ASSERT_FATAL(_freeTag & ENTRY_IN_POOL_FREE, "initializing an entry which is not free");
 
@@ -87,6 +100,9 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
 void
 TR_MethodToBeCompiled::shutdown()
    {
+#if defined(JITSERVER_SUPPORT)
+   freeJITServerAllocations();
+#endif /* defined(JITSERVER_SUPPORT) */
    TR::MonitorTable *table = TR::MonitorTable::get();
    if (!table) return;
    table->removeAndDestroy(_monitor);
@@ -128,3 +144,21 @@ TR_MethodToBeCompiled::setAotCodeToBeRelocated(const void *m)
    _aotCodeToBeRelocated = m;
    _optimizationPlan->setIsAotLoad(m!=0);
    }
+
+#if defined(JITSERVER_SUPPORT)
+uint64_t 
+TR_MethodToBeCompiled::getClientUID() const
+   {
+   return _stream->getClientId();
+   }
+
+void
+TR_MethodToBeCompiled::freeJITServerAllocations()
+   {
+   if (_clientOptions)
+      {
+      _compInfoPT->getCompilationInfo()->persistentMemory()->freePersistentMemory((void *)_clientOptions);
+      _clientOptions = NULL;
+      }
+   }
+#endif /* defined(JITSERVER_SUPPORT) */

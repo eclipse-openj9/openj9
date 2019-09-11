@@ -347,7 +347,6 @@ public:
 			return pointerFields;
 		}
 
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		/* if NUA is enabled, separate path for contiguous arrays */
 		UDATA sizeInElements = _extensions->indexableObjectModel.getSizeInElements(objectPtr);
 		if (isContiguous || (0 == sizeInElements)) {
@@ -355,7 +354,6 @@ public:
 			fj9object_t *endScanPtr = startScanPtr + sizeInElements;
 			pointerFields += scanPointerRange(env, startScanPtr, endScanPtr);
 		} else {
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
 			fj9object_t *arrayoid = _extensions->indexableObjectModel.getArrayoidPointer(objectPtr);
 			UDATA numArraylets = _extensions->indexableObjectModel.numArraylets(objectPtr);
 			for (UDATA i=0; i<numArraylets; i++) {
@@ -375,9 +373,7 @@ public:
 					}
 				}
 			}
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		}
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
 
 		/* check for yield if we've actually scanned a leaf */
 		if (0 != pointerFields) {

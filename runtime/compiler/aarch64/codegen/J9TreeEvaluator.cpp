@@ -128,6 +128,8 @@ static void wrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *
                                         wbRef, NULL);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions, NULL);
+
+   cg->machine()->setLinkRegisterKilled(true);
    }
 
 TR::Register *
@@ -552,7 +554,7 @@ J9::ARM64::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    snippetLabel = generateLabelSymbol(cg);
    cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
    
-   gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_CS);
+   gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, (reversed ? TR::CC_CS : TR::CC_LS));
 
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
 

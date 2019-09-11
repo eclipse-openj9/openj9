@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "OMR/Bytes.hpp"
 #include "j9.h"
 #undef min
 #undef max
@@ -134,7 +135,7 @@ size_t
 SegmentAllocator::pageAlign(const size_t requestedSize) throw()
    {
    size_t const pageSize = this->pageSize();
-   size_t alignedSize = (requestedSize + pageSize - 1) & ~(pageSize - 1);
+   size_t alignedSize = OMR::align(requestedSize, pageSize);
    return alignedSize;
    }
 

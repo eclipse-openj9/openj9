@@ -887,7 +887,7 @@ void arm64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
    TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(startPC);
    intptrj_t dispatcher = (intptrj_t)((uint8_t *)startPC + linkInfo->getReservedWord());
 
-   *buffer = 0x58000110; //LDR R16 PC+8
+   *buffer = 0x58000050; //LDR R16 PC+8
    buffer += 1; 
    *buffer = 0xD61F0200; //BR R16
    buffer += 1;

@@ -36,9 +36,7 @@
 
 #include "AllocateDescription.hpp"
 #include "AllocationContextTarok.hpp"
-#if defined(J9VM_GC_ARRAYLETS)
 #include "ArrayletLeafIterator.hpp"
-#endif /* J9VM_GC_ARRAYLETS */
 #include "AtomicOperations.hpp"
 #include "Bits.hpp"
 #include "CardCleaner.hpp"
@@ -391,7 +389,6 @@ MM_CopyForwardScheme::clearGCStats(MM_EnvironmentVLHGC *env)
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats.clear();
 }
 
-#if defined(J9VM_GC_ARRAYLETS)
 void
 MM_CopyForwardScheme::updateLeafRegions(MM_EnvironmentVLHGC *env)
 {
@@ -428,7 +425,6 @@ MM_CopyForwardScheme::updateLeafRegions(MM_EnvironmentVLHGC *env)
 		}
 	}
 }
-#endif /* J9VM_GC_ARRAYLETS */
 
 void
 MM_CopyForwardScheme::preProcessRegions(MM_EnvironmentVLHGC *env)
@@ -1621,9 +1617,7 @@ MM_CopyForwardScheme::copyForwardCollectionSet(MM_EnvironmentVLHGC *env)
 	/* Record the completion time of the copy forward cycle */
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._endTime = j9time_hires_clock();
 
-#if defined(J9VM_GC_ARRAYLETS)
 	updateLeafRegions(env);
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 
 	/* We used memory from the ACs for survivor space - make sure it doesn't hang around as allocation space */
 	clearReservedRegionLists(env);
@@ -1981,11 +1975,9 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 
 				forwardedHeader->fixupCopiedObject(destinationObjectPtr);
 
-#if defined(J9VM_GC_ARRAYLETS)
 				if(_extensions->objectModel.isIndexable(destinationObjectPtr)) {
 					updateInternalLeafPointersAfterCopy((J9IndexableObject *)destinationObjectPtr, (J9IndexableObject *)forwardedHeader->getObject());
 				}
-#endif /* J9VM_GC_ARRAYLETS */
 
 				/* IF the object has been hashed and has not been moved then we must store the previous
 				 * address into the hashcode slot at hashcode offset.
@@ -2074,7 +2066,6 @@ MM_CopyForwardScheme::copyLeafChildren(MM_EnvironmentVLHGC* env, MM_AllocationCo
 }
 #endif /* J9VM_GC_LEAF_BITS */
 
-#if defined(J9VM_GC_ARRAYLETS)
 /**
  * Updates leaf pointers that point to an address located within the indexable object.  For example,
  * when the array layout is either inline continuous or hybrid, there will be leaf pointers that point
@@ -2103,8 +2094,6 @@ MM_CopyForwardScheme::updateInternalLeafPointersAfterCopy(J9IndexableObject *des
 		}
 	}
 }
-
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 
 void
 MM_CopyForwardScheme::flushCacheMarkMap(MM_EnvironmentVLHGC *env, MM_CopyScanCacheVLHGC *cache)

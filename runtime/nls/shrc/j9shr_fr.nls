@@ -4967,7 +4967,7 @@ J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_NUMBYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_RAW_CLASS_DATA_AREA_NUMBYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_RAW_DATA_AREA_SIZE=<taille> octets de r\u00e9serve de l'espace cache pour les donn\u00e9es de classes brutes
+J9NLS_SHRC_SHRINIT_HELPTEXT_RAW_DATA_AREA_SIZE=R\u00e9server <taille> octets d'espace cache pour les donn\u00e9es de classes brutes
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_RAW_DATA_AREA_SIZE.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_RAW_DATA_AREA_SIZE.system_action=
@@ -6718,7 +6718,7 @@ J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS=# Suggestion au d\u00e9marrage                    %*c= %d
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS=# Suggestions au d\u00e9marrage                    %*c= %d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.sample_input_1=0
 J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS.sample_input_2=
@@ -6756,7 +6756,7 @@ J9NLS_SHRC_GET_DIR_HOME_ON_NFS.system_action=The JVM terminates, unless you have
 J9NLS_SHRC_GET_DIR_HOME_ON_NFS.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME=Impossible d'utiliser le r\u00e9pertoire de base de l'utilisateur comme r\u00e9pertoire de cache partag\u00e9 par d\u00e9faut. Le code d'erreur est %1$d.
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME=Impossible d'utiliser le r\u00e9pertoire de base de l'utilisateur comme r\u00e9pertoire de cache partag\u00e9 par d\u00e9faut. Code d'erreur : %1$d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.sample_input_1=-1
 J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.explanation=An error occurred checking the attributes of the directory.
@@ -6771,14 +6771,14 @@ J9NLS_SHRC_GET_DIR_NO_SPACE.system_action=The JVM terminates, unless you have sp
 J9NLS_SHRC_GET_DIR_NO_SPACE.user_response=Ensure the process has enough native memory to run.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK=Minimiser le contr\u00f4le des horodatages sur les fichiers jar/zip dans les URL.
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK=Minimiser le contr\u00f4le des horodatages sur les fichiers jar/zip d'URL.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=V\u00e9rifier les horodatages des fichiers jar/zip dans les URL \u00e0 chaque chargement de classe autre que d'amor\u00e7age.
+J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK=V\u00e9rifier les horodatages des fichiers jar/zip d'URL \u00e0 chaque chargement de classe autre que d'amor\u00e7age.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK.system_action=

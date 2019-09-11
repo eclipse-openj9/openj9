@@ -82,9 +82,7 @@ public:
 	 */
 	virtual void *allocateTLH(MM_EnvironmentBase *env, MM_AllocateDescription *allocateDescription, MM_ObjectAllocationInterface *objectAllocationInterface, bool shouldCollectOnFailure);
 	virtual void *allocateObject(MM_EnvironmentBase *env, MM_AllocateDescription *allocateDescription, bool shouldCollectOnFailure);
-#if defined(J9VM_GC_ARRAYLETS)
 	virtual void *allocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocateDescription, bool shouldCollectOnFailure);
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 
 	/**
 	 * Acquire a new region to be placed in the active set of regions from which to allocate.
@@ -401,7 +399,6 @@ private:
 	 */
 	void *lockedAllocateObject(MM_EnvironmentBase *env, MM_AllocateDescription *allocateDescription);
 
-#if defined(J9VM_GC_ARRAYLETS)
 	/**
 	 * Allocate an arraylet leaf.  Note that the receiver can assume that either the context is locked or the calling thread has exclusive.
 	 * NOTE:  The returned arraylet leaf is UNINITIALIZED MEMORY (since it can't be zeroed under lock) so the caller must zero it before it
@@ -414,7 +411,6 @@ private:
 	 * @return The address of the leaf
 	 */
 	void *lockedAllocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocateDescription, MM_HeapRegionDescriptorVLHGC *freeRegionForArrayletLeaf);
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 
 	/**
 	 * Common implementation for flush() and flushForShutdown()

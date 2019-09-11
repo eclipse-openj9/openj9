@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,11 +50,9 @@ public:
 protected:
 private:
 	MM_HeapRegionDescriptorVLHGC *_region;
-#if defined(J9VM_GC_ARRAYLETS)
 	J9IndexableObject *_spine; /**< If this region contains an arraylet leaf, this points to the the spine which owns the leaf */
 	MM_HeapRegionDescriptorVLHGC *_nextArrayletLeafRegion; /**< If this region has a spine in it, this is a list of regions which represent the leaves of the region.  If this is a leaf region, it is the next leaf region in the list */
 	MM_HeapRegionDescriptorVLHGC *_previousArrayletLeafRegion; /**< If this region has a spine in it, this is NULL.  If this is a leaf region, it is the previous leaf region in the list */
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 	UDATA _backingStore[((sizeof(MM_MemoryPoolBumpPointer) - 1)/sizeof(UDATA)) + 1]; /**< Allocate space for Memory Pool List */
 	
 public:
@@ -83,14 +81,12 @@ public:
 	 */
 	void taskAsIdlePool(MM_EnvironmentVLHGC *env);
 	
-#if defined(J9VM_GC_ARRAYLETS)
 	void taskAsArrayletLeaf(MM_EnvironmentBase *env);
 	void removeFromArrayletLeafList();
 	void addToArrayletLeafList(MM_HeapRegionDescriptorVLHGC* spineRegion);
 	MM_HeapRegionDescriptorVLHGC *getNextArrayletLeafRegion() { return _nextArrayletLeafRegion; }
 	J9IndexableObject *getSpine() { return _spine; }
 	void setSpine(J9IndexableObject *spineObject);
-#endif /* J9VM_GC_ARRAYLETS */
 	
 	/**
 	 * @return true if the receiver represents a region which the compact scheme can directly act upon but false if not (ie:  uncommitted or managed by a memory pool type which can't be compacted)

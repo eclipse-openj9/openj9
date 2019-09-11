@@ -47,6 +47,7 @@
 #include "MemorySubSpace.hpp"
 #include "MixedObjectAllocationModel.hpp"
 #include "ObjectAccessBarrier.hpp"
+#include "ObjectAccessBarrierAPI.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "ObjectModel.hpp"
 
@@ -328,6 +329,15 @@ J9AllocateIndexableObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uint32_t num
 			env->_isInNoGCAllocationCall = false;
 		}
 	}
+	/* TODO: Need to implement a more optimal path for cases where barriers are not required or where a batch barrier can be used. */ 
+	if ((NULL != objectPtr) && J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassContainsUnflattenedFlattenables)) {
+		MM_ObjectAccessBarrierAPI objectAccessBarrier(vmThread);
+		J9Class * elementClass = ((J9ArrayClass *) clazz)->componentType; 
+		j9object_t defaultValue = elementClass->flattenedClassCache->defaultValue;
+		for (UDATA index = 0; index < numberOfIndexedFields; index++) {
+			objectAccessBarrier.inlineIndexableObjectStoreObject(vmThread, objectPtr, index, defaultValue);
+		}
+	}
 
 	return objectPtr;
 }
@@ -591,6 +601,15 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 		Trc_MM_ArrayObjectAllocationFailed(vmThread, sizeInBytesRequired, clazz, memorySpace->getName(), memorySpace);
 		dumpStackFrames(vmThread);
 		TRIGGER_J9HOOK_MM_PRIVATE_OUT_OF_MEMORY(extensions->privateHookInterface, vmThread->omrVMThread, j9time_hires_clock(), J9HOOK_MM_PRIVATE_OUT_OF_MEMORY, memorySpace, memorySpace->getName());
+	}
+	/* TODO: Need to implement a more optimal path for cases where barriers are not required or where a batch barrier can be used. */ 
+	if ((NULL != objectPtr) && J9_ARE_ALL_BITS_SET(clazz->classFlags, J9ClassContainsUnflattenedFlattenables)) {
+		MM_ObjectAccessBarrierAPI objectAccessBarrier(vmThread);
+		J9Class * elementClass = ((J9ArrayClass *) clazz)->componentType; 
+		j9object_t defaultValue = elementClass->flattenedClassCache->defaultValue;
+		for (UDATA index = 0; index < numberOfIndexedFields; index++) {
+			objectAccessBarrier.inlineIndexableObjectStoreObject(vmThread, objectPtr, index, defaultValue);
+		}
 	}
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)

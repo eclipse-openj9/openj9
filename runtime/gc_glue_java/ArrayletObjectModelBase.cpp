@@ -23,8 +23,6 @@
 #include "ArrayletObjectModelBase.hpp"
 #include "GCExtensionsBase.hpp"
 
-#if defined(J9VM_GC_ARRAYLETS)
-
 bool
 GC_ArrayletObjectModelBase::initialize(MM_GCExtensionsBase * extensions)
 {
@@ -83,7 +81,6 @@ GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, UDATA 
 	 * In hybrid specs, the spine may also include padding for a secondary size field in empty arrays
 	 */
 	UDATA const slotSize = J9GC_REFERENCE_SIZE(this);
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 	MM_GCExtensionsBase* extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
 	UDATA spineArrayoidSize = 0;
 	UDATA spinePaddingSize = 0;
@@ -94,10 +91,6 @@ GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, UDATA 
 			spineArrayoidSize = numberArraylets * slotSize;
 		}
 	}
-#else
-	UDATA spinePaddingSize = alignData ? slotSize : 0;
-	UDATA spineArrayoidSize = numberArraylets * slotSize;
-#endif
 	UDATA spineDataSize = 0;
 	if (InlineContiguous == layout) {
 		spineDataSize = dataSize; // All data in spine
@@ -107,5 +100,3 @@ GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, UDATA 
 
 	return spinePaddingSize + spineArrayoidSize + spineDataSize;
 }
-
-#endif /* defined(J9VM_GC_ARRAYLETS) */

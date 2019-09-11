@@ -21,7 +21,10 @@
  *******************************************************************************/
 
 #include "codegen/ARM64PrivateLinkage.hpp"
+#include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage_inlines.hpp"
+#include "codegen/MemoryReference.hpp"
+#include "il/symbol/ResolvedMethodSymbol.hpp"
 
 TR::ARM64PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)
    : TR::Linkage(cg)
@@ -180,6 +183,51 @@ void TR::ARM64PrivateLinkage::initARM64RealRegisterLinkage()
       machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000);
    }
 
+
+void
+TR::ARM64PrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method)
+   {
+   ListIterator<TR::ParameterSymbol> paramIterator(&(method->getParameterList()));
+   TR::ParameterSymbol *paramCursor = paramIterator.getFirst();
+   int32_t numIntArgs = 0, numFloatArgs = 0;
+   const TR::ARM64LinkageProperties& properties = getProperties();
+
+   while ( (paramCursor!=NULL) &&
+           ( (numIntArgs < properties.getNumIntArgRegs()) ||
+             (numFloatArgs < properties.getNumFloatArgRegs()) ) )
+      {
+      int32_t index = -1;
+
+      switch (paramCursor->getDataType())
+         {
+         case TR::Int8:
+         case TR::Int16:
+         case TR::Int32:
+         case TR::Int64:
+         case TR::Address:
+            if (numIntArgs < properties.getNumIntArgRegs())
+               {
+               index = numIntArgs;
+               }
+            numIntArgs++;
+            break;
+
+         case TR::Float:
+         case TR::Double:
+            if (numFloatArgs < properties.getNumFloatArgRegs())
+               {
+               index = numFloatArgs;
+               }
+            numFloatArgs++;
+            break;
+         }
+
+      paramCursor->setLinkageRegisterIndex(index);
+      paramCursor = paramIterator.getNext();
+      }
+   }
+
+
 void TR::ARM64PrivateLinkage::createPrologue(TR::Instruction *cursor)
    {
    TR_UNIMPLEMENTED();
@@ -187,12 +235,64 @@ void TR::ARM64PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
 void TR::ARM64PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    {
-   TR_UNIMPLEMENTED();
+   const TR::ARM64LinkageProperties& properties = getProperties();
+   TR::Machine *machine = cg()->machine();
+   TR::Node *lastNode = cursor->getNode();
+   TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
+   TR::RealRegister *javaSP = machine->getRealRegister(properties.getStackPointerRegister()); // x20
+
+   // restore preserved GPRs
+   int32_t preservedRegisterOffset = cg()->getLargestOutgoingArgSize() + properties.getOffsetToFirstParm(); // outgoingArgsSize
+   TR::RealRegister::RegNum firstPreservedGPR = TR::RealRegister::x28;
+   TR::RealRegister::RegNum lastPreservedGPR = TR::RealRegister::x21;
+   for (TR::RealRegister::RegNum r = firstPreservedGPR; r >= lastPreservedGPR; r = (TR::RealRegister::RegNum)((uint32_t)r-1))
+      {
+      TR::RealRegister *rr = machine->getRealRegister(r);
+      if (rr->getHasBeenAssignedInMethod())
+         {
+         TR::MemoryReference *preservedRegMR = new (trHeapMemory()) TR::MemoryReference(javaSP, preservedRegisterOffset, cg());
+         cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, rr, preservedRegMR, cursor);
+         preservedRegisterOffset += 8;
+         }
+      }
+
+   // remove space for preserved registers
+   uint32_t frameSize = cg()->getFrameSizeInBytes();
+   if (constantIsUnsignedImm12(frameSize))
+      {
+      cursor = generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, lastNode, javaSP, javaSP, frameSize, cursor);
+      }
+   else
+      {
+      TR::RealRegister *x9Reg = machine->getRealRegister(TR::RealRegister::RegNum::x9);
+      cursor = loadConstant32(cg(), lastNode, frameSize, x9Reg, cursor);
+      cursor = generateTrg1Src2Instruction(cg(), TR::InstOpCode::addx, lastNode, javaSP, javaSP, x9Reg, cursor);
+      }
+
+   // restore return address
+   TR::RealRegister *lr = machine->getRealRegister(TR::RealRegister::x30); // lr
+   if (machine->getLinkRegisterKilled())
+      {
+      TR::MemoryReference *returnAddressMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, 0, cg());
+      cursor = generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, lastNode, lr, returnAddressMR, cursor);
+      }
+
+   // return
+   generateRegBranchInstruction(cg(), TR::InstOpCode::ret, lastNode, lr, cursor);
    }
 
 int32_t TR::ARM64PrivateLinkage::buildArgs(TR::Node *callNode,
    TR::RegisterDependencyConditions *dependencies)
    {
+   return buildPrivateLinkageArgs(callNode, dependencies, TR_Private);
+   }
+
+int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
+   TR::RegisterDependencyConditions *dependencies,
+   TR_LinkageConventions linkage)
+   {
+   TR_ASSERT(linkage == TR_Private || linkage == TR_Helper || linkage == TR_CHelper, "Unexpected linkage convention");
+
    TR_UNIMPLEMENTED();
    return 0;
    }
@@ -207,4 +307,10 @@ TR::Register *TR::ARM64PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    {
    TR_UNIMPLEMENTED();
    return NULL;
+   }
+
+int32_t TR::ARM64HelperLinkage::buildArgs(TR::Node *callNode,
+   TR::RegisterDependencyConditions *dependencies)
+   {
+   return buildPrivateLinkageArgs(callNode, dependencies, _helperLinkage);
    }

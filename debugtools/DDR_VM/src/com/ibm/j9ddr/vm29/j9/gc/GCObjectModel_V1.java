@@ -67,13 +67,9 @@ class GCObjectModel_V1 extends GCObjectModel
 	 */
 	private static final long OBSOLETE_OBJECT_ALIGNMENT_IN_BYTES = 8;
 	
-	static 
+	static
 	{
-		if (J9BuildFlags.gc_arraylets) {
-			OBJECT_HEADER_REMEMBERED_BITS = OBJECT_HEADER_AGE_MASK & ~J9_GC_ARRAYLET_LAYOUT_MASK;
-		} else {
-			OBJECT_HEADER_REMEMBERED_BITS = OBJECT_HEADER_AGE_MASK;
-		}
+		OBJECT_HEADER_REMEMBERED_BITS = OBJECT_HEADER_AGE_MASK & ~J9_GC_ARRAYLET_LAYOUT_MASK;
 //		OBJECT_HEADER_REMEMBERED_BITS_SHIFT = OBJECT_HEADER_AGE_SHIFT;
 //		STATE_NOT_REMEMBERED = 0;
 		STATE_REMEMBERED = J9_OBJECT_HEADER_REMEMBERED_BITS_TO_SET & OBJECT_HEADER_REMEMBERED_BITS;
@@ -225,7 +221,7 @@ public UDATA getTotalFootprintInBytesWithHeader(J9ObjectPointer object) throws C
 	public UDATA adjustSizeInBytes(UDATA sizeInBytes)
 	{
 		long bytes = sizeInBytes.longValue();
-		if (!J9BuildFlags.env_data64 || (J9BuildFlags.gc_compressedPointers && J9BuildFlags.gc_arraylets)) {		
+		if (!J9BuildFlags.env_data64 || J9BuildFlags.gc_compressedPointers) {
 			bytes = (bytes + (ObjectModel.getObjectAlignmentInBytes() - 1)) & ~(ObjectModel.getObjectAlignmentInBytes() - 1);
 		}
 

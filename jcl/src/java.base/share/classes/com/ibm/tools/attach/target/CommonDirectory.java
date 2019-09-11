@@ -110,9 +110,6 @@ public abstract class CommonDirectory {
 	 /*[PR Jazz 30075] createDirectoryAndSemaphore is a misnomer, since it does not create the semaphore. */
 	static void prepareCommonDirectory() throws IOException {
 		File cd = getCommonDirFileObject();
-		if (LOGGING_DISABLED != loggingStatus) {
-			IPC.logMessage("createDirectoryAndSemaphore ", cd.getAbsolutePath()); //$NON-NLS-1$
-		}
 		if (cd.exists()) {
 			if (!cd.canWrite()) {
 				IPC.logMessage("could not write ", cd.getAbsolutePath()); //$NON-NLS-1$				
@@ -125,9 +122,17 @@ public abstract class CommonDirectory {
 					IPC.logMessage("deleted ", cd.getAbsolutePath()); //$NON-NLS-1$
 				}
 				IPC.mkdirWithPermissions(cd.getAbsolutePath(), COMMON_DIRECTORY_PERMISSIONS);
+				IPC.logMessage("After deletion of an existing file, created the common directory at ", cd.getAbsolutePath()); //$NON-NLS-1$
+			} else {
+				if (LOGGING_DISABLED != loggingStatus) {
+					IPC.logMessage("The common directory already exists at ", cd.getAbsolutePath()); //$NON-NLS-1$
+				}
 			}
 		} else {
 			IPC.mkdirWithPermissions(cd.getAbsolutePath(), COMMON_DIRECTORY_PERMISSIONS);
+			if (LOGGING_DISABLED != loggingStatus) {
+				IPC.logMessage("Created the common directory at ", cd.getAbsolutePath()); //$NON-NLS-1$
+			}
 		}
 		/*[PR Jazz 30075] setupSemaphore was redundant. */
 	}

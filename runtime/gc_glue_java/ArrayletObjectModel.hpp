@@ -33,8 +33,6 @@
 #include "modron.h"
 #include "modronopt.h"
 
-#if defined(J9VM_GC_ARRAYLETS)
-
 #include "ArrayletObjectModelBase.hpp"
 #include "Bits.hpp"
 #include "Math.hpp"
@@ -194,12 +192,8 @@ public:
 	MMINLINE bool
 	hasArrayletLeafPointers(J9IndexableObject *objPtr)
 	{
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		/* Contiguous arraylet has no implicit leaf pointer */
 		return !isInlineContiguousArraylet(objPtr);
-#else /* J9VM_GC_HYBRID_ARRAYLETS */
-		return true;
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
 	}
 
 
@@ -288,14 +282,10 @@ public:
 	MMINLINE UDATA
 	getHeaderSize(J9Class *clazzPtr, ArrayLayout layout)
 	{
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		UDATA headerSize = contiguousHeaderSize();
 		if (layout != InlineContiguous) {
 			headerSize = discontiguousHeaderSize();
 		}
-#else
-		UDATA headerSize = discontiguousHeaderSize();
-#endif
 		return headerSize;
 	}
 
@@ -355,12 +345,10 @@ public:
 	getArrayLayout(J9IndexableObject *objPtr)
 	{
 		GC_ArrayletObjectModel::ArrayLayout layout = GC_ArrayletObjectModel::InlineContiguous;
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		/* Trivial check for InlineContiguous. */
 		if (0 != getArraySize(objPtr)) {
 			return GC_ArrayletObjectModel::InlineContiguous;
 		}
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
 
 		/* Check if the objPtr is in the allowed arraylet range. */
 		if (((UDATA)objPtr >= (UDATA)_arrayletRangeBase) && ((UDATA)objPtr < (UDATA)_arrayletRangeTop)) {
@@ -392,16 +380,13 @@ public:
 	MMINLINE void
 	memcpyArray(J9IndexableObject *destObject, J9IndexableObject *srcObject)
 	{
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		if (InlineContiguous == getArrayLayout(srcObject)) {
 			/* assume that destObject must have the same shape! */
 			UDATA sizeInBytes = getSizeInBytesWithoutHeader(srcObject);
 			UDATA* srcData = (UDATA*)getDataPointerForContiguous(srcObject);
 			UDATA* destData = (UDATA*)getDataPointerForContiguous(destObject);
 			copyInWords(destData, srcData, sizeInBytes);
-		} else
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
-		{
+		} else {
 			UDATA arrayletCount = numArraylets(srcObject);
 			fj9object_t *srcArraylets = getArrayoidPointer(srcObject);
 			fj9object_t *destArraylets = getArrayoidPointer(destObject);
@@ -761,11 +746,9 @@ public:
 	getSizeInBytesWithHeader(J9Class *clazz, UDATA numberOfElements)
 	{
 		ArrayLayout layout = InlineContiguous; 
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		if(0 == numberOfElements) {
 			layout = Discontiguous;
 		}
-#endif /* defined(J9VM_GC_HYBRID_ARRAYLETS) */
 		return getSizeInBytesWithHeader(clazz, layout, numberOfElements);
 	}
 
@@ -802,7 +785,6 @@ public:
 	MMINLINE UDATA
 	getHeaderSize(J9IndexableObject *arrayPtr)
 	{
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		UDATA headerSize = 0;
 		if (compressObjectReferences()) {
 			UDATA size = ((J9IndexableObjectContiguousCompressed *)arrayPtr)->size;
@@ -817,9 +799,6 @@ public:
 				headerSize = sizeof(J9IndexableObjectDiscontiguousFull);
 			}
 		}
-#else
-		UDATA headerSize = discontiguousHeaderSize();
-#endif
 		return headerSize;
 	}
 
@@ -842,13 +821,7 @@ public:
 	MMINLINE void *
 	getDataPointerForContiguous(J9IndexableObject *arrayPtr)
 	{
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		return (void *)((UDATA)arrayPtr + contiguousHeaderSize());
-#else /* J9VM_GC_HYBRID_ARRAYLETS */
-		fj9object_t* arrayoidPointer = getArrayoidPointer(arrayPtr);
-		fj9object_t firstArrayletLeaf = arrayoidPointer[0];
-		return mmPointerFromToken((J9JavaVM*)_omrVM->_language_vm, firstArrayletLeaf);
-#endif /* J9VM_GC_HYBRID_ARRAYLETS */
 	}
 
 
@@ -863,11 +836,9 @@ public:
 	getHashcodeOffset(J9Class *clazzPtr, UDATA numberOfElements)
 	{
 		ArrayLayout layout = InlineContiguous; 
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		if(0 == numberOfElements) {
 			layout = Discontiguous;
 		}
-#endif /* defined(J9VM_GC_HYBRID_ARRAYLETS) */
 		return getHashcodeOffset(clazzPtr, layout, numberOfElements);
 	}
 
@@ -919,6 +890,4 @@ public:
 	 */
 	void tearDown(MM_GCExtensionsBase *extensions);
 };
-
-#endif /*J9VM_GC_ARRAYLETS */
 #endif /* ARRAYLETOBJECTMODEL_ */

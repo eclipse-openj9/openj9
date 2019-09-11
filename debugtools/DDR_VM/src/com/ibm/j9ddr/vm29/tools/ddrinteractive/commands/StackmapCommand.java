@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,13 +28,13 @@ import com.ibm.j9ddr.tools.ddrinteractive.Command;
 import com.ibm.j9ddr.tools.ddrinteractive.CommandUtils;
 import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
+import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
 import com.ibm.j9ddr.vm29.j9.DataType;
 import com.ibm.j9ddr.vm29.j9.ROMHelp;
 import com.ibm.j9ddr.vm29.j9.stackmap.StackMap;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9ConstantPoolPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9JavaVMPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
@@ -112,7 +112,7 @@ public class StackmapCommand extends Command
 
 				UDATA offsetPC = new UDATA(pc.sub(U8Pointer.cast(remoteMethod.bytecodes())));
 				CommandUtils.dbgPrint(out, "Relative PC = %d\n", offsetPC.longValue());
-				J9ClassPointer localClass = J9_CLASS_FROM_CP(remoteMethod.constantPool());
+				J9ClassPointer localClass = ConstantPoolHelpers.J9_CLASS_FROM_METHOD(remoteMethod);
 				long methodIndex = new UDATA(remoteMethod.sub(localClass.ramMethods())).longValue();			
 				CommandUtils.dbgPrint(out, "Method index is %d\n", methodIndex);
 				
@@ -171,7 +171,6 @@ public class StackmapCommand extends Command
 		}
 	}
 
-	
 	/**
 	 * Java representation of the following macro in VM.
 	 * #define J9ROMCLASS_ROMMETHODS(base) NNSRP_GET((base)->romMethods, struct J9ROMMethod*)
@@ -184,19 +183,5 @@ public class StackmapCommand extends Command
 	{
 		return base.romMethods();		
 	}
-	
-	
-	/**
-	 * Java representation of the following macro that is defined in j9cp.h file
-	 * #define J9_CLASS_FROM_CP(cp)	(((J9ConstantPool *) (cp))->ramClass)
-	 * 
-	 * @param constantPool Pointer to a constant pool.
-	 * 
-	 * @return {@link J9ClassPointer}  A pointer to a class. 
-	 * 
-	 */
-	private J9ClassPointer J9_CLASS_FROM_CP(J9ConstantPoolPointer constantPool) throws CorruptDataException 
-	{
-		return constantPool.ramClass();
-	}
+
 }

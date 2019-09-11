@@ -248,10 +248,8 @@ extern J9_CFUNC void* j9gc_objaccess_jniGetPrimitiveArrayCritical(J9VMThread* vm
 extern J9_CFUNC void j9gc_objaccess_jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, jarray array, void * elems, jint mode);
 extern J9_CFUNC const jchar* j9gc_objaccess_jniGetStringCritical(J9VMThread* vmThread, jstring str, jboolean *isCopy);
 extern J9_CFUNC void j9gc_objaccess_jniReleaseStringCritical(J9VMThread* vmThread, jstring str, const jchar * elems);
-#if defined(J9VM_GC_ARRAYLETS)
 extern J9_CFUNC UDATA j9gc_arraylet_getLeafSize(J9JavaVM* javaVM);
 extern J9_CFUNC UDATA j9gc_arraylet_getLeafLogSize(J9JavaVM* javaVM);
-#endif /* J9VM_GC_ARRAYLETS */
 extern J9_CFUNC void j9gc_get_CPU_times(J9JavaVM *javaVM, U_64* masterCpuMillis, U_64* slaveCpuMillis, U_32* maxThreads, U_32* currentThreads);
 
 

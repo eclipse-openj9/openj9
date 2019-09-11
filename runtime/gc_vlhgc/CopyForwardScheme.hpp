@@ -864,9 +864,7 @@ private:
 	 * @return an object pointer representing the new location of the object, or the original object pointer on failure.
 	 */
 	J9Object *copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ScavengerForwardedHeader* forwardedHeader, bool leafType = false);
-#if defined(J9VM_GC_ARRAYLETS)
 	void updateInternalLeafPointersAfterCopy(J9IndexableObject *destinationPtr, J9IndexableObject *sourcePtr);
-#endif /* J9VM_GC_ARRAYLETS */
 	
 	/**
 	 * Push any remaining cached mark map data out before the copy scan cache is released.
@@ -1005,13 +1003,11 @@ protected:
 	 */
 	void mergeGCStats(MM_EnvironmentVLHGC *env);
 
-#if defined(J9VM_GC_ARRAYLETS)
 	/**
 	 * After successful copy forward cycle, update leaf region base pointers to newly copied spine locations and
 	 * recycle any with spines remaining in evacuate space.
 	 */
 	void updateLeafRegions(MM_EnvironmentVLHGC *env);
-#endif /* J9VM_GC_ARRAYLETS */
 
 	/**
 	 * Before a copy forward operation, perform any pre processing required on regions.

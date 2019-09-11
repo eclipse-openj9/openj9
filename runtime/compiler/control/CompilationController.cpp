@@ -217,7 +217,7 @@ TR_OptimizationPlan *TR::DefaultCompilationStrategy::processEvent(TR_MethodEvent
             plan = TR_OptimizationPlan::alloc(hotnessLevel);
             *newPlanCreated = true;
             }
-         
+
          TR_OptimizationPlan::_optimizationPlanMonitor->enter();
          attachedPlan = methodInfo->_optimizationPlan;
          if (attachedPlan)
@@ -475,7 +475,7 @@ TR::DefaultCompilationStrategy::processInterpreterSample(TR_MethodEvent *event)
                else
                   {
                   if (logSampling)
-                     curMsg += sprintf(curMsg, " cannot be compiled, extra field is %08X", TR::CompilationInfo::getJ9MethodExtra(j9method));
+                     curMsg += sprintf(curMsg, " cannot be compiled, extra field is %08lX", TR::CompilationInfo::getJ9MethodExtra(j9method));
                   }
                }
             TR::Recompilation::globalSampleCount++;
@@ -1043,11 +1043,8 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
                         if (cmdLineOptions->getOption(TR_UpgradeBootstrapAtWarm) && fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)j9method))
                            {
 #ifndef PUBLIC_BUILD
-#if defined(HINTS_IN_SHAREDCACHE_OBJECT)
-                           bool expensiveComp = (TR_J9SharedCache *)(((TR_J9VMBase *) fe)->sharedCache())->isHint(j9method, TR_HintLargeMemoryMethodW);
-#else
-                           bool expensiveComp = ((TR_J9VMBase *) fe)->isSharedCacheHint(j9method, TR_HintLargeMemoryMethodW);
-#endif
+                           TR_J9SharedCache *sc = TR_J9VMBase::get(jitConfig, event->_vmThread, TR_J9VMBase::AOT_VM)->sharedCache();
+                           bool expensiveComp = sc->isHint(j9method, TR_HintLargeMemoryMethodW);
                            if (!expensiveComp)
 #endif //!PUBLIC_BUILD
                               nextOptLevel = warm;
@@ -1600,4 +1597,3 @@ TR::ThresholdCompilationStrategy::processJittedSample(TR_MethodEvent *event)
       }
       return plan;
    }
-

@@ -49,7 +49,7 @@ TR::S390J9CallSnippet::generateVIThunk(TR::Node * callNode, int32_t argSize, TR:
    uint8_t * thunk, * cursor, * returnValue;
    TR::SymbolReference *dispatcherSymbol;
 
-   if (comp->compileRelocatableCode())
+   if (fej9->storeOffsetToArgumentsInVirtualIndirectThunks())
       thunk = (uint8_t *)comp->trMemory()->allocateMemory(codeSize, heapAlloc);
    else
       thunk = (uint8_t *)cg->allocateCodeMemory(codeSize, true);

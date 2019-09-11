@@ -456,11 +456,11 @@ void TR_RuntimeAssumptionTable::reclaimMarkedAssumptionsFromRAT(int32_t cleanupC
  */
 void TR_RuntimeAssumptionTable::markAssumptionsAndDetach(void * md, bool reclaimPrePrologueAssumptions)
    {
+   assumptionTableMutex->enter();
    J9JITExceptionTable *metaData = (J9JITExceptionTable*) md;
    OMR::RuntimeAssumption *sentry = (OMR::RuntimeAssumption*)(metaData->runtimeAssumptionList);
    OMR::RuntimeAssumption *cursor, *next;
 
-   assumptionTableMutex->enter();
    if (sentry)
       {
       TR_ASSERT(sentry->getAssumptionKind() == RuntimeAssumptionSentinel, "First assumption must be the sentinel\n");
@@ -1216,6 +1216,24 @@ J9::PersistentInfo::addUnloadedClass(
    _unloadedMethodAddresses->add(startAddress, startAddress+size);
    }
 
+#if defined(JITSERVER_SUPPORT)
+void TR_AddressSet::destroy()
+   {
+   jitPersistentFree(_addressRanges);
+   }
+
+void TR_AddressSet::getRanges(std::vector<TR_AddressRange> &ranges)
+   {
+   ranges.insert(ranges.begin(), _addressRanges, _addressRanges + _numAddressRanges);
+   }
+
+void TR_AddressSet::setRanges(const std::vector<TR_AddressRange> &ranges)
+   {
+   TR_ASSERT(ranges.size() <= _maxAddressRanges, "Setting too many ranges");
+   std::copy(ranges.begin(), ranges.end(), _addressRanges);
+   _numAddressRanges = ranges.size();
+   }
+#endif
 
 void TR_AddressSet::trace(char *format, ...)
    {

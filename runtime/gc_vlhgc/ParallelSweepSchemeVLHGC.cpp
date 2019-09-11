@@ -992,7 +992,6 @@ MM_ParallelSweepSchemeVLHGC::recycleFreeRegions(MM_EnvironmentVLHGC *env)
 		if (!region->_sweepData._alreadySwept && region->hasValidMarkMap()) {
 			MM_MemoryPoolBumpPointer *regionPool = (MM_MemoryPoolBumpPointer *)region->getMemoryPool();
 			Assert_MM_true(NULL != regionPool);
-#if defined(J9VM_GC_ARRAYLETS)
 			MM_HeapRegionDescriptorVLHGC *walkRegion = region;
 			MM_HeapRegionDescriptorVLHGC *next = walkRegion->_allocateData.getNextArrayletLeafRegion();
 			/* Try to walk list from this head */
@@ -1013,14 +1012,11 @@ MM_ParallelSweepSchemeVLHGC::recycleFreeRegions(MM_EnvironmentVLHGC *env)
 					walkRegion->getSubSpace()->recycleRegion(env, walkRegion);
 				}
 			}
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 
 			/* recycle if empty */
 			if (region->getSize() == regionPool->getActualFreeMemorySize()) {
-#if defined(J9VM_GC_ARRAYLETS)
 				Assert_MM_true(NULL == region->_allocateData.getSpine());
 				Assert_MM_true(NULL == region->_allocateData.getNextArrayletLeafRegion());
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 				region->getSubSpace()->recycleRegion(env, region);
 			}
 		}

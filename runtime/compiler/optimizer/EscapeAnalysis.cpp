@@ -544,6 +544,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    _fixedVirtualCallSites.setFirst(NULL);
 
    _parms = NULL;
+   _ignoreableUses = NULL;
    _nonColdLocalObjectsValueNumbers = NULL;
    _allLocalObjectsValueNumbers = NULL;
    _visitedNodes = NULL;
@@ -587,6 +588,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          }
       else
          {
+         _ignoreableUses = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
          _nonColdLocalObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
          _allLocalObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
          _notOptimizableLocalObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
@@ -597,6 +599,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    if ( !_candidates.isEmpty())
       {
       findLocalObjectsValueNumbers();
+      findIgnoreableUses();
       }
 
    // Complete the candidate info by finding all uses and defs that are reached
@@ -1261,6 +1264,48 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
       }
 
    return cost; // actual cost
+   }
+
+void TR_EscapeAnalysis::findIgnoreableUses()
+   {
+   if (comp()->getOSRMode() != TR::voluntaryOSR)
+      return;
+
+   TR::NodeChecklist visited(comp());
+   bool inOSRCodeBlock = false;
+
+   // Gather all uses under fake prepareForOSR calls - they will be tracked as ignoreable
+   for (TR::TreeTop *treeTop = comp()->getStartTree(); treeTop; treeTop = treeTop->getNextTreeTop())
+       {
+       if (treeTop->getNode()->getOpCodeValue() == TR::BBStart)
+           inOSRCodeBlock = treeTop->getNode()->getBlock()->isOSRCodeBlock();
+       else if (inOSRCodeBlock
+                && treeTop->getNode()->getNumChildren() > 0
+                && treeTop->getNode()->getFirstChild()->getOpCodeValue() == TR::call
+                && treeTop->getNode()->getFirstChild()->getSymbolReference()->getReferenceNumber() == TR_prepareForOSR)
+           {
+           TR::Node *callNode = treeTop->getNode()->getFirstChild();
+           for (int i = 0; i < callNode->getNumChildren(); ++i)
+              findIgnoreableUses(callNode->getChild(i), visited);
+           }
+       }
+   }
+
+void TR_EscapeAnalysis::findIgnoreableUses(TR::Node *node, TR::NodeChecklist &visited)
+   {
+   if (visited.contains(node))
+      return;
+   visited.add(node);
+   if (trace())
+      traceMsg(comp(), "Marking n%dn as an ignoreable use\n", node->getGlobalIndex());
+   _ignoreableUses->set(node->getGlobalIndex());
+
+   int32_t i;
+   for (i = 0; i < node->getNumChildren(); i++)
+      {
+      TR::Node *child = node->getChild(i);
+      findIgnoreableUses(child, visited);
+      }
    }
 
 void TR_EscapeAnalysis::findLocalObjectsValueNumbers()
@@ -2305,12 +2350,22 @@ bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
                   {
                   int32_t useIndex = cursor;
                   TR::Node *useNode = _useDefInfo->getNode(useIndex+_useDefInfo->getFirstUseIndex());
+
+                  // Only add this value number if it's not to be ignored
+                  if (_ignoreableUses->get(useNode->getGlobalIndex()))
+                     {
+                     continue;
+                     }
+
                   int32_t useNodeVN = _valueNumberInfo->getValueNumber(useNode);
                   int32_t i;
+
                   for (i = candidate->_valueNumbers->size()-1; i >= 0; i--)
                      {
                      if (candidate->_valueNumbers->element(i) == useNodeVN)
+                        {
                         break;
+                        }
                      }
 
                   if (i < 0)
@@ -3911,7 +3966,12 @@ void TR_EscapeAnalysis::checkEscape(TR::TreeTop *firstTree, bool isCold, bool & 
       if (node->getOpCode().isCheck() || node->getOpCodeValue() == TR::treetop)
          node = node->getFirstChild();
       if (node->getOpCode().isCall() && !vnsCall.contains(node))
-         checkEscapeViaCall(node, vnsCall, ignoreRecursion);
+         {
+         if (node->getSymbolReference()->getReferenceNumber() != TR_prepareForOSR
+             || comp()->getOSRMode() != TR::voluntaryOSR
+             ||  _curBlock->isOSRInduceBlock())
+            checkEscapeViaCall(node, vnsCall, ignoreRecursion);
+         }
       }
    }
 

@@ -8325,13 +8325,178 @@ written authorization of the copyright holder.
 /*[ENDIF] Java12 */
 
 /*[IF Java13]*/
-	/*
+	/**
 	 * Determine if current String object is LATIN1.
 	 *
 	 * @return true if it is LATIN1, otherwise false.
 	 */
 	boolean isLatin1() {
 		return LATIN1 == coder();
+	}
+
+	/**
+	 * Format the string using this string as the format with supplied args.
+	 *
+	 * @param args
+	 *          the format arguments to use
+	 *
+	 * @return the formatted result
+	 *
+	 * @see #format(String, Object...)
+	 */
+	@Deprecated(forRemoval=true, since="13")
+	public String formatted(Object... args) {
+		return String.format(this, args);
+	}
+
+	/**
+	 * Removes the minimum indentation from the beginning of each line and
+	 * removes the trailing spaces in every line from the string
+	 *
+	 * @return this string with incidental whitespaces removed from every line
+	 */
+	@Deprecated(forRemoval=true, since="13")
+	public String stripIndent() {
+		if (isEmpty()) {
+			return this;
+		}
+
+		char lastChar = charAt(length() - 1);
+		boolean trailingNewLine = ('\n' == lastChar) || ('\r' == lastChar);
+
+		Iterator<String> iter = lines().iterator();
+		int min = Integer.MAX_VALUE;
+
+		if (trailingNewLine) {
+			min = 0;
+		} else {
+			while (iter.hasNext()) {
+				String line = iter.next();
+
+				/* The minimum indentation is calculated based on the number of leading
+				 * whitespace characters from all non-blank lines and the last line even
+				 * if it is blank.
+				 */
+				if (!line.isBlank() || !iter.hasNext()) {
+					int count = 0;
+					int limit = Math.min(min, line.length());
+					while ((count < limit) && Character.isWhitespace(line.charAt(count))) {
+						count++;
+					}
+
+					if (min > count) {
+						min = count;
+					}
+				}
+			}
+			/* reset iterator to beginning of the string */
+			iter = lines().iterator();
+		}
+
+		StringBuilder builder = new StringBuilder();
+
+		while (iter.hasNext()) {
+			String line = iter.next();
+
+			if (line.isBlank()) {
+				builder.append("");
+			} else {
+				line = line.substring(min);
+				builder.append(line.stripTrailing());
+			}
+			builder.append("\n");
+		}
+
+
+		if (!trailingNewLine) {
+			builder.setLength(builder.length() - 1);
+		}
+
+		return builder.toString();
+	}
+
+	/**
+	 * Translate the escape sequences in this string as if in a string literal
+	 *
+	 * @return result string after translation
+	 *
+	 * @throws IllegalArgumentException
+	 *          If invalid escape sequence is detected
+	 */
+	@Deprecated(forRemoval=true, since="13")
+	public String translateEscapes() {
+		StringBuilder builder = new StringBuilder();
+		char[] charArray = toCharArray();
+		int index = 0;
+		int strLength = length();
+		while (index < strLength) {
+			if ('\\' == charArray[index]) {
+				index++;
+				if (index >= strLength) {
+					/*[MSG "K0D00", "Invalid escape sequence detected: {0}"]*/
+					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0D00", "\\")); //$NON-NLS-1$ //$NON-NLS-2$
+				}
+				int octal = 0;
+				switch (charArray[index]) {
+				case 'b':
+					builder.append('\b');
+					break;
+				case 't':
+					builder.append('\t');
+					break;
+				case 'n':
+					builder.append('\n');
+					break;
+				case 'f':
+					builder.append('\f');
+					break;
+				case 'r':
+					builder.append('\r');
+					break;
+				case '\"':
+				case '\'':
+				case '\\':
+					builder.append(charArray[index]);
+					break;
+				case '0':
+				case '1':
+				case '2':
+				case '3':
+					octal = charArray[index] - '0';
+					/* If the octal escape sequence only has a single digit, then translate the escape and search for next escape sequence 
+					 * If there is more than one digit, fall though to case 4-7 and save the current digit as the first digit of the sequence
+					 */
+					if ((index < strLength - 1) && ('0' <= charArray[index + 1]) && ('7' >= charArray[index + 1])) {
+						index++;
+					} else {
+						builder.append((char)octal);
+						break;
+					}
+					//$FALL-THROUGH$
+				case '4':
+				case '5':
+				case '6':
+				case '7':
+					/* Shift octal value (either 0 or value fall through from the previous case) left one digit then add the current digit */
+					octal = (octal * 010) + (charArray[index] - '0');
+
+					/* Check for last possible digit in octal escape sequence */
+					if ((index < strLength - 1) && ('0' <= charArray[index + 1]) && ('7' >= charArray[index + 1])) {
+						index++;
+						octal = (octal * 010) + (charArray[index] - '0');
+					}
+					builder.append((char)octal);
+					break;
+				default:
+					/*[MSG "K0D00", "Invalid escape sequence detected: {0}"]*/
+					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0D00", "\\" + charArray[index])); //$NON-NLS-1$ //$NON-NLS-2$
+				}
+			} else {
+				builder.append(charArray[index]);
+			}
+			index++;
+		}
+		return builder.toString();
 	}
 /*[ENDIF] Java13 */
 }

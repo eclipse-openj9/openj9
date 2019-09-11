@@ -2250,7 +2250,7 @@ TR_ResolvedRelocatableJ9Method::allocateException(uint32_t numBytes, TR::Compila
    J9JITExceptionTable *eTbl = NULL;
    uint32_t size = 0;
    bool shouldRetryAllocation;
-   eTbl = (J9JITExceptionTable *)_fe->allocateDataCacheRecord(numBytes, comp, true, &shouldRetryAllocation,
+   eTbl = (J9JITExceptionTable *)_fe->allocateDataCacheRecord(numBytes, comp, _fe->needsContiguousCodeAndDataCacheAllocation(), &shouldRetryAllocation,
                                                               J9_JIT_DCE_EXCEPTION_INFO, &size);
    if (!eTbl)
       {
@@ -5238,7 +5238,6 @@ TR_ResolvedJ9Method::archetypeArgPlaceholderSlot()
       romMethod = getOriginalROMMethod((J9Method *)aMethod);
       }
 
-   J9ROMClass *romClass = J9_CLASS_FROM_METHOD(((J9Method *)aMethod))->romClass;
    J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(romMethod);
 
    U_8 tempArgTypes[256];
@@ -5874,7 +5873,7 @@ TR_ResolvedJ9Method::allocateException(uint32_t numBytes, TR::Compilation *comp)
    J9JITExceptionTable *eTbl;
    uint32_t size = 0;
    bool shouldRetryAllocation;
-   eTbl = (J9JITExceptionTable *)_fe->allocateDataCacheRecord(numBytes, comp, false, &shouldRetryAllocation,
+   eTbl = (J9JITExceptionTable *)_fe->allocateDataCacheRecord(numBytes, comp, _fe->needsContiguousCodeAndDataCacheAllocation(), &shouldRetryAllocation,
                                                               J9_JIT_DCE_EXCEPTION_INFO, &size);
    if (!eTbl)
       {

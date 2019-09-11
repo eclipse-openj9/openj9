@@ -30,6 +30,7 @@
 namespace TR { class CodeGenerator; }
 namespace TR { class Instruction; }
 namespace TR { class Register; }
+namespace TR { class ResolvedMethodSymbol; }
 
 namespace TR {
 
@@ -38,6 +39,17 @@ class ARM64PrivateLinkage : public TR::Linkage
    protected:
 
    TR::ARM64LinkageProperties _properties;
+
+   /**
+    * @brief Builds method arguments
+    * @param[in] node : caller node
+    * @param[in] dependencies : register dependency conditions
+    * @param[in] linkage : linkage type
+    */
+   int32_t buildPrivateLinkageArgs(
+         TR::Node *callNode,
+         TR::RegisterDependencyConditions *dependencies,
+         TR_LinkageConventions linkage);
 
    public:
 
@@ -77,12 +89,19 @@ class ARM64PrivateLinkage : public TR::Linkage
    virtual void initARM64RealRegisterLinkage();
 
    /**
+    * @brief Copy linkage register indices to parameter symbols
+    *
+    * @param[in] method : the resolved method symbol
+    */
+   void setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method);
+
+   /**
     * @brief Creates method prologue
     * @param[in] cursor : instruction cursor
     */
    virtual void createPrologue(TR::Instruction *cursor);
    /**
-    * @brief Creates method prologue
+    * @brief Creates method epilogue
     * @param[in] cursor : instruction cursor
     */
    virtual void createEpilogue(TR::Instruction *cursor);
@@ -116,8 +135,25 @@ class ARM64HelperLinkage : public TR::ARM64PrivateLinkage
    /**
     * @brief Constructor
     * @param[in] cg : CodeGenerator
+    * @param[in] helperLinkage : linkage convention
     */
-   ARM64HelperLinkage(TR::CodeGenerator *cg) : TR::ARM64PrivateLinkage(cg) {}
+   ARM64HelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), TR::ARM64PrivateLinkage(cg)
+      {
+      TR_ASSERT(helperLinkage == TR_Helper || helperLinkage == TR_CHelper, "Unexpected helper linkage convention");
+      }
+
+   /**
+    * @brief Builds method arguments for helper call
+    * @param[in] node : caller node
+    * @param[in] dependencies : register dependency conditions
+    * @return total size that arguments occupy on Java stack
+    */
+   virtual int32_t buildArgs(
+      TR::Node *callNode,
+      TR::RegisterDependencyConditions *dependencies);
+   protected:
+
+   TR_LinkageConventions _helperLinkage;
    };
 
 }

@@ -128,7 +128,6 @@ inline void getClassNameSignatureFromMethod(J9Method *method, J9UTF8 *& methodCl
    methodSignature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
    }
 
-
 typedef struct TR_JitPrivateConfig
    {
    TR::FILE      *vLogFile;
@@ -159,6 +158,20 @@ typedef struct TR_JitPrivateConfig
    TR_AOTStats *aotStats;
    } TR_JitPrivateConfig;
 
+#if defined(JITSERVER_SUPPORT)
+// JITServer: union containing all possible datatypes of static final fields
+union
+TR_StaticFinalData
+   {
+   int8_t dataInt8Bit;
+   int16_t dataInt16Bit;
+   int32_t dataInt32Bit;
+   int64_t dataInt64Bit;
+   float dataFloat;
+   double dataDouble;
+   uintptrj_t dataAddress;
+   };
+#endif /* defined(JITSERVER_SUPPORT) */
 
 #ifdef __cplusplus
 extern "C" {
@@ -230,6 +243,7 @@ public:
    virtual ~TR_J9VMBase() {}
 
    virtual bool isAOT_DEPRECATED_DO_NOT_USE() { return false; }
+   virtual bool needsContiguousCodeAndDataCacheAllocation() { return false; }
    virtual bool supportsMethodEntryPadding() { return true; }
    virtual bool canUseSymbolValidationManager() { return false; }
 
@@ -893,6 +907,7 @@ public:
    bool shouldSleep() { _shouldSleep = !_shouldSleep; return _shouldSleep; } // no need for virtual; we need this per thread
 
    virtual bool isAnonymousClass(TR_OpaqueClassBlock *j9clazz) { return (J9_ARE_ALL_BITS_SET(((J9Class*)j9clazz)->romClass->extraModifiers, J9AccClassAnonClass)); }
+   virtual bool isAnonymousClass(J9ROMClass *romClass) { return (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass)); }
    virtual int64_t getCpuTimeSpentInCompThread(TR::Compilation * comp); // resolution is 0.5 sec or worse. Returns -1 if unavailable
 
    virtual void *             getClassLoader(TR_OpaqueClassBlock * classPointer);
@@ -923,14 +938,6 @@ public:
 
    static char            x86VendorID[13];
    static bool            x86VendorIDInitialized;
-
-#if !defined(HINTS_IN_SHAREDCACHE_OBJECT)
-   bool isSharedCacheHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
-   void addSharedCacheHint(TR_ResolvedMethod *, TR_SharedCacheHint);
-   virtual uint16_t getAllSharedCacheHints(J9Method *method);
-   bool isSharedCacheHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL);
-   void addSharedCacheHint(J9Method *, TR_SharedCacheHint);
-#endif
 
    virtual J9Class * matchRAMclassFromROMclass(J9ROMClass * clazz,  TR::Compilation * comp);
    virtual J9VMThread * getCurrentVMThread();
@@ -987,10 +994,6 @@ public:
    virtual bool isMethodBreakpointed(TR_OpaqueMethodBlock *method);
 
    virtual bool canRememberClass(TR_OpaqueClassBlock *classPtr) { return false; }
-   private:
-#if !defined(HINTS_IN_SHAREDCACHE_OBJECT)
-   uint32_t     getSharedCacheHint(J9VMThread * vmThread, J9Method *romMethod, J9SharedClassConfig * scConfig);
-#endif
 
 protected:
 
@@ -1036,6 +1039,7 @@ public:
    virtual bool               stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *methodClass);
 
    virtual TR_OpaqueClassBlock *             getSuperClass(TR_OpaqueClassBlock *classPointer);
+   virtual bool               isSameOrSuperClass(J9Class *superClass, J9Class *subClass);
    virtual bool               isUnloadAssumptionRequired(TR_OpaqueClassBlock *, TR_ResolvedMethod *);
 
    virtual TR_OpaqueClassBlock * getClassClassPointer(TR_OpaqueClassBlock *);
@@ -1101,6 +1105,7 @@ public:
    virtual bool               hardwareProfilingInstructionsNeedRelocation()   { return true; }
    virtual bool               supportsMethodEntryPadding()                    { return false; }
    virtual bool               isBenefitInliningCheckIfFinalizeObject()          { return true; }
+   virtual bool               needsContiguousCodeAndDataCacheAllocation()     { return true; }
    virtual bool               shouldDelayAotLoad();
 
    virtual bool               isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT = false);

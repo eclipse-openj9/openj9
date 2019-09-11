@@ -77,7 +77,7 @@ extern "C" {
 #include "OSCacheFile.hpp"
 #include "SCImplementedAPI.hpp"
 #include "UnitTest.hpp"
-
+#include "OMR/Bytes.hpp"
 
 #define SHRINIT_NAMEBUF_SIZE 256
 #define SHRINIT_LOW_FREE_DISK_SIZE ((U_64)6 * 1024 * 1024 * 1024)
@@ -4367,7 +4367,7 @@ j9shr_parseMemSize(char * str, UDATA & value) {
 	switch (*str) {
 		case '\0':
 				oldValue = value;
-				value = (value +  sizeof(UDATA) - 1) & ~(sizeof(UDATA) - 1);		/* round to nearest pointer value */
+				value = OMR::align(value, sizeof(UDATA));		/* round to nearest pointer value */
 				if (value < oldValue) {
 					/*OVERFLOW*/
 					return FALSE;

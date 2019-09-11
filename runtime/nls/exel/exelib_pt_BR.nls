@@ -804,7 +804,7 @@ J9NLS_EXELIB_INTERNAL_HELP_VMNORTSJ2.user_response=
 # healthcenter help
 
 J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER=\n\
-\  -Xhealthcenter  ativar o agente Health Center
+\  -Xhealthcenter  ativa o agente Health Center
 # START NON-TRANSLATABLE
 J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.explanation=NOTAG
 J9NLS_EXELIB_INTERNAL_HELP_HEALTHCENTER.system_action=

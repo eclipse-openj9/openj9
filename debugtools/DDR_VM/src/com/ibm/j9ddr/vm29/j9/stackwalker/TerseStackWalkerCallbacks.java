@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9VMThreadPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
+import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
 import com.ibm.j9ddr.vm29.j9.stackwalker.StackWalkerUtils;
 
 public class TerseStackWalkerCallbacks implements IStackWalkerCallbacks {
@@ -46,7 +47,7 @@ public class TerseStackWalkerCallbacks implements IStackWalkerCallbacks {
 		try {
 			if (walkState.method.notNull()) {
 				J9MethodPointer method = walkState.method;
-				J9UTF8Pointer className = StackWalkerUtils.UNTAGGED_METHOD_CP(method).ramClass().romClass().className();
+				J9UTF8Pointer className = ConstantPoolHelpers.J9_CLASS_FROM_METHOD(method).romClass().className();
 				J9ROMMethodPointer romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 				J9UTF8Pointer name = romMethod.nameAndSignature().name();
 				J9UTF8Pointer sig = romMethod.nameAndSignature().signature();

@@ -35,6 +35,7 @@ import java.util.List;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.vm29.j9.AlgorithmPicker;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
+import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
 import com.ibm.j9ddr.vm29.j9.J9ConfigFlags;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
 import com.ibm.j9ddr.vm29.pointer.U16Pointer;
@@ -1456,8 +1457,7 @@ public class MethodMetaData
 				if (!isPatchedValue(inlinedMethod))
 				{
 					walkState.method = inlinedMethod;
-					walkState.constantPool = UNTAGGED_METHOD_CP(walkState.method);
-					
+					walkState.constantPool = ConstantPoolHelpers.J9_CP_FROM_METHOD(walkState.method);
 					WALK_METHOD_CLASS(walkState);
 				}
 			}

@@ -289,7 +289,7 @@ J9NLS_PORT_IEATDUMP_NAME_TOO_LONG.user_response=Specify a shorter dump template.
 
 # END NON-TRANSLATABLE
 
-J9NLS_PORT_IEATDUMP_DISK_FULL=IEATDUMP a \u00e9chou\u00e9, car il a \u00e9t\u00e9 impossible d'allouer le jeu de donn\u00e9es de vidage (v\u00e9rifiez l'espace disque et les autorisations).
+J9NLS_PORT_IEATDUMP_DISK_FULL=IEATDUMP a \u00e9chou\u00e9, car il a \u00e9t\u00e9 impossible d'allouer le jeu de donn\u00e9es de vidage (v\u00e9rifiez l'espace disque et les autorisations de champ).
 # START NON-TRANSLATABLE
 J9NLS_PORT_IEATDUMP_DISK_FULL.explanation=The JVM attempted to take an IEATDUMP, and the dump routine returned with return code 0x8 and reason code 0x26, indicating the dump failed because the dump dataset could not be allocated.
 J9NLS_PORT_IEATDUMP_DISK_FULL.system_action=The JVM will continue running, but will fail to create a dump.
