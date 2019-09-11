@@ -489,6 +489,7 @@ foundITable:
 	* Perform an invoke generic for InvokeGenericHandle
 	* @param methodHandle
 	* @return j9object_t The target MethodHandle (the one to execute next)
+	* 			or null if target MethodHandle is null
 	*/
 	j9object_t
 	doInvokeGeneric(j9object_t methodHandle);

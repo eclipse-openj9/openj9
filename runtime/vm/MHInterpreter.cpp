@@ -254,8 +254,12 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 		}
 		case J9_METHOD_HANDLE_KIND_INVOKE_GENERIC: {
 			methodHandle = doInvokeGeneric(methodHandle);
+
 			if (VM_VMHelpers::exceptionPending(_currentThread)) {
 				goto throwCurrentException;
+			} else if (NULL == methodHandle) {
+				nextAction = THROW_NPE;
+				goto done;
 			}
 			break;
 		}
@@ -988,6 +992,12 @@ VM_MHInterpreter::doInvokeGeneric(j9object_t methodHandle)
 	U_32 currentArgSlots = (U_32)J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(_currentThread, currentType);
 	const U_32 slotsOffsetToTargetHandle = currentArgSlots - 1;
 	j9object_t targetHandle = *(j9object_t*)(_currentThread->sp + slotsOffsetToTargetHandle);
+
+	/* If receiver handle is null, return directly and a NPE will be thrown by the caller */
+	if (targetHandle == NULL) {
+		return targetHandle;
+	}
+
 	j9object_t targetType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, targetHandle);
 
 	/* There are three cases here:
