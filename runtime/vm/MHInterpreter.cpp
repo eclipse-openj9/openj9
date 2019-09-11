@@ -1090,7 +1090,11 @@ VM_MHInterpreter::spreadForAsSpreader(j9object_t methodHandle)
 		if (0 != spreadCount) {
 			/* Build a frame so we can throw an exception */
 			buildMethodTypeFrame(_currentThread, currentType);
+#if JAVA_SPEC_VERSION >= 10
+			setCurrentException(_currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+#else
 			setCurrentException(_currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, NULL);
+#endif /* JAVA_SPEC_VERSION >= 10 */
 			goto exitSpreadForAsSpreader;
 		}
 	} else {
