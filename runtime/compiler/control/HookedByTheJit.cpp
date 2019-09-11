@@ -78,6 +78,10 @@
 #include "runtime/HWProfiler.hpp"
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/SystemSegmentProvider.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "runtime/Listener.hpp"
+#include "runtime/JITServerStatisticsThread.hpp"
+#endif
 
 extern "C" {
 struct J9JavaVM;
@@ -4685,6 +4689,14 @@ void JitShutdown(J9JITConfig * jitConfig)
    if (!vm->isAOT_DEPRECATED_DO_NOT_USE())
       stopSamplingThread(jitConfig);
 
+#if defined(JITSERVER_SUPPORT)
+   JITServerStatisticsThread *statsThreadObj = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject;
+   if (statsThreadObj)
+      {
+      statsThreadObj->stopStatisticsThread(jitConfig);
+      }
+#endif
+
    TR_DebuggingCounters::report();
    accumulateAndPrintDebugCounters(jitConfig);
 
@@ -6998,6 +7010,32 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          jProfiler->start(javaVM);
          }
       }
+
+#if defined(JITSERVER_SUPPORT)   
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener;
+      listener->startListenerThread(javaVM);
+
+      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Started JITServer listener thread: %p ", listener->getListenerThread());
+
+      if (jitConfig->samplingFrequency != 0)
+         {
+         JITServerStatisticsThread *statsThreadObj = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject;
+         // statsThreadObj is guaranteed to be non-null because JITServer will not start if statisticsThreadObject cannot be created
+         statsThreadObj->startStatisticsThread(javaVM);
+         // Verify that statistics thread was started
+         if (!statsThreadObj->getStatisticsThread())
+            {
+            j9tty_printf(PORTLIB, "Error: Unable to start the statistics thread\n");
+            return -1;
+            // If we decide to start even without a statistics thread, we must
+            // free `statsThreadObj` and set the corresponding jitConfig field to NULL
+            }
+         }
+      }
+#endif // JITSERVER_SUPPORT
 
    if ((*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_START, jitHookLocalGCStart, OMR_GET_CALLSITE(), NULL) ||
        (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_END, jitHookLocalGCEnd, OMR_GET_CALLSITE(), NULL) ||

@@ -346,7 +346,9 @@ J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator 
    TR_ASSERT(testNode->getOpCodeValue() == TR::lcmpeq, "asynccheck bad format");
 
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
-   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::SymbolReference *asynccheckHelper = node->getSymbolReference();
+   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, asynccheckHelper, doneLabel));
 
    // ToDo:
    // Optimize this using "cmp (immediate)" instead of "cmp (register)" when possible
@@ -354,6 +356,8 @@ J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator 
 
    TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_EQ);
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
 
    cg->decReferenceCount(firstChild);
    cg->decReferenceCount(secondChild);
