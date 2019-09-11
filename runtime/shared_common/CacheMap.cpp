@@ -4583,11 +4583,14 @@ SH_CacheMap::markItemStaleCheckMutex(J9VMThread* currentThread, const ShcItem* i
 	Trc_SHR_CM_markItemStaleCheckMutex_Entry(currentThread, item);
 
 	if (_ccHead->hasWriteMutex(currentThread)) {
-		_ccHead->markStale(currentThread, (BlockPtr)ITEMEND(item), isCacheLocked);
+		if (!isCacheLocked) {
+			_ccHead->doLockCache(currentThread);		/* Wait till all readers stop and unprotect metadata area */
+		}
+		_ccHead->markStale(currentThread, (BlockPtr)ITEMEND(item), true);
 	} else {
 		_ccHead->exitReadMutex(currentThread, fnName);
-		if (_ccHead->enterWriteMutex(currentThread, false, fnName) == 0) {
-			_ccHead->markStale(currentThread, (BlockPtr)ITEMEND(item), isCacheLocked);
+		if (_ccHead->enterWriteMutex(currentThread, true, fnName) == 0) {
+			_ccHead->markStale(currentThread, (BlockPtr)ITEMEND(item), true);
 			_ccHead->exitWriteMutex(currentThread, fnName);
 		} else {
 			Trc_SHR_CM_markItemStaleCheckMutex_Failed(currentThread, item);
