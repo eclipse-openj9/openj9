@@ -227,7 +227,7 @@ void TR_ReadSampleRequestsHistory::advanceEpoch() // performed by sampling threa
 
 uintptrj_t
 TR_IProfiler::createBalancedBST(uintptrj_t *pcEntries, int32_t low, int32_t high, uintptrj_t memChunk,
-                                TR::Compilation *comp, uintptrj_t cacheStartAddress, uintptrj_t cacheSize)
+                                uintptrj_t cacheStartAddress, uintptrj_t cacheSize)
    {
    if (high < low)
       return 0;
@@ -239,7 +239,7 @@ TR_IProfiler::createBalancedBST(uintptrj_t *pcEntries, int32_t low, int32_t high
    entry->createPersistentCopy(cacheStartAddress, cacheSize, storage, _compInfo->getPersistentInfo());
 
    uintptrj_t leftChild = createBalancedBST(pcEntries, low, middle-1,
-                                            memChunk + bytes, comp, cacheStartAddress, cacheSize);
+                                            memChunk + bytes, cacheStartAddress, cacheSize);
 
    if (leftChild)
       {
@@ -248,7 +248,7 @@ TR_IProfiler::createBalancedBST(uintptrj_t *pcEntries, int32_t low, int32_t high
       }
 
    uintptrj_t rightChild = createBalancedBST(pcEntries, middle+1, high,
-                                             memChunk + bytes + leftChild, comp, cacheStartAddress, cacheSize);
+                                             memChunk + bytes + leftChild, cacheStartAddress, cacheSize);
    if (rightChild)
       {
       TR_ASSERT(bytes + leftChild < 1 << 16, "Error storing iprofile information: right child too far away"); // current size of right child
@@ -345,6 +345,13 @@ TR_IProfiler::walkILTreeForEntries(uintptrj_t *pcEntries, uint32_t &numEntries, 
    return bytesFootprint;
    }
 
+bool
+TR_IProfiler::elgibleForPersistIprofileInfo(TR::Compilation *comp) const
+   {
+      return (TR::Options::sharedClassCache() &&
+             !comp->getOption(TR_DisablePersistIProfile) &&
+             isIProfilingEnabled());
+   }
 
 void
 TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol, TR_ResolvedMethod *resolvedMethod, TR::Compilation *comp)
@@ -367,9 +374,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
    fprintf(stderr, "persistIprofileInfo for %s while compiling %s\n", methodSig, comp->signature());
 #endif
 
-   if (TR::Options::sharedClassCache()        // shared classes must be enabled
-      && !comp->getOption(TR_DisablePersistIProfile) &&
-      isIProfilingEnabled() &&
+   if (elgibleForPersistIprofileInfo(comp) &&
       (!SCfull || !comp->getOption(TR_DisableUpdateJITBytesSize)))
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)_vm;
@@ -445,7 +450,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
                   fprintf(stderr, "\n");
 #endif
                   void * memChunk = comp->trMemory()->allocateMemory(bytesFootprint, stackAlloc);
-                  intptrj_t bytes = createBalancedBST(pcEntries, 0, numEntries-1, (uintptrj_t) memChunk, comp, cacheOffset, cacheSize);
+                  intptrj_t bytes = createBalancedBST(pcEntries, 0, numEntries-1, (uintptrj_t) memChunk, cacheOffset, cacheSize);
                   TR_ASSERT(bytes == bytesFootprint, "BST doesn't match expected footprint");
 
 
@@ -1223,11 +1228,11 @@ TR_IProfiler::invalidateEntryIfInconsistent(TR_IPBytecodeHashTableEntry *entry)
    {
    if (_compInfo->getPersistentInfo()->getGlobalClassUnloadID() != entry->getLastSeenClassUnloadID())
       {
-   if (_compInfo->getPersistentInfo()->isInUnloadedMethod(entry->getPC()))
-      {
-      entry->setInvalid();
-      return true;
-      }
+      if (_compInfo->getPersistentInfo()->isInUnloadedMethod(entry->getPC()))
+         {
+         entry->setInvalid();
+         return true;
+         }
       else
          {
          entry->setLastSeenClassUnloadID(_compInfo->getPersistentInfo()->getGlobalClassUnloadID());
@@ -1409,7 +1414,6 @@ TR_IProfiler::profilingSample (TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
    // When we just search in the hashtable we don't need to lock,
    // It should work even if someone else is modifying the hashtable bucket entry
    //
-
    if (!addIt) // read request
       {
       _STATS_IPEntryRead++;
@@ -1909,51 +1913,34 @@ TR_IProfiler::getMethodFromNode(TR::Node *node, TR::Compilation *comp)
       return node->getMethod();
    }
 
+
 uintptrj_t
-getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_FrontEnd *vm, TR::Compilation * comp)
+TR_IProfiler::getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex)
 
    {
+   uintptrj_t searchedPC = 0;
    uint32_t methodSize = TR::Compiler->mtd.bytecodeSize(method);
-   uintptrj_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
-   uintptrj_t searchedPC = (uintptrj_t)(methodStart + byteCodeIndex);
-
-   if (byteCodeIndex >= methodSize)
+ 
+   if (byteCodeIndex < methodSize)
       {
+      uintptrj_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
+      searchedPC = (uintptrj_t)(methodStart + byteCodeIndex);
 
-      if (comp->getOutFile())
+      // interfaces are weird
+      // [   1],     1, JBinvokeinterface2      <- we get sample for this index
+      // [   2],     2, JBnop
+      // [   3],     3, JBinvokeinterface         21 <- we ask on this one
+
+      if (isInterfaceBytecode(*(U_8*)searchedPC) &&
+         byteCodeIndex >= 2 &&
+         isInterface2Bytecode(*(U_8 *)(searchedPC - 2)))
          {
-
-         TR_Stack<int32_t> & stack = comp->getInlinedCallStack();
-         int len = comp->getInlinedCallStack().size();
-         traceMsg(comp, "CSI : INLINER STACK :\n");
-         for (int i = 0; i < len; i++)
-            {
-            TR_IPHashedCallSite hcs;
-            TR_InlinedCallSite& callsite = comp->getInlinedCallSite (stack[len - i - 1]);
-            hcs._method = (J9Method*) callsite._methodInfo;
-            hcs._offset = callsite._byteCodeInfo.getByteCodeIndex();
-            printHashedCallSite(&hcs, comp->getOutFile()->_stream, comp);
-            }
-         comp->dumpMethodTrees("CSI Trees : byteCodeIndex < methodSize");
+         searchedPC -= 2;
          }
       }
-
-   TR_ASSERT(byteCodeIndex < methodSize, "Bytecode index can't be higher than the methodSize");
-
-
-   // interfaces are weird
-   // [   1],     1, JBinvokeinterface2      <- we get sample for this index
-   // [   2],     2, JBnop
-   // [   3],     3, JBinvokeinterface         21 <- we ask on this one
-
-   static bool traceIProfiling = ((debug("traceIProfiling") != NULL) );
-   if (isInterfaceBytecode(*(U_8*)searchedPC) &&
-       byteCodeIndex >= 2 &&
-       isInterface2Bytecode(*(U_8 *)(searchedPC - 2)))
+   else
       {
-      searchedPC -= 2;
-      if (traceIProfiling)
-         traceMsg(comp, "Adjusted PC=%p by 2 because it's interfaceinvoke\n", searchedPC);
+      TR_ASSERT(false, "Bytecode index can't be higher than the methodSize: bci=%u methdSize=%u", byteCodeIndex, methodSize);
       }
 
    return searchedPC;
@@ -1961,16 +1948,34 @@ getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeI
 
 
 
+
 uintptrj_t
-getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation * comp)
+TR_IProfiler::getSearchPCFromMethodAndBCIndex(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation * comp)
    {
-   return getSearchPCFromMethodAndBCIndex(method, byteCodeIndex, comp->fej9(), comp);
+   uintptrj_t pc = getSearchPCFromMethodAndBCIndex(method, byteCodeIndex);
+   // Diagnostic in case of error
+   if (pc == 0 && comp->getOutFile())
+      {
+      TR_Stack<int32_t> & stack = comp->getInlinedCallStack();
+      int len = comp->getInlinedCallStack().size();
+      traceMsg(comp, "CSI : INLINER STACK :\n");
+      for (int i = 0; i < len; i++)
+         {
+         TR_IPHashedCallSite hcs;
+         TR_InlinedCallSite& callsite = comp->getInlinedCallSite(stack[len - i - 1]);
+         hcs._method = (J9Method*)callsite._methodInfo;
+         hcs._offset = callsite._byteCodeInfo.getByteCodeIndex();
+         printHashedCallSite(&hcs, comp->getOutFile()->_stream, comp);
+         }
+      comp->dumpMethodTrees("CSI Trees : byteCodeIndex < methodSize");
+      }
+   return pc;
    }
 
 uintptrj_t
 TR_IProfiler::getSearchPC(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR::Compilation * comp)
    {
-   return getSearchPCFromMethodAndBCIndex(method, byteCodeIndex, _vm, comp);
+   return getSearchPCFromMethodAndBCIndex(method, byteCodeIndex, comp);
    }
 
 
@@ -2056,10 +2061,8 @@ TR_IProfiler::getProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
       return entry->getData();
       }
 
-   uintptrj_t searchedPC = getSearchPC (method, byteCodeIndex, comp);
    return 0;
    }
-
 
 int32_t
 TR_IProfiler::getSwitchCountForValue (TR::Node *node, int32_t value, TR::Compilation *comp)
@@ -2320,16 +2323,6 @@ TR_IProfiler::setBlockAndEdgeFrequencies(TR::CFG *cfg, TR::Compilation *comp)
             }
          }
       }
-   }
-
-
-J9Class *
-TR_IProfiler::getInterfaceClass(J9Method *aMethod, TR::Compilation *comp)
-   {
-   J9UTF8 * className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD((aMethod))->romClass);
-   int32_t len = J9UTF8_LENGTH(className);
-   char * s = classNameToSignature(utf8Data(className), len, comp);
-   return (J9Class *)(comp->fej9()->getClassFromSignature(s, len, (TR_OpaqueMethodBlock *)aMethod));
    }
 
 TR_AbstractInfo *
@@ -2826,23 +2819,9 @@ TR_IPBCDataCallGraph::getSumCount(TR::Compilation *comp, bool)
 uintptrj_t
 TR_IPBCDataCallGraph::getData(TR::Compilation *comp)
    {
-   int32_t sumWeight = _csInfo._residueWeight;
-   int32_t maxWeight = 0;
-   uintptrj_t data = 0;
-
-   for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
-      {
-      if (!_csInfo.getClazz(i))
-         continue;
-
-      if (_csInfo._weight[i] > maxWeight)
-         {
-         maxWeight = _csInfo._weight[i];
-         data = _csInfo.getClazz(i);
-         }
-
-      sumWeight += _csInfo._weight[i];
-      }
+   int32_t sumWeight;
+   int32_t maxWeight;
+   uintptrj_t data = _csInfo.getDominantClass(sumWeight, maxWeight);
 
    static bool traceIProfiling = ((debug("traceIProfiling") != NULL));
    if (traceIProfiling && comp)
@@ -2959,6 +2938,98 @@ TR_IPBCDataCallGraph::isLocked()
    persistenceMonitor->exit();
    return locked;
    }
+
+#if defined(JITSERVER_SUPPORT)
+/**
+ * API used by JITClient to check whether the current entry can be persisted
+ *
+ * @param info PersistentInfo pointer used for checking if the class has been unloaded
+ * 
+ * @return IPBC_ENTRY_PERSIST_LOCK, IPBC_ENTRY_PERSIST_UNLOADED or IPBC_ENTRY_CAN_PERSIST
+ */
+uint32_t
+TR_IPBCDataCallGraph::canBeSerialized(TR::PersistentInfo *info)
+   {
+   if (!lockEntry()) // Try to lock the entry; if entry is already locked, abort
+      return IPBC_ENTRY_PERSIST_LOCK;
+
+   for (int32_t i = 0; i < NUM_CS_SLOTS && _csInfo.getClazz(i);i++) // scan all classes profiled in this entry
+      {
+      J9Class *clazz = (J9Class *) _csInfo.getClazz(i);
+      if (clazz)
+         {
+         if (info->isUnloadedClass(clazz, true))
+            {
+            releaseEntry();  // release the lock on the entry
+            return IPBC_ENTRY_PERSIST_UNLOADED;
+            }
+         TR_ASSERT(_csInfo.getClazz(i), "Race condition detected: cached value=%p, pc=%p", clazz, _pc);
+         }
+      }
+   return IPBC_ENTRY_CAN_PERSIST;
+   }
+
+
+/**
+ * API used by JITClient to serialize IP data of a method
+ *
+ * @param methodStartAddress Start address of the bytecodes for the method
+ * @param storage Storage area where we serialize entries
+ * @param info PersistentInfo pointer used for checking if the class has been unloaded
+ * 
+ * @return void
+ */
+void
+TR_IPBCDataCallGraph::serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
+   {
+   TR_IPBCDataCallGraphStorage * store = (TR_IPBCDataCallGraphStorage *) storage;
+   TR_ASSERT(_pc >= methodStartAddress, "_pc=%p should be larger than methodStartAddress=%p\n", (void*)_pc, (void*)methodStartAddress);
+   storage->pc = _pc - methodStartAddress;
+   storage->ID = TR_IPBCD_CALL_GRAPH;
+   storage->left = 0;
+   storage->right = 0;
+   for (int32_t i=0; i < NUM_CS_SLOTS;i++)
+      {
+      J9Class *clazz = (J9Class *) _csInfo.getClazz(i);
+      if (clazz)
+         {
+         TR_ASSERT(!info->isUnloadedClass(clazz, true), "cannot store unloaded class");
+         store->_csInfo.setClazz(i, (uintptrj_t)clazz);
+         TR_ASSERT(_csInfo.getClazz(i), "Race condition detected: cached value=%p, pc=%p", clazz, _pc);
+         }
+      else
+         {
+         store->_csInfo.setClazz(i, 0);
+         }
+      store->_csInfo._weight[i] = _csInfo._weight[i];
+      }
+   store->_csInfo._residueWeight = _csInfo._residueWeight;
+   store->_csInfo._tooBigToBeInlined = _csInfo._tooBigToBeInlined;
+
+   }
+
+
+/**
+ * API used by JITServer to deserialize IP data of a method sent from JITClient
+ *
+ * @param storage Storage area where the serialized entries resides
+ * 
+ * @return void
+ */
+void
+TR_IPBCDataCallGraph::deserialize(TR_IPBCDataStorageHeader *storage)
+   {
+   TR_IPBCDataCallGraphStorage * store = (TR_IPBCDataCallGraphStorage *) storage;
+   TR_ASSERT(storage->ID == TR_IPBCD_CALL_GRAPH, "Incompatible types between storage and loading of iprofile persistent data");
+   for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
+      {
+      _csInfo.setClazz(i, store->_csInfo.getClazz(i));
+      _csInfo._weight[i] = store->_csInfo._weight[i];
+      }
+   _csInfo._residueWeight = store->_csInfo._residueWeight;
+   _csInfo._tooBigToBeInlined = store->_csInfo._tooBigToBeInlined;
+   }
+#endif
 
 uint32_t
 TR_IPBCDataCallGraph::canBePersisted(uintptrj_t cacheStartAddress, uintptrj_t cacheSize, TR::PersistentInfo *info)
@@ -3155,7 +3226,6 @@ TR_IProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, int32_
 
       if (csInfo)
          {
-         csInfo->setClazz(0, 0);
          csInfo->_weight[0] = count;
 
          if (count>_maxCallFrequency)
@@ -3512,7 +3582,7 @@ bool TR_IProfiler::getCallerWeight(TR_OpaqueMethodBlock *calleeMethod,TR_OpaqueM
    //adjust pcIndex for interface calls (see getSearchPCFromMethodAndBCIndex)
    //otherwise we won't be able to locate a caller-callee-bcIndex triplet
    //even if it is in a TR_IPMethodHashTableEntry
-   uintptrj_t pcAddress = getSearchPCFromMethodAndBCIndex(callerMethod, pcIndex, TR::comp());
+   uintptrj_t pcAddress = getSearchPCFromMethodAndBCIndex(callerMethod, pcIndex, comp);
 
    TR_IPMethodHashTableEntry *entry = searchForMethodSample((TR_OpaqueMethodBlock*)calleeMethod, bucket);
 
@@ -4312,6 +4382,30 @@ void CallSiteProfileInfo::setClazz(int index, uintptrj_t clazzPointer)
 #endif //OMR_GC_COMPRESSED_POINTERS
    }
 
+uintptrj_t
+CallSiteProfileInfo::getDominantClass(int32_t &sumW, int32_t &maxW)
+   {
+   int32_t sumWeight = _residueWeight;
+   int32_t maxWeight = 0;
+   uintptrj_t data = 0;
+
+   for (int32_t i = 0; i < NUM_CS_SLOTS; i++)
+      {
+      if (!getClazz(i))
+         continue;
+
+      if (_weight[i] > maxWeight)
+         {
+         maxWeight = _weight[i];
+         data = getClazz(i);
+         }
+
+      sumWeight += _weight[i];
+      }
+   sumW = sumWeight;
+   maxW = maxWeight;
+   return data;
+   }
 
 // Supporting code for dumping IProfiler data to stderr to track possible 
 // performance issues due to insufficient or wrong IProfiler info
