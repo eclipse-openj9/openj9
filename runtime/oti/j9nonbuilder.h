@@ -1147,6 +1147,7 @@ typedef struct J9SharedCacheInfo {
 	UDATA freeBytes;
 	I_64 lastDetach;
 	UDATA softMaxBytes;
+	I_8 layer;
 } J9SharedCacheInfo;
 
 typedef struct J9SharedCacheHeader {
