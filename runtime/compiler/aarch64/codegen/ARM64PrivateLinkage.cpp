@@ -243,9 +243,9 @@ void TR::ARM64PrivateLinkage::createEpilogue(TR::Instruction *cursor)
 
    // restore preserved GPRs
    int32_t preservedRegisterOffset = cg()->getLargestOutgoingArgSize() + properties.getOffsetToFirstParm(); // outgoingArgsSize
-   TR::RealRegister::RegNum firstPreservedGPR = TR::RealRegister::x28;
-   TR::RealRegister::RegNum lastPreservedGPR = TR::RealRegister::x21;
-   for (TR::RealRegister::RegNum r = firstPreservedGPR; r >= lastPreservedGPR; r = (TR::RealRegister::RegNum)((uint32_t)r-1))
+   TR::RealRegister::RegNum firstPreservedGPR = TR::RealRegister::x21;
+   TR::RealRegister::RegNum lastPreservedGPR = TR::RealRegister::x28;
+   for (TR::RealRegister::RegNum r = firstPreservedGPR; r <= lastPreservedGPR; r = (TR::RealRegister::RegNum)((uint32_t)r+1))
       {
       TR::RealRegister *rr = machine->getRealRegister(r);
       if (rr->getHasBeenAssignedInMethod())
