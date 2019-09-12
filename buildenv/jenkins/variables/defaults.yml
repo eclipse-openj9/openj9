@@ -338,7 +338,7 @@ x86-64_linux_cm:
     next: '--openssl-version=1.1.1a'
   extra_configure_options:
     8: '--with-cmake --disable-ddr --with-openssl=fetched'
-    11: '--with-cmake --disable-ddr --with-openssl=fetched'
+    11: '--with-cmake --with-openssl=fetched'
     12: '--with-cmake --disable-ddr --with-openssl=fetched'
     13: '--with-cmake --disable-ddr --with-openssl=fetched'
     next: '--with-cmake --disable-ddr --with-openssl=fetched'
