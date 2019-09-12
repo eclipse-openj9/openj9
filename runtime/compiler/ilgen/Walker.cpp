@@ -4572,7 +4572,13 @@ break
          }
       }
 
-   if (cg()->getEnforceStoreOrder() && calledMethod->isConstructor())
+   // We disable this optimization for JITServer because TR_VMField is not supported on JITServer yet. Once we have decided how to build the data structures
+   // required by this optimization efficiently, we can re-enable this optimization.
+   if (cg()->getEnforceStoreOrder() && calledMethod->isConstructor()
+      #ifdef JITSERVER_SUPPORT
+         && !cg()->comp()->isOutOfProcessCompilation()
+      #endif
+      )
       {
       if (resolvedMethodSymbol)
          {
