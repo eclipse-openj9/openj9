@@ -269,6 +269,7 @@ typedef struct jvmtiStackInfoExtended {
 #define COM_IBM_ITERATE_SHARED_CACHES_VERSION_2 2
 #define COM_IBM_ITERATE_SHARED_CACHES_VERSION_3 3
 #define COM_IBM_ITERATE_SHARED_CACHES_VERSION_4 4
+#define COM_IBM_ITERATE_SHARED_CACHES_VERSION_5 5
 
 /**
  * The following 5 macros can be used to get address mode and compressedRefs mode from jvmtiSharedCacheInfo.addrMode when COM_IBM_ITERATE_SHARED_CACHES_VERSION_3 or later is specified.
@@ -294,6 +295,7 @@ typedef struct jvmtiStackInfoExtended {
  * lastDetach - time from which last detach has happened
  * cacheType - the type of the cache. This is the new field included when COM_IBM_ITERATE_SHARED_CACHES_VERSION_2 or later is specified
  * softMaxBytes - the soft limit for the available space in the cache. This is the new field included when COM_IBM_ITERATE_SHARED_CACHES_VERSION_4 or later is specified
+ * layer - the shared cache layer number. It is -1 if the shared cache does not have a layer number. This is the new field included when COM_IBM_ITERATE_SHARED_CACHES_VERSION_5 or later is specified
  * 
  * If IBM adds new information to this structure, it will be added
  * to the end to preserve backwards compatibility, and
@@ -313,6 +315,7 @@ typedef struct jvmtiSharedCacheInfo {
 	jlong lastDetach;
 	jint cacheType;
 	jlong softMaxBytes;
+	jint layer;
 } jvmtiSharedCacheInfo;
 
 /**

@@ -164,6 +164,7 @@ j9shr_iterateSharedCaches(J9JavaVM *vm,	const char *ctrlDirName, UDATA groupPerm
 			callbackData.os_shmid = cacheInfo->os_shmid;
 			callbackData.os_semid = cacheInfo->os_semid;
 			callbackData.lastDetach = cacheInfo->lastdetach;
+			callbackData.layer = cacheInfo->layer;
 
 			if ((callbackData.isCompatible == 1) && (cacheInfo->isJavaCorePopulated == 1)) {
 				callbackData.cacheSize = cacheInfo->javacoreData.cacheSize;
@@ -204,6 +205,7 @@ j9shr_iterateSharedCaches(J9JavaVM *vm,	const char *ctrlDirName, UDATA groupPerm
 			callbackData.os_shmid = cacheInfo->os_shmid;
 			callbackData.os_semid = cacheInfo->os_semid;
 			callbackData.lastDetach = cacheInfo->lastdetach;
+			callbackData.layer = cacheInfo->layer;
 
 			callbackData.cacheSize = (UDATA)J9SH_OSCACHE_UNKNOWN;
 			callbackData.softMaxBytes = (UDATA)J9SH_OSCACHE_UNKNOWN;
