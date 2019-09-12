@@ -41,6 +41,11 @@ J9::ClassEnv::getClassFromJavaLangClass(uintptrj_t objectPointer)
    }
 */
 
+TR::ClassEnv *
+J9::ClassEnv::self()
+   {
+   return static_cast<TR::ClassEnv *>(this);
+   }
 
 J9Class *
 J9::ClassEnv::convertClassOffsetToClassPtr(TR_OpaqueClassBlock *clazzOffset)
@@ -53,6 +58,34 @@ J9::ClassEnv::convertClassOffsetToClassPtr(TR_OpaqueClassBlock *clazzOffset)
    return (J9Class*)((TR_OpaqueClassBlock *)clazzOffset);
    }
 
+TR_OpaqueClassBlock *
+J9::ClassEnv::convertClassPtrToClassOffset(J9Class *clazzPtr)
+   {
+   // NOTE : We could pass down vmThread() in the call below if the conversion
+   // required the VM thread. Currently it does not. If we did change that
+   // such that the VM thread was reqd, we would need to handle AOT where the
+   // TR_FrontEnd is created with a NULL J9VMThread object.
+   //
+   return (TR_OpaqueClassBlock*)(clazzPtr);
+   }
+
+bool
+J9::ClassEnv::isClassSpecialForStackAllocation(TR_OpaqueClassBlock * clazz)
+   {
+   const UDATA mask = (J9AccClassReferenceWeak |
+                       J9AccClassReferenceSoft |
+                       J9AccClassFinalizeNeeded |
+                       J9AccClassOwnableSynchronizer);
+
+      {
+      if (((J9Class *)clazz)->classDepthAndFlags & mask)
+         {
+         return true;
+         }
+      }
+
+   return false;
+   }
 
 uintptrj_t
 J9::ClassEnv::classFlagsValue(TR_OpaqueClassBlock * classPointer)
@@ -60,6 +93,11 @@ J9::ClassEnv::classFlagsValue(TR_OpaqueClassBlock * classPointer)
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classFlags);
    }
 
+uintptrj_t
+J9::ClassEnv::classFlagReservableWordInitValue(TR_OpaqueClassBlock * classPointer)
+   {
+   return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classFlags) & J9ClassReservableLockWordInit;
+   }
 
 uintptrj_t
 J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
@@ -78,9 +116,39 @@ J9::ClassEnv::classInstanceSize(TR_OpaqueClassBlock * clazzPointer)
 J9ROMClass *
 J9::ClassEnv::romClassOf(TR_OpaqueClassBlock * clazz)
    {
-   return TR::Compiler->cls.convertClassOffsetToClassPtr(clazz)->romClass;
+   J9Class *j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
+   return j9clazz->romClass;
    }
 
+J9Class **
+J9::ClassEnv::superClassesOf(TR_OpaqueClassBlock * clazz)
+   {
+   return TR::Compiler->cls.convertClassOffsetToClassPtr(clazz)->superclasses;
+   }
+
+J9ROMClass *
+J9::ClassEnv::romClassOfSuperClass(TR_OpaqueClassBlock * clazz, size_t index)
+   {
+   return self()->superClassesOf(clazz)[index]->romClass;
+   }
+
+J9ITable *
+J9::ClassEnv::iTableOf(TR_OpaqueClassBlock * clazz)
+   {
+   return (J9ITable*) self()->convertClassOffsetToClassPtr(clazz)->iTable;
+   }
+
+J9ITable *
+J9::ClassEnv::iTableNext(J9ITable *current)
+   {
+   return current->next;
+   }
+
+J9ROMClass *
+J9::ClassEnv::iTableRomClass(J9ITable *current)
+   {
+   return current->interfaceClass->romClass;
+   }
 
 bool
 J9::ClassEnv::isStringClass(TR_OpaqueClassBlock *clazz)
@@ -315,4 +383,23 @@ J9::ClassEnv::getArrayElementWidthInBytes(TR::Compilation *comp, TR_OpaqueClassB
    TR_ASSERT(TR::Compiler->cls.isClassArray(comp, arrayClass), "Class must be array");
    int32_t logElementSize = ((J9ROMArrayClass*)((J9Class*)arrayClass)->romClass)->arrayShape & 0x0000FFFF;
    return 1 << logElementSize;
+   }
+
+intptrj_t
+J9::ClassEnv::getVFTEntry(TR::Compilation *comp, TR_OpaqueClassBlock* clazz, int32_t offset)
+   {
+   return comp->fej9()->getVFTEntry(clazz, offset);
+   }
+
+uint8_t *
+J9::ClassEnv::getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t cpIndex, int &classRefLen)
+   {
+   J9ConstantPool *ramCP = reinterpret_cast<J9ConstantPool *>(comp->fej9()->getConstantPoolFromClass(clazz));
+   J9ROMConstantPoolItem *romCP = ramCP->romConstantPool;
+   J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&romCP[cpIndex];
+   J9ROMClassRef *romClassRef = (J9ROMClassRef *)&romCP[romFieldRef->classRefCPIndex];
+   J9UTF8 *classRefNameUtf8 = J9ROMCLASSREF_NAME(romClassRef);
+   classRefLen = J9UTF8_LENGTH(classRefNameUtf8);
+   uint8_t *classRefName = J9UTF8_DATA(classRefNameUtf8);
+   return classRefName;
    }
