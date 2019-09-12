@@ -629,16 +629,6 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 
 			continue;
 		}
-		if (try_scan(&scan_start, "tarokEnableCopyForwardMarkCompactHybrid")) {
-			extensions->tarokEnableCopyForwardHybrid = true;
-			continue;
-		}
-
-		if (try_scan(&scan_start, "tarokDisableCopyForwardMarkCompactHybrid")) {
-			extensions->tarokEnableCopyForwardHybrid = false;
-			continue;
-		}
-
 #endif /* defined (J9VM_GC_VLHGC) */
 
 		if(try_scan(&scan_start, "packetListLockSplit=")) {

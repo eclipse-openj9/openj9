@@ -90,7 +90,6 @@ MM_IncrementalGenerationalGC::MM_IncrementalGenerationalGC(MM_EnvironmentVLHGC *
 	, _classLoaderRememberedSet(NULL)
 	, _copyForwardDelegate(env)
 	, _globalMarkDelegate(env)
-	, _partialMarkDelegate(env)
 	, _reclaimDelegate(env, manager, &_collectionSetDelegate)
 	, _schedulingDelegate(env, manager)
 	, _collectionSetDelegate(env, manager)
@@ -171,9 +170,6 @@ MM_IncrementalGenerationalGC::initialize(MM_EnvironmentVLHGC *env)
  		goto error_no_memory;
  	}
 
- 	if(!_partialMarkDelegate.initialize(env)) {
- 		goto error_no_memory;
- 	}
  	
  	if(!_reclaimDelegate.initialize(env)) {
  		goto error_no_memory;
@@ -292,9 +288,6 @@ MM_IncrementalGenerationalGC::tearDown(MM_EnvironmentVLHGC *env)
 	_copyForwardDelegate.tearDown(env);
 
 	_globalMarkDelegate.tearDown(env);
-
-	_partialMarkDelegate.tearDown(env);
-	
 	_reclaimDelegate.tearDown(env);
 
 	_collectionSetDelegate.tearDown(env);
@@ -555,33 +548,22 @@ MM_IncrementalGenerationalGC::heapAddRange(MM_EnvironmentBase *env, MM_MemorySub
 	if (result) {
 		result = _globalMarkDelegate.heapAddRange(envVLHGC, subspace, size, lowAddress, highAddress);
 		if (result) {
-			result = _partialMarkDelegate.heapAddRange(envVLHGC, subspace, size, lowAddress, highAddress);
+			result = _reclaimDelegate.heapAddRange(envVLHGC, subspace, size, lowAddress, highAddress);
 			if (result) {
-				result = _reclaimDelegate.heapAddRange(envVLHGC, subspace, size, lowAddress, highAddress);
-				if (result) {
-					if(NULL != _extensions->referenceChainWalkerMarkMap) {
-						result = _extensions->referenceChainWalkerMarkMap->heapAddRange(envVLHGC, size, lowAddress, highAddress);
-						if (!result) {
-							/* Reference Chain Walker Mark Map expansion has failed
-							 * Mark Map Manager, Global Mark Delegate, Partial Mark Delegate and Reclaim Delegate expansions must be reversed
-							 */
-							_reclaimDelegate.heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, NULL, NULL);
-							_partialMarkDelegate.heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, NULL, NULL);
-							_globalMarkDelegate.heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, NULL, NULL);
-							_markMapManager->heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, NULL, NULL);
-						}
+				if(NULL != _extensions->referenceChainWalkerMarkMap) {
+					result = _extensions->referenceChainWalkerMarkMap->heapAddRange(envVLHGC, size, lowAddress, highAddress);
+					if (!result) {
+						/* Reference Chain Walker Mark Map expansion has failed
+						 * Mark Map Manager, Global Mark Delegate, Partial Mark Delegate and Reclaim Delegate expansions must be reversed
+						 */
+						_reclaimDelegate.heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, NULL, NULL);
+						_globalMarkDelegate.heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, NULL, NULL);
+						_markMapManager->heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, NULL, NULL);
 					}
-				} else {
-					/* Reclaim Delegate expansion has failed
-					 * Mark Map Manager, Global Mark Delegate and Partial Mark Delegate expansions must be reversed
-					 */
-					_partialMarkDelegate.heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, NULL, NULL);
-					_globalMarkDelegate.heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, NULL, NULL);
-					_markMapManager->heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, NULL, NULL);
 				}
 			} else {
-				/* Partial Mark Delegate expansion has failed
-				 * Mark Map Manager and Global Mark Delegate expansions must be reversed
+				/* Reclaim Delegate expansion has failed
+				 * Mark Map Manager, Global Mark Delegate and Partial Mark Delegate expansions must be reversed
 				 */
 				_globalMarkDelegate.heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, NULL, NULL);
 				_markMapManager->heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, NULL, NULL);
@@ -609,8 +591,6 @@ MM_IncrementalGenerationalGC::heapRemoveRange(MM_EnvironmentBase *env, MM_Memory
 
 	result = result && _globalMarkDelegate.heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, lowValidAddress, highValidAddress);
 
-	result = result && _partialMarkDelegate.heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, lowValidAddress, highValidAddress);
-	
 	result = result && _reclaimDelegate.heapRemoveRange(envVLHGC, subspace, size, lowAddress, highAddress, lowValidAddress, highValidAddress);
 
 	if(NULL != _extensions->referenceChainWalkerMarkMap) {
@@ -1238,22 +1218,6 @@ MM_IncrementalGenerationalGC::partialGarbageCollect(MM_EnvironmentVLHGC *env, MM
 		_schedulingDelegate.setAutomaticDefragmentEmptinessThreshold(optimalEmptinessRegionThreshold);
 	}
 
-	/* For Non CopyForwardHybrid mode, we don't allow any eden regions with jniCritical for copyforward, if there is any, would switch MarkCompact PGC mode
-	 * For CopyForwardHybrid mode, we do not care about jniCritical eden regions, the eden regions with jniCritical would be marked instead copyforwarded during collection.*/
-	if (!_extensions->tarokEnableCopyForwardHybrid && (0 == _extensions->fvtest_forceCopyForwardHybridRatio)) {
-		if (env->_cycleState->_shouldRunCopyForward) {
-			MM_HeapRegionDescriptorVLHGC *region = NULL;
-			GC_HeapRegionIteratorVLHGC iterator(_regionManager);
-			while (env->_cycleState->_shouldRunCopyForward && (NULL != (region = iterator.nextRegion()))) {
-				if ((region->_criticalRegionsInUse > 0) && region->isEden()) {
-					/* if we find any Eden regions which have critical regions in use, we need to switch to Mark-Compact since we have to collect Eden but can't move objects in this region */
-					env->_cycleState->_shouldRunCopyForward = false;
-					/* record this observation in the cycle state so that verbose can see it and produce an appropriate message */
-					env->_cycleState->_reasonForMarkCompactPGC = MM_CycleState::reason_JNI_critical_in_Eden;
-				}
-			}
-		}
-	}
 	/* Determine if there are enough regions available to attempt a copy-forward collection.
 	 * Note that this check is done after we sweep, since that might have recovered enough 
 	 * regions to make copy-forward feasible.
@@ -1269,12 +1233,8 @@ MM_IncrementalGenerationalGC::partialGarbageCollect(MM_EnvironmentVLHGC *env, MM
 			env->_cycleState->_reasonForMarkCompactPGC = MM_CycleState::reason_insufficient_free_space;
 		}
 	}
-	
-	if (env->_cycleState->_shouldRunCopyForward) {
-		partialGarbageCollectUsingCopyForward(env, allocDescription);
-	} else {
-		partialGarbageCollectUsingMarkCompact(env, allocDescription);
-	}
+
+	partialGarbageCollectUsingCopyForward(env, allocDescription);
 
 	env->_cycleState->_workPackets = NULL;
 	env->_cycleState->_markMap = NULL;
@@ -1326,7 +1286,7 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingCopyForward(MM_Environme
 		estimatedReguiredSurvivorRegions = estimatedReguiredSurvivorRegions * (100 - extensions->fvtest_forceCopyForwardHybridRatio) / 100;
 	}
 
-	if ((_extensions->tarokEnableCopyForwardHybrid || (0 != _extensions->fvtest_forceCopyForwardHybridRatio)) && (_schedulingDelegate.isPGCAbortDuringGMP() || _schedulingDelegate.isFirstPGCAfterGMP()) && (estimatedReguiredSurvivorRegions > freeRegions)) {
+	if ((_schedulingDelegate.isPGCAbortDuringGMP() || _schedulingDelegate.isFirstPGCAfterGMP()) && (estimatedReguiredSurvivorRegions > freeRegions)) {
 		double edenSurvivorRate = _schedulingDelegate.getAvgEdenSurvivalRateCopyForward(env);
 		UDATA regionCountRequiredMarkOnly = 0;
 		if (0 != edenSurvivorRate) {
@@ -1428,76 +1388,6 @@ MM_IncrementalGenerationalGC::partialGarbageCollectUsingCopyForward(MM_Environme
 	Trc_MM_IncrementalGenerationalGC_partialGarbageCollectUsingCopyForward_Exit(env->getLanguageVMThread());
 }
 
-void
-MM_IncrementalGenerationalGC::partialGarbageCollectUsingMarkCompact(MM_EnvironmentVLHGC *env, MM_AllocateDescription *allocDescription)
-{
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	
-	if (_extensions->tarokUseProjectedSurvivalCollectionSet) {
-		_projectedSurvivalCollectionSetDelegate.createRegionCollectionSetForPartialGC(env);
-	} else {
-		_collectionSetDelegate.createRegionCollectionSetForPartialGC(env);
-	}
-
-	_schedulingDelegate.partialGarbageCollectStarted(env);
-
-	/* flush the RSList and RSM from our currently selected regions into the card table since we will rebuild them as we process the table */
-	flushRememberedSetIntoCardTable(env);
-	_interRegionRememberedSet->flushBuffersForDecommitedRegions(env);
-
-	Assert_MM_true(env->_cycleState->_markMap == _markMapManager->getPartialGCMap());
-	Assert_MM_true(env->_cycleState->_workPackets == _workPacketsForPartialGC);
-
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._startTime = j9time_hires_clock();
-	reportPGCMarkStart(env);
-
-	MM_MarkMap *savedMapState = NULL;
-	if (J9_EVENT_IS_HOOKED(_extensions->omrHookInterface, J9HOOK_MM_OMR_OBJECT_DELETE)) {
-		savedMapState = _markMapManager->savePreviousMarkMapForDeleteEvents(env);
-	}
-	/* now we can finish marking the collection set */
-	_partialMarkDelegate.performMarkForPartialGC(env);
-	if (NULL != savedMapState) {
-		_markMapManager->reportDeletedObjects(env, savedMapState, env->_cycleState->_markMap);
-	}
-	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats._endTime = j9time_hires_clock();
-	reportPGCMarkEnd(env);
-
-	postMarkMapCompletion(env);
-	_partialMarkDelegate.postMarkCleanup(env);
-
-	/* all objects in collection set regions are now marked, so change the type of these regions */
-	declareAllRegionsAsMarked(env);
-
-	/* this considers regions that are marked&swept since last GMP */
-	UDATA compactSelectionGoalInBytes = _schedulingDelegate.getDesiredCompactWork();
-	{
-		Trc_MM_ReclaimDelegate_runReclaimComplete_Entry(env->getLanguageVMThread(), compactSelectionGoalInBytes, 0);
-		_reclaimDelegate.runReclaimCompleteSweep(env, allocDescription, env->_cycleState->_activeSubSpace, env->_cycleState->_gcCode);
-		_reclaimDelegate.runReclaimCompleteCompact(env, allocDescription, env->_cycleState->_activeSubSpace, env->_cycleState->_gcCode, _markMapManager->getGlobalMarkPhaseMap(), compactSelectionGoalInBytes);
-		Trc_MM_ReclaimDelegate_runReclaimComplete_Exit(env->getLanguageVMThread(), 0);
-	}
-
-	_schedulingDelegate.recalculateRatesOnFirstPGCAfterGMP(env);
-
-	UDATA defragmentReclaimableRegions = 0;
-	UDATA reclaimableRegions = 0;
-	_reclaimDelegate.estimateReclaimableRegions(env, 0.0 /* copy-forward loss */, &reclaimableRegions, &defragmentReclaimableRegions);
-	_schedulingDelegate.partialGarbageCollectCompleted(env, reclaimableRegions, defragmentReclaimableRegions);
-	
-	if (_extensions->tarokUseProjectedSurvivalCollectionSet) {
-		_projectedSurvivalCollectionSetDelegate.deleteRegionCollectionSetForPartialGC(env);
-	} else {
-		_collectionSetDelegate.deleteRegionCollectionSetForPartialGC(env);
-	}
-	
-	if (_extensions->fvtest_tarokVerifyMarkMapClosure) {
-		verifyMarkMapClosure(env, env->_cycleState->_markMap);
-	}
-
-	Assert_MM_false(_workPacketsForGlobalGC->getOverflowFlag());
-	Assert_MM_false(_workPacketsForPartialGC->getOverflowFlag());
-}
 
 void 
 MM_IncrementalGenerationalGC::setupBeforePartialGC(MM_EnvironmentVLHGC *env, MM_GCCode gcCode)
@@ -2429,37 +2319,13 @@ MM_IncrementalGenerationalGC::reportGlobalGCMarkEnd(MM_EnvironmentBase *env)
 }
 
 void
-MM_IncrementalGenerationalGC::reportPGCMarkStart(MM_EnvironmentBase *env)
-{
-	reportMarkStart(env);
-
-	TRIGGER_J9HOOK_MM_PRIVATE_PGC_MARK_START(
-		_extensions->privateHookInterface,
-		env->getOmrVMThread(),
-		&static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats,
-		&static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats);
-}
-
-void
-MM_IncrementalGenerationalGC::reportPGCMarkEnd(MM_EnvironmentBase *env)
-{
-	reportMarkEnd(env);
-
-	TRIGGER_J9HOOK_MM_PRIVATE_PGC_MARK_END(
-		_extensions->privateHookInterface,
-		env->getOmrVMThread(),
-		&static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._markStats,
-		&static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._workPacketStats,
-		&static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._irrsStats);
-}
-
-void
 MM_IncrementalGenerationalGC::collectorExpanded(MM_EnvironmentBase *envBase, MM_MemorySubSpace *subSpace, UDATA expandSize)
 {
 	MM_EnvironmentVLHGC* env = MM_EnvironmentVLHGC::getEnvironment(envBase);
 
 	/* this even can only happen during a copy-forward PGC */
 	Assert_MM_true(MM_CycleState::CT_PARTIAL_GARBAGE_COLLECTION == env->_cycleState->_collectionType);
+	/* if _shouldRunCopyForward == false, it is copyforwardhybrid with all regions need to be marked/compacted, for this case we don't need to collectorExpanded. */
 	Assert_MM_true(env->_cycleState->_shouldRunCopyForward);
 
 	MM_Collector::collectorExpanded(env, subSpace, expandSize);

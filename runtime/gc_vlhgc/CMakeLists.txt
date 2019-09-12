@@ -60,10 +60,6 @@ j9vm_add_library(j9gcvlhgc STATIC
 	MemorySubSpaceTarok.cpp
 	OwnableSynchronizerObjectBufferVLHGC.cpp
 	ParallelSweepSchemeVLHGC.cpp
-	PartialMarkDelegate.cpp
-	PartialMarkGMPCardCleaner.cpp
-	PartialMarkingScheme.cpp
-	PartialMarkNoGMPCardCleaner.cpp
 	ProjectedSurvivalCollectionSetDelegate.cpp
 	ReclaimDelegate.cpp
 	ReferenceObjectBufferVLHGC.cpp
