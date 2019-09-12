@@ -50,7 +50,7 @@ public class JavaInfo {
         } else if (osName.contains("sunos")) {
             spec = "osx";
         } else if (osName.contains("bsd")) {
-            spec = "osx";
+            spec = "bsd";
         } else {
             System.out.println("Cannot determine System.getProperty('os.name')=" + osName + "\n");
             return null;
