@@ -99,10 +99,15 @@
 #include "env/ClassLoaderTable.hpp"
 #include "runtime/ArtifactManager.hpp"
 #include "runtime/CodeCacheMemorySegment.hpp"
+#if defined(JITSERVER_SUPPORT)
 #include "env/j9methodServer.hpp"
 #include "control/JITServerCompilationThread.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
 #include "runtime/JITServerIProfiler.hpp"
+#include "net/ClientStream.hpp"
+#include "net/ServerStream.hpp"
+#include "control/JITServerHelpers.hpp"
+#endif
 
 #ifdef COMPRESS_AOT_DATA
 #ifdef J9ZOS390

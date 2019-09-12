@@ -24,10 +24,8 @@
 #define JITSERVER_COMPILATION_THREAD_H
 
 #include "control/CompilationThread.hpp"
-#include "control/JITServerHelpers.hpp"
-#include "env/j9methodServer.hpp"
-#include "net/ClientStream.hpp"
 #include "runtime/JITClientSession.hpp"
+#include "env/j9methodServer.hpp"
 
 class TR_IPBytecodeHashTableEntry;
 

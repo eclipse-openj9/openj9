@@ -65,6 +65,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "env/jittypes.h"
+#include "il/Node.hpp"
 #include "infra/Link.hpp"
 #include "runtime/ExternalProfiler.hpp"
 
@@ -86,6 +87,11 @@ namespace TR { class PersistentInfo; }
 namespace TR { class Monitor; }
 struct J9Class;
 struct J9PortLibrary;
+namespace TR { class ResolvedMethodSymbol; }
+class TR_ResolvedMethod;
+class TR_AbstractInfo;
+class TR_BitVector;
+class TR_J9VMBase;
 
 #if defined (_MSC_VER)
 extern "C" __declspec(dllimport) void __stdcall DebugBreak();

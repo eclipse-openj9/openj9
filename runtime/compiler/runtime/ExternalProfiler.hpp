@@ -26,6 +26,7 @@
 #include <stdint.h>
 
 class TR_ValueProfileInfo;
+class TR_ExternalValueProfileInfo;
 namespace TR { class CFG; }
 namespace TR { class Compilation; }
 namespace TR { class Node; }

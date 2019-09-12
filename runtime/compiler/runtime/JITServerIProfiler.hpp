@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,6 @@
 #ifndef JITSERVER_IPROFILER_HPP
 #define JITSERVER_IPROFILER_HPP
 
-#include "runtime/J9Profiler.hpp"
 #include "runtime/IProfiler.hpp"
 
 namespace JITServer
@@ -46,6 +45,39 @@ struct TR_ContiguousIPMethodHashTableEntry
    TR_ContiguousIPMethodData _callers[TR_IPMethodHashTableEntry::MAX_IPMETHOD_CALLERS]; // array of callers and their weights. null _method means EOL
    TR_DummyBucket _otherBucket;
    };
+
+/**
+ * @class JITServerIProfiler
+ * @brief Class for manipulating IProfiler data at the server side 
+ *
+ * This class is an extension of the TR_IProfiler class so that the server
+ * can intercept IProfiler requests from the JIT compiler and redirect them
+ * to the client. For this purpose a few methods from TR_IProfiler class
+ * have been overridden.
+ * To reduce the communication between server and client the JITServer
+ * implements a caching mechanism while the client uses message aggregation,
+ * where, instead of sending only the requested information for the bytecode
+ * of interest, it will send the IProfile information for the entire method.
+ * There are two levels of caches: methods that have been already compiled
+ * cannot accumulate more IProfile information, so they can be cached globally.
+ * For methods that are still interpreted, the IProfile information is still
+ * growing, so the server will cache this information only for the duration of
+ * the current compilation. The idea is that new information which is accumulated
+ * during the short time span of the current compilation is not going to affect
+ * optimizer decisions too much. For the same reason, IProfile information
+ * for the method currently being compiled is cached globally.
+ * The per-compilation cache is stored in a `CompilationInfoPerThreadRemote`
+ * object while the global IProfile cache is stored in `struct J9MethodInfo`
+ * which is part of `ClientSessionData` (thus, the global cache is more like
+ * a collection of caches, one for each method).
+ * As a RAS feature, caching can be disabled if the environment variable 
+ * TR_DisableIPCaching is set.
+ * Another RAS feature is the validation of the cached data. For a build with
+ * assumes enabled (or for a debug build) every time the server uses a cached
+ * value it will send a message to the client and compare the cached value to
+ * the value retrieved from the client. An warning message will be printed to
+ * stderr in case of a missmatch.
+ */
 
 class JITServerIProfiler : public TR_IProfiler
    {
@@ -88,23 +120,34 @@ private:
    uint32_t _statsIProfilerInfoCachingFailures;
    };
 
+/**
+ * @class JITClientIProfiler
+ * @brief Class for manipulating IProfiler data at the client side 
+ *
+ * This class is an extension of the TR_IProfiler and has the ability of
+ * serializing the entire IProfile data for a given method and send it to 
+ * server.
+ */
+
 class JITClientIProfiler : public TR_IProfiler
    {
-   public:
+public:
 
-      TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
-      static JITClientIProfiler * allocate(J9JITConfig *jitConfig);
-      JITClientIProfiler(J9JITConfig *);
-      // NOTE: since the JITClient can act as a regular JVM compiling methods 
-      // locally, we must not change the behavior of functions used in TR_IProfiler
-      // Thus, any virtual function here must call the corresponding method in
-      // the base class. It may be better not to override any methods though
-    
-      uint32_t walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
-                                              TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort, TR::Compilation *comp);
-      uintptr_t serializeIProfilerMethodEntries(uintptrj_t *pcEntries, uint32_t numEntries, uintptr_t memChunk, uintptrj_t methodStartAddress);
-      bool serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITServer::ClientStream *client, bool usePersistentCache);
-      std::string serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb);
+   TR_PERSISTENT_ALLOC(TR_Memory::IProfiler);
+   static JITClientIProfiler * allocate(J9JITConfig *jitConfig);
+   JITClientIProfiler(J9JITConfig *);
+   // NOTE: since the JITClient can act as a regular JVM compiling methods 
+   // locally, we must not change the behavior of functions used in TR_IProfiler
+   // Thus, any virtual function here must call the corresponding method in
+   // the base class. It may be better not to override any methods though
+ 
+   bool serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITServer::ClientStream *client, bool usePersistentCache);
+   std::string serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb);
+
+private:
+   uint32_t walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
+                                           TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort, TR::Compilation *comp);
+   uintptr_t serializeIProfilerMethodEntries(uintptrj_t *pcEntries, uint32_t numEntries, uintptr_t memChunk, uintptrj_t methodStartAddress);
    };
 
 #endif

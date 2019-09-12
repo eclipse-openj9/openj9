@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,12 +23,15 @@
 #include "runtime/JITServerIProfiler.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/JITServerCompilationThread.hpp"
+#include "runtime/JITClientSession.hpp"
 #include "infra/CriticalSection.hpp" // for OMR::CriticalSection
 #include "ilgen/J9ByteCode.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "bcnames.h"
-#include "env/j9methodServer.hpp"
+#include "net/ClientStream.hpp"
+#include "net/ServerStream.hpp"
+
 
 JITServerIProfiler *
 JITServerIProfiler::allocate(J9JITConfig *jitConfig)
@@ -167,8 +170,6 @@ JITServerIProfiler::profilingSample(uintptrj_t pc, uintptrj_t data, bool addIt, 
    TR_ASSERT(false, "not implemented for JITServer");
    return NULL;
    }
-
-
 
 // This method is used to search the hash table first, then the shared cache
 TR_IPBytecodeHashTableEntry*
@@ -409,224 +410,6 @@ JITServerIProfiler::invalidateEntryIfInconsistent(TR_IPBytecodeHashTableEntry *e
    return false;
    }
 
-JITClientIProfiler *
-JITClientIProfiler::allocate(J9JITConfig *jitConfig)
-   {
-   JITClientIProfiler * profiler = new (PERSISTENT_NEW) JITClientIProfiler(jitConfig);
-   return profiler;
-   }
-
-JITClientIProfiler::JITClientIProfiler(J9JITConfig *jitConfig)
-   : TR_IProfiler(jitConfig)
-   {
-   }
-
-/**
- *  walkILTreeForIProfilingEntries
- *
- * Given a method, use the bytecodeIterator to walk over its bytecodes and determine
- * the bytecodePCs that have IProfiler information. Create a sorted array with such
- * bytecodePCs
- * 
- * @param pcEntries An array that needs to be populated (in sorted fashion)
- * @param numEntries (output) Returns the number of entries in the array
- * @param bcIterator The bytecodeIterator (must be allocated by the caller)
- * @param method j9method to be scanned
- * @param BCvisit Bit vector used to avoid scanning the same bytecode twice (why?)
- * @param abort (output) set to true if something goes wrong
- *
- * @return Number of bytes needed to store all IProfiler entries of this method
- */
-uint32_t
-JITClientIProfiler::walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
-                                                       TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort, TR::Compilation *comp)
-   {
-   abort = false; // optimistic
-   uint32_t bytesFootprint = 0;
-   uint32_t methodSize = TR::Compiler->mtd.bytecodeSize(method);
-   for (TR_J9ByteCode bc = bcIterator->first(); bc != J9BCunknown; bc = bcIterator->next())
-      {
-      uint32_t bci = bcIterator->bcIndex();
-      if (bci < methodSize && !BCvisit->isSet(bci))
-         {
-         uintptrj_t thisPC = getSearchPCFromMethodAndBCIndex(method, bci);
-
-         TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bci, comp);
-         BCvisit->set(bci);
-         if (entry && !invalidateEntryIfInconsistent(entry))
-            {
-            // now check if it can be persisted, lock it, and add it to my list.
-            uint32_t canPersist = entry->canBeSerialized(getCompInfo()->getPersistentInfo());
-            if (canPersist == IPBC_ENTRY_CAN_PERSIST)
-               {
-               bytesFootprint += entry->getBytesFootprint();
-               // doing insertion sort as we go.
-               int32_t i;
-               for (i = numEntries; i > 0 && pcEntries[i - 1] > thisPC; i--)
-                  {
-                  pcEntries[i] = pcEntries[i - 1];
-                  }
-               pcEntries[i] = thisPC;
-               numEntries++;
-               }
-            else // cannot persist
-               {
-               switch (canPersist) {
-                  case IPBC_ENTRY_PERSIST_LOCK:
-                     // that means the entry is locked by another thread. going to abort the
-                     // storage of iprofiler information for this method
-                  {
-                  // In some corner cases of invoke interface, we may come across the same entry
-                  // twice under 2 different bytecodes. In that case, the other entry has been
-                  // locked by this thread and is in the list of entries, so don't abort.
-                  int32_t i;
-                  bool found = false;
-                  int32_t a1 = 0, a2 = numEntries - 1;
-                  while (a2 >= a1 && !found)
-                     {
-                     i = (a1 + a2) / 2;
-                     if (pcEntries[i] == thisPC)
-                        found = true;
-                     else if (pcEntries[i] < thisPC)
-                        a1 = i + 1;
-                     else
-                        a2 = i - 1;
-                     }
-                  if (!found)
-                     {
-                     abort = true;
-                     return 0;
-                     }
-                  }
-                  break;
-                  case IPBC_ENTRY_PERSIST_UNLOADED:
-                     _STATS_entriesNotPersisted_Unloaded++;
-                     break;
-                  default:
-                     _STATS_entriesNotPersisted_Other++;
-                  }
-               }
-            }
-         }
-      else
-         {
-         TR_ASSERT(bci < methodSize, "bytecode can't be greater then method size");
-         }
-      }
-   return bytesFootprint;
-   }
-
-/**
- * Code to be executed on the  JITClient to serialize IP data of a method
- *
- * @param pcEntries Sorted array with PCs that have IProfiler info
- * @param numEntries Number of entries in the above array; guaranteed > 0
- * @param memChunk Storage area where we serialize entries
- * @param methodStartAddress Start address of the bytecodes for the method
- * @return Total memory space used for serialization
- */
-uintptr_t
-JITClientIProfiler::serializeIProfilerMethodEntries(uintptrj_t *pcEntries, uint32_t numEntries,
-                                                        uintptr_t memChunk, uintptrj_t methodStartAddress)
-   {
-   uintptr_t crtAddr = memChunk;
-   TR_IPBCDataStorageHeader * storage = NULL;
-   for (uint32_t i = 0; i < numEntries; ++i)
-      {
-      storage = (TR_IPBCDataStorageHeader *)crtAddr;
-      TR_IPBytecodeHashTableEntry *entry = profilingSample(pcEntries[i], 0, false);
-      entry->serialize(methodStartAddress, storage, getCompInfo()->getPersistentInfo());
-
-      // optimistically set link to next entry
-      uint32_t bytes = entry->getBytesFootprint();
-      TR_ASSERT(bytes < 1 << 8, "Error storing iprofile information: left child too far away"); // current size of left child
-      storage->left = bytes;
-
-      crtAddr += bytes; // advance to the next position
-      }
-   // Unlink the last entry
-   storage->left = 0;
-
-   return crtAddr - memChunk;
-   }
-
-// Code executed at the client to serialize IProfiler info for an entire method
-bool
-JITClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock*method, TR::Compilation *comp, JITServer::ClientStream *client, bool usePersistentCache)
-   {
-   TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
-   uint32_t numEntries = 0;
-   uint32_t bytesFootprint = 0;
-   uintptrj_t methodSize  = (uintptrj_t)TR::Compiler->mtd.bytecodeSize(method);
-   uintptrj_t methodStart = (uintptrj_t)TR::Compiler->mtd.bytecodeStart(method);
-
-   uintptrj_t * pcEntries = NULL;
-   bool abort = false;
-   try {
-      TR_ResolvedJ9Method resolvedj9method = TR_ResolvedJ9Method(method, comp->fej9(), comp->trMemory());
-      TR_J9ByteCodeIterator bci(NULL, &resolvedj9method, static_cast<TR_J9VMBase *> (comp->fej9()), comp);
-      // Allocate memory for every possible node in this method
-      TR_BitVector *BCvisit = new (comp->trStackMemory()) TR_BitVector(methodSize, comp->trMemory(), stackAlloc);
-      pcEntries = (uintptrj_t *)comp->trMemory()->allocateMemory(sizeof(uintptrj_t) * methodSize, stackAlloc);
-
-      // Walk all bytecodes and populate the sorted array of interesting PCs (pcEntries)
-      // numEntries will indicate how many entries have been populated
-      // These profiling entries have been 'locked' so we must remember to unlock them
-      bytesFootprint = walkILTreeForIProfilingEntries(pcEntries, numEntries, &bci, method, BCvisit, abort, comp);
-
-      if (numEntries && !abort)
-         {
-         // Serialize the entries
-         std::string buffer(bytesFootprint, '\0');
-         intptrj_t writtenBytes = serializeIProfilerMethodEntries(pcEntries, numEntries, (uintptr_t)&buffer[0], methodStart);
-         TR_ASSERT(writtenBytes == bytesFootprint, "BST doesn't match expected footprint");
-         // send the information to the server
-         client->write(JITServer::MessageType::IProfiler_profilingSample, buffer, true, usePersistentCache);
-         }
-      else if (!numEntries && !abort)// Empty IProfiler data for this method
-         {
-         client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), true, usePersistentCache);
-         }
-
-      // release any entry that has been locked by us
-      for (uint32_t i = 0; i < numEntries; i++)
-         {
-         TR_IPBCDataCallGraph *cgEntry = profilingSample(pcEntries[i], 0, false)->asIPBCDataCallGraph();
-         if (cgEntry)
-            cgEntry->releaseEntry();
-         }
-      }
-   catch (const std::exception &e)
-      {
-      // release any entry that has been locked by us
-      for (uint32_t i = 0; i < numEntries; i++)
-         {
-         TR_IPBCDataCallGraph *cgEntry = profilingSample(pcEntries[i], 0, false)->asIPBCDataCallGraph();
-         if (cgEntry)
-            cgEntry->releaseEntry();
-         }
-      throw;
-      }
-      return abort;
-   }
-
-std::string
-JITClientIProfiler::serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb)
-   {
-   // find entry in a hash table, if it exists
-   auto entry = findOrCreateMethodEntry(NULL, (J9Method *) omb, false);
-   if (entry)
-      {
-      auto serialEntry = TR_ContiguousIPMethodHashTableEntry::serialize(entry);
-      std::string entryStr((char *) &serialEntry, sizeof(TR_ContiguousIPMethodHashTableEntry));
-      return entryStr;
-      }
-   else
-      {
-      return std::string();
-      }
-   }
-
 void
 JITServerIProfiler::validateCachedIPEntry(TR_IPBytecodeHashTableEntry *entry, TR_IPBCDataStorageHeader *clientData, uintptrj_t methodStart, bool isMethodBeingCompiled, TR_OpaqueMethodBlock *method, bool fromPerCompilationCache, bool isCompiledWhenProfiling)
    {
@@ -796,5 +579,231 @@ JITServerIProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, 
       {
       auto serverMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(method);
       compInfoPT->cacheResolvedMirrorMethodsPersistIPInfo(serverMethod->getRemoteMirror());
+      }
+   }
+
+JITClientIProfiler *
+JITClientIProfiler::allocate(J9JITConfig *jitConfig)
+   {
+   JITClientIProfiler * profiler = new (PERSISTENT_NEW) JITClientIProfiler(jitConfig);
+   return profiler;
+   }
+
+JITClientIProfiler::JITClientIProfiler(J9JITConfig *jitConfig)
+   : TR_IProfiler(jitConfig)
+   {
+   }
+
+/**
+ *  walkILTreeForIProfilingEntries
+ *
+ * Given a method, use the bytecodeIterator to walk over its bytecodes and determine
+ * the bytecodePCs that have IProfiler information. Create a sorted array with such
+ * bytecodePCs
+ * 
+ * @param pcEntries An array that needs to be populated (in sorted fashion)
+ * @param numEntries (output) Returns the number of entries in the array
+ * @param bcIterator The bytecodeIterator (must be allocated by the caller)
+ * @param method j9method to be scanned
+ * @param BCvisit Bit vector used to avoid scanning the same bytecode twice (why?)
+ * @param abort (output) set to true if something goes wrong
+ *
+ * @return Number of bytes needed to store all IProfiler entries of this method
+ */
+uint32_t
+JITClientIProfiler::walkILTreeForIProfilingEntries(uintptrj_t *pcEntries, uint32_t &numEntries, TR_J9ByteCodeIterator *bcIterator,
+                                                       TR_OpaqueMethodBlock *method, TR_BitVector *BCvisit, bool &abort, TR::Compilation *comp)
+   {
+   abort = false; // optimistic
+   uint32_t bytesFootprint = 0;
+   uint32_t methodSize = TR::Compiler->mtd.bytecodeSize(method);
+   for (TR_J9ByteCode bc = bcIterator->first(); bc != J9BCunknown; bc = bcIterator->next())
+      {
+      uint32_t bci = bcIterator->bcIndex();
+      if (bci < methodSize && !BCvisit->isSet(bci))
+         {
+         uintptrj_t thisPC = getSearchPCFromMethodAndBCIndex(method, bci);
+
+         TR_IPBytecodeHashTableEntry *entry = profilingSample(method, bci, comp);
+         BCvisit->set(bci);
+         if (entry && !invalidateEntryIfInconsistent(entry))
+            {
+            // now check if it can be persisted, lock it, and add it to my list.
+            uint32_t canPersist = entry->canBeSerialized(getCompInfo()->getPersistentInfo());
+            if (canPersist == IPBC_ENTRY_CAN_PERSIST)
+               {
+               bytesFootprint += entry->getBytesFootprint();
+               // doing insertion sort as we go.
+               int32_t i;
+               for (i = numEntries; i > 0 && pcEntries[i - 1] > thisPC; i--)
+                  {
+                  pcEntries[i] = pcEntries[i - 1];
+                  }
+               pcEntries[i] = thisPC;
+               numEntries++;
+               }
+            else // cannot persist
+               {
+               switch (canPersist) {
+                  case IPBC_ENTRY_PERSIST_LOCK:
+                     // that means the entry is locked by another thread. going to abort the
+                     // storage of iprofiler information for this method
+                  {
+                  // In some corner cases of invoke interface, we may come across the same entry
+                  // twice under 2 different bytecodes. In that case, the other entry has been
+                  // locked by this thread and is in the list of entries, so don't abort.
+                  int32_t i;
+                  bool found = false;
+                  int32_t a1 = 0, a2 = numEntries - 1;
+                  while (a2 >= a1 && !found)
+                     {
+                     i = (a1 + a2) / 2;
+                     if (pcEntries[i] == thisPC)
+                        found = true;
+                     else if (pcEntries[i] < thisPC)
+                        a1 = i + 1;
+                     else
+                        a2 = i - 1;
+                     }
+                  if (!found)
+                     {
+                     abort = true;
+                     return 0;
+                     }
+                  }
+                  break;
+                  case IPBC_ENTRY_PERSIST_UNLOADED:
+                     _STATS_entriesNotPersisted_Unloaded++;
+                     break;
+                  default:
+                     _STATS_entriesNotPersisted_Other++;
+                  }
+               }
+            }
+         }
+      else
+         {
+         TR_ASSERT(bci < methodSize, "bytecode can't be greater then method size");
+         }
+      }
+   return bytesFootprint;
+   }
+
+/**
+ * Code to be executed on the JITClient to serialize IP data of a method
+ *
+ * @param pcEntries Sorted array with PCs that have IProfiler info
+ * @param numEntries Number of entries in the above array; guaranteed > 0
+ * @param memChunk Storage area where we serialize entries
+ * @param methodStartAddress Start address of the bytecodes for the method
+ * @return Total memory space used for serialization
+ */
+uintptr_t
+JITClientIProfiler::serializeIProfilerMethodEntries(uintptrj_t *pcEntries, uint32_t numEntries,
+                                                        uintptr_t memChunk, uintptrj_t methodStartAddress)
+   {
+   uintptr_t crtAddr = memChunk;
+   TR_IPBCDataStorageHeader * storage = NULL;
+   for (uint32_t i = 0; i < numEntries; ++i)
+      {
+      storage = (TR_IPBCDataStorageHeader *)crtAddr;
+      TR_IPBytecodeHashTableEntry *entry = profilingSample(pcEntries[i], 0, false);
+      entry->serialize(methodStartAddress, storage, getCompInfo()->getPersistentInfo());
+
+      // optimistically set link to next entry
+      uint32_t bytes = entry->getBytesFootprint();
+      TR_ASSERT(bytes < 1 << 8, "Error storing iprofile information: left child too far away"); // current size of left child
+      storage->left = bytes;
+
+      crtAddr += bytes; // advance to the next position
+      }
+   // Unlink the last entry
+   storage->left = 0;
+
+   return crtAddr - memChunk;
+   }
+
+/**
+ * Code to be executed on the JITClient to send IProfiler info to JITServer
+ *
+ * @param method J9Method in question
+ * @param comp TR::Compilation pointer
+ * @param client Connection to JITServer
+ * @param usePersistentCache Whetehr to use persistent cache
+ * @return Whether the operation was successful
+ */
+bool
+JITClientIProfiler::serializeAndSendIProfileInfoForMethod(TR_OpaqueMethodBlock *method, TR::Compilation *comp, JITServer::ClientStream *client, bool usePersistentCache)
+   {
+   TR::StackMemoryRegion stackMemoryRegion(*comp->trMemory());
+   uint32_t numEntries = 0;
+   uint32_t bytesFootprint = 0;
+   uintptrj_t methodSize  = (uintptrj_t)TR::Compiler->mtd.bytecodeSize(method);
+   uintptrj_t methodStart = (uintptrj_t)TR::Compiler->mtd.bytecodeStart(method);
+
+   uintptrj_t * pcEntries = NULL;
+   bool abort = false;
+   try {
+      TR_ResolvedJ9Method resolvedj9method = TR_ResolvedJ9Method(method, comp->fej9(), comp->trMemory());
+      TR_J9ByteCodeIterator bci(NULL, &resolvedj9method, static_cast<TR_J9VMBase *> (comp->fej9()), comp);
+      // Allocate memory for every possible node in this method
+      TR_BitVector *BCvisit = new (comp->trStackMemory()) TR_BitVector(methodSize, comp->trMemory(), stackAlloc);
+      pcEntries = (uintptrj_t *)comp->trMemory()->allocateMemory(sizeof(uintptrj_t) * methodSize, stackAlloc);
+
+      // Walk all bytecodes and populate the sorted array of interesting PCs (pcEntries)
+      // numEntries will indicate how many entries have been populated
+      // These profiling entries have been 'locked' so we must remember to unlock them
+      bytesFootprint = walkILTreeForIProfilingEntries(pcEntries, numEntries, &bci, method, BCvisit, abort, comp);
+
+      if (numEntries && !abort)
+         {
+         // Serialize the entries
+         std::string buffer(bytesFootprint, '\0');
+         intptrj_t writtenBytes = serializeIProfilerMethodEntries(pcEntries, numEntries, (uintptr_t)&buffer[0], methodStart);
+         TR_ASSERT(writtenBytes == bytesFootprint, "BST doesn't match expected footprint");
+         // send the information to the server
+         client->write(JITServer::MessageType::IProfiler_profilingSample, buffer, true, usePersistentCache);
+         }
+      else if (!numEntries && !abort)// Empty IProfiler data for this method
+         {
+         client->write(JITServer::MessageType::IProfiler_profilingSample, std::string(), true, usePersistentCache);
+         }
+
+      // release any entry that has been locked by us
+      for (uint32_t i = 0; i < numEntries; i++)
+         {
+         TR_IPBCDataCallGraph *cgEntry = profilingSample(pcEntries[i], 0, false)->asIPBCDataCallGraph();
+         if (cgEntry)
+            cgEntry->releaseEntry();
+         }
+      }
+   catch (const std::exception &e)
+      {
+      // release any entry that has been locked by us
+      for (uint32_t i = 0; i < numEntries; i++)
+         {
+         TR_IPBCDataCallGraph *cgEntry = profilingSample(pcEntries[i], 0, false)->asIPBCDataCallGraph();
+         if (cgEntry)
+            cgEntry->releaseEntry();
+         }
+      throw;
+      }
+      return abort;
+   }
+
+std::string
+JITClientIProfiler::serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb)
+   {
+   // find entry in a hash table, if it exists
+   auto entry = findOrCreateMethodEntry(NULL, (J9Method *) omb, false);
+   if (entry)
+      {
+      auto serialEntry = TR_ContiguousIPMethodHashTableEntry::serialize(entry);
+      std::string entryStr((char *) &serialEntry, sizeof(TR_ContiguousIPMethodHashTableEntry));
+      return entryStr;
+      }
+   else
+      {
+      return std::string();
       }
    }
