@@ -3120,17 +3120,44 @@ SH_CacheMap::updateROMClassResource(J9VMThread* currentThread, const void* addre
 				break;
 			}
 			U_8* updateAddress = (U_8*)resourceDescriptor->unWrap(resourceWrapper) + updateAtOffset;
+			const ShcItem *itemInCache = resourceDescriptor->wrapperToItem(resourceWrapper);
+			ShcItem *tmpItem = NULL;
+			const ShcItem *itemToUse = itemInCache;
+			bool addResourceInTopLayer = false;
 			if (false == isAddressInCache((void*)updateAddress, data->length, false, true)) {
-				Trc_SHR_CM_updateROMClassResource_Exit7(currentThread, updateAddress, data->length);
-				result = J9SHR_RESOURCE_STORE_ERROR;
-				break;
+				/* We cannot overwrite the existing resource which is in a lower layer cache, instead we add a new resource. 
+				 * The old resources will be removed from the hashtable. */
+				Trc_SHR_Assert_True(isAddressInCache((void*)updateAddress, data->length, false, false));
+				tmpItem = (ShcItem*)j9mem_allocate_memory(itemInCache->dataLen, J9MEM_CATEGORY_CLASSES);
+				if (NULL == tmpItem) {
+					Trc_SHR_CM_updateROMClassResource_Exit8(currentThread);
+					result = J9SHR_RESOURCE_STORE_ERROR;
+					break;
+				} else {
+					memcpy(tmpItem, itemInCache, itemInCache->dataLen);
+					addResourceInTopLayer = true;
+					itemToUse = tmpItem;
+				}
 			}
 
-			const ShcItem *itemInCache = resourceDescriptor->wrapperToItem(resourceWrapper);
 			if (false == isUDATA) {
-				resourceDescriptor->updateDataInCache(itemInCache, updateAtOffset, data);
+				resourceDescriptor->updateDataInCache(itemToUse, updateAtOffset, data);
 			} else {
-				resourceDescriptor->updateUDATAInCache(itemInCache, updateAtOffset, *((UDATA *)data->address));
+				resourceDescriptor->updateUDATAInCache(itemToUse, updateAtOffset, *((UDATA *)data->address));
+			}
+			if (addResourceInTopLayer) {
+				U_8* resourceWrapper = ITEMDATA(itemToUse);
+				SH_AttachedDataManager::SH_AttachedDataResourceDescriptor tmpDescriptor(ADWDATA(resourceWrapper), (U_32)resourceDescriptor->resourceLengthFromWrapper(resourceWrapper), resourceDescriptor->getResourceDataSubType());
+				const void* ret = addROMClassResourceToCache(currentThread, addressInCache, localRRM, &tmpDescriptor, p_subcstr);
+				Trc_SHR_CM_updateROMClassResource_Exit7(currentThread, updateAddress, data->length);
+				if (((void*)J9SHR_RESOURCE_STORE_FULL == ret)
+					|| ((void*)J9SHR_RESOURCE_STORE_ERROR == ret)
+					|| (NULL == ret)
+				) {
+					result = J9SHR_RESOURCE_STORE_ERROR;
+				}
+				j9mem_free_memory(tmpItem);
+				break;
 			}
 		} else {
 			if(NULL != p_subcstr) {
@@ -4002,7 +4029,6 @@ SH_CacheMap::storeSharedData(J9VMThread* currentThread, const char* key, UDATA k
 	J9UTF8* utfKeyStruct = NULL;
 	UDATA dataNotIndexed = (data != NULL) ? (data->flags & J9SHRDATA_NOT_INDEXED) : 0;
 	SH_ByteDataManager* localBDM;
-	SH_ScopeManager* localSCM = NULL;
 	bool overwrite = false;
 
 	PORT_ACCESS_FROM_VMC(currentThread);
@@ -4079,8 +4105,13 @@ SH_CacheMap::storeSharedData(J9VMThread* currentThread, const char* key, UDATA k
 										memcpy((void *)result, data->address, foundDatalen);
 										Trc_SHR_CM_storeSharedData_OverwriteExisting(currentThread, result, data->address, foundDatalen);
 									}
-								} else {
+								} else if (isAddressInCache(result, foundDatalen, true, true)) {
+									/* Do nothing here. We do not overwrite if the existing byteData is in readWrite area */ 
+								} else if (isAddressInCache(result, foundDatalen, false, false)) {
+									/* Existing byteData is in non-readwrite area of a lower layer cache, in this case, we store a new byteData.
+									 * Even though we are unable to mark the existing byteData stale, SH_ByteDataManager always find the byteData under the same key in higher layer first. */
 									Trc_SHR_CM_storeSharedData_OverwriteExisting_NotInTopLayer(currentThread, data->address, foundDatalen);
+									goto _addData;
 								}
 							} else {
 								Trc_SHR_Assert_ShouldNeverHappen();
@@ -4102,19 +4133,20 @@ SH_CacheMap::storeSharedData(J9VMThread* currentThread, const char* key, UDATA k
 		} else {
 			localBDM->markAllStaleForKey(currentThread, key, keylen);
 		}
-	
-		if (!(localSCM = getScopeManager(currentThread))) {
-			Trc_SHR_CM_storeSharedData_NoSCM(currentThread);
-			result = NULL;
-			goto _done;
-		}
 	}
 
+_addData:
 	/* If data is NULL or datalen <= 0, mark the original item(s) stale, but don't store anything */
 	if ((data != NULL) && (data->length > 0) && ((data->address != NULL) || (data->flags & J9SHRDATA_ALLOCATE_ZEROD_MEMORY))) {
 		const J9UTF8* tokenKey = NULL;	
 
 		if (!dataNotIndexed) {
+			SH_ScopeManager* localSCM = getScopeManager(currentThread);
+			if (NULL == localSCM) {
+				Trc_SHR_CM_storeSharedData_NoSCM(currentThread);
+				result = NULL;
+				goto _done;
+			}
 			/* Create J9UTF8 struct as key */
 			if (keylen >= (STACK_STRINGBUF_SIZE - sizeof(J9UTF8))) {
 				if (!(utfKeyPtr = (char*)j9mem_allocate_memory((keylen * sizeof(U_8)) + sizeof(ShcItem), J9MEM_CATEGORY_CLASSES))) {
@@ -4135,7 +4167,6 @@ SH_CacheMap::storeSharedData(J9VMThread* currentThread, const char* key, UDATA k
 				}
 			}
 		}
-
 		result = (const U_8*)addByteDataToCache(currentThread, localBDM, tokenKey, data, NULL, false);
 	}
 
