@@ -20,17 +20,21 @@
 
 # To use this docker file:
 # 
-# 1. Make sure you have an sdk under /your/path/to/j2sdk-image and execute the following command
+# 1. Make sure you have a j2sdk-image under the current directory and execute the following command
 #   `docker build -f \
-#    buildenv/docker/jdk<version>/<platform>/rhel<version>/jitaas/run/Dockerfile \
-#    -v /your/path/to/j2sdk-image:/root/j2sdk-image \
-#    -t=openj9-jitaas-run .`
+#    buildenv/docker/jdk8/x86_64/rhel7/jitaas/run/Dockerfile \
+#    -t=openj9-jitserver-run .`
 #
 
 FROM registry.access.redhat.com/ubi7/ubi:latest
 
-WORKDIR /root
+# Bring the sdk into the image
+WORKDIR /opt
+COPY j2sdk-image /opt/sdk-ubi
 
-ENTRYPOINT ["/root/j2sdk-image/jre/bin/java", "-XX:StartAsJITServer", "-Xjit:verbose={JITServer}"]
+# Create user
+RUN adduser --uid 10000 --gid 0 default
+USER 10000
 
+ENTRYPOINT ["/opt/sdk-ubi/jre/bin/java", "-XX:StartAsJITServer", "-Xjit:verbose"]
 EXPOSE 38400
