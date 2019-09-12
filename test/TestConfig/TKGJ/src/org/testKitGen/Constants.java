@@ -28,8 +28,6 @@ import java.util.stream.Collectors;
 import java.util.Arrays;
 
 public final class Constants {
-	// TODO: suffix for comparison
-	public static final String SUFFIX = ".tkgj";
 	public static final String PLAYLIST = "playlist.xml";
 	public static final String MODESXML = "resources/modes.xml";
 	public static final String OTTAWACSV = "resources/ottawa.csv";

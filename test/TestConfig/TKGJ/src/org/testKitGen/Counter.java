@@ -32,7 +32,7 @@ import java.util.Map;
 
 public class Counter {
 	private static Map<String, Integer> count = new HashMap<String, Integer>();
-	private static String countmk = Options.getProjectRootDir() + "/TestConfig/" + Constants.COUNTMK + Constants.SUFFIX;
+	private static String countmk = Options.getProjectRootDir() + "/TestConfig/" + Constants.COUNTMK;
 
 	private Counter(Options op) {
 	}
@@ -56,9 +56,8 @@ public class Counter {
 
 			f.close();
 
-			// TODO: uncomment after testing
-			// System.out.println();
-			// System.out.println("Generated " + countmk);
+			System.out.println();
+			System.out.println("Generated " + countmk);
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
