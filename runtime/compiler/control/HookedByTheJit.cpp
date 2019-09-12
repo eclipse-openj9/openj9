@@ -7080,7 +7080,15 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          {
          JITServerStatisticsThread *statsThreadObj = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject;
          // statsThreadObj is guaranteed to be non-null because JITServer will not start if statisticsThreadObject cannot be created
-         statsThreadObj->startStatisticsThread(javaVM); 
+         statsThreadObj->startStatisticsThread(javaVM);
+         // Verify that statistics thread was started
+         if (!statsThreadObj->getStatisticsThread())
+            {
+            j9tty_printf(PORTLIB, "Error: Unable to start the statistics thread\n");
+            return -1;
+            // If we decide to start even without a statistics thread, we must
+            // free `statsThreadObj` and set the corresponding jitConfig field to NULL
+            }
          }
 
       // Give the JIT a chance to do stuff after the VM is initialized
