@@ -134,7 +134,6 @@ extern J9_CFUNC void* j9gc_objaccess_staticReadAddress(J9VMThread *vmThread, J9C
 extern J9_CFUNC IDATA j9gc_objaccess_indexableReadI32(J9VMThread *vmThread, J9IndexableObject *srcObject, I_32 index, UDATA isVolatile);
 extern J9_CFUNC void allocateZeroedTLHPages(J9JavaVM *javaVM, UDATA flag);
 extern J9_CFUNC I_64 j9gc_objaccess_mixedObjectReadI64(J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile);
-extern J9_CFUNC UDATA j9mm_arraylet_identification(J9JavaVM *javaVM, UDATA *arrayletLeafSize, UDATA *offset, UDATA *width, UDATA *mask, UDATA *result);
 extern J9_CFUNC UDATA j9gc_objaccess_indexableReadU32(J9VMThread *vmThread, J9IndexableObject *srcObject, I_32 index, UDATA isVolatile);
 extern J9_CFUNC j9objectmonitor_t* j9gc_objaccess_getLockwordAddress(J9VMThread *vmThread, j9object_t object);
 extern J9_CFUNC j9object_t j9gc_objaccess_readObjectFromInternalVMSlot(J9VMThread *vmThread, j9object_t *srcSlot);

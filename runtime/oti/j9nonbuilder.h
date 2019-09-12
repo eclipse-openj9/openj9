@@ -4400,7 +4400,6 @@ typedef struct J9MemoryManagerFunctions {
 	jvmtiIterationControl  ( *j9mm_iterate_region_objects)(struct J9JavaVM *vm, J9PortLibrary *portLibrary, struct J9MM_IterateRegionDescriptor *region, UDATA flags, jvmtiIterationControl (*func)(struct J9JavaVM *vm, struct J9MM_IterateObjectDescriptor *objectDesc, void *userData), void *userData) ;
 	UDATA  ( *j9mm_find_region_for_pointer)(struct J9JavaVM* javaVM, void *pointer, struct J9MM_IterateRegionDescriptor *regionDesc) ;
 	jvmtiIterationControl  ( *j9mm_iterate_object_slots)(struct J9JavaVM *javaVM, J9PortLibrary *portLibrary, struct J9MM_IterateObjectDescriptor *object, UDATA flags, jvmtiIterationControl (*func)(struct J9JavaVM *javaVM, struct J9MM_IterateObjectDescriptor *objectDesc, struct J9MM_IterateObjectRefDescriptor *refDesc, void *userData), void *userData) ;
-	UDATA  ( *j9mm_arraylet_identification)(struct J9JavaVM *javaVM, UDATA *arrayletLeafSize, UDATA *offset, UDATA *width, UDATA *mask, UDATA *result) ;
 #if defined(J9VM_GC_REALTIME)
 	UDATA  ( *j9gc_objaccess_checkStringConstantsLive)(struct J9JavaVM *javaVM, j9object_t stringOne, j9object_t stringTwo) ;
 #endif /* J9VM_GC_REALTIME */
