@@ -459,6 +459,9 @@ enum INIT_STAGE {
 #define VMOPT_XXDEEP_SCAN "-XX:+GCDeepStructurePriorityScan"
 #define VMOPT_XXNODEEP_SCAN "-XX:-GCDeepStructurePriorityScan"
 
+#define VMOPT_XXCLASSRELATIONSHIPVERIFIER "-XX:+ClassRelationshipVerifier"
+#define VMOPT_XXNOCLASSRELATIONSHIPVERIFIER "-XX:-ClassRelationshipVerifier"
+
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 
 #define MAPOPT_XCOMP "-Xcomp"
