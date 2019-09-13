@@ -263,7 +263,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
       if (*hintFlags == 0) // If no prior hints exist, we can perform a "storeAttachedData" operation
          {
          uint32_t bytesToPersist = 0;
- 
+
          if (!SCfull)
             {
             *hintFlags |= newHint;
@@ -318,14 +318,14 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
             if (isFailedValidationHint)
                *hintCount = 10 * _initialHintSCount;
             }
-         else 
+         else
             {
             // hint already exists, but maybe we need to update the count
             if (isFailedValidationHint)
                {
                uint16_t oldCount = *hintCount;
                uint16_t newCount = std::min(oldCount * 10, TR_DEFAULT_INITIAL_COUNT);
-               
+
                if (newCount != oldCount)
                   {
                   updateHint = true;
@@ -723,7 +723,9 @@ bool
 TR_J9SharedCache::romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & chainPtr, UDATA *chainEnd)
    {
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-   UDATA romClassOffset = offsetInSharedCacheFromPointer(romClass);
+   UDATA romClassOffset;
+   if (!isPointerInSharedCache(romClass, &romClassOffset))
+      return false;
    LOG(9, { log("\t\tExamining romclass %p (%.*s) offset %d, comparing to %d\n", romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className), romClassOffset, *chainPtr); });
    if ((chainPtr > chainEnd) || (romClassOffset != *chainPtr++))
       return false;
