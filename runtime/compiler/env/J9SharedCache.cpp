@@ -716,7 +716,9 @@ bool
 TR_J9SharedCache::romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & chainPtr, UDATA *chainEnd)
    {
    J9UTF8 * className = J9ROMCLASS_CLASSNAME(romClass);
-   UDATA romClassOffset = offsetInSharedCacheFromPointer(romClass);
+   UDATA romClassOffset;
+   if (!isPointerInSharedCache(romClass, &romClassOffset))
+      return false;
    LOG(9, { log("\t\tExamining romclass %p (%.*s) offset %d, comparing to %d\n", romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className), romClassOffset, *chainPtr); });
    if ((chainPtr > chainEnd) || (romClassOffset != *chainPtr++))
       return false;
