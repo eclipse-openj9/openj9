@@ -133,7 +133,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _remoteCompilationMode(JITServer::NONE),
          _JITServerAddress("localhost"),
          _JITServerPort(38400),
-         _socketTimeoutMs(1000),
+         _socketTimeoutMs(2000),
          _clientUID(0),
 #endif /* defined(JITSERVER_SUPPORT) */
       OMR::PersistentInfoConnector(pm)
