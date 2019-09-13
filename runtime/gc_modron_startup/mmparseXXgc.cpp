@@ -664,6 +664,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 		
+#if defined(J9VM_GC_MODRON_SCAVENGER)
 		if(try_scan(&scan_start, "cacheListLockSplit=")) {
 			if(!scan_udata_helper(vm, &scan_start, &extensions->cacheListSplit, "cacheListLockSplit=")) {
 				returnValue = JNI_EINVAL;
@@ -676,6 +677,7 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			}
 			continue;
 		}
+#endif /* J9VM_GC_MODRON_SCAVENGER */
 
 		if (try_scan(&scan_start, "markingArraySplitMinimumAmount=")) {
 			UDATA arraySplitAmount = 0;
