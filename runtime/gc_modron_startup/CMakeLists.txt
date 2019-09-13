@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,12 @@ target_include_directories(j9modronstartup
 	PUBLIC
 		.
 )
+if(OMR_OS_ZOS)
+	target_include_directories(j9modronstartup
+		PRIVATE
+			"${omr_SOURCE_DIR}/port/zos390"
+	)
+endif()
 target_link_libraries(j9modronstartup
 	PRIVATE
 		j9vm_interface

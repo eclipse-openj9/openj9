@@ -42,6 +42,12 @@ target_include_directories(jvm_redirect
 		"${j9vm_SOURCE_DIR}/j9vm"
 		"${j9vm_BINARY_DIR}/j9vm"
 )
+if(OMR_OS_ZOS)
+	target_include_directories(jvm_redirect
+		PRIVATE
+			"${omr_SOURCE_DIR}/port/zos390"
+	)
+endif()
 set_target_properties(jvm_redirect PROPERTIES
 	LIBRARY_OUTPUT_NAME jvm
 	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
