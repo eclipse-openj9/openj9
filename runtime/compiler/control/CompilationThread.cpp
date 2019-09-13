@@ -44,7 +44,6 @@
 #include "j9protos.h"
 #include "vmaccess.h"
 #include "objhelp.h"
-#include "shcdatatypes.h"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Instruction.hpp"
 #include "compile/CompilationTypes.hpp"
@@ -97,6 +96,7 @@
 #include "runtime/JITClientSession.hpp"
 #endif /* defined(JITSERVER_SUPPORT) */
 #ifdef COMPRESS_AOT_DATA
+#include "shcdatatypes.h" // For CompiledMethodWrapper
 #ifdef J9ZOS390
 // inflateInit checks the version of the zlib with which data was deflated.
 // Reason we need to avoid conversion here is because, we are statically linking
@@ -1474,25 +1474,6 @@ TR::CompilationInfo::disableAOTCompilations()
       TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT, true);
       TR_DataCacheManager::getManager()->startupOver();
       }
-#endif
-
-
-#if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-
-// Note: this method must be called only when we know that AOT mode for shared classes is enabled !!
-bool TR::CompilationInfo::isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)
-   {
-   J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
-   return _sharedCacheReloRuntime.isRomClassForMethodInSharedCache(method, javaVM) ? true : false;
-   }
-
-TR_YesNoMaybe TR::CompilationInfo::isMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)
-   {
-   if (isRomClassForMethodInSharedCache(method, javaVM))
-      return TR_maybe;
-   else
-      return TR_no;
-   }
 #endif
 
 // Print the entire qualified name of the given method to the vlog
@@ -5578,7 +5559,6 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
    // Check to see if we find the method in the shared cache
    // If yes, raise the priority to be processed ahead of other methods
    //
-   J9JavaVM *javaVM = vmThread->javaVM;
 
    if (TR::Options::sharedClassCache() && !TR::Options::getAOTCmdLineOptions()->getOption(TR_NoLoadAOT) && details.isOrdinaryMethod())
       {
@@ -5590,14 +5570,14 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
          // other JVM added the method to the cache meanwhile. The net effect is that the said
          // method may have its count bumped up and compiled later
          //
-         if (javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method)))
+         if (vmThread->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method)))
             {
             TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
             if (
                static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
                || (
                   static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
-                  && _sharedCacheReloRuntime.validateAOTHeader(javaVM, fe, vmThread)
+                  && _sharedCacheReloRuntime.validateAOTHeader(fe, vmThread)
                   )
                )
                {
@@ -5979,7 +5959,7 @@ void *TR::CompilationInfo::compileOnApplicationThread(J9VMThread * vmThread, TR:
             static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
             || (
                static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
-               && _sharedCacheReloRuntime.validateAOTHeader(jitConfig->javaVM, fe, vmThread)
+               && _sharedCacheReloRuntime.validateAOTHeader(fe, vmThread)
                )
             )
             {
@@ -6455,7 +6435,6 @@ TR::CompilationInfoPerThreadBase::generatePerfToolEntry()
 /**
  * @brief TR::CompilationInfoPerThreadBase::preCompilationTasks
  * @param vmThread Pointer to the current J9VMThread (input)
- * @param javaVM Pointer to the J9JavaVM (input)
  * @param entry Pointer to the TR_MethodToBeCompiled entry (input)
  * @param method Pointer to the J9Method (input)
  * @param aotCachedMethod Pointer to a pointer to the AOT code to be relocated (if it exists) (output)
@@ -6470,7 +6449,6 @@ TR::CompilationInfoPerThreadBase::generatePerfToolEntry()
  */
 void
 TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
-                                                      J9JavaVM *javaVM,
                                                       TR_MethodToBeCompiled *entry,
                                                       J9Method *method,
                                                       const void **aotCachedMethod,
@@ -6519,7 +6497,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          if (canRelocateMethod && !entry->_oldStartPC)
             {
             UDATA flags = 0;
-            *aotCachedMethod = javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method), &flags);
+            *aotCachedMethod = vmThread->javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method), &flags);
             if (!(flags & J9SHR_AOT_METHOD_FLAG_INVALIDATED))
                {
 #ifdef COMPRESS_AOT_DATA
@@ -6644,7 +6622,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          !TR::CompilationInfo::isCompiled(method) &&
          !entry->isDLTCompile() &&
          !entry->_doNotUseAotCodeFromSharedCache &&
-         reloRuntime->isRomClassForMethodInSharedCache(method, javaVM) &&
+         TR_J9VMBase::get(_jitConfig, vmThread)->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass) &&
          (!TR::Options::getAOTCmdLineOptions()->getOption(TR_AOTCompileOnlyFromBootstrap) ||
            TR_J9VMBase::get(jitConfig, vmThread)->isClassLibraryMethod((TR_OpaqueMethodBlock *)method), true);
 
@@ -7084,7 +7062,6 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
       setTimeWhenCompStarted(j9time_usec_clock());
       }
 
-   J9JavaVM *javaVM = vmThread->javaVM;
    TR_MethodMetaData *metaData = NULL;
    void *startPC = NULL;
    const void *aotCachedMethod = NULL;
@@ -7105,7 +7082,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
 
    try
       {
-      TR::RawAllocator rawAllocator(javaVM);
+      TR::RawAllocator rawAllocator(vmThread->javaVM);
       J9::SystemSegmentProvider defaultSegmentProvider(
          1 << 16,
          (0 != scratchSegmentProvider.getPreferredSegmentSize()) ? scratchSegmentProvider.getPreferredSegmentSize()
@@ -7125,7 +7102,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
       TR::Region dispatchRegion(regionSegmentProvider, rawAllocator);
       TR_Memory trMemory(*_compInfo.persistentMemory(), dispatchRegion);
 
-      preCompilationTasks(vmThread, javaVM, entry,
+      preCompilationTasks(vmThread, entry,
                           method, &aotCachedMethod, trMemory,
                           canDoRelocatableCompile, eligibleForRelocatableCompile,
                           reloRuntime);
@@ -9363,7 +9340,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                      // If validation has been performed, then a header already existed
                      // or one was already been created in this JVM
                      TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
-                     safeToStore = entry->_compInfoPT->reloRuntime()->storeAOTHeader(jitConfig->javaVM, fe, vmThread);
+                     safeToStore = entry->_compInfoPT->reloRuntime()->storeAOTHeader(fe, vmThread);
                      }
                   else
                      {
@@ -9387,7 +9364,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                   codeStart = (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC;
                   codeSize  = aotMethodHeaderEntry->compileMethodCodeSize;
 
-                  aotMethodHeaderEntry->compileFirstClassLocation = (UDATA)jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->romclassStartAddress;
+                  aotMethodHeaderEntry->unused = TR::Compiler->host.is64Bit() ? 0xDEADC0DEDEADC0DEULL : 0xDEADC0DE;
 
                   if (safeToStore)
                      {
@@ -12260,7 +12237,7 @@ TR::CompilationInfo::addOutOfProcessMethodToBeCompiled(JITServer::ServerStream *
       else
          {
          int32_t numCompThreadsSuspended = getNumUsableCompilationThreads() - getNumCompThreadsActive();
-         TR_ASSERT(numCompThreadsSuspended >= 0, "Accounting error for suspendedCompThreads usable=%d active=%d\n", 
+         TR_ASSERT(numCompThreadsSuspended >= 0, "Accounting error for suspendedCompThreads usable=%d active=%d\n",
                    getNumUsableCompilationThreads(), getNumCompThreadsActive());
          // Cannot activate if there is nothing to activate
          activate = (numCompThreadsSuspended <= 0) ? TR_no : TR_yes;

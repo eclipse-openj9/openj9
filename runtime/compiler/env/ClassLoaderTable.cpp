@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,16 +83,11 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *classLoaderPo
 
    if (!info)
       {
-      //fprintf(stderr, "PCLT:associating loader %p with first loaded class %p\n", classLoaderPointer, clazz);
       void *classChainPointer = (void *) sharedCache()->rememberClass(clazz);
-      //fprintf(stderr,"\tclass chain pointer %p\n", classChainPointer);
       if (classChainPointer)
          {
-         void *classChainOffsetInSharedCache=NULL;
-         bool inCache = sharedCache()->isPointerInSharedCache(classChainPointer, classChainOffsetInSharedCache);
+         bool inCache = sharedCache()->isPointerInSharedCache(classChainPointer);
          TR_ASSERT(inCache, "rememberClass should only return class chain pointers that are in the shared class cache");
-
-         //fprintf(stderr,"PCLT:\tclass chain pointer %p, offset %p\n", classChainPointer, classChainOffsetInSharedCache);
 
          info = new (trPersistentMemory()) TR_ClassLoaderInfo(classLoaderPointer, classChainPointer);
          if (!info)
@@ -105,7 +100,6 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *classLoaderPo
 
          info->_next = _loaderTable[index];
          _loaderTable[index] = info;
-         //fprintf(stderr,"PCLT:\tinserted into loader table at index %d\n", index);
 
          // now index by class chain
          index = hashClassChain(classChainPointer);
@@ -115,13 +109,11 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *classLoaderPo
 
          if (info)
             {
-            //fprintf(stderr,"PCLT:\tanother loader %p has the same first loaded class (chain %p)!\n", info->_classLoaderPointer, info->_classChainPointer);
             // getting here means there are two class loaders with identical first loaded class
             // current heuristic doesn't work in this scenario
             // TODO some diagnostic output here
             // we have added this loader to _loaderTable, which has nice side benefit that we won't keep trying it, so
-            //    leave it there
-            //fprintf(stderr,"WARNING: multiple class loaders have same identifying class %p\n", clazz);
+            // leave it there
             return;
             }
 
@@ -134,14 +126,10 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *classLoaderPo
             }
          info->_next = _classChainTable[index];
          _classChainTable[index] = info;
-         //fprintf(stderr,"PCLT:\tinserted into class chain table at index %d\n", index);
          }
       else
          {
-         //fprintf(stderr,"PCLT:\tclass can't be stored in cache\n");
          }
-
-      //fprintf(stderr,"PCLT:num class loaders now %d\n", ++_numClassLoaders);
       }
    }
 

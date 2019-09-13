@@ -1121,10 +1121,9 @@ static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *m, TR::Compilation 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM)) && !defined(SMALL)
    if (TR::Options::sharedClassCache())
       {
-      TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
       J9Method *method = (J9Method *) m->getPersistentIdentifier();
 
-      if (!compInfo->isRomClassForMethodInSharedCache(method, jitConfig->javaVM))
+      if (!comp->fej9()->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass))
          {
 #if defined(J9ZOS390)
           // Do not change the counts on zos at the moment since the shared cache capacity is higher on this platform
@@ -1712,7 +1711,7 @@ bool storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *co
 
    if (!definingClass)
       {
-      definingClass = (J9Class *) reloRuntime->getClassFromCP(fej9->vmThread(), fej9->_jitConfig->javaVM, constantPool, cpIndex, isStatic);
+      definingClass = (J9Class *) reloRuntime->getClassFromCP(fej9->vmThread(), constantPool, cpIndex, isStatic);
       traceMsg(comp, "\tdefiningClass recomputed from cp as %p\n", definingClass);
       }
 
@@ -1836,7 +1835,7 @@ TR_ResolvedRelocatableJ9Method::fieldAttributes(TR::Compilation * comp, int32_t 
                else
                   reloRuntime = compInfo->getCompInfoForThread(fej9->vmThread())->reloRuntime();
 
-               TR_OpaqueClassBlock *clazz = reloRuntime->getClassFromCP(fej9->vmThread(), fej9->_jitConfig->javaVM, constantPool, cpIndex, false);
+               TR_OpaqueClassBlock *clazz = reloRuntime->getClassFromCP(fej9->vmThread(), constantPool, cpIndex, false);
 
                fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(clazz, constantPool, cpIndex);
                }
@@ -1961,7 +1960,7 @@ TR_ResolvedRelocatableJ9Method::staticAttributes(TR::Compilation * comp,
          else
             reloRuntime = compInfo->getCompInfoForThread(fej9->vmThread())->reloRuntime();
 
-         TR_OpaqueClassBlock *clazz = reloRuntime->getClassFromCP(fej9->vmThread(), fej9->_jitConfig->javaVM, constantPool, cpIndex, true);
+         TR_OpaqueClassBlock *clazz = reloRuntime->getClassFromCP(fej9->vmThread(), constantPool, cpIndex, true);
 
          fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(clazz, constantPool, cpIndex, true);
          }
@@ -1983,9 +1982,7 @@ TR_ResolvedRelocatableJ9Method::staticAttributes(TR::Compilation * comp,
    if (offset && fieldInfoCanBeUsed &&
       (!(_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) ||
       comp->ilGenRequest().details().isMethodHandleThunk() || // cmvc 195373
-      !performTransformation(comp, "Setting as unresolved static attributes cpIndex=%d\n",cpIndex)) /*&&
-      compInfo->isRomClassForMethodInSharedCache(method, jitConfig->javaVM) */  /* &&
-      fieldIsFromLocalClass((void *)_methodCookie, cpIndex)*/)
+      !performTransformation(comp, "Setting as unresolved static attributes cpIndex=%d\n",cpIndex)))
       {
       theFieldIsFromLocalClass = true;
       ltype = fieldShape->modifiers;
@@ -2198,7 +2195,8 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
          isSystemClassLoader = ((void*)_fe->vmThread()->javaVM->systemClassLoader->classLoaderObject ==  (void*)_fe->getClassLoader(clazzOfInlinedMethod));
          }
 
-      if (TR::CompilationInfo::get(_fe->_jitConfig)->isRomClassForMethodInSharedCache(j9method, _fe->_jitConfig->javaVM))
+      bool methodInSCC = _fe->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(j9method)->romClass);
+      if (methodInSCC)
          {
          bool sameLoaders = false;
          TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
@@ -2230,7 +2228,7 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
             }
          }
       else if (aotStats &&
-               !TR::CompilationInfo::get(_fe->_jitConfig)->isRomClassForMethodInSharedCache(j9method, _fe->_jitConfig->javaVM))
+               !methodInSCC)
          {
          aotStats->numMethodROMMethodNotInSC++;
          }

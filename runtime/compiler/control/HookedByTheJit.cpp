@@ -467,7 +467,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
          // been created before options were processed.
          TR_J9SharedCache *sc = TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM)->sharedCache();
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-         if (compInfo->reloRuntime()->isRomClassForMethodInSharedCache(method, jitConfig->javaVM))
+         if (TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM)->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass))
             {
             PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
             I_64 sharedQueryTime = 0;
@@ -629,7 +629,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       int32_t sigLen = sprintf(buf, "%.*s.%.*s%.*s", className->length, utf8Data(className), name->length, utf8Data(name), signature->length, utf8Data(signature));
       printf("Initial: Signature %s Count %d isLoopy %d isAOT %d is in SCC %d SCCContainsProfilingInfo %d \n",buf,TR::CompilationInfo::getInvocationCount(method),J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod),
             TR::Options::sharedClassCache() ? jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod) : 0,
-            TR::Options::sharedClassCache() ? compInfo->isRomClassForMethodInSharedCache(method, jitConfig->javaVM) : 0,containsInfo) ; fflush(stdout);
+            TR::Options::sharedClassCache() ? TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM)->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass) : 0,containsInfo) ; fflush(stdout);
       }
    }
 
@@ -4031,7 +4031,14 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    // verify and remove  FIXME
    cl->classDepthAndFlags &= ~J9AccClassHasBeenOverridden;
 
-   J9ClassLoader *classLoader = cl->classLoader;
+   // For regular classes, cl->classLoader points to the correct class loader by the time we enter this hook.
+   // For anonymous classes however, it points to the anonymous class loader and not the correct class loader.
+   // Once the class is fully loaded the classLoader member will be updated to point to the correct class loader,
+   // which is the anonymous class's host class's class loader, but that doesn't do us any good in this hook.
+   // We need the correct class loader right now, so we grab the host class's class loader instead.
+   // For regular classes, cl->hostClass points back to the class itself, so by doing this we get the correct
+   // class loader for both regular and anonymous classes without having to check if this is an anonymous class.
+   J9ClassLoader *classLoader = cl->hostClass->classLoader;
 
    bool p = TR::Options::getVerboseOption(TR_VerboseHookDetailsClassLoading);
    char * className = NULL;

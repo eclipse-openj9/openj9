@@ -220,7 +220,7 @@ TR::SymbolValidationManager::validateWellKnownClasses(const uintptrj_t *wellKnow
    int classCount = static_cast<int>(wellKnownClassChainOffsets[0]);
    for (int i = 1; i <= classCount; i++)
       {
-      void *classChainOffset = reinterpret_cast<void*>(wellKnownClassChainOffsets[i]);
+      uintptr_t classChainOffset = wellKnownClassChainOffsets[i];
       uintptrj_t *classChain = reinterpret_cast<uintptrj_t*>(
          _fej9->sharedCache()->pointerFromOffsetInSharedCache(classChainOffset));
       J9ROMClass *romClass = _fej9->sharedCache()->startingROMClassOfClassChain(classChain);
@@ -1052,7 +1052,7 @@ TR::SymbolValidationManager::validateDefiningClassFromCPRecord(uint16_t classID,
 
    J9Class *beholder = getJ9ClassFromID(beholderID);
    J9ConstantPool *beholderCP = J9_CP_FROM_CLASS(beholder);
-   return validateSymbol(classID, reloRuntime->getClassFromCP(_vmThread, _fej9->_jitConfig->javaVM, beholderCP, cpIndex, isStatic));
+   return validateSymbol(classID, reloRuntime->getClassFromCP(_vmThread, beholderCP, cpIndex, isStatic));
    }
 
 bool

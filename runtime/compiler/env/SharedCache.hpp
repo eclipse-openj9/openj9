@@ -41,10 +41,10 @@ public:
    virtual uintptrj_t *rememberClass(TR_OpaqueClassBlock *clazz) { return 0; }
    virtual bool classMatchesCachedVersion(TR_OpaqueClassBlock *clazz, uintptrj_t *chainData=NULL) { return false; }
 
-   virtual void *pointerFromOffsetInSharedCache(void *offset) { return (void *) NULL; }
-   virtual void *offsetInSharedCacheFromPointer(void *ptr) { return (void *) NULL; }
+   virtual void *pointerFromOffsetInSharedCache(uintptr_t offset) { return NULL; }
+   virtual uintptr_t offsetInSharedCacheFromPointer(void *ptr) { return 0; }
 
-   virtual bool isPointerInSharedCache(void *ptr, void * & cacheOffset) { return false; }
+   virtual bool isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset = NULL) { return false; }
 
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *cinaData, void *loader) { return NULL; }
 
