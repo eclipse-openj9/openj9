@@ -92,6 +92,10 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Instruction *generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *dstReg, TR::Register *srcReg, TR::Instruction *preced=NULL);
+   static TR::Instruction *generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::Instruction *preced=NULL);
+
    };
 
 }

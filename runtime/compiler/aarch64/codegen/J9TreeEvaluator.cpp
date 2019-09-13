@@ -753,3 +753,31 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
    resultReg = NULL;
    return false;
    }
+
+TR::Instruction *J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *dstReg, TR::Register *srcReg, TR::Instruction *preced)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   uintptrj_t mask = TR::Compiler->om.maskOfObjectVftField();
+   bool isCompressed = TR::Compiler->om.compressObjectReferences();
+
+   if (~mask == 0)
+      {
+      // no mask instruction required
+      return preced;
+      }
+   else if (~mask == 0xFF)
+      {
+      TR::InstOpCode::Mnemonic op = isCompressed ? TR::InstOpCode::andimmw : TR::InstOpCode::andimmx;
+      uint32_t imm = isCompressed ? 0x617 : 0xE37; // encoding for ~0xFF
+      return generateLogicalImmInstruction(cg, op, node, dstReg, srcReg, !isCompressed, imm, preced);
+      }
+   else
+      {
+      TR_UNIMPLEMENTED();
+      }
+   }
+
+TR::Instruction *J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::Instruction *preced)
+   {
+   return J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(cg, node, reg, reg, preced);
+   }
