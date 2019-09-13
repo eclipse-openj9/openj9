@@ -248,25 +248,6 @@ private:
    void         genJITIntrinsicsEnabled();
    void         genIsORBDeepCopyAvailable();
 
-   TR::SymbolReference *getVectorElementSymRef();
-   TR::Node            *genVectorUnaryOp(TR::Node *node, TR::ILOpCodes op1, TR::DataType dt1, TR::ILOpCodes op2, TR::DataType dt2);
-   TR::Node            *genVectorBinaryOp(TR::Node *node, TR::ILOpCodes op1, TR::DataType dt1, TR::ILOpCodes op2, TR::DataType dt2);
-   TR::Node            *genVectorBinaryOpNoTrg(TR::Node *node, TR::ILOpCodes op);
-   TR::Node            *genVectorTernaryOp(TR::Node *node, TR::ILOpCodes op);
-   TR::Node            *genVectorCompareBranchOp(TR::Node *node, TR::ILOpCodes op);
-   TR::Node            *genVectorLoadOp(TR::Node *node, TR::ILOpCodes loadOp, TR::ILOpCodes storeOp);
-   TR::Node            *genVectorStoreOp(TR::Node *node, TR::ILOpCodes loadOp, TR::ILOpCodes storeOp);
-   TR::Node            *handleVectorIntrinsicCall(TR::Node *node, TR::MethodSymbol *symbol);
-
-   TR::Node            *genVectorSplatsOp(TR::Node *node, TR::ILOpCodes loadOp, TR::DataType vectorType, TR::DataType scalarType);
-   TR::Node            *genVectorStore(TR::Node *node, TR::DataType dt, TR::DataType dt2);
-   TR::Node            *genVectorGetElementOp(TR::Node *node, TR::ILOpCodes loadOp);
-   TR::Node            *genVectorSetElementOp(TR::Node *node, TR::ILOpCodes loadOp);
-   TR::Node            *genVectorAddReduceDouble(TR::Node *node);
-   TR::Node            *genVectorLoadWithStrideDouble(TR::Node *node);
-   TR::Node            *genVectorLogDouble(TR::Node *node);
-   TR::Node            *genVectorAddress(TR::Node *node, TR::ILOpCodes op);
-
    TR::Node     *genNewInstanceImplCall(TR::Node *classNode);
    //TR::Node *  transformNewInstanceImplCall(TR::TreeTop *, TR::Node *);
 
