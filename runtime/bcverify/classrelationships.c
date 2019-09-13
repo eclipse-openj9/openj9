@@ -77,28 +77,53 @@ j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, 
 		}
 	}
 
-    /* Add a parentNode to the child's linked list of parents */
-    parentNode = (J9ClassRelationshipNode *) j9mem_allocate_memory(sizeof(J9ClassRelationshipNode), J9MEM_CATEGORY_CLASSES);
-
-    if (NULL != parentNode) {
-        memset(parentNode, 0, sizeof(J9ClassRelationshipNode));
-        parentNode->className = (U_8 *) j9mem_allocate_memory(parentNameLength + 1, J9MEM_CATEGORY_CLASSES);
-
-        if (NULL != parentNode->className) {
-            memcpy(parentNode->className, parentName, parentNameLength);
-            parentNode->className[parentNameLength] = '\0';
-            parentNode->classNameLength = parentNameLength;
-            J9_LINKED_LIST_ADD_LAST(childEntry->root, parentNode);
-            Trc_RTV_recordClassRelationship_AllocatedEntry(vmThread, childEntry->classNameLength, childEntry->className, childEntry, parentNode->classNameLength, parentNode->className, parentNode);
-        } else {
-            Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
-            j9mem_free_memory(parentNode);
-            goto recordDone;
-        }
-    } else {
-        Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
-        goto recordDone;
-    }
+	/* Add a parentNode to the child's linked list of parents */
+	if (J9_LINKED_LIST_IS_EMPTY(childEntry->root)) {
+		parentNode = allocateParentNode(vmThread, parentName, parentNameLength);
+		if (parentNode == NULL) {
+			/* Allocation failure */
+			Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
+			goto recordDone;
+		}
+		Trc_RTV_recordClassRelationship_AllocatedEntry(vmThread, childEntry->classNameLength, childEntry->className, childEntry, parentNode->classNameLength, parentNode->className, parentNode);
+		J9_LINKED_LIST_ADD_LAST(childEntry->root, parentNode);
+	} else {
+		BOOLEAN alreadyPresent = FALSE;
+		BOOLEAN addBefore = FALSE;
+		J9ClassRelationshipNode *walk = J9_LINKED_LIST_START_DO(childEntry->root);
+		/**
+		 * Keep the list of parent nodes ordered by class name length so it's a faster traversal
+		 * and duplicates can be avoided
+		 */
+		while (NULL != walk) {
+			if (walk->classNameLength > parentNameLength) {
+				addBefore = TRUE;
+				break;
+			} else if (J9UTF8_DATA_EQUALS(walk->className, walk->classNameLength, parentName, parentNameLength)) {
+				/* Already present, skip */
+				alreadyPresent = TRUE;
+				break;
+			} else {
+				/* walk->className is shorter or equal length but different data; keep looking */
+			}
+			walk = J9_LINKED_LIST_NEXT_DO(childEntry->root, walk);
+		}
+		if (!alreadyPresent) {
+			parentNode = allocateParentNode(vmThread, parentName, parentNameLength);
+			if (parentNode == NULL) {
+				/* Allocation failure */
+				Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
+				goto recordDone;
+			}
+			Trc_RTV_recordClassRelationship_AllocatedEntry(vmThread, childEntry->classNameLength, childEntry->className, childEntry, parentNode->classNameLength, parentNode->className, parentNode); 
+			if (addBefore) {
+				J9_LINKED_LIST_ADD_BEFORE(childEntry->root, walk, parentNode);
+			} else {
+				/* If got through the whole list of shorter or equal length names, add it here */
+				J9_LINKED_LIST_ADD_LAST(childEntry->root, parentNode);
+			}
+		}
+	}
 
 	recordResult = TRUE;
 	*reasonCode = 0;
@@ -106,6 +131,33 @@ j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, 
 recordDone:
 	Trc_RTV_recordClassRelationship_Exit(vmThread, recordResult);
 	return recordResult;
+}
+
+/**
+ * Add a parentNode to a child entry's linked list of parents.
+ *
+ * Return the allocated J9ClassRelationshipNode.
+ */
+static VMINLINE J9ClassRelationshipNode *
+allocateParentNode(J9VMThread *vmThread, U_8 *className, UDATA classNameLength)
+{
+	PORT_ACCESS_FROM_VMC(vmThread);
+	J9ClassRelationshipNode *parentNode = (J9ClassRelationshipNode *) j9mem_allocate_memory(sizeof(J9ClassRelationshipNode), J9MEM_CATEGORY_CLASSES);
+
+	if (NULL != parentNode) {
+		parentNode->className = (U_8 *) j9mem_allocate_memory(classNameLength + 1, J9MEM_CATEGORY_CLASSES);
+
+		if (NULL != parentNode->className) {
+			memcpy(parentNode->className, className, classNameLength);
+			parentNode->className[classNameLength] = '\0';
+			parentNode->classNameLength = classNameLength;
+		} else {
+			j9mem_free_memory(parentNode);
+			parentNode = NULL;
+		}
+	}
+
+	return parentNode;
 }
 
 /**
