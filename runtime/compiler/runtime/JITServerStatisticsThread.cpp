@@ -153,8 +153,8 @@ JITServerStatisticsThread::startStatisticsThread(J9JavaVM *javaVM)
                                                                &statisticsThreadProc,
                                                                javaVM->jitConfig,
                                                                J9THREAD_CATEGORY_SYSTEM_JIT_THREAD))
-         { // cannot create the statistics thread
-         j9tty_printf(PORTLIB, "Warning: Unable to create JITServer Statistics Thread.\n");
+         { 
+         // cannot create the statistics thread
          TR::Monitor::destroy(_statisticsThreadMonitor);
          _statisticsThreadMonitor = NULL;
          }
@@ -166,14 +166,10 @@ JITServerStatisticsThread::startStatisticsThread(J9JavaVM *javaVM)
          _statisticsThreadMonitor->exit();
          if (!getStatisticsThread())
             {
-            j9tty_printf(PORTLIB, "Warning: JITServer Statistics Thread attach failed.\n");
+            TR::Monitor::destroy(_statisticsThreadMonitor);
+            _statisticsThreadMonitor = NULL;
             }
          }
-      }
-   else
-      {
-      // JITServer can function without the statistics thread
-      j9tty_printf(PORTLIB, "Warning: Unable to create JITServer Statistics Monitor.\n");
       }
    }
 
