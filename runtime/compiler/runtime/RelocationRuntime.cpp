@@ -705,49 +705,28 @@ TR_RelocationRuntime::aotMethodHeaderVersionsMatch()
 
 
 bool
-TR_RelocationRuntime::storeAOTHeader(J9JavaVM *pjavaVM, TR_FrontEnd *fe, J9VMThread *curThread)
+TR_RelocationRuntime::storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)
    {
    TR_ASSERT(0, "Error: storeAOTHeader not supported in this relocation runtime");
    return false;
    }
 
 TR_AOTHeader *
-TR_RelocationRuntime::createAOTHeader(J9JavaVM *pjavaVM, TR_FrontEnd *fe)
+TR_RelocationRuntime::createAOTHeader(TR_FrontEnd *fe)
    {
    TR_ASSERT(0, "Error: createAOTHeader not supported in this relocation runtime");
    return NULL;
    }
 
 bool
-TR_RelocationRuntime::validateAOTHeader(J9JavaVM *pjavaVM, TR_FrontEnd *fe, J9VMThread *curThread)
+TR_RelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)
    {
    TR_ASSERT(0, "Error: validateAOTHeader not supported in this relocation runtime");
    return false;
    }
 
-void *
-TR_RelocationRuntime::isROMClassInSharedCaches(UDATA romClassValue, J9JavaVM *pjavaVM)
-   {
-   TR_ASSERT(0, "Error: isROMClassInSharedCaches not supported in this relocation runtime");
-   return NULL;
-   }
-
-bool
-TR_RelocationRuntime::isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *pjavaVM)
-   {
-   TR_ASSERT(0, "Error: isRomClassForMethodInSharedCache not supported in this relocation runtime");
-   return false;
-   }
-
-TR_YesNoMaybe
-TR_RelocationRuntime::isMethodInSharedCache(J9Method *method, J9JavaVM *pjavaVM)
-   {
-   TR_ASSERT(0, "Error: isMethodInSharedCache not supported in this relocation runtime");
-   return TR_no;
-   }
-
 TR_OpaqueClassBlock *
-TR_RelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9JavaVM *pjavaVM, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)
+TR_RelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)
    {
    TR_ASSERT(0, "Error: getClassFromCP not supported in this relocation runtime");
    return NULL;
@@ -851,8 +830,6 @@ TR_SharedCacheRelocationRuntime::allocateSpaceInDataCache(uintptr_t metaDataSize
 void
 TR_SharedCacheRelocationRuntime::initializeAotRuntimeInfo()
    {
-   _baseAddress = (U_8 *) javaVM()->sharedClassConfig->cacheDescriptorList->romclassStartAddress;
-   _compileFirstClassLocation = _aotMethodHeaderEntry->compileFirstClassLocation;
    if (!useCompiledCopy())
       _classReloAmount = 1;
    }
@@ -972,7 +949,7 @@ TR_SharedCacheRelocationRuntime::getCurrentLockwordOptionHashValue(J9JavaVM *vm)
 // This function currently does not rely on the object beyond the v-table override (compiled as static without any problems).
 // If this changes, we will need to look further into whether its users risk concurrent access.
 bool
-TR_SharedCacheRelocationRuntime::validateAOTHeader(J9JavaVM *pjavaVM, TR_FrontEnd *fe, J9VMThread *curThread)
+TR_SharedCacheRelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
 
@@ -1023,7 +1000,7 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(J9JavaVM *pjavaVM, TR_FrontEn
          incompatibleCache(J9NLS_RELOCATABLE_CODE_WRONG_GC_POLICY,
                            "AOT header validation failed: incompatible gc write barrier type");
          }
-      else if (hdrInCache->lockwordOptionHashValue != getCurrentLockwordOptionHashValue(pjavaVM))
+      else if (hdrInCache->lockwordOptionHashValue != getCurrentLockwordOptionHashValue(javaVM()))
          {
          incompatibleCache(J9NLS_RELOCATABLE_CODE_PROCESSING_COMPATIBILITY_FAILURE,
                            "AOT header validation failed: incompatible lockword options");
@@ -1066,7 +1043,7 @@ TR_SharedCacheRelocationRuntime::validateAOTHeader(J9JavaVM *pjavaVM, TR_FrontEn
    }
 
 TR_AOTHeader *
-TR_SharedCacheRelocationRuntime::createAOTHeader(J9JavaVM *pjavaVM, TR_FrontEnd *fe)
+TR_SharedCacheRelocationRuntime::createAOTHeader(TR_FrontEnd *fe)
    {
    PORT_ACCESS_FROM_JAVAVM(javaVM());
 
@@ -1087,7 +1064,7 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(J9JavaVM *pjavaVM, TR_FrontEnd 
 
       aotHeader->processorSignature = TR::Compiler->target.cpu.id();
       aotHeader->gcPolicyFlag = javaVM()->memoryManagerFunctions->j9gc_modron_getWriteBarrierType(javaVM());
-      aotHeader->lockwordOptionHashValue = getCurrentLockwordOptionHashValue(pjavaVM);
+      aotHeader->lockwordOptionHashValue = getCurrentLockwordOptionHashValue(javaVM());
 #if defined(OMR_GC_COMPRESSED_POINTERS)
       aotHeader->compressedPointerShift = javaVM()->memoryManagerFunctions->j9gc_objaccess_compressedPointersShift(javaVM()->internalVMFunctions->currentVMThread(javaVM()));
 #else
@@ -1107,10 +1084,10 @@ TR_SharedCacheRelocationRuntime::createAOTHeader(J9JavaVM *pjavaVM, TR_FrontEnd 
    }
 
 bool
-TR_SharedCacheRelocationRuntime::storeAOTHeader(J9JavaVM *pjavaVM, TR_FrontEnd *fe, J9VMThread *curThread)
+TR_SharedCacheRelocationRuntime::storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)
    {
 
-   TR_AOTHeader *aotHeader = createAOTHeader(javaVM(), fe);
+   TR_AOTHeader *aotHeader = createAOTHeader(fe);
    if (!aotHeader)
       {
       PORT_ACCESS_FROM_JAVAVM(javaVM());
@@ -1136,7 +1113,7 @@ TR_SharedCacheRelocationRuntime::storeAOTHeader(J9JavaVM *pjavaVM, TR_FrontEnd *
       {
       // If a header already exists, the old one is returned
       // Thus, we must check the validity of the header
-      return validateAOTHeader(javaVM(), fe, curThread);
+      return validateAOTHeader(fe, curThread);
       }
    else
       {
@@ -1150,67 +1127,8 @@ TR_SharedCacheRelocationRuntime::storeAOTHeader(J9JavaVM *pjavaVM, TR_FrontEnd *
       }
    }
 
-
-void *
-TR_SharedCacheRelocationRuntime::isROMClassInSharedCaches(UDATA romClassValue, J9JavaVM *pjavaVM)
-   {
-   j9thread_monitor_enter(javaVM()->sharedClassConfig->configMonitor);
-   J9SharedClassCacheDescriptor *currentCacheDescriptor = javaVM()->sharedClassConfig->cacheDescriptorList;
-   bool matchFound = false;
-
-   while (!matchFound && currentCacheDescriptor)
-      {
-      //printf("currentCacheDescriptor: %p, currentCacheDescriptor->cacheStartAddress: %p, cacheSizeBytes: %x, romClassStartAddress: %p, romClassValue :%p, descriptor->next: %p\n", currentCacheDescriptor, currentCacheDescriptor->cacheStartAddress, currentCacheDescriptor->cacheSizeBytes, currentCacheDescriptor->romclassStartAddress, romClassValue, currentCacheDescriptor->next);
-      //if (((romClassValue < (UDATA)currentCacheDescriptor->romclassStartAddress + currentCacheDescriptor->cacheSizeBytes)&& (romClassValue >= (UDATA)currentCacheDescriptor->romclassStartAddress))) // Temporarily use romclassStartAddress because cachStartAddress is NULL for new cache
-      if (((romClassValue < (UDATA)currentCacheDescriptor->metadataStartAddress)&& (romClassValue >= (UDATA)currentCacheDescriptor->romclassStartAddress)))
-         {
-         matchFound = true;
-         break;
-         }
-      if (currentCacheDescriptor->next == javaVM()->sharedClassConfig->cacheDescriptorList)
-         break; // Since list is circular, break if we are about to loop back
-      currentCacheDescriptor = currentCacheDescriptor->next;
-      }
-   j9thread_monitor_exit(javaVM()->sharedClassConfig->configMonitor);
-   if (matchFound)
-      {
-      return (void *)currentCacheDescriptor;
-      }
-   else
-      {
-      return NULL;
-      }
-   }
-
-bool
-TR_SharedCacheRelocationRuntime::isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *pjavaVM)
-   {
-#if 1
-   J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
-#if 0
-   j9thread_monitor_enter(javaVM()->sharedClassConfig->configMonitor);
-   UDATA cacheEnd = (UDATA)javaVM()->sharedClassConfig->cacheDescriptorList->cacheStartAddress + javaVM()->sharedClassConfig->cacheDescriptorList->cacheSizeBytes;
-   bool isRomClassForMethodInSharedCache = (((UDATA)romClass >= (UDATA)javaVM()->sharedClassConfig->cacheDescriptorList->cacheStartAddress) && ((UDATA)romClass <= cacheEnd));
-   j9thread_monitor_exit(javaVM()->sharedClassConfig->configMonitor);
-   return isRomClassForMethodInSharedCache;
-#else
-   bool isRomClassForMethodInSharedCache = isROMClassInSharedCaches((UDATA)romClass, javaVM()) ? true : false;
-   return isRomClassForMethodInSharedCache;
-#endif
-#endif
-   }
-
-TR_YesNoMaybe
-TR_SharedCacheRelocationRuntime::isMethodInSharedCache(J9Method *method, J9JavaVM *pjavaVM)
-   {
-   if (isRomClassForMethodInSharedCache(method, javaVM()))
-      return TR_maybe;
-   else
-      return TR_no;
-   }
-
 TR_OpaqueClassBlock *
-TR_SharedCacheRelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9JavaVM *pjavaVM, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)
+TR_SharedCacheRelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)
    {
    J9JITConfig *jitConfig = vmThread->javaVM->jitConfig;
    TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);

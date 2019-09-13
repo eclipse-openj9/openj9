@@ -161,7 +161,6 @@ class CompilationInfoPerThreadBase
                  TR_ResolvedMethod *compilee, TR_J9VMBase &, TR_OptimizationPlan*, TR::SegmentAllocator const &scratchSegmentProvider);
 
    void preCompilationTasks(J9VMThread * vmThread,
-                            J9JavaVM *javaVM,
                             TR_MethodToBeCompiled *entry,
                             J9Method *method,
                             const void **aotCachedMethod,
