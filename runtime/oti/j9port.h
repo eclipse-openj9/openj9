@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -643,6 +643,43 @@ typedef struct J9ProcessorDesc {
 #define J9PORT_X86_FEATURE_AVX          32 + 28 /* Processor supports the AVX instruction extensions. */
 #define J9PORT_X86_FEATURE_F16C         32 + 29 /* 16-bit floating-point conversion instructions. */
 #define J9PORT_X86_FEATURE_RDRAND       32 + 30 /* Processor supports RDRAND instruction. */
+
+
+/* INTEL INSTRUCTION SET REFERENCE, A-L May 2019
+ * Vol. 2 3-197 Table 3-8. Structured Feature Information Returned in the EBX Register by CPUID instruction
+ */
+#define J9PORT_X86_FEATURE_FSGSBASE 		96 + 0	/* fsgsbase instructions support */
+#define J9PORT_X86_FEATURE_IA32_TSC_ADJUST	96 + 1	/* IA32_TSC_ADJUST MSR support */
+#define J9PORT_X86_FEATURE_SGX				96 + 2	/* Intel Software Guard Extensions */
+#define J9PORT_X86_FEATURE_BMI1				96 + 3	/* Bit Manipulation Instructions 1 */
+#define J9PORT_X86_FEATURE_HLE				96 + 4	/* Hardware Lock Elison */
+#define J9PORT_X86_FEATURE_AVX2				96 + 5	/* AVX2 support */
+#define J9PORT_X86_FEATURE_FDP_EXCPTN_ONLY	96 + 6	/* x87 FPU data pointer updated only on exceptions */
+#define J9PORT_X86_FEATURE_SMEP				96 + 7	/* Supervsior-Mode Execution Prevention */
+#define J9PORT_X86_FEATURE_BMI2				96 + 8	/* Bit Manipulation Instructions 2 */
+#define J9PORT_X86_FEATURE_ERMSB			96 + 9	/* Enhanced REP MOVSB/STOSB */
+#define J9PORT_X86_FEATURE_INVPCID			96 + 10	/* Invalidate Process-Context Identifier instruction */
+#define J9PORT_X86_FEATURE_RTM				96 + 11	/* Restricted Transactional Memory */
+#define J9PORT_X86_FEATURE_RDT_M			96 + 12	/* Intel RDT Monitoring */
+#define J9PORT_X86_FEATURE_DEPRECATE_FPUCS	96 + 13	/* Deprecates FPU CS and FPU DS when set */
+#define J9PORT_X86_FEATURE_MPX				96 + 14	/* Intel Memory Protextion Extensions */
+#define J9PORT_X86_FEATURE_RDT_A			96 + 15	/* Intel RDT Allocation */
+#define J9PORT_X86_FEATURE_AVX512F			96 + 16	/* AVX512 Foundation */
+#define J9PORT_X86_FEATURE_AVX512DQ			96 + 17	/* AVX512 Doubleword & Quadword */
+#define J9PORT_X86_FEATURE_RDSEED			96 + 18	/* RDSEED instruction support */
+#define J9PORT_X86_FEATURE_ADX				96 + 19	/* Intel ADX (multi-precision arithmetic) */
+#define J9PORT_X86_FEATURE_SMAP				96 + 20	/* Supervisor-Mode Access Prevention */
+#define J9PORT_X86_FEATURE_AVX512_IFMA		96 + 21	/* AVX512 Integer Fused Multiply Add */
+#define J9PORT_X86_FEATURE_22				96 + 22	/* reserved */
+#define J9PORT_X86_FEATURE_CLFLUSHOPT		96 + 23	/* cache flush optimized */
+#define J9PORT_X86_FEATURE_CLWB				96 + 24	/* cache line write back */
+#define J9PORT_X86_FEATURE_IPT				96 + 25	/* Intel Processor Trace */
+#define J9PORT_X86_FEATURE_AVX512PF			96 + 26	/* AVX512 Prefetch */
+#define J9PORT_X86_FEATURE_AVX512ER			96 + 27	/* AVX512 Exponential and Reciprocal */
+#define J9PORT_X86_FEATURE_AVX512CD			96 + 28	/* AVX512 Conflict Detection */
+#define J9PORT_X86_FEATURE_SHA				96 + 29	/* Intel SHA Extensions */
+#define J9PORT_X86_FEATURE_AVX512BW			96 + 30	/* AVX512 Byte and Word */
+#define J9PORT_X86_FEATURE_AVX512VL			96 + 31	/* AVX512 Vector Length */
 
 /* cache types */
 #define J9PORT_CACHEINFO_ICACHE 0x01

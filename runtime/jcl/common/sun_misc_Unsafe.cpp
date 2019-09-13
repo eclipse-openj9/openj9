@@ -847,6 +847,108 @@ Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, 
 	return offset;
 }
 
+/**
+ * Writes modified memory in an address range from cache to main memory.
+ * Uses memory barriers before and after writeback to ensure ordering.
+ * 
+ * On x86, the writeback is done using the CLWB instruction if available
+ * for performance, falling back to CLFLUSHOPT then CLFLUSH otherwise.
+ * 
+ * @param addr address of block to write back to memory
+ * @param len length of block being written
+ * @param writebackMethod the feature we use to do the writeback
+ * @param cacheLineSize length of a cache line on the current platform
+ */
+void JNICALL
+Java_jdk_internal_misc_Unsafe_writebackMemory0(JNIEnv *env, jobject receiver, jlong addr, jlong len, jint writebackMethod, jlong cacheLineSize)
+{
+#if defined(LINUX) && (defined(J9X86) || defined(J9HAMMER))
+	uintptr_t cache_line_size = *(uintptr_t *) &cacheLineSize;
+	U_8 *end_addr = (*(U_8 **) &addr) + (*(uintptr_t *) &len) - 1;
+	U_8 *ptr = (U_8 *)((*(uintptr_t *) &addr) & ~(cache_line_size - 1));
+	if (writebackMethod == J9PORT_X86_FEATURE_CLWB) {
+		issueReadWriteBarrier();
+		for (; ptr < end_addr; ptr += cache_line_size) {
+			asm volatile("clwb %0" : "+m" (*ptr));
+		}
+		/* writeback any partial cache line at the end */
+		asm volatile("clwb %0" : "+m" (*end_addr));
+		issueReadWriteBarrier();
+		return;
+	} else if (writebackMethod == J9PORT_X86_FEATURE_CLFLUSHOPT) {
+		issueReadWriteBarrier();
+		for (; ptr < end_addr; ptr += cache_line_size) {
+			asm volatile("clflushopt %0" : "+m" (*ptr));
+		}
+		asm volatile("clflushopt %0" : "+m" (*end_addr));
+		issueReadWriteBarrier();
+		return;
+	} else if (writebackMethod == J9PORT_X86_FEATURE_CLFSH) {
+		issueReadWriteBarrier();
+		for (; ptr < end_addr; ptr += cache_line_size) {
+			asm volatile("clflush %0" : "+m" (*ptr));
+		}
+		asm volatile("clflush %0" : "+m" (*end_addr));
+		issueReadWriteBarrier();
+		return;
+	}
+#endif /* linux and x86 */
+
+	jclass exceptionClass = env->FindClass("java/lang/RuntimeException");
+	if (exceptionClass == 0) {
+		/* Just return if we can't load the exception class. */
+		return;
+	}
+	env->ThrowNew(exceptionClass, "writebackMemory not supported");
+}
+
+/**
+ * Checks if the platform supports writeback from cache to memory. This
+ * function checks for a feature that is supported on the current platform
+ * which allows cache writeback then writes a constant in j9port.h which
+ * corresponds to that feature (for example J9PORT_X86_FEATURE_CLFSH)
+ * in the CACHE_WRITEBACK_FEATURE class field in the Unsafe Java class. A
+ * value of 0 is written if cache writeback is not supported.
+ * 
+ * The size of a cache line is also written to the CACHE_LINE_SIZE field
+ * in Unsafe.
+ * 
+ * Specifically, for x86, this checks for the existence of the CLFLUSH,
+ * CLFLUSHOPT, and CLWB instructions. CLWB does writeback without flush
+ * and is our first choice due to performance. CLFLUSHOPT is a more
+ * weakly ordered version of CLFLUSH, and they both writeback modified
+ * cache contents to memory before flushing that cache line.
+ */
+void JNICALL
+Java_jdk_internal_misc_Unsafe_cpuWritebackFeatures0(JNIEnv *env, jclass clazz)
+{
+	jfieldID id_feature = env->GetStaticFieldID(clazz, "CACHE_WRITEBACK_FEATURE", "I");
+	jfieldID id_cacheline = env->GetStaticFieldID(clazz, "CACHE_LINE_SIZE", "J");
+	if (id_feature == NULL || id_cacheline == NULL) {
+		return;
+	} else {
+#if defined(LINUX) && (defined(J9X86) || defined(J9HAMMER))
+		PORT_ACCESS_FROM_ENV(env);
+		J9ProcessorDesc desc;
+		j9sysinfo_get_processor_description(&desc);
+		/* cache line size is the value of bits 8-15 * 8 */
+		jlong lineSize = ((desc.features[2] & 0xFF00) >> 8) * 8;
+		env->SetStaticLongField(clazz, id_cacheline, lineSize);
+		if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLWB)) {
+			env->SetStaticIntField(clazz, id_feature, J9PORT_X86_FEATURE_CLWB);
+		} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLFLUSHOPT)) {
+			env->SetStaticIntField(clazz, id_feature, J9PORT_X86_FEATURE_CLFLUSHOPT);
+		} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLFSH)) {
+			env->SetStaticIntField(clazz, id_feature, J9PORT_X86_FEATURE_CLFSH);
+		} else {
+			env->SetStaticIntField(clazz, id_feature, 0);
+		}
+		return;
+#endif /* linux and x86 */
+		env->SetStaticIntField(clazz, id_feature, 0);
+	}
+}
+
 /* register jdk.internal.misc.Unsafe natives common to Java 9, 10 and beyond */
 static void
 registerJdkInternalMiscUnsafeNativesCommon(JNIEnv *env, jclass clazz) {
@@ -970,6 +1072,25 @@ registerJdkInternalMiscUnsafeNativesJava10(JNIEnv *env, jclass clazz) {
 	env->RegisterNatives(clazz, natives, sizeof(natives)/sizeof(JNINativeMethod));
 }
 
+/* register jdk.internal.misc.Unsafe natives for Java 14 */
+static void
+registerJdkInternalMiscUnsafeNativesJava14(JNIEnv *env, jclass clazz) {
+	/* clazz can't be null */
+	JNINativeMethod natives[] = {
+		{
+			(char*)"writebackMemory0",
+			(char*)"(JJIJ)V",
+			(void*)&Java_jdk_internal_misc_Unsafe_writebackMemory0
+		},
+		{
+			(char*)"cpuWritebackFeatures0",
+			(char*)"()V",
+			(void*)&Java_jdk_internal_misc_Unsafe_cpuWritebackFeatures0
+		}
+	};
+	env->RegisterNatives(clazz, natives, sizeof(natives)/sizeof(JNINativeMethod));
+}
+
 /* class jdk.internal.misc.Unsafe only presents in Java 9 and beyond */
 void JNICALL
 Java_jdk_internal_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
@@ -980,6 +1101,9 @@ Java_jdk_internal_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
 	registerJdkInternalMiscUnsafeNativesCommon(env, clazz);
 	if (J2SE_VERSION(currentThread->javaVM) >= J2SE_V11) {
 		registerJdkInternalMiscUnsafeNativesJava10(env, clazz);
+	}
+	if (J2SE_VERSION(currentThread->javaVM) >= J2SE_V14) {
+		registerJdkInternalMiscUnsafeNativesJava14(env, clazz);
 	}
 }
 
