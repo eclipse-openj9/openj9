@@ -224,6 +224,20 @@ IDATA
 j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *childName, UDATA childNameLength, U_8 *parentName, UDATA parentNameLength, IDATA *reasonCode);
 
 /**
+ * @brief						Validate each recorded relationship for a class (child).
+ * 								Parent classes are expected to be interfaces, superclasses or superinterfaces of the child class.
+ *
+ * @param *vmThread				The calling vmThread
+ * @param *classLoader			Class loader to look up relationships from
+ * @param *childName			Class name of the child class to validate
+ * @param childNameLength		Length of the child class name
+ * @param childClass			The loaded child J9Class
+ * @return J9Class				Returns NULL if successful, or the class that fails validation if unsuccessful
+ */
+J9Class *
+j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *childName, UDATA childNameLength, J9Class *childClass);
+
+/**
  * @brief						Allocates new hash table to store class relationship entries.
  *
  * @param *classLoader			The class loader where the hash table is stored

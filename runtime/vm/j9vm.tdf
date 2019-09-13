@@ -779,3 +779,5 @@ TraceExit=Trc_VM_sendResolveConstantDynamic_Exit Overhead=1 Level=2 Template="se
 TraceException=Trc_VM_CreateRAMClassFromROMClass_nestedValueClassNotVisible Overhead=1 Level=1 Template="Nested field (RAM class=%p, classloader=%p, this classloader=%p) is not visible. Throw IllegalAccessError"
 
 TraceEvent=Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened Overhead=1 Level=7 Template="ValueType is eligible for flattening name=%.*s j9class=%p"
+
+TraceException=Trc_VM_classInitStateMachine_classRelationshipValidationFailed Group=classinit Overhead=1 Level=1 Template="Class relationship validation failed between child: %.*s and parent: %.*s"

@@ -134,6 +134,109 @@ recordDone:
 }
 
 /**
+ * Validate each recorded relationship for a class.
+ *
+ * Returns failedClass, which is NULL if successful, or the class that fails validation if unsuccessful.
+ */
+J9Class *
+j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoader, U_8 *childName, UDATA childNameLength, J9Class *childClass)
+{
+	PORT_ACCESS_FROM_VMC(vmThread);
+	J9Class *parentClass = NULL;
+	J9Class *failedClass = NULL;
+	J9ClassRelationship *childEntry = NULL;
+	J9ClassRelationshipNode *parentNode = NULL;
+
+	Trc_RTV_validateClassRelationships_Entry(vmThread, childNameLength, childName);
+	Assert_RTV_true(NULL != childName);
+	childEntry = findClassRelationship(vmThread, classLoader, childName, childNameLength);
+
+	/* No relationships were recorded for the class (in this class loader), or its relationships have already been verified */
+	if (NULL == childEntry) {
+		goto validateDone;
+	}
+
+	/* The class is invalid if it has been marked as an interface, but it actually isn't */
+	if (J9_ARE_ANY_BITS_SET(childEntry->flags, J9RELATIONSHIP_MUST_BE_INTERFACE)) {
+		Trc_RTV_validateClassRelationships_FlaggedAsInterface(vmThread, childNameLength, childName);
+		if (!J9ROMCLASS_IS_INTERFACE(childClass->romClass)) {
+			Trc_RTV_validateClassRelationships_ShouldBeInterface(vmThread, childNameLength, childName);
+			failedClass = childClass;
+			goto validateDone;
+		}
+	}
+
+	parentNode = J9_LINKED_LIST_START_DO(childEntry->root);
+
+	while (NULL != parentNode) {
+		/* Find the parent class in the loaded classes table */
+		parentClass = J9_VM_FUNCTION(vmThread, hashClassTableAt)(classLoader, parentNode->className, parentNode->classNameLength);
+
+		/* If the parent class has not been loaded, then it has to be an interface since the child is already loaded */
+		if (NULL == parentClass) {
+			/* Add a new relationship to the table if one doesn't already exist and flag the parentClass as J9RELATIONSHIP_MUST_BE_INTERFACE */
+			J9ClassRelationship *parentEntry = findClassRelationship(vmThread, classLoader, parentNode->className, parentNode->classNameLength);
+
+			Trc_RTV_validateClassRelationships_ParentNotLoaded(vmThread, parentNode->classNameLength, parentNode->className, parentNode);
+
+			if (NULL == parentEntry) {
+				J9ClassRelationship parent = {0};
+				PORT_ACCESS_FROM_VMC(vmThread);
+				parent.className = (U_8 *) j9mem_allocate_memory(parentNode->classNameLength + 1, J9MEM_CATEGORY_CLASSES);
+
+				/* className for parent successfully allocated, continue initialization of parent entry */
+				if (NULL != parent.className) {
+					Trc_RTV_validateClassRelationships_AllocatingParent(vmThread);
+					memcpy(parent.className, parentNode->className, parentNode->classNameLength);
+					parent.className[parentNode->classNameLength] = '\0';
+					parent.classNameLength = parentNode->classNameLength;
+					parent.flags = J9RELATIONSHIP_MUST_BE_INTERFACE;
+
+					parentEntry = hashTableAdd(classLoader->classRelationshipsHashTable, &parent);
+
+					if (NULL == parentEntry) {
+						Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
+						j9mem_free_memory(parent.className);
+						failedClass = childClass;
+						goto validateDone;
+					}
+					Trc_RTV_validateClassRelationships_AllocatedParentEntry(vmThread);
+				} else {
+					Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
+					failedClass = childClass;
+					goto validateDone;
+				}
+			} else {
+				parentEntry->flags |= J9RELATIONSHIP_MUST_BE_INTERFACE;
+			}
+		} else {
+			/* The already loaded parentClass should either be an interface, or is the same or superclass of the childClass */
+			if (J9ROMCLASS_IS_INTERFACE(parentClass->romClass)) {
+				/* If the target is an interface, be permissive as per the verifier type checking rules */
+				Trc_RTV_validateClassRelationships_ParentIsInterface(vmThread, parentNode->classNameLength, parentNode->className, parentNode);
+			} else if (isSameOrSuperClassOf(parentClass, childClass)) {
+				Trc_RTV_validateClassRelationships_ParentIsSuperClass(vmThread, parentNode->classNameLength, parentNode->className, parentNode);
+			} else {
+				/* The child and parent have an invalid relationship */
+				Trc_RTV_validateClassRelationships_InvalidRelationship(vmThread, parentNode->classNameLength, parentNode->className);
+				failedClass = parentClass;
+				goto validateDone;
+			}
+		}
+		parentNode = J9_LINKED_LIST_NEXT_DO(childEntry->root, parentNode);
+	}
+
+	/* Successful validation; free memory for childEntry */
+	freeClassRelationshipParentNodes(vmThread, classLoader, childEntry);
+	j9mem_free_memory(childEntry->className);
+	hashTableRemove(classLoader->classRelationshipsHashTable, childEntry);
+
+validateDone:
+	Trc_RTV_validateClassRelationships_Exit(vmThread, failedClass);
+	return failedClass;
+}
+
+/**
  * Add a parentNode to a child entry's linked list of parents.
  *
  * Return the allocated J9ClassRelationshipNode.

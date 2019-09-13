@@ -34,6 +34,7 @@
 		<export name='j9bcv_satisfyClassLoadingConstraint'/>
 		<export name='j9bcv_J9VMDllMain'/>
 		<export name='j9bcv_recordClassRelationship'/>
+		<export name='j9bcv_validateClassRelationships'/>
 		<export name='j9bcv_hashClassRelationshipTableNew'/>
 		<export name='j9bcv_hashClassRelationshipTableFree'/>
 	</exports>
