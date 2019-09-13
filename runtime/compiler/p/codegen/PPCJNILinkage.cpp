@@ -1345,19 +1345,12 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
 
    int32_t floatRegsUsed = (numFloatArgs>properties.getNumFloatArgRegs())?properties.getNumFloatArgRegs():numFloatArgs;
 
-   bool isHelper = false;
-   if (callNode->getSymbolReference()->getReferenceNumber() == TR_PPCVectorLogDouble)
-      {
-      isHelper = true;
-      }
-
    if (liveVMX || liveVSXScalar || liveVSXVector)
       {
       for (i=(TR::RealRegister::RegNum)((uint32_t)TR::RealRegister::LastFPR+1); i<=TR::RealRegister::LastVSR; i++)
          {
          // isFastJNI implying: no call back into Java, such that preserved is preserved
-         if (!properties.getPreserved((TR::RealRegister::RegNum)i) ||
-             (!isFastJNI  && !isHelper))
+         if (!properties.getPreserved((TR::RealRegister::RegNum)i) || !isFastJNI)
             {
             TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_VSX_SCALAR, cg());
             }

@@ -4107,119 +4107,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       };
 
 
-   static X SIMDMethods [] =
-      {
-      // ---- Integer Type Operations
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAddInt,           "vectorAddInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSubInt,           "vectorSubInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMulInt,           "vectorMulInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorDivInt,           "vectorDivInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorRemInt,           "vectorRemInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorNegInt,           "vectorNegInt",    "([II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsInt,        "vectorSplatsInt", "([III)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMinInt,           "vectorMinInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMaxInt,           "vectorMaxInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreInt,         "vectorCopyInt",   "([II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreInt,         "vectorStoreInt",   "([II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpEqInt,         "vectorCmpEqInt",   "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpGeInt,         "vectorCmpGeInt",   "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpGtInt,         "vectorCmpGtInt",   "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpLeInt,         "vectorCmpLeInt",   "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpLtInt,         "vectorCmpLtInt",   "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllEqInt,      "vectorCmpAllEqInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllGeInt,      "vectorCmpAllGeInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllGtInt,      "vectorCmpAllGtInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllLeInt,      "vectorCmpAllLeInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllLtInt,      "vectorCmpAllLtInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyEqInt,      "vectorCmpAnyEqInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyGeInt,      "vectorCmpAnyGeInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyGtInt,      "vectorCmpAnyGtInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyLeInt,      "vectorCmpAnyLeInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyLtInt,      "vectorCmpAnyLtInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAndInt,           "vectorAndInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorOrInt,           "vectorOrInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorXorInt,           "vectorXorInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorNotInt,           "vectorNotInt",    "([II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorGetElementInt,    "vectorGetElementInt", "([II)I")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSetElementInt,    "vectorSetElementInt", "([III)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMergeHighInt,     "vectorMergeHighInt", "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMergeLowInt,      "vectorMergeLowInt",  "([II[II[II)V")},
-
-      // ---- Long Type Operations
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAddLong,           "vectorAddLong",    "([JI[JI[JI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSubLong,           "vectorSubLong",    "([JI[JI[JI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMulLong,           "vectorMulLong",    "([JI[JI[JI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorDivLong,           "vectorDivLong",    "([JI[JI[JI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorRemLong,           "vectorRemLong",    "([JI[JI[JI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorNegLong,           "vectorNegLong",    "([JI[JI)V")},
-
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreByte,         "vectorStoreByte",   "([BI[BI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreChar,         "vectorStoreChar",   "([CI[CI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreShort,        "vectorStoreShort",  "([SI[SI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreLong,         "vectorStoreLong",   "([JI[JI)V")},
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsByte,        "vectorSplatsByte",  "([BIB)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsChar,        "vectorSplatsChar",  "([CIC)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsShort,       "vectorSplatsShort", "([SIS)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsLong,        "vectorSplatsLong",  "([JIJ)V")},
-
-      // ---- Float Type Operations
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAddFloat,           "vectorAddFloat",    "([FI[FI[FI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSubFloat,           "vectorSubFloat",    "([FI[FI[FI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMulFloat,           "vectorMulFloat",    "([FI[FI[FI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorDivFloat,           "vectorDivFloat",    "([FI[FI[FI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorNegFloat,           "vectorNegFloat",    "([FI[FI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsFloat,        "vectorSplatsFloat", "([FIF)V")},
-
-      // ---- Double Type Operations
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAddDouble,           "vectorAddDouble",    "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMinDouble,           "vectorMinDouble",    "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMaxDouble,           "vectorMaxDouble",    "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAddress,             "vectorAddress", "([D)J")},
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAddReduceDouble,     "vectorAddReduceDouble", "([DI)D")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpEqDouble,         "vectorCmpEqDouble",   "([JI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpGeDouble,         "vectorCmpGeDouble",   "([JI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpGtDouble,         "vectorCmpGtDouble",   "([JI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpLeDouble,         "vectorCmpLeDouble",   "([JI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpLtDouble,         "vectorCmpLtDouble",   "([JI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllEqDouble,      "vectorCmpAllEqDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllGeDouble,      "vectorCmpAllGeDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllGtDouble,      "vectorCmpAllGtDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllLeDouble,      "vectorCmpAllLeDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllLtDouble,      "vectorCmpAllLtDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyEqDouble,      "vectorCmpAnyEqDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyGeDouble,      "vectorCmpAnyGeDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyGtDouble,      "vectorCmpAnyGtDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyLeDouble,      "vectorCmpAnyLeDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyLtDouble,      "vectorCmpAnyLtDouble",   "([DI[DI)Z")},
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorDivDouble,           "vectorDivDouble",    "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorGetElementDouble,    "vectorGetElementDouble", "([DI)D")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSetElementDouble,    "vectorSetElementDouble", "([DID)V")},
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorLoadWithStrideDouble, "vectorLoadWithStrideDouble", "([DI[DII)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorLogDouble,            "vectorLogDouble",             "([DI[DI)V")},
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMaddDouble,          "vectorMaddDouble",      "([DI[DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMergeHighDouble,     "vectorMergeHighDouble", "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMergeLowDouble,      "vectorMergeLowDouble",  "([DI[DI[DI)V")},
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMulDouble,           "vectorMulDouble",    "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorNegDouble,           "vectorNegDouble",    "([DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorNmsubDouble,         "vectorNmsubDouble",   "([DI[DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMsubDouble,          "vectorMsubDouble",   "([DI[DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSelDouble,           "vectorSelDouble",   "([DI[DI[DI[JI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsDouble,        "vectorSplatsDouble", "([DID)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreDouble,         "vectorStoreDouble",  "([DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreDouble,         "vectorCopyDouble",   "([DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSubDouble,           "vectorSubDouble",    "([DI[DI[DI)V")},
-      // {x(TR::com_ibm_dataaccess_SIMD_vectorRemDouble,           "vectorRemDouble",    "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSqrtDouble,           "vectorSqrtDouble",    "([DI[DI)V")},
-      {  TR::unknownMethod}
-      };
-
 #if defined(ENABLE_SPMD_SIMD)
    static X SPMDKernelBaseMethods [] =
       {
@@ -4365,7 +4252,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       { "java/lang/reflect/Array", ArrayMethods},
       { "java/nio/HeapByteBuffer", HeapByteBufferMethods},
       { "sun/nio/ch/NativeThread", NativeThreadMethods},
-      { "com/ibm/dataaccess/SIMD", SIMDMethods },
       { 0 }
       };
 
