@@ -113,7 +113,8 @@ TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::Compilati
    _classOfStaticMap(NULL),
    _fieldAttributesCache(NULL),
    _staticAttributesCache(NULL),
-   _isUnresolvedStrCache(NULL)
+   _isUnresolvedStrCache(NULL),
+   _unresolvedFieldCache(NULL)
    {}
 
 // waitForMyTurn needs to be executed with sequencingMonitor in hand
@@ -913,6 +914,20 @@ TR::CompilationInfoPerThreadRemote::getCachedIsUnresolvedStr(TR_OpaqueClassBlock
    }
 
 void
+TR::CompilationInfoPerThreadRemote::cacheUnresolvedField(J9Class *ramClass, int32_t cpIndex)
+   {
+   J9Class *nullClazz = NULL;
+   cacheToPerCompilationMap(_unresolvedFieldCache, std::make_pair(ramClass, cpIndex), nullClazz);
+   }
+
+bool
+TR::CompilationInfoPerThreadRemote::getCachedUnresolvedField(J9Class *ramClass, int32_t cpIndex)
+   {
+   J9Class *nullClazz;
+   return getCachedValueFromPerCompilationMap(_unresolvedFieldCache, std::make_pair(ramClass, cpIndex), nullClazz);
+   }
+
+void
 TR::CompilationInfoPerThreadRemote::clearPerCompilationCaches()
    {
    clearPerCompilationCache(_methodIPDataPerComp);
@@ -922,6 +937,7 @@ TR::CompilationInfoPerThreadRemote::clearPerCompilationCaches()
    clearPerCompilationCache(_fieldAttributesCache);
    clearPerCompilationCache(_staticAttributesCache);
    clearPerCompilationCache(_isUnresolvedStrCache);
+   clearPerCompilationCache(_unresolvedFieldCache);
    }
 
 void

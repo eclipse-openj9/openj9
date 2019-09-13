@@ -30,6 +30,7 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
 #include "control/JITServerHelpers.hpp"
+#include "control/JITServerCompilationThread.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "exceptions/AOTFailure.hpp"
 #include "codegen/CodeGenerator.hpp"
@@ -370,6 +371,13 @@ TR_J9ServerVM::jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_R
          UDATA field1 = 0, field2 = 0;
          J9Class *declaringClass1 = NULL, *declaringClass2 = NULL;
 
+         // do a quick check to see if either of the two fields is unresolved for the current compilation.
+         // if at least one field is unresolved, we must assume fields are not same.
+         auto compInfoPT = static_cast<TR::CompilationInfoPerThreadRemote *>(_compInfoPT);
+         if (compInfoPT->getCachedUnresolvedField(ramClass1, cpIndex1) ||
+             compInfoPT->getCachedUnresolvedField(ramClass2, cpIndex2))
+            return false;
+         
          bool needRemoteCall = true;
          bool cached = getCachedField(ramClass1, cpIndex1, &declaringClass1, &field1);
          cached &= getCachedField(ramClass2, cpIndex2, &declaringClass2, &field2);
@@ -396,6 +404,16 @@ TR_J9ServerVM::jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_R
                remoteResult = (declaringClass1 == declaringClass2) && (field1 == field2);
                cacheField(ramClass1, cpIndex1, declaringClass1, field1);
                cacheField(ramClass2, cpIndex2, declaringClass2, field2);
+               }
+            else
+               {
+               // if a field is unresolved, cache the result locally for the duration of one compilation.
+               // might give incorrect results sometimes, but should save lots of remote calls.
+               // functional correctness should not be affected.
+               if (!declaringClass1 && !field1)
+                  compInfoPT->cacheUnresolvedField(ramClass1, cpIndex1);
+               if (!declaringClass2 && !field2)
+                  compInfoPT->cacheUnresolvedField(ramClass2, cpIndex2);
                }
             TR_ASSERT(!cached || result == remoteResult, "JIT fields are not same");
             result = remoteResult;
