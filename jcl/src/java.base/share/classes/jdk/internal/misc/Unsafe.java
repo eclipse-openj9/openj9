@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -185,6 +185,26 @@ public final class Unsafe {
 
 	/* Mask byte offset of an int. */
 	private static final long BYTE_OFFSET_MASK = 0b11L;
+
+/*[IF Java14]*/
+	/* 
+	 * Platform feature needed for the writebackMemory method. Takes the value of the
+	 * feature constant in j9port.h (for example J9PORT_X86_FEATURE_CLFSH or 19) or 0
+	 * if cache writeback is not supported. A value of -1 means that this field has not
+	 * been set yet.
+	 * 
+	 * For x86, valid values are J9PORT_X86_FEATURE_CLFSH (19),
+	 * J9PORT_X86_FEATURE_CLFLUSHOPT (96+23), and J9PORT_X86_FEATURE_CLWB (96+24)
+	 */
+	private static int CACHE_WRITEBACK_FEATURE = -1;
+
+	/* 
+	 * Size of a cache line on the current platform in bytes. A value of -1 means this
+	 * field has not been set yet
+	 */
+	private static long CACHE_LINE_SIZE = -1;
+/*[ENDIF] Java14 */
+
 	
 	static {
 		registerNatives();
@@ -1041,6 +1061,32 @@ public final class Unsafe {
 
 	/* @return true if machine is big endian, false otherwise */
 	private native boolean isBigEndian0();
+
+/*[IF Java14]*/
+	/**
+	 * Writes modified memory in an address range from cache to main memory.
+	 * Uses memory barriers before and after writeback to ensure ordering.
+	 * 
+	 * @param addr address of block to write back to memory
+	 * @param len length of block being written
+	 * @param writebackMethod the feature we use to do the writeback
+	 * @param cacheLineSize length of a cache line on the current platform
+	 */
+	private native void writebackMemory0(long addr, long len, int writebackMethod, long cacheLineSize);
+
+
+	/**
+	 * Checks if the platform supports writeback from cache to memory. This
+	 * function checks for a feature that is supported on the current platform
+	 * which allows cache writeback then writes a constant in j9port.h which
+	 * corresponds to that feature (for example J9PORT_X86_FEATURE_CLFSH)
+	 * in the CACHE_WRITEBACK_FEATURE class field. A value of 0 is written if
+	 * cache writeback is not supported.
+	 * 
+	 * The size of a cache line is also written to the CACHE_LINE_SIZE field.
+	 */
+	private static native void cpuWritebackFeatures0();
+/*[ENDIF] Java14 */
 	
 	/**
 	 * Getter for unsafe instance.
@@ -5875,22 +5921,25 @@ public final class Unsafe {
 	 * @param addr address to the start of the block of virtual memory to be flushed
 	 * @param len length of the block of virtual memory to be flushed
 	 * @throws RuntimeException if cache flushing not enabled
-	 * 
-	 * Temporary stub method
 	 */
 	public void writebackMemory(long addr, long len) {
-		throw new UnsupportedOperationException("Stub method"); //$NON-NLS-1$
+		if (isWritebackEnabled()) {
+			writebackMemory0(addr, len, CACHE_WRITEBACK_FEATURE, CACHE_LINE_SIZE);
+		} else {
+			throw new RuntimeException("writebackMemory not enabled");
+		}
 	}
 
 	/**
-	 * Check if cache flushing is possible on the runtime OS
+	 * Check if cache writeback is possible on the runtime OS
 	 * 
-	 * @return true if cache flushing is possible, else false
-	 * 
-	 * Temporary stub method
+	 * @return true if cache writeback is possible, else false
 	 */
 	public static boolean isWritebackEnabled() {
-		throw new UnsupportedOperationException("Stub method"); //$NON-NLS-1$
+		if (CACHE_WRITEBACK_FEATURE == -1) {
+			cpuWritebackFeatures0();
+		}
+		return (CACHE_WRITEBACK_FEATURE > 0) && (CACHE_LINE_SIZE > 0);
 	}
 /*[ENDIF] Java14 */
 
