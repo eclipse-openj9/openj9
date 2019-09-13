@@ -290,7 +290,7 @@ TR_S390Recompilation::generatePrePrologue()
       }
 
    // Save the preprologue size to the JIT entry point for use of JIT entry point alignment
-   cg->setPreprologueOffset(preprologueSize);
+   cg->setPreJitMethodEntrySize(preprologueSize);
 
    return cursor;
    }
