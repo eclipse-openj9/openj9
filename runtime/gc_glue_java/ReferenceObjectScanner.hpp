@@ -82,9 +82,9 @@ protected:
 	 * Subclasses must call this method to set up the instance description bits and description pointer.
 	 */
 	MMINLINE void
-	initialize(MM_EnvironmentBase *env)
+	initialize(MM_EnvironmentBase *env, J9Class *clazzPtr)
 	{
-		GC_MixedObjectScanner::initialize(env);
+		GC_MixedObjectScanner::initialize(env, clazzPtr);
 
 		/* Skip over referent slot if required */
 		_scanMap = skipReferentSlot(_scanPtr, _scanMap);
@@ -106,7 +106,7 @@ public:
 	{
 		GC_ReferenceObjectScanner *objectScanner = (GC_ReferenceObjectScanner *)allocSpace;
 		new(objectScanner) GC_ReferenceObjectScanner(env, objectPtr, referentSlotAddress, flags);
-		objectScanner->initialize(env);
+		objectScanner->initialize(env, J9GC_J9OBJECT_CLAZZ(objectPtr, env));
 		return objectScanner;
 	}
 
