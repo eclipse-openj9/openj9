@@ -35,7 +35,11 @@ typedef struct J9ClassRelationshipNode {
     struct J9ClassRelationshipNode *linkPrevious;
 } J9ClassRelationshipNode;
 
+#define J9RELATIONSHIP_JAVA_LANG_THROWABLE_STRING "java/lang/Throwable"
+#define J9RELATIONSHIP_JAVA_LANG_THROWABLE_STRING_LENGTH (sizeof(J9RELATIONSHIP_JAVA_LANG_THROWABLE_STRING) - 1)
+
 /* Bits for J9ClassRelationship flags field */
 #define J9RELATIONSHIP_MUST_BE_INTERFACE 0x1
+#define J9RELATIONSHIP_PARENT_IS_THROWABLE 0x2
 
 #endif /* j9relationship_h */

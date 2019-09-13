@@ -77,38 +77,14 @@ j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, 
 		}
 	}
 
-	/* Add a parentNode to the child's linked list of parents */
-	if (J9_LINKED_LIST_IS_EMPTY(childEntry->root)) {
-		parentNode = allocateParentNode(vmThread, parentName, parentNameLength);
-		if (parentNode == NULL) {
-			/* Allocation failure */
-			Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
-			goto recordDone;
+	/* If the parent is java/lang/Throwable, set a flag instead of allocating a node */
+	if (J9UTF8_DATA_EQUALS(J9RELATIONSHIP_JAVA_LANG_THROWABLE_STRING, J9RELATIONSHIP_JAVA_LANG_THROWABLE_STRING_LENGTH, parentName, parentNameLength)) {
+		if (!J9_ARE_ANY_BITS_SET(childEntry->flags, J9RELATIONSHIP_PARENT_IS_THROWABLE)) {
+			childEntry->flags |= J9RELATIONSHIP_PARENT_IS_THROWABLE;
 		}
-		Trc_RTV_recordClassRelationship_AllocatedEntry(vmThread, childEntry->classNameLength, childEntry->className, childEntry, parentNode->classNameLength, parentNode->className, parentNode);
-		J9_LINKED_LIST_ADD_LAST(childEntry->root, parentNode);
 	} else {
-		BOOLEAN alreadyPresent = FALSE;
-		BOOLEAN addBefore = FALSE;
-		J9ClassRelationshipNode *walk = J9_LINKED_LIST_START_DO(childEntry->root);
-		/**
-		 * Keep the list of parent nodes ordered by class name length so it's a faster traversal
-		 * and duplicates can be avoided
-		 */
-		while (NULL != walk) {
-			if (walk->classNameLength > parentNameLength) {
-				addBefore = TRUE;
-				break;
-			} else if (J9UTF8_DATA_EQUALS(walk->className, walk->classNameLength, parentName, parentNameLength)) {
-				/* Already present, skip */
-				alreadyPresent = TRUE;
-				break;
-			} else {
-				/* walk->className is shorter or equal length but different data; keep looking */
-			}
-			walk = J9_LINKED_LIST_NEXT_DO(childEntry->root, walk);
-		}
-		if (!alreadyPresent) {
+		/* Add a parentNode to the child's linked list of parents */
+		if (J9_LINKED_LIST_IS_EMPTY(childEntry->root)) {
 			parentNode = allocateParentNode(vmThread, parentName, parentNameLength);
 			if (parentNode == NULL) {
 				/* Allocation failure */
@@ -116,11 +92,42 @@ j9bcv_recordClassRelationship(J9VMThread *vmThread, J9ClassLoader *classLoader, 
 				goto recordDone;
 			}
 			Trc_RTV_recordClassRelationship_AllocatedEntry(vmThread, childEntry->classNameLength, childEntry->className, childEntry, parentNode->classNameLength, parentNode->className, parentNode); 
-			if (addBefore) {
-				J9_LINKED_LIST_ADD_BEFORE(childEntry->root, walk, parentNode);
-			} else {
-				/* If got through the whole list of shorter or equal length names, add it here */
-				J9_LINKED_LIST_ADD_LAST(childEntry->root, parentNode);
+			J9_LINKED_LIST_ADD_LAST(childEntry->root, parentNode);
+		} else {
+			BOOLEAN alreadyPresent = FALSE;
+			BOOLEAN addBefore = FALSE;
+			J9ClassRelationshipNode *walk = J9_LINKED_LIST_START_DO(childEntry->root);
+			/**
+			 * Keep the list of parent nodes ordered by class name length so it's a faster traversal
+			 * and duplicates can be avoided
+			 */
+			while (NULL != walk) {
+				if (walk->classNameLength > parentNameLength) {
+					addBefore = TRUE;
+					break;
+				} else if (J9UTF8_DATA_EQUALS(walk->className, walk->classNameLength, parentName, parentNameLength)) {
+					/* Already present, skip */
+					alreadyPresent = TRUE;
+					break;
+				} else {
+					/* walk->className is shorter or equal length but different data; keep looking */
+				}
+				walk = J9_LINKED_LIST_NEXT_DO(childEntry->root, walk);
+			}
+			if (!alreadyPresent) {
+				parentNode = allocateParentNode(vmThread, parentName, parentNameLength);
+				if (parentNode == NULL) {
+					/* Allocation failure */
+					Trc_RTV_classRelationships_AllocationFailedParent(vmThread);
+					goto recordDone;
+				}
+				Trc_RTV_recordClassRelationship_AllocatedEntry(vmThread, childEntry->classNameLength, childEntry->className, childEntry, parentNode->classNameLength, parentNode->className, parentNode); 
+				if (addBefore) {
+					J9_LINKED_LIST_ADD_BEFORE(childEntry->root, walk, parentNode);
+				} else {
+					/* If got through the whole list of shorter or equal length names, add it here */
+					J9_LINKED_LIST_ADD_LAST(childEntry->root, parentNode);
+				}
 			}
 		}
 	}
@@ -162,6 +169,21 @@ j9bcv_validateClassRelationships(J9VMThread *vmThread, J9ClassLoader *classLoade
 		if (!J9ROMCLASS_IS_INTERFACE(childClass->romClass)) {
 			Trc_RTV_validateClassRelationships_ShouldBeInterface(vmThread, childNameLength, childName);
 			failedClass = childClass;
+			goto validateDone;
+		}
+	}
+
+	/* If J9RELATIONSHIP_PARENT_IS_THROWABLE is set, check that the relationship holds */
+	if (J9_ARE_ANY_BITS_SET(childEntry->flags, J9RELATIONSHIP_PARENT_IS_THROWABLE)) {
+		/* Throwable will already be loaded since it is a required class J9VMCONSTANTPOOL_JAVALANGTHROWABLE */
+		parentClass = J9VMJAVALANGTHROWABLE_OR_NULL(vmThread->javaVM);
+		Assert_RTV_true(NULL != parentClass);
+		if (isSameOrSuperClassOf(parentClass, childClass)) {
+			Trc_RTV_validateClassRelationships_ParentIsSuperClass(vmThread, J9RELATIONSHIP_JAVA_LANG_THROWABLE_STRING_LENGTH, J9RELATIONSHIP_JAVA_LANG_THROWABLE_STRING, NULL);
+		} else {
+			/* The class is invalid since it doesn't hold the expected relationship with java/lang/Throwable */
+			Trc_RTV_validateClassRelationships_InvalidRelationship(vmThread, J9RELATIONSHIP_JAVA_LANG_THROWABLE_STRING_LENGTH, J9RELATIONSHIP_JAVA_LANG_THROWABLE_STRING);
+			failedClass = parentClass;
 			goto validateDone;
 		}
 	}
