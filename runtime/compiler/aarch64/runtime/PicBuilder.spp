@@ -72,6 +72,7 @@
 #undef SETVAL
 
 	.set	clinit_bit,	1
+	.set	clinit_bit_number,	0
 
 // BL to PicBuilder from every snippet is always the instruction previous to LR
 
@@ -200,7 +201,7 @@ L_notSync:
 L_gotHelper:
 	ldr	x0, [x27, #J9TR_SCSnippet_codeCacheReturnAddress]	// Fetch code cache EIP
 	ldr	x3, [x27, #J9TR_SCSnippet_method]
-	tbnz	x3, #1, L_USSGclinitCase			// branch if the LSB (the "clinit" bit) was set in the resolved address
+	tbnz	x3, #clinit_bit_number, L_USSGclinitCase	// branch if the LSB (the "clinit" bit) was set in the resolved address
 	ldr	x28, [x27, #J9TR_USCSnippet_CP]			// get CP
 	ldr	x8, [x27, #J9TR_USCSnippet_CPIndex]		// get CP index & flags
 	and	x8, x8, #(~J9TR_USCSnippet_HelperOffset)	// remove helper offset from CP index
@@ -350,17 +351,17 @@ L_StaticGlueCallFixer:
 	ldr	x0, [x1, #J9TR_SCSnippet_method]		// get method
 	mov	x2, x30						// save static glue return address
 	ldr	x30, [x1, #J9TR_SCSnippet_codeCacheReturnAddress]	// get code cache return address
-	tst	x0, #clinit_bit					// branch if the LSB (the "clinit" bit) was set in the resolved address
-	bne	L_SGCclinitCase
+	tbnz	x0, #clinit_bit_number, L_SGCclinitCase		// branch if the LSB (the "clinit" bit) was set in the resolved address
 	ldr	x1, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
-	tbnz	x1, #J9TR_MethodNotCompiledBit, L_StaticGlueCallFixer1	// is method now compiled?
+	tst	x1, #J9TR_MethodNotCompiledBit
+	beq	L_StaticGlueCallFixer1				// is method now compiled?
 	ret	x2						// if not, return to static glue to call interpreter
 L_StaticGlueCallFixer1:
 	ldr	x28, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
 	sub	x27, x30, #4					// get address of BL instruction (code cache RA points to instruction following BL)
-	str	x28, [J9SP, #-8]!				// push:	method
+	str	x28, [J9SP, #-8]!				// push:	addr of the callee (MethodPCStartOffset)
 	str	x27, [J9SP, #-8]!				// 		addr of BL instr
-	str	x0, [J9SP, #-8]!				// 		addr of the callee (MethodPCStartOffset)
+	str	x0, [J9SP, #-8]!				// 		method
 								// prepare args for jitCallCFunction:
 	ldr	x0, const_mcc_callPointPatching_unwrapper	// addr of mcc_callPointPatching_unwrapper
 	mov	x1, J9SP					// addr of the first arg for patchCallPoint
@@ -372,7 +373,8 @@ L_StaticGlueCallFixer1:
 L_SGCclinitCase:
 	and	x0, x0, #(~clinit_bit)				// clear the "clinit" bit
 	ldr	x1, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
-	tbnz	x1, #J9TR_MethodNotCompiledBit, L_SGCclinitCase1	// is method now compiled?
+	tst	x1, #J9TR_MethodNotCompiledBit
+	beq	L_SGCclinitCase1				// is method now compiled?
 	ret	x2						// if not, return to static glue to call interpreter
 L_SGCclinitCase1:
 	br	x1						// in <clinit> case, dispatch method directly without patching
