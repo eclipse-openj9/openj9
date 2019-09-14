@@ -1127,6 +1127,11 @@ TR_arrayTypeCode TR_J9VMBase::getPrimitiveArrayTypeCode(TR_OpaqueClassBlock* cla
       return atype_int;
    else if (j9clazz == jitConfig->javaVM->longReflectClass)
       return atype_long;
+   else
+      {
+      TR_ASSERT(false, "TR_arrayTypeCode is not defined for the j9clazz");
+      return (TR_arrayTypeCode)0;
+      }
    }
 
 TR_OpaqueClassBlock *
@@ -1139,6 +1144,12 @@ uintptrj_t
 TR_J9VMBase::getConstantPoolFromMethod(TR_OpaqueMethodBlock *method)
    {
    return (uintptrj_t)J9_CP_FROM_METHOD((J9Method *)method);
+   }
+
+uintptrj_t
+TR_J9VMBase::getConstantPoolFromClass(TR_OpaqueClassBlock *clazz)
+   {
+   return (uintptrj_t)J9_CP_FROM_CLASS((J9Class *)clazz);
    }
 
 void TR_J9VMBase::printVerboseLogHeader(TR::Options *cmdLineOptions)
@@ -2200,7 +2211,7 @@ TR_MarkHotField::markHotField(J9Class * clazz, bool rootClass)
       if (rootClass)
          {
          int32_t len; char * s = _symRef->getOwningMethod(_comp)->fieldName(_symRef->getCPIndex(), len, _comp->trMemory());
-         printf("hot field %*s with bitValue=%x and slotIndex=%d found while compiling \n   %s\n", len, s, _bitValue, _slotIndex, _comp->signature());
+         printf("hot field %*s with bitValue=%lx and slotIndex=%lu found while compiling \n   %s\n", len, s, _bitValue, _slotIndex, _comp->signature());
          }
 
       J9ROMClass* romClass = ((J9Class *)clazz)->romClass;
@@ -4397,7 +4408,7 @@ TR_J9VMBase::printAdditionalInfoOnAssertionFailure(TR::Compilation *comp)
    {
    char *c = (char *)comp->trMemory()->allocateHeapMemory(20);
 
-   sprintf(c, "VMState: %#010x", vmThread()->omrVMThread->vmState);
+   sprintf(c, "VMState: %#010lx", vmThread()->omrVMThread->vmState);
 
    return c;
    }
@@ -5883,6 +5894,25 @@ TR_J9VMBase::isThunkArchetype(J9Method * method)
    return false;
    }
 
+bool
+TR_J9VMBase::canAllocateInlineClass(TR_OpaqueClassBlock *clazzOffset)
+   {
+   J9Class *clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazzOffset);
+   // Can not inline the allocation if the class is not fully initialized
+   if (clazz->initializeStatus != 1)
+      return false;
+
+   // Can not inline the allocation if the class is an interface or abstract
+   if (clazz->romClass->modifiers & (J9AccAbstract | J9AccInterface))
+      return false;
+   return true;
+   }
+
+intptrj_t
+TR_J9VMBase::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
+   {
+   return *(intptrj_t*) (((uint8_t *)clazz) + offset);
+   }
 
 TR_OpaqueClassBlock *
 TR_J9VMBase::convertClassPtrToClassOffset(J9Class *clazzPtr)
@@ -5908,9 +5938,25 @@ TR_J9VMBase::convertMethodPtrToMethodOffset(J9Method *methodPtr)
    return J9JitMemory::convertMethodPtrToMethodOffset(methodPtr);
    }
 
-
 const char *
 TR_J9VMBase::getJ9MonitorName(J9ThreadMonitor* monitor) { return monitor->name; }
+
+TR_OpaqueClassBlock *
+TR_J9VMBase::getClassFromNewArrayType(int32_t arrayType)
+   {
+   struct J9Class ** arrayClasses = &_jitConfig->javaVM->booleanArrayClass;
+   return convertClassPtrToClassOffset(arrayClasses[arrayType - 4]);
+   }
+
+TR_OpaqueClassBlock *
+TR_J9VMBase::getClassFromNewArrayTypeNonNull(int32_t arrayType)
+   {
+   // This query is needed for inline allocation, which requires array class to
+   // be non-NULL, but getClassFromNewArrayType returns NULL in AOT mode
+   auto clazz = TR_J9VMBase::getClassFromNewArrayType(arrayType);
+   TR_ASSERT(clazz, "class must not be NULL");
+   return clazz;
+   }
 
 /////////////////////////////////////////////////////
 // TR_J9VM
@@ -6454,6 +6500,12 @@ TR_J9VMBase::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer)
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classDepthAndFlags);
    }
 
+uintptrj_t
+TR_J9VMBase::getClassFlagsValue(TR_OpaqueClassBlock * classPointer)
+   {
+   return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classFlags);
+   }
+
 #define LOOKUP_OPTION_JNI 1024
 #define LOOKUP_OPTION_NO_CLIMB 32
 #define LOOKUP_OPTION_NO_THROW 8192
@@ -6594,13 +6646,6 @@ TR_J9VM::getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz)
          return i + 4;
       }
    return -1;
-   }
-
-TR_OpaqueClassBlock *
-TR_J9VM::getClassFromNewArrayType(int32_t arrayType)
-   {
-   struct J9Class ** arrayClasses = &_jitConfig->javaVM->booleanArrayClass;
-   return convertClassPtrToClassOffset(arrayClasses[arrayType - 4]);
    }
 
 uint32_t
@@ -8616,6 +8661,27 @@ TR_J9SharedCacheVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointe
 
    if (validated)
       return classDepthFlags;
+   else
+      return 0;
+   }
+
+uintptrj_t
+TR_J9SharedCacheVM::getClassFlagsValue(TR_OpaqueClassBlock * classPointer)
+   {
+   TR::Compilation* comp = _compInfoPT->getCompilation();
+   TR_ASSERT(comp, "Should be called only within a compilation");
+
+   bool validated = false;
+   uintptrj_t classFlags = TR_J9VM::getClassFlagsValue(classPointer);
+
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      {
+      SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
+      validated = true;
+      }
+
+   if (validated)
+      return classFlags;
    else
       return 0;
    }
