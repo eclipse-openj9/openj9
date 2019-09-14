@@ -32,9 +32,9 @@ namespace J9 { class ClassEnv; }
 namespace J9 { typedef J9::ClassEnv ClassEnvConnector; }
 #endif
 
+#include "env/jittypes.h"
 #include "env/OMRClassEnv.hpp"
 #include "infra/Annotations.hpp"
-#include "env/jittypes.h"
 #include "j9.h"
 
 namespace TR { class SymbolReference; }
@@ -46,6 +46,8 @@ class OMR_EXTENSIBLE ClassEnv : public OMR::ClassEnvConnector
    {
 public:
 
+   TR::ClassEnv *self();
+
    bool classesOnHeap() { return true; }
 
    bool classObjectsMayBeCollected() { return false; }
@@ -55,12 +57,21 @@ public:
    TR_OpaqueClassBlock *getClassFromJavaLangClass(uintptrj_t objectPointer);
 
    J9Class *convertClassOffsetToClassPtr(TR_OpaqueClassBlock *clazzOffset);
+   TR_OpaqueClassBlock *convertClassPtrToClassOffset(J9Class *clazzPtr);
 
    uintptrj_t classFlagsValue(TR_OpaqueClassBlock * classPointer);
+   uintptrj_t classFlagReservableWordInitValue(TR_OpaqueClassBlock * classPointer);
    uintptrj_t classDepthOf(TR_OpaqueClassBlock *clazzPointer);
    uintptrj_t classInstanceSize(TR_OpaqueClassBlock * clazzPointer);
 
    J9ROMClass *romClassOf(TR_OpaqueClassBlock * clazz);
+   J9ROMClass *romClassOfSuperClass(TR_OpaqueClassBlock * clazz, size_t index);
+
+   J9ITable *iTableOf(TR_OpaqueClassBlock * clazz);
+   J9ITable *iTableNext(J9ITable *current);
+   J9ROMClass *iTableRomClass(J9ITable *current);
+
+   J9Class **superClassesOf(TR_OpaqueClassBlock * clazz);
 
    bool isStringClass(TR_OpaqueClassBlock *clazz);
 
@@ -105,6 +116,17 @@ public:
    int32_t flagValueForPrimitiveTypeCheck(TR::Compilation *comp);
    int32_t flagValueForArrayCheck(TR::Compilation *comp);
    int32_t flagValueForFinalizerCheck(TR::Compilation *comp);
+
+   bool isClassSpecialForStackAllocation(TR_OpaqueClassBlock * classPointer);
+   /**
+    * Get the virtual function table entry at a specific offset from the class
+    *
+    * @param clazz The RAM class pointer to read from
+    * @param offset An offset into the virtual function table (VFT) of clazz
+    * @return The entry point of the method at the given offset
+    */
+   intptrj_t getVFTEntry(TR::Compilation *comp, TR_OpaqueClassBlock* clazz, int32_t offset);
+   uint8_t *getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t cpIndex, int &classRefLen);
    };
 
 }

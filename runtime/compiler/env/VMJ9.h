@@ -263,6 +263,7 @@ public:
    virtual bool isGetImplInliningSupported();
 
    virtual uintptrj_t getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
+   virtual uintptrj_t getClassFlagsValue(TR_OpaqueClassBlock * classPointer);
 
    virtual bool isAbstractClass(TR_OpaqueClassBlock * clazzPointer);
    virtual bool isCloneable(TR_OpaqueClassBlock *);
@@ -585,6 +586,7 @@ public:
    virtual uintptrj_t         getOffsetOfDescriptionWordFromPtrField();
 
    virtual uintptrj_t         getConstantPoolFromMethod(TR_OpaqueMethodBlock *);
+   virtual uintptrj_t         getConstantPoolFromClass(TR_OpaqueClassBlock *);
 
    virtual uintptrj_t         getOffsetOfIsArrayFieldFromRomClass();
    virtual uintptrj_t         getOffsetOfClassAndDepthFlags();
@@ -878,6 +880,8 @@ public:
    virtual J9Method *convertMethodOffsetToMethodPtr(TR_OpaqueMethodBlock *methodOffset);
    virtual TR_OpaqueMethodBlock *convertMethodPtrToMethodOffset(J9Method *methodPtr);
 
+   virtual bool canAllocateInlineClass(TR_OpaqueClassBlock *clazz);
+   virtual intptrj_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset);
 
     TR::TreeTop * lowerAsyncCheck( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
     TR::TreeTop * lowerAtcCheck( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
@@ -970,6 +974,8 @@ public:
    virtual bool acquireClassTableMutex();
    virtual void releaseClassTableMutex(bool);
 
+   virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType);
+   virtual TR_OpaqueClassBlock * getClassFromNewArrayTypeNonNull(int32_t arrayType);
    // --------------------------------------------------------------------------
    // Object model
    // --------------------------------------------------------------------------
@@ -1031,7 +1037,6 @@ public:
    virtual TR_OpaqueClassBlock * getArrayClassFromComponentClass(TR_OpaqueClassBlock *componentClass);
    virtual TR_OpaqueClassBlock * getLeafComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
    virtual int32_t               getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz);
-   virtual TR_OpaqueClassBlock * getClassFromNewArrayType(int32_t arrayType);
    virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_ResolvedMethod *method, bool isVettedForAOT=false);
    virtual TR_OpaqueClassBlock * getClassFromSignature(const char * sig, int32_t length, TR_OpaqueMethodBlock *method, bool isVettedForAOT=false);
    virtual TR_OpaqueClassBlock * getBaseComponentClass(TR_OpaqueClassBlock * clazz, int32_t & numDims);
@@ -1144,6 +1149,7 @@ public:
    virtual bool               isPublicClass(TR_OpaqueClassBlock *clazz);
    virtual bool               hasFinalizer(TR_OpaqueClassBlock * classPointer);
    virtual uintptrj_t         getClassDepthAndFlagsValue(TR_OpaqueClassBlock * classPointer);
+   virtual uintptrj_t         getClassFlagsValue(TR_OpaqueClassBlock * classPointer);
    virtual TR_OpaqueMethodBlock * getMethodFromClass(TR_OpaqueClassBlock *, char *, char *, TR_OpaqueClassBlock * = NULL);
    virtual bool               isPrimitiveClass(TR_OpaqueClassBlock *clazz);
    virtual TR_OpaqueClassBlock * getComponentClassFromArrayClass(TR_OpaqueClassBlock * arrayClass);
