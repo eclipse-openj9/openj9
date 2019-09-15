@@ -450,6 +450,48 @@ static const J9SignalMapping signalMap[] = {
 #if defined(SIGPOLL)
 	J9_SIGNAL_MAP_ENTRY("POLL", SIGPOLL),
 #endif /* defined(SIGPOLL) */
+#if defined(SIGPWR)
+	J9_SIGNAL_MAP_ENTRY("CLD", SIGCLD),
+#endif /* defined(SIGPWR) */
+#if defined(SIGPWR)
+	J9_SIGNAL_MAP_ENTRY("PWR", SIGPWR),
+#endif /* defined(SIGPWR) */
+#if defined(SIGSTKFLT)
+	J9_SIGNAL_MAP_ENTRY("STKFLT", SIGSTKFLT),
+#endif /* defined(SIGSTKFLT) */
+#if defined(SIGCPUFAIL)
+	J9_SIGNAL_MAP_ENTRY("CPUFAIL", SIGCPUFAIL),
+#endif /* defined(SIGCPUFAIL) */
+#if defined(SIGDANGER)
+	J9_SIGNAL_MAP_ENTRY("DANGER", SIGDANGER),
+#endif /* defined(SIGDANGER) */
+#if defined(SIGEMT)
+	J9_SIGNAL_MAP_ENTRY("EMT", SIGEMT),
+#endif /* defined(SIGEMT) */
+#if defined(SIGGRANT)
+	J9_SIGNAL_MAP_ENTRY("GRANT", SIGGRANT),
+#endif /* defined(SIGGRANT) */
+#if defined(SIGLOST)
+	J9_SIGNAL_MAP_ENTRY("LOST", SIGLOST),
+#endif /* defined(SIGLOST) */
+#if defined(SIGMIGRATE)
+	J9_SIGNAL_MAP_ENTRY("MIGRATE", SIGMIGRATE),
+#endif /* defined(SIGMIGRATE) */
+#if defined(SIGMSG)
+	J9_SIGNAL_MAP_ENTRY("MSG", SIGMSG),
+#endif /* defined(SIGMSG) */
+#if defined(SIGPRE)
+	J9_SIGNAL_MAP_ENTRY("PRE", SIGPRE),
+#endif /* defined(SIGPRE) */
+#if defined(SIGRETRACT)
+	J9_SIGNAL_MAP_ENTRY("RETRACT", SIGRETRACT),
+#endif /* defined(SIGRETRACT) */
+#if defined(SIGSAK)
+	J9_SIGNAL_MAP_ENTRY("SAK", SIGSAK),
+#endif /* defined(SIGSAK) */
+#if defined(SIGSOUND)
+	J9_SIGNAL_MAP_ENTRY("SOUND", SIGSOUND),
+#endif /* defined(SIGSOUND) */
 	{NULL, J9_SIG_ERR}
 };
 
