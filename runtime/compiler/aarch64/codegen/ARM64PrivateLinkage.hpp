@@ -122,6 +122,21 @@ class ARM64PrivateLinkage : public TR::Linkage
    virtual TR::Register *buildDirectDispatch(TR::Node *callNode);
 
    /**
+    * @brief Builds direct call to method
+    * @param[in] node : caller node
+    * @param[in] callSymRef : target symbol reference
+    * @param[in] dependencies : register dependency conditions
+    * @param[in] pp : linkage properties
+    * @param[in] argSize : size of arguments
+    */
+   void buildDirectCall(
+      TR::Node *callNode,
+      TR::SymbolReference *callSymRef,
+      TR::RegisterDependencyConditions *dependencies,
+      const TR::ARM64LinkageProperties &pp,
+      uint32_t argSize);
+
+   /**
     * @brief Builds indirect dispatch to method
     * @param[in] node : caller node
     */
