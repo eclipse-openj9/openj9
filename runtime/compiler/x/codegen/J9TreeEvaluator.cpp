@@ -6833,7 +6833,7 @@ static void genInitObjectHeader(TR::Node             *node,
       }
    else
       {
-      bool initReservable = TR::Compiler->cls.classFlagReservableWorldInitValue(clazz);
+      bool initReservable = TR::Compiler->cls.classFlagReservableWordInitValue(clazz);
       if (!isZeroInitialized || initReservable)
          {
          bool initLw = (node->getOpCodeValue() != TR::New) || initReservable;

@@ -25,7 +25,6 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/JITServerCompilationThread.hpp"
 #include "control/MethodToBeCompiled.hpp"
-#include "env/JITServerPersistentCHTable.hpp"
 #include "infra/CriticalSection.hpp"
 
 uint32_t     JITServerHelpers::serverMsgTypeCount[] = {};
