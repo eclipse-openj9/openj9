@@ -9303,6 +9303,15 @@ portLibCall_sysinfo_has_resumable_trap_handler()
       #endif
    #endif
 
+   /* AArch64 */
+   #if defined(TR_HOST_ARM64) && defined(TR_TARGET_ARM64)
+      #ifdef LINUX
+         return true;
+      #else
+         return false;
+      #endif
+   #endif
+
    /* 390 */
    #if defined(TR_HOST_S390) && defined(TR_TARGET_S390)
       #if defined(J9ZOS390)
@@ -9344,98 +9353,13 @@ portLibCall_sysinfo_has_fixed_frame_C_calling_convention()
       return false;
    #endif
 
-   /* X86 */
-   #if defined(TR_HOST_X86) && defined(TR_TARGET_X86)
+   /* AArch64 */
+   #if defined(TR_HOST_ARM64) && defined(TR_TARGET_ARM64)
       return false;
    #endif
 
-   }
-
-
-static uint32_t
-portLibCall_sysinfo_number_bytes_read_inaccessible()
-   {
-   // remove TR_HOST_ and TR_TARGET_ defines once code is moved to each architectures port library
-
-   /* PPC */
-   #if defined(TR_HOST_POWER) && defined(TR_TARGET_POWER)
-      return 0;
-   #endif
-
    /* X86 */
    #if defined(TR_HOST_X86) && defined(TR_TARGET_X86)
-      #if defined(J9HAMMER) || defined(WINDOWS) || defined(LINUX) // LINUX_POST22
-         return 4096;
-      #else
-         return 0;
-      #endif
-   #endif
-
-   /* ARM */
-   #if defined(TR_HOST_ARM) && defined(TR_TARGET_ARM)
-      return 0;
-   #endif
-
-   /* 390 */
-   #if defined(TR_HOST_S390) && defined(TR_TARGET_S390)
-      return 4096;
-   #endif
-
-   }
-
-static uint32_t
-portLibCall_sysinfo_number_bytes_write_inaccessible()
-   {
-   // remove TR_HOST_ and TR_TARGET_ defines once code is moved to each architectures port library
-
-   /* PPC */
-   #if defined(TR_HOST_POWER) && defined(TR_TARGET_POWER)
-      return 4096;
-   #endif
-
-   /* X86 */
-   #if defined(TR_HOST_X86) && defined(TR_TARGET_X86)
-      #if defined(J9HAMMER) || defined(WINDOWS) || defined(LINUX) // LINUX_POST22
-         return 4096;
-      #else
-         return 0;
-      #endif
-   #endif
-
-   /* ARM */
-   #if defined(TR_HOST_ARM) && defined(TR_TARGET_ARM)
-      return 0;
-   #endif
-
-   /* 390 */
-   #if defined(TR_HOST_S390) && defined(TR_TARGET_S390)
-      return 4096;
-   #endif
-
-   }
-
-static bool
-portLibCall_sysinfo_supports_scaled_index_addressing()
-   {
-   // remove TR_HOST_ and TR_TARGET_ defines once code is moved to each architectures port library
-
-   /* X86 */
-   #if defined(TR_HOST_X86) && defined(TR_TARGET_X86)
-      return true;
-   #endif
-
-   /* PPC */
-   #if defined(TR_HOST_POWER) && defined(TR_TARGET_POWER)
-      return false;
-   #endif
-
-   /* S390 */
-   #if defined(TR_HOST_S390) && defined(TR_TARGET_S390)
-       return false;
-   #endif
-
-   /* ARM */
-   #if defined(TR_HOST_ARM) && defined(TR_TARGET_ARM)
       return false;
    #endif
 

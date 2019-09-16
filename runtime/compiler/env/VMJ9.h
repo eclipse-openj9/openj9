@@ -220,9 +220,6 @@ static TR_Processor portLibCall_getX86ProcessorType();
 static bool portLibCall_sysinfo_has_resumable_trap_handler();
 static bool portLibCall_sysinfo_has_fixed_frame_C_calling_convention();
 static bool portLibCall_sysinfo_has_floating_point_unit();
-static uint32_t portLibCall_sysinfo_number_bytes_read_inaccessible();
-static uint32_t portLibCall_sysinfo_number_bytes_write_inaccessible();
-static bool portLibCall_sysinfo_supports_scaled_index_addressing();
 
 TR::CompilationInfo *getCompilationInfo(J9JITConfig *jitConfig);
 
