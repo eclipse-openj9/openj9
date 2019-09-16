@@ -11451,61 +11451,6 @@ static TR::Register *inlineFixedTrg1Src1(TR::Node *node, TR::InstOpCode::Mnemoni
    return targetRegister;
    }
 
-static TR::Register *inlineLongNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR_ASSERT(node->getNumChildren() == 1, "Wrong number of children in inlineLongNumberOfLeadingZeros");
-
-   TR::Node *firstChild = node->getFirstChild();
-   TR::Register *srcRegister = cg->evaluate(firstChild);
-   TR::Register *targetRegister = cg->allocateRegister();
-   TR::Register *tempRegister = cg->allocateRegister();
-   TR::Register *maskRegister = cg->allocateRegister();
-
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzw, node, targetRegister, srcRegister->getHighOrder());
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzw, node, tempRegister, srcRegister->getLowOrder());
-   generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, maskRegister, targetRegister, 27, 0x1);
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::neg, node, maskRegister, maskRegister);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::AND, node, tempRegister, tempRegister, maskRegister);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, targetRegister, targetRegister, tempRegister);
-   // An alternative to generating this right shift/neg/and sequence is:
-   // mask = targetRegister << 26
-   // mask = mask >> 31 (algebraic shift to replicate sign bit)
-   // tempRegister &= mask
-   // add targetRegister, targetRegister, tempRegister
-   // Of course, there is also the alternative of:
-   // cmpwi srcRegister->getHighOrder(), 0
-   // bne over
-   // add targetRegister, targetRegister, tempRegister
-   // over:
-
-   cg->stopUsingRegister(tempRegister);
-   cg->stopUsingRegister(maskRegister);
-
-   node->setRegister(targetRegister);
-   cg->decReferenceCount(firstChild);
-
-   return targetRegister;
-   }
-
-static TR::Register *inlineNumberOfTrailingZeros(TR::Node *node, TR::InstOpCode::Mnemonic op, int32_t subfconst, TR::CodeGenerator *cg)
-   {
-   TR_ASSERT(node->getNumChildren() == 1, "Wrong number of children in inlineNumberOfTrailingZeros");
-
-   TR::Node *firstChild = node->getFirstChild();
-   TR::Register *srcRegister = cg->evaluate(firstChild);
-   TR::Register *targetRegister = cg->allocateRegister();
-
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi2, node, targetRegister, srcRegister, -1);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::andc, node, targetRegister, targetRegister, srcRegister);
-   generateTrg1Src1Instruction(cg, op, node, targetRegister, targetRegister);
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subfic, node, targetRegister, targetRegister, subfconst);
-
-   node->setRegister(targetRegister);
-   cg->decReferenceCount(firstChild);
-
-   return targetRegister;
-   }
-
 static TR::Register *inlineLongNumberOfTrailingZeros(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_ASSERT(node->getNumChildren() == 1, "Wrong number of children in inlineLongNumberOfTrailingZeros");
@@ -11535,83 +11480,6 @@ static TR::Register *inlineLongNumberOfTrailingZeros(TR::Node *node, TR::CodeGen
    cg->decReferenceCount(firstChild);
 
    return targetRegister;
-   }
-
-static TR::Register *inlineIntegerHighestOneBit(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR_ASSERT(node->getNumChildren() == 1, "Wrong number of children in inlineIntegerHighestOneBit");
-
-   TR::Node *firstChild = node->getFirstChild();
-   TR::Register *srcRegister = cg->evaluate(firstChild);
-   TR::Register *targetRegister = cg->allocateRegister();
-   TR::Register *tempRegister = cg->allocateRegister();
-
-   generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzw, node, tempRegister, srcRegister);
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, targetRegister, 0x8000);
-   generateTrg1Src2Instruction(cg, TR::InstOpCode::srw, node, targetRegister, targetRegister, tempRegister);
-
-   cg->stopUsingRegister(tempRegister);
-
-   node->setRegister(targetRegister);
-   cg->decReferenceCount(firstChild);
-
-   return targetRegister;
-   }
-
-static TR::Register *inlineLongHighestOneBit(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR_ASSERT(node->getNumChildren() == 1, "Wrong number of children in inlineLongHighestOneBit");
-
-   TR::Node *firstChild = node->getFirstChild();
-   TR::Register *srcRegister = cg->evaluate(firstChild);
-
-   if (TR::Compiler->target.is64Bit())
-      {
-      TR::Register *targetRegister = cg->allocateRegister();
-      TR::Register *tempRegister = cg->allocateRegister();
-
-      generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzd, node, tempRegister, srcRegister);
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, targetRegister, 0x8000);
-      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicr, node, targetRegister, targetRegister, 32, CONSTANT64(0x8000000000000000));
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::srd, node, targetRegister, targetRegister, tempRegister);
-
-      cg->stopUsingRegister(tempRegister);
-
-      node->setRegister(targetRegister);
-      cg->decReferenceCount(firstChild);
-
-      return targetRegister;
-      }
-   else
-      {
-      TR::RegisterPair *targetRegister = cg->allocateRegisterPair(cg->allocateRegister(), cg->allocateRegister());
-      TR::Register *tempRegister = cg->allocateRegister();
-      TR::Register *condReg = cg->allocateRegister(TR_CCR);
-      TR::LabelSymbol *jumpLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-      TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
-
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpi4, node, condReg, srcRegister->getHighOrder(), 0);
-      generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzw, node, tempRegister, srcRegister->getHighOrder());
-      generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, jumpLabel, condReg);
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, targetRegister->getHighOrder(), 0x8000);
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, targetRegister->getLowOrder(), 0);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::srw, node, targetRegister->getHighOrder(), targetRegister->getHighOrder(), tempRegister);
-      generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
-      generateLabelInstruction(cg, TR::InstOpCode::label, node, jumpLabel);
-      generateTrg1Src1Instruction(cg, TR::InstOpCode::cntlzw, node, tempRegister, srcRegister->getLowOrder());
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::lis, node, targetRegister->getLowOrder(), 0x8000);
-      generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, targetRegister->getHighOrder(), 0);
-      generateTrg1Src2Instruction(cg, TR::InstOpCode::srw, node, targetRegister->getLowOrder(), targetRegister->getLowOrder(), tempRegister);
-      generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
-
-      cg->stopUsingRegister(tempRegister);
-      cg->stopUsingRegister(condReg);
-
-      node->setRegister(targetRegister);
-      cg->decReferenceCount(firstChild);
-
-      return targetRegister;
-      }
    }
 
 static TR::Register *inlineIsAssignableFrom(TR::Node *node, TR::CodeGenerator *cg)
@@ -13189,48 +13057,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             return true;
             }
          break;
-
-      case TR::java_lang_Integer_numberOfLeadingZeros:
-         resultReg = inlineFixedTrg1Src1(node, TR::InstOpCode::cntlzw, cg);
-         return true;
-
-      case TR::java_lang_Long_numberOfLeadingZeros:
-         if (TR::Compiler->target.is64Bit())
-            {
-            resultReg = inlineFixedTrg1Src1(node, TR::InstOpCode::cntlzd, cg);
-            return true;
-            }
-         else
-            {
-            resultReg = inlineLongNumberOfLeadingZeros(node, cg);
-            return true;
-            }
-
-      case TR::java_lang_Integer_numberOfTrailingZeros:
-         {
-         resultReg = inlineNumberOfTrailingZeros(node, TR::InstOpCode::cntlzw, 32, cg);
-         return true;
-         }
-
-      case TR::java_lang_Long_numberOfTrailingZeros:
-         if (TR::Compiler->target.is64Bit())
-            {
-            resultReg = inlineNumberOfTrailingZeros(node, TR::InstOpCode::cntlzd, 64, cg);
-            return true;
-            }
-         else
-            {
-            resultReg = inlineLongNumberOfTrailingZeros(node, cg);
-            return true;
-            }
-
-      case TR::java_lang_Integer_highestOneBit:
-         resultReg = inlineIntegerHighestOneBit(node, cg);
-         return true;
-
-      case TR::java_lang_Long_highestOneBit:
-         resultReg = inlineLongHighestOneBit(node, cg);
-         return true;
 
       case TR::java_lang_Short_reverseBytes:
          resultReg = inlineShortReverseBytes(node, cg);

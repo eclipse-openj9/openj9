@@ -335,13 +335,7 @@ bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::Recognized
       return true;
       }
 
-   if (method == TR::java_lang_Integer_highestOneBit ||
-       method == TR::java_lang_Integer_numberOfLeadingZeros ||
-       method == TR::java_lang_Integer_numberOfTrailingZeros ||
-       method == TR::java_lang_Long_highestOneBit ||
-       method == TR::java_lang_Long_numberOfLeadingZeros ||
-       method == TR::java_lang_Long_numberOfTrailingZeros ||
-       method == TR::java_lang_Short_reverseBytes ||
+   if (method == TR::java_lang_Short_reverseBytes ||
        method == TR::java_lang_Integer_reverseBytes ||
        method == TR::java_lang_Long_reverseBytes)
       {
