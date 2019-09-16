@@ -462,5 +462,10 @@
 			<class name="org.openj9.test.jdk.internal.agent.Test_FileSystem"/>
 		</classes>
 	</test>
+	<test name="classRelationshipVerifierTests">
+		<classes>
+			<class name="org.openj9.test.classRelationshipVerifier.TestClassRelationshipVerifier"/>
+		</classes>
+	</test>
 </suite>
 <!-- Suite -->

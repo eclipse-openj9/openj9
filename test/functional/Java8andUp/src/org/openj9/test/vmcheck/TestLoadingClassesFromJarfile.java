@@ -142,6 +142,7 @@ public class TestLoadingClassesFromJarfile {
 			"java.util.PropertyPermission",
 			"javax.imageio.ImageIO",
 			"javax.swing",
+			"org.openj9.test.classRelationshipVerifier.TestClassRelationshipVerifier",
 			"sun.applet",
 			"sun.awt",
 			"sun.font",
