@@ -11071,7 +11071,7 @@ TR::CompilationInfo::storeAOTInSharedCache(
       // If validation has been performed, then a header already existed
       // or one was already been created in this JVM
       TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
-      safeToStore = entry->_compInfoPT->reloRuntime()->storeAOTHeader(jitConfig->javaVM, fe, vmThread);
+      safeToStore = entry->_compInfoPT->reloRuntime()->storeAOTHeader(fe, vmThread);
       }
    else
       {
