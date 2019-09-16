@@ -50,22 +50,33 @@ timestamps {
         def artifactoryCreds = server.getCredentialsId()
         def ARTIFACTORY_NUM_ARTIFACTS = params.ARTIFACTORY_NUM_ARTIFACTS ? params.ARTIFACTORY_NUM_ARTIFACTS : env.ARTIFACTORY_NUM_ARTIFACTS
         def ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS = params.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS ? params.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS : env.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS
-
-        switch(params.JOB_TYPE) {
-            case 'TIME':
-                cleanupTime(ARTIFACTORY_SERVER_URL, ARTIFACTORY_REPO, ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS, artifactoryCreds)
-            break
-            case 'COUNT':
-                if (params.JOB_TO_CHECK){
-                    cleanupBuilds(ARTIFACTORY_SERVER_URL, ARTIFACTORY_REPO, params.JOB_TO_CHECK, ARTIFACTORY_NUM_ARTIFACTS, artifactoryCreds)
-                } else {
-                    error 'Please input a job to cleanup'
-                }
-            break
-            default:
-                error 'the JOB_TO_CHECK parameter is not properly defined. Please Enter TIME or COUNT'
-            break
-        }
+        ret = false
+        try {
+           retry(2) {
+               if (ret) {
+                  sleep time: 120, unit: 'SECONDS'
+               } else {
+                  ret = true 
+               }
+               switch(params.JOB_TYPE) {
+                    case 'TIME':
+                       cleanupTime(ARTIFACTORY_SERVER_URL, ARTIFACTORY_REPO, ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS, artifactoryCreds)
+            	    break
+                    case 'COUNT':
+                	if (params.JOB_TO_CHECK){
+                    	   cleanupBuilds(ARTIFACTORY_SERVER_URL, ARTIFACTORY_REPO, params.JOB_TO_CHECK, ARTIFACTORY_NUM_ARTIFACTS, artifactoryCreds)
+                	} else {
+                       	   error 'Please input a job to cleanup'
+                	}
+            	    break
+                    default:
+                        error 'the JOB_TO_CHECK parameter is not properly defined. Please Enter TIME or COUNT'
+                    break
+               }
+          }
+       } catch (e) {
+          slackSend channel: '#jenkins-sandbox', color: 'danger', message: "Failed: ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)"    
+       }
     }
 }
 
