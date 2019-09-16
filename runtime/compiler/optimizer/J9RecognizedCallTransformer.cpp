@@ -376,7 +376,7 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
       case TR::java_lang_Math_abs_L:
       case TR::java_lang_Math_abs_F:
       case TR::java_lang_Math_abs_D:
-         return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ();
+         return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ() || TR::Compiler->target.cpu.isPower();
       case TR::java_lang_Math_max_I:
       case TR::java_lang_Math_min_I:
       case TR::java_lang_Math_max_L:

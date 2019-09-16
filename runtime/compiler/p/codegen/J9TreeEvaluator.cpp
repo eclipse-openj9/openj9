@@ -11451,95 +11451,6 @@ static TR::Register *inlineFixedTrg1Src1(TR::Node *node, TR::InstOpCode::Mnemoni
    return targetRegister;
    }
 
-static TR::Register *inlineAbsInt(TR::Node *node, TR::CodeGenerator *cg)
-{
-    TR::Node *firstChild = node->getFirstChild();
-    TR::Register *resultRegister = cg->allocateRegister(), *firstRegister,*tempRegister;
-
-    if (firstChild->getOpCode().isLoadConst())
-    {
-        int32_t value = firstChild->getInt();
-        if (value<0) value = -value;
-        loadConstant(cg, node, value, resultRegister);
-    }
-    else
-    {
-        firstRegister = cg->evaluate(firstChild);
-        generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, resultRegister, firstRegister);
-        if (!firstChild->isNonNegative())
-        {
-            tempRegister = cg->allocateRegister();
-            // srawi $t1 $t0 31
-            // xor   $t0 $t0 $t1
-            // subf  $t0 $t1 $t0
-            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, tempRegister, resultRegister, 31);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::XOR, node, resultRegister, resultRegister, tempRegister);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, resultRegister, tempRegister, resultRegister);
-            cg->stopUsingRegister(tempRegister);
-        }
-    }
-    node->setRegister(resultRegister);
-    cg->decReferenceCount(firstChild);
-    return resultRegister;
-}
-
-static TR::Register *inlineAbsLong(TR::Node *node, TR::CodeGenerator *cg)
-{
-    TR::Node *firstChild = node->getFirstChild();
-    TR::Register *firstRegister, *tempRegister;
-
-    if (TR::Compiler->target.is64Bit())
-    {
-        TR::Register *resultRegister = cg->allocateRegister();
-        firstRegister = cg->evaluate(firstChild);
-        generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, resultRegister, firstRegister);
-        if (!firstChild->isNonNegative())
-        {
-            tempRegister = cg->allocateRegister();
-            // sradi $t1 $t0 63
-            // xor   $t0 $t0 $t1
-            // subf  $t0 $t1 $t0
-            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::sradi, node, tempRegister, resultRegister, 63);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::XOR, node, resultRegister, resultRegister, tempRegister);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::subf, node, resultRegister, tempRegister, resultRegister);
-            cg->stopUsingRegister(tempRegister);
-        }
-        node->setRegister(resultRegister);
-        cg->decReferenceCount(firstChild);
-        return resultRegister;
-    }
-    else
-    {
-        TR::RegisterPair *resultRegister = cg->allocateRegisterPair(cg->allocateRegister(), cg->allocateRegister());
-
-        firstRegister = cg->evaluate(firstChild);
-        generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, resultRegister->getLowOrder(), firstRegister->getLowOrder());
-        generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, resultRegister->getHighOrder(), firstRegister->getHighOrder());
-
-        if (!firstChild->isNonNegative())
-        {
-            tempRegister = cg->allocateRegister();
-            // srawi $t1       $t0->high 31
-            // xor   $t0->high $t0->high $t1
-            // xor   $t0->low  $t0->low  $t1
-            // subfc $t0->low  $t1       $t0->low
-            // subfe $t0->high $t1       $t0->high
-            generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, tempRegister, resultRegister->getHighOrder(), 31);
-
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::XOR, node, resultRegister->getHighOrder(), resultRegister->getHighOrder(), tempRegister);
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::XOR, node, resultRegister->getLowOrder(), resultRegister->getLowOrder(), tempRegister);
-
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::subfc, node, resultRegister->getLowOrder(), tempRegister, resultRegister->getLowOrder());
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::subfe, node, resultRegister->getHighOrder(), tempRegister, resultRegister->getHighOrder());
-
-            cg->stopUsingRegister(tempRegister);
-        }
-        node->setRegister(resultRegister);
-        cg->decReferenceCount(firstChild);
-        return resultRegister;
-    }
-}
-
 static TR::Register *inlineLongNumberOfLeadingZeros(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_ASSERT(node->getNumChildren() == 1, "Wrong number of children in inlineLongNumberOfLeadingZeros");
@@ -13278,22 +13189,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             return true;
             }
          break;
-
-      case TR::java_lang_Math_abs_F:
-         resultReg = inlineSinglePrecisionFP(node, TR::InstOpCode::fabs, cg);
-         return true;
-
-      case TR::java_lang_Math_abs_D:
-         resultReg = inlineDoublePrecisionFP(node, TR::InstOpCode::fabs, cg);
-         return true;
-
-      case TR::java_lang_Math_abs_I:
-         resultReg = inlineAbsInt(node,cg);
-         return true;
-
-      case TR::java_lang_Math_abs_L:
-         resultReg = inlineAbsLong(node,cg);
-         return true;
 
       case TR::java_lang_Integer_numberOfLeadingZeros:
          resultReg = inlineFixedTrg1Src1(node, TR::InstOpCode::cntlzw, cg);
