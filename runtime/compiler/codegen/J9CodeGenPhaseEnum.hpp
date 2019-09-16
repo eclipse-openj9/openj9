@@ -35,7 +35,6 @@
    MoveUpArrayLengthStoresPhase,
    InsertEpilogueYieldPointsPhase,
    CompressedReferenceRematerializationPhase,
-   SplitWarmAndColdBlocksPhase,
    IdentifyUnneededByteConvsPhase,
    LateSequentialConstantStoreSimplificationPhase,  // all
    LastJ9Phase = LateSequentialConstantStoreSimplificationPhase,
