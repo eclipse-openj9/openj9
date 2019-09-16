@@ -56,87 +56,92 @@ static void storeMethodInfo (J9BytecodeVerificationData * verifyData, J9UTF8* er
 J9Class *
 j9rtv_verifierGetRAMClass( J9BytecodeVerificationData *verifyData, J9ClassLoader* classLoader, U_8 *className, UDATA nameLength, IDATA *reasonCode)
 {
-	J9Class *found;
+	J9Class *found = NULL;
 	JavaVM* jniVM = (JavaVM*)verifyData->javaVM;
-    J9ThreadEnv* threadEnv;
+	J9ThreadEnv* threadEnv = NULL;
+	J9JavaVM *vm = verifyData->vmStruct->javaVM;
 	(*jniVM)->GetEnv(jniVM, (void**)&threadEnv, J9THREAD_VERSION_1_1);
 
-
 #ifdef J9VM_THR_PREEMPTIVE
-	threadEnv->monitor_enter(verifyData->vmStruct->javaVM->classTableMutex);
+	threadEnv->monitor_enter(vm->classTableMutex);
 #endif
 
 	/* Sniff the class table to see if already loaded */
 	Trc_RTV_j9rtv_verifierGetRAMClass_Entry(verifyData->vmStruct, classLoader, nameLength, className);
-	found = verifyData->vmStruct->javaVM->internalVMFunctions->hashClassTableAt (classLoader, className, nameLength);
+	found = vm->internalVMFunctions->hashClassTableAt (classLoader, className, nameLength);
 
 #ifdef J9VM_THR_PREEMPTIVE
-	threadEnv->monitor_exit(verifyData->vmStruct->javaVM->classTableMutex);
+	threadEnv->monitor_exit(vm->classTableMutex);
 #endif
 
 	if (!found) {
-		J9BytecodeVerificationData savedVerifyData;
-		UDATA *currentAlloc;
-		UDATA *internalBufferStart;
-		UDATA *internalBufferEnd;
-		J9VMThread *tmpVMC = verifyData->vmStruct;
-
-		Trc_RTV_j9rtv_verifierGetRAMClass_notFound(verifyData->vmStruct);
-
-		/* Nest class loading */
-		memcpy(&savedVerifyData, verifyData, sizeof(savedVerifyData));
-		verifyData->vmStruct = NULL;
-
-		if (BCV_ERR_INSUFFICIENT_MEMORY == allocateVerifyBuffers (tmpVMC->javaVM->portLibrary, verifyData)) {
-			/* returning BCV_ERR_INSUFFICIENT_MEMORY for OOM condition */
-			Trc_RTV_j9rtv_verifierGetRAMClass_OutOfMemoryException(verifyData->vmStruct, classLoader, nameLength, className);
-			*reasonCode = BCV_ERR_INSUFFICIENT_MEMORY;
+		/* Set reasonCode to BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED if -XX:+ClassRelationshipVerifier is used, the class is not already loaded and if the classfile major version is at least 51 (Java 7) */
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER) && (verifyData->romClass->majorVersion >= 51)) {
+			*reasonCode = BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED;
 			return NULL;
-		}
+		} else {
+			J9BytecodeVerificationData savedVerifyData;
+			UDATA *currentAlloc;
+			UDATA *internalBufferStart;
+			UDATA *internalBufferEnd;
+			J9VMThread *tmpVMC = verifyData->vmStruct;
+
+			Trc_RTV_j9rtv_verifierGetRAMClass_notFound(verifyData->vmStruct);
+
+			/* Nest class loading */
+			memcpy(&savedVerifyData, verifyData, sizeof(savedVerifyData));
+			verifyData->vmStruct = NULL;
+
+			if (BCV_ERR_INSUFFICIENT_MEMORY == allocateVerifyBuffers (tmpVMC->javaVM->portLibrary, verifyData)) {
+				/* returning BCV_ERR_INSUFFICIENT_MEMORY for OOM condition */
+				Trc_RTV_j9rtv_verifierGetRAMClass_OutOfMemoryException(verifyData->vmStruct, classLoader, nameLength, className);
+				*reasonCode = BCV_ERR_INSUFFICIENT_MEMORY;
+				return NULL;
+			}
 
 #ifdef J9VM_THR_PREEMPTIVE
-		threadEnv->monitor_exit(verifyData->verifierMutex);
+			threadEnv->monitor_exit(verifyData->verifierMutex);
 #endif
 
-		/* Find the requested class, fully loading it, but not initializing it. */
+			/* Find the requested class, fully loading it, but not initializing it. */
 
-		found = tmpVMC->javaVM->internalVMFunctions->internalFindClassUTF8(
-			tmpVMC,
-			className,
-			nameLength,
-			classLoader,
-			J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+			found = tmpVMC->javaVM->internalVMFunctions->internalFindClassUTF8(
+				tmpVMC,
+				className,
+				nameLength,
+				classLoader,
+				J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 
-		if (NULL == found) {
-			*reasonCode = BCV_ERR_INACCESSIBLE_CLASS;
-		}
+			if (NULL == found) {
+				*reasonCode = BCV_ERR_INACCESSIBLE_CLASS;
+			}
 
 #ifdef J9VM_THR_PREEMPTIVE
-		/*
-		 * Note: if locking both verifierMutex and classTableMutex, they must be entered in that order (CMVC 186043).
-		 */
+			/*
+			 * Note: if locking both verifierMutex and classTableMutex, they must be entered in that order (CMVC 186043).
+			 */
 
-		threadEnv->monitor_enter(verifyData->verifierMutex);
+			threadEnv->monitor_enter(verifyData->verifierMutex);
 #endif
 
-		freeVerifyBuffers (tmpVMC->javaVM->portLibrary, verifyData);
+			freeVerifyBuffers (tmpVMC->javaVM->portLibrary, verifyData);
 
-		/* The currentAlloc, internalBufferStart, internalBufferEnd fields are NOT nested */
-		/* used in bcvalloc/bcvfree - avoid hammering it */
-		/* This should probably be moved out of the struct, but where? - split the struct by scope */
-		currentAlloc = verifyData->currentAlloc;
-		internalBufferStart = verifyData->internalBufferStart;
-		internalBufferEnd = verifyData->internalBufferEnd;
+			/* The currentAlloc, internalBufferStart, internalBufferEnd fields are NOT nested */
+			/* used in bcvalloc/bcvfree - avoid hammering it */
+			/* This should probably be moved out of the struct, but where? - split the struct by scope */
+			currentAlloc = verifyData->currentAlloc;
+			internalBufferStart = verifyData->internalBufferStart;
+			internalBufferEnd = verifyData->internalBufferEnd;
 
-		memcpy(verifyData, &savedVerifyData, sizeof(savedVerifyData));
+			memcpy(verifyData, &savedVerifyData, sizeof(savedVerifyData));
 
-		verifyData->currentAlloc = currentAlloc;
-		verifyData->internalBufferStart = internalBufferStart;
-		verifyData->internalBufferEnd = internalBufferEnd;
+			verifyData->currentAlloc = currentAlloc;
+			verifyData->internalBufferStart = internalBufferStart;
+			verifyData->internalBufferEnd = internalBufferEnd;
+		} 
 	} else {
 		Trc_RTV_j9rtv_verifierGetRAMClass_found(verifyData->vmStruct);
 	}
-
 
 	Trc_RTV_j9rtv_verifierGetRAMClass_Exit(verifyData->vmStruct);
 
