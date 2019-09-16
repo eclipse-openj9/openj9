@@ -367,8 +367,10 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
       case TR::java_lang_Class_isAssignableFrom:
          return cg()->supportsInliningOfIsAssignableFrom();
       case TR::java_lang_Integer_rotateLeft:
+      case TR::java_lang_Integer_rotateRight:
          return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ() || TR::Compiler->target.cpu.isPower();
       case TR::java_lang_Long_rotateLeft:
+      case TR::java_lang_Long_rotateRight:
          return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ() || (TR::Compiler->target.cpu.isPower() && TR::Compiler->target.is64Bit());
       case TR::java_lang_Math_abs_I:
       case TR::java_lang_Math_abs_L:
@@ -409,9 +411,31 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
       case TR::java_lang_Integer_rotateLeft:
          processIntrinsicFunction(treetop, node, TR::irol);
          break;
+      case TR::java_lang_Integer_rotateRight:
+         {
+         // rotateRight(x, distance) = rotateLeft(x, -distance)
+         TR::Node *distance = TR::Node::create(node, TR::ineg, 1);
+         distance->setChild(0, node->getSecondChild());
+         node->setAndIncChild(1, distance);
+
+         processIntrinsicFunction(treetop, node, TR::irol);
+
+         break;
+         }
       case TR::java_lang_Long_rotateLeft:
          processIntrinsicFunction(treetop, node, TR::lrol);
          break;
+      case TR::java_lang_Long_rotateRight:
+         {
+         // rotateRight(x, distance) = rotateLeft(x, -distance)
+         TR::Node *distance = TR::Node::create(node, TR::ineg, 1);
+         distance->setChild(0, node->getSecondChild());
+         node->setAndIncChild(1, distance);
+
+         processIntrinsicFunction(treetop, node, TR::lrol);
+
+         break;
+         }
       case TR::java_lang_Math_abs_I:
          processIntrinsicFunction(treetop, node, TR::iabs);
          break;

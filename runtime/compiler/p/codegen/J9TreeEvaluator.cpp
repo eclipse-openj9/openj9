@@ -10655,62 +10655,6 @@ static TR::Register *inlineAtomicOperation(TR::Node *node, TR::CodeGenerator *cg
    return resultReg;
    }
 
-static TR::Register *inlineIntegerRotateRight(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR_ASSERT(node->getNumChildren() == 2, "Wrong number of children in inlineIntegerRotateRight");
-
-   TR::Node *firstChild = node->getFirstChild();
-   TR::Node *secondChild = node->getSecondChild();
-   TR::Register *srcRegister = cg->evaluate(firstChild);
-   TR::Register *targetRegister = cg->allocateRegister();
-
-   if (secondChild->getOpCodeValue() == TR::iconst || secondChild->getOpCodeValue() == TR::iuconst)
-      {
-      int32_t value = (32 - secondChild->getInt()) & 0x1f;
-      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, targetRegister, srcRegister, value, 0xffffffff);
-      }
-   else
-      {
-      TR::Register *shiftAmountReg = cg->evaluate(secondChild);
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subfic, node, targetRegister, shiftAmountReg, 32);
-      generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::rlwnm, node, targetRegister, srcRegister, targetRegister, 0xffffffff);
-      }
-
-   node->setRegister(targetRegister);
-   cg->decReferenceCount(firstChild);
-   cg->decReferenceCount(secondChild);
-
-   return targetRegister;
-   }
-
-static TR::Register *inlineLongRotateRight(TR::Node *node, TR::CodeGenerator *cg)
-   {
-   TR_ASSERT(node->getNumChildren() == 2, "Wrong number of children in inlineLongRotateRight");
-
-   TR::Node *firstChild = node->getFirstChild();
-   TR::Node *secondChild = node->getSecondChild();
-   TR::Register *srcRegister = cg->evaluate(firstChild);
-   TR::Register *targetRegister = cg->allocateRegister();
-
-   if (secondChild->getOpCodeValue() == TR::iconst || secondChild->getOpCodeValue() == TR::iuconst)
-      {
-      int32_t value = (64 - secondChild->getInt()) & 0x3f;
-      generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rldicl, node, targetRegister, srcRegister, value, CONSTANT64(0xffffffffffffffff));
-      }
-   else
-      {
-      TR::Register *shiftAmountReg = cg->evaluate(secondChild);
-      generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::subfic, node, targetRegister, shiftAmountReg, 64);
-      generateTrg1Src2ImmInstruction(cg, TR::InstOpCode::rldcl, node, targetRegister, srcRegister, targetRegister, CONSTANT64(0xffffffffffffffff));
-      }
-
-   node->setRegister(targetRegister);
-   cg->decReferenceCount(firstChild);
-   cg->decReferenceCount(secondChild);
-
-   return targetRegister;
-   }
-
 static TR::Register *inlineShortReverseBytes(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_ASSERT(node->getNumChildren() == 1, "Wrong number of children in inlineShortReverseBytes");
@@ -13392,18 +13336,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       case TR::java_lang_Long_highestOneBit:
          resultReg = inlineLongHighestOneBit(node, cg);
          return true;
-
-      case TR::java_lang_Integer_rotateRight:
-         resultReg = inlineIntegerRotateRight(node, cg);
-         return true;
-
-      case TR::java_lang_Long_rotateRight:
-         if (TR::Compiler->target.is64Bit())
-            {
-            resultReg = inlineLongRotateRight(node, cg);
-            return true;
-            }
-         break;
 
       case TR::java_lang_Short_reverseBytes:
          resultReg = inlineShortReverseBytes(node, cg);
