@@ -13135,8 +13135,6 @@ static void inlineVSXArrayCopy(TR::Node *node, TR::Register *srcAddrReg, TR::Reg
    generateDepLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions);
    }
 
-extern TR::Register *inlineLongRotateLeft(TR::Node *node, TR::CodeGenerator *cg);
-extern TR::Register *inlineIntegerRotateLeft(TR::Node *node, TR::CodeGenerator *cg);
 extern TR::Register *inlineBigDecimalConstructor(TR::Node *node, TR::CodeGenerator *cg, bool isLong, bool exp);
 extern TR::Register *inlineBigDecimalBinaryOp(TR::Node * node, TR::CodeGenerator *cg, TR::InstOpCode::Mnemonic op, bool scaled);
 extern TR::Register *inlineBigDecimalDivide(TR::Node * node, TR::CodeGenerator *cg);
@@ -13394,18 +13392,6 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
       case TR::java_lang_Long_highestOneBit:
          resultReg = inlineLongHighestOneBit(node, cg);
          return true;
-
-      case TR::java_lang_Integer_rotateLeft:
-         resultReg = inlineIntegerRotateLeft(node, cg);
-         return true;
-
-      case TR::java_lang_Long_rotateLeft:
-         if (TR::Compiler->target.is64Bit())
-            {
-            resultReg = inlineLongRotateLeft(node, cg);
-            return true;
-            }
-         break;
 
       case TR::java_lang_Integer_rotateRight:
          resultReg = inlineIntegerRotateRight(node, cg);

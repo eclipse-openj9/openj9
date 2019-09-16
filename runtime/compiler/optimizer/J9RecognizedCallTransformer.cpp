@@ -367,7 +367,9 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
       case TR::java_lang_Class_isAssignableFrom:
          return cg()->supportsInliningOfIsAssignableFrom();
       case TR::java_lang_Integer_rotateLeft:
+         return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ() || TR::Compiler->target.cpu.isPower();
       case TR::java_lang_Long_rotateLeft:
+         return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ() || (TR::Compiler->target.cpu.isPower() && TR::Compiler->target.is64Bit());
       case TR::java_lang_Math_abs_I:
       case TR::java_lang_Math_abs_L:
       case TR::java_lang_Math_abs_F:
