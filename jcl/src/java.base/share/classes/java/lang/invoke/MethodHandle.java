@@ -1620,9 +1620,10 @@ public abstract class MethodHandle
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF Sidecar18-SE-OpenJ9]*/
 	void customize() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		// this is an empty implementation to satisfy RI specific method calls
+		// https://github.com/eclipse/openj9/issues/7080
 	}
 /*[ENDIF]*/
 	
