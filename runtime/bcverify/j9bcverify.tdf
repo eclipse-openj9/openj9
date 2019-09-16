@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2006, 2018 IBM Corp. and others
+// Copyright (c) 2006, 2019 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -187,3 +187,28 @@ TraceException=Trc_RTV_j9rtv_verifyArguments_OutOfMemoryException Overhead=1 Lev
 TraceException=Trc_RTV_j9rtv_verifyArguments_InaccessibleClass Overhead=1 Level=1 Template="j9rtv_verifyArguments - %.*s %.*s%.*s - Inaccessible class"
 
 TraceException=Trc_RTV_j9rtv_verifyBytecodes_Unreachable Overhead=1 Level=1 Template="j9rtv_verifyBytecodes - %.*s %.*s%.*s Unreachable error %i occurred"
+
+TraceEntry=Trc_RTV_recordClassRelationship_Entry Overhead=1 Level=3 Template="recordClassRelationship - child: %.*s, parent: %.*s"
+TraceException=Trc_RTV_recordClassRelationship_EntryAllocationFailedChild Overhead=1 Level=1 Template="recordClassRelationship - failed to allocate child entry"
+TraceEvent=Trc_RTV_recordClassRelationship_AllocatedEntry Overhead=1 Level=3 Template="recordClassRelationship - recorded class loading relationship for child: %.*s, %p and parent: %.*s, %p"
+TraceExit=Trc_RTV_recordClassRelationship_Exit Overhead=1 Level=3 Template="recordClassRelationship - returning %p"
+
+TraceException=Trc_RTV_classRelationships_AllocationFailedParent Overhead=1 Level=1 Template="classRelationship - failed to allocate parent"
+
+TraceEntry=Trc_RTV_validateClassRelationships_Entry Overhead=1 Level=3 Template="validateClassRelationships - child class: %.*s"
+TraceEvent=Trc_RTV_validateClassRelationships_FlaggedAsInterface Overhead=1 Level=3 Template="validateClassRelationships - %.*s is flagged as J9RELATIONSHIP_MUST_BE_INTERFACE"
+TraceException=Trc_RTV_validateClassRelationships_ShouldBeInterface Overhead=1 Level=1 Template="validateClassRelationships - %.*s is not an interface, so it is invalid"
+TraceEvent=Trc_RTV_validateClassRelationships_ParentNotLoaded Overhead=1 Level=3 Template="validateClassRelationships - parent class: %.*s, %p not loaded, flag class as J9RELATIONSHIP_MUST_BE_INTERFACE"
+TraceEvent=Trc_RTV_validateClassRelationships_AllocatingParent Overhead=1 Level=3 Template="validateClassRelationships - allocating new entry for parent"
+TraceEvent=Trc_RTV_validateClassRelationships_AllocatedParentEntry Overhead=1 Level=3 Template="validateClassRelationships - allocated parent entry"
+TraceEvent=Trc_RTV_validateClassRelationships_ParentIsInterface Overhead=1 Level=3 Template="validateClassRelationships - parent class: %.*s, %p is interface"
+TraceEvent=Trc_RTV_validateClassRelationships_ParentIsSuperClass Overhead=1 Level=3 Template="validateClassRelationships - parent class: %.*s, %p is superclass"
+TraceException=Trc_RTV_validateClassRelationships_InvalidRelationship Overhead=1 Level=1 Template="validateClassRelationships - invalid relationship with parent: %.*s"
+TraceExit=Trc_RTV_validateClassRelationships_Exit Overhead=1 Level=3 Template="validateClassRelationships - returning %p"
+
+TraceEntry=Trc_RTV_findClassRelationship_Entry Overhead=1 Level=3 Template="findClassRelationship - class: %.*s"
+TraceExit=Trc_RTV_findClassRelationship_Exit Overhead=1 Level=3 Template="findClassRelationship - returning %p"
+
+TraceEntry=Trc_RTV_freeClassRelationshipParentNodes_Entry Overhead=1 Level=3 Template="freeClassRelationshipParentNodes - class: %.*s"
+TraceEvent=Trc_RTV_freeClassRelationshipParentNodes_Parent Overhead=1 Level=3 Template="freeClassRelationshipParentNodes - parent: %.*s"
+TraceExit=Trc_RTV_freeClassRelationshipParentNodes_Exit Overhead=1 Level=3 Template="freeClassRelationshipParentNodes - returning"

@@ -27,6 +27,7 @@ add_library(bcuwhite SHARED
 	#TODO do we really need to recompile these sources,
 	# or can we just reuse the object files
 	${j9vm_SOURCE_DIR}/bcverify/bcverify.c
+	${j9vm_SOURCE_DIR}/bcverify/classrelationships.c
 	${j9vm_SOURCE_DIR}/bcverify/clconstraints.c
 	${j9vm_SOURCE_DIR}/bcverify/rtverify.c
 	${j9vm_SOURCE_DIR}/bcverify/staticverify.c

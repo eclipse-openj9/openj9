@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-   Copyright (c) 2006, 2017 IBM Corp. and others
+   Copyright (c) 2006, 2019 IBM Corp. and others
 
    This program and the accompanying materials are made available under
    the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,10 @@
 		<export name='j9bcv_checkClassLoadingConstraintForName'/>
 		<export name='j9bcv_satisfyClassLoadingConstraint'/>
 		<export name='j9bcv_J9VMDllMain'/>
+		<export name='j9bcv_recordClassRelationship'/>
+		<export name='j9bcv_validateClassRelationships'/>
+		<export name='j9bcv_hashClassRelationshipTableNew'/>
+		<export name='j9bcv_hashClassRelationshipTableFree'/>
 	</exports>
 
 	<artifact type="static" name="j9bcv" bundle="jvm" loadgroup="">
@@ -65,6 +69,7 @@
 		</makefilestubs>
 		<objects>
 			<object name="bcverify"/>
+			<object name="classrelationships"/>
 			<object name="clconstraints"/>
 			<object name="rtverify"/>
 			<object name="staticverify"/>
