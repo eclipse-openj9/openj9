@@ -1,4 +1,4 @@
-* Copyright (c) 2016, 2018 IBM Corp. and others
+* Copyright (c) 2016, 2019 IBM Corp. and others
       ACONTROL AFPR,FLAG(CONT)
 
 FFISYS CELQPRLG DSASIZE=DSASZ,PSECT=ASP

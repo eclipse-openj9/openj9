@@ -59,11 +59,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<include-if condition="spec.aix_ppc.*" />
 			</makefilestub>
 
-			<!-- Build .S files on z/OS -->
-			<makefilestub data='COMPILE.S=as -mgoff'>
-				<include-if condition="spec.zos_390.*" />
-			</makefilestub>
-
 			<!-- Build .S files on Windows -->
 			<makefilestub data="include winassembly.mk">
 				<include-if condition="spec.win.*" />
@@ -249,19 +244,19 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<vpath pattern="ffi.c" path="z" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.zos_390([^-].*)?" />
 			</vpath>
-			<vpath pattern="sysvz.S" path="z" augmentObjects="true" type="relativepath">
+			<vpath pattern="sysvz.s" path="z" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.zos_390([^-].*)?" />
 			</vpath>
-			<vpath pattern="closure_sysvz.S" path="z" augmentObjects="true" type="relativepath">
+			<vpath pattern="closure_sysvz.s" path="z" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.zos_390([^-].*)?" />
 			</vpath>
 			<vpath pattern="ffi64.c" path="z" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.zos_390-64.*" />
 			</vpath>
-			<vpath pattern="sysvz64.S" path="z" augmentObjects="true" type="relativepath">
+			<vpath pattern="sysvz64.s" path="z" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.zos_390-64.*" />
 			</vpath>
-			<vpath pattern="closure_sysvz64.S" path="z" augmentObjects="true" type="relativepath">
+			<vpath pattern="closure_sysvz64.s" path="z" augmentObjects="true" type="relativepath">
 				<include-if condition="spec.zos_390-64.*" />
 			</vpath>
 		</vpaths>
