@@ -1149,8 +1149,7 @@ J9::Z::TreeEvaluator::genLoadForObjectHeadersMasked(TR::CodeGenerator *cg, TR::N
    TR::Instruction *loadInstr;
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z13) &&
-         !(comp->getOption(TR_DisableZ13) || comp->getOption(TR_DisableZ13LoadAndMask)))
+   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z13))
       {
       iCursor = generateRXInstruction(cg, TR::InstOpCode::LLZRGF, node, reg, tempMR, iCursor);
       loadInstr = iCursor;
