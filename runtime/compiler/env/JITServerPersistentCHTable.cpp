@@ -26,8 +26,7 @@
 #include "net/ServerStream.hpp"
 #include "env/ClassTableCriticalSection.hpp"   // for ClassTableCriticalSection
 #include "control/CompilationThread.hpp"       // for TR::compInfoPT
-#include "control/JITServerCompilationThread.hpp"   // for ClientSessionData
-
+#include "runtime/JITClientSession.hpp"
 
 // plan: send the whole table once,
 // then on the client mark entires as dirty when they are modified

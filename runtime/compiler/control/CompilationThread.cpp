@@ -101,12 +101,13 @@
 #include "runtime/CodeCacheMemorySegment.hpp"
 #if defined(JITSERVER_SUPPORT)
 #include "env/j9methodServer.hpp"
+#include "control/JITClientCompilationThread.hpp"
 #include "control/JITServerCompilationThread.hpp"
+#include "control/JITServerHelpers.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
 #include "runtime/JITServerIProfiler.hpp"
 #include "net/ClientStream.hpp"
 #include "net/ServerStream.hpp"
-#include "control/JITServerHelpers.hpp"
 #endif
 
 #ifdef COMPRESS_AOT_DATA

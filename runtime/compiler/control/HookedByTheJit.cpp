@@ -79,7 +79,6 @@
 #include "runtime/HWProfiler.hpp"
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/SystemSegmentProvider.hpp"
-#include "control/JITServerCompilationThread.hpp"
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/Listener.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
