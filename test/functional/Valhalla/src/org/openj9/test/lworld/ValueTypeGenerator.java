@@ -67,7 +67,7 @@ public class ValueTypeGenerator extends ClassLoader {
 				fieldModifiers = ACC_PUBLIC;
 			} else {
 				if ((nameAndSigValue.length > 2) && nameAndSigValue[2].equals("static")) {
-					fieldModifiers = ACC_PUBLIC + ACC_FINAL + ACC_STATIC;
+					fieldModifiers = ACC_PUBLIC + ACC_STATIC;
 				} else {
 					fieldModifiers = ACC_PUBLIC + ACC_FINAL;
 				}
@@ -679,7 +679,7 @@ public class ValueTypeGenerator extends ClassLoader {
 	
 	private static void generateGetterStatic(ClassWriter cw, String[] nameAndSigValue, String className) {
 		boolean doubleDetected = false;
-		MethodVisitor mv = cw.visitMethod((ACC_PUBLIC | ACC_STATIC), "get" + nameAndSigValue[0], "(Ljava/lang/Class;)" + nameAndSigValue[1], null, null);
+		MethodVisitor mv = cw.visitMethod((ACC_PUBLIC | ACC_STATIC), "getStatic" + nameAndSigValue[0], "(Ljava/lang/Class;)" + nameAndSigValue[1], null, null);
 		mv.visitCode();
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitFieldInsn(GETSTATIC, className, nameAndSigValue[0], nameAndSigValue[1]);

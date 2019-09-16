@@ -1350,7 +1350,7 @@ public class ValueTypeTests {
 	
 
 	@Test(priority=4)
-	static public void testClassWithOnlyStaticFieldsWithSingleAlignment() throws Throwable {
+	static public void testStaticFieldsWithSingleAlignment() throws Throwable {
 		String fields[] = {
 			"tri:QTriangle2D;:static",
 			"point:QPoint2D;:static",
@@ -1359,23 +1359,14 @@ public class ValueTypeTests {
 			"f:QValueFloat;:static",
 			"tri2:QTriangle2D;:static"};
 		Class ClassWithOnlyStaticFieldsWithSingleAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithSingleAlignment", fields);
-		int length = fields.length;
-		MethodHandle[][] StaticFieldsWithSingleAlignmentGenericGetterAndSetter = new MethodHandle[length][2];
-
-		/*
-		 * Getters are created in array StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][0] according to the order of fields i
-		 * Setters are created in array StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][1] according to the order of fields i
-		 */
-		for (int i = 0; i < length; i++) {
-			String fieldName = fields[i].split(":")[0];
-			StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][0] = generateStaticGenericGetter(ClassWithOnlyStaticFieldsWithSingleAlignment, fieldName);
-			StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][1] = generateStaticGenericSetter(ClassWithOnlyStaticFieldsWithSingleAlignment, fieldName);
-		}
-		//checkFieldAccessMHOfAssortedType(StaticFieldsWithSingleAlignmentGenericGetterAndSetter, ClassWithOnlyStaticFieldsWithSingleAlignment.getClass(), fields, false);
+		MethodHandle[][] StaticFieldsWithSingleAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(ClassWithOnlyStaticFieldsWithSingleAlignment, fields);
+		
+		initializeStaticFields(ClassWithOnlyStaticFieldsWithSingleAlignment, StaticFieldsWithSingleAlignmentGenericGetterAndSetter, fields);
+		checkFieldAccessMHOfAssortedType(StaticFieldsWithSingleAlignmentGenericGetterAndSetter, ClassWithOnlyStaticFieldsWithSingleAlignment, fields, false);
 	}
 
 	@Test(priority=4)
-	static public void testClassWithOnlyStaticFieldsWithLongAlignment() throws Throwable {
+	static public void testStaticFieldsWithLongAlignment() throws Throwable {
 		String fields[] = {
 			"point:QPoint2D;:static",
 			"line:QFlattenedLine2D;:static",
@@ -1385,23 +1376,14 @@ public class ValueTypeTests {
 			"i:QValueInt;:static",
 			"tri:QTriangle2D;:static"};
 		Class ClassWithOnlyStaticFieldsWithLongAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithLongAlignment", fields);
-		int length = fields.length;
-		MethodHandle[][] StaticFieldsWithLongAlignmentGenericGetterAndSetter = new MethodHandle[length][2];
-
-		/*
-		 * Getters are created in array StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][0] according to the order of fields i
-		 * Setters are created in array StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][1] according to the order of fields i
-		 */
-		for (int i = 0; i < length; i++) {
-			String fieldName = fields[i].split(":")[0];
-			StaticFieldsWithLongAlignmentGenericGetterAndSetter[i][0] = generateStaticGenericGetter(ClassWithOnlyStaticFieldsWithLongAlignment, fieldName);
-			StaticFieldsWithLongAlignmentGenericGetterAndSetter[i][1] = generateStaticGenericSetter(ClassWithOnlyStaticFieldsWithLongAlignment, fieldName);
-		}
-		//checkFieldAccessMHOfAssortedType(StaticFieldsWithLongAlignmentGenericGetterAndSetter, ClassWithOnlyStaticFieldsWithLongAlignment.getClass(), fields, false);
+		MethodHandle[][] StaticFieldsWithLongAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(ClassWithOnlyStaticFieldsWithLongAlignment, fields);
+		
+		initializeStaticFields(ClassWithOnlyStaticFieldsWithLongAlignment, StaticFieldsWithLongAlignmentGenericGetterAndSetter, fields);
+		checkFieldAccessMHOfAssortedType(StaticFieldsWithLongAlignmentGenericGetterAndSetter, ClassWithOnlyStaticFieldsWithLongAlignment, fields, false);
 	}
 
 	@Test(priority=4)
-	static public void testClassWithOnlyStaticFieldsWithObjectAlignment() throws Throwable {
+	static public void testStaticFieldsWithObjectAlignment() throws Throwable {
 		String fields[] = {
 			"tri:QTriangle2D;:static",
 			"point:QPoint2D;:static",
@@ -1411,19 +1393,10 @@ public class ValueTypeTests {
 			"f:QValueFloat;:static",
 			"tri2:QTriangle2D;:static"};
 		Class ClassWithOnlyStaticFieldsWithObjectAlignment = ValueTypeGenerator.generateValueClass("ClassWithOnlyStaticFieldsWithObjectAlignment", fields);
-		int length = fields.length;
-		MethodHandle[][] StaticFieldsWithObjectAlignmentGenericGetterAndSetter = new MethodHandle[length][2];
+		MethodHandle[][] StaticFieldsWithObjectAlignmentGenericGetterAndSetter = generateStaticGenericGetterAndSetter(ClassWithOnlyStaticFieldsWithObjectAlignment, fields);
 
-		/*
-		 * Getters are created in array StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][0] according to the order of fields i
-		 * Setters are created in array StaticFieldsWithSingleAlignmentGenericGetterAndSetter[i][1] according to the order of fields i
-		 */
-		for (int i = 0; i < length; i++) {
-			String fieldName = fields[i].split(":")[0];
-			StaticFieldsWithObjectAlignmentGenericGetterAndSetter[i][0] = generateStaticGenericGetter(ClassWithOnlyStaticFieldsWithObjectAlignment, fieldName);
-			StaticFieldsWithObjectAlignmentGenericGetterAndSetter[i][1] = generateStaticGenericSetter(ClassWithOnlyStaticFieldsWithObjectAlignment, fieldName);
-		}
-		//checkFieldAccessMHOfAssortedType(StaticFieldsWithObjectAlignmentGenericGetterAndSetter, ClassWithOnlyStaticFieldsWithObjectAlignment.getClass(), fields, false);
+		initializeStaticFields(ClassWithOnlyStaticFieldsWithObjectAlignment, StaticFieldsWithObjectAlignmentGenericGetterAndSetter, fields);
+		checkFieldAccessMHOfAssortedType(StaticFieldsWithObjectAlignmentGenericGetterAndSetter, ClassWithOnlyStaticFieldsWithObjectAlignment.getClass(), fields, false);
 	}
 
 	/*
@@ -1620,6 +1593,16 @@ public class ValueTypeTests {
 		return getterAndSetter;
 	}
 
+	static MethodHandle[][] generateStaticGenericGetterAndSetter(Class clazz, String[] fields) {
+		MethodHandle[][] getterAndSetter = new MethodHandle[fields.length][2];
+		for (int i = 0; i < fields.length; i++) {
+			String field = (fields[i].split(":"))[0];
+			getterAndSetter[i][0] = generateStaticGenericGetter(clazz, field);
+			getterAndSetter[i][1] = generateStaticGenericSetter(clazz, field);
+		}
+		return getterAndSetter;
+	}
+
 	static Object createPoint2D(int[] positions) throws Throwable {
 		return makePoint2D.invoke(positions[0], positions[1]);
 	}
@@ -1687,6 +1670,46 @@ public class ValueTypeTests {
 			}
 		}
 		return makeMethod.invokeWithArguments(args);
+	}
+
+	static void initializeStaticFields(Class clazz, MethodHandle[][] getterAndSetter, String[] fields) throws Throwable {
+		Object defaultValue = null;
+		for (int i = 0; i < fields.length; i++) {
+			String signature = (fields[i].split(":"))[1];
+			switch (signature) {
+			case "QPoint2D;":
+				defaultValue = createPoint2D(defaultPointPositions1);
+				break;
+			case "QFlattenedLine2D;":
+				defaultValue = createFlattenedLine2D(defaultLinePositions1);
+				break;
+			case "QTriangle2D;":
+				defaultValue = createTriangle2D(defaultTrianglePositions);
+				break;
+			case "QValueInt;":
+				defaultValue = makeValueInt.invoke(defaultInt);
+				break;
+			case "QValueFloat;":
+				defaultValue = makeValueFloat.invoke(defaultFloat);
+				break;
+			case "QValueDouble;":
+				defaultValue = makeValueDouble.invoke(defaultDouble);
+				break;
+			case "QValueObject;":
+				defaultValue = makeValueObject.invoke(defaultObject);
+				break;
+			case "QValueLong;":
+				defaultValue = makeValueLong.invoke(defaultLong);
+				break;
+			case "QLargeObject;":
+				defaultValue = createLargeObject(defaultObject);
+				break;
+			default:
+				defaultValue = null;
+				break;
+			}
+			getterAndSetter[i][1].invokeWithArguments(clazz, defaultValue);
+		}
 	}
 
 	static void checkFieldAccessMHOfAssortedType(MethodHandle[][] fieldAccessMHs, Object instance, String[] fields,
