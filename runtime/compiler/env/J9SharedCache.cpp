@@ -260,7 +260,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
 
       const uint32_t scHintDataLength = sizeof(scHintData);
 
-      if (*hintFlags == 0) // If no prior hints exist, we can perform a "storeAttachedData" operation
+      if (scHintData == 0) // If no prior hints exist, we can perform a "storeAttachedData" operation
          {
          uint32_t bytesToPersist = 0;
 
