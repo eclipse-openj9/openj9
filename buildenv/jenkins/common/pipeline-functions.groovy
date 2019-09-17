@@ -305,13 +305,17 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
             // want to offer the restart option as it is not desired for PR builds.
             // If the job was UNSTABLE this indicates test(s) failed and we don't want to offer the restart option.
             echo "WARNING: Downstream job ${DOWNSTREAM_JOB_NAME} is ${JOB.result} after ${DOWNSTREAM_JOB_TIME}. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
+            def slack_colour = ''
             if (JOB.result == "UNSTABLE") {
+                slack_colour = 'warning'
                 unstable "Setting overall pipeline status to UNSTABLE"
             } else {
+                // Job aborted (GREY)
+                slack_colour = '#808080'
                 currentBuild.result = JOB.result
             }
             if (SLACK_CHANNEL) {
-                slackSend channel: SLACK_CHANNEL, color: 'warning', message: "${JOB.result}: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}"
+                slackSend channel: SLACK_CHANNEL, color: slack_colour, message: "${JOB.result}: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}"
             }
             // Set Github Commit Status
             if (ghprbActualCommit) {
