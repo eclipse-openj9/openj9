@@ -27,7 +27,6 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #if defined(JITSERVER_SUPPORT)
-#include "control/JITServerCompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
 #endif
 #include "j9.h"

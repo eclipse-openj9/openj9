@@ -44,7 +44,7 @@
 #include "il/Node_inlines.hpp"
 #include "env/VMJ9.h"
 #include "control/CompilationThread.hpp"
-#include "control/JITServerCompilationThread.hpp"
+#include "runtime/JITClientSession.hpp"
 
 #define DEFAULT_OBJECT_ALIGNMENT (8)
 

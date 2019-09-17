@@ -29,7 +29,6 @@
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
-#include "control/JITServerCompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "exceptions/AOTFailure.hpp"

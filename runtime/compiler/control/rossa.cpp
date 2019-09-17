@@ -71,7 +71,6 @@
 #include "env/ClassTableCriticalSection.hpp"
 
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
-#include "control/JITServerCompilationThread.hpp"
 
 /* Hardware Profiling */
 #if defined(TR_HOST_S390) && defined(BUILD_Z_RUNTIME_INSTRUMENTATION)
