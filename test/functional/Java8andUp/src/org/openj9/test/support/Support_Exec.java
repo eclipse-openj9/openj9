@@ -42,6 +42,29 @@ public class Support_Exec {
 
 	public static String execJava(String[] args, String[] classpath,
 			boolean displayOutput) throws IOException, InterruptedException {
+		return execJava(args, classpath, displayOutput, "");
+	}
+
+	/**
+	 * Check if there is any output from the process error stream when there is no
+	 * expectedErr specified, When an expectedErr is supplied (not null and not
+	 * empty), check if such string presents in the process error output, pass if it
+	 * does appear, otherwise, Assert.fail() is invoked.
+	 * 
+	 * [PR CMVC 93383] fail test when unexpected output on err stream
+	 *
+	 * @return String the normal output of the process
+	 * @param args
+	 *            an array containing the jvm arguments
+	 * @param classpath
+	 *            an array containing the classpath
+	 * @param displayOutput
+	 *            the flag to determine if the normal output is displayed
+	 * @param expectedErr
+	 *            an expected error string
+	 */
+	public static String execJava(String[] args, String[] classpath, boolean displayOutput, String expectedErr)
+			throws IOException, InterruptedException {
 		// this function returns the output of the process as a string
 		Object[] execArgs = execJava2(args, classpath, displayOutput);
 		Process proc = (Process) execArgs[0];
@@ -57,36 +80,56 @@ public class Support_Exec {
 		}
 		in.close();
 		proc.waitFor();
-		checkStderr(execArgs);
+		checkStderr(execArgs, expectedErr);
 		proc.destroy();
 		return output.toString();
 	}
 
-	/* [PR CMVC 93383] fail test when unexpected output on err stream */
-	public static void checkStderr(Object[] execArgs) {
+	/**
+	 * Check if there is any error output from the process error stream when there
+	 * is no expectedErr specified; When an expectedErr is supplied (not null and
+	 * not empty), check if such string presents in the process error output, pass
+	 * if it does appear, otherwise, Assert.fail() is invoked.
+	 * 
+	 * [PR CMVC 93383] fail test when unexpected output on err stream
+	 *
+	 * @param execArgs
+	 *            an array containing the process & the error stream output
+	 * @param expectedErr
+	 *            an expected error string
+	 */
+	public static void checkStderr(Object[] execArgs, String expectedErr) {
+		boolean checkExpectedErr = expectedErr != null && !expectedErr.isEmpty();
+		boolean expectedErrFound = false;
 		Process proc = (Process) execArgs[0];
 		StringBuffer errBuf = (StringBuffer) execArgs[1];
 		synchronized (errBuf) {
 			if (errBuf.length() > 0) {
 				/*
-				 * [PR JAZZ 9611] Test using Runtime.exec() fails on zOS because
-				 * of warning on stderr
+				 * [PR JAZZ 9611] Test using Runtime.exec() fails on zOS because of warning on
+				 * stderr
 				 */
-				BufferedReader reader = new BufferedReader(new StringReader(
-						errBuf.toString()));
+				BufferedReader reader = new BufferedReader(new StringReader(errBuf.toString()));
 				String line;
 				try {
 					while ((line = reader.readLine()) != null) {
 						if (line.indexOf("switch to IFA processor") != -1) {
 							continue;
 						}
+						if (checkExpectedErr && line.indexOf(expectedErr) != -1) {
+							// expected error string found, no further checking
+							expectedErrFound = true;
+							break;
+						}
 						Assert.fail(errBuf.toString());
 					}
 				} catch (IOException e) {
 					Assert.fail(e.toString());
 				}
-
 			}
+		}
+		if (checkExpectedErr && !expectedErrFound) {
+			Assert.fail("Not found expected error string: " + expectedErr + ", but got: " + errBuf.toString());
 		}
 	}
 
