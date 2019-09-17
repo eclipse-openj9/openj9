@@ -24,6 +24,7 @@
 
 #include "codegen/CodeGenerator.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "control/JITServerHelpers.hpp"
 #include "control/MethodToBeCompiled.hpp"
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/VMAccessCriticalSection.hpp"
@@ -32,6 +33,8 @@
 #include "runtime/CodeCacheExceptions.hpp"
 #include "runtime/J9VMAccess.hpp"
 #include "runtime/RelocationTarget.hpp"
+#include "net/ClientStream.hpp"
+#include "net/ServerStream.hpp"
 #include "jitprotos.h"
 #include "vmaccess.h"
 
@@ -3019,7 +3022,11 @@ TR::CompilationInfoPerThreadRemote::CompilationInfoPerThreadRemote(TR::Compilati
    _waitToBeNotified(false),
    _methodIPDataPerComp(NULL),
    _resolvedMethodInfoMap(NULL),
-   _resolvedMirrorMethodsPersistIPInfo(NULL)
+   _resolvedMirrorMethodsPersistIPInfo(NULL),
+   _classOfStaticMap(NULL),
+   _fieldAttributesCache(NULL),
+   _staticAttributesCache(NULL),
+   _isUnresolvedStrCache(NULL)
    {}
 
 // waitForMyTurn needs to be executed with sequencingMonitor in hand
@@ -3616,6 +3623,14 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       }
    }
 
+/**
+ * Code to be executed on the JITServer to store bytecode iprofiler info to heap memory (instead of to persistent memory)
+ *
+ * @param method J9Method in question
+ * @param byteCodeIndex bytecode in question
+ * @param entry iprofile data to be stored
+ * @return always return true at the moment
+ */
 bool
 TR::CompilationInfoPerThreadRemote::cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry)
    {
@@ -3643,6 +3658,14 @@ TR::CompilationInfoPerThreadRemote::cacheIProfilerInfo(TR_OpaqueMethodBlock *met
    return true;
    }
 
+/**
+ * Code to be executed on the JITServer to retrieve bytecode iprofiler info from the heap memory
+ *
+ * @param method J9Method in question
+ * @param byteCodeIndex bytecode in question
+ * @param methodInfoPresent indicates to the caller whether the data is present
+ * @return IPTableHeapEntry bytecode iprofile data
+ */
 TR_IPBytecodeHashTableEntry*
 TR::CompilationInfoPerThreadRemote::getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent)
    {
