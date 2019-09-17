@@ -93,6 +93,7 @@
 #include "env/SystemSegmentProvider.hpp"
 #include "env/DebugSegmentProvider.hpp"
 #if defined(JITSERVER_SUPPORT)
+#include "control/JITServerHelpers.hpp"
 #include "runtime/JITClientSession.hpp"
 #endif /* defined(JITSERVER_SUPPORT) */
 #ifdef COMPRESS_AOT_DATA
@@ -764,7 +765,7 @@ void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
    rawAllocator.deallocate(compilationRuntime);
    }
 
-#if defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO)
+#if defined(JITSERVER_SUPPORT)
 J9ROMClass *
 TR::CompilationInfoPerThread::getRemoteROMClassIfCached(J9Class *clazz)
    {
@@ -783,7 +784,7 @@ TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memor
       }
    return romClass;
    }
-#endif /* defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO) */
+#endif /* defined(JITSERVER_SUPPORT) */
 
 void
 TR::CompilationInfoPerThread::waitForGCCycleMonitor(bool threadHasVMAccess)
@@ -11071,7 +11072,7 @@ TR::CompilationInfo::storeAOTInSharedCache(
       // If validation has been performed, then a header already existed
       // or one was already been created in this JVM
       TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
-      safeToStore = entry->_compInfoPT->reloRuntime()->storeAOTHeader(jitConfig->javaVM, fe, vmThread);
+      safeToStore = entry->_compInfoPT->reloRuntime()->storeAOTHeader(fe, vmThread);
       }
    else
       {
