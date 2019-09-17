@@ -66,6 +66,8 @@
  */
 bool firstCompileStarted = false;
 
+// JITSERVER_TODO: disabled to allow for JITServer
+#if !defined(JITSERVER_SUPPORT)
 void *operator new(size_t size)
    {
 #if defined(DEBUG)
@@ -90,6 +92,7 @@ void operator delete(void *)
    {
    TR_ASSERT(0, "Invalid use of global operator delete");
    }
+#endif /* !defined(JITSERVER_SUPPORT) */
 
 
 
@@ -171,6 +174,10 @@ J9::Compilation::Compilation(int32_t id,
    _profileInfo(NULL),
    _skippedJProfilingBlock(false),
    _reloRuntime(reloRuntime),
+#if defined(JITSERVER_SUPPORT)
+   _outOfProcessCompilation(false),
+   _remoteCompilation(false),
+#endif /* defined(JITSERVER_SUPPORT) */
    _osrProhibitedOverRangeOfTrees(false)
    {
    _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);
