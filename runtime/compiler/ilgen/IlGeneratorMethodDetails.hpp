@@ -154,7 +154,7 @@ public:
    NewInstanceThunkDetails(const NewInstanceThunkDetails & other) :
       TR::IlGeneratorMethodDetails(other.getMethod())
       {
-      _data._class = other.getClass();
+      _data._class = other.classNeedingThunk();
       }
 
    virtual const char * name()         const { return "NewInstanceThunk"; }
@@ -163,15 +163,17 @@ public:
    virtual bool isNewInstanceThunk()   const { return true; }
    virtual bool supportsInvalidation() const { return false; }
 
-   J9Class *getClass()                 const { return _data._class; }
+   J9Class *classNeedingThunk()        const { return _data._class; }
 
-   bool isThunkFor(J9Class *clazz)     const { return clazz == getClass(); }
+   virtual J9Class *getClass()         const { return classNeedingThunk(); }
+
+   bool isThunkFor(J9Class *clazz)     const { return clazz == classNeedingThunk(); }
 
    virtual bool sameAs(TR::IlGeneratorMethodDetails & other, TR_FrontEnd *fe)
       {
       return other.isNewInstanceThunk() &&
              sameMethod(other) &&
-             static_cast<NewInstanceThunkDetails &>(other).getClass() == getClass();
+             static_cast<NewInstanceThunkDetails &>(other).classNeedingThunk() == classNeedingThunk();
       }
 
    virtual void printDetails(TR_FrontEnd *fe, TR::FILE *file);
@@ -186,6 +188,7 @@ class ArchetypeSpecimenDetails : public TR::IlGeneratorMethodDetails
 public:
    ArchetypeSpecimenDetails(J9Method * const method) : TR::IlGeneratorMethodDetails(method) { }
    ArchetypeSpecimenDetails(TR_ResolvedMethod *method) : TR::IlGeneratorMethodDetails(method) { }
+   ArchetypeSpecimenDetails(const ArchetypeSpecimenDetails &other) : TR::IlGeneratorMethodDetails(other) { }
 
    virtual const char * name()        const { return "ArchetypeSpecimen"; }
 
@@ -223,6 +226,12 @@ public:
       {
       _data._methodHandleData._handleRef = handleRef;
       _data._methodHandleData._argRef = argRef;
+      }
+   MethodHandleThunkDetails(const MethodHandleThunkDetails &other) :
+      ArchetypeSpecimenDetails(other)
+      {
+      _data._methodHandleData._handleRef = other.getHandleRef();
+      _data._methodHandleData._argRef = other.getArgRef();
       }
 
    virtual const char * name()         const { return "MethodHandleThunk"; }

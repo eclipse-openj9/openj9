@@ -68,6 +68,35 @@ IlGeneratorMethodDetails::clone(TR::IlGeneratorMethodDetails &storage, const TR:
    }
 
 
+#if defined(JITSERVER_SUPPORT)
+TR::IlGeneratorMethodDetails *
+IlGeneratorMethodDetails::clone(TR::IlGeneratorMethodDetails &storage, const TR::IlGeneratorMethodDetails & other, const IlGeneratorMethodDetailsType type)
+   {
+   // The if nest below covers every concrete subclass of IlGeneratorMethodDetails.
+   // If other is not one of these classes, then it will assert.
+
+   if (type & ORDINARY_METHOD)
+      return new (&storage) TR::IlGeneratorMethodDetails(static_cast<const TR::IlGeneratorMethodDetails &>(other));
+   else if (type & DUMP_METHOD)
+      return new (&storage) DumpMethodDetails(static_cast<const DumpMethodDetails &>(other));
+   else if (type & NEW_INSTANCE_THUNK)
+      return new (&storage) NewInstanceThunkDetails(static_cast<const NewInstanceThunkDetails &>(other));
+   else if (type & METHOD_IN_PROGRESS)
+      return new (&storage) MethodInProgressDetails(static_cast<const MethodInProgressDetails &>(other));
+   else if (type & METHOD_HANDLE_THUNK)
+      {
+      if (type & SHAREABLE_THUNK)
+         return new (&storage) ShareableInvokeExactThunkDetails(static_cast<const ShareableInvokeExactThunkDetails &>(other));
+      else if (type & CUSTOM_THUNK)
+         return new (&storage) CustomInvokeExactThunkDetails(static_cast<const CustomInvokeExactThunkDetails &>(other));
+      }
+
+   TR_ASSERT(0, "Unexpected IlGeneratorMethodDetails object\n");
+   return NULL; // error case
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
+
+
 IlGeneratorMethodDetails::IlGeneratorMethodDetails(const TR::IlGeneratorMethodDetails & other) :
    _method(other.getMethod())
    {
@@ -78,6 +107,41 @@ IlGeneratorMethodDetails::IlGeneratorMethodDetails(TR_ResolvedMethod *method)
    {
    _method = (J9Method *)(method->getPersistentIdentifier());
    }
+
+
+#if defined(JITSERVER_SUPPORT)
+const J9ROMClass *
+IlGeneratorMethodDetails::getRomClass() const
+   {
+   return J9_CLASS_FROM_METHOD(self()->getMethod())->romClass;
+   }
+
+const J9ROMMethod *
+IlGeneratorMethodDetails::getRomMethod() const
+   {
+   return J9_ROM_METHOD_FROM_RAM_METHOD(self()->getMethod());
+   }
+
+IlGeneratorMethodDetailsType
+IlGeneratorMethodDetails::getType() const
+   {
+   int type = EMPTY;
+   if (self()->isOrdinaryMethod()) type |= ORDINARY_METHOD;
+   if (self()->isDumpMethod()) type |= DUMP_METHOD;
+   if (self()->isNewInstanceThunk()) type |= NEW_INSTANCE_THUNK;
+   if (self()->isMethodInProgress()) type |= METHOD_IN_PROGRESS;
+   if (self()->isArchetypeSpecimen()) type |= ARCHETYPE_SPECIMEN;
+   if (self()->isMethodHandleThunk())
+      {
+      type |= METHOD_HANDLE_THUNK;
+      if (static_cast<const MethodHandleThunkDetails *>(self())->isShareable())
+         type |= SHAREABLE_THUNK;
+      else if (static_cast<const MethodHandleThunkDetails *>(self())->isCustom())
+         type |= CUSTOM_THUNK;
+      }
+   return (IlGeneratorMethodDetailsType) type;
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
 
 
 bool
