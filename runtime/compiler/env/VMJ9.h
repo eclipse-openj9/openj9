@@ -238,8 +238,10 @@ public:
       DEFAULT_VM = 0
       , J9_VM
       , AOT_VM
+#if defined(JITSERVER_SUPPORT)
       , J9_SERVER_VM // for JITServer
       , J9_SHARED_CACHE_SERVER_VM // for Remote AOT JITServer
+#endif /* defined(JITSERVER_SUPPORT) */
       };
 
    TR_J9VMBase(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, J9VMThread * vmContext);

@@ -403,7 +403,6 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          }
 
       J9ROMMethod *romMethod = (J9ROMMethod*)((uint8_t*)romClass + romMethodOffset);
-      J9Method *methodsOfClass = std::get<1>(classInfoTuple);
 
       // Build my entry
       if (!(optPlan = TR_OptimizationPlan::alloc(clientOptPlan.getOptLevel())))
@@ -412,13 +411,13 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
 
       TR::IlGeneratorMethodDetails *clientDetails = (TR::IlGeneratorMethodDetails*) &detailsStr[0];
       *(uintptr_t*)clientDetails = 0; // smash remote vtable pointer to catch bugs early
-      TR::IlGeneratorMethodDetails details;
-      TR::IlGeneratorMethodDetails &remoteDetails = details.createRemoteMethodDetails(*clientDetails, detailsType, ramMethod, romClass, romMethod, clazz, methodsOfClass);
+      TR::IlGeneratorMethodDetails serverDetailsStorage;
+      TR::IlGeneratorMethodDetails *serverDetails = TR::IlGeneratorMethodDetails::clone(serverDetailsStorage, *clientDetails, detailsType);
 
       // All entries have the same priority for now. In the future we may want to give higher priority to sync requests
       // Also, oldStartPC is always NULL for JITServer
       entry._freeTag = ENTRY_IN_POOL_FREE; // pretend we just got it from the pool because we need to initialize it again
-      entry.initialize(remoteDetails, NULL, CP_SYNC_NORMAL, optPlan);
+      entry.initialize(*serverDetails, NULL, CP_SYNC_NORMAL, optPlan);
       entry._jitStateWhenQueued = compInfo->getPersistentInfo()->getJitState();
       entry._stream = stream; // Add the stream to the entry
       entry._clientOptions = clientOptions;
