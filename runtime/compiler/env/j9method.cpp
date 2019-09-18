@@ -1206,20 +1206,18 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
       }
 
    TR::RecognizedMethod rm = getRecognizedMethod();
-   if ((rm == TR::java_math_BigDecimal_noLLOverflowMul || rm == TR::java_math_BigDecimal_noLLOverflowAdd) )
+   switch (rm)
       {
+      case TR::java_math_BigDecimal_noLLOverflowMul:
+      case TR::java_math_BigDecimal_noLLOverflowAdd:
+      case TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble:
+      case TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat:
+      case TR::java_lang_invoke_MethodHandle_invokeExact:
       return false;
       }
 
-   if (true)
-      {
-      // these methods are never interpreted, so don't bother
-      //
-      TR::RecognizedMethod rm = comp->getCurrentMethod()->getRecognizedMethod();
-      if (rm == TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble ||
-          rm == TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat)
-         return false;
-      }
+   if (convertToMethod()->isArchetypeSpecimen())
+      return false;
 
    intptrj_t count = getInvocationCount();
 
@@ -3879,6 +3877,7 @@ void TR_ResolvedJ9Method::construct()
       {  TR::java_lang_invoke_MethodHandle_invoke                   ,   13, "invokeGeneric",              (int16_t)-1, "*"}, // Older name from early versions of the jsr292 spec
       {  TR::java_lang_invoke_MethodHandle_invokeExact              ,   11, "invokeExact",                (int16_t)-1, "*"},
       {  TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress ,   24, "invokeExactTargetAddress",   (int16_t)-1, "*"},
+      {x(TR::java_lang_invoke_MethodHandle_type                     ,   "type",                       "()Ljava/lang/invoke/MethodType;")},
       {x(TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper,   "invokeWithArgumentsHelper",  "(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;")},
       {x(TR::java_lang_invoke_MethodHandle_asType, "asType", "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")},
       {x(TR::java_lang_invoke_MethodHandle_asType_instance, "asType", "(Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")},
@@ -4084,6 +4083,12 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_invoke_FilterArgumentsHandle_filterArguments,       "filterArguments",  "([Ljava/lang/invoke/MethodHandle;I)I")},
       {  TR::java_lang_invoke_FilterArgumentsHandle_invokeExact,  28,  "invokeExact_thunkArchetype_X",    (int16_t)-1, "*"},
       {  TR::unknownMethod}
+      };
+
+    static X ConvertHandleFilterHelpersMethods[] =
+      {
+      {x(TR::java_lang_invoke_ConvertHandleFilterHelpers_object2J,          "object2J",    "(Ljava/lang/Object;)J")},
+      {x(TR::java_lang_invoke_ConvertHandleFilterHelpers_number2J,          "number2J",    "(Ljava/lang/Number;)J")},
       };
 
    static X CatchHandleMethods[] =
@@ -4447,6 +4452,12 @@ void TR_ResolvedJ9Method::construct()
       { 0 }
       };
 
+   static Y class44[] =
+      {
+      { "java/lang/invoke/ConvertHandle$FilterHelpers", ConvertHandleFilterHelpersMethods },
+      { 0 }
+      };
+
    static Y class45[] =
       {
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
@@ -4493,7 +4504,7 @@ void TR_ResolvedJ9Method::construct()
       0, 0, 0, class13, class14, class15, class16, class17, class18, class19,
       class20, class21, class22, class23, class24, class25, 0, class27, class28, class29,
       class30, class31, class32, class33, class34, class35, class36, 0, class38, class39,
-      class40, class41, class42, class43, 0, class45, class46, 0, class48, 0,
+      class40, class41, class42, class43, class44, class45, class46, 0, class48, 0,
       class50, 0, 0, class53, 0, class55
       };
 

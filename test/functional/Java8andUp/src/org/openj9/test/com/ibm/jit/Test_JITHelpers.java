@@ -447,69 +447,235 @@ public class Test_JITHelpers {
 	 * @tests com.ibm.jit.JITHelpers#intrinsicIndexOfLatin1(Object, byte, int, int)
 	 */
 	public static void test_intrinsicIndexOfLatin1() {
-		byte lowerLetter;
-		byte upperLetter;
-		int lowerResult;
-		int upperResult;
+		try {
+			Field valueField = String.class.getDeclaredField("value");
+			valueField.setAccessible(true);
 
-		for (int i : indexes) {
-			for (int j : indexes) {
-				lowerLetter = lowercaseLatin1Byte[j];
-				lowerResult = helpers.intrinsicIndexOfLatin1(lowercaseLatin1Byte, lowerLetter, i, lowercaseLatin1Byte.length);
+			// Latin1 tests are valid if and only if compact strings are enabled because of the way we extract the
+			// String.value field and pass it off to the intrinsicIndexOfLatin1 API. The only way to ensure
+			// the extracted array is in Latin1 format is to make sure compact strings are enabled.
+			Field enableCompressionField = String.class.getDeclaredField("enableCompression");
+			enableCompressionField.setAccessible(true);
 
-				if (j >= i) {
-					Assert.assertEquals(lowerResult, j, "intrinsicIndexOfLatin1 returned incorrect result on a char array of lowercase letters");
-				} else {
-					Assert.assertEquals(lowerResult, -1, "intrinsicIndexOfLatin1 returned incorrect result on a char array of lowercase letters");
-				}
-
-				upperLetter = uppercaseLatin1Byte[j];
-				upperResult = helpers.intrinsicIndexOfLatin1(uppercaseLatin1Byte, upperLetter, i, uppercaseLatin1Byte.length);
-
-				if (j >= i) {
-					Assert.assertEquals(upperResult, j, "intrinsicIndexOfLatin1 returned incorrect result on a char array of uppercase letters");
-				} else {
-					Assert.assertEquals(upperResult, -1, "intrinsicIndexOfLatin1 returned incorrect result on a char array of uppercase letters");
-				}
+			if ((boolean)enableCompressionField.get(null)) {
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get(""), (byte)'a', 0, 0), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get(""), (byte)'a', 5, 0), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("a"), (byte)'a', 0, 1), 0);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("a"), (byte)'a', 1, 1), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("a"), (byte)'b', 0, 1), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("a"), (byte)'b', 1, 1), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("a"), (byte)'A', 0, 1), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab"), (byte)'b', 0, 2), 1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab"), (byte)'b', 1, 2), 1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab"), (byte)'B', 0, 2), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab"), (byte)'B', 1, 2), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab"), (byte)'a', 0, 2), 0);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab"), (byte)'A', 1, 2), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab"), (byte)'a', 1, 2), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("aba"), (byte)'b', 1, 3), 1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmno"), (byte)'o', 0, 15), 14);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmno"), (byte)'o', 7, 15), 14);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmno"), (byte)'a', 0, 15), 0);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmno"), (byte)'x', 0, 15), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmno"), (byte)'x', 1, 15), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmno"), (byte)'x', 7, 15), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmno"), (byte)'d', 0, 15), 3);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmno"), (byte)'d', 2, 15), 3);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmno"), (byte)'d', 5, 15), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnop"), (byte)'o', 0, 16), 14);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnop"), (byte)'o', 7, 16), 14);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnop"), (byte)'p', 0, 16), 15);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnop"), (byte)'p', 5, 16), 15);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnop"), (byte)'a', 0, 16), 0);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnop"), (byte)'x', 0, 16), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnop"), (byte)'x', 1, 16), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnop"), (byte)'x', 7, 16), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnop"), (byte)'d', 0, 16), 3);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnop"), (byte)'d', 2, 16), 3);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnop"), (byte)'d', 5, 16), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnopq"), (byte)'o', 0, 17), 14);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnopq"), (byte)'o', 7, 17), 14);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnopq"), (byte)'p', 0, 17), 15);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnopq"), (byte)'p', 5, 17), 15);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnopq"), (byte)'q', 0, 17), 16);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnopq"), (byte)'q', 5, 17), 16);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnopq"), (byte)'a', 0, 17), 0);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnopq"), (byte)'x', 0, 17), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnopq"), (byte)'x', 1, 17), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnopq"), (byte)'x', 7, 17), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnopq"), (byte)'d', 0, 17), 3);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnopq"), (byte)'d', 2, 17), 3);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("abcdefghijklmnopq"), (byte)'d', 5, 17), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'o', 0, 31), 28);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'o', 7, 31), 28);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'p', 0, 31), 29);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'p', 5, 31), 29);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'q', 0, 31), 30);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'q', 5, 31), 30);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'a', 0, 31), 0);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'x', 0, 31), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'x', 1, 31), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'x', 7, 31), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'d', 0, 31), 17);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'1', 0, 31), 2);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'1', 1, 31), 2);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'1', 2, 31), 2);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'1', 3, 31), 12);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'1', 4, 31), 12);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'d', 2, 31), 17);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234cdefghijklmnopq"), (byte)'d', 5, 31), 17);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab123456789012345cdefghijklmnopq"), (byte)'o', 0, 32), 29);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab123456789012345cdefghijklmnopq"), (byte)'o', 7, 32), 29);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab123456789012345cdefghijklmnopq"), (byte)'p', 0, 32), 30);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab123456789012345cdefghijklmnopq"), (byte)'p', 5, 32), 30);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab123456789012345cdefghijklmnopq"), (byte)'q', 0, 32), 31);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab123456789012345cdefghijklmnopq"), (byte)'q', 5, 32), 31);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab123456789012345cdefghijklmnopq"), (byte)'a', 0, 32), 0);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab123456789012345cdefghijklmnopq"), (byte)'x', 0, 32), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab123456789012345cdefghijklmnopq"), (byte)'x', 1, 32), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab123456789012345cdefghijklmnopq"), (byte)'x', 7, 32), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab123456789012345cdefghijklmnopq"), (byte)'d', 0, 32), 18);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab123456789012345cdefghijklmnopq"), (byte)'d', 2, 32), 18);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab123456789012345cdefghijklmnopq"), (byte)'d', 5, 32), 18);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'o', 0, 34), 31);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'o', 7, 34), 31);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'p', 0, 34), 32);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'p', 5, 34), 32);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'q', 0, 34), 33);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'q', 5, 34), 33);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'a', 0, 34), 0);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'x', 0, 34), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'x', 1, 34), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'x', 7, 34), -1);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'d', 0, 34), 20);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'1', 3, 34), 12);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'1', 4, 34), 12);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'1', 0, 34), 2);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'1', 1, 34), 2);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'1', 2, 34), 2);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'6', 3, 34), 7);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'6', 8, 34), 17);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'d', 2, 34), 20);
+				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), (byte)'d', 5, 34), 20);
 			}
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} catch (NoSuchFieldException e) {
+			throw new RuntimeException(e);
 		}
-
-		Assert.assertEquals(helpers.intrinsicIndexOfLatin1(lowercaseLatin1Byte, (byte)0x00, 0, lowercaseLatin1Byte.length), -1,
-		    "intrinsicIndexOfLatin1 return incorrect result when passed a null character");
 	}
 
 	/**
 	 * @tests com.ibm.jit.JITHelpers#intrinsicIndexOfUTF16(Object, char, int, int)
 	 */
 	public static void test_intrinsicIndexOfUTF16() {
-		char lowerLetter;
-		char upperLetter;
-		int lowerResult;
-		int upperResult;
-
-		for (int i : indexes) {
-			for (int j : indexes) {
-				lowerLetter = lowercaseUTF16Char[j];
-				lowerResult = helpers.intrinsicIndexOfUTF16(lowercaseUTF16Char, lowerLetter, i, lowercaseUTF16Char.length);
-
-				if (j >= i) {
-					Assert.assertEquals(lowerResult, j, "intrinsicIndexOfUTF16 returned incorrect result on a char array of lowercase letters");
-				} else {
-					Assert.assertEquals(lowerResult, -1, "intrinsicIndexOfUTF16 returned incorrect result on a char array of lowercase letters");
-				}
-
-				upperLetter = uppercaseUTF16Char[j];
-				upperResult = helpers.intrinsicIndexOfUTF16(uppercaseUTF16Char, upperLetter, i, uppercaseUTF16Char.length);
-
-				if (j >= i) {
-					Assert.assertEquals(upperResult, j, "intrinsicIndexOfUTF16 returned incorrect result on a char array of uppercase letters");
-				} else {
-					Assert.assertEquals(upperResult, -1, "intrinsicIndexOfUTF16 returned incorrect result on a char array of uppercase letters");
-				}
-			}
+		try {
+			Field valueField = String.class.getDeclaredField("value");
+			valueField.setAccessible(true);
+			
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get(""), '\u0190', 0, 0), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get(""), '\u0190', 5, 0), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190"), '\u0190', 0, 1), 0);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190"), '\u0190', 1, 1), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190"), 'b', 0, 1), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190"), 'b', 1, 1), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190"), 'A', 0, 1), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b"), 'b', 0, 2), 1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b"), 'b', 1, 2), 1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b"), 'B', 0, 2), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b"), 'B', 1, 2), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b"), '\u0190', 0, 2), 0);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b"), 'A', 1, 2), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b"), '\u0190', 1, 2), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b\u0190"), 'b', 1, 3), 1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmno"), 'o', 0, 15), 14);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmno"), 'o', 7, 15), 14);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmno"), '\u0190', 0, 15), 0);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmno"), 'x', 0, 15), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmno"), 'x', 1, 15), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmno"), 'x', 7, 15), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmno"), 'd', 0, 15), 3);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmno"), 'd', 2, 15), 3);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmno"), 'd', 5, 15), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnop"), 'o', 0, 16), 14);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnop"), 'o', 7, 16), 14);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnop"), 'p', 0, 16), 15);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnop"), 'p', 5, 16), 15);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnop"), '\u0190', 0, 16), 0);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnop"), 'x', 0, 16), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnop"), 'x', 1, 16), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnop"), 'x', 7, 16), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnop"), 'd', 0, 16), 3);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnop"), 'd', 2, 16), 3);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnop"), 'd', 5, 16), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnopq"), 'o', 0, 17), 14);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnopq"), 'o', 7, 17), 14);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnopq"), 'p', 0, 17), 15);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnopq"), 'p', 5, 17), 15);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnopq"), 'q', 0, 17), 16);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnopq"), 'q', 5, 17), 16);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnopq"), '\u0190', 0, 17), 0);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnopq"), 'x', 0, 17), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnopq"), 'x', 1, 17), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnopq"), 'x', 7, 17), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnopq"), 'd', 0, 17), 3);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnopq"), 'd', 2, 17), 3);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190bcdefghijklmnopq"), 'd', 5, 17), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), 'o', 0, 31), 28);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), 'o', 7, 31), 28);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), 'p', 0, 31), 29);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), 'p', 5, 31), 29);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), 'q', 0, 31), 30);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), 'q', 5, 31), 30);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), '\u0190', 0, 31), 0);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), 'x', 0, 31), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), 'x', 1, 31), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), 'x', 7, 31), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), 'd', 0, 31), 17);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), '1', 0, 31), 2);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), '1', 1, 31), 2);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), '1', 2, 31), 2);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), '1', 3, 31), 12);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), '1', 4, 31), 12);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), 'd', 2, 31), 17);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234cdefghijklmnopq"), 'd', 5, 31), 17);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b123456789012345cdefghijklmnopq"), 'o', 0, 32), 29);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b123456789012345cdefghijklmnopq"), 'o', 7, 32), 29);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b123456789012345cdefghijklmnopq"), 'p', 0, 32), 30);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b123456789012345cdefghijklmnopq"), 'p', 5, 32), 30);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b123456789012345cdefghijklmnopq"), 'q', 0, 32), 31);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b123456789012345cdefghijklmnopq"), 'q', 5, 32), 31);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b123456789012345cdefghijklmnopq"), '\u0190', 0, 32), 0);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b123456789012345cdefghijklmnopq"), 'x', 0, 32), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b123456789012345cdefghijklmnopq"), 'x', 1, 32), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b123456789012345cdefghijklmnopq"), 'x', 7, 32), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b123456789012345cdefghijklmnopq"), 'd', 0, 32), 18);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b123456789012345cdefghijklmnopq"), 'd', 2, 32), 18);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b123456789012345cdefghijklmnopq"), 'd', 5, 32), 18);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), 'o', 0, 34), 31);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), 'o', 7, 34), 31);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), 'p', 0, 34), 32);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), 'p', 5, 34), 32);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), 'q', 0, 34), 33);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), 'q', 5, 34), 33);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), '\u0190', 0, 34), 0);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), 'x', 0, 34), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), 'x', 1, 34), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), 'x', 7, 34), -1);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), 'd', 0, 34), 20);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), '1', 3, 34), 12);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), '1', 4, 34), 12);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), '1', 0, 34), 2);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), '1', 1, 34), 2);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), '1', 2, 34), 2);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), '6', 3, 34), 7);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), '6', 8, 34), 17);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), 'd', 2, 34), 20);
+            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190b12345678901234567cdefghijklmnopq"), 'd', 5, 34), 20);
+		} catch (IllegalAccessException e) {
+			throw new RuntimeException(e);
+		} catch (NoSuchFieldException e) {
+			throw new RuntimeException(e);
 		}
-
-		Assert.assertEquals(helpers.intrinsicIndexOfUTF16(lowercaseUTF16Char, (char)0x0000, 0, lowercaseUTF16Char.length), -1,
-		    "intrinsicIndexOfUTF16 return incorrect result when passed a null character");
 	}
 }
