@@ -386,11 +386,6 @@ doVerify:
 						setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_CLASS_RELATIONSHIP_INVALID, J9VMCONSTANTPOOL_JAVALANGVERIFYERROR, clazzNameLength, clazzName, resultNameLength, resultName);
 					}
 				}
-				if (VM_VMHelpers::exceptionPending(currentThread)) {
-					initializationLock = setInitStatus(currentThread, clazz, J9ClassInitUnverified, initializationLock);
-					clazz = VM_VMHelpers::currentClass(clazz);
-					goto done;
-				}
 				initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 				clazz = VM_VMHelpers::currentClass(clazz);
 				if (VM_VMHelpers::exceptionPending(currentThread)) {
