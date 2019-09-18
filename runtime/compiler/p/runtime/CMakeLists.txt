@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,6 @@ j9jit_files(
 	${omr_SOURCE_DIR}/compiler/p/runtime/VirtualGuardRuntime.spp
 	${omr_SOURCE_DIR}/compiler/p/runtime/OMRCodeCacheConfig.cpp
 	p/runtime/J9PPCArrayCopy.spp
-	p/runtime/J9PPCArrayCmp.spp
 	p/runtime/J9PPCArrayTranslate.spp
 	p/runtime/J9PPCEncodeUTF16.spp
 	p/runtime/J9PPCCompressString.spp
