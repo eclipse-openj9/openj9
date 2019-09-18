@@ -5447,14 +5447,12 @@ TR_ResolvedJ9Method::startAddressForJITInternalNativeMethod()
    return startAddressForJittedMethod();
    }
 
-#if defined(JITSERVER_SUPPORT)
 TR_PersistentJittedBodyInfo *
 TR_ResolvedJ9Method::getExistingJittedBodyInfo()
    {
    void *methodAddress = startAddressForInterpreterOfJittedMethod();
    return TR::Recompilation::getJittedBodyInfoFromPC(methodAddress);
    }
-#endif
 
 int32_t
 TR_ResolvedJ9Method::virtualCallSelector(U_32 cpIndex)
