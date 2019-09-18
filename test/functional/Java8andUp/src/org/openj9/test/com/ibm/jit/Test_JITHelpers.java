@@ -459,7 +459,6 @@ public class Test_JITHelpers {
 
 			if ((boolean)enableCompressionField.get(null)) {
 				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get(""), (byte)'a', 0, 0), -1);
-				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get(""), (byte)'a', 5, 0), -1);
 				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("a"), (byte)'a', 0, 1), 0);
 				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("a"), (byte)'a', 1, 1), -1);
 				Assert.assertEquals(helpers.intrinsicIndexOfLatin1(valueField.get("a"), (byte)'b', 0, 1), -1);
@@ -574,7 +573,6 @@ public class Test_JITHelpers {
 			valueField.setAccessible(true);
 			
             Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get(""), '\u0190', 0, 0), -1);
-            Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get(""), '\u0190', 5, 0), -1);
             Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190"), '\u0190', 0, 1), 0);
             Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190"), '\u0190', 1, 1), -1);
             Assert.assertEquals(helpers.intrinsicIndexOfUTF16(valueField.get("\u0190"), 'b', 0, 1), -1);
