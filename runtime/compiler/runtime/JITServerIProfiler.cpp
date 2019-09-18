@@ -23,6 +23,7 @@
 #include "runtime/JITServerIProfiler.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/JITServerCompilationThread.hpp"
+#include "env/j9methodServer.hpp"
 #include "runtime/JITClientSession.hpp"
 #include "infra/CriticalSection.hpp" // for OMR::CriticalSection
 #include "ilgen/J9ByteCode.hpp"
@@ -577,10 +578,8 @@ JITServerIProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *methodSymbol, 
 
    if (clientSessionData->getOrCacheVMInfo(stream)->_elgibleForPersistIprofileInfo)
       {
-#if defined(JITSERVER_TODO)
       auto serverMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(method);
       compInfoPT->cacheResolvedMirrorMethodsPersistIPInfo(serverMethod->getRemoteMirror());
-#endif
       }
    }
 

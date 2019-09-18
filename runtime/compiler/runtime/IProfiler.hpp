@@ -92,6 +92,7 @@ class TR_ResolvedMethod;
 class TR_AbstractInfo;
 class TR_BitVector;
 class TR_J9VMBase;
+class TR_J9SharedCache;
 
 
 #if defined (_MSC_VER)
