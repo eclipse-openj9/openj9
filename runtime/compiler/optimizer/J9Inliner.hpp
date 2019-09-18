@@ -36,9 +36,9 @@ class TR_J9InnerPreexistenceInfo;
  * Class TR_MultipleCallTargetInliner
  * ==================================
  *
- * Exception Directed Optimization (EDO) enables more aggressive 
- * inlining that the JIT does in cases when the call graph of the 
- * callee being inlined has some throw statements that would get 
+ * Exception Directed Optimization (EDO) enables more aggressive
+ * inlining that the JIT does in cases when the call graph of the
+ * callee being inlined has some throw statements that would get
  * caught in a catch block of the caller.
  *
  * The end goal is to give the JIT optimizer (value propagation in
@@ -70,6 +70,7 @@ class TR_MultipleCallTargetInliner : public TR_InlinerBase
 
       template <typename FunctObj>
       void recursivelyWalkCallTargetAndPerformAction(TR_CallTarget *ct, FunctObj &action);
+
       //void generateNodeEstimate(TR_CallTarget *ct, TR::Compilation *comp);
 
       class generateNodeEstimate
@@ -87,15 +88,18 @@ class TR_MultipleCallTargetInliner : public TR_InlinerBase
       virtual bool inlineCallTargets(TR::ResolvedMethodSymbol *, TR_CallStack *, TR_InnerPreexistenceInfo *);
       virtual bool exceedsSizeThreshold(TR_CallSite *callSite, int bytecodeSize, TR::Block * callNodeBlock, TR_ByteCodeInfo & bcInfo, int32_t numLocals=0, TR_ResolvedMethod * caller = 0, TR_ResolvedMethod * calleeResolvedMethod = 0, TR::Node * callNode = 0, bool allConsts = false);
 
-      TR_LinkHead<TR_CallTarget> _callTargets;
+      TR_LinkHead<TR_CallTarget> _callTargets; // This list only contains the call targets from top most level
 
    protected:
       virtual int32_t scaleSizeBasedOnBlockFrequency(int32_t bytecodeSize, int32_t frequency, int32_t borderFrequency, TR_ResolvedMethod * calleeResolvedMethod, TR::Node *callNode, int32_t coldBorderFrequency = 0);
       float getScalingFactor(float factor);
+      virtual bool supportsMultipleTargetInlining () { return true ; }
 
+      void walkCallSites(TR::ResolvedMethodSymbol *, TR_CallStack *, TR_InnerPreexistenceInfo *, int32_t walkDepth);
+      void walkCallSite( TR::ResolvedMethodSymbol * calleeSymbol, TR_CallStack * callStack,
+                         TR::TreeTop * callNodeTreeTop, TR::Node * parent, TR::Node * callNode, TR_VirtualGuardSelection *guard,
+                         TR_OpaqueClassBlock * thisClass, bool inlineNonRecursively, int32_t walkDepth);
    private:
-
-
       bool analyzeCallSite(TR::ResolvedMethodSymbol *, TR_CallStack *, TR::TreeTop *, TR::Node *, TR::Node *);
       void weighCallSite( TR_CallStack * callStack , TR_CallSite *callsite, bool currentBlockHasExceptionSuccessors,bool dontAddCalls=false);
 
@@ -103,17 +107,30 @@ class TR_MultipleCallTargetInliner : public TR_InlinerBase
       bool eliminateTailRecursion(TR::ResolvedMethodSymbol *, TR_CallStack *, TR::TreeTop *, TR::Node *, TR::Node *, TR_VirtualGuardSelection *);
       void assignArgumentsToParameters(TR::ResolvedMethodSymbol *, TR::TreeTop *, TR::Node *);
       bool isLargeCompiledMethod(TR_ResolvedMethod *calleeResolvedMethod, int32_t bytecodeSize, int32_t freq);
+      /* \brief
+       *    This API processes the call targets got chopped off from \ref _calltargets
+       *
+       * \parm firstChoppedOffcalltarget
+       *    the start of the targets that should be chopped off from \ref _callTargets
+       *
+       * \parm lastTargetToInline
+       *    the tail of _callTargets
+       *
+       * \notes
+       *    Call targets are chopped off from \ref _callTargets list because of global budget limit like node counts and total weight.
+       *    This function chooses to keep some chopped of targets if they meet certain conditions.
+       */
+      void processChoppedOffCallTargets(TR_CallTarget* lastTargetToInline, TR_CallTarget *firstChoppedOffcalltarget, int estimateAndRefineBytecodeSize);
 
-   protected:
-      virtual bool supportsMultipleTargetInlining () { return true ; }
-
-      void walkCallSites(TR::ResolvedMethodSymbol *, TR_CallStack *, TR_InnerPreexistenceInfo *, int32_t walkDepth);
-      void walkCallSite( TR::ResolvedMethodSymbol * calleeSymbol, TR_CallStack * callStack,
-                         TR::TreeTop * callNodeTreeTop, TR::Node * parent, TR::Node * callNode, TR_VirtualGuardSelection *guard,
-                         TR_OpaqueClassBlock * thisClass, bool inlineNonRecursively, int32_t walkDepth);
-
-     //private fields
-
+      /*
+       * \brief
+       *    Recursively walk through the sub call graph of a given calltarget and clean up all targets
+       *    from their respective callsites if chopped of from _callTargets
+       *
+       * \return
+       *    True if the given calltarget should be inlined
+       */
+      bool inlineSubCallGraph(TR_CallTarget* calltarget);
    };
 
 class TR_J9InlinerUtil: public OMR_InlinerUtil
@@ -137,6 +154,7 @@ class TR_J9InlinerUtil: public OMR_InlinerUtil
       virtual void refineInliningThresholds(TR::Compilation *comp, int32_t &callerWeightLimit, int32_t &maxRecursiveCallByteCodeSizeEstimate, int32_t &methodByteCodeSizeThreshold, int32_t &methodInWarmBlockByteCodeSizeThreshold, int32_t &methodInColdBlockByteCodeSizeThreshold, int32_t &nodeCountThreshold, int32_t size);
       static void checkForConstClass(TR_CallTarget *target, TR_InlinerTracer *tracer);
       virtual bool needTargetedInlining(TR::ResolvedMethodSymbol *callee);
+      virtual void requestAdditionalOptimizations(TR_CallTarget *calltarget);
    protected:
       virtual void refineColdness (TR::Node* node, bool& isCold);
       virtual void computeMethodBranchProfileInfo (TR::Block * cfgBlock, TR_CallTarget* calltarget, TR::ResolvedMethodSymbol* callerSymbol);
@@ -234,6 +252,25 @@ class TR_J9InlinerPolicy : public OMR_InlinerPolicy
       bool validateArguments(TR_CallTarget *calltarget, TR_LinkHead<TR_ParameterMapping> &map);
       virtual bool supressInliningRecognizedInitialCallee(TR_CallSite* callsite, TR::Compilation* comp);
       virtual TR_InlinerFailureReason checkIfTargetInlineable(TR_CallTarget* target, TR_CallSite* callsite, TR::Compilation* comp);
+      /** \brief
+       *     This query decides whether the given method is JSR292 related
+       */
+      static bool isJSR292Method(TR_ResolvedMethod *resolvedMethod);
+      /** \brief
+       *     This query decides whether the given JSR292 callee is worthing inlining
+       *
+       *  \notes
+       *     The methods are in 3 kinds: 1. VarHandle operation methods 2. small getters 3. method handle thunk
+       */
+      static bool isJSR292AlwaysWorthInlining(TR_ResolvedMethod *resolvedMethod);
+      /** \brief
+       *     This query defines a group of methods that are small getters in the java/lang/invoke package
+       */
+      static bool isJSR292SmallGetterMethod(TR_ResolvedMethod *resolvedMethod);
+      /** \brief
+       *     This query defines a group of methods that are small helpers in the java/lang/invoke package
+       */
+      static bool isJSR292SmallHelperMethod(TR_ResolvedMethod *resolvedMethod);
    };
 
 class TR_J9JSR292InlinerPolicy : public TR_J9InlinerPolicy
