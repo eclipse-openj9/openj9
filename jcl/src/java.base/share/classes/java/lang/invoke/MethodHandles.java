@@ -1865,32 +1865,29 @@ public class MethodHandles {
 			 * as it is not set up for lookup objects by default.
 			 */
 			int fullAccessMode = FULL_ACCESS_MASK | MODULE | UNCONDITIONAL;
-			
-			if (0 == (fullAccessMode & dropMode)) {
-				/*[MSG "K065R", "The requested lookup mode: 0x{0} is not one of the existing access modes: 0x{1}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065R", Integer.toHexString(dropMode), Integer.toHexString(fullAccessMode))); //$NON-NLS-1$
-			}
-			
+
 			/* The lookup object has to discard the protected and unconditional access by default */
 			int newAccessMode = accessMode & ~(PROTECTED | UNCONDITIONAL);
 			
-			if (PRIVATE == (PRIVATE & dropMode)) {
-				newAccessMode &= ~PRIVATE;
-			}
-			
-			/* The lookup object has no package and private access if the PACKAGE bit is dropped */
-			if (PACKAGE == (PACKAGE & dropMode)) {
-				newAccessMode &= ~(PACKAGE | PRIVATE);
-			}
-			
-			/* The lookup object has no module, package and private access if the MODULE bit is dropped */
-			if (MODULE == (MODULE & dropMode)) {
-				newAccessMode &= ~(MODULE | PACKAGE | PRIVATE);
-			}
-			
-			/* The lookup object has no access at all if the PUBLIC bit is dropped */
-			if (PUBLIC == (PUBLIC & dropMode)) {
+			switch (dropMode) {
+			case PUBLIC:
 				newAccessMode = NO_ACCESS;
+				break;
+			case MODULE:
+				newAccessMode &= ~(MODULE | PACKAGE | PRIVATE);
+				break;
+			case PACKAGE:
+				newAccessMode &= ~(PACKAGE | PRIVATE);
+				break;
+			case PRIVATE:
+				newAccessMode &= ~PRIVATE;
+				break;
+			case PROTECTED:
+			case UNCONDITIONAL:
+				break;
+			default:
+				/*[MSG "K065R", "The requested lookup mode: 0x{0} is not one of the existing access modes: 0x{1}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065R", Integer.toHexString(dropMode), Integer.toHexString(fullAccessMode))); //$NON-NLS-1$
 			}
 			
 			return new Lookup(accessClass, newAccessMode); 
