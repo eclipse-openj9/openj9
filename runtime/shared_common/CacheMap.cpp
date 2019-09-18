@@ -7769,7 +7769,9 @@ SH_CacheMap::getPrereqCache(J9VMThread* currentThread, const char* cacheDir, SH_
 		UDATA itemType = ITEMTYPE(it);
 		if ((itemType <= TYPE_UNINITIALIZED) || (itemType > MAX_DATA_TYPES)) {
 			CACHEMAP_TRACE1(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_READ_CORRUPT_DATA, it);
-			if (startupForStats == false && isReadOnly) {
+			if ((false == startupForStats)
+				&& (false == isReadOnly)
+			) {
 				ccToUse->setCorruptCache(currentThread, ITEM_TYPE_CORRUPT, (UDATA)it);
 			}
 			reportCorruptCache(currentThread, ccToUse);
