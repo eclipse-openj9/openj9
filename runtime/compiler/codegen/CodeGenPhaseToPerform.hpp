@@ -41,7 +41,6 @@
     LowerTreesPhase,
     InsertDebugCountersPhase,
     CompressedReferenceRematerializationPhase,
-    SplitWarmAndColdBlocksPhase,
     AllocateLinkageRegisters,
 
     IdentifyUnneededByteConvsPhase,

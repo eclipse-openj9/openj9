@@ -101,8 +101,6 @@ public:
 
    void insertEpilogueYieldPoints();
 
-   void splitWarmAndColdBlocks(); // J9 & Z
-
    void allocateLinkageRegisters();
 
    void fixUpProfiledInterfaceGuardTest();

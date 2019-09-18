@@ -231,8 +231,6 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    bool canCopyWithOneOrTwoInstrs(char *lit, size_t size);
    bool inlineSmallLiteral(size_t srcSize, char *srcLiteral, size_t destSize, bool trace);
 
-   bool allowSplitWarmAndColdBlocks() { return true; }
-
 #if defined(J9VM_JIT_FREE_SYSTEM_STACK_POINTER)
    /** \brief
     *     Determines whether the JIT supports freeing up the system stack pointer (SSP) for register allocation.
