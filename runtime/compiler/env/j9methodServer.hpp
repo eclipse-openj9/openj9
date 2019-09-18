@@ -203,7 +203,7 @@ protected:
    static void setAttributeResultFromResolvedMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, U_32 * fieldOffset, void **address, TR::DataType * type, bool * volatileP, bool * isFinal, bool * isPrivate, bool * unresolvedInCP, bool *result, bool isStatic);
    virtual bool getCachedFieldAttributes(int32_t cpIndex, TR_J9MethodFieldAttributes &attributes, bool isStatic);
    virtual void cacheFieldAttributes(int32_t cpIndex, const TR_J9MethodFieldAttributes &attributes, bool isStatic);
-   virtual TR_FieldAttributesCache *getAttributesCache(bool isStatic, bool unresolvedInCP=false);
+   virtual TR_FieldAttributesCache &getAttributesCache(bool isStatic, bool unresolvedInCP=false);
    virtual bool validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation);
    virtual bool canCacheFieldAttributes(int32_t cpIndex, const TR_J9MethodFieldAttributes &attributes, bool isStatic);
 
@@ -275,7 +275,7 @@ protected:
    virtual void                  handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;
    virtual void                  handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;
    virtual char *                fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override;
-   virtual TR_FieldAttributesCache *getAttributesCache(bool isStatic, bool unresolvedInCP=false) override;
+   virtual TR_FieldAttributesCache &getAttributesCache(bool isStatic, bool unresolvedInCP=false) override;
    virtual bool validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation) override;
    UDATA getFieldType(J9ROMConstantPoolItem * CP, int32_t cpIndex);
    };

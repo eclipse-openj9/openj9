@@ -153,25 +153,17 @@ TR_ResolvedJ9JITServerMethod::getClassFromConstantPool(TR::Compilation * comp, u
       {
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
       auto &constantClassPoolCache = getJ9ClassInfo(compInfoPT, _ramClass)._constantClassPoolCache;
-      if (!constantClassPoolCache)
-         {
-         // initialize cache, called once per ram class
-         constantClassPoolCache = new (PERSISTENT_NEW) PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>(PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>::allocator_type(TR::Compiler->persistentAllocator()));
-         }
-      else
-         {
-         auto it = constantClassPoolCache->find(cpIndex);
-         if (it != constantClassPoolCache->end())
-            return it->second;
-         }
+      auto it = constantClassPoolCache.find(cpIndex);
+      if (it != constantClassPoolCache.end())
+         return it->second;
       }
    _stream->write(JITServer::MessageType::ResolvedMethod_getClassFromConstantPool, _remoteMirror, cpIndex, returnClassForAOT);
    TR_OpaqueClassBlock *resolvedClass = std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
    if (resolvedClass)
       {
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto constantClassPoolCache = getJ9ClassInfo(compInfoPT, _ramClass)._constantClassPoolCache;
-      constantClassPoolCache->insert({cpIndex, resolvedClass});
+      auto &constantClassPoolCache = getJ9ClassInfo(compInfoPT, _ramClass)._constantClassPoolCache;
+      constantClassPoolCache.insert({cpIndex, resolvedClass});
       }
    return resolvedClass;
    }
@@ -183,25 +175,17 @@ TR_ResolvedJ9JITServerMethod::getDeclaringClassFromFieldOrStatic(TR::Compilation
       {
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
       auto &cache = getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDeclaringClassCache;
-      if (!cache)
-         {
-         // initialize cache, called once per ram class
-         cache = new (PERSISTENT_NEW) PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>(PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>::allocator_type(TR::Compiler->persistentAllocator()));
-         }
-      else
-         {
-         auto it = cache->find(cpIndex);
-         if (it != cache->end())
-            return it->second;
-         }
+      auto it = cache.find(cpIndex);
+      if (it != cache.end())
+         return it->second;
       }
    _stream->write(JITServer::MessageType::ResolvedMethod_getDeclaringClassFromFieldOrStatic, _remoteMirror, cpIndex);
    TR_OpaqueClassBlock *declaringClass = std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
    if (declaringClass)
       {
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto cache = getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDeclaringClassCache;
-      cache->insert({cpIndex, declaringClass});
+      auto &cache = getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDeclaringClassCache;
+      cache.insert({cpIndex, declaringClass});
       }
    return declaringClass;
    }
@@ -217,14 +201,8 @@ TR_ResolvedJ9JITServerMethod::classOfStatic(I_32 cpIndex, bool returnClassForAOT
       {
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor()); 
       auto &classOfStaticCache = getJ9ClassInfo(compInfoPT, _ramClass)._classOfStaticCache;
-      if (!classOfStaticCache)
-         {
-         // initialize cache, called once per ram class
-         classOfStaticCache = new (PERSISTENT_NEW) PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>(PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>::allocator_type(TR::Compiler->persistentAllocator()));
-         }
-      
-      auto it = classOfStaticCache->find(cpIndex);
-      if (it != classOfStaticCache->end())
+      auto it = classOfStaticCache.find(cpIndex);
+      if (it != classOfStaticCache.end())
          return it->second;
       }
 
@@ -240,8 +218,8 @@ TR_ResolvedJ9JITServerMethod::classOfStatic(I_32 cpIndex, bool returnClassForAOT
       // if client returned NULL, don't cache, because class might not be fully initialized,
       // so the result may change in the future
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor()); 
-      auto classOfStaticCache = getJ9ClassInfo(compInfoPT, _ramClass)._classOfStaticCache;
-      classOfStaticCache->insert({cpIndex, classOfStatic});
+      auto &classOfStaticCache = getJ9ClassInfo(compInfoPT, _ramClass)._classOfStaticCache;
+      classOfStaticCache.insert({cpIndex, classOfStatic});
       }
    else
       {
@@ -443,7 +421,7 @@ TR_ResolvedJ9JITServerMethod::staticsAreSame(int32_t cpIndex1, TR_ResolvedMethod
    return false;
    }
 
-TR_FieldAttributesCache *
+TR_FieldAttributesCache &
 TR_ResolvedJ9JITServerMethod::getAttributesCache(bool isStatic, bool unresolvedInCP)
    {
    // Return a persistent attributes cache for regular JIT compilations
@@ -451,11 +429,6 @@ TR_ResolvedJ9JITServerMethod::getAttributesCache(bool isStatic, bool unresolvedI
    auto &attributesCache = isStatic ? 
       getJ9ClassInfo(compInfoPT, _ramClass)._staticAttributesCache :
       getJ9ClassInfo(compInfoPT, _ramClass)._fieldAttributesCache;
-   if (!attributesCache)
-      {
-      // initialize cache, called once per ram class
-      attributesCache = new (PERSISTENT_NEW) TR_FieldAttributesCache(TR_FieldAttributesCache::allocator_type(TR::Compiler->persistentAllocator()));
-      }
    return attributesCache;
    }
 
@@ -466,9 +439,9 @@ TR_ResolvedJ9JITServerMethod::getCachedFieldAttributes(int32_t cpIndex, TR_J9Met
       {
       // First, search a global cache
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor()); 
-      auto attributesCache = getAttributesCache(isStatic);
-      auto it = attributesCache->find(cpIndex);
-      if (it != attributesCache->end())
+      auto &attributesCache = getAttributesCache(isStatic);
+      auto it = attributesCache.find(cpIndex);
+      if (it != attributesCache.end())
          {
          attributes = it->second;
          return true;
@@ -500,20 +473,20 @@ TR_ResolvedJ9JITServerMethod::cacheFieldAttributes(int32_t cpIndex, const TR_J9M
       {
       // field is resolved in CP, can cache globally per RAM class.
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor()); 
-      auto attributesCache = getAttributesCache(isStatic);
+      auto &attributesCache = getAttributesCache(isStatic);
 #if defined(DEBUG) || defined(PROD_WITH_ASSUMES)
       TR_ASSERT(canCacheFieldAttributes(cpIndex, attributes, isStatic), "new and cached field attributes are not equal");
 #endif
-      attributesCache->insert({cpIndex, attributes});
+      attributesCache.insert({cpIndex, attributes});
       }
    }
 
 bool
 TR_ResolvedJ9JITServerMethod::canCacheFieldAttributes(int32_t cpIndex, const TR_J9MethodFieldAttributes &attributes, bool isStatic)
    {
-   auto attributesCache = getAttributesCache(isStatic);
-   auto it = attributesCache->find(cpIndex);
-   if (it != attributesCache->end())
+   auto &attributesCache = getAttributesCache(isStatic);
+   auto it = attributesCache.find(cpIndex);
+   if (it != attributesCache.end())
       {
       // Attempting to cache attributes when this key is already cached.
       // This case can happen when two threads call `getCachedFieldAttributes`,
@@ -952,13 +925,8 @@ TR_ResolvedJ9JITServerMethod::getRemoteROMString(int32_t &len, void *basePtr, st
    {
       OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
       auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._remoteROMStringsCache;
-      // initialize cache if it hasn't been done yet
-      if (!stringsCache)
-         {
-         stringsCache = new (PERSISTENT_NEW) PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>(PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>::allocator_type(TR::Compiler->persistentAllocator()));
-         }
-      auto gotStr = stringsCache->find(key);
-      if (gotStr != stringsCache->end())
+      auto gotStr = stringsCache.find(key);
+      if (gotStr != stringsCache.end())
          {
          cachedStr = &(gotStr->second);
          isCached = true;
@@ -976,7 +944,7 @@ TR_ResolvedJ9JITServerMethod::getRemoteROMString(int32_t &len, void *basePtr, st
          // reaquire the monitor
          OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
          auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._remoteROMStringsCache;
-         cachedStr = &(stringsCache->insert({key, std::get<0>(_stream->read<std::string>())}).first->second);
+         cachedStr = &(stringsCache.insert({key, std::get<0>(_stream->read<std::string>())}).first->second);
          }
       }
 
@@ -1116,13 +1084,8 @@ TR_ResolvedJ9JITServerMethod::fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_
    {
       OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
       auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._fieldOrStaticNameCache;
-      // initialize cache if it hasn't been done yet
-      if (!stringsCache)
-         {
-         stringsCache = new (PERSISTENT_NEW) PersistentUnorderedMap<int32_t, std::string>(PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>::allocator_type(TR::Compiler->persistentAllocator()));
-         }
-      auto gotStr = stringsCache->find(cpIndex);
-      if (gotStr != stringsCache->end())
+      auto gotStr = stringsCache.find(cpIndex);
+      if (gotStr != stringsCache.end())
          {
          cachedStr = &(gotStr->second);
          isCached = true;
@@ -1137,7 +1100,7 @@ TR_ResolvedJ9JITServerMethod::fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_
          // reaquire the monitor
          OMR::CriticalSection getRemoteROMClass(threadCompInfo->getClientData()->getROMMapMonitor()); 
          auto &stringsCache = getJ9ClassInfo(threadCompInfo, _ramClass)._fieldOrStaticNameCache;
-         cachedStr = &(stringsCache->insert({cpIndex, std::get<0>(_stream->read<std::string>())}).first->second);
+         cachedStr = &(stringsCache.insert({cpIndex, std::get<0>(_stream->read<std::string>())}).first->second);
          }
       }
 
@@ -2559,7 +2522,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::staticAttributes(TR::Compilation * comp
    return theFieldIsFromLocalClass;
    }
 
-TR_FieldAttributesCache *
+TR_FieldAttributesCache &
 TR_ResolvedRelocatableJ9JITServerMethod::getAttributesCache(bool isStatic, bool unresolvedInCP)
    {
    // Return persistent attributes cache for AOT compilations
@@ -2567,11 +2530,6 @@ TR_ResolvedRelocatableJ9JITServerMethod::getAttributesCache(bool isStatic, bool 
    auto &attributesCache = isStatic ? 
       getJ9ClassInfo(compInfoPT, _ramClass)._staticAttributesCacheAOT :
       getJ9ClassInfo(compInfoPT, _ramClass)._fieldAttributesCacheAOT;
-   if (!attributesCache)
-      {
-      // initialize cache, called once per ram class
-      attributesCache = new (PERSISTENT_NEW) TR_FieldAttributesCache(TR_FieldAttributesCache::allocator_type(TR::Compiler->persistentAllocator()));
-      }
    return attributesCache;
    }
 
@@ -2618,23 +2576,15 @@ TR_J9ServerMethod::TR_J9ServerMethod(TR_FrontEnd * fe, TR_Memory * trMemory, J9C
       // look up parameters for construction of this method in a cache first
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
       auto &cache = getJ9ClassInfo(compInfoPT, aClazz)._J9MethodNameCache;
-      if (!cache)
+      // search the cache for existing method parameters
+      auto it = cache.find(cpIndex);
+      if (it != cache.end())
          {
-         // initialize cache, called once per ram class
-         cache = new (PERSISTENT_NEW) PersistentUnorderedMap<int32_t, J9MethodNameAndSignature>(PersistentUnorderedMap<int32_t, J9MethodNameAndSignature>::allocator_type(TR::Compiler->persistentAllocator()));
-         }
-      else
-         {
-         // search the cache for existing method parameters
-         auto it = cache->find(cpIndex);
-         if (it != cache->end())
-            {
-            const J9MethodNameAndSignature &params = it->second;
-            classNameStr = params._classNameStr;
-            methodNameStr = params._methodNameStr;
-            methodSignatureStr = params._methodSignatureStr;
-            cached = true;
-            }
+         const J9MethodNameAndSignature &params = it->second;
+         classNameStr = params._classNameStr;
+         methodNameStr = params._methodNameStr;
+         methodSignatureStr = params._methodSignatureStr;
+         cached = true;
          }
       }
 
@@ -2649,8 +2599,8 @@ TR_J9ServerMethod::TR_J9ServerMethod(TR_FrontEnd * fe, TR_Memory * trMemory, J9C
       methodSignatureStr = std::get<2>(recv);
 
       OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
-      auto cache = getJ9ClassInfo(compInfoPT, aClazz)._J9MethodNameCache;
-      cache->insert({cpIndex, {classNameStr, methodNameStr, methodSignatureStr}});
+      auto &cache = getJ9ClassInfo(compInfoPT, aClazz)._J9MethodNameCache;
+      cache.insert({cpIndex, {classNameStr, methodNameStr, methodSignatureStr}});
       }
 
    _className = str2utf8((char*)&classNameStr[0], classNameStr.length(), trMemory, heapAlloc);
