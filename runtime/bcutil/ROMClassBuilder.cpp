@@ -478,9 +478,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 	if (isLambda) {
 		/* calculate the romSize to compare the ROM sizes in the compareROMClassForEquality method for lambda classes */
 		romSize = U_32(sizeInformation.rcWithOutUTF8sSize + sizeInformation.utf8sSize + sizeInformation.rawClassDataSize + sizeInformation.varHandleMethodTypeLookupTableSize);
-		/* round up to sizeof(U_64) */
-		romSize += (sizeof(U_64) - 1);
-		romSize &= ~(sizeof(U_64) - 1);
+		romSize = ROUND_UP_TO_POWEROF2(romSize, sizeof(U_64));
 	}
 
 	if ( context->shouldCompareROMClassForEquality() ) {
@@ -599,17 +597,13 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 			sizeRequirements.romClassMinimalSize =
 					U_32(sizeInformation.rcWithOutUTF8sSize
 					+ sizeInformation.utf8sSize + sizeInformation.rawClassDataSize + sizeInformation.varHandleMethodTypeLookupTableSize);
-			/* round up to sizeof(U_64) */
-			sizeRequirements.romClassMinimalSize += (sizeof(U_64) - 1);
-			sizeRequirements.romClassMinimalSize &= ~(sizeof(U_64) - 1);
+			sizeRequirements.romClassMinimalSize = ROUND_UP_TO_POWEROF2(sizeRequirements.romClassMinimalSize, sizeof(U_64));
 
 			sizeRequirements.romClassSizeFullSize =
 					U_32(sizeRequirements.romClassMinimalSize
 					+ sizeInformation.lineNumberSize
 					+ sizeInformation.variableInfoSize);
-			/* round up to sizeof(U_64) */
-			sizeRequirements.romClassSizeFullSize += (sizeof(U_64) - 1);
-			sizeRequirements.romClassSizeFullSize &= ~(sizeof(U_64)-1);
+			sizeRequirements.romClassSizeFullSize = ROUND_UP_TO_POWEROF2(sizeRequirements.romClassSizeFullSize, sizeof(U_64));
 
 
 			sizeRequirements.lineNumberTableSize = U_32(sizeInformation.lineNumberSize);
@@ -705,8 +699,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 		* This mirrors ROM class padding in finishPrepareAndLaydown when the final ROM class size 
 		* is calculated.
 		*/
-		maxRequiredSize += (sizeof(U_64) - 1);
-		romSize &= ~(sizeof(U_64) - 1);
+		maxRequiredSize = ROUND_UP_TO_POWEROF2(maxRequiredSize, sizeof(U_64));
 		romClassBuffer = context->allocationStrategy()->allocate(maxRequiredSize);
 	}
 	if ( romClassBuffer == NULL ) {
@@ -1022,9 +1015,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
 	 * Record the romSize as the final size of the ROMClass with interned strings space removed.
 	 */
 	U_32 romSize = U_32(sizeInformation->rcWithOutUTF8sSize + sizeInformation->utf8sSize + sizeInformation->rawClassDataSize + sizeInformation->varHandleMethodTypeLookupTableSize);
-	/* round up to sizeof(U_64) */
-	romSize += (sizeof(U_64) - 1);
-	romSize &= ~(sizeof(U_64) - 1);
+	romSize = ROUND_UP_TO_POWEROF2(romSize, sizeof(U_64));
 
 	/*
 	 * update the SRP Offset Table with the base addresses for main ROMClass section (RC_TAG),
