@@ -88,7 +88,7 @@ public class PointerGenerator {
 	private static final String BEGIN_USER_CODE = "[BEGIN USER CODE]";
 	private static final String END_USER_CODE = "[END USER CODE]";
 
-	private final Map<String, String> opts = new HashMap<String, String>();
+	private final Map<String, String> opts = new HashMap<>();
 	StructureReader structureReader;
 	File outputDir;
 	File outputDirHelpers;
@@ -170,9 +170,9 @@ public class PointerGenerator {
 
 	private void generateBuildFlags(StructureDescriptor structure) throws IOException {
 		File javaFile = new File(outputDir, structure.getName() + ".java");
-		List<String> userImports = new ArrayList<String>();
-		List<String> userCode = new ArrayList<String>();
-		collectMergeData(javaFile, userImports, userCode, structure);
+		List<String> userImports = new ArrayList<>();
+		List<String> userCode = new ArrayList<>();
+		collectMergeData(javaFile, userImports, userCode);
 
 		byte[] original = null;
 		int length = 0;
@@ -211,11 +211,11 @@ public class PointerGenerator {
 		}
 	}
 
-	private void writeBuildFlagsStaticInitializer(PrintWriter writer, StructureDescriptor structure) {
+	private static void writeBuildFlagsStaticInitializer(PrintWriter writer, StructureDescriptor structure) {
 		Collections.sort(structure.getConstants());
 
 		writer.println("\tstatic {");
-		writer.println("\t\tHashMap<String, Boolean> defaultValues = new HashMap<String, Boolean>();");
+		writer.println("\t\tHashMap<String, Boolean> defaultValues = new HashMap<>();");
 		writer.println();
 		writer.println("\t\t// Edit default values here");
 
@@ -251,11 +251,11 @@ public class PointerGenerator {
 
 	private void generateClass(StructureDescriptor structure) throws IOException {
 		File javaFile = new File(outputDir, structure.getPointerName() + ".java");
-		List<String> userImports = new ArrayList<String>();
-		List<String> userCode = new ArrayList<String>();
+		List<String> userImports = new ArrayList<>();
+		List<String> userCode = new ArrayList<>();
 		if (opts.get("-u").equals("true")) {
 			// if user code is supported then preserve it between generations
-			collectMergeData(javaFile, userImports, userCode, structure);
+			collectMergeData(javaFile, userImports, userCode);
 		} else {
 			// caching can be set from an optional properties file
 			setCacheStatusFromPropertyFile(structure);
@@ -306,7 +306,7 @@ public class PointerGenerator {
 			if (opts.get("-u").equals("false")) {
 				writer.println("\tprivate static final boolean CACHE_CLASS = true;");
 			}
-			writer.format("\tprivate static HashMap<Long, %s> CLASS_CACHE = new HashMap<Long, %s>();%n", structure.getPointerName(), structure.getPointerName());
+			writer.format("\tprivate static HashMap<Long, %s> CLASS_CACHE = new HashMap<>();%n", structure.getPointerName());
 			writer.println();
 		}
 		if (cacheFields) {
@@ -405,7 +405,7 @@ public class PointerGenerator {
 		}
 	}
 
-	private void writeBuildFlags(PrintWriter writer, StructureDescriptor structure) {
+	private static void writeBuildFlags(PrintWriter writer, StructureDescriptor structure) {
 		writer.println("\t// Build Flags");
 		Collections.sort(structure.getConstants());
 		for (ConstantDescriptor constant : structure.getConstants()) {
@@ -413,7 +413,7 @@ public class PointerGenerator {
 		}
 	}
 
-	private void collectMergeData(File javaFile, List<String> userImports, List<String> userCode, StructureDescriptor structure) throws IOException {
+	private void collectMergeData(File javaFile, List<String> userImports, List<String> userCode) throws IOException {
 		if (javaFile.exists()) {
 			BufferedReader reader = new BufferedReader(new FileReader(javaFile));
 			String aLine;
@@ -616,7 +616,7 @@ public class PointerGenerator {
 				if (colonIndex == -1) {
 					throw new IllegalArgumentException(String.format("%s is not a bitfield", fieldDescriptor));
 				}
-				writeBitFieldMethod(writer, structure, fieldDescriptor, type, fieldDescriptor.getName());
+				writeBitFieldMethod(writer, structure, fieldDescriptor, fieldDescriptor.getName());
 				break;
 			default:
 				if ((TYPE_SIMPLE_MIN <= type) && (type <= TYPE_SIMPLE_MAX)) {
@@ -655,7 +655,7 @@ public class PointerGenerator {
 		writeEAMethod(writer, "PointerPointer", structure, fieldDescriptor);
 	}
 
-	private void writeBitFieldMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor, int type, String getter) {
+	private void writeBitFieldMethod(PrintWriter writer, StructureDescriptor structure, FieldDescriptor fieldDescriptor, String getter) {
 		CTypeParser parser = new CTypeParser(fieldDescriptor.getType());
 		String typeString = parser.getCoreType();
 
@@ -668,7 +668,7 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", typeString, getter);
 		}
-		writeMethodSignature(writer, typeString, getter, fieldDescriptor, true);
+		writeMethodSignature(writer, generalizeSimpleType(typeString), getter, fieldDescriptor, true);
 		if (cacheFields) {
 			writer.format("\t\tif (CACHE_FIELDS) {%n");
 			writer.format("\t\t\tif (%s_cache == null) {%n", getter);
@@ -720,7 +720,7 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %sEA_cache;%n", returnType, getter);
 		}
-		writeMethodSignature(writer, returnType, getter + "EA", fieldDescriptor, false);
+		writeMethodSignature(writer, generalizeSimplePointer(returnType), getter + "EA", fieldDescriptor, false);
 		writeZeroCheck(writer);
 		if (cacheFields) {
 			writer.format("\t\tif (CACHE_FIELDS) {%n");
@@ -737,7 +737,7 @@ public class PointerGenerator {
 		writeMethodClose(writer);
 	}
 
-	private void writeZeroCheck(PrintWriter writer) {
+	private static void writeZeroCheck(PrintWriter writer) {
 		writer.format("\t\tif (address == 0) {%n");
 		writer.format("\t\t\tthrow new NullPointerDereference();%n");
 		writer.format("\t\t}%n");
@@ -810,7 +810,7 @@ public class PointerGenerator {
 		writeMethodClose(writer);
 	}
 
-	private void writeMethodClose(PrintWriter writer) {
+	private static void writeMethodClose(PrintWriter writer) {
 		writer.println("\t}");
 		writer.println();
 	}
@@ -1220,7 +1220,7 @@ public class PointerGenerator {
 		if (cacheFields) {
 			writer.format("\tprivate %s %s_cache;%n", pointerType, getter);
 		}
-		writeMethodSignature(writer, pointerType, getter, fieldDescriptor, true);
+		writeMethodSignature(writer, generalizeSimplePointer(pointerType), getter, fieldDescriptor, true);
 		writeZeroCheck(writer);
 		if (cacheFields) {
 			writer.format("\t\tif (CACHE_FIELDS) {%n");
@@ -1544,7 +1544,7 @@ public class PointerGenerator {
 		}
 	}
 
-	private void writeBuildFlagImports(PrintWriter writer) {
+	private static void writeBuildFlagImports(PrintWriter writer) {
 		writer.println("import java.util.HashMap;");
 		writer.println("import java.lang.reflect.Field;");
 	}
