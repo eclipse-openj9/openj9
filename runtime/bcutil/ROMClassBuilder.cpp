@@ -701,31 +701,12 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 		lineNumberBuffer = allocatedBuffers.lineNumberBuffer;
 		variableInfoBuffer = allocatedBuffers.variableInfoBuffer;
 	} else {
-		if (countDebugDataOutOfLine) {
-			/* Pad maxRequiredSize to the size to sizeof(U_64) in order to prevent memory corruption.  
-			 * 
-			 * In rare cases it is possible that maxRequiredSize is 2 bytes too small, due to
-			 * counting the data 'out-of-line', and then writing the debug data 'in-line' with 
-			 * padding U_64 adjustments. The extra 2 bytes is a result of a switch from U_16
-			 * alignment for debug data (when writing out of line), to U_32 alignment (when 
-			 * writing inline). It should also be noted that these extra 2 bytes are only 
-			 * visible when only one method with debug data exists. If there are more, then the removal 
-			 * of 'SRPs to debug data' from each method will hide the extra padding for in-line 
-			 * debug data.
-			 * 
-			 * Without this padding any new segment returned by the below call to allocate could be 
-			 * too small to contain the rom class that is about to be written.
-			 * 
-			 * Note: When the problem described above occurs maxRequiredSize will not be U_64 aligned 
-			 *       until the below code runs.
-			 */
-			UDATA alignmentBits = (sizeof (U_64) - 1);
-			UDATA adjustedCount = (maxRequiredSize + alignmentBits) & ~alignmentBits;
-			UDATA bytesToPad = adjustedCount - maxRequiredSize;
-			if (0 != bytesToPad) {
-				maxRequiredSize += bytesToPad;
-			}
-		}
+		/* Pad maxRequiredSize to the size to sizeof(U_64) in order to prevent memory corruption. 
+		* This mirrors ROM class padding in finishPrepareAndLaydown when the final ROM class size 
+		* is calculated.
+		*/
+		maxRequiredSize += (sizeof(U_64) - 1);
+		romSize &= ~(sizeof(U_64) - 1);
 		romClassBuffer = context->allocationStrategy()->allocate(maxRequiredSize);
 	}
 	if ( romClassBuffer == NULL ) {
