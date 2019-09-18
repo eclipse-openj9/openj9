@@ -476,7 +476,7 @@ final class PointerHelper extends HelperBase {
 	/* Sample generated code:
 	 *
 	 * @com.ibm.j9ddr.GeneratedFieldAccessor(offsetFieldName="_isDirOffset_", declaredType="uint32_t:1")
-	 * public U32 isDir() throws CorruptDataException {
+	 * public UDATA isDir() throws CorruptDataException {
 	 *     return getU32Bitfield(J9FileStat._isDir_s_, J9FileStat._isDir_b_);
 	 * }
 	 */
