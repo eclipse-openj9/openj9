@@ -342,8 +342,6 @@ become discontiguous whenever this flag is enabled. Since there won’t be any e
 all data is stored in their own region. It additionaly reduces footprint, mainly for JNI primitive array critical.</description>
 		<ifRemoved></ifRemoved>
 		<requires>
-			<require flag="gc_arraylets"/>
-			<require flag="gc_hybridArraylets"/>
 			<require flag="gc_vlhgc"/>
 		</requires>
 	</flag>

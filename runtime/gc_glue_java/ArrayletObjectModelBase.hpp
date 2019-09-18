@@ -256,6 +256,9 @@ public:
 			numberOfArraylets = ((dataSizeInBytes >> leafLogSize) + (((dataSizeInBytes & leafSizeMask) + leafSizeMask) >> leafLogSize));
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+			/* By forcing the layout to be discontiguous in some special cases the last arraylet leaf may be a 
+			 * NULL pointer. In that case we do not consider such leaf for this arraylet.
+			 */
 			if ((_enableDoubleMapping && numberOfArraylets > 1) && (unadjustedDataSizeInBytes % leafSize == 0)) {
 				numberOfArraylets -= 1;
 			}

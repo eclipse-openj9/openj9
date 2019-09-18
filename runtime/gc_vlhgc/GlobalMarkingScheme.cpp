@@ -1231,9 +1231,9 @@ private:
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	virtual void doDoubleMappedObjectSlot(ArrayletTableEntry *slotPtr, GC_HashTableIterator *hashTableIterator) {
-                MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._doubleMappedArrayletsCandidates += 1;
+                MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCandidates += 1;
                 if (!_markingScheme->isMarked((J9Object *)slotPtr->heapAddr)) {
-                        MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._doubleMappedArrayletsCleared += 1;
+                        MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCleared += 1;
 			_extensions->freeDoubleMap(_env, slotPtr->contiguousAddr, slotPtr->dataSize, &slotPtr->identifier);
                         hashTableIterator->removeSlot();
                 }
