@@ -1697,7 +1697,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   {
                   callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite(
                      callStack._method, callNodeTreeTop, parent, callNode,
-                     interfaceMethod, resolvedMethod->classOfMethod(), -1, cpIndex,
+                     interfaceMethod, resolvedMethod->classOfMethod(), (int32_t) resolvedMethod->virtualCallSelector(cpIndex), cpIndex,
                      resolvedMethod, resolvedSymbol, isIndirectCall, isInterface,
                      newBCInfo, comp(), _recursionDepth, allconsts);
                   }

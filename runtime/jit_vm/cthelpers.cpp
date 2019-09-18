@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -63,7 +63,7 @@ jitGetCountingSendTarget(J9VMThread *vmThread, J9Method *ramMethod)
  * - a non-final method of Object, using virtual dispatch.
  */
 J9Method*
-jitGetImproperInterfaceMethodFromCP(J9VMThread *currentThread, J9ConstantPool *constantPool, UDATA cpIndex)
+jitGetImproperInterfaceMethodFromCP(J9VMThread *currentThread, J9ConstantPool *constantPool, UDATA cpIndex, UDATA* nonFinalObjectMethodVTableOffset)
 {
 	J9RAMInterfaceMethodRef *ramMethodRef = (J9RAMInterfaceMethodRef*)constantPool + cpIndex;
 	J9Class* interfaceClass = (J9Class*)ramMethodRef->interfaceClass;
@@ -95,6 +95,9 @@ jitGetImproperInterfaceMethodFromCP(J9VMThread *currentThread, J9ConstantPool *c
 			 * generate a virtual dispatch.
 			 */
 			improperMethod = *(J9Method**)((UDATA)jlObject + methodIndex);
+			if (NULL != nonFinalObjectMethodVTableOffset) {
+				*nonFinalObjectMethodVTableOffset= methodIndex;
+			}
 		}
 	}
 done:

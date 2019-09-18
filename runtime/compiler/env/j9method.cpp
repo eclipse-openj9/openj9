@@ -6436,10 +6436,11 @@ TR_ResolvedJ9Method::getResolvedImproperInterfaceMethod(TR::Compilation * comp, 
    return 0;
 #else
    J9Method *j9method = NULL;
+   UDATA vtableOffset = 0;
    if ((_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) == 0)
       {
       TR::VMAccessCriticalSection getResolvedPrivateInterfaceMethodOffset(fej9());
-      j9method = jitGetImproperInterfaceMethodFromCP(_fe->vmThread(), cp(), cpIndex);
+      j9method = jitGetImproperInterfaceMethodFromCP(_fe->vmThread(), cp(), cpIndex, &vtableOffset);
       }
 
    if (comp->getOption(TR_UseSymbolValidationManager) && j9method)
@@ -6451,7 +6452,7 @@ TR_ResolvedJ9Method::getResolvedImproperInterfaceMethod(TR::Compilation * comp, 
    if (j9method == NULL)
       return NULL;
    else
-      return createResolvedMethodFromJ9Method(comp, cpIndex, 0, j9method, NULL, NULL);
+      return createResolvedMethodFromJ9Method(comp, cpIndex, (uint32_t)vtableOffset, j9method, NULL, NULL);
 #endif
    }
 
