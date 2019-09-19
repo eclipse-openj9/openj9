@@ -608,8 +608,7 @@ TR_PersistentMethodInfo::get(TR_ResolvedMethod * feMethod)
    if (feMethod->isInterpreted() || feMethod->isJITInternalNative())
       return 0;
 
-   void *startPC = (void *)feMethod->startAddressForInterpreterOfJittedMethod();
-   TR_PersistentJittedBodyInfo *bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(startPC);
+   TR_PersistentJittedBodyInfo *bodyInfo = ((TR_ResolvedJ9Method*) feMethod)->getExistingJittedBodyInfo();
    return bodyInfo ? bodyInfo->getMethodInfo() : 0;
    }
 

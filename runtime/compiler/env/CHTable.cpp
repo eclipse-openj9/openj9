@@ -37,6 +37,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
+#include "env/j9method.h"
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
@@ -819,8 +820,7 @@ bool CollectCompiledImplementors::visitSubclass(TR_PersistentClassInfo *cl)
             }
          else
             {
-            void *methodAddress = (_implArray[_count - 1])->startAddressForInterpreterOfJittedMethod();
-            TR_PersistentJittedBodyInfo * bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(methodAddress);
+            TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) _implArray[_count - 1])->getExistingJittedBodyInfo();
             if (!bodyInfo || bodyInfo->getHotness() < _hotness)
                {
                _count -= 1;
