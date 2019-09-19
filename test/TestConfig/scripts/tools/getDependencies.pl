@@ -64,7 +64,14 @@ print "task is set to $task\n";
 print "os   is set to $os\n";
 
 # Define a a hash for each dependent jar
-# Contents in the hash should be: url => , fname =>, sha1 =>
+# Contents in the hash should be: 
+#   url - required. url to download the dependent jar
+#   fname - required. the dependent jar name
+#   sha1 - sha1 value for the dependent jar (can be skipped if both shaurl and shafn are provided)
+#   shaurl - optional. url to download the sha file
+#   shafn  - optional. sha file name (has to be used with shaurl)
+#   shaalg - optional. sha is calculated based on shaalg (default value is sha1)
+
 my %asm_all = (
 	url => 'http://central.maven.org/maven2/org/ow2/asm/asm-all/6.0_BETA/asm-all-6.0_BETA.jar',
 	fname => 'asm-all.jar',
@@ -106,9 +113,11 @@ my %jcommander = (
 	sha1 => 'bfcb96281ea3b59d626704f74bc6d625ff51cbce'
 );
 my %asmtools = (
-	url => 'https://ci.adoptopenjdk.net/view/Dependencies/job/asmtools/107/artifact/asmtools.jar',
+	url => 'https://ci.adoptopenjdk.net/view/Dependencies/job/asmtools/lastSuccessfulBuild/artifact/asmtools.jar',
 	fname => 'asmtools.jar',
-	sha1 => '04cf07c584121c2e5a3d1dad2839fc8ab4828b6d'
+	shaurl => 'https://ci.adoptopenjdk.net/view/Dependencies/job/asmtools/lastSuccessfulBuild/artifact/asmtools.jar.sha256sum.txt',
+	shafn => 'asmtools.jar.sha256sum.txt',
+	shaalg => '256'
 );
 # this is needed for JDK11 and up
 my %jaxb_api = (
@@ -142,8 +151,15 @@ if ($task eq "clean") {
 	print "downloading dependent third party jars to $path\n";
 	for my $i (0 .. $#jars_info) {
 		my $url = $jars_info[$i]{url};
-		my $filename = $path . $sep . $jars_info[$i]{fname};
-		my $sha = Digest::SHA->new("sha1");
+		my $fn = $jars_info[$i]{fname};
+		my $filename = $path . $sep . $fn;
+		my $shaurl = $jars_info[$i]{shaurl};
+		my $shafn = $jars_info[$i]{shafn};
+		my $shaalg = $jars_info[$i]{shaalg};
+		if (!$shaalg) {
+			$shaalg = "sha1";
+		}
+		my $sha = Digest::SHA->new($shaalg);
 		my $digest = "";
 
 		if (-e $filename) {
@@ -151,40 +167,89 @@ if ($task eq "clean") {
 			$digest = $sha->hexdigest;
 		}
 
-		if ($digest eq $jars_info[$i]{sha1}) {
+		my $expectedsha = $jars_info[$i]{sha1};
+		if (!$expectedsha) {
+			$shafn = $path . $sep . $shafn;
+			# if the sha file exists, parse the file and get the expected sha
+			if (-e $shafn) {
+				$expectedsha = getShaFromFile($shafn, $fn);
+			} 
+
+			# if expectedsha is not set above and shaurl is provided, download the sha file 
+			# and parse the file to get the expected sha
+			if (!$expectedsha && $shaurl) {
+				downloadFile($shaurl, $shafn);
+				$expectedsha = getShaFromFile($shafn, $fn);
+			}
+		}
+
+		if ($expectedsha && $digest eq $expectedsha) {
 			print "$filename exists with correct hash, not downloading\n";
 			next;
 		}
 
-		print "downloading $url\n";
-		my $output;
-		if ($os eq 'os.zos') {
-			$output = qx{curl -k -o $filename $url 2>&1};
-		} else {
-			$output = qx{wget --no-check-certificate --quiet --output-document=$filename $url 2>&1};
-		}
-		my $returnCode = $?;
-		if ($returnCode == 0) {
-			print "--> file downloaded to $filename\n";
-		} else {
-			print $output;
-			unlink $filename or die "Can't delete '$filename': $!\n";
-			die "ERROR: downloading $url failed, return code: $returnCode\n";
+		# download the dependent third party jar
+		downloadFile($url, $filename);
+
+		# if shaurl is provided, re-download the sha file and reset the expectedsha value
+		# as the dependent third party jar is newly downloadeded
+		if ($shaurl) {
+			downloadFile($shaurl, $shafn);
+			$expectedsha = getShaFromFile($shafn, $fn);
 		}
 
-		# validate dependencies sha1 sum
-		$sha = Digest::SHA->new("sha1");
+		if (!$expectedsha) {
+			die "ERROR: cannot get the expected sha for file $fn.\n";
+		}
+
+		# validate dependencies sha sum
+		$sha = Digest::SHA->new($shaalg);
 		$sha->addfile($filename);
 		$digest = $sha->hexdigest;
 
-		if ($digest ne $jars_info[$i]{sha1}) {
-			print "Expected sha1 is: $jars_info[$i]{sha1},\n";
-			print "Actual sha1 is  : $digest.\n";
+		if ($digest ne $expectedsha) {
+			print "Expected sha is: $expectedsha,\n";
+			print "Actual sha is  : $digest.\n";
 			print "Please delete $filename and rerun the program!";
-			die "ERROR: sha1 checksum error.\n";
+			die "ERROR: sha checksum error.\n";
 		}
 	}
 	print "downloaded dependent third party jars successfully\n";
 } else {
 	die "ERROR: task unsatisfied!\n";
+}
+
+
+sub getShaFromFile {
+	my ( $shafile, $fn ) = @_;
+	my $sha = "";
+	open my $fh, '<', $shafile or print "Can't open file $!";
+	my $content = do { local $/; <$fh> };
+	my @token = split / /, $content;
+	if (@token > 1) {
+		$sha = $token[0];
+	} else {
+		print "WARNING: cannot get the sha from $shafile.\nFile content: $content\n";
+	}
+	return $sha;
+}
+
+sub downloadFile {
+	my ( $url, $filename ) = @_;
+	print "downloading $url\n";
+	my $output;
+	# ToDo: should use curl only
+	if ($os eq 'os.zos') {
+		$output = qx{curl -k -o $filename $url 2>&1};	
+	} else {
+		$output = qx{wget --no-check-certificate --quiet --output-document=$filename $url 2>&1};
+	}
+	my $returnCode = $?;
+	if ($returnCode == 0) {
+		print "--> file downloaded to $filename\n";
+	} else {
+		print $output;
+		unlink $filename or die "Can't delete '$filename': $!\n";
+		die "ERROR: downloading $url failed, return code: $returnCode\n";
+	}
 }
