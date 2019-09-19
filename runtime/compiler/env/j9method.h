@@ -490,9 +490,7 @@ public:
 
    virtual bool owningMethodDoesntMatter();
    virtual bool isMethodInValidLibrary();
-#if defined(JITSERVER_SUPPORT)
    virtual TR_PersistentJittedBodyInfo *getExistingJittedBodyInfo();
-#endif
 
    static bool isInvokePrivateVTableOffset(UDATA vTableOffset);
 
