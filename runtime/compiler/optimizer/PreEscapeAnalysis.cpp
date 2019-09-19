@@ -32,6 +32,15 @@
 
 int32_t TR_PreEscapeAnalysis::perform()
    {
+   if (!optimizer()->isEnabled(OMR::escapeAnalysis))
+      {
+      if (comp()->trace(OMR::escapeAnalysis))
+         {
+         traceMsg(comp(), "EscapeAnalysis is disabled - skipping Pre-EscapeAnalysis\n");
+         }
+      return 0;
+      }
+
    if (comp()->getOSRMode() != TR::voluntaryOSR)
       {
       if (comp()->trace(OMR::escapeAnalysis))
