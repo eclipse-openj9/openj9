@@ -102,7 +102,8 @@ final class VarargsCollectorHandle extends MethodHandle {
 	static MethodType varargsCollectorType(MethodType nextType, Class<?> arrayType) {
 		return nextType.changeParameterType(nextType.parameterCount() - 1, arrayType);
 	}
-	
+
+	@Override
 	public Object invokeWithArguments(Object... args) throws Throwable, WrongMethodTypeException, ClassCastException {
 		int argsLength = 0;
 		if (args != null) {
@@ -122,9 +123,18 @@ final class VarargsCollectorHandle extends MethodHandle {
 			for (int i = 0; i < numTrailingArgs; i++) {
 				arraySetter.invoke(trailingArgs, i, args[mhLength - 1 + i]);
 			}
-			args = Arrays.copyOf(args, mhLength);
-			args[mhLength - 1] = trailingArgs;
-			return this.asFixedArity().invokeWithArguments(args);
+
+			/* Create new object array to store the arguments
+			 * This is to avoid the case where args passed to invokeWithArguments
+			 * is a typed array (ie. not Object[]) which generates ArrayStoreException
+			 */
+			Object[] newArgs = new Object[mhLength];
+			for (int i = 0; i < mhLength - 1; i++) {
+				newArgs[i] = args[i];
+			}
+			newArgs[mhLength - 1] = trailingArgs;
+
+			return this.asFixedArity().invokeWithArguments(newArgs);
 		} else
 		/*[ENDIF]*/
 		{
