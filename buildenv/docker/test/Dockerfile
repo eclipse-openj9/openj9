@@ -62,6 +62,7 @@ RUN apt-get update \
     build-essential \
     perl \
     vim \
+    libexpat1-dev \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Docker module to run test framework
