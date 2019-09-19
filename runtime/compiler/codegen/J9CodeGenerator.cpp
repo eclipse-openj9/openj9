@@ -42,6 +42,7 @@
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
+#include "env/j9method.h"
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -1197,8 +1198,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
                methodSymbol->getResolvedMethodSymbol() &&
                methodSymbol->getResolvedMethodSymbol()->getResolvedMethod())
             {
-            void * methodAddress = methodSymbol->getResolvedMethodSymbol()->getResolvedMethod()->startAddressForInterpreterOfJittedMethod();
-            TR_PersistentJittedBodyInfo * bodyInfo = TR::Recompilation::getJittedBodyInfoFromPC(methodAddress);
+            TR_PersistentJittedBodyInfo * bodyInfo = ((TR_ResolvedJ9Method*) methodSymbol->getResolvedMethodSymbol()->getResolvedMethod())->getExistingJittedBodyInfo();
             //printf("Pushing node %p\n", node);
             //fflush(stdout);
             if (bodyInfo &&
