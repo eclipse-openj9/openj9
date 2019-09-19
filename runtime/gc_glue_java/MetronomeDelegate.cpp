@@ -260,7 +260,7 @@ MM_MetronomeDelegate::allocateAndInitializeOwnableSynchronizerObjectLists(MM_Env
 		ownableSynchronizerObjectLists[index].setNextList(nextOwnableSynchronizerObjectList);
 		ownableSynchronizerObjectLists[index].setPreviousList(previousOwnableSynchronizerObjectList);
 	}
-	_extensions->ownableSynchronizerObjectLists = ownableSynchronizerObjectLists;
+	_extensions->setOwnableSynchronizerObjectLists(ownableSynchronizerObjectLists);
 	return true;
 }
 
@@ -277,9 +277,9 @@ MM_MetronomeDelegate::tearDown(MM_EnvironmentBase *env)
 		_extensions->unfinalizedObjectLists = NULL;
 	}
 
-	if (NULL != _extensions->ownableSynchronizerObjectLists) {
-		env->getForge()->free(_extensions->ownableSynchronizerObjectLists);
-		_extensions->ownableSynchronizerObjectLists = NULL;
+	if (NULL != _extensions->getOwnableSynchronizerObjectLists()) {
+		env->getForge()->free(_extensions->getOwnableSynchronizerObjectLists());
+		_extensions->setOwnableSynchronizerObjectLists(NULL);
 	}
 	
 	if (NULL != _extensions->accessBarrier) {
@@ -1219,7 +1219,7 @@ MM_MetronomeDelegate::scanOwnableSynchronizerObjects(MM_EnvironmentRealtime *env
 		GC_OMRVMInterface::flushNonAllocationCaches(env);
 		UDATA listIndex;
 		for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
-			MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = &_extensions->ownableSynchronizerObjectLists[listIndex];
+			MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = &_extensions->getOwnableSynchronizerObjectLists()[listIndex];
 			ownableSynchronizerObjectList->startOwnableSynchronizerProcessing();
 		}
 		env->_currentTask->releaseSynchronizedGCThreads(env);
@@ -1229,7 +1229,7 @@ MM_MetronomeDelegate::scanOwnableSynchronizerObjects(MM_EnvironmentRealtime *env
 	MM_OwnableSynchronizerObjectBuffer *buffer = gcEnv->_ownableSynchronizerObjectBuffer;
 	UDATA listIndex;
 	for (listIndex = 0; listIndex < maxIndex; ++listIndex) {
-		MM_OwnableSynchronizerObjectList *list = &_extensions->ownableSynchronizerObjectLists[listIndex];
+		MM_OwnableSynchronizerObjectList *list = &_extensions->getOwnableSynchronizerObjectLists()[listIndex];
 		if (!list->wasEmpty()) {
 			if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 				J9Object *object = list->getPriorList();

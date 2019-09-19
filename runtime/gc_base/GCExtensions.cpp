@@ -36,6 +36,7 @@
 #if defined(J9VM_GC_IDLE_HEAP_MANAGER)
  #include  "IdleGCManager.hpp"
 #endif /* defined(J9VM_GC_IDLE_HEAP_MANAGER) */
+#include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
 #include "ObjectModel.hpp"
 #include "ReferenceChainWalkerMarkMap.hpp"
@@ -266,4 +267,15 @@ MM_GCExtensions::computeDefaultMaxHeap(MM_EnvironmentBase *env)
 #endif /* OMR_ENV_DATA64 */
 
 	memoryMax = MM_Math::roundToFloor(heapAlignment, memoryMax);
+}
+
+MM_OwnableSynchronizerObjectList *
+MM_GCExtensions::getOwnableSynchronizerObjectListsExternal(J9VMThread *vmThread)
+{
+	if (isConcurrentScavengerInProgress()) {
+		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+		((MM_MemorySpace *)vmThread->omrVMThread->memorySpace)->localGarbageCollect(env, J9MMCONSTANT_IMPLICIT_GC_COMPLETE_CONCURRENT);
+	}
+
+	return ownableSynchronizerObjectLists;
 }

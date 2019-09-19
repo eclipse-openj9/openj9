@@ -96,7 +96,7 @@ j9gc_modron_local_collect(J9VMThread *vmThread)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 
-	((MM_MemorySpace *)vmThread->omrVMThread->memorySpace)->localGarbageCollect(env);
+	((MM_MemorySpace *)vmThread->omrVMThread->memorySpace)->localGarbageCollect(env, J9MMCONSTANT_IMPLICIT_GC_DEFAULT);
 
 	return 0;
 }
@@ -659,6 +659,9 @@ j9gc_get_gc_cause(OMR_VMThread *omrVMthread)
 			ret = "collect due to JVM becomes idle";
 			break;
 #endif
+		case J9MMCONSTANT_IMPLICIT_GC_COMPLETE_CONCURRENT :
+			ret = "concurrent collection must be completed";
+			break;
 		case J9MMCONSTANT_IMPLICIT_GC_PERCOLATE_CRITICAL_REGIONS :
 		default :
 			ret = "unknown";

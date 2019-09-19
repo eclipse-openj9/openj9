@@ -713,7 +713,7 @@ MM_RootScanner::scanOwnableSynchronizerObjects(MM_EnvironmentBase *env)
 	reportScanningStarted(RootScannerEntity_OwnableSynchronizerObjects);
 
 	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
-	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = _extensions->ownableSynchronizerObjectLists;
+	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = _extensions->getOwnableSynchronizerObjectLists();
 	while(NULL != ownableSynchronizerObjectList) {
 		if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 			J9Object *objectPtr = ownableSynchronizerObjectList->getHeadOfList();
