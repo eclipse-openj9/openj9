@@ -2604,6 +2604,24 @@ TR_IPBCDataFourBytes::operator new (size_t size) throw()
    return TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size);
    }
 
+#if defined(JITSERVER_SUPPORT)
+void
+TR_IPBCDataFourBytes::serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
+   {
+   TR_IPBCDataFourBytesStorage * store = (TR_IPBCDataFourBytesStorage *) storage;
+   storage->pc = _pc - methodStartAddress;
+   storage->left = 0;
+   storage->right = 0;
+   storage->ID = TR_IPBCD_FOUR_BYTES;
+   store->data = data;
+   }
+void
+TR_IPBCDataFourBytes::deserialize(TR_IPBCDataStorageHeader *storage)
+   {
+   loadFromPersistentCopy(storage, NULL);
+   }
+#endif
+
 void
 TR_IPBCDataFourBytes::createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
    {
@@ -2685,7 +2703,24 @@ TR_IPBCDataEightWords::copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry
       data[i] = entry->data[i];
    }
 
-
+#if defined(JITSERVER_SUPPORT)
+void
+TR_IPBCDataEightWords::serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
+   {
+   TR_IPBCDataEightWordsStorage * store = (TR_IPBCDataEightWordsStorage *) storage;
+   storage->pc = _pc - methodStartAddress;
+   storage->ID = TR_IPBCD_EIGHT_WORDS;
+   storage->left = 0;
+   storage->right = 0;
+   for (int i = 0; i < SWITCH_DATA_COUNT; i++)
+      store->data[i] = data[i];
+   }
+void
+TR_IPBCDataEightWords::deserialize(TR_IPBCDataStorageHeader *storage)
+   {
+   loadFromPersistentCopy(storage, NULL);
+   }
+#endif
 
 int32_t
 TR_IPBCDataCallGraph::setData(uintptrj_t v, uint32_t freq)

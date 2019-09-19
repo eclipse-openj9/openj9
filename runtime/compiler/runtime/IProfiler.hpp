@@ -318,8 +318,8 @@ public:
    virtual TR_IPBCDataFourBytes  *asIPBCDataFourBytes() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataFourBytesStorage);}
 #if defined(JITSERVER_SUPPORT)
-   virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) { createPersistentCopy(methodStartAddress, 0, storage, info); } // use cacheSize=0 because createPersistentCopy doesn't use it
-   virtual void deserialize(TR_IPBCDataStorageHeader *storage) { loadFromPersistentCopy(storage, NULL, 0); }
+   virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
+   virtual void deserialize(TR_IPBCDataStorageHeader *storage);
 #endif
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader *storage, TR::Compilation *comp);
@@ -376,8 +376,8 @@ public:
    virtual TR_IPBCDataEightWords  *asIPBCDataEightWords() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof(TR_IPBCDataEightWordsStorage);}
 #if defined(JITSERVER_SUPPORT)
-   virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) { createPersistentCopy(methodStartAddress, 0, storage, info); } // use cacheSize=0 because createPersistentCopy doesn't use it
-   virtual void deserialize(TR_IPBCDataStorageHeader *storage) { loadFromPersistentCopy(storage, NULL, 0); }
+   virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
+   virtual void deserialize(TR_IPBCDataStorageHeader *storage);
 #endif
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader *storage, TR::Compilation *comp);
