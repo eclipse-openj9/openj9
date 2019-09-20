@@ -124,6 +124,10 @@ public:
 	 */
 	bool initializeAllocateDescription(MM_EnvironmentBase *env);
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	void *doubleMapArraylets(MM_EnvironmentBase* env, J9Object *objectPtr);
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+
 	/**
 	 * Initializer.
 	 */

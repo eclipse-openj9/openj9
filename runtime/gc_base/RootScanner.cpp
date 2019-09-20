@@ -46,6 +46,9 @@
 #include "HeapRegionDescriptor.hpp"
 #include "HeapRegionIterator.hpp"
 #include "HeapRegionManager.hpp"
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+#include "HeapRegionIteratorVLHGC.hpp"
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 #include "MemoryPool.hpp"
 #include "MemorySubSpace.hpp"
 #include "MemorySpace.hpp"
@@ -231,10 +234,10 @@ MM_RootScanner::doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *st
 /**
  * @todo Provide function documentation
  */
-void 
-MM_RootScanner::doDoubleMappedObjectSlot(ArrayletTableEntry *slotPtr, GC_HashTableIterator *hashTableIterator)
+void
+MM_RootScanner::doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier)
 {
-	doSlot((J9Object **)&slotPtr->heapAddr);
+        doSlot((J9Object **)&objectPtr);
 }
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
@@ -872,13 +875,17 @@ void
 MM_RootScanner::scanDoubleMappedObjects(MM_EnvironmentBase *env)
 {
 	if (_singleThread || J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
-		J9HashTable* arrayletHashTable = _extensions->getArrayletHashTable();
+		GC_HeapRegionIteratorVLHGC regionIterator(_extensions->heap->getHeapRegionManager());
+		MM_HeapRegionDescriptorVLHGC *region = NULL;
 		reportScanningStarted(RootScannerEntity_DoubleMappedObjects);
-		if (arrayletHashTable != NULL) {
-			GC_HashTableIterator hashTableIterator(arrayletHashTable);
-			ArrayletTableEntry *slot = NULL;
-			while (NULL != (slot = (ArrayletTableEntry *)hashTableIterator.nextSlot())) {
-				doDoubleMappedObjectSlot(slot, &hashTableIterator);
+		while(NULL != (region = regionIterator.nextRegion())) {
+			if(region->isArrayletLeaf()) {
+				J9Object *spineObject = (J9Object *)region->_allocateData.getSpine();
+				Assert_MM_true(NULL != spineObject);
+				void *contiguous = region->_identifier.address;
+				if (NULL != contiguous) {
+					doDoubleMappedObjectSlot(spineObject, &region->_identifier);
+				}
 			}
 		}
 		reportScanningEnded(RootScannerEntity_DoubleMappedObjects);

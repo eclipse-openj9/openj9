@@ -92,7 +92,7 @@ protected:
 	bool _classDataAsRoots; /**< Should all classes (and class loaders) be treated as roots. Default true, should set to false when class unloading */
 	bool _includeJVMTIObjectTagTables; /**< Should the iterator include the JVMTIObjectTagTables. Default true, should set to false when doing JVMTI object walks */
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	bool _includeDoubleMap; /**< Should the GC policy be balanced and compressed refs (explicitly enabled via command line parameter). Default is false. */
+	bool _includeDoubleMap; /**< Enables doublemap should the GC policy be balanced. Default is false. */
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	bool _trackVisibleStackFrameDepth; /**< Should the stack walker be told to track the visible frame depth. Default false, should set to true when doing JVMTI walks that report stack slots */
 
@@ -504,7 +504,7 @@ public:
 	virtual void doVMClassSlot(J9Class **slotPtr, GC_VMClassSlotIterator *vmClassSlotIterator);
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator);
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	virtual void doDoubleMappedObjectSlot(ArrayletTableEntry *slotPtr, GC_HashTableIterator *hashTableIterator);
+	virtual void doDoubleMappedObjectSlot(J9Object *obj, struct J9PortVmemIdentifier *identifier);
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	
 	/**

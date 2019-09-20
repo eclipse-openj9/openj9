@@ -1203,14 +1203,15 @@ private:
 	}
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	virtual void doDoubleMappedObjectSlot(ArrayletTableEntry *slotPtr, GC_HashTableIterator *hashTableIterator) {
+	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier) {
 		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCandidates += 1;
-		if (!_markingScheme->isMarked((J9Object *)slotPtr->heapAddr)) {
+		if (!_markingScheme->isMarked(objectPtr)) {
 			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCleared += 1;
-			_extensions->freeDoubleMap(_env, slotPtr->contiguousAddr, slotPtr->dataSize, &slotPtr->identifier);
-                        hashTableIterator->removeSlot();
+			PORT_ACCESS_FROM_ENVIRONMENT(_env);
+			int result = j9vmem_free_memory(identifier->address, identifier->size, identifier);
+			Assert_MM_true(result == 0);
 		}
-	}
+    }
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 	/**

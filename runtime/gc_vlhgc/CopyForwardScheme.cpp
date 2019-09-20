@@ -3879,21 +3879,18 @@ private:
 	}
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	virtual void doDoubleMappedObjectSlot(ArrayletTableEntry *slotPtr, GC_HashTableIterator *hashTableIterator) 
-	{
-		J9Object *objectPtr = (J9Object *)slotPtr->heapAddr;
+	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier) {
 		MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._doubleMappedArrayletsCandidates += 1;
 		if (!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
 			MM_ScavengerForwardedHeader forwardedHeader(objectPtr);
-            		objectPtr = forwardedHeader.getForwardedObject();
-			if (objectPtr == NULL) {
+			objectPtr = forwardedHeader.getForwardedObject();
+			if (NULL == objectPtr) {
 				Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
-                                MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._doubleMappedArrayletsCleared += 1;
-				_extensions->freeDoubleMap(_env, slotPtr->contiguousAddr, slotPtr->dataSize, &slotPtr->identifier);
-                        	hashTableIterator->removeSlot();
-			} else {
-				slotPtr->heapAddr = (void *)objectPtr;
+				MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._doubleMappedArrayletsCleared += 1;
+				PORT_ACCESS_FROM_ENVIRONMENT(_env);
+				int result = j9vmem_free_memory(identifier->address, identifier->size, identifier);
+				Assert_MM_true(result == 0);
 			}
 		}
 	}

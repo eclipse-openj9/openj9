@@ -64,8 +64,10 @@ public:
 	UDATA _stringConstantsCleared;  /**< The number of string constants that have been cleared during marking */
 	UDATA _stringConstantsCandidates; /**< The number of string constants that have been visited in string table during marking */
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	UDATA _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
 	UDATA _doubleMappedArrayletsCandidates; /**< The number of double mapped arraylets that have been visited during marking */
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 private:
 	
@@ -91,8 +93,10 @@ public:
 		_stringConstantsCleared = 0;
 		_stringConstantsCandidates = 0;
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared = 0;
 		_doubleMappedArrayletsCandidates = 0;
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	}
 	
 	/**
@@ -113,8 +117,10 @@ public:
 		_stringConstantsCleared += stats->_stringConstantsCleared;
 		_stringConstantsCandidates += stats->_stringConstantsCandidates;
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		_doubleMappedArrayletsCleared += stats->_doubleMappedArrayletsCleared;
 		_doubleMappedArrayletsCandidates += stats->_doubleMappedArrayletsCandidates;
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	}
 
 	MM_CopyForwardStats() :
@@ -128,8 +134,10 @@ public:
 		,_phantomReferenceStats()
 		,_stringConstantsCleared(0)
 		,_stringConstantsCandidates(0)
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		,_doubleMappedArrayletsCleared(0)
 		,_doubleMappedArrayletsCandidates(0)
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	{}
 };
 
