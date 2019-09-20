@@ -277,76 +277,48 @@ ClientSessionData::printStats()
    j9tty_printf(PORTLIB, "\tTotal size of cached ROM classes + methods: %d bytes\n", total);
    }
 
+ClientSessionData::ClassInfo::ClassInfo() :
+   _romClass(NULL),
+   _remoteRomClass(NULL),
+   _methodsOfClass(NULL),
+   _baseComponentClass(NULL),
+   _numDimensions(0),
+   _remoteROMStringsCache(decltype(_remoteROMStringsCache)::allocator_type(TR::Compiler->persistentAllocator())),
+   _fieldOrStaticNameCache(decltype(_fieldOrStaticNameCache)::allocator_type(TR::Compiler->persistentAllocator())),
+   _parentClass(NULL),
+   _interfaces(NULL),
+   _classHasFinalFields(false),
+   _classDepthAndFlags(0),
+   _classInitialized(false),
+   _byteOffsetToLockword(0),
+   _leafComponentClass(NULL),
+   _classLoader(NULL),
+   _hostClass(NULL),
+   _componentClass(NULL),
+   _arrayClass(NULL),
+   _totalInstanceSize(0),
+   _classOfStaticCache(decltype(_classOfStaticCache)::allocator_type(TR::Compiler->persistentAllocator())),
+   _constantClassPoolCache(decltype(_constantClassPoolCache)::allocator_type(TR::Compiler->persistentAllocator())),
+   _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(TR::Compiler->persistentAllocator())),
+   _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(TR::Compiler->persistentAllocator())),
+   _fieldAttributesCacheAOT(decltype(_fieldAttributesCacheAOT)::allocator_type(TR::Compiler->persistentAllocator())),
+   _staticAttributesCacheAOT(decltype(_fieldAttributesCacheAOT)::allocator_type(TR::Compiler->persistentAllocator())),
+   _constantPool(NULL),
+   _jitFieldsCache(decltype(_jitFieldsCache)::allocator_type(TR::Compiler->persistentAllocator())),
+   _classFlags(0),
+   _fieldOrStaticDeclaringClassCache(decltype(_fieldOrStaticDeclaringClassCache)::allocator_type(TR::Compiler->persistentAllocator())),
+   _J9MethodNameCache(decltype(_J9MethodNameCache)::allocator_type(TR::Compiler->persistentAllocator()))
+   {
+   }
+
 void
 ClientSessionData::ClassInfo::freeClassInfo()
    {
    TR_Memory::jitPersistentFree(_romClass);
-   // If string cache exists, free it
-   if (_remoteROMStringsCache)
-      {
-      _remoteROMStringsCache->~PersistentUnorderedMap<TR_RemoteROMStringKey, std::string>();
-      jitPersistentFree(_remoteROMStringsCache);
-      }
 
-   // if fieldOrStaticNameCache exists, free it
-   if (_fieldOrStaticNameCache)
-      {
-      _fieldOrStaticNameCache->~PersistentUnorderedMap<int32_t, std::string>();
-      jitPersistentFree(_fieldOrStaticNameCache);
-      }
    // free cached _interfaces
    _interfaces->~PersistentVector<TR_OpaqueClassBlock *>();
    jitPersistentFree(_interfaces);
-
-   // if class of static cache exists, free it
-   if (_classOfStaticCache)
-      {
-      _classOfStaticCache->~PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>();
-      jitPersistentFree(_classOfStaticCache);
-      }
-
-   if (_constantClassPoolCache)
-      {
-      _constantClassPoolCache->~PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>();
-      jitPersistentFree(_constantClassPoolCache);
-      }
-
-   if (_fieldAttributesCache)
-      {
-      _fieldAttributesCache->~TR_FieldAttributesCache();
-      jitPersistentFree(_fieldAttributesCache);
-      }
-   if (_staticAttributesCache)
-      {
-      _staticAttributesCache->~TR_FieldAttributesCache();
-      jitPersistentFree(_staticAttributesCache);
-      }
-
-   if (_fieldAttributesCacheAOT)
-      {
-      _fieldAttributesCacheAOT->~TR_FieldAttributesCache();
-      jitPersistentFree(_fieldAttributesCacheAOT);
-      }
-   if (_staticAttributesCacheAOT)
-      {
-      _staticAttributesCacheAOT->~TR_FieldAttributesCache();
-      jitPersistentFree(_staticAttributesCacheAOT);
-      }
-   if (_jitFieldsCache)
-      {
-      _jitFieldsCache->~TR_JitFieldsCache();
-      jitPersistentFree(_jitFieldsCache);
-      }
-   if (_fieldOrStaticDeclaringClassCache)
-      {
-      _fieldOrStaticDeclaringClassCache->~PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *>();
-      jitPersistentFree(_fieldOrStaticDeclaringClassCache);
-      }
-   if (_J9MethodNameCache)
-      {
-      _J9MethodNameCache->~PersistentUnorderedMap<int32_t, J9MethodNameAndSignature>();
-      jitPersistentFree(_J9MethodNameCache);
-      }
    }
 
 ClientSessionData::VMInfo *

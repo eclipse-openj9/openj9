@@ -385,6 +385,7 @@ ifneq ($(JITSERVER_SUPPORT),)
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/control/JITServerCompilationThread.cpp \
     compiler/control/JITServerHelpers.cpp \
+    compiler/env/j9methodServer.cpp \
     compiler/net/ClientStream.cpp \
     compiler/net/CommunicationStream.cpp \
     compiler/net/ProtobufTypeConvert.cpp \
