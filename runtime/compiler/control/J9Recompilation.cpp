@@ -31,6 +31,9 @@
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
 #include "exceptions/RuntimeFailure.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "control/JITServerCompilationThread.hpp"
+#endif
 
 bool J9::Recompilation::_countingSupported = false;
 
@@ -717,3 +720,23 @@ TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_Per
    if (oldPtr)
       TR_PersistentProfileInfo::decRefCount((TR_PersistentProfileInfo*)oldPtr);
    }
+
+#if defined(JITSERVER_SUPPORT)
+TR_PersistentJittedBodyInfo *
+J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory *trMemory)
+   {
+   auto bodyInfo = (TR_PersistentJittedBodyInfo*) trMemory->allocateHeapMemory(sizeof(TR_PersistentJittedBodyInfo), TR_MemoryBase::Recompilation);
+   auto methodInfo = (TR_PersistentMethodInfo*) trMemory->allocateHeapMemory(sizeof(TR_PersistentMethodInfo), TR_MemoryBase::Recompilation);
+   memcpy(bodyInfo, &bodyInfoStr[0], sizeof(TR_PersistentJittedBodyInfo));
+   memcpy(methodInfo, &methodInfoStr[0], sizeof(TR_PersistentMethodInfo));
+   bodyInfo->setMethodInfo(methodInfo);
+   bodyInfo->setProfileInfo(NULL);
+   bodyInfo->setMapTable(NULL);
+   methodInfo->setOptimizationPlan(NULL);
+   // cannot use setter because it calls the destructor on the old profile data,
+   // which is a client pointer
+   methodInfo->_recentProfileInfo = NULL;
+   methodInfo->_bestProfileInfo = NULL;
+   return bodyInfo;
+   }
+#endif

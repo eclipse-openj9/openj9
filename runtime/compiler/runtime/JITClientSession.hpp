@@ -228,6 +228,7 @@ class ClientSessionData
 
    struct ClassInfo
       {
+      ClassInfo();
       void freeClassInfo(); // this method is in place of a destructor. We can't have destructor
       // because it would be called after inserting ClassInfo into the ROM map, freeing romClass
       J9ROMClass *_romClass; // romClass content exists in persistentMemory at the server
@@ -236,8 +237,8 @@ class ClientSessionData
       // Fields meaningful for arrays
       TR_OpaqueClassBlock *_baseComponentClass;
       int32_t _numDimensions;
-      PersistentUnorderedMap<TR_RemoteROMStringKey, std::string> *_remoteROMStringsCache; // cached strings from the client
-      PersistentUnorderedMap<int32_t, std::string> *_fieldOrStaticNameCache;
+      PersistentUnorderedMap<TR_RemoteROMStringKey, std::string> _remoteROMStringsCache; // cached strings from the client
+      PersistentUnorderedMap<int32_t, std::string> _fieldOrStaticNameCache;
       TR_OpaqueClassBlock *_parentClass;
       PersistentVector<TR_OpaqueClassBlock *> *_interfaces;
       bool _classHasFinalFields;
@@ -250,19 +251,18 @@ class ClientSessionData
       TR_OpaqueClassBlock * _componentClass; // caching the componentType of the J9ArrayClass
       TR_OpaqueClassBlock * _arrayClass;
       uintptrj_t _totalInstanceSize;
-      PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> *_classOfStaticCache;
-      PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> *_constantClassPoolCache;
-      TR_FieldAttributesCache *_fieldAttributesCache;
-      TR_FieldAttributesCache *_staticAttributesCache;
-      TR_FieldAttributesCache *_fieldAttributesCacheAOT;
-      TR_FieldAttributesCache *_staticAttributesCacheAOT;
+      PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _classOfStaticCache;
+      PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _constantClassPoolCache;
+      TR_FieldAttributesCache _fieldAttributesCache;
+      TR_FieldAttributesCache _staticAttributesCache;
+      TR_FieldAttributesCache _fieldAttributesCacheAOT;
+      TR_FieldAttributesCache _staticAttributesCacheAOT;
       J9ConstantPool *_constantPool;
-      TR_JitFieldsCache *_jitFieldsCache;
+      TR_JitFieldsCache _jitFieldsCache;
       uintptrj_t _classFlags;
-      PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> *_fieldOrStaticDeclaringClassCache;
-      PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> *_J9MethodNameCache; // key is a cpIndex
+      PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _fieldOrStaticDeclaringClassCache;
+      PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> _J9MethodNameCache; // key is a cpIndex
       }; // struct ClassInfo
-
 
    /**
       @class J9MethodInfo
@@ -467,3 +467,4 @@ class ClientSessionHT
    }; // class ClientSessionHT
 
 #endif /* defined(JIT_CLIENT_SESSION_H) */
+
