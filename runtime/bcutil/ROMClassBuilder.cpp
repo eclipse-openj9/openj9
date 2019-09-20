@@ -436,7 +436,6 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 			return res;
 		}
 	}
-	context->setIsLambda(isLambda);
 
 	ConstantPoolMap constantPoolMap(bufferManager, context);
 	ClassFileOracle classFileOracle(bufferManager, classFileParser->getParsedClassFile(), &constantPoolMap, _verifyExcludeAttribute, context);
