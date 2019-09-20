@@ -62,7 +62,7 @@ RUN apt-get update \
     build-essential \
     perl \
     vim \
-    libexpat1-dev \
+    libexpat1-dev \ # should be removed once the switch to TestKitGen java is complete and the builds are stabilized.
   && rm -rf /var/lib/apt/lists/*
 
 # Install Docker module to run test framework
