@@ -26,7 +26,8 @@
 //
 TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *startPC)
    {
-   TR_UNIMPLEMENTED();
+   // ToDo: Implement this (Issue #6607)
+
    return NULL;
    }
 
