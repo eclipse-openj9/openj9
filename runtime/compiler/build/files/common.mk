@@ -388,6 +388,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/env/j9methodServer.cpp \
     compiler/env/JITServerCHTable.cpp \
     compiler/env/JITServerPersistentCHTable.cpp \
+    compiler/env/VMJ9Server.cpp \
     compiler/net/ClientStream.cpp \
     compiler/net/CommunicationStream.cpp \
     compiler/net/ProtobufTypeConvert.cpp \
