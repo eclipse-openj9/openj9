@@ -1710,7 +1710,7 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
 
    if (!definingClass)
       {
-      definingClass = (J9Class *) reloRuntime->getClassFromCP(fej9->vmThread(), constantPool, cpIndex, isStatic);
+      definingClass = (J9Class *) TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, constantPool, cpIndex, isStatic);
       traceMsg(comp, "\tdefiningClass recomputed from cp as %p\n", definingClass);
       }
 
@@ -1834,7 +1834,7 @@ TR_ResolvedRelocatableJ9Method::fieldAttributes(TR::Compilation * comp, int32_t 
                else
                   reloRuntime = compInfo->getCompInfoForThread(fej9->vmThread())->reloRuntime();
 
-               TR_OpaqueClassBlock *clazz = reloRuntime->getClassFromCP(fej9->vmThread(), constantPool, cpIndex, false);
+               TR_OpaqueClassBlock *clazz = TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, constantPool, cpIndex, false);
 
                fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(clazz, constantPool, cpIndex);
                }
@@ -1959,7 +1959,7 @@ TR_ResolvedRelocatableJ9Method::staticAttributes(TR::Compilation * comp,
          else
             reloRuntime = compInfo->getCompInfoForThread(fej9->vmThread())->reloRuntime();
 
-         TR_OpaqueClassBlock *clazz = reloRuntime->getClassFromCP(fej9->vmThread(), constantPool, cpIndex, true);
+         TR_OpaqueClassBlock *clazz = TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, constantPool, cpIndex, true);
 
          fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(clazz, constantPool, cpIndex, true);
          }
