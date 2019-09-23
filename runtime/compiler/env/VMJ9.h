@@ -161,8 +161,7 @@ typedef struct TR_JitPrivateConfig
    TR_AOTStats *aotStats;
    } TR_JitPrivateConfig;
 
-
-// JITServer: union containing all possible datatypes of static final fields
+// Union containing all possible datatypes of static final fields
 union
 TR_StaticFinalData
    {
@@ -174,7 +173,6 @@ TR_StaticFinalData
    double dataDouble;
    uintptrj_t dataAddress;
    };
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -712,7 +710,7 @@ public:
 #endif
    virtual void refineColdness (TR::Node* node, bool& isCold);
 
-   virtual TR::Node * inlineNativeCall( TR::Compilation *,  TR::TreeTop *, TR::Node *) { return 0; }
+   virtual TR::Node * inlineNativeCall(TR::Compilation *,  TR::TreeTop *, TR::Node *) { return 0; }
 
    virtual bool               inlinedAllocationsMustBeVerified() { return false; }
 
@@ -891,11 +889,10 @@ public:
    virtual TR_OpaqueClassBlock *getHostClass(TR_OpaqueClassBlock *clazzOffset);
    virtual bool canAllocateInlineClass(TR_OpaqueClassBlock *clazz);
    virtual bool isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz);
-   virtual bool getArrayLengthOfStaticAddress(void *ptr, int32_t &length);
    virtual intptrj_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset);
 
-    TR::TreeTop * lowerAsyncCheck( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
-    TR::TreeTop * lowerAtcCheck( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
+   TR::TreeTop * lowerAsyncCheck(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
+   TR::TreeTop * lowerAtcCheck(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method);
    virtual bool isMethodTracingEnabled(J9Method *j9method)
       {
@@ -908,15 +905,15 @@ public:
    virtual bool canMethodExitEventBeHooked();
    virtual bool methodsCanBeInlinedEvenIfEventHooksEnabled();
 
-   TR::TreeTop * lowerMethodHook( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
-   TR::TreeTop * lowerArrayLength( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
-   TR::TreeTop * lowerContigArrayLength( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
-   TR::TreeTop * lowerMultiANewArray( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
-   TR::TreeTop * lowerToVcall( TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
+   TR::TreeTop * lowerMethodHook(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
+   TR::TreeTop * lowerArrayLength(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
+   TR::TreeTop * lowerContigArrayLength(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
+   TR::TreeTop * lowerMultiANewArray(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
+   TR::TreeTop * lowerToVcall(TR::Compilation *, TR::Node * root,  TR::TreeTop * treeTop);
    virtual U_8 * fetchMethodExtendedFlagsPointer(J9Method *method); // wrapper method of fetchMethodExtendedFlagsPointer in util/extendedmethodblockaccess.c, for JITServer override purpose
    virtual void * getStaticHookAddress(int32_t event);
 
-   TR::Node * initializeLocalObjectFlags( TR::Compilation *, TR::Node * allocationNode, TR_OpaqueClassBlock * ramClass);
+   TR::Node * initializeLocalObjectFlags(TR::Compilation *, TR::Node * allocationNode, TR_OpaqueClassBlock * ramClass);
 
    virtual J9JITConfig *getJ9JITConfig() { return _jitConfig; }
 
@@ -929,7 +926,7 @@ public:
    virtual bool isAnonymousClass(J9ROMClass *romClass) { return (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass)); }
    virtual int64_t getCpuTimeSpentInCompThread(TR::Compilation * comp); // resolution is 0.5 sec or worse. Returns -1 if unavailable
 
-   virtual void *             getClassLoader(TR_OpaqueClassBlock * classPointer);
+   virtual void * getClassLoader(TR_OpaqueClassBlock * classPointer);
    virtual bool getReportByteCodeInfoAtCatchBlock();
 
    J9VMThread *            _vmThread;

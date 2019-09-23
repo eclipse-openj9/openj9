@@ -22,7 +22,9 @@
 
 #define J9_EXTERNAL_TO_VM
 
+#if defined(JITSERVER_SUPPORT)
 #include "env/VMJ9Server.hpp"
+#endif
 
 #if defined (_MSC_VER) && (_MSC_VER < 1900)
 #define snprintf _snprintf
@@ -593,6 +595,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
       // Check if this thread has cached the frontend inside
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
+#if defined(JITSERVER_SUPPORT)
       if (vmType==J9_SERVER_VM || vmType==J9_SHARED_CACHE_SERVER_VM)
          {
          TR_ASSERT(vmWithoutThreadInfo->_compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER, "J9_SERVER_VM and J9_SHARED_CACHE_SERVER_VM should only be instantiated in JITServer::SERVER mode");
@@ -651,6 +654,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
             return sharedCacheServerVM;
             }
          }
+#endif
       if (vmType==AOT_VM)
          {
          TR_J9VMBase * aotVMWithThreadInfo = static_cast<TR_J9VMBase *>(vmThread->aotVMwithThreadInfo);
@@ -737,14 +741,23 @@ TR_J9VMBase::TR_J9VMBase(
          }
 
    _sharedCache = NULL;
-   if (TR::Options::sharedClassCache() ||
-       (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER))
+   if (TR::Options::sharedClassCache()
+#if defined(JITSERVER_SUPPORT)
+      || (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+#endif
+      )
       // shared classes and AOT must be enabled, or we should be on the JITServer with remote AOT enabled
       {
+#if defined(JITSERVER_SUPPORT)
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+         {
          _sharedCache = new (PERSISTENT_NEW) TR_J9JITServerSharedCache(this);
+         }
       else
+#endif   
+         {
          _sharedCache = new (PERSISTENT_NEW) TR_J9SharedCache(this);
+         }
       if (!_sharedCache)
          {
          TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
@@ -766,7 +779,9 @@ TR_J9VMBase::freeSharedCache()
    {
    if (_sharedCache)        // shared classes and AOT must be enabled
       {
+#if defined(JITSERVER_SUPPORT)
       if (_compInfo && (_compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER))
+#endif
          {
          TR_ASSERT(TR::Options::sharedClassCache(), "Found shared cache with option disabled");
          }
@@ -3432,7 +3447,7 @@ TR_J9VMBase::lowerMethodHook(TR::Compilation * comp, TR::Node * root, TR::TreeTo
 U_8 *
 TR_J9VMBase::fetchMethodExtendedFlagsPointer(J9Method *method)
    {
-   return fetchMethodExtendedFlagsPointer(method);
+   return ::fetchMethodExtendedFlagsPointer(method);
    }
 
 void *
@@ -3759,9 +3774,11 @@ TR_J9VMBase::tryToAcquireAccess(TR::Compilation * comp, bool *haveAcquiredVMAcce
    bool hasVMAccess;
    *haveAcquiredVMAccess = false;
 
+#if defined(JITSERVER_SUPPORT)
    // JITServer TODO: For now, we always take the "safe path" on the server
-   if (TR::CompilationInfo::getStream())
+   if (comp->isOutOfProcessCompilation())
       return false;
+#endif
 
    if (!comp->getOption(TR_DisableNoVMAccess))
       {
@@ -5950,23 +5967,6 @@ TR_J9VMBase::isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz)
    return getSystemClassLoader() == getClassLoader(clazz);
    }
 
-bool
-TR_J9VMBase::getArrayLengthOfStaticAddress(void *ptr, int32_t &length)
-   {
-   TR::VMAccessCriticalSection getArrayLengthOfStaticAddress(this);
-   if ((*(void **)ptr != 0))
-      {
-      length = *((int32_t *) (((uintptrj_t) *(void ***)ptr) + (uintptrj_t) getOffsetOfContiguousArraySizeField()));
-
-      if (length == 0 && TR::Compiler->om.useHybridArraylets())
-         {
-         length = *((int32_t *) (((uintptrj_t) *(void ***)ptr) + (uintptrj_t) getOffsetOfDiscontiguousArraySizeField()));
-         }
-      return true;
-      }
-   return false;
-   }
-
 intptrj_t
 TR_J9VMBase::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
    {
@@ -7296,8 +7296,10 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
 
          TR::SymbolReference *helperSymRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, true, true, false);
          sym->setMethodAddress(helperSymRef->getMethodAddress());
+#if defined(JITSERVER_SUPPORT)
          // JITServer: store the helper reference number in the node for use in creating TR_HelperAddress relocation
          callNode->getSymbolReference()->setReferenceNumber(helperSymRef->getReferenceNumber());
+#endif
          return callNode;
          }
       case TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper:
@@ -8278,7 +8280,6 @@ TR_J9VM::getPrimitiveArrayAllocationClass(J9Class *clazz)
    {
    return (TR_OpaqueClassBlock *) clazz;
    }
-
 
 TR_StaticFinalData
 TR_J9VM::dereferenceStaticFinalAddress(void *staticAddress, TR::DataType addressType)
