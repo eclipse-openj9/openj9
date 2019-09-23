@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,14 +37,14 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.types.UDATA;
 
-public class JitMetadataFromPcCommand extends Command 
+public class JitMetadataFromPcCommand extends Command
 {
 	public JitMetadataFromPcCommand()
 	{
 		addCommand("jitmetadatafrompc", "<pc>", "Show jit method metadata for PC");
 	}
-	
-	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException 
+
+	public void run(String command, String[] args, Context context, PrintStream out) throws DDRInteractiveCommandException
 	{
 		try {
 			UDATA searchValue = new UDATA(Long.decode(args[0]));
@@ -60,7 +60,7 @@ public class JitMetadataFromPcCommand extends Command
 
 	}
 
-	void dbgext_j9jitexceptiontable(PrintStream out, J9JITExceptionTablePointer parm) throws CorruptDataException 
+	void dbgext_j9jitexceptiontable(PrintStream out, J9JITExceptionTablePointer parm) throws CorruptDataException
 	{
 		/* print individual fields */
 		CommandUtils.dbgPrint(out, "J9JITExceptionTable at %s {\n", parm.getHexAddress());
@@ -73,7 +73,7 @@ public class JitMetadataFromPcCommand extends Command
 		CommandUtils.dbgPrint(out, "    UDATA parm.endWarmPC = %s;\n", parm.endWarmPC().getHexValue());
 		CommandUtils.dbgPrint(out, "    UDATA parm.startColdPC = %s;\n", parm.startColdPC().getHexValue());
 		CommandUtils.dbgPrint(out, "    UDATA parm.endPC = %s;\n", parm.endPC().getHexValue());
-		CommandUtils.dbgPrint(out, "    UDATA parm.totalFrameSize = %s;\n", parm.totalFrameSize().getHexValue());
+		CommandUtils.dbgPrint(out, "    UDATA parm.totalFrameSizeInSlots = %s;\n", parm.totalFrameSizeInSlots().getHexValue());
 		CommandUtils.dbgPrint(out, "    I_16 parm.slots = %s;\n", parm.slots().getHexValue());
 		CommandUtils.dbgPrint(out, "    I_16 parm.scalarTempSlots = %s;\n", parm.scalarTempSlots().getHexValue());
 		CommandUtils.dbgPrint(out, "    I_16 parm.objectTempSlots = %s;\n", parm.objectTempSlots().getHexValue());

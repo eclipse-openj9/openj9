@@ -1,6 +1,6 @@
 /*******************************************************************************
- *
  * Copyright (c) 1991, 2019 IBM Corp. and others
+ *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
  * distribution and is available at https://www.eclipse.org/legal/epl-2.0/
@@ -503,7 +503,7 @@ typedef struct J9JITExceptionTable {
 	UDATA endWarmPC;
 	UDATA startColdPC;
 	UDATA endPC;
-	UDATA totalFrameSize;
+	UDATA totalFrameSizeInSlots;
 	I_16 slots;
 	I_16 scalarTempSlots;
 	I_16 objectTempSlots;
@@ -1725,19 +1725,19 @@ typedef struct J9ModuleExtraInfo {
 /*             Structure of Flattened Class Cache              */
 /*                                                             *
  *    Default Value   |   Number of Entries   |                *
- *____________________|_______________________|________________* 
+ *____________________|_______________________|________________*
  *                    |                       |                *
  *      clazz 0       |   Name & Signature 0  |     offset 0   *
- *____________________|_______________________|________________* 
+ *____________________|_______________________|________________*
  *                    |                       |                *
  *      clazz 1       |   Name & Signature 1  |     offset 1   *
- *____________________|_______________________|________________* 
+ *____________________|_______________________|________________*
  *         .          |           .           |        .       *
  *         .          |           .           |        .       *
  *         .          |           .           |        .       *
- *____________________|_______________________|________________* 
+ *____________________|_______________________|________________*
  *                    |                       |                *
- *      clazz N       |   Name & Signature N  |     offset N   * 
+ *      clazz N       |   Name & Signature N  |     offset N   *
  ***************************************************************/
 typedef struct J9FlattenedClassCacheEntry {
 	struct J9Class* clazz;

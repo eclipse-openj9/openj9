@@ -286,7 +286,7 @@ static void printMetaData(J9TR_MethodMetaData * methodMetaData)
       printf("Stub Metadata 0x%p, nothing to dump\n", methodMetaData);
       return;
       }
-   
+
    printf("Metadata dump:\n");
    initializeIterator(&iter, methodMetaData);
    for (index = 0; index < iter._stackAtlas->numberOfMaps; ++index)
@@ -376,7 +376,7 @@ void jitGetMapsFromPC(J9JavaVM * javaVM, J9TR_MethodMetaData * methodMetaData, U
 
    if (methodMetaData->flags & JIT_METADATA_IS_STUB)
       return;
-   
+
    if (!stackAtlas)
       return;
 
@@ -1212,7 +1212,7 @@ void aotMethodMetaDataFixEndian(J9JITExceptionTable * methodMetaData)
    J9_AOT_FIX_ENDIAN(methodMetaData->startColdPC)
 
    J9_AOT_FIX_ENDIAN(methodMetaData->hotness)
-   J9_AOT_FIX_ENDIAN(methodMetaData->totalFrameSize)
+   J9_AOT_FIX_ENDIAN(methodMetaData->totalFrameSizeInSlots)
    J9_AOT_FIX_ENDIAN_HALF(methodMetaData->slots)
    J9_AOT_FIX_ENDIAN_HALF(methodMetaData->scalarTempSlots)
    J9_AOT_FIX_ENDIAN_HALF(methodMetaData->objectTempSlots)
@@ -1367,7 +1367,7 @@ void walkJITFrameSlotsForInternalPointers(J9StackWalkState * walkState,  U_8 ** 
 
        /* If base array was moved by a non zero displacement
        */
-#if defined(J9VM_INTERP_STACKWALK_TRACING) 
+#if defined(J9VM_INTERP_STACKWALK_TRACING)
       if ((displacement != 0) || (walkState->walkThread->javaVM->runtimeFlags & J9_RUNTIME_SNIFF_AND_WHACK))
 #else
       if (displacement != 0)
@@ -1767,7 +1767,7 @@ JITINLINE UDATA getJittedMethodEndPC(J9TR_MethodMetaData * md)
 
 I_16 getJitTotalFrameSize(J9TR_MethodMetaData * md)
    {
-   return (I_16) md->totalFrameSize;
+   return (I_16) md->totalFrameSizeInSlots;
    }
 
 I_16 getJitSlots(J9TR_MethodMetaData * md)

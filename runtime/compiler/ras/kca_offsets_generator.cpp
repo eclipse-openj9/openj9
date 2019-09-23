@@ -103,7 +103,7 @@ J9::Options::kcaOffsets(char *option, void *, TR::OptionTable *entry)
       fprintf( file, "#define METADATA_ENDWARMPC         (%d)\n", offsetof(J9JITExceptionTable,endWarmPC) );
       fprintf( file, "#define METADATA_COLDSTART         (%d)\n", offsetof(J9JITExceptionTable,startColdPC) );
       fprintf( file, "#define METADATA_COLDEND           (%d)\n", offsetof(J9JITExceptionTable,endPC) );
-      fprintf( file, "#define METADATA_FRAMESIZE         (%d)\n", offsetof(J9JITExceptionTable,totalFrameSize) );
+      fprintf( file, "#define METADATA_FRAMESIZE         (%d)\n", offsetof(J9JITExceptionTable,totalFrameSizeInSlots) );
       fprintf( file, "#define METADATA_NUM_EXC_RANGES    (%d)\n", offsetof(J9JITExceptionTable,numExcptionRanges) );
       fprintf( file, "#define METADATA_INLINEDCALLS      (%d)\n", offsetof(J9JITExceptionTable,inlinedCalls) );
       fprintf( file, "#define METADATA_BODYINFO          (%d)\n", offsetof(J9JITExceptionTable,bodyInfo) );

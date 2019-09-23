@@ -63,7 +63,7 @@ TR_Debug::printJ9JITExceptionTableDetails(J9JITExceptionTable *data, J9JITExcept
    trfprintf(_file, "scalarTempSlots=%d, objectTempSlots=%d\n", data->scalarTempSlots, data->objectTempSlots);
    trfprintf(_file, "prologuePushes=%d, tempOffset=%d\n", data->prologuePushes, data->tempOffset);
    trfprintf(_file, "registerSaveDescription=[%p]\n", data->registerSaveDescription);
-   trfprintf(_file, "totalFrameSize=%d { Real Frame Size: %d }\n", data->totalFrameSize, (data->totalFrameSize + 1) * TR::Compiler->om.sizeofReferenceAddress());
+   trfprintf(_file, "totalFrameSizeInSlots=%d { Real Frame Size: %d }\n", data->totalFrameSizeInSlots, (data->totalFrameSizeInSlots + 1) * TR::Compiler->om.sizeofReferenceAddress());
    trfprintf(_file, "bodyInfo= [%p]\n", data->bodyInfo);
    }
 
@@ -78,7 +78,7 @@ TR_Debug::print(J9JITExceptionTable * data, TR_ResolvedMethod * feMethod, bool f
    int32_t sizeOfStackAtlas = 0;
    int32_t * offsetInfo = 0;
    if (sa)
-      offsetInfo = printStackAtlas(startPC, sa->getAtlasBits(), sa->getNumberOfSlotsMapped(), fourByteOffsets, &sizeOfStackAtlas, data->totalFrameSize);
+      offsetInfo = printStackAtlas(startPC, sa->getAtlasBits(), sa->getNumberOfSlotsMapped(), fourByteOffsets, &sizeOfStackAtlas, data->totalFrameSizeInSlots);
 
    TR_ASSERT( sizeOfStackAtlas, "size of stack atlas cannot be 0\n");
 

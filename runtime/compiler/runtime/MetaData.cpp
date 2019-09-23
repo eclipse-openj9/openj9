@@ -1449,7 +1449,7 @@ createMethodMetaData(
       data->flags |= JIT_METADATA_GC_MAP_32_BIT_OFFSETS;
 
    data->hotness = comp->getMethodHotness();
-   data->totalFrameSize = comp->cg()->getFrameSizeInBytes()/TR::Compiler->om.sizeofReferenceAddress();
+   data->totalFrameSizeInSlots = comp->cg()->getFrameSizeInBytes()/TR::Compiler->om.sizeofReferenceAddress();
    data->slots = vmMethod->numberOfParameterSlots();
    data->scalarTempSlots = methodSymbol->getScalarTempSlots();
    data->objectTempSlots = methodSymbol->getObjectTempSlots();

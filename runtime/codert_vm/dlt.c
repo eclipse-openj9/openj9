@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -87,7 +87,7 @@ retry:
 	/* Check for stack overflow */
 
 	metaData = jitGetExceptionTableFromPC(currentThread, (UDATA) dltEntry);
-	checkSP = walkState->sp - (metaData->totalFrameSize + J9SW_JIT_STACK_SLOTS_USED_BY_CALL);
+	checkSP = walkState->sp - (metaData->totalFrameSizeInSlots + J9SW_JIT_STACK_SLOTS_USED_BY_CALL);
 	if (checkSP < currentThread->stackOverflowMark2) {
 #if defined(J9VM_INTERP_GROWABLE_STACKS)
 		/* If we are already handling an overflow, abandon the DLT */
@@ -104,7 +104,7 @@ retry:
 				if (bytesRequired > maxSize) {
 					bytesRequired = maxSize;
 				}
-				
+
 				/* If the grow succeeds, restart the stack walk since all the stack pointers have moved */
 
 				if (vm->internalVMFunctions->growJavaStack(currentThread, bytesRequired) == 0) {
