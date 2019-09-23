@@ -396,7 +396,7 @@ J9::X86::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod 
 bool
 J9::X86::CodeGenerator::supportsInliningOfIsAssignableFrom()
    {
-   static const bool disableInliningOfIsAssignableFrom = (bool)feGetEnv("TR_DisableInliningOfIsAssignableFrom");
+   static const bool disableInliningOfIsAssignableFrom = feGetEnv("TR_disableInlineIsAssignableFrom") != NULL;
    return !disableInliningOfIsAssignableFrom;
    }
 
