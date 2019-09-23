@@ -25,6 +25,19 @@
 
 #include "env/VMJ9.h"
 
+/**
+ * @class TR_J9ServerVM
+ * @brief Class used by JITServer for querying client-side VM information 
+ *
+ * This class is an extension of the TR_J9VM class which overrides a number 
+ * of TR_J9VM's APIs. TR_J9ServerVM is used by JITServer and the overridden 
+ * APIs mostly send remote messages to JITClient to query information from 
+ * the TR_J9VM on the client. The information is needed for JITServer to 
+ * compile code that is compatible with the client-side VM. To minimize the 
+ * number of remote messages as a way to optimize JITServer performance, a 
+ * lot of client-side TR_J9VM information are cached on JITServer.
+ */
+
 class TR_J9ServerVM: public TR_J9VM
    {
 public:
@@ -40,10 +53,7 @@ public:
    virtual bool canDevirtualizeDispatch() override                       { return true; }
    virtual bool needRelocationsForBodyInfoData() override                { return true; }
    virtual bool needRelocationsForPersistentInfoData() override          { return true; }
-
-   virtual void markHotField(TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool) override
-      { return; }
-
+   virtual void markHotField(TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool) override { return; }
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT) override;
    virtual bool isClassLibraryClass(TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getSuperClass(TR_OpaqueClassBlock *classPointer) override;
@@ -53,9 +63,6 @@ public:
    virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,
                                                                  char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod) override;
    virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBlock *b, bool objectTypeIsFixed, bool castTypeIsFixed = true, bool optimizeForAOT = false) override;
-//   virtual bool isInterfaceClass(TR_OpaqueClassBlock *clazzPointer) override;
-//   virtual bool isClassFinal(TR_OpaqueClassBlock *) override;
-//   virtual bool isAbstractClass(TR_OpaqueClassBlock *clazzPointer) override;
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT = false) override;
    virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method) override;
    virtual bool canMethodEnterEventBeHooked() override;
@@ -74,19 +81,15 @@ public:
    virtual bool classHasBeenReplaced(TR_OpaqueClassBlock *) override;
    virtual bool classHasBeenExtended(TR_OpaqueClassBlock *) override;
    virtual bool compiledAsDLTBefore(TR_ResolvedMethod *) override;
-//   virtual char * getClassNameChars(TR_OpaqueClassBlock *ramClass, int32_t & length) override;
    virtual uintptrj_t getOverflowSafeAllocSize() override;
    virtual bool isThunkArchetype(J9Method * method) override;
    virtual int32_t printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method) override;
-//   virtual bool isPrimitiveClass(TR_OpaqueClassBlock * clazz) override;
    virtual bool isClassInitialized(TR_OpaqueClassBlock * clazz) override;
    virtual UDATA getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method) override;
    virtual int32_t getByteOffsetToLockword(TR_OpaqueClassBlock * clazz) override;
    virtual bool isString(TR_OpaqueClassBlock * clazz) override;
    virtual void * getMethods(TR_OpaqueClassBlock * clazz) override;
    virtual void getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, List<TR_ResolvedMethod> * resolvedMethodsInClass) override;
-   //virtual uint32_t getNumMethods(TR_OpaqueClassBlock * clazz) override;
-   //virtual uint32_t getNumInnerClasses(TR_OpaqueClassBlock * clazz) override;
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *clazz) override;
    virtual uint32_t getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getObjectClass(uintptrj_t objectPointer) override;
@@ -159,7 +162,6 @@ public:
    virtual void setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp) override;
    virtual bool needsInvokeExactJ2IThunk(TR::Node *node,  TR::Compilation *comp) override;
    virtual TR_ResolvedMethod *createMethodHandleArchetypeSpecimen(TR_Memory *, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0) override;
-   virtual bool getArrayLengthOfStaticAddress(void *ptr, int32_t &length) override;
    virtual intptrj_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset) override;
    virtual bool isClassArray(TR_OpaqueClassBlock *klass) override;
    virtual uintptrj_t getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef) override { return 0; } // safe answer
@@ -184,6 +186,16 @@ protected:
    bool getCachedField(J9Class *ramClass, int32_t cpIndex, J9Class **declaringClass, UDATA *field);
    void cacheField(J9Class *ramClass, int32_t cpIndex, J9Class *declaringClass, UDATA field);
    };
+
+/**
+ * @class TR_J9SharedCacheServerVM
+ * @brief Class used by JITServer for querying client-side VM information with
+ * additional handling for AOT compilation
+ *
+ * This class is an extension of the TR_J9ServerVM class. This class conceptually
+ * does very similar things compared to TR_J9ServerVM except it's used for AOT 
+ * compilation.
+ */
 
 class TR_J9SharedCacheServerVM: public TR_J9ServerVM
    {
