@@ -49,6 +49,9 @@
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "optimizer/PreExistence.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "env/j9methodServer.hpp"
+#endif
 
 void
 TR_PreXRecompile::dumpInfo()
@@ -249,6 +252,13 @@ void TR_CHTable::cleanupNewlyExtendedInfo(TR::Compilation *comp)
 //
 bool TR_CHTable::commit(TR::Compilation *comp)
    {
+#if defined(JITSERVER_SUPPORT)
+   if (comp->isOutOfProcessCompilation())
+      {
+      return true; // Handled in outOfProcessCompilationEnd instead
+      }
+#endif
+
    TR::list<TR_VirtualGuard*> &vguards = comp->getVirtualGuards();
    TR::list<TR_VirtualGuardSite*> *sideEffectPatchSites = comp->getSideEffectGuardPatchSites();
 
@@ -708,6 +718,138 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
       }
    }
 
+#if defined(JITSERVER_SUPPORT)
+VirtualGuardInfoForCHTable getImportantVGuardInfo(TR::Compilation *comp, TR_VirtualGuard *vguard)
+   {
+   VirtualGuardInfoForCHTable info;
+   info._testType = vguard->getTestType();
+   info._kind = vguard->getKind();
+   info._calleeIndex = vguard->getCalleeIndex();
+   info._byteCodeIndex = vguard->getByteCodeIndex();
+
+   // info below is not used if there are no nop sites
+   if (vguard->getNOPSites().isEmpty())
+      return info;
+
+   TR::SymbolReference *symRef = vguard->getSymbolReference();
+   if (symRef)
+      {
+      TR::MethodSymbol *methodSymbol = symRef->getSymbol()->castToMethodSymbol();
+      TR::ResolvedMethodSymbol *resolvedMethodSymbol = methodSymbol->getResolvedMethodSymbol();
+      info._hasResolvedMethodSymbol = resolvedMethodSymbol != NULL;
+      info._cpIndex = symRef->getCPIndex();
+      info._owningMethod = static_cast<TR_ResolvedJ9JITServerMethod*>(symRef->getOwningMethod(comp))->getRemoteMirror();
+      info._isInterface = methodSymbol->isInterface();
+      info._guardedMethod = resolvedMethodSymbol ? static_cast<TR_ResolvedJ9JITServerMethod*>(resolvedMethodSymbol->getResolvedMethod())->getRemoteMirror() : NULL;
+      info._offset = symRef->getOffset();
+
+      info._isInlineGuard = vguard->isInlineGuard();
+      TR_DevirtualizedCallInfo *dc;
+
+      if (resolvedMethodSymbol)
+         info._guardedMethodThisClass = vguard->isInlineGuard()
+            ? vguard->getThisClass()
+            : ((dc = comp->findDevirtualizedCall(vguard->getCallNode()))
+               ? dc->_thisType
+               : resolvedMethodSymbol->getResolvedMethod()->classOfMethod());
+      }
+
+   info._thisClass = vguard->getThisClass();
+   info._mergedWithHCRGuard = vguard->mergedWithHCRGuard();
+   info._mergedWithOSRGuard = vguard->mergedWithOSRGuard();
+
+   info._mutableCallSiteObject = info._kind == TR_MutableCallSiteTargetGuard ? vguard->mutableCallSiteObject() : NULL;
+   info._mutableCallSiteEpoch = info._kind == TR_MutableCallSiteTargetGuard ? vguard->mutableCallSiteEpoch() : -1;
+
+   info._inlinedResolvedMethod = info._kind == TR_BreakpointGuard
+      ? static_cast<TR_ResolvedJ9JITServerMethod *>(comp->getInlinedResolvedMethod(info._calleeIndex))->getRemoteMirror()
+      : NULL;
+
+   return info;
+   }
+
+CHTableCommitData
+TR_CHTable::computeDataForCHTableCommit(TR::Compilation *comp)
+   {
+   // collect info from TR_CHTable
+   std::vector<TR_OpaqueClassBlock*> classes = _classes
+      ? std::vector<TR_OpaqueClassBlock*>(&(_classes->element(0)), (&(_classes->element(_classes->lastIndex()))) + 1)
+      : std::vector<TR_OpaqueClassBlock*>();
+   std::vector<TR_OpaqueClassBlock*> classesThatShouldNotBeNewlyExtended = _classesThatShouldNotBeNewlyExtended
+      ? std::vector<TR_OpaqueClassBlock*>(&_classesThatShouldNotBeNewlyExtended->element(0), &_classesThatShouldNotBeNewlyExtended->element(_classesThatShouldNotBeNewlyExtended->lastIndex()) + 1)
+      : std::vector<TR_OpaqueClassBlock*>();
+   std::vector<TR_ResolvedMethod*> preXMethods(_preXMethods ? _preXMethods->size() : 0);
+   for (size_t i = 0; i < preXMethods.size(); i++)
+      {
+      TR_ResolvedMethod *method = _preXMethods->element(i);
+      TR_ResolvedJ9JITServerMethod *JITServerMethod = static_cast<TR_ResolvedJ9JITServerMethod*>(method);
+      preXMethods[i] = JITServerMethod->getRemoteMirror();
+      }
+
+   cleanupNewlyExtendedInfo(comp);
+
+   // collect virtual guard info
+   TR::list<TR_VirtualGuard*> &vguards = comp->getVirtualGuards();
+   std::vector<VirtualGuardForCHTable> serialVGuards;
+   serialVGuards.reserve(vguards.size());
+
+   for (TR_VirtualGuard* vguard : vguards)
+      {
+      VirtualGuardInfoForCHTable info = getImportantVGuardInfo(comp, vguard);
+
+      std::vector<TR_VirtualGuardSite> nopSites;
+
+         {
+         List<TR_VirtualGuardSite> &sites = vguard->getNOPSites();
+         ListIterator<TR_VirtualGuardSite> it(&sites);
+         for (TR_VirtualGuardSite *site = it.getFirst(); site; site = it.getNext())
+            nopSites.push_back(*site);
+         }
+
+      std::vector<VirtualGuardInfoForCHTable> innerAssumptions;
+         {
+         ListIterator<TR_InnerAssumption> it(&vguard->getInnerAssumptions());
+         for (TR_InnerAssumption *inner = it.getFirst(); inner; inner = it.getNext())
+            {
+            VirtualGuardInfoForCHTable innerInfo = getImportantVGuardInfo(comp, vguard);
+            innerAssumptions.push_back(innerInfo);
+            }
+         }
+
+      serialVGuards.push_back(std::make_tuple(info, nopSites, innerAssumptions));
+      }
+
+   TR::list<TR_VirtualGuardSite*> &sideEffectPatchSites = *comp->getSideEffectGuardPatchSites();
+   std::vector<TR_VirtualGuardSite> sideEffectPatchSitesVec;
+   for (TR_VirtualGuardSite *site : sideEffectPatchSites)
+      sideEffectPatchSitesVec.push_back(*site);
+
+   FlatClassLoadCheck compClassesThatShouldNotBeLoaded;
+   for (TR_ClassLoadCheck * clc = comp->getClassesThatShouldNotBeLoaded()->getFirst(); clc; clc = clc->getNext())
+      compClassesThatShouldNotBeLoaded.emplace_back(std::string(clc->_name, clc->_length));
+
+   FlatClassExtendCheck compClassesThatShouldNotBeNewlyExtended;
+   for (TR_ClassExtendCheck * cec = comp->getClassesThatShouldNotBeNewlyExtended()->getFirst(); cec; cec = cec->getNext())
+      compClassesThatShouldNotBeNewlyExtended.emplace_back(cec->_clazz);
+
+   auto *compClassesForOSRRedefinition = comp->getClassesForOSRRedefinition();
+   std::vector<TR_OpaqueClassBlock*> classesForOSRRedefinition(compClassesForOSRRedefinition->size());
+   for (int i = 0; i < compClassesForOSRRedefinition->size(); ++i)
+      classesForOSRRedefinition[i] = (*compClassesForOSRRedefinition)[i];
+
+   uint8_t *startPC = comp->cg()->getCodeStart();
+
+   return std::make_tuple(classes,
+                          classesThatShouldNotBeNewlyExtended,
+                          preXMethods,
+                          sideEffectPatchSitesVec,
+                          serialVGuards,
+                          compClassesThatShouldNotBeLoaded,
+                          compClassesThatShouldNotBeNewlyExtended,
+                          classesForOSRRedefinition,
+                          startPC);
+   }
+#endif
 
 // class used to collect all different implementations of a method
 class CollectImplementors : public TR_SubclassVisitor

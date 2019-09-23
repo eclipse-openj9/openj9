@@ -420,18 +420,22 @@ static bool checkForRemainingInlineableJSR292(TR::Compilation *comp, TR::Resolve
    TR::NodeChecklist visited(comp);
    for (TR::TreeTop *tt = methodSymbol->getFirstTreeTop(); tt ; tt = tt->getNextTreeTop())
       {
-      TR::Node *node = tt->getNode()->getFirstChild();
-      if (node && node->getOpCode().isCall() && !visited.contains(node))
+      TR::Node *ttNode = tt->getNode();
+      if (ttNode->getNumChildren() > 0)
          {
-         visited.add(node);
-         if (node->getSymbolReference()->getSymbol()->getResolvedMethodSymbol())
+         TR::Node *node = ttNode->getFirstChild();
+         if (node->getOpCode().isCall() && !visited.contains(node))
             {
-            TR_ResolvedMethod * resolvedMethod = node->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod();
-            if (!node->isTheVirtualCallNodeForAGuardedInlinedCall() &&
-               (resolvedMethod->convertToMethod()->isArchetypeSpecimen() ||
-                resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact))
+            visited.add(node);
+            if (node->getSymbolReference()->getSymbol()->getResolvedMethodSymbol())
                {
-               return true;
+               TR_ResolvedMethod * resolvedMethod = node->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod();
+               if (!node->isTheVirtualCallNodeForAGuardedInlinedCall() &&
+                  (resolvedMethod->convertToMethod()->isArchetypeSpecimen() ||
+                   resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact))
+                  {
+                  return true;
+                  }
                }
             }
          }
