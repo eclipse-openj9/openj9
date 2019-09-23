@@ -33,6 +33,9 @@
 #include "env/jittypes.h"
 #include "infra/Link.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "env/JITServerCHTable.hpp"
+#endif
 
 class TR_FrontEnd;
 class TR_OpaqueClassBlock;
@@ -414,6 +417,9 @@ class TR_CHTable
    void commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> &sites,
                            TR_PersistentCHTable *table, TR::Compilation *comp);
    void commitOSRVirtualGuards(TR::Compilation *comp, TR::list<TR_VirtualGuard*> &vguards);
+#if defined(JITSERVER_SUPPORT)
+   CHTableCommitData computeDataForCHTableCommit(TR::Compilation *comp);
+#endif
 
    TR_Array<TR_OpaqueClassBlock *> *getClasses() { return _classes;}
    TR_Array<TR_OpaqueClassBlock *> *getClassesThatShouldNotBeNewlyExtended() { return _classesThatShouldNotBeNewlyExtended;}
