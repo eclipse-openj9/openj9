@@ -1052,15 +1052,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getVFTEntry(std::get<0>(recv), std::get<1>(recv)));
          }
          break;
-      case MessageType::VM_getArrayLengthOfStaticAddress:
-         {
-         auto recv = client->getRecvData<void*>();
-         void *ptr = std::get<0>(recv);
-         int32_t length;
-         bool ok = fe->getArrayLengthOfStaticAddress(ptr, length);
-         client->write(response, ok, length);
-         }
-         break;
       case MessageType::VM_isClassArray:
          {
          auto recv = client->getRecvData<TR_OpaqueClassBlock*>();

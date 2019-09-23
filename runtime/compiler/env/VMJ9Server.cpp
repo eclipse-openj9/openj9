@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -115,14 +115,14 @@ TR_J9ServerVM::createMethod(TR_Memory * trMemory, TR_OpaqueClassBlock * clazz, i
 
 TR_ResolvedMethod *
 TR_J9ServerVM::createResolvedMethod(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod,
-                                  TR_ResolvedMethod * owningMethod, TR_OpaqueClassBlock *classForNewInstance)
+                                    TR_ResolvedMethod * owningMethod, TR_OpaqueClassBlock *classForNewInstance)
    {
    return createResolvedMethodWithSignature(trMemory, aMethod, classForNewInstance, NULL, -1, owningMethod);
    }
 
 TR_ResolvedMethod *
 TR_J9ServerVM::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,
-                          char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod)
+                                                 char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod)
    {
    TR_ResolvedJ9Method *result = NULL;
    if (isAOT_DEPRECATED_DO_NOT_USE())
@@ -171,31 +171,7 @@ TR_J9ServerVM::isInstanceOf(TR_OpaqueClassBlock *a, TR_OpaqueClassBlock *b, bool
       return TR_no;
    return TR_maybe;
    }
-/*
-bool
-TR_J9ServerVM::isInterfaceClass(TR_OpaqueClassBlock *clazzPointer)
-   {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_isInterfaceClass, clazzPointer);
-   return std::get<0>(stream->read<bool>());
-   }
 
-bool
-TR_J9ServerVM::isClassFinal(TR_OpaqueClassBlock *clazzPointer)
-   {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_isClassFinal, clazzPointer);
-   return std::get<0>(stream->read<bool>());
-   }
-
-bool
-TR_J9ServerVM::isAbstractClass(TR_OpaqueClassBlock *clazzPointer)
-   {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_isAbstractClass, clazzPointer);
-   return std::get<0>(stream->read<bool>());
-   }
-*/
 TR_OpaqueClassBlock *
 TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT)
    {
@@ -218,7 +194,6 @@ TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bo
       {
       OMR::CriticalSection getSystemClassCS(_compInfoPT->getClientData()->getClassMapMonitor());
       classByNameMap[key] = clazz;
-
       }
    else
       {
@@ -336,8 +311,6 @@ TR_J9ServerVM::getClassFromSignature(const char *sig, int32_t length, TR_Resolve
       // In theory we could consider this a special case and watch the CHTable updates
       // for a class load event for Ljava/lang/String$StringCompressionFlag, but it may not
       // be worth the trouble.
-      //static unsigned long errorsSystem = 0;
-      //printf("ErrorSystem %lu for cl=%p\tclassName=%.*s\n", ++errorsSystem, cl, length, sig);
       }
    return clazz;
    }
@@ -375,7 +348,9 @@ TR_J9ServerVM::jitFieldsAreSame(TR_ResolvedMethod * method1, I_32 cpIndex1, TR_R
 
    bool sigSame = true;
    if (serverMethod1->fieldsAreSame(cpIndex1, serverMethod2, cpIndex2, sigSame))
+      {
       result = true;
+      }
    else
       {
       if (sigSame)
@@ -469,7 +444,9 @@ TR_J9ServerVM::jitStaticsAreSame(TR_ResolvedMethod *method1, I_32 cpIndex1, TR_R
 
    bool sigSame = true;
    if (serverMethod1->staticsAreSame(cpIndex1, serverMethod2, cpIndex2, sigSame))
+      {
       result = true;
+      }
    else
       {
       if (sigSame)
@@ -542,21 +519,6 @@ TR_J9ServerVM::compiledAsDLTBefore(TR_ResolvedMethod *method)
 #endif
    }
 
-
-/*
-char *
-TR_J9ServerVM::getClassNameChars(TR_OpaqueClassBlock * ramClass, int32_t & length)
-   {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getClassNameChars, ramClass);
-   const std::string className = std::get<0>(stream->read<std::string>());
-   char * classNameChars = (char*) _compInfoPT->getCompilation()->trMemory()->allocateMemory(className.length(), heapAlloc);
-   memcpy(classNameChars, &className[0], className.length());
-   length = className.length();
-   return classNameChars;
-   }
-*/
-
 uintptrj_t
 TR_J9ServerVM::getOverflowSafeAllocSize()
    {
@@ -596,15 +558,7 @@ TR_J9ServerVM::printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMe
    J9UTF8 * signature = str2utf8((char*)&signatureStr[0], signatureStr.length(), trMemory, heapAlloc);
    return TR_J9VMBase::printTruncatedSignature(sigBuf, bufLen, className, name, signature);
    }
-/*
-bool
-TR_J9ServerVM::isPrimitiveClass(TR_OpaqueClassBlock * clazz)
-   {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_isPrimitiveClass, clazz);
-   return std::get<0>(stream->read<bool>());
-   }
-*/
+
 bool
 TR_J9ServerVM::isClassInitialized(TR_OpaqueClassBlock * clazz)
    {
@@ -683,22 +637,6 @@ TR_J9ServerVM::getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * cl
    getResolvedMethodsAndMethods(trMemory, classPointer, resolvedMethodsInClass, NULL, NULL);
    }
 
-
-/*uint32_t
-TR_J9ServerVM::getNumMethods(TR_OpaqueClassBlock * clazz)
-   {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getNumMethods, clazz);
-   return std::get<0>(stream->read<uint32_t>());
-   }
-
-uint32_t
-TR_J9ServerVM::getNumInnerClasses(TR_OpaqueClassBlock * clazz)
-   {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getNumInnerClasses, clazz);
-   return std::get<0>(stream->read<uint32_t>());
-   }*/
 bool
 TR_J9ServerVM::isPrimitiveArray(TR_OpaqueClassBlock *clazz)
    {
@@ -801,14 +739,7 @@ TR_J9ServerVM::getStringUTF8Length(uintptrj_t objectPointer)
    stream->write(JITServer::MessageType::VM_getStringUTF8Length, objectPointer);
    return std::get<0>(stream->read<intptrj_t>());
    }
-/*
-uintptrj_t
-TR_J9ServerVM::getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock *clazz)
-   {
-   J9Class *j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
-   return reinterpret_cast<uintptrj_t>(TR::compInfoPT->getAndCacheRemoteROMClass(j9clazz));
-   }
-*/
+
 bool
 TR_J9ServerVM::classInitIsFinished(TR_OpaqueClassBlock *clazz)
    {
@@ -1499,16 +1430,6 @@ TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptrj
    return result;
    }
 
-bool
-TR_J9ServerVM::getArrayLengthOfStaticAddress(void *ptr, int32_t &length)
-   {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getArrayLengthOfStaticAddress, ptr);
-   auto recv = stream->read<bool, int32_t>();
-   length = std::get<1>(recv);
-   return std::get<0>(recv);
-   }
-
 intptrj_t
 TR_J9ServerVM::getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset)
    {
@@ -1680,17 +1601,17 @@ TR_J9ServerVM::getClassFromCP(J9ConstantPool *cp)
    }
 
 void
-TR_J9ServerVM::reserveTrampolineIfNecessary( TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding)
-{
-    // Not necessary in JITServer server mode
-}
+TR_J9ServerVM::reserveTrampolineIfNecessary(TR::Compilation *, TR::SymbolReference *symRef, bool inBinaryEncoding)
+   {
+   // Not necessary in JITServer server mode
+   }
 
 intptrj_t
 TR_J9ServerVM::methodTrampolineLookup(TR::Compilation *comp, TR::SymbolReference * symRef, void * callSite)
-{
-    // Not necessary in JITServer server mode, return the call's PC so that the call will not appear to require a trampoline
-    return (intptrj_t)callSite;
-}
+   {
+   // Not necessary in JITServer server mode, return the call's PC so that the call will not appear to require a trampoline
+   return (intptrj_t)callSite;
+   }
 
 uintptrj_t
 TR_J9ServerVM::getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock * clazz)
@@ -1822,11 +1743,7 @@ TR_J9SharedCacheServerVM::isPublicClass(TR_OpaqueClassBlock * classPointer)
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
-
-   if (validated)
-      return publicClass;
-   else
-      return true;
+   return validated ? publicClass : true;
    }
 
 TR_OpaqueClassBlock *
@@ -1850,11 +1767,7 @@ TR_J9SharedCacheServerVM::getProfiledClassFromProfiledInfo(TR_ExtraAddressInfo *
       if (((TR_ResolvedRelocatableJ9JITServerMethod*) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class*)classPointer))
          validated = true;
       }
-
-   if (validated)
-      return classPointer;
-   else
-      return NULL;
+   return validated ? classPointer : NULL;
    }
 
 TR_YesNoMaybe
@@ -1873,11 +1786,7 @@ TR_J9SharedCacheServerVM::isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBl
       {
       validated = optimizeForAOT;
       }
-
-   if (validated)
-      return isAnInstanceOf;
-   else
-      return TR_maybe;
+   return validated ? isAnInstanceOf : TR_maybe;
    }
 
 TR_OpaqueClassBlock *
@@ -1899,11 +1808,7 @@ TR_J9SharedCacheServerVM::getSystemClassFromClassName(const char * name, int32_t
             validated = true;
          }
       }
-
-   if (validated)
-      return classPointer;
-   else
-      return NULL;
+   return validated ? classPointer : NULL;
    }
 
 bool
@@ -2025,11 +1930,7 @@ TR_J9SharedCacheServerVM::hasFinalizer(TR_OpaqueClassBlock * classPointer)
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
-
-   if (validated)
-      return classHasFinalizer;
-   else
-      return true;
+   return validated ? classHasFinalizer : true;
    }
 
 bool
@@ -2051,11 +1952,7 @@ TR_J9SharedCacheServerVM::isPrimitiveClass(TR_OpaqueClassBlock * classPointer)
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
-
-   if (validated)
-      return isPrimClass;
-   else
-      return false;
+   return validated ? isPrimClass : false;
    }
 
 bool
@@ -2232,11 +2129,7 @@ TR_J9SharedCacheServerVM::getResolvedMethodForNameAndSignature(TR_Memory * trMem
       {
       validated = ((TR_ResolvedRelocatableJ9JITServerMethod *)comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *)classPointer);
       }
-
-   if (validated)
-      return resolvedMethod;
-   else
-      return NULL;
+   return validated ? resolvedMethod : NULL;
    }
 
 bool
@@ -2258,11 +2151,7 @@ TR_J9SharedCacheServerVM::isPrimitiveArray(TR_OpaqueClassBlock *classPointer)
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
-
-   if (validated)
-      return isPrimArray;
-   else
-      return false;
+   return validated ? isPrimArray : false;
    }
 
 bool
@@ -2284,11 +2173,7 @@ TR_J9SharedCacheServerVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
-
-   if (validated)
-      return isRefArray;
-   else
-      return false;
+   return validated ? isRefArray : false;
    }
 
 TR_OpaqueMethodBlock *
@@ -2316,11 +2201,7 @@ TR_J9SharedCacheServerVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * class
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
-
-   if (validated)
-      return classDepthFlags;
-   else
-      return 0;
+   return validated ? classDepthFlags : 0;
    }
 
 uintptrj_t
@@ -2337,11 +2218,7 @@ TR_J9SharedCacheServerVM::getClassFlagsValue(TR_OpaqueClassBlock * classPointer)
       SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
       validated = true;
       }
-
-   if (validated)
-      return classFlags;
-   else
-      return 0;
+   return validated ? classFlags : 0;
    }
 
 bool
@@ -2456,11 +2333,7 @@ TR_J9SharedCacheServerVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock * 
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) arrayClass))
          validated = true;
       }
-
-   if (validated)
-      return componentClass;
-   else
-      return NULL;
+   return validated ? componentClass : NULL;
    }
 
 TR_OpaqueClassBlock *
@@ -2481,11 +2354,7 @@ TR_J9SharedCacheServerVM::getArrayClassFromComponentClass(TR_OpaqueClassBlock * 
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) componentClass))
          validated = true;
       }
-
-   if (validated)
-      return arrayClass;
-   else
-      return NULL;
+   return validated ? arrayClass : NULL;
    }
 
 TR_OpaqueClassBlock *
@@ -2507,11 +2376,7 @@ TR_J9SharedCacheServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBloc
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) arrayClass))
          validated = true;
       }
-
-   if (validated)
-      return leafComponent;
-   else
-      return NULL;
+   return validated ? leafComponent : NULL;
    }
 
 TR_OpaqueClassBlock *
@@ -2533,11 +2398,7 @@ TR_J9SharedCacheServerVM::getBaseComponentClass(TR_OpaqueClassBlock * classPoint
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
-
-   if (validated)
-      return baseComponent;
-   else
-      return classPointer;  // not sure about this return value, but it's what we used to return before we got "smart"
+   return validated ? baseComponent : classPointer;  // not sure about this return value, but it's what we used to return before we got "smart"
    }
 
 TR_OpaqueClassBlock *
