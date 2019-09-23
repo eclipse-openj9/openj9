@@ -33,6 +33,7 @@ my $headerComments =
 	. "########################################################\n"
 	. "\n";
 
+my $suffix = "";
 my $mkName = "autoGen.mk";
 my $dependmk = "dependencies.mk";
 my $utilsmk = "utils.mk";
@@ -54,6 +55,7 @@ my %targetCount = ();
 my $buildList = '';
 my $iterations = 1;
 my $testFlag = '';
+my $validateMode = 0;
 my $parseResult = {};
 my $parseTest = {};
 $parseResult->{'tests'} = [];
@@ -63,7 +65,11 @@ my $eleStr = '';
 my $eleArr = [];
 
 sub runmkgen {
-	( $projectRootDir, $allLevels, $allGroups, $allTypes, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList, $iterations, $testFlag ) = @_;
+	( $projectRootDir, $allLevels, $allGroups, $allTypes, $output, $graphSpecs, $jdkVersion, $allImpls, $impl, my $modesxml, my $ottawacsv, $buildList, $iterations, $testFlag, $validateMode ) = @_;
+
+	if ( $validateMode == 1 ) {
+		$suffix = ".tkgj";
+	}
 
 	$testRoot = $projectRootDir;
 	if ($output) {
@@ -220,12 +226,12 @@ sub generateMk {
 
 	my $rt = 0;
 	if ($playlistXML || @{$subdirsHavePlaylist}) {
-		writeVars($makeFile, $subdirsHavePlaylist, $currentdirs);
+		writeVars($makeFile . $suffix, $subdirsHavePlaylist, $currentdirs);
 		if (@{$subdirsHavePlaylist}) {
 			$rt = 1;
 		}
 		if ($playlistXML) {
-			$rt |= xml2mk($makeFile, $playlistXML, $currentdirs, $subdirsHavePlaylist);
+			$rt |= xml2mk($makeFile . $suffix, $playlistXML, $currentdirs, $subdirsHavePlaylist);
 		}
 		validateTKGJ($makeFile);
 	}
@@ -673,6 +679,7 @@ sub writeTargets {
 	if (defined $result->{'include'}) {
 		print $fhOut "-include " . $result->{'include'} . "\n\n";
 	}
+
 	print $fhOut 'include $(TEST_ROOT)$(D)TestConfig$(D)' . $dependmk . "\n\n";
 	foreach my $test ( @{ $result->{'tests'} } ) {
 		my $count    = 0;
@@ -990,7 +997,7 @@ sub getAllInvalidSpecs {
 
 sub dependGen {
 	my $dependmkpath = $testRoot . "/TestConfig/" . $dependmk;
-	open( my $fhOut, '>', $dependmkpath ) or die "Cannot create file $dependmkpath";
+	open( my $fhOut, '>', $dependmkpath . $suffix ) or die "Cannot create file $dependmkpath";
 	print $fhOut $headerComments;
 
 	my @allDisHead = ('', 'disabled.', 'echo.disabled.');
@@ -1073,13 +1080,13 @@ sub dependGen {
 	}
 
 	close $fhOut;
-	print "\nGenerated $dependmk\n";
+	print "\nGenerated $dependmk$suffix\n";
 	validateTKGJ($dependmkpath);
 }
 
 sub utilsGen {
 	my $utilsmkpath = $testRoot . "/TestConfig/" . $utilsmk;
-	open( my $fhOut, '>', $utilsmkpath ) or die "Cannot create file $utilsmkpath";
+	open( my $fhOut, '>', $utilsmkpath . $suffix ) or die "Cannot create file $utilsmkpath";
 	print $fhOut $headerComments;
 	print $fhOut "PLATFORM=\n";
 	my $spec2platform = '';
@@ -1094,13 +1101,13 @@ sub utilsGen {
 	print $fhOut $spec2platform;
 
 	close $fhOut;
-	print "\nGenerated $utilsmk\n";
+	print "\nGenerated $utilsmk$suffix\n";
 	validateTKGJ($utilsmkpath);
 }
 
 sub countGen {
 	my $countmkpath = $testRoot . "/TestConfig/" . $countmk;
-	open( my $fhOut, '>', $countmkpath ) or die "Cannot create file $countmkpath";
+	open( my $fhOut, '>', $countmkpath . $suffix) or die "Cannot create file $countmkpath";
 	print $fhOut $headerComments;
 
 	print $fhOut "_GROUPTARGET = \$(firstword \$(MAKECMDGOALS))\n\n";
@@ -1112,14 +1119,15 @@ sub countGen {
 	}
 
 	close $fhOut;
-	print "\nGenerated $countmk\n";
+	print "\nGenerated $countmk$suffix\n";
 	validateTKGJ($countmkpath);
 }
-
-# TODO: remove 
+ 
 sub validateTKGJ {
-	if (compare($_[0], $_[0] . ".tkgj") != 0) {
-		say "Warning: tkgj failed!\n";
+	if ( $validateMode == 1 ) {
+		if (compare($_[0], $_[0] . $suffix) != 0) {
+			die "TestKitGen Java failed!\n";
+		}
 	}
 }
 1;

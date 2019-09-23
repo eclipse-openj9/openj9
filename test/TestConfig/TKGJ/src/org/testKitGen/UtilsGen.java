@@ -28,9 +28,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class UtilsGen {
-	private static String utilsmk = Options.getProjectRootDir() + "/TestConfig/" + Constants.UTILSMK + Constants.SUFFIX;
-	private static String dependmk = Options.getProjectRootDir() + "/TestConfig/" + Constants.DEPENDMK
-			+ Constants.SUFFIX;
+	private static String utilsmk = Options.getProjectRootDir() + "/TestConfig/" + Constants.UTILSMK;
+	private static String dependmk = Options.getProjectRootDir() + "/TestConfig/" + Constants.DEPENDMK;
 
 	private UtilsGen() {
 	}
@@ -126,9 +125,8 @@ public class UtilsGen {
 
 		f.close();
 
-		// TODO: uncomment after testing
-		// System.out.println();
-		// System.out.println("Generated " + dependmk);
+		System.out.println();
+		System.out.println("Generated " + dependmk);
 	}
 
 	private static void genUtilsMk() throws IOException {
@@ -142,8 +140,7 @@ public class UtilsGen {
 		}
 
 		f.close();
-		// TODO: uncomment after testing
-		// System.out.println();
-		// System.out.println("Generated " + utilsmk);
+		System.out.println();
+		System.out.println("Generated " + utilsmk);
 	}
 }

@@ -54,15 +54,14 @@ public class MkGen {
 		this.playlistXML = playlistXML;
 		this.currentdirs = currentdirs;
 		this.subdirs = subdirs;
-		this.makeFile = absolutedir + "/" + Constants.TESTMK + Constants.SUFFIX;
+		this.makeFile = absolutedir + "/" + Constants.TESTMK;
 		this.testInfoArr = new ArrayList<TestInfo>();
 		this.groupTargets = new HashMap<String, ArrayList<String>>();
 	}
 
 	public void start() {
-		// TODO: uncomment after testing
-		// System.out.println();
-		// System.out.println("Generating make file " + makeFile);
+		System.out.println();
+		System.out.println("Generating make file " + makeFile);
 
 		try {
 			writeVars();
