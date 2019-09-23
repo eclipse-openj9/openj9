@@ -1283,7 +1283,7 @@ createMethodMetaData(
    // Find unmergeable GC maps
    //
    GCStackMapSet nonmergeableBCI(std::less<TR_GCStackMap*>(), cg->trMemory()->heapMemoryRegion());
-   if (comp->getOptions()->getReportByteCodeInfoAtCatchBlock())
+   if (comp->fej9vm()->getReportByteCodeInfoAtCatchBlock())
       {
       for (TR::TreeTop* treetop = comp->getStartTree(); treetop; treetop = treetop->getNextTreeTop())
          {
