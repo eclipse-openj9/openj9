@@ -67,18 +67,3 @@ VM_DdrDebugLink(J9VMPopFramesInterruptEvent)
  * @ddr_namespace: map_to_type=DDRAlgorithmVersions
  */
 #define J9DDR_GENERATE_VERSION 1
-
-/* Declare these for compatibility with old DTFJ plugins, see https://github.com/eclipse/openj9/issues/6316. */
-/* @ddr_namespace: map_to_type=J9Consts */
-
-#define J9_JAVA_CLASS_ARRAY J9AccClassArray
-#define J9_JAVA_CLASS_DEPTH_MASK J9AccClassDepthMask
-#define J9_JAVA_CLASS_DYING J9AccClassDying
-#define J9_JAVA_CLASS_GC_SPECIAL J9AccClassGCSpecial
-#define J9_JAVA_CLASS_HOT_SWAPPED_OUT J9AccClassHotSwappedOut
-#define J9_JAVA_CLASS_RAM_ARRAY J9AccClassRAMArray
-#define J9_JAVA_CLASS_RAM_SHAPE_SHIFT J9AccClassRAMShapeShift
-#define J9_JAVA_CLASS_REFERENCE_MASK J9AccClassReferenceMask
-#define J9_JAVA_INTERFACE J9AccInterface
-#define J9_JAVA_NATIVE J9AccNative
-#define J9_JAVA_STATIC J9AccStatic
