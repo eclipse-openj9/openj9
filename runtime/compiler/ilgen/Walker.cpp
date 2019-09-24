@@ -358,7 +358,7 @@ TR::Block * TR_J9ByteCodeIlGenerator::walker(TR::Block * prevBlock)
          case J9BCdastore:                   storeArrayElement(TR::Double);           _bcIndex += 1; break;
          case J9BCaastore:                   storeArrayElement(TR::Address);          _bcIndex += 1; break;
          case J9BCbastore: genUnary(TR::i2b); storeArrayElement(TR::Int8);             _bcIndex += 1; break;
-         case J9BCcastore: genUnary(TR::i2s); storeArrayElement(TR::Int16, TR::cstorei);_bcIndex += 1; break;
+         case J9BCcastore: genUnary(TR::i2s); storeArrayElement(TR::Int16);_bcIndex += 1; break;
          case J9BCsastore: genUnary(TR::i2s); storeArrayElement(TR::Int16);            _bcIndex += 1; break;
 
          case J9BCistorew: storeAuto(TR::Int32,  next2Bytes()); _bcIndex += 3; break;
