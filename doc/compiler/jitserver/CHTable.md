@@ -101,7 +101,7 @@ and relocated the code, which prevents the runtime assumptions from being reloca
 after the final message sent by the server. So we have to send the data required to perform the commit along with the final
 message and have the client perform the commit after loading the code. This is implemented in `JITServerCompilationThread.cpp`. The
 call to `computeDataForCHTableCommit` is performed on the server and the data is transferred to the client where
-`JITServerCHTableCommit` is called.
+`JITClientCHTableCommit` is called.
 
 Because the vanilla `commit` code uses a bunch of linked lists of complex types including symbol references (which only exist on
 the server) and protobuf gives us vectors when deserializing, the commit code has been duplicated to make use of stripped down
