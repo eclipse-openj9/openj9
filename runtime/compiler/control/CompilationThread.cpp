@@ -163,7 +163,7 @@ void setThreadAffinity(unsigned _int64 handle, unsigned long mask)
 TR_RelocationRuntime*
 TR::CompilationInfoPerThreadBase::reloRuntime()
    {
-#if defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO)
+#if defined(JITSERVER_SUPPORT)
    if (_methodBeingCompiled->isAotLoad() ||
        _compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::NONE ||
        (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && TR::Options::sharedClassCache())) // Enable local AOT compilations at client
@@ -171,7 +171,7 @@ TR::CompilationInfoPerThreadBase::reloRuntime()
    return static_cast<TR_RelocationRuntime*>(&_remoteCompileReloRuntime);
 #else
    return static_cast<TR_RelocationRuntime*>(&_sharedCacheReloRuntime);
-#endif /* defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO) */
+#endif /* defined(JITSERVER_SUPPORT) */
    }
 
 void
@@ -870,6 +870,9 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _compInfo(compInfo),
    _jitConfig(jitConfig),
    _sharedCacheReloRuntime(jitConfig),
+#if defined(JITSERVER_SUPPORT)
+   _remoteCompileReloRuntime(jitConfig),
+#endif /* defined(JITSERVER_SUPPORT) */
    _compThreadId(id),
    _onSeparateThread(onSeparateThread),
    _vm(NULL),
@@ -11206,7 +11209,7 @@ TR::CompilationInfo::storeAOTInSharedCache(
       disableAOTCompilations();
       }
    }
-#endif /* defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM)) */
+#endif /* defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)) */
 
 //===========================================================
 TR_LowPriorityCompQueue::TR_LowPriorityCompQueue()
@@ -12163,6 +12166,52 @@ bool TR::CompilationInfo::canProcessJProfilingRequest()
    }
 
 #if defined(JITSERVER_SUPPORT)
+bool
+TR::CompilationInfo::canRelocateMethod(TR::Compilation *comp)
+   {
+   TR_Debug *debug = TR::Options::getDebug();
+   bool canRelocateMethod = false;
+   if (debug)
+      {
+      TR_FilterBST *filter = NULL;
+      J9UTF8 *className = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_className;
+      J9UTF8 *name = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_name;
+      J9UTF8 *signature = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_signature;
+      char *methodSignature;
+      char arr[1024];
+      int32_t len = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 3;
+      if (len < 1024)
+         methodSignature = arr;
+      else
+         methodSignature = (char *) jitPersistentAlloc(len);
+
+       if (methodSignature)
+         {
+         sprintf(methodSignature, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
+         //printf("methodSig: %s\n", methodSignature);
+
+          if (debug->methodSigCanBeRelocated(methodSignature, filter))
+            canRelocateMethod = true;
+         }
+      else
+         {
+         canRelocateMethod = true;
+         }
+
+       if (methodSignature && (len >= 1024))
+         jitPersistentFree(methodSignature);
+      }
+   else
+      {
+      // Prevent the relocation if specific option is given
+      if (!comp->getOption(TR_DisableDelayRelocationForAOTCompilations))
+         canRelocateMethod = false;
+      else
+         canRelocateMethod = true;
+      }
+   return canRelocateMethod;
+   }
+
 void
 TR::CompilationInfoPerThread::updateLastLocalGCCounter()
    {
