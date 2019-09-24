@@ -438,7 +438,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 	}
 
 	ConstantPoolMap constantPoolMap(bufferManager, context);
-	ClassFileOracle classFileOracle(bufferManager, classFileParser->getParsedClassFile(), &constantPoolMap, _verifyExcludeAttribute, context);
+	ClassFileOracle classFileOracle(bufferManager, classFileParser->getParsedClassFile(), &constantPoolMap, _verifyExcludeAttribute, _classFileBuffer, context);
 	if ( !classFileOracle.isOK() ) {
 		return classFileOracle.getBuildResult();
 	}
