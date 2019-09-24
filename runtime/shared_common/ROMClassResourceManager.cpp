@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -273,13 +273,20 @@ SH_ROMClassResourceManager::storeNew(J9VMThread* currentThread, const ShcItem* i
 
 	if (!_cache->isStale(itemInCache)) {
 		entry = rrmTableAdd(currentThread, itemInCache, cachelet);
-		/* If there was an existing stale entry, remove it */
+		/* If there was an existing entry, remove it */
 		_dataBytes += ITEMDATALEN(itemInCache);
-		if (entry && _cache->isStale(entry->item())) {
-			UDATA key = getKeyForItem(entry->item());
-			
-			rrmTableRemove(currentThread, key);
-			entry = rrmTableAdd(currentThread, itemInCache, cachelet);
+		const ShcItem* itemInHashTable = NULL;
+		if (NULL != entry) {
+			itemInHashTable = entry->item();
+			if (NULL != itemInHashTable) {
+				if (itemInCache != itemInHashTable) {
+					/* found an existing item under the same key, remove it from the hashTable */
+					UDATA key = getKeyForItem(itemInHashTable);
+					rrmTableRemove(currentThread, key);
+					Trc_SHR_RRM_storeNew_existingEntryRemoved(currentThread, itemInHashTable);
+					entry = rrmTableAdd(currentThread, itemInCache, cachelet);
+				}
+			}
 		}
 		if (!entry) {
 			Trc_SHR_RRM_storeNew_ExitFalse(currentThread);
