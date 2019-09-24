@@ -281,6 +281,10 @@ private :
 	void writeSharedClassIPCInfo(const char* textStart, const char* textEnd, IDATA id, UDATA padToLength);
 	void writeSharedClassLockInfo(const char* lockName, IDATA lockSemid, void* lockTID);
 	void writeSharedClassSection(void);
+	void writeSharedClassSectionTopLayerStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData, bool multiLayerStats);
+	void writeSharedClassSectionTopLayerStatsSummaryHelper(J9SharedClassJavacoreDataDescriptor* javacoreData);
+	void writeSharedClassSectionAllLayersStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData);
+	
 #endif
 	void writeTrailer(void);
 
@@ -2787,6 +2791,405 @@ JavaCoreDumpWriter::writeSharedClassLockInfo(const char* lockName, IDATA lockSem
 }
 
 void 
+JavaCoreDumpWriter::writeSharedClassSectionTopLayerStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData, bool multiLayerStats)
+{
+	_OutputStream.writeCharacters(
+			"1SCLTEXTCRTW       Cache Created With\n"
+			"NULL               ------------------\n"
+			"NULL\n"
+	);
+
+	if (0 != (javacoreData->extraFlags & J9SHR_EXTRA_FLAGS_NO_LINE_NUMBERS)) {
+		_OutputStream.writeCharacters(
+				"2SCLTEXTXNL            -Xnolinenumbers       = true\n"
+		);
+	} else {
+		_OutputStream.writeCharacters(
+				"2SCLTEXTXNL            -Xnolinenumbers       = false\n"
+		);   
+	}
+
+	if (0 != (javacoreData->extraFlags & J9SHR_EXTRA_FLAGS_BCI_ENABLED)) {
+		_OutputStream.writeCharacters(
+				"2SCLTEXTBCI            BCI Enabled           = true\n"
+		);
+	} else {
+		_OutputStream.writeCharacters(
+				"2SCLTEXTBCI            BCI Enabled           = false\n"
+		);
+	}
+
+	if (0 != (javacoreData->extraFlags & J9SHR_EXTRA_FLAGS_RESTRICT_CLASSPATHS)) {
+		_OutputStream.writeCharacters(
+				"2SCLTEXTBCI            Restrict Classpaths   = true\n"
+		);
+	} else {
+		_OutputStream.writeCharacters(
+				"2SCLTEXTBCI            Restrict Classpaths   = false\n"
+		);
+	}
+
+	_OutputStream.writeCharacters(
+				"NULL\n"
+				"1SCLTEXTCSUM       Cache Summary\n"
+				"NULL               ------------------\n"
+				"NULL\n"
+	);
+
+	if (0 != (javacoreData->extraFlags & J9SHR_EXTRA_FLAGS_NO_LINE_NUMBER_CONTENT)) {
+		_OutputStream.writeCharacters(
+				"2SCLTEXTNLC            No line number content                    = true\n"
+		);
+	} else {
+		_OutputStream.writeCharacters(
+				"2SCLTEXTNLC            No line number content                    = false\n"
+		);
+	}
+
+	if (0 != (javacoreData->extraFlags & J9SHR_EXTRA_FLAGS_LINE_NUMBER_CONTENT)) {
+		_OutputStream.writeCharacters(
+				"2SCLTEXTLNC            Line number content                       = true\n"
+		);
+	} else {
+		_OutputStream.writeCharacters(
+				"2SCLTEXTLNC            Line number content                       = false\n"
+		);
+	}
+
+	_OutputStream.writeCharacters(
+				"NULL\n"
+	);
+
+	_OutputStream.writeCharacters(
+			"2SCLTEXTRCS            ROMClass start address                    = "
+	);
+	_OutputStream.writePointer(javacoreData->romClassStart);
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTRCE            ROMClass end address                      = "
+	);
+	_OutputStream.writePointer(javacoreData->romClassEnd);
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTMSA            Metadata start address                    = "
+	);
+	_OutputStream.writePointer(javacoreData->metadataStart);
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTCEA            Cache end address                         = "
+	);
+	_OutputStream.writePointer(javacoreData->cacheEndAddress);
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTRTF            Runtime flags                             = "
+	);
+	_OutputStream.writeInteger64(javacoreData->runtimeFlags, "0x%.16llX");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTCGN            Cache generation                          = "
+	);
+	_OutputStream.writeInteger(javacoreData->cacheGen, "%zu");
+
+	if (multiLayerStats) {
+		_OutputStream.writeCharacters(
+			"\n2SCLTEXTCLY            Cache layer                               = "
+		);
+		_OutputStream.writeInteger(javacoreData->topLayer, "%zd");
+	}
+			
+	_OutputStream.writeCharacters(
+			"\nNULL"
+			"\n2SCLTEXTCSZ            Cache size                                = "
+	);
+	_OutputStream.writeInteger(javacoreData->cacheSize, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTSMB            Softmx bytes                              = "
+	);
+	_OutputStream.writeInteger(javacoreData->softMaxBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTFRB            Free bytes                                = "
+	);
+	_OutputStream.writeInteger(javacoreData->freeBytes, "%zu");
+
+			
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTARB            Reserved space for AOT bytes              = "
+	);
+	_OutputStream.writeInteger(javacoreData->minAOT, "%zd");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTAMB            Maximum space for AOT bytes               = "
+	);
+	_OutputStream.writeInteger(javacoreData->maxAOT, "%zd");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTJRB            Reserved space for JIT data bytes         = "
+	);
+	_OutputStream.writeInteger(javacoreData->minJIT, "%zd");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTJMB            Maximum space for JIT data bytes          = "
+	);
+	_OutputStream.writeInteger(javacoreData->maxJIT, "%zd");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTRWB            ReadWrite bytes                           = "
+	);
+	_OutputStream.writeInteger(javacoreData->readWriteBytes, "%zu");
+
+	if (NO_CORRUPTION != javacoreData->corruptionCode) {
+		_OutputStream.writeCharacters(
+			"\n2SCLTEXTCOC            Corruption Code                           = "
+		);
+		_OutputStream.writeInteger(javacoreData->corruptionCode, "%zd");
+
+		_OutputStream.writeCharacters(
+			"\n2SCLTEXTCOV            Corrupt Value                             = "
+		);
+		_OutputStream.writeInteger(javacoreData->corruptValue);
+	}
+
+	if (!multiLayerStats) {
+		_OutputStream.writeCharacters(
+			"\n2SCLTEXTMDA            Metadata bytes                            = "
+		);
+	}
+
+	_OutputStream.writeInteger(javacoreData->otherBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTDAS            Class debug area size                     = "
+	);
+	_OutputStream.writeInteger(javacoreData->debugAreaSize, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTDAU            Class debug area % used                   = "
+	);
+	_OutputStream.writeInteger(javacoreData->debugAreaUsed, "%zu");
+	_OutputStream.writeCharacters("%");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTDAN            Class LineNumberTable bytes               = "
+	);
+	_OutputStream.writeInteger(javacoreData->debugAreaLineNumberTableBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTDAV            Class LocalVariableTable bytes            = "
+	);
+	_OutputStream.writeInteger(javacoreData->debugAreaLocalVariableTableBytes, "%zu");
+	_OutputStream.writeCharacters("\n");
+}
+
+void 
+JavaCoreDumpWriter::writeSharedClassSectionTopLayerStatsSummaryHelper(J9SharedClassJavacoreDataDescriptor* javacoreData)
+{
+	_OutputStream.writeCharacters(
+			"NULL"
+			"\n2SCLTEXTCPF            Cache is "
+	);
+	_OutputStream.writeInteger(javacoreData->percFull, "%zu");
+
+	if (javacoreData->softMaxBytes == javacoreData->cacheSize) {
+		_OutputStream.writeCharacters("% full\n");
+	} else {
+		_OutputStream.writeCharacters("% soft full\n");
+	}
+
+	_OutputStream.writeCharacters(
+			"NULL\n"
+			"1SCLTEXTCMST       Cache Memory Status\n"
+			"NULL               ------------------\n"
+			"1SCLTEXTCNTD           Cache Name                    Feature                  Memory type              Cache path\n"
+			"NULL\n"
+	);
+	_OutputStream.writeCharacters(
+			"2SCLTEXTCMDT           "
+	);
+	_OutputStream.writeCharacters(javacoreData->cacheName);
+	for (UDATA i = strlen(javacoreData->cacheName); i < 30; i++) {
+		_OutputStream.writeCharacters(" ");
+	}
+	if (J9_ARE_ALL_BITS_SET(javacoreData->feature, J9SH_FEATURE_COMPRESSED_POINTERS)) {
+		_OutputStream.writeCharacters("CR                       ");
+	} else if (J9_ARE_ALL_BITS_SET(javacoreData->feature, J9SH_FEATURE_NON_COMPRESSED_POINTERS)) {
+		_OutputStream.writeCharacters("Non-CR                   ");
+	} else {
+		_OutputStream.writeCharacters("Default                  ");
+	}
+	if (javacoreData->shmid == -2) {
+		_OutputStream.writeCharacters("Memory mapped file       ");
+	} else {
+		writeSharedClassIPCInfo("IPC Memory (id ", ")", javacoreData->shmid, 25);
+	}
+	_OutputStream.writeCharacters(javacoreData->cacheDir);
+	_OutputStream.writeCharacters("\n");
+
+	_OutputStream.writeCharacters(
+			"NULL\n"
+			"1SCLTEXTCMST       Cache Lock Status\n"
+			"NULL               ------------------\n"
+			"1SCLTEXTCNTD           Lock Name                     Lock type                TID owning lock\n"
+			"NULL\n"
+			);
+
+	writeSharedClassLockInfo(
+			"2SCLTEXTCWRL           Cache write lock              ", javacoreData->semid, javacoreData->writeLockTID
+	);
+
+	writeSharedClassLockInfo(
+			"2SCLTEXTCRWL           Cache read/write lock         ", javacoreData->semid, javacoreData->readWriteLockTID
+	);
+}
+
+void 
+JavaCoreDumpWriter::writeSharedClassSectionAllLayersStatsHelper(J9SharedClassJavacoreDataDescriptor* javacoreData)
+{
+	_OutputStream.writeCharacters(
+			"2SCLTEXTRCB            ROMClass bytes                            = "
+	);
+	_OutputStream.writeInteger(javacoreData->romClassBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTAOB            AOT code bytes                            = "
+	);
+	_OutputStream.writeInteger(javacoreData->aotBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTADB            AOT data bytes                            = "
+	);
+	_OutputStream.writeInteger(javacoreData->aotDataBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTAHB            AOT class hierarchy bytes                 = "
+	);
+	_OutputStream.writeInteger(javacoreData->aotClassChainDataBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTATB            AOT thunk bytes                           = "
+	);
+	_OutputStream.writeInteger(javacoreData->aotThunkDataBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTJHB            JIT hint bytes                            = "
+	);
+	_OutputStream.writeInteger(javacoreData->jitHintDataBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTJPB            JIT profile bytes                         = "
+	);
+	_OutputStream.writeInteger(javacoreData->jitProfileDataBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNOB            Java Object bytes                         = "
+	);
+	_OutputStream.writeInteger(javacoreData->objectBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTZCB            Zip cache bytes                           = "
+	);
+	_OutputStream.writeInteger(javacoreData->zipCacheDataBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTSHB            Startup hint bytes                        = "
+	);
+	_OutputStream.writeInteger(javacoreData->startupHintBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTJCB            JCL data bytes                            = "
+	);
+	_OutputStream.writeInteger(javacoreData->jclDataBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTBDA            Byte data bytes                           = "
+	);
+	_OutputStream.writeInteger(javacoreData->indexedDataBytes, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\nNULL"
+			"\n2SCLTEXTNRC            Number ROMClasses                         = "
+	);
+	_OutputStream.writeInteger(javacoreData->numROMClasses, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNAM            Number AOT Methods                        = "
+	);
+	_OutputStream.writeInteger(javacoreData->numAOTMethods, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNAD            Number AOT Data Entries                   = "
+	);
+	_OutputStream.writeInteger(javacoreData->numAotDataEntries, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNAH            Number AOT Class Hierarchy                = "
+	);
+	_OutputStream.writeInteger(javacoreData->numAotClassChains, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNAT            Number AOT Thunks                         = "
+	);
+	_OutputStream.writeInteger(javacoreData->numAotThunks, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNJH            Number JIT Hints                          = "
+	);
+	_OutputStream.writeInteger(javacoreData->numJitHints, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNJP            Number JIT Profiles                       = "
+	);
+	_OutputStream.writeInteger(javacoreData->numJitProfiles, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNCP            Number Classpaths                         = "
+	);
+	_OutputStream.writeInteger(javacoreData->numClasspaths, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNUR            Number URLs                               = "
+	);
+	_OutputStream.writeInteger(javacoreData->numURLs, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNTK            Number Tokens                             = "
+	);
+	_OutputStream.writeInteger(javacoreData->numTokens, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNOJ            Number Java Objects                       = "
+	);
+	_OutputStream.writeInteger(javacoreData->numObjects, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNZC            Number Zip Caches                         = "
+	);
+	_OutputStream.writeInteger(javacoreData->numZipCaches, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNSH            Number Startup Hint Entries               = "
+	);
+	_OutputStream.writeInteger(javacoreData->numStartupHints, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNJC            Number JCL Entries                        = "
+	);
+	_OutputStream.writeInteger(javacoreData->numJclEntries, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTNST            Number Stale classes                      = "
+	);
+	_OutputStream.writeInteger(javacoreData->numStaleClasses, "%zu");
+
+	_OutputStream.writeCharacters(
+			"\n2SCLTEXTPST            Percent Stale classes                     = "
+	);
+	_OutputStream.writeInteger(javacoreData->percStale, "%zu");
+	_OutputStream.writeCharacters("\n");
+}
+
+void 
 JavaCoreDumpWriter::writeSharedClassSection(void)
 {
 	J9SharedClassJavacoreDataDescriptor javacoreData;
@@ -2806,396 +3209,27 @@ JavaCoreDumpWriter::writeSharedClassSection(void)
 			"NULL           ========================================\n"
 			"NULL\n"
 		);
-	
-		_OutputStream.writeCharacters(
-			"1SCLTEXTCRTW   Cache Created With\n"
-			"NULL           ------------------\n"
-			"NULL\n"
-		);
-
-		if (0 != (javacoreData.extraFlags & J9SHR_EXTRA_FLAGS_NO_LINE_NUMBERS)) {
-			_OutputStream.writeCharacters(
-				"2SCLTEXTXNL        -Xnolinenumbers       = true\n"
-			);
-		} else {
-			_OutputStream.writeCharacters(
-				"2SCLTEXTXNL        -Xnolinenumbers       = false\n"
-			);   
-		}
-
-		if (0 != (javacoreData.extraFlags & J9SHR_EXTRA_FLAGS_BCI_ENABLED)) {
-			_OutputStream.writeCharacters(
-				"2SCLTEXTBCI        BCI Enabled           = true\n"
-			);
-		} else {
-			_OutputStream.writeCharacters(
-				"2SCLTEXTBCI        BCI Enabled           = false\n"
-			);
-		}
-
-		if (0 != (javacoreData.extraFlags & J9SHR_EXTRA_FLAGS_RESTRICT_CLASSPATHS)) {
-			_OutputStream.writeCharacters(
-				"2SCLTEXTBCI        Restrict Classpaths   = true\n"
-			);
-		} else {
-			_OutputStream.writeCharacters(
-				"2SCLTEXTBCI        Restrict Classpaths   = false\n"
-			);
-		}
-
-		_OutputStream.writeCharacters(
-			"NULL\n"
-			"1SCLTEXTCSUM   Cache Summary\n"
-			"NULL           ------------------\n"
-			"NULL\n"
-		);
-
-		if (0 != (javacoreData.extraFlags & J9SHR_EXTRA_FLAGS_NO_LINE_NUMBER_CONTENT)) {
-			_OutputStream.writeCharacters(
-				"2SCLTEXTNLC        No line number content                    = true\n"
-			);
-		} else {
-			_OutputStream.writeCharacters(
-				"2SCLTEXTNLC        No line number content                    = false\n"
-			);
-		}
-
-		if (0 != (javacoreData.extraFlags & J9SHR_EXTRA_FLAGS_LINE_NUMBER_CONTENT)) {
-			_OutputStream.writeCharacters(
-				"2SCLTEXTLNC        Line number content                       = true\n"
-			);
-		} else {
-			_OutputStream.writeCharacters(
-				"2SCLTEXTLNC        Line number content                       = false\n"
-			);
-		}
-
-		_OutputStream.writeCharacters(
-					"NULL\n"
-		);
-
 		
-		if (javacoreData.ccCount > 1) {
-			_OutputStream.writeCharacters(
-				"2SCLTEXTCCC        Cachelet count                            = "
-			);
-			_OutputStream.writeInteger(javacoreData.ccCount, "%zu");
-			
-			_OutputStream.writeCharacters(
-				"\n2SCLTEXTCCS        Cachelets started                         = "
-			);
-			_OutputStream.writeInteger(javacoreData.ccStartedCount, "%zu");
-			_OutputStream.writeCharacters("\n");
-			
-		}
-
-		_OutputStream.writeCharacters(
-			"2SCLTEXTRCS        ROMClass start address                    = "
-		);
-		_OutputStream.writePointer(javacoreData.romClassStart);
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTRCE        ROMClass end address                      = "
-		);
-		_OutputStream.writePointer(javacoreData.romClassEnd);
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTMSA        Metadata start address                    = "
-		);
-		_OutputStream.writePointer(javacoreData.metadataStart);
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTCEA        Cache end address                         = "
-		);
-		_OutputStream.writePointer(javacoreData.cacheEndAddress);
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTRTF        Runtime flags                             = "
-		);
-		_OutputStream.writeInteger64(javacoreData.runtimeFlags, "0x%.16llX");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTCGN        Cache generation                          = "
-		);
-		_OutputStream.writeInteger(javacoreData.cacheGen, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\nNULL"
-			"\n2SCLTEXTCSZ        Cache size                                = "
-		);
-		_OutputStream.writeInteger(javacoreData.cacheSize, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTSMB        Softmx bytes                              = "
-		);
-		_OutputStream.writeInteger(javacoreData.softMaxBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTFRB        Free bytes                                = "
-		);
-		_OutputStream.writeInteger(javacoreData.freeBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTRCB        ROMClass bytes                            = "
-		);
-		_OutputStream.writeInteger(javacoreData.romClassBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTAOB        AOT code bytes                            = "
-		);
-		_OutputStream.writeInteger(javacoreData.aotBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTADB        AOT data bytes                            = "
-		);
-		_OutputStream.writeInteger(javacoreData.aotDataBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTAHB        AOT class hierarchy bytes                 = "
-		);
-		_OutputStream.writeInteger(javacoreData.aotClassChainDataBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTATB        AOT thunk bytes                           = "
-		);
-		_OutputStream.writeInteger(javacoreData.aotThunkDataBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTARB        Reserved space for AOT bytes              = "
-		);
-		_OutputStream.writeInteger(javacoreData.minAOT, "%zd");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTAMB        Maximum space for AOT bytes               = "
-		);
-		_OutputStream.writeInteger(javacoreData.maxAOT, "%zd");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTJHB        JIT hint bytes                            = "
-		);
-		_OutputStream.writeInteger(javacoreData.jitHintDataBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTJPB        JIT profile bytes                         = "
-		);
-		_OutputStream.writeInteger(javacoreData.jitProfileDataBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTJRB        Reserved space for JIT data bytes         = "
-		);
-		_OutputStream.writeInteger(javacoreData.minJIT, "%zd");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTJMB        Maximum space for JIT data bytes          = "
-		);
-		_OutputStream.writeInteger(javacoreData.maxJIT, "%zd");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNOB        Java Object bytes                         = "
-		);
-		_OutputStream.writeInteger(javacoreData.objectBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTZCB        Zip cache bytes                           = "
-		);
-		_OutputStream.writeInteger(javacoreData.zipCacheDataBytes, "%zu");
+		bool multiLayerStats = (0 < javacoreData.topLayer);
 		
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTSHB        Startup hint bytes                        = "
-		);
-		_OutputStream.writeInteger(javacoreData.startupHintBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTRWB        ReadWrite bytes                           = "
-		);
-		_OutputStream.writeInteger(javacoreData.readWriteBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTJCB        JCL data bytes                            = "
-		);
-		_OutputStream.writeInteger(javacoreData.jclDataBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTBDA        Byte data bytes                           = "
-		);
-		_OutputStream.writeInteger(javacoreData.indexedDataBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTMDA        Metadata bytes                            = "
-		);
-		_OutputStream.writeInteger(javacoreData.otherBytes, "%zu");
-
-		if (NO_CORRUPTION != javacoreData.corruptionCode) {
+		if (multiLayerStats) {
 			_OutputStream.writeCharacters(
-				"\n2SCLTEXTCOC        Corruption Code                           = "
-			);
-			_OutputStream.writeInteger(javacoreData.corruptionCode, "%zd");
-
-			_OutputStream.writeCharacters(
-				"\n2SCLTEXTCOV        Corrupt Value                             = "
-			);
-			_OutputStream.writeInteger(javacoreData.corruptValue);
-		}
-
-		_OutputStream.writeCharacters(
-		    "\n2SCLTEXTDAS        Class debug area size                     = "
-		);
-		_OutputStream.writeInteger(javacoreData.debugAreaSize, "%zu");
-
-		_OutputStream.writeCharacters(
-		    "\n2SCLTEXTDAU        Class debug area % used                   = "
-		);
-		_OutputStream.writeInteger(javacoreData.debugAreaUsed, "%zu");
-		_OutputStream.writeCharacters("%");
-
-		_OutputStream.writeCharacters(
-		    "\n2SCLTEXTDAN        Class LineNumberTable bytes               = "
-		);
-		_OutputStream.writeInteger(javacoreData.debugAreaLineNumberTableBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-		    "\n2SCLTEXTDAV        Class LocalVariableTable bytes            = "
-		);
-		_OutputStream.writeInteger(javacoreData.debugAreaLocalVariableTableBytes, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\nNULL"
-			"\n2SCLTEXTNRC        Number ROMClasses                         = "
-		);
-		_OutputStream.writeInteger(javacoreData.numROMClasses, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNAM        Number AOT Methods                        = "
-		);
-		_OutputStream.writeInteger(javacoreData.numAOTMethods, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNAD        Number AOT Data Entries                   = "
-		);
-		_OutputStream.writeInteger(javacoreData.numAotDataEntries, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNAH        Number AOT Class Hierarchy                = "
-		);
-		_OutputStream.writeInteger(javacoreData.numAotClassChains, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNAT        Number AOT Thunks                         = "
-		);
-		_OutputStream.writeInteger(javacoreData.numAotThunks, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNJH        Number JIT Hints                          = "
-		);
-		_OutputStream.writeInteger(javacoreData.numJitHints, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNJP        Number JIT Profiles                       = "
-		);
-		_OutputStream.writeInteger(javacoreData.numJitProfiles, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNCP        Number Classpaths                         = "
-		);
-		_OutputStream.writeInteger(javacoreData.numClasspaths, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNUR        Number URLs                               = "
-		);
-		_OutputStream.writeInteger(javacoreData.numURLs, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNTK        Number Tokens                             = "
-		);
-		_OutputStream.writeInteger(javacoreData.numTokens, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNOJ        Number Java Objects                       = "
-		);
-		_OutputStream.writeInteger(javacoreData.numObjects, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNZC        Number Zip Caches                         = "
-		);
-		_OutputStream.writeInteger(javacoreData.numZipCaches, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNSH        Number Startup Hint Entries               = "
-		);
-		_OutputStream.writeInteger(javacoreData.numStartupHints, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNJC        Number JCL Entries                        = "
-		);
-		_OutputStream.writeInteger(javacoreData.numJclEntries, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTNST        Number Stale classes                      = "
-		);
-		_OutputStream.writeInteger(javacoreData.numStaleClasses, "%zu");
-
-		_OutputStream.writeCharacters(
-			"\n2SCLTEXTPST        Percent Stale classes                     = "
-		);
-		_OutputStream.writeInteger(javacoreData.percStale, "%zu");
-		_OutputStream.writeCharacters("%\n");
-		
-		_OutputStream.writeCharacters(
-			"NULL\n"
-			"2SCLTEXTCPF        Cache is "
-		);
-		_OutputStream.writeInteger(javacoreData.percFull, "%zu");
-		
-		if (javacoreData.softMaxBytes == javacoreData.cacheSize) {
-			_OutputStream.writeCharacters("% full\n");
-		} else {
-			_OutputStream.writeCharacters("% soft full\n");
-		}
-
-		_OutputStream.writeCharacters(
+				"1SCLTEXTCSTL   Cache Statistics for Top Layer\n"
 				"NULL\n"
-				"1SCLTEXTCMST   Cache Memory Status\n"
-				"NULL           ------------------\n"
-				"1SCLTEXTCNTD       Cache Name                    Feature                  Memory type              Cache path\n"
+			);
+			writeSharedClassSectionTopLayerStatsHelper(&javacoreData, multiLayerStats);
+			writeSharedClassSectionTopLayerStatsSummaryHelper(&javacoreData);
+			_OutputStream.writeCharacters(
 				"NULL\n"
-		);
-		_OutputStream.writeCharacters(
-				"2SCLTEXTCMDT       "
-		);
-		_OutputStream.writeCharacters(javacoreData.cacheName);
-		for (UDATA i = strlen(javacoreData.cacheName); i < 30; i++) {
-			_OutputStream.writeCharacters(" ");
-		}
-		if (J9_ARE_ALL_BITS_SET(javacoreData.feature, J9SH_FEATURE_COMPRESSED_POINTERS)) {
-			_OutputStream.writeCharacters("CR                       ");
-		} else if (J9_ARE_ALL_BITS_SET(javacoreData.feature, J9SH_FEATURE_NON_COMPRESSED_POINTERS)) {
-			_OutputStream.writeCharacters("Non-CR                   ");
+				"1SCLTEXTCSAL   Cache Statistics for All Layers\n"
+				"NULL\n"
+			);
+			writeSharedClassSectionAllLayersStatsHelper(&javacoreData);
 		} else {
-			_OutputStream.writeCharacters("Default                  ");
+			writeSharedClassSectionTopLayerStatsHelper(&javacoreData, multiLayerStats);
+			writeSharedClassSectionAllLayersStatsHelper(&javacoreData);
+			writeSharedClassSectionTopLayerStatsSummaryHelper(&javacoreData);
 		}
-		if (javacoreData.shmid == -2) {
-			_OutputStream.writeCharacters("Memory mapped file       ");
-		} else {
-			writeSharedClassIPCInfo("IPC Memory (id ", ")", javacoreData.shmid, 25);
-		}
-		_OutputStream.writeCharacters(javacoreData.cacheDir);
-		_OutputStream.writeCharacters("\n");
-
-		_OutputStream.writeCharacters(
-				"NULL\n"
-				"1SCLTEXTCMST   Cache Lock Status\n"
-				"NULL           ------------------\n"
-				"1SCLTEXTCNTD       Lock Name                     Lock type                TID owning lock\n"
-				"NULL\n"
-		);
-
-		writeSharedClassLockInfo(
-				"2SCLTEXTCWRL       Cache write lock              ", javacoreData.semid, javacoreData.writeLockTID
-		);
-		
-		writeSharedClassLockInfo(
-				"2SCLTEXTCRWL       Cache read/write lock         ", javacoreData.semid, javacoreData.readWriteLockTID
-		);
 		
 		/* Write the section trailer */
 		_OutputStream.writeCharacters(
