@@ -103,9 +103,9 @@
 	<export name="Java_com_ibm_jvm_Trace_resumeThisImpl" />
 	<export name="Java_com_ibm_jvm_Trace_getMicros" />
 	
-	<export name="Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getLoadedClassCountImpl" />
+	<export name="Java_openj9_internal_management_ClassLoaderInfoBaseImpl_getLoadedClassCountImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getTotalLoadedClassCountImpl" />
-	<export name="Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getUnloadedClassCountImpl" />
+	<export name="Java_openj9_internal_management_ClassLoaderInfoBaseImpl_getUnloadedClassCountImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_isVerboseImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_setVerboseImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_CompilationMXBeanImpl_getTotalCompilationTimeImpl" />
