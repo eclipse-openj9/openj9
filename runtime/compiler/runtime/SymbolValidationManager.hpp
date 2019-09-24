@@ -757,8 +757,10 @@ public:
 
    static bool assertionsAreFatal();
 
-   std::string serializeSymbolToIDMap(); // JITServer
+#if defined(JITSERVER_SUPPORT)
+   std::string serializeSymbolToIDMap();
    void deserializeSymbolToIDMap(const std::string &symbolToIdStr);
+#endif /* defined(JITSERVER_SUPPORT) */
 
 private:
 
