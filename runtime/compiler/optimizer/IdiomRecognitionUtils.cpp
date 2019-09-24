@@ -387,7 +387,7 @@ createIdiomByteArrayStoreInLoop(TR_PCISCGraph *tgt, int32_t ctrl, int dagId, TR_
 TR_PCISCNode *
 createIdiomCharArrayLoadInLoop(TR_PCISCGraph *tgt, int32_t ctrl, int dagId, TR_PCISCNode *pred, TR_PCISCNode *base, TR_PCISCNode *index, TR_PCISCNode *cmah, TR_PCISCNode *const2)
    {
-   return createIdiomArrayLoadInLoop(tgt, ctrl, dagId, pred, TR::cloadi, TR::Int16, base, index, cmah, const2);
+   return createIdiomArrayLoadInLoop(tgt, ctrl, dagId, pred, TR::sloadi, TR::Int16, base, index, cmah, const2);
    }
 
 //*****************************************************************************************

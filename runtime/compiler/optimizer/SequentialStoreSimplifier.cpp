@@ -2275,7 +2275,7 @@ static TR::TreeTop * reduceArrayLoad(TR_ArrayShiftTreeCollection * storeTrees, T
          newDataType = TR::Int16;
          numValidTrees = 2 / storeTrees->getTree(0)->getRootNode()->getOpCode().getSize();
          storeOpCode = TR::cstorei;
-         loadOpCode = TR::cloadi;
+         loadOpCode = TR::sloadi;
          }
 
       if (numValidTrees < 2 ||
