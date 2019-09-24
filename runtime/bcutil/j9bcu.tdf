@@ -187,7 +187,7 @@ TraceEvent=Trc_BCU_createRomClassEndian_Subset Noenv Overhead=1 Level=3 Template
 TraceAssert=Trc_BCU_Assert_ShouldNeverHappen NoEnv Overhead=1 Level=1 Assert="(0 /* Fatal verifier error */)"
 TraceAssert=Trc_BCU_Assert_Equals NoEnv Overhead=1 Level=1 Assert="(P1 == P2)"
 TraceAssert=Trc_BCU_Assert_NotEquals NoEnv Overhead=1 Level=1 Assert="(P1 != P2)"
-TraceAssert=Trc_BCU_Assert_True NoEnv Overhead=1 Level=1 Assert="(P1)"
+TraceAssert=Trc_BCU_Assert_True NoEnv Overhead=1 Level=3 Assert="(P1)"
 TraceAssert=Trc_BCU_Assert_False NoEnv Overhead=1 Level=1 Assert="!(P1)"
 
 TraceException=Trc_BCU_verifyCanonisizeAndCopyUTF8_FailedFirstByteZero Noenv Overhead=1 Level=10 Template="BCU j9bcutil_verifyCanonisizeAndCopyUTF8: failed because first byte is 0"
@@ -374,3 +374,5 @@ TraceException=Trc_BCU_j9bcutil_readClassFileBytes_MaxCPCount NoEnv Overhead=1 L
 TraceException=Trc_BCU_internalDefineClass_orphanNotFound Overhead=1 Level=1 Template="orphan ROM class %p not found in table, table entry was %p"
 
 TraceEvent=Trc_BCU_compareROMClassForEquality_event NoEnv Overhead=1 Level=7 Template="compareROMClassForEquality returns %d for class name '%.*s'"
+
+TraceAssert=Trc_BCU_Assert_True_Level1 NoEnv Overhead=1 Level=1 Assert="(P1)"
