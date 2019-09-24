@@ -63,7 +63,7 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public J9::AheadOfTimeCompile
     */
    virtual uint8_t *initializeAOTRelocationHeader(TR::IteratedExternalRelocation *relocation);
 
-   static bool classAddressUsesReloRecordInfo() { return true; }
+   static bool classAddressUsesReloRecordInfo() { return false; }
 
    private:
    TR::CodeGenerator *_cg;
