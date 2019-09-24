@@ -189,6 +189,7 @@ private:
    TR_AOTStats *_aotStats;
    J9SharedClassConfig *_sharedCacheConfig;
    UDATA _numDigitsForCacheOffsets;
+   UDATA _cacheStartAddress;
 
    uint32_t _logLevel;
    bool _verboseHints;
@@ -214,8 +215,8 @@ public:
    // virtual void addHint(J9ROMMethod *, TR_SharedCacheHint) override { TR_ASSERT(false, "called"); }
    virtual bool isMostlyFull() override { TR_ASSERT(false, "called"); return false;}
 
-   virtual void *pointerFromOffsetInSharedCache(void *offset) override;
-   virtual void *offsetInSharedCacheFromPointer(void *ptr) override;
+   virtual void *pointerFromOffsetInSharedCache(uintptr_t offset) override;
+   virtual uintptr_t offsetInSharedCacheFromPointer(void *ptr) override;
 
    virtual UDATA *rememberClass(J9Class *clazz, bool create=true) override;
 
@@ -226,7 +227,7 @@ public:
 
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader) override { TR_ASSERT(false, "called"); return NULL;}
 
-   virtual bool isPointerInSharedCache(void *ptr, void * & cacheOffset) override { TR_ASSERT(false, "called"); return false;}
+   virtual bool isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset) override { TR_ASSERT(false, "called"); return false;}
 
    
    static void setSharedCacheDisabledReason(TR_J9SharedCacheDisabledReason state) { TR_ASSERT(false, "called"); }

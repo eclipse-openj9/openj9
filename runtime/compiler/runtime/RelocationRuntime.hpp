@@ -381,14 +381,11 @@ public:
       void * operator new(size_t, J9JITConfig *);
       TR_JITServerRelocationRuntime(J9JITConfig *jitCfg) : TR_RelocationRuntime(jitCfg) {}
 // The following public APIs should not be used with this class
-      virtual bool storeAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
-      virtual TR_AOTHeader *createAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
-      virtual bool validateAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
+      virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
+      virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
+      virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
 
-      virtual void *isROMClassInSharedCaches(UDATA romClassValue, J9JavaVM *javaVM)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
-      virtual bool isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
-      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!");  return TR_no; }
-      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9JavaVM *javaVM, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
+      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
       static uint8_t *copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe);
 
 private:

@@ -118,6 +118,21 @@ TR_ResolvedMethodCacheEntry
 
 using TR_ResolvedMethodInfoCache = UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry>;
 
+/**
+ * @class TR_ResolvedJ9JITServerMethod
+ * @brief Class used by JITServer for obtaining method/class information needed 
+ * during compilation from JITClient
+ *
+ * This class is an extension of the TR_ResolvedJ9Method class. Most of the APIs of 
+ * TR_ResolvedJ9JITServerMethod are remote calls to the JITClient to obtain 
+ * compilation information about the compiling method and related classes. Upon 
+ * instantiation of a TR_ResolvedJ9JITServerMethod class, a mirror TR_ResolvedJ9Method
+ * will be created on the client via TR_ResolvedJ9JITServerMethod::createResolvedMethodMirror. 
+ * During compilation the JITServer will mostly be communicating with the client-side
+ * mirror instance. Certain data are cached at the JITServer to reduce the number 
+ * of remote calls to JITClient.
+ */
+
 class TR_ResolvedJ9JITServerMethod : public TR_ResolvedJ9Method
    {
 public:
@@ -228,6 +243,18 @@ private:
    virtual char * fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_Memory * trMemory, TR_AllocationKind kind = heapAlloc) override;
    void unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITServerMethodInfo &methodInfo);
    };
+
+
+/**
+ * @class TR_ResolvedRelocatableJ9JITServerMethod
+ * @brief Class used by JITServer for obtaining method/class information needed 
+ * during compilation from JITClient plus additional handling for AOT compilations
+ *
+ * This class is an extension of the above TR_ResolvedJ9JITServerMethod class that
+ * has additional handling for AOT compilations. The relationship between 
+ * TR_ResolvedJ9JITServerMethod and TR_ResolvedRelocatableJ9JITServerMethod is similar 
+ * to the relationship between TR_ResolvedJ9Method and TR_ResolvedRelocatableJ9Method. 
+ */
 
 class TR_ResolvedRelocatableJ9JITServerMethod : public TR_ResolvedJ9JITServerMethod
    {

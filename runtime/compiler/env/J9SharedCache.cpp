@@ -103,6 +103,8 @@ TR_J9SharedCache::TR_J9SharedCache(TR_J9VMBase *fe)
    _sharedCacheConfig = _javaVM->sharedClassConfig;
    if (_sharedCacheConfig)
       {
+      _cacheStartAddress = (UDATA) _sharedCacheConfig->cacheDescriptorList->cacheStartAddress;
+
       _numDigitsForCacheOffsets=8;
 
       UDATA totalCacheSize = 0;
@@ -470,7 +472,7 @@ TR_J9SharedCache::isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset)
       return true;
       }
 #endif // J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
-   LOG(5,{ log("isPointerInSharedCache FAIL offset %d size %d\n", offset, _cacheSizeInBytes);});
+   // LOG(5,{ log("isPointerInSharedCache FAIL offset %d size %d\n", offset, _cacheSizeInBytes);});
    return false;
    }
 
@@ -861,7 +863,7 @@ TR_J9JITServerSharedCache::TR_J9JITServerSharedCache(TR_J9VMBase *fe)
    }
 
 void *
-TR_J9JITServerSharedCache::pointerFromOffsetInSharedCache(void *offset)
+TR_J9JITServerSharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
    // compute pointer from client's cache start address
@@ -869,13 +871,13 @@ TR_J9JITServerSharedCache::pointerFromOffsetInSharedCache(void *offset)
    return (void *) ((UDATA)offset + vmInfo->_cacheStartAddress);
    }
 
-void *
+uintptr_t
 TR_J9JITServerSharedCache::offsetInSharedCacheFromPointer(void *ptr)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
    // return offset from client's cache start address
    auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
-   return (void *) ((UDATA)ptr - vmInfo->_cacheStartAddress);
+   return (uintptr_t)((UDATA)ptr - vmInfo->_cacheStartAddress);
    }
 
 UDATA *
