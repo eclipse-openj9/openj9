@@ -25,8 +25,16 @@
 #include "mgmtinit.h"
 #include "j9modron.h"
 
-static jobject processSegmentList(JNIEnv *env, jclass memoryUsage, jobject memUsageConstructor, J9MemorySegmentList *segList, U_64 initSize, I_64 maxSize, U_64 *storedPeakSize, U_64 *storedPeakUsed, UDATA action);
+typedef enum {
+	CLASS_MEMORY=0,
+	MISC_MEMORY,
+	JIT_CODECACHE,
+	JIT_DATACACHE
+} nonHeapMemoryPoolIndex;
+
+static jobject processSegmentList(JNIEnv *env, jclass memoryUsage, jobject memUsageConstructor, J9MemorySegmentList *segList, U_64 initSize, I_64 maxSize, U_64 *storedPeakSize, U_64 *storedPeakUsed, UDATA action, BOOLEAN isCodeCacheSegment);
 static UDATA getIndexFromPoolID(J9JavaLangManagementData *mgmt, UDATA id);
+static UDATA getNonHeapIndexFromPoolID(UDATA id);
 static J9MemorySegmentList *getMemorySegmentList(J9JavaVM *javaVM, jint id);
 
 jobject JNICALL
@@ -147,7 +155,7 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getPeakUsageImpl
 		/* NonHeap MemoryPool */
 		J9MemorySegmentList *segList = getMemorySegmentList(javaVM, id);
 		if (NULL != segList) {
-			return processSegmentList(env, memoryUsage, memUsageConstructor, segList, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].initialSize, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].maxSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakUsed, 1);
+			return processSegmentList(env, memoryUsage, memUsageConstructor, segList, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].initialSize, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].maxSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakUsed, 1, (JIT_CODECACHE == getNonHeapIndexFromPoolID(id)));
 		} else {
 			return NULL;
 		}
@@ -204,7 +212,7 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getUsageImpl(JNI
 		/* NonHeap MemoryPool */
 		J9MemorySegmentList *segList = getMemorySegmentList(javaVM, id);
 		if (NULL != segList) {
-			return processSegmentList(env, memoryUsage, memUsageConstructor, segList, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].initialSize, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].maxSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakUsed, 0);
+			return processSegmentList(env, memoryUsage, memUsageConstructor, segList, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].initialSize, mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].maxSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakUsed, 0, (JIT_CODECACHE == getNonHeapIndexFromPoolID(id)));
 		} else {
 			return NULL;
 		}
@@ -358,7 +366,7 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_resetPeakUsageIm
 		/* NonHeap MemoryPool */
 		J9MemorySegmentList *segList = getMemorySegmentList(javaVM, id);
 		if (NULL != segList) {
-			processSegmentList(env, NULL, NULL, segList, 0, 0, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakUsed, 2);
+			processSegmentList(env, NULL, NULL, segList, 0, 0, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakSize, &mgmt->nonHeapMemoryPools[id-J9VM_MANAGEMENT_POOL_NONHEAP_SEG].peakUsed, 2, (JIT_CODECACHE == getNonHeapIndexFromPoolID(id)));
 		}
 	}
 }
@@ -440,7 +448,7 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getPreCollection
 		1 - check peak and update if necessary, return a MemoryUsage object for the peak usage
 		2 - reset the peak to the current usage, return nothing */
 static jobject
-processSegmentList(JNIEnv *env, jclass memoryUsage, jobject memUsageConstructor, J9MemorySegmentList *segList, U_64 initialSize, I_64 maxSize, U_64 *storedPeakSize, U_64 *storedPeakUsed, UDATA action) {
+processSegmentList(JNIEnv *env, jclass memoryUsage, jobject memUsageConstructor, J9MemorySegmentList *segList, U_64 initialSize, I_64 maxSize, U_64 *storedPeakSize, U_64 *storedPeakUsed, UDATA action, BOOLEAN isCodeCacheSegment) {
 	jlong used = 0;
 	jlong committed = 0;
 	jlong peakUsed = 0;
@@ -455,8 +463,31 @@ processSegmentList(JNIEnv *env, jclass memoryUsage, jobject memUsageConstructor,
 	omrthread_monitor_enter(segList->segmentMutex);
 
 	MEMORY_SEGMENT_LIST_DO(segList, seg)
+	if (isCodeCacheSegment) {
+		/* Set default values for warmAlloc and coldAlloc pointers */
+		UDATA warmAlloc = (UDATA)seg->heapBase;
+		UDATA coldAlloc = (UDATA)seg->heapTop;
+
+		/* The JIT code cache grows from both ends of the segment: the warmAlloc pointer upwards from the start of the segment
+		 * and the coldAlloc pointer downwards from the end of the segment. The free space in a JIT code cache segment is the
+		 * space between the warmAlloc and coldAlloc pointers. See compiler/runtime/OMRCodeCache.hpp, the contract with the JVM is
+		 * that the address of the TR::CodeCache structure is stored at the beginning of the segment.
+		 */
+#ifdef J9VM_INTERP_NATIVE_SUPPORT
+		UDATA *mccCodeCache = *((UDATA**)seg->heapBase);
+		if (mccCodeCache) {
+			J9JITConfig* jitConfig = javaVM->jitConfig;
+			if (jitConfig) {
+				warmAlloc = (UDATA)jitConfig->codeCacheWarmAlloc(mccCodeCache);
+				coldAlloc = (UDATA)jitConfig->codeCacheColdAlloc(mccCodeCache);
+			}
+		}
+#endif
+		used += seg->size - (coldAlloc - warmAlloc);
+	} else {
 		used += seg->heapAlloc - seg->heapBase;
-		committed += seg->size;
+	}
+	committed += seg->size;
 	END_MEMORY_SEGMENT_LIST_DO(seg)
 
 	omrthread_monitor_exit(segList->segmentMutex);
@@ -502,6 +533,12 @@ getIndexFromPoolID(J9JavaLangManagementData *mgmt, UDATA id)
 		}
 	}
 	return idx;
+}
+
+static UDATA
+getNonHeapIndexFromPoolID(UDATA id)
+{
+	return (id - J9VM_MANAGEMENT_POOL_NONHEAP_SEG);
 }
 
 static J9MemorySegmentList *
