@@ -35,6 +35,8 @@ using ResolvedMirrorMethodsPersistIP_t = Vector<TR_ResolvedJ9Method *>;
 using ClassOfStatic_t = UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_OpaqueClassBlock *>;
 using FieldOrStaticAttrTable_t = UnorderedMap<std::pair<TR_OpaqueClassBlock *, int32_t>, TR_J9MethodFieldAttributes>;
 
+void outOfProcessCompilationEnd(TR_MethodToBeCompiled *entry, TR::Compilation *comp);
+
 namespace TR
 {
 // Objects of this type are instantiated at JITServer
@@ -43,11 +45,15 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    public:
    friend class TR::CompilationInfo;
    CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread);
+
+   virtual void processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider) override;
    TR_PersistentMethodInfo *getRecompilationMethodInfo() const { return _recompilationMethodInfo; }
 
-   uint32_t getSeqNo() const { return _seqNo; }; // for ordering requests at the server
+   uint32_t getSeqNo() const { return _seqNo; }; // For ordering requests at the server
    void setSeqNo(uint32_t seqNo) { _seqNo = seqNo; }
+   void updateSeqNo(ClientSessionData *clientSession);
 
+   void waitForMyTurn(ClientSessionData *clientSession, TR_MethodToBeCompiled &entry); // Return false if timeout
    bool getWaitToBeNotified() const { return _waitToBeNotified; }
    void setWaitToBeNotified(bool b) { _waitToBeNotified = b; }
 
@@ -70,6 +76,9 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    void cacheIsUnresolvedStr(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, const TR_IsUnresolvedString &stringAttrs);
    bool getCachedIsUnresolvedStr(TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_IsUnresolvedString &stringAttrs);
 
+   void clearPerCompilationCaches();
+   void deleteClientSessionData(uint64_t clientId, TR::CompilationInfo* compInfo, J9VMThread* compThread);
+
    private:
    /* Template method for allocating a cache of type T on the heap.
     * Cache pointer must be NULL.
@@ -83,6 +92,7 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
       cache = new (trMemory->trHeapMemory()) T(typename T::allocator_type(trMemory->heapMemoryRegion()));
       return cache != NULL;
       }
+
    /* Template method for storing key-value pairs (of types K and V respectively)
     * to a heap-allocated unordered map.
     * If a map is NULL, will allocate it.
