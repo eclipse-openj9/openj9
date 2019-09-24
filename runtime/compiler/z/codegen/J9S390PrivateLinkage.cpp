@@ -1540,10 +1540,11 @@ TR::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
             }
             break;
          default:
+            // For remote compilations we always need to regenerate the thunk inside the code cache for this compilation.
             if (fej9->needsInvokeExactJ2IThunk(callNode, comp()))
                {
-               comp()->getPersistentInfo()->getInvokeExactJ2IThunkTable()->addThunk(
-                  TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(callNode, sizeOfArguments, methodSymbol->getMethod()->signatureChars(), cg()), fej9);
+               TR_J2IThunk *thunk = TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(callNode, sizeOfArguments, methodSymbol->getMethod()->signatureChars(), cg());
+               fej9->setInvokeExactJ2IThunk(thunk, comp());
                }
             break;
          }
