@@ -264,7 +264,6 @@ class ClientSessionData
       PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> _J9MethodNameCache; // key is a cpIndex
       }; // struct ClassInfo
 
-
    /**
       @class J9MethodInfo
       @brief Struct that holds relevant data for a j9method
