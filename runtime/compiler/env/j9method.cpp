@@ -1126,11 +1126,10 @@ static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *rm, TR::Compilation
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM)) && !defined(SMALL)
    if (TR::Options::sharedClassCache())
       {
-      TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
       J9ROMClass *romClass = m->romClassPtr();
       J9ROMMethod *romMethod = m->romMethod();
 
-      if (!comp->fej9()->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass))
+      if (!comp->fej9()->sharedCache()->isPointerInSharedCache(romClass))
          {
 #if defined(J9ZOS390)
           // Do not change the counts on zos at the moment since the shared cache capacity is higher on this platform
@@ -1207,20 +1206,18 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
       }
 
    TR::RecognizedMethod rm = getRecognizedMethod();
-   if ((rm == TR::java_math_BigDecimal_noLLOverflowMul || rm == TR::java_math_BigDecimal_noLLOverflowAdd) )
+   switch (rm)
       {
+      case TR::java_math_BigDecimal_noLLOverflowMul:
+      case TR::java_math_BigDecimal_noLLOverflowAdd:
+      case TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble:
+      case TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat:
+      case TR::java_lang_invoke_MethodHandle_invokeExact:
       return false;
       }
 
-   if (true)
-      {
-      // these methods are never interpreted, so don't bother
-      //
-      TR::RecognizedMethod rm = comp->getCurrentMethod()->getRecognizedMethod();
-      if (rm == TR::com_ibm_jit_DecimalFormatHelper_formatAsDouble ||
-          rm == TR::com_ibm_jit_DecimalFormatHelper_formatAsFloat)
-         return false;
-      }
+   if (convertToMethod()->isArchetypeSpecimen())
+      return false;
 
    intptrj_t count = getInvocationCount();
 
@@ -2385,8 +2382,8 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
    }
 
 #if defined(JITSERVER_SUPPORT)
-// protected constructor to be used by JITServer
-// had to reorder arguments to prevent ambiguity with above constructor
+// Protected constructor to be used by JITServer
+// Had to reorder arguments to prevent ambiguity with above constructor
 TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * owner)
    : TR_J9Method(), TR_ResolvedJ9MethodBase(fe, owner), _pendingPushSlots(-1)
    {
@@ -2408,11 +2405,11 @@ void TR_ResolvedJ9Method::construct()
 
    static X ArrayListMethods[] =
       {
-      {x(TR::java_util_ArrayList_add,  "add",    "(Ljava/lang/Object;)Z")},
+      {x(TR::java_util_ArrayList_add,      "add",     "(Ljava/lang/Object;)Z")},
       {x(TR::java_util_ArrayList_ensureCapacity,      "ensureCapacity",      "(I)V")},
-      {x(TR::java_util_ArrayList_get,      "get",      "(I)Ljava/lang/Object;")},
-      {x(TR::java_util_ArrayList_remove, "remove", "(I)Ljava/lang/Object;")},
-      {x(TR::java_util_ArrayList_set,    "set", "(ILjava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::java_util_ArrayList_get,      "get",     "(I)Ljava/lang/Object;")},
+      {x(TR::java_util_ArrayList_remove,   "remove",  "(I)Ljava/lang/Object;")},
+      {x(TR::java_util_ArrayList_set,      "set",     "(ILjava/lang/Object;)Ljava/lang/Object;")},
       {  TR::unknownMethod}
       };
 
@@ -3880,6 +3877,7 @@ void TR_ResolvedJ9Method::construct()
       {  TR::java_lang_invoke_MethodHandle_invoke                   ,   13, "invokeGeneric",              (int16_t)-1, "*"}, // Older name from early versions of the jsr292 spec
       {  TR::java_lang_invoke_MethodHandle_invokeExact              ,   11, "invokeExact",                (int16_t)-1, "*"},
       {  TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress ,   24, "invokeExactTargetAddress",   (int16_t)-1, "*"},
+      {x(TR::java_lang_invoke_MethodHandle_type                     ,   "type",                       "()Ljava/lang/invoke/MethodType;")},
       {x(TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper,   "invokeWithArgumentsHelper",  "(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;")},
       {x(TR::java_lang_invoke_MethodHandle_asType, "asType", "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")},
       {x(TR::java_lang_invoke_MethodHandle_asType_instance, "asType", "(Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")},
@@ -3965,7 +3963,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_invoke_CollectHandle_allocateArray,                 "allocateArray",               "(Ljava/lang/invoke/CollectHandle;)Ljava/lang/Object;")},
       {x(TR::java_lang_invoke_CollectHandle_numArgsToPassThrough,          "numArgsToPassThrough",        "()I")},
       {x(TR::java_lang_invoke_CollectHandle_numArgsToCollect,              "numArgsToCollect",            "()I")},
-      {x(TR::java_lang_invoke_CollectHandle_collectionStart,     	       "collectionStart",             "()I")},
+      {x(TR::java_lang_invoke_CollectHandle_collectionStart,               "collectionStart",             "()I")},
       {x(TR::java_lang_invoke_CollectHandle_numArgsAfterCollectArray,      "numArgsAfterCollectArray",    "()I")},
       {  TR::java_lang_invoke_CollectHandle_invokeExact,          28,  "invokeExact_thunkArchetype_X",    (int16_t)-1, "*"},
       {  TR::unknownMethod}
@@ -4087,6 +4085,12 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+    static X ConvertHandleFilterHelpersMethods[] =
+      {
+      {x(TR::java_lang_invoke_ConvertHandleFilterHelpers_object2J,          "object2J",    "(Ljava/lang/Object;)J")},
+      {x(TR::java_lang_invoke_ConvertHandleFilterHelpers_number2J,          "number2J",    "(Ljava/lang/Number;)J")},
+      };
+
    static X CatchHandleMethods[] =
       {
       {x(TR::java_lang_invoke_CatchHandle_numCatchTargetArgsToPassThrough,       "numCatchTargetArgsToPassThrough",  "()I")},
@@ -4133,119 +4137,6 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
-
-   static X SIMDMethods [] =
-      {
-      // ---- Integer Type Operations
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAddInt,           "vectorAddInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSubInt,           "vectorSubInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMulInt,           "vectorMulInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorDivInt,           "vectorDivInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorRemInt,           "vectorRemInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorNegInt,           "vectorNegInt",    "([II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsInt,        "vectorSplatsInt", "([III)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMinInt,           "vectorMinInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMaxInt,           "vectorMaxInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreInt,         "vectorCopyInt",   "([II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreInt,         "vectorStoreInt",   "([II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpEqInt,         "vectorCmpEqInt",   "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpGeInt,         "vectorCmpGeInt",   "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpGtInt,         "vectorCmpGtInt",   "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpLeInt,         "vectorCmpLeInt",   "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpLtInt,         "vectorCmpLtInt",   "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllEqInt,      "vectorCmpAllEqInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllGeInt,      "vectorCmpAllGeInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllGtInt,      "vectorCmpAllGtInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllLeInt,      "vectorCmpAllLeInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllLtInt,      "vectorCmpAllLtInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyEqInt,      "vectorCmpAnyEqInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyGeInt,      "vectorCmpAnyGeInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyGtInt,      "vectorCmpAnyGtInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyLeInt,      "vectorCmpAnyLeInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyLtInt,      "vectorCmpAnyLtInt",   "([II[II)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAndInt,           "vectorAndInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorOrInt,           "vectorOrInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorXorInt,           "vectorXorInt",    "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorNotInt,           "vectorNotInt",    "([II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorGetElementInt,    "vectorGetElementInt", "([II)I")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSetElementInt,    "vectorSetElementInt", "([III)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMergeHighInt,     "vectorMergeHighInt", "([II[II[II)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMergeLowInt,      "vectorMergeLowInt",  "([II[II[II)V")},
-
-      // ---- Long Type Operations
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAddLong,           "vectorAddLong",    "([JI[JI[JI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSubLong,           "vectorSubLong",    "([JI[JI[JI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMulLong,           "vectorMulLong",    "([JI[JI[JI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorDivLong,           "vectorDivLong",    "([JI[JI[JI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorRemLong,           "vectorRemLong",    "([JI[JI[JI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorNegLong,           "vectorNegLong",    "([JI[JI)V")},
-
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreByte,         "vectorStoreByte",   "([BI[BI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreChar,         "vectorStoreChar",   "([CI[CI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreShort,        "vectorStoreShort",  "([SI[SI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreLong,         "vectorStoreLong",   "([JI[JI)V")},
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsByte,        "vectorSplatsByte",  "([BIB)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsChar,        "vectorSplatsChar",  "([CIC)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsShort,       "vectorSplatsShort", "([SIS)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsLong,        "vectorSplatsLong",  "([JIJ)V")},
-
-      // ---- Float Type Operations
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAddFloat,           "vectorAddFloat",    "([FI[FI[FI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSubFloat,           "vectorSubFloat",    "([FI[FI[FI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMulFloat,           "vectorMulFloat",    "([FI[FI[FI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorDivFloat,           "vectorDivFloat",    "([FI[FI[FI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorNegFloat,           "vectorNegFloat",    "([FI[FI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsFloat,        "vectorSplatsFloat", "([FIF)V")},
-
-      // ---- Double Type Operations
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAddDouble,           "vectorAddDouble",    "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMinDouble,           "vectorMinDouble",    "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMaxDouble,           "vectorMaxDouble",    "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAddress,             "vectorAddress", "([D)J")},
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorAddReduceDouble,     "vectorAddReduceDouble", "([DI)D")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpEqDouble,         "vectorCmpEqDouble",   "([JI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpGeDouble,         "vectorCmpGeDouble",   "([JI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpGtDouble,         "vectorCmpGtDouble",   "([JI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpLeDouble,         "vectorCmpLeDouble",   "([JI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpLtDouble,         "vectorCmpLtDouble",   "([JI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllEqDouble,      "vectorCmpAllEqDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllGeDouble,      "vectorCmpAllGeDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllGtDouble,      "vectorCmpAllGtDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllLeDouble,      "vectorCmpAllLeDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAllLtDouble,      "vectorCmpAllLtDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyEqDouble,      "vectorCmpAnyEqDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyGeDouble,      "vectorCmpAnyGeDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyGtDouble,      "vectorCmpAnyGtDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyLeDouble,      "vectorCmpAnyLeDouble",   "([DI[DI)Z")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorCmpAnyLtDouble,      "vectorCmpAnyLtDouble",   "([DI[DI)Z")},
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorDivDouble,           "vectorDivDouble",    "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorGetElementDouble,    "vectorGetElementDouble", "([DI)D")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSetElementDouble,    "vectorSetElementDouble", "([DID)V")},
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorLoadWithStrideDouble, "vectorLoadWithStrideDouble", "([DI[DII)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorLogDouble,            "vectorLogDouble",             "([DI[DI)V")},
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMaddDouble,          "vectorMaddDouble",      "([DI[DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMergeHighDouble,     "vectorMergeHighDouble", "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMergeLowDouble,      "vectorMergeLowDouble",  "([DI[DI[DI)V")},
-
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMulDouble,           "vectorMulDouble",    "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorNegDouble,           "vectorNegDouble",    "([DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorNmsubDouble,         "vectorNmsubDouble",   "([DI[DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorMsubDouble,          "vectorMsubDouble",   "([DI[DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSelDouble,           "vectorSelDouble",   "([DI[DI[DI[JI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSplatsDouble,        "vectorSplatsDouble", "([DID)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreDouble,         "vectorStoreDouble",  "([DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorStoreDouble,         "vectorCopyDouble",   "([DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSubDouble,           "vectorSubDouble",    "([DI[DI[DI)V")},
-      // {x(TR::com_ibm_dataaccess_SIMD_vectorRemDouble,           "vectorRemDouble",    "([DI[DI[DI)V")},
-      {x(TR::com_ibm_dataaccess_SIMD_vectorSqrtDouble,           "vectorSqrtDouble",    "([DI[DI)V")},
-      {  TR::unknownMethod}
-      };
 
 #if defined(ENABLE_SPMD_SIMD)
    static X SPMDKernelBaseMethods [] =
@@ -4392,7 +4283,6 @@ void TR_ResolvedJ9Method::construct()
       { "java/lang/reflect/Array", ArrayMethods},
       { "java/nio/HeapByteBuffer", HeapByteBufferMethods},
       { "sun/nio/ch/NativeThread", NativeThreadMethods},
-      { "com/ibm/dataaccess/SIMD", SIMDMethods },
       { 0 }
       };
 
@@ -4562,6 +4452,12 @@ void TR_ResolvedJ9Method::construct()
       { 0 }
       };
 
+   static Y class44[] =
+      {
+      { "java/lang/invoke/ConvertHandle$FilterHelpers", ConvertHandleFilterHelpersMethods },
+      { 0 }
+      };
+
    static Y class45[] =
       {
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
@@ -4608,7 +4504,7 @@ void TR_ResolvedJ9Method::construct()
       0, 0, 0, class13, class14, class15, class16, class17, class18, class19,
       class20, class21, class22, class23, class24, class25, 0, class27, class28, class29,
       class30, class31, class32, class33, class34, class35, class36, 0, class38, class39,
-      class40, class41, class42, class43, 0, class45, class46, 0, class48, 0,
+      class40, class41, class42, class43, class44, class45, class46, 0, class48, 0,
       class50, 0, 0, class53, 0, class55
       };
 
@@ -6540,10 +6436,11 @@ TR_ResolvedJ9Method::getResolvedImproperInterfaceMethod(TR::Compilation * comp, 
    return 0;
 #else
    J9Method *j9method = NULL;
+   UDATA vtableOffset = 0;
    if ((_fe->_jitConfig->runtimeFlags & J9JIT_RUNTIME_RESOLVE) == 0)
       {
       TR::VMAccessCriticalSection getResolvedPrivateInterfaceMethodOffset(fej9());
-      j9method = jitGetImproperInterfaceMethodFromCP(_fe->vmThread(), cp(), cpIndex);
+      j9method = jitGetImproperInterfaceMethodFromCP(_fe->vmThread(), cp(), cpIndex, &vtableOffset);
       }
 
    if (comp->getOption(TR_UseSymbolValidationManager) && j9method)
@@ -6555,7 +6452,7 @@ TR_ResolvedJ9Method::getResolvedImproperInterfaceMethod(TR::Compilation * comp, 
    if (j9method == NULL)
       return NULL;
    else
-      return createResolvedMethodFromJ9Method(comp, cpIndex, 0, j9method, NULL, NULL);
+      return createResolvedMethodFromJ9Method(comp, cpIndex, (uint32_t)vtableOffset, j9method, NULL, NULL);
 #endif
    }
 
@@ -8606,12 +8503,12 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          int32_t numNextArguments;
          int32_t spreadStart;
 
-         bool getSpreadPos = symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_SpreadHandle_spreadStart ||
-               symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_SpreadHandle_numArgsAfterSpreadArray;
 #if defined(JITSERVER_SUPPORT) 
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
+            bool getSpreadPos = symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_SpreadHandle_spreadStart ||
+               symRef->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod() == TR::java_lang_invoke_SpreadHandle_numArgsAfterSpreadArray;
             stream->write(JITServer::MessageType::runFEMacro_invokeSpreadHandle, thunkDetails->getHandleRef(), getSpreadPos);
             auto recv = stream->read<int32_t, int32_t, int32_t>();
             numArguments = std::get<0>(recv);
