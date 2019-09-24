@@ -3382,7 +3382,7 @@ public class MethodHandles {
 
 		boolean noValuesToInsert = values.length == 0;  // expected NPE.  Must be null checked before location is checked.
 
-		if ((location < 0) || (location >= originalType.parameterCount())) {
+		if ((location < 0) || (location > (originalType.parameterCount() - values.length))) {
 			throw new IllegalArgumentException();
 		}
 
