@@ -1414,6 +1414,7 @@ static void printClass(TR_OpaqueClassBlock *clazz)
       }
    }
 
+#if defined(JITSERVER_SUPPORT)
 std::string
 TR::SymbolValidationManager::serializeSymbolToIDMap()
    {
@@ -1435,7 +1436,7 @@ void
 TR::SymbolValidationManager::deserializeSymbolToIDMap(const std::string &symbolToIdStr)
    {
    _symbolToIdMap.clear();
-   
+
    int32_t entrySize = sizeof(SymbolToIdMap::key_type) + sizeof(SymbolToIdMap::mapped_type);
    int32_t numEntries = symbolToIdStr.length() / entrySize;
    for (int32_t idx = 0; idx < numEntries; idx++)
@@ -1446,6 +1447,7 @@ TR::SymbolValidationManager::deserializeSymbolToIDMap(const std::string &symbolT
       _symbolToIdMap.insert(std::make_pair(symbol, id));
       }
    }
+#endif /* defined(JITSERVER_SUPPORT) */
 
 namespace // file-local
    {
