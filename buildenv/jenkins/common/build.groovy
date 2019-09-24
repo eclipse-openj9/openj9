@@ -21,6 +21,8 @@
  *******************************************************************************/
 import groovy.json.JsonSlurper;
 
+pipelineFunctions = load 'buildenv/jenkins/common/pipeline-functions.groovy'
+
 def get_source() {
     stage('Get Source') {
         // Setup REPO variables
@@ -356,16 +358,10 @@ def upload_artifactory(uploadSpec) {
     buildInfo.env.capture = true
 
     //Retry uploading to Artifactory if errors occur
-    def ret = false
-    retry (3) {
-        if (ret) {
-            sleep time: 300, unit: 'SECONDS'
-        } else {
-            ret = true
-        }
-        server.upload spec: uploadSpec, buildInfo: buildInfo
-        server.publishBuildInfo buildInfo
-    }
+    pipelineFunctions.retry_and_delay({
+        server.upload spec: uploadSpec, buildInfo: buildInfo; 
+        server.publishBuildInfo buildInfo}, 
+        3, 300)
 
     // Write URL to env so that we can pull it from the upstream pipeline job
     env.ARTIFACTORY_URL = server.getUrl()
