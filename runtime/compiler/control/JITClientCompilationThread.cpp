@@ -1481,6 +1481,25 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, std::string(data, len));
          }
          break;
+      case MessageType::ClassInfo_getRemoteROMString:
+         {
+         auto recv = client->getRecvData<J9ROMClass *, size_t, std::string>();
+         J9ROMClass *romClass = std::get<0>(recv);
+         size_t offsetFromROMClass = std::get<1>(recv);
+         std::string offsetsStr = std::get<2>(recv);
+         size_t numOffsets = offsetsStr.size() / sizeof(size_t);
+         size_t *offsets = (size_t*) &offsetsStr[0];
+         uint8_t *ptr = (uint8_t*) romClass + offsetFromROMClass;
+         for (size_t i = 0; i < numOffsets; i++)
+            {
+            size_t offset = offsets[i];
+            ptr = ptr + offset + *(J9SRP*)(ptr + offset);
+            }
+         int32_t len;
+         char * data = utf8Data((J9UTF8*) ptr, len);
+         client->write(response, std::string(data, len));
+         }
+         break;
       case MessageType::ResolvedMethod_fieldOrStaticName:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
