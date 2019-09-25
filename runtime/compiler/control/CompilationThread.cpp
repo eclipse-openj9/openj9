@@ -6803,6 +6803,7 @@ const void*
 findAotBodyInSCC(J9VMThread *vmThread, const J9ROMMethod *romMethod)
    {
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+   TR_ASSERT(!TR::CompilationInfo::getStream(), "This function should not be called at the server because SCC does not exist at the server.");
    UDATA flags = 0;
    const void *aotCachedMethod = vmThread->javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);
    if (!(flags & J9SHR_AOT_METHOD_FLAG_INVALIDATED))
@@ -7790,7 +7791,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
       TR_FilterBST *filterInfo = NULL;
       // JITServer: methodCanBeCompiled check should have been done on the client, skip it on the server.
-      if (!details.isRemoteMethod() && !that->methodCanBeCompiled(p->trMemory(), vm, compilee, filterInfo))
+      if (!TR::CompilationInfo::getStream() && !that->methodCanBeCompiled(p->trMemory(), vm, compilee, filterInfo))
          {
          that->_methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
 
@@ -8318,9 +8319,13 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             {
             uint64_t proposedScratchMemoryLimit = (uint64_t)TR::Options::getScratchSpaceLimit();
 
-            bool isJSR292 = TR::CompilationInfo::isJSR292(details.getRomMethod());
+#if defined(JITSERVER_SUPPORT)
+            bool isJSR292 = TR::CompilationInfo::getStream() ? false : TR::CompilationInfo::isJSR292(details.getRomMethod());
+#else
+            bool isJSR292 = TR::CompilationInfo::isJSR292(details.getMethod());
+#endif /* defined(JITSERVER_SUPPORT) */
 
-            // Check if the the method to be compiled is a JSR292 method
+            // Check if the method to be compiled is a JSR292 method
             if (isJSR292)
                {
                /* Set options */
@@ -9956,7 +9961,8 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
                codeStart = (U_8 *)aotMethodHeaderEntry->compileMethodCodeStartPC;
                codeSize  = aotMethodHeaderEntry->compileMethodCodeSize;
 
-               aotMethodHeaderEntry->compileFirstClassLocation = (UDATA)jitConfig->javaVM->sharedClassConfig->cacheDescriptorList->romclassStartAddress;
+               aotMethodHeaderEntry->unused = TR::Compiler->host.is64Bit() ? 0xDEADC0DEDEADC0DEULL : 0xDEADC0DE;
+
                J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 
                TR::CompilationInfo::storeAOTInSharedCache(

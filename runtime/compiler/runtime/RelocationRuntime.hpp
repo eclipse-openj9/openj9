@@ -114,7 +114,6 @@ typedef struct TR_AOTRuntimeInfo {
     struct J9MemorySegment* codeCache;
     struct J9MemorySegment* dataCache;
     void* baseJxeAddress;
-    uintptr_t compileFirstClassLocation;
     uintptr_t *fe;
 } TR_AOTRuntimeInfo;
 
@@ -156,7 +155,6 @@ class TR_RelocationRuntime {
       UDATA dataCacheDelta()                                      { return _dataCacheDelta; }
       UDATA classReloAmount()                                     { return _classReloAmount; }
       U_8 *baseAddress()                                          { return _baseAddress; }
-      uintptr_t compileFirstClassLocation()                       { return _compileFirstClassLocation; }
 
       UDATA reloStartTime()                                       { return _reloStartTime; }
       void setReloStartTime(UDATA time)                           { _reloStartTime = time; }
@@ -309,7 +307,6 @@ class TR_RelocationRuntime {
 
       // inlined TR_AOTRuntimeInfo
       struct TR_AOTHeader* _aotHeader;
-      uintptr_t _compileFirstClassLocation;
       U_8 * _baseAddress;
       UDATA _classReloAmount;
 

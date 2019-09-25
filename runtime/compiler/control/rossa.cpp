@@ -207,11 +207,13 @@ char *compilationErrorNames[]={
    "compilationSymbolValidationManagerFailure", //50
    "compilationAOTNoSupportForAOTFailure", //51
    "compilationAOTValidateTMFailure", //52
+#if defined(JITSERVER_SUPPORT)
    "compilationStreamFailure", //53
    "compilationStreamLostMessage", // 54
    "compilationStreamMessageTypeMismatch", // 55
    "compilationStreamVersionIncompatible", // 56
    "compilationStreamInterrupted", // 57
+#endif /* defined(JITSERVER_SUPPORT) */
    "compilationMaxError"
 };
 
