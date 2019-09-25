@@ -43,8 +43,13 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    public:
    friend class TR::CompilationInfo;
    CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread);
+   TR_PersistentMethodInfo *getRecompilationMethodInfo() const { return _recompilationMethodInfo; }
+
    uint32_t getSeqNo() const { return _seqNo; }; // for ordering requests at the server
    void setSeqNo(uint32_t seqNo) { _seqNo = seqNo; }
+
+   bool getWaitToBeNotified() const { return _waitToBeNotified; }
+   void setWaitToBeNotified(bool b) { _waitToBeNotified = b; }
 
    bool cacheIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, TR_IPBytecodeHashTableEntry *entry);
    TR_IPBytecodeHashTableEntry *getCachedIProfilerInfo(TR_OpaqueMethodBlock *method, uint32_t byteCodeIndex, bool *methodInfoPresent);
@@ -119,6 +124,7 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
       // memory will be released automatically at the end of the compilation
       cache = NULL;
       }
+
    TR_PersistentMethodInfo *_recompilationMethodInfo;
    uint32_t _seqNo;
    bool _waitToBeNotified; // accessed with clientSession->_sequencingMonitor in hand

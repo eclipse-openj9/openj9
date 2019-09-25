@@ -95,7 +95,7 @@ public:
    StreamMessageTypeMismatch() : _message("JITServer/JITClient message type mismatch detected") { }
    StreamMessageTypeMismatch(MessageType serverType, MessageType clientType)
       {
-      _message = "JITServer expected mesasge type " + std::to_string(serverType) + " received " + std::to_string(clientType);
+      _message = "JITServer expected message type " + std::to_string(serverType) + " received " + std::to_string(clientType);
       }
    virtual const char* what() const throw() 
       {

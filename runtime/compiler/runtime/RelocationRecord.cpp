@@ -55,6 +55,11 @@
 #include  "runtime/SymbolValidationManager.hpp"
 #include "env/VMJ9.h"
 #include "control/rossa.h"
+#if defined(JITSERVER_SUPPORT)
+#include "control/CompilationRuntime.hpp"
+#include "control/CompilationThread.hpp"
+#include "control/MethodToBeCompiled.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
 
 // TODO: move this someplace common for RuntimeAssumptions.cpp and here
 #if defined(__IBMCPP__) && !defined(AIXPPC) && !defined(LINUXPPC)
@@ -1748,7 +1753,11 @@ TR_RelocationRecordBodyInfo::applyRelocation(TR_RelocationRuntime *reloRuntime, 
    {
    J9JITExceptionTable *exceptionTable = reloRuntime->exceptionTable();
    reloTarget->storeAddress((uint8_t *) exceptionTable->bodyInfo, reloLocation);
-   fixPersistentMethodInfo((void *)exceptionTable);
+#if defined(JITSERVER_SUPPORT)
+   fixPersistentMethodInfo((void *)exceptionTable, !reloRuntime->fej9()->_compInfoPT->getMethodBeingCompiled()->isAotLoad());
+#else
+   fixPersistentMethodInfo((void *)exceptionTable, false);
+#endif /* defined(JITSERVER_SUPPORT) */
    return 0;
    }
 
