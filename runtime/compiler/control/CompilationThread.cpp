@@ -7809,8 +7809,14 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             {
             uint64_t proposedScratchMemoryLimit = (uint64_t)TR::Options::getScratchSpaceLimit();
 
-            // Check if the the method to be compiled is a JSR292 method
-            if (TR::CompilationInfo::isJSR292(details.getMethod()))
+#if defined(JITSERVER_SUPPORT)
+            bool isJSR292 = TR::CompilationInfo::getStream() ? false : TR::CompilationInfo::isJSR292(details.getRomMethod());
+#else
+            bool isJSR292 = TR::CompilationInfo::isJSR292(details.getMethod());
+#endif /* defined(JITSERVER_SUPPORT) */
+
+            // Check if the method to be compiled is a JSR292 method
+            if (isJSR292)
                {
                /* Set options */
                compiler->getOptions()->setOption(TR_Server);

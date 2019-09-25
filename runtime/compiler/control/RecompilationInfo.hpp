@@ -87,6 +87,7 @@ class TR_PersistentMethodInfo
    public:
    TR_PERSISTENT_ALLOC(TR_Memory::PersistentMethodInfo);
 
+   TR_PersistentMethodInfo() {}
    TR_PersistentMethodInfo(TR::Compilation *);
    TR_PersistentMethodInfo(TR_OpaqueMethodBlock *);
 
@@ -324,7 +325,7 @@ class TR_PersistentJittedBodyInfo
    friend class TR_DebugExt;
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
-   friend void fixPersistentMethodInfo(void *table);
+   friend void fixPersistentMethodInfo(void *table, bool isJITClientAOTLoad);
 #endif
 
    public:
@@ -339,6 +340,8 @@ class TR_PersistentJittedBodyInfo
    bool getIsProfilingBody()        { return _flags.testAny(IsProfilingBody); }
    bool getIsAotedBody()            { return _flags.testAny(IsAotedBody); }
    void setIsAotedBody(bool b)      { _flags.set(IsAotedBody, b); }
+   bool getIsRemoteCompileBody()    { return _flags.testAny(IsRemoteCompileBody); }
+   void setIsRemoteCompileBody(bool b){ _flags.set(IsRemoteCompileBody, b); }
    bool getSamplingRecomp()         { return _flags.testAny(SamplingRecomp); }
    void setSamplingRecomp()         { _flags.set(SamplingRecomp, true); }
    bool getIsPushedForRecompilation(){ return _flags.testAny(IsPushedForRecompilation); }
@@ -363,7 +366,7 @@ class TR_PersistentJittedBodyInfo
 
    bool getUsesJProfiling() { return _flags.testAny(UsesJProfiling); }
    void setUsesJProfiling() { _flags.set(UsesJProfiling, true); }
- 
+
    // used in dump recompilations
    void *getStartPCAfterPreviousCompile() { return _startPCAfterPreviousCompile; }
    void setStartPCAfterPreviousCompile(void *oldStartPC) { _startPCAfterPreviousCompile = oldStartPC; }
@@ -413,8 +416,8 @@ class TR_PersistentJittedBodyInfo
       UsesPreexistence        = 0x0004,
       DisableSampling         = 0x0008, // This flag disables sampling of this method even though its recompilable
       IsProfilingBody         = 0x0010,
-      IsAotedBody             = 0x0020,
-      //IsForcedCompilation     = 0x0040, To be reused
+      IsAotedBody             = 0x0020, // } Mutually
+      IsRemoteCompileBody     = 0x0040, // } exclusive
       SamplingRecomp          = 0x0080, // Set when recomp decision is taken due to sampling; used to
                                         // prevent further sampling once a decision is taken
       IsPushedForRecompilation= 0x0100,  // Set when the counter of this method is abruptly decremented to 1

@@ -125,6 +125,8 @@ public:
 
    static bool isAlreadyPreparedForRecompile(void *startPC);
 
+   virtual TR_PersistentMethodInfo *getExistingMethodInfo(TR_ResolvedMethod *method);
+
    static int32_t globalSampleCount;
    static int32_t hwpGlobalSampleCount;
    static int32_t jitGlobalSampleCount;
@@ -132,12 +134,9 @@ public:
 
 #if defined(JITSERVER_SUPPORT)
    static TR_PersistentJittedBodyInfo * persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory * trMemory);
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
 protected:
-
-   virtual TR_PersistentMethodInfo *getExistingMethodInfo(TR_ResolvedMethod *method);
-
    static int32_t limitMethodsCompiled;
    static int32_t hotThresholdMethodsCompiled;
    static int32_t scorchingThresholdMethodsCompiled;
