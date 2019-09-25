@@ -20,15 +20,16 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "net/ServerStream.hpp"
 #include "j9methodServer.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
-#include "control/MethodToBeCompiled.hpp"
 #include "control/JITServerCompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
+#include "control/MethodToBeCompiled.hpp"
+#include "env/VMJ9Server.hpp"
 #include "exceptions/DataCacheError.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
+#include "net/ServerStream.hpp"
 
 ClientSessionData::ClassInfo &
 getJ9ClassInfo(TR::CompilationInfoPerThread *threadCompInfo, J9Class *clazz)
@@ -2558,7 +2559,6 @@ TR_J9ServerMethod::TR_J9ServerMethod(TR_FrontEnd * fe, TR_Memory * trMemory, J9C
    : TR_J9Method()
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-
    TR_J9ServerVM *fej9 = (TR_J9ServerVM *) fe;
    TR::CompilationInfoPerThread *compInfoPT = fej9->_compInfoPT;
    std::string classNameStr;

@@ -886,7 +886,9 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _compInfo(compInfo),
    _jitConfig(jitConfig),
    _sharedCacheReloRuntime(jitConfig),
+#if defined(JITSERVER_SUPPORT)
    _remoteCompileReloRuntime(jitConfig),
+#endif /* defined(JITSERVER_SUPPORT) */
    _compThreadId(id),
    _onSeparateThread(onSeparateThread),
    _vm(NULL),
@@ -1501,20 +1503,11 @@ TR::CompilationInfo::disableAOTCompilations()
 
 #if defined(JITSERVER_SUPPORT)
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-
 // Note: this method must be called only when we know that AOT mode for shared classes is enabled !!
 bool TR::CompilationInfo::isRomClassForMethodInSharedCache(J9Method *method)
    {
    J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
    return _sharedCacheReloRuntime.isRomClassForMethodInSharedCache(method) ? true : false;
-   }
-
-TR_YesNoMaybe TR::CompilationInfo::isMethodInSharedCache(J9Method *method)
-   {
-   if (isRomClassForMethodInSharedCache(method))
-      return TR_maybe;
-   else
-      return TR_no;
    }
 #endif
 #endif /* defined(JITSERVER_SUPPORT) */
@@ -6905,7 +6898,6 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
  */
 void
 TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
-                                                      J9JavaVM *javaVM,
                                                       TR_MethodToBeCompiled *entry,
                                                       J9Method *method,
                                                       const void **aotCachedMethod,
@@ -7588,7 +7580,7 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
       TR::Region dispatchRegion(regionSegmentProvider, rawAllocator);
       TR_Memory trMemory(*_compInfo.persistentMemory(), dispatchRegion);
 
-      preCompilationTasks(vmThread, javaVM, entry,
+      preCompilationTasks(vmThread, entry,
                           method, &aotCachedMethod, trMemory,
                           canDoRelocatableCompile, eligibleForRelocatableCompile, 
                           reloRuntime);
