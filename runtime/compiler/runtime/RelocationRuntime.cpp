@@ -73,6 +73,9 @@
 #include "codegen/CodeGenerator.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/CompilationRuntime.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "control/CompilationThread.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
 
 TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
    {
@@ -161,7 +164,8 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
                                                     bool shouldUseCompiledCopy,
                                                     TR::Options *options,
                                                     TR::Compilation *comp,
-                                                    TR_ResolvedMethod *resolvedMethod)
+                                                    TR_ResolvedMethod *resolvedMethod,
+                                                    uint8_t *existingCode)
    {
    _currentThread = vmThread;
    _fe = theFE;
@@ -190,7 +194,7 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
    uint8_t *oldDataStart, *oldCodeStart, *newCodeStart;
    tempDataStart = (uint8_t *)cacheEntry;
 
-   //Check method header is valid
+   // Check method header is valid
    _aotMethodHeaderEntry = (TR_AOTMethodHeader *)(cacheEntry + 1); // skip the header J9JITDataCacheHeader
    if (!aotMethodHeaderVersionsMatch())
       return NULL;
@@ -271,7 +275,15 @@ TR_RelocationRuntime::prepareRelocateAOTCodeAndData(J9VMThread* vmThread,
       else
          {
          _newExceptionTableStart = allocateSpaceInDataCache(_exceptionTableCacheEntry->size, _exceptionTableCacheEntry->type);
-         tempCodeStart = tempDataStart + dataSize;
+         if (existingCode)
+            {
+            tempCodeStart = existingCode;
+            }
+         else
+            {
+            tempCodeStart = tempDataStart + dataSize;
+            }
+
          if (_newExceptionTableStart)
             {
             TR_DataCacheManager::copyDataCacheAllocation(reinterpret_cast<J9JITDataCacheHeader *>(_newExceptionTableStart), _exceptionTableCacheEntry);
@@ -531,7 +543,13 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
       /* Fix up inlined exception table ram method entries if wide */
       if (((UDATA)_exceptionTable->numExcptionRanges) & J9_JIT_METADATA_WIDE_EXCEPTIONS)
          {
+         // Highest 2 bits indicate wide exceptions and FSD, unset them and extract
+         // the number of exception ranges
          UDATA numExcptionRanges = ((UDATA)_exceptionTable->numExcptionRanges) & 0x7fff;
+#if defined(JITSERVER_SUPPORT)
+         if (_comp->getOption(TR_FullSpeedDebug))
+            numExcptionRanges &= ~(J9_JIT_METADATA_WIDE_EXCEPTIONS | J9_JIT_METADATA_HAS_BYTECODE_PC);
+#endif /* defined(JITSERVER_SUPPORT) */
 
          /* 4 byte exception range entries */
          J9JIT32BitExceptionTableEntry *excptEntry32 = (J9JIT32BitExceptionTableEntry *)(_exceptionTable + 1);
@@ -549,6 +567,10 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
 
             //excptEntry32->ramMethod = _method;
             excptEntry32++;
+#if defined(JITSERVER_SUPPORT)
+            if (_comp->getOption(TR_FullSpeedDebug))
+               excptEntry32 = (J9JIT32BitExceptionTableEntry *) ((uint8_t *) excptEntry32 + 4);
+#endif /* defined(JITSERVER_SUPPORT) */
             numExcptionRanges--;
             }
          }
@@ -558,6 +580,9 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
       startPC = _exceptionTable->startPC;
       } //end if J9_JIT_DCE_EXCEPTION_INFO
 
+#if defined(JITSERVER_SUPPORT)
+   TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "TR_RelocationRuntime::relocateAOTCodeAndData should not be called at the JITSERVER");
+#endif /* defined(JITSERVER_SUPPORT) */
    if (startPC)
       {
       // insert exceptionTable into JIT artifacts avl tree under mutex
@@ -566,11 +591,13 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
 
          jit_artifact_insert(javaVM()->portLibrary, jitConfig()->translationArtifacts, _exceptionTable);
 
+#if !defined(JITSERVER_SUPPORT)
          // Fix up RAM method
          TR::CompilationInfo::setJ9MethodExtra(_method, startPC);
 
          // Return the send target
          _method->methodRunAddress = jitConfig()->i2jTransition;
+#endif /* !defined(JITSERVER_SUPPORT) */
 
          // Test for anonymous classes
          J9Class *j9clazz = ramCP()->ramClass;
@@ -665,7 +692,28 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
       {
       TR_PersistentJittedBodyInfo *persistentBodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo *>( (_newPersistentInfo + sizeof(J9JITDataCacheHeader) ) );
       TR_PersistentMethodInfo *persistentMethodInfo = reinterpret_cast<TR_PersistentMethodInfo *>( (_newPersistentInfo + sizeof(J9JITDataCacheHeader) ) + sizeof(TR_PersistentJittedBodyInfo) );
-      persistentBodyInfo->setMethodInfo(persistentMethodInfo);
+
+#if defined(JITSERVER_SUPPORT)
+      if (_comp->isRemoteCompilation() && !_comp->getCurrentMethod()->isInterpreted())
+         {
+         TR_PersistentMethodInfo *existingPersistentMethodInfo = _comp->getRecompilationInfo()->getExistingMethodInfo(_comp->getCurrentMethod());
+         if (existingPersistentMethodInfo)
+            {
+            // Handles the recompilations and updates the existing info
+            *existingPersistentMethodInfo = *persistentMethodInfo;
+            }
+         else
+            {
+            // Handles the very first compilation of the method which allocates the persistent info
+            existingPersistentMethodInfo = persistentMethodInfo;
+            }
+         persistentBodyInfo->setMethodInfo(existingPersistentMethodInfo);
+         }
+      else
+#endif /* defined(JITSERVER_SUPPORT) */
+         {
+         persistentBodyInfo->setMethodInfo(persistentMethodInfo);
+         }
       _exceptionTable->bodyInfo = (void *)(persistentBodyInfo);
       }
 
@@ -676,6 +724,11 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
       {
       _exceptionTable->riData = (void *) (((U_8 *)_exceptionTable->riData) + dataRelocationAmount);
       }
+
+#if defined(JITSERVER_SUPPORT)
+   if (_exceptionTable->osrInfo)
+      _exceptionTable->osrInfo = (void *) (((U_8 *)_exceptionTable->osrInfo) + dataRelocationAmount);
+#endif /* defined(JITSERVER_SUPPORT) */
 
    #if 0
       fprintf(stdout, "-> %p", _exceptionTable->ramMethod);
@@ -725,12 +778,52 @@ TR_RelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)
    return false;
    }
 
+#if defined(JITSERVER_SUPPORT)
+void *
+TR_RelocationRuntime::isROMClassInSharedCaches(UDATA romClassValue)
+   {
+   TR_ASSERT_FATAL(0, "Error: isROMClassInSharedCaches not supported in TR_RelocationRuntime");
+   return NULL;
+   }
+
+bool
+TR_RelocationRuntime::isRomClassForMethodInSharedCache(J9Method *method)
+   {
+   TR_ASSERT_FATAL(0, "Error: isRomClassForMethodInSharedCache not supported in TR_RelocationRuntime");
+   return false;
+   }
+
+TR_YesNoMaybe
+TR_RelocationRuntime::isMethodInSharedCache(J9Method *method)
+   {
+   TR_ASSERT_FATAL(0, "Error: isMethodInSharedCache not supported in TR_RelocationRuntime");
+   return TR_no;
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
+
 TR_OpaqueClassBlock *
 TR_RelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)
    {
    TR_ASSERT(0, "Error: getClassFromCP not supported in this relocation runtime");
    return NULL;
    }
+
+#if defined(JITSERVER_SUPPORT)
+J9JITExceptionTable *
+TR_RelocationRuntime::copyMethodMetaData(J9JITDataCacheHeader *dataCacheHeader)
+   {
+   TR_AOTMethodHeader *aotMethodHeaderEntry = (TR_AOTMethodHeader *) (dataCacheHeader + 1);
+   J9JITDataCacheHeader *exceptionTableCacheEntry = (J9JITDataCacheHeader *)((uint8_t *) dataCacheHeader + aotMethodHeaderEntry->offsetToExceptionTable);
+   uint8_t *newExceptionTableStart = allocateSpaceInDataCache(exceptionTableCacheEntry->size, exceptionTableCacheEntry->type);
+   J9JITExceptionTable *metaData = NULL;
+   if (newExceptionTableStart)
+      {
+      TR_DataCacheManager::copyDataCacheAllocation(reinterpret_cast<J9JITDataCacheHeader *>(newExceptionTableStart), exceptionTableCacheEntry);
+      metaData = reinterpret_cast<J9JITExceptionTable *>(newExceptionTableStart + sizeof(J9JITDataCacheHeader)); // Get new exceptionTable location
+      }
+   return metaData;
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
 
 bool TR_RelocationRuntime::_globalValuesInitialized=false;
 
@@ -1127,13 +1220,62 @@ TR_SharedCacheRelocationRuntime::storeAOTHeader(TR_FrontEnd *fe, J9VMThread *cur
       }
    }
 
+
+#if defined(JITSERVER_SUPPORT)
+void *
+TR_SharedCacheRelocationRuntime::isROMClassInSharedCaches(UDATA romClassValue)
+   {
+   j9thread_monitor_enter(javaVM()->sharedClassConfig->configMonitor);
+   J9SharedClassCacheDescriptor *currentCacheDescriptor = javaVM()->sharedClassConfig->cacheDescriptorList;
+   bool matchFound = false;
+
+   while (!matchFound && currentCacheDescriptor)
+      {
+      if (((romClassValue < (UDATA)currentCacheDescriptor->metadataStartAddress)&& (romClassValue >= (UDATA)currentCacheDescriptor->romclassStartAddress)))
+         {
+         matchFound = true;
+         break;
+         }
+      if (currentCacheDescriptor->next == javaVM()->sharedClassConfig->cacheDescriptorList)
+         break; // Since the list is circular, break if we are about to loop back
+      currentCacheDescriptor = currentCacheDescriptor->next;
+      }
+   j9thread_monitor_exit(javaVM()->sharedClassConfig->configMonitor);
+   if (matchFound)
+      {
+      return (void *)currentCacheDescriptor;
+      }
+   else
+      {
+      return NULL;
+      }
+   }
+
+bool
+TR_SharedCacheRelocationRuntime::isRomClassForMethodInSharedCache(J9Method *method)
+   {
+   J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
+   bool isRomClassForMethodInSharedCache = isROMClassInSharedCaches((UDATA)romClass) ? true : false;
+   return isRomClassForMethodInSharedCache;
+   }
+
+TR_YesNoMaybe
+TR_SharedCacheRelocationRuntime::isMethodInSharedCache(J9Method *method)
+   {
+   if (isRomClassForMethodInSharedCache(method))
+      return TR_maybe;
+   else
+      return TR_no;
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
+
 TR_OpaqueClassBlock *
 TR_SharedCacheRelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)
    {
    J9JITConfig *jitConfig = vmThread->javaVM->jitConfig;
    TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
    TR::VMAccessCriticalSection getClassFromCP(fe);
-   /* Get the class.  Stop immediately if an exception occurs. */
+   // Get the class.  Stop immediately if an exception occurs.
    J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&constantPool->romConstantPool[cpIndex];
 
    J9Class *resolvedClass = javaVM()->internalVMFunctions->resolveClassRef(vmThread, constantPool, romFieldRef->classRefCPIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
@@ -1241,3 +1383,100 @@ void TR_RelocationRuntime::addClazzRecord(uint8_t *ia, uint32_t bcIndex, TR_Opaq
    }
 
 #endif
+
+#if defined(JITSERVER_SUPPORT)
+void
+TR_JITServerRelocationRuntime::initializeCacheDeltas()
+   {
+   _dataCacheDelta = 0;
+   _codeCacheDelta = 0;
+   }
+
+U_8 *
+TR_JITServerRelocationRuntime::allocateSpaceInCodeCache(UDATA codeSize)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)_fe;
+   TR::CodeCacheManager *manager = TR::CodeCacheManager::instance();
+
+   int32_t compThreadID = fej9->getCompThreadIDForVMThread(_currentThread);
+   if (!codeCache())
+      {
+      int32_t numReserved;
+
+      _codeCache = manager->reserveCodeCache(false, codeSize, compThreadID, &numReserved);  // Acquire a cold/warm code cache.
+      if (!codeCache())
+         {
+         // TODO: How do we pass back error codes to trigger retrial?
+         //if (numReserved >= 1) // We could still get some code space in caches that are currently reserved
+         //    *returnCode = compilationCodeReservationFailure; // this will promp a retrial
+         return NULL;
+         }
+       // The GC may unload classes if code caches have been switched
+
+      if (compThreadID >= 0 && fej9->getCompilationShouldBeInterruptedFlag())
+         {
+         codeCache()->unreserve(); // Cancel the reservation
+         //*returnCode = compilationInterrupted; // Allow retrial //FIXME: how do we pass error codes?
+         return NULL; // fail this AOT load
+         }
+      _haveReservedCodeCache = true;
+      }
+
+   uint8_t *coldCode;
+   U_8 *codeStart = manager->allocateCodeMemory(codeSize, 0, &_codeCache, &coldCode, false);
+
+   // JITServer FIXME: This code is probably needed, but everything works without it, so don't run it for now.
+#if 0
+   // FIXME: The GC may unload classes if code caches have been switched
+   if (compThreadID >= 0 && fej9->getCompilationShouldBeInterruptedFlag())
+      {
+      codeCache()->unreserve(); // cancel the reservation
+      _haveReservedCodeCache = false;
+      //*returnCode = compilationInterrupted; // allow retrial
+      return NULL;
+      }
+#endif
+   return codeStart;
+   }
+
+uint8_t *
+TR_JITServerRelocationRuntime::allocateSpaceInDataCache(uintptr_t metaDataSize,
+                                                   uintptr_t type)
+   {
+   _metaDataAllocSize = TR_DataCacheManager::alignToMachineWord(metaDataSize);
+   U_8 *newDataStart = TR_DataCacheManager::getManager()->allocateDataCacheRecord(_metaDataAllocSize, type, 0);
+   if (newDataStart)
+      newDataStart -= sizeof(J9JITDataCacheHeader);
+   return newDataStart;
+   }
+
+uint8_t *
+TR_JITServerRelocationRuntime::copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe)
+   {
+   TR::CompilationInfoPerThreadBase *compInfoPT = fe->_compInfoPT;
+   int32_t numReserved;
+   TR::CodeCache *codeCache = NULL;
+   TR::CodeCacheManager *manager = TR::CodeCacheManager::instance();
+   TR_ASSERT(!compInfoPT->getCompilation()->cg()->getCodeCache(), "No code caches should be reserved when copying a thunk");
+   codeCache = manager->reserveCodeCache(false, totalSize, compInfoPT->getCompThreadId(), &numReserved);
+   if (!codeCache)
+      return NULL;
+
+   if (compInfoPT->getCompThreadId() >= 0 && fe->getCompilationShouldBeInterruptedFlag())
+      {
+      codeCache->unreserve();
+      return NULL;
+      }
+
+   uint8_t *coldCodeStart = NULL;
+   manager->allocateCodeMemory(0, totalSize, &codeCache, &coldCodeStart, false, false);
+   if (coldCodeStart)
+      {
+      memcpy(coldCodeStart, startAddress, totalSize);
+      }
+   // Unreserve code cache so that the next thunk will have to reserve it again
+   codeCache->unreserve();
+
+   return coldCodeStart;
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
