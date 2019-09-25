@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Objects;
-import java.util.Properties;
 
 import com.ibm.j9ddr.StructureReader.PackageNameType;
 import com.ibm.j9ddr.StructureReader.StructureDescriptor;
@@ -63,32 +62,24 @@ public class J9DDRClassLoader extends SecureClassLoader {
 			return false;
 		}
 
-		// Beginning with VM version 29, pointers classes are generated
-		// if "generate.pointers" is true in dynamic.properties.
+		// Get pointer sizes in bytes (rounding up for 31-bit s390 VMs).
+		int hostPointerSize = (Integer.getInteger("sun.arch.data.model", 0) + 7) / 8;
+		int corePointerSize = reader.getSizeOfUDATA();
 
-		String packageName = reader.getPackageName(PackageNameType.POINTER_PACKAGE_SLASH_NAME);
-		String resourceName = '/' + packageName + "dynamic.properties";
-		InputStream stream = J9DDRClassLoader.class.getResourceAsStream(resourceName);
-
-		if (stream == null) {
+		if (hostPointerSize == corePointerSize) {
+			// The VM that produced the core file has the same size pointers
+			// as this VM: we can use the pointers classes in j9ddr.jar.
 			return false;
 		}
 
-		Properties dynamic = new Properties();
+		// This constant will only be present in a build using OMR tooling and in which
+		// the pointer classes generated from the associated DDR blob have been validated.
+		long coreVersion = reader.getConstantValue("DDRAlgorithmVersions", "J9DDR_GENERATE_VERSION", 0);
 
-		try {
-			dynamic.load(stream);
-		} catch (IOException e) {
-			// ignore
-		}
+		// The minimum valid version, which may be overridden.
+		long threshold = Long.getLong("openj9.dtfj.version-threshold", 1);
 
-		try {
-			stream.close();
-		} catch (IOException e) {
-			// ignore
-		}
-
-		return Boolean.parseBoolean(dynamic.getProperty("generate.pointers"));
+		return coreVersion >= threshold;
 	}
 
 	private static String withTrailingDot(String name) {
