@@ -354,8 +354,19 @@ def upload_artifactory(uploadSpec) {
     // Add BUILD_IDENTIFIER to the buildInfo. The UploadSpec adds it to the Artifact info
     buildInfo.env.filter.addInclude("BUILD_IDENTIFIER")
     buildInfo.env.capture = true
-    server.upload spec: uploadSpec, buildInfo: buildInfo
-    server.publishBuildInfo buildInfo
+
+    //Retry uploading to Artifactory if errors occur
+    def ret = false
+    retry (3) {
+        if (ret) {
+            sleep time: 300, unit: 'SECONDS'
+        } else {
+            ret = true
+        }
+        server.upload spec: uploadSpec, buildInfo: buildInfo
+        server.publishBuildInfo buildInfo
+    }
+
     // Write URL to env so that we can pull it from the upstream pipeline job
     env.ARTIFACTORY_URL = server.getUrl()
     env.ARTIFACTORY_CREDS = server.getCredentialsId()
