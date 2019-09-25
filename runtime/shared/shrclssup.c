@@ -129,9 +129,12 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 				/* Check for -XX:ShareClassesEnableBCI and -XX:ShareClassesDisableBCI; whichever comes later wins.
 				 * These options should be checked before parseArgs() to allow -Xshareclasses:[enable|disable]BCI to override this option.
+				 * 
+				 * Note: Please also change the function checkArgsConsumed() in runtime/vm/jvminit.c when adding new options,
+				 * in order to quietly consume the options if it is used without -Xshareclasses
 				 */
-				argIndex1 = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, VMOPT_XXSHARECLASSESENABLEBCI, NULL);
-				argIndex2 = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, VMOPT_XXSHARECLASSESDISABLEBCI, NULL);
+				argIndex1 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXSHARECLASSESENABLEBCI, NULL);
+				argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXSHARECLASSESDISABLEBCI, NULL);
 				if (argIndex1 > argIndex2) {
 					runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_BCI;
 				} else if (argIndex2 > argIndex1) {
@@ -139,15 +142,15 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 				}
 
 				/* Check for -XX:+ShareAnonymousClasses and -XX:-ShareAnonymousClasses; whichever comes later wins. Enable is set by default so we just need to disable when that's the case. */
-				argIndex1 = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, VMOPT_XXENABLESHAREANONYMOUSCLASSES, NULL);
-				argIndex2 = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, VMOPT_XXDISABLESHAREANONYMOUSCLASSES, NULL);
+				argIndex1 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLESHAREANONYMOUSCLASSES, NULL);
+				argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLESHAREANONYMOUSCLASSES, NULL);
 				if (argIndex2 > argIndex1) {
 					runtimeFlags &= (~J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES);
 				}
 
 				/* Check for -XX:+ShareUnsafeClasses and -XX:-ShareUnsafeClasses; whichever comes later wins. Enable is set by default so we just need to disable when that's the case. */
-				argIndex1 = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, VMOPT_XXENABLESHAREUNSAFECLASSES, NULL);
-				argIndex2 = FIND_AND_CONSUME_ARG(OPTIONAL_LIST_MATCH, VMOPT_XXDISABLESHAREUNSAFECLASSES, NULL);
+				argIndex1 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLESHAREUNSAFECLASSES, NULL);
+				argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLESHAREUNSAFECLASSES, NULL);
 				if (argIndex2 > argIndex1) {
 					runtimeFlags &= (~J9SHR_RUNTIMEFLAG_ENABLE_SHAREUNSAFECLASSES);
 				}
