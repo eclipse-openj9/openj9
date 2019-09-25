@@ -46,8 +46,7 @@ autoconfig:
 autogen: autoconfig
 	${TEST_JDK_HOME}/bin/java -cp ./TKGJ/TestKitGen.jar org.testKitGen.MainRunner --spec=$(SPEC) --jdkVersion=$(JDK_VERSION) --impl=$(JDK_IMPL) --buildList=${BUILD_LIST} --iterations=$(TEST_ITERATIONS) --testFlag=$(TEST_FLAG) $(OPTS);
 	cd $(CURRENT_DIR)$(D)scripts$(D)testKitGen; \
-	perl testKitGen.pl --graphSpecs=$(SPEC) --jdkVersion=$(JDK_VERSION) --impl=$(JDK_IMPL) --buildList=${BUILD_LIST} --iterations=$(TEST_ITERATIONS) --testFlag=$(TEST_FLAG) --validate $(OPTS); \
-	cd $(CURRENT_DIR);
+	perl testKitGen.pl --graphSpecs=$(SPEC) --jdkVersion=$(JDK_VERSION) --impl=$(JDK_IMPL) --buildList=${BUILD_LIST} --iterations=$(TEST_ITERATIONS) --testFlag=$(TEST_FLAG) --validate $(OPTS)
 
 AUTOGEN_FILES = $(wildcard $(CURRENT_DIR)$(D)jvmTest.mk)
 AUTOGEN_FILES += $(wildcard $(CURRENT_DIR)$(D)machineConfigure.mk)

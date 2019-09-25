@@ -73,7 +73,7 @@ public class MkTreeGen {
 
 			// TODO clean up JCL_VERSION
 			// Temporary exclusion, remove this block when JCL_VERSION separation is removed
-			if ((Options.getJdkVersion() != "Panama") && (Options.getJdkVersion() != "Valhalla")) {
+			if ((!Options.getJdkVersion().equalsIgnoreCase("Panama")) && (!Options.getJdkVersion().equalsIgnoreCase("Valhalla"))) {
 				String JCL_VERSION = "";
 				if (System.getenv("JCL_VERSION") != null) {
 					JCL_VERSION = System.getenv("JCL_VERSION");
