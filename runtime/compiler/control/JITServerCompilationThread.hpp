@@ -45,7 +45,7 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    friend class TR::CompilationInfo;
    CompilationInfoPerThreadRemote(TR::CompilationInfo &compInfo, J9JITConfig *jitConfig, int32_t id, bool isDiagnosticThread);
    virtual void processEntry(TR_MethodToBeCompiled &entry, J9::J9SegmentProvider &scratchSegmentProvider) override;
-   TR_PersistentMethodInfo *getRecompilationMethodInfo() { return _recompilationMethodInfo; }
+   TR_PersistentMethodInfo *getRecompilationMethodInfo() const { return _recompilationMethodInfo; }
 
    uint32_t getSeqNo() const { return _seqNo; }; // for ordering requests at the server
    void setSeqNo(uint32_t seqNo) { _seqNo = seqNo; }
@@ -63,7 +63,7 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
    TR_ResolvedMethodKey getResolvedMethodKey(TR_ResolvedMethodType type, TR_OpaqueClassBlock *ramClass, int32_t cpIndex, TR_OpaqueClassBlock *classObject = NULL);
 
    void cacheResolvedMirrorMethodsPersistIPInfo(TR_ResolvedJ9Method *resolvedMethod);
-   ResolvedMirrorMethodsPersistIP_t *getCachedResolvedMirrorMethodsPersistIPInfo() { return _resolvedMirrorMethodsPersistIPInfo; }
+   ResolvedMirrorMethodsPersistIP_t *getCachedResolvedMirrorMethodsPersistIPInfo() const { return _resolvedMirrorMethodsPersistIPInfo; }
 
    void cacheNullClassOfStatic(TR_OpaqueClassBlock *ramClass, int32_t cpIndex);
    bool getCachedNullClassOfStatic(TR_OpaqueClassBlock *ramClass, int32_t cpIndex);

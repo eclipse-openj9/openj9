@@ -83,9 +83,27 @@ TR_J9ServerVM::getSuperClass(TR_OpaqueClassBlock *clazz)
 bool
 TR_J9ServerVM::isSameOrSuperClass(J9Class *superClass, J9Class *subClass)
    {
+   if (superClass == subClass) // same class
+      return true;
+
+   void *superClassLoader, *subClassLoader;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_isSameOrSuperClass, superClass, subClass);
-   return std::get<0>(stream->read<bool>());
+   JITServerHelpers::getAndCacheRAMClassInfo(superClass, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_LOADER, &superClassLoader);
+   JITServerHelpers::getAndCacheRAMClassInfo(subClass, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_LOADER, &subClassLoader);
+   if (superClassLoader != subClassLoader)
+      return false;
+
+   TR_OpaqueClassBlock *candidateSuperClassPtr = reinterpret_cast<TR_OpaqueClassBlock *>(superClass);
+   TR_OpaqueClassBlock *classPtr = reinterpret_cast<TR_OpaqueClassBlock *>(subClass);
+   // walk the hierarchy, trying to find a matching super class
+   while (classPtr)
+      {
+      // getSuperClass might invoke a remote call with a very low probability
+      classPtr = getSuperClass(classPtr); 
+      if (classPtr == candidateSuperClassPtr)
+         return true;
+      }
+   return false;
    }
 
 

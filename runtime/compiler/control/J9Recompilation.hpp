@@ -132,8 +132,9 @@ public:
    static int32_t jitGlobalSampleCount;
    static int32_t jitRecompilationsInduced;
 
-   // used for JITServer
+#if defined(JITSERVER_SUPPORT)
    static TR_PersistentJittedBodyInfo * persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory * trMemory);
+#endif /* defined(JITSERVER_SUPPORT) */
 
 protected:
    static int32_t limitMethodsCompiled;
