@@ -267,7 +267,7 @@ static IDATA checkDjavacompiler (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_
 #endif /* J9VM_OPT_SIDECAR */
 static void* getOptionExtraInfo (J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA match, char* optionName);
 static void closeAllDLLs (J9JavaVM* vm);
-static UDATA checkArgsConsumed (J9PortLibrary* portLibrary, J9VMInitArgs* j9vm_args);
+static UDATA checkArgsConsumed (J9JavaVM * vm, J9PortLibrary* portLibrary, J9VMInitArgs* j9vm_args);
 
 #if (defined(J9VM_INTERP_VERBOSE))
 static const char* getNameForStage (IDATA stage);
@@ -2408,7 +2408,7 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 
 /* Run after all command-line args should have been consumed. Returns TRUE or FALSE. */
 
-static UDATA checkArgsConsumed(J9PortLibrary* portLibrary, J9VMInitArgs* j9vm_args) {
+static UDATA checkArgsConsumed(J9JavaVM * vm, J9PortLibrary* portLibrary, J9VMInitArgs* j9vm_args) {
 	UDATA i = 0;
 	PORT_ACCESS_FROM_PORT(portLibrary);
 	jboolean ignoreUnrecognized = j9vm_args->actualVMArgs->ignoreUnrecognized;
@@ -2437,6 +2437,16 @@ static UDATA checkArgsConsumed(J9PortLibrary* portLibrary, J9VMInitArgs* j9vm_ar
 		if (xxIgnoreUnrecognizedXXColonOptionsDisableIndex > xxIgnoreUnrecognizedXXColonOptionsEnableIndex) {
 			ignoreUnrecongizedXXColonOptions = JNI_FALSE;
 		}
+	}
+
+	/* Consuming the shared class options if it is used without -Xshareclasses */
+	if (!ignoreUnrecongizedXXColonOptions && !vm->sharedCacheAPI->xShareClassesPresent) {
+		findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XXSHARECLASSESENABLEBCI, NULL, TRUE);
+		findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XXSHARECLASSESDISABLEBCI, NULL, TRUE);
+		findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XXENABLESHAREANONYMOUSCLASSES, NULL, TRUE);
+		findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XXDISABLESHAREANONYMOUSCLASSES, NULL, TRUE);
+		findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XXENABLESHAREUNSAFECLASSES, NULL, TRUE);
+		findArgInVMArgs( PORTLIB, j9vm_args, EXACT_MATCH, VMOPT_XXDISABLESHAREUNSAFECLASSES, NULL, TRUE);
 	}
 
 	for (i=0; i<j9vm_args->nOptions; i++) {
@@ -5965,7 +5975,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		goto error;
 	}
 
-	if (FALSE == checkArgsConsumed(portLibrary, vm->vmArgsArray)) {
+	if (FALSE == checkArgsConsumed(vm, portLibrary, vm->vmArgsArray)) {
 		parseError = TRUE;
 		goto error;
 	}
