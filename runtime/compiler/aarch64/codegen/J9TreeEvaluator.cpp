@@ -359,6 +359,9 @@ J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator 
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
 
+   // ARM64HelperCallSnippet generates "bl" instruction
+   cg->machine()->setLinkRegisterKilled(true);
+
    cg->decReferenceCount(firstChild);
    cg->decReferenceCount(secondChild);
    cg->decReferenceCount(testNode);
