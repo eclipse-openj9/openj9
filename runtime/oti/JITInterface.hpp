@@ -25,11 +25,6 @@
 
 #include "j9port.h"
 
-/* TODO: Implement jitVTableIndex() to remove this #include */
-#if defined(J9VM_ARCH_AARCH64)
-#include "assert.h"
-#endif
-
 extern "C" {
 
 #if defined(J9VM_ARCH_X86)
@@ -192,8 +187,33 @@ public:
 			jitVTableIndex = 0 - (instruction & 0x00000FFF);
 		}
 #elif defined(J9VM_ARCH_AARCH64)
-		/* TODO: Implement this */
-		assert(0);
+		/* Virtual call instructions
+		 *	...
+		 *	movn x9, vTableOffset (if within 16 bit)
+		 *	ldr x9, [vftReg, x9]
+		 *	blr x9
+		 *	<- return address points here
+		 * See TR::ARM64PrivateLinkage::buildVirtualDispatch()
+		 */
+		U_32 movInstr1 = ((U_32*)jitReturnAddress)[-3];
+		U_32 ldrInstr = ((U_32*)jitReturnAddress)[-2];
+		if ((ldrInstr & 0xFFFFF81F) == 0xF8696809) { // ldr x9, [vftReg, x9]
+			if ((movInstr1 & 0xFFE0001F) == 0x92800009) {
+				// movn x9, vTableOffset (negated)
+				jitVTableIndex = (UDATA)(-(I_64)((movInstr1 >> 5) & 0xFFFF)-1);
+			} else {
+				// movz x9, vTableOffset (lower 16 bits)
+				// movk x9, vTableOffset, LSL #16 (upper 16 bits)
+				// sxtw x9, w9
+				U_32 movInstr2 = ((U_32*)jitReturnAddress)[-4];
+				movInstr1 = ((U_32*)jitReturnAddress)[-5];
+				if ((movInstr1 & 0xFFE0001F) == 0xD2800009 &&
+				    (movInstr2 & 0xFFE0001F) == 0xF2A00009) {
+					I_32 idx = ((movInstr2 << 11) & 0xFFFF0000) | ((movInstr1 >> 5) & 0xFFFF);
+					jitVTableIndex = (UDATA)((I_64)idx);
+				}
+			}
+		}
 #elif defined(J9VM_ARCH_S390)
 		/* The vtable index is always in the register */
 #else
