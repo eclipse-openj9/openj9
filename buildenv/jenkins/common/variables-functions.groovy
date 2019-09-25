@@ -1044,8 +1044,15 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
     params.put('DISCARDER_NUM_BUILDS', DISCARDER_NUM_BUILDS)
 
     def templatePath = 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy'
-
-    create = jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params
+    ret = false    
+    retry(3) {
+       if (ret) {
+          sleep time: 120,unit: 'SECONDS'
+       } else {
+          ret = true
+       }
+       jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params
+    }
 }
 
 def set_misc_variables() {
