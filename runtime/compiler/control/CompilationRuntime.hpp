@@ -831,8 +831,8 @@ public:
    void     setAotRelocationTime(uint32_t reloTime) { _statTotalAotRelocationTime = reloTime; }
    void    incrementNumMethodsFoundInSharedCache() { _numMethodsFoundInSharedCache++; }
    int32_t numMethodsFoundInSharedCache() { return _numMethodsFoundInSharedCache; }
-   bool isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *vm);
-   TR_YesNoMaybe isMethodInSharedCache(J9Method *method, J9JavaVM *vm);
+   bool isRomClassForMethodInSharedCache(J9Method *method);
+   TR_YesNoMaybe isMethodInSharedCache(J9Method *method);
    int32_t getNumInvRequestsInCompQueue() const { return _numInvRequestsInCompQueue; }
    TR::CompilationInfoPerThreadBase *getCompInfoForCompOnAppThread() const { return _compInfoForCompOnAppThread; }
    J9JITConfig *getJITConfig() { return _jitConfig; }

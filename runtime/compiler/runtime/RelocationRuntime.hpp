@@ -25,10 +25,6 @@
 
 #include "j9cfg.h"
 
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390))
-   #define TR_SHARED_CACHE_AOT_SE_PLATFORM
-#endif
-
 #include <assert.h>
 #include "codegen/Relocation.hpp"
 #include "env/j9method.h"
@@ -113,7 +109,6 @@ typedef struct TR_AOTRuntimeInfo {
     struct TR_AOTHeader* aotHeader;
     struct J9MemorySegment* codeCache;
     struct J9MemorySegment* dataCache;
-    void* baseJxeAddress;
     uintptr_t *fe;
 } TR_AOTRuntimeInfo;
 
@@ -154,7 +149,6 @@ class TR_RelocationRuntime {
       UDATA codeCacheDelta()                                      { return _codeCacheDelta; }
       UDATA dataCacheDelta()                                      { return _dataCacheDelta; }
       UDATA classReloAmount()                                     { return _classReloAmount; }
-      U_8 *baseAddress()                                          { return _baseAddress; }
 
       UDATA reloStartTime()                                       { return _reloStartTime; }
       void setReloStartTime(UDATA time)                           { _reloStartTime = time; }
@@ -183,14 +177,17 @@ class TR_RelocationRuntime {
                                                          TR_ResolvedMethod *resolvedMethod,
                                                          uint8_t *existingCode = NULL);
 
-      virtual bool storeAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread);
-      virtual TR_AOTHeader *createAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe);
-      virtual bool validateAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
+      virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
 
-      virtual void *isROMClassInSharedCaches(UDATA romClassValue, J9JavaVM *javaVM);
-      virtual bool isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *javaVM);
-      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method, J9JavaVM *javaVM);
-      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9JavaVM *javaVM, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
+#if defined(JITSERVER_SUPPORT)
+      virtual void *isROMClassInSharedCaches(UDATA romClassValue);
+      virtual bool isRomClassForMethodInSharedCache(J9Method *method);
+      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method);
+#endif /* defined(JITSERVER_SUPPORT) */
+
+      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
 
       static uintptr_t    getGlobalValue(uint32_t g)
          {
@@ -246,7 +243,9 @@ class TR_RelocationRuntime {
       uint32_t getNumInlinedAllocRelos() { return 0; }
       uint32_t getNumFailedAllocInlinedRelos() { return 0; }
 #endif
+#if defined(JITSERVER_SUPPORT)
       virtual J9JITExceptionTable *copyMethodMetaData(J9JITDataCacheHeader *dataCacheHeader);
+#endif /* defined(JITSERVER_SUPPORT) */
 
    private:
       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize)                           { return NULL; }
@@ -307,7 +306,6 @@ class TR_RelocationRuntime {
 
       // inlined TR_AOTRuntimeInfo
       struct TR_AOTHeader* _aotHeader;
-      U_8 * _baseAddress;
       UDATA _classReloAmount;
 
       TR::CodeCache *_codeCache;
@@ -354,15 +352,17 @@ public:
       TR_SharedCacheRelocationRuntime(J9JITConfig *jitCfg) :
          _sharedCacheIsFull(false), TR_RelocationRuntime(jitCfg) {}
 
-      virtual bool storeAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread);
-      virtual TR_AOTHeader *createAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe);
-      virtual bool validateAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
+      virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
+      virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
 
-      virtual void *isROMClassInSharedCaches(UDATA romClassValue, J9JavaVM *javaVM);
-      virtual bool isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *javaVM);
-      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method, J9JavaVM *javaVM);
+#if defined(JITSERVER_SUPPORT)
+      virtual void *isROMClassInSharedCaches(UDATA romClassValue);
+      virtual bool isRomClassForMethodInSharedCache(J9Method *method);
+      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method);
+#endif /* defined(JITSERVER_SUPPORT) */
 
-      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9JavaVM *javaVM, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
+      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
 
 private:
       uint32_t getCurrentLockwordOptionHashValue(J9JavaVM *vm) const;
@@ -385,20 +385,24 @@ private:
       static const UDATA aotHeaderKeyLength;
 };
 
+#if defined(JITSERVER_SUPPORT)
 class TR_JITServerRelocationRuntime : public TR_RelocationRuntime {
 public:
       TR_ALLOC(TR_Memory::Relocation)
       void * operator new(size_t, J9JITConfig *);
       TR_JITServerRelocationRuntime(J9JITConfig *jitCfg) : TR_RelocationRuntime(jitCfg) {}
-// The following public APIs should not be used with this class
-      virtual bool storeAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
-      virtual TR_AOTHeader *createAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
-      virtual bool validateAOTHeader(J9JavaVM *javaVM, TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
 
-      virtual void *isROMClassInSharedCaches(UDATA romClassValue, J9JavaVM *javaVM)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
-      virtual bool isRomClassForMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
-      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method, J9JavaVM *javaVM)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!");  return TR_no; }
-      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9JavaVM *javaVM, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
+      // The following public APIs should not be used with this class
+      virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
+      virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
+      virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
+
+      virtual void *isROMClassInSharedCaches(UDATA romClassValue)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0; }
+      virtual bool isRomClassForMethodInSharedCache(J9Method *method)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0; }
+      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!");  return TR_no; }
+
+      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
+
       static uint8_t *copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe);
 
 private:
@@ -407,4 +411,6 @@ private:
       virtual void initializeCacheDeltas();
       virtual void initializeAotRuntimeInfo() override { _classReloAmount = 1; }
 };
+#endif /* defined(JITSERVER_SUPPORT) */
+
 #endif   // RELOCATION_RUNTIME_INCL
