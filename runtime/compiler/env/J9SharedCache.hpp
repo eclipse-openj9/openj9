@@ -146,9 +146,8 @@ public:
    static TR_J9SharedCacheDisabledReason getSharedCacheDisabledReason() { return _sharedCacheState; }
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo);
    static void setStoreSharedDataFailedLength(UDATA length) {_storeSharedDataFailedLength = length; }
+   J9SharedClassCacheDescriptor *getCacheDescriptorList();
    
-   virtual UDATA getCacheStartAddress() { return _cacheStartAddress; }
-
 private:
    J9JITConfig *jitConfig() { return _jitConfig; }
    J9JavaVM *javaVM() { return _javaVM; }
@@ -189,7 +188,6 @@ private:
    TR_AOTStats *_aotStats;
    J9SharedClassConfig *_sharedCacheConfig;
    UDATA _numDigitsForCacheOffsets;
-   UDATA _cacheStartAddress;
 
    uint32_t _logLevel;
    bool _verboseHints;
@@ -215,9 +213,6 @@ public:
    // virtual void addHint(J9ROMMethod *, TR_SharedCacheHint) override { TR_ASSERT(false, "called"); }
    virtual bool isMostlyFull() override { TR_ASSERT(false, "called"); return false;}
 
-   virtual void *pointerFromOffsetInSharedCache(uintptr_t offset) override;
-   virtual uintptr_t offsetInSharedCacheFromPointer(void *ptr) override;
-
    virtual UDATA *rememberClass(J9Class *clazz, bool create=true) override;
 
    virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT(false, "called"); return 0;}
@@ -226,17 +221,12 @@ public:
    virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL) override { TR_ASSERT(false, "called"); return false;}
 
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader) override { TR_ASSERT(false, "called"); return NULL;}
-
-   virtual bool isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset) override { TR_ASSERT(false, "called"); return false;}
-
    
    static void setSharedCacheDisabledReason(TR_J9SharedCacheDisabledReason state) { TR_ASSERT(false, "called"); }
    static TR_J9SharedCacheDisabledReason getSharedCacheDisabledReason() { TR_ASSERT(false, "called"); return TR_J9SharedCache::TR_J9SharedCacheDisabledReason::UNINITIALIZED;}
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo) { TR_ASSERT(false, "called"); return TR_no;}
    static void setStoreSharedDataFailedLength(UDATA length) { TR_ASSERT(false, "called"); }
    
-   virtual UDATA getCacheStartAddress() override;
-
    virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) override;
 
    void setStream(JITServer::ServerStream *stream) { _stream = stream; }

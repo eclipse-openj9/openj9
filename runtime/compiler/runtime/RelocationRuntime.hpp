@@ -154,10 +154,7 @@ class TR_RelocationRuntime {
       UDATA codeCacheDelta()                                      { return _codeCacheDelta; }
       UDATA dataCacheDelta()                                      { return _dataCacheDelta; }
       UDATA classReloAmount()                                     { return _classReloAmount; }
-<<<<<<< HEAD
-=======
       U_8 *baseAddress()                                          { return _baseAddress; }
->>>>>>> jitaas
 
       UDATA reloStartTime()                                       { return _reloStartTime; }
       void setReloStartTime(UDATA time)                           { _reloStartTime = time; }
@@ -307,10 +304,7 @@ class TR_RelocationRuntime {
 
       // inlined TR_AOTRuntimeInfo
       struct TR_AOTHeader* _aotHeader;
-<<<<<<< HEAD
-=======
       U_8 * _baseAddress;
->>>>>>> jitaas
       UDATA _classReloAmount;
 
       TR::CodeCache *_codeCache;

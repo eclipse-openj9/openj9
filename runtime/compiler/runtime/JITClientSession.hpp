@@ -295,7 +295,6 @@ class ClientSessionData
       int32_t _arrayletLeafSize;
       uint64_t _overflowSafeAllocSize;
       int32_t _compressedReferenceShift;
-      UDATA _cacheStartAddress;
       bool _stringCompressionEnabled;
       bool _hasSharedClassCache;
       bool _elgibleForPersistIprofileInfo;
@@ -313,6 +312,7 @@ class ClientSessionData
       void *_floatInvokeExactThunkHelper;
       void *_doubleInvokeExactThunkHelper;
       size_t _interpreterVTableOffset;
+      J9SharedClassCacheDescriptor *_j9SharedClassCacheDescriptorList;
       }; // struct VMInfo
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)
@@ -384,6 +384,9 @@ class ClientSessionData
 
    template <typename map, typename key>
    void purgeCache(std::vector<ClassUnloadedData> *unloadedClasses, map m, key ClassUnloadedData::*k);
+
+   J9SharedClassCacheDescriptor * reconstructJ9SharedClassCacheDescriptorList(std::vector<uintptr_t>& listOfCacheStartAddress, std::vector<uintptr_t>& listOfCacheSizeBytes);
+   void destroyJ9SharedClassCacheDescriptorList();
 
    private:
    const uint64_t _clientUID;

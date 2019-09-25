@@ -72,7 +72,10 @@ ClientSessionData::~ClientSessionData()
       }
    _staticMapMonitor->destroy();
    if (_vmInfo)
+      {
+      destroyJ9SharedClassCacheDescriptorList();
       jitPersistentFree(_vmInfo);
+      }
    _thunkSetMonitor->destroy();
    }
 
@@ -327,9 +330,57 @@ ClientSessionData::getOrCacheVMInfo(JITServer::ServerStream *stream)
    if (!_vmInfo)
       {
       stream->write(JITServer::MessageType::VM_getVMInfo, JITServer::Void());
-      _vmInfo = new (PERSISTENT_NEW) VMInfo(std::get<0>(stream->read<VMInfo>()));
+      auto recv = stream->read<VMInfo, std::vector<uintptr_t>, std::vector<uintptr_t> >();
+      _vmInfo = new (PERSISTENT_NEW) VMInfo(std::get<0>(recv));
+      _vmInfo->_j9SharedClassCacheDescriptorList = reconstructJ9SharedClassCacheDescriptorList(std::get<1>(recv), std::get<2>(recv));
       }
    return _vmInfo;
+   }
+
+J9SharedClassCacheDescriptor *
+ClientSessionData::reconstructJ9SharedClassCacheDescriptorList(std::vector<uintptr_t>& listOfCacheStartAddress, std::vector<uintptr_t>& listOfCacheSizeBytes)
+   {
+   J9SharedClassCacheDescriptor * cur = NULL;
+   J9SharedClassCacheDescriptor * prev = NULL;
+   J9SharedClassCacheDescriptor * head = NULL;
+   for (int i = 0; i < listOfCacheStartAddress.size(); i++)
+      {
+      cur = new (PERSISTENT_NEW) J9SharedClassCacheDescriptor();
+      cur->cacheStartAddress = (J9SharedCacheHeader*)(listOfCacheStartAddress[i]);
+      cur->cacheSizeBytes = listOfCacheSizeBytes[i];
+      if (prev)
+         {
+         prev->next = cur;
+         cur->previous = prev;
+         }
+      else
+         {
+         head = cur;
+         }
+      prev = cur;
+      }
+   if (!head)
+      return NULL;
+   head->previous = prev; // assign head's previous to tail
+   prev->next = head; // assign tail's previous to head
+   return head;
+   }
+
+void
+ClientSessionData::destroyJ9SharedClassCacheDescriptorList()
+   {
+   if (!_vmInfo->_j9SharedClassCacheDescriptorList)
+      return;
+   J9SharedClassCacheDescriptor * cur = _vmInfo->_j9SharedClassCacheDescriptorList;
+   J9SharedClassCacheDescriptor * next = NULL;
+   _vmInfo->_j9SharedClassCacheDescriptorList->previous->next = NULL; // break the circular links by setting tail's next pointer to be NULL 
+   while (cur)
+      {
+      next = cur->next;
+      jitPersistentFree(cur);
+      cur = next;
+      }
+   _vmInfo->_j9SharedClassCacheDescriptorList = NULL;
    }
 
 

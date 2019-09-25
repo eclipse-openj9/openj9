@@ -103,8 +103,6 @@ TR_J9SharedCache::TR_J9SharedCache(TR_J9VMBase *fe)
    _sharedCacheConfig = _javaVM->sharedClassConfig;
    if (_sharedCacheConfig)
       {
-      _cacheStartAddress = (UDATA) _sharedCacheConfig->cacheDescriptorList->cacheStartAddress;
-
       _numDigitsForCacheOffsets=8;
 
       UDATA totalCacheSize = 0;
@@ -132,8 +130,20 @@ TR_J9SharedCache::TR_J9SharedCache(TR_J9VMBase *fe)
       _verboseHints = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseSCHints);
 
       LOG(5, { log("\t_sharedCacheConfig %p\n", _sharedCacheConfig); });
-      LOG(5, { log("\t_cacheStartAddress %p\n", _cacheStartAddress); });
       }
+   }
+
+J9SharedClassCacheDescriptor *
+TR_J9SharedCache::getCacheDescriptorList()
+   {
+#if defined(JITSERVER_SUPPORT)
+   if (auto stream = TR::CompilationInfo::getStream())
+      {
+      auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+      return vmInfo->_j9SharedClassCacheDescriptorList;
+      }
+#endif /* defined(JITSERVER_SUPPORT) */
+   return _sharedCacheConfig ? _sharedCacheConfig->cacheDescriptorList : NULL;
    }
 
 void
@@ -401,7 +411,7 @@ TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
    {
 #if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
    // The cache descriptor list is linked last to first and is circular, so last->previous == first.
-   J9SharedClassCacheDescriptor *firstCache = _sharedCacheConfig->cacheDescriptorList->previous;
+   J9SharedClassCacheDescriptor *firstCache = getCacheDescriptorList()->previous;
    J9SharedClassCacheDescriptor *curCache = firstCache;
    do
       {
@@ -414,7 +424,7 @@ TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
       }
    while (curCache != firstCache);
 #else // !J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
-   J9SharedClassCacheDescriptor *curCache = _sharedCacheConfig->cacheDescriptorList;
+   J9SharedClassCacheDescriptor *curCache = getCacheDescriptorList();
    if (offset < curCache->cacheSizeBytes)
       {
       return (void *)(offset + (uintptr_t)curCache->cacheStartAddress);
@@ -443,7 +453,7 @@ TR_J9SharedCache::isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset)
 #if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
    uintptr_t offset = 0;
    // The cache descriptor list is linked last to first and is circular, so last->previous == first.
-   J9SharedClassCacheDescriptor *firstCache = _sharedCacheConfig->cacheDescriptorList->previous;
+   J9SharedClassCacheDescriptor *firstCache = getCacheDescriptorList()->previous;
    J9SharedClassCacheDescriptor *curCache = firstCache;
    do
       {
@@ -461,7 +471,7 @@ TR_J9SharedCache::isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset)
       }
    while (curCache != firstCache);
 #else // !J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
-   J9SharedClassCacheDescriptor *curCache = _sharedCacheConfig->cacheDescriptorList;
+   J9SharedClassCacheDescriptor *curCache = getCacheDescriptorList();
    if (isPointerInCache(curCache, ptr))
       {
       if (cacheOffset)
@@ -862,24 +872,6 @@ TR_J9JITServerSharedCache::TR_J9JITServerSharedCache(TR_J9VMBase *fe)
    _stream = NULL;
    }
 
-void *
-TR_J9JITServerSharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
-   {
-   TR_ASSERT(_stream, "stream must be initialized by now");
-   // compute pointer from client's cache start address
-   auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
-   return (void *) ((UDATA)offset + vmInfo->_cacheStartAddress);
-   }
-
-uintptr_t
-TR_J9JITServerSharedCache::offsetInSharedCacheFromPointer(void *ptr)
-   {
-   TR_ASSERT(_stream, "stream must be initialized by now");
-   // return offset from client's cache start address
-   auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
-   return (uintptr_t)((UDATA)ptr - vmInfo->_cacheStartAddress);
-   }
-
 UDATA *
 TR_J9JITServerSharedCache::rememberClass(J9Class *clazz, bool create)
    {
@@ -912,14 +904,6 @@ TR_J9JITServerSharedCache::rememberClass(J9Class *clazz, bool create)
          }
       }
    return chainData;
-   }
-
-UDATA
-TR_J9JITServerSharedCache::getCacheStartAddress()
-   {
-   TR_ASSERT(_stream, "stream must be initialized by now");
-   auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(_stream);
-   return vmInfo->_cacheStartAddress;
    }
 
 uintptrj_t
