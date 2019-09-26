@@ -187,7 +187,7 @@ public class TestInfo {
 		for (int j = 0; j < subsets.getLength(); j++) {
 			String subset = subsets.item(j).getTextContent().trim();
 
-			if (subset.equals(Options.getJdkVersion())) {
+			if (subset.equalsIgnoreCase(Options.getJdkVersion())) {
 				isValidSubset = true;
 				break;
 			} else {
