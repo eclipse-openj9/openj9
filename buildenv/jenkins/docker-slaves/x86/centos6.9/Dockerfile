@@ -185,12 +185,12 @@ RUN wget http://www.us.apache.org/dist/ant/binaries/apache-ant-1.10.5-bin.tar.gz
   && cd .. \
   && rm -rf ant-contrib
 
-# Install Cuda version 7.5.18
+# Install Cuda version 9.0
 RUN cd /usr/src/ \
-  && wget http://developer.download.nvidia.com/compute/cuda/7.5/Prod/local_installers/cuda_7.5.18_linux.run \
-  && chmod +x cuda_7.5.18_linux.run \
-  && /usr/src/cuda_7.5.18_linux.run --silent --toolkit --override \
-  && rm -f /usr/src/cuda_7.5.18_linux.run
+  && wget https://developer.nvidia.com/compute/cuda/9.0/Prod/local_installers/cuda_9.0.176_384.81_linux-run \
+  && chmod +x cuda_9.0.176_384.81_linux-run \
+  && /usr/src/cuda_9.0.176_384.81_linux-run --silent --toolkit --override \
+  && rm -f /usr/src/cuda_9.0.176_384.81_linux-run
 
 # set up sshd config
 RUN mkdir /var/run/sshd \
