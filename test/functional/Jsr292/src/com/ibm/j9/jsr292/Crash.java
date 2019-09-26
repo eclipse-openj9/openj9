@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,9 +22,12 @@
 package com.ibm.j9.jsr292;
 
 import org.testng.annotations.Test;
+import org.testng.Assert;
 import org.testng.AssertJUnit;
 import static java.lang.invoke.MethodType.methodType;
 import java.lang.invoke.MethodHandles;
+
+import org.openj9.test.util.VersionCheck;
 
 public class Crash {
 	
@@ -38,6 +41,14 @@ public class Crash {
 				 	.asSpreader(long[].class, 1)
 				 	.invoke(1l, (long[]) null);
 		} catch(IllegalArgumentException e) {
+			if (VersionCheck.major() >= 11) {
+				Assert.fail("IllegalArgumentException thrown instead of NullPointerException");
+			}
+			exceptionOccurred = true;
+		} catch(NullPointerException e) {
+			if (VersionCheck.major() < 11) {
+				Assert.fail("NullPointerException thrown instead of IllegalArgumentException");
+			}
 			exceptionOccurred = true;
 		}
 		AssertJUnit.assertTrue(exceptionOccurred);
