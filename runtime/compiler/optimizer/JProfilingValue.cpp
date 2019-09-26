@@ -899,8 +899,6 @@ TR_JProfilingValue::createHelperCall(TR::Compilation *comp, TR::Node *value, TR:
 
 #if defined(TR_HOST_POWER) || defined(TR_HOST_ARM) || defined(TR_HOST_S390)
    profiler->getSymbol()->castToMethodSymbol()->setLinkage(TR_System);
-#elif defined(TR_HOST_X86)
-   profiler->getSymbol()->castToMethodSymbol()->setSystemLinkageDispatch();
 #endif
 
    TR::Node *helperCall = TR::Node::createWithSymRef(value, TR::call, 2, profiler);
