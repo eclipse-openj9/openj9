@@ -40,8 +40,10 @@ add_library(j9vrb SHARED
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vrb.c
 )
 
-#TODO this is platform specific
-set_property(SOURCE ../compiler/runtime/MethodMetaData.c APPEND_STRING PROPERTY COMPILE_FLAGS  " -std=gnu89")
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+	set_property(SOURCE ../compiler/runtime/MethodMetaData.c APPEND_STRING PROPERTY COMPILE_FLAGS  " -std=gnu89")
+endif()
+
 target_include_directories(j9vrb
 	PRIVATE
 		${CMAKE_CURRENT_BINARY_DIR}
