@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -112,7 +112,7 @@ public:
 	 * @return undefined if nextSlot has yet to be called.
 	 */
 	MMINLINE UDATA getIndex() {
-		return MM_Bits::convertBytesToObjectFieldSlots((UDATA)_scanPtr - (UDATA)_endPtr);
+		return ((UDATA)_scanPtr - (UDATA)_endPtr) >> OMRVM_REFERENCE_SHIFT(_omrVM);
 	}
 
 
