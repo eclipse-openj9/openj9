@@ -1412,6 +1412,41 @@ static void printClass(TR_OpaqueClassBlock *clazz)
       }
    }
 
+#if defined(JITSERVER_SUPPORT)
+std::string
+TR::SymbolValidationManager::serializeSymbolToIDMap()
+   {
+   int32_t entrySize = sizeof(SymbolToIdMap::key_type) + sizeof(SymbolToIdMap::mapped_type);
+   std::string symbolToIdStr(entrySize * _symbolToIdMap.size(), '\0');
+   uint16_t idx = 0;
+   for (auto it : _symbolToIdMap)
+      {
+      SymbolToIdMap::key_type symbol = it.first;
+      SymbolToIdMap::mapped_type id = it.second;
+      memcpy(&symbolToIdStr[idx * entrySize], &symbol, sizeof(symbol));
+      memcpy(&symbolToIdStr[idx * entrySize + sizeof(symbol)], &id, sizeof(id));
+      ++idx;
+      }
+   return symbolToIdStr;
+   }
+
+void
+TR::SymbolValidationManager::deserializeSymbolToIDMap(const std::string &symbolToIdStr)
+   {
+   _symbolToIdMap.clear();
+
+   int32_t entrySize = sizeof(SymbolToIdMap::key_type) + sizeof(SymbolToIdMap::mapped_type);
+   int32_t numEntries = symbolToIdStr.length() / entrySize;
+   for (int32_t idx = 0; idx < numEntries; idx++)
+      {
+      SymbolToIdMap::key_type symbol;
+      memcpy(&symbol, &symbolToIdStr[idx * entrySize], sizeof(symbol));
+      SymbolToIdMap::mapped_type id = (uint16_t) symbolToIdStr[idx * entrySize + sizeof(symbol)];
+      _symbolToIdMap.insert(std::make_pair(symbol, id));
+      }
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
+
 namespace // file-local
    {
    class LexicalOrder
