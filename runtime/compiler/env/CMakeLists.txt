@@ -64,6 +64,7 @@ if(JITSERVER_SUPPORT)
 		env/j9methodServer.cpp
 		env/JITServerCHTable.cpp
 		env/JITServerPersistentCHTable.cpp
+		env/VMJ9Server.cpp
 	)
 endif()
 
