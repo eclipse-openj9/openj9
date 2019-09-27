@@ -262,8 +262,8 @@ JIT_HELPER(_jitProfileBigDecimalValue);
 JIT_HELPER(_jitProfileStringValue);
 JIT_HELPER(_jitProfileAddress);
 JIT_HELPER(_jitProfileWarmCompilePICAddress);
-JIT_HELPER(_jProfile32BitValue);
-JIT_HELPER(_jProfile64BitValue);
+JIT_HELPER(jProfile32BitValue);
+JIT_HELPER(jProfile64BitValue);
 
 void PPCinitializeValueProfiler()
    {
@@ -274,7 +274,7 @@ void PPCinitializeValueProfiler()
    SET(TR_jitProfileLongValue,             (void *) _jitProfileLongValue,             TR_Helper);
    SET(TR_jitProfileBigDecimalValue,       (void *) _jitProfileBigDecimalValue,       TR_Helper);
    SET(TR_jitProfileStringValue,           (void *) _jitProfileStringValue,           TR_Helper);
-   SET(TR_jProfile32BitValue,              (void *) _jProfile32BitValue,              TR_Helper);
-   SET(TR_jProfile64BitValue,              (void *) _jProfile64BitValue,              TR_Helper);
+   SET(TR_jProfile32BitValue,              (void *) jProfile32BitValue,               TR_Helper);
+   SET(TR_jProfile64BitValue,              (void *) jProfile64BitValue,               TR_Helper);
    }
 #endif

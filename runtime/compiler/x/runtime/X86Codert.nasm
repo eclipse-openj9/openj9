@@ -145,6 +145,13 @@ segment .text
         DECLARE_GLOBAL jitFPHelpersBegin
         DECLARE_GLOBAL jitFPHelpersEnd
 
+%ifdef TR_HOST_64BIT
+        DECLARE_GLOBAL jProfile32BitValueWrapper
+        DECLARE_GLOBAL jProfile64BitValueWrapper
+        DECLARE_EXTERN jProfile32BitValue
+        DECLARE_EXTERN jProfile64BitValue
+%endif
+
         align 16
 jitFPHelpersBegin:
 
@@ -636,6 +643,26 @@ LARGE_NUMS:
         pop _rbx
         pop _rax
         ret                                             ; Epilog End
+
+%ifdef TR_HOST_64BIT
+        align 16
+jProfile32BitValueWrapper:
+        ; Called directly from jitted code, _rbp is vmthread
+        mov [_rbp+J9TR_VMThread_sp], _rsp                 ; Store current java stack pointer to vmthread
+        mov _rsp, [_rbp+J9TR_VMThread_machineSP]          ; switch to c stack
+        CallHelper jProfile32BitValue
+        mov _rsp, [_rbp+J9TR_VMThread_sp]                 ; restore java stack pointer
+        ret
+
+        align 16
+jProfile64BitValueWrapper:
+        ; Called directly from jitted code, _rbp is vmthread
+        mov [_rbp+J9TR_VMThread_sp], _rsp                 ; Store current java stack pointer to vmthread
+        mov _rsp, [_rbp+J9TR_VMThread_machineSP]          ; switch to c stack
+        CallHelper jProfile64BitValue
+        mov _rsp, [_rbp+J9TR_VMThread_sp]                 ; restore java stack pointer
+        ret
+%endif
 
 %ifndef TR_HOST_64BIT
 ; in:   32-bit slot on stack - double to convert
