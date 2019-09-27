@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -211,7 +211,7 @@ com/ibm/security/util/text/resources
 com/ibm/security/validator
 com/ibm/security/x509
 com/ibm/tools/attach/attacher
-com/ibm/tools/attach/target
+openj9/internal/tools/attach/target
 com/ibm/virtualization/management
 com/oracle/webservices/internal/api
 com/oracle/webservices/internal/api/databinding

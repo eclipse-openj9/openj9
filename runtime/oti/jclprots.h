@@ -572,47 +572,47 @@ jlong JNICALL Java_com_ibm_jvm_Trace_getMicros(JNIEnv *env, jobject recv);
 
 /* attach API */
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_cancelNotify(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName, jint numberOfDecrements, jboolean global);
+Java_openj9_internal_tools_attach_target_IPC_cancelNotify(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName, jint numberOfDecrements, jboolean global);
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_chownFileToTargetUid(JNIEnv *env, jclass clazz, jstring path, jlong uid);
+Java_openj9_internal_tools_attach_target_IPC_chownFileToTargetUid(JNIEnv *env, jclass clazz, jstring path, jlong uid);
 jlong JNICALL
-Java_com_ibm_tools_attach_target_CommonDirectory_getFileOwner(JNIEnv *env, jclass clazz, jstring path);
+Java_openj9_internal_tools_attach_target_CommonDirectory_getFileOwner(JNIEnv *env, jclass clazz, jstring path);
 jlong JNICALL
-Java_com_ibm_tools_attach_target_IPC_getUid(JNIEnv *env, jclass clazz);
+Java_openj9_internal_tools_attach_target_IPC_getUid(JNIEnv *env, jclass clazz);
 jbyteArray JNICALL
-Java_com_ibm_tools_attach_target_IPC_getTmpDirImpl(JNIEnv *env, jclass clazz);
+Java_openj9_internal_tools_attach_target_IPC_getTmpDirImpl(JNIEnv *env, jclass clazz);
 jstring JNICALL
-Java_com_ibm_tools_attach_target_IPC_getTempDirImpl(JNIEnv *env, jclass clazz);
+Java_openj9_internal_tools_attach_target_IPC_getTempDirImpl(JNIEnv *env, jclass clazz);
 jboolean JNICALL
-Java_com_ibm_tools_attach_target_IPC_isUsingDefaultUid(JNIEnv *env, jclass clazz);
+Java_openj9_internal_tools_attach_target_IPC_isUsingDefaultUid(JNIEnv *env, jclass clazz);
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_mkdirWithPermissionsImpl(JNIEnv *env, jclass clazz, jstring absolutePath, jint cdPerms);
+Java_openj9_internal_tools_attach_target_IPC_mkdirWithPermissionsImpl(JNIEnv *env, jclass clazz, jstring absolutePath, jint cdPerms);
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_createFileWithPermissionsImpl(JNIEnv *env, jclass clazz, jstring path, jint mode);
+Java_openj9_internal_tools_attach_target_IPC_createFileWithPermissionsImpl(JNIEnv *env, jclass clazz, jstring path, jint mode);
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_setupSemaphore(JNIEnv *env, jclass clazz, jstring ctrlDirName);
+Java_openj9_internal_tools_attach_target_IPC_setupSemaphore(JNIEnv *env, jclass clazz, jstring ctrlDirName);
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_openSemaphore(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName);
+Java_openj9_internal_tools_attach_target_IPC_openSemaphore(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName);
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_notifyVm(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName, jint numberOfPosts, jboolean global);
+Java_openj9_internal_tools_attach_target_IPC_notifyVm(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName, jint numberOfPosts, jboolean global);
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_waitSemaphore(JNIEnv *env, jclass clazz);
+Java_openj9_internal_tools_attach_target_IPC_waitSemaphore(JNIEnv *env, jclass clazz);
 void JNICALL
-Java_com_ibm_tools_attach_target_IPC_closeSemaphore(JNIEnv *env, jclass clazz);
+Java_openj9_internal_tools_attach_target_IPC_closeSemaphore(JNIEnv *env, jclass clazz);
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_destroySemaphore(JNIEnv *env, jclass clazz);
+Java_openj9_internal_tools_attach_target_IPC_destroySemaphore(JNIEnv *env, jclass clazz);
 jlong JNICALL
-Java_com_ibm_tools_attach_target_IPC_getProcessId(JNIEnv *env, jclass clazz);
+Java_openj9_internal_tools_attach_target_IPC_getProcessId(JNIEnv *env, jclass clazz);
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_chmod(JNIEnv *env, jclass clazz, jstring path, jint mode);
+Java_openj9_internal_tools_attach_target_IPC_chmod(JNIEnv *env, jclass clazz, jstring path, jint mode);
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_processExistsImpl(JNIEnv *env, jclass clazz, jlong pid);
+Java_openj9_internal_tools_attach_target_IPC_processExistsImpl(JNIEnv *env, jclass clazz, jlong pid);
 jlong JNICALL
-Java_com_ibm_tools_attach_target_FileLock_lockFileImpl(JNIEnv *env, jclass clazz, jstring path, jint mode, jboolean blocking);
+Java_openj9_internal_tools_attach_target_FileLock_lockFileImpl(JNIEnv *env, jclass clazz, jstring path, jint mode, jboolean blocking);
 jint JNICALL
-Java_com_ibm_tools_attach_target_FileLock_unlockFileImpl(JNIEnv *env, jclass clazz, jlong fd);
+Java_openj9_internal_tools_attach_target_FileLock_unlockFileImpl(JNIEnv *env, jclass clazz, jlong fd);
 void JNICALL
-Java_com_ibm_tools_attach_target_IPC_tracepoint(JNIEnv *env, jclass clazz, jint statusCode, jstring message);
+Java_openj9_internal_tools_attach_target_IPC_tracepoint(JNIEnv *env, jclass clazz, jint statusCode, jstring message);
 
 /* J9SourceJclExceptionSupport*/
 extern J9_CFUNC j9array_t  
@@ -697,10 +697,10 @@ Java_com_ibm_oti_vm_VM_setDaemonThreadImpl (JNIEnv *env, jobject recv, jobject a
 void JNICALL Java_com_ibm_oti_vm_VM_dumpString(JNIEnv * env, jclass clazz, jstring str);
 jboolean JNICALL Java_com_ibm_oti_vm_VM_appendToCPNativeImpl(JNIEnv * env, jclass clazz, jstring classPathAdditions, jstring newClassPath);
 jboolean JNICALL Java_com_ibm_oti_vm_VM_isApplicationClassLoaderPresent(JNIEnv * env, jclass clazz);
-jstring JNICALL Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_getHeapClassStatisticsImpl(JNIEnv * env, jclass unused);
-jobjectArray JNICALL Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_dumpAllThreadsImpl(JNIEnv *env, jobject beanInstance,
+jstring JNICALL Java_openj9_internal_tools_attach_diagnostics_base_DiagnosticUtils_getHeapClassStatisticsImpl(JNIEnv * env, jclass unused);
+jobjectArray JNICALL Java_openj9_internal_tools_attach_diagnostics_base_DiagnosticUtils_dumpAllThreadsImpl(JNIEnv *env, jobject beanInstance,
 	jboolean getLockedMonitors, jboolean getLockedSynchronizers, jint maxDepth);
-jstring JNICALL Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_triggerDumpsImpl(JNIEnv *env, jclass clazz, jstring opts, jstring event);
+jstring JNICALL Java_openj9_internal_tools_attach_diagnostics_base_DiagnosticUtils_triggerDumpsImpl(JNIEnv *env, jclass clazz, jstring opts, jstring event);
 
 /* J9SourceJclCommonInit*/
 jint computeFullVersionString (J9JavaVM* vm);

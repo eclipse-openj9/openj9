@@ -1289,7 +1289,7 @@ launchAttachApi(J9VMThread *currentThread) {
 	jmethodID meth;
 	JNIEnv *env = (JNIEnv *) currentThread;
 
-	clazz = (*env)->FindClass(env, "com/ibm/tools/attach/target/AttachHandler");
+	clazz = (*env)->FindClass(env, "openj9/internal/tools/attach/target/AttachHandler");
 	if (NULL == clazz) {
 		return -1;
 	}

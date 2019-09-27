@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 2009, 2010 IBM Corp. and others
  *
@@ -144,4 +144,4 @@
  *<tr><td>com.ibm.tools.attach.timeout</td><td>Specify the timeout in milliseconds for communication between attacher and attachment.  Set to 0 for no timeout.</td></tr>
  *</table>
  */
-package com.ibm.tools.attach.target;
+package openj9.internal.tools.attach.target;
