@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2016 IBM Corp. and others
+ * Copyright (c) 2011, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,7 +80,11 @@ final class SpreadHandle extends MethodHandle {
 		if (spreadArg == null) {
 			if (spreadCount != 0) {
 				/*[MSG "K05d1", "cannot have null spread argument unless spreadCount is 0"]*/
+/*[IF Java11]*/
+				throw new NullPointerException(Msg.getString("K05d1")); //$NON-NLS-1$
+/*[ELSE]*/
 				throw new IllegalArgumentException(Msg.getString("K05d1")); //$NON-NLS-1$
+/*[ENDIF]*/
 			}
 		} else if (spreadCount != java.lang.reflect.Array.getLength(spreadArg)) {
 			/*[MSG "K05d2", "expected '{0}' sized array; encountered '{1}' sized array"]*/
