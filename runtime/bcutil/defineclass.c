@@ -843,15 +843,6 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 	Trc_BCU_Assert_True(NULL != vm->dynamicLoadBuffers);
 
 	switch (result) {
-		case BCT_ERR_CLASS_READ: {
-			J9CfrError * cfrError = (J9CfrError *) vm->dynamicLoadBuffers->classFileError;
-
-			errorUTF = (U_8 *) buildVerifyErrorString(vm, cfrError, className, classNameLength);
-			exceptionNumber = cfrError->errorAction;
-			/* We don't free vm->dynamicLoadBuffers->classFileError because it is also used as a classFileBuffer in ROMClassBuilder */
-			break;
-		}
-
 		case BCT_ERR_INVALID_BYTECODE:
 		case BCT_ERR_STACK_MAP_FAILED:
 		case BCT_ERR_VERIFY_ERROR_INLINING:
@@ -874,12 +865,32 @@ createROMClassFromClassFile(J9VMThread *currentThread, J9LoadROMClassData *loadD
 			exceptionNumber = J9VMCONSTANTPOOL_JAVALANGOUTOFMEMORYERROR;
 			break;
 
+		/*
+		 * Error messages are contents of vm->dynamicLoadBuffers->classFileError with class name appended.
+		 * 
+		 * We don't free vm->dynamicLoadBuffers->classFileError because it is also used as a classFileBuffer in ROMClassBuilder.
+		 */
+		case BCT_ERR_CLASS_READ:
+			exceptionNumber = ((J9CfrError *)vm->dynamicLoadBuffers->classFileError)->errorAction;
+			/* FALLTHROUGH */
+
+		case BCT_ERR_GENERIC_ERROR_CUSTOM_MSG: {
+			/* default value for exceptionNumber (J9VMCONSTANTPOOL_JAVALANGCLASSFORMATERROR) assigned before switch */		
+			errorUTF = (U_8 *)buildVerifyErrorString(vm, (J9CfrError *)vm->dynamicLoadBuffers->classFileError, className, classNameLength);
+			break;
+		}
+
+		/*
+		 * Error messages are contents of vm->dynamicLoadBuffers->classFileError if anything is assigned 
+		 * otherwise just the classname.
+		 */
 		case BCT_ERR_CLASS_NAME_MISMATCH:
 			exceptionNumber = J9VMCONSTANTPOOL_JAVALANGNOCLASSDEFFOUNDERROR;
 			/* FALLTHROUGH */
 			
 		default:
-			/* default value for exceptionNumber (J9VMCONSTANTPOOL_JAVALANGCLASSFORMATERROR) assigned before switch */
+			/* BCT_ERR_GENERIC_ERROR: default value for exceptionNumber (J9VMCONSTANTPOOL_JAVALANGCLASSFORMATERROR) 
+			 * assigned before switch */
 			errorUTF = vm->dynamicLoadBuffers->classFileError;
 			if (NULL == errorUTF) {
 				PORT_ACCESS_FROM_JAVAVM(vm);
