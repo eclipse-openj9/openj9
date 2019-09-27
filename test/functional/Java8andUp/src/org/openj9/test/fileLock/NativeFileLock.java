@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@ public class NativeFileLock extends GenericFileLock {
 
 		TestFileLocking.logger.debug("enter NativeFileLock");
 		Class<?> nativeFileLock = Class
-				.forName("com.ibm.tools.attach.target.FileLock");
+				.forName("openj9.internal.tools.attach.target.FileLock");
 		Constructor<?> nflConstructor = nativeFileLock.getDeclaredConstructor(
 				java.lang.String.class, int.class);
 		nflConstructor.setAccessible(true);

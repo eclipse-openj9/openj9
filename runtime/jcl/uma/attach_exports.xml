@@ -1,5 +1,5 @@
 <!-- 
-	Copyright (c) 2009, 2017 IBM Corp. and others
+	Copyright (c) 2009, 2019 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,24 +20,24 @@
 	SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 <exports group="attach">
-	<export name="Java_com_ibm_tools_attach_target_IPC_cancelNotify" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_chmod" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_chownFileToTargetUid" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_closeSemaphore" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_createFileWithPermissionsImpl" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_destroySemaphore" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_getProcessId" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_getTempDirImpl" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_getUid" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_isUsingDefaultUid" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_mkdirWithPermissionsImpl" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_notifyVm" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_openSemaphore" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_processExistsImpl" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_setupSemaphore" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_waitSemaphore" />
-	<export name="Java_com_ibm_tools_attach_target_FileLock_lockFileImpl" />
-	<export name="Java_com_ibm_tools_attach_target_FileLock_unlockFileImpl" />
-	<export name="Java_com_ibm_tools_attach_target_CommonDirectory_getFileOwner" />
-	<export name="Java_com_ibm_tools_attach_target_IPC_tracepoint" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_cancelNotify" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_chmod" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_chownFileToTargetUid" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_closeSemaphore" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_createFileWithPermissionsImpl" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_destroySemaphore" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_getProcessId" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_getTempDirImpl" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_getUid" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_isUsingDefaultUid" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_mkdirWithPermissionsImpl" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_notifyVm" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_openSemaphore" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_processExistsImpl" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_setupSemaphore" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_waitSemaphore" />
+	<export name="Java_openj9_internal_tools_attach_target_FileLock_lockFileImpl" />
+	<export name="Java_openj9_internal_tools_attach_target_FileLock_unlockFileImpl" />
+	<export name="Java_openj9_internal_tools_attach_target_CommonDirectory_getFileOwner" />
+	<export name="Java_openj9_internal_tools_attach_target_IPC_tracepoint" />
 </exports>

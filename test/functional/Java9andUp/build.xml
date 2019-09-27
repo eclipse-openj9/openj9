@@ -61,7 +61,7 @@
 			<src path="${src}" />
 			<src path="${TestUtilities}" />
 			<src path="${transformerListener}" />
-			<compilerarg line="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED" />
+			<compilerarg line="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED" />
 			<classpath>
 				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
 				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />

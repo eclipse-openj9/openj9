@@ -30,8 +30,8 @@ import java.util.List;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.spi.AttachProvider;
 
+import openj9.internal.tools.attach.diagnostics.base.DiagnosticUtils;
 import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
-import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 
 /**
  * Jcmd A tool for running diagnostic commands on another Java process
