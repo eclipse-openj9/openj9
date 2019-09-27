@@ -64,7 +64,7 @@
 				</javac>
 			</then>
 			<else>
-				<property name="addExports" value="--add-exports java.base/jdk.internal.module=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach=ALL-UNNAMED --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED" />
+				<property name="addExports" value="--add-exports java.base/jdk.internal.module=ALL-UNNAMED --add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED --add-exports java.base/com.ibm.tools.attach=ALL-UNNAMED --add-exports=java.base/jdk.internal.misc=ALL-UNNAMED" />
 				<if>
 					<equals arg1="${JCL_VERSION}" arg2="latest"/>
 					<then>

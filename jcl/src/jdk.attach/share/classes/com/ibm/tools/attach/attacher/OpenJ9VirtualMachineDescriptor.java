@@ -25,9 +25,9 @@ package com.ibm.tools.attach.attacher;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import com.ibm.tools.attach.target.Advertisement;
-import com.ibm.tools.attach.target.IPC;
-import com.ibm.tools.attach.target.TargetDirectory;
+import openj9.internal.tools.attach.target.Advertisement;
+import openj9.internal.tools.attach.target.IPC;
+import openj9.internal.tools.attach.target.TargetDirectory;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.spi.AttachProvider;
 

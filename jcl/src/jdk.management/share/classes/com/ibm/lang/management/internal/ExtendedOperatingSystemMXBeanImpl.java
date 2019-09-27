@@ -607,7 +607,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	@Override
 	public boolean isProcessRunning(long pid) {
 		com.ibm.java.lang.management.internal.RuntimeMXBeanImpl.checkMonitorPermission();
-		return com.ibm.tools.attach.target.IPC.processExists(pid);
+		return openj9.internal.tools.attach.target.IPC.processExists(pid);
 	}
 
 }

@@ -1,5 +1,5 @@
-/*[INCLUDE-IF Sidecar16]*/
-package com.ibm.tools.attach.target;
+/*[INCLUDE-IF Sidecar18-SE]*/
+package openj9.internal.tools.attach.target;
 /*******************************************************************************
  * Copyright (c) 2009, 2019 IBM Corp. and others
  *
@@ -24,8 +24,8 @@ package com.ibm.tools.attach.target;
 
 import java.io.File;
 import java.io.IOException;
-import static com.ibm.tools.attach.target.IPC.LOGGING_DISABLED;
-import static com.ibm.tools.attach.target.IPC.loggingStatus;
+import static openj9.internal.tools.attach.target.IPC.LOGGING_DISABLED;
+import static openj9.internal.tools.attach.target.IPC.loggingStatus;
 
 /**
  * This class represents the advertisement directory representing a potential attach API target VM.

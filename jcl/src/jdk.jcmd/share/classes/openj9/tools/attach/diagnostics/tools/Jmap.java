@@ -27,11 +27,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ibm.tools.attach.target.AttachHandler;
-import com.ibm.tools.attach.target.IPC;
+import openj9.internal.tools.attach.diagnostics.base.DiagnosticProperties;
+import openj9.internal.tools.attach.diagnostics.base.DiagnosticUtils;
+import openj9.internal.tools.attach.target.AttachHandler;
+import openj9.internal.tools.attach.target.IPC;
 import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
-import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
-import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 
 /**
  * JMap A tool for listing heap information about another Java process
