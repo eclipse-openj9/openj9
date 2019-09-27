@@ -2917,7 +2917,6 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
    // JITSERVER_TODO guards the code that relies on other JITServer unmerged files.
 #if defined(JITSERVER_TODO)
    compInfoPT->getClientData()->setRtResolve(rtResolve);
-   _reportByteCodeInfoAtCatchBlock = fe->getReportByteCodeInfoAtCatchBlock();
 #endif /* defined(JITSERVER_TODO) */
    unpackRegex(options->_traceForCodeMining);
    unpackRegex(options->_disabledOptTransformations);
