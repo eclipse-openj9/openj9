@@ -174,6 +174,28 @@
 
 #endif
 
+#define SaveFPRArgs                                       \
+	addi	J9SP, J9SP, -64;                             \
+	stfd	fp0, 0(J9SP);                               \
+	stfd	fp1, 8(J9SP);                               \
+	stfd	fp2, 16(J9SP);                               \
+	stfd	fp3, 24(J9SP);                               \
+	stfd	fp4, 32(J9SP);                               \
+	stfd	fp5, 40(J9SP);                               \
+	stfd	fp6, 48(J9SP);                               \
+	stfd	fp7, 56(J9SP);
+
+#define restoreFPRArgs									\
+	lfd  	fp0, 0(J9SP);                               \
+	lfd  	fp1, 8(J9SP);                               \
+	lfd  	fp2, 16(J9SP);                               \
+	lfd  	fp3, 24(J9SP);                               \
+	lfd  	fp4, 32(J9SP);                               \
+	lfd  	fp5, 40(J9SP);                               \
+	lfd  	fp6, 48(J9SP);                               \                      
+	lfd  	fp7, 56(J9SP);                               \
+	addi	J9SP, J9SP, 64;
+
 #ifdef AIXPPC
 	.lglobl   .__common_lock_check
 	.lglobl   .__common_lock_update
@@ -3104,6 +3126,8 @@ __picRegistration:
 .__picRegistration:
 #endif
 	startproc.__picRegistration:
+	! Preserve Argument FPR0-FPR7 GPRs GPR3-GPR10 were previously preserved in the caller routine
+    SaveFPRArgs
 	mfspr	r5, LR					! Save return address and allocate space for frame
 	staddru	SP, -24*ALen(SP)
 	staddr	r5, 19*ALen(SP)
@@ -3132,6 +3156,7 @@ __picRegistration:
 	laddr	r3, 16*ALen(SP)
 	laddr	r11, 17*ALen(SP)
 	addi	SP, SP, 24*ALen
+	restoreFPRArgs
 	blr
 	endproc.__picRegistration:
 
