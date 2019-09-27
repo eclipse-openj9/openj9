@@ -2325,5 +2325,26 @@
 			<group>functional</group>
 		</groups>
 	</test>
-
+	
+	<test>
+		<testCaseName>BooleanTest</testCaseName>
+		<variations>
+			<!-- <variation>Mode612</variation> JIT only, Currently fails -->
+			<variation>Mode610</variation><!-- Default -->
+			<variation>Mode609</variation><!-- Interpreter only -->
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
+			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+			-testnames BooleanTest \
+			-groups $(TEST_GROUP) \
+			-excludegroups $(DEFAULT_EXCLUDE); \
+			$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+	</test>
 </playlist>
