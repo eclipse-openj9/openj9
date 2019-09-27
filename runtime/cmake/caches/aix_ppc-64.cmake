@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,5 +34,9 @@ set(J9VM_MODULE_CODEGEN_PPC ON CACHE BOOL "")
 set(J9VM_GC_IDLE_HEAP_MANAGER OFF CACHE BOOL "")
 set(J9VM_OPT_SWITCH_STACKS_FOR_SIGNAL_HANDLER OFF CACHE BOOL "")
 set(J9VM_THR_ASYNC_NAME_UPDATE OFF CACHE BOOL "")
+
+# Note: In CMake, 'set's on cache variables only apply if the cache variable
+# is not already set. Thus any cache varaibles set in this file, override
+# anything set in common.cmake
 
 include("${CMAKE_CURRENT_LIST_DIR}/common.cmake")
