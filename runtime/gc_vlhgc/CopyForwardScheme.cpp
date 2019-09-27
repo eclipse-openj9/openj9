@@ -3880,14 +3880,15 @@ private:
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier) {
-		MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._doubleMappedArrayletsCandidates += 1;
+		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);
+		env->_copyForwardStats._doubleMappedArrayletsCandidates += 1;
 		if (!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
 			MM_ScavengerForwardedHeader forwardedHeader(objectPtr);
 			objectPtr = forwardedHeader.getForwardedObject();
 			if (NULL == objectPtr) {
 				Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
-				MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._doubleMappedArrayletsCleared += 1;
+				env->_copyForwardStats._doubleMappedArrayletsCleared += 1;
 				PORT_ACCESS_FROM_ENVIRONMENT(_env);
 				int result = j9vmem_free_memory(identifier->address, identifier->size, identifier);
 				Assert_MM_true(result == 0);

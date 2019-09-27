@@ -259,7 +259,7 @@ public:
 			/* By forcing the layout to be discontiguous in some special cases the last arraylet leaf may be a 
 			 * NULL pointer. In that case we do not consider such leaf for this arraylet.
 			 */
-			if ((_enableDoubleMapping && 1 < numberOfArraylets) && (0 == unadjustedDataSizeInBytes % leafSize)) {
+			if ((_enableDoubleMapping && (1 < numberOfArraylets)) && (0 == unadjustedDataSizeInBytes % leafSize)) {
 				numberOfArraylets -= 1;
 			}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */

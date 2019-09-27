@@ -31,8 +31,6 @@
 #include "HeapRegionManager.hpp"
 #include "HeapRegionDescriptorVLHGC.hpp"
 #include "Heap.hpp"
-
-#define ARRAYLET_ALLOC_THRESHOLD 64
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 /**
@@ -260,20 +258,24 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 		switch (_layout) {
 		case GC_ArrayletObjectModel::Discontiguous:
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-			if (extensions->indexableObjectModel.isDoubleMappingEnabled() && extensions->isVLHGC()) {
+			if (extensions->indexableObjectModel.isDoubleMappingEnabled()) {
 				Assert_MM_true(arrayoidIndex == _numberOfArraylets);
 				UDATA arrayletLeafCount = extensions->indexableObjectModel.numArraylets(spine);
 				UDATA sizeInElements = extensions->indexableObjectModel.getSizeInElements(spine);
 				Assert_MM_true(sizeInElements == 0 || arrayletLeafCount > 0);
 
-				if ((arrayletLeafCount > 1) && (sizeInElements > 0)) {
+				/*
+				 * Arraylets that contain only one leaf are contiguous in nature; therefore, there's
+				 * no need to double map it
+				 */
+				if ((arrayletLeafCount > 1)) {
 					doubleMapArraylets(env, (J9Object *)spine);
 					/* 
-				 	 * If doublemap fails the caller must handle it appropriatly. In case
-				 	 * of JNI critical, if doublemap fails, it will fall back to copying
-				 	 * each element of the array to a temporary array. It might hurt performance
-				 	 * but execution won't halt.
-				 	 */
+					 * If doublemap fails the caller must handle it appropriatly. In case
+					 * of JNI critical, if doublemap fails, it will fall back to copying
+					 * each element of the array to a temporary array. It might hurt performance
+					 * but execution won't halt.
+					 */
 				}
 			} else
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
@@ -337,11 +339,10 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase* env, J
 
 	void *result = NULL;
 
+#define ARRAYLET_ALLOC_THRESHOLD 64
 	void *leaves[ARRAYLET_ALLOC_THRESHOLD];
-	void **arrayletLeaveAddrs;
-	if (arrayletLeafCount <= ARRAYLET_ALLOC_THRESHOLD) {
-		arrayletLeaveAddrs = leaves;
-	} else {
+	void **arrayletLeaveAddrs = leaves;
+	if (arrayletLeafCount > ARRAYLET_ALLOC_THRESHOLD) {
 		arrayletLeaveAddrs = (void **)env->getForge()->allocate(arrayletLeafCount * sizeof(uintptr_t), MM_AllocationCategory::GC_HEAP, J9_GET_CALLSITE());
 	}
 
@@ -359,13 +360,14 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase* env, J
 		count++;
 	}
 
-	J9Object *firstLeafSlot = (J9Object *)((uintptr_t)extensions->indexableObjectModel.getArrayoidPointer((J9IndexableObject*)objectPtr)[0]);
+	GC_SlotObject objectSlot(env->getOmrVM(), &extensions->indexableObjectModel.getArrayoidPointer((J9IndexableObject*)objectPtr)[0]);
+	J9Object *firstLeafSlot = objectSlot.readReferenceFromSlot();
 
-        MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)heap->getHeapRegionManager()->tableDescriptorForAddress(firstLeafSlot);
+	MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)heap->getHeapRegionManager()->tableDescriptorForAddress(firstLeafSlot);
 
-        UDATA arrayletLeafSize = javaVM->arrayletLeafSize;
-        /* gets pagesize  or j9vmem_supported_page_sizes()[0]? */
-        UDATA pageSize = j9mmap_get_region_granularity(NULL);
+	UDATA arrayletLeafSize = javaVM->arrayletLeafSize;
+	/* gets pagesize  or j9vmem_supported_page_sizes()[0]? */
+	UDATA pageSize = j9mmap_get_region_granularity(NULL);
 
 	/* Get heap and from there call an OMR API that will doble map everything */
 	result = heap->doubleMapArraylet(env, arrayletLeaveAddrs, count, arrayletLeafSize, elementsSize, 
@@ -382,11 +384,9 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase* env, J
 		printf("Freeing dynamically allocated array!!!!\n");
 	}
 	
-	// env->getForge()->free((void*)arrayletLeaveAddrs);
-
-        if (NULL == firstLeafRegionDescriptor->_identifier.address) {
-                result = NULL;
-        }
+	if (NULL == firstLeafRegionDescriptor->_identifier.address) {
+		result = NULL;
+	}
 
 	return result;
 }
