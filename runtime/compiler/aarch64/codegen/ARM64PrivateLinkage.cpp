@@ -71,7 +71,7 @@ TR::ARM64PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)
       _properties._registerFlags[i] = Preserved; // x18 - x28 Preserved
 
    _properties._registerFlags[TR::RealRegister::x29]   = ARM64_Reserved; // FP
-   _properties._registerFlags[TR::RealRegister::x30]   = ARM64_Reserved; // LR
+   _properties._registerFlags[TR::RealRegister::lr]    = ARM64_Reserved; // LR
    _properties._registerFlags[TR::RealRegister::sp]    = ARM64_Reserved;
    _properties._registerFlags[TR::RealRegister::xzr]   = ARM64_Reserved;
 
@@ -125,8 +125,8 @@ TR::ARM64PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)
    _properties._vtableIndexArgumentRegister = TR::RealRegister::x9;
    _properties._j9methodArgumentRegister    = TR::RealRegister::x0;
 
-   // Volatile GPR (0-15) + FPR (0-31)
-   _properties._numberOfDependencyGPRegisters = 16 + 32;
+   // Volatile GPR (0-15) + FPR (0-31) + VFT Reg
+   _properties._numberOfDependencyGPRegisters = 16 + 32 + 1;
    _properties._offsetToFirstParm             = 0; // To be determined
    _properties._offsetToFirstLocal            = 0; // To be determined
    }
@@ -178,7 +178,7 @@ void TR::ARM64PrivateLinkage::initARM64RealRegisterLinkage()
    reg = machine->getRealRegister(TR::RealRegister::RegNum::x29); // FP
    lockRegister(reg);
 
-   reg = machine->getRealRegister(TR::RealRegister::RegNum::x30); // LR
+   reg = machine->getRealRegister(TR::RealRegister::RegNum::lr); // LR
    lockRegister(reg);
 
    reg = machine->getRealRegister(TR::RealRegister::RegNum::sp); // SP
@@ -285,7 +285,7 @@ void TR::ARM64PrivateLinkage::createEpilogue(TR::Instruction *cursor)
       }
 
    // restore return address
-   TR::RealRegister *lr = machine->getRealRegister(TR::RealRegister::x30); // lr
+   TR::RealRegister *lr = machine->getRealRegister(TR::RealRegister::lr);
    if (machine->getLinkRegisterKilled())
       {
       TR::MemoryReference *returnAddressMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, 0, cg());
@@ -513,7 +513,7 @@ int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
    for (int32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR; ++i)
       {
       TR::RealRegister::RegNum realReg = (TR::RealRegister::RegNum)i;
-      if (properties.getPreserved(realReg))
+      if (properties.getPreserved(realReg) || (properties.getRegisterFlags(realReg) & ARM64_Reserved))
          continue;
       if (realReg == specialArgReg)
          continue; // already added deps above.  No need to add them here.
@@ -537,6 +537,17 @@ int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
       {
       //add return floating-point register dependency
       TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)getProperties().getFloatReturnRegister(), TR_FPR, cg());
+      }
+
+   for (int32_t i = TR::RealRegister::FirstFPR; i <= TR::RealRegister::LastFPR; ++i)
+      {
+      TR::RealRegister::RegNum realReg = (TR::RealRegister::RegNum)i;
+      if (properties.getPreserved(realReg))
+         continue;
+      if (!dependencies->searchPreConditionRegister(realReg))
+         {
+         TR::addDependency(dependencies, NULL, realReg, TR_FPR, cg());
+         }
       }
 
    if (numMemArgs > 0)
