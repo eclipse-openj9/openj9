@@ -245,7 +245,7 @@ public:
 
    virtual bool isAOT_DEPRECATED_DO_NOT_USE() { return false; }
    virtual bool needsContiguousCodeAndDataCacheAllocation() { return false; }
-   virtual bool supportsMethodEntryPadding() { return true; }
+   virtual bool supportsJitMethodEntryAlignment() { return true; }
    virtual bool canUseSymbolValidationManager() { return false; }
 
 #if defined(TR_TARGET_S390)
@@ -1133,7 +1133,7 @@ public:
    virtual bool               callTargetsNeedRelocations()                    { return true; }
    virtual bool               doStringPeepholing()                            { return false; }
    virtual bool               hardwareProfilingInstructionsNeedRelocation()   { return true; }
-   virtual bool               supportsMethodEntryPadding()                    { return false; }
+   virtual bool               supportsJitMethodEntryAlignment()               { return false; }
    virtual bool               isBenefitInliningCheckIfFinalizeObject()        { return true; }
    virtual bool               needsContiguousCodeAndDataCacheAllocation()     { return true; }
    virtual bool               shouldDelayAotLoad();
