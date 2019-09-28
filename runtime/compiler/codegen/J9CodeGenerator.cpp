@@ -4543,9 +4543,9 @@ J9::CodeGenerator::wantToPatchClassPointer(const TR_OpaqueClassBlock *allegedCla
    }
 
 bool
-J9::CodeGenerator::supportsMethodEntryPadding()
+J9::CodeGenerator::supportsJitMethodEntryAlignment()
    {
-   return self()->fej9()->supportsMethodEntryPadding();
+   return self()->fej9()->supportsJitMethodEntryAlignment();
    }
 
 bool

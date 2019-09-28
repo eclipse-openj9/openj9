@@ -392,7 +392,7 @@ public:
    bool hasFixedFrameC_CallingConvention() {return _j9Flags.testAny(HasFixedFrameC_CallingConvention);}
    void setHasFixedFrameC_CallingConvention() {_j9Flags.set(HasFixedFrameC_CallingConvention);}
 
-   bool supportsMethodEntryPadding();
+   bool supportsJitMethodEntryAlignment();
 
    /** \brief
     *     Determines whether the code generator supports inlining of java/lang/Class.isAssignableFrom

@@ -221,12 +221,10 @@ J9::Power::CodeGenerator::generateBinaryEncodingPrologue(
       data->cursorInstruction = data->cursorInstruction->getNext();
       }
 
-   int32_t boundary = comp->getOptions()->getJitMethodEntryAlignmentBoundary(self());
-   if (boundary && (boundary > 4) && ((boundary & (boundary - 1)) == 0))
+   if (self()->supportsJitMethodEntryAlignment())
       {
-      comp->getOptions()->setJitMethodEntryAlignmentBoundary(boundary);
       self()->setPreJitMethodEntrySize(data->estimate);
-      data->estimate += (boundary - 4);
+      data->estimate += (self()->getJitMethodEntryAlignmentBoundary() - 1);
       }
 
    tempInstruction = data->cursorInstruction;
