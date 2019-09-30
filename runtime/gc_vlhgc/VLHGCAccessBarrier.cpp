@@ -250,6 +250,25 @@ MM_VLHGCAccessBarrier::postStoreClassToClassLoader(J9VMThread *vmThread, J9Class
 	}
 }
 
+void
+MM_VLHGCAccessBarrier::copyArrayCritical(J9VMThread* vmThread, GC_ArrayObjectModel *indexableObjectModel,
+					J9InternalVMFunctions *functions, void **data,
+					J9IndexableObject *arrayObject, jboolean *isCopy)
+{
+	I_32 sizeInElements = (I_32)indexableObjectModel->getSizeInElements(arrayObject);
+	UDATA sizeInBytes = indexableObjectModel->getDataSizeInBytes(arrayObject);
+	*data = functions->jniArrayAllocateMemoryFromThread(vmThread, sizeInBytes);
+	if (NULL == *data) {
+		functions->setNativeOutOfMemoryError(vmThread, 0, 0);	// better error message here?
+	} else {
+		indexableObjectModel->memcpyFromArray(*data, arrayObject, 0, sizeInElements);
+		vmThread->jniCriticalCopyCount += 1;
+		if (NULL != isCopy) {
+			*isCopy = JNI_TRUE;
+		}
+	}
+}
+
 void*
 MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray array, jboolean *isCopy)
 {
@@ -260,75 +279,77 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 	GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
 
 	J9IndexableObject *arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
-	bool shouldCopy = false;
 	bool alwaysCopyInCritical = (javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL;
 	if (alwaysCopyInCritical) {
-		shouldCopy = true;
+		copyArrayCritical(vmThread, indexableObjectModel, functions, &data, arrayObject, isCopy);
 	} else if (!indexableObjectModel->isInlineContiguousArraylet(arrayObject)) {
 		/* an array having discontiguous extents is another reason to force the critical section to be a copy */
-		shouldCopy = true;
-	}
-
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(vmThread);
-	bool contiguousDataAvailable = false;
-	if (shouldCopy && indexableObjectModel->isDoubleMappingEnabled()) {
-		if (indexableObjectModel->numArraylets(arrayObject) > 1) {
-			GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
-			J9Object *firstLeafSlot = objectSlot.readReferenceFromSlot();
-			MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)_extensions->heapRegionManager->tableDescriptorForAddress(firstLeafSlot);
-			data = firstLeafRegionDescriptor->_identifier.address;
+		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(vmThread);
+		if (indexableObjectModel->isDoubleMappingEnabled()) {
+			if (indexableObjectModel->isArrayletDataDiscontigous(arrayObject)) {
+				GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
+				J9Object *firstLeafSlot = objectSlot.readReferenceFromSlot();
+				MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)_extensions->heapRegionManager->tableDescriptorForAddress(firstLeafSlot);
+				data = firstLeafRegionDescriptor->_identifier.address;
 
-			if (NULL == data) {
-				/* Doublemap failed, but we still need to continue execution; therefore fallback to previous approach */
-				contiguousDataAvailable = false;
-			} else {
-				contiguousDataAvailable = true;
-			}
-		/* Corner case where there's only one arraylet leaf */
-		} else if (indexableObjectModel->numArraylets(arrayObject) == 1 && indexableObjectModel->getSizeInElements(arrayObject) > 0) {
-			/* Solo arraylet leaf is contiguous so we can simply return the data associated with it */
-			MM_JNICriticalRegion::enterCriticalRegion(vmThread, true);
-			Assert_MM_true(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS);
-			GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
-			data = objectSlot.readReferenceFromSlot();
-			contiguousDataAvailable = true;
-		}
-	}
-	if (!contiguousDataAvailable)
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
-	{
-		if (shouldCopy) {
-			I_32 sizeInElements = (I_32)indexableObjectModel->getSizeInElements(arrayObject);
-			UDATA sizeInBytes = indexableObjectModel->getDataSizeInBytes(arrayObject);
-			data = functions->jniArrayAllocateMemoryFromThread(vmThread, sizeInBytes);
-			if (NULL == data) {
-				functions->setNativeOutOfMemoryError(vmThread, 0, 0);	// better error message here?
-			} else {
-				indexableObjectModel->memcpyFromArray(data, arrayObject, 0, sizeInElements);
-				if (NULL != isCopy) {
-					*isCopy = JNI_TRUE;
+				if (NULL == data) {
+					/* Doublemap failed, but we still need to continue execution; therefore fallback to previous approach */
+					copyArrayCritical(vmThread, indexableObjectModel, functions, &data, arrayObject, isCopy);
 				}
+			/* Corner case where there's only one arraylet leaf */
+			} else if (indexableObjectModel->isArrayletDataContigous(arrayObject)) {
+				/* Solo arraylet leaf is contiguous so we can simply return the data associated with it */
+				MM_JNICriticalRegion::enterCriticalRegion(vmThread, true);
+				Assert_MM_true(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS);
+				GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
+				data = objectSlot.readReferenceFromSlot();
 			}
-			vmThread->jniCriticalCopyCount += 1;
-		} else {
-			// acquire access and return a direct pointer
-			MM_JNICriticalRegion::enterCriticalRegion(vmThread, true);
-			Assert_MM_true(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS);
-			arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
-			data = (void *)indexableObjectModel->getDataPointerForContiguous(arrayObject);
-			if (NULL != isCopy) {
-				*isCopy = JNI_FALSE;
-			}
-#if defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_MODRON_SCAVENGER)
-			/* we need to increment this region's critical count so that we know not to compact it */
-			UDATA volatile *criticalCount = &(((MM_HeapRegionDescriptorVLHGC *)_heap->getHeapRegionManager()->regionDescriptorForAddress(arrayObject))->_criticalRegionsInUse);
-			MM_AtomicOperations::add(criticalCount, 1);
-#endif /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_MODRON_SCAVENGER)*/
+		} else
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+		{
+			copyArrayCritical(vmThread, indexableObjectModel, functions, &data, arrayObject, isCopy);
 		}
+	} else {
+		// acquire access and return a direct pointer
+		MM_JNICriticalRegion::enterCriticalRegion(vmThread, true);
+		Assert_MM_true(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS);
+		arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
+		data = (void *)indexableObjectModel->getDataPointerForContiguous(arrayObject);
+		if (NULL != isCopy) {
+			*isCopy = JNI_FALSE;
+		}
+#if defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_MODRON_SCAVENGER)
+		/* we need to increment this region's critical count so that we know not to compact it */
+		UDATA volatile *criticalCount = &(((MM_HeapRegionDescriptorVLHGC *)_heap->getHeapRegionManager()->regionDescriptorForAddress(arrayObject))->_criticalRegionsInUse);
+		MM_AtomicOperations::add(criticalCount, 1);
+#endif /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_MODRON_SCAVENGER)*/
 	}
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 	return data;
+}
+
+void
+MM_VLHGCAccessBarrier::copyBackArrayCritical(J9VMThread* vmThread, GC_ArrayObjectModel *indexableObjectModel,
+					J9InternalVMFunctions *functions, void *elems,
+					J9IndexableObject **arrayObject, jint mode)
+{
+	if (JNI_ABORT != mode) {
+		I_32 sizeInElements = (I_32)indexableObjectModel->getSizeInElements(*arrayObject);
+		indexableObjectModel->memcpyToArray(*arrayObject, 0, sizeInElements, elems);
+	}
+
+	// Commit means copy the data but do not free the buffer.
+	// All other modes free the buffer.
+	if(JNI_COMMIT != mode) {
+		functions->jniArrayFreeMemoryFromThread(vmThread, elems);
+	}
+
+	if(vmThread->jniCriticalCopyCount > 0) {
+		vmThread->jniCriticalCopyCount -= 1;
+	} else {
+		Assert_MM_invalidJNICall();
+	}
 }
 
 void
@@ -340,83 +361,57 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 	GC_ArrayObjectModel *indexableObjectModel = &_extensions->indexableObjectModel;
 
 	J9IndexableObject *arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
-	bool shouldCopy = false;
 	bool alwaysCopyInCritical = (javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL;
 	if (alwaysCopyInCritical) {
-		shouldCopy = true;
+		copyBackArrayCritical(vmThread, indexableObjectModel, functions, elems, &arrayObject, mode);
 	} else if (!indexableObjectModel->isInlineContiguousArraylet(arrayObject)) {
 		/* an array having discontiguous extents is another reason to force the critical section to be a copy */
-		shouldCopy = true;
-	}
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(vmThread);
-	bool successfulDoubleMap = false;
-	if(shouldCopy && (indexableObjectModel->numArraylets(arrayObject) == 1)
-			&& indexableObjectModel->isDoubleMappingEnabled()
-			&& (indexableObjectModel->getSizeInElements(arrayObject) > 0)) {
+		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(vmThread);
+		if (indexableObjectModel->isDoubleMappingEnabled()) {
+			if (indexableObjectModel->isArrayletDataDiscontigous(arrayObject)) {
+				GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
+				J9Object *firstLeafSlot = objectSlot.readReferenceFromSlot();
+				MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)_extensions->heapRegionManager->tableDescriptorForAddress(firstLeafSlot);
+
+				if (NULL == firstLeafRegionDescriptor->_identifier.address) {
+					/* Doublemap failed, but we still need to continue execution; therefore fallback to previous approach */
+					copyBackArrayCritical(vmThread, indexableObjectModel, functions, elems, &arrayObject, mode);
+				}
+			} else if (indexableObjectModel->isArrayletDataContigous(arrayObject)) {
+				/*
+				 * Objects can not be moved if critical section is active
+				 * This trace point will be generated if object has been moved or passed value of elems is corrupted
+				 */
+				GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
+				void *data = objectSlot.readReferenceFromSlot();
+
+				if (elems != data) {
+					Trc_MM_JNIReleasePrimitiveArrayCritical_invalid(vmThread, arrayObject, elems, data);
+				}
+				MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
+			}
+		} else
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+		{
+			copyBackArrayCritical(vmThread, indexableObjectModel, functions, elems, &arrayObject, mode);
+		}
+	} else {
 		/*
 		 * Objects can not be moved if critical section is active
 		 * This trace point will be generated if object has been moved or passed value of elems is corrupted
 		 */
-		GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
-		void *data = objectSlot.readReferenceFromSlot();
-
-		if (elems != data) {
+		void *data = (void *)indexableObjectModel->getDataPointerForContiguous(arrayObject);
+		if(elems != data) {
 			Trc_MM_JNIReleasePrimitiveArrayCritical_invalid(vmThread, arrayObject, elems, data);
 		}
-		successfulDoubleMap = true;
-		MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
-	} else if (shouldCopy && indexableObjectModel->isDoubleMappingEnabled()
-			&& (indexableObjectModel->numArraylets(arrayObject) > 1)) {
-		GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
-		J9Object *firstLeafSlot = objectSlot.readReferenceFromSlot();
-
-		MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)_extensions->heapRegionManager->tableDescriptorForAddress(firstLeafSlot);
-
-		if (NULL == firstLeafRegionDescriptor->_identifier.address) {
-			/* Doublemap failed, but we still need to continue execution; therefore fallback to previous approach */
-			successfulDoubleMap = false;
-		} else {
-			successfulDoubleMap = true;
-		}
-	} 
-	if (!successfulDoubleMap)
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
-	{
-		if (shouldCopy) {
-			if (JNI_ABORT != mode) {
-				I_32 sizeInElements = (I_32)indexableObjectModel->getSizeInElements(arrayObject);
-				indexableObjectModel->memcpyToArray(arrayObject, 0, sizeInElements, elems);
-			}
-
-			// Commit means copy the data but do not free the buffer.
-			// All other modes free the buffer.
-			if(JNI_COMMIT != mode) {
-				functions->jniArrayFreeMemoryFromThread(vmThread, elems);
-			}
-
-			if(vmThread->jniCriticalCopyCount > 0) {
-				vmThread->jniCriticalCopyCount -= 1;
-			} else {
-				Assert_MM_invalidJNICall();
-			}
-		} else {
-			/*
-			 * Objects can not be moved if critical section is active
-			 * This trace point will be generated if object has been moved or passed value of elems is corrupted
-			 */
-			void *data = (void *)indexableObjectModel->getDataPointerForContiguous(arrayObject);
-			if(elems != data) {
-				Trc_MM_JNIReleasePrimitiveArrayCritical_invalid(vmThread, arrayObject, elems, data);
-			}
 #if defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_MODRON_SCAVENGER)
-			/* we need to decrement this region's critical count */
-			UDATA volatile *criticalCount = &(((MM_HeapRegionDescriptorVLHGC *)_heap->getHeapRegionManager()->regionDescriptorForAddress(arrayObject))->_criticalRegionsInUse);
-			Assert_MM_true((*criticalCount) > 0);
-			MM_AtomicOperations::subtract(criticalCount, 1);
+		/* we need to decrement this region's critical count */
+		UDATA volatile *criticalCount = &(((MM_HeapRegionDescriptorVLHGC *)_heap->getHeapRegionManager()->regionDescriptorForAddress(arrayObject))->_criticalRegionsInUse);
+		Assert_MM_true((*criticalCount) > 0);
+		MM_AtomicOperations::subtract(criticalCount, 1);
 #endif /* defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_MODRON_SCAVENGER)*/
-			MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
-		}
+		MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
 	}
 	VM_VMAccess::inlineExitVMToJNI(vmThread);
 }

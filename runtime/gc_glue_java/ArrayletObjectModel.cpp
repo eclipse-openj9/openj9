@@ -43,6 +43,14 @@ GC_ArrayletObjectModel::AssertBadElementSize()
 	Assert_MM_unreachable();
 }
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+void
+GC_ArrayletObjectModel::AssertNotEmptyArrayletLeaves(UDATA sizeInElements, UDATA arrayletLeafCount)
+{
+	Assert_MM_true(sizeInElements == 0 || arrayletLeafCount > 0);
+}
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+
 GC_ArrayletObjectModel::ArrayLayout
 GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes, UDATA largestDesirableSpine)
 {

@@ -188,6 +188,8 @@ public:
 	double initialRAMPercent; /**< Value of -XX:InitialRAMPercentage specified by the user */
 
 protected:
+private:
+protected:
 	virtual bool initialize(MM_EnvironmentBase* env);
 	virtual void tearDown(MM_EnvironmentBase* env);
 	virtual void computeDefaultMaxHeap(MM_EnvironmentBase* env);

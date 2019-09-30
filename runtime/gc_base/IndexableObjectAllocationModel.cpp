@@ -259,16 +259,11 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 		case GC_ArrayletObjectModel::Discontiguous:
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 			if (extensions->indexableObjectModel.isDoubleMappingEnabled()) {
-				Assert_MM_true(arrayoidIndex == _numberOfArraylets);
-				UDATA arrayletLeafCount = extensions->indexableObjectModel.numArraylets(spine);
-				UDATA sizeInElements = extensions->indexableObjectModel.getSizeInElements(spine);
-				Assert_MM_true(sizeInElements == 0 || arrayletLeafCount > 0);
-
-				/*
-				 * Arraylets that contain only one leaf are contiguous in nature; therefore, there's
-				 * no need to double map it
+				/**
+				 * There are some special cases where double mapping an arraylet is
+				 * not necessary; isArrayletDataDiscontigous() details those cases.
 				 */
-				if ((arrayletLeafCount > 1)) {
+				if (extensions->indexableObjectModel.isArrayletDataDiscontigous(spine)) {
 					doubleMapArraylets(env, (J9Object *)spine);
 					/* 
 					 * If doublemap fails the caller must handle it appropriatly. In case
@@ -277,7 +272,7 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 					 * but execution won't halt.
 					 */
 				}
-			} else
+			}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 			/* if last arraylet leaf is empty (contains 0 bytes) arrayoid pointer is set to NULL */
 			if (arrayoidIndex == (_numberOfArraylets - 1)) {
@@ -336,6 +331,12 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase* env, J
 	GC_ArrayletLeafIterator arrayletLeafIterator(javaVM, (J9IndexableObject*)objectPtr);
 	UDATA arrayletLeafCount = arrayletLeafIterator.getNumLeafs();
 	MM_Heap *heap = extensions->getHeap();
+	UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
+
+	/* Adjust arraylet leaf count. There might be the case where the last leaf is NULL */
+	if (_dataSize % arrayletLeafSize == 0) {
+		arrayletLeafCount -= 1;
+	}
 
 	void *result = NULL;
 
@@ -356,6 +357,10 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase* env, J
 
 	while (NULL != (slotObject = arrayletLeafIterator.nextLeafPointer())) {
 		void *currentLeaf = slotObject->readReferenceFromSlot();
+		/* In some corner cases the last leaf might be NULL therefore we must ignore it */
+		if (NULL == currentLeaf) {
+			break;
+		}
 		arrayletLeaveAddrs[count] = currentLeaf;
 		count++;
 	}
@@ -365,7 +370,6 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase* env, J
 
 	MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)heap->getHeapRegionManager()->tableDescriptorForAddress(firstLeafSlot);
 
-	UDATA arrayletLeafSize = javaVM->arrayletLeafSize;
 	/* gets pagesize  or j9vmem_supported_page_sizes()[0]? */
 	UDATA pageSize = j9mmap_get_region_granularity(NULL);
 
@@ -381,7 +385,6 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase* env, J
 	if (arrayletLeafCount > ARRAYLET_ALLOC_THRESHOLD) {
 		firstLeafRegionDescriptor->_identifier.handle = (void*)arrayletLeaveAddrs;
 		env->getForge()->free((void*)arrayletLeaveAddrs);
-		printf("Freeing dynamically allocated array!!!!\n");
 	}
 	
 	if (NULL == firstLeafRegionDescriptor->_identifier.address) {
