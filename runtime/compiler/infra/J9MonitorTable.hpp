@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,6 +67,7 @@ class OMR_EXTENSIBLE MonitorTable : public OMR::MonitorTableConnector
    int32_t readReleaseClassUnloadMonitor(int32_t compThreadIndex);
    int32_t getClassUnloadMonitorHoldCount(int32_t i) const { return _classUnloadMonitorHolders[i]; }
 
+   bool allocInitClassUnloadMonitorHolders(uint32_t allowedTotalCompThreads);
 
    private:
 
@@ -94,6 +95,7 @@ class OMR_EXTENSIBLE MonitorTable : public OMR::MonitorTableConnector
    // the classUnloadmonitor. Normally it should not be more than 1
    //
    int32_t *_classUnloadMonitorHolders;
+   uint32_t _numCompThreads;
    };
 
 }
