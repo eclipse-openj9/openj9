@@ -188,12 +188,10 @@ RUN wget https://archive.apache.org/dist/ant/binaries/apache-ant-1.10.5-bin.zip 
   && rm -rf ant-contrib
 
 # Install Cuda version 9.0
-ENV CUDA_VERSION 9.0
-ENV CUDA_HOME    /usr/local/cuda-${CUDA_VERSION}
 
-RUN mkdir -p ${CUDA_HOME}/nvvm
-COPY --from=cuda-dev ${CUDA_HOME}/include      ${CUDA_HOME}/include
-COPY --from=cuda-dev ${CUDA_HOME}/nvvm/include ${CUDA_HOME}/nvvm/include
+RUN mkdir -p /usr/local/cuda-9.0/nvvm
+COPY --from=cuda-dev /usr/local/cuda-9.0/include      /usr/local/cuda-9.0/include
+COPY --from=cuda-dev /usr/local/cuda-9.0/nvvm/include /usr/local/cuda-9.0/nvvm/include
 
 # set up sshd config
 RUN mkdir /var/run/sshd \
