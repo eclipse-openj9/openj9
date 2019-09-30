@@ -58,6 +58,7 @@
 	.extern	jitResolveStaticFieldSetter
 	.extern	jitResolveField
 	.extern	jitResolveFieldSetter
+	.extern	jitResolveVirtualMethod
 	.extern	jitResolveInterfaceMethod
 	.extern	jitLookupInterfaceMethod
 	.extern	jitCallCFunction
@@ -98,6 +99,12 @@
 	.set	J9TR_UICSnippet_CPIndex,	16
 	.set	J9TR_ICSnippet_InterfaceClass,	24
 	.set	J9TR_ICSnippet_MethodIndex,	32
+
+// Unresolved virtual call snippet
+
+	.set	J9TR_UVCSnippet_codeCacheReturnAddress,	0
+	.set	J9TR_UVCSnippet_CP,		8
+	.set	J9TR_UVCSnippet_CPIndex,	16
 
 	.text
 	.align 2
@@ -271,8 +278,58 @@ _interpreterUnresolvedInstanceDataGlue:
 _interpreterUnresolvedInstanceDataStoreGlue:
 	hlt	#0	// Not implemented yet
 
+// For virtual unresolved call, we generate following instructions
+//  movz  x9, #0
+//  movk  x9, #0, LSL #16
+//  sxtw  x9, w9
+//  ldr   dstReg, [vftReg, x9]
+//  b     VirtualUnresolvedSnippet ; change this to "blr dstReg"
+//
+// We encode the resolved index value into movz and movk instructions first
+// Then the b instruction is changed to "blr dstReg"
+//
 _virtualUnresolvedHelper:
-	hlt	#0	// Not implemented yet
+	stp	x0, x1, [J9SP, #-64]!				// save parameter regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	add	x0, x30, #J9TR_UVCSnippet_CP			// get CP/index pair pointer
+	ldr	x1, [x30, #J9TR_UVCSnippet_codeCacheReturnAddress]	// get code cache RA
+	mov	x10, x1						// protect LR in x10 (in L_commonLookupException, it is expected)
+	bl	jitResolveVirtualMethod				// resolve the method, return value = vTable offset
+	cbz	x0, L_commonLookupException			// if resolve failed, throw the exception
+	mov	x2, x0
+	sub	x0, x10, #20					// get the address of the movz instruction
+	ldr	w1, [x0]					// fetch the movz instruction
+	ubfx	x3, x2, #0, #16				// lower 16 bits of the index
+	orr	w1, w1, w3, LSL #5				// encode the index in the movz instruction
+	str	w1, [x0]					// store the movz instruction
+	ldr	w1, [x0, #4]					// fetch the movk instruction
+	ubfx	x3, x2, #16, #16				// next 16 bits of the index
+	orr	w1, w1, w3, LSL #5				// encode the index in the movk instruction
+	str	w1, [x0, #4]					// store the movk instruction
+	mov	x1, #8						// 2 instruction to flush
+	bl	flushICache
+	sub	x0, x10, #8					// get the address of the ldr instruction
+	ldr	w2, [x0]					// fetch the ldr instruction
+	ubfx	x2, x2, #0, #5					// extract the dstReg
+	ldr	w3, const_blr					// fetch constant for the blr instruction
+	orr	w3, w3, w2, LSL #5				// encode the dstReg in the blr instruction
+	sub	x0, x10, #4					// get the address of the b instruction
+	str	w3, [x0]					// store instruction
+	mov	x1, #4						// 1 instruction to flush
+	bl	flushICache
+	sub	x30, x10, #20					// set the movk instruction as the destination
+	ldp	x0, x1, [J9SP, #0]				// restore other parameter regs
+	ldp	x2, x3, [J9SP, #16]
+	ldp	x4, x5, [J9SP, #32]
+	ldp	x6, x7, [J9SP, #48]
+	add	J9SP, J9SP, #64
+	ret							// jump back to the movk instruction
+
+	.align	2
+const_blr:
+	.word	0xD63F0000
 
 // Handles calls to interface call snippets
 //
