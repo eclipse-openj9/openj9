@@ -49,7 +49,7 @@ import com.sun.tools.attach.spi.AttachProvider;
 
 @SuppressWarnings("nls")
 class TargetManager {
-	static final String COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER = "com.ibm.tools.attach.target.AttachHandler";
+	static final String OPENJ9_INTERNAL_TOOLS_ATTACH_TARGET_ATTACH_HANDLER = "openj9.internal.tools.attach.target.AttachHandler";
 	private static Logger logger = Logger.getLogger(TargetManager.class);
 	public static final String PID_PREAMBLE = "pid=";
 	public static final String VMID_PREAMBLE = "vmid=";
@@ -143,7 +143,7 @@ class TargetManager {
 	public static long getProcessId() {
 		long result = -1;
 		try {
-			Class<?> attachHandlerClass = Class.forName(TargetManager.COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
+			Class<?> attachHandlerClass = Class.forName(TargetManager.OPENJ9_INTERNAL_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
 			final Method getPid = attachHandlerClass.getMethod("getProcessId");
 			result = (long) getPid.invoke(attachHandlerClass);
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
@@ -490,7 +490,7 @@ class TargetManager {
 	 */
 	public static void dumpLogs(boolean printLogs) {
 		try {
-			Class<?> attachHandlerClass = Class.forName(COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
+			Class<?> attachHandlerClass = Class.forName(OPENJ9_INTERNAL_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
 			logger.debug("Dumping attach API logs");
 			File pwd = new File(System.getProperty("user.dir"));
 			File[] logFiles = pwd.listFiles();
@@ -518,7 +518,7 @@ class TargetManager {
 				}
 			}
 		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e1) {
-			logger.error("could not load or use " + COM_IBM_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
+			logger.error("could not load or use " + OPENJ9_INTERNAL_TOOLS_ATTACH_TARGET_ATTACH_HANDLER);
 		}
 	}
 

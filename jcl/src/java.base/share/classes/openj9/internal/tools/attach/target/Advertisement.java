@@ -1,5 +1,5 @@
-/*[INCLUDE-IF Sidecar16]*/
-package com.ibm.tools.attach.target;
+/*[INCLUDE-IF Sidecar18-SE]*/
+package openj9.internal.tools.attach.target;
 /*******************************************************************************
  * Copyright (c) 2009, 2019 IBM Corp. and others
  *
@@ -27,8 +27,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-import static com.ibm.tools.attach.target.IPC.loggingStatus;
-import static com.ibm.tools.attach.target.IPC.LOGGING_DISABLED;
+import static openj9.internal.tools.attach.target.IPC.loggingStatus;
+import static openj9.internal.tools.attach.target.IPC.LOGGING_DISABLED;
 
 public final class Advertisement {
 	private static final String KEY_ATTACH_NOTIFICATION_SYNC = "attachNotificationSync"; //$NON-NLS-1$

@@ -4351,7 +4351,7 @@ done:
 		return rc;
 	}
 
-	/* com.ibm.tools.attach.target.Attachment: private native int loadAgentLibraryImpl(ClassLoader loader, String agentLibrary, String options, boolean decorate); */
+	/* openj9.internal.tools.attach.target.Attachment: private native int loadAgentLibraryImpl(ClassLoader loader, String agentLibrary, String options, boolean decorate); */
 	VMINLINE VM_BytecodeAction
 	inlAttachmentLoadAgentLibraryImpl(REGISTER_ARGS_LIST)
 	{

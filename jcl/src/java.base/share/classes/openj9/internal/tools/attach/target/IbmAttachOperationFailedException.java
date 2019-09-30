@@ -1,5 +1,5 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
-package com.ibm.tools.attach.target;
+package openj9.internal.tools.attach.target;
 
 import java.io.IOException;
 /**

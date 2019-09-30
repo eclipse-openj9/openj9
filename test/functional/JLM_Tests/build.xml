@@ -79,7 +79,7 @@
 						<property name="addExports" value="--add-exports java.management/com.ibm.java.lang.management.internal=ALL-UNNAMED --add-exports jdk.management/com.ibm.lang.management.internal=ALL-UNNAMED --add-exports java.management/javax.management=ALL-UNNAMED --add-exports java.base/java.security=ALL-UNNAMED" />
 					</else>
 				</if>
-				<property name="TestUtilitiesExports" value="--add-exports java.base/com.ibm.tools.attach.target=ALL-UNNAMED" />
+				<property name="TestUtilitiesExports" value="--add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED" />
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<src path="${src_90}" />
