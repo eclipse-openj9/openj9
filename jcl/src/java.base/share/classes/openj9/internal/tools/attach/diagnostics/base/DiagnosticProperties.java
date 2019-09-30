@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-package openj9.tools.attach.diagnostics.base;
+package openj9.internal.tools.attach.diagnostics.base;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -30,7 +30,7 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Comparator;
 import java.util.Properties;
-import com.ibm.tools.attach.target.IPC;
+import openj9.internal.tools.attach.target.IPC;
 
 /**
  * Augments Properties with convenience methods to add ints, booleans, and
