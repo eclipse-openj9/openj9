@@ -602,7 +602,6 @@ protected:
 
    bool                          unresolvedFieldAttributes (int32_t cpIndex, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate);
    bool                          unresolvedStaticAttributes(int32_t cpIndex, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate);
-   virtual char *                fieldOrStaticNameChars(int32_t cpIndex, int32_t & len);
 
    J9ExceptionHandler * exceptionHandler();
    };

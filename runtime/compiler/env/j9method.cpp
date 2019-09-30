@@ -1435,12 +1435,6 @@ TR_ResolvedRelocatableJ9Method::setAttributeResult(bool isStaticField, bool resu
    *type = decodeType(ltype);
    }
 
-char *
-TR_ResolvedRelocatableJ9Method::fieldOrStaticNameChars(I_32 cpIndex, int32_t & len)
-   {
-   len = 0;
-   return ""; // TODO: Implement me
-   }
 
 TR::Method *   TR_ResolvedRelocatableJ9Method::convertToMethod()              { return this; }
 

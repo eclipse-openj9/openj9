@@ -274,7 +274,6 @@ protected:
    virtual void                  handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;
    virtual void                  handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;
    virtual void                  handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;
-   virtual char *                fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override;
    virtual TR_FieldAttributesCache &getAttributesCache(bool isStatic, bool unresolvedInCP=false) override;
    virtual bool validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation) override;
    UDATA getFieldType(J9ROMConstantPoolItem * CP, int32_t cpIndex);
