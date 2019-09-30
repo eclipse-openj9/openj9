@@ -140,6 +140,25 @@ elseif(OMR_ARCH_S390)
 			set(CMAKE_ASM_FLAGS "-z noexecstack -mzarch -march=z9-109 -m31")
 		endif()
 		target_include_directories(ffi PUBLIC s390)
+	elseif(OMR_OS_ZOS)
+		target_include_directories(ffi PUBLIC z)
+		if(OMR_ENV_DATA64)
+			target_sources(ffi
+				PRIVATE
+					z/closure_sysvz64.s
+					z/ffi64.c
+					z/sysvz64.s
+			)
+			target_include_directories(ffi PUBLIC preconf/mz64)
+		else()
+			target_sources(ffi
+				PRIVATE
+					z/closure_sysvz.s
+					z/ffi.c
+					z/sysvz.s
+			)
+			target_include_directories(ffi PUBLIC preconf/mz31)
+		endif()
 	else()
 		message(SEND_ERROR "Unsupported platform")
 	endif()
