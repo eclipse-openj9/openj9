@@ -357,7 +357,7 @@ TR::S390J9CallSnippet::emitSnippetBody()
          }
       else
          {
-         uintptrj_t ramMethod = (uintptr_t)methodSymbol->getMethodAddress();
+         uintptrj_t ramMethod = (uintptrj_t)methodSymRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier();
          *(uintptrj_t *) cursor = ramMethod;
          if (comp->getOption(TR_EnableHCR))
             cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);
