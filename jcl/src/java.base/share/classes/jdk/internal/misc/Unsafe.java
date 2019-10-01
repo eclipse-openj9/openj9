@@ -36,6 +36,9 @@ import jdk.internal.ref.Cleaner;
 
 public final class Unsafe {
 
+	/* Prevents this class from being instantiated. */
+	private Unsafe() {}
+	
 	/* unsafe instance */
 	private static final Unsafe theUnsafe;
 
