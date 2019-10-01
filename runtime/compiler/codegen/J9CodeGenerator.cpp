@@ -4751,7 +4751,7 @@ J9::CodeGenerator::generateCatchBlockBBStartPrologue(
       TR::Node *node,
       TR::Instruction *fenceInstruction)
    {
-   if (self()->comp()->getOptions()->getReportByteCodeInfoAtCatchBlock())
+   if (self()->comp()->fej9vm()->getReportByteCodeInfoAtCatchBlock())
       {
       // Note we should not use `fenceInstruction` here because it is not the first instruction in this BB. The first
       // instruction is a label that incoming branches will target. We will use this label (first instruction in the

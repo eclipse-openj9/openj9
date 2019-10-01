@@ -2919,8 +2919,6 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
    // On JITServer, we store this value for each client in ClientSessionData
    bool rtResolve = (bool) *((uint8_t *) options + clientOptionsSize - sizeof(bool));
    compInfoPT->getClientData()->setRtResolve(rtResolve);
-   _reportByteCodeInfoAtCatchBlock = fe->getReportByteCodeInfoAtCatchBlock();
-
    unpackRegex(options->_traceForCodeMining);
    unpackRegex(options->_disabledOptTransformations);
    unpackRegex(options->_disabledInlineSites);
