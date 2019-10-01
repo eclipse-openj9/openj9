@@ -62,13 +62,13 @@ TR::ARM64PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)
    _properties._registerFlags[TR::RealRegister::x16]   = ARM64_Reserved; // IP0
    _properties._registerFlags[TR::RealRegister::x17]   = ARM64_Reserved; // IP1
 
-   _properties._registerFlags[TR::RealRegister::x18]   = Preserved;
+   _properties._registerFlags[TR::RealRegister::x18]   = 0;
 
    _properties._registerFlags[TR::RealRegister::x19]   = Preserved|ARM64_Reserved; // vmThread
    _properties._registerFlags[TR::RealRegister::x20]   = Preserved|ARM64_Reserved; // Java SP
 
    for (i = TR::RealRegister::x21; i <= TR::RealRegister::x28; i++)
-      _properties._registerFlags[i] = Preserved; // x18 - x28 Preserved
+      _properties._registerFlags[i] = Preserved; // x21 - x28 Preserved
 
    _properties._registerFlags[TR::RealRegister::x29]   = ARM64_Reserved; // FP
    _properties._registerFlags[TR::RealRegister::lr]    = ARM64_Reserved; // LR
@@ -125,8 +125,8 @@ TR::ARM64PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)
    _properties._vtableIndexArgumentRegister = TR::RealRegister::x9;
    _properties._j9methodArgumentRegister    = TR::RealRegister::x0;
 
-   // Volatile GPR (0-15) + FPR (0-31) + VFT Reg
-   _properties._numberOfDependencyGPRegisters = 16 + 32 + 1;
+   // Volatile GPR (0-15, 18) + FPR (0-31) + VFT Reg
+   _properties._numberOfDependencyGPRegisters = 17 + 32 + 1;
    _properties._offsetToFirstParm             = 0; // To be determined
    _properties._offsetToFirstLocal            = 0; // To be determined
    }
@@ -188,9 +188,8 @@ void TR::ARM64PrivateLinkage::initARM64RealRegisterLinkage()
    for (icount = TR::RealRegister::x0; icount <= TR::RealRegister::x15; icount++)
       machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000);
 
-   // assign "maximum" weight to registers x18 and x21-x28
-   machine->getRealRegister(TR::RealRegister::RegNum::x18)->setWeight(0xf000);
-   for (icount = TR::RealRegister::x20; icount <= TR::RealRegister::x28; icount++)
+   // assign "maximum" weight to registers x21-x28
+   for (icount = TR::RealRegister::x21; icount <= TR::RealRegister::x28; icount++)
       machine->getRealRegister((TR::RealRegister::RegNum)icount)->setWeight(0xf000);
 
    // assign "maximum" weight to registers v0-v31
