@@ -1,0 +1,33 @@
+# commands 
+# %n% indicates an insert supplied for a particular command instance
+# %xx% indicates something replaced by a value elsewhere in this config file
+cmd.getCacheFileName=%java_exe% -Xshareclasses:printCacheFilename,name=%1%,persistent 
+cmd.getSnapshotFileName=%java_exe% -Xshareclasses:name=%1%,printSnapshotFilename
+cmd.getCacheFileNameNonPersist=%java_exe% -Xshareclasses:printCacheFilename,name=%1%,nonpersistent
+cmd.destroyCache=%java_exe% -Xshareclasses:name=%1%,destroy
+cmd.destroyPersistentCache=%java_exe% -Xshareclasses:name=%1%,destroy
+cmd.destroyNonPersistentCache=%java_exe% -Xshareclasses:name=%1%,nonpersistent,destroy
+cmd.destroyAllCaches=%java_exe% -Xshareclasses:destroyAll%1%
+cmd.destroyAllSnapshots=%java_exe% -Xshareclasses:destroyAllSnapshots%1%
+cmd.runSimpleJavaProgramWithPersistentCache=%java_exe% -XX:SharedCacheHardLimit=16m -Xscmx16m -Xshareclasses:name=%1%,verbose -cp . SimpleApp
+cmd.runSimpleJavaProgramWithNonPersistentCache=%java_exe% -XX:SharedCacheHardLimit=16m -Xscmx16m -Xshareclasses:name=%1%,nonpersistent,verbose -cp . SimpleApp
+cmd.runSimpleJavaProgram=%java_exe% -XX:SharedCacheHardLimit=16m -Xscmx16m -Xshareclasses:name=%1%,verbose -cp . SimpleApp
+cmd.listAllCaches=%java_exe% -Xshareclasses:listAllCaches%1%
+cmd.createNonPersistentCache=%java_exe% -XX:SharedCacheHardLimit=16m -Xscmx16m -Xshareclasses:name=%1%,nonpersistent,verbose -cp . SimpleApp
+cmd.createCacheSnapshot=%java_exe% -Xshareclasses:name=%1%,nonpersistent,snapshotCache
+cmd.expireAllCaches=%java_exe% -Xshareclasses:expire=0,verbose%1% -cp . SimpleApp
+cmd.createIncompatibleCache=%java_exe% -Xshareclasses:name=%1%,verbose -cp . SimpleApp
+cmd.runPrintStats=%java_exe% -Xshareclasses:name=%1%,printStats%2%,verbose%3%
+cmd.runPrintAllStats=%java_exe% -Xshareclasses:name=%1%,printAllStats,verbose%2%
+cmd.runResetPersistentCache=%java_exe% -Xshareclasses:name=%1%,reset,verbose -cp . ResetApp
+cmd.runResetNonPersistentCache=%java_exe% -Xshareclasses:name=%1%,reset,nonpersistent,verbose -cp . ResetApp
+cmd.runComplexJavaProgram=%java_exe% -Xshareclasses:name=%1%,verbose -Dconfig.properties=%2% %apploc% tests.sharedclasses.options.TestCorruptedCaches04Helper %1% 
+cmd.runSimpleJavaProgramWithPersistentCachePlusOptions=%java_exe% -Xshareclasses:name=%1%,verbose  %2% -cp . SimpleApp
+cmd.runSimpleJavaProgramWithPersistentCacheCheckStringTable=%java_exe% -Xtrace:none=j9shr.1547 -Xshareclasses:name=%1%,verbose,checkStringTable,verboseIntern -cp . SimpleApp
+cmd.runInfiniteLoopJavaProgramWithPersistentCache=%java_exe% -Xshareclasses:name=%1%,verbose -cp . InfiniteLoop
+cmd.runInfiniteLoopJavaProgramWithNonPersistentCache=%java_exe% -Xshareclasses:name=%1%,nonpersistent,verbose -cp . InfiniteLoop
+cmd.expireAllCachesWithTime=%java_exe% -Xshareclasses:expire=%1%,verbose%2% -cp . SimpleApp
+cmd.runHanoiProgramWithCache=%java_exe% -XX:SharedCacheHardLimit=16m -Xshareclasses:name=%1%,verbose %2% -cp utils.jar org.openj9.test.ivj.Hanoi 15
+cmd.runSimpleJavaProgramWithAgentWithPersistentCache=%java_exe% -Xshareclasses:name=%1%,verbose -agentlib:jvmtitest=test:%2%,args:%3% -cp . SimpleApp
+cmd.runSimpleJavaProgramWithAgentWithNonPersistentCache=%java_exe% -Xshareclasses:name=%1%,nonpersistent,verbose -agentlib:jvmtitest=test:%2%,args:%3% -cp . SimpleApp
+cmd.checkJavaVersion=%java_exe% -version

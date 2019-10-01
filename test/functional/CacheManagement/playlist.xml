@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2016, 2019 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
+	<include>CacheManagement.mk</include>
+	<test>
+		<testCaseName>testSCCacheManagement</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+		$(SYSV_CLEANUP) ; \
+		cp $(Q)$(TEST_RESROOT)$(D)CacheManagement.jar$(Q) .; \
+		cp $(Q)$(LIB_DIR)$(D)junit4.jar$(Q) .; \
+		cp $(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) .; \
+		true CacheManagement.jar ; \
+		true junit4.jar ; \
+		true utils.jar ; \
+		$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf CacheManagement.jar; \
+		$(CONVERT_TO_EBCDIC_CMD) \
+		$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		$(DFLT_CONFIG_FILE) \
+		-agentlib:jvmtitest=test:sca001 \
+		-DREALTIME=$(REALTIME_PLATFORM) \
+		-DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
+		-DJAVA_TEST_COMMAND=$(Q)$(JAVA_COMMAND) $(JVM_OPTIONS)$(Q)\
+		-DJAVA5_HOME=$(JAVA_HOME) \
+		$(Q)-DTEST_JVM_OPTIONS=$(JVM_OPTIONS)$(Q) \
+		-cp $(Q)CacheManagement.jar$(P)$(LIB_DIR)$(D)junit4.jar$Q \
+		junit.textui.TestRunner tests.sharedclasses.options.junit.AllTests; \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+</playlist>

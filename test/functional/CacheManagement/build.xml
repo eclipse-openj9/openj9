@@ -1,0 +1,68 @@
+<project name="CacheManagement" default="clean" basedir=".">
+	<taskdef resource='net/sf/antcontrib/antlib.xml'/>
+	<description>
+		Build CacheManagement Tests 
+	</description>
+	<import file="${TEST_ROOT}/functional/build.xml"/>
+	
+	<!-- set global properties for this build -->
+	<property name="DEST" value="${BUILD_ROOT}/functional/CacheManagement" />
+	<property name="src" location="./src"/>
+	<property name="src_80" location="./src_80"/>
+	<property name="src_90_up" location="./src_90_up"/>
+	<property name="build" location="./bin"/>
+	<property name="testcodebuild" location="./testcodebuild"/>
+	
+	<target name="init">
+		<mkdir dir="${DEST}" />
+		<mkdir dir="${build}" />
+		<mkdir dir="${testcodebuild}" />
+	</target>
+
+	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source ">
+		<echo>Ant version is ${ant.version}</echo>
+		<echo>============COMPILER SETTINGS============</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
+		<javac srcdir="./testcode" destdir="${testcodebuild}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1"/>
+		<javac srcdir="./testcode" destdir="${build}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1"/>
+		<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+			<src path="${src}"/>
+			<classpath>
+				<pathelement location="${TEST_ROOT}/TestConfig/lib/junit4.jar" />
+			</classpath>
+		</javac>
+	</target>
+	<target name="dist" depends="compile" description="generate the distribution" >
+		<!-- CONFIG ARTEFACTS & TEST ARTEFACTS - move them to the build dir... -->	
+		<copy todir="${build}">
+			<fileset dir="./configs"/>
+			<fileset dir="./testcode"/>
+		</copy>
+		<jar jarfile="${build}/testcode.jar" filesonly="true">
+			<fileset dir="${testcodebuild}"/>
+		</jar>
+		<jar jarfile="${DEST}/CacheManagement.jar" filesonly="true">
+			<fileset dir="${build}"/>
+			<fileset dir="${src}"/>
+			<fileset dir="${src}/../" includes="*.properties,*.xml" />
+		</jar>
+		<jar jarfile="${DEST}/testcode.jar" filesonly="true">
+			<fileset dir="${testcodebuild}"/>
+		</jar>
+		<copy todir="${DEST}">
+			<fileset dir="${src}/../" includes="*.xml" />
+			<fileset dir="${src}/../" includes="*.mk" />
+		</copy>
+	</target>
+    <target name="clean" depends="dist" description="clean up" >
+       <!-- Delete the ${build} directory trees -->
+       <delete dir="${build}"/>
+    </target>
+	
+    <target name="build">
+		<antcall target="clean" inheritall="true" />	
+    </target>
+</project>

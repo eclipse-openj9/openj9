@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+<suite id="CacheManagementTests launcher">
+
+	<!-- running locally we expect TEST_JAVA_HOME to be supplied, running on nescafe we will not be using it and rely on TESTBASE -->
+	<if testVariable="TEST_JAVA_HOME" testValue="" resultVariable="TEST_JAVA_HOME" resultValue="./testjdk/$BUILDNAME$/sdk"/>
+	<if testVariable="REFJAVAEXE" testValue="" resultVariable="REFJAVAEXE" resultValue="./refjdk/sdk/jre/bin/java"/>
+	
+	<variable name="JAVAEXE" value="$TEST_JAVA_HOME$/jre/bin/java"/>
+	<envvar name="JAVAEXE" value="$TEST_JAVA_HOME$/jre/bin/java"/>
+    <envvar name="JAVACEXE" value="$TEST_JAVA_HOME$/bin/javac"/>
+    <variable name="JAVACEXE" value="$TEST_JAVA_HOME$/bin/javac"/>
+    <variable name="TESTFOLDER" value="./testsuite60/SharedClasses/CacheManagement"/>
+	
+    <test id="Copy the resources across to the bin folder" timeout="600" runPath="$TESTFOLDER$">
+      <makedirectory value="bin"/>
+      <command>$JAVAEXE$ -classpath bin tests.sharedclasses.CopyResources src bin</command>
+      <return value="0"/>
+    </test>
+	
+    <test id="Create the config file" timeout="600" runPath="$TESTFOLDER$">
+      <command>$JAVAEXE$ -Dcachedir=c:/temp/testCacheDir -Dtestjava=$JAVAEXE$ -Drefjava=$REFJAVAEXE$ -classpath bin tests.sharedclasses.CreateConfig</command>
+      <return value="0"/>
+    </test>
+	
+    <test id="Run CacheManagement tests" timeout="600" runPath="$TESTFOLDER$">
+      <command>$JAVAEXE$ -Dconfig.properties=config.properties -classpath junit.jar;bin junit.textui.TestRunner tests.sharedclasses.options.junit.TestOptionsDefault</command>
+      <return value="0"/>
+    </test>
+</suite>
