@@ -236,8 +236,8 @@ doubleMaxMinHelper(TR::Node *node, TR::CodeGenerator *cg, bool isMaxOp)
  * StringUTF16.indexOf(s1Value, s1Length, s2Value, s2Length, fromIndex);
  *
  * For Java 8:
- * com.ibm.jit.JITHelpers.intrinsicIndexOfStringLatin1(char[] s1Value, int s1len, char[] s2Value, int s2len, int start);
- * com.ibm.jit.JITHelpers.intrinsicIndexOfStringUTF16(char[] s1Value, int s1len, char[] s2Value, int s2len, int start);
+ * com.ibm.jit.JITHelpers.intrinsicIndexOfStringLatin1(Object s1Value, int s1len, Object s2Value, int s2len, int start);
+ * com.ibm.jit.JITHelpers.intrinsicIndexOfStringUTF16(Object s1Value, int s1len, Object s2Value, int s2len, int start);
  *
  * Assumptions:
  *
@@ -516,7 +516,7 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
       generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelExtractFirstCharPos);
 
       generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, char1IndexReg, tmpVReg, generateS390MemoryReference(7, cg), 0);
-      generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, char1IndexReg, loadLenReg, labelStringNotFound, TR::InstOpCode::COND_BNLR);
+      generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, char1IndexReg, loadLenReg, labelStringNotFound, TR::InstOpCode::COND_BHR);
 
       generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, char1IndexReg, s1VecStartIndexReg);
       generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, char1IndexReg, maxIndexReg, labelStringNotFound, TR::InstOpCode::COND_BHR);
