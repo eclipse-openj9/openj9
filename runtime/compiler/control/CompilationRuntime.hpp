@@ -684,8 +684,9 @@ public:
 
    static int32_t getCompThreadSuspensionThreshold(int32_t threadID) { return _compThreadSuspensionThresholds[threadID]; }
 
-   // updateNumUsableCompThreads() is called before startCompilationThread() to update TR::Options::_numUsableCompilationThreads
-   // based on if it is on the JITClient side or the JITServer side.
+   // updateNumUsableCompThreads() is called before startCompilationThread() to update TR::Options::_numUsableCompilationThreads.
+   // It makes sure the number of usable compilation threads is within allowed bounds.
+   // If not, set it to the upper bound based on the mode: JITClient/non-JITServer or JITServer.
    void updateNumUsableCompThreads(int32_t &numUsableCompThreads);
    bool allocateCompilationThreads(int32_t numUsableCompThreads);
    void freeAllCompilationThreads();
@@ -959,7 +960,7 @@ public:
                              or OMRPORT_MEMINFO_NOT_AVAILABLE in case of error
    */
    uint64_t computeFreePhysicalMemory(bool &incompleteInfo);
- 
+
    /**
    * @brief Compute free physical memory taking into account container limits and caches it for later use
    *
@@ -969,7 +970,7 @@ public:
    *
    * @param incompleteInfo   [OUTPUT] Boolean indicating that cached/buffered memory couldn't be read
    * @param updatePeriodMs   Indicates how often the cached values are refreshed
-   * @return                 A value representing the free physicalMemory 
+   * @return                 A value representing the free physicalMemory
                              or OMRPORT_MEMINFO_NOT_AVAILABLE in case of error
    */
    uint64_t computeAndCacheFreePhysicalMemory(bool &incompleteInfo, int64_t updatePeriodMs=-1);
@@ -1046,8 +1047,10 @@ public:
    struct CompilationStatsPerInterval _intervalStats;
    TR_PersistentArray<TR_SignatureCountPair *> *_persistedMethods;
 
-   static const uint32_t MAX_CLIENT_USABLE_COMP_THREADS = 7;
-   static const uint32_t MAX_SERVER_USABLE_COMP_THREADS = 63;
+   // Must be less than 8 at the JITClient or non-JITServer mode.
+   // Because in some parts of the code (CHTable) we keep flags on a byte variable.
+   static const uint32_t MAX_CLIENT_USABLE_COMP_THREADS = 7;  // For JITClient and non-JITServer mode
+   static const uint32_t MAX_SERVER_USABLE_COMP_THREADS = 63; // JITServer
    static const uint32_t MAX_DIAGNOSTIC_COMP_THREADS = 1;
 
 private:
@@ -1085,7 +1088,7 @@ private:
    static int32_t *_compThreadSuspensionThresholds;
    static int32_t *_compThreadActivationThresholdsonStarvation;
 
-   TR::CompilationInfoPerThread **_arrayOfCompilationInfoPerThread; // first NULL entry means end of the array
+   TR::CompilationInfoPerThread **_arrayOfCompilationInfoPerThread; // First NULL entry means end of the array
    TR::CompilationInfoPerThread *_compInfoForDiagnosticCompilationThread; // compinfo for dump compilation thread
    TR::CompilationInfoPerThreadBase *_compInfoForCompOnAppThread; // This is NULL for separate compilation thread
    TR_MethodToBeCompiled *_methodQueue;
@@ -1187,7 +1190,7 @@ private:
 #ifdef DEBUG
    bool                   _traceCompiling;
 #endif
-   int32_t                _numCompThreads;
+   int32_t                _numCompThreads; // Number of usable compilation threads that does not include the diagnostic thread
    int32_t                _numDiagnosticThreads;
    int32_t                _iprofilerMaxCount;
    int32_t                _numGCRQueued; // how many GCR requests are in the queue
