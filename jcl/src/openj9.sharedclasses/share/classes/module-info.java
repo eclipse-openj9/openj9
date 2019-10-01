@@ -23,6 +23,10 @@
 
 /*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
 
+/**
+ * Defines the shared class cache API. Used to add shared class caching to a ClassLoader implementation.
+ * Obtain information about the current shared class cache, available shared class caches, or destroy caches.
+ */
 module openj9.sharedclasses {
   requires java.base;
   exports com.ibm.oti.shared;
