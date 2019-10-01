@@ -561,7 +561,7 @@
 	-Djdk.attach.allowAttachSelf=true \
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	--add-exports jdk.jcmd/openj9.tools.attach.diagnostics.info=ALL-UNNAMED \
-	--add-exports java.base/openj9.internal.tools.attach.diagnostics.base=ALL-UNNAMED \
+	--add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJstack \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -614,7 +614,7 @@
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	--add-exports jdk.jcmd/openj9.tools.attach.diagnostics.info=ALL-UNNAMED \
 	--add-exports jdk.attach/com.ibm.tools.attach.attacher=ALL-UNNAMED \
-	--add-exports java.base/openj9.internal.tools.attach.diagnostics.base=ALL-UNNAMED \
+	--add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJmap \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \

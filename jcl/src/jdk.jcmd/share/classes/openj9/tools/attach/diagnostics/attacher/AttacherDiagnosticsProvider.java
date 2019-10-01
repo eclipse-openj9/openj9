@@ -31,7 +31,7 @@ import java.util.Properties;
 import com.ibm.tools.attach.attacher.OpenJ9AttachProvider;
 import com.ibm.tools.attach.attacher.OpenJ9VirtualMachine;
 
-import openj9.internal.tools.attach.diagnostics.base.DiagnosticProperties;
+import openj9.internal.tools.attach.target.DiagnosticProperties;
 import openj9.internal.tools.attach.target.IPC;
 import com.sun.tools.attach.AttachNotSupportedException;
 
