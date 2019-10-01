@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-package openj9.internal.tools.attach.diagnostics.base;
+package openj9.internal.tools.attach.target;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -30,7 +30,6 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Comparator;
 import java.util.Properties;
-import openj9.internal.tools.attach.target.IPC;
 
 /**
  * Augments Properties with convenience methods to add ints, booleans, and
@@ -52,7 +51,7 @@ public class DiagnosticProperties {
 	private static final String JAVA_LANG_STRING = "java.lang.String"; //$NON-NLS-1$
 
 	/**
-	 * Set this to "true" to enable verbose mode
+	 * Set this to "true" to enable verbose mode
 	 */
 	public static final String DEBUG_PROPERTY = "openj9.tools.attach.diagnostics.debug"; //$NON-NLS-1$
 

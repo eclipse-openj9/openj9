@@ -37,8 +37,7 @@ import java.util.Objects;
 import java.util.Properties;
 
 import java.util.ServiceLoader;
-import openj9.internal.tools.attach.diagnostics.base.DiagnosticProperties;
-import openj9.internal.tools.attach.diagnostics.base.DiagnosticUtils;
+
 /*[IF Sidecar19-SE]*/
 import jdk.internal.vm.VMSupport;
 /*[ELSE] Sidecar19-SE
