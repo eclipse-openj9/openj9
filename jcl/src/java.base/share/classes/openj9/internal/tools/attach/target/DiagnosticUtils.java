@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-package openj9.internal.tools.attach.diagnostics.base;
+package openj9.internal.tools.attach.target;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -32,7 +32,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.ibm.oti.vm.VM;
-import openj9.internal.tools.attach.target.IPC;
 
 import openj9.management.internal.InvalidDumpOptionExceptionBase;
 import openj9.management.internal.LockInfoBase;

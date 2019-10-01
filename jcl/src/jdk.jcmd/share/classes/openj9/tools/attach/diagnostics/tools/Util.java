@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import openj9.internal.tools.attach.diagnostics.base.DiagnosticProperties;
+import openj9.internal.tools.attach.target.DiagnosticProperties;
 import openj9.internal.tools.attach.target.IPC;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
