@@ -52,7 +52,7 @@ public class DiagnosticProperties {
 	private static final String JAVA_LANG_STRING = "java.lang.String"; //$NON-NLS-1$
 
 	/**
-	 * Set this to "true" to enable verbose mode
+	 * Set this to "true" to enable verbose mode
 	 */
 	public static final String DEBUG_PROPERTY = "openj9.tools.attach.diagnostics.debug"; //$NON-NLS-1$
 
