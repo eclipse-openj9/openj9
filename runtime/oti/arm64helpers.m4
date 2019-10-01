@@ -27,9 +27,6 @@ define({ALen},{8})
 
 define({J9VMTHREAD},{x19})
 define({J9SP},{x20})
-define({J9PC},{x21})
-define({J9LITERALS},{x22})
-define({J9A0},{x23})
 
 define({FUNC_LABEL},{$1})
 
