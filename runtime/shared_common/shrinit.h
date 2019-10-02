@@ -97,6 +97,8 @@ typedef struct J9SharedClassesOptions {
 #define OPTION_PRINTDETAILS "printDetails"
 #define OPTION_PRINTALLSTATS "printAllStats"
 #define OPTION_PRINTALLSTATS_EQUALS "printAllStats="
+#define OPTION_PRINT_TOP_LAYER_STATS "printTopLayerStats"
+#define OPTION_PRINT_TOP_LAYER_STATS_EQUALS "printTopLayerStats="
 #define OPTION_PRINT_CACHENAME "printCacheFilename"
 #define OPTION_NAME_EQUALS "name="
 #define OPTION_DESTROY "destroy"
@@ -270,6 +272,8 @@ typedef struct J9SharedClassesOptions {
 #define RESULT_DO_DESTROYALLLAYERS 50
 #define RESULT_DO_LAYER_EQUALS 51
 #define RESULT_DO_CREATE_LAYER 52
+#define RESULT_DO_PRINT_TOP_LAYER_STATS 53
+#define RESULT_DO_PRINT_TOP_LAYER_STATS_EQUALS 54
 
 #define PARSE_TYPE_EXACT 1
 #define PARSE_TYPE_STARTSWITH 2
@@ -291,6 +295,7 @@ typedef struct J9SharedClassesOptions {
 #endif /* defined(J9ZOS390) || defined(AIXPPC) */
 #define HELPTEXT_PRINTALLSTATS_OPTION OPTION_PRINTALLSTATS"[=option[+s]]"
 #define HELPTEXT_PRINTSTATS_OPTION OPTION_PRINTSTATS"[=option[+s]]"
+#define HELPTEXT_OPTION_PRINT_TOP_LAYER_STATS OPTION_PRINT_TOP_LAYER_STATS"[=option[+s]]"
 #define HELPTEXT_STORAGE_KEY_EQUALS OPTION_STORAGE_KEY_EQUALS"<key>"
 #define HELPTEXT_INVALIDATE_AOT_METHODS_OPTION OPTION_INVALIDATE_AOT_METHODS_EQUALS"help|{<method_specification>[,<method_specification>]}"
 #define HELPTEXT_REVALIDATE_AOT_METHODS_OPTION OPTION_REVALIDATE_AOT_METHODS_EQUALS"help|{<method_specification>[,<method_specification>]}"
