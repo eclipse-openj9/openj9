@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2000, 2018 IBM Corp. and others
+Copyright (c) 2000, 2019 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,16 +30,16 @@ or shape of classes (no adding or removing fields or methods for example). The
 JIT already supported HCR, but enabling HCR support incurred a ~2-3% throughput
 performance overhead as well as a compilation time overhead. This meant that
 the JVM only enabled support for HCR if it detected agents requiring method
-redefinition at JVM startup. Oracle has long supported dynamic agent attach –
+redefinition at JVM startup. Oracle has long supported dynamic agent attach -
 they allow agents to be attached at runtime and so need to always run in HCR
 mode.
 
 The traditional means of implementing HCR support in the JIT was to add an HCR
 guard to every inlined method. The guard would patch if the method it protected
-was redefined – this stops us from executing the inlined method body and
+was redefined - this stops us from executing the inlined method body and
 instead calls the VM to run the new method implementation. The control-flow
 diamond this creates is the reason from the throughput performance overhead
-mentioned previously – the cold call on the taken side of the guard causes most
+mentioned previously - the cold call on the taken side of the guard causes most
 analyses to become very conservative due to the arbitrary nature of the code
 the call may run.
 
@@ -47,7 +47,7 @@ Unlike traditional HCR, nextGenHCR implements HCR using on-stack replacement
 (OSR). OSR is a technology introduced into the VM and JIT in Java 7.1 and which
 has had some limited usage until now. OSR allows JITed code to, optionally,
 transition execution back to the VM at well-defined points in the program.
-Achieving this transition requires some very complex mechanics as the VM’s
+Achieving this transition requires some very complex mechanics as the VM's
 bytecode stack state must be recreated from the values held in registers and on
 the stack by the JITed method implementation.
 
@@ -93,23 +93,23 @@ may see in the code, their meaning, and the different modes of OSR operation.
 
 The most fundamental construct in the OSR implementation is the OSR Point. An
 OSR point is a program execution point where the JIT may wish to transition
-execution of the method from the JITed code body back to the VM’s bytecode
+execution of the method from the JITed code body back to the VM's bytecode
 interpreter loop.
 
 ## Involuntary and Voluntary OSR
 
 OSR can operate in two modes: voluntary or involuntary. Under involuntary OSR,
 the VM controls when execution will transition from JITed code to the bytecode
-interpreter loop – this mode is used to implement Full Speed Debug. In this
+interpreter loop - this mode is used to implement Full Speed Debug. In this
 mode, any operation which may yield control to the VM may allow the VM to
-trigger an OSR transition – we view this as involuntary OSR because the JITed
+trigger an OSR transition - we view this as involuntary OSR because the JITed
 code does not control when a transition may occur. Under voluntary OSR the
 JITed code controls when to trigger an OSR transition to the VM. This mode is
 used in a number of ways by the JIT, but most notably it is the mode used to
 implement nextGenHCR. To limit the number of points where OSR transitions may
 occur under nextGenHCR, method redefinitions are only permitted at a subset of
 yield points. These include calls, asyncchecks and monitor enters. There is
-also an implicit OSR point in the method prologue due to the stack overflow. 
+also an implicit OSR point in the method prologue due to the stack overflow.
 
 ## Pre and Post Execution OSR
 
@@ -119,7 +119,7 @@ execute up to that point and reconstruct the state such that the VM's
 interpreter can begin execution of the monitor enter. Under post execution OSR,
 the transition occurs after the OSR point has been evaluated in JITed code.
 This is achieved by offsetting the desired transition bytecode index by the
-size of the OSR point’s opcode. NextGenHCR is implemented using post execution
+size of the OSR point's opcode. NextGenHCR is implemented using post execution
 OSR, such that OSR guards are taken after the yield to the VM. A significant
 concern with post execution OSR is that the transition may be delayed until
 after a series of pending push slots, such as storing a call result, to ensure
@@ -127,7 +127,7 @@ the stack is correctly represented.
 
 ## Induction and Analysis OSR
 
-There are two types of OSR points: 
+There are two types of OSR points:
 
 * Induction points: OSR points that can transition to the VM
 * Analysis points: OSR points that cannot transition to the VM, exist only to hold OSR data
@@ -156,9 +156,9 @@ reduce the constraints on other optimizations. These blocks end with an OSR
 induce, which transitions to the VM, and an exception edge to the OSR catch
 block. Once the OSR induce is called, we transition to the VM. The VM will then
 create an OSR buffer, based on the size of the stack and the number of autos it
-expects at the induce’s bytecode index. It will then execute the
-`prepareForOSR`, which will fill the buffer based on the JIT’s stack.
- 
+expects at the induce's bytecode index. It will then execute the
+`prepareForOSR`, which will fill the buffer based on the JIT's stack.
+
 ## OSR Bookkeeping
 
 To achieve these transitions, OSR bookkeeping is required at all possible OSR
@@ -172,7 +172,7 @@ their OSR catch block, which must be maintained to ensure the necessary symrefs
 are retained. Once OSRGuardInsertion and OSRExceptionEdgeRemoval are performed,
 exception edges to OSR catch blocks will be limited to the OSR induce blocks
 and the creation of OSR guards can no longer be performed.
- 
+
 ## OSR Guards
 
 OSR guards are placed after OSR points and behave similarly to HCR guards. They
@@ -199,6 +199,6 @@ the JIT has done cannot be expressed in terms of the semantics the VM would
 have executed. This is evident in the JIT's implementation of MethodHandles.
 These bytecode indices are marked as `cannotAttemptOSR` during ILGen and will not
 have OSR infrastructure generated for them or any methods inlined within them.
-All other unmarked bytecode indices in ILGen where one of nextGenHCR’s OSR
-points may be generated must correctly represent the VM’s stack with stores to
+All other unmarked bytecode indices in ILGen where one of nextGenHCR's OSR
+points may be generated must correctly represent the VM's stack with stores to
 pending push slots.

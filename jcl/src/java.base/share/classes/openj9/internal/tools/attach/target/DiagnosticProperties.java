@@ -20,7 +20,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package openj9.internal.tools.attach.target;
 
 import java.io.IOException;
@@ -34,7 +33,6 @@ import java.util.Properties;
 /**
  * Augments Properties with convenience methods to add ints, booleans, and
  * longs.
- *
  */
 public class DiagnosticProperties {
 	private final Properties baseProperties;
@@ -43,6 +41,7 @@ public class DiagnosticProperties {
 	 * Master prefix for property keys
 	 */
 	public static final String OPENJ9_DIAGNOSTICS_PREFIX = "openj9_diagnostics."; //$NON-NLS-1$
+
 	/**
 	 * Use for commands which return a single string
 	 */
@@ -66,7 +65,7 @@ public class DiagnosticProperties {
 			return null;
 		});
 	}
-	
+
 	/**
 	 * @param props Properties object received from the target.
 	 */
@@ -83,7 +82,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Add a property with an integer value.
-	 * 
+	 *
 	 * @param key   property name
 	 * @param value property value
 	 */
@@ -93,7 +92,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Add a property with a String value.
-	 * 
+	 *
 	 * @param key   property name
 	 * @param value property value
 	 */
@@ -103,7 +102,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Add a property with an long value.
-	 * 
+	 *
 	 * @param key   property name
 	 * @param value property value
 	 */
@@ -113,7 +112,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Add a property with a boolean value.
-	 * 
+	 *
 	 * @param key   property name
 	 * @param value property value
 	 */
@@ -129,7 +128,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Test if the given property is present.
-	 * 
+	 *
 	 * @param key property name
 	 * @return true if the property name is found
 	 */
@@ -139,7 +138,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Retrieve the value of a property and convert it to an int.
-	 * 
+	 *
 	 * @param key name of the property
 	 * @return value of the property as an int
 	 * @throws NumberFormatException if the value is not a string representing a
@@ -153,7 +152,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Retrieve the value of a property and convert it to an long.
-	 * 
+	 *
 	 * @param key name of the property
 	 * @return value of the property as a long
 	 * @throws NumberFormatException if the value is not a string representing a
@@ -167,7 +166,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Retrieve the value of a property and convert it to a boolean.
-	 * 
+	 *
 	 * @param key name of the property
 	 * @return value of the property as a boolean
 	 * @throws IOException if the property is missing
@@ -179,7 +178,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Return a property value for the given key.
-	 * 
+	 *
 	 * @param key property name
 	 * @return property value as a String
 	 * @throws IOException if the property is missing
@@ -191,7 +190,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Return a property value for the given key.
-	 * 
+	 *
 	 * @param key property name
 	 * @return property value or null if the property is not found
 	 */
@@ -203,7 +202,7 @@ public class DiagnosticProperties {
 	 * Retrieve a value of a simple type, i.e. boxed scalar type, from a specified
 	 * property. Return null if the type is not recognized, the value is absent, or the
 	 * value is the empty string (unless the type is String).
-	 * 
+	 *
 	 * @param typeName Fully qualified name of the type
 	 * @param key      Name of the property containing the value
 	 * @return object containing the value or null on error.
@@ -212,7 +211,7 @@ public class DiagnosticProperties {
 	public Object getSimple(String typeName, String key) throws NumberFormatException {
 		Object value = null;
 		String valueString = baseProperties.getProperty(key);
-		if ((null != valueString) && 
+		if ((null != valueString) &&
 				(JAVA_LANG_STRING.equals(typeName) || !valueString.isEmpty())) {
 			switch (typeName) {
 			case "java.lang.Boolean": //$NON-NLS-1$
@@ -251,7 +250,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Print a DiagnosticProperties object.
-	 * 
+	 *
 	 * @param msg   Message to print before properties. May be null.
 	 * @param props DiagnosticProperties object to dump
 	 */
@@ -261,7 +260,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Print a list of properties in sorted order if debugging is enabled.
-	 * 
+	 *
 	 * @param msg   Message to print before properties. May be null.
 	 * @param props Properties object to dump
 	 */
@@ -279,7 +278,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Print a Properties object in sorted key order.
-	 * 
+	 *
 	 * @param props object to dump
 	 * @return String representation of props
 	 */
@@ -294,11 +293,11 @@ public class DiagnosticProperties {
 		}
 		return buff.toString();
 	}
-	
+
 	/**
 	 * Print the result string of a command that produces a single string. Print an
 	 * error message if the command resulted in an error.
-	 * 
+	 *
 	 * @return String result or error message
 	 */
 	public String printStringResult() {
@@ -328,7 +327,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Create a properties file to hold a single string.
-	 * 
+	 *
 	 * @param text text of the string
 	 * @return DiagnosticProperties object
 	 */
@@ -340,7 +339,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Return the underlying properties object by reference.
-	 * 
+	 *
 	 * @return Properties object
 	 */
 	public Properties toProperties() {
@@ -368,7 +367,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Encode information about an exception into properties.
-	 * 
+	 *
 	 * @param e Exception object
 	 * @return Properties object
 	 */
@@ -386,7 +385,7 @@ public class DiagnosticProperties {
 
 	/**
 	 * Report the status of a command execution.
-	 * 
+	 *
 	 * @param error true if the command failed
 	 * @param msg   status message
 	 * @return DiagnosticProperties object

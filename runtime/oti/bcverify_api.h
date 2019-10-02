@@ -29,7 +29,6 @@
 *
 * This file contains public function prototypes and
 * type definitions for the BCVERIFY module.
-*
 */
 
 #include "j9.h"
@@ -49,9 +48,8 @@ extern "C" {
 * @param *verifyData
 * @return IDATA
 */
-IDATA 
+IDATA
 allocateVerifyBuffers (J9PortLibrary * portLib, J9BytecodeVerificationData *verifyData);
-
 
 /**
 * @brief
@@ -59,9 +57,8 @@ allocateVerifyBuffers (J9PortLibrary * portLib, J9BytecodeVerificationData *veri
 * @param byteCount
 * @return void*
 */
-void* 
+void*
 bcvalloc (J9BytecodeVerificationData * verifyData, UDATA byteCount);
-
 
 /**
 * @brief
@@ -69,9 +66,8 @@ bcvalloc (J9BytecodeVerificationData * verifyData, UDATA byteCount);
 * @param address
 * @return void
 */
-void 
+void
 bcvfree (J9BytecodeVerificationData * verifyData, void* address);
-
 
 /**
 * @brief
@@ -79,9 +75,8 @@ bcvfree (J9BytecodeVerificationData * verifyData, void* address);
 * @param *verifyData
 * @return void
 */
-void 
+void
 freeVerifyBuffers (J9PortLibrary * portLib, J9BytecodeVerificationData *verifyData);
-
 
 /**
 * @brief
@@ -89,18 +84,16 @@ freeVerifyBuffers (J9PortLibrary * portLib, J9BytecodeVerificationData *verifyDa
 * @param verifyData
 * @return void
 */
-void 
+void
 j9bcv_freeVerificationData (J9PortLibrary * portLib, J9BytecodeVerificationData * verifyData);
-
 
 /**
 * @brief
 * @param portLib
 * @return J9BytecodeVerificationData *
 */
-J9BytecodeVerificationData * 
+J9BytecodeVerificationData *
 j9bcv_initializeVerificationData (J9JavaVM* javaVM);
-
 
 /**
 * @brief
@@ -110,10 +103,9 @@ j9bcv_initializeVerificationData (J9JavaVM* javaVM);
 * @param verifyData
 * @return IDATA
 */
-IDATA 
+IDATA
 j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * ramClass, J9ROMClass * romClass,
 											   J9BytecodeVerificationData * verifyData);
-
 
 /**
 * @brief
@@ -122,7 +114,7 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * ramClass, J9ROMClass *
 * @param reserved
 * @return IDATA
 */
-IDATA 
+IDATA
 j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved);
 
 /* ---------------- chverify.c ---------------- */
@@ -132,7 +124,7 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved);
 * @param info
 * @return IDATA
 */
-I_32 
+I_32
 bcvCheckClassName (J9CfrConstantPoolInfo * info);
 
 /**
@@ -149,7 +141,7 @@ bcvCheckClassNameInLoading (J9CfrConstantPoolInfo * info);
 * @param info
 * @return IDATA
 */
-I_32 
+I_32
 bcvCheckName (J9CfrConstantPoolInfo * info);
 
 /**
@@ -157,7 +149,7 @@ bcvCheckName (J9CfrConstantPoolInfo * info);
 * @param info
 * @return IDATA
 */
-I_32 
+I_32
 bcvCheckMethodName (J9CfrConstantPoolInfo * info);
 
 /**
@@ -179,7 +171,7 @@ bcvIsInitOrClinit (J9CfrConstantPoolInfo * info);
 * @param sig2
 * @return UDATA
 */
-UDATA 
+UDATA
 j9bcv_checkClassLoadingConstraintsForSignature (J9VMThread* vmThread, J9ClassLoader* loader1, J9ClassLoader* loader2, J9UTF8* sig1, J9UTF8* sig2);
 
 /**
@@ -202,16 +194,15 @@ j9bcv_checkClassLoadingConstraintForName (J9VMThread* vmThread, J9ClassLoader* l
 * @param ramClass
 * @return J9Class *
 */
-J9Class * 
+J9Class *
 j9bcv_satisfyClassLoadingConstraint (J9VMThread* vmThread, J9ClassLoader* loader, J9Class* ramClass);
-
 
 /**
 * @brief
 * @param jvm
 * @return void
 */
-void 
+void
 unlinkClassLoadingConstraints (J9JavaVM* jvm);
 
 /* ---------------- classrelationships.c ---------------- */
@@ -279,7 +270,6 @@ j9bcv_hashClassRelationshipTableFree(J9VMThread *vmThread, J9ClassLoader *classL
 J9Class *
 j9rtv_verifierGetRAMClass( J9BytecodeVerificationData *verifyData, J9ClassLoader* classLoader, U_8 *className, UDATA nameLength, IDATA *reasonCode);
 
-
 /**
  * Check whether a mismatched type/error occurs in the method signature for runtime verification
  * @param verifyData - pointer to J9BytecodeVerificationData
@@ -292,7 +282,6 @@ j9rtv_verifierGetRAMClass( J9BytecodeVerificationData *verifyData, J9ClassLoader
 IDATA
 j9rtv_verifyArguments (J9BytecodeVerificationData *verifyData, J9UTF8 * utf8string, UDATA ** pStackTop);
 
-
 /**
 * @brief
 * @param *verifyData
@@ -300,7 +289,6 @@ j9rtv_verifyArguments (J9BytecodeVerificationData *verifyData, J9UTF8 * utf8stri
 */
 IDATA
 j9rtv_verifyBytecodes (J9BytecodeVerificationData *verifyData);
-
 
 /* ---------------- staticverify.c ---------------- */
 
@@ -315,7 +303,7 @@ j9rtv_verifyBytecodes (J9BytecodeVerificationData *verifyData);
 * @param hasRET
 * @return IDATA
 */
-IDATA 
+IDATA
 j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile, U_8 * segment,
 										U_8 * segmentLength, U_8 * freePointer, U_32 vmVersionShifted, U_32 flags, I_32 *hasRET);
 
@@ -351,7 +339,6 @@ IDATA j9bcv_checkFieldSignature (J9CfrConstantPoolInfo * info, UDATA currentInde
 BOOLEAN
 buildStackFromMethodSignature( J9BytecodeVerificationData *verifyData, UDATA **stackTopPtr, UDATA *argCount);
 
-
 /**
 * @brief
 * @param portLib
@@ -368,7 +355,7 @@ j9bcv_createVerifyErrorString(J9PortLibrary * portLib, J9BytecodeVerificationDat
 * @param length
 * @return UDATA
 */
-UDATA 
+UDATA
 findClassName(J9BytecodeVerificationData * verifyData, U_8 * name, UDATA length);
 
 /**
@@ -389,18 +376,16 @@ convertClassNameToStackMapType(J9BytecodeVerificationData * verifyData, U_8 *nam
 * @param bytecodes
 * @return UDATA
 */
-UDATA 
+UDATA
 getSpecialType(J9BytecodeVerificationData *verifyData, UDATA type, U_8* bytecodes);
-
 
 /**
 * @brief
 * @param *verifyData
 * @return void
 */
-void 
+void
 initializeClassNameList(J9BytecodeVerificationData *verifyData);
-
 
 /**
 * @brief
@@ -411,9 +396,8 @@ initializeClassNameList(J9BytecodeVerificationData *verifyData);
 * 	output parameter denoting error conditions
 * @return IDATA
 */
-IDATA 
+IDATA
 isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDATA targetClass, IDATA *reasonCode );
-
 
 /**
 * @brief
@@ -425,9 +409,8 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 * 	output parameter denoting error conditions
 * @return IDATA
 */
-IDATA 
+IDATA
 isClassCompatibleByName(J9BytecodeVerificationData *verifyData, UDATA sourceClass, U_8* targetClassName, UDATA targetClassNameLength, IDATA *reasonCode);
-
 
 /**
 * @brief
@@ -439,9 +422,8 @@ isClassCompatibleByName(J9BytecodeVerificationData *verifyData, UDATA sourceClas
 * 	output parameter denoting error conditions
 * @return IDATA
 */
-IDATA 
+IDATA
 isFieldAccessCompatible(J9BytecodeVerificationData * verifyData, J9ROMFieldRef * fieldRef, UDATA bytecode, UDATA receiver, IDATA *reasonCode);
-
 
 /**
 * @brief
@@ -454,7 +436,6 @@ isFieldAccessCompatible(J9BytecodeVerificationData * verifyData, J9ROMFieldRef *
 IDATA
 isInterfaceClass(J9BytecodeVerificationData * verifyData, U_8* className, UDATA classLength, IDATA *reasonCode);
 
-
 /**
 * @brief
 * @param *verifyData
@@ -466,7 +447,7 @@ isInterfaceClass(J9BytecodeVerificationData * verifyData, U_8* className, UDATA 
 * 	output parameter denoting error conditions
 * @return UDATA
 */
-UDATA 
+UDATA
 isProtectedAccessPermitted(J9BytecodeVerificationData *verifyData, J9UTF8* declaringClassName, UDATA targetClass, void* member, UDATA isField, IDATA *reasonCode);
 
 /**
@@ -475,7 +456,7 @@ isProtectedAccessPermitted(J9BytecodeVerificationData *verifyData, J9UTF8* decla
 * @param *signature
 * @return UDATA
 */
-UDATA 
+UDATA
 parseObjectOrArrayName(J9BytecodeVerificationData *verifyData, U_8 *signature);
 
 /**
@@ -488,7 +469,6 @@ parseObjectOrArrayName(J9BytecodeVerificationData *verifyData, U_8 *signature);
 UDATA *
 pushClassType(J9BytecodeVerificationData * verifyData, J9UTF8 * utf8string, UDATA * stackTop);
 
-
 /**
 * @brief
 * @param *verifyData
@@ -496,9 +476,8 @@ pushClassType(J9BytecodeVerificationData * verifyData, J9UTF8 * utf8string, UDAT
 * @param *stackTop
 * @return UDATA*
 */
-UDATA* 
+UDATA*
 pushFieldType(J9BytecodeVerificationData *verifyData, J9UTF8 * utf8string, UDATA *stackTop);
-
 
 /**
 * @brief
@@ -508,9 +487,8 @@ pushFieldType(J9BytecodeVerificationData *verifyData, J9UTF8 * utf8string, UDATA
 * @param stackTop
 * @return UDATA *
 */
-UDATA * 
+UDATA *
 pushLdcType(J9BytecodeVerificationData *verifyData, J9ROMClass * romClass, UDATA index, UDATA * stackTop);
-
 
 /**
 * @brief
@@ -519,7 +497,7 @@ pushLdcType(J9BytecodeVerificationData *verifyData, J9ROMClass * romClass, UDATA
 * @param stackTop
 * @return UDATA*
 */
-UDATA* 
+UDATA*
 pushReturnType(J9BytecodeVerificationData *verifyData, J9UTF8 * utf8string, UDATA * stackTop);
 
 /**
@@ -533,7 +511,7 @@ pushReturnType(J9BytecodeVerificationData *verifyData, J9UTF8 * utf8string, UDAT
  * Examines a Unicode character and determines if it is a valid start/part character
  * for use in Java identifiers.
  * @param testChar The character to test.
- * 
+ *
  * @return One of the following values:
  * 		VALID_START if testChar can appear in the first position of an identifier.
  * 		VALID_PART if testChar can appear in any but the first positions of an identifier.
@@ -553,4 +531,3 @@ isJavaIdentifierPart(U_32 c);
 #endif
 
 #endif /* bcverify_api_h */
-
