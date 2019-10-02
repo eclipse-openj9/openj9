@@ -78,6 +78,7 @@ public class ShrCCommand extends Command
 	private static final String rangeDelim = "..";
 	private static long cacheTotalSize = 0;
 	private static final long TYPE_PREREQ_CACHE = J9ConstantHelper.getLong(ShcdatatypesConstants.class, "TYPE_PREREQ_CACHE", -1);
+	private static final long J9SHR_DATA_TYPE_STARTUP_HINTS = J9ConstantHelper.getLong(ShCFlags.class, "J9SHR_DATA_TYPE_STARTUP_HINTS", -1);
 
 
 	public ShrCCommand()
@@ -1127,7 +1128,11 @@ public class ShrCCommand extends Command
 			CommandUtils.dbgPrint(out, "CHARARRAY data %d metadata %d\n", chararrayDataLen, chararrayMetaLen);
 			CommandUtils.dbgPrint(out, "BYTEDATA Summary\n");
 			CommandUtils.dbgPrint(out, "\tUNKNOWN %d  HELPER %d  POOL %d  AOTHEADER %d\n", numByteOfType[(int) J9SHR_DATA_TYPE_UNKNOWN], numByteOfType[(int) J9SHR_DATA_TYPE_HELPER], numByteOfType[(int) J9SHR_DATA_TYPE_POOL], numByteOfType[(int) J9SHR_DATA_TYPE_AOTHEADER]);
-			CommandUtils.dbgPrint(out, "\tJCL %d  VM %d  ROMSTRING %d  ZIPCACHE %d  STARTUPHINTS %d\n", numByteOfType[(int) J9SHR_DATA_TYPE_JCL], numByteOfType[(int) J9SHR_DATA_TYPE_VM], numByteOfType[(int) J9SHR_DATA_TYPE_ROMSTRING], numByteOfType[(int) J9SHR_DATA_TYPE_ZIPCACHE], numByteOfType[(int) J9SHR_DATA_TYPE_STARTUP_HINTS]);
+			if (J9SHR_DATA_TYPE_STARTUP_HINTS < 0) {
+				CommandUtils.dbgPrint(out, "\tJCL %d  VM %d  ROMSTRING %d  ZIPCACHE %d\n", numByteOfType[(int) J9SHR_DATA_TYPE_JCL], numByteOfType[(int) J9SHR_DATA_TYPE_VM], numByteOfType[(int) J9SHR_DATA_TYPE_ROMSTRING], numByteOfType[(int) J9SHR_DATA_TYPE_ZIPCACHE]);
+			} else {
+				CommandUtils.dbgPrint(out, "\tJCL %d  VM %d  ROMSTRING %d  ZIPCACHE %d  STARTUPHINTS %d\n", numByteOfType[(int) J9SHR_DATA_TYPE_JCL], numByteOfType[(int) J9SHR_DATA_TYPE_VM], numByteOfType[(int) J9SHR_DATA_TYPE_ROMSTRING], numByteOfType[(int) J9SHR_DATA_TYPE_ZIPCACHE], numByteOfType[(int) J9SHR_DATA_TYPE_STARTUP_HINTS]);
+			}
 			CommandUtils.dbgPrint(out, "\tJITHINT %d  AOTCLASSCHAIN %d AOTTHUNK %d\n", numByteOfType[(int) J9SHR_DATA_TYPE_JITHINT], numByteOfType[(int) J9SHR_DATA_TYPE_AOTCLASSCHAIN], numByteOfType[(int) J9SHR_DATA_TYPE_AOTTHUNK]);
 			if (cacheletMetaLen > 0) {
 				CommandUtils.dbgPrint(out, "CACHELET count %d (without segments %d) metadata %d\n", numCachelets, numCacheletsNoSegments, cacheletMetaLen);
@@ -1156,8 +1161,11 @@ public class ShrCCommand extends Command
 
 		SH_CacheMapPointer cacheMap = sharedClassConfig.sharedClassCache();
 		J9SharedClassCacheDescriptorPointer cacheDescriptor = sharedClassConfig.cacheDescriptorList();
-		/* get cacheDescriptor of layer 0 cache */
-		cacheDescriptor = cacheDescriptor.previous();
+		
+		if (topLayer > 0) {
+			/* get cacheDescriptor of layer 0 cache */
+			cacheDescriptor = cacheDescriptor.previous();
+		}
 		int layer = 0;
 		do {
 			/* TRY TO GET : cacheStartAddress */
@@ -1241,7 +1249,9 @@ public class ShrCCommand extends Command
 			if (0 == segmentPtr[layer].longValue()) {
 				CommandUtils.dbgPrint(out, "segmentPtr is zero for layer %d\n", layer);
 			}
-			cacheDescriptor = cacheDescriptor.previous();
+			if (topLayer > 0) {
+				cacheDescriptor = cacheDescriptor.previous();
+			}
 			layer += 1;
 		} while (layer <= topLayer);
 		
@@ -1909,7 +1919,7 @@ public class ShrCCommand extends Command
 			int topLayer = dbgShrcCacheTopLayer(out, sharedClassConfig);
 			int layer = (-1 == topLayer) ? -1 : 0;
 			do {
-				found = dbgShrcHeaderOperations(out, cacheStartAddressArray[layer], address, -1, layer).getV1();
+				found = dbgShrcHeaderOperations(out, (layer >= 0) ? cacheStartAddressArray[layer] : cacheStartAddress, address, -1, layer).getV1();
 				if (found) {
 					break;
 				} else if (-1 == layer) {
