@@ -425,6 +425,8 @@ public:
 	const char* getCacheUniqueID(J9VMThread* currentThread) const;
 
 	const char* getCacheName(void) const;
+	
+	I_8 getLayer(void) const;
 
 	bool verifyCacheUniqueID(J9VMThread* currentThread, const char* expectedCacheUniqueID) const;
 	

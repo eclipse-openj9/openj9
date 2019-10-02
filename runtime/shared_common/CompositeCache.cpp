@@ -7073,3 +7073,12 @@ SH_CompositeCacheImpl::getCacheName(void) const
 {
 	return _cacheName;
 }
+
+/**
+ * Return the cache layer number.
+ */
+I_8
+SH_CompositeCacheImpl::getLayer(void) const
+{
+	return _layer;
+}
