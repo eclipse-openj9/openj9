@@ -3925,9 +3925,9 @@ public class MethodHandles {
 			bodyIterationVarLength = 2;
 		}
 
-		/* As a special case, if the body contributes only V and I types, with no
-		 * additional A types, then the internal parameter list is extended by the
-		 * argument types A... of the end handle. Adjust A count to correctly verify
+		/* As a special case, if the body contributes only V and I types, with no
+		 * additional A types, then the internal parameter list is extended by the
+		 * argument types A... of the end handle. Adjust A count to correctly verify
 		 * parameters are effectively identical. Body will be altered outside of
 		 * verification.
 		 */

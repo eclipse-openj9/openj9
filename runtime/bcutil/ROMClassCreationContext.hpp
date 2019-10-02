@@ -305,9 +305,9 @@ public:
 		bool isUnsafeDefineClassSharingEnabled = J9_ARE_ALL_BITS_SET(_javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_SHAREUNSAFECLASSES);
 
 		if (isClassAnon()) {
-			/* 
-			 * Since the class loader shared classes enable flag is set properly and it is checked in the isClassLoaderSharedClassesEnabled() function
-			 * before this function is called in isROMClassShareable(). Thus, we can just assert isAnonDefineClassSharingEnabled is true
+			/*
+			 * Since the class loader shared classes enable flag is set properly and it is checked in the isClassLoaderSharedClassesEnabled() function
+			 * before this function is called in isROMClassShareable(). Thus, we can just assert isAnonDefineClassSharingEnabled is true.
 			 */
 			Trc_BCU_Assert_True(isAnonDefineClassSharingEnabled);
 			isEnabled = true;
