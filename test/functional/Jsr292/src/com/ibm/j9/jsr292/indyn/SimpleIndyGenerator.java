@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,6 +54,24 @@ public class SimpleIndyGenerator {
 		cw.visit( V1_7, ACC_PUBLIC | ACC_SUPER, "com/ibm/j9/jsr292/indyn/GenIndyn", null, "java/lang/Object", null );
 
 		MethodVisitor mv;
+		{
+			mv = cw.visitMethod( ACC_PUBLIC | ACC_STATIC, "test_CallSiteNullErrorRethrown", "()V", null, null );
+			mv.visitCode();
+			mv.visitInvokeDynamicInsn( "test_CallSiteNullErrorRethrown", "()V",
+					new Handle(
+							H_INVOKESTATIC, 
+							"com/ibm/j9/jsr292/indyn/BootstrapMethods", 
+							"bootstrap_test_CallSiteNullErrorRethrown",
+							Type.getType(
+									"(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;"
+									).getDescriptor() 
+					)
+			);
+			mv.visitInsn( RETURN );
+			mv.visitMaxs( 0, 0 );
+			mv.visitEnd();
+		}
+		
 		{
 			mv = cw.visitMethod( ACC_PUBLIC | ACC_STATIC, "indy_return_string", "()Ljava/lang/String;", null, null );
 			mv.visitCode();
