@@ -567,6 +567,7 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 						}
 						if (0 == _sharedClassConfig->readOnlyCacheRuntimeFlags) {
 							_sharedClassConfig->readOnlyCacheRuntimeFlags = (_sharedClassConfig->runtimeFlags | J9SHR_RUNTIMEFLAG_ENABLE_READONLY);
+							_sharedClassConfig->readOnlyCacheRuntimeFlags &= ~J9SHR_RUNTIMEFLAG_AUTOKILL_DIFF_BUILDID;
 							_readOnlyCacheRuntimeFlags = &_sharedClassConfig->readOnlyCacheRuntimeFlags;
 						}
 						I_8 preLayer = 0;
@@ -595,7 +596,7 @@ error:
 				if (isCcHead) {
 					cacheFileSize = _ccHead->getTotalSize();
 				}
-				handleStartupError(currentThread, ccToUse, rc, *runtimeFlags, _verboseFlags, &doRetry);
+				handleStartupError(currentThread, ccToUse, rc, *runtimeFlags, _verboseFlags, &doRetry, &deleteRC);
 
 				if (isCcHead && doRetry) {
 					if (cacheFileSize > 0) {
@@ -690,7 +691,7 @@ error:
 	} while (NULL != ccToUse && CC_STARTUP_OK == rc);
 
 	if (rc != CC_STARTUP_OK) {
-		handleStartupError(currentThread, ccToUse, rc, *runtimeFlags, _verboseFlags, &doRetry);
+		handleStartupError(currentThread, ccToUse, rc, *runtimeFlags, _verboseFlags, &doRetry, &deleteRC);
 		Trc_SHR_CM_startup_Exit1(currentThread);
 		return -1;
 	}
@@ -779,9 +780,10 @@ error:
  * @param [in] runtimeFlags  The runtime flags
  * @param [in] verboseFlags  Flags controlling the verbose output
  * @param [out] doRetry  Whether to retry starting up the cache
+ * @param [out] deleteRC  0 if cache is successful deleted, -1 otherwise.
  */
 void
-SH_CacheMap::handleStartupError(J9VMThread* currentThread, SH_CompositeCacheImpl* ccToUse, IDATA errorCode, U_64 runtimeFlags, UDATA verboseFlags, bool *doRetry)
+SH_CacheMap::handleStartupError(J9VMThread* currentThread, SH_CompositeCacheImpl* ccToUse, IDATA errorCode, U_64 runtimeFlags, UDATA verboseFlags, bool *doRetry, IDATA *deleteRC)
 {
 	PORT_ACCESS_FROM_VMC(currentThread);
 	if (errorCode == CC_STARTUP_CORRUPT) {
@@ -802,9 +804,9 @@ SH_CacheMap::handleStartupError(J9VMThread* currentThread, SH_CompositeCacheImpl
 		if ((errorCode == CC_STARTUP_CORRUPT) || (errorCode == CC_STARTUP_RESET) || (errorCode == CC_STARTUP_SOFT_RESET)) {
 			/* If SOFT_RESET, suppress verbose unless "verbose" is explicitly set
 				* This will ensure that if the VM can't destroy the cache, we don't get unwanted error messages */
-			IDATA deleteRC = ccToUse->deleteCache(currentThread, (errorCode == CC_STARTUP_SOFT_RESET) && !(verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE));
+			*deleteRC = ccToUse->deleteCache(currentThread, (errorCode == CC_STARTUP_SOFT_RESET) && !(verboseFlags & J9SHR_VERBOSEFLAG_ENABLE_VERBOSE));
 			ccToUse->cleanup(currentThread);
-			if (deleteRC == 0) {
+			if (0 == *deleteRC) {
 				if (errorCode == CC_STARTUP_CORRUPT) {
 					/* Recovering from a corrupted cache, clear the flags which prevent access */
 					resetCorruptState(currentThread, FALSE);
@@ -814,7 +816,7 @@ SH_CacheMap::handleStartupError(J9VMThread* currentThread, SH_CompositeCacheImpl
 			/* If the restored cache is corrupted, return CC_STARTUP_CORRUPT and do not retry,
 			 * as retry will create another empty cache that is not restored from the snapshot
 			 */
-				if ((deleteRC == 0) || (errorCode == CC_STARTUP_SOFT_RESET)) {
+				if ((0 == *deleteRC) || (errorCode == CC_STARTUP_SOFT_RESET)) {
 					/* If we deleted the cache, or in the case of SOFT_RESET, even if we failed to delete the cache, retry */
 					Trc_SHR_Assert_True(ccToUse == _ccHead);
 					*doRetry = true;
