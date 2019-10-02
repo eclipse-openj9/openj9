@@ -697,10 +697,10 @@ Java_com_ibm_oti_vm_VM_setDaemonThreadImpl (JNIEnv *env, jobject recv, jobject a
 void JNICALL Java_com_ibm_oti_vm_VM_dumpString(JNIEnv * env, jclass clazz, jstring str);
 jboolean JNICALL Java_com_ibm_oti_vm_VM_appendToCPNativeImpl(JNIEnv * env, jclass clazz, jstring classPathAdditions, jstring newClassPath);
 jboolean JNICALL Java_com_ibm_oti_vm_VM_isApplicationClassLoaderPresent(JNIEnv * env, jclass clazz);
-jstring JNICALL Java_openj9_internal_tools_attach_diagnostics_base_DiagnosticUtils_getHeapClassStatisticsImpl(JNIEnv * env, jclass unused);
-jobjectArray JNICALL Java_openj9_internal_tools_attach_diagnostics_base_DiagnosticUtils_dumpAllThreadsImpl(JNIEnv *env, jobject beanInstance,
+jstring JNICALL Java_openj9_internal_tools_attach_target_DiagnosticUtils_getHeapClassStatisticsImpl(JNIEnv * env, jclass unused);
+jobjectArray JNICALL Java_openj9_internal_tools_attach_target_DiagnosticUtils_dumpAllThreadsImpl(JNIEnv *env, jobject beanInstance,
 	jboolean getLockedMonitors, jboolean getLockedSynchronizers, jint maxDepth);
-jstring JNICALL Java_openj9_internal_tools_attach_diagnostics_base_DiagnosticUtils_triggerDumpsImpl(JNIEnv *env, jclass clazz, jstring opts, jstring event);
+jstring JNICALL Java_openj9_internal_tools_attach_target_DiagnosticUtils_triggerDumpsImpl(JNIEnv *env, jclass clazz, jstring opts, jstring event);
 
 /* J9SourceJclCommonInit*/
 jint computeFullVersionString (J9JavaVM* vm);
