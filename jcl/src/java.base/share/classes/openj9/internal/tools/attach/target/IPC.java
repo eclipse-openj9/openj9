@@ -46,7 +46,7 @@ import static java.nio.file.attribute.PosixFilePermission.GROUP_READ;
 import static java.nio.file.attribute.PosixFilePermission.GROUP_WRITE;
 import static java.nio.file.attribute.PosixFilePermission.OTHERS_READ;
 import static java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE;
-import static openj9.internal.tools.attach.diagnostics.base.DiagnosticProperties.OPENJ9_DIAGNOSTICS_PREFIX;
+import static openj9.internal.tools.attach.target.DiagnosticProperties.OPENJ9_DIAGNOSTICS_PREFIX;
 
 /**
  * Utility class for operating system calls

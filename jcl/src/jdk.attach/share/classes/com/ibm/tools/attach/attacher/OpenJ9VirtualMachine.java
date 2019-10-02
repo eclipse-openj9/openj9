@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 2009, 2019 IBM Corp. and others
  *
@@ -42,12 +42,12 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import openj9.internal.tools.attach.diagnostics.base.DiagnosticProperties;
-import openj9.internal.tools.attach.diagnostics.base.DiagnosticUtils;
 import openj9.internal.tools.attach.target.AttachHandler;
 import openj9.internal.tools.attach.target.AttachmentConnection;
 import openj9.internal.tools.attach.target.Command;
 import openj9.internal.tools.attach.target.CommonDirectory;
+import openj9.internal.tools.attach.target.DiagnosticProperties;
+import openj9.internal.tools.attach.target.DiagnosticUtils;
 import openj9.internal.tools.attach.target.FileLock;
 import openj9.internal.tools.attach.target.IPC;
 import openj9.internal.tools.attach.target.Reply;
