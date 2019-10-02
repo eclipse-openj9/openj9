@@ -23,6 +23,9 @@
 
 /*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
 
+/**
+ * Provides the ConditionException class for z/OS Language Environment condition handling.
+ */
 module openj9.zosconditionhandling {
   exports com.ibm.le.conditionhandling;
 }

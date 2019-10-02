@@ -23,6 +23,10 @@
 
 /*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
 
+/**
+ * Defines API for creating diagnostic dump files, querying and controlling OS logging,
+ * querying Java heap and OS memory stats, and controlling and logging trace file output. 
+ */
 module openj9.jvm {
   exports com.ibm.jvm;
 }

@@ -23,6 +23,9 @@
 
 /*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
 
+/**
+ *  Provides the traceformat utility for formatting binary trace files.
+ */
 module openj9.traceformat {
   exports com.ibm.jvm.trace.format.api;
 }
