@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,6 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package com.ibm.j9.jsr292.indyn;
+
+import org.openj9.test.util.VersionCheck;
 
 import org.testng.annotations.Test;
 import org.testng.Assert;
@@ -369,5 +371,33 @@ public class IndyTest {
 		MethodType mt = com.ibm.j9.jsr292.indyn.GenIndyn.test_boostrap_return_constant_MethodType();
 		AssertJUnit.assertEquals(expected, mt);
 		AssertJUnit.assertTrue(expected == mt);
+	}
+
+	// test that if resolved CallSite is null, the same error is rethrown
+	@Test(groups = { "level.extended" })
+	public void test_CallSiteNullErrorRethrown () {
+		/* The bootstrap method associated with the indy call in test_CallSiteNullErrorRethrown
+		 * will return null the first time its called, and a valid CallSite for all repeat calls.
+		 */
+
+		// Java 8: NullPointerException is expected on the first run
+		// Java 11: BootstrapMethodError is expected on the first run
+		try {
+			com.ibm.j9.jsr292.indyn.GenIndyn.test_CallSiteNullErrorRethrown();
+			Assert.fail("BootstrapMethodError or NullPointerException should be thrown.");
+		} catch(BootstrapMethodError e) {
+			Assert.assertTrue(VersionCheck.major() >= 11);
+		} catch (NullPointerException e) {
+			Assert.assertTrue(VersionCheck.major() == 8);
+		}
+
+		// Java 8: CallSite resolution is expected to succeed
+		// Java 11 :The same BSME is expected on the second run
+		try {
+			com.ibm.j9.jsr292.indyn.GenIndyn.test_CallSiteNullErrorRethrown();
+			Assert.assertTrue(VersionCheck.major() == 8);
+		} catch ( java.lang.BootstrapMethodError e ) {
+			Assert.assertTrue(VersionCheck.major() >= 11);			
+		}
 	}
 }
