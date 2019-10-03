@@ -117,7 +117,14 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
    bool crc32m3 = (callSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer);
 
    // TODO: How to handle discontiguous array?
+   // The specialCaseJNI shortcut will mangle register dependencies and use system/C dispatch.
+   // The addresses of the optimized helpers in the server process will not necessarily
+   // match the client-side addresses, so we can't take this shortcut in JITServer mode.
    bool specialCaseJNI = (crc32m1 || crc32m2 || crc32m3) && !comp()->requiresSpineChecks();
+
+#ifdef JITSERVER_SUPPORT
+   specialCaseJNI = specialCaseJNI && !comp()->isOutOfProcessCompilation();
+#endif
 
    bool isGPUHelper = callSymbol->isHelper() && (callSymRef->getReferenceNumber() == TR_estimateGPU ||
                                                  callSymRef->getReferenceNumber() == TR_getStateGPU ||
