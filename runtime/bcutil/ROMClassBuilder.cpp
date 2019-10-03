@@ -747,7 +747,7 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 	/* This assert will detect memory corruption when a new segment
 	 * for the ROM class was allocated using maxRequiredSize.
 	 */
-	Trc_BCU_Assert_True(romSize <= maxRequiredSize);
+	Trc_BCU_Assert_True_Level1(romSize <= maxRequiredSize);
 
 	/*
 	 * inform the allocator what the final ROMSize is
