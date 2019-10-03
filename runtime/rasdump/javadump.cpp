@@ -2019,7 +2019,8 @@ JavaCoreDumpWriter::writeHookInfo(struct OMRHookInfo4Dump *hookInfo)
 	}
 	_OutputStream.writeCharacters("\n");
 	_OutputStream.writeCharacters("4HKSTARTTIME          Start Time: ");
-	omrstr_ftime(timeStamp, _MaximumTimeStampLength, "%Y-%m-%dT%H:%M:%S", hookInfo->startTime);
+	/* timestamp(hookInfo->startTime) precision has been updated from millisecond to microsecond, hookInfo->startTime need to be changed back to millisecond for passing it to function omrstr_ftime() */
+	omrstr_ftime(timeStamp, _MaximumTimeStampLength, "%Y-%m-%dT%H:%M:%S", hookInfo->startTime/1000);
 	/* nul-terminate timestamp in case omrstr_ftime didn't have enough room to do so */
 	timeStamp[_MaximumTimeStampLength] = '\0';
 	_OutputStream.writeCharacters(timeStamp);
