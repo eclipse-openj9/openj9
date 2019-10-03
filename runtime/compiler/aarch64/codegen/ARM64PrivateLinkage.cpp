@@ -434,7 +434,7 @@ int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
          case TR::Int16:
          case TR::Int32:
          case TR::Int64:
-         case TR::Address: // have to do something for GC maps here
+         case TR::Address:
             if (childType == TR::Address)
                {
                argRegister = pushAddressArg(child);
@@ -458,7 +458,21 @@ int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
                   generateMovInstruction(cg(), callNode, tempReg, argRegister);
                   argRegister = tempReg;
                   }
-               TR::addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+               if (numIntegerArgs == 0)
+                  {
+                  // the first integer argument
+                  TR::Register *resultReg;
+                  if (resType.isAddress())
+                     resultReg = cg()->allocateCollectedReferenceRegister();
+                  else
+                     resultReg = cg()->allocateRegister();
+                  dependencies->addPreCondition(argRegister, TR::RealRegister::x0);
+                  dependencies->addPostCondition(resultReg, TR::RealRegister::x0);
+                  }
+               else
+                  {
+                  TR::addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                  }
                }
             else // numIntegerArgs >= numIntArgRegs
                {
