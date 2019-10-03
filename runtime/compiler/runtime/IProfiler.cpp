@@ -399,7 +399,7 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
       // can only persist profile info if the method is in the shared cache
       if (comp->fej9()->sharedCache()->isPointerInSharedCache(romMethod))
         {
-         TR_ASSERT(comp->fej9()->sharedCache()->isPointerInSharedCache(methodStart), "bytecodes not in shared cache");
+         TR_ASSERT(comp->fej9()->sharedCache()->isPointerInSharedCache((void *)methodStart), "bytecodes not in shared cache");
          // check if there is already an entry
          unsigned char storeBuffer[1000];
          uint32_t bufferLength = 1000;
