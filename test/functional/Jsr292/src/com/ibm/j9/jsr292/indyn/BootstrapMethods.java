@@ -45,6 +45,17 @@ import java.util.List;
 import differentpackage.CrossPackageHelper;
 
 public class BootstrapMethods {
+
+	// Bootstrap method throws null the first time, else a valid CallSite
+	private static int bootstrap_test_CallSiteNullErrorRethrown_counter = 0;
+	public static CallSite bootstrap_test_CallSiteNullErrorRethrown( Lookup lookup, String name, MethodType type ) throws Throwable {
+		if (0 == bootstrap_test_CallSiteNullErrorRethrown_counter) {
+			bootstrap_test_CallSiteNullErrorRethrown_counter++;
+			return null;
+		}
+		MethodHandle handle = lookup.findStatic( Helper.class, "voidMethod", methodType( void.class ) );
+		return new ConstantCallSite(handle);
+	}
 	
 	//Bootstrap method for constant MH test
 	public static CallSite bootstrap_constant_string( Lookup lookup, String name, MethodType type, String s1, String s2 ) {
