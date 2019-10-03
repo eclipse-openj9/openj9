@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,7 +51,7 @@ void
 GC_CheckOwnableSynchronizerList::check()
 {
 	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
-	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = _extensions->ownableSynchronizerObjectLists;
+	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = _extensions->getOwnableSynchronizerObjectLists();
 
 	MM_HeapRegionManager* heapRegionManager = _extensions->heapRegionManager;
 	UDATA maximumOwnableSynchronizerCountOnHeap = heapRegionManager->getTotalHeapSizeInBytes()/J9_GC_MINIMUM_OBJECT_SIZE;
@@ -84,7 +84,7 @@ void
 GC_CheckOwnableSynchronizerList::print()
 {
 	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
-	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = _extensions->ownableSynchronizerObjectLists;
+	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = _extensions->getOwnableSynchronizerObjectLists();
 
 	GC_ScanFormatter formatter(_portLibrary, "ownableSynchronizerObjectList");
 	while(NULL != ownableSynchronizerObjectList) {

@@ -71,7 +71,7 @@ void
 MM_OwnableSynchronizerObjectBufferRealtime::flushImpl(MM_EnvironmentBase* env)
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = &extensions->ownableSynchronizerObjectLists[_ownableSynchronizerObjectListIndex];
+	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = &extensions->getOwnableSynchronizerObjectLists()[_ownableSynchronizerObjectListIndex];
 	ownableSynchronizerObjectList->addAll(env, _head, _tail);
 	_ownableSynchronizerObjectListIndex += 1;
 	if (extensions->realtimeGC->getRealtimeDelegate()->getOwnableSynchronizerObjectListCount(env) == _ownableSynchronizerObjectListIndex) {
