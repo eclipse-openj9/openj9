@@ -482,7 +482,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._arrayletLeafSize = TR::Compiler->om.arrayletLeafSize();
          vmInfo._overflowSafeAllocSize = static_cast<uint64_t>(fe->getOverflowSafeAllocSize());
          vmInfo._compressedReferenceShift = TR::Compiler->om.compressedReferenceShift();
-         vmInfo._cacheStartAddress = fe->sharedCache() ? fe->sharedCache()->getCacheStartAddress() : 0;
+         vmInfo._j9SharedClassCacheDescriptorList = NULL;
          vmInfo._stringCompressionEnabled = fe->isStringCompressionEnabledVM();
          vmInfo._hasSharedClassCache = TR::Options::sharedClassCache();
          vmInfo._elgibleForPersistIprofileInfo = vmInfo._isIProfilerEnabled ? fe->getIProfiler()->elgibleForPersistIprofileInfo(comp) : false;
@@ -503,7 +503,25 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._floatInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactF, false, false, false)->getMethodAddress();
          vmInfo._doubleInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD, false, false, false)->getMethodAddress();
          vmInfo._interpreterVTableOffset = TR::Compiler->vm.getInterpreterVTableOffset();
-         client->write(response, vmInfo);
+
+         // For multi-layered SCC support
+         std::vector<uintptr_t> listOfCacheStartAddress;
+         std::vector<uintptr_t> listOfCacheSizeBytes;
+         if (fe->sharedCache() && fe->sharedCache()->getCacheDescriptorList())
+            {
+            // The cache descriptor list is linked last to first and is circular, so last->previous == first.
+            J9SharedClassCacheDescriptor *head = fe->sharedCache()->getCacheDescriptorList();
+            J9SharedClassCacheDescriptor *curCache = head;
+            do
+               {
+               listOfCacheStartAddress.push_back((uintptr_t)curCache->cacheStartAddress);
+               listOfCacheSizeBytes.push_back(curCache->cacheSizeBytes);
+               curCache = curCache->next;
+               }
+            while (curCache != head);
+            }
+
+         client->write(response, vmInfo, listOfCacheStartAddress, listOfCacheSizeBytes);
          }
          break;
 #endif /* defined(JITSERVER_TODO) */
