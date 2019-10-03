@@ -60,8 +60,6 @@ add_library(j9vm SHARED
 	guardedstorage.c
 	hookableAsync.c
 	initsendtarget.cpp
-	#Only on z/OS?
-	#inlineleconditionhandler.c
 	intfunc.c
 	J9OMRHelpers.cpp
 	javaPriority.c
@@ -181,7 +179,11 @@ elseif(OMR_ARCH_S390)
 		if(OMR_ENV_DATA64)
 			target_sources(j9vm PRIVATE mz64/unsafeHelper.s)
 		else()
-			target_sources(j9vm PRIVATE mz31/unsafeHelper.s)
+			target_sources(j9vm PRIVATE
+				mz31/unsafeHelper.s
+				inlineleconditionhandler.c
+				leconditionexceptionsup.c
+			)
 		endif()
 	else()
 		message(SEND_ERROR "Unsupported platform")
