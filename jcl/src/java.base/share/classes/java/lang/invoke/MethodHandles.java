@@ -4972,4 +4972,3 @@ public class MethodHandles {
 	}
 /*[ENDIF]*/	
 }
-

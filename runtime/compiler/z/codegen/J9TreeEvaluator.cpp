@@ -764,9 +764,9 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
 
    // Characters a-z (0x61-0x7A) when to upper and A-Z (0x41-0x5A) when to lower
    generateVRIaInstruction (cg, TR::InstOpCode::VLEIH, node, alphaRangeVector, isToUpper ? 0x617A : 0x415A, 0x0);
-   // Characters àáâãäåæçèéêëìíîïðñòóôõö (0xE0-0xF6) when to upper and ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ (0xC0-0xD6) when to lower
+   // Characters (0xE0-0xF6) when to upper and (0xC0-0xD6) when to lower
    generateVRIaInstruction (cg, TR::InstOpCode::VLEIH, node, alphaRangeVector, isToUpper ? 0xE0F6 : 0xC0D6, 0x1);
-   // Characters øùúûüýþ (0xF8-0xFE) when to upper and ØÙÚÛÜÝÞ (0xD8-0xDE) when to lower
+   // Characters (0xF8-0xFE) when to upper and (0xD8-0xDE) when to lower
    generateVRIaInstruction (cg, TR::InstOpCode::VLEIH, node, alphaRangeVector, isToUpper ? 0xF8FE : 0xD8DE, 0X2);
 
    if (!isCompressedString)
@@ -960,7 +960,7 @@ inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isLatin1)
    regDeps->addPostCondition(valueVector, TR::RealRegister::AssignAny);
 
    generateVRRfInstruction(cg, TR::InstOpCode::VLVGP, node, valueVector, offset, ch);
-   
+
    // Byte or halfword mask
    const int elementSizeMask = isLatin1 ? 0x0 : 0x1;
    generateVRIcInstruction(cg, TR::InstOpCode::VREP, node, valueVector, valueVector, (cg->machine()->getVRFSize() / (1 << elementSizeMask)) - 1, elementSizeMask);
@@ -3706,7 +3706,7 @@ J9::Z::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::Code
 
    // OOL code start.
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, unresolvedLabel);
- 
+
    if (isStatic)
       {
       // Fills in J9JITWatchedStaticFieldData.fieldClass.
@@ -3794,7 +3794,7 @@ J9::Z::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::Code
    }
 
 /*
- * This method will prepare the registers and then make a VM Helper call to report that a fieldwatch event has occurred 
+ * This method will prepare the registers and then make a VM Helper call to report that a fieldwatch event has occurred
  * in a Java class with field watch enabled.
  *
  * The possible VM Helpers are:
