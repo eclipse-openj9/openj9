@@ -1259,7 +1259,14 @@ public abstract class MethodHandle
 					throw WrongMethodTypeException.newWrongMethodTypeException(type, callsiteType);
 				}
 				result = cs.dynamicInvoker();
+			} 
+			/*[IF Java11]*/
+			else {
+				/* The result of the resolution of a dynamically-computed call site must not be null. */
+				/*[MSG "K0A02", "Bootstrap method returned null."]*/
+				throw new ClassCastException(Msg.getString("K0A02")); //$NON-NLS-1$
 			}
+			/*[ENDIF]*/
 		} catch(Throwable e) {
 
 			/*[IF Sidecar19-SE]*/
