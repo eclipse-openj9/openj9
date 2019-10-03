@@ -338,12 +338,12 @@ ClientSessionData::getOrCacheVMInfo(JITServer::ServerStream *stream)
    }
 
 J9SharedClassCacheDescriptor *
-ClientSessionData::reconstructJ9SharedClassCacheDescriptorList(std::vector<uintptr_t>& listOfCacheStartAddress, std::vector<uintptr_t>& listOfCacheSizeBytes)
+ClientSessionData::reconstructJ9SharedClassCacheDescriptorList(const std::vector<uintptr_t>& listOfCacheStartAddress, const std::vector<uintptr_t>& listOfCacheSizeBytes)
    {
    J9SharedClassCacheDescriptor * cur = NULL;
    J9SharedClassCacheDescriptor * prev = NULL;
    J9SharedClassCacheDescriptor * head = NULL;
-   for (int i = 0; i < listOfCacheStartAddress.size(); i++)
+   for (size_t i = 0; i < listOfCacheStartAddress.size(); i++)
       {
       cur = new (PERSISTENT_NEW) J9SharedClassCacheDescriptor();
       cur->cacheStartAddress = (J9SharedCacheHeader*)(listOfCacheStartAddress[i]);

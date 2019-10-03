@@ -527,7 +527,7 @@ TR_J9SharedCache::rememberClass(J9Class *clazz, bool create)
    LOG(5,{ log("rememberClass class %p romClass %p %.*s\n", clazz, romClass, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
 
    uintptrj_t classOffsetInCache;
-   if (!isPointerInSharedCache(clazz->romClass, &classOffsetInCache))
+   if (!isPointerInSharedCache(romClass, &classOffsetInCache))
       {
       LOG(5,{ log("\trom class not in shared cache, returning\n"); });
       return NULL;
@@ -765,7 +765,7 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
    LOG(5, { log("classMatchesCachedVersion class %p %.*s\n", clazz, J9UTF8_LENGTH(className), J9UTF8_DATA(className)); });
 
    uintptrj_t classOffsetInCache;
-   if (!isPointerInSharedCache(clazz->romClass, &classOffsetInCache))
+   if (!isPointerInSharedCache(romClass, &classOffsetInCache))
       {
       LOG(5, { log("\tclass not in shared cache, returning false\n"); });
       return false;
@@ -790,7 +790,7 @@ TR_J9SharedCache::classMatchesCachedVersion(J9Class *clazz, UDATA *chainData)
    UDATA *chainEnd = (UDATA *) (((U_8*)chainData) + chainLength);
    LOG(9, { log("\tfound chain: %p with length %d\n", chainData, chainLength); });
 
-   if (! romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
+   if (!romclassMatchesCachedVersion(romClass, chainPtr, chainEnd))
       {
          LOG(5, { log("\tClass did not match, returning false\n"); });
          return false;

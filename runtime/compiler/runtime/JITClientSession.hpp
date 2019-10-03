@@ -385,7 +385,7 @@ class ClientSessionData
    template <typename map, typename key>
    void purgeCache(std::vector<ClassUnloadedData> *unloadedClasses, map m, key ClassUnloadedData::*k);
 
-   J9SharedClassCacheDescriptor * reconstructJ9SharedClassCacheDescriptorList(std::vector<uintptr_t>& listOfCacheStartAddress, std::vector<uintptr_t>& listOfCacheSizeBytes);
+   J9SharedClassCacheDescriptor * reconstructJ9SharedClassCacheDescriptorList(const std::vector<uintptr_t>& listOfCacheStartAddress, const std::vector<uintptr_t>& listOfCacheSizeBytes);
    void destroyJ9SharedClassCacheDescriptorList();
 
    private:
