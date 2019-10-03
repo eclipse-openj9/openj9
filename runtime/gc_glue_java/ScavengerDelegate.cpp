@@ -174,7 +174,8 @@ MM_ScavengerDelegate::workerSetupForGC_clearEnvironmentLangStats(MM_EnvironmentB
 void
 MM_ScavengerDelegate::reportScavengeEnd(MM_EnvironmentBase * envBase, bool scavengeSuccessful)
 {
-	Assert_GC_true_with_message2(envBase, _extensions->scavengerJavaStats._ownableSynchronizerCandidates >= _extensions->scavengerJavaStats._ownableSynchronizerTotalSurvived,
+	/* This assert is not valid for concurrent scavenger - given mutator allocation during concurrent phase, it's possible to have more total survived than candidates*/
+	Assert_GC_true_with_message2(envBase, _extensions->isConcurrentScavengerEnabled() || _extensions->scavengerJavaStats._ownableSynchronizerCandidates >= _extensions->scavengerJavaStats._ownableSynchronizerTotalSurvived,
 			"[MM_ScavengerDelegate::reportScavengeEnd]: _extensions->scavengerJavaStats: _ownableSynchronizerCandidates=%zu < _ownableSynchronizerTotalSurvived=%zu\n", _extensions->scavengerJavaStats._ownableSynchronizerCandidates, _extensions->scavengerJavaStats._ownableSynchronizerTotalSurvived);
 
 	if (!scavengeSuccessful) {
@@ -203,6 +204,8 @@ MM_ScavengerDelegate::mergeGCStats_mergeLangStats(MM_EnvironmentBase * envBase)
 	finalGCJavaStats->_weakReferenceStats.merge(&scavJavaStats->_weakReferenceStats);
 	finalGCJavaStats->_softReferenceStats.merge(&scavJavaStats->_softReferenceStats);
 	finalGCJavaStats->_phantomReferenceStats.merge(&scavJavaStats->_phantomReferenceStats);
+
+	scavJavaStats->clear();
 }
 
 void
@@ -333,10 +336,8 @@ MM_ScavengerDelegate::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr
 		}
 		break;
 	case GC_ObjectModel::SCAN_OWNABLESYNCHRONIZER_OBJECT:
-		if (!_extensions->isConcurrentScavengerEnabled()) {
-			if (GC_ObjectScanner::isHeapScan(flags)) {
-				private_addOwnableSynchronizerObjectInList(env, objectPtr);
-			}
+		if (GC_ObjectScanner::isHeapScan(flags)) {
+			private_addOwnableSynchronizerObjectInList(env, objectPtr);
 		}
 		objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, allocSpace, flags);
 		break;
@@ -597,8 +598,10 @@ MM_ScavengerDelegate::private_addOwnableSynchronizerObjectInList(MM_EnvironmentS
 {
 	omrobjectptr_t link = MM_GCExtensions::getExtensions(_extensions)->accessBarrier->isObjectInOwnableSynchronizerList(object);
 	/* if isObjectInOwnableSynchronizerList() return NULL, it means the object isn't in OwnableSynchronizerList,
-	 * it could be the constructing object which would be added in the list after the construction finish later. ignore the object to avoid duplicated reference in the list. */
-	if (NULL != link) {
+	 * it could be the constructing object which would be added in the list after the construction finish later. ignore the object to avoid duplicated reference in the list.
+	 * For concurrent scavenger, an object that doesn't finish constructing before the start of the STW phase will be added to the list after, during the concurrent phase.
+	 * In this case, the object may already be added to the list. */
+	if (NULL != link && (!_extensions->isConcurrentScavengerEnabled() || (_extensions->isConcurrentScavengerEnabled() && !_extensions->scavenger->isObjectInNewSpace(link)))) {
 		/* this method expects the caller (scanObject) never pass the same object twice, which could cause circular loop when walk through the list.
 		 * the assertion partially could detect duplication case */
 		Assert_MM_false(_extensions->scavenger->isObjectInNewSpace(link));

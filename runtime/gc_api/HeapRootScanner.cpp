@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -466,7 +466,7 @@ MM_HeapRootScanner::scanOwnableSynchronizerObjects()
 	setReachability(RootScannerEntityReachability_Weak);
 
 	MM_ObjectAccessBarrier *barrier = _extensions->accessBarrier;
-	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = _extensions->ownableSynchronizerObjectLists;
+	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = _extensions->getOwnableSynchronizerObjectLists();
 
 	while(NULL != ownableSynchronizerObjectList) {
 		J9Object *objectPtr = ownableSynchronizerObjectList->getHeadOfList();

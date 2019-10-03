@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,12 +100,12 @@ MM_HeapRegionDescriptorVLHGC::initialize(MM_EnvironmentBase *env, MM_HeapRegionM
 	extensions->unfinalizedObjectLists = &_unfinalizedObjectList;
 
 	/* add our ownable synchronizer list to the global list (no locking - assumes single threaded initialization) */
-	_ownableSynchronizerObjectList.setNextList(extensions->ownableSynchronizerObjectLists);
+	_ownableSynchronizerObjectList.setNextList(extensions->getOwnableSynchronizerObjectLists());
 	_ownableSynchronizerObjectList.setPreviousList(NULL);
-	if (NULL != extensions->ownableSynchronizerObjectLists) {
-		extensions->ownableSynchronizerObjectLists->setPreviousList(&_ownableSynchronizerObjectList);
+	if (NULL != extensions->getOwnableSynchronizerObjectLists()) {
+		extensions->getOwnableSynchronizerObjectLists()->setPreviousList(&_ownableSynchronizerObjectList);
 	}
-	extensions->ownableSynchronizerObjectLists = &_ownableSynchronizerObjectList;
+	extensions->setOwnableSynchronizerObjectLists(&_ownableSynchronizerObjectList);
 	
 	return true;
 }
@@ -128,7 +128,7 @@ MM_HeapRegionDescriptorVLHGC::tearDown(MM_EnvironmentBase *env)
 
 	_rememberedSetCardList.tearDown(extensions);
 	extensions->unfinalizedObjectLists = NULL;
-	extensions->ownableSynchronizerObjectLists = NULL;
+	extensions->setOwnableSynchronizerObjectLists(NULL);
 
 	MM_HeapRegionDescriptor::tearDown(env);
 }
