@@ -2011,22 +2011,23 @@ JavaCoreDumpWriter::writeHookInfo(struct OMRHookInfo4Dump *hookInfo)
 	char timeStamp[_MaximumTimeStampLength + 1];
 	OMRPORT_ACCESS_FROM_OMRVM(_VirtualMachine->omrVM);
 
-	_OutputStream.writeCharacters("4HKCALLSITE           ");
+	_OutputStream.writeCharacters("4HKCALLSITE        ");
 	if (NULL != hookInfo->callsite) {
 		_OutputStream.writeCharacters(hookInfo->callsite);
 	} else {
 		_OutputStream.writePointer(hookInfo->func_ptr);
 	}
 	_OutputStream.writeCharacters("\n");
-	_OutputStream.writeCharacters("4HKSTARTTIME          Start Time: ");
-	/* timestamp(hookInfo->startTime) precision has been updated from millisecond to microsecond, hookInfo->startTime need to be changed back to millisecond for passing it to function omrstr_ftime() */
-	omrstr_ftime(timeStamp, _MaximumTimeStampLength, "%Y-%m-%dT%H:%M:%S", hookInfo->startTime/1000);
+	_OutputStream.writeCharacters("4HKSTARTTIME       Start Time: ");
+	/* convert time from microseconds to milliseconds */
+	uint64_t startTimeMs = hookInfo->startTime / 1000;
+	omrstr_ftime(timeStamp, _MaximumTimeStampLength, "%Y-%m-%dT%H:%M:%S", startTimeMs);
 	/* nul-terminate timestamp in case omrstr_ftime didn't have enough room to do so */
 	timeStamp[_MaximumTimeStampLength] = '\0';
 	_OutputStream.writeCharacters(timeStamp);
-	_OutputStream.writeInteger64(hookInfo->startTime % 1000, ".%03llu");
+	_OutputStream.writeInteger64(startTimeMs % 1000, ".%03llu");
 	_OutputStream.writeCharacters("\n");
-	_OutputStream.writeCharacters("4HKDURATION           Duration  : ");
+	_OutputStream.writeCharacters("4HKDURATION        Duration: ");
 	_OutputStream.writeInteger64(hookInfo->duration, "%llu");
 	_OutputStream.writeCharacters("us\n");
 }
@@ -2045,22 +2046,23 @@ JavaCoreDumpWriter::writeHookInterface(struct J9HookInterface **hookInterface)
 			_OutputStream.writeInteger(i, "%zu");
 			_OutputStream.writeCharacters("\n");
 
-			_OutputStream.writeCharacters("3HKCALLCOUNT       ");
+			_OutputStream.writeCharacters("3HKCALLCOUNT     ");
 			_OutputStream.writeInteger(eventDump->count, "%zu");
 			_OutputStream.writeCharacters("\n");
 
-			_OutputStream.writeCharacters("3HKTOTALTIME       ");
+			_OutputStream.writeCharacters("3HKTOTALTIME     ");
 			_OutputStream.writeInteger(eventDump->totalTime, "%zu");
 			_OutputStream.writeCharacters("us\n");
 
 			if ((NULL != eventDump->lastHook.callsite) || (NULL != eventDump->lastHook.func_ptr)) {
-				_OutputStream.writeCharacters("3HKLAST            Last Callback\n");
+				_OutputStream.writeCharacters("3HKLAST          Last Callback\n");
 				writeHookInfo(&eventDump->lastHook);
-				_OutputStream.writeCharacters("3HKLONGST          Longest Callback\n");
+				_OutputStream.writeCharacters("3HKLONGST        Longest Callback\n");
 				writeHookInfo(&eventDump->longestHook);
 			}
 			_OutputStream.writeCharacters("NULL\n");
 		}
+
 		/* reset the eventDump statistics */
 		eventDump->count = 0;
 		eventDump->totalTime = 0;
@@ -2074,7 +2076,6 @@ JavaCoreDumpWriter::writeHookInterface(struct J9HookInterface **hookInterface)
 		eventDump->lastHook.callsite = NULL;
 		eventDump->lastHook.func_ptr = NULL;
 		eventDump->lastHook.duration = 0;
-
 	}
 }
 
@@ -2502,27 +2503,33 @@ JavaCoreDumpWriter::writeClassSection(void)
  *
  * 0SECTION       HOOK subcomponent dump routine
  * NULL           ==============================
+ * 1NOTE          This data is reset after writing each javacore file
+ * NULL           ------------------------------------------------------------------------
  * 1HKINTERFACE   MM_OMRHookInterface
  * NULL           ------------------------------------------------------------------------
  * 2HKEVENTID     1
+ * 3HKCALLCOUNT     19
+ * 3HKTOTALTIME     212us
  * 3HKLAST          Last Callback
- * 4HKCALLSITE          MemoryPoolLargeObjects.cpp:115
- * 4HKSTARTTIME         Start Time: 2017-03-20T15:22:37.553
- * 4HKDURATION          DurationMs: 1
- * 3HKLONGEST       Longest Callback
- * 4HKCALLSITE          MemoryPoolLargeObjects.cpp:115
- * 4HKSTARTTIME         Start Time: 2017-03-20T15:22:35.215
- * 4HKDURATION          DurationMs: 100
+ * 4HKCALLSITE        trcengine.c:395
+ * 4HKSTARTTIME       Start Time: 2019-10-03T11:48:34.076
+ * 4HKDURATION        Duration: 10us
+ * 3HKLONGST        Longest Callback
+ * 4HKCALLSITE        trcengine.c:395
+ * 4HKSTARTTIME       Start Time: 2019-10-03T11:48:34.391
+ * 4HKDURATION        Duration: 50us
  * NULL
  * 2HKEVENTID     2
+ * 3HKCALLCOUNT     2
+ * 3HKTOTALTIME     0us
  * 3HKLAST          Last Callback
- * 4HKCALLSITE          VerboseHandlerOutputStandard.cpp:119
- * 4HKSTARTTIME         Start Time: 2017-03-20T15:22:37.553
- * 4HKDURATION          DurationMs: 1
- * 3HKLONGEST       Longest Callback
- * 4HKCALLSITE          VerboseHandlerOutputStandard.cpp:119
- * 4HKSTARTTIME         Start Time: 2017-03-20T15:22:34.015
- * 4HKDURATION          DurationMs: 1
+ * 4HKCALLSITE        jvmtiHook.c:1654
+ * 4HKSTARTTIME       Start Time: 2019-10-03T11:48:34.236
+ * 4HKDURATION        Duration: 0us
+ * 3HKLONGST        Longest Callback
+ * 4HKCALLSITE        jvmtiHook.c:1654
+ * 4HKSTARTTIME       Start Time: 2019-10-03T11:48:34.236
+ * 4HKDURATION        Duration: 0us
  * NULL
  * ...
  * 1HKINTERFACE   MM_PrivateHookInterface
@@ -2550,7 +2557,8 @@ JavaCoreDumpWriter::writeHookSection(void)
 	/* Write the section header */
 	_OutputStream.writeCharacters("0SECTION       HOOK subcomponent dump routine\n");
 	_OutputStream.writeCharacters("NULL           ==============================\n");
-	_OutputStream.writeCharacters("1NOTE          These data are reset every time a javacore is taken\n");
+	_OutputStream.writeCharacters("1NOTE          This data is reset after each javacore file is written\n");
+	_OutputStream.writeCharacters("NULL           ------------------------------------------------------------------------\n");
 	_OutputStream.writeCharacters("1HKINTERFACE   MM_OMRHookInterface\n");
 	writeHookInterface(_VirtualMachine->memoryManagerFunctions->j9gc_get_omr_hook_interface(_VirtualMachine->omrVM));
 	_OutputStream.writeCharacters("1HKINTERFACE   MM_PrivateHookInterface\n");
