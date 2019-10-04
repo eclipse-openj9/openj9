@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 def VARIABLES
+pipelineFunctions = load 'buildenv/jenkins/common/pipeline-functions.groovy'
 
 /*
 * Parses the Jenkins job variables file and populates the VARIABLES collection.
@@ -1044,15 +1045,9 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
     params.put('DISCARDER_NUM_BUILDS', DISCARDER_NUM_BUILDS)
 
     def templatePath = 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy'
-    ret = false    
-    retry(3) {
-       if (ret) {
-          sleep time: 120,unit: 'SECONDS'
-       } else {
-          ret = true
-       }
-       jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params
-    }
+    pipelineFunctions.retry_and_delay({
+        jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params}, 
+        3, 120)
 }
 
 def set_misc_variables() {
