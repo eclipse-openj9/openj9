@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,6 +51,11 @@ J9::MonitorTable::init(
    table->_portLib = portLib;
    table->_monitors.setFirst(0);
 
+   table->_numCompThreads = 0;
+   // Memory for classUnloadMonitorHolders will be allocated later in allocInitClassUnloadMonitorHolders()
+   // just before the compilation threads are started
+   table->_classUnloadMonitorHolders = NULL;
+
    // Initialize the Monitors
    if (!table->_tableMonitor.init      ("JIT-MonitorTableMonitor")) return 0;
    if (!table->_j9MemoryAllocMonitor.init("JIT-MemoryAllocMonitor")) return 0;
@@ -68,17 +73,25 @@ J9::MonitorTable::init(
    memoryAllocMonitor = table->_memoryAllocMonitor = &table->_j9MemoryAllocMonitor;
    table->_scratchMemoryPoolMonitor = &table->_j9ScratchMemoryPoolMonitor; // export this value
 
-   // Allocate and initialize the array of classUnloadMonitorHolders
-   table->_classUnloadMonitorHolders = (int32_t*)j9mem_allocate_memory(sizeof(*(table->_classUnloadMonitorHolders))*MAX_TOTAL_COMP_THREADS, J9MEM_CATEGORY_JIT);
-   if (!table->_classUnloadMonitorHolders)
-      return 0;
-   for (int32_t i = 0; i < MAX_TOTAL_COMP_THREADS; i++)
-      table->_classUnloadMonitorHolders[i] = 0;
-
    OMR::MonitorTable::_instance = table;
    return table;
    }
 
+bool
+J9::MonitorTable::allocInitClassUnloadMonitorHolders(uint32_t allowedTotalCompThreads)
+   {
+   PORT_ACCESS_FROM_PORT(_portLib);
+
+   _numCompThreads = allowedTotalCompThreads;
+   // Allocate and initialize the array of classUnloadMonitorHolders
+   _classUnloadMonitorHolders = (int32_t*)j9mem_allocate_memory(sizeof(*(_classUnloadMonitorHolders)) * _numCompThreads, J9MEM_CATEGORY_JIT);
+   if (!_classUnloadMonitorHolders)
+      return false;
+   for (int32_t i = 0; i < _numCompThreads; i++)
+      _classUnloadMonitorHolders[i] = 0;
+
+   return true;
+   }
 
 TR::Monitor *
 J9::MonitorTable::create(char *name)
@@ -228,7 +241,7 @@ J9::MonitorTable::readAcquireClassUnloadMonitor(int32_t compThreadIndex)
    {
    _classUnloadMonitor.enter_read();
    // Need to determine the identity of the compilation thread
-   TR_ASSERT(compThreadIndex < MAX_TOTAL_COMP_THREADS, "compThreadIndex is too high");
+   TR_ASSERT(compThreadIndex < _numCompThreads, "compThreadIndex is too high");
    return ++(_classUnloadMonitorHolders[compThreadIndex]);
    }
 
@@ -236,7 +249,7 @@ J9::MonitorTable::readAcquireClassUnloadMonitor(int32_t compThreadIndex)
 int32_t
 J9::MonitorTable::readReleaseClassUnloadMonitor(int32_t compThreadIndex)
    {
-   TR_ASSERT(compThreadIndex < MAX_TOTAL_COMP_THREADS, "compThreadIndex is too high");
+   TR_ASSERT(compThreadIndex < _numCompThreads, "compThreadIndex is too high");
    if (_classUnloadMonitorHolders[compThreadIndex] > 0)
       {
       _classUnloadMonitorHolders[compThreadIndex]--;
