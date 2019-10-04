@@ -908,7 +908,7 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    {
    // At this point, compilation threads have not been fully started yet. getNumTotalCompilationThreads()
    // would not return a correct value. Need to use TR::Options::_numUsableCompilationThreads
-   TR_ASSERT(_compThreadId < (TR::Options::_numUsableCompilationThreads + TR::CompilationInfo::MAX_DIAGNOSTIC_COMP_THREADS),
+   TR_ASSERT_FATAL(_compThreadId < (TR::Options::_numUsableCompilationThreads + TR::CompilationInfo::MAX_DIAGNOSTIC_COMP_THREADS),
              "Cannot have a compId %d greater than %u", _compThreadId, (TR::Options::_numUsableCompilationThreads + TR::CompilationInfo::MAX_DIAGNOSTIC_COMP_THREADS));
    }
 
@@ -927,7 +927,7 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
    // name the thread
    //
    // NOTE:
-   //      increasing MAX_*_COMP_THREADS over 3 digits requires an
+   //      increasing MAX_*_COMP_THREADS over three digits requires an
    //      increase in the length of _activeThreadName and _suspendedThreadName
 
    // constant thread name formats
@@ -944,7 +944,7 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
    // determine the correct name to use, and its length
    //
    // NOTE:
-   //       using sizeof(...) - 1 because the characters "%d" will be replaced by one digit;
+   //       using sizeof(...) - 1 because the characters "%3d" will be replaced by three digits;
    //       the null character however *is* counted by sizeof
    if (isDiagnosticThread)
       {
@@ -2641,6 +2641,7 @@ int32_t *TR::CompilationInfo::_compThreadActivationThresholdsonStarvation = NULL
 
 void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThreads)
    {
+#if defined(JITSERVER_SUPPORT)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       numUsableCompThreads = ((numUsableCompThreads < 0) ||
@@ -2648,6 +2649,7 @@ void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThrea
                                MAX_SERVER_USABLE_COMP_THREADS : numUsableCompThreads;
       }
    else
+#endif /* defined(JITSERVER_SUPPORT) */
       {
       numUsableCompThreads = ((numUsableCompThreads < 0) ||
                               (numUsableCompThreads > MAX_CLIENT_USABLE_COMP_THREADS)) ?
@@ -2670,12 +2672,14 @@ TR::CompilationInfo::allocateCompilationThreads(int32_t numUsableCompThreads)
    TR_ASSERT((numUsableCompThreads == TR::Options::_numUsableCompilationThreads),
              "numUsableCompThreads %d is not equal to the Option value %d", numUsableCompThreads, TR::Options::_numUsableCompilationThreads);
 
+#if defined(JITSERVER_SUPPORT)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       TR_ASSERT((0 < numUsableCompThreads) && (numUsableCompThreads <= MAX_SERVER_USABLE_COMP_THREADS),
                "numUsableCompThreads %d is greater than supported %d", numUsableCompThreads, MAX_SERVER_USABLE_COMP_THREADS);
       }
    else
+#endif /* defined(JITSERVER_SUPPORT) */
       {
       TR_ASSERT((0 < numUsableCompThreads) && (numUsableCompThreads <= MAX_CLIENT_USABLE_COMP_THREADS),
                "numUsableCompThreads %d is greater than supported %d", numUsableCompThreads, MAX_CLIENT_USABLE_COMP_THREADS);
@@ -2705,11 +2709,11 @@ TR::CompilationInfo::allocateCompilationThreads(int32_t numUsableCompThreads)
       //                 the queueWeight has to be below 10 to suspend second comp thread
       // For example:
       // compThreadActivationThresholds[MAX_TOTAL_COMP_THREADS+1] = {-1, 100, 200, 300, 400, 500, 600, 700, 800};
-      // compThreadSuspensionThresholds[MAX_TOTAL_COMP_THREADS+1] = {-1,  -1,  10,  110, 210, 310, 410, 510, 610};
+      // compThreadSuspensionThresholds[MAX_TOTAL_COMP_THREADS+1] = {-1,  -1,  10, 110, 210, 310, 410, 510, 610};
       // compThreadActivationThresholdsonStarvation[MAX_TOTAL_COMP_THREADS+1] = {-1, 800, 1600, 3200, 6400, 12800, 19200, 25600, 32000};
       _compThreadActivationThresholds[0] = -1;
       _compThreadActivationThresholds[1] = 100;
-      _compThreadActivationThresholds[2] = _compThreadSuspensionThresholds[1] + 100;
+      _compThreadActivationThresholds[2] = 200;
 
       _compThreadSuspensionThresholds[0] = -1;
       _compThreadSuspensionThresholds[1] = -1;
@@ -2765,6 +2769,8 @@ TR::CompilationInfo::freeAllCompilationThreads()
 
    if (_arrayOfCompilationInfoPerThread)
       {
+      // TODO: Need to properly free all dynamically allocated objects from
+      // CompilationInfoPerThread and CompilationInfoPerThreadRemote first
       jitPersistentFree(_arrayOfCompilationInfoPerThread);
       }
    }
@@ -2805,9 +2811,14 @@ TR::CompilationInfo::startCompilationThread(int32_t priority, int32_t threadId, 
    setCompBudget(TR::Options::_compilationBudget); // might do it several time, but it does not hurt
 
    // Create a compInfo for this thread
+#if defined(JITSERVER_SUPPORT)
    TR::CompilationInfoPerThread  *compInfoPT = getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ?
       new (persistentMemory()) TR::CompilationInfoPerThreadRemote(*this, _jitConfig, threadId, isDiagnosticThread) :
       new (persistentMemory()) TR::CompilationInfoPerThread(*this, _jitConfig, threadId, isDiagnosticThread);
+#else
+   TR::CompilationInfoPerThread  *compInfoPT = new (persistentMemory()) TR::CompilationInfoPerThread(*this, _jitConfig, threadId, isDiagnosticThread);
+#endif /* defined(JITSERVER_SUPPORT) */
+
    if (!compInfoPT || !compInfoPT->initializationSucceeded() || !compInfoPT->getCompThreadMonitor())
       return 1; // TODO must deallocate some things in compInfoPT as well as the memory for it
 
