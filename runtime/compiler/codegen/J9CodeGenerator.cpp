@@ -1086,6 +1086,15 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          if (!allowedToReserve)
             {
             persistentClassInfo->setReservable(false);
+#if defined(JITSERVER_SUPPORT)
+            // This is currently the only place where this flag gets cleared. For JITServer, we should propagate it to the client,
+            // to avoid having to call scanForNativeMethodsUntilMonitorNode again.
+            if (auto stream = TR::CompilationInfo::getStream())
+               {
+               stream->write(JITServer::MessageType::CHTable_clearReservable, classPointer);
+               // No response necessary - we can continue concurrently
+               }
+#endif /* defined(JITSERVER_SUPPORT) */
             }
          }
       }
@@ -2486,9 +2495,9 @@ J9::CodeGenerator::processRelocations()
 
    int32_t missedSite = -1;
 
-   if (self()->comp()->getOption(TR_AOT) != false)
+   TR_ASSERT_FATAL(self()->comp()->compileRelocatableCode() == self()->comp()->getOption(TR_AOT), "compileRelocatableCode() has different result from getOption(TR_AOT)");
+   if (self()->comp()->compileRelocatableCode())
       {
-//#if (defined(TR_HOST_X86) || defined(TR_HOST_S390) || defined(TR_HOST_POWER))
       uint32_t inlinedCallSize = self()->comp()->getNumInlinedCallSites();
 
       // Create temporary hashtable for ordering AOT guard relocations
@@ -2666,7 +2675,6 @@ J9::CodeGenerator::processRelocations()
 
                   traceMsg(self()->comp(), "\tinline site %d inlined method %p\n", i, inlinedMethod);
                   if (ramMethod == inlinedMethod)
-                  //if (((uintptrj_t)ramMethod == (uintptrj_t)aotMethodInfo->resolvedMethod->getPersistentIdentifier()) && orderedInlinedSiteListTable[counter].first)
                      {
                      traceMsg(self()->comp(), "\t\tmatch!\n");
                      siteIndex = i;
@@ -2720,7 +2728,14 @@ J9::CodeGenerator::processRelocations()
                }
             }
          }
+      }
 
+#if defined(JITSERVER_SUPPORT)
+   if (self()->comp()->compileRelocatableCode() || self()->comp()->isOutOfProcessCompilation())
+#else   
+   if (self()->comp()->compileRelocatableCode())
+#endif /* defined(JITSERVER_SUPPORT) */
+      {
       TR::SymbolValidationManager::SymbolValidationRecordList &validationRecords = self()->comp()->getSymbolValidationManager()->getValidationRecordList();
       if (self()->comp()->getOption(TR_UseSymbolValidationManager))
          {
@@ -2738,7 +2753,6 @@ J9::CodeGenerator::processRelocations()
             }
          }
 
-//#endif
       // Now call the platform specific processing of relocations
       self()->getAheadOfTimeCompile()->processRelocations();
       }
@@ -2746,9 +2760,50 @@ J9::CodeGenerator::processRelocations()
    for (auto aotIterator = self()->getExternalRelocationList().begin(); aotIterator != self()->getExternalRelocationList().end(); ++aotIterator)
       {
       // Traverse the AOT/external labels
-	  (*aotIterator)->apply(self());
+      (*aotIterator)->apply(self());
       }
    }
+
+#if defined(JITSERVER_SUPPORT)
+void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, const char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node, TR::ExternalRelocationPositionRequest where)
+   {
+   TR_ASSERT(generatingFileName, "External relocation location has improper NULL filename specified");
+   if (self()->comp()->compileRelocatableCode() || self()->comp()->isOutOfProcessCompilation())
+      {
+      TR::RelocationDebugInfo *genData = new(self()->trHeapMemory()) TR::RelocationDebugInfo;
+      genData->file = generatingFileName;
+      genData->line = generatingLineNumber;
+      genData->node = node;
+      self()->addExternalRelocation(r, genData, where);
+      }
+   }
+
+void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, TR::RelocationDebugInfo* info, TR::ExternalRelocationPositionRequest where)
+   {
+   if (self()->comp()->compileRelocatableCode() || self()->comp()->isOutOfProcessCompilation())
+      {
+      TR_ASSERT(info, "External relocation location does not have associated debug information");
+      r->setDebugInfo(info);
+      switch (where)
+         {
+         case TR::ExternalRelocationAtFront:
+            _externalRelocationList.push_front(r);
+            break;
+
+         case TR::ExternalRelocationAtBack:
+            _externalRelocationList.push_back(r);
+            break;
+
+         default:
+            TR_ASSERT_FATAL(
+               false,
+               "invalid TR::ExternalRelocationPositionRequest %d",
+               where);
+            break;
+         }
+      }
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
 
 void J9::CodeGenerator::addProjectSpecializedRelocation(uint8_t *location, uint8_t *target, uint8_t *target2,
       TR_ExternalRelocationTargetKind kind, char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node)
@@ -2802,7 +2857,11 @@ void
 J9::CodeGenerator::jitAddUnresolvedAddressMaterializationToPatchOnClassRedefinition(void *firstInstruction)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->fe());
+#if defined(JITSERVER_SUPPORT)
+   if (self()->comp()->compileRelocatableCode() || self()->comp()->isOutOfProcessCompilation())
+#else
    if (self()->comp()->compileRelocatableCode())
+#endif /* defined(JITSERVER_SUPPORT) */
       {
       self()->addExternalRelocation(new (self()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)firstInstruction, 0, TR_HCR, self()),
                                  __FILE__,__LINE__, NULL);
@@ -4660,6 +4719,20 @@ J9::CodeGenerator::needRelocationsForStatics()
    {
    return self()->fej9()->needRelocationsForStatics();
    }
+
+#if defined(JITSERVER_SUPPORT)
+bool
+J9::CodeGenerator::needRelocationsForBodyInfoData()
+   {
+   return self()->fej9()->needRelocationsForBodyInfoData();
+   }
+
+bool
+J9::CodeGenerator::needRelocationsForPersistentInfoData()
+   {
+   return self()->fej9()->needRelocationsForPersistentInfoData();
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
 
 
 bool

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,9 @@
 #include "codegen/FrontEnd.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "env/J2IThunk.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
 #include "runtime/J9Runtime.hpp"
 #include "runtime/MethodMetaData.h"
 #include "runtime/RelocationRuntime.hpp"
@@ -94,6 +97,49 @@ TR_X86RelocationTarget::performThunkRelocation(uint8_t *thunkAddress, uintptr_t 
    int32_t *thunkRelocationData = (int32_t *)(thunkAddress - sizeof(int32_t));
    *(UDATA *) (thunkAddress + *thunkRelocationData + 2) = vmHelper;
    }
+
+#if defined(JITSERVER_SUPPORT)
+static void *
+j9ThunkInvokeExactHelperFromTerseSignature(UDATA signatureLength, char *signatureChars, TR_RelocationRuntime *reloRuntime)
+   {
+   TR_RuntimeHelper helper;
+
+   switch (signatureChars[signatureLength - 1])
+      {
+      case 'V':
+         helper = TR_icallVMprJavaSendInvokeExact0;
+         break;
+      case 'F':
+         helper = TR_icallVMprJavaSendInvokeExactF;
+         break;
+      case 'D':
+         helper = TR_icallVMprJavaSendInvokeExactD;
+         break;
+      case 'J':
+         helper = TR_icallVMprJavaSendInvokeExactJ;
+         break;
+      case '[':
+         /* intentional fall-through */
+      case 'L':
+         helper = TR_icallVMprJavaSendInvokeExactL;
+         break;
+      default:
+         helper = TR_icallVMprJavaSendInvokeExact1;
+         break;
+      }
+   TR::SymbolReference *symRef = reloRuntime->comp()->getSymRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
+
+   return symRef->getMethodAddress();
+   }
+
+void
+TR_X86RelocationTarget::performInvokeExactJ2IThunkRelocation(TR_J2IThunk *thunk)
+   {
+   char *signature = thunk->terseSignature();
+   void *vmHelper = j9ThunkInvokeExactHelperFromTerseSignature(strlen(signature), signature, reloRuntime());
+   *(UDATA *)(thunk->entryPoint() + 2) = (UDATA) vmHelper;
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
 
 bool TR_AMD64RelocationTarget::useTrampoline(uint8_t * helperAddress, uint8_t *baseLocation)
    {

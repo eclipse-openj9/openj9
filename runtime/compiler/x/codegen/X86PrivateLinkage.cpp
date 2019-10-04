@@ -34,6 +34,9 @@
 #include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "control/CompilationThread.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
 #include "env/CHTable.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/J2IThunk.hpp"
@@ -1753,8 +1756,8 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
             default:
                if (fej9->needsInvokeExactJ2IThunk(callNode, comp()))
                   {
-                  comp()->getPersistentInfo()->getInvokeExactJ2IThunkTable()->addThunk(
-                     generateInvokeExactJ2IThunk(callNode, methodSymbol->getMethod()->signatureChars()), fej9);
+                  TR_J2IThunk *thunk = generateInvokeExactJ2IThunk(callNode, methodSymbol->getMethod()->signatureChars());
+                  fej9->setInvokeExactJ2IThunk(thunk, comp());
                   }
                break;
             }
@@ -1896,6 +1899,17 @@ void TR::X86PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, T
 
    if (TR::Compiler->target.is64Bit() && methodSymRef->getReferenceNumber()>=TR_AMD64numRuntimeHelpers)
       fej9->reserveTrampolineIfNecessary(comp(), methodSymRef, false);
+
+#if defined(JITSERVER_SUPPORT)
+   // JITServer Workaround: Further transmute dispatchJ9Method symbols to appear as a runtime helper, this will cause OMR to
+   // generate a TR_HelperAddress relocation instead of a TR_RelativeMethodAddress Relocation.
+   if (!comp()->getOption(TR_DisableInliningOfNatives) &&
+       methodSymbol->getMandatoryRecognizedMethod() == TR::java_lang_invoke_ComputedCalls_dispatchJ9Method &&
+       comp()->isOutOfProcessCompilation())
+      {
+      methodSymbol->setHelper();
+      }
+#endif /* defined(JITSERVER_SUPPORT) */
 
    if (cg()->supportVMInternalNatives() && methodSymbol->isVMInternalNative())
       {
