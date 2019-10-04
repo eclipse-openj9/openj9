@@ -75,7 +75,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
 		</makefilestubs>
 		<libraries>
-			<library name="jvm"/>
+			<library name="j9jvm"/>
 		</libraries>
 	</artifact>
 </module>

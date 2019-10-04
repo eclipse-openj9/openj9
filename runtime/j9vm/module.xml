@@ -42,7 +42,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</commands>
 	</artifact>
 
-	<artifact type="shared" name="jvm" bundle="jvm" loadgroup="" appendrelease="false">
+	<artifact type="shared" name="j9jvm" bundle="jvm" loadgroup="" appendrelease="false">
 		<include-if condition="spec.flags.module_j9vm" />
 		<options>
 			<option name="requiresPrimitiveTable"/>
@@ -107,10 +107,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		</objects>
 
 		<!--
-		  WARNING: DO NOT LINK SHARED LIBRARIES AGAINST THIS SHARED LIBRARY
-		           WE NEED TO BE ABLE TO LOAD IT WITHOUT ANYTHING ELSE ON THE
-		           LIBPATH.
-		           This is required because of sidecar configurations.
+		WARNING: DO NOT LINK SHARED LIBRARIES AGAINST THIS SHARED LIBRARY
+		WE NEED TO BE ABLE TO LOAD IT WITHOUT ANYTHING ELSE ON THE LIBPATH.
+		This is required because of sidecar configurations.
 		-->
 		<libraries>
 			<library name="socket" type="macro"/>
@@ -121,7 +120,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<library name="j9hashtable" type="external"/>
 			<library name="j9pool" type="external"/>
 			<library name="j9vmi"/>
-			<!--  for advance toolchain pthread must be last in the link order -->
+			<!-- for advance toolchain pthread must be last in the link order -->
 			<library name="pthread" type="system">
 				<include-if condition="spec.linux.* and not spec.linux_ztpf.*"/>
 			</library>

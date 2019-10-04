@@ -20,11 +20,11 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-# Wrapper areround omr_add_exports which strips windows name mangling (except on 32bit windows)
+# Wrapper areround omr_add_exports which strips windows name mangling (except on 32-bit windows).
 function(jvm_add_exports tgt)
 	set(filtered_exports)
 	if(OMR_OS_WINDOWS AND OMR_ENV_DATA32)
-		# we keep mangled names on 32 bit windows
+		# we keep mangled names on 32-bit windows
 		set(filtered_exports ${ARGN})
 	else()
 		# for each symbol name of the form '_foo@1234' replace with 'foo'
@@ -36,7 +36,7 @@ function(jvm_add_exports tgt)
 	omr_add_exports(${tgt} ${filtered_exports})
 endfunction()
 
-jvm_add_exports(jvm
+jvm_add_exports(j9jvm
 	JNI_CreateJavaVM
 	JNI_GetCreatedJavaVMs
 	JNI_GetDefaultJavaVMInitArgs
@@ -149,7 +149,7 @@ jvm_add_exports(jvm
 	jio_vsnprintf
 	post_block
 	pre_block
-	# Additions for Java 7
+	# Additions for Java 7.
 	_JVM_GetStackAccessControlContext@8
 	_JVM_GetInheritedAccessControlContext@8
 	_JVM_GetArrayLength@8
@@ -243,16 +243,16 @@ jvm_add_exports(jvm
 	_JVM_SetPrimitiveField@24
 	_JVM_SetNativeThreadName@12
 
-	# Additions used on linux-x86
+	# Additions used on linux-x86.
 	_JVM_SetSockOpt@20
 	_JVM_SocketShutdown@8
 	_JVM_GetSockName@12
 	_JVM_GetHostName@8
 
-	# Additions to support the JDWP agent
+	# Additions to support the JDWP agent.
 	JVM_InitAgentProperties
 
-	# Additions to support Java 7 verification
+	# Additions to support Java 7 verification.
 	_JVM_GetMethodIxLocalsCount@12
 	_JVM_GetCPMethodNameUTF@12
 	_JVM_GetMethodIxExceptionTableEntry@20
@@ -284,7 +284,7 @@ jvm_add_exports(jvm
 	_JVM_GetMethodIxExceptionsCount@12
 	_JVM_ReleaseUTF@4
 
-	# Additions for Java 8
+	# Additions for Java 8.
 	_JVM_GetClassTypeAnnotations@8
 	_JVM_GetFieldTypeAnnotations@8
 	_JVM_GetMethodParameters@8
@@ -295,10 +295,9 @@ jvm_add_exports(jvm
 )
 
 if(JAVA_SPEC_VERSION LESS 11)
-	# i.e. JAVA_SPEC_VERSION < 11
-	jvm_add_exports(jvm _JVM_GetCallerClass@4)
+	jvm_add_exports(j9jvm _JVM_GetCallerClass@4)
 else()
-	jvm_add_exports(jvm
+	jvm_add_exports(j9jvm
 		_JVM_GetCallerClass@8
 		# Additions for Java 9 (Modularity)
 		JVM_DefineModule
@@ -345,8 +344,8 @@ else()
 endif()
 
 if(NOT JAVA_SPEC_VERSION LESS 14)
-	jvm_add_exports(jvm
-		# Additions for Java 14 (General)
+	jvm_add_exports(j9jvm
+		# Additions for Java 14 (General).
 		JVM_GetExtendedNPEMessage
 	)
 endif()

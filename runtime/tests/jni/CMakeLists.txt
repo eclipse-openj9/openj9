@@ -39,7 +39,7 @@ target_link_libraries(j9ben
 	PRIVATE
 		j9vm_interface
 		j9thr
-		jvm
+		j9jvm
 )
 target_include_directories(j9ben
 	PRIVATE

@@ -66,7 +66,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>
-			<include path="jvm"/>
+			<include path="j9jvm"/>
 			<include path="$(OMRPORT_SRCDIR)zos390" type="relativepath">
 				<include-if condition="spec.zos_390.*"/>
 			</include>
