@@ -1,5 +1,5 @@
-/*[INCLUDE-IF Sidecar16]*/
-package com.ibm.tools.attach.target;
+/*[INCLUDE-IF Sidecar18-SE]*/
+package openj9.internal.tools.attach.target;
 
 /*******************************************************************************
  * Copyright (c) 2009, 2019 IBM Corp. and others

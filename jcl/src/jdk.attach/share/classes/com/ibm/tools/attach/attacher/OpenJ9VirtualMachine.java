@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 2009, 2019 IBM Corp. and others
  *
@@ -42,15 +42,17 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.ibm.tools.attach.target.AttachHandler;
-import com.ibm.tools.attach.target.AttachmentConnection;
-import com.ibm.tools.attach.target.Command;
-import com.ibm.tools.attach.target.CommonDirectory;
-import com.ibm.tools.attach.target.FileLock;
-import com.ibm.tools.attach.target.IPC;
-import com.ibm.tools.attach.target.Reply;
-import com.ibm.tools.attach.target.Response;
-import com.ibm.tools.attach.target.TargetDirectory;
+import openj9.internal.tools.attach.target.AttachHandler;
+import openj9.internal.tools.attach.target.AttachmentConnection;
+import openj9.internal.tools.attach.target.Command;
+import openj9.internal.tools.attach.target.CommonDirectory;
+import openj9.internal.tools.attach.target.DiagnosticProperties;
+import openj9.internal.tools.attach.target.DiagnosticUtils;
+import openj9.internal.tools.attach.target.FileLock;
+import openj9.internal.tools.attach.target.IPC;
+import openj9.internal.tools.attach.target.Reply;
+import openj9.internal.tools.attach.target.Response;
+import openj9.internal.tools.attach.target.TargetDirectory;
 import com.sun.tools.attach.AgentInitializationException;
 import com.sun.tools.attach.AgentLoadException;
 import com.sun.tools.attach.AttachNotSupportedException;
@@ -58,9 +60,6 @@ import com.sun.tools.attach.AttachOperationFailedException;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.spi.AttachProvider;
-
-import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
-import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 
 /**
  * Handles the initiator end of an attachment to a target VM
