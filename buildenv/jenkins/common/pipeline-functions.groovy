@@ -606,6 +606,33 @@ def generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO)
     }
 }
 
+// Please use curly brackets to wrap the parameter, command
+// Please use a semicolon to separate each command if there are mutiple commands
+// The parameters, numRetries and waitTime, are integers
+// The parameter, units, is a string  
+// The default value of the number of entries is 3. 
+// The default values of the wait time and the unit are 60 seconds
+// The parameter, units, can be 'NANOSECONDS', 'MICROSECONDS', 'MILLISECONDS',
+// 'SECONDS', 'MINUTES', 'HOURS', 'DAYS'
+// Example:
+// retry_and_delay({println "This is an example"})
+// retry_and_delay({println "This is an example"}, 4)
+// retry_and_delay({println "This is an example"}, 4, 120)
+// retry_and_delay({println "This is an example"}, 4, 3, 'MINUTES')
+// retry_and_delay({println "This is an example"; println "Another example"}) 
+  
+def retry_and_delay(command, numRetries = 3, waitTime = 60, units = 'SECONDS') {
+    def ret = false
+    retry(numRetries) {
+        if (ret) {
+            sleep time: waitTime, unit: units
+        } else {
+            ret = true
+        }
+        command()
+    }
+}
+
 def setup_pull_request() {
     // Parse Github trigger comment
     // Jenkins test sanity <platform>*
