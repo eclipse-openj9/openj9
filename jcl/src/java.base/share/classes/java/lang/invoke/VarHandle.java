@@ -451,7 +451,7 @@ public abstract class VarHandle extends VarHandleInternal
 	 */
 	public final MethodType accessModeType(AccessMode accessMode) {
 		MethodType internalType = handleTable[accessMode.ordinal()].type;
-		int numOfArguments = internalType.arguments.length;
+		int numOfArguments = internalType.parameterCount();
 		
 		// Drop the internal VarHandle argument
 		MethodType modifiedType = internalType.dropParameterTypes(numOfArguments - 1, numOfArguments);
@@ -544,8 +544,8 @@ public abstract class VarHandle extends VarHandleInternal
 			/* The resulting method handle must come with the same signature as the requested access mode method
 			 * so as to throw out UnsupportedOperationException from that method.
 			 */
-			mh = mh.asType(MethodType.methodType(mt.returnType));
-			mh = MethodHandles.dropArguments(mh, 0, mt.arguments);
+			mh = mh.asType(MethodType.methodType(mt.returnType()));
+			mh = MethodHandles.dropArguments(mh, 0, mt.parameterArray());
 		}
 		
 		return mh;

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,8 +53,8 @@ abstract class ConvertHandle extends MethodHandle {
 	 * Return conversions are handled by FilterReturnHandle.
 	 */
 	final void checkConversion(MethodType toType, MethodType fromType) {
-		Class<?>[] toArgs = toType.arguments;
-		Class<?>[] fromArgs = fromType.arguments;
+		Class<?>[] toArgs = toType.ptypes();
+		Class<?>[] fromArgs = fromType.ptypes();
 
 		if (toArgs.length != fromArgs.length) {
 			throwWrongMethodTypeException(fromType, toType, toArgs.length);
@@ -219,11 +219,11 @@ abstract class ConvertHandle extends MethodHandle {
 		} 
 
 		static MethodHandle getPrimitiveReturnFilter(MethodType type, boolean isExplicitCast) throws IllegalAccessException, NoSuchMethodException {
-			Class<?> fromClass = type.arguments[0];
-			Class<?> toClass = type.returnType;
+			Class<?> fromClass = type.ptypes()[0];
+			Class<?> toClass = type.returnType();
 			
 			if (!isExplicitCast) {
-				if ((type.returnType != void.class) && !checkIfWideningPrimitiveConversion(fromClass, toClass)) {
+				if ((type.returnType() != void.class) && !checkIfWideningPrimitiveConversion(fromClass, toClass)) {
 					throw new WrongMethodTypeException();
 				}
 			}
@@ -231,7 +231,7 @@ abstract class ConvertHandle extends MethodHandle {
 			if (filter == null) {
 				MethodHandle previous;
 				String to = MethodType.getBytecodeStringName(toClass);
-				String from = MethodType.getBytecodeStringName(type.arguments[0]);
+				String from = MethodType.getBytecodeStringName(type.ptypes()[0]);
 				filter = privilegedLookup.findStatic(FilterHelpers.class, from + "2" + to, type); //$NON-NLS-1$
 				if ((previous = cachedReturnFilters.putIfAbsent(type, filter)) != null) {
 					filter = previous;
@@ -251,27 +251,27 @@ abstract class ConvertHandle extends MethodHandle {
 		 * Constructors of the Wrapper type provide the filter.
 		 */
 		static MethodHandle getBoxingReturnFilter(MethodType type) throws IllegalAccessException, NoSuchMethodException {
-			Class<?> wrapper = MethodType.wrapPrimitive(type.arguments[0]);
-			if (!type.returnType.isAssignableFrom(wrapper)) {
+			Class<?> wrapper = MethodType.wrapPrimitive(type.ptypes()[0]);
+			if (!type.returnType().isAssignableFrom(wrapper)) {
 				throw new WrongMethodTypeException();
 			}
 			MethodHandle filter = cachedReturnFilters.get(type);
 			if (filter == null) {
 				MethodHandle previous;
-				filter = privilegedLookup.findStatic(wrapper, "valueOf", MethodType.methodType(wrapper, type.arguments[0])); //$NON-NLS-1$
+				filter = privilegedLookup.findStatic(wrapper, "valueOf", MethodType.methodType(wrapper, type.ptypes()[0])); //$NON-NLS-1$
 				if ((previous = cachedReturnFilters.putIfAbsent(type, filter)) != null) {
 					filter = previous;
 				}
 			}
-			if (type.returnType != wrapper) {
+			if (type.returnType() != wrapper) {
 				filter = filter.cloneWithNewType(type);
 			}
 			return filter;
 		}
 		
 		static MethodHandle getUnboxingReturnFilter(MethodType type, boolean isExplicitCast) throws IllegalAccessException, NoSuchMethodException {
-			Class<?> toUnbox = type.arguments[0];
-			Class<?> returnType = type.returnType;
+			Class<?> toUnbox = type.ptypes()[0];
+			Class<?> returnType = type.returnType();
 			
 			if (toUnbox.equals(Object.class)) {
 				String methodName;
@@ -345,7 +345,7 @@ abstract class ConvertHandle extends MethodHandle {
 		 * object to object conversion: use Class#cast(Object)
 		 */
 		static MethodHandle getCastFilter(MethodType type, boolean isExplicitCast) throws IllegalAccessException, NoSuchMethodException{
-			Class<?> returnClass = type.returnType;
+			Class<?> returnClass = type.returnType();
 			if (isExplicitCast && returnClass.isInterface()) {
 				// Interfaces are passed unchecked
 				MethodType filterType = MethodType.methodType(Object.class, Object.class);
