@@ -50,7 +50,7 @@ final class CollectHandle extends MethodHandle {
 		this.collectArraySize = collectArraySize;
 		this.next = next;
 		if (collectArraySize == 0) {
-			emptyArray = Array.newInstance(next.type.arguments[collectPosition].getComponentType(), 0);
+			emptyArray = Array.newInstance(next.type.ptypes()[collectPosition].getComponentType(), 0);
 		} else {
 			emptyArray = null;
 		}
@@ -109,7 +109,7 @@ final class CollectHandle extends MethodHandle {
 
 	private static final Object allocateArray(CollectHandle mh) {
 		return Array.newInstance(
-			mh.next.type.arguments[mh.collectPosition].getComponentType(),
+			mh.next.type.ptypes()[mh.collectPosition].getComponentType(),
 			mh.collectArraySize);
 	}
 

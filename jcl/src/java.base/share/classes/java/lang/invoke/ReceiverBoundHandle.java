@@ -74,7 +74,7 @@ final class ReceiverBoundHandle extends DirectHandle {
 	 * argument.
 	 */
 	static final MethodType receiverBoundMethodType(MethodType type) {
-		return type.dropFirstParameterType();
+		return type.dropParameterTypes(0, 1);
 	}
 
 	@Override

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2011 IBM Corp. and others
+ * Copyright (c) 2011, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,7 @@ final class FilterReturnHandle extends ConvertHandle {
 	final MethodHandle filter;
 	
 	FilterReturnHandle(MethodHandle next, MethodHandle filter) {
-		super(next, next.type.changeReturnType(filter.type.returnType), KIND_FILTERRETURN, filter.type()); //$NON-NLS-1$
+		super(next, next.type.changeReturnType(filter.type.returnType()), KIND_FILTERRETURN, filter.type()); //$NON-NLS-1$
 		this.filter = filter;
 	}
 

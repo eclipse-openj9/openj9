@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2014, 2018 IBM Corp. and others
+ * Copyright (c) 2014, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -129,16 +129,16 @@ final class MethodHandleInfoImpl implements MethodHandleInfo {
 					// Method
 					} else if (isMethod()) { 
 						if (isPublic) {
-							result = defc.getMethod(getName(), getMethodType().arguments);
+							result = defc.getMethod(getName(), getMethodType().ptypes());
 						} else {
-							result = defc.getDeclaredMethod(getName(), getMethodType().arguments);
+							result = defc.getDeclaredMethod(getName(), getMethodType().ptypes());
 						}
 					// Constructor
 					} else if (isConstructor()) {
 						if (isPublic) {
-							result = defc.getConstructor(getMethodType().arguments);
+							result = defc.getConstructor(getMethodType().ptypes());
 						} else {
-							result = defc.getDeclaredConstructor(getMethodType().arguments);
+							result = defc.getDeclaredConstructor(getMethodType().ptypes());
 						}
 					}
 				} catch (NoSuchFieldException | NoSuchMethodException e) {

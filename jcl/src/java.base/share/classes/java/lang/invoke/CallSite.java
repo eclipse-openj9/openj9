@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2011, 2011 IBM Corp. and others
+ * Copyright (c) 2011, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,9 +96,9 @@ public abstract class CallSite {
 		if (null == initialTargetHandle) {
 			initialTargetHandle = lookupInitialTarget();
 		}
-		initialTargetHandle = initialTargetHandle.asType(methodType(type.returnType));
+		initialTargetHandle = initialTargetHandle.asType(methodType(type.returnType()));
 		/* Adapt the initial target to be compliant with what the caller expects */
-		return MethodHandles.dropArguments(initialTargetHandle, 0, type.arguments);
+		return MethodHandles.dropArguments(initialTargetHandle, 0, type.ptypes());
 	}
 	
 	/* Initialize the cached MethodHandle for initialTarget */
