@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,7 +19,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-
 package jit.test.jitt.codecache;
 
 import jit.runner.JarTesterMT;
@@ -32,7 +31,7 @@ public class BoundaryTest extends TestCase {
 
 	/**
 	 * Boundary test for JIT code cache.
-	 * Test�proper response when maximum code caches have been allocated and no space remains.
+	 * Test proper response when maximum code caches have been allocated and no space remains.
 	 * 1) Set a small code cache size (128 kb)
 	 * 2) Set small code size
 	 * 3) Feed enough Jar files to JarTesterMT so that it can keep compiling classes until all code caches are filled

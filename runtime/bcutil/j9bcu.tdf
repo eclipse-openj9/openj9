@@ -184,11 +184,11 @@ TraceExit=Trc_BCU_replaceWithInteredString_ExitUntwizzledNodeForSharedClassLoade
 
 TraceEvent=Trc_BCU_createRomClassEndian_Subset Noenv Overhead=1 Level=3 Template="BCU j9bcutil_createROMClassEndian: Setting J9AccSubset flag on ROMClass %p"
 
-TraceAssert=Trc_BCU_Assert_ShouldNeverHappen NoEnv Overhead=1 Level=3 Assert="(0 /* Fatal verifier error */)"
-TraceAssert=Trc_BCU_Assert_Equals NoEnv Overhead=1 Level=3 Assert="(P1 == P2)"
-TraceAssert=Trc_BCU_Assert_NotEquals NoEnv Overhead=1 Level=3 Assert="(P1 != P2)"
+TraceAssert=Trc_BCU_Assert_ShouldNeverHappen NoEnv Overhead=1 Level=1 Assert="(0 /* Fatal verifier error */)"
+TraceAssert=Trc_BCU_Assert_Equals NoEnv Overhead=1 Level=1 Assert="(P1 == P2)"
+TraceAssert=Trc_BCU_Assert_NotEquals NoEnv Overhead=1 Level=1 Assert="(P1 != P2)"
 TraceAssert=Trc_BCU_Assert_True NoEnv Overhead=1 Level=3 Assert="(P1)"
-TraceAssert=Trc_BCU_Assert_False NoEnv Overhead=1 Level=3 Assert="!(P1)"
+TraceAssert=Trc_BCU_Assert_False NoEnv Overhead=1 Level=1 Assert="!(P1)"
 
 TraceException=Trc_BCU_verifyCanonisizeAndCopyUTF8_FailedFirstByteZero Noenv Overhead=1 Level=10 Template="BCU j9bcutil_verifyCanonisizeAndCopyUTF8: failed because first byte is 0"
 TraceException=Trc_BCU_verifyCanonisizeAndCopyUTF8_FailedFirstByteFormat Noenv Overhead=1 Level=10 Template="BCU j9bcutil_verifyCanonisizeAndCopyUTF8: failed due to first byte format, first byte=%x"
@@ -230,12 +230,12 @@ TraceEvent=Trc_BCU_createRomClassEndian_ParseClassFileEnd NoEnv Overhead=1 Level
 TraceEvent=Trc_BCU_createRomClassEndian_TranslateClassFileStart NoEnv Overhead=1 Level=5 Template="BCU Start Translation %s Classloader %p"
 TraceEvent=Trc_BCU_createRomClassEndian_TranslateClassFileEnd NoEnv Overhead=1 Level=5 Template="BCU End Translation %.*s romClassSize %d Classloader %p"
 
-TraceAssert=Trc_BCU_Assert_TrueTreeVerify NoEnv Overhead=1 Level=3 Assert="(P1)"
+TraceAssert=Trc_BCU_Assert_TrueTreeVerify NoEnv Overhead=1 Level=1 Assert="(P1)"
 
-TraceAssert=Trc_Assert_BCU_mustHaveVMAccess NoEnv overhead=1 Level=3 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS"
+TraceAssert=Trc_Assert_BCU_mustHaveVMAccess NoEnv overhead=1 Level=1 Assert="(P1)->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS"
 
-TraceAssert=Trc_BCU_Assert_LessThan NoEnv Overhead=1 Level=3 Assert="(P1 < P2)"
-TraceAssert=Trc_BCU_Assert_NotGreaterThan NoEnv Overhead=1 Level=3 Assert="(P1 <= P2)"
+TraceAssert=Trc_BCU_Assert_LessThan NoEnv Overhead=1 Level=1 Assert="(P1 < P2)"
+TraceAssert=Trc_BCU_Assert_NotGreaterThan NoEnv Overhead=1 Level=1 Assert="(P1 <= P2)"
 
 TraceEvent=Trc_BCU_ClassFileOracle_walkFields_UnknownAttribute Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkFields: Unknown attribute tag=%d name=%.*s length=%d"
 TraceEvent=Trc_BCU_ClassFileOracle_walkMethods_UnknownAttribute Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkMethods: Unknown attribute tag=%d name=%.*s length=%d"
@@ -258,12 +258,12 @@ TraceException=Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_Duplica
 TraceException=Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_LocalVariableTypeTableIndexOutOfBounds Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkMethodCodeAttributeAttributes: LocalVariableTypeTable index %d exceeds number of local variables %d in method %.*s"
 TraceException=Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_DuplicateLocalVariableTypeTable Noenv Overhead=1 Level=3 Template="BCU ClassFileOracle::walkMethodCodeAttributeAttributes: Multiple LocalVariableTable attributes in method %.*s, found %p, original=%p"
 
-TraceAssert=Trc_BCU_Assert_SupportedByteCode NoEnv Overhead=1 Level=3 Assert="(0 != sunJavaInstructionSizeTable[P1])"
+TraceAssert=Trc_BCU_Assert_SupportedByteCode NoEnv Overhead=1 Level=1 Assert="(0 != sunJavaInstructionSizeTable[P1])"
 TraceEntry=Trc_BCU_avl_intern_verify_EntryV2 Noenv Overhead=1 Level=3 Template="BCU avl_intern_verify Entry: tree=%p sharedPool=%p localPool=%p"
 
-TraceAssert=Trc_Assert_BCU_mustHaveExclusiveVMAccess NoEnv overhead=1 Level=3 Assert="(P1)->publicFlags & (J9_PUBLIC_FLAGS_VM_ACCESS | J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE)"
+TraceAssert=Trc_Assert_BCU_mustHaveExclusiveVMAccess NoEnv overhead=1 Level=1 Assert="(P1)->publicFlags & (J9_PUBLIC_FLAGS_VM_ACCESS | J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE)"
 
-TraceAssert=Trc_BCU_Assert_InternVerificationFailure NoEnv Overhead=1 Level=3 Assert="(0)"
+TraceAssert=Trc_BCU_Assert_InternVerificationFailure NoEnv Overhead=1 Level=1 Assert="(0)"
 
 TraceEvent=Trc_BCU_romClassOrphansHashTableAdd Overhead=1 Level=3 Template="BCU romClassOrphansHashTableAdd: className=%.*s orphanROMClass=%p"
 TraceEvent=Trc_BCU_romClassOrphansHashTableReplace Overhead=1 Level=3 Template="BCU romClassOrphansHashTableReplace: className=%.*s orphanROMClass=%p"
@@ -374,3 +374,5 @@ TraceException=Trc_BCU_j9bcutil_readClassFileBytes_MaxCPCount NoEnv Overhead=1 L
 TraceException=Trc_BCU_internalDefineClass_orphanNotFound Overhead=1 Level=1 Template="orphan ROM class %p not found in table, table entry was %p"
 
 TraceEvent=Trc_BCU_compareROMClassForEquality_event NoEnv Overhead=1 Level=7 Template="compareROMClassForEquality returns %d for class name '%.*s'"
+
+TraceAssert=Trc_BCU_Assert_True_Level1 NoEnv Overhead=1 Level=1 Assert="(P1)"

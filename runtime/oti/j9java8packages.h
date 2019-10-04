@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1579,7 +1579,7 @@ lookupJava8Package (register const char *str, register unsigned int len)
 #line 407 "j9java8packages.gperf"
       {"com/sun/org/omg/CORBA/portable"},
 #line 214 "j9java8packages.gperf"
-      {"com/ibm/tools/attach/target"},
+      {"openj9/internal/tools/attach/target"},
 #line 648 "j9java8packages.gperf"
       {"com/sun/xml/internal/ws/client/dispatch"},
 #line 257 "j9java8packages.gperf"

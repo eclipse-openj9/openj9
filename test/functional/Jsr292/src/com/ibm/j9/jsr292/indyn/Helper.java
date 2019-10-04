@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,8 @@ public class Helper {
 	public int publicInt = 1; 
 	
 	public static int publicStaticInt = 100;
+
+	public static void voidMethod() { }
 	
 	public static void addStaticPublic(int a, String b){ }
 	

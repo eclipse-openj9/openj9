@@ -1473,9 +1473,11 @@ onLoadInternal(
       if (TR::Options::_numUsableCompilationThreads > maxNumberOfCodeCaches)
          TR::Options::_numUsableCompilationThreads =  maxNumberOfCodeCaches;
 
-      if (TR::Options::_numUsableCompilationThreads > MAX_USABLE_COMP_THREADS)
+      compInfo->updateNumUsableCompThreads(TR::Options::_numUsableCompilationThreads);
+
+      if (!compInfo->allocateCompilationThreads(TR::Options::_numUsableCompilationThreads))
          {
-         fprintf(stderr, "Too many compilation threads. Only up to %d supported\n", MAX_USABLE_COMP_THREADS);
+         fprintf(stderr, "onLoadInternal: Failed to set up %d compilation threads\n", TR::Options::_numUsableCompilationThreads);
          return -1;
          }
 
@@ -1491,6 +1493,7 @@ onLoadInternal(
             }
          }
 
+      // If more than one diagnostic compilation thread is created, MAX_DIAGNOSTIC_COMP_THREADS needs to be updated
       // create diagnostic compilation thread
       if (compInfo->startCompilationThread(-1, highestThreadID, /* isDiagnosticThread */ true) != 0)
          {
@@ -1694,7 +1697,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
    if (!jitConfig)
       return -1;
 
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    isSharedAOT = TR::Options::sharedClassCache();
 #endif /* J9VM_INTERP_AOT_COMPILE_SUPPORT && J9VM_OPT_SHARED_CLASSES && TR_HOST_X86 && TR_HOST_S390 */
 

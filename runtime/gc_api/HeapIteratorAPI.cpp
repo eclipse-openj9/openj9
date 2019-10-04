@@ -496,7 +496,7 @@ j9mm_iterate_all_ownable_synchronizer_objects(J9VMThread *vmThread, J9PortLibrar
 	J9JavaVM *javaVM = vmThread->javaVM;
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM->omrVM);
 	MM_ObjectAccessBarrier *barrier = extensions->accessBarrier;
-	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = extensions->ownableSynchronizerObjectLists;
+	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = extensions->getOwnableSynchronizerObjectListsExternal(vmThread);
 
 	Assert_MM_true(NULL != ownableSynchronizerObjectList);
 

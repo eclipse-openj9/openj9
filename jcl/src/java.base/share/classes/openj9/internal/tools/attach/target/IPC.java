@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 2009, 2019 IBM Corp. and others
  *
@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-package com.ibm.tools.attach.target;
+package openj9.internal.tools.attach.target;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -46,7 +46,7 @@ import static java.nio.file.attribute.PosixFilePermission.GROUP_READ;
 import static java.nio.file.attribute.PosixFilePermission.GROUP_WRITE;
 import static java.nio.file.attribute.PosixFilePermission.OTHERS_READ;
 import static java.nio.file.attribute.PosixFilePermission.OTHERS_WRITE;
-import static openj9.tools.attach.diagnostics.base.DiagnosticProperties.OPENJ9_DIAGNOSTICS_PREFIX;
+import static openj9.internal.tools.attach.target.DiagnosticProperties.OPENJ9_DIAGNOSTICS_PREFIX;
 
 /**
  * Utility class for operating system calls

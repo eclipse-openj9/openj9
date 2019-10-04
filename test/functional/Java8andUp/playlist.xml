@@ -561,7 +561,7 @@
 	-Djdk.attach.allowAttachSelf=true \
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	--add-exports jdk.jcmd/openj9.tools.attach.diagnostics.info=ALL-UNNAMED \
-	--add-exports java.base/openj9.tools.attach.diagnostics.base=ALL-UNNAMED \
+	--add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJstack \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -614,7 +614,7 @@
 	-Dcom.ibm.tools.attach.timeout=15000 \
 	--add-exports jdk.jcmd/openj9.tools.attach.diagnostics.info=ALL-UNNAMED \
 	--add-exports jdk.attach/com.ibm.tools.attach.attacher=ALL-UNNAMED \
-	--add-exports java.base/openj9.tools.attach.diagnostics.base=ALL-UNNAMED \
+	--add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames TestJmap \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
@@ -1292,7 +1292,10 @@
 			<group>functional</group>
 		</groups>
     <variations>
-      <variation>'-Xjit:{*Test_JITHelpers*}(count=0)'</variation>
+      <variation>-Xjit:count=0 -XX:-CompactStrings</variation>
+      <variation>-Xjit:count=0 -XX:+CompactStrings</variation>
+      <variation>-Xjit:count=1,disableAsyncCompilation -XX:-CompactStrings</variation>
+      <variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
     </variations>
 		<impls>
 			<impl>openj9</impl>
@@ -1319,7 +1322,10 @@
 			<group>functional</group>
 		</groups>
     <variations>
-      <variation>'-Xjit:{*Test_JITHelpers*}(count=0)'</variation>
+      <variation>-Xjit:count=0 -XX:-CompactStrings</variation>
+      <variation>-Xjit:count=0 -XX:+CompactStrings</variation>
+      <variation>-Xjit:count=1,disableAsyncCompilation -XX:-CompactStrings</variation>
+      <variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
     </variations>
 		<impls>
 			<impl>openj9</impl>
@@ -2145,30 +2151,6 @@
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames testStringInterning \
-	-groups $(TEST_GROUP) \
-	-excludegroups $(DEFAULT_EXCLUDE); \
-	$(TEST_STATUS)</command>
-		<levels>
-			<level>sanity</level>
-		</levels>
-		<groups>
-			<group>functional</group>
-		</groups>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
-	</test>
-	<test>
-		<testCaseName>testStringIndexOfString</testCaseName>
-		<variations>
-			<variation>NoOptions</variation>
-			<variation>$(SQ)-Xjit:disableAsyncCompilation,tryToInline={java/lang/String.indexOf*},limit={org/openj9/test/string/StringIndexOfString.doTest*},{org/openj9/test/string/StringIndexOfString.doTest*}(count=50)$(SQ)</variation>
-		</variations>
-		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
-	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-	-testnames testStringIndexOfString \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>

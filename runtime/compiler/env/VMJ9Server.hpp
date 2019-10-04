@@ -65,9 +65,6 @@ public:
    virtual TR_ResolvedMethod * createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod, TR_OpaqueClassBlock *classForNewInstance,
                                                                  char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod) override;
    virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBlock *b, bool objectTypeIsFixed, bool castTypeIsFixed = true, bool optimizeForAOT = false) override;
-   //virtual bool isInterfaceClass(TR_OpaqueClassBlock *clazzPointer) override;
-   //virtual bool isClassFinal(TR_OpaqueClassBlock *) override;
-   //virtual bool isAbstractClass(TR_OpaqueClassBlock *clazzPointer) override;
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT = false) override;
    virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method) override;
    virtual bool canMethodEnterEventBeHooked() override;
@@ -86,19 +83,15 @@ public:
    virtual bool classHasBeenReplaced(TR_OpaqueClassBlock *) override;
    virtual bool classHasBeenExtended(TR_OpaqueClassBlock *) override;
    virtual bool compiledAsDLTBefore(TR_ResolvedMethod *) override;
-   //virtual char * getClassNameChars(TR_OpaqueClassBlock *ramClass, int32_t & length) override;
    virtual uintptrj_t getOverflowSafeAllocSize() override;
    virtual bool isThunkArchetype(J9Method * method) override;
    virtual int32_t printTruncatedSignature(char *sigBuf, int32_t bufLen, TR_OpaqueMethodBlock *method) override;
-   //virtual bool isPrimitiveClass(TR_OpaqueClassBlock * clazz) override;
    virtual bool isClassInitialized(TR_OpaqueClassBlock * clazz) override;
    virtual UDATA getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method) override;
    virtual int32_t getByteOffsetToLockword(TR_OpaqueClassBlock * clazz) override;
    virtual bool isString(TR_OpaqueClassBlock * clazz) override;
    virtual void * getMethods(TR_OpaqueClassBlock * clazz) override;
    virtual void getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, List<TR_ResolvedMethod> * resolvedMethodsInClass) override;
-   //virtual uint32_t getNumMethods(TR_OpaqueClassBlock * clazz) override;
-   //virtual uint32_t getNumInnerClasses(TR_OpaqueClassBlock * clazz) override;
    virtual bool isPrimitiveArray(TR_OpaqueClassBlock *clazz) override;
    virtual uint32_t getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getObjectClass(uintptrj_t objectPointer) override;

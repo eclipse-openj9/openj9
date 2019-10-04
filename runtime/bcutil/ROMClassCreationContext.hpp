@@ -167,7 +167,7 @@ public:
 			memset(&_verboseRecords[0], 0, sizeof(_verboseRecords));
 		}
 	}
-	
+
 	bool isCreatingIntermediateROMClass() const { return _creatingIntermediateROMClass; }
 	U_8 *classFileBytes() const { return _classFileBytes; }
 	UDATA classFileSize() const { return _classFileSize; }
@@ -305,9 +305,9 @@ public:
 		bool isUnsafeDefineClassSharingEnabled = J9_ARE_ALL_BITS_SET(_javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_SHAREUNSAFECLASSES);
 
 		if (isClassAnon()) {
-			/* 
-			 * Since the class loader shared classes enable flag is set properly and it is checked in the isClassLoaderSharedClassesEnabled() function
-			 * before this function is called in isROMClassShareable(). Thus, we can just assert isAnonDefineClassSharingEnabled is true
+			/*
+			 * Since the class loader shared classes enable flag is set properly and it is checked in the isClassLoaderSharedClassesEnabled() function
+			 * before this function is called in isROMClassShareable(). Thus, we can just assert isAnonDefineClassSharingEnabled is true.
 			 */
 			Trc_BCU_Assert_True(isAnonDefineClassSharingEnabled);
 			isEnabled = true;
@@ -405,22 +405,22 @@ public:
 	 * Report an invalid annotation error against a particular member (field or method).
 	 * This will attempt to construct and set an error message based on the supplied
 	 * NLS key. Regardless, an appropriate BuildResult value will be returned.
-	 * 
+	 *
 	 * @param className	UTF8 data representing the class containing the member
 	 * @param classNameLength	length of UTF8 data representing the class containing the member
 	 * @param memberName	UTF8 data representing the member with the annotation
 	 * @param memberNameLength	length of UTF8 data representing the member with the annotation
 	 * @param module_name	the module portion of the NLS key
 	 * @param message_num	the message portion of the NLS key
-	 * @return the BuildResult value 
+	 * @return the BuildResult value
 	 */
-	BuildResult 
+	BuildResult
 	reportInvalidAnnotation(U_8 *className, U_16 classNameLength, U_8 *memberName, U_16 memberNameLength, U_32 module_name, U_32 message_num)
 	{
 		const char* nlsMessage = NULL;
 		PORT_ACCESS_FROM_PORT(_portLibrary);
-		
-		/* Call direct through the port library to circumvent the macro, 
+
+		/* Call direct through the port library to circumvent the macro,
 		 * which assumes that the key is a single parameter.
 		 */
 		nlsMessage = OMRPORT_FROM_J9PORT(PORTLIB)->nls_lookup_message(OMRPORT_FROM_J9PORT(PORTLIB), J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, module_name, message_num, NULL);
@@ -550,7 +550,7 @@ public:
 			reportVerboseStatistics();
 		}
 	}
-	
+
 	void forceDebugDataInLine()
 	{
 		_forceDebugDataInLine = true;
@@ -565,12 +565,12 @@ public:
 		}
 	}
 
-	void startDebugCompare() 
+	void startDebugCompare()
 	{
 		_doDebugCompare = true;
 	}
 
-	void endDebugCompare() 
+	void endDebugCompare()
 	{
 		_doDebugCompare = false;
 	}
@@ -590,7 +590,7 @@ public:
 	{
 		return (0 != (romMethodModifiers() & J9AccMethodHasDebugInfo));
 	}
-	
+
 	bool romMethodHasLineNumberCountCompressed()
 	{
 		bool retval = false;
@@ -603,7 +603,7 @@ public:
 		}
 		return retval;
 	}
-	
+
 	U_32 romMethodCompressedLineNumbersLength()
 	{
 		U_32 retval = 0;
@@ -633,16 +633,16 @@ public:
 		}
 	}
 
-	bool romMethodDebugDataIsInline() 
+	bool romMethodDebugDataIsInline()
 	{
 		bool retval = true;
-		J9ROMMethod * romMethod = romMethodGetCachedMethod();	
-		/* romMethodHasDebugData() is called to ensure methodDebugInfoFromROMMethod() 
+		J9ROMMethod * romMethod = romMethodGetCachedMethod();
+		/* romMethodHasDebugData() is called to ensure methodDebugInfoFromROMMethod()
 		 * will return a valid address to inspect.
 		 */
 		if ((NULL != romMethod) && (true == romMethodHasDebugData())) {
 			/* methodDebugInfoFromROMMethod() is called instead of getMethodDebugInfoFromROMMethod()
-			 * because getMethodDebugInfoFromROMMethod() will follow the srp to 'out of line' debug 
+			 * because getMethodDebugInfoFromROMMethod() will follow the srp to 'out of line' debug
 			 * data (and cause problems checking "1 ==(debugInfo->srpToVarInfo & 1)")
 			 */
 			J9MethodDebugInfo* debugInfo = methodDebugInfoFromROMMethod(romMethod);
@@ -651,12 +651,12 @@ public:
 		return retval;
 	}
 
-	void romMethodCacheCurrentRomMethod(IDATA offset) 
+	void romMethodCacheCurrentRomMethod(IDATA offset)
 	{
 		_existingRomMethod = romMethodFromOffset(offset);
 	}
 
-	J9ROMMethod * romMethodGetCachedMethod() 
+	J9ROMMethod * romMethodGetCachedMethod()
 	{
 		return _existingRomMethod;
 	}
@@ -683,7 +683,7 @@ public:
 			return 0;
 		}
 	}
-	
+
 	bool romClassHasSourceDebugExtension()
 	{
 		return (0 != (romClassOptionalFlags() & J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION));
@@ -693,7 +693,7 @@ public:
 	{
 		return (0 != (romClassOptionalFlags() & J9_ROMCLASS_OPTINFO_SOURCE_FILE_NAME));
 	}
-	
+
 private:
 	void reportVerboseStatistics();
 	void verbosePrintPhase(ROMClassCreationPhase phase, bool *printedPhases, UDATA indent);
@@ -741,7 +741,7 @@ private:
 	J9ROMMethod * _existingRomMethod;
 	bool _reusingIntermediateClassData;
 	bool _creatingIntermediateROMClass;
-	
+
 	J9ROMMethod * romMethodFromOffset(IDATA offset);
 };
 

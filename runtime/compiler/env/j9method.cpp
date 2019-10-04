@@ -211,7 +211,7 @@ TR_J9VMBase::createResolvedMethodWithSignature(TR_Memory * trMemory, TR_OpaqueMe
    if (isAOT_DEPRECATED_DO_NOT_USE())
       {
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
       if (TR::Options::sharedClassCache())
          {
          result = new (trMemory->trHeapMemory()) TR_ResolvedRelocatableJ9Method(aMethod, this, trMemory, owningMethod);
@@ -1123,7 +1123,7 @@ static intptrj_t getInitialCountForMethod(TR_ResolvedMethod *rm, TR::Compilation
 
    intptrj_t initialCount = m->hasBackwardBranches() ? options->getInitialBCount() : options->getInitialCount();
 
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM)) && !defined(SMALL)
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    if (TR::Options::sharedClassCache())
       {
       J9ROMClass *romClass = m->romClassPtr();
@@ -1674,7 +1674,7 @@ bool
 TR_ResolvedRelocatableJ9Method::getUnresolvedFieldInCP(I_32 cpIndex)
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-   #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+   #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
       return !J9RAMFIELDREF_IS_RESOLVED(((J9RAMFieldRef*)cp()) + cpIndex);
    #else
       return true;
@@ -1885,7 +1885,7 @@ TR_ResolvedRelocatableJ9Method::fieldAttributes(TR::Compilation * comp, int32_t 
       }
    else
       {
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
       ltype = getFieldType((J9ROMConstantPoolItem *)romLiterals(), cpIndex);
 #endif
 
@@ -2000,7 +2000,7 @@ TR_ResolvedRelocatableJ9Method::staticAttributes(TR::Compilation * comp,
       {
       if (aotStats)
          ((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->numStaticFieldInfoNotUsed++;
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
       ltype = getFieldType((J9ROMConstantPoolItem *)romLiterals(), cpIndex);
 #endif
 
@@ -3403,8 +3403,8 @@ void TR_ResolvedJ9Method::construct()
       {
       {x(TR::com_ibm_jit_JITHelpers_is32Bit,                                  "is32Bit", "()Z")},
       {x(TR::com_ibm_jit_JITHelpers_isArray,                                  "isArray", "(Ljava/lang/Object;)Z")},
-      {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1,             "intrinsicIndexOfStringLatin1", "([CI[CII)I")},
-      {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16,              "intrinsicIndexOfStringUTF16", "([CI[CII)I")},
+      {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1,             "intrinsicIndexOfStringLatin1", "(Ljava/lang/Object;ILjava/lang/Object;II)I")},
+      {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16,              "intrinsicIndexOfStringUTF16", "(Ljava/lang/Object;ILjava/lang/Object;II)I")},
       {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1,                   "intrinsicIndexOfLatin1", "(Ljava/lang/Object;BII)I")},
       {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16,                    "intrinsicIndexOfUTF16", "(Ljava/lang/Object;CII)I")},
 #ifdef TR_TARGET_32BIT

@@ -49,11 +49,10 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "runtime/IProfiler.hpp"
-// JITSERVER_TODO guards the code that relies on other JITServer unmerged files.
-#if defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO)
+#if defined(JITSERVER_SUPPORT)
 #include "env/j9methodServer.hpp"
 #include "control/JITServerCompilationThread.hpp"
-#endif /* defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO) */
+#endif /* defined(JITSERVER_SUPPORT) */
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -1864,16 +1863,11 @@ J9::Options::fePreProcess(void * base)
       UDATA numCompThreads;
       IDATA ret = GET_INTEGER_VALUE(argIndex, compThreadsOption, numCompThreads);
 
-#if defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO)
       if (ret == OPTION_OK)
          {
          _numUsableCompilationThreads = numCompThreads;
          compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
          }
-#else
-      if (ret == OPTION_OK && numCompThreads <= MAX_USABLE_COMP_THREADS)
-         _numUsableCompilationThreads = numCompThreads;
-#endif /* defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO) */
       }
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)
@@ -2083,7 +2077,7 @@ J9::Options::fePreProcess(void * base)
          compInfo->getPersistentInfo()->setClientUID(dist(rng));
          }
       }
-   // _safeReservePhysicalMemoryValue is set as 0 for the JITServer client because compilations
+   // _safeReservePhysicalMemoryValue is set as 0 for the JITClient because compilations
    // are done remotely. The user can still override it with a command line option
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
@@ -2186,9 +2180,7 @@ J9::Options::fePostProcessJIT(void * base)
    J9JavaVM * javaVM = jitConfig->javaVM;
    PORT_ACCESS_FROM_JAVAVM(javaVM);
 
-#if defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO)
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
-#endif /* defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO) */
    // If user has not specified a value for compilation threads, do it now.
    // This code does not have to stay in the fePostProcessAOT because in an AOT only
    // scenario we don't need more than one compilation thread to load code.
@@ -2204,11 +2196,7 @@ J9::Options::fePostProcessJIT(void * base)
          if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableRampupImprovements) &&
             !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableRampupImprovements))
             {
-#if defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO)
             compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
-#else
-            _numUsableCompilationThreads = MAX_USABLE_COMP_THREADS;
-#endif /* defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO) */
             }
          }
       if (_numUsableCompilationThreads <= 0)
@@ -2217,12 +2205,8 @@ J9::Options::fePostProcessJIT(void * base)
          // Do not create more than numProc-1 compilation threads, but at least one
          //
          uint32_t numOnlineCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
-#if defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO)
          compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
          _numUsableCompilationThreads = numOnlineCPUs > 1 ? std::min((numOnlineCPUs - 1), static_cast<uint32_t>(_numUsableCompilationThreads)) : 1;
-#else
-         _numUsableCompilationThreads = numOnlineCPUs > 1 ? std::min((numOnlineCPUs - 1), static_cast<uint32_t>(MAX_USABLE_COMP_THREADS)) : 1;
-#endif /* defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO) */
          }
       }
 
@@ -2911,13 +2895,10 @@ J9::Options::unpackOptions(char *clientOptions, size_t clientOptionsSize, TR::Co
 
    // Receive rtResolve: J9JIT_RUNTIME_RESOLVE
    // NOTE: This relies on rtResolve being the last option in clientOptions
-   // the J9JIT_RUNTIME_RESOLVE flag from JITServer client
+   // the J9JIT_RUNTIME_RESOLVE flag from JITClient
    // On JITServer, we store this value for each client in ClientSessionData
    bool rtResolve = (bool) *((uint8_t *) options + clientOptionsSize - sizeof(bool));
-   // JITSERVER_TODO guards the code that relies on other JITServer unmerged files.
-#if defined(JITSERVER_TODO)
    compInfoPT->getClientData()->setRtResolve(rtResolve);
-#endif /* defined(JITSERVER_TODO) */
    unpackRegex(options->_traceForCodeMining);
    unpackRegex(options->_disabledOptTransformations);
    unpackRegex(options->_disabledInlineSites);

@@ -23,6 +23,11 @@
 
 /*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
 
+/**
+ * Packed decimal and decimal data access accelerator API. Arithmetic, copying and shifting operations
+ * for packed decimal data. Convert between decimal data types stored in byte arrays and Java binary types.
+ * Marshall Java binary types to and from byte arrays.
+ */
 module openj9.dataaccess {
   exports com.ibm.dataaccess;
 }
