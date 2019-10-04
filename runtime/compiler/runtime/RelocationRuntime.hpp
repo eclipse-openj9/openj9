@@ -25,10 +25,6 @@
 
 #include "j9cfg.h"
 
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390))
-   #define TR_SHARED_CACHE_AOT_SE_PLATFORM
-#endif
-
 #include <assert.h>
 #include "codegen/Relocation.hpp"
 #include "env/j9method.h"
