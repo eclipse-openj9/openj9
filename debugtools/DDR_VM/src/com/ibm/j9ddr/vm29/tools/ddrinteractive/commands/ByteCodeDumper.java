@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -171,25 +171,22 @@ public class ByteCodeDumper {
 		UDATA start;
 		UDATA pc;
 		UDATA bc;
-		I32 low, high;
+		I32 low;
+		I32 high;
 		U32 npairs;
 		J9ROMMethodPointer romMethod = (J9ROMMethodPointer.cast(bytecodes.sub(J9ROMMethod.SIZEOF)));
 		U32 localsCount = new U32(ROMHelp.J9_ARG_COUNT_FROM_ROM_METHOD(romMethod).add(ROMHelp.J9_TEMP_COUNT_FROM_ROM_METHOD(romMethod)));
 		int resultArray[] = new int[8192];
-		String environment = "0";
-		boolean envVarDefined = false;
+		String environment = System.getenv().get("j9bcutil_dumpBytecodes");
+		Integer dumpBytecodes = environment != null ? Integer.valueOf(environment) : null;
 		int result;
 
-		if (System.getenv().containsKey("j9bcutil_dumpBytecodes")) {
-			envVarDefined = true;
-			environment = System.getenv().get("j9bcutil_dumpBytecodes");
-		}
 		pc = new UDATA(walkStartPC);
 		bcIndex = bytecodes.add(pc); // cell address
 		while (pc.lte(walkEndPC)) {
 			if (flags.anyBitsIn(BCT_DumpMaps)) {
 				for (int j = LOCAL_MAP; j < MAP_COUNT; j++) {
-					if (envVarDefined && (!pc.eq(Integer.parseInt(environment)))) {
+					if ((dumpBytecodes != null) && !pc.eq(dumpBytecodes)) {
 						continue;
 					}
 
@@ -363,18 +360,10 @@ public class ByteCodeDumper {
 				}
 				out.append(String.format("%d\n", target.intValue()));
 			} else if (bcIntVal == JBtableswitch) {
-				switch (start.intValue() % 4) {
-				case 0:
-					incIndex();
-					pc = pc.add(1);  // fall through
-				case 1:
-					incIndex();
-					pc = pc.add(1);  // fall through
-				case 2:
-					incIndex();
-					pc = pc.add(1);  // fall through
-				case 3:
-					break;
+				int padding = switchPaddingSize(start);
+				if (padding != 0) {
+					bcIndex = bcIndex.add(padding);
+					pc = pc.add(padding);
 				}
 				index = new UDATA(_GETNEXT_U32());
 				target = start.add(index);
@@ -393,21 +382,10 @@ public class ByteCodeDumper {
 					pc = pc.add(4);
 				}
 			} else if (bcIntVal == JBlookupswitch) {
-				switch (start.intValue() % 4) {
-				case 0:
-					incIndex();
-					pc = pc.add(1);
-					break;
-				case 1:
-					incIndex();
-					pc = pc.add(1);
-					break;
-				case 2:
-					incIndex();
-					pc = pc.add(1);
-					break;
-				case 3:
-					break;
+				int padding = switchPaddingSize(start);
+				if (padding != 0) {
+					bcIndex = bcIndex.add(padding);
+					pc = pc.add(padding);
 				}
 				index = new UDATA(_GETNEXT_U32());
 				target = start.add(index);
@@ -576,6 +554,14 @@ public class ByteCodeDumper {
 			}
 		}
 		return new IDATA(BCT_ERR_NO_ERROR);
+	}
+
+	/**
+	 * Given the offset of a tableswitch or lookupswitch bytecode,
+	 * answer the number of padding bytes that follow.
+	 */
+	private static int switchPaddingSize(UDATA start) {
+		return 3 - (start.intValue() % 4);
 	}
 
 	private static void incIndex() {
