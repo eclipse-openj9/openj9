@@ -4527,7 +4527,7 @@ TR_J9VMBase::findPersistentJ2IThunk(char *signatureChars)
 void *
 TR_J9VMBase::findPersistentThunk(char *signatureChars, uint32_t signatureLength)
    {
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    J9SharedDataDescriptor firstDescriptor;
    J9VMThread *curThread = getCurrentVMThread();
    firstDescriptor.address = NULL;
@@ -5475,9 +5475,10 @@ TR_J9VMBase::getSupportsRecognizedMethods()
       TR::Compiler->target.cpu.isX86() ||
       TR::Compiler->target.cpu.isPower() ||
       TR::Compiler->target.cpu.isARM() ||
+      TR::Compiler->target.cpu.isARM64() ||
       !isAOT_DEPRECATED_DO_NOT_USE(),
       "getSupportsRecognizedMethods must be called only on X,P,Z or only for non-AOT");
-   return  true;
+   return true;
    }
 
 
@@ -9136,7 +9137,7 @@ TR_J9SharedCacheVM::persistJ2IThunk(void *thunk)
 void *
 TR_J9SharedCacheVM::persistThunk(char *signatureChars, uint32_t signatureLength, uint8_t *thunkStart, uint32_t totalSize)
    {
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    J9SharedDataDescriptor dataDescriptor;
    J9VMThread *curThread = getCurrentVMThread();
 
