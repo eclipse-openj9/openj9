@@ -230,7 +230,7 @@ public:
    virtual bool       callTargetsNeedRelocations() override                    { return true; }
    virtual bool       doStringPeepholing() override                            { return false; }
    virtual bool       hardwareProfilingInstructionsNeedRelocation() override   { return true; }
-   virtual bool       supportsMethodEntryPadding() override                    { return false; }
+   virtual bool       supportsJitMethodEntryAlignment() override               { return false; }
    virtual bool       isBenefitInliningCheckIfFinalizeObject() override        { return true; }
    virtual bool       needsContiguousCodeAndDataCacheAllocation() override     { return true; }
 

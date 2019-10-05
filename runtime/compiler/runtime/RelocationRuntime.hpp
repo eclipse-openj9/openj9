@@ -174,11 +174,18 @@ class TR_RelocationRuntime {
                                                          bool shouldUseCompiledCopy,
                                                          TR::Options *options,
                                                          TR::Compilation *compilation,
-                                                         TR_ResolvedMethod *resolvedMethod);
+                                                         TR_ResolvedMethod *resolvedMethod,
+                                                         uint8_t *existingCode = NULL);
 
       virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
       virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
+
+#if defined(JITSERVER_SUPPORT)
+      virtual void *isROMClassInSharedCaches(UDATA romClassValue);
+      virtual bool isRomClassForMethodInSharedCache(J9Method *method);
+      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method);
+#endif /* defined(JITSERVER_SUPPORT) */
 
       virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
 
@@ -236,6 +243,9 @@ class TR_RelocationRuntime {
       uint32_t getNumInlinedAllocRelos() { return 0; }
       uint32_t getNumFailedAllocInlinedRelos() { return 0; }
 #endif
+#if defined(JITSERVER_SUPPORT)
+      virtual J9JITExceptionTable *copyMethodMetaData(J9JITDataCacheHeader *dataCacheHeader);
+#endif /* defined(JITSERVER_SUPPORT) */
 
    private:
       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize)                           { return NULL; }
@@ -346,6 +356,12 @@ public:
       virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
 
+#if defined(JITSERVER_SUPPORT)
+      virtual void *isROMClassInSharedCaches(UDATA romClassValue);
+      virtual bool isRomClassForMethodInSharedCache(J9Method *method);
+      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method);
+#endif /* defined(JITSERVER_SUPPORT) */
+
       virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
 
 private:
@@ -368,5 +384,33 @@ private:
       static const char aotHeaderKey[];
       static const UDATA aotHeaderKeyLength;
 };
+
+#if defined(JITSERVER_SUPPORT)
+class TR_JITServerRelocationRuntime : public TR_RelocationRuntime {
+public:
+      TR_ALLOC(TR_Memory::Relocation)
+      void * operator new(size_t, J9JITConfig *);
+      TR_JITServerRelocationRuntime(J9JITConfig *jitCfg) : TR_RelocationRuntime(jitCfg) {}
+
+      // The following public APIs should not be used with this class
+      virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
+      virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
+      virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
+
+      virtual void *isROMClassInSharedCaches(UDATA romClassValue)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0; }
+      virtual bool isRomClassForMethodInSharedCache(J9Method *method)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0; }
+      virtual TR_YesNoMaybe isMethodInSharedCache(J9Method *method)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!");  return TR_no; }
+
+      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
+
+      static uint8_t *copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe);
+
+private:
+      virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize);
+      virtual uint8_t * allocateSpaceInDataCache(UDATA metaDataSize, UDATA type);
+      virtual void initializeCacheDeltas();
+      virtual void initializeAotRuntimeInfo() override { _classReloAmount = 1; }
+};
+#endif /* defined(JITSERVER_TODO) */
 
 #endif   // RELOCATION_RUNTIME_INCL
