@@ -172,10 +172,12 @@ J9::ARM64::TreeEvaluator::conditionalHelperEvaluator(TR::Node *node, TR::CodeGen
       }
 
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
-   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference());
+   cg->addSnippet(snippet);
    TR::ARM64ConditionCode cc = (testNode->getOpCodeValue() == TR::icmpeq) ? TR::CC_EQ : TR::CC_NE;
    TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, cc, conditions);
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+   snippet->gcMap().setGCRegisterMask(0xffffffff);
 
    for (i = numArgs - 1; i >= 0; i--)
       cg->decReferenceCount(callNode->getChild(i));
@@ -301,19 +303,23 @@ J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    if (!isConstDivisor || (!is64Bit && divisor->getInt() == 0) || (is64Bit && divisor->getLongInt() == 0))
       {
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
-      cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+      TR::Instruction *gcPoint;
+      TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference());
+      cg->addSnippet(snippet);
 
       if (isConstDivisor)
          {
          // No explicit check required
-         generateLabelInstruction(cg, TR::InstOpCode::b, node, snippetLabel);
+         gcPoint = generateLabelInstruction(cg, TR::InstOpCode::b, node, snippetLabel);
          }
       else
          {
          TR::Register *divisorReg = cg->evaluate(divisor);
          TR::InstOpCode::Mnemonic compareOp = is64Bit ? TR::InstOpCode::cbzx : TR::InstOpCode::cbzw;
-         generateCompareBranchInstruction(cg, compareOp, node, divisorReg, snippetLabel, NULL);
+         gcPoint = generateCompareBranchInstruction(cg, compareOp, node, divisorReg, snippetLabel, NULL);
          }
+      gcPoint->ARM64NeedsGCMap(cg, 0xffffffff);
+      snippet->gcMap().setGCRegisterMask(0xffffffff);
       }
 
    cg->evaluate(node->getFirstChild());
@@ -348,7 +354,8 @@ J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator 
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
    TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
    TR::SymbolReference *asynccheckHelper = node->getSymbolReference();
-   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, asynccheckHelper, doneLabel));
+   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, asynccheckHelper, doneLabel);
+   cg->addSnippet(snippet);
 
    // ToDo:
    // Optimize this using "cmp (immediate)" instead of "cmp (register)" when possible
@@ -356,7 +363,7 @@ J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator 
 
    TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_EQ);
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
-
+   snippet->gcMap().setGCRegisterMask(0xffffffff);
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
 
    // ARM64HelperCallSnippet generates "bl" instruction
@@ -559,11 +566,13 @@ J9::ARM64::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       }
 
    snippetLabel = generateLabelSymbol(cg);
-   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference());
+   cg->addSnippet(snippet);
    
    gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, (reversed ? TR::CC_CS : TR::CC_LS));
 
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+   snippet->gcMap().setGCRegisterMask(0xffffffff);
 
    cg->decReferenceCount(firstChild);
    cg->decReferenceCount(secondChild);
