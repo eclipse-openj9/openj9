@@ -66,7 +66,7 @@ abstract class FieldHandle extends PrimitiveHandle {
 	}
 
 	final Class<?> finishFieldInitialization(Class<?> accessClass) throws IllegalAccessException, NoSuchFieldException {
-		String signature = MethodType.getBytecodeStringName(fieldClass);
+		String signature = MethodTypeHelper.getBytecodeStringName(fieldClass);
 		try {
 			boolean isStaticLookup = ((KIND_GETSTATICFIELD == this.kind) || (KIND_PUTSTATICFIELD == this.kind)); 
 			return lookupField(referenceClass, name, signature, isStaticLookup, accessClass);
