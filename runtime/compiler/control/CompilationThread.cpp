@@ -10339,58 +10339,6 @@ TR::CompilationInfo::setProcessorByDebugOption()
       TR::Compiler->target.cpu.setProcessor(TR_PPC7xx);
    }
 
-#if defined(JITSERVER_SUPPORT)
-void
-TR::CompilationInfo::addJ9HookVMDynamicCodeLoadForAOT(J9VMThread* vmThread, J9Method* method, J9JITConfig* jitConfig, TR_MethodMetaData* relocatedMetaData)
-   {
-   OMR::CodeCacheMethodHeader *ccMethodHeader;
-   ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
-      jitConfig->javaVM->hookInterface,
-      vmThread,
-      method,
-      reinterpret_cast<void *>(relocatedMetaData->startPC),
-      relocatedMetaData->endWarmPC - relocatedMetaData->startPC,
-      "JIT warm body",
-      relocatedMetaData
-      );
-   if (relocatedMetaData->startColdPC)
-      {
-      // Register the cold code section too
-      //
-      ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
-         jitConfig->javaVM->hookInterface,
-         vmThread,
-         method,
-         reinterpret_cast<void *>(relocatedMetaData->startColdPC),
-         relocatedMetaData->endPC - relocatedMetaData->startColdPC,
-         "JIT cold body",
-         relocatedMetaData
-         );
-      }
-   ccMethodHeader = getCodeCacheMethodHeader(
-      reinterpret_cast<char *>(relocatedMetaData->startPC),
-      32,
-      relocatedMetaData
-      );
-   if (ccMethodHeader && (relocatedMetaData->bodyInfo != NULL))
-      {
-      TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(reinterpret_cast<void *>(relocatedMetaData->startPC));
-      if (linkageInfo->isRecompMethodBody())
-         {
-         ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
-            jitConfig->javaVM->hookInterface,
-            vmThread,
-            method,
-            ccMethodHeader->_eyeCatcher + 4,
-            relocatedMetaData->startPC - reinterpret_cast<uintptr_t>(ccMethodHeader->_eyeCatcher + 4),
-            "JIT method header",
-            relocatedMetaData
-            );
-         }
-      }
-   }
-#endif /* defined(JITSERVER_SUPPORT) */
-
 // Ensure that only methods whose name (prefix) matches names in
 // the translation filter list are compiled.
 //
@@ -11557,7 +11505,90 @@ TR::CompilationInfo::computeFreePhysicalLimitAndAbortCompilationIfLow(TR::Compil
    return freePhysicalMemorySizeB;
    }
 
-#if defined(JITSERVER_SUPPORT)
+void
+TR::CompilationInfo::replenishInvocationCount(J9Method* method, TR::Compilation* comp)
+   {
+   // Replenish the counts of the method
+   // We are holding the compilation monitor at this point
+   //
+   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+   if (!(romMethod->modifiers & J9AccNative))// Never change the extra field of a native method
+      {
+      int32_t methodVMExtra = TR::CompilationInfo::getJ9MethodVMExtra(method);
+      if (methodVMExtra == 1 || methodVMExtra == J9_JIT_QUEUED_FOR_COMPILATION)
+         {
+         // We want to use high counts unless the user specified counts on the command line
+         // or he used useLowerMethodCounts (or Xquickstart)
+         int32_t count;
+         if (TR::Options::getCountsAreProvidedByUser() || TR::Options::startupTimeMatters() == TR_yes)
+            count = getCount(romMethod, comp->getOptions(), comp->getOptions());
+         else
+            count = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? TR_DEFAULT_INITIAL_BCOUNT : TR_DEFAULT_INITIAL_COUNT;
+
+         TR::CompilationInfo::setInvocationCount(method, count);
+         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
+            {
+            // compiler must exist because startPC != NULL
+            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Reencoding count=%d for %s j9m=%p ", count, comp->signature(), method);
+            }
+         }
+      else
+         {
+         TR_ASSERT(false, "Unexpected value for method->extra = %p (method=%p)\n", TR::CompilationInfo::getJ9MethodExtra(method), method);
+         }
+      }
+   }
+
+void
+TR::CompilationInfo::addJ9HookVMDynamicCodeLoadForAOT(J9VMThread* vmThread, J9Method* method, J9JITConfig* jitConfig, TR_MethodMetaData* relocatedMetaData)
+   {
+   OMR::CodeCacheMethodHeader *ccMethodHeader;
+   ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
+      jitConfig->javaVM->hookInterface,
+      vmThread,
+      method,
+      reinterpret_cast<void *>(relocatedMetaData->startPC),
+      relocatedMetaData->endWarmPC - relocatedMetaData->startPC,
+      "JIT warm body",
+      relocatedMetaData
+      );
+   if (relocatedMetaData->startColdPC)
+      {
+      // Register the cold code section too
+      //
+      ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
+         jitConfig->javaVM->hookInterface,
+         vmThread,
+         method,
+         reinterpret_cast<void *>(relocatedMetaData->startColdPC),
+         relocatedMetaData->endPC - relocatedMetaData->startColdPC,
+         "JIT cold body",
+         relocatedMetaData
+         );
+      }
+   ccMethodHeader = getCodeCacheMethodHeader(
+      reinterpret_cast<char *>(relocatedMetaData->startPC),
+      32,
+      relocatedMetaData
+      );
+   if (ccMethodHeader && (relocatedMetaData->bodyInfo != NULL))
+      {
+      TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(reinterpret_cast<void *>(relocatedMetaData->startPC));
+      if (linkageInfo->isRecompMethodBody())
+         {
+         ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(
+            jitConfig->javaVM->hookInterface,
+            vmThread,
+            method,
+            ccMethodHeader->_eyeCatcher + 4,
+            relocatedMetaData->startPC - reinterpret_cast<uintptr_t>(ccMethodHeader->_eyeCatcher + 4),
+            "JIT method header",
+            relocatedMetaData
+            );
+         }
+      }
+   }
+
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
 void
 TR::CompilationInfo::storeAOTInSharedCache(
@@ -11599,6 +11630,7 @@ TR::CompilationInfo::storeAOTInSharedCache(
       const U_8 *codedataToStore = codeStart;
       int metadataToStoreSize = dataSize;
       int codedataToStoreSize = codeSize;
+
 #ifdef COMPRESS_AOT_DATA
       try 
          {
@@ -11646,6 +11678,7 @@ TR::CompilationInfo::storeAOTInSharedCache(
                 */
                const J9JITDataCacheHeader *aotMethodHeader = reinterpret_cast<const J9JITDataCacheHeader *>(dataStart);
                TR_AOTMethodHeader *aotMethodHeaderEntry = const_cast<TR_AOTMethodHeader *>(reinterpret_cast<const TR_AOTMethodHeader *>(aotMethodHeader + 1));
+
                aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_CompressedMethodInCache;
                memcpy(compressedData, dataStart, aotMethodHeaderSize);
                metadataToStore = (const U_8*) compressedData;
@@ -11680,7 +11713,8 @@ TR::CompilationInfo::storeAOTInSharedCache(
                dataSize+codeSize);   
             }   
          }
-#endif
+#endif /* COMPRESS_AOT_DATA */
+
       storedCompiledMethod =
          reinterpret_cast<const J9JITDataCacheHeader*>(
             jitConfig->javaVM->sharedClassConfig->storeCompiledMethod(
@@ -11722,87 +11756,7 @@ TR::CompilationInfo::storeAOTInSharedCache(
       disableAOTCompilations();
       }
    }
-#endif
-
-bool
-TR::CompilationInfo::canRelocateMethod(TR::Compilation *comp)
-   {
-   TR_Debug *debug = TR::Options::getDebug();
-   bool canRelocateMethod = false;
-   if (debug)
-      {
-      TR_FilterBST *filter = NULL;
-      J9UTF8 *className = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_className;
-      J9UTF8 *name = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_name;
-      J9UTF8 *signature = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_signature;
-      char *methodSignature;
-      char arr[1024];
-      int32_t len = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 3;
-      if (len < 1024)
-         methodSignature = arr;
-      else
-         methodSignature = (char *) jitPersistentAlloc(len);
-
-       if (methodSignature)
-         {
-         sprintf(methodSignature, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
-         //printf("methodSig: %s\n", methodSignature);
-
-          if (debug->methodSigCanBeRelocated(methodSignature, filter))
-            canRelocateMethod = true;
-         }
-      else
-         canRelocateMethod = true;
-
-
-       if (methodSignature && (len >= 1024))
-         jitPersistentFree(methodSignature);
-      }
-   else
-      {
-      // Prevent the relocation if specific option is given
-      if (!comp->getOption(TR_DisableDelayRelocationForAOTCompilations))
-         canRelocateMethod = false;
-      else
-         canRelocateMethod = true;
-      }
-   return canRelocateMethod;
-   }
-
-void
-TR::CompilationInfo::replenishInvocationCount(J9Method* method, TR::Compilation* comp)
-   {
-   // Replenish the counts of the method
-   // We are holding the compilation monitor at this point
-   //
-   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
-   if (!(romMethod->modifiers & J9AccNative))// Never change the extra field of a native method
-      {
-      int32_t methodVMExtra = TR::CompilationInfo::getJ9MethodVMExtra(method);
-      if (methodVMExtra == 1 || methodVMExtra == J9_JIT_QUEUED_FOR_COMPILATION)
-         {
-         // We want to use high counts unless the user specified counts on the command line
-         // or he used useLowerMethodCounts (or Xquickstart)
-         int32_t count;
-         if (TR::Options::getCountsAreProvidedByUser() || TR::Options::startupTimeMatters() == TR_yes)
-            count = getCount(romMethod, comp->getOptions(), comp->getOptions());
-         else
-            count = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? TR_DEFAULT_INITIAL_BCOUNT : TR_DEFAULT_INITIAL_COUNT;
-
-         TR::CompilationInfo::setInvocationCount(method, count);
-         if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerbosePerformance))
-            {
-            // compiler must exist because startPC != NULL
-            TR_VerboseLog::writeLineLocked(TR_Vlog_PERF, "Reencoding count=%d for %s j9m=%p ", count, comp->signature(), method);
-            }
-         }
-      else
-         {
-         TR_ASSERT(false, "Unexpected value for method->extra = %p (method=%p)\n", TR::CompilationInfo::getJ9MethodExtra(method), method);
-         }
-      }
-   }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM)) */
 
 //===========================================================
 TR_LowPriorityCompQueue::TR_LowPriorityCompQueue()
@@ -12759,6 +12713,52 @@ bool TR::CompilationInfo::canProcessJProfilingRequest()
    }
 
 #if defined(JITSERVER_SUPPORT)
+bool
+TR::CompilationInfo::canRelocateMethod(TR::Compilation *comp)
+   {
+   TR_Debug *debug = TR::Options::getDebug();
+   bool canRelocateMethod = false;
+   if (debug)
+      {
+      TR_FilterBST *filter = NULL;
+      J9UTF8 *className = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_className;
+      J9UTF8 *name = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_name;
+      J9UTF8 *signature = ((TR_ResolvedJ9Method*)comp->getCurrentMethod())->_signature;
+      char *methodSignature;
+      char arr[1024];
+      int32_t len = J9UTF8_LENGTH(className) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) + 3;
+      if (len < 1024)
+         methodSignature = arr;
+      else
+         methodSignature = (char *) jitPersistentAlloc(len);
+
+       if (methodSignature)
+         {
+         sprintf(methodSignature, "%.*s.%.*s%.*s", J9UTF8_LENGTH(className), utf8Data(className), J9UTF8_LENGTH(name), utf8Data(name), J9UTF8_LENGTH(signature), utf8Data(signature));
+         //printf("methodSig: %s\n", methodSignature);
+
+          if (debug->methodSigCanBeRelocated(methodSignature, filter))
+            canRelocateMethod = true;
+         }
+      else
+         {
+         canRelocateMethod = true;
+         }
+
+       if (methodSignature && (len >= 1024))
+         jitPersistentFree(methodSignature);
+      }
+   else
+      {
+      // Prevent the relocation if specific option is given
+      if (!comp->getOption(TR_DisableDelayRelocationForAOTCompilations))
+         canRelocateMethod = false;
+      else
+         canRelocateMethod = true;
+      }
+   return canRelocateMethod;
+   }
+
 void
 TR::CompilationInfoPerThread::updateLastLocalGCCounter()
    {
