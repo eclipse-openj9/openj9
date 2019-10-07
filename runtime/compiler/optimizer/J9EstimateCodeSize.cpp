@@ -473,35 +473,9 @@ TR_J9EstimateCodeSize::estimateCodeSize(TR_CallTarget *calltarget, TR_CallStack 
    return false;
    }
 
-bool
-TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown, TR::Region &cfgRegion)
+TR::CFG&
+TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, TR::Region &cfgRegion, TR_J9ByteCodeIterator& bci, NeedsPeekingHeuristic &nph, TR::Block** blocks, flags8_t * flags)
    {
-   TR_ASSERT(calltarget->_calleeMethod, "assertion failure");
-
-   heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- calltarget = %p , _ecsPrexArgInfo = %p",
-      _recursionDepth, calltarget, calltarget->_ecsPrexArgInfo);
-
-
-
-   if (tracer()->heuristicLevel() && calltarget->_ecsPrexArgInfo)
-      {
-      heuristicTrace(tracer(), "ECS CSI -- ArgInfo :");
-      tracer()->dumpPrexArgInfo(calltarget->_ecsPrexArgInfo);
-      }
-
-   TR_InlinerDelimiter delimiter(tracer(), "realEstimateCodeSize");
-
-   if (calltarget->_calleeMethod->numberOfExceptionHandlers() > 0)
-      _hasExceptionHandlers = true;
-
-   if (_aggressivelyInlineThrows)
-      {
-      TR_CatchBlockProfileInfo * catchInfo = TR_CatchBlockProfileInfo::get(comp(), calltarget->_calleeMethod);
-      if (catchInfo)
-         _throwCount += catchInfo->getThrowCounter();
-      }
-
-   //TR::Compilation * comp = _inliner->comp();
 
    char nameBuffer[1024];
    const char *callerName = NULL;
@@ -510,90 +484,31 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
             calltarget->_calleeMethod->getPersistentIdentifier(), nameBuffer,
             1024, comp()->trMemory());
 
-   heuristicTrace(tracer(),
-         "*** Depth %d: ECS to begin for target %p signature %s size assuming we can partially inline (optimistic size)  = %d total real size so far = %d sizeThreshold %d",
-         _recursionDepth, calltarget, callerName, _optimisticSize, _realSize,
-         _sizeThreshold);
-
-   TR_ByteCodeInfo newBCInfo;
-   newBCInfo.setDoNotProfile(0);
-   TR::ResolvedMethodSymbol* methodSymbol = TR::ResolvedMethodSymbol::create(comp()->trHeapMemory(), calltarget->_calleeMethod, comp());
-   if (_mayHaveVirtualCallProfileInfo)
-      {
-        if (!comp()->incInlineDepth(methodSymbol, calltarget->_myCallSite->_bcInfo, 0, NULL, !calltarget->_myCallSite->_isIndirectCall))
-            {
-            return false; //this is intentional
-                          //calling returnCleanup here will result in assertion
-                          //as incInlineDepth doesn't do anything
-            }
-
-
-      newBCInfo.setCallerIndex(comp()->getCurrentInlinedSiteIndex());
-      }
-
-   if( comp()->getVisitCount() > HIGH_VISIT_COUNT )
-      {
-      heuristicTrace(tracer(),"Depth %d: estimateCodeSize aborting due to high comp()->getVisitCount() of %d",_recursionDepth,comp()->getVisitCount());
-      return returnCleanup(3);
-      }
-
-   if (_recursionDepth > MAX_ECS_RECURSION_DEPTH)
-      {
-      calltarget->_isPartialInliningCandidate = false;
-      heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. Exceeded Recursion Depth", _recursionDepth, calltarget, callerName);
-      return returnCleanup(1);
-      }
-
-   int32_t size = calltarget->_myCallSite->_isIndirectCall ? 5 : 0;
-
-   TR_J9ByteCodeIterator bci(0, static_cast<TR_ResolvedJ9Method *> (calltarget->_calleeMethod), static_cast<TR_J9VMBase *> (comp()->fej9()), comp());
-
-   bool inlineableCallExists = false;
-   bool nonColdCallExists = false;
-   bool callExists = false;
+   int size = calltarget->_myCallSite->_isIndirectCall ? 5 : 0;
 
    int32_t maxIndex = bci.maxByteCodeIndex() + 5;
-
-   flags8_t * flags = (flags8_t *) comp()->trMemory()->allocateStackMemory(
-         maxIndex * sizeof(flags8_t));
-   memset(flags, 0, maxIndex * sizeof(flags8_t));
-
-   TR_CallSite * * callSites =
-         (TR_CallSite * *) comp()->trMemory()->allocateStackMemory(maxIndex
-               * sizeof(TR_CallSite *));
-   memset(callSites, 0, maxIndex * sizeof(TR_CallSite *));
 
    int32_t *bcSizes = (int32_t *) comp()->trMemory()->allocateStackMemory(
          maxIndex * sizeof(int32_t));
    memset(bcSizes, 0, maxIndex * sizeof(int32_t));
 
+   bool blockStart = true;
+
+   bool thisOnStack = false;
+   bool hasThisCalls = false;
+   bool foundNewAllocation = false;
+
    bool unresolvedSymbolsAreCold = comp()->notYetRunMeansCold();
 
-   bool blockStart = true;
-   TR_CallStack callStack(comp(), 0, calltarget->_calleeMethod, prevCallStack, 0);
-
-   bool foundNewAllocation = false;
-   bool hasThisCalls = false;
-   bool thisOnStack = false;
-
-   TR_PrexArgInfo* argsFromSymbol = TR_PrexArgInfo::buildPrexArgInfoForMethodSymbol(methodSymbol, tracer());
-
-   if (!TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(argsFromSymbol, calltarget->_ecsPrexArgInfo, tracer()))
-   {
-      heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. Incompatible arguments", _recursionDepth, calltarget, callerName);
-      return returnCleanup(6);
-   }
-
-   NeedsPeekingHeuristic nph(calltarget, bci, methodSymbol, comp());
-
-   //this might be a little bit too verbose, so let's hide the heuristic's output behind this env var
-   static char *traceNeedsPeeking = feGetEnv("TR_traceNeedsPeekingHeuristic");
-   if (traceNeedsPeeking)
-      {
-      nph.setTracer(tracer());
-      }
+   TR_ByteCodeInfo newBCInfo;
+   newBCInfo.setDoNotProfile(0);
+   if (_mayHaveVirtualCallProfileInfo)
+      newBCInfo.setCallerIndex(comp()->getCurrentInlinedSiteIndex());
 
    // PHASE 1:  Bytecode Iteration
+
+   bool callExists = false;
+   size = calltarget->_myCallSite->_isIndirectCall ? 5 : 0;
    TR_J9ByteCode bc = bci.first(), nextBC;
 
 #if defined(JITSERVER_SUPPORT)
@@ -946,24 +861,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       TR::DebugCounter::incStaticDebugCounter(comp(), TR::DebugCounter::debugCounterName(comp(), "inliner/%s/estimatedBytecodeSize/%d", calltarget->_calleeSymbol->signature(comp()->trMemory()), calltarget->_fullSize));
       }
 
-   bool wasPeekingSuccessfull = false;
-
-   if (nph.doPeeking() && recurseDown
-      || calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen())
-      {
-
-      heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- needsPeeking is true for calltarget %p",
-      _recursionDepth, calltarget);
-
-      bool ilgenSuccess = (NULL != methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, NULL));
-      if (ilgenSuccess)
-         {
-         heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- peeking was successfull for calltarget %p", _recursionDepth, calltarget);
-         calltarget->_ecsPrexArgInfo->clearArgInfoForNonInvariantArguments(methodSymbol, tracer());
-         wasPeekingSuccessfull = true;
-         }
-      }
-
    /********* PHASE 2: Generate CFG **********/
 
    heuristicTrace(tracer(),"--- Done Iterating over Bytecodes in call to %s.  size = %d _recursionDepth = %d _optimisticSize = %d _realSize = %d _sizeThreshold = %d",callerName, size, _recursionDepth, _optimisticSize, _realSize, _sizeThreshold);
@@ -971,11 +868,10 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    if (hasThisCalls && calltarget->_calleeSymbol)
       calltarget->_calleeSymbol->setHasThisCalls(true);
 
-   TR_Queue<TR::Block> callBlocks(comp()->trMemory());
 
    //if (callExists)
-   if (true) // Need to run the below code to inline partially anyway (even if there are no calls in this callee)
-      {
+   //if (true) // Need to run the below code to inline partially anyway (even if there are no calls in this callee)
+      //{
       TR_Array<TR_J9ByteCodeIterator::TryCatchInfo> tryCatchInfo(
             comp()->trMemory(),
             calltarget->_calleeMethod->numberOfExceptionHandlers(), true,
@@ -1039,10 +935,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       setupNode(cfg.getEnd()->asBlock()->getExit()->getNode(),
             endNodeIndex, calltarget->_calleeMethod, comp());
 
-      TR::Block * * blocks =
-            (TR::Block * *) comp()->trMemory()->allocateStackMemory(maxIndex
-                  * sizeof(TR::Block *));
-      memset(blocks, 0, maxIndex * sizeof(TR::Block *));
 
       debugTrace(tracer(),"PECS: startblock %p %d endblock %p %d",cfg.getStart()->asBlock(), cfg.getStart()->getNumber(), cfg.getEnd()->asBlock(), cfg.getEnd()->getNumber());
 
@@ -1051,8 +943,9 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       debugTrace(tracer(),"PECS: iterating over bc indexes in CFG creation. maxIndex =%d", maxIndex);
       int32_t blockStartSize = 0;
       int32_t startIndex = 0;
-      for (bc = bci.first(), i = bci.bcIndex(); bc != J9BCunknown; bc = bci.next(), i = bci.bcIndex())
+      for (TR_J9ByteCode bc = bci.first(); bc != J9BCunknown; bc = bci.next())
          {
+         int32_t i = bci.bcIndex();
          if (flags[i].testAny(bbStart))
             {
             debugTrace(tracer(),"Calling getBlock.  blocks[%d] = %p", i, blocks[i]);
@@ -1214,32 +1107,173 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                cfg.addExceptionEdge(blocks[j], blocks[handlerInfo->_handlerIndex]);
          }
 
-      // Adjust call frequency for unknown or direct calls, for which we don't get profiling information
-      //
-      TR_ValueProfileInfoManager * profileManager = TR_ValueProfileInfoManager::get(comp());
-      bool callGraphEnabled = !comp()->getOption(TR_DisableCallGraphInlining);//profileManager->isCallGraphProfilingEnabled(comp());
-      if (!_inliner->firstPass())
-         callGraphEnabled = false; // TODO: Work out why this doesn't function properly on subsequent passes
-      if (callGraphEnabled && recurseDown)
-         {
-         TR_OpaqueMethodBlock *method = calltarget->_myCallSite->_callerResolvedMethod->getPersistentIdentifier();
-         uint32_t bcIndex = calltarget->_myCallSite->_bcInfo.getByteCodeIndex();
-         int32_t callCount = profileManager->getCallGraphProfilingCount(method,
-               bcIndex, comp());
-         cfg._calledFrequency = callCount;
 
-         if (callCount <= 0 && _lastCallBlockFrequency > 0)
-            cfg._calledFrequency = _lastCallBlockFrequency;
 
-         heuristicTrace(tracer(),
-               "Depth %d: Setting called count for caller index %d, bytecode index %d of %d", _recursionDepth,
-               calltarget->_myCallSite->_bcInfo.getCallerIndex(),
-               calltarget->_myCallSite->_bcInfo.getByteCodeIndex(), callCount);
-         }
-      else if (callGraphEnabled)
+
+   return cfg;
+   }
+
+bool
+TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown, TR::Region &cfgRegion)
+   {
+   TR_ASSERT(calltarget->_calleeMethod, "assertion failure");
+
+   heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- calltarget = %p , _ecsPrexArgInfo = %p",
+      _recursionDepth, calltarget, calltarget->_ecsPrexArgInfo);
+
+
+
+   if (tracer()->heuristicLevel() && calltarget->_ecsPrexArgInfo)
+      {
+      heuristicTrace(tracer(), "ECS CSI -- ArgInfo :");
+      tracer()->dumpPrexArgInfo(calltarget->_ecsPrexArgInfo);
+      }
+
+   TR_InlinerDelimiter delimiter(tracer(), "realEstimateCodeSize");
+
+   if (calltarget->_calleeMethod->numberOfExceptionHandlers() > 0)
+      _hasExceptionHandlers = true;
+
+   if (_aggressivelyInlineThrows)
+      {
+      TR_CatchBlockProfileInfo * catchInfo = TR_CatchBlockProfileInfo::get(comp(), calltarget->_calleeMethod);
+      if (catchInfo)
+         _throwCount += catchInfo->getThrowCounter();
+      }
+
+   //TR::Compilation * comp = _inliner->comp();
+
+   char nameBuffer[1024];
+   const char *callerName = NULL;
+   if (tracer()->heuristicLevel())
+      callerName = comp()->fej9()->sampleSignature(
+            calltarget->_calleeMethod->getPersistentIdentifier(), nameBuffer,
+            1024, comp()->trMemory());
+
+   heuristicTrace(tracer(),
+         "*** Depth %d: ECS to begin for target %p signature %s size assuming we can partially inline (optimistic size)  = %d total real size so far = %d sizeThreshold %d",
+         _recursionDepth, calltarget, callerName, _optimisticSize, _realSize,
+         _sizeThreshold);
+
+   TR_ByteCodeInfo newBCInfo;
+   newBCInfo.setDoNotProfile(0);
+   TR::ResolvedMethodSymbol* methodSymbol = TR::ResolvedMethodSymbol::create(comp()->trHeapMemory(), calltarget->_calleeMethod, comp());
+   if (_mayHaveVirtualCallProfileInfo)
+      {
+        if (!comp()->incInlineDepth(methodSymbol, calltarget->_myCallSite->_bcInfo, 0, NULL, !calltarget->_myCallSite->_isIndirectCall))
+            {
+            return false; //this is intentional
+                          //calling returnCleanup here will result in assertion
+                          //as incInlineDepth doesn't do anything
+            }
+
+
+      newBCInfo.setCallerIndex(comp()->getCurrentInlinedSiteIndex());
+      }
+
+   if( comp()->getVisitCount() > HIGH_VISIT_COUNT )
+      {
+      heuristicTrace(tracer(),"Depth %d: estimateCodeSize aborting due to high comp()->getVisitCount() of %d",_recursionDepth,comp()->getVisitCount());
+      return returnCleanup(3);
+      }
+
+   if (_recursionDepth > MAX_ECS_RECURSION_DEPTH)
+      {
+      calltarget->_isPartialInliningCandidate = false;
+      heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. Exceeded Recursion Depth", _recursionDepth, calltarget, callerName);
+      return returnCleanup(1);
+      }
+
+   TR_J9ByteCodeIterator bci(0, static_cast<TR_ResolvedJ9Method *> (calltarget->_calleeMethod), static_cast<TR_J9VMBase *> (comp()->fej9()), comp());
+
+   bool inlineableCallExists = false;
+   bool nonColdCallExists = false;
+
+   int32_t maxIndex = bci.maxByteCodeIndex() + 5;
+
+   flags8_t * flags = (flags8_t *) comp()->trMemory()->allocateStackMemory(
+         maxIndex * sizeof(flags8_t));
+   memset(flags, 0, maxIndex * sizeof(flags8_t));
+
+   TR_CallSite * * callSites =
+         (TR_CallSite * *) comp()->trMemory()->allocateStackMemory(maxIndex
+               * sizeof(TR_CallSite *));
+   memset(callSites, 0, maxIndex * sizeof(TR_CallSite *));
+
+   bool unresolvedSymbolsAreCold = comp()->notYetRunMeansCold();
+
+   TR_CallStack callStack(comp(), 0, calltarget->_calleeMethod, prevCallStack, 0);
+
+   TR_PrexArgInfo* argsFromSymbol = TR_PrexArgInfo::buildPrexArgInfoForMethodSymbol(methodSymbol, tracer());
+
+   if (!TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(argsFromSymbol, calltarget->_ecsPrexArgInfo, tracer()))
+   {
+      heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. Incompatible arguments", _recursionDepth, calltarget, callerName);
+      return returnCleanup(6);
+   }
+
+   NeedsPeekingHeuristic nph(calltarget, bci, methodSymbol, comp());
+   //this might be a little bit too verbose, so let's hide the heuristic's output behind this env var
+   static char *traceNeedsPeeking = feGetEnv("TR_traceNeedsPeekingHeuristic");
+   if (traceNeedsPeeking)
+      {
+      nph.setTracer(tracer());
+      }
+
+   bool wasPeekingSuccessfull = false;
+
+   if (nph.doPeeking() && recurseDown
+      || calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen())
+      {
+
+      heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- needsPeeking is true for calltarget %p",
+      _recursionDepth, calltarget);
+
+      bool ilgenSuccess = (NULL != methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, NULL));
+      if (ilgenSuccess)
          {
-         cfg._calledFrequency = 10000;
+         heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- peeking was successfull for calltarget %p", _recursionDepth, calltarget);
+         calltarget->_ecsPrexArgInfo->clearArgInfoForNonInvariantArguments(methodSymbol, tracer());
+         wasPeekingSuccessfull = true;
          }
+      }
+
+   TR::Block * * blocks =
+         (TR::Block * *) comp()->trMemory()->allocateStackMemory(maxIndex
+               * sizeof(TR::Block *));
+   memset(blocks, 0, maxIndex * sizeof(TR::Block *));
+
+
+   TR::CFG &cfg = processBytecodeAndGenerateCFG(calltarget, cfgRegion, bci, nph, blocks, flags);
+
+   int size = calltarget->_fullSize;
+
+   // Adjust call frequency for unknown or direct calls, for which we don't get profiling information
+   //
+   TR_ValueProfileInfoManager * profileManager = TR_ValueProfileInfoManager::get(comp());
+   bool callGraphEnabled = !comp()->getOption(TR_DisableCallGraphInlining);//profileManager->isCallGraphProfilingEnabled(comp());
+   if (!_inliner->firstPass())
+      callGraphEnabled = false; // TODO: Work out why this doesn't function properly on subsequent passes
+   if (callGraphEnabled && recurseDown)
+      {
+      TR_OpaqueMethodBlock *method = calltarget->_myCallSite->_callerResolvedMethod->getPersistentIdentifier();
+      uint32_t bcIndex = calltarget->_myCallSite->_bcInfo.getByteCodeIndex();
+      int32_t callCount = profileManager->getCallGraphProfilingCount(method,
+            bcIndex, comp());
+      cfg._calledFrequency = callCount;
+
+      if (callCount <= 0 && _lastCallBlockFrequency > 0)
+         cfg._calledFrequency = _lastCallBlockFrequency;
+
+      heuristicTrace(tracer(),
+            "Depth %d: Setting called count for caller index %d, bytecode index %d of %d", _recursionDepth,
+            calltarget->_myCallSite->_bcInfo.getCallerIndex(),
+            calltarget->_myCallSite->_bcInfo.getByteCodeIndex(), callCount);
+      }
+   else if (callGraphEnabled)
+      {
+      cfg._calledFrequency = 10000;
+      }
 
       cfg.propagateColdInfo(callGraphEnabled); // propagate coldness but also generate frequency information
       // for blocks if call graph profiling is enabled
@@ -1339,8 +1373,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
             {
             case J9BCinvokedynamic:
                {
-               if (thisOnStack)
-                  hasThisCalls = true;
                cpIndex = bci.next2Bytes();
                bool isInterface = false;
                bool isIndirectCall = false;
@@ -1403,8 +1435,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
             case J9BCinvokevirtual:
                {
-               if (thisOnStack)
-                  hasThisCalls = true;
                cpIndex = bci.next2Bytes();
                auto calleeMethod = (TR_ResolvedJ9Method*)calltarget->_calleeMethod;
                resolvedMethod = calleeMethod->getResolvedPossiblyPrivateVirtualMethod(comp(), cpIndex, true, &isUnresolvedInCP);
@@ -1531,19 +1561,17 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
             case J9BCinvokespecial:
             case J9BCinvokespecialsplit:
-               {
-               if (thisOnStack)
-                  hasThisCalls = true;
-               cpIndex = bci.next2Bytes();
-               resolvedMethod = calltarget->_calleeMethod->getResolvedSpecialMethod(comp(), (bc == J9BCinvokespecialsplit)?cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG:cpIndex, &isUnresolvedInCP);
-               bool isIndirectCall = false;
-               bool isInterface = false;
-               TR::Method *interfaceMethod = 0;
-               TR::TreeTop *callNodeTreeTop = 0;
-               TR::Node *parent = 0;
-               TR::Node *callNode = 0;
-               TR::ResolvedMethodSymbol *resolvedSymbol = 0;
-               if (!resolvedMethod || isUnresolvedInCP || resolvedMethod->isCold(comp(), false))
+            {
+            cpIndex = bci.next2Bytes();
+            resolvedMethod = calltarget->_calleeMethod->getResolvedSpecialMethod(comp(), (bc == J9BCinvokespecialsplit)?cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG:cpIndex, &isUnresolvedInCP);
+            bool isIndirectCall = false;
+            bool isInterface = false;
+            TR::Method *interfaceMethod = 0;
+            TR::TreeTop *callNodeTreeTop = 0;
+            TR::Node *parent = 0;
+            TR::Node *callNode = 0;
+            TR::ResolvedMethodSymbol *resolvedSymbol = 0;
+            if (!resolvedMethod || isUnresolvedInCP || resolvedMethod->isCold(comp(), false))
                   {
                   if(tracer()->heuristicLevel())
                       {
@@ -1783,8 +1811,9 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          bool isCold = false;
          int coldBorderFrequency = 20;
 
-         for (bc = bci.first(), i = bci.bcIndex(); bc != J9BCunknown; bc = bci.next(), i = bci.bcIndex())
+         for (TR_J9ByteCode bc = bci.first(); bc != J9BCunknown; bc = bci.next());
             {
+            int32_t i = bci.bcIndex();
             if (blocks[i])
                if (!blocks[i]->isCold() && blocks[i]->getFrequency() > coldBorderFrequency)
                   isCold = false;
@@ -1843,9 +1872,10 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          calltarget->_partialSize = 0;
          }
 
+
       /*************** PHASE 3:  Optimistically Assume we can partially inline calltarget and add to an optimisticSize ******************/
 
-
+      TR_Queue<TR::Block> callBlocks(comp()->trMemory());
       bool isCandidate = trimBlocksForPartialInlining(calltarget, &callBlocks);
 
       switch (calltarget->_calleeMethod->getRecognizedMethod())
@@ -1884,9 +1914,10 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          }
 
       /****************** Phase 4: Deal with Inlineable Calls **************************/
-
-      for (bc = bci.first(), i = bci.bcIndex(); bc != J9BCunknown && inlineableCallExists; bc = bci.next(), i = bci.bcIndex())
+      TR::Block *currentBlock = NULL;
+      for (TR_J9ByteCode bc = bci.first(); bc != J9BCunknown && inlineableCallExists; bc = bci.next())
          {
+         int32_t i = bci.bcIndex();
          //heuristicTrace(tracer(),"--- Depth %d: Checking _real size vs Size Threshold: _realSize %d _sizeThreshold %d sizeThreshold %d ",_recursionDepth, _realSize, _sizeThreshold, sizeThreshold);
 
          if (_realSize > sizeThreshold)
@@ -2170,7 +2201,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          heuristicTrace(tracer(),"*** Depth %d: ECS end for target %p signature %s. real size exceeds Size Threshold", _recursionDepth,calltarget, callerName);
          return returnCleanup(4);
          }
-      }
+      //}
 
    return returnCleanup(0);
    }
