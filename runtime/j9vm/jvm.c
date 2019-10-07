@@ -452,7 +452,7 @@ static const J9SignalMapping signalMap[] = {
 #endif /* defined(SIGPOLL) */
 #if defined(SIGCLD)
 	J9_SIGNAL_MAP_ENTRY("CLD", SIGCLD),
-#endif /* defined(SIGPWR) */
+#endif /* defined(SIGCLD) */
 #if defined(SIGPWR)
 	J9_SIGNAL_MAP_ENTRY("PWR", SIGPWR),
 #endif /* defined(SIGPWR) */
