@@ -25,8 +25,15 @@ add_subdirectory(testjvmtiB)
 add_subdirectory(testlibA)
 add_subdirectory(testlibB)
 
-#TODO this is platform specific stuff
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -rdynamic")
+
+#TODO: this is how its done in the module.xml, but its probably a toolchain thing
+if(OMR_OS_LINUX)
+    if(OMR_ARCH_X86 OR OMR_ARCH_S390)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -rdynamic")
+    endif()
+elseif(OMR_OS_AIX)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -qpic -brtl -bexpall")
+endif()
 
 add_executable(testjep178_static
     static_agents.c
