@@ -614,7 +614,7 @@ void TR::ARM64PrivateLinkage::buildDirectCall(TR::Node *callNode,
       TR::LabelSymbol *label = generateLabelSymbol(cg());
       TR::Snippet *snippet;
 
-      if (callSymRef->isUnresolved())
+      if (callSymRef->isUnresolved() || comp()->compileRelocatableCode())
          {
          snippet = new (trHeapMemory()) TR::ARM64UnresolvedCallSnippet(cg(), callNode, label, argSize);
          }
