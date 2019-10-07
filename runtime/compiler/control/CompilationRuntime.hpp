@@ -1027,7 +1027,7 @@ public:
 
    static void addJ9HookVMDynamicCodeLoadForAOT(J9VMThread * vmThread, J9Method * method, J9JITConfig *jitConfig, TR_MethodMetaData* relocatedMetaData);
 
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    static void storeAOTInSharedCache(J9VMThread *vmThread, J9ROMMethod *romMethod, const U_8 *dataStart, UDATA dataSize, const U_8 *codeStart, UDATA codeSize, TR::Compilation *comp, J9JITConfig *jitConfig, TR_MethodToBeCompiled *entry);
 #endif
 
