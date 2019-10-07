@@ -325,14 +325,13 @@ static Block * getBlock(TR::Compilation *comp, Block * * blocks,
    if (!blocks[i])
       {
 
-      TR::TreeTop *startTree = TR::TreeTop::create(comp, TR::Node::createOnStack(
+      TR::TreeTop *startTree = TR::TreeTop::create(comp, TR::Node::create(
             NULL, TR::BBStart, 0));
-      TR::TreeTop *endTree = TR::TreeTop::create(comp, TR::Node::createOnStack(
+      TR::TreeTop *endTree = TR::TreeTop::create(comp, TR::Node::create(
             NULL, TR::BBEnd, 0));
 
       startTree->join(endTree);
-      blocks[i] = new (comp->trStackMemory()) Block (startTree, endTree,
-            comp->trMemory());
+      blocks[i] = Block::createBlock(startTree, endTree, cfg);
 
       blocks[i]->setBlockBCIndex(i);
       blocks[i]->setNumber(cfg.getNextNodeNumber());
@@ -457,7 +456,7 @@ TR_J9EstimateCodeSize::adjustEstimateForStringCompression(TR_ResolvedMethod* met
 bool
 TR_J9EstimateCodeSize::estimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown)
    {
-   if (realEstimateCodeSize(calltarget, prevCallStack, recurseDown))
+   if (realEstimateCodeSize(calltarget, prevCallStack, recurseDown, comp()->trMemory()->currentStackRegion()))
       {
       if (_isLeaf && _realSize > 1)
          {
@@ -472,7 +471,7 @@ TR_J9EstimateCodeSize::estimateCodeSize(TR_CallTarget *calltarget, TR_CallStack 
    }
 
 bool
-TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown)
+TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown, TR::Region &cfgRegion)
    {
    TR_ASSERT(calltarget->_calleeMethod, "assertion failure");
 
@@ -984,16 +983,17 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                (uint16_t) handler, (uint32_t) type);
          }
 
-      TR::CFG cfg(comp(), calltarget->_calleeSymbol, comp()->trMemory()->currentStackRegion());
-      cfg.setStartAndEnd(new (comp()->trStackMemory()) TR::Block(
-            TR::TreeTop::create(comp(), TR::Node::createOnStack(NULL,
+      calltarget->_cfg = new (cfgRegion) TR::CFG(comp(), calltarget->_calleeSymbol, cfgRegion);
+      TR::CFG &cfg = *(calltarget->_cfg);
+      cfg.setStartAndEnd(TR::Block::createBlock(
+            TR::TreeTop::create(comp(), TR::Node::create(NULL,
                   TR::BBStart, 0)), TR::TreeTop::create(comp(),
-                  TR::Node::createOnStack(NULL, TR::BBEnd, 0)),
-            comp()->trMemory()), new (comp()->trStackMemory()) TR::Block(
-            TR::TreeTop::create(comp(), TR::Node::createOnStack(NULL,
+                  TR::Node::create(NULL, TR::BBEnd, 0)),
+            cfg), TR::Block::createBlock(
+            TR::TreeTop::create(comp(), TR::Node::create(NULL,
                   TR::BBStart, 0)), TR::TreeTop::create(comp(),
-                  TR::Node::createOnStack(NULL, TR::BBEnd, 0)),
-            comp()->trMemory()));
+                  TR::Node::create(NULL, TR::BBEnd, 0)),
+            cfg));
 
       cfg.getStart()->asBlock()->getEntry()->join(
             cfg.getStart()->asBlock()->getExit());
@@ -1831,7 +1831,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
       /*************** PHASE 3:  Optimistically Assume we can partially inline calltarget and add to an optimisticSize ******************/
 
-      calltarget->_cfg = &cfg;
 
       bool isCandidate = trimBlocksForPartialInlining(calltarget, &callBlocks);
 
