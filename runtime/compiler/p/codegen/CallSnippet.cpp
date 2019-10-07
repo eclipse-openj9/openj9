@@ -719,7 +719,11 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
          {
          int32_t  *patchAddr = (int32_t *)getLowerInstruction()->getBinaryEncoding();
          intptrj_t addrValue = (intptrj_t)cursor;
-         if (!comp->compileRelocatableCode())
+         if (!comp->compileRelocatableCode() 
+            #ifdef JITSERVER_SUPPORT
+               && !comp->isOutOfProcessCompilation()
+            #endif
+            )
             {
             // If the high nibble is 0 and the next nibble's high bit is clear, change the first instruction to a nop and the third to a li
             // Next nibble's high bit needs to be clear in order to use li (because li will sign extend the immediate)
@@ -744,6 +748,10 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
             }
          else
             {
+            // We must take this path for all compiles that need to generate relocatable code (ex. AOT, outOfProcess).
+            // The immediate fields of relocatable instructions must be clear. This is because when performing the relocation,
+            // we OR the new address into the fields. So if the fields are not already clear, then OR'ing the new address can
+            // result in garbage data.
             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(getUpperInstruction(),
                (uint8_t *)(addrValue),
                (uint8_t *)fixedSequence4,
