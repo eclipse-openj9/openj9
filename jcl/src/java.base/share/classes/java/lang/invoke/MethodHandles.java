@@ -2718,7 +2718,7 @@ public class MethodHandles {
 			if (constantValue == null) {
 				throw new IllegalArgumentException();
 			}
-			Class<?> unwrapped = MethodType.unwrapPrimitive(constantValue.getClass());
+			Class<?> unwrapped = MethodTypeHelper.unwrapPrimitive(constantValue.getClass());
 			if ((returnType != unwrapped) && !FilterHelpers.checkIfWideningPrimitiveConversion(unwrapped, returnType)) {
 				throw new ClassCastException();
 			}
@@ -3764,7 +3764,7 @@ public class MethodHandles {
 			}
 			if (clazz.isPrimitive()) {
 				Objects.requireNonNull(value);
-				Class<?> unwrapped = MethodType.unwrapPrimitive(valueClazz);
+				Class<?> unwrapped = MethodTypeHelper.unwrapPrimitive(valueClazz);
 				if ((clazz != unwrapped) && !FilterHelpers.checkIfWideningPrimitiveConversion(unwrapped, clazz)) {
 					clazz.cast(value);	// guaranteed to throw ClassCastException
 				}

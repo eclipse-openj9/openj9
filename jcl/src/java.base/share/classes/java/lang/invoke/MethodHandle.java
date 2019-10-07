@@ -943,7 +943,7 @@ public abstract class MethodHandle
 		char[] signature = new char[length];
 		fieldDescriptor.getChars(0, length, signature, 0);
 
-		MethodType.parseIntoClass(signature, 0, classList, classLoader, fieldDescriptor);
+		MethodTypeHelper.parseIntoClass(signature, 0, classList, classLoader, fieldDescriptor);
 
 		return classList.get(0);
 	}
@@ -1215,7 +1215,7 @@ public abstract class MethodHandle
 			Object internalRamClass = access.createInternalRamClass(j9class);
 			Class<?> classObject = getClassFromJ9Class(j9class);
 			
-			type = MethodType.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
+			type = MethodTypeHelper.vmResolveFromMethodDescriptorString(methodDescriptor, access.getClassloader(classObject), null);
 			final MethodHandles.Lookup lookup = new MethodHandles.Lookup(classObject, false);
 			try {
 				lookup.accessCheckArgRetTypes(type);
@@ -1408,27 +1408,27 @@ public abstract class MethodHandle
 				result = lookup.findStaticSetter(referenceClazz, name, resolveFieldHandleHelper(typeDescriptor, lookup, loader));
 				break;
 			case 5: /* invokeVirtual */
-				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				type = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 				lookup.accessCheckArgRetTypes(type);
 				result = lookup.findVirtual(referenceClazz, name, type);
 				break;
 			case 6: /* invokeStatic */
-				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				type = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 				lookup.accessCheckArgRetTypes(type);
 				result = lookup.findStatic(referenceClazz, name, type);
 				break;
 			case 7: /* invokeSpecial */ 
-				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				type = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 				lookup.accessCheckArgRetTypes(type);
 				result = lookup.findSpecial(referenceClazz, name, type, currentClass);
 				break;
 			case 8: /* newInvokeSpecial */
-				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				type = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 				lookup.accessCheckArgRetTypes(type);
 				result = lookup.findConstructor(referenceClazz, type);
 				break;
 			case 9: /* invokeInterface */
-				type = MethodType.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
+				type = MethodTypeHelper.vmResolveFromMethodDescriptorString(typeDescriptor, loader, null);
 				lookup.accessCheckArgRetTypes(type);
 				result = lookup.findVirtual(referenceClazz, name, type);
 				break;
@@ -1449,7 +1449,7 @@ public abstract class MethodHandle
 	 * a valid field descriptor so adding the "()V" around it is valid.
 	 */
 	private static final Class<?> resolveFieldHandleHelper(String typeDescriptor, Lookup lookup, ClassLoader loader) throws Throwable {
-		MethodType mt = MethodType.vmResolveFromMethodDescriptorString("(" + typeDescriptor + ")V", loader, null); //$NON-NLS-1$ //$NON-NLS-2$
+		MethodType mt = MethodTypeHelper.vmResolveFromMethodDescriptorString("(" + typeDescriptor + ")V", loader, null); //$NON-NLS-1$ //$NON-NLS-2$
 		lookup.accessCheckArgRetTypes(mt);
 		return mt.parameterType(0);
 	}
