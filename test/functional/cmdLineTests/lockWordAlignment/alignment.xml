@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2015, 2018 IBM Corp. and others
+  Copyright (c) 2015, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,13 +26,17 @@
 
 <suite id="J9 Field Alignment Command-Line Option Tests" timeout="300">
  <variable name="TESTSBOOTCLASSPATH" value="-Xbootclasspath/a:$TESTSJARPATH$" />
- <variable name="OBJECTTESTSBOOTCLASSPATH" value="-Xbootclasspath/p:$OBJECTJARPATH$" />
+ <variable name="OBJECTTESTSBOOTCLASSPATH" value="--patch-module java.base=$OBJECTJARPATH$" />
  <variable name="JAVAPBOOTCLASSPATH" value="-bootclasspath $OBJECTJARPATH$" />
+ 
 
  <variable name="PRIV_FIELD1" value=".*" />
  <variable name="PRIV_FIELD2" value=".*" />
  <variable name="PRIV_FIELD3" value=".*" />
  
+
+ <if testVariable="JDK_VERSION" testValue="8" resultVariable="OBJECTTESTSBOOTCLASSPATH" resultValue="-Xbootclasspath/p:$OBJECTJARPATH$"/>
+
  <if testVariable="OLWMODE" testValue="standard" resultVariable="OBJECTTESTSBOOTCLASSPATH" resultValue=" "/>
  <if testVariable="OLWMODE" testValue="standard" resultVariable="JAVAPBOOTCLASSPATH" resultValue=" "/>
 

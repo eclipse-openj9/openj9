@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2010, 2018 IBM Corp. and others
+  Copyright (c) 2010, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -218,5 +218,47 @@
 	</exclude>
 	<exclude id="Test 55 Check default cache size on Java 9 and up" platform="8">
 		<reason>This test should not be run on Java 8</reason>
+	</exclude>
+	<exclude id="Test 61 clean-up" platform="8">
+		<reason>Exclude the extra clean-up since tests are not run in jdk8</reason>
+	</exclude>
+	<exclude id="Test 62-a: Store the Anonymous Class and the Unsafe Class in the cache" platform="8">
+		<reason>Only Java 11 and up use jdk.internal.misc.Unsafe </reason>
+	</exclude>
+	<exclude id="Test 62-b: Check whether they have been stored correctly" platform="8">
+		<reason>Only Java 11 and up use jdk.internal.misc.Unsafe  </reason>
+	</exclude>
+	<exclude id="Test 62-c: Make sure the classes are loaded from the cache and work properly" platform="8">
+		<reason>Only Java 11 and up use jdk.internal.misc.Unsafe  </reason>
+	</exclude>
+	<exclude id="Test 62-d: Check whether the classes are loaded correctly and work properly after the implementation has been modified" platform="8">
+		<reason>Only Java 11 and up use jdk.internal.misc.Unsafe  </reason>
+	</exclude>
+	<exclude id="Test 62 clean-up" platform="8">
+		<reason>Exclude the extra clean-up since tests are not run in jdk8</reason>
+	</exclude>
+	<exclude id="Test 63-a: Only store the Anonymous Class in the cache" platform="8">
+		<reason>Only Java 11 and up use jdk.internal.misc.Unsafe  </reason>
+	</exclude>
+	<exclude id="Test 63-b: Check whether the Anonymous Class has been stored correctly" platform="8">
+		<reason>Only Java 11 and up use jdk.internal.misc.Unsafe  </reason>
+	</exclude>
+	<exclude id="Test 63 clean-up" platform="8">
+		<reason>Exclude the extra clean-up since tests are not run in jdk8</reason>
+	</exclude>
+	<exclude id="Test 64-a: Only store the Unsafe Class in the cache" platform="8">
+		<reason>Only Java 11 and up use jdk.internal.misc.Unsafe  </reason>
+	</exclude>
+	<exclude id="Test 64-b: Check whether the Unsafe class has been stored correctly" platform="8">
+		<reason>Only Java 11 and up use jdk.internal.misc.Unsafe  </reason>
+	</exclude>
+	<exclude id="Test 64 clean-up" platform="8">
+		<reason>Exclude the extra clean-up since tests are not run in jdk8</reason>
+	</exclude>
+	<exclude id="Test 65-a: Do not store the Anonymous Class and the Unsafe Class in the cache" platform="8">
+		<reason>Only Java 11 and up use jdk.internal.misc.Unsafe  </reason>
+	</exclude>
+	<exclude id="Test 65-b: Make sure none of the classes has been stored in the cache" platform="8">
+		<reason>Only Java 11 and up use jdk.internal.misc.Unsafe  </reason>
 	</exclude>
 </suite>

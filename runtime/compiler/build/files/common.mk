@@ -383,6 +383,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
 
 ifneq ($(JITSERVER_SUPPORT),)
 JIT_PRODUCT_SOURCE_FILES+=\
+    compiler/control/JITClientCompilationThread.cpp \
     compiler/control/JITServerCompilationThread.cpp \
     compiler/control/JITServerHelpers.cpp \
     compiler/env/j9methodServer.cpp \

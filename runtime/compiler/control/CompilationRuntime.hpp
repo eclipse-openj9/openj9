@@ -1015,6 +1015,8 @@ public:
    uint32_t getLocalGCCounter() const { return _localGCCounter; }
    void incrementLocalGCCounter() { _localGCCounter++; }
 
+   static bool canRelocateMethod(TR::Compilation * comp);
+
    const PersistentVector<std::string> &getJITServerSslKeys() const { return _sslKeys; }
    void  addJITServerSslKey(const std::string &key) { _sslKeys.push_back(key); }
    const PersistentVector<std::string> &getJITServerSslCerts() const { return _sslCerts; }
