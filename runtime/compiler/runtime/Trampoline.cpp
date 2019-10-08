@@ -1034,124 +1034,13 @@ void s390zOS64CreateHelperTrampoline(void *trampPtr, int32_t numHelpers)
       else
          rEP = 15;
 
-      static bool enableIIHF = (feGetEnv("TR_IIHF") != NULL);
-
-      if (!enableIIHF)
-         {
-         // Trampoline Code:
-         // zOS Linkage rEP = r15.
-         // 0d40           BASR  rEP, 0
-         // e340400e04     LG    rEP, 14(,rEP)
-         // 07f4           BCR   rEP
-         // 6-bytes padding
-         //                DC    helperAddr
-
-         // BASR rEP, 0;
-         *(int16_t *)buffer = 0x0d00 + (rEP << 4);
-         buffer += sizeof(int16_t);
-
-         // LG rEP, 14(,rEP)
-         *(int32_t *)buffer = 0xe300000e + (rEP << 12) + (rEP << 20);
-         buffer += sizeof(int32_t);
-         *(int16_t *)buffer = 0x0004;
-         buffer += sizeof(int16_t);
-         // BCR rEP
-         *(int16_t *)buffer = 0x07f0 + rEP;
-         buffer += sizeof(int16_t);
-
-         // 6-byte Padding.
-         *(int32_t *)buffer = 0x00000000;
-         buffer += sizeof(int32_t);
-         *(int16_t *)buffer = 0x0000;
-         buffer += sizeof(int16_t);
-
-         // DC mAddr
-         *(intptrj_t *)buffer = helperAddr;
-         buffer += sizeof(intptrj_t);
-         }
-      else
-         {
-         //Alternative Trampoline code
-         // IIHF rEP addr
-         // IILF rEP addr
-         // BRC  rEP
-
-         uint32_t low = (uint32_t)helperAddr;
-         uint32_t high = (uint32_t)(helperAddr >> 32);
-
-         // IIHF rEP, mAddr;
-         *(int16_t *)buffer = 0xC008 + (rEP << 4);
-         buffer += sizeof(int16_t);
-         *(int32_t *)buffer = 0x00000000 + high;
-         buffer += sizeof(int32_t);
-
-         // IILF rEP, mAddr;
-         *(int16_t *)buffer = 0xC009 + (rEP << 4);
-         buffer += sizeof(int16_t);
-         *(int32_t *)buffer = 0x00000000 + low;
-         buffer += sizeof(int32_t);
-
-         // BCR rEP
-         *(int16_t *)buffer = 0x07f0 + rEP;
-         buffer += sizeof(int16_t);
-         }
-      }
-   }
-
-// zOS64 Create Method Trampoline
-void s390zOS64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
-   {
-   uint8_t     *buffer = (uint8_t *)trampPtr;
-   // Get the Entry Pointer (should be r15 for zOS64).
-   uint16_t rEP = 15;
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(startPC);
-   intptrj_t dispatcher = (intptrj_t)((uint8_t *)startPC + linkInfo->getReservedWord());
-
-   static bool enableIIHF = (feGetEnv("TR_IIHF") != NULL);
-
-   if (!enableIIHF)
-      {
       // Trampoline Code:
-      // zOS Linkage rEP = r4.
-      // 0d40           BASR  rEP, 0
-      // e340400804     LG    rEP, 14(,rEP)
-      // 07f4           BCR   rEP
-      // 6-bytes padding to align DC address.
-      //                DC    dispatcher
-
-      // BASR rEP, 0;
-      *(int16_t *)buffer = 0x0d00 + (rEP << 4);
-      buffer += sizeof(int16_t);
-
-      // LG rEP, 14(,rEP)
-      *(int32_t *)buffer = 0xe300000e + (rEP << 12) + (rEP << 20);
-      buffer += sizeof(int32_t);
-      *(int16_t *)buffer = 0x0004;
-      buffer += sizeof(int16_t);
-
-      // BCR rEP
-      *(int16_t *)buffer = 0x07f0 + rEP;
-      buffer += sizeof(int16_t);
-
-      // 6-byte Padding.
-      *(int32_t *)buffer = 0x00000000;
-      buffer += sizeof(int32_t);
-      *(int16_t *)buffer = 0x0000;
-      buffer += sizeof(int16_t);
-
-      // DC mAddr
-      *(intptrj_t *)buffer = dispatcher;
-      buffer += sizeof(intptrj_t);
-      }
-   else
-      {
-      //Alternative Trampoline code
       // IIHF rEP addr
       // IILF rEP addr
-      // BRC  rEP
+      // BCR  rEP
 
-      uint32_t low = (uint32_t) dispatcher;
-      uint32_t high = (uint32_t) (dispatcher >> 32);
+      uint32_t low = (uint32_t)helperAddr;
+      uint32_t high = (uint32_t)(helperAddr >> 32);
 
       // IIHF rEP, mAddr;
       *(int16_t *)buffer = 0xC008 + (rEP << 4);
@@ -1169,6 +1058,40 @@ void s390zOS64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method
       *(int16_t *)buffer = 0x07f0 + rEP;
       buffer += sizeof(int16_t);
       }
+   }
+
+// zOS64 Create Method Trampoline
+void s390zOS64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
+   {
+   uint8_t     *buffer = (uint8_t *)trampPtr;
+   // Get the Entry Pointer (should be r15 for zOS64).
+   uint16_t rEP = 15;
+   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(startPC);
+   intptrj_t dispatcher = (intptrj_t)((uint8_t *)startPC + linkInfo->getReservedWord());
+
+   // Trampoline Code:
+   // IIHF rEP addr
+   // IILF rEP addr
+   // BCR  rEP
+
+   uint32_t low = (uint32_t) dispatcher;
+   uint32_t high = (uint32_t) (dispatcher >> 32);
+
+   // IIHF rEP, mAddr;
+   *(int16_t *)buffer = 0xC008 + (rEP << 4);
+   buffer += sizeof(int16_t);
+   *(int32_t *)buffer = 0x00000000 + high;
+   buffer += sizeof(int32_t);
+
+   // IILF rEP, mAddr;
+   *(int16_t *)buffer = 0xC009 + (rEP << 4);
+   buffer += sizeof(int16_t);
+   *(int32_t *)buffer = 0x00000000 + low;
+   buffer += sizeof(int32_t);
+
+   // BCR rEP
+   *(int16_t *)buffer = 0x07f0 + rEP;
+   buffer += sizeof(int16_t);
    }
 
 // zOS64 Code Patching.
@@ -1327,91 +1250,13 @@ void s390zLinux64CreateHelperTrampoline(void *trampPtr, int32_t numHelpers)
       else
          rEP = 4;
 
-      static bool enableIIHF = (feGetEnv("TR_IIHF") != NULL);
-
-      if (enableIIHF)
-         {
-         //Alternative Trampoline code
-         // IIHF rEP addr
-         // IILF rEP addr
-         // BRC  rEP
-
-         uint32_t low = (uint32_t)helperAddr;
-         uint32_t high = (uint32_t)(helperAddr >> 32);
-
-         // IIHF rEP, mAddr;
-         *(int16_t *)buffer = 0xC008 + (rEP << 4);
-         buffer += sizeof(int16_t);
-         *(int32_t *)buffer = 0x00000000 + high;
-         buffer += sizeof(int32_t);
-
-         // IILF rEP, mAddr;
-         *(int16_t *)buffer = 0xC009 + (rEP << 4);
-         buffer += sizeof(int16_t);
-         *(int32_t *)buffer = 0x00000000 + low;
-         buffer += sizeof(int32_t);
-
-         // BCR rEP
-         *(int16_t *)buffer = 0x07f0 + rEP;
-         buffer += sizeof(int16_t);
-         }
-      else
-         {
-         // Trampoline Code:
-         // zLinux Linkage rEP = r4.
-         // 0d40           BASR  rEP, 0
-         // e340400e04     LG    rEP, 14(,rEP)
-         // 07f4           BCR   rEP
-         // 6-bytes padding
-         //                DC    helperAddr
-
-         // BASR rEP, 0;
-         *(int16_t *)buffer = 0x0d00 + (rEP << 4);
-         buffer += sizeof(int16_t);
-
-         // LG rEP, 14(,rEP)
-         *(int32_t *)buffer = 0xe300000e + (rEP << 12) + (rEP << 20);
-         buffer += sizeof(int32_t);
-         *(int16_t *)buffer = 0x0004;
-         buffer += sizeof(int16_t);
-
-         // BCR rEP
-         *(int16_t *)buffer = 0x07f0 + rEP;
-         buffer += sizeof(int16_t);
-
-         // 6-byte Padding.
-         *(int32_t *)buffer = 0x00000000;
-         buffer += sizeof(int32_t);
-         *(int16_t *)buffer = 0x0000;
-         buffer += sizeof(int16_t);
-
-         // DC mAddr
-         *(intptrj_t *)buffer = helperAddr;
-         buffer += sizeof(intptrj_t);
-         }
-      }
-   }
-
-// zLinux64 Create Method Trampoline
-void s390zLinux64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
-   {
-   uint8_t     *buffer = (uint8_t *)trampPtr;
-   // Get the Entry Pointer (should be r4 for zLinux64).
-   uint16_t rEP = 4;  // Joran TODO: useEPRegNum instead.
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(startPC);
-   intptrj_t dispatcher = (intptrj_t)((uint8_t *) startPC + linkInfo->getReservedWord());
-
-   static bool enableIIHF = (feGetEnv("TR_IIHF") != NULL);
-
-   if (enableIIHF)
-      {
-      //Alternative Trampoline code
+      // Trampoline Code:
       // IIHF rEP addr
       // IILF rEP addr
-      // BRC  rEP
+      // BCR  rEP
 
-      uint32_t low = (uint32_t) dispatcher;
-      uint32_t high = (uint32_t) (dispatcher >> 32);
+      uint32_t low = (uint32_t)helperAddr;
+      uint32_t high = (uint32_t)(helperAddr >> 32);
 
       // IIHF rEP, mAddr;
       *(int16_t *)buffer = 0xC008 + (rEP << 4);
@@ -1424,41 +1269,45 @@ void s390zLinux64CreateMethodTrampoline(void *trampPtr, void *startPC, void *met
       buffer += sizeof(int16_t);
       *(int32_t *)buffer = 0x00000000 + low;
       buffer += sizeof(int32_t);
-      }
-   else
-      {
-      // Trampoline Code:
-      // zLinux Linkage rEP = r4.
-      // 0d40           BASR  rEP, 0
-      // e340400804     LG    rEP, 14(,rEP)
-      // 07f4           BCR   rEP
-      // 6-bytes padding to align DC address.
-      //                DC    dispatcher
-
-      // BASR rEP, 0;
-      *(int16_t *)buffer = 0x0d00 + (rEP << 4);
-      buffer += sizeof(int16_t);
-
-      // LG rEP, 14(,rEP)
-      *(int32_t *)buffer = 0xe300000e + (rEP << 12) + (rEP << 20);
-      buffer += sizeof(int32_t);
-      *(int16_t *)buffer = 0x0004;
-      buffer += sizeof(int16_t);
 
       // BCR rEP
       *(int16_t *)buffer = 0x07f0 + rEP;
       buffer += sizeof(int16_t);
-
-      // 6-byte Padding.
-      *(int32_t *)buffer = 0x00000000;
-      buffer += sizeof(int32_t);
-      *(int16_t *)buffer = 0x0000;
-      buffer += sizeof(int16_t);
-
-      // DC mAddr
-      *(intptrj_t *)buffer = dispatcher;
-      buffer += sizeof(intptrj_t);
       }
+   }
+
+// zLinux64 Create Method Trampoline
+void s390zLinux64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
+   {
+   uint8_t     *buffer = (uint8_t *)trampPtr;
+   // Get the Entry Pointer (should be r4 for zLinux64).
+   uint16_t rEP = 4;  // Joran TODO: useEPRegNum instead.
+   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(startPC);
+   intptrj_t dispatcher = (intptrj_t)((uint8_t *) startPC + linkInfo->getReservedWord());
+
+   //Alternative Trampoline code
+   // IIHF rEP addr
+   // IILF rEP addr
+   // BCR  rEP
+
+   uint32_t low = (uint32_t) dispatcher;
+   uint32_t high = (uint32_t) (dispatcher >> 32);
+
+   // IIHF rEP, mAddr;
+   *(int16_t *)buffer = 0xC008 + (rEP << 4);
+   buffer += sizeof(int16_t);
+   *(int32_t *)buffer = 0x00000000 + high;
+   buffer += sizeof(int32_t);
+
+   // IILF rEP, mAddr;
+   *(int16_t *)buffer = 0xC009 + (rEP << 4);
+   buffer += sizeof(int16_t);
+   *(int32_t *)buffer = 0x00000000 + low;
+   buffer += sizeof(int32_t);
+
+   // BCR rEP
+   *(int16_t *)buffer = 0x07f0 + rEP;
+   buffer += sizeof(int16_t);
    }
 
 // zLinux64 Code Patching.
