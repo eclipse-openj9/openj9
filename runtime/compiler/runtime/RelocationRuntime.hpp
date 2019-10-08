@@ -411,6 +411,6 @@ private:
       virtual void initializeCacheDeltas();
       virtual void initializeAotRuntimeInfo() override { _classReloAmount = 1; }
 };
-#endif /* defined(JITSERVER_TODO) */
+#endif /* defined(JITSERVER_SUPPORT) */
 
 #endif   // RELOCATION_RUNTIME_INCL
