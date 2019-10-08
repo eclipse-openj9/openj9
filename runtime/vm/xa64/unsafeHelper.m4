@@ -1,4 +1,4 @@
-dnl Copyright (c) 1991, 2018 IBM Corp. and others
+dnl Copyright (c) 1991, 2019 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,7 @@ dnl Defined in: #Args: 2
 START_PROC(unsafePut64)
 	push rbp
 	mov rbp, rsp
-	mov [rdi], rsi
+	mov qword ptr [rdi], rsi
 	pop rbp
 	ret
 END_PROC(unsafePut64)
@@ -48,7 +48,7 @@ dnl Defined in: #Args: 2
 START_PROC(unsafePut32)
 	push rbp
 	mov rbp, rsp
-	mov [rdi], esi
+	mov dword ptr [rdi], esi
 	pop rbp
 	ret
 END_PROC(unsafePut32)
@@ -59,7 +59,7 @@ dnl Defined in: #Args: 2
 START_PROC(unsafePut16)
 	push rbp
 	mov rbp, rsp
-	mov [rdi], si
+	mov word ptr [rdi], si
 	pop rbp
 	ret
 END_PROC(unsafePut16)
@@ -70,7 +70,7 @@ dnl Defined in: #Args: 2
 START_PROC(unsafePut8)
 	push rbp
 	mov rbp, rsp
-	mov [rdi], sil
+	mov byte ptr [rdi], sil
 	pop rbp
 	ret
 END_PROC(unsafePut8)
@@ -81,7 +81,7 @@ dnl Defined in: #Args: 1
 START_PROC(unsafeGet64)
 	push rbp
 	mov rbp, rsp
-	mov rax, [rdi]
+	mov rax, qword ptr [rdi]
 	pop rbp
 	ret
 END_PROC(unsafeGet64)
@@ -92,7 +92,7 @@ dnl Defined in: #Args: 1
 START_PROC(unsafeGet32)
 	push rbp
 	mov rbp, rsp
-	mov eax, [rdi]
+	mov eax, dword ptr [rdi]
 	pop rbp
 	ret
 END_PROC(unsafeGet32)
@@ -103,7 +103,7 @@ dnl Defined in: #Args: 1
 START_PROC(unsafeGet16)
 	push rbp
 	mov rbp, rsp
-	mov eax, [rdi]
+	movzx eax, word ptr [rdi]
 	pop rbp
 	ret
 END_PROC(unsafeGet16)
@@ -114,7 +114,7 @@ dnl Defined in: #Args: 1
 START_PROC(unsafeGet8)
 	push rbp
 	mov rbp, rsp
-	mov eax, [rdi]
+	movzx eax, byte ptr [rdi]
 	pop rbp
 	ret
 END_PROC(unsafeGet8)
