@@ -135,10 +135,18 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
             }
          }
 
-      if (cg()->comp()->compileRelocatableCode() && label == NULL)
+      if ((cg()->comp()->compileRelocatableCode() || cg()->comp()->isOutOfProcessCompilation()) && label == NULL)
          {
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)getSymbolReference(),TR_HelperAddress, cg()),
-                                __FILE__, __LINE__, getNode());
+         if (sym && !sym->isHelper() && resolvedMethod)
+	    {
+            cg()->addProjectSpecializedRelocation(cursor, (uint8_t *)getSymbolReference()->getMethodAddress(), NULL, TR_MethodCallAddress,
+                               __FILE__, __LINE__, getNode());
+	    }
+         else
+	    {
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)getSymbolReference(),TR_HelperAddress, cg()),
+                               __FILE__, __LINE__, getNode());
+	    }
          }
       }
    else
