@@ -296,11 +296,12 @@ class ClientSessionData
       int32_t _arrayletLeafSize;
       uint64_t _overflowSafeAllocSize;
       int32_t _compressedReferenceShift;
+      J9SharedClassCacheDescriptor *_j9SharedClassCacheDescriptorList;
       bool _stringCompressionEnabled;
       bool _hasSharedClassCache;
       bool _elgibleForPersistIprofileInfo;
-      TR_OpaqueClassBlock *_arrayTypeClasses[8];
       bool _reportByteCodeInfoAtCatchBlock;
+      TR_OpaqueClassBlock *_arrayTypeClasses[8];
       MM_GCReadBarrierType _readBarrierType;
       MM_GCWriteBarrierType _writeBarrierType;
       bool _compressObjectReferences;
@@ -313,7 +314,6 @@ class ClientSessionData
       void *_floatInvokeExactThunkHelper;
       void *_doubleInvokeExactThunkHelper;
       size_t _interpreterVTableOffset;
-      J9SharedClassCacheDescriptor *_j9SharedClassCacheDescriptorList;
       }; // struct VMInfo
 
    TR_PERSISTENT_ALLOC(TR_Memory::ClientSessionData)

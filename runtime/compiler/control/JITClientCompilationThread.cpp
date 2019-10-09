@@ -478,6 +478,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._arrayletLeafSize = TR::Compiler->om.arrayletLeafSize();
          vmInfo._overflowSafeAllocSize = static_cast<uint64_t>(fe->getOverflowSafeAllocSize());
          vmInfo._compressedReferenceShift = TR::Compiler->om.compressedReferenceShift();
+         vmInfo._j9SharedClassCacheDescriptorList = NULL;
          vmInfo._stringCompressionEnabled = fe->isStringCompressionEnabledVM();
          vmInfo._hasSharedClassCache = TR::Options::sharedClassCache();
          vmInfo._elgibleForPersistIprofileInfo = vmInfo._isIProfilerEnabled ? fe->getIProfiler()->elgibleForPersistIprofileInfo(comp) : false;
@@ -500,7 +501,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._interpreterVTableOffset = TR::Compiler->vm.getInterpreterVTableOffset();
 
          // For multi-layered SCC support
-         vmInfo._j9SharedClassCacheDescriptorList = NULL;
          std::vector<uintptr_t> listOfCacheStartAddress;
          std::vector<uintptr_t> listOfCacheSizeBytes;
          if (fe->sharedCache() && fe->sharedCache()->getCacheDescriptorList())
