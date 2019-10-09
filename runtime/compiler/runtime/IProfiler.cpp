@@ -403,9 +403,9 @@ TR_IProfiler::persistIprofileInfo(TR::ResolvedMethodSymbol *resolvedMethodSymbol
       bool doit = true;
 
       // can only persist profile info if the method is in the shared cache
-      if (doit && _compInfo->reloRuntime()->isROMClassInSharedCaches((uintptrj_t)romMethod, _compInfo->getJITConfig()->javaVM))
+      if (doit && _compInfo->reloRuntime()->isROMClassInSharedCaches((uintptrj_t)romMethod))
         {
-         TR_ASSERT(_compInfo->reloRuntime()->isROMClassInSharedCaches((uintptrj_t)methodStart, _compInfo->getJITConfig()->javaVM), "bytecodes not in shared cache");
+         TR_ASSERT(_compInfo->reloRuntime()->isROMClassInSharedCaches((uintptrj_t)methodStart), "bytecodes not in shared cache");
          // check if there is already an entry
          unsigned char storeBuffer[1000];
          uint32_t bufferLength = 1000;
