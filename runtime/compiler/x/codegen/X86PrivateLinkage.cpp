@@ -34,6 +34,9 @@
 #include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "control/CompilationThread.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
 #include "env/CHTable.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/J2IThunk.hpp"
@@ -54,7 +57,6 @@
 #include "x/codegen/FPTreeEvaluator.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
-#include "control/CompilationThread.hpp"
 
 #ifdef TR_TARGET_64BIT
 #include "x/amd64/codegen/AMD64GuardedDevirtualSnippet.hpp"
@@ -1743,7 +1745,6 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
                char *j2iSignature = fej9->getJ2IThunkSignatureForDispatchVirtual(methodSymbol->getMethod()->signatureChars(), methodSymbol->getMethod()->signatureLength(), comp());
                int32_t signatureLen = strlen(j2iSignature);
                virtualThunk = fej9->getJ2IThunk(j2iSignature, signatureLen, comp());
-               // in server mode, we always need to regenerate the thunk inside the code cache for this compilation
                if (!virtualThunk)
                   {
                   virtualThunk = fej9->setJ2IThunk(j2iSignature, signatureLen,
@@ -1753,7 +1754,6 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
                }
                break;
             default:
-               // in server mode, we always need to regenerate the thunk inside the code cache for this compilation
                if (fej9->needsInvokeExactJ2IThunk(callNode, comp()))
                   {
                   TR_J2IThunk *thunk = generateInvokeExactJ2IThunk(callNode, methodSymbol->getMethod()->signatureChars());
@@ -1765,7 +1765,6 @@ TR::Register *TR::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
       else
          {
          virtualThunk = fej9->getJ2IThunk(methodSymbol->getMethod(), comp());
-         // in server mode, we always need to regenerate the thunk inside the code cache for this compilation
          if (!virtualThunk)
             virtualThunk = fej9->setJ2IThunk(methodSymbol->getMethod(), generateVirtualIndirectThunk(callNode), comp());
          }
@@ -1901,11 +1900,16 @@ void TR::X86PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, T
    if (TR::Compiler->target.is64Bit() && methodSymRef->getReferenceNumber()>=TR_AMD64numRuntimeHelpers)
       fej9->reserveTrampolineIfNecessary(comp(), methodSymRef, false);
 
+#if defined(JITSERVER_SUPPORT)
    // JITServer Workaround: Further transmute dispatchJ9Method symbols to appear as a runtime helper, this will cause OMR to
    // generate a TR_HelperAddress relocation instead of a TR_RelativeMethodAddress Relocation.
    if (!comp()->getOption(TR_DisableInliningOfNatives) &&
-       methodSymbol->getMandatoryRecognizedMethod() == TR::java_lang_invoke_ComputedCalls_dispatchJ9Method)
+       methodSymbol->getMandatoryRecognizedMethod() == TR::java_lang_invoke_ComputedCalls_dispatchJ9Method &&
+       comp()->isOutOfProcessCompilation())
+      {
       methodSymbol->setHelper();
+      }
+#endif /* defined(JITSERVER_SUPPORT) */
 
    if (cg()->supportVMInternalNatives() && methodSymbol->isVMInternalNative())
       {

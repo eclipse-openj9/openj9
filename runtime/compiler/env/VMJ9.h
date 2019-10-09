@@ -247,7 +247,7 @@ public:
 
    virtual bool isAOT_DEPRECATED_DO_NOT_USE() { return false; }
    virtual bool needsContiguousCodeAndDataCacheAllocation() { return false; }
-   virtual bool supportsMethodEntryPadding() { return true; }
+   virtual bool supportsJitMethodEntryAlignment() { return true; }
    virtual bool canUseSymbolValidationManager() { return false; }
 
 #if defined(TR_TARGET_S390)
@@ -1093,6 +1093,7 @@ public:
    virtual uint32_t               getPrimitiveArrayOffsetInJavaVM(uint32_t arrayType);
 
    virtual bool isDecimalFormatPattern( TR::Compilation *comp, TR_ResolvedMethod *method);
+
    virtual TR_StaticFinalData dereferenceStaticFinalAddress(void *staticAddress, TR::DataType addressType);
    virtual TR_OpaqueClassBlock *getClassFromCP(J9ConstantPool *cp);
    virtual J9ROMMethod *getROMMethodFromRAMMethod(J9Method *ramMethod);
@@ -1134,7 +1135,7 @@ public:
    virtual bool               callTargetsNeedRelocations()                    { return true; }
    virtual bool               doStringPeepholing()                            { return false; }
    virtual bool               hardwareProfilingInstructionsNeedRelocation()   { return true; }
-   virtual bool               supportsMethodEntryPadding()                    { return false; }
+   virtual bool               supportsJitMethodEntryAlignment()               { return false; }
    virtual bool               isBenefitInliningCheckIfFinalizeObject()        { return true; }
    virtual bool               needsContiguousCodeAndDataCacheAllocation()     { return true; }
    virtual bool               shouldDelayAotLoad();

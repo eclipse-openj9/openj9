@@ -946,12 +946,13 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       //the desired invoke bytecode.
       if (!isJitInduceOSRCall)
          {
-         // XXX: Ugly, not sure how this was supposed to work but for AOT (and now JITServer) we do direct calls
-	 // through snippets, except the method we're calling might already be compiled, in which case getMethodAddress()
-	 // returns the compiled code entrypoint instead of the RAM method... how did AOT not hit this?
-         intptrj_t ramMethod = comp->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER && !methodSymbol->isInterpreted() ?
-                               (intptr_t)methodSymRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier() :
-			       (intptr_t)methodSymbol->getMethodAddress();
+#if defined(JITSERVER_SUPPORT)
+         intptrj_t ramMethod = comp->isOutOfProcessCompilation() && !methodSymbol->isInterpreted() ?
+                                    (intptr_t)methodSymRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier() :
+                                    (intptr_t)methodSymbol->getMethodAddress();
+#else
+         intptrj_t ramMethod = (intptr_t)methodSymbol->getMethodAddress();
+#endif /* defined(JITSERVER_SUPPORT) */
 
          if (TR::Compiler->target.is64Bit())
             {
