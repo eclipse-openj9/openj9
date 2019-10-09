@@ -100,7 +100,7 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
             self()->comp()->getSymbolValidationManager();
          void *offsets = const_cast<void*>(svm->wellKnownClassChainOffsets());
          *(uintptrj_t *)relocationDataCursor =
-            fej9->sharedCache()->offsetInSharedCacheFromPointer(offsets);
+            self()->offsetInSharedCacheFromPointer(fej9->sharedCache(), offsets);
          relocationDataCursor += SIZEPOINTER;
          }
 
@@ -273,7 +273,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
          TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
          void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass);
-         uintptr_t romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
 
          *(uintptrj_t *)cursor = romClassOffsetInSharedCache;
          cursor += SIZEPOINTER;
@@ -320,7 +320,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          cursor += SIZEPOINTER;
 
          void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(inlinedCodeClass);
-         uintptr_t romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
          traceMsg(comp, "class is %p, romclass is %p, offset is %p\n", inlinedCodeClass, romClass, romClassOffsetInSharedCache);
          *(uintptrj_t *)cursor = romClassOffsetInSharedCache;
          cursor += SIZEPOINTER;
@@ -494,7 +494,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
          // Store class chain to get name of class. Checking the class chain for
          // this record eliminates the need for a separate class chain validation.
-         uintptr_t classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(record->_classChain);
+         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, record->_classChain);
          binaryTemplate->_classID = symValManager->getIDFromSymbol(record->_class);
          binaryTemplate->_beholderID = symValManager->getIDFromSymbol(record->_beholder);
          binaryTemplate->_classChainOffsetInSCC = classChainOffsetInSharedCache;
@@ -519,7 +519,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          uintptrj_t classChainOffsetInSharedCacheForCL = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(classToValidate);
 
          //store the classchain's offset for the class that needs to be validated in the second run
-         uintptr_t classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(classChainForClassToValidate);
+         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
 
          binaryTemplate->_classID = symValManager->getIDFromSymbol(static_cast<void *>(classToValidate));
          binaryTemplate->_classChainOffsetInSCC = classChainOffsetInSharedCache;
@@ -643,7 +643,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
          // Store class chain to get name of class. Checking the class chain for
          // this record eliminates the need for a separate class chain validation.
-         uintptr_t classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(record->_classChain);
+         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, record->_classChain);
          binaryTemplate->_systemClassID = symValManager->getIDFromSymbol(record->_class);
          binaryTemplate->_classChainOffsetInSCC = classChainOffsetInSharedCache;
 
@@ -712,7 +712,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
          void *classToValidate = static_cast<void *>(record->_class);
          void *classChainForClassToValidate = record->_classChain;
-         uintptr_t classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(classChainForClassToValidate);
+         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
 
          binaryTemplate->_classID = symValManager->getIDFromSymbol(classToValidate);
          binaryTemplate->_classChainOffsetInSCC = classChainOffsetInSharedCache;
@@ -878,7 +878,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          // Store rom method to get name of method
          J9Method *methodToValidate = reinterpret_cast<J9Method *>(record->_method);
          J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(methodToValidate);
-         uintptr_t romMethodOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romMethod);
+         uintptr_t romMethodOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romMethod);
 
          binaryTemplate->_methodID = symValManager->getIDFromSymbol(static_cast<void *>(record->_method));
          binaryTemplate->_definingClassID = symValManager->getIDFromSymbol(static_cast<void *>(record->definingClass()));
@@ -1015,7 +1015,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          *(uintptrj_t*)cursor = (uintptrj_t) aotCI->_cpIndex;
          cursor += SIZEPOINTER;
 
-         uintptr_t classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(aotCI->_classChain);
+         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, aotCI->_classChain);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
          }
@@ -1034,7 +1034,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          cursor += SIZEPOINTER;
 
          void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(aotCI->_clazz);
-         uintptr_t romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
          *(uintptrj_t *)cursor = romClassOffsetInSharedCache;
          cursor += SIZEPOINTER;
          }
@@ -1053,7 +1053,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          //store the classchain's offset for the class that needs to be validated in the second run
          void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(classToValidate);
          uintptrj_t *classChainForClassToValidate = (uintptrj_t *) aotCI->_classChain;
-         uintptr_t classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(classChainForClassToValidate);
+         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
          }
