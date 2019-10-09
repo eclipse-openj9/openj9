@@ -1723,7 +1723,7 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 	if (NULL != methodType) {
 		/* check returnType */
 		J9Class *senderClass = ramCP->ramClass;
-		J9Class *returnTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(vmThread, methodType));
+		J9Class *returnTypeClass = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(vmThread, methodType));
 		J9Class *illegalClass = NULL;
 		IDATA visibilityReturnCode = 0;
 
@@ -1740,7 +1740,7 @@ resolveMethodTypeRefInto(J9VMThread *vmThread, J9ConstantPool *ramCP, UDATA cpIn
 			illegalClass = returnTypeClass;
 		} else {
 			/* check paramTypes */
-			j9object_t argTypesObject = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(vmThread, methodType);
+			j9object_t argTypesObject = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(vmThread, methodType);
 			U_32 typeCount = J9INDEXABLEOBJECT_SIZE(vmThread, argTypesObject);
 
 			for (UDATA i = 0; i < typeCount; i++) {

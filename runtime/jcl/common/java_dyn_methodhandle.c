@@ -348,7 +348,7 @@ accessCheckFieldSignature(J9VMThread *currentThread, J9Class* lookupClass, UDATA
 	
 		if ('L' == lookupSigData[sigOffset]) {
 			BOOLEAN isVirtual = (0 == (((J9ROMFieldShape*)romField)->modifiers & J9AccStatic));
-			j9object_t argsArray = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(currentThread, methodType);
+			j9object_t argsArray = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, methodType);
 			U_32 numParameters = J9INDEXABLEOBJECT_SIZE(currentThread, argsArray);
 			j9object_t clazz = NULL;
 			J9Class *ramClass = NULL;
@@ -359,7 +359,7 @@ accessCheckFieldSignature(J9VMThread *currentThread, J9Class* lookupClass, UDATA
 
 			/* '()X' or '(Receiver)X' are both getters.  All others are setters */
 			if (((0 == numParameters) && !isVirtual) || ((1 == numParameters) && isVirtual)) {
-				clazz = J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(currentThread, methodType);
+				clazz = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, methodType);
 			} else {
 				U_32 argumentIndex = 0;
 
@@ -397,7 +397,7 @@ accessCheckMethodSignature(J9VMThread *currentThread, J9Method *method, j9object
 	if (NULL != verifyData) {
 		U_8 *lookupSigData = J9UTF8_DATA(lookupSig);
 		/* Grab the args array and length from MethodType.arguments */
-		j9object_t argsArray = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(currentThread, methodType);
+		j9object_t argsArray = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, methodType);
 		j9object_t clazz = NULL;
 		J9Class *methodRamClass = J9_CLASS_FROM_METHOD(method);
 		J9ClassLoader *targetClassloader = methodRamClass->classLoader;
@@ -466,7 +466,7 @@ accessCheckMethodSignature(J9VMThread *currentThread, J9Method *method, j9object
 		if('L' == lookupSigData[index]) {
 			J9Class *returnRamClass = NULL;
 			/* Grab the MethodType returnType */
-			clazz = J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(currentThread, methodType);
+			clazz = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, methodType);
 			returnRamClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazz);
 
 			/* Check if we really need to check this classloader constraint */

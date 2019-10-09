@@ -1433,12 +1433,12 @@ done:
 	doMethodTypesMatchIgnoringLastArgument(J9VMThread *currentThread, j9object_t shorterMT, j9object_t longerMT)
 	{
 		bool matched = false;
-		j9object_t shorterMTReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(currentThread, shorterMT);
-		j9object_t longerMTReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(currentThread, longerMT);
+		j9object_t shorterMTReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, shorterMT);
+		j9object_t longerMTReturnType = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(currentThread, longerMT);
 
 		if (shorterMTReturnType == longerMTReturnType) {
-			j9object_t shorterMTArguments = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(currentThread, shorterMT);
-			j9object_t longerMTArguments = J9VMJAVALANGINVOKEMETHODTYPE_ARGUMENTS(currentThread, longerMT);
+			j9object_t shorterMTArguments = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, shorterMT);
+			j9object_t longerMTArguments = J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, longerMT);
 			I_32 longerMTArgumentsLength = (I_32)J9INDEXABLEOBJECT_SIZE(currentThread, longerMTArguments);
 
 			if ((longerMTArgumentsLength - 1) == (I_32)J9INDEXABLEOBJECT_SIZE(currentThread, shorterMTArguments)) {
@@ -1657,6 +1657,23 @@ exit:
 		}
 		return method;
 	}
+
+	/**
+	 * Calculate the MethodType argument slot count
+	 *
+	 * @param currentThread[in] the current J9VMThread
+	 * @param methodType[in] the MethodType object
+	 *
+	 * @returns the argSlot count
+	 */
+	static VMINLINE U_32
+	getArgSlotFromMethodType(J9VMThread *currentThread, j9object_t methodType) {
+		j9object_t methodTypeForm = (j9object_t)J9VMJAVALANGINVOKEMETHODTYPE_FORM(currentThread, methodType);
+		U_64 argCounts = (U_64)J9VMJAVALANGINVOKEMETHODTYPEFORM_ARGCOUNTS(currentThread, methodTypeForm);
+
+		return (U_32)((argCounts >> 16) & 0xFFFF);
+	}
+
 };
 
 #endif /* VMHELPERS_HPP_ */

@@ -542,7 +542,7 @@ done:
 		J9JITConfig *jitConfig = _vm->jitConfig;
 		Assert_VM_false(jitConfig->fsdEnabled);
 		/* Add one to MethodType->argSlots to account for the MethodHandle receiver */
-		return jitTransition(REGISTER_ARGS, J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(_currentThread, methodType) + 1, jitStartAddress);
+		return jitTransition(REGISTER_ARGS, (UDATA)VM_VMHelpers::getArgSlotFromMethodType(_currentThread, methodType) + 1, jitStartAddress);
 	}
 
 	VMINLINE VM_BytecodeAction
@@ -945,10 +945,10 @@ obj:;
 		static U_8 const bcReturnFromJ2I[] = { JBinvokestatic, 0, 0, JBreturnFromJ2I };
 		void* const jitReturnAddress = VM_JITInterface::fetchJITReturnAddress(_currentThread, _sp);
 		j9object_t methodType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandle);
-		j9object_t returnType = J9VMJAVALANGINVOKEMETHODTYPE_RETURNTYPE(_currentThread, methodType);
+		j9object_t returnType = J9VMJAVALANGINVOKEMETHODTYPE_RTYPE(_currentThread, methodType);
 		void* const exitPoint = j2iReturnPoint(J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, returnType));
 		/* Get the argument count from the MethodHandle */
-		UDATA argCount = J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(_currentThread, methodType) + 1; /* argSlots does not include the receiver of the invokeExact */
+		UDATA argCount = (UDATA)VM_VMHelpers::getArgSlotFromMethodType(_currentThread, methodType) + 1; /* argSlots does not include the receiver of the invokeExact */
 		/* Decrement the MH invocationCount if we are going to run jitted as the shareable
 		 * thunks will increment the count.  We only want shareableThunks called from the
 		 * JIT to modify the MH invocationCount. We will increment the count later if we
@@ -8064,7 +8064,7 @@ retry:
 		if (J9_EXPECTED(NULL != methodHandle)) {
 			/* Copy the stack up to create a free slot for the receiver.  Write the MH into that slot */
 			j9object_t currentType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandle);
-			U_32 argSlots = (U_32)J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(_currentThread, currentType);
+			U_32 argSlots = VM_VMHelpers::getArgSlotFromMethodType(_currentThread, currentType);
 			_sp -= 1;
 			memmove(_sp, _sp + 1, argSlots * sizeof(UDATA));
 			((j9object_t *)_sp)[argSlots] = methodHandle;
@@ -8225,7 +8225,7 @@ done:
 
 			if (count == (IDATA)_vm->methodHandleCompileCount) {
 				j9object_t currentType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandle);
-				U_32 argSlots = (U_32)J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(_currentThread, currentType);
+				U_32 argSlots = VM_VMHelpers::getArgSlotFromMethodType(_currentThread, currentType);
 				UDATA *_spPriorToFrameBuild = _sp;
 				updateVMStruct(REGISTER_ARGS);
 				J9SFMethodTypeFrame *frame = buildMethodTypeFrame(_currentThread, currentType);
