@@ -35,6 +35,8 @@ TR::ARM64StackCheckFailureSnippet::emitSnippetBody()
    TR::ResolvedMethodSymbol *bodySymbol = cg()->comp()->getJittedMethodSymbol();
    TR::Machine *machine = cg()->machine();
    TR::SymbolReference *sofRef = cg()->comp()->getSymRefTab()->findOrCreateStackOverflowSymbolRef(bodySymbol);
+   ListIterator<TR::ParameterSymbol> paramIterator(&(bodySymbol->getParameterList()));
+   TR::ParameterSymbol  *paramCursor = paramIterator.getFirst();
 
    uint8_t *cursor = cg()->getBinaryBufferCursor();
    uint8_t *returnLocation;
@@ -95,10 +97,31 @@ TR::ARM64StackCheckFailureSnippet::emitSnippetBody()
    if (atlas)
       {
       // only the arg references are live at this point
-      TR_GCStackMap *map = atlas->getParameterMap();
+      uint32_t  numberOfParmSlots = atlas->getNumberOfParmSlotsMapped();
+      TR_GCStackMap *map = new (cg()->trHeapMemory(), numberOfParmSlots) TR_GCStackMap(numberOfParmSlots);
+
+      map->copy(atlas->getParameterMap());
+      while (paramCursor != NULL)
+         {
+         int32_t  intRegArgIndex = paramCursor->getLinkageRegisterIndex();
+         if (intRegArgIndex >= 0                   &&
+             paramCursor->isReferencedParameter()  &&
+             paramCursor->isCollectedReference())
+            {
+            // In full speed debug all the parameters are passed in the stack for this case
+            // but will also reside in the registers
+            if (!cg()->comp()->getOption(TR_FullSpeedDebug))
+               {
+               map->resetBit(paramCursor->getGCMapIndex());
+               }
+            map->setRegisterBits(1 << (linkage.getIntegerArgumentRegister(intRegArgIndex) - 1));
+            }
+         paramCursor = paramIterator.getNext();
+         }
 
       // set the GC map
       gcMap().setStackMap(map);
+      atlas->setParameterMap(map);
       }
    gcMap().registerStackMap(returnLocation, cg());
 
