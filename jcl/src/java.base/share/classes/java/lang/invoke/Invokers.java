@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,3 +21,26 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+package java.lang.invoke;
+
+class Invokers {
+	static final int INV_EXACT = 0;
+	static final int INV_GENERIC = 1;
+	static final int INV_BASIC = 2;
+	static final int INV_LIMIT = 3;
+
+	private final MethodType targetType;
+
+	Invokers(MethodType targetType) {
+		this.targetType = targetType;
+	}
+
+	MethodHandle exactInvoker() {
+		return new InvokeExactHandle(targetType);
+	}
+
+	MethodHandle genericInvoker() {
+		return new InvokeGenericHandle(targetType);
+	}
+ }
+ 
