@@ -34,7 +34,7 @@ namespace TR {
 class ARM64Relocation
    {
    public:
-   //TR_ALLOC(TR_Memory::ARM64Relocation)
+   TR_ALLOC(TR_Memory::ARM64Relocation)
 
    /**
     * @brief Constructor
