@@ -2167,7 +2167,7 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
    {
    TR_ResolvedMethod *resolvedMethod = NULL;
 
-#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    static char *dontInline = feGetEnv("TR_AOTDontInline");
    bool resolveAOTMethods = !comp->getOption(TR_DisableAOTResolveDiffCLMethods);
    bool enableAggressive = comp->getOption(TR_EnableAOTInlineSystemMethod);
