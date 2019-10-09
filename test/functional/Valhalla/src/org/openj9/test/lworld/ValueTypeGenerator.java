@@ -101,9 +101,12 @@ public class ValueTypeGenerator extends ClassLoader {
 			testMonitorEnterOnObject(cw, className, fields);
 			testMonitorExitOnObject(cw, className, fields);
 			testMonitorEnterAndExitWithRefType(cw, className, fields);
+			testCheckCastRefClassOnNull(cw, className, fields);
 		} else {
 			makeValue(cw, className, makeValueSig, fields, makeMaxLocal);
 			makeValueTypeDefaultValue(cw, className, makeValueSig, fields, makeMaxLocal);
+			testCheckCastValueTypeOnNull(cw, className, fields);
+			testCheckCastValueTypeOnNonNullType(cw, className, fields);
 			if (!isVerifiable) {
 				makeGeneric(cw, className, "makeValueGeneric", "makeValue", makeValueSig, makeValueGenericSig, fields, makeMaxLocal);
 			}
@@ -290,6 +293,36 @@ public class ValueTypeGenerator extends ClassLoader {
 		mv.visitTypeInsn(DEFAULTVALUE, valueName);
 		mv.visitInsn(ARETURN);
 		mv.visitMaxs(1, 0);
+		mv.visitEnd();
+	}
+
+	private static void testCheckCastValueTypeOnNonNullType(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC  + ACC_STATIC, "testCheckCastValueTypeOnNonNullType", "()Ljava/lang/Object;", null, null);
+		mv.visitCode();
+		mv.visitTypeInsn(DEFAULTVALUE, className);
+		mv.visitTypeInsn(CHECKCAST, className);
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(1, 2);
+		mv.visitEnd();
+	}
+
+	private static void testCheckCastValueTypeOnNull(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastValueTypeOnNull", "()Ljava/lang/Object;", null, null);
+		mv.visitCode();
+		mv.visitInsn(ACONST_NULL);
+		mv.visitTypeInsn(CHECKCAST, className);
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(1, 2);
+		mv.visitEnd();
+	}
+
+	private static void testCheckCastRefClassOnNull(ClassWriter cw, String className, String[] fields) {
+		MethodVisitor mv = cw.visitMethod(ACC_PUBLIC + ACC_STATIC, "testCheckCastRefClassOnNull", "()Ljava/lang/Object;", null, null);
+		mv.visitCode();
+		mv.visitTypeInsn(NEW, className);
+		mv.visitTypeInsn(CHECKCAST, className);
+		mv.visitInsn(ARETURN);
+		mv.visitMaxs(1, 2);
 		mv.visitEnd();
 	}
 
