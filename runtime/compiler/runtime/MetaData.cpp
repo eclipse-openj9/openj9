@@ -1212,10 +1212,10 @@ static void populateInlineCalls(
          inlinedCallSite->_methodInfo = (TR_OpaqueMethodBlock*)-1;
          }
       memcpy(callSiteCursor, inlinedCallSite, sizeof(TR_InlinedCallSite) );
-      if (comp->getOption(TR_AOT) && (comp->getOption(TR_TraceRelocatableDataCG) || comp->getOption(TR_TraceRelocatableDataDetailsCG) || comp->getOption(TR_TraceReloCG)))
-      	 {
-      	 traceMsg(comp, "inlineIdx %d, callSiteCursor %p, inlinedCallSite->methodInfo = %p\n", i, callSiteCursor, inlinedCallSite->_methodInfo);
-      	 }
+      if (comp->getOption(TR_TraceRelocatableDataCG) || comp->getOption(TR_TraceRelocatableDataDetailsCG) || comp->getOption(TR_TraceReloCG))
+         {
+         traceMsg(comp, "inlineIdx %d, callSiteCursor %p, inlinedCallSite->methodInfo = %p\n", i, callSiteCursor, inlinedCallSite->_methodInfo);
+         }
 
       if (!vm->isAOT_DEPRECATED_DO_NOT_USE()) // For AOT, we should only have returned resolved info about a method if the method came from same class loaders.
          {
