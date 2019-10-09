@@ -304,8 +304,8 @@ public class ObjectFieldInfo {
 			if (!modifiers.anyBitsIn(J9AccStatic) ) {
 				if (modifiers.anyBitsIn(J9FieldFlagObject)) {
 					if (valueTypeHelper.isFlattenableFieldSignature(J9ROMFieldShapeHelper.getSignature(f))) {
-						J9ClassPointer fieldClass = valueTypeHelper.findJ9ClassInFlattenedClassCacheWithFieldName(containerClazz,J9ROMFieldShapeHelper.getName(f));
-						if (null == fieldClass) {
+						J9ClassPointer fieldClass = valueTypeHelper.findJ9ClassInFlattenedClassCacheWithFieldName(containerClazz, J9ROMFieldShapeHelper.getName(f));
+						if (!valueTypeHelper.isJ9ClassIsFlattened(fieldClass)) {
 							instanceObjectCount += 1;
 							totalObjectCount += 1;
 						} else if (valueTypeHelper.isJ9ClassLargestAlignmentConstraintDouble(fieldClass)) {

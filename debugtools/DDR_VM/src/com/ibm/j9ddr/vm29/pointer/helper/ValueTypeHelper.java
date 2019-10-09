@@ -37,7 +37,7 @@ import com.ibm.j9ddr.vm29.pointer.StructurePointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9ROMNameAndSignaturePointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ROMFieldShapePointer;
 import com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags;
 import com.ibm.j9ddr.vm29.structure.J9JavaClassFlags;
 import com.ibm.j9ddr.vm29.types.UDATA;
@@ -61,7 +61,7 @@ public class ValueTypeHelper {
 		private MethodHandle getFlattenedClassCachePointer = null;
 		private Class<?> flattenedClassCachePointer = null;
 		private MethodHandle flattenedClassCache_numberOfEntries = null;
-		private MethodHandle flattenedClassCacheEntry_NaS = null;
+		private MethodHandle flattenedClassCacheEntry_field = null;
 		private MethodHandle flattenedClassCacheEntry_clazz = null;
 		private MethodHandle flattenedClassCacheEntry_cast = null;
 		private Class<?> flattenedClassCacheEntryPointer = null;
@@ -74,7 +74,7 @@ public class ValueTypeHelper {
 				getFlattenedClassCachePointer = lookup.findVirtual(J9ClassPointer.class, "flattenedClassCache", MethodType.methodType(flattenedClassCachePointer));
 				flattenedClassCache_numberOfEntries = lookup.findVirtual(flattenedClassCachePointer, "numberOfEntries", MethodType.methodType(UDATA.class));
 				flattenedClassCacheEntryPointer = Class.forName("com.ibm.j9ddr.vm29.pointer.generated.J9FlattenedClassCacheEntryPointer");
-				flattenedClassCacheEntry_NaS = lookup.findVirtual(flattenedClassCacheEntryPointer, "nameAndSignature", MethodType.methodType(J9ROMNameAndSignaturePointer.class));
+				flattenedClassCacheEntry_field = lookup.findVirtual(flattenedClassCacheEntryPointer, "field", MethodType.methodType(J9ROMFieldShapePointer.class));
 				flattenedClassCacheEntry_clazz = lookup.findVirtual(flattenedClassCacheEntryPointer, "clazz", MethodType.methodType(J9ClassPointer.class));
 				flattenedClassCacheEntry_cast = lookup.findStatic(flattenedClassCacheEntryPointer, "cast", MethodType.methodType(flattenedClassCacheEntryPointer, AbstractPointer.class));
 			} catch (Throwable t) {
@@ -112,7 +112,7 @@ public class ValueTypeHelper {
 
 				int cacheLength = length.intValue();
 				for (int i = 0; i < cacheLength; i++) {
-					String field = J9UTF8Helper.stringValue(((J9ROMNameAndSignaturePointer)flattenedClassCacheEntry_NaS.invoke(entry)).name());
+					String field = J9UTF8Helper.stringValue(((J9ROMFieldShapePointer)flattenedClassCacheEntry_field.invoke(entry)).nameAndSignature().name());
 					if (field.equals(fieldName)) {
 						resultClazz = (J9ClassPointer) flattenedClassCacheEntry_clazz.invoke(entry);
 						break;
@@ -156,7 +156,7 @@ public class ValueTypeHelper {
 
 				int cacheLength = length.intValue();
 				for (int i = 0; i < cacheLength; i++) {
-					String field = J9UTF8Helper.stringValue(((J9ROMNameAndSignaturePointer)flattenedClassCacheEntry_NaS.invoke(entry)).signature());
+					String field = J9UTF8Helper.stringValue(((J9ROMFieldShapePointer)flattenedClassCacheEntry_field.invoke(entry)).nameAndSignature().signature());
 					field = field.substring(1,  field.length() - 1);
 					if (field.equals(fieldSig)) {
 						resultClazz = (J9ClassPointer) flattenedClassCacheEntry_clazz.invoke(entry);
@@ -259,7 +259,8 @@ public class ValueTypeHelper {
 			return false;
 		}
 
-		private boolean isJ9ClassIsFlattened(J9ClassPointer clazz) throws CorruptDataException {
+		@Override
+		public boolean isJ9ClassIsFlattened(J9ClassPointer clazz) throws CorruptDataException {
 			if (J9ClassIsFlattened != 0) {
 				return J9ClassHelper.extendedClassFlags(clazz).allBitsIn(J9ClassIsFlattened);
 			}
@@ -416,6 +417,15 @@ public class ValueTypeHelper {
 	 * @return true if clazz has reference alignment constraint, false otherwise
 	 */
 	public boolean isJ9ClassLargestAlignmentConstraintReference(J9ClassPointer clazz) throws CorruptDataException {
+		return false;
+	}
+
+	/**
+	 * Queries if class is flattened
+	 * @param clazz J9Class
+	 * @return true if clazz is flattened, false otherwise
+	 */
+	public boolean isJ9ClassIsFlattened(J9ClassPointer clazz) throws CorruptDataException {
 		return false;
 	}
 }
