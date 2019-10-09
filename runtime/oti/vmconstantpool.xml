@@ -109,6 +109,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<classref name="java/lang/invoke/VolatileCallSite" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/MutableCallSite" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/MethodType" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/MethodTypeHelper" flags="opt_methodHandle"/>
+	<classref name="java/lang/invoke/MethodTypeForm" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/WrongMethodTypeException" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/PassThroughHandle" flags="opt_methodHandle"/>
 	<classref name="java/lang/invoke/InsertHandle" flags="opt_methodHandle"/>
@@ -291,11 +293,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<fieldref class="java/lang/invoke/SpreadHandle" name="arrayClass" signature="Ljava/lang/Class;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/SpreadHandle" name="spreadCount" signature="I" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/SpreadHandle" name="spreadPosition" signature="I" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/MethodType" name="arguments" signature="[Ljava/lang/Class;" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/MethodType" name="returnType" signature="Ljava/lang/Class;" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/MethodType" name="argSlots" signature="I" flags="opt_methodHandle"/>
-	<fieldref class="java/lang/invoke/MethodType" name="stackDescriptionBits" signature="[I" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodType" name="ptypes" signature="[Ljava/lang/Class;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodType" name="rtype" signature="Ljava/lang/Class;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodType" name="form" signature="Ljava/lang/invoke/MethodTypeForm;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/MethodType" name="methodDescriptor" signature="Ljava/lang/String;" flags="opt_methodHandle"/>
+	<fieldref class="java/lang/invoke/MethodTypeForm" name="argCounts" signature="J" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/DynamicInvokerHandle" name="site" signature="Ljava/lang/invoke/CallSite;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/FilterReturnHandle" name="filter" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<fieldref class="java/lang/invoke/VarargsCollectorHandle" name="next" signature="Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
@@ -340,7 +342,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<staticmethodref class="java/lang/J9VMInternals" name="threadCleanup" signature="(Ljava/lang/Thread;)V"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="newInstanceImpl" signature="(Ljava/lang/Class;)Ljava/lang/Object;" flags="jit_newInstancePrototype"/>
 	<staticmethodref class="java/lang/J9VMInternals" name="formatNoSuchMethod" signature="(Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;"/>
-	<staticmethodref class="java/lang/invoke/MethodType" name="vmResolveFromMethodDescriptorString" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
+	<staticmethodref class="java/lang/invoke/MethodTypeHelper" name="vmResolveFromMethodDescriptorString" signature="(Ljava/lang/String;Ljava/lang/ClassLoader;Ljava/lang/Class;)Ljava/lang/invoke/MethodType;" flags="opt_methodHandle"/>
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="sendResolveMethodHandle" signature="(ILjava/lang/Class;Ljava/lang/Class;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="resolveInvokeDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/invoke/MethodHandle;" flags="opt_methodHandle"/>
 	<staticmethodref class="java/lang/invoke/MethodHandle" name="resolveConstantDynamic" signature="(JLjava/lang/String;Ljava/lang/String;J)Ljava/lang/Object;" versions="11-" flag="opt_methodHandle"/>
