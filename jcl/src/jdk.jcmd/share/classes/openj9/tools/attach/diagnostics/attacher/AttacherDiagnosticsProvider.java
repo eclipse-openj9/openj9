@@ -30,10 +30,10 @@ import java.util.Properties;
 
 import com.ibm.tools.attach.attacher.OpenJ9AttachProvider;
 import com.ibm.tools.attach.attacher.OpenJ9VirtualMachine;
-import com.ibm.tools.attach.target.IPC;
-import com.sun.tools.attach.AttachNotSupportedException;
 
-import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
+import openj9.internal.tools.attach.target.DiagnosticProperties;
+import openj9.internal.tools.attach.target.IPC;
+import com.sun.tools.attach.AttachNotSupportedException;
 
 /**
  * This class allows a Attach API attacher to query a target JVM about

@@ -638,10 +638,6 @@ public:
    static void disableAOTCompilations();
 #endif
 
-#if defined(JITSERVER_SUPPORT)
-   static void replenishInvocationCount(J9Method* method, TR::Compilation* comp);
-#endif /* defined(JITSERVER_SUPPORT) */
-
    void * operator new(size_t s, void * p) throw() { return p; }
    CompilationInfo (J9JITConfig *jitConfig);
    TR::Monitor *getCompilationMonitor() {return _compilationMonitor;}
@@ -684,8 +680,9 @@ public:
 
    static int32_t getCompThreadSuspensionThreshold(int32_t threadID) { return _compThreadSuspensionThresholds[threadID]; }
 
-   // updateNumUsableCompThreads() is called before startCompilationThread() to update TR::Options::_numUsableCompilationThreads
-   // based on if it is on the JITClient side or the JITServer side.
+   // updateNumUsableCompThreads() is called before startCompilationThread() to update TR::Options::_numUsableCompilationThreads.
+   // It makes sure the number of usable compilation threads is within allowed bounds.
+   // If not, set it to the upper bound based on the mode: JITClient/non-JITServer or JITServer.
    void updateNumUsableCompThreads(int32_t &numUsableCompThreads);
    bool allocateCompilationThreads(int32_t numUsableCompThreads);
    void freeAllCompilationThreads();
@@ -830,6 +827,7 @@ public:
    void     setAotRelocationTime(uint32_t reloTime) { _statTotalAotRelocationTime = reloTime; }
    void    incrementNumMethodsFoundInSharedCache() { _numMethodsFoundInSharedCache++; }
    int32_t numMethodsFoundInSharedCache() { return _numMethodsFoundInSharedCache; }
+
    int32_t getNumInvRequestsInCompQueue() const { return _numInvRequestsInCompQueue; }
    TR::CompilationInfoPerThreadBase *getCompInfoForCompOnAppThread() const { return _compInfoForCompOnAppThread; }
    J9JITConfig *getJITConfig() { return _jitConfig; }
@@ -1017,11 +1015,6 @@ public:
    uint32_t getLocalGCCounter() const { return _localGCCounter; }
    void incrementLocalGCCounter() { _localGCCounter++; }
 
-   static void addJ9HookVMDynamicCodeLoadForAOT(J9VMThread * vmThread, J9Method * method, J9JITConfig *jitConfig, TR_MethodMetaData* relocatedMetaData);
-
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
-   static void storeAOTInSharedCache(J9VMThread *vmThread, J9ROMMethod *romMethod, const U_8 *dataStart, UDATA dataSize, const U_8 *codeStart, UDATA codeSize, TR::Compilation *comp, J9JITConfig *jitConfig, TR_MethodToBeCompiled *entry);
-#endif
    static bool canRelocateMethod(TR::Compilation * comp);
 
    const PersistentVector<std::string> &getJITServerSslKeys() const { return _sslKeys; }
@@ -1031,6 +1024,14 @@ public:
    const std::string &getJITServerSslRootCerts() const { return _sslRootCerts; }
    void  setJITServerSslRootCerts(const std::string &cert) { _sslRootCerts = cert; }
 #endif /* defined(JITSERVER_SUPPORT) */
+
+   static void replenishInvocationCount(J9Method* method, TR::Compilation* comp);
+
+   static void addJ9HookVMDynamicCodeLoadForAOT(J9VMThread * vmThread, J9Method * method, J9JITConfig *jitConfig, TR_MethodMetaData* relocatedMetaData);
+
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+   static void storeAOTInSharedCache(J9VMThread *vmThread, J9ROMMethod *romMethod, const U_8 *dataStart, UDATA dataSize, const U_8 *codeStart, UDATA codeSize, TR::Compilation *comp, J9JITConfig *jitConfig, TR_MethodToBeCompiled *entry);
+#endif
 
    static int32_t         VERY_SMALL_QUEUE;
    static int32_t         SMALL_QUEUE;
@@ -1044,8 +1045,10 @@ public:
    struct CompilationStatsPerInterval _intervalStats;
    TR_PersistentArray<TR_SignatureCountPair *> *_persistedMethods;
 
-   static const uint32_t MAX_CLIENT_USABLE_COMP_THREADS = 7;
-   static const uint32_t MAX_SERVER_USABLE_COMP_THREADS = 63;
+   // Must be less than 8 at the JITClient or non-JITServer mode.
+   // Because in some parts of the code (CHTable) we keep flags on a byte variable.
+   static const uint32_t MAX_CLIENT_USABLE_COMP_THREADS = 7;  // For JITClient and non-JITServer mode
+   static const uint32_t MAX_SERVER_USABLE_COMP_THREADS = 63; // JITServer
    static const uint32_t MAX_DIAGNOSTIC_COMP_THREADS = 1;
 
 private:
@@ -1083,7 +1086,7 @@ private:
    static int32_t *_compThreadSuspensionThresholds;
    static int32_t *_compThreadActivationThresholdsonStarvation;
 
-   TR::CompilationInfoPerThread **_arrayOfCompilationInfoPerThread; // first NULL entry means end of the array
+   TR::CompilationInfoPerThread **_arrayOfCompilationInfoPerThread; // First NULL entry means end of the array
    TR::CompilationInfoPerThread *_compInfoForDiagnosticCompilationThread; // compinfo for dump compilation thread
    TR::CompilationInfoPerThreadBase *_compInfoForCompOnAppThread; // This is NULL for separate compilation thread
    TR_MethodToBeCompiled *_methodQueue;
@@ -1185,7 +1188,7 @@ private:
 #ifdef DEBUG
    bool                   _traceCompiling;
 #endif
-   int32_t                _numCompThreads;
+   int32_t                _numCompThreads; // Number of usable compilation threads that does not include the diagnostic thread
    int32_t                _numDiagnosticThreads;
    int32_t                _iprofilerMaxCount;
    int32_t                _numGCRQueued; // how many GCR requests are in the queue

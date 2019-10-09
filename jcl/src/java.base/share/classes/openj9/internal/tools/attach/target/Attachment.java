@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 2009, 2019 IBM Corp. and others
  *
@@ -20,7 +20,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-package com.ibm.tools.attach.target;
+package openj9.internal.tools.attach.target;
 
 import java.io.ByteArrayInputStream;
 import java.io.Closeable;
@@ -37,14 +37,13 @@ import java.util.Objects;
 import java.util.Properties;
 
 import java.util.ServiceLoader;
-import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
-import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
+
 /*[IF Sidecar19-SE]*/
 import jdk.internal.vm.VMSupport;
 /*[ELSE] Sidecar19-SE
 import sun.misc.VMSupport;
 /*[ENDIF] Sidecar19-SE */
-import static com.ibm.tools.attach.target.IPC.LOCAL_CONNECTOR_ADDRESS;
+import static openj9.internal.tools.attach.target.IPC.LOCAL_CONNECTOR_ADDRESS;
 
 /**
  * This class handles established connections initiated by another VM

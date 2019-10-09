@@ -25,10 +25,6 @@
 
 #include "j9cfg.h"
 
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390))
-   #define TR_SHARED_CACHE_AOT_SE_PLATFORM
-#endif
-
 #include <assert.h>
 #include "codegen/Relocation.hpp"
 #include "env/j9method.h"
@@ -241,7 +237,9 @@ class TR_RelocationRuntime {
       uint32_t getNumInlinedAllocRelos() { return 0; }
       uint32_t getNumFailedAllocInlinedRelos() { return 0; }
 #endif
+#if defined(JITSERVER_SUPPORT)
       virtual J9JITExceptionTable *copyMethodMetaData(J9JITDataCacheHeader *dataCacheHeader);
+#endif /* defined(JITSERVER_SUPPORT) */
 
    private:
       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize)                           { return NULL; }
@@ -375,6 +373,7 @@ private:
       static const UDATA aotHeaderKeyLength;
 };
 
+#if defined(JITSERVER_SUPPORT)
 class TR_JITServerRelocationRuntime : public TR_RelocationRuntime {
 public:
       TR_ALLOC(TR_Memory::Relocation)
@@ -386,6 +385,7 @@ public:
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
 
       virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
+
       static uint8_t *copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe);
 
 private:
@@ -394,4 +394,6 @@ private:
       virtual void initializeCacheDeltas();
       virtual void initializeAotRuntimeInfo() override { _classReloAmount = 1; }
 };
+#endif /* defined(JITSERVER_SUPPORT) */
+
 #endif   // RELOCATION_RUNTIME_INCL

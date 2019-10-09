@@ -51,6 +51,7 @@
 #include "runtime/IProfiler.hpp"
 #if defined(JITSERVER_SUPPORT)
 #include "env/j9methodServer.hpp"
+#include "control/JITServerCompilationThread.hpp"
 #endif /* defined(JITSERVER_SUPPORT) */
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
@@ -1862,17 +1863,11 @@ J9::Options::fePreProcess(void * base)
       UDATA numCompThreads;
       IDATA ret = GET_INTEGER_VALUE(argIndex, compThreadsOption, numCompThreads);
 
-#if defined(JITSERVER_SUPPORT)
       if (ret == OPTION_OK)
          {
          _numUsableCompilationThreads = numCompThreads;
          compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
          }
-#else
-      if (ret == OPTION_OK && numCompThreads <= MAX_USABLE_COMP_THREADS)
-         _numUsableCompilationThreads = numCompThreads;
-#endif /* defined(JITSERVER_SUPPORT) */
-
       }
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390)
@@ -2190,9 +2185,7 @@ J9::Options::fePostProcessJIT(void * base)
    J9JavaVM * javaVM = jitConfig->javaVM;
    PORT_ACCESS_FROM_JAVAVM(javaVM);
 
-#if defined(JITSERVER_SUPPORT)
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
-#endif /* defined(JITSERVER_SUPPORT) */
    // If user has not specified a value for compilation threads, do it now.
    // This code does not have to stay in the fePostProcessAOT because in an AOT only
    // scenario we don't need more than one compilation thread to load code.
@@ -2208,11 +2201,7 @@ J9::Options::fePostProcessJIT(void * base)
          if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableRampupImprovements) &&
             !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableRampupImprovements))
             {
-#if defined(JITSERVER_SUPPORT)
             compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
-#else
-            _numUsableCompilationThreads = MAX_USABLE_COMP_THREADS;
-#endif /* defined(JITSERVER_SUPPORT) */
             }
          }
       if (_numUsableCompilationThreads <= 0)
@@ -2221,12 +2210,8 @@ J9::Options::fePostProcessJIT(void * base)
          // Do not create more than numProc-1 compilation threads, but at least one
          //
          uint32_t numOnlineCPUs = j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE);
-#if defined(JITSERVER_SUPPORT)
          compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
          _numUsableCompilationThreads = numOnlineCPUs > 1 ? std::min((numOnlineCPUs - 1), static_cast<uint32_t>(_numUsableCompilationThreads)) : 1;
-#else
-         _numUsableCompilationThreads = numOnlineCPUs > 1 ? std::min((numOnlineCPUs - 1), static_cast<uint32_t>(MAX_USABLE_COMP_THREADS)) : 1;
-#endif /* defined(JITSERVER_SUPPORT) */
          }
       }
 

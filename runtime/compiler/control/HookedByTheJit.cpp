@@ -5516,7 +5516,7 @@ bool CPUThrottleEnabled(TR::CompilationInfo *compInfo, uint64_t crtTime)
 
 /// Sums up CPU utilization of all compilation thread and write this
 /// value in the compilation info (or -1 in case of error)
-void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, uint64_t crtTime, J9VMThread *currentThread, int32_t *cpuUtilizationValues)
+static void DoCalculateOverallCompCPUUtilization(TR::CompilationInfo *compInfo, uint64_t crtTime, J9VMThread *currentThread, int32_t *cpuUtilizationValues)
    {
    // Sum up the CPU utilization of all the compilation threads
    int32_t totalCompCPUUtilization = 0;

@@ -66,7 +66,7 @@ isFileOwnedByMe(JNIEnv *env, const char *pathUTF) {
 
 #define TMP_PATH_BUFFER_SIZE 128
 jstring JNICALL
-Java_com_ibm_tools_attach_target_IPC_getTempDirImpl(JNIEnv *env, jclass clazz)
+Java_openj9_internal_tools_attach_target_IPC_getTempDirImpl(JNIEnv *env, jclass clazz)
 {
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
 	jstring result = NULL;
@@ -116,7 +116,7 @@ Java_com_ibm_tools_attach_target_IPC_getTempDirImpl(JNIEnv *env, jclass clazz)
  */
 
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_chmod(JNIEnv *env, jclass clazz, jstring path, jint mode)
+Java_openj9_internal_tools_attach_target_IPC_chmod(JNIEnv *env, jclass clazz, jstring path, jint mode)
 {
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
 
@@ -140,7 +140,7 @@ Java_com_ibm_tools_attach_target_IPC_chmod(JNIEnv *env, jclass clazz, jstring pa
  * @return result of chown() operation
  */
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_chownFileToTargetUid(JNIEnv *env, jclass clazz, jstring path, jlong uid)
+Java_openj9_internal_tools_attach_target_IPC_chownFileToTargetUid(JNIEnv *env, jclass clazz, jstring path, jlong uid)
 {
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
 
@@ -167,7 +167,7 @@ Java_com_ibm_tools_attach_target_IPC_chownFileToTargetUid(JNIEnv *env, jclass cl
  * @return Returns 0 on Windows and the effective UID of owner on other operation systems. Returns -1 in the case of an error.
  */
 jlong JNICALL
-Java_com_ibm_tools_attach_target_CommonDirectory_getFileOwner(JNIEnv *env, jclass clazz, jstring path) {
+Java_openj9_internal_tools_attach_target_CommonDirectory_getFileOwner(JNIEnv *env, jclass clazz, jstring path) {
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
 
 	jlong ownerUid = -1;
@@ -195,7 +195,7 @@ Java_com_ibm_tools_attach_target_CommonDirectory_getFileOwner(JNIEnv *env, jclas
  * @note A batch process runs as the default UID if it has no USS segment.
  */
 jboolean JNICALL
-Java_com_ibm_tools_attach_target_IPC_isUsingDefaultUid(JNIEnv *env, jclass clazz)
+Java_openj9_internal_tools_attach_target_IPC_isUsingDefaultUid(JNIEnv *env, jclass clazz)
 {
 
 	jboolean usingDuid = JNI_FALSE;
@@ -253,7 +253,7 @@ Java_com_ibm_tools_attach_target_IPC_isUsingDefaultUid(JNIEnv *env, jclass clazz
  */
 
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_mkdirWithPermissionsImpl(JNIEnv *env, jclass clazz, jstring absolutePath, jint cdPerms)
+Java_openj9_internal_tools_attach_target_IPC_mkdirWithPermissionsImpl(JNIEnv *env, jclass clazz, jstring absolutePath, jint cdPerms)
 {
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
 	jint status = JNI_OK;
@@ -261,7 +261,7 @@ Java_com_ibm_tools_attach_target_IPC_mkdirWithPermissionsImpl(JNIEnv *env, jclas
 
 	if (NULL != absolutePathUTF) {
 		status = j9file_mkdir(absolutePathUTF); /* file perms ignored for now */
-		Java_com_ibm_tools_attach_target_IPC_chmod(env, clazz, absolutePath, cdPerms);
+		Java_openj9_internal_tools_attach_target_IPC_chmod(env, clazz, absolutePath, cdPerms);
 		/* ensure that the directory group is the same as this process's.  Some OS's set the group to that of the parent directory */
 		j9file_chown(absolutePathUTF, J9PORT_FILE_IGNORE_ID, j9sysinfo_get_egid());
 		Trc_JCL_attach_mkdirWithPermissions(env, absolutePathUTF, cdPerms, status);
@@ -279,7 +279,7 @@ Java_com_ibm_tools_attach_target_IPC_mkdirWithPermissionsImpl(JNIEnv *env, jclas
  * Create the file, set the permissions (to override umask) and close it
  */
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_createFileWithPermissionsImpl(JNIEnv *env, jclass clazz, jstring path, jint mode)
+Java_openj9_internal_tools_attach_target_IPC_createFileWithPermissionsImpl(JNIEnv *env, jclass clazz, jstring path, jint mode)
 {
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
 
@@ -341,7 +341,7 @@ static jint createSharedResourcesDir(JNIEnv *env, jstring ctrlDirName)
  */
 
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_setupSemaphore(JNIEnv *env, jclass clazz, jstring ctrlDirName)
+Java_openj9_internal_tools_attach_target_IPC_setupSemaphore(JNIEnv *env, jclass clazz, jstring ctrlDirName)
 {
 
 
@@ -404,7 +404,7 @@ openSemaphore(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName, 
  */
 
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_openSemaphore(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName)
+Java_openj9_internal_tools_attach_target_IPC_openSemaphore(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName)
 {
 	jint rc = 0;
 	J9JavaVM* javaVM = ((J9VMThread*) env)->javaVM;
@@ -428,7 +428,7 @@ Java_com_ibm_tools_attach_target_IPC_openSemaphore(JNIEnv *env, jclass clazz, js
  * @return JNI_OK on success, j9shsem_open or close status otherwise
  */
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_notifyVm(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName, jint numberOfPosts, jboolean global)
+Java_openj9_internal_tools_attach_target_IPC_notifyVm(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName, jint numberOfPosts, jboolean global)
 {
 
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
@@ -461,7 +461,7 @@ Java_com_ibm_tools_attach_target_IPC_notifyVm(JNIEnv *env, jclass clazz, jstring
  * @return JNI_OK on success, j9shsem_open or close status otherwise
  */
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_cancelNotify(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName, jint numberOfDecrements, jboolean global)
+Java_openj9_internal_tools_attach_target_IPC_cancelNotify(JNIEnv *env, jclass clazz, jstring ctrlDirName, jstring semaName, jint numberOfDecrements, jboolean global)
 {
 
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
@@ -491,7 +491,7 @@ Java_com_ibm_tools_attach_target_IPC_cancelNotify(JNIEnv *env, jclass clazz, jst
  *  Block until semaphore becomes non-zero.
  */
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_waitSemaphore(JNIEnv *env, jclass clazz)
+Java_openj9_internal_tools_attach_target_IPC_waitSemaphore(JNIEnv *env, jclass clazz)
 {
 
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
@@ -509,7 +509,7 @@ Java_com_ibm_tools_attach_target_IPC_waitSemaphore(JNIEnv *env, jclass clazz)
  * Close semaphore
  */
 void JNICALL
-Java_com_ibm_tools_attach_target_IPC_closeSemaphore(JNIEnv *env, jclass clazz)
+Java_openj9_internal_tools_attach_target_IPC_closeSemaphore(JNIEnv *env, jclass clazz)
 {
 
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
@@ -525,7 +525,7 @@ Java_com_ibm_tools_attach_target_IPC_closeSemaphore(JNIEnv *env, jclass clazz)
  * @return 0 on success, -1 on failure
  */
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_destroySemaphore(JNIEnv *env, jclass clazz)
+Java_openj9_internal_tools_attach_target_IPC_destroySemaphore(JNIEnv *env, jclass clazz)
 {
 
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
@@ -547,7 +547,7 @@ Java_com_ibm_tools_attach_target_IPC_destroySemaphore(JNIEnv *env, jclass clazz)
  * @return numeric user ID of the caller. This is upcast from a UDATA.
  */
 jlong JNICALL
-Java_com_ibm_tools_attach_target_IPC_getUid(JNIEnv *env, jclass clazz)
+Java_openj9_internal_tools_attach_target_IPC_getUid(JNIEnv *env, jclass clazz)
 {
 
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
@@ -563,7 +563,7 @@ Java_com_ibm_tools_attach_target_IPC_getUid(JNIEnv *env, jclass clazz)
  * @return process ID of the caller.  This is upcast from UDATA.
  */
 jlong JNICALL
-Java_com_ibm_tools_attach_target_IPC_getProcessId(JNIEnv *env, jclass clazz)
+Java_openj9_internal_tools_attach_target_IPC_getProcessId(JNIEnv *env, jclass clazz)
 {
 
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
@@ -582,7 +582,7 @@ Java_com_ibm_tools_attach_target_IPC_getProcessId(JNIEnv *env, jclass clazz)
  * @return positive value if the process exists, 0 if the process does not exist, otherwise negative error code
  */
 jint JNICALL
-Java_com_ibm_tools_attach_target_IPC_processExistsImpl(JNIEnv *env, jclass clazz, jlong pid)
+Java_openj9_internal_tools_attach_target_IPC_processExistsImpl(JNIEnv *env, jclass clazz, jlong pid)
 {
 	PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
 	/* PID value was upcast from a UDATA to jlong. */
@@ -600,7 +600,7 @@ Java_com_ibm_tools_attach_target_IPC_processExistsImpl(JNIEnv *env, jclass clazz
  * @note J9PORT_ERROR_FILE_OPFAILED (-300) indicates file cannot be opened or the path could not be converted, J9PORT_ERROR_FILE_LOCK_BADLOCK (-316) indicates that the file could not be locked.
  */
 jlong JNICALL
-Java_com_ibm_tools_attach_target_FileLock_lockFileImpl(JNIEnv *env, jclass clazz, jstring path, jint mode, jboolean blocking)
+Java_openj9_internal_tools_attach_target_FileLock_lockFileImpl(JNIEnv *env, jclass clazz, jstring path, jint mode, jboolean blocking)
 {
     PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
 
@@ -655,7 +655,7 @@ Java_com_ibm_tools_attach_target_FileLock_lockFileImpl(JNIEnv *env, jclass clazz
  * @param message descriptive message. May be null.
  */
 void JNICALL
-Java_com_ibm_tools_attach_target_IPC_tracepoint(JNIEnv *env, jclass clazz, jint statusCode, jstring message) {
+Java_openj9_internal_tools_attach_target_IPC_tracepoint(JNIEnv *env, jclass clazz, jint statusCode, jstring message) {
 
 		const char *msgUTF = NULL;
 		const char *statusText = "STATUS_NORMAL";
@@ -696,7 +696,7 @@ Java_com_ibm_tools_attach_target_IPC_tracepoint(JNIEnv *env, jclass clazz, jint 
  * @return 0 if successful, -1 if failed
  */
 jint JNICALL
-Java_com_ibm_tools_attach_target_FileLock_unlockFileImpl(JNIEnv *env, jclass clazz, jlong fd) {
+Java_openj9_internal_tools_attach_target_FileLock_unlockFileImpl(JNIEnv *env, jclass clazz, jlong fd) {
     PORT_ACCESS_FROM_VMC( ((J9VMThread *) env) );
 
     jint result = JNI_OK;
