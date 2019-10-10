@@ -431,11 +431,11 @@ bool ppcCodePatching(void *method, void *callSite, void *currentPC, void *curren
 
          const intptrj_t *obj = *(intptrj_t **)((intptrj_t)extra + sizeof(intptrj_t));
          // Discard high order 32 bits via cast to uint32_t to avoid shifting and masking when using compressed refs
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-         intptrj_t currentReceiverJ9Class = *(uint32_t *)((int8_t *)obj + TMP_OFFSETOF_J9OBJECT_CLAZZ);
-#else
-         intptrj_t currentReceiverJ9Class = *(intptrj_t *)((int8_t *)obj + TMP_OFFSETOF_J9OBJECT_CLAZZ);
-#endif
+         intptrj_t currentReceiverJ9Class = 0;
+         if (TR::Compiler->om.compressObjectReferences())
+            currentReceiverJ9Class = *(uint32_t *)((int8_t *)obj + TMP_OFFSETOF_J9OBJECT_CLAZZ);
+         else
+            currentReceiverJ9Class = *(intptrj_t *)((int8_t *)obj + TMP_OFFSETOF_J9OBJECT_CLAZZ);
 
          // Throwing away the flag bits in CLASS slot
          currentReceiverJ9Class &= ~(J9_REQUIRED_CLASS_ALIGNMENT - 1);

@@ -6309,7 +6309,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                TR::LabelSymbol *nonZeroLengthLabel = generateLabelSymbol(cg);
                iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, nonZeroLengthLabel, condReg, iCursor);
 
-               int32_t zeroLenArraySize = (sizeof(J9IndexableObjectDiscontiguous) + fej9->getObjectAlignmentInBytes() - 1) & (-fej9->getObjectAlignmentInBytes());
+               int32_t zeroLenArraySize = (TR::Compiler->om.discontiguousArrayHeaderSizeInBytes() + fej9->getObjectAlignmentInBytes() - 1) & (-fej9->getObjectAlignmentInBytes());
                TR_ASSERT(zeroLenArraySize >= J9_GC_MINIMUM_OBJECT_SIZE, "Zero-length array size must be bigger than MIN_OBJECT_SIZE");
                TR_ASSERT(zeroLenArraySize <= maxSafeSize, "Zero-length array size must be smaller than maxSafeSize");
                // Load TLH heapAlloc and heapTop values.
@@ -6591,7 +6591,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
                   {
                   int32_t arrayletLeafSize = TR::Compiler->om.arrayletLeafSize();
 
-                  if (allocSize >= arrayletLeafSize + sizeof(J9IndexableObjectContiguous))
+                  if (allocSize >= arrayletLeafSize + TR::Compiler->om.contiguousArrayHeaderSizeInBytes())
                      {
                      static const char *p = feGetEnv("TR_TarokPreLeafSizeCheckConstBreak");
                      if (p)
@@ -7198,7 +7198,7 @@ TR::Register *outlinedHelperNewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    //
 
    const bool isVariableLen = objectSizeBytes == 0;
-   const int32_t allocSizeBytes = isVariableLen ? sizeof(J9IndexableObjectContiguous) : (objectSizeBytes + fej9->getObjectAlignmentInBytes() - 1) & (-fej9->getObjectAlignmentInBytes());
+   const int32_t allocSizeBytes = isVariableLen ? TR::Compiler->om.contiguousArrayHeaderSizeInBytes() : (objectSizeBytes + fej9->getObjectAlignmentInBytes() - 1) & (-fej9->getObjectAlignmentInBytes());
    const bool needsZeroInit = !fej9->tlhHasBeenCleared() && !node->canSkipZeroInitialization();
    // Only zero-init inline if the object size is known and relatively small, otherwise do in the helper
    const int32_t maxInitSlots = 8;
@@ -7471,7 +7471,7 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
          {
          // classReg is passed to the VM helper on the slow path and subsequently clobbered; copy it for later nodes if necessary
          classReg = cg->gprClobberEvaluate(firstChild);
-         dataBegin = sizeof(J9Object);
+         dataBegin = TR::Compiler->om.objectHeaderSizeInBytes();
          }
       else
          {
@@ -7489,14 +7489,14 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
             if (generateArraylets)
                dataBegin = fej9->getArrayletFirstElementOffset(elementSize, comp);
             else
-               dataBegin = sizeof(J9IndexableObjectContiguous);
+               dataBegin = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
             static const char *p = feGetEnv("TR_TarokDataBeginBreak");
             if (p)
                TR_ASSERT(false, "Hitting Arraylet Data Begin Break");
             }
          else
             {
-            dataBegin = sizeof(J9IndexableObjectContiguous);
+            dataBegin = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
             }
          secondChild = node->getSecondChild();
          enumReg = cg->evaluate(firstChild);

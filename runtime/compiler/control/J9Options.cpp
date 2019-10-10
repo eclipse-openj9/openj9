@@ -319,11 +319,7 @@ qualifiedSize(UDATA *byteSize, char **qualifier)
 bool
 J9::Options::useCompressedPointers()
    {
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-   return true;
-#else
-   return false;
-#endif
+   return TR::Compiler->om.compressObjectReferences();
    }
 
 

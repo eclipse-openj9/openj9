@@ -1922,17 +1922,20 @@ int32_t TR_J9VMBase::getArrayletFirstElementOffset(int8_t elementSize, TR::Compi
    TR_ASSERT(elementSize >= 0, "unexpected arraylet element size");
 
    int32_t offset;
-#if defined(J9VM_GC_COMPRESSED_POINTERS)
-   offset = (getFirstArrayletPointerOffset(comp) + TR::Compiler->om.sizeofReferenceField() + sizeof(UDATA)-1) & (-(int32_t)sizeof(UDATA));
-   TR_ASSERT((offset & sizeof(UDATA)-1) == 0, "unexpected alignment for first arraylet element");
-#else
-   if (elementSize > sizeof(UDATA))
-      offset = (getFirstArrayletPointerOffset(comp) + sizeof(UDATA) + elementSize-1) & (-elementSize);
+   if (TR::Compiler->om.compressObjectReferences())
+      {
+      offset = (getFirstArrayletPointerOffset(comp) + TR::Compiler->om.sizeofReferenceField() + sizeof(UDATA)-1) & (-(int32_t)sizeof(UDATA));
+      TR_ASSERT((offset & sizeof(UDATA)-1) == 0, "unexpected alignment for first arraylet element");
+      }
    else
-      offset = getFirstArrayletPointerOffset(comp) + sizeof(UDATA);
+      {
+      if (elementSize > sizeof(UDATA))
+         offset = (getFirstArrayletPointerOffset(comp) + sizeof(UDATA) + elementSize-1) & (-elementSize);
+      else
+         offset = getFirstArrayletPointerOffset(comp) + sizeof(UDATA);
 
-   TR_ASSERT((offset & (elementSize-1)) == 0, "unexpected alignment for first arraylet element");
-#endif
+      TR_ASSERT((offset & (elementSize-1)) == 0, "unexpected alignment for first arraylet element");
+      }
 
    return offset;
    }

@@ -7959,7 +7959,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       if (opCode == TR::New)
          {
          classReg = cg->evaluate(firstChild);
-         dataBegin = sizeof(J9Object);
+         dataBegin = TR::Compiler->om.objectHeaderSizeInBytes();
          }
       else
          {

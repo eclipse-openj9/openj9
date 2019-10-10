@@ -56,7 +56,11 @@ void
 clearLockWord(J9VMThread *currentThread, j9objectmonitor_t *lockWord)
 {
 	VM_AtomicSupport::writeBarrier();
-	*lockWord = 0;
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(currentThread)) {
+		*(U_32*)lockWord = 0;
+	} else {
+		*(UDATA*)lockWord = 0;
+	}
 }
 
 /*
