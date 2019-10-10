@@ -26,6 +26,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
   OBJCOPY := $(OPENJ9_CC_PREFIX)-objcopy
 <#elseif uma.spec.processor.aarch64>
   OBJCOPY := $(OPENJ9_CC_PREFIX)-objcopy
+<#elseif uma.spec.processor.riscv64 && uma.spec.flags.env_crossbuild.enabled>
+  AR := riscv64-unknown-linux-gnu-ar
+  AS := riscv64-unknown-linux-gnu-as
+  OBJCOPY := riscv64-unknown-linux-gnu-objcopy
 <#else>
   OBJCOPY := objcopy
 </#if>
@@ -86,7 +90,7 @@ $(UMA_EXETARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 
 UMA_EXE_POSTFIX_FLAGS += -lm -lrt -lpthread -lc -ldl -lutil -Wl,-z,origin,-rpath,\$$ORIGIN,--disable-new-dtags,-rpath-link,$(UMA_PATH_TO_ROOT)
 
-<#if uma.spec.processor.amd64>
+<#if uma.spec.processor.amd64 || uma.spec.processor.riscv64>
   UMA_MASM2GAS_FLAGS += --64
 </#if>
 
@@ -100,7 +104,7 @@ ifndef UMA_DO_NOT_OPTIMIZE_CCODE
   <#if uma.spec.properties.uma_optimization_cflags.defined>
     UMA_OPTIMIZATION_CFLAGS += ${uma.spec.properties.uma_optimization_cflags.value}
   <#else>
-    <#if uma.spec.processor.amd64>
+    <#if uma.spec.processor.amd64 || uma.spec.processor.riscv64>
       UMA_OPTIMIZATION_CFLAGS += -O3 -fno-strict-aliasing
     <#elseif uma.spec.processor.x86>
       UMA_OPTIMIZATION_CFLAGS += -O3 -fno-strict-aliasing -march=pentium4 -mtune=prescott -mpreferred-stack-boundary=4
@@ -126,7 +130,7 @@ ifndef UMA_DO_NOT_OPTIMIZE_CCODE
   <#if uma.spec.properties.uma_optimization_cxxflags.defined>
     UMA_OPTIMIZATION_CXXFLAGS += ${uma.spec.properties.uma_optimization_cxxflags.value}
   <#else>
-    <#if uma.spec.processor.amd64>
+    <#if uma.spec.processor.amd64 || uma.spec.processor.riscv64>
       UMA_OPTIMIZATION_CXXFLAGS += -O3 -fno-strict-aliasing
     <#elseif uma.spec.processor.x86>
       UMA_OPTIMIZATION_CXXFLAGS += -O3 -fno-strict-aliasing -march=pentium4 -mtune=prescott -mpreferred-stack-boundary=4
@@ -246,7 +250,7 @@ ifdef j9vm_uma_gnuDebugSymbols
   </#if>
 endif
 
-<#if uma.spec.processor.x86 || uma.spec.processor.amd64>
+<#if uma.spec.processor.x86 || uma.spec.processor.amd64 || uma.spec.processor.riscv64>
   <#-- GCC compilers support dependency generation -->
   CFLAGS += -MMD
   CPPFLAGS += -MMD
@@ -263,7 +267,7 @@ CPPFLAGS += -DLINUX -D_REENTRANT
 </#if>
 
 <#-- Add Position Independent compile flag -->
-<#if uma.spec.processor.amd64 || uma.spec.processor.arm || uma.spec.processor.s390>
+<#if uma.spec.processor.amd64 || uma.spec.processor.arm || uma.spec.processor.s390 || uma.spec.processor.riscv64>
   CFLAGS += -fPIC
   CXXFLAGS += -fPIC
 <#elseif uma.spec.processor.ppc>
@@ -348,6 +352,15 @@ endif
       PPC_GCC_CXXFLAGS += -DLINUXPPC -m32 -fstack-protector
     endif
   endif
+<#elseif uma.spec.processor.riscv64>
+  CFLAGS   += -DRISCV64
+  CXXFLAGS += -DRISCV64
+  CPPFLAGS += -DRISCV64
+  <#if uma.spec.flags.env_crossbuild.enabled>
+     CFLAGS   += $(SYSROOT_CFLAGS)
+     CXXFLAGS += $(SYSROOT_CFLAGS)
+     CPPFLAGS += $(SYSROOT_CFLAGS)
+  </#if>
 <#elseif uma.spec.processor.s390>
   CFLAGS += $(J9M31) -DS390 -D_LONG_LONG -DJ9VM_TIERED_CODE_CACHE -fno-strict-aliasing
   CXXFLAGS += $(J9M31) -DS390 -D_LONG_LONG -DJ9VM_TIERED_CODE_CACHE -fno-strict-aliasing
@@ -511,7 +524,7 @@ MHInterpreter$(UMA_DOT_O) : MHInterpreter.cpp
 
 endif
 </#if>
-<#if uma.spec.processor.amd64>
+<#if uma.spec.processor.amd64 || uma.spec.processor.riscv64>
 # Special handling for unused result warnings.
 closures$(UMA_DOT_O) : closures.c
 	$(CC) $(CFLAGS) -Wno-unused-result -c -o $@ $<
