@@ -1200,45 +1200,12 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 	U_8 *jitPC = decompRecord->pc;
 	/* Simulate a call to a resolve helper to make the stack walkable */
 	buildBranchJITResolveFrame(currentThread, jitPC, J9_STACK_FLAGS_JIT_EXCEPTION_CATCH_RESOLVE);
-
-	J9JavaVM *vm = currentThread->javaVM;
-	J9JITDecompileState decompileState;
-	J9StackWalkState walkState;
+	/* Discard the existing decompilation in favour of a new one at the exception catch point */
 	J9OSRBuffer *osrBuffer = &decompRecord->osrBuffer;
 	UDATA numberOfFrames = osrBuffer->numberOfFrames;
 	J9OSRFrame *osrFrame = (J9OSRFrame*)(osrBuffer + 1);
-	J9JITExceptionTable *metaData = NULL;
-
-	/* Collect the required information from the stack - top visible frame is the decompile frame */
-	walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_MAINTAIN_REGISTER_MAP | J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_SAVE_STACKED_REGISTERS;
-	walkState.skipCount = 0;
-	walkState.frameWalkFunction = decompileMethodFrameIterator;
-	walkState.walkThread = currentThread;
-	walkState.userData1 = &decompileState;
-	walkState.userData2 = NULL;
-	vm->walkStackFrames(currentThread, &walkState);
-	metaData = decompileState.metaData;
-
-	/* Determine in which inlined frame the exception is being caught */
-	UDATA newNumberOfFrames = 1;
-	void *stackMap = NULL;
-	void *inlineMap = NULL;
-	void *inlinedCallSite = NULL;
-	/* Note we need to add 1 to the JIT PC here in order to get the correct map at the exception handler
-	 * because jitGetMapsFromPC is expecting a return address, so it subtracts 1.  The value stored in the
-	 * decomp record is the start address of the compiled exception handler.
-	 */
-	jitGetMapsFromPC(vm, metaData, (UDATA)jitPC + 1, &stackMap, &inlineMap);
-	Assert_CodertVM_false(NULL == inlineMap);
-	if (NULL != getJitInlinedCallInfo(metaData)) {
-		inlinedCallSite = getFirstInlinedCallSite(metaData, inlineMap);
-		if (inlinedCallSite != NULL) {
-			newNumberOfFrames = getJitInlineDepthFromCallSite(metaData, inlinedCallSite) + 1;
-		}
-	}
-	Assert_CodertVM_true(numberOfFrames >= newNumberOfFrames);
 	J9Pool *monitorEnterRecordPool = currentThread->monitorEnterRecordPool;
-	while (numberOfFrames != newNumberOfFrames) {
+	while (0 != numberOfFrames) {
 		/* Discard the monitor records for the popped frames */
 		J9MonitorEnterRecord *enterRecord = osrFrame->monitorEnterRecords;
 		while (NULL != enterRecord) {
@@ -1250,17 +1217,36 @@ c_jitDecompileAtExceptionCatch(J9VMThread * currentThread)
 		osrFrame = (J9OSRFrame*)((U_8*)osrFrame + osrFrameSize(osrFrame->method));
 		numberOfFrames -= 1;
 	}
+	freeDecompilationRecord(currentThread, decompRecord, FALSE);
 
-	/* Fix the OSR frame to resume at the catch point with an empty pending stack (the caught exception
-	 * is pushed after decompilation completes).
-	 */
-	osrFrame->bytecodePCOffset = getCurrentByteCodeIndexAndIsSameReceiver(metaData, inlineMap, inlinedCallSite, NULL);
-	Trc_Decomp_jitInterpreterPCFromWalkState_Entry(jitPC);
-	Trc_Decomp_jitInterpreterPCFromWalkState_exHandler(osrFrame->bytecodePCOffset);
-	osrFrame->pendingStackHeight = 0;
+	J9JavaVM *vm = currentThread->javaVM;
+	J9StackWalkState walkState;
 
+	/* Add a new decompilation to the catching frame */
+	walkState.flags = J9_STACKWALK_COUNT_SPECIFIED | J9_STACKWALK_SKIP_INLINES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_MAINTAIN_REGISTER_MAP;
+	walkState.skipCount = 0;
+	walkState.maxFrames = 1;
+	walkState.walkThread = currentThread;
+	vm->walkStackFrames(currentThread, &walkState);
+	decompRecord = addDecompilation(currentThread, &walkState, 0);
+	Assert_CodertVM_false(NULL == decompRecord);
+	decompRecord = fetchAndUnstackDecompilationInfo(currentThread);
+	/* Fix the saved PC since the frame is still on the stack */
+	fixSavedPC(currentThread, decompRecord);
+
+	/* Collect the required information from the stack - top visible frame is the decompile frame */
+	J9JITDecompileState decompileState;
+	walkState.flags = J9_STACKWALK_ITERATE_FRAMES | J9_STACKWALK_SKIP_INLINES | J9_STACKWALK_VISIBLE_ONLY | J9_STACKWALK_MAINTAIN_REGISTER_MAP | J9_STACKWALK_ITERATE_HIDDEN_JIT_FRAMES | J9_STACKWALK_SAVE_STACKED_REGISTERS;
+	walkState.skipCount = 0;
+	walkState.frameWalkFunction = decompileMethodFrameIterator;
+	walkState.walkThread = currentThread;
+	walkState.userData1 = &decompileState;
+	walkState.userData2 = NULL;
+	vm->walkStackFrames(currentThread, &walkState);
+	osrBuffer = &decompRecord->osrBuffer;
+	numberOfFrames = osrBuffer->numberOfFrames;
+	osrFrame = (J9OSRFrame*)(osrBuffer + 1);
 	performDecompile(currentThread, &decompileState, decompRecord, osrFrame, numberOfFrames);
-
 	freeDecompilationRecord(currentThread, decompRecord, TRUE);
 
 	/* Push the exception */
