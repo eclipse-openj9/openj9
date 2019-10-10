@@ -746,7 +746,7 @@ void TR::ARM64PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
          generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::sbfmx, callNode, x9, x9, 0x1F); // sxtw x9, w9
          tempMR = new (trHeapMemory()) TR::MemoryReference(vftReg, x9, cg());
          generateTrg1MemInstruction(cg(), TR::InstOpCode::ldroffx, callNode, dstReg, tempMR);
-         gcPoint = generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, vcSnippetLabel, dependencies);
+         gcPoint = generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, vcSnippetLabel);
 
          cg()->stopUsingRegister(dstReg);
          }
