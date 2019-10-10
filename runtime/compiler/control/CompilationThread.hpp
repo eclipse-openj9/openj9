@@ -160,7 +160,6 @@ class CompilationInfoPerThreadBase
    TR_MethodMetaData *performAOTLoad(J9VMThread *context, TR::Compilation *, TR_ResolvedMethod *compilee, TR_J9VMBase *vm, J9Method *method);
 
    void preCompilationTasks(J9VMThread * vmThread,
-                            J9JavaVM *javaVM,
                             TR_MethodToBeCompiled *entry,
                             J9Method *method,
                             const void **aotCachedMethod,
@@ -259,7 +258,9 @@ class CompilationInfoPerThreadBase
    TR::CompilationInfo &        _compInfo;
    J9JITConfig * const          _jitConfig;
    TR_SharedCacheRelocationRuntime _sharedCacheReloRuntime;
+#if defined(JITSERVER_SUPPORT)
    TR_JITServerRelocationRuntime _remoteCompileReloRuntime;
+#endif /* defined(JITSERVER_SUPPORT) */
    int32_t const                _compThreadId; // unique number starting from 0; Only used for compilation on separate thread
    bool const                   _onSeparateThread;
 
