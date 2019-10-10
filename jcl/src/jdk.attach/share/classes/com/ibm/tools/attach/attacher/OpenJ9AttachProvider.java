@@ -32,11 +32,11 @@ import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ibm.tools.attach.target.Advertisement;
-import com.ibm.tools.attach.target.AttachHandler;
-import com.ibm.tools.attach.target.CommonDirectory;
-import com.ibm.tools.attach.target.IPC;
-import com.ibm.tools.attach.target.TargetDirectory;
+import openj9.internal.tools.attach.target.Advertisement;
+import openj9.internal.tools.attach.target.AttachHandler;
+import openj9.internal.tools.attach.target.CommonDirectory;
+import openj9.internal.tools.attach.target.IPC;
+import openj9.internal.tools.attach.target.TargetDirectory;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.AttachPermission;
 import com.sun.tools.attach.VirtualMachineDescriptor;

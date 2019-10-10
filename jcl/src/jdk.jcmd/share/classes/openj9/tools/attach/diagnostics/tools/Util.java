@@ -35,14 +35,14 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
-import com.ibm.tools.attach.target.IPC;
+import openj9.internal.tools.attach.target.DiagnosticProperties;
+import openj9.internal.tools.attach.target.IPC;
 import com.sun.tools.attach.AttachNotSupportedException;
 import com.sun.tools.attach.VirtualMachine;
 import com.sun.tools.attach.VirtualMachineDescriptor;
 import com.sun.tools.attach.spi.AttachProvider;
 
 import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
-import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
 
 /**
  * Common functions for diagnostic tools

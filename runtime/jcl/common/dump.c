@@ -284,7 +284,7 @@ Java_com_ibm_jvm_Dump_triggerDumpsImpl (JNIEnv *env, jclass clazz, jstring jopts
 }
 
 jstring JNICALL
-Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_triggerDumpsImpl(JNIEnv *env, jclass clazz, jstring jopts, jstring jevent)
+Java_openj9_internal_tools_attach_target_DiagnosticUtils_triggerDumpsImpl(JNIEnv *env, jclass clazz, jstring jopts, jstring jevent)
 {
 	return Java_com_ibm_jvm_Dump_triggerDumpsImpl(env, clazz, jopts, jevent);
 }

@@ -29,12 +29,12 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.ibm.tools.attach.target.AttachHandler;
-import com.ibm.tools.attach.target.IPC;
+import openj9.internal.tools.attach.target.AttachHandler;
+import openj9.internal.tools.attach.target.DiagnosticProperties;
+import openj9.internal.tools.attach.target.DiagnosticUtils;
+import openj9.internal.tools.attach.target.IPC;
 
 import openj9.tools.attach.diagnostics.attacher.AttacherDiagnosticsProvider;
-import openj9.tools.attach.diagnostics.base.DiagnosticProperties;
-import openj9.tools.attach.diagnostics.base.DiagnosticUtils;
 
 /**
  * JStack

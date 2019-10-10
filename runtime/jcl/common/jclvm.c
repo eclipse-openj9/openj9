@@ -158,7 +158,7 @@ Java_com_ibm_oti_vm_VM_allInstances(JNIEnv * env, jclass unused, jclass clazz, j
  * This string inserts Unix-style line separators.  The caller is responsible for translating them if necessary.
  */
 jstring JNICALL
-Java_openj9_tools_attach_diagnostics_base_DiagnosticUtils_getHeapClassStatisticsImpl(JNIEnv * env, jclass unused)
+Java_openj9_internal_tools_attach_target_DiagnosticUtils_getHeapClassStatisticsImpl(JNIEnv * env, jclass unused)
 {
 	J9VMThread *vmThread = (J9VMThread *) env;
 	J9JavaVM *vm = vmThread->javaVM;

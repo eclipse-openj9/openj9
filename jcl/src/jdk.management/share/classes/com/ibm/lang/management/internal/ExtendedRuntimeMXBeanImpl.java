@@ -24,7 +24,7 @@ package com.ibm.lang.management.internal;
 
 import com.ibm.java.lang.management.internal.RuntimeMXBeanImpl;
 import com.ibm.lang.management.RuntimeMXBean;
-import com.ibm.tools.attach.target.AttachHandler;
+import openj9.internal.tools.attach.target.AttachHandler;
 
 
 /**
