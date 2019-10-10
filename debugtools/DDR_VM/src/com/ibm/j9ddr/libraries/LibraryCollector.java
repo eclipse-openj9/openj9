@@ -310,7 +310,7 @@ public class LibraryCollector {
 		return libraryName.equals("lib.so") // the SOname that appears in executables
 				// ABI: i386, ia64, sh
 				|| libraryName.startsWith("linux-gate")
-				// ABI: aarch64, arm, mips, x86_64, x86/32
+				// ABI: aarch64, arm, mips, riscv, x86_64, x86/32
 				|| libraryName.startsWith("linux-vdso.so.1")
 				// ABI: ppc/32, s390
 				|| libraryName.startsWith("linux-vdso32.so.1")

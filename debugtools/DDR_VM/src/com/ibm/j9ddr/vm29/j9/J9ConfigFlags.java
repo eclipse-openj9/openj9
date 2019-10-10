@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,7 @@ public final class J9ConfigFlags {
 
 	public static final boolean arch_arm;
 	public static final boolean arch_power;
+	public static final boolean arch_riscv;
 	public static final boolean arch_s390;
 	public static final boolean arch_x86;
 
@@ -49,6 +50,7 @@ public final class J9ConfigFlags {
 
 		arch_arm = getFlag(flagsClass, "arch_arm", "J9VM_ARCH_ARM");
 		arch_power = getFlag(flagsClass, "arch_power", "J9VM_ARCH_POWER");
+		arch_riscv = getFlag(flagsClass, "arch_riscv", "J9VM_ARCH_RISCV");
 		arch_s390 = getFlag(flagsClass, "arch_s390", "J9VM_ARCH_S390");
 		arch_x86 = getFlag(flagsClass, "arch_x86", "J9VM_ARCH_X86");
 	}

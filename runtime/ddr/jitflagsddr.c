@@ -64,6 +64,13 @@ J9DDRConstantTableEntryWithValue("host_POWER",host_POWER)
 #endif
 J9DDRConstantTableEntryWithValue("host_PPC", host_PPC)
 
+#if defined(TR_HOST_RISCV)
+	#define host_RISCV 1
+#else
+	#define host_RISCV 0
+#endif
+J9DDRConstantTableEntryWithValue("host_RISCV", host_RISCV)
+
 #if defined(TR_HOST_S390)
 	#define host_S390 1
 #else

@@ -96,6 +96,13 @@ public class StackWalkerUtils
 			jitArgumentRegisterNumbers = new int[] { 3, 4, 5, 6, 7, 8, 9, 10 };
 		} else if (J9ConfigFlags.arch_s390) {
 			jitArgumentRegisterNumbers = new int[] { 1, 2, 3 };
+		} else if (J9ConfigFlags.arch_riscv) {
+			/* The setting is based on the description of RISC-V Spec as follows:
+			 * Register  ABI Name  Description                      Saver
+			 * x10~11     a0~1     Function arguments/return values Caller
+			 * x12~17     a2~7     Function arguments               Caller
+			 */
+			jitArgumentRegisterNumbers = new int[] { 10, 11, 12, 13, 14, 15, 16, 17 };
 		} else {
 			throw new IllegalArgumentException("Unsupported platform");
 		}

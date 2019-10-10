@@ -25,6 +25,7 @@ import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.ARCH_AMD64;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.ARCH_IA32;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.ARCH_PPC32;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.ARCH_PPC64;
+import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.ARCH_RISCV64;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.ARCH_S390;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.ARCH_ARM;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.AT_ENTRY;
@@ -233,6 +234,8 @@ public abstract class ELFDumpReader implements ILibraryDependentCore
 			} else {
 				return new ELFARM32DumpReader(reader);
 			}
+		case (ARCH_RISCV64) :
+			return new ELFRISCV64DumpReader(reader);
 		default:
 			throw new IOException("Unrecognised machine type: " + reader.getMachineType());
 		}

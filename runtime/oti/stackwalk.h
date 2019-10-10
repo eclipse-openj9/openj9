@@ -345,6 +345,67 @@ extern "C" {
 #define J9SW_LOWEST_MEMORY_PRESERVED_REGISTER jit_r21
 #define J9SW_JIT_CALLEE_PRESERVED_SIZE 8
 
+#elif defined(J9VM_ARCH_RISCV)
+
+/* RISCV */
+
+/* @ddr_namespace: map_to_type=J9StackWalkFlags */
+
+#undef  J9SW_JIT_FLOATS_PASSED_AS_DOUBLES
+#undef  J9SW_JIT_HELPERS_PASS_PARAMETERS_ON_STACK
+#undef  J9SW_NEEDS_JIT_2_INTERP_CALLEE_ARG_POP
+#define J9SW_REGISTER_MAP_WALK_REGISTERS_LOW_TO_HIGH
+
+/* @ddr_namespace: map_to_type=J9StackWalkConstants */
+
+#define J9SW_JIT_STACK_SLOTS_USED_BY_CALL 0x1
+#define J9SW_ARGUMENT_REGISTER_COUNT 0x8
+#define J9SW_JIT_FLOAT_ARGUMENT_REGISTER_COUNT 0x8
+#define J9SW_POTENTIAL_SAVED_REGISTERS 0xC
+
+#if defined(J9VM_ENV_DATA64)
+
+/* RISCV-64 */
+
+/* @ddr_namespace: map_to_type=J9StackWalkFlags */
+
+#define J9SW_NEEDS_JIT_2_INTERP_THUNKS
+#define J9SW_PARAMETERS_IN_REGISTERS
+
+/* @ddr_namespace: map_to_type=J9StackWalkConstants */
+
+#define JIT_RESOLVE_PARM(parmNumber) (walkState->walkedEntryLocalStorage->jitGlobalStorageBase[jitArgumentRegisterNumbers[(parmNumber) - 1]])
+#define J9SW_REGISTER_MAP_MASK 0xFFFF
+#define J9SW_JIT_FIRST_RESOLVE_PARM_REGISTER 0x3
+#define J9SW_JIT_CALLEE_PRESERVED_SIZE 8
+#undef  J9SW_JIT_LOOKUP_INTERFACE_RESOLVE_OFFSET_TO_SAVED_RECEIVER
+#undef  J9SW_JIT_VIRTUAL_METHOD_RESOLVE_OFFSET_TO_SAVED_RECEIVER
+#define J9SW_LOWEST_MEMORY_PRESERVED_REGISTER
+
+#else /* J9VM_ENV_DATA64 */
+
+/* RISCV-32 */
+
+/* @ddr_namespace: map_to_type=J9StackWalkFlags */
+
+#undef  J9SW_JIT_FLOATS_PASSED_AS_DOUBLES
+#define J9SW_JIT_HELPERS_PASS_PARAMETERS_ON_STACK
+#define J9SW_NEEDS_JIT_2_INTERP_CALLEE_ARG_POP
+#undef  J9SW_NEEDS_JIT_2_INTERP_THUNKS
+#undef  J9SW_PARAMETERS_IN_REGISTERS
+
+/* @ddr_namespace: map_to_type=J9StackWalkConstants */
+
+#define JIT_RESOLVE_PARM(parmNumber) (walkState->bp[parmNumber])
+#define J9SW_REGISTER_MAP_MASK 0x7F
+#undef  J9SW_JIT_FIRST_RESOLVE_PARM_REGISTER
+#define J9SW_JIT_VIRTUAL_METHOD_RESOLVE_OFFSET_TO_SAVED_RECEIVER 0x0
+#define J9SW_JIT_LOOKUP_INTERFACE_RESOLVE_OFFSET_TO_SAVED_RECEIVER 0x0
+#define J9SW_JIT_CALLEE_PRESERVED_SIZE 3
+#define J9SW_LOWEST_MEMORY_PRESERVED_REGISTER
+
+#endif /* J9VM_ENV_DATA64 */
+
 #else
 #error Unsupported platform
 #endif
