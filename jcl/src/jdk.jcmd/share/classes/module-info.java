@@ -23,6 +23,10 @@
 
 /*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
 
+/**
+ * Defines the jcmd tool, used for obtaining information about a running JVM, or requesting a
+ * running JVM to do operations such as creating diagnotic files or performing a GC.
+ */
 module jdk.jcmd {
   requires java.base;
   requires java.management;
