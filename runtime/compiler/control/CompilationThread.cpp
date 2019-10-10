@@ -886,7 +886,9 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _compInfo(compInfo),
    _jitConfig(jitConfig),
    _sharedCacheReloRuntime(jitConfig),
+#if defined(JITSERVER_SUPPORT)
    _remoteCompileReloRuntime(jitConfig),
+#endif /* defined(JITSERVER_SUPPORT) */
    _compThreadId(id),
    _onSeparateThread(onSeparateThread),
    _vm(NULL),

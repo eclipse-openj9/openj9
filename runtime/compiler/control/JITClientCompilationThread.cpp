@@ -21,13 +21,16 @@
  *******************************************************************************/
 
 #include "codegen/CodeGenerator.hpp"
+#include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
 #include "control/MethodToBeCompiled.hpp"
 #include "env/ClassTableCriticalSection.hpp"
+#include "env/J2IThunk.hpp"
 #include "env/j9methodServer.hpp"
 #include "env/JITServerPersistentCHTable.hpp"
 #include "env/VMAccessCriticalSection.hpp"
+#include "env/VMJ9.h"
 #include "net/ClientStream.hpp"
 #include "runtime/CodeCacheExceptions.hpp"
 #include "runtime/J9VMAccess.hpp"
