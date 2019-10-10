@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,16 +26,12 @@
 #include "j9.h"
 #include "j9port.h"
 
-#define CACHE_BUFFER_SIZE 16*1024
-#define CACHE_BUFFER_NUM 4
-#define INVALID_POSITION -1
-#define UNUSED FALSE
-#define INUSE TRUE
-#ifdef J9ZTPF
-#undef NO_DATA
-#endif
-#define NO_DATA -1
-#define HAS_DATA(index) handle->cacheTable[index].hwm >= 0
+#define J9FILECACHE_BUFFER_SIZE (16*1024)
+#define J9FILECACHE_BUFFER_NUM 4
+#define J9FILECACHE_UNUSED FALSE
+#define J9FILECACHE_INUSE TRUE
+#define J9FILECACHE_NO_DATA (-1)
+#define J9FILECACHE_HAS_DATA(index) (handle->cacheTable[index].hwm >= 0)
 
 typedef U_16 LRU;  /* LRU is a typedef to allow the size to be easily changed for LRU rollover testing */  
 
@@ -53,7 +49,7 @@ typedef struct J9CachedFileHandle {
 	IDATA fd;                                                    /* file descriptor of the file on disk */
 	U_8 inuse;                                                   /* index of the current inuse cache */
 	LRU lru_count;                                               /* least recently used count */
-	J9CachedFileCacheDescriptor cacheTable[CACHE_BUFFER_NUM];    /* the cache descriptors */ 
+	J9CachedFileCacheDescriptor cacheTable[J9FILECACHE_BUFFER_NUM];    /* the cache descriptors */
 } J9CachedFileHandle;
 
 #ifdef __cplusplus
