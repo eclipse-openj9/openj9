@@ -7608,12 +7608,12 @@ done:
 	{
 retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+		U_16 index = *(U_16*)(_pc + 1);
+		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
+		J9RAMClassRef *ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
+		J9Class* volatile castClass = ramCPEntry->value;
 		j9object_t obj = *(j9object_t*)_sp;
 		if (NULL != obj) {
-			U_16 index = *(U_16*)(_pc + 1);
-			J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
-			J9RAMClassRef *ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
-			J9Class* volatile castClass = ramCPEntry->value;
 			if (NULL != castClass) {
 				J9Class *instanceClass = J9OBJECT_CLAZZ(_currentThread, obj);
 				profileCast(REGISTER_ARGS, instanceClass);
@@ -7626,6 +7626,9 @@ retry:
 					goto done;
 				}
 			} else {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+resolve:
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 				/* Unresolved */
 				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 				updateVMStruct(REGISTER_ARGS);
@@ -7642,6 +7645,17 @@ retry:
 				goto retry;
 			}
 		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		else {
+			if (NULL == castClass) {
+				/* Resolve the class and then check again whether it is a value type */
+				goto resolve;
+			} else if (J9_IS_J9CLASS_VALUETYPE(castClass)) {
+				rc = THROW_NPE;
+				goto done;
+			}
+		}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		_pc += 3;
 done:
 		return rc;
