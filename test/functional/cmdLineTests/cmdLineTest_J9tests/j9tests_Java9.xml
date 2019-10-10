@@ -189,7 +189,8 @@
 
  <test id="Xmso">
   <command>$EXE$ $CP$ -Xmso256K -verbose:sizes $TARGET$</command>
-  <output>.*Xmso256K.*</output>
+  <output platform="aix.*,linux.*,win.*,osx.*,zos_390-31.*">.*Xmso256K.*</output>
+  <output platform="zos_390-64.*">.*Xmso1M.*</output>
  </test>
 
  <test id="Xiss">
