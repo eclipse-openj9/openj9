@@ -1425,7 +1425,7 @@ TR_ResolvedRelocatableJ9Method::setAttributeResult(bool isStaticField, bool resu
          if (isStaticField)
             *fieldOffset = (void*) NULL;
          else
-            *(U_32*)fieldOffset = (U_32) sizeof(J9Object);
+            *(U_32*)fieldOffset = (U_32) TR::Compiler->om.objectHeaderSizeInBytes();
          }
       }
 
@@ -1878,7 +1878,7 @@ TR_ResolvedRelocatableJ9Method::fieldAttributes(TR::Compilation * comp, int32_t 
 
       if (aotStats)
          ((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->numInstanceFieldInfoUsed++;
-      if (resolveField) *fieldOffset = offset + sizeof(J9Object);  // add header size
+      if (resolveField) *fieldOffset = offset + TR::Compiler->om.objectHeaderSizeInBytes();  // add header size
 #if defined(DEBUG_LOCAL_CLASS_OPT)
       resolvedCtr++;
 #endif
@@ -6977,7 +6977,7 @@ TR_ResolvedJ9Method::fieldAttributes(TR::Compilation * comp, I_32 cpIndex, U_32 
       ltype = fieldShape->modifiers;
       //ltype = (((J9RAMFieldRef*) literals())[cpIndex]).flags;
       *volatileP = (ltype & J9AccVolatile) ? true : false;
-      *fieldOffset = offset + sizeof(J9Object);  // add header size
+      *fieldOffset = offset + TR::Compiler->om.objectHeaderSizeInBytes();  // add header size
 
       if (isFinal) *isFinal = (ltype & J9AccFinal) ? true : false;
       if (isPrivate) *isPrivate = (ltype & J9AccPrivate) ? true : false;
@@ -6992,7 +6992,7 @@ TR_ResolvedJ9Method::fieldAttributes(TR::Compilation * comp, I_32 cpIndex, U_32 
          }
 
       *volatileP = true;                              // assume worst case, necessary?
-      *fieldOffset = sizeof(J9Object);
+      *fieldOffset = TR::Compiler->om.objectHeaderSizeInBytes();
       ltype = ltype << 16;
       if (isFinal) *isFinal = false;
       }
@@ -9119,7 +9119,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          TR::SymbolReference *fieldSymRef = fieldLoad->getSymbolReference();
          TR::Symbol *fieldSym = fieldSymRef->getSymbol();
          TR_ASSERT(fieldSym->isShadow() && fieldSymRef->getCPIndex() > 0, "ILGenMacros.getField expecting field load; found load of %s", comp()->getDebug()->getName(symRef));
-         uintptrj_t fieldOffset = fieldSymRef->getOffset() - sizeof(J9Object); // blah
+         uintptrj_t fieldOffset = fieldSymRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes(); // blah
 
          int32_t result;
 
@@ -9185,7 +9185,7 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver
          }
       TR::Symbol *sym = symRef->getSymbol();
       TR_ASSERT(sym->isShadow() && symRef->getCPIndex() > 0, "walkReferenceChain expecting field load; found load of %s", comp()->getDebug()->getName(symRef));
-      uintptrj_t fieldOffset = symRef->getOffset() - sizeof(J9Object); // blah
+      uintptrj_t fieldOffset = symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes(); // blah
       result = fej9->getReferenceFieldAt(walkReferenceChain(node->getFirstChild(), receiver), fieldOffset);
       }
    else

@@ -94,8 +94,8 @@ typedef struct J9IndexableObject* mm_j9array_t;
 
 /* Internal macros - Do not use outside this file */
 #if defined(OMR_GC_COMPRESSED_POINTERS)
-#define J9_CONVERT_POINTER_FROM_TOKEN_VM__(javaVM, pointer) ((void*)((UDATA)(pointer) << javaVM->compressedPointersShift))
-#define J9_CONVERT_POINTER_TO_TOKEN_VM__(javaVM, pointer) ((U_32)((UDATA)(pointer) >> javaVM->compressedPointersShift))
+#define J9_CONVERT_POINTER_FROM_TOKEN_VM__(javaVM, pointer) ((void*)((UDATA)(pointer) << (javaVM)->compressedPointersShift))
+#define J9_CONVERT_POINTER_TO_TOKEN_VM__(javaVM, pointer) ((U_32)((UDATA)(pointer) >> (javaVM)->compressedPointersShift))
 #else
 #define J9_CONVERT_POINTER_FROM_TOKEN_VM__(javaVM, pointer) ((void*)(UDATA)(pointer))
 #define J9_CONVERT_POINTER_TO_TOKEN_VM__(javaVM, pointer) ((U_32)(UDATA)(pointer))

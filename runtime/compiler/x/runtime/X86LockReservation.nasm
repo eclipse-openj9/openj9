@@ -52,19 +52,12 @@ eq_J9Monitor_RecCountMask     equ 0F8h
 
 %ifndef TR_HOST_64BIT
 
-eq_J9Monitor_LockWord         equ 04h
 eq_J9Monitor_CountsClearMask  equ 0FFFFFF07h
 eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFF05h
 
 %else ; ndef  64bit
 ; this stupidness is required because masm2gas can't handle
 ; ifdef on definitions
-
-%ifdef ASM_OMR_GC_COMPRESSED_POINTERS
-eq_J9Monitor_LockWord         equ 04h
-%else
-eq_J9Monitor_LockWord         equ 08h
-%endif
 
 eq_J9Monitor_CountsClearMask  equ 0FFFFFFFFFFFFFF07h
 eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF05h
@@ -75,19 +68,36 @@ eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF05h
 ; lockword address => _rcx
 ; lockword value   => _rax
 %macro ObtainLockWordHelper 1 ; args: ObjAddr
-    %ifdef ASM_OMR_GC_COMPRESSED_POINTERS
-        mov  eax, [%1 + J9TR_J9Object_class]        ; receiver class
-    %else
-        mov _rax, [%1 + J9TR_J9Object_class]         ; receiver class
-    %endif
+%ifdef ASM_OMR_GC_COMPRESSED_POINTERS
+%ifdef ASM_OMR_GC_FULL_POINTERS
+    cmp qword [_rbp + J9TR_VMThreadCompressObjectReferences], 0
+    je  short %%full
+    mov  eax, [%1 + J9TR_J9Object_class]         ; receiver class
     and _rax, eq_ObjectClassMask
-    mov _rax, [_rax + J9TR_J9Class_lockOffset]        ; offset of lock word in receiver class
-    lea _rcx, [%1 + _rax]                             ; load the address of object lock word
-    %ifdef ASM_OMR_GC_COMPRESSED_POINTERS
-        mov  eax, [_rcx]
-    %else
-        mov _rax, [_rcx]
-    %endif
+    mov _rax, [_rax + J9TR_J9Class_lockOffset]   ; offset of lock word in receiver class
+    lea _rcx, [%1 + _rax]                        ; load the address of object lock word
+    mov  eax, [_rcx]
+%%full:
+    mov _rax, [%1 + J9TR_J9Object_class]         ; receiver class
+    and _rax, eq_ObjectClassMask
+    mov _rax, [_rax + J9TR_J9Class_lockOffset]   ; offset of lock word in receiver class
+    lea _rcx, [%1 + _rax]                        ; load the address of object lock word
+    mov _rax, [_rcx]
+%%done:
+%else
+    mov  eax, [%1 + J9TR_J9Object_class]         ; receiver class
+    and _rax, eq_ObjectClassMask
+    mov _rax, [_rax + J9TR_J9Class_lockOffset]   ; offset of lock word in receiver class
+    lea _rcx, [%1 + _rax]                        ; load the address of object lock word
+    mov  eax, [_rcx]
+%endif
+%else
+    mov _rax, [%1 + J9TR_J9Object_class]         ; receiver class
+    and _rax, eq_ObjectClassMask
+    mov _rax, [_rax + J9TR_J9Class_lockOffset]   ; offset of lock word in receiver class
+    lea _rcx, [%1 + _rax]                        ; load the address of object lock word
+    mov _rax, [_rcx]
+%endif
 %endmacro
 
 %macro ObtainLockWord 0

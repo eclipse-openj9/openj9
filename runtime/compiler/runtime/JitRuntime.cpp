@@ -643,21 +643,22 @@ void J9FASTCALL _jitProfileStringValue(uintptrj_t value, int32_t charsOffset, in
       {
       readValues = true;
 
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-      J9JavaVM *jvm = jitConfig->javaVM;
-      if (!jvm)
-         return;
+      if (TR::Compiler->om.compressObjectReferences())
+         {
+         J9JavaVM *jvm = jitConfig->javaVM;
+         if (!jvm)
+            return;
 
-      J9MemoryManagerFunctions * mmf = jvm->memoryManagerFunctions;
-      J9VMThread *vmThread = jvm->internalVMFunctions->currentVMThread(jvm);
-      int32_t result = mmf->j9gc_objaccess_compressedPointersShift(vmThread);
+         J9MemoryManagerFunctions * mmf = jvm->memoryManagerFunctions;
+         J9VMThread *vmThread = jvm->internalVMFunctions->currentVMThread(jvm);
+         int32_t result = mmf->j9gc_objaccess_compressedPointersShift(vmThread);
 
-      chars = (char *) (( (uintptrj_t) (*((uint32_t *) (value + charsOffset)))) << result);
-#else
-      chars = *((char **) (value + charsOffset));
-#endif
+         chars = (char *) (( (uintptrj_t) (*((uint32_t *) (value + charsOffset)))) << result);
+         }
+      else
+         chars = *((char **) (value + charsOffset));
 
-      chars = chars + (sizeof(J9IndexableObjectContiguous));
+      chars = chars + (TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
 
       length = *((int32_t *) (value + lengthOffset));
       if (length > 128)
@@ -849,7 +850,7 @@ void dumpInstanceFieldsForClass(::FILE *fp, J9Class *instanceClass, J9VMThread *
 
             if (offset >= 0)
                {
-               fprintf(fp, "%d\n", offset + sizeof(J9Object));
+               fprintf(fp, "%d\n", offset + TR::Compiler->om.objectHeaderSizeInBytes());
                }
             else
                {

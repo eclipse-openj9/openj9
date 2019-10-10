@@ -99,11 +99,9 @@ J9::ObjectModel::initialize()
 int32_t
 J9::ObjectModel::sizeofReferenceField()
    {
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-   return sizeof(fj9object_t);
-#else
+   if (compressObjectReferences())
+      return sizeof(uint32_t);
    return sizeof(uintptrj_t);
-#endif
    }
 
 
@@ -121,11 +119,9 @@ J9::ObjectModel::getSizeOfArrayElement(TR::Node * node)
 
    if (node->getOpCodeValue() == TR::anewarray)
       {
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-      return TR::Compiler->om.sizeofReferenceField();
-#else
+      if (compressObjectReferences())
+         return sizeofReferenceField();
       return TR::Symbol::convertTypeToSize(TR::Address);
-#endif
       }
 
    TR_ASSERT(node->getSecondChild()->getOpCode().isLoadConst(), "Expecting const child \n");
@@ -233,25 +229,21 @@ J9::ObjectModel::nativeAddressesCanChangeSize()
 bool
 J9::ObjectModel::generateCompressedObjectHeaders()
    {
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-   return true;
-#else
-   return false;
-#endif
+   return compressObjectReferences();
    }
 
 
 uintptrj_t
 J9::ObjectModel::contiguousArrayHeaderSizeInBytes()
    {
-   return sizeof(J9IndexableObjectContiguous);
+   return compressObjectReferences() ? sizeof(J9IndexableObjectContiguousCompressed) : sizeof(J9IndexableObjectContiguousFull);
    }
 
 
 uintptrj_t
 J9::ObjectModel::discontiguousArrayHeaderSizeInBytes()
    {
-   return sizeof(J9IndexableObjectDiscontiguous);
+   return compressObjectReferences() ? sizeof(J9IndexableObjectDiscontiguousCompressed) : sizeof(J9IndexableObjectDiscontiguousFull);
    }
 
 
@@ -314,19 +306,18 @@ J9::ObjectModel::compressedReferenceShiftOffset()
 int32_t
 J9::ObjectModel::compressedReferenceShift()
    {
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-   J9JavaVM *javaVM = TR::Compiler->javaVM;
-   if (!javaVM)
-      return 0;
+   if (compressObjectReferences())
+      {
+      J9JavaVM *javaVM = TR::Compiler->javaVM;
+      if (!javaVM)
+         return 0;
 
-   J9VMThread *vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
-   J9MemoryManagerFunctions * mmf = javaVM->memoryManagerFunctions;
-   int32_t result = mmf->j9gc_objaccess_compressedPointersShift(vmThread);
-   return result;
-#else
+      J9VMThread *vmThread = javaVM->internalVMFunctions->currentVMThread(javaVM);
+      J9MemoryManagerFunctions * mmf = javaVM->memoryManagerFunctions;
+      int32_t result = mmf->j9gc_objaccess_compressedPointersShift(vmThread);
+      return result;
+      }
    return 0;
-#endif
-
    }
 
 

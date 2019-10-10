@@ -4709,11 +4709,10 @@ J9::X86::TreeEvaluator::VMmonentEvaluator(
       objectClassReg = cg->allocateRegister();
       numDeps++;
       TR::X86RegMemInstruction *instr;
-#ifdef OMR_GC_COMPRESSED_POINTERS
-      instr = generateRegMemInstruction(L4RegMem, node, objectClassReg, objectClassMR, cg);
-#else
-      instr = generateRegMemInstruction(LRegMem(), node, objectClassReg, objectClassMR, cg);
-#endif
+      if (TR::Compiler->om.compressObjectReferences())
+         instr = generateRegMemInstruction(L4RegMem, node, objectClassReg, objectClassMR, cg);
+      else
+         instr = generateRegMemInstruction(LRegMem(), node, objectClassReg, objectClassMR, cg);
       // This instruction may try to dereference a null memory address
       // add an implicit exception point for it.
       //
@@ -5213,11 +5212,11 @@ TR::Register *J9::X86::TreeEvaluator::VMmonexitEvaluator(TR::Node          *node
       {
       TR::MemoryReference *objectClassMR = generateX86MemoryReference(objectReg, TMP_OFFSETOF_J9OBJECT_CLAZZ, cg);
       objectClassReg = cg->allocateRegister();
-#ifdef OMR_GC_COMPRESSED_POINTERS
-      TR::Instruction *instr = generateRegMemInstruction(L4RegMem, node, objectClassReg, objectClassMR, cg);
-#else
-      TR::Instruction *instr = generateRegMemInstruction(LRegMem(), node, objectClassReg, objectClassMR, cg);
-#endif
+      TR::Instruction *instr = NULL;
+      if (TR::Compiler->om.compressObjectReferences())
+         instr = generateRegMemInstruction(L4RegMem, node, objectClassReg, objectClassMR, cg);
+      else
+         instr = generateRegMemInstruction(LRegMem(), node, objectClassReg, objectClassMR, cg);
       //this instruction may try to dereference a null memory address
       //add an implicit exception point for it.
       cg->setImplicitExceptionPoint(instr);
@@ -7013,7 +7012,7 @@ static bool genZeroInitObject2(
    // set up clazz value here
    TR_OpaqueClassBlock *clazz = NULL;
    cg->comp()->canAllocateInline(node, clazz);
-   auto headerSize = node->getOpCodeValue() != TR::New ? sizeof(J9IndexableObjectContiguous) : sizeof(J9Object);
+   auto headerSize = node->getOpCodeValue() != TR::New ? TR::Compiler->om.contiguousArrayHeaderSizeInBytes() : TR::Compiler->om.objectHeaderSizeInBytes();
    TR_ASSERT(headerSize >= 4, "Object/Array header must be >= 4.");
    objectSize -= headerSize;
 
@@ -7149,7 +7148,7 @@ static bool genZeroInitObject(
    comp->canAllocateInline(node, clazz);
 
    int32_t numSlots = 0;
-   int32_t startOfZeroInits = isArrayNew ? sizeof(J9IndexableObjectContiguous) : sizeof(J9Object);
+   int32_t startOfZeroInits = isArrayNew ? TR::Compiler->om.contiguousArrayHeaderSizeInBytes() : TR::Compiler->om.objectHeaderSizeInBytes();
 
    if (TR::Compiler->target.is64Bit())
       {
@@ -7557,7 +7556,7 @@ J9::X86::TreeEvaluator::VMnewEvaluator(
             return NULL;
          }
 
-      dataOffset = sizeof(J9Object); //Not used...
+      dataOffset = TR::Compiler->om.objectHeaderSizeInBytes(); //Not used...
       classReg = node->getFirstChild()->getRegister();
       TR_ASSERT(objectSize > 0, "assertion failure");
       }
@@ -8084,113 +8083,90 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
 
       TR::Instruction* instr;
 
-#ifdef OMR_GC_COMPRESSED_POINTERS
-      // FIXME: Add check for hint when doing the arraystore check as below when class pointer compression
-      // is enabled.
-
-      TR::MemoryReference *destTypeMR = generateX86MemoryReference(destReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-
-      generateRegMemInstruction(L4RegMem, node, destComponentClassReg, destTypeMR, cg); // class pointer is 32 bits
-      TR::TreeEvaluator::generateVFTMaskInstruction(node, destComponentClassReg, cg);
-
-      // -------------------------------------------------------------------------
-      //
-      // If the component type is java.lang.Object then the store always succeeds.
-      //
-      // -------------------------------------------------------------------------
-
-      TR_OpaqueClassBlock *objectClass = fej9->getSystemClassFromClassName("java/lang/Object", 16);
-
-      if (TR::Compiler->target.is64Bit())
+      if (TR::Compiler->om.compressObjectReferences())
          {
-#ifdef OMR_GC_COMPRESSED_POINTERS
+
+         // FIXME: Add check for hint when doing the arraystore check as below when class pointer compression
+         // is enabled.
+
+         TR::MemoryReference *destTypeMR = generateX86MemoryReference(destReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
+
+         generateRegMemInstruction(L4RegMem, node, destComponentClassReg, destTypeMR, cg); // class pointer is 32 bits
+         TR::TreeEvaluator::generateVFTMaskInstruction(node, destComponentClassReg, cg);
+
+         // -------------------------------------------------------------------------
+         //
+         // If the component type is java.lang.Object then the store always succeeds.
+         //
+         // -------------------------------------------------------------------------
+
+         TR_OpaqueClassBlock *objectClass = fej9->getSystemClassFromClassName("java/lang/Object", 16);
+
          TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
          instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) objectClass), cg);
 
-#else // 64 bit but no class pointer compression
+         generateLabelInstruction(JE4, node, wrtbarLabel, cg);
 
-         if ((uintptrj_t)objectClass <= (uintptrj_t)0x7fffffff)
-            {
-            instr = generateRegImmInstruction(CMP8RegImm4, node, destComponentClassReg, (uintptr_t) objectClass, cg);
-            }
-         else
-            {
-            TR::Register *objectClassReg = scratchRegisterManager->findOrCreateScratchRegister();
-            instr = generateRegImm64Instruction(MOV8RegImm64, node, objectClassReg, (uintptr_t) objectClass, cg);
-            generateRegRegInstruction(CMP8RegReg, node, destComponentClassReg, objectClassReg, cg);
-            scratchRegisterManager->reclaimScratchRegister(objectClassReg);
-            }
-#endif
+         // HCR in VMarrayStoreCHKEvaluator
+         if (cg->wantToPatchClassPointer(objectClass, node))
+            comp->getStaticHCRPICSites()->push_front(instr);
+
+         // here we may have to convert the TR_OpaqueClassBlock into a J9Class pointer
+         // and store it in destComponentClassReg
+         // ..
+
+         TR::MemoryReference *destCompTypeMR =
+            generateX86MemoryReference(destComponentClassReg, offsetof(J9ArrayClass, componentType), cg);
+         generateRegMemInstruction(LRegMem(), node, destComponentClassReg, destCompTypeMR, cg);
+
+         // here we may have to convert the J9Class pointer from destComponentClassReg into
+         // a TR_OpaqueClassBlock and store it back into destComponentClassReg
+         // ..
+
+         TR::MemoryReference *sourceRegClassMR = generateX86MemoryReference(sourceReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
+         generateRegMemInstruction(L4RegMem, node, sourceClassReg, sourceRegClassMR, cg);
+         TR::TreeEvaluator::generateVFTMaskInstruction(node, sourceClassReg, cg);
+
+         generateRegRegInstruction(CMP4RegReg, node, destComponentClassReg, sourceClassReg, cg); // compare only 32 bits
+         generateLabelInstruction(JE4, node, wrtbarLabel, cg);
+
+         // -------------------------------------------------------------------------
+         //          // Check the source class cast cache
+         //
+         // -------------------------------------------------------------------------
+
+         generateMemRegInstruction(
+            CMP4MemReg,
+            node,
+            generateX86MemoryReference(sourceClassReg, offsetof(J9Class, castClassCache), cg), destComponentClassReg, cg);
          }
-      else
+      else // no class pointer compression
          {
-         instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (int32_t)(uintptr_t) objectClass, cg);
+         TR::MemoryReference *sourceClassMR = generateX86MemoryReference(sourceReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
+         generateRegMemInstruction(LRegMem(), node, sourceClassReg, sourceClassMR, cg);
+         TR::TreeEvaluator::generateVFTMaskInstruction(node, sourceClassReg, cg);
+
+         TR::MemoryReference *destClassMR = generateX86MemoryReference(destReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
+         generateRegMemInstruction(LRegMem(), node, destComponentClassReg, destClassMR, cg);
+         TR::TreeEvaluator::generateVFTMaskInstruction(node, destComponentClassReg, cg);
+         TR::MemoryReference *destCompTypeMR =
+            generateX86MemoryReference(destComponentClassReg, offsetof(J9ArrayClass, componentType), cg);
+         generateRegMemInstruction(LRegMem(), node, destComponentClassReg, destCompTypeMR, cg);
+
+         generateRegRegInstruction(CMPRegReg(), node, destComponentClassReg, sourceClassReg, cg);
+         generateLabelInstruction(JE4, node, wrtbarLabel, cg);
+
+         // -------------------------------------------------------------------------
+         //
+         // Check the source class cast cache
+         //
+         // -------------------------------------------------------------------------
+
+         generateMemRegInstruction(
+            CMPMemReg(),
+            node,
+            generateX86MemoryReference(sourceClassReg, offsetof(J9Class, castClassCache), cg), destComponentClassReg, cg);
          }
-
-      generateLabelInstruction(JE4, node, wrtbarLabel, cg);
-
-      // HCR in VMarrayStoreCHKEvaluator
-      if (cg->wantToPatchClassPointer(objectClass, node))
-         comp->getStaticHCRPICSites()->push_front(instr);
-
-      // here we may have to convert the TR_OpaqueClassBlock into a J9Class pointer
-      // and store it in destComponentClassReg
-      // ..
-
-      TR::MemoryReference *destCompTypeMR =
-         generateX86MemoryReference(destComponentClassReg, offsetof(J9ArrayClass, componentType), cg);
-      generateRegMemInstruction(LRegMem(), node, destComponentClassReg, destCompTypeMR, cg);
-
-      // here we may have to convert the J9Class pointer from destComponentClassReg into
-      // a TR_OpaqueClassBlock and store it back into destComponentClassReg
-      // ..
-
-      TR::MemoryReference *sourceRegClassMR = generateX86MemoryReference(sourceReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-      generateRegMemInstruction(L4RegMem, node, sourceClassReg, sourceRegClassMR, cg);
-      TR::TreeEvaluator::generateVFTMaskInstruction(node, sourceClassReg, cg);
-
-      generateRegRegInstruction(CMP4RegReg, node, destComponentClassReg, sourceClassReg, cg); // compare only 32 bits
-      generateLabelInstruction(JE4, node, wrtbarLabel, cg);
-
-      // -------------------------------------------------------------------------
-           //
-           // Check the source class cast cache
-           //
-           // -------------------------------------------------------------------------
-
-           generateMemRegInstruction(
-              CMP4MemReg,
-              node,
-              generateX86MemoryReference(sourceClassReg, offsetof(J9Class, castClassCache), cg), destComponentClassReg, cg);
-
-
-#else // no class pointer compression
-      TR::MemoryReference *sourceClassMR = generateX86MemoryReference(sourceReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-      generateRegMemInstruction(LRegMem(), node, sourceClassReg, sourceClassMR, cg);
-      TR::TreeEvaluator::generateVFTMaskInstruction(node, sourceClassReg, cg);
-
-      TR::MemoryReference *destClassMR = generateX86MemoryReference(destReg, TR::Compiler->om.offsetOfObjectVftField(), cg);
-      generateRegMemInstruction(LRegMem(), node, destComponentClassReg, destClassMR, cg);
-      TR::TreeEvaluator::generateVFTMaskInstruction(node, destComponentClassReg, cg);
-      TR::MemoryReference *destCompTypeMR =
-         generateX86MemoryReference(destComponentClassReg, offsetof(J9ArrayClass, componentType), cg);
-      generateRegMemInstruction(LRegMem(), node, destComponentClassReg, destCompTypeMR, cg);
-
-      generateRegRegInstruction(CMPRegReg(), node, destComponentClassReg, sourceClassReg, cg);
-      generateLabelInstruction(JE4, node, wrtbarLabel, cg);
-
-      // -------------------------------------------------------------------------
-      //
-      // Check the source class cast cache
-      //
-      // -------------------------------------------------------------------------
-
-      generateMemRegInstruction(
-         CMPMemReg(),
-         node,
-         generateX86MemoryReference(sourceClassReg, offsetof(J9Class, castClassCache), cg), destComponentClassReg, cg);
-
-#endif
       generateLabelInstruction(JE4, node, wrtbarLabel, cg);
 
       instr = NULL;
@@ -8208,24 +8184,25 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
 
       if (TR::Compiler->target.is64Bit())
          {
-#ifdef OMR_GC_COMPRESSED_POINTERS
-         TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
-         instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) objectClass), cg);
-
-#else // 64 bit but no class pointer compression
-
-         if ((uintptrj_t)objectClass <= (uintptrj_t)0x7fffffff)
-            {
-            instr = generateRegImmInstruction(CMP8RegImm4, node, destComponentClassReg, (uintptr_t) objectClass, cg);
-            }
-         else
-            {
-            TR::Register *objectClassReg = scratchRegisterManager->findOrCreateScratchRegister();
-            instr = generateRegImm64Instruction(MOV8RegImm64, node, objectClassReg, (uintptr_t) objectClass, cg);
-            generateRegRegInstruction(CMP8RegReg, node, destComponentClassReg, objectClassReg, cg);
-            scratchRegisterManager->reclaimScratchRegister(objectClassReg);
-            }
-#endif
+            if (TR::Compiler->om.compressObjectReferences())
+               {
+               TR_ASSERT((((uintptr_t)objectClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
+               instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) objectClass), cg);
+               }
+            else // 64 bit but no class pointer compression
+               {
+               if ((uintptrj_t)objectClass <= (uintptrj_t)0x7fffffff)
+                  {
+                  instr = generateRegImmInstruction(CMP8RegImm4, node, destComponentClassReg, (uintptr_t) objectClass, cg);
+                  }
+               else
+                  {
+                  TR::Register *objectClassReg = scratchRegisterManager->findOrCreateScratchRegister();
+                  instr = generateRegImm64Instruction(MOV8RegImm64, node, objectClassReg, (uintptr_t) objectClass, cg);
+                  generateRegRegInstruction(CMP8RegReg, node, destComponentClassReg, objectClassReg, cg);
+                  scratchRegisterManager->reclaimScratchRegister(objectClassReg);
+                  }
+               }
          }
       else
          {
@@ -8253,30 +8230,32 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
          TR_OpaqueClassBlock *arrayComponentClass = (TR_OpaqueClassBlock *) node->getArrayComponentClassInNode();
          if (TR::Compiler->target.is64Bit())
             {
-#ifdef OMR_GC_COMPRESSED_POINTERS
-            TR_ASSERT((((uintptr_t)arrayComponentClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
-            instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) arrayComponentClass), cg);
-
-            if (fej9->isUnloadAssumptionRequired(arrayComponentClass, comp->getCurrentMethod()))
-                         comp->getStaticPICSites()->push_front(instr);
-
-
-#else // 64 bit but no class pointer compression
-            if ((uintptrj_t)arrayComponentClass <= (uintptrj_t)0x7fffffff)
+            if (TR::Compiler->om.compressObjectReferences())
                {
-               instr = generateRegImmInstruction(CMP8RegImm4, node, destComponentClassReg, (uintptr_t) arrayComponentClass, cg);
+               TR_ASSERT((((uintptr_t)arrayComponentClass) >> 32) == 0, "TR_OpaqueClassBlock must fit on 32 bits when using class pointer compression");
+               instr = generateRegImmInstruction(CMP4RegImm4, node, destComponentClassReg, (uint32_t) ((uint64_t) arrayComponentClass), cg);
+
                if (fej9->isUnloadAssumptionRequired(arrayComponentClass, comp->getCurrentMethod()))
-                  comp->getStaticPICSites()->push_front(instr);
+                            comp->getStaticPICSites()->push_front(instr);
 
                }
-            else
+            else // 64 bit but no class pointer compression
                {
-               TR::Register *arrayComponentClassReg = scratchRegisterManager->findOrCreateScratchRegister();
-               instr = generateRegImm64Instruction(MOV8RegImm64, node, arrayComponentClassReg, (uintptr_t) arrayComponentClass, cg);
-               generateRegRegInstruction(CMP8RegReg, node, destComponentClassReg, arrayComponentClassReg, cg);
-               scratchRegisterManager->reclaimScratchRegister(arrayComponentClassReg);
+               if ((uintptrj_t)arrayComponentClass <= (uintptrj_t)0x7fffffff)
+                  {
+                  instr = generateRegImmInstruction(CMP8RegImm4, node, destComponentClassReg, (uintptr_t) arrayComponentClass, cg);
+                  if (fej9->isUnloadAssumptionRequired(arrayComponentClass, comp->getCurrentMethod()))
+                     comp->getStaticPICSites()->push_front(instr);
+
+                  }
+               else
+                  {
+                  TR::Register *arrayComponentClassReg = scratchRegisterManager->findOrCreateScratchRegister();
+                  instr = generateRegImm64Instruction(MOV8RegImm64, node, arrayComponentClassReg, (uintptr_t) arrayComponentClass, cg);
+                  generateRegRegInstruction(CMP8RegReg, node, destComponentClassReg, arrayComponentClassReg, cg);
+                  scratchRegisterManager->reclaimScratchRegister(arrayComponentClassReg);
+                  }
                }
-#endif
             }
          else
             {
@@ -8297,10 +8276,9 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
 
 
 
-#ifdef OMR_GC_COMPRESSED_POINTERS
+   // For compressed references:
    // destComponentClassReg contains the class offset so we may need to generate code
    // to convert from class offset to real J9Class pointer
-#endif
 
       // -------------------------------------------------------------------------
       //
@@ -8352,10 +8330,9 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
             }
          }
 
-#ifdef OMR_GC_COMPRESSED_POINTERS
+   // For compressed references:
    // temp2 contains the class offset so we may need to generate code
    // to convert from class offset to real J9Class pointer
-#endif
 
       // Get the depth of type of object being stored into the array in testerReg2
       //
@@ -8423,10 +8400,9 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
          scratchRegisterManager->reclaimScratchRegister(sourceClassDepthReg);
 
 
-#ifdef OMR_GC_COMPRESSED_POINTERS
+   // For compressed references:
    // destComponentClassReg contains the class offset so we may need to generate code
    // to convert from class offset to real J9Class pointer
-#endif
 
       if (TR::Compiler->target.is32Bit())
          {
@@ -8457,18 +8433,13 @@ J9::X86::TreeEvaluator::VMarrayStoreCHKEvaluator(
       TR::MemoryReference *leaMR =
          generateX86MemoryReference(sourceSuperClassReg, destComponentClassDepthReg, logBase2(sizeof(uintptrj_t)), 0, cg);
 
-#ifdef OMR_GC_COMPRESSED_POINTERS
+      // For compressed references:
       // leaMR is a memory reference to a J9Class
       // destComponentClassReg contains a TR_OpaqueClassBlock
       // We may need to convert superClass to a class offset before doing the comparison
-#endif
 
       if (TR::Compiler->target.is32Bit())
          {
-
-#ifdef OMR_GC_COMPRESSED_POINTERS
-         TR_ASSERT(0, "Unexpected 32-bit ArrayStoreCHK path");
-#endif
 
          generateRegMemInstruction(LRegMem(), node, sourceSuperClassReg, leaMR, cg);
 
@@ -8557,11 +8528,10 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
       else
          testOpCode = TEST4MemImm4;
 
-      #ifdef OMR_GC_COMPRESSED_POINTERS
+      if (TR::Compiler->om.compressObjectReferences())
          generateRegMemInstruction(L4RegMem, node, tempReg, generateX86MemoryReference(object1Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
-      #else
+      else
          generateRegMemInstruction(LRegMem(), node, tempReg, generateX86MemoryReference(object1Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
-      #endif
 
 	 TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
          generateMemImmInstruction(testOpCode, node, generateX86MemoryReference(tempReg,  offsetof(J9Class, classDepthAndFlags), cg), J9AccClassRAMArray, cg);
@@ -8613,11 +8583,10 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
       if (!node->isArrayChkReferenceArray1())
          {
 
-         #ifdef OMR_GC_COMPRESSED_POINTERS
+    	 if (TR::Compiler->om.compressObjectReferences())
             generateRegMemInstruction(L4RegMem, node, tempReg, generateX86MemoryReference(object1Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
-         #else
+         else
             generateRegMemInstruction(LRegMem(), node, tempReg, generateX86MemoryReference(object1Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
-         #endif
 
 	 TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
          generateRegMemInstruction(LRegMem(), node, tempReg, generateX86MemoryReference(tempReg, offsetof(J9Class, classDepthAndFlags), cg), cg);
@@ -8649,11 +8618,10 @@ TR::Register *J9::X86::TreeEvaluator::VMarrayCheckEvaluator(TR::Node *node, TR::
 
          // Check that object 2 is an array. If not, throw exception.
          //
-         #ifdef OMR_GC_COMPRESSED_POINTERS
+         if (TR::Compiler->om.compressObjectReferences())
             generateRegMemInstruction(L4RegMem, node, tempReg, generateX86MemoryReference(object2Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
-         #else
+         else
             generateRegMemInstruction(LRegMem(), node, tempReg, generateX86MemoryReference(object2Reg,  TR::Compiler->om.offsetOfObjectVftField(), cg), cg);
-         #endif
 	    TR::TreeEvaluator::generateVFTMaskInstruction(node, tempReg, cg);
             generateMemImmInstruction(testOpCode, node, generateX86MemoryReference(tempReg,  offsetof(J9Class, classDepthAndFlags), cg), J9AccClassRAMArray, cg);
          if (!snippetLabel)

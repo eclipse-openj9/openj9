@@ -141,11 +141,7 @@ public:
    uintptrj_t getDominantClass(int32_t &sumW, int32_t &maxW);
 
 private:
-#if defined(OMR_GC_COMPRESSED_POINTERS) //compressed references
-   uint32_t _clazz[NUM_CS_SLOTS]; // store them in 32bits
-#else
    uintptrj_t _clazz[NUM_CS_SLOTS]; // store them in either 64 or 32 bits
-#endif //OMR_GC_COMPRESSED_POINTERS
    };
 
 #define TR_IPBCD_FOUR_BYTES  1
@@ -402,11 +398,7 @@ public:
    void * operator new (size_t size) throw();
    void * operator new (size_t size, void * placement) {return placement;}
 
-#if defined(OMR_GC_COMPRESSED_POINTERS) //compressed references
-   static const uint32_t IPROFILING_INVALID = ~0; //only take up the bottom 32, class compression issue
-#else
    static const uintptrj_t IPROFILING_INVALID = ~0;
-#endif //OMR_GC_COMPRESSED_POINTERS
 
    virtual uintptrj_t getData(TR::Compilation *comp = NULL);
    virtual CallSiteProfileInfo* getCGData() { return &_csInfo; } // overloaded

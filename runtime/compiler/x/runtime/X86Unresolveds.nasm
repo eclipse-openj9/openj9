@@ -26,8 +26,6 @@
 ;
 ; --------------------------------------------------------------------------------
 
-      eq_offsetof_J9Object_clazz equ 8                            ; offset of class pointer in a J9Object
-
       %include "jilconsts.inc"
       %include "X86PicBuilder.inc"
 
@@ -928,12 +926,6 @@ retn
 
       %include "jilconsts.inc"
       %include "X86PicBuilder.inc"
-
-%ifdef ASM_OMR_GC_COMPRESSED_POINTERS
-eq_offsetof_J9Object_clazz equ   8        ; offset of class pointer in a J9Object
-%else
-eq_offsetof_J9Object_clazz equ   16       ; offset of class pointer in a J9Object
-%endif
 
 
 

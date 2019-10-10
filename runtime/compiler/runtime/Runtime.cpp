@@ -295,6 +295,10 @@ JIT_HELPER(interpreterUnresolvedStaticGlue);
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
 JIT_HELPER(doAESInHardwareJit);
 JIT_HELPER(expandAESKeyInHardwareJit);
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+JIT_HELPER(doAESInHardwareJitCompressed);
+JIT_HELPER(expandAESKeyInHardwareJitCompressed);
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 #endif
 
 JIT_HELPER(jitMonitorEnterReserved);
@@ -1101,8 +1105,18 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    //
 #if defined (TR_HOST_X86)
    SET(TR_isAESSupportedByHardware,    (void *) 0,                         TR_Helper);
-   SET(TR_doAESInHardwareInner,        (void *) doAESInHardwareJit,        TR_Helper);
-   SET(TR_expandAESKeyInHardwareInner, (void *) expandAESKeyInHardwareJit, TR_Helper);
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+   if (TR::Compiler->om.compressObjectReferences())
+      {
+      SET(TR_doAESInHardwareInner,        (void *) doAESInHardwareJitCompressed,        TR_Helper);
+      SET(TR_expandAESKeyInHardwareInner, (void *) expandAESKeyInHardwareJitCompressed, TR_Helper);
+      }
+   else
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+      {
+      SET(TR_doAESInHardwareInner,        (void *) doAESInHardwareJit,        TR_Helper);
+      SET(TR_expandAESKeyInHardwareInner, (void *) expandAESKeyInHardwareJit, TR_Helper);
+      }
 #elif defined (TR_HOST_POWER)
    SET(TR_PPCAESKeyExpansion, (void *) AESKeyExpansion_PPC, TR_Helper);
    SET(TR_PPCAESEncryptVMX,   (void *) AESEncryptVMX_PPC,   TR_Helper);
