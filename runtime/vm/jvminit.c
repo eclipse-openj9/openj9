@@ -3597,6 +3597,15 @@ threadInitStages(J9JavaVM* vm, IDATA stage, void* reserved)
 				goto _memParseError;
 			}
 
+#if defined(J9ZOS39064)
+			/* Use a 1MB OS stack on z/OS 64-bit as this is what the OS
+			 * allocates anyway, using IARV64 GETSTOR to allocate a segment.
+			 */
+			if (vm->defaultOSStackSize < J9_OS_STACK_SIZE) {
+				vm->defaultOSStackSize = J9_OS_STACK_SIZE;
+			}
+#endif /* defined(J9ZOS39064) */
+
 #if defined(J9VM_INTERP_GROWABLE_STACKS)
 			if (0 != (parseError = setMemoryOptionToOptElse(vm, &(vm->initialStackSize), VMOPT_XISS, J9_INITIAL_STACK_SIZE, TRUE))) {
 				parseErrorOption = VMOPT_XISS;
