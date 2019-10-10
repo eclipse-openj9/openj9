@@ -65,11 +65,11 @@ assert_cache_separation(struct J9PortLibrary *portLibrary, J9CachedFileHandle* h
 	PORT_ACCESS_FROM_PORT(portLibrary);
 
 	/* go through all the caches to get their ranges */
-	for (i = 0; i < CACHE_BUFFER_NUM; i++) {
+	for (i = 0; i < J9FILECACHE_BUFFER_NUM; i++) {
 		base = handle->cacheTable[i].cacheBase;
-		for (j = i+1; j < CACHE_BUFFER_NUM; j++) {
+		for (j = i+1; j < J9FILECACHE_BUFFER_NUM; j++) {
 			compare_to_base = handle->cacheTable[j].cacheBase;
-			if ( (base < compare_to_base) && ((base + CACHE_BUFFER_SIZE -1) >= compare_to_base) ) {
+			if ( (base < compare_to_base) && ((base + J9FILECACHE_BUFFER_SIZE - 1) >= compare_to_base) ) {
 				j9tty_printf(PORTLIB, ">>bases %ld", base);
 				j9tty_printf(PORTLIB, ">> %ld <<\n", compare_to_base);
 				clash = TRUE;
@@ -118,7 +118,7 @@ setup_cache(J9CachedFileHandle* handle, U_8 index, I_64 base, IDATA position, U_
 	pCacheTableEntry->lru = LATEST_LRU();
 	pCacheTableEntry->cacheBase = base;
 	pCacheTableEntry->cachePosition = position;
-	pCacheTableEntry->hwm = NO_DATA;
+	pCacheTableEntry->hwm = J9FILECACHE_NO_DATA;
 	pCacheTableEntry->cacheInUse = inuse;
 	
 	handle->inuse = index;
@@ -132,7 +132,7 @@ find_oldest_cache(J9CachedFileHandle* handle)
 	LRU lru = LATEST_LRU(); /* set up with the current lru */
 	
 	/* go through all the caches and find the one with the lowest lru */
-	for (i = 0; i < CACHE_BUFFER_NUM; i++) {
+	for (i = 0; i < J9FILECACHE_BUFFER_NUM; i++) {
 		if (handle->cacheTable[i].lru < lru) {
 			/* found an older cache */
 			lru = handle->cacheTable[i].lru;
@@ -152,8 +152,8 @@ find_next_oldest_cache(J9CachedFileHandle* handle, U_8 oldest, U_8* pNext)
 	U_8 next_index = 0;
 	U_8 found = 0;
 
-	if (CACHE_BUFFER_NUM > 1) {
-			for (index = 0; index < CACHE_BUFFER_NUM; index++) {
+	if (J9FILECACHE_BUFFER_NUM > 1) {
+			for (index = 0; index < J9FILECACHE_BUFFER_NUM; index++) {
 			if (handle->cacheTable[index].lru > handle->cacheTable[oldest].lru) {
 				/* found an lru younger than the oldest but this might not be the next oldest */
 				lru = handle->cacheTable[index].lru;
@@ -221,9 +221,9 @@ find_cache_containing(J9CachedFileHandle* handle, I_64 position)
 	/* return the index of the cache that contains position */
 	/* this does not mean that the cache has necessarily written to the position as yet */
 	/* return -1 if no cache holds the position */
-	for (index = 0; index < CACHE_BUFFER_NUM; index++) {
-		if (handle->cacheTable[index].cacheInUse == INUSE) {
-			I_64 max_range = handle->cacheTable[index].cacheBase + CACHE_BUFFER_SIZE -1;
+	for (index = 0; index < J9FILECACHE_BUFFER_NUM; index++) {
+		if (handle->cacheTable[index].cacheInUse == J9FILECACHE_INUSE) {
+			I_64 max_range = handle->cacheTable[index].cacheBase + J9FILECACHE_BUFFER_SIZE - 1;
 			if (position >= handle->cacheTable[index].cacheBase && position <= max_range) {
 				/* found a cache that holds the position */
 				return index;
@@ -239,9 +239,9 @@ find_possible_contention(J9CachedFileHandle* handle, I_64 position)
 	U_8 index;
 	
 	/* return the index of a cache that will need to be flushed in order to write to this new position */
-	for (index = 0; index < CACHE_BUFFER_NUM; index++) {
+	for (index = 0; index < J9FILECACHE_BUFFER_NUM; index++) {
 		I_64 base = handle->cacheTable[index].cacheBase;
-		if ( (position < base) && ((position + CACHE_BUFFER_SIZE -1) >= base) ) {
+		if ( (position < base) && ((position + J9FILECACHE_BUFFER_SIZE - 1) >= base) ) {
 			/* allocation of a cache starting at this position may result in a cache overwrite */
 			return index;
 		}
@@ -254,7 +254,7 @@ flush_cache(J9CachedFileHandle* handle, U_8 index)
 {
 	PORT_ACCESS_FROM_PORT(handle->portLibrary);
 
-	if (HAS_DATA(index)) {
+	if (J9FILECACHE_HAS_DATA(index)) {
 		/* position the file pointer */
 		I_64 seek_rc = j9file_seek(handle->fd, handle->cacheTable[index].cacheBase, EsSeekSet);
 
@@ -301,12 +301,12 @@ j9cached_file_open(struct J9PortLibrary *portLibrary, const char *path, I_32 fla
 			handle->portLibrary = portLibrary;
 			handle->fd = rawResult;
 			LATEST_LRU() = -1;
-			for (index = 0; index < CACHE_BUFFER_NUM; index++) {
+			for (index = 0; index < J9FILECACHE_BUFFER_NUM; index++) {
 				/* initialize the individual cache(s) */
-				handle->cacheTable[index].cache = (char *) j9mem_allocate_memory(CACHE_BUFFER_SIZE, OMRMEM_CATEGORY_VM);
+				handle->cacheTable[index].cache = (char *) j9mem_allocate_memory(J9FILECACHE_BUFFER_SIZE, OMRMEM_CATEGORY_VM);
 				if (handle->cacheTable[index].cache != NULL) {
 					/* created one of the cache(s) */
-					setup_cache(handle, index, 0, 0, UNUSED);
+					setup_cache(handle, index, 0, 0, J9FILECACHE_UNUSED);
 #if defined(DEBUG)
 					j9tty_printf(PORTLIB, "cache %d address: 0x%x\n", LATEST_LRU(), handle->cacheTable[index].cache);
 #endif 
@@ -322,7 +322,7 @@ j9cached_file_open(struct J9PortLibrary *portLibrary, const char *path, I_32 fla
 			
 			if (alloc_error == FALSE) {
 				/* set the current cache inuse */
-				setup_cache(handle, handle->inuse, 0, 0, INUSE);
+				setup_cache(handle, handle->inuse, 0, 0, J9FILECACHE_INUSE);
 			}
 		} else {
 			/* could not allocate the handle, so return an error */
@@ -341,7 +341,7 @@ j9cached_file_open(struct J9PortLibrary *portLibrary, const char *path, I_32 fla
 			/* got a handle, so free any cached associated with it */
 			I_8 index;
 
-			for (index = 0; index < CACHE_BUFFER_NUM; index++) {
+			for (index = 0; index < J9FILECACHE_BUFFER_NUM; index++) {
 				if (handle->cacheTable[index].cache != NULL) {
 					j9mem_free_memory(handle->cacheTable[index].cache);
 				}
@@ -388,7 +388,7 @@ j9cached_file_close(struct J9PortLibrary *portLibrary, IDATA fd)
 		return j9file_close(fd);
 	}
 	
-	for (index = 0; index < CACHE_BUFFER_NUM; index++) {
+	for (index = 0; index < J9FILECACHE_BUFFER_NUM; index++) {
 
 		if (flushRC == 0) {
 			/* write each cache in turn */
@@ -463,15 +463,15 @@ j9cached_file_write(struct J9PortLibrary* portLibrary, IDATA fd, const void* buf
 #endif
 
 	/* test for the availability of space in the current cache */
-	free_space = CACHE_BUFFER_SIZE - pCurrentCache->cachePosition;
+	free_space = J9FILECACHE_BUFFER_SIZE - pCurrentCache->cachePosition;
 	if (nbytes > free_space) {
 		I_8 new_cache;
 		
 		if (free_space > 0) {
 			/* the cache will overflow, but still has some room, so fill this cache up */
 			memcpy(pCurrentCache->cache + pCurrentCache->cachePosition, buf, free_space);
-			pCurrentCache->cachePosition = CACHE_BUFFER_SIZE; /* this is an invalid cachePosition */
-			pCurrentCache->hwm = pCurrentCache->cachePosition -1;
+			pCurrentCache->cachePosition = J9FILECACHE_BUFFER_SIZE; /* this is an invalid cachePosition */
+			pCurrentCache->hwm = pCurrentCache->cachePosition - 1;
 #if defined(DEBUG)
 			j9tty_printf(PORTLIB, "1. set hwm on %d to %d (%ld)\n", handle->inuse, pCurrentCache->hwm, pCurrentCache->cacheBase+pCurrentCache->hwm);
 #endif
@@ -479,7 +479,7 @@ j9cached_file_write(struct J9PortLibrary* portLibrary, IDATA fd, const void* buf
 		
 		/* now look for another to spill the data into */
 		/* first, see if the spill cache is already in use */
-		new_cache = find_cache_containing(handle, pCurrentCache->cacheBase + CACHE_BUFFER_SIZE);
+		new_cache = find_cache_containing(handle, pCurrentCache->cacheBase + J9FILECACHE_BUFFER_SIZE);
 		if (new_cache == -1) {
 			new_cache = find_oldest_cache(handle);
 		}
@@ -496,7 +496,7 @@ j9cached_file_write(struct J9PortLibrary* portLibrary, IDATA fd, const void* buf
 		}
 
 		/* setup the new cache */		
-		setup_cache(handle, new_cache, pCurrentCache->cacheBase + CACHE_BUFFER_SIZE, 0, INUSE);
+		setup_cache(handle, new_cache, pCurrentCache->cacheBase + J9FILECACHE_BUFFER_SIZE, 0, J9FILECACHE_INUSE);
 
 		/* write the remaining data into the new cache */
 #if defined(DEBUG)
@@ -512,7 +512,7 @@ j9cached_file_write(struct J9PortLibrary* portLibrary, IDATA fd, const void* buf
 		memcpy(pCurrentCache->cache + pCurrentCache->cachePosition, buf, nbytes);
 		pCurrentCache->cachePosition += nbytes;
 		if (pCurrentCache->cachePosition > pCurrentCache->hwm) {
-			pCurrentCache->hwm = pCurrentCache->cachePosition -1;
+			pCurrentCache->hwm = pCurrentCache->cachePosition - 1;
 		}
 #if defined(DEBUG)
 		j9tty_printf(PORTLIB, "3. set hwm on %d to %d (%ld)\n", handle->inuse, pCurrentCache->hwm, pCurrentCache->cacheBase+pCurrentCache->hwm);
@@ -614,7 +614,7 @@ j9cached_file_seek(struct J9PortLibrary* portLibrary, IDATA fd, I_64 offset, I_3
 			}
 			
 			/* setup the new cache */		
-			setup_cache(handle, cache, newPosition, 0, INUSE);
+			setup_cache(handle, cache, newPosition, 0, J9FILECACHE_INUSE);
 		} else {
 			/* found one that would get trampled, so we need to flush this cache, then we can reuse it */
 #if defined(DEBUG)
@@ -627,7 +627,7 @@ j9cached_file_seek(struct J9PortLibrary* portLibrary, IDATA fd, I_64 offset, I_3
 			}
 		
 			/* reuse the cache */		
-			setup_cache(handle, clashCache, newPosition, 0, INUSE);
+			setup_cache(handle, clashCache, newPosition, 0, J9FILECACHE_INUSE);
 		}
 	} else {
 		/* found a cache that holds this position, */
@@ -668,7 +668,7 @@ j9cached_file_seek(struct J9PortLibrary* portLibrary, IDATA fd, I_64 offset, I_3
 			}
 
 			/* setup the cache for reuse */		
-			setup_cache(handle, rangeCache, newPosition, 0, INUSE);
+			setup_cache(handle, rangeCache, newPosition, 0, J9FILECACHE_INUSE);
 		}
 	}
 	
@@ -712,8 +712,8 @@ j9cached_file_sync(struct J9PortLibrary *portLibrary, IDATA fd)
 	
 	/* push each unwritten cache out to disk but do not alter their */
 	/* hwm or cachePosition */
-	for (index = 0; index < CACHE_BUFFER_NUM; index++) {
-		if (HAS_DATA(index)) {
+	for (index = 0; index < J9FILECACHE_BUFFER_NUM; index++) {
+		if (J9FILECACHE_HAS_DATA(index)) {
 			IDATA write_rc;
 			/* position the file pointer */
 			I_64 seek_rc = j9file_seek(handle->fd, handle->cacheTable[index].cacheBase, EsSeekSet);
