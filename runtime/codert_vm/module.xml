@@ -23,6 +23,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 <module>
 	<artifact type="static" name="j9codert_vm">
 		<include-if condition="spec.flags.module_codert_vm" />
+		<exclude-if condition="spec.linux_riscv.*" />
 		<phase>core</phase>
 		<flags>
 			<flag name="$(TR_HOST)"/>
