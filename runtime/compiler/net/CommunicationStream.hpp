@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2020 IBM Corp. and others
+ * Copyright (c) 2020, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,10 +23,13 @@
 #ifndef COMMUNICATION_STREAM_H
 #define COMMUNICATION_STREAM_H
 
-#include <google/protobuf/io/zero_copy_stream_impl.h> // for ZeroCopyInputStream
-#include "net/ProtobufTypeConvert.hpp"
-#include "net/SSLProtobufStream.hpp"
+#include "net/Message.hpp"
 #include "env/TRMemory.hpp"
+#include "env/CompilerEnv.hpp" // for TR::Compiler->target.is64Bit()
+#include "control/Options.hpp" // TR::Options::useCompressedPointers()
+#include "net/MessageBuffer.hpp"
+#include "net/SSLProtobufStream.hpp"
+#include <unistd.h>
 
 namespace JITServer
 {
@@ -35,9 +38,6 @@ enum JITServerCompatibilityFlags
    JITServerJavaVersionMask    = 0x00000FFF,
    JITServerCompressedRef      = 0x00001000,
    };
-// list of features that client and server must match in order for remote compilations to work
-
-using namespace google::protobuf::io;
 
 class CommunicationStream
    {
@@ -53,116 +53,96 @@ public:
       }
 
 protected:
-   CommunicationStream()
-      : _inputStream(NULL),
-      _outputStream(NULL),
-      _ssl(NULL),
-      _sslInputStream(NULL),
-      _sslOutputStream(NULL),
-      _connfd(-1)
+   CommunicationStream() :
+      _ssl(NULL)
       {
-      // set everything to NULL, in case the child stream fails to call initStream
-      // which initializes these variables
+      }
+
+   ~CommunicationStream()
+      {
+      close(_connfd);
       }
 
    void initStream(int connfd, BIO *ssl)
-   {
+      {
       _connfd = connfd;
       _ssl = ssl;
-      if (_ssl)
-         {
-         _sslInputStream = new (PERSISTENT_NEW) SSLInputStream(_ssl);
-         _sslOutputStream = new (PERSISTENT_NEW) SSLOutputStream(_ssl);
-         _inputStream = new (PERSISTENT_NEW) CopyingInputStreamAdaptor(_sslInputStream);
-         _outputStream = new (PERSISTENT_NEW) CopyingOutputStreamAdaptor(_sslOutputStream);
-         }
-      else
-         {
-         _inputStream = new (PERSISTENT_NEW) FileInputStream(_connfd);
-         _outputStream = new (PERSISTENT_NEW) FileOutputStream(_connfd);
-         }
       }
 
-   virtual ~CommunicationStream()
-      {
-      if (_inputStream)
-         {
-         _inputStream->~ZeroCopyInputStream();
-         TR_Memory::jitPersistentFree(_inputStream);
-         }
-      if (_outputStream)
-         {
-         _outputStream->~ZeroCopyOutputStream();
-         TR_Memory::jitPersistentFree(_outputStream);
-         }
-      if (_ssl)
-         {
-         _sslInputStream->~SSLInputStream();
-         TR_Memory::jitPersistentFree(_sslInputStream);
-         _sslOutputStream->~SSLOutputStream();
-         TR_Memory::jitPersistentFree(_sslOutputStream);
-         (*OBIO_free_all)(_ssl);
-         }
-      if (_connfd != -1)
-         {
-         close(_connfd);
-         _connfd = -1;
-         }
-      }
 
+
+   void readMessage(Message &msg);
+   void writeMessage(Message &msg);
+
+   int getConnFD() { return _connfd; }
+
+
+   
+   // TODO: verify that ssl actually works (probably not)
+   BIO *_ssl; // SSL connection, null if not using SSL
+   int _connfd;
+   ServerMessage _sMsg;
+   ClientMessage _cMsg;
+
+   static const uint8_t MAJOR_NUMBER = 0;
+   static const uint16_t MINOR_NUMBER = 3;
+   static const uint8_t PATCH_NUMBER = 0;
+   static uint32_t CONFIGURATION_FLAGS;
+
+private:
+   // readBlocking and writeBlocking are functions that directly read/write
+   // passed object from/to the socket. For the object to be correctly written,
+   // it needs to be contiguous.
    template <typename T>
    void readBlocking(T &val)
       {
-      val.mutable_data()->clear_data();
-      CodedInputStream codedInputStream(_inputStream);
-      uint32_t messageSize;
-      if (!codedInputStream.ReadLittleEndian32(&messageSize))
-         throw JITServer::StreamFailure("JITServer I/O error: reading message size");
-      auto limit = codedInputStream.PushLimit(messageSize);
-      if (!val.ParseFromCodedStream(&codedInputStream))
-         throw JITServer::StreamFailure("JITServer I/O error: reading from stream");
-      if (!codedInputStream.ConsumedEntireMessage())
-         throw JITServer::StreamFailure("JITServer I/O error: did not receive entire message");
-      codedInputStream.PopLimit(limit);
+      readBlocking(&val, sizeof(T));
       }
+
+   template <typename T>
+   void readBlocking(T *ptr, size_t size)
+      {
+      int32_t bytesRead = read(_connfd, ptr, size);
+      if (bytesRead == -1)
+         {
+         throw JITServer::StreamFailure("JITServer I/O error: read error");
+         }
+      else if (bytesRead < size)
+         {
+         char *remainingPtr = reinterpret_cast<char *>(ptr) + bytesRead;
+         int32_t remainingRead = read(_connfd, remainingPtr, size - bytesRead);
+         if (remainingRead != size - bytesRead)
+            {
+            throw JITServer::StreamFailure("JITServer I/O error: read error");
+            }
+         }
+      }
+
    template <typename T>
    void writeBlocking(const T &val)
       {
-         {
-         CodedOutputStream codedOutputStream(_outputStream);
-         size_t messageSize = val.ByteSizeLong();
-         TR_ASSERT(messageSize < 1ul<<32, "message size too big");
-         codedOutputStream.WriteLittleEndian32(messageSize);
-         val.SerializeWithCachedSizes(&codedOutputStream);
-         if (codedOutputStream.HadError())
-            throw JITServer::StreamFailure("JITServer I/O error: writing to stream");
-         // codedOutputStream must be dropped before calling flush
-         }
-      if (_ssl ? !((CopyingOutputStreamAdaptor*)_outputStream)->Flush()
-               : !((FileOutputStream*)_outputStream)->Flush())
-         {
-         throw JITServer::StreamFailure("JITServer I/O error: flushing stream: GetErrno " + std::to_string(((FileOutputStream*)_outputStream)->GetErrno()));
-         }
+      writeBlocking(&val, sizeof(T));
       }
 
-   int _connfd; // connection file descriptor
-
-   // re-usable message objects
-   J9ServerMessage _sMsg;
-   J9ClientMessage _cMsg;
-
-   BIO *_ssl; // SSL connection, null if not using SSL
-   SSLInputStream *_sslInputStream;
-   SSLOutputStream *_sslOutputStream;
-   ZeroCopyInputStream *_inputStream;
-   ZeroCopyOutputStream *_outputStream;
-
-   static const uint8_t MAJOR_NUMBER = 0;
-   static const uint16_t MINOR_NUMBER = 5;
-   static const uint8_t PATCH_NUMBER = 0;
-   static uint32_t CONFIGURATION_FLAGS;
+   template <typename T>
+   void writeBlocking(T *ptr, size_t size)
+      {
+      int32_t bytesWritten = write(_connfd, ptr, size);
+      if (bytesWritten == -1)
+         {
+         throw JITServer::StreamFailure("JITServer I/O error: write error");
+         }
+      else if (bytesWritten < size)
+         {
+         char *remainingPtr = reinterpret_cast<char *>(ptr) + bytesWritten;
+         int32_t remainingWritten = write(_connfd, remainingPtr, size - bytesWritten);
+         if (remainingWritten != size - bytesWritten)
+            {
+            throw JITServer::StreamFailure("JITServer I/O error: write error");
+            }
+         }
+      }
    };
-
 };
 
-#endif // COMMUNICATION_STREAM_H
+#endif
