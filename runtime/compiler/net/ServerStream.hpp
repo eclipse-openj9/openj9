@@ -23,13 +23,12 @@
 #ifndef SERVER_STREAM_H
 #define SERVER_STREAM_H
 
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-#include "net/ProtobufTypeConvert.hpp"
+#include "net/RawTypeConvert.hpp"
 #include "net/CommunicationStream.hpp"
 #include "env/VerboseLog.hpp"
 #include "control/Options.hpp"
-
 #include <openssl/ssl.h>
+
 class SSLOutputStream;
 class SSLInputStream;
 
@@ -83,12 +82,12 @@ public:
       @param [in] type Message type to be sent
       @param [in] args Variable number of additional paramaters to be sent
    */
-   template <typename ...T>
-   void write(MessageType type, T... args)
+   template <typename ...Args>
+   void write(MessageType type, Args... args)
       {
-      setArgs<T...>(_sMsg.mutable_data(), args...);
-      _sMsg.set_type(type);
-      writeBlocking(_sMsg);
+      _sMsg.setType(type);
+      setArgsRaw<Args...>(_sMsg, args...);
+      writeMessage(_sMsg);
       }
 
    /**
@@ -106,7 +105,7 @@ public:
    template <typename ...T>
    std::tuple<T...> read()
       {
-      readBlocking(_cMsg);
+      readMessage(_cMsg);
       switch (_cMsg.type())
          {
          case MessageType::compilationInterrupted:
@@ -124,7 +123,7 @@ public:
                throw StreamMessageTypeMismatch(_sMsg.type(), _cMsg.type());
             }
          }
-      return getArgs<T...>(_cMsg.mutable_data());
+      return getArgsRaw<T...>(_cMsg);
       }
 
    /**
@@ -144,7 +143,7 @@ public:
    template <typename... T>
    std::tuple<T...> readCompileRequest()
       {
-      readBlocking(_cMsg);
+      readMessage(_cMsg);
       if (_cMsg.version() != 0 && _cMsg.version() != getJITServerVersion())
          {
          throw StreamVersionIncompatible(getJITServerVersion(), _cMsg.version());
@@ -163,7 +162,7 @@ public:
             }
          case MessageType::compilationRequest:
             {
-            return getArgs<T...>(_cMsg.mutable_data());
+            return getArgsRaw<T...>(_cMsg);
             }
          default:
             {
@@ -178,7 +177,7 @@ public:
    template <typename... T>
    std::tuple<T...> getRecvData()
       {
-      return getArgs<T...>(_cMsg.mutable_data());
+      return getArgsRaw<T...>(_cMsg);
       }
 
    /**

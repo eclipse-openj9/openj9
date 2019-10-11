@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2020, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,19 +20,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-
-#include "CommunicationStream.hpp"
-#include "env/CompilerEnv.hpp" // for TR::Compiler->target.is64Bit()
-#include "control/Options.hpp" // TR::Options::useCompressedPointers()
 #include "control/CompilationRuntime.hpp"
-#include "j9cfg.h" // for JAVA_SPEC_VERSION
-
+#include "net/CommunicationStream.hpp"
 
 namespace JITServer
 {
 uint32_t CommunicationStream::CONFIGURATION_FLAGS = 0;
 
-void CommunicationStream::initVersion()
+void
+CommunicationStream::initVersion()
    {
    if (TR::Compiler->target.is64Bit() && TR::Options::useCompressedPointers())
       {
@@ -57,4 +53,32 @@ void CommunicationStream::initSSL()
    // It's redundant, should be able to remove it later
    // OpenSSL_add_ssl_algorithms();
    }
-};
+
+void
+CommunicationStream::readMessage(Message &msg)
+   {
+   msg.clearForRead();
+
+   // read message size
+   uint32_t serializedSize;
+   readBlocking(serializedSize);
+   msg.setSerializedSize(serializedSize);
+
+   // read the rest of the message
+   uint32_t messageSize = serializedSize - sizeof(uint32_t);
+   readBlocking(msg.getBufferStartForRead() + sizeof(uint32_t), messageSize);
+
+   // rebuild the message
+   msg.deserialize();
+   }
+
+void
+CommunicationStream::writeMessage(Message &msg)
+   {
+   char *serialMsg = msg.serialize();
+
+   // write serialized message to the socket
+   writeBlocking(serialMsg, msg.serializedSize());
+   msg.clearForWrite();
+   }
+}

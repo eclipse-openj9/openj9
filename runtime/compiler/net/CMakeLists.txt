@@ -24,6 +24,7 @@ j9jit_files(
 	net/ClientStream.cpp
 	net/CommunicationStream.cpp
 	net/LoadSSLLibs.cpp
-	net/ProtobufTypeConvert.cpp
+        net/MessageBuffer.cpp
+        net/Message.cpp
 	net/ServerStream.cpp
 )
