@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,6 +53,30 @@ public:
    uintptr_t bytecodeStart(TR_OpaqueMethodBlock *method);
 
    uint32_t bytecodeSize(TR_OpaqueMethodBlock *method);
+
+   /**
+    * @brief Given a method signature, tokenize it into its class name, method name,
+    *        and type signature strings.
+    *
+    * @param[in] methodSignature : the char string of the full method signature to tokenize
+    * @param[out] methodClass : pointer to the start of the string within the methodSignature
+    *                representing the class name of the given method signature
+    * @param[out] methodClassLen : length in bytes of the class name string
+    * @param[out] methodName : pointer to the start of the string within the methodSignature
+    *                representing the method name of the given method signature
+    * @param[out] methodNameLen : length in bytes of the method name string
+    * @param[out] typeSignature : pointer to the start of the string within the methodSignature
+    *                representing the method type signature of the given method signature
+    * @param[out] typeSignatureLen : length in bytes of the type signature string
+    */
+   void tokenizeSignature(
+      const char * methodSignature,
+      const char * &methodClass,
+      uint32_t     &methodClassLen,
+      const char * &methodName,
+      uint32_t     &methodNameLen,
+      const char * &typeSignature,
+      uint32_t     &typeSignatureLen);
 
    };
 
