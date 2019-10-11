@@ -69,39 +69,15 @@ public class MkTreeGen {
 		File[] dir = directory.listFiles();
 
 		for (File entry : dir) {
-			boolean tempExclude = false;
-
-			// TODO clean up JCL_VERSION
-			// Temporary exclusion, remove this block when JCL_VERSION separation is removed
-			if ((!Options.getJdkVersion().equalsIgnoreCase("Panama")) && (!Options.getJdkVersion().equalsIgnoreCase("Valhalla"))) {
-				String JCL_VERSION = "";
-				if (System.getenv("JCL_VERSION") != null) {
-					JCL_VERSION = System.getenv("JCL_VERSION");
-				} else {
-					JCL_VERSION = "latest";
-				}
-
-				// Temporarily exclude projects for CCM build (i.e., when JCL_VERSION is latest)
-				String latestDisabledDir = "proxyFieldAccess Panama";
-
-				// Temporarily exclude SVT_Modularity tests from integration build where we are
-				// still using b148 JCL level
-				String currentDisableDir = "SVT_Modularity OpenJ9_Jsr_292_API";
-
-				tempExclude = ((JCL_VERSION.equals("latest")) && latestDisabledDir.contains(entry.getName()))
-						|| ((JCL_VERSION.equals("current")) && currentDisableDir.contains(entry.getName()));
-			}
 			File file = new File(absolutedir + '/' + entry.getName());
-			if (!tempExclude) {
-				if (file.isFile() && entry.getName().equals(Constants.PLAYLIST)) {
-					playlistXML = file;
-				} else if (file.isDirectory()) {
-					currentdirs.add(entry.getName());
-					if (traverse(currentdirs)) {
-						subdirs.add(entry.getName());
-					}
-					currentdirs.remove(currentdirs.size() - 1);
+			if (file.isFile() && entry.getName().equals(Constants.PLAYLIST)) {
+				playlistXML = file;
+			} else if (file.isDirectory()) {
+				currentdirs.add(entry.getName());
+				if (traverse(currentdirs)) {
+					subdirs.add(entry.getName());
 				}
+				currentdirs.remove(currentdirs.size() - 1);
 			}
 		}
 
