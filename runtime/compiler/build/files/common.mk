@@ -395,7 +395,8 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/net/ClientStream.cpp \
     compiler/net/CommunicationStream.cpp \
     compiler/net/LoadSSLLibs.cpp \
-    compiler/net/ProtobufTypeConvert.cpp \
+    compiler/net/MessageBuffer.cpp \
+    compiler/net/Message.cpp \
     compiler/net/ServerStream.cpp \
     compiler/runtime/CompileService.cpp \
     compiler/runtime/JITClientSession.cpp \
