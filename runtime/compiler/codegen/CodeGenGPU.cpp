@@ -816,7 +816,6 @@ static const char * nvvmOpCodeNames[] =
 
 
 
-   NULL,          // TR::imulover
 
    NULL,          // TR::dfloor
    NULL,          // TR::ffloor
