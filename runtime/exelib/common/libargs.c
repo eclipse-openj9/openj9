@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -334,6 +334,8 @@ vmOptionsTableAddOptionWithCopy(void **vmOptionsTable, char *optionString, void 
 	#else /* J9VM_ENV_LITTLE_ENDIAN */
 	  #define JVM_ARCH_DIR "ppc64"
 	#endif /* PPC64 */
+  #elif defined(RISCV64)
+      #define JVM_ARCH_DIR "riscv64"
   #else
 	#error "Must define an architecture"
   #endif

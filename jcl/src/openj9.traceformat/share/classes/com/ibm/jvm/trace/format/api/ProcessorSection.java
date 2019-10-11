@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,8 +39,8 @@ public class ProcessorSection {
 	protected static final int LONG = 8; // length of a long in bytes
 	protected static final String SUM_TAB = "        ";
 
-	private final static String[] Archs = { "Unknown", "x86", "S390", "Power", "IA64", "S390X", "AMD64" };
-	private final static String[] SubTypes = { "i486", "i586", "Pentium II", "Pentium III", "Merced", "McKinley", "PowerRS", "PowerPC", "GigaProcessor", "ESA", "Pentium IV", "T-Rex", "Opteron" };
+	private final static String[] Archs = { "Unknown", "x86", "S390", "Power", "IA64", "S390X", "AMD64", "RISCV"};
+	private final static String[] SubTypes = { "i486", "i586", "Pentium II", "Pentium III", "Merced", "McKinley", "PowerRS", "PowerPC", "GigaProcessor", "ESA", "Pentium IV", "T-Rex", "Opteron", "RV64G"};
 	private final static String[] trCounter = { "Sequence Counter", "Special", "RDTSC Timer", "AIX Timer", "MFSPR Timer", "MFTB Timer", "STCK Timer", "J9 timer" };
 	
 	TraceContext context;

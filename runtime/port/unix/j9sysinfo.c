@@ -267,6 +267,10 @@ static BOOLEAN testSTFLE(struct J9PortLibrary *portLibrary, uint64_t stfleBit);
 static intptr_t getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc);
 #endif /* defined(S390) || defined(J9ZOS390) || defined(J9ZTPF) */
 
+#if defined(RISCV64)
+static intptr_t getRISCV64Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc);
+#endif /* defined(RISCV64) */
+
 #if (defined(LINUXPPC) || defined(AIXPPC))
 static J9ProcessorArchitecture mapPPCProcessor(const char *processorName);
 static void setFeature(J9ProcessorDesc *desc, uint32_t feature);
@@ -430,6 +434,8 @@ j9sysinfo_get_processor_description(struct J9PortLibrary *portLibrary, J9Process
 		rc = getAIXPPCDescription(portLibrary, desc);
 #elif (defined(S390) || defined(J9ZOS390))
 		rc = getS390Description(portLibrary, desc);
+#elif defined(RISCV64)
+		rc = getRISCV64Description(portLibrary, desc);
 #endif
 	}
 
@@ -1187,6 +1193,24 @@ getS390Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 }
 #endif /* (defined(S390) || defined(J9ZOS390)) */
 
+#if defined(RISCV64)
+/**
+ * @internal
+ * Populates J9ProcessorDesc *desc on RISC-V
+ *
+ * @param[in] desc pointer to the struct that will contain the CPU type and features.
+ *
+ * @return 0 on success, -1 on failure
+ */
+static intptr_t
+getRISCV64Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
+{
+	desc->processor = PROCESOR_RISCV64_UNKNOWN;
+	desc->physicalProcessor = desc->processor;
+	return 0;
+}
+#endif /* defined(RISCV64) */
+
 BOOLEAN
 j9sysinfo_processor_has_feature(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc, uint32_t feature)
 {
@@ -1300,7 +1324,7 @@ openAndReadInfo(struct J9PortLibrary *portLibrary, char* pathBuffer, size_t path
 	return status;
 }
 
-#if (defined(J9X86) || defined(J9HAMMER))
+#if (defined(J9X86) || defined(J9HAMMER) || defined(RISCV64))
 
 char const *cpuPathPattern = "/sys/devices/system/cpu/cpu%d/cache/";
 char const *indexPattern = "index%d/";
@@ -1543,7 +1567,7 @@ getCacheLevels(struct J9PortLibrary *portLibrary, const int32_t cpu)
 	} while (!finish);
 	return result;
 }
-/*  (defined(J9X86) || defined(J9HAMMER) ) */
+/*  (defined(J9X86) || defined(J9HAMMER) || defined(RISCV64)) */
 #elif  defined(AIXPPC)
 static int32_t
 getCacheLevels(struct J9PortLibrary *portLibrary,
@@ -1628,6 +1652,24 @@ j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, const J9CacheInfoQue
 	int32_t result = J9PORT_ERROR_SYSINFO_NOT_SUPPORTED;
 	Trc_PRT_sysinfo_get_cache_info_enter(query->cmd, query->cpu, query->level, query->cacheType);
 
+#if defined(RISCV64)
+	{
+		/* We need to avoid checking the cache directory as the cache info doesn't exist
+		 * on Linux booted via QEMU (the emulator) while is literally supported on the
+		 * hardware (e.g. HiFive U540). In such case, there is no padding adjustment for
+		 * class objects even if the -XX:-RestrictContended option is specified on the
+		 * command line.
+		 */
+		DIR* cacheDir = opendir("/sys/devices/system/cpu/cpu0/cache");
+		if (NULL != cacheDir) {
+			closedir(cacheDir);
+		} else {
+			Trc_PRT_sysinfo_get_cache_info_exit(result);
+			return result;
+		}
+	}
+#endif
+
 #if defined(OSX)
 	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
 	switch (query->cmd) {
@@ -1642,7 +1684,7 @@ j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, const J9CacheInfoQue
 		result = J9PORT_ERROR_SYSINFO_NOT_SUPPORTED;
 		break;
 	}
-#elif (defined(J9X86) || defined(J9HAMMER) || defined(AIXPPC))
+#elif (defined(J9X86) || defined(J9HAMMER) || defined(AIXPPC) || defined(RISCV64))
 	switch (query->cmd) {
 	case J9PORT_CACHEINFO_QUERY_LINESIZE:
 	case J9PORT_CACHEINFO_QUERY_CACHESIZE:
