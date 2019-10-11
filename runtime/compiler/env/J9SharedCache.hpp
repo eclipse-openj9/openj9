@@ -36,6 +36,22 @@ class TR_ResolvedMethod;
 namespace TR { class CompilationInfo; }
 namespace JITServer { class ServerStream; }
 
+/**
+ * \brief An interface to the VM's shared class cache.
+ *
+ * This class provides an interface to the VM's shared class cache as represented by the the descriptors in J9SharedClassConfig::cacheDescriptorList.
+ * The cache descriptor list is a circular linked list. It is doubly linked when J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE is defined
+ * or singly linked otherwise.
+ *
+ * If J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE is not defined, the list consists of a single element who's next pointer refers back to itself.
+ * Offsets into the shared cache represent the distance from the start of the cache. Converting between pointers and offsets can be done with
+ * simple pointer arithmetic.
+ *
+ * If J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE is defined, the head of the list represents the top-most (and therefore writable)
+ * layer of the shared class cache, the next element represents the (N-1)th layer, and so on. The element previous to the head represents the base layer.
+ * The list of cache layers can be thought of as a single logical cache starting at layer 0 and ending at layer N. Offsets into the shared cache
+ * represent the distance from the start of the cache. Converting between pointers and offsets requires traversing the list starting at the base layer.
+ */
 class TR_J9SharedCache : public TR_SharedCache
    {
 public:
@@ -53,8 +69,21 @@ public:
    virtual void addHint(TR_ResolvedMethod *, TR_SharedCacheHint);
    virtual bool isMostlyFull();
 
-   virtual void *pointerFromOffsetInSharedCache(void *offset);
-   virtual void *offsetInSharedCacheFromPointer(void *ptr);
+   /**
+    * \brief Converts a shared cache offset into a pointer.
+    *
+    * \param[in] offset The offset to convert.
+    * \return A pointer. Raises a fatal assertion before returning NULL if the offset is invalid.
+    */
+   virtual void *pointerFromOffsetInSharedCache(uintptr_t offset);
+
+   /**
+    * \brief Converts a pointer into the shared cache into an offset.
+    *
+    * \param[in] ptr The pointer to convert.
+    * \return An offset. Raises a fatal assertion before returning 0 if the pointer is invalid.
+    */
+   virtual uintptr_t offsetInSharedCacheFromPointer(void *ptr);
 
    virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR::Compilation *comp);
    virtual void persistIprofileInfo(TR::ResolvedMethodSymbol *, TR_ResolvedMethod*, TR::Compilation *comp);
@@ -82,7 +111,14 @@ public:
 
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader);
 
-   virtual bool isPointerInSharedCache(void *ptr, void * & cacheOffset);
+   /**
+    * \brief Checks whether the specified pointer points into the shared cache.
+    *
+    * \param[in] ptr The pointer to check.
+    * \param[out] cacheOffset If ptr points into the shared cache and this parameter is not NULL the result of converting ptr into an offset will be returned here. If ptr does not point into the shared cache this parameter is ignored.
+    * \return True if the pointer points into the shared cache, false otherwise.
+    */
+   virtual bool isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset = NULL);
 
    J9ROMClass *startingROMClassOfClassChain(UDATA *classChain);
 
@@ -110,9 +146,8 @@ public:
    static TR_J9SharedCacheDisabledReason getSharedCacheDisabledReason() { return _sharedCacheState; }
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo);
    static void setStoreSharedDataFailedLength(UDATA length) {_storeSharedDataFailedLength = length; }
+   J9SharedClassCacheDescriptor *getCacheDescriptorList();
    
-   virtual UDATA getCacheStartAddress() { return _cacheStartAddress; }
-
 private:
    J9JITConfig *jitConfig() { return _jitConfig; }
    J9JavaVM *javaVM() { return _javaVM; }
@@ -140,6 +175,8 @@ private:
    bool romclassMatchesCachedVersion(J9ROMClass *romClass, UDATA * & chainPtr, UDATA *chainEnd);
    UDATA *findChainForClass(J9Class *clazz, const char *key, uint32_t keyLength);
 
+   static bool isPointerInCache(const J9SharedClassCacheDescriptor *cacheDesc, void *ptr);
+
    uint16_t _initialHintSCount;
    uint16_t _hintsEnabledMask;
 
@@ -150,8 +187,6 @@ private:
 
    TR_AOTStats *_aotStats;
    J9SharedClassConfig *_sharedCacheConfig;
-   UDATA _cacheStartAddress;
-   UDATA _cacheSizeInBytes;
    UDATA _numDigitsForCacheOffsets;
 
    uint32_t _logLevel;
@@ -178,9 +213,6 @@ public:
    // virtual void addHint(J9ROMMethod *, TR_SharedCacheHint) override { TR_ASSERT(false, "called"); }
    virtual bool isMostlyFull() override { TR_ASSERT(false, "called"); return false;}
 
-   virtual void *pointerFromOffsetInSharedCache(void *offset) override;
-   virtual void *offsetInSharedCacheFromPointer(void *ptr) override;
-
    virtual UDATA *rememberClass(J9Class *clazz, bool create=true) override;
 
    virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT(false, "called"); return 0;}
@@ -189,17 +221,12 @@ public:
    virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL) override { TR_ASSERT(false, "called"); return false;}
 
    virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader) override { TR_ASSERT(false, "called"); return NULL;}
-
-   virtual bool isPointerInSharedCache(void *ptr, void * & cacheOffset) override { TR_ASSERT(false, "called"); return false;}
-
    
    static void setSharedCacheDisabledReason(TR_J9SharedCacheDisabledReason state) { TR_ASSERT(false, "called"); }
    static TR_J9SharedCacheDisabledReason getSharedCacheDisabledReason() { TR_ASSERT(false, "called"); return TR_J9SharedCache::TR_J9SharedCacheDisabledReason::UNINITIALIZED;}
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo) { TR_ASSERT(false, "called"); return TR_no;}
    static void setStoreSharedDataFailedLength(UDATA length) { TR_ASSERT(false, "called"); }
    
-   virtual UDATA getCacheStartAddress() override;
-
    virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) override;
 
    void setStream(JITServer::ServerStream *stream) { _stream = stream; }

@@ -1498,7 +1498,7 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(TR_Resolved
             isSystemClassLoader = ((void*)fej9->vmThread()->javaVM->systemClassLoader->classLoaderObject ==  (void*)fej9->getClassLoader(clazzOfInlinedMethod));
             }
 
-         if (TR::CompilationInfo::get(fej9->_jitConfig)->isRomClassForMethodInSharedCache(j9method))
+         if (fej9->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(j9method)->romClass))
             {
             bool sameLoaders = false;
             TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
