@@ -861,7 +861,7 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, fullVectorConversion);
 
    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node,
-                                           lengthRegister, static_cast<int32_t>(sizeOfVector),
+                                           lengthRegister, sizeOfVector,
                                            TR::InstOpCode::COND_BL, success, false);
 
    // Set the loopCounter to the amount of groups of 16 bytes left, ignoring already accounted for remainder
@@ -930,6 +930,9 @@ inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isLatin1)
    TR::Register* ch = cg->evaluate(node->getChild(2));
    TR::Register* offset = cg->evaluate(node->getChild(3));
    TR::Register* length = cg->gprClobberEvaluate(node->getChild(4));
+
+
+   const int8_t sizeOfVector = cg->machine()->getVRFSize();
 
    // load length isn't used after loop, size must is adjusted to become bytes left
    TR::Register* loopCounter = length;
@@ -1014,7 +1017,7 @@ inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isLatin1)
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, fullVectorLabel);
 
    generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node,
-                                           length, static_cast<int32_t>(cg->machine()->getVRFSize()),
+                                           length, sizeOfVector,
                                            TR::InstOpCode::COND_BL, failureLabel);
 
    // Set loopcounter to 1/16 of the length, remainder has already been accounted for
