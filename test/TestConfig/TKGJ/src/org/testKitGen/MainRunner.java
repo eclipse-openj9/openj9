@@ -33,11 +33,11 @@ public class MainRunner {
 	}
 
 	public static void start() {
-		System.out.println("\nSTART TEST KIT GEN\n");
+		System.out.println("\nStarting to generate test make files.\n");
 		ModesDictionary.parse();
 		MkTreeGen.start();
 		UtilsGen.start();
 		Counter.generateFile();
-		System.out.println("\nTEST KIT GEN SUCCESSFUL\n");
+		System.out.println("\nMake files are generated successfully.\n");
 	}
 }
