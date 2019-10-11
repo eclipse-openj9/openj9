@@ -258,7 +258,7 @@ BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    }
 
 ClientStream::ClientStream(TR::PersistentInfo *info)
-   : CommunicationStream(), _versionCheckStatus(NOT_DONE)
+   : CommunicationStreamRaw(), _versionCheckStatus(NOT_DONE)
    {
    int connfd = openConnection(info->getJITServerAddress(), info->getJITServerPort(), info->getSocketTimeout());
    BIO *ssl = openSSLConnection(_sslCtx, connfd);
@@ -267,12 +267,11 @@ ClientStream::ClientStream(TR::PersistentInfo *info)
    }
 #else // JITSERVER_ENABLE_SSL
 ClientStream::ClientStream(TR::PersistentInfo *info)
-   : CommunicationStream(), _versionCheckStatus(NOT_DONE)
+   : CommunicationStreamRaw(), _versionCheckStatus(NOT_DONE)
    {
    int connfd = openConnection(info->getJITServerAddress(), info->getJITServerPort(), info->getSocketTimeout());
    initStream(connfd);
    _numConnectionsOpened++;
    }
 #endif
-
 };

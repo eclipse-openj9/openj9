@@ -392,6 +392,9 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/env/VMJ9Server.cpp \
     compiler/net/ClientStream.cpp \
     compiler/net/CommunicationStream.cpp \
+    compiler/net/CommunicationStreamRaw.cpp \
+    compiler/net/MessageBuffer.cpp \
+    compiler/net/Message.cpp \
     compiler/net/ProtobufTypeConvert.cpp \
     compiler/net/ServerStream.cpp \
     compiler/runtime/CompileService.cpp \

@@ -27,7 +27,9 @@
 #include "compile/CompilationTypes.hpp"
 #include "ilgen/J9IlGeneratorMethodDetails.hpp"
 #include "net/ProtobufTypeConvert.hpp"
+#include "net/RawTypeConvert.hpp"
 #include "net/CommunicationStream.hpp"
+#include "net/CommunicationStreamRaw.hpp"
 
 #if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/ssl.h>
@@ -37,6 +39,14 @@ class SSLInputStream;
 
 namespace JITServer
 {
+
+// class ClientStreamRaw : public CommunicationStreamRaw
+   // {
+// public:
+   // explicit ClientStreamRaw(int connfd);
+
+   // };
+
 enum VersionCheckStatus
    {
    NOT_DONE = 0,
@@ -59,7 +69,7 @@ enum VersionCheckStatus
           auto recv = client->getRecvData<uint32_t, std::string, std::string, .......>();
    (5) install compiled code into code cache
 */
-class ClientStream : public CommunicationStream
+class ClientStream : public CommunicationStreamRaw
    {
 public:
    /**
@@ -90,13 +100,13 @@ public:
       {
       if (getVersionCheckStatus() == NOT_DONE)
          {
-         _cMsg.set_version(getJITServerVersion());
+         _cMsg.setVersion(getJITServerVersion());
          write(MessageType::compilationRequest, args...);
-         _cMsg.clear_version();
+         _cMsg.clearVersion();
          }
       else // getVersionCheckStatus() == PASSED
          {
-         _cMsg.clear_version(); // the compatibility check is done. We clear the version to save message size.
+         _cMsg.clearVersion(); // the compatibility check is done. We clear the version to save message size.
          write(MessageType::compilationRequest, args...);
          }
       }
@@ -110,10 +120,10 @@ public:
    template <typename ...T>
    void write(MessageType type, T... args)
       {
-      _cMsg.set_type(type);
-      setArgs<T...>(_cMsg.mutable_data(), args...);
+      _cMsg.setType(type);
+      setArgsRaw<T...>(_cMsg, args...);
 
-      writeBlocking(_cMsg);
+      writeMessage(_cMsg);
       }
 
    /**
@@ -125,7 +135,7 @@ public:
    */
    MessageType read()
       {
-      readBlocking(_sMsg);
+      readMessage(_sMsg);
       return _sMsg.type();
       }
 
@@ -135,7 +145,7 @@ public:
    template <typename ...T>
    std::tuple<T...> getRecvData()
       {
-      return getArgs<T...>(_sMsg.mutable_data());
+      return getArgsRaw<T...>(_sMsg);
       }
 
    /**
@@ -148,12 +158,14 @@ public:
    template <typename ...T>
    void writeError(MessageType type, T... args)
       {
-      _cMsg.set_type(type);
+      _cMsg.setType(type);
       if (type == MessageType::compilationInterrupted || type == MessageType::connectionTerminate)
-         _cMsg.mutable_data()->clear_data();
+         {
+         // _cMsg.clear();
+         }
       else
-         setArgs<T...>(_cMsg.mutable_data(), args...);
-      writeBlocking(_cMsg);
+         setArgsRaw<T...>(_cMsg, args...);
+      writeMessage(_cMsg);
       }
 
    VersionCheckStatus getVersionCheckStatus()

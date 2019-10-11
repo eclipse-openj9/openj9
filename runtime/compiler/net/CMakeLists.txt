@@ -23,6 +23,9 @@
 j9jit_files(
 	net/ClientStream.cpp
 	net/CommunicationStream.cpp
+        net/CommunicationStreamRaw.cpp
+        net/MessageBuffer.cpp
+        net/Message.cpp
 	net/ProtobufTypeConvert.cpp
 	net/ServerStream.cpp
 )

@@ -25,9 +25,13 @@
 
 #include <google/protobuf/io/zero_copy_stream_impl.h>
 #include "net/ProtobufTypeConvert.hpp"
+#include "net/RawTypeConvert.hpp"
 #include "net/CommunicationStream.hpp"
+#include "net/CommunicationStreamRaw.hpp"
 #include "env/VerboseLog.hpp"
 #include "control/Options.hpp"
+
+#include <unistd.h>
 
 #if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/ssl.h>
@@ -63,7 +67,7 @@ class BaseCompileDispatcher;
    7) When compilation is completed successfully, the server responds with finishCompilation(T... args).
       When compilation is aborted, the sever responds with writeError(uint32_t statusCode).
  */
-class ServerStream : public CommunicationStream
+class ServerStream : public CommunicationStreamRaw
    {
 public:
    /**
@@ -78,6 +82,9 @@ public:
 #else
    explicit ServerStream(int connfd);
 #endif
+   // ServerStream(int connfd) :
+      // CommunicationStreamRaw(connfd)
+      // {}
    virtual ~ServerStream()
       {
       _numConnectionsClosed++;
@@ -89,12 +96,12 @@ public:
       @param [in] type Message type to be sent
       @param [in] args Variable number of additional paramaters to be sent
    */
-   template <typename ...T>
-   void write(MessageType type, T... args)
+   template <typename ...Args>
+   void write(MessageType type, Args... args)
       {
-      setArgs<T...>(_sMsg.mutable_data(), args...);
-      _sMsg.set_type(type);
-      writeBlocking(_sMsg);
+      _sMsg.setType(type);
+      setArgsRaw<Args...>(_sMsg, args...);
+      writeMessage(_sMsg);
       }
 
    /**
@@ -112,7 +119,7 @@ public:
    template <typename ...T>
    std::tuple<T...> read()
       {
-      readBlocking(_cMsg);
+      readMessage(_cMsg);
       switch (_cMsg.type())
          {
          case MessageType::compilationInterrupted:
@@ -130,7 +137,7 @@ public:
                throw StreamMessageTypeMismatch(_sMsg.type(), _cMsg.type());
             }
          }
-      return getArgs<T...>(_cMsg.mutable_data());
+      return getArgsRaw<T...>(_cMsg);
       }
 
    /**
@@ -150,7 +157,9 @@ public:
    template <typename... T>
    std::tuple<T...> readCompileRequest()
       {
-      readBlocking(_cMsg);
+      // fprintf(stderr, "readCompileRequest ClientMessage=%p\n", &_cMsg);
+      readMessage(_cMsg);
+      // fprintf(stderr, "numArgs=%d\n", _cMsg.getMetaData().numDataPoints);
       if (_cMsg.version() != 0 && _cMsg.version() != getJITServerVersion())
          {
          throw StreamVersionIncompatible(getJITServerVersion(), _cMsg.version());
@@ -169,7 +178,7 @@ public:
             }
          case MessageType::compilationRequest:
             {
-            return getArgs<T...>(_cMsg.mutable_data());
+            return getArgsRaw<T...>(_cMsg);
             }
          default:
             {
@@ -184,7 +193,7 @@ public:
    template <typename... T>
    std::tuple<T...> getRecvData()
       {
-      return getArgs<T...>(_cMsg.mutable_data());
+      return getArgsRaw<T...>(_cMsg);
       }
 
    /**

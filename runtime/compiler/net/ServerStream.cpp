@@ -47,14 +47,14 @@ int ServerStream::_numConnectionsClosed = 0;
 
 #if defined(JITSERVER_ENABLE_SSL)
 ServerStream::ServerStream(int connfd, BIO *ssl)
-   : CommunicationStream()
+   : CommunicationStreamRaw()
    {
    initStream(connfd, ssl);
    _numConnectionsOpened++;
    }
 #else // JITSERVER_ENABLE_SSL
 ServerStream::ServerStream(int connfd)
-   : CommunicationStream()
+   : CommunicationStreamRaw()
    {
    initStream(connfd);
    _numConnectionsOpened++;
@@ -285,6 +285,7 @@ ServerStream::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR
       ServerStream *stream = new (PERSISTENT_NEW) ServerStream(connfd, bio);
 #else
       ServerStream *stream = new (PERSISTENT_NEW) ServerStream(connfd);
+      // ServerStreamRaw *streamRaw = new (PERSISTENT_NEW) ServerStreamRaw(connfd);
 #endif
       compiler->compile(stream);
       }
