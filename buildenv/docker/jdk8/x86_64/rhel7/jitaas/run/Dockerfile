@@ -31,10 +31,21 @@ FROM registry.access.redhat.com/ubi7/ubi:latest
 # Bring the sdk into the image
 WORKDIR /opt
 COPY j2sdk-image /opt/sdk-ubi
+MAINTAINER adoptopenjdk@gmail.com
+#labels for container catalog
+LABEL name="ibm-java-acceleration-server-ubi7" \
+      vendor="IBM" \
+      version="0.0.1" \
+      release="1" \
+      summary="JIT Server and other accelerators" \
+      description="Server that accelerates java runtime"
+RUN mkdir /licenses
+COPY ../../../../../../../LICENSE licenses
 
 # Create user
 RUN adduser --uid 10000 --gid 0 default
 USER 10000
 
-ENTRYPOINT ["/opt/sdk-ubi/jre/bin/java", "-XX:StartAsJITServer", "-Xjit:verbose"]
 EXPOSE 38400
+CMD ["-D", "FOREGROUND"]
+ENTRYPOINT ["/opt/sdk-ubi/jre/bin/java", "-XX:StartAsJITServer", "-Xjit:verbose"]
