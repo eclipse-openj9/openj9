@@ -22,7 +22,7 @@
 
 #define J9_EXTERNAL_TO_VM
 
-#if defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO)
+#if defined(JITSERVER_SUPPORT)
 #include "env/VMJ9Server.hpp"
 #endif
 

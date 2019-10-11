@@ -468,7 +468,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, methods, methodsInfo);
          }
          break;
-#if defined(JITSERVER_TODO)
       case MessageType::VM_getVMInfo:
          {
          ClientSessionData::VMInfo vmInfo = {};
@@ -524,7 +523,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, vmInfo, listOfCacheStartAddress, listOfCacheSizeBytes);
          }
          break;
-#endif /* defined(JITSERVER_TODO) */
       case MessageType::VM_isPrimitiveArray:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
@@ -1428,7 +1426,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, offset);
          }
          break;
-#if defined(JITSERVER_TODO)
       case MessageType::ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
@@ -1437,7 +1434,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          J9Method *j9method = NULL;
             {
             TR::VMAccessCriticalSection getResolvedHandleMethod(fe);
-            j9method = jitGetImproperInterfaceMethodFromCP(fe->vmThread(), mirror->cp(), cpIndex);
+            j9method = jitGetImproperInterfaceMethodFromCP(fe->vmThread(), mirror->cp(), cpIndex, NULL);
             }
          // Create a mirror right away
          TR_ResolvedJ9JITServerMethodInfo methodInfo;
@@ -1447,7 +1444,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, j9method, methodInfo);
          }
          break;
-#endif /* defined(JITSERVER_TODO) */
       case MessageType::ResolvedMethod_startAddressForJNIMethod:
          {
          TR_ResolvedJ9Method *ramMethod = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
@@ -2053,7 +2049,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, JITServer::Void());
          }
          break;
-#if defined(JITSERVER_TODO)
       case MessageType::SharedCache_storeSharedData:
          {
          auto recv = client->getRecvData<std::string, J9SharedDataDescriptor, std::string>();
@@ -2065,7 +2060,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, ptr);
          }
          break;
-#endif /* defined(JITSERVER_TODO) */
       case MessageType::runFEMacro_derefUintptrjPtr:
          {
          TR::VMAccessCriticalSection deref(fe);
