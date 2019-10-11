@@ -70,6 +70,8 @@ public:
 
    uint32_t getSize();
 
+   bool dontEliminateStores(bool isForLocalDeadStore = false);
+
    /// given a direct call to Object.clone node, return the class of the receiver.
    ///
    TR_OpaqueClassBlock* getCloneClassInNode();
