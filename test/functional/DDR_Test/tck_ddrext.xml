@@ -131,6 +131,15 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo>DUMP_OPTION: ${DUMP_OPTION}</echo>
 		<echo>EXTRADUMPOPT: ${EXTRADUMPOPT}</echo>
 
+		<!-- We use the -Xint option to store the startup hint into the shared chache. -->
+		<exec executable="${JAVA_COMMAND}" failonerror="true">
+			<arg line="-Xscmx16m -Xshareclasses:name=ddrextjunitSCC -Xgcpolicy:gencon" />
+			<arg line="-Xint" />
+			<arg value="-cp" />
+			<arg value="${TEST_RESROOT}/DDR_Test.jar" />
+			<arg value="j9vm.test.corehelper.SCCTestHelper" />
+		</exec>
+
 		<exec executable="${JAVA_COMMAND}" failonerror="true">
 			<arg line="${DUMP_OPTION}" />
 			<arg line="-Xitsn1000" />
