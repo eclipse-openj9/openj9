@@ -26,8 +26,7 @@ public class Options {
 	private static String spec = "";
 	private static String jdkVersion = "";
 	private static String impl = "";
-	// TODO: simpilify the dir after testing
-	private static String projectRootDir = System.getProperty("user.dir") + "/scripts/testKitGen/../../..";
+	private static String projectRootDir = System.getProperty("user.dir") + "/..";
 	private static String buildList = "";
 	private static String iterations = "";
 	private static String testFlag = "";
