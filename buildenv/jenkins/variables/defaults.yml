@@ -286,11 +286,11 @@ x86-64_linux:
     13: '--openssl-version=1.1.1a'
     next: '--openssl-version=1.1.1a'
   extra_configure_options:
-    8: '--with-openssl=fetched'
-    11: '--with-openssl=fetched'
-    12: '--with-openssl=fetched'
-    13: '--with-openssl=fetched'
-    next: '--with-openssl=fetched'
+    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
   build_env:
     cmd:
       8: 'source /opt/rh/devtoolset-7/enable'
@@ -337,11 +337,11 @@ x86-64_linux_cm:
     13: '--openssl-version=1.1.1a'
     next: '--openssl-version=1.1.1a'
   extra_configure_options:
-    8: '--with-cmake --disable-ddr --with-openssl=fetched'
-    11: '--with-cmake --with-openssl=fetched'
-    12: '--with-cmake --disable-ddr --with-openssl=fetched'
-    13: '--with-cmake --disable-ddr --with-openssl=fetched'
-    next: '--with-cmake --disable-ddr --with-openssl=fetched'
+    8: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
+    11: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    12: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
+    13: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
+    next: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
   extra_make_options:
     8: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
     11: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
@@ -403,11 +403,11 @@ x86-64_linux_xl:
     13: '--openssl-version=1.1.1a'
     next: '--openssl-version=1.1.1a'
   extra_configure_options:
-    8: '--with-noncompressedrefs --with-openssl=fetched'
-    11: '--with-noncompressedrefs --with-openssl=fetched'
-    12: '--with-noncompressedrefs --with-openssl=fetched'
-    13: '--with-noncompressedrefs --with-openssl=fetched'
-    next: '--with-noncompressedrefs --with-openssl=fetched'
+    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
+    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
+    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
+    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
+    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
   build_env:
     cmd:
       8: 'source /opt/rh/devtoolset-7/enable'
