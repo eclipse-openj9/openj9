@@ -80,6 +80,7 @@
 #include "bcnames.h"
 #include "jimagereader.h"
 #include "vendor_version.h"
+#include "stackmap_api.h"
 
 #ifdef J9VM_OPT_ZIP_SUPPORT
 #include "zip_api.h"
@@ -3243,6 +3244,12 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 			vm->extendedRuntimeFlags |= J9_EXTENDED_RUNTIME_POSITIVE_HASHCODE;
 		} else if (enablePositiveHashCode < disablePositiveHashCode) {
 			vm->extendedRuntimeFlags &= ~(UDATA)J9_EXTENDED_RUNTIME_POSITIVE_HASHCODE;
+		} else if (0 == strcmp(testString, VMOPT_XXDEBUGLOCALMAPPER)) {
+			/* There is no option to revert to the non-debug local mapper as using such
+			 * an option when in debug mode would result in issues where the debugger
+			 * may have the wrong view of data
+			 */
+			installDebugLocalMapper(vm);
 		}
 	}
 

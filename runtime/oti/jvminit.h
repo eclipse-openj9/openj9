@@ -330,6 +330,7 @@ enum INIT_STAGE {
 #define VMOPT_XXHANDLESIGXFSZ "-XX:+HandleSIGXFSZ"
 #define VMOPT_XXHEAPDUMPONOOM "-XX:+HeapDumpOnOutOfMemoryError"
 #define VMOPT_XXNOHEAPDUMPONOOM "-XX:-HeapDumpOnOutOfMemoryError"
+#define VMOPT_XXDEBUGLOCALMAPPER "-XX:DebugLocalMapper"
 
 #define VMOPT_XSOFTREFTHRESHOLD "-XSoftRefThreshold"
 #define VMOPT_XAGGRESSIVE "-Xaggressive"
