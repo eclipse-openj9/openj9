@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 2005, 2019 IBM Corp. and others
  *
@@ -26,6 +26,8 @@ import java.lang.management.ClassLoadingMXBean;
 import java.lang.management.ManagementFactory;
 
 import javax.management.ObjectName;
+
+import openj9.internal.management.ClassLoaderInfoBaseImpl;
 
 /**
  * Runtime type for {@link ClassLoadingMXBean}.
@@ -61,17 +63,11 @@ public final class ClassLoadingMXBeanImpl implements ClassLoadingMXBean {
 	}
 
 	/**
-	 * @return the number of loaded classes
-	 * @see #getLoadedClassCount()
-	 */
-	private native int getLoadedClassCountImpl();
-
-	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public int getLoadedClassCount() {
-		return this.getLoadedClassCountImpl();
+		return (int)ClassLoaderInfoBaseImpl.getLoadedClassCountImpl();
 	}
 
 	/**
@@ -89,17 +85,11 @@ public final class ClassLoadingMXBeanImpl implements ClassLoadingMXBean {
 	}
 
 	/**
-	 * @return the total number of unloaded classes
-	 * @see #getUnloadedClassCount()
-	 */
-	private native long getUnloadedClassCountImpl();
-
-	/**
 	 * {@inheritDoc}
 	 */
 	@Override
 	public long getUnloadedClassCount() {
-		return this.getUnloadedClassCountImpl();
+		return ClassLoaderInfoBaseImpl.getUnloadedClassCountImpl();
 	}
 
 	/**

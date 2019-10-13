@@ -331,15 +331,15 @@ void JNICALL Java_java_net_PlainMulticastSocketImpl_createMulticastSocketImpl (
 
 /* J9SourceManagementClassLoading*/
 extern J9_CFUNC jlong JNICALL
-Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getUnloadedClassCountImpl (JNIEnv *env, jobject beanInstance);
+Java_openj9_internal_management_ClassLoaderInfoBaseImpl_getUnloadedClassCountImpl (JNIEnv *env, jobject beanInstance);
 extern J9_CFUNC void JNICALL
 Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_setVerboseImpl (JNIEnv *env, jobject beanInstance, jboolean value);
 extern J9_CFUNC jlong JNICALL
 Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getTotalLoadedClassCountImpl (JNIEnv *env, jobject beanInstance);
 extern J9_CFUNC jboolean JNICALL
 Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_isVerboseImpl (JNIEnv *env, jobject beanInstance);
-extern J9_CFUNC jint JNICALL
-Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getLoadedClassCountImpl (JNIEnv *env, jobject beanInstance);
+extern J9_CFUNC jlong JNICALL
+Java_openj9_internal_management_ClassLoaderInfoBaseImpl_getLoadedClassCountImpl (JNIEnv *env, jobject beanInstance);
 
 /* J9SourceManagementGarbageCollector*/
 extern J9_CFUNC jlong JNICALL
