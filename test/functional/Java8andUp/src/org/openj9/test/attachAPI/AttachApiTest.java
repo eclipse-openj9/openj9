@@ -35,7 +35,6 @@ import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.List;
-import java.util.Optional;
 import java.util.Properties;
 
 import org.openj9.test.util.PlatformInfo;
@@ -70,6 +69,13 @@ abstract class AttachApiTest {
 
 	protected static void log(String outLine) {
 		logger.debug(outLine);
+	}
+	
+	protected static void logOutput(List<String> output, String utilName) {
+		PrintStream stream = StringPrintStream.factory();
+		stream.println(utilName + " output:");
+		output.forEach(s -> stream.println(s));
+		logger.debug(stream.toString());
 	}
 	
 	public void logProperties(Properties props) {
