@@ -41,8 +41,6 @@ RUN apt-get update \
     cmake \
     cpio \
     file \
-    g++-4.8 \
-    gcc-4.8 \
     git \
     git-core \
     libasound2-dev \
@@ -74,11 +72,17 @@ RUN apt-get update \
     vim \
   && rm -rf /var/lib/apt/lists/*
 
-# Create links for c++,g++,cc,gcc
-RUN ln -s g++ /usr/bin/c++ \
-  && ln -s g++-4.8 /usr/bin/g++ \
-  && ln -s gcc /usr/bin/cc \
-  && ln -s gcc-4.8 /usr/bin/gcc
+# Add the GCC-7.3 Binary
+RUN cd /usr/local \
+  && wget -O gcc-7.tar.xz "https://ci.adoptopenjdk.net/userContent/gcc/gcc730+ccache.x86_64.tar.xz" \
+  && tar -xJf gcc-7.tar.xz --strip-components=1 \
+  && rm -rf gcc-7.tar.xz
+  
+# Create links for GCC to access the C library and gcc,g++
+RUN ln -s /usr/lib/x86_64-linux-gnu /usr/lib64 \
+  && ln -s /usr/include/x86_64-linux-gnu/* /usr/local/include \
+  && ln -s /usr/local/bin/g++-7.3 /usr/bin/g++ \
+  && ln -s /usr/local/bin/gcc-7.3 /usr/bin/gcc
 
 # Download and setup freemarker.jar to /root/freemarker.jar
 RUN cd /root \
