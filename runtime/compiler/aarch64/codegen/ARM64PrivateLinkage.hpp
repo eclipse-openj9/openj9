@@ -51,6 +51,19 @@ class ARM64PrivateLinkage : public TR::Linkage
          TR::RegisterDependencyConditions *dependencies,
          TR_LinkageConventions linkage);
 
+   /**
+    * @brief Store informaiton of outgoing memory argument
+    * @param[in] argReg : argument register
+    * @param[in] offset : offset from Java SP
+    * @param[in] opCode : opcode for storing argument
+    * @param[in] memArg : MemoryArgument
+    */
+   void pushOutgoingMemArgument(
+      TR::Register *argReg,
+      int32_t offset,
+      TR::InstOpCode::Mnemonic opCode,
+      TR::ARM64MemoryArgument &memArg);
+
    public:
 
    /**
