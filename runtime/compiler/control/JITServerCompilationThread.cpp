@@ -303,13 +303,11 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
          _vm = TR_J9VMBase::get(_jitConfig, compThread, TR_J9VMBase::J9_SERVER_VM);
          }
 
-#if defined(JITSERVER_TODO)
       if (_vm->sharedCache())
          // Set/update stream pointer in shared cache.
          // Note that if remote-AOT is enabled, even regular J9_SERVER_VM will have a shared cache
          // This behaviour is consistent with non-JITServer
          ((TR_J9JITServerSharedCache *) _vm->sharedCache())->setStream(stream);
-#endif /* defined(JITSERVER_TODO) */
 
       //if (seqNo == 100)
       //   throw JITServer::StreamFailure(); // stress testing
