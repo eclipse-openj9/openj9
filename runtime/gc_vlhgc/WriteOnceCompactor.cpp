@@ -1575,7 +1575,7 @@ public:
 		scanJNIGlobalReferences(env);
 		scanStringTable(env);
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-                scanDoubleMappedObjects(env);
+		scanDoubleMappedObjects(env);
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 		scanMonitorReferences(env);
 		scanJNIWeakGlobalReferences(env);

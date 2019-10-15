@@ -26,7 +26,6 @@ CONFIGURE_ARGS += \
 	--enable-debug \
 	--enable-OMR_THR_THREE_TIER_LOCKING \
 	--enable-OMR_THR_YIELD_ALG \
-	--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 	--enable-OMR_THR_SPIN_WAKE_CONTROL
 
 ifeq (linux_x86-64_cmprssptrs, $(SPEC))
@@ -34,6 +33,7 @@ ifeq (linux_x86-64_cmprssptrs, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
@@ -50,6 +50,7 @@ ifeq (linux_x86-64_cmprssptrs_panama, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
@@ -66,6 +67,7 @@ ifeq (linux_x86-64_codecov, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
@@ -77,6 +79,7 @@ ifeq (linux_x86-64, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
@@ -111,6 +114,7 @@ ifeq (linux_x86-64_cmprssptrs_purec, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
@@ -125,6 +129,7 @@ ifeq (linux_x86-64_purec, $(SPEC))
 		--enable-OMRTHREAD_LIB_UNIX \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \

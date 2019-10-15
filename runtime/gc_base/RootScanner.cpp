@@ -231,13 +231,10 @@ MM_RootScanner::doStringTableSlot(J9Object **slotPtr, GC_StringTableIterator *st
 }
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-/**
- * @todo Provide function documentation
- */
 void
 MM_RootScanner::doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier)
 {
-        doSlot((J9Object **)&objectPtr);
+	/* No need to call doSlot() here since there's nothing to update */
 }
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
@@ -882,9 +879,9 @@ MM_RootScanner::scanDoubleMappedObjects(MM_EnvironmentBase *env)
 			if (region->isArrayletLeaf()) {
 				J9Object *spineObject = (J9Object *)region->_allocateData.getSpine();
 				Assert_MM_true(NULL != spineObject);
-				void *contiguous = region->_arrayletDoublemapID.address;
-				if (NULL != contiguous) {
-					doDoubleMappedObjectSlot(spineObject, &region->_arrayletDoublemapID);
+				J9PortVmemIdentifier *arrayletDoublemapID = &region->_arrayletDoublemapID;
+				if (NULL != arrayletDoublemapID->address) {
+					doDoubleMappedObjectSlot(spineObject, arrayletDoublemapID);
 				}
 			}
 		}

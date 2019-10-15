@@ -373,12 +373,6 @@ public:
 	}
 #endif /* J9VM_OPT_JVMTI */
 
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	void setIncludeDoubleMap(bool includeDoubleMap) {
-		_includeDoubleMap = includeDoubleMap;
-	}
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
-
 	/** Set whether the iterator will scan the JVMTIObjectTagTables (if applicable to the scan type) */
 	void setTrackVisibleStackFrameDepth(bool trackVisibleStackFrameDepth) {
 		 _trackVisibleStackFrameDepth = trackVisibleStackFrameDepth;
@@ -447,6 +441,15 @@ public:
 #endif /* J9VM_OPT_JVMTI */
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	/**
+	 * Scans each heap region for arraylet leaves that contains a not NULL
+	 * contiguous address. This address points to a contiguous representation
+	 * of the arraylet associated with this leaf. Only arraylets that has been
+	 * double mapped will contain such contiguous address, otherwise the
+	 * address will be NULL
+	 * 
+	 * @param env thread GC Environment
+	 */
 	void scanDoubleMappedObjects(MM_EnvironmentBase *env);
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
@@ -504,7 +507,15 @@ public:
 	virtual void doVMClassSlot(J9Class **slotPtr, GC_VMClassSlotIterator *vmClassSlotIterator);
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator);
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	virtual void doDoubleMappedObjectSlot(J9Object *obj, struct J9PortVmemIdentifier *identifier);
+	/**
+	 * Frees double mapped region associated to objectPtr (arraylet spine) if objectPtr
+	 * is not live
+	 *
+	 * @param objectPtr[in] indexable object's spine
+	 * @param identifier[in/out] identifier associated with object's spine, which contains
+	 * doble mapped address and size
+	 */
+	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier);
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	
 	/**

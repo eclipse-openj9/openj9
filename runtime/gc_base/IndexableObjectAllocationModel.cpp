@@ -265,12 +265,6 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 				 */
 				if (extensions->indexableObjectModel.isArrayletDataDiscontiguous(spine)) {
 					doubleMapArraylets(env, (J9Object *)spine);
-					/* 
-					 * If doublemap fails the caller must handle it appropriatly. In case
-					 * of JNI critical, if doublemap fails, it will fall back to copying
-					 * each element of the array to a temporary array. It might hurt performance
-					 * but execution won't halt.
-					 */
 				}
 			}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
@@ -285,9 +279,9 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 			}
 			break;
 
-		/* Unreachable if double map is enabled */
 		case GC_ArrayletObjectModel::Hybrid:
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+			/* Unreachable if double map is enabled */
 			if (extensions->indexableObjectModel.isDoubleMappingEnabled()) {
 				Assert_MM_double_map_unreachable();
 			}
@@ -317,10 +311,10 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 }
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-#if !defined(LINUX) || !defined(J9VM_ENV_DATA64) || defined(OMRZTPF)
+#if !(defined(LINUX) && defined(J9VM_ENV_DATA64)) || defined(OMRZTPF)
 /* Double map is only supported on LINUX 64 bit Systems for now */
 #error "Platform not supported by Double Map API"
-#endif /* !definedLINUX || !defined(J9VM_ENV_DATA64) || defined(OMRZTPF) */
+#endif /* !(defined(LINUX) && defined(J9VM_ENV_DATA64)) || defined(OMRZTPF) */
 void * 
 MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J9Object *objectPtr) 
 {
@@ -329,14 +323,9 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	GC_ArrayletLeafIterator arrayletLeafIterator(javaVM, (J9IndexableObject *)objectPtr);
-	UDATA arrayletLeafCount = arrayletLeafIterator.getNumLeafs();
 	MM_Heap *heap = extensions->getHeap();
 	UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
-
-	/* Adjust arraylet leaf count. There might be the case where the last leaf is NULL */
-	if (_dataSize % arrayletLeafSize == 0) {
-		arrayletLeafCount -= 1;
-	}
+	UDATA arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, _dataSize) / arrayletLeafSize;
 
 	void *result = NULL;
 
@@ -347,10 +336,9 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 		arrayletLeaveAddrs = (void **)env->getForge()->allocate(arrayletLeafCount * sizeof(uintptr_t), MM_AllocationCategory::GC_HEAP, J9_GET_CALLSITE());
 	}
 
-	if (arrayletLeaveAddrs == NULL) {
+	if (NULL == arrayletLeaveAddrs) {
 		return NULL;
 	}
-	UDATA elementsSize = extensions->indexableObjectModel.getDataSizeInBytes((J9IndexableObject *)objectPtr);
 
 	GC_SlotObject *slotObject = NULL;
 	uintptr_t count = 0;
@@ -365,6 +353,9 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 		count++;
 	}
 
+	/* Number of arraylet leaves in the iterator must match the number of leaves calculated */
+	Assert_MM_true(arrayletLeafCount == count);
+
 	GC_SlotObject objectSlot(env->getOmrVM(), &extensions->indexableObjectModel.getArrayoidPointer((J9IndexableObject *)objectPtr)[0]);
 	J9Object *firstLeafSlot = objectSlot.readReferenceFromSlot();
 
@@ -374,7 +365,7 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 	UDATA pageSize = j9mmap_get_region_granularity(NULL);
 
 	/* Get heap and from there call an OMR API that will doble map everything */
-	result = heap->doubleMapArraylet(env, arrayletLeaveAddrs, count, arrayletLeafSize, elementsSize, 
+	result = heap->doubleMapArraylet(env, arrayletLeaveAddrs, count, arrayletLeafSize, _dataSize,
 				&firstLeafRegionDescriptor->_arrayletDoublemapID,
 				pageSize);
 
@@ -382,10 +373,13 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 		env->getForge()->free((void *)arrayletLeaveAddrs);
 	}
 
-	if (NULL == result) { /* Double map failed */
-		return NULL;
-	}
-	
+	/*
+	 * Double map failed
+	 * If doublemap fails the caller must handle it appropriatly. In case
+	 * of JNI critical, if doublemap fails, it will fall back to copying
+	 * each element of the array to a temporary array. It might hurt performance
+	 * but execution won't halt.
+	 */
 	if (NULL == firstLeafRegionDescriptor->_arrayletDoublemapID.address) {
 		result = NULL;
 	}

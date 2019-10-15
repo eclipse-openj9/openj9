@@ -33,6 +33,9 @@ GC_ArrayletObjectModelBase::initialize(MM_GCExtensionsBase * extensions)
 	_arrayletRangeBase = NULL;
 	_arrayletRangeTop = (void *)UDATA_MAX;
 	_arrayletSubSpace = NULL;
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	_enableDoubleMapping = false;
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	_largestDesirableArraySpineSize = UDATA_MAX;
 
 	return true;
