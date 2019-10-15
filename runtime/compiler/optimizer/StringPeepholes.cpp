@@ -2068,7 +2068,12 @@ TR::SymbolReference *TR_StringPeepholes::findSymRefForValueOf(const char *sig)
    {
    // try to find the symbol ref for String.valueOf
    TR_OpaqueClassBlock *stringClass = comp()->getStringClassPointer();
-   TR_ASSERT(stringClass, "stringClass cannot be 0 because we did this before in init\n");
+
+   // It is possible for getStringClassPointer to return NULL in an AOT compilation
+   if (!stringClass && comp()->compileRelocatableCode())
+      comp()->failCompilation<TR::CompilationException>("StringPeepholes: stringClass is NULL");
+
+   TR_ASSERT_FATAL(stringClass, "stringClass should not be NULL\n");
    TR_ResolvedMethod *method = comp()->fej9()->getResolvedMethodForNameAndSignature(trMemory(), stringClass, "valueOf", sig);
    return method ? getSymRefTab()->findOrCreateMethodSymbol(JITTED_METHOD_INDEX, -1, method, TR::MethodSymbol::Static) : NULL;
    }
