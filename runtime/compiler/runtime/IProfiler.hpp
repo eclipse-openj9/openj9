@@ -94,6 +94,7 @@ class TR_BitVector;
 class TR_J9VMBase;
 class TR_J9SharedCache;
 
+
 #if defined (_MSC_VER)
 extern "C" __declspec(dllimport) void __stdcall DebugBreak();
 #if _MSC_VER < 1600

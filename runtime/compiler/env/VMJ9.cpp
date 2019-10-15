@@ -22,7 +22,7 @@
 
 #define J9_EXTERNAL_TO_VM
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO)
 #include "env/VMJ9Server.hpp"
 #endif
 
@@ -748,7 +748,7 @@ TR_J9VMBase::TR_J9VMBase(
       )
       // shared classes and AOT must be enabled, or we should be on the JITServer with remote AOT enabled
       {
-#if defined(JITSERVER_SUPPORT)
+#if defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO)
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          _sharedCache = new (PERSISTENT_NEW) TR_J9JITServerSharedCache(this);
