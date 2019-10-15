@@ -180,7 +180,6 @@ enum MessageType
    VM_getArrayLengthInElements = 256;
    VM_getClassFromJavaLangClass = 257;
    VM_getOffsetOfClassFromJavaLangClassField = 258;
-   VM_getConstantPoolFromMethod = 259;
    /* VM_getProcessID = 260; */
    VM_getIdentityHashSaltPolicy = 261;
    VM_getOffsetOfJLThreadJ9Thread = 262;
@@ -220,7 +219,6 @@ enum MessageType
    /* VM_getSystemClassLoader = 296; */
    VM_instanceOfOrCheckCast = 297;
    VM_getNewArrayTypeFromClass = 298;
-   VM_getConstantPoolFromClass = 299;
    VM_getResolvedMethodsAndMirror = 300;
    VM_getVMInfo = 301;
    VM_isAnonymousClass = 302;

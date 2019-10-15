@@ -932,17 +932,17 @@ TR_J9ServerVM::getOffsetOfClassFromJavaLangClassField()
 uintptrj_t
 TR_J9ServerVM::getConstantPoolFromMethod(TR_OpaqueMethodBlock *method)
    {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getConstantPoolFromMethod, method);
-   return std::get<0>(stream->read<uintptrj_t>());
+   TR_OpaqueClassBlock *owningClass = getClassFromMethodBlock(method);
+   return getConstantPoolFromClass(owningClass);
    }
 
 uintptrj_t
 TR_J9ServerVM::getConstantPoolFromClass(TR_OpaqueClassBlock *clazz)
    {
+   J9ConstantPool *cp;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getConstantPoolFromClass, clazz);
-   return std::get<0>(stream->read<uintptrj_t>());
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *) clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CONSTANT_POOL, (void *)&cp);
+   return reinterpret_cast<uintptrj_t>(cp);
    }
 
 uintptrj_t

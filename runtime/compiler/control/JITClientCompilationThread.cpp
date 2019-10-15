@@ -725,18 +725,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getOffsetOfClassFromJavaLangClassField());
          }
          break;
-      case MessageType::VM_getConstantPoolFromMethod:
-         {
-         TR_OpaqueMethodBlock *method = std::get<0>(client->getRecvData<TR_OpaqueMethodBlock *>());
-         client->write(response, fe->getConstantPoolFromMethod(method));
-         }
-         break;
-      case MessageType::VM_getConstantPoolFromClass:
-         {
-         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->getConstantPoolFromClass(clazz));
-         }
-         break;
       case MessageType::VM_getIdentityHashSaltPolicy:
          {
          client->getRecvData<JITServer::Void>();
