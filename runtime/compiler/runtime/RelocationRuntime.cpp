@@ -778,6 +778,29 @@ TR_RelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)
    return false;
    }
 
+#if defined(JITSERVER_SUPPORT)
+void *
+TR_RelocationRuntime::isROMClassInSharedCaches(UDATA romClassValue)
+   {
+   TR_ASSERT_FATAL(0, "Error: isROMClassInSharedCaches not supported in TR_RelocationRuntime");
+   return NULL;
+   }
+
+bool
+TR_RelocationRuntime::isRomClassForMethodInSharedCache(J9Method *method)
+   {
+   TR_ASSERT_FATAL(0, "Error: isRomClassForMethodInSharedCache not supported in TR_RelocationRuntime");
+   return false;
+   }
+
+TR_YesNoMaybe
+TR_RelocationRuntime::isMethodInSharedCache(J9Method *method)
+   {
+   TR_ASSERT_FATAL(0, "Error: isMethodInSharedCache not supported in TR_RelocationRuntime");
+   return TR_no;
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
+
 TR_OpaqueClassBlock *
 TR_RelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)
    {
@@ -1190,6 +1213,55 @@ TR_SharedCacheRelocationRuntime::storeAOTHeader(TR_FrontEnd *fe, J9VMThread *cur
       return false;
       }
    }
+
+
+#if defined(JITSERVER_SUPPORT)
+void *
+TR_SharedCacheRelocationRuntime::isROMClassInSharedCaches(UDATA romClassValue)
+   {
+   j9thread_monitor_enter(javaVM()->sharedClassConfig->configMonitor);
+   J9SharedClassCacheDescriptor *currentCacheDescriptor = javaVM()->sharedClassConfig->cacheDescriptorList;
+   bool matchFound = false;
+
+   while (!matchFound && currentCacheDescriptor)
+      {
+      if (((romClassValue < (UDATA)currentCacheDescriptor->metadataStartAddress)&& (romClassValue >= (UDATA)currentCacheDescriptor->romclassStartAddress)))
+         {
+         matchFound = true;
+         break;
+         }
+      if (currentCacheDescriptor->next == javaVM()->sharedClassConfig->cacheDescriptorList)
+         break; // Since the list is circular, break if we are about to loop back
+      currentCacheDescriptor = currentCacheDescriptor->next;
+      }
+   j9thread_monitor_exit(javaVM()->sharedClassConfig->configMonitor);
+   if (matchFound)
+      {
+      return (void *)currentCacheDescriptor;
+      }
+   else
+      {
+      return NULL;
+      }
+   }
+
+bool
+TR_SharedCacheRelocationRuntime::isRomClassForMethodInSharedCache(J9Method *method)
+   {
+   J9ROMClass *romClass = J9_CLASS_FROM_METHOD(method)->romClass;
+   bool isRomClassForMethodInSharedCache = isROMClassInSharedCaches((UDATA)romClass) ? true : false;
+   return isRomClassForMethodInSharedCache;
+   }
+
+TR_YesNoMaybe
+TR_SharedCacheRelocationRuntime::isMethodInSharedCache(J9Method *method)
+   {
+   if (isRomClassForMethodInSharedCache(method))
+      return TR_maybe;
+   else
+      return TR_no;
+   }
+#endif /* defined(JITSERVER_SUPPORT) */
 
 TR_OpaqueClassBlock *
 TR_SharedCacheRelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)
