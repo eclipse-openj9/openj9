@@ -33,8 +33,6 @@ RUN apt-get update \
 	  cmake \
 	  cpio \
 	  file \
-	  g++-4.8 \
-	  gcc-4.8 \
 	  git \
 	  libasound2-dev \
 	  libcups2-dev \
@@ -64,11 +62,17 @@ RUN apt-get update \
 	  vim \
  && rm -rf /var/lib/apt/lists/*
 
-# Create links to the required compiler version.
-RUN ln -s gcc-4.8 /usr/bin/cc \
- && ln -s gcc-4.8 /usr/bin/gcc \
- && ln -s g++-4.8 /usr/bin/c++ \
- && ln -s g++-4.8 /usr/bin/g++
+# Install GCC-7.3
+RUN cd /usr/local \
+  && wget -O gcc-7.tar.xz "https://ci.adoptopenjdk.net/userContent/gcc/gcc730+ccache.ppc64le.tar.xz" \
+  && tar -xJf gcc-7.tar.xz --strip-components=1 \
+  && rm -rf gcc-7.tar.xz
+  
+# Create links for GCC to access the C library and gcc,g++
+RUN ln -s /usr/lib/powerpc64le-linux-gnu /usr/lib64 \
+  && ln -s /usr/include/powerpc64le-linux-gnu/* /usr/local/include \
+  && ln -s /usr/local/bin/g++-7.3 /usr/bin/g++ \
+  && ln -s /usr/local/bin/gcc-7.3 /usr/bin/gcc
 
 # Download and unpack freemarker.
 RUN cd /root \
