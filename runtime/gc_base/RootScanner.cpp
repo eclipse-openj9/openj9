@@ -878,13 +878,13 @@ MM_RootScanner::scanDoubleMappedObjects(MM_EnvironmentBase *env)
 		GC_HeapRegionIteratorVLHGC regionIterator(_extensions->heap->getHeapRegionManager());
 		MM_HeapRegionDescriptorVLHGC *region = NULL;
 		reportScanningStarted(RootScannerEntity_DoubleMappedObjects);
-		while(NULL != (region = regionIterator.nextRegion())) {
-			if(region->isArrayletLeaf()) {
+		while (NULL != (region = regionIterator.nextRegion())) {
+			if (region->isArrayletLeaf()) {
 				J9Object *spineObject = (J9Object *)region->_allocateData.getSpine();
 				Assert_MM_true(NULL != spineObject);
-				void *contiguous = region->_identifier.address;
+				void *contiguous = region->_arrayletDoublemapID.address;
 				if (NULL != contiguous) {
-					doDoubleMappedObjectSlot(spineObject, &region->_identifier);
+					doDoubleMappedObjectSlot(spineObject, &region->_arrayletDoublemapID);
 				}
 			}
 		}

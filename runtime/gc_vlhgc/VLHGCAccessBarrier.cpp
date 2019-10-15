@@ -251,7 +251,7 @@ MM_VLHGCAccessBarrier::postStoreClassToClassLoader(J9VMThread *vmThread, J9Class
 }
 
 void
-MM_VLHGCAccessBarrier::copyArrayCritical(J9VMThread* vmThread, GC_ArrayObjectModel *indexableObjectModel,
+MM_VLHGCAccessBarrier::copyArrayCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
 					J9InternalVMFunctions *functions, void **data,
 					J9IndexableObject *arrayObject, jboolean *isCopy)
 {
@@ -287,23 +287,26 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(vmThread);
 		if (indexableObjectModel->isDoubleMappingEnabled()) {
-			if (indexableObjectModel->isArrayletDataDiscontigous(arrayObject)) {
+			if (indexableObjectModel->isArrayletDataDiscontiguous(arrayObject)) {
 				GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
 				J9Object *firstLeafSlot = objectSlot.readReferenceFromSlot();
 				MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)_extensions->heapRegionManager->tableDescriptorForAddress(firstLeafSlot);
-				data = firstLeafRegionDescriptor->_identifier.address;
+				data = firstLeafRegionDescriptor->_arrayletDoublemapID.address;
 
 				if (NULL == data) {
 					/* Doublemap failed, but we still need to continue execution; therefore fallback to previous approach */
 					copyArrayCritical(vmThread, indexableObjectModel, functions, &data, arrayObject, isCopy);
 				}
 			/* Corner case where there's only one arraylet leaf */
-			} else if (indexableObjectModel->isArrayletDataContigous(arrayObject)) {
+			} else if (indexableObjectModel->isArrayletDataContiguous(arrayObject)) {
 				/* Solo arraylet leaf is contiguous so we can simply return the data associated with it */
 				MM_JNICriticalRegion::enterCriticalRegion(vmThread, true);
 				Assert_MM_true(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS);
 				GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
 				data = objectSlot.readReferenceFromSlot();
+			} else {
+				/* Possible to reach here if arraylet leaf has one leaf and no elements in it */
+				Assert_MM_true((indexableObjectModel->numArraylets(arrayObject) == 1) && (indexableObjectModel->getSizeInElements(arrayObject) == 0));
 			}
 		} else
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
@@ -330,7 +333,7 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 }
 
 void
-MM_VLHGCAccessBarrier::copyBackArrayCritical(J9VMThread* vmThread, GC_ArrayObjectModel *indexableObjectModel,
+MM_VLHGCAccessBarrier::copyBackArrayCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
 					J9InternalVMFunctions *functions, void *elems,
 					J9IndexableObject **arrayObject, jint mode)
 {
@@ -369,16 +372,16 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(vmThread);
 		if (indexableObjectModel->isDoubleMappingEnabled()) {
-			if (indexableObjectModel->isArrayletDataDiscontigous(arrayObject)) {
+			if (indexableObjectModel->isArrayletDataDiscontiguous(arrayObject)) {
 				GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
 				J9Object *firstLeafSlot = objectSlot.readReferenceFromSlot();
 				MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)_extensions->heapRegionManager->tableDescriptorForAddress(firstLeafSlot);
 
-				if (NULL == firstLeafRegionDescriptor->_identifier.address) {
+				if (NULL == firstLeafRegionDescriptor->_arrayletDoublemapID.address) {
 					/* Doublemap failed, but we still need to continue execution; therefore fallback to previous approach */
 					copyBackArrayCritical(vmThread, indexableObjectModel, functions, elems, &arrayObject, mode);
 				}
-			} else if (indexableObjectModel->isArrayletDataContigous(arrayObject)) {
+			} else if (indexableObjectModel->isArrayletDataContiguous(arrayObject)) {
 				/*
 				 * Objects can not be moved if critical section is active
 				 * This trace point will be generated if object has been moved or passed value of elems is corrupted
@@ -390,6 +393,9 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 					Trc_MM_JNIReleasePrimitiveArrayCritical_invalid(vmThread, arrayObject, elems, data);
 				}
 				MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
+			} else {
+				/* Possible to reach here if arraylet leaf has one leaf and no elements in it */
+				Assert_MM_true((indexableObjectModel->numArraylets(arrayObject) == 1) && (indexableObjectModel->getSizeInElements(arrayObject) == 0));
 			}
 		} else
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
