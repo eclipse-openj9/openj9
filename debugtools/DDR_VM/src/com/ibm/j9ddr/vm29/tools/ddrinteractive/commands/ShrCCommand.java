@@ -64,6 +64,7 @@ public class ShrCCommand extends Command
 	private static final long INV_AOT_STATS = 0x80L;
 	private static final long CACHELET_STATS = 0x100L;
 	private static final long PREREQ_CACHE_STATS = 0x200L;
+	private static final long STARTUPHINT_STATS = 0x400L;
 	private static final long FIND_METHOD = 0x1000L;
 	private static final long JITPROFILE_STATS = 0x2000L;
 	private static final long JITHINT_STATS = 0x4000L;
@@ -187,6 +188,8 @@ public class ShrCCommand extends Command
 					dbgShrcPrintAllStats(out, vm, sharedClassConfig, metaStart, metaEnd, BYTE_STATS, null, false, VoidPointer.NULL, false);
 				} else if (args[0].equals("ubytestats")) {
 					dbgShrcPrintAllStats(out, vm, sharedClassConfig, metaStart, metaEnd, UNINDEXED_BYTE_STATS, null, false, VoidPointer.NULL, false);
+				} else if (args[0].equals("startuphint")) {
+					dbgShrcPrintAllStats(out, vm, sharedClassConfig, metaStart, metaEnd, STARTUPHINT_STATS, null, false, VoidPointer.NULL, false);
 				} else if (args[0].equals("clstats")) {
 					dbgShrcPrintAllStats(out, vm, sharedClassConfig, metaStart, metaEnd, CACHELET_STATS, null, false, VoidPointer.NULL, false);
 				} else if (args[0].equals("preqstats")) {
@@ -658,6 +661,7 @@ public class ShrCCommand extends Command
 		CommandUtils.dbgPrint(out, "!shrc orphanstats [range|layer=<n>]            -- Print orphan cache contents\n");
 		CommandUtils.dbgPrint(out, "!shrc scopestats [range|layer=<n>]             -- Print scope cache contents\n");
 		CommandUtils.dbgPrint(out, "!shrc bytestats [range|layer=<n>]              -- Print byte data cache contents\n");
+		CommandUtils.dbgPrint(out, "!shrc startuphint [range|layer=<n>]            -- Print startup hint data cache contents\n");
 		CommandUtils.dbgPrint(out, "!shrc ubytestats [range|layer=<n>]             -- Print unindexed byte data cache contents\n");
 		CommandUtils.dbgPrint(out, "!shrc stalestats [range|layer=<n>]             -- Print all the stale cache contents\n");
 		CommandUtils.dbgPrint(out, "!shrc clstats [range|layer=<n>]                -- Print cachelet cache contents\n");
@@ -1001,18 +1005,33 @@ public class ShrCCommand extends Command
 					}
 					if (rwOffset.eq(0)) {
 						byteDataLen += len.longValue();
-						if ((statTypes & BYTE_STATS) != 0) {
+						if (((statTypes & BYTE_STATS) != 0) 
+							|| ((statTypes & STARTUPHINT_STATS) != 0)
+						) {
+							if (((statTypes & BYTE_STATS) == 0) 
+								&& (!getType(byteDataType).equals("STARTUPHINT"))
+							) {
+								continue;
+							} 
 							entryFound = true;
 							CommandUtils.dbgPrint(out, "%d: %s %s BYTEDATA !j9x %s,%s", it.jvmID().longValue(), it.getHexAddress(), getType(byteDataType), ByteDataWrapperHelper.getDataFromByteDataWrapper(bdw, cacheHeaderPtr).getHexAddress(), len.getHexValue());
 						}
 					} else {
 						byteDataRWLen += len.longValue();
-						if ((statTypes & BYTE_STATS) != 0) {
+						if (((statTypes & BYTE_STATS) != 0)
+							|| ((statTypes & STARTUPHINT_STATS) != 0)						
+						) {
+							if (((statTypes & BYTE_STATS) == 0) 
+								&& (!getType(byteDataType).equals("STARTUPHINT"))
+							) {
+								continue;
+							} 
 							entryFound = true;
 							CommandUtils.dbgPrint(out, "%d: %s BYTEDATA RW !j9x %s,%s", it.jvmID().longValue(), it.getHexAddress(), ByteDataWrapperHelper.getDataFromByteDataWrapper(bdw, cacheHeaderPtr).getHexAddress(), len.getHexValue());
 						}
 					}
 					if (((statTypes & BYTE_STATS) != 0)
+						|| ((statTypes & STARTUPHINT_STATS) != 0)
 						|| (showAllStaleFlag && isStale)
 					) {
 						if (isStale) {
