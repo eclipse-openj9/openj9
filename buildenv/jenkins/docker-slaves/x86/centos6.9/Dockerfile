@@ -26,6 +26,8 @@
 #   docker build -t openj9 -f Dockerfile .
 #   docker run -it openj9
 
+FROM nvidia/cuda:9.0-devel-centos6 AS cuda-dev
+
 FROM centos:centos6.9
 
 # Install required OS tools
@@ -186,11 +188,10 @@ RUN wget https://archive.apache.org/dist/ant/binaries/apache-ant-1.10.5-bin.zip 
   && rm -rf ant-contrib
 
 # Install Cuda version 9.0
-RUN cd /usr/src/ \
-  && wget https://developer.nvidia.com/compute/cuda/9.0/Prod/local_installers/cuda_9.0.176_384.81_linux-run \
-  && chmod +x cuda_9.0.176_384.81_linux-run \
-  && /usr/src/cuda_9.0.176_384.81_linux-run --silent --toolkit --override \
-  && rm -f /usr/src/cuda_9.0.176_384.81_linux-run
+
+RUN mkdir -p /usr/local/cuda-9.0/nvvm
+COPY --from=cuda-dev /usr/local/cuda-9.0/include      /usr/local/cuda-9.0/include
+COPY --from=cuda-dev /usr/local/cuda-9.0/nvvm/include /usr/local/cuda-9.0/nvvm/include
 
 # set up sshd config
 RUN mkdir /var/run/sshd \
