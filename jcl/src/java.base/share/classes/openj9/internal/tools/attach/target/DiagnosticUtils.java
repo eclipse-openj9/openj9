@@ -152,7 +152,7 @@ public class DiagnosticUtils {
 	 * @param diagnosticCommand String containing the command and options
 	 * @return command result or diagnostic information in case of error
 	 */
-	public static DiagnosticProperties executeDiagnosticCommand(String diagnosticCommand) {
+	static DiagnosticProperties executeDiagnosticCommand(String diagnosticCommand) {
 		IPC.logMessage("executeDiagnosticCommand: ", diagnosticCommand); //$NON-NLS-1$
 
 		DiagnosticProperties result;
