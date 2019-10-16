@@ -25,16 +25,19 @@
 #include "compile/InlineBlock.hpp"
 #include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "env/j9methodServer.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
+#include "env/VMJ9.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/ParameterSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "optimizer/PreExistence.hpp"
-#include "ras/LogTracer.hpp"
-#include "env/VMJ9.h"
 #include "optimizer/J9CallGraph.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
+#include "ras/LogTracer.hpp"
 #include "runtime/J9Profiler.hpp"
 
 // Empirically determined value
@@ -591,8 +594,19 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       }
 
    // PHASE 1:  Bytecode Iteration
-
    TR_J9ByteCode bc = bci.first(), nextBC;
+
+#if defined(JITSERVER_SUPPORT)
+   if (comp()->isOutOfProcessCompilation())
+      {
+      // JITServer optimization:
+      // request this resolved method to create all of its callee resolved methods
+      // in a single query.
+      auto calleeMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(calltarget->_calleeMethod);
+      calleeMethod->cacheResolvedMethodsCallees();
+      }
+#endif /* defined(JITSERVER_SUPPORT) */
+
    for (; bc != J9BCunknown; bc = bci.next())
       {
       nph.processByteCode();
