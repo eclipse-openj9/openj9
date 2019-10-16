@@ -233,7 +233,7 @@ TR::S390J9CallSnippet::generateInvokeExactJ2IThunk(TR::Node * callNode, int32_t 
       cursor += 2;
       }
 
-   *(uintptrj_t *) cursor = (uintptrj_t) dispatcherSymbol->getMethodAddress();
+   *(uintptrj_t *) cursor = (uintptrj_t) cg->fej9()->getInvokeExactThunkHelperAddress(comp, dispatcherSymbol, callNode->getDataType());
    cursor += sizeof(uintptrj_t);
 
    diagnostic("\n-- ( Created invokeExact J2I thunk " POINTER_PRINTF_FORMAT " for node " POINTER_PRINTF_FORMAT " )", thunk, callNode);
@@ -372,7 +372,11 @@ TR::S390J9CallSnippet::emitSnippetBody()
                                                                         cg()),
                                                                      __FILE__, __LINE__, callNode);
             }
+#if defined(JITSERVER_SUPPORT)
+         else if (!comp->isOutOfProcessCompilation()) // Since we query this information from the client, remote compilations don't need to add relocation records for TR_MethodObject
+#else
          else
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) callNode->getSymbolReference(), getNode() ? (uint8_t *)(intptr_t)getNode()->getInlinedSiteIndex() : (uint8_t *)-1, TR_MethodObject, cg()),
                                     __FILE__, __LINE__, callNode);

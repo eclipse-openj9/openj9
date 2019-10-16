@@ -120,16 +120,16 @@ using TR_ResolvedMethodInfoCache = UnorderedMap<TR_ResolvedMethodKey, TR_Resolve
 
 /**
  * @class TR_ResolvedJ9JITServerMethod
- * @brief Class used by JITServer for obtaining method/class information needed 
+ * @brief Class used by JITServer for obtaining method/class information needed
  * during compilation from JITClient
  *
- * This class is an extension of the TR_ResolvedJ9Method class. Most of the APIs of 
- * TR_ResolvedJ9JITServerMethod are remote calls to the JITClient to obtain 
- * compilation information about the compiling method and related classes. Upon 
+ * This class is an extension of the TR_ResolvedJ9Method class. Most of the APIs of
+ * TR_ResolvedJ9JITServerMethod are remote calls to the JITClient to obtain
+ * compilation information about the compiling method and related classes. Upon
  * instantiation of a TR_ResolvedJ9JITServerMethod class, a mirror TR_ResolvedJ9Method
- * will be created on the client via TR_ResolvedJ9JITServerMethod::createResolvedMethodMirror. 
+ * will be created on the client via TR_ResolvedJ9JITServerMethod::createResolvedMethodMirror.
  * During compilation the JITServer will mostly be communicating with the client-side
- * mirror instance. Certain data are cached at the JITServer to reduce the number 
+ * mirror instance. Certain data are cached at the JITServer to reduce the number
  * of remote calls to JITClient.
  */
 
@@ -247,13 +247,13 @@ private:
 
 /**
  * @class TR_ResolvedRelocatableJ9JITServerMethod
- * @brief Class used by JITServer for obtaining method/class information needed 
+ * @brief Class used by JITServer for obtaining method/class information needed
  * during compilation from JITClient plus additional handling for AOT compilations
  *
  * This class is an extension of the above TR_ResolvedJ9JITServerMethod class that
- * has additional handling for AOT compilations. The relationship between 
- * TR_ResolvedJ9JITServerMethod and TR_ResolvedRelocatableJ9JITServerMethod is similar 
- * to the relationship between TR_ResolvedJ9Method and TR_ResolvedRelocatableJ9Method. 
+ * has additional handling for AOT compilations. The relationship between
+ * TR_ResolvedJ9JITServerMethod and TR_ResolvedRelocatableJ9JITServerMethod is similar
+ * to the relationship between TR_ResolvedJ9Method and TR_ResolvedRelocatableJ9Method.
  */
 
 class TR_ResolvedRelocatableJ9JITServerMethod : public TR_ResolvedJ9JITServerMethod
@@ -301,7 +301,6 @@ protected:
    virtual void                  handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;
    virtual void                  handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;
    virtual void                  handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP) override;
-   virtual char *                fieldOrStaticNameChars(int32_t cpIndex, int32_t & len) override;
    virtual TR_FieldAttributesCache &getAttributesCache(bool isStatic, bool unresolvedInCP=false) override;
    virtual bool validateMethodFieldAttributes(const TR_J9MethodFieldAttributes &attributes, bool isStatic, int32_t cpIndex, bool isStore, bool needAOTValidation) override;
    UDATA getFieldType(J9ROMConstantPoolItem * CP, int32_t cpIndex);

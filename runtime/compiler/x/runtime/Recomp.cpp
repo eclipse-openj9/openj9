@@ -115,7 +115,7 @@ TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *st
       auto &methodInfoStr = std::get<1>(recv);
       return J9::Recompilation::persistentJittedBodyInfoFromString(bodyInfoStr, methodInfoStr, TR::comp()->trMemory());
       }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    // The body info pointer is stored in the pre-prologue of the method. The
    // location of the field depends upon the type of the method header.  Use the
    // header-type bits in the linkage info fields to determine what kind of header
@@ -124,7 +124,7 @@ TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *st
    TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
    return linkageInfo->isRecompMethodBody() ?
       *(TR_PersistentJittedBodyInfo **)((uint8_t*)startPC + START_PC_TO_METHOD_INFO_ADDRESS) :
-      0;
+      NULL;
    }
 
 // This method should only be called for methods compiled for sampling

@@ -2246,13 +2246,6 @@ TR_ResolvedRelocatableJ9JITServerMethod::isUnresolvedMethodHandle(I_32 cpIndex)
    return true;
    }
 
-char *
-TR_ResolvedRelocatableJ9JITServerMethod::fieldOrStaticNameChars(I_32 cpIndex, int32_t & len)
-   {
-   len = 0;
-   return "";
-   }
-
 TR_OpaqueClassBlock *
 TR_ResolvedRelocatableJ9JITServerMethod::getDeclaringClassFromFieldOrStatic(TR::Compilation *comp, int32_t cpIndex)
    {
