@@ -736,7 +736,7 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
    TR::Instruction* cursor;
 
    const int elementSizeMask = (isCompressedString) ? 0x0 : 0x1;    // byte or halfword mask
-   const int8_t sizeOfVector = cg->machine()->getVRFSize();
+   const int32_t sizeOfVector = cg->machine()->getVRFSize();
    const bool is64 = TR::Compiler->target.is64Bit();
    uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
 
@@ -860,7 +860,9 @@ TR::Register * caseConversionHelper(TR::Node* node, TR::CodeGenerator* cg, bool 
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, fullVectorConversion);
 
-   generateRIEInstruction(cg, TR::InstOpCode::CIJ, node, lengthRegister, sizeOfVector, success, TR::InstOpCode::COND_BL);
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node,
+                                           lengthRegister, sizeOfVector,
+                                           TR::InstOpCode::COND_BL, success, false);
 
    // Set the loopCounter to the amount of groups of 16 bytes left, ignoring already accounted for remainder
    generateRSInstruction(cg, TR::InstOpCode::SRL, node, loopCounter, loopCounter, 4);
@@ -928,6 +930,9 @@ inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isLatin1)
    TR::Register* ch = cg->evaluate(node->getChild(2));
    TR::Register* offset = cg->evaluate(node->getChild(3));
    TR::Register* length = cg->gprClobberEvaluate(node->getChild(4));
+
+
+   const int32_t sizeOfVector = cg->machine()->getVRFSize();
 
    // load length isn't used after loop, size must is adjusted to become bytes left
    TR::Register* loopCounter = length;
@@ -999,7 +1004,9 @@ inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isLatin1)
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_MASK1, node, notFoundInResidue);
 
    generateVRScInstruction(cg, TR::InstOpCode::VLGV, node, scratch, resultVector, generateS390MemoryReference(7, cg), 0);
-   generateRIEInstruction(cg, TR::InstOpCode::CRJ, node, scratch, loadLength, foundLabelExtractedScratch, TR::InstOpCode::COND_BNH);
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::CR, node,
+                                           scratch, loadLength,
+                                           TR::InstOpCode::COND_BNH, foundLabelExtractedScratch);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, notFoundInResidue);
 
@@ -1009,7 +1016,9 @@ inlineIntrinsicIndexOf(TR::Node * node, TR::CodeGenerator * cg, bool isLatin1)
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, fullVectorLabel);
 
-   generateRIEInstruction(cg, TR::InstOpCode::CIJ, node, length, cg->machine()->getVRFSize(), failureLabel, TR::InstOpCode::COND_BL);
+   generateS390CompareAndBranchInstruction(cg, TR::InstOpCode::C, node,
+                                           length, sizeOfVector,
+                                           TR::InstOpCode::COND_BL, failureLabel);
 
    // Set loopcounter to 1/16 of the length, remainder has already been accounted for
    generateRSInstruction(cg, TR::InstOpCode::SRL, node, loopCounter, loopCounter, 4);
