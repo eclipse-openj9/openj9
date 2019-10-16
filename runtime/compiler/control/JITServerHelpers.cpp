@@ -478,9 +478,6 @@ JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo,
 J9ROMMethod *
 JITServerHelpers::romMethodOfRamMethod(J9Method* method)
    {
-   if (!TR::CompilationInfo::getStream()) // Not JITServer
-      return J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
-
    // JITServer
    auto clientData = TR::compInfoPT->getClientData();
    J9ROMMethod *romMethod = NULL;
