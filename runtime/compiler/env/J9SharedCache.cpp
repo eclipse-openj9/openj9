@@ -885,7 +885,7 @@ TR_J9JITServerSharedCache::rememberClass(J9Class *clazz, bool create)
    {
    TR_ASSERT(_stream, "stream must be initialized by now");
    auto clientData = TR::compInfoPT->getClientData();
-   PersistentUnorderedMap<J9Class *, UDATA *> & cache = clientData->getClassClainDataCache();
+   PersistentUnorderedMap<J9Class *, UDATA *> & cache = clientData->getClassChainDataCache();
       {
       OMR::CriticalSection classChainDataMapMonitor(clientData->getClassChainDataMapMonitor());
       auto it = cache.find(clazz);

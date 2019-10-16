@@ -1932,7 +1932,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::storeValidationRecordIfNecessary(TR::Co
 
    UDATA *classChain = NULL;
    auto clientData = _fe->_compInfoPT->getClientData();
-   PersistentUnorderedMap<J9Class *, UDATA *> &classChainCache = clientData->getClassClainDataCache();
+   PersistentUnorderedMap<J9Class *, UDATA *> &classChainCache = clientData->getClassChainDataCache();
    if (definingClass)
       {
       // if defining class is known, check if we already have a corresponding class chain cached
