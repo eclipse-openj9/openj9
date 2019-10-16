@@ -86,11 +86,11 @@ public:
 
    bool generateCompressedObjectHeaders();
 
-   bool usesDiscontiguousArraylets() { return _usesDiscontiguousArraylets; }
+   bool usesDiscontiguousArraylets();
    bool canGenerateArraylets() { return usesDiscontiguousArraylets(); }
    bool useHybridArraylets() { return usesDiscontiguousArraylets(); }
-   int32_t arrayletLeafSize() { return _arrayLetLeafSize; }
-   int32_t arrayletLeafLogSize() { return _arrayLetLeafLogSize; }
+   int32_t arrayletLeafSize();
+   int32_t arrayletLeafLogSize();
 
    int32_t compressedReferenceShiftOffset();
    int32_t compressedReferenceShift();
@@ -115,17 +115,17 @@ public:
    /**
    * @brief Returns the read barrier type of VM's GC
    */
-   MM_GCReadBarrierType  readBarrierType()  { return _readBarrierType;  }
+   MM_GCReadBarrierType  readBarrierType();
 
    /**
    * @brief Returns the write barrier type of VM's GC
    */
-   MM_GCWriteBarrierType writeBarrierType() { return _writeBarrierType; }
+   MM_GCWriteBarrierType writeBarrierType();
 
    /**
    * @brief Returns whether or not object references are compressed
    */
-   bool compressObjectReferences() { return _compressObjectReferences; }
+   bool compressObjectReferences();
 
 private:
 
