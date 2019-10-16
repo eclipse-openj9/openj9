@@ -58,14 +58,12 @@
 #include "runtime/CodeCacheReclamation.h"
 #include "runtime/codertinit.hpp"
 #include "runtime/IProfiler.hpp"
-#include "runtime/JITServerIProfiler.hpp"
 #include "runtime/HWProfiler.hpp"
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/ClassLoaderTable.hpp"
 #include "env/J2IThunk.hpp"
 #include "env/PersistentCHTable.hpp"
-#include "env/JITServerPersistentCHTable.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
 #include "env/ClassTableCriticalSection.hpp"
@@ -108,11 +106,13 @@
 #include "ras/DebugExt.hpp"
 #include "env/exports.h"
 #if defined(JITSERVER_SUPPORT)
+#include "env/JITServerPersistentCHTable.hpp"
 #include "net/CommunicationStream.hpp" 
 #include "net/ClientStream.hpp"
 #include "runtime/JITClientSession.hpp"
 #include "runtime/Listener.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
+#include "runtime/JITServerIProfiler.hpp"
 #endif
 
 extern "C" int32_t encodeCount(int32_t count);
@@ -341,9 +341,11 @@ j9jit_testarossa_err(
                }
             }
          }
+#if defined(JITSERVER_SUPPORT)
       // Do not allow local compilations in JITServer server mode
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          return 0;
+#endif
       }
 
    event._j9method = method;
@@ -1530,6 +1532,7 @@ onLoadInternal(
 
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
       {
+#if defined(JITSERVER_SUPPORT)
       if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = JITServerIProfiler::allocate(jitConfig);
@@ -1539,6 +1542,7 @@ onLoadInternal(
          ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = JITClientIProfiler::allocate(jitConfig);
          }
       else
+#endif
          {
          ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_IProfiler::allocate(jitConfig);
          }
@@ -1613,6 +1617,7 @@ onLoadInternal(
       }
 
    TR_PersistentCHTable *chtable;
+#if defined(JITSERVER_SUPPORT)
    if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       chtable = new (PERSISTENT_NEW) JITServerPersistentCHTable(persistentMemory);
@@ -1622,12 +1627,15 @@ onLoadInternal(
       chtable = new (PERSISTENT_NEW) JITClientPersistentCHTable(persistentMemory);
       }
    else
+#endif
       {
       chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);
       }
    if (chtable == NULL)
       return -1;
    persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
+
+
 #if defined(JITSERVER_SUPPORT)
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
@@ -1856,24 +1864,26 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
          {
          javaVM->sharedClassConfig->runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_AOT;
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+#if defined(JITSERVER_SUPPORT)
          if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             {
-            // TODO: Format the error message to use j9nls_printf
-            fprintf(stderr, "Aborting Compilation: SCC/AOT must be enabled and can be stored in JITServer Server Mode.");
+            fprintf(stderr, "Error: -Xaot:nostore option is not compatible with JITServer mode.");
             return -1;
             }
+#endif
          }
       else if ((javaVM->sharedClassConfig->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_AOT) == 0)
          {
          TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+#if defined(JITSERVER_SUPPORT)
          if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             {
-            // TODO: Format the error message to use j9nls_printf
-            fprintf(stderr, "Aborting Compilation: SCC/AOT must be enabled and can be stored in JITServer Server Mode.");
+            fprintf(stderr, "Error: -Xnoaot option must not be specified for JITServer.");
             return -1;
             }
-         }        
+#endif
+         }
       }
 #endif
 
