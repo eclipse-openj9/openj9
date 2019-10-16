@@ -80,8 +80,6 @@ done:
 	return rc;
 }
 
-
-
 /**
  * @brief Append a single pathSegment to the system classloader
  * @param *vm
@@ -95,12 +93,43 @@ addToSystemClassLoaderSearch(J9JavaVM * vm, const char* pathSegment,
 		UDATA classLoaderType, BOOLEAN enforceJarRestriction)
 {
 	UDATA rc = CLS_ERROR_NONE;
+#if defined(WIN32)
+	char *jarPath = NULL;
+	int32_t size = 0;
+	BOOLEAN conversionSucceed = FALSE;
+	
+	PORT_ACCESS_FROM_JAVAVM(vm);
+#endif /* defined(WIN32) */
 
 	Trc_VM_addToSystemClassLoaderSearch_Entry(pathSegment);
 
-	if (pathSegment == NULL) {
-		return CLS_ERROR_NULL_POINTER;
+	if (NULL == pathSegment) {
+		rc = CLS_ERROR_NULL_POINTER;
+		goto done;
 	}
+
+#if defined(WIN32)
+	/* This method is called by jvmtiAddToSystemClassLoaderSearch, and eventually invoked by 
+	 * java.instrument/share/native/libinstrument/InvocationAdapter.c & JPLISAgent.c
+	 * which pass pathSegment in system default code page encoding.
+	 */
+	size = j9str_convert(J9STR_CODE_WINDEFAULTACP, J9STR_CODE_MUTF8, pathSegment, strlen(pathSegment), NULL, 0);
+	if (size > 0) {
+		size += 1; /* leave room for null */
+		jarPath = j9mem_allocate_memory(size, OMRMEM_CATEGORY_VM);
+		if (NULL != jarPath) {
+			size = j9str_convert(J9STR_CODE_WINDEFAULTACP, J9STR_CODE_MUTF8, pathSegment, strlen(pathSegment), jarPath, size);
+			if (size > 0) {
+				conversionSucceed = TRUE;
+			}
+		}
+	}
+	if (!conversionSucceed) {
+		rc = CLS_ERROR_INTERNAL;
+		goto done;
+	}
+	pathSegment = jarPath;
+#endif /* defined(WIN32) */
 
 	if (classLoaderType & CLS_TYPE_ADD_TO_SYSTEM_PROPERTY) {
 		rc = addToSystemProperty(vm, "java.class.path", pathSegment);
@@ -117,12 +146,15 @@ addToSystemClassLoaderSearch(J9JavaVM * vm, const char* pathSegment,
 	}
 
 done:
+#if defined(WIN32)
+	if (NULL != jarPath) {
+		j9mem_free_memory(jarPath);
+	}
+#endif /* defined(WIN32) */
 	Trc_VM_addToSystemClassLoaderSearch_Exit();
 
 	return rc;
 }
-
-
 
 static UDATA
 addToSystemProperty(J9JavaVM * vm, const char * propertyName, const char * segment)
