@@ -53,9 +53,7 @@ public:
    virtual bool canDevirtualizeDispatch() override                       { return true; }
    virtual bool needRelocationsForBodyInfoData() override                { return true; }
    virtual bool needRelocationsForPersistentInfoData() override          { return true; }
-
    virtual void markHotField(TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool) override { return; }
-
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT) override;
    virtual bool isClassLibraryClass(TR_OpaqueClassBlock *clazz) override;
    virtual TR_OpaqueClassBlock * getSuperClass(TR_OpaqueClassBlock *classPointer) override;
@@ -188,7 +186,6 @@ protected:
    bool getCachedField(J9Class *ramClass, int32_t cpIndex, J9Class **declaringClass, UDATA *field);
    void cacheField(J9Class *ramClass, int32_t cpIndex, J9Class *declaringClass, UDATA field);
    };
-
 
 /**
  * @class TR_J9SharedCacheServerVM

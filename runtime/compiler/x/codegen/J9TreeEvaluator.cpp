@@ -3873,9 +3873,10 @@ inline void generateInlinedCheckCastOrInstanceOfForInterface(TR::Node* node, TR_
    uintptrj_t guessClass = 0;
    TR_OpaqueClassBlock* guessClassArray[NUM_PICS];
    auto num_PICs = TR::TreeEvaluator::interpreterProfilingInstanceOfOrCheckCastInfo(cg, node, guessClassArray);
+   auto fej9 = (TR_J9VMBase *)(cg->comp()->fe());
    for (uint8_t i = 0; i < num_PICs; i++)
       {
-      if (instanceOfOrCheckCast((J9Class*)guessClassArray[i], (J9Class*)clazz))
+      if (fej9->instanceOfOrCheckCast((J9Class*)guessClassArray[i], (J9Class*)clazz))
          {
          guessClass = (uintptrj_t)guessClassArray[i];
          }
@@ -6867,8 +6868,7 @@ static void genInitObjectHeader(TR::Node             *node,
       }
    else
       {
-      J9Class *j9class = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
-      bool initReservable = J9CLASS_EXTENDED_FLAGS(j9class) & J9ClassReservableLockWordInit;
+      bool initReservable = TR::Compiler->cls.classFlagReservableWordInitValue(clazz);
       if (!isZeroInitialized || initReservable)
          {
          bool initLw = (node->getOpCodeValue() != TR::New) || initReservable;
@@ -12944,3 +12944,4 @@ TR::Register *J9::X86::TreeEvaluator::awrtbarEvaluator(TR::Node *node, TR::CodeG
    // counts of the children evaluated here and let this helper handle it.
    return TR::TreeEvaluator::writeBarrierEvaluator(node, cg);
    }
+

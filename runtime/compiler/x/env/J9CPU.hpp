@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -78,6 +78,10 @@ public:
 
    TR_ProcessorFeatureFlags getProcessorFeatureFlags();
    bool isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags processorFeatureFlags);
+
+   uint32_t getX86ProcessorFeatureFlags();
+   uint32_t getX86ProcessorFeatureFlags2();
+   uint32_t getX86ProcessorFeatureFlags8();
 
    };
 
