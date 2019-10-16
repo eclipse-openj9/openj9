@@ -20,32 +20,55 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef TR_METHODSYMBOL_INCL
-#define TR_METHODSYMBOL_INCL
+#ifndef J9_METHODSYMBOL_INCL
+#define J9_METHODSYMBOL_INCL
 
-#include "il/symbol/J9MethodSymbol.hpp"
+/*
+ * The following #define and typedef must appear before any #includes in this file
+ */
+#ifndef J9_METHODSYMBOL_CONNECTOR
+#define J9_METHODSYMBOL_CONNECTOR
+namespace J9 { class MethodSymbol; }
+namespace J9 { typedef J9::MethodSymbol MethodSymbolConnector; }
+#endif
 
-#include <stddef.h>
+
+#include <stdint.h>
 #include "codegen/LinkageConventionsEnum.hpp"
+#include "compile/Method.hpp"
+#include "il/DataTypes.hpp"
+#include "il/OMRMethodSymbol.hpp"
+#include "runtime/J9Runtime.hpp"
 
-namespace TR { class Method; }
+namespace TR { class Compilation; }
 
-namespace TR
+namespace J9
 {
 
-class OMR_EXTENSIBLE MethodSymbol : public J9::MethodSymbolConnector
+/**
+ * Symbol for methods, along with information about the method
+ */
+class OMR_EXTENSIBLE MethodSymbol : public OMR::MethodSymbolConnector
    {
 
 protected:
 
    MethodSymbol(TR_LinkageConventions lc = TR_Private, TR::Method * m = NULL) :
-      J9::MethodSymbolConnector(lc, m) { }
+      OMR::MethodSymbolConnector(lc, m) { }
 
-private:
+public:
 
-   // When adding another class to the hierarchy, add it as a friend here
-   friend class J9::MethodSymbol;
-   friend class OMR::MethodSymbol;
+   bool isPureFunction();
+
+   TR_RuntimeHelper getVMCallHelper() { return TR_j2iTransition; } // deprecated
+
+   bool safeToSkipNullChecks();
+   bool safeToSkipBoundChecks();
+   bool safeToSkipDivChecks();
+   bool safeToSkipCheckCasts();
+   bool safeToSkipArrayStoreChecks();
+   bool safeToSkipZeroInitializationOnNewarrays();
+   bool safeToSkipChecksOnArrayCopies();
 
    };
 

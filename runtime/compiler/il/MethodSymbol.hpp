@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,10 +20,36 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifndef J9_SYMBOL_INLINES_INCL
-#define J9_SYMBOL_INLINES_INCL
+#ifndef TR_METHODSYMBOL_INCL
+#define TR_METHODSYMBOL_INCL
 
-#include "il/symbol/J9Symbol.hpp"
-#include "il/symbol/OMRSymbol_inlines.hpp"
+#include "il/J9MethodSymbol.hpp"
 
-#endif // J9_SYMBOL_INLINES_INCL
+#include <stddef.h>
+#include "codegen/LinkageConventionsEnum.hpp"
+
+namespace TR { class Method; }
+
+namespace TR
+{
+
+class OMR_EXTENSIBLE MethodSymbol : public J9::MethodSymbolConnector
+   {
+
+protected:
+
+   MethodSymbol(TR_LinkageConventions lc = TR_Private, TR::Method * m = NULL) :
+      J9::MethodSymbolConnector(lc, m) { }
+
+private:
+
+   // When adding another class to the hierarchy, add it as a friend here
+   friend class J9::MethodSymbol;
+   friend class OMR::MethodSymbol;
+
+   };
+
+}
+
+#endif
+

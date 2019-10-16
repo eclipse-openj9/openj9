@@ -32,11 +32,10 @@ namespace J9 { class StaticSymbol; }
 namespace J9 { typedef J9::StaticSymbol StaticSymbolConnector; }
 #endif
 
-#include "il/Symbol.hpp"
-#include "il/symbol/OMRStaticSymbol.hpp"
-
 #include <stdint.h>
 #include "il/DataTypes.hpp"
+#include "il/OMRStaticSymbol.hpp"
+#include "il/Symbol.hpp"
 
 namespace TR { class StaticSymbol; }
 
@@ -146,7 +145,7 @@ public:
 
 private:
    void makeMethodTypeTableEntry(int32_t methodTypeIndex);
-      
+
 
    int32_t _methodTypeIndex;
 

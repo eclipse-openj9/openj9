@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,9 +26,9 @@
 #include "ilgen/J9ByteCode.hpp"
 #include "ilgen/J9ByteCodeIterator.hpp"
 #include "ilgen/ByteCodeIteratorWithState.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "compiler/il/OMRTreeTop_inlines.hpp"
 
@@ -117,8 +117,8 @@ protected:
       //printf("addTempForPartialINliningCallBack. (Haven't generated CallBack yet.)\n");
 
       if(_replacedSymRefs == 0)
-         _replacedSymRefs = new (_compilation->trStackMemory()) TR_Array<TR::SymbolReference*>(_compilation->trMemory(), numParms , true, stackAlloc); 
-      
+         _replacedSymRefs = new (_compilation->trStackMemory()) TR_Array<TR::SymbolReference*>(_compilation->trMemory(), numParms , true, stackAlloc);
+
       (*_replacedSymRefs)[slot] = tempRef;
 
       //printf("addTempForPartialInliningCallBack : _replacedSYmRefs = %p _replacedSymRefs->isEmpty() = %d\n",_replacedSymRefs,_replacedSymRefs->isEmpty());
@@ -129,13 +129,13 @@ protected:
 //      printf("Walker:genPartialInliningCallBack for index %d methodSymbol = %p\n",index, _methodSymbol);
       genBBStart(index);
       //printf("\tgenBBStart generated Block %p Block->getNumber %d\n",blocks(index),blocks(index)->getNumber());
-      
+
       TR::Node *ttNode = TR::Node::create(TR::treetop, 1);
       TR::Node *callNode =TR::Node::copy(callTreeTop->getNode()->getFirstChild());
       callNode->setReferenceCount(1);
       //TR_ASSERT(callNode->getOpCode().isCall(), "node %p isn't a call!\n",callTreeTop->getNode()->getFirstChild());
       ttNode->setFirst(callNode);       //copying callnode. will replace children shortly
-      
+
 
       ListIterator<TR::ParameterSymbol> li (&_methodSymbol->getParameterList());
       TR::ParameterSymbol *si = NULL;
@@ -149,7 +149,7 @@ protected:
             ref = (*_replacedSymRefs)[si->getSlot()];
             //printf("genPartialInliningCallBack:  Found a replaced symRef for slot %d\n",si->getSlot());
             }
-      
+
          if(callNode->getOpCode().isIndirect() && i==0)  // need to generate vft offset & call
             {
             TR::Node *thisPointer =  TR::Node::createWithSymRef(_compilation->il.opCodeForDirectLoad(si->getDataType()),0,ref);
@@ -179,7 +179,7 @@ protected:
       //printf("Walker:genGotoPartialInliningCallBack for index %d\n",index);
       genBBStart(index);
       if(!isGenerated(index)) // could also consider blocks(index)->isEmptyBlock()
-         {      
+         {
          blocks(index)->append(TR::TreeTop::create(_compilation,TR::Node::create(TR::Goto, 0, gotoTreeTop)));
          }
       setIsGenerated(index);
@@ -206,7 +206,7 @@ protected:
 
    // how many bytes are used on the operand stack to hold the operand stack element's result?
    //   size of addresses depends on the target platform (32- or 64-bit)
-   //   
+   //
    int32_t numberOfByteCodeStackSlots(TR::Node * n)
       {
       // note, getSize(TR::Address) = 8 on 64-bit platforms
@@ -232,7 +232,7 @@ protected:
       shiftAndCopy(2, 1);
       }
 
-   void dup2x1() 
+   void dup2x1()
       {
       TR::Node * &nWord1 = node(_stack->topIndex());
 

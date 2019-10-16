@@ -27,9 +27,9 @@
 #include "env/IO.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "p/codegen/PPCTableOfConstants.hpp"
 
 TR::PPCInterfaceCastSnippet::PPCInterfaceCastSnippet(TR::CodeGenerator * cg, TR::Node * n, TR::LabelSymbol *restartLabel, TR::LabelSymbol *snippetLabel, TR::LabelSymbol *trueLabel, TR::LabelSymbol *falseLabel, TR::LabelSymbol *doneLabel, TR::LabelSymbol *callLabel, bool testCastClassIsSuper, bool checkCast, int32_t offsetClazz, int32_t offsetCastClassCache, bool needsResult)

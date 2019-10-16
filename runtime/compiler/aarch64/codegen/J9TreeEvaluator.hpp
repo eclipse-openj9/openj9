@@ -36,7 +36,7 @@ namespace J9 { typedef J9::ARM64::TreeEvaluator TreeEvaluatorConnector; }
 
 
 #include "compiler/codegen/J9TreeEvaluator.hpp"  // include parent
-#include "il/symbol/LabelSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 
 namespace J9
 {

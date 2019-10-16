@@ -26,11 +26,11 @@
 
 #include "optimizer/BoolArrayStoreTransformer.hpp"
 #include "compiler/il/OMRTreeTop_inlines.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/ILWalk.hpp"
 #include <deque>

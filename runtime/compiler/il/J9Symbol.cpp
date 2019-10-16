@@ -30,8 +30,6 @@
 
 **************************************************************************/
 
-#include "il/symbol/OMRSymbol.hpp"
-
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
@@ -41,10 +39,10 @@
 #include "env/TRMemory.hpp"
 #include "env/VMJ9.h"
 #include "il/DataTypes.hpp"
+#include "il/StaticSymbol.hpp"
+#include "il/StaticSymbol_inlines.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/StaticSymbol.hpp"
-#include "il/symbol/StaticSymbol_inlines.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Flags.hpp"
 #include "ras/Debug.hpp"
@@ -192,7 +190,7 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
    TR_OpaqueClassBlock *declaringClass = owningMethod->getDeclaringClassFromFieldOrStatic(comp, cpIndex);
 
    // $assertionDisabled fields are always foldable based on the Javadoc (setClassAssertionStatus
-   // "This method has no effect if the named class has already been initialized. 
+   // "This method has no effect if the named class has already been initialized.
    // (Once a class is initialized, its assertion status cannot change.)"
    // So check if the field is final and check if it is this special field
    if (isStatic)
@@ -200,7 +198,7 @@ J9::Symbol::searchRecognizedField(TR::Compilation * comp, TR_ResolvedMethod * ow
       int32_t  totalLen;
       char    *fieldName;
       fieldName = owningMethod->staticName(cpIndex, totalLen, comp->trMemory());  // totalLen = strlen("<class>" + "<field>" + "<sig>") + 3
-      static char *assertionsDisabledStr = "$assertionsDisabled Z"; 
+      static char *assertionsDisabledStr = "$assertionsDisabled Z";
       //string will be of the form "<class>.$assertionsDisabled Z"
       if (declaringClass
           && totalLen >= 22

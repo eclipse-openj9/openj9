@@ -39,12 +39,12 @@
 #include "il/Block.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "infra/Assert.hpp"
@@ -73,7 +73,7 @@ static TR_PersistentProfileInfo *getProfilingInfoForCFG(TR::Compilation *comp, T
        && comp->getRecompilationInfo())
       return info;
 
-   if ((*(TR_BlockFrequencyInfo::getEnableJProfilingRecompilation())) == -1 
+   if ((*(TR_BlockFrequencyInfo::getEnableJProfilingRecompilation())) == -1
        && cfg->getMethodSymbol()
        && cfg->getMethodSymbol()->getResolvedMethod()
        && info
@@ -871,7 +871,7 @@ J9::CFG::setBlockFrequenciesBasedOnInterpreterProfiler()
          {
          if (comp()->getHCRMode() != TR::osr)
             backEdgeExists = true;
-         else 
+         else
             {
             // Count the number of edges from non OSR blocks
             int32_t nonOSREdges = 0;

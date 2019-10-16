@@ -26,9 +26,9 @@
 #include "codegen/Relocation.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/StaticSymbol.hpp"
+#include "il/StaticSymbol_inlines.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
-#include "il/symbol/StaticSymbol_inlines.hpp"
 
 TR_RuntimeHelper
 J9::ARM::UnresolvedDataSnippet::getHelper()

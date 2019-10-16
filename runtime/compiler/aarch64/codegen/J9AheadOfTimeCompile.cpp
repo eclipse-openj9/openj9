@@ -23,7 +23,7 @@
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/StaticSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/RelocationRecord.hpp"
 

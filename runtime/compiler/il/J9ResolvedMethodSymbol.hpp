@@ -32,7 +32,7 @@ namespace J9 { class ResolvedMethodSymbol; }
 namespace J9 { typedef J9::ResolvedMethodSymbol ResolvedMethodSymbolConnector; }
 #endif
 
-#include "il/symbol/OMRResolvedMethodSymbol.hpp"
+#include "il/OMRResolvedMethodSymbol.hpp"
 #include "infra/Annotations.hpp"
 
 class TR_ResolvedMethod;
