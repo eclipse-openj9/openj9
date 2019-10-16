@@ -23,6 +23,9 @@
 #include "optimizer/TransformUtil.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "control/CompilationRuntime.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
 #include "env/CompilerEnv.hpp"
 #include "il/Block.hpp"
 #include "il/Block_inlines.hpp"
@@ -1285,8 +1288,8 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
          TR_AOTMethodHeader *aotMethodHeaderEntry = (TR_AOTMethodHeader *)(aotMethodHeader + 1);
          aotMethodHeaderEntry->flags |= TR_AOTMethodHeader_UsesEnableStringCompressionFolding;
          TR_ASSERT(node->getDataType() == TR::Int32, "Java_lang_String_enableCompression must be Int32");
-         bool fieldValue = *(int32_t*)sym->castToStaticSymbol()->getStaticAddress() != 0;
-         bool compressionEnabled = IS_STRING_COMPRESSION_ENABLED_VM(static_cast<TR_J9VMBase *>(comp->fe())->getJ9JITConfig()->javaVM);
+         bool fieldValue = ((TR_J9VM *) comp->fej9())->dereferenceStaticFinalAddress(sym->castToStaticSymbol()->getStaticAddress(), TR::Int32).dataInt32Bit != 0;
+         bool compressionEnabled = comp->fej9()->isStringCompressionEnabledVM();
          TR_ASSERT((fieldValue && compressionEnabled) || (!fieldValue && !compressionEnabled),
             "java/lang/String.enableCompression and javaVM->strCompEnabled must be in sync");
          if (fieldValue)
@@ -1323,6 +1326,7 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
       }
 
    TR::StaticSymbol *staticSym = sym->castToStaticSymbol();
+   TR_StaticFinalData data = ((TR_J9VM *) comp->fej9())->dereferenceStaticFinalAddress(staticSym->getStaticAddress(), loadType);
    if (typeIsConstible)
       {
       if (performTransformation(comp, "O^O foldStaticFinalField: turn [%p] %s %s into load const\n", node, node->getOpCode().getName(), symRef->getName(comp->getDebug())))
@@ -1333,27 +1337,27 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
             {
             case TR::Int8:
                TR::Node::recreate(node, TR::bconst);
-               node->setByte(*(int8_t*)staticSym->getStaticAddress());
+               node->setByte(data.dataInt8Bit);
                break;
             case TR::Int16:
                TR::Node::recreate(node, TR::sconst);
-               node->setShortInt(*(int16_t*)staticSym->getStaticAddress());
+               node->setShortInt(data.dataInt16Bit);
                break;
             case TR::Int32:
                TR::Node::recreate(node, TR::iconst);
-               node->setInt(*(int32_t*)staticSym->getStaticAddress());
+               node->setInt(data.dataInt32Bit);
                break;
             case TR::Int64:
                TR::Node::recreate(node, TR::lconst);
-               node->setLongInt(*(int64_t*)staticSym->getStaticAddress());
+               node->setLongInt(data.dataInt64Bit);
                break;
             case TR::Float:
                TR::Node::recreate(node, TR::fconst);
-               node->setFloat(*(float*)staticSym->getStaticAddress());
+               node->setFloat(data.dataFloat);
                break;
             case TR::Double:
                TR::Node::recreate(node, TR::dconst);
-               node->setDouble(*(double*)staticSym->getStaticAddress());
+               node->setDouble(data.dataDouble);
                break;
             default:
                TR_ASSERT(0, "Unexpected type %s", loadType.toString());
@@ -1366,7 +1370,7 @@ J9::TransformUtil::foldStaticFinalFieldImpl(TR::Compilation *comp, TR::Node *nod
                                                          symRef->getName(comp->getDebug())));
       return true;
       }
-   else if (*(uintptrj_t*)staticSym->getStaticAddress() == 0) // Seems ok just to check for a static to be NULL without vm access
+   else if (data.dataAddress == 0) // Seems ok just to check for a static to be NULL without vm access
       {
       switch (staticSym->getRecognizedField())
          {
@@ -1433,6 +1437,16 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
 bool
 J9::TransformUtil::transformIndirectLoadChainAt(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, uintptrj_t *baseReferenceLocation, TR::Node **removedNode)
    {
+#if defined(JITSERVER_SUPPORT)
+   // Bypass this method, because baseReferenceLocation is often an address of a pointer
+   // on server's stack, which causes a segfault when getStaticReferenceFieldAtAddress is called
+   // on the client.
+   if (comp->isOutOfProcessCompilation())
+      {
+      return false;
+      }
+#endif /* defined(JITSERVER_SUPPORT) */
+
    TR::VMAccessCriticalSection transformIndirectLoadChainAt(comp->fej9());
    uintptrj_t baseAddress;
    if (baseExpression->getOpCode().hasSymbolReference() && baseExpression->getSymbol()->isStatic())
@@ -1551,7 +1565,7 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
       J9Class* clazz = (J9Class*)baseAddress;
       traceMsg(comp, "Looking at node %p with initializeStatusFromClassSymbol, class %p initialize status is %d\n", node, clazz, clazz->initializeStatus);
       // Only fold the load if the class has been initialized
-      if (clazz->initializeStatus == J9ClassInitSucceeded)
+      if (fej9->isClassInitialized((TR_OpaqueClassBlock *) clazz) == J9ClassInitSucceeded)
          {
          if (node->getDataType() == TR::Int32)
             {

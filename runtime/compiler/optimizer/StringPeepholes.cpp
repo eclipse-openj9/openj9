@@ -453,13 +453,15 @@ void TR_StringPeepholes::processBlock(TR::Block *block)
             }
 
          // check that the helper class is available before invoking the matcher
-         TR_OpaqueClassBlock *DFHClass = fe()->getClassFromSignature("com/ibm/jit/DecimalFormatHelper", 31, comp()->getCurrentMethod());
-         if (comp()->isOutermostMethod() && !optimizer()->isIlGenOpt() && !comp()->getOption(TR_DisableDecimalFormatPeephole) &&
-            DFHClass != NULL)
+         if (comp()->isOutermostMethod() && !optimizer()->isIlGenOpt() && !comp()->getOption(TR_DisableDecimalFormatPeephole))
             {
-            TR::TreeTop *newTree = detectFormatPattern(tt, exit, callNode);
-            if (newTree)
-               tt = newTree;
+            TR_OpaqueClassBlock *DFHClass = fe()->getClassFromSignature("com/ibm/jit/DecimalFormatHelper", 31, comp()->getCurrentMethod());
+            if (DFHClass != NULL)
+               {
+               TR::TreeTop *newTree = detectFormatPattern(tt, exit, callNode);
+               if (newTree)
+                  tt = newTree;
+               }
             }
 
          if (comp()->isOptServer() &&
