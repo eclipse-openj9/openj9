@@ -297,6 +297,8 @@ enum MessageType
 
    Recompilation_getExistingMethodInfo = 1000;
    Recompilation_getJittedBodyInfoFromPC = 1001;
+
+   ClassInfo_getRemoteROMString = 1100;
    }
 
 message J9ServerMessage

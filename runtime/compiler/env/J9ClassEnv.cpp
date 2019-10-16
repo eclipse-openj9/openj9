@@ -515,24 +515,43 @@ J9::ClassEnv::getVFTEntry(TR::Compilation *comp, TR_OpaqueClassBlock* clazz, int
 uint8_t *
 J9::ClassEnv::getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t cpIndex, int &classRefLen)
    {
+   J9ROMConstantPoolItem *romCP = self()->getROMConstantPool(comp, clazz);
+   J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&romCP[cpIndex];
+   TR_ASSERT(inROMClass(romFieldRef), "field ref must be in ROM class");
+   J9ROMClassRef *romClassRef = (J9ROMClassRef *)&romCP[romFieldRef->classRefCPIndex];
+   TR_ASSERT(inROMClass(romClassRef), "class ref must be in ROM class");
 #if defined(JITSERVER_SUPPORT)
-   auto stream = TR::CompilationInfo::getStream();
-   if (stream && comp->isOutOfProcessCompilation())
+   if (comp->isOutOfProcessCompilation())
       {
-      stream->write(JITServer::MessageType::ClassEnv_getROMClassRefName, clazz, cpIndex);
-      auto classRefNameStr = std::get<0>(stream->read<std::string>());
-      classRefLen = classRefNameStr.length();
-      uint8_t *classRefName = (uint8_t *) comp->trMemory()->allocateHeapMemory(classRefLen);
-      memcpy(classRefName, &classRefNameStr[0], classRefLen);
-      return classRefName;
+      TR::CompilationInfoPerThread *compInfoPT = TR::compInfoPT;
+      char *name;
+      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor()); 
+      auto &classMap = compInfoPT->getClientData()->getROMClassMap();
+      auto it = classMap.find(reinterpret_cast<J9Class *>(clazz));
+      auto &classInfo = it->second;
+      name = classInfo.getROMString(classRefLen, romClassRef,
+                             {
+                             offsetof(J9ROMClassRef, name)
+                             });
+      return (uint8_t *) name;
       }
 #endif /* defined(JITSERVER_SUPPORT) */
-   J9ConstantPool *ramCP = reinterpret_cast<J9ConstantPool *>(comp->fej9()->getConstantPoolFromClass(clazz));
-   J9ROMConstantPoolItem *romCP = ramCP->romConstantPool;
-   J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&romCP[cpIndex];
-   J9ROMClassRef *romClassRef = (J9ROMClassRef *)&romCP[romFieldRef->classRefCPIndex];
    J9UTF8 *classRefNameUtf8 = J9ROMCLASSREF_NAME(romClassRef);
    classRefLen = J9UTF8_LENGTH(classRefNameUtf8);
    uint8_t *classRefName = J9UTF8_DATA(classRefNameUtf8);
    return classRefName;
+   }
+
+J9ROMConstantPoolItem *
+J9::ClassEnv::getROMConstantPool(TR::Compilation *comp, TR_OpaqueClassBlock *clazz)
+   {
+#if defined(JITSERVER_SUPPORT)
+   if (comp->isOutOfProcessCompilation())
+      {
+      J9ROMClass *romClass = TR::compInfoPT->getAndCacheRemoteROMClass(reinterpret_cast<J9Class *>(clazz));
+      return (J9ROMConstantPoolItem *) ((UDATA) romClass + sizeof(J9ROMClass));
+      }
+#endif /* defined(JITSERVER_SUPPORT) */
+   J9ConstantPool *ramCP = reinterpret_cast<J9ConstantPool *>(comp->fej9()->getConstantPoolFromClass(clazz));
+   return ramCP->romConstantPool;
    }
