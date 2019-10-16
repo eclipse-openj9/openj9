@@ -515,7 +515,7 @@ J9::ClassEnv::getVFTEntry(TR::Compilation *comp, TR_OpaqueClassBlock* clazz, int
 uint8_t *
 J9::ClassEnv::getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t cpIndex, int &classRefLen)
    {
-   J9ROMConstantPoolItem *romCP = getROMConstantPool(comp, clazz);
+   J9ROMConstantPoolItem *romCP = self()->getROMConstantPool(comp, clazz);
    J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&romCP[cpIndex];
    TR_ASSERT(inROMClass(romFieldRef), "field ref must be in ROM class");
    J9ROMClassRef *romClassRef = (J9ROMClassRef *)&romCP[romFieldRef->classRefCPIndex];
@@ -535,7 +535,7 @@ J9::ClassEnv::getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *cla
                              });
       return (uint8_t *) name;
       }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    J9UTF8 *classRefNameUtf8 = J9ROMCLASSREF_NAME(romClassRef);
    classRefLen = J9UTF8_LENGTH(classRefNameUtf8);
    uint8_t *classRefName = J9UTF8_DATA(classRefNameUtf8);
