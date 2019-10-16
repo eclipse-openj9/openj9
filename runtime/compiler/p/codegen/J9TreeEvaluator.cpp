@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -9806,6 +9806,35 @@ static TR::Register *inlineSinglePrecisionFPTrg1Src2(TR::Node *node, TR::InstOpC
    return targetRegister;
    }
 
+static TR::Register *inlineFPTrg1Src3(TR::Node *node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT_FATAL(node->getNumChildren() == 3, "In function inlineFPTrg1Src3, the node at address %p should have exactly 3 children, but got %u instead", node, node->getNumChildren());
+
+   TR::DataType type = node->getDataType();
+   TR_ASSERT_FATAL(type == TR::Float || type == TR::Double, "In function inlineFPTrg1Src3, the node at address %p should be either TR::Float or TR::Double", node);
+
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Node *thirdChild = node->getThirdChild();
+   TR::Register *src1Register = cg->evaluate(firstChild);
+   TR::Register *src2Register = cg->evaluate(secondChild);
+   TR::Register *src3Register = cg->evaluate(thirdChild);
+   TR::Register *targetRegister;
+
+   if(type == TR::Float)
+      targetRegister = cg->allocateSinglePrecisionRegister();
+   else
+      targetRegister = cg->allocateRegister(TR_FPR);
+   
+   generateTrg1Src3Instruction(cg, op, node, targetRegister, src1Register, src2Register, src3Register);
+
+   node->setRegister(targetRegister);
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   cg->decReferenceCount(thirdChild);
+   return targetRegister;
+   } 
+
 static TR::Register *inlineDoublePrecisionFP(TR::Node *node, TR::InstOpCode::Mnemonic op, TR::CodeGenerator *cg)
    {
    TR_ASSERT(node->getNumChildren() == 1, "Wrong number of children in inlineDoublePrecisionFP");
@@ -12805,6 +12834,16 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
             return true;
             }
          break;
+
+      case TR::java_lang_Math_fma_D:
+      case TR::java_lang_StrictMath_fma_D:
+         resultReg = inlineFPTrg1Src3(node, TR::InstOpCode::fmadd, cg);
+         return true;
+
+      case TR::java_lang_Math_fma_F:
+      case TR::java_lang_StrictMath_fma_F:
+         resultReg = inlineFPTrg1Src3(node, TR::InstOpCode::fmadds, cg);
+         return true;
 
       case TR::java_lang_Short_reverseBytes:
          resultReg = inlineShortReverseBytes(node, cg);
