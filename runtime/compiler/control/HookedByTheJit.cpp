@@ -79,8 +79,10 @@
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #if defined(JITSERVER_SUPPORT)
-#include "runtime/Listener.hpp"
+#include "control/JITServerHelpers.hpp"
+#include "runtime/JITServerIProfiler.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
+#include "runtime/Listener.hpp"
 #endif
 
 extern "C" {
@@ -478,7 +480,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                {
                int32_t scount = optionsAOT->getInitialSCount();
                uint16_t newScount = 0;
-               if (sc->isHint(method, TR_HintFailedValidation, &newScount))
+               if (sc && sc->isHint(method, TR_HintFailedValidation, &newScount))
                   {
                   if ((scount == TR_QUICKSTART_INITIAL_SCOUNT) || (scount == TR_INITIAL_SCOUNT))
                      { // If scount is not user specified (coarse way due to info being lost from options parsing)
@@ -551,7 +553,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                // We may lower or increase the counts based on TR_HintMethodCompiledDuringStartup
                if (count == -1 && // Not yet changed
                    jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
-                   (TR_HintMethodCompiledDuringStartup & TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags()))
+                   (TR_HintMethodCompiledDuringStartup & TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags()) && sc)
                   {
                   bool wasCompiledDuringStartup = sc->isHint(method, TR_HintMethodCompiledDuringStartup);
                   if (wasCompiledDuringStartup)
@@ -627,11 +629,24 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
       J9UTF8 * name      = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(method));
       J9UTF8 * signature = J9ROMMETHOD_SIGNATURE(J9_ROM_METHOD_FROM_RAM_METHOD(method));
       int32_t sigLen = sprintf(buf, "%.*s.%.*s%.*s", className->length, utf8Data(className), name->length, utf8Data(name), signature->length, utf8Data(signature));
-      printf("Initial: Signature %s Count %d isLoopy %d isAOT %d is in SCC %d SCCContainsProfilingInfo %d \n",buf,TR::CompilationInfo::getInvocationCount(method),J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod),
+      printf("Initial: Signature %s Count %d isLoopy %d isAOT %lu is in SCC %d SCCContainsProfilingInfo %d \n",buf,TR::CompilationInfo::getInvocationCount(method),J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod),
             TR::Options::sharedClassCache() ? jitConfig->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, romMethod) : 0,
             TR::Options::sharedClassCache() ? TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM)->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass) : 0,containsInfo) ; fflush(stdout);
       }
    }
+
+#if defined(JITSERVER_SUPPORT)
+static void jitHookVMInitialized(J9HookInterface * * hook, UDATA eventNum, void * eventData, void * userData)
+   {
+   J9VMThread* vmThread = ((J9VMInitEvent *)eventData)->vmThread;
+   TR::CompilationInfo *compInfo = getCompilationInfo(vmThread->javaVM->jitConfig);
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      fprintf(stderr, "\nJITServer ready to accept incoming requests\n");
+      j9thread_sleep(10000000000);
+      }
+   }
+#endif
 
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
 
@@ -1520,7 +1535,7 @@ static void jitHookLocalGCStart(J9HookInterface * * hookInterface, UDATA eventNu
 
    if (jitConfig->gcTraceThreshold && jitConfig->gcCount == jitConfig->gcTraceThreshold)
       {
-      printf("\n<jit: enabling stack tracing at gc %d>", jitConfig->gcCount);
+      printf("\n<jit: enabling stack tracing at gc %lu>", jitConfig->gcCount);
       TR::Options::getCmdLineOptions()->setVerboseOption(TR_VerboseGc);
       }
    jitReclaimMarkedAssumptions(false);
@@ -1560,6 +1575,11 @@ static void jitHookLocalGCEnd(J9HookInterface * * hookInterface, UDATA eventNum,
 
    if (jitConfig->runtimeFlags & J9JIT_GC_NOTIFY)
       printf("}");
+
+#if defined(JITSERVER_SUPPORT)
+   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
+   compInfo->incrementLocalGCCounter();
+#endif
    }
 
 static void initThreadAfterCreation(J9VMThread *vmThread)
@@ -1974,6 +1994,31 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
    {
    Trc_JIT_DumpStart(crashedThread);
 
+#if defined(JITSERVER_SUPPORT)
+   if (context && context->javaVM && context->javaVM->jitConfig)
+      {
+      J9JITConfig *jitConfig = context->javaVM->jitConfig;
+      TR::CompilationInfo *compInfo = TR::CompilationInfo::get(context->javaVM->jitConfig);
+      if (compInfo)
+         {
+         static char * isPrintJITServerMsgStats = feGetEnv("TR_PrintJITServerMsgStats");
+         if (isPrintJITServerMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+            JITServerHelpers::printJITServerMsgStats(jitConfig);
+         if (feGetEnv("TR_PrintJITServerCHTableStats"))
+            JITServerHelpers::printJITServerCHTableStats(jitConfig, compInfo);
+         if (feGetEnv("TR_PrintJITServerIPMsgStats"))
+            {
+            if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+               {
+               TR_J9VMBase * vmj9 = (TR_J9VMBase *)(TR_J9VMBase::get(context->javaVM->jitConfig, 0));
+               JITServerIProfiler *iProfiler = (JITServerIProfiler *)vmj9->getIProfiler();
+               iProfiler->printStats();
+               }
+            }
+         }
+      }
+#endif
+
    if (TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseDump))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITDUMP, "JIT dump initiated. Crashed vmThread=%p", crashedThread);
 
@@ -2378,7 +2423,7 @@ static void jitHookThreadEnd(J9HookInterface * * hookInterface, UDATA eventNum, 
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_CountWriteBarriersRT))
       {
-      fprintf(stderr,"Thread %p: Executed %d barriers, %d went to slow path\n", vmThread, vmThread->debugEventData6, vmThread->debugEventData7);
+      fprintf(stderr,"Thread %p: Executed %lu barriers, %lu went to slow path\n", vmThread, vmThread->debugEventData6, vmThread->debugEventData7);
       }
    return;
    }
@@ -2751,6 +2796,11 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
    if (table)
       table->classGotUnloaded(fej9, clazz);
 
+#if defined(JITSERVER_SUPPORT)
+   // Add to JITServer unload list
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+      compInfo->getUnloadedClassesTempList()->push_back(clazz);
+#endif
    }
 #endif /* defined (J9VM_GC_DYNAMIC_CLASS_UNLOADING)*/
 
@@ -2984,6 +3034,12 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
    classPair = classList;
    for (i = 0; i < classCount; i++)
       {
+#if defined(JITSERVER_SUPPORT)
+      // Add to JITServer unload list
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+         compInfo->getUnloadedClassesTempList()->push_back((TR_OpaqueClassBlock *) classPair->oldClass);
+#endif
+
       freshClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(classPair->newClass);
       if (VM_PASSES_SAME_CLASS_TWICE)
          staleClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(((J9Class*)freshClass)->replacedClass);
@@ -3415,7 +3471,7 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
                      {
                      if (traceIt)
                         {
-                        printf("For submethod %p,signature compare fails after bc walk bc !=genericReturn at i(%d)+2\n",i);
+                        printf("For submethod %p,signature compare fails after bc walk bc !=genericReturn at i(%d)+2\n", subMethod, i);
                         fflush(stdout);
                         }
                      matches=false;
@@ -3467,14 +3523,14 @@ static void updateOverriddenFlag( J9VMThread *vm , J9Class *cl)
                   }
                }
             }
-         else if ( superMethod != subMethod)    // we don't have bytecodes, but the j9methods don't match, so set the overridden bit anyways
+         else if (superMethod != subMethod)    // we don't have bytecodes, but the j9methods don't match, so set the overridden bit anyways
             {
             jitUpdateMethodOverride(vm, cl, superMethod,subMethod);
             vm->javaVM->internalVMFunctions->atomicOrIntoConstantPool(vm->javaVM, superMethod,J9_STARTPC_METHOD_IS_OVERRIDDEN);
 
             if (traceIt)
                {
-               printf("For submethod %p, j9methods don't match.  Setting overridden bit. endbc - startbc = %d methodmodifiersaresafe = %d\n",subMethod,(J9_BYTECODE_END_FROM_ROM_METHOD(subROM) - J9_BYTECODE_START_FROM_ROM_METHOD(subROM)),methodModifiersAreSafe);
+               printf("For submethod %p, j9methods don't match.  Setting overridden bit. endbc - startbc = %ld methodmodifiersaresafe = %d\n",subMethod,(J9_BYTECODE_END_FROM_ROM_METHOD(subROM) - J9_BYTECODE_START_FROM_ROM_METHOD(subROM)),methodModifiersAreSafe);
                fflush(stdout);
                }
 
@@ -3523,7 +3579,12 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
    TR_PersistentCHTable * table = 0;
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (TR::Options::getCmdLineOptions()->allowRecompilation()
+      && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
+#if defined(JITSERVER_SUPPORT)
+      && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+#endif
+      )
       table = compInfo->getPersistentInfo()->getPersistentCHTable();
 
    TR_J9VMBase *vm = TR_J9VMBase::get(jitConfig, vmThread);
@@ -4083,7 +4144,12 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    cl->newInstanceCount = options->getInitialCount();
 #endif
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() 
+      && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
+#if defined(JITSERVER_SUPPORT)
+      && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+#endif
+      )
       {
       TR_PersistentClassInfo *info = compInfo->getPersistentInfo()->getPersistentCHTable()->classGotLoaded(vm, clazz);
 
@@ -4145,7 +4211,11 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    classLoadEvent->failed = allocFailed;
 
    // Determine whether this class gets lock reservation
-   if (options->getOption(TR_ReservingLocks))
+   if (options->getOption(TR_ReservingLocks)
+#if defined(JITSERVER_SUPPORT)
+      && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+#endif
+      )
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(TR_J9VMBase::get(jitConfig, 0));
       int lwOffset = fej9->getByteOffsetToLockword(clazz);
@@ -4229,7 +4299,12 @@ static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA e
 
    jitAcquireClassTableMutex(vmThread);
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts))
+   if (TR::Options::getCmdLineOptions()->allowRecompilation() 
+      && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
+#if defined(JITSERVER_SUPPORT)
+      && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+#endif
+      )
       {
       if (!initFailed && !compInfo->getPersistentInfo()->getPersistentCHTable()->classGotInitialized(vm, compInfo->persistentMemory(), clazz))
          initFailed = true;
@@ -4745,6 +4820,15 @@ void JitShutdown(J9JITConfig * jitConfig)
       j9tty_printf(PORTLIB, "\tNo prof. info cause cannot get classInfo:%10d\n", TR_IProfiler::_STATS_cannotGetClassInfo);
       j9tty_printf(PORTLIB, "\tNo prof. info because timestamp expired: %10d\n", TR_IProfiler::_STATS_timestampHasExpired);
       }
+
+#if defined(JITSERVER_SUPPORT)
+   static char * isPrintJITServerMsgStats = feGetEnv("TR_PrintJITServerMsgStats");
+   if (isPrintJITServerMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+      JITServerHelpers::printJITServerMsgStats(jitConfig);
+   static char * isPrintJITServerCHTableStats = feGetEnv("TR_PrintJITServerCHTableStats");
+   if (isPrintJITServerCHTableStats)
+      JITServerHelpers::printJITServerCHTableStats(jitConfig, compInfo);
+#endif
 
    TRC_JIT_ShutDownEnd(vmThread, "end of JitShutdown function");
    }
@@ -5767,7 +5851,12 @@ static void iProfilerActivationLogic(J9JITConfig * jitConfig, TR::CompilationInf
          TR_J9VMBase *fej9 = (TR_J9VMBase *)(TR_J9VMBase::get(jitConfig, 0));
          TR_IProfiler *iProfiler = fej9->getIProfiler();
          TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
-         if (iProfiler && iProfiler->getProfilerMemoryFootprint() < TR::Options::_iProfilerMemoryConsumptionLimit)
+         if (iProfiler 
+            && iProfiler->getProfilerMemoryFootprint() < TR::Options::_iProfilerMemoryConsumptionLimit
+#if defined(JITSERVER_SUPPORT)
+            && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+#endif
+            )
             {
             // Turn on if classLoadPhase became active or
             // if many interpreted samples
@@ -6913,7 +7002,12 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    jitConfig->samplerMonitor = NULL; // initialize this field just in case
    TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
    compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_NOT_CREATED); // just in case
-   if (jitConfig->samplingFrequency && !vmj9->isAOT_DEPRECATED_DO_NOT_USE())
+   if (jitConfig->samplingFrequency 
+      && !vmj9->isAOT_DEPRECATED_DO_NOT_USE()
+#if defined(JITSERVER_SUPPORT)
+      && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+#endif
+      )
       {
       if ((jitConfig->sampleInterruptHandlerKey = javaVM->internalVMFunctions->J9RegisterAsyncEvent(javaVM, jitMethodSampleInterrupt, NULL)) < 0)
          {
@@ -6988,10 +7082,17 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       }
    else
       {
-      if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZE_SEND_TARGET, jitHookInitializeSendTarget, OMR_GET_CALLSITE(), NULL))
+      // Do not register the hook that sets method invocation counts in JITServer server mode
+      // This ensures that interpreter will not send methods for compilation
+#if defined(JITSERVER_SUPPORT)
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
+#endif
          {
-         j9tty_printf(PORTLIB, "Error: Unable to install send target hook\n");
-         return -1;
+         if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZE_SEND_TARGET, jitHookInitializeSendTarget, OMR_GET_CALLSITE(), NULL))
+            {
+            j9tty_printf(PORTLIB, "Error: Unable to install send target hook\n");
+            return -1;
+            }
          }
 #if defined (J9VM_INTERP_PROFILING_BYTECODES)
       TR_IProfiler *iProfiler = vmj9->getIProfiler();
@@ -7003,7 +7104,11 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
             {
             iProfiler->startIProfilerThread(javaVM);
             }
-         if (TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase))
+         if (TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase)
+#if defined(JITSERVER_SUPPORT)
+            || compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER
+#endif
+            )
             {
             interpreterProfilingState = IPROFILING_STATE_OFF;
             }
@@ -7062,6 +7167,13 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
             // free `statsThreadObj` and set the corresponding jitConfig field to NULL
             }
          }
+      }
+
+   // Give the JIT a chance to do stuff after the VM is initialized
+   if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, jitHookVMInitialized, OMR_GET_CALLSITE(), NULL))
+      {
+      j9tty_printf(PORTLIB, "Error: Unable to install J9HOOK_VM_INITIALIZED\n");
+      return -1;
       }
 #endif // JITSERVER_SUPPORT
 
