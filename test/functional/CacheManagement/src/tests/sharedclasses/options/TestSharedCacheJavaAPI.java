@@ -163,22 +163,16 @@ public class TestSharedCacheJavaAPI extends TestUtils {
 		    newCacheCount = cacheList.size();
 		    
 		    if (dirGroupAccess != null) {
-		    	int tempGroupAccessCount = 0;
 		    	cacheGroupAccessList = SharedClassUtilities.getSharedCacheInfo(dirGroupAccess, SharedClassUtilities.NO_FLAGS, false);
 		    	if (cacheGroupAccessList == null) {
 		    		fail("SharedClassUtilities.getSharedCacheInfo failed: no cache found with dir is " + dirGroupAccess);
 		    	}
-		    	tempGroupAccessCount = cacheGroupAccessList.size();
-		    	if (tempGroupAccessCount == -1) {
-		    		fail("SharedClassUtilities.getSharedCacheInfo failed: Invalid number of cache found with dir is " + dirGroupAccess);
-		    	}
+		    	
 		    	cacheGroupAccessNonPersistentList = SharedClassUtilities.getSharedCacheInfo(dirRemoveJavaSharedResources, SharedClassUtilities.NO_FLAGS, false);
 		    	if (cacheGroupAccessNonPersistentList == null) {
 			    	fail("SharedClassUtilities.getSharedCacheInfo failed: no cache found with dir is " + dirRemoveJavaSharedResources);
 			    }
-		    	if (tempGroupAccessCount == -1) {
-		    		fail("SharedClassUtilities.getSharedCacheInfo failed: Invalid number of cache found with dir is " + dirRemoveJavaSharedResources);
-		    	}
+		    	
 		    	newCacheCount += cacheGroupAccessList.size() + cacheGroupAccessNonPersistentList.size();
 		    	if ((newCacheCount == -1) || (newCacheCount != 
 		    			(oldCacheCount + persistentGroupAccessCount + nonpersistentGroupAccessCount +
