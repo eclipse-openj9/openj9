@@ -51,6 +51,7 @@ class JITServerHelpers
       CLASSINFO_REMOTE_ROM_CLASS,
       CLASSINFO_CLASS_FLAGS,
       CLASSINFO_METHODS_OF_CLASS,
+      CLASSINFO_CONSTANT_POOL
       };
    // NOTE: when adding new elements to this tuple, add them to the end,
    // to not mess with the established order.

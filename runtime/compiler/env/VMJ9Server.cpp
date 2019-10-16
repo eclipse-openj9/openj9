@@ -933,17 +933,17 @@ TR_J9ServerVM::getOffsetOfClassFromJavaLangClassField()
 uintptrj_t
 TR_J9ServerVM::getConstantPoolFromMethod(TR_OpaqueMethodBlock *method)
    {
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getConstantPoolFromMethod, method);
-   return std::get<0>(stream->read<uintptrj_t>());
+   TR_OpaqueClassBlock *owningClass = getClassFromMethodBlock(method);
+   return getConstantPoolFromClass(owningClass);
    }
 
 uintptrj_t
 TR_J9ServerVM::getConstantPoolFromClass(TR_OpaqueClassBlock *clazz)
    {
+   J9ConstantPool *cp;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getConstantPoolFromClass, clazz);
-   return std::get<0>(stream->read<uintptrj_t>());
+   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *) clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CONSTANT_POOL, (void *)&cp);
+   return reinterpret_cast<uintptrj_t>(cp);
    }
 
 uintptrj_t
@@ -2130,7 +2130,6 @@ TR_J9SharedCacheServerVM::getResolvedMethodForNameAndSignature(TR_Memory * trMem
       {
       validated = ((TR_ResolvedRelocatableJ9JITServerMethod *)comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *)classPointer);
       }
-
    return validated ? resolvedMethod : NULL;
    }
 
@@ -2153,7 +2152,6 @@ TR_J9SharedCacheServerVM::isPrimitiveArray(TR_OpaqueClassBlock *classPointer)
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
-
    return validated ? isPrimArray : false;
    }
 
@@ -2176,7 +2174,6 @@ TR_J9SharedCacheServerVM::isReferenceArray(TR_OpaqueClassBlock *classPointer)
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
-
    return validated ? isRefArray : false;
    }
 
@@ -2205,7 +2202,6 @@ TR_J9SharedCacheServerVM::getClassDepthAndFlagsValue(TR_OpaqueClassBlock * class
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
-
    return validated ? classDepthFlags : 0;
    }
 
@@ -2223,7 +2219,6 @@ TR_J9SharedCacheServerVM::getClassFlagsValue(TR_OpaqueClassBlock * classPointer)
       SVM_ASSERT_ALREADY_VALIDATED(comp->getSymbolValidationManager(), classPointer);
       validated = true;
       }
-
    return validated ? classFlags : 0;
    }
 
@@ -2339,7 +2334,6 @@ TR_J9SharedCacheServerVM::getComponentClassFromArrayClass(TR_OpaqueClassBlock * 
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) arrayClass))
          validated = true;
       }
-
    return validated ? componentClass : NULL;
    }
 
@@ -2361,7 +2355,6 @@ TR_J9SharedCacheServerVM::getArrayClassFromComponentClass(TR_OpaqueClassBlock * 
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) componentClass))
          validated = true;
       }
-
    return validated ? arrayClass : NULL;
    }
 
@@ -2384,7 +2377,6 @@ TR_J9SharedCacheServerVM::getLeafComponentClassFromArrayClass(TR_OpaqueClassBloc
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) arrayClass))
          validated = true;
       }
-
    return validated ? leafComponent : NULL;
    }
 
@@ -2407,7 +2399,6 @@ TR_J9SharedCacheServerVM::getBaseComponentClass(TR_OpaqueClassBlock * classPoint
       if (((TR_ResolvedRelocatableJ9JITServerMethod *) comp->getCurrentMethod())->validateArbitraryClass(comp, (J9Class *) classPointer))
          validated = true;
       }
-
    return validated ? baseComponent : classPointer;  // not sure about this return value, but it's what we used to return before we got "smart"
    }
 
