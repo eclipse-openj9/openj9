@@ -71,16 +71,16 @@
 #include "infra/Monitor.hpp"
 #include "infra/MonitorTable.hpp"
 #include "il/DataTypes.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/NodePool.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
@@ -403,7 +403,7 @@ portLib_getARMLinuxProcessor()
       // searching for part of the model name value
       position_l = strstr(line_p, "Processor");
       // found the model name line, position_l is to the right of the target data
-      if (position_l) 
+      if (position_l)
          {
          position_l = strchr(line_p, ':');
          if (position_l==NULL) return TR_DefaultARMProcessor;

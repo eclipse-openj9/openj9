@@ -32,7 +32,7 @@ namespace J9 { class Symbol; }
 namespace J9 { typedef J9::Symbol SymbolConnector; }
 #endif
 
-#include "il/symbol/OMRSymbol.hpp"
+#include "il/OMRSymbol.hpp"
 
 #include <stddef.h>
 #include <stdint.h>

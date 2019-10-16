@@ -33,10 +33,10 @@
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "il/DataTypes.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/OMRDataTypes_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 
 /*
  * J9 ARM64 specific tree evaluator table overrides
@@ -494,9 +494,9 @@ TR::Register *
 J9::ARM64::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   // ldrw R, [B + contiguousSize]        
-   // cmp R, 0                            
-   // cselw R, [B + discontiguousSize]    
+   // ldrw R, [B + contiguousSize]
+   // cmp R, 0
+   // cselw R, [B + discontiguousSize]
    //
    TR::Register *objectReg = cg->evaluate(node->getFirstChild());
    TR::Register *lengthReg = cg->allocateRegister();
@@ -568,7 +568,7 @@ J9::ARM64::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    snippetLabel = generateLabelSymbol(cg);
    TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference());
    cg->addSnippet(snippet);
-   
+
    gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, (reversed ? TR::CC_CS : TR::CC_LS));
 
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
@@ -654,7 +654,7 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
    }
 
 static TR::Register *
-genCAS(TR::Node *node, TR::CodeGenerator *cg, TR::Register *objReg, TR::Register *offsetReg, TR::Register *oldVReg, TR::Register *newVReg, 
+genCAS(TR::Node *node, TR::CodeGenerator *cg, TR::Register *objReg, TR::Register *offsetReg, TR::Register *oldVReg, TR::Register *newVReg,
       TR::LabelSymbol *doneLabel, TR::Node *objNode, int32_t oldValue, bool oldValueInReg, bool isLong, bool casWithoutSync = false)
    {
    TR_ASSERT_FATAL(false, "CAS generation is currently unsupported.\n");
@@ -670,8 +670,8 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
    TR::Node *fourthChild = node->getChild(3);
    TR::Node *fifthChild = node->getChild(4);
    TR::Register *offsetReg = NULL;
-   TR::Register *oldVReg = NULL; 
-   TR::Register *newVReg = NULL; 
+   TR::Register *oldVReg = NULL;
+   TR::Register *newVReg = NULL;
    TR::Register *resultReg = NULL;
    TR::Register *objReg = cg->evaluate(secondChild);
    TR::RegisterDependencyConditions *conditions = NULL;
@@ -741,7 +741,7 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
    if (methodSymbol)
       {
-      switch (methodSymbol->getRecognizedMethod()) 
+      switch (methodSymbol->getRecognizedMethod())
          {
          case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
             {
@@ -755,12 +755,12 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
                }
             break;
             }
-         
+
          default:
             break;
          }
       }
-   
+
    // Nothing was done
    resultReg = NULL;
    return false;

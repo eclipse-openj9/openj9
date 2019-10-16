@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,11 +32,11 @@
 #include "env/CompilerEnv.hpp"
 #include "env/VMJ9.h"
 #include "il/DataTypes.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/PPCRecompilationSnippet.hpp"

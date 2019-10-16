@@ -35,10 +35,10 @@
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
 #include "env/jittypes.h"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "ras/Debug.hpp"
 #include "x/codegen/RestartSnippet.hpp"
 

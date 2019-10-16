@@ -41,10 +41,10 @@
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
+#include "il/MethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
@@ -628,7 +628,7 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
       TR_ASSERT(methodSymbol->isInterface() && info->getKind() == TR_InterfaceGuard, "assertion failure");
       TR_OpaqueClassBlock *thisClass = info->getThisClass();
       TR_ASSERT(thisClass, "assertion failure");
-      
+
       TR_ResolvedMethod *implementer = table->findSingleImplementer(thisClass, cpIndex, owningMethod, comp, true, TR_yes);
       if (!implementer ||
           (info->getTestType() == TR_VftTest && comp->fe()->classHasBeenExtended(implementer->containingClass())))

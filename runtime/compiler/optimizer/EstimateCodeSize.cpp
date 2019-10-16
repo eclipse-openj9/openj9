@@ -25,7 +25,7 @@
 
 #include "codegen/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "optimizer/CallInfo.hpp"
 #include "ras/LogTracer.hpp"

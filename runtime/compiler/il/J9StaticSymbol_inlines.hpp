@@ -29,12 +29,11 @@
  * If OMRStaticInlines gets created, be sure to include here
  */
 
-#include "il/symbol/J9StaticSymbol.hpp"
-
 #include <stddef.h>
 #include "env/TRMemory.hpp"
+#include "il/J9StaticSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 
 
 inline void

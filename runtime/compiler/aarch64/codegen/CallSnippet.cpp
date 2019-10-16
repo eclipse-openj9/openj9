@@ -31,9 +31,9 @@
 #include "codegen/Register.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/J2IThunk.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 
 static uint8_t *storeArgumentItem(TR::InstOpCode::Mnemonic op, uint8_t *buffer, TR::RealRegister *reg, int32_t offset, TR::CodeGenerator *cg)
    {

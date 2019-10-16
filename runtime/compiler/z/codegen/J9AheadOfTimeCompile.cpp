@@ -37,11 +37,11 @@
 #include "env/SharedCache.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/RelocationRecord.hpp"
 
