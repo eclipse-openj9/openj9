@@ -38,6 +38,10 @@ namespace TR { class CompilationInfo; }
 namespace JITServer { class ServerStream; }
 #endif
 
+struct J9SharedClassConfig;
+struct J9SharedClassCacheDescriptor;
+struct J9SharedDataDescriptor;
+
 /**
  * \brief An interface to the VM's shared class cache.
  *
