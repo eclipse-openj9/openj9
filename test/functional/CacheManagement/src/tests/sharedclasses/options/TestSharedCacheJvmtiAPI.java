@@ -17,24 +17,39 @@ public class TestSharedCacheJvmtiAPI extends TestUtils {
     public static void main(String args[]) {
     	boolean ret = true;
     	String dir = null;
+    	String dirGroupAccess = null;
+    	String dirRemoveJavaSharedResources = null;
     	int oldCacheCount = 0;
+    	int oldCacheGroupAccessCount = 0;
     	int newCacheCount = 0;
+    	int newCacheGroupAccessCount = 0;
     	
         runDestroyAllCaches();
         if (false == isWindows()) {
         	runDestroyAllSnapshots();
+        	if (isOpenJ9()) {
+        		runDestroyAllGroupAccessCaches();
+        	}
         }
         try {
 	    	dir = getCacheDir();
 	    	if (dir == null) {
+	    		dir = getControlDir();
 	    	}
-	    	
 	    	/* get cache count before creating any new cache */
 	    	oldCacheCount = iterateSharedCache(dir, NO_FLAGS, false);
 		    if (oldCacheCount == -1) {
-		    	fail("iterateSharedCacheFunction failed");
+		    	fail("iterateSharedCacheFunction failed with dir " + dir);
 		    }
-		    	    
+	    	
+	    	if (dir == null && false == isWindows() && false == isMVS() && isOpenJ9()) {
+	    		dirGroupAccess = getCacheDir("Foo_groupaccess", false);
+	    		dirRemoveJavaSharedResources = removeJavaSharedResourcesDir(dirGroupAccess);
+	    		oldCacheGroupAccessCount = iterateSharedCache(dirGroupAccess, NO_FLAGS, false) + iterateSharedCache(dirRemoveJavaSharedResources, NO_FLAGS, false);
+			    if (oldCacheGroupAccessCount == -1) {
+			    	fail("iterateSharedCacheFunction failed with dir " + dirGroupAccess);
+			    }
+	    	}
 	    	cacheCount = 0;
 	    	if (isMVS() == false) {
 	    		createPersistentCache("cache1");
@@ -61,10 +76,20 @@ public class TestSharedCacheJvmtiAPI extends TestUtils {
 					snapshotCount++;
 				}
 	    	}
-		    
-		    newCacheCount = iterateSharedCache(dir, NO_FLAGS, false);
-		    if ((newCacheCount == -1) || (newCacheCount != oldCacheCount + cacheCount + snapshotCount)) {
-		    	fail("iterateSharedCacheFunction failed");
+	    	newCacheCount = iterateSharedCache(dir, NO_FLAGS, false);
+		    if ( dirGroupAccess == null ) {
+			    if ((newCacheCount == -1) || (newCacheCount != oldCacheCount + cacheCount + snapshotCount)) {
+			    	fail("iterateSharedCacheFunction failed, Invalid number of cache found\t" +
+			    			"expected: " + (oldCacheCount + cacheCount + snapshotCount) + "\tfound: " + newCacheCount);
+			    }
+		    } else {
+		    	newCacheGroupAccessCount = iterateSharedCache(dirGroupAccess, NO_FLAGS, false);
+		    	newCacheGroupAccessCount += iterateSharedCache(dirRemoveJavaSharedResources, NO_FLAGS, false);
+			    if ((newCacheCount == -1) || (newCacheGroupAccessCount == -1) ||
+			    		((newCacheCount + newCacheGroupAccessCount) != (oldCacheCount +oldCacheGroupAccessCount + cacheCount + snapshotCount))) {
+			    	fail("iterateSharedCacheFunction ffailed, Invalid number of cache found\t" +
+			    			"expected: " + (oldCacheCount +oldCacheGroupAccessCount + cacheCount + snapshotCount) + "\tfound: " + (newCacheCount + newCacheGroupAccessCount));
+			    }
 		    }
 		    
 		    if (isMVS() == false) {
@@ -77,7 +102,11 @@ public class TestSharedCacheJvmtiAPI extends TestUtils {
 		    	destroySharedCache(dir, "cache1", PERSISTENT, false);
 		    	checkFileDoesNotExistForPersistentCache("cache1");
 				if (isWindows() == false) {
-			    	destroySharedCache(dir, "cache1_groupaccess", PERSISTENT, false);
+					if (dirGroupAccess == null) {
+						destroySharedCache(dir, "cache1_groupaccess", PERSISTENT, false);
+					} else {
+						destroySharedCache(dirGroupAccess, "cache1_groupaccess", PERSISTENT, false);
+					}	
 			    	checkFileDoesNotExistForPersistentCache("cache1_groupaccess");
 				}
 		    }
@@ -89,7 +118,11 @@ public class TestSharedCacheJvmtiAPI extends TestUtils {
 		    	destroySharedCache(dir, "cache2", NONPERSISTENT, false);
 			    checkFileDoesNotExistForNonPersistentCache("cache2");
 			    if (isWindows() == false) {
-			    	destroySharedCache(dir, "cache2_groupaccess", NONPERSISTENT, false);
+					if (dirGroupAccess == null) {
+						destroySharedCache(dir, "cache2_groupaccess", NONPERSISTENT, false);
+					} else {
+						destroySharedCache(dirRemoveJavaSharedResources, "cache2_groupaccess", NONPERSISTENT, false);
+					}
 			    	checkFileDoesNotExistForNonPersistentCache("cache2_groupaccess");
 			    	
 			    	checkFileExistsForCacheSnapshot("cache2");
@@ -102,6 +135,9 @@ public class TestSharedCacheJvmtiAPI extends TestUtils {
 			runDestroyAllCaches();
 			if (false == isWindows()) {
 				runDestroyAllSnapshots();
+				if (isOpenJ9()) {
+					runDestroyAllGroupAccessCaches();
+				}
 			}
 		}
 	}

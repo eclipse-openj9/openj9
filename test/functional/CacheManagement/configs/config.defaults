@@ -4,6 +4,9 @@
 cmd.getCacheFileName=%java_exe% -Xshareclasses:printCacheFilename,name=%1%,persistent 
 cmd.getSnapshotFileName=%java_exe% -Xshareclasses:name=%1%,printSnapshotFilename
 cmd.getCacheFileNameNonPersist=%java_exe% -Xshareclasses:printCacheFilename,name=%1%,nonpersistent
+cmd.getCacheFileNameGroupAccess=%java_exe% -Xshareclasses:printCacheFilename,name=%1%,persistent,groupaccess
+cmd.getSnapshotFileNameGroupAccess=%java_exe% -Xshareclasses:name=%1%,printSnapshotFilename,groupaccess
+cmd.getCacheFileNameNonPersistGroupAccess=%java_exe% -Xshareclasses:printCacheFilename,name=%1%,nonpersistent,groupaccess
 cmd.destroyCache=%java_exe% -Xshareclasses:name=%1%,destroy
 cmd.destroyPersistentCache=%java_exe% -Xshareclasses:name=%1%,destroy
 cmd.destroyNonPersistentCache=%java_exe% -Xshareclasses:name=%1%,nonpersistent,destroy

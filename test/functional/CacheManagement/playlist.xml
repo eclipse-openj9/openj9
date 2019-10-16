@@ -47,6 +47,47 @@
 		-DJAVA_TEST_COMMAND=$(Q)$(JAVA_COMMAND) $(JVM_OPTIONS)$(Q)\
 		-DJAVA5_HOME=$(JAVA_HOME) \
 		$(Q)-DTEST_JVM_OPTIONS=$(JVM_OPTIONS)$(Q) \
+		-cp $(Q)CacheManagement.jar$(P)$(LIB_DIR)$(D)junit4.jar$(Q) \
+		junit.textui.TestRunner tests.sharedclasses.options.junit.AllTests; \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<platformRequirements>^os.win</platformRequirements>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+		<test>
+		<testCaseName>testSCCacheManagement_win</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+		$(SYSV_CLEANUP) ; \
+		cp $(Q)$(TEST_RESROOT)$(D)CacheManagement.jar$(Q) .; \
+		cp $(Q)$(LIB_DIR)$(D)junit4.jar$(Q) .; \
+		cp $(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) .; \
+		true CacheManagement.jar ; \
+		true junit4.jar ; \
+		true utils.jar ; \
+		$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf CacheManagement.jar; \
+		$(CONVERT_TO_EBCDIC_CMD) \
+		$(JAVA_COMMAND) $(JVM_OPTIONS) \
+		$(DFLT_CONFIG_FILE) \
+		-agentlib:jvmtitest=test:sca001 \
+		-DREALTIME=$(REALTIME_PLATFORM) \
+		-DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
+		-DJAVA_TEST_COMMAND=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ)\
+		-DJAVA5_HOME=$(SQ)$(JAVA_HOME)$(SQ) \
+		$(Q)-DTEST_JVM_OPTIONS=$(JVM_OPTIONS)$(Q) \
 		-cp $(Q)CacheManagement.jar$(P)$(LIB_DIR)$(D)junit4.jar$Q \
 		junit.textui.TestRunner tests.sharedclasses.options.junit.AllTests; \
 	$(TEST_STATUS)</command>
@@ -59,6 +100,7 @@
 		<types>
 			<type>native</type>
 		</types>
+		<platformRequirements>os.win</platformRequirements>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>

@@ -27,10 +27,9 @@ public class TestPersistentCacheMoving01 extends TestUtils {
 		  String loc = getCacheFileLocationForPersistentCache("Foo");
 		  File f = new File(loc);
 		  File fHidden = new File(tmpdir+File.separator+getCacheFileName("Foo", true));
-//		  System.out.println(loc);
-//		  System.out.println(fHidden);
+		//  System.out.println(loc);
+		//  System.out.println(fHidden);
 		  if (!f.renameTo(fHidden)) fail("Could not rename the control file to be hidden");
-		  
 		  setCacheDir(tmpdir);
 		  listAllCaches();
 		  checkOutputForCompatibleCache("Foo",true,true);
