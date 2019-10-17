@@ -533,6 +533,7 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
 
    TR::RealRegister *x15reg = cg->machine()->getRealRegister(TR::RealRegister::x15);
 
+   *((int32_t *)thunk + 1) = buffer - returnValue;  // patch offset for AOT relocation
    // movz x15, low 16 bits
    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movzx) | ((dispatcher & 0xFFFF) << 5);
    x15reg->setRegisterFieldRD((uint32_t *)buffer);
@@ -554,7 +555,6 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
    x15reg->setRegisterFieldRN((uint32_t *)buffer);
    buffer += ARM64_INSTRUCTION_LENGTH;
 
-   *((int32_t *)thunk + 1) = buffer - returnValue;  // patch offset for AOT relocation
    *(int32_t *)thunk = buffer - returnValue;        // patch size of thunk
 
 #ifdef TR_HOST_ARM64
