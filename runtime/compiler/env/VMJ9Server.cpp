@@ -33,6 +33,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "exceptions/AOTFailure.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "env/J2IThunk.hpp"
 
 void
 TR_J9ServerVM::getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods)

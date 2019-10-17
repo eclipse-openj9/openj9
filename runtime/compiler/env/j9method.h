@@ -89,13 +89,13 @@ class TR_J9MethodParameterIterator : public TR_MethodParameterIterator
    {
 public:
    TR_ALLOC(TR_Memory::Method)
-   virtual TR::DataType         getDataType();
-   virtual TR_OpaqueClassBlock * getOpaqueClass();
-   virtual char *                getUnresolvedJavaClassSignature(uint32_t&);
-   virtual bool                  isArray();
-   virtual bool                  isClass();
-   virtual bool                  atEnd();
-   virtual void                  advanceCursor();
+   virtual TR::DataType            getDataType();
+   virtual TR_OpaqueClassBlock *   getOpaqueClass();
+   virtual char *                  getUnresolvedJavaClassSignature(uint32_t&);
+   virtual bool                    isArray();
+   virtual bool                    isClass();
+   virtual bool                    atEnd();
+   virtual void                    advanceCursor();
 private:
    TR_J9MethodParameterIterator(TR_J9MethodBase &j9Method, TR::Compilation& comp, TR_ResolvedMethod * resolveMethod);
    TR_J9MethodBase &    _j9Method;
@@ -194,10 +194,12 @@ public:
    TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, J9Class * aClazz, uintptr_t cpIndex);
    TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, TR_OpaqueMethodBlock * aMethod);
 
+#if defined(JITSERVER_SUPPORT)
 protected:
    // To be used by JITServer.
    // Warning: some initialization must be done manually after calling this constructor
    TR_J9Method();
+#endif /* defined(JITSERVER_SUPPORT) */
    };
 
 class TR_ResolvedJ9MethodBase : public TR_ResolvedMethod

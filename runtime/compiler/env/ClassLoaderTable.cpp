@@ -70,12 +70,8 @@ int32_t TR_PersistentClassLoaderTable::_numClassLoaders = 0;
 void
 TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *classLoaderPointer, TR_OpaqueClassBlock *clazz)
    {
-   //fprintf(stderr, "PLCT: associateClassLoaderWithClass %p %p\n", classLoaderPointer, clazz);
    if (!sharedCache())
-      {
-      //fprintf(stderr, "PLCT: no shared cache\n");
       return;
-      }
 
    // need to acquire some kind of lock here
 
@@ -84,7 +80,7 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *classLoaderPo
    TR_ClassLoaderInfo *info = _loaderTable[index];
    while (info != NULL && info->_classLoaderPointer != classLoaderPointer)
       info = info->_next;
-   //fprintf(stderr, "PLCT: info %p\n", info);
+
    if (!info)
       {
       void *classChainPointer = (void *) sharedCache()->rememberClass(clazz);
