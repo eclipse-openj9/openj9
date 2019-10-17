@@ -40,7 +40,7 @@
 #include "vmaccess.h"
 #if defined(JITSERVER_SUPPORT)
 #include "runtime/JITClientSession.hpp"
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
 int64_t
 J9::VMEnv::maxHeapSizeInBytes()
@@ -497,6 +497,6 @@ J9::VMEnv::getInterpreterVTableOffset()
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_interpreterVTableOffset;
       }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    return sizeof(J9Class);
    }

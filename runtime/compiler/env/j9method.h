@@ -199,7 +199,7 @@ protected:
    // To be used by JITServer.
    // Warning: some initialization must be done manually after calling this constructor
    TR_J9Method();
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    };
 
 class TR_ResolvedJ9MethodBase : public TR_ResolvedMethod
