@@ -423,7 +423,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             if (TEST_JOB_NAME.contains("jck")){
                 EXTRA_OPTIONS = "-Xfuture"
                 if (TEST_JOB_NAME.contains("next")){
-                    EXTRA_OPTIONS += " ––enable–preview"
+                    EXTRA_OPTIONS += " --enable-preview"
                 }
             }
             
