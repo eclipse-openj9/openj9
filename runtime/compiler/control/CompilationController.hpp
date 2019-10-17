@@ -52,7 +52,6 @@ class TR_MethodEvent
           OtherRecompilationTrigger,
           JitCompilationInducedByDLT,
           HWPRecompilationTrigger,
-          RemoteCompilationRequest,
           NumEvents      // must be the last one
    };
    int32_t      _eventType;
@@ -62,7 +61,6 @@ class TR_MethodEvent
    J9VMThread * _vmThread;
    J9Class *    _classNeedingThunk; // for newInstanceImpl
    TR_Hotness   _nextOptLevel; // Used for HWP-based recompilation
-   TR_Hotness   _JITClientOptLevel; // Used for JITServer compilation
    };
 
 
