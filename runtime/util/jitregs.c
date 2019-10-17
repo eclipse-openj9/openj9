@@ -384,13 +384,13 @@ U_8 jitCalleeDestroyedRegisterList[] = {
 	0x0D,	/* jit_r13 */
 	0x0E,	/* jit_r14 */
 	0x0F,	/* jit_r15 */
-};
-U_8 jitCalleeSavedRegisterList[] = {
 	0x10,	/* jit_r16 */
 	0x11,	/* jit_r17 */
 	0x12,	/* jit_r18 */
 	0x13,	/* jit_r19 */
 	0x14,	/* jit_r20 */
+};
+U_8 jitCalleeSavedRegisterList[] = {
 	0x15,	/* jit_r21 */
 	0x16,	/* jit_r22 */
 	0x17,	/* jit_r23 */

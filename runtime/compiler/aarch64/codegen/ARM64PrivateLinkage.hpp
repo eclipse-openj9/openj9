@@ -89,6 +89,20 @@ class ARM64PrivateLinkage : public TR::Linkage
    virtual void initARM64RealRegisterLinkage();
 
    /**
+    * @brief Calculates the amount of frame space required to save the
+    *    preserved registers in this method.
+    *
+    * @param[out] registerSaveDescription : the bitmask of registers to preserve
+    * @param[out] numGPRsSaved : the number of GPRs saved
+    *
+    * @return : number of bytes required to reserve on the frame for
+    *           preserved registers
+    */
+   int32_t calculatePreservedRegisterSaveSize(
+      uint32_t &registerSaveDescription,
+      uint32_t &numGPRsSaved);
+
+   /**
     * @brief Copy linkage register indices to parameter symbols
     *
     * @param[in] method : the resolved method symbol
@@ -173,6 +187,46 @@ class ARM64PrivateLinkage : public TR::Linkage
       TR::Node *callNode,
       TR::RegisterDependencyConditions *dependencies,
       uint32_t argSize);
+
+   /**
+    * J9 private linkage override of OMR function
+    */
+   virtual void performPostBinaryEncoding();
+
+   /**
+    * @return Retrieve the interpretedMethodEntryPoint instruction
+    */
+   TR::Instruction *getInterpretedMethodEntryPoint() { return _interpretedMethodEntryPoint; }
+
+   /**
+    * @brief Sets the interpreted method entry point instruction
+    * @param[in] ins : interpreted method entry point instruction
+    */
+   void setInterpretedMethodEntryPoint(TR::Instruction *ins) { _interpretedMethodEntryPoint = ins; }
+
+   /**
+    * @return Retrieve the jittedMethodEntryPoint instruction
+    */
+   TR::Instruction *getJittedMethodEntryPoint() { return _jittedMethodEntryPoint; }
+
+   /**
+    * @brief Sets the jitted method entry point instruction
+    * @param[in] ins : jitted method entry point instruction
+    */
+   void setJittedMethodEntryPoint(TR::Instruction *ins) { _jittedMethodEntryPoint = ins; }
+
+   protected:
+
+   /**
+    * The first TR::Instruction of the method when called from an interpreted method.
+    */
+   TR::Instruction *_interpretedMethodEntryPoint;
+
+   /**
+    * The first TR::Instruction of the method when called from a jitted method.
+    */
+   TR::Instruction *_jittedMethodEntryPoint;
+
    };
 
 class ARM64HelperLinkage : public TR::ARM64PrivateLinkage
@@ -201,6 +255,7 @@ class ARM64HelperLinkage : public TR::ARM64PrivateLinkage
    protected:
 
    TR_LinkageConventions _helperLinkage;
+
    };
 
 }
