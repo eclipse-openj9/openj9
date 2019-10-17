@@ -2846,7 +2846,7 @@ static bool methodsAreRedefinedInPlace()
 // Hack markers
 #define VM_PASSES_SAME_CLASS_TWICE 1
 
-#if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRedefinedClass *classList)
    {
    reportHook(currentThread, "jitClassesRedefined");
@@ -3084,7 +3084,7 @@ void jitFlushCompilationQueue(J9VMThread * currentThread, J9JITFlushCompilationQ
    reportHookFinished(currentThread, "jitFlushCompilationQueue ", buffer);
    }
 
-#endif // #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390))
+#endif // #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 
 void jitMethodBreakpointed(J9VMThread * vmThread, J9Method *j9method)
    {
