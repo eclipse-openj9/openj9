@@ -36,7 +36,6 @@ public class UtilsGen {
 
 	public static void start() {
 		try {
-			// TODO: combine two mk files
 			genDependMk();
 			genUtilsMk();
 		} catch (IOException e) {

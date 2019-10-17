@@ -117,8 +117,24 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getNonHeapMemoryUsag
 		omrthread_monitor_enter(segList->segmentMutex);
 
 		MEMORY_SEGMENT_LIST_DO(segList, seg)
-			used += seg->heapAlloc - seg->heapBase;
+		{
+			/* Set default values for warmAlloc and coldAlloc pointers */
+			UDATA warmAlloc = (UDATA)seg->heapBase;
+			UDATA coldAlloc = (UDATA)seg->heapTop;
+
+			/* The JIT code cache grows from both ends of the segment: the warmAlloc pointer upwards from the start of the segment
+			 * and the coldAlloc pointer downwards from the end of the segment. The free space in a JIT code cache segment is the
+			 * space between the warmAlloc and coldAlloc pointers. See compiler/runtime/OMRCodeCache.hpp, the contract with the JVM is
+			 * that the address of the TR::CodeCache structure is stored at the beginning of the segment.
+			 */
+			UDATA *mccCodeCache = *((UDATA**)seg->heapBase);
+			if (mccCodeCache) {
+				warmAlloc = (UDATA)javaVM->jitConfig->codeCacheWarmAlloc(mccCodeCache);
+				coldAlloc = (UDATA)javaVM->jitConfig->codeCacheColdAlloc(mccCodeCache);
+			}
+			used += seg->size - (coldAlloc - warmAlloc);
 			committed += seg->size;
+		}
 		END_MEMORY_SEGMENT_LIST_DO(seg)
 
 		omrthread_monitor_exit(segList->segmentMutex);
