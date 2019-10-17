@@ -288,7 +288,11 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
     // Set Github Commit Status
     if (ghprbActualCommit) {
         node(SETUP_LABEL) {
-            set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, BUILD_URL, 'PENDING', "Build Started")
+            try {
+                retry_and_delay({set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, BUILD_URL, 'PENDING', "Build Started")})
+            } catch (e) {
+                println "Failed to set the GitHub commit status to PENDING when the job STARTED"
+            }
         }
     }
 
@@ -322,7 +326,11 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
             // Set Github Commit Status
             if (ghprbActualCommit) {
                 node(SETUP_LABEL) {
-                    set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build ${JOB.result}")
+                    try {
+                        retry_and_delay({set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build ${JOB.result}")})
+                    } catch (e) {
+                        println "Failed to set the GitHub commit status to FAILURE when the job ${JOB.result}"
+                    }
                 }
             }
         } else { // Job failed (RED)
@@ -332,7 +340,11 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
             // Set Github Commit Status
             if (ghprbActualCommit) {
                 node(SETUP_LABEL) {
-                    set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build FAILED")
+                    try {
+                        retry_and_delay({set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build FAILED")})
+                    } catch (e) {
+                        println "Failed to set the GitHub commit status to FAILURE when the job Failed"
+                    }
                 }
             }
             timeout(time: RESTART_TIMEOUT.toInteger(), unit: RESTART_TIMEOUT_UNITS) {
@@ -347,7 +359,11 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
         // Set Github Commit Status
         if (ghprbActualCommit) {
             node(SETUP_LABEL) {
-                set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'SUCCESS', "Build PASSED")
+                try {
+                    retry_and_delay({set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'SUCCESS', "Build PASSED")})
+                } catch (e) {
+                    println "Failed to set the Github commit status to SUCCESS when the job PASSED"
+                }
             }
         }
     }
