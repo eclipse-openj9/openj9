@@ -217,7 +217,7 @@ endif
 
 # run UMA to generate makefiles
 J9VM_GIT_DIR := $(firstword $(wildcard $(J9_ROOT)/.git) $(wildcard $(J9_ROOT)/workspace/.git))
-J9VM_SHA     := $(if $(J9VM_GIT_DIR),$(shell git -C $(dir $(J9VM_GIT_DIR)) rev-parse --short HEAD),developer.compile)
+J9VM_SHA     ?= $(if $(J9VM_GIT_DIR),$(shell git -C $(dir $(J9VM_GIT_DIR)) rev-parse --short HEAD),developer.compile)
 SPEC_DIR     := buildspecs
 UMA_TOOL     := $(JAVA) -cp "sourcetools/lib/om.jar$(PATHSEP)$(FREEMARKER_JAR)$(PATHSEP)sourcetools/lib/uma.jar" com.ibm.j9.uma.Main
 UMA_OPTIONS  := -rootDir . -configDir $(SPEC_DIR) -buildSpecId $(SPEC)
