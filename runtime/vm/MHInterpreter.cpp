@@ -867,30 +867,72 @@ extern "C" J9SFMethodTypeFrame *
 buildMethodTypeFrame(J9VMThread * currentThread, j9object_t methodType)
 {
 #define ROUND_U32_TO(granularity, number) (((number) + (granularity) - 1) & ~((U_32)(granularity) - 1))
-/*
-	U_32 argSlots = (U_32)J9VMJAVALANGINVOKEMETHODTYPE_ARGSLOTS(currentThread, methodType);
-	j9object_t stackDescriptionBits = J9VMJAVALANGINVOKEMETHODTYPE_STACKDESCRIPTIONBITS(currentThread, methodType);
-	U_32 descriptionInts = J9INDEXABLEOBJECT_SIZE(currentThread, stackDescriptionBits);
-	U_32 descriptionBytes = ROUND_U32_TO(sizeof(UDATA), descriptionInts * sizeof(I_32));
-	I_32 * description;
-	U_32 i;
-*/
+
+	U_32 argSlots = VM_VMHelpers::getArgSlotFromMethodType(currentThread, methodType);
+
 	J9SFMethodTypeFrame * methodTypeFrame;
 	UDATA * newA0 = currentThread->sp + argSlots;
 
-	/* Push the description bits */
-/*
-	description = (I_32 *) ((U_8 *)currentThread->sp - descriptionBytes);
-	for (i = 0; i < descriptionInts; ++i) {
-		description[i] = J9JAVAARRAYOFINT_LOAD(currentThread, stackDescriptionBits, i);
+	j9object_t arguments = (j9object_t)J9VMJAVALANGINVOKEMETHODTYPE_PTYPES(currentThread, methodType);
+	U_32 argLength = J9INDEXABLEOBJECT_SIZE(currentThread, arguments);
+	/* neededInts is the number of stackslots + 1 for the receiver (MH or NULL) + 31 so that we round up */
+	U_32 neededInts = (argSlots + 32) / 32;
+	U_32 descriptionBytes = ROUND_U32_TO(sizeof(UDATA), neededInts * sizeof(I_32));
+	I_32 * description = (I_32 *) ((U_8 *)currentThread->sp - descriptionBytes);
+	U_32 index = 0;
+	I_32 argBit = 1;
+	I_32 curr = 0;
+
+	/* Mark the "receiver" bit.  This is the mandatory bit */
+	curr |= argBit;
+	argBit <<= 1;
+
+	for(U_32 i = 0; i < argLength; i++) {
+		j9object_t clazz = J9JAVAARRAYOFOBJECT_LOAD(currentThread, arguments, i);
+		J9Class * ramClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, clazz);
+
+		if (J9ROMCLASS_IS_PRIMITIVE_TYPE(ramClass->romClass)) {
+			if ((ramClass == currentThread->javaVM->longReflectClass)
+			|| (ramClass == currentThread->javaVM->doubleReflectClass)) {
+				argBit <<= 1;
+				/* If we shifted far enough to remove the bit from the int
+				* then start assigning bits to the next int in the array
+				*/
+				if (argBit == 0) {
+					argBit = 1;
+					description[index] = curr;
+					index++;
+					curr = 0;
+				}
+			}
+		} else {
+			curr |= argBit;
+		}
+
+		/* Shift to the next argument */
+		argBit <<= 1;
+		/* If we shifted far enough to remove the bit from the int
+		 * then start assigning bits to the next int in the array
+		 */
+		if (argBit == 0) {
+			argBit = 1;
+			description[index] = curr;
+			index++;
+			curr = 0;
+		}
 	}
-*/
+
+	/* Ensure last int updated */
+	if (index < neededInts) {
+		description[index] = curr;
+	}
+
 	/* Push the frame */
 
-	methodTypeFrame = (J9SFMethodTypeFrame *) ((U_8 *)currentThread->sp - sizeof(J9SFMethodTypeFrame));
+	methodTypeFrame = (J9SFMethodTypeFrame *) ((U_8 *)description - sizeof(J9SFMethodTypeFrame));
 	methodTypeFrame->methodType = methodType;
 	methodTypeFrame->argStackSlots = argSlots;
-	methodTypeFrame->descriptionIntCount = 0;
+	methodTypeFrame->descriptionIntCount = neededInts;
 	methodTypeFrame->specialFrameFlags = 0;
 	methodTypeFrame->savedCP = currentThread->literals;
 	methodTypeFrame->savedPC = currentThread->pc;
