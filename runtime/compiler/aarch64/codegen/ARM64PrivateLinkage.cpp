@@ -148,6 +148,18 @@ uint32_t TR::ARM64PrivateLinkage::getRightToLeft()
    return getProperties().getRightToLeft();
    }
 
+intptrj_t
+TR::ARM64PrivateLinkage::entryPointFromCompiledMethod()
+   {
+   return reinterpret_cast<intptrj_t>(getJittedMethodEntryPoint()->getBinaryEncoding());
+   }
+
+intptrj_t
+TR::ARM64PrivateLinkage::entryPointFromInterpretedMethod()
+   {
+   return reinterpret_cast<intptrj_t>(getInterpretedMethodEntryPoint()->getBinaryEncoding());
+   }
+
 void TR::ARM64PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    {
    const TR::ARM64LinkageProperties& linkageProperties = getProperties();

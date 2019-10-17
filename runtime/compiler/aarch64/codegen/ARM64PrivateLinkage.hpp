@@ -189,6 +189,16 @@ class ARM64PrivateLinkage : public TR::Linkage
       uint32_t argSize);
 
    /**
+    * @brief J9 private linkage override of OMR function
+    */
+   virtual intptrj_t entryPointFromCompiledMethod();
+
+   /**
+    * @brief J9 private linkage override of OMR function
+    */
+   virtual intptrj_t entryPointFromInterpretedMethod();
+
+   /**
     * J9 private linkage override of OMR function
     */
    virtual void performPostBinaryEncoding();
