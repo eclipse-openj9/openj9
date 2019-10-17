@@ -96,16 +96,7 @@ public class MkGen {
 		f.write(Constants.HEADERCOMMENTS + "\n");
 		f.write("D=/\n\n");
 		f.write("ifndef TEST_ROOT\n");
-
-		// TODO: remove win condition after testing
-		if (Options.getSpec().contains("win")) {
-			String projectRootDir = Options.getProjectRootDir().replace("C:", "/cygdrive/c")
-					.replace("c:", "/cygdrive/c").replace('\\', '/');
-			f.write("\tTEST_ROOT := " + projectRootDir + "\n");
-		} else {
-			f.write("\tTEST_ROOT := " + Options.getProjectRootDir() + "\n");
-
-		}
+		f.write("\tTEST_ROOT := " + Options.getProjectRootDir() + "\n");
 
 		f.write("endif\n\n");
 		f.write("SUBDIRS = " + String.join(" ", subdirs) + "\n\n");
