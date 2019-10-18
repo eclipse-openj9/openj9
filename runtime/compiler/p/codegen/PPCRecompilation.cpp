@@ -179,7 +179,7 @@ TR::Instruction *TR_PPCRecompilation::generatePrologue(TR::Instruction *cursor)
       // this instruction is replaced after successful recompilation
       cursor = generateTrg1Src2Instruction   (cg(), TR::InstOpCode::OR,    firstNode, gr11,  gr11, gr11, cursor);
       cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::blt, firstNode, snippetLabel, cr0, cursor);
-      TR::Snippet     *snippet = new (cg()->trHeapMemory()) TR::PPCRecompilationSnippet(snippetLabel, cursor, cg());
+      TR::Snippet     *snippet = new (cg()->trHeapMemory()) TR::PPCRecompilationSnippet(snippetLabel, cursor->getPPCConditionalBranchInstruction(), cg());
       cg()->addSnippet(snippet);
       }
    return(cursor);

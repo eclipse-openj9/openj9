@@ -47,7 +47,7 @@ uint8_t *TR::PPCRecompilationSnippet::emitSnippetBody()
    uint8_t             *buffer = cg()->getBinaryBufferCursor();
    TR::Compilation *comp = cg()->comp();
    TR::SymbolReference  *countingRecompMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCcountingRecompileMethod, false, false, false);
-   bool                 longPrologue = (getBranchToSnippet()->getBinaryLength() > 4);
+   bool                 longPrologue = getBranchToSnippet()->getFarRelocation();
 
    getSnippetLabel()->setCodeLocation(buffer);
 
