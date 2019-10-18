@@ -1429,14 +1429,16 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
       symRef->setReallySharesSymbol();
 
    TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
-   // check for KnownObjectTable first, in JITServer mode, this will return NULL,
-   // so we never enter the critical section
-   TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-   if (knot
-       && resolved
+
+   if (resolved
        && isFinal
        && type == TR::Address
-       && !comp()->compileRelocatableCode())
+       && !comp()->compileRelocatableCode()
+#if defined(JITSERVER_SUPPORT)
+       // in JITServer mode KnownObjectTable is disabled so we want to avoid entering the critical section
+       && comp()->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+#endif
+       )
       {
       TR::VMAccessCriticalSection getObjectReferenceLocation(comp());
       if (*((uintptrj_t*)dataAddress) != 0)
