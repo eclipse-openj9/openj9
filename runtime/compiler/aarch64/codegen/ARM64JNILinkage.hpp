@@ -25,9 +25,10 @@
 
 #include "codegen/ARM64PrivateLinkage.hpp"
 
-namespace TR {
+namespace TR
+{
 
-class ARM64JNILinkage : public TR::ARM64PrivateLinkage
+class ARM64JNILinkage : public J9::ARM64PrivateLinkage
    {
    public:
 
