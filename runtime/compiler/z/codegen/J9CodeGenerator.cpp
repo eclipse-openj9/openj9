@@ -36,18 +36,17 @@
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
 #include "codegen/Linkage_inlines.hpp"
+#include "codegen/S390PrivateLinkage.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "z/codegen/J9S390PrivateLinkage.hpp"
 #include "z/codegen/J9SystemLinkageLinux.hpp"
 #include "z/codegen/J9SystemLinkagezOS.hpp"
 #include "z/codegen/J9S390CHelperLinkage.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Recompilation.hpp"
 #include "z/codegen/S390Register.hpp"
-#include "z/codegen/J9S390PrivateLinkage.hpp"
 #include "z/codegen/ReduceSynchronizedFieldLoad.hpp"
 
 #define OPT_DETAILS "O^O CODE GENERATION: "
@@ -205,7 +204,7 @@ J9::Z::CodeGenerator::createLinkage(TR_LinkageConventions lc)
          break;
 
       case TR_Private:
-         linkage = new (self()->trHeapMemory()) TR::S390PrivateLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::S390PrivateLinkage(self());
          break;
 
       case TR_J9JNILinkage:
@@ -3564,7 +3563,8 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
    TR::Instruction* vmCallHelperSnippetLabelInstruction = cursor;
 
    // Store all arguments to the stack for access by the interpreted method
-   cursor = static_cast<TR::Instruction*>(self()->getS390PrivateLinkage()->saveArguments(cursor, false, true));
+   J9::S390PrivateLinkage *privateLinkage = static_cast<J9::S390PrivateLinkage *>(self()->getLinkage());
+   cursor = static_cast<TR::Instruction*>(privateLinkage->saveArguments(cursor, false, true));
 
    // Load the EP register with the address of the next instruction
    cursor = generateRRInstruction(self(), TR::InstOpCode::BASR, node, self()->getEntryPointRealRegister(), self()->machine()->getRealRegister(TR::RealRegister::GPR0), cursor);

@@ -44,6 +44,7 @@
 #include "codegen/J9WatchedStaticFieldSnippet.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
+#include "codegen/S390PrivateLinkage.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
@@ -67,7 +68,6 @@
 #include "ras/Delimiter.hpp"
 #include "ras/DebugCounter.hpp"
 #include "env/VMJ9.h"
-#include "z/codegen/J9S390PrivateLinkage.hpp"
 #include "z/codegen/J9S390Snippet.hpp"
 #include "z/codegen/J9S390CHelperLinkage.hpp"
 #include "z/codegen/BinaryCommutativeAnalyser.hpp"
@@ -4792,7 +4792,7 @@ VMarrayStoreCHKEvaluator(
    TR::InstOpCode::Mnemonic loadOp;
    TR::Instruction * cursor;
    TR::Instruction * gcPoint;
-   TR::S390PrivateLinkage * linkage = TR::toS390PrivateLinkage(cg->getLinkage());
+   J9::S390PrivateLinkage * linkage = static_cast<J9::S390PrivateLinkage *>(cg->getLinkage());
    int bytesOffset;
 
    TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, owningObjectRegVal, generateS390MemoryReference(owningObjectReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
@@ -5033,7 +5033,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    TR::MemoryReference * mr1, * mr2;
    TR::LabelSymbol * wbLabel, * cFlowRegionEnd, * simpleStoreLabel, * cFlowRegionStart;
    TR::RegisterDependencyConditions * conditions;
-   TR::S390PrivateLinkage * linkage = TR::toS390PrivateLinkage(cg->getLinkage());
+   J9::S390PrivateLinkage * linkage = static_cast<J9::S390PrivateLinkage *>(cg->getLinkage());
    TR::Register * tempReg = NULL;
    TR::Instruction *cursor;
 
