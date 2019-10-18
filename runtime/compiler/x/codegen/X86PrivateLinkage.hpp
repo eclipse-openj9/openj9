@@ -214,9 +214,13 @@ struct PicParameters
    int32_t defaultNumberOfSlots;
    };
 
+}
 
 
-class X86PrivateLinkage : public J9::PrivateLinkage
+namespace J9
+{
+
+class X86PrivateLinkage : public PrivateLinkage
    {
    protected:
 
@@ -290,7 +294,5 @@ class X86PrivateLinkage : public J9::PrivateLinkage
    };
 
 }
-
-inline TR::X86PrivateLinkage *toX86PrivateLinkage(TR::Linkage *l) {return (TR::X86PrivateLinkage *)l;}
 
 #endif

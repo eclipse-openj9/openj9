@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,19 +25,16 @@
 
 #ifdef TR_TARGET_64BIT
 
-#include "x/codegen/X86PrivateLinkage.hpp"
+#include "codegen/X86PrivateLinkage.hpp"
 
 namespace TR { class AMD64PrivateLinkage; }
 class J2IThunk;
 
-namespace TR {
 
-// Pseudo-safe downcast function, since all linkages are AMD64PrivateLinkages
-//
-inline TR::AMD64PrivateLinkage * toAMD64PrivateLinkage(TR::Linkage *l) { return (TR::AMD64PrivateLinkage *)l; }
+namespace J9
+{
 
-
-class AMD64PrivateLinkage : public TR::X86PrivateLinkage
+class AMD64PrivateLinkage : public J9::X86PrivateLinkage
    {
    public:
 

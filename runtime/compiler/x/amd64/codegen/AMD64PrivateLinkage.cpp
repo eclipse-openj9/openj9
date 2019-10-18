@@ -82,8 +82,8 @@ enum
 // Initialization
 //
 
-TR::AMD64PrivateLinkage::AMD64PrivateLinkage(TR::CodeGenerator *cg)
-   : TR::X86PrivateLinkage(cg)
+J9::AMD64PrivateLinkage::AMD64PrivateLinkage(TR::CodeGenerator *cg)
+   : J9::X86PrivateLinkage(cg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    const TR::RealRegister::RegNum noReg = TR::RealRegister::NoReg;
@@ -309,7 +309,7 @@ static int32_t flushArgumentSize(
    return size + (((offset >= -128 && offset <= 127)) ? 1 : 4);
    }
 
-uint8_t *TR::AMD64PrivateLinkage::flushArguments(
+uint8_t *J9::AMD64PrivateLinkage::flushArguments(
       TR::Node *callNode,
       uint8_t *cursor,
       bool calculateSizeOnly,
@@ -398,7 +398,7 @@ uint8_t *TR::AMD64PrivateLinkage::flushArguments(
    }
 
 TR::Instruction *
-TR::AMD64PrivateLinkage::generateFlushInstruction(
+J9::AMD64PrivateLinkage::generateFlushInstruction(
       TR::Instruction *prev,
       TR_MovOperandTypes operandType,
       TR::DataType dataType,
@@ -449,7 +449,7 @@ TR::AMD64PrivateLinkage::generateFlushInstruction(
    }
 
 TR::Instruction *
-TR::AMD64PrivateLinkage::flushArguments(
+J9::AMD64PrivateLinkage::flushArguments(
       TR::Instruction *prev,
       TR::ResolvedMethodSymbol *methodSymbol,
       bool isReturnAddressOnStack,
@@ -525,7 +525,7 @@ TR::AMD64PrivateLinkage::flushArguments(
    return prev;
    }
 
-uint8_t *TR::AMD64PrivateLinkage::generateVirtualIndirectThunk(TR::Node *callNode)
+uint8_t *J9::AMD64PrivateLinkage::generateVirtualIndirectThunk(TR::Node *callNode)
    {
    int32_t              codeSize;
    TR::SymbolReference  *glueSymRef;
@@ -606,7 +606,7 @@ uint8_t *TR::AMD64PrivateLinkage::generateVirtualIndirectThunk(TR::Node *callNod
    return thunkEntry;
    }
 
-TR_J2IThunk *TR::AMD64PrivateLinkage::generateInvokeExactJ2IThunk(TR::Node *callNode, char *signature)
+TR_J2IThunk *J9::AMD64PrivateLinkage::generateInvokeExactJ2IThunk(TR::Node *callNode, char *signature)
    {
    TR::Compilation * comp = cg()->comp();
 
@@ -696,7 +696,7 @@ TR_J2IThunk *TR::AMD64PrivateLinkage::generateInvokeExactJ2IThunk(TR::Node *call
 // Prologue and Epilogue
 //
 
-void TR::AMD64PrivateLinkage::mapIncomingParms(TR::ResolvedMethodSymbol *method)
+void J9::AMD64PrivateLinkage::mapIncomingParms(TR::ResolvedMethodSymbol *method)
    {
    TR_ASSERT(!getProperties().passArgsRightToLeft(), "Right-to-left not yet implemented on AMD64");
 
@@ -724,7 +724,7 @@ void TR::AMD64PrivateLinkage::mapIncomingParms(TR::ResolvedMethodSymbol *method)
 
    }
 
-TR::Instruction *TR::AMD64PrivateLinkage::savePreservedRegisters(TR::Instruction *cursor)
+TR::Instruction *J9::AMD64PrivateLinkage::savePreservedRegisters(TR::Instruction *cursor)
    {
    TR::ResolvedMethodSymbol *bodySymbol  = comp()->getJittedMethodSymbol();
    const int32_t          localSize   = _properties.getOffsetToFirstLocal() - bodySymbol->getLocalMappingCursor();
@@ -764,7 +764,7 @@ TR::Instruction *TR::AMD64PrivateLinkage::savePreservedRegisters(TR::Instruction
    return cursor;
    }
 
-TR::Instruction *TR::AMD64PrivateLinkage::restorePreservedRegisters(TR::Instruction *cursor)
+TR::Instruction *J9::AMD64PrivateLinkage::restorePreservedRegisters(TR::Instruction *cursor)
    {
    TR::ResolvedMethodSymbol *bodySymbol  = comp()->getJittedMethodSymbol();
    const int32_t          localSize   = _properties.getOffsetToFirstLocal() - bodySymbol->getLocalMappingCursor();
@@ -799,7 +799,7 @@ TR::Instruction *TR::AMD64PrivateLinkage::restorePreservedRegisters(TR::Instruct
 // Call node evaluation
 //
 
-int32_t TR::AMD64PrivateLinkage::argAreaSize(TR::ResolvedMethodSymbol *methodSymbol)
+int32_t J9::AMD64PrivateLinkage::argAreaSize(TR::ResolvedMethodSymbol *methodSymbol)
    {
    int32_t result = 0;
    ListIterator<TR::ParameterSymbol>   paramIterator(&(methodSymbol->getParameterList()));
@@ -811,7 +811,7 @@ int32_t TR::AMD64PrivateLinkage::argAreaSize(TR::ResolvedMethodSymbol *methodSym
    return result;
    }
 
-int32_t TR::AMD64PrivateLinkage::argAreaSize(TR::Node *callNode)
+int32_t J9::AMD64PrivateLinkage::argAreaSize(TR::Node *callNode)
    {
    // TODO: We only need this function because unresolved calls don't have a
    // TR::ResolvedMethodSymbol, and only TR::ResolvedMethodSymbol has
@@ -831,7 +831,7 @@ int32_t TR::AMD64PrivateLinkage::argAreaSize(TR::Node *callNode)
    return result;
    }
 
-int32_t TR::AMD64PrivateLinkage::buildArgs(TR::Node                             *callNode,
+int32_t J9::AMD64PrivateLinkage::buildArgs(TR::Node                             *callNode,
                                           TR::RegisterDependencyConditions  *dependencies)
    {
    TR::MethodSymbol *methodSymbol = callNode->getSymbol()->getMethodSymbol();
@@ -896,7 +896,7 @@ int32_t TR::AMD64PrivateLinkage::buildArgs(TR::Node                             
    return buildPrivateLinkageArgs(callNode, dependencies, rightToLeft, passArgsOnStack);
    }
 
-int32_t TR::AMD64PrivateLinkage::buildPrivateLinkageArgs(TR::Node                             *callNode,
+int32_t J9::AMD64PrivateLinkage::buildPrivateLinkageArgs(TR::Node                             *callNode,
                                                         TR::RegisterDependencyConditions  *dependencies,
                                                         bool                                 rightToLeft,
                                                         bool                                 passArgsOnStack)
@@ -1124,7 +1124,7 @@ static TR_AtomicRegion X86PicSlotAtomicRegion[] =
    };
 
 
-TR::Instruction *TR::AMD64PrivateLinkage::buildPICSlot(TR::X86PICSlot picSlot, TR::LabelSymbol *mismatchLabel, TR::LabelSymbol *doneLabel, TR::X86CallSite &site)
+TR::Instruction *J9::AMD64PrivateLinkage::buildPICSlot(TR::X86PICSlot picSlot, TR::LabelSymbol *mismatchLabel, TR::LabelSymbol *doneLabel, TR::X86CallSite &site)
    {
    TR::Register *cachedAddressRegister = cg()->allocateRegister();
 
@@ -1245,7 +1245,7 @@ static TR_AtomicRegion amd64IPicAtomicRegions[] =
    //{ 0x28, 4 }, // Call displacement 2  (no race here)
    };
 
-void TR::AMD64PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk)
+void J9::AMD64PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
    int32_t numIPICs = 0;
@@ -1357,7 +1357,7 @@ void TR::AMD64PrivateLinkage::buildIPIC(TR::X86CallSite &site, TR::LabelSymbol *
    cg()->reserveNTrampolines(numIPICs);
    }
 
-void TR::AMD64PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk)
+void J9::AMD64PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel, uint8_t *thunk)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
    if (entryLabel)
@@ -1392,7 +1392,7 @@ void TR::AMD64PrivateLinkage::buildVirtualOrComputedCall(TR::X86CallSite &site, 
       }
    }
 
-TR::Register *TR::AMD64PrivateLinkage::buildJNIDispatch(TR::Node *callNode)
+TR::Register *J9::AMD64PrivateLinkage::buildJNIDispatch(TR::Node *callNode)
    {
    TR_ASSERT(0, "AMD64 implements JNI dispatch using a system linkage");
    return NULL;

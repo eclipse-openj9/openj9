@@ -22,8 +22,8 @@
 
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
+#include "codegen/X86PrivateLinkage.hpp"
 #include "compile/Compilation.hpp"
-#include "x/codegen/X86PrivateLinkage.hpp"
 #include "x/codegen/X86HelperLinkage.hpp"
 #include "codegen/AMD64PrivateLinkage.hpp"
 #include "codegen/AMD64JNILinkage.hpp"
@@ -46,8 +46,8 @@ J9::X86::AMD64::CodeGenerator::createLinkage(TR_LinkageConventions lc)
       case TR_Helper:
       case TR_Private:
          {
-         TR::X86PrivateLinkage *p = NULL;
-         p = new (self()->trHeapMemory()) TR::AMD64PrivateLinkage(self());
+         J9::X86PrivateLinkage *p = NULL;
+         p = new (self()->trHeapMemory()) J9::AMD64PrivateLinkage(self());
          p->IPicParameters.roundedSizeOfSlot = 10+3+2+5+2+2;
          p->IPicParameters.defaultNumberOfSlots = 2;
          p->IPicParameters.defaultSlotAddress = 0;
