@@ -149,7 +149,7 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
   && mv bootjdk11/* /usr/lib/jvm/adoptojdk-java-11 \
   && rm -rf bootjdk11
 
-# Download and install boot JDK from AdoptOpenJDK for java 13 and higher
+# Download and install boot JDK from AdoptOpenJDK for java 13
 RUN mkdir -p /usr/lib/jvm/adoptojdk-java-12 \
   && cd /usr/lib/jvm/adoptojdk-java-12 \
   && wget -O bootjdk12.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk12?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
@@ -158,6 +158,16 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-12 \
   && mv $(ls | grep -i jdk-12) bootjdk12 \
   && mv bootjdk12/* /usr/lib/jvm/adoptojdk-java-12 \
   && rm -rf bootjdk12
+
+# Download and install boot JDK from AdoptOpenJDK for java 14 and higher
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-13 \
+  && cd /usr/lib/jvm/adoptojdk-java-13 \
+  && wget -O bootjdk13.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk13?openjdk_impl=openj9&os=linux&arch=s390x&release=latest&type=jdk" \
+  && tar -xzf bootjdk13.tar.gz \
+  && rm -f bootjdk13.tar.gz \
+  && mv $(ls | grep -i jdk-13) bootjdk13 \
+  && mv bootjdk13/* /usr/lib/jvm/adoptojdk-java-13 \
+  && rm -rf bootjdk13
 
 # Set up sshd config
 RUN mkdir /var/run/sshd \
