@@ -310,7 +310,7 @@ uint8_t *TR::ARM64UnresolvedCallSnippet::emitSnippetBody()
 
    TR::SymbolReference *methodSymRef = getNode()->getSymbolReference();
    TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
-   int32_t helperLookupOffset;
+   intptrj_t helperLookupOffset;
 
    TR::Compilation* comp = cg()->comp();
 

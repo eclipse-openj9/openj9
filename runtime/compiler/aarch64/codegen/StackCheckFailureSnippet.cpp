@@ -218,5 +218,6 @@ TR::ARM64StackCheckFailureSnippet::getLength(int32_t estimatedSnippetStart)
    else
       {
       TR_ASSERT(false, "Frame size too big.  Not supported yet");
+      return 0;
       }
    }
