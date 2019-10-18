@@ -33,11 +33,20 @@
 #include "j9cfg.h"
 #include "jilconsts.h"
 #include "j9protos.h"
+#if defined(JITSERVER_SUPPORT)
+#include "control/JITServerHelpers.hpp"
+#endif
 
 bool
 J9::VMMethodEnv::hasBackwardBranches(TR_OpaqueMethodBlock *method)
    {
-   J9ROMMethod * romMethod = JITServerHelpers::romMethodOfRamMethod((J9Method *)method);
+   J9ROMMethod *romMethod = NULL;
+#if defined(JITSERVER_SUPPORT)
+   if (TR::CompilationInfo::getStream())
+      romMethod = JITServerHelpers::romMethodOfRamMethod((J9Method *)method);
+   else
+#endif
+      romMethod = J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
    return (romMethod->modifiers & J9AccMethodHasBackwardBranches) != 0;
    }
 
@@ -64,10 +73,9 @@ J9::VMMethodEnv::startPC(TR_OpaqueMethodBlock *method)
 uintptr_t
 J9::VMMethodEnv::bytecodeStart(TR_OpaqueMethodBlock *method)
    {
-
    J9ROMMethod *romMethod = NULL;
-   auto stream = TR::CompilationInfo::getStream();
-   if (stream)
+#if defined(JITSERVER_SUPPORT)
+   if (TR::CompilationInfo::getStream())
       // Don't need to call getOriginalROMMethod, because
       // in JITServer romMethodOfRamMethod already fetches
       // ROM method from its ROM class.
@@ -75,6 +83,7 @@ J9::VMMethodEnv::bytecodeStart(TR_OpaqueMethodBlock *method)
       // dereferenced later on, so need ROM method to be on the server.
       romMethod = JITServerHelpers::romMethodOfRamMethod((J9Method *) method);
    else
+#endif
       romMethod = getOriginalROMMethod((J9Method *)method);
    return (uintptr_t)(J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
    }
@@ -83,7 +92,13 @@ J9::VMMethodEnv::bytecodeStart(TR_OpaqueMethodBlock *method)
 uint32_t
 J9::VMMethodEnv::bytecodeSize(TR_OpaqueMethodBlock *method)
    {
-   J9ROMMethod *romMethod = JITServerHelpers::romMethodOfRamMethod((J9Method*) method);
+   J9ROMMethod *romMethod = NULL;
+#if defined(JITSERVER_SUPPORT)
+   if (TR::CompilationInfo::getStream())
+      romMethod = JITServerHelpers::romMethodOfRamMethod((J9Method*) method);
+   else
+#endif
+      romMethod = J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)method);
    return (uint32_t)(J9_BYTECODE_END_FROM_ROM_METHOD(romMethod) -
                      J9_BYTECODE_START_FROM_ROM_METHOD(romMethod));
    }
