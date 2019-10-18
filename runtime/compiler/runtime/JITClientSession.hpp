@@ -295,12 +295,12 @@ class ClientSessionData
       int32_t _arrayletLeafSize;
       uint64_t _overflowSafeAllocSize;
       int32_t _compressedReferenceShift;
-      UDATA _cacheStartAddress;
+      J9SharedClassCacheDescriptor *_j9SharedClassCacheDescriptorList;
       bool _stringCompressionEnabled;
       bool _hasSharedClassCache;
       bool _elgibleForPersistIprofileInfo;
-      TR_OpaqueClassBlock *_arrayTypeClasses[8];
       bool _reportByteCodeInfoAtCatchBlock;
+      TR_OpaqueClassBlock *_arrayTypeClasses[8];
       MM_GCReadBarrierType _readBarrierType;
       MM_GCWriteBarrierType _writeBarrierType;
       bool _compressObjectReferences;
@@ -326,7 +326,7 @@ class ClientSessionData
    PersistentUnorderedMap<J9Class*, ClassInfo> & getROMClassMap() { return _romClassMap; }
    PersistentUnorderedMap<J9Method*, J9MethodInfo> & getJ9MethodMap() { return _J9MethodMap; }
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getClassByNameMap() { return _classByNameMap; }
-   PersistentUnorderedMap<J9Class *, UDATA *> & getClassClainDataCache() { return _classChainDataMap; }
+   PersistentUnorderedMap<J9Class *, UDATA *> & getClassChainDataCache() { return _classChainDataMap; }
    PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock*> & getConstantPoolToClassMap() { return _constantPoolToClassMap; }
    void processUnloadedClasses(JITServer::ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }
@@ -384,6 +384,9 @@ class ClientSessionData
 
    template <typename map, typename key>
    void purgeCache(std::vector<ClassUnloadedData> *unloadedClasses, map m, key ClassUnloadedData::*k);
+
+   J9SharedClassCacheDescriptor * reconstructJ9SharedClassCacheDescriptorList(const std::vector<uintptr_t> &listOfCacheStartAddress, const std::vector<uintptr_t> &listOfCacheSizeBytes);
+   void destroyJ9SharedClassCacheDescriptorList();
 
    private:
    const uint64_t _clientUID;
