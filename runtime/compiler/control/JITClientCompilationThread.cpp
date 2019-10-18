@@ -468,7 +468,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, methods, methodsInfo);
          }
          break;
-#if defined(JITSERVER_TODO)
       case MessageType::VM_getVMInfo:
          {
          ClientSessionData::VMInfo vmInfo = {};
@@ -482,7 +481,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._arrayletLeafSize = TR::Compiler->om.arrayletLeafSize();
          vmInfo._overflowSafeAllocSize = static_cast<uint64_t>(fe->getOverflowSafeAllocSize());
          vmInfo._compressedReferenceShift = TR::Compiler->om.compressedReferenceShift();
-         vmInfo._cacheStartAddress = fe->sharedCache() ? fe->sharedCache()->getCacheStartAddress() : 0;
+         vmInfo._j9SharedClassCacheDescriptorList = NULL;
          vmInfo._stringCompressionEnabled = fe->isStringCompressionEnabledVM();
          vmInfo._hasSharedClassCache = TR::Options::sharedClassCache();
          vmInfo._elgibleForPersistIprofileInfo = vmInfo._isIProfilerEnabled ? fe->getIProfiler()->elgibleForPersistIprofileInfo(comp) : false;
@@ -503,10 +502,27 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._floatInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactF, false, false, false)->getMethodAddress();
          vmInfo._doubleInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD, false, false, false)->getMethodAddress();
          vmInfo._interpreterVTableOffset = TR::Compiler->vm.getInterpreterVTableOffset();
-         client->write(response, vmInfo);
+
+         // For multi-layered SCC support
+         std::vector<uintptr_t> listOfCacheStartAddress;
+         std::vector<uintptr_t> listOfCacheSizeBytes;
+         if (fe->sharedCache() && fe->sharedCache()->getCacheDescriptorList())
+            {
+            // The cache descriptor list is linked last to first and is circular, so last->previous == first.
+            J9SharedClassCacheDescriptor *head = fe->sharedCache()->getCacheDescriptorList();
+            J9SharedClassCacheDescriptor *curCache = head;
+            do
+               {
+               listOfCacheStartAddress.push_back((uintptr_t)curCache->cacheStartAddress);
+               listOfCacheSizeBytes.push_back(curCache->cacheSizeBytes);
+               curCache = curCache->next;
+               }
+            while (curCache != head);
+            }
+
+         client->write(response, vmInfo, listOfCacheStartAddress, listOfCacheSizeBytes);
          }
          break;
-#endif /* defined(JITSERVER_TODO) */
       case MessageType::VM_isPrimitiveArray:
          {
          TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
@@ -1398,26 +1414,25 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, offset);
          }
          break;
-#if defined(JITSERVER_TODO)
       case MessageType::ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
          auto mirror = std::get<0>(recv);
          auto cpIndex = std::get<1>(recv);
+         UDATA vtableOffset = 0;
          J9Method *j9method = NULL;
             {
             TR::VMAccessCriticalSection getResolvedHandleMethod(fe);
-            j9method = jitGetImproperInterfaceMethodFromCP(fe->vmThread(), mirror->cp(), cpIndex);
+            j9method = jitGetImproperInterfaceMethodFromCP(fe->vmThread(), mirror->cp(), cpIndex, &vtableOffset);
             }
          // Create a mirror right away
          TR_ResolvedJ9JITServerMethodInfo methodInfo;
          if (j9method)
-            TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, 0, mirror, fe, trMemory);
+            TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, (uint32_t)vtableOffset, mirror, fe, trMemory);
 
          client->write(response, j9method, methodInfo);
          }
          break;
-#endif /* defined(JITSERVER_TODO) */
       case MessageType::ResolvedMethod_startAddressForJNIMethod:
          {
          TR_ResolvedJ9Method *ramMethod = std::get<0>(client->getRecvData<TR_ResolvedJ9Method *>());
@@ -2023,7 +2038,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, JITServer::Void());
          }
          break;
-#if defined(JITSERVER_TODO)
       case MessageType::SharedCache_storeSharedData:
          {
          auto recv = client->getRecvData<std::string, J9SharedDataDescriptor, std::string>();
@@ -2035,7 +2049,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, ptr);
          }
          break;
-#endif /* defined(JITSERVER_TODO) */
       case MessageType::runFEMacro_derefUintptrjPtr:
          {
          TR::VMAccessCriticalSection deref(fe);
