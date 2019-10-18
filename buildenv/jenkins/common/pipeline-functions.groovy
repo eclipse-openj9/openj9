@@ -633,21 +633,20 @@ def generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO)
     }
 }
 
-// Please use curly brackets to wrap the parameter, command
-// Please use a semicolon to separate each command if there are mutiple commands
-// The parameters, numRetries and waitTime, are integers
-// The parameter, units, is a string  
-// The default value of the number of entries is 3. 
-// The default values of the wait time and the unit are 60 seconds
-// The parameter, units, can be 'NANOSECONDS', 'MICROSECONDS', 'MILLISECONDS',
-// 'SECONDS', 'MINUTES', 'HOURS', 'DAYS'
-// Example:
-// retry_and_delay({println "This is an example"})
-// retry_and_delay({println "This is an example"}, 4)
-// retry_and_delay({println "This is an example"}, 4, 120)
-// retry_and_delay({println "This is an example"}, 4, 3, 'MINUTES')
-// retry_and_delay({println "This is an example"; println "Another example"}) 
-  
+/*
+* Use curly brackets to wrap the parameter, command.
+* Use a semicolon to separate each command if there are mutiple commands.
+* The parameters, numRetries and waitTime, are integers.
+* The parameter, units, is a string.
+* The parameter, units, can be 'NANOSECONDS', 'MICROSECONDS', 'MILLISECONDS',
+* 'SECONDS', 'MINUTES', 'HOURS', 'DAYS'
+* Example:
+* retry_and_delay({println "This is an example"})
+* retry_and_delay({println "This is an example"}, 4)
+* retry_and_delay({println "This is an example"}, 4, 120)
+* retry_and_delay({println "This is an example"}, 4, 3, 'MINUTES')
+* retry_and_delay({println "This is an example"; println "Another example"})
+*/
 def retry_and_delay(command, numRetries = 3, waitTime = 60, units = 'SECONDS') {
     def ret = false
     retry(numRetries) {
@@ -661,6 +660,24 @@ def retry_and_delay(command, numRetries = 3, waitTime = 60, units = 'SECONDS') {
 }
 
 def setup_pull_request() {
+    // Parse Github trigger comments
+    // For example:
+    /* This is great
+       Jenkins test extended <platform>
+       It was tested*/
+
+    def PARSED_BY_NEWLINE_COMMENT = params.ghprbCommentBody.split(/\\r?\\n/)
+    for (COMMENT in PARSED_BY_NEWLINE_COMMENT) {
+        def comment = COMMENT.toLowerCase().tokenize(' ')
+        if (("${comment[0]}" == "jenkins") && (("${comment[1]}" == "compile") || ("${comment[1]}" == "test"))) {
+            setup_pull_request_single_comment(comment)
+            return
+        }
+    }
+    error("Invalid trigger comment")
+}
+
+def setup_pull_request_single_comment(PARSED_COMMENT) {
     // Parse Github trigger comment
     // Jenkins test sanity <platform>*
     // Jenkins test extended <platform>*
@@ -676,7 +693,6 @@ def setup_pull_request() {
     *
     * Note: Depends logic is already part of the build/compile job and is located in the checkout_pullrequest() function.
     */
-    def PARSED_COMMENT = params.ghprbCommentBody.toLowerCase().tokenize(' ')
     // Don't both checking PARSED_COMMENT[0] since it is hardcoded in the trigger regex of the Jenkins job.
 
     // Setup TESTS_TARGETS
