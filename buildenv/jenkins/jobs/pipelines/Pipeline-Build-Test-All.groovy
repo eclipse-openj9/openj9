@@ -317,6 +317,9 @@ try {
                     }
                 }
             }
+            if (params.SLACK_ON_SUCCESS && SLACK_CHANNEL) {
+                slackSend channel: SLACK_CHANNEL, color: 'good', message: "Build Passed: ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)"
+            }
         }
     }
 } finally {
