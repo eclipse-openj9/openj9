@@ -367,10 +367,9 @@ xlpSubOptionsParser(J9JavaVM *vm, IDATA xlpIndex, XlpError *xlpError, UDATA *req
 
 	UDATA pageSizeHowMany = 0;
 #if	defined(J9ZOS390)
-	UDATA pageableHowMany = 0;
-	UDATA pageableOptionNumber = 0;
-	UDATA nonPageableHowMany = 0;
 	UDATA nonPageableOptionNumber = 0;
+	UDATA pageableOptionNumber = 0;
+	PORT_ACCESS_FROM_JAVAVM(vm);
 #endif /* defined(J9ZOS390) */
 
 	/* Reset error state from parsing of previous -Xlp<size> option */
@@ -482,13 +481,11 @@ xlpSubOptionsParser(J9JavaVM *vm, IDATA xlpIndex, XlpError *xlpError, UDATA *req
 			parsingState = PARSING_COMMA;
 		} else if (try_scan(&optionsString, "pageable")) {
 #if	defined(J9ZOS390)
-			pageableHowMany += 1;
 			pageableOptionNumber = optionNumber;
 #endif /* defined(J9ZOS390) */
 			parsingState = PARSING_COMMA;
 		} else if (try_scan(&optionsString, "nonpageable")) {
 #if	defined(J9ZOS390)
-			nonPageableHowMany += 1;
 			nonPageableOptionNumber = optionNumber;
 #endif /* defined(J9ZOS390) */
 			parsingState = PARSING_COMMA;
@@ -535,24 +532,28 @@ xlpSubOptionsParser(J9JavaVM *vm, IDATA xlpIndex, XlpError *xlpError, UDATA *req
 	}
 
 #if defined(J9ZOS390)
-	/*
-	 *  [non]pageable
-	 *  - this option must be specified for Z platforms
-	 */
-	if ((0 == pageableHowMany) && (0 == nonPageableHowMany)) {
-		/* error: [non]pageable not found */
-		xlpErrorState = XLP_INCOMPLETE_OPTION;
-		xlpError->xlpOptionErrorString = "-Xlp:objectheap:";
-		xlpError->xlpMissingOptionString = "[non]pageable";
-		return xlpErrorState;
-	}
-
-	if (pageableOptionNumber > nonPageableOptionNumber) {
+	if (nonPageableOptionNumber > pageableOptionNumber) {
+		/* nonpageable is most right */
+		*requestedPageFlags = J9PORT_VMEM_PAGE_FLAG_FIXED;
+	} else if (pageableOptionNumber != 0) {
 		/* pageable is most right */
 		*requestedPageFlags = J9PORT_VMEM_PAGE_FLAG_PAGEABLE;
 	} else {
-		/* nonpageable is most right */
-		*requestedPageFlags = J9PORT_VMEM_PAGE_FLAG_FIXED;
+		/* [non]pageable not passed. By default use pageable if both are sizes are available */
+		UDATA *pageSizes = j9vmem_supported_page_sizes();
+		UDATA *pageFlags = j9vmem_supported_page_flags();
+		for (UDATA pageIndex = 0; 0 != pageSizes[pageIndex]; ++pageIndex) {
+			if (pageSizes[pageIndex] == (UDATA)requestedPageSize) {
+
+				if (pageFlags[pageIndex] == J9PORT_VMEM_PAGE_FLAG_PAGEABLE) {
+					*requestedPageFlags = J9PORT_VMEM_PAGE_FLAG_PAGEABLE;
+					break;
+				}
+				else {
+					*requestedPageFlags = J9PORT_VMEM_PAGE_FLAG_FIXED;
+				}
+			}
+		}
 	}
 #endif /* defined(J9ZOS390) */
 
@@ -640,14 +641,10 @@ gcParseXlpOption(J9JavaVM *vm)
 	 * It also overrides -Xlp<size> option if it appears to the right of -Xlp<size>
 	 *
 	 * The proper formed -Xlp:objectheap: option must be (in strict order):
-	 * 	For all non-Z platforms:
+	 * 	For all platforms:
 	 * 		-Xlp:objectheap:pagesize=<size> or
 	 * 		-Xlp:objectheap:pagesize=<size>,pageable or
 	 * 		-Xlp:objectheap:pagesize=<size>,nonpageable
-	 *
-	 * 	For Z platforms
-	 *		-Xlp:objectheap:pagesize=<size>,pageable or
-	 *		-Xlp:objectheap:pagesize=<size>,nonpageable
 	 */
 	xlpObjectHeapIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, "-Xlp:objectheap:", NULL);
 
