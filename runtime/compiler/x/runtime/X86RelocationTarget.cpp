@@ -35,11 +35,13 @@
 #include "codegen/FrontEnd.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "env/J2IThunk.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
 #include "runtime/J9Runtime.hpp"
 #include "runtime/MethodMetaData.h"
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/RelocationTarget.hpp"
-#include "env/J2IThunk.hpp"
 
 uint8_t *
 TR_X86RelocationTarget::eipBaseForCallOffset(uint8_t *reloLocation)
@@ -96,8 +98,9 @@ TR_X86RelocationTarget::performThunkRelocation(uint8_t *thunkAddress, uintptr_t 
    *(UDATA *) (thunkAddress + *thunkRelocationData + 2) = vmHelper;
    }
 
-void *
-j9ThunkInvokeExactHelperFromTerseSignature(UDATA signatureLength, char *signatureChars)
+#if defined(JITSERVER_SUPPORT)
+static void *
+j9ThunkInvokeExactHelperFromTerseSignature(UDATA signatureLength, char *signatureChars, TR_RelocationRuntime *reloRuntime)
    {
    TR_RuntimeHelper helper;
 
@@ -124,7 +127,7 @@ j9ThunkInvokeExactHelperFromTerseSignature(UDATA signatureLength, char *signatur
          helper = TR_icallVMprJavaSendInvokeExact1;
          break;
       }
-   TR::SymbolReference *symRef = TR::comp()->getSymRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
+   TR::SymbolReference *symRef = reloRuntime->comp()->getSymRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
 
    return symRef->getMethodAddress();
    }
@@ -133,9 +136,10 @@ void
 TR_X86RelocationTarget::performInvokeExactJ2IThunkRelocation(TR_J2IThunk *thunk)
    {
    char *signature = thunk->terseSignature();
-   void *vmHelper = j9ThunkInvokeExactHelperFromTerseSignature(strlen(signature), signature);
+   void *vmHelper = j9ThunkInvokeExactHelperFromTerseSignature(strlen(signature), signature, reloRuntime());
    *(UDATA *)(thunk->entryPoint() + 2) = (UDATA) vmHelper;
    }
+#endif /* defined(JITSERVER_SUPPORT) */
 
 bool TR_AMD64RelocationTarget::useTrampoline(uint8_t * helperAddress, uint8_t *baseLocation)
    {
