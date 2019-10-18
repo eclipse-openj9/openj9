@@ -51,8 +51,13 @@ struct PPCPICItem
    float _frequency;
    };
 
+}
 
-class PPCPrivateLinkage : public J9::PrivateLinkage
+
+namespace J9
+{
+
+class PPCPrivateLinkage : public PrivateLinkage
    {
    public:
 
@@ -104,12 +109,17 @@ class PPCPrivateLinkage : public J9::PrivateLinkage
    virtual TR::Register *buildalloca(TR::Node *BIFCallNode);
    };
 
+}
 
-class PPCHelperLinkage : public TR::PPCPrivateLinkage
+
+namespace TR
+{
+
+class PPCHelperLinkage : public J9::PPCPrivateLinkage
    {
    public:
 
-   PPCHelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), TR::PPCPrivateLinkage(cg)
+   PPCHelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), J9::PPCPrivateLinkage(cg)
       {
       TR_ASSERT(helperLinkage == TR_Helper || helperLinkage == TR_CHelper, "Unexpected helper linkage convention");
       }
