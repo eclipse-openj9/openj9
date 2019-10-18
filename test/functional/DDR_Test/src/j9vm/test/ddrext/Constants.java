@@ -170,6 +170,7 @@ public class Constants {
 	public static final String SHRC_BYTESTATS_FAILURE_KEY = "UNKNOWN\\(,no shared cache";
 
 	// To check the startuphint
+	public static final String SHRC_STARTUPHINT = "startuphint";
 	public static final String SHRC_STARTUPHINT_SUCCESS_KEY = "STARTUPHINT BYTEDATA";
 	public static final String SHRC_STARTUPHINT_FAILURE_KEY = "STARTUPHINTS 0";
 
