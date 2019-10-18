@@ -30,9 +30,10 @@ namespace TR { class CodeGenerator; }
 namespace TR { class Instruction; }
 namespace TR { class Register; }
 
-namespace TR {
+namespace J9
+{
 
-class ARMPrivateLinkage : public J9::PrivateLinkage
+class ARMPrivateLinkage : public PrivateLinkage
    {
    static TR::ARMLinkageProperties properties;
 
@@ -72,11 +73,17 @@ class ARMPrivateLinkage : public J9::PrivateLinkage
    virtual TR::Register *buildIndirectDispatch(TR::Node *callNode);
    };
 
-class ARMHelperLinkage : public TR::ARMPrivateLinkage
+}
+
+
+namespace TR
+{
+
+class ARMHelperLinkage : public J9::ARMPrivateLinkage
    {
    public:
 
-   ARMHelperLinkage(TR::CodeGenerator *codeGen) : TR::ARMPrivateLinkage(codeGen) {}
+   ARMHelperLinkage(TR::CodeGenerator *codeGen) : J9::ARMPrivateLinkage(codeGen) {}
 
    virtual int32_t buildArgs(TR::Node                            *callNode,
                              TR::RegisterDependencyConditions *dependencies,
