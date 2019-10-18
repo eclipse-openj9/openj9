@@ -23,7 +23,9 @@
 #include "optimizer/TransformUtil.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
+#if defined(JITSERVER_SUPPORT)
 #include "control/CompilationRuntime.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
 #include "env/CompilerEnv.hpp"
 #include "il/Block.hpp"
 #include "il/Block_inlines.hpp"
@@ -46,7 +48,7 @@
 
 /**
  * Walks the TR_RegionStructure counting loops to get the nesting depth of the block
- */ 
+ */
 int32_t J9::TransformUtil::getLoopNestingDepth(TR::Compilation *comp, TR::Block *block)
    {
    TR_RegionStructure *region = block->getParentStructureIfExists(comp->getFlowGraph());
@@ -1436,13 +1438,15 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
 bool
 J9::TransformUtil::transformIndirectLoadChainAt(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, uintptrj_t *baseReferenceLocation, TR::Node **removedNode)
    {
-   // bypass this method, because baseReferenceLocation is often an address of a pointer
+#if defined(JITSERVER_SUPPORT)
+   // Bypass this method, because baseReferenceLocation is often an address of a pointer
    // on server's stack, which causes a segfault when getStaticReferenceFieldAtAddress is called
    // on the client.
-   if (comp->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+   if (comp->isOutOfProcessCompilation())
       {
       return false;
       }
+#endif /* defined(JITSERVER_SUPPORT) */
 
    TR::VMAccessCriticalSection transformIndirectLoadChainAt(comp->fej9());
    uintptrj_t baseAddress;
@@ -1542,16 +1546,15 @@ J9::TransformUtil::transformIndirectLoadChainImpl(TR::Compilation *comp, TR::Nod
    {
    TR_J9VMBase *fej9 = comp->fej9();
    
+   TR_ASSERT(TR::Compiler->vm.hasAccess(comp), "transformIndirectLoadChain requires VM access");
+   TR_ASSERT(node->getOpCode().isLoadIndirect(), "Expecting indirect load; found %s %p", node->getOpCode().getName(), node);
+   TR_ASSERT(node->getNumChildren() == 1, "Expecting indirect load %s %p to have one child; actually has %d", node->getOpCode().getName(), node, node->getNumChildren());
+
    if (comp->compileRelocatableCode())
       {
       return false;
       }
 
-   TR_ASSERT(TR::Compiler->vm.hasAccess(comp), "transformIndirectLoadChain requires VM access");
-   TR_ASSERT(node->getOpCode().isLoadIndirect(), "Expecting indirect load; found %s %p", node->getOpCode().getName(), node);
-   TR_ASSERT(node->getNumChildren() == 1, "Expecting indirect load %s %p to have one child; actually has %d", node->getOpCode().getName(), node, node->getNumChildren());
-
-   
    TR::SymbolReference *symRef = node->getSymbolReference();
 
    if (symRef->hasKnownObjectIndex())

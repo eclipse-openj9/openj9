@@ -1048,9 +1048,13 @@ TR_CISCGraph::makePreparedCISCGraphs(TR::Compilation *c)
    // FIXME: We need getSupportsCountDecimalDigit() like interface
    // this idiom is only enabled on 390 for the moment
 
+#if defined(JITSERVER_SUPPORT)
    // Enabling genDecimal generates the TROT instruction on Z which is currently not
    // relocatable for remote compiles. Thus we disable this option for remote compiles for now.
    bool genDecimal = TR::Compiler->target.cpu.isZ() && !c->isOutOfProcessCompilation();
+#else
+   bool genDecimal = TR::Compiler->target.cpu.isZ();
+#endif /* defined(JITSERVER_SUPPORT) */
    bool genBitOpMem = TR::Compiler->target.cpu.isZ();
    bool is64Bit = TR::Compiler->target.is64Bit();
    bool isBig = TR::Compiler->target.cpu.isBigEndian();

@@ -25,18 +25,20 @@
 #include "compile/InlineBlock.hpp"
 #include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "env/j9methodServer.hpp"
+#endif /* defined(JITSERVER_SUPPORT) */
+#include "env/VMJ9.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "il/symbol/ParameterSymbol.hpp"
 #include "optimizer/PreExistence.hpp"
-#include "ras/LogTracer.hpp"
-#include "env/VMJ9.h"
 #include "optimizer/J9CallGraph.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
+#include "ras/LogTracer.hpp"
 #include "runtime/J9Profiler.hpp"
-#include "env/j9methodServer.hpp"
 
 // Empirically determined value
 const float TR_J9EstimateCodeSize::STRING_COMPRESSION_ADJUSTMENT_FACTOR = 0.75f;
@@ -595,6 +597,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    // PHASE 1:  Bytecode Iteration
    TR_J9ByteCode bc = bci.first(), nextBC;
 
+#if defined(JITSERVER_SUPPORT)
    if (comp()->isOutOfProcessCompilation())
       {
       // JITServer optimization:
@@ -603,8 +606,9 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       auto calleeMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(calltarget->_calleeMethod);
       calleeMethod->cacheResolvedMethodsCallees();
       }
+#endif /* defined(JITSERVER_SUPPORT) */
 
-   for(; bc != J9BCunknown; bc = bci.next())
+   for (; bc != J9BCunknown; bc = bci.next())
       {
       nph.processByteCode();
       TR_ResolvedMethod * resolvedMethod;
@@ -2019,7 +2023,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       reduceDAAWrapperCodeSize(calltarget);
 
       /****************** PHASE 5: Figure out if We're really going to do a partial Inline and add whatever we do to the realSize. *******************/
-
       if (isPartialInliningCandidate(calltarget, &callBlocks))
          {
          if (comp()->getOption(TR_TraceBFGeneration))
