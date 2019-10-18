@@ -467,6 +467,11 @@ JITServerHelpers::getROMClassData(const ClientSessionData::ClassInfo &classInfo,
          *(J9Method **)data = classInfo._methodsOfClass;
          }
          break;
+      case CLASSINFO_CONSTANT_POOL :
+         {
+         *(J9ConstantPool **)data = classInfo._constantPool;
+         }
+         break;
       default :
          {
          TR_ASSERT(0, "Class Info not supported %u \n", dataType);
