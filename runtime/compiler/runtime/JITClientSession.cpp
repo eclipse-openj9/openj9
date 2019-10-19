@@ -286,8 +286,6 @@ ClientSessionData::ClassInfo::ClassInfo() :
    _methodsOfClass(NULL),
    _baseComponentClass(NULL),
    _numDimensions(0),
-   _remoteROMStringsCache(decltype(_remoteROMStringsCache)::allocator_type(TR::Compiler->persistentAllocator())),
-   _fieldOrStaticNameCache(decltype(_fieldOrStaticNameCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _parentClass(NULL),
    _interfaces(NULL),
    _classHasFinalFields(false),
@@ -300,15 +298,17 @@ ClientSessionData::ClassInfo::ClassInfo() :
    _componentClass(NULL),
    _arrayClass(NULL),
    _totalInstanceSize(0),
+   _constantPool(NULL),
+   _classFlags(0),
+   _remoteROMStringsCache(decltype(_remoteROMStringsCache)::allocator_type(TR::Compiler->persistentAllocator())),
+   _fieldOrStaticNameCache(decltype(_fieldOrStaticNameCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _classOfStaticCache(decltype(_classOfStaticCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _constantClassPoolCache(decltype(_constantClassPoolCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _fieldAttributesCache(decltype(_fieldAttributesCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _staticAttributesCache(decltype(_staticAttributesCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _fieldAttributesCacheAOT(decltype(_fieldAttributesCacheAOT)::allocator_type(TR::Compiler->persistentAllocator())),
    _staticAttributesCacheAOT(decltype(_fieldAttributesCacheAOT)::allocator_type(TR::Compiler->persistentAllocator())),
-   _constantPool(NULL),
    _jitFieldsCache(decltype(_jitFieldsCache)::allocator_type(TR::Compiler->persistentAllocator())),
-   _classFlags(0),
    _fieldOrStaticDeclaringClassCache(decltype(_fieldOrStaticDeclaringClassCache)::allocator_type(TR::Compiler->persistentAllocator())),
    _J9MethodNameCache(decltype(_J9MethodNameCache)::allocator_type(TR::Compiler->persistentAllocator()))
    {
@@ -455,6 +455,77 @@ ClientSessionData::notifyAndDetachFirstWaitingThread()
    return entry;
    }
 
+bool
+ClientSessionData::ClassInfo::inROMClass(void * address)
+   {
+   return address >= _romClass && address < ((uint8_t*) _romClass) + _romClass->romSize;
+   }
+
+char *
+ClientSessionData::ClassInfo::getRemoteROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
+   {
+   auto offsetFirst = *offsets.begin();
+   auto offsetSecond = (offsets.size() == 2) ? *(offsets.begin() + 1) : 0;
+
+   TR_ASSERT(offsetFirst < (1 << 16) && offsetSecond < (1 << 16), "Offsets are larger than 16 bits");
+   TR_ASSERT(offsets.size() <= 2, "Number of offsets is greater than 2"); 
+
+   // create a key for hashing into a table of strings
+   TR_RemoteROMStringKey key;
+   uint32_t offsetKey = (offsetFirst << 16) + offsetSecond;
+   key._basePtr = basePtr;
+   key._offsets = offsetKey;
+   
+   std::string *cachedStr = NULL;
+   bool isCached = false;
+   auto gotStr = _remoteROMStringsCache.find(key);
+   if (gotStr != _remoteROMStringsCache.end())
+      {
+      cachedStr = &(gotStr->second);
+      isCached = true;
+      }
+
+   // only make a query if a string hasn't been cached
+   if (!isCached)
+      {
+      size_t offsetFromROMClass = (uint8_t*) basePtr - (uint8_t*) _romClass;
+      std::string offsetsStr((char*) offsets.begin(), offsets.size() * sizeof(size_t));
+      
+      JITServer::ServerStream *stream = TR::CompilationInfo::getStream();      
+      stream->write(JITServer::MessageType::ClassInfo_getRemoteROMString, _remoteRomClass, offsetFromROMClass, offsetsStr);
+      cachedStr = &(_remoteROMStringsCache.insert({key, std::get<0>(stream->read<std::string>())}).first->second);
+      }
+
+   len = cachedStr->length();
+   return &(cachedStr->at(0));
+   }
+
+// Takes a pointer to some data which is placed statically relative to the rom class,
+// as well as a list of offsets to J9SRP fields. The first offset is applied before the first
+// SRP is followed.
+//
+// If at any point while following the chain of SRP pointers we land outside the ROM class,
+// then we fall back to getRemoteROMString which follows the same process on the client.
+//
+// This is a workaround because some data referenced in the ROM constant pool is located outside of
+// it, but we cannot easily determine if the reference is outside or not (or even if it is a reference!)
+// because the data is untyped.
+char *
+ClientSessionData::ClassInfo::getROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
+   {
+   uint8_t *ptr = (uint8_t*) basePtr;
+   for (size_t offset : offsets)
+      {
+      ptr += offset;
+      if (!inROMClass(ptr))
+         return getRemoteROMString(len, basePtr, offsets);
+      ptr = ptr + *(J9SRP*)ptr;
+      }
+   if (!inROMClass(ptr))
+      return getRemoteROMString(len, basePtr, offsets);
+   char *data = utf8Data((J9UTF8*) ptr, len);
+   return data;
+   }
 
 template <typename map, typename key>
 void ClientSessionData::purgeCache(std::vector<ClassUnloadedData> *unloadedClasses, map m, key ClassUnloadedData::*k)
