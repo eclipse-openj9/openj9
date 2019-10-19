@@ -711,7 +711,7 @@ TR_J9MethodBase::isBigDecimalMethod(J9Method * j9Method)
       stream->write(JITServer::MessageType::ResolvedMethod_isBigDecimalMethod, j9Method);
       return std::get<0>(stream->read<bool>());
       }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    return isBigDecimalMethod(J9_ROM_METHOD_FROM_RAM_METHOD(j9Method), J9_CLASS_FROM_METHOD(j9Method)->romClass);
    }
 
@@ -774,7 +774,7 @@ TR_J9MethodBase::isBigDecimalConvertersMethod(J9Method * j9Method)
       stream->write(JITServer::MessageType::ResolvedMethod_isBigDecimalConvertersMethod, j9Method);
       return std::get<0>(stream->read<bool>());
       }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    return isBigDecimalConvertersMethod(J9_ROM_METHOD_FROM_RAM_METHOD(j9Method), J9_CLASS_FROM_METHOD(j9Method)->romClass);
    }
 
@@ -2318,7 +2318,7 @@ TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, TR_OpaqueMethod
 TR_J9Method::TR_J9Method()
    {
    }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
 //////////////////////////////
 //
@@ -2382,7 +2382,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
    : TR_J9Method(), TR_ResolvedJ9MethodBase(fe, owner), _pendingPushSlots(-1)
    {
    }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
 void TR_ResolvedJ9Method::construct()
    {
@@ -6086,7 +6086,7 @@ TR_ResolvedJ9Method::methodTypeConstant(I_32 cpIndex)
    {
 #if defined(JITSERVER_SUPPORT)
    TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    J9RAMMethodTypeRef *ramMethodTypeRef = (J9RAMMethodTypeRef *)(literals() + cpIndex);
    return &ramMethodTypeRef->type;
@@ -6097,7 +6097,7 @@ TR_ResolvedJ9Method::isUnresolvedMethodType(I_32 cpIndex)
    {
 #if defined(JITSERVER_SUPPORT)
    TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    return *(intptrj_t*)methodTypeConstant(cpIndex) == 0;
    }
@@ -6107,7 +6107,7 @@ TR_ResolvedJ9Method::methodHandleConstant(I_32 cpIndex)
    {
 #if defined(JITSERVER_SUPPORT)
    TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    J9RAMMethodHandleRef *ramMethodHandleRef = (J9RAMMethodHandleRef *)(literals() + cpIndex);
    return &ramMethodHandleRef->methodHandle;
@@ -6118,7 +6118,7 @@ TR_ResolvedJ9Method::isUnresolvedMethodHandle(I_32 cpIndex)
    {
 #if defined(JITSERVER_SUPPORT)
    TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    return *(intptrj_t*)methodHandleConstant(cpIndex) == 0;
    }
@@ -6141,7 +6141,7 @@ TR_ResolvedJ9Method::varHandleMethodTypeTableEntryAddress(int32_t cpIndex)
    {
 #if defined(JITSERVER_SUPPORT)
    TR_ASSERT(!TR::CompilationInfo::getStream(), "no server");
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
 
    J9Class *ramClass = constantPoolHdr();
@@ -7568,7 +7568,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             collectionStart = std::get<2>(recv);
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeCollectHandleNumArgsToCollect(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -7629,7 +7629,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             methodDescriptor[methodDescriptorLength] = 0;
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeExplicitCastHandleConvertArgs(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -7731,7 +7731,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                   targetParmClass = std::get<1>(recv);
                   }
                else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
                   {
                   TR::VMAccessCriticalSection targetTypeL(fej9);
                   // We've already loaded the handle once, but must reload it because we released VM access in between.
@@ -7827,7 +7827,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             methodDescriptor[methodDescriptorLength] = 0;
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeILGenMacrosInvokeExactAndFixup(fej9);
             receiverHandle = *thunkDetails->getHandleRef();
@@ -7935,7 +7935,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             nextHandleSignature[methodDescriptorLength] = 0;
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeArgumentMoverHandlePermuteArgs(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8035,7 +8035,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                traceMsg(comp(), "  permuteArgs: permuted placeholder signature is %s\n", newSignature);
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokePermuteHandlePermuteArgs(fej9);
             uintptrj_t methodHandle = *thunkDetails->getHandleRef();
@@ -8154,7 +8154,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             numGuardArgs = std::get<0>(stream->read<int32_t>());
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeGuardWithTestHandleNumGuardArgs(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8193,7 +8193,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             numValues = std::get<2>(recv);
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeInsertHandle(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8248,7 +8248,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             vmSlot = std::get<1>(recv);
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeDirectHandleDirectCall(fej9);
             methodHandle   = *thunkDetails->getHandleRef();
@@ -8412,7 +8412,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             isPrimitiveClass = std::get<5>(recv);
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeSpreadHandleArrayArg(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8510,7 +8510,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             spreadStart = std::get<2>(recv);
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeSpreadHandle(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8589,7 +8589,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                }
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeFoldHandle(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8665,7 +8665,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             foldPosition = std::get<0>(stream->read<int32_t>());
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeFoldHandle(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8753,7 +8753,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             methodDescriptor[methodDescriptorLength] = 0;
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeFinallyHandle(fej9);
             uintptrj_t methodHandle = *thunkDetails->getHandleRef();
@@ -8829,7 +8829,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             numFilters = std::get<2>(recv);
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeFilterArgumentsHandle2(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8901,7 +8901,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                }
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeFilterArgumentsHandle(fej9);
             uintptrj_t methodHandle = *thunkDetails->getHandleRef();
@@ -9028,7 +9028,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             numCatchArguments = std::get<0>(stream->read<int32_t>());
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeCatchHandle(fej9);
             uintptrj_t methodHandle   = *thunkDetails->getHandleRef();
@@ -9063,7 +9063,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             parameterCount = std::get<0>(stream->read<int32_t>());
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeILGenMacros(fej9);
             uintptrj_t receiverHandle   = *thunkDetails->getHandleRef();
@@ -9096,7 +9096,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             arrayLength = (int32_t)fej9->getArrayLengthInElements(array);
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeILGenMacros(fej9);
             uintptrj_t receiverHandle   = *thunkDetails->getHandleRef();
@@ -9134,7 +9134,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             result = fej9->getInt32FieldAt(baseObject, fieldOffset); // TODO: Handle types other than int32
             }
          else
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeILGenMacros(fej9);
             uintptrj_t receiverHandle   = *thunkDetails->getHandleRef();

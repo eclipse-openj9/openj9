@@ -24,7 +24,7 @@
 
 #if defined(JITSERVER_SUPPORT)
 #include "env/VMJ9Server.hpp"
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
 #if defined (_MSC_VER) && (_MSC_VER < 1900)
 #define snprintf _snprintf
@@ -654,7 +654,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
             return sharedCacheServerVM;
             }
          }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO) */
       if (vmType==AOT_VM)
          {
          TR_J9VMBase * aotVMWithThreadInfo = static_cast<TR_J9VMBase *>(vmThread->aotVMwithThreadInfo);
@@ -744,7 +744,7 @@ TR_J9VMBase::TR_J9VMBase(
    if (TR::Options::sharedClassCache()
 #if defined(JITSERVER_SUPPORT)
       || (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
       )
       // shared classes and AOT must be enabled, or we should be on the JITServer with remote AOT enabled
       {
@@ -754,7 +754,7 @@ TR_J9VMBase::TR_J9VMBase(
          _sharedCache = new (PERSISTENT_NEW) TR_J9JITServerSharedCache(this);
          }
       else
-#endif   
+#endif /* defined(JITSERVER_SUPPORT) */
          {
          _sharedCache = new (PERSISTENT_NEW) TR_J9SharedCache(this);
          }
@@ -781,7 +781,7 @@ TR_J9VMBase::freeSharedCache()
       {
 #if defined(JITSERVER_SUPPORT)
       if (_compInfo && (_compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER))
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
          {
          TR_ASSERT(TR::Options::sharedClassCache(), "Found shared cache with option disabled");
          }
@@ -3781,7 +3781,7 @@ TR_J9VMBase::tryToAcquireAccess(TR::Compilation * comp, bool *haveAcquiredVMAcce
    // JITServer TODO: For now, we always take the "safe path" on the server
    if (comp->isOutOfProcessCompilation())
       return false;
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
    if (!comp->getOption(TR_DisableNoVMAccess))
       {
@@ -7299,7 +7299,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
 #if defined(JITSERVER_SUPPORT)
          // JITServer: store the helper reference number in the node for use in creating TR_HelperAddress relocation
          callNode->getSymbolReference()->setReferenceNumber(helperSymRef->getReferenceNumber());
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
          return callNode;
          }
       case TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper:
