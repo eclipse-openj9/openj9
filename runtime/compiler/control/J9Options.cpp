@@ -2144,6 +2144,11 @@ J9::Options::setupJITServerOptions()
          // IProfiler thread is not needed at JITServer because
          // no IProfiler info is collected at the server itself
          self()->setOption(TR_DisableIProfilerThread);
+
+         // This option is used to generate SIMD instructions on Z. Currently the infrastructure
+         // to support the relocation of some of those instructions is not available. Thus we disable
+         // this option for remote compilations.
+         self()->setOption(TR_DisableSIMDArrayTranslate);
          }
 
       // In the JITServer world, expensive compilations are performed remotely so there is no risk of blowing the footprint limit on the JVM
@@ -2163,6 +2168,7 @@ J9::Options::setupJITServerOptions()
                persistentInfo->getJITServerAddress().c_str(), persistentInfo->getJITServerPort(),
                persistentInfo->getSocketTimeout());
       }
+
    }
 #endif /* defined(JITSERVER_SUPPORT) */
 

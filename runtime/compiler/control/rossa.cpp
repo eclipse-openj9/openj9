@@ -106,11 +106,13 @@
 #include "ras/DebugExt.hpp"
 #include "env/exports.h"
 #if defined(JITSERVER_SUPPORT)
+#include "env/JITServerPersistentCHTable.hpp"
 #include "net/CommunicationStream.hpp" 
 #include "net/ClientStream.hpp"
 #include "runtime/JITClientSession.hpp"
 #include "runtime/Listener.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
+#include "runtime/JITServerIProfiler.hpp"
 #endif
 
 extern "C" int32_t encodeCount(int32_t count);
@@ -323,9 +325,9 @@ j9jit_testarossa_err(
       event._eventType = TR_MethodEvent::InterpreterCounterTripped;
       // Experimental code: user may want to artificially delay the compilation
       // of methods to gather more IProfiler info
+      TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
       if (TR::Options::_compilationDelayTime > 0)
          {
-         TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
          if (!TR::CompilationInfo::isJNINative(method))
             {
             if (compInfo->getPersistentInfo()->getElapsedTime() < 1000 * TR::Options::_compilationDelayTime)
@@ -340,6 +342,11 @@ j9jit_testarossa_err(
                }
             }
          }
+#if defined(JITSERVER_SUPPORT)
+      // Do not allow local compilations in JITServer server mode
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+         return 0;
+#endif
       }
 
    event._j9method = method;
@@ -510,7 +517,6 @@ j9jit_createNewInstanceThunk_err(
    event._j9method = method;
    event._oldStartPC = 0;
    event._vmThread = vmThread;
-   event._classNeedingThunk = classNeedingThunk;
    bool newPlanCreated;
    TR_OptimizationPlan *plan = TR::CompilationController::getCompilationStrategy()->processEvent(&event, &newPlanCreated);
    UDATA result = 0;
@@ -1126,11 +1132,10 @@ onLoadInternal(
    if (persistentMemory == NULL)
       return -1;
 
-   TR_PersistentCHTable *chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);
-   if (chtable == NULL)
-      return -1;
-   persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
-
+   // JITServer: persistentCHTable used to be inited here, but we have to move it after JITServer commandline opts
+   // setting it to null here to catch anything that assumes it's set between here and the new init code.
+   persistentMemory->getPersistentInfo()->setPersistentCHTable(NULL);
+   
    if (!TR::CompilationInfo::createCompilationInfo(jitConfig))
       return -1;
 
@@ -1528,7 +1533,20 @@ onLoadInternal(
 
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
       {
-      ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_IProfiler::allocate(jitConfig);
+#if defined(JITSERVER_SUPPORT)
+      if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+         {
+         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = JITServerIProfiler::allocate(jitConfig);
+         }
+      else if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+         {
+         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = JITClientIProfiler::allocate(jitConfig);
+         }
+      else
+#endif
+         {
+         ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = TR_IProfiler::allocate(jitConfig);
+         }
       if (!(((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler))
          {
          // Warn that IProfiler was not allocated
@@ -1598,6 +1616,26 @@ onLoadInternal(
             TR::Options::getCmdLineOptions()->getOption(TR_InhibitRecompilation)))
          persistentMemory->getPersistentInfo()->setRuntimeInstrumentationRecompilationEnabled(true);
       }
+
+   TR_PersistentCHTable *chtable;
+#if defined(JITSERVER_SUPPORT)
+   if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      chtable = new (PERSISTENT_NEW) JITServerPersistentCHTable(persistentMemory);
+      }
+   else if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
+      {
+      chtable = new (PERSISTENT_NEW) JITClientPersistentCHTable(persistentMemory);
+      }
+   else
+#endif
+      {
+      chtable = new (PERSISTENT_NEW) TR_PersistentCHTable(persistentMemory);
+      }
+   if (chtable == NULL)
+      return -1;
+   persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
+
 #if defined(JITSERVER_SUPPORT)
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
@@ -1630,6 +1668,11 @@ onLoadInternal(
       }
    else if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
+      compInfo->setUnloadedClassesTempList(new (PERSISTENT_NEW) PersistentVector<TR_OpaqueClassBlock*>(
+         PersistentVector<TR_OpaqueClassBlock*>::allocator_type(TR::Compiler->persistentAllocator())));
+
+      compInfo->setNewlyExtendedClasses(new (PERSISTENT_NEW) PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t>(
+         PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t>::allocator_type(TR::Compiler->persistentAllocator())));
       // Try to initialize SSL
       if (JITServer::ClientStream::static_init(compInfo->getPersistentInfo()) != 0)
          return -1;
@@ -1820,11 +1863,25 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
          {
          javaVM->sharedClassConfig->runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_AOT;
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+#if defined(JITSERVER_SUPPORT)
+         if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+            {
+            fprintf(stderr, "Error: -Xaot:nostore option is not compatible with JITServer mode.");
+            return -1;
+            }
+#endif
          }
       else if ((javaVM->sharedClassConfig->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_AOT) == 0)
          {
          TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+#if defined(JITSERVER_SUPPORT)
+         if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+            {
+            fprintf(stderr, "Error: -Xnoaot option must not be specified for JITServer.");
+            return -1;
+            }
+#endif
          }
       }
 #endif
