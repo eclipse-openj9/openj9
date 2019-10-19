@@ -30,3 +30,12 @@ JVM_InitializeFromArchive(JNIEnv *env, jclass clz)
 	/* A no-op implementation is ok. */
 }
 #endif /* JAVA_SPEC_VERSION >= 11 */
+
+#if JAVA_SPEC_VERSION >= 14
+JNIEXPORT jstring JNICALL
+JVM_GetExtendedNPEMessage(JNIEnv *env, jthrowable throwableObj)
+{
+	/* Returning NULL to allow JDK14 compilation, https://github.com/eclipse/openj9/issues/7500 */
+	return NULL;
+}
+#endif /* JAVA_SPEC_VERSION >= 14 */

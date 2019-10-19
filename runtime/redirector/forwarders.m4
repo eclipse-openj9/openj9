@@ -313,3 +313,5 @@ _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_AreNestMates,JNICALL,false,jboolean,JNIEnv *env,jclass clzOne, jclass clzTwo)])
 _IF([JAVA_SPEC_VERSION >= 11],
 	[_X(JVM_InitializeFromArchive, JNICALL, false, void, JNIEnv *env, jclass clz)])
+_IF([JAVA_SPEC_VERSION >= 14],
+		[_X(JVM_GetExtendedNPEMessage, JNICALL, false, jstring, JNIEnv *env, jthrowable throwableObj)])
