@@ -517,9 +517,7 @@ J9::ClassEnv::getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *cla
    {
    J9ROMConstantPoolItem *romCP = self()->getROMConstantPool(comp, clazz);
    J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&romCP[cpIndex];
-   TR_ASSERT(inROMClass(romFieldRef), "field ref must be in ROM class");
    J9ROMClassRef *romClassRef = (J9ROMClassRef *)&romCP[romFieldRef->classRefCPIndex];
-   TR_ASSERT(inROMClass(romClassRef), "class ref must be in ROM class");
 #if defined(JITSERVER_SUPPORT)
    if (comp->isOutOfProcessCompilation())
       {
