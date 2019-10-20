@@ -137,6 +137,10 @@ private:
    TR::Node *    genInvokeWithVFTChild(TR::SymbolReference *);
    TR::Node *    getReceiverFor(TR::SymbolReference *);
    void          stashArgumentsForOSR(TR_J9ByteCode byteCode);
+   /** \brief
+    *    Tell if the current bytecode is at start of a basic block
+    */
+   bool          isAtBBStart(int32_t bcIndex);
 
    // Placeholder manipulation
    //

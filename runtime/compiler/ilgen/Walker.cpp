@@ -1559,6 +1559,11 @@ TR_J9ByteCodeIlGenerator::handlePendingPushSaveSideEffects(TR::Node * n, TR::Nod
       }
    }
 
+bool
+TR_J9ByteCodeIlGenerator::isAtBBStart(int32_t bcIndex)
+   {
+   return blocks(bcIndex) && blocks(bcIndex)->getEntry()->getNode()->getByteCodeIndex() == bcIndex;
+   }
 /*
  * Stash the required number of arguments for the provided bytecode.
  * The current stack will be walked, determining pending push temps for
@@ -1568,7 +1573,9 @@ TR_J9ByteCodeIlGenerator::handlePendingPushSaveSideEffects(TR::Node * n, TR::Nod
 void
 TR_J9ByteCodeIlGenerator::stashArgumentsForOSR(TR_J9ByteCode byteCode)
    {
-   if (!_couldOSRAtNextBC)
+   if (!_couldOSRAtNextBC &&
+       !isAtBBStart(_bcIndex)) // _couldOSRAtNextBC doesn't work if the curent bc is at bbstart,
+                               // conversatively assume OSR transition can happen at bbstart
       return;
    _couldOSRAtNextBC = false;
 
