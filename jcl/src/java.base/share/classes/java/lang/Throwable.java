@@ -551,7 +551,7 @@ private StackTraceElement[] printStackTrace(
         }
 		if (outOfMemory) {
 			appendTo(err, "\tat ", indents); //$NON-NLS-1$
-			Util.printStackTraceElement(stack[i], null, err, false);
+			Util.printStackTraceElement(stack[i], null, err);
         }
 		appendLnTo(err);		
     }

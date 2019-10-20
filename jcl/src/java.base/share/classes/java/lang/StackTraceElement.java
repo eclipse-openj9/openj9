@@ -249,7 +249,7 @@ public boolean isNativeMethod() {
 /*[ENDIF]*/
 public String toString() {
 	StringBuilder buf = new StringBuilder(80);
-	Util.printStackTraceElement(this, source, buf, false);
+	Util.printStackTraceElement(this, source, buf);
 	return buf.toString();
 }
 

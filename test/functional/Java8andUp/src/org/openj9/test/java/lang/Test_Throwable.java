@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1250,7 +1250,8 @@ public class Test_Throwable {
 			boolean foundAppCause = false;
 			eST = cause.getStackTrace();
 			for (int i = 0; i < eST.length; i++) {
-				if (eST[i].toString().indexOf("org.openj9.test.java.lang.Test_Throwable$StaticClass.a") == 0) {
+				/* the package may be preceded by a classloader name */
+				if (eST[i].toString().indexOf("org.openj9.test.java.lang.Test_Throwable$StaticClass.a") >= 0) {
 					foundAppCause = true;
 					break;
 				}
