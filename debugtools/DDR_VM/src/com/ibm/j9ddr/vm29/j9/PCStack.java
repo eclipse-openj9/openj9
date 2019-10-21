@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1017,8 +1017,8 @@ public class PCStack
 		0x00 /* JBgotow = 200  -- pops: 0 pushes: 0*/ ,
 		0x00 /* JBunimplemented = 201  -- pops: 0 pushes: 0*/ ,
 		0x00 /* JBbreakpoint = 202  -- pops: 0 pushes: 0*/ ,
-		0x01 /* JBdefaultvalue = 203 -- pops: 0 pushes: 1*/ ,
-		0x80 /* JBwithfield = 204  -- pops: 0 pushes: 0*/ ,
+		0x50 /* JBdefaultvalue = 203 -- pops: 0 pushes: 1*/ ,
+		0x80 /* JBwithfield = 204  -- pops: 2 pushes: 1*/ ,
 		0x00 /* JBunimplemented = 205  -- pops: 0 pushes: 0*/ ,
 		0x00 /* JBunimplemented = 206  -- pops: 0 pushes: 0*/ ,
 		0x00 /* JBunimplemented = 207  -- pops: 0 pushes: 0*/ ,
@@ -1539,8 +1539,6 @@ public class PCStack
 		0x0 /* JBbreakpoint (16rCA) */,
 		0x0 /* JBdefaultvalue (16rCB) */ ,
 		0x0 /* JBwithfield (16rCC) */ ,
-		0x0 /* JBunimplemented (16rCB) */,
-		0x0 /* JBunimplemented (16rCC) */,
 		0x0 /* JBunimplemented (16rCD) */,
 		0x0 /* JBunimplemented (16rCE) */,
 		0x0 /* JBunimplemented (16rCF) */,
