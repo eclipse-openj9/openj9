@@ -45,6 +45,7 @@
 #include "runtime/RelocationRuntime.hpp"
 #include "env/J9SegmentCache.hpp"
 #if defined(JITSERVER_SUPPORT)
+#include "env/VMJ9Server.hpp"
 #include "env/PersistentCollections.hpp"
 #endif /* defined(JITSERVER_SUPPORT) */
 
@@ -159,6 +160,7 @@ class CompilationInfoPerThreadBase
    void *compile(J9VMThread *context, TR_MethodToBeCompiled *entry, J9::J9SegmentProvider &scratchSegmentProvider);
    TR_MethodMetaData *compile(J9VMThread *context, TR::Compilation *,
                  TR_ResolvedMethod *compilee, TR_J9VMBase &, TR_OptimizationPlan*, TR::SegmentAllocator const &scratchSegmentProvider);
+   TR_MethodMetaData *performAOTLoad(J9VMThread *context, TR::Compilation *, TR_ResolvedMethod *compilee, TR_J9VMBase *vm, J9Method *method);
 
    void preCompilationTasks(J9VMThread * vmThread,
                             TR_MethodToBeCompiled *entry,
@@ -177,6 +179,8 @@ class CompilationInfoPerThreadBase
                               bool canDoRelocatableCompile,
                               bool eligibleForRelocatableCompile,
                               TR_RelocationRuntime *reloRuntime);
+   const void* findAotBodyInSCC(J9VMThread *vmThread, const J9ROMMethod *romMethod);
+   bool isMethodIneligibleForAot(J9Method *method);
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
    TR_MethodMetaData *installAotCachedMethod(
@@ -252,6 +256,7 @@ class CompilationInfoPerThreadBase
 
    void                     setClientStream(JITServer::ClientStream *stream) { _clientStream = stream; }
    JITServer::ClientStream *getClientStream() const { return _clientStream; }
+   bool shouldPerformLocalComp(const TR_MethodToBeCompiled *entry);
 #endif /* defined(JITSERVER_SUPPORT) */
 
    protected:
@@ -379,6 +384,10 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    CpuSelfThreadUtilization& getCompThreadCPU() { return _compThreadCPU; }
 
 #if defined(JITSERVER_SUPPORT)
+   TR_J9ServerVM            *getServerVM() const { return _serverVM; }
+   void                      setServerVM(TR_J9ServerVM *vm) { _serverVM = vm; }
+   TR_J9SharedCacheServerVM *getSharedCacheServerVM() const { return _sharedCacheServerVM; }
+   void                      setSharedCacheServerVM(TR_J9SharedCacheServerVM *vm) { _sharedCacheServerVM = vm; }
    JITServer::ServerStream  *getStream();
    J9ROMClass               *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=NULL);
    J9ROMClass               *getRemoteROMClassIfCached(J9Class *);
@@ -403,6 +412,8 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   _isDiagnosticThread;
    CpuSelfThreadUtilization _compThreadCPU;
 #if defined(JITSERVER_SUPPORT)
+   TR_J9ServerVM         *_serverVM;
+   TR_J9SharedCacheServerVM *_sharedCacheServerVM;
    // The following hastable caches <classLoader,classname> --> <J9Class> mappings
    // The cache only lives during a compilation due to class unloading concerns
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *_classesThatShouldNotBeNewlyExtended;
