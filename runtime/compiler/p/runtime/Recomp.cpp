@@ -45,6 +45,7 @@ extern void ppcCodeSync(uint8_t *, uint32_t);
 //
 TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *startPC)
    {
+   TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "This routine cannot be used on the Server when doing a remote compilation!");
    TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
    int32_t  jitEntryOffset = getJitEntryOffset(linkageInfo);
    int32_t *jitEntry = (int32_t *)((int8_t *)startPC + jitEntryOffset);
