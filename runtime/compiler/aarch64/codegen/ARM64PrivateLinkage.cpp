@@ -413,7 +413,7 @@ void TR::ARM64PrivateLinkage::createPrologue(TR::Instruction *cursor)
    TR::RealRegister *vmThread = machine->getRealRegister(properties.getMethodMetaDataRegister());   // x19
    TR::RealRegister *javaSP = machine->getRealRegister(properties.getStackPointerRegister());       // x20
 
-   setInterpretedMethodEntryPoint(cursor);
+   TR::Instruction *beforeInterpreterMethodEntryPointInstruction = cursor;
 
    // --------------------------------------------------------------------------
    // Create the entry point when transitioning from an interpreted method.
@@ -422,7 +422,7 @@ void TR::ARM64PrivateLinkage::createPrologue(TR::Instruction *cursor)
    //
    cursor = loadStackParametersToLinkageRegisters(cursor);
 
-   setJittedMethodEntryPoint(cursor);
+   TR::Instruction *beforeJittedMethodEntryPointInstruction = cursor;
 
    // Entry breakpoint
    //
@@ -636,6 +636,9 @@ void TR::ARM64PrivateLinkage::createPrologue(TR::Instruction *cursor)
    //
    cursor = copyParametersToHomeLocation(cursor);
 
+   // Set the instructions for method entry points
+   setInterpretedMethodEntryPoint(beforeInterpreterMethodEntryPointInstruction->getNext());
+   setJittedMethodEntryPoint(beforeJittedMethodEntryPointInstruction->getNext());
    }
 
 void TR::ARM64PrivateLinkage::createEpilogue(TR::Instruction *cursor)
