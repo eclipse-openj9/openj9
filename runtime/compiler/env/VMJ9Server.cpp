@@ -1464,9 +1464,9 @@ TR_J9ServerVM::isClassArray(TR_OpaqueClassBlock *klass)
    }
 
 bool
-TR_J9ServerVM::instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass)
+TR_J9ServerVM::instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* castClass, bool cacheUpdate)
    {
-   if (instanceClass == castClass)
+      if (instanceClass == castClass)
       return true;
 
    // When castClass is an ancestor/interface of class instanceClass, can avoid a remote message,
@@ -1510,7 +1510,10 @@ TR_J9ServerVM::instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass)
             // getComponentFromArrayClass multiple times, or getLeafComponentTypeFromArrayClass.
             // each call requires a remote message, faster and easier to call instanceOfOrCheckCast on the client
             JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-            stream->write(JITServer::MessageType::VM_instanceOfOrCheckCast, instanceClass, castClass);
+            if (cacheUpdate)
+               stream->write(JITServer::MessageType::VM_instanceOfOrCheckCast, instanceClass, castClass);
+            else
+               stream->write(JITServer::MessageType::VM_instanceOfOrCheckCastNoCacheUpdate, instanceClass, castClass);
             return std::get<0>(stream->read<bool>());
             }
          // instance class is cached, and all of the checks failed, cast is invalid
@@ -1520,8 +1523,23 @@ TR_J9ServerVM::instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass)
 
    // instance class is not cached, make a remote call
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_instanceOfOrCheckCast, instanceClass, castClass);
+   if (cacheUpdate)
+      stream->write(JITServer::MessageType::VM_instanceOfOrCheckCast, instanceClass, castClass);
+   else
+      stream->write(JITServer::MessageType::VM_instanceOfOrCheckCastNoCacheUpdate, instanceClass, castClass);
    return std::get<0>(stream->read<bool>());
+   }
+
+bool
+TR_J9ServerVM::instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass)
+   {
+   return instanceOfOrCheckCastHelper(instanceClass, castClass, true);
+   }
+
+bool
+TR_J9ServerVM::instanceOfOrCheckCastNoCacheUpdate(J9Class *instanceClass, J9Class* castClass)
+   {
+   return instanceOfOrCheckCastHelper(instanceClass, castClass, false);
    }
 
 bool
