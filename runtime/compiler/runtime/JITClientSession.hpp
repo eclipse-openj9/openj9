@@ -231,14 +231,13 @@ class ClientSessionData
       ClassInfo();
       void freeClassInfo(); // this method is in place of a destructor. We can't have destructor
       // because it would be called after inserting ClassInfo into the ROM map, freeing romClass
+
       J9ROMClass *_romClass; // romClass content exists in persistentMemory at the server
       J9ROMClass *_remoteRomClass; // pointer to the corresponding ROM class on the client
       J9Method *_methodsOfClass;
       // Fields meaningful for arrays
       TR_OpaqueClassBlock *_baseComponentClass;
       int32_t _numDimensions;
-      PersistentUnorderedMap<TR_RemoteROMStringKey, std::string> _remoteROMStringsCache; // cached strings from the client
-      PersistentUnorderedMap<int32_t, std::string> _fieldOrStaticNameCache;
       TR_OpaqueClassBlock *_parentClass;
       PersistentVector<TR_OpaqueClassBlock *> *_interfaces;
       bool _classHasFinalFields;
@@ -251,15 +250,17 @@ class ClientSessionData
       TR_OpaqueClassBlock * _componentClass; // caching the componentType of the J9ArrayClass
       TR_OpaqueClassBlock * _arrayClass;
       uintptrj_t _totalInstanceSize;
+      J9ConstantPool *_constantPool;
+      uintptrj_t _classFlags;
+      PersistentUnorderedMap<TR_RemoteROMStringKey, std::string> _remoteROMStringsCache; // cached strings from the client
+      PersistentUnorderedMap<int32_t, std::string> _fieldOrStaticNameCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _classOfStaticCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _constantClassPoolCache;
       TR_FieldAttributesCache _fieldAttributesCache;
       TR_FieldAttributesCache _staticAttributesCache;
       TR_FieldAttributesCache _fieldAttributesCacheAOT;
       TR_FieldAttributesCache _staticAttributesCacheAOT;
-      J9ConstantPool *_constantPool;
       TR_JitFieldsCache _jitFieldsCache;
-      uintptrj_t _classFlags;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _fieldOrStaticDeclaringClassCache;
       PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> _J9MethodNameCache; // key is a cpIndex
 
@@ -331,7 +332,7 @@ class ClientSessionData
    PersistentUnorderedMap<J9Class*, ClassInfo> & getROMClassMap() { return _romClassMap; }
    PersistentUnorderedMap<J9Method*, J9MethodInfo> & getJ9MethodMap() { return _J9MethodMap; }
    PersistentUnorderedMap<ClassLoaderStringPair, TR_OpaqueClassBlock*> & getClassByNameMap() { return _classByNameMap; }
-   PersistentUnorderedMap<J9Class *, UDATA *> & getClassClainDataCache() { return _classChainDataMap; }
+   PersistentUnorderedMap<J9Class *, UDATA *> & getClassChainDataCache() { return _classChainDataMap; }
    PersistentUnorderedMap<J9ConstantPool *, TR_OpaqueClassBlock*> & getConstantPoolToClassMap() { return _constantPoolToClassMap; }
    void processUnloadedClasses(JITServer::ServerStream *stream, const std::vector<TR_OpaqueClassBlock*> &classes);
    TR::Monitor *getROMMapMonitor() { return _romMapMonitor; }

@@ -23,6 +23,7 @@
 #include "runtime/JITServerIProfiler.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/JITServerCompilationThread.hpp"
+#include "env/j9methodServer.hpp"
 #include "runtime/JITClientSession.hpp"
 #include "infra/CriticalSection.hpp" // for OMR::CriticalSection
 #include "ilgen/J9ByteCode.hpp"
@@ -807,3 +808,4 @@ JITClientIProfiler::serializeIProfilerMethodEntry(TR_OpaqueMethodBlock *omb)
       return std::string();
       }
    }
+

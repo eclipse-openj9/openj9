@@ -37,6 +37,7 @@
 #include "env/PersistentCHTable.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/jittypes.h"
+#include "env/j9method.h"
 #include "env/ClassTableCriticalSection.hpp"
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
@@ -627,7 +628,7 @@ TR_CHTable::commitVirtualGuard(TR_VirtualGuard *info, List<TR_VirtualGuardSite> 
       TR_ASSERT(methodSymbol->isInterface() && info->getKind() == TR_InterfaceGuard, "assertion failure");
       TR_OpaqueClassBlock *thisClass = info->getThisClass();
       TR_ASSERT(thisClass, "assertion failure");
-      
+
       TR_ResolvedMethod *implementer = table->findSingleImplementer(thisClass, cpIndex, owningMethod, comp, true, TR_yes);
       if (!implementer ||
           (info->getTestType() == TR_VftTest && comp->fe()->classHasBeenExtended(implementer->containingClass())))

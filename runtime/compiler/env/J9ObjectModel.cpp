@@ -46,7 +46,7 @@
 #if defined(JITSERVER_SUPPORT)
 #include "control/CompilationThread.hpp"
 #include "runtime/JITClientSession.hpp"
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
 #define DEFAULT_OBJECT_ALIGNMENT (8)
 
@@ -324,7 +324,7 @@ J9::ObjectModel::compressedReferenceShift()
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_compressedReferenceShift;
       }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
    J9JavaVM *javaVM = TR::Compiler->javaVM;
@@ -593,7 +593,7 @@ J9::ObjectModel::usesDiscontiguousArraylets()
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_usesDiscontiguousArraylets;
       }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    return _usesDiscontiguousArraylets;
    }
 
@@ -606,7 +606,7 @@ J9::ObjectModel::arrayletLeafSize()
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_arrayletLeafSize;
       }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    return _arrayLetLeafSize;
    }
 
@@ -619,7 +619,7 @@ J9::ObjectModel::arrayletLeafLogSize()
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_arrayletLeafLogSize;
       }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    return _arrayLetLeafLogSize;
    }
 
@@ -632,7 +632,7 @@ J9::ObjectModel::readBarrierType()
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_readBarrierType;
       }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    return _readBarrierType;
    }
 
@@ -645,7 +645,7 @@ J9::ObjectModel::writeBarrierType()
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_writeBarrierType;
       }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    return _writeBarrierType;
    }
 
@@ -658,6 +658,6 @@ J9::ObjectModel::compressObjectReferences()
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_compressObjectReferences;
       }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
    return _compressObjectReferences;
    }

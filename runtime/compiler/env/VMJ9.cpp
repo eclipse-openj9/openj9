@@ -24,7 +24,7 @@
 
 #if defined(JITSERVER_SUPPORT)
 #include "env/VMJ9Server.hpp"
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
 #if defined (_MSC_VER) && (_MSC_VER < 1900)
 #define snprintf _snprintf
@@ -654,7 +654,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
             return sharedCacheServerVM;
             }
          }
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
       if (vmType==AOT_VM)
          {
          TR_J9VMBase * aotVMWithThreadInfo = static_cast<TR_J9VMBase *>(vmThread->aotVMwithThreadInfo);
@@ -744,7 +744,7 @@ TR_J9VMBase::TR_J9VMBase(
    if (TR::Options::sharedClassCache()
 #if defined(JITSERVER_SUPPORT)
       || (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
       )
       // shared classes and AOT must be enabled, or we should be on the JITServer with remote AOT enabled
       {
@@ -754,7 +754,7 @@ TR_J9VMBase::TR_J9VMBase(
          _sharedCache = new (PERSISTENT_NEW) TR_J9JITServerSharedCache(this);
          }
       else
-#endif   
+#endif /* defined(JITSERVER_SUPPORT) */
          {
          _sharedCache = new (PERSISTENT_NEW) TR_J9SharedCache(this);
          }
@@ -781,7 +781,7 @@ TR_J9VMBase::freeSharedCache()
       {
 #if defined(JITSERVER_SUPPORT)
       if (_compInfo && (_compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER))
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
          {
          TR_ASSERT(TR::Options::sharedClassCache(), "Found shared cache with option disabled");
          }
@@ -3850,7 +3850,7 @@ TR_J9VMBase::tryToAcquireAccess(TR::Compilation * comp, bool *haveAcquiredVMAcce
    // JITServer TODO: For now, we always take the "safe path" on the server
    if (comp->isOutOfProcessCompilation())
       return false;
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
 
    if (!comp->getOption(TR_DisableNoVMAccess))
       {
@@ -6314,10 +6314,6 @@ TR_J9VMBase::getByteCodeName(uint8_t opcode)
 void
 TR_J9VMBase::getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, List<TR_ResolvedMethod> * resolvedMethodsInClass)
    {
-   // JAAS TODO: Following three methods (getMethods, getNumMethods, createResolvedMethod) have been overrided,
-   // yet it is not clear whether the VMAccessCriticalSection is necessary.
-   // seems to work though
-   //TR_ASSERT(TR::comp()->getPersistentInfo()->getJaasMode() == NONJAAS_MODE, "JAAS Hit TR_J9VMBase::getResolvedMethods");
    TR::VMAccessCriticalSection getResolvedMethods(this); // Prevent HCR
    J9Method * resolvedMethods = (J9Method *) getMethods(classPointer);
    uint32_t i;
@@ -7371,7 +7367,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
 #if defined(JITSERVER_SUPPORT)
          // JITServer: store the helper reference number in the node for use in creating TR_HelperAddress relocation
          callNode->getSymbolReference()->setReferenceNumber(helperSymRef->getReferenceNumber());
-#endif
+#endif /* defined(JITSERVER_SUPPORT) */
          return callNode;
          }
       case TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper:
@@ -9036,11 +9032,6 @@ TR_J9SharedCacheVM::getBaseComponentClass(TR_OpaqueClassBlock * classPointer, in
 TR_OpaqueClassBlock *
 TR_J9SharedCacheVM::getClassFromNewArrayType(int32_t arrayType)
    {
-   // TODO: This needs to return null because for some reason VP depends on it.
-   // It may be that this is just done because rememberClass is broken and can't 
-   // handle arrays of primitives.
-   // If you change this, please update the TEMP HACK in J9Compilation.cpp
-   // and in initializeLocalArrayHeader as well.
    TR::Compilation *comp = TR::comp();
    if (comp && comp->getOption(TR_UseSymbolValidationManager))
       return TR_J9VM::getClassFromNewArrayType(arrayType);
