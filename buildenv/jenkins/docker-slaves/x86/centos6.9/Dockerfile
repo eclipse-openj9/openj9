@@ -215,7 +215,7 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
   && mv bootjdk11/* /usr/lib/jvm/adoptojdk-java-11 \
   && rm -rf bootjdk11
 
-# Setup boot JDK for building Java 13 and higher
+# Setup boot JDK for building Java 13
 RUN mkdir -p /usr/lib/jvm/adoptojdk-java-12 \
   && cd /usr/lib/jvm/adoptojdk-java-12 \
   && wget -O bootjdk12.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk12?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal" \
@@ -224,6 +224,16 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-12 \
   && mv $(ls | grep -i jdk-12) bootjdk12 \
   && mv bootjdk12/* /usr/lib/jvm/adoptojdk-java-12 \
   && rm -rf bootjdk12
+
+# Setup boot JDK for building Java 14 and higher
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-13 \
+  && cd /usr/lib/jvm/adoptojdk-java-13 \
+  && wget -O bootjdk13.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk13?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal" \
+  && tar -xzf bootjdk13.tar.gz \
+  && rm -f bootjdk13.tar.gz \
+  && mv $(ls | grep -i jdk-13) bootjdk13 \
+  && mv bootjdk13/* /usr/lib/jvm/adoptojdk-java-13 \
+  && rm -rf bootjdk13
 
 # Install Curl version 7.24.0.
 RUN cd /usr/src \
