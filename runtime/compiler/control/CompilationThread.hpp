@@ -46,7 +46,6 @@
 #include "env/J9SegmentCache.hpp"
 #if defined(JITSERVER_SUPPORT)
 #include "env/VMJ9Server.hpp"
-#include "env/J2IThunk.hpp"
 #include "env/PersistentCollections.hpp"
 #endif /* defined(JITSERVER_SUPPORT) */
 
@@ -70,7 +69,11 @@ class TR_ResolvedMethod;
 class TR_RelocationRuntime;
 #if defined(JITSERVER_SUPPORT)
 class ClientSessionData;
-namespace JITServer { class ClientStream; }
+namespace JITServer
+   {
+   class ClientStream;
+   class ServerStream;
+   }
 #endif /* defined(JITSERVER_SUPPORT) */
 
 enum CompilationThreadState
@@ -176,6 +179,8 @@ class CompilationInfoPerThreadBase
                               bool canDoRelocatableCompile,
                               bool eligibleForRelocatableCompile,
                               TR_RelocationRuntime *reloRuntime);
+   const void* findAotBodyInSCC(J9VMThread *vmThread, const J9ROMMethod *romMethod);
+   bool isMethodIneligibleForAot(J9Method *method);
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT)
    TR_MethodMetaData *installAotCachedMethod(
@@ -251,6 +256,7 @@ class CompilationInfoPerThreadBase
 
    void                     setClientStream(JITServer::ClientStream *stream) { _clientStream = stream; }
    JITServer::ClientStream *getClientStream() const { return _clientStream; }
+   bool shouldPerformLocalComp(const TR_MethodToBeCompiled *entry);
 #endif /* defined(JITSERVER_SUPPORT) */
 
    protected:
@@ -330,7 +336,6 @@ private:
       );
 #endif
 
-   bool shouldPerformLocalComp(const TR_MethodToBeCompiled *entry);
    }; // CompilationInfoPerThreadBase
 }
 
@@ -394,8 +399,6 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    protected:
    J9::J9SegmentCache initializeSegmentCache(J9::J9SegmentProvider &segmentProvider);
 
-   TR_J9ServerVM         *_serverVM;
-   TR_J9SharedCacheServerVM *_sharedCacheServerVM;
    j9thread_t             _osThread;
    J9VMThread            *_compilationThread;
    int32_t                _compThreadPriority; // to reduce number of checks
@@ -409,6 +412,8 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   _isDiagnosticThread;
    CpuSelfThreadUtilization _compThreadCPU;
 #if defined(JITSERVER_SUPPORT)
+   TR_J9ServerVM         *_serverVM;
+   TR_J9SharedCacheServerVM *_sharedCacheServerVM;
    // The following hastable caches <classLoader,classname> --> <J9Class> mappings
    // The cache only lives during a compilation due to class unloading concerns
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *_classesThatShouldNotBeNewlyExtended;
