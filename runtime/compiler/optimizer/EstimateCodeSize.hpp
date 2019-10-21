@@ -85,6 +85,11 @@ class TR_EstimateCodeSize
    bool isLeaf()                       { return _isLeaf; }
 
    int32_t getNumOfEstimatedCalls()    { return _numOfEstimatedCalls; }
+   /*
+    * \brief
+    *    tell whether this callsite has inlineable target
+    */
+   bool isInlineable(TR_CallStack *, TR_CallSite *callsite);
 
    TR::Compilation *comp()              { return _inliner->comp(); }
    TR_InlinerTracer *tracer()          { return _tracer; }
@@ -93,9 +98,6 @@ class TR_EstimateCodeSize
 
    virtual bool estimateCodeSize(TR_CallTarget *, TR_CallStack * , bool recurseDown = true) = 0;
 
-   bool isInlineable(TR_CallStack *, TR_CallSite *callsite);
-
-   void markIsCold(flags8_t * flags, int32_t i);
 
    bool returnCleanup(int32_t);      // common tasks requiring completion before returning from estimation
 
