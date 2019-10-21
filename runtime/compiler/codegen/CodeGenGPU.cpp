@@ -151,7 +151,6 @@ static const char * nvvmOpCodeNames[] =
    "fmul",        // TR::dmul
    "mul",         // TR::bmul
    "mul",         // TR::smul
-   "mul",         // TR::iumul
 
    "sdiv",        // TR::idiv
    "sdiv",        // TR::ldiv
