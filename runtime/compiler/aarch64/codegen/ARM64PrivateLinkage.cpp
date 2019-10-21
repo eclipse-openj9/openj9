@@ -688,6 +688,17 @@ void TR::ARM64PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    generateRegBranchInstruction(cg(), TR::InstOpCode::ret, lastNode, lr, cursor);
    }
 
+void TR::ARM64PrivateLinkage::pushOutgoingMemArgument(TR::Register *argReg, int32_t offset, TR::InstOpCode::Mnemonic opCode, TR::ARM64MemoryArgument &memArg)
+   {
+   const TR::ARM64LinkageProperties& properties = self()->getProperties();
+   TR::RealRegister *javaSP = cg()->machine()->getRealRegister(properties.getStackPointerRegister()); // x20
+
+   TR::MemoryReference *result = new (self()->trHeapMemory()) TR::MemoryReference(javaSP, offset, cg());
+   memArg.argRegister = argReg;
+   memArg.argMemory = result;
+   memArg.opCode = opCode;
+   }
+
 int32_t TR::ARM64PrivateLinkage::buildArgs(TR::Node *callNode,
    TR::RegisterDependencyConditions *dependencies)
    {
@@ -702,12 +713,14 @@ int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
 
    const TR::ARM64LinkageProperties& properties = getProperties();
    TR::ARM64MemoryArgument *pushToMemory = NULL;
-   TR::Register *argMemReg;
    TR::Register *tempReg;
    int32_t argIndex = 0;
    int32_t numMemArgs = 0;
+   int32_t memArgSize = 0;
+   int32_t memArgOffset;
    int32_t from, to, step;
    int32_t totalSize = 0;
+   int32_t multiplier;
 
    uint32_t numIntegerArgs = 0;
    uint32_t numFloatArgs = 0;
@@ -769,7 +782,6 @@ int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
       {
       child = callNode->getChild(i);
       childType = child->getDataType();
-      int32_t multiplier;
 
       switch (childType)
          {
@@ -778,18 +790,24 @@ int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
          case TR::Int32:
          case TR::Int64:
          case TR::Address:
-            if (numIntegerArgs >= numIntArgRegs)
-               numMemArgs++;
-            numIntegerArgs++;
             multiplier = (childType == TR::Int64) ? 2 : 1;
+            if (numIntegerArgs >= numIntArgRegs)
+               {
+               numMemArgs++;
+               memArgSize += TR::Compiler->om.sizeofReferenceAddress() * multiplier;
+               }
+            numIntegerArgs++;
             totalSize += TR::Compiler->om.sizeofReferenceAddress() * multiplier;
             break;
          case TR::Float:
          case TR::Double:
-            if (numFloatArgs >= numFloatArgRegs)
-               numMemArgs++;
-            numFloatArgs++;
             multiplier = (childType == TR::Double) ? 2 : 1;
+            if (numFloatArgs >= numFloatArgRegs)
+               {
+               numMemArgs++;
+               memArgSize += TR::Compiler->om.sizeofReferenceAddress() * multiplier;
+               }
+            numFloatArgs++;
             totalSize += TR::Compiler->om.sizeofReferenceAddress() * multiplier;
             break;
          default:
@@ -804,7 +822,7 @@ int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
       {
       pushToMemory = new (trStackMemory()) TR::ARM64MemoryArgument[numMemArgs];
 
-      argMemReg = cg()->allocateRegister();
+      memArgOffset = rightToLeft ? 0 : memArgSize;
       }
 
    numIntegerArgs = 0;
@@ -814,7 +832,6 @@ int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
    // TODO: C helper linkage does not, this code needs to make sure argument registers are killed in post dependencies
    for (int32_t i = from; (rightToLeft && i >= to) || (!rightToLeft && i <= to); i += step)
       {
-      TR::MemoryReference *mref = NULL;
       TR::Register *argRegister;
       TR::InstOpCode::Mnemonic op;
 
@@ -869,8 +886,17 @@ int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
                }
             else // numIntegerArgs >= numIntArgRegs
                {
-               op = ((childType == TR::Address) || (childType == TR::Int64)) ? TR::InstOpCode::strpostx : TR::InstOpCode::strpostw;
-               mref = getOutgoingArgumentMemRef(argMemReg, argRegister, op, pushToMemory[argIndex++]);
+               op = ((childType == TR::Address) || (childType == TR::Int64)) ? TR::InstOpCode::strimmx : TR::InstOpCode::strimmw;
+               multiplier = (childType == TR::Int64) ? 2 : 1;
+               if (!rightToLeft)
+                  {
+                  memArgOffset -= TR::Compiler->om.sizeofReferenceAddress() * multiplier;
+                  }
+               pushOutgoingMemArgument(argRegister, memArgOffset, op, pushToMemory[argIndex++]);
+               if (rightToLeft)
+                  {
+                  memArgOffset += TR::Compiler->om.sizeofReferenceAddress() * multiplier;
+                  }
                }
             numIntegerArgs++;
             break;
@@ -908,8 +934,17 @@ int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
                }
             else // numFloatArgs >= numFloatArgRegs
                {
-               op = (childType == TR::Float) ? TR::InstOpCode::vstrposts : TR::InstOpCode::vstrpostd;
-               mref = getOutgoingArgumentMemRef(argMemReg, argRegister, op, pushToMemory[argIndex++]);
+               op = (childType == TR::Float) ? TR::InstOpCode::vstrimms : TR::InstOpCode::vstrimmd;
+               multiplier = (childType == TR::Double) ? 2 : 1;
+               if (!rightToLeft)
+                  {
+                  memArgOffset -= TR::Compiler->om.sizeofReferenceAddress() * multiplier;
+                  }
+               pushOutgoingMemArgument(argRegister, memArgOffset, op, pushToMemory[argIndex++]);
+               if (rightToLeft)
+                  {
+                  memArgOffset += TR::Compiler->om.sizeofReferenceAddress() * multiplier;
+                  }
                }
             numFloatArgs++;
             break;
@@ -958,17 +993,12 @@ int32_t TR::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
 
    if (numMemArgs > 0)
       {
-      TR::RealRegister *sp = cg()->machine()->getRealRegister(properties.getStackPointerRegister());
-      generateMovInstruction(cg(), callNode, argMemReg, sp);
-
       for (argIndex = 0; argIndex < numMemArgs; argIndex++)
          {
          TR::Register *aReg = pushToMemory[argIndex].argRegister;
          generateMemSrc1Instruction(cg(), pushToMemory[argIndex].opCode, callNode, pushToMemory[argIndex].argMemory, aReg);
          cg()->stopUsingRegister(aReg);
          }
-
-      cg()->stopUsingRegister(argMemReg);
       }
 
    return totalSize;
