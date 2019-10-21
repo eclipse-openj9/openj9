@@ -144,9 +144,9 @@ RUN cd /usr/src \
   && rm -rf /usr/src/git-2.5.3
 
 # Install ant version 1.10.5.
-RUN wget http://www.us.apache.org/dist/ant/binaries/apache-ant-1.10.5-bin.tar.gz \
-  && tar xvfz apache-ant-1.10.5-bin.tar.gz -C /opt \
-  && rm apache-ant-1.10.5-bin.tar.gz \
+RUN wget https://archive.apache.org/dist/ant/binaries/apache-ant-1.10.5-bin.zip \
+  && unzip apache-ant-1.10.5-bin.zip -d /opt \
+  && rm apache-ant-1.10.5-bin.zip \
   && ln -s /opt/apache-ant-1.10.5 /opt/ant \
   && ln -s /opt/ant/bin/ant /usr/bin/ant \
   && cd /opt/ant/lib \
@@ -211,7 +211,7 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-11 \
   && mv bootjdk11/* /usr/lib/jvm/adoptojdk-java-11 \
   && rm -rf bootjdk11
 
-# Setup boot JDK for building Java 13 and higher
+# Setup boot JDK for building Java 13
 RUN mkdir -p /usr/lib/jvm/adoptojdk-java-12 \
   && cd /usr/lib/jvm/adoptojdk-java-12 \
   && wget -O bootjdk12.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk12?openjdk_impl=openj9&os=linux&arch=ppc64le&release=latest&type=jdk" \
@@ -220,6 +220,16 @@ RUN mkdir -p /usr/lib/jvm/adoptojdk-java-12 \
   && mv $(ls | grep -i jdk-12) bootjdk12 \
   && mv bootjdk12/* /usr/lib/jvm/adoptojdk-java-12 \
   && rm -rf bootjdk12
+
+# Setup boot JDK for building Java 14 and higher
+RUN mkdir -p /usr/lib/jvm/adoptojdk-java-13 \
+  && cd /usr/lib/jvm/adoptojdk-java-13 \
+  && wget -O bootjdk13.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk13?openjdk_impl=openj9&os=linux&arch=ppc64le&release=latest&type=jdk" \
+  && tar -xzf bootjdk13.tar.gz \
+  && rm -f bootjdk13.tar.gz \
+  && mv $(ls | grep -i jdk-13) bootjdk13 \
+  && mv bootjdk13/* /usr/lib/jvm/adoptojdk-java-13 \
+  && rm -rf bootjdk13
 
 # Install Freemaker for building OpenJ9. Used in bash ./configure --with-freemarker-jar=<path-to-freemaker-jar>
 RUN cd /home/${USER} \
