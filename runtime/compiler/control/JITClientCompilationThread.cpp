@@ -1073,6 +1073,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->instanceOfOrCheckCast(clazz1, clazz2));
          }
          break;
+      case MessageType::VM_instanceOfOrCheckCastNoCacheUpdate:
+         {
+         auto recv = client->getRecvData<J9Class*, J9Class*>();
+         auto clazz1 = std::get<0>(recv);
+         auto clazz2 = std::get<1>(recv);
+         client->write(response, fe->instanceOfOrCheckCastNoCacheUpdate(clazz1, clazz2));
+         }
+         break;
       case MessageType::VM_transformJlrMethodInvoke:
          {
          auto recv = client->getRecvData<J9Method*, J9Class*>();
