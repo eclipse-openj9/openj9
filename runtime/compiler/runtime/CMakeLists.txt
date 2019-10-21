@@ -62,6 +62,7 @@ j9jit_files(
 
 if(JITSERVER_SUPPORT)
 	j9jit_files(
+                runtime/CompileService.cpp
 		runtime/JITClientSession.cpp
 		runtime/JITServerIProfiler.cpp
 		runtime/JITServerStatisticsThread.cpp

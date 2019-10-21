@@ -595,7 +595,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
       // Check if this thread has cached the frontend inside
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-#if defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO)
+#if defined(JITSERVER_SUPPORT)
       if (vmType==J9_SERVER_VM || vmType==J9_SHARED_CACHE_SERVER_VM)
          {
          TR_ASSERT(vmWithoutThreadInfo->_compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER, "J9_SERVER_VM and J9_SHARED_CACHE_SERVER_VM should only be instantiated in JITServer::SERVER mode");
@@ -654,7 +654,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
             return sharedCacheServerVM;
             }
          }
-#endif /* defined(JITSERVER_SUPPORT) && defined(JITSERVER_TODO) */
+#endif /* defined(JITSERVER_SUPPORT) */
       if (vmType==AOT_VM)
          {
          TR_J9VMBase * aotVMWithThreadInfo = static_cast<TR_J9VMBase *>(vmThread->aotVMwithThreadInfo);
