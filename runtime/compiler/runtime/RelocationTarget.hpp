@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,7 @@
 class TR_OpaqueClassBlock;
 class TR_RelocationRecord;
 class TR_RelocationRuntimeLogger;
+class TR_J2IThunk;
 
 // TR_RelocationTarget defines how a platform target implements the individual steps of processing
 //    relocation records.
@@ -133,6 +134,14 @@ class TR_RelocationTarget
       virtual uint32_t loadCPIndex(uint8_t *reloLocationHigh, uint8_t *reloLocationLow);
 
       virtual void performThunkRelocation(uint8_t *thunkAddress, uintptr_t vmHelper);
+      /**
+       * @brief Identifies the correct runtime helper based on thunk signature and relocates helper
+       * address. Needed for JITServer.
+       *
+       * @param thunk Pointer to a thunk to be relocated.
+       */
+      virtual void performInvokeExactJ2IThunkRelocation(TR_J2IThunk *thunk);
+
       virtual uint8_t *arrayCopyHelperAddress(J9JavaVM *javaVM);
 
       virtual void patchNonVolatileFieldMemoryFence(J9ROMFieldShape* resolvedField, UDATA cpAddr, U_8 descriptorByte, U_8 *instructionAddress, U_8 *snippetStartAddress, J9JavaVM *javaVM);
