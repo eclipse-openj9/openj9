@@ -573,6 +573,7 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 						I_8 preLayer = 0;
 						char cacheNameBuf[USER_SPECIFIED_CACHE_NAME_MAXLEN];
 
+						memset(cacheUniqueID, 0, sizeof(cacheUniqueID));
 						strncpy(cacheUniqueID, cacheUniqueIDPtr, idLen);
 						SH_OSCache::getCacheNameAndLayerFromUnqiueID(vm, cacheDirBuf, cacheUniqueID, idLen, cacheNameBuf, USER_SPECIFIED_CACHE_NAME_MAXLEN, &preLayer);
 						const char* cacheName = cacheNameBuf;
