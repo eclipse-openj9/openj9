@@ -152,7 +152,7 @@ TR_J9ByteCodeIlGenerator::genIL()
           * if DelayRelocationForAOT don't persist iprofiler info now.
           * instead, persist iprofiler info when loading the aot compilation
           */
-         if(comp()->getOption(TR_DisableDelayRelocationForAOTCompilations) || !comp()->fej9()->shouldDelayAotLoad())
+         if (comp()->getOption(TR_DisableDelayRelocationForAOTCompilations) || !fej9()->shouldDelayAotLoad())
             {
             sc->persistIprofileInfo(_methodSymbol->getResolvedMethodSymbol(), comp());
             }
@@ -259,8 +259,8 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
             TR_OpaqueClassBlock *callerClass  = caller  ? caller->classOfMethod() : 0;
             TR_OpaqueClassBlock *callerClass1 = caller1 ? caller1->classOfMethod() : 0;
 
-            bool doIt = ! ( fej9()->stackWalkerMaySkipFrames(caller->getPersistentIdentifier(),callerClass) ||
-                           fej9()->stackWalkerMaySkipFrames(caller1->getPersistentIdentifier(),callerClass1));
+            bool doIt = !(fej9()->stackWalkerMaySkipFrames(caller->getPersistentIdentifier(),callerClass) ||
+                          fej9()->stackWalkerMaySkipFrames(caller1->getPersistentIdentifier(),callerClass1));
 
 
             if (doIt && !comp()->compileRelocatableCode())
