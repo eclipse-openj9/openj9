@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,23 +23,23 @@
 #ifndef ARM_PRIVATELINKAGE_INCL
 #define ARM_PRIVATELINKAGE_INCL
 
-#include "codegen/Linkage.hpp"
-
+#include "codegen/PrivateLinkage.hpp"
 #include "infra/Assert.hpp"
 
 namespace TR { class CodeGenerator; }
 namespace TR { class Instruction; }
 namespace TR { class Register; }
 
-namespace TR {
+namespace J9
+{
 
-class ARMPrivateLinkage : public TR::Linkage
+class ARMPrivateLinkage : public PrivateLinkage
    {
    static TR::ARMLinkageProperties properties;
 
    public:
 
-   ARMPrivateLinkage(TR::CodeGenerator *codeGen) : TR::Linkage(codeGen) {}
+   ARMPrivateLinkage(TR::CodeGenerator *cg) : J9::PrivateLinkage(cg) {}
 
    virtual uint32_t getRightToLeft();
    virtual void mapStack(TR::ResolvedMethodSymbol *method);
@@ -73,11 +73,17 @@ class ARMPrivateLinkage : public TR::Linkage
    virtual TR::Register *buildIndirectDispatch(TR::Node *callNode);
    };
 
-class ARMHelperLinkage : public TR::ARMPrivateLinkage
+}
+
+
+namespace TR
+{
+
+class ARMHelperLinkage : public J9::ARMPrivateLinkage
    {
    public:
 
-   ARMHelperLinkage(TR::CodeGenerator *codeGen) : TR::ARMPrivateLinkage(codeGen) {}
+   ARMHelperLinkage(TR::CodeGenerator *codeGen) : J9::ARMPrivateLinkage(codeGen) {}
 
    virtual int32_t buildArgs(TR::Node                            *callNode,
                              TR::RegisterDependencyConditions *dependencies,

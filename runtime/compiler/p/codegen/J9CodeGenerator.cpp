@@ -136,7 +136,7 @@ J9::Power::CodeGenerator::createLinkage(TR_LinkageConventions lc)
    switch (lc)
       {
       case TR_Private:
-         linkage = new (self()->trHeapMemory()) TR::PPCPrivateLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::PPCPrivateLinkage(self());
          break;
       case TR_System:
          linkage = new (self()->trHeapMemory()) TR::PPCSystemLinkage(self());
