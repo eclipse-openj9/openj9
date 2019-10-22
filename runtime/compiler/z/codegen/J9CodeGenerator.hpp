@@ -36,14 +36,12 @@ namespace J9 { typedef J9::Z::CodeGenerator CodeGeneratorConnector; }
 #error J9::Z::CodeGenerator expected to be a primary connector, but a J9 connector is already defined
 #endif
 
-
-
 #include "compiler/codegen/J9CodeGenerator.hpp"
 #include "j9cfg.h"
+
 namespace TR { class S390EyeCatcherDataSnippet; }
-
-
 namespace TR { class Node; }
+
 
 namespace J9
 {
@@ -114,7 +112,7 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    bool canGeneratePDBinaryIntrinsic(TR::ILOpCodes opCode, TR::Node * op1PrecNode, TR::Node * op2PrecNode, TR::Node * resultPrecNode);
 
    bool constLoadNeedsLiteralFromPool(TR::Node *node);
-   
+
    bool supportsTrapsInTMRegion(){ return TR::Compiler->target.isZOS();}
 
    using J9::CodeGenerator::addAllocatedRegister;

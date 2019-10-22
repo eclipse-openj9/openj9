@@ -23,7 +23,7 @@
 #ifndef ARM_JNILINKAGE_INCL
 #define ARM_JNILINKAGE_INCL
 
-#include "arm/codegen/ARMPrivateLinkage.hpp"
+#include "codegen/ARMPrivateLinkage.hpp"
 
 #include <stdint.h>
 #include "codegen/Linkage.hpp"
@@ -37,7 +37,7 @@ namespace TR { class RegisterDependencyConditions; }
 
 namespace TR {
 
-class ARMJNILinkage : public TR::ARMPrivateLinkage
+class ARMJNILinkage : public J9::ARMPrivateLinkage
    {
    public:
 
