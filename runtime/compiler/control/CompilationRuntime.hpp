@@ -77,6 +77,8 @@ template <typename T> class TR_PersistentArray;
 typedef J9JITExceptionTable TR_MethodMetaData;
 #if defined(JITSERVER_SUPPORT)
 class ClientSessionHT;
+
+namespace JITServer { class ServerStream; }
 #endif /* defined(JITSERVER_SUPPORT) */
 
 struct TR_SignatureCountPair
@@ -446,8 +448,6 @@ public:
    static void freeCompilationInfo(J9JITConfig *jitConfig);
    static TR::CompilationInfo *get(J9JITConfig * = 0) { return _compilationRuntime; }
    static bool shouldRetryCompilation(TR_MethodToBeCompiled *entry, TR::Compilation *comp);
-   static bool shouldAbortCompilation(TR_MethodToBeCompiled *entry, TR::PersistentInfo *persistentInfo);
-   static bool canRelocateMethod(TR::Compilation * comp);
    static bool useSeparateCompilationThread();
    static int computeCompilationThreadPriority(J9JavaVM *vm);
    static void *compilationEnd(J9VMThread *context, TR::IlGeneratorMethodDetails & details, J9JITConfig *jitConfig, void * startPC,
@@ -1014,6 +1014,8 @@ public:
    uint8_t getCHTableUpdateDone() const { return _chTableUpdateFlags; }
    uint32_t getLocalGCCounter() const { return _localGCCounter; }
    void incrementLocalGCCounter() { _localGCCounter++; }
+
+   static bool canRelocateMethod(TR::Compilation * comp);
 
    const PersistentVector<std::string> &getJITServerSslKeys() const { return _sslKeys; }
    void  addJITServerSslKey(const std::string &key) { _sslKeys.push_back(key); }
