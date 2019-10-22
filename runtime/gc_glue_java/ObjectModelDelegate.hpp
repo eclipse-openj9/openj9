@@ -378,6 +378,20 @@ public:
 		return size;
 	}
 
+	MMINLINE UDATA
+	getHotFieldOffset(MM_ForwardedHeader *forwardedHeader)
+	{
+		J9Class* hotClass = ((J9Class *)(((uintptr_t)(forwardedHeader->getPreservedSlot())) & ~(UDATA)_delegateHeaderSlotFlagsMask));
+		return hotClass->hotField1.hotFieldOffset;
+	}
+
+	MMINLINE UDATA
+	getHotFieldOffset2(MM_ForwardedHeader *forwardedHeader)
+	{
+		J9Class* hotClass = ((J9Class *)(((uintptr_t)(forwardedHeader->getPreservedSlot())) & ~(UDATA)_delegateHeaderSlotFlagsMask));
+		return hotClass->hotField2.hotFieldOffset;	
+	}
+
 	/**
 	 * Return true if the object holds references to heap objects not reachable from reference graph. For
 	 * example, an object may be associated with a class and the class may have associated meta-objects

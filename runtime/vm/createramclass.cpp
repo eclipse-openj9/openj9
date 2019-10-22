@@ -69,7 +69,7 @@ enum J9ClassFragments {
 	RAM_SPECIAL_SPLIT_TABLE_FRAGMENT,
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	RAM_CLASS_FLATTENED_CLASS_CACHE,
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */	
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	RAM_CLASS_FRAGMENT_COUNT
 };
 
@@ -2493,6 +2493,12 @@ fail:
 					memcpy(ramClass->flattenedClassCache, flattenedClassCache, flattenedClassCacheAllocSize);
 				}
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+				ramClass->hotField1.hotFieldOffset =  UDATA_MAX;
+				ramClass->hotField1.hotFieldMethodHotness = 2; 
+				ramClass->hotField1.hotFieldThreshold = 200;
+				ramClass->hotField2.hotFieldOffset =  UDATA_MAX;
+				ramClass->hotField2.hotFieldMethodHotness = 2; 
+				ramClass->hotField2.hotFieldThreshold = 200;
 			}
 		}
 
@@ -3157,6 +3163,15 @@ retry:
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 
 		result->classFlags = classFlags;
+		
+		if(javaVM->memoryManagerFunctions->j9gc_dynamic_breadth_first_scan_ordering_enabled(javaVM)) {
+			J9UTF8 *className = J9ROMCLASS_CLASSNAME(romClass);
+			if (J9UTF8_LITERAL_EQUALS(J9UTF8_DATA(className), J9UTF8_LENGTH(className), "java/lang/String")) {
+				const char * const fieldName = "value";
+				const char * const fieldSig = "[C";
+				result->hotField1.hotFieldOffset = (UDATA)javaVM->internalVMFunctions->instanceFieldOffset(vmThread, result, (U_8*)fieldName, strlen(fieldName), (U_8*)fieldSig, strlen(fieldSig), NULL, NULL, J9_LOOK_NO_JAVA) + (J9JAVAVM_OBJECT_HEADER_SIZE(javaVM)/J9JAVAVM_REFERENCE_SIZE(javaVM));
+			}
+		}
 	}
 
 	return result;

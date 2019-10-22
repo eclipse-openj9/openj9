@@ -2312,26 +2312,31 @@ TR_MarkHotField::markHotField(int32_t frequency, J9Class * clazz, bool rootClass
          printf("hot field %*s with bitValue=%lx and slotIndex=%lu found while compiling \n   %s\n", len, s, _bitValue, _slotIndex, _comp->signature());
          }
 
-      J9ROMClass* romClass = ((J9Class *)clazz)->romClass;
+      J9ROMClass* romClass = TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock*)clazz);
       J9UTF8* name = J9ROMCLASS_CLASSNAME(romClass);
       printf("%*smarked field as hot in class %.*s\n", depth(), " ", J9UTF8_LENGTH(name), J9UTF8_DATA(name));
       }  
-   
-      J9ROMClass* romClass = ((J9Class *)clazz)->romClass;
-      J9UTF8* name = J9ROMCLASS_CLASSNAME(romClass);
 
-      if (jitConfig->javaVM->memoryManagerFunctions->j9gc_dynamic_breadth_first_scan_ordering_enabled(jitConfig->javaVM) && clazz->totalInstanceSize <=512) {
-      /* Setting hot fields for dynamic breadth first scan ordering */
-         if ((clazz->hotField1.hotFieldOffset == UDATA_MAX && _comp->getMethodHotness() >=warm) ||
-            (_comp->getMethodHotness() > clazz->hotField1.hotFieldMethodHotness && frequency > ((clazz->hotField1.hotFieldThreshold/5)*4))         
-         ) {
-            clazz->hotField1.hotFieldOffset = _slotIndex;
-            clazz->hotField1.hotFieldMethodHotness = _comp->getMethodHotness(); 
-            clazz->hotField1.hotFieldThreshold = frequency;
-         } else if (_slotIndex !=  clazz->hotField1.hotFieldOffset && _comp->getMethodHotness() >= hot && frequency > clazz->hotField2.hotFieldThreshold) {
-            clazz->hotField2.hotFieldOffset = _slotIndex;
-            clazz->hotField2.hotFieldMethodHotness = _comp->getMethodHotness(); 
-            clazz->hotField2.hotFieldThreshold = frequency;
+      if (jitConfig->javaVM->memoryManagerFunctions->j9gc_dynamic_breadth_first_scan_ordering_enabled(jitConfig->javaVM)) {
+          /* Setting hot fields for dynamic breadth first scan ordering */
+         if(clazz->totalInstanceSize <=512) {
+            if ((_slotIndex !=  clazz->hotField2.hotFieldOffset) &&
+               ((clazz->hotField1.hotFieldOffset == UDATA_MAX && _comp->getMethodHotness() >=warm) ||
+               (_comp->getMethodHotness() > clazz->hotField1.hotFieldMethodHotness && frequency > ((clazz->hotField1.hotFieldThreshold/10)*9)) ||
+               (_comp->getMethodHotness() == clazz->hotField1.hotFieldMethodHotness && frequency > ((clazz->hotField1.hotFieldThreshold/9)*10)))    
+            ) {
+               clazz->hotField1.hotFieldOffset = _slotIndex;
+               clazz->hotField1.hotFieldMethodHotness = _comp->getMethodHotness(); 
+               clazz->hotField1.hotFieldThreshold = frequency;
+            } else if ((_slotIndex !=  clazz->hotField1.hotFieldOffset) &&
+               ((clazz->hotField2.hotFieldOffset == UDATA_MAX  && _comp->getMethodHotness() >= hot) ||
+               (_comp->getMethodHotness() > clazz->hotField2.hotFieldMethodHotness && frequency > ((clazz->hotField2.hotFieldThreshold/10)*9)) ||
+               (_comp->getMethodHotness() == clazz->hotField2.hotFieldMethodHotness && frequency > ((clazz->hotField2.hotFieldThreshold/9)*10)))
+               ) {
+               clazz->hotField2.hotFieldOffset = _slotIndex;
+               clazz->hotField2.hotFieldMethodHotness = _comp->getMethodHotness(); 
+               clazz->hotField2.hotFieldThreshold = frequency;
+            }
          }
       } else {
          *(UDATA *)((char *)clazz + offsetOfHotFields()) = noncoldWord | _bitValue;

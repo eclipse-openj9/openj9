@@ -98,12 +98,6 @@ GC_ObjectModel::internalClassLoadHook(J9HookInterface** hook, UDATA eventNum, vo
 	GC_ObjectModel *objectModel = (GC_ObjectModel*)userData;
 	J9VMThread *vmThread = classLoadEvent->currentThread;
 	J9Class *clazz = classLoadEvent->clazz;
-	clazz->hotField1.hotFieldOffset =  UDATA_MAX;
-	clazz->hotField1.hotFieldMethodHotness = 2; 
-	clazz->hotField1.hotFieldThreshold = 200;
-	clazz->hotField2.hotFieldOffset =  UDATA_MAX;
-	clazz->hotField2.hotFieldMethodHotness = 2; 
-	clazz->hotField2.hotFieldThreshold = 200;
 
 	/* we're only interested in bootstrap classes */
 	if (clazz->classLoader == vmThread->javaVM->systemClassLoader) {
@@ -114,8 +108,6 @@ GC_ObjectModel::internalClassLoadHook(J9HookInterface** hook, UDATA eventNum, vo
 		const char * const javaLangClassLoader = "java/lang/ClassLoader";
 		const char * const javaLangClass = "java/lang/Class";
 		const char * const abstractOwnableSynchronizer = "java/util/concurrent/locks/AbstractOwnableSynchronizer";
-		
-		const char * const javaLangString = "java/lang/String";
 
 		if (0 == compareUTF8Length(J9UTF8_DATA(className), J9UTF8_LENGTH(className), (U_8*)atomicMarkableReference, strlen(atomicMarkableReference))) {
 			clazz->classDepthAndFlags |= J9AccClassGCSpecial;
@@ -128,9 +120,7 @@ GC_ObjectModel::internalClassLoadHook(J9HookInterface** hook, UDATA eventNum, vo
 			objectModel->_classClass = clazz;
 		} else if (0 == compareUTF8Length(J9UTF8_DATA(className), J9UTF8_LENGTH(className), (U_8*)abstractOwnableSynchronizer, strlen(abstractOwnableSynchronizer))) {
 			 clazz->classDepthAndFlags |= J9AccClassOwnableSynchronizer;
-		} else if (0 == compareUTF8Length(J9UTF8_DATA(className), J9UTF8_LENGTH(className), (U_8*)javaLangString, strlen(javaLangString))) {
-			 clazz->hotField1.hotFieldOffset =  1; 
-		} 
+		}
 	}
 }
 
