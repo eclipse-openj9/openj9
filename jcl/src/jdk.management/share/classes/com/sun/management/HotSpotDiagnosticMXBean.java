@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar19-SE]*/
+/*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
  * Copyright (c) 2017, 2019 IBM Corp. and others
@@ -21,6 +21,7 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
+/*[IF Sidecar19-SE]*/
 package com.sun.management;
 
 import java.lang.management.PlatformManagedObject;
@@ -32,3 +33,4 @@ import java.lang.management.PlatformManagedObject;
 public interface HotSpotDiagnosticMXBean extends PlatformManagedObject {
 
 }
+/*[ENDIF]*/
