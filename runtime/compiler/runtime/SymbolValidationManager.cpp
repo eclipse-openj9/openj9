@@ -49,8 +49,10 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _fej9((TR_J9VM *)TR_J9VMBase::get(
         _vmThread->javaVM->jitConfig,
         _vmThread,
-        TR::CompilationInfo::get()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ?
-           TR_J9VMBase::J9_SERVER_VM : TR_J9VMBase::DEFAULT_VM)),
+#if defined(JITSERVER_SUPPORT)
+        TR::CompilationInfo::get()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ? TR_J9VMBase::J9_SERVER_VM : 
+#endif
+        TR_J9VMBase::DEFAULT_VM)),
      _trMemory(_comp->trMemory()),
      _chTable(_comp->getPersistentInfo()->getPersistentCHTable()),
      _rootClass(compilee->classOfMethod()),
@@ -67,13 +69,14 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
    {
    assertionsAreFatal(); // Acknowledge the env var whether or not assertions fail
 
-
+#if defined(JITSERVER_SUPPORT)
    auto stream = TR::CompilationInfo::getStream();
    if (stream && _fej9->sharedCache())
       // because a different VM is used here, a new Shared Cache object was created, so
       // need to update stream
       // JITServer TODO: we update stream in multiple places, better to change it to only one
       ((TR_J9JITServerSharedCache *) _fej9->sharedCache())->setStream(stream);
+#endif
 
    defineGuaranteedID(NULL, TR::SymbolType::typeOpaque);
    defineGuaranteedID(_rootClass, TR::SymbolType::typeClass);
@@ -683,6 +686,7 @@ TR::SymbolValidationManager::addClassFromCPRecord(TR_OpaqueClassBlock *clazz, J9
       return true; // to make sure not to modify _classesFromAnyCPIndex
 
    TR_OpaqueClassBlock *beholder = _fej9->getClassFromCP(constantPoolOfBeholder);
+
    SVM_ASSERT_ALREADY_VALIDATED(this, beholder);
    if (isWellKnownClass(clazz))
       return true;
