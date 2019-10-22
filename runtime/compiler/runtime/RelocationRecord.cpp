@@ -1589,6 +1589,7 @@ TR_RelocationRecordDataAddress::findDataAddress(TR_RelocationRuntime *reloRuntim
    if (address == NULL)
       {
       RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tfindDataAddress: unresolved\n");
+      return 0;
       }
 
    address = address + extraOffset;
