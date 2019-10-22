@@ -212,7 +212,7 @@ void TR_SharedMemoryAnnotations::setParmNum(TR::Compilation *comp, TR::SymbolRef
 
 bool currentMethodHasFpreductionAnnotation(TR::Compilation *comp, bool trace)
    {
-    J9ROMMethod * romMethod = (J9ROMMethod *)J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)comp->getCurrentMethod()->getPersistentIdentifier());
+    J9ROMMethod * romMethod = static_cast<TR_J9VM *>(comp->fej9())->getROMMethodFromRAMMethod((J9Method *)comp->getCurrentMethod()->getPersistentIdentifier());
 
     U_32 * annotationsData = getMethodAnnotationsDataFromROMMethod(romMethod);
 

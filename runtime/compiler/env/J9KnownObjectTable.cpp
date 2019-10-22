@@ -128,7 +128,7 @@ J9::KnownObjectTable::dumpObjectTo(TR::FILE *file, Index i, const char *fieldNam
          {
          J9Method *j9method  = (J9Method*)J9VMJAVALANGINVOKEPRIMITIVEHANDLE_VMSLOT(j9fe->vmThread(), (J9Object*)(*ref));
          J9UTF8   *className = J9ROMCLASS_CLASSNAME(J9_CLASS_FROM_METHOD(j9method)->romClass);
-         J9UTF8   *methName  = J9ROMMETHOD_NAME(J9_ROM_METHOD_FROM_RAM_METHOD(j9method));
+         J9UTF8   *methName  = J9ROMMETHOD_NAME(static_cast<TR_J9VM *>(j9fe)->getROMMethodFromRAMMethod(j9method));
          int32_t offs = simpleNameOffset(utf8Data(className), J9UTF8_LENGTH(className));
          trfprintf(file, "  vmSlot: %.*s.%.*s",
             J9UTF8_LENGTH(className)-offs, utf8Data(className)+offs,
