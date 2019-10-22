@@ -264,7 +264,6 @@ class ClientSessionData
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _fieldOrStaticDeclaringClassCache;
       PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> _J9MethodNameCache; // key is a cpIndex
 
-      bool inROMClass(void *address);
       char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
       char* getRemoteROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
       }; // struct ClassInfo

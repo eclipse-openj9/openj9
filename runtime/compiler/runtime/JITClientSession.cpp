@@ -21,10 +21,12 @@
  *******************************************************************************/
 
 #include "runtime/JITClientSession.hpp"
-#include "runtime/RuntimeAssumptions.hpp" // for TR_AddressSet
-#include "net/ServerStream.hpp" // for JITServer::ServerStream
-#include "control/MethodToBeCompiled.hpp" // for TR_MethodToBeCompiled
+
 #include "control/CompilationRuntime.hpp" // for CompilationInfo
+#include "control/MethodToBeCompiled.hpp" // for TR_MethodToBeCompiled
+#include "control/JITServerHelpers.hpp"
+#include "net/ServerStream.hpp" // for JITServer::ServerStream
+#include "runtime/RuntimeAssumptions.hpp" // for TR_AddressSet
 
 
 ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo) : 
@@ -455,12 +457,6 @@ ClientSessionData::notifyAndDetachFirstWaitingThread()
    return entry;
    }
 
-bool
-ClientSessionData::ClassInfo::inROMClass(void * address)
-   {
-   return address >= _romClass && address < ((uint8_t*) _romClass) + _romClass->romSize;
-   }
-
 char *
 ClientSessionData::ClassInfo::getRemoteROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
    {
@@ -517,11 +513,11 @@ ClientSessionData::ClassInfo::getROMString(int32_t &len, void *basePtr, std::ini
    for (size_t offset : offsets)
       {
       ptr += offset;
-      if (!inROMClass(ptr))
+      if (!JITServerHelpers::isAddressInROMClass(ptr, _romClass))
          return getRemoteROMString(len, basePtr, offsets);
       ptr = ptr + *(J9SRP*)ptr;
       }
-   if (!inROMClass(ptr))
+   if (!JITServerHelpers::isAddressInROMClass(ptr, _romClass))
       return getRemoteROMString(len, basePtr, offsets);
    char *data = utf8Data((J9UTF8*) ptr, len);
    return data;
