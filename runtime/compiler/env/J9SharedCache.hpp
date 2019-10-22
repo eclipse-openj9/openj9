@@ -159,7 +159,6 @@ private:
    void log(char *format, ...);
 
    uint32_t getHint(J9VMThread * vmThread, J9Method *method);
-   uint32_t getHint(J9VMThread * vmThread, J9ROMMethod *method);
 
    void convertUnsignedOffsetToASCII(UDATA offset, char *myBuffer);
    void createClassKey(UDATA classOffsetInCache, char *key, uint32_t & keyLength);
