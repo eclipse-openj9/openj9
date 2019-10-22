@@ -142,6 +142,7 @@ public:
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	/**
 	 * Sets enable double mapping
+	 * 
 	 * @param enableDoubleMapping
 	 */
 	MMINLINE void
@@ -150,6 +151,11 @@ public:
 		_enableDoubleMapping = enableDoubleMapping;
 	}
 
+	/**
+	 * Returns enable double mapping
+	 * 
+	 * @return true if double mapping is enabled, false otherwise
+	 */
 	MMINLINE bool
 	isDoubleMappingEnabled()
 	{

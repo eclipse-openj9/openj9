@@ -104,7 +104,8 @@ GC_ArrayletObjectModelBase::getSpineSizeWithoutHeader(ArrayLayout layout, UDATA 
 		} else
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 		{
-			spineDataSize = (dataSize & (_omrVM->_arrayletLeafSize - 1)); // Last arraylet in spine.
+			/* Last arraylet in spine */
+			spineDataSize = (dataSize & (_omrVM->_arrayletLeafSize - 1));
 		}
 	}
 

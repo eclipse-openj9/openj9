@@ -297,6 +297,7 @@ public:
 	 *		multiple of region size. Here we would have 2 or more arraylet leaves
 	 *		containing data and the last leaf pointing to NULL. Nonetheless, we
 	 *		always double map in this case
+	 *
 	 * @param spine Pointer to an array indexable object spine
 	 * @return false in case corner cases 0, 2 or 3 are valid. On the other hand,
 	 *		if cases 4 or 5 are true, the function returns true.
@@ -311,6 +312,7 @@ public:
 
 	/**
 	 * Checks if arraylet falls into corner case of contiguous data
+	 * 
 	 * @param spine Pointer to an array indexable object spine
 	 * @return true in case corner cases 2 or 3 are valid. On the other hand,
 	 * 		if cases 0, 4 or 5 are true, the function returns false.

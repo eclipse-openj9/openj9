@@ -259,7 +259,8 @@ MM_VLHGCAccessBarrier::copyArrayCritical(J9VMThread *vmThread, GC_ArrayObjectMod
 	UDATA sizeInBytes = indexableObjectModel->getDataSizeInBytes(arrayObject);
 	*data = functions->jniArrayAllocateMemoryFromThread(vmThread, sizeInBytes);
 	if (NULL == *data) {
-		functions->setNativeOutOfMemoryError(vmThread, 0, 0);	// better error message here?
+		/* better error message here? */
+		functions->setNativeOutOfMemoryError(vmThread, 0, 0);
 	} else {
 		indexableObjectModel->memcpyFromArray(*data, arrayObject, 0, sizeInElements);
 		vmThread->jniCriticalCopyCount += 1;
@@ -280,6 +281,14 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 
 	J9IndexableObject *arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
 	bool alwaysCopyInCritical = (javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL;
+
+	/* Set default isCopy value to JNI_FALSE, where in case we need to copy array critical
+	 * the value is set to JNI_TRUE in copyArrayCritical()
+	 */
+	if (NULL != isCopy) {
+		*isCopy = JNI_FALSE;
+	}
+
 	if (alwaysCopyInCritical) {
 		copyArrayCritical(vmThread, indexableObjectModel, functions, &data, arrayObject, isCopy);
 	} else if (!indexableObjectModel->isInlineContiguousArraylet(arrayObject)) {
@@ -306,7 +315,7 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 				data = objectSlot.readReferenceFromSlot();
 			} else {
 				/* Possible to reach here if arraylet leaf has one leaf and no elements in it */
-				Assert_MM_true((indexableObjectModel->numArraylets(arrayObject) == 1) && (indexableObjectModel->getSizeInElements(arrayObject) == 0));
+				Assert_MM_true((1 == indexableObjectModel->numArraylets(arrayObject)) && (0 == indexableObjectModel->getSizeInElements(arrayObject)));
 			}
 		} else
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
@@ -319,9 +328,6 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 		Assert_MM_true(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS);
 		arrayObject = (J9IndexableObject*)J9_JNI_UNWRAP_REFERENCE(array);
 		data = (void *)indexableObjectModel->getDataPointerForContiguous(arrayObject);
-		if (NULL != isCopy) {
-			*isCopy = JNI_FALSE;
-		}
 #if defined(J9VM_GC_MODRON_COMPACTION) || defined(J9VM_GC_MODRON_SCAVENGER)
 		/* we need to increment this region's critical count so that we know not to compact it */
 		UDATA volatile *criticalCount = &(((MM_HeapRegionDescriptorVLHGC *)_heap->getHeapRegionManager()->regionDescriptorForAddress(arrayObject))->_criticalRegionsInUse);
@@ -342,8 +348,10 @@ MM_VLHGCAccessBarrier::copyBackArrayCritical(J9VMThread *vmThread, GC_ArrayObjec
 		indexableObjectModel->memcpyToArray(*arrayObject, 0, sizeInElements, elems);
 	}
 
-	// Commit means copy the data but do not free the buffer.
-	// All other modes free the buffer.
+	/**
+	 * Commit means copy the data but do not free the buffer.
+	 * All other modes free the buffer.
+	 */
 	if(JNI_COMMIT != mode) {
 		functions->jniArrayFreeMemoryFromThread(vmThread, elems);
 	}
@@ -382,7 +390,7 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 					copyBackArrayCritical(vmThread, indexableObjectModel, functions, elems, &arrayObject, mode);
 				}
 			} else if (indexableObjectModel->isArrayletDataContiguous(arrayObject)) {
-				/*
+				/**
 				 * Objects can not be moved if critical section is active
 				 * This trace point will be generated if object has been moved or passed value of elems is corrupted
 				 */
@@ -395,7 +403,7 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 				MM_JNICriticalRegion::exitCriticalRegion(vmThread, true);
 			} else {
 				/* Possible to reach here if arraylet leaf has one leaf and no elements in it */
-				Assert_MM_true((indexableObjectModel->numArraylets(arrayObject) == 1) && (indexableObjectModel->getSizeInElements(arrayObject) == 0));
+				Assert_MM_true((1 == indexableObjectModel->numArraylets(arrayObject)) && (0 == indexableObjectModel->getSizeInElements(arrayObject)));
 			}
 		} else
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
