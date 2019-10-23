@@ -554,7 +554,8 @@ void
 TR_Debug::printByteCodeStack(int32_t parentStackIndex, uint16_t byteCodeIndex, char * indent)
    {
 #if defined(JITSERVER_SUPPORT)
-   return ;
+   if (_comp->isOutOfProcessCompilation() || _comp->isRemoteCompilation())
+      return;
 #endif
    if (!_comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
       {
