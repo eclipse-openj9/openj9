@@ -2891,13 +2891,11 @@ TR_J9ByteCodeIlGenerator::genInvokeSpecial(int32_t cpIndex)
       {
       _invokeSpecialSeen = true;
 
-      J9Class * const textualDefClass =
-         TR::Compiler->cls.convertClassOffsetToClassPtr(_method->containingClass());
       // For this purpose, an anonymous class whose host class is an interface
       // is expected to behave as though its code is contained within that
       // interface. For non-anonymous classes, hostClass is circular.
       TR_OpaqueClassBlock * const defClass =
-         fej9()->convertClassPtrToClassOffset(textualDefClass->hostClass);
+         fej9()->getHostClass(_method->containingClass());
       if (TR::Compiler->cls.isInterfaceClass(comp(), defClass))
          _invokeSpecialInterface = defClass;
 
@@ -4252,7 +4250,7 @@ break
             TR_OpaqueClassBlock *orbClass = fej9()->getClassFromSignature(ORB_REPLACE_CLASS_NAME, ORB_REPLACE_CLASS_LEN, callNode->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod());
 
             if (comp()->getOption(TR_TraceILGen))
-               traceMsg(comp(), "orbClass = %p, orbClassLoader %s systemClassLoader\n", orbClass, (fej9()->getClassLoader(cl) != fej9()->getSystemClassLoader()) ? "!=" : "==");
+               traceMsg(comp(), "orbClass = %p, orbClassLoader %s systemClassLoader\n", orbClass, (!fej9()->isClassLoadedBySystemClassLoader(cl)) ? "!=" : "==");
 
             // PR107804 if the ORB class is loaded we cannot do the serialization opt since the
             // ObjectInputStream.redirectedReadObject cannot handle ORB for some reason
@@ -4261,7 +4259,7 @@ break
                canDoSerializationOpt = false;
                }
 
-            if (orbClass && (fej9()->getClassLoader(cl) != fej9()->getSystemClassLoader()))
+            if (orbClass && !fej9()->isClassLoadedBySystemClassLoader(cl))
                {
                TR_ScratchList<TR_ResolvedMethod> methods(trMemory());
                fej9()->getResolvedMethods(trMemory(), orbClass, &methods);
@@ -4337,8 +4335,8 @@ break
                   {
                   TR_OpaqueClassBlock *serialClass = fej9()->getClassFromSignature(JAVA_SERIAL_REPLACE_CLASS_NAME, JAVA_SERIAL_REPLACE_CLASS_LEN, callNode->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod());
                   if (comp()->getOption(TR_TraceILGen))
-                     traceMsg(comp(), "serialClass = %p, serialClassLoader %s systemClassLoader\n", serialClass, (fej9()->getClassLoader(cl) != fej9()->getSystemClassLoader()) ? "!=" : "==");
-                  if (serialClass && (fej9()->getClassLoader(cl) != fej9()->getSystemClassLoader()))
+                     traceMsg(comp(), "serialClass = %p, serialClassLoader %s systemClassLoader\n", serialClass, (!fej9()->isClassLoadedBySystemClassLoader(cl)) ? "!=" : "==");
+                  if (serialClass && !fej9()->isClassLoadedBySystemClassLoader(cl))
                      {
                      TR_ScratchList<TR_ResolvedMethod> methods(trMemory());
                      fej9()->getResolvedMethods(trMemory(), serialClass, &methods);
@@ -6930,6 +6928,11 @@ void TR_J9ByteCodeIlGenerator::genFullFence(TR::Node *node)
 
 void TR_J9ByteCodeIlGenerator::performClassLookahead(TR_PersistentClassInfo *classInfo)
    {
+#if defined(JITSERVER_SUPPORT)
+   // Do not perform class lookahead in server mode
+   if (comp()->isOutOfProcessCompilation())
+      return;
+#endif
    // Do not perform class lookahead when peeking (including recursive class lookahead)
    //
    if (comp()->isPeekingMethod())

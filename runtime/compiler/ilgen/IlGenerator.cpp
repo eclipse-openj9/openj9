@@ -152,8 +152,7 @@ TR_J9ByteCodeIlGenerator::genIL()
           * if DelayRelocationForAOT don't persist iprofiler info now.
           * instead, persist iprofiler info when loading the aot compilation
           */
-         TR_J9SharedCacheVM *fej9sc = (TR_J9SharedCacheVM *)(comp()->fej9());
-         if(comp()->getOption(TR_DisableDelayRelocationForAOTCompilations) || !fej9sc->shouldDelayAotLoad())
+         if (comp()->getOption(TR_DisableDelayRelocationForAOTCompilations) || !fej9()->shouldDelayAotLoad())
             {
             sc->persistIprofileInfo(_methodSymbol->getResolvedMethodSymbol(), comp());
             }
@@ -260,21 +259,19 @@ bool TR_J9ByteCodeIlGenerator::internalGenIL()
             TR_OpaqueClassBlock *callerClass  = caller  ? caller->classOfMethod() : 0;
             TR_OpaqueClassBlock *callerClass1 = caller1 ? caller1->classOfMethod() : 0;
 
-            bool doIt = ! ( fej9()->stackWalkerMaySkipFrames(caller->getPersistentIdentifier(),callerClass) ||
-                           fej9()->stackWalkerMaySkipFrames(caller1->getPersistentIdentifier(),callerClass1));
+            bool doIt = !(fej9()->stackWalkerMaySkipFrames(caller->getPersistentIdentifier(),callerClass) ||
+                          fej9()->stackWalkerMaySkipFrames(caller1->getPersistentIdentifier(),callerClass1));
 
 
             if (doIt && !comp()->compileRelocatableCode())
                {
-               if (recognizedMethod == TR::java_lang_ClassLoader_callerClassLoader
-                  )
+               if (recognizedMethod == TR::java_lang_ClassLoader_callerClassLoader)
                   {
                   createGeneratedFirstBlock();
                   // check for bootstrap classloader, if so
                   // return null (see semantics of ClassLoader.callerClassLoader())
                   //
-                  if ((void *)fej9()->getClassLoader(caller->classOfMethod()) ==
-                        (void *)fej9()->getSystemClassLoader())
+                  if (fej9()->isClassLoadedBySystemClassLoader(caller->classOfMethod()))
                      {
                      loadConstant(TR::aconst, (void *)0);
                      }
