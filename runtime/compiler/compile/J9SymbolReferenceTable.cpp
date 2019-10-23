@@ -1429,7 +1429,9 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
       symRef->setReallySharesSymbol();
 
    TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
-   if (resolved
+   TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+   if (knot
+       && resolved
        && isFinal
        && type == TR::Address
        && !comp()->compileRelocatableCode())
@@ -1466,11 +1468,7 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
 
             if (createKnownObject)
                {
-               TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-               if (knot)
-                  {
-                  knownObjectIndex = knot->getIndexAt((uintptrj_t*)dataAddress);
-                  }
+               knownObjectIndex = knot->getIndexAt((uintptrj_t*)dataAddress);
                }
             }
          }
