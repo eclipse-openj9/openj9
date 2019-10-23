@@ -192,18 +192,6 @@ ifeq ($(HOST_BITS),32)
     endif
 endif
 
-ifeq ($(HOST_BITS),64)
-    M4_DEFINES+=TR_64Bit
-
-    ifneq (,$(shell grep 'define J9VM_INTERP_COMPRESSED_OBJECT_HEADER' $(J9SRC)/include/j9cfg.h))
-        M4_DEFINES+=J9VM_INTERP_COMPRESSED_OBJECT_HEADER
-    endif
-
-    ifneq (,$(shell grep 'define J9VM_GC_COMPRESSED_POINTERS' $(J9SRC)/include/j9cfg.h))
-        M4_DEFINES+=OMR_GC_COMPRESSED_POINTERS
-    endif
-endif
-
 ifeq ($(BUILD_CONFIG),debug)
     M4_FLAGS+=$(M4_FLAGS_DEBUG)
 endif
