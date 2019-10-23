@@ -10294,7 +10294,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       // again and return the oldStartPC as the new startPC so the old (fixed up)
       // method body is run
       //
-      if (entry && !isJITServerMode)
+      if (!isJITServerMode)
          TR::Recompilation::methodCannotBeRecompiled(oldStartPC, trvm);
       startPC = oldStartPC;
 #if defined(JITSERVER_SUPPORT)
