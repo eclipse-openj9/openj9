@@ -321,10 +321,15 @@ J9::Node::processJNICall(TR::TreeTop * callNodeTreeTop, TR::ResolvedMethodSymbol
       }
 
 #if defined(TR_TARGET_POWER)
+   // Recognizing these methods on Power allows us to take a shortcut 
+   // in the JNI dispatch where we mangle the register dependencies and call 
+   // optimized helpers in the JIT library using what amounts to system/C dispatch.
+   // The addresses of the optimized helpers in the server process will not necessarily
+   // match the client-side addresses, so we can't take this shortcut in JITServer mode.
    if (((methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_update) ||
         (methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes) ||
         (methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer)) &&
-       !comp->requiresSpineChecks())
+       !comp->requiresSpineChecks() && !comp->isOutOfProcessCompilation())
       {
       self()->setPreparedForDirectJNI();
       return self();
