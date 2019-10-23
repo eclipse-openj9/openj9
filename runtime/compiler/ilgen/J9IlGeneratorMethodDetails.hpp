@@ -41,10 +41,8 @@ namespace J9 { typedef J9::IlGeneratorMethodDetails IlGeneratorMethodDetailsConn
 
 class J9Class;
 class J9Method;
-#if defined(JITSERVER_SUPPORT)
 class J9ROMClass;
 class J9ROMMethod;
-#endif /* defined(JITSERVER_SUPPORT) */
 class TR_FrontEnd;
 class TR_IlGenerator;
 class TR_InlineBlocks;
@@ -117,9 +115,10 @@ public:
    virtual J9Class *getClass() const;
 #if defined(JITSERVER_SUPPORT)
    IlGeneratorMethodDetailsType getType() const;
+#endif /* defined(JITSERVER_SUPPORT) */
    virtual const J9ROMClass *getRomClass() const;
    virtual const J9ROMMethod *getRomMethod() const;
-#endif /* defined(JITSERVER_SUPPORT) */
+
 
    virtual TR_IlGenerator *getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,
                                           TR_FrontEnd * fe,
