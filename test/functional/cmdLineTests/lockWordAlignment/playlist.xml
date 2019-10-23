@@ -52,11 +52,11 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -cp $(Q)$(ASM_JAR)$(P)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(TEST_RESROOT)$(D) i; \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -cp $(Q)$(ASM_JAR)$(P)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) i; \
 		$(JAVA_COMMAND) $(JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(ADD_EXPORTS)$(SQ) \
-		-DEXEP=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)javap$(Q) -DOLWMODE=i -DJDK_VERSION=$(JDK_VERSION) \
+		-DEXEP=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)javap$(SQ) -DOLWMODE=i -DJDK_VERSION=$(JDK_VERSION) \
 		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
-		-DOBJECTJARPATH=$(TEST_RESROOT)$(D)object_i.jar \
+		-DOBJECTJARPATH=$(Q)$(TEST_RESROOT)$(D)object_i.jar$(Q) \
 		-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) \
 		-explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
@@ -77,11 +77,11 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -cp $(Q)$(ASM_JAR)$(P)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(TEST_RESROOT)$(D) ii; \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -cp $(Q)$(ASM_JAR)$(P)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) ii; \
 		$(JAVA_COMMAND) $(JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(ADD_EXPORTS)$(SQ) \
-		-DEXEP=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)javap$(Q) -DOLWMODE=ii -DJDK_VERSION=$(JDK_VERSION) \
+		-DEXEP=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)javap$(SQ) -DOLWMODE=ii -DJDK_VERSION=$(JDK_VERSION) \
 		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
-		-DOBJECTJARPATH=$(TEST_RESROOT)$(D)object_ii.jar \
+		-DOBJECTJARPATH=$(Q)$(TEST_RESROOT)$(D)object_ii.jar$(Q) \
 		-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) \
 		-explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
@@ -102,11 +102,11 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -cp $(Q)$(ASM_JAR)$(P)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(TEST_RESROOT)$(D) iii; \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -cp $(Q)$(ASM_JAR)$(P)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) iii; \
 		$(JAVA_COMMAND) $(JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(ADD_EXPORTS)$(SQ) \
-		-DEXEP=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)javap$(Q) -DOLWMODE=iii -DJDK_VERSION=$(JDK_VERSION) \
+		-DEXEP=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)javap$(SQ) -DOLWMODE=iii -DJDK_VERSION=$(JDK_VERSION) \
 		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
-		-DOBJECTJARPATH=$(TEST_RESROOT)$(D)object_iii.jar \
+		-DOBJECTJARPATH=$(Q)$(TEST_RESROOT)$(D)object_iii.jar$(Q) \
 		-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) \
 		-explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
@@ -127,11 +127,11 @@
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -cp $(Q)$(ASM_JAR)$(P)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(TEST_RESROOT)$(D) d; \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -cp $(Q)$(ASM_JAR)$(P)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) d; \
 		$(JAVA_COMMAND) $(JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(ADD_EXPORTS)$(SQ) \
-		-DEXEP=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)javap$(Q) -DOLWMODE=d -DJDK_VERSION=$(JDK_VERSION) \
+		-DEXEP=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)javap$(SQ) -DOLWMODE=d -DJDK_VERSION=$(JDK_VERSION) \
 		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
-		-DOBJECTJARPATH=$(TEST_RESROOT)$(D)object_d.jar \
+		-DOBJECTJARPATH=$(Q)$(TEST_RESROOT)$(D)object_d.jar$(Q) \
 		-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) \
 		-explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
