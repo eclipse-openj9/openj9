@@ -543,3 +543,9 @@ JITServerHelpers::shouldRetryConnection(OMRPortLibrary *portLibrary)
    OMRPORT_ACCESS_FROM_OMRPORT(portLibrary);
    return omrtime_current_time_millis() > _nextConnectionRetryTime;
    }
+
+bool
+JITServerHelpers::isAddressInROMClass(const void *address, const J9ROMClass *romClass)
+   {
+   return ((address >= romClass) && (address < (((uint8_t*) romClass) + romClass->romSize)));
+   }

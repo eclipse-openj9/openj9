@@ -899,12 +899,6 @@ TR_ResolvedJ9JITServerMethod::getResolvedVirtualMethod(TR::Compilation * comp, T
    return resolvedMethod;
    }
 
-bool
-TR_ResolvedJ9JITServerMethod::inROMClass(void * address)
-   {
-   return address >= romClassPtr() && address < ((uint8_t*)romClassPtr()) + romClassPtr()->romSize;
-   }
-
 char *
 TR_ResolvedJ9JITServerMethod::getRemoteROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
    {
@@ -967,14 +961,15 @@ char *
 TR_ResolvedJ9JITServerMethod::getROMString(int32_t &len, void *basePtr, std::initializer_list<size_t> offsets)
    {
    uint8_t *ptr = (uint8_t*) basePtr;
+   const J9ROMClass * romClass = romClassPtr();
    for (size_t offset : offsets)
       {
       ptr += offset;
-      if (!inROMClass(ptr))
+      if (!JITServerHelpers::isAddressInROMClass(ptr, romClass))
          return getRemoteROMString(len, basePtr, offsets);
       ptr = ptr + *(J9SRP*)ptr;
       }
-   if (!inROMClass(ptr))
+   if (!JITServerHelpers::isAddressInROMClass(ptr, romClass))
       return getRemoteROMString(len, basePtr, offsets);
    char *data = utf8Data((J9UTF8*) ptr, len);
    return data;
@@ -1015,7 +1010,7 @@ TR_ResolvedJ9JITServerMethod::classNameOfFieldOrStatic(I_32 cpIndex, int32_t & l
       return 0;
 
    J9ROMFieldRef * ref = (J9ROMFieldRef *) (&romCPBase()[cpIndex]);
-   TR_ASSERT(inROMClass(ref), "field ref must be in ROM class"); // for now. if this fails make it a remote call
+   TR_ASSERT(JITServerHelpers::isAddressInROMClass(ref, romClassPtr()), "field ref must be in ROM class"); // for now. if this fails make it a remote call
    char *name = getROMString(len, &romCPBase()[ref->classRefCPIndex],
                            {
                            offsetof(J9ROMClassRef, name),
@@ -1059,14 +1054,17 @@ TR_ResolvedJ9JITServerMethod::fieldOrStaticName(I_32 cpIndex, int32_t & len, TR_
 
    J9ROMFieldRef * ref = (J9ROMFieldRef *) (&romCPBase()[cpIndex]);
    J9ROMNameAndSignature * nameAndSignature = J9ROMFIELDREF_NAMEANDSIGNATURE(ref);
+   const J9ROMClass * romClass = romClassPtr();
 
-   if (inROMClass(nameAndSignature))
+   if (JITServerHelpers::isAddressInROMClass(nameAndSignature, romClass))
       {
       J9UTF8 * declName = J9ROMCLASSREF_NAME((J9ROMClassRef *) (&romCPBase()[ref->classRefCPIndex]));
       J9UTF8 * name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature);
       J9UTF8 * signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
 
-      if (inROMClass(declName) && inROMClass(name) && inROMClass(signature))
+      if (JITServerHelpers::isAddressInROMClass(declName, romClass) &&
+          JITServerHelpers::isAddressInROMClass(name, romClass) &&
+          JITServerHelpers::isAddressInROMClass(signature, romClass))
          {
          len = J9UTF8_LENGTH(declName) + J9UTF8_LENGTH(name) + J9UTF8_LENGTH(signature) +3;
          char * s = (char *)trMemory->allocateMemory(len, kind);
