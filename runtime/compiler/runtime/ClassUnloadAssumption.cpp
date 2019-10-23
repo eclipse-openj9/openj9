@@ -1180,11 +1180,7 @@ J9::PersistentInfo::ensureUnloadedAddressSetsAreInitialized()
 
       return _unloadedClassAddresses && _unloadedMethodAddresses;
       }
-   else
-      return false;
    }
-
-
 
 
 bool
