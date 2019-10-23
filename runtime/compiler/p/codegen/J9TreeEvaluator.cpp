@@ -6293,7 +6293,7 @@ static void genHeapAlloc(TR::Node *node, TR::Instruction *&iCursor, TR_OpaqueCla
             if (maxContiguousArraySize > UPPER_IMMED)
                {
                iCursor = loadConstant(cg, node, maxContiguousArraySize, temp2Reg, iCursor);
-               iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpli4, node, condReg, enumReg, temp2Reg, iCursor);
+               iCursor = generateTrg1Src2Instruction(cg, TR::InstOpCode::cmpl4, node, condReg, enumReg, temp2Reg, iCursor);
                }
             else
                iCursor = generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::cmpli4, node, condReg, enumReg, maxContiguousArraySize, iCursor);
