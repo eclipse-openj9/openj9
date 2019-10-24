@@ -82,6 +82,10 @@ getJitEntryOffset(TR_LinkageInfo * linkageInfo)
 TR_PersistentJittedBodyInfo *
 J9::Recompilation::getJittedBodyInfoFromPC(void * startPC)
    {
+#if defined(JITSERVER_SUPPORT)
+   TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "This routine must not be used on the Server for a remote compile!");
+#endif
+
    TR_ASSERT(startPC, "startPC is null");
    TR_LinkageInfo * linkageInfo = TR_LinkageInfo::get(startPC);
    if (!linkageInfo->isRecompMethodBody())
