@@ -55,7 +55,7 @@ public class Jcmd {
 			+ "%n"
 			+ "list JVM processes on the local machine. Default behavior when no options are specified.%n"
 			+ "%n"
-			+ "NOTE: this utility may significantly affect the performance of the target JVM.%n"
+			+ "NOTE: this utility might significantly affect the performance of the target JVM.%n"
 			+ "    The available diagnostic commands are determined by%n"
 			+ "    the target VM and may vary between VMs.%n";
 	@SuppressWarnings("nls")

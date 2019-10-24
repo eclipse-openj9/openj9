@@ -339,12 +339,12 @@ public class DiagnosticUtils {
 			+ " Options:%n"
 			+ "          all : include all objects, including dead objects (this is the default option)%n"
 			+ "         live : include all objects after a global GC collection%n"
-			+ "NOTE: this utility may significantly affect the performance of the target VM.%n";
+			+ "NOTE: this utility might significantly affect the performance of the target VM.%n";
 
 	@SuppressWarnings("nls")
 	private static final String DIAGNOSTICS_GC_RUN_HELP = "Run the garbage collector.%n"
 			+ FORMAT_PREFIX + DIAGNOSTICS_GC_RUN + "%n"
-			+ "NOTE: this utility may significantly affect the performance of the target VM.%n";
+			+ "NOTE: this utility might significantly affect the performance of the target VM.%n";
 
 	@SuppressWarnings("nls")
 	private static final String DIAGNOSTICS_THREAD_PRINT_HELP = "List thread information.%n"
@@ -366,7 +366,7 @@ public class DiagnosticUtils {
 
 	private static final String DIAGNOSTICS_JSTAT_CLASS_HELP = "Show JVM classloader statistics.%n" //$NON-NLS-1$
 			+ FORMAT_PREFIX + DIAGNOSTICS_STAT_CLASS + "%n" //$NON-NLS-1$
-			+ "NOTE: this utility may significantly affect the performance of the target VM.%n"; //$NON-NLS-1$
+			+ "NOTE: this utility might significantly affect the performance of the target VM.%n"; //$NON-NLS-1$
 
 	/* Initialize the command and help text tables */
 	static {
