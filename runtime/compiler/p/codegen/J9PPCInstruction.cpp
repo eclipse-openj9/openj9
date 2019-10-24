@@ -49,6 +49,7 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
       TR::ResolvedMethodSymbol *sym = getSymbolReference()->getSymbol()->getResolvedMethodSymbol();
       TR_ResolvedMethod *resolvedMethod = sym == NULL ? NULL : sym->getResolvedMethod();
       TR::LabelSymbol *label = getSymbolReference()->getSymbol()->getLabelSymbol();
+      bool callToSelf = resolvedMethod != NULL && resolvedMethod->isSameMethod(comp->getCurrentMethod()) && !comp->isDLT();
 
       if (cg()->hasCodeCacheSwitched())
          {
@@ -90,7 +91,7 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
             }
          }
 
-      if (resolvedMethod != NULL && resolvedMethod->isSameMethod(comp->getCurrentMethod()) && !comp->isDLT())
+      if (callToSelf)
          {
          uint8_t *jitTojitStart = cg()->getCodeStart();
          jitTojitStart += ((*(int32_t *)(jitTojitStart - 4)) >> 16) & 0x0000ffff;
@@ -135,10 +136,20 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
             }
          }
 
-      if (cg()->comp()->compileRelocatableCode() && label == NULL)
+      if ((cg()->comp()->compileRelocatableCode() || cg()->comp()->isOutOfProcessCompilation()) &&
+          label == NULL && 
+          !callToSelf)
          {
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)getSymbolReference(),TR_HelperAddress, cg()),
-                                __FILE__, __LINE__, getNode());
+         if (sym && !sym->isHelper() && resolvedMethod)
+            {
+            cg()->addProjectSpecializedRelocation(cursor, (uint8_t *)getSymbolReference()->getMethodAddress(), NULL, TR_MethodCallAddress,
+                               __FILE__, __LINE__, getNode());
+            }
+         else
+            {
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,(uint8_t *)getSymbolReference(),TR_HelperAddress, cg()),
+                               __FILE__, __LINE__, getNode());
+            }
          }
       }
    else
