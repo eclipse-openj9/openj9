@@ -59,6 +59,7 @@ names that match within `BUILD_LIST`.
 
 ```
     export BUILD_LIST=functional/TestUtilities,functional/Java8andUp
+    make -f run_configure.mk
     make compile
 ```
 
@@ -138,15 +139,13 @@ Disabled tests and reasons can also be printed through adding `echo.disabled` in
 
 ## 6) How to execute a directory of tests?
 
-The example below executes all of the sanity tests found within the
-JIT_Test directory
+Only the tests in `BUILD_LIST` will be executed.
 
 ```
-    make -C ../functional/JIT_Test -f autoGen.mk _sanity
-```
-or
-```
-    cd ../functional/JIT_Test; make -f autoGen.mk _sanity
+    export BUILD_LIST=functional/JIT_Test
+    make -f run_configure.mk
+    make compile
+    make _sanity
 ```
 
 ## 7) How to run an individual JCK?
