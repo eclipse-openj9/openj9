@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -212,7 +212,7 @@ void TR_SharedMemoryAnnotations::setParmNum(TR::Compilation *comp, TR::SymbolRef
 
 bool currentMethodHasFpreductionAnnotation(TR::Compilation *comp, bool trace)
    {
-    J9ROMMethod * romMethod = (J9ROMMethod *)J9_ROM_METHOD_FROM_RAM_METHOD((J9Method *)comp->getCurrentMethod()->getPersistentIdentifier());
+    J9ROMMethod * romMethod = static_cast<TR_J9VM *>(comp->fej9())->getROMMethodFromRAMMethod((J9Method *)comp->getCurrentMethod()->getPersistentIdentifier());
 
     U_32 * annotationsData = getMethodAnnotationsDataFromROMMethod(romMethod);
 

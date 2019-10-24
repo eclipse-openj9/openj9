@@ -876,7 +876,6 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
          // Store rom method to get name of method
          J9Method *methodToValidate = reinterpret_cast<J9Method *>(record->_method);
-
          J9ROMMethod *romMethod = static_cast<TR_J9VM *>(fej9)->getROMMethodFromRAMMethod(methodToValidate);
          uintptr_t romMethodOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romMethod);
 
