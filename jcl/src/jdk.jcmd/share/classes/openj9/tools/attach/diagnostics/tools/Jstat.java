@@ -61,7 +61,7 @@ public class Jstat {
 			+ "   -options : list the available command options%n"
 			+ "   -class : Classloading statistics%n"
 			+ "  <vmid>: Attach API VM ID as shown in jps or other Attach API-based tools%n"
-			+ "NOTE: this utility may significantly affect the performance of the target VM.%n"
+			+ "NOTE: this utility might significantly affect the performance of the target VM.%n"
 			+ "At least one option must be selected.%n";
 
 	/**
