@@ -198,15 +198,6 @@ e.g.,
 Above command will run [all possible variations in _testExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/playlist.xml#L28-L30)
 target
 
-#### Run a directory of tests <br />
-cd path/to/directory; make -f autoGen.mk testTarget <br /> 
-or make -C path/to/directory -f autoGen.mk testTarget <br />
-e.g., 
-```
-    cd test/functional/TestExample
-    make -f autoGen.mk _sanity
-```
-
 #### Run all tests
 - compile & run tests
 ```
