@@ -7892,14 +7892,6 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Instruction *firstBRCToOOL = NULL;
    TR::Instruction *secondBRCToOOL = NULL;
 
-   bool outlineNew = false;
-   bool disableOutlinedNew = comp->getOption(TR_DisableOutlinedNew);
-
-   //Disabling outline new for now
-   //TODO: enable later
-   static bool enableOutline = (feGetEnv("TR_OutlineNew")!=NULL);
-   disableOutlinedNew = !enableOutline;
-
    bool generateArraylets = comp->generateArraylets();
 
    // in time, the tlh will probably always be batch cleared, and therefore it will not be
@@ -8025,47 +8017,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          }
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 1.1: Use OutlinedNew? =========================================///
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
-      if (opCode != TR::anewarray && opCode != TR::New && opCode != TR::newarray)
-         {
-         //for now only enabling for TR::New
-         disableOutlinedNew = true;
-         }
-      else if (generateArraylets)
-         {
-         if (comp->getOption(TR_TraceCG))
-         traceMsg(comp, "OUTLINED NEW: Disable for %s %p because outlined allocation can't deal with arraylets\n", node->getOpCode().getName(), node);
-         disableOutlinedNew = true;
-         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.new/refusedToOutline/arraylets/%s", node->getOpCode().getName()), 1, TR::DebugCounter::Undetermined);
-         }
-      else if (comp->getMethodHotness() > warm)
-         {
-         if (comp->getOption(TR_TraceCG))
-         traceMsg(comp, "OUTLINED NEW: Disable for %p because opt level is %s\n", node, comp->getHotnessName());
-         disableOutlinedNew = true;
-         cg->generateDebugCounter(TR::DebugCounter::debugCounterName(comp, "cg.new/refusedToOutline/optlevel/%s", comp->getHotnessName()), 1, TR::DebugCounter::Undetermined);
-         }
-      else if (needZeroReg)
-         {
-         if (comp->getOption(TR_TraceCG))
-         traceMsg(comp, "OUTLINED NEW: Disable for %p due to tlhNotCleared\n", node);
-         disableOutlinedNew = true;
-         cg->generateDebugCounter("cg.new/refusedToOutline/tlhNotCleared", 1, TR::DebugCounter::Undetermined);
-         }
-      else if (allocateSize > cg->getMaxObjectSizeGuaranteedNotToOverflow())
-         {
-         if (comp->getOption(TR_TraceCG))
-         traceMsg(comp, "OUTLINED NEW: Disable for %p due to allocate large object size\n", node);
-         disableOutlinedNew = true;
-         cg->generateDebugCounter("cg.new/refusedToOutline/largeObjectSize", 1, TR::DebugCounter::Undetermined);
-         }
-
-      if (!disableOutlinedNew && performTransformation(comp, "O^O OUTLINED NEW: outlining %s %p, size %d\n", node->getOpCode().getName(), node, allocateSize))
-      outlineNew = true;
-
-      //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 2: Setup Register Dependencies===============================///
+      ///============================ STAGE 1: Setup Register Dependencies===============================///
       //////////////////////////////////////////////////////////////////////////////////////////////////////
 
       temp1Reg = srm->findOrCreateScratchRegister();
@@ -8089,7 +8041,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       TR::Register *copyClassReg = classReg;
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 3: Calculate Allocation Size ================================///
+      ///============================ STAGE 2: Calculate Allocation Size ================================///
       //////////////////////////////////////////////////////////////////////////////////////////////////////
       // Three possible outputs:
       // if variable-length array   - dataSizeReg will contain the (calculated) size
@@ -8135,10 +8087,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          dataSizeReg = srm->findOrCreateScratchRegister();
          if (allocateSize % alignmentConstant == 0 && elementSize < alignmentConstant)
             {
-            if (outlineNew)
-               tmp = resReg;
-            else
-               tmp = temp1Reg;
+            tmp = temp1Reg;
             }
          else
             {
@@ -8259,22 +8208,8 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
          }
 
-      if (outlineNew && !isVariableLen)
-         {
-         TR::Register * tmpReg = NULL;
-         if (opCode == TR::New)
-            tmpReg = enumReg;
-         else
-            tmpReg = resReg;
-
-         if (TR::Compiler->target.is64Bit())
-            iCursor = genLoadLongConstant(cg, node, allocateSize, tmpReg, iCursor, conditions);
-         else
-            iCursor = generateLoad32BitConstant(cg, node, allocateSize, tmpReg, true, iCursor, conditions);
-         }
-
       //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 4: Generate HeapTop Test=====================================///
+      ///============================ STAGE 3: Generate HeapTop Test=====================================///
       //////////////////////////////////////////////////////////////////////////////////////////////////////
       TR::Instruction *current;
       TR::Instruction *firstInstruction;
@@ -8284,85 +8219,35 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
       TR_ASSERT(current != NULL, "Could not get current instruction");
 
-      if (outlineNew)
+      static char * useDualTLH = feGetEnv("TR_USEDUALTLH");
+      //Here we set up backout paths if we overflow nonZeroTLH in genHeapAlloc.
+      //If we overflow the nonZeroTLH, set the destination to the right VM runtime helper (eg jitNewObjectNoZeroInit, etc...)
+      //The zeroed-TLH versions have their correct destinations already setup in TR_ByteCodeIlGenerator::genNew, TR_ByteCodeIlGenerator::genNewArray, TR_ByteCodeIlGenerator::genANewArray
+      //TR::PPCHeapAllocSnippet retrieves this destination via node->getSymbolReference() below after genHeapAlloc.
+      if(!comp->getOption(TR_DisableDualTLH) && useDualTLH && node->canSkipZeroInitialization())
          {
-         if (isVariableLen)
-            roundArrayLengthToObjectAlignment(cg, node, iCursor, dataSizeReg, conditions, litPoolBaseReg, allocateSize, elementSize, resReg, exitOOLLabel );
-
-         TR_RuntimeHelper helper;
-         if (opCode == TR::New)
-            helper = TR_S390OutlinedNew;
-         else
-            helper = TR_S390OutlinedNewArray;
-
-#if !defined(PUBLIC_BUILD)
-         static bool bppoutline = (feGetEnv("TR_BPRP_Outline")!=NULL);
-         if (bppoutline)
-            {
-            TR::LabelSymbol * callLabel = generateLabelSymbol(cg);
-            TR::Instruction * instr = generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, callLabel);
-
-            if (helper == TR_S390OutlinedNew && cg->_outlineCall._frequency == -1)
-               {
-               cg->_outlineCall._frequency = 1;
-               cg->_outlineCall._callSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
-               cg->_outlineCall._callLabel = callLabel;
-               }
-            else if (helper == TR_S390OutlinedNewArray && cg->_outlineArrayCall._frequency == -1)
-               {
-               cg->_outlineArrayCall._frequency = 1;
-               cg->_outlineArrayCall._callSymRef = cg->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
-               cg->_outlineArrayCall._callLabel = callLabel;
-               }
-            }
-#endif
-         // outlineNew is disabled, so We don't use the hardcoded dependency for that
-         // TODO When we decide to enable outlinedNew we need to make sure we have class and size in right register as per expectation
-         iCursor = generateDirectCall(cg, node, false, cg->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false), conditions);
-         //check why it fails when TR::InstOpCode::BRCL instead of TR::InstOpCode::BRC is used
-         iCursor = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BH, node, callLabel, iCursor);
-         if(!firstBRCToOOL)
-            {
-            firstBRCToOOL = iCursor;
-            }
-         else
-            {
-            secondBRCToOOL = iCursor;
-            }
-
+         if (node->getOpCodeValue() == TR::New)
+         node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewObjectNoZeroInitSymbolRef(comp->getMethodSymbol()));
+         else if (node->getOpCodeValue() == TR::newarray)
+         node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewArrayNoZeroInitSymbolRef(comp->getMethodSymbol()));
+         else if (node->getOpCodeValue() == TR::anewarray)
+         node->setSymbolReference(comp->getSymRefTab()->findOrCreateANewArrayNoZeroInitSymbolRef(comp->getMethodSymbol()));
          }
-      else
+
+      if (enumReg == NULL && opCode != TR::New)
          {
-         static char * useDualTLH = feGetEnv("TR_USEDUALTLH");
-         //Here we set up backout paths if we overflow nonZeroTLH in genHeapAlloc.
-         //If we overflow the nonZeroTLH, set the destination to the right VM runtime helper (eg jitNewObjectNoZeroInit, etc...)
-         //The zeroed-TLH versions have their correct destinations already setup in TR_ByteCodeIlGenerator::genNew, TR_ByteCodeIlGenerator::genNewArray, TR_ByteCodeIlGenerator::genANewArray
-         //TR::PPCHeapAllocSnippet retrieves this destination via node->getSymbolReference() below after genHeapAlloc.
-         if(!comp->getOption(TR_DisableDualTLH) && useDualTLH && node->canSkipZeroInitialization())
-            {
-            if (node->getOpCodeValue() == TR::New)
-            node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewObjectNoZeroInitSymbolRef(comp->getMethodSymbol()));
-            else if (node->getOpCodeValue() == TR::newarray)
-            node->setSymbolReference(comp->getSymRefTab()->findOrCreateNewArrayNoZeroInitSymbolRef(comp->getMethodSymbol()));
-            else if (node->getOpCodeValue() == TR::anewarray)
-            node->setSymbolReference(comp->getSymRefTab()->findOrCreateANewArrayNoZeroInitSymbolRef(comp->getMethodSymbol()));
-            }
-
-         if (enumReg == NULL && opCode != TR::New)
-            {
-            enumReg = cg->allocateRegister();
-            conditions->addPostCondition(enumReg, TR::RealRegister::AssignAny);
-            traceMsg(comp,"enumReg = %s\n", enumReg->getRegisterName(comp));
-            }
-         // classReg and enumReg have to be intact still, in case we have to call the helper.
-         // On return, zeroReg is set to 0, and dataSizeReg is set to the size of data area if
-         // isVariableLen is true.
-         genHeapAlloc(node, iCursor, isVariableLen, enumReg, resReg, zeroReg, dataSizeReg, temp1Reg, callLabel, allocateSize, elementSize, cg,
-               litPoolBaseReg, conditions, firstBRCToOOL, secondBRCToOOL, exitOOLLabel);
+         enumReg = cg->allocateRegister();
+         conditions->addPostCondition(enumReg, TR::RealRegister::AssignAny);
+         traceMsg(comp,"enumReg = %s\n", enumReg->getRegisterName(comp));
          }
+      // classReg and enumReg have to be intact still, in case we have to call the helper.
+      // On return, zeroReg is set to 0, and dataSizeReg is set to the size of data area if
+      // isVariableLen is true.
+      genHeapAlloc(node, iCursor, isVariableLen, enumReg, resReg, zeroReg, dataSizeReg, temp1Reg, callLabel, allocateSize, elementSize, cg,
+            litPoolBaseReg, conditions, firstBRCToOOL, secondBRCToOOL, exitOOLLabel);
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 5: Generate Fall-back Path ==================================///
+      ///============================ STAGE 4: Generate Fall-back Path ==================================///
       //////////////////////////////////////////////////////////////////////////////////////////////////////
          /* New Evaluator Optimization: Using OOL instead of snippet for heap alloc */
 
@@ -8394,7 +8279,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, cFlowRegionEnd);
       heapAllocOOL->swapInstructionListsWithCompilation();
       //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 6: Initialize the new object header ==========================///
+      ///============================ STAGE 5: Initialize the new object header ==========================///
       //////////////////////////////////////////////////////////////////////////////////////////////////////
       if (isArray)
          {
@@ -8427,7 +8312,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       TR_ASSERT((fej9->tlhHasBeenCleared() || J9JIT_TESTMODE || J9JIT_TOSS_CODE), "");
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 6b: Prefetch after stores ===================================///
+      ///============================ STAGE 5b: Prefetch after stores ===================================///
       //////////////////////////////////////////////////////////////////////////////////////////////////////
       if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) && cg->enableTLHPrefetching())
          {
@@ -8435,7 +8320,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          }
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 7: AOT Relocation Records ===================================///
+      ///============================ STAGE 6: AOT Relocation Records ===================================///
       //////////////////////////////////////////////////////////////////////////////////////////////////////
       if (comp->compileRelocatableCode() && (opCode == TR::New || opCode == TR::anewarray) )
          {
@@ -8479,7 +8364,7 @@ J9::Z::TreeEvaluator::VMnewEvaluator(TR::Node * node, TR::CodeGenerator * cg)
          }
 
       //////////////////////////////////////////////////////////////////////////////////////////////////////
-      ///============================ STAGE 8: Done. Housekeeping items =================================///
+      ///============================ STAGE 7: Done. Housekeeping items =================================///
       //////////////////////////////////////////////////////////////////////////////////////////////////////
 
       // Add these registers to the dep list if they are actually used in the evaluator body
