@@ -105,3 +105,8 @@ commits), PR builds must be triggered again.
 * Ensure `[ci skip]` is used for documentation only changes; any changes to code **must**
 be tested using the appropriate PR builds.
 
+* If the code change(s) necessitate change(s) to the [OpenJ9 Documentation](https://www.eclipse.org/openj9/docs/),
+first add the `depends:doc` label to the OpenJ9 PR, and then ensure the contributer 
+has opened an associated PR in the [openj9-docs](https://github.com/eclipse/openj9-docs) 
+repository. An OpenJ9 PR that requires documentation changes should not be merged 
+until the associated `openj9-docs` PR is also approved and ready to be merged.
