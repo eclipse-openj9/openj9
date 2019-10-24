@@ -95,6 +95,8 @@ class JITServerHelpers
 
    static uint32_t serverMsgTypeCount[JITServer::MessageType_ARRAYSIZE];
 
+   static bool isAddressInROMClass(const void *address, const J9ROMClass *romClass);
+
    private:
    static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
    static TR::Monitor *getClientStreamMonitor()
