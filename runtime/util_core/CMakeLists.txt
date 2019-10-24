@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,11 +24,10 @@ add_library(j9utilcore STATIC
 	j9argscan.c
 	j9shchelp.c
 	vmargs_core.c
-
-	$<TARGET_OBJECTS:omrutil_obj>
 )
 
 target_link_libraries(j9utilcore
 	PRIVATE
 		j9vm_interface
+		omrutil
 )
