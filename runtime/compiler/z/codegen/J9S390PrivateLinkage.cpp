@@ -2670,9 +2670,8 @@ TR::J9S390JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
                                                     TR::Register * tempReg1)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
-   // Commenting the caching and enabling direct fuction calls of cg() and comp()
-   //TR::CodeGenerator* cg = cg();
-   //TR::Compilation* comp = comp();
+   TR::CodeGenerator* cg = cg();
+   TR::Compilation* comp = comp();
 
    if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10))
       {
@@ -2725,9 +2724,8 @@ TR::J9S390JNILinkage::acquireVMAccessMaskAtomicFree(TR::Node * callNode,
                                                     TR::Register * tempReg1)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
-   // Commenting the caching and enabling direct fuction calls of cg() and comp()
-   //TR::CodeGenerator* cg = cg();
-   //TR::Compilation* comp = comp();
+   TR::CodeGenerator* cg = cg();
+   TR::Compilation* comp = comp();
 
    // Zero vmthread->inNative, which is a UDATA field
    generateSS1Instruction(cg, TR::InstOpCode::XC, callNode, TR::Compiler->om.sizeofReferenceAddress() - 1,
