@@ -169,6 +169,15 @@ char *TR_EscapeAnalysis::getClassName(TR::Node *classNode)
 
 bool TR_EscapeAnalysis::isImmutableObject(TR::Node *node)
    {
+   // For debugging issues with the special handling of immutable objects
+   // that allows them to be discontiguously allocated even if they escape
+   static char *disableImmutableObjectHandling = feGetEnv("TR_disableEAImmutableObjectHandling");
+
+   if (disableImmutableObjectHandling)
+      {
+      return false;
+      }
+
    if (node->getOpCodeValue() != TR::New)
       {
       return false;
@@ -5391,12 +5400,18 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
 
             if (fieldIsPresentInObject)
                {
-               // Special case handling of non-contiguous immutable object:
-               // if it escapes in a cold block, need to ensure the temporary
-               // that replaces it is correctly initialized
+               // For a candidate that is escaping in a cold block, keep track
+               // of fields that are referenced so they can be initialized.
+               // Otherwise, rewrite field references (in else branch_.
+               // Special case handling of stores to fields of immutable objects
+               // that are not contiguously allocated - their field references
+               // are also rewritten (in else branch), but the original stores
+               // still preserved.
+               //
                if (candidate->escapesInColdBlock(_curBlock)
                       && (!isImmutableObject(candidate)
-                             || candidate->isContiguousAllocation()))
+                             || candidate->isContiguousAllocation()
+                             || node->getOpCode().isLoadVar()))
                   {
                   // Uh, why are we re-calculating the fieldOffset?  Didn't we just do that above?
                   //
@@ -5452,9 +5467,15 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                         }
                      }
                   }
+
+               // For a candidate that is not escaping in a cold block, or that
+               // is an immutable object that is non-contiguously allocated,
+               // rewrite references
+               //
                else // if (!candidate->escapesInColdBlock(_curBlock))
                     //        || (isImmutableObject(candidate)
                     //               && !candidate->isContiguousAllocation()))
+                    //               && !node->getOpCode().isLoadVar()))
                   {
                   if (candidate->isContiguousAllocation())
                      removeThisNode |= fixupFieldAccessForContiguousAllocation(node, candidate);
