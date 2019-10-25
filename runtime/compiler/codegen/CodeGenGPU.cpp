@@ -628,7 +628,6 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::luRegLoad
    NULL,          // TR::iuRegStore
    NULL,          // TR::luRegStore
-   NULL,          // TR::suternary
    NULL,          // TR::cconst
 
    "load",        // TR::cload
