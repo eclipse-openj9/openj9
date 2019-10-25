@@ -2049,7 +2049,7 @@ bool TR::CompilationInfo::shouldAbortCompilation(TR_MethodToBeCompiled *entry, T
    if ((TR::Options::getCmdLineOptions()->getOption(TR_EnableHCR) || TR::Options::getCmdLineOptions()->getOption(TR_FullSpeedDebug)))
       {
       TR::IlGeneratorMethodDetails & details = entry->getMethodDetails();
-      J9Class *clazz = details.getClass(); 
+      J9Class *clazz = details.getClass();
       if (clazz && J9_IS_CLASS_OBSOLETE(clazz))
          {
          TR_ASSERT(0, "Should never have compiled replaced method %p", details.getMethod());
@@ -5806,7 +5806,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
 #ifdef TR_TARGET_S390
                   || TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility()
 #endif
-                  ) && TR_J9MethodBase::isBigDecimalMethod((J9Method *)method))))
+                  ) && TR::Method::isBigDecimalMethod((J9Method *)method))))
                 async = false;
             }
          }
@@ -6819,7 +6819,7 @@ TR::CompilationInfoPerThreadBase::findAotBodyInSCC(J9VMThread *vmThread, const J
       return NULL;
    }
 
-bool 
+bool
 TR::CompilationInfoPerThreadBase::isMethodIneligibleForAot(J9Method *method)
    {
    const J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
@@ -6846,7 +6846,7 @@ TR::CompilationInfoPerThreadBase::isMethodIneligibleForAot(J9Method *method)
          || TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility()
 #endif
          )
-      && TR_J9MethodBase::isBigDecimalMethod((J9ROMMethod *)romMethod, (J9ROMClass *)romClass)
+      && TR::Method::isBigDecimalMethod((J9ROMMethod *)romMethod, (J9ROMClass *)romClass)
    )
       return true;
    return false;
@@ -6926,7 +6926,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
             {
             throw std::bad_alloc();
             }
-           
+
          TR_ResolvedMethod *resolvedMethod = fe->createResolvedMethod(&trMemory, (TR_OpaqueMethodBlock *)method);
          if (!debug->methodCanBeRelocated(&trMemory, resolvedMethod, filter) ||
              !debug->methodCanBeCompiled(&trMemory, resolvedMethod, filter))
@@ -7251,7 +7251,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       else // client executing a compilation locally
          {
          // The bit for this compilation thread should be 0 because we never sent any updates to the server
-         TR_ASSERT((_compInfo.getCHTableUpdateDone() & (1 << getCompThreadId())) == 0, 
+         TR_ASSERT((_compInfo.getCHTableUpdateDone() & (1 << getCompThreadId())) == 0,
             "For local compilations _chTableUpdateFlags should not have the bit set for this comp ID");
          }
       }
@@ -7457,7 +7457,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
          // For JITServer we should wipe this method from the code cache
          if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             _compiler->cg()->getCodeCache()->resetCodeCache();
-#endif /* defined(JITSERVER_SUPPORT) */            
+#endif /* defined(JITSERVER_SUPPORT) */
          _compiler->cg()->getCodeCache()->unreserve();
          _compiler->cg()->setCodeCache(0);
          }
@@ -8811,7 +8811,7 @@ TR::CompilationInfoPerThreadBase::compile(
 
       // If we want to compile without VM access, now it's the time to release it
       // For the JITClient we must not enter this path. The class unload monitor
-      // will not be acquired/released and we'll only release VMaccess when 
+      // will not be acquired/released and we'll only release VMaccess when
       // waiting for a reply from the server
       if (!compiler->getOption(TR_DisableNoVMAccess) &&
           !_methodBeingCompiled->_aotCodeToBeRelocated &&
@@ -9807,12 +9807,12 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
    PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
    TR_DataCache *dataCache = NULL;
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
-  
+
    bool isJITServerMode = false;
 #if defined(JITSERVER_SUPPORT)
    isJITServerMode = compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER;
 #endif /* defined(JITSERVER_SUPPORT) */
-   
+
    if (details.isNewInstanceThunk())
       {
       if (isJITServerMode)
@@ -9897,7 +9897,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 #endif // ifdef J9VM_JIT_DYNAMIC_LOOP_TRANSFER
             }
          }
-      
+
       if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) || isJITServerMode) && comp)
          {
          if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
@@ -10326,7 +10326,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          }
 #endif /* defined(JITSERVER_SUPPORT) */
       }
-  
+
    if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) || isJITServerMode) && comp)
       {
       if (jitConfig->runtimeFlags & J9JIT_TOSS_CODE)
@@ -10773,7 +10773,7 @@ void TR::CompilationInfoPerThreadBase::logCompilationSuccess(
          // We should add the null terminator just in case
          * (compilationAttributes + sizeof(compilationAttributes)-1) = '\0';
 #endif
-         
+
          Trc_JIT_compileEnd15(vmThread, compilationTypeString, hotnessString, compiler->signature(),
                                startPC, endWarmPC, startColdPC, endPC,
                                translationTime, method, metaData,
@@ -11655,7 +11655,7 @@ TR::CompilationInfo::storeAOTInSharedCache(
    TR::Compilation *comp,
    J9JITConfig *jitConfig,
    TR_MethodToBeCompiled *entry
-   ) 
+   )
    {
    bool safeToStore;
    const J9JITDataCacheHeader *storedCompiledMethod = NULL;
@@ -11686,7 +11686,7 @@ TR::CompilationInfo::storeAOTInSharedCache(
       int codedataToStoreSize = codeSize;
 
 #ifdef COMPRESS_AOT_DATA
-      try 
+      try
          {
          if (!comp->getOption(TR_DisableAOTBytesCompression))
             {
@@ -11695,20 +11695,20 @@ TR::CompilationInfo::storeAOTInSharedCache(
              * -----------------------------------------------------------------------------------------------------
              * | CompiledMethodWrapper | J9JITDataCacheHeader | TR_AOTMethodHeader | Metadata | Compiled Code Data |
              * -----------------------------------------------------------------------------------------------------
-             * 
+             *
              * When we compile a method, we send data from J9JITDataCacheHeader to store in the cache.
-             * For each method Shared Class Cache API adds CompiledMethodWrapper header which holds the size of data in cache, 
-             * as well as J9ROMMethod of compiled method. 
+             * For each method Shared Class Cache API adds CompiledMethodWrapper header which holds the size of data in cache,
+             * as well as J9ROMMethod of compiled method.
              * Size of the original data is extracted from the TR_AOTMethodHeader while size of compressed data is extracted from
-             * CompiledMethodWrapper. 
-             * That is why We do not compress header as we can extract the original data size 
-             * which is useful information while inflating the method data while loading compiled method. 
-             * 
+             * CompiledMethodWrapper.
+             * That is why We do not compress header as we can extract the original data size
+             * which is useful information while inflating the method data while loading compiled method.
+             *
              * Compressed data stored in the cache looks like following
              * ------------------------------------------------------------------------------------------------------------------------------------------------
              * | CompiledMethodWrapper | J9JITDataCacheHeader (UnCompressed)| TR_AOTMethodHeader (UnCompressed)| (Metadata + Compiled Code Data) (Compressed) |
              * ------------------------------------------------------------------------------------------------------------------------------------------------
-             *  
+             *
              */
             void * originalData = comp->trMemory()->allocateHeapMemory(codeSize+dataSize);
             void * compressedData = comp->trMemory()->allocateHeapMemory(codeSize+dataSize);
@@ -11725,7 +11725,7 @@ TR::CompilationInfo::storeAOTInSharedCache(
                 * In load run we get the whole buffer from the cache and use the information from header to
                 * Get the relocation data and compiled code.
                 * Because of this reason we copy both metadata and compiled code in one buffer and deflate it together.
-                * TODO: We will always query the shared class cache to get full data for stored AOT compiled method 
+                * TODO: We will always query the shared class cache to get full data for stored AOT compiled method
                 * that is combined meta data and code data. Even if compression of AOT bytes is disabled, we do not need
                 * to send two different buffers to store in cache and also as no one queries either code data / metadata for
                 * method, clean up the share classs cache API.
@@ -11738,7 +11738,7 @@ TR::CompilationInfo::storeAOTInSharedCache(
                metadataToStore = (const U_8*) compressedData;
                metadataToStoreSize = compressedDataSize+aotMethodHeaderSize;
                codedataToStore = NULL;
-               codedataToStoreSize = 0;  
+               codedataToStoreSize = 0;
                if (TR::Options::getVerboseOption(TR_VerboseAOTCompression))
                   {
                   TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "%s : Compression of method data Successful - Original method size = %d bytes, Compressed Method Size = %d bytes",
@@ -11764,8 +11764,8 @@ TR::CompilationInfo::storeAOTInSharedCache(
             {
             TR_VerboseLog::writeLineLocked(TR_Vlog_AOTCOMPRESSION, "!%s : Method will not be compressed as necessary memory can not be allocated, Method Size = %d bytes",
                comp->signature(),
-               dataSize+codeSize);   
-            }   
+               dataSize+codeSize);
+            }
          }
 #endif /* COMPRESS_AOT_DATA */
 

@@ -641,7 +641,7 @@ TR_DebugExt::dxAllocateSymRefInternals(TR::SymbolReference *localSymRef, bool co
          localSym = (TR::Symbol*) dxMallocAndRead(sizeof(TR::ResolvedMethodSymbol), sym);
          if (complete)
             {
-            TR_J9MethodBase *localMethod = (TR_J9MethodBase *) dxMallocAndRead(sizeof(TR_J9MethodBase), (void*)localSym->getMethodSymbol()->getMethod());
+            TR::Method *localMethod = (TR::Method *) dxMallocAndRead(sizeof(TR::Method), (void*)localSym->getMethodSymbol()->getMethod());
             localSym->getMethodSymbol()->setMethod(localMethod);
             }
          }
@@ -651,7 +651,7 @@ TR_DebugExt::dxAllocateSymRefInternals(TR::SymbolReference *localSymRef, bool co
          localSym = (TR::Symbol*) dxMallocAndRead(sizeof(TR::MethodSymbol), sym);
          if (complete)
             {
-            TR_J9MethodBase *localMethod = (TR_J9MethodBase *) dxMallocAndRead(sizeof(TR_J9MethodBase), (void*)localSym->getMethodSymbol()->getMethod());
+            TR::Method *localMethod = (TR::Method *) dxMallocAndRead(sizeof(TR::Method), (void*)localSym->getMethodSymbol()->getMethod());
             localSym->getMethodSymbol()->setMethod(localMethod);
             }
          }
@@ -2395,10 +2395,10 @@ void TR_DebugExt::dxPrintMethodToBeCompiled(TR_MethodToBeCompiled *remoteCompEnt
    _dbgPrintf("\tbool                          _freeTag = %d\n",localCompEntry->_freeTag);
    _dbgPrintf("\tuint8_t                       _weight = %u\n",localCompEntry->_weight);
    _dbgPrintf("\tbool                          _hasIncrementedNumCompThreadsCompilingHotterMethods = %d\n",localCompEntry->_hasIncrementedNumCompThreadsCompilingHotterMethods);
-#if defined(JITSERVER_SUPPORT)   
+#if defined(JITSERVER_SUPPORT)
    _dbgPrintf("\tTR_Hotness                    _origOptLevel = 0x%p\n\n", localCompEntry->_origOptLevel);
 #endif
-   
+
    struct J9Method *ramMethod = (struct J9Method *)dxGetJ9MethodFromMethodToBeCompiled(remoteCompEntry);
    if (ramMethod)
       _dbgPrintf("\tAssociated J9Method = !trprint j9method 0x%p\n", ramMethod);
@@ -3807,8 +3807,7 @@ const char *
 TR_DebugExt::getMethodName(TR::SymbolReference * symRef)
    {
    TR::Method * method = symRef->getSymbol()->castToMethodSymbol()->getMethod();
-   TR_J9MethodBase *localMethod = (TR_J9MethodBase *) dxMallocAndRead(sizeof(TR_J9MethodBase), (void*)method);
-   //TR_J9MethodBase *localMethod = (TR_J9MethodBase *)symRef->getSymbol()->castToMethodSymbol()->getMethod();
+   TR::Method *localMethod = (TR::Method *) dxMallocAndRead(sizeof(TR::Method), (void*)method);
 
    const char *s = dxGetSignature(localMethod->_className, localMethod->_name, localMethod->_signature);
    dxFree(localMethod);

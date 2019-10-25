@@ -22,6 +22,7 @@
 
 #include "optimizer/TransformUtil.hpp"
 #include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #if defined(JITSERVER_SUPPORT)
 #include "control/CompilationRuntime.hpp"
@@ -2238,9 +2239,9 @@ J9::TransformUtil::truncateBooleanForUnsafeGetPut(TR::Compilation *comp, TR::Tre
    {
    TR::Node* unsafeCall = tree->getNode()->getFirstChild();
    TR::RecognizedMethod rm = unsafeCall->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod();
-   TR_ASSERT(TR_J9MethodBase::isUnsafeGetPutBoolean(rm), "Not unsafe get/put boolean method");
+   TR_ASSERT(TR::Method::isUnsafeGetPutBoolean(rm), "Not unsafe get/put boolean method");
 
-   if (TR_J9MethodBase::isUnsafePut(rm))
+   if (TR::Method::isUnsafePut(rm))
       {
       int32_t valueChildIndex = unsafeCall->getFirstArgumentIndex() + 3;
       TR::Node* value = unsafeCall->getChild(valueChildIndex);
