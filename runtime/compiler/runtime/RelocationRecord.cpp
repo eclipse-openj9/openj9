@@ -1603,6 +1603,10 @@ TR_RelocationRecordDataAddress::applyRelocation(TR_RelocationRuntime *reloRuntim
    {
    uint8_t *newAddress = findDataAddress(reloRuntime, reloTarget);
 
+#if defined(JITSERVER_SUPPORT)
+   RELO_LOG(reloRuntime->reloLogger(), 6, "applyRelocation old ptr %p, new ptr %p\n", reloTarget->loadPointer(reloLocation), newAddress);
+#endif
+
    if (!newAddress)
       return compilationAotStaticFieldReloFailure;
 

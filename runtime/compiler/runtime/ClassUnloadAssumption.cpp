@@ -33,6 +33,10 @@
 #include "infra/CriticalSection.hpp"
 #include "runtime/J9RuntimeAssumptions.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
+#if defined(JITSERVER_SUPPORT)
+#include "control/CompilationThread.hpp"
+#include "runtime/JITClientSession.hpp"
+#endif
 
 extern TR::Monitor *assumptionTableMutex;
 
@@ -106,8 +110,14 @@ TR_PersistentClassInfo::removeASubClass(TR_PersistentClassInfo *subClassToRemove
 void
 TR_PersistentClassInfo::removeSubClasses()
    {
-   _classId = 0;
+   TR_SubClass *scl = _subClasses.getFirst();
    _subClasses.setFirst(0);
+   while (scl)
+      {
+      TR_SubClass *nextScl = scl->getNext();
+      jitPersistentFree(scl);
+      scl = nextScl;
+      }
    }
 
 /*This method walks the subclass list and removes any class which is marked as unloaded*/
@@ -1153,6 +1163,13 @@ J9::PersistentInfo::ensureUnloadedAddressSetsAreInitialized()
       {
       return true;
       }
+#if defined(JITSERVER_SUPPORT)
+   else if (getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      // In JITServer::SERVER mode unloaded addresses are maintained per JITClient
+      return false;
+      }
+#endif
    else
       {
       int32_t maxUnloadedAddressRanges = TR::Options::getCmdLineOptions()->getMaxUnloadedAddressRanges();
@@ -1173,6 +1190,14 @@ J9::PersistentInfo::isUnloadedClass(
       void *v,
       bool yesIReallyDontCareAboutHCR)
    {
+#if defined(JITSERVER_SUPPORT)
+   if (getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      auto clientData = TR::compInfoPT->getClientData();
+      OMR::CriticalSection isUnloadedClass(clientData->getROMMapMonitor());
+      return clientData->getUnloadedClassAddresses().mayContain((uintptrj_t)v);
+      } 
+#endif
    OMR::CriticalSection isUnloadedClass(assumptionTableMutex);
    bool result = (_unloadedClassAddresses && _unloadedClassAddresses->mayContain((uintptrj_t)v));
    return result;
@@ -1198,9 +1223,11 @@ J9::PersistentInfo::isObsoleteClass(void *v, TR_FrontEnd *fe)
 bool
 J9::PersistentInfo::isInUnloadedMethod(uintptrj_t address)
    {
+#if defined(JITSERVER_SUPPORT)
+   TR_ASSERT(getRemoteCompilationMode() != JITServer::SERVER, "JITServer does not maintain unloaded method ranges, this method should not be called");
+#endif
    OMR::CriticalSection isInUnloadedMethod(assumptionTableMutex);
-   bool result = (_unloadedMethodAddresses && _unloadedMethodAddresses->mayContain(address));
-   return result;
+   return _unloadedMethodAddresses && _unloadedMethodAddresses->mayContain(address);
    }
 
 
