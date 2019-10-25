@@ -28,6 +28,7 @@ import java.lang.invoke.MethodType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import sun.misc.Unsafe;
 import org.testng.Assert;
 import static org.testng.Assert.*;
@@ -112,6 +113,41 @@ public class ValueTypeTests {
 	static Class assortedValueWithLongAlignmentClass = null;
 	static MethodHandle makeAssortedValueWithLongAlignment = null;
 	static MethodHandle[][] assortedValueWithLongAlignmentGetterAndWither = null;
+	/* assortedValueWithObjectAlignment */
+	static Class assortedValueWithObjectAlignmentClass = null;
+	static MethodHandle makeAssortedValueWithObjectAlignment = null;
+	static MethodHandle[][] assortedValueWithObjectAlignmentGetterAndWither = null;
+	/* assortedValueWithSingleAlignment */
+	static Class assortedValueWithSingleAlignmentClass = null;
+	static MethodHandle makeAssortedValueWithSingleAlignment = null;
+	static MethodHandle[][] assortedValueWithSingleAlignmentGetterAndWither = null;
+	/* fields */
+	static String typeWithSingleAlignmentFields[] = {
+		"tri:QTriangle2D;:value",
+		"point:QPoint2D;:value",
+		"line:QFlattenedLine2D;:value",
+		"i:QValueInt;:value",
+		"f:QValueFloat;:value",
+		"tri2:QTriangle2D;:value"
+	};
+	static String typeWithObjectAlignmentFields[] = {
+		"tri:QTriangle2D;:value",
+		"point:QPoint2D;:value",
+		"line:QFlattenedLine2D;:value",
+		"o:QValueObject;:value",
+		"i:QValueInt;:value",
+		"f:QValueFloat;:value",
+		"tri2:QTriangle2D;:value"
+	};
+	static String typeWithLongAlignmentFields[] = {
+		"point:QPoint2D;:value",
+		"line:QFlattenedLine2D;:value",
+		"o:QValueObject;:value",
+		"l:QValueLong;:value",
+		"d:QValueDouble;:value",
+		"i:QValueInt;:value",
+		"tri:QTriangle2D;:value"
+	};
 	
 	/* default values */
 	static int[] defaultPointPositions1 = {0xFFEEFFEE, 0xAABBAABB};
@@ -137,7 +173,10 @@ public class ValueTypeTests {
 	static double defaultDoubleNew = -123412341.21341234d;
 	static float defaultFloatNew = -123423.12341234f;
 	static Object defaultObjectNew = (Object)0xFFEEFFEE;
-	
+	/* miscellaneous constants */
+	static final int genericArraySize = 10;
+	static final int objectGCScanningIterationCount = 10000;
+
 	@BeforeClass
 	static public void testSetUp() throws RuntimeException {
 		try {
@@ -708,7 +747,7 @@ public class ValueTypeTests {
 	
 	@Test(priority=4)
 	static public void testCreateArrayTriangle2D() throws Throwable {
-		Object arrayObject = Array.newInstance(triangle2DClass, 10);
+		Object arrayObject = Array.newInstance(triangle2DClass, genericArraySize);
 		Object triangle1 = createTriangle2D(defaultTrianglePositions);
 		Object triangle2 = createTriangle2D(defaultTrianglePositionsNew);
 		Object triangleEmpty = createTriangle2D(defaultTrianglePositionsEmpty);
@@ -891,15 +930,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testCreateAssortedValueWithLongAlignment() throws Throwable {
-		String fields[] = {
-				"point:QPoint2D;:value",
-				"line:QFlattenedLine2D;:value",
-				"o:QValueObject;:value",
-				"l:QValueLong;:value",
-				"d:QValueDouble;:value",
-				"i:QValueInt;:value",
-				"tri:QTriangle2D;:value"};
-		assortedValueWithLongAlignmentClass = ValueTypeGenerator.generateValueClass("AssortedValueWithLongAlignment", fields);
+		assortedValueWithLongAlignmentClass = ValueTypeGenerator.generateValueClass("AssortedValueWithLongAlignment", typeWithLongAlignmentFields);
 
 		makeAssortedValueWithLongAlignment = lookup.findStatic(assortedValueWithLongAlignmentClass,
 				"makeValueGeneric", MethodType.methodType(assortedValueWithLongAlignmentClass, Object.class,
@@ -908,9 +939,9 @@ public class ValueTypeTests {
 		 * Getters are created in array getterAndWither[i][0] according to the order of fields i
 		 * Withers are created in array getterAndWither[i][1] according to the order of fields i
 		 */
-		assortedValueWithLongAlignmentGetterAndWither = generateGenericGetterAndWither(assortedValueWithLongAlignmentClass, fields);
-		Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, fields);
-		checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterAndWither, assortedValueWithLongAlignment, fields, true);
+		assortedValueWithLongAlignmentGetterAndWither = generateGenericGetterAndWither(assortedValueWithLongAlignmentClass, typeWithLongAlignmentFields);
+		Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
+		checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterAndWither, assortedValueWithLongAlignment, typeWithLongAlignmentFields, true);
 	}
 
 	/*
@@ -928,15 +959,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testCreateAssortedRefWithLongAlignment() throws Throwable {
-		String fields[] = {
-				"point:QPoint2D;:value",
-				"line:QFlattenedLine2D;:value",
-				"o:QValueObject;:value",
-				"l:QValueLong;:value",
-				"d:QValueDouble;:value",
-				"i:QValueInt;:value",
-				"tri:QTriangle2D;:value"};
-		assortedRefWithLongAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithLongAlignment", fields);
+		assortedRefWithLongAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithLongAlignment", typeWithLongAlignmentFields);
 
 		makeAssortedRefWithLongAlignment = lookup.findStatic(assortedRefWithLongAlignmentClass,
 				"makeRefGeneric", MethodType.methodType(assortedRefWithLongAlignmentClass, Object.class, Object.class,
@@ -946,9 +969,9 @@ public class ValueTypeTests {
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
-		assortedRefWithLongAlignmentGetterAndSetter = generateGenericGetterAndSetter(assortedRefWithLongAlignmentClass, fields);
-		Object assortedRefWithLongAlignment = createAssorted(makeAssortedRefWithLongAlignment, fields);
-		checkFieldAccessMHOfAssortedType(assortedRefWithLongAlignmentGetterAndSetter, assortedRefWithLongAlignment, fields, false);
+		assortedRefWithLongAlignmentGetterAndSetter = generateGenericGetterAndSetter(assortedRefWithLongAlignmentClass, typeWithLongAlignmentFields);
+		Object assortedRefWithLongAlignment = createAssorted(makeAssortedRefWithLongAlignment, typeWithLongAlignmentFields);
+		checkFieldAccessMHOfAssortedType(assortedRefWithLongAlignmentGetterAndSetter, assortedRefWithLongAlignment, typeWithLongAlignmentFields, false);
 	}
 
 	/*
@@ -966,28 +989,20 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testCreateAssortedValueWithObjectAlignment() throws Throwable {
-		String fields[] = {
-				"tri:QTriangle2D;:value",
-				"point:QPoint2D;:value",
-				"line:QFlattenedLine2D;:value",
-				"o:QValueObject;:value",
-				"i:QValueInt;:value",
-				"f:QValueFloat;:value",
-				"tri2:QTriangle2D;:value"};
-		Class assortedValueWithObjectAlignmentClass = ValueTypeGenerator
-				.generateValueClass("AssortedValueWithObjectAlignment", fields);
+		assortedValueWithObjectAlignmentClass = ValueTypeGenerator
+			.generateValueClass("AssortedValueWithObjectAlignment", typeWithObjectAlignmentFields);
 
-		MethodHandle makeAssortedValueWithObjectAlignment = lookup.findStatic(assortedValueWithObjectAlignmentClass,
-				"makeValueGeneric", MethodType.methodType(assortedValueWithObjectAlignmentClass, Object.class,
-						Object.class, Object.class, Object.class, Object.class, Object.class, Object.class));
+		makeAssortedValueWithObjectAlignment = lookup.findStatic(assortedValueWithObjectAlignmentClass,
+			"makeValueGeneric", MethodType.methodType(assortedValueWithObjectAlignmentClass, Object.class,
+					Object.class, Object.class, Object.class, Object.class, Object.class, Object.class));
 		/*
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
-		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(assortedValueWithObjectAlignmentClass, fields);
+		assortedValueWithObjectAlignmentGetterAndWither = generateGenericGetterAndWither(assortedValueWithObjectAlignmentClass, typeWithObjectAlignmentFields);
 
-		Object assortedValueWithObjectAlignment = createAssorted(makeAssortedValueWithObjectAlignment, fields);
-		checkFieldAccessMHOfAssortedType(getterAndWither, assortedValueWithObjectAlignment, fields, true);
+		Object assortedValueWithObjectAlignment = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
+		checkFieldAccessMHOfAssortedType(assortedValueWithObjectAlignmentGetterAndWither, assortedValueWithObjectAlignment, typeWithObjectAlignmentFields, true);
 	}
 
 	/*
@@ -1005,15 +1020,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testCreateAssortedRefWithObjectAlignment() throws Throwable {
-		String fields[] = {
-				"tri:QTriangle2D;:value",
-				"point:QPoint2D;:value",
-				"line:QFlattenedLine2D;:value",
-				"o:QValueObject;:value",
-				"i:QValueInt;:value",
-				"f:QValueFloat;:value",
-				"tri2:QTriangle2D;:value"};
-		Class assortedRefWithObjectAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithObjectAlignment", fields);
+		Class assortedRefWithObjectAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithObjectAlignment", typeWithObjectAlignmentFields);
 
 		MethodHandle makeAssortedRefWithObjectAlignment = lookup.findStatic(assortedRefWithObjectAlignmentClass,
 				"makeRefGeneric", MethodType.methodType(assortedRefWithObjectAlignmentClass, Object.class, Object.class,
@@ -1022,10 +1029,10 @@ public class ValueTypeTests {
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
-		MethodHandle[][] getterAndSetter = generateGenericGetterAndSetter(assortedRefWithObjectAlignmentClass, fields);
+		MethodHandle[][] getterAndSetter = generateGenericGetterAndSetter(assortedRefWithObjectAlignmentClass, typeWithObjectAlignmentFields);
 
-		Object assortedRefWithObjectAlignment = createAssorted(makeAssortedRefWithObjectAlignment, fields);
-		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithObjectAlignment, fields, false);
+		Object assortedRefWithObjectAlignment = createAssorted(makeAssortedRefWithObjectAlignment, typeWithObjectAlignmentFields);
+		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithObjectAlignment, typeWithObjectAlignmentFields, false);
 	}
 
 	/*
@@ -1042,26 +1049,19 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testCreateAssortedValueWithSingleAlignment() throws Throwable {
-		String fields[] = {
-				"tri:QTriangle2D;:value",
-				"point:QPoint2D;:value",
-				"line:QFlattenedLine2D;:value",
-				"i:QValueInt;:value",
-				"f:QValueFloat;:value",
-				"tri2:QTriangle2D;:value"};
-		Class assortedValueWithSingleAlignmentClass = ValueTypeGenerator.generateValueClass("AssortedValueWithSingleAlignment", fields);
+		assortedValueWithSingleAlignmentClass = ValueTypeGenerator.generateValueClass("AssortedValueWithSingleAlignment", typeWithSingleAlignmentFields);
 
-		MethodHandle makeAssortedValueWithSingleAlignment = lookup.findStatic(assortedValueWithSingleAlignmentClass,
-				"makeValueGeneric", MethodType.methodType(assortedValueWithSingleAlignmentClass, Object.class,
-						Object.class, Object.class, Object.class, Object.class, Object.class));
+		makeAssortedValueWithSingleAlignment = lookup.findStatic(assortedValueWithSingleAlignmentClass,
+			"makeValueGeneric", MethodType.methodType(assortedValueWithSingleAlignmentClass, Object.class,
+					Object.class, Object.class, Object.class, Object.class, Object.class));
 		/*
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
-		MethodHandle[][] getterAndWither = generateGenericGetterAndWither(assortedValueWithSingleAlignmentClass, fields);
+		assortedValueWithSingleAlignmentGetterAndWither = generateGenericGetterAndWither(assortedValueWithSingleAlignmentClass, typeWithSingleAlignmentFields);
 
-		Object assortedValueWithSingleAlignment = createAssorted(makeAssortedValueWithSingleAlignment, fields);
-		checkFieldAccessMHOfAssortedType(getterAndWither, assortedValueWithSingleAlignment, fields, true);
+		Object assortedValueWithSingleAlignment = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
+		checkFieldAccessMHOfAssortedType(assortedValueWithSingleAlignmentGetterAndWither, assortedValueWithSingleAlignment, typeWithSingleAlignmentFields, true);
 	}
 
 	/*
@@ -1078,14 +1078,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testCreateAssortedRefWithSingleAlignment() throws Throwable {
-		String fields[] = {
-				"tri:QTriangle2D;:value",
-				"point:QPoint2D;:value",
-				"line:QFlattenedLine2D;:value",
-				"i:QValueInt;:value",
-				"f:QValueFloat;:value",
-				"tri2:QTriangle2D;:value"};
-		Class assortedRefWithSingleAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithSingleAlignment", fields);
+		Class assortedRefWithSingleAlignmentClass = ValueTypeGenerator.generateRefClass("AssortedRefWithSingleAlignment", typeWithSingleAlignmentFields);
 
 		MethodHandle makeAssortedRefWithSingleAlignment = lookup.findStatic(assortedRefWithSingleAlignmentClass,
 				"makeRefGeneric", MethodType.methodType(assortedRefWithSingleAlignmentClass, Object.class, Object.class,
@@ -1094,10 +1087,10 @@ public class ValueTypeTests {
 		 * Getters are created in array getterAndSetter[i][0] according to the order of fields i
 		 * Setters are created in array getterAndSetter[i][1] according to the order of fields i
 		 */
-		MethodHandle[][] getterAndSetter = generateGenericGetterAndSetter(assortedRefWithSingleAlignmentClass, fields);
+		MethodHandle[][] getterAndSetter = generateGenericGetterAndSetter(assortedRefWithSingleAlignmentClass, typeWithSingleAlignmentFields);
 
-		Object assortedRefWithSingleAlignment = createAssorted(makeAssortedRefWithSingleAlignment, fields);
-		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithSingleAlignment, fields, false);
+		Object assortedRefWithSingleAlignment = createAssorted(makeAssortedRefWithSingleAlignment, typeWithSingleAlignmentFields);
+		checkFieldAccessMHOfAssortedType(getterAndSetter, assortedRefWithSingleAlignment, typeWithSingleAlignmentFields, false);
 	}
 
 	/*
@@ -1296,17 +1289,7 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testDefaultValues() throws Throwable {
-
 		/* Test with assorted value object with long alignment */
-		String assortedValueWithLongAlignmentFields[] = {
-				"point:QPoint2D;:value",
-				"line:QFlattenedLine2D;:value",
-				"o:QValueObject;:value",
-				"l:QValueLong;:value",
-				"d:QValueDouble;:value",
-				"i:QValueInt;:value",
-				"tri:QTriangle2D;:value"};
-
 		MethodHandle makeValueTypeDefaultValueWithLong = lookup.findStatic(assortedValueWithLongAlignmentClass,
 				"makeValueTypeDefaultValue", MethodType.methodType(assortedValueWithLongAlignmentClass));
 
@@ -1315,15 +1298,7 @@ public class ValueTypeTests {
 			assertNotNull(assortedValueWithLongAlignmentGetterAndWither[i][0].invoke(assortedValueWithLongAlignment));
 		}
 
-		/* Test with assorted Ref object with long alignment */
-		String assortedRefWithLongAlignmentfields[] = {
-				"point:QPoint2D;:value",
-				"line:QFlattenedLine2D;:value",
-				"o:QValueObject;:value",
-				"l:QValueLong;:value",
-				"d:QValueDouble;:value",
-				"i:QValueInt;:value",
-				"tri:QTriangle2D;:value"};
+		/* Test with assorted ref object with long alignment */
 		MethodHandle makeRefDefaultValueWithLong = lookup.findStatic(assortedRefWithLongAlignmentClass,
 				"makeRefDefaultValue", MethodType.methodType(assortedRefWithLongAlignmentClass));
 		Object assortedRefWithLongAlignment = makeRefDefaultValueWithLong.invoke();
@@ -1332,14 +1307,12 @@ public class ValueTypeTests {
 		}
 
 		/* Test with flattened line 2D */
-		String lineFields[] = {"st:QPoint2D;:value", "en:QPoint2D;:value"};
 		MethodHandle makeDefaultValueFlattenedLine2D = lookup.findStatic(flattenedLine2DClass, "makeValueTypeDefaultValue", MethodType.methodType(flattenedLine2DClass));
 		Object lineObject = makeDefaultValueFlattenedLine2D.invoke();
 		assertNotNull(getFlatSt.invoke(lineObject));
 		assertNotNull(getFlatEn.invoke(lineObject));
 
 		/* Test with triangle 2D */
-		String triangleFields[] = {"v1:QFlattenedLine2D;:value", "v2:QFlattenedLine2D;:value", "v3:QFlattenedLine2D;:value"};
 		MethodHandle makeDefaultValueTriangle2D = lookup.findStatic(triangle2DClass, "makeValueTypeDefaultValue", MethodType.methodType(triangle2DClass));
 		Object triangleObject = makeDefaultValueTriangle2D.invoke();
 		assertNotNull(getV1.invoke(triangleObject));
@@ -1410,7 +1383,7 @@ public class ValueTypeTests {
 	static public void testCreateLargeNumberOfPoint2D() throws Throwable {
 		String fields[] = {"x:I", "y:I"};
 		String className = "Point2D";
-		for(int valueIndex = 0; valueIndex < 200000; valueIndex++){
+		for (int valueIndex = 0; valueIndex < 200000; valueIndex++) {
 			className =  "Point2D" + valueIndex;		
 			point2DClass = ValueTypeGenerator.generateValueClass(className, fields);
 			/* findStatic will trigger class resolution */
@@ -1424,8 +1397,8 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testDefaultValueInPointArray() throws Throwable {
-		Object pointArray = Array.newInstance(point2DClass, 10);
-		for (int i = 0; i < 10; i++) {
+		Object pointArray = Array.newInstance(point2DClass, genericArraySize);
+		for (int i = 0; i < genericArraySize; i++) {
 			Object pointObject = Array.get(pointArray, i);
 			assertNotNull(pointObject);
 		}
@@ -1437,8 +1410,8 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testDefaultValueInLineArray() throws Throwable {
-		Object flattenedLineArray = Array.newInstance(flattenedLine2DClass, 10);
-		for (int i = 0; i < 10; i++) {
+		Object flattenedLineArray = Array.newInstance(flattenedLine2DClass, genericArraySize);
+		for (int i = 0; i < genericArraySize; i++) {
 			Object lineObject = Array.get(flattenedLineArray, i);
 			assertNotNull(lineObject);
 			assertNotNull(getFlatSt.invoke(lineObject));
@@ -1452,8 +1425,8 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testDefaultValueInTriangleArray() throws Throwable {
-		Object triangleArray = Array.newInstance(triangle2DClass, 10);
-		for (int i = 0; i < 10; i++) {
+		Object triangleArray = Array.newInstance(triangle2DClass, genericArraySize);
+		for (int i = 0; i < genericArraySize; i++) {
 			Object triangleObject = Array.get(triangleArray, i);
 			assertNotNull(triangleObject);
 			assertNotNull(getV1.invoke(triangleObject));
@@ -1468,8 +1441,8 @@ public class ValueTypeTests {
 	 */
 	@Test(priority=4)
 	static public void testDefaultValueInAssortedValueWithLongAlignmentArray() throws Throwable {
-		Object assortedValueWithLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, 10);
-		for (int i = 0; i < 10; i++) {
+		Object assortedValueWithLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
+		for (int i = 0; i < genericArraySize; i++) {
 			Object assortedValueWithLongAlignmentObject = Array.get(assortedValueWithLongAlignmentArray, i);
 			assertNotNull(assortedValueWithLongAlignmentObject);
 			for (int j = 0; j < 7; j++) {
@@ -1483,9 +1456,9 @@ public class ValueTypeTests {
 	 * Since it's ref type, the array should be filled with nullptrs
 	 */
 	@Test(priority=4)
-	static public void testDefaultValueInassortedRefWithLongAlignmentArray() throws Throwable {
-		Object assortedRefWithLongAlignmentArray = Array.newInstance(assortedRefWithLongAlignmentClass, 10);
-		for (int i = 0; i < 10; i++) {
+	static public void testDefaultValueInAssortedRefWithLongAlignmentArray() throws Throwable {
+		Object assortedRefWithLongAlignmentArray = Array.newInstance(assortedRefWithLongAlignmentClass, genericArraySize);
+		for (int i = 0; i < genericArraySize; i++) {
 			Object assortedRefWithLongAlignmentObject = Array.get(assortedRefWithLongAlignmentArray, i);
 			assertNull(assortedRefWithLongAlignmentObject);
 		}
@@ -1522,6 +1495,87 @@ public class ValueTypeTests {
 		Class refClass = ValueTypeGenerator.generateRefClass("TestCheckCastRefClassOnNull", fields);
 		MethodHandle checkCastRefClassOnNull = lookup.findStatic(refClass, "testCheckCastRefClassOnNull", MethodType.methodType(Object.class));
 		checkCastRefClassOnNull.invoke();
+	}
+
+
+	// The three following tests can be used to verify that flattened value types in arrays are handled properly by the GC. In the
+	// current state, these tests should pass when flattened is disabled but failed when it is enabled.
+	/*
+	 * Maintain a buffer of flattened arrays with long-aligned valuetypes while keeping a certain amount of classes alive at any 
+	 * single time. This forces the GC to unload the classes.
+	 */
+	@Test(enabled = false, priority=5)
+	static public void testValueWithLongAlignmentGCScanning() throws Throwable {
+		ArrayList<Object> longAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
+		for (int i = 0; i < objectGCScanningIterationCount; i++) {
+			Object newLongAlignmentArray = Array.newInstance(assortedValueWithLongAlignmentClass, genericArraySize);
+			for (int j = 0; j < genericArraySize; j++) {
+				Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
+				Array.set(newLongAlignmentArray, j, assortedValueWithLongAlignment);
+			}
+			longAlignmentArrayList.add(newLongAlignmentArray);
+		}
+
+		System.gc();
+		System.gc();
+
+		for (int i = 0; i < objectGCScanningIterationCount; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterAndWither, Array.get(longAlignmentArrayList.get(i), j), typeWithLongAlignmentFields, true);
+			}
+		}
+	}
+
+	/*
+	 * Maintain a buffer of flattened arrays with object-aligned valuetypes while keeping a certain amount of classes alive at any 
+	 * single time. This forces the GC to unload the classes.
+	 */
+	@Test(enabled = false, priority=5)
+	static public void testValueWithObjectAlignmentGCScanning() throws Throwable {
+		ArrayList<Object> objectAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
+		for (int i = 0; i < objectGCScanningIterationCount; i++) {
+			Object newObjectAlignmentArray = Array.newInstance(assortedValueWithObjectAlignmentClass, genericArraySize);
+			for (int j = 0; j < genericArraySize; j++) {
+				Object assortedValueWithObjectAlignment = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
+				Array.set(newObjectAlignmentArray, j, assortedValueWithObjectAlignment);
+			}
+			objectAlignmentArrayList.add(newObjectAlignmentArray);
+		}
+
+		System.gc();
+		System.gc();
+
+		for (int i = 0; i < objectGCScanningIterationCount; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				checkFieldAccessMHOfAssortedType(assortedValueWithObjectAlignmentGetterAndWither, Array.get(objectAlignmentArrayList.get(i), j), typeWithObjectAlignmentFields, true);
+			}
+		}
+	}
+
+	/*
+	 * Maintain a buffer of flattened arrays with single-aligned valuetypes while keeping a certain amount of classes alive at any 
+	 * single time. This forces the GC to unload the classes.
+	 */
+	@Test(enabled = false, priority=5)
+	static public void testValueWithSingleAlignmentGCScanning() throws Throwable {
+		ArrayList<Object> singleAlignmentArrayList = new ArrayList<Object>(objectGCScanningIterationCount);
+		for (int i = 0; i < objectGCScanningIterationCount; i++) {
+			Object newSingleAlignmentArray = Array.newInstance(assortedValueWithSingleAlignmentClass, genericArraySize);
+			for (int j = 0; j < genericArraySize; j++) {
+				Object assortedValueWithSingleAlignment = createAssorted(makeAssortedValueWithSingleAlignment, typeWithSingleAlignmentFields);
+				Array.set(newSingleAlignmentArray, j, assortedValueWithSingleAlignment);
+			}
+			singleAlignmentArrayList.add(newSingleAlignmentArray);
+		}
+
+		System.gc();
+		System.gc();
+
+		for (int i = 0; i < objectGCScanningIterationCount; i++) {
+			for (int j = 0; j < genericArraySize; j++) {
+				checkFieldAccessMHOfAssortedType(assortedValueWithSingleAlignmentGetterAndWither, Array.get(singleAlignmentArrayList.get(i), j), typeWithSingleAlignmentFields, true);
+			}
+		}
 	}
 
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
