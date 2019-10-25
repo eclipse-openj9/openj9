@@ -57,6 +57,29 @@ class MethodHandleNatives {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 /*[ENDIF] Java14 */
+
+	class Constants {
+		static final int MN_IS_METHOD			= 0x10000;
+		static final int MN_IS_CONSTRUCTOR		= 0x20000;
+		static final int MN_IS_FIELD			= 0x40000;
+		static final int MN_IS_TYPE				= 0x80000;
+		static final int MN_CALLER_SENSITIVE	= 0x100000;
+		static final int MN_REFERENCE_KIND_SHIFT= 24;
+		static final int MN_REFERENCE_KIND_MASK	= 0xF;
+		static final int MN_SEARCH_SUPERCLASSES	= 0x100000;
+		static final int MN_SEARCH_INTERFACES	= 0x200000;
+		static final byte REF_NONE				= 0;
+		static final byte REF_getField			= 1;
+		static final byte REF_getStatic			= 2;
+		static final byte REF_putField			= 3;
+		static final byte REF_putStatic			= 4;
+		static final byte REF_invokeVirtual		= 5;
+		static final byte REF_invokeStatic		= 6;
+		static final byte REF_invokeSpecial		= 7;
+		static final byte REF_newInvokeSpecial	= 8;
+		static final byte REF_invokeInterface	= 9;
+		static final byte REF_LIMIT				= 10;
+	}
 }
 
 /*[ENDIF] Java11 */
