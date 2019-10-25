@@ -299,28 +299,6 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
-      case TR_MethodPointer:
-         {
-         TR::Node *aconstNode = (TR::Node *) relocation->getTargetAddress();
-         uintptr_t inlinedSiteIndex = (uintptr_t)aconstNode->getInlinedSiteIndex();
-         *(uintptr_t *)cursor = inlinedSiteIndex;
-         cursor += SIZEPOINTER;
-
-         TR_OpaqueMethodBlock *j9method = (TR_OpaqueMethodBlock *) aconstNode->getAddress();
-         TR_OpaqueClassBlock *j9class = fej9->getClassFromMethodBlock(j9method);
-
-         uintptr_t classChainOffsetInSharedCache = sharedCache->getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(j9class);
-         *(uintptr_t *)cursor = classChainOffsetInSharedCache;
-         cursor += SIZEPOINTER;
-
-         cursor = self()->emitClassChainOffset(cursor, j9class);
-
-         uintptr_t vTableOffset = (uintptr_t) fej9->getInterpreterVTableSlot(j9method, j9class);
-         *(uintptr_t *)cursor = vTableOffset;
-         cursor += SIZEPOINTER;
-         }
-         break;
-
       case TR_ClassPointer:
          {
          TR::Node *aconstNode = (TR::Node *) relocation->getTargetAddress();
