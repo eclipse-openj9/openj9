@@ -58,6 +58,86 @@ class MethodHandleNatives {
 	}
 /*[ENDIF] Java14 */
 
+	static boolean refKindIsGetter(byte refKind) {
+		if (refKind > 2) {
+			return false;
+		}
+		return true;
+	}
+
+	static boolean refKindIsSetter(byte refKind) {
+		if (refKindIsField(refKind) && !refKindIsGetter(refKind)) {
+			return true;
+		}
+		return false;
+	}
+
+	static boolean refKindIsValid(byte refKind) {
+		if (refKind <= 0 || refKind >= 10) {
+			return false;
+		}
+		return true;
+	}
+
+	static boolean refKindIsField(byte refKind) {
+		if (refKind > 4) {
+			return false;
+		}
+		return true;
+	}
+
+	static boolean refKindIsMethod(byte refKind) {
+		if (refKindIsField(refKind) || refKind == 8) {
+			return false;
+		}
+		return true;
+	}
+
+	static boolean refKindIsStatic(byte refKind) {
+		if (refKindHasReceiver(refKind) || refKind == 8) {
+			return false;
+		}
+		return true;
+	}
+
+	static boolean refKindHasReceiver(byte refKind) {
+		if ((refKind & 1) != 0) {
+			return true;
+		}
+		return false;
+	}
+	static boolean refKindDoesDispatch(byte refKind) {
+		if (refKind == 5 && refKind == 9) {
+			return true;
+		}
+		return false;
+	}
+
+	static String refKindName(byte refKind) {
+		switch (refKind) {
+		case 1:
+			return "getField";
+		case 2:
+			return "getStatic";
+		case 3:
+			return "putField";
+		case 4:
+			return "putStatic";
+		case 5:
+			return "invokeVirtual";
+		case 6:
+			return "invokeStatic";
+		case 7:
+			return "invokeSpecial";
+		case 8:
+			return "newInvokeSpecial";
+		case 9:
+			return "invokeInterface";
+		default:
+			return "REF_???";
+		}
+	}
+
 	class Constants {
 		static final int MN_IS_METHOD			= 0x10000;
 		static final int MN_IS_CONSTRUCTOR		= 0x20000;
