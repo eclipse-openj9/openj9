@@ -4,7 +4,7 @@ define(`ZZ',`**')
 define(`ZZ',`##')
 ')dnl
 
-ZZ Copyright (c) 2000, 2017 IBM Corp. and others
+ZZ Copyright (c) 2000, 2019 IBM Corp. and others
 ZZ
 ZZ This program and the accompanying materials are made 
 ZZ available under the terms of the Eclipse Public License 2.0 
@@ -70,7 +70,7 @@ SETVAL(PVFPSize,0)
 SETVAL(PVFPSize,8*DblLen)
 ])dnl
 
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
 SETVAL(PVGPRSize,27*PTR_SIZE)
 ],[dnl
 SETVAL(PVGPRSize,11*PTR_SIZE)
@@ -506,7 +506,7 @@ START_FUNC(_jitProfileValueWrap,_jitPVW)
 
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     STMH_GPR r0,r15,44(J9SP)
 ])dnl
 ifdef([J9_SOFT_FLOAT],[dnl
@@ -552,7 +552,7 @@ ZZ do nothing
     LD f7,ProfileVFPSlot7(J9SP)
 ])dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     LMH_GPR r0,r15,44(J9SP)
 ])dnl
     AHI_GPR J9SP,ProfileValueStackSize
@@ -564,7 +564,7 @@ ZZ ------------------------------------------
 START_FUNC(_jitProfileAddressWrap,_jitPAW)
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     STMH_GPR r0,r15,44(J9SP)
 ])dnl
 ifdef([J9_SOFT_FLOAT],[dnl
@@ -611,7 +611,7 @@ ZZ do nothing
     LD f7,ProfileVFPSlot7(J9SP)
 ])dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     LMH_GPR r0,r15,44(J9SP)
 ])dnl
     AHI_GPR J9SP,ProfileValueStackSize
@@ -623,7 +623,7 @@ ZZ ------------------------------------------
 START_FUNC(_jitProfileLongValueWrap,_jitPLW)
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     STMH_GPR r0,r15,44(J9SP)
 ])dnl
 ifdef([J9_SOFT_FLOAT],[dnl
@@ -669,7 +669,7 @@ ZZ do nothing
     LD f7,ProfileVFPSlot7(J9SP)
 ])dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     LMH_GPR r0,r15,44(J9SP)
 ])dnl
     AHI_GPR J9SP,ProfileValueStackSize
@@ -681,7 +681,7 @@ ZZ ------------------------------------------
 START_FUNC(_jitProfileBigDecimalValueWrap,_jitPBDW)
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     STMH_GPR r0,r15,44(J9SP)
 ])dnl
 ifdef([J9_SOFT_FLOAT],[dnl
@@ -727,7 +727,7 @@ ZZ do nothing
     LD f7,ProfileVFPSlot7(J9SP)
 ])dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     LMH_GPR r0,r15,44(J9SP)
 ])dnl
     AHI_GPR J9SP,ProfileValueStackSize
@@ -739,7 +739,7 @@ ZZ ------------------------------------------
 START_FUNC(_jitProfileStringValueWrap,_jitPSW)
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     STMH_GPR r0,r15,44(J9SP)
 ])dnl
 ifdef([J9_SOFT_FLOAT],[dnl
@@ -785,7 +785,7 @@ ZZ do nothing
     LD f7,ProfileVFPSlot7(J9SP)
 ])dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     LMH_GPR r0,r15,44(J9SP)
 ])dnl
     AHI_GPR J9SP,ProfileValueStackSize

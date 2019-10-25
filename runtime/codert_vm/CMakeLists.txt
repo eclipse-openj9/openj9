@@ -66,10 +66,6 @@ elseif(OMR_ARCH_S390)
 		endif()
 		# NOTE: no flags needed for 31 bit
 
-		if(J9VM_JIT_32BIT_USES64BIT_REGISTERS)
-			list(APPEND m4_defines J9VM_JIT_32BIT_USES64BIT_REGISTERS)
-		endif()
-
 		if(J9VM_JIT_FREE_SYSTEM_STACK_POINTER)
 			list(APPEND m4_defines J9VM_JIT_FREE_SYSTEM_STACK_POINTER)
 		endif()

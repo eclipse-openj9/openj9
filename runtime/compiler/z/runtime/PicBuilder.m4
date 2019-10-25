@@ -2765,7 +2765,7 @@ ifdef([J9ZOS390],[dnl
 END_FUNC(_RITRIC,RITRIC,8)
 
 SETVAL(rdsa,5)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
 SETVAL(dsaSize,32*PTR_SIZE)
 ],[dnl
 SETVAL(dsaSize,16*PTR_SIZE)
@@ -2791,7 +2791,7 @@ ZZ ===================================================================
     ST_GPR   r14,PTR_SIZE(,rdsa)
     AHI_GPR  rdsa,-dsaSize
     STM_GPR  r0,r15,0(rdsa)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     STMH_GPR r0,r15,64(rdsa)
 ])dnl
     LR_GPR   r8,rdsa      # save dsa in r8
@@ -2839,7 +2839,7 @@ ZZ  R2 contains return value
     LR_GPR   rdsa,r8 #restore dsa from r8
     LM_GPR   r0,r1,0(rdsa)
     LM_GPR   r3,r15,3*PTR_SIZE(rdsa)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     LMH_GPR  r0,r15,64(rdsa)
 ])dnl
     AHI_GPR  rdsa,dsaSize
