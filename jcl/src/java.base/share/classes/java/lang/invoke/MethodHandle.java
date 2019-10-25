@@ -1617,7 +1617,7 @@ public abstract class MethodHandle
 		/* Note: so far this method is only invoked by java.lang.invoke.ConstantBootstraps.getStaticFinal() 
 		 * to return a MemberName object, and only MemberName.isFinal() is invoked.
 		 */
-		return new MemberName(this);
+		return new MemberName((Class<?>)null);
 		/*[ELSE]
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		/*[ENDIF] Java11 */
