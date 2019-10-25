@@ -125,18 +125,18 @@ public:
 
 	MM_CopyForwardStats() :
 		MM_CopyForwardStatsCore()
-		,_unfinalizedCandidates(0)
-		,_unfinalizedEnqueued(0)
-		,_ownableSynchronizerCandidates(0)
-		,_ownableSynchronizerSurvived(0)
-		,_weakReferenceStats()
-		,_softReferenceStats()
-		,_phantomReferenceStats()
-		,_stringConstantsCleared(0)
-		,_stringConstantsCandidates(0)
+		, _unfinalizedCandidates(0)
+		, _unfinalizedEnqueued(0)
+		, _ownableSynchronizerCandidates(0)
+		, _ownableSynchronizerSurvived(0)
+		, _weakReferenceStats()
+		, _softReferenceStats()
+		, _phantomReferenceStats()
+		, _stringConstantsCleared(0)
+		, _stringConstantsCandidates(0)
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		,_doubleMappedArrayletsCleared(0)
-		,_doubleMappedArrayletsCandidates(0)
+		, _doubleMappedArrayletsCleared(0)
+		, _doubleMappedArrayletsCandidates(0)
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	{}
 };

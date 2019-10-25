@@ -311,10 +311,10 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 }
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-#if !(defined(LINUX) && defined(J9VM_ENV_DATA64)) || defined(OMRZTPF)
+#if !(defined(LINUX) && defined(J9VM_ENV_DATA64))
 /* Double map is only supported on LINUX 64 bit Systems for now */
 #error "Platform not supported by Double Map API"
-#endif /* !(defined(LINUX) && defined(J9VM_ENV_DATA64)) || defined(OMRZTPF) */
+#endif /* !(defined(LINUX) && defined(J9VM_ENV_DATA64)) */
 void * 
 MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J9Object *objectPtr) 
 {
@@ -374,10 +374,10 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 	}
 
 	/*
-	 * Double map failed
-	 * If doublemap fails the caller must handle it appropriatly. In case
-	 * of JNI critical, if doublemap fails, it will fall back to copying
-	 * each element of the array to a temporary array. It might hurt performance
+	 * Double map failed.
+	 * If doublemap fails the caller must handle it appropriately. The only case being
+	 * JNI critical, where it will fall back to copying each element of the array to
+	 * a temporary array (logic handled by JNI Critical). It might hurt performance
 	 * but execution won't halt.
 	 */
 	if (NULL == firstLeafRegionDescriptor->_arrayletDoublemapID.address) {

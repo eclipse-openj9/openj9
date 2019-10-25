@@ -47,7 +47,7 @@ GC_ArrayletObjectModel::AssertBadElementSize()
 void
 GC_ArrayletObjectModel::AssertNotEmptyArrayletLeaves(UDATA sizeInElements, UDATA arrayletLeafCount)
 {
-	Assert_MM_true(sizeInElements == 0 || arrayletLeafCount > 0);
+	Assert_MM_true((0 == sizeInElements) || (arrayletLeafCount > 0));
 }
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 

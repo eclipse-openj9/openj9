@@ -3890,8 +3890,7 @@ private:
 				Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
 				env->_copyForwardStats._doubleMappedArrayletsCleared += 1;
 				PORT_ACCESS_FROM_ENVIRONMENT(_env);
-				int result = j9vmem_free_memory(identifier->address, identifier->size, identifier);
-				Assert_MM_true(result == 0);
+				j9vmem_free_memory(identifier->address, identifier->size, identifier);
 			}
 		}
 	}

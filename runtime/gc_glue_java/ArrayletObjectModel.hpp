@@ -61,7 +61,7 @@ private:
 		UDATA dataSize = getDataSizeInBytes(spine);
 		AssertNotEmptyArrayletLeaves(sizeInElements, arrayletLeafCount);
 
-		return ((arrayletLeafCount == 2) && ((dataSize % arrayletLeafSize) == 0));
+		return (2 == arrayletLeafCount) && (0 == (dataSize % arrayletLeafSize));
 	}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 protected:
@@ -307,7 +307,7 @@ public:
 	{
 		UDATA arrayletLeafCount = numArraylets(spine);
 		UDATA sizeInElements = getSizeInElements(spine);
-		return ((arrayletLeafCount > 1) && !isOneArrayletLeafWithNULL(spine, arrayletLeafCount, sizeInElements));
+		return (arrayletLeafCount > 1) && !isOneArrayletLeafWithNULL(spine, arrayletLeafCount, sizeInElements);
 	}
 
 	/**
@@ -322,8 +322,8 @@ public:
 	{
 		UDATA arrayletLeafCount = numArraylets(spine);
 		UDATA sizeInElements = getSizeInElements(spine);
-		return (((1 == arrayletLeafCount) || isOneArrayletLeafWithNULL(spine, arrayletLeafCount, sizeInElements))
-				&& (sizeInElements > 0));
+		return ((1 == arrayletLeafCount) || isOneArrayletLeafWithNULL(spine, arrayletLeafCount, sizeInElements))
+				&& (sizeInElements > 0);
 	}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 

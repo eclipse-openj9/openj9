@@ -252,8 +252,8 @@ MM_VLHGCAccessBarrier::postStoreClassToClassLoader(J9VMThread *vmThread, J9Class
 
 void
 MM_VLHGCAccessBarrier::copyArrayCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
-					J9InternalVMFunctions *functions, void **data,
-					J9IndexableObject *arrayObject, jboolean *isCopy)
+	J9InternalVMFunctions *functions, void **data,
+	J9IndexableObject *arrayObject, jboolean *isCopy)
 {
 	I_32 sizeInElements = (I_32)indexableObjectModel->getSizeInElements(arrayObject);
 	UDATA sizeInBytes = indexableObjectModel->getDataSizeInBytes(arrayObject);
@@ -352,11 +352,11 @@ MM_VLHGCAccessBarrier::copyBackArrayCritical(J9VMThread *vmThread, GC_ArrayObjec
 	 * Commit means copy the data but do not free the buffer.
 	 * All other modes free the buffer.
 	 */
-	if(JNI_COMMIT != mode) {
+	if (JNI_COMMIT != mode) {
 		functions->jniArrayFreeMemoryFromThread(vmThread, elems);
 	}
 
-	if(vmThread->jniCriticalCopyCount > 0) {
+	if (vmThread->jniCriticalCopyCount > 0) {
 		vmThread->jniCriticalCopyCount -= 1;
 	} else {
 		Assert_MM_invalidJNICall();
