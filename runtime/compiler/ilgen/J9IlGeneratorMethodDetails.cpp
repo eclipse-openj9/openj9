@@ -142,42 +142,6 @@ IlGeneratorMethodDetails::getType() const
    }
 #endif /* defined(JITSERVER_SUPPORT) */
 
-
-#if defined(JITSERVER_SUPPORT)
-const J9ROMClass *
-IlGeneratorMethodDetails::getRomClass() const
-   {
-   return J9_CLASS_FROM_METHOD(self()->getMethod())->romClass;
-   }
-
-const J9ROMMethod *
-IlGeneratorMethodDetails::getRomMethod() const
-   {
-   return J9_ROM_METHOD_FROM_RAM_METHOD(self()->getMethod());
-   }
-
-IlGeneratorMethodDetailsType
-IlGeneratorMethodDetails::getType() const
-   {
-   int type = EMPTY;
-   if (self()->isOrdinaryMethod()) type |= ORDINARY_METHOD;
-   if (self()->isDumpMethod()) type |= DUMP_METHOD;
-   if (self()->isNewInstanceThunk()) type |= NEW_INSTANCE_THUNK;
-   if (self()->isMethodInProgress()) type |= METHOD_IN_PROGRESS;
-   if (self()->isArchetypeSpecimen()) type |= ARCHETYPE_SPECIMEN;
-   if (self()->isMethodHandleThunk())
-      {
-      type |= METHOD_HANDLE_THUNK;
-      if (static_cast<const MethodHandleThunkDetails *>(self())->isShareable())
-         type |= SHAREABLE_THUNK;
-      else if (static_cast<const MethodHandleThunkDetails *>(self())->isCustom())
-         type |= CUSTOM_THUNK;
-      }
-   return (IlGeneratorMethodDetailsType) type;
-   }
-#endif /* defined(JITSERVER_SUPPORT) */
-
-
 bool
 IlGeneratorMethodDetails::sameAs(TR::IlGeneratorMethodDetails & other, TR_FrontEnd *fe)
    {

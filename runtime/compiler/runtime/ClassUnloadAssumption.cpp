@@ -1260,23 +1260,6 @@ void TR_AddressSet::setRanges(const std::vector<TR_AddressRange> &ranges)
    }
 #endif
 
-void TR_AddressSet::destroy()
-   {
-   jitPersistentFree(_addressRanges);
-   }
-
-void TR_AddressSet::getRanges(std::vector<TR_AddressRange> &ranges)
-   {
-   ranges.insert(ranges.begin(), _addressRanges, _addressRanges + _numAddressRanges);
-   }
-
-void TR_AddressSet::setRanges(const std::vector<TR_AddressRange> &ranges)
-   {
-   TR_ASSERT(ranges.size() <= _maxAddressRanges, "Setting too many ranges");
-   std::copy(ranges.begin(), ranges.end(), _addressRanges);
-   _numAddressRanges = ranges.size();
-   }
-
 void TR_AddressSet::trace(char *format, ...)
    {
    static char *env = feGetEnv("TR_traceUnloadedClassRanges");

@@ -2777,7 +2777,6 @@ void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, const char *gen
       self()->addExternalRelocation(r, genData, where);
       }
    }
-#endif /* defined(JITSERVER_SUPPORT) */
 
 void J9::CodeGenerator::addExternalRelocation(TR::Relocation *r, TR::RelocationDebugInfo* info, TR::ExternalRelocationPositionRequest where)
    {
