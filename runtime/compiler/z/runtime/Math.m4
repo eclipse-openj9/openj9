@@ -722,7 +722,7 @@ LABEL(LDIVExit)
     END_FUNC(_longDivide,_LDIV,7)
 
 SETVAL(rdsa,5)
-ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
 SETVAL(dsaSize,32*PTR_SIZE)
 ],[dnl
 SETVAL(dsaSize,16*PTR_SIZE)
@@ -739,7 +739,7 @@ ZZ
     ST_GPR   r14,PTR_SIZE(,rdsa)
     AHI_GPR  rdsa,-dsaSize
     STM_GPR  r0,r15,0(rdsa)
-ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     STMH_GPR r0,r15,64(rdsa)
 ])dnl
 
@@ -769,7 +769,7 @@ ifdef([TR_HOST_64BIT],[dnl
 
     LR_GPR  rdsa,r8 #restore dsa from r8
     LM_GPR r0,r15,0(rdsa)
-ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     LMH_GPR r0,r15,64(rdsa)
 ])dnl
     AHI_GPR rdsa,dsaSize
@@ -789,7 +789,7 @@ ZZ
     ST_GPR   r14,PTR_SIZE(,rdsa)
     AHI_GPR  rdsa,-dsaSize
     STM_GPR  r0,r15,0(rdsa)
-ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     STMH_GPR r0,r15,64(rdsa)
 ])dnl
 
@@ -821,7 +821,7 @@ ZZ load up the C Environment addr into r5 and Entry point in R6
 
     LR_GPR  rdsa,r8
     LM_GPR r0,r15,0(rdsa)
-ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
     LMH_GPR r0,r15,64(rdsa)
 ])dnl
     AHI_GPR rdsa,dsaSize

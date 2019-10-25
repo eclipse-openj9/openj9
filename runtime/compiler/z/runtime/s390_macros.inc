@@ -473,7 +473,7 @@ ZZ ============================================================
 define(SaveRegs,
 [dnl
 
-ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
      AHI_GPR  r5,-(32*PTR_SIZE)
      STM_GPR  r0,r15,0(r5)            # save all registers
      STMH_GPR  r0,r15,64(r5)  # save all hi regs (16*4)
@@ -496,7 +496,7 @@ define(RestoreRegs,
 [dnl
 
      ST_GPR   r5,(5*PTR_SIZE)(r5)     # store the new J9SP
-ifdef([ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
      LMH_GPR  r0,r15,64(r5) # restore all hi regs (16*4)
      LM_GPR   r0,r15,0(r5)            # restore all registers
      AHI_GPR  r5,(32*PTR_SIZE)
