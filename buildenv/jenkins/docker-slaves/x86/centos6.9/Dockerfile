@@ -121,12 +121,6 @@ RUN yum -y update \
 # Any commands that require gcc need to be run after this SHELL command and before the next SHELL
 SHELL ["/bin/sh","-lc"]
 
-# Dependency required by test framework
-RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
-  && cpanm Text::CSV \
-  && cpanm JSON \
-  && cpanm XML::Parser
-
 # Install make 4.1
 RUN cd /tmp \
   && wget -O make-4.1.tar.gz "http://ftp.gnu.org/gnu/make/make-4.1.tar.gz" \
