@@ -62,9 +62,6 @@ RUN apt-get update \
     xvfb \
   && rm -rf /var/lib/apt/lists/*
 
-# Install Docker module to run test framework
-RUN echo yes | cpan install JSON Text::CSV XML::Parser
-
 # Install ccache
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends ccache
