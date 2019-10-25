@@ -112,6 +112,14 @@ public class TestSharedClassesExt extends DDRExtTesterBase {
 		}
 	}
 
+	//Test whether the startuphint shows up.
+	public void testShrcStartUpHintExt() {
+		String statsOutput = exec(Constants.SHRC_CMD,
+				new String[] { Constants.SHRC_STARTUPHINT });
+		assertTrue(validate(statsOutput, Constants.SHRC_STARTUPHINT_SUCCESS_KEY,
+				Constants.SHRC_STARTUPHINT_FAILURE_KEY, true));
+	}
+
 	public void testShrcUByteStatsExt() {
 		String statsOutput = exec(Constants.SHRC_CMD,
 				new String[] { Constants.SHRC_UBYTESTATS });

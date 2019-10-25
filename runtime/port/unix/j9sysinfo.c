@@ -91,10 +91,6 @@
 #undef nl_langinfo
 #endif
 
-#if defined(J9ZOS390)
-#include "j9getuserid.h"
-#endif
-
 /* End copy from j9filetext.c */
 
 #ifdef AIXPPC

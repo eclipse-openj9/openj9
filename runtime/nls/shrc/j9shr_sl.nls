@@ -5338,7 +5338,7 @@ J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_REQUIRED.system_action=The JVM term
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_REQUIRED.user_response=Modify existing "-Xshareclasses:" option to add "groupAccess" suboption and restart. The shared cache may have been created by another user in the same group as the current user.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_READONLY_REQUIRED=JVM ni konfiguriran za dostop do pomnilnika v skupni rabi, povezanega z obstoje\u010dim netrajnim predpomnilnikom razredov v skupni rabi. V netrajen predpomnilnik razredov v skupni rabi pripenjajte s podmo\u017enostma 'groupAccess' in 'readonly'.
+J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_READONLY_REQUIRED=JVM ni konfiguriran za dostop do pomnilnika v skupni rabi, povezanega z obstoje\u010dim netrajnim predpomnilnikom razredov v skupni rabi. V netrajen predpomnilnik razredov v skupni rabi pripenjajte s podmo\u017enostima 'groupAccess' in 'readonly'.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_READONLY_REQUIRED.explanation=An error has occurred within Shared Classes processing.
 J9NLS_SHRC_OSCACHE_SHARED_MEMORY_GROUPACCESS_READONLY_REQUIRED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
@@ -6025,7 +6025,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_METHOD_SPEC.user_response=
 # END NON-TRANSLATABLE
 
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC=POMEMBNO: ve\u010d specifikacij metod lahko posredujete tako, da jih lo\u010dite z vejicami . \u010ce vrednost mo\u017enosti vsebuje vejice, mora biti obdana z zavitimi oklepaji. \n\
-\t\u010ce \u017eelite prepre\u010diti, da bi lupina prestrezala in fragmentirala ukazne vrstice, lo\u010dene z vejicami, mo\u017enosti obdajte z narekovaji, npr.: \n \n \t\"-Xshareclasses:name=Cache1,%s{java/util/*.*(),java/lang/Object.*(*)}\" or\n \t-Xshareclasses:name=Cache1,%s\'{java/util/*.*(),!java/util/*.*()}\'\n
+\t\u010ce \u017eelite prepre\u010diti, da bi lupina prestrezala in fragmentirala ukazne vrstice, lo\u010dene z vejicami, mo\u017enosti obdajte z narekovaji, npr.: \n \n \t\"-Xshareclasses:name=Cache1,%s{java/util/*.*(),java/lang/Object.*(*)}\" ali \n \t-Xshareclasses:name=Cache1,%s\'{java/util/*.*(),!java/util/*.*()}\'\n
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.sample_input_1=findAotMethods=
 J9NLS_SHRC_SHRINIT_INFOTEXT_METHOD_SPEC.explanation=NOTAG

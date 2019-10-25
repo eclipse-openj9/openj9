@@ -1277,7 +1277,7 @@ TR::SymbolValidationManager::validateImproperInterfaceMethodFromCPRecord(uint16_
 
       {
       TR::VMAccessCriticalSection resolveImproperMethodRef(_fej9);
-      ramMethod = jitGetImproperInterfaceMethodFromCP(_vmThread, beholderCP, cpIndex);
+      ramMethod = jitGetImproperInterfaceMethodFromCP(_vmThread, beholderCP, cpIndex, NULL);
       }
 
    return validateSymbol(methodID, definingClassID, ramMethod);

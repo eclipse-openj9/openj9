@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,20 +26,20 @@
 #include "codegen/Snippet.hpp"
 
 namespace TR { class CodeGenerator; }
-namespace TR { class Instruction; }
+namespace TR { class PPCConditionalBranchInstruction; }
 namespace TR { class LabelSymbol; }
 
 namespace TR {
 
 class PPCRecompilationSnippet : public TR::Snippet
    {
-   TR::Instruction *branchToSnippet;
+   TR::PPCConditionalBranchInstruction *branchToSnippet;
 
    public:
 
    PPCRecompilationSnippet(
          TR::LabelSymbol *snippetlab,
-         TR::Instruction *bts,
+         TR::PPCConditionalBranchInstruction *bts,
          TR::CodeGenerator *cg)
       : TR::Snippet(cg, 0, snippetlab, false), branchToSnippet(bts)
       {
@@ -47,7 +47,7 @@ class PPCRecompilationSnippet : public TR::Snippet
 
    virtual Kind getKind() { return IsRecompilation; }
 
-   TR::Instruction *getBranchToSnippet() {return branchToSnippet;}
+   TR::PPCConditionalBranchInstruction *getBranchToSnippet() {return branchToSnippet;}
 
    virtual uint8_t *emitSnippetBody();
 

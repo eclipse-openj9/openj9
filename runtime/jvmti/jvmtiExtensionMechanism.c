@@ -1906,6 +1906,9 @@ iterateSharedCachesCallback(J9JavaVM *vm, J9SharedCacheInfo *event_data, void *u
 	if (COM_IBM_ITERATE_SHARED_CACHES_VERSION_4 <= userdata->version) {
 		cacheInfo.softMaxBytes = ((UDATA)-1 == event_data->softMaxBytes) ? (jlong) -1 : (jlong) event_data->softMaxBytes;
 	}
+	if (COM_IBM_ITERATE_SHARED_CACHES_VERSION_5 <= userdata->version) {
+		cacheInfo.layer = (jint) event_data->layer;
+	}
 	if (JNI_OK != userdata->callback(userdata->env, &cacheInfo, userdata->userdata)) {
 		return -1;
 	}
@@ -1936,10 +1939,8 @@ jvmtiIterateSharedCaches(jvmtiEnv *env,
 	
 	Trc_JVMTI_jvmtiIterateSharedCaches_Entry(env, callback, user_data);
 	
-	if ((COM_IBM_ITERATE_SHARED_CACHES_VERSION_1 != version)
-		&& (COM_IBM_ITERATE_SHARED_CACHES_VERSION_2 != version)
-		&& (COM_IBM_ITERATE_SHARED_CACHES_VERSION_3 != version)
-		&& (COM_IBM_ITERATE_SHARED_CACHES_VERSION_4 != version)
+	if ((COM_IBM_ITERATE_SHARED_CACHES_VERSION_1 > version)
+		|| (COM_IBM_ITERATE_SHARED_CACHES_VERSION_5 < version)
 	) {
 		rc = JVMTI_ERROR_UNSUPPORTED_VERSION;
 		goto done;

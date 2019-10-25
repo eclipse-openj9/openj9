@@ -24,7 +24,7 @@
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
-<!-- Test 200-a to Test 207 cleanup: 83 tests -->
+<!-- Test 200-a to Test 208 cleanup: 88 tests -->
 
 <suite id="Shared Classes CommandLineOptionTests Suite">
 
@@ -41,6 +41,7 @@
 	
 	<variable name="CP_HANOI" value="-cp $UTILSDIR$$PATHSEP$utils.jar" />
  	<variable name="PROGRAM_HANOI" value="org.openj9.test.ivj.Hanoi 2" />
+ 	<variable name="PROGRAM_HANOI_2" value="org.openj9.test.ivj.Hanoi 3" />
  	
  	<variable name="CP_FIB" value="-cp $UTILSDIR$$PATHSEP$utilsBK.jar" />
  	<variable name="PROGRAM_FIB" value="VMBench/FibBench" />
@@ -925,6 +926,62 @@
 
 	<test id="Test 207 cleanup: destroy non-persistent cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,nonpersistent,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<!-- Since running Hanoi with -Xjit option does not store the startup hint to the shared chache, we use -Xint here -->
+	<test id="Test 208-a: Create a new cache to test -Xshareclasses:printStats=startuphint" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -Xint $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 208-b: Check whether -Xshareclasses:printStats=startuphint works properly" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats=startuphint</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">STARTUP HINTS KEY:</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 1</output>
+
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Startup hint bytes[\s]*= 0</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 0</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<!-- Since running Hanoi with -Xjit option does not store the startup hint to the shared chache, we use -Xint here -->
+	<test id="Test 208-c: Run the test again with a different argument" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -Xint $CP_HANOI$ $PROGRAM_HANOI_2$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 208-d: Make sure -Xshareclasses:printStats=startuphint still works properly for another test" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printStats=startuphint</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">STARTUP HINTS KEY:</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 2</output>
+
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Startup hint bytes[\s]*= 0</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 0</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># Startup hints[\s]*= 1</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 208 cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>

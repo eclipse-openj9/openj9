@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,6 +31,9 @@ namespace TR
 class OMR_EXTENSIBLE Linkage : public J9::LinkageConnector
    {
    public:
+
+   Linkage(TR::CodeGenerator *cg)
+      : J9::LinkageConnector(cg) {}
 
    Linkage(TR::CodeGenerator *cg, TR_S390LinkageConventions elc, TR_LinkageConventions le)
       : J9::LinkageConnector(cg, elc, le) {}

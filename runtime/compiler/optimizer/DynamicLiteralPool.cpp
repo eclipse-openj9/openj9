@@ -50,12 +50,12 @@
 #include "il/Node.hpp"
 #include "il/NodePool.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/MethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/ILWalk.hpp"
@@ -465,7 +465,7 @@ bool TR_DynamicLiteralPool::transformStaticSymRefToIndirectLoad(TR::TreeTop * tt
    //childSymRef->setFromLiteralPool();
    TR::ILOpCode childOpcode=child->getOpCode();
    TR::ILOpCodes childOpcodeValue=child->getOpCodeValue();
-   
+
    if (childOpcodeValue==TR::loadaddr)
       {
       return false;
@@ -473,7 +473,7 @@ bool TR_DynamicLiteralPool::transformStaticSymRefToIndirectLoad(TR::TreeTop * tt
    else
       {
       TR::SymbolReference *intChildShadow = NULL;
-      
+
       if (childSymRef->isUnresolved())
          {
          if (cg()->supportsDirectIntegralLoadStoresFromLiteralPool())
@@ -482,7 +482,7 @@ bool TR_DynamicLiteralPool::transformStaticSymRefToIndirectLoad(TR::TreeTop * tt
             }
 
          childSymRef->setFromLiteralPool();
-         
+
          if (performTransformation(comp(), "%s unresolved static ref for node %p (%s)\n", optDetailString(), child, child->getOpCode().getName()))
             {
             _changed = true;

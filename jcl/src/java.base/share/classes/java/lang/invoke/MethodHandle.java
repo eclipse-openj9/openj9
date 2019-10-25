@@ -1259,7 +1259,14 @@ public abstract class MethodHandle
 					throw WrongMethodTypeException.newWrongMethodTypeException(type, callsiteType);
 				}
 				result = cs.dynamicInvoker();
+			} 
+			/*[IF Java11]*/
+			else {
+				/* The result of the resolution of a dynamically-computed call site must not be null. */
+				/*[MSG "K0A02", "Bootstrap method returned null."]*/
+				throw new ClassCastException(Msg.getString("K0A02")); //$NON-NLS-1$
 			}
+			/*[ENDIF]*/
 		} catch(Throwable e) {
 
 			/*[IF Sidecar19-SE]*/
@@ -1620,9 +1627,10 @@ public abstract class MethodHandle
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 	
-/*[IF Sidecar19-SE-OpenJ9]*/
+/*[IF Sidecar18-SE-OpenJ9]*/
 	void customize() {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		// this is an empty implementation to satisfy RI specific method calls
+		// https://github.com/eclipse/openj9/issues/7080
 	}
 /*[ENDIF]*/
 	

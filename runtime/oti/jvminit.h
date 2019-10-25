@@ -403,6 +403,9 @@ enum INIT_STAGE {
 #define VMOPT_XXENABLESHAREANONYMOUSCLASSES "-XX:+ShareAnonymousClasses"
 #define VMOPT_XXDISABLESHAREANONYMOUSCLASSES "-XX:-ShareAnonymousClasses"
 
+#define VMOPT_XXENABLESHAREUNSAFECLASSES "-XX:+ShareUnsafeClasses"
+#define VMOPT_XXDISABLESHAREUNSAFECLASSES "-XX:-ShareUnsafeClasses"
+
 #define VMOPT_XXFORCECLASSFILEASINTERMEDIATEDATA "-XX:ForceClassfileAsIntermediateData"
 #define VMOPT_XXRECREATECLASSFILEONLOAD "-XX:RecreateClassfileOnload"
 
@@ -455,6 +458,12 @@ enum INIT_STAGE {
 
 #define VMOPT_XXTRANSPARENT_HUGEPAGE "-XX:+TransparentHugePage"
 #define VMOPT_XXNOTRANSPARENT_HUGEPAGE "-XX:-TransparentHugePage"
+
+#define VMOPT_XXDEEP_SCAN "-XX:+GCDeepStructurePriorityScan"
+#define VMOPT_XXNODEEP_SCAN "-XX:-GCDeepStructurePriorityScan"
+
+#define VMOPT_XXCLASSRELATIONSHIPVERIFIER "-XX:+ClassRelationshipVerifier"
+#define VMOPT_XXNOCLASSRELATIONSHIPVERIFIER "-XX:-ClassRelationshipVerifier"
 
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 

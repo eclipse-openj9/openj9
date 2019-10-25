@@ -1070,38 +1070,10 @@ typedef struct J9SharedClassJavacoreDataDescriptor {
 	void* cacheEndAddress;
 	U_64 runtimeFlags;
 	UDATA cacheGen;
-	UDATA ccCount;
-	UDATA ccStartedCount;
+	I_8 topLayer;
 	UDATA cacheSize;
 	UDATA freeBytes;
-	UDATA romClassBytes;
-	UDATA aotBytes;
-	UDATA readWriteBytes;
-	UDATA jclDataBytes;
-	UDATA zipCacheDataBytes;
-	UDATA jitHintDataBytes;
-	UDATA jitProfileDataBytes;
-	UDATA aotDataBytes;
-	UDATA aotClassChainDataBytes;
-	UDATA aotThunkDataBytes;
-	UDATA indexedDataBytes;
-	UDATA unindexedDataBytes;
-	UDATA otherBytes;
-	UDATA numROMClasses;
-	UDATA numStaleClasses;
-	UDATA numAOTMethods;
-	UDATA numClasspaths;
-	UDATA numURLs;
-	UDATA numTokens;
-	UDATA numJclEntries;
-	UDATA numZipCaches;
-	UDATA numJitHints;
-	UDATA numJitProfiles;
-	UDATA numAotDataEntries;
-	UDATA numAotClassChains;
-	UDATA numAotThunks;
 	UDATA percFull;
-	UDATA percStale;
 	const char* cacheName;
 	U_32 feature;
 	IDATA shmid;
@@ -1109,9 +1081,8 @@ typedef struct J9SharedClassJavacoreDataDescriptor {
 	const char* cacheDir;
 	void* writeLockTID;
 	void* readWriteLockTID;
-	UDATA objectBytes;
-	UDATA numObjects;
 	UDATA extraFlags;
+	UDATA readWriteBytes;
 	UDATA debugAreaSize;
 	UDATA debugAreaUsed;
 	UDATA debugAreaLineNumberTableBytes;
@@ -1124,6 +1095,37 @@ typedef struct J9SharedClassJavacoreDataDescriptor {
 	IDATA corruptionCode;
 	UDATA corruptValue;
 	UDATA softMaxBytes;
+	UDATA otherBytes;
+	/* The fields above are stats for the top layer, and the fields below are the summary for all layers */
+	UDATA ccCount;
+	UDATA ccStartedCount;
+	UDATA romClassBytes;
+	UDATA aotBytes;
+	UDATA jclDataBytes;
+	UDATA zipCacheDataBytes;
+	UDATA jitHintDataBytes;
+	UDATA jitProfileDataBytes;
+	UDATA aotDataBytes;
+	UDATA aotClassChainDataBytes;
+	UDATA aotThunkDataBytes;
+	UDATA indexedDataBytes;
+	UDATA unindexedDataBytes;
+	UDATA numROMClasses;
+	UDATA numStaleClasses;
+	UDATA percStale;
+	UDATA numAOTMethods;
+	UDATA numClasspaths;
+	UDATA numURLs;
+	UDATA numTokens;
+	UDATA numJclEntries;
+	UDATA numZipCaches;
+	UDATA numJitHints;
+	UDATA numJitProfiles;
+	UDATA numAotDataEntries;
+	UDATA numAotClassChains;
+	UDATA numAotThunks;
+	UDATA objectBytes;
+	UDATA numObjects;
 	UDATA numStartupHints;
 	UDATA startupHintBytes;
 } J9SharedClassJavacoreDataDescriptor;
@@ -1147,6 +1149,7 @@ typedef struct J9SharedCacheInfo {
 	UDATA freeBytes;
 	I_64 lastDetach;
 	UDATA softMaxBytes;
+	I_8 layer;
 } J9SharedCacheInfo;
 
 typedef struct J9SharedCacheHeader {
@@ -1724,19 +1727,19 @@ typedef struct J9ModuleExtraInfo {
 /*             Structure of Flattened Class Cache              */
 /*                                                             *
  *    Default Value   |   Number of Entries   |                *
- *____________________|_______________________|________________* 
+ *____________________|_______________________|________________*
  *                    |                       |                *
  *      clazz 0       |   Name & Signature 0  |     offset 0   *
- *____________________|_______________________|________________* 
+ *____________________|_______________________|________________*
  *                    |                       |                *
  *      clazz 1       |   Name & Signature 1  |     offset 1   *
- *____________________|_______________________|________________* 
+ *____________________|_______________________|________________*
  *         .          |           .           |        .       *
  *         .          |           .           |        .       *
  *         .          |           .           |        .       *
- *____________________|_______________________|________________* 
+ *____________________|_______________________|________________*
  *                    |                       |                *
- *      clazz N       |   Name & Signature N  |     offset N   * 
+ *      clazz N       |   Name & Signature N  |     offset N   *
  ***************************************************************/
 typedef struct J9FlattenedClassCacheEntry {
 	struct J9Class* clazz;
@@ -2581,9 +2584,6 @@ typedef struct J9SFJ2IFrame {
 	UDATA jit_r9;
 	UDATA jit_r6;
 #elif defined(J9VM_ARCH_AARCH64) /* J9VM_ARCH_ARM */
-	UDATA jit_r18;
-	UDATA jit_r19;
-	UDATA jit_r20;
 	UDATA jit_r21;
 	UDATA jit_r22;
 	UDATA jit_r23;
@@ -3132,6 +3132,7 @@ typedef struct J9ClassLoader {
 	struct J9HashTable* packageHashTable;
 	struct J9HashTable* moduleExtraInfoHashTable;
 	struct J9HashTable* classLocationHashTable;
+	struct J9HashTable* classRelationshipsHashTable;
 } J9ClassLoader;
 
 #define J9CLASSLOADER_SHARED_CLASSES_ENABLED  8
@@ -4284,10 +4285,8 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_get_overflow_safe_alloc_size)(struct J9JavaVM *javaVM) ;
 	void*  ( *getVerboseGCFunctionTable)(struct J9JavaVM *javaVM) ;
 	I_32  ( *referenceArrayCopy)(struct J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, fj9object_t *srcAddress, fj9object_t *destAddress, I_32 lengthInSlots) ;
-#if defined(J9VM_GC_ARRAYLETS)
 	/* TODO: disable this entrypoint once the JIT has been updated */
 	I_32  ( *referenceArrayCopyIndex)(struct J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots) ;
-#endif /* J9VM_GC_ARRAYLETS */
 	UDATA  ( *alwaysCallReferenceArrayCopyHelper)(struct J9JavaVM *javaVM) ;
 	void  ( *j9gc_ext_reachable_objects_do)(struct J9VMThread *vmThread, jvmtiIterationControl (*func)(j9object_t *slotPtr, j9object_t sourcePtr, void *userData, IDATA type, IDATA index, IDATA wasReportedBefore), void *userData, UDATA walkFlags) ;
 	void  ( *j9gc_ext_reachable_from_object_do)(struct J9VMThread *vmThread, j9object_t objectPtr, jvmtiIterationControl (*func)(j9object_t *slotPtr, j9object_t sourcePtr, void *userData, IDATA type, IDATA index, IDATA wasReportedBefore), void *userData, UDATA walkFlags) ;
@@ -4402,7 +4401,6 @@ typedef struct J9MemoryManagerFunctions {
 	jvmtiIterationControl  ( *j9mm_iterate_region_objects)(struct J9JavaVM *vm, J9PortLibrary *portLibrary, struct J9MM_IterateRegionDescriptor *region, UDATA flags, jvmtiIterationControl (*func)(struct J9JavaVM *vm, struct J9MM_IterateObjectDescriptor *objectDesc, void *userData), void *userData) ;
 	UDATA  ( *j9mm_find_region_for_pointer)(struct J9JavaVM* javaVM, void *pointer, struct J9MM_IterateRegionDescriptor *regionDesc) ;
 	jvmtiIterationControl  ( *j9mm_iterate_object_slots)(struct J9JavaVM *javaVM, J9PortLibrary *portLibrary, struct J9MM_IterateObjectDescriptor *object, UDATA flags, jvmtiIterationControl (*func)(struct J9JavaVM *javaVM, struct J9MM_IterateObjectDescriptor *objectDesc, struct J9MM_IterateObjectRefDescriptor *refDesc, void *userData), void *userData) ;
-	UDATA  ( *j9mm_arraylet_identification)(struct J9JavaVM *javaVM, UDATA *arrayletLeafSize, UDATA *offset, UDATA *width, UDATA *mask, UDATA *result) ;
 #if defined(J9VM_GC_REALTIME)
 	UDATA  ( *j9gc_objaccess_checkStringConstantsLive)(struct J9JavaVM *javaVM, j9object_t stringOne, j9object_t stringTwo) ;
 #endif /* J9VM_GC_REALTIME */
@@ -4413,10 +4411,8 @@ typedef struct J9MemoryManagerFunctions {
 	const char*  ( *omrgc_get_version)(OMR_VM *omrVM) ;
 	UDATA  ( *j9mm_abandon_object)(struct J9JavaVM *javaVM,struct  J9MM_IterateRegionDescriptor *region, struct J9MM_IterateObjectDescriptor *objectDesc) ;
 	void  ( *j9mm_get_guaranteed_nursery_range)(struct J9JavaVM* javaVM, void** start, void** end) ;
-#if defined(J9VM_GC_ARRAYLETS)
 	UDATA  ( *j9gc_arraylet_getLeafSize)(struct J9JavaVM* javaVM) ;
 	UDATA  ( *j9gc_arraylet_getLeafLogSize)(struct J9JavaVM* javaVM) ;
-#endif /* J9VM_GC_ARRAYLETS */
 	void  ( *j9gc_set_allocation_sampling_interval)(struct J9VMThread *vmThread, UDATA samplingInterval);
 	void  ( *j9gc_set_allocation_threshold)(struct J9VMThread *vmThread, UDATA low, UDATA high) ;
 	void  ( *j9gc_objaccess_recentlyAllocatedObject)(struct J9VMThread *vmThread, J9Object *dstObject) ;
@@ -5046,12 +5042,18 @@ typedef struct J9VMThread {
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 #if defined(OMR_GC_FULL_POINTERS)
+/* Mixed mode - necessarily 64-bit */
 #define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) (0 != (vmThread)->compressObjectReferences)
+#define J9VMTHREAD_REFERENCE_SHIFT(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? 2 : 3)
 #else /* OMR_GC_FULL_POINTERS */
+/* Compressed only - necessarily 64-bit */
 #define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) TRUE
+#define J9VMTHREAD_REFERENCE_SHIFT(vmThread) 2
 #endif /* OMR_GC_FULL_POINTERS */
 #else /* OMR_GC_COMPRESSED_POINTERS */
+/* Full only - could be 32 or 64-bit */
 #define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) FALSE
+#define J9VMTHREAD_REFERENCE_SHIFT(vmThread) OMR_LOG_POINTER_SIZE
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 #define J9VMTHREAD_REFERENCE_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(U_32) : sizeof(UDATA))
 #define J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))
@@ -5501,12 +5503,18 @@ typedef struct J9JavaVM {
 
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 #if defined(OMR_GC_FULL_POINTERS)
+/* Mixed mode - necessarily 64-bit */
 #define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) J9_ARE_ANY_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES)
+#define J9JAVAVM_REFERENCE_SHIFT(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? 2 : 3)
 #else /* OMR_GC_FULL_POINTERS */
+/* Compressed only - necessarily 64-bit */
 #define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) TRUE
+#define J9JAVAVM_REFERENCE_SHIFT(vm) 2
 #endif /* OMR_GC_FULL_POINTERS */
 #else /* OMR_GC_COMPRESSED_POINTERS */
+/* Full only - could be 32 or 64-bit */
 #define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) FALSE
+#define J9JAVAVM_REFERENCE_SHIFT(vm) OMR_LOG_POINTER_SIZE
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 #define J9JAVAVM_REFERENCE_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(U_32) : sizeof(UDATA))
 #define J9JAVAVM_OBJECT_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))

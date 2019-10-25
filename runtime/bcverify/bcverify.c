@@ -2646,6 +2646,8 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 	IDATA noVerboseVerificationIndex = -1;
 	IDATA verifyErrorDetailsIndex = -1;
 	IDATA noVerifyErrorDetailsIndex = -1;
+	IDATA classRelationshipVerifierIndex = -1;
+	IDATA noClassRelationshipVerifierIndex = -1;
 	IDATA returnVal = J9VMDLLMAIN_OK;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	J9HookInterface ** vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
@@ -2721,6 +2723,19 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 			if (verifyErrorDetailsIndex >= noVerifyErrorDetailsIndex) {
 				vm->bytecodeVerificationData->verificationFlags |= J9_VERIFY_ERROR_DETAILS;
 			}
+
+			/* Set runtime flag for -XX:+ClassRelationshipVerifier */
+			classRelationshipVerifierIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXCLASSRELATIONSHIPVERIFIER, NULL);
+			noClassRelationshipVerifierIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOCLASSRELATIONSHIPVERIFIER, NULL);
+			if (classRelationshipVerifierIndex > noClassRelationshipVerifierIndex) {
+				if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_XFUTURE)) {
+					loadInfo->fatalErrorStr = "-XX:+ClassRelationshipVerifier cannot be used if -Xfuture or if -Xverify:all is enabled";
+					returnVal = J9VMDLLMAIN_FAILED;
+				} else {
+					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER;
+				}
+			}
+
 			break;
 
 		case LIBRARIES_ONUNLOAD :

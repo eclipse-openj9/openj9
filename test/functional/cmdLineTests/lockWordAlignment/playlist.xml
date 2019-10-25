@@ -23,12 +23,17 @@
 -->
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../TestConfig/playlist.xsd">
+	<include>alignmentSettings.mk</include>
 	<test>
-		<testCaseName>cmdLineTester_lockWordAlignment_Object_Standard_SE80</testCaseName>
+		<testCaseName>cmdLineTester_lockWordAlignment_Object_Standard</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DEXEP=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)javap$(Q) -DOLWMODE=standard -DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) -DOBJECTJARPATH= -jar $(CMDLINETESTER_JAR) -DRESDIR=$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_testresources$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(ADD_EXPORTS)$(SQ) \
+		-DEXEP=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)javap$(Q) -DOLWMODE=standard -DJDK_VERSION=$(JDK_VERSION) \
+		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
+		-DOBJECTJARPATH= -jar $(CMDLINETESTER_JAR) -DRESDIR=$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_testresources$(Q) \
+		-DRESJAR=$(CMDLINETESTER_RESJAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
@@ -37,20 +42,23 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-		</subsets>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
 	</test>
 	<test>
-		<testCaseName>cmdLineTester_lockWordAlignment_Object_Standard</testCaseName>
+		<testCaseName>cmdLineTester_lockWordAlignment_Object_i</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) --add-exports=java.base/com.ibm.oti.vm=ALL-UNNAMED$(SQ) -DEXEP=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)javap$(Q) -DOLWMODE=standard -DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) -DOBJECTJARPATH= -jar $(CMDLINETESTER_JAR) -DRESDIR=$(Q)$(JVM_TEST_ROOT)$(D)cmdline_options_testresources$(Q) -DRESJAR=$(CMDLINETESTER_RESJAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) -explainExcludes -nonZeroExitWhenError; \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -cp $(Q)$(ASM_JAR)$(P)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) i; \
+		$(JAVA_COMMAND) $(JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(ADD_EXPORTS)$(SQ) \
+		-DEXEP=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)javap$(SQ) -DOLWMODE=i -DJDK_VERSION=$(JDK_VERSION) \
+		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
+		-DOBJECTJARPATH=$(Q)$(TEST_RESROOT)$(D)object_i.jar$(Q) \
+		-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) \
+		-explainExcludes -nonZeroExitWhenError; \
 		$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
@@ -59,9 +67,81 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>9+</subset>
-		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>cmdLineTester_lockWordAlignment_Object_ii</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -cp $(Q)$(ASM_JAR)$(P)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) ii; \
+		$(JAVA_COMMAND) $(JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(ADD_EXPORTS)$(SQ) \
+		-DEXEP=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)javap$(SQ) -DOLWMODE=ii -DJDK_VERSION=$(JDK_VERSION) \
+		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
+		-DOBJECTJARPATH=$(Q)$(TEST_RESROOT)$(D)object_ii.jar$(Q) \
+		-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) \
+		-explainExcludes -nonZeroExitWhenError; \
+		$(TEST_STATUS)</command>
+		<platformRequirements>^arch.arm</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>cmdLineTester_lockWordAlignment_Object_iii</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -cp $(Q)$(ASM_JAR)$(P)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) iii; \
+		$(JAVA_COMMAND) $(JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(ADD_EXPORTS)$(SQ) \
+		-DEXEP=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)javap$(SQ) -DOLWMODE=iii -DJDK_VERSION=$(JDK_VERSION) \
+		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
+		-DOBJECTJARPATH=$(Q)$(TEST_RESROOT)$(D)object_iii.jar$(Q) \
+		-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) \
+		-explainExcludes -nonZeroExitWhenError; \
+		$(TEST_STATUS)</command>
+		<platformRequirements>^arch.arm</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	<test>
+		<testCaseName>cmdLineTester_lockWordAlignment_Object_d</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -cp $(Q)$(ASM_JAR)$(P)$(TEST_RESROOT)$(D)alignment.jar$(Q) CreateTestObjectJar $(Q)$(TEST_RESROOT)$(D)$(Q) d; \
+		$(JAVA_COMMAND) $(JVM_OPTIONS) -DJVM_TEST_ROOT=$(JVM_TEST_ROOT) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) $(ADD_EXPORTS)$(SQ) \
+		-DEXEP=$(SQ)$(TEST_JDK_HOME)$(D)bin$(D)javap$(SQ) -DOLWMODE=d -DJDK_VERSION=$(JDK_VERSION) \
+		-DTESTSJARPATH=$(Q)$(TEST_RESROOT)$(D)alignment.jar$(Q) \
+		-DOBJECTJARPATH=$(Q)$(TEST_RESROOT)$(D)object_d.jar$(Q) \
+		-jar $(CMDLINETESTER_JAR) -config $(Q)$(TEST_RESROOT)$(D)alignment.xml$(Q) \
+		-explainExcludes -nonZeroExitWhenError; \
+		$(TEST_STATUS)</command>
+		<platformRequirements>^arch.arm</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>

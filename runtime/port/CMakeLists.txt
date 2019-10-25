@@ -202,7 +202,8 @@ omr_add_exports(j9prt
 
 # Note: we need to pass EARLY_SOURCE_EVAL because the ddr logic chokes on
 # $<TARGET_OBJECTS:omrport_obj> on older versions of cmake
-target_enable_ddr(j9prt j9ddr EARLY_SOURCE_EVAL)
+target_enable_ddr(j9prt EARLY_SOURCE_EVAL GLOB_HEADERS)
+ddr_set_add_targets(j9ddr j9prt)
 
 install(
 	TARGETS j9prt

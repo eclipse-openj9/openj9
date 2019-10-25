@@ -34,6 +34,7 @@
 #include "jbcmap.h"
 #include "ut_j9bcu.h"
 #include "util_api.h"
+#include "j9protos.h"
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 #define VALUE_TYPES_MAJOR_VERSION 55
@@ -137,12 +138,13 @@ ClassFileOracle::LocalVariablesIterator::hasGenericSignature()
 }
 
 ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *classFile, ConstantPoolMap *constantPoolMap,
-                                 U_8 * verifyExcludeAttribute, ROMClassCreationContext *context) :
+                                 U_8 * verifyExcludeAttribute, U_8 * romBuilderClassFileBuffer, ROMClassCreationContext *context) :
 	_buildResult(OK),
 	_bufferManager(bufferManager),
 	_classFile(classFile),
 	_constantPoolMap(constantPoolMap),
 	_verifyExcludeAttribute(verifyExcludeAttribute),
+	_romBuilderClassFileBuffer(romBuilderClassFileBuffer),
 	_context(context),
 	_singleScalarStaticCount(0),
 	_objectStaticCount(0),
@@ -964,6 +966,24 @@ ClassFileOracle::walkMethodMethodParametersAttribute(U_16 methodIndex)
 
 }
 
+void
+ClassFileOracle::throwGenericErrorWithCustomMsg(UDATA code, UDATA offset)
+{
+	_buildResult = OutOfMemory;
+	PORT_ACCESS_FROM_PORT(_context->portLibrary());
+	U_8* errorMsg = (U_8 *)j9mem_allocate_memory(sizeof(J9CfrError), J9MEM_CATEGORY_CLASSES);
+	if (NULL != errorMsg) {
+		_buildResult = GenericErrorCustomMsg;
+		buildError((J9CfrError*)errorMsg, code, GenericErrorCustomMsg, offset);
+		J9TranslationBufferSet* dlb = _context->javaVM()->dynamicLoadBuffers;
+		/* avoid leaking memory if classFileError was not previously null. Do not free
+		 * memory if _classFileBuffer from ROMClassBuilder is using the same address. */
+		if ((NULL != dlb->classFileError) && (_romBuilderClassFileBuffer != dlb->classFileError)) {
+			j9mem_free_memory(dlb->classFileError);
+		}
+		dlb->classFileError = errorMsg;
+	}
+}
 
 void
 ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
@@ -1126,7 +1146,8 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 						if (codeAttribute->maxLocals <= index) {
 							Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_LocalVariableTableIndexOutOfBounds(
 									index, codeAttribute->maxLocals, (U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex));
-							_buildResult = GenericError;
+
+							throwGenericErrorWithCustomMsg(J9NLS_CFR_LVT_INDEX_OUTOFRANGE__ID, index);
 							break;
 						} else if (NULL == _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTable) {
 							_methodsInfo[methodIndex].localVariablesInfo[index].localVariableTable = localVariableTable;
@@ -1158,11 +1179,12 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 				J9CfrAttributeLocalVariableTypeTable *localVariableTypeTable = (J9CfrAttributeLocalVariableTypeTable *) attribute;
 				if (0 != localVariableTypeTable->localVariableTypeTableLength) {
 					for (U_16 localVariableTypeTableIndex = 0; localVariableTypeTableIndex < localVariableTypeTable->localVariableTypeTableLength; ++localVariableTypeTableIndex) {
-						U_16 index = localVariableTypeTable->localVariableTypeTable[localVariableTypeTableIndex].index;
+						J9CfrLocalVariableTypeTableEntry *lvttEntry = &(localVariableTypeTable->localVariableTypeTable[localVariableTypeTableIndex]);
+						const U_16 index = lvttEntry->index;
 						if (codeAttribute->maxLocals <= index) {
 							Trc_BCU_ClassFileOracle_walkMethodCodeAttributeAttributes_LocalVariableTypeTableIndexOutOfBounds(
 									index, codeAttribute->maxLocals, (U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex));
-							_buildResult = GenericError;
+							throwGenericErrorWithCustomMsg(J9NLS_CFR_LVTT_INDEX_OUTOFRANGE__ID, index);
 							break;
 						} else if (NULL == _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTable) {
 							_methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTable = localVariableTypeTable;
@@ -1171,6 +1193,19 @@ ClassFileOracle::walkMethodCodeAttributeAttributes(U_16 methodIndex)
 									(U_32)getUTF8Length(_classFile->methods[methodIndex].nameIndex), getUTF8Data(_classFile->methods[methodIndex].nameIndex), localVariableTypeTable, _methodsInfo[methodIndex].localVariablesInfo[index].localVariableTypeTable);
 							_buildResult = GenericError;
 							break;
+						}
+
+						/* 4.7.14: There may be no more than one LocalVariableTypeTable attribute per local variable in the attributes table of a Code attribute. 
+						 * The entry is unique with its startPC, length, and index. */
+						for (U_16 localVariableTypeTableCompareIndex = 0; localVariableTypeTableCompareIndex < localVariableTypeTableIndex; ++localVariableTypeTableCompareIndex) {
+							J9CfrLocalVariableTypeTableEntry *lvttCompareEntry = &(localVariableTypeTable->localVariableTypeTable[localVariableTypeTableCompareIndex]);
+							if ((lvttEntry->startPC == lvttCompareEntry->startPC)
+								&& (lvttEntry->length == lvttCompareEntry->length)
+								&& (index == lvttCompareEntry->index) 
+							) {
+								throwGenericErrorWithCustomMsg(J9NLS_CFR_LVTT_DUPLICATE__ID, index);
+								break;
+							}
 						}
 						markConstantUTF8AsReferenced(localVariableTypeTable->localVariableTypeTable[localVariableTypeTableIndex].signatureIndex);
 					}

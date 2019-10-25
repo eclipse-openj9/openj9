@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,8 +23,7 @@
 #ifndef PPC_PRIVATELINKAGE_INCL
 #define PPC_PRIVATELINKAGE_INCL
 
-#include "codegen/Linkage.hpp"
-
+#include "codegen/PrivateLinkage.hpp"
 #include "infra/Assert.hpp"
 
 class TR_BitVector;
@@ -52,8 +51,13 @@ struct PPCPICItem
    float _frequency;
    };
 
+}
 
-class PPCPrivateLinkage : public TR::Linkage
+
+namespace J9
+{
+
+class PPCPrivateLinkage : public PrivateLinkage
    {
    public:
 
@@ -105,12 +109,17 @@ class PPCPrivateLinkage : public TR::Linkage
    virtual TR::Register *buildalloca(TR::Node *BIFCallNode);
    };
 
+}
 
-class PPCHelperLinkage : public TR::PPCPrivateLinkage
+
+namespace TR
+{
+
+class PPCHelperLinkage : public J9::PPCPrivateLinkage
    {
    public:
 
-   PPCHelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), TR::PPCPrivateLinkage(cg)
+   PPCHelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), J9::PPCPrivateLinkage(cg)
       {
       TR_ASSERT(helperLinkage == TR_Helper || helperLinkage == TR_CHelper, "Unexpected helper linkage convention");
       }

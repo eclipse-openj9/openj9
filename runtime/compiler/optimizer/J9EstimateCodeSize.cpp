@@ -31,9 +31,9 @@
 #include "env/VMJ9.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
 #include "optimizer/PreExistence.hpp"
 #include "optimizer/J9CallGraph.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
@@ -328,14 +328,13 @@ static Block * getBlock(TR::Compilation *comp, Block * * blocks,
    if (!blocks[i])
       {
 
-      TR::TreeTop *startTree = TR::TreeTop::create(comp, TR::Node::createOnStack(
+      TR::TreeTop *startTree = TR::TreeTop::create(comp, TR::Node::create(
             NULL, TR::BBStart, 0));
-      TR::TreeTop *endTree = TR::TreeTop::create(comp, TR::Node::createOnStack(
+      TR::TreeTop *endTree = TR::TreeTop::create(comp, TR::Node::create(
             NULL, TR::BBEnd, 0));
 
       startTree->join(endTree);
-      blocks[i] = new (comp->trStackMemory()) Block (startTree, endTree,
-            comp->trMemory());
+      blocks[i] = Block::createBlock(startTree, endTree, cfg);
 
       blocks[i]->setBlockBCIndex(i);
       blocks[i]->setNumber(cfg.getNextNodeNumber());
@@ -460,7 +459,7 @@ TR_J9EstimateCodeSize::adjustEstimateForStringCompression(TR_ResolvedMethod* met
 bool
 TR_J9EstimateCodeSize::estimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown)
    {
-   if (realEstimateCodeSize(calltarget, prevCallStack, recurseDown))
+   if (realEstimateCodeSize(calltarget, prevCallStack, recurseDown, comp()->trMemory()->currentStackRegion()))
       {
       if (_isLeaf && _realSize > 1)
          {
@@ -475,7 +474,7 @@ TR_J9EstimateCodeSize::estimateCodeSize(TR_CallTarget *calltarget, TR_CallStack 
    }
 
 bool
-TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown)
+TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown, TR::Region &cfgRegion)
    {
    TR_ASSERT(calltarget->_calleeMethod, "assertion failure");
 
@@ -490,7 +489,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       tracer()->dumpPrexArgInfo(calltarget->_ecsPrexArgInfo);
       }
 
-   TR_InlinerDelimiter delimiter(tracer(), "estimateCodeSize");
+   TR_InlinerDelimiter delimiter(tracer(), "realEstimateCodeSize");
 
    if (calltarget->_calleeMethod->numberOfExceptionHandlers() > 0)
       _hasExceptionHandlers = true;
@@ -949,13 +948,13 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
    bool wasPeekingSuccessfull = false;
 
-   if (nph.doPeeking() && recurseDown)
+   if (nph.doPeeking() && recurseDown
+      || calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen())
       {
 
       heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- needsPeeking is true for calltarget %p",
       _recursionDepth, calltarget);
 
-      methodSymbol = TR::ResolvedMethodSymbol::create(comp()->trHeapMemory(),calltarget->_calleeMethod,comp());
       bool ilgenSuccess = (NULL != methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, NULL));
       if (ilgenSuccess)
          {
@@ -998,16 +997,17 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                (uint16_t) handler, (uint32_t) type);
          }
 
-      TR::CFG cfg(comp(), calltarget->_calleeSymbol);
-      cfg.setStartAndEnd(new (comp()->trStackMemory()) TR::Block(
-            TR::TreeTop::create(comp(), TR::Node::createOnStack(NULL,
+      calltarget->_cfg = new (cfgRegion) TR::CFG(comp(), calltarget->_calleeSymbol, cfgRegion);
+      TR::CFG &cfg = *(calltarget->_cfg);
+      cfg.setStartAndEnd(TR::Block::createBlock(
+            TR::TreeTop::create(comp(), TR::Node::create(NULL,
                   TR::BBStart, 0)), TR::TreeTop::create(comp(),
-                  TR::Node::createOnStack(NULL, TR::BBEnd, 0)),
-            comp()->trMemory()), new (comp()->trStackMemory()) TR::Block(
-            TR::TreeTop::create(comp(), TR::Node::createOnStack(NULL,
+                  TR::Node::create(NULL, TR::BBEnd, 0)),
+            cfg), TR::Block::createBlock(
+            TR::TreeTop::create(comp(), TR::Node::create(NULL,
                   TR::BBStart, 0)), TR::TreeTop::create(comp(),
-                  TR::Node::createOnStack(NULL, TR::BBEnd, 0)),
-            comp()->trMemory()));
+                  TR::Node::create(NULL, TR::BBEnd, 0)),
+            cfg));
 
       cfg.getStart()->asBlock()->getEntry()->join(
             cfg.getStart()->asBlock()->getExit());
@@ -1071,7 +1071,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                debugTrace(tracer(),"adding a fallthrough edge between block %p %d and %p %d", currentBlock, currentBlock->getNumber(), newBlock, newBlock->getNumber());
                debugTrace(tracer(),"joining nodes between blocks %p %d and %p %d", currentBlock, currentBlock->getNumber(), newBlock, newBlock->getNumber());
                currentBlock->getExit()->join(newBlock->getEntry());
-               cfg.addEdge(currentBlock, newBlock, stackAlloc);
+               cfg.addEdge(currentBlock, newBlock);
                } 
             else 
                {
@@ -1136,14 +1136,14 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   setupLastTreeTop(currentBlock, bc, i, getBlock(comp(), blocks, calltarget->_calleeMethod, i + bci.relativeBranch(), cfg), calltarget->_calleeMethod, comp());
                   cfg.addEdge(currentBlock, getBlock(comp(), blocks,
                         calltarget->_calleeMethod, i + bci.relativeBranch(),
-                        cfg), stackAlloc);
+                        cfg));
                   addFallThruEdge = true;
                   break;
                   }
                case J9BCgoto:
                case J9BCgotow:
                   setupLastTreeTop(currentBlock, bc, i, getBlock(comp(), blocks, calltarget->_calleeMethod, i + bci.relativeBranch(), cfg), calltarget->_calleeMethod, comp());
-                  cfg.addEdge(currentBlock, getBlock(comp(), blocks, calltarget->_calleeMethod, i + bci.relativeBranch(), cfg), stackAlloc);
+                  cfg.addEdge(currentBlock, getBlock(comp(), blocks, calltarget->_calleeMethod, i + bci.relativeBranch(), cfg));
                   addFallThruEdge = false;
                   break;
                case J9BCReturnC:
@@ -1153,7 +1153,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                case J9BCgenericReturn:
                case J9BCathrow:
                   setupLastTreeTop(currentBlock, bc, i, cfg.getEnd()->asBlock(), calltarget->_calleeMethod, comp());
-                  cfg.addEdge(currentBlock, cfg.getEnd(), stackAlloc);
+                  cfg.addEdge(currentBlock, cfg.getEnd());
                   addFallThruEdge = false;
                   break;
                case J9BCtableswitch:
@@ -1164,13 +1164,13 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                               index), cfg);
                   setupLastTreeTop(currentBlock, bc, i, defaultBlock,
                         calltarget->_calleeMethod, comp());
-                  cfg.addEdge(currentBlock, defaultBlock, stackAlloc);
+                  cfg.addEdge(currentBlock, defaultBlock);
                   int32_t low = bci.nextSwitchValue(index);
                   int32_t high = bci.nextSwitchValue(index) - low + 1;
                   for (int32_t j = 0; j < high; ++j)
                      cfg.addEdge(currentBlock, getBlock(comp(), blocks,
                            calltarget->_calleeMethod, i + bci.nextSwitchValue(
-                                 index), cfg), stackAlloc);
+                                 index), cfg));
                   addFallThruEdge = false;
                   break;
                   }
@@ -1182,14 +1182,14 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                               index), cfg);
                   setupLastTreeTop(currentBlock, bc, i, defaultBlock,
                         calltarget->_calleeMethod, comp());
-                  cfg.addEdge(currentBlock, defaultBlock, stackAlloc);
+                  cfg.addEdge(currentBlock, defaultBlock);
                   int32_t tableSize = bci.nextSwitchValue(index);
                   for (int32_t j = 0; j < tableSize; ++j)
                      {
                      index += 4; // match value
                      cfg.addEdge(currentBlock, getBlock(comp(), blocks,
                            calltarget->_calleeMethod, i + bci.nextSwitchValue(
-                                 index), cfg), stackAlloc);
+                                 index), cfg));
                      }
                   addFallThruEdge = false;
                   break;
@@ -1211,7 +1211,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
          for (int32_t j = handlerInfo->_startIndex; j <= handlerInfo->_endIndex; ++j)
             if (blocks[j])
-               cfg.addExceptionEdge(blocks[j], blocks[handlerInfo->_handlerIndex], stackAlloc);
+               cfg.addExceptionEdge(blocks[j], blocks[handlerInfo->_handlerIndex]);
          }
 
       // Adjust call frequency for unknown or direct calls, for which we don't get profiling information
@@ -1259,6 +1259,63 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       TR_prevArgs pca;
       TR::Block *currentInlinedBlock = NULL;
       TR_J9ByteCode bc = bci.first(), nextBC;
+      if (wasPeekingSuccessfull
+          && comp()->getOrCreateKnownObjectTable()
+          && calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen())
+         {
+         // call sites in method handle thunks are created from trees so skip bytecode iteration below
+         bc = J9BCunknown;
+         TR::NodeChecklist visited(comp());
+         for (TR::TreeTop* tt = methodSymbol->getFirstTreeTop(); tt; tt = tt->getNextTreeTop())
+            {
+            if (tt->getNode()->getOpCodeValue() == TR::BBStart)
+               /*
+                * TODO: we should use the proper block with correct block frequency info
+                * but profiling for method handle thunks doesn't work yet
+                */
+               currentInlinedBlock = tt->getEnclosingBlock();
+
+            if (tt->getNode()->getNumChildren()>0 &&
+                tt->getNode()->getFirstChild()->getOpCode().isCall())
+               {
+               TR::Node* parent = tt->getNode();
+               TR::Node* callNode = tt->getNode()->getFirstChild();
+               TR::SymbolReference* symRef =  callNode->getSymbolReference();
+               if (!callNode->getSymbolReference()->isUnresolved() && !visited.contains(callNode))
+                  {
+                  int i = callNode->getByteCodeIndex();
+                  visited.add(callNode);
+                  TR_ResolvedMethod* resolvedMethod = callNode->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod();
+                  TR::RecognizedMethod rm = resolvedMethod->getRecognizedMethod();
+
+                  TR_CallSite *callsite = TR_CallSite::create(tt, parent, callNode,
+                                                            resolvedMethod->classOfMethod(), symRef, resolvedMethod,
+                                                            comp(), comp()->trMemory() , heapAlloc, calltarget->_calleeMethod, _recursionDepth, false);
+
+                  TR_PrexArgInfo *argInfo = calltarget->_ecsPrexArgInfo;
+
+                  callsite->_callerBlock = currentInlinedBlock;
+                  if (isInlineable(&callStack, callsite))
+                     {
+                     callSites[i] = callsite;
+                     inlineableCallExists = true;
+
+                     if (!currentInlinedBlock->isCold())
+                          nonColdCallExists = true;
+                     for (int j = 0; j < callSites[i]->numTargets(); j++)
+                        callSites[i]->getTarget(j)->_originatingBlock = currentInlinedBlock;
+                     }
+                  else
+                     {
+                     //support counters
+                     calltarget->addDeadCallee(callsite);
+                     }
+                  flags[i].set(isUnsanitizeable);
+                  }
+               }
+            }
+         }
+
       for (; bc != J9BCunknown; bc = bci.next())
          {
          TR_ResolvedMethod * resolvedMethod;
@@ -1280,6 +1337,70 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
          switch (bc)
             {
+            case J9BCinvokedynamic:
+               {
+               if (thisOnStack)
+                  hasThisCalls = true;
+               cpIndex = bci.next2Bytes();
+               bool isInterface = false;
+               bool isIndirectCall = false;
+               TR::Method *interfaceMethod = 0;
+               TR::TreeTop *callNodeTreeTop = 0;
+               TR::Node *parent = 0;
+               TR::Node *callNode = 0;
+               TR::ResolvedMethodSymbol *resolvedSymbol = 0;
+
+               TR_ResolvedMethod * owningMethod = methodSymbol->getResolvedMethod();
+               TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
+               if (knot && !owningMethod->isUnresolvedCallSiteTableEntry(cpIndex))
+                  {
+                  isIndirectCall = true;
+                  uintptrj_t *entryLocation = (uintptrj_t*)owningMethod->callSiteTableEntryAddress(cpIndex);
+                  // Add callsite handle to known object table
+                  knot->getIndexAt((uintptrj_t*)entryLocation);
+                  resolvedMethod = comp()->fej9()->createMethodHandleArchetypeSpecimen(comp()->trMemory(), entryLocation, owningMethod);
+                  bool allconsts= false;
+
+                  heuristicTrace(tracer(),"numberOfExplicitParameters = %d  pca.getNumPrevConstArgs = %d\n",resolvedMethod->numberOfExplicitParameters() ,pca.getNumPrevConstArgs(resolvedMethod->numberOfExplicitParameters()));
+                  if ( resolvedMethod->numberOfExplicitParameters() > 0 && resolvedMethod->numberOfExplicitParameters() <= pca.getNumPrevConstArgs(resolvedMethod->numberOfExplicitParameters()))
+                     allconsts = true;
+
+                  TR_CallSite *callsite = new (comp()->trHeapMemory()) TR_J9MethodHandleCallSite( callStack._method, callNodeTreeTop,   parent,
+                                                                                    callNode, interfaceMethod, resolvedMethod->classOfMethod(),
+                                                                                    (int32_t) resolvedMethod->virtualCallSelector(cpIndex), cpIndex, resolvedMethod,
+                                                                                    resolvedSymbol, isIndirectCall, isInterface, newBCInfo, comp(),
+                                                                                    _recursionDepth, allconsts);
+
+                  TR_PrexArgInfo *argInfo = calltarget->_ecsPrexArgInfo;
+                  callsite->_callerBlock = currentInlinedBlock;
+                  if (isInlineable(&callStack, callsite))
+                     {
+                     callSites[i] = callsite;
+                     inlineableCallExists = true;
+
+                     if (!currentInlinedBlock->isCold())
+                          nonColdCallExists = true;
+
+                     if (wasPeekingSuccessfull)
+                        {
+                        TR_PrexArgInfo::propagateArgsFromCaller(methodSymbol, callsite, argInfo, tracer());
+                        if (tracer()->heuristicLevel())
+                           {
+                           alwaysTrace(tracer(), "propagateArgs :");
+                           if (callsite->numTargets() && callsite->getTarget(0)->_ecsPrexArgInfo)
+                              tracer()->dumpPrexArgInfo(callsite->getTarget(0)->_ecsPrexArgInfo);
+                           }
+                        }
+                     }
+                  else
+                     //support counters
+                     calltarget->addDeadCallee(callsite);
+
+                  }
+               }
+               flags[i].set(isUnsanitizeable);
+               break;
+
             case J9BCinvokevirtual:
                {
                if (thisOnStack)
@@ -1590,7 +1711,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   {
                   callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite(
                      callStack._method, callNodeTreeTop, parent, callNode,
-                     interfaceMethod, resolvedMethod->classOfMethod(), -1, cpIndex,
+                     interfaceMethod, resolvedMethod->classOfMethod(), (int32_t) resolvedMethod->virtualCallSelector(cpIndex), cpIndex,
                      resolvedMethod, resolvedSymbol, isIndirectCall, isInterface,
                      newBCInfo, comp(), _recursionDepth, allconsts);
                   }
@@ -1716,9 +1837,14 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
           heuristicTrace(tracer(),"Omitting Big Decimal method from size readjustment, calltarget = %p calleemethod = %p",calltarget,calltarget ? calltarget->_calleeMethod : 0);
          }
 
+      if (_inliner->forceInline(calltarget))
+         {
+         calltarget->_fullSize = 0;
+         calltarget->_partialSize = 0;
+         }
+
       /*************** PHASE 3:  Optimistically Assume we can partially inline calltarget and add to an optimisticSize ******************/
 
-      calltarget->_cfg = &cfg;
 
       bool isCandidate = trimBlocksForPartialInlining(calltarget, &callBlocks);
 
@@ -1860,8 +1986,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   int32_t origOptimisticSize = _optimisticSize;
                   int32_t origRealSize = _realSize;
                   bool prevNonColdCalls = _hasNonColdCalls;
-                 // if(recurseDown)
-                     bool estimateSuccess = estimateCodeSize(targetCallee, &callStack); //,recurseDown);
+                  bool estimateSuccess = estimateCodeSize(targetCallee, &callStack); //recurseDown = true
                   bool calltargetSetTooBig = false;
                   bool calleeHasNonColdCalls = _hasNonColdCalls;
                   _hasNonColdCalls = prevNonColdCalls;// reset the bool for the parent

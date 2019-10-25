@@ -363,11 +363,11 @@ public:
 #else /* defined (OMR_GC_COMPRESSED_POINTERS) */
 			uintptr_t elements = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
 #endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
+
 			if (0 == elements) {
 				elements = ((J9IndexableObjectDiscontiguous *)forwardedHeader->getObject())->size;
 			}
-#endif
+
 			uintptr_t dataSize = _arrayObjectModel->getDataSizeInBytes(clazz, elements);
 			GC_ArrayletObjectModel::ArrayLayout layout = _arrayObjectModel->getArrayletLayout(clazz, dataSize);
 			size = _arrayObjectModel->getSizeInBytesWithHeader(clazz, layout, elements);

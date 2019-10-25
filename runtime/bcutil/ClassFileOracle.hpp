@@ -831,7 +831,7 @@ class NameAndTypeIterator
 	FieldIterator getFieldIterator() { return FieldIterator(_fieldsInfo, _classFile); }
 	MethodIterator getMethodIterator() { return MethodIterator(_methodsInfo, _classFile); }
 
-	ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *classFile, ConstantPoolMap *constantPoolMap, U_8 * verifyExcludeAttribute, ROMClassCreationContext *context);
+	ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *classFile, ConstantPoolMap *constantPoolMap, U_8 * verifyExcludeAttribute, U_8 * romBuilderClassFileBuffer, ROMClassCreationContext *context);
 	~ClassFileOracle();
 
 	bool isOK() const { return OK == _buildResult; }
@@ -967,6 +967,7 @@ private:
 	J9CfrClassFile *_classFile;
 	ConstantPoolMap *_constantPoolMap;
 	U_8 *_verifyExcludeAttribute;
+	U_8 *_romBuilderClassFileBuffer;
 	UDATA _bctFlags;
 	ROMClassCreationContext *_context;
 
@@ -1029,6 +1030,7 @@ private:
 	void walkMethodAttributes(U_16 methodIndex);
 	void walkMethodThrownExceptions(U_16 methodIndex);
 	void walkMethodCodeAttribute(U_16 methodIndex);
+	void throwGenericErrorWithCustomMsg(UDATA code, UDATA offset);
 	void walkMethodCodeAttributeAttributes(U_16 methodIndex);
 	void walkMethodCodeAttributeCaughtExceptions(U_16 methodIndex);
 	void walkMethodCodeAttributeCode(U_16 methodIndex);

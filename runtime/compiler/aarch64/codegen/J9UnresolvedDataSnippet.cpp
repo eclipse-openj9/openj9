@@ -20,18 +20,33 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/UnresolvedDataSnippet.hpp"
+#include "compile/Compilation.hpp"
+#include "il/StaticSymbol.hpp"
 
 uint8_t *
 J9::ARM64::UnresolvedDataSnippet::emitSnippetBody()
    {
-   TR_UNIMPLEMENTED();
+   // Implement this in OpenJ9 PR #5985
+   cg()->comp()->failCompilation<TR::AssertionFailure>("UnresolvedDataSnippet");
    return NULL;
+   }
+
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
+   {
+   uint8_t            *cursor = snippet->getSnippetLabel()->getCodeLocation();
+
+   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Unresolved Data Snippet");
+
+   //TODO print snippet body
    }
 
 uint32_t
 J9::ARM64::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   TR_UNIMPLEMENTED();
+   // Implement this in OpenJ9 PR #5985
+   cg()->comp()->failCompilation<TR::AssertionFailure>("UnresolvedDataSnippet");
    return 0;
    }

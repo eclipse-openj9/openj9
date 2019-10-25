@@ -193,12 +193,12 @@ public:
 				extensions->unfinalizedObjectLists = &regionExtension->_unfinalizedObjectLists[list];
 
 				new(&regionExtension->_ownableSynchronizerObjectLists[list]) MM_OwnableSynchronizerObjectList();
-				regionExtension->_ownableSynchronizerObjectLists[list].setNextList(extensions->ownableSynchronizerObjectLists);
+				regionExtension->_ownableSynchronizerObjectLists[list].setNextList(extensions->getOwnableSynchronizerObjectLists());
 				regionExtension->_ownableSynchronizerObjectLists[list].setPreviousList(NULL);
-				if (NULL != extensions->ownableSynchronizerObjectLists) {
-					extensions->ownableSynchronizerObjectLists->setPreviousList(&regionExtension->_ownableSynchronizerObjectLists[list]);
+				if (NULL != extensions->getOwnableSynchronizerObjectLists()) {
+					extensions->getOwnableSynchronizerObjectLists()->setPreviousList(&regionExtension->_ownableSynchronizerObjectLists[list]);
 				}
-				extensions->ownableSynchronizerObjectLists = &regionExtension->_ownableSynchronizerObjectLists[list];
+				extensions->setOwnableSynchronizerObjectLists(&regionExtension->_ownableSynchronizerObjectLists[list]);
 
 				new(&regionExtension->_referenceObjectLists[list]) MM_ReferenceObjectList();
 			}

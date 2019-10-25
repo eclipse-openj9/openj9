@@ -49,16 +49,16 @@
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/NodePool.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/Cfg.hpp"
@@ -2070,7 +2070,12 @@ TR::SymbolReference *TR_StringPeepholes::findSymRefForValueOf(const char *sig)
    {
    // try to find the symbol ref for String.valueOf
    TR_OpaqueClassBlock *stringClass = comp()->getStringClassPointer();
-   TR_ASSERT(stringClass, "stringClass cannot be 0 because we did this before in init\n");
+
+   // It is possible for getStringClassPointer to return NULL in an AOT compilation
+   if (!stringClass && comp()->compileRelocatableCode())
+      comp()->failCompilation<TR::CompilationException>("StringPeepholes: stringClass is NULL");
+
+   TR_ASSERT_FATAL(stringClass, "stringClass should not be NULL\n");
    TR_ResolvedMethod *method = comp()->fej9()->getResolvedMethodForNameAndSignature(trMemory(), stringClass, "valueOf", sig);
    return method ? getSymRefTab()->findOrCreateMethodSymbol(JITTED_METHOD_INDEX, -1, method, TR::MethodSymbol::Static) : NULL;
    }
@@ -2155,7 +2160,7 @@ void TR_StringPeepholes::removeAllocationFenceOfNew(TR::TreeTop *newTreeTop)
       }
    }
 
-/* 
+/*
  * In HCR, these optimizations cannot be performed if the classes have already been redefined.
  * StringBuffer and StringBuilder calls will be removed and replaced, whilst Integer calls will
  * be used for conversions to strings.
@@ -2163,20 +2168,20 @@ void TR_StringPeepholes::removeAllocationFenceOfNew(TR::TreeTop *newTreeTop)
 bool TR_StringPeepholes::classesRedefined()
    {
    if (!comp()->getOption(TR_EnableHCR))
-      return false; 
+      return false;
 
    TR_OpaqueClassBlock *clazz = comp()->fej9()->getSystemClassFromClassName("java/lang/StringBuffer", strlen("java/lang/StringBuffer"));
    if (classRedefined(clazz))
       return true;
- 
+
    clazz = comp()->fej9()->getSystemClassFromClassName("java/lang/StringBuilder", strlen("java/lang/StringBuilder"));
    if (classRedefined(clazz))
       return true;
- 
+
    clazz = comp()->fej9()->getSystemClassFromClassName("java/lang/Integer", strlen("java/lang/Integer"));
    if (classRedefined(clazz))
       return true;
-   
+
    return false;
    }
 
@@ -2194,11 +2199,11 @@ TR::TreeTop *TR_StringPeepholes::searchForStringAppend(const char *sig, TR::Tree
    for (;tt != exitTree; tt = tt->getNextRealTreeTop())
       {
       TR::Node *node = tt->getNode();
-      
+
       if (skipNodeUnderOSR(node))
          {
          if (trace())
-            traceMsg(comp(), "Skipping OSR node [%p] when searching for append\n", node); 
+            traceMsg(comp(), "Skipping OSR node [%p] when searching for append\n", node);
          continue;
          }
 
@@ -2236,7 +2241,7 @@ TR::TreeTop *TR_StringPeepholes::searchForStringAppend(const char *sig, TR::Tree
                while (skipNodeUnderOSR(cursor->getNode()))
                   {
                   if (trace())
-                     traceMsg(comp(), "Skipping OSR node [%p] when searching for append with integer\n", node); 
+                     traceMsg(comp(), "Skipping OSR node [%p] when searching for append with integer\n", node);
 
                   // Check the additional reference to Integer.toString is seen
                   if (cursor->getNode()->getOpCode().isStoreDirect() && cursor->getNode()->getFirstChild() == prevCall)
@@ -2284,8 +2289,8 @@ TR::TreeTop *TR_StringPeepholes::searchForInitCall(const char *sig, TR::TreeTop 
       if (skipNodeUnderOSR(node))
          {
          if (trace())
-            traceMsg(comp(), "Skipping OSR node [%p] when searching for init\n", node); 
-         continue;  
+            traceMsg(comp(), "Skipping OSR node [%p] when searching for init\n", node);
+         continue;
          }
 
       if (node->getNumChildren() == 1 &&
@@ -2318,8 +2323,8 @@ TR::TreeTop *TR_StringPeepholes::searchForToStringCall(TR::TreeTop *tt, TR::Tree
       if (skipNodeUnderOSR(node))
          {
          if (trace())
-            traceMsg(comp(), "Skipping OSR node [%p] when searching for toString\n", node); 
-         continue;  
+            traceMsg(comp(), "Skipping OSR node [%p] when searching for toString\n", node);
+         continue;
          }
 
       if (node->getNumChildren() == 1 &&

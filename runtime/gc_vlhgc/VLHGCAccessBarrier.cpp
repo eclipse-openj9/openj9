@@ -174,7 +174,6 @@ MM_VLHGCAccessBarrier::preBatchObjectStoreImpl(J9VMThread *vmThread, J9Object *d
  * Finds opportunities for doing the copy without or partially executing writeBarrier.
  * @return ARRAY_COPY_SUCCESSFUL if copy was successful, ARRAY_COPY_NOT_DONE no copy is done
  */
-#if defined(J9VM_GC_ARRAYLETS)
 I_32
 MM_VLHGCAccessBarrier::backwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
 {
@@ -194,7 +193,6 @@ MM_VLHGCAccessBarrier::backwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9I
 	
 	return retValue;
 }
-
 
 /**
  * Finds opportunities for doing the copy without or partially executing writeBarrier.
@@ -218,7 +216,6 @@ MM_VLHGCAccessBarrier::forwardReferenceArrayCopyIndex(J9VMThread *vmThread, J9In
 	
 	return retValue;
 }
-#endif /* J9VM_GC_ARRAYLETS */
 
 /**
  * VMDESIGN 2048
@@ -263,13 +260,9 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 	bool alwaysCopyInCritical = (javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL;
 	if (alwaysCopyInCritical) {
 		shouldCopy = true;
-	} else {
-#if defined(J9VM_GC_ARRAYLETS)
+	} else if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(arrayObject)) {
 		/* an array having discontiguous extents is another reason to force the critical section to be a copy */
-		if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(arrayObject)) {
-			shouldCopy = true;
-		}
-#endif
+		shouldCopy = true;
 	}
 
 	if (shouldCopy) {
@@ -317,14 +310,11 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 	bool alwaysCopyInCritical = (javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL;
 	if (alwaysCopyInCritical) {
 		shouldCopy = true;
-	} else {
-#if defined(J9VM_GC_ARRAYLETS)
+	} else if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(arrayObject)) {
 		/* an array having discontiguous extents is another reason to force the critical section to be a copy */
-		if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(arrayObject)) {
-			shouldCopy = true;
-		}
-#endif
+		shouldCopy = true;
 	}
+
 	if(shouldCopy) {
 		if(JNI_ABORT != mode) {
 			GC_ArrayObjectModel* indexableObjectModel = &_extensions->indexableObjectModel;
@@ -385,13 +375,9 @@ MM_VLHGCAccessBarrier::jniGetStringCritical(J9VMThread* vmThread, jstring str, j
 	bool alwaysCopyInCritical = (javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL;
 	if (alwaysCopyInCritical) {
 		shouldCopy = true;
-	} else {
-#if defined(J9VM_GC_ARRAYLETS)
+	} else if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(valueObject)) {
 		/* an array having discontiguous extents is another reason to force the critical section to be a copy */
-		if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(valueObject)) {
-			shouldCopy = true;
-		}
-#endif
+		shouldCopy = true;
 	}
 
 	if (shouldCopy) {
@@ -458,13 +444,9 @@ MM_VLHGCAccessBarrier::jniReleaseStringCritical(J9VMThread* vmThread, jstring st
 	bool alwaysCopyInCritical = (javaVM->runtimeFlags & J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL) == J9_RUNTIME_ALWAYS_COPY_JNI_CRITICAL;
 	if (alwaysCopyInCritical) {
 		shouldCopy = true;
-	} else {
-#if defined(J9VM_GC_ARRAYLETS)
+	} else if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(valueObject)) {
 		/* an array having discontiguous extents is another reason to force the critical section to be a copy */
-		if (!_extensions->indexableObjectModel.isInlineContiguousArraylet(valueObject)) {
-			shouldCopy = true;
-		}
-#endif
+		shouldCopy = true;
 	}
 
 	if (shouldCopy) {

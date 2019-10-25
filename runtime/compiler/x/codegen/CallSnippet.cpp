@@ -26,19 +26,19 @@
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/SnippetGCMap.hpp"
+#include "codegen/X86PrivateLinkage.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
-#include "x/codegen/X86PrivateLinkage.hpp"
 
 bool TR::X86PicDataSnippet::shouldEmitJ2IThunkPointer()
    {
@@ -150,7 +150,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
 
    uint8_t *cursor = startOfSnippet;
 
-   TR::X86PrivateLinkage *x86Linkage = toX86PrivateLinkage(cg()->getLinkage());
+   J9::X86PrivateLinkage *x86Linkage = static_cast<J9::X86PrivateLinkage *>(cg()->getLinkage());
 
    int32_t disp32;
 

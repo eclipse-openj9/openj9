@@ -369,17 +369,3 @@ TR_PPC64RelocationTarget::platformAddPICtoPatchPtrOnClassUnload(TR_OpaqueClassBl
    uint8_t *sitePointer = static_cast<uint8_t *>(ptr) + (TR::Compiler->target.cpu.isBigEndian()?4:0);
    createClassUnloadPicSite(classKey, sitePointer, sizeof(int32_t), reloRuntime()->comp()->getMetadataAssumptionList());
    }
-
-#ifdef ENABLE_SIMD_LIB
-#ifndef LINUX
-#include "logd2.i"
-#else
-extern "C" {
-vector double __logd2 (vector double val)
-{
-   vector double ret = { log(val[0]), log(val[1]) };
-   return ret;
-}
-}
-#endif
-#endif

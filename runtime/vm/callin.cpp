@@ -1035,43 +1035,53 @@ sendResolveInvokeDynamic(J9VMThread *currentThread, J9ConstantPool *ramCP, UDATA
 }
 
 void JNICALL
-runCallInMethod(JNIEnv *env, jobject receiver, jclass clazz, jmethodID methodID, void* args)
+runCallInMethod(JNIEnv *env, jobject receiver, jclass clazz, jmethodID methodID, void *args)
 {
-	J9VMThread *currentThread = (J9VMThread*)env;
+	J9VMThread *currentThread = (J9VMThread *)env;
 	Trc_VM_runCallInMethod_Entry(currentThread);
 	J9VMEntryLocalStorage newELS;
 	if (buildCallInStackFrame(currentThread, &newELS, false, true)) {
-		if (NULL != methodID) {
-			J9SFJNICallInFrame *frame = (J9SFJNICallInFrame*)currentThread->sp;
-			J9JNIMethodID *mid = (J9JNIMethodID*)methodID;
-			J9Method *method = mid->method;
-			J9Class *j9clazz = NULL;
-			j9object_t receiverObject = NULL;
-			if (NULL != receiver) {
-				receiverObject = J9_JNI_UNWRAP_REFERENCE(receiver);
-			}
-			VM_VMHelpers::clearException(currentThread);
-			if (NULL == clazz) {
-				/* virtual send -- lookup real method */
-				j9clazz = J9OBJECT_CLAZZ(currentThread, receiverObject);
-				method = mapVirtualMethod(currentThread, method, mid->vTableIndex, j9clazz);
-			} else {
-				j9clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, clazz);
-			}
-			if (NULL != receiverObject) {
-				*--currentThread->sp = (UDATA)receiverObject;
-				// TODO: j9clazz is never NULL, should check clazz
-				if (NULL != j9clazz) {
-					/* nonvirtual send -- could be a constructor, so invoke the recently-created object barrier */
-					currentThread->javaVM->memoryManagerFunctions->j9gc_objaccess_recentlyAllocatedObject(currentThread, receiverObject);
-				}
-			}
-			frame->specialFrameFlags |= pushArguments(currentThread, method, args);
-			/* Run the method */
-			currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
-			currentThread->returnValue2 = (UDATA)method;
-			c_cInterpreter(currentThread);
+		Assert_VM_true(NULL != methodID);
+		J9SFJNICallInFrame *frame = (J9SFJNICallInFrame *)currentThread->sp;
+		J9JNIMethodID *mid = (J9JNIMethodID *)methodID;
+		J9Method *method = mid->method;
+		J9Class *j9clazz = NULL;
+		j9object_t receiverObject = NULL;
+		if (NULL != receiver) {
+			receiverObject = J9_JNI_UNWRAP_REFERENCE(receiver);
 		}
+		VM_VMHelpers::clearException(currentThread);
+		if (NULL != clazz) {
+			j9clazz = J9VM_J9CLASS_FROM_JCLASS(currentThread, clazz);
+			if (NULL == receiverObject) {
+				goto pushArgs;
+			}
+		} else if (J9_EXPECTED(NULL != receiverObject)) {
+			/* virtual send -- lookup real method */
+			j9clazz = J9OBJECT_CLAZZ(currentThread, receiverObject);
+			method = mapVirtualMethod(currentThread, method, mid->vTableIndex, j9clazz);
+		} else /* (NULL == clazz) && (NULL == receiverObject) */ {
+			/* Only static methods can be called without a receiver. */
+			J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+			if (J9_EXPECTED(J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccStatic))) {
+				goto pushArgs;
+			}
+			setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGNULLPOINTEREXCEPTION, NULL);
+			goto restore;
+		}
+		*--currentThread->sp = (UDATA)receiverObject;
+		/* TODO j9clazz is normally not NULL, should check clazz */
+		if (NULL != j9clazz) {
+			/* nonvirtual send -- could be a constructor, so invoke the recently-created object barrier */
+			currentThread->javaVM->memoryManagerFunctions->j9gc_objaccess_recentlyAllocatedObject(currentThread, receiverObject);
+		}
+pushArgs:
+		frame->specialFrameFlags |= pushArguments(currentThread, method, args);
+		/* Run the method */
+		currentThread->returnValue = J9_BCLOOP_RUN_METHOD;
+		currentThread->returnValue2 = (UDATA)method;
+		c_cInterpreter(currentThread);
+restore:
 		restoreCallInFrame(currentThread);
 	}
 	Trc_VM_runCallInMethod_Exit(currentThread);

@@ -92,10 +92,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_get_overflow_safe_alloc_size,
 	getVerboseGCFunctionTable,
 	referenceArrayCopy,
-#if defined(J9VM_GC_ARRAYLETS)
 	/* TODO: disable this entrypoint once the JIT has been updated */
 	referenceArrayCopyIndex,
-#endif /* J9VM_GC_ARRAYLETS */
 	alwaysCallReferenceArrayCopyHelper,
 	j9gc_ext_reachable_objects_do,
 	j9gc_ext_reachable_from_object_do,
@@ -210,7 +208,6 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9mm_iterate_region_objects,
 	j9mm_find_region_for_pointer,
 	j9mm_iterate_object_slots,
-	j9mm_arraylet_identification,
 #if defined(J9VM_GC_REALTIME)
 	j9gc_objaccess_checkStringConstantsLive,
 #endif /* J9VM_GC_REALTIME */
@@ -221,10 +218,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	omrgc_get_version,
 	j9mm_abandon_object,
 	j9mm_get_guaranteed_nursery_range,
-#if defined(J9VM_GC_ARRAYLETS)
 	j9gc_arraylet_getLeafSize,
 	j9gc_arraylet_getLeafLogSize,
-#endif /* J9VM_GC_ARRAYLETS */
 	j9gc_set_allocation_sampling_interval,
 	j9gc_set_allocation_threshold,
 	j9gc_objaccess_recentlyAllocatedObject,

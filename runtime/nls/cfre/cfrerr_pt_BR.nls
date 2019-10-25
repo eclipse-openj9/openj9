@@ -1340,7 +1340,7 @@ J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.user_response=Contact the provider
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=A entrada do conjunto constante n\u00e3o \u00e9 v\u00e1lida nos arquivos de classe com vers\u00f5es menores que a 53.0
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=A entrada do conjunto constante n\u00e3o \u00e9 v\u00e1lida nos arquivos de classe com vers\u00f5es < 53.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1356,7 +1356,7 @@ J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.user_response=Contact the provider of the 
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55=A entrada do conjunto constante n\u00e3o \u00e9 v\u00e1lida nos arquivos de classe com vers\u00f5es menores que a 55.0
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55=A entrada do conjunto constante n\u00e3o \u00e9 v\u00e1lida nos arquivos de classe com vers\u00f5es < 55.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1416,7 +1416,7 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.user_response=Contact the provider of
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55=A entrada do conjunto constante n\u00e3o \u00e9 v\u00e1lida nos arquivos de classe com vers\u00f5es menores que a 55.0
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55=A entrada do conjunto constante n\u00e3o \u00e9 v\u00e1lida nos arquivos de classe com vers\u00f5es < 55.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.

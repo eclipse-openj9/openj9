@@ -74,6 +74,9 @@ struct TR_MethodToBeCompiled
    uint64_t getClientUID() const;
    void freeJITServerAllocations(); // Clean up client options which were allocated using persistent allocator
    bool hasChangedToLocalSyncComp() const { return (_origOptLevel != unknownHotness); }
+#else
+   bool isRemoteCompReq() const { return false; } // at the client
+   bool isOutOfProcessCompReq() const { return false; } // at the server
 #endif /* defined(JITSERVER_SUPPORT) */
 
    TR_MethodToBeCompiled *_next;

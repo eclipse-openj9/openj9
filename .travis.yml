@@ -28,14 +28,16 @@ cache:
 dist: xenial
 addons:
   apt:
+    sources:
+      - ubuntu-toolchain-r-test
     packages:
       - autoconf
       - ca-certificates
       - ccache
       - cpio
       - file
-      - g++-4.8
-      - gcc-4.8
+      - g++-7
+      - gcc-7
       - git
       - git-core
       - libasound2-dev
@@ -69,6 +71,6 @@ script:
 after_script:
   - ccache -s
 env:
-  # Note Currently enabling RUN_LINT and RUN_BUILD simultaneously is not supported
+  # Note: Enabling RUN_BUILD and RUN_LINT simultaneously is not currently supported.
   - RUN_BUILD=yes RUN_LINT=no
-  - RUN_BUILD=no RUN_LINT=yes
+  - RUN_BUILD=no  RUN_LINT=yes

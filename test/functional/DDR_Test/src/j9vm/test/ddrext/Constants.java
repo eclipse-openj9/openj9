@@ -169,6 +169,11 @@ public class Constants {
 	public static final String SHRC_BYTESTATS_SUCCESS_KEY_JAVA9 = "BYTEDATA !j9x";
 	public static final String SHRC_BYTESTATS_FAILURE_KEY = "UNKNOWN\\(,no shared cache";
 
+	// To check the startuphint
+	public static final String SHRC_STARTUPHINT = "startuphint";
+	public static final String SHRC_STARTUPHINT_SUCCESS_KEY = "STARTUPHINT BYTEDATA";
+	public static final String SHRC_STARTUPHINT_FAILURE_KEY = "STARTUPHINTS 0";
+
 	public static final String SHRC_UBYTESTATS = "ubytestats";
 
 	// currently our dump does not contain any data for this

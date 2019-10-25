@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -523,7 +523,7 @@ public class StackMap
 								PUSH(INT);
 							}
 						}
-					} else if (bc == JBputfield) {
+					} else if ((bc == JBputfield)  || (bc == JBwithfield)) {
 						POP();
 						index = PARAM_16(bcIndex, 1).intValue();
 						utf8Signature = J9ROMFieldRefPointer.cast(pool.add(index)).nameAndSignature().signature();
@@ -532,7 +532,10 @@ public class StackMap
 						if ((signature == 'D') || (signature == 'J')) {
 							POP();
 						}
-					} else if ((bc == JBputstatic) || (bc == JBwithfield)) {
+						if (bc == JBwithfield) {
+							PUSH(OBJ);
+						}
+					} else if (bc == JBputstatic) {
 						index = PARAM_16(bcIndex, 1).intValue();
 						utf8Signature = J9ROMFieldRefPointer.cast(pool.add(index)).nameAndSignature().signature();
 						signature = J9UTF8Helper.stringValue(utf8Signature).charAt(0);

@@ -1340,7 +1340,7 @@ J9NLS_CFR_ERR_CONSTANT_PACKAGE_OUTSIDE_MODULE.user_response=Contact the provider
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=Voce pool di costanti non valido nei file classe con versioni < 53.0
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53=Voce pool di costanti non valida nei file classe con versioni < 53.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V53.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1356,7 +1356,7 @@ J9NLS_CFR_ERR_MODULE_IS_INVALID_CLASS.user_response=Contact the provider of the 
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55=Voce pool di costanti non valido nei file classe con versioni < 55.0
+J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55=Voce pool di costanti non valida nei file classe con versioni < 55.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_CP_ENTRY_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1400,7 +1400,7 @@ J9NLS_CFR_ERR_BC_LDC2W_CONSTANT_DYNAMIC_NOT_LONG_OR_DOUBLE.user_response=Contact
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49=Voce pool di costanti non valido nei file classe con versioni < 49.0
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49=Voce pool di costanti non valida nei file classe con versioni < 49.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1408,7 +1408,7 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V49.user_response=Contact the provider of
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51=Voce pool di costanti non valido nei file classe con versioni < 51.0
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51=Voce pool di costanti non valida nei file classe con versioni < 51.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.
@@ -1416,7 +1416,7 @@ J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V51.user_response=Contact the provider of
 
 # END NON-TRANSLATABLE
 
-J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55=Voce pool di costanti non valido nei file classe con versioni < 55.0
+J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55=Voce pool di costanti non valida nei file classe con versioni < 55.0
 # START NON-TRANSLATABLE
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.explanation=Please consult the Java Virtual Machine Specification for a detailed explaination.
 J9NLS_CFR_ERR_LDC_INDEX_INVALID_BEFORE_V55.system_action=The JVM will throw a verification or classloading-related exception such as java.lang.ClassFormatError.

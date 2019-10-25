@@ -52,7 +52,6 @@ TR_PatchNOPedGuardSiteOnClassPreInitialize::make(
    return result;
    }
 
-
 uintptrj_t
 TR_PatchNOPedGuardSiteOnClassPreInitialize::hashCode(char *sig, uint32_t sigLen)
    {
@@ -88,7 +87,7 @@ TR_PatchNOPedGuardSiteOnClassPreInitialize::reclaim()
    {
    TR_ASSERT_FATAL(_key != NULL, "Attempt to reclaim an already freed _key");
 
-    jitPersistentFree((void*)_key);
+   jitPersistentFree((void*)_key);
    _key = 0;
    }
 
@@ -230,9 +229,9 @@ TR_PersistentCHTable::classGotExtended(
    {
    TR_PersistentClassInfo * cl = findClassInfo(superClassId);
    TR_PersistentClassInfo * subClass = findClassInfo(subClassId); // This is actually the class that got loaded extending the superclass
-
+#if defined(JITSERVER_SUPPORT)
    TR::CompilationInfo::get()->classGotNewlyExtended(superClassId);
-
+#endif
    // should have an assume0(cl && subClass) here - but assume does not work rt-code
 
    TR_SubClass *sc = cl->addSubClass(subClass); // Updating the hierarchy
@@ -461,6 +460,7 @@ TR_PersistentCHTable::removeAssumptionFromRAT(OMR::RuntimeAssumption *assumption
 void
 TR_PersistentClassInfo::setShouldNotBeNewlyExtended(int32_t ID)
    {
+#if defined(JITSERVER_SUPPORT)
    if (TR::compInfoPT->getStream())
       {
       auto classesThatShouldNotBeNewlyExtended = TR::compInfoPT->getClassesThatShouldNotBeNewlyExtended();
@@ -468,6 +468,7 @@ TR_PersistentClassInfo::setShouldNotBeNewlyExtended(int32_t ID)
          classesThatShouldNotBeNewlyExtended->insert(_classId);
       }
    else
+#endif
       {
       _shouldNotBeNewlyExtended.set(1 << ID);
       }

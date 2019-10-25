@@ -35,11 +35,13 @@ public class ROMClassWrapperHelper {
 		if (null == cacheHeader) {
 			return U8Pointer.cast(ptr).add(I32Pointer.cast(theCpOffset.getAddress()).at(0));
 		} else {
-			UDATA offset = J9ShrOffsetPointer.cast(theCpOffset).offset();
+			J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(theCpOffset);
+			UDATA offset = j9shrOffset.offset();
 			if (offset.eq(0)) {
 				return U8Pointer.NULL;
 			}
-			return cacheHeader[0].add(offset);
+			int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
+			return cacheHeader[layer].add(offset);
 		}
 	}
 
@@ -48,11 +50,13 @@ public class ROMClassWrapperHelper {
 		if (null == cacheHeader) {
 			return U8Pointer.cast(ptr).add(I32Pointer.cast(romClassOffset.getAddress()).at(0));
 		} else {
-			UDATA offset = J9ShrOffsetPointer.cast(romClassOffset).offset();
+			J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(romClassOffset);
+			UDATA offset = j9shrOffset.offset();
 			if (offset.eq(0)) {
 				return U8Pointer.NULL;
 			}
-			return cacheHeader[0].add(offset);
+			int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
+			return cacheHeader[layer].add(offset);
 		}
 	}
 }

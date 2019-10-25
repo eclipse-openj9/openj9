@@ -332,14 +332,11 @@ public:
 #else /* defined (OMR_GC_COMPRESSED_POINTERS) */
 		U_32 size = ((J9IndexableObjectContiguous *)_objectPtr)->size;
 #endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
-#if defined(J9VM_GC_HYBRID_ARRAYLETS)
 		if (0 == size) {
 			/* Discontiguous */
 			size = ((J9IndexableObjectDiscontiguous *)_objectPtr)->size;
 		}
-#endif
 		return size;
-
 	}
 
 	MMINLINE I_32 computeObjectHash(J9VMThread* vmThread)

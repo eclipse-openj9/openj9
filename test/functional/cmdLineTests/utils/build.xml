@@ -31,7 +31,10 @@
 	<!-- set properties for this build -->
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/utils" />
 	<property name="src" location="./src"/>
+	<property name="src_110" location="./src_110"/>
 	<property name="build" location="./bin"/>
+	<property name="addExports" value="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED" />
+	<property name="TestUtilities" location="../utilshelper/src" />
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -46,6 +49,17 @@
 		<echo>===debug:                        on</echo>
 		<echo>===destdir:                      ${DEST}</echo>
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" />
+		<if>
+			<not>
+				<equals arg1="${JDK_VERSION}" arg2="8" />
+			</not>
+			<then>
+				<javac srcdir="${src_110}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1" >
+					<src path="${TestUtilities}" />
+					<compilerarg line='${addExports}' />
+				</javac>
+			</then>
+		</if>
 	</target>
 
 	<target name="dist" depends="compile" description="generate the distribution">

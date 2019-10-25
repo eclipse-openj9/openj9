@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2006, 2017 IBM Corp. and others
+  Copyright (c) 2006, 2019 IBM Corp. and others
  
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,7 +30,6 @@
 	<flags>
 		<flag id="gc_adaptiveTenuring" value="true"/>
 		<flag id="gc_allocationTax" value="true"/>
-		<flag id="gc_arraylets" value="true"/>
 		<flag id="gc_combinationSpec" value="true"/>
 		<flag id="gc_concurrentSweep" value="true"/>
 		<flag id="gc_dynamicClassUnloading" value="true"/>
@@ -39,7 +38,6 @@
 		<flag id="gc_fragmentedHeap" value="true"/>
 		<flag id="gc_generational" value="true"/>
 		<flag id="gc_heapCardTable" value="true"/>
-		<flag id="gc_hybridArraylets" value="true"/>
 		<flag id="gc_jniArrayCache" value="true"/>
 		<flag id="gc_largeObjectArea" value="true"/>
 		<flag id="gc_leafBits" value="true"/>

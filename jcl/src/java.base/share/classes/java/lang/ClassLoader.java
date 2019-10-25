@@ -281,7 +281,9 @@ public abstract class ClassLoader {
 				System.setSecurityManager(new SecurityManager());
 			} else {
 				try {
-					System.setSecurityManager((SecurityManager)Class.forName(javaSecurityManager, true, applicationClassLoader).getDeclaredConstructor().newInstance());
+					Constructor<?> constructor = Class.forName(javaSecurityManager, true, applicationClassLoader).getConstructor();
+					constructor.setAccessible(true);
+					System.setSecurityManager((SecurityManager)constructor.newInstance());
 				} catch (Throwable e) {
 					/*[MSG "K0631", "JVM can't set custom SecurityManager due to {0}"]*/
 					throw new Error(com.ibm.oti.util.Msg.getString("K0631", e.toString()), e); //$NON-NLS-1$
@@ -542,8 +544,16 @@ final Class<?> defineClassInternal(
 	if (className != null) {
 		/*[PR 95417]*/
 		String packageName = checkClassName(className);
-		/*[PR 93858]*/
-		checkPackageSigners(packageName, className, certs);
+		if ((protectionDomain == null) && allowNullProtectionDomain) {
+			/*
+			 * Skip checkPackageSigners(), in this condition, the caller of this method is 
+			 * java.lang.Access.defineClass() and invoked by trusted system code hence 
+			 * there is no need to check its ProtectionDomain and associated code source certificates.
+			 */
+		} else {
+			/*[PR 93858]*/
+			checkPackageSigners(packageName, className, certs);
+		}
 	}
 
 	/*[PR 123387] bogus parameters to defineClass() should produce ArrayIndexOutOfBoundsException */

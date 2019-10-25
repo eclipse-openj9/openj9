@@ -2250,7 +2250,7 @@ Java_com_ibm_oti_shared_SharedClassUtilities_init(JNIEnv *env, jclass clazz) {
 	JCL_CACHE_SET(env, CLS_com_ibm_oti_shared_SharedClassCacheInfo, javaClass);
 
 	/* get methodID of SharedClassCacheInfo constructor */
-	mid = (*env)->GetMethodID(env, javaClass, "<init>", "(Ljava/lang/String;ZZIIJIIZJJIJ)V");
+	mid = (*env)->GetMethodID(env, javaClass, "<init>", "(Ljava/lang/String;ZZIIJIIZJJIJI)V");
 	if (NULL == mid) {
 		return;
 	}
@@ -2314,7 +2314,8 @@ populateSharedCacheInfo(J9JavaVM *vm, J9SharedCacheInfo *event_data, void *user_
 												(-1 == event_data->cacheSize) ? (jlong) -1 : (jlong) event_data->cacheSize,
 												(-1 == event_data->freeBytes) ? (jlong) -1 : (jlong) event_data->freeBytes,
 												(jint)event_data->cacheType,
-												((UDATA)-1 == event_data->softMaxBytes) ? (jlong) -1 : (jlong) event_data->softMaxBytes
+												((UDATA)-1 == event_data->softMaxBytes) ? (jlong) -1 : (jlong) event_data->softMaxBytes,
+												(jint) event_data->layer
 												);
 	if (NULL == sharedCacheInfoObject) {
 		return -1;

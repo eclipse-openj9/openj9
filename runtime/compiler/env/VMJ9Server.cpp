@@ -31,7 +31,6 @@
 #include "runtime/CodeCacheExceptions.hpp"
 #include "control/JITServerHelpers.hpp"
 #include "env/PersistentCHTable.hpp"
-#include "env/J2IThunk.hpp"
 #include "exceptions/AOTFailure.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "env/J2IThunk.hpp"

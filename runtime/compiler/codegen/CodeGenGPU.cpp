@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,13 +32,13 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/RecognizedMethods.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/annotations/GPUAnnotation.hpp"
@@ -651,6 +651,7 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::checkcast
    NULL,          // TR::checkcastAndNULLCHK
    NULL,          // TR::New
+   NULL,          //TR::newvalue
    "INVALID",       // TR::newarray
    NULL,          // TR::anewarray
    NULL,          // TR::variableNew
@@ -815,7 +816,6 @@ static const char * nvvmOpCodeNames[] =
 
 
 
-   NULL,          // TR::imulover
 
    NULL,          // TR::dfloor
    NULL,          // TR::ffloor

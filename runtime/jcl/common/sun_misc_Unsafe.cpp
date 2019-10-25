@@ -100,13 +100,6 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 
 	jsize length = env->GetArrayLength(bytecodes);
 
-	if (NULL != vm->sharedClassConfig) {
-		if (J9_ARE_ALL_BITS_SET(vm->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES)) {
-			/* if ShareAnonymousClasses is enabled, anonymous classes are shared and for isROMClassShareable() to return true, we need to set the flag of the classLoader */
-			vm->anonClassLoader->flags |= J9CLASSLOADER_SHARED_CLASSES_ENABLED;
-		}
-	}
-
 	/* acquires access internally */
 	jclass anonClass = defineClassCommon(env, hostClassLoaderLocalRef, NULL,bytecodes, 0, length, protectionDomainLocalRef, J9_FINDCLASS_FLAG_UNSAFE | J9_FINDCLASS_FLAG_ANON, hostClazz);
 	if (env->ExceptionCheck()) {

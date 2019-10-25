@@ -118,12 +118,6 @@ J9::CodeGenPhase::performCompressedReferenceRematerializationPhase(TR::CodeGener
    cg->compressedReferenceRematerialization();
    }
 
-void
-J9::CodeGenPhase::performSplitWarmAndColdBlocksPhase(TR::CodeGenerator * cg, TR::CodeGenPhase *)
-   {
-   cg->splitWarmAndColdBlocks();
-   }
-
 const char *
 J9::CodeGenPhase::getName()
    {
@@ -145,8 +139,6 @@ J9::CodeGenPhase::getName(TR::CodeGenPhase::PhaseValue phase)
          return "InsertEpilogueYieldPoints";
       case CompressedReferenceRematerializationPhase:
          return "CompressedReferenceRematerialization";
-      case SplitWarmAndColdBlocksPhase:
-         return "SplitWarmAndColdBlocks";
       case IdentifyUnneededByteConvsPhase:
 	      return "IdentifyUnneededByteConvsPhase";
       case LateSequentialConstantStoreSimplificationPhase:

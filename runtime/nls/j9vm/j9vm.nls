@@ -1939,3 +1939,17 @@ J9NLS_VM_XVERIFYNONE_DEPRECATED.explanation=Since Java 13 -Xverify:none and -nov
 J9NLS_VM_XVERIFYNONE_DEPRECATED.system_action=The JVM will show a warning and continue to recognize the options.
 J9NLS_VM_XVERIFYNONE_DEPRECATED.user_response=Consider not using these options as they will likely be removed in a future release.
 # END NON-TRANSLATABLE
+
+# Message for failed validation of class relationships for a particular class
+# Arguments 1 and 2 are the child class name
+# Arguments 3 and 4 are the parent class name
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID=Invalid class loading relationship for child: %2$.*1$s, parent: %4$.*3$s
+# START NON-TRANSLATABLE
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_1=10
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_2=ChildClassName
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_3=11
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.sample_input_4=ParentClassName
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.explanation=The specified child class fails verification since it has an invalid class relationship.
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.system_action=The JVM will throw a java/lang/VerifyError.
+J9NLS_VM_CLASS_RELATIONSHIP_INVALID.user_response=Ensure that all class relationships are valid.
+# END NON-TRANSLATABLE

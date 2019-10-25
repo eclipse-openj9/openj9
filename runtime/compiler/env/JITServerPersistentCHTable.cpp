@@ -141,7 +141,10 @@ JITServerPersistentCHTable::commitModifications(const std::string &rawData)
          {
          auto classInfo = findClassInfo(flat->_subClasses[i]);
 
+         // JITSERVER TODO, use fatal
          TR_ASSERT(classInfo, "subclass info cannot be null: ensure subclasses are loaded before superclass");
+         // TR_ASSERT_FATAL(classInfo, "subclass info cannot be null: ensure subclasses are loaded before superclass");
+
          if (classInfo)
             persist->addSubClass(classInfo);
          else

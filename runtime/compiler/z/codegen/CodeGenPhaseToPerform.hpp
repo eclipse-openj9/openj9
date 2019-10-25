@@ -42,7 +42,6 @@
     LowerTreesPhase,
     InsertDebugCountersPhase,
     CompressedReferenceRematerializationPhase,
-    SplitWarmAndColdBlocksPhase,
     AllocateLinkageRegisters,
 
     markLoadAsZeroOrSignExtension,

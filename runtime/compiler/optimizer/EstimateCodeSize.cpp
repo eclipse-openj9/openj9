@@ -25,7 +25,7 @@
 
 #include "codegen/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
 #include "optimizer/CallInfo.hpp"
 #include "ras/LogTracer.hpp"
@@ -120,6 +120,12 @@ TR_EstimateCodeSize::isInlineable(TR_CallStack * prevCallStack, TR_CallSite *cal
 
    heuristicTrace(tracer(),"Depth %d: Created Call Site %p for call found at bc index %d. Signature %s  Looking for call targets.",
                              _recursionDepth, callsite, callsite->_byteCodeIndex, tracer()->traceSignature(callsite));
+
+   if (_inliner->getPolicy()->supressInliningRecognizedInitialCallee(callsite, _inliner->comp()))
+      {
+      heuristicTrace(tracer(),"Skip looking for call targets because supressInliningRecognizedInitialCallee is true for this call site %p\n", callsite);
+      return false;
+      }
 
    callsite->findCallSiteTarget(prevCallStack, _inliner);
    _inliner->applyPolicyToTargets(prevCallStack, callsite);

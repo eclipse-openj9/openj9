@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,6 +21,8 @@
  *******************************************************************************/
 package com.ibm.j9ddr.vm29.j9;
 
+import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.J9AccMethodHasGenericSignature;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -29,7 +31,6 @@ import com.ibm.j9ddr.vm29.pointer.SelfRelativePointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
-import com.ibm.j9ddr.vm29.pointer.generated.J9ConstantPoolPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ExceptionHandlerPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ExceptionInfoPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9MethodDebugInfoPointer;
@@ -40,7 +41,6 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ROMClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ROMMethodPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9UTF8Pointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ROMMethodHelper;
-import com.ibm.j9ddr.vm29.structure.J9Consts;
 import com.ibm.j9ddr.vm29.structure.J9ExceptionHandler;
 import com.ibm.j9ddr.vm29.structure.J9ExceptionInfo;
 import com.ibm.j9ddr.vm29.structure.J9MethodParameter;
@@ -49,8 +49,6 @@ import com.ibm.j9ddr.vm29.types.U16;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U8;
 import com.ibm.j9ddr.vm29.types.UDATA;
-
-import static com.ibm.j9ddr.vm29.structure.J9JavaAccessFlags.*;
 
 /**
  * Static helper functions. Equivalent to romhelp.c / rommeth.h
@@ -398,7 +396,6 @@ public class ROMHelp {
 			return U32Pointer.NULL;
 		}
  
-		
 		private U32Pointer defaultAnnotationFromROMMethod(J9ROMMethodPointer romMethod)  throws CorruptDataException{
 			J9ROMMethodPointer result = J9ROMMethodPointer.cast(parameterAnnotationsFromROMMethod(romMethod));
 			boolean hasParameterAnnotations = J9ROMMethodHelper.hasParameterAnnotations(romMethod);
@@ -586,9 +583,7 @@ public class ROMHelp {
 		}
 
 		public J9ClassPointer J9_CLASS_FROM_METHOD(J9MethodPointer method) throws CorruptDataException {
-			J9ConstantPoolPointer cp = method.constantPool().untag(J9Consts.J9_STARTPC_STATUS);
-
-			return cp.ramClass();
+			return ConstantPoolHelpers.J9_CLASS_FROM_METHOD(method);
 		}
 
 		public U8 J9_ARG_COUNT_FROM_ROM_METHOD(J9ROMMethodPointer method) throws CorruptDataException {

@@ -24,12 +24,12 @@
 #define J9BYTECODEITERATOR_INCL
 
 #include "env/jittypes.h"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "ilgen/ByteCodeIterator.hpp"
 #include "infra/Link.hpp"
 #include "env/j9method.h"
@@ -63,8 +63,8 @@ public:
 
       };
 
-   TR_J9ByteCodeIterator(TR::ResolvedMethodSymbol *methodSymbol, TR::Compilation *comp) 
-      : Base(methodSymbol, static_cast<TR_ResolvedJ9Method*>(methodSymbol->getResolvedMethod()), comp) 
+   TR_J9ByteCodeIterator(TR::ResolvedMethodSymbol *methodSymbol, TR::Compilation *comp)
+      : Base(methodSymbol, static_cast<TR_ResolvedJ9Method*>(methodSymbol->getResolvedMethod()), comp)
       {}
 
    TR_J9ByteCodeIterator(TR::ResolvedMethodSymbol *methodSymbol, TR_ResolvedJ9Method *method, TR_J9VMBase * fe, TR::Compilation * comp) :
@@ -76,7 +76,7 @@ public:
    void initialize(TR_ResolvedJ9Method *, TR_J9VMBase *);
 
    int32_t defaultTargetIndex() { return (int32_t)(_bcIndex + 1 + ((4 - ((intptrj_t)&_code[_bcIndex+1] & 3)) & 3)); }
-   
+
    bool isThisChanged();
 
    int32_t findFloatingPointInstruction();
@@ -139,7 +139,7 @@ public:
                                                                          nextByte(o + 3); }
    int16_t  next2BytesSigned(int32_t o = 1)       { return next2Bytes(o); }
    int32_t  next4BytesSigned(int32_t o = 1)       { return next4Bytes(o); }
-#else 
+#else
    uint16_t next2Bytes(int32_t o = 1)             { return *((uint16_t*)&_code[_bcIndex + o]); }
    uint32_t next4Bytes(int32_t o = 1)             { return *((uint32_t*)&_code[_bcIndex + o]); }
    int16_t  next2BytesSigned(int32_t o = 1)       { return next2Bytes(o); }

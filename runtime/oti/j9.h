@@ -61,6 +61,7 @@
 #include "temp.h"
 #include "j9thread.h"
 #include "j2sever.h"
+#include "j9relationship.h"
 
 typedef struct J9JNIRedirectionBlock {
 	struct J9JNIRedirectionBlock* next;

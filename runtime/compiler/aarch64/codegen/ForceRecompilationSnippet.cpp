@@ -32,6 +32,16 @@ TR::ARM64ForceRecompilationSnippet::emitSnippetBody()
    return buffer;
    }
 
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::ARM64ForceRecompilationSnippet * snippet)
+   {
+   uint8_t             *cursor        = snippet->getSnippetLabel()->getCodeLocation();
+
+   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, "Force Recompilation Snippet");
+
+   //TODO print snippet body
+   }
+
 uint32_t
 TR::ARM64ForceRecompilationSnippet::getLength(int32_t estimatedSnippetStart)
    {

@@ -70,6 +70,12 @@ public:
       {
       }
 
+   CFG(TR::Compilation *c, TR::ResolvedMethodSymbol *m, TR::Region &r) :
+         OMR::CFGConnector(c, m, r),
+      _externalProfiler(NULL)
+      {
+      }
+
    /**
     * Set up profiling frequencies for nodes and edges, normalized to the
     * maxBlockCount in TR::Recompilation.

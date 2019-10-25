@@ -31,9 +31,9 @@
 #include "codegen/Register.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/J2IThunk.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 
 static uint8_t *storeArgumentItem(TR::InstOpCode::Mnemonic op, uint8_t *buffer, TR::RealRegister *reg, int32_t offset, TR::CodeGenerator *cg)
    {
@@ -275,6 +275,20 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
    return cursor+4;
    }
 
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::ARM64CallSnippet * snippet)
+   {
+   TR::Node            *callNode     = snippet->getNode();
+   TR::SymbolReference *glueRef      = _cg->getSymRef(snippet->getHelper());;
+   TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
+   TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
+
+   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
+   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(methodSymRef));
+
+   //TODO print snippet body
+   }
+
 uint32_t TR::ARM64CallSnippet::getLength(int32_t estimatedSnippetStart)
    {
    return (instructionCountForArguments(getNode(), cg()) + 6) * 4;
@@ -296,7 +310,7 @@ uint8_t *TR::ARM64UnresolvedCallSnippet::emitSnippetBody()
 
    TR::SymbolReference *methodSymRef = getNode()->getSymbolReference();
    TR::MethodSymbol *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
-   int32_t helperLookupOffset;
+   intptrj_t helperLookupOffset;
 
    TR::Compilation* comp = cg()->comp();
 
@@ -348,9 +362,17 @@ uint8_t *TR::ARM64UnresolvedCallSnippet::emitSnippetBody()
    return cursor + 8;
    }
 
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::ARM64UnresolvedCallSnippet * snippet)
+   {
+   print(pOutFile, (TR::ARM64CallSnippet *) snippet);
+
+   //TODO print snippet body
+   }
+
 uint32_t TR::ARM64UnresolvedCallSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   return TR::ARM64CallSnippet::getLength(estimatedSnippetStart) + 12;
+   return TR::ARM64CallSnippet::getLength(estimatedSnippetStart) + 16;
    }
 
 uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
@@ -392,9 +414,20 @@ uint8_t *TR::ARM64VirtualUnresolvedSnippet::emitSnippetBody()
    return cursor + 8;
    }
 
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::ARM64VirtualUnresolvedSnippet * snippet)
+   {
+   TR::SymbolReference *callSymRef = snippet->getNode()->getSymbolReference();
+   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
+
+   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(callSymRef));
+
+   //TODO print snippet body
+   }
+
 uint32_t TR::ARM64VirtualUnresolvedSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   return 24;
+   return 28;
    }
 
 uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
@@ -441,9 +474,20 @@ uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
    return cursor;
    }
 
+void
+TR_Debug::print(TR::FILE *pOutFile, TR::ARM64InterfaceCallSnippet * snippet)
+   {
+   TR::SymbolReference *callSymRef = snippet->getNode()->getSymbolReference();
+   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
+
+   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(callSymRef));
+
+   //TODO print snippet body
+   }
+
 uint32_t TR::ARM64InterfaceCallSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   return 32;
+   return 44;
    }
 
 uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
@@ -489,6 +533,7 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
 
    TR::RealRegister *x15reg = cg->machine()->getRealRegister(TR::RealRegister::x15);
 
+   *((int32_t *)thunk + 1) = buffer - returnValue;  // patch offset for AOT relocation
    // movz x15, low 16 bits
    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::movzx) | ((dispatcher & 0xFFFF) << 5);
    x15reg->setRegisterFieldRD((uint32_t *)buffer);
@@ -510,7 +555,6 @@ uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSi
    x15reg->setRegisterFieldRN((uint32_t *)buffer);
    buffer += ARM64_INSTRUCTION_LENGTH;
 
-   *((int32_t *)thunk + 1) = buffer - returnValue;  // patch offset for AOT relocation
    *(int32_t *)thunk = buffer - returnValue;        // patch size of thunk
 
 #ifdef TR_HOST_ARM64

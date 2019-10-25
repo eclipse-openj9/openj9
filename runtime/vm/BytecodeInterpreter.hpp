@@ -1045,6 +1045,25 @@ obj:;
 		return instance;
 	}
 
+	/* Allocate an array instance
+	 * 
+	 * @returns the allocated array instance
+	 */
+	VMINLINE j9object_t
+	inlineArrayAllocation(J9Class *arrayClass, U_32 size, bool initializeSlots = true, bool memoryBarrier = true, bool sizeCheck = true)
+	{
+		j9object_t instance = NULL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
+			instance = _objectAllocate.inlineAllocateIndexableValueTypeObject(_currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
+		} else
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+		{
+			instance = _objectAllocate.inlineAllocateIndexableObject(_currentThread, arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
+		}
+		return instance;
+	}
+
 	/**
 	 * Perform a non-instrumentable allocation of an indexable class.
 	 * If inline allocation fails, the out of line allocator will be called.
@@ -1062,14 +1081,11 @@ obj:;
 	allocateIndexableObject(REGISTER_ARGS_LIST, J9Class *arrayClass, U_32 size, bool initializeSlots = true, bool memoryBarrier = true, bool sizeCheck = true)
 	{
 		j9object_t instance = NULL;
-
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-		if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
-			instance = _objectAllocate.inlineAllocateIndexableValueTypeObject(_currentThread, arrayClass, (U_32)size, initializeSlots, memoryBarrier, sizeCheck);
-		} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables)) 
+#endif
 		{
-			instance = _objectAllocate.inlineAllocateIndexableObject(_currentThread, arrayClass, (U_32)size, initializeSlots, memoryBarrier, sizeCheck);
+			instance = inlineArrayAllocation(arrayClass, size, initializeSlots, memoryBarrier, sizeCheck);
 		}
 
 		if (NULL == instance) {
@@ -3112,14 +3128,7 @@ done:
 		if (flags & J9AccClassArray) {
 			U_32 size = J9INDEXABLEOBJECT_SIZE(_currentThread, original);
 
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			if (J9_IS_J9CLASS_FLATTENED(objectClass)) {
-				copy = _objectAllocate.inlineAllocateIndexableValueTypeObject(_currentThread, objectClass, size, false, false, false);
-			} else
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
-			{
-				copy = _objectAllocate.inlineAllocateIndexableObject(_currentThread, objectClass, size, false, false, false);
-			}
+			copy = inlineArrayAllocation(objectClass, size, false, false, false);
 
 			if (NULL == copy) {
 				pushObjectInSpecialFrame(REGISTER_ARGS, original);
@@ -3717,7 +3726,7 @@ done:
 	inlUnsafePutObject(REGISTER_ARGS_LIST, bool isVolatile)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		j9object_t value = *(j9object_t*)_sp;
+		j9object_t *value = (j9object_t*)_sp;
 		UDATA offset = (UDATA)*(I_64*)(_sp + 1);
 		j9object_t obj = *(j9object_t*)(_sp + 3);
 		
@@ -3839,8 +3848,8 @@ done:
 	inlUnsafeCompareAndSwapObject(REGISTER_ARGS_LIST)
 	{
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
-		j9object_t swapValue = *(j9object_t*)_sp;
-		j9object_t compareValue = *(j9object_t*)(_sp + 1);
+		j9object_t *swapValue = (j9object_t*)_sp;
+		j9object_t *compareValue = (j9object_t*)(_sp + 1);
 		UDATA offset = (UDATA)*(I_64*)(_sp + 2);
 		j9object_t obj = *(j9object_t*)(_sp + 4);
 
@@ -4126,6 +4135,12 @@ done:
 			goto done;
 		}
 		_vm->anonClassLoader->flags |= J9CLASSLOADER_ANON_CLASS_LOADER;
+		if (NULL != _vm->sharedClassConfig) {
+			if (J9_ARE_ANY_BITS_SET(_vm->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES)) {
+				/* ShareAnonymousClasses is enabled by default so we set the class loader flag */
+				_vm->anonClassLoader->flags |= J9CLASSLOADER_SHARED_CLASSES_ENABLED;
+			}
+		}
 		J9CLASSLOADER_SET_CLASSLOADEROBJECT(_currentThread, _vm->anonClassLoader, anonClassLoaderObject);
 		VM_AtomicSupport::writeBarrier();
 		J9VMJAVALANGCLASSLOADER_SET_VMREF(_currentThread, anonClassLoaderObject, _vm->anonClassLoader);
@@ -7539,12 +7554,10 @@ retry:
 			if (J9_EXPECTED(NULL != arrayClass)) {
 				j9object_t instance = NULL;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				if (J9_IS_J9CLASS_FLATTENED(arrayClass)) {
-					instance = _objectAllocate.inlineAllocateIndexableValueTypeObject(_currentThread, arrayClass, (U_32)size);
-				} else
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
+				if (J9_ARE_NO_BITS_SET(arrayClass->classFlags, J9ClassContainsUnflattenedFlattenables)) 
+#endif
 				{
-					instance = _objectAllocate.inlineAllocateIndexableObject(_currentThread, arrayClass, (U_32)size);
+					instance = inlineArrayAllocation(arrayClass, (U_32) size);
 				}
 
 				if (NULL == instance) {
@@ -7595,12 +7608,12 @@ done:
 	{
 retry:
 		VM_BytecodeAction rc = EXECUTE_BYTECODE;
+		U_16 index = *(U_16*)(_pc + 1);
+		J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
+		J9RAMClassRef *ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
+		J9Class* volatile castClass = ramCPEntry->value;
 		j9object_t obj = *(j9object_t*)_sp;
 		if (NULL != obj) {
-			U_16 index = *(U_16*)(_pc + 1);
-			J9ConstantPool *ramConstantPool = J9_CP_FROM_METHOD(_literals);
-			J9RAMClassRef *ramCPEntry = ((J9RAMClassRef*)ramConstantPool) + index;
-			J9Class* volatile castClass = ramCPEntry->value;
 			if (NULL != castClass) {
 				J9Class *instanceClass = J9OBJECT_CLAZZ(_currentThread, obj);
 				profileCast(REGISTER_ARGS, instanceClass);
@@ -7613,6 +7626,9 @@ retry:
 					goto done;
 				}
 			} else {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+resolve:
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 				/* Unresolved */
 				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 				updateVMStruct(REGISTER_ARGS);
@@ -7629,6 +7645,17 @@ retry:
 				goto retry;
 			}
 		}
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		else {
+			if (NULL == castClass) {
+				/* Resolve the class and then check again whether it is a value type */
+				goto resolve;
+			} else if (J9_IS_J9CLASS_VALUETYPE(castClass)) {
+				rc = THROW_NPE;
+				goto done;
+			}
+		}
+#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 		_pc += 3;
 done:
 		return rc;

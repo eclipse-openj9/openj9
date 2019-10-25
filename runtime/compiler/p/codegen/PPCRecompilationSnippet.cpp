@@ -30,14 +30,14 @@
 #include "env/IO.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "p/codegen/PPCInstruction.hpp"
 #include "p/codegen/PPCRecompilation.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -47,7 +47,7 @@ uint8_t *TR::PPCRecompilationSnippet::emitSnippetBody()
    uint8_t             *buffer = cg()->getBinaryBufferCursor();
    TR::Compilation *comp = cg()->comp();
    TR::SymbolReference  *countingRecompMethodSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_PPCcountingRecompileMethod, false, false, false);
-   bool                 longPrologue = (getBranchToSnippet()->getBinaryLength() > 4);
+   bool                 longPrologue = getBranchToSnippet()->getFarRelocation();
 
    getSnippetLabel()->setCodeLocation(buffer);
 

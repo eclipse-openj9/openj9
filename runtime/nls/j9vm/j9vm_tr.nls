@@ -1891,7 +1891,7 @@ J9NLS_VM_THREAD_CREATE_FAILED_WITH_32BIT_ERRNO2.user_response=
 
 # Message for LinkageError when a VerifyError is thrown out
 # arguments 1 and 2 are the specified class name
-J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS=Final superclass %2$.*1$s geni\u015fletilemiyor
+J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS=Son \u00fcst s\u0131n\u0131f %2$.*1$s geni\u015fletilemiyor
 # START NON-TRANSLATABLE
 J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS.sample_input_1=9
 J9NLS_VM_CLASS_LOADING_ERROR_EXTEND_FINAL_SUPERCLASS.sample_input_2=ClassName
@@ -1933,7 +1933,7 @@ J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.system_action=The JVM will throw an I
 J9NLS_VM_CLASS_LOADING_ERROR_NON_INTERFACE.user_response=Contact the provider of the classfile for a corrected version.
 # END NON-TRANSLATABLE
 
-J9NLS_VM_XVERIFYNONE_DEPRECATED=Java 13 -Xverify:none ve -noverify kald\u0131rma i\u00e7in kullan\u0131m\u0131 sonland\u0131r\u0131ld\u0131\u011f\u0131ndan gelecekte kabul edilen se\u00e7enekler olmayabilir.
+J9NLS_VM_XVERIFYNONE_DEPRECATED=Java 13 s\u00fcr\u00fcm\u00fcnden bu yana -Xverify:none ve -noverify kullan\u0131mdan kald\u0131r\u0131ld\u0131\u011f\u0131ndan gelecekte kabul edilen se\u00e7enekler olmayabilir.
 # START NON-TRANSLATABLE
 J9NLS_VM_XVERIFYNONE_DEPRECATED.explanation=Since Java 13 -Xverify:none and -noverify were deprecated for removal and may not be accepted options in the future.
 J9NLS_VM_XVERIFYNONE_DEPRECATED.system_action=The JVM will show a warning and continue to recognize the options.

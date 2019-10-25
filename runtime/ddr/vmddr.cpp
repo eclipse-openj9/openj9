@@ -37,16 +37,6 @@ VM_DdrDebugLink(CacheletWrapper)
 VM_DdrDebugLink(CharArrayWrapper)
 VM_DdrDebugLink(J9DbgROMClassBuilder)
 VM_DdrDebugLink(J9DbgStringInternTable)
-VM_DdrDebugLink(J9JITDataCacheHeader)
-VM_DdrDebugLink(J9JITFrame)
-VM_DdrDebugLink(J9JITHashTable)
-VM_DdrDebugLink(J9JITStackAtlas)
-VM_DdrDebugLink(J9Object)
-VM_DdrDebugLink(J9ObjectCompressed)
-VM_DdrDebugLink(J9ObjectFull)
-VM_DdrDebugLink(J9Object)
-VM_DdrDebugLink(J9ObjectCompressed)
-VM_DdrDebugLink(J9ObjectFull)
 VM_DdrDebugLink(J9IndexableObject)
 VM_DdrDebugLink(J9IndexableObjectContiguous)
 VM_DdrDebugLink(J9IndexableObjectContiguousCompressed)
@@ -54,6 +44,13 @@ VM_DdrDebugLink(J9IndexableObjectContiguousFull)
 VM_DdrDebugLink(J9IndexableObjectDiscontiguous)
 VM_DdrDebugLink(J9IndexableObjectDiscontiguousCompressed)
 VM_DdrDebugLink(J9IndexableObjectDiscontiguousFull)
+VM_DdrDebugLink(J9JITDataCacheHeader)
+VM_DdrDebugLink(J9JITFrame)
+VM_DdrDebugLink(J9JITHashTable)
+VM_DdrDebugLink(J9JITStackAtlas)
+VM_DdrDebugLink(J9Object)
+VM_DdrDebugLink(J9ObjectCompressed)
+VM_DdrDebugLink(J9ObjectFull)
 VM_DdrDebugLink(J9OSRFrame)
 VM_DdrDebugLink(J9RAMMethodRef)
 VM_DdrDebugLink(J9RASdumpQueue)
@@ -63,19 +60,10 @@ VM_DdrDebugLink(J9SFStackFrame)
 VM_DdrDebugLink(J9SRPHashTable)
 VM_DdrDebugLink(J9VMPopFramesInterruptEvent)
 
-
-/* Declare these for compatibility with the old DTFJ plugin, see https://github.com/eclipse/openj9/issues/6316 */
-/* @ddr_namespace: map_to_type=J9Consts */
-
-#define J9_JAVA_CLASS_ARRAY J9AccClassArray
-#define J9_JAVA_CLASS_REFERENCE_MASK J9AccClassReferenceMask
-#define J9_JAVA_CLASS_GC_SPECIAL J9AccClassGCSpecial
-#define J9_JAVA_CLASS_RAM_SHAPE_SHIFT J9AccClassRAMShapeShift
-#define J9_JAVA_STATIC J9AccStatic
-#define J9_JAVA_CLASS_RAM_ARRAY J9AccClassRAMArray
-#define J9_JAVA_INTERFACE J9AccInterface
-#define J9_JAVA_CLASS_DEPTH_MASK J9AccClassDepthMask
-#define J9_JAVA_CLASS_HOT_SWAPPED_OUT J9AccClassHotSwappedOut
-#define J9_JAVA_INTERFACE J9AccInterface
-#define J9_JAVA_CLASS_DYING J9AccClassDying
-#define J9_JAVA_NATIVE J9AccNative
+/*
+ * All builds now validate that DTFJ code is compatible with generating pointer
+ * classes dynamically. This will mark core files accordingly.
+ *
+ * @ddr_namespace: map_to_type=DDRAlgorithmVersions
+ */
+#define J9DDR_GENERATE_VERSION 1

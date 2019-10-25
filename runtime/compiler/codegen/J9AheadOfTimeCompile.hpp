@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,6 +65,37 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
     * to contain a pointer to TR_RelocationRecordInformation.
     */
    static bool classAddressUsesReloRecordInfo() { return false; }
+
+   protected:
+   /**
+    * @brief Wrapper around TR_J9SharedCache::isPointerInSharedCache
+    *
+    * TR_J9SharedCache::offsetInSharedCacheFromPointer asserts if the pointer
+    * passed in does not exist in the SCC. Under HCR, when an agent redefines
+    * a class, it causes the J9Class pointer to stay the same, but the
+    * J9ROMClass pointer changes. This means that if the compiler has a
+    * reference to a J9Class who J9ROMClass was in the SCC at one point in the
+    * compilation, it may no longer be so at another point in the compilation.
+    *
+    * This means that the compilation is no longer valid and should be aborted.
+    * Even if there isn't an abort during the compilation, at the end of the
+    * compilation, the compiler will fail the compile if such a redefinition
+    * occurred.
+    *
+    * Calling TR_J9SharedCache::offsetInSharedCacheFromPointer after such a
+    * redefinition could result in an assert. Therefore, this method exists as
+    * a wrapper around TR_J9SharedCache::isPointerInSharedCache which doesn't
+    * assert and conveniently, updates the location referred to by the cacheOffset
+    * pointer passed in as a parameter.
+    *
+    * If the ptr isn't in the the SCC, then the current method will abort the
+    * compilation. If the ptr is in the SCC, then the updated cacheOffset will
+    *
+    * @param sharedCache pointer to the TR_SharedCache object
+    * @param ptr pointer whose offset in the SCC is required
+    * @return The offset into the SCC of ptr
+    */
+   uintptr_t offsetInSharedCacheFromPointer(TR_SharedCache *sharedCache, void *ptr);
    };
 
 }

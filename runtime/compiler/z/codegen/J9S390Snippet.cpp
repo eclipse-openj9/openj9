@@ -29,6 +29,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GCStackMap.hpp"
 #include "codegen/Machine.hpp"
+#include "codegen/S390PrivateLinkage.hpp"
 #include "codegen/SnippetGCMap.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/IO.hpp"
@@ -38,7 +39,6 @@
 #include "il/Node_inlines.hpp"
 #include "env/VMJ9.h"
 #include "runtime/CodeCacheManager.hpp"
-#include "z/codegen/J9S390PrivateLinkage.hpp"
 #include "z/codegen/S390Instruction.hpp"
 #include "z/codegen/S390Snippets.hpp"
 

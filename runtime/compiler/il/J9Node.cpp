@@ -28,10 +28,10 @@
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
 #include "env/CompilerEnv.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "env/CHTable.hpp"
 #include "env/PersistentCHTable.hpp"
@@ -128,6 +128,20 @@ J9::Node::~Node()
    {
    _unionPropertyB = UnionPropertyB();
    }
+
+bool
+J9::Node::dontEliminateStores(bool isForLocalDeadStore)
+   {
+   // Disallow store sinking of BCD operations in Java because such operations may be under a BCDCHK node, implying that
+   // an exception path may be taken at runtime to evaluate the tree. Sinking such potentially exceptional operations
+   // violates the assumption that all such operations are to be anchored on a BCDCHK treetop, which the codegen expects
+   // to be able to generate the exception handling fallback code.
+   if (self()->getFirstChild()->getOpCode().isBinaryCodedDecimalOp())
+      return true;
+   else
+      return OMR::NodeConnector::dontEliminateStores(isForLocalDeadStore);
+   }
+
 
 void
 J9::Node::copyValidProperties(TR::Node *fromNode, TR::Node *toNode)

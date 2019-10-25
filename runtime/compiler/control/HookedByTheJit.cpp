@@ -464,7 +464,10 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
          }
       else if (TR::Options::sharedClassCache())
          {
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+         // The default FE may not have TR_J9SharedCache object because the FE may have
+         // been created before options were processed.
+         TR_J9SharedCache *sc = TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM)->sharedCache();
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
          if (TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM)->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass))
             {
             PORT_ACCESS_FROM_JAVAVM(jitConfig->javaVM);
@@ -476,8 +479,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                {
                int32_t scount = optionsAOT->getInitialSCount();
                uint16_t newScount = 0;
-
-               if (fe->sharedCache() && (TR_J9SharedCache *)(((TR_J9VMBase *) fe)->sharedCache())->isHint(method, TR_HintFailedValidation, &newScount))
+               if (sc && sc->isHint(method, TR_HintFailedValidation, &newScount))
                   {
                   if ((scount == TR_QUICKSTART_INITIAL_SCOUNT) || (scount == TR_INITIAL_SCOUNT))
                      { // If scount is not user specified (coarse way due to info being lost from options parsing)
@@ -494,22 +496,45 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
             // AOT Body not in SCC, so scount was not set
             else if (!TR::Options::getCountsAreProvidedByUser())
                {
-               // Because C-interpreter is slower we need to rely more on jitted code
-               // This means compiling more, but we have to be careful
-               // Let's use some smaller than normal counts, but only if
-               // 1) Quickstart - because we don't risk losing iprofiling info
-               // 2) GracePeriod - because we want to limit the number of 'extra'
-               //                  compilations and short apps are affected more
-               // 3) Bootstrap - same as above, plus if these methods get into the
-               //                SCC I would rather have non-app specific methods
-               // 4) Cold run - we want to avoid extra compilations in warm runs
-               // The danger is that very small applications that don't even get to AOT 200 methods
-               // may think that the runs are always cold
-               if (TR::Options::getCmdLineOptions()->getOption(TR_LowerCountsForAotCold) &&
-                   compInfo->isWarmSCC() == TR_no &&
-                   compInfo->getPersistentInfo()->getElapsedTime() <= (uint64_t)compInfo->getPersistentInfo()->getClassLoadingPhaseGracePeriod() &&
-                   TR::Options::isQuickstartDetected() &&
-                   fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method)) // is this an expensive call here?
+               bool useLowerCountsForAOTCold = false;
+               if (TR::Options::getCmdLineOptions()->getOption(TR_LowerCountsForAotCold) && compInfo->isWarmSCC() == TR_no)
+                  {
+                  // Because C-interpreter is slower we need to rely more on jitted code
+                  // This means compiling more, but we have to be careful.
+                  // Let's use some smaller than normal counts in the cold run (to avoid
+                  // extra compilations in the warm runs), but only if
+                  //
+                  // 1) The Default SCC isn't used - because we don't want to increase footprint
+                  //
+                  // OR
+                  //
+                  // 1) Quickstart - because we don't risk losing iprofiling info
+                  // 2) GracePeriod - because we want to limit the number of 'extra'
+                  //                  compilations and short apps are affected more
+                  // 3) Bootstrap - same as above, plus if these methods get into the
+                  //                SCC I would rather have non-app specific methods
+                  //
+                  // The danger is that very small applications that don't even get to AOT 200 methods
+                  // may think that the runs are always cold
+
+
+                  // J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES is a good proxy for whether the
+                  // Default SCC is set because, when -Xshareclasses option is used, by default non
+                  // bootstrap loaded classes are put into the SCC. However, if the -Xshareclasses
+                  // option isn't used, then the Default SCC only contains bootstrap loaded classes.
+                  if (J9_ARE_ALL_BITS_SET(jitConfig->javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES))
+                     {
+                     useLowerCountsForAOTCold = true;
+                     }
+                  else if (compInfo->getPersistentInfo()->getElapsedTime() <= (uint64_t)compInfo->getPersistentInfo()->getClassLoadingPhaseGracePeriod() &&
+                           TR::Options::isQuickstartDetected() &&
+                           fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)method))
+                     {
+                     useLowerCountsForAOTCold = true;
+                     }
+                  }
+
+               if (useLowerCountsForAOTCold)
                   {
                   // TODO: modify the function that reads a specified count such that
                   // if the user specifies a count or bcount on the command line that is obeyed
@@ -527,9 +552,10 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                // We may lower or increase the counts based on TR_HintMethodCompiledDuringStartup
                if (count == -1 && // Not yet changed
                    jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
-                   (TR_HintMethodCompiledDuringStartup & TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags()) && fe->sharedCache())
+
+                   (TR_HintMethodCompiledDuringStartup & TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags()) && sc)
                   {
-                  bool wasCompiledDuringStartup = (TR_J9SharedCache *)(fe->sharedCache())->isHint(method, TR_HintMethodCompiledDuringStartup);
+                  bool wasCompiledDuringStartup = sc->isHint(method, TR_HintMethodCompiledDuringStartup);
                   if (wasCompiledDuringStartup)
                      {
                      // Lower the counts for any method that doesn't have an AOT body,
@@ -560,7 +586,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                count = J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? TR_DEFAULT_INITIAL_BCOUNT : TR_DEFAULT_INITIAL_COUNT;
 #endif // !J9ZOS390
             }
-#endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#endif // defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
          } // if (TR::Options::sharedClassCache())
       if (count == -1) // count didn't change yet
          {
@@ -1968,7 +1994,6 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
    {
    Trc_JIT_DumpStart(crashedThread);
 
-
 #if defined(JITSERVER_SUPPORT)
    if (context && context->javaVM && context->javaVM->jitConfig)
       {
@@ -1979,10 +2004,8 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
          static char * isPrintJITServerMsgStats = feGetEnv("TR_PrintJITServerMsgStats");
          if (isPrintJITServerMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
             JITServerHelpers::printJITServerMsgStats(jitConfig);
-
          if (feGetEnv("TR_PrintJITServerCHTableStats"))
             JITServerHelpers::printJITServerCHTableStats(jitConfig, compInfo);
-
          if (feGetEnv("TR_PrintJITServerIPMsgStats"))
             {
             if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
@@ -2873,7 +2896,7 @@ static bool methodsAreRedefinedInPlace()
 // Hack markers
 #define VM_PASSES_SAME_CLASS_TWICE 1
 
-#if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRedefinedClass *classList)
    {
    reportHook(currentThread, "jitClassesRedefined");
@@ -3117,7 +3140,7 @@ void jitFlushCompilationQueue(J9VMThread * currentThread, J9JITFlushCompilationQ
    reportHookFinished(currentThread, "jitFlushCompilationQueue ", buffer);
    }
 
-#endif // #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390))
+#endif // #if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 
 void jitMethodBreakpointed(J9VMThread * vmThread, J9Method *j9method)
    {
@@ -4748,6 +4771,7 @@ void JitShutdown(J9JITConfig * jitConfig)
 
    if (!vm->isAOT_DEPRECATED_DO_NOT_USE())
       stopSamplingThread(jitConfig);
+
 #if defined(JITSERVER_SUPPORT)
    JITServerStatisticsThread *statsThreadObj = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject;
    if (statsThreadObj)
@@ -4755,6 +4779,7 @@ void JitShutdown(J9JITConfig * jitConfig)
       statsThreadObj->stopStatisticsThread(jitConfig);
       }
 #endif
+
    TR_DebuggingCounters::report();
    accumulateAndPrintDebugCounters(jitConfig);
 
@@ -7151,6 +7176,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          }
       }
 #endif // JITSERVER_SUPPORT
+
    if ((*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_START, jitHookLocalGCStart, OMR_GET_CALLSITE(), NULL) ||
        (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_END, jitHookLocalGCEnd, OMR_GET_CALLSITE(), NULL) ||
        (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GLOBAL_GC_START, jitHookGlobalGCStart, OMR_GET_CALLSITE(), NULL) ||
@@ -7269,4 +7295,3 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
 
 
 } /* extern "C" */
-

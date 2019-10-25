@@ -20,18 +20,27 @@
  *******************************************************************************/
 
 #include "optimizer/PreEscapeAnalysis.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/TreeTop.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
+#include "il/TreeTop.hpp"
 #include "optimizer/Optimizer.hpp"
 #include "optimizer/OptimizationManager.hpp"
 
 int32_t TR_PreEscapeAnalysis::perform()
    {
+   if (!optimizer()->isEnabled(OMR::escapeAnalysis))
+      {
+      if (comp()->trace(OMR::escapeAnalysis))
+         {
+         traceMsg(comp(), "EscapeAnalysis is disabled - skipping Pre-EscapeAnalysis\n");
+         }
+      return 0;
+      }
+
    if (comp()->getOSRMode() != TR::voluntaryOSR)
       {
       if (comp()->trace(OMR::escapeAnalysis))

@@ -44,10 +44,8 @@ MM_HeapRegionDataForAllocate::MM_HeapRegionDataForAllocate(MM_EnvironmentVLHGC *
 	, _owningContext(NULL)
 	, _originalOwningContext(NULL)
 	, _region(NULL)
-#if defined(J9VM_GC_ARRAYLETS)
 	, _nextArrayletLeafRegion(NULL)
 	, _previousArrayletLeafRegion(NULL)
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 {
 	_typeId = __FUNCTION__;
 }
@@ -110,12 +108,10 @@ MM_HeapRegionDataForAllocate::taskAsMemoryPoolBumpPointer(MM_EnvironmentBase *en
 void
 MM_HeapRegionDataForAllocate::taskAsFreePool(MM_EnvironmentBase *env)
 {
-#if defined(J9VM_GC_ARRAYLETS)
 	Assert_MM_true(NULL == _spine);
 	Assert_MM_true(NULL == _nextArrayletLeafRegion);
 	Assert_MM_true(NULL == _previousArrayletLeafRegion);
-#endif /* defined(J9VM_GC_ARRAYLETS) */
-	
+
 	MM_MemoryPoolBumpPointer *memoryPool = (MM_MemoryPoolBumpPointer*)_region->getMemoryPool();
 	if (NULL != memoryPool) {
 		memoryPool->tearDown(env);
@@ -164,7 +160,6 @@ MM_HeapRegionDataForAllocate::taskAsIdlePool(MM_EnvironmentVLHGC *env)
 	MM_GCExtensions::getExtensions(env)->updateIdentityHashDataForSaltIndex(index);
 }
 
-#if defined(J9VM_GC_ARRAYLETS)
 void
 MM_HeapRegionDataForAllocate::taskAsArrayletLeaf(MM_EnvironmentBase *env)
 {
@@ -232,7 +227,6 @@ MM_HeapRegionDataForAllocate::setSpine(J9IndexableObject *spineObject)
 	Assert_MM_true(_region->isArrayletLeaf());
 	_spine = spineObject;
 }
-#endif /* J9VM_GC_ARRAYLETS */
 
 bool
 MM_HeapRegionDataForAllocate::participatesInCompaction()

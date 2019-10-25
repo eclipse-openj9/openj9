@@ -25,7 +25,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/p/runtime/CodeSync.cpp \
     compiler/p/runtime/ebb.spp \
     compiler/p/runtime/Emulation.c \
-    compiler/p/runtime/J9PPCArrayCmp.spp \
     compiler/p/runtime/J9PPCArrayCopy.spp \
     compiler/p/runtime/J9PPCArrayTranslate.spp \
     compiler/p/runtime/J9PPCCRC32.spp \

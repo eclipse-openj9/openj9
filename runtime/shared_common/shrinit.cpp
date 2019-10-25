@@ -77,7 +77,7 @@ extern "C" {
 #include "OSCacheFile.hpp"
 #include "SCImplementedAPI.hpp"
 #include "UnitTest.hpp"
-
+#include "OMR/Bytes.hpp"
 
 #define SHRINIT_NAMEBUF_SIZE 256
 #define SHRINIT_LOW_FREE_DISK_SIZE ((U_64)6 * 1024 * 1024 * 1024)
@@ -199,6 +199,9 @@ J9SharedClassesHelpText J9SHAREDCLASSESHELPTEXT[] = {
 #endif
 	{OPTION_LISTALLCACHES, J9NLS_SHRC_SHRINIT_HELPTEXT_LISTALLCACHES, 0, 0},
 	{HELPTEXT_PRINTSTATS_OPTION, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_2, 0, 0},
+#if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
+	{HELPTEXT_OPTION_PRINT_TOP_LAYER_STATS, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINT_TOP_LAYER_STATS, 0, 0},
+#endif /* J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE */
 	{OPTION_PRINTDETAILS, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTDETAILS},
 	{OPTION_PRINTALLSTATS, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS, 0, 0},
 	{OPTION_PRINTORPHANSTATS, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTORPHANSTATS},
@@ -244,6 +247,7 @@ J9SharedClassesHelpText J9SHAREDCLASSESHELPTEXT[] = {
 	{OPTION_DISABLE_BCI, J9NLS_SHRC_SHRINIT_HELPTEXT_DISABLE_BCI, 0, 0},
 	{OPTION_RESTRICT_CLASSPATHS, J9NLS_SHRC_SHRINIT_HELPTEXT_RESTRICT_CLASSPATHS, 0, 0},
 	{OPTION_ALLOW_CLASSPATHS, J9NLS_SHRC_SHRINIT_HELPTEXT_ALLOW_CLASSPATHS, 0, 0},
+	{OPTION_NO_PERSISTENT_DISK_SPACE_CHECK, J9NLS_SHRC_SHRINIT_HELPTEXT_NO_PERSISTENT_DISK_SPACE_CHECK, 0, 0},
 	HELPTEXT_NEWLINE,
 	{HELPTEXT_INVALIDATE_AOT_METHODS_OPTION, J9NLS_SHRC_SHRINIT_HELPTEXT_INVALIDATE_AOT_METHODS, 0, 0},
 	{HELPTEXT_REVALIDATE_AOT_METHODS_OPTION, J9NLS_SHRC_SHRINIT_HELPTEXT_REVALIDATE_AOT_METHODS, 0, 0},
@@ -255,6 +259,11 @@ J9SharedClassesHelpText J9SHAREDCLASSESHELPTEXT[] = {
 	{HELPTEXT_ADJUST_MINJITDATA_EQUALS, J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MINJIT_EQUALS, 0, 0},
 	{HELPTEXT_ADJUST_MAXJITDATA_EQUALS, J9NLS_SHRC_SHRINIT_HELPTEXT_ADJUST_MAXJIT_EQUALS, 0, 0},
 #endif
+#if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
+	HELPTEXT_NEWLINE,
+	{HELPTEXT_LAYER_EQUALS,J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS, 0, 0},
+	{OPTION_CREATE_LAYER, J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER, 0, 0},
+#endif /* J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE */
 	{OPTION_NO_TIMESTAMP_CHECKS, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_NO_TIMESTAMP_CHECKS},
 	{OPTION_NO_URL_TIMESTAMP_CHECK, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK},
 	{OPTION_URL_TIMESTAMP_CHECK, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_URL_TIMESTAMP_CHECK},
@@ -278,10 +287,6 @@ J9SharedClassesHelpText J9SHAREDCLASSESHELPTEXT[] = {
 	{OPTION_DISABLE_CORRUPT_CACHE_DUMPS, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_DISABLE_CORRUPT_CACHE_DUMPS},
 	{OPTION_CHECK_STRINGTABLE_RESET, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_CHECK_STRINGTABLE_RESET},
 	{OPTION_ADDTESTJITHINT, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_ADD_JIT_HINTS},
-#if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
-	{HELPTEXT_LAYER_EQUALS, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_LAYER_EQUALS},
-	{OPTION_CREATE_LAYER, 0, 0, J9NLS_SHRC_SHRINIT_HELPTEXT_CREATE_LAYER},
-#endif /* J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE */
 	{NULL, 0, 0, 0, 0}
 };
 
@@ -296,6 +301,10 @@ J9SharedClassesOptions J9SHAREDCLASSESOPTIONS[] = {
 	{ OPTION_LISTALLCACHES, PARSE_TYPE_EXACT, RESULT_DO_LISTALLCACHES, 0},
 	{ OPTION_PRINTSTATS, PARSE_TYPE_EXACT, RESULT_DO_PRINTSTATS, 0},
 	{ OPTION_PRINTSTATS_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_PRINTSTATS_EQUALS, 0},
+#if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
+	{ OPTION_PRINT_TOP_LAYER_STATS, PARSE_TYPE_EXACT, RESULT_DO_PRINT_TOP_LAYER_STATS, 0},
+	{ OPTION_PRINT_TOP_LAYER_STATS_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_PRINT_TOP_LAYER_STATS_EQUALS, 0},
+#endif /* J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE */
 	{ OPTION_PRINTDETAILS, PARSE_TYPE_EXACT, RESULT_DO_PRINTDETAILS, J9SHR_RUNTIMEFLAG_ENABLE_DETAILED_STATS},
 	{ OPTION_PRINTALLSTATS, PARSE_TYPE_EXACT, RESULT_DO_PRINTALLSTATS, 0},
 	{ OPTION_PRINTALLSTATS_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_PRINTALLSTATS_EQUALS, 0},
@@ -379,6 +388,7 @@ J9SharedClassesOptions J9SHAREDCLASSESOPTIONS[] = {
 	{ OPTION_LAYER_EQUALS, PARSE_TYPE_STARTSWITH, RESULT_DO_LAYER_EQUALS, 0 },
 	{ OPTION_CREATE_LAYER, PARSE_TYPE_EXACT, RESULT_DO_CREATE_LAYER, 0 },
 #endif /* defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE) */
+	{ OPTION_NO_PERSISTENT_DISK_SPACE_CHECK, PARSE_TYPE_EXACT, RESULT_DO_ADD_RUNTIMEFLAG, J9SHR_RUNTIMEFLAG_NO_PERSISTENT_DISK_SPACE_CHECK},
 	{ NULL, 0, 0 }
 };
 
@@ -402,7 +412,7 @@ static void adjustCacheSizes(J9PortLibrary* portlib, UDATA verboseFlags, J9Share
 static IDATA checkIfCacheExists(J9JavaVM* vm, const char* ctrlDirName, char* cacheDirName, const char* cacheName, J9PortShcVersion* versionData, U_32 cacheType, I_8 layer);
 static bool isClassFromPatchedModule(J9VMThread* vmThread, J9Module *j9module, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader);
 static J9Module* getModule(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLoader* classLoader);
-static bool isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize);
+static bool isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize, U_64 runtimeFlags);
 static char* generateStartupHintsKey(J9JavaVM *vm);
 static void fetchStartupHintsFromSharedCache(J9VMThread* vmThread);
 static void findExistingCacheLayerNumbers(J9JavaVM* vm, const char* ctrlDirName, const char* cacheName, U_64 runtimeFlags, I_8 *maxLayerNo);
@@ -841,6 +851,7 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 			break;
 		case RESULT_DO_PRINTALLSTATS_EQUALS:
 		case RESULT_DO_PRINTSTATS_EQUALS:
+		case RESULT_DO_PRINT_TOP_LAYER_STATS_EQUALS:
 		{
 			returnAction = J9SHAREDCLASSESOPTIONS[i].action;
 #if defined(AIXPPC)
@@ -849,9 +860,13 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 			if (RESULT_DO_PRINTALLSTATS_EQUALS == J9SHAREDCLASSESOPTIONS[i].action) {
 				tempStr = options + strlen(OPTION_PRINTALLSTATS_EQUALS);
 				tempInt = strlen(OPTION_PRINTALLSTATS_EQUALS) + strlen(tempStr);
-			} else {
+			} else if (RESULT_DO_PRINTSTATS_EQUALS == J9SHAREDCLASSESOPTIONS[i].action) {
 				tempStr = options + strlen(OPTION_PRINTSTATS_EQUALS);
 				tempInt = strlen(OPTION_PRINTSTATS_EQUALS) + strlen(tempStr);
+			} else {
+				tempStr = options + strlen(OPTION_PRINT_TOP_LAYER_STATS_EQUALS);
+				tempInt = strlen(OPTION_PRINT_TOP_LAYER_STATS_EQUALS) + strlen(tempStr);
+				*printStatsOptions |= PRINTSTATS_SHOW_TOP_LAYER_ONLY;
 			}
 
 			char delim = '+';
@@ -985,6 +1000,13 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 			lastAction = returnAction;
 #endif /* defined(AIXPPC) */
 			*printStatsOptions |=  PRINTSTATS_SHOW_NONE;
+			break;
+		case RESULT_DO_PRINT_TOP_LAYER_STATS:
+			returnAction = J9SHAREDCLASSESOPTIONS[i].action;
+#if defined(AIXPPC)
+			lastAction = returnAction;
+#endif /* defined(AIXPPC) */
+			*printStatsOptions |= (PRINTSTATS_SHOW_NONE | PRINTSTATS_SHOW_TOP_LAYER_ONLY);
 			break;
 
 		case RESULT_DO_DESTROY:
@@ -1227,6 +1249,12 @@ j9shr_dump_help(J9JavaVM* vm, UDATA more)
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREANONYMOUSCLASSES, NULL);
+	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+
+	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXENABLESHAREUNSAFECLASSES, NULL);
+	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
+
+	tmpcstr = j9nls_lookup_message((J9NLS_INFO | J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_EXELIB_INTERNAL_HELP_XXDISABLESHAREUNSAFECLASSES, NULL);
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "%s", tmpcstr);
 
 	j9file_printf(PORTLIB, J9PORT_TTY_OUT, "\n\n");
@@ -2366,6 +2394,8 @@ reportUtilityNotApplicable(J9JavaVM* vm, const char* ctrlDirName, const char* ca
 
 	if (RESULT_DO_PRINTSTATS == command) {
 		optionName = ((runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_DETAILED_STATS) != 0) ? OPTION_PRINTDETAILS : OPTION_PRINTSTATS;
+	} else if (RESULT_DO_PRINT_TOP_LAYER_STATS == command) {
+		optionName = OPTION_PRINT_TOP_LAYER_STATS;
 	} else {
 		optionName = OPTION_PRINTALLSTATS;
 	}
@@ -2389,15 +2419,19 @@ reportUtilityNotApplicable(J9JavaVM* vm, const char* ctrlDirName, const char* ca
 	}
 }
 
-static void j9shr_printStats_dump_help(J9JavaVM* vm, bool moreHelp, bool helpForPrintStats)
+static void j9shr_printStats_dump_help(J9JavaVM* vm, bool moreHelp, UDATA command)
 {
 	PORT_ACCESS_FROM_JAVAVM(vm);
+	
+	const char* option = OPTION_PRINTSTATS_EQUALS;
+	if (RESULT_DO_PRINTALLSTATS_EQUALS == command) {
+		option = OPTION_PRINTALLSTATS_EQUALS;
+	} else if (RESULT_DO_PRINT_TOP_LAYER_STATS_EQUALS == command) {
+		option = OPTION_PRINT_TOP_LAYER_STATS_EQUALS;
+	} 
 
-	if (helpForPrintStats) {
-		SHRINIT_TRACE_NOTAG(1, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP);
-	} else {
-		SHRINIT_TRACE_NOTAG(1, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTALLSTATS_HELP);
-	}
+	SHRINIT_TRACE2_NOTAG(1, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_HELP_V1, option, option);
+
 	SHRINIT_TRACE_NOTAG(1, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ALL);
 	SHRINIT_TRACE_NOTAG(1, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CLASSPATH);
 	SHRINIT_TRACE_NOTAG(1, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_URL);
@@ -2528,6 +2562,7 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 	case RESULT_DO_PRINTSTATS:
 	case RESULT_DO_PRINTALLSTATS:
 	case RESULT_DO_PRINTORPHANSTATS:
+	case RESULT_DO_PRINT_TOP_LAYER_STATS:
 		{
 			/* Test for existence of cache first. If it exists, proceed with cache init */
 			IDATA cacheExists = checkIfCacheExists(vm, sharedClassConfig->ctrlDirName, cacheDirName, cacheName, &versionData, cacheType, layer);
@@ -2543,14 +2578,15 @@ performSharedClassesCommandLineAction(J9JavaVM* vm, J9SharedClassConfig* sharedC
 		break;
 	case RESULT_DO_PRINTALLSTATS_EQUALS:
 	case RESULT_DO_PRINTSTATS_EQUALS:
+	case RESULT_DO_PRINT_TOP_LAYER_STATS_EQUALS:
 		{
 			IDATA cacheExists = 0;
 
 			if (printStatsOptions & PRINTSTATS_SHOW_MOREHELP) {
-				j9shr_printStats_dump_help(vm, true, (RESULT_DO_PRINTSTATS_EQUALS == command));
+				j9shr_printStats_dump_help(vm, true, command);
 				break;
 			} else if (printStatsOptions & PRINTSTATS_SHOW_HELP) {
-				j9shr_printStats_dump_help(vm, false, (RESULT_DO_PRINTSTATS_EQUALS == command));
+				j9shr_printStats_dump_help(vm, false, command);
 				break;
 			}
 			/* Test for existence of cache first. If it exists, proceed with cache init */
@@ -2837,7 +2873,7 @@ ensureCorrectCacheSizes(J9JavaVM *vm, J9PortLibrary* portlib, U_64 runtimeFlags,
 		}
 	} else {
 		if (is64BitPlatDefaultSize) {
-			if (isFreeDiskSpaceLow(vm, &maxSize)) {
+			if (isFreeDiskSpaceLow(vm, &maxSize, runtimeFlags)) {
 				Trc_SHR_Assert_True(*cacheSize > maxSize);
 				adjustCacheSizes(portlib, verboseFlags, piconfig, maxSize);
 			}
@@ -3265,11 +3301,14 @@ j9shr_init(J9JavaVM *vm, UDATA loadFlags, UDATA* nonfatal)
 		exitAfterBuildingTempConfig = true;
 	}
 
-	if (parseResult==RESULT_DO_PRINTSTATS ||
-		parseResult==RESULT_DO_PRINTALLSTATS ||
-		parseResult==RESULT_DO_PRINTORPHANSTATS ||
-		parseResult==RESULT_DO_PRINTALLSTATS_EQUALS ||
-		parseResult==RESULT_DO_PRINTSTATS_EQUALS) {
+	if ((RESULT_DO_PRINTSTATS == parseResult) ||
+		(RESULT_DO_PRINTALLSTATS == parseResult) ||
+		(RESULT_DO_PRINTORPHANSTATS == parseResult) ||
+		(RESULT_DO_PRINT_TOP_LAYER_STATS == parseResult) ||
+		(RESULT_DO_PRINTALLSTATS_EQUALS == parseResult) ||
+		(RESULT_DO_PRINTSTATS_EQUALS == parseResult) ||
+		(RESULT_DO_PRINT_TOP_LAYER_STATS_EQUALS == parseResult)
+	) {
 		doPrintStats = true;
 		/* Do not try to kill a cache if we just want to get stats on it */
 		/* set J9SHR_RUNTIMEFLAG_ENABLE_READONLY. If not set, vmCntr will be increased in the cache header */
@@ -3839,11 +3878,14 @@ j9shr_print_stats(J9JavaVM *vm, UDATA parseResult, U_64 runtimeFlags, UDATA prin
 	UDATA showFlags = 0;
 	J9VMThread* currentThread = vm->internalVMFunctions->currentVMThread(vm);
 
-	if (RESULT_DO_PRINTALLSTATS == parseResult ||
-			RESULT_DO_PRINTALLSTATS_EQUALS == parseResult||
-			RESULT_DO_PRINTORPHANSTATS == parseResult ||
-			RESULT_DO_PRINTSTATS_EQUALS == parseResult ||
-			RESULT_DO_PRINTSTATS == parseResult) {
+	if ((RESULT_DO_PRINTALLSTATS == parseResult) ||
+		(RESULT_DO_PRINTALLSTATS_EQUALS == parseResult) ||
+		(RESULT_DO_PRINTORPHANSTATS == parseResult) ||
+		(RESULT_DO_PRINTSTATS_EQUALS == parseResult) ||
+		(RESULT_DO_PRINTSTATS == parseResult) ||
+		(RESULT_DO_PRINT_TOP_LAYER_STATS == parseResult) ||
+		(RESULT_DO_PRINT_TOP_LAYER_STATS_EQUALS == parseResult)
+	) {
 		showFlags = printStatsOptions;
 	}
 	return ((SH_CacheMap*)vm->sharedClassConfig->sharedClassCache)->printCacheStats(currentThread, showFlags, runtimeFlags);
@@ -4277,6 +4319,7 @@ getDefaultRuntimeFlags(void)
 			J9SHR_RUNTIMEFLAG_ENABLE_TIMESTAMP_CHECKS |
 			J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION |
 			J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES |
+			J9SHR_RUNTIMEFLAG_ENABLE_SHAREUNSAFECLASSES |			
 			J9SHR_RUNTIMEFLAG_ENABLE_ROUND_TO_PAGE_SIZE |
 #if defined (J9SHR_MSYNC_SUPPORT)
 			J9SHR_RUNTIMEFLAG_ENABLE_MSYNC |
@@ -4352,7 +4395,7 @@ j9shr_parseMemSize(char * str, UDATA & value) {
 	switch (*str) {
 		case '\0':
 				oldValue = value;
-				value = (value +  sizeof(UDATA) - 1) & ~(sizeof(UDATA) - 1);		/* round to nearest pointer value */
+				value = OMR::align(value, sizeof(UDATA));		/* round to nearest pointer value */
 				if (value < oldValue) {
 					/*OVERFLOW*/
 					return FALSE;
@@ -5023,12 +5066,17 @@ getModule(J9VMThread* vmThread, U_8* className, UDATA classNameLength, J9ClassLo
  * @return False if the space free disk space >= SHRINIT_LOW_DISK_SIZE. True otherwise.
  */
 static bool
-isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize)
+isFreeDiskSpaceLow(J9JavaVM *vm, U_64* maxsize, U_64 runtimeFlags)
 {
 	char cacheDirName[J9SH_MAXPATH];
 	memset(cacheDirName, 0, J9SH_MAXPATH);
 	bool ret = true;
 	PORT_ACCESS_FROM_JAVAVM(vm);
+
+	if (J9_ARE_ANY_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_NO_PERSISTENT_DISK_SPACE_CHECK)) {
+		ret = false;
+		goto done;
+	}
 
 	if (-1 == j9shr_getCacheDir(vm, vm->sharedCacheAPI->ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_PERSISTENT)) {
 		/* use j9shr_getCacheDir() instead of SH_OSCache::getCacheDir() to avoid duplicated NLS message if SH_OSCache::getCacheDir() failed */

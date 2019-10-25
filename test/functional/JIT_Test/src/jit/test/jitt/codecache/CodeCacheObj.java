@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,13 +66,13 @@ public class CodeCacheObj {
 	 * Given a verbose log method entry represented by a Method object, figures out whether or not the method
 	 * belongs to this code cache by comparing the method's address range with the code cache's address range.
 	 *
-	 * Since the values�0..9�and�A..F�are in hex-digit order in the ASCII character set, address comparison is
+	 * Since the values [0..9] and [A..F] are in hex-digit order in the ASCII character set, address comparison is
 	 * done by simply using the String.compareTo(String) method.
 	 *
 	 * @param method - the Method object representing a verbose log entry
 	 * @return True if the given method belongs to this code cache, false otherwise
 	 */
-	public boolean addressRangeIncludes(MethodObj method){
+	public boolean addressRangeIncludes(MethodObj method) {
 		return addressRangeIncludes( method.getCcAddressRange() );
 	}
 

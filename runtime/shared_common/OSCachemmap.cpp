@@ -964,7 +964,8 @@ SH_OSCachemmap::internalAttach(bool isNewCache, UDATA generation)
 	Trc_SHR_OSC_Mmap_internalAttach_goodAcquireAttachReadLock();
 
 #ifndef WIN32
-	{
+	/* if the cache is read-only and not being written, no free disk space is required */
+	if (!_runningReadOnly && J9_ARE_NO_BITS_SET(_runtimeFlags, J9SHR_RUNTIMEFLAG_NO_PERSISTENT_DISK_SPACE_CHECK)) {
 		J9FileStatFilesystem fileStatFilesystem;
 		/* check for free disk space */
 		rc = j9file_stat_filesystem(_cachePathName, 0, &fileStatFilesystem);

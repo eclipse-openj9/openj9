@@ -28,8 +28,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -139,4 +142,47 @@ public class Util {
 		}
 	}
 
+	/**
+	 * Print the Properties object in key-value format.
+	 * This differs from Properties.list() in that it does not truncate long values.
+	 * @param out
+	 * @param props
+	 */
+	static void printProperties(PrintStream out, Properties props) {
+		for ( Entry<Object, Object> theEntry : props.entrySet()) {
+			out.printf("%s=%s%n", theEntry.getKey(), theEntry.getValue()); //$NON-NLS-1$
+		}
+	}
+
+	/**
+	 * Print an error message if it is not null or empty.
+	 * Print the help content.
+	 * Terminates JVM.
+	 * 
+	 * @param error
+	 *            an error message to indicate the cause of the error
+	 * @param help
+	 *            the help showing the utility usages
+	 */
+	static void exitJVMWithReasonAndHelp(String error, String help) {
+		if ((error != null) && (!error.isEmpty())) {
+			System.out.println(error);
+		}
+		System.out.printf(help);
+		System.exit(1);
+	}
+	
+	@SuppressWarnings("nls")
+	private static final String[] HELP_OPTIONS = { "-h", "help", "-help", "--help" };
+
+	/**
+	 * Check if the option matches one of HELP_OPTIONS
+	 * 
+	 * @param option
+	 *            the option to be checked
+	 * @return true if found a match, otherwise false
+	 */
+	static boolean checkHelpOption(String option) {
+		return Arrays.stream(HELP_OPTIONS).anyMatch(option::equalsIgnoreCase);
+	}
 }

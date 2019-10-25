@@ -431,11 +431,11 @@ bool ppcCodePatching(void *method, void *callSite, void *currentPC, void *curren
 
          const intptrj_t *obj = *(intptrj_t **)((intptrj_t)extra + sizeof(intptrj_t));
          // Discard high order 32 bits via cast to uint32_t to avoid shifting and masking when using compressed refs
-#if defined(OMR_GC_COMPRESSED_POINTERS)
-         intptrj_t currentReceiverJ9Class = *(uint32_t *)((int8_t *)obj + TMP_OFFSETOF_J9OBJECT_CLAZZ);
-#else
-         intptrj_t currentReceiverJ9Class = *(intptrj_t *)((int8_t *)obj + TMP_OFFSETOF_J9OBJECT_CLAZZ);
-#endif
+         intptrj_t currentReceiverJ9Class = 0;
+         if (TR::Compiler->om.compressObjectReferences())
+            currentReceiverJ9Class = *(uint32_t *)((int8_t *)obj + TMP_OFFSETOF_J9OBJECT_CLAZZ);
+         else
+            currentReceiverJ9Class = *(intptrj_t *)((int8_t *)obj + TMP_OFFSETOF_J9OBJECT_CLAZZ);
 
          // Throwing away the flag bits in CLASS slot
          currentReceiverJ9Class &= ~(J9_REQUIRED_CLASS_ALIGNMENT - 1);
@@ -860,6 +860,8 @@ void armCodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *
 
 #if defined(TR_TARGET_ARM64)
 
+#define TRAMPOLINE_SIZE         16
+
 void arm64CodeCacheConfig(int32_t ccSizeInByte, int32_t *numTempTrampolines)
    {
    *numTempTrampolines = 0;
@@ -867,15 +869,15 @@ void arm64CodeCacheConfig(int32_t ccSizeInByte, int32_t *numTempTrampolines)
 
 void arm64CreateHelperTrampolines(void *trampPtr, int32_t numHelpers)
    {
-   uint32_t *buffer = (uint32_t *)((uint8_t *)trampPtr + 16);
+   uint32_t *buffer = (uint32_t *)((uint8_t *)trampPtr + TRAMPOLINE_SIZE);
    for (int32_t i=1; i<numHelpers; i++)
       {
-      *((int32_t *)buffer) = 0x58000110; //LDR R16 PC+8
+      *((int32_t *)buffer) = 0x58000050; //LDR R16 PC+8
       buffer += 1; 
       *buffer = 0xD61F0200; //BR R16
       buffer += 1;
       *((intptrj_t *)buffer) = (intptrj_t)runtimeHelperValue((TR_RuntimeHelper)i);
-      buffer += 1;
+      buffer += 2;
       }
    }
 
@@ -885,7 +887,7 @@ void arm64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
    TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(startPC);
    intptrj_t dispatcher = (intptrj_t)((uint8_t *)startPC + linkInfo->getReservedWord());
 
-   *buffer = 0x58000110; //LDR R16 PC+8
+   *buffer = 0x58000050; //LDR R16 PC+8
    buffer += 1; 
    *buffer = 0xD61F0200; //BR R16
    buffer += 1;
@@ -948,7 +950,7 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
 
 void arm64CodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t *numHelpers, int32_t* CCPreLoadedCodeSize)
    {
-   *trampolineSize = 16;
+   *trampolineSize = TRAMPOLINE_SIZE;
    callBacks[0] = (void *)&arm64CodeCacheConfig;
    callBacks[1] = (void *)&arm64CreateHelperTrampolines;
    callBacks[2] = (void *)&arm64CreateMethodTrampoline;
@@ -957,6 +959,8 @@ void arm64CodeCacheParameters(int32_t *trampolineSize, void **callBacks, int32_t
    *CCPreLoadedCodeSize = 0;
    *numHelpers = TR_ARM64numRuntimeHelpers;
    }
+
+#undef TRAMPOLINE_SIZE
 
 #endif /* TR_TARGET_ARM64 */
 

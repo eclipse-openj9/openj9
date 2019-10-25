@@ -59,13 +59,10 @@ public:
 
 	virtual void systemGarbageCollect(MM_EnvironmentBase *env, U_32 gcCode);
 	virtual void *allocateObject(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure);
-#if defined(OMR_GC_ARRAYLETS)
 	virtual void *allocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure);
-#endif /* defined(OMR_GC_ARRAYLETS) */
 
- 	void collect(MM_EnvironmentBase *env, MM_GCCode gcCode);
+	void collect(MM_EnvironmentBase *env, MM_GCCode gcCode);
 
-	
 	MM_MemorySubSpaceMetronome(
 		MM_EnvironmentBase *env, MM_PhysicalSubArena *physicalSubArena, MM_MemoryPool *memoryPool,
 		bool usesGlobalCollector, UDATA minimumSize, UDATA initialSize, UDATA maximumSize

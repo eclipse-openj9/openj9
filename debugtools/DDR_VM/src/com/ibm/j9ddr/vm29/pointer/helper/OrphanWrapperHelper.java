@@ -36,11 +36,13 @@ public class OrphanWrapperHelper {
 		if (null == cacheHeader) {
 			return J9ROMClassPointer.cast(U8Pointer.cast(ptr).add(I32Pointer.cast(romClassOffset.getAddress()).at(0)));
 		} else {
-			UDATA offset = J9ShrOffsetPointer.cast(romClassOffset).offset();
+			J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(romClassOffset);
+			UDATA offset = j9shrOffset.offset();
 			if (offset.eq(0)) {
 				return J9ROMClassPointer.cast(U8Pointer.NULL);
 			}
-			return J9ROMClassPointer.cast(cacheHeader[0].add(offset));
+			int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
+			return J9ROMClassPointer.cast(cacheHeader[layer].add(offset));
 		}
 	}
 }

@@ -104,8 +104,6 @@ public:
 
    void insertEpilogueYieldPoints();
 
-   void splitWarmAndColdBlocks(); // J9 & Z
-
    void allocateLinkageRegisters();
 
    void fixUpProfiledInterfaceGuardTest();
@@ -436,7 +434,7 @@ public:
    /** \brief
     *    The code generator supports inlining of java/lang/String.toUpperCase() and toLowerCase()
     */
-   void setSupportsInlineStringCaseConversion() { return _j9Flags.set(SupportsInlineStringCaseConversion);}
+   void setSupportsInlineStringCaseConversion() { _j9Flags.set(SupportsInlineStringCaseConversion);}
 
    /** \brief
     *    Determines whether the code generator supports inlining of java/lang/String.indexOf()
@@ -446,7 +444,7 @@ public:
    /** \brief
     *    The code generator supports inlining of java/lang/String.indexOf()
     */
-   void setSupportsInlineStringIndexOf() { return _j9Flags.set(SupportsInlineStringIndexOf);}
+   void setSupportsInlineStringIndexOf() { _j9Flags.set(SupportsInlineStringIndexOf);}
 
    /** \brief
    *    Determines whether the code generator supports inlining of java/lang/String.hashCode()
@@ -456,7 +454,7 @@ public:
    /** \brief
    *    The code generator supports inlining of java/lang/String.hashCode()
    */
-   void setSupportsInlineStringHashCode() { return _j9Flags.set(SupportsInlineStringHashCode); }
+   void setSupportsInlineStringHashCode() { _j9Flags.set(SupportsInlineStringHashCode); }
 
    /** \brief
    *    Determines whether the code generator supports inlining of java_util_concurrent_ConcurrentLinkedQueue_tm*
@@ -467,7 +465,7 @@ public:
    /** \brief
    *    The code generator supports inlining of java_util_concurrent_ConcurrentLinkedQueue_tm* methods
    */
-   void setSupportsInlineConcurrentLinkedQueue() { return _j9Flags.set(SupportsInlineConcurrentLinkedQueue); }
+   void setSupportsInlineConcurrentLinkedQueue() { _j9Flags.set(SupportsInlineConcurrentLinkedQueue); }
 
    /**
     * \brief

@@ -20,6 +20,7 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
+include(CheckCXXCompilerFlag)
 # This CMakeLists is included by the VM CMake lists, and works after composition
 # has occurred.
 #
@@ -49,8 +50,18 @@ if(OMR_ARCH_X86)
 	omr_append_flags(CMAKE_ASM_NASM_FLAGS ${asm_inc_dirs})
 endif()
 
+if(OMR_TOOLCONFIG STREQUAL "gnu")
+	check_cxx_compiler_flag("-static-libstdc++" ALLOWS_STATIC_LIBCPP)
+endif()
+
+# This target is created so that various subdirectories can add dependencies to it.
+# The j9jit target will then depend on it, propagating the dependencies.
+# This is required because at the time we include the subdirectories, the j9jit target
+# does not yet exist (and as such can't have dependencies addded to it).
+add_custom_target(j9jit_generate)
+
 # On windows exceptions are controlled via a the preprocessor define _HAS_EXCEPTIONS
-# We need to enable it again, after omr platform config removed it
+# We need to enable it again, after omr platform config removed it.
 get_directory_property(compile_defs COMPILE_DEFINITIONS)
 list(REMOVE_ITEM compile_defs "_HAS_EXCEPTIONS=0")
 set_property(DIRECTORY PROPERTY COMPILE_DEFINITIONS ${compile_defs})
@@ -179,6 +190,7 @@ set(REMOVED_OMR_FILES
 	${omr_SOURCE_DIR}/compiler/ilgen/IlInjector.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRBytecodeBuilder.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRIlBuilder.cpp
+	${omr_SOURCE_DIR}/compiler/ilgen/OMRIlType.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRIlValue.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRJitBuilderRecorder.cpp
 	${omr_SOURCE_DIR}/compiler/ilgen/OMRJitBuilderRecorderBinaryBuffer.cpp
@@ -278,6 +290,19 @@ elseif(OMR_OS_WINDOWS)
 		-DSUPPORTS_THREAD_LOCAL
 		-DWINDOWS
 	)
+elseif(OMR_OS_AIX)
+	set(J9_SHAREDFLAGS
+		-DAIXPPC
+		-DRS6000
+		-D_XOPEN_SOURCE_EXTENDED=1
+		-D_ALL_SOURCE
+		-DSUPPORTS_THREAD_LOCAL
+	)
+	if(OMR_ENV_DATA64)
+		set(J9_SHAREDFLAGS -q64)
+	else()
+		set(J9_SHAREDFLAGS -q32)
+	endif()
 else()
 	message(SEND_ERROR "unsupported platform")
 endif()
@@ -302,6 +327,7 @@ create_omr_compiler_library(NAME j9jit
 add_dependencies(j9jit
 	omrgc_hookgen
 	j9jit_tracegen
+	j9jit_generate
 )
 
 if(JITSERVER_SUPPORT)
@@ -328,6 +354,17 @@ if(JITSERVER_SUPPORT)
 	target_link_libraries(j9jit PRIVATE ${Protobuf_LIBRARIES})
 endif()
 
+# This is a bit hokey, but cmake can't track the fact that files are generated across directories.
+# Note: while these are only needed on z, setting the properties unconditionally has no ill-effect.
+set_source_files_properties(
+	${CMAKE_CURRENT_BINARY_DIR}/z/runtime/Math.s
+	${CMAKE_CURRENT_BINARY_DIR}/z/runtime/PicBuilder.s
+	${CMAKE_CURRENT_BINARY_DIR}/z/runtime/Recompilation.s
+	${CMAKE_CURRENT_BINARY_DIR}/z/runtime/ValueProf.s
+	PROPERTIES
+	GENERATED TRUE
+)
+
 if(OMR_OS_LINUX)
 	set_property(TARGET j9jit APPEND_STRING PROPERTY
 		LINK_FLAGS "  -Wl,--version-script=${CMAKE_CURRENT_SOURCE_DIR}/build/scripts/j9jit.linux.exp")
@@ -335,7 +372,24 @@ if(OMR_OS_LINUX)
 elseif(OMR_OS_WINDOWS)
 	target_sources(j9jit PRIVATE build/scripts/j9jit.def)
 endif()
+if((OMR_TOOLCONFIG STREQUAL "gnu") AND ALLOWS_STATIC_LIBCPP)
+	# We assume that if the compiler allows -static-libstdc++
+	# it will also allow -static-libgcc
+	set_property(TARGET j9jit APPEND_STRING PROPERTY
+		LINK_FLAGS " -static-libgcc -static-libstdc++")
+endif()
 set_property(TARGET j9jit PROPERTY LINKER_LANGUAGE CXX)
+
+# Note ddrgen can't handle the templated symbols used in the jit
+target_enable_ddr(j9jit NO_DEBUG_INFO)
+file(GLOB_RECURSE headers
+	${CMAKE_CURRENT_SOURCE_DIR}/runtime/*.hpp
+	${CMAKE_CURRENT_SOURCE_DIR}/runtime/*.h
+)
+ddr_add_headers(j9jit
+	${headers}
+)
+ddr_set_add_targets(omrddr j9jit)
 
 install(
 	TARGETS j9jit

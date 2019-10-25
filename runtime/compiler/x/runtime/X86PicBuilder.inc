@@ -104,10 +104,22 @@ eq_IPicData_j2iThunk           equ 22h    ; only present if direct invoke is pos
 ;
 %macro LoadClassPointerFromObjectHeader 3 ;ObjectReg, ClassPtrReg64, ClassPtrReg32
 %ifdef ASM_OMR_GC_COMPRESSED_POINTERS
-        mov     %3, dword [%1 + J9TR_J9Object_class] ; read only 32 bits and zero extend
+%ifdef ASM_OMR_GC_FULL_POINTERS
+        cmp     qword [_rbp + J9TR_VMThreadCompressObjectReferences], 0
+        je      short %%full
+        mov     %3, [%1 + J9TR_J9Object_class] ; read only 32 bits and zero extend
         and     %3, eq_ObjectClassMask
+        jmp     short %%done
+%%full:
+        mov     %2, [%1 + J9TR_J9Object_class]
+        and     %2, eq_ObjectClassMask
+%%done:
 %else
-        mov     %2, qword [%1 + J9TR_J9Object_class]
+        mov     %3, [%1 + J9TR_J9Object_class] ; read only 32 bits and zero extend
+        and     %3, eq_ObjectClassMask
+%endif
+%else
+        mov     %2, [%1 + J9TR_J9Object_class]
         and     %2, eq_ObjectClassMask
 %endif
 %endmacro

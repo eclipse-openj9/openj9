@@ -58,6 +58,7 @@
 	.extern	jitResolveStaticFieldSetter
 	.extern	jitResolveField
 	.extern	jitResolveFieldSetter
+	.extern	jitResolveVirtualMethod
 	.extern	jitResolveInterfaceMethod
 	.extern	jitLookupInterfaceMethod
 	.extern	jitCallCFunction
@@ -72,6 +73,7 @@
 #undef SETVAL
 
 	.set	clinit_bit,	1
+	.set	clinit_bit_number,	0
 
 // BL to PicBuilder from every snippet is always the instruction previous to LR
 
@@ -98,6 +100,12 @@
 	.set	J9TR_ICSnippet_InterfaceClass,	24
 	.set	J9TR_ICSnippet_MethodIndex,	32
 
+// Unresolved virtual call snippet
+
+	.set	J9TR_UVCSnippet_codeCacheReturnAddress,	0
+	.set	J9TR_UVCSnippet_CP,		8
+	.set	J9TR_UVCSnippet_CPIndex,	16
+
 	.text
 	.align 2
 
@@ -117,6 +125,7 @@ L_refreshHelper:
 	bne	L_outOfRange			// distance is out of +/-128MB range
 
 L_rewriteBranch:
+	sub	x3, x1, x0			// distance = (target - callSite)
 	ldr	w2, [x0]			// fetch branch instruction
 	ubfx	x1, x3, #2, #26			// distance >> 2, masking out sign bits
 	and	w2, w2, #0xFC000000		// mask out branch distance
@@ -127,8 +136,21 @@ L_rewriteBranch:
 
 // Get a new (reachable) target address for calling the helper via trampoline
 L_outOfRange:
-	hlt	#0	// Not implemented yet -- Use mcc_lookupHelperTrampoline_unwrapper
+	sub	J9SP, J9SP, #32
+	stp	x0, x30, [J9SP, #16]		// save registers
+	stp	x0, x2, [J9SP]			// push call site addr (x0) and helper index (x2)
+	ldr	x0, const_mcc_lookupHelperTrampoline_unwrapper
+	mov	x1, J9SP			// addr of the first arg for mcc_lookupHelperTrampoline_unwrapper
+	mov	x2, J9SP			// addr of the return value from mcc_lookupHelperTrampoline_unwrapper
+	bl	jitCallCFunction
+	ldr	x1, [J9SP]
+	ldp	x0, x30, [J9SP, #16]		// restore registers
+	add	J9SP, J9SP, #32
 	b	L_rewriteBranch
+
+	.align	3
+const_mcc_lookupHelperTrampoline_unwrapper:
+	.dword	mcc_lookupHelperTrampoline_unwrapper
 
 // Static glue target table is laid out as:
 //
@@ -153,17 +175,17 @@ __staticGlueTable:
 //
 // in:     x3  = address of resolve helper function
 //         x30 = snippet
-// out:
-// trash:	x8, x27, x28
+//
+// trash:	x10, x11, x12
 
 L_mergedUnresolvedSpecialStaticGlue:
-	mov	x27, x30					// save snippet address
-	ldr	x0, [x27, #J9TR_SCSnippet_codeCacheReturnAddress]	// Fetch code cache EIP
-	ldr	x1, [x27, #J9TR_USCSnippet_CP]			// get CP
-	ldr	x28, [x27, #J9TR_USCSnippet_CPIndex]		// get CP index & flags
-	and	x2, x28, #~(J9TR_USCSnippet_HelperOffset)	// remove helper offset from CP index
+	mov	x10, x30					// save snippet address
+	ldr	x0, [x10, #J9TR_SCSnippet_codeCacheReturnAddress]	// Fetch code cache EIP
+	ldr	x1, [x10, #J9TR_USCSnippet_CP]			// get CP
+	ldr	x11, [x10, #J9TR_USCSnippet_CPIndex]		// get CP index & flags
+	and	x2, x11, #~(J9TR_USCSnippet_HelperOffset)	// remove helper offset from CP index
 	blr	x3						// call resolve helper
-	str	x0, [x27, #J9TR_SCSnippet_method]		// update snippet with resolved method
+	str	x0, [x10, #J9TR_SCSnippet_method]		// update snippet with resolved method
 	and	x0, x0, #(~clinit_bit)				// clear the clinit bit in the returned address
 	mov	x2, x0						// save method (x0 trashed by following call)
 	bl	jitMethodIsNative				// is the method native?
@@ -173,10 +195,10 @@ L_mergedUnresolvedSpecialStaticGlue:
 	b	L_gotHelper					// and skip to writing the address into the instruction
 L_notNative:
 	ldr	x3, const_staticGlueTable			// get helper table address
-	lsr	x1, x28, #J9TR_USCSnippet_HelperOffsetShift	// get helper offset
+	lsr	x1, x11, #J9TR_USCSnippet_HelperOffsetShift	// get helper offset
 	mov	x0, x2						// recover method
 	bl	jitMethodIsSync					// is method synchronized?
-	lsr	x2, x28, #(J9TR_USCSnippet_HelperOffsetShift+2)	// save helper offset for refreshHelper
+	lsr	x2, x11, #(J9TR_USCSnippet_HelperOffsetShift+2)	// save helper offset for refreshHelper
 	cbz	x0, L_notSync
 	add	x1, x1, #J9TR_staticGlueTableSyncOffset		// if so, adjust helper offset
 	add	x2, x2, #1
@@ -184,15 +206,15 @@ L_notSync:
 	add	x2, x2, #TR_ARM64interpreterVoidStaticGlue
 	ldr	x1, [x3, x1]					// fetch static glue helper from table
 L_gotHelper:
-	ldr	x0, [x27, #J9TR_SCSnippet_codeCacheReturnAddress]	// Fetch code cache EIP
-	ldr	x3, [x27, #J9TR_SCSnippet_method]
-	tbnz	x3, #1, L_USSGclinitCase			// branch if the LSB (the "clinit" bit) was set in the resolved address
-	ldr	x28, [x27, #J9TR_USCSnippet_CP]			// get CP
-	ldr	x8, [x27, #J9TR_USCSnippet_CPIndex]		// get CP index & flags
-	and	x8, x8, #(~J9TR_USCSnippet_HelperOffset)	// remove helper offset from CP index
+	ldr	x0, [x10, #J9TR_SCSnippet_codeCacheReturnAddress]	// Fetch code cache EIP
+	ldr	x3, [x10, #J9TR_SCSnippet_method]
+	tbnz	x3, #clinit_bit_number, L_USSGclinitCase	// branch if the LSB (the "clinit" bit) was set in the resolved address
+	ldr	x11, [x10, #J9TR_USCSnippet_CP]			// get CP
+	ldr	x12, [x10, #J9TR_USCSnippet_CPIndex]		// get CP index & flags
+	and	x12, x12, #(~J9TR_USCSnippet_HelperOffset)	// remove helper offset from CP index
 	stp	x1, x2, [J9SP, #-16]!				// save regs
-	str	x8, [J9SP, #-8]!				// push:	CP index
-	str	x28, [J9SP, #-8]!				// 		CP
+	str	x12, [J9SP, #-8]!				// push:	CP index
+	str	x11, [J9SP, #-8]!				// 		CP
 	str	x3, [J9SP, #-8]!				// 		method
 	str	x0, [J9SP, #-8]!				//
 								// prepare args for jitCallCFunction:
@@ -202,11 +224,11 @@ L_gotHelper:
 	bl	jitCallCFunction
 	add	J9SP, J9SP, #32					// restore J9SP
 	ldp	x1, x2, [J9SP], #16				// restore regs
-	add	x0, x27, #J9TR_Snippet_CallInstruction		// get address of BL instruction in snippet
+	add	x0, x10, #J9TR_Snippet_CallInstruction		// get address of BL instruction in snippet
 	mov	x30, x0						// execute the BL after rewriting it
 	b	L_refreshHelper					// update branch instruction to new target
 L_USSGclinitCase:
-	mov	x30, x27					// send helpers expect link register to contain snippet return address
+	mov	x30, x10					// send helpers expect link register to contain snippet return address
 	br	x1						// in <clinit> case, dispatch method directly without patching
 
 	.align	3
@@ -256,25 +278,81 @@ _interpreterUnresolvedInstanceDataGlue:
 _interpreterUnresolvedInstanceDataStoreGlue:
 	hlt	#0	// Not implemented yet
 
+// For virtual unresolved call, we generate following instructions
+//  movz  x9, #0
+//  movk  x9, #0, LSL #16
+//  sxtw  x9, w9
+//  ldr   dstReg, [vftReg, x9]
+//  b     VirtualUnresolvedSnippet ; change this to "blr dstReg"
+//
+// We encode the resolved index value into movz and movk instructions first
+// Then the b instruction is changed to "blr dstReg"
+//
 _virtualUnresolvedHelper:
-	hlt	#0	// Not implemented yet
+	stp	x0, x1, [J9SP, #-64]!				// save parameter regs
+	stp	x2, x3, [J9SP, #16]
+	stp	x4, x5, [J9SP, #32]
+	stp	x6, x7, [J9SP, #48]
+	add	x0, x30, #J9TR_UVCSnippet_CP			// get CP/index pair pointer
+	ldr	x1, [x30, #J9TR_UVCSnippet_codeCacheReturnAddress]	// get code cache RA
+	mov	x10, x1						// protect LR in x10 (in L_commonLookupException, it is expected)
+	bl	jitResolveVirtualMethod				// resolve the method, return value = vTable offset
+	cbz	x0, L_commonLookupException			// if resolve failed, throw the exception
+	mov	x2, x0
+	sub	x0, x10, #20					// get the address of the movz instruction
+	ldr	w1, [x0]					// fetch the movz instruction
+	ubfx	x3, x2, #0, #16				// lower 16 bits of the index
+	orr	w1, w1, w3, LSL #5				// encode the index in the movz instruction
+	str	w1, [x0]					// store the movz instruction
+	ldr	w1, [x0, #4]					// fetch the movk instruction
+	ubfx	x3, x2, #16, #16				// next 16 bits of the index
+	orr	w1, w1, w3, LSL #5				// encode the index in the movk instruction
+	str	w1, [x0, #4]					// store the movk instruction
+	mov	x1, #8						// 2 instruction to flush
+	bl	flushICache
+	sub	x0, x10, #8					// get the address of the ldr instruction
+	ldr	w2, [x0]					// fetch the ldr instruction
+	ubfx	x2, x2, #0, #5					// extract the dstReg
+	ldr	w3, const_blr					// fetch constant for the blr instruction
+	orr	w3, w3, w2, LSL #5				// encode the dstReg in the blr instruction
+	sub	x0, x10, #4					// get the address of the b instruction
+	str	w3, [x0]					// store instruction
+	mov	x1, #4						// 1 instruction to flush
+	bl	flushICache
+	sub	x30, x10, #20					// set the movk instruction as the destination
+	ldp	x0, x1, [J9SP, #0]				// restore other parameter regs
+	ldp	x2, x3, [J9SP, #16]
+	ldp	x4, x5, [J9SP, #32]
+	ldp	x6, x7, [J9SP, #48]
+	add	J9SP, J9SP, #64
+	ret							// jump back to the movk instruction
 
+	.align	2
+const_blr:
+	.word	0xD63F0000
+
+// Handles calls to interface call snippets
+//
+// in:     x30 = snippet
+//
+// trash:	x10, x11
+//
 _interfaceCallHelper:
 	stp	x0, x1, [J9SP, #-64]!
 	stp	x2, x3, [J9SP, #16]
 	stp	x4, x5, [J9SP, #32]
 	stp	x6, x7, [J9SP, #48]
-	mov	x3, x30						// preserve LR
+	mov	x7, x30						// preserve LR
 	add	x0, x30, #J9TR_UICSnippet_CP			// get CP/index pair pointer
 	ldr	x1, [x30, #J9TR_ICSnippet_codeCacheReturnAddress]	// get code cache RA
-	mov	x28, x1						// protect RA in x28 (in L_commonLookupException, it is expected)
+	mov	x10, x1						// protect RA in x10 (in L_commonLookupException, it is expected)
 	bl	jitResolveInterfaceMethod			// call the helper
 	cbz	x0, L_commonLookupException			// if resolve failed, throw the exception
-	add	x0, x3, #J9TR_Snippet_CallInstruction		// get address of BL instruction in snippet
+	add	x0, x7, #J9TR_Snippet_CallInstruction		// get address of BL instruction in snippet
 	ldr	x1, const_interfaceDispatch			// get new snippet branch target
 	mov	x2, #TR_ARM64interfaceDispatch
 	bl	L_refreshHelper					// rewrite the BL
-	mov	x30, x3						// restore LR
+	mov	x30, x7						// restore LR
 	ldr	x0, [J9SP, #0]					// refetch 'this'
 	b	L_continueInterfaceSend				// lookup interface method and send
 _interfaceDispatch:
@@ -291,31 +369,31 @@ L_continueInterfaceSend:
 	and	x0, x0, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
 	add	x1, x30, #J9TR_ICSnippet_InterfaceClass		// get InterfaceClass/MethodIndex pair pointer
 	ldr	x2, [x30, #J9TR_ICSnippet_codeCacheReturnAddress]	// get code cache RA
-	mov	x28, x2						// protect LR in x28 (in L_commonLookupException, it is expected)
+	mov	x10, x2						// protect LR in x10 (in L_commonLookupException, it is expected)
 	bl	jitLookupInterfaceMethod			// call the helper
 	cbz	x0, L_commonLookupException			// if resolve failed, throw the exception
-	mov	x15, #J9TR_InterpVTableOffset
-	sub	x15, x15, x0					// convert interp vTableIndex to jit index (must be in x15 for patch virtual)
-	mov	x30, x28						// set LR = code cache RA
+	mov	x9, #J9TR_InterpVTableOffset
+	sub	x9, x9, x0					// convert interp vTableIndex to jit index (must be in x9 for patch virtual)
+	mov	x30, x10						// set LR = code cache RA
 	ldr	x0, [J9SP, #0]					// refetch 'this'
 #ifdef J9VM_GC_COMPRESSED_POINTERS
-	ldr	w14, [x0, #J9TR_ObjectHeader_class]		// load class offset of receiver
+	ldr	w11, [x0, #J9TR_ObjectHeader_class]		// load class offset of receiver
 #else
-	ldr	x14, [x0, #J9TR_ObjectHeader_class]		// load class of receiver
+	ldr	x11, [x0, #J9TR_ObjectHeader_class]		// load class of receiver
 #endif
-	and	x14, x14, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
+	and	x11, x11, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
 	ldr	x1, [J9SP, #8]					// restore other parameter regs
 	ldp	x2, x3, [J9SP, #16]
 	ldp	x4, x5, [J9SP, #32]
 	ldp	x6, x7, [J9SP, #48]
 	add	J9SP, J9SP, #64
-	ldr	x15, [x14, x15]					// jump thru vtable
-	br	x15
+	ldr	x11, [x11, x9]					// jump thru vtable
+	br	x11
 
 L_commonLookupException:
 	add	J9SP, J9SP, #64					// clean up stack but do not restore register values
 	ldr	x0, [J9VMTHREAD, #J9TR_VMThreadCurrentException]	// load pending exception from vmStruct
-	mov	x30, x28					// move correct LR in to get exception throw.
+	mov	x30, x10					// move correct LR in to get exception throw.
 	b	jitThrowException				// throw it
 
 	.align	3
@@ -330,40 +408,41 @@ const_interfaceDispatch:
 // out:   x0  = method
 //        x30 = code cache return address
 //
-// trash: x1, x2
+// trash: x10, x11
 //
 L_StaticGlueCallFixer:
 	ldr	x0, [x1, #J9TR_SCSnippet_method]		// get method
 	mov	x2, x30						// save static glue return address
 	ldr	x30, [x1, #J9TR_SCSnippet_codeCacheReturnAddress]	// get code cache return address
-	tst	x0, #clinit_bit					// branch if the LSB (the "clinit" bit) was set in the resolved address
-	bne	L_SGCclinitCase
+	tbnz	x0, #clinit_bit_number, L_SGCclinitCase		// branch if the LSB (the "clinit" bit) was set in the resolved address
 	ldr	x1, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
-	tbz	x1, #J9TR_MethodNotCompiledBit, L_StaticGlueCallFixer1	// is method now compiled?
+	tst	x1, #J9TR_MethodNotCompiledBit
+	beq	L_StaticGlueCallFixer1				// is method now compiled?
 	ret	x2						// if not, return to static glue to call interpreter
 L_StaticGlueCallFixer1:
-	ldr	x28, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
-	sub	x27, x30, #4					// get address of BL instruction (code cache RA points to instruction following BL)
-	str	x28, [J9SP, #-8]!				// push:	method
-	str	x27, [J9SP, #-8]!				// 		addr of BL instr
-	str	x0, [J9SP, #-8]!				// 		addr of the callee (MethodPCStartOffset)
+	ldr	x10, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
+	sub	x11, x30, #4					// get address of BL instruction (code cache RA points to instruction following BL)
+	str	x10, [J9SP, #-8]!				// push:	addr of the callee (MethodPCStartOffset)
+	str	x11, [J9SP, #-8]!				// 		addr of BL instr
+	str	x0, [J9SP, #-8]!				// 		method
 								// prepare args for jitCallCFunction:
 	ldr	x0, const_mcc_callPointPatching_unwrapper	// addr of mcc_callPointPatching_unwrapper
 	mov	x1, J9SP					// addr of the first arg for patchCallPoint
 	mov	x2, J9SP					// where to put the return value
 	bl	jitCallCFunction
 	add	J9SP, J9SP, #24					// restore J9SP
-	add	x30, x27, #4					// set LR to code cache RA
-	br	x28						// jump to the I->J start address
+	add	x30, x11, #4					// set LR to code cache RA
+	br	x10						// jump to the I->J start address
 L_SGCclinitCase:
 	and	x0, x0, #(~clinit_bit)				// clear the "clinit" bit
 	ldr	x1, [x0, #J9TR_MethodPCStartOffset]		// get I->J start address
-	tbz	x1, #J9TR_MethodNotCompiledBit, L_SGCclinitCase1	// is method now compiled?
+	tst	x1, #J9TR_MethodNotCompiledBit
+	beq	L_SGCclinitCase1				// is method now compiled?
 	ret	x2						// if not, return to static glue to call interpreter
 L_SGCclinitCase1:
 	br	x1						// in <clinit> case, dispatch method directly without patching
-const_mcc_callPointPatching_unwrapper:
 	.align	3
+const_mcc_callPointPatching_unwrapper:
 	.dword	mcc_callPointPatching_unwrapper
 
 _interpreterVoidStaticGlue:

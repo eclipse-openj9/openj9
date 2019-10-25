@@ -29,9 +29,9 @@
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
 #include "ilgen/IlGenRequest.hpp"
@@ -81,11 +81,11 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
 
    int32_t byteArrayType = fej9->getNewArrayTypeFromClass(reinterpret_cast<TR_OpaqueClassBlock*>(fej9->getJ9JITConfig()->javaVM->byteArrayClass));
 
-   TR::Node::recreateWithoutProperties(node, TR::newarray, 2, 
+   TR::Node::recreateWithoutProperties(node, TR::newarray, 2,
       TR::Node::create(TR::ishl, 2,
-         lenNode, 
+         lenNode,
          TR::Node::iconst(1)),
-      TR::Node::iconst(byteArrayType), 
+      TR::Node::iconst(byteArrayType),
 
       getSymRefTab()->findOrCreateNewArraySymbolRef(node->getSymbolReference()->getOwningMethodSymbol(comp())));
 
@@ -93,7 +93,7 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    newByteArrayNode->setCanSkipZeroInitialization(true);
    newByteArrayNode->setIsNonNull(true);
 
-   TR::Node* newCallNode = TR::Node::createWithSymRef(node, TR::call, 5, 
+   TR::Node* newCallNode = TR::Node::createWithSymRef(node, TR::call, 5,
       getSymRefTab()->methodSymRefFromName(comp()->getMethodSymbol(), "java/lang/String", "decompressedArrayCopy", "([CI[BII)V", TR::MethodSymbol::Static));
    newCallNode->setAndIncChild(0, valueNode);
    newCallNode->setAndIncChild(1, offNode);
@@ -207,7 +207,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
    {
    bool enableTrace = trace() || comp()->getOption(TR_TraceUnsafeInlining);
    bool isNotStaticField = !strncmp(comp()->getCurrentMethod()->classNameChars(), "java/util/concurrent/atomic/", strlen("java/util/concurrent/atomic/"));
-
+   bool fixupCommoning = true;
    TR::Node* unsafeCall = treetop->getNode()->getFirstChild();
    TR::Node* objectNode = unsafeCall->getChild(1);
    TR::Node* offsetNode = unsafeCall->getChild(2);
@@ -260,8 +260,8 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       auto isObjectNullNode = TR::Node::createif(TR::ifacmpeq, objectNode->duplicateTree(), TR::Node::aconst(0), NULL);
       auto isObjectNullTreeTop = TR::TreeTop::create(comp(), isObjectNullNode);
       treetop->insertBefore(isObjectNullTreeTop);
-      treetop->getEnclosingBlock()->split(treetop, cfg);
-
+      treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
+ 
       if (enableTrace)
          traceMsg(comp(), "Created isObjectNull test node n%dn, non-null object will fall through to Block_%d\n", isObjectNullNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
 
@@ -272,7 +272,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
                                                NULL);
       auto isNotLowTaggedTreeTop = TR::TreeTop::create(comp(), isNotLowTaggedNode);
       treetop->insertBefore(isNotLowTaggedTreeTop);
-      treetop->getEnclosingBlock()->split(treetop, cfg);
+      treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
 
       if (enableTrace)
          traceMsg(comp(), "Created isNotLowTagged test node n%dn, static field will fall through to Block_%d\n", isNotLowTaggedNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
@@ -325,7 +325,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
 
       treetop->insertBefore(TR::TreeTop::create(comp(), objectAdjustmentNode));
       treetop->insertBefore(TR::TreeTop::create(comp(), offsetAdjustmentNode));
-      treetop->getEnclosingBlock()->split(treetop, cfg);
+      treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
 
       if (enableTrace)
          traceMsg(comp(), "Block_%d contains call to atomic method helper, and is the target of isObjectNull and isNotLowTagged tests\n", treetop->getEnclosingBlock()->getNumber());
@@ -353,26 +353,30 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
    switch(node->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod())
       {
       case TR::sun_misc_Unsafe_getAndAddInt:
-         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && 
+         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() &&
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
       case TR::sun_misc_Unsafe_getAndSetInt:
-         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && 
+         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() &&
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicSwapSymbol);
       case TR::sun_misc_Unsafe_getAndAddLong:
-         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.is64Bit() && 
+         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.is64Bit() &&
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
       case TR::sun_misc_Unsafe_getAndSetLong:
-         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.is64Bit() && 
+         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.is64Bit() &&
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicSwapSymbol);
       case TR::java_lang_Class_isAssignableFrom:
          return cg()->supportsInliningOfIsAssignableFrom();
       case TR::java_lang_Integer_rotateLeft:
+      case TR::java_lang_Integer_rotateRight:
+         return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ() || TR::Compiler->target.cpu.isPower();
       case TR::java_lang_Long_rotateLeft:
+      case TR::java_lang_Long_rotateRight:
+         return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ() || (TR::Compiler->target.cpu.isPower() && TR::Compiler->target.is64Bit());
       case TR::java_lang_Math_abs_I:
       case TR::java_lang_Math_abs_L:
       case TR::java_lang_Math_abs_F:
       case TR::java_lang_Math_abs_D:
-         return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ();
+         return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ() || TR::Compiler->target.cpu.isPower();
       case TR::java_lang_Math_max_I:
       case TR::java_lang_Math_min_I:
       case TR::java_lang_Math_max_L:
@@ -407,9 +411,31 @@ void J9::RecognizedCallTransformer::transform(TR::TreeTop* treetop)
       case TR::java_lang_Integer_rotateLeft:
          processIntrinsicFunction(treetop, node, TR::irol);
          break;
+      case TR::java_lang_Integer_rotateRight:
+         {
+         // rotateRight(x, distance) = rotateLeft(x, -distance)
+         TR::Node *distance = TR::Node::create(node, TR::ineg, 1);
+         distance->setChild(0, node->getSecondChild());
+         node->setAndIncChild(1, distance);
+
+         processIntrinsicFunction(treetop, node, TR::irol);
+
+         break;
+         }
       case TR::java_lang_Long_rotateLeft:
          processIntrinsicFunction(treetop, node, TR::lrol);
          break;
+      case TR::java_lang_Long_rotateRight:
+         {
+         // rotateRight(x, distance) = rotateLeft(x, -distance)
+         TR::Node *distance = TR::Node::create(node, TR::ineg, 1);
+         distance->setChild(0, node->getSecondChild());
+         node->setAndIncChild(1, distance);
+
+         processIntrinsicFunction(treetop, node, TR::lrol);
+
+         break;
+         }
       case TR::java_lang_Math_abs_I:
          processIntrinsicFunction(treetop, node, TR::iabs);
          break;

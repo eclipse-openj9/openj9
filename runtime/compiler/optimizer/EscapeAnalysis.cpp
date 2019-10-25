@@ -51,21 +51,21 @@
 #include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "il/AliasSetInterface.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/ILOps.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "infra/Array.hpp"
 #include "infra/Assert.hpp"
 #include "infra/BitVector.hpp"
@@ -169,6 +169,15 @@ char *TR_EscapeAnalysis::getClassName(TR::Node *classNode)
 
 bool TR_EscapeAnalysis::isImmutableObject(TR::Node *node)
    {
+   // For debugging issues with the special handling of immutable objects
+   // that allows them to be discontiguously allocated even if they escape
+   static char *disableImmutableObjectHandling = feGetEnv("TR_disableEAImmutableObjectHandling");
+
+   if (disableImmutableObjectHandling)
+      {
+      return false;
+      }
+
    if (node->getOpCodeValue() != TR::New)
       {
       return false;
@@ -544,6 +553,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    _fixedVirtualCallSites.setFirst(NULL);
 
    _parms = NULL;
+   _ignoreableUses = NULL;
    _nonColdLocalObjectsValueNumbers = NULL;
    _allLocalObjectsValueNumbers = NULL;
    _visitedNodes = NULL;
@@ -587,6 +597,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
          }
       else
          {
+         _ignoreableUses = new (trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
          _nonColdLocalObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
          _allLocalObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
          _notOptimizableLocalObjectsValueNumbers = new (trStackMemory()) TR_BitVector(_valueNumberInfo->getNumberOfValues(), trMemory(), stackAlloc);
@@ -597,6 +608,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    if ( !_candidates.isEmpty())
       {
       findLocalObjectsValueNumbers();
+      findIgnoreableUses();
       }
 
    // Complete the candidate info by finding all uses and defs that are reached
@@ -1261,6 +1273,48 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
       }
 
    return cost; // actual cost
+   }
+
+void TR_EscapeAnalysis::findIgnoreableUses()
+   {
+   if (comp()->getOSRMode() != TR::voluntaryOSR)
+      return;
+
+   TR::NodeChecklist visited(comp());
+   bool inOSRCodeBlock = false;
+
+   // Gather all uses under fake prepareForOSR calls - they will be tracked as ignoreable
+   for (TR::TreeTop *treeTop = comp()->getStartTree(); treeTop; treeTop = treeTop->getNextTreeTop())
+       {
+       if (treeTop->getNode()->getOpCodeValue() == TR::BBStart)
+           inOSRCodeBlock = treeTop->getNode()->getBlock()->isOSRCodeBlock();
+       else if (inOSRCodeBlock
+                && treeTop->getNode()->getNumChildren() > 0
+                && treeTop->getNode()->getFirstChild()->getOpCodeValue() == TR::call
+                && treeTop->getNode()->getFirstChild()->getSymbolReference()->getReferenceNumber() == TR_prepareForOSR)
+           {
+           TR::Node *callNode = treeTop->getNode()->getFirstChild();
+           for (int i = 0; i < callNode->getNumChildren(); ++i)
+              findIgnoreableUses(callNode->getChild(i), visited);
+           }
+       }
+   }
+
+void TR_EscapeAnalysis::findIgnoreableUses(TR::Node *node, TR::NodeChecklist &visited)
+   {
+   if (visited.contains(node))
+      return;
+   visited.add(node);
+   if (trace())
+      traceMsg(comp(), "Marking n%dn as an ignoreable use\n", node->getGlobalIndex());
+   _ignoreableUses->set(node->getGlobalIndex());
+
+   int32_t i;
+   for (i = 0; i < node->getNumChildren(); i++)
+      {
+      TR::Node *child = node->getChild(i);
+      findIgnoreableUses(child, visited);
+      }
    }
 
 void TR_EscapeAnalysis::findLocalObjectsValueNumbers()
@@ -2305,12 +2359,22 @@ bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
                   {
                   int32_t useIndex = cursor;
                   TR::Node *useNode = _useDefInfo->getNode(useIndex+_useDefInfo->getFirstUseIndex());
+
+                  // Only add this value number if it's not to be ignored
+                  if (_ignoreableUses->get(useNode->getGlobalIndex()))
+                     {
+                     continue;
+                     }
+
                   int32_t useNodeVN = _valueNumberInfo->getValueNumber(useNode);
                   int32_t i;
+
                   for (i = candidate->_valueNumbers->size()-1; i >= 0; i--)
                      {
                      if (candidate->_valueNumbers->element(i) == useNodeVN)
+                        {
                         break;
+                        }
                      }
 
                   if (i < 0)
@@ -3911,7 +3975,12 @@ void TR_EscapeAnalysis::checkEscape(TR::TreeTop *firstTree, bool isCold, bool & 
       if (node->getOpCode().isCheck() || node->getOpCodeValue() == TR::treetop)
          node = node->getFirstChild();
       if (node->getOpCode().isCall() && !vnsCall.contains(node))
-         checkEscapeViaCall(node, vnsCall, ignoreRecursion);
+         {
+         if (node->getSymbolReference()->getReferenceNumber() != TR_prepareForOSR
+             || comp()->getOSRMode() != TR::voluntaryOSR
+             ||  _curBlock->isOSRInduceBlock())
+            checkEscapeViaCall(node, vnsCall, ignoreRecursion);
+         }
       }
    }
 
@@ -5331,12 +5400,18 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
 
             if (fieldIsPresentInObject)
                {
-               // Special case handling of non-contiguous immutable object:
-               // if it escapes in a cold block, need to ensure the temporary
-               // that replaces it is correctly initialized
+               // For a candidate that is escaping in a cold block, keep track
+               // of fields that are referenced so they can be initialized.
+               // Otherwise, rewrite field references (in else branch_.
+               // Special case handling of stores to fields of immutable objects
+               // that are not contiguously allocated - their field references
+               // are also rewritten (in else branch), but the original stores
+               // still preserved.
+               //
                if (candidate->escapesInColdBlock(_curBlock)
                       && (!isImmutableObject(candidate)
-                             || candidate->isContiguousAllocation()))
+                             || candidate->isContiguousAllocation()
+                             || node->getOpCode().isLoadVar()))
                   {
                   // Uh, why are we re-calculating the fieldOffset?  Didn't we just do that above?
                   //
@@ -5392,9 +5467,15 @@ bool TR_EscapeAnalysis::fixupNode(TR::Node *node, TR::Node *parent, TR::NodeChec
                         }
                      }
                   }
+
+               // For a candidate that is not escaping in a cold block, or that
+               // is an immutable object that is non-contiguously allocated,
+               // rewrite references
+               //
                else // if (!candidate->escapesInColdBlock(_curBlock))
                     //        || (isImmutableObject(candidate)
                     //               && !candidate->isContiguousAllocation()))
+                    //               && !node->getOpCode().isLoadVar()))
                   {
                   if (candidate->isContiguousAllocation())
                      removeThisNode |= fixupFieldAccessForContiguousAllocation(node, candidate);

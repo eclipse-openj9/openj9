@@ -39,6 +39,7 @@
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
+#include "il/J9Symbol.hpp"
 #include "infra/Annotations.hpp"
 #include "optimizer/OptimizationStrategies.hpp"
 #include "env/J9SharedCache.hpp"
@@ -218,9 +219,6 @@ static TR_Processor portLibCall_getX86ProcessorType();
 static bool portLibCall_sysinfo_has_resumable_trap_handler();
 static bool portLibCall_sysinfo_has_fixed_frame_C_calling_convention();
 static bool portLibCall_sysinfo_has_floating_point_unit();
-static uint32_t portLibCall_sysinfo_number_bytes_read_inaccessible();
-static uint32_t portLibCall_sysinfo_number_bytes_write_inaccessible();
-static bool portLibCall_sysinfo_supports_scaled_index_addressing();
 
 TR::CompilationInfo *getCompilationInfo(J9JITConfig *jitConfig);
 
@@ -234,7 +232,9 @@ public:
       {
       DEFAULT_VM = 0
       , J9_VM
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
       , AOT_VM
+#endif
 #if defined(JITSERVER_SUPPORT)
       , J9_SERVER_VM // for JITServer
       , J9_SHARED_CACHE_SERVER_VM // for Remote AOT JITServer
@@ -701,7 +701,7 @@ public:
    //getSymbolAndFindInlineTarget queries
    virtual bool supressInliningRecognizedInitialCallee(TR_CallSite* callsite, TR::Compilation* comp);
    virtual int checkInlineableWithoutInitialCalleeSymbol (TR_CallSite* callsite, TR::Compilation* comp);
-   virtual int checkInlineableTarget (TR_CallTarget* target, TR_CallSite* callsite, TR::Compilation* comp, bool inJSR292InliningPasses);
+   virtual int checkInlineableTarget (TR_CallTarget* target, TR_CallSite* callsite);
 
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
    virtual bool inlineRecognizedCryptoMethod(TR_CallTarget* target, TR::Compilation* comp);
@@ -777,7 +777,29 @@ public:
    // JSR292 }}}
 
    virtual uintptrj_t getFieldOffset( TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef);
+   /*
+    * \brief
+    *    tell whether it's possible to dereference a field given the field symbol reference at compile time
+    *
+    * \fieldRef
+    *    symbol reference of the field
+    */
    virtual bool canDereferenceAtCompileTime(TR::SymbolReference *fieldRef,  TR::Compilation *comp);
+
+   /*
+    * \brief
+    *    tell whether it's possible to dereference a field given the field symbol at compile time
+    *
+    * \fieldSymbol
+    *    symbol of the field
+    *
+    * \cpIndex
+    *    constant pool index
+    *
+    * \owningMethod
+    *    the method accessing the field
+    */
+   virtual bool canDereferenceAtCompileTimeWithFieldSymbol(TR::Symbol *fieldSymbol, int32_t cpIndex, TR_ResolvedMethod *owningMethod);
 
    virtual bool getStringFieldByName( TR::Compilation *, TR::SymbolReference *stringRef, TR::SymbolReference *fieldRef, void* &pResult);
    virtual bool      isString(TR_OpaqueClassBlock *clazz);

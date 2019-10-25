@@ -23,6 +23,9 @@
 
 /*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
 
+/** 
+ * Defines the jdmpview tool for reading system core and java core diagnostic files.
+ */
 module openj9.dtfjview {
   requires openj9.dtfj;
   requires java.logging;

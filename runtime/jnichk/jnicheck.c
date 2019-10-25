@@ -1988,7 +1988,6 @@ jniCheckPrintJNIOnLoad(JNIEnv *env, U_32 level)
 	libName = (j9array_t *)vmThread->arg0EA;
 	size = J9INDEXABLEOBJECT_SIZE(vmThread, *libName);
 
-#if defined(J9VM_GC_ARRAYLETS)
 	{
 		UDATA i;
 
@@ -2003,9 +2002,6 @@ jniCheckPrintJNIOnLoad(JNIEnv *env, U_32 level)
 			size = 0;
 		}
 	}
-#else /* J9VM_GC_ARRAYLETS */
-	data = (char *)(*libName + 1);
-#endif /* J9VM_GC_ARRAYLETS */
 
 	switch (level) {
 	case J9NLS_ERROR:

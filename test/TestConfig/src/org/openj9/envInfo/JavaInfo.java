@@ -47,6 +47,10 @@ public class JavaInfo {
             spec = "aix";
         } else if (osName.contains("z/os")) {
             spec = "zos";
+        } else if (osName.contains("sunos")) {
+            spec = "sunos";
+        } else if (osName.contains("bsd")) {
+            spec = "bsd";
         } else {
             System.out.println("Cannot determine System.getProperty('os.name')=" + osName + "\n");
             return null;
@@ -60,6 +64,8 @@ public class JavaInfo {
             spec += "_390";
         } else if (osArch.contains("aarch")) {
             spec += "_arm";
+        } else if (osArch.contains("sparcv9")) {
+            spec += "_sparcv9";
         } else {
             System.out.println("Cannot determine System.getProperty('os.arch')=" + osArch + "\n");
             return null;

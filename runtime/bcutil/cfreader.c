@@ -1898,14 +1898,15 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
-				if((cpBase)&&(cpBase[value].tag != CFR_CONSTANT_Utf8)) {
-					errorCode = J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8__ID;
-					goto _errorFound;
-				}
-
-				if ((flags & CFR_Xfuture) && (bcvCheckName(&cpBase[value]))) {
-					errorCode = J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME__ID;
-					goto _errorFound;
+				if(cpBase) {
+					if(cpBase[value].tag != CFR_CONSTANT_Utf8) {
+						errorCode = J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8__ID;
+						goto _errorFound;
+					}
+					if((flags & CFR_Xfuture) && (bcvCheckName(&cpBase[value]))) {
+						errorCode = J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME__ID;
+						goto _errorFound;
+					}
 				}
 
 				value = ((J9CfrAttributeLocalVariableTable*)attrib)->localVariableTable[j].descriptorIndex;
@@ -1913,13 +1914,15 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
-				if((cpBase)&&(cpBase[value].tag != CFR_CONSTANT_Utf8)) {
-					errorCode = J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8__ID;
-					goto _errorFound;
-				}
-				if(j9bcv_checkFieldSignature(&cpBase[value], 0)) {
-					errorCode = J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_INVALID__ID;
-					goto _errorFound;
+				if(cpBase) {
+					if(cpBase[value].tag != CFR_CONSTANT_Utf8) {
+						errorCode = J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_NOT_UTF8__ID;
+						goto _errorFound;
+					}
+					if(j9bcv_checkFieldSignature(&cpBase[value], 0)) {
+						errorCode = J9NLS_CFR_ERR_LOCAL_VARIABLE_SIGNATURE_INVALID__ID;
+						goto _errorFound;
+					}
 				}
 
 				/* index range verification happens in ClassFileOracle.cpp with Xfuture */
@@ -1944,9 +1947,15 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
 					goto _errorFound;
 				}
-				if((cpBase)&&(cpBase[value].tag != CFR_CONSTANT_Utf8)) {
-					errorCode = J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8__ID;
-					goto _errorFound;
+				if(cpBase) {
+					if(cpBase[value].tag != CFR_CONSTANT_Utf8) {
+						errorCode = J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME_NOT_UTF8__ID;
+						goto _errorFound;
+					}
+					if((flags & CFR_Xfuture) && (bcvCheckName(&cpBase[value]))) {
+						errorCode = J9NLS_CFR_ERR_LOCAL_VARIABLE_NAME__ID;
+						goto _errorFound;
+					}
 				}
 
 				value = ((J9CfrAttributeLocalVariableTypeTable*)attrib)->localVariableTypeTable[j].signatureIndex;

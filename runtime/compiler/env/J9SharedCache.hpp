@@ -34,7 +34,13 @@
 class TR_J9VMBase;
 class TR_ResolvedMethod;
 namespace TR { class CompilationInfo; }
+#if defined(JITSERVER_SUPPORT)
 namespace JITServer { class ServerStream; }
+#endif
+
+struct J9SharedClassConfig;
+struct J9SharedClassCacheDescriptor;
+struct J9SharedDataDescriptor;
 
 /**
  * \brief An interface to the VM's shared class cache.
@@ -61,11 +67,8 @@ public:
 
    virtual bool isHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
    virtual bool isHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL);
-   // virtual bool isHint(J9ROMMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL);
    virtual uint16_t getAllEnabledHints(J9Method *method);
-   // virtual uint16_t getAllEnabledHints(J9ROMMethod *method);
    virtual void addHint(J9Method *, TR_SharedCacheHint);
-   // virtual void addHint(J9ROMMethod *, TR_SharedCacheHint);
    virtual void addHint(TR_ResolvedMethod *, TR_SharedCacheHint);
    virtual bool isMostlyFull();
 
@@ -146,7 +149,7 @@ public:
    static TR_J9SharedCacheDisabledReason getSharedCacheDisabledReason() { return _sharedCacheState; }
    static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo);
    static void setStoreSharedDataFailedLength(UDATA length) {_storeSharedDataFailedLength = length; }
-   J9SharedClassCacheDescriptor *getCacheDescriptorList();
+   virtual J9SharedClassCacheDescriptor *getCacheDescriptorList();
    
 private:
    J9JITConfig *jitConfig() { return _jitConfig; }
@@ -196,6 +199,20 @@ private:
    static UDATA                          _storeSharedDataFailedLength;
    };
 
+#if defined(JITSERVER_SUPPORT)                                                                                                                                                                               
+/**                                                                                                                                                                                                          
+* @class TR_J9JITServerSharedCache                                                                                                                                                                           
+* @brief Class used by JITServer for querying client-side SharedCache information                                                                                                                            
+*                                                                                                                                                                                                            
+* This class is an extension of the TR_J9SharedCache class which overrides a number                                                                                                                          
+* of TR_J9SharedCache's APIs. TR_J9JITServerSharedCache is used by JITServer and                                                                                                                             
+* the overridden APIs mostly send remote messages to JITClient to query information from                                                                                                                     
+* the TR_J9SharedCache on the client. The information is needed for JITServer to                                                                                                                             
+* compile code that is compatible with the client-side VM. To minimize the                                                                                                                                   
+* number of remote messages as a way to optimize JITServer performance, a                                                                                                                                    
+* lot of client-side TR_J9SharedCache information are cached on JITServer.                                                                                                                                   
+*/
+
 class TR_J9JITServerSharedCache : public TR_J9SharedCache
    {
 public:
@@ -205,11 +222,9 @@ public:
 
    virtual bool isHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT(false, "called"); return false;}
    virtual bool isHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT(false, "called"); return false;}
-   // virtual bool isHint(J9ROMMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT(false, "called"); return false;}
+
    virtual uint16_t getAllEnabledHints(J9Method *method) override { TR_ASSERT(false, "called"); return 0;}
-   // virtual uint16_t getAllEnabledHints(J9ROMMethod *method) override { TR_ASSERT(false, "called"); return 0;}
    virtual void addHint(J9Method *, TR_SharedCacheHint) override;
-   // virtual void addHint(J9ROMMethod *, TR_SharedCacheHint) override { TR_ASSERT(false, "called"); }
    virtual bool isMostlyFull() override { TR_ASSERT(false, "called"); return false;}
 
    virtual UDATA *rememberClass(J9Class *clazz, bool create=true) override;
@@ -228,11 +243,14 @@ public:
    
    virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) override;
 
+   virtual J9SharedClassCacheDescriptor *getCacheDescriptorList();
+
    void setStream(JITServer::ServerStream *stream) { _stream = stream; }
    virtual const void *storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor);
 
 private:
    JITServer::ServerStream *_stream;
    };
+#endif /* defined(JITSERVER_SUPPORT) */
 
 #endif

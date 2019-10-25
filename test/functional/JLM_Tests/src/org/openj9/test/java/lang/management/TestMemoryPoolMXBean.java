@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -885,6 +885,11 @@ public class TestMemoryPoolMXBean {
 			AssertJUnit.assertNotNull(mu);
 			AssertJUnit.assertTrue(mu.getCommitted() != -1);
 			AssertJUnit.assertTrue(mu.getUsed() != -1);
+			String name = testBean.getName();
+			/* verify if we retrieve the usage for JIT code cache. */
+			if (name.equals("JIT code cache")) {
+				AssertJUnit.assertTrue(mu.getUsed() != 0);
+			}
 		} else {
 			AssertJUnit.assertNull(mu);
 		} // end else not a valid pool
@@ -914,6 +919,11 @@ public class TestMemoryPoolMXBean {
 			AssertJUnit.assertNotNull(mu);
 			AssertJUnit.assertTrue(mu.getCommitted() != -1);
 			AssertJUnit.assertTrue(mu.getUsed() != -1);
+			String name = testBean.getName();
+			/* verify if we retrieve the usage for JIT code cache. */
+			if (name.equals("JIT code cache")) {
+				AssertJUnit.assertTrue(mu.getUsed() != 0);
+			}
 		} else {
 			AssertJUnit.assertNull(mu);
 		} // end else not a valid pool

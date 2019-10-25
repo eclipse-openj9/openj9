@@ -350,7 +350,6 @@ iterateArrayObjectSlots(
 	return returnCode;
 }
 
-#if defined(J9VM_GC_ARRAYLETS)
 jvmtiIterationControl static
 iterateArrayletSlots(
 		J9JavaVM *javaVM,
@@ -376,7 +375,6 @@ iterateArrayletSlots(
 	}
 	return returnCode;
 }
-#endif /* J9VM_GC_ARRAYLETS */
 
 /**
  * Walk all object slots for the given object, call user provided function.
@@ -412,17 +410,13 @@ j9mm_iterate_object_slots(
 
 	case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
 		returnCode = iterateArrayObjectSlots(javaVM, objectPtr, object, flags, func, userData);
-#if defined(J9VM_GC_ARRAYLETS)
 		if (JVMTI_ITERATION_CONTINUE == returnCode) {
 			returnCode = iterateArrayletSlots(javaVM, objectPtr, object, flags, func, userData);
 		}
-#endif /* J9VM_GC_ARRAYLETS */
 		break;
 
 	case GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT:
-#if defined(J9VM_GC_ARRAYLETS)
 		returnCode = iterateArrayletSlots(javaVM, objectPtr, object, flags, func, userData);
-#endif /* J9VM_GC_ARRAYLETS */
 		break;
 
 	default:
@@ -430,50 +424,6 @@ j9mm_iterate_object_slots(
 	}
 
 	return returnCode;
-}
-
-
-/**
- * Provide the arraylet identification bitmask.  For builds that do not
- * support arraylets all values are set to 0.
- *
- * @return arrayletLeafSize
- * @return offset
- * @return width
- * @return mask
- * @return result
- * @return 0 on success, non-0 on failure.
- */
-UDATA
-j9mm_arraylet_identification(
-	J9JavaVM *javaVM,
-	UDATA *arrayletLeafSize,
-	UDATA *offset,
-	UDATA *width,
-	UDATA *mask,
-	UDATA *result)
-{
-#if defined(J9VM_GC_ARRAYLETS)
-	/*
-	 * This a temporary fix, this place should be modified
-	 * OBJECT_HEADER_INDEXABLE is stored in RAM class in classDepthAndFlags field
-	 * and should be taken from there
-	 * (this is correct for non-SWH specifications as well)
-	 * Correspondent DTFJ code must be changed
-	 */
-	*arrayletLeafSize = javaVM->arrayletLeafSize;
-	*offset = 0;
-	*width = 0;
-	*mask = 0;
-	*result = 0;
-#else /* J9VM_GC_ARRAYLETS */
-	*arrayletLeafSize = 0;
-	*offset = 0;
-	*width = 0;
-	*mask = 0;
-	*result = 0;
-#endif /* J9VM_GC_ARRAYLETS */
-	return 0;
 }
 
 /**
@@ -546,7 +496,7 @@ j9mm_iterate_all_ownable_synchronizer_objects(J9VMThread *vmThread, J9PortLibrar
 	J9JavaVM *javaVM = vmThread->javaVM;
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(javaVM->omrVM);
 	MM_ObjectAccessBarrier *barrier = extensions->accessBarrier;
-	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = extensions->ownableSynchronizerObjectLists;
+	MM_OwnableSynchronizerObjectList *ownableSynchronizerObjectList = extensions->getOwnableSynchronizerObjectListsExternal(vmThread);
 
 	Assert_MM_true(NULL != ownableSynchronizerObjectList);
 
@@ -610,13 +560,11 @@ initializeRegionDescriptor(MM_GCExtensionsBase* extensions, J9MM_IterateRegionDe
 		objectAlignment = 0;
 		objectMinimumSize = 0;
 		break;
-#if defined(J9VM_GC_ARRAYLETS)
 	case MM_HeapRegionDescriptor::ARRAYLET_LEAF:
 		regionName = HEAPITERATORAPI_REGION_NAME_ARRAYLET;
 		objectAlignment = 0;
 		objectMinimumSize = 0;
 		break;
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 #if defined(J9VM_GC_SEGREGATED_HEAP)
 	case MM_HeapRegionDescriptor::SEGREGATED_SMALL:
 		regionName = HEAPITERATORAPI_REGION_NAME_SEGREGATED_SMALL;

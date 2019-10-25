@@ -33,6 +33,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9JITDecompilationInfoPointer;
 import com.ibm.j9ddr.vm29.j9.AlgorithmPicker;
 import com.ibm.j9ddr.vm29.j9.AlgorithmVersion;
 import com.ibm.j9ddr.vm29.j9.BaseAlgorithm;
+import com.ibm.j9ddr.vm29.j9.ConstantPoolHelpers;
 import com.ibm.j9ddr.vm29.j9.IAlgorithm;
 import com.ibm.j9ddr.vm29.j9.J9ConfigFlags;
 import com.ibm.j9ddr.vm29.pointer.PointerPointer;
@@ -585,7 +586,7 @@ public class StackWalker
 			if (walkState.method.notNull()) {
 				J9ROMMethodPointer romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(walkState.method);
 	
-				walkState.constantPool = UNTAGGED_METHOD_CP(walkState.method);
+				walkState.constantPool = ConstantPoolHelpers.J9_CP_FROM_METHOD(walkState.method);
 				walkState.argCount = new UDATA(romMethod.argCount());
 					
 				if ((walkState.flags & J9_STACKWALK_ITERATE_O_SLOTS) != 0) {
@@ -959,7 +960,7 @@ public class StackWalker
 				J9ROMMethodPointer romMethod;
 				J9JavaVMPointer vm = walkState.walkThread.javaVM();
 				
-				walkState.constantPool = UNTAGGED_METHOD_CP(walkState.method);
+				walkState.constantPool = ConstantPoolHelpers.J9_CP_FROM_METHOD(walkState.method);
 				if ((walkState.pc != vm.impdep1PC()) && (walkState.pc != (vm.impdep1PC().addOffset(3)))) {
 					walkState.bytecodePCOffset = walkState.pc.sub(walkState.method.bytecodes().getAddress());	
 				} else {
@@ -1234,7 +1235,7 @@ public class StackWalker
 			walkState.bp = UDATAPointer.cast(methodFrame.savedA0EA());
 			walkState.frameFlags = methodFrame.specialFrameFlags();
 			walkState.method = methodFrame.method();
-			walkState.constantPool = UNTAGGED_METHOD_CP(walkState.method);
+			walkState.constantPool = ConstantPoolHelpers.J9_CP_FROM_METHOD(walkState.method);
 	
 			printFrameType(walkState, "JIT JNI call-out");
 	

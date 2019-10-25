@@ -216,7 +216,7 @@ TR_OptimizationPlan *TR::DefaultCompilationStrategy::processEvent(TR_MethodEvent
             plan = TR_OptimizationPlan::alloc(hotnessLevel);
             *newPlanCreated = true;
             }
-         
+
          TR_OptimizationPlan::_optimizationPlanMonitor->enter();
          attachedPlan = methodInfo->_optimizationPlan;
          if (attachedPlan)
@@ -1042,7 +1042,8 @@ TR::DefaultCompilationStrategy::processJittedSample(TR_MethodEvent *event)
                         if (cmdLineOptions->getOption(TR_UpgradeBootstrapAtWarm) && fe->isClassLibraryMethod((TR_OpaqueMethodBlock *)j9method))
                            {
 #ifndef PUBLIC_BUILD
-                           bool expensiveComp = fe->sharedCache() && (TR_J9SharedCache *)(((TR_J9VMBase *) fe)->sharedCache())->isHint(j9method, TR_HintLargeMemoryMethodW);
+                           TR_J9SharedCache *sc = TR_J9VMBase::get(jitConfig, event->_vmThread, TR_J9VMBase::AOT_VM)->sharedCache();
+                           bool expensiveComp = sc->isHint(j9method, TR_HintLargeMemoryMethodW);
                            if (!expensiveComp)
 #endif //!PUBLIC_BUILD
                               nextOptLevel = warm;
@@ -1595,4 +1596,3 @@ TR::ThresholdCompilationStrategy::processJittedSample(TR_MethodEvent *event)
       }
       return plan;
    }
-

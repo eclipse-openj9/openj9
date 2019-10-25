@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 #ifndef PPC_JNILINKAGE_INCL
 #define PPC_JNILINKAGE_INCL
 
-#include "p/codegen/PPCPrivateLinkage.hpp"
+#include "codegen/PPCPrivateLinkage.hpp"
 
 #include "codegen/Linkage.hpp"
 #include "infra/Assert.hpp"
@@ -46,7 +46,7 @@ namespace TR { class ResolvedMethodSymbol; }
 
 namespace TR {
 
-class PPCJNILinkage : public TR::PPCPrivateLinkage
+class PPCJNILinkage : public J9::PPCPrivateLinkage
    {
    protected:
    TR::PPCLinkageProperties _properties;

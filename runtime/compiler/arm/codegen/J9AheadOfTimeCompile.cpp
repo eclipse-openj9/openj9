@@ -35,11 +35,11 @@
 #include "env/SharedCache.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "runtime/RelocationRuntime.hpp"
 #include "runtime/RelocationRecord.hpp"
 
@@ -417,8 +417,7 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
          TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
          void *romClass = (void *) fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass);
-         uintptr_t romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
-
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
          *(uintptrj_t *) cursor = romClassOffsetInSharedCache;
          cursor += SIZEPOINTER;
 
@@ -455,7 +454,7 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          cursor += SIZEPOINTER;
 
          void *romClass = (void *) fej9->getPersistentClassPointerFromClassPointer(inlinedCodeClass);
-         uintptr_t romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
          traceMsg(comp, "class is %p, romclass is %p, offset is %p\n", inlinedCodeClass, romClass, romClassOffsetInSharedCache);
          *(uintptrj_t *) cursor = romClassOffsetInSharedCache;
          cursor += SIZEPOINTER;
@@ -484,7 +483,7 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          *(uintptrj_t*)cursor = (uintptrj_t) aotCI->_cpIndex;
          cursor += SIZEPOINTER;
 
-         uintptr_t classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(aotCI->_classChain);
+         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, aotCI->_classChain);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
          }
@@ -503,7 +502,7 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          cursor += SIZEPOINTER;
 
          void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(aotCI->_clazz);
-         uintptr_t romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
          *(uintptrj_t *)cursor = romClassOffsetInSharedCache;
          cursor += SIZEPOINTER;
          }
@@ -522,7 +521,7 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          //store the classchain's offset for the class that needs to be validated in the second run
          void *romClass = (void *)fej9->getPersistentClassPointerFromClassPointer(classToValidate);
          uintptrj_t *classChainForClassToValidate = (uintptrj_t *) aotCI->_classChain;
-         uintptr_t classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(classChainForClassToValidate);
+         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForClassToValidate);
          *(uintptrj_t *)cursor = classChainOffsetInSharedCache;
          cursor += SIZEPOINTER;
          }

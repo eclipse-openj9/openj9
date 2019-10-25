@@ -43,7 +43,7 @@
 #include "env/jittypes.h"
 #include "env/VMAccessCriticalSection.hpp"
 #include "exceptions/AOTFailure.hpp"
-#include "il/symbol/StaticSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "infra/SimpleRegex.hpp"
 #include "runtime/CodeCache.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -4718,4 +4718,3 @@ uint32_t TR_RelocationRecord::_relocationRecordHeaderSizeTable[TR_NumExternalRel
    sizeof(TR_RelocationRecordSymbolFromManagerBinaryTemplate),                       // TR_DiscontiguousSymbolFromManager               = 100
    sizeof(TR_RelocationRecordResolvedTrampolinesBinaryTemplate),                     // TR_ResolvedTrampolines                          = 101
    };
-

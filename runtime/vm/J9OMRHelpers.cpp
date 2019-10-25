@@ -27,11 +27,12 @@
 #include "OMR_VM.hpp"
 #include "OMR_VMConfiguration.hpp"
 #include "OMR_VMThread.hpp"
+#include "OMR/Bytes.hpp"
 
 extern "C" {
 
 /* Generic rounding macro - result is a UDATA */
-#define ROUND_TO(granularity, number) (((UDATA)(number) + (granularity) - 1) & ~((UDATA)(granularity) - 1))
+#define ROUND_TO(granularity, number) OMR::align((UDATA)(number), granularity)
 
 jint
 initOMRVMThread(J9JavaVM *vm, J9VMThread *vmThread)
