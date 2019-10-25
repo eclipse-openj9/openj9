@@ -39,6 +39,7 @@
 #include "env/jittypes.h"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
+#include "il/J9Symbol.hpp"
 #include "infra/Annotations.hpp"
 #include "optimizer/OptimizationStrategies.hpp"
 #include "env/J9SharedCache.hpp"
@@ -776,7 +777,29 @@ public:
    // JSR292 }}}
 
    virtual uintptrj_t getFieldOffset( TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef);
+   /*
+    * \brief
+    *    tell whether it's possible to dereference a field given the field symbol reference at compile time
+    *
+    * \fieldRef
+    *    symbol reference of the field
+    */
    virtual bool canDereferenceAtCompileTime(TR::SymbolReference *fieldRef,  TR::Compilation *comp);
+
+   /*
+    * \brief
+    *    tell whether it's possible to dereference a field given the field symbol at compile time
+    *
+    * \fieldSymbol
+    *    symbol of the field
+    *
+    * \cpIndex
+    *    constant pool index
+    *
+    * \owningMethod
+    *    the method accessing the field
+    */
+   virtual bool canDereferenceAtCompileTimeWithFieldSymbol(TR::Symbol *fieldSymbol, int32_t cpIndex, TR_ResolvedMethod *owningMethod);
 
    virtual bool getStringFieldByName( TR::Compilation *, TR::SymbolReference *stringRef, TR::SymbolReference *fieldRef, void* &pResult);
    virtual bool      isString(TR_OpaqueClassBlock *clazz);
