@@ -2395,8 +2395,10 @@ void TR_DebugExt::dxPrintMethodToBeCompiled(TR_MethodToBeCompiled *remoteCompEnt
    _dbgPrintf("\tbool                          _freeTag = %d\n",localCompEntry->_freeTag);
    _dbgPrintf("\tuint8_t                       _weight = %u\n",localCompEntry->_weight);
    _dbgPrintf("\tbool                          _hasIncrementedNumCompThreadsCompilingHotterMethods = %d\n",localCompEntry->_hasIncrementedNumCompThreadsCompilingHotterMethods);
-   _dbgPrintf("\tTR_Hotness                   _origOptLevel = 0x%p\n\n", localCompEntry->_origOptLevel);
-
+#if defined(JITSERVER_SUPPORT)   
+   _dbgPrintf("\tTR_Hotness                    _origOptLevel = 0x%p\n\n", localCompEntry->_origOptLevel);
+#endif
+   
    struct J9Method *ramMethod = (struct J9Method *)dxGetJ9MethodFromMethodToBeCompiled(remoteCompEntry);
    if (ramMethod)
       _dbgPrintf("\tAssociated J9Method = !trprint j9method 0x%p\n", ramMethod);

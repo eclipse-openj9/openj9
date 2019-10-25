@@ -553,36 +553,39 @@ extern "C" void jitBytecodePrintFunction(void *userData, char *format, ...)
 void
 TR_Debug::printByteCodeStack(int32_t parentStackIndex, uint16_t byteCodeIndex, char * indent)
    {
-   return;
-      if (!_comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
+#if defined(JITSERVER_SUPPORT)
+   if (_comp->isOutOfProcessCompilation() || _comp->isRemoteCompilation())
+      return;
+#endif
+   if (!_comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE())
+      {
+      J9Method * ramMethod;
+      void *bcPrintFunc = (void *)jitBytecodePrintFunction;
+      if (parentStackIndex == -1)
          {
-         J9Method * ramMethod;
-         void *bcPrintFunc = (void *)jitBytecodePrintFunction;
-         if (parentStackIndex == -1)
-            {
-            sprintf(indent, " \\\\");
-            trfprintf(_file, "%s %s\n", indent, _comp->getCurrentMethod()->signature(comp()->trMemory(), heapAlloc));
-            ramMethod = (J9Method *)_comp->getCurrentMethod()->resolvedMethodAddress();
-            }
-         else
-            {
-            TR_InlinedCallSite & site = _comp->getInlinedCallSite(parentStackIndex);
-            printByteCodeStack(site._byteCodeInfo.getCallerIndex(), site._byteCodeInfo.getByteCodeIndex(), indent);
-            ramMethod = (J9Method *)site._methodInfo;
-            }
-
-         #ifdef J9VM_ENV_LITTLE_ENDIAN
-            uint32_t flags = BCT_LittleEndianOutput;
-         #else
-            uint32_t flags = BCT_BigEndianOutput;
-         #endif
-
-         j9bcutil_dumpBytecodes(((TR_J9VMBase *)_comp->fej9())->_portLibrary,
-                                J9_CLASS_FROM_METHOD(ramMethod)->romClass,
-                                J9_BYTECODE_START_FROM_RAM_METHOD(ramMethod),
-                                byteCodeIndex, byteCodeIndex, flags, bcPrintFunc, this, indent);
-         sprintf(indent, "%s   ", indent);
+         sprintf(indent, " \\\\");
+         trfprintf(_file, "%s %s\n", indent, _comp->getCurrentMethod()->signature(comp()->trMemory(), heapAlloc));
+         ramMethod = (J9Method *)_comp->getCurrentMethod()->resolvedMethodAddress();
          }
+      else
+         {
+         TR_InlinedCallSite & site = _comp->getInlinedCallSite(parentStackIndex);
+         printByteCodeStack(site._byteCodeInfo.getCallerIndex(), site._byteCodeInfo.getByteCodeIndex(), indent);
+         ramMethod = (J9Method *)site._methodInfo;
+         }
+
+      #ifdef J9VM_ENV_LITTLE_ENDIAN
+         uint32_t flags = BCT_LittleEndianOutput;
+      #else
+         uint32_t flags = BCT_BigEndianOutput;
+      #endif
+
+      j9bcutil_dumpBytecodes(((TR_J9VMBase *)_comp->fej9())->_portLibrary,
+                             J9_CLASS_FROM_METHOD(ramMethod)->romClass,
+                             J9_BYTECODE_START_FROM_RAM_METHOD(ramMethod),
+                             byteCodeIndex, byteCodeIndex, flags, bcPrintFunc, this, indent);
+      sprintf(indent, "%s   ", indent);
+      }
    }
 
 // copied from jit.dev/rossa.cpp - needed to link on WinCE

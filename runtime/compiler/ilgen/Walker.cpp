@@ -7945,9 +7945,11 @@ void TR_J9ByteCodeIlGenerator::genFullFence(TR::Node *node)
 
 void TR_J9ByteCodeIlGenerator::performClassLookahead(TR_PersistentClassInfo *classInfo)
    {
-   // do not perform lookahead in server mode
-   if (TR::CompilationInfo::getStream())
+#if defined(JITSERVER_SUPPORT)
+   // Do not perform class lookahead in server mode
+   if (comp()->isOutOfProcessCompilation())
       return;
+#endif
    // Do not perform class lookahead when peeking (including recursive class lookahead)
    //
    if (comp()->isPeekingMethod())
