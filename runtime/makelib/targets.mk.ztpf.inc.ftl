@@ -177,6 +177,10 @@ UMA_EXE_POSTFIX_FLAGS += -Wl,--eh-frame-hdr
 UMA_EXE_POSTFIX_FLAGS += -lgcc
 UMA_EXE_POSTFIX_FLAGS += -lCTOE
 
+ifdef j9vm_jit_32bitUses64bitRegisters
+  UMA_M4_FLAGS += -DJ9VM_JIT_32BIT_USES64BIT_REGISTERS
+endif
+
 ifdef UMA_TREAT_WARNINGS_AS_ERRORS
   ifndef UMA_SUPPRESS_WARNINGS_AS_ERRORS
     CFLAGS += -Wimplicit -Wreturn-type -Werror

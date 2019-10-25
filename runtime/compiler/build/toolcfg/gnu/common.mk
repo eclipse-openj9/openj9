@@ -369,6 +369,12 @@ ifeq ($(HOST_ARCH),z)
     M4_DEFINES+=$(HOST_DEFINES) $(TARGET_DEFINES)
     M4_DEFINES+=J9VM_TIERED_CODE_CACHE
 
+    ifeq ($(HOST_BITS),32)
+        ifneq (,$(shell grep 'define J9VM_JIT_32BIT_USES64BIT_REGISTERS' $(J9SRC)/include/j9cfg.h))
+            M4_DEFINES+=J9VM_JIT_32BIT_USES64BIT_REGISTERS
+        endif
+    endif
+
     ifeq ($(HOST_BITS),64)
         ifneq (,$(shell grep 'define J9VM_INTERP_COMPRESSED_OBJECT_HEADER' $(J9SRC)/include/j9cfg.h))
             M4_DEFINES+=J9VM_INTERP_COMPRESSED_OBJECT_HEADER
