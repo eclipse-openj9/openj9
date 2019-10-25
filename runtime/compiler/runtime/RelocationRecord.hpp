@@ -204,7 +204,6 @@ struct TR_RelocationRecordDebugCounterBinaryTemplate : public TR_RelocationRecor
    };
 
 typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadAssumptionBinaryTemplate;
-typedef TR_RelocationRecordBinaryTemplate TR_RelocationRecordClassUnloadBinaryTemplate;
 
 struct TR_RelocationRecordValidateClassByNameBinaryTemplate : public TR_RelocationRecordBinaryTemplate
    {

@@ -1429,8 +1429,6 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
       symRef->setReallySharesSymbol();
 
    TR::KnownObjectTable::Index knownObjectIndex = TR::KnownObjectTable::UNKNOWN;
-   // check for KnownObjectTable first, in JITServer mode, this will return NULL,
-   // so we never enter the critical section
    TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
    if (knot
        && resolved
@@ -1470,11 +1468,7 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
 
             if (createKnownObject)
                {
-               TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-               if (knot)
-                  {
-                  knownObjectIndex = knot->getIndexAt((uintptrj_t*)dataAddress);
-                  }
+               knownObjectIndex = knot->getIndexAt((uintptrj_t*)dataAddress);
                }
             }
          }

@@ -929,7 +929,6 @@ J9::TransformUtil::foldReliableStaticFinalField(TR::Compilation *comp, TR::Node 
 bool
 J9::TransformUtil::foldStaticFinalFieldAssumingProtection(TR::Compilation *comp, TR::Node *node)
    {
-   TR_ASSERT(node->getOpCode().isLoadVarDirect(), "Expecting direct load; found %s %p", node->getOpCode().getName(), node);
    TR_ASSERT(node->isLoadOfStaticFinalField(),
              "Expecting load of static final field on %s %p",
              node->getOpCode().getName(), node);
