@@ -186,12 +186,6 @@ M4_DEFINES+=\
     J9VM_TIERED_CODE_CACHE \
     J9VM_JIT_FREE_SYSTEM_STACK_POINTER
 
-ifeq ($(HOST_BITS),32)
-    ifneq (,$(shell grep 'define J9VM_JIT_32BIT_USES64BIT_REGISTERS' $(J9SRC)/include/j9cfg.h 2>/dev/null))
-        M4_DEFINES+=J9VM_JIT_32BIT_USES64BIT_REGISTERS
-    endif
-endif
-
 ifeq ($(HOST_BITS),64)
     M4_DEFINES+=TR_64Bit
 
