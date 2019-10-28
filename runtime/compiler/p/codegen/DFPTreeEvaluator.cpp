@@ -1817,7 +1817,7 @@ extern TR::Register *inlineBigDecimalCompareTo(
 
    TR::Register * crGPRegister = cg->allocateRegister();
    TR::Register * retRegister = cg->allocateRegister();
-   generateTrg1ImmInstruction(cg, TR::InstOpCode::mfcr, node, crGPRegister, 0x80);
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::mfocrf, node, crGPRegister, 0x80);
    generateTrg1Src1Imm2Instruction(cg, TR::InstOpCode::rlwinm, node, retRegister, crGPRegister, 1, 0x1);
    generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::srawi, node, crGPRegister, crGPRegister, 30);
    generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, retRegister, retRegister, crGPRegister);
