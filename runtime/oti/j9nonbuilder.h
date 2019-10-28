@@ -4755,6 +4755,13 @@ typedef struct J9VMRuntimeStateListener {
 	UDATA idleTuningFlags;
 } J9VMRuntimeStateListener;
 
+/* J9LargePageCompatibilityOptions contains the index of the large page option to be used. Size is the size requested if applicable. */
+
+typedef struct J9LargePageCompatibilityOptions {
+    IDATA pageSizeRequested;
+    IDATA optionIndex; 
+} J9LargePageCompatibilityOptions;
+
 /* Values for J9VMRuntimeStateListener.vmRuntimeState
  * These values are reflected in the Java class library code(RuntimeMXBean)
  */
@@ -5150,6 +5157,7 @@ typedef struct J9JavaVM {
 	U_32 minimumReservedRatio;
 	U_32 cancelAbsoluteThreshold;
 	U_32 minimumLearningRatio;
+	J9LargePageCompatibilityOptions largePageOption;
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2

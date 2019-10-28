@@ -1871,7 +1871,35 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				}
 			}
 #endif /* !defined(WIN32) && !defined(J9ZTPF) */
+			/* Parse options related to Large Pages */
+			{
+				IDATA argIndexUseLargePages = FIND_AND_CONSUME_ARG(EXACT_MATCH, MAPOPT_XXUSELARGEPAGES, NULL);
+				IDATA argIndexLargePageSizeInBytes = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, MAPOPT_XXLARGEPAGESIZEINBYTES_EQUALS, NULL);
+				J9LargePageCompatibilityOptions *optionConfig = &(vm->largePageOption);
+				if (argIndexUseLargePages > argIndexLargePageSizeInBytes) {
+					optionConfig->optionIndex = argIndexUseLargePages;
+					optionConfig->pageSizeRequested = -1;
+				}
+				else if (-1 != argIndexLargePageSizeInBytes) {
+					UDATA requestedLargeCodePageSize = 0;
+					char *lpOption = MAPOPT_XXLARGEPAGESIZEINBYTES_EQUALS;
 
+					optionConfig->optionIndex = argIndexLargePageSizeInBytes;
+					
+					/* Extract size argument */
+					parseError = GET_MEMORY_VALUE(argIndexLargePageSizeInBytes, lpOption, requestedLargeCodePageSize);
+
+					if (OPTION_OK != parseError) {
+						parseErrorOption = MAPOPT_XXLARGEPAGESIZEINBYTES_EQUALS;
+						goto _memParseError;
+					}
+					
+					optionConfig->pageSizeRequested = requestedLargeCodePageSize;
+				}
+				else {
+					optionConfig->optionIndex = -1;
+				}
+			}
 #if defined(AIXPPC)
 			/* Override the AIX soft limit on the data segment to avoid getting EAGAIN when creating a new thread,
 			 * which results in an OutOfMemoryException. Also provides compatibility with IBM Java 8.
