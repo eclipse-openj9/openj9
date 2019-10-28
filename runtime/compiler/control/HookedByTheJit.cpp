@@ -7167,13 +7167,13 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
             // free `statsThreadObj` and set the corresponding jitConfig field to NULL
             }
          }
-      }
 
-   // Give the JIT a chance to do stuff after the VM is initialized
-   if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, jitHookVMInitialized, OMR_GET_CALLSITE(), NULL))
-      {
-      j9tty_printf(PORTLIB, "Error: Unable to install J9HOOK_VM_INITIALIZED\n");
-      return -1;
+      // Give the JIT a chance to do stuff after the VM is initialized
+      if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, jitHookVMInitialized, OMR_GET_CALLSITE(), NULL))
+         {
+         j9tty_printf(PORTLIB, "Error: Unable to install J9HOOK_VM_INITIALIZED\n");
+         return -1;
+         }
       }
 #endif // JITSERVER_SUPPORT
 
