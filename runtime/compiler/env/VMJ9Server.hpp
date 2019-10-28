@@ -161,7 +161,8 @@ public:
    virtual bool isClassLoadedBySystemClassLoader(TR_OpaqueClassBlock *clazz) override;
    virtual void setInvokeExactJ2IThunk(void *thunkptr, TR::Compilation *comp) override;
    virtual bool needsInvokeExactJ2IThunk(TR::Node *node,  TR::Compilation *comp) override;
-   virtual TR_ResolvedMethod *createMethodHandleArchetypeSpecimen(TR_Memory *, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0) override;
+   virtual TR_ResolvedMethod *createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0) override;
+   virtual TR_ResolvedMethod *createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, TR_OpaqueMethodBlock *archetype, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod = 0) override;
    virtual intptrj_t getVFTEntry(TR_OpaqueClassBlock *clazz, int32_t offset) override;
    virtual bool isClassArray(TR_OpaqueClassBlock *klass) override;
    virtual uintptrj_t getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef) override { return 0; } // safe answer
