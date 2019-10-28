@@ -57,7 +57,9 @@ final class SharedClassURLClasspathHelperImpl extends SharedClassAbstractHelper 
 		initialize(loader, id, canFind, canStore);
 		initializeShareableClassloader(loader);
 		initializeURLs();
-		notifyClasspathChange3(id, loader, this.urls, 0, this.urlCount, true);
+		if (!invalidURLExists) {
+			notifyClasspathChange3(id, loader, this.urls, 0, this.urlCount, true);
+		}
 		
 	}
 
@@ -244,7 +246,9 @@ final class SharedClassURLClasspathHelperImpl extends SharedClassAbstractHelper 
 				invalidURLExists = true;
 			}
 			notifyClasspathChange2(loader);
-			notifyClasspathChange3(id, loader, urls, urlCount, (urlCount + 1), true);
+			if (!invalidURLExists) {
+				notifyClasspathChange3(id, loader, urls, urlCount, (urlCount + 1), true);
+			}
 			++urlCount;
 		}
 	}
@@ -352,7 +356,9 @@ final class SharedClassURLClasspathHelperImpl extends SharedClassAbstractHelper 
 			/*[MSG "K05b2", "setClasspath() updated classpath. Now urlCount={0}"]*/
 			printVerboseInfo(Msg.getString("K05b2", urlCount)); //$NON-NLS-1$
 			notifyClasspathChange2(loader);
-			notifyClasspathChange3(id, loader, urls, 0, urlCount, true);
+			if (!invalidURLExists) {
+				notifyClasspathChange3(id, loader, urls, 0, urlCount, true);
+			}
 		}
 	}
 
