@@ -129,11 +129,11 @@ ppc64le_linux:
     13: '--openssl-version=1.1.1a'
     next: '--openssl-version=1.1.1a'
   extra_configure_options:
-    8: '--with-openssl=fetched'
-    11: '--with-openssl=fetched'
-    12: '--with-openssl=fetched'
-    13: '--with-openssl=fetched'
-    next: '--with-openssl=fetched'
+    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
   build_env:
     vars:
       8: 'CC=gcc-7 CXX=g++-7'
