@@ -3012,7 +3012,7 @@ J9::Options::setLogFileForClientOptions(int suffixNumber)
          self()->openLogFile(_compilationSequenceNumber);
          }
 
-      if (!_logFile)
+      if (_logFile)
          {
          J9JITConfig *jitConfig = (J9JITConfig*)_feBase;
          if (!jitConfig->tracingHook)
