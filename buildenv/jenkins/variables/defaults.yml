@@ -142,10 +142,6 @@ ppc64le_linux:
       13: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
   excluded_tests:
-    11:
-      ? special.system
-    12:
-      ? special.system
     13:
       ? special.system
 #========================================#
@@ -195,10 +191,6 @@ s390x_linux:
     13: '--with-openssl=fetched'
     next: '--with-openssl=fetched'
   excluded_tests:
-    11:
-      ? special.system
-    12:
-      ? special.system
     13:
       ? special.system
 #========================================#
@@ -246,8 +238,6 @@ ppc64_aix:
       13: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
   excluded_tests:
-    8:
-      ? special.system
     11:
       ? special.system
     12:
