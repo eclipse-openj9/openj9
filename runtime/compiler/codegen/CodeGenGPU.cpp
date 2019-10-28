@@ -614,7 +614,6 @@ static const char * nvvmOpCodeNames[] =
    "sub",         // TR::busub
    "sub",         // TR::iuneg
    "sub",         // TR::luneg
-   "shl",         // TR::lushl
    "fptoui",      // TR::f2iu
    "fptoui",      // TR::f2lu
    "fptoui",      // TR::f2bu
