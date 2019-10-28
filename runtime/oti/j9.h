@@ -308,9 +308,7 @@ static const struct { \
 
 /* VTable constants offset */
 #define J9VTABLE_INITIAL_VIRTUAL_OFFSET (sizeof(J9Class) + offsetof(J9VTableHeader, initialVirtualMethod))
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 #define J9VTABLE_INVOKE_PRIVATE_OFFSET (sizeof(J9Class) + offsetof(J9VTableHeader, invokePrivateMethod))
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
 /* Skip Interpreter VTable header */
 #define JIT_VTABLE_START_ADDRESS(clazz) ((UDATA *)(clazz) - (sizeof(J9VTableHeader) / sizeof(UDATA)))
