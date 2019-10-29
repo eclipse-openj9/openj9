@@ -151,7 +151,6 @@ static const char * nvvmOpCodeNames[] =
    "fmul",        // TR::dmul
    "mul",         // TR::bmul
    "mul",         // TR::smul
-   "mul",         // TR::iumul
 
    "sdiv",        // TR::idiv
    "sdiv",        // TR::ldiv
@@ -629,10 +628,6 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::luRegLoad
    NULL,          // TR::iuRegStore
    NULL,          // TR::luRegStore
-   NULL,          // TR::iuternary
-   NULL,          // TR::luternary
-   NULL,          // TR::buternary
-   NULL,          // TR::suternary
    NULL,          // TR::cconst
 
    "load",        // TR::cload
