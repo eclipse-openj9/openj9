@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -348,7 +348,11 @@ bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::Recognized
 
    if (method == TR::java_lang_Short_reverseBytes ||
        method == TR::java_lang_Integer_reverseBytes ||
-       method == TR::java_lang_Long_reverseBytes)
+       method == TR::java_lang_Long_reverseBytes ||
+       method == TR::java_lang_Math_fma_D ||
+       method == TR::java_lang_Math_fma_F ||
+       method == TR::java_lang_StrictMath_fma_D ||
+       method == TR::java_lang_StrictMath_fma_F)
       {
       return true;
       }
