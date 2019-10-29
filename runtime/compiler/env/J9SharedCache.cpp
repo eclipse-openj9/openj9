@@ -106,34 +106,43 @@ TR_J9SharedCache::TR_J9SharedCache(TR_J9VMBase *fe)
    _sharedCacheConfig = _javaVM->sharedClassConfig;
    _numDigitsForCacheOffsets = 8;
 
+#if defined(JITSERVER_SUPPORT)
+   TR_ASSERT_FATAL(_sharedCacheConfig || _compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER, "Must have _sharedCacheConfig");
+#else
    TR_ASSERT_FATAL(_sharedCacheConfig, "Must have _sharedCacheConfig");
-  
-   UDATA totalCacheSize = 0;
-   J9SharedClassCacheDescriptor *curCache = _sharedCacheConfig->cacheDescriptorList;
-   do
+#endif
+
+#if defined(JITSERVER_SUPPORT)
+   if (_sharedCacheConfig)
+#endif
       {
-      totalCacheSize += curCache->cacheSizeBytes;
-      curCache = curCache->next;
+      UDATA totalCacheSize = 0;
+      J9SharedClassCacheDescriptor *curCache = _sharedCacheConfig->cacheDescriptorList;
+      do
+         {
+         totalCacheSize += curCache->cacheSizeBytes;
+         curCache = curCache->next;
+         }
+      while (curCache != _sharedCacheConfig->cacheDescriptorList);
+
+      if (totalCacheSize > UINT_MAX)
+         _numDigitsForCacheOffsets = 16;
+
+      _hintsEnabledMask = 0;
+      if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableSharedCacheHints))
+         _hintsEnabledMask = TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags();
+
+      _initialHintSCount = std::min(TR::Options::getCmdLineOptions()->getInitialSCount(), TR::Options::getAOTCmdLineOptions()->getInitialSCount());
+      if (_initialHintSCount == 0)
+         _initialHintSCount = 1;
+
+      _logLevel = std::max(TR::Options::getAOTCmdLineOptions()->getAotrtDebugLevel(), TR::Options::getCmdLineOptions()->getAotrtDebugLevel());
+
+      _verboseHints = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseSCHints);
+
+      LOG(5, { log("\t_sharedCacheConfig %p\n", _sharedCacheConfig); });
+      LOG(5, { log("\ttotalCacheSize %p\n", totalCacheSize); });
       }
-   while (curCache != _sharedCacheConfig->cacheDescriptorList);
-
-   if (totalCacheSize > UINT_MAX)
-      _numDigitsForCacheOffsets = 16;
-
-   _hintsEnabledMask = 0;
-   if (!TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableSharedCacheHints))
-      _hintsEnabledMask = TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags();
-
-   _initialHintSCount = std::min(TR::Options::getCmdLineOptions()->getInitialSCount(), TR::Options::getAOTCmdLineOptions()->getInitialSCount());
-   if (_initialHintSCount == 0)
-      _initialHintSCount = 1;
-
-   _logLevel = std::max(TR::Options::getAOTCmdLineOptions()->getAotrtDebugLevel(), TR::Options::getCmdLineOptions()->getAotrtDebugLevel());
-
-   _verboseHints = TR::Options::getCmdLineOptions()->getVerboseOption(TR_VerboseSCHints);
-
-   LOG(5, { log("\t_sharedCacheConfig %p\n", _sharedCacheConfig); });
-   LOG(5, { log("\ttotalCacheSize %p\n", totalCacheSize); });
 #endif
    }
 
