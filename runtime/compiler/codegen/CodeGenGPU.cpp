@@ -780,15 +780,6 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::getstack
    NULL,          // TR::dealloca
 
-   NULL,          // TR::ishfl
-   NULL,          // TR::lshfl
-   NULL,          // TR::iushfl
-   NULL,          // TR::lushfl
-   NULL,          // TR::bshfl
-   NULL,          // TR::sshfl
-   NULL,          // TR::bushfl
-   NULL,          // TR::sushfl
-
    NULL,          // TR::idoz
 
    NULL,          // TR::dcos
