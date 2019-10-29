@@ -96,6 +96,15 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Instruction *generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *dstReg, TR::Register *srcReg, TR::Instruction *preced=NULL);
    static TR::Instruction *generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::Instruction *preced=NULL);
 
+   /*
+    * @brief Calls helper function for float/double remainder
+    * @param[in] node : node
+    * @param[in] cg   : CodeGenerator
+    * @param[in] isSinglePrecision : true if type is single precision float
+    */
+   static TR::Register *fremHelper(TR::Node *node, TR::CodeGenerator *cg, bool isSinglePrecision);
+   static TR::Register *fremEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *dremEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    };
 
 }
