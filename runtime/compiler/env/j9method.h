@@ -106,20 +106,6 @@ private:
    };
 
 
-class TR_J9Method : public TR::Method
-   {
-public:
-   TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, J9Class * aClazz, uintptr_t cpIndex);
-   TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, TR_OpaqueMethodBlock * aMethod);
-
-#if defined(JITSERVER_SUPPORT)
-protected:
-   // To be used by JITServer.
-   // Warning: some initialization must be done manually after calling this constructor
-   TR_J9Method();
-#endif /* defined(JITSERVER_SUPPORT) */
-   };
-
 class TR_ResolvedJ9MethodBase : public TR_ResolvedMethod
    {
 public:
@@ -177,7 +163,7 @@ public:
 
    };
 
-class TR_ResolvedJ9Method : public TR_J9Method, public TR_ResolvedJ9MethodBase
+class TR_ResolvedJ9Method : public TR::Method, public TR_ResolvedJ9MethodBase
    {
 public:
    TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);

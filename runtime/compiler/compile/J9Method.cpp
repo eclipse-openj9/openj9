@@ -34,9 +34,11 @@
 #include "compile/ResolvedMethod.hpp"
 #include "env/j9method.h"
 #include "env/jittypes.h"
+#include "env/VMAccessCriticalSection.hpp"
 #include "env/VMJ9.h"
 #include "il/DataTypes.hpp"
 #include "il/ILOpCodes.hpp"
+#include "infra/Assert.hpp"
 
 
 static TR::DataType J9ToTRMap[] =
@@ -73,6 +75,45 @@ static char *utf82str(J9UTF8 *utf8, TR_Memory *trMemory, TR_AllocationKind alloc
    memcpy(string, J9UTF8_DATA(utf8), length);
    string[length] = 0;
    return string;
+   }
+
+J9::Method::Method(TR_FrontEnd *fe, TR_Memory *trMemory, J9Class *aClazz, uintptr_t cpIndex)
+   {
+   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
+
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+
+   J9ROMClass * romClass = aClazz->romClass;
+   uintptr_t realCPIndex = jitGetRealCPIndex(fej9->vmThread(), romClass, cpIndex);
+   J9ROMMethodRef * romRef = &J9ROM_CP_BASE(romClass, J9ROMMethodRef)[realCPIndex];
+   J9ROMClassRef * classRef = &J9ROM_CP_BASE(romClass, J9ROMClassRef)[romRef->classRefCPIndex];
+   J9ROMNameAndSignature * nameAndSignature = J9ROMMETHODREF_NAMEANDSIGNATURE(romRef);
+
+   _className = J9ROMCLASSREF_NAME(classRef);
+   _name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature);
+   _signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
+
+   parseSignature(trMemory);
+   _fullSignature = NULL;
+   }
+
+J9::Method::Method(TR_FrontEnd *fe, TR_Memory *trMemory, TR_OpaqueMethodBlock *aMethod)
+   {
+   J9ROMMethod * romMethod;
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
+
+      {
+      TR::VMAccessCriticalSection j9method(fej9);
+      romMethod = getOriginalROMMethod((J9Method *)aMethod);
+      }
+
+   J9ROMClass *romClass = J9_CLASS_FROM_METHOD(((J9Method *)aMethod))->romClass;
+   _className = J9ROMCLASS_CLASSNAME(romClass);
+   _name = J9ROMMETHOD_NAME(romMethod);
+   _signature = J9ROMMETHOD_SIGNATURE(romMethod);
+
+   parseSignature(trMemory);
+   _fullSignature = NULL;
    }
 
 TR_MethodParameterIterator *

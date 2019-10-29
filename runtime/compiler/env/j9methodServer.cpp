@@ -1644,7 +1644,7 @@ TR_ResolvedJ9JITServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, T
 
    _bodyInfo = J9::Recompilation::persistentJittedBodyInfoFromString(bodyInfoStr, methodInfoStr, trMemory);
 
-   // initialization from TR_J9Method constructor
+   // initialization from TR::Method constructor
    _className = J9ROMCLASS_CLASSNAME(_romClass);
    _name = J9ROMMETHOD_NAME(_romMethod);
    _signature = J9ROMMETHOD_SIGNATURE(_romMethod);
@@ -2583,7 +2583,7 @@ static J9UTF8 *str2utf8(const char *str, int32_t length, TR_Memory *trMemory, TR
    }
 
 TR_J9ServerMethod::TR_J9ServerMethod(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClazz, uintptr_t cpIndex)
-   : TR_J9Method()
+   : TR::Method()
    {
    TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
    TR_J9ServerVM *fej9 = (TR_J9ServerVM *) fe;

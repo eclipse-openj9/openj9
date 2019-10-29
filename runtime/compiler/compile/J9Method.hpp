@@ -40,6 +40,8 @@ namespace J9 { typedef J9::Method MethodConnector; }
 #include "infra/Flags.hpp"
 
 class TR_ResolvedMethod;
+class TR_FrontEnd;
+class TR_OpaqueMethodBlock;
 namespace TR { class Compilation; }
 
 extern "C" {
@@ -60,6 +62,10 @@ class Method : public OMR::MethodConnector
 
    Method(Type t = J9) :
       OMR::MethodConnector(t) {}
+
+   Method(TR_FrontEnd *trvm, TR_Memory *m, J9Class *aClazz, uintptr_t cpIndex);
+
+   Method(TR_FrontEnd *trvm, TR_Memory *m, TR_OpaqueMethodBlock *aMethod);
 
    static bool isBigDecimalNameAndSignature(J9UTF8 *name, J9UTF8 *signature);
    static bool isBigDecimalMethod(J9ROMMethod *romMethod, J9ROMClass *romClass);

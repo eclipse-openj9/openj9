@@ -170,7 +170,7 @@ TR_J9VMBase::offsetOfMethodIsBreakpointedBit()
 TR::Method *
 TR_J9VMBase::createMethod(TR_Memory * trMemory, TR_OpaqueClassBlock * clazz, int32_t refOffset)
    {
-   return new (trMemory->trHeapMemory()) TR_J9Method(this, trMemory, TR::Compiler->cls.convertClassOffsetToClassPtr(clazz), refOffset);
+   return new (trMemory->trHeapMemory()) TR::Method(this, trMemory, TR::Compiler->cls.convertClassOffsetToClassPtr(clazz), refOffset);
    }
 
 TR_ResolvedMethod *
@@ -1709,53 +1709,6 @@ TR_ResolvedRelocatableJ9Method::getNonPersistentIdentifier()
    return (TR_OpaqueMethodBlock *)ramMethod();
    }
 
-
-TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClazz, uintptr_t cpIndex)
-   {
-   TR_ASSERT(cpIndex != -1, "cpIndex shouldn't be -1");
-
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
-
-   J9ROMClass * romClass = aClazz->romClass;
-   uintptr_t realCPIndex = jitGetRealCPIndex(fej9->vmThread(), romClass, cpIndex);
-   J9ROMMethodRef * romRef = &J9ROM_CP_BASE(romClass, J9ROMMethodRef)[realCPIndex];
-   J9ROMClassRef * classRef = &J9ROM_CP_BASE(romClass, J9ROMClassRef)[romRef->classRefCPIndex];
-   J9ROMNameAndSignature * nameAndSignature = J9ROMMETHODREF_NAMEANDSIGNATURE(romRef);
-
-   _className = J9ROMCLASSREF_NAME(classRef);
-   _name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSignature);
-   _signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSignature);
-
-   parseSignature(trMemory);
-   _fullSignature = NULL;
-   }
-
-TR_J9Method::TR_J9Method(TR_FrontEnd * fe, TR_Memory * trMemory, TR_OpaqueMethodBlock * aMethod)
-   {
-   J9ROMMethod * romMethod;
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
-
-      {
-      TR::VMAccessCriticalSection j9method(fej9);
-      romMethod = getOriginalROMMethod((J9Method *)aMethod);
-      }
-
-   J9ROMClass *romClass = J9_CLASS_FROM_METHOD(((J9Method *)aMethod))->romClass;
-   _className = J9ROMCLASS_CLASSNAME(romClass);
-   _name = J9ROMMETHOD_NAME(romMethod);
-   _signature = J9ROMMETHOD_SIGNATURE(romMethod);
-
-   parseSignature(trMemory);
-   _fullSignature = NULL;
-   }
-
-#if defined(JITSERVER_SUPPORT)
-// used by JITServer
-TR_J9Method::TR_J9Method()
-   {
-   }
-#endif /* defined(JITSERVER_SUPPORT) */
-
 //////////////////////////////
 //
 //  TR_ResolvedMethod
@@ -1772,7 +1725,7 @@ static bool supportsFastJNI(TR_FrontEnd *fe)
    }
 
 TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owner, uint32_t vTableSlot)
-   : TR_J9Method(fe, trMemory, aMethod), TR_ResolvedJ9MethodBase(fe, owner), _pendingPushSlots(-1)
+   : TR::Method(fe, trMemory, aMethod), TR_ResolvedJ9MethodBase(fe, owner), _pendingPushSlots(-1)
    {
    _ramMethod = (J9Method *)aMethod;
 
@@ -1815,7 +1768,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
 // Protected constructor to be used by JITServer
 // Had to reorder arguments to prevent ambiguity with above constructor
 TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * owner)
-   : TR_J9Method(), TR_ResolvedJ9MethodBase(fe, owner), _pendingPushSlots(-1)
+   : TR::Method(), TR_ResolvedJ9MethodBase(fe, owner), _pendingPushSlots(-1)
    {
    }
 #endif /* defined(JITSERVER_SUPPORT) */
@@ -4406,22 +4359,22 @@ TR_ResolvedJ9Method::romClassPtr()
    }
 
 TR::Method * TR_ResolvedJ9Method::convertToMethod()                { return this; }
-uint32_t      TR_ResolvedJ9Method::numberOfParameters()           { return TR_J9Method::numberOfExplicitParameters() + (isStatic()? 0 : 1); }
-uint32_t      TR_ResolvedJ9Method::numberOfExplicitParameters()   { return TR_J9Method::numberOfExplicitParameters(); }
-TR::DataType     TR_ResolvedJ9Method::parmType(uint32_t n)           { return TR_J9Method::parmType(n); }
-TR::ILOpCodes  TR_ResolvedJ9Method::directCallOpCode()             { return TR_J9Method::directCallOpCode(); }
-TR::ILOpCodes  TR_ResolvedJ9Method::indirectCallOpCode()           { return TR_J9Method::indirectCallOpCode(); }
-TR::DataType     TR_ResolvedJ9Method::returnType()                   { return TR_J9Method::returnType(); }
-uint32_t      TR_ResolvedJ9Method::returnTypeWidth()              { return TR_J9Method::returnTypeWidth(); }
-bool          TR_ResolvedJ9Method::returnTypeIsUnsigned()         { return TR_J9Method::returnTypeIsUnsigned(); }
-TR::ILOpCodes  TR_ResolvedJ9Method::returnOpCode()                 { return TR_J9Method::returnOpCode(); }
-const char *  TR_ResolvedJ9Method::signature(TR_Memory * m, TR_AllocationKind k) { return TR_J9Method::signature(m, k); }
-uint16_t      TR_ResolvedJ9Method::classNameLength()              { return TR_J9Method::classNameLength(); }
-uint16_t      TR_ResolvedJ9Method::nameLength()                   { return TR_J9Method::nameLength(); }
-uint16_t      TR_ResolvedJ9Method::signatureLength()              { return TR_J9Method::signatureLength(); }
-char *        TR_ResolvedJ9Method::classNameChars()               { return TR_J9Method::classNameChars(); }
-char *        TR_ResolvedJ9Method::nameChars()                    { return TR_J9Method::nameChars(); }
-char *        TR_ResolvedJ9Method::signatureChars()               { return TR_J9Method::signatureChars(); }
+uint32_t      TR_ResolvedJ9Method::numberOfParameters()           { return TR::Method::numberOfExplicitParameters() + (isStatic()? 0 : 1); }
+uint32_t      TR_ResolvedJ9Method::numberOfExplicitParameters()   { return TR::Method::numberOfExplicitParameters(); }
+TR::DataType     TR_ResolvedJ9Method::parmType(uint32_t n)           { return TR::Method::parmType(n); }
+TR::ILOpCodes  TR_ResolvedJ9Method::directCallOpCode()             { return TR::Method::directCallOpCode(); }
+TR::ILOpCodes  TR_ResolvedJ9Method::indirectCallOpCode()           { return TR::Method::indirectCallOpCode(); }
+TR::DataType     TR_ResolvedJ9Method::returnType()                   { return TR::Method::returnType(); }
+uint32_t      TR_ResolvedJ9Method::returnTypeWidth()              { return TR::Method::returnTypeWidth(); }
+bool          TR_ResolvedJ9Method::returnTypeIsUnsigned()         { return TR::Method::returnTypeIsUnsigned(); }
+TR::ILOpCodes  TR_ResolvedJ9Method::returnOpCode()                 { return TR::Method::returnOpCode(); }
+const char *  TR_ResolvedJ9Method::signature(TR_Memory * m, TR_AllocationKind k) { return TR::Method::signature(m, k); }
+uint16_t      TR_ResolvedJ9Method::classNameLength()              { return TR::Method::classNameLength(); }
+uint16_t      TR_ResolvedJ9Method::nameLength()                   { return TR::Method::nameLength(); }
+uint16_t      TR_ResolvedJ9Method::signatureLength()              { return TR::Method::signatureLength(); }
+char *        TR_ResolvedJ9Method::classNameChars()               { return TR::Method::classNameChars(); }
+char *        TR_ResolvedJ9Method::nameChars()                    { return TR::Method::nameChars(); }
+char *        TR_ResolvedJ9Method::signatureChars()               { return TR::Method::signatureChars(); }
 
 intptrj_t
 TR_ResolvedJ9Method::getInvocationCount()
