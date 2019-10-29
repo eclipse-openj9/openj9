@@ -612,7 +612,6 @@ TR_RuntimeAssumptionTable::notifyIllegalStaticFinalFieldModificationEvent(TR_Fro
 
    OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnStaticFinalFieldModification, hashCode((uintptrj_t)key));
    OMR::RuntimeAssumption* cursor = *headPtr;
-   OMR::RuntimeAssumption* prev = NULL;
    bool found = false;
 
    while (cursor)
@@ -632,9 +631,7 @@ TR_RuntimeAssumptionTable::notifyIllegalStaticFinalFieldModificationEvent(TR_Fro
             }
          cursor->compensate(vm, 0, 0);
          markForDetachFromRAT(cursor);
-         continue;
          }
-      prev = cursor;
       cursor = next;
       }
 
