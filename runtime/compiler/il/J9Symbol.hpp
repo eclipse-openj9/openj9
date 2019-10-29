@@ -152,7 +152,7 @@ public:
       Java_lang_invoke_MutableCallSiteDynamicInvokerHandle_mutableSite,
       Java_lang_invoke_MethodHandle_thunks,
       Java_lang_invoke_MethodHandle_type,
-      Java_lang_invoke_MethodType_arguments,
+      Java_lang_invoke_MethodType_ptypes,
       Java_lang_invoke_PrimitiveHandle_rawModifiers,
       Java_lang_invoke_PrimitiveHandle_defc,
       Java_lang_invoke_ThunkTuple_invokeExactThunk,

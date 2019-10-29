@@ -2116,7 +2116,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          int32_t collectArraySize = fe->getInt32Field(methodHandle, "collectArraySize");
          uintptrj_t arguments = fe->getReferenceField(
                   fe->getReferenceField(methodHandle, "type", "Ljava/lang/invoke/MethodType;"),
-                  "arguments", "[Ljava/lang/Class;");
+                  "ptypes", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          int32_t collectionStart = 0;
          if (getPos)
@@ -2131,7 +2131,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          uintptrj_t methodHandle = *std::get<0>(recv);
          uintptrj_t guardArgs = fe->getReferenceField(fe->methodHandle_type(fe->getReferenceField(methodHandle,
             "guard", "Ljava/lang/invoke/MethodHandle;")),
-            "arguments", "[Ljava/lang/Class;");
+            "ptypes", "[Ljava/lang/Class;");
          int32_t numGuardArgs = (int32_t)fe->getArrayLengthInElements(guardArgs);
          client->write(response, numGuardArgs);
          }
@@ -2162,14 +2162,14 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             methodHandle,
             "next",             "Ljava/lang/invoke/MethodHandle;"),
             "type",             "Ljava/lang/invoke/MethodType;"),
-            "arguments",        "[Ljava/lang/Class;");
+            "ptypes",           "[Ljava/lang/Class;");
          TR_OpaqueClassBlock *targetParmClass = (TR_OpaqueClassBlock*)(intptrj_t)fe->getInt64Field(fe->getReferenceElement(targetArguments, argIndex),
                                                                           "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
          // Load callsite type and check if two types are compatible
          uintptrj_t sourceArguments = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "type",             "Ljava/lang/invoke/MethodType;"),
-            "arguments",        "[Ljava/lang/Class;");
+            "ptypes",           "[Ljava/lang/Class;");
          TR_OpaqueClassBlock *sourceParmClass = (TR_OpaqueClassBlock*)(intptrj_t)fe->getInt64Field(fe->getReferenceElement(sourceArguments, argIndex),
                                                                           "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
          client->write(response, sourceParmClass, targetParmClass);
@@ -2231,10 +2231,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR::VMAccessCriticalSection invokeSpreadHandle(fe);
          uintptrj_t methodHandle = *std::get<0>(recv);
          bool getSpreadPosition = std::get<1>(recv);
-         uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+         uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "ptypes", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          uintptrj_t next = fe->getReferenceField(methodHandle, "next", "Ljava/lang/invoke/MethodHandle;");
-         uintptrj_t nextArguments = fe->getReferenceField(fe->methodHandle_type(next), "arguments", "[Ljava/lang/Class;");
+         uintptrj_t nextArguments = fe->getReferenceField(fe->methodHandle_type(next), "ptypes", "[Ljava/lang/Class;");
          int32_t numNextArguments = (int32_t)fe->getArrayLengthInElements(nextArguments);
          int32_t spreadStart = 0;
          // Guard to protect old code
@@ -2250,7 +2250,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          uintptrj_t methodHandle = *std::get<0>(recv);
          int32_t insertionIndex = fe->getInt32Field(methodHandle, "insertionIndex");
          uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(methodHandle, "type",
-                  "Ljava/lang/invoke/MethodType;"), "arguments", "[Ljava/lang/Class;");
+                  "Ljava/lang/invoke/MethodType;"), "ptypes", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          uintptrj_t values = fe->getReferenceField(methodHandle, "values", "[Ljava/lang/Object;");
          int32_t numValues = (int32_t)fe->getArrayLengthInElements(values);
@@ -2278,7 +2278,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          else
             {
             uintptrj_t combiner         = fe->getReferenceField(methodHandle, "combiner", "Ljava/lang/invoke/MethodHandle;");
-            uintptrj_t combinerArguments = fe->getReferenceField(fe->methodHandle_type(combiner), "arguments", "[Ljava/lang/Class;");
+            uintptrj_t combinerArguments = fe->getReferenceField(fe->methodHandle_type(combiner), "ptypes", "[Ljava/lang/Class;");
             numArgs = (int32_t)fe->getArrayLengthInElements(combinerArguments);
             }
          client->write(response, indices, foldPosition, numArgs);
@@ -2324,7 +2324,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          uintptrj_t methodHandle = *std::get<0>(recv);
          uintptrj_t finallyTarget = fe->getReferenceField(methodHandle, "finallyTarget", "Ljava/lang/invoke/MethodHandle;");
          uintptrj_t finallyType = fe->getReferenceField(finallyTarget, "type", "Ljava/lang/invoke/MethodType;");
-         uintptrj_t arguments        = fe->getReferenceField(finallyType, "arguments", "[Ljava/lang/Class;");
+         uintptrj_t arguments        = fe->getReferenceField(finallyType, "ptypes", "[Ljava/lang/Class;");
          int32_t numArgsPassToFinallyTarget = (int32_t)fe->getArrayLengthInElements(arguments);
 
          uintptrj_t methodDescriptorRef = fe->getReferenceField(finallyType, "methodDescriptor", "Ljava/lang/String;");
@@ -2339,7 +2339,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fe);
          uintptrj_t methodHandle = *std::get<0>(recv);
-         uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+         uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "ptypes", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          int32_t filterPos     = (int32_t)fe->getInt32Field(methodHandle, "filterPosition");
          client->write(response, numArguments, filterPos);
@@ -2377,7 +2377,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokeFilderArgumentsHandle(fe);
          uintptrj_t methodHandle = *std::get<0>(recv);
-         uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+         uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "ptypes", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          int32_t startPos     = (int32_t)fe->getInt32Field(methodHandle, "startPos");
          uintptrj_t filters = fe->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
@@ -2394,7 +2394,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          uintptrj_t catchArguments = fe->getReferenceField(fe->getReferenceField(
             catchTarget,
             "type", "Ljava/lang/invoke/MethodType;"),
-            "arguments", "[Ljava/lang/Class;");
+            "ptypes", "[Ljava/lang/Class;");
          int32_t numCatchArguments = (int32_t)fe->getArrayLengthInElements(catchArguments);
          client->write(response, numCatchArguments);
          }
@@ -2440,7 +2440,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "type", "Ljava/lang/invoke/MethodType;"),
-            "arguments", "[Ljava/lang/Class;");
+            "ptypes", "[Ljava/lang/Class;");
          int32_t parameterCount = (int32_t)fe->getArrayLengthInElements(arguments);
          client->write(response, parameterCount);
          }
