@@ -1415,6 +1415,12 @@ TR_J9ServerVM::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *com
    }
 
 TR_ResolvedMethod *
+TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, TR_OpaqueMethodBlock *archetype, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod)
+   {
+   return createMethodHandleArchetypeSpecimen(trMemory, methodHandleLocation, owningMethod);
+   }
+
+TR_ResolvedMethod *
 TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod)
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
