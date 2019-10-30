@@ -24,11 +24,14 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 Let's create the following scenario:
 For the purpose of this example, we assume you have an OpenJ9 SDK ready
-for testing. Below are the specific commands you'd run to compile and
-run tests. Details are explained in *Tasks in OpenJ9 Test* section below.
+for testing. Below are the specific commands you'd run to clone test framework
+TKG, compile and run tests. Details are explained in *Tasks in OpenJ9 Test*
+section below.
 
 ```
-cd openj9/test/TestConfig
+cd openj9/test
+git clone https://github.com/AdoptOpenJDK/TKG.git
+cd TKG
 export TEST_JDK_HOME=<path to JDK directory that you wish to test>
 export BUILD_LIST=functional
 make -f run_configure.mk
@@ -100,7 +103,7 @@ Please read [DependentLibs.md](./DependentLibs.md) for details.
 - If you have added new features to OpenJ9, you will likely need to add new tests. Check out [openj9/test/functional/TestExample/src/org/openj9/test/MyTest.java](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample/src/org/openj9/test/example/MyTest.java) for
 the format to use.
 
-- If you have many new test cases to add and special build requirements, then you may want to copy the [TestExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample) update the build.xml and playlist.xml files to match your new Test class names. The playlist.xml format is defined in TestConfig/playlist.xsd.
+- If you have many new test cases to add and special build requirements, then you may want to copy the [TestExample](https://github.com/eclipse/openj9/blob/master/test/functional/TestExample) update the build.xml and playlist.xml files to match your new Test class names. The playlist.xml format is defined in TKG/playlist.xsd.
 
 - A test can be tagged with following elements:
       - level:   [sanity|extended|special] (extended default value)
@@ -332,7 +335,7 @@ If a test is disabled, it means that this test is disabled using `<disabled>` ta
 
 TestNG tests produce html (and xml) output from the tests are 
 created and stored in a test_output_xxxtimestamp folder in the 
-TestConfig directory (or from where you ran "make test"). 
+TKG directory (or from where you ran "make test"). 
 
 The output is organized by tests, each test having its own set of 
 output.  If you open the index.html file in a web browser, you will

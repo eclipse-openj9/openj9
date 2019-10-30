@@ -26,7 +26,9 @@ Below is an example to run all sanity.functional tests against a JDK8
 Linux x86-64 cmprssptrs OpenJ9 SDK:
 
 ```
-    cd openj9/test/TestConfig
+    cd openj9/test
+    git clone https://github.com/AdoptOpenJDK/TKG.git
+    cd TKG
     export TEST_JDK_HOME=/my/openj9/jdk
     make -f run_configure.mk   // generates makefiles
     make compile               // downloads test related material/libs
@@ -71,7 +73,7 @@ Adding a testNG test as an example:
     - update testng.xml to add the test class to a existing <test> or
     create a new <test>
     - If the new <test> is created in testng.xml, playlist.xml should
-    be updated to add the new <test> based on [playlist.xsd](./TestConfig/playlist.xsd)
+    be updated to add the new <test> based on [playlist.xsd](./TKG/playlist.xsd)
     Supported test groups are `functional|system|openjdk|external|perf|jck`.
     It is required to provide one group per test in playlist.xml.
 - adding additional new test methods for new Java10 functionality
