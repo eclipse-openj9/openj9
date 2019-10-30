@@ -109,6 +109,7 @@ class TR_LowPriorityCompQueue
       TR_PERSISTENT_ALLOC(TR_Memory::PersistentInfo); // TODO: define its own category
       static const uint32_t HT_SIZE = (1 << 13); // power of two for cheap modulo
       TR_LowPriorityCompQueue();
+      ~TR_LowPriorityCompQueue();
 
       void setCompInfo(TR::CompilationInfo *compInfo) { _compInfo = compInfo; }
       bool hasLowPriorityRequest() const { return (_firstLPQentry != NULL); }
@@ -687,6 +688,7 @@ public:
    void updateNumUsableCompThreads(int32_t &numUsableCompThreads);
    bool allocateCompilationThreads(int32_t numUsableCompThreads);
    void freeAllCompilationThreads();
+   void freeAllResources();
 
    uintptr_t startCompilationThread(int32_t priority, int32_t id, bool isDiagnosticThread);
    bool initializeCompilationOnApplicationThread();

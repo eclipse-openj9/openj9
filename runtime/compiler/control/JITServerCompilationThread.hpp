@@ -78,6 +78,7 @@ class CompilationInfoPerThreadRemote : public TR::CompilationInfoPerThread
 
    void clearPerCompilationCaches();
    void deleteClientSessionData(uint64_t clientId, TR::CompilationInfo* compInfo, J9VMThread* compThread);
+   virtual void freeAllResources() override;
 
    private:
    /* Template method for allocating a cache of type T on the heap.
