@@ -31,7 +31,7 @@ project(j9_sourcetools VERSION 1.0)
 set(CMAKE_JAVA_TARGET_OUTPUT_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 
 # TODO this needs to be named and handled better
-set(SPEC_LEVEL 8 CACHE STRING "")
+set(SPEC_LEVEL 7 CACHE STRING "")
 set(CMAKE_JAVA_COMPILE_FLAGS -nowarn -source ${SPEC_LEVEL} -target ${SPEC_LEVEL})
 
 # Note add_jar isn't as good at tracking target dependencies as regular cmake
