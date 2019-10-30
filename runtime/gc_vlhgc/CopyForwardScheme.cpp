@@ -3875,6 +3875,24 @@ private:
 		}
 	}
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier) {
+		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);
+		env->_copyForwardStats._doubleMappedArrayletsCandidates += 1;
+		if (!_copyForwardScheme->isLiveObject(objectPtr)) {
+			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
+			MM_ScavengerForwardedHeader forwardedHeader(objectPtr);
+			objectPtr = forwardedHeader.getForwardedObject();
+			if (NULL == objectPtr) {
+				Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
+				env->_copyForwardStats._doubleMappedArrayletsCleared += 1;
+				PORT_ACCESS_FROM_ENVIRONMENT(_env);
+				j9vmem_free_memory(identifier->address, identifier->size, identifier);
+			}
+		}
+	}
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+
 	/**
 	 * @Clear the string table cache slot if the object is not marked
 	 */
