@@ -297,7 +297,7 @@ public:
 		_objectPtr(object)
 		, _preserved(*(volatile UDATA *)_objectPtr)
 #if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
-		, _compressObjectReferences(extensions->compressObjectReferences());
+		, _compressObjectReferences(extensions->compressObjectReferences())
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	{
 	}
@@ -320,7 +320,7 @@ public:
 		_objectPtr(object)
 		, _preserved(*(volatile UDATA *)_objectPtr)
 #if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
-		, _compressObjectReferences(compress);
+		, _compressObjectReferences(compress)
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	{
 	}
