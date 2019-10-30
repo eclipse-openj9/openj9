@@ -37,6 +37,7 @@
 #include "optimizer/EstimateCodeSize.hpp"
 
 class TR_ResolvedMethod;
+class NeedsPeekingHeuristic;
 
 class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
    {
@@ -77,6 +78,37 @@ class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
 
    protected:
       bool estimateCodeSize(TR_CallTarget *, TR_CallStack * , bool recurseDown = true);
+      
+     /** \brief
+      *     Generates a CFG for the calltarget->_calleeMethod.
+      *
+      *  \param calltarget
+      *     The calltarget which we wish to generate a CFG for.
+      *
+      *  \param cfgRegion
+      *     The memory region where the cfg is going to be stored
+      *
+      *  \param bci
+      *     The bytecode iterator. Must be instantiated in the following way:
+      *     \code
+      *        bci(0, static_cast<TR_ResolvedJ9Method *> (calltarget->_calleeMethod), ...)
+      *     \endcode
+      *
+      *  \param nph
+      *     Pointer to NeedsPeekingHeuristic.
+      *
+      *  \param blocks
+      *     Array of block pointers. Size of array must be equal to the maximum
+      *     bytecode index in calltarget->_calleeMethod
+      *
+      *  \param flags
+      *     Array of flags8_t. Size of array must be equal to maximum bytecode
+      *     index in calltarget->_calleeMethod
+      *
+      *  \return
+      *     Reference to cfg
+      */
+      TR::CFG &processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, TR::Region &cfgRegion, TR_J9ByteCodeIterator &bci, NeedsPeekingHeuristic &nph, TR::Block** blocks, flags8_t * flags);
       bool realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown, TR::Region &cfgRegion);
 
       bool reduceDAAWrapperCodeSize(TR_CallTarget* target);
