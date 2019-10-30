@@ -3881,7 +3881,7 @@ private:
 		env->_copyForwardStats._doubleMappedArrayletsCandidates += 1;
 		if (!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
-			MM_ScavengerForwardedHeader forwardedHeader(objectPtr);
+			MM_ScavengerForwardedHeader forwardedHeader(objectPtr, _extensions);
 			objectPtr = forwardedHeader.getForwardedObject();
 			if (NULL == objectPtr) {
 				Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
