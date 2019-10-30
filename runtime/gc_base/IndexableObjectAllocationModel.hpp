@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -123,6 +123,19 @@ public:
 	 * Allocation description and layout initialization.
 	 */
 	bool initializeAllocateDescription(MM_EnvironmentBase *env);
+
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	/**
+	 * For non-contiguous arraylets (discontiguous arraylets, hybrid not allowed
+	 * when double map is enabled), double maps the arraylet leaves to a contiguous
+	 * region outside the heap, making a discontiguous arraylet look contiguous
+	 *
+	 * @param env thread GC Environment
+	 * @param objectPtr indexable object spine
+	 * @return the contiguous address pointer
+	 */
+	void *doubleMapArraylets(MM_EnvironmentBase *env, J9Object *objectPtr);
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 	/**
 	 * Initializer.

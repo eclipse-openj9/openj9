@@ -44,6 +44,9 @@ private:
 #if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
 	bool _compressObjectReferences;
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	bool _enableDoubleMapping; /** Allows arraylets to be double mapped */
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 protected:
 	OMR_VM *_omrVM; 	/**< used so that we can pull the arrayletLeafSize and arrayletLeafLogSize for arraylet sizing calculations */
 	void * _arrayletRangeBase; /**< The base heap range of where discontiguous arraylets are allowed. */
@@ -135,6 +138,30 @@ public:
 			((J9IndexableObjectContiguousFull *)arrayPtr)->size = (U_32)size;
 		}
 	}
+
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	/**
+	 * Sets enable double mapping
+	 * 
+	 * @param enableDoubleMapping
+	 */
+	MMINLINE void
+	setEnableDoubleMapping(bool enableDoubleMapping)
+	{
+		_enableDoubleMapping = enableDoubleMapping;
+	}
+
+	/**
+	 * Returns enable double mapping
+	 * 
+	 * @return true if double mapping is enabled, false otherwise
+	 */
+	MMINLINE bool
+	isDoubleMappingEnabled()
+	{
+		return _enableDoubleMapping;
+	}
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 	/**
 	 * Sets size in elements of a discontiguous indexable object .

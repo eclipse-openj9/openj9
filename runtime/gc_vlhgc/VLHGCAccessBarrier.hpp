@@ -46,6 +46,12 @@ class MM_VLHGCAccessBarrier : public MM_ObjectAccessBarrier
 private:
 	void postObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject, J9Object *srcObject);
 	void preBatchObjectStoreImpl(J9VMThread *vmThread, J9Object *dstObject);
+	void copyArrayCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
+				J9InternalVMFunctions *functions, void **data,
+				J9IndexableObject *arrayObject, jboolean *isCopy);
+	void copyBackArrayCritical(J9VMThread *vmThread, GC_ArrayObjectModel *indexableObjectModel,
+				J9InternalVMFunctions *functions, void *elems,
+				J9IndexableObject **arrayObject, jint mode);
 
 protected:
 	virtual bool initialize(MM_EnvironmentBase *env);
