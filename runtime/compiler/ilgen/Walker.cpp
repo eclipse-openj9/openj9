@@ -2164,7 +2164,7 @@ TR_J9ByteCodeIlGenerator::calculateArrayElementAddress(TR::DataType dataType, bo
 
    // Stack is now ...,aryRef,index<===
    TR::Node * index = pop();
-   dup();
+   if (checks) dup();
    dup();
    TR::Node * nodeThatWasNullChecked = pop();
 
