@@ -20,7 +20,7 @@ dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exc
 
 include(jilvalues.m4)
 
-define({CINTERP_STACK_SIZE},{J9CONST(J9TR_cframe_sizeof,$1,$2)})
+J9CONST({CINTERP_STACK_SIZE},J9TR_cframe_sizeof)
 ifelse(eval(CINTERP_STACK_SIZE % 16),0,,{ERROR stack size CINTERP_STACK_SIZE is not 16-aligned})
 
 define({ALen},{8})
