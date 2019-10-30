@@ -131,13 +131,6 @@ public class MkGen {
 			// Generate make target
 			String name = var.getSubTestName();
 
-			// TODO: skip test if it is not valid
-			String condition_platform = null;
-			if (!var.isValid()) {
-				condition_platform = name + "_INVALID_PLATFORM_CHECK";
-				f.write(condition_platform + "=$(filter " + Options.getSpec() + ", $(SPEC))\n");
-			}
-
 			if (!testInfo.getCapabilities().isEmpty()) {
 				List<String> capabilityReqs_HashKeys = new ArrayList<>(testInfo.getCapabilities().keySet());
 				Collections.sort(capabilityReqs_HashKeys);
@@ -149,12 +142,6 @@ public class MkGen {
 
 			String jvmtestroot = "$(JVM_TEST_ROOT)$(D)" + String.join("$(D)", currentdirs);
 			f.write(name + ": TEST_RESROOT=" + jvmtestroot + "\n");
-
-			// TODO: keep for now to match result with perl testkitgen, remove after test
-			if (testInfo.getIterations() != Integer.parseInt(Options.getIterations())) {
-				f.write(name + ": TEST_ITERATIONS=" + testInfo.getIterations() + "\n");
-			}
-
 			f.write(name + ": JVM_OPTIONS?=" + testInfo.getAotOptions() + "$(RESERVED_OPTIONS) "
 					+ (var.getJvmOptions().isEmpty() ? "" : (var.getJvmOptions() + " ")) + "$(EXTRA_OPTIONS)\n");
 
@@ -179,50 +166,47 @@ public class MkGen {
 				}
 			}
 
-			if (condition_platform != null) {
-				f.write("ifeq ($(" + condition_platform + "),)\n");
-			}
-			List<String> capKeys = new ArrayList<String>(testInfo.getCapabilities().keySet());
-			if (!capKeys.isEmpty()) {
-				Collections.sort(capKeys);
-				for (String cKey : capKeys) {
-					String condition_capsReqs = name + "_" + cKey + "_CHECK";
-					f.write("ifeq ($(" + condition_capsReqs + "), " + testInfo.getCapabilities().get(cKey) + ")\n");
+			if (var.isValid()) {
+				List<String> capKeys = new ArrayList<String>(testInfo.getCapabilities().keySet());
+				if (!capKeys.isEmpty()) {
+					Collections.sort(capKeys);
+					for (String cKey : capKeys) {
+						String condition_capsReqs = name + "_" + cKey + "_CHECK";
+						f.write("ifeq ($(" + condition_capsReqs + "), " + testInfo.getCapabilities().get(cKey) + ")\n");
+					}
 				}
-			}
-
-			f.write(indent + "$(TEST_SETUP);\n");
-
-			f.write(indent + "@echo \"variation: " + var.getVariation()
-					+ "\" | tee -a $(Q)$(TESTOUTPUT)$(D)TestTargetResult$(Q);\n");
-			f.write(indent
-					+ "@echo \"JVM_OPTIONS: $(JVM_OPTIONS)\" | tee -a $(Q)$(TESTOUTPUT)$(D)TestTargetResult$(Q);\n");
-
-			f.write(indent + "{ ");
-			for (int k = 1; k <= testInfo.getIterations(); k++) {
-				f.write("itercnt=" + k + "; \\\n" + indent + "$(MKTREE) $(REPORTDIR); \\\n" + indent
-						+ "$(CD) $(REPORTDIR); \\\n");
-				f.write(indent + testInfo.getCommand() + ";");
-				if (k != testInfo.getIterations()) {
-					f.write(" \\\n" + indent);
+	
+				f.write(indent + "$(TEST_SETUP);\n");
+	
+				f.write(indent + "@echo \"variation: " + var.getVariation()
+						+ "\" | tee -a $(Q)$(TESTOUTPUT)$(D)TestTargetResult$(Q);\n");
+				f.write(indent
+						+ "@echo \"JVM_OPTIONS: $(JVM_OPTIONS)\" | tee -a $(Q)$(TESTOUTPUT)$(D)TestTargetResult$(Q);\n");
+	
+				f.write(indent + "{ ");
+				for (int k = 1; k <= testInfo.getIterations(); k++) {
+					f.write("itercnt=" + k + "; \\\n" + indent + "$(MKTREE) $(REPORTDIR); \\\n" + indent
+							+ "$(CD) $(REPORTDIR); \\\n");
+					f.write(indent + testInfo.getCommand() + ";");
+					if (k != testInfo.getIterations()) {
+						f.write(" \\\n" + indent);
+					}
 				}
-			}
-			f.write(" } 2>&1 | tee -a $(Q)$(TESTOUTPUT)$(D)TestTargetResult$(Q);\n");
-
-			f.write(indent + "$(TEST_TEARDOWN);\n");
-
-			if (!capKeys.isEmpty()) {
-				Collections.sort(capKeys, Collections.reverseOrder());
-				for (String cKey : capKeys) {
-					f.write("else\n");
-					f.write(indent + "@echo \"Skipped due to capabilities (" + cKey + ":"
-							+ testInfo.getCapabilities().get(cKey)
-							+ ") => $(TEST_SKIP_STATUS)\" | tee -a $(Q)$(TESTOUTPUT)$(D)TestTargetResult$(Q);\n");
-					f.write("endif\n");
+				f.write(" } 2>&1 | tee -a $(Q)$(TESTOUTPUT)$(D)TestTargetResult$(Q);\n");
+	
+				f.write(indent + "$(TEST_TEARDOWN);\n");
+	
+				if (!capKeys.isEmpty()) {
+					Collections.sort(capKeys, Collections.reverseOrder());
+					for (String cKey : capKeys) {
+						f.write("else\n");
+						f.write(indent + "@echo \"Skipped due to capabilities (" + cKey + ":"
+								+ testInfo.getCapabilities().get(cKey)
+								+ ") => $(TEST_SKIP_STATUS)\" | tee -a $(Q)$(TESTOUTPUT)$(D)TestTargetResult$(Q);\n");
+						f.write("endif\n");
+					}
 				}
-			}
-			if (condition_platform != null) {
-				f.write("else\n");
+			} else {
 				if (testInfo.getPlatformRequirements() != null) {
 					f.write(indent
 							+ "@echo \"Skipped due to jvm options ($(JVM_OPTIONS)) and/or platform requirements ("
@@ -232,8 +216,8 @@ public class MkGen {
 					f.write(indent
 							+ "@echo \"Skipped due to jvm options ($(JVM_OPTIONS)) => $(TEST_SKIP_STATUS)\" | tee -a $(Q)$(TESTOUTPUT)$(D)TestTargetResult$(Q);\n");
 				}
-				f.write("endif\n");
 			}
+
 			f.write(indent + "@perl '-MTime::HiRes=gettimeofday' -e 'print \"" + name
 					+ " Finish Time: \" . localtime() . \" Epoch Time (ms): \" . int (gettimeofday * 1000) . \"\\n\"' | tee -a $(Q)$(TESTOUTPUT)$(D)TestTargetResult$(Q)\n");
 
