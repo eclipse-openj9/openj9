@@ -211,7 +211,8 @@ static IDATA
 stringComparatorFn(struct J9AVLTree *tree, struct J9AVLTreeNode *leftNode, struct J9AVLTreeNode *rightNode)
 {
 	J9JavaVM *javaVM = (J9JavaVM*) tree->userData;
-	bool isMetronome = MM_GCExtensionsBase::getExtensions(javaVM->omrVM)->isMetronomeGC();
+	MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(javaVM->omrVM);
+	bool isMetronome = extensions->isMetronomeGC();
 	j9object_t right_s = NULL;
 	U_32 rightLength = 0;
 	j9object_t right_p = NULL;
@@ -228,7 +229,7 @@ stringComparatorFn(struct J9AVLTree *tree, struct J9AVLTreeNode *leftNode, struc
 
 	if (!isMetronome) {
 		/* Check if string was copy-forwarded.  Only do this on non-metronome since metronome re-uses the FORWARDED bit */
-		MM_ScavengerForwardedHeader forwardedHeader(right_s);
+		MM_ScavengerForwardedHeader forwardedHeader(right_s, extensions);
 		J9Object* forwardedPtr = forwardedHeader.getForwardedObject();
 		if (NULL != forwardedPtr) {
 			right_s = forwardedPtr;
@@ -301,7 +302,7 @@ stringComparatorFn(struct J9AVLTree *tree, struct J9AVLTreeNode *leftNode, struc
 
 		if (!isMetronome) {
 			/* Check if string was copy-forwarded.  Only do this on non-metronome since metronome re-uses the FORWARDED bit */
-			MM_ScavengerForwardedHeader forwardedHeader(left_s);
+			MM_ScavengerForwardedHeader forwardedHeader(left_s, extensions);
 			J9Object* forwardedPtr = forwardedHeader.getForwardedObject();
 			if (NULL != forwardedPtr) {
 				left_s = forwardedPtr;
