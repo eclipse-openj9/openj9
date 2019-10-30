@@ -5592,6 +5592,146 @@ done:
 }
 
 /**
+ * Starts up a non-top layer cache to get cache statistics.
+ * 
+ * @param[in] currentThread Pointer to J9VMThread structure for the current thread
+ * @param[in] ctrlDirName The cache control directory
+ * @param[in] cacheName The cache name
+ * @param[in] cacheName The cache type
+ * @param[in] layer The cache layer number
+ * @param[in] runtimeFlags  The runtime Flags
+ * @param[in] verboseFlags The flags controling verbose output
+  *
+ * @return CC_STARTUP_OK(0) for success, CC_STARTUP_FAILED(-1) for failure and CC_STARTUP_CORRUPT(-2) for corrupted cache.
+ */
+IDATA
+SH_CompositeCacheImpl::startupNonTopLayerForStats(J9VMThread* currentThread, const char* ctrlDirName, const char* cacheName, U_32 cacheType, I_8 layer, U_64* runtimeFlags, UDATA verboseFlags)
+{
+	IDATA retval = CC_STARTUP_OK;
+	const char* fnName = "CC startupForStats";
+	bool cacheHasIntegrity = true;
+	J9PortShcVersion versionData;
+	J9SharedClassPreinitConfig piconfig;
+	PORT_ACCESS_FROM_VMC(currentThread);
+	J9JavaVM* vm = currentThread->javaVM;
+	SH_OSCache* memForConstructor = NULL;
+	UDATA memSize = 0;
+	bool osCacheStarted = false;
+
+	Trc_SHR_CC_startupNonTopLayerForStats_Entry(currentThread, ctrlDirName, cacheName, cacheType, layer, *runtimeFlags, verboseFlags);
+	
+	if (_started == true) {
+		goto done;
+	}
+
+	_runtimeFlags = runtimeFlags;
+	memSize = SH_OSCache::getRequiredConstrBytes();
+	memForConstructor = (SH_OSCache*)j9mem_allocate_memory(memSize, J9MEM_CATEGORY_VM);
+	if (NULL == memForConstructor) {
+		retval = CC_STARTUP_FAILED;
+		goto done;
+	}
+
+	setCurrentCacheVersion(vm, J2SE_VERSION(vm), &versionData);
+	versionData.cacheType = cacheType;
+	_oscache = SH_OSCache::newInstance(PORTLIB, memForConstructor, cacheName, OSCACHE_CURRENT_CACHE_GEN, &versionData, layer);
+
+	if (J9PORT_SHR_CACHE_TYPE_NONPERSISTENT == cacheType) {
+		/* only startup non-top layer nonpersistent cache in read-write mode in order to get semid */
+		if (_oscache->startup(vm, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, cacheName, &piconfig, SH_CompositeCacheImpl::getNumRequiredOSLocks(), J9SH_OSCACHE_OPEXIST_STATS, 0, 0/*runtime flags*/, 0, 0, &versionData, NULL, SHR_STARTUP_REASON_NORMAL)) {
+			osCacheStarted = true;
+		}
+	}
+	
+	if (!osCacheStarted) {
+		/* try to open the cache read-only */
+		if (!_oscache->startup(vm, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, cacheName, &piconfig, 0, J9SH_OSCACHE_OPEXIST_STATS, 0, 0/*runtime flags*/, J9OSCACHE_OPEN_MODE_DO_READONLY, 0, &versionData, NULL, SHR_STARTUP_REASON_NORMAL)) {
+			_oscache->cleanup();
+			retval = CC_STARTUP_FAILED;
+			goto done;
+		}
+	}
+	
+	_osPageSize = _oscache->getPermissionsRegionGranularity(_portlib);
+
+	_readOnlyOSCache = _oscache->isRunningReadOnly();
+	if (_readOnlyOSCache) {
+		_commonCCInfo->writeMutexID = CC_READONLY_LOCK_VALUE;
+		_commonCCInfo->readWriteAreaMutexID = CC_READONLY_LOCK_VALUE;
+	} else {
+		IDATA lockID;
+		if ((lockID = _oscache->getWriteLockID()) >= 0) {
+			_commonCCInfo->writeMutexID = (U_32)lockID;
+		} else {
+			retval = CC_STARTUP_FAILED;
+			goto done;
+		}
+		if ((lockID = _oscache->getReadWriteLockID()) >= 0) {
+			_commonCCInfo->readWriteAreaMutexID = (U_32)lockID;
+		} else {
+			retval = CC_STARTUP_FAILED;
+			goto done;
+		}
+	}
+
+	if (omrthread_tls_alloc(&(_commonCCInfo->writeMutexEntryCount)) != 0) {
+		retval = CC_STARTUP_FAILED;
+		goto done;
+	}
+
+	_theca = (J9SharedCacheHeader*)_oscache->attach(currentThread, &versionData);
+
+	if (isCacheInitComplete() == false) {
+		retval = CC_STARTUP_CORRUPT;
+		goto done;
+	}
+
+	if (enterWriteMutex(currentThread, false, fnName) != 0) {
+		retval = CC_STARTUP_FAILED;
+		goto done;
+	}
+
+	if (!_readOnlyOSCache && _theca->roundedPagesFlag && ((currentThread->javaVM->sharedCacheAPI->runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT) != 0)) {
+		/* If mprotection is globally enabled, protect the entire cache body. Although
+		 * we have the write lock, the header may still be written by other JVMs to
+		 * take the read lock. The read-write area can also be written since we don't
+		 * have the read-write lock.
+		 */
+		*_runtimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT;
+		notifyPagesRead(CASTART(_theca), CAEND(_theca), DIRECTION_FORWARD, true);
+	}
+	/* _started is set to true if the write area mutex was entered. Because _started 
+	 * is used in ::shutdownForStats() to decide if '::exitWriteMutex()' needs to be called,
+	 * _started will still be set if any of the below code finds the cache to be corrupt.
+	 * 
+	 * All other failures after this point are a result of a corrupt cache.
+	 */
+	_started = true;
+
+	if (!checkCacheCRC(&cacheHasIntegrity, NULL)) {
+		retval = CC_STARTUP_CORRUPT;
+		goto done;
+	}
+
+	/* Needs to be set or 'SH_CompositeCacheImpl::next' will always return nothing.
+	 * This is a problem during 'SH_CacheMap::readCache' when collecting stats for
+	 * the cache.
+	 */
+	_prevScan = _scan = (ShcItemHdr*)CCFIRSTENTRY(_theca);
+
+	if (_debugData->Init(currentThread, _theca, (AbstractMemoryPermission *)this, verboseFlags, _runtimeFlags, true) == false) {
+		retval = CC_STARTUP_CORRUPT;
+		goto done;
+	}
+
+done:
+	/*Calling ::shutdownForStats() calls 'exitWriteMutex()'*/
+	Trc_SHR_CC_startupNonTopLayerForStats_Exit(currentThread, retval);
+	return retval;
+}
+
+
+/**
  * Shut down a CompositeCache started with startupForStats().
  *
  * THREADING: Only ever single threaded
@@ -5611,8 +5751,10 @@ SH_CompositeCacheImpl::shutdownForStats(J9VMThread* currentThread)
 	if (_started == true) {
 
 		if ((*_runtimeFlags & J9SHR_RUNTIMEFLAG_ENABLE_MPROTECT) != 0) {
-			/* If the cache was protected, unprotect it */
-			notifyPagesRead(CASTART(_theca), CAEND(_theca), DIRECTION_FORWARD, false);
+			/* If the cache was protected, unprotect it. But Only do this if _readOnlyOSCache is false. */
+			if (!_readOnlyOSCache) {
+				notifyPagesRead(CASTART(_theca), CAEND(_theca), DIRECTION_FORWARD, false);
+			}
 		}
 
 		if (exitWriteMutex(currentThread, fnName, false) != 0) {
@@ -5631,6 +5773,11 @@ SH_CompositeCacheImpl::shutdownForStats(J9VMThread* currentThread)
 		_commonCCInfo->writeMutexEntryCount = 0;
 	}
 	done:
+	if (NULL != getPrevious()) {
+		/* detach non-top layers only, top layer is detached in SH_OSCachemmap::getCacheStats()/SH_OSCachesysv::getCacheStats() */
+		_oscache->detach();
+	}
+	
 	return retval;
 }
 
@@ -7081,4 +7228,28 @@ I_8
 SH_CompositeCacheImpl::getLayer(void) const
 {
 	return _layer;
+}
+
+/**
+ * Return the cache file name.
+ */
+const char* 
+SH_CompositeCacheImpl::getCacheNameWithVGen(void) const
+{
+	return _oscache->getCacheNameWithVGen();
+}
+
+/* Get a SH_OSCache_Info of a non-top layer cache.
+ * 
+ * @param[in] vm The current J9JavaVM
+ * @param[in] ctrlDirName The cache control directory 
+ * @param[in] groupPerm Group permissions to open the cache directory
+ * @param[out] SH_OSCache_Info of the non-top layer cache
+ * 
+ * @return 0 on success and -1 on failure
+ */
+IDATA
+SH_CompositeCacheImpl::getNonTopLayerCacheInfo(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, SH_OSCache_Info *cacheInfo) 
+{
+	return SH_OSCache::getCacheStatistics(vm, ctrlDirName, _oscache->getCacheNameWithVGen(), groupPerm, 0, J2SE_VERSION(vm), cacheInfo, SHR_STATS_REASON_ITERATE, true, false, NULL, _oscache);
 }

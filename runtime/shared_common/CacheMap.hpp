@@ -211,7 +211,7 @@ public:
 	virtual IDATA aotMethodOperation(J9VMThread* currentThread, char* methodSpecs, UDATA action);
 
 	/* @see CacheMapStats.hpp */
-	IDATA startupForStats(J9VMThread* currentThread, SH_OSCache * oscache, U_64 * runtimeflags);
+	IDATA startupForStats(J9VMThread* currentThread, const char* ctrlDirName, UDATA groupPerm, SH_OSCache * oscache, U_64 * runtimeflags, J9Pool **lowerLayerList);
 
 	/* @see CacheMapStats.hpp */
 	IDATA shutdownForStats(J9VMThread* currentThread);
@@ -519,6 +519,8 @@ private:
 	void printCacheStatsTopLayerSummaryStatsHelper(J9VMThread* currentThread, UDATA showFlags, U_64 runtimeFlags, J9SharedClassJavacoreDataDescriptor *javacoreData);
 	
 	void printCacheStatsAllLayersStatsHelper(J9VMThread* currentThread, UDATA showFlags, U_64 runtimeFlags, J9SharedClassJavacoreDataDescriptor *javacoreData, U_32 staleBytes);
+
+	IDATA startupLowerLayerForStats(J9VMThread* currentThread, const char* ctrlDirName, UDATA groupPerm, SH_OSCache *oscache, J9Pool** lowerLayerList);
 };
 
 #endif /* !defined(CACHEMAP_H_INCLUDED) */

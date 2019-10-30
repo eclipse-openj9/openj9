@@ -6967,26 +6967,24 @@ SH_CacheMap::managers()
  *
  * THREADING: Only ever single threaded
  *
- * @param [in] currentThread  The current thread
- * @param [in] config  The shared class config
- * @param [in] attachedMemory  The attached shared memory region
- * @param [in] runtimeflags  The runtime flags used by this cache
+ * @param [in] currentThread The current thread
+ * @param [in] ctrlDirName The cache control directroy
+ * @param [in] groupPerm Group permissions to open the cache directory
+ * @param [in] oscache An exiting top layer SH_OSCache
+ * @param [in] runtimeflags The runtime flags used by this cache
+ * @param [out] lowerLayerList A list of SH_OSCache_Info for lower layer caches.
  *
- * @return 0 on success or -1 for failure
- * @retval CC_STARTUP_OK (0) success
- * @retval CC_STARTUP_FAILED (-1)
- * @retval CC_STARTUP_CORRUPT (-2)
+ * @return CC_STARTUP_OK on success, CC_STARTUP_FAILED(-1) or CC_STARTUP_CORRUPT(-2) on failure
  */
 IDATA
-SH_CacheMap::startupForStats(J9VMThread* currentThread, SH_OSCache * oscache, U_64 * runtimeflags)
+SH_CacheMap::startupForStats(J9VMThread* currentThread, const char* ctrlDirName, UDATA groupPerm, SH_OSCache *oscache, U_64 *runtimeflags, J9Pool **lowerLayerList)
 {
 	IDATA retval = 0;
 	UDATA verboseFlags = 0;
 	IDATA startuprc = CC_STARTUP_OK;
 	IDATA itemsRead = -1;
-#if defined(J9SHR_CACHELET_SUPPORT)
-	SH_CompositeCacheImpl* cache = _cacheletHead; /* this list currently spans all supercaches */
-#endif
+	SH_CompositeCacheImpl* ccToUse = NULL;
+	J9JavaVM *vm = currentThread->javaVM;
 
 	/*The below runtime flags are used during:
 	 * 	1.) 'SH_CacheMap::startManager'
@@ -6995,15 +6993,14 @@ SH_CacheMap::startupForStats(J9VMThread* currentThread, SH_OSCache * oscache, U_
 	 */
 	_runtimeFlags = runtimeflags;
 
-	/* When 'SH_CacheMap::startManager' is called it expected that the _refreshMutex is created.
-	 * -Xshareclasses:noLocalLocking looks like it should enable a mode where '_refreshMutex' should not
-	 * be required. However it also looks like this feature should be disabled.
-	 */
+	/* When 'SH_CacheMap::startManager' is called it expected that the _refreshMutex is created. */
 	if (omrthread_monitor_init(&_refreshMutex, 0) != 0) {
 		_refreshMutex = NULL;
 		retval = CC_STARTUP_FAILED;
 		goto done;
 	}
+	
+	
 	startuprc = _ccHead->startupForStats(currentThread, oscache, _runtimeFlags, verboseFlags);
 	if (startuprc != CC_STARTUP_OK) {
 		if (startuprc == CC_STARTUP_CORRUPT) {
@@ -7012,37 +7009,67 @@ SH_CacheMap::startupForStats(J9VMThread* currentThread, SH_OSCache * oscache, U_
 			retval = CC_STARTUP_FAILED;
 		}
 		goto done;
+	} else {
+		if (oscache->getLayer() > 0) {
+			startuprc = startupLowerLayerForStats(currentThread, ctrlDirName, groupPerm, oscache, lowerLayerList);
+			if (startuprc != CC_STARTUP_OK) {
+				if (startuprc == CC_STARTUP_CORRUPT) {
+					retval = CC_STARTUP_CORRUPT;
+				} else {
+					retval = CC_STARTUP_FAILED;
+				}
+				goto done;
+			}
+		}
 	}
 	setCacheAddressRangeArray();
 
-	if (oscache->getLayer() == 0) {
-		/* TODO: Should also read cache if layer > 0 */
-		/* populate the hashtables */
-		itemsRead = readCache(currentThread, _ccHead, -1, true);
+	ccToUse = _ccTail;
+	
+	do {
+		itemsRead = readCache(currentThread, ccToUse, -1, true);
 		if (CM_READ_CACHE_FAILED == itemsRead) {
 			retval = CC_STARTUP_FAILED;
-			goto done;
 		} else if (CM_CACHE_CORRUPT == itemsRead) {
 			retval = CC_STARTUP_CORRUPT;
-			goto done;
 		}
-	}
 
-#if defined(J9SHR_CACHELET_SUPPORT)
-	/* startup all cachelets to get stats */
-	while (cache) {
-		IDATA startupcachelet = startupCacheletForStats(currentThread, cache);
-		if ( CC_STARTUP_OK != startupcachelet ) {
-			if (startupcachelet == CC_STARTUP_CORRUPT) {
-				retval = CC_STARTUP_CORRUPT;
+		if (ccToUse != _ccHead) {
+			if (NULL == *lowerLayerList) {
+				*lowerLayerList = pool_new(sizeof(SH_OSCache_Info),  0, 0, 0, J9_GET_CALLSITE(), J9MEM_CATEGORY_CLASSES, POOL_FOR_PORT(_portlib));
+			}
+			if (NULL == *lowerLayerList) {
+				retval = CC_STARTUP_FAILED;
+				break;
+			}
+			(*lowerLayerList)->flags |= POOL_ALWAYS_KEEP_SORTED;
+			SH_OSCache_Info tempInfo;
+			if (-1 != ccToUse->getNonTopLayerCacheInfo(vm, ctrlDirName, groupPerm, &tempInfo)) {
+				if (CC_STARTUP_CORRUPT == retval) {
+					tempInfo.isCorrupt = 1;
+				}
+				if (!ccToUse->getJavacoreData(vm, &tempInfo.javacoreData)) {
+					retval = CC_STARTUP_FAILED;
+					break;
+				}
+				tempInfo.javacoreData.freeBytes = ccToUse->getFreeAvailableBytes();
+				tempInfo.isJavaCorePopulated = 1;
+				SH_OSCache_Info* newElement = (SH_OSCache_Info*) pool_newElement(*lowerLayerList);
+				if (NULL == newElement) {
+					Trc_SHR_CM_startupForStats_pool_newElement_failed(currentThread);
+					pool_kill(*lowerLayerList);
+					*lowerLayerList = NULL;
+					retval = CC_STARTUP_FAILED;
+					break;
+				}
+				memcpy(newElement, &tempInfo, sizeof(SH_OSCache_Info));
 			} else {
 				retval = CC_STARTUP_FAILED;
+				break;
 			}
-			goto done;
 		}
-		cache = cache->getNext();
-	}
-#endif
+		ccToUse = ccToUse->getPrevious();
+	} while (NULL != ccToUse && CC_STARTUP_OK == retval);
 
 done:
 	if (retval != CC_STARTUP_OK) {
@@ -7050,6 +7077,82 @@ done:
 	}
 	return retval;
 }
+
+/**
+ * Start up the lower layer shared cache for statistics.
+ *
+ * @param [in] currentThread Pointer to J9VMThread structure for the current thread
+ * @param [in] oscache an exiting top layer SH_OSCache
+ * @param [out] lowerLayerStatsList A list of SH_OSCache_Info for all lower layer caches.
+ *
+ * @retval CC_STARTUP_OK (0) success
+ * @retval CC_STARTUP_FAILED(-1) or CC_STARTUP_CORRUPT (-2) on failure.
+ */
+IDATA
+SH_CacheMap::startupLowerLayerForStats(J9VMThread* currentThread, const char* ctrlDirName, UDATA groupPerm, SH_OSCache *oscache, J9Pool** lowerLayerList)
+{
+	IDATA rc = CC_STARTUP_OK;
+	SH_CompositeCacheImpl* ccToUse = _ccHead;
+	const char* cacheName = NULL;
+	U_32 cacheType = oscache->getCacheType();
+	char cacheUniqueID[J9SHR_UNIQUE_CACHE_ID_BUFSIZE];
+	J9JavaVM *vm = currentThread->javaVM;
+	char cacheDirBuf[J9SH_MAXPATH];
+	SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirBuf, J9SH_MAXPATH, cacheType, false);
+	
+	do {
+		const char* cacheUniqueIDPtr = NULL;
+		UDATA idLen = 0;
+		
+		IDATA preqRC = getPrereqCache(currentThread, cacheDirBuf, ccToUse, true, &cacheUniqueIDPtr, &idLen);
+		I_8 layer = 0;
+
+		if (0 > preqRC) {
+			if (CM_CACHE_CORRUPT == preqRC) {
+				rc = CC_STARTUP_CORRUPT;
+				SH_Managers::ManagerWalkState state;
+				SH_Manager* walkManager = managers()->startDo(currentThread, 0, &state);
+				while (walkManager) {
+					/* Corruption on the metadata detected. We will return from this function. Clean up the managers before that. */ 
+					walkManager->cleanup(currentThread);
+					walkManager = managers()->nextDo(&state);
+				}
+			} else {
+				rc = CC_STARTUP_FAILED;
+			}
+			break;
+		} else if (1 == preqRC) {
+			PORT_ACCESS_FROM_VMC(currentThread);
+			UDATA reqBytes = SH_CompositeCacheImpl::getRequiredConstrBytesWithCommonInfo(false, true);
+			SH_CompositeCacheImpl* allocPtr = (SH_CompositeCacheImpl*)j9mem_allocate_memory(reqBytes, J9MEM_CATEGORY_CLASSES);
+			if (NULL == allocPtr) {
+				rc = CC_STARTUP_FAILED;
+				break;
+			}
+			char cacheNameBuf[USER_SPECIFIED_CACHE_NAME_MAXLEN];
+			Trc_SHR_Assert_True(idLen < sizeof(cacheUniqueID));
+			memcpy(cacheUniqueID, cacheUniqueIDPtr, idLen);
+			cacheUniqueID[idLen] = '\0';
+			SH_OSCache::getCacheNameAndLayerFromUnqiueID(vm, cacheDirBuf, cacheUniqueID, idLen, cacheNameBuf, USER_SPECIFIED_CACHE_NAME_MAXLEN, &layer);
+			cacheName = cacheNameBuf;
+			SH_CompositeCacheImpl* ccNext = SH_CompositeCacheImpl::newInstance(vm, _sharedClassConfig, allocPtr, cacheName, cacheType, true, layer);
+			ccNext->setNext(NULL);
+			ccNext->setPrevious(ccToUse);
+			ccToUse->setNext(ccNext);
+			_ccTail = ccNext;
+		} else {
+			/* no prereq cache */
+			break;
+		}
+		ccToUse = ccToUse->getNext();
+		if (NULL != ccToUse) {
+			rc = ccToUse->startupNonTopLayerForStats(currentThread, ctrlDirName, cacheName, cacheType, layer, _runtimeFlags, 0);
+		}
+	} while (NULL != ccToUse && CC_STARTUP_OK == rc);
+
+	return rc;
+}
+
 
 /**
  * Shut down a CacheMap started with startupForStats().
@@ -7073,10 +7176,24 @@ SH_CacheMap::shutdownForStats(J9VMThread* currentThread)
 		walkManager = managers()->nextDo(&state);
 	}	
 
-	if (_ccHead != NULL) {
-		if (_ccHead->shutdownForStats(currentThread) != 0) {
+	SH_CompositeCacheImpl* ccToUse = _ccHead;
+	
+	while (ccToUse != NULL) {
+		if (ccToUse->shutdownForStats(currentThread) != 0) {
 			retval = -1;
 		}
+		ccToUse = ccToUse->getNext();
+	}
+	ccToUse = _ccHead;
+	while (ccToUse != NULL) {
+		SH_CompositeCacheImpl* ccNext = ccToUse->getNext();
+		if (_ccHead != ccToUse) {
+			PORT_ACCESS_FROM_VMC(currentThread);
+			/* _ccHead is alloacated together with the SH_CacheMap instance, it will be free together with the SH_CacheMap instance */
+			ccToUse->cleanup(currentThread);
+			j9mem_free_memory(ccToUse);
+		}
+		ccToUse = ccNext;
 	}
 
 	if (_refreshMutex != NULL) {

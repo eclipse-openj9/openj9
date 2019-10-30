@@ -1318,7 +1318,7 @@ SH_OSCachemmap::initializeDataHeader(SH_OSCacheInitializer *initializer)
 /**
  * Method to detach a persistent cache from the process
  */
-void
+IDATA
 SH_OSCachemmap::detach()
 {
 	if (acquireHeaderWriteLock(_activeGeneration, NULL) != -1) {
@@ -1336,6 +1336,7 @@ SH_OSCachemmap::detach()
 		Trc_SHR_Assert_ShouldNeverHappen();
 	}
 	internalDetach(_activeGeneration);
+	return 0;
 }
 
 /* Perform enough work to detach from the cache after having called internalAttach */
@@ -1390,11 +1391,12 @@ SH_OSCachemmap::internalDetach(UDATA generation)
  * @param [in] cacheNameWithVGen Filename of the cache to stat
  * @param [out] cacheInfo Pointer to the structure to be completed with the cache's details
  * @param [in] reason Indicates the reason for getting cache stats. Refer sharedconsts.h for valid values.
+ * @param [out] lowerLayerList A list of SH_OSCache_Info for all lower layer caches.
  *
  * @return 0 on success and -1 for failure
  */
 IDATA
-SH_OSCachemmap::getCacheStats(J9JavaVM* vm, const char* cacheDirName, const char *cacheNameWithVGen, SH_OSCache_Info *cacheInfo, UDATA reason)
+SH_OSCachemmap::getCacheStats(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, const char *cacheNameWithVGen, SH_OSCache_Info *cacheInfo, UDATA reason, J9Pool** lowerLayerList)
 {
 	J9PortLibrary *portLibrary = vm->portLibrary;
 	PORT_ACCESS_FROM_PORT(portLibrary);
@@ -1425,22 +1427,22 @@ SH_OSCachemmap::getCacheStats(J9JavaVM* vm, const char* cacheDirName, const char
 	} else if (SHR_STATS_REASON_EXPIRE == reason) {
 		reasonForStartup = SHR_STARTUP_REASON_EXPIRE;
 	}
+	
 
 	cache = (SH_OSCachemmap *) SH_OSCache::newInstance(PORTLIB, &cacheStruct, cacheInfo->name, cacheInfo->generation, &versionData, getLayerFromName(cacheNameWithVGen));
 
 	/* We try to open the cache read/write */
-	if (!cache->startup(vm, cacheDirName, vm->sharedCacheAPI->cacheDirPerm, cacheInfo->name, &piconfig, SH_CompositeCacheImpl::getNumRequiredOSLocks(), J9SH_OSCACHE_OPEXIST_STATS, 0, 0/*runtime flags*/, 0, 0, &versionData, NULL, reasonForStartup)) {
-
+	if (!cache->startup(vm, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, cacheInfo->name, &piconfig, SH_CompositeCacheImpl::getNumRequiredOSLocks(), J9SH_OSCACHE_OPEXIST_STATS, 0, 0/*runtime flags*/, 0, 0, &versionData, NULL, reasonForStartup)) {
 		/* If that fails - try to open the cache read-only */
-		if (!cache->startup(vm, cacheDirName, vm->sharedCacheAPI->cacheDirPerm, cacheInfo->name, &piconfig, 0, J9SH_OSCACHE_OPEXIST_STATS, 0, 0/*runtime flags*/, J9OSCACHE_OPEN_MODE_DO_READONLY, 0, &versionData, NULL, reasonForStartup)) {
+		if (!cache->startup(vm, ctrlDirName, vm->sharedCacheAPI->cacheDirPerm, cacheInfo->name, &piconfig, 0, J9SH_OSCACHE_OPEXIST_STATS, 0, 0/*runtime flags*/, J9OSCACHE_OPEN_MODE_DO_READONLY, 0, &versionData, NULL, reasonForStartup)) {
 			cache->cleanup();
 			return -1;
 		}
 		inUse = J9SH_OSCACHE_UNKNOWN; /* We can't determine whether there are JVMs attached to a read-only cache */
 
 	} else {
-		/* Try to acquire the attach write lock. This will only succeed if noone else
-		 * has the attach read lock i.e. there is noone connected to the cache */
+		/* Try to acquire the attach write lock. This will only succeed if no one else
+		 * has the attach read lock i.e. there is no one connected to the cache */
 		lockRc = cache->tryAcquireAttachWriteLock(cacheInfo->generation);
 		if (0 == lockRc) {
 			Trc_SHR_OSC_Mmap_getCacheStats_cacheNotInUse();
@@ -1486,7 +1488,7 @@ SH_OSCachemmap::getCacheStats(J9JavaVM* vm, const char* cacheDirName, const char
 				cacheInfo->createtime = *timeValue;
 			}
 			if (SHR_STATS_REASON_ITERATE == reason) {
-				getCacheStatsCommon(vm, cache, cacheInfo);
+				getCacheStatsCommon(vm, ctrlDirName, groupPerm, cache, cacheInfo, lowerLayerList);
 			}
 			cache->internalDetach(cacheInfo->generation);
 		}
@@ -1503,6 +1505,74 @@ SH_OSCachemmap::getCacheStats(J9JavaVM* vm, const char* cacheDirName, const char
 	 * but is currently set by the caller */
 	cache->cleanup();
 	return 0;
+}
+
+
+/**
+ * Method to get a SH_OSCache_Info for a compatible non-top layer shared classes cache.
+ * 
+ * This method returns the last attached, detached and created times,
+ * 
+ * Details of data held in the cache data area are not accessed here.
+ * 
+ * @param[in] vm The Java VM
+ * @param[in] ctrlDirName Cache directory
+ * @param[in] groupPerm Group permissions to open the cache directory
+ * @param[in] cacheNameWithVGen Filename of the cache to stat
+ * @param[out] cacheInfo Pointer to the structure to be completed with the cache's details
+ * @param[in] reason Indicates the reason for getting cache stats. Refer sharedconsts.h for valid values.
+ * @param[in] A pointer of SH_OSCachemmap
+ * 
+ * @return 0 on success and -1 for failure
+ */
+IDATA
+SH_OSCachemmap::getNonTopLayerCacheInfo(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, const char *cacheNameWithVGen, SH_OSCache_Info *cacheInfo, UDATA reason, SH_OSCachemmap* oscache)
+{
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	void *cacheHeader = NULL;
+	I_64 *timeValue = NULL;
+	J9PortShcVersion versionData;
+	IDATA ret = 0;
+	
+	Trc_SHR_OSC_Mmap_getNonTopLayerCacheInfo_Entry(ctrlDirName, groupPerm, cacheNameWithVGen, reason);
+
+	Trc_SHR_Assert_True(SHR_STATS_REASON_ITERATE == reason);
+
+	getValuesFromShcFilePrefix(PORTLIB, cacheNameWithVGen, &versionData);
+	versionData.cacheType = J9PORT_SHR_CACHE_TYPE_PERSISTENT;
+	
+	if (removeCacheVersionAndGen(cacheInfo->name, CACHE_ROOT_MAXLEN, J9SH_VERSION_STRING_LEN + 1, cacheNameWithVGen) != 0) {
+		ret = -1;
+		goto done;
+	}
+
+	cacheInfo->lastattach = J9SH_OSCACHE_UNKNOWN;
+	cacheInfo->lastdetach = J9SH_OSCACHE_UNKNOWN;
+	cacheInfo->createtime = J9SH_OSCACHE_UNKNOWN;
+	cacheInfo->os_shmid = (UDATA)J9SH_OSCACHE_UNKNOWN;
+	cacheInfo->os_semid = (UDATA)J9SH_OSCACHE_UNKNOWN;
+	cacheInfo->nattach = J9SH_OSCACHE_UNKNOWN;
+
+	/* The offset of fields createTime, lastAttachedTime, lastDetachedTime in struct OSCache_mmap_header2 are different on 32-bit and 64-bit caches. 
+	 * This depends on OSCachemmap_header_version_current and OSCache_header_version_current not changing in an incompatible way.
+	 */
+	Trc_SHR_Assert_True(J9SH_ADDRMODE == cacheInfo->versionData.addrmode);
+
+	cacheHeader = oscache->_headerStart;
+
+	/* Read the fields from the header and populate cacheInfo */
+	if ((timeValue = (I_64*)getMmapHeaderFieldAddressForGen(cacheHeader, cacheInfo->generation, OSCACHEMMAP_HEADER_FIELD_LAST_ATTACHED_TIME))) {
+		cacheInfo->lastattach = *timeValue;
+	} 
+	if ((timeValue = (I_64*)getMmapHeaderFieldAddressForGen(cacheHeader, cacheInfo->generation, OSCACHEMMAP_HEADER_FIELD_LAST_DETACHED_TIME))) {
+		cacheInfo->lastdetach = *timeValue;
+	}
+	if ((timeValue = (I_64*)getMmapHeaderFieldAddressForGen(cacheHeader, cacheInfo->generation, OSCACHEMMAP_HEADER_FIELD_CREATE_TIME))) {
+		cacheInfo->createtime = *timeValue;
+	}
+done:
+	Trc_SHR_OSC_Mmap_getNonTopLayerCacheInfo_Exit(ret, cacheInfo->name, cacheInfo->lastattach, cacheInfo->lastdetach, cacheInfo->createtime);
+	return ret;
 }
 
 /**
