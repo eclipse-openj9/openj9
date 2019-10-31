@@ -2559,69 +2559,6 @@ ZZ zLinux
     END_FUNC(_interfaceCallHelperMultiSlots,ifCHM,7)
 
 ZZ ===================================================================
-ZZ Allocates new object out of line.
-ZZ Callable by the JIT generated code.
-ZZ If we are out of TLH space, we set CC and
-ZZ check it when we return from this helper.
-ZZ IT DOES NOT INITIALIZE THE HEADER
-ZZ
-ZZ Parameters:
-ZZ
-ZZ   class R1
-ZZ   object size R2
-ZZ
-ZZ Returns:
-ZZ
-ZZ   R3
-ZZ ===================================================================
-START_FUNC(outlinedNewObject,ONO)
-  A_GPR  R2,J9TR_VMThread_heapAlloc(,J9VM_STRUCT)
-  CL_GPR R2,J9TR_VMThread_heapTop(,J9VM_STRUCT)
-  L_GPR  R3,J9TR_VMThread_heapAlloc(,J9VM_STRUCT)
-  BCR    HEX(2),R14
-  ST_GPR R2,J9TR_VMThread_heapAlloc(,J9VM_STRUCT)
-  BR     R14
-END_FUNC(outlinedNewObject,ONO,5)
-
-ZZ ===================================================================
-ZZ Allocates new array out of line.
-ZZ Callable by the JIT generated code.
-ZZ If we are out of TLH space, we set CC and
-ZZ check it when we return from this helper.
-ZZ IT DOES NOT INITIALIZE THE HEADER
-ZZ
-ZZ Parameters:
-ZZ
-ZZ   byte size R3
-ZZ   class R1
-ZZ   array size R2
-ZZ
-ZZ Returns:
-ZZ
-ZZ   R3
-ZZ ===================================================================
-START_FUNC(outlinedNewArray,ONA)
-ZZ Test if size is 0, means arraylets go to VM helpers
-  LTR rEP,R2
-  BRC     HEX(8),PatchConditionCode
-ZZ Test if size is negative or too large
-  SRA     rEP,16
-  BRC     HEX(6),PatchConditionCode
-  LR_GPR  rEP,R3
-ZZ Load HeapAlloc and compare it with HeapTop..
-  L_GPR   R3,J9TR_VMThread_heapAlloc(,J9VM_STRUCT)
-  AR_GPR  rEP,R3
-  CL_GPR  rEP,J9TR_VMThread_heapTop(,J9VM_STRUCT)
-  BCR     HEX(2),R14
-  ST_GPR  rEP,J9TR_VMThread_heapAlloc(,J9VM_STRUCT)
-  BR      R14
-LABEL(PatchConditionCode)
-  LHI_GPR   rEP,16
-  LTR_GPR   rEP,rEP
-  BR        R14
-END_FUNC(outlinedNewArray,ONA,5)
-
-ZZ ===================================================================
 ZZ wrapper to call atomic compare and swap of a 4 byte value
 ZZ Note--this is called with C linkage!
 ZZ CARG1 patch address
