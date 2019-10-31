@@ -1816,19 +1816,13 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			argIndex2 = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXTRANSPARENT_HUGEPAGE, NULL);
 			{
 				/* Last instance of +/- TransparentHugepage found on the command line wins
-				 * Default to -XX:-TransparentHugepage for performance reasons
+				 *
+				 * Default to use OMR setting (Enable for all Linux with THP set to madvise)
 				 */
 				if (argIndex2 > argIndex) {
 					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 1);
 				} else if (argIndex > argIndex2){
 					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 0);
-				} else {
-#if defined(LINUX) && defined(J9VM_ARCH_X86)
-					/* Enable THP on xLinux by default */
-					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 1);
-#else
-					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 0);
-#endif /* defined(LINUX) && defined(J9VM_ARCH_X86) */
 				}
 			}
 
