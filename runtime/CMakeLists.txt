@@ -115,6 +115,8 @@ set(conditionalVersionString)
 configure_file(include/j9cfg.h.in j9cfg.h)
 configure_file(include/j9lib.h.in j9lib.h)
 configure_file(include/j9version.h.in j9version.h)
+configure_file(makelib/copyright.c.in copyright.c)
+
 
 # Definition of add_hookgen pulled in from omr/cmake/modules/OmrHookgen.cmake
 # Here we handle all the .hdf files which don't have a more logical home.
@@ -260,6 +262,13 @@ target_include_directories(j9vm_interface
 		${CMAKE_CURRENT_BINARY_DIR}/omr
 		${CMAKE_CURRENT_BINARY_DIR}
 		${CMAKE_BINARY_DIR}
+)
+# Inject copyright file if building a shared library or executable
+set(is_executable "$<STREQUAL:$<TARGET_PROPERTY:TYPE>,EXECUTRABLE>")
+set(is_shlib "$<STREQUAL:$<TARGET_PROPERTY:TYPE>,SHARED_LIBRARY>")
+target_sources(j9vm_interface
+	INTERFACE
+		$<$<OR:${is_shlib},${is_executable}>:${CMAKE_CURRENT_BINARY_DIR}/copyright.c>
 )
 
 if(J9VM_IS_NON_STAGING)
