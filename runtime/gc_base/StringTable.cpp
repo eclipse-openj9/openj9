@@ -544,7 +544,7 @@ j9gc_stringHashFn(void *key, void *userData)
 	return stringHashFn(key, userData);
 }
 
-j9object_t   
+j9object_t
 j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags)
 {
 	J9JavaVM *vm = vmThread->javaVM;
@@ -554,7 +554,19 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	j9object_t charArray = NULL;
 	UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
 	UDATA unicodeLength = 0;
-	bool isCompressable = false;
+
+	bool isCompressable = true;
+
+	for (UDATA i = 0; i < length; ++i) {
+		if (data[i] > 127) {
+			isCompressable = false;
+			break;
+		}
+	}
+
+	if (isCompressable) {
+		stringFlags |= J9_STR_ASCII;
+	}
 
 	Trc_MM_createJavaLangString_Entry(vmThread, length, data, stringFlags);
 
@@ -568,7 +580,16 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	 */
 
 	if ((stringFlags & (J9_STR_XLAT | J9_STR_UNICODE | J9_STR_INTERN)) == J9_STR_INTERN) {
-		U_32 hash = (U_32)vmFuncs->computeHashForUTF8(data, length);
+		UDATA hash = 0;
+
+		if (isCompressable) {
+			for (UDATA i = 0; i < length; ++i) {
+				hash = (hash << 5) - hash + data[i];
+			}
+		} else {
+			hash = (U_32)vmFuncs->computeHashForUTF8(data, length);
+		}
+
 		UDATA tableIndex = stringTable->getTableIndex(hash);
 
 		stringTable->lockTable(tableIndex);
@@ -601,32 +622,41 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			if (J9_STR_UNICODE == (stringFlags & J9_STR_UNICODE)) {
 				unicodeLength = length / 2;
 			} else {
-				unicodeLength = getUnicodeLength(data, length, NULL);
+				if (isCompressable) {
+					unicodeLength = length;
+				} else {
+					unicodeLength = getUnicodeLength(data, length, NULL);
+				}
 			}
 		}
+
 		PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, result);
+
 		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
-			if (isCompressable) {
+			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressable) {
 				charArray = J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) unicodeLength, allocateFlags);
 			} else {
 				charArray = J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) unicodeLength * 2, allocateFlags);
 			}
 		} else {
-			if (isCompressable) {
+			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressable) {
 				charArray = J9AllocateIndexableObject(vmThread, vm->charArrayClass, (U_32) (unicodeLength + 1) / 2, allocateFlags);
 			} else {
 				charArray = J9AllocateIndexableObject(vmThread, vm->charArrayClass, (U_32) unicodeLength, allocateFlags);
 			}
 		}
+
 		result = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
+
 		if (charArray == NULL) {
 			goto nomem;
 		}
+
 		if (J9_STR_UNICODE == (stringFlags & J9_STR_UNICODE)) {
 			UDATA i;
 			U_16 * unicodeData = (U_16 *) data;
 
-			if (isCompressable) {
+			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressable) {
 				for (i = 0; i < unicodeLength; ++i) {
 					J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, (I_8)unicodeData[i]);
 				}
@@ -636,10 +666,32 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 				}
 			}
 		} else {
-			if (isCompressable) {
+			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressable) {
 				vmFuncs->copyUTF8ToCompressedUnicode(vmThread, data, length, stringFlags, charArray, 0);
 			} else {
-				vmFuncs->copyUTF8ToUnicode(vmThread, data, length, stringFlags, charArray, 0);
+				if (isCompressable) {
+					if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
+						for (UDATA i = 0; i < length; ++i) {
+							U_8 c = data[i];
+							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, c != '/' ? c : '.');
+						}
+					} else {
+						for (UDATA i = 0; i < length; ++i) {
+							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, data[i]);
+						}
+					}
+
+					if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME)) {
+						for (IDATA i = length - 1; i >= 0; --i) {
+							if ('.' == J9JAVAARRAYOFCHAR_LOAD(vmThread, charArray, i)) {
+								J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, '/');
+								break;
+							}
+						}
+					}
+				} else {
+					vmFuncs->copyUTF8ToUnicode(vmThread, data, length, stringFlags, charArray, 0);
+				}
 			}
 		}
 
@@ -781,7 +833,7 @@ setupCharArray(J9VMThread *vmThread, j9object_t sourceString, j9object_t newStri
 }
 
 
-j9object_t   
+j9object_t	
 j9gc_internString(J9VMThread *vmThread, j9object_t sourceString)
 {
 	J9JavaVM *vm = vmThread->javaVM;
