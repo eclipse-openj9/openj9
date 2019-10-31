@@ -281,7 +281,7 @@ def build() {
 def archive_sdk() {
     stage('Archive') {
         def buildDir = "build/${RELEASE}/images/"
-        def testDir = "test/openj9"
+        def testDir = "test"
 
         dir(OPENJDK_CLONE_DIR) {
             sh "tar -C ${buildDir} -zcvf ${SDK_FILENAME} ${JDK_FOLDER}"
@@ -289,9 +289,9 @@ def archive_sdk() {
             if (fileExists("${buildDir}${testDir}")) {
                 if (SPEC.contains('zos')) {
                     // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
-                    sh "pax  -wvz -s#${buildDir}${testDir}#native-test-libs#g -f ${TEST_FILENAME} ${buildDir}${testDir}"
+                    sh "pax  -wvz -s#${buildDir}${testDir}#test-images#g -f ${TEST_FILENAME} ${buildDir}${testDir}"
                 } else {
-                    sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},native-test-libs,'"
+                    sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},test-images,'"
                 }
             }
             if (ARTIFACTORY_SERVER) {
