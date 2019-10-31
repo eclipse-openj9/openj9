@@ -2495,7 +2495,6 @@ J9::CodeGenerator::processRelocations()
 
    int32_t missedSite = -1;
 
-   TR_ASSERT_FATAL(self()->comp()->compileRelocatableCode() == self()->comp()->getOption(TR_AOT), "compileRelocatableCode() has different result from getOption(TR_AOT)");
    if (self()->comp()->compileRelocatableCode())
       {
       uint32_t inlinedCallSize = self()->comp()->getNumInlinedCallSites();
