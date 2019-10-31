@@ -327,7 +327,7 @@ x86-64_linux_cm:
     13: '--openssl-version=1.1.1d'
     next: '--openssl-version=1.1.1d'
   extra_configure_options:
-    8: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
+    8: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
     11: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
     12: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
     13: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
