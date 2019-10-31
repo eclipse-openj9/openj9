@@ -63,7 +63,7 @@
  *    rules to see which ones(s) wish to trigger on this J9Method.  The
  *    entryAction, exitAction and delay are stored in the method rule.
  *
- * resumecout and suspendcount:
+ * resumecount and suspendcount:
  *    resumecount is the number of resumethis actions required to start a
  *    thread tracing.  suspendcount is the number of suspendthis calls
  *    required to stop a thread tracing.  Both act on the RasGlobalStorage value
