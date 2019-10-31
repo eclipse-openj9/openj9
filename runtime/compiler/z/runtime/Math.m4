@@ -28,33 +28,33 @@ ZZ GPL-2.0 WITH Classpath-exception-2.0 OR
 ZZ LicenseRef-GPL-2.0 WITH Assembly-exception
 
 
-changequote([,])dnl
+changequote({,})dnl
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
 
         TITLE 'Math.s'
 
 MATH#START      CSECT
 MATH#START      RMODE ANY
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
 MATH#START      AMODE 64
-],[dnl
+},{dnl
 MATH#START      AMODE 31
-])dnl
-])dnl
+})dnl
+})dnl
 
-define([MATH_M4],[1])
+define({MATH_M4},{1})
 
 ZZ ===================================================================
 ZZ codert/jilconsts.inc is a j9 assembler include that defines
 ZZ offsets of various fields in structs used by jit
 ZZ ===================================================================
 
-include([jilconsts.inc])dnl
+include({jilconsts.inc})dnl
 
 
-include([z/runtime/s390_macros.inc])dnl
-include([z/runtime/s390_asdef.inc])dnl
+include({z/runtime/s390_macros.inc})dnl
+include({z/runtime/s390_asdef.inc})dnl
 
 ZZ ===================================================================
 ZZ codert.dev/codertTOC.inc is a JIT assembler include that defines
@@ -62,7 +62,7 @@ ZZ index of various runtime helper functions addressable from
 ZZ codertTOC.
 ZZ ===================================================================
 
-include([runtime/Helpers.inc])dnl
+include({runtime/Helpers.inc})dnl
 
 SETPPA2()
 
@@ -72,11 +72,11 @@ ZZ constant.  Called as a C func from C++ code
 ZZ ===================================================================
 START_FUNC(_getnumRTHelpers,_GNUMRH)
   lhi CRINT,TR_S390numRuntimeHelpers
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
   b  RETURNOFFSET(CRA)
-],[dnl
+},{dnl
   br  CRA
-])dnl
+})dnl
 END_FUNC(_getnumRTHelpers,_GNUMRH,9)
 
 ZZ ===================================================================
@@ -89,13 +89,13 @@ ZZ it in as such so that we can compile on any platform.
 ZZ ===================================================================
 START_FUNC(_getSTFLEBits,_GSTFLE)
   LR_GPR   r0,CARG1
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
   DC HEX(b2b02000)
   b  RETURNOFFSET(CRA)
-],[dnl
+},{dnl
 .long HEX(b2b03000)
   br  CRA
-])dnl
+})dnl
 END_FUNC(_getSTFLEBits,_GSTFLE,9)
 
 ZZ ===================================================================
@@ -108,11 +108,11 @@ START_FUNC(_isPSWInProblemState,_PROBST)
   EPSW CRINT,CARG2
   SRL CRINT,16
   NILL CRINT,HEX(0001)
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
   b  RETURNOFFSET(CRA)
-],[dnl
+},{dnl
   br  CRA
-])dnl
+})dnl
 END_FUNC(_isPSWInProblemState,_PROBST,9)
 
 ZZ  This is a generic helper for performing long Remainder
@@ -722,11 +722,11 @@ LABEL(LDIVExit)
     END_FUNC(_longDivide,_LDIV,7)
 
 SETVAL(rdsa,5)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
 SETVAL(dsaSize,32*PTR_SIZE)
-],[dnl
+},{dnl
 SETVAL(dsaSize,16*PTR_SIZE)
-])dnl
+})dnl
 
 ZZ
 ZZ doubleRemainder(x,y)
@@ -739,39 +739,39 @@ ZZ
     ST_GPR   r14,PTR_SIZE(,rdsa)
     AHI_GPR  rdsa,-dsaSize
     STM_GPR  r0,r15,0(rdsa)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,64(rdsa)
-])dnl
+})dnl
 
     LR_GPR  r8,rdsa #save dsa in r8
     ldr     f0,f1
 
 LOAD_ADDR_FROM_TOC(r6,TR_S390jitMathHelperDREM)
 
-ifdef([J9ZOS390],[dnl
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({J9ZOS390},{dnl
+ifdef({TR_HOST_64BIT},{dnl
     STD     f0,2176(r4)
     STD     f2,2184(r4)
     LM_GPR r5,r6,0(r6)
     BASR    r7,r6   # Call jitMathHelperDoubleRemainderDouble
     lr      r0,r0     # Nop for XPLINK return
-],[dnl
+},{dnl
     STD     f0,2112(r4)
     STD     f2,2120(r4)
     L_GPR r12,J9TR_CAA_save_offset(,r4)
     LM_GPR r5,r6,16(r6)
     BASR    r7,r6   # Call jitMathHelperDoubleRemainderDouble
     DC   X'4700',Y((LCALLDESCDRM-(*-8))/8)   * nop desc
-])dnl
-],[dnl
+})dnl
+},{dnl
     BASR    r14,r6  # Call jitMathHelperDoubleRemainderDouble
-])dnl
+})dnl
 
     LR_GPR  rdsa,r8 #restore dsa from r8
     LM_GPR r0,r15,0(rdsa)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,64(rdsa)
-])dnl
+})dnl
     AHI_GPR rdsa,dsaSize
     L_GPR  r14,PTR_SIZE(,rdsa)
     br r14
@@ -789,24 +789,24 @@ ZZ
     ST_GPR   r14,PTR_SIZE(,rdsa)
     AHI_GPR  rdsa,-dsaSize
     STM_GPR  r0,r15,0(rdsa)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,64(rdsa)
-])dnl
+})dnl
 
     LR_GPR  r8,rdsa
     ler     f0,f1
 
 LOAD_ADDR_FROM_TOC(r6,TR_S390jitMathHelperFREM)
 
-ifdef([J9ZOS390],[dnl
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({J9ZOS390},{dnl
+ifdef({TR_HOST_64BIT},{dnl
     ste     f0,2180(r4)
     ste     f2,2188(r4)
 ZZ load up the C Environment addr into r5 and Entry point in R6
     LM_GPR r5,r6,0(r6)
     BASR    r7,r6     # Call jitMathHelperFloatRemainderFloat
     lr      r0,r0     # Nop for XPLINK return
-],[dnl
+},{dnl
     ste     f0,2112(r4)
     ste     f2,2116(r4)
     L_GPR r12,J9TR_CAA_save_offset(,r4)
@@ -814,26 +814,26 @@ ZZ load up the C Environment addr into r5 and Entry point in R6
     LM_GPR r5,r6,16(r6)
     BASR    r7,r6     # Call jitMathHelperFloatRemainderFloat
     DC   X'4700',Y((LCALLDESCFRM-(*-8))/8)   * nop desc
-])dnl
-],[dnl
+})dnl
+},{dnl
     BASR    r14,r6    # Call jitMathHelperFloatRemainderFloat
-])dnl
+})dnl
 
     LR_GPR  rdsa,r8
     LM_GPR r0,r15,0(rdsa)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,64(rdsa)
-])dnl
+})dnl
     AHI_GPR rdsa,dsaSize
     L_GPR  r14,PTR_SIZE(,rdsa)
     br r14
 
     END_FUNC(__floatRemainder,_FREM,7)
 
-ifdef([J9ZOS390],[dnl
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({J9ZOS390},{dnl
+ifdef({TR_HOST_64BIT},{dnl
 ZZ 64bit XPLINK doesn't need call descriptors
-],[dnl
+},{dnl
 ZZ Call Descriptor for call to jitMathHelperFloatRemainderFloat
 LCALLDESCFRM      DS    0D           * Dword Boundary
         DC    A(Z_FREM-*)            *
@@ -848,5 +848,5 @@ LCALLDESCDRM      DS    0D           * Dword Boundary
         DC    BL.6'001000',BL.6'000000',BL.6'000000',BL.6'000000'
 ZZ                                   unprototyped call
     END
-])dnl
-])dnl
+})dnl
+})dnl
