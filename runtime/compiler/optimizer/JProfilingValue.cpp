@@ -990,9 +990,6 @@ TR_JProfilingValue::computeHash(TR::Compilation *comp, TR_AbstractHashTableProfi
       hash->setAndIncChild(0, value);
       hash->setAndIncChild(1, hashAddr);
       hash->setAndIncChild(2, TR::Node::iconst(value, table->getBits()));
-
-      // Convert to the platform address width
-      hash = convertType(hash, TR::Compiler->target.is64Bit() ? TR::Int64 : TR::Int32);
       }
    else if (table->getHashType() == BitShiftHash)
       {

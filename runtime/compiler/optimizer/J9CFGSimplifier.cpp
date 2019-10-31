@@ -27,8 +27,8 @@
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 
 #define OPT_DETAILS "O^O CFG SIMPLIFICATION: "
 

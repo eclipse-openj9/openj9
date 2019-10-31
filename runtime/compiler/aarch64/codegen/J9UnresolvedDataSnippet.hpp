@@ -61,6 +61,8 @@ class UnresolvedDataSnippet : public J9::UnresolvedDataSnippet
       J9::UnresolvedDataSnippet(cg, node, symRef, isStore, isGCSafePoint),
       _memoryReference(NULL)
       {
+      // Implement this in OpenJ9 PR #5985
+      cg->comp()->failCompilation<TR::AssertionFailure>("UnresolvedDataSnippet");
       }
 
    /**

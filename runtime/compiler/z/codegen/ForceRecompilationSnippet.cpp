@@ -27,9 +27,9 @@
 #include "env/IO.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 uint8_t *

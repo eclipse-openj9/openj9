@@ -24,17 +24,19 @@
 #include "codegen/ARM64JNILinkage.hpp"
 #include "codegen/ARM64PrivateLinkage.hpp"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/ARM64Instruction.hpp"
 #include "codegen/J9ARM64Snippet.hpp"
+#include "codegen/OMRCodeGenerator.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "il/DataTypes.hpp"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/OMRDataTypes_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 
 /*
  * J9 ARM64 specific tree evaluator table overrides
@@ -126,6 +128,8 @@ static void wrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register *
                                         wbRef, NULL);
 
    generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, conditions, NULL);
+
+   cg->machine()->setLinkRegisterKilled(true);
    }
 
 TR::Register *
@@ -168,10 +172,12 @@ J9::ARM64::TreeEvaluator::conditionalHelperEvaluator(TR::Node *node, TR::CodeGen
       }
 
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
-   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference());
+   cg->addSnippet(snippet);
    TR::ARM64ConditionCode cc = (testNode->getOpCodeValue() == TR::icmpeq) ? TR::CC_EQ : TR::CC_NE;
    TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, cc, conditions);
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+   snippet->gcMap().setGCRegisterMask(0xffffffff);
 
    for (i = numArgs - 1; i >= 0; i--)
       cg->decReferenceCount(callNode->getChild(i));
@@ -297,19 +303,23 @@ J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    if (!isConstDivisor || (!is64Bit && divisor->getInt() == 0) || (is64Bit && divisor->getLongInt() == 0))
       {
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
-      cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+      TR::Instruction *gcPoint;
+      TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference());
+      cg->addSnippet(snippet);
 
       if (isConstDivisor)
          {
          // No explicit check required
-         generateLabelInstruction(cg, TR::InstOpCode::b, node, snippetLabel);
+         gcPoint = generateLabelInstruction(cg, TR::InstOpCode::b, node, snippetLabel);
          }
       else
          {
          TR::Register *divisorReg = cg->evaluate(divisor);
          TR::InstOpCode::Mnemonic compareOp = is64Bit ? TR::InstOpCode::cbzx : TR::InstOpCode::cbzw;
-         generateCompareBranchInstruction(cg, compareOp, node, divisorReg, snippetLabel, NULL);
+         gcPoint = generateCompareBranchInstruction(cg, compareOp, node, divisorReg, snippetLabel, NULL);
          }
+      gcPoint->ARM64NeedsGCMap(cg, 0xffffffff);
+      snippet->gcMap().setGCRegisterMask(0xffffffff);
       }
 
    cg->evaluate(node->getFirstChild());
@@ -342,7 +352,10 @@ J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator 
    TR_ASSERT(testNode->getOpCodeValue() == TR::lcmpeq, "asynccheck bad format");
 
    TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg);
-   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::SymbolReference *asynccheckHelper = node->getSymbolReference();
+   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, asynccheckHelper, doneLabel);
+   cg->addSnippet(snippet);
 
    // ToDo:
    // Optimize this using "cmp (immediate)" instead of "cmp (register)" when possible
@@ -350,6 +363,11 @@ J9::ARM64::TreeEvaluator::asynccheckEvaluator(TR::Node *node, TR::CodeGenerator 
 
    TR::Instruction *gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_EQ);
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+   snippet->gcMap().setGCRegisterMask(0xffffffff);
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+
+   // ARM64HelperCallSnippet generates "bl" instruction
+   cg->machine()->setLinkRegisterKilled(true);
 
    cg->decReferenceCount(firstChild);
    cg->decReferenceCount(secondChild);
@@ -476,9 +494,9 @@ TR::Register *
 J9::ARM64::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-   // ldrw R, [B + contiguousSize]        
-   // cmp R, 0                            
-   // cselw R, [B + discontiguousSize]    
+   // ldrw R, [B + contiguousSize]
+   // cmp R, 0
+   // cselw R, [B + discontiguousSize]
    //
    TR::Register *objectReg = cg->evaluate(node->getFirstChild());
    TR::Register *lengthReg = cg->allocateRegister();
@@ -548,11 +566,13 @@ J9::ARM64::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       }
 
    snippetLabel = generateLabelSymbol(cg);
-   cg->addSnippet(new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference()));
-   
-   gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_CS);
+   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference());
+   cg->addSnippet(snippet);
+
+   gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, (reversed ? TR::CC_CS : TR::CC_LS));
 
    gcPoint->ARM64NeedsGCMap(cg, 0xFFFFFFFF);
+   snippet->gcMap().setGCRegisterMask(0xffffffff);
 
    cg->decReferenceCount(firstChild);
    cg->decReferenceCount(secondChild);
@@ -631,4 +651,145 @@ J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerat
    cg->decReferenceCount(wrtBarNode);
 
    return NULL;
+   }
+
+static TR::Register *
+genCAS(TR::Node *node, TR::CodeGenerator *cg, TR::Register *objReg, TR::Register *offsetReg, TR::Register *oldVReg, TR::Register *newVReg,
+      TR::LabelSymbol *doneLabel, TR::Node *objNode, int32_t oldValue, bool oldValueInReg, bool isLong, bool casWithoutSync = false)
+   {
+   TR_ASSERT_FATAL(false, "CAS generation is currently unsupported.\n");
+   }
+
+static TR::Register *
+VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
+   {
+   TR::Compilation * comp = cg->comp();
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Node *thirdChild = node->getChild(2);
+   TR::Node *fourthChild = node->getChild(3);
+   TR::Node *fifthChild = node->getChild(4);
+   TR::Register *offsetReg = NULL;
+   TR::Register *oldVReg = NULL;
+   TR::Register *newVReg = NULL;
+   TR::Register *resultReg = NULL;
+   TR::Register *objReg = cg->evaluate(secondChild);
+   TR::RegisterDependencyConditions *conditions = NULL;
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   intptrj_t oldValue = 0;
+   bool oldValueInReg = true;
+   offsetReg = cg->evaluate(thirdChild);
+
+   // Obtain values to be checked for, and swapped in:
+   if (fourthChild->getOpCode().isLoadConst() && fourthChild->getRegister() == NULL)
+      {
+      if (isLong)
+         oldValue = fourthChild->getLongInt();
+      else
+         oldValue = fourthChild->getInt();
+      if (constantIsUnsignedImm12(oldValue))
+         oldValueInReg = false;
+      }
+   if (oldValueInReg)
+      oldVReg = cg->evaluate(fourthChild);
+   newVReg = cg->evaluate(fifthChild);
+
+   // Determine if synchronization needed:
+   bool casWithoutSync = false;
+   TR_OpaqueMethodBlock *caller = node->getOwningMethod();
+   if (caller)
+      {
+      TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
+      TR_ResolvedMethod *m = fej9->createResolvedMethod(cg->trMemory(), caller, node->getSymbolReference()->getOwningMethod(comp));
+      if ((m->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicInteger_weakCompareAndSet)
+            || (m->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicLong_weakCompareAndSet)
+            || (m->getRecognizedMethod() == TR::java_util_concurrent_atomic_AtomicReference_weakCompareAndSet))
+         {
+         casWithoutSync = true;
+         }
+      }
+
+   // Compare and swap:
+   resultReg = genCAS(node, cg, objReg, offsetReg, oldVReg, newVReg, doneLabel, secondChild, oldValue, oldValueInReg, isLong, casWithoutSync);
+
+   conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(5, 5, cg->trMemory());
+   TR::addDependency(conditions, objReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, offsetReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, resultReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(conditions, newVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   if (oldValueInReg)
+      TR::addDependency(conditions, oldVReg, TR::RealRegister::NoReg, TR_GPR, cg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel);
+
+   cg->recursivelyDecReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   cg->decReferenceCount(thirdChild);
+   if (oldValueInReg)
+      cg->decReferenceCount(fourthChild);
+   else
+      cg->recursivelyDecReferenceCount(fourthChild);
+   cg->decReferenceCount(fifthChild);
+   return resultReg;
+   }
+
+bool
+J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
+   {
+   TR::CodeGenerator *cg = self();
+   TR::MethodSymbol * methodSymbol = node->getSymbol()->getMethodSymbol();
+
+   if (methodSymbol)
+      {
+      switch (methodSymbol->getRecognizedMethod())
+         {
+         case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
+            {
+            if (!methodSymbol->isNative())
+               break;
+
+            if ((node->isUnsafeGetPutCASCallOnNonArray() || !TR::Compiler->om.canGenerateArraylets()) && node->isSafeForCGToFastPathUnsafeCall())
+               {
+               resultReg = VMinlineCompareAndSwap(node, cg, false);
+               return true;
+               }
+            break;
+            }
+
+         default:
+            break;
+         }
+      }
+
+   // Nothing was done
+   resultReg = NULL;
+   return false;
+   }
+
+TR::Instruction *J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *dstReg, TR::Register *srcReg, TR::Instruction *preced)
+   {
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   uintptrj_t mask = TR::Compiler->om.maskOfObjectVftField();
+   bool isCompressed = TR::Compiler->om.compressObjectReferences();
+
+   if (~mask == 0)
+      {
+      // no mask instruction required
+      return preced;
+      }
+   else if (~mask == 0xFF)
+      {
+      TR::InstOpCode::Mnemonic op = isCompressed ? TR::InstOpCode::andimmw : TR::InstOpCode::andimmx;
+      uint32_t imm = isCompressed ? 0x617 : 0xE37; // encoding for ~0xFF
+      return generateLogicalImmInstruction(cg, op, node, dstReg, srcReg, !isCompressed, imm, preced);
+      }
+   else
+      {
+      TR_UNIMPLEMENTED();
+      }
+   }
+
+TR::Instruction *J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::Instruction *preced)
+   {
+   return J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(cg, node, reg, reg, preced);
    }

@@ -23,6 +23,11 @@
 
 /*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
 
+/**
+ * Provides access to CUDA-capable devices from Java.
+ * <p>
+ * A wealth of background information on CUDA is available <a href="http://www.nvidia.com/object/cuda_home.html">here</a>.
+ */
 module openj9.cuda {
   requires java.base;
   exports com.ibm.cuda;

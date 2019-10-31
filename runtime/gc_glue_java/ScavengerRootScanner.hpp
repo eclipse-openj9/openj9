@@ -173,9 +173,9 @@ public:
 			env->_cycleState->_referenceObjectOptions |= MM_CycleState::references_clear_weak;
 			env->_currentTask->releaseSynchronizedGCThreads(env);
 		}
-		Assert_GC_true_with_message(env, env->getGCEnvironment()->_referenceObjectBuffer->isEmpty(), "Non-empty reference buffer in MM_EnvironmentBase* env=%p\n", env);
+		Assert_GC_true_with_message(env, env->getGCEnvironment()->_referenceObjectBuffer->isEmpty(), "Non-empty reference buffer in MM_EnvironmentBase* env=%p before scanClearable\n", env);
 		_rootClearer.scanClearable(env);
-		Assert_GC_true_with_message(env, env->getGCEnvironment()->_referenceObjectBuffer->isEmpty(), "Non-empty reference buffer in MM_EnvironmentBase* env=%p\n", env);
+		Assert_GC_true_with_message(env, _extensions->isScavengerBackOutFlagRaised() || env->getGCEnvironment()->_referenceObjectBuffer->isEmpty(), "Non-empty reference buffer in MM_EnvironmentBase* env=%p after scanClearable\n", env);
 	}
 
 	virtual void

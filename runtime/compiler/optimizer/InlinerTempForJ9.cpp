@@ -38,9 +38,10 @@
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "optimizer/CallInfo.hpp"
 #include "optimizer/J9CallGraph.hpp"
 #include "optimizer/PreExistence.hpp"
@@ -54,7 +55,6 @@
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "optimizer/Structure.hpp"                        // TR_RegionAnalysis
 #include "optimizer/StructuralAnalysis.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
 #include "control/Recompilation.hpp"                      //TR_PersistentJittedBodyInfo
 #include "control/RecompilationInfo.hpp"                  //TR_PersistentJittedBodyInfo
 #include "optimizer/EstimateCodeSize.hpp"
@@ -342,16 +342,8 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
    if (calleeMethod->isDAAWrapperMethod())
       return true;
 
-   if (TR_J9MethodBase::isVarHandleOperationMethod(calleeMethod->convertToMethod()->getMandatoryRecognizedMethod()))
+   if (isJSR292AlwaysWorthInlining(calleeMethod))
       return true;
-
-   switch (calleeMethod->convertToMethod()->getMandatoryRecognizedMethod())
-      {
-      case TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress:
-         return true;
-      default:
-         break;
-      }
 
    switch (calleeMethod->getRecognizedMethod())
       {
@@ -418,6 +410,49 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       return true;
 
    return false;
+   }
+
+/*
+ * Check if there is any method handle invoke left in the method body
+ */
+static bool checkForRemainingInlineableJSR292(TR::Compilation *comp, TR::ResolvedMethodSymbol *methodSymbol)
+   {
+   TR::NodeChecklist visited(comp);
+   for (TR::TreeTop *tt = methodSymbol->getFirstTreeTop(); tt ; tt = tt->getNextTreeTop())
+      {
+      TR::Node *ttNode = tt->getNode();
+      if (ttNode->getNumChildren() > 0)
+         {
+         TR::Node *node = ttNode->getFirstChild();
+         if (node->getOpCode().isCall() && !visited.contains(node))
+            {
+            visited.add(node);
+            if (node->getSymbolReference()->getSymbol()->getResolvedMethodSymbol())
+               {
+               TR_ResolvedMethod * resolvedMethod = node->getSymbolReference()->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod();
+               if (!node->isTheVirtualCallNodeForAGuardedInlinedCall() &&
+                  (resolvedMethod->convertToMethod()->isArchetypeSpecimen() ||
+                   resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact))
+                  {
+                  return true;
+                  }
+               }
+            }
+         }
+      }
+   return false;
+   }
+
+void
+TR_J9InlinerUtil::requestAdditionalOptimizations(TR_CallTarget *calltarget)
+   {
+   if (calltarget->_myCallSite->getDepth() == -1 // only do this for top level callee to prevent exponential walk of inlined trees
+      && checkForRemainingInlineableJSR292(comp(), calltarget->_calleeSymbol))
+      {
+      _inliner->getOptimizer()->setRequestOptimization(OMR::methodHandleInvokeInliningGroup);
+      if (comp()->trace(OMR::inlining))
+         heuristicTrace(tracer(),"Requesting one more pass of targeted inlining due to method handle invoke in %s\n", tracer()->traceSignature(calltarget->_calleeSymbol));
+      }
    }
 
 void
@@ -2139,21 +2174,6 @@ TR_J9InlinerPolicy::tryToInline(TR_CallTarget * calltarget, TR_CallStack * callS
       return true;
       }
 
-
-   if (toInline) switch (calltarget->_calleeMethod->getRecognizedMethod())
-      {
-      case TR::java_lang_invoke_MethodHandle_invokeExact:
-         heuristicTrace(tracer(),"calltarget %p is an invokeExact, tryToinline is returning true");
-         return true;
-      default:
-         if (calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen())
-            {
-            heuristicTrace(tracer(),"calltarget %p is an archetype specimen, tryToinline is returning true");
-            return true;
-            }
-      }
-
-
    if (OMR_InlinerPolicy::tryToInlineGeneral(calltarget, callStack, toInline))
       return true;
 
@@ -2372,7 +2392,10 @@ TR_J9InlinerPolicy::adjustFanInSizeInExceedsSizeThreshold(int bytecodeSize,
 bool
 TR_J9InlinerPolicy::callMustBeInlined(TR_CallTarget *calltarget)
    {
-   TR_ResolvedMethod *method = calltarget->_calleeSymbol ? calltarget->_calleeSymbol->getResolvedMethod() : NULL;
+   TR_ResolvedMethod *method = calltarget->_calleeMethod;
+
+   if (method->convertToMethod()->isArchetypeSpecimen())
+      return true;
 
    if (insideIntPipelineForEach(method, comp()))
       {
@@ -3321,94 +3344,28 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
          printf("Using trivial weight limit of %d\n", trivialWeightForLimit);
          }
 
+      TR_CallTarget* callTargetToChop = NULL;
       {
       bool doneInlining = false;
-      totalWeight = 0;
+      int32_t totalWeight = 0;
       TR_CallTarget * prev = 0;
       for (calltarget = _callTargets.getFirst(); calltarget; prev = calltarget, calltarget = calltarget->getNext())
          {
-         int32_t tempTotalWeight = totalWeight + calltarget->_weight;
-         if ((tempTotalWeight > limit) && (calltarget->_weight > trivialWeightForLimit))
+         totalWeight += calltarget->_weight;
+         if (doneInlining)
+            tracer()->insertCounter(Exceeded_Caller_Budget,calltarget->_myCallSite->_callNodeTreeTop);
+         else if (totalWeight > limit && calltarget->_weight > trivialWeightForLimit)
             {
-            tempTotalWeight = totalWeight + calltarget->_weight;
-            if ((tempTotalWeight > limit) && (calltarget->_weight > trivialWeightForLimit))
-               {
-               doneInlining = true;
-               }
-
-            if (doneInlining)
-               tracer()->insertCounter(Exceeded_Caller_Budget,calltarget->_myCallSite->_callNodeTreeTop);
+            callTargetToChop = calltarget;
+            doneInlining = true;
             }
-         totalWeight = tempTotalWeight;
          }
       }
 
-      totalWeight = 0;
       TR_CallTarget * prev = 0;
-      bool PDFForceInlineHotDominateCall = false;
-      for (calltarget = _callTargets.getFirst(); calltarget; prev = calltarget, calltarget = calltarget->getNext())
-         if (callMustBeInlinedRegardlessOfSize(calltarget->_myCallSite))
-            {
-            PDFForceInlineHotDominateCall = true;
-            break;
-            }
-      //put the hot dominate calls first so we do not chop them
-      if (PDFForceInlineHotDominateCall)
-         for (calltarget = _callTargets.getFirst(); calltarget; prev = calltarget, calltarget = calltarget->getNext())
-            {
-            if (forceInline(calltarget) && (calltarget != _callTargets.getFirst()))
-               {
-               heuristicTrace(tracer(),"callsite %p forceInline: %d is moved to start\n", calltarget->_myCallSite, forceInline(calltarget));
-               prev->setNext(calltarget->getNext());
-               TR_CallTarget *tmp =  _callTargets.getFirst();
-               _callTargets.setFirst(calltarget);
-               calltarget->setNext( tmp);
-               calltarget = prev;
-               }
-            }
-
-      totalWeight = 0;
-      prev = 0;
-      for (calltarget = _callTargets.getFirst(); calltarget; prev = calltarget, calltarget = calltarget->getNext())
-         {
-         int32_t tempTotalWeight = totalWeight + calltarget->_weight;
-         if ((tempTotalWeight > limit) && (calltarget->_weight > trivialWeightForLimit))
-            {
-            tempTotalWeight = totalWeight + calltarget->_weight;
-
-            if ((tempTotalWeight > limit) && (calltarget->_weight > trivialWeightForLimit) && !forceInline(calltarget))
-               {
-               if (prev)
-                  {
-                  heuristicTrace(tracer(), "Chopping the Tail off the list of targets we're inlining. New last target = %p Choping off at target %p", prev, calltarget);
-                  prev->setNext(0);
-                  }
-               else
-                  _callTargets.setFirst(0);
-
-               break;
-               }
-            }
-         totalWeight = tempTotalWeight;
-         }
-      //calltarget is assigned in the previous loop
-      //need to delete these call targets from their respective callsites now that we've chopped them out of the list
-      for (; calltarget; calltarget = calltarget->getNext())
-         {
-         if (calltarget)
-            calltarget->_myCallSite->removecalltarget(calltarget,tracer(),Trimmed_List_of_Callees);
-         }
-      if (comp()->getOption(TR_TraceAll) || tracer()->heuristicLevel())
-         {
-         tracer()->dumpCallGraphs(&_callTargets);
-         tracer()->dumpDeadCalls(&_deadCallSites);
-         }
-
-      prev = 0;
       int32_t estimatedNumberOfNodes = getCurrentNumberOfNodes();
       debugTrace(tracer(), "Initially, estimatedNumberOfNodes = %d\n", estimatedNumberOfNodes);
-
-      for (calltarget = _callTargets.getFirst(); calltarget; prev = calltarget, calltarget = calltarget->getNext())
+      for (calltarget = _callTargets.getFirst(); calltarget != callTargetToChop; prev = calltarget, calltarget = calltarget->getNext())
          {
          generateNodeEstimate myEstimate;
          recursivelyWalkCallTargetAndPerformAction(calltarget, myEstimate);
@@ -3418,28 +3375,15 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
 
          float factor = 1.1F;          // this factor was chosen based on a study of a large WAS app that showed that getMaxBytecodeindex was 92% accurate compared to nodes generated
 
-         if (!forceInline(calltarget) && (uint32_t)(estimatedNumberOfNodes*factor) > _nodeCountThreshold)
+         if ((uint32_t)(estimatedNumberOfNodes*factor) > _nodeCountThreshold)
             {
-            heuristicTrace(tracer(),"Estimated number of nodes of %d exceeds nodeCountThreshold of %d. Trimming list:",(uint32_t)(estimatedNumberOfNodes*factor), _nodeCountThreshold);
-
-            if (prev)
-               {
-               heuristicTrace(tracer(),"Chopping the Tail off the list of targets we're inlining. New last target = %p Choping off at target %p",prev,calltarget);
-               prev->setNext(0);
-               }
-            else
-               _callTargets.setFirst(0);
-
+            callTargetToChop = calltarget;
+            debugTrace(tracer(),"estimate nodes exceeds _nodeCountThreshold, chopped off targets staring from %p, lastTargetToInline %p\n", callTargetToChop, prev);
             break;
             }
          }
-      //calltarget is assigned in the previous loop
-      //need to delete these call targets from their respective callsites now that we've chopped them out of the list
-      for(; calltarget; calltarget = calltarget->getNext())
-         {
-         if(calltarget)
-            calltarget->_myCallSite->removecalltarget(calltarget,tracer(),Trimmed_List_of_Callees);
-         }
+
+      processChoppedOffCallTargets(prev, callTargetToChop, estimatedNumberOfNodes);
       if (comp()->getOption(TR_TraceAll) || tracer()->heuristicLevel())
          {
          tracer()->dumpCallGraphs(&_callTargets);
@@ -4069,6 +4013,65 @@ void TR_MultipleCallTargetInliner::weighCallSite( TR_CallStack * callStack , TR_
    heuristicTrace(tracer(),"^^^ Done Weighing of all targets in CallSite %p callnode %p\n",callsite, callsite->_callNode);
    }
 
+bool TR_MultipleCallTargetInliner::inlineSubCallGraph(TR_CallTarget* calltarget)
+   {
+   TR_J9InlinerPolicy *j9inlinerPolicy = (TR_J9InlinerPolicy *) getPolicy();
+   /*
+    * keep the target if it meets either of the following condition:
+    * 1. It's a JSR292 related method. This condition allows inlining method handle thunk chain without inlining the leaf java method.
+    * 2. It's force inline target
+    */
+   if (j9inlinerPolicy->isJSR292Method(calltarget->_calleeMethod)
+       || forceInline(calltarget))
+      {
+      for (TR_CallSite* callsite = calltarget->_myCallees.getFirst(); callsite ; callsite = callsite->getNext())
+         {
+         for (int32_t i = 0 ; i < callsite->numTargets() ; i++)
+            inlineSubCallGraph(callsite->getTarget(i));
+         }
+      return true;
+      }
+
+   calltarget->_myCallSite->removecalltarget(calltarget, tracer(), Trimmed_List_of_Callees);
+   return false;
+   }
+
+void TR_MultipleCallTargetInliner::processChoppedOffCallTargets(TR_CallTarget *lastTargetToInline, TR_CallTarget* firstChoppedOffcalltarget, int estimatedNumberOfNodes)
+   {
+   if (firstChoppedOffcalltarget)
+      {
+      TR_CallTarget * calltarget = firstChoppedOffcalltarget;
+      for (; calltarget; calltarget = calltarget->getNext())
+         {
+         if (inlineSubCallGraph(calltarget))
+            {
+            generateNodeEstimate myEstimate;
+            recursivelyWalkCallTargetAndPerformAction(calltarget, myEstimate);
+            estimatedNumberOfNodes += myEstimate.getNodeEstimate();
+            /*
+             * ForceInline targets and JSR292 methods should always be inlined regarless of budget. However, with
+             * inlining methodhandle chain in normal inlining, the number of nodes can be tremendous resulting in
+             * compilations, especially those with higher opt level, eating up too much CPU time. The heuristic here
+             * is added to prevent compilations consuming too much CPU.
+             */
+            static bool dontAbortCompilationEvenWithLargeInliningNodesEstimation = feGetEnv("TR_DontAbortCompilationEvenWithLargeInliningNodesEstimation") ? true: false;
+            if (!dontAbortCompilationEvenWithLargeInliningNodesEstimation && estimatedNumberOfNodes > 50000 && comp()->getMethodHotness() >= hot)
+                  comp()->failCompilation<TR::ExcessiveComplexity>("too many nodes if forced inlining targets are included");
+
+            if (lastTargetToInline)
+               lastTargetToInline->setNext(calltarget);
+            else
+               _callTargets.setFirst(calltarget);
+            lastTargetToInline = calltarget;
+            }
+         }
+      }
+
+   if (lastTargetToInline)
+      lastTargetToInline->setNext(NULL);
+   else _callTargets.setFirst(NULL);
+   }
+
 //Note, this function is shared by all FE's.  If you are changing the heuristic for your FE only, you need to push this method into the various FE's FEInliner.cpp file.
 int32_t TR_MultipleCallTargetInliner::scaleSizeBasedOnBlockFrequency(int32_t bytecodeSize, int32_t frequency, int32_t borderFrequency, TR_ResolvedMethod * calleeResolvedMethod, TR::Node *callNode, int32_t coldBorderFrequency)
    {
@@ -4246,6 +4249,8 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
 
      frequency1 = comp()->convertNonDeterministicInput(comp()->fej9()->getIProfilerCallCount(bcInfo, comp()), MAX_BLOCK_COUNT + MAX_COLD_BLOCK_COUNT, randomGenerator(), 0);
      frequency2 = comp()->convertNonDeterministicInput(block->getFrequency(), MAX_BLOCK_COUNT + MAX_COLD_BLOCK_COUNT, randomGenerator(), 0);
+     if (frequency1 > frequency2 && callerResolvedMethod->convertToMethod()->isArchetypeSpecimen())
+        frequency2 = frequency1;
 
      if ((frequency1 <= 0) && ((0 <= frequency2) &&  (frequency2 <= MAX_COLD_BLOCK_COUNT)) &&
         !alwaysWorthInlining(calleeResolvedMethod, callNode))
@@ -4253,7 +4258,7 @@ TR_MultipleCallTargetInliner::exceedsSizeThreshold(TR_CallSite *callSite, int by
         isCold = true;
         }
 
-     debugTrace(tracer(), "exceedsSizeThreshold: Call with block_%d has frequency %d", block->getNumber(), frequency2);
+     debugTrace(tracer(), "exceedsSizeThreshold: Call with block_%d has frequency1 %d frequency2 %d ", block->getNumber(), frequency1, frequency2);
 
      if (allowBiggerMethods() &&
          !comp()->getMethodSymbol()->doJSR292PerfTweaks() &&
@@ -4710,50 +4715,157 @@ TR_J9InlinerPolicy::validateArguments(TR_CallTarget *calltarget, TR_LinkHead<TR_
 bool
 TR_J9InlinerPolicy::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, TR::Compilation* comp)
    {
-   return (comp->fej9()->supressInliningRecognizedInitialCallee(callsite, comp));
-   }
+   TR_ResolvedMethod * initialCalleeMethod = callsite->_initialCalleeMethod;
 
-TR_InlinerFailureReason
-TR_J9InlinerPolicy::checkIfTargetInlineable(TR_CallTarget* target, TR_CallSite* callsite, TR::Compilation* comp)
-   {
-   return  static_cast<TR_InlinerFailureReason> (comp->fej9()->checkInlineableTarget(target, callsite, comp, false));
+   if (initialCalleeMethod)
+      {
+      switch (initialCalleeMethod->getRecognizedMethod())
+         {
+         /*
+          * Inline this group of methods when the compiling method is shared method handle thunk.
+          * Otherwise, they can be folded away by VP and should not be inlined here.
+          */
+         case TR::java_lang_invoke_DirectHandle_nullCheckIfRequired:
+         case TR::java_lang_invoke_PrimitiveHandle_initializeClassIfRequired:
+         case TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress:
+            TR::IlGeneratorMethodDetails & details = comp->ilGenRequest().details();
+            if (details.isMethodHandleThunk())
+               {
+               J9::MethodHandleThunkDetails & thunkDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
+                  return thunkDetails.isCustom();
+               }
+            return true;
+         }
+      }
+   return (callsite->_callNode && comp->fej9()->supressInliningRecognizedInitialCallee(callsite, comp));
    }
 
 TR_InlinerFailureReason
 TR_J9JSR292InlinerPolicy::checkIfTargetInlineable(TR_CallTarget* target, TR_CallSite* callsite, TR::Compilation* comp)
    {
-   return  static_cast<TR_InlinerFailureReason> (comp->fej9()->checkInlineableTarget(target, callsite, comp, true));
-    }
+   // for GPU, skip all the heuristic for JSR292 related methods
+   if (comp->hasIntStreamForEach())
+      return DontInline_Callee;
+
+   TR_ResolvedMethod * resolvedMethod = target->_calleeSymbol ? target->_calleeSymbol->getResolvedMethod():target->_calleeMethod;
+   if (!isJSR292Method(resolvedMethod))
+      return DontInline_Callee;
+
+   if (isJSR292AlwaysWorthInlining(resolvedMethod))
+      return InlineableTarget;
+   else if (comp->getCurrentMethod()->convertToMethod()->isArchetypeSpecimen() ||
+            comp->getCurrentMethod()->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact)
+      {
+      //we are ourselves an archetype specimen, so we can inline other archetype speciman
+      return InlineableTarget;
+      }
+   else if (comp->getMethodHotness() >= warm)
+      {
+      // We are not an archetype specimen
+      // but because we're warm (or greater) we are allowed to inline JSR292 methods
+      return InlineableTarget;
+      }
+
+   //we are not an archetype specimen ourselves and we are cold or below, No inlining of JSR292 methods.
+   return DontInline_Callee;
+   }
+
+TR_InlinerFailureReason
+ TR_J9InlinerPolicy::checkIfTargetInlineable(TR_CallTarget* target, TR_CallSite* callsite, TR::Compilation* comp)
+   {
+   if (comp->compileRelocatableCode() && comp->getMethodHotness() <= cold)
+      {
+      // If we are an AOT cold compile, don't inline
+      return DontInline_Callee;
+      }
+
+   return static_cast<TR_InlinerFailureReason> (comp->fej9()->checkInlineableTarget(target, callsite));
+   }
+
+bool TR_J9InlinerPolicy::isJSR292Method(TR_ResolvedMethod *resolvedMethod)
+   {
+   if (isJSR292AlwaysWorthInlining(resolvedMethod))
+      return true;
+
+   TR::RecognizedMethod method =  resolvedMethod->getRecognizedMethod();
+   if (method == TR::java_lang_invoke_MethodHandle_invokeExact)
+      return true;
+   return false;
+   }
+
+bool TR_J9InlinerPolicy::isJSR292AlwaysWorthInlining(TR_ResolvedMethod *resolvedMethod)
+   {
+   TR::RecognizedMethod method =  resolvedMethod->getRecognizedMethod();
+   if (method == TR::java_lang_invoke_MethodHandle_invokeExact)
+      return true;
+
+   if (TR_J9MethodBase::isVarHandleOperationMethod(method))
+      return true;
+
+   if (isJSR292SmallGetterMethod(resolvedMethod))
+      return true;
+
+   if (isJSR292SmallHelperMethod(resolvedMethod))
+      return true;
+
+   if (resolvedMethod->convertToMethod()->isArchetypeSpecimen())
+      return true;
+
+   return false;
+   }
+
+bool TR_J9InlinerPolicy::isJSR292SmallHelperMethod(TR_ResolvedMethod *resolvedMethod)
+   {
+   TR::RecognizedMethod method =  resolvedMethod->getRecognizedMethod();
+   switch (method)
+      {
+      case TR::java_lang_invoke_ConvertHandleFilterHelpers_object2J:
+      case TR::java_lang_invoke_ConvertHandleFilterHelpers_number2J:
+      case TR::java_lang_invoke_MethodHandle_doCustomizationLogic:
+      case TR::java_lang_invoke_MethodHandle_undoCustomizationLogic:
+         return true;
+      }
+   return false;
+   }
+
+bool TR_J9InlinerPolicy::isJSR292SmallGetterMethod(TR_ResolvedMethod *resolvedMethod)
+   {
+   TR::RecognizedMethod method =  resolvedMethod->getRecognizedMethod();
+   // small getters
+   switch (method)
+      {
+      case TR::java_lang_invoke_MutableCallSite_getTarget:
+      case TR::java_lang_invoke_MethodHandle_type:
+         return true;
+      }
+   return false;
+   }
 
 void
 TR_J9InlinerUtil::estimateAndRefineBytecodeSize(TR_CallSite* callsite, TR_CallTarget* calltarget, TR_CallStack *callStack, int32_t &bytecodeSize)
    {
-   if (comp()->getOptLevel() >= warm)
+   if (comp()->getOptLevel() >= warm && bytecodeSize > 100)
       {
-      TR_EstimateCodeSize::raiiWrapper ecsWrapper(inliner(), tracer(), inliner()->getMaxRecursiveCallByteCodeSizeEstimate());
-      TR_EstimateCodeSize *ecs = ecsWrapper.getCodeEstimator();
-
-      calltarget->_originatingBlock = (callsite->_callerBlock != NULL) ? callsite->_callerBlock : (callsite->_callNodeTreeTop ? callsite->_callNodeTreeTop->getEnclosingBlock() : 0);
                      //We call to calculateCodeSize to simply get an estimate.
                      //We don't want the original calltarget to be modified and become inconsistent in any way
                      //Please see 196749 for more details
 
-      TR_CallTarget callTargetClone (*calltarget);
+      calltarget->_originatingBlock = (callsite->_callerBlock != NULL) ? callsite->_callerBlock : (callsite->_callNodeTreeTop ? callsite->_callNodeTreeTop->getEnclosingBlock() : 0);
       bool estimateIsFine = false;
-      if (callTargetClone._originatingBlock && callTargetClone._calleeSymbol)
+      if (calltarget->_originatingBlock && calltarget->_calleeSymbol)
          {
+         TR_CallTarget callTargetClone (*calltarget);
+         TR_EstimateCodeSize::raiiWrapper ecsWrapper(inliner(), tracer(), inliner()->getMaxRecursiveCallByteCodeSizeEstimate());
+         TR_EstimateCodeSize *ecs = ecsWrapper.getCodeEstimator();
          vcount_t origVisitCount = comp()->getVisitCount();
          estimateIsFine = ecs->calculateCodeSize(&callTargetClone, callStack, false);
          comp()->setVisitCount(origVisitCount);
-         }
 
-      if (estimateIsFine)
-         {
-         if (comp()->trace(OMR::inlining))
-            traceMsg( comp(), "Partial estimate for this target %d, full size %d, real bytecode size %d\n", callTargetClone._partialSize, callTargetClone._fullSize, bytecodeSize);
-
-         if (bytecodeSize>100)
+         if (estimateIsFine)
             {
+            if (comp()->trace(OMR::inlining))
+               traceMsg( comp(), "Partial estimate for this target %d, full size %d, real bytecode size %d\n", callTargetClone._partialSize, callTargetClone._fullSize, bytecodeSize);
+
             bytecodeSize = callTargetClone._fullSize;
             if (comp()->trace(OMR::inlining))
                traceMsg( comp(), "Reducing bytecode size to %d\n", bytecodeSize);
@@ -5084,6 +5196,9 @@ static char* classSignature (TR::Method * m, TR::Compilation* comp) //tracer hel
 
 TR::Node* TR_PrexArgInfo::getCallNode (TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite, TR_InlinerTracer* tracer)
    {
+   if (callsite->_callNode)
+      return callsite->_callNode;
+
    for (TR::TreeTop* tt = methodSymbol->getFirstTreeTop(); tt; tt=tt->getNextTreeTop())
       {
       if (tt->getNode()->getNumChildren()>0 &&

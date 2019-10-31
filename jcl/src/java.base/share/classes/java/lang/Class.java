@@ -3414,19 +3414,50 @@ public String getSimpleName() {
 		}
 	}
 	String simpleName = baseType.getSimpleNameImpl();
+	String fullName = baseType.getName();
 	if (simpleName == null) {
+		Class<?> parent = baseType.getEnclosingObjectClass();
 		// either a base class, or anonymous class
-		if (baseType.getEnclosingObjectClass() != null) {
+		if (parent != null) {
 			simpleName = ""; //$NON-NLS-1$
 		} else {
 			// remove the package name
-			simpleName = baseType.getName();
-			int index = simpleName.lastIndexOf('.');
+			int index = fullName.lastIndexOf('.');
 			if (index != -1) {
-				simpleName = simpleName.substring(index+1);
+				simpleName = fullName.substring(index+1);
+			} else {
+				// no periods in fully qualified name, thus simple name is also the full name
+				simpleName = fullName;
 			}
 		}
 	}
+	/*[IF !Sidecar19-SE]*/
+	/* In Java 8, the simple name needs to match the full name*/
+	else if (!fullName.endsWith(simpleName)) {
+		Class<?> parent = baseType.getEnclosingObjectClass();
+		int index = fullName.lastIndexOf('.') + 1;
+		if (parent == null) {
+			parent = getDeclaringClassImpl();
+		}
+		if (parent != null) {
+			/* Nested classes have names which consist of the parent class name followed by a '$', followed by
+			 * the simple name. Some nested classes have additional characters between the parent class name
+			 * and the simple name of the nested class.
+			 */
+			String parentName = parent.getName();
+			if (fullName.startsWith(parentName) && (fullName.charAt(parentName.length()) == '$')) {
+				index = fullName.lastIndexOf('$') + 1;
+				// a local class simple name is preceded by a sequence of digits
+				while (index < fullName.length() && !Character.isJavaIdentifierStart(fullName.charAt(index))) {
+					index++;
+				}
+			}
+		}
+		if (index != -1) {
+			simpleName = fullName.substring(index);
+		}
+	}
+	/*[ENDIF] !Sidecar19-SE*/
 	if (arrayCount > 0) {
 		StringBuilder result = new StringBuilder(simpleName);
 		for (int i=0; i<arrayCount; i++) {

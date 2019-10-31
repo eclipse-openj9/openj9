@@ -34,10 +34,14 @@ export TEST_JDK_HOME:=$(subst \,/,$(TEST_JDK_HOME))
 endif
 
 testconfig:
+	ant -f ./scripts/build_tools.xml -DTEST_JDK_HOME=$(TEST_JDK_HOME)
 ifneq ($(AUTO_DETECT), false)
 	@echo "AUTO_DETECT is set to true"
-	ant -f ./src/build_envInfo.xml -DTEST_JDK_HOME=$(TEST_JDK_HOME)
+	${TEST_JDK_HOME}/bin/java -cp ./bin/TestKitGen.jar org.openj9.envInfo.EnvDetector JavaInfo
 else
 	@echo "AUTO_DETECT is set to false"
 endif
 	$(MAKE) -f makeGen.mk AUTO_DETECT=$(AUTO_DETECT)
+
+clean:
+	ant -f ./scripts/build_tools.xml clean

@@ -107,6 +107,12 @@
 			<class name="org.openj9.test.attachAPI.TestJcmd"/>
 		</classes>
 	</test>
+
+	<test name="TestJstat">
+		<classes>
+			<class name="org.openj9.test.attachAPI.TestJstat"/>
+		</classes>
+	</test>
 	
 	<test name="TestFileLocking">
 		<classes>
@@ -447,11 +453,6 @@
 			<class name="org.openj9.test.string.StringInterning" />
 		</classes>
 	</test>
-	<test name="testStringIndexOfString">
-		<classes>
-			<class name="org.openj9.test.string.StringIndexOfString" />
-		</classes>
-	</test>
 	<test name="testStringStreams">
 		<classes>
 			<class name="org.openj9.test.string.StringStreams" />
@@ -465,6 +466,11 @@
 	<test name="FileSystem-isAccessUserOnlyTests">
 		<classes>
 			<class name="org.openj9.test.jdk.internal.agent.Test_FileSystem"/>
+		</classes>
+	</test>
+	<test name="classRelationshipVerifierTests">
+		<classes>
+			<class name="org.openj9.test.classRelationshipVerifier.TestClassRelationshipVerifier"/>
 		</classes>
 	</test>
 </suite>

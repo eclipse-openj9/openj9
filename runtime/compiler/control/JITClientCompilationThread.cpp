@@ -1415,15 +1415,16 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, I_32>();
          auto mirror = std::get<0>(recv);
          auto cpIndex = std::get<1>(recv);
+         UDATA vtableOffset = 0;
          J9Method *j9method = NULL;
             {
             TR::VMAccessCriticalSection getResolvedHandleMethod(fe);
-            j9method = jitGetImproperInterfaceMethodFromCP(fe->vmThread(), mirror->cp(), cpIndex);
+            j9method = jitGetImproperInterfaceMethodFromCP(fe->vmThread(), mirror->cp(), cpIndex, &vtableOffset);
             }
          // Create a mirror right away
          TR_ResolvedJ9JITServerMethodInfo methodInfo;
          if (j9method)
-            TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, 0, mirror, fe, trMemory);
+            TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, (uint32_t)vtableOffset, mirror, fe, trMemory);
 
          client->write(response, j9method, methodInfo);
          }

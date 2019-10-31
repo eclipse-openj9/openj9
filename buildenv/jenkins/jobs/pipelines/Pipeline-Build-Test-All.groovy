@@ -39,7 +39,9 @@
  *              win_x86 (Java 8 support only),
  *              zos_390-64_cmprssptrs (Java 11 support only),
  *              osx_x86-64 (Java 8 and Java 11 support only),
- *              osx_x86-64_cmprssptrs (Java 8 and Java 11 support only)
+ *              osx_x86-64_cmprssptrs (Java 8 and Java 11 support only),
+ *              aarch64_linux (Java 11 support only),
+ *              aarch64_linux_xl (Java 11 support only)
  *   OPENJ9_REPO: String - the OpenJ9 git repository URL: e.g. https://github.com/eclipse/openj9.git (default)
  *   OPENJ9_BRANCH: String - the OpenJ9 branch to clone from: e.g. master (default)
  *   OPENJ9_SHA: String - the last commit SHA of the OpenJ9 repository
@@ -88,7 +90,9 @@ SPECS = ['ppc64_aix'      : CURRENT_RELEASES,
          'x86-64_mac'     : CURRENT_RELEASES,
          'x86-32_windows' : ['8'],
          'x86-64_windows' : CURRENT_RELEASES,
-         'x86-64_windows_xl' : CURRENT_RELEASES]
+         'x86-64_windows_xl' : CURRENT_RELEASES,
+         'aarch64_linux' : ['11'],
+         'aarch64_linux_xl' : ['11']]
 
 // SHORT_NAMES is used for PullRequest triggers
 // TODO Combine SHORT_NAMES and SPECS
@@ -107,7 +111,10 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','s390x_linux','x86-64_linux','x86-64_lin
             'winxl' : ['x86-64_windows_xl'],
             'osx' : ['x86-64_mac'],
             'osxlargeheap' : ['x86-64_mac_xl'],
-            'osxxl' : ['x86-64_mac_xl']]
+            'osxxl' : ['x86-64_mac_xl'],
+            'alinux64' : ['aarch64_linux'],
+            'alinux64xl' : ['aarch64_linux_xl'],
+            'alinux64largeheap' : ['aarch64_linux_xl']]
 
 // Initialize all PARAMETERS (params) to Groovy Variables even if they are not passed
 echo "Initialize all PARAMETERS..."
@@ -309,6 +316,9 @@ try {
                             break
                     }
                 }
+            }
+            if (params.SLACK_ON_SUCCESS && SLACK_CHANNEL) {
+                slackSend channel: SLACK_CHANNEL, color: 'good', message: "Build Passed: ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)"
             }
         }
     }

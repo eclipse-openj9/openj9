@@ -55,7 +55,7 @@ public class Jcmd {
 			+ "%n"
 			+ "list JVM processes on the local machine. Default behavior when no options are specified.%n"
 			+ "%n"
-			+ "NOTE: this utility may significantly affect the performance of the target JVM.%n"
+			+ "NOTE: this utility might significantly affect the performance of the target JVM.%n"
 			+ "    The available diagnostic commands are determined by%n"
 			+ "    the target VM and may vary between VMs.%n";
 	@SuppressWarnings("nls")
@@ -86,19 +86,24 @@ public class Jcmd {
 		} else if ((args.length == 1) && (null != firstArgument) && Arrays.stream(HELP_OPTIONS).anyMatch(firstArgument::equals)) {	
 			System.out.printf(HELPTEXT);
 		} else {
-			String vmid = firstArgument;
-			AttacherDiagnosticsProvider diagProvider = new AttacherDiagnosticsProvider();
 			command = DiagnosticUtils.makeJcmdCommand(args, 1);
-			try {
-				diagProvider.attach(vmid);
-				try {
-					Util.runCommandAndPrintResult(diagProvider, command, command); // $NON-NLS-1$
-				} finally {
-					diagProvider.detach();
-				}
-			} catch (IOException e) {
-				Util.handleCommandException(vmid, e);
+			if (command.isEmpty()) {
+				System.err.printf("There is no jcmd command.%n"); //$NON-NLS-1$
 				System.out.printf(HELPTEXT);
+			} else {
+				String vmid = firstArgument;
+				AttacherDiagnosticsProvider diagProvider = new AttacherDiagnosticsProvider();
+				try {
+					diagProvider.attach(vmid);
+					try {
+						Util.runCommandAndPrintResult(diagProvider, command, command); // $NON-NLS-1$
+					} finally {
+						diagProvider.detach();
+					}
+				} catch (IOException e) {
+					Util.handleCommandException(vmid, e);
+					System.out.printf(HELPTEXT);
+				}
 			}
 		}
 	}

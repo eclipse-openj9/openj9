@@ -131,23 +131,22 @@ uint8_t *
 TR_RelocationTarget::loadClassAddressForHeader(uint8_t *reloLocation)
    {
    // reloLocation points at the start of the address, so just need to dereference as uint8_t *
-#ifdef OMR_GC_COMPRESSED_POINTERS
-   return (uint8_t *) (uintptr_t) loadUnsigned32b(reloLocation);
-#else
+   if (TR::Compiler->om.compressObjectReferences())
+      return (uint8_t *) (uintptr_t) loadUnsigned32b(reloLocation);
    return (uint8_t *) loadPointer(reloLocation);
-#endif
    }
 
 void
 TR_RelocationTarget::storeClassAddressForHeader(uint8_t *clazz, uint8_t *reloLocation)
    {
    // reloLocation points at the start of the address, so just store the uint8_t * at reloLocation
-#ifdef OMR_GC_COMPRESSED_POINTERS
-   uintptr_t clazzPtr = (uintptr_t)clazz;
-   storeUnsigned32b((uint32_t)clazzPtr, reloLocation);
-#else
-   storePointer(clazz, reloLocation);
-#endif
+   if (TR::Compiler->om.compressObjectReferences())
+      {
+      uintptr_t clazzPtr = (uintptr_t)clazz;
+      storeUnsigned32b((uint32_t)clazzPtr, reloLocation);
+      }
+   else
+      storePointer(clazz, reloLocation);
    }
 
 uint32_t

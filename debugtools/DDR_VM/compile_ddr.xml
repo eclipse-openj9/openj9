@@ -305,33 +305,7 @@
 		<mkdir dir="${findbugs.results.dir}"/>
 		<mkdir dir="${findbugs.unpack.dir}"/>
 
-		<if>
-			<os family="unix"/>
-			<then>
- 				<if>
- 					<equals arg1="${product}" arg2="java8" />
- 					<then>
- 						<property name="build.compiler.java" value="/bluebird/bin/platform/linux386/ibm-jdk-1.8.0/bin/javac" />
- 					</then>
- 					<else>
- 						<property name="build.compiler.java" value="/bluebird/bin/platform/linux386/ibm-jdk-1.9.0-b136/bin/javac" />
- 					</else>
- 				</if>
-			</then>
-			<else>
-				<echo>dev tools: ${env.DEV_TOOLS}</echo>
- 				<fail unless="env.DEV_TOOLS" message="You must have the DEV_TOOLS environment defined." />
- 				<if>
- 					<equals arg1="${product}" arg2="java8" />
- 					<then>
- 						<property name="build.compiler.java" value="${env.DEV_TOOLS}/ibm-jdk-1.8.0/bin/javac.exe" />
- 					</then>
- 					<else>
- 						<property name="build.compiler.java" value="${env.DEV_TOOLS}/ibm-jdk-1.9.0/bin/javac.exe" />
- 					</else>
- 				</if>
-			</else>
-		</if>
+		<property name="build.compiler.java" value="${with-boot-jdk}/bin/javac" />
 	</target>
 
 	<target name="findbugs">

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2016 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,18 +33,15 @@ Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_isVerboseImpl(
 	return ( (javaVM->verboseLevel & VERBOSE_CLASS) == VERBOSE_CLASS );
 }
 
-jint JNICALL
-Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getLoadedClassCountImpl(JNIEnv *env, jobject beanInstance)
+jlong JNICALL
+Java_openj9_internal_management_ClassLoaderInfoBaseImpl_getLoadedClassCountImpl(JNIEnv *env, jobject beanInstance)
 {
-	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
-	jint result;
-	J9JavaLangManagementData *mgmt = javaVM->managementData;
+	jlong result = 0;
+	J9JavaLangManagementData *mgmt = ((J9VMThread *) env)->javaVM->managementData;
 
-	omrthread_rwmutex_enter_read( mgmt->managementDataLock );
-
-	result = (jint)( mgmt->totalClassLoads - mgmt->totalClassUnloads );
-
-	omrthread_rwmutex_exit_read( mgmt->managementDataLock );
+	omrthread_rwmutex_enter_read(mgmt->managementDataLock);
+	result = (jlong)(mgmt->totalClassLoads - mgmt->totalClassUnloads);
+	omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 
 	return result;
 }
@@ -66,7 +63,7 @@ Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getTotalLoaded
 }
 
 jlong JNICALL
-Java_com_ibm_java_lang_management_internal_ClassLoadingMXBeanImpl_getUnloadedClassCountImpl(JNIEnv *env, jobject beanInstance)
+Java_openj9_internal_management_ClassLoaderInfoBaseImpl_getUnloadedClassCountImpl(JNIEnv *env, jobject beanInstance)
 {
 	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
 	jlong result;

@@ -216,7 +216,7 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
     }
 }
 
-def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL) {
+def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, EXTRA_OPTIONS) {
     stage ("${JOB_NAME}") {
         return build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
             [string(name: 'UPSTREAM_JOB_NAME', value: UPSTREAM_JOB_NAME),
@@ -235,12 +235,13 @@ def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NO
             string(name: 'TEST_FLAG', value: TEST_FLAG),
             string(name: 'KEEP_REPORTDIR', value: 'false'),
             string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
-            booleanParam(name: 'IS_PARALLEL', value: IS_PARALLEL)])
+            booleanParam(name: 'IS_PARALLEL', value: IS_PARALLEL),
+            string(name: 'EXTRA_OPTIONS', value: EXTRA_OPTIONS)])
 
     }
 }
 
-def build_with_artifactory(JOB_NAME, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL) {
+def build_with_artifactory(JOB_NAME, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, EXTRA_OPTIONS) {
     stage ("${JOB_NAME}") {
         return build_with_slack(JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
             [string(name: 'LABEL', value: NODE),
@@ -259,7 +260,8 @@ def build_with_artifactory(JOB_NAME, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SH
             string(name: 'TEST_FLAG', value: TEST_FLAG),
             string(name: 'KEEP_REPORTDIR', value: 'false'),
             string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
-            booleanParam(name: 'IS_PARALLEL', value: IS_PARALLEL)])
+            booleanParam(name: 'IS_PARALLEL', value: IS_PARALLEL),
+            string(name: 'EXTRA_OPTIONS', value: EXTRA_OPTIONS)])
     }
 }
 
@@ -286,7 +288,11 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
     // Set Github Commit Status
     if (ghprbActualCommit) {
         node(SETUP_LABEL) {
-            set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, BUILD_URL, 'PENDING', "Build Started")
+            try {
+                retry_and_delay({set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, BUILD_URL, 'PENDING', "Build Started")})
+            } catch (e) {
+                println "Failed to set the GitHub commit status to PENDING when the job STARTED"
+            }
         }
     }
 
@@ -305,18 +311,26 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
             // want to offer the restart option as it is not desired for PR builds.
             // If the job was UNSTABLE this indicates test(s) failed and we don't want to offer the restart option.
             echo "WARNING: Downstream job ${DOWNSTREAM_JOB_NAME} is ${JOB.result} after ${DOWNSTREAM_JOB_TIME}. Job Number: ${DOWNSTREAM_JOB_NUMBER} Job URL: ${DOWNSTREAM_JOB_URL}"
+            def slack_colour = ''
             if (JOB.result == "UNSTABLE") {
+                slack_colour = 'warning'
                 unstable "Setting overall pipeline status to UNSTABLE"
             } else {
+                // Job aborted (GREY)
+                slack_colour = '#808080'
                 currentBuild.result = JOB.result
             }
             if (SLACK_CHANNEL) {
-                slackSend channel: SLACK_CHANNEL, color: 'warning', message: "${JOB.result}: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}"
+                slackSend channel: SLACK_CHANNEL, color: slack_colour, message: "${JOB.result}: ${DOWNSTREAM_JOB_NAME} #${DOWNSTREAM_JOB_NUMBER} (<${DOWNSTREAM_JOB_URL}|Open>)\nStarted by ${JOB_NAME} #${BUILD_NUMBER} (<${BUILD_URL}|Open>)\n${build_causes_string}"
             }
             // Set Github Commit Status
             if (ghprbActualCommit) {
                 node(SETUP_LABEL) {
-                    set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build ${JOB.result}")
+                    try {
+                        retry_and_delay({set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build ${JOB.result}")})
+                    } catch (e) {
+                        println "Failed to set the GitHub commit status to FAILURE when the job ${JOB.result}"
+                    }
                 }
             }
         } else { // Job failed (RED)
@@ -326,7 +340,11 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
             // Set Github Commit Status
             if (ghprbActualCommit) {
                 node(SETUP_LABEL) {
-                    set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build FAILED")
+                    try {
+                        retry_and_delay({set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'FAILURE', "Build FAILED")})
+                    } catch (e) {
+                        println "Failed to set the GitHub commit status to FAILURE when the job Failed"
+                    }
                 }
             }
             timeout(time: RESTART_TIMEOUT.toInteger(), unit: RESTART_TIMEOUT_UNITS) {
@@ -341,7 +359,11 @@ def build_with_slack(DOWNSTREAM_JOB_NAME, ghprbGhRepository, ghprbActualCommit, 
         // Set Github Commit Status
         if (ghprbActualCommit) {
             node(SETUP_LABEL) {
-                set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'SUCCESS', "Build PASSED")
+                try {
+                    retry_and_delay({set_build_status(GITHUB_REPO, DOWNSTREAM_JOB_NAME, ghprbActualCommit, DOWNSTREAM_JOB_URL, 'SUCCESS', "Build PASSED")})
+                } catch (e) {
+                    println "Failed to set the Github commit status to SUCCESS when the job PASSED"
+                }
             }
         }
     }
@@ -412,15 +434,24 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             if (TEST_JOB_NAME.contains("special.system")){
                 IS_PARALLEL = true
             }
+            
+            def EXTRA_OPTIONS = ""
+            if (TEST_JOB_NAME.contains("jck")){
+                EXTRA_OPTIONS = "-Xfuture"
+                if (TEST_JOB_NAME.contains("next")){
+                    EXTRA_OPTIONS += " --enable-preview"
+                }
+            }
+            
             testjobs["${TEST_JOB_NAME}"] = {
                 if (params.ghprbPullId) {
                     cancel_running_builds(TEST_JOB_NAME, BUILD_IDENTIFIER)
                 }
                 if (ARTIFACTORY_CREDS) {
                     cleanup_artifactory(ARTIFACTORY_MANUAL_CLEANUP, TEST_JOB_NAME, ARTIFACTORY_SERVER, ARTIFACTORY_REPO, ARTIFACTORY_NUM_ARTIFACTS)
-                    jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL)
+                    jobs["${TEST_JOB_NAME}"] = build_with_artifactory(TEST_JOB_NAME, TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, CUSTOMIZED_SDK_URL, ARTIFACTORY_CREDS, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, EXTRA_OPTIONS)
                 } else {
-                    jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL)
+                    jobs["${TEST_JOB_NAME}"] = build_with_one_upstream(TEST_JOB_NAME, BUILD_JOB_NAME, jobs["build"].getNumber(), TEST_NODE, OPENJ9_REPO, OPENJ9_BRANCH, SHAS['OPENJ9'], VENDOR_TEST_REPOS, VENDOR_TEST_BRANCHES, VENDOR_TEST_SHAS, VENDOR_TEST_DIRS, USER_CREDENTIALS_ID, TEST_FLAG, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, IS_PARALLEL, EXTRA_OPTIONS)
                 }
             }
         }
@@ -602,7 +633,51 @@ def generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO)
     }
 }
 
+/*
+* Use curly brackets to wrap the parameter, command.
+* Use a semicolon to separate each command if there are mutiple commands.
+* The parameters, numRetries and waitTime, are integers.
+* The parameter, units, is a string.
+* The parameter, units, can be 'NANOSECONDS', 'MICROSECONDS', 'MILLISECONDS',
+* 'SECONDS', 'MINUTES', 'HOURS', 'DAYS'
+* Example:
+* retry_and_delay({println "This is an example"})
+* retry_and_delay({println "This is an example"}, 4)
+* retry_and_delay({println "This is an example"}, 4, 120)
+* retry_and_delay({println "This is an example"}, 4, 3, 'MINUTES')
+* retry_and_delay({println "This is an example"; println "Another example"})
+*/
+def retry_and_delay(command, numRetries = 3, waitTime = 60, units = 'SECONDS') {
+    def ret = false
+    retry(numRetries) {
+        if (ret) {
+            sleep time: waitTime, unit: units
+        } else {
+            ret = true
+        }
+        command()
+    }
+}
+
 def setup_pull_request() {
+    // Parse Github trigger comments
+    // For example:
+    /* This is great
+       Jenkins test extended <platform>
+       It was tested*/
+
+    def PARSED_BY_NEWLINE_COMMENT = params.ghprbCommentBody.split(/\\r?\\n/)
+    for (COMMENT in PARSED_BY_NEWLINE_COMMENT) {
+        def comment = COMMENT.toLowerCase().tokenize(' ')
+        if (("${comment[0]}" == "jenkins") && (("${comment[1]}" == "compile") || ("${comment[1]}" == "test"))) {
+            setup_pull_request_single_comment(comment)
+            return
+        }
+    }
+    error("Invalid trigger comment")
+}
+
+def setup_pull_request_single_comment(PARSED_COMMENT) {
     // Parse Github trigger comment
     // Jenkins test sanity <platform>*
     // Jenkins test extended <platform>*
@@ -618,7 +693,6 @@ def setup_pull_request() {
     *
     * Note: Depends logic is already part of the build/compile job and is located in the checkout_pullrequest() function.
     */
-    def PARSED_COMMENT = params.ghprbCommentBody.toLowerCase().tokenize(' ')
     // Don't both checking PARSED_COMMENT[0] since it is hardcoded in the trigger regex of the Jenkins job.
 
     // Setup TESTS_TARGETS

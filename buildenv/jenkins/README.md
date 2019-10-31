@@ -45,6 +45,12 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - Linux on ppc64le
         - Spec: ppc64le_linux
         - Shortname: plinux
+    - Linux on aarch64
+        - Spec: aarch64_linux
+        - Shortname: alinux64
+    - Linux on aarch64 largeheap/non-compressed references
+        - Spec: aarch64_linux_xl
+        - Shortname: alinux64xl or alinux64largeheap
     - AIX on ppc64
         - Spec: ppc64_aix
         - Shortname: aix

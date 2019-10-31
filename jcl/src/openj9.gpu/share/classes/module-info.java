@@ -23,6 +23,10 @@
 
 /*[REM] This file must not use tabs because the dependency recognition code in openjdk does not support them. */
 
+/**
+ * Defines API to perform certain operations using any connected CUDA capable GPU,
+ * such as sorting arrays of natives types.
+ */
 module openj9.gpu {
   requires java.base;
   requires openj9.cuda;

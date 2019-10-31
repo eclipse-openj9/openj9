@@ -3099,9 +3099,7 @@ triggerGCInitialized(J9VMThread* vmThread)
 	UDATA regionCount = extensions->getHeap()->getHeapRegionManager()->getTableRegionCount();
 
 	UDATA arrayletLeafSize = 0;
-#if defined(J9VM_GC_ARRAYLETS)
 	arrayletLeafSize = vm->arrayletLeafSize;
-#endif
 
 	TRIGGER_J9HOOK_MM_OMR_INITIALIZED(
 		extensions->omrHookInterface,

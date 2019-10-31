@@ -89,16 +89,16 @@
 #include "infra/MonitorTable.hpp"
 #include "il/DataTypes.hpp"
 #include "il/J9DataTypes.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/NodePool.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
@@ -1922,17 +1922,20 @@ int32_t TR_J9VMBase::getArrayletFirstElementOffset(int8_t elementSize, TR::Compi
    TR_ASSERT(elementSize >= 0, "unexpected arraylet element size");
 
    int32_t offset;
-#if defined(J9VM_GC_ARRAYLETS) && defined(J9VM_GC_COMPRESSED_POINTERS)
-   offset = (getFirstArrayletPointerOffset(comp) + TR::Compiler->om.sizeofReferenceField() + sizeof(UDATA)-1) & (-(int32_t)sizeof(UDATA));
-   TR_ASSERT((offset & sizeof(UDATA)-1) == 0, "unexpected alignment for first arraylet element");
-#else
-   if (elementSize > sizeof(UDATA))
-      offset = (getFirstArrayletPointerOffset(comp) + sizeof(UDATA) + elementSize-1) & (-elementSize);
+   if (TR::Compiler->om.compressObjectReferences())
+      {
+      offset = (getFirstArrayletPointerOffset(comp) + TR::Compiler->om.sizeofReferenceField() + sizeof(UDATA)-1) & (-(int32_t)sizeof(UDATA));
+      TR_ASSERT((offset & sizeof(UDATA)-1) == 0, "unexpected alignment for first arraylet element");
+      }
    else
-      offset = getFirstArrayletPointerOffset(comp) + sizeof(UDATA);
+      {
+      if (elementSize > sizeof(UDATA))
+         offset = (getFirstArrayletPointerOffset(comp) + sizeof(UDATA) + elementSize-1) & (-elementSize);
+      else
+         offset = getFirstArrayletPointerOffset(comp) + sizeof(UDATA);
 
-   TR_ASSERT((offset & (elementSize-1)) == 0, "unexpected alignment for first arraylet element");
-#endif
+      TR_ASSERT((offset & (elementSize-1)) == 0, "unexpected alignment for first arraylet element");
+      }
 
    return offset;
    }
@@ -2713,11 +2716,6 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
       //
       switch (callNode->getSymbol()->getResolvedMethodSymbol()->getRecognizedMethod())
          {
-         case TR::java_lang_invoke_MethodHandle_doCustomizationLogic:
-         case TR::java_lang_invoke_MethodHandle_undoCustomizationLogic:
-            dontInlineRecognizedMethod = true;
-            break;
-
          // ByteArray Marshalling methods
          case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeShort_:
          case TR::com_ibm_dataaccess_ByteArrayMarshaller_writeShortLength_:
@@ -2961,79 +2959,12 @@ int TR_J9VMBase::checkInlineableWithoutInitialCalleeSymbol (TR_CallSite* callsit
    }
 
 
-int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* callsite, TR::Compilation* comp, bool inJSR292InliningPasses)
+int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* callsite)
    {
+   TR::Compilation *comp = TR::comp();
    TR_ResolvedMethod * resolvedMethod = target->_calleeSymbol ? target->_calleeSymbol->getResolvedMethod():target->_calleeMethod;
 
-   if (!comp->hasIntStreamForEach())
-      {
-      // This first if statement controls inlining of a large class of JSR292 methods, which we want to consider ONLY in certain cases in early rounds of inlining...
-      if ( resolvedMethod->convertToMethod()->isArchetypeSpecimen() ||
-         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact ||
-         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress ||
-         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MutableCallSite_getTarget ||
-         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_DirectHandle_invokeExact ||
-         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_InterfaceHandle_invokeExact ||
-         resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_VirtualHandle_invokeExact ||
-         TR_J9MethodBase::isVarHandleOperationMethod(resolvedMethod->getRecognizedMethod())
-         )
-         {
-         if ( resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress ||
-             resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MutableCallSite_getTarget ||
-             TR_J9MethodBase::isVarHandleOperationMethod(resolvedMethod->getRecognizedMethod()) ||
-             resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_DirectHandle_invokeExact ||
-             resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_InterfaceHandle_invokeExact ||
-             resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_VirtualHandle_invokeExact
-            )
-            {
-            // Always choose to inline these methods; the first two are small getters, and the last three are single-level "leaf" handles
-            }
-         else if ( !inJSR292InliningPasses )
-            {
-            // Last round of inlining, no more JSR292 methods (other than the above two things, to which we always say yes)
-            return DontInline_Callee;
-            }
-         else if ( comp->getCurrentMethod()->convertToMethod()->isArchetypeSpecimen() || comp->getCurrentMethod()->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact )
-            {
-            // We're in JSR292 Inlining rounds, and we are ourselves an archetype specimen, so we can inline other archetype specimens whenever we see fit
-            }
-         else if ( comp->getMethodHotness() >= hot )
-            {
-            // We are a hot method that isn't an archetype specimen, and we're in JSR292 inlining,
-            // but because we're hot (or greater) we are allowed to inline JSR292 methods whenever we see fit
-            }
-         else
-            {
-            // We are in first rounds of inlining, we are warm or below, and we are not an archetype specimen ourselves... No inlining of JSR292 methods.
-            return DontInline_Callee;
-            }
-         }
-      else if ( inJSR292InliningPasses )
-         {
-         // If we aren't in the last round of inlining, don't inline anything that didn't fall into the above category
-         return DontInline_Callee;
-         }
-      else if (comp->compileRelocatableCode() && comp->getMethodHotness() <= cold)
-         {
-         // If we are an AOT cold compile, don't inline
-         return DontInline_Callee;
-         }
-      else if ( comp->ilGenRequest().details().isMethodHandleThunk() &&
-                static_cast<J9::MethodHandleThunkDetails &>(comp->ilGenRequest().details()).isShareable())
-         {
-         // We are trying to inline a non-JSR292 method, and we are in the last round of inlining, but we are a shareable thunk, so say NO
-         // Except for do and undo customization logic which we still want to inline...
-         //
-         if ( resolvedMethod->getRecognizedMethod() != TR::java_lang_invoke_MethodHandle_doCustomizationLogic &&
-              resolvedMethod->getRecognizedMethod() != TR::java_lang_invoke_MethodHandle_undoCustomizationLogic
-            )
-            {
-            return DontInline_Callee;
-            }
-         }
-      }
-
-   if (!TR_J9InlinerPolicy::isInlineableJNI(resolvedMethod,callsite->_callNode) || ( TR_J9InlinerPolicy::isInlineableJNI(resolvedMethod,callsite->_callNode) && callsite->isIndirectCall()) )
+   if (!TR_J9InlinerPolicy::isInlineableJNI(resolvedMethod,callsite->_callNode) || callsite->isIndirectCall())
       {
       if (!target->_calleeMethod->isCompilable(comp->trMemory()) || !target->_calleeMethod->isInlineable(comp))
          {
@@ -3046,7 +2977,7 @@ int TR_J9VMBase::checkInlineableTarget (TR_CallTarget* target, TR_CallSite* call
          }
       }
 
-   TR::RecognizedMethod rm = target->_calleeSymbol ? target->_calleeSymbol->getRecognizedMethod() : target->_calleeMethod->getRecognizedMethod();
+   TR::RecognizedMethod rm = resolvedMethod->getRecognizedMethod();
 
    // Don't inline methods that are going to be reduced in ilgen or UnsafeFastPath
    switch (rm)
@@ -3525,7 +3456,7 @@ TR_J9VMBase::fetchMethodExtendedFlagsPointer(J9Method *method)
 void *
 TR_J9VMBase::getStaticHookAddress(int32_t event)
    {
-   return &vmThread()->javaVM->hookInterface.flags[event]; 
+   return &vmThread()->javaVM->hookInterface.flags[event];
    }
 
 static void lowerContiguousArrayLength(TR::Compilation *comp, TR::Node *root)
@@ -4189,6 +4120,52 @@ static bool foldFinalFieldsIn(const char *className, int32_t classNameLength, TR
       return false;
    }
 
+bool
+TR_J9VMBase::canDereferenceAtCompileTimeWithFieldSymbol(TR::Symbol * fieldSymbol, int32_t cpIndex, TR_ResolvedMethod *owningMethod)
+   {
+   TR::Compilation *comp = TR::comp();
+   switch (fieldSymbol->getRecognizedField())
+      {
+      case TR::Symbol::Java_lang_invoke_PrimitiveHandle_rawModifiers:
+      case TR::Symbol::Java_lang_invoke_PrimitiveHandle_defc:
+      case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
+         {
+         return true;
+         }
+      default:
+         {
+         if (!fieldSymbol->isFinal())
+            return false;
+
+         // Sadly, it's common for deserialization-like code to strip final
+         // specifiers off instance fields so they can be filled in during
+         // deserialization.  To support these shenanigans, we must restrict
+         // ourselves to fold instance fields only in classes classes where
+         // this is known to be safe.
+
+         const char* name;
+         int32_t len;
+
+         // Get class name for fabricated java field
+         if (cpIndex < 0 &&
+             fieldSymbol->getRecognizedField() != TR::Symbol::UnknownField)
+            {
+            name = fieldSymbol->owningClassNameCharsForRecognizedField(len);
+            }
+         else
+            {
+            TR_OpaqueClassBlock *fieldClass = owningMethod->getClassFromFieldOrStatic(comp, cpIndex);
+            if (!fieldClass)
+               return false;
+
+            name = getClassNameChars((TR_OpaqueClassBlock*)fieldClass, len);
+            }
+
+         return foldFinalFieldsIn(name, len, comp);
+         }
+      }
+   return false;
+   }
 
 bool
 TR_J9VMBase::canDereferenceAtCompileTime(TR::SymbolReference *fieldRef, TR::Compilation *comp)
@@ -4209,51 +4186,10 @@ TR_J9VMBase::canDereferenceAtCompileTime(TR::SymbolReference *fieldRef, TR::Comp
          {
          return isFinalFieldOfNativeStruct(fieldRef, comp) || isFinalFieldPointingAtNativeStruct(fieldRef, comp);
          }
-      else switch (fieldRef->getSymbol()->getRecognizedField())
-         {
-         case TR::Symbol::Java_lang_invoke_PrimitiveHandle_rawModifiers:
-         case TR::Symbol::Java_lang_invoke_PrimitiveHandle_defc:
-         case TR::Symbol::Java_lang_invoke_VarHandle_handleTable:
-            {
-            return true;
-            }
-         default:
-            {
-            if (!fieldRef->getSymbol()->isFinal())
-               return false;
-
-            // Sadly, it's common for deserialization-like code to strip final
-            // specifiers off instance fields so they can be filled in during
-            // deserialization.  To support these shenanigans, we must restrict
-            // ourselves to fold instance fields only in classes classes where
-            // this is known to be safe.
-
-            const char* name;
-            int32_t len;
-
-            // Get class name for fabricated java field
-            if (fieldRef->getCPIndex() < 0 &&
-               fieldRef->getSymbol()->getRecognizedField() != TR::Symbol::UnknownField)
-               {
-               name = fieldRef->getSymbol()->owningClassNameCharsForRecognizedField(len);
-               }
-            else
-               {
-               TR_OpaqueClassBlock *fieldClass = fieldRef->getOwningMethod(comp)->getClassFromFieldOrStatic(comp, fieldRef->getCPIndex());
-               if (!fieldClass)
-                  return false;
-
-               name = getClassNameChars((TR_OpaqueClassBlock*)fieldClass, len);
-               }
-
-            return foldFinalFieldsIn(name, len, comp);
-            }
-         }
+      else return canDereferenceAtCompileTimeWithFieldSymbol(fieldRef->getSymbol(), fieldRef->getCPIndex(), fieldRef->getOwningMethodSymbol(comp)->getResolvedMethod());
       }
    else
-      {
       return false;
-      }
    }
 
 
@@ -4599,7 +4535,7 @@ TR_J9VMBase::findPersistentJ2IThunk(char *signatureChars)
 void *
 TR_J9VMBase::findPersistentThunk(char *signatureChars, uint32_t signatureLength)
    {
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    J9SharedDataDescriptor firstDescriptor;
    J9VMThread *curThread = getCurrentVMThread();
    firstDescriptor.address = NULL;
@@ -5547,9 +5483,10 @@ TR_J9VMBase::getSupportsRecognizedMethods()
       TR::Compiler->target.cpu.isX86() ||
       TR::Compiler->target.cpu.isPower() ||
       TR::Compiler->target.cpu.isARM() ||
+      TR::Compiler->target.cpu.isARM64() ||
       !isAOT_DEPRECATED_DO_NOT_USE(),
       "getSupportsRecognizedMethods must be called only on X,P,Z or only for non-AOT");
-   return  true;
+   return true;
    }
 
 
@@ -9208,7 +9145,7 @@ TR_J9SharedCacheVM::persistJ2IThunk(void *thunk)
 void *
 TR_J9SharedCacheVM::persistThunk(char *signatureChars, uint32_t signatureLength, uint8_t *thunkStart, uint32_t totalSize)
    {
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    J9SharedDataDescriptor dataDescriptor;
    J9VMThread *curThread = getCurrentVMThread();
 
@@ -9517,6 +9454,15 @@ portLibCall_sysinfo_has_resumable_trap_handler()
       #endif
    #endif
 
+   /* AArch64 */
+   #if defined(TR_HOST_ARM64) && defined(TR_TARGET_ARM64)
+      #ifdef LINUX
+         return true;
+      #else
+         return false;
+      #endif
+   #endif
+
    /* 390 */
    #if defined(TR_HOST_S390) && defined(TR_TARGET_S390)
       #if defined(J9ZOS390)
@@ -9558,98 +9504,13 @@ portLibCall_sysinfo_has_fixed_frame_C_calling_convention()
       return false;
    #endif
 
-   /* X86 */
-   #if defined(TR_HOST_X86) && defined(TR_TARGET_X86)
+   /* AArch64 */
+   #if defined(TR_HOST_ARM64) && defined(TR_TARGET_ARM64)
       return false;
    #endif
 
-   }
-
-
-static uint32_t
-portLibCall_sysinfo_number_bytes_read_inaccessible()
-   {
-   // remove TR_HOST_ and TR_TARGET_ defines once code is moved to each architectures port library
-
-   /* PPC */
-   #if defined(TR_HOST_POWER) && defined(TR_TARGET_POWER)
-      return 0;
-   #endif
-
    /* X86 */
    #if defined(TR_HOST_X86) && defined(TR_TARGET_X86)
-      #if defined(J9HAMMER) || defined(WINDOWS) || defined(LINUX) // LINUX_POST22
-         return 4096;
-      #else
-         return 0;
-      #endif
-   #endif
-
-   /* ARM */
-   #if defined(TR_HOST_ARM) && defined(TR_TARGET_ARM)
-      return 0;
-   #endif
-
-   /* 390 */
-   #if defined(TR_HOST_S390) && defined(TR_TARGET_S390)
-      return 4096;
-   #endif
-
-   }
-
-static uint32_t
-portLibCall_sysinfo_number_bytes_write_inaccessible()
-   {
-   // remove TR_HOST_ and TR_TARGET_ defines once code is moved to each architectures port library
-
-   /* PPC */
-   #if defined(TR_HOST_POWER) && defined(TR_TARGET_POWER)
-      return 4096;
-   #endif
-
-   /* X86 */
-   #if defined(TR_HOST_X86) && defined(TR_TARGET_X86)
-      #if defined(J9HAMMER) || defined(WINDOWS) || defined(LINUX) // LINUX_POST22
-         return 4096;
-      #else
-         return 0;
-      #endif
-   #endif
-
-   /* ARM */
-   #if defined(TR_HOST_ARM) && defined(TR_TARGET_ARM)
-      return 0;
-   #endif
-
-   /* 390 */
-   #if defined(TR_HOST_S390) && defined(TR_TARGET_S390)
-      return 4096;
-   #endif
-
-   }
-
-static bool
-portLibCall_sysinfo_supports_scaled_index_addressing()
-   {
-   // remove TR_HOST_ and TR_TARGET_ defines once code is moved to each architectures port library
-
-   /* X86 */
-   #if defined(TR_HOST_X86) && defined(TR_TARGET_X86)
-      return true;
-   #endif
-
-   /* PPC */
-   #if defined(TR_HOST_POWER) && defined(TR_TARGET_POWER)
-      return false;
-   #endif
-
-   /* S390 */
-   #if defined(TR_HOST_S390) && defined(TR_TARGET_S390)
-       return false;
-   #endif
-
-   /* ARM */
-   #if defined(TR_HOST_ARM) && defined(TR_TARGET_ARM)
       return false;
    #endif
 

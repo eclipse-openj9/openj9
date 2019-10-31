@@ -30,19 +30,22 @@
 #define MAX_JVMS_IN_HIVE 4
 
 /* structure used to return data obtained through the perf stat interface */
-typedef struct PerfStatData {
+struct PerfStatData
+{
 	u_longlong_t hpi; /* hypervisor pages in since LPAR start */
 	u_longlong_t hpit; /* hypervisor page in time since LPAR start in nanoseconds */
 	u_longlong_t pmem; /* assigned physical memory in bytes */
 };
 
-/* structure used to send data between JVMS */
-typedef struct HiveData {
+/* structure used to send data between JVMs */
+struct HiveData
+{
 	long 			jvmId; /* unique id assigned to JVM on command line */
 	u_longlong_t	currentHpi; /* hpi value for last interval */
 	u_longlong_t	assignedPhysical; /* currently assigned physical memory in bytes */
 };
-#endif
+
+#endif /* defined(AIXPPC) */
 
 class OSMemoryAgent : public RuntimeToolsIntervalAgent
 {
@@ -135,7 +138,7 @@ private:
 	u_longlong_t _hpiValues[MAX_JVMS_IN_HIVE];
 	u_longlong_t _assignedPhysical[MAX_JVMS_IN_HIVE];
 
-#endif
+#endif /* defined(AIXPPC) */
 
 	/*
 	 * Function members
@@ -173,8 +176,7 @@ protected:
 	 *
 	 */
 	void updateFromHive(void);
-
-#endif
+#endif /* defined(AIXPPC) */
 
 public:
 	/**

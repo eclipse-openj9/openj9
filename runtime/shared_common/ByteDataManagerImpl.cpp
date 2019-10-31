@@ -218,6 +218,8 @@ SH_ByteDataManagerImpl::findSingleEntry(J9VMThread* currentThread, const char* k
 	Trc_SHR_BDMI_findSingleEntry_Entry(currentThread, keylen, key, dataType, jvmID);
 
 	if ((found = (BdLinkedListImpl*)hllTableLookup(currentThread, key, (U_16)keylen, true))) {
+		/* set found to found->_next, so that we see the last added item first, which means we will always find the item in the higher layer cache first */
+		found = (BdLinkedListImpl*)found->_next;
 		walk = found;
 		do {
 			const ShcItem* item = walk->_item;
@@ -262,7 +264,8 @@ SH_ByteDataManagerImpl::markAllStaleForKey(J9VMThread* currentThread, const char
 
 	if ((found = (BdLinkedListImpl*)hllTableLookup(currentThread, key, (U_16)keylen, true))) {
 		U_16 jvmID = _cache->getCompositeCacheAPI()->getJVMID();
-		
+		/* set found to found->_next, so that we see the last added item first, which means we will always find the item in the higher layer cache first */
+		found = (BdLinkedListImpl*)found->_next;
 		walk = found;
 		do {
 			const ShcItem* item = walk->_item;
@@ -326,6 +329,8 @@ SH_ByteDataManagerImpl::find(J9VMThread* currentThread, const char* key, UDATA k
 	Trc_SHR_BDMI_find_Entry(currentThread, keylen, key, limitDataType, includePrivateData, firstItem, descriptorPool);
 
 	if ((found = (BdLinkedListImpl*)hllTableLookup(currentThread, key, (U_16)keylen, true))) {
+		/* set found to found->_next, so that we see the last added item first, which means we will always find the item in the higher layer cache first */
+		found = (BdLinkedListImpl*)found->_next;
 		walk = found;
 		do {
 			const ShcItem* item = walk->_item;

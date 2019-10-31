@@ -41,9 +41,21 @@ J9::AheadOfTimeCompile::emitClassChainOffset(uint8_t* cursor, TR_OpaqueClassBloc
    void *classChainForInlinedMethod = sharedCache->rememberClass(classToRemember);
    if (!classChainForInlinedMethod)
       self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("classChainForInlinedMethod == NULL");
-   uintptrj_t classChainForInlinedMethodOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(classChainForInlinedMethod);
+   uintptrj_t classChainForInlinedMethodOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, classChainForInlinedMethod);
    *pointer_cast<uintptrj_t *>(cursor) = classChainForInlinedMethodOffsetInSharedCache;
    return cursor + SIZEPOINTER;
+   }
+
+uintptr_t
+J9::AheadOfTimeCompile::offsetInSharedCacheFromPointer(TR_SharedCache *sharedCache, void *ptr)
+   {
+   uintptr_t offset = 0;
+   if (sharedCache->isPointerInSharedCache(ptr, &offset))
+      return offset;
+   else
+      self()->comp()->failCompilation<J9::ClassChainPersistenceFailure>("Failed to find pointer in SCC");
+
+   return offset;
    }
 
 uintptr_t
@@ -316,7 +328,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
          TR_RelocationRecordValidateInstanceField *fieldRecord = reinterpret_cast<TR_RelocationRecordValidateInstanceField *>(reloRecord);
          uintptrj_t inlinedSiteIndex = reinterpret_cast<uintptrj_t>(relocation->getTargetAddress());
          TR::AOTClassInfo *aotCI = reinterpret_cast<TR::AOTClassInfo*>(relocation->getTargetAddress2());
-         uintptr_t classChainOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(aotCI->_classChain);
+         uintptr_t classChainOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, aotCI->_classChain);
 
          fieldRecord->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
          fieldRecord->setConstantPool(reloTarget, reinterpret_cast<uintptrj_t>(aotCI->_constantPool));
@@ -376,7 +388,7 @@ J9::AheadOfTimeCompile::initializeCommonAOTRelocationHeader(TR::IteratedExternal
 
          TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
          void *romClass = reinterpret_cast<void *>(fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass));
-         uintptr_t romClassOffsetInSharedCache = sharedCache->offsetInSharedCacheFromPointer(romClass);
+         uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
 
          inlinedMethod->setReloFlags(reloTarget, flags);
          inlinedMethod->setInlinedSiteIndex(reloTarget, inlinedSiteIndex);
@@ -1329,7 +1341,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
             cursor++;        // unused field
             if (is64BitTarget)
                {
-               cursor +=4; 
+               cursor +=4;
                }
             traceMsg(self()->comp(), "\n ClassUnloadAssumption \n");
             break;
@@ -1895,7 +1907,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
 
          default:
             traceMsg(self()->comp(), "Unknown Relocation type = %d\n", kind);
-            TR_ASSERT(false, "should be unreachable");
+            TR_ASSERT_FATAL(false, "Unknown Relocation type = %d", kind);
             break;
          }
 

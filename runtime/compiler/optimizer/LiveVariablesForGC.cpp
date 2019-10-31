@@ -30,15 +30,15 @@
 #include "control/Options_inlines.hpp"
 #include "env/StackMemoryRegion.hpp"
 #include "env/TRMemory.hpp"
+#include "il/AutomaticSymbol.hpp"
 #include "il/Block.hpp"
 #include "il/ILOpCodes.hpp"
 #include "il/Node.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/AutomaticSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
 #include "infra/BitVector.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/List.hpp"
@@ -238,11 +238,11 @@ int32_t TR_GlobalLiveVariablesForGC::perform()
       // Perform liveness analysis
       //
       bool ignoreOSRuses = false; // Used to be set to true but we cannot set this to true because a variable may not be live in compiled code but may still be needed (live) in the interpreter
-      /* for mimicInterpreterShape, because OSR points can extend the live range of autos 
+      /* for mimicInterpreterShape, because OSR points can extend the live range of autos
        * autos sharing the same slot in interpreter might end up with overlapped
        * live range if OSRUses are not ignored
        */
-      if (comp()->getOption(TR_MimicInterpreterFrameShape)) 
+      if (comp()->getOption(TR_MimicInterpreterFrameShape))
          ignoreOSRuses = true;
 
       TR_Liveness liveLocals(comp(), optimizer(), comp()->getFlowGraph()->getStructure(), ignoreOSRuses, NULL, false, comp()->getOption(TR_EnableAggressiveLiveness));

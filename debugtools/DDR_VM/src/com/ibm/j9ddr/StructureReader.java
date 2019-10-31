@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
@@ -51,7 +52,7 @@ import com.ibm.j9ddr.logging.LoggerNames;
 public class StructureReader {
 	public static final int VERSION = 1;
 	public static final int J9_STRUCTURES_EYECATCHER = 0xFACEDEB8;	// eyecatcher / magic identifier for a J9 structure file
-	private HashMap<String, StructureDescriptor> structures = null;
+	private Map<String, StructureDescriptor> structures = null;
 
 	private String packageDotBaseName;
 	private String pointerDotName;
@@ -228,7 +229,7 @@ public class StructureReader {
 
 		mapData = stripComments(mapData);
 
-		Map<String, String> aliasMap = new HashMap<String, String>();
+		Map<String, String> aliasMap = new HashMap<>();
 		Matcher mapMatcher = MAP_PATTERN.matcher(mapData);
 
 		while (mapMatcher.find()) {
@@ -317,7 +318,7 @@ public class StructureReader {
 	 * @param structureName name of the structure
 	 * @return map of the fields as FieldName, Offset pair
 	 */
-	public ArrayList<FieldDescriptor> getFields(String structureName) {
+	public List<FieldDescriptor> getFields(String structureName) {
 		StructureDescriptor structure = structures.get(structureName);
 
 		if (structure == null) {
@@ -327,7 +328,7 @@ public class StructureReader {
 		return structure.fields;
 	}
 
-	public ArrayList<ConstantDescriptor> getConstants(String structureName) {
+	public List<ConstantDescriptor> getConstants(String structureName) {
 		StructureDescriptor structure = structures.get(structureName);
 
 		if (structure == null) {
@@ -339,7 +340,7 @@ public class StructureReader {
 
 	private void parse(InputStream inputStream) throws IOException {
 		header = new StructureHeader(inputStream);
-		structures = new HashMap<String, StructureDescriptor>();
+		structures = new HashMap<>();
 		BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
 
 		String line = reader.readLine();
@@ -449,7 +450,7 @@ public class StructureReader {
 
 		if (structures == null) {
 			// initialize the structure map with a sensible initial capacity
-			structures = new HashMap<String, StructureDescriptor>(header.getStructureCount());
+			structures = new HashMap<>(header.getStructureCount());
 		}
 
 		for (int i = 0; i < header.getStructureCount(); i++) {
@@ -471,9 +472,9 @@ public class StructureReader {
 			structure.superName = structure.superName.replace("__", "$");
 			structure.sizeOf = ddrStream.readInt();
 			int numberOfFields = ddrStream.readInt();
-			structure.fields = new ArrayList<FieldDescriptor>(numberOfFields);
+			structure.fields = new ArrayList<>(numberOfFields);
 			int numberOfConstants = ddrStream.readInt();
-			structure.constants = new ArrayList<ConstantDescriptor>(numberOfConstants);
+			structure.constants = new ArrayList<>(numberOfConstants);
 
 			logger.logp(FINER, null, null, "{0} super {1} sizeOf {2}",
 					new Object[] { structure.name, structure.superName, structure.sizeOf });
@@ -554,8 +555,8 @@ public class StructureReader {
 		String superName;
 		String pointerName;
 		int sizeOf;
-		ArrayList<FieldDescriptor> fields;
-		ArrayList<ConstantDescriptor> constants;
+		List<FieldDescriptor> fields;
+		List<ConstantDescriptor> constants;
 
 		public StructureDescriptor() {
 			super();
@@ -582,11 +583,11 @@ public class StructureReader {
 			return superName;
 		}
 
-		public ArrayList<FieldDescriptor> getFields() {
+		public List<FieldDescriptor> getFields() {
 			return fields;
 		}
 
-		public ArrayList<ConstantDescriptor> getConstants() {
+		public List<ConstantDescriptor> getConstants() {
 			return constants;
 		}
 
@@ -599,8 +600,8 @@ public class StructureReader {
 			if (parts.length < 3 || parts.length > 4) {
 				throw new IllegalArgumentException(String.format("Superset file line is invalid: %s", line));
 			}
-			constants = new ArrayList<ConstantDescriptor>();
-			fields = new ArrayList<FieldDescriptor>();
+			constants = new ArrayList<>();
+			fields = new ArrayList<>();
 			name = parts[1];
 			pointerName = parts[2];
 
@@ -785,7 +786,7 @@ public class StructureReader {
 			}
 
 			int count = (parts.length - 3) / 2;
-			Collection<FieldDescriptor> result = new ArrayList<FieldDescriptor>(count);
+			Collection<FieldDescriptor> result = new ArrayList<>(count);
 
 			final String declaredName = parts[2];
 			for (int i = 0; i < count; i++) {

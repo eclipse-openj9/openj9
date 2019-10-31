@@ -29,10 +29,10 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 import com.ibm.oti.vm.VM;
 
+import openj9.internal.management.ClassLoaderInfoBaseImpl;
 import openj9.management.internal.InvalidDumpOptionExceptionBase;
 import openj9.management.internal.LockInfoBase;
 import openj9.management.internal.ThreadInfoBase;
@@ -84,6 +84,11 @@ public class DiagnosticUtils {
 	private static final String DIAGNOSTICS_DUMP_SNAP = "Dump.snap"; //$NON-NLS-1$
 	private static final String DIAGNOSTICS_DUMP_SYSTEM = "Dump.system"; //$NON-NLS-1$
 
+	/**
+	 * Get JVM statistics
+	 */
+	private static final String DIAGNOSTICS_STAT_CLASS = "jstat.class"; //$NON-NLS-1$
+	
 	/**
 	 * Key for the command sent to executeDiagnosticCommand()
 	 */
@@ -152,7 +157,7 @@ public class DiagnosticUtils {
 	 * @param diagnosticCommand String containing the command and options
 	 * @return command result or diagnostic information in case of error
 	 */
-	public static DiagnosticProperties executeDiagnosticCommand(String diagnosticCommand) {
+	static DiagnosticProperties executeDiagnosticCommand(String diagnosticCommand) {
 		IPC.logMessage("executeDiagnosticCommand: ", diagnosticCommand); //$NON-NLS-1$
 
 		DiagnosticProperties result;
@@ -288,6 +293,19 @@ public class DiagnosticUtils {
 		return DiagnosticProperties.makeCommandSucceeded();
 	}
 
+	private static DiagnosticProperties getJstatClass(String diagnosticCommand) {
+		IPC.logMessage("jstat command : ", diagnosticCommand); //$NON-NLS-1$
+		StringWriter buffer = new StringWriter(100);
+		PrintWriter bufferPrinter = new PrintWriter(buffer);
+		bufferPrinter.println("Class Loaded    Class Unloaded"); //$NON-NLS-1$
+		// "Class Loaded".length = 12, "Class Unloaded".length = 14
+		bufferPrinter.printf("%12d    %14d%n", //$NON-NLS-1$
+				Long.valueOf(ClassLoaderInfoBaseImpl.getLoadedClassCountImpl()),
+				Long.valueOf(ClassLoaderInfoBaseImpl.getUnloadedClassCountImpl()));
+		bufferPrinter.flush();
+		return DiagnosticProperties.makeStringResult(buffer.toString());
+	}
+	
 	private static DiagnosticProperties doHelp(String diagnosticCommand) {
 		String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
 		/* print a list of the available commands */
@@ -321,12 +339,12 @@ public class DiagnosticUtils {
 			+ " Options:%n"
 			+ "          all : include all objects, including dead objects (this is the default option)%n"
 			+ "         live : include all objects after a global GC collection%n"
-			+ "NOTE: this utility may significantly affect the performance of the target VM.%n";
+			+ "NOTE: this utility might significantly affect the performance of the target VM.%n";
 
 	@SuppressWarnings("nls")
 	private static final String DIAGNOSTICS_GC_RUN_HELP = "Run the garbage collector.%n"
 			+ FORMAT_PREFIX + DIAGNOSTICS_GC_RUN + "%n"
-			+ "NOTE: this utility may significantly affect the performance of the target VM.%n";
+			+ "NOTE: this utility might significantly affect the performance of the target VM.%n";
 
 	@SuppressWarnings("nls")
 	private static final String DIAGNOSTICS_THREAD_PRINT_HELP = "List thread information.%n"
@@ -345,6 +363,10 @@ public class DiagnosticUtils {
 
 	private static final String DIAGNOSTICS_DUMP_SYSTEM_HELP = "Create a native core file.%n" //$NON-NLS-1$
 			+ FORMAT_PREFIX + DIAGNOSTICS_DUMP_SYSTEM + FILE_PATH_HELP;
+
+	private static final String DIAGNOSTICS_JSTAT_CLASS_HELP = "Show JVM classloader statistics.%n" //$NON-NLS-1$
+			+ FORMAT_PREFIX + DIAGNOSTICS_STAT_CLASS + "%n" //$NON-NLS-1$
+			+ "NOTE: this utility might significantly affect the performance of the target VM.%n"; //$NON-NLS-1$
 
 	/* Initialize the command and help text tables */
 	static {
@@ -377,6 +399,8 @@ public class DiagnosticUtils {
 
 		commandTable.put(DIAGNOSTICS_DUMP_SYSTEM, DiagnosticUtils::doDump);
 		helpTable.put(DIAGNOSTICS_DUMP_SYSTEM, DIAGNOSTICS_DUMP_SYSTEM_HELP);
+		
+		commandTable.put(DIAGNOSTICS_STAT_CLASS, DiagnosticUtils::getJstatClass);
+		helpTable.put(DIAGNOSTICS_STAT_CLASS, DIAGNOSTICS_JSTAT_CLASS_HELP);
 	}
-
 }

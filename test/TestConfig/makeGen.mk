@@ -40,32 +40,11 @@ include $(CURRENT_DIR)$(D)featureSettings.mk
 -include $(CURRENT_DIR)$(D)autoGenEnv.mk
 include $(CURRENT_DIR)$(D)envSettings.mk
 
-ifeq ($(JAVA_VERSION), SE80)
-	JDK_VERSION:=8
-endif
-ifeq ($(JAVA_VERSION), SE90)
-	JDK_VERSION:=9
-endif
-ifeq ($(JAVA_VERSION), SE100)
-	JDK_VERSION:=10
-endif
-ifeq ($(JAVA_VERSION), SE110)
-	JDK_VERSION:=11
-endif
-ifeq ($(JAVA_VERSION), SE120)
-	JDK_VERSION:=12
-endif
-ifeq ($(JAVA_VERSION), SE130)
-	JDK_VERSION:=13
-endif
-
 autoconfig:
-	perl configure.pl
+	perl scripts$(D)configure.pl
 
 autogen: autoconfig
-	cd $(CURRENT_DIR)$(D)scripts$(D)testKitGen; \
-	perl testKitGen.pl --graphSpecs=$(SPEC) --jdkVersion=$(JDK_VERSION) --impl=$(JDK_IMPL) --buildList=${BUILD_LIST} --iterations=$(TEST_ITERATIONS) --testFlag=$(TEST_FLAG) $(OPTS); \
-	cd $(CURRENT_DIR);
+	${TEST_JDK_HOME}/bin/java -cp ./bin/TestKitGen.jar org.testKitGen.MainRunner --spec=$(SPEC) --jdkVersion=$(JDK_VERSION) --impl=$(JDK_IMPL) --buildList=${BUILD_LIST} --iterations=$(TEST_ITERATIONS) --testFlag=$(TEST_FLAG) $(OPTS)
 
 AUTOGEN_FILES = $(wildcard $(CURRENT_DIR)$(D)jvmTest.mk)
 AUTOGEN_FILES += $(wildcard $(CURRENT_DIR)$(D)machineConfigure.mk)

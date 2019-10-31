@@ -2962,3 +2962,5 @@ TraceExit-Exception=Trc_SHR_CM_startup_Exit12 Overhead=1 Level=1 Template="CM st
 TraceExit-Exception=Trc_SHR_CM_startup_Exit13 Overhead=1 Level=1 Template="CM startup: Failed to read the cache. Cache is corrupted"
 TraceExit-Exception=Trc_SHR_CM_updateROMClassResource_Exit7 Overhead=1 Level=1 Template="CM updateROMClassResource: The address to be updated %p (length %zu) is not in top layer cache."
 TraceException=Trc_SHR_CM_storeSharedData_OverwriteExisting_NotInTopLayer Overhead=1 Level=2 Template="CM storeSharedData: Existing data in the shared cache (data->address %p, foundDatalen %zu) is not in top layer cache."
+TraceEvent=Trc_SHR_RRM_storeNew_existingEntryRemoved Overhead=1 Level=6 Template="RRM storeNew: removed existing item 0x%p from the hashTable"
+TraceExit-Exception=Trc_SHR_CM_updateROMClassResource_Exit8 Overhead=1 Level=1 Template="CM updateROMClassResource: Failed to allocate memory for ROMClass resource"

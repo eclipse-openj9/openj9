@@ -30,9 +30,9 @@
 #include "env/J2IThunk.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 uint8_t *
@@ -49,7 +49,7 @@ TR::S390J9CallSnippet::generateVIThunk(TR::Node * callNode, int32_t argSize, TR:
    uint8_t * thunk, * cursor, * returnValue;
    TR::SymbolReference *dispatcherSymbol;
 
-   if (comp->compileRelocatableCode())
+   if (fej9->storeOffsetToArgumentsInVirtualIndirectThunks())
       thunk = (uint8_t *)comp->trMemory()->allocateMemory(codeSize, heapAlloc);
    else
       thunk = (uint8_t *)cg->allocateCodeMemory(codeSize, true);
@@ -357,7 +357,7 @@ TR::S390J9CallSnippet::emitSnippetBody()
          }
       else
          {
-         uintptrj_t ramMethod = (uintptr_t)methodSymbol->getMethodAddress();
+         uintptrj_t ramMethod = (uintptrj_t)methodSymRef->getSymbol()->castToResolvedMethodSymbol()->getResolvedMethod()->getPersistentIdentifier();
          *(uintptrj_t *) cursor = ramMethod;
          if (comp->getOption(TR_EnableHCR))
             cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);

@@ -94,7 +94,7 @@ extern "C" UDATA jitAMD64Handler(J9VMThread* vmThread, U_32 sigType, void* sigIn
 #endif
 #endif
 
-#if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 extern "C" void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRedefinedClass *classList);
 extern "C" void jitFlushCompilationQueue(J9VMThread * currentThread, J9JITFlushCompilationQueueReason reason);
 #endif
@@ -476,7 +476,7 @@ void codert_init_helpers_and_targets(J9JITConfig * jitConfig, char isSMP)
    jitConfig->getCurrentByteCodeIndexAndIsSameReceiver = getCurrentByteCodeIndexAndIsSameReceiver;
    jitConfig->getJitRegisterMap = getJitRegisterMap;
    jitConfig->jitReportDynamicCodeLoadEvents = jitReportDynamicCodeLoadEvents;
-#if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    jitConfig->jitClassesRedefined = jitClassesRedefined;
    jitConfig->jitFlushCompilationQueue = jitFlushCompilationQueue;
 #endif

@@ -30,6 +30,7 @@
 #include "control/RecompilationInfo.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
+#include "env/j9method.h"
 #include "env/VMJ9.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -56,7 +57,9 @@ TR_PersistentMethodInfo *
 TR_S390Recompilation::getExistingMethodInfo(TR_ResolvedMethod * method)
    {
    // The method was previously compiled. Find its method info block from the
-   // its TR_PersistentJittedBodyInfo.
+   // start PC address. The mechanism is different depending on whether the
+   // method was compiled for sampling or counting.
+   //
    TR_PersistentJittedBodyInfo *bodyInfo = ((TR_ResolvedJ9Method*) method)->getExistingJittedBodyInfo();
    return bodyInfo ? bodyInfo->getMethodInfo() : NULL;
    }
@@ -287,7 +290,7 @@ TR_S390Recompilation::generatePrePrologue()
       }
 
    // Save the preprologue size to the JIT entry point for use of JIT entry point alignment
-   cg->setPreprologueOffset(preprologueSize);
+   cg->setPreJitMethodEntrySize(preprologueSize);
 
    return cursor;
    }

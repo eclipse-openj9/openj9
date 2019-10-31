@@ -134,7 +134,6 @@ extern J9_CFUNC void* j9gc_objaccess_staticReadAddress(J9VMThread *vmThread, J9C
 extern J9_CFUNC IDATA j9gc_objaccess_indexableReadI32(J9VMThread *vmThread, J9IndexableObject *srcObject, I_32 index, UDATA isVolatile);
 extern J9_CFUNC void allocateZeroedTLHPages(J9JavaVM *javaVM, UDATA flag);
 extern J9_CFUNC I_64 j9gc_objaccess_mixedObjectReadI64(J9VMThread *vmThread, j9object_t srcObject, UDATA offset, UDATA isVolatile);
-extern J9_CFUNC UDATA j9mm_arraylet_identification(J9JavaVM *javaVM, UDATA *arrayletLeafSize, UDATA *offset, UDATA *width, UDATA *mask, UDATA *result);
 extern J9_CFUNC UDATA j9gc_objaccess_indexableReadU32(J9VMThread *vmThread, J9IndexableObject *srcObject, I_32 index, UDATA isVolatile);
 extern J9_CFUNC j9objectmonitor_t* j9gc_objaccess_getLockwordAddress(J9VMThread *vmThread, j9object_t object);
 extern J9_CFUNC j9object_t j9gc_objaccess_readObjectFromInternalVMSlot(J9VMThread *vmThread, j9object_t *srcSlot);
@@ -248,10 +247,8 @@ extern J9_CFUNC void* j9gc_objaccess_jniGetPrimitiveArrayCritical(J9VMThread* vm
 extern J9_CFUNC void j9gc_objaccess_jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, jarray array, void * elems, jint mode);
 extern J9_CFUNC const jchar* j9gc_objaccess_jniGetStringCritical(J9VMThread* vmThread, jstring str, jboolean *isCopy);
 extern J9_CFUNC void j9gc_objaccess_jniReleaseStringCritical(J9VMThread* vmThread, jstring str, const jchar * elems);
-#if defined(J9VM_GC_ARRAYLETS)
 extern J9_CFUNC UDATA j9gc_arraylet_getLeafSize(J9JavaVM* javaVM);
 extern J9_CFUNC UDATA j9gc_arraylet_getLeafLogSize(J9JavaVM* javaVM);
-#endif /* J9VM_GC_ARRAYLETS */
 extern J9_CFUNC void j9gc_get_CPU_times(J9JavaVM *javaVM, U_64* masterCpuMillis, U_64* slaveCpuMillis, U_32* maxThreads, U_32* currentThreads);
 
 

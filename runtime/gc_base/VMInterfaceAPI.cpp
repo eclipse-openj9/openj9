@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,7 +69,6 @@ j9gc_get_omr_hook_interface(OMR_VM *omrVM)
 
 }
 
-#if defined(J9VM_GC_ARRAYLETS)
 /**
  * Returns the arraylet leaf size in bytes
  * @parm jajaVM - the Java VM
@@ -92,6 +91,5 @@ j9gc_arraylet_getLeafLogSize(J9JavaVM* javaVM)
 {
 	return javaVM->arrayletLeafLogSize;
 }
-#endif /* J9VM_GC_ARRAYLETS */
 
 } /* Extern C */

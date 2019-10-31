@@ -162,7 +162,9 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    friend class TR_ClassQueries;
    friend class J9::Options;
    friend class ::OMR::Options;
+#if defined(JITSERVER_SUPPORT)
    friend class FlatPersistentClassInfo;
+#endif
 
    TR_OpaqueClassBlock               *_classId;
    TR_LinkHead0<TR_SubClass>          _subClasses;
@@ -230,11 +232,13 @@ class TR_AddressSet
       _maxAddressRanges(maxAddressRanges)
       {}
 
+#if defined(JITSERVER_SUPPORT)
    void destroy();
-   void getRanges(std::vector<TR_AddressRange> &ranges);
-   void setRanges(const std::vector<TR_AddressRange> &ranges);
-   int32_t getNumberOfRanges() { return _numAddressRanges; }
-   int32_t getMaxRanges() { return _maxAddressRanges; }
+   void getRanges(std::vector<TR_AddressRange> &ranges); // copies the address ranges stored in the current object into a vector
+   void setRanges(const std::vector<TR_AddressRange> &ranges); // loads the address ranges from the vector given as parameter
+   int32_t getNumberOfRanges() const { return _numAddressRanges; }
+   int32_t getMaxRanges() const { return _maxAddressRanges; }
+#endif
 
    void add        (uintptrj_t address){ add(address, address); }
    void add        (uintptrj_t start, uintptrj_t end);
@@ -249,7 +253,6 @@ class TR_AddressSet
       }
 
    };
-
 
 class TR_UnloadedClassPicSite : public OMR::ValueModifyRuntimeAssumption
    {

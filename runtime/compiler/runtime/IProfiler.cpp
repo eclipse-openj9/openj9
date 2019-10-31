@@ -566,7 +566,7 @@ TR_IProfiler::allocate(J9JITConfig *jitConfig)
 
 TR_IProfiler::TR_IProfiler(J9JITConfig *jitConfig)
    : _isIProfilingEnabled(true),
-     _valueProfileMethod(NULL), _maxCount(DEFAULT_PROFILING_COUNT), _lightHashTableMonitor(0), _allowedToGiveInlinedInformation(true),
+     _valueProfileMethod(NULL), _lightHashTableMonitor(0), _allowedToGiveInlinedInformation(true),
      _globalAllocationCount (0), _maxCallFrequency(0), _iprofilerThread(0), _iprofilerOSThread(NULL),
      _workingBufferTail(NULL), _numOutstandingBuffers(0), _numRequests(1), _numRequestsSkipped(0),
      _numRequestsHandedToIProfilerThread(0), _iprofilerThreadExitFlag(0), _iprofilerMonitor(NULL),
@@ -2036,15 +2036,6 @@ TR_IProfiler::getProfilingData(TR_OpaqueMethodBlock *method, uint32_t byteCodeIn
    }
 
 int32_t
-TR_IProfiler::getMaxCount(bool isAOT)
-   {
-   if (!isIProfilingEnabled())
-      return 0;
-
-   return _maxCount;
-   }
-
-int32_t
 TR_IProfiler::getSwitchCountForValue (TR::Node *node, int32_t value, TR::Compilation *comp)
    {
    TR_ByteCodeInfo bcInfo = node->getByteCodeInfo();
@@ -2288,7 +2279,6 @@ TR_IProfiler::setBlockAndEdgeFrequencies(TR::CFG *cfg, TR::Compilation *comp)
       return;
 
    cfg->propagateFrequencyInfoFromExternalProfiler(this);
-   _maxCount = cfg->getMaxFrequency();
 
    static bool traceIProfiling = ((debug("traceIProfiling") != NULL));
    if (traceIProfiling)
@@ -2304,12 +2294,6 @@ TR_IProfiler::setBlockAndEdgeFrequencies(TR::CFG *cfg, TR::Compilation *comp)
             }
          }
       }
-   }
-
-void
-TR_IProfiler::resetProfiler()
-   {
-   _maxCount = DEFAULT_PROFILING_COUNT;
    }
 
 TR_AbstractInfo *
@@ -2973,7 +2957,6 @@ TR_IPBCDataCallGraph::isLocked()
  *
  * @return IPBC_ENTRY_PERSIST_LOCK, IPBC_ENTRY_PERSIST_UNLOADED or IPBC_ENTRY_CAN_PERSIST
  */
-
 uint32_t
 TR_IPBCDataCallGraph::canBeSerialized(TR::PersistentInfo *info)
    {
@@ -4387,26 +4370,26 @@ TR_IPHashedCallSite::operator new (size_t size) throw()
 inline
 uintptrj_t CallSiteProfileInfo::getClazz(int index)
    {
-#if defined(OMR_GC_COMPRESSED_POINTERS) //compressed references
-   //support for convert code, when it is implemented, "uncompress"
-   return (uintptrj_t)TR::Compiler->cls.convertClassOffsetToClassPtr((TR_OpaqueClassBlock *)(uintptrj_t)_clazz[index]);
-#else
-   return (uintptrj_t)_clazz[index]; //things are just stored as regular pointers otherwise
-#endif //OMR_GC_COMPRESSED_POINTERS
+   if (TR::Compiler->om.compressObjectReferences())
+      //support for convert code, when it is implemented, "uncompress"
+      return (uintptrj_t)TR::Compiler->cls.convertClassOffsetToClassPtr((TR_OpaqueClassBlock *)(uintptrj_t)_clazz[index]);
+   else
+      return (uintptrj_t)_clazz[index]; //things are just stored as regular pointers otherwise
    }
 
 inline
 void CallSiteProfileInfo::setClazz(int index, uintptrj_t clazzPointer)
    {
-#if defined(OMR_GC_COMPRESSED_POINTERS) //compressed references
-   //support for convert code, when it is implemented, do compression
-   TR_OpaqueClassBlock * compressedOffset = J9JitMemory::convertClassPtrToClassOffset((J9Class *)clazzPointer); //compressed 32bit pointer
-   //if we end up with something in the top 32bits, our compression is no good...
-   TR_ASSERT((!(0xFFFFFFFF00000000 & (uintptrj_t)compressedOffset)), "Class pointer contains bits in the top word. Pointer given: %p Compressed: %p", clazzPointer, compressedOffset);
-   _clazz[index] = (uint32_t)((uintptrj_t)compressedOffset); //ditch the top zeros
-#else
-   _clazz[index] = (uintptrj_t)clazzPointer;
-#endif //OMR_GC_COMPRESSED_POINTERS
+   if (TR::Compiler->om.compressObjectReferences())
+      {
+      //support for convert code, when it is implemented, do compression
+      TR_OpaqueClassBlock * compressedOffset = J9JitMemory::convertClassPtrToClassOffset((J9Class *)clazzPointer); //compressed 32bit pointer
+      //if we end up with something in the top 32bits, our compression is no good...
+      TR_ASSERT((!(0xFFFFFFFF00000000 & (uintptrj_t)compressedOffset)), "Class pointer contains bits in the top word. Pointer given: %p Compressed: %p", clazzPointer, compressedOffset);
+      _clazz[index] = (uint32_t)((uintptrj_t)compressedOffset); //ditch the top zeros
+      }
+   else
+      _clazz[index] = (uintptrj_t)clazzPointer;
    }
 
 uintptrj_t

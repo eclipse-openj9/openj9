@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -46,7 +46,7 @@ getJ9CfrErrorNormalMessage(J9PortLibrary* portLib, J9CfrError* error, const U_8*
 	errorDescription = getJ9CfrErrorDescription(PORTLIB, error);
 
 	/* J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD=%1$s; class=%3$.*2$s, offset=%4$u */
-	template = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD, "%s;%.*s,%u");
+	template = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_CFR_ERROR_TEMPLATE_NO_METHOD, "%s; class=%.*s, offset=%u");
 
 	allocSize = strlen(template) + strlen(errorDescription) + classNameLength + MAX_INT_SIZE;
 	errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
@@ -65,7 +65,8 @@ getJ9CfrErrorBsmMessage(J9PortLibrary* portLib, J9CfrError* error, const U_8* cl
 	char *errorString = NULL;
 
 	/* J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY=BootstrapMethod (%1$d) arguments contain invalid constantpool entry at index (#%2$u) of type (%3$u); class=%5$.*4$s, offset=%6$u */
-	const char *template = j9nls_lookup_message(J9NLS_ERROR | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY, "(%d)(#%u)(%u);%.*s,%u");
+	const char *template = j9nls_lookup_message(J9NLS_ERROR | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY,
+			"BootstrapMethod (%d) arguments contain invalid constantpool entry at index (#%u) of type (%u); class=%.*s, offset=%u");
 
 	allocSize = strlen(template) + classNameLength + (MAX_INT_SIZE * 4);
 	errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
@@ -106,7 +107,7 @@ getJ9CfrErrorDetailMessageForMethod(J9PortLibrary* portLib, J9CfrError* error, c
 	errorDescription = getJ9CfrErrorDescription(PORTLIB, error);
 
 	/* J9NLS_CFR_ERROR_TEMPLATE_METHOD=%1$s; class=%3$.*2$s, method=%5$.*4$s%7$.*6$s, pc=%8$u */
-	template = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_CFR_ERROR_TEMPLATE_METHOD, "%s;%.*s,%.*s%.*s,%u");
+	template = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_CFR_ERROR_TEMPLATE_METHOD, "%s; class=%.*s, method=%.*s%.*s, pc=%u");
 
 	allocSize = strlen(template) + strlen(errorDescription) + MAX_INT_SIZE + classNameLength + methodNameLength + methodSignatureLength + detailedExceptionLength;
 

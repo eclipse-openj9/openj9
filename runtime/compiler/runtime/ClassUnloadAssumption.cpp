@@ -1241,7 +1241,7 @@ J9::PersistentInfo::addUnloadedClass(
    _unloadedMethodAddresses->add(startAddress, startAddress+size);
    }
 
-
+#if defined(JITSERVER_SUPPORT)
 void TR_AddressSet::destroy()
    {
    jitPersistentFree(_addressRanges);
@@ -1258,6 +1258,7 @@ void TR_AddressSet::setRanges(const std::vector<TR_AddressRange> &ranges)
    std::copy(ranges.begin(), ranges.end(), _addressRanges);
    _numAddressRanges = ranges.size();
    }
+#endif
 
 void TR_AddressSet::trace(char *format, ...)
    {

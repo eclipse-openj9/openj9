@@ -140,11 +140,7 @@ public:
    uintptrj_t getDominantClass(int32_t &sumW, int32_t &maxW);
 
 private:
-#if defined(OMR_GC_COMPRESSED_POINTERS) //compressed references
-   uint32_t _clazz[NUM_CS_SLOTS]; // store them in 32bits
-#else
    uintptrj_t _clazz[NUM_CS_SLOTS]; // store them in either 64 or 32 bits
-#endif //OMR_GC_COMPRESSED_POINTERS
    };
 
 #define TR_IPBCD_FOUR_BYTES  1
@@ -217,11 +213,13 @@ public:
    // returns the number of bytes the equivalent storage structure needs
    virtual uint32_t                   getBytesFootprint() = 0;
 
+#if defined(JITSERVER_SUPPORT)
    // Serialization used for JITServer
    // not sufficient for persisting to the shared cache
    virtual uint32_t canBeSerialized(TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
    virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info) = 0;
    virtual void deserialize(TR_IPBCDataStorageHeader *storage) = 0;
+#endif
 
    virtual uint32_t canBePersisted(TR_J9SharedCache *sharedCache, TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)  = 0;
@@ -402,11 +400,7 @@ public:
    void * operator new (size_t size) throw();
    void * operator new (size_t size, void * placement) {return placement;}
 
-#if defined(OMR_GC_COMPRESSED_POINTERS) //compressed references
-   static const uint32_t IPROFILING_INVALID = ~0; //only take up the bottom 32, class compression issue
-#else
    static const uintptrj_t IPROFILING_INVALID = ~0;
-#endif //OMR_GC_COMPRESSED_POINTERS
 
    virtual uintptrj_t getData(TR::Compilation *comp = NULL);
    virtual CallSiteProfileInfo* getCGData() { return &_csInfo; } // overloaded
@@ -427,9 +421,11 @@ public:
    virtual void setInvalid() { _csInfo.setClazz(0, IPROFILING_INVALID); }
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataCallGraphStorage);}
 
+#if defined(JITSERVER_SUPPORT)
    virtual uint32_t canBeSerialized(TR::PersistentInfo *info);
    virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void deserialize(TR_IPBCDataStorageHeader *storage);
+#endif
 
    virtual uint32_t canBePersisted(TR_J9SharedCache *sharedCache, TR::PersistentInfo *info);
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
@@ -507,7 +503,6 @@ public:
    void shutdown();
    void outputStats();
    void dumpIPBCDataCallGraph(J9VMThread* currentThread);
-   void resetProfiler();
    void startIProfilerThread(J9JavaVM *javaVM);
    void deallocateIProfilerBuffers();
    void stopIProfilerThread();
@@ -624,7 +619,6 @@ private:
    virtual void setBlockAndEdgeFrequencies( TR::CFG *cfg, TR::Compilation *comp);
    virtual bool hasSameBytecodeInfo(TR_ByteCodeInfo & persistentByteCodeInfo, TR_ByteCodeInfo & currentByteCodeInfo, TR::Compilation *comp);
    virtual void getBranchCounters (TR::Node *node, TR::TreeTop *fallThroughTree, int32_t *taken, int32_t *notTaken, TR::Compilation *comp);
-   int32_t getMaxCount(bool isAOT);
    virtual int32_t getSwitchCountForValue (TR::Node *node, int32_t value, TR::Compilation *comp);
    virtual int32_t getSumSwitchCount (TR::Node *node, TR::Compilation *comp);
    virtual int32_t getFlatSwitchProfileCounts (TR::Node *node, TR::Compilation *comp);
@@ -695,8 +689,6 @@ private:
    TR_IPBCDataAllocation         **_allocHashTable;
 #endif
 
-   // block frequency
-   int32_t                         _maxCount;
    // giving out profiling information for inlined calls
    bool                            _allowedToGiveInlinedInformation;
    int32_t                         _classLoadTimeStampGap;

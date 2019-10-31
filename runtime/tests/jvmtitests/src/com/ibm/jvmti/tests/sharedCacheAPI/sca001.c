@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include "ibmjvmti.h"
 #include "jvmti_test.h"
 
-#define INVALID_COM_IBM_ITERATE_SHARED_CACHES_VERSION (COM_IBM_ITERATE_SHARED_CACHES_VERSION_4 + 1)
+#define INVALID_COM_IBM_ITERATE_SHARED_CACHES_VERSION (COM_IBM_ITERATE_SHARED_CACHES_VERSION_5 + 1)
 #define INVALID_COM_IBM_ITERATE_SHARED_CACHES_NO_FLAGS (COM_IBM_ITERATE_SHARED_CACHES_NO_FLAGS + 100)
 #define INVALID_CACHE_TYPE 3
 
@@ -32,6 +32,7 @@ static jint JNICALL validateSharedCacheInfo(jvmtiEnv *jvmti, jvmtiSharedCacheInf
 static jint JNICALL validateSharedCacheInfoVersion2(jvmtiEnv *jvmti, jvmtiSharedCacheInfo *cache_info, jobject user_data);
 static jint JNICALL validateSharedCacheInfoVersion3(jvmtiEnv *jvmti, jvmtiSharedCacheInfo *cache_info, jobject user_data);
 static jint JNICALL validateSharedCacheInfoVersion4(jvmtiEnv *jvmti, jvmtiSharedCacheInfo *cache_info, jobject user_data);
+static jint JNICALL validateSharedCacheInfoVersion5(jvmtiEnv *jvmti, jvmtiSharedCacheInfo *cache_info, jobject user_data);
 static int checkAddrMode(int addrMode, int version);
 
 static agentEnv * env;
@@ -41,6 +42,7 @@ static int cacheCount = 0;
 static int cacheCountVersion2 = 0;
 static int cacheCountVersion3 = 0;
 static int cacheCountVersion4 = 0;
+static int cacheCountVersion5 = 0;
 
 jint JNICALL
 sca001(agentEnv * agent_env, char * args)
@@ -134,6 +136,23 @@ validateSharedCacheInfoVersion4(jvmtiEnv *jvmti, jvmtiSharedCacheInfo *cache_inf
 	}
 
 	cacheCountVersion4++;
+	return JNI_OK;
+}
+
+static jint JNICALL
+validateSharedCacheInfoVersion5(jvmtiEnv *jvmti, jvmtiSharedCacheInfo *cache_info, jobject user_data)
+{
+	if (0 != checkAddrMode((int)cache_info->addrMode, COM_IBM_ITERATE_SHARED_CACHES_VERSION_5)) {
+		error(env, JVMTI_ERROR_INVALID_TYPESTATE, "Field addrMode of jvmtiSharedCacheInfo is wrong when passing COM_IBM_ITERATE_SHARED_CACHES_VERSION_5 to iterateSharedCacheFunction \n");
+		return JNI_EINVAL;
+	}
+	
+	if (0 != cache_info->layer) {
+		error(env, JVMTI_ERROR_INVALID_TYPESTATE, "Field layer of jvmtiSharedCacheInfo is wrong when passing COM_IBM_ITERATE_SHARED_CACHES_VERSION_5 to iterateSharedCacheFunction \n");
+		return JNI_EINVAL;
+	}
+
+	cacheCountVersion5 ++;
 	return JNI_OK;
 }
 
@@ -296,6 +315,35 @@ Java_tests_sharedclasses_options_TestSharedCacheJvmtiAPI_iterateSharedCache(JNIE
 			(*jni_env)->ReleaseStringUTFChars(jni_env, cacheDir, (const char *)dir);
 		}
 		error(env, JVMTI_ERROR_INTERNAL, "iterateSharedCacheFunction: Number of caches found using COM_IBM_ITERATE_SHARED_CACHES_VERSION_1 and COM_IBM_ITERATE_SHARED_CACHES_VERSION_4 are different \n");
+		return (jint)-1;
+	}
+	
+	/* check for invalid flags field when passing in COM_IBM_ITERATE_SHARED_CACHES_VERSION_5 */
+	err = (iterateSharedCacheFunction)(jvmti_env, COM_IBM_ITERATE_SHARED_CACHES_VERSION_5, dir, INVALID_COM_IBM_ITERATE_SHARED_CACHES_NO_FLAGS, useCommandLineValues, validateSharedCacheInfoVersion5, NULL);
+	if (JVMTI_ERROR_ILLEGAL_ARGUMENT != err) {
+		if (NULL != cacheDir) {
+			(*jni_env)->ReleaseStringUTFChars(jni_env, cacheDir, (const char *)dir);
+		}
+		error(env, err, "iterateSharedCacheFunction: invalid flags field test failed when passing in COM_IBM_ITERATE_SHARED_CACHES_VERSION_5\n");
+		return (jint)-1;
+	}
+
+	cacheCountVersion5 = 0;
+	err = (iterateSharedCacheFunction)(jvmti_env, COM_IBM_ITERATE_SHARED_CACHES_VERSION_5, dir, flags, useCommandLineValues, validateSharedCacheInfoVersion5, NULL);
+
+	if (JVMTI_ERROR_NONE != err) {
+		if (cacheDir != NULL) {
+			(*jni_env)->ReleaseStringUTFChars(jni_env, cacheDir, (const char *)dir);
+		}
+		error(env, err, "iterateSharedCacheFunction: iteration of shared caches failed when passing in COM_IBM_ITERATE_SHARED_CACHES_VERSION_5\n");
+		return (jint)-1;
+	}
+
+	if (cacheCountVersion5 != cacheCount) {
+		if (NULL != cacheDir) {
+			(*jni_env)->ReleaseStringUTFChars(jni_env, cacheDir, (const char *)dir);
+		}
+		error(env, JVMTI_ERROR_INTERNAL, "iterateSharedCacheFunction: Number of caches found using COM_IBM_ITERATE_SHARED_CACHES_VERSION_1 and COM_IBM_ITERATE_SHARED_CACHES_VERSION_5 are different \n");
 		return (jint)-1;
 	}
 

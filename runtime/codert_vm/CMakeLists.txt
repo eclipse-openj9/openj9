@@ -59,7 +59,22 @@ elseif(OMR_ARCH_POWER)
 		pnathelp.s
 	)
 elseif(OMR_ARCH_S390)
-	j9vm_gen_asm(znathelp.m4)
+	set(m4_defines )
+	if(OMR_OS_ZOS)
+		if(OMR_ENV_DATA64)
+			list(APPEND m4_defines  TR_64Bit TR_HOST_64BIT)
+		endif()
+		# NOTE: no flags needed for 31 bit
+
+		if(J9VM_JIT_32BIT_USES64BIT_REGISTERS)
+			list(APPEND m4_defines J9VM_JIT_32BIT_USES64BIT_REGISTERS)
+		endif()
+
+		if(J9VM_JIT_FREE_SYSTEM_STACK_POINTER)
+			list(APPEND m4_defines J9VM_JIT_FREE_SYSTEM_STACK_POINTER)
+		endif()
+	endif()
+	j9vm_gen_asm(znathelp.m4 DEFINES ${m4_defines})
 
 	target_sources(j9codert_vm PRIVATE
 		znathelp.s

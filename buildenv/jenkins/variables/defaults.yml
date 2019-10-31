@@ -106,7 +106,7 @@ ppc64le_linux:
     11: '/usr/lib/jvm/adoptojdk-java-11'
     12: '/usr/lib/jvm/adoptojdk-java-11'
     13: '/usr/lib/jvm/adoptojdk-java-12'
-    next: '/usr/lib/jvm/adoptojdk-java-12'
+    next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
     8: 'linux-ppc64le-normal-server-release'
     11: 'linux-ppc64le-normal-server-release'
@@ -159,7 +159,7 @@ s390x_linux:
     11: '/usr/lib/jvm/adoptojdk-java-11'
     12: '/usr/lib/jvm/adoptojdk-java-11'
     13: '/usr/lib/jvm/adoptojdk-java-12'
-    next: '/usr/lib/jvm/adoptojdk-java-12'
+    next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
     8: 'linux-s390x-normal-server-release'
     11: 'linux-s390x-normal-server-release'
@@ -210,7 +210,7 @@ ppc64_aix:
     11: '/usr/java11_64'
     12: '/usr/java11_64'
     13: '/usr/java12_64'
-    next: '/usr/java12_64'
+    next: '/usr/java13_64'
   release:
     8: 'aix-ppc64-normal-server-release'
     11: 'aix-ppc64-normal-server-release'
@@ -243,8 +243,8 @@ ppc64_aix:
       8: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
       11: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
       12: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
-      13: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
-      next: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
+      13: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
+      next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
   excluded_tests:
     8:
       ? special.system
@@ -263,7 +263,7 @@ x86-64_linux:
     11: '/usr/lib/jvm/jdk-11'
     12: '/usr/lib/jvm/jdk-11'
     13: '/usr/lib/jvm/adoptojdk-java-12'
-    next: '/usr/lib/jvm/adoptojdk-java-12'
+    next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
     8: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
@@ -286,11 +286,11 @@ x86-64_linux:
     13: '--openssl-version=1.1.1a'
     next: '--openssl-version=1.1.1a'
   extra_configure_options:
-    8: '--with-openssl=fetched'
-    11: '--with-openssl=fetched'
-    12: '--with-openssl=fetched'
-    13: '--with-openssl=fetched'
-    next: '--with-openssl=fetched'
+    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
   build_env:
     cmd:
       8: 'source /opt/rh/devtoolset-7/enable'
@@ -314,7 +314,7 @@ x86-64_linux_cm:
     11: '/usr/lib/jvm/jdk-11'
     12: '/usr/lib/jvm/jdk-11'
     13: '/usr/lib/jvm/adoptojdk-java-12'
-    next: '/usr/lib/jvm/adoptojdk-java-12'
+    next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
     8: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
@@ -337,11 +337,11 @@ x86-64_linux_cm:
     13: '--openssl-version=1.1.1a'
     next: '--openssl-version=1.1.1a'
   extra_configure_options:
-    8: '--with-cmake --disable-ddr --with-openssl=fetched'
-    11: '--with-cmake --disable-ddr --with-openssl=fetched'
-    12: '--with-cmake --disable-ddr --with-openssl=fetched'
-    13: '--with-cmake --disable-ddr --with-openssl=fetched'
-    next: '--with-cmake --disable-ddr --with-openssl=fetched'
+    8: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
+    11: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    12: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
+    13: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
+    next: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
   extra_make_options:
     8: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
     11: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
@@ -380,7 +380,7 @@ x86-64_linux_xl:
     11: '/usr/lib/jvm/jdk-11'
     12: '/usr/lib/jvm/jdk-11'
     13: '/usr/lib/jvm/adoptojdk-java-12'
-    next: '/usr/lib/jvm/adoptojdk-java-12'
+    next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
     8: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
@@ -403,11 +403,11 @@ x86-64_linux_xl:
     13: '--openssl-version=1.1.1a'
     next: '--openssl-version=1.1.1a'
   extra_configure_options:
-    8: '--with-noncompressedrefs --with-openssl=fetched'
-    11: '--with-noncompressedrefs --with-openssl=fetched'
-    12: '--with-noncompressedrefs --with-openssl=fetched'
-    13: '--with-noncompressedrefs --with-openssl=fetched'
-    next: '--with-noncompressedrefs --with-openssl=fetched'
+    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
+    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
+    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
+    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
+    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
   build_env:
     cmd:
       8: 'source /opt/rh/devtoolset-7/enable'
@@ -425,6 +425,34 @@ x86-64_linux_xl:
     13:
       ? special.system
 #========================================#
+# Linux Aarch 64bits Large Heap
+#========================================#
+aarch64_linux_xl:
+  boot_jdk:
+    11: '/usr/lib/jvm/adoptojdk-java-11'
+  release:
+    11: 'linux-aarch64-normal-server-release'
+  freemarker: '/home/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
+  extra_configure_options:
+    11: '--with-noncompressedrefs'
+  node_labels:
+    build:
+      11: 'ci.role.build && hw.arch.aarch64 && sw.os.cent.7'
+#========================================#
+# Linux Aarch 64bits Compressed Pointers
+#========================================#
+aarch64_linux:
+  boot_jdk:
+    11: '/usr/lib/jvm/adoptojdk-java-11'
+  release:
+    11: 'linux-aarch64-normal-server-release'
+  freemarker: '/home/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
+  node_labels:
+    build:
+      11: 'ci.role.build && hw.arch.aarch64 && sw.os.cent.7'
+#========================================#
 # Windows x86 64bits Compressed Pointers
 #========================================#
 x86-64_windows:
@@ -433,7 +461,7 @@ x86-64_windows:
     11: '/cygdrive/c/openjdk/jdk11'
     12: '/cygdrive/c/openjdk/jdk11'
     13: '/cygdrive/c/openjdk/jdk12'
-    next: '/cygdrive/c/openjdk/jdk12'
+    next: '/cygdrive/c/openjdk/jdk13'
   release:
     8: 'windows-x86_64-normal-server-release'
     11: 'windows-x86_64-normal-server-release'
@@ -478,7 +506,7 @@ x86-64_windows_xl:
     11: '/cygdrive/c/openjdk/jdk11'
     12: '/cygdrive/c/openjdk/jdk11'
     13: '/cygdrive/c/openjdk/jdk12'
-    next: '/cygdrive/c/openjdk/jdk12'
+    next: '/cygdrive/c/openjdk/jdk13'
   release:
     8: 'windows-x86_64-normal-server-release'
     11: 'windows-x86_64-normal-server-release'
@@ -552,7 +580,7 @@ x86-64_mac:
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
     12: '/Users/jenkins/bootjdks/adoptojdk-java-11'
     13: '/Users/jenkins/bootjdks/adoptojdk-java-12'
-    next: '/Users/jenkins/bootjdks/adoptojdk-java-12'
+    next: '/Users/jenkins/bootjdks/adoptojdk-java-13'
   release:
     8: 'macosx-x86_64-normal-server-release'
     11: 'macosx-x86_64-normal-server-release'
@@ -584,8 +612,6 @@ x86-64_mac:
     vars:
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
   excluded_tests:
-    8:
-      ? special.system
     11:
       ? special.system
     12:
@@ -601,7 +627,7 @@ x86-64_mac_xl:
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
     12: '/Users/jenkins/bootjdks/adoptojdk-java-11'
     13: '/Users/jenkins/bootjdks/adoptojdk-java-12'
-    next: '/Users/jenkins/bootjdks/adoptojdk-java-12'
+    next: '/Users/jenkins/bootjdks/adoptojdk-java-13'
   release:
     8: 'macosx-x86_64-normal-server-release'
     11: 'macosx-x86_64-normal-server-release'

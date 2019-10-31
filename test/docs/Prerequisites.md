@@ -24,9 +24,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
   * ant 1.7.1 or above with ant-contrib.jar
   * make 4.1 or above
-  * perl 5.10.1 or above with JSON, Text::CSV and XML::Parser module installed
+  * perl 5.10.1 or above** 
   * curl 7.20.0 or above (needs -J/--remote-header-name support)
   
   * docker (needed if you wish to run docker-based application tests)
 
 Note for Windows testing, cygwin is also required.  
+
+** If using old Perl based Testkitgen, need additional JSON, Text::CSV and XML::Parser module installed

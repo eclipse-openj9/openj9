@@ -31,6 +31,7 @@
 #include "compile/ResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
+#include "env/j9method.h"
 #include "env/VMJ9.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"

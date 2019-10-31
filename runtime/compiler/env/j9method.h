@@ -110,56 +110,56 @@ class TR_J9MethodBase : public TR::Method
 public:
    TR_ALLOC(TR_Memory::Method)
 
-   static bool                   isBigDecimalNameAndSignature(J9UTF8 *name, J9UTF8 *signature);
-   static bool                   isBigDecimalMethod(J9ROMMethod * romMethod, J9ROMClass * romClass);
-   static bool                   isBigDecimalMethod(J9UTF8 * className, J9UTF8 * name, J9UTF8 * signature);
-   static bool                   isBigDecimalMethod(J9Method * j9Method);
-   bool                          isBigDecimalMethod( TR::Compilation * comp = NULL);
-   static bool                   isBigDecimalConvertersNameAndSignature(J9UTF8 *name, J9UTF8 *signature);
-   static bool                   isBigDecimalConvertersMethod(J9ROMMethod * romMethod, J9ROMClass * romClass);
-   static bool                   isBigDecimalConvertersMethod(J9UTF8 * className, J9UTF8 * name, J9UTF8 * signature);
-   static bool                   isBigDecimalConvertersMethod(J9Method * j9Method);
-   bool                          isBigDecimalConvertersMethod( TR::Compilation * comp = NULL);
+   static bool                     isBigDecimalNameAndSignature(J9UTF8 *name, J9UTF8 *signature);
+   static bool                     isBigDecimalMethod(J9ROMMethod * romMethod, J9ROMClass * romClass);
+   static bool                     isBigDecimalMethod(J9UTF8 * className, J9UTF8 * name, J9UTF8 * signature);
+   static bool                     isBigDecimalMethod(J9Method * j9Method);
+   bool                            isBigDecimalMethod( TR::Compilation * comp = NULL);
+   static bool                     isBigDecimalConvertersNameAndSignature(J9UTF8 *name, J9UTF8 *signature);
+   static bool                     isBigDecimalConvertersMethod(J9ROMMethod * romMethod, J9ROMClass * romClass);
+   static bool                     isBigDecimalConvertersMethod(J9UTF8 * className, J9UTF8 * name, J9UTF8 * signature);
+   static bool                     isBigDecimalConvertersMethod(J9Method * j9Method);
+   bool                            isBigDecimalConvertersMethod( TR::Compilation * comp = NULL);
 
-   static bool                   isUnsafeGetPutWithObjectArg(TR::RecognizedMethod rm);
-   static bool                   isUnsafeGetPutBoolean(TR::RecognizedMethod rm);
-   static bool                   isUnsafePut(TR::RecognizedMethod rm);
-   static bool                   isVolatileUnsafe(TR::RecognizedMethod rm);
-   static TR::DataType           unsafeDataTypeForArray(TR::RecognizedMethod rm);
-   static TR::DataType           unsafeDataTypeForObject(TR::RecognizedMethod rm);
-   static bool                   isVarHandleOperationMethod(TR::RecognizedMethod rm);
-   virtual bool                  isVarHandleAccessMethod(TR::Compilation * = NULL);
+   static bool                     isUnsafeGetPutWithObjectArg(TR::RecognizedMethod rm);
+   static bool                     isUnsafeGetPutBoolean(TR::RecognizedMethod rm);
+   static bool                     isUnsafePut(TR::RecognizedMethod rm);
+   static bool                     isVolatileUnsafe(TR::RecognizedMethod rm);
+   static TR::DataType             unsafeDataTypeForArray(TR::RecognizedMethod rm);
+   static TR::DataType             unsafeDataTypeForObject(TR::RecognizedMethod rm);
+   static bool                     isVarHandleOperationMethod(TR::RecognizedMethod rm);
+   virtual bool                    isVarHandleAccessMethod(TR::Compilation * = NULL);
 
-   virtual bool                  isUnsafeWithObjectArg( TR::Compilation * comp = NULL);
-   virtual bool                  isUnsafeCAS(TR::Compilation * = NULL);
-   virtual uint32_t              numberOfExplicitParameters();
-   virtual TR::DataType         parmType(uint32_t parmNumber); // returns the type of the parmNumber'th parameter (0-based)
+   virtual bool                    isUnsafeWithObjectArg( TR::Compilation * comp = NULL);
+   virtual bool                    isUnsafeCAS(TR::Compilation * = NULL);
+   virtual uint32_t                numberOfExplicitParameters();
+   virtual TR::DataType            parmType(uint32_t parmNumber); // returns the type of the parmNumber'th parameter (0-based)
 
-   virtual TR::ILOpCodes         directCallOpCode();
-   virtual TR::ILOpCodes         indirectCallOpCode();
+   virtual TR::ILOpCodes           directCallOpCode();
+   virtual TR::ILOpCodes           indirectCallOpCode();
 
-   virtual TR::DataType         returnType();
-   virtual uint32_t              returnTypeWidth();
-   virtual bool                  returnTypeIsUnsigned();
-   virtual TR::ILOpCodes         returnOpCode();
+   virtual TR::DataType            returnType();
+   virtual uint32_t                returnTypeWidth();
+   virtual bool                    returnTypeIsUnsigned();
+   virtual TR::ILOpCodes           returnOpCode();
 
-   virtual const char *          signature(TR_Memory  *, TR_AllocationKind = heapAlloc); // this actually returns the class, method, and signature!
-   virtual uint16_t              classNameLength();
-   virtual uint16_t              nameLength();
-   virtual uint16_t              signatureLength();
-   virtual char *                classNameChars(); // returns the utf8 of the class that this method is in.
-   virtual char *                nameChars(); // returns the utf8 of the method name
-   virtual char *                signatureChars(); // returns the utf8 of the signature
+   virtual const char *            signature(TR_Memory  *, TR_AllocationKind = heapAlloc); // this actually returns the class, method, and signature!
+   virtual uint16_t                classNameLength();
+   virtual uint16_t                nameLength();
+   virtual uint16_t                signatureLength();
+   virtual char *                  classNameChars(); // returns the utf8 of the class that this method is in.
+   virtual char *                  nameChars(); // returns the utf8 of the method name
+   virtual char *                  signatureChars(); // returns the utf8 of the signature
 
-   void                          setSignature(char *newSignature, int32_t newSignatureLength, TR_Memory *); // JSR292
-   virtual void                  setArchetypeSpecimen(bool b = true);
+   void                            setSignature(char *newSignature, int32_t newSignatureLength, TR_Memory *); // JSR292
+   virtual void                    setArchetypeSpecimen(bool b = true);
 
-   virtual bool                  isConstructor();
-   virtual bool                  isFinalInObject();
+   virtual bool                    isConstructor();
+   virtual bool                    isFinalInObject();
    virtual TR_MethodParameterIterator* getParameterIterator( TR::Compilation &comp, TR_ResolvedMethod *r)
       { return new (comp.trHeapMemory()) TR_J9MethodParameterIterator(*this, comp, r); }
 
-   virtual bool isArchetypeSpecimen(){ return _flags.testAny(ArchetypeSpecimen); }
+   virtual bool                    isArchetypeSpecimen(){ return _flags.testAny(ArchetypeSpecimen); }
 
 protected:
    friend class TR_Debug;
@@ -207,30 +207,30 @@ class TR_ResolvedJ9MethodBase : public TR_ResolvedMethod
 public:
    TR_ResolvedJ9MethodBase(TR_FrontEnd *, TR_ResolvedMethod * owningMethod);
 
-   virtual bool                  isCompilable(TR_Memory *);
-   virtual bool                  isInlineable( TR::Compilation *);
-   virtual bool                  isCold( TR::Compilation *, bool, TR::ResolvedMethodSymbol * sym = NULL);
-   virtual TR_J9VMBase *         fej9();
-   virtual TR_FrontEnd *         fe();
+   virtual bool                    isCompilable(TR_Memory *);
+   virtual bool                    isInlineable( TR::Compilation *);
+   virtual bool                    isCold( TR::Compilation *, bool, TR::ResolvedMethodSymbol * sym = NULL);
+   virtual TR_J9VMBase *           fej9();
+   virtual TR_FrontEnd *           fe();
 
 
-   J9ROMConstantPoolItem * romLiterals();   // address of 1st CP entry (with type being an entry for array indexing)
-   J9ROMFieldRef *         romCPBase();
+   J9ROMConstantPoolItem *         romLiterals();   // address of 1st CP entry (with type being an entry for array indexing)
+   J9ROMFieldRef *                 romCPBase();
 
-   virtual TR_ResolvedMethod    *owningMethod();
-   virtual void                  setOwningMethod(TR_ResolvedMethod *parent);
-   virtual bool                  canAlwaysShareSymbolDespiteOwningMethod(TR_ResolvedMethod *other);
+   virtual TR_ResolvedMethod *     owningMethod();
+   virtual void                    setOwningMethod(TR_ResolvedMethod *parent);
+   virtual bool                    canAlwaysShareSymbolDespiteOwningMethod(TR_ResolvedMethod *other);
 
-   virtual char *                classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len);
-   virtual char *                classSignatureOfFieldOrStatic(int32_t cpIndex, int32_t & len);
-   virtual int32_t               classCPIndexOfFieldOrStatic(int32_t cpIndex);
-   virtual TR_OpaqueClassBlock  *getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex);
-   virtual char *                fieldName (int32_t cpIndex, TR_Memory *, TR_AllocationKind kind = heapAlloc);
-   virtual char *                staticName(int32_t cpIndex, TR_Memory *, TR_AllocationKind kind = heapAlloc);
-   virtual char *                localName (uint32_t slotNumber, uint32_t bcIndex, TR_Memory *){ return NULL; }
-   virtual char *                fieldName (int32_t cpIndex, int32_t & len, TR_Memory *, TR_AllocationKind kind = heapAlloc);
-   virtual char *                staticName(int32_t cpIndex, int32_t & len, TR_Memory *, TR_AllocationKind kind = heapAlloc);
-   virtual char *                localName (uint32_t slotNumber, uint32_t bcIndex, int32_t &len, TR_Memory *){ return NULL; }
+   virtual char *                  classNameOfFieldOrStatic(int32_t cpIndex, int32_t & len);
+   virtual char *                  classSignatureOfFieldOrStatic(int32_t cpIndex, int32_t & len);
+   virtual int32_t                 classCPIndexOfFieldOrStatic(int32_t cpIndex);
+   virtual TR_OpaqueClassBlock  *  getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex);
+   virtual char *                  fieldName (int32_t cpIndex, TR_Memory *, TR_AllocationKind kind = heapAlloc);
+   virtual char *                  staticName(int32_t cpIndex, TR_Memory *, TR_AllocationKind kind = heapAlloc);
+   virtual char *                  localName (uint32_t slotNumber, uint32_t bcIndex, TR_Memory *){ return NULL; }
+   virtual char *                  fieldName (int32_t cpIndex, int32_t & len, TR_Memory *, TR_AllocationKind kind = heapAlloc);
+   virtual char *                  staticName(int32_t cpIndex, int32_t & len, TR_Memory *, TR_AllocationKind kind = heapAlloc);
+   virtual char *                  localName (uint32_t slotNumber, uint32_t bcIndex, int32_t &len, TR_Memory *){ return NULL; }
 
    virtual void setMethodHandleLocation(uintptrj_t *location)
       {
@@ -248,14 +248,14 @@ public:
 
    protected:
 
-   virtual char *  fieldOrStaticName(int32_t cpIndex, int32_t & len, TR_Memory *, TR_AllocationKind kind = heapAlloc);
-   int32_t exceptionData(J9ExceptionHandler *, int32_t, int32_t, int32_t *, int32_t *, int32_t *);
-   virtual TR_J9MethodBase *asJ9Method() = 0;
+   virtual char *                  fieldOrStaticName(int32_t cpIndex, int32_t & len, TR_Memory *, TR_AllocationKind kind = heapAlloc);
+   int32_t                         exceptionData(J9ExceptionHandler *, int32_t, int32_t, int32_t *, int32_t *, int32_t *);
+   virtual TR_J9MethodBase *       asJ9Method() = 0;
 
-   TR_J9VMBase             *_fe;
-   TR_ResolvedMethod       *_owningMethod;
-   J9ROMConstantPoolItem   *_romLiterals;
-   uintptrj_t              *_methodHandleLocation; // Address of a (uncompressed) reference to a j/l/i/MethodHandle
+   TR_J9VMBase *                   _fe;
+   TR_ResolvedMethod *             _owningMethod;
+   J9ROMConstantPoolItem *         _romLiterals;
+   uintptrj_t *                    _methodHandleLocation; // Address of a (uncompressed) reference to a j/l/i/MethodHandle
 
    };
 
@@ -264,103 +264,102 @@ class TR_ResolvedJ9Method : public TR_J9Method, public TR_ResolvedJ9MethodBase
 public:
    TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
-   J9ROMMethod *           romMethod() { return _romMethod; }
+   J9ROMMethod *                   romMethod() { return _romMethod; }
    virtual J9ROMClass *            romClassPtr();
-   virtual J9ConstantPool *      cp();
+   virtual J9ConstantPool *        cp();
 protected:
    virtual J9RAMConstantPoolItem * literals();   // address of 1st CP entry (with type being an entry for array indexing)
 public:
-   J9Method *              ramMethod() { return _ramMethod; }
+   J9Method *                      ramMethod() { return _ramMethod; }
    virtual J9Class *               constantPoolHdr();
    virtual J9ClassLoader *         getClassLoader();
 
+   uint32_t                        methodModifiers();
+   virtual uint32_t                classModifiers();
+   virtual uint32_t                classExtraModifiers();
 
-   uint32_t                methodModifiers();
-   virtual uint32_t              classModifiers();
-   virtual uint32_t              classExtraModifiers();
+   virtual TR::Method *            convertToMethod();
 
-   virtual TR::Method *           convertToMethod();
+   virtual uint32_t                numberOfParameters();
+   virtual uint32_t                numberOfExplicitParameters();
+   virtual TR::DataType            parmType(uint32_t parmNumber); // returns the type of the parmNumber'th parameter (0-based)
+   virtual TR::ILOpCodes           directCallOpCode();
+   virtual TR::ILOpCodes           indirectCallOpCode();
+   virtual TR::DataType            returnType();
+   virtual uint32_t                returnTypeWidth();
+   virtual bool                    returnTypeIsUnsigned();
+   virtual TR::ILOpCodes           returnOpCode();
+   virtual const char *            signature(TR_Memory  *, TR_AllocationKind = heapAlloc);
+   virtual uint16_t                classNameLength();
+   virtual uint16_t                nameLength();
+   virtual uint16_t                signatureLength();
+   virtual char *                  classNameChars(); // returns the utf8 of the class that this method is in.
+   virtual char *                  nameChars(); // returns the utf8 of the method name
+   virtual char *                  signatureChars(); // returns the utf8 of the signature
 
-   virtual uint32_t              numberOfParameters();
-   virtual uint32_t              numberOfExplicitParameters();
-   virtual TR::DataType         parmType(uint32_t parmNumber); // returns the type of the parmNumber'th parameter (0-based)
-   virtual TR::ILOpCodes         directCallOpCode();
-   virtual TR::ILOpCodes         indirectCallOpCode();
-   virtual TR::DataType         returnType();
-   virtual uint32_t              returnTypeWidth();
-   virtual bool                  returnTypeIsUnsigned();
-   virtual TR::ILOpCodes         returnOpCode();
-   virtual const char *          signature(TR_Memory  *, TR_AllocationKind = heapAlloc);
-   virtual uint16_t              classNameLength();
-   virtual uint16_t              nameLength();
-   virtual uint16_t              signatureLength();
-   virtual char *                classNameChars(); // returns the utf8 of the class that this method is in.
-   virtual char *                nameChars(); // returns the utf8 of the method name
-   virtual char *                signatureChars(); // returns the utf8 of the signature
+   virtual bool                    isConstructor();
+   virtual bool                    isStatic();
+   virtual bool                    isAbstract();
+   virtual bool                    isNative();
+   virtual bool                    isSynchronized();
+   virtual bool                    isPrivate();
+   virtual bool                    isProtected();
+   virtual bool                    isPublic();
+   virtual bool                    isFinal();
+   virtual bool                    isStrictFP();
+   virtual bool                    isInterpreted();
+   virtual bool                    isInterpretedForHeuristics();
+   virtual bool                    hasBackwardBranches();
+   virtual bool                    isObjectConstructor();
+   virtual bool                    isNonEmptyObjectConstructor();
+   virtual bool                    isSubjectToPhaseChange(TR::Compilation *comp);
 
-   virtual bool                  isConstructor();
-   virtual bool                  isStatic();
-   virtual bool                  isAbstract();
-   virtual bool                  isNative();
-   virtual bool                  isSynchronized();
-   virtual bool                  isPrivate();
-   virtual bool                  isProtected();
-   virtual bool                  isPublic();
-   virtual bool                  isFinal();
-   virtual bool                  isStrictFP();
-   virtual bool                  isInterpreted();
-   virtual bool                  isInterpretedForHeuristics();
-   virtual bool                  hasBackwardBranches();
-   virtual bool                  isObjectConstructor();
-   virtual bool                  isNonEmptyObjectConstructor();
-   virtual bool                  isSubjectToPhaseChange(TR::Compilation *comp);
-
-   virtual void *                resolvedMethodAddress();
-   virtual void *                startAddressForJittedMethod();
-   virtual void *                startAddressForJNIMethod( TR::Compilation *);
-   virtual void *                startAddressForJITInternalNativeMethod();
-   virtual void *                startAddressForInterpreterOfJittedMethod();
-   virtual bool                  isWarmCallGraphTooBig(uint32_t bcIndex,  TR::Compilation *);
-   virtual void                  setWarmCallGraphTooBig(uint32_t bcIndex,  TR::Compilation *);
-   virtual void                  getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight = NULL);
-   virtual bool                  getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0);
+   virtual void *                  resolvedMethodAddress();
+   virtual void *                  startAddressForJittedMethod();
+   virtual void *                  startAddressForJNIMethod( TR::Compilation *);
+   virtual void *                  startAddressForJITInternalNativeMethod();
+   virtual void *                  startAddressForInterpreterOfJittedMethod();
+   virtual bool                    isWarmCallGraphTooBig(uint32_t bcIndex,  TR::Compilation *);
+   virtual void                    setWarmCallGraphTooBig(uint32_t bcIndex,  TR::Compilation *);
+   virtual void                    getFaninInfo(uint32_t *count, uint32_t *weight, uint32_t *otherBucketWeight = NULL);
+   virtual bool                    getCallerWeight(TR_ResolvedJ9Method *caller, uint32_t *weight, uint32_t pcIndex=~0);
 
 
-   virtual intptrj_t             getInvocationCount();
-   virtual bool                  setInvocationCount(intptrj_t oldCount, intptrj_t newCount);
-   virtual bool                  isSameMethod(TR_ResolvedMethod *);
+   virtual intptrj_t               getInvocationCount();
+   virtual bool                    setInvocationCount(intptrj_t oldCount, intptrj_t newCount);
+   virtual bool                    isSameMethod(TR_ResolvedMethod *);
 
-   virtual uint16_t              numberOfParameterSlots();
-   virtual uint16_t              archetypeArgPlaceholderSlot();
-   virtual uint16_t              numberOfTemps();
-   virtual uint16_t              numberOfPendingPushes();
+   virtual uint16_t                numberOfParameterSlots();
+   virtual uint16_t                archetypeArgPlaceholderSlot();
+   virtual uint16_t                numberOfTemps();
+   virtual uint16_t                numberOfPendingPushes();
 
-   virtual uint8_t *             bytecodeStart();
-   virtual uint32_t              maxBytecodeIndex();
+   virtual uint8_t *               bytecodeStart();
+   virtual uint32_t                maxBytecodeIndex();
 
-   virtual TR_OpaqueClassBlock * containingClass();
+   virtual TR_OpaqueClassBlock *   containingClass();
 
-   static TR_OpaqueClassBlock *  getClassFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, TR::Compilation *comp, uint32_t cpIndex);
-   static TR_OpaqueClassBlock *  getClassOfStaticFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex);
+   static TR_OpaqueClassBlock *    getClassFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, TR::Compilation *comp, uint32_t cpIndex);
+   static TR_OpaqueClassBlock *    getClassOfStaticFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex);
 
-   virtual void *                ramConstantPool();
-   virtual void *                constantPool();
-   virtual TR_OpaqueClassBlock * getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassForAot=false);
-   virtual bool                  validateClassFromConstantPool( TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass);
-   virtual bool                  validateArbitraryClass( TR::Compilation *comp, J9Class *clazz);
+   virtual void *                  ramConstantPool();
+   virtual void *                  constantPool();
+   virtual TR_OpaqueClassBlock *   getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassForAot=false);
+   virtual bool                    validateClassFromConstantPool( TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass);
+   virtual bool                    validateArbitraryClass( TR::Compilation *comp, J9Class *clazz);
 
-   virtual char *                getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length);
-   virtual TR::DataType         getLDCType(int32_t cpIndex);
-   virtual bool                  isClassConstant(int32_t cpIndex);
-   virtual bool                  isStringConstant(int32_t cpIndex);
-   virtual bool                  isMethodTypeConstant(int32_t cpIndex);
-   virtual bool                  isMethodHandleConstant(int32_t cpIndex);
-   virtual uint32_t              intConstant(int32_t cpIndex);
-   virtual uint64_t              longConstant(int32_t cpIndex);
-   virtual float *               floatConstant(int32_t cpIndex);
-   virtual double *              doubleConstant(int32_t cpIndex, TR_Memory *);
-   virtual void *                stringConstant(int32_t cpIndex);
-   virtual bool                  isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false);
+   virtual char *                  getClassNameFromConstantPool(uint32_t cpIndex, uint32_t &length);
+   virtual TR::DataType            getLDCType(int32_t cpIndex);
+   virtual bool                    isClassConstant(int32_t cpIndex);
+   virtual bool                    isStringConstant(int32_t cpIndex);
+   virtual bool                    isMethodTypeConstant(int32_t cpIndex);
+   virtual bool                    isMethodHandleConstant(int32_t cpIndex);
+   virtual uint32_t                intConstant(int32_t cpIndex);
+   virtual uint64_t                longConstant(int32_t cpIndex);
+   virtual float *                 floatConstant(int32_t cpIndex);
+   virtual double *                doubleConstant(int32_t cpIndex, TR_Memory *);
+   virtual void *                  stringConstant(int32_t cpIndex);
+   virtual bool                    isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false);
    /** \brief
     *     Retrieves the underlying type information for a given constant dynamic.
     *
@@ -370,7 +369,7 @@ public:
     *  \return
     *     Opaque pointer to the UTF8 type string.
     */
-   virtual void *                getConstantDynamicTypeFromCP(int32_t cpIndex);
+   virtual void *                  getConstantDynamicTypeFromCP(int32_t cpIndex);
    /** \brief
     *     Determines whether the given constant pool entry is constant dynamic.
     *
@@ -380,7 +379,7 @@ public:
     *  \return
     *     <c>true</c> if the given constant pool entry type is constant dynamic; <c>false</c> otherwise.
     */
-   virtual bool                  isConstantDynamic(int32_t cpIndex);
+   virtual bool                    isConstantDynamic(int32_t cpIndex);
    /** \brief
     *     Determines whether the given constant dynamic is unresolved.
     *
@@ -390,7 +389,7 @@ public:
     *  \return
     *     <c>true</c> if the constant dynamic is unresolved; <c>false</c> otherwise.
     */
-   virtual bool                  isUnresolvedConstantDynamic(int32_t cpIndex);
+   virtual bool                    isUnresolvedConstantDynamic(int32_t cpIndex);
    /** \brief
     *     Retrieve the address of the slot containing the constant dynamic.
     *
@@ -400,102 +399,100 @@ public:
     *  \return
     *     Opaque pointer to the slot containing the resolved constant dynamic value.
     */
-   virtual void *                dynamicConstant(int32_t cpIndex);
-   virtual void *                methodTypeConstant(int32_t cpIndex);
-   virtual bool                  isUnresolvedMethodType(int32_t cpIndex);
-   virtual void *                methodHandleConstant(int32_t cpIndex);
-   virtual bool                  isUnresolvedMethodHandle(int32_t cpIndex);
+   virtual void *                  dynamicConstant(int32_t cpIndex);
+   virtual void *                  methodTypeConstant(int32_t cpIndex);
+   virtual bool                    isUnresolvedMethodType(int32_t cpIndex);
+   virtual void *                  methodHandleConstant(int32_t cpIndex);
+   virtual bool                    isUnresolvedMethodHandle(int32_t cpIndex);
 
-   virtual bool                  isUnresolvedCallSiteTableEntry(int32_t callSiteIndex);
-   virtual void *                callSiteTableEntryAddress(int32_t callSiteIndex);
+   virtual bool                    isUnresolvedCallSiteTableEntry(int32_t callSiteIndex);
+   virtual void *                  callSiteTableEntryAddress(int32_t callSiteIndex);
 #if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
-   virtual bool                  isUnresolvedMethodTypeTableEntry(int32_t cpIndex);
-   virtual void *                methodTypeTableEntryAddress(int32_t cpIndex);
+   virtual bool                    isUnresolvedMethodTypeTableEntry(int32_t cpIndex);
+   virtual void *                  methodTypeTableEntryAddress(int32_t cpIndex);
 #endif
    // J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING is always true and is planed to be cleaned up, always assume it's true
-   virtual bool                  isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex);
-   virtual void *                varHandleMethodTypeTableEntryAddress(int32_t cpIndex);
+   virtual bool                    isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex);
+   virtual void *                  varHandleMethodTypeTableEntryAddress(int32_t cpIndex);
 
-   virtual bool                  fieldsAreSame(int32_t, TR_ResolvedMethod *, int32_t, bool &sigSame);
-   virtual bool                  staticsAreSame(int32_t, TR_ResolvedMethod *, int32_t, bool &sigSame);
+   virtual bool                    fieldsAreSame(int32_t, TR_ResolvedMethod *, int32_t, bool &sigSame);
+   virtual bool                    staticsAreSame(int32_t, TR_ResolvedMethod *, int32_t, bool &sigSame);
 
-   virtual bool                  fieldAttributes (TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation);
+   virtual bool                    fieldAttributes (TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation);
 
+   virtual bool                    staticAttributes( TR::Compilation *, int32_t cpIndex, void * *, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOValidation);
 
-   virtual bool                  staticAttributes( TR::Compilation *, int32_t cpIndex, void * *, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOValidation);
+   virtual char *                  fieldNameChars(int32_t cpIndex, int32_t & len);
+   virtual char *                  staticNameChars(int32_t cpIndex, int32_t & len);
+   virtual char *                  fieldSignatureChars(int32_t cpIndex, int32_t & len);
+   virtual char *                  staticSignatureChars(int32_t cpIndex, int32_t & len);
+   virtual char *                  localName (uint32_t slotNumber, uint32_t bcIndex, TR_Memory *);
+   virtual char *                  localName (uint32_t slotNumber, uint32_t bcIndex, int32_t &len, TR_Memory *);
 
-   virtual char *                fieldNameChars(int32_t cpIndex, int32_t & len);
-   virtual char *                staticNameChars(int32_t cpIndex, int32_t & len);
-   virtual char *                fieldSignatureChars(int32_t cpIndex, int32_t & len);
-   virtual char *                staticSignatureChars(int32_t cpIndex, int32_t & len);
-   virtual char *                localName (uint32_t slotNumber, uint32_t bcIndex, TR_Memory *);
-   virtual char *                localName (uint32_t slotNumber, uint32_t bcIndex, int32_t &len, TR_Memory *);
+   virtual TR_OpaqueClassBlock *   classOfStatic(int32_t cpIndex, bool returnClassForAOT = false);
+   virtual TR_OpaqueClassBlock *   classOfMethod();
+   virtual uint32_t                classCPIndexOfMethod(uint32_t methodCPIndex);
+   virtual void * &                addressOfClassOfMethod();
 
-   virtual TR_OpaqueClassBlock * classOfStatic(int32_t cpIndex, bool returnClassForAOT = false);
-   virtual TR_OpaqueClassBlock * classOfMethod();
-   virtual uint32_t              classCPIndexOfMethod(uint32_t methodCPIndex);
-   virtual void * & addressOfClassOfMethod();
+   virtual uint32_t                vTableSlot(uint32_t);
 
-   virtual uint32_t              vTableSlot(uint32_t);
+   virtual bool                    isCompilable(TR_Memory *);
 
-   virtual bool                  isCompilable(TR_Memory *);
+   static TR_OpaqueMethodBlock *   getVirtualMethod(TR_J9VMBase *fej9, J9ConstantPool *cp, I_32 cpIndex, UDATA *vTableOffset, bool *unresolvedInCP);
+   static TR_OpaqueClassBlock  *   getInterfaceITableIndexFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex, uintptrj_t *pITableIndex);
 
-   static TR_OpaqueMethodBlock * getVirtualMethod(TR_J9VMBase *fej9, J9ConstantPool *cp, I_32 cpIndex, UDATA *vTableOffset, bool *unresolvedInCP);
-   static TR_OpaqueClassBlock  * getInterfaceITableIndexFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, int32_t cpIndex, uintptrj_t *pITableIndex);
+   virtual TR_ResolvedMethod *     getResolvedStaticMethod ( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
+   virtual TR_ResolvedMethod *     getResolvedSpecialMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
+   virtual TR_ResolvedMethod *     getResolvedVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP);
+   virtual TR_ResolvedMethod *     getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP);
+   virtual TR_OpaqueClassBlock *   getResolvedInterfaceMethod(int32_t cpIndex, uintptrj_t * pITableIndex);
 
-   virtual TR_ResolvedMethod *   getResolvedStaticMethod ( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
-   virtual TR_ResolvedMethod *   getResolvedSpecialMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
-   virtual TR_ResolvedMethod *   getResolvedVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP);
-   virtual TR_ResolvedMethod *   getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP);
-   virtual TR_OpaqueClassBlock * getResolvedInterfaceMethod(int32_t cpIndex, uintptrj_t * pITableIndex);
+   virtual TR_ResolvedMethod *     getResolvedDynamicMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
+   virtual TR_ResolvedMethod *     getResolvedHandleMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
+   virtual TR_ResolvedMethod *     getResolvedHandleMethodWithSignature( TR::Compilation *, int32_t cpIndex, char *signature);
 
-   virtual TR_ResolvedMethod *   getResolvedDynamicMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
-   virtual TR_ResolvedMethod *   getResolvedHandleMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP);
-   virtual TR_ResolvedMethod *   getResolvedHandleMethodWithSignature( TR::Compilation *, int32_t cpIndex, char *signature);
+   virtual uint32_t                getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, int32_t cpIndex);
+   virtual TR_ResolvedMethod *     getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex);
+   virtual TR_ResolvedMethod *     getResolvedInterfaceMethod( TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
+   virtual TR_ResolvedMethod *     getResolvedVirtualMethod( TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t virtualCallOffset, bool ignoreRtResolve = true);
 
-   virtual uint32_t              getResolvedInterfaceMethodOffset(TR_OpaqueClassBlock * classObject, int32_t cpIndex);
-   virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex);
-   virtual TR_ResolvedMethod *   getResolvedInterfaceMethod( TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t cpIndex);
-   virtual TR_ResolvedMethod *   getResolvedVirtualMethod( TR::Compilation *, TR_OpaqueClassBlock * classObject, int32_t virtualCallOffset, bool ignoreRtResolve = true);
+   virtual bool                    virtualMethodIsOverridden();
+   virtual void                    setVirtualMethodIsOverridden();
+   virtual void *                  addressContainingIsOverriddenBit();
+   virtual int32_t                 virtualCallSelector(uint32_t cpIndex);
 
-   virtual bool                  virtualMethodIsOverridden();
-   virtual void                  setVirtualMethodIsOverridden();
-   virtual void *                addressContainingIsOverriddenBit();
-   virtual int32_t               virtualCallSelector(uint32_t cpIndex);
+   virtual int32_t                 exceptionData(int32_t exceptionNumber, int32_t * startIndex, int32_t * endIndex, int32_t * catchType);
+   virtual uint32_t                numberOfExceptionHandlers();
 
-   virtual int32_t               exceptionData(int32_t exceptionNumber, int32_t * startIndex, int32_t * endIndex, int32_t * catchType);
-   virtual uint32_t              numberOfExceptionHandlers();
+   virtual bool                    isNewInstanceImplThunk();
+   virtual bool                    isJNINative();
+   virtual bool                    isJITInternalNative();
+   virtual bool                    methodIsNotzAAPEligible();
 
-   virtual bool                  isNewInstanceImplThunk();
-   virtual bool                  isJNINative();
-   virtual bool                  isJITInternalNative();
-   virtual bool                  methodIsNotzAAPEligible();
+   uintptrj_t                      getJNIProperties() { return _jniProperties; }
+   void *                          getJNITargetAddress() {return _jniTargetAddress; }
 
-   uintptrj_t                    getJNIProperties() { return _jniProperties; }
-   void *                        getJNITargetAddress() {return _jniTargetAddress; }
+   virtual TR_OpaqueMethodBlock *  getNonPersistentIdentifier();
+   virtual TR_OpaqueMethodBlock *  getPersistentIdentifier();
+   virtual uint8_t *               allocateException(uint32_t, TR::Compilation*);
 
-   virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier();
-   virtual TR_OpaqueMethodBlock *getPersistentIdentifier();
-   virtual uint8_t *             allocateException(uint32_t, TR::Compilation*);
+   virtual const char *            newInstancePrototypeSignature(TR_Memory * m, TR_AllocationKind = heapAlloc);
 
-   virtual const char *          newInstancePrototypeSignature(TR_Memory * m, TR_AllocationKind = heapAlloc);
+   J9ExceptionHandler *            exceptionHandler();
+   virtual void                    setClassForNewInstance(J9Class *c);
+   bool                            fieldIsFromLocalClass(int32_t cpIndex);
 
-   J9ExceptionHandler *          exceptionHandler();
-   virtual void                  setClassForNewInstance(J9Class *c);
-   bool                          fieldIsFromLocalClass(int32_t cpIndex);
+   virtual char *                  fieldOrStaticNameChars      (int32_t cpIndex, int32_t & len);
+   virtual char *                  fieldOrStaticSignatureChars (int32_t cpIndex, int32_t & len);
 
-   virtual char *fieldOrStaticNameChars      (int32_t cpIndex, int32_t & len);
-   virtual char *fieldOrStaticSignatureChars (int32_t cpIndex, int32_t & len);
+   virtual bool                    shouldFailSetRecognizedMethodInfoBecauseOfHCR();
+   virtual void                    setRecognizedMethodInfo(TR::RecognizedMethod rm);
 
-   virtual bool shouldFailSetRecognizedMethodInfoBecauseOfHCR();
-   virtual void setRecognizedMethodInfo(TR::RecognizedMethod rm);
-
-   virtual bool owningMethodDoesntMatter();
-   virtual bool isMethodInValidLibrary();
+   virtual bool                    owningMethodDoesntMatter();
+   virtual bool                    isMethodInValidLibrary();
    virtual TR_PersistentJittedBodyInfo *getExistingJittedBodyInfo();
 
-   static bool isInvokePrivateVTableOffset(UDATA vTableOffset);
-
+   static bool                     isInvokePrivateVTableOffset(UDATA vTableOffset);
    /**
     * @brief Create TR::ParameterSymbols from the signature of a method, and add them
     *        to the ParameterList on the ResolvedMethodSymbol.
@@ -505,21 +502,21 @@ public:
    virtual void makeParameterList(TR::ResolvedMethodSymbol *methodSym);
 
 protected:
-   virtual TR_J9MethodBase *asJ9Method(){ return this; }
+   virtual TR_J9MethodBase *       asJ9Method(){ return this; }
    TR_ResolvedJ9Method(TR_FrontEnd *, TR_ResolvedMethod * owningMethod = 0);
    virtual void construct();
-   virtual TR_ResolvedMethod *createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
-   virtual void                  handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
-   virtual void                  handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
-   virtual void                  handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
+   virtual TR_ResolvedMethod *     createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
+   virtual void                    handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
+   virtual void                    handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
+   virtual void                    handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
 
-   J9Method *              _ramMethod;
-   J9ROMMethod *           _romMethod;
-   uint32_t                _vTableSlot;
-   J9Class *               _j9classForNewInstance;
-   uintptrj_t              _jniProperties;
-   void *                  _jniTargetAddress;
-   int32_t                 _pendingPushSlots;
+   J9Method *                      _ramMethod;
+   J9ROMMethod *                   _romMethod;
+   uint32_t                        _vTableSlot;
+   J9Class *                       _j9classForNewInstance;
+   uintptrj_t                      _jniProperties;
+   void *                          _jniTargetAddress;
+   int32_t                         _pendingPushSlots;
    };
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
@@ -529,83 +526,83 @@ class TR_ResolvedRelocatableJ9Method : public TR_ResolvedJ9Method
 public:
    TR_ResolvedRelocatableJ9Method(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
 
-   virtual TR::Method *           convertToMethod();
+   virtual TR::Method *            convertToMethod();
 
-   virtual void *                constantPool();
+   virtual void *                  constantPool();
 
-   virtual bool                  isStatic();
-   virtual bool                  isAbstract();
-   virtual bool                  isNative();
-   virtual bool                  isSynchronized();
-   virtual bool                  isPrivate();
-   virtual bool                  isProtected();
-   virtual bool                  isPublic();
-   virtual bool                  isFinal();
-   virtual bool                  isStrictFP();
+   virtual bool                    isStatic();
+   virtual bool                    isAbstract();
+   virtual bool                    isNative();
+   virtual bool                    isSynchronized();
+   virtual bool                    isPrivate();
+   virtual bool                    isProtected();
+   virtual bool                    isPublic();
+   virtual bool                    isFinal();
+   virtual bool                    isStrictFP();
 
-   virtual bool                  isInterpreted();
-   virtual bool                  isInterpretedForHeuristics();
-   virtual bool                  hasBackwardBranches();
-   virtual bool                  isObjectConstructor();
-   virtual bool                  isNonEmptyObjectConstructor();
+   virtual bool                    isInterpreted();
+   virtual bool                    isInterpretedForHeuristics();
+   virtual bool                    hasBackwardBranches();
+   virtual bool                    isObjectConstructor();
+   virtual bool                    isNonEmptyObjectConstructor();
 
-   virtual void *                startAddressForJittedMethod();
-   virtual void *                startAddressForJNIMethod( TR::Compilation *);
-   virtual void *                startAddressForJITInternalNativeMethod();
-   virtual void *                startAddressForInterpreterOfJittedMethod();
+   virtual void *                  startAddressForJittedMethod();
+   virtual void *                  startAddressForJNIMethod( TR::Compilation *);
+   virtual void *                  startAddressForJITInternalNativeMethod();
+   virtual void *                  startAddressForInterpreterOfJittedMethod();
 
 
-   virtual TR_OpaqueClassBlock * getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassToAOT = false);
-   virtual bool                  validateClassFromConstantPool( TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass);
-   virtual bool                  validateArbitraryClass( TR::Compilation *comp, J9Class *clazz);
+   virtual TR_OpaqueClassBlock *   getClassFromConstantPool( TR::Compilation *, uint32_t cpIndex, bool returnClassToAOT = false);
+   virtual bool                    validateClassFromConstantPool( TR::Compilation *comp, J9Class *clazz, uint32_t cpIndex, TR_ExternalRelocationTargetKind reloKind = TR_ValidateClass);
+   virtual bool                    validateArbitraryClass( TR::Compilation *comp, J9Class *clazz);
 
-   virtual void *                stringConstant(int32_t cpIndex);
-   virtual bool                  isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false);
-   virtual void *                methodTypeConstant(int32_t cpIndex);
-   virtual bool                  isUnresolvedMethodType(int32_t cpIndex);
-   virtual void *                methodHandleConstant(int32_t cpIndex);
-   virtual bool                  isUnresolvedMethodHandle(int32_t cpIndex);
+   virtual void *                  stringConstant(int32_t cpIndex);
+   virtual bool                    isUnresolvedString(int32_t cpIndex, bool optimizeForAOT = false);
+   virtual void *                  methodTypeConstant(int32_t cpIndex);
+   virtual bool                    isUnresolvedMethodType(int32_t cpIndex);
+   virtual void *                  methodHandleConstant(int32_t cpIndex);
+   virtual bool                    isUnresolvedMethodHandle(int32_t cpIndex);
 
-   virtual bool                  fieldAttributes ( TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation);
+   virtual bool                    fieldAttributes ( TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation);
 
-   virtual bool                  staticAttributes( TR::Compilation *, int32_t cpIndex, void * *, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation);
+   virtual bool                    staticAttributes( TR::Compilation *, int32_t cpIndex, void * *, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation);
 
-   virtual int32_t               virtualCallSelector(uint32_t cpIndex);
-   virtual char *                fieldSignatureChars(int32_t cpIndex, int32_t & len);
-   virtual char *                staticSignatureChars(int32_t cpIndex, int32_t & len);
+   virtual int32_t                 virtualCallSelector(uint32_t cpIndex);
+   virtual char *                  fieldSignatureChars(int32_t cpIndex, int32_t & len);
+   virtual char *                  staticSignatureChars(int32_t cpIndex, int32_t & len);
 
-   virtual TR_OpaqueClassBlock * classOfStatic(int32_t cpIndex, bool returnClassForAOT = false);
+   virtual TR_OpaqueClassBlock *   classOfStatic(int32_t cpIndex, bool returnClassForAOT = false);
 
-   virtual TR_ResolvedMethod *   getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP);
+   virtual TR_ResolvedMethod *     getResolvedPossiblyPrivateVirtualMethod( TR::Compilation *, int32_t cpIndex, bool ignoreRtResolve, bool * unresolvedInCP);
 
-   virtual bool                  getUnresolvedFieldInCP(int32_t cpIndex);
-   virtual bool                  getUnresolvedStaticMethodInCP(int32_t cpIndex);
-   virtual bool                  getUnresolvedSpecialMethodInCP(int32_t cpIndex);
-   virtual bool                  getUnresolvedVirtualMethodInCP(int32_t cpIndex);
+   virtual bool                    getUnresolvedFieldInCP(int32_t cpIndex);
+   virtual bool                    getUnresolvedStaticMethodInCP(int32_t cpIndex);
+   virtual bool                    getUnresolvedSpecialMethodInCP(int32_t cpIndex);
+   virtual bool                    getUnresolvedVirtualMethodInCP(int32_t cpIndex);
 
-   virtual TR_ResolvedMethod *   getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex);
+   virtual TR_ResolvedMethod *     getResolvedImproperInterfaceMethod(TR::Compilation * comp, I_32 cpIndex);
 
-   virtual TR_OpaqueMethodBlock *getNonPersistentIdentifier();
-   virtual uint8_t *             allocateException(uint32_t, TR::Compilation*);
+   virtual TR_OpaqueMethodBlock *  getNonPersistentIdentifier();
+   virtual uint8_t *               allocateException(uint32_t, TR::Compilation*);
 
-   virtual TR_OpaqueClassBlock  *getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex);
+   virtual TR_OpaqueClassBlock  *  getDeclaringClassFromFieldOrStatic( TR::Compilation *comp, int32_t cpIndex);
 
-   virtual bool                  storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass=0);
+   virtual bool                    storeValidationRecordIfNecessary(TR::Compilation * comp, J9ConstantPool *constantPool, int32_t cpIndex, TR_ExternalRelocationTargetKind reloKind, J9Method *ramMethod, J9Class *definingClass=0);
 
-   static void                   setAttributeResult(bool, bool, uintptr_t, int32_t, int32_t, int32_t, TR::DataType *, bool *, bool *, bool *, void ** );
+   static void                     setAttributeResult(bool, bool, uintptr_t, int32_t, int32_t, int32_t, TR::DataType *, bool *, bool *, bool *, void ** );
 protected:
-   virtual TR_ResolvedMethod *   createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
+   virtual TR_ResolvedMethod *     createResolvedMethodFromJ9Method(TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);
 
-   virtual void                  handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
-   virtual void                  handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
-   virtual void                  handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
+   virtual void                    handleUnresolvedStaticMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
+   virtual void                    handleUnresolvedSpecialMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
+   virtual void                    handleUnresolvedVirtualMethodInCP(int32_t cpIndex, bool * unresolvedInCP);
 
-   bool                          getUnresolvedMethodInCP(TR_OpaqueMethodBlock *aMethod);
+   bool                            getUnresolvedMethodInCP(TR_OpaqueMethodBlock *aMethod);
 
-   bool                          unresolvedFieldAttributes (int32_t cpIndex, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate);
-   bool                          unresolvedStaticAttributes(int32_t cpIndex, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate);
+   bool                            unresolvedFieldAttributes (int32_t cpIndex, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate);
+   bool                            unresolvedStaticAttributes(int32_t cpIndex, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate);
 
-   J9ExceptionHandler * exceptionHandler();
+   J9ExceptionHandler *            exceptionHandler();
    };
 
 #endif

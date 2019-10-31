@@ -70,7 +70,7 @@ endif
 
 UMA_ZOS_FLAGS += -DJ9ZOS390 -DLONGLONG -DJ9VM_TIERED_CODE_CACHE -D_ALL_SOURCE -D_XOPEN_SOURCE_EXTENDED -DIBM_ATOE -D_POSIX_SOURCE
 UMA_ZOS_FLAGS += -I$(OMR_DIR)/util/a2e/headers $(UMA_OPTIMIZATION_FLAGS) $(UMA_OPTIMIZATION_LINKER_FLAGS) \
-	-Wc,"xplink,convlit(ISO8859-1),rostring,FLOAT(IEEE,FOLD,AFP),enum(4)" -Wa,goff -Wc,NOANSIALIAS -Wc,"inline(auto,noreport,600,5000)"
+	-Wc,"convlit(ISO8859-1),xplink,rostring,FLOAT(IEEE,FOLD,AFP),enum(4)" -Wa,goff -Wc,NOANSIALIAS -Wc,"inline(auto,noreport,600,5000)"
 UMA_ZOS_FLAGS += -Wc,"SERVICE(j${uma.buildinfo.build_date})" -Wc,"TARGET(zOSV1R13)"
 UMA_ZOS_FLAGS += -Wc,list,offset
 ifdef j9vm_env_data64
@@ -100,6 +100,14 @@ ifdef j9vm_jit_freeSystemStackPointer
   UMA_M4_FLAGS += -DJ9VM_JIT_FREE_SYSTEM_STACK_POINTER
 endif
 
+COMMA := ,
+
+# Compile jniargtestssystemlink with non-XPLINK (system) linkage
+ifeq ($(UMA_TARGET_NAME),jniargtestssystemlink)
+  UMA_ZOS_FLAGS := $(subst $(COMMA)xplink,,$(UMA_ZOS_FLAGS))
+  UMA_LINK_FLAGS := $(subst $(COMMA)xplink,,$(UMA_LINK_FLAGS))
+endif
+
 ifndef j9vm_env_data64
 ASFLAGS += -mzarch
 endif
@@ -124,7 +132,6 @@ endif
 
 # JAZZ103 49015 - compile with MRABIG debug option to reduce stack size required for -Xmt
 MRABIG = -Wc,"TBYDBG(-qdebug=MRABIG)"
-COMMA := ,
 SPECIALCXXFLAGS = $(filter-out -Wc$(COMMA)debug -O3,$(CXXFLAGS))
 NEW_OPTIMIZATION_FLAG = -O2 -Wc,"TBYDBG(-qdebug=lincomm:ptranl:tfbagg)" -Wc,"FEDBG(-qxflag=InlineDespiteVolatileInArgs)"
 BytecodeInterpreter.o : BytecodeInterpreter.cpp

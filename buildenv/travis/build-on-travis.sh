@@ -1,4 +1,5 @@
 #!/bin/bash
+
 ###############################################################################
 # Copyright (c) 2018, 2019 IBM Corp. and others
 #
@@ -30,6 +31,10 @@ set -x
 # Build machines have 2 cores and 4 gigs of memory.  Attempt to double provision the number of cores for the make.
 MAKE_JOBS=4
 
+# explicitly select the desired version of GCC via the environment
+export CC=gcc-7
+export CXX=g++-7
+
 # download bootstrap jdk
 SRCDIR=$PWD
 cd ~
@@ -42,7 +47,7 @@ export PATH="${JAVA_HOME}/bin:${PATH}"
 cd $SRCDIR
 
 # Note Currently enabling RUN_LINT and RUN_BUILD simultaneously is not supported
-if test "x$RUN_LINT" = "xyes"; then
+if test "x$RUN_LINT" = "xyes" ; then
   llvm-config --version
   clang++ --version
 
@@ -71,11 +76,7 @@ if test "x$RUN_LINT" = "xyes"; then
   make -j $MAKE_JOBS -f linter.mk
 fi
 
-if test "x$RUN_BUILD" = "xyes"; then
-  if ! wget https://ci.eclipse.org/openj9/userContent/freemarker-2.3.8.jar -O freemarker.jar ; then
-    wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
-    tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
-  fi
+if test "x$RUN_BUILD" = "xyes" ; then
   cd ..
   # Shallow clone of the openj9-openjdk-jdk9 repo to speed up clone / reduce server load.
   git clone --depth 1 https://github.com/ibmruntimes/openj9-openjdk-jdk11.git
@@ -93,7 +94,7 @@ if test "x$RUN_BUILD" = "xyes"; then
   cd openj9-openjdk-jdk11 && bash get_source.sh -openj9-repo=$TRAVIS_BUILD_DIR -openj9-branch=$TRAVIS_BRANCH -openj9-sha=$OPENJ9_SHA
 
   # Limit number of jobs to work around g++ internal compiler error.
-  bash configure --with-freemarker-jar=$TRAVIS_BUILD_DIR/freemarker.jar --with-jobs=$MAKE_JOBS --with-num-cores=$MAKE_JOBS --enable-ccache --with-cmake --disable-ddr
+  bash configure --disable-warnings-as-errors --enable-ccache --with-cmake --with-jobs=$MAKE_JOBS --with-num-cores=$MAKE_JOBS
   make images EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"
   # Minimal sniff test - ensure java -version works.
   ./build/linux-x86_64-normal-server-release/images/jdk/bin/java -version

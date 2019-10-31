@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2001, 2017 IBM Corp. and others
+  Copyright (c) 2001, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,15 +25,15 @@
 <module>
         
 	<exports group="all">
-		<export name='Java_com_ibm_j9_zostest_ZosNativesTest1_ifaSwitchTest1'/>
-		<export name='Java_com_ibm_j9_zostest_ZosNativesTest2_ifaSwitchTest2'/>
-		<export name='Java_com_ibm_j9_zostest_ZosNativesTest3_ifaSwitchTest3'/>
-		<export name='Java_com_ibm_j9_zostest_ZosNativesTest4_ifaSwitchTest4'/>
-		<export name='Java_com_ibm_j9_zostest_ZosNativesTest5_ifaSwitchTest5'/>
-		<export name='Java_com_ibm_j9_zostest_ZosNativesTest6_ifaSwitchTest6'/>
-		<export name='Java_com_ibm_j9_zostest_ZosNativesTest7_ifaSwitchTest7'/>
-		<export name='Java_com_ibm_j9_zostest_ZosNativesTest8_ifaSwitchTest8'/>
-		<export name='Java_com_ibm_j9_zostest_ZosNativesTest9_registerNative'/>
+		<export name='Java_com_ibm_j9_zostest_ZosNativesTest_ifaSwitchTest1'/>
+		<export name='Java_com_ibm_j9_zostest_ZosNativesTest_ifaSwitchTest2'/>
+		<export name='Java_com_ibm_j9_zostest_ZosNativesTest_ifaSwitchTest3'/>
+		<export name='Java_com_ibm_j9_zostest_ZosNativesTest_ifaSwitchTest4'/>
+		<export name='Java_com_ibm_j9_zostest_ZosNativesTest_ifaSwitchTest5'/>
+		<export name='Java_com_ibm_j9_zostest_ZosNativesTest_ifaSwitchTest6'/>
+		<export name='Java_com_ibm_j9_zostest_ZosNativesTest_ifaSwitchTest7'/>
+		<export name='Java_com_ibm_j9_zostest_ZosNativesTest_ifaSwitchTest8'/>
+		<export name='Java_com_ibm_j9_zostest_ZosNativesTest_registerNative'/>
 	</exports>
 
 	<artifact type="shared" name="zostesting" appendrelease="false">

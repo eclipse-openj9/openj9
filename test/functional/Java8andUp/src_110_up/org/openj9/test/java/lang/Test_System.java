@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -374,6 +374,36 @@ public class Test_System {
 		}
 	}
 
+	/**
+	 * @tests java.lang.System#setSecurityManager(java.lang.SecurityManager)
+	 */
+	@Test
+	public void test_setSecurityManager3() {
+		/* https://github.com/eclipse/openj9/issues/6661 */
+		try {
+			String helperName = "org.openj9.test.java.lang.Test_System$TestSecurityManagerNonPublicConstructor";
+			String output = Support_Exec.execJava(new String[] { "-Djava.security.manager=" + helperName, helperName },
+					null, true,
+					"java.lang.NoSuchMethodException: org.openj9.test.java.lang.Test_System$TestSecurityManagerNonPublicConstructor.<init>()");
+			// if the expected error string was not found, Assert.fail() will be invoked
+			// within Support_Exec.execJava() above.
+		} catch (Exception e) {
+			Assert.fail("Unexpected: " + e);
+		}
+	}
+
+	/**
+	 * @tests java.lang.System#setSecurityManager(java.lang.SecurityManager)
+	 */
+	public static class TestSecurityManagerNonPublicConstructor extends SecurityManager {
+		TestSecurityManagerNonPublicConstructor() {
+		}
+
+		public static void main(String[] args) {
+			System.out.println(System.getSecurityManager().getClass().getName());
+		}
+	}
+	
 	/**
 	 * Sets up the fixture, for example, open a network connection. This method
 	 * is called before a test is executed.

@@ -136,7 +136,7 @@ J9::Power::CodeGenerator::createLinkage(TR_LinkageConventions lc)
    switch (lc)
       {
       case TR_Private:
-         linkage = new (self()->trHeapMemory()) TR::PPCPrivateLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::PPCPrivateLinkage(self());
          break;
       case TR_System:
          linkage = new (self()->trHeapMemory()) TR::PPCSystemLinkage(self());
@@ -221,12 +221,10 @@ J9::Power::CodeGenerator::generateBinaryEncodingPrologue(
       data->cursorInstruction = data->cursorInstruction->getNext();
       }
 
-   int32_t boundary = comp->getOptions()->getJitMethodEntryAlignmentBoundary(self());
-   if (boundary && (boundary > 4) && ((boundary & (boundary - 1)) == 0))
+   if (self()->supportsJitMethodEntryAlignment())
       {
-      comp->getOptions()->setJitMethodEntryAlignmentBoundary(boundary);
       self()->setPreJitMethodEntrySize(data->estimate);
-      data->estimate += (boundary - 4);
+      data->estimate += (self()->getJitMethodEntryAlignmentBoundary() - 1);
       }
 
    tempInstruction = data->cursorInstruction;
@@ -335,24 +333,9 @@ bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::Recognized
       return true;
       }
 
-   if (method == TR::java_lang_Math_abs_F ||
-       method == TR::java_lang_Math_abs_D ||
-       method == TR::java_lang_Math_abs_I ||
-       method == TR::java_lang_Math_abs_L ||
-       method == TR::java_lang_Integer_highestOneBit ||
-       method == TR::java_lang_Integer_numberOfLeadingZeros ||
-       method == TR::java_lang_Integer_numberOfTrailingZeros ||
-       method == TR::java_lang_Integer_rotateLeft ||
-       method == TR::java_lang_Integer_rotateRight ||
-       method == TR::java_lang_Long_highestOneBit ||
-       method == TR::java_lang_Long_numberOfLeadingZeros ||
-       method == TR::java_lang_Long_numberOfTrailingZeros ||
-       method == TR::java_lang_Short_reverseBytes ||
+   if (method == TR::java_lang_Short_reverseBytes ||
        method == TR::java_lang_Integer_reverseBytes ||
-       method == TR::java_lang_Long_reverseBytes ||
-       (TR::Compiler->target.is64Bit() &&
-        (method == TR::java_lang_Long_rotateLeft ||
-        method == TR::java_lang_Long_rotateRight)))
+       method == TR::java_lang_Long_reverseBytes)
       {
       return true;
       }

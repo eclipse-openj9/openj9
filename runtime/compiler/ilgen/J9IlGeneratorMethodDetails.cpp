@@ -108,8 +108,6 @@ IlGeneratorMethodDetails::IlGeneratorMethodDetails(TR_ResolvedMethod *method)
    _method = (J9Method *)(method->getPersistentIdentifier());
    }
 
-
-#if defined(JITSERVER_SUPPORT)
 const J9ROMClass *
 IlGeneratorMethodDetails::getRomClass() const
    {
@@ -122,6 +120,7 @@ IlGeneratorMethodDetails::getRomMethod() const
    return J9_ROM_METHOD_FROM_RAM_METHOD(self()->getMethod());
    }
 
+#if defined(JITSERVER_SUPPORT)
 IlGeneratorMethodDetailsType
 IlGeneratorMethodDetails::getType() const
    {
@@ -142,7 +141,6 @@ IlGeneratorMethodDetails::getType() const
    return (IlGeneratorMethodDetailsType) type;
    }
 #endif /* defined(JITSERVER_SUPPORT) */
-
 
 bool
 IlGeneratorMethodDetails::sameAs(TR::IlGeneratorMethodDetails & other, TR_FrontEnd *fe)

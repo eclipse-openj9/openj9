@@ -251,14 +251,11 @@ instanceField:
 			} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
 				/* Static field */
 				J9Class *fieldClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, object);
-
 				if (J9_ARE_ANY_BITS_SET(offset, J9_SUN_FINAL_FIELD_OFFSET_TAG)) {
 					VM_VMHelpers::reportFinalFieldModified(currentThread, fieldClass);
 				}
 				void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
-				{
-					objectAccessBarrier->inlineStaticStoreU32(currentThread, fieldClass, (U_32*)valueAddress, (U_32)value, isVolatile);
-				}
+				objectAccessBarrier->inlineStaticStoreU32(currentThread, fieldClass, (U_32*)valueAddress, (U_32)value, isVolatile);
 			} else {
 instanceField:
 				/* Instance field */
@@ -332,14 +329,11 @@ instanceField:
 			} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
 				/* Static field */
 				J9Class *fieldClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, object);
-
 				if (J9_ARE_ANY_BITS_SET(offset, J9_SUN_FINAL_FIELD_OFFSET_TAG)) {
 					VM_VMHelpers::reportFinalFieldModified(currentThread, fieldClass);
 				}
 				void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
-				{
-					objectAccessBarrier->inlineStaticStoreU64(currentThread, fieldClass, (U_64*)valueAddress, (U_64)value, isVolatile);
-				}
+				objectAccessBarrier->inlineStaticStoreU64(currentThread, fieldClass, (U_64*)valueAddress, (U_64)value, isVolatile);
 			} else {
 instanceField:
 				/* Instance field */
@@ -519,50 +513,44 @@ public:
 	}
 
 	static VMINLINE void
-	putObject(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI *objectAccessBarrier, j9object_t object, UDATA offset, bool isVolatile, j9object_t value)
+	putObject(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI *objectAccessBarrier, j9object_t object, UDATA offset, bool isVolatile, j9object_t *value)
 	{
 		if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 			UDATA index = convertOffsetToIndex(currentThread, offset, logFJ9ObjectSize(currentThread));
-			objectAccessBarrier->inlineIndexableObjectStoreObject(currentThread, object, index, value, isVolatile);
+			objectAccessBarrier->inlineIndexableObjectStoreObject(currentThread, object, index, *value, isVolatile);
 		} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
 			/* Static field */
 			J9Class *fieldClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, object);
-
 			if (J9_ARE_ANY_BITS_SET(offset, J9_SUN_FINAL_FIELD_OFFSET_TAG)) {
 				VM_VMHelpers::reportFinalFieldModified(currentThread, fieldClass);
 			}
 			void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
-			{
-				objectAccessBarrier->inlineStaticStoreObject(currentThread, fieldClass, (j9object_t*)valueAddress, value, isVolatile);
-			}
+			objectAccessBarrier->inlineStaticStoreObject(currentThread, fieldClass, (j9object_t*)valueAddress, *value, isVolatile);
 		} else {
 			/* Instance field */
-			objectAccessBarrier->inlineMixedObjectStoreObject(currentThread, object, offset, value, isVolatile);
+			objectAccessBarrier->inlineMixedObjectStoreObject(currentThread, object, offset, *value, isVolatile);
 		}
 	}
 
 	static VMINLINE bool
-	compareAndSwapObject(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI *objectAccessBarrier, j9object_t object, UDATA offset, j9object_t compareValue, j9object_t swapValue)
+	compareAndSwapObject(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI *objectAccessBarrier, j9object_t object, UDATA offset, j9object_t *compareValue, j9object_t *swapValue)
 	{
 		bool result = false;
 		
 		if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 			UDATA index = convertOffsetToIndex(currentThread, offset, logFJ9ObjectSize(currentThread));
-			result = objectAccessBarrier->inlineIndexableObjectCompareAndSwapObject(currentThread, object, index, compareValue, swapValue, true);
+			result = objectAccessBarrier->inlineIndexableObjectCompareAndSwapObject(currentThread, object, index, *compareValue, *swapValue, true);
 		} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
 			/* Static field */
 			J9Class *fieldClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, object);
-
 			if (J9_ARE_ANY_BITS_SET(offset, J9_SUN_FINAL_FIELD_OFFSET_TAG)) {
 				VM_VMHelpers::reportFinalFieldModified(currentThread, fieldClass);
 			}
 			void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
-			{
-				result = objectAccessBarrier->inlineStaticCompareAndSwapObject(currentThread, fieldClass, (j9object_t*)valueAddress, compareValue, swapValue, true);
-			}
+			result = objectAccessBarrier->inlineStaticCompareAndSwapObject(currentThread, fieldClass, (j9object_t*)valueAddress, *compareValue, *swapValue, true);
 		} else {
 			/* Instance field */
-			result = objectAccessBarrier->inlineMixedObjectCompareAndSwapObject(currentThread, object, offset, compareValue, swapValue, true);
+			result = objectAccessBarrier->inlineMixedObjectCompareAndSwapObject(currentThread, object, offset, *compareValue, *swapValue, true);
 		}
 		return result;
 	}
@@ -588,14 +576,11 @@ public:
 			} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
 				/* Static field */
 				J9Class *fieldClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, object);
-
 				if (J9_ARE_ANY_BITS_SET(offset, J9_SUN_FINAL_FIELD_OFFSET_TAG)) {
 					VM_VMHelpers::reportFinalFieldModified(currentThread, fieldClass);
 				}
 				void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
-				{
-					result = objectAccessBarrier->inlineStaticCompareAndSwapU64(currentThread, fieldClass, (U_64*)valueAddress, compareValue, swapValue, true);
-				}
+				result = objectAccessBarrier->inlineStaticCompareAndSwapU64(currentThread, fieldClass, (U_64*)valueAddress, compareValue, swapValue, true);
 			} else {
 instanceField:
 				/* Instance field */
@@ -626,14 +611,11 @@ instanceField:
 			} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
 				/* Static field */
 				J9Class *fieldClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, object);
-
 				if (J9_ARE_ANY_BITS_SET(offset, J9_SUN_FINAL_FIELD_OFFSET_TAG)) {
 					VM_VMHelpers::reportFinalFieldModified(currentThread, fieldClass);
 				}
 				void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
-				{
-					result = objectAccessBarrier->inlineStaticCompareAndSwapU32(currentThread, fieldClass, (U_32*)valueAddress, compareValue, swapValue, true);
-				}
+				result = objectAccessBarrier->inlineStaticCompareAndSwapU32(currentThread, fieldClass, (U_32*)valueAddress, compareValue, swapValue, true);
 			} else {
 instanceField:
 				/* Instance field */
@@ -644,7 +626,7 @@ instanceField:
 	}
 
 	static VMINLINE j9object_t
-	compareAndExchangeObject(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI *objectAccessBarrier, j9object_t object, UDATA offset, j9object_t compareValue, j9object_t swapValue)
+	compareAndExchangeObject(J9VMThread *currentThread, MM_ObjectAccessBarrierAPI *objectAccessBarrier, j9object_t object, UDATA offset, j9object_t *compareValue, j9object_t *swapValue)
 	{
 		Assert_VM_notNull(object);
 
@@ -652,21 +634,18 @@ instanceField:
 
 		if (VM_VMHelpers::objectIsArray(currentThread, object)) {
 			UDATA index = convertOffsetToIndex(currentThread, offset, logFJ9ObjectSize(currentThread));
-			result = objectAccessBarrier->inlineIndexableObjectCompareAndExchangeObject(currentThread, object, index, compareValue, swapValue, true);
+			result = objectAccessBarrier->inlineIndexableObjectCompareAndExchangeObject(currentThread, object, index, *compareValue, *swapValue, true);
 		} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
 			/* Static field */
 			J9Class *fieldClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, object);
-
 			if (J9_ARE_ANY_BITS_SET(offset, J9_SUN_FINAL_FIELD_OFFSET_TAG)) {
 				VM_VMHelpers::reportFinalFieldModified(currentThread, fieldClass);
 			}
 			void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
-			{
-				result = objectAccessBarrier->inlineStaticCompareAndExchangeObject(currentThread, fieldClass, (j9object_t*)valueAddress, compareValue, swapValue, true);
-			}
+			result = objectAccessBarrier->inlineStaticCompareAndExchangeObject(currentThread, fieldClass, (j9object_t*)valueAddress, *compareValue, *swapValue, true);
 		} else {
 			/* Instance field */
-			result = objectAccessBarrier->inlineMixedObjectCompareAndExchangeObject(currentThread, object, offset, compareValue, swapValue, true);
+			result = objectAccessBarrier->inlineMixedObjectCompareAndExchangeObject(currentThread, object, offset, *compareValue, *swapValue, true);
 		}
 		return result;
 	}
@@ -696,10 +675,9 @@ instanceField:
 				if (J9_ARE_ANY_BITS_SET(offset, J9_SUN_FINAL_FIELD_OFFSET_TAG)) {
 					VM_VMHelpers::reportFinalFieldModified(currentThread, fieldClass);
 				}
+
 				void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
-				{
-					result = objectAccessBarrier->inlineStaticCompareAndExchangeU32(currentThread, fieldClass, (U_32*)valueAddress, compareValue, swapValue, true);
-				}
+				result = objectAccessBarrier->inlineStaticCompareAndExchangeU32(currentThread, fieldClass, (U_32*)valueAddress, compareValue, swapValue, true);
 			} else {
 instanceField:
 				/* Instance field */
@@ -730,14 +708,11 @@ instanceField:
 			} else if (offset & J9_SUN_STATIC_FIELD_OFFSET_TAG) {
 				/* Static field */
 				J9Class *fieldClass = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, object);
-
 				if (J9_ARE_ANY_BITS_SET(offset, J9_SUN_FINAL_FIELD_OFFSET_TAG)) {
 					VM_VMHelpers::reportFinalFieldModified(currentThread, fieldClass);
 				}
 				void *valueAddress = (void*)((UDATA)fieldClass->ramStatics + (offset & ~(UDATA)J9_SUN_FIELD_OFFSET_MASK));
-				{
-					result = objectAccessBarrier->inlineStaticCompareAndExchangeU64(currentThread, fieldClass, (U_64*)valueAddress, compareValue, swapValue, true);
-				}
+				result = objectAccessBarrier->inlineStaticCompareAndExchangeU64(currentThread, fieldClass, (U_64*)valueAddress, compareValue, swapValue, true);
 			} else {
 instanceField:
 				/* Instance field */

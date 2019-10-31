@@ -374,6 +374,18 @@ doVerify:
 				/* Verify this class */
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
 				performVerification(currentThread, clazz);
+				/* Validate class relationships if -XX:+ClassRelationshipVerifier is used and if the classfile major version is at least 51 (Java 7) */
+				if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER) && (clazz->romClass->majorVersion >= 51)) {
+					U_8 *clazzName = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(clazz->romClass));
+					UDATA clazzNameLength = J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(clazz->romClass));
+					J9Class *validateResult = j9bcv_validateClassRelationships(currentThread, clazz->classLoader, clazzName, clazzNameLength, clazz);
+					if (NULL != validateResult) {
+						U_8 *resultName = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(validateResult->romClass));
+						UDATA resultNameLength = J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(validateResult->romClass));
+						Trc_VM_classInitStateMachine_classRelationshipValidationFailed(currentThread, clazzNameLength, clazzName, resultNameLength, resultName);
+						setCurrentExceptionNLSWithArgs(currentThread, J9NLS_VM_CLASS_RELATIONSHIP_INVALID, J9VMCONSTANTPOOL_JAVALANGVERIFYERROR, clazzNameLength, clazzName, resultNameLength, resultName);
+					}
+				}
 				initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 				clazz = VM_VMHelpers::currentClass(clazz);
 				if (VM_VMHelpers::exceptionPending(currentThread)) {

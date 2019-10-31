@@ -455,6 +455,9 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 	U_8 *sourceName, *targetName;
 	UDATA sourceLength, targetLength;
 
+	/* Record class relationship if -XX:+ClassRelationshipVerifier is used */
+	BOOLEAN classRelationshipVerifierEnabled = J9_ARE_ANY_BITS_SET(verifyData->vmStruct->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER);
+
 	*reasonCode = 0;
 
 	/* if they are identical, then we're done */
@@ -530,16 +533,19 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		 *    except Object (already checked above), java/lang/Cloneable and java/io/Serializable,
 		 *    which means targetClass must be one/array of Object, java/lang/Cloneable and java/io/Serializable.
 		 */
-		if ((IDATA) TRUE == isInterfaceClass(verifyData, targetName, targetLength, reasonCode)) {
-			/* targetClass must be either java/lang/Cloneable or java/io/Serializable
-			 * in the case when sourceClass is an array type (sourceArity > 0).
-			 */
-			if (((CLONEABLE_CLASS_NAME_LENGTH == targetLength) && ((0 == strncmp((const char*)targetName, CLONEABLE_CLASS_NAME, CLONEABLE_CLASS_NAME_LENGTH))))
-			|| ((SERIALIZEABLE_CLASS_NAME_LENGTH == targetLength) && (0 == strncmp((const char*)targetName, SERIALIZEABLE_CLASS_NAME, SERIALIZEABLE_CLASS_NAME_LENGTH)))
-			) {
-				return (IDATA) TRUE;
+		if (((CLONEABLE_CLASS_NAME_LENGTH == targetLength) && ((0 == strncmp((const char*)targetName, CLONEABLE_CLASS_NAME, CLONEABLE_CLASS_NAME_LENGTH))))
+		|| ((SERIALIZEABLE_CLASS_NAME_LENGTH == targetLength) && (0 == strncmp((const char*)targetName, SERIALIZEABLE_CLASS_NAME, SERIALIZEABLE_CLASS_NAME_LENGTH)))
+		) {
+			rc = isInterfaceClass(verifyData, targetName, targetLength, reasonCode);
+
+			if ((classRelationshipVerifierEnabled) && (BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED == *reasonCode)) {
+				getNameAndLengthFromClassNameList (verifyData, sourceIndex, &sourceName, &sourceLength);
+				rc = j9bcv_recordClassRelationship (verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
 			}
+
+			return rc;
 		}
+
 		return (IDATA) FALSE;
 	}
 
@@ -557,7 +563,15 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 
 	/* if the target is an interface, be permissive */
 	rc = isInterfaceClass(verifyData, targetName, targetLength, reasonCode);
-	if (rc != (IDATA) FALSE) {
+
+	getNameAndLengthFromClassNameList (verifyData, sourceIndex, &sourceName, &sourceLength);
+
+	/* classRelationshipVerifierEnabled and target not already loaded, so record the class relationship */
+	if ((classRelationshipVerifierEnabled) && (BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED == *reasonCode)) {
+		rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
+	}
+
+	if ((IDATA) FALSE != rc) {
 		return rc;
 	}
 
@@ -565,9 +579,14 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		return (IDATA) FALSE;
 	}
 
-	getNameAndLengthFromClassNameList (verifyData, sourceIndex, &sourceName, &sourceLength);
+	rc = isRAMClassCompatible(verifyData, targetName, targetLength , sourceName, sourceLength, reasonCode);
 
-	return isRAMClassCompatible(verifyData, targetName, targetLength , sourceName, sourceLength, reasonCode);
+	/* classRelationshipVerifierEnabled and source and/or target not already loaded, so record the class relationship */
+	if ((classRelationshipVerifierEnabled) && (BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED == *reasonCode)) {
+		rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
+	}
+
+	return rc;
 }
 
 /*
@@ -761,7 +780,7 @@ j9bcv_createVerifyErrorString(J9PortLibrary * portLib, J9BytecodeVerificationDat
 
 	if ((IDATA) error->errorPC == -1) {
 		/* J9NLS_BCV_ERROR_TEMPLATE_NO_PC=%1$s; class=%3$.*2$s, method=%5$.*4$s%7$.*6$s */
-		formatString = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_BCV_ERROR_TEMPLATE_NO_PC, "%s;%.*s,%.*s%.*s");
+		formatString = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_BCV_ERROR_TEMPLATE_NO_PC, "%s; class=%.*s, method=%.*s%.*s");
 	} else {
 		/* Jazz 82615: Generate the error message framework by default.
 		 * The error message framework is not required when the -XX:-VerifyErrorDetails option is specified.
@@ -784,10 +803,11 @@ j9bcv_createVerifyErrorString(J9PortLibrary * portLib, J9BytecodeVerificationDat
 		/*Jazz 82615: fetch the corresponding NLS message when type mismatch error is detected */
 		if (NULL == error->errorSignatureString) {
 			/* J9NLS_BCV_ERROR_TEMPLATE_WITH_PC=%1$s; class=%3$.*2$s, method=%5$.*4$s%7$.*6$s, pc=%8$u */
-			formatString = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_BCV_ERROR_TEMPLATE_WITH_PC, "%s;%.*s,%.*s%.*s,%u");
+			formatString = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_BCV_ERROR_TEMPLATE_WITH_PC, "%s; class=%.*s, method=%.*s%.*s, pc=%u");
 		} else {
-			/*Jazz 82615: J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH=%1$s; class=%3$.*2$s, method=%5$.*4$s%7$.*6$s, pc=%8$u; Mismatch, argument %9$d in signature %11$.*10$s.%13$.*12$s:%15$.*14$s does not match */
-			formatString = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH, "%s;%.*s,%.*s%.*s,%u;,%d%.*s.%.*s:%.*s");
+			/*Jazz 82615: J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH=%1$s; class=%3$.*2$s, method=%5$.*4$s%7$.*6$s, pc=%8$u; Type Mismatch, argument %9$d in signature %11$.*10$s.%13$.*12$s:%15$.*14$s does not match */
+			formatString = j9nls_lookup_message(J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_BCV_ERROR_TEMPLATE_TYPE_MISMATCH,
+					"%s; class=%.*s, method=%.*s%.*s, pc=%u; Type Mismatch, argument %d in signature %.*s.%.*s:%.*s does not match");
 		}
 	}
 

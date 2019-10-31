@@ -27,9 +27,6 @@ define({ALen},{8})
 
 define({J9VMTHREAD},{x19})
 define({J9SP},{x20})
-define({J9PC},{x21})
-define({J9LITERALS},{x22})
-define({J9A0},{x23})
 
 define({FUNC_LABEL},{$1})
 
@@ -166,6 +163,7 @@ define({RESTORE_ALL_REGS},{
 })
 
 define({SAVE_PRESERVED_REGS},{
+	str x18,JIT_GPR_SAVE_SLOT(18)
 	str x21,JIT_GPR_SAVE_SLOT(21)
 	stp x22,x23,JIT_GPR_SAVE_SLOT(22)
 	stp x24,x25,JIT_GPR_SAVE_SLOT(24)
@@ -174,6 +172,7 @@ define({SAVE_PRESERVED_REGS},{
 })
 
 define({RESTORE_PRESERVED_REGS},{
+	ldr x18,JIT_GPR_SAVE_SLOT(18)
 	ldr x21,JIT_GPR_SAVE_SLOT(21)
 	ldp x22,x23,JIT_GPR_SAVE_SLOT(22)
 	ldp x24,x25,JIT_GPR_SAVE_SLOT(24)
@@ -182,8 +181,8 @@ define({RESTORE_PRESERVED_REGS},{
 })
 
 define({BRANCH_VIA_VMTHREAD},{
-	ldr x0,[J9VMTHREAD,{#}$1]
-	br x0
+	ldr x8,[J9VMTHREAD,{#}$1]
+	br x8
 })
 
 define({SWITCH_TO_JAVA_STACK},{ldr J9SP,[J9VMTHREAD,{#}J9TR_VMThread_sp]})

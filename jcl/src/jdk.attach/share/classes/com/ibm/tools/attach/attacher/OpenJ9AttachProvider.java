@@ -62,6 +62,7 @@ public class OpenJ9AttachProvider extends AttachProvider {
 		checkAttachSecurity();
 		try {
 			OpenJ9VirtualMachine vm = new OpenJ9VirtualMachine(this, id);
+			IPC.logMessage("Attach target id: " + id); //$NON-NLS-1$
 			vm.attachTarget();
 			return vm;
 		} catch (NullPointerException e) {
@@ -118,10 +119,10 @@ public class OpenJ9AttachProvider extends AttachProvider {
 			IPC.logMessage("listVirtualMachines() error getting common directory"); //$NON-NLS-1$
 			return null; /* indicate an error */
 		} else if (!commonDir.exists()) {
-			IPC.logMessage("listVirtualMachines() common directory is absent"); //$NON-NLS-1$
+			IPC.logMessage("listVirtualMachines() common directory is absent, expected " + commonDir.getAbsolutePath()); //$NON-NLS-1$
 			return descriptors; /*[PR 103332 - common dir will not exist if attach API is disabled */
 		} else if (!commonDir.isDirectory()) { /* Cleanup. handle case where couldn't open common dir. */
-			IPC.logMessage("listVirtualMachines() common directory is mis-configured"); //$NON-NLS-1$
+			IPC.logMessage("listVirtualMachines() common directory is mis-configured for " + commonDir.getAbsolutePath()); //$NON-NLS-1$
 			return null; /* Configuration error */
 		}
 

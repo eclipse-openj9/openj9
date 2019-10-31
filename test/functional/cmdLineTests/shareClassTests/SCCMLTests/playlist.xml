@@ -36,6 +36,7 @@
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
+	-DUTILSJAR_2=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils2$(D)utils2.jar$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)ShareClassesCMLTests-1.xml$(Q) -xids all,$(PLATFORM),$(VARIATION),$(JDK_VERSION) -plats all,$(PLATFORM),$(VARIATION),$(BITS) -xlist $(Q)$(TEST_RESROOT)$(D)exclude.xml$(Q) \
 	-nonZeroExitWhenError \
@@ -65,6 +66,7 @@
 	-DPATHSEP=$(Q)$(D)$(Q) -DCPDL=$(Q)$(P)$(Q) -DRUN_SCRIPT=$(RUN_SCRIPT) -DPROPS_DIR=$(PROPS_DIR) -DSCRIPT_SUFFIX=$(SCRIPT_SUFFIX) -DEXECUTABLE_SUFFIX=$(EXECUTABLE_SUFFIX) \
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
+	-DUTILSJAR_2=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils2$(D)utils2.jar$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
 	-config $(Q)$(TEST_RESROOT)$(D)ShareClassesCMLTests-1.xml$(Q) -xids all,$(PLATFORM),$(VARIATION),$(JDK_VERSION),$(JDK_IMPL) -plats all,$(PLATFORM),$(VARIATION),$(JDK_VERSION)_$(BITS) -xlist $(Q)$(TEST_RESROOT)$(D)exclude_openj9.xml$(Q) \
 	-nonZeroExitWhenError \
@@ -377,7 +379,7 @@
 	-DJAVA_EXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) -DJAVA_HOME=$(SQ)$(TEST_JDK_HOME)$(SQ) -DSCMODE=204 -DJVM_TEST_ROOT=$(Q)$(JVM_TEST_ROOT)$(Q) \
 	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
 	-jar $(CMDLINETESTER_JAR) \
-	-config $(Q)$(TEST_RESROOT)$(D)ShareClassesCMLOpenJ9.xml$(Q) -xids all,$(PLATFORM),$(VARIATION),$(JAVA_VERSION) -plats all,$(PLATFORM),$(VARIATION) \
+	-config $(Q)$(TEST_RESROOT)$(D)ShareClassesCMLOpenJ9.xml$(Q) -xids all,$(PLATFORM),$(VARIATION) -plats all,$(PLATFORM),$(VARIATION) \
 	-nonZeroExitWhenError \
 	-outputLimit 300; \
 	$(TEST_STATUS)</command>

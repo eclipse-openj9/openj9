@@ -73,13 +73,15 @@ public class ByteDataWrapperHelper {
 				return U8Pointer.cast(ptr).add(externalBlockOffsetI32); 
 			}
 		} else {
-			UDATA offset = J9ShrOffsetPointer.cast(externalBlockOffset).offset();
+			J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(externalBlockOffset);
+			UDATA offset = j9shrOffset.offset();
 			if (offset.eq(0)) {
 				/* return ((U_8*)(bdw)) + sizeof(ByteDataWrapper) */
 				return U8Pointer.cast(ptr).add(ByteDataWrapper.SIZEOF);
 			} else {
+				int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
 				/* return the same as SH_CacheMap::getDataFromByteDataWrapper(const ByteDataWrapper* bdw) */
-				return cacheHeader[0].add(offset);
+				return cacheHeader[layer].add(offset);
 			}
 		}
 	}
@@ -102,11 +104,13 @@ public class ByteDataWrapperHelper {
 				return U8Pointer.cast(ptr).add(tokenOffsetI32);
 			}
 		} else {
-			UDATA offset = J9ShrOffsetPointer.cast(tokenOffset).offset();
+			J9ShrOffsetPointer j9shrOffset = J9ShrOffsetPointer.cast(tokenOffset);
+			UDATA offset = j9shrOffset.offset();
 			if (offset.eq(0)) {
 				return U8Pointer.NULL;
 			}
-			return cacheHeader[0].add(offset);
+			int layer = SharedClassesMetaDataHelper.getCacheLayerFromJ9shrOffset(j9shrOffset);
+			return cacheHeader[layer].add(offset);
 		}
 	}
 }

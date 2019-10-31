@@ -63,7 +63,7 @@ protected:
 	 * @param[in] flags Scanning context flags
 	 */
 	MMINLINE GC_MixedObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, uintptr_t flags)
-		: GC_ObjectScanner(env, objectPtr, env->getExtensions()->mixedObjectModel.getHeadlessObject(objectPtr), 0, flags, J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceHotFieldDescription)
+		: GC_ObjectScanner(env, env->getExtensions()->mixedObjectModel.getHeadlessObject(objectPtr), 0, flags)
 		, _endPtr((fomrobject_t *)((uint8_t*)_scanPtr + env->getExtensions()->mixedObjectModel.getSizeInBytesWithoutHeader(objectPtr)))
 		, _mapPtr(_scanPtr)
 		, _descriptionPtr(NULL)
@@ -79,12 +79,11 @@ protected:
 	 * @param[in] env The scanning thread environment
 	 */
 	MMINLINE void
-	initialize(MM_EnvironmentBase *env)
+	initialize(MM_EnvironmentBase *env, J9Class *clazzPtr)
 	{
 		GC_ObjectScanner::initialize(env);
 
 		/* Initialize the slot map from description bits */
-		J9Class *clazzPtr = J9GC_J9OBJECT_CLAZZ(_parentObjectPtr, env);
 		_scanMap = (uintptr_t)clazzPtr->instanceDescription;
 #if defined(J9VM_GC_LEAF_BITS)
 		_leafMap = (uintptr_t)clazzPtr->instanceLeafDescription;
@@ -123,7 +122,7 @@ public:
 	{
 		GC_MixedObjectScanner *objectScanner = (GC_MixedObjectScanner *)allocSpace;
 		new(objectScanner) GC_MixedObjectScanner(env, objectPtr, flags);
-		objectScanner->initialize(env);
+		objectScanner->initialize(env, J9GC_J9OBJECT_CLAZZ(objectPtr, env));
 		return objectScanner;
 	}
 	

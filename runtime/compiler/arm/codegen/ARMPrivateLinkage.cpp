@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "arm/codegen/ARMPrivateLinkage.hpp"
+#include "codegen/ARMPrivateLinkage.hpp"
 
 #include "arm/codegen/ARMInstruction.hpp"
 #include "codegen/CallSnippet.hpp"
@@ -39,18 +39,18 @@
 #include "il/Node_inlines.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "env/VMJ9.h"
 
 #define LOCK_R14
 // #define DEBUG_ARM_LINKAGE
 
-TR::ARMLinkageProperties TR::ARMPrivateLinkage::properties =
+TR::ARMLinkageProperties J9::ARMPrivateLinkage::properties =
    {                           // TR_Private
     0,                         // linkage properties
        {                        // register flags
@@ -160,7 +160,7 @@ TR::ARMLinkageProperties TR::ARMPrivateLinkage::properties =
        0                         // firstFloatReturnRegister
    };
 
-TR::ARMLinkageProperties& TR::ARMPrivateLinkage::getProperties()
+TR::ARMLinkageProperties& J9::ARMPrivateLinkage::getProperties()
    {
    return properties;
    }
@@ -171,7 +171,7 @@ static void lockRegister(TR::RealRegister *regToAssign)
    regToAssign->setAssignedRegister(regToAssign);
    }
 
-void TR::ARMPrivateLinkage::initARMRealRegisterLinkage()
+void J9::ARMPrivateLinkage::initARMRealRegisterLinkage()
    {
    TR::CodeGenerator           *codeGen     = cg();
    TR::Machine                 *machine = codeGen->machine();
@@ -210,12 +210,12 @@ void TR::ARMPrivateLinkage::initARMRealRegisterLinkage()
 #endif
    }
 
-uint32_t TR::ARMPrivateLinkage::getRightToLeft()
+uint32_t J9::ARMPrivateLinkage::getRightToLeft()
    {
    return getProperties().getRightToLeft();
    }
 
-void TR::ARMPrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
+void J9::ARMPrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    {
    ListIterator<TR::AutomaticSymbol>  automaticIterator(&method->getAutomaticList());
    TR::AutomaticSymbol               *localCursor       = automaticIterator.getFirst();
@@ -309,7 +309,7 @@ void TR::ARMPrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    atlas->setParmBaseOffset(atlas->getParmBaseOffset() + offsetToFirstParm - firstLocalOffset);
    }
 
-void TR::ARMPrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex)
+void J9::ARMPrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex)
    {
    int32_t roundedSize = (p->getSize()+3)&(~3);
    if (roundedSize == 0)
@@ -318,7 +318,7 @@ void TR::ARMPrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t 
    p->setOffset(stackIndex -= roundedSize);
    }
 
-void TR::ARMPrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method)
+void J9::ARMPrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method)
    {
    ListIterator<TR::ParameterSymbol>   paramIterator(&(method->getParameterList()));
    TR::ParameterSymbol      *paramCursor = paramIterator.getFirst();
@@ -415,7 +415,7 @@ TR::RealRegister::RegNum getSingleAssignedRegister(TR::Machine *machine, const T
 //
 // * Linkage slots are not needed in leaf methods. (TODO)
 
-void TR::ARMPrivateLinkage::createPrologue(TR::Instruction *cursor)
+void J9::ARMPrivateLinkage::createPrologue(TR::Instruction *cursor)
    {
    TR::CodeGenerator   *codeGen    = cg();
    TR::Machine         *machine    = codeGen->machine();
@@ -714,7 +714,7 @@ void TR::ARMPrivateLinkage::createPrologue(TR::Instruction *cursor)
       }
    }
 
-void TR::ARMPrivateLinkage::createEpilogue(TR::Instruction *cursor)
+void J9::ARMPrivateLinkage::createEpilogue(TR::Instruction *cursor)
    {
    TR::CodeGenerator   *codeGen    = cg();
    TR::Machine         *machine    = codeGen->machine();
@@ -831,7 +831,7 @@ void TR::ARMPrivateLinkage::createEpilogue(TR::Instruction *cursor)
    cursor = generateTrg1Src1Instruction(codeGen, ARMOp_mov, lastNode, gr15, gr14, cursor);
    }
 
-TR::MemoryReference *TR::ARMPrivateLinkage::getOutgoingArgumentMemRef(int32_t               totalSize,
+TR::MemoryReference *J9::ARMPrivateLinkage::getOutgoingArgumentMemRef(int32_t               totalSize,
                                                                        int32_t               offset,
                                                                        TR::Register          *argReg,
                                                                        TR_ARMOpCodes         opCode,
@@ -850,7 +850,7 @@ printf("private: totalSize %d offset %d\n", totalSize, offset); fflush(stdout);
    return result;
    }
 
-int32_t TR::ARMPrivateLinkage::buildArgs(TR::Node                            *callNode,
+int32_t J9::ARMPrivateLinkage::buildArgs(TR::Node                            *callNode,
                                         TR::RegisterDependencyConditions *dependencies,
                                         TR::Register* &vftReg,
                                         bool                                isVirtual)
@@ -858,7 +858,7 @@ int32_t TR::ARMPrivateLinkage::buildArgs(TR::Node                            *ca
    return buildARMLinkageArgs(callNode, dependencies, vftReg, TR_Private, isVirtual);
    }
 
-void TR::ARMPrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
+void J9::ARMPrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
                         TR::RegisterDependencyConditions *dependencies,
                         TR::RegisterDependencyConditions *postDeps,
                         TR::Register                     *vftReg,
@@ -1044,7 +1044,7 @@ void TR::ARMPrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
    return;
    }
 
-TR::Register *TR::ARMPrivateLinkage::buildDirectDispatch(TR::Node *callNode)
+TR::Register *J9::ARMPrivateLinkage::buildDirectDispatch(TR::Node *callNode)
    {
    TR::MethodSymbol *callSym = callNode->getSymbol()->castToMethodSymbol();
    if (callSym->isJNI() &&
@@ -1061,7 +1061,7 @@ TR::Register *TR::ARMPrivateLinkage::buildDirectDispatch(TR::Node *callNode)
       }
    }
 
-TR::Register *TR::ARMPrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
+TR::Register *J9::ARMPrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    {
    TR::CodeGenerator *codeGen = cg();
    TR::Machine       *machine = codeGen->machine();

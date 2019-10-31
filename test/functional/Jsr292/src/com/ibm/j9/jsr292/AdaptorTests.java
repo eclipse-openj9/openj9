@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,8 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.WrongMethodTypeException;
 import java.util.Arrays;
 import java.util.List;
+
+import org.openj9.test.util.VersionCheck;
 
 import examples.PackageExamples;
 
@@ -288,6 +290,14 @@ public class AdaptorTests {
 				MethodHandle spreader = handle.asSpreader(long[].class, 1);
 				AssertJUnit.assertEquals(3, (long)spreader.invoke(1l, (long[]) null));
 			} catch(IllegalArgumentException e) {
+				if (VersionCheck.major() >= 11) {
+					Assert.fail("IllegalArgumentException thrown instead of NullPointerException");
+				}
+				exceptionOccurred = true;
+			} catch(NullPointerException e) {
+				if (VersionCheck.major() < 11) {
+					Assert.fail("NullPointerException thrown instead of IllegalArgumentException");
+				}
 				exceptionOccurred = true;
 			}
 			AssertJUnit.assertTrue(exceptionOccurred);

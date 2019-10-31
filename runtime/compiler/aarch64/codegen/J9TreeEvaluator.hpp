@@ -36,7 +36,7 @@ namespace J9 { typedef J9::ARM64::TreeEvaluator TreeEvaluatorConnector; }
 
 
 #include "compiler/codegen/J9TreeEvaluator.hpp"  // include parent
-#include "il/symbol/LabelSymbol.hpp"
+#include "il/LabelSymbol.hpp"
 
 namespace J9
 {
@@ -92,6 +92,10 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *asynccheckEvaluator(TR::Node *node, TR::CodeGenerator *cg);
 
    static TR::Register *ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+
+   static TR::Instruction *generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *dstReg, TR::Register *srcReg, TR::Instruction *preced=NULL);
+   static TR::Instruction *generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::Instruction *preced=NULL);
+
    };
 
 }

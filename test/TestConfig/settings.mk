@@ -55,26 +55,6 @@ include $(TEST_ROOT)$(D)TestConfig$(D)utils.mk
 include $(TEST_ROOT)$(D)TestConfig$(D)testEnv.mk
 include $(TEST_ROOT)$(D)TestConfig$(D)featureSettings.mk
 
-# temporarily support both JAVA_VERSION and JDK_VERSION
-ifeq ($(JAVA_VERSION), SE80)
-	JDK_VERSION:=8
-endif
-ifeq ($(JAVA_VERSION), SE90)
-	JDK_VERSION:=9
-endif
-ifeq ($(JAVA_VERSION), SE100)
-	JDK_VERSION:=10
-endif
-ifeq ($(JAVA_VERSION), SE110)
-	JDK_VERSION:=11
-endif
-ifeq ($(JAVA_VERSION), SE120)
-	JDK_VERSION:=12
-endif
-ifeq ($(JAVA_VERSION), SE130)
-	JDK_VERSION:=13
-endif
-
 ifndef JDK_VERSION
 	export JDK_VERSION:=8
 else
@@ -201,7 +181,7 @@ CMDLINETESTER_RESJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdline_options_testr
 # testng report dir
 #######################################
 ifndef UNIQUEID
-	GETID := $(TEST_ROOT)$(D)TestConfig$(D)scripts$(D)testKitGen$(D)resultsSummary$(D)getUniqueId.pl
+	GETID := $(TEST_ROOT)$(D)TestConfig$(D)scripts$(D)getUniqueId.pl
 	export UNIQUEID := $(shell perl $(GETID) -v)
 endif
 TESTOUTPUT := $(TEST_ROOT)$(D)TestConfig$(D)test_output_$(UNIQUEID)
@@ -341,4 +321,4 @@ rmResultFile:
 	@$(RM) $(Q)$(TEMPRESULTFILE)$(Q)
 
 resultsSummary:
-	@perl $(Q)$(TEST_ROOT)$(D)TestConfig$(D)scripts$(D)testKitGen$(D)resultsSummary$(D)resultsSum.pl$(Q) --failuremk=$(Q)$(FAILEDTARGETS)$(Q) --resultFile=$(Q)$(TEMPRESULTFILE)$(Q) --tapFile=$(Q)$(TAPRESULTFILE)$(Q) --diagnostic=$(DIAGNOSTICLEVEL)
+	@perl $(Q)$(TEST_ROOT)$(D)TestConfig$(D)scripts$(D)resultsSum.pl$(Q) --failuremk=$(Q)$(FAILEDTARGETS)$(Q) --resultFile=$(Q)$(TEMPRESULTFILE)$(Q) --tapFile=$(Q)$(TAPRESULTFILE)$(Q) --diagnostic=$(DIAGNOSTICLEVEL) --jdkVersion=$(JDK_VERSION) --jdkImpl=$(JDK_IMPL) --spec=$(SPEC) --buildList=$(BUILD_LIST) --customTarget=$(CUSTOM_TARGET)

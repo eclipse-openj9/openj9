@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -144,22 +144,20 @@ public:
 
 	virtual void *allocationRequestFailed(MM_EnvironmentBase *env, MM_AllocateDescription *allocateDescription, AllocationType allocationType, MM_ObjectAllocationInterface *objectAllocationInterface, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace);
 	virtual void *allocateObject(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure);
-#if defined(J9VM_GC_ARRAYLETS)
+
 	virtual UDATA largestDesirableArraySpine()
 	{
 		return _extensions->getOmrVM()->_arrayletLeafSize;
 	}
 
 	virtual void *allocateArrayletLeaf(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure);
-#endif /* J9VM_GC_ARRAYLETS */
-	
-	
+
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 	virtual void *allocateTLH(MM_EnvironmentBase *env, MM_AllocateDescription *allocDescription, MM_ObjectAllocationInterface *objectAllocationInterface, MM_MemorySubSpace *baseSubSpace, MM_MemorySubSpace *previousSubSpace, bool shouldCollectOnFailure);
 #endif /* J9VM_GC_THREAD_LOCAL_HEAP */
-	
+
 	virtual void setAllocateAtSafePointOnly(MM_EnvironmentBase *env, bool safePoint) { _allocateAtSafePointOnly = safePoint; };
-	
+
 	/* Calls for internal collection routines */
 	virtual void *collectorAllocate(MM_EnvironmentBase *env, MM_Collector *requestCollector, MM_AllocateDescription *allocDescription);
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)

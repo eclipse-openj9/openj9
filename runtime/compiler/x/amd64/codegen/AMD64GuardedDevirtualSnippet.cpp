@@ -27,9 +27,9 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
 
 uint8_t *TR::AMD64GuardedDevirtualSnippet::loadArgumentsIfNecessary(TR::Node *callNode, uint8_t *cursor, bool calculateSizeOnly, int32_t *sizeOfFlushArea)
    {

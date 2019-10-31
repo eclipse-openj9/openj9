@@ -31,9 +31,7 @@
 #include "ModronAssertions.h"
 #include "AllocateDescription.hpp"
 #include "AllocationContextTarok.hpp"
-#if defined(J9VM_GC_ARRAYLETS)
 #include "ArrayletLeafIterator.hpp"
-#endif /* J9VM_GC_ARRAYLETS */
 #include "AtomicOperations.hpp"
 #include "Bits.hpp"
 #include "CardListFlushTask.hpp"
@@ -588,12 +586,12 @@ MM_WriteOnceCompactor::compact(MM_EnvironmentVLHGC *env)
 	env->_currentTask->synchronizeGCThreads(env, UNIQUE_ID);
 
 	env->_compactVLHGCStats._fixupArrayletLeafStartTime = j9time_hires_clock();
-#if defined(J9VM_GC_ARRAYLETS)
+
 	if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 		/* now, correct any leaf pages to point at their moved spines - this must be called AFTER (aka:  post-sync) we are sure to have finished fixing up leaf contents since it relies on knowing exactly which version of the spine pointer it sees */
 		fixupArrayletLeafRegionSpinePointers();
 	}
-#endif /* defined(J9VM_GC_ARRAYLETS) */
+
 	timeTemp = j9time_hires_clock();
 	env->_compactVLHGCStats._fixupArrayletLeafEndTime = timeTemp;
 	env->_compactVLHGCStats._recycleStartTime = timeTemp;
@@ -743,11 +741,9 @@ MM_WriteOnceCompactor::evacuatePage(MM_EnvironmentVLHGC *env, void *page, J9MM_F
 				if (_extensions->objectModel.isRemembered(newLocation)) {
 					_extensions->objectModel.clearRemembered(newLocation);
 				}
-#if defined(J9VM_GC_ARRAYLETS)
 				if(_extensions->objectModel.isIndexable(newLocation)) {
 					updateInternalLeafPointersAfterCopy((J9IndexableObject*) newLocation, (J9IndexableObject*) objectPtr);
 				}
-#endif /* J9VM_GC_ARRAYLETS */
 				if (hasBeenHashed && !hasBeenMoved) {
 					/* add the hash */
 					UDATA hashOffset = _extensions->objectModel.getHashcodeOffset(newLocation);
@@ -1506,7 +1502,6 @@ MM_WriteOnceCompactor::flushRememberedSetIntoCardTable(MM_EnvironmentVLHGC *env)
 	}
 }
 
-#if defined (J9VM_GC_ARRAYLETS)
 void
 MM_WriteOnceCompactor::tagArrayletLeafRegionsForFixup(MM_EnvironmentVLHGC *env)
 {
@@ -1548,7 +1543,6 @@ MM_WriteOnceCompactor::tagArrayletLeafRegionsForFixup(MM_EnvironmentVLHGC *env)
 		}
 	}
 }
-#endif /* defined (J9VM_GC_ARRAYLETS) */
 
 class MM_WriteOnceCompactFixupRoots : public MM_RootScanner {
 private:
@@ -1895,7 +1889,6 @@ MM_WriteOnceCompactor::recycleFreeRegionsAndFixFreeLists(MM_EnvironmentVLHGC *en
 	}
 }
 
-#if defined(J9VM_GC_ARRAYLETS)
 /**
  * Updates leaf pointers that point to an address located within the indexable object.  For example,
  * when the array layout is either inline continuous or hybrid, there will be leaf pointers that point
@@ -2016,7 +2009,6 @@ MM_WriteOnceCompactor::fixupArrayletLeafRegionContentsAndObjectLists(MM_Environm
 	/* restore everything to a flushed state before exiting */
 	env->getGCEnvironment()->_unfinalizedObjectBuffer->flush(env);
 }
-#endif /* defined(J9VM_GC_ARRAYLETS) */
 
 void
 MM_WriteOnceCompactor::clearMarkMapCompactSet(MM_EnvironmentVLHGC *env, MM_MarkMap *markMap)

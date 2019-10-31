@@ -34,7 +34,8 @@ target_link_libraries(j9shr
 )
 
 omr_add_exports(j9shr J9VMDllMain)
-target_enable_ddr(j9shr j9ddr)
+target_enable_ddr(j9shr GLOB_HEADERS_RECURSIVE)
+ddr_set_add_targets(j9ddr j9shr)
 
 install(
 	TARGETS j9shr

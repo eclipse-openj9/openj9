@@ -31,7 +31,6 @@
 #include "runtime/CodeCacheExceptions.hpp"
 #include "control/JITServerHelpers.hpp"
 #include "env/PersistentCHTable.hpp"
-#include "env/J2IThunk.hpp"
 #include "exceptions/AOTFailure.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "env/J2IThunk.hpp"
@@ -1413,6 +1412,12 @@ TR_J9ServerVM::needsInvokeExactJ2IThunk(TR::Node *callNode, TR::Compilation *com
       {
       return false;
       }
+   }
+
+TR_ResolvedMethod *
+TR_J9ServerVM::createMethodHandleArchetypeSpecimen(TR_Memory *trMemory, TR_OpaqueMethodBlock *archetype, uintptrj_t *methodHandleLocation, TR_ResolvedMethod *owningMethod)
+   {
+   return createMethodHandleArchetypeSpecimen(trMemory, methodHandleLocation, owningMethod);
    }
 
 TR_ResolvedMethod *

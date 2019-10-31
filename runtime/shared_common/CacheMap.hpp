@@ -506,12 +506,19 @@ private:
 
 	IDATA getPrereqCache(J9VMThread* currentThread, const char* cacheDir, SH_CompositeCacheImpl* ccToUse, bool startupForStats, const char** prereqCacheID, UDATA* idLen);
 
-	void handleStartupError(J9VMThread* currentThread, SH_CompositeCacheImpl* ccToUse, IDATA errorCode, U_64 runtimeFlags, UDATA verboseFlags, bool *doRetry);
+	void handleStartupError(J9VMThread* currentThread, SH_CompositeCacheImpl* ccToUse, IDATA errorCode, U_64 runtimeFlags, UDATA verboseFlags, bool *doRetry, IDATA *deleteRC);
 	
 	void setCacheAddressRangeArray(void);
 	
 	void getJ9ShrOffsetFromAddress(const void* address, J9ShrOffset* offset);
-
+	
+	UDATA getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescriptor* descriptor, bool topLayerOnly);
+	
+	void printCacheStatsTopLayerStatsHelper(J9VMThread* currentThread, UDATA showFlags, U_64 runtimeFlags, J9SharedClassJavacoreDataDescriptor *javacoreData, bool multiLayerStats);
+	
+	void printCacheStatsTopLayerSummaryStatsHelper(J9VMThread* currentThread, UDATA showFlags, U_64 runtimeFlags, J9SharedClassJavacoreDataDescriptor *javacoreData);
+	
+	void printCacheStatsAllLayersStatsHelper(J9VMThread* currentThread, UDATA showFlags, U_64 runtimeFlags, J9SharedClassJavacoreDataDescriptor *javacoreData, U_32 staleBytes);
 };
 
 #endif /* !defined(CACHEMAP_H_INCLUDED) */

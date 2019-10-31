@@ -602,7 +602,6 @@ MM_StandardAccessBarrier::getJNICriticalRegionCount(MM_GCExtensions *extensions)
 	return activeCriticals;
 }
 
-#if defined(J9VM_GC_ARRAYLETS)
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 I_32
 MM_StandardAccessBarrier::doCopyContiguousBackwardWithReadBarrier(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
@@ -715,7 +714,6 @@ MM_StandardAccessBarrier::forwardReferenceArrayCopyIndex(J9VMThread *vmThread, J
 	}
 	return retValue;
 }
-#endif /* J9VM_GC_ARRAYLETS */
 
 J9Object*
 MM_StandardAccessBarrier::asConstantPoolObject(J9VMThread *vmThread, J9Object* toConvert, UDATA allocationFlags)
@@ -757,22 +755,16 @@ MM_StandardAccessBarrier::preMonitorTableSlotRead(J9VMThread *vmThread, j9object
 		omrobjectptr_t forwardPtr = forwardHeader.getForwardedObject();
 
 		if (NULL != forwardPtr) {
-			/* Object has been copied - ensure the object is fully copied before exposing it, update the slot and return.
+			/* Object has been or is being copied - ensure the object is fully copied before exposing it, update the slot and return.
 			 *  Slot update needs to be atomic, only if there is a mutator thread racing with a write operation to this same slot.
-			 *  ATM, this barrier is only used to update Monitor table entries, which should not be ever reinitialized by any mutator.
+			 *  The barrier is typically used to update Monitor table entries, which should not be ever reinitialized by any mutator.
 			 *  Updated can occur, but only by GC threads during STW clearing phase, thus no race with this barrier. */
 			forwardHeader.copyOrWait(forwardPtr);
 			*srcAddress = forwardPtr;
-		} else {
-			Assert_GC_true_with_message2(env, forwardHeader.isSelfForwardedPointer(),
-				"Monitor object, not forwarded, in Evacuate: slot %llx object %llx\n", srcAddress, object);
-			/* A typical usage of this barrier is to update monitor table slot for blocking object (blockingEnterObject).
-			 * Such object is a hard root, hence copied during initial roots scanning. We should never need to copy it via this barrier.
-			 * If this assert eventually triggers it means the barrier is used for some other objects that are not hard roots
-			 * (for example, iterating monitor table to dump info about all monitors). If so, try using the other API (that's using VM rather
-			 * than Thread argument) instead (since that API expects accessing even dead objects and does not impose the assert).
-			 */
 		}
+		/* Do nothing if the object is not copied already, since it might be dead.
+		 * This object is found without real reference to it,
+		 * for example by iterating monitor table to dump info about all monitors */
 	}
 
 	return true;
@@ -790,7 +782,7 @@ MM_StandardAccessBarrier::preMonitorTableSlotRead(J9JavaVM *vm, j9object_t *srcA
 		omrobjectptr_t forwardPtr = forwardHeader.getForwardedObject();
 
 		if (NULL != forwardPtr) {
-			/* Object has been copied - ensure the object is fully copied before exposing it, update the slot and return */
+			/* Object has been or is being copied - ensure the object is fully copied before exposing it, update the slot and return */
 			forwardHeader.copyOrWait(forwardPtr);
 			*srcAddress = forwardPtr;
 		}

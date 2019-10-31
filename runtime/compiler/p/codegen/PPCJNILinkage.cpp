@@ -36,9 +36,9 @@
 #include "env/CompilerEnv.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
+#include "il/LabelSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
 #include "infra/SimpleRegex.hpp"
 #include "p/codegen/CallSnippet.hpp"
 #include "p/codegen/GenerateInstructions.hpp"
@@ -49,7 +49,7 @@
 #include "p/codegen/StackCheckFailureSnippet.hpp"
 
 TR::PPCJNILinkage::PPCJNILinkage(TR::CodeGenerator *cg)
-   :TR::PPCPrivateLinkage(cg)
+   : J9::PPCPrivateLinkage(cg)
    {
    //Copy out SystemLinkage properties. Assumes no objects in TR::PPCLinkageProperties.
    TR::Linkage *sysLinkage = cg->getLinkage(TR_System);
@@ -1348,19 +1348,12 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
 
    int32_t floatRegsUsed = (numFloatArgs>properties.getNumFloatArgRegs())?properties.getNumFloatArgRegs():numFloatArgs;
 
-   bool isHelper = false;
-   if (callNode->getSymbolReference()->getReferenceNumber() == TR_PPCVectorLogDouble)
-      {
-      isHelper = true;
-      }
-
    if (liveVMX || liveVSXScalar || liveVSXVector)
       {
       for (i=(TR::RealRegister::RegNum)((uint32_t)TR::RealRegister::LastFPR+1); i<=TR::RealRegister::LastVSR; i++)
          {
          // isFastJNI implying: no call back into Java, such that preserved is preserved
-         if (!properties.getPreserved((TR::RealRegister::RegNum)i) ||
-             (!isFastJNI  && !isHelper))
+         if (!properties.getPreserved((TR::RealRegister::RegNum)i) || !isFastJNI)
             {
             TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_VSX_SCALAR, cg());
             }

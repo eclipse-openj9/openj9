@@ -21,12 +21,12 @@
  *******************************************************************************/
 
 #include "env/annotations/GPUAnnotation.hpp"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "env/j9method.h"
 #include "cfreader.h"
@@ -51,7 +51,7 @@ static U_32 getIntFromCP(I_32 cpIndex, J9ROMClass *romClass)
    }
 
 
-void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp) 
+void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
    {
    if (!comp->isGPUCompilation()) return;
 
@@ -68,7 +68,7 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
          {
          J9Class *supClass = supClasses[i];
          romCl = supClass->romClass;
-         } 
+         }
 
       J9UTF8 *utf8 = J9ROMCLASS_CLASSNAME(romCl);
       char *className = (char *) J9UTF8_DATA(utf8);
@@ -122,7 +122,7 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
                {
                U_16 elementNameIndex;
                NEXT_U16(elementNameIndex, data);
-            
+
                int32_t len;
                char * str = getNameFromCP(len, elementNameIndex, romCl);
                U_8 tag;
@@ -132,8 +132,8 @@ void TR_SharedMemoryAnnotations::loadAnnotations(TR::Compilation *comp)
                size = getIntFromCP(constValueIndex, romCl) + 4;  // TODO: header !!!
                }
             }
-          
-         traceMsg(comp, "       size = %d\n", size);              
+
+         traceMsg(comp, "       size = %d\n", size);
          _sharedMemoryFields.push_back(TR_SharedMemoryField(fieldName, fieldNameLength, fieldSig, fieldSigLength, size));
          }
       }
@@ -162,7 +162,7 @@ void extractFieldName(TR::Compilation *comp, TR::SymbolReference *symRef,
    }
 
 
-TR_SharedMemoryField TR_SharedMemoryAnnotations::find(TR::Compilation *comp, TR::SymbolReference *symRef) 
+TR_SharedMemoryField TR_SharedMemoryAnnotations::find(TR::Compilation *comp, TR::SymbolReference *symRef)
    {
    int32_t classNameLength, fieldNameLength, fieldSigLength;
    char *className, *fieldName, *fieldSig;
@@ -184,7 +184,7 @@ TR_SharedMemoryField TR_SharedMemoryAnnotations::find(TR::Compilation *comp, TR:
    }
 
 // TODO: use another data structure to speedup the search
-void TR_SharedMemoryAnnotations::setParmNum(TR::Compilation *comp, TR::SymbolReference *symRef, int32_t num) 
+void TR_SharedMemoryAnnotations::setParmNum(TR::Compilation *comp, TR::SymbolReference *symRef, int32_t num)
    {
    int32_t classNameLength, fieldNameLength, fieldSigLength;
    char *className, *fieldName, *fieldSig;
@@ -227,7 +227,7 @@ bool currentMethodHasFpreductionAnnotation(TR::Compilation *comp, bool trace)
 	        NEXT_U16(numAnnotations, data);
             }
 
-         if (trace) traceMsg(comp, "current method has %d annotations %p\n", numAnnotations, annotationsData); 
+         if (trace) traceMsg(comp, "current method has %d annotations %p\n", numAnnotations, annotationsData);
 
          for (int i= 0; i < numAnnotations; i++)
             {
@@ -242,7 +242,7 @@ bool currentMethodHasFpreductionAnnotation(TR::Compilation *comp, bool trace)
             if (len == 44
                 && strncmp(str, "Lorg/apache/spark/sql/execution/fpreduction;", len) == 0)
                {
-               if (trace) traceMsg(comp, "current method has @fpreduction annotation\n"); 
+               if (trace) traceMsg(comp, "current method has @fpreduction annotation\n");
                return true;
                }
             }

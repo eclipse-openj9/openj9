@@ -20,8 +20,8 @@
 
 # To use this docker file:
 # 1.Depends on your OS platform, build the base openj9 docker
-#   image from the Dockerfile in buildenv/docker/jdk9/
-#   `docker build -f buildenv/docker/jdk9/<platform>/ubuntu/Dockerfile -t=openj9 .`
+#   image from the Dockerfile in buildenv/docker/jdk11/
+#   `docker build -f buildenv/docker/jdk11/<platform>/ubuntu/Dockerfile -t=openj9 .`
 #
 # 2.Build the Docker image from buildenv/docker/test/ for testing
 #   `docker build -t=openj9-buildandtest .`
@@ -45,7 +45,7 @@
 #
 #   Highly recommend mounting folders to Docker container rather
 #   than cloning them within Docker container. e.g.
-#   `docker run -it -v <path_to_openj9-openjdk-jdk9_dir>:/openj9-openjdk-jdk9`
+#   `docker run -it -v <path_to_openj9-openjdk-jdk11_dir>:/openj9-openjdk-jdk11`
 #   In this case, the built OpenJ9 SDK can be easily ported to localhost machine.
 #
 
@@ -62,6 +62,8 @@ RUN apt-get update \
     build-essential \
     perl \
     vim \
+    # 'libexpat1-dev' package should be removed once switching to TestKitGen java is complete and the builds are stabilized.
+    libexpat1-dev \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Docker module to run test framework

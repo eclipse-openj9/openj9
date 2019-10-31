@@ -36,9 +36,10 @@
 #include "il/Block.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 #include "optimizer/CallInfo.hpp"
 #include "optimizer/J9CallGraph.hpp"
 #include "optimizer/PreExistence.hpp"
@@ -47,7 +48,6 @@
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "il/symbol/ParameterSymbol.hpp"
 
 #define OPT_DETAILS "O^O INLINER: "
 
@@ -171,7 +171,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               callNode->getOpCode().isCallIndirect(),
                               calleeSymbol->isInterface(),
                               callNode->getByteCodeInfo(),
-                              comp);
+                              comp,
+                              depth,
+                              allConsts);
          }
       else
          {
@@ -192,7 +194,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                      callNode->getOpCode().isCallIndirect(),
                      calleeSymbol->isInterface(),
                      callNode->getByteCodeInfo(),
-                     comp) ;
+                     comp,
+                     depth,
+                     allConsts) ;
             }
 
          if (calleeSymbol->getResolvedMethodSymbol() && calleeSymbol->getResolvedMethodSymbol()->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact)
@@ -210,7 +214,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                   callNode->getOpCode().isCallIndirect(),
                   calleeSymbol->isInterface(),
                   callNode->getByteCodeInfo(),
-                  comp) ;
+                  comp,
+                  depth,
+                  allConsts) ;
             }
 
          return new (trMemory, kind) TR_J9VirtualCallSite  (lCaller,
@@ -226,7 +232,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               callNode->getOpCode().isCallIndirect(),
                               calleeSymbol->isInterface(),
                               callNode->getByteCodeInfo(),
-                              comp) ;
+                              comp,
+                              depth,
+                              allConsts) ;
 
          }
       }
@@ -236,7 +244,7 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               parent,
                               callNode,
                               calleeSymbol->getMethod(),
-                              receiverClass,
+                              resolvedMethod && !resolvedMethod->isStatic() ? receiverClass : NULL,
                               (int32_t)symRef->getOffset(),
                               symRef->getCPIndex(),
                               resolvedMethod,
@@ -244,7 +252,9 @@ TR_CallSite* TR_CallSite::create(TR::TreeTop* callNodeTreeTop,
                               callNode->getOpCode().isCallIndirect(),
                               calleeSymbol->isInterface(),
                               callNode->getByteCodeInfo(),
-                              comp) ;
+                              comp,
+                              depth,
+                              allConsts) ;
 
    }
 
@@ -350,7 +360,7 @@ static void populateOSRCallSiteRematTable(TR::Optimizer* optimizer, TR_CallTarge
 
       // Storing failures, will search for a double store that occurs before
       //
-      else 
+      else
          {
          if (comp->trace(OMR::inlining))
             traceMsg(comp, "callSiteRemat: failed to find store for pending push #%d\n", store->getSymbolReference()->getReferenceNumber());
@@ -359,14 +369,14 @@ static void populateOSRCallSiteRematTable(TR::Optimizer* optimizer, TR_CallTarge
          }
       }
 
-   // Perform search for any double stores 
+   // Perform search for any double stores
    // This goes from the start of the block to the call, as PPs may store
    // duplicate values
    //
    if (failedPP.size() > 0)
       RematTools::walkTreeTopsCalculatingRematFailureAlternatives(comp,
          blockStart, call, failedPP, scanTargets, safetyInfo, verboseCallSiteRemat != NULL);
- 
+
    // Perform the safety check, to ensure symrefs haven't been
    // modified.
    //
@@ -938,7 +948,7 @@ void TR_ProfileableCallSite::findSingleProfiledReceiver(ListIterator<TR_ExtraAdd
 
          heuristicTrace(inliner->tracer(),"Creating a profiled call. callee Symbol %p frequencyadjustment %f",_initialCalleeSymbol, val);
          addTarget(comp()->trMemory(),inliner,guard,targetMethod,tempreceiverClass,heapAlloc,val);
-         
+
          if (comp()->getOption(TR_DisableMultiTargetInlining))
             return;
          }

@@ -1206,11 +1206,7 @@ class CheckEngine
 			if (delta < ObjectModel.getSizeInBytesWithHeader(object).longValue()) {
 				return J9MODRON_GCCHK_RC_INVALID_RANGE;
 			}
-			
-			if(J9BuildFlags.gc_arraylets && !J9BuildFlags.gc_hybridArraylets) {
-				// TODO kmt : more code here
-			}
-			
+
 			if((checkFlags & J9MODRON_GCCHK_VERIFY_FLAGS) != 0) {
 				// TODO : fix this test
 				if (!checkIndexableFlag(object)) {

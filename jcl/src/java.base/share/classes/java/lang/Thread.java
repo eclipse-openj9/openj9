@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 package java.lang;
 
 /*******************************************************************************
@@ -27,7 +27,8 @@ import java.util.Map;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-/*[IF Sidecar19-SE]
+/*[IF Java11]
+import jdk.internal.misc.TerminatingThreadLocal;
 import jdk.internal.reflect.CallerSensitive;
 /*[ELSE]*/
 import sun.reflect.CallerSensitive;
@@ -1480,6 +1481,12 @@ void uncaughtException(Throwable e) {
  * @see J9VMInternals#threadCleanup()
  */
 void cleanup() {
+/*[IF Java11]*/
+	if (threadLocals != null && TerminatingThreadLocal.REGISTRY.isPresent()) {
+		TerminatingThreadLocal.threadTerminated();
+	}
+/*[ENDIF]*/
+
 	/*[PR 97317]*/
 	group = null;
 

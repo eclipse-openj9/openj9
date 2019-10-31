@@ -6645,7 +6645,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_NOBOOTCLASSPATH_V1.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_BOOTCLASSESONLY=\u00d6ny\u00fckleme olmayan s\u0131n\u0131f y\u00fckleyicisi taraf\u0131ndan y\u00fcklenen s\u0131n\u0131flar\u0131n \u00f6nbelle\u011fe al\u0131nmas\u0131 ge\u00e7ersiz k\u0131l\u0131n\u0131r. Bu se\u00e7enek, "nonfatal" se\u00e7ene\u011fini de a\u00e7ar.
+J9NLS_SHRC_SHRINIT_HELPTEXT_BOOTCLASSESONLY=\u00d6ny\u00fckleme olmayan s\u0131n\u0131f y\u00fckleyicileri taraf\u0131ndan y\u00fcklenen s\u0131n\u0131flar\u0131n \u00f6nbelle\u011fe al\u0131nmas\u0131 ge\u00e7ersiz k\u0131l\u0131n\u0131r. Bu se\u00e7enek, "nonfatal" se\u00e7ene\u011fini de a\u00e7ar.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_BOOTCLASSESONLY.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_BOOTCLASSESONLY.system_action=
@@ -6659,7 +6659,7 @@ J9NLS_SHRC_SHRINIT_HELPTEXT_FATAL.system_action=
 J9NLS_SHRC_SHRINIT_HELPTEXT_FATAL.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY=%1$d: 0x%2$p STARTUP HINTS KEY: %4$.*3$s Adres: 0x%5$p Boyut: %6$d
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY=%1$d: 0x%2$p BA\u015eLANGI\u00c7 \u0130PU\u00c7LARI ANAHTARI: %4$.*3$s Adres: 0x%5$p Boyut: %6$d
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.sample_input_2=042F71F8
@@ -6672,7 +6672,7 @@ J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.system_action=
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY.user_response=
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL=STARTUP HINTS DETAIL \u0130\u015faretler: %1$zu DATA1: %2$zu DATA2: %3$zu
+J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL=BA\u015eLANGI\u00c7 \u0130PU\u00c7LARI AYRINTISI \u0130\u015faretler: %1$zu DATA1: %2$zu DATA2: %3$zu
 # START NON-TRANSLATABLE
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.sample_input_1=1
 J9NLS_SHRC_CM_PRINTSTATS_STARTUP_HINTS_DISPLAY_DETAIL.sample_input_2=1024
@@ -6716,28 +6716,28 @@ J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.system_action=The JVM terminates, unless you hav
 J9NLS_SHRC_GET_DIR_BUF_OVERFLOW.user_response=Please try using a shorter shared cache directory.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME=Kullan\u0131c\u0131n\u0131n anasayfas\u0131 varsay\u0131lan payla\u015f\u0131lan \u00f6nbellek dizini olarak kullan\u0131lamad\u0131. Ana dizin al\u0131nam\u0131yor. L\u00fctfen "HOME" ortam de\u011fi\u015fkeni veya "cacheDir=" komut sat\u0131r\u0131 se\u00e7ene\u011fi arac\u0131l\u0131\u011f\u0131yla ba\u015fka bir dizin al\u0131n veya parola dosyas\u0131 giri\u015finde ana dizini d\u00fczeltin.
+J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME=Kullan\u0131c\u0131n\u0131n anasayfas\u0131 varsay\u0131lan payla\u015f\u0131lan \u00f6nbellek dizini olarak kullan\u0131lamad\u0131. Ana dizin al\u0131nam\u0131yor. L\u00fctfen "HOME" ortam de\u011fi\u015fkeni veya "cacheDir=" komut sat\u0131r\u0131 se\u00e7ene\u011fi arac\u0131l\u0131\u011f\u0131yla ba\u015fka bir dizin belirleyin veya parola dosyas\u0131 giri\u015finde ana dizini d\u00fczeltin.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.explanation=An error occurred getting user's home directory.
 J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_GET_DIR_FAILED_TO_GET_HOME.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW=Kullan\u0131c\u0131n\u0131n anasayfas\u0131 varsay\u0131lan payla\u015f\u0131lan \u00f6nbellek dizini olarak kullan\u0131lamad\u0131. Yol \u00e7ok uzun. Ana dizin al\u0131nam\u0131yor. L\u00fctfen "HOME" ortam de\u011fi\u015fkeni veya "cacheDir=" komut sat\u0131r\u0131 se\u00e7ene\u011fi arac\u0131l\u0131\u011f\u0131yla ba\u015fka bir dizin al\u0131n veya parola dosyas\u0131 giri\u015finde ana dizini d\u00fczeltin.
+J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW=Kullan\u0131c\u0131n\u0131n anasayfas\u0131 varsay\u0131lan payla\u015f\u0131lan \u00f6nbellek dizini olarak kullan\u0131lamad\u0131. Yol \u00e7ok uzun. Ana dizin al\u0131nam\u0131yor. L\u00fctfen "HOME" ortam de\u011fi\u015fkeni veya "cacheDir=" komut sat\u0131r\u0131 se\u00e7ene\u011fi arac\u0131l\u0131\u011f\u0131yla ba\u015fka bir dizin belirleyin veya parola dosyas\u0131 giri\u015finde ana dizini d\u00fczeltin.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.explanation=The length of user's home directory is greater than the internal buffer space.
 J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_GET_DIR_HOME_BUF_OVERFLOW.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_HOME_ON_NFS=Kullan\u0131c\u0131n\u0131n anasayfas\u0131 varsay\u0131lan payla\u015f\u0131lan \u00f6nbellek dizini olarak kullan\u0131lamad\u0131. A\u011f Dosya Sistemi \u00fczerinde. Ana dizin al\u0131nam\u0131yor. L\u00fctfen "HOME" ortam de\u011fi\u015fkeni veya "cacheDir=" komut sat\u0131r\u0131 se\u00e7ene\u011fi arac\u0131l\u0131\u011f\u0131yla ba\u015fka bir dizin al\u0131n veya parola dosyas\u0131 giri\u015finde ana dizini d\u00fczeltin.
+J9NLS_SHRC_GET_DIR_HOME_ON_NFS=Kullan\u0131c\u0131n\u0131n anasayfas\u0131 varsay\u0131lan payla\u015f\u0131lan \u00f6nbellek dizini olarak kullan\u0131lamad\u0131. A\u011f Dosya Sistemi \u00fczerinde. Ana dizin al\u0131nam\u0131yor. L\u00fctfen "HOME" ortam de\u011fi\u015fkeni veya "cacheDir=" komut sat\u0131r\u0131 se\u00e7ene\u011fi arac\u0131l\u0131\u011f\u0131yla ba\u015fka bir dizin belirleyin veya parola dosyas\u0131 giri\u015finde ana dizini d\u00fczeltin.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_HOME_ON_NFS.explanation=The shared cache directory cannot be on a Network File System.
 J9NLS_SHRC_GET_DIR_HOME_ON_NFS.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_GET_DIR_HOME_ON_NFS.user_response=Cannot get home directory. Please set another directory via environment variable "HOME" or command line option "cacheDir=", or fix the home directory in the password file entry.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME=Kullan\u0131c\u0131n\u0131n anasayfas\u0131 varsay\u0131lan payla\u015f\u0131lan \u00f6nbellek dizini olarak kullan\u0131lamad\u0131. Hata  kodu %1$d.
+J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME=Kullan\u0131c\u0131n\u0131n anasayfas\u0131 varsay\u0131lan payla\u015f\u0131lan \u00f6nbellek dizini olarak kullan\u0131lamad\u0131. Hata kodu %1$d.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.sample_input_1=-1
 J9NLS_SHRC_GET_DIR_CANNOT_STAT_HOME.explanation=An error occurred checking the attributes of the directory.
@@ -6752,7 +6752,7 @@ J9NLS_SHRC_GET_DIR_NO_SPACE.system_action=The JVM terminates, unless you have sp
 J9NLS_SHRC_GET_DIR_NO_SPACE.user_response=Ensure the process has enough native memory to run.
 # END NON-TRANSLATABLE
 
-J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK=URL jar/zip dosyalar\u0131nda zaman damgas\u0131n\u0131 denetimini en aza indirin.
+J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK=URL jar/zip dosyalar\u0131nda zaman damgas\u0131 denetimini en aza indirin.
 # START NON-TRANSLATABLE
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK.explanation=NOTAG
 J9NLS_SHRC_SHRINIT_HELPTEXT_NO_URL_TIMESTAMP_CHECK.system_action=

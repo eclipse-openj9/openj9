@@ -1,4 +1,4 @@
- 
+
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -36,9 +36,9 @@
 #if defined(LINUX)
 #if !defined(J9ZTPF)
 #include <sys/signal.h>
+#include <linux/unistd.h>
 #endif /* !defined(J9ZTPF) */
 #include <sys/types.h>
-#include <linux/unistd.h>
 #endif
 
 
@@ -46,7 +46,7 @@ MM_MetronomeAlarmThread *
 MM_MetronomeAlarmThread::newInstance(MM_EnvironmentBase *env)
 {
 	MM_MetronomeAlarmThread *alarmThread;
-	
+
 	alarmThread = (MM_MetronomeAlarmThread *)env->getForge()->allocate(sizeof(MM_MetronomeAlarmThread), MM_AllocationCategory::FIXED, OMR_GET_CALLSITE());
 	if (alarmThread) {
 		new(alarmThread) MM_MetronomeAlarmThread(env);
@@ -70,29 +70,29 @@ MM_MetronomeAlarmThread::tearDown(MM_EnvironmentBase *env)
 {
 	/* Shut down the alarm thread, if there is one running */
 	omrthread_monitor_enter(_mutex);
-	
+
 	/* Set shutdown thread flag */
 	_shutdown = true;
 
 	while (_alarmThreadActive == ALARM_THREAD_ACTIVE) {
 		omrthread_monitor_wait(_mutex);
 	}
-		
+
 	omrthread_monitor_exit(_mutex);
 
 	/* Kill the alarm only after the alarm thread is killed */
 	if (NULL != _alarm) {
 		_alarm->kill(env);
-		_alarm = NULL;	
+		_alarm = NULL;
 	}
 
 	if (NULL != _mutex) {
 		omrthread_monitor_destroy(_mutex);
-		_mutex = NULL;	
+		_mutex = NULL;
 	}
 }
 
-bool 
+bool
 MM_MetronomeAlarmThread::initialize(MM_EnvironmentBase *env)
 {
 	if (0 != omrthread_monitor_init_with_name(&_mutex, 0, "Metronome Alarm Thread")) {
@@ -104,7 +104,7 @@ MM_MetronomeAlarmThread::initialize(MM_EnvironmentBase *env)
 	 */
 	_alarm = MM_Alarm::factory(env, _scheduler->_osInterface);
 	if (!_alarm || !_alarm->initialize(env, this)) {
-		return false;	
+		return false;
 	}
 
 	return true;
@@ -145,28 +145,28 @@ MM_MetronomeAlarmThread::startThread(MM_EnvironmentBase *env)
 				J9THREAD_CATEGORY_SYSTEM_GC_THREAD)) {
 		return false;
 	}
-	
+
 	omrthread_monitor_enter(_mutex);
 	while (_alarmThreadActive == ALARM_THREAD_INACTIVE) {
 		omrthread_monitor_wait(_mutex);
 	}
 	retCode = (_alarmThreadActive == ALARM_THREAD_ACTIVE);
 	omrthread_monitor_exit(_mutex);
-	
+
 	return retCode;
 }
 
 /**
  * C++ entrypoint for the newly-created alarm thread.
  */
-void 
+void
 MM_MetronomeAlarmThread::run(MM_EnvironmentRealtime *env)
 {
 	omrthread_monitor_enter(_mutex);
-	
+
 	_alarmThreadActive = ALARM_THREAD_ACTIVE;
 	omrthread_monitor_notify(_mutex);
-		
+
 	while (!_shutdown) {
 		omrthread_monitor_exit(_mutex);
 

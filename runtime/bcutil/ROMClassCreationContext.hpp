@@ -71,8 +71,7 @@ public:
 		_doDebugCompare(false),
 		_existingRomMethod(NULL),
 		_reusingIntermediateClassData(false),
-		_creatingIntermediateROMClass(false),
-		_isLambda(false)
+		_creatingIntermediateROMClass(false)
 	{
 	}
 
@@ -108,8 +107,7 @@ public:
 		_doDebugCompare(false),
 		_existingRomMethod(NULL),
 		_reusingIntermediateClassData(false),
-		_creatingIntermediateROMClass(false),
-		_isLambda(false)
+		_creatingIntermediateROMClass(false)
 	{
 	}
 
@@ -152,8 +150,7 @@ public:
 		_doDebugCompare(false),
 		_existingRomMethod(NULL),
 		_reusingIntermediateClassData(false),
-		_creatingIntermediateROMClass(creatingIntermediateROMClass),
-		_isLambda(false)
+		_creatingIntermediateROMClass(creatingIntermediateROMClass)
 	{
 		if ((NULL != _javaVM) && (NULL != _javaVM->dynamicLoadBuffers)) {
 			/* localBuffer should not be NULL */
@@ -170,7 +167,7 @@ public:
 			memset(&_verboseRecords[0], 0, sizeof(_verboseRecords));
 		}
 	}
-	
+
 	bool isCreatingIntermediateROMClass() const { return _creatingIntermediateROMClass; }
 	U_8 *classFileBytes() const { return _classFileBytes; }
 	UDATA classFileSize() const { return _classFileSize; }
@@ -275,14 +272,14 @@ public:
 		 * Any of the following conditions prevent the sharing of a ROMClass:
 		 *  - classloader is not shared classes enabled
 		 *  - cache is full
-		 *  - Unsafe classes except lambda classes are not shared
+		 *  - the class is unsafe and isUnsafeClassSharingEnabled returns false (see the function isUnsafeClassShareable() for more details)
 		 *  - shared cache is BCI enabled and class is modified by BCI agent
 		 *  - shared cache is BCI enabled and ROMClass being store is intermediate ROMClass
 		 *  - the class is loaded from a patch path
 		 */
 		if (isSharedClassesEnabled()
 			&& isClassLoaderSharedClassesEnabled()
-			&& (!isClassUnsafe() || _isLambda)
+			&& (!isClassUnsafe() || isUnsafeClassSharingEnabled())
 			&& !(isSharedClassesBCIEnabled()
 			&& (classFileBytesReplaced() || isCreatingIntermediateROMClass()))
 			&& (LOAD_LOCATION_PATCH_PATH != loadLocation())
@@ -293,7 +290,33 @@ public:
 		}
 	}
 
-	void setIsLambda(bool isLambda) { _isLambda = isLambda; }
+	bool isUnsafeClassSharingEnabled() const {
+		/*
+		 * The command line option -XX:[+/-]ShareUnsafeClasses, combined with -XX:[+/-]ShareAnonymousClasses will have 4 different behaviours:
+		 * 1. -XX:+ShareAnonymousClasses -XX:+ShareUnsafeClasses, this will share all unsafe classes
+		 * 2. -XX:+ShareAnonymousClasses -XX:-ShareUnsafeClasses, this will only share anonymous classes and not other unsafe classes
+		 * 3. -XX:-ShareAnonymousClasses -XX:+ShareUnsafeClasses, this will only share unsafe classes that are not anonymous
+		 * 4. -XX:-ShareAnonymousClasses -XX:-ShareUnsafeClasses, this will share neither.
+		 * The current default behavior is the 1st option.
+		 */
+		bool isEnabled = false;
+
+		bool isAnonDefineClassSharingEnabled = J9_ARE_ALL_BITS_SET(_javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_SHAREANONYMOUSCLASSES);
+		bool isUnsafeDefineClassSharingEnabled = J9_ARE_ALL_BITS_SET(_javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_SHAREUNSAFECLASSES);
+
+		if (isClassAnon()) {
+			/*
+			 * Since the class loader shared classes enable flag is set properly and it is checked in the isClassLoaderSharedClassesEnabled() function
+			 * before this function is called in isROMClassShareable(). Thus, we can just assert isAnonDefineClassSharingEnabled is true.
+			 */
+			Trc_BCU_Assert_True(isAnonDefineClassSharingEnabled);
+			isEnabled = true;
+		} else if (isUnsafeDefineClassSharingEnabled) {
+			/* Classes loaded  by Unsafe.defineClass */
+			isEnabled = true;
+		}
+		return isEnabled;
+	}
 
 	/*
 	 * Returns true if any of the following conditions is true
@@ -382,22 +405,22 @@ public:
 	 * Report an invalid annotation error against a particular member (field or method).
 	 * This will attempt to construct and set an error message based on the supplied
 	 * NLS key. Regardless, an appropriate BuildResult value will be returned.
-	 * 
+	 *
 	 * @param className	UTF8 data representing the class containing the member
 	 * @param classNameLength	length of UTF8 data representing the class containing the member
 	 * @param memberName	UTF8 data representing the member with the annotation
 	 * @param memberNameLength	length of UTF8 data representing the member with the annotation
 	 * @param module_name	the module portion of the NLS key
 	 * @param message_num	the message portion of the NLS key
-	 * @return the BuildResult value 
+	 * @return the BuildResult value
 	 */
-	BuildResult 
+	BuildResult
 	reportInvalidAnnotation(U_8 *className, U_16 classNameLength, U_8 *memberName, U_16 memberNameLength, U_32 module_name, U_32 message_num)
 	{
 		const char* nlsMessage = NULL;
 		PORT_ACCESS_FROM_PORT(_portLibrary);
-		
-		/* Call direct through the port library to circumvent the macro, 
+
+		/* Call direct through the port library to circumvent the macro,
 		 * which assumes that the key is a single parameter.
 		 */
 		nlsMessage = OMRPORT_FROM_J9PORT(PORTLIB)->nls_lookup_message(OMRPORT_FROM_J9PORT(PORTLIB), J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE, module_name, message_num, NULL);
@@ -527,7 +550,7 @@ public:
 			reportVerboseStatistics();
 		}
 	}
-	
+
 	void forceDebugDataInLine()
 	{
 		_forceDebugDataInLine = true;
@@ -542,12 +565,12 @@ public:
 		}
 	}
 
-	void startDebugCompare() 
+	void startDebugCompare()
 	{
 		_doDebugCompare = true;
 	}
 
-	void endDebugCompare() 
+	void endDebugCompare()
 	{
 		_doDebugCompare = false;
 	}
@@ -567,7 +590,7 @@ public:
 	{
 		return (0 != (romMethodModifiers() & J9AccMethodHasDebugInfo));
 	}
-	
+
 	bool romMethodHasLineNumberCountCompressed()
 	{
 		bool retval = false;
@@ -580,7 +603,7 @@ public:
 		}
 		return retval;
 	}
-	
+
 	U_32 romMethodCompressedLineNumbersLength()
 	{
 		U_32 retval = 0;
@@ -610,16 +633,16 @@ public:
 		}
 	}
 
-	bool romMethodDebugDataIsInline() 
+	bool romMethodDebugDataIsInline()
 	{
 		bool retval = true;
-		J9ROMMethod * romMethod = romMethodGetCachedMethod();	
-		/* romMethodHasDebugData() is called to ensure methodDebugInfoFromROMMethod() 
+		J9ROMMethod * romMethod = romMethodGetCachedMethod();
+		/* romMethodHasDebugData() is called to ensure methodDebugInfoFromROMMethod()
 		 * will return a valid address to inspect.
 		 */
 		if ((NULL != romMethod) && (true == romMethodHasDebugData())) {
 			/* methodDebugInfoFromROMMethod() is called instead of getMethodDebugInfoFromROMMethod()
-			 * because getMethodDebugInfoFromROMMethod() will follow the srp to 'out of line' debug 
+			 * because getMethodDebugInfoFromROMMethod() will follow the srp to 'out of line' debug
 			 * data (and cause problems checking "1 ==(debugInfo->srpToVarInfo & 1)")
 			 */
 			J9MethodDebugInfo* debugInfo = methodDebugInfoFromROMMethod(romMethod);
@@ -628,12 +651,12 @@ public:
 		return retval;
 	}
 
-	void romMethodCacheCurrentRomMethod(IDATA offset) 
+	void romMethodCacheCurrentRomMethod(IDATA offset)
 	{
 		_existingRomMethod = romMethodFromOffset(offset);
 	}
 
-	J9ROMMethod * romMethodGetCachedMethod() 
+	J9ROMMethod * romMethodGetCachedMethod()
 	{
 		return _existingRomMethod;
 	}
@@ -660,7 +683,7 @@ public:
 			return 0;
 		}
 	}
-	
+
 	bool romClassHasSourceDebugExtension()
 	{
 		return (0 != (romClassOptionalFlags() & J9_ROMCLASS_OPTINFO_SOURCE_DEBUG_EXTENSION));
@@ -670,7 +693,7 @@ public:
 	{
 		return (0 != (romClassOptionalFlags() & J9_ROMCLASS_OPTINFO_SOURCE_FILE_NAME));
 	}
-	
+
 private:
 	void reportVerboseStatistics();
 	void verbosePrintPhase(ROMClassCreationPhase phase, bool *printedPhases, UDATA indent);
@@ -718,8 +741,7 @@ private:
 	J9ROMMethod * _existingRomMethod;
 	bool _reusingIntermediateClassData;
 	bool _creatingIntermediateROMClass;
-	bool _isLambda;
-	
+
 	J9ROMMethod * romMethodFromOffset(IDATA offset);
 };
 

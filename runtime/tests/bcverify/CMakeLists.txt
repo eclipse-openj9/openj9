@@ -27,6 +27,7 @@ add_library(bcuwhite SHARED
 	#TODO do we really need to recompile these sources,
 	# or can we just reuse the object files
 	${j9vm_SOURCE_DIR}/bcverify/bcverify.c
+	${j9vm_SOURCE_DIR}/bcverify/classrelationships.c
 	${j9vm_SOURCE_DIR}/bcverify/clconstraints.c
 	${j9vm_SOURCE_DIR}/bcverify/rtverify.c
 	${j9vm_SOURCE_DIR}/bcverify/staticverify.c
@@ -69,8 +70,26 @@ omr_add_exports(bcuwhite
 	Java_com_ibm_j9_test_bcverify_TestNatives_bcvCheckMethodName
 )
 
+add_library(bcvrelationships SHARED
+	relationships/bcvrelationships.c
+)
+
+target_link_libraries(bcvrelationships
+	PRIVATE
+		j9vm_interface
+
+		j9avl
+		j9hashtable
+		j9pool
+		j9utilcore
+)
+
+omr_add_exports(bcvrelationships
+	Java_org_openj9_test_classRelationshipVerifier_TestClassRelationshipVerifier_isRelationshipRecorded
+)
+
 install(
-	TARGETS bcuwhite
+	TARGETS bcuwhite bcvrelationships
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
 	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

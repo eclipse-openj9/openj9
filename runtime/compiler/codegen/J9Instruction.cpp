@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,8 +40,6 @@ J9::Instruction::Instruction(
       TR::Node *node) :
    OMR::InstructionConnector(cg, op, node)
    {
-   _registerSaveDescription = 0;
-
    if (self()->getPrev())
       {
       _liveLocals = cg->getLiveLocals();
@@ -62,8 +60,6 @@ J9::Instruction::Instruction(
       TR::Node *node) :
    OMR::InstructionConnector(cg, precedingInstruction, op, node)
    {
-   _registerSaveDescription = 0;
-
    if (precedingInstruction != 0)
       {
       _liveLocals = precedingInstruction->_liveLocals;

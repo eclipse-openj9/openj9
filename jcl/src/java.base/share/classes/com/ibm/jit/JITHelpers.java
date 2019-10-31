@@ -588,7 +588,7 @@ public final class JITHelpers {
 	 * @return        the index (in number of characters) of the target array within the source array, or -1 if the
 	 *                target array is not found within the source array.
 	 */
-	public int intrinsicIndexOfStringLatin1(char[] s1Value, int s1len, char[] s2Value, int s2len, int start) {
+	public int intrinsicIndexOfStringLatin1(Object s1Value, int s1len, Object s2Value, int s2len, int start) {
 		char firstChar = byteToCharUnsigned(getByteFromArrayByIndex(s2Value, 0));
 
 		while (true) {
@@ -634,8 +634,8 @@ public final class JITHelpers {
 	 * @return        the index (in number of characters) of the target array within the source array, or -1 if the
 	 *                target array is not found within the source array.
 	 */
-	public int intrinsicIndexOfStringUTF16(char[] s1Value, int s1len, char[] s2Value, int s2len, int start) {
-		char firstChar = s2Value[0];
+	public int intrinsicIndexOfStringUTF16(Object s1Value, int s1len, Object s2Value, int s2len, int start) {
+		char firstChar = getCharFromArrayByIndex(s2Value, 0);
 
 		while (true) {
 			int i = intrinsicIndexOfUTF16(s1Value, firstChar, start, s1len);
@@ -648,7 +648,7 @@ public final class JITHelpers {
 			int o1 = i;
 			int o2 = 0;
 
-			while ((++o2 < s2len) && (s1Value[++o1] == s2Value[o2]))
+			while (++o2 < s2len && getCharFromArrayByIndex(s1Value, ++o1) == getCharFromArrayByIndex(s2Value, o2))
 				;
 
 			if (o2 == s2len) {

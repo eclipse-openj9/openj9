@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,7 +77,7 @@ class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
 
    protected:
       bool estimateCodeSize(TR_CallTarget *, TR_CallStack * , bool recurseDown = true);
-      bool realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown);
+      bool realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallStack *prevCallStack, bool recurseDown, TR::Region &cfgRegion);
 
       bool reduceDAAWrapperCodeSize(TR_CallTarget* target);
 

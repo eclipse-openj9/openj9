@@ -199,6 +199,7 @@ countSharedCacheCallback(J9JavaVM *vm, J9SharedCacheInfo *cacheInfo, void *userD
 		j9tty_printf(PORTLIB, "cacheType:: %d\t", cacheInfo->cacheType);
 		j9tty_printf(PORTLIB, "isCompatible: %d\t", cacheInfo->isCompatible);
 		j9tty_printf(PORTLIB, "modLevel: %d\t", cacheInfo->modLevel);
+		j9tty_printf(PORTLIB, "layer: %d\t", cacheInfo->layer);
 		j9tty_printf(PORTLIB, "address mode: %d\t", cacheInfo->addrMode);
 		j9tty_printf(PORTLIB, "isCorrupt: %d\n", cacheInfo->isCorrupt);
 		for (i = 0; i < (NUM_CACHE + NUM_SNAPSHOT); i++) {
@@ -246,6 +247,7 @@ validateSharedCacheCallback(J9JavaVM *vm, J9SharedCacheInfo *cacheInfo, void *us
 			&& (J9SH_OSCACHE_UNKNOWN == (IDATA)cacheInfo->cacheSize)
 			&& (J9SH_OSCACHE_UNKNOWN == (IDATA)cacheInfo->freeBytes)
 			&& (J9SH_OSCACHE_UNKNOWN == (IDATA)cacheInfo->softMaxBytes)
+			&& (0 == cacheInfo->layer)
 		) {
 			cacheInfoList[NUM_CACHE].found = TRUE;
 		}
@@ -263,8 +265,10 @@ validateSharedCacheCallback(J9JavaVM *vm, J9SharedCacheInfo *cacheInfo, void *us
 				(CACHE_SIZE != cacheInfo->softMaxBytes) ||
 				(cacheInfo->freeBytes != (cacheSize - cacheInfoList[i].debugBytes)) ||
 				(cacheInfo->addrMode != addrMode) ||
-				(cacheInfo->modLevel != getShcModlevelForJCL(J2SE_VERSION(vm)) ||
-				(cacheInfo->lastDetach <= 0))) {
+				(cacheInfo->modLevel != getShcModlevelForJCL(J2SE_VERSION(vm))) ||
+				(cacheInfo->lastDetach <= 0) ||
+				(0 != cacheInfo->layer)
+			) {
 				continue;
 			}
 

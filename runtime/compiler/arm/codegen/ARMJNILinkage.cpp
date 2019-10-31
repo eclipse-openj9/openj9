@@ -39,16 +39,16 @@
 #include "env/J2IThunk.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
+#include "il/LabelSymbol.hpp"
+#include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/RegisterMappedSymbol.hpp"
+#include "il/ResolvedMethodSymbol.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/Symbol.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
-#include "il/symbol/LabelSymbol.hpp"
-#include "il/symbol/MethodSymbol.hpp"
-#include "il/symbol/RegisterMappedSymbol.hpp"
-#include "il/symbol/ResolvedMethodSymbol.hpp"
-#include "il/symbol/StaticSymbol.hpp"
 
 #define LOCK_R14
 
@@ -74,7 +74,7 @@ static TR::RealRegister::RegNum _singleArgumentRegisters[] =
    };
 
 TR::ARMJNILinkage::ARMJNILinkage(TR::CodeGenerator *cg)
-   :TR::ARMPrivateLinkage(cg)
+   : J9::ARMPrivateLinkage(cg)
    {
    //Copy out SystemLinkage properties. Assumes no objects in TR::ARMLinkageProperties.
    TR::Linkage *sysLinkage = cg->getLinkage(TR_System);

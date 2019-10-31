@@ -195,7 +195,7 @@ TR_VMFieldsInfo::TR_VMFieldsInfo(TR::Compilation * comp, J9Class *aClazz, int bu
    _gcDescriptor = (int32_t *) _comp->trMemory()->allocateMemory((_numRefSlotsInObject+1)*sizeof(int32_t), allocKind);
    _gcDescriptor[_numRefSlotsInObject] = 0;
 
-   slotsInHeader = (sizeof(J9Object)/numBytesInSlot);
+   slotsInHeader = (TR::Compiler->om.objectHeaderSizeInBytes()/numBytesInSlot);
    countSlots = slotsInHeader;
    bitIndex = 0;
    if ( ((UDATA) descriptorPtr) & BCT_J9DescriptionImmediate )

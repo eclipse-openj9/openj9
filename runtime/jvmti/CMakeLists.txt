@@ -79,7 +79,8 @@ omr_add_exports(j9jvmti
 	J9VMDllMain
 )
 
-target_enable_ddr(j9jvmti j9ddr)
+target_enable_ddr(j9jvmti GLOB_HEADERS)
+ddr_set_add_targets(j9ddr j9jvmti)
 
 install(
 	TARGETS j9jvmti

@@ -28,9 +28,9 @@
 #include "env/IO.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"
-#include "il/symbol/StaticSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/StaticSymbol.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "runtime/J9ValueProfiler.hpp"
@@ -103,7 +103,7 @@ J9::TreeEvaluator::bwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -125,7 +125,7 @@ J9::TreeEvaluator::bwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -147,7 +147,7 @@ J9::TreeEvaluator::swrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -169,7 +169,7 @@ J9::TreeEvaluator::swrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -191,7 +191,7 @@ J9::TreeEvaluator::iwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -213,7 +213,7 @@ J9::TreeEvaluator::iwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -235,7 +235,7 @@ J9::TreeEvaluator::lwrtbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -257,7 +257,7 @@ J9::TreeEvaluator::lwrtbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, valueReg);
       }
 
-   // Note: The reference count for valueReg's node is not decremented here because the 
+   // Note: The reference count for valueReg's node is not decremented here because the
    // store evaluator also uses it and so it will evaluate+decrement it. Thus we must skip decrementing here
    // to avoid double decrementing.
    cg->decReferenceCount(sideEffectNode);
@@ -280,7 +280,7 @@ J9::TreeEvaluator::frdbarEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    cg->decReferenceCount(sideEffectNode);
    return TR::TreeEvaluator::floadEvaluator(node, cg);
-   } 
+   }
 
 TR::Register *
 J9::TreeEvaluator::frdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
@@ -294,7 +294,7 @@ J9::TreeEvaluator::frdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       {
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
       }
-   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the 
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the
    // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
    // decrementing the node we skip doing it here and let the load evaluator do it.
    return TR::TreeEvaluator::floadEvaluator(node, cg);
@@ -331,7 +331,7 @@ J9::TreeEvaluator::drdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
       }
 
-   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the 
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the
    // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
    // decrementing the node we skip doing it here and let the load evaluator do it.
    return TR::TreeEvaluator::dloadEvaluator(node, cg);
@@ -368,7 +368,7 @@ J9::TreeEvaluator::brdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
       }
 
-   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the 
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the
    // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
    // decrementing the node we skip doing it here and let the load evaluator do it.
    return TR::TreeEvaluator::bloadEvaluator(node, cg);
@@ -405,7 +405,7 @@ J9::TreeEvaluator::srdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
       }
 
-   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the 
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the
    // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
    // decrementing the node we skip doing it here and let the load evaluator do it.
    return TR::TreeEvaluator::sloadEvaluator(node, cg);
@@ -442,7 +442,7 @@ J9::TreeEvaluator::lrdbariEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       TR::TreeEvaluator::rdWrtbarHelperForFieldWatch(node, cg, sideEffectRegister, NULL);
       }
 
-   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the 
+   // Note: For indirect rdbar nodes, the first child (sideEffectNode) is also used by the
    // load evaluator. The load evaluator will also evaluate+decrement it. In order to avoid double
    // decrementing the node we skip doing it here and let the load evaluator do it.
    return TR::TreeEvaluator::lloadEvaluator(node, cg);
@@ -579,7 +579,7 @@ void traceInstanceOfOrCheckCastProfilingInfo(TR::CodeGenerator *cg, TR::Node *no
       }
    }
 /**   \brief Generates an array of profiled classes with the boolean representing if the profiled class is instanceOf cast class or not
- **   \param profiledClassList 
+ **   \param profiledClassList
  **      An array of InstanceOfOrCheckCasrProfiledClasses structure passed from the main evaluator to fill up with profiled classes info
  **   \param topClassProbability
  **      float pointer passed from main evaluator, we update the value with the probability for the top profiled class to be castClass
@@ -630,7 +630,7 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
 
       if (!tempProfiledClass)
          continue;
-      
+
       // Skip unloaded classes.
       //
       if (comp->getPersistentInfo()->isObsoleteClass(tempProfiledClass, fej9))
@@ -697,14 +697,14 @@ uint32_t getInstanceOfOrCheckCastTopProfiledClass(TR::CodeGenerator *cg, TR::Nod
    }
 
 /**   \brief Generates an array of profiled classes with the boolean representing if the profiled class is instanceOf cast class or not
- **   \param profiledClassList 
+ **   \param profiledClassList
  **      An array of InstanceOfOrCheckCasrProfiledClasses structure passed from the main evaluator to fill up with profiled classes info
  **   \param numberOfProfiledClass
  **      An int pointer passed from main evaluator, we update the value with the number of classes we get from profilef info
  **   \param maxProfiledClass
  **      An int denoting how many profiled classes we want
  **   \param topClassProbability
- **      Probability of having topClass to be castClass. 
+ **      Probability of having topClass to be castClass.
  **   \param topClassWasCastClass
  **      Boolean pointer which will be set to true or false depending on if top profiled class was cast class or not
  **/
@@ -734,9 +734,15 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
 
    TR::SymbolReference *castClassSymRef = castClassNode->getSymbolReference();
 
+   if (cg->comp()->getOption(TR_OptimizeForSpace) || (cg->comp()->getOption(TR_DisableInlineCheckCast) && (instanceOfOrCheckCastNode->getOpCodeValue() == TR::checkcast || instanceOfOrCheckCastNode->getOpCodeValue() == TR::checkcastAndNULLCHK)) || (cg->comp()->getOption(TR_DisableInlineInstanceOf) && instanceOfOrCheckCastNode->getOpCodeValue() == TR::instanceof))
+      {
+      if (instanceOfOrCheckCastNode->getOpCodeValue() == TR::checkcastAndNULLCHK)
+         sequences[i++] = NullTest;
+      sequences[i++] = HelperCall;  
+      }
    // Object is known to be null, usually removed by the optimizer, but in case they're not we know the result of the cast/instanceof.
    //
-   if (objectNode->isNull())
+   else if (objectNode->isNull())
       {
       if (instanceOfOrCheckCastNode->getOpCodeValue() == TR::checkcastAndNULLCHK)
             sequences[i++] = NullTest;
@@ -769,8 +775,8 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
       sequences[i++] = ClassEqualityTest;
       sequences[i++] = CastClassCacheTest;
       // On Z, We were having support for Super Class Test for dynamic Cast Class so adding it here. It can be guarded if Power/X do not need it.
-      if (cg->supportsInliningOfIsInstance() && 
-         instanceOfOrCheckCastNode->getOpCodeValue() == TR::instanceof && 
+      if (cg->supportsInliningOfIsInstance() &&
+         instanceOfOrCheckCastNode->getOpCodeValue() == TR::instanceof &&
          instanceOfOrCheckCastNode->getSecondChild()->getOpCodeValue() != TR::loadaddr)
          sequences[i++] = SuperClassTest;
       if (createDynamicCacheTests)
@@ -785,7 +791,7 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
 
       TR::StaticSymbol   *castClassSym = castClassSymRef->getSymbol()->getStaticSymbol();
       TR_OpaqueClassBlock *castClass = (TR_OpaqueClassBlock *)castClassSym->getStaticAddress();
-      J9UTF8              *castClassName = J9ROMCLASS_CLASSNAME(((J9Class *)castClass)->romClass);
+      J9UTF8              *castClassName = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) castClass));
       // Cast class is a primitive (implies this is an instanceof, since you can't cast an object to a primitive).
       // Usually removed by the optimizer, but in case they're not we know they'll always fail, no object can be of a primitive type.
       // We don't even need to do a null test unless it's a checkcastAndNULLCHK node.
@@ -834,7 +840,7 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
                {
                for (int i=0; i<numProfiledClasses; i++)
                   {
-                  J9UTF8 *profiledClassName = J9ROMCLASS_CLASSNAME(((J9Class *)profiledClassList[i].profiledClass)->romClass);
+                  J9UTF8 *profiledClassName = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) profiledClassList[i].profiledClass));
                   traceMsg(cg->comp(), "%s:Interpreter profiling instance class: [" POINTER_PRINTF_FORMAT "] %.*s, probability=%.1f\n",
                      instanceOfOrCheckCastNode->getOpCode().getName(), profiledClassList[i].profiledClass, J9UTF8_LENGTH(profiledClassName), J9UTF8_DATA(profiledClassName), profiledClassList[i].frequency);
                   }
@@ -858,7 +864,7 @@ uint32_t J9::TreeEvaluator::calculateInstanceOfOrCheckCastSequences(TR::Node *in
                   {
                   if (singleImplementerClass)
                      {
-                     J9UTF8 *singleImplementerClassName = J9ROMCLASS_CLASSNAME(((J9Class *)singleImplementerClass)->romClass);
+                     J9UTF8 *singleImplementerClassName = J9ROMCLASS_CLASSNAME(TR::Compiler->cls.romClassOf((TR_OpaqueClassBlock *) singleImplementerClass));
                      traceMsg(cg->comp(), "%s: Single implementer for interface/abstract class: [" POINTER_PRINTF_FORMAT "] %.*s\n",
                               instanceOfOrCheckCastNode->getOpCode().getName(), singleImplementerClass, J9UTF8_LENGTH(singleImplementerClassName), J9UTF8_DATA(singleImplementerClassName));
                      }
