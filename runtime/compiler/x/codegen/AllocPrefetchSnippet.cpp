@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,7 +88,7 @@ uint8_t *TR::X86AllocPrefetchSnippet::emitSnippetBody()
       TR_RuntimeHelper helper = (comp->getOption(TR_EnableNewX86PrefetchTLH)) ? TR_X86newPrefetchTLH : TR_X86prefetchTLH;
       helperSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(helper, false, false, false);
       disp32 = cg()->branchDisplacementToHelperOrTrampoline(buffer+4, helperSymRef);
-      if (fej9->helpersNeedRelocation())
+      if (fej9->needRelocationsForHelpers())
          {
          cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(buffer,
                                                                                 (uint8_t *)helperSymRef,
