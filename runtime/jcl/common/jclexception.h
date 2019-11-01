@@ -28,9 +28,10 @@ typedef struct J9GetStackTraceUserData {
 	J9Class * elementClass;
 	UDATA index;
 	UDATA maxFrames;
+	J9UTF8 *previousFileName;
 } J9GetStackTraceUserData;
 
-J9IndexableObject *   getStackTrace(J9VMThread * vmThread, j9object_t* exceptionAddr, UDATA pruneConstructors);
+J9IndexableObject * getStackTrace(J9VMThread * vmThread, j9object_t* exceptionAddr, UDATA pruneConstructors);
 
 
 #endif
