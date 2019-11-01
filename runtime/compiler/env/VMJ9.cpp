@@ -259,6 +259,12 @@ TR_J9VMBase::instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass)
    return ::instanceOfOrCheckCast(instanceClass, castClass);
    }
 
+bool
+TR_J9VMBase::instanceOfOrCheckCastNoCacheUpdate(J9Class *instanceClass, J9Class* castClass)
+   {
+   return ::instanceOfOrCheckCastNoCacheUpdate(instanceClass, castClass);
+   }
+
 // Points to address: what if vmThread is not the compilation thread.
 // What if the compilation thread does not have the classUnloadMonitor.
 // What if jitConfig does not exist.
