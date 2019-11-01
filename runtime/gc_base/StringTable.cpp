@@ -548,22 +548,27 @@ j9object_t
 j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags)
 {
 	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions * const vmfcns = vm->internalVMFunctions;
 	MM_StringTable *stringTable = MM_GCExtensions::getExtensions(vm->omrVM)->getStringTable();
-	J9Class *stringClass;
 	j9object_t result = NULL;
-	j9object_t charArray;
+	j9object_t charArray = NULL;
 	UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
-	UDATA unicodeLength;
+	UDATA unicodeLength = 0;
 	bool isCompressable = false;
 
 	Trc_MM_createJavaLangString_Entry(vmThread, length, data, stringFlags);
 
-	/* see if the string is already in the table. Race condition where another thread may add the string
-	 * before this one is not fatal and is ignored.
+	/* For strings that should be interned, and don't need to be converted or translated,
+	 * check if they are already in the string hashtable.  Otherwise, don't bother with
+	 * the work to check the table.  This may result in slightly higher footprint but saves
+	 * on the common case where we don't expect the string to have been interned.
+	 *
+	 * See if the string is already in the table. Race condition where another thread may
+	 * add the string before this one is not fatal and is ignored.
 	 */
 
-	if ((stringFlags & (J9_STR_XLAT | J9_STR_UNICODE)) == 0) {
-		U_32 hash = (U_32)vm->internalVMFunctions->computeHashForUTF8(data, length);
+	if ((stringFlags & (J9_STR_XLAT | J9_STR_UNICODE | J9_STR_INTERN)) == J9_STR_INTERN) {
+		U_32 hash = (U_32)vmfcns->computeHashForUTF8(data, length);
 		UDATA tableIndex = stringTable->getTableIndex(hash);
 
 		stringTable->lockTable(tableIndex);
@@ -579,10 +584,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			allocateFlags |= J9_GC_ALLOCATE_OBJECT_TENURED;
 		}
 
-		stringClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRING, J9_FINDKNOWNCLASS_FLAG_EXISTING_ONLY);
-		if (stringClass == NULL) {
-			goto nomem;
-		}
+		J9Class *stringClass = J9VMJAVALANGSTRING_OR_NULL(vm);
 		result = J9AllocateObject(vmThread, stringClass, allocateFlags);
 		if (result == NULL) {
 			goto nomem;
@@ -635,9 +637,9 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			}
 		} else {
 			if (isCompressable) {
-				vm->internalVMFunctions->copyUTF8ToCompressedUnicode(vmThread, data, length, stringFlags, charArray, 0);
+				vmfcns->copyUTF8ToCompressedUnicode(vmThread, data, length, stringFlags, charArray, 0);
 			} else {
-				vm->internalVMFunctions->copyUTF8ToUnicode(vmThread, data, length, stringFlags, charArray, 0);
+				vmfcns->copyUTF8ToUnicode(vmThread, data, length, stringFlags, charArray, 0);
 			}
 		}
 
@@ -662,7 +664,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 					 * jitHookClassPreinitialize will process initialization events for String compression sideEffectGuards
 					 * so we must initialize the class if this is the first time we are loading it
 					 */
-			 		J9Class* flagClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
+					J9Class* flagClass = vmfcns->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
 
 					if (NULL == flagClass) {
 						goto nomem;
@@ -701,7 +703,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	return result;
 
 nomem:
-	vm->internalVMFunctions->setHeapOutOfMemoryError(vmThread);
+	vmfcns->setHeapOutOfMemoryError(vmThread);
 	return NULL;
 }
 
@@ -783,6 +785,7 @@ j9object_t
 j9gc_internString(J9VMThread *vmThread, j9object_t sourceString)
 {
 	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions * const vmfcns = vm->internalVMFunctions;
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(vm->omrVM);
 	MM_StringTable *stringTable = extensions->getStringTable();
 	bool isMetronome = extensions->isMetronomeGC();
@@ -837,7 +840,7 @@ j9gc_internString(J9VMThread *vmThread, j9object_t sourceString)
 		}
 
 		if (NULL == internedString) {
-			vm->internalVMFunctions->setHeapOutOfMemoryError(vmThread);
+			vmfcns->setHeapOutOfMemoryError(vmThread);
 		}
 	}
 
@@ -850,15 +853,15 @@ j9object_t
 j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA resolveFlags) {
 /* This option is disabled as its not supported by Tarok */
 	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions * const vmfcns = vm->internalVMFunctions;
 	MM_StringTable *stringTable = MM_GCExtensions::getExtensions(vm->omrVM)->getStringTable();
 	j9object_t string, internedString;
 	J9IndexableObject* charArray;
-	J9Class *stringClass;
 	UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
 	UDATA unicodeLength;
 	bool isCompressable = false;
 
-	U_32 hash = (U_32) vm->internalVMFunctions->computeHashForUTF8(data, length);
+	U_32 hash = (U_32) vmfcns->computeHashForUTF8(data, length);
 	UDATA tableIndex = stringTable->getTableIndex(hash);
 
 	/* see if the string is already in the table. Race condition where another thread may add the string
@@ -872,7 +875,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 		return internedString;
 	}
 
-	stringClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRING, 0);
+	J9Class * stringClass = J9VMJAVALANGSTRING_OR_NULL(vm);
 	string = J9AllocateObject(vmThread, stringClass, allocateFlags);
 	if (string == NULL) {
 		goto nomem;
@@ -899,7 +902,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 		if (charArray == NULL) {
 			goto nomem;
 		}
-		vm->internalVMFunctions->copyUTF8ToCompressedUnicode(vmThread, data, length, J9_STR_INTERN, (j9object_t)charArray, 0);
+		vmfcns->copyUTF8ToCompressedUnicode(vmThread, data, length, J9_STR_INTERN, (j9object_t)charArray, 0);
 	} else {
 		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
 			charArray = (J9IndexableObject*)J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) unicodeLength * 2, allocateFlags);
@@ -911,7 +914,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 		if (charArray == NULL) {
 			goto nomem;
 		}
-		vm->internalVMFunctions->copyUTF8ToUnicode(vmThread, data, length, J9_STR_INTERN, (j9object_t)charArray, 0);
+		vmfcns->copyUTF8ToUnicode(vmThread, data, length, J9_STR_INTERN, (j9object_t)charArray, 0);
 	}
 
 	J9VMJAVALANGSTRING_SET_VALUE(vmThread, string, charArray);
@@ -935,7 +938,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 				 * jitHookClassPreinitialize will process initialization events for String compression sideEffectGuards
 				 * so we must initialize the class if this is the first time we are loading it
 				 */
-		 		J9Class* flagClass = vm->internalVMFunctions->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
+				J9Class* flagClass = vmfcns->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
 
 				if (NULL == flagClass) {
 					goto nomem;
@@ -974,7 +977,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 	return string;
 
 nomem:
-	vm->internalVMFunctions->setHeapOutOfMemoryError(vmThread);
+	vmfcns->setHeapOutOfMemoryError(vmThread);
 	return NULL;
 }
 
