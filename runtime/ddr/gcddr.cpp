@@ -22,6 +22,7 @@
 
 #include "AllocateDescription.hpp"
 #include "AllocationCategory.hpp"
+#include "CompactScheme.hpp"
 #include "ConcurrentCardTable.hpp"
 #include "CopyScanCacheStandard.hpp"
 #include "FreeHeapRegionList.hpp"
@@ -46,6 +47,7 @@
 #if defined(OMR_GC_SEGREGATED_HEAP)
 # include "MemoryPoolSegregated.hpp"
 # include "MemorySubSpaceSegregated.hpp"
+# include "ObjectHeapIteratorSegregated.hpp"
 # include "SegregatedGC.hpp"
 #endif /* OMR_GC_SEGREGATED_HEAP */
 
@@ -79,7 +81,108 @@ GC_DdrDebugLink(GC_FinalizeListManager)
 #endif /* J9VM_GC_FINALIZATION */
 
 #if defined(OMR_GC_SEGREGATED_HEAP)
+GC_DdrDebugLink(GC_ObjectHeapIteratorSegregated)
 GC_DdrDebugLink(MM_MemoryPoolSegregated)
 GC_DdrDebugLink(MM_MemorySubSpaceSegregated)
 GC_DdrDebugLink(MM_SegregatedGC)
+#endif /* OMR_GC_SEGREGATED_HEAP */
+
+/*
+ * Suggest to compilers that they include fuller descriptions of certain types.
+ */
+
+class DDR_MM_AllocateDescription : public MM_AllocateDescription
+{
+public:
+	MM_MemorySubSpace::AllocationType _ddrAllocationType;
+	MM_MemorySubSpace::AllocationType getAllocationType();
+};
+
+MM_MemorySubSpace::AllocationType
+DDR_MM_AllocateDescription::getAllocationType()
+{
+	return this->_ddrAllocationType;
+}
+
+class DDR_MM_HeapRegionDescriptor : public MM_HeapRegionDescriptor
+{
+public:
+	MM_HeapRegionDescriptor::RegionType _ddrRegionType;
+	MM_HeapRegionDescriptor::RegionType getRegionType();
+};
+
+MM_HeapRegionDescriptor::RegionType
+DDR_MM_HeapRegionDescriptor::getRegionType()
+{
+	return this->_ddrRegionType;
+}
+
+class DDR_MM_MemoryPoolHybrid : public MM_MemoryPoolHybrid
+{
+public:
+	const char * ddrHelper();
+};
+
+const char *
+DDR_MM_MemoryPoolHybrid::ddrHelper()
+{
+	return this->_typeId;
+}
+
+class DDR_MM_HeapRegionList : public MM_HeapRegionList
+{
+public:
+	MM_HeapRegionList::RegionListKind _ddrRegionListKind;
+	MM_HeapRegionList::RegionListKind getRegionListKind();
+};
+
+MM_HeapRegionList::RegionListKind
+DDR_MM_HeapRegionList::getRegionListKind()
+{
+	return this->_ddrRegionListKind;
+}
+
+#if defined(OMR_GC_MODRON_COMPACTION)
+
+class DDR_CompactMemoryPoolState : public MM_CompactMemoryPoolState
+{
+public:
+	const char * ddrHelper();
+};
+
+const char *
+DDR_CompactMemoryPoolState::ddrHelper()
+{
+	return this->_typeId;
+}
+
+#endif /* OMR_GC_MODRON_COMPACTION */
+
+#if defined(OMR_GC_SEGREGATED_HEAP)
+
+class DDR_GC_ObjectHeapIteratorSegregated : public GC_ObjectHeapIteratorSegregated
+{
+public:
+	MM_HeapRegionDescriptor::RegionType _ddrRegionType;
+	MM_HeapRegionDescriptor::RegionType getRegionType();
+};
+
+MM_HeapRegionDescriptor::RegionType
+DDR_GC_ObjectHeapIteratorSegregated::getRegionType()
+{
+	return this->_ddrRegionType;
+}
+
+class DDR_SegregatedGC : public MM_SegregatedGC
+{
+public:
+	MM_SegregatedMarkingScheme *getMarkingScheme();
+};
+
+MM_SegregatedMarkingScheme *
+DDR_SegregatedGC::getMarkingScheme()
+{
+	return this->_markingScheme;
+}
+
 #endif /* OMR_GC_SEGREGATED_HEAP */
