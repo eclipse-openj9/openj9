@@ -33,6 +33,7 @@
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
 #include "MixedObjectScanner.hpp"
 #include "ModronTypes.hpp"
+//#include "RealtimeGC.hpp"
 #include "ReferenceObjectScanner.hpp"
 #include "PointerArrayObjectScanner.hpp"
 
@@ -129,9 +130,15 @@ public:
 			break;
 		case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
 		{
+#if defined (J9VM_GC_REALTIME)
+			// Moving the scanPointerArrayObject() function from MetronomeDelegate() to this function seems dumb; can't include RealtimeGC or marking shceme headers in here!
+			//env->getExtensions()->realtimeGC->getRealtimeDelegate()->scanPointerArrayObject(env, objectPtr);
+			*sizeToDo = 0;
+#else
 			uintptr_t slotsToDo = 0;
 			uintptr_t startIndex = setupPointerArrayScanner(env, objectPtr, reason, sizeToDo, &slotsToDo);
 			objectScanner = GC_PointerArrayObjectScanner::newInstance(env, objectPtr, scannerSpace, GC_ObjectScanner::indexableObject, slotsToDo, startIndex);
+#endif /* defined (J9VM_GC_REALTIME) */
 			break;
 		}
 		case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:

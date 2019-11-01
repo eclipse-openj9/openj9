@@ -119,7 +119,7 @@ public:
 	}
 
 	bool incrementalCompleteScan(MM_EnvironmentRealtime *env, uintptr_t maxCount);
-	uintptr_t scanObject(MM_EnvironmentRealtime *env, uintptr_t item);
+	uintptr_t scanObject(MM_EnvironmentRealtime *env, uintptr_t item, GC_ObjectScannerState *objectScannerState);
 
 	/**
 	 * Create a MM_RealtimeMarkingScheme object
