@@ -8405,26 +8405,41 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
       {
       // TODO: we must handle OOM cases when we abort the compilation right from the start.
       // Or eliminate the code that throws (or the code could also look at how the expensive the compilation is)
-      that->_methodBeingCompiled->_compErrCode = compilationFailure;
-
-      if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure, TR_VerbosePerformance))
+      try
          {
-         try
-            {
-            throw;
-            }
-         catch (const J9::JITShutdown)
-            {
+         throw;
+         }
+#if defined(JITSERVER_SUPPORT)
+      catch (const JITServer::StreamFailure &e)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "<EARLY TRANSLATION FAILURE: JITServer stream failure>");
+         that->_methodBeingCompiled->_compErrCode = compilationStreamFailure;
+         }
+      catch (const JITServer::StreamInterrupted &e)
+         {
+         if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+            TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "<EARLY TRANSLATION FAILURE: compilation interrupted by JITClient>");
+         that->_methodBeingCompiled->_compErrCode = compilationStreamInterrupted;
+         }
+#endif /* defined(JITSERVER_SUPPORT) */
+      catch (const J9::JITShutdown)
+         {
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure, TR_VerbosePerformance))
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,"<EARLY TRANSLATION FAILURE: JIT Shutdown signaled>");
-            }
-         catch (const std::bad_alloc &e)
-            {
+         that->_methodBeingCompiled->_compErrCode = compilationFailure;
+         }
+      catch (const std::bad_alloc &e)
+         {
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure, TR_VerbosePerformance))
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,"<EARLY TRANSLATION FAILURE: out of scratch memory>");
-            }
-         catch (const std::exception &e)
-            {
+         that->_methodBeingCompiled->_compErrCode = compilationFailure;
+         }
+      catch (const std::exception &e)
+         {
+         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure, TR_VerbosePerformance))
             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE,"<EARLY TRANSLATION FAILURE: compilation aborted>");
-            }
+         that->_methodBeingCompiled->_compErrCode = compilationFailure;
          }
 
       Trc_JIT_outOfMemory(vmThread);
