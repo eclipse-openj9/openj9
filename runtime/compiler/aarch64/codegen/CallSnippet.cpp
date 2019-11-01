@@ -170,6 +170,16 @@ static int32_t instructionCountForArguments(TR::Node *callNode, TR::CodeGenerato
    return count;
    }
 
+static int32_t
+getBLDistance(uint8_t *cursor)
+   {
+   // branch distance of BL instruction
+   int32_t distance;
+   distance = *((int32_t *)cursor) & 0x03ffffff; // imm26
+   distance = (distance << 6) >> 4; // sign extend and add two 0 bits
+   return distance;
+   }
+
 TR_RuntimeHelper TR::ARM64CallSnippet::getHelper()
    {
    TR::Compilation * comp = cg()->comp();
@@ -454,11 +464,26 @@ void
 TR_Debug::print(TR::FILE *pOutFile, TR::ARM64VirtualUnresolvedSnippet * snippet)
    {
    TR::SymbolReference *callSymRef = snippet->getNode()->getSymbolReference();
-   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
+   uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(callSymRef));
+   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, getName(snippet), getName(callSymRef));
 
-   //TODO print snippet body
+   int32_t distance = getBLDistance(cursor);
+   printPrefix(pOutFile, NULL, cursor, ARM64_INSTRUCTION_LENGTH);
+   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t; %s",
+             (intptr_t)cursor + distance, getRuntimeHelperName(TR_ARM64virtualUnresolvedHelper));
+   cursor += ARM64_INSTRUCTION_LENGTH;
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
+   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Code cache return address", *(intptr_t *)cursor);
+   cursor += sizeof(intptr_t);
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
+   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Constant pool address", *(intptrj_t *)cursor);
+   cursor += sizeof(intptr_t);
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
+   trfprintf(pOutFile, ".dword \t0x%08x\t\t; cpIndex", *(intptr_t *)cursor);
    }
 
 uint32_t TR::ARM64VirtualUnresolvedSnippet::getLength(int32_t estimatedSnippetStart)
@@ -514,11 +539,26 @@ void
 TR_Debug::print(TR::FILE *pOutFile, TR::ARM64InterfaceCallSnippet * snippet)
    {
    TR::SymbolReference *callSymRef = snippet->getNode()->getSymbolReference();
-   uint8_t *bufferPos = snippet->getSnippetLabel()->getCodeLocation();
+   uint8_t *cursor = snippet->getSnippetLabel()->getCodeLocation();
 
-   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet), getName(callSymRef));
+   printSnippetLabel(pOutFile, snippet->getSnippetLabel(), cursor, getName(snippet), getName(callSymRef));
 
-   //TODO print snippet body
+   int32_t distance = getBLDistance(cursor);
+   printPrefix(pOutFile, NULL, cursor, ARM64_INSTRUCTION_LENGTH);
+   trfprintf(pOutFile, "bl \t" POINTER_PRINTF_FORMAT "\t\t; %s",
+             (intptr_t)cursor + distance, getRuntimeHelperName(TR_ARM64interfaceCallHelper));
+   cursor += ARM64_INSTRUCTION_LENGTH;
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
+   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Code cache return address", *(intptr_t *)cursor);
+   cursor += sizeof(intptr_t);
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
+   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; Constant pool address", *(intptrj_t *)cursor);
+   cursor += sizeof(intptr_t);
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
+   trfprintf(pOutFile, ".dword \t0x%08x\t\t; cpIndex", *(intptr_t *)cursor);
    }
 
 uint32_t TR::ARM64InterfaceCallSnippet::getLength(int32_t estimatedSnippetStart)
