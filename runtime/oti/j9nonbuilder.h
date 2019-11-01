@@ -3082,11 +3082,11 @@ typedef struct J9ArrayClass {
 	struct J9Method** specialSplitMethodTable;
 	struct J9JITExceptionTable* jitMetaDataList;
 	struct J9Class* gcLink;
+	struct J9Class* hostClass;
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	struct J9Class* nestHost;
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	/* Added temporarily for consistency */
 	UDATA flattenedElementSize;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } J9ArrayClass;
