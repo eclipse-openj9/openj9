@@ -160,17 +160,13 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
    TR_Memory  *trMemory = compInfoPT->getCompilation()->trMemory();
    TR::Compilation *comp = compInfoPT->getCompilation();
 
-   // Release VM access before doing a potentially long wait
-   TR_ASSERT(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS, "Must have VM access");
    TR_ASSERT(TR::MonitorTable::get()->getClassUnloadMonitorHoldCount(compInfoPT->getCompThreadId()) == 0, "Must not hold classUnloadMonitor");
    TR::MonitorTable *table = TR::MonitorTable::get();
    TR_ASSERT(table && table->isThreadInSafeMonitorState(vmThread), "Must not hold any monitors when waiting for server");
 
-   releaseVMAccess(vmThread);
-
    response = client->read();
 
-   // Re-acquire VM access and check for possible class unloading
+   // Acquire VM access and check for possible class unloading
    acquireVMAccessNoSuspend(vmThread);
 
    // Update statistics for server message type
@@ -2478,6 +2474,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          // It is vital that this remains a hard error during dev!
          TR_ASSERT(false, "JITServer: handleServerMessage received an unknown message type: %d\n", response);
       }
+
+   releaseVMAccess(vmThread);
    return done;
    }
 
@@ -2759,23 +2757,14 @@ remoteCompile(
       client->buildCompileRequest(TR::comp()->getPersistentInfo()->getClientUID(), romMethodOffset,
                                  method, clazz, *compInfoPT->getMethodBeingCompiled()->_optimizationPlan, detailsStr, details.getType(), unloadedClasses,
                                  classInfoTuple, optionsStr, recompMethodInfoStr, seqNo, useAotCompilation);
-      // Re-acquire VM access and check for possible class unloading
-      acquireVMAccessNoSuspend(vmThread);
-      uint8_t interruptReason = compInfoPT->compilationShouldBeInterrupted();
-      if (interruptReason)
-         {
-         auto comp = compInfoPT->getCompilation();
-         if (TR::Options::isAnyVerboseOptionSet(TR_VerboseJITServer, TR_VerboseCompilationDispatch))
-             TR_VerboseLog::writeLineLocked(TR_Vlog_FAILURE, "Interrupting remote compilation (interruptReason %u) in remoteCompile of %s @ %s",
-                 interruptReason, comp->signature(), comp->getHotnessName());
-
-         // Inform server that the compilation has been interrupted
-         client->writeError(JITServer::MessageType::compilationInterrupted, 0 /* placeholder */);
-         comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted in remoteCompile");
-         }
 
       JITServer::MessageType response;
       while(!handleServerMessage(client, compiler->fej9vm(), response));
+
+      // Re-acquire VM access
+      // handleServerMessage will always acquire VM access after read() and release VM access at the end
+      // Therefore we need to re-acquire VM access after we get out of handleServerMessage
+      acquireVMAccessNoSuspend(vmThread);
 
       if (JITServer::MessageType::compilationCode == response)
          {
