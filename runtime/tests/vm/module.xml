@@ -48,7 +48,6 @@
 			<vpath path="j9vm" pattern="KeyHashTable.c" augmentObjects="true"/>
 			<vpath path="j9vm" pattern="ModularityHashTables.c" augmentObjects="true"/>
 			<vpath path="j9vm" pattern="resolvefield.cpp" augmentObjects="true"/>
-			<vpath path="j9vm" pattern="classsupport.c" augmentObjects="true"/>
 			<vpath path="j9vm" pattern="ObjectFieldInfo.cpp" augmentObjects="true"/>
 			<vpath path="j9vm" pattern="segment.c" augmentObjects="true"/>
 			<vpath path="j9vm" pattern="ut_j9vm.c" augmentObjects="true"/>

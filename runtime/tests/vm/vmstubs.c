@@ -35,6 +35,21 @@ setCurrentExceptionUTF(J9VMThread * vmThread, UDATA exceptionNumber, const char 
 	/* NOTE: Stub function. */
 }
 
+struct J9Class *
+internalFindClassUTF8(J9VMThread *currentThread, U_8 *className, UDATA classNameLength, J9ClassLoader *classLoader, UDATA options)
+{
+	/* NOTE: Stub function. */
+	return NULL;
+}
+
+struct J9Class*
+peekClassHashTable(J9VMThread* currentThread, J9ClassLoader* classLoader, U_8* className, UDATA classNameLength)
+{
+	/* NOTE: Stub function. */
+	return NULL;
+}
+
+
 J9VMThread *
 currentVMThread(J9JavaVM * vm)
 {
