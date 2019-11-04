@@ -2896,9 +2896,7 @@ typedef struct J9InitializerMethods {
 	void* initialStaticMethod;
 	void* initialSpecialMethod;
 	void* initialVirtualMethod;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	void* invokePrivateMethod;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 } J9InitializerMethods;
 
 typedef struct J9VMInterface {
@@ -3427,9 +3425,7 @@ typedef struct J9ITable {
 typedef struct J9VTableHeader {
 	UDATA size;
 	J9Method* initialVirtualMethod;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	J9Method* invokePrivateMethod;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 } J9VTableHeader;
 
 typedef struct J9ClassCastParms {
