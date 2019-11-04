@@ -1,6 +1,6 @@
 #!/bin/perl
 
-# Copyright (c) 2000, 2017 IBM Corp. and others
+# Copyright (c) 2000, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,7 +37,7 @@ while (<FILE>)
    chomp;
    my $line   = $_;
    my $length = length($line);
-   die "line longer than $MAX_LENGTH characters ($length)"
+   die "line longer than $MAX_LENGTH characters ($length) '$line'"
       if ( $length > $MAX_LENGTH );
 
    # check that only valid characters show up in the string
@@ -47,7 +47,7 @@ while (<FILE>)
       map { $_ => 1 } ( 13, 21, 64 .. 249 );  # ebcdic
    my $newline = $line;
    $newline =~ s/(.)/$goodchars{ord($1)} ? $1 : ' '/eg;
-   die "invalid character(s)"
+   die "invalid character(s) '$line'"
       if $newline ne $line;
       
    my $comment_regex =
@@ -57,7 +57,7 @@ while (<FILE>)
 
    # skip comment lines
    next if $line =~ m/^$comment_regex/;
-   die "comment lines should not have preceding whitespace"
+   die "comment lines should not have preceding whitespace '$line'"
       if $line =~ m/^\s+$comment_regex/;
 
    # strip the comments out
@@ -66,10 +66,10 @@ while (<FILE>)
    # the # character is considered a comment everywhere
    $line =~ s/\#.*$//;
 
-   die "comma in first column"    if $line =~ m/^,/;
-   die "whitespace next to comma" if $line =~ m/\s,|,\s/;
-   die "whitespace within parentheses"
+   die "comma in first column '$line'"    if $line =~ m/^,/;
+   die "whitespace next to comma '$line'" if $line =~ m/\s,|,\s/;
+   die "whitespace within parentheses '$line'"
       if $line =~ m/\(.*\s.*\)/;
-   die "whitespace before parentheses"
+   die "whitespace before parentheses '$line'"
       if $line =~ m/,\s+\(/;
    }
