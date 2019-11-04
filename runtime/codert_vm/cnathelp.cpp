@@ -1716,13 +1716,11 @@ retry:
 		}
 		goto retry;
 	}
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	if (J9VTABLE_INVOKE_PRIVATE_OFFSET == vTableOffset) {
 		UDATA method = ((UDATA)ramMethodRef->method) | J9_VTABLE_INDEX_DIRECT_METHOD_FLAG;
 		JIT_RETURN_UDATA(method);
 		goto done;
 	}
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	JIT_RETURN_UDATA(sizeof(J9Class) - vTableOffset);
 done:
 	SLOW_JIT_HELPER_EPILOGUE();

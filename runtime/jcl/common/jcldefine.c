@@ -226,10 +226,6 @@ done:
 		}
 	} else {
 		result = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
-
-		if ((NULL != result) && J9CLASS_IS_EXEMPT_FROM_VALIDATION(clazz)) {
-			vmFuncs->fixUnsafeMethods(currentThread, result);
-		}
 	}
 
 	vmFuncs->internalExitVMToJNI(currentThread);

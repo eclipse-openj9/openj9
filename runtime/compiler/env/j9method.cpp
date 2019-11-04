@@ -6328,11 +6328,7 @@ TR_ResolvedJ9Method::isCompilable(TR_Memory * trMemory)
 bool
 TR_ResolvedJ9Method::isInvokePrivateVTableOffset(UDATA vTableOffset)
    {
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
    return vTableOffset == J9VTABLE_INVOKE_PRIVATE_OFFSET;
-#else
-   return false;
-#endif
    }
 
 TR_OpaqueMethodBlock *
