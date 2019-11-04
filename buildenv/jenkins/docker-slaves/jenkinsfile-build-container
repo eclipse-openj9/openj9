@@ -49,7 +49,12 @@ if("${OS}" == "unknown" || !(validArch.contains(ARCH))) {
                     currentBuild.description = TEMP_DESC + "<a href=${JENKINS_URL}/computer/${NODE_NAME}>${NODE_NAME}</a><br>"
                     currentBuild.description += "Docker image:<a href=${DOCKER_URL}/${REPOSITORY}>${REPOSITORY}</a>"
                     stage("Clone") {
-                        checkout scm
+                        if (params.VENDOR_BRANCH && params.VENDOR_REPO) {
+                            def VENDOR_CREDENTIALS = (params.VENDOR_CREDENTIALS) ? params.VENDOR_CREDENTIALS : ""
+                            git branch: params.VENDOR_BRANCH, changelog: false, credentialsId: VENDOR_CREDENTIALS, poll: false, url: params.VENDOR_REPO
+                        } else {
+                            checkout scm
+                        }
                     }
                     stage("Build") {
                         if(params.ghprbPullId) {
