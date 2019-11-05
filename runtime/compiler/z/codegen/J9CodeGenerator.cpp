@@ -208,7 +208,7 @@ J9::Z::CodeGenerator::createLinkage(TR_LinkageConventions lc)
          break;
 
       case TR_J9JNILinkage:
-         linkage = new (self()->trHeapMemory()) TR::J9S390JNILinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::Z::JNILinkage(self());
          break;
 
       case TR_System:

@@ -2513,7 +2513,7 @@ J9::S390PrivateLinkage::setupJNICallOutFrame(TR::Node * callNode,
  *                we potentially go out to call a helper before jumping to the native.
  *                but the helper call saves and restores all regs
  */
-void TR::J9S390JNILinkage::releaseVMAccessMask(TR::Node * callNode,
+void J9::Z::JNILinkage::releaseVMAccessMask(TR::Node * callNode,
    TR::Register * methodMetaDataVirtualRegister, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg,
    TR::S390JNICallDataSnippet * jniCallDataSnippet, TR::RegisterDependencyConditions * deps)
    {
@@ -2597,7 +2597,7 @@ void TR::J9S390JNILinkage::releaseVMAccessMask(TR::Node * callNode,
    }
 
 
-void TR::J9S390JNILinkage::acquireVMAccessMask(TR::Node * callNode, TR::Register * javaLitPoolVirtualRegister,
+void J9::Z::JNILinkage::acquireVMAccessMask(TR::Node * callNode, TR::Register * javaLitPoolVirtualRegister,
    TR::Register * methodMetaDataVirtualRegister, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg)
    {
    // start of acquire vm access
@@ -2667,7 +2667,7 @@ void TR::J9S390JNILinkage::acquireVMAccessMask(TR::Node * callNode, TR::Register
  *
 */
 void
-TR::J9S390JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
+J9::Z::JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
                                                     TR::Register * methodMetaDataVirtualRegister,
                                                     TR::Register * tempReg1)
    {
@@ -2721,7 +2721,7 @@ TR::J9S390JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
  *
  * */
 void
-TR::J9S390JNILinkage::acquireVMAccessMaskAtomicFree(TR::Node * callNode,
+J9::Z::JNILinkage::acquireVMAccessMaskAtomicFree(TR::Node * callNode,
                                                     TR::Register * methodMetaDataVirtualRegister,
                                                     TR::Register * tempReg1)
    {
@@ -2758,7 +2758,7 @@ TR::J9S390JNILinkage::acquireVMAccessMaskAtomicFree(TR::Node * callNode,
    }
 #endif
 
-void TR::J9S390JNILinkage::checkException(TR::Node * callNode,
+void J9::Z::JNILinkage::checkException(TR::Node * callNode,
    TR::Register * methodMetaDataVirtualRegister,
    TR::Register * tempReg)
    {
@@ -2779,7 +2779,7 @@ void TR::J9S390JNILinkage::checkException(TR::Node * callNode,
    }
 
 void
-TR::J9S390JNILinkage::processJNIReturnValue(TR::Node * callNode,
+J9::Z::JNILinkage::processJNIReturnValue(TR::Node * callNode,
                                             TR::CodeGenerator* cg,
                                             TR::Register* javaReturnRegister)
    {
@@ -2828,7 +2828,7 @@ TR::J9S390JNILinkage::processJNIReturnValue(TR::Node * callNode,
       }
    }
 
-TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
+TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
    {
     if (comp()->getOption(TR_TraceCG))
        traceMsg(comp(), "\nbuildDirectDispatch\n");
@@ -3505,9 +3505,7 @@ J9::S390PrivateLinkage::getSystemStackPointerRegister()
    }
 
 
-TR::J9S390JNILinkage::J9S390JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc, TR_LinkageConventions lc)
+J9::Z::JNILinkage::JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc, TR_LinkageConventions lc)
    :J9::S390PrivateLinkage(cg, elc, lc)
    {
    }
-
-

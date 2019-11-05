@@ -145,11 +145,20 @@ public:
       }
    };
 
-class J9S390JNILinkage : public J9::S390PrivateLinkage
+}
+
+
+namespace J9
+{
+
+namespace Z
+{
+
+class JNILinkage : public J9::S390PrivateLinkage
    {
 public:
 
-   J9S390JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaPrivate, TR_LinkageConventions lc=TR_J9JNILinkage);
+   JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaPrivate, TR_LinkageConventions lc=TR_J9JNILinkage);
    virtual TR::Register * buildDirectDispatch(TR::Node * callNode);
 
    /**
@@ -187,6 +196,8 @@ public:
                                       TR::Register * tempReg1);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
    };
+
+}
 
 }
 
