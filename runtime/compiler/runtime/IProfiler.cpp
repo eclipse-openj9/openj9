@@ -4128,8 +4128,7 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
                cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG;
             J9Method * callee = jitGetJ9MethodUsingIndex(vmThread, ramCP, cpIndex);
 
-            if ((javaVM->initialMethods.initialStaticMethod == callee) ||
-                (javaVM->initialMethods.initialSpecialMethod == callee))
+            if (callee == NULL)
                {
                break;
                }
@@ -4156,8 +4155,10 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
             callee = *(J9Method**)cursor;
             cursor += sizeof(J9Method *);
 
-            if (callee && javaVM->initialMethods.initialVirtualMethod != callee &&
-               !fanInDisabled)
+            if (callee
+               && (javaVM->initialMethods.initialVirtualMethod != callee)
+               && (javaVM->initialMethods.invokePrivateMethod != callee)
+               && !fanInDisabled)
                {
                uint32_t offset = (uint32_t) (pc - caller->bytecodes);
                findOrCreateMethodEntry(caller, callee , true , offset);

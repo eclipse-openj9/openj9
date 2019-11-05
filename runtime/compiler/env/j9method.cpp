@@ -6557,10 +6557,8 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
    // See if the constant pool entry is already resolved or not
    //
    J9Method * ramMethod;
-   if (unresolvedInCP)
+   if (unresolvedInCP != NULL)
       {
-      ramMethod = jitGetJ9MethodUsingIndex(_fe->vmThread(), cp(), cpIndex);
-      //*unresolvedInCP = !ramMethod || !J9_BYTECODE_START_FROM_RAM_METHOD(ramMethod);
       //we init the CP with a special magic method, which has no bytecodes (hence bytecode start is NULL)
       //i.e. the CP will always contain a method for special and static methods
       *unresolvedInCP = true;
@@ -6572,7 +6570,7 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
       {
       TR::VMAccessCriticalSection resolveSpecialMethodRef(fej9());
 
-      ramMethod = jitResolveSpecialMethodRef(_fe->vmThread(), cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+      J9Method * ramMethod = jitResolveSpecialMethodRef(_fe->vmThread(), cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
       if (ramMethod)
          {
          bool createResolvedMethod = true;
