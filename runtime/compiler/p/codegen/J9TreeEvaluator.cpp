@@ -39,6 +39,7 @@
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
+#include "codegen/PPCJNILinkage.hpp"
 #include "codegen/PPCPrivateLinkage.hpp"
 #include "codegen/Relocation.hpp"
 #include "codegen/Snippet.hpp"
@@ -68,7 +69,6 @@
 //#include "p/codegen/PPCAheadOfTimeCompile.hpp"
 #include "p/codegen/PPCEvaluator.hpp"
 #include "p/codegen/PPCInstruction.hpp"
-#include "p/codegen/PPCJNILinkage.hpp"
 #include "p/codegen/PPCTableOfConstants.hpp"
 #include "runtime/CodeCache.hpp"
 #include "env/VMJ9.h"
@@ -8698,7 +8698,7 @@ void J9::Power::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR:
    //      child 4 ------  Copy length in byte;
 
    bool aix_style_linkage = (TR::Compiler->target.isAIX() || (TR::Compiler->target.is64Bit() && TR::Compiler->target.isLinux()));
-   TR::PPCJNILinkage *jniLinkage = (TR::PPCJNILinkage*) cg->getLinkage(TR_J9JNILinkage);
+   J9::Power::JNILinkage *jniLinkage = (J9::Power::JNILinkage*) cg->getLinkage(TR_J9JNILinkage);
    const TR::PPCLinkageProperties &pp = jniLinkage->getProperties();
    TR::RegisterDependencyConditions *conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(pp.getNumberOfDependencyGPRegisters(),
          pp.getNumberOfDependencyGPRegisters(), cg->trMemory());
@@ -13698,7 +13698,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
          // Start of referenceArrayCopy helper path.
          generateLabelInstruction(cg, TR::InstOpCode::label, node, helperLabel);
 
-         TR::PPCJNILinkage *jniLinkage = (TR::PPCJNILinkage*) cg->getLinkage(TR_J9JNILinkage);
+         J9::Power::JNILinkage *jniLinkage = (J9::Power::JNILinkage*) cg->getLinkage(TR_J9JNILinkage);
          const TR::PPCLinkageProperties &pp = jniLinkage->getProperties();
 
          int32_t elementSize;
@@ -14009,7 +14009,7 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
    // Start of referenceArrayCopy helper path.
    generateLabelInstruction(cg, TR::InstOpCode::label, node, helperLabel);
 
-   TR::PPCJNILinkage *jniLinkage = (TR::PPCJNILinkage*) cg->getLinkage(TR_J9JNILinkage);
+   J9::Power::JNILinkage *jniLinkage = (J9::Power::JNILinkage*) cg->getLinkage(TR_J9JNILinkage);
    const TR::PPCLinkageProperties &pp = jniLinkage->getProperties();
 
    int32_t elementSize;

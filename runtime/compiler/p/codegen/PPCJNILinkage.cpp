@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "p/codegen/PPCJNILinkage.hpp"
+#include "codegen/PPCJNILinkage.hpp"
 
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGeneratorUtils.hpp"
@@ -48,7 +48,7 @@
 #include "p/codegen/PPCTableOfConstants.hpp"
 #include "p/codegen/StackCheckFailureSnippet.hpp"
 
-TR::PPCJNILinkage::PPCJNILinkage(TR::CodeGenerator *cg)
+J9::Power::JNILinkage::JNILinkage(TR::CodeGenerator *cg)
    : J9::PPCPrivateLinkage(cg)
    {
    //Copy out SystemLinkage properties. Assumes no objects in TR::PPCLinkageProperties.
@@ -65,33 +65,33 @@ TR::PPCJNILinkage::PPCJNILinkage(TR::CodeGenerator *cg)
 
    }
 
-int32_t TR::PPCJNILinkage::buildArgs(TR::Node *callNode,
+int32_t J9::Power::JNILinkage::buildArgs(TR::Node *callNode,
                              TR::RegisterDependencyConditions *dependencies,
                              const TR::PPCLinkageProperties &properties)
    {
-   TR_ASSERT(0, "Should call TR::PPCJNILinkage::buildJNIArgs instead.");
+   TR_ASSERT(0, "Should call J9::Power::JNILinkage::buildJNIArgs instead.");
    return 0;
    }
 
-TR::Register *TR::PPCJNILinkage::buildIndirectDispatch(TR::Node  *callNode)
+TR::Register *J9::Power::JNILinkage::buildIndirectDispatch(TR::Node  *callNode)
    {
-   TR_ASSERT(0, "Calling TR::PPCJNILinkage::buildIndirectDispatch does not make sense.");
+   TR_ASSERT(0, "Calling J9::Power::JNILinkage::buildIndirectDispatch does not make sense.");
    return NULL;
    }
 
-void         TR::PPCJNILinkage::buildVirtualDispatch(TR::Node   *callNode,
+void         J9::Power::JNILinkage::buildVirtualDispatch(TR::Node   *callNode,
                                                     TR::RegisterDependencyConditions *dependencies,
                                                     uint32_t                           sizeOfArguments)
    {
-   TR_ASSERT(0, "Calling TR::PPCJNILinkage::buildVirtualDispatch does not make sense.");
+   TR_ASSERT(0, "Calling J9::Power::JNILinkage::buildVirtualDispatch does not make sense.");
    }
 
-const TR::PPCLinkageProperties& TR::PPCJNILinkage::getProperties()
+const TR::PPCLinkageProperties& J9::Power::JNILinkage::getProperties()
    {
    return _properties;
    }
 
-TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
+TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    {
    bool aix_style_linkage = (TR::Compiler->target.isAIX() || (TR::Compiler->target.is64Bit() && TR::Compiler->target.isLinux()));
    TR::LabelSymbol           *returnLabel = generateLabelSymbol(cg());
@@ -623,7 +623,7 @@ TR::Register *TR::PPCJNILinkage::buildDirectDispatch(TR::Node *callNode)
    }
 
 // tempReg0 to tempReg2 are temporary registers
-void TR::PPCJNILinkage::releaseVMAccess(TR::Node* callNode, TR::RegisterDependencyConditions* deps, TR::RealRegister* metaReg, TR::Register* tempReg0, TR::Register* tempReg1, TR::Register* tempReg2)
+void J9::Power::JNILinkage::releaseVMAccess(TR::Node* callNode, TR::RegisterDependencyConditions* deps, TR::RealRegister* metaReg, TR::Register* tempReg0, TR::Register* tempReg1, TR::Register* tempReg2)
    {
    // Release vm access - use hardware registers because of the control flow
    TR::Instruction  *gcPoint;
@@ -685,7 +685,7 @@ void TR::PPCJNILinkage::releaseVMAccess(TR::Node* callNode, TR::RegisterDependen
    }
 
 // tempReg0 to tempReg2 are temporary registers
-void TR::PPCJNILinkage::acquireVMAccess(TR::Node* callNode, TR::RegisterDependencyConditions* deps, TR::RealRegister* metaReg, TR::Register* tempReg0, TR::Register* tempReg1, TR::Register* tempReg2)
+void J9::Power::JNILinkage::acquireVMAccess(TR::Node* callNode, TR::RegisterDependencyConditions* deps, TR::RealRegister* metaReg, TR::Register* tempReg0, TR::Register* tempReg1, TR::Register* tempReg2)
    {
    // Acquire VM Access
    TR::Instruction  *gcPoint;
@@ -730,7 +730,7 @@ void TR::PPCJNILinkage::acquireVMAccess(TR::Node* callNode, TR::RegisterDependen
    }
 
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI
-void TR::PPCJNILinkage::releaseVMAccessAtomicFree(TR::Node* callNode, TR::RegisterDependencyConditions* deps, TR::RealRegister* metaReg, TR::Register* cr0Reg, TR::Register* tempReg1, TR::Register* tempReg2)
+void J9::Power::JNILinkage::releaseVMAccessAtomicFree(TR::Node* callNode, TR::RegisterDependencyConditions* deps, TR::RealRegister* metaReg, TR::Register* cr0Reg, TR::Register* tempReg1, TR::Register* tempReg2)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
 
@@ -760,7 +760,7 @@ void TR::PPCJNILinkage::releaseVMAccessAtomicFree(TR::Node* callNode, TR::Regist
       generateConditionalBranchInstruction(cg(), TR::InstOpCode::bnel, callNode, releaseVMAccessSnippetLabel, cr0Reg);
    }
 
-void TR::PPCJNILinkage::acquireVMAccessAtomicFree(TR::Node* callNode, TR::RegisterDependencyConditions* deps, TR::RealRegister* metaReg, TR::Register* cr0Reg, TR::Register* tempReg1, TR::Register* tempReg2)
+void J9::Power::JNILinkage::acquireVMAccessAtomicFree(TR::Node* callNode, TR::RegisterDependencyConditions* deps, TR::RealRegister* metaReg, TR::Register* cr0Reg, TR::Register* tempReg1, TR::Register* tempReg2)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe();
 
@@ -788,7 +788,7 @@ void TR::PPCJNILinkage::acquireVMAccessAtomicFree(TR::Node* callNode, TR::Regist
    }
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
-int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
+int32_t J9::Power::JNILinkage::buildJNIArgs(TR::Node *callNode,
                                        TR::RegisterDependencyConditions *dependencies,
                                        const TR::PPCLinkageProperties &properties,
                                        bool isFastJNI,
@@ -1382,7 +1382,7 @@ int32_t TR::PPCJNILinkage::buildJNIArgs(TR::Node *callNode,
    return argSize;
    }
 
-TR::Register *TR::PPCJNILinkage::pushJNIReferenceArg(TR::Node *child)
+TR::Register *J9::Power::JNILinkage::pushJNIReferenceArg(TR::Node *child)
    {
    TR::Register *pushRegister;
    bool         checkSplit = true;

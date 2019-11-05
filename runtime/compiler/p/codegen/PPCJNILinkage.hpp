@@ -44,15 +44,19 @@ namespace TR { class ParameterSymbol; }
 namespace TR { class RegisterDependencyConditions; }
 namespace TR { class ResolvedMethodSymbol; }
 
-namespace TR {
+namespace J9
+{
 
-class PPCJNILinkage : public J9::PPCPrivateLinkage
+namespace Power
+{
+
+class JNILinkage : public J9::PPCPrivateLinkage
    {
    protected:
    TR::PPCLinkageProperties _properties;
 
    public:
-   PPCJNILinkage(TR::CodeGenerator *cg);
+   JNILinkage(TR::CodeGenerator *cg);
 
    void releaseVMAccess(TR::Node* callNode, TR::RegisterDependencyConditions* deps, TR::RealRegister* metaReg, TR::Register* zeroReg, TR::Register* tempReg1, TR::Register* tempReg2);
    void acquireVMAccess(TR::Node* callNode, TR::RegisterDependencyConditions* deps, TR::RealRegister* metaReg, TR::Register* tempReg0, TR::Register* tempReg1, TR::Register* tempReg2);
@@ -82,6 +86,8 @@ class PPCJNILinkage : public J9::PPCPrivateLinkage
 
    virtual const TR::PPCLinkageProperties& getProperties();
    };
+
+}
 
 }
 
