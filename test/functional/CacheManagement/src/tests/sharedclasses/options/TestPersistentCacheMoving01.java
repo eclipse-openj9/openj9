@@ -16,10 +16,16 @@ public class TestPersistentCacheMoving01 extends TestUtils {
 		  // no support on ZOS for persistent caches ...
 		  return;
 	  }
+	  String currentCacheDir = getCacheDir();
+	  if ( null == currentCacheDir && isOpenJ9() ) {
+		  // Persistent cachefile without groupaccess are generated under HOME directory
+		  // Current directory is under /tmp. Move a file from HOME directory to /tmp may not succeed on some platforms. 
+		return;
+	  }
 	  
 	  runSimpleJavaProgramWithPersistentCache("Foo,verboseIO");
 	  checkOutputContains("Stored class SimpleApp2", "Did not find expected message about the test class being stored in the cache");
-	  String currentCacheDir = getCacheDir();
+
 	  String tmpdir = createTemporaryDirectory("TestPersistentCacheMoving01");
 	  try {
 		  
@@ -27,8 +33,7 @@ public class TestPersistentCacheMoving01 extends TestUtils {
 		  String loc = getCacheFileLocationForPersistentCache("Foo");
 		  File f = new File(loc);
 		  File fHidden = new File(tmpdir+File.separator+getCacheFileName("Foo", true));
-		//  System.out.println(loc);
-		//  System.out.println(fHidden);
+
 		  if (!f.renameTo(fHidden)) fail("Could not rename the control file to be hidden");
 		  setCacheDir(tmpdir);
 		  listAllCaches();
