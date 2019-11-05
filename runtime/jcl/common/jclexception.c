@@ -166,9 +166,12 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 			utf = J9ROMCLASS_CLASSNAME(romClass);
 			string = NULL;
 			{
-				J9Class* clazz = vmfns->peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utf), J9UTF8_LENGTH(utf));
-				if (NULL != clazz) {
-					string = J9VMJAVALANGCLASS_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
+				J9Class* clazz = NULL;
+				if (NULL != classLoader) {
+					clazz = vmfns->peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utf), J9UTF8_LENGTH(utf));
+					if (NULL != clazz) {
+						string = J9VMJAVALANGCLASS_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
+					}
 				}
 				if (NULL == string) {
 					string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utf), (U_32) J9UTF8_LENGTH(utf), J9_STR_XLAT | J9_STR_TENURE | J9_STR_INTERN);
@@ -190,7 +193,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 			/* Fill in method name */
 
 			utf = J9ROMMETHOD_NAME(romMethod);
-			string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utf), (U_32) J9UTF8_LENGTH(utf), J9_STR_XLAT);
+			string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utf), (U_32) J9UTF8_LENGTH(utf), 0);
 			if (string == NULL) {
 				rc = FALSE;
 				/* exception is pending from the call */
@@ -211,7 +214,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 				 * provided the utf8 interning is hitting on common strings
 				 */
 				if ((NULL != previousFileName) && (previousFileName == fileName)) {
-					j9array_t result = (j9array_t) PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 1);
+					j9array_t result = (j9array_t) PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 2);
 					element = J9JAVAARRAYOFOBJECT_LOAD(vmThread, result, (I_32)userData->index - 1);
 					string = J9VMJAVALANGSTACKTRACEELEMENT_FILENAME(vmThread, element);
 				} else {
