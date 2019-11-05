@@ -165,7 +165,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 			/* Fill in method class */
 			utf = J9ROMCLASS_CLASSNAME(romClass);
 			{
-				J9Class* clazz = peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utf), J9UTF8_LENGTH(utf));
+				J9Class* clazz = vmfns->peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utf), J9UTF8_LENGTH(utf));
 				string = J9VMJAVALANGCLASS_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 				if (string == NULL) {
 					string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utf), (U_32) J9UTF8_LENGTH(utf), J9_STR_XLAT | J9_STR_TENURE | J9_STR_INTERN);
