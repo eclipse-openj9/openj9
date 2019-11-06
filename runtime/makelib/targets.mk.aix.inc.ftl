@@ -95,12 +95,12 @@ endif
 
 ifeq (,$(findstring xlclang,$(notdir $(CC))))
   # xlc options
-  CFLAGS += -q mbcs -qlanglvl=extended -qinfo=pro
+  CFLAGS += -q mbcs -qinfo=pro
 else
  # xlclang options
-  CFLAGS += -qlanglvl=extended0x -qxlcompatmacros
+  CFLAGS += -qxlcompatmacros
 endif
-CFLAGS += -qarch=ppc -qalias=noansi -qxflag=LTOL:LTOL0 -qsuppress=1506-1108
+CFLAGS += -qlanglvl=extended -qarch=ppc -qalias=noansi -qxflag=LTOL:LTOL0 -qsuppress=1506-1108
 CFLAGS += -D_XOPEN_SOURCE_EXTENDED=1 -D_ALL_SOURCE -DRS6000 -DAIXPPC -D_LARGE_FILES
 
 ifdef I5_VERSION
@@ -111,12 +111,12 @@ endif
 
 ifeq (,$(findstring xlclang++,$(notdir $(CXX))))
   # xlc++ options
-  CXXFLAGS += -q mbcs -qlanglvl=extended -qinfo=pro
+  CXXFLAGS += -q mbcs -qinfo=pro
 else
   # xlclang++ options
-  CXXFLAGS += -qlanglvl=extended0x -qxlcompatmacros -fno-rtti -fno-exceptions
+  CXXFLAGS += -qxlcompatmacros -fno-rtti -fno-exceptions
 endif
-CXXFLAGS += -qarch=ppc -qalias=noansi -qxflag=LTOL:LTOL0 -qsuppress=1506-1108
+CXXFLAGS += -qlanglvl=extended0x -qarch=ppc -qalias=noansi -qxflag=LTOL:LTOL0 -qsuppress=1506-1108
 CXXFLAGS += -D_XOPEN_SOURCE_EXTENDED=1 -D_ALL_SOURCE -DRS6000 -DAIXPPC -D_LARGE_FILES
 CPPFLAGS += -D_XOPEN_SOURCE_EXTENDED=1 -D_ALL_SOURCE -DRS6000 -DAIXPPC -D_LARGE_FILES
 
