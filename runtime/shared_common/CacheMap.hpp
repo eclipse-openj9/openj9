@@ -381,7 +381,7 @@ private:
 
 	const U_8* findAttachedData(J9VMThread* currentThread, const void* addressInCache, J9SharedDataDescriptor* data, IDATA *corruptOffset, const char** p_subcstr) ;
 
-	void updateROMSegmentList(J9VMThread* currentThread, bool hasClassSegmentMutex);
+	void updateROMSegmentList(J9VMThread* currentThread, bool hasClassSegmentMutex, bool topLayerOnly = true);
 
 	void updateROMSegmentListForCache(J9VMThread* currentThread, SH_CompositeCacheImpl* forCache);
 

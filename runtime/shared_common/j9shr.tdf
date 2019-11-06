@@ -2964,3 +2964,5 @@ TraceExit-Exception=Trc_SHR_CM_updateROMClassResource_Exit7 Overhead=1 Level=1 T
 TraceException=Trc_SHR_CM_storeSharedData_OverwriteExisting_NotInTopLayer Overhead=1 Level=2 Template="CM storeSharedData: Existing data in the shared cache (data->address %p, foundDatalen %zu) is not in top layer cache."
 TraceEvent=Trc_SHR_RRM_storeNew_existingEntryRemoved Overhead=1 Level=6 Template="RRM storeNew: removed existing item 0x%p from the hashTable"
 TraceExit-Exception=Trc_SHR_CM_updateROMClassResource_Exit8 Overhead=1 Level=1 Template="CM updateROMClassResource: Failed to allocate memory for ROMClass resource"
+
+TraceEvent=Trc_SHR_CM_updateROMSegmentList_NewHeapAlloc Overhead=1 Level=4 Template="CM updateROMSegmentList: Updated class segment list - currentSegment is %p, new heapAlloc=%p"
