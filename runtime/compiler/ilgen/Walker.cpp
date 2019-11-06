@@ -5458,6 +5458,19 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
             char* returnTypeUtf8Data = (char *)J9UTF8_DATA(returnTypeUtf8);
             bool isCondyPrimitive = (1 == returnTypeUtf8Length);
 
+            // Use aconst for null object
+            if (!isCondyPrimitive && !isCondyUnresolved)
+               {
+               TR::VMAccessCriticalSection condyCriticalSection(comp()->fej9());
+               uintptrj_t* objLocation = (uintptrj_t*)_methodSymbol->getResolvedMethod()->dynamicConstant(cpIndex);
+               uintptrj_t obj = *objLocation;
+               if (obj == 0)
+                  {
+                  loadConstant(TR::aconst, (void *)0);
+                  return;
+                  }
+               }
+
             char* symbolTypeSig = NULL;
             int32_t symbolTypeSigLength = 0;
             // For non-primitive condy, resolved or not, we create a static symbol,
