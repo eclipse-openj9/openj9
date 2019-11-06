@@ -6554,9 +6554,6 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
 
 #if !TURN_OFF_INLINING
 
-   // See if the constant pool entry is already resolved or not
-   //
-   J9Method * ramMethod;
    if (unresolvedInCP != NULL)
       {
       *unresolvedInCP = true;
@@ -6619,7 +6616,7 @@ TR_ResolvedJ9Method::getResolvedPossiblyPrivateVirtualMethod(TR::Compilation * c
          performTransformation(comp, "Setting as unresolved virtual call cpIndex=%d\n",cpIndex) ) || ignoreRtResolve)
       {
       // only call the resolve if unresolved
-      UDATA vTableOffset;
+      UDATA vTableOffset = 0;
       J9Method * ramMethod = (J9Method *)getVirtualMethod(_fe, cp(), cpIndex, &vTableOffset, unresolvedInCP);
       bool createResolvedMethod = true;
 
