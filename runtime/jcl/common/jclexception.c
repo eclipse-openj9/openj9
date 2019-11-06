@@ -174,7 +174,11 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 					}
 				}
 				if (NULL == string) {
-					string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utf), (U_32) J9UTF8_LENGTH(utf), J9_STR_XLAT | J9_STR_TENURE | J9_STR_INTERN);
+					UDATA flags = J9_STR_XLAT | J9_STR_TENURE | J9_STR_INTERN;
+					if (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass)) {
+						flags |= J9_STR_ANON_CLASS_NAME;
+					}
+					string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utf), (U_32) J9UTF8_LENGTH(utf), flags);
 					if (NULL == string) {
 						rc = FALSE;
 						/* exception is pending from the call */
