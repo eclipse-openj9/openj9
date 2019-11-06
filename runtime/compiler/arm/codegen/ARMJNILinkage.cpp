@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#include "arm/codegen/ARMJNILinkage.hpp"
+#include "codegen/ARMJNILinkage.hpp"
 
 #include "arm/codegen/ARMInstruction.hpp"
 #include "codegen/CallSnippet.hpp"
@@ -73,7 +73,7 @@ static TR::RealRegister::RegNum _singleArgumentRegisters[] =
    TR::RealRegister::fs15
    };
 
-TR::ARMJNILinkage::ARMJNILinkage(TR::CodeGenerator *cg)
+J9::ARM::JNILinkage::JNILinkage(TR::CodeGenerator *cg)
    : J9::ARMPrivateLinkage(cg)
    {
    //Copy out SystemLinkage properties. Assumes no objects in TR::ARMLinkageProperties.
@@ -90,37 +90,37 @@ TR::ARMJNILinkage::ARMJNILinkage(TR::CodeGenerator *cg)
 
    }
 
-int32_t TR::ARMJNILinkage::buildArgs(TR::Node *callNode,
+int32_t J9::ARM::JNILinkage::buildArgs(TR::Node *callNode,
                              TR::RegisterDependencyConditions *dependencies,
                              TR::Register* &vftReg,
                              bool                                isVirtual)
    {
-   TR_ASSERT(0, "Should call TR::ARMJNILinkage::buildJNIArgs instead.");
+   TR_ASSERT(0, "Should call J9::ARM::JNILinkage::buildJNIArgs instead.");
    return 0;
    }
 
-TR::Register *TR::ARMJNILinkage::buildIndirectDispatch(TR::Node  *callNode)
+TR::Register *J9::ARM::JNILinkage::buildIndirectDispatch(TR::Node  *callNode)
    {
-   TR_ASSERT(0, "Calling TR::ARMJNILinkage::buildIndirectDispatch does not make sense.");
+   TR_ASSERT(0, "Calling J9::ARM::JNILinkage::buildIndirectDispatch does not make sense.");
    return NULL;
    }
 
-void         TR::ARMJNILinkage::buildVirtualDispatch(TR::Node   *callNode,
+void         J9::ARM::JNILinkage::buildVirtualDispatch(TR::Node   *callNode,
                                                     TR::RegisterDependencyConditions *dependencies,
                                                     TR::RegisterDependencyConditions *postDeps,
                                                     TR::Register                        *vftReg,
                                                     uint32_t                           sizeOfArguments)
    {
-   TR_ASSERT(0, "Calling TR::ARMJNILinkage::buildVirtualDispatch does not make sense.");
+   TR_ASSERT(0, "Calling J9::ARM::JNILinkage::buildVirtualDispatch does not make sense.");
    }
 
-TR::ARMLinkageProperties& TR::ARMJNILinkage::getProperties()
+TR::ARMLinkageProperties& J9::ARM::JNILinkage::getProperties()
    {
    return _properties;
    }
 
 #if defined(__VFP_FP__) && !defined(__SOFTFP__)
-TR::Register *TR::ARMJNILinkage::pushFloatArgForJNI(TR::Node *child)
+TR::Register *J9::ARM::JNILinkage::pushFloatArgForJNI(TR::Node *child)
    {
    // if (isSmall()) return 0;
 
@@ -137,7 +137,7 @@ TR::Register *TR::ARMJNILinkage::pushFloatArgForJNI(TR::Node *child)
    return pushRegister;
    }
 
-TR::Register *TR::ARMJNILinkage::pushDoubleArgForJNI(TR::Node *child)
+TR::Register *J9::ARM::JNILinkage::pushDoubleArgForJNI(TR::Node *child)
    {
    // if (isSmall()) return 0;
 
@@ -155,7 +155,7 @@ TR::Register *TR::ARMJNILinkage::pushDoubleArgForJNI(TR::Node *child)
    }
 #endif
 
-TR::MemoryReference *TR::ARMJNILinkage::getOutgoingArgumentMemRef(int32_t               totalSize,
+TR::MemoryReference *J9::ARM::JNILinkage::getOutgoingArgumentMemRef(int32_t               totalSize,
                                                                        int32_t               offset,
                                                                        TR::Register          *argReg,
                                                                        TR_ARMOpCodes         opCode,
@@ -175,7 +175,7 @@ printf("JNI: offset %d\n", offset); fflush(stdout);
    return result;
    }
 
-int32_t TR::ARMJNILinkage::buildJNIArgs(TR::Node *callNode,
+int32_t J9::ARM::JNILinkage::buildJNIArgs(TR::Node *callNode,
                           TR::RegisterDependencyConditions *dependencies,
                           TR::Register* &vftReg,
                           bool passReceiver,
@@ -703,7 +703,7 @@ printf("done\n"); fflush(stdout);
    }
 
 
-TR::Register *TR::ARMJNILinkage::buildDirectDispatch(TR::Node *callNode)
+TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    {
    TR::CodeGenerator           *codeGen    = cg();
    const TR::ARMLinkageProperties &jniLinkageProperties = getProperties();

@@ -35,13 +35,17 @@ namespace TR { class Node; }
 namespace TR { class Register; }
 namespace TR { class RegisterDependencyConditions; }
 
-namespace TR {
+namespace J9
+{
 
-class ARMJNILinkage : public J9::ARMPrivateLinkage
+namespace ARM
+{
+
+class JNILinkage : public J9::ARMPrivateLinkage
    {
    public:
 
-   ARMJNILinkage(TR::CodeGenerator *codeGen);
+   JNILinkage(TR::CodeGenerator *codeGen);
 
    virtual TR::MemoryReference *getOutgoingArgumentMemRef(int32_t               totalParmAreaSize,
                                                             int32_t               argOffset,
@@ -78,6 +82,8 @@ class ARMJNILinkage : public J9::ARMPrivateLinkage
 private:
    TR::ARMLinkageProperties _properties;
    };
+
+}
 
 }
 
