@@ -330,6 +330,8 @@ enum INIT_STAGE {
 #define VMOPT_XXHANDLESIGXFSZ "-XX:+HandleSIGXFSZ"
 #define VMOPT_XXHEAPDUMPONOOM "-XX:+HeapDumpOnOutOfMemoryError"
 #define VMOPT_XXNOHEAPDUMPONOOM "-XX:-HeapDumpOnOutOfMemoryError"
+#define VMOPT_XDUMP_EXIT_OUTOFMEMORYERROR "-Xdump:exit:events=throw+systhrow,filter=java/lang/OutOfMemoryError"
+#define VMOPT_XDUMP_EXIT_OUTOFMEMORYERROR_DISABLE "-Xdump:exit:none:events=throw+systhrow,filter=java/lang/OutOfMemoryError"
 
 #define VMOPT_XSOFTREFTHRESHOLD "-XSoftRefThreshold"
 #define VMOPT_XAGGRESSIVE "-Xaggressive"
@@ -504,6 +506,8 @@ enum INIT_STAGE {
 #define MAPOPT_XXMAXHEAPSIZE_EQUALS "-XX:MaxHeapSize="
 #define MAPOPT_XXINITIALHEAPSIZE_EQUALS "-XX:InitialHeapSize="
 #define MAPOPT_XXONOUTOFMEMORYERROR_EQUALS "-XX:OnOutOfMemoryError="
+#define MAPOPT_XXENABLEEXITONOUTOFMEMORYERROR "-XX:+ExitOnOutOfMemoryError"
+#define MAPOPT_XXDISABLEEXITONOUTOFMEMORYERROR "-XX:-ExitOnOutOfMemoryError"
 
 #define VMOPT_XXACTIVEPROCESSORCOUNT_EQUALS "-XX:ActiveProcessorCount="
 
