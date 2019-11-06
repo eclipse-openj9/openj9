@@ -6559,8 +6559,6 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
    J9Method * ramMethod;
    if (unresolvedInCP != NULL)
       {
-      //we init the CP with a special magic method, which has no bytecodes (hence bytecode start is NULL)
-      //i.e. the CP will always contain a method for special and static methods
       *unresolvedInCP = true;
       }
 
