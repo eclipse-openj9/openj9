@@ -609,6 +609,8 @@ configureDumpAgents(J9JavaVM *vm)
 							return J9VMDLLMAIN_FAILED;
 						}
 					}
+				} else {
+					GET_OPTION_VALUE(xdumpIndex, ':', &optionString);
 				}
 			} else {
 				GET_OPTION_VALUE(xdumpIndex, ':', &optionString);
