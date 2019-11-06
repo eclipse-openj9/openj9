@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,18 +31,30 @@ namespace TR { class CodeGenerator; }
 namespace TR { class Node; }
 namespace TR { class Register; }
 
-namespace TR {
+namespace J9
+{
 
-class IA32JNILinkage: public TR::IA32J9SystemLinkage
+namespace X86
+{
+
+namespace I386
+{
+
+class JNILinkage : public TR::IA32J9SystemLinkage
    {
    public:
-   IA32JNILinkage(TR::CodeGenerator *cg): TR::IA32J9SystemLinkage(cg) {}
+
+   JNILinkage(TR::CodeGenerator *cg): TR::IA32J9SystemLinkage(cg) {}
    virtual TR::Register *buildDirectDispatch(TR::Node *callNode, bool spillFPRegs);
 
    private:
    TR::Register *buildJNIDispatch(TR::Node *callNode);
 
    };
+
+}
+
+}
 
 }
 

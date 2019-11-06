@@ -38,14 +38,20 @@ namespace TR { class RegisterDependencyConditions; }
 
 #define IMCOMPLETELINKAGE  "This class is only used to generate call-out sequence but no call-in sequence, so it is not used as a complete linkage."
 
-namespace TR
+namespace J9
 {
 
-class AMD64JNILinkage : public J9::AMD64PrivateLinkage
+namespace X86
+{
+
+namespace AMD64
+{
+
+class JNILinkage : public J9::AMD64PrivateLinkage
    {
    public:
 
-   AMD64JNILinkage(TR::AMD64SystemLinkage *systemLinkage, TR::CodeGenerator *cg) :
+   JNILinkage(TR::AMD64SystemLinkage *systemLinkage, TR::CodeGenerator *cg) :
       J9::AMD64PrivateLinkage(cg),
          _systemLinkage(systemLinkage) {}
 
@@ -97,6 +103,10 @@ class AMD64JNILinkage : public J9::AMD64PrivateLinkage
       } _JNIDispatchInfo;
 
    };
+
+}
+
+}
 
 }
 

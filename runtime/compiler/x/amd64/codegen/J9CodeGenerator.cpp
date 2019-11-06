@@ -65,12 +65,12 @@ J9::X86::AMD64::CodeGenerator::createLinkage(TR_LinkageConventions lc)
          if (TR::Compiler->target.isWindows())
             {
             systemLinkage = new (self()->trHeapMemory()) TR::AMD64J9Win64FastCallLinkage(self());
-            linkage = new (self()->trHeapMemory()) TR::AMD64JNILinkage(systemLinkage, self());
+            linkage = new (self()->trHeapMemory()) J9::X86::AMD64::JNILinkage(systemLinkage, self());
             }
          else if (TR::Compiler->target.isLinux() || TR::Compiler->target.isOSX())
             {
             systemLinkage = new (self()->trHeapMemory()) TR::AMD64J9ABILinkage(self());
-            linkage = new (self()->trHeapMemory()) TR::AMD64JNILinkage(systemLinkage, self());
+            linkage = new (self()->trHeapMemory()) J9::X86::AMD64::JNILinkage(systemLinkage, self());
             }
          else
             {

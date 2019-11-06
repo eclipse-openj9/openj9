@@ -59,7 +59,7 @@ J9::X86::i386::CodeGenerator::createLinkage(TR_LinkageConventions lc)
       case TR_J9JNILinkage:
          if (TR::Compiler->target.isWindows() || TR::Compiler->target.isLinux())
             {
-            linkage = new (self()->trHeapMemory()) TR::IA32JNILinkage(self());
+            linkage = new (self()->trHeapMemory()) J9::X86::I386::JNILinkage(self());
             }
          else
             {
