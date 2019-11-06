@@ -3089,18 +3089,12 @@ typedef struct J9ArrayClass {
 } J9ArrayClass;
 
 
-#if defined(LINUX) && defined(J9VM_ARCH_X86) && !defined(OSX)
-/* Only enable the assert on linux x86 as not all the versions
- * of the compilers we use (xlc) support static_asserts in on
- * all the platforms.
- */
 #if defined(__cplusplus)
 /* Hide the asserts from DDR */
 #if !defined(TYPESTUBS_H)
 static_assert(sizeof(J9Class) == sizeof(J9ArrayClass), "J9Class and J9ArrayClass must be the same size");
 #endif /* !TYPESTUBS_H */
 #endif /* __cplusplus */
-#endif /* LINUX && J9VM_ARCH_X86 */
 
 typedef struct J9HookedNative {
 	struct J9NativeLibrary* nativeLibrary;
