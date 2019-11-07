@@ -4087,6 +4087,14 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
          }
       }
 
+   // initialize class hot field values
+   cl->hotField1.hotFieldOffset =  UDATA_MAX;
+   cl->hotField1.hotFieldMethodHotness = warm; 
+   cl->hotField1.hotFieldThreshold = TR::Options::_hotFieldThreshold;
+   cl->hotField2.hotFieldOffset =  UDATA_MAX;
+   cl->hotField2.hotFieldMethodHotness = warm; 
+   cl->hotField2.hotFieldThreshold = TR::Options::_hotFieldThreshold;
+
    // todo: why is the override bit on already....temporarily reset it
    // ALI 20031015: I think I have fixed the above todo - we should never
    // get an inconsistent state now.  The following should be unnecessary -

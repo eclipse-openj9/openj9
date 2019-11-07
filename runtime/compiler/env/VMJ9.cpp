@@ -2216,13 +2216,13 @@ public:
    TR_MarkHotField(TR::Compilation * comp, TR::SymbolReference * symRef)
       : TR_SubclassVisitor(comp), _symRef(symRef) { }
 
-   void mark(int32_t frequency, J9Class *, bool);
+   void mark(J9Class *, bool, int32_t frequency);
 
    virtual bool visitSubclass(TR_PersistentClassInfo *);
 
 private:
 
-   bool markHotField(int32_t frequency, J9Class * clazz, bool baseClass);
+   bool markHotField(J9Class * clazz, bool baseClass, int32_t frequency);
 
    TR::SymbolReference * _symRef;
    UDATA                _bitValue;
@@ -2230,7 +2230,7 @@ private:
    };
 
 void
-TR_MarkHotField::mark(int32_t frequency, J9Class * clazz, bool isFixedClass)
+TR_MarkHotField::mark(J9Class * clazz, bool isFixedClass, int32_t frequency)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_comp->fe());
    if (fej9->isAOT_DEPRECATED_DO_NOT_USE())
@@ -2261,7 +2261,7 @@ TR_MarkHotField::mark(int32_t frequency, J9Class * clazz, bool isFixedClass)
 
    _bitValue = (UDATA)1 << _slotIndex;
 
-   if (!markHotField(frequency, clazz, true))
+   if (!markHotField(clazz, true, frequency))
       return;
 
    if (!isFixedClass)
@@ -2274,11 +2274,11 @@ TR_MarkHotField::mark(int32_t frequency, J9Class * clazz, bool isFixedClass)
 bool
 TR_MarkHotField::visitSubclass(TR_PersistentClassInfo * subclassInfo)
    {
-   return markHotField(TR::Options::_hotFieldThreshold, TR::Compiler->cls.convertClassOffsetToClassPtr(subclassInfo->getClassId()), false);
+   return markHotField(TR::Compiler->cls.convertClassOffsetToClassPtr(subclassInfo->getClassId()), false, TR::Options::_hotFieldThreshold);
    }
 
 bool
-TR_MarkHotField::markHotField(int32_t frequency, J9Class * clazz, bool rootClass)
+TR_MarkHotField::markHotField(J9Class * clazz, bool rootClass, int32_t frequency)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_comp->fe());
    if (fej9->isAOT_DEPRECATED_DO_NOT_USE())
@@ -2317,8 +2317,7 @@ TR_MarkHotField::markHotField(int32_t frequency, J9Class * clazz, bool rootClass
       printf("%*smarked field as hot in class %.*s\n", depth(), " ", J9UTF8_LENGTH(name), J9UTF8_DATA(name));
       }  
 
-      if (jitConfig->javaVM->memoryManagerFunctions->j9gc_dynamic_breadth_first_scan_ordering_enabled(jitConfig->javaVM)) {
-          /* Setting hot fields for dynamic breadth first scan ordering */
+      if (jitConfig->javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(jitConfig->javaVM)) {
          if(clazz->totalInstanceSize <=512) {
             if ((_slotIndex !=  clazz->hotField2.hotFieldOffset) &&
                ((clazz->hotField1.hotFieldOffset == UDATA_MAX && _comp->getMethodHotness() >=warm) ||
@@ -2345,10 +2344,10 @@ TR_MarkHotField::markHotField(int32_t frequency, J9Class * clazz, bool rootClass
    }
 
 void
-TR_J9VMBase::markHotField(int32_t frequency, TR::Compilation * comp, TR::SymbolReference * symRef, TR_OpaqueClassBlock * clazz, bool isFixedClass)
+TR_J9VMBase::markHotField(TR::Compilation * comp, TR::SymbolReference * symRef, TR_OpaqueClassBlock * clazz, bool isFixedClass, int32_t frequency)
    {
    TR_MarkHotField marker(comp, symRef);
-   marker.mark(frequency, TR::Compiler->cls.convertClassOffsetToClassPtr(clazz), isFixedClass);
+   marker.mark(TR::Compiler->cls.convertClassOffsetToClassPtr(clazz), isFixedClass, frequency);
    }
 
 
@@ -2441,7 +2440,7 @@ TR_J9VMBase::findFirstHotFieldTenuredClassOffset(TR::Compilation *comp, TR_Opaqu
 void
 TR_J9VMBase::markClassForTenuredAlignment(TR::Compilation *comp, TR_OpaqueClassBlock *opclazz, uint32_t alignFromStart)
    {
-   if (!jitConfig->javaVM->memoryManagerFunctions->j9gc_dynamic_breadth_first_scan_ordering_enabled(jitConfig->javaVM) && !isAOT_DEPRECATED_DO_NOT_USE())
+   if (!jitConfig->javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(jitConfig->javaVM) && !isAOT_DEPRECATED_DO_NOT_USE())
       {
       J9Class *clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(opclazz);
       UDATA hotFieldsWordValue = 0x1; // mark for alignment

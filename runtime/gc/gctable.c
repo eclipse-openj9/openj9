@@ -78,7 +78,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_scavenger_enabled,
 	j9gc_concurrent_scavenger_enabled,
 	j9gc_software_read_barrier_enabled,
-	j9gc_dynamic_breadth_first_scan_ordering_enabled,
+	j9gc_hot_reference_field_required,
 #if defined(J9VM_GC_HEAP_CARD_TABLE)
 	j9gc_concurrent_getCardSize,
 	j9gc_concurrent_getHeapBase,

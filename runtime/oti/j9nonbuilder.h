@@ -4291,7 +4291,7 @@ typedef struct J9MemoryManagerFunctions {
 	UDATA  ( *j9gc_scavenger_enabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_concurrent_scavenger_enabled)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_software_read_barrier_enabled)(struct J9JavaVM *javaVM) ;
-	UDATA  ( *j9gc_dynamic_breadth_first_scan_ordering_enabled)(struct J9JavaVM *javaVM) ;
+	UDATA  ( *j9gc_hot_reference_field_required)(struct J9JavaVM *javaVM) ;
 #if defined(J9VM_GC_HEAP_CARD_TABLE)
 	UDATA  ( *j9gc_concurrent_getCardSize)(struct J9JavaVM *javaVM) ;
 	UDATA  ( *j9gc_concurrent_getHeapBase)(struct J9JavaVM *javaVM) ;

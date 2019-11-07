@@ -98,7 +98,7 @@ GC_ObjectModel::internalClassLoadHook(J9HookInterface** hook, UDATA eventNum, vo
 	GC_ObjectModel *objectModel = (GC_ObjectModel*)userData;
 	J9VMThread *vmThread = classLoadEvent->currentThread;
 	J9Class *clazz = classLoadEvent->clazz;
-
+	
 	/* we're only interested in bootstrap classes */
 	if (clazz->classLoader == vmThread->javaVM->systemClassLoader) {
 		J9ROMClass *romClass = clazz->romClass;
