@@ -816,32 +816,31 @@ TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key
 bool
 TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITServerMethod *owningMethod, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP)
    {
-   TR_ResolvedMethodCacheEntry methodCacheEntry;
+   TR_ResolvedMethodCacheEntry methodCacheEntry = {0};
+
+   *resolvedMethod = NULL;
+
+   if (unresolvedInCP)
+      *unresolvedInCP = true;
+
    if (getCachedValueFromPerCompilationMap(_resolvedMethodInfoMap, key, methodCacheEntry))
       {
       auto comp = getCompilation();
       TR_OpaqueMethodBlock *method = methodCacheEntry.method;
+
       if (!method)
-         {
-         *resolvedMethod = NULL;
          return true;
-         }
+
       auto methodInfo = methodCacheEntry.methodInfo;
       uint32_t vTableSlot = methodCacheEntry.vTableSlot;
-
 
       // Re-add validation record
       if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && !comp->getSymbolValidationManager()->inHeuristicRegion())
          {
          if(!owningMethod->addValidationRecordForCachedResolvedMethod(key, method))
-            {
-            // Could not add a validation record
-            *resolvedMethod = NULL;
-            if (unresolvedInCP)
-               *unresolvedInCP = true;
-            return true;
-            }
+            return true; // Could not add a validation record
          }
+
       // Create resolved method from cached method info
       if (key.type != TR_ResolvedMethodType::VirtualFromOffset)
          {

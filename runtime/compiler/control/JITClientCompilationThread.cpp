@@ -1270,7 +1270,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto literals = std::get<1>(recv);
          J9ConstantPool *cp = (J9ConstantPool*)literals;
          I_32 cpIndex = std::get<2>(recv);
-         bool resolvedInCP = false;
+         bool unresolvedInCP = true;
 
          // Only call the resolve if unresolved
          J9Method * ramMethod = 0;
@@ -1288,7 +1288,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             uint32_t classIndex = ((J9ROMMethodRef *) cp->romConstantPool)[cpIndex].classRefCPIndex;
             J9Class * classObject = (((J9RAMClassRef*) literals)[classIndex]).value;
             ramMethod = *(J9Method **)((char *)classObject + vTableIndex);
-            resolvedInCP = true;
+            unresolvedInCP = false;
             }
 
          if(TR_ResolvedJ9Method::isInvokePrivateVTableOffset(vTableIndex))
@@ -1302,11 +1302,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             TR_ResolvedJ9JITServerMethodInfo methodInfo;
             TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) ramMethod, (uint32_t) vTableIndex, owningMethod, fe, trMemory);
 
-            client->write(response, ramMethod, vTableIndex, resolvedInCP, methodInfo);
+            client->write(response, ramMethod, vTableIndex, unresolvedInCP, methodInfo);
             }
          else
             {
-            client->write(response, ramMethod, vTableIndex, resolvedInCP, TR_ResolvedJ9JITServerMethodInfo());
+            client->write(response, ramMethod, vTableIndex, unresolvedInCP, TR_ResolvedJ9JITServerMethodInfo());
             }
          }
          break;
@@ -1434,7 +1434,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          if (j9method)
             TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(methodInfo, (TR_OpaqueMethodBlock *) j9method, (uint32_t)vtableOffset, mirror, fe, trMemory);
 
-         client->write(response, j9method, methodInfo);
+         client->write(response, j9method, methodInfo, vtableOffset);
          }
          break;
       case MessageType::ResolvedMethod_startAddressForJNIMethod:
