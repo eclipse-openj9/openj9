@@ -127,37 +127,22 @@ protected:
 
    };
 
-}
-
-}
-
-
-namespace TR
-{
 
 ////////////////////////////////////////////////////////////////////////////////
-//  TR::S390HelperLinkage Definition for J9
+//  J9::Z::HelperLinkage Definition for J9
 ////////////////////////////////////////////////////////////////////////////////
 
-class S390HelperLinkage : public J9::Z::PrivateLinkage
+class HelperLinkage : public PrivateLinkage
    {
 public:
 
-   S390HelperLinkage(TR::CodeGenerator * cg)
-      : J9::Z::PrivateLinkage(cg,TR_JavaHelper, TR_Helper)
+   HelperLinkage(TR::CodeGenerator * cg)
+      : PrivateLinkage(cg,TR_JavaHelper, TR_Helper)
       {
       setProperty(ParmsInReverseOrder);
       }
    };
 
-}
-
-
-namespace J9
-{
-
-namespace Z
-{
 
 class JNILinkage : public PrivateLinkage
    {

@@ -36,6 +36,7 @@
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
 #include "codegen/Linkage_inlines.hpp"
+#include "codegen/S390CHelperLinkage.hpp"
 #include "codegen/S390PrivateLinkage.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
@@ -43,7 +44,6 @@
 #include "il/Node_inlines.hpp"
 #include "z/codegen/J9SystemLinkageLinux.hpp"
 #include "z/codegen/J9SystemLinkagezOS.hpp"
-#include "z/codegen/J9S390CHelperLinkage.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Recompilation.hpp"
 #include "z/codegen/S390Register.hpp"
@@ -197,10 +197,10 @@ J9::Z::CodeGenerator::createLinkage(TR_LinkageConventions lc)
    switch (lc)
       {
       case TR_CHelper:
-         linkage = new (self()->trHeapMemory()) TR::S390CHelperLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::Z::CHelperLinkage(self());
          break;
       case TR_Helper:
-         linkage = new (self()->trHeapMemory()) TR::S390HelperLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::Z::HelperLinkage(self());
          break;
 
       case TR_Private:

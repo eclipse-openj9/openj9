@@ -20,8 +20,8 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+#include "codegen/S390CHelperLinkage.hpp"
 #include "codegen/S390PrivateLinkage.hpp"
-#include "z/codegen/J9S390CHelperLinkage.hpp"
 
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/GCStackAtlas.hpp"
@@ -53,9 +53,9 @@
 #include "runtime/J9ValueProfiler.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
-// TR::S390CHelperLinkage for J9
+// J9::Z::CHelperLinkage for J9
 ////////////////////////////////////////////////////////////////////////////////
-TR::S390CHelperLinkage::S390CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions elc, TR_LinkageConventions lc)
+J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions elc, TR_LinkageConventions lc)
    : TR::Linkage(codeGen,elc,lc)
    {
    // Common Linux on Z and z/OS linkage settings
@@ -257,7 +257,7 @@ class RealRegisterManager
  *           If passed, this function uses it to store return value from helper instead of allocating new register
  *    \return TR::Register *helperReturnResult, gets the return value of helper function and return to the evaluator.
  */
-TR::Register * TR::S390CHelperLinkage::buildDirectDispatch(TR::Node * callNode, TR::RegisterDependencyConditions **deps, TR::Register *returnReg)
+TR::Register * J9::Z::CHelperLinkage::buildDirectDispatch(TR::Node * callNode, TR::RegisterDependencyConditions **deps, TR::Register *returnReg)
    {
    RealRegisterManager RealRegisters(cg());
    bool isHelperCallWithinICF = deps != NULL;
