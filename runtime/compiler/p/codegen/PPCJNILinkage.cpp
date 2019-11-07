@@ -49,7 +49,7 @@
 #include "p/codegen/StackCheckFailureSnippet.hpp"
 
 J9::Power::JNILinkage::JNILinkage(TR::CodeGenerator *cg)
-   : J9::PPCPrivateLinkage(cg)
+   : J9::Power::PrivateLinkage(cg)
    {
    //Copy out SystemLinkage properties. Assumes no objects in TR::PPCLinkageProperties.
    TR::Linkage *sysLinkage = cg->getLinkage(TR_System);

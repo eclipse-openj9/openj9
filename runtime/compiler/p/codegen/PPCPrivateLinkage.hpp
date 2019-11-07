@@ -57,11 +57,14 @@ struct PPCPICItem
 namespace J9
 {
 
-class PPCPrivateLinkage : public PrivateLinkage
+namespace Power
+{
+
+class PrivateLinkage : public J9::PrivateLinkage
    {
    public:
 
-   PPCPrivateLinkage(TR::CodeGenerator *cg);
+   PrivateLinkage(TR::CodeGenerator *cg);
 
    virtual const TR::PPCLinkageProperties& getProperties();
    virtual uint32_t getRightToLeft();
@@ -111,15 +114,17 @@ class PPCPrivateLinkage : public PrivateLinkage
 
 }
 
+}
+
 
 namespace TR
 {
 
-class PPCHelperLinkage : public J9::PPCPrivateLinkage
+class PPCHelperLinkage : public J9::Power::PrivateLinkage
    {
    public:
 
-   PPCHelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), J9::PPCPrivateLinkage(cg)
+   PPCHelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), J9::Power::PrivateLinkage(cg)
       {
       TR_ASSERT(helperLinkage == TR_Helper || helperLinkage == TR_CHelper, "Unexpected helper linkage convention");
       }

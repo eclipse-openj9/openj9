@@ -3705,7 +3705,7 @@ TR::Register *J9::Power::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, T
    TR::MemoryReference *tempMR1, *tempMR2;
    TR::LabelSymbol *wbLabel, *doneLabel, *startLabel, *storeLabel, *wrtBarEndLabel;
    TR::RegisterDependencyConditions *conditions;
-   J9::PPCPrivateLinkage *linkage = (J9::PPCPrivateLinkage *) cg->getLinkage();
+   J9::Power::PrivateLinkage *linkage = (J9::Power::PrivateLinkage *) cg->getLinkage();
    const TR::PPCLinkageProperties &properties = linkage->getProperties();
    TR::Instruction *gcPoint;
    bool stopUsingSrc = false;

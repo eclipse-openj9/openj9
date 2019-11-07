@@ -50,7 +50,7 @@ namespace J9
 namespace Power
 {
 
-class JNILinkage : public J9::PPCPrivateLinkage
+class JNILinkage : public PrivateLinkage
    {
    protected:
    TR::PPCLinkageProperties _properties;
