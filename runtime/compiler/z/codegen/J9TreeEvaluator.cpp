@@ -4791,7 +4791,7 @@ VMarrayStoreCHKEvaluator(
    TR::InstOpCode::Mnemonic loadOp;
    TR::Instruction * cursor;
    TR::Instruction * gcPoint;
-   J9::S390PrivateLinkage * linkage = static_cast<J9::S390PrivateLinkage *>(cg->getLinkage());
+   J9::Z::PrivateLinkage * linkage = static_cast<J9::Z::PrivateLinkage *>(cg->getLinkage());
    int bytesOffset;
 
    TR::TreeEvaluator::genLoadForObjectHeadersMasked(cg, node, owningObjectRegVal, generateS390MemoryReference(owningObjectReg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg), NULL);
@@ -5032,7 +5032,7 @@ J9::Z::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node * node, TR::CodeGenerator 
    TR::MemoryReference * mr1, * mr2;
    TR::LabelSymbol * wbLabel, * cFlowRegionEnd, * simpleStoreLabel, * cFlowRegionStart;
    TR::RegisterDependencyConditions * conditions;
-   J9::S390PrivateLinkage * linkage = static_cast<J9::S390PrivateLinkage *>(cg->getLinkage());
+   J9::Z::PrivateLinkage * linkage = static_cast<J9::Z::PrivateLinkage *>(cg->getLinkage());
    TR::Register * tempReg = NULL;
    TR::Instruction *cursor;
 
