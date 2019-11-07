@@ -335,7 +335,7 @@ TR::Linkage *J9::ARM::CodeGenerator::createLinkage(TR_LinkageConventions lc)
 //       linkage = new (self()->trHeapMemory()) TR::ARMInterpretedStaticLinkage(this);
 //       break;
       case TR_Private:
-         linkage = new (self()->trHeapMemory()) J9::ARMPrivateLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::ARM::PrivateLinkage(self());
          break;
       case TR_System:
          linkage = new (self()->trHeapMemory()) TR::ARMSystemLinkage(self());

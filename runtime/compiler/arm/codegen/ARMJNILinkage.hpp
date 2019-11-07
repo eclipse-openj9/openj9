@@ -41,7 +41,7 @@ namespace J9
 namespace ARM
 {
 
-class JNILinkage : public J9::ARMPrivateLinkage
+class JNILinkage : public PrivateLinkage
    {
    public:
 

@@ -74,7 +74,7 @@ static TR::RealRegister::RegNum _singleArgumentRegisters[] =
    };
 
 J9::ARM::JNILinkage::JNILinkage(TR::CodeGenerator *cg)
-   : J9::ARMPrivateLinkage(cg)
+   : J9::ARM::PrivateLinkage(cg)
    {
    //Copy out SystemLinkage properties. Assumes no objects in TR::ARMLinkageProperties.
    TR::Linkage *sysLinkage = cg->getLinkage(TR_System);
