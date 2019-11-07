@@ -24,7 +24,7 @@
 #include "codegen/Linkage_inlines.hpp"
 
 J9::ARM64::JNILinkage::JNILinkage(TR::CodeGenerator *cg)
-   : J9::ARM64PrivateLinkage(cg)
+   : J9::ARM64::PrivateLinkage(cg)
    {
    TR_UNIMPLEMENTED();
    }
