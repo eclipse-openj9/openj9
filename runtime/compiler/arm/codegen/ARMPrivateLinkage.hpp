@@ -76,25 +76,20 @@ class PrivateLinkage : public J9::PrivateLinkage
    virtual TR::Register *buildIndirectDispatch(TR::Node *callNode);
    };
 
-}
 
-}
-
-
-namespace TR
-{
-
-class ARMHelperLinkage : public J9::ARM::PrivateLinkage
+class HelperLinkage : public PrivateLinkage
    {
    public:
 
-   ARMHelperLinkage(TR::CodeGenerator *codeGen) : J9::ARM::PrivateLinkage(codeGen) {}
+   HelperLinkage(TR::CodeGenerator *codeGen) : PrivateLinkage(codeGen) {}
 
    virtual int32_t buildArgs(TR::Node                            *callNode,
                              TR::RegisterDependencyConditions *dependencies,
                              TR::Register* &vftReg,
                              bool                                isVirtual);
    };
+
+}
 
 }
 

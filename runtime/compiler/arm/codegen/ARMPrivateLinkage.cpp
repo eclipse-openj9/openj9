@@ -1151,10 +1151,10 @@ TR::Register *J9::ARM::PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    return returnRegister;
    }
 
-int32_t TR::ARMHelperLinkage::buildArgs(TR::Node                            *callNode,
-                                       TR::RegisterDependencyConditions *dependencies,
-					TR::Register* &vftReg,
-                                       bool                                isVirtual)
+int32_t J9::ARM::HelperLinkage::buildArgs(TR::Node                            *callNode,
+                                          TR::RegisterDependencyConditions *dependencies,
+                                          TR::Register* &vftReg,
+                                          bool                                isVirtual)
    {
    TR_ASSERT(!isVirtual, "virtual helper calls not supported");
    return buildARMLinkageArgs(callNode, dependencies, vftReg, TR_Helper, isVirtual);

@@ -345,7 +345,7 @@ TR::Linkage *J9::ARM::CodeGenerator::createLinkage(TR_LinkageConventions lc)
 //       break;
       case TR_CHelper:
       case TR_Helper:
-         linkage = new (self()->trHeapMemory()) TR::ARMHelperLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::ARM::HelperLinkage(self());
          break;
       case TR_J9JNILinkage:
          linkage = new (self()->trHeapMemory()) J9::ARM::JNILinkage(self());
