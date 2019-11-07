@@ -1988,7 +1988,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
    return totalSize;
    }
 
-static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, uint32_t maxStaticPICs, TR_ScratchList<TR::PPCPICItem> &values)
+static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, uint32_t maxStaticPICs, TR_ScratchList<J9::PPCPICItem> &values)
    {
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
@@ -2051,7 +2051,7 @@ static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, u
       if (!method || method->isInterpreted())
          continue;
 
-      values.add(new (comp->trStackMemory()) TR::PPCPICItem(clazz, method, freq));
+      values.add(new (comp->trStackMemory()) J9::PPCPICItem(clazz, method, freq));
       ++numStaticPics;
       }
 
@@ -2482,13 +2482,13 @@ void J9::Power::PrivateLinkage::buildVirtualDispatch(TR::Node                   
       static char     *maxInterfaceStaticPICsString = feGetEnv("TR_ppcMaxInterfaceStaticPICs");
       static uint32_t  maxInterfaceStaticPICs = maxInterfaceStaticPICsString ? atoi(maxInterfaceStaticPICsString) : 1;
 
-      TR_ScratchList<TR::PPCPICItem> values(cg()->trMemory());
+      TR_ScratchList<J9::PPCPICItem> values(cg()->trMemory());
       const uint32_t maxStaticPICs = methodSymbol->isInterface() ? maxInterfaceStaticPICs : maxVirtualStaticPICs;
 
       if (getProfiledCallSiteInfo(cg(), callNode, maxStaticPICs, values))
          {
-         ListIterator<TR::PPCPICItem>  i(&values);
-         TR::PPCPICItem               *pic = i.getFirst();
+         ListIterator<J9::PPCPICItem>  i(&values);
+         J9::PPCPICItem               *pic = i.getFirst();
 
          // If this value is dominant, optimize exclusively for it
          if (pic->_frequency > MAX_PROFILED_CALL_FREQUENCY)

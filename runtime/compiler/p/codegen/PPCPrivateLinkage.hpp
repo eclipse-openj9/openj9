@@ -37,7 +37,8 @@ namespace TR { class ParameterSymbol; }
 namespace TR { class RegisterDependencyConditions; }
 namespace TR { class ResolvedMethodSymbol; }
 
-namespace TR {
+namespace J9
+{
 
 struct PPCPICItem
    {
