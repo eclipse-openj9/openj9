@@ -1735,13 +1735,15 @@ J9::Options::fePreProcess(void * base)
 
          UDATA largePageSize = 0;
          UDATA largePageFlags = 0;
-         int32_t lpArgIndex;
          UDATA lpSize = 0;
+         int32_t lpArgIndex = FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, "-Xlp", 0);
 
          // -Xlp<size>, attempt to use specified page size
-         if ((lpArgIndex=FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, "-Xlp", 0)) >= 0)
+         if (lpArgIndex >= 0)
             {
-            GET_MEMORY_VALUE(lpArgIndex, "-Xlp", lpSize);
+            // GET_MEMORY_VALUE macro casts it's second parameter to (char**)&, so a pointer to the option string is passed rather than the string literal.
+            char *lpOption = "-Xlp";
+            GET_MEMORY_VALUE(lpArgIndex, lpOption , lpSize);
             }
 
          if (lpSize > 0)
