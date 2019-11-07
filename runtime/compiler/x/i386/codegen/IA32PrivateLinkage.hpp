@@ -30,11 +30,17 @@ namespace TR { class UnresolvedDataSnippet; }
 namespace J9
 {
 
-class IA32PrivateLinkage : public X86PrivateLinkage
+namespace X86
+{
+
+namespace I386
+{
+
+class PrivateLinkage : public J9::X86::PrivateLinkage
    {
    public:
 
-   IA32PrivateLinkage(TR::CodeGenerator *cg);
+   PrivateLinkage(TR::CodeGenerator *cg);
 
    TR::Register *pushThis(TR::Node *child);
    TR::Register *pushIntegerWordArg(TR::Node *child);
@@ -56,6 +62,10 @@ class IA32PrivateLinkage : public X86PrivateLinkage
 
 }
 
+}
+
+}
+
 
 /**
  * The following is only required to assist with refactoring because they are
@@ -63,15 +73,11 @@ class IA32PrivateLinkage : public X86PrivateLinkage
  * class moves into the J9 namespace they can be easily removed in OMR and will
  * be subsequently deleted here.
  */
-namespace TR
+namespace J9
 {
 
-typedef J9::IA32PrivateLinkage IA32PrivateLinkage;
-
-inline TR::IA32PrivateLinkage *toIA32PrivateLinkage(TR::Linkage *linkage)
-   {
-   return static_cast<TR::IA32PrivateLinkage *>(linkage);
-   }
+typedef J9::X86::I386::PrivateLinkage IA32PrivateLinkage;
 
 }
+
 #endif

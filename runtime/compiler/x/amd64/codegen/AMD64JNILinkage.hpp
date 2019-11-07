@@ -47,12 +47,12 @@ namespace X86
 namespace AMD64
 {
 
-class JNILinkage : public J9::AMD64PrivateLinkage
+class JNILinkage : public PrivateLinkage
    {
    public:
 
    JNILinkage(TR::AMD64SystemLinkage *systemLinkage, TR::CodeGenerator *cg) :
-      J9::AMD64PrivateLinkage(cg),
+      PrivateLinkage(cg),
          _systemLinkage(systemLinkage) {}
 
    int32_t computeMemoryArgSize(TR::Node *callNode, int32_t first, int32_t last, bool passThread = true);

@@ -86,7 +86,7 @@ inline uint32_t lcm(uint32_t a, uint32_t b)
    return a * b / gcd(a, b);
    }
 
-J9::X86PrivateLinkage::X86PrivateLinkage(TR::CodeGenerator *cg) : J9::PrivateLinkage(cg)
+J9::X86::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg) : J9::PrivateLinkage(cg)
    {
    // Stack alignment basic requirement:
    //    X86-32:  4 bytes, per hardware requirement
@@ -97,7 +97,7 @@ J9::X86PrivateLinkage::X86PrivateLinkage(TR::CodeGenerator *cg) : J9::PrivateLin
                                            cg->fej9()->getLocalObjectAlignmentInBytes()));
    }
 
-const TR::X86LinkageProperties& J9::X86PrivateLinkage::getProperties()
+const TR::X86LinkageProperties& J9::X86::PrivateLinkage::getProperties()
    {
    return _properties;
    }
@@ -110,7 +110,7 @@ const TR::X86LinkageProperties& J9::X86PrivateLinkage::getProperties()
 static const TR::RealRegister::RegNum NOT_ASSIGNED = (TR::RealRegister::RegNum)-1;
 
 
-void J9::X86PrivateLinkage::copyLinkageInfoToParameterSymbols()
+void J9::X86::PrivateLinkage::copyLinkageInfoToParameterSymbols()
    {
    TR::ResolvedMethodSymbol              *bodySymbol = comp()->getJittedMethodSymbol();
    ListIterator<TR::ParameterSymbol>   paramIterator(&(bodySymbol->getParameterList()));
@@ -145,7 +145,7 @@ void J9::X86PrivateLinkage::copyLinkageInfoToParameterSymbols()
       }
    }
 
-void J9::X86PrivateLinkage::copyGlRegDepsToParameterSymbols(TR::Node *bbStart, TR::CodeGenerator *cg)
+void J9::X86::PrivateLinkage::copyGlRegDepsToParameterSymbols(TR::Node *bbStart, TR::CodeGenerator *cg)
    {
    TR_ASSERT(bbStart->getOpCodeValue() == TR::BBStart, "assertion failure");
    if (bbStart->getNumChildren() > 0)
@@ -166,7 +166,7 @@ void J9::X86PrivateLinkage::copyGlRegDepsToParameterSymbols(TR::Node *bbStart, T
       }
    }
 
-TR::Instruction *J9::X86PrivateLinkage::copyStackParametersToLinkageRegisters(TR::Instruction *procEntryInstruction)
+TR::Instruction *J9::X86::PrivateLinkage::copyStackParametersToLinkageRegisters(TR::Instruction *procEntryInstruction)
    {
    TR_ASSERT(procEntryInstruction && procEntryInstruction->getOpCodeValue() == PROCENTRY, "assertion failure");
    TR::Instruction *intrpPrev = procEntryInstruction->getPrev(); // The instruction before the interpreter entry point
@@ -174,7 +174,7 @@ TR::Instruction *J9::X86PrivateLinkage::copyStackParametersToLinkageRegisters(TR
    return intrpPrev->getNext();
    }
 
-TR::Instruction *J9::X86PrivateLinkage::movLinkageRegisters(TR::Instruction *cursor, bool isStore)
+TR::Instruction *J9::X86::PrivateLinkage::movLinkageRegisters(TR::Instruction *cursor, bool isStore)
    {
    TR_ASSERT(cursor, "assertion failure");
 
@@ -220,7 +220,7 @@ TR::Instruction *J9::X86PrivateLinkage::movLinkageRegisters(TR::Instruction *cur
 // linkage register) to their "home location" where the method body will expect
 // to find them (either on stack or in a global register).
 //
-TR::Instruction *J9::X86PrivateLinkage::copyParametersToHomeLocation(TR::Instruction *cursor, bool parmsHaveBeenStored)
+TR::Instruction *J9::X86::PrivateLinkage::copyParametersToHomeLocation(TR::Instruction *cursor, bool parmsHaveBeenStored)
    {
    TR::Machine *machine = cg()->machine();
    TR::RealRegister  *framePointer = machine->getRealRegister(TR::RealRegister::vfp);
@@ -484,7 +484,7 @@ static TR::Instruction *initializeLocals(TR::Instruction      *cursor,
 
 #define STACKCHECKBUFFER 512
 
-void J9::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
+void J9::X86::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    {
 #if defined(DEBUG)
    // TODO:AMD64: Get this into the debug DLL
@@ -1010,20 +1010,20 @@ void J9::X86PrivateLinkage::createPrologue(TR::Instruction *cursor)
 #endif
    }
 
-bool J9::X86PrivateLinkage::needsFrameDeallocation()
+bool J9::X86::PrivateLinkage::needsFrameDeallocation()
    {
    // frame needs a deallocation if FrameSize == 0
    //
    return !_properties.getAlwaysDedicateFramePointerRegister() && cg()->getFrameSizeInBytes() == 0;
    }
 
-TR::Instruction *J9::X86PrivateLinkage::deallocateFrameIfNeeded(TR::Instruction *cursor, int32_t size)
+TR::Instruction *J9::X86::PrivateLinkage::deallocateFrameIfNeeded(TR::Instruction *cursor, int32_t size)
    {
    return cursor;
    }
 
 
-void J9::X86PrivateLinkage::createEpilogue(TR::Instruction *cursor)
+void J9::X86::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    {
    TR::RealRegister* espReal = machine()->getRealRegister(TR::RealRegister::esp);
 
@@ -1058,7 +1058,7 @@ void J9::X86PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    }
 
 TR::Register *
-J9::X86PrivateLinkage::buildDirectDispatch(
+J9::X86::PrivateLinkage::buildDirectDispatch(
       TR::Node *callNode,
       bool spillFPRegs)
    {
@@ -1473,7 +1473,7 @@ void TR::X86CallSite::computeProfiledTargets()
       // Disable lastITable logic if all the implementers can fit into the pic slots during non-startup state
       if (_useLastITableCache && TR::Compiler->target.is64Bit() && _interfaceClassOfMethod && comp()->getPersistentInfo()->getJitState() != STARTUP_STATE)
          {
-         J9::X86PrivateLinkage *privateLinkage = static_cast<J9::X86PrivateLinkage *>(getLinkage());
+         J9::X86::PrivateLinkage *privateLinkage = static_cast<J9::X86::PrivateLinkage *>(getLinkage());
          int32_t numPICSlots = numStaticPICSlots + privateLinkage->IPicParameters.defaultNumberOfSlots;
          TR_ResolvedMethod **implArray = new (comp()->trStackMemory()) TR_ResolvedMethod*[numPICSlots+1];
          TR_PersistentCHTable * chTable = comp()->getPersistentInfo()->getPersistentCHTable();
@@ -1625,7 +1625,7 @@ static bool indirectDispatchWillBuildVirtualGuard(TR::Compilation *comp, TR::X86
    return false;
    }
 
-TR::Register *J9::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
+TR::Register *J9::X86::PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    {
    TR::StackMemoryRegion stackMemoryRegion(*comp()->trMemory());
 
@@ -1893,7 +1893,7 @@ TR::Register *J9::X86PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    return returnRegister;
    }
 
-void J9::X86PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, TR::X86CallSite &site)
+void J9::X86::PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, TR::X86CallSite &site)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fe());
    TR::MethodSymbol   *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
@@ -1982,7 +1982,7 @@ void J9::X86PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef, T
    }
 
 void
-J9::X86PrivateLinkage::buildInterfaceCall(
+J9::X86::PrivateLinkage::buildInterfaceCall(
       TR::X86CallSite &site,
       TR::LabelSymbol *entryLabel,
       TR::LabelSymbol *doneLabel,
@@ -1996,7 +1996,7 @@ J9::X86PrivateLinkage::buildInterfaceCall(
    buildIPIC(site, entryLabel, doneLabel, thunk);
    }
 
-void J9::X86PrivateLinkage::buildRevirtualizedCall(TR::X86CallSite &site, TR::LabelSymbol *revirtualizeLabel, TR::LabelSymbol *doneLabel)
+void J9::X86::PrivateLinkage::buildRevirtualizedCall(TR::X86CallSite &site, TR::LabelSymbol *revirtualizeLabel, TR::LabelSymbol *doneLabel)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    TR::Register *vftRegister = site.getCallNode()->getFirstChild()->getRegister(); // may be NULL; we don't need to evaluate it here
@@ -2035,12 +2035,12 @@ void J9::X86PrivateLinkage::buildRevirtualizedCall(TR::X86CallSite &site, TR::La
    cg()->addSnippet(snippet);
    }
 
-void J9::X86PrivateLinkage::buildCallArguments(TR::X86CallSite &site)
+void J9::X86::PrivateLinkage::buildCallArguments(TR::X86CallSite &site)
    {
    site.setArgSize(buildArgs(site.getCallNode(), site.getPreConditionsUnderConstruction()));
    }
 
-bool J9::X86PrivateLinkage::buildVirtualGuard(TR::X86CallSite &site, TR::LabelSymbol *revirtualizeLabel)
+bool J9::X86::PrivateLinkage::buildVirtualGuard(TR::X86CallSite &site, TR::LabelSymbol *revirtualizeLabel)
    {
    TR_ASSERT(site.getVirtualGuardKind() != TR_NoGuard, "site must require a virtual guard");
 
@@ -2070,7 +2070,7 @@ bool J9::X86PrivateLinkage::buildVirtualGuard(TR::X86CallSite &site, TR::LabelSy
 
       if (TR::Compiler->target.isSMP())
          generatePatchableCodeAlignmentInstruction(vgnopAtomicRegions, patchable, cg());
-      // HCR in J9::X86PrivateLinkage::buildRevirtualizedCall
+      // HCR in J9::X86::PrivateLinkage::buildRevirtualizedCall
       if (comp()->getOption(TR_EnableHCR))
          {
          TR_VirtualGuard* HCRGuard = TR_VirtualGuard::createGuardedDevirtualizationGuard(TR_HCRGuard, comp(), callNode);
@@ -2114,7 +2114,7 @@ bool J9::X86PrivateLinkage::buildVirtualGuard(TR::X86CallSite &site, TR::LabelSy
       }
    }
 
-TR::Instruction *J9::X86PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR_X86OpCode dispatchOp, TR::Register *targetAddressReg, TR::MemoryReference *targetAddressMemref)
+TR::Instruction *J9::X86::PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR_X86OpCode dispatchOp, TR::Register *targetAddressReg, TR::MemoryReference *targetAddressMemref)
    {
    TR::Node *callNode = site.getCallNode();
    if (cg()->enableSinglePrecisionMethods() &&
@@ -2203,7 +2203,7 @@ TR::Instruction *J9::X86PrivateLinkage::buildVFTCall(TR::X86CallSite &site, TR_X
    return callInstr;
    }
 
-TR::Register *J9::X86PrivateLinkage::buildCallPostconditions(TR::X86CallSite &site)
+TR::Register *J9::X86::PrivateLinkage::buildCallPostconditions(TR::X86CallSite &site)
    {
    TR::RegisterDependencyConditions *dependencies = site.getPostConditionsUnderConstruction();
    TR_ASSERT(dependencies != NULL, "assertion failure");
@@ -2395,7 +2395,7 @@ TR::Register *J9::X86PrivateLinkage::buildCallPostconditions(TR::X86CallSite &si
    }
 
 
-void J9::X86PrivateLinkage::buildVPIC(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel)
+void J9::X86::PrivateLinkage::buildVPIC(TR::X86CallSite &site, TR::LabelSymbol *entryLabel, TR::LabelSymbol *doneLabel)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    TR_ASSERT(doneLabel, "a doneLabel is required for VPIC dispatches");
@@ -2466,7 +2466,7 @@ void J9::X86PrivateLinkage::buildVPIC(TR::X86CallSite &site, TR::LabelSymbol *en
    cg()->reserveNTrampolines(VPicParameters.defaultNumberOfSlots);
    }
 
-void J9::X86PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86CallSite &site, int32_t numIPicSlots, TR::X86PICSlot &lastPicSlot, TR::Instruction *&slotPatchInstruction, TR::LabelSymbol *doneLabel, TR::LabelSymbol *lookupDispatchSnippetLabel, TR_OpaqueClassBlock *declaringClass, uintptrj_t itableIndex )
+void J9::X86::PrivateLinkage::buildInterfaceDispatchUsingLastITable (TR::X86CallSite &site, int32_t numIPicSlots, TR::X86PICSlot &lastPicSlot, TR::Instruction *&slotPatchInstruction, TR::LabelSymbol *doneLabel, TR::LabelSymbol *lookupDispatchSnippetLabel, TR_OpaqueClassBlock *declaringClass, uintptrj_t itableIndex )
    {
    static char *breakBeforeInterfaceDispatchUsingLastITable = feGetEnv("TR_breakBeforeInterfaceDispatchUsingLastITable");
 

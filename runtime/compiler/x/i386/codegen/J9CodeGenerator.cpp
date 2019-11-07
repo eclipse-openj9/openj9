@@ -44,8 +44,8 @@ J9::X86::i386::CodeGenerator::createLinkage(TR_LinkageConventions lc)
       case TR_Helper:
       case TR_Private:
          {
-         J9::X86PrivateLinkage *p = NULL;
-         p = new (self()->trHeapMemory()) J9::IA32PrivateLinkage(self());
+         J9::X86::PrivateLinkage *p = NULL;
+         p = new (self()->trHeapMemory()) J9::X86::I386::PrivateLinkage(self());
          p->IPicParameters.roundedSizeOfSlot = 6+2+5+2+1;
          p->IPicParameters.defaultNumberOfSlots = 2;
          p->IPicParameters.defaultSlotAddress = -1;
