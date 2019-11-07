@@ -256,15 +256,9 @@ class PrivateLinkage : public J9::PrivateLinkage
    TR::Instruction *_jittedMethodEntryPoint;
 
    };
-}
-
-}
 
 
-namespace TR
-{
-
-class ARM64HelperLinkage : public J9::ARM64::PrivateLinkage
+class HelperLinkage : public PrivateLinkage
    {
    public:
 
@@ -273,7 +267,7 @@ class ARM64HelperLinkage : public J9::ARM64::PrivateLinkage
     * @param[in] cg : CodeGenerator
     * @param[in] helperLinkage : linkage convention
     */
-   ARM64HelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), J9::ARM64::PrivateLinkage(cg)
+   HelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), PrivateLinkage(cg)
       {
       TR_ASSERT(helperLinkage == TR_Helper || helperLinkage == TR_CHelper, "Unexpected helper linkage convention");
       }
@@ -292,6 +286,8 @@ class ARM64HelperLinkage : public J9::ARM64::PrivateLinkage
    TR_LinkageConventions _helperLinkage;
 
    };
+
+}
 
 }
 

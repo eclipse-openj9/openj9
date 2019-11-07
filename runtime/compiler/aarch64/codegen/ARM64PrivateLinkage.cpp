@@ -1373,7 +1373,7 @@ void J9::ARM64::PrivateLinkage::performPostBinaryEncoding()
    *(uint32_t *)(linkageInfoWordInstruction->getBinaryEncoding()) = linkageInfoWord;
    }
 
-int32_t TR::ARM64HelperLinkage::buildArgs(TR::Node *callNode,
+int32_t J9::ARM64::HelperLinkage::buildArgs(TR::Node *callNode,
    TR::RegisterDependencyConditions *dependencies)
    {
    return buildPrivateLinkageArgs(callNode, dependencies, _helperLinkage);
