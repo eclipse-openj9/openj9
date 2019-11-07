@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,18 +41,23 @@ namespace TR { class RegisterDependencyConditions; }
 // This initial version has following limitations:
 //     1. Floating point parameters are not currently in-support.
 //     2. Return value can only be at most pointer size, i.e. DWORD on X86-32 and QWORD on X86-64.
-namespace TR {
-class X86HelperCallSite
+namespace J9
+{
+
+namespace X86
+{
+
+class HelperCallSite
    {
    public:
-   X86HelperCallSite(TR::Node* callNode, TR::CodeGenerator* cg) :
+   HelperCallSite(TR::Node* callNode, TR::CodeGenerator* cg) :
       _cg(cg),
       _Node(callNode),
       _ReturnType(callNode->getDataType()),
       _SymRef(callNode->getSymbolReference()),
       _Params(cg->trMemory())
       {}
-   X86HelperCallSite(TR::Node* callNode, TR::DataType callReturnType, TR::SymbolReference* callSymRef, TR::CodeGenerator* cg) :
+   HelperCallSite(TR::Node* callNode, TR::DataType callReturnType, TR::SymbolReference* callSymRef, TR::CodeGenerator* cg) :
       _cg(cg),
       _Node(callNode),
       _ReturnType(callReturnType),
@@ -87,17 +92,17 @@ class X86HelperCallSite
    TR_Array<TR::Register*> _Params;
    };
 
-class X86HelperLinkage : public TR::Linkage
+class HelperLinkage : public TR::Linkage
    {
    public:
-   X86HelperLinkage(TR::CodeGenerator *cg) : TR::Linkage(cg) {}
-   const X86LinkageProperties& getProperties() { return _Properties; }
+   HelperLinkage(TR::CodeGenerator *cg) : TR::Linkage(cg) {}
+   const TR::X86LinkageProperties& getProperties() { return _Properties; }
    virtual void createPrologue(TR::Instruction *cursor) { TR_ASSERT(false, IMCOMPLETELINKAGE); }
    virtual void createEpilogue(TR::Instruction *cursor) { TR_ASSERT(false, IMCOMPLETELINKAGE); }
    virtual TR::Register* buildIndirectDispatch(TR::Node *callNode) { TR_ASSERT(false, "Indirect dispatch is not currently supported"); return NULL; }
    virtual TR::Register* buildDirectDispatch(TR::Node* callNode, bool spillFPRegs)
       {
-      X86HelperCallSite CallSite(callNode, cg());
+      HelperCallSite CallSite(callNode, cg());
       // Evaluate children
       for (int i = 0; i < callNode->getNumChildren(); i++)
          {
@@ -123,8 +128,11 @@ class X86HelperLinkage : public TR::Linkage
       }
 
    private:
-   X86LinkageProperties _Properties;
-};
+   TR::X86LinkageProperties _Properties;
+   };
 
 }
+
+}
+
 #endif

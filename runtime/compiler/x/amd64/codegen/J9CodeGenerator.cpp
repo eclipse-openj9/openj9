@@ -41,7 +41,7 @@ J9::X86::AMD64::CodeGenerator::createLinkage(TR_LinkageConventions lc)
    switch (lc)
       {
       case TR_CHelper:
-         linkage = new (self()->trHeapMemory()) TR::X86HelperLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::X86::HelperLinkage(self());
          break;
       case TR_Helper:
       case TR_Private:
