@@ -55,7 +55,6 @@ adoptopenjdk:
 artifactory_server: 'ci-eclipse-openj9'
 artifactory_repo: 'ci-eclipse-openj9'
 artifactory_num_artifacts: 30
-# This is being used for the cleanup script
 artifactory_days_to_keep_artifacts: 50
 artifactory_manual_cleanup: true
 #========================================#
