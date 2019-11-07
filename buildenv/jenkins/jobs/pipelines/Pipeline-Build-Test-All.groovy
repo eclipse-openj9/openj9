@@ -227,8 +227,10 @@ try {
 
                     COUNT = 0
                     BUILD_SPECS.each { SPEC, SDK_VERSIONS ->
+                        echo "DEBUG SPEC:'${SPEC}'"
                         if (VARIABLES."${SPEC}") {
                             SDK_VERSIONS.each { SDK_VERSION ->
+                                echo "DEBUG SDK_VERSION:'${SDK_VERSION}'"
                                 def job_name = get_pipeline_name(SPEC, SDK_VERSION)
                                 pipelineNames.add(job_name)
 
@@ -262,6 +264,7 @@ try {
                                 builds["${job_name}"] = {
                                     try {
                                         builds["${job_name}"] = {
+                                            echo "DEBUG AUTOMATIC_GENERATION:'${AUTOMATIC_GENERATION}'"
                                             if (AUTOMATIC_GENERATION != 'false') {
                                                 node(SETUP_LABEL) {
                                                     unstash 'DSL'
