@@ -938,19 +938,19 @@ gcParseSovereignArguments(J9JavaVM *vm)
 		goto _error;
 	}
 
-	if(-1 != FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, "-Xgcthreads", NULL)) {
-		result = option_set_to_opt_integer(vm, "-Xgcthreads", &index, EXACT_MEMORY_MATCH, &extensions->gcThreadCount);
+	if(-1 != FIND_ARG_IN_VMARGS(EXACT_MEMORY_MATCH, VMOPT_XGCTHREADS, NULL)) {
+		result = option_set_to_opt_integer(vm, VMOPT_XGCTHREADS, &index, EXACT_MEMORY_MATCH, &extensions->gcThreadCount);
 		if (OPTION_OK != result) {
 			if (OPTION_MALFORMED == result) {
-				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, "-Xgcthreads");
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, VMOPT_XGCTHREADS);
 			} else {
-				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, "-Xgcthreads");
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, VMOPT_XGCTHREADS);
 			}
 			goto _error;
 		}
 
 		if(0 == extensions->gcThreadCount) {
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, "-Xgcthreads", (UDATA)0);
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_MUST_BE_ABOVE, VMOPT_XGCTHREADS, (UDATA)0);
 			goto _error;
 		}
 
@@ -996,12 +996,12 @@ gcParseSovereignArguments(J9JavaVM *vm)
 	}
 
 #if defined(OMR_GC_MODRON_CONCURRENT_MARK)
-	result = option_set_to_opt_integer(vm, "-Xconcurrentbackground", &index, EXACT_MEMORY_MATCH, &extensions->concurrentBackground);
+	result = option_set_to_opt_integer(vm, VMOPT_XCONCURRENTBACKGROUND, &index, EXACT_MEMORY_MATCH, &extensions->concurrentBackground);
 	if (OPTION_OK != result) {
 		if (OPTION_MALFORMED == result) {
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, "-Xconcurrentbackground");
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_MUST_BE_NUMBER, VMOPT_XCONCURRENTBACKGROUND);
 		} else {
-			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, "-Xconcurrentbackground");
+			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, VMOPT_XCONCURRENTBACKGROUND);
 		}
 		goto _error;
 	}
