@@ -263,16 +263,14 @@ try {
                                 COUNT += 1
                                 builds["${job_name}"] = {
                                     try {
-                                        builds["${job_name}"] = {
-                                            echo "DEBUG AUTOMATIC_GENERATION:'${AUTOMATIC_GENERATION}'"
-                                            if (AUTOMATIC_GENERATION != 'false') {
-                                                node(SETUP_LABEL) {
-                                                    unstash 'DSL'
-                                                    variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline', 'Pipeline')
-                                                }
+                                        echo "DEBUG AUTOMATIC_GENERATION:'${AUTOMATIC_GENERATION}'"
+                                        if (AUTOMATIC_GENERATION != 'false') {
+                                            node(SETUP_LABEL) {
+                                                unstash 'DSL'
+                                                variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline', 'Pipeline')
                                             }
-                                            build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION)
                                         }
+                                        build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION)
                                     } finally {
                                         COUNT -= 1
                                     }
