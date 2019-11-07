@@ -2869,8 +2869,8 @@ TR::Register *J9::Power::PrivateLinkage::buildalloca(TR::Node *BIFCallNode)
    return NULL;
    }
 
-int32_t TR::PPCHelperLinkage::buildArgs(TR::Node *callNode,
-                                       TR::RegisterDependencyConditions *dependencies)
+int32_t J9::Power::HelperLinkage::buildArgs(TR::Node *callNode,
+                                            TR::RegisterDependencyConditions *dependencies)
    {
    return buildPrivateLinkageArgs(callNode, dependencies, _helperLinkage);
    }

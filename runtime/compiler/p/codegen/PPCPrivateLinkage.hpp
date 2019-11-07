@@ -112,19 +112,12 @@ class PrivateLinkage : public J9::PrivateLinkage
    virtual TR::Register *buildalloca(TR::Node *BIFCallNode);
    };
 
-}
 
-}
-
-
-namespace TR
-{
-
-class PPCHelperLinkage : public J9::Power::PrivateLinkage
+class HelperLinkage : public PrivateLinkage
    {
    public:
 
-   PPCHelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), J9::Power::PrivateLinkage(cg)
+   HelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), PrivateLinkage(cg)
       {
       TR_ASSERT(helperLinkage == TR_Helper || helperLinkage == TR_CHelper, "Unexpected helper linkage convention");
       }
@@ -136,6 +129,8 @@ class PPCHelperLinkage : public J9::Power::PrivateLinkage
 
    TR_LinkageConventions _helperLinkage;
    };
+
+}
 
 }
 

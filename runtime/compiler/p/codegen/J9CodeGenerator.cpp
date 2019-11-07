@@ -143,7 +143,7 @@ J9::Power::CodeGenerator::createLinkage(TR_LinkageConventions lc)
          break;
       case TR_CHelper:
       case TR_Helper:
-         linkage = new (self()->trHeapMemory()) TR::PPCHelperLinkage(self(), lc);
+         linkage = new (self()->trHeapMemory()) J9::Power::HelperLinkage(self(), lc);
          break;
       case TR_J9JNILinkage:
          linkage = new (self()->trHeapMemory()) J9::Power::JNILinkage(self());
