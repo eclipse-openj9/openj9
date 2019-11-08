@@ -2759,14 +2759,6 @@ void TR_ResolvedJ9Method::construct()
       { TR::unknownMethod}
    };
 
-   static X DataAccessByteArrayUtilMethods[] =
-      {
-       {x(TR::com_ibm_dataaccess_ByteArrayUtils_trailingZeros,           "trailingZeros"        ,    "([B)I")},
-       {x(TR::com_ibm_dataaccess_ByteArrayUtils_trailingZerosByteAtATime,"trailingZerosByteAtATime", "([BII)I")},
-       {x(TR::com_ibm_dataaccess_ByteArrayUtils_trailingZerosQuadWordAtATime_,   "trailingZerosQuadWordAtATime_", "([BI)I")},
-       { TR::unknownMethod}
-      };
-
    static X DataAccessDecimalDataMethods[] =
    {
       {x(TR::com_ibm_dataaccess_DecimalData_JITIntrinsicsEnabled, "JITIntrinsicsEnabled", "()Z")},
@@ -4360,7 +4352,6 @@ void TR_ResolvedJ9Method::construct()
 
    static Y class33[] =
       {
-      { "com/ibm/dataaccess/ByteArrayUtils", DataAccessByteArrayUtilMethods },
       { "java/util/stream/AbstractPipeline", JavaUtilStreamAbstractPipelineMethods },
       { "java/util/stream/IntPipeline$Head", JavaUtilStreamIntPipelineHeadMethods },
       { 0 }
