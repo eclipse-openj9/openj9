@@ -213,9 +213,9 @@ J9::Z::CodeGenerator::createLinkage(TR_LinkageConventions lc)
 
       case TR_System:
          if (TR::Compiler->target.isLinux())
-            linkage = new (self()->trHeapMemory()) TR::J9S390zLinuxSystemLinkage(self()); //J9
+            linkage = new (self()->trHeapMemory()) J9::Z::zLinuxSystemLinkage(self());
          else
-            linkage = new (self()->trHeapMemory()) TR::J9S390zOSSystemLinkage(self()); //J9
+            linkage = new (self()->trHeapMemory()) J9::Z::zOSSystemLinkage(self());
          break;
 
       default :
