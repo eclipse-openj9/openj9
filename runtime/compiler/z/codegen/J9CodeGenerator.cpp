@@ -4013,12 +4013,6 @@ J9::Z::CodeGenerator::inlineDirectCall(
                                                                       : inlineUTF16BEEncode    (node, cg);
          break;
 
-      case TR::com_ibm_dataaccess_ByteArrayUtils_trailingZerosQuadWordAtATime_:
-         // TODO (Nigel): Is this deprecated? If so can we remove this?
-         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) && !comp->getOption(TR_DisableIntrinsics) && !comp->getOption(TR_DisableDAATrailingZero) && !TR::Compiler->om.canGenerateArraylets())
-            return resultReg = inlineTrailingZerosQuadWordAtATime(node, cg);
-         break;
-
       default:
          break;
 

@@ -543,13 +543,6 @@
    com_ibm_dataaccess_ByteArrayUnmarshaller_readFloat,
    com_ibm_dataaccess_ByteArrayUnmarshaller_readDouble,
 
-   // Java wrapper method
-   com_ibm_dataaccess_ByteArrayUtils_trailingZeros,
-   // Java method
-   com_ibm_dataaccess_ByteArrayUtils_trailingZerosByteAtATime,
-   // recognized inline asm method
-   com_ibm_dataaccess_ByteArrayUtils_trailingZerosQuadWordAtATime_,
-
    //wrapper method
    com_ibm_dataaccess_DecimalData_convertIntegerToPackedDecimal,
    com_ibm_dataaccess_DecimalData_convertIntegerToPackedDecimal_ByteBuffer,

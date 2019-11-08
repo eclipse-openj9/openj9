@@ -3780,8 +3780,6 @@ break
       DAA_PRINT(TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readFloat);
       DAA_PRINT(TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readDouble);
 
-      DAA_PRINT(TR::com_ibm_dataaccess_ByteArrayUtils_trailingZeros);
-
       DAA_PRINT(TR::com_ibm_dataaccess_DecimalData_JITIntrinsicsEnabled);
 
       DAA_PRINT(TR::com_ibm_dataaccess_DecimalData_convertIntegerToPackedDecimal);
