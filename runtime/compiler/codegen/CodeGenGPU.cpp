@@ -614,8 +614,6 @@ static const char * nvvmOpCodeNames[] =
    "sub",         // TR::busub
    "sub",         // TR::iuneg
    "sub",         // TR::luneg
-   "shl",         // TR::iushl
-   "shl",         // TR::lushl
    "fptoui",      // TR::f2iu
    "fptoui",      // TR::f2lu
    "fptoui",      // TR::f2bu
@@ -781,15 +779,6 @@ static const char * nvvmOpCodeNames[] =
 
    NULL,          // TR::getstack
    NULL,          // TR::dealloca
-
-   NULL,          // TR::ishfl
-   NULL,          // TR::lshfl
-   NULL,          // TR::iushfl
-   NULL,          // TR::lushfl
-   NULL,          // TR::bshfl
-   NULL,          // TR::sshfl
-   NULL,          // TR::bushfl
-   NULL,          // TR::sushfl
 
    NULL,          // TR::idoz
 
