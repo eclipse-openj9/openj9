@@ -168,9 +168,8 @@ bash get_source.sh
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar
+bash configure --with-freemarker-jar=/root/freemarker.jar
 ```
-:warning: You must give an absolute path to freemarker.jar
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
