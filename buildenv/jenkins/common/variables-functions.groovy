@@ -436,7 +436,7 @@ def set_build_variables() {
 def set_sdk_variables() {
     DATESTAMP = get_date()
     SDK_FILENAME = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}.tar.gz"
-    TEST_FILENAME = "native-test-libs.tar.gz"
+    TEST_FILENAME = "test-images.tar.gz"
     echo "Using SDK_FILENAME = ${SDK_FILENAME}"
     echo "Using TEST_FILENAME = ${TEST_FILENAME}"
     DIAGNOSTICS_FILENAME = "${JOB_NAME}-${BUILD_NUMBER}-${DATESTAMP}-diagnostics.tar.gz"
