@@ -2893,10 +2893,10 @@ typedef struct J9IndexableObjectDiscontiguousFull {
 } J9IndexableObjectDiscontiguousFull;
 
 typedef struct J9InitializerMethods {
-	void* initialStaticMethod;
-	void* initialSpecialMethod;
-	void* initialVirtualMethod;
-	void* invokePrivateMethod;
+	struct J9Method* initialStaticMethod;
+	struct J9Method* initialSpecialMethod;
+	struct J9Method* initialVirtualMethod;
+	struct J9Method* invokePrivateMethod;
 } J9InitializerMethods;
 
 typedef struct J9VMInterface {
