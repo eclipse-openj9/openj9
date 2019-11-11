@@ -112,8 +112,20 @@ RUN cd /usr/local \
   && ln -s /usr/local/bin/gcc-7.3 /usr/bin/gcc \
   && ln -s /usr/local/bin/g++-7.3 /usr/bin/g++
 
+RUN cd /tmp \
+  && wget https://github.com/protocolbuffers/protobuf/releases/download/v3.7.1/protobuf-cpp-3.7.1.tar.gz \
+  && tar -xzf protobuf-cpp-3.7.1.tar.gz \
+  && rm -f protobuf-cpp-3.7.1.tar.gz \
+  && cd ./protobuf-3.7.1 \
+  && ./configure --disable-shared --with-pic \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf /tmp/protobuf-3.7.1
+
 # Edit ldconfig to connect this library
 RUN echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local.conf \
+  echo "/usr/local/lib" >> /etc/ld.so.conf.d/local.conf \
   && ldconfig
 
 # Install cmake version 3.11.4
