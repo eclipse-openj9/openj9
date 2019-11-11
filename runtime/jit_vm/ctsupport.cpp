@@ -24,6 +24,9 @@
 #include "j9cp.h"
 #include "rommeth.h"
 #include "ute.h"
+#include "VMHelpers.hpp"
+
+extern "C" {
 
 #define J9_IS_STATIC_SPLIT_TABLE_INDEX(value)		J9_ARE_ALL_BITS_SET(value, J9_STATIC_SPLIT_TABLE_INDEX_FLAG)
 #define J9_IS_SPECIAL_SPLIT_TABLE_INDEX(value) 		J9_ARE_ALL_BITS_SET(value, J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG)
@@ -31,7 +34,7 @@
 
 J9_DECLARE_CONSTANT_UTF8(newInstancePrototypeName, "newInstancePrototype");
 J9_DECLARE_CONSTANT_UTF8(newInstancePrototypeSig, "(Ljava/lang/Class;)Ljava/lang/Object;");
-const J9NameAndSignature newInstancePrototypeNameAndSig = { (J9UTF8*)&newInstancePrototypeName, (J9UTF8*)&newInstancePrototypeSig };
+extern const J9NameAndSignature newInstancePrototypeNameAndSig = { (J9UTF8*)&newInstancePrototypeName, (J9UTF8*)&newInstancePrototypeSig };
 
 static void jitResetAllMethodsAtStartupHelper(J9VMThread *vmStruct, J9Class *root);
 
@@ -64,7 +67,7 @@ jitGetClassInClassloaderFromUTF8(J9VMThread *vmStruct, J9ClassLoader *classLoade
 	J9Class *result = NULL;
 	
 	if (0 != signatureLength){
-		result = vmStruct->javaVM->internalVMFunctions->internalFindClassUTF8(vmStruct, signatureChars, 
+		result = vmStruct->javaVM->internalVMFunctions->internalFindClassUTF8(vmStruct, (U_8*)signatureChars,
 				signatureLength, classLoader, J9_FINDCLASS_FLAG_EXISTING_ONLY);
 	}
 	
@@ -609,7 +612,9 @@ jitGetRealCPIndex(J9VMThread *currentThread, J9ROMClass *romClass, UDATA cpOrSpl
  * @param constantPool		Constant pool of the class that 'owns' the 'cpOrSplitIndex'
  * @param cpOrSplitIndex	Index of a method. Either an index into constant pool or into split table
  *
- * @return J9Method represented by 'cpOrSplitIndex' or NULL if the method is one of the "special" initialMethods or invokePrivateMethod
+ * @return J9Method represented by 'cpOrSplitIndex'
+ * 	or NULL if the method is one of the "special" initialMethods
+ * 	or if invokePrivateMethod, the real private targetmethod from the constantpool at cpOrSplitIndex if provided.
  */
 J9Method *
 jitGetJ9MethodUsingIndex(J9VMThread *currentThread, J9ConstantPool *constantPool, UDATA cpOrSplitIndex)
@@ -628,13 +633,7 @@ jitGetJ9MethodUsingIndex(J9VMThread *currentThread, J9ConstantPool *constantPool
 	} else {
 		method = ((J9RAMStaticMethodRef*)(constantPool + cpOrSplitIndex))->method;
 	}
-	if ((method == (J9Method*)currentThread->javaVM->initialMethods.initialStaticMethod)
-	|| (method == (J9Method*)currentThread->javaVM->initialMethods.initialSpecialMethod)
-	|| (method == (J9Method*)currentThread->javaVM->initialMethods.initialVirtualMethod)
-	|| (method == (J9Method*)currentThread->javaVM->initialMethods.invokePrivateMethod)
-	) {
-		method = NULL;
-	}
+	method = VM_VMHelpers::filterVMInitialMethods(currentThread, method, constantPool, cpOrSplitIndex);
 	return method;
 }
 
@@ -717,3 +716,5 @@ jitGetDeclaringClassOfROMField(J9VMThread *vmStruct, J9Class *clazz, J9ROMFieldS
 	} while (NULL != currentClass);
 	return currentClass;
 }
+
+} /* extern "C" */
