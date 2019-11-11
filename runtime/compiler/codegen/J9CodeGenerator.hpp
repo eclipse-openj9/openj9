@@ -172,6 +172,7 @@ public:
 
    bool needClassAndMethodPointerRelocations();
    bool needRelocationsForStatics();
+   bool needRelocationsForHelpers();
 #if defined(JITSERVER_SUPPORT)
    bool needRelocationsForBodyInfoData();
    bool needRelocationsForPersistentInfoData();

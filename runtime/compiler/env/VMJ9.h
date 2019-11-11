@@ -281,7 +281,7 @@ public:
 
    virtual uintptrj_t getPersistentClassPointerFromClassPointer(TR_OpaqueClassBlock * clazz);//d169771 [2177]
 
-   virtual bool helpersNeedRelocation() { return false; }
+   virtual bool needRelocationsForHelpers() { return false; }
    virtual bool needClassAndMethodPointerRelocations() { return false; }
    virtual bool needRelocationsForStatics() { return false; }
    virtual bool needRelocationsForBodyInfoData() { return false; }
@@ -1142,7 +1142,7 @@ public:
    virtual bool               canRelocateDirectNativeCalls()                  { return false; }
    virtual bool               needClassAndMethodPointerRelocations()          { return true; }
    virtual bool               inlinedAllocationsMustBeVerified()              { return true; }
-   virtual bool               helpersNeedRelocation()                         { return true; }
+   virtual bool               needRelocationsForHelpers()                     { return true; }
    virtual bool               supportsEmbeddedHeapBounds()                    { return false; }
    virtual bool               supportsFastNanoTime()                          { return false; }
    virtual bool               needRelocationsForStatics()                     { return true; }
