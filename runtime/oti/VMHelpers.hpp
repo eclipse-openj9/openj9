@@ -1435,6 +1435,11 @@ exit:
 	 * private target method from the cp and cpIndex if they have been
 	 * provided.
 	 *
+	 * Note, there are also two defines that can be used to check the vtable
+	 * index is one of the special methods:
+	 * * J9VTABLE_INITIAL_VIRTUAL_OFFSET, &
+	 * * J9VTABLE_INVOKE_PRIVATE_OFFSET
+	 *
 	 * @param vmThread[in] a J9VMThread
 	 * @param method[in] the J9Method to filter
 	 * @param cp[in] the RAM constantpool to look in for the real method for invokePrivateMethod (default = NULL)
@@ -1444,21 +1449,21 @@ exit:
 	static VMINLINE J9Method*
 	filterVMInitialMethods(J9VMThread const *vmThread, J9Method *method, J9ConstantPool const * cp = NULL, UDATA cpIndex = 0)
 	{
-		J9InitializerMethods *initialMethods = vmThread->javaVM->initialMethods;
-		if ((method == (J9Method*)initialMethods.initialStaticMethod)
-		|| (method == (J9Method*)initialMethods.initialSpecialMethod)
-		|| (method == (J9Method*)initialMethods.initialVirtualMethod)
+		J9InitializerMethods *initialMethods = &(vmThread->javaVM->initialMethods);
+		if ((method == initialMethods->initialStaticMethod)
+		|| (method == initialMethods->initialSpecialMethod)
+		|| (method == initialMethods->initialVirtualMethod)
 		) {
 			method = NULL;
 		}
-		if (method == (J9Method*)initialMethods.invokePrivateMethod) {
+		if (method == initialMethods->invokePrivateMethod) {
 			method = NULL;
 			if (NULL != cp) {
 				/* Read the second slot from the CP entry to get the "real"
 				 * target method.  Note, the cpIndex cannot be a split index
 				 * in the case of an invokePrivateMethod.
 				 */
-				method = ((J9RAMVirtualMethodRef*) cp)[cpIndex]).method;
+				method = (((J9RAMVirtualMethodRef*) cp)[cpIndex]).method;
 			}
 		}
 		return method;
