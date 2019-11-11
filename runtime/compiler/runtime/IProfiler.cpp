@@ -4213,6 +4213,8 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
 #endif
                }
             TR_ASSERT(false, "Unrecognized bytecode in IProfiler buffer");
+            /* Template="Unrecognized bytecode (pc=%p, bc=%d) cursor %p in buffer %p of size %d" */
+            Trc_JIT_IProfiler_unrecognized(vmThread, pc, *pc, cursor, data, size);
             Assert_JIT_unreachable();
             return 0;
          }
