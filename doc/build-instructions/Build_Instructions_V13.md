@@ -166,6 +166,11 @@ bash get_source.sh
 ### 3. Configure
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
+#### From your build environment with Docker :whale:
+```
+bash configure --with-freemarker-jar=/root/freemarker.jar
+```
+#### From your build environment without Docker
 ```
 bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar --with-boot-jdk=<path_to_boot_JDK12>
 ```
