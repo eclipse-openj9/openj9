@@ -23,7 +23,7 @@
 add_library(j9jit_vm STATIC
 	artifact.c
 	cthelpers.cpp
-	ctsupport.c
+	ctsupport.cpp
 )
 
 target_include_directories(j9jit_vm
