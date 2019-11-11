@@ -230,6 +230,32 @@ printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, J9ROMClass *rom
 	return TRUE;
 }
 
+#define METHODPC_CACHE_SIZE 256
+#define METHODPC_CACHE_DIMENSION 8
+#if defined(J9VM_ENV_DATA64)
+#define METHODPC_CACHE_HASH_VALUE ((UDATA)J9CONST_U64(17446744073709553729))
+#define BITS_IN_INTEGER 64
+#else
+#define METHODPC_CACHE_HASH_VALUE ((UDATA)4102541685U)
+#define BITS_IN_INTEGER 32
+#endif
+
+#define METHODPC_CACHE_HASH_RESULT(key) \
+	 (((key) * METHODPC_CACHE_HASH_VALUE) >> (BITS_IN_INTEGER - METHODPC_CACHE_DIMENSION))
+
+typedef struct MethodPCCache
+{
+	UDATA methodPC;
+	J9ROMClass * romClass;
+	J9ROMMethod * romMethod;
+	J9UTF8 * fileName;
+	UDATA lineNumber;
+	J9ClassLoader * classLoader;
+	J9JITExceptionTable * metaData;
+	void * inlineMap;
+	void * inlinedCallSite;
+	UDATA inlineDepth;
+} MethodPCCache;
 
 /* 
  * Walks the backtrace of an exception instance, invoking a user-supplied callback function for
@@ -252,7 +278,7 @@ iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t 
 	j9object_t walkback = J9VMJAVALANGTHROWABLE_WALKBACK(vmThread, (*exception));
 
 	/* Note that exceptionAddr might be a pointer into the current thread's stack, so no java code is allowed to run
-	   (nothing which could cause the stack to grow).
+		(nothing which could cause the stack to grow).
 	*/
 
 	if (walkback) {
@@ -275,29 +301,85 @@ iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t 
 		while (currentElement != arraySize) {
 			/* write as for or move currentElement++ to very end */ 
 			UDATA methodPC = J9JAVAARRAYOFUDATA_LOAD(vmThread, J9VMJAVALANGTHROWABLE_WALKBACK(vmThread, (*exception)), currentElement);
+			/* The methodPC value is overwritten by the bytecode index if the methodPC points to a JIT frame, but we want
+			 * to cache the original address hence we need to save a copy here.
+			 */
+			UDATA methodPCOriginal = methodPC;
+			BOOLEAN methodPCCacheHit = FALSE;
 			J9ROMMethod * romMethod = NULL;
 			J9ROMClass *romClass = NULL;
 			UDATA lineNumber = 0;
 			J9UTF8 * fileName = NULL;
 			J9ClassLoader *classLoader = NULL;
+
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 			J9JITExceptionTable * metaData = NULL;
 			UDATA inlineDepth = 0;
+			/* The inlineDepth value is mutated in the loops below as we walk through the inlining table. We are only
+			 * chaching the toplevel JIT frame so we need to save a copy of the original value.
+			 */
+			UDATA inlineDepthOriginal = 0;
 			void * inlinedCallSite = NULL;
 			void * inlineMap = NULL;
 			J9JITConfig * jitConfig = vm->jitConfig;
+			MethodPCCache *methodPCCache = vm->methodPCCache;
+			MethodPCCache *cacheEntry = NULL;
 
-			if (jitConfig) {
-				metaData = jitConfig->jitGetExceptionTableFromPC(vmThread, methodPC);
-				if (metaData) {
-					inlineMap = jitConfig->jitGetInlinerMapFromPC(vm, metaData, methodPC);
-					if (inlineMap) {
-						inlinedCallSite = jitConfig->getFirstInlinedCallSite(metaData, inlineMap);
-						if (inlinedCallSite) {
-							inlineDepth = jitConfig->getJitInlineDepthFromCallSite(metaData, inlinedCallSite);
-							totalEntries += inlineDepth;
+			if (NULL == methodPCCache) {
+				MethodPCCache *existingCache = NULL;
+				PORT_ACCESS_FROM_JAVAVM(vm);
+				methodPCCache = j9mem_allocate_memory(METHODPC_CACHE_SIZE * sizeof(MethodPCCache), OMRMEM_CATEGORY_JIT);
+
+				if (NULL != methodPCCache) {
+					memset(methodPCCache, 0, METHODPC_CACHE_SIZE * sizeof(MethodPCCache));
+
+					/* The vmThread parameter to this function may not be the current thread, so ensure that only a single
+					 * instance of the cache is allocated for the VM, and make sure the empty cache entries for a new cache
+					 * are visible to other threads before the cache pointer is visible.
+					 */
+					issueWriteBarrier();
+
+					existingCache = (MethodPCCache*)compareAndSwapUDATA((uintptr_t*)&vm->methodPCCache, (uintptr_t)existingCache, (uintptr_t)methodPCCache);
+					if (NULL != existingCache) {
+						j9mem_free_memory(methodPCCache);
+						methodPCCache = existingCache;
+					}
+				}
+			}
+
+			cacheEntry = &(methodPCCache[METHODPC_CACHE_HASH_RESULT(methodPC)]);
+			omrthread_monitor_enter(vm->methodPCCacheMutex);
+			if (cacheEntry->methodPC == methodPC) {
+				methodPCCacheHit = TRUE;
+				romMethod = cacheEntry->romMethod;
+				romClass = cacheEntry->romClass;
+				lineNumber = cacheEntry->lineNumber;
+				fileName = cacheEntry->fileName;
+				classLoader = cacheEntry->classLoader;
+				metaData = cacheEntry->metaData;
+				inlineMap = cacheEntry->inlineMap;
+				inlinedCallSite = cacheEntry->inlinedCallSite;
+				inlineDepth = cacheEntry->inlineDepth;
+ 			}
+			omrthread_monitor_exit(vm->methodPCCacheMutex);
+
+			if (FALSE == methodPCCacheHit) {
+				if (jitConfig) {
+					metaData = jitConfig->jitGetExceptionTableFromPC(vmThread, methodPC);
+					if (metaData) {
+						inlineMap = jitConfig->jitGetInlinerMapFromPC(vm, metaData, methodPC);
+						if (inlineMap) {
+							inlinedCallSite = jitConfig->getFirstInlinedCallSite(metaData, inlineMap);
+							if (inlinedCallSite) {
+								inlineDepth = jitConfig->getJitInlineDepthFromCallSite(metaData, inlinedCallSite);
+								totalEntries += inlineDepth;
+							}
 						}
 					}
+				}
+			} else {
+				if (inlinedCallSite) {
+					totalEntries += inlineDepth;
 				}
 			}
 #endif
@@ -310,6 +392,7 @@ iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t 
 					J9Method *ramMethod;
 					J9Class *ramClass;
 					UDATA isSameReceiver;
+					inlineDepthOriginal = inlineDepth;
 inlinedEntry:
 					/* Check for metadata unload */
 					if (NULL == metaData->ramMethod) {
@@ -342,11 +425,13 @@ inlinedEntry:
 				} else {
 					pruneConstructors = FALSE;
 #endif
-					romClass = findROMClassFromPC(vmThread, methodPC, &classLoader);
-					if(romClass) {
-						romMethod = findROMMethodInROMClass(vmThread, romClass, methodPC);
-						if (romMethod != NULL) {
-							methodPC -= (UDATA) J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
+					if (FALSE == methodPCCacheHit) {
+						romClass = findROMClassFromPC(vmThread, methodPC, &classLoader);
+						if(romClass) {
+							romMethod = findROMMethodInROMClass(vmThread, romClass, methodPC);
+							if (romMethod != NULL) {
+								methodPC -= (UDATA) J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
+							}
 						}
 					}
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
@@ -355,8 +440,27 @@ inlinedEntry:
 
 #ifdef J9VM_OPT_DEBUG_INFO_SERVER
 				if (romMethod != NULL) {
-					lineNumber = getLineNumberForROMClassFromROMMethod(vm, romMethod, romClass, classLoader, methodPC);
-					fileName = getSourceFileNameForROMClass(vm, classLoader, romClass);
+					if (FALSE == methodPCCacheHit) {
+						lineNumber = getLineNumberForROMClassFromROMMethod(vm, romMethod, romClass, classLoader, methodPC);
+						fileName = getSourceFileNameForROMClass(vm, classLoader, romClass);
+
+#ifdef J9VM_INTERP_NATIVE_SUPPORT
+						if (inlineDepthOriginal == inlineDepth) {
+							omrthread_monitor_enter(vm->methodPCCacheMutex);
+							cacheEntry->methodPC = methodPCOriginal;
+							cacheEntry->romMethod = romMethod;
+							cacheEntry->romClass = romClass;
+							cacheEntry->lineNumber = lineNumber;
+							cacheEntry->fileName = fileName;
+							cacheEntry->classLoader = classLoader;
+							cacheEntry->metaData = metaData;
+							cacheEntry->inlineMap = inlineMap;
+							cacheEntry->inlinedCallSite = inlinedCallSite;
+							cacheEntry->inlineDepth = inlineDepth;
+							omrthread_monitor_exit(vm->methodPCCacheMutex);
+						}
+#endif /* J9VM_INTERP_NATIVE_SUPPORT */
+					}
 				}
 #endif
 
@@ -418,10 +522,10 @@ gpProtectedExceptionDescribe(void *entryArg)
  * 
  * Builds the exception	
  *
- * @param env    J9VMThread *
+ * @param env	 J9VMThread *
  *
  */
-void   
+void
 internalExceptionDescribe(J9VMThread * vmThread)
 {
 	/* If the exception is NULL, do nothing.  Do not fetch the exception value into a local here as we do not have VM access yet. */
@@ -497,7 +601,7 @@ done: ;
  * 
  * @param env	Current VM thread (J9VMThread *)
  */
-void JNICALL   
+void JNICALL
 exceptionDescribe(JNIEnv * env)
 {
 	J9VMThread * vmThread = (J9VMThread *) env;

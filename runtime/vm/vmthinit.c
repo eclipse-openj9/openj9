@@ -80,6 +80,8 @@ UDATA initializeVMThreading(J9JavaVM *vm)
 
 		omrthread_monitor_init_with_name(&vm->constantDynamicMutex, 0, "Wait mutex for constantDynamic during resolve") ||
 
+		omrthread_monitor_init_with_name(&vm->methodPCCacheMutex, 0, "Method PC cache mutex") ||
+
 		initializeMonitorTable(vm)
 	)
 	{
@@ -156,6 +158,7 @@ void terminateVMThreading(J9JavaVM *vm)
 	if (vm->nativeLibraryMonitor) omrthread_monitor_destroy(vm->nativeLibraryMonitor);
 	if (vm->vmRuntimeStateListener.runtimeStateListenerMutex) omrthread_monitor_destroy(vm->vmRuntimeStateListener.runtimeStateListenerMutex);
 	if (vm->constantDynamicMutex) omrthread_monitor_destroy(vm->constantDynamicMutex);
+	if (vm->methodPCCacheMutex) omrthread_monitor_destroy(vm->methodPCCacheMutex);
 
 	destroyMonitorTable(vm);
 }

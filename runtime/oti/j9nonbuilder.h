@@ -5484,6 +5484,8 @@ typedef struct J9JavaVM {
 	UDATA valueFlatteningThreshold;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	UDATA dCacheLineSize;
+	void* methodPCCache;
+	omrthread_monitor_t methodPCCacheMutex;
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2
