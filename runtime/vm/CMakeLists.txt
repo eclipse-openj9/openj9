@@ -108,7 +108,7 @@ add_library(j9vm SHARED
 	threadhelp.cpp
 	threadpark.c
 	throwexception.c
-	valueTypeHelpers.cpp
+	ValueTypeHelpers.cpp
 	visible.c
 	VMAccess.cpp
 	vmbootlib.c

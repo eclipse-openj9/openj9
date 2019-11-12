@@ -569,41 +569,372 @@ public class ValueTypeTests {
 		} catch (NoClassDefFoundError e) {}
 	}
 
-	/*
-	 * TODO: behaviour of the test between two valueTypes will depend on the new spec(not finalized)
-	 * 
-	 * Test ifacmp on value class
-	 * 
-	 * class TestIfacmpOnValueClass {}
-	 *
-	 *
-	 *	@Test(priority=2)
-	 *	static public void TestIfacmpOnValueClass() throws Throwable {
-	 *	int x = 0;
-	 *	int y = 0;
-	 *
-	 *	Object valueType = makePoint2D.invoke(x, y);
-	 *	Object refType = (Object) x;
-	 *
-	 *	Assert.assertFalse((valueType == refType), "An identity (==) comparison that contains a valueType should always return false");
-	 *
-	 *	Assert.assertFalse((refType == valueType), "An identity (==) comparison that contains a valueType should always return false");
-	 *
-	 *	Assert.assertFalse((valueType == valueType), "An identity (==) comparison that contains a valueType should always return false");
-	 *
-	 *	Assert.assertTrue((refType == refType), "An identity (==) comparison on the same refType should always return true");
-	 *
-	 *	Assert.assertTrue((valueType != refType), "An identity (!=) comparison that contains a valueType should always return true");
-	 *
-	 *	Assert.assertTrue((refType != valueType), "An identity (!=) comparison that contains a valueType should always return true");
-	 *
-	 *	Assert.assertTrue((valueType != valueType), "An identity (!=) comparison that contains a valueType should always return true");
-	 *
-	 *	Assert.assertFalse((refType != refType), "An identity (!=) comparison on the same refType should always return false");
-	 *	}
-	 */
+	
+	@Test(priority=2)
+	static public void testBasicACMPTestOnIdentityTypes() throws Throwable {
+		
+		Object identityType1 = new String();
+		Object identityType2 = new String();
+		Object nullPointer = null;
+		
+		/* sanity test on identity classes */
+		Assert.assertTrue((identityType1 == identityType1), "An identity (==) comparison on the same identityType should always return true");
+		
+		Assert.assertFalse((identityType2 == identityType1), "An identity (==) comparison on different identityTypes should always return false");
+		
+		Assert.assertFalse((identityType2 == nullPointer), "An identity (==) comparison on different identityTypes should always return false");
+		
+		Assert.assertTrue((nullPointer == nullPointer), "An identity (==) comparison on the same identityType should always return true");
+		
+		Assert.assertFalse((identityType1 != identityType1), "An identity (!=) comparison on the same identityType should always return false");
+		
+		Assert.assertTrue((identityType2 != identityType1), "An identity (!=) comparison on different identityTypes should always return true");
+		
+		Assert.assertTrue((identityType2 != nullPointer), "An identity (!=) comparison on different identityTypes should always return true");
+		
+		Assert.assertFalse((nullPointer != nullPointer), "An identity (!=) comparison on the same identityType should always return false");
+		
+	}
+	
+	@Test(priority=2)
+	static public void testBasicACMPTestOnValueTypes() throws Throwable {
+		Object valueType1 = makePoint2D.invoke(1, 2);
+		Object valueType2 = makePoint2D.invoke(1, 2);
+		Object newValueType = makePoint2D.invoke(2, 1);
+		Object identityType = new String();
+		Object nullPointer = null;
+		
+		Assert.assertTrue((valueType1 == valueType1), "A substitutability (==) test on the same value should always return true");
+		
+		Assert.assertTrue((valueType1 == valueType2), "A substitutability (==) test on different value the same contents should always return true");
+		
+		Assert.assertFalse((valueType1 == newValueType), "A substitutability (==) test on different value should always return false");
+		
+		Assert.assertFalse((valueType1 == identityType), "A substitutability (==) test on different value with identity type should always return false");
+		
+		Assert.assertFalse((valueType1 == nullPointer), "A substitutability (==) test on different value with null pointer should always return false");
+		
+		Assert.assertFalse((valueType1 != valueType1), "A substitutability (!=) test on the same value should always return false");
+		
+		Assert.assertFalse((valueType1 != valueType2), "A substitutability (!=) test on different value the same contents should always return false");
+		
+		Assert.assertTrue((valueType1 != newValueType), "A substitutability (!=) test on different value should always return true");
+		
+		Assert.assertTrue((valueType1 != identityType), "A substitutability (!=) test on different value with identity type should always return true");
+		
+		Assert.assertTrue((valueType1 != nullPointer), "A substitutability (!=) test on different value with null pointer should always return true");
+	}
+	
+	@Test(priority=4)
+	static public void testACMPTestOnFastSubstitutableValueTypes() throws Throwable {
+		Object valueType1 = createTriangle2D(defaultTrianglePositions);
+		Object valueType2 = createTriangle2D(defaultTrianglePositions);
+		Object newValueType = createTriangle2D(defaultTrianglePositionsNew);
+		Object identityType = new String();
+		Object nullPointer = null;
+		
+		Assert.assertTrue((valueType1 == valueType1), "A substitutability (==) test on the same value should always return true");
+		
+		Assert.assertTrue((valueType1 == valueType2), "A substitutability (==) test on different value the same contents should always return true");
+		
+		Assert.assertFalse((valueType1 == newValueType), "A substitutability (==) test on different value should always return false");
+		
+		Assert.assertFalse((valueType1 == identityType), "A substitutability (==) test on different value with identity type should always return false");
+		
+		Assert.assertFalse((valueType1 == nullPointer), "A substitutability (==) test on different value with null pointer should always return false");
+		
+		Assert.assertFalse((valueType1 != valueType1), "A substitutability (!=) test on the same value should always return false");
+		
+		Assert.assertFalse((valueType1 != valueType2), "A substitutability (!=) test on different value the same contents should always return false");
+		
+		Assert.assertTrue((valueType1 != newValueType), "A substitutability (!=) test on different value should always return true");
+		
+		Assert.assertTrue((valueType1 != identityType), "A substitutability (!=) test on different value with identity type should always return true");
+		
+		Assert.assertTrue((valueType1 != nullPointer), "A substitutability (!=) test on different value with null pointer should always return true");
+	}
+	
+	@Test(priority=3)
+	static public void testACMPTestOnFastSubstitutableValueTypesVer2() throws Throwable {
+		/* these VTs will have array refs */
+		String fields[] = {"x:I", "y:I", "z:I", "arr:[Ljava/lang/Object;"};
+		Class<?> fastSubVT = ValueTypeGenerator.generateValueClass("FastSubVT", fields);
+		
+		MethodHandle makeFastSubVT = lookup.findStatic(fastSubVT, "makeValue", MethodType.methodType(fastSubVT, int.class, int.class, int.class, Object[].class));
+		
+		Object[] arr = {"foo", "bar", "baz"};
+		Object[] arr2 = {"foozo", "barzo", "bazzo"};
+		Object valueType1 = makeFastSubVT.invoke(1, 2, 3, arr);
+		Object valueType2 = makeFastSubVT.invoke(1, 2, 3, arr);
+		Object newValueType = makeFastSubVT.invoke(3, 2, 1, arr2);
+		Object identityType = new String();
+		Object nullPointer = null;
+		
+		Assert.assertTrue((valueType1 == valueType1), "A substitutability (==) test on the same value should always return true");
+		
+		Assert.assertTrue((valueType1 == valueType2), "A substitutability (==) test on different value the same contents should always return true");
+		
+		Assert.assertFalse((valueType1 == newValueType), "A substitutability (==) test on different value should always return false");
+		
+		Assert.assertFalse((valueType1 == identityType), "A substitutability (==) test on different value with identity type should always return false");
+		
+		Assert.assertFalse((valueType1 == nullPointer), "A substitutability (==) test on different value with null pointer should always return false");
+		
+		Assert.assertFalse((valueType1 != valueType1), "A substitutability (!=) test on the same value should always return false");
+		
+		Assert.assertFalse((valueType1 != valueType2), "A substitutability (!=) test on different value the same contents should always return false");
+		
+		Assert.assertTrue((valueType1 != newValueType), "A substitutability (!=) test on different value should always return true");
+		
+		Assert.assertTrue((valueType1 != identityType), "A substitutability (!=) test on different value with identity type should always return true");
+		
+		Assert.assertTrue((valueType1 != nullPointer), "A substitutability (!=) test on different value with null pointer should always return true");
+	}
+	
+	@Test(priority=3)
+	static public void testACMPTestOnRecursiveValueTypes() throws Throwable {
+		String fields[] = {"l:J", "next:Ljava/lang/Object;", "i:I"};
+		Class<?> nodeClass = ValueTypeGenerator.generateValueClass("Node", fields);
+		MethodHandle makeNode = lookup.findStatic(nodeClass, "makeValue", MethodType.methodType(nodeClass, long.class, Object.class, int.class));
+		
+		Object list1 = makeNode.invoke(3, null, 3);
+		Object list2 = makeNode.invoke(3, null, 3);
+		Object list3sameAs1 = makeNode.invoke(3, null, 3);
+		Object list4 = makeNode.invoke(3, null, 3);
+		Object list5null = makeNode.invoke(3, null, 3);
+		Object list6null = makeNode.invoke(3, null, 3);
+		Object list7obj = makeNode.invoke(3, new Object(), 3);
+		Object list8str = makeNode.invoke(3, "foo", 3);
+		Object identityType = new String();
+		Object nullPointer = null;
+		
+		for (int i = 0; i < 100; i++) {
+			list1 = makeNode.invoke(3, list1, i);
+			list2 = makeNode.invoke(3, list2, i + 1);
+			list3sameAs1 = makeNode.invoke(3, list3sameAs1, i);
+		}
+		for (int i = 0; i < 50; i++) {
+			list4 = makeNode.invoke(3, list4, i);
+		}
+		
+		Assert.assertTrue((list1 == list1), "A substitutability (==) test on the same value should always return true");
+		
+		Assert.assertTrue((list5null == list5null), "A substitutability (==) test on the same value should always return true");
+		
+		Assert.assertTrue((list1 == list3sameAs1), "A substitutability (==) test on different value the same contents should always return true");
+		
+		Assert.assertTrue((list5null == list6null), "A substitutability (==) test on different value the same contents should always return true");
+		
+		Assert.assertFalse((list1 == list2), "A substitutability (==) test on different value should always return false");
+		
+		Assert.assertFalse((list1 == list4), "A substitutability (==) test on different value should always return false");
+		
+		Assert.assertFalse((list1 == list5null), "A substitutability (==) test on different value should always return false");
+		
+		Assert.assertFalse((list1 == list7obj), "A substitutability (==) test on different value should always return false");
+		
+		Assert.assertFalse((list1 == list8str), "A substitutability (==) test on different value should always return false");
+		
+		Assert.assertFalse((list7obj == list8str), "A substitutability (==) test on different value should always return false");
+		
+		Assert.assertFalse((list1 == identityType), "A substitutability (==) test on different value with identity type should always return false");
+		
+		Assert.assertFalse((list1 == nullPointer), "A substitutability (==) test on different value with null pointer should always return false");
+		
+		Assert.assertFalse((list1 != list1), "A substitutability (!=) test on the same value should always return false");
+		
+		Assert.assertFalse((list5null != list5null), "A substitutability (!=) test on the same value should always return false");
+		
+		Assert.assertFalse((list1 != list3sameAs1), "A substitutability (!=) test on different value the same contents should always return false");
+		
+		Assert.assertFalse((list5null != list6null), "A substitutability (!=) test on different value the same contents should always return false");
+		
+		Assert.assertTrue((list1 != list2), "A substitutability (!=) test on different value should always return true");
+		
+		Assert.assertTrue((list1 != list4), "A substitutability (!=) test on different value should always return true");
+		
+		Assert.assertTrue((list1 != list5null), "A substitutability (!=) test on different value should always return true");
+		
+		Assert.assertTrue((list1 != list7obj), "A substitutability (!=) test on different value should always return true");
+		
+		Assert.assertTrue((list1 != list8str), "A substitutability (!=) test on different value should always return true");
+		
+		Assert.assertTrue((list7obj != list8str), "A substitutability (!=) test on different value should always return true");
+		
+		Assert.assertTrue((list1 != identityType), "A substitutability (!=) test on different value with identity type should always return true");
+		
+		Assert.assertTrue((list1 != nullPointer), "A substitutability (!=) test on different value with null pointer should always return true");
+		
+	}
+	
+	@Test(priority=3)
+	static public void testACMPTestOnValueFloat() throws Throwable {
+		Object float1 = makeValueFloat.invoke(1.1f);
+		Object float2 = makeValueFloat.invoke(-1.1f);
+		Object float3 = makeValueFloat.invoke(12341.112341234f);
+		Object float4sameAs1 = makeValueFloat.invoke(1.1f);
+		Object nan = makeValueFloat.invoke(Float.NaN);
+		Object nan2 = makeValueFloat.invoke(Float.NaN);
+		Object positiveZero = makeValueFloat.invoke(0.0f);
+		Object negativeZero = makeValueFloat.invoke(-0.0f);
+		Object positiveInfinity = makeValueFloat.invoke(Float.POSITIVE_INFINITY);
+		Object negativeInfinity = makeValueFloat.invoke(Float.NEGATIVE_INFINITY);
+		
+		Assert.assertTrue((float1 == float1), "A substitutability (==) test on the same value should always return true");
 
-    /*    
+		Assert.assertTrue((float1 == float4sameAs1), "A substitutability (==) test on different value the same contents should always return true");
+
+		Assert.assertTrue((nan == nan2), "A substitutability (==) test on different value the same contents should always return true");
+
+		Assert.assertFalse((float1 == float2), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((float1 == float3), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((float1 == nan), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((float1 == positiveZero), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((float1 == negativeZero), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((float1 == positiveInfinity), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((float1 == negativeInfinity), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((positiveInfinity == negativeInfinity), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((positiveZero == negativeZero), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((float1 != float1), "A substitutability (!=) test on the same value should always return false");
+				
+		Assert.assertFalse((float1 != float4sameAs1), "A substitutability (!=) test on different value the same contents should always return false");
+		
+		Assert.assertFalse((nan != nan2), "A substitutability (!=) test on different value the same contents should always return false");
+
+		Assert.assertTrue((float1 != float2), "A substitutability (!=) test on different value should always return true");
+		
+		Assert.assertTrue((float1 != float3), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((float1 != nan), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((float1 != positiveZero), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((float1 != negativeZero), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((float1 != positiveInfinity), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((float1 != negativeInfinity), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((positiveInfinity != negativeInfinity), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((positiveZero != negativeZero), "A substitutability (!=) test on different value should always return true");
+			
+	}
+
+	@Test(priority=3)
+	static public void testACMPTestOnValueDouble() throws Throwable {
+		Object double1 = makeValueDouble.invoke(1.1d);
+		Object double2 = makeValueDouble.invoke(-1.1d);
+		Object double3 = makeValueDouble.invoke(12341.112341234d);
+		Object double4sameAs1 = makeValueDouble.invoke(1.1d);
+		Object nan = makeValueDouble.invoke(Double.NaN);
+		Object nan2 = makeValueDouble.invoke(Double.NaN);
+		Object positiveZero = makeValueDouble.invoke(0.0f);
+		Object negativeZero = makeValueDouble.invoke(-0.0f);
+		Object positiveInfinity = makeValueDouble.invoke(Double.POSITIVE_INFINITY);
+		Object negativeInfinity = makeValueDouble.invoke(Double.NEGATIVE_INFINITY);
+		
+		Assert.assertTrue((double1 == double1), "A substitutability (==) test on the same value should always return true");
+
+		Assert.assertTrue((double1 == double4sameAs1), "A substitutability (==) test on different value the same contents should always return true");
+
+		Assert.assertTrue((nan == nan2), "A substitutability (==) test on different value the same contents should always return true");
+
+		Assert.assertFalse((double1 == double2), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((double1 == double3), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((double1 == nan), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((double1 == positiveZero), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((double1 == negativeZero), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((double1 == positiveInfinity), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((double1 == negativeInfinity), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((positiveInfinity == negativeInfinity), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((positiveZero == negativeZero), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((double1 != double1), "A substitutability (!=) test on the same value should always return false");
+				
+		Assert.assertFalse((double1 != double4sameAs1), "A substitutability (!=) test on different value the same contents should always return false");
+		
+		Assert.assertFalse((nan != nan2), "A substitutability (!=) test on different value the same contents should always return false");
+
+		Assert.assertTrue((double1 != double2), "A substitutability (!=) test on different value should always return true");
+		
+		Assert.assertTrue((double1 != double3), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((double1 != nan), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((double1 != positiveZero), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((double1 != negativeZero), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((double1 != positiveInfinity), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((double1 != negativeInfinity), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((positiveInfinity != negativeInfinity), "A substitutability (!=) test on different value should always return true");
+
+		Assert.assertTrue((positiveZero != negativeZero), "A substitutability (!=) test on different value should always return true");
+	}
+	
+	@Test(priority=6)
+	static public void testACMPTestOnAssortedValues() throws Throwable {
+		Object assortedValueWithLongAlignment = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
+		Object assortedValueWithLongAlignment2 = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
+		Object assortedValueWithLongAlignment3 = createAssorted(makeAssortedValueWithLongAlignment, typeWithLongAlignmentFields);
+		assortedValueWithLongAlignment3 = checkFieldAccessMHOfAssortedType(assortedValueWithLongAlignmentGetterAndWither, assortedValueWithLongAlignment3, typeWithLongAlignmentFields, true);
+		
+		Object assortedValueWithObjectAlignment = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
+		Object assortedValueWithObjectAlignment2 = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
+		Object assortedValueWithObjectAlignment3 = createAssorted(makeAssortedValueWithObjectAlignment, typeWithObjectAlignmentFields);
+		assortedValueWithObjectAlignment3 = checkFieldAccessMHOfAssortedType(assortedValueWithObjectAlignmentGetterAndWither, assortedValueWithObjectAlignment3, typeWithObjectAlignmentFields, true);
+		
+		Assert.assertTrue((assortedValueWithLongAlignment == assortedValueWithLongAlignment), "A substitutability (==) test on the same value should always return true");
+
+		Assert.assertTrue((assortedValueWithObjectAlignment == assortedValueWithObjectAlignment), "A substitutability (==) test on the same value should always return true");
+		
+		Assert.assertTrue((assortedValueWithLongAlignment == assortedValueWithLongAlignment2), "A substitutability (==) test on different value the same contents should always return true");
+
+		Assert.assertTrue((assortedValueWithObjectAlignment == assortedValueWithObjectAlignment2), "A substitutability (==) test on different value the same contents should always return true");
+
+		Assert.assertFalse((assortedValueWithLongAlignment == assortedValueWithLongAlignment3), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((assortedValueWithLongAlignment == assortedValueWithObjectAlignment), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((assortedValueWithObjectAlignment == assortedValueWithObjectAlignment3), "A substitutability (==) test on different value should always return false");
+
+		Assert.assertFalse((assortedValueWithLongAlignment != assortedValueWithLongAlignment), "A substitutability (!=) test on the same value should always return false");
+		
+		Assert.assertFalse((assortedValueWithObjectAlignment != assortedValueWithObjectAlignment), "A substitutability (!=) test on the same value should always return false");
+				
+		Assert.assertFalse((assortedValueWithLongAlignment != assortedValueWithLongAlignment2), "A substitutability (!=) test on different value the same contents should always return false");
+		
+		Assert.assertFalse((assortedValueWithObjectAlignment != assortedValueWithObjectAlignment2), "A substitutability (!=) test on different value the same contents should always return false");
+
+		Assert.assertTrue((assortedValueWithLongAlignment != assortedValueWithLongAlignment3), "A substitutability (!=) test on different value the same contents should always return false");
+
+		Assert.assertTrue((assortedValueWithLongAlignment != assortedValueWithObjectAlignment), "A substitutability (!=) test on different value the same contents should always return false");
+
+		Assert.assertTrue((assortedValueWithObjectAlignment != assortedValueWithObjectAlignment3), "A substitutability (!=) test on different value the same contents should always return false");
+
+	}
+	
+	/*
 	 * Test monitorEnter on valueType
 	 * 
 	 * class TestMonitorEnterOnValueType {
@@ -1916,7 +2247,7 @@ public class ValueTypeTests {
 		}
 	}
 
-	static void checkFieldAccessMHOfAssortedType(MethodHandle[][] fieldAccessMHs, Object instance, String[] fields,
+	static Object checkFieldAccessMHOfAssortedType(MethodHandle[][] fieldAccessMHs, Object instance, String[] fields,
 			boolean ifValue)
 			throws Throwable {
 		for (int i = 0; i < fields.length; i++) {
@@ -2017,6 +2348,7 @@ public class ValueTypeTests {
 				break;
 			}
 		}
+		return instance;
 	}
 
 	static void checkFieldAccessMHOfStaticType(MethodHandle[][] fieldAccessMHs, String[] fields)
