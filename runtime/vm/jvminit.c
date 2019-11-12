@@ -1996,7 +1996,8 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			}
 
 			/* Parse jcl options */
-			if ((argIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XJCL_COLON, NULL)) >= 0) {
+			argIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XJCL_COLON, NULL);
+			if (argIndex >= 0) {
 				loadInfo = FIND_DLL_TABLE_ENTRY( J9_DEFAULT_JCL_DLL_NAME );
 				/* we know there is a colon */
 				GET_OPTION_VALUE(argIndex, ':', &optionValue);
