@@ -8167,8 +8167,21 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                      //   options->setTrivialInlinerMaxSize(40);
                      }
 
-                  // Disable NextGenHCR during Startup Phase
-                  if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP)
+                  // Disable NextGenHCR during Startup Phase, if any of the
+                  // following is true:
+                  //
+                  // - TR_DisableNextGenHCRDuringStartup has been specified, or
+                  // - this is a DLT compile, or
+                  // - optLevel is warm or lower, unless
+                  //   TR_EnableStartupNextGenHCRAtAllOpts has been specified
+                  //
+                  static char *disableNextGenHCRDuringStartup = feGetEnv("TR_DisableNextGenHCRDuringStartup");
+                  static char *enableStartupNextGenHCRAtAllOpts = feGetEnv("TR_EnableStartupNextGenHCRAtAllOpts");
+                  if (jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP
+                      && (disableNextGenHCRDuringStartup
+                          || that->_methodBeingCompiled->isDLTCompile()
+                          || options->getOptLevel() <= warm
+                             && !enableStartupNextGenHCRAtAllOpts))
                      {
                      options->setOption(TR_DisableNextGenHCR);
                      }
