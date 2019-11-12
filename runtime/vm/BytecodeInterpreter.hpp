@@ -48,6 +48,7 @@
 #include "MHInterpreter.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
 #include "ObjectHash.hpp"
+#include "valueTypeHelpers.hpp"
 #include "VMHelpers.hpp"
 #include "VMAccess.hpp"
 #include "ObjectAllocationAPI.hpp"
@@ -7275,13 +7276,18 @@ done:
 		} else if ((NULL == rhs) || (NULL == lhs)) {
 			acmpResult = false;
 		} else {
-			J9Class * lhsClass = J9OBJECT_CLAZZ(_currentThread, lhs);
-			J9Class * rhsClass = J9OBJECT_CLAZZ(_currentThread, rhs);
+			J9Class *lhsClass = J9OBJECT_CLAZZ(_currentThread, lhs);
+			J9Class *rhsClass = J9OBJECT_CLAZZ(_currentThread, rhs);
 			if ((J9_IS_J9CLASS_VALUETYPE(rhsClass)
 				&& J9_IS_J9CLASS_VALUETYPE(lhsClass))
 				&& (rhsClass == lhsClass)
 			) {
-				acmpResult = isSubstitutable(lhs, rhs);
+				/* If J9ClassCanSupportFastSubstitutability is set, we can use the barrier version of memcmp, else we recursively check the fields manually. */
+				if (J9_ARE_ALL_BITS_SET(lhsClass->classFlags, J9ClassCanSupportFastSubstitutability)) {
+					acmpResult = _objectAccessBarrier.structuralFlattenedCompareObjects(_currentThread, lhsClass, lhs, rhs, J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread));
+				} else {
+					acmpResult = ValueTypeHelpers::isSubstitutable(_currentThread, _vm, &_objectAccessBarrier, lhs, rhs, J9VMTHREAD_OBJECT_HEADER_SIZE(_currentThread), lhsClass);
+				}
 			}
 		}
 		return acmpResult;
@@ -7289,24 +7295,6 @@ done:
 		return (rhs == lhs);
 #endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 	}
-
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-	/*
-	 * Determine if the two valueTypes are substitutable when rhs.class equals lhs.class
-	 *
-	 * @param[in] lhs the lhs object of acmp bytecodes and it's a valueType
-	 * @param[in] rhs the rhs object of acmp bytecodes and it's a valueType
-	 * return true if they are substitutable and false otherwise
-	 */
-	VMINLINE bool
-	isSubstitutable(j9object_t lhs, j9object_t rhs)
-	{
-		/*
-		 * TODO: this will be updated in a future PR.
-		 */
-		return false;
-	}
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
 
 	/* ..., lhs, rhs => ... */
 	VMINLINE VM_BytecodeAction
@@ -8465,7 +8453,7 @@ retry:
 				goto done;
 			}
 
-			copyObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, objectRefClass, false, false);
+			copyObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, objectRefClass, true, false);
 			if (NULL == copyObjectRef) {
 				buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
 				pushObjectInSpecialFrame(REGISTER_ARGS, originalObjectRef);

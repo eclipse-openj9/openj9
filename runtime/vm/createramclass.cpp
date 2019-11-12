@@ -3140,9 +3140,9 @@ retry:
 			if ((result->totalInstanceSize <= javaVM->valueFlatteningThreshold) && !J9ROMCLASS_IS_CONTENDED(romClass)) {
 				Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), result);
 				classFlags |= J9ClassIsFlattened;
-			}
-			if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassCanSupportFastSubstitutability)) {
-				classFlags |= J9ClassCanSupportFastSubstitutability;
+				if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassCanSupportFastSubstitutability)) {
+					classFlags |= J9ClassCanSupportFastSubstitutability;
+				}
 			}
 
 			if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassLargestAlignmentConstraintDouble)) {
