@@ -2335,9 +2335,14 @@ MM_CopyForwardScheme::scanReferenceObjectSlots(MM_EnvironmentVLHGC *env, MM_Allo
 	
 	GC_SlotObject referentPtr(_javaVM->omrVM, &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr));
 
-	/* Iteratoring and copyforwarding  the slot reference */
-	if (success) {
-		success = iterateAndCopyforwardSlotReference(env, reservingContext, objectPtr);
+	/* Iteratoring and copyforwarding the slot reference without leaf bit, sacrifice a minor performance to avoid code complication, could optimazation later. */
+	GC_MixedObjectIterator mixedObjectIterator(_javaVM->omrVM, objectPtr);
+	GC_SlotObject *slotObject = NULL;
+	while (success && (NULL != (slotObject = mixedObjectIterator.nextSlot()))) {
+		if ((slotObject->readAddressFromSlot() != referentPtr.readAddressFromSlot()) || referentMustBeMarked) {
+			/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
+			success = copyAndForward(env, reservingContext, objectPtr, slotObject);
+		}
 	}
 
 	if (SCAN_REASON_OVERFLOWED_REGION == reason) {
