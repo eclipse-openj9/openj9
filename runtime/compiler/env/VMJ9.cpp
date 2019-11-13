@@ -600,7 +600,6 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
       {
       // Check if this thread has cached the frontend inside
 
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
 #if defined(JITSERVER_SUPPORT)
       if (vmType==J9_SERVER_VM || vmType==J9_SHARED_CACHE_SERVER_VM)
          {
@@ -619,27 +618,8 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
             }
          TR_ASSERT(compInfoPT, "Tried to create a TR_J9ServerVM without compInfoPT");
 
-         if (vmType==J9_SERVER_VM)
-            {
-            TR_J9ServerVM *serverVM = compInfoPT->getServerVM();
-            if (!serverVM)
-               {
-               PORT_ACCESS_FROM_JITCONFIG(jitConfig);
-               void * alloc = j9mem_allocate_memory(sizeof(TR_J9ServerVM), J9MEM_CATEGORY_JIT);
-               if (alloc)
-                  serverVM = new (alloc) TR_J9ServerVM(jitConfig, vmWithoutThreadInfo->_compInfo, vmThread);
-               if (serverVM)
-                  {
-                  serverVM->_vmThreadIsCompilationThread = TR_yes;
-                  serverVM->_compInfoPT = compInfoPT;
-                  compInfoPT->setServerVM(serverVM);
-                  }
-               else
-                  throw std::bad_alloc();
-               }
-            return serverVM;
-            }
-         else
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
+         if (vmType==J9_SHARED_CACHE_SERVER_VM)
             {
             TR_J9SharedCacheServerVM *sharedCacheServerVM = compInfoPT->getSharedCacheServerVM();
             if (!sharedCacheServerVM)
@@ -659,8 +639,34 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
                }
             return sharedCacheServerVM;
             }
+         else
+#endif /* defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) */
+            {
+#if !defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
+            TR_ASSERT((vmType != J9_SHARED_CACHE_SERVER_VM), "vmType cannot be J9_SHARED_CACHE_SERVER_VM when J9VM_INTERP_AOT_COMPILE_SUPPORT is disabled");
+#endif /* !defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) */
+
+            TR_J9ServerVM *serverVM = compInfoPT->getServerVM();
+            if (!serverVM)
+               {
+               PORT_ACCESS_FROM_JITCONFIG(jitConfig);
+               void * alloc = j9mem_allocate_memory(sizeof(TR_J9ServerVM), J9MEM_CATEGORY_JIT);
+               if (alloc)
+                  serverVM = new (alloc) TR_J9ServerVM(jitConfig, vmWithoutThreadInfo->_compInfo, vmThread);
+               if (serverVM)
+                  {
+                  serverVM->_vmThreadIsCompilationThread = TR_yes;
+                  serverVM->_compInfoPT = compInfoPT;
+                  compInfoPT->setServerVM(serverVM);
+                  }
+               else
+                  throw std::bad_alloc();
+               }
+            return serverVM;
+            }
          }
 #endif /* defined(JITSERVER_SUPPORT) */
+#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
       if (vmType==AOT_VM)
          {
          TR_J9VMBase * aotVMWithThreadInfo = static_cast<TR_J9VMBase *>(vmThread->aotVMwithThreadInfo);
@@ -689,7 +695,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
          return aotVMWithThreadInfo;
          }
       else // We need to create a J9_VM
-#endif
+#endif /* defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) */
          {
          TR_J9VMBase * vmWithThreadInfo = (TR_J9VMBase *)vmThread->jitVMwithThreadInfo;
          TR_ASSERT(vmType==DEFAULT_VM || vmType==J9_VM, "assertion failure");
