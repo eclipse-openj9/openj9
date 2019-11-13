@@ -735,3 +735,20 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
       }
    }
 
+TR::Linkage *
+J9::Power::CodeGenerator::deriveCallingLinkage(TR::Node *node, bool isIndirect)
+   {
+   TR::SymbolReference *symRef    = node->getSymbolReference();
+   TR::MethodSymbol    *callee    = symRef->getSymbol()->castToMethodSymbol();
+   TR_J9VMBase         *fej9      = (TR_J9VMBase *)(self()->fe());
+
+   static char * disableDirectNativeCall = feGetEnv("TR_DisableDirectNativeCall");
+
+   // Clean-up: the fej9 checking seemed unnecessary
+   if (!isIndirect && callee->isJNI() && fej9->canRelocateDirectNativeCalls() &&
+       (node->isPreparedForDirectJNI() ||
+        (disableDirectNativeCall == NULL && callee->getResolvedMethodSymbol()->canDirectNativeCall())))
+      return self()->getLinkage(TR_J9JNILinkage);
+
+   return self()->getLinkage(callee->getLinkageConvention());
+   }

@@ -13318,25 +13318,9 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
    TR::MethodSymbol    *callee    = symRef->getSymbol()->castToMethodSymbol();
    TR::Linkage      *linkage;
    TR::Register        *returnRegister;
-   bool doJNIDirectDispatch = false;
-
-   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
-
-   if(callee->isJNI() && callee->getLinkageConvention() != TR_J9JNILinkage)
-      {
-      //This needs a cleanup, canRelocateDirectNativeCalls() might go away soon.
-      //Too many checks here, can we simplify this?
-
-      static char * disableDirectNativeCall = feGetEnv("TR_DisableDirectNativeCall");
-      doJNIDirectDispatch = fej9->canRelocateDirectNativeCalls() &&
-                            (node->isPreparedForDirectJNI() ||
-                            (disableDirectNativeCall == NULL && callee->getResolvedMethodSymbol()->canDirectNativeCall()));
-
-      }
 
    if (!cg->inlineDirectCall(node, returnRegister))
       {
-      TR::SymbolReference *symRef = node->getSymbolReference();
       TR::SymbolReferenceTable *symRefTab = cg->comp()->getSymRefTab();
 
       // Non-helpers supported by code gen. are expected to be inlined
@@ -13347,10 +13331,7 @@ TR::Register *J9::Power::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
                    symRefTab->getNonHelperSymbol(symRef));
          }
 
-      if(doJNIDirectDispatch)
-         linkage = cg->getLinkage(TR_J9JNILinkage);
-      else
-         linkage = cg->getLinkage(callee->getLinkageConvention());
+      linkage = cg->deriveCallingLinkage(node, false);
       returnRegister = linkage->buildDirectDispatch(node);
       }
 
