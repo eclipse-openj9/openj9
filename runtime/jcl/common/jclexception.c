@@ -29,6 +29,7 @@
 #include "omrgcconsts.h"
 #include "rommeth.h"
 #include "vm_api.h"
+#include "ut_j9jcl.h"
 
 static UDATA getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader);
 
@@ -170,6 +171,11 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 				if (NULL != classLoader) {
 					clazz = vmfns->peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utf), J9UTF8_LENGTH(utf));
 					if (NULL != clazz) {
+						/* clazz can never be an array here as arrays can't define methods so we don't need to
+						 * take them into account in the code below when writing the interned string back to
+						 * the Class object.
+						 */
+						Assert_JCL_false(J9CLASS_IS_ARRAY(clazz));
 						string = J9VMJAVALANGCLASS_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 					}
 				}
