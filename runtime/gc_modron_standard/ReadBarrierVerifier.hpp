@@ -65,16 +65,14 @@ public:
 	void poisonSlot(MM_GCExtensionsBase *extensions, omrobjectptr_t *slot);
 	void poisonJniWeakReferenceSlots(MM_EnvironmentBase *env);
 	void poisonMonitorReferenceSlots(MM_EnvironmentBase *env);
-	void poisonStaticClassSlots(MM_EnvironmentBase *env);
-	void poisonConstantPoolObjects(MM_EnvironmentBase *env);
+	void poisonClass(MM_EnvironmentBase *env);
 	virtual void poisonSlots(MM_EnvironmentBase *env);
 
 	void healSlot(MM_GCExtensionsBase *extensions, fomrobject_t *srcAddress);
 	void healSlot(MM_GCExtensionsBase *extensions, omrobjectptr_t *slot);
 	void healJniWeakReferenceSlots(MM_EnvironmentBase *env);
 	void healMonitorReferenceSlots(MM_EnvironmentBase *env);
-	void healStaticClassSlots(MM_EnvironmentBase *env);
-	void healConstantPoolObjects(MM_EnvironmentBase *env);
+	void healClass(MM_EnvironmentBase *env);
 	virtual void healSlots(MM_EnvironmentBase *env);
 
 
