@@ -47,7 +47,7 @@ static UDATA getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J
 static BOOLEAN
 setStackTraceElementSource(J9VMThread* vmThread, j9object_t stackTraceElement, J9ClassLoader* classLoader, J9ROMClass* romClass)
 {
-	J9InternalVMFunctions * vmfns = vmThread->javaVM->internalVMFunctions;
+	J9InternalVMFunctions * vmFuncs = vmThread->javaVM->internalVMFunctions;
 	J9UTF8* name = J9ROMCLASS_CLASSNAME(romClass);
 	j9object_t element = stackTraceElement;
 	j9object_t heapClass, protectionDomain;
@@ -55,7 +55,7 @@ setStackTraceElementSource(J9VMThread* vmThread, j9object_t stackTraceElement, J
 	U_8 *path = NULL;
 	UDATA pathLen = 0;
 
-	J9Class* clazz = vmfns->internalFindClassUTF8(vmThread, J9UTF8_DATA(name), J9UTF8_LENGTH(name), classLoader,	J9_FINDCLASS_FLAG_EXISTING_ONLY);
+	J9Class* clazz = vmFuncs->internalFindClassUTF8(vmThread, J9UTF8_DATA(name), J9UTF8_LENGTH(name), classLoader,	J9_FINDCLASS_FLAG_EXISTING_ONLY);
 	if (NULL == clazz) {
 		return FALSE;
 	}
@@ -87,7 +87,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 {
 	J9GetStackTraceUserData * userData = voidUserData;
 	J9JavaVM * vm = vmThread->javaVM;
-	J9InternalVMFunctions const *  vmfns = vm->internalVMFunctions;
+	J9InternalVMFunctions const *  vmFuncs = vm->internalVMFunctions;
 	J9MemoryManagerFunctions const * mmfns = vm->memoryManagerFunctions;
 	j9object_t element = NULL;
 	UDATA rc = TRUE;
@@ -107,7 +107,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 	element = mmfns->J9AllocateObject(vmThread, userData->elementClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 	if (element == NULL) {
 		rc = FALSE;
-		vmfns->setHeapOutOfMemoryError(vmThread);
+		vmFuncs->setHeapOutOfMemoryError(vmThread);
 	} else {
 		j9array_t result = (j9array_t) PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 1);
 		J9JAVAARRAYOFOBJECT_STORE(vmThread, result, (I_32)userData->index, element);
@@ -153,7 +153,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 					classNameUTF = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass));
 					length = packageNameLength(romClass);
 					omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-					module = vmfns->findModuleForPackage(vmThread, classLoader, classNameUTF, (U_32) length);
+					module = vmFuncs->findModuleForPackage(vmThread, classLoader, classNameUTF, (U_32) length);
 					omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
 
 					if (NULL != module) {
@@ -169,7 +169,7 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 			{
 				J9Class* clazz = NULL;
 				if (NULL != classLoader) {
-					clazz = vmfns->peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utf), J9UTF8_LENGTH(utf));
+					clazz = vmFuncs->peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utf), J9UTF8_LENGTH(utf));
 					if (NULL != clazz) {
 						/* clazz can never be an array here as arrays can't define methods so we don't need to
 						 * take them into account in the code below when writing the interned string back to
@@ -266,7 +266,7 @@ J9IndexableObject *
 getStackTrace(J9VMThread * vmThread, j9object_t * exceptionAddr, UDATA pruneConstructors)
 {
 	J9JavaVM * vm = vmThread->javaVM;
-	J9InternalVMFunctions * vmfns = vm->internalVMFunctions;
+	J9InternalVMFunctions * vmFuncs = vm->internalVMFunctions;
 	J9MemoryManagerFunctions * mmfns = vm->memoryManagerFunctions;
 	UDATA numberOfFrames;
 	J9Class * elementClass;
@@ -282,7 +282,7 @@ retry:
 
 	/* Get the total number of entries in the trace */
 
-	numberOfFrames = vmfns->iterateStackTrace(vmThread, exceptionAddr, NULL, NULL, pruneConstructors);
+	numberOfFrames = vmFuncs->iterateStackTrace(vmThread, exceptionAddr, NULL, NULL, pruneConstructors);
 
 	/* Create the result array */
 
@@ -290,7 +290,7 @@ retry:
 	arrayClass = elementClass->arrayClass;
 	if (arrayClass == NULL) {
 		/* the first class in vm->arrayROMClasses is the array class for Objects */
-		arrayClass = vmfns->internalCreateArrayClass(vmThread, 
+		arrayClass = vmFuncs->internalCreateArrayClass(vmThread,
 			(J9ROMArrayClass *) J9ROMIMAGEHEADER_FIRSTCLASS(vm->arrayROMClasses), 
 			elementClass);
 		if (arrayClass == NULL) {
@@ -301,7 +301,7 @@ retry:
 	result = (j9array_t) mmfns->J9AllocateIndexableObject(
 		vmThread, arrayClass, (U_32)numberOfFrames, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 	if (result == NULL) {
-		vmfns->setHeapOutOfMemoryError(vmThread);
+		vmFuncs->setHeapOutOfMemoryError(vmThread);
 		return NULL;
 	}
 
@@ -312,7 +312,7 @@ retry:
 	userData.maxFrames = numberOfFrames;
 	userData.previousFileName = NULL;
 	PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, (j9object_t) result);
-	vmfns->iterateStackTrace(vmThread, exceptionAddr, getStackTraceIterator, &userData, pruneConstructors);
+	vmFuncs->iterateStackTrace(vmThread, exceptionAddr, getStackTraceIterator, &userData, pruneConstructors);
 	result = (j9array_t) POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
 
 	/* If the stack trace sizes are inconsistent between pass 1 and 2, start again */
