@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,20 +35,11 @@
 
 
 /**
- * If condyOnly flag is not set:
  * @return the next object slot in the constant pool
  * @return NULL if there are no more object references
- *
- * If condyOnly flag is set and Java version is SE11 and above:
- * @return the next Condy reference from the constant pool
- * @return NULL if there are no more references
  */
 j9object_t *
 GC_ConstantPoolObjectSlotIterator::nextSlot() {
-	/* Return NULL if _condyOnly is true but system is not condy-enabled */
-	if (_condyOnly && !_condyEnabled) {
-		return NULL;
-	}
 	U_32 slotType;
 	j9object_t *slotPtr;
 	j9object_t *result = NULL;
@@ -63,41 +54,27 @@ GC_ConstantPoolObjectSlotIterator::nextSlot() {
 		slotType = _cpDescription & J9_CP_DESCRIPTION_MASK;
 		slotPtr = _cpEntry;
 
-		/* If _condyOnly is TRUE, return the next constant dynamic slot in constant pool
-		 * Otherwise return the next object */
-		if (_condyOnly) {
-			/* Determine if the slot is constant dynamic */
-			if (slotType == J9CPTYPE_CONSTANT_DYNAMIC) {
-				if (NULL != (result = _constantDynamicSlotIterator.nextSlot(slotPtr))) {
-					/* Do not progress through the function.
-					 * Avoids advancing the slot while a constant dynamic is being iterated */
-					return result;
-				}
+		/* Determine if the slot should be processed */
+		switch (slotType) {
+		case J9CPTYPE_STRING: /* fall through */
+		case J9CPTYPE_ANNOTATION_UTF8:
+			result = &(((J9RAMStringRef *) slotPtr)->stringObject);
+			break;
+		case J9CPTYPE_METHOD_TYPE:
+			result = &(((J9RAMMethodTypeRef *) slotPtr)->type);
+			break;
+		case J9CPTYPE_METHODHANDLE:
+			result = &(((J9RAMMethodHandleRef *) slotPtr)->methodHandle);
+			break;
+		case J9CPTYPE_CONSTANT_DYNAMIC:
+			if (NULL != (result = _constantDynamicSlotIterator.nextSlot(slotPtr))) {
+				/* Do not progress through the function.
+				 * Avoids advancing the slot while a constant dynamic is being iterated */
+				return result;
 			}
-		} else {
-			/* Determine if the slot should be processed */
-			switch (slotType) {
-			case J9CPTYPE_STRING: /* fall through */
-			case J9CPTYPE_ANNOTATION_UTF8:
-				result = &(((J9RAMStringRef *) slotPtr)->stringObject);
-				break;
-			case J9CPTYPE_METHOD_TYPE:
-				result = &(((J9RAMMethodTypeRef *) slotPtr)->type);
-				break;
-			case J9CPTYPE_METHODHANDLE:
-				result = &(((J9RAMMethodHandleRef *) slotPtr)->methodHandle);
-				break;
-			case J9CPTYPE_CONSTANT_DYNAMIC:
-				if (NULL != (result = _constantDynamicSlotIterator.nextSlot(slotPtr))) {
-					/* Do not progress through the function.
-					 * Avoids advancing the slot while a constant dynamic is being iterated */
-					return result;
-				}
-				break;
-			default:
-				break;
-			}
-
+			break;
+		default:
+			break;
 		}
 
 		/* Adjust the CP slot and description information */
