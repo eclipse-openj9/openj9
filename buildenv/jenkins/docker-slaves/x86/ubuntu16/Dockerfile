@@ -104,7 +104,7 @@ RUN mkdir /var/run/sshd \
 RUN sed 's@session\s*required\s*pam_loginuid.so@session optional pam_loginuid.so@g' -i /etc/pam.d/sshd
 
 # Install OpenSSL v1.1.1b
-# Required for JITaaS & Crypto functional testing
+# Required for JITServer & Crypto functional testing
 RUN cd /tmp \
   && wget https://github.com/openssl/openssl/archive/OpenSSL_1_1_1b.tar.gz \
   && tar -xzf OpenSSL_1_1_1b.tar.gz \
@@ -119,7 +119,7 @@ RUN cd /tmp \
   && echo "PATH=/usr/local/openssl-1.1.1b/bin:$PATH" > /etc/environment
 
 # Install Protobuf v3.5.1
-# Required for JITaaS
+# Required for JITServer
 RUN cd /tmp \
   && wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
   && tar -xzf protobuf-cpp-3.5.1.tar.gz \

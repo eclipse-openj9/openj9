@@ -38,7 +38,7 @@ Whenever possible, caching should be done globally, because hit rates will be hi
 
 # Important caches
 ## `ClientSessionData`
-Stores all of the globally cached data; for a detailed description read [this](https://github.com/eclipse/openj9/blob/jitaas/doc/compiler/jitaas/ClientSession.md).
+Stores all of the globally cached data; for a detailed description read [this](ClientSession.md).
 ## `CompilationInfoPerThreadRemote`
 Most of the per-compilation caches are stored in `CompilationInfoPerThreadRemote`. Since most caches have very similar structure, i.e. hash map, we added templated methods for working with these caches. The methods are `initializePerCompilationCache`, `cacheToPerCompilationMap`, `getCachedValueFromPerCompilationMap`, `clearPerCompilationCache`. If a new cache is added, it should use these methods. At the end of compilation all local caches need to be reset by adding a call to `TR::CompilationInfoPerThreadRemote::clearPerCompilationCaches`.
 Some important per-compilation caches:

@@ -248,7 +248,7 @@ RUN cd /usr/src \
   && rm -rf /usr/src/curl-7.24.0
 
 # Install OpenSSL v1.1.1b
-# Required for JITaaS  & Crypto functional testing
+# Required for JITServer  & Crypto functional testing
 # OpenSSL requires ldconfig to be run in order to function properly
 # however ldconfig is not included here because it will be run
 # after the other sections that depend on ldconfig
@@ -266,7 +266,7 @@ RUN cd /tmp \
   && echo "PATH=/usr/local/openssl-1.1.1b/bin:\$PATH" > /etc/profile.d/openssl.sh
 
 # Install Protobuf v3.5.1
-# Required for JITaaS
+# Required for JITServer
 RUN cd /tmp \
   && wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
   && tar -xzf protobuf-cpp-3.5.1.tar.gz \

@@ -8924,7 +8924,7 @@ TR::CompilationInfoPerThreadBase::compile(
          metaData = remoteCompile(vmThread, compiler, compilee, method, details, this);
          }
 #endif /* defined(JITSERVER_SUPPORT) */
-      else // non-jitaas, non-aot-load
+      else // non-jitserver, non-aot-load
          {
          if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
             {

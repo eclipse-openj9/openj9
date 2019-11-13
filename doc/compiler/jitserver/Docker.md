@@ -40,18 +40,18 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
    ```
 3. Build JITServer
    ```
-   cd openj9/buildenv/docker/jdk8/x86_64/ubuntu18/jitaas/build
-   docker build -f Dockerfile -t=openj9-jitaas .
+   cd openj9/buildenv/docker/jdk8/x86_64/ubuntu18/jitserver/build
+   docker build -f Dockerfile -t=openj9-jitserver .
    ```
 
 ## Details on the JITServer Dockerfiles
-JITServer Dockerfiles are located under: `openj9/buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas`
+JITServer Dockerfiles are located under: `openj9/buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitserver`
 - `build/Dockerfile`
    - Sets up the build environment for JITServer
    - Pulls the source code from OpenJDK, OpenJ9, and OMR repos. By default, `jitaas` branch is used for OpenJ9 and OMR.
    - Runs make commands to build JITServer
 - `buildenv/Dockerfile`
-    - Similar to `jitaas/build/Dockerfile`. The difference is that it does not build JITServer. It only pulls the source code and sets up the environment for JITServer build
+    - Similar to `jitserver/build/Dockerfile`. The difference is that it does not build JITServer. It only pulls the source code and sets up the environment for JITServer build
 - `run/Dockerfile`
    - Starts up a JITServer server
 - `test/Dockerfile`
@@ -65,57 +65,57 @@ JITServer Dockerfiles are located under: `openj9/buildenv/docker/jdk<version>/<p
    openj9/buildenv/docker/jdk<version>/<platform>/ubuntu<version>/Dockerfile \
    -t=openj9 .
    ```
-- <a name="openj9-jitaas-build"></a>Build `openj9-jitaas-build` image using `build/Dockerfile`
+- <a name="openj9-jitserver-build"></a>Build `openj9-jitserver-build` image using `build/Dockerfile`
    ```
   docker build -f \ 
-  buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/build/Dockerfile \ 
+  buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitserver/build/Dockerfile \ 
   --build-arg openj9_repo=<your-openj9-repo> \ 
   --build-arg openj9_branch=<your-openj9-branch> \ 
   --build-arg omr_repo=<your-omr-repo> \ 
   --build-arg omr_branch=<your-omr-branch> \
-  -t=openj9-jitaas-build .
+  -t=openj9-jitserver-build .
   ```
   Or without specifying repos and using the default latest `jitaas` branch for OpenJ9 and OMR
   ```
   docker build -f \ 
-  buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/build/Dockerfile \ 
-  -t=openj9-jitaas-build .
+  buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitserver/build/Dockerfile \ 
+  -t=openj9-jitserver-build .
   ```
 
 ### [run/Dockerfile](https://github.com/eclipse/openj9/blob/jitaas/buildenv/docker/jdk8/x86_64/ubuntu18/jitaas/run/Dockerfile)
-- **Prerequisite**: [`openj9-jitaas-build`](#openj9-jitaas-build) image
-- Build `openj9-jitaas-run-server` using `run/Dockerfile`
+- **Prerequisite**: [`openj9-jitserver-build`](#openj9-jitserver-build) image
+- Build `openj9-jitserver-run-server` using `run/Dockerfile`
    ```
    docker build -f \
-   buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/run/Dockerfile \
-   -t=openj9-jitaas-run-server .
+   buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitserver/run/Dockerfile \
+   -t=openj9-jitserver-run-server .
    ```
-- <a name="openj9-jitaas-run-server"></a>Use the image to start up a JITServer server:
+- <a name="openj9-jitserver-run-server"></a>Use the image to start up a JITServer server:
    ```
-   docker run -it -d openj9-jitaas-run-server
+   docker run -it -d openj9-jitserver-run-server
    ```
 - Find out its IPAddress
    ```
-   docker inspect <openj9-jitaas-run-server-container-id> | grep "IPAddress"
+   docker inspect <openj9-jitserver-run-server-container-id> | grep "IPAddress"
    ```
-- Look at jitaas verbose logs
+- Look at jitserver verbose logs
    ```
-   docker logs -f <openj9-jitaas-run-server-container-id>
+   docker logs -f <openj9-jitserver-run-server-container-id>
    ```
 
 ### [test/Dockerfile](https://github.com/eclipse/openj9/blob/jitaas/buildenv/docker/jdk8/x86_64/ubuntu18/jitaas/test/Dockerfile)
 - **Prerequisite**:
-   - [`openj9-jitaas-build`](#openj9-jitaas-build) image
-   - A running [`openj9-jitaas-run-server`](#openj9-jitaas-run-server) container and its IPAddress
-- Build `openj9-jitaas-test` using `test/Dockerfile`:
+   - [`openj9-jitserver-build`](#openj9-jitserver-build) image
+   - A running [`openj9-jitserver-run-server`](#openj9-jitserver-run-server) container and its IPAddress
+- Build `openj9-jitserver-test` using `test/Dockerfile`:
    ```
    docker build -f \
-   buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/test/Dockerfile \
-   -t=openj9-jitaas-test .
+   buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitserver/test/Dockerfile \
+   -t=openj9-jitserver-test .
    ```
 - Use the image for testing:
    ```
-   docker run -it openj9-jitaas-test
+   docker run -it openj9-jitserver-test
    // once you're inside the container
    make _sanity EXTRA_OPTIONS=" -XX:+UseJITServer:server=<IPAddress> "
    // make sure to put spaces before and after " -XX:+UseJITServer:server=<IPAddress> "
@@ -128,14 +128,14 @@ JITServer Dockerfiles are located under: `openj9/buildenv/docker/jdk<version>/<p
    ```
 
 ### [buildenv/Dockerfile](https://github.com/eclipse/openj9/blob/jitaas/buildenv/docker/jdk8/x86_64/ubuntu18/jitaas/buildenv/Dockerfile)
-- Build `openj9-jitaas-buildenv` using `buildenv/Dockerfile`:
+- Build `openj9-jitserver-buildenv` using `buildenv/Dockerfile`:
    ```
    docker build -f \
-   buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitaas/buildenv/Dockerfile \
-   -t=openj9-jitaas-buildenv .
+   buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitserver/buildenv/Dockerfile \
+   -t=openj9-jitserver-buildenv .
    ```
 - Use the image
    ```
-   docker run -it openj9-jitaas-buildenv
-   // then you can build your jitaas binaries inside this container
+   docker run -it openj9-jitserver-buildenv
+   // then you can build your jitserver binaries inside this container
    ```

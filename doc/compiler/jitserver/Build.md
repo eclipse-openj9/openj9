@@ -51,6 +51,7 @@ apt-get update \
 	  libcups2-dev \
 	  libdwarf-dev \
 	  libelf-dev \
+	  libfontconfig1-dev \
 	  libfreetype6-dev \
 	  libnuma-dev \
 	  libx11-dev \
@@ -91,6 +92,10 @@ cd /root \
  && tar -xzf bootjdk8.tar.gz \
  && rm -f bootjdk8.tar.gz \
  && mv $(ls | grep -i jdk) bootjdk8
+
+#########
+# Version 3.5.1 of protobuf has been validated to work on x86. On Z and PowerPC a version of 3.7.1 or higher is needed.
+#########
 
 wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
  && tar -xvzf protobuf-cpp-3.5.1.tar.gz \
