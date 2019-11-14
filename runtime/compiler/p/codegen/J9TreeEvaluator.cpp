@@ -1305,9 +1305,9 @@ J9::Power::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGe
    else if (!(node->getSymbolReference()->isUnresolved()))
       {
       fieldClassReg = cg->allocateRegister();
-      // During Non-AOT compilation the fieldClass has been populated inside the dataSnippet during compilation.
+      // During Non-AOT (JIT and JITServer) compilation the fieldClass has been populated inside the dataSnippet during compilation.
       // During AOT compilation the fieldClass must be loaded from the snippet. The fieldClass in an AOT body is invalid.
-      if (cg->comp()->compileRelocatableCode())
+      if (cg->needClassAndMethodPointerRelocations())
          {
          // Load FieldClass from snippet
          generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, fieldClassReg,
