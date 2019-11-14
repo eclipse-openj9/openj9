@@ -122,7 +122,7 @@ RUN cd /tmp \
   && tar -xzf protobuf-cpp-3.5.1.tar.gz \
   && rm -f protobuf-cpp-3.5.1.tar.gz \
   && cd /tmp/protobuf-3.5.1 \
-  && ./configure \
+  && ./configure --disable-shared --with-pic \
   && make \
   && make install \
   && cd .. \
