@@ -418,6 +418,7 @@ uint8_t *J9::ARM::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
          TR_OpaqueClassBlock *inlinedMethodClass = resolvedMethod->containingClass();
          void *romClass = (void *) fej9->getPersistentClassPointerFromClassPointer(inlinedMethodClass);
          uintptr_t romClassOffsetInSharedCache = self()->offsetInSharedCacheFromPointer(sharedCache, romClass);
+
          *(uintptrj_t *) cursor = romClassOffsetInSharedCache;
          cursor += SIZEPOINTER;
 

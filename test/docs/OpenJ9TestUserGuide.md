@@ -26,7 +26,7 @@ Let's create the following scenario:
 For the purpose of this example, we assume you have an OpenJ9 SDK ready
 for testing. Below are the specific commands you'd run to compile and
 run tests. Details are explained in *Tasks in OpenJ9 Test* section below.
-For JIT-as-a-Service testing, refer to [Testing.md](https://github.com/eclipse/openj9/blob/jitaas/doc/compiler/jitaas/Testing.md)
+For JITServer testing, refer to [Testing.md](https://github.com/eclipse/openj9/blob/jitaas/doc/compiler/jitaas/Testing.md)
 
 ```
 cd openj9/test/TestConfig

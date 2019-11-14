@@ -651,6 +651,7 @@ TR_J9SharedCache::rememberDebugCounterName(const char *name)
                                         &dataDescriptor);
 
    offset = data ? offsetInSharedCacheFromPointer((void *)data) : (UDATA)-1;
+
    //printf("\nrememberDebugCounterName: Tried to store %s (%p), data=%p, offset=%p\n", name, name, data, offset);
 #endif
    return offset;
@@ -888,6 +889,7 @@ TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR
    return classChainOffsetInSharedCache;
    }
 
+
 const void *
 TR_J9SharedCache::storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor)
    {
@@ -979,4 +981,5 @@ TR_J9JITServerSharedCache::storeSharedData(J9VMThread *vmThread, char *key, J9Sh
    _stream->write(JITServer::MessageType::SharedCache_storeSharedData, std::string(key, strlen(key)), *descriptor, dataStr);
    return std::get<0>(_stream->read<const void *>());
    }
+
 #endif

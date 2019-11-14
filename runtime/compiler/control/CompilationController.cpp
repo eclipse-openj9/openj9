@@ -141,6 +141,7 @@ TR_Hotness TR::DefaultCompilationStrategy::getInitialOptLevel(J9Method *j9method
    return TR::Options::getInitialHotnessLevel(J9ROMMETHOD_HAS_BACKWARDS_BRANCHES(romMethod) ? true : false);
    }
 
+
 //------------------------------- processEvent ------------------------
 // If the function returns NULL, then the value of *newPlanCreated is
 // undefined and should not be tested

@@ -5240,6 +5240,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
    TR::VMAccessCriticalSection loadStaticCriticalSection(fej9,
                                                           TR::VMAccessCriticalSection::tryToAcquireVMAccess,
                                                           comp());
+
    if (canOptimizeFinalStatic &&
        loadStaticCriticalSection.hasVMAccess())
       {

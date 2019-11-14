@@ -119,6 +119,7 @@ public:
    virtual const J9ROMClass *getRomClass() const;
    virtual const J9ROMMethod *getRomMethod() const;
 
+
    virtual TR_IlGenerator *getIlGenerator(TR::ResolvedMethodSymbol *methodSymbol,
                                           TR_FrontEnd * fe,
                                           TR::Compilation *comp,

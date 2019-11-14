@@ -34,7 +34,7 @@
 #include "runtime/J9RuntimeAssumptions.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #if defined(JITSERVER_SUPPORT)
-#include "control/CompilationThread.hpp" // for TR::compInfoPT
+#include "control/CompilationThread.hpp"
 #include "runtime/JITClientSession.hpp"
 #endif
 
@@ -1178,6 +1178,8 @@ J9::PersistentInfo::ensureUnloadedAddressSetsAreInitialized()
       return _unloadedClassAddresses && _unloadedMethodAddresses;
       }
    }
+
+
 
 
 bool

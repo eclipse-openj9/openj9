@@ -2979,6 +2979,7 @@ TR_IPBCDataCallGraph::canBeSerialized(TR::PersistentInfo *info)
    return IPBC_ENTRY_CAN_PERSIST;
    }
 
+
 /**
  * API used by JITClient to serialize IP data of a method
  *
@@ -2988,7 +2989,6 @@ TR_IPBCDataCallGraph::canBeSerialized(TR::PersistentInfo *info)
  *
  * @return void
  */
-
 void
 TR_IPBCDataCallGraph::serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
    {
@@ -3017,6 +3017,7 @@ TR_IPBCDataCallGraph::serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorag
    store->_csInfo._tooBigToBeInlined = _csInfo._tooBigToBeInlined;
 
    }
+
 
 /**
  * API used by JITServer to deserialize IP data of a method sent from JITClient

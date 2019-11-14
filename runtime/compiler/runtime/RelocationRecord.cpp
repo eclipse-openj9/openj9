@@ -1417,6 +1417,7 @@ TR_RelocationRecordMethodAddress::applyRelocation(TR_RelocationRuntime *reloRunt
       oldAddress = reloTarget->loadCallTarget(reloLocation);
    else
       oldAddress = reloTarget->loadAddress(reloLocation);
+
    RELO_LOG(reloRuntime->reloLogger(), 5, "\t\tapplyRelocation: old method address %p\n", oldAddress);
    uint8_t *newAddress = currentMethodAddress(reloRuntime, oldAddress);
    RELO_LOG(reloRuntime->reloLogger(), 5, "\t\tapplyRelocation: new method address %p\n", newAddress);
@@ -1793,7 +1794,6 @@ TR_RelocationRecordThunks::relocateAndRegisterThunk(
    uintptr_t cpIndex,
    uint8_t *reloLocation)
    {
-
    J9JITConfig *jitConfig = reloRuntime->jitConfig();
    J9JavaVM *javaVM = reloRuntime->jitConfig()->javaVM;
    J9ConstantPool *constantPool = (J9ConstantPool *)cp;

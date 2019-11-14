@@ -142,6 +142,7 @@ IlGeneratorMethodDetails::getType() const
    }
 #endif /* defined(JITSERVER_SUPPORT) */
 
+
 bool
 IlGeneratorMethodDetails::sameAs(TR::IlGeneratorMethodDetails & other, TR_FrontEnd *fe)
    {

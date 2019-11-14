@@ -274,6 +274,7 @@ public:
    virtual J9Class *               constantPoolHdr();
    virtual J9ClassLoader *         getClassLoader();
 
+
    uint32_t                        methodModifiers();
    virtual uint32_t                classModifiers();
    virtual uint32_t                classExtraModifiers();
@@ -420,6 +421,7 @@ public:
 
    virtual bool                    fieldAttributes (TR::Compilation *, int32_t cpIndex, uint32_t * fieldOffset, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOTValidation);
 
+
    virtual bool                    staticAttributes( TR::Compilation *, int32_t cpIndex, void * *, TR::DataType * type, bool * volatileP, bool * isFinal, bool *isPrivate, bool isStore, bool * unresolvedInCP, bool needsAOValidation);
 
    virtual char *                  fieldNameChars(int32_t cpIndex, int32_t & len);
@@ -493,6 +495,7 @@ public:
    virtual TR_PersistentJittedBodyInfo *getExistingJittedBodyInfo();
 
    static bool                     isInvokePrivateVTableOffset(UDATA vTableOffset);
+
    /**
     * @brief Create TR::ParameterSymbols from the signature of a method, and add them
     *        to the ParameterList on the ResolvedMethodSymbol.

@@ -80,6 +80,7 @@ TR_PersistentClassLoaderTable::associateClassLoaderWithClass(void *classLoaderPo
    TR_ClassLoaderInfo *info = _loaderTable[index];
    while (info != NULL && info->_classLoaderPointer != classLoaderPointer)
       info = info->_next;
+
    if (!info)
       {
       void *classChainPointer = (void *) sharedCache()->rememberClass(clazz);
