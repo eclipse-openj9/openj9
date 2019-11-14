@@ -383,7 +383,7 @@ constraintHashFn(void *key, void *userData)
 {
 	J9ClassLoadingConstraint *k = key;
 	J9JavaVM *vm = userData;
-	UDATA utf8Hash = vm->internalVMFunctions->computeHashForUTF8(k->name, k->nameLength);
+	UDATA utf8Hash = J9_VM_FUNCTION_VIA_JAVAVM(vm, computeHashForUTF8)(k->name, k->nameLength);
 
 	return (UDATA)k->classLoader ^ utf8Hash;
 }

@@ -56,6 +56,7 @@
 				<include-if condition="spec.zos_390-64.*"/>
 				<include-if condition="spec.zos_390.*"/>
 			</flag>
+			<flag name="J9_INTERNAL_TO_VM"/>
 		</flags>
 		<includes>
 			<include path="j9include"/>
