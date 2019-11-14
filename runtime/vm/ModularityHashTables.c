@@ -86,10 +86,9 @@ modulePointerHashEqualFn(void *tableNode, void *queryNode, void *userData)
 static UDATA 
 packageHashFn(void *key, void *userData) 
 {
-	J9JavaVM* javaVM = (J9JavaVM*) userData;
 	J9Package *entry = *(J9Package**) key;
 
-	return javaVM->internalVMFunctions->computeHashForUTF8(J9UTF8_DATA(entry->packageName), J9UTF8_LENGTH(entry->packageName));
+	return computeHashForUTF8(J9UTF8_DATA(entry->packageName), J9UTF8_LENGTH(entry->packageName));
 }
 
 static UDATA
