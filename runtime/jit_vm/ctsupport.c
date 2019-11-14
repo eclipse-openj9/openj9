@@ -609,7 +609,7 @@ jitGetRealCPIndex(J9VMThread *currentThread, J9ROMClass *romClass, UDATA cpOrSpl
  * @param constantPool		Constant pool of the class that 'owns' the 'cpOrSplitIndex'
  * @param cpOrSplitIndex	Index of a method. Either an index into constant pool or into split table
  *
- * @return 				J9Method represented by 'cpOrSplitIndex'
+ * @return J9Method represented by 'cpOrSplitIndex' or NULL if the method is one of the "special" initialMethods or invokePrivateMethod
  */
 J9Method *
 jitGetJ9MethodUsingIndex(J9VMThread *currentThread, J9ConstantPool *constantPool, UDATA cpOrSplitIndex)
@@ -622,17 +622,18 @@ jitGetJ9MethodUsingIndex(J9VMThread *currentThread, J9ConstantPool *constantPool
 
 		if (J9_IS_STATIC_SPLIT_TABLE_INDEX(cpOrSplitIndex)) {
 			method = clazz->staticSplitMethodTable[splitTableIndex];
-			if (method == (J9Method*)currentThread->javaVM->initialMethods.initialStaticMethod) {
-				method = NULL;
-			}
 		} else {
 			method = clazz->specialSplitMethodTable[splitTableIndex];
-			if (method == (J9Method*)currentThread->javaVM->initialMethods.initialSpecialMethod) {
-				method = NULL;
-			}
 		}
 	} else {
 		method = ((J9RAMStaticMethodRef*)(constantPool + cpOrSplitIndex))->method;
+	}
+	if ((method == (J9Method*)currentThread->javaVM->initialMethods.initialStaticMethod)
+	|| (method == (J9Method*)currentThread->javaVM->initialMethods.initialSpecialMethod)
+	|| (method == (J9Method*)currentThread->javaVM->initialMethods.initialVirtualMethod)
+	|| (method == (J9Method*)currentThread->javaVM->initialMethods.invokePrivateMethod)
+	) {
+		method = NULL;
 	}
 	return method;
 }

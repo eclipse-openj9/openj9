@@ -2164,7 +2164,7 @@ TR_J9ByteCodeIlGenerator::calculateArrayElementAddress(TR::DataType dataType, bo
 
    // Stack is now ...,aryRef,index<===
    TR::Node * index = pop();
-   dup();
+   if (checks) dup();
    dup();
    TR::Node * nodeThatWasNullChecked = pop();
 
@@ -3779,8 +3779,6 @@ break
       DAA_PRINT(TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readLongLength);
       DAA_PRINT(TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readFloat);
       DAA_PRINT(TR::com_ibm_dataaccess_ByteArrayUnmarshaller_readDouble);
-
-      DAA_PRINT(TR::com_ibm_dataaccess_ByteArrayUtils_trailingZeros);
 
       DAA_PRINT(TR::com_ibm_dataaccess_DecimalData_JITIntrinsicsEnabled);
 
@@ -5458,6 +5456,19 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
             int returnTypeUtf8Length = J9UTF8_LENGTH(returnTypeUtf8);
             char* returnTypeUtf8Data = (char *)J9UTF8_DATA(returnTypeUtf8);
             bool isCondyPrimitive = (1 == returnTypeUtf8Length);
+
+            // Use aconst for null object
+            if (!isCondyPrimitive && !isCondyUnresolved)
+               {
+               TR::VMAccessCriticalSection condyCriticalSection(comp()->fej9());
+               uintptrj_t* objLocation = (uintptrj_t*)_methodSymbol->getResolvedMethod()->dynamicConstant(cpIndex);
+               uintptrj_t obj = *objLocation;
+               if (obj == 0)
+                  {
+                  loadConstant(TR::aconst, (void *)0);
+                  return;
+                  }
+               }
 
             char* symbolTypeSig = NULL;
             int32_t symbolTypeSigLength = 0;

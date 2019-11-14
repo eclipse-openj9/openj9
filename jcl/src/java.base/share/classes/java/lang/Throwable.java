@@ -301,8 +301,8 @@ StackTraceElement[] getInternalStackTrace() {
  *				The stream to write the walkback on.
  */
 public void printStackTrace (PrintStream err) {
-    StackTraceElement[] stack;
-    stack = printStackTrace(err, null, 0, false);
+	StackTraceElement[] stack;
+	stack = printStackTrace(err, null, 0, false);
 
 	Throwable throwable = getCause();
 	while (throwable != null && stack != null) {
@@ -319,14 +319,14 @@ public void printStackTrace (PrintStream err) {
  *				The writer to write the walkback on.
  */
 public void printStackTrace(PrintWriter err) {
-    StackTraceElement[] stack;
-    stack = printStackTrace(err, null, 0, false);
+	StackTraceElement[] stack;
+	stack = printStackTrace(err, null, 0, false);
 
-    Throwable throwable = getCause();
-    while (throwable != null && stack != null) {
-        stack = throwable.printStackTrace(err, stack, 0, false);
-        throwable = throwable.getCause();
-    }
+	Throwable throwable = getCause();
+	while (throwable != null && stack != null) {
+		stack = throwable.printStackTrace(err, stack, 0, false);
+		throwable = throwable.getCause();
+	}
 }
 
 /**
@@ -497,39 +497,39 @@ private StackTraceElement[] printStackTrace(
 		Appendable err, StackTraceElement[] parentStack, int indents, boolean suppressed) {
 	/*[PR 120593] CDC 1.0 and CDC 1.1 TCK fails in java.lang.. Exception tests */
 	if (err == null) throw new NullPointerException();
-    StackTraceElement[] stack;
-    boolean outOfMemory = this instanceof OutOfMemoryError;
-    if (parentStack != null) {
-	    if (suppressed) {
-	    	appendTo(err, "Suppressed: ", indents); //$NON-NLS-1$
-	    } else {
-	    	appendTo(err, "Caused by: ", indents); //$NON-NLS-1$
-	    }
+	StackTraceElement[] stack;
+	boolean outOfMemory = this instanceof OutOfMemoryError;
+	if (parentStack != null) {
+		if (suppressed) {
+			appendTo(err, "Suppressed: ", indents); //$NON-NLS-1$
+		} else {
+			appendTo(err, "Caused by: ", indents); //$NON-NLS-1$
+		}
 	}
-    if (!outOfMemory) try {
-    	appendTo(err, toString());
-    } catch(OutOfMemoryError e) {
-        outOfMemory = true;
-    }
-    if (outOfMemory) {
-        try {
-            appendTo(err, getClass().getName());		
-        } catch(OutOfMemoryError e) {
+	if (!outOfMemory) try {
+		appendTo(err, toString());
+	} catch(OutOfMemoryError e) {
+		outOfMemory = true;
+	}
+	if (outOfMemory) {
+		try {
+			appendTo(err, getClass().getName());		
+		} catch(OutOfMemoryError e) {
 			outOfMemory = true;
 			appendTo(err, "java.lang.OutOfMemoryError(?)");			 //$NON-NLS-1$
-        }
-        try {
+		}
+		try {
 			String message = getLocalizedMessage();
 			if (message != null) {
 				appendTo(err, ": "); //$NON-NLS-1$
 				appendTo(err, message);
 			}
-        } catch(OutOfMemoryError e) {
+		} catch(OutOfMemoryError e) {
 			outOfMemory = true;
-        }
-    }
+		}
+	}
 	appendLnTo(err);
-    int duplicates = 0;
+	int duplicates = 0;
 	try {
 		// Don't use getStackTrace() as it calls clone()
 		// Get stackTrace, in case stackTrace is reassigned
@@ -543,19 +543,21 @@ private StackTraceElement[] printStackTrace(
 		appendLnTo(err);
 		return null;
 	}
-    for (int i=0; i < stack.length - duplicates; i++) {
-		if (!outOfMemory) try {
-            appendTo(err, "\tat " + stack[i], indents);			 //$NON-NLS-1$
-        } catch(OutOfMemoryError e) {
-			outOfMemory = true;
-        }
+	for (int i=0; i < stack.length - duplicates; i++) {
+		if (!outOfMemory) {
+			try {
+				appendTo(err, "\tat " + stack[i], indents);			 //$NON-NLS-1$
+			} catch(OutOfMemoryError e) {
+				outOfMemory = true;
+			}
+		}
 		if (outOfMemory) {
 			appendTo(err, "\tat ", indents); //$NON-NLS-1$
 			Util.printStackTraceElement(stack[i], null, err, false);
-        }
+		}
 		appendLnTo(err);		
-    }
-    if (duplicates > 0) {
+	}
+	if (duplicates > 0) {
 		if (!outOfMemory) try {
 			appendTo(err, "\t... " + duplicates + " more", indents); //$NON-NLS-1$ //$NON-NLS-2$
 		} catch(OutOfMemoryError e) {
@@ -565,7 +567,7 @@ private StackTraceElement[] printStackTrace(
 			appendTo(err, "\t... ", indents); //$NON-NLS-1$
 			appendTo(err, duplicates);
 			appendTo(err, " more"); //$NON-NLS-1$
-        }		
+        	}		
 		appendLnTo(err);
 	}
     

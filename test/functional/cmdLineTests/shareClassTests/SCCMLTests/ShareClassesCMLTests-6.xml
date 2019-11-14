@@ -24,7 +24,7 @@
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
-<!-- Test 200-a to Test 208 cleanup: 88 tests -->
+<!-- Test 200-a to Test 208 cleanup: 89 tests -->
 
 <suite id="Shared Classes CommandLineOptionTests Suite">
 
@@ -912,6 +912,17 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 	</test>
 	
+	<test id="Test 206: cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
 	<test id="Test 207: Create a non-persistent cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ -Xtrace:print=j9prt.700 $currentMode$,nonpersistent -version</command>
 		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>

@@ -1,4 +1,4 @@
-ZZ Copyright (c) 2000, 2017 IBM Corp. and others
+ZZ Copyright (c) 2000, 2019 IBM Corp. and others
 ZZ
 ZZ This program and the accompanying materials are made 
 ZZ available under the terms of the Eclipse Public License 2.0 
@@ -29,8 +29,8 @@ ZZ differently for zOS compared to zLinux
 ZZ ============================================================
 
 define(SETPPA2,
-[dnl
-ifdef([TR_HOST_64BIT],[dnl
+{dnl
+ifdef({TR_HOST_64BIT},{dnl
       EXTRN CELQSTRT
 ZZ PPA2: compile unit block
 PPA2   DS    0D
@@ -41,67 +41,67 @@ PPA2   DS    0D
         DC   AL4(0)
         DC   B'10000001'
         DC   XL3'000000'
-],[dnl
-])dnl
-])dnl
+},{dnl
+})dnl
+})dnl
 
 
 ZZ ============================================================
 
 define(SETVAL,
-[dnl
-$1 EQU $2])dnl
+{dnl
+$1 EQU $2})dnl
 
 ZZ ============================================================
 
 define(EQUVAL,
-[dnl
-$1 EQU $2])dnl
+{dnl
+$1 EQU $2})dnl
 
 ZZ ============================================================
 
 define(CONST_4BYTE,
-[dnl
-    DC    XL4'$1'])dnl
+{dnl
+    DC    XL4'$1'})dnl
 
 ZZ ============================================================
 
 define(CONST_4BYTE_WITH_LABEL,
-[dnl
-$1  DC XL4'$2'])dnl
+{dnl
+$1  DC XL4'$2'})dnl
 
 ZZ ============================================================
 
 define(MACRO_BEGIN_NOARG,
-[dnl
+{dnl
         MACRO
 &NAME   $1
-])dnl
+})dnl
 
 ZZ ============================================================
 
 define(MACRO_END,
-[dnl
+{dnl
         MEND
-])dnl
+})dnl
 
 ZZ ============================================================
 
 define(LABEL,
-[dnl
-$1 DS 0H])dnl
+{dnl
+$1 DS 0H})dnl
 
 ZZ ============================================================
 
 define(HEX,
-[dnl
-X'$1'])dnl
+{dnl
+X'$1'})dnl
 
 ZZ ============================================================
 
 define(START_FUNC,
-[dnl
-ifdef([TR_HOST_64BIT],[dnl
+{dnl
+ifdef({TR_HOST_64BIT},{dnl
      DS    0D
 Z#$2  CSECT
 Z#$2  RMODE ANY
@@ -114,26 +114,26 @@ Z$2  DS 0D
 Z$2  ALIAS C'$1'
 Z$2  XATTR SCOPE(X),LINKAGE(XPLINK)
 
-],[dnl
+},{dnl
 
 ZZ   START $1
 Z$2  DS 0D
      ENTRY Z$2
 Z$2  ALIAS C'$1'
 Z$2  XATTR SCOPE(X),LINKAGE(XPLINK)
-])dnl
-ifdef([TR_HOST_64BIT],[dnl
+})dnl
+ifdef({TR_HOST_64BIT},{dnl
 Z$2      AMODE 64
-],[dnl
+},{dnl
 Z$2      AMODE 31
-])dnl
-])dnl
+})dnl
+})dnl
 
 ZZ ============================================================
 
 define(END_FUNC,
-[dnl
-ifdef([TR_HOST_64BIT],[dnl
+{dnl
+ifdef({TR_HOST_64BIT},{dnl
 
 ZZ  Eyecatcher
 ZZ   DC AL4(Z$2)
@@ -158,15 +158,15 @@ PPAZ$2      DS    0F
         DC    H'$3'       
         DC    CL$3'Z$2'  
         DC    AL4(Z$2-PPAZ$2) 
-],[dnl
+},{dnl
 
 ZZ  Eyecatcher
      DC AL4(Z$2)
      DC XL8'005F004A00490054'
      DC CL$3'Z$2'
 ZZ   END  $1
-])dnl
-])dnl
+})dnl
+})dnl
 
 ZZ ============================================================
 
@@ -188,8 +188,8 @@ SETVAL(CEP,6)
 SETVAL(CRA,7)
 ZZ return integer
 SETVAL(CRINT,3)
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
 SETVAL(RETURNOFFSET,2)
-],[dnl
+},{dnl
 SETVAL(RETURNOFFSET,4)
-])dnl
+})dnl

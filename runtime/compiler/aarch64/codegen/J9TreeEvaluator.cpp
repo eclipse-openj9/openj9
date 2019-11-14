@@ -75,7 +75,8 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::loadFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::storeFence] = TR::TreeEvaluator::flushEvaluator;
    tet[TR::fullFence] = TR::TreeEvaluator::flushEvaluator;
-
+   tet[TR::frem] = TR::TreeEvaluator::fremEvaluator;
+   tet[TR::drem] = TR::TreeEvaluator::dremEvaluator;
    }
 
 void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceInstruction, TR::CodeGenerator *cg)
@@ -792,4 +793,92 @@ TR::Instruction *J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGe
 TR::Instruction *J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::Instruction *preced)
    {
    return J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(cg, node, reg, reg, preced);
+   }
+
+TR::Register *J9::ARM64::TreeEvaluator::fremHelper(TR::Node *node, TR::CodeGenerator *cg, bool isSinglePrecision)
+   {
+   TR::Register *trgReg      = isSinglePrecision ? cg->allocateSinglePrecisionRegister() : cg->allocateRegister(TR_FPR);
+   TR::Node     *child1      = node->getFirstChild();
+   TR::Node     *child2      = node->getSecondChild();
+   TR::Register *source1Reg  = cg->evaluate(child1);
+   TR::Register *source2Reg  = cg->evaluate(child2);
+
+   if (!cg->canClobberNodesRegister(child1))
+      {
+      auto copyReg = isSinglePrecision ? cg->allocateSinglePrecisionRegister() : cg->allocateRegister(TR_FPR);
+      generateTrg1Src1Instruction(cg, isSinglePrecision ? TR::InstOpCode::fmovs : TR::InstOpCode::fmovd, node, copyReg, source1Reg);
+      source1Reg = copyReg;
+      }
+   if (!cg->canClobberNodesRegister(child2))
+      {
+      auto copyReg = isSinglePrecision ? cg->allocateSinglePrecisionRegister() : cg->allocateRegister(TR_FPR);
+      generateTrg1Src1Instruction(cg, isSinglePrecision ? TR::InstOpCode::fmovs : TR::InstOpCode::fmovd, node, copyReg, source2Reg);
+      source2Reg = copyReg;
+      }
+
+   // We call helperCFloatRemainderFloat, thus we need to set appropriate register dependencies.
+   // First, count all volatile registers.
+   TR::Linkage *linkage = cg->createLinkage(TR_System);
+   auto linkageProp = linkage->getProperties();
+   int nregs = 0;
+   for (int32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableFPR; i++)
+      {
+      if ((linkageProp._registerFlags[i] != ARM64_Reserved) && (linkageProp._registerFlags[i] != Preserved))
+         {
+         nregs++;
+         }
+      }
+
+   TR::RegisterDependencyConditions *dependencies = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(nregs, nregs, cg->trMemory());
+
+   // Then, add all volatile registers to dependencies except for v0 and v1.
+   for (int32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastAssignableGPR; i++)
+      {
+      if ((linkageProp._registerFlags[i] != ARM64_Reserved) && (linkageProp._registerFlags[i] != Preserved))
+         {
+         auto tmpReg = cg->allocateRegister(TR_GPR);
+         TR::addDependency(dependencies, tmpReg, static_cast<TR::RealRegister::RegNum>(i), TR_GPR, cg);
+         cg->stopUsingRegister(tmpReg);
+         }
+      }
+   for (int32_t i = TR::RealRegister::v2; i <= TR::RealRegister::LastAssignableFPR; i++)
+      {
+      if ((linkageProp._registerFlags[i] != ARM64_Reserved) && (linkageProp._registerFlags[i] != Preserved))
+         {
+         auto tmpReg = cg->allocateRegister(TR_FPR);
+         TR::addDependency(dependencies, tmpReg, static_cast<TR::RealRegister::RegNum>(i), TR_FPR, cg);
+         cg->stopUsingRegister(tmpReg);
+         }
+      }
+
+   // Finally add v0 and v1 to dependencies.
+   dependencies->addPreCondition(source1Reg, TR::RealRegister::v0);
+   dependencies->addPostCondition(trgReg, TR::RealRegister::v0);
+   dependencies->addPreCondition(source2Reg, TR::RealRegister::v1);
+   auto tmpReg = cg->allocateRegister(TR_FPR);
+   dependencies->addPostCondition(tmpReg, TR::RealRegister::v1);
+   cg->stopUsingRegister(tmpReg);
+
+   TR::SymbolReference *helperSym = cg->symRefTab()->findOrCreateRuntimeHelper(isSinglePrecision ? TR_ARM64floatRemainder : TR_ARM64doubleRemainder,
+                                                                               false, false, false);
+   generateImmSymInstruction(cg, TR::InstOpCode::bl, node,
+                             (uintptr_t)helperSym->getMethodAddress(),
+                             dependencies, helperSym, NULL);
+   cg->stopUsingRegister(source1Reg);
+   cg->stopUsingRegister(source2Reg);
+   cg->decReferenceCount(child1);
+   cg->decReferenceCount(child2);
+   node->setRegister(trgReg);
+   cg->machine()->setLinkRegisterKilled(true);
+
+   return trgReg;
+   }
+TR::Register *J9::ARM64::TreeEvaluator::fremEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return fremHelper(node, cg, true);
+   }
+
+TR::Register *J9::ARM64::TreeEvaluator::dremEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return fremHelper(node, cg, false);
    }

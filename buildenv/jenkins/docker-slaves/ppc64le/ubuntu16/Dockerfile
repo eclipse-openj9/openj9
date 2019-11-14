@@ -62,12 +62,24 @@ RUN apt-get update \
     xvfb \
   && rm -rf /var/lib/apt/lists/*
 
-# Install Docker module to run test framework
-RUN echo yes | cpan install JSON Text::CSV XML::Parser
-
 # Install ccache
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends ccache
+
+RUN cd /tmp \
+  && wget https://github.com/protocolbuffers/protobuf/releases/download/v3.7.1/protobuf-cpp-3.7.1.tar.gz \
+  && tar -xzf protobuf-cpp-3.7.1.tar.gz \
+  && rm -f protobuf-cpp-3.7.1.tar.gz \
+  && cd ./protobuf-3.7.1 \
+  && ./configure --disable-shared --with-pic \
+  && make \
+  && make install \
+  && cd .. \
+  && rm -rf /tmp/protobuf-3.7.1
+
+RUN echo "/usr/local/lib64" >> /etc/ld.so.conf.d/local.conf \
+  && echo "/usr/local/lib" >> /etc/ld.so.conf.d/usr-local.conf \
+  && ldconfig
 
 # Add user home/USER
 RUN useradd -ms /bin/bash ${USER} \

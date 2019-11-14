@@ -40,7 +40,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 
 	if (vm->sharedCacheAPI == NULL) {
 
-		IDATA index;
+		IDATA index = FIND_ARG_IN_VMARGS( OPTIONAL_LIST_MATCH, OPT_XSHARECLASSES, NULL);
 
 		U_64 runtimeFlags = getDefaultRuntimeFlags();
 
@@ -57,7 +57,7 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 		vm->sharedCacheAPI->minJIT = -1;
 		vm->sharedCacheAPI->maxJIT = -1;
 		vm->sharedCacheAPI->layer = -1;
-		if ((index = FIND_ARG_IN_VMARGS( OPTIONAL_LIST_MATCH, OPT_XSHARECLASSES, NULL ))>=0) {
+		if (index >= 0) {
 			char optionsBuffer[SHR_SUBOPT_BUFLEN];
 			char* optionsBufferPtr = (char*)optionsBuffer;
 			IDATA parseRc = OPTION_OK;
@@ -282,8 +282,8 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved)
 	/* This code detects "none" as part of Xshareclasses and unloads the DLL if it is found. Must therefore be in this stage or earlier */
 	case DLL_LOAD_TABLE_FINALIZED :
 	{
-		IDATA index;
-		if ((index = FIND_ARG_IN_VMARGS( OPTIONAL_LIST_MATCH, OPT_XSHARECLASSES, NULL ))>=0) {
+		IDATA index = FIND_ARG_IN_VMARGS( OPTIONAL_LIST_MATCH, OPT_XSHARECLASSES, NULL);
+		if (index >= 0) {
 			char optionsBuffer[SHR_SUBOPT_BUFLEN];
 			char* optionsBufferPtr = (char*)optionsBuffer;
 

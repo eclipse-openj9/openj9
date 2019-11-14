@@ -281,7 +281,7 @@ def build() {
 def archive_sdk() {
     stage('Archive') {
         def buildDir = "build/${RELEASE}/images/"
-        def testDir = "test/openj9"
+        def testDir = "test"
 
         dir(OPENJDK_CLONE_DIR) {
             sh "tar -C ${buildDir} -zcvf ${SDK_FILENAME} ${JDK_FOLDER}"
@@ -289,9 +289,9 @@ def archive_sdk() {
             if (fileExists("${buildDir}${testDir}")) {
                 if (SPEC.contains('zos')) {
                     // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
-                    sh "pax  -wvz -s#${buildDir}${testDir}#native-test-libs#g -f ${TEST_FILENAME} ${buildDir}${testDir}"
+                    sh "pax  -wvz -s#${buildDir}${testDir}#test-images#g -f ${TEST_FILENAME} ${buildDir}${testDir}"
                 } else {
-                    sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},native-test-libs,'"
+                    sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},test-images,'"
                 }
             }
             if (ARTIFACTORY_SERVER) {
@@ -326,8 +326,59 @@ def archive_sdk() {
     }
 }
 
+/*
+* When crash occurs in java, there will be an output in the log: IEATDUMP success for DSN='JENKINS.JVM.JENKIN*.*.*.X&DS'.
+* The X&DS is a macro that is passed to the IEATDUMP service on z/OS.
+* The dump is split into multiple files by the macro if the address space is large.
+* Each dataset is named in a similar way but there is a distinct suffix to specify the order.
+* For example, JVM.*.*.*.001, JVM.*.*.*.002, and JVM.*.*.*.003.
+* The function fetchFile moves each dataset into the current directory of the machine, and appends the data to the core.xxx.dmp at the same time.
+* The file core.xxx.dmp is uploaded to artifactory for triage.
+*/
+def fetchFile(src, dest) {
+    // remove the user name from the dataset name
+    def offset = USER.length() + 1
+    def fileToMove = src.substring(src.indexOf("${USER}.") + offset)
+    // append the dataset to core.xxx.dmp file
+    sh "cat '//${fileToMove}' >> ${dest}"
+    // remove the dataset
+    sh "tso DELETE ${fileToMove}"
+}
+
 def archive_diagnostics() {
-    sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"
+    if (SPEC.contains('zos')) {
+        def logContent = currentBuild.rawBuild.getLog()
+        // search for each occurrence of IEATDUMP success for DSN=
+        def matches = logContent =~ /IEATDUMP success for DSN=.*/
+        for (match in matches) {
+            // extract the naming convention of datasets
+            def beginIndex = match.indexOf('\'') + 1
+            def endIndex = match.lastIndexOf('.')
+            def filename = match.substring(beginIndex, endIndex)
+            // count how many datasets created by the macro
+            def num = sh returnStdout: true, script: "tso listcat | grep ${filename} | wc -l"
+            def numFiles = num.trim().toInteger()
+            for (i = 1; i <= numFiles; i++) {
+                switch (i) {
+                    case 1..9:
+                        src = filename + '.' + 'X00' + i;
+                        break;
+                    case 10..99:
+                        src = filename + '.' + 'X0' + i;
+                        break;
+                    case 100..999:
+                        src = filename + '.' + 'X' + i;
+                        break;
+                }
+                dest = 'core' + '.' + filename + '.' + 'dmp'
+                fetchFile(src,dest)
+            }
+        }
+        // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
+        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | pax -wzf ${DIAGNOSTICS_FILENAME}"   
+    } else {
+        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"      
+    }
     if (ARTIFACTORY_SERVER) {
         def uploadSpec = """{
             "files":[
@@ -352,15 +403,15 @@ def upload_artifactory(uploadSpec) {
     server.connection.timeout = 600
 
     def buildInfo = Artifactory.newBuildInfo()
-    buildInfo.retention maxBuilds: ARTIFACTORY_NUM_ARTIFACTS, deleteBuildArtifacts: true
+    buildInfo.retention maxBuilds: ARTIFACTORY_NUM_ARTIFACTS, maxDays: ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS, deleteBuildArtifacts: true
     // Add BUILD_IDENTIFIER to the buildInfo. The UploadSpec adds it to the Artifact info
     buildInfo.env.filter.addInclude("BUILD_IDENTIFIER")
     buildInfo.env.capture = true
 
     //Retry uploading to Artifactory if errors occur
     pipelineFunctions.retry_and_delay({
-        server.upload spec: uploadSpec, buildInfo: buildInfo; 
-        server.publishBuildInfo buildInfo}, 
+        server.upload spec: uploadSpec, buildInfo: buildInfo;
+        server.publishBuildInfo buildInfo},
         3, 300)
 
     // Write URL to env so that we can pull it from the upstream pipeline job

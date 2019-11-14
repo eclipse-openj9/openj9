@@ -4,7 +4,7 @@ define(`ZZ',`**')
 define(`ZZ',`##')
 ')dnl
 
-ZZ Copyright (c) 2000, 2017 IBM Corp. and others
+ZZ Copyright (c) 2000, 2019 IBM Corp. and others
 ZZ
 ZZ This program and the accompanying materials are made 
 ZZ available under the terms of the Eclipse Public License 2.0 
@@ -27,33 +27,33 @@ ZZ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR
 ZZ GPL-2.0 WITH Classpath-exception-2.0 OR
 ZZ LicenseRef-GPL-2.0 WITH Assembly-exception
 
-changequote([,])dnl
+changequote({,})dnl
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
 
         TITLE 'ValueProf.s'
 
 VALPROF#START      CSECT
 VALPROF#START      RMODE ANY
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
 VALPROF#START      AMODE 64
-],[dnl
+},{dnl
 VALPROF#START      AMODE 31
-])dnl
-])dnl
+})dnl
+})dnl
 
-define([VALPROF_M4],[1])
+define({VALPROF_M4},{1})
 
 ZZ ===================================================================
 ZZ codert/jilconsts.inc is a j9 assembler include that defines
 ZZ offsets of various fields in structs used by jit
 ZZ ===================================================================
 
-include([jilconsts.inc])dnl
+include({jilconsts.inc})dnl
 
 
-include([z/runtime/s390_macros.inc])dnl
-include([z/runtime/s390_asdef.inc])dnl
+include({z/runtime/s390_macros.inc})dnl
+include({z/runtime/s390_asdef.inc})dnl
 
 ZZ ===================================================================
 ZZ codert.dev/codertTOC.inc is a JIT assembler include that defines
@@ -61,20 +61,20 @@ ZZ index of various runtime helper functions addressable from
 ZZ codertTOC.
 ZZ ===================================================================
 
-include([runtime/Helpers.inc])dnl
+include({runtime/Helpers.inc})dnl
 
 SETVAL(DblLen,8)
-ifdef([J9_SOFT_FLOAT],[dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 SETVAL(PVFPSize,0)
-],[dnl
+},{dnl
 SETVAL(PVFPSize,8*DblLen)
-])dnl
+})dnl
 
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
 SETVAL(PVGPRSize,27*PTR_SIZE)
-],[dnl
+},{dnl
 SETVAL(PVGPRSize,11*PTR_SIZE)
-])dnl
+})dnl
 
 SETVAL(FPSlot0,0*DblLen)
 SETVAL(FPSlot1,1*DblLen)
@@ -99,19 +99,19 @@ ZZ * * * * * * * * * * * * * * *
 ZZ macros for jitProfile* code
 ZZ
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
 define(XFORM_JITARGS_TO_CARGS_INT,
-[dnl
+{dnl
 
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
   L_GPR  r9,2200(rSSP) ZZ preserve value in r9
   ST_GPR r1,2200(rSSP) ZZ save as arg ZZ 4 on C stack
-],[dnl
+},{dnl
 ZZ restore CAA to r12
   L_GPR r12,J9TR_CAA_save_offset(rSSP)
   L_GPR  r9,2124(rSSP) ZZ preserve value in r9
   ST_GPR r1,2124(rSSP) ZZ save as arg ZZ 4
-])dnl
+})dnl
   LR_GPR r1,r3 ZZ save
   LR_GPR r3,r2 ZZ c arg 3
   LR_GPR r2,r1 ZZ c arg 2
@@ -120,34 +120,34 @@ ZZ restore CAA to r12
 ZZ load up the C Environment addr into r5
 LOAD_ADDR_FROM_TOC(r5,TR_S390CEnvironmentAddress)
 
-])dnl
+})dnl
 
-],[dnl
+},{dnl
 
 define(XFORM_JITARGS_TO_CARGS_INT,
-[dnl
+{dnl
 
   LR_GPR r4,r2
   L  r2,ProfileValueStackSize+0*PTR_SIZE(r5)
   LR_GPR r5,r1
 ZZ  LR_GPR r3,r3 no need
-])dnl
+})dnl
 
-])dnl
+})dnl
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
 define(XFORM_JITARGS_TO_CARGS_ADDR,
-[dnl
+{dnl
 
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
   L_GPR  r9,2200(rSSP) ZZ preserve value in r9
   ST_GPR r1,2200(rSSP) ZZ save as arg ZZ 4 on C stack
-],[dnl
+},{dnl
 ZZ restore CAA to r12
   L_GPR r12,J9TR_CAA_save_offset(rSSP)
   L_GPR  r9,2124(rSSP) ZZ preserve value in r9
   ST_GPR r1,2124(rSSP) ZZ save as arg ZZ 4
-])dnl
+})dnl
   LR_GPR r1,r3 ZZ save
   LR_GPR r3,r2 ZZ c arg 3
   LR_GPR r2,r1 ZZ c arg 2
@@ -156,33 +156,33 @@ ZZ restore CAA to r12
 ZZ load up the C Environment addr into r5
 LOAD_ADDR_FROM_TOC(r5,TR_S390CEnvironmentAddress)
 
-])dnl
+})dnl
 
-],[dnl
+},{dnl
 
 define(XFORM_JITARGS_TO_CARGS_ADDR,
-[dnl
+{dnl
 
   LR_GPR r4,r2
   L_GPR  r2,ProfileValueStackSize+0*PTR_SIZE(r5)
   LR_GPR r5,r1
 ZZ  LR_GPR r3,r3 no need
-])dnl
+})dnl
 
-])dnl
+})dnl
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
 define(XFORM_JITARGS_TO_CARGS_LONG,
-[dnl
+{dnl
 
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
   L_GPR  r9,2200(rSSP) ZZ preserve value in r9
   ST_GPR r1,2200(rSSP) ZZ save as arg ZZ 4 on C stack
   LR_GPR r1,r3 ZZ save
   LR_GPR r3,r2 ZZ c arg 3
   LR_GPR r2,r1 ZZ c arg 2
   L_GPR  r1,ProfileValueStackSize+0*PTR_SIZE(r5)
-],[dnl
+},{dnl
 ZZ restore CAA to r12
   L_GPR r12,J9TR_CAA_save_offset(rSSP)
   L_GPR  r9,2124(rSSP) ZZ preserve value in r9
@@ -190,37 +190,37 @@ ZZ restore CAA to r12
   ST_GPR r2,2124(rSSP) ZZ save as arg ZZ 5
   ST_GPR r1,2128(rSSP) ZZ save as arg ZZ 4
   LM  r1,r2,ProfileValueStackSize+0*PTR_SIZE(r5)
-])dnl
+})dnl
 
 ZZ load up the C Environment addr into r5
 LOAD_ADDR_FROM_TOC(r5,TR_S390CEnvironmentAddress)
-])dnl
+})dnl
 
-],[dnl
+},{dnl
 
 define(XFORM_JITARGS_TO_CARGS_LONG,
-[dnl
-ifdef([TR_HOST_64BIT],[dnl
+{dnl
+ifdef({TR_HOST_64BIT},{dnl
   LR_GPR r4,r2
   L_GPR  r2,ProfileValueStackSize+0*PTR_SIZE(r5)
   LR_GPR r5,r1
 ZZ  LR_GPR r3,r3 no need
-],[dnl
+},{dnl
   LR_GPR r4,r3
   LR_GPR r6,r2 ZZ Temporarily save r2 value into r6.
   LM_GPR r2,r3,ProfileValueStackSize+0*PTR_SIZE(r5)
   LR_GPR r5,r6 ZZ Load r2's original value back out of r6
   LR_GPR r6,r1
-])dnl
-])dnl
-])dnl
+})dnl
+})dnl
+})dnl
 
 ZZ * end macro *
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
 define(XFORM_JITARGS_TO_CARGS_BIGDECIMAL,
-[dnl
-ifdef([TR_HOST_64BIT],[dnl
+{dnl
+ifdef({TR_HOST_64BIT},{dnl
   L_GPR  r9,2200(rSSP)      ZZ preserve value in r9
   L_GPR  r10,2208(rSSP)     ZZ preserve value in r10
   L_GPR  r11,2216(rSSP)     ZZ preserve value in r11
@@ -233,7 +233,7 @@ ifdef([TR_HOST_64BIT],[dnl
   L_GPR  r1,ProfileValueStackSize+0*PTR_SIZE(r5) ZZ c arg ZZ 1
   L_GPR  r2,ProfileValueStackSize+1*PTR_SIZE(r5) ZZ c arg ZZ 2
   L      r3,ProfileValueStackSize+2*PTR_SIZE(r5) ZZ c arg ZZ 3
-],[dnl
+},{dnl
   L_GPR  r12,J9TR_CAA_save_offset(rSSP)
   L_GPR  r9,2124(rSSP)      ZZ preserve value in r9
   L_GPR  r10,2128(rSSP)     ZZ preserve value in r10
@@ -247,18 +247,18 @@ ifdef([TR_HOST_64BIT],[dnl
   L_GPR  r1,ProfileValueStackSize+0*PTR_SIZE(r5) ZZ c arg ZZ 1
   L_GPR  r2,ProfileValueStackSize+1*PTR_SIZE(r5) ZZ c arg ZZ 2
   L      r3,ProfileValueStackSize+2*PTR_SIZE(r5) ZZ c arg ZZ 3
-])dnl
+})dnl
 
 ZZ load up the C Environment addr into r5
 LOAD_ADDR_FROM_TOC(r5,TR_S390CEnvironmentAddress)
-])dnl
+})dnl
 
-],[dnl
+},{dnl
 
 define(XFORM_JITARGS_TO_CARGS_BIGDECIMAL,
-[dnl
-ifdef([TR_HOST_64BIT],[dnl
-ifdef([J9ZTPF],[dnl
+{dnl
+ifdef({TR_HOST_64BIT},{dnl
+ifdef({J9ZTPF},{dnl
   L_GPR r9,456(rSSP)      ZZ preserve value in r9
   L_GPR r10,448(rSSP)     ZZ preserve value in r10
   ST_GPR r1,456(rSSP)     ZZ save as arg ZZ 7
@@ -268,7 +268,7 @@ ifdef([J9ZTPF],[dnl
   L_GPR r3,ProfileValueStackSize+1*PTR_SIZE(r5) ZZ c arg ZZ 2
   L     r4,ProfileValueStackSize+2*PTR_SIZE(r5) ZZ c arg ZZ 3
   L     r5,ProfileValueStackSize+3*PTR_SIZE(r5) ZZ c arg ZZ 4
-],[dnl
+},{dnl
   L_GPR r9,168(rSSP)      ZZ preserve value in r9
   L_GPR r10,164(rSSP)     ZZ preserve value in r10
   ST_GPR r1,168(rSSP)     ZZ save as arg ZZ 7
@@ -278,8 +278,8 @@ ifdef([J9ZTPF],[dnl
   L_GPR r3,ProfileValueStackSize+1*PTR_SIZE(r5) ZZ c arg ZZ 2
   L     r4,ProfileValueStackSize+2*PTR_SIZE(r5) ZZ c arg ZZ 3
   L     r5,ProfileValueStackSize+3*PTR_SIZE(r5) ZZ c arg ZZ 4
-])dnl
-],[dnl
+})dnl
+},{dnl
   L_GPR r9,100(rSSP)      ZZ preserve value in r9
   L_GPR r10,96(rSSP)      ZZ preserve value in r10
   ST_GPR r1,100(rSSP)     ZZ save as arg ZZ 7
@@ -289,16 +289,16 @@ ifdef([J9ZTPF],[dnl
   L_GPR r3,ProfileValueStackSize+1*PTR_SIZE(r5) ZZ c arg ZZ 2
   L     r4,ProfileValueStackSize+2*PTR_SIZE(r5) ZZ c arg ZZ 3
   L     r5,ProfileValueStackSize+3*PTR_SIZE(r5) ZZ c arg ZZ 4
-])dnl
-])dnl
-])dnl
+})dnl
+})dnl
+})dnl
 
 ZZ STRING
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
 define(XFORM_JITARGS_TO_CARGS_STRING,
-[dnl
-ifdef([TR_HOST_64BIT],[dnl
+{dnl
+ifdef({TR_HOST_64BIT},{dnl
   L_GPR  r9,2200(rSSP)      ZZ preserve value in r9
   L_GPR  r10,2208(rSSP)     ZZ preserve value in r10
   L_GPR  r11,2216(rSSP)     ZZ preserve value in r11
@@ -308,7 +308,7 @@ ifdef([TR_HOST_64BIT],[dnl
   L_GPR  r1,ProfileValueStackSize+0*PTR_SIZE(r5) ZZ c arg ZZ 1
   L      r2,ProfileValueStackSize+1*PTR_SIZE(r5) ZZ c arg ZZ 2
   L      r3,ProfileValueStackSize+2*PTR_SIZE(r5) ZZ c arg ZZ 3
-],[dnl
+},{dnl
   L_GPR  r12,J9TR_CAA_save_offset(rSSP)
   L_GPR  r9,2124(rSSP)      ZZ preserve value in r9
   L_GPR  r10,2128(rSSP)     ZZ preserve value in r10
@@ -319,17 +319,17 @@ ifdef([TR_HOST_64BIT],[dnl
   L_GPR  r1,ProfileValueStackSize+0*PTR_SIZE(r5) ZZ c arg ZZ 1
   L      r2,ProfileValueStackSize+1*PTR_SIZE(r5) ZZ c arg ZZ 2
   L      r3,ProfileValueStackSize+2*PTR_SIZE(r5) ZZ c arg ZZ 3
-])dnl
+})dnl
 
 ZZ load up the C Environment addr into r5
 LOAD_ADDR_FROM_TOC(r5,TR_S390CEnvironmentAddress)
-])dnl
+})dnl
 
-],[dnl
+},{dnl
 
 define(XFORM_JITARGS_TO_CARGS_STRING,
-[dnl
-ifdef([TR_HOST_64BIT],[dnl
+{dnl
+ifdef({TR_HOST_64BIT},{dnl
   L_GPR r10,164(rSSP)     ZZ preserve value in r10
   ST_GPR r2,164(rSSP)         ZZ save as arg ZZ 6
   LR    r6,r3            ZZ c arg ZZ 5
@@ -337,7 +337,7 @@ ifdef([TR_HOST_64BIT],[dnl
   L     r3,ProfileValueStackSize+1*PTR_SIZE(r5) ZZ c arg ZZ 2
   L     r4,ProfileValueStackSize+2*PTR_SIZE(r5) ZZ c arg ZZ 3
   L_GPR r5,ProfileValueStackSize+3*PTR_SIZE(r5) ZZ c arg ZZ 4
-],[dnl
+},{dnl
   L_GPR r10,96(rSSP)      ZZ preserve value in r10
   ST_GPR r2,96(rSSP)          ZZ save as arg ZZ 6
   LR    r6,r3            ZZ c arg ZZ 5
@@ -345,9 +345,9 @@ ifdef([TR_HOST_64BIT],[dnl
   L     r3,ProfileValueStackSize+1*PTR_SIZE(r5) ZZ c arg ZZ 2
   L     r4,ProfileValueStackSize+2*PTR_SIZE(r5) ZZ c arg ZZ 3
   L_GPR r5,ProfileValueStackSize+3*PTR_SIZE(r5) ZZ c arg ZZ 4
-])dnl
-])dnl
-])dnl
+})dnl
+})dnl
+})dnl
 
 
 
@@ -355,124 +355,124 @@ ZZ macro for restoring C caller stack as
 ZZ before--xplink only
 ZZ Restore arg4 to C stack
 ZZ probably not necessary, but just in case
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
 define(RESTORE_CALLER_OUTARGS,
-[dnl
+{dnl
 
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
   ST_GPR r9,2200(rSSP) ZZ restore previous value
-],[dnl
+},{dnl
 ZZ restore CAA to r12
   ST_GPR r9,2124(rSSP) ZZ restore
-])dnl
-])dnl
+})dnl
+})dnl
 
-],[dnl
+},{dnl
 
 define(RESTORE_CALLER_OUTARGS,
-[dnl
+{dnl
 
 ZZ no restore required
-])dnl
-])dnl
+})dnl
+})dnl
 
 ZZ macro for restoring C caller stack as
 ZZ before--xplink only
 ZZ Restore arg4 to C stack
 ZZ probably not necessary, but just in case
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
 define(RESTORE_CALLER_LONG_OUTARGS,
-[dnl
+{dnl
 
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
   ST_GPR r9,2200(rSSP) ZZ restore previous value
-],[dnl
+},{dnl
 ZZ restore CAA to r12
   ST_GPR r9,2124(rSSP) ZZ restore
   ST_GPR r10,2128(rSSP) ZZ restore
-])dnl
-])dnl
+})dnl
+})dnl
 
-],[dnl
+},{dnl
 
 define(RESTORE_CALLER_LONG_OUTARGS,
-[dnl
+{dnl
 
 ZZ no restore required
-])dnl
-])dnl
+})dnl
+})dnl
 
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
 define(RESTORE_CALLER_BIGDECIMAL_OUTARGS,
-[dnl
+{dnl
 
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
   ST_GPR  r9,2200(rSSP)  ZZ restore
   ST_GPR  r10,2208(rSSP) ZZ restore
   ST_GPR  r11,2216(rSSP) ZZ restore
   ST_GPR  r12,2224(rSSP) ZZ restore
 
-],[dnl
+},{dnl
   ST_GPR r9,2124(rSSP)  ZZ restore
   ST_GPR r10,2128(rSSP) ZZ restore
   ST_GPR r11,2132(rSSP) ZZ restore
   ST_GPR r14,2136(rSSP) ZZ restore
-])dnl
-])dnl
+})dnl
+})dnl
 
-],[dnl
+},{dnl
 
 define(RESTORE_CALLER_BIGDECIMAL_OUTARGS,
-[dnl
+{dnl
 
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
   ST_GPR r9,168(rSSP)   ZZ restore
   ST_GPR r10,164(rSSP)  ZZ restore
-],[dnl
+},{dnl
 ZZ restore CAA to r12
   ST_GPR r9,100(rSSP) ZZ restore
   ST_GPR r10,96(rSSP) ZZ restore
-])dnl
+})dnl
 
 
 ZZ no restore required
-])dnl
-])dnl
+})dnl
+})dnl
 
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
 define(RESTORE_CALLER_STRING_OUTARGS,
-[dnl
+{dnl
 
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
   ST_GPR  r9,2200(rSSP)  ZZ restore
   ST_GPR  r10,2208(rSSP) ZZ restore
   ST_GPR  r11,2216(rSSP) ZZ restore
 
-],[dnl
+},{dnl
   ST_GPR r9,2124(rSSP)  ZZ restore
   ST_GPR r10,2128(rSSP) ZZ restore
   ST_GPR r11,2132(rSSP) ZZ restore
-])dnl
-])dnl
+})dnl
+})dnl
 
-],[dnl
+},{dnl
 
 define(RESTORE_CALLER_STRING_OUTARGS,
-[dnl
+{dnl
 
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
   ST_GPR r10,164(rSSP)  ZZ restore
-],[dnl
+},{dnl
 ZZ restore CAA to r12
   ST_GPR r10,96(rSSP) ZZ restore
-])dnl
+})dnl
 
 
 ZZ no restore required
-])dnl
-])dnl
+})dnl
+})dnl
 
 
 ZZ * end macro *
@@ -506,12 +506,12 @@ START_FUNC(_jitProfileValueWrap,_jitPVW)
 
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,44(J9SP)
-])dnl
-ifdef([J9_SOFT_FLOAT],[dnl
+})dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
     STD f0,ProfileVFPSlot0(J9SP)
     STD f1,ProfileVFPSlot1(J9SP)
     STD f2,ProfileVFPSlot2(J9SP)
@@ -520,7 +520,7 @@ ZZ do nothing
     STD f5,ProfileVFPSlot5(J9SP)
     STD f6,ProfileVFPSlot6(J9SP)
     STD f7,ProfileVFPSlot7(J9SP)
-])dnl
+})dnl
 
   LR_GPR r8,J9SP  ZZ happen to know r8 is saved by callee
 
@@ -539,9 +539,9 @@ SaveSSP
 
   LR_GPR J9SP,r8
 
-ifdef([J9_SOFT_FLOAT],[dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
     LD f0,ProfileVFPSlot0(J9SP)
     LD f1,ProfileVFPSlot1(J9SP)
     LD f2,ProfileVFPSlot2(J9SP)
@@ -550,11 +550,11 @@ ZZ do nothing
     LD f5,ProfileVFPSlot5(J9SP)
     LD f6,ProfileVFPSlot6(J9SP)
     LD f7,ProfileVFPSlot7(J9SP)
-])dnl
+})dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,44(J9SP)
-])dnl
+})dnl
     AHI_GPR J9SP,ProfileValueStackSize
     BR r14
 
@@ -564,12 +564,12 @@ ZZ ------------------------------------------
 START_FUNC(_jitProfileAddressWrap,_jitPAW)
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,44(J9SP)
-])dnl
-ifdef([J9_SOFT_FLOAT],[dnl
+})dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
     STD f0,ProfileVFPSlot0(J9SP)
     STD f1,ProfileVFPSlot1(J9SP)
     STD f2,ProfileVFPSlot2(J9SP)
@@ -578,7 +578,7 @@ ZZ do nothing
     STD f5,ProfileVFPSlot5(J9SP)
     STD f6,ProfileVFPSlot6(J9SP)
     STD f7,ProfileVFPSlot7(J9SP)
-])dnl
+})dnl
 
   LR_GPR r8,J9SP  ZZ happen to know r8 is saved by callee
 
@@ -598,9 +598,9 @@ SaveSSP
 
   LR_GPR J9SP,r8
 
-ifdef([J9_SOFT_FLOAT],[dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
     LD f0,ProfileVFPSlot0(J9SP)
     LD f1,ProfileVFPSlot1(J9SP)
     LD f2,ProfileVFPSlot2(J9SP)
@@ -609,11 +609,11 @@ ZZ do nothing
     LD f5,ProfileVFPSlot5(J9SP)
     LD f6,ProfileVFPSlot6(J9SP)
     LD f7,ProfileVFPSlot7(J9SP)
-])dnl
+})dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,44(J9SP)
-])dnl
+})dnl
     AHI_GPR J9SP,ProfileValueStackSize
     BR r14
 
@@ -623,12 +623,12 @@ ZZ ------------------------------------------
 START_FUNC(_jitProfileLongValueWrap,_jitPLW)
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,44(J9SP)
-])dnl
-ifdef([J9_SOFT_FLOAT],[dnl
+})dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
     STD f0,ProfileVFPSlot0(J9SP)
     STD f1,ProfileVFPSlot1(J9SP)
     STD f2,ProfileVFPSlot2(J9SP)
@@ -637,7 +637,7 @@ ZZ do nothing
     STD f5,ProfileVFPSlot5(J9SP)
     STD f6,ProfileVFPSlot6(J9SP)
     STD f7,ProfileVFPSlot7(J9SP)
-])dnl
+})dnl
 
   LR_GPR r8,J9SP  ZZ happen to know r8 is saved by callee
 
@@ -656,9 +656,9 @@ SaveSSP
 
   LR_GPR J9SP,r8
 
-ifdef([J9_SOFT_FLOAT],[dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
     LD f0,ProfileVFPSlot0(J9SP)
     LD f1,ProfileVFPSlot1(J9SP)
     LD f2,ProfileVFPSlot2(J9SP)
@@ -667,11 +667,11 @@ ZZ do nothing
     LD f5,ProfileVFPSlot5(J9SP)
     LD f6,ProfileVFPSlot6(J9SP)
     LD f7,ProfileVFPSlot7(J9SP)
-])dnl
+})dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,44(J9SP)
-])dnl
+})dnl
     AHI_GPR J9SP,ProfileValueStackSize
     BR r14
 
@@ -681,12 +681,12 @@ ZZ ------------------------------------------
 START_FUNC(_jitProfileBigDecimalValueWrap,_jitPBDW)
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,44(J9SP)
-])dnl
-ifdef([J9_SOFT_FLOAT],[dnl
+})dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
     STD f0,ProfileVFPSlot0(J9SP)
     STD f1,ProfileVFPSlot1(J9SP)
     STD f2,ProfileVFPSlot2(J9SP)
@@ -695,7 +695,7 @@ ZZ do nothing
     STD f5,ProfileVFPSlot5(J9SP)
     STD f6,ProfileVFPSlot6(J9SP)
     STD f7,ProfileVFPSlot7(J9SP)
-])dnl
+})dnl
 
   LR_GPR r8,J9SP  ZZ happen to know r8 is saved by callee
 
@@ -714,9 +714,9 @@ SaveSSP
 
   LR_GPR J9SP,r8
 
-ifdef([J9_SOFT_FLOAT],[dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
     LD f0,ProfileVFPSlot0(J9SP)
     LD f1,ProfileVFPSlot1(J9SP)
     LD f2,ProfileVFPSlot2(J9SP)
@@ -725,11 +725,11 @@ ZZ do nothing
     LD f5,ProfileVFPSlot5(J9SP)
     LD f6,ProfileVFPSlot6(J9SP)
     LD f7,ProfileVFPSlot7(J9SP)
-])dnl
+})dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,44(J9SP)
-])dnl
+})dnl
     AHI_GPR J9SP,ProfileValueStackSize
     BR r14
 
@@ -739,12 +739,12 @@ ZZ ------------------------------------------
 START_FUNC(_jitProfileStringValueWrap,_jitPSW)
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,44(J9SP)
-])dnl
-ifdef([J9_SOFT_FLOAT],[dnl
+})dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
     STD f0,ProfileVFPSlot0(J9SP)
     STD f1,ProfileVFPSlot1(J9SP)
     STD f2,ProfileVFPSlot2(J9SP)
@@ -753,7 +753,7 @@ ZZ do nothing
     STD f5,ProfileVFPSlot5(J9SP)
     STD f6,ProfileVFPSlot6(J9SP)
     STD f7,ProfileVFPSlot7(J9SP)
-])dnl
+})dnl
 
   LR_GPR r8,J9SP  ZZ happen to know r8 is saved by callee
 
@@ -772,9 +772,9 @@ SaveSSP
 
   LR_GPR J9SP,r8
 
-ifdef([J9_SOFT_FLOAT],[dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
     LD f0,ProfileVFPSlot0(J9SP)
     LD f1,ProfileVFPSlot1(J9SP)
     LD f2,ProfileVFPSlot2(J9SP)
@@ -783,11 +783,11 @@ ZZ do nothing
     LD f5,ProfileVFPSlot5(J9SP)
     LD f6,ProfileVFPSlot6(J9SP)
     LD f7,ProfileVFPSlot7(J9SP)
-])dnl
+})dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,44(J9SP)
-])dnl
+})dnl
     AHI_GPR J9SP,ProfileValueStackSize
     BR r14
 
@@ -798,15 +798,15 @@ ZZ Wrapper to modify runtime instrumentation controls.
 ZZ @param CARG1 pointer to RI Control Block
 ZZ ==================================================================
 START_FUNC(_jitRIMRIC,_jitRIMRIC)
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
    DC HEX(EB001000)
    DC HEX(0062)
    B  RETURNOFFSET(CRA)
-],[dnl
+},{dnl
    .long HEX(EB002000)
    .long HEX(0062)
    BR CRA
-])dnl
+})dnl
 END_FUNC(_jitRIMRIC,_jitRIMRIC,12)
 
 ZZ ==================================================================
@@ -818,7 +818,7 @@ ZZ          3  if Controls are not valid
 ZZ ==================================================================
 START_FUNC(_jitRISTRIC,_jitRISTRIC)
    LHI CRINT,0
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
    DC HEX(EB001000)
    DC HEX(0061)
    BC 8,RETURNOFFSET(CRA)
@@ -826,7 +826,7 @@ ifdef([J9ZOS390],[dnl
    BC 2,RETURNOFFSET(CRA)
    LHI CRINT,3
    B  RETURNOFFSET(CRA)
-],[dnl
+},{dnl
    .long HEX(EB002000)
    .long HEX(0061)
    BCR 8,CRA
@@ -834,7 +834,7 @@ ifdef([J9ZOS390],[dnl
    BCR 2,CRA
    LHI CRINT,3
    BR CRA
-])dnl
+})dnl
 END_FUNC(_jitRISTRIC,_jitRISTRIC,13)
 
 ZZ ==================================================================
@@ -846,7 +846,7 @@ ZZ          3  if Controls are not valid
 ZZ ==================================================================
 START_FUNC(_jitRITRIC,_jitRITRIC)
    LHI CRINT,0
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
    DC HEX(AA020000)
    BC 8,RETURNOFFSET(CRA)
    LHI CRINT,1
@@ -855,7 +855,7 @@ ifdef([J9ZOS390],[dnl
    BC 2,RETURNOFFSET(CRA)
    LHI CRINT,3
    B  RETURNOFFSET(CRA)
-],[dnl
+},{dnl
    .long HEX(AA020000)
    BCR 8,CRA
    LHI CRINT,1
@@ -864,7 +864,7 @@ ifdef([J9ZOS390],[dnl
    BCR 2,CRA
    LHI CRINT,3
    BR CRA
-])dnl
+})dnl
 END_FUNC(_jitRITRIC,_jitRITRIC,12)
 
 ZZ ==================================================================
@@ -875,21 +875,21 @@ ZZ          3  if Controls are not valid
 ZZ ==================================================================
 START_FUNC(_jitRION,_jitRION)
    LHI CRINT,0
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
    DC HEX(AA010000)
    BC 8,RETURNOFFSET(CRA)
    LHI CRINT,2
    BC 2,RETURNOFFSET(CRA)
    LHI CRINT,3
    B  RETURNOFFSET(CRA)
-],[dnl
+},{dnl
    .long HEX(AA010000)
    BCR 8,CRA
    LHI CRINT,2
    BCR 2,CRA
    LHI CRINT,3
    BR CRA
-])dnl
+})dnl
 END_FUNC(_jitRION,_jitRION,10)
 
 ZZ ==================================================================
@@ -900,24 +900,24 @@ ZZ          3  if Controls are not valid
 ZZ ==================================================================
 START_FUNC(_jitRIOFF,_jitRIOFF)
    LHI CRINT,0
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
    DC HEX(AA030000)
    BC 8,RETURNOFFSET(CRA)
    LHI CRINT,2
    BC 2,RETURNOFFSET(CRA)
    LHI CRINT,3
    B  RETURNOFFSET(CRA)
-],[dnl
+},{dnl
    .long HEX(AA030000)
    BCR 8,CRA
    LHI CRINT,2
    BCR 2,CRA
    LHI CRINT,3
    BR CRA
-   ])dnl
+   })dnl
 END_FUNC(_jitRIOFF,_jitRIOFF,11)
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
     END
-])dnl
+})dnl
 

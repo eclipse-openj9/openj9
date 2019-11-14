@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,6 +68,11 @@ public:
 	UDATA _stringConstantsCleared;  /**< The number of string constants that have been cleared during marking */
 	UDATA _stringConstantsCandidates; /**< The number of string constants that have been visited in string table during marking */
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	UDATA _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
+	UDATA _doubleMappedArrayletsCandidates; /**< The number of double mapped arraylets that have been visited during marking */
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */	
+
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 	UDATA _splitArraysProcessed; /**< The number of array chunks (not counting parts smaller than the split size) processed by this thread */
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
@@ -94,6 +99,11 @@ public:
 		_stringConstantsCleared = 0;
 		_stringConstantsCandidates = 0;
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		_doubleMappedArrayletsCleared = 0;
+		_doubleMappedArrayletsCandidates = 0;
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */	
+
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 		_splitArraysProcessed = 0;
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */
@@ -116,6 +126,12 @@ public:
 		_stringConstantsCleared += statsToMerge->_stringConstantsCleared;
 		_stringConstantsCandidates += statsToMerge->_stringConstantsCandidates;
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		_doubleMappedArrayletsCleared += statsToMerge->_doubleMappedArrayletsCleared;
+		_doubleMappedArrayletsCandidates += statsToMerge->_doubleMappedArrayletsCandidates;
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */	
+
+
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 		/* It may not ever be useful to merge these stats, but do it anyways */
 		_splitArraysProcessed += statsToMerge->_splitArraysProcessed;
@@ -134,6 +150,10 @@ public:
 		,_phantomReferenceStats()
 		,_stringConstantsCleared(0)
 		,_stringConstantsCandidates(0)
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		,_doubleMappedArrayletsCleared(0)
+		,_doubleMappedArrayletsCandidates(0)
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 #if defined(J9MODRON_TGC_PARALLEL_STATISTICS)
 		,_splitArraysProcessed(0)
 #endif /* J9MODRON_TGC_PARALLEL_STATISTICS */

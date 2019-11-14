@@ -522,7 +522,8 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                   // Default SCC is set because, when -Xshareclasses option is used, by default non
                   // bootstrap loaded classes are put into the SCC. However, if the -Xshareclasses
                   // option isn't used, then the Default SCC only contains bootstrap loaded classes.
-                  if (J9_ARE_ALL_BITS_SET(jitConfig->javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES))
+                  if (J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(jitConfig->javaVM) &&
+                      J9_ARE_ALL_BITS_SET(jitConfig->javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES))
                      {
                      useLowerCountsForAOTCold = true;
                      }

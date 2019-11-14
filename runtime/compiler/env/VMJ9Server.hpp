@@ -49,7 +49,7 @@ public:
    virtual bool needsContiguousCodeAndDataCacheAllocation() override     { return true; }
    virtual bool supportsEmbeddedHeapBounds() override                    { return false; }
    virtual bool supportsFastNanoTime() override                          { return false; }
-   virtual bool helpersNeedRelocation() override                         { return true; }
+   virtual bool needRelocationsForHelpers() override                     { return true; }
    virtual bool canDevirtualizeDispatch() override                       { return true; }
    virtual bool needRelocationsForBodyInfoData() override                { return true; }
    virtual bool needRelocationsForPersistentInfoData() override          { return true; }
@@ -218,7 +218,7 @@ public:
    virtual bool       canRelocateDirectNativeCalls() override                  { return false; }
    virtual bool       needClassAndMethodPointerRelocations() override          { return true; }
    virtual bool       inlinedAllocationsMustBeVerified() override              { return true; }
-   virtual bool       helpersNeedRelocation() override                         { return true; }
+   virtual bool       needRelocationsForHelpers() override                     { return true; }
    virtual bool       supportsEmbeddedHeapBounds() override                    { return false; }
    virtual bool       supportsFastNanoTime() override                          { return false; }
    virtual bool       needRelocationsForStatics() override                     { return true; }

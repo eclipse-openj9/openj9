@@ -79,12 +79,6 @@ RUN apt-get update \
     zip \
   && rm -rf /var/lib/apt/lists/*
 
-# Dependency required by test framework
-RUN wget -O - http://cpanmin.us | perl - --self-upgrade \
-  && cpanm Text::CSV \
-  && cpanm JSON \
-  && cpanm XML::Parser
-
 # Install GCC-7.4
 RUN cd /usr/local \
   && wget -O gcc-7.tar.xz "https://ci.adoptopenjdk.net/userContent/gcc/gcc740+ccache.s390x.tar.xz" \

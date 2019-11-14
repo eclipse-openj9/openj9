@@ -115,17 +115,10 @@ MM_ReadBarrierVerifier::poisonMonitorReferenceSlots(MM_EnvironmentBase *env)
 }
 
 void
-MM_ReadBarrierVerifier::poisonStaticClassSlots(MM_EnvironmentBase *env)
+MM_ReadBarrierVerifier::poisonClass(MM_EnvironmentBase *env)
 {
 	MM_RootScannerReadBarrierVerifier scanner(env, true, true);
-	scanner.scanClassStaticSlots(env);
-}
-
-void
-MM_ReadBarrierVerifier::poisonConstantPoolObjects(MM_EnvironmentBase *env)
-{
-	MM_RootScannerReadBarrierVerifier scanner(env, true, true);
-	scanner.scanConstantPoolObjectSlots(env);
+	scanner.scanClass(env);
 }
 
 void
@@ -139,8 +132,7 @@ MM_ReadBarrierVerifier::poisonSlots(MM_EnvironmentBase *env)
 		poisonMonitorReferenceSlots(env);
 	}
 	if (1 == extensions->fvtest_enableClassStaticsReadBarrierVerification) {
-		poisonStaticClassSlots(env);
-		poisonConstantPoolObjects(env);
+		poisonClass(env);
 	}
 }
 
@@ -196,17 +188,10 @@ MM_ReadBarrierVerifier::healMonitorReferenceSlots(MM_EnvironmentBase *env)
 }
 
 void
-MM_ReadBarrierVerifier::healStaticClassSlots(MM_EnvironmentBase *env)
+MM_ReadBarrierVerifier::healClass(MM_EnvironmentBase *env)
 {
 	MM_RootScannerReadBarrierVerifier scanner(env, true);
-	scanner.scanClassStaticSlots(env);
-}
-
-void
-MM_ReadBarrierVerifier::healConstantPoolObjects(MM_EnvironmentBase *env)
-{
-	MM_RootScannerReadBarrierVerifier scanner(env, true);
-	scanner.scanConstantPoolObjectSlots(env);
+	scanner.scanClass(env);
 }
 
 void
@@ -220,8 +205,7 @@ MM_ReadBarrierVerifier::healSlots(MM_EnvironmentBase *env)
 		healMonitorReferenceSlots(env);
 	}
 	if (1 == extensions->fvtest_enableClassStaticsReadBarrierVerification) {
-		healStaticClassSlots(env);
-		healConstantPoolObjects(env);
+		healClass(env);
 	}
 
 }

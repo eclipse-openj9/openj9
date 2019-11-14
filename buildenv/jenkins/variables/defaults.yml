@@ -55,7 +55,6 @@ adoptopenjdk:
 artifactory_server: 'ci-eclipse-openj9'
 artifactory_repo: 'ci-eclipse-openj9'
 artifactory_num_artifacts: 30
-# This is being used for the cleanup script
 artifactory_days_to_keep_artifacts: 50
 artifactory_manual_cleanup: true
 #========================================#
@@ -123,17 +122,17 @@ ppc64le_linux:
       13: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
   extra_getsource_options:
-    8: '--openssl-version=1.1.1a'
-    11: '--openssl-version=1.1.1a'
-    12: '--openssl-version=1.1.1a'
-    13: '--openssl-version=1.1.1a'
-    next: '--openssl-version=1.1.1a'
+    8: '--openssl-version=1.1.1d'
+    11: '--openssl-version=1.1.1d'
+    12: '--openssl-version=1.1.1d'
+    13: '--openssl-version=1.1.1d'
+    next: '--openssl-version=1.1.1d'
   extra_configure_options:
-    8: '--with-openssl=fetched'
-    11: '--with-openssl=fetched'
-    12: '--with-openssl=fetched'
-    13: '--with-openssl=fetched'
-    next: '--with-openssl=fetched'
+    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
   build_env:
     vars:
       8: 'CC=gcc-7 CXX=g++-7'
@@ -142,10 +141,6 @@ ppc64le_linux:
       13: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
   excluded_tests:
-    11:
-      ? special.system
-    12:
-      ? special.system
     13:
       ? special.system
 #========================================#
@@ -183,11 +178,11 @@ s390x_linux:
       13: 'CC=gcc-7 CXX=g++-7'
       next: 'CC=gcc-7 CXX=g++-7'
   extra_getsource_options:
-    8: '--openssl-version=1.1.1a'
-    11: '--openssl-version=1.1.1a'
-    12: '--openssl-version=1.1.1a'
-    13: '--openssl-version=1.1.1a'
-    next: '--openssl-version=1.1.1a'
+    8: '--openssl-version=1.1.1d'
+    11: '--openssl-version=1.1.1d'
+    12: '--openssl-version=1.1.1d'
+    13: '--openssl-version=1.1.1d'
+    next: '--openssl-version=1.1.1d'
   extra_configure_options:
     8: '--with-openssl=fetched'
     11: '--with-openssl=fetched'
@@ -195,10 +190,6 @@ s390x_linux:
     13: '--with-openssl=fetched'
     next: '--with-openssl=fetched'
   excluded_tests:
-    11:
-      ? special.system
-    12:
-      ? special.system
     13:
       ? special.system
 #========================================#
@@ -227,17 +218,17 @@ ppc64_aix:
       13: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
       next: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
   extra_getsource_options:
-    8: '--openssl-version=1.1.1a'
-    11: '--openssl-version=1.1.1a'
-    12: '--openssl-version=1.1.1a'
-    13: '--openssl-version=1.1.1a'
-    next: '--openssl-version=1.1.1a'
+    8: '--openssl-version=1.1.1d'
+    11: '--openssl-version=1.1.1d'
+    12: '--openssl-version=1.1.1d'
+    13: '--openssl-version=1.1.1d'
+    next: '--openssl-version=1.1.1d'
   extra_configure_options:
     8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8 --with-openssl=fetched'
     11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched'
     12: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched'
-    13: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched'
-    next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched'
+    13: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched --disable-ddr'
+    next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched --disable-ddr'
   build_env:
     vars:
       8: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
@@ -246,8 +237,6 @@ ppc64_aix:
       13: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
   excluded_tests:
-    8:
-      ? special.system
     11:
       ? special.system
     12:
@@ -280,11 +269,11 @@ x86-64_linux:
       13: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
       next: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
   extra_getsource_options:
-    8: '--openssl-version=1.1.1a'
-    11: '--openssl-version=1.1.1a'
-    12: '--openssl-version=1.1.1a'
-    13: '--openssl-version=1.1.1a'
-    next: '--openssl-version=1.1.1a'
+    8: '--openssl-version=1.1.1d'
+    11: '--openssl-version=1.1.1d'
+    12: '--openssl-version=1.1.1d'
+    13: '--openssl-version=1.1.1d'
+    next: '--openssl-version=1.1.1d'
   extra_configure_options:
     8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
     11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
@@ -331,13 +320,13 @@ x86-64_linux_cm:
       13: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
       next: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
   extra_getsource_options:
-    8: '--openssl-version=1.1.1a'
-    11: '--openssl-version=1.1.1a'
-    12: '--openssl-version=1.1.1a'
-    13: '--openssl-version=1.1.1a'
-    next: '--openssl-version=1.1.1a'
+    8: '--openssl-version=1.1.1d'
+    11: '--openssl-version=1.1.1d'
+    12: '--openssl-version=1.1.1d'
+    13: '--openssl-version=1.1.1d'
+    next: '--openssl-version=1.1.1d'
   extra_configure_options:
-    8: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
+    8: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
     11: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
     12: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
     13: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
@@ -397,11 +386,11 @@ x86-64_linux_xl:
       13: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
       next: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
   extra_getsource_options:
-    8: '--openssl-version=1.1.1a'
-    11: '--openssl-version=1.1.1a'
-    12: '--openssl-version=1.1.1a'
-    13: '--openssl-version=1.1.1a'
-    next: '--openssl-version=1.1.1a'
+    8: '--openssl-version=1.1.1d'
+    11: '--openssl-version=1.1.1d'
+    12: '--openssl-version=1.1.1d'
+    13: '--openssl-version=1.1.1d'
+    next: '--openssl-version=1.1.1d'
   extra_configure_options:
     8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
     11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
@@ -471,11 +460,11 @@ x86-64_windows:
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
   extra_configure_options:
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
-    11: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
-    12: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
-    13: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
-    next: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
+    11: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
+    12: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
+    13: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
+    next: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
@@ -491,6 +480,8 @@ x86-64_windows:
       13: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
       next: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
   excluded_tests:
+    8:
+      ? special.system
     11:
       ? special.system
     12:
@@ -516,11 +507,11 @@ x86-64_windows_xl:
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
   extra_configure_options:
-    8: '--with-noncompressedrefs --with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
-    11: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
-    12: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
-    13: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
-    next: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_64 --enable-openssl-bundling'
+    8: '--with-noncompressedrefs --with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
+    11: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
+    12: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
+    13: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
+    next: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
@@ -553,7 +544,7 @@ x86-32_windows:
   release:
     8: 'windows-x86-normal-server-release'
   extra_configure_options:
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib32 --with-target-bits=32 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1-x86_32 --enable-openssl-bundling'
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib32 --with-target-bits=32 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_32 --enable-openssl-bundling'
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
   node_labels:
@@ -588,11 +579,11 @@ x86-64_mac:
     13: 'macosx-x86_64-server-release'
     next: 'macosx-x86_64-server-release'
   extra_getsource_options:
-    8: '--openssl-version=1.1.1a'
-    11: '--openssl-version=1.1.1a'
-    12: '--openssl-version=1.1.1a'
-    13: '--openssl-version=1.1.1a'
-    next: '--openssl-version=1.1.1a'
+    8: '--openssl-version=1.1.1d'
+    11: '--openssl-version=1.1.1d'
+    12: '--openssl-version=1.1.1d'
+    13: '--openssl-version=1.1.1d'
+    next: '--openssl-version=1.1.1d'
   extra_configure_options:
     8: '--with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer --with-openssl=fetched --enable-openssl-bundling'
     11: '--with-openssl=fetched --enable-openssl-bundling'
@@ -635,11 +626,11 @@ x86-64_mac_xl:
     13: 'macosx-x86_64-server-release'
     next: 'macosx-x86_64-server-release'
   extra_getsource_options:
-    8: '--openssl-version=1.1.1a'
-    11: '--openssl-version=1.1.1a'
-    12: '--openssl-version=1.1.1a'
-    13: '--openssl-version=1.1.1a'
-    next: '--openssl-version=1.1.1a'
+    8: '--openssl-version=1.1.1d'
+    11: '--openssl-version=1.1.1d'
+    12: '--openssl-version=1.1.1d'
+    13: '--openssl-version=1.1.1d'
+    next: '--openssl-version=1.1.1d'
   extra_configure_options:
     8: '--with-noncompressedrefs --with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer --with-openssl=fetched --enable-openssl-bundling'
     11: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
