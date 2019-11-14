@@ -46,7 +46,7 @@ typedef struct stringTableUTF8Query {
 static UDATA stringHashFn (void *key, void *userData);
 static UDATA stringHashEqualFn (void *leftKey, void *rightKey, void *userData);
 static IDATA stringComparatorFn(struct J9AVLTree *tree, struct J9AVLTreeNode *leftNode, struct J9AVLTreeNode *rightNode);
-static UDATA getUnicodeLength (U_8 *data, UDATA length, bool *isCompressable);
+static UDATA getUnicodeLength (U_8 *data, UDATA length, bool *isCompressible);
 static bool isUnicodeCompressable(U_16 *data, UDATA length);
 static j9object_t setupCharArray(J9VMThread *vmThread, j9object_t sourceString, j9object_t newString);
 
@@ -555,16 +555,16 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
 	UDATA unicodeLength = 0;
 
-	bool isCompressable = true;
+	bool isCompressible = true;
 
 	for (UDATA i = 0; i < length; ++i) {
 		if (data[i] > 127) {
-			isCompressable = false;
+			isCompressible = false;
 			break;
 		}
 	}
 
-	if (isCompressable) {
+	if (isCompressible) {
 		stringFlags |= J9_STR_ASCII;
 	}
 
@@ -582,7 +582,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	if ((stringFlags & (J9_STR_XLAT | J9_STR_UNICODE | J9_STR_INTERN)) == J9_STR_INTERN) {
 		UDATA hash = 0;
 
-		if (isCompressable) {
+		if (isCompressible) {
 			for (UDATA i = 0; i < length; ++i) {
 				hash = (hash << 5) - hash + data[i];
 			}
@@ -614,15 +614,15 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 		if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
 			if (J9_STR_UNICODE == (stringFlags & J9_STR_UNICODE)) {
 				unicodeLength = length / 2;
-				isCompressable = isUnicodeCompressable((U_16*)data, unicodeLength);
+				isCompressible = isUnicodeCompressable((U_16*)data, unicodeLength);
 			} else {
-				unicodeLength = getUnicodeLength(data, length, &isCompressable);
+				unicodeLength = getUnicodeLength(data, length, &isCompressible);
 			}
 		} else {
 			if (J9_STR_UNICODE == (stringFlags & J9_STR_UNICODE)) {
 				unicodeLength = length / 2;
 			} else {
-				if (isCompressable) {
+				if (isCompressible) {
 					unicodeLength = length;
 				} else {
 					unicodeLength = getUnicodeLength(data, length, NULL);
@@ -633,13 +633,13 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 		PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, result);
 
 		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
-			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressable) {
+			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressible) {
 				charArray = J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) unicodeLength, allocateFlags);
 			} else {
 				charArray = J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) unicodeLength * 2, allocateFlags);
 			}
 		} else {
-			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressable) {
+			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressible) {
 				charArray = J9AllocateIndexableObject(vmThread, vm->charArrayClass, (U_32) (unicodeLength + 1) / 2, allocateFlags);
 			} else {
 				charArray = J9AllocateIndexableObject(vmThread, vm->charArrayClass, (U_32) unicodeLength, allocateFlags);
@@ -656,7 +656,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			UDATA i;
 			U_16 * unicodeData = (U_16 *) data;
 
-			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressable) {
+			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressible) {
 				for (i = 0; i < unicodeLength; ++i) {
 					J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, (I_8)unicodeData[i]);
 				}
@@ -666,10 +666,10 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 				}
 			}
 		} else {
-			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressable) {
+			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressible) {
 				vmFuncs->copyUTF8ToCompressedUnicode(vmThread, data, length, stringFlags, charArray, 0);
 			} else {
-				if (isCompressable) {
+				if (isCompressible) {
 					if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
 						for (UDATA i = 0; i < length; ++i) {
 							U_8 c = data[i];
@@ -698,7 +698,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 		J9VMJAVALANGSTRING_SET_VALUE(vmThread, result, charArray);
 
 		if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
-			if (isCompressable) {
+			if (isCompressible) {
 				if (J2SE_VERSION(vm) >= J2SE_V11) {
 					J9VMJAVALANGSTRING_SET_CODER(vmThread, result, 0);
 				} else {
@@ -911,7 +911,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 	J9IndexableObject* charArray;
 	UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
 	UDATA unicodeLength;
-	bool isCompressable = false;
+	bool isCompressible = false;
 
 	U_32 hash = (U_32) vmFuncs->computeHashForUTF8(data, length);
 	UDATA tableIndex = stringTable->getTableIndex(hash);
@@ -934,7 +934,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 	}
 
 	if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
-		unicodeLength = getUnicodeLength(data, length, &isCompressable);
+		unicodeLength = getUnicodeLength(data, length, &isCompressible);
 	} else {
 		unicodeLength = getUnicodeLength(data, length, NULL);
 	}
@@ -943,7 +943,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 
 	PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, string);
 
-	if (isCompressable) {
+	if (isCompressible) {
 		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
 			charArray = (J9IndexableObject*)J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) unicodeLength, allocateFlags);
 		} else {
@@ -972,7 +972,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 	J9VMJAVALANGSTRING_SET_VALUE(vmThread, string, charArray);
 
 	if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
-		if (isCompressable) {
+		if (isCompressible) {
 			if (J2SE_VERSION(vm) >= J2SE_V11) {
 				J9VMJAVALANGSTRING_SET_CODER(vmThread, string, 0);
 			} else {
@@ -1037,11 +1037,11 @@ nomem:
  * Determine the unicode length of a UTF8 string, while testing its compressability
  * @param data A pointer to a UTF8 string
  * @param length The length of the UTF8 string
- * @param isCompressable[out] Is the string compressable, or NULL
+ * @param isCompressible[out] Is the string compressable, or NULL
  * @return the length of the UTF8 string in unicode characters
  */
 static UDATA
-getUnicodeLength(U_8 *data, UDATA length, bool *isCompressable)
+getUnicodeLength(U_8 *data, UDATA length, bool *isCompressible)
 {
 	UDATA unicodeLength = 0;
 	bool canCompress = true;
@@ -1063,8 +1063,8 @@ getUnicodeLength(U_8 *data, UDATA length, bool *isCompressable)
 		++unicodeLength;
 	}
 
-	if (NULL != isCompressable) {
-		*isCompressable = canCompress;
+	if (NULL != isCompressible) {
+		*isCompressible = canCompress;
 	}
 
 	return unicodeLength;

@@ -566,6 +566,7 @@ extern "C" {
 #define J9_STR_ANON_CLASS_NAME 0x20
 /* Determines whether a copied string result will be null terminated */
 #define J9_STR_NULL_TERMINATE_RESULT 0x40
+/* Determines whether the string contains only ASCII characters (ord <= 127) */
 #define J9_STR_ASCII 0x80
 #define J9_STR_COMPRESSION_THRESHOLD 0xFF
 
