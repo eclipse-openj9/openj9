@@ -4588,15 +4588,21 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	if (nestMembers == null) {
 		nestMembers = getNestMembersImpl();
 	}
-	SecurityManager securityManager = System.getSecurityManager();
-	if (securityManager != null) {
-		/* All classes in a nest must be in the same runtime package and therefore same classloader */
-		ClassLoader nestMemberClassLoader = this.internalGetClassLoader();
-		ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
-		if (!doesClassLoaderDescendFrom(nestMemberClassLoader, callerClassLoader)) {
-			String nestMemberPackageName = this.getPackageName();
-			if ((nestMemberPackageName != null) && (nestMemberPackageName != "")) {
-				securityManager.checkPackageAccess(nestMemberPackageName);
+	if (nestMembers.length == 1 && nestMembers[0] == this) {
+		/* This is a Class object that belongs to the nest consisting only of itself,
+		 * or a Class object representing array types, primitive types, or void.
+		 */
+	} else {
+		SecurityManager securityManager = System.getSecurityManager();
+		if (securityManager != null) {
+			/* All classes in a nest must be in the same runtime package and therefore same classloader */
+			ClassLoader nestMemberClassLoader = this.internalGetClassLoader();
+			ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
+			if (!doesClassLoaderDescendFrom(nestMemberClassLoader, callerClassLoader)) {
+				String nestMemberPackageName = this.getPackageName();
+				if ((nestMemberPackageName != null) && (nestMemberPackageName != "")) {
+					securityManager.checkPackageAccess(nestMemberPackageName);
+				}
 			}
 		}
 	}
