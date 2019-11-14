@@ -622,9 +622,8 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			if (J9_STR_UNICODE == (stringFlags & J9_STR_UNICODE)) {
 				unicodeLength = length / 2;
 			} else {
-				if (isCompressible) {
-					unicodeLength = length;
-				} else {
+				unicodeLength = length;
+				if (!isCompressible) {
 					unicodeLength = getUnicodeLength(data, length, NULL);
 				}
 			}
