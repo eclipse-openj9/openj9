@@ -155,6 +155,7 @@
 #define REFERENCEFIELDLEN 8
 #define REFERENCERETURNTYPE "Ljava/lang/Object;"
 #define REFERENCERETURNTYPELEN 18
+#define MAX_HOT_FIELD_SIZE_IN_BYTES 512
 
 #if SOLARIS || AIXPPC || LINUX
 #include <strings.h>
@@ -2318,19 +2319,19 @@ TR_MarkHotField::markHotField(J9Class * clazz, bool rootClass, int32_t frequency
       }  
 
       if (jitConfig->javaVM->memoryManagerFunctions->j9gc_hot_reference_field_required(jitConfig->javaVM)) {
-         if(clazz->totalInstanceSize <=512) {
+         if(clazz->totalInstanceSize <= MAX_HOT_FIELD_SIZE_IN_BYTES) {
             if ((_slotIndex !=  clazz->hotField2.hotFieldOffset) &&
                ((clazz->hotField1.hotFieldOffset == UDATA_MAX && _comp->getMethodHotness() >=warm) ||
-               (_comp->getMethodHotness() > clazz->hotField1.hotFieldMethodHotness && frequency > ((clazz->hotField1.hotFieldThreshold/10)*9)) ||
-               (_comp->getMethodHotness() == clazz->hotField1.hotFieldMethodHotness && frequency > ((clazz->hotField1.hotFieldThreshold/9)*10)))    
+               (_comp->getMethodHotness() > clazz->hotField1.hotFieldMethodHotness && frequency >= clazz->hotField1.hotFieldThreshold) ||
+               (_comp->getMethodHotness() == clazz->hotField1.hotFieldMethodHotness && frequency > clazz->hotField1.hotFieldThreshold))    
             ) {
                clazz->hotField1.hotFieldOffset = _slotIndex;
                clazz->hotField1.hotFieldMethodHotness = _comp->getMethodHotness(); 
                clazz->hotField1.hotFieldThreshold = frequency;
             } else if ((_slotIndex !=  clazz->hotField1.hotFieldOffset) &&
                ((clazz->hotField2.hotFieldOffset == UDATA_MAX  && _comp->getMethodHotness() >= hot) ||
-               (_comp->getMethodHotness() > clazz->hotField2.hotFieldMethodHotness && frequency > ((clazz->hotField2.hotFieldThreshold/10)*9)) ||
-               (_comp->getMethodHotness() == clazz->hotField2.hotFieldMethodHotness && frequency > ((clazz->hotField2.hotFieldThreshold/9)*10)))
+               (_comp->getMethodHotness() > clazz->hotField2.hotFieldMethodHotness && frequency >= clazz->hotField2.hotFieldThreshold) ||
+               (_comp->getMethodHotness() == clazz->hotField2.hotFieldMethodHotness && frequency > clazz->hotField2.hotFieldThreshold))
                ) {
                clazz->hotField2.hotFieldOffset = _slotIndex;
                clazz->hotField2.hotFieldMethodHotness = _comp->getMethodHotness(); 
