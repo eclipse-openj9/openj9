@@ -115,25 +115,20 @@ findField(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameL
 			 */
 			J9UTF8 * interfaceName = NNSRP_PTR_GET(interfaces, J9UTF8 *);
 			J9Class* interfaceClass = peekClassHashTable(vmStruct, currentClass->classLoader, J9UTF8_DATA(interfaceName), J9UTF8_LENGTH(interfaceName));
-
-			if (J9_EXPECTED(interfaceClass != NULL)) { /* shouldn't be NULL, but be safe */
-				J9ITable* iTable = NULL;
-				for(;;) {
-					field = findFieldInClass(vmStruct,
-						interfaceClass, 
-						fieldName, fieldNameLength, 
-						signature, signatureLength, 
-						offsetOrAddress, definingClass);
-					if (field != NULL) {
-						return field;
-					}
-					iTable = iTable ? iTable->next : (J9ITable *)interfaceClass->iTable;
-					if (iTable == NULL) break;
-					interfaceClass = iTable->interfaceClass;
+			J9ITable* iTable = NULL;
+			Assert_VM_notNull(interfaceClass);
+			for(;;) {
+				field = findFieldInClass(vmStruct,
+					interfaceClass,
+					fieldName, fieldNameLength,
+					signature, signatureLength,
+					offsetOrAddress, definingClass);
+				if (field != NULL) {
+					return field;
 				}
-			} else {
-				/* This should never happen as the interfaces need to have already been loaded */
-				Assert_VM_unreachable();
+				iTable = iTable ? iTable->next : (J9ITable *)interfaceClass->iTable;
+				if (iTable == NULL) break;
+				interfaceClass = iTable->interfaceClass;
 			}
 		}
 
