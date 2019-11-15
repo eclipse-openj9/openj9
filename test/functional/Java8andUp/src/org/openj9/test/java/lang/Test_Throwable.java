@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -490,6 +490,51 @@ public class Test_Throwable {
 		} catch (java.lang.NullPointerException npe) {
 			Assert.fail("printStackTrace() failed");
 		}
+	}
+
+	/**
+	 *  @tests java.lang.Throwable#printStackTrace()
+	 *  when the exception chain is circular
+	 */
+	@Test
+	public void test_circularChainedExceptions1() {
+		Throwable t1 = new Throwable("Message 1");
+		Throwable t2 = new Throwable("Message 2");
+		t1.initCause(t2);
+		t2.initCause(t1);
+		ByteArrayOutputStream bao = new ByteArrayOutputStream();
+		PrintStream ps = new PrintStream(bao);
+		t1.printStackTrace(ps);
+		ps.close();
+		String s = new String(bao.toByteArray(), 0, bao.size());
+		boolean match = (s.indexOf("java.lang.Throwable: Message 1") != -1);
+		match &= (s.indexOf("Caused by: java.lang.Throwable: Message 2") != -1);
+		match &= (s.indexOf("[CIRCULAR REFERENCE:java.lang.Throwable: Message 1]") != -1);
+		AssertJUnit.assertTrue("Incorrect stackTrace printed:\n" + s, match);
+	}
+
+	/**
+	 *  @tests java.lang.Throwable#printStackTrace()
+	 *  when the circular exception chain includes a suppressed exception
+	 */
+	@Test
+	public void test_circularChainedExceptions2() {
+		Throwable t1 = new Throwable("Message 1");
+		Throwable t2 = new Throwable("Message 2");
+		Throwable t3 = new Throwable("Message 3");
+		t1.initCause(t2);
+		t2.addSuppressed(t3);
+		t3.initCause(t1);
+		ByteArrayOutputStream bao = new ByteArrayOutputStream();
+		PrintStream ps = new PrintStream(bao);
+		t1.printStackTrace(ps);
+		ps.close();
+		String s = new String(bao.toByteArray(), 0, bao.size());
+		boolean match = (s.indexOf("java.lang.Throwable: Message 1") != -1);
+		match &= (s.indexOf("Caused by: java.lang.Throwable: Message 2") != -1);
+		match &= (s.indexOf("Suppressed: java.lang.Throwable: Message 3") != -1);
+		match &= (s.indexOf("[CIRCULAR REFERENCE:java.lang.Throwable: Message 1]") != -1);
+		AssertJUnit.assertTrue("Incorrect stackTrace printed:\n" + s, match);
 	}
 
 	/**
