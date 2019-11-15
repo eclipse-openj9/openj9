@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,9 +28,10 @@ typedef struct J9GetStackTraceUserData {
 	J9Class * elementClass;
 	UDATA index;
 	UDATA maxFrames;
+	J9UTF8 *previousFileName;
 } J9GetStackTraceUserData;
 
-J9IndexableObject *   getStackTrace(J9VMThread * vmThread, j9object_t* exceptionAddr, UDATA pruneConstructors);
+J9IndexableObject * getStackTrace(J9VMThread * vmThread, j9object_t* exceptionAddr, UDATA pruneConstructors);
 
 
 #endif

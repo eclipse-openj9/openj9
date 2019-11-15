@@ -372,4 +372,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	setNestmatesError,
 #endif
 	areValueTypesEnabled,
+	peekClassHashTable,
 };
