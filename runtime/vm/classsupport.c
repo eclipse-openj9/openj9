@@ -167,29 +167,21 @@ findPrimitiveArrayClass(J9JavaVM* vm, jchar sigChar)
 	switch (sigChar) {
 	case 'B':
 		return vm->byteArrayClass;
-		break;
 	case 'C':
 		return vm->charArrayClass;
-		break;
 	case 'I':
 		return vm->intArrayClass;
-		break;
 	case 'J':
 		return vm->longArrayClass;
-		break;
 	case 'S':
 		return vm->shortArrayClass;
-		break;
 	case 'Z':
 		return vm->booleanArrayClass;
-		break;
 #ifdef J9VM_INTERP_FLOAT_SUPPORT
 	case 'D':
 		return vm->doubleArrayClass;
-		break;
 	case 'F':
 		return vm->floatArrayClass;
-		break;
 #endif
 	default:
 		return NULL;
