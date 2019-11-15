@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2016 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,14 @@ internalFindClassUTF8(J9VMThread *currentThread, U_8 *className, UDATA className
 	/* NOTE: Stub function. */
 	return NULL;
 }
+
+struct J9Class*
+peekClassHashTable(J9VMThread* currentThread, J9ClassLoader* classLoader, U_8* className, UDATA classNameLength)
+{
+	/* NOTE: Stub function. */
+	return NULL;
+}
+
 
 J9VMThread *
 currentVMThread(J9JavaVM * vm)

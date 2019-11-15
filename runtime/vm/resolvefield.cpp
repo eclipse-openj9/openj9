@@ -93,9 +93,9 @@ findField(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameL
 #endif
 
 	do {        
-		J9ROMClass* romClass;
-		J9SRP *interfaces;
-		UDATA i;
+		J9ROMClass* romClass = NULL;
+		J9SRP *interfaces = NULL;
+		UDATA i = 0;
 
 		field = findFieldInClass(vmStruct, 
 			currentClass, 
@@ -110,29 +110,25 @@ findField(J9VMThread *vmStruct, J9Class *clazz, U_8 *fieldName, UDATA fieldNameL
 		romClass = currentClass->romClass;
 		interfaces = J9ROMCLASS_INTERFACES(romClass);
 		for (i = 0; i < romClass->interfaceCount; i++, interfaces++) {
+			/* By definition, the interfaces MUST already have been loaded as
+			 * all superclasses & interfaces are loaded before the current class
+			 */
 			J9UTF8 * interfaceName = NNSRP_PTR_GET(interfaces, J9UTF8 *);
-			J9Class* interfaceClass = internalFindClassUTF8(
-				vmStruct,
-				J9UTF8_DATA(interfaceName),
-				J9UTF8_LENGTH(interfaceName),
-				currentClass->classLoader, 
-				J9_FINDCLASS_FLAG_EXISTING_ONLY);
-
-			if (interfaceClass != NULL) { /* shouldn't be NULL, but be safe */
-				J9ITable* iTable = NULL;
-				for(;;) {
-					field = findFieldInClass( vmStruct,
-						interfaceClass, 
-						fieldName, fieldNameLength, 
-						signature, signatureLength, 
-						offsetOrAddress, definingClass);
-					if (field != NULL) {
-						return field;
-					}
-					iTable = iTable ? iTable->next : (J9ITable *)interfaceClass->iTable;
-					if (iTable == NULL) break;
-					interfaceClass = iTable->interfaceClass;
+			J9Class* interfaceClass = peekClassHashTable(vmStruct, currentClass->classLoader, J9UTF8_DATA(interfaceName), J9UTF8_LENGTH(interfaceName));
+			J9ITable* iTable = NULL;
+			Assert_VM_notNull(interfaceClass);
+			for(;;) {
+				field = findFieldInClass(vmStruct,
+					interfaceClass,
+					fieldName, fieldNameLength,
+					signature, signatureLength,
+					offsetOrAddress, definingClass);
+				if (field != NULL) {
+					return field;
 				}
+				iTable = iTable ? iTable->next : (J9ITable *)interfaceClass->iTable;
+				if (iTable == NULL) break;
+				interfaceClass = iTable->interfaceClass;
 			}
 		}
 
