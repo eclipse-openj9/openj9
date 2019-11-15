@@ -534,33 +534,28 @@ public class MethodHandles {
 		 * @throws IllegalAccessException If the {@link Class} is not accessible from {@link #accessClass}. 
 		 */
 		private void checkClassAccess(Class<?> targetClass) throws IllegalAccessException {
-			/*[IF Sidecar19-SE]*/
-			checkClassModuleVisibility(accessMode, accessClass.getModule(), targetClass);
-			/*[ENDIF]*/
-			if (NO_ACCESS != accessMode) {
-				/* target class should always be accessible to the lookup class when they are the same class */
-				if (accessClass == targetClass) {
-					return;
-				}
-				
-				int modifiers = targetClass.getModifiers();
-				
-				/* A protected class (must be a member class) is compiled to a public class as
+			int targetModifiers = targetClass.getModifiers();
+			boolean accessible = false;
+			if (Modifier.isPublic(targetModifiers) || Modifier.isProtected(targetModifiers)) {
+				/*[IF Sidecar19-SE]*/
+				checkClassModuleVisibility(accessMode, accessClass.getModule(), targetClass);
+				/*[ENDIF]*/
+				accessible = true;
+			} else if (NO_ACCESS != accessMode) {
+				/* The target class should always be accessible to the lookup class when they are the same class.
+				 * A protected class (must be a member class) is compiled to a public class as
 				 * the protected flag of this class doesn't exist on the VM level (there is no 
-				 * access flag in the binary form representing 'protected')
+				 * access flag in the binary form representing 'protected').
 				 */
-				if (Modifier.isPublic(modifiers) || Modifier.isProtected(modifiers)) {
-					/* Already determined that we have more than "no access" (public access) */
-					return;
-				} else {
-					if (((PACKAGE == (accessMode & PACKAGE)) || Modifier.isPrivate(accessMode)) && isSamePackage(accessClass, targetClass)) {
-						return;
-					}
+				if ((accessClass == targetClass)
+				|| ((PACKAGE == (accessMode & PACKAGE)) && isSamePackage(accessClass, targetClass))) {
+					accessible = true;
 				}
 			}
-
-			/*[MSG "K0680", "Class '{0}' no access to: class '{1}'"]*/
-			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0680", accessClass.getName(), targetClass.getName()));  //$NON-NLS-1$
+			if (!accessible) {
+				/*[MSG "K0680", "Class '{0}' no access to: class '{1}'"]*/
+				throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0680", accessClass.getName(), targetClass.getName()));  //$NON-NLS-1$
+			}
 		}
 		
 		private void checkSpecialAccess(Class<?> declaringClass, Class<?> callerClass) throws IllegalAccessException {
