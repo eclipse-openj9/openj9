@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@
 #include "util_api.h"
 
 #include "BuildResult.hpp"
+#include "VMHelpers.hpp"
 
 class ClassFileWriter {
 /*
@@ -99,7 +100,7 @@ private:
 		case CFR_CONSTANT_Class:
 		case CFR_CONSTANT_Utf8: {
 			J9UTF8 *utf8 = (J9UTF8 *) e->address;
-			return computeHashForUTF8(J9UTF8_DATA(utf8), J9UTF8_LENGTH(utf8));
+			return VM_VMHelpers::computeHashForUTF8(J9UTF8_DATA(utf8), J9UTF8_LENGTH(utf8));
 		}
 		default:
 			/* Mix cpType into the 4th byte of the address, which is not likely to vary much within the ROM class */

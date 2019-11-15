@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2014 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,15 +23,14 @@
 #include "util_api.h"
 
 /**
- * Hash function for UTF8 strings which works from the front of the string to the back.  Mathematically equivalent to
- * computeJavaHashForExpandedString, which works back to front on Unicode.
+ * Computes the hash value for an input string using the hash algorithm defined by the java/lang/String.hashCode()I
+ * method.
  *
- * @param data points to raw UTF8 bytes, assumed to be a valid encoding
- * @param length is the number of bytes
+ * @param data points to raw UTF8 bytes, assumed to be a valid (potentially multi-byte) encoding
+ * @param length the number of bytes to hash
  *
  * @return hash code for the UTF8 string
  */
-
 UDATA
 computeHashForUTF8(const U_8 * data, UDATA length)
 {

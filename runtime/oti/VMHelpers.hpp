@@ -999,6 +999,49 @@ done:
 	}
 
 	/**
+	 * Computes the hash value for an input string using the hash algorithm defined by the java/lang/String.hashCode()I
+	 * method.
+	 *
+	 * @param data points to raw UTF8 bytes, assumed to be a valid (potentially multi-byte) encoding
+	 * @param length the number of bytes to hash
+	 *
+	 * @return hash code for the UTF8 string
+	 */
+	static VMINLINE UDATA
+	computeHashForUTF8(const U_8 *data, UDATA length)
+	{
+		UDATA hash = 0;
+		const U_8 * end = data + length;
+
+		while (data < end) {
+			U_16 c;
+
+			data += decodeUTF8Char(data, &c);
+			hash = (hash << 5) - hash + c;
+		}
+		return hash;
+	}
+
+	/**
+	 * Computes the hash value for an input string using the hash algorithm defined by the java/lang/String.hashCode()I
+	 * method.
+	 *
+	 * @param data points to raw UTF8 bytes, all of which are within the ASCII subset ord. [0, 127]
+	 * @param length the number of bytes to hash
+	 *
+	 * @return hash code for the UTF8 string
+	 */
+	static VMINLINE UDATA
+	computeHashForASCII(const U_8 *data, UDATA length)
+	{
+		UDATA hash = 0;
+		for (UDATA i = 0; i < length; ++i) {
+			hash = (hash << 5) - hash + data[i];
+		}
+		return hash;
+	}
+
+	/**
 	 * Determine the JIT to JIT start address by skipping over the interpreter
 	 * pre-prologue at the interpreter to JIT start address.
 	 *

@@ -31,6 +31,7 @@
 #include "GCExtensionsBase.hpp"
 #include "ScavengerForwardedHeader.hpp"
 #include "StringTable.hpp"
+#include "VMHelpers.hpp"
 
 /* the following is all ones except the least significant bit */
 #define TYPE_UTF8 ((UDATA)1)
@@ -583,11 +584,9 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 		UDATA hash = 0;
 
 		if (isCompressible) {
-			for (UDATA i = 0; i < length; ++i) {
-				hash = (hash << 5) - hash + data[i];
-			}
+			hash = VM_VMHelpers::computeHashForASCII(data, length);
 		} else {
-			hash = (U_32)vmFuncs->computeHashForUTF8(data, length);
+			hash = VM_VMHelpers::computeHashForUTF8(data, length);
 		}
 
 		UDATA tableIndex = stringTable->getTableIndex(hash);
@@ -912,7 +911,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 	UDATA unicodeLength;
 	bool isCompressible = false;
 
-	U_32 hash = (U_32) vmFuncs->computeHashForUTF8(data, length);
+	U_32 hash = (U_32)VM_VMHelpers::computeHashForUTF8(data, length);
 	UDATA tableIndex = stringTable->getTableIndex(hash);
 
 	/* see if the string is already in the table. Race condition where another thread may add the string
