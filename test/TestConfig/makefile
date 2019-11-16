@@ -78,5 +78,13 @@ getdependency:
 #######################################
 # compile all tests under $(TEST_ROOT)
 #######################################
-compile: getdependency
-	ant -f scripts$(D)build_test.xml -DTEST_ROOT=$(TEST_ROOT) -DBUILD_ROOT=$(BUILD_ROOT) -DJDK_VERSION=$(JDK_VERSION) -DJDK_IMPL=$(JDK_IMPL) -DJCL_VERSION=$(JCL_VERSION) -DBUILD_LIST=${BUILD_LIST} -DRESOURCES_DIR=${RESOURCES_DIR} -DPLATFORM=${PLATFORM} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJVM_VERSION=$(JVM_VERSION) -DLIB_DIR=$(LIB_DIR)
+COMPILATION_LOG=$(TESTOUTPUT)$(D)compile$(D)compilation.log
+
+MOVE_TDUMP_PERL=perl scripts$(D)moveDmp.pl --compileLogPath=$(Q)$(COMPILATION_LOG)$(Q) --testRoot=$(Q)$(TEST_ROOT)$(Q) --spec=$(Q)$(SPEC)$(Q)
+MOVE_TDUMP=if [ -z $$(tail -n 1 $(COMPILATION_LOG) | grep 0) ]; then $(MOVE_TDUMP_PERL); $(RM) $(Q)$(COMPILATION_LOG)$(Q); false; else $(RM) $(Q)$(COMPILATION_LOG)$(Q); fi
+COMPILE_CMD=ant -f scripts$(D)build_test.xml -DTEST_ROOT=$(TEST_ROOT) -DBUILD_ROOT=$(BUILD_ROOT) -DJDK_VERSION=$(JDK_VERSION) -DJDK_IMPL=$(JDK_IMPL) -DJCL_VERSION=$(JCL_VERSION) -DBUILD_LIST=${BUILD_LIST} -DRESOURCES_DIR=${RESOURCES_DIR} -DPLATFORM=${PLATFORM} -DTEST_JDK_HOME=${TEST_JDK_HOME} -DJVM_VERSION=$(JVM_VERSION) -DLIB_DIR=$(LIB_DIR)
+
+compile: getdependency; \
+	$(MKTREE) $(TESTOUTPUT)$(D)compile; \
+	($(COMPILE_CMD) 2>&1; echo $$? ) | tee $(Q)$(COMPILATION_LOG)$(Q); \
+	$(MOVE_TDUMP)
