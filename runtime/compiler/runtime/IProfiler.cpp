@@ -37,6 +37,7 @@
 #include "j9cfg.h"
 #include "rommeth.h"
 #include "vmaccess.h"
+#include "VMHelpers.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "compile/Compilation.hpp"
@@ -4155,10 +4156,9 @@ UDATA TR_IProfiler::parseBuffer(J9VMThread * vmThread, const U_8* dataStart, UDA
             callee = *(J9Method**)cursor;
             cursor += sizeof(J9Method *);
 
-            if (callee
-               && (javaVM->initialMethods.initialVirtualMethod != callee)
-               && (javaVM->initialMethods.invokePrivateMethod != callee)
-               && !fanInDisabled)
+            callee = VM_VMHelpers::filterVMInitialMethods(vmThread, callee);
+
+            if ((callee != NULL) && !fanInDisabled)
                {
                uint32_t offset = (uint32_t) (pc - caller->bytecodes);
                findOrCreateMethodEntry(caller, callee , true , offset);
