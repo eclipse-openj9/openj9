@@ -34,7 +34,7 @@ add_library(j9vrb SHARED
 	${j9vm_SOURCE_DIR}/vm/linearswalk.c
 	
 	${j9vm_SOURCE_DIR}/codert_vm/jswalk.c #IF J9VM_INTERP_NATIVE_SUPPORT
-	${j9vm_SOURCE_DIR}/jit_vm/ctsupport.c #IF J9VM_INTERP_USE_SPLIT_SIDE_TABLES
+	${j9vm_SOURCE_DIR}/jit_vm/ctsupport.cpp #IF J9VM_INTERP_USE_SPLIT_SIDE_TABLES
 	${j9vm_SOURCE_DIR}/compiler/runtime/MethodMetaData.c
 	
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vrb.c

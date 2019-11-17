@@ -1427,6 +1427,47 @@ exit:
 			&& (ramClass->romClass->majorVersion >= 53);
 	}
 
+	/**
+	 * Filter out the initialMethods use to initialize constantpool entries
+	 * as the methods aren't real Java methods and shouldn't be exposed to
+	 * other APIs.
+	 * For the special case of the `invokePrivateMethod`, lookup the real
+	 * private target method from the cp and cpIndex if they have been
+	 * provided.
+	 *
+	 * Note, there are also two defines that can be used to check the vtable
+	 * index is one of the special methods:
+	 * * J9VTABLE_INITIAL_VIRTUAL_OFFSET, &
+	 * * J9VTABLE_INVOKE_PRIVATE_OFFSET
+	 *
+	 * @param vmThread[in] a J9VMThread
+	 * @param method[in] the J9Method to filter
+	 * @param cp[in] the RAM constantpool to look in for the real method for invokePrivateMethod (default = NULL)
+	 * @param cpIndex[in] the constantpool entry to fetch the real method from for invokePrivateMethod (default = 0)
+	 * @return The real J9Method pointer or null if it was an initialMethod.
+	 */
+	static VMINLINE J9Method*
+	filterVMInitialMethods(J9VMThread const *vmThread, J9Method *method, J9ConstantPool const * cp = NULL, UDATA cpIndex = 0)
+	{
+		J9InitializerMethods *initialMethods = &(vmThread->javaVM->initialMethods);
+		if ((method == initialMethods->initialStaticMethod)
+		|| (method == initialMethods->initialSpecialMethod)
+		|| (method == initialMethods->initialVirtualMethod)
+		) {
+			method = NULL;
+		}
+		if (method == initialMethods->invokePrivateMethod) {
+			method = NULL;
+			if (NULL != cp) {
+				/* Read the second slot from the CP entry to get the "real"
+				 * target method.  Note, the cpIndex cannot be a split index
+				 * in the case of an invokePrivateMethod.
+				 */
+				method = (((J9RAMVirtualMethodRef*) cp)[cpIndex]).method;
+			}
+		}
+		return method;
+	}
 };
 
 #endif /* VMHELPERS_HPP_ */
