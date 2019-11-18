@@ -233,7 +233,6 @@ def build_with_one_upstream(JOB_NAME, UPSTREAM_JOB_NAME, UPSTREAM_JOB_NUMBER, NO
             string(name: 'VENDOR_TEST_DIRS', value: VENDOR_TEST_DIRS),
             string(name: 'USER_CREDENTIALS_ID', value: USER_CREDENTIALS_ID),
             string(name: 'TEST_FLAG', value: TEST_FLAG),
-            string(name: 'KEEP_REPORTDIR', value: 'false'),
             string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
             booleanParam(name: 'IS_PARALLEL', value: IS_PARALLEL),
             string(name: 'EXTRA_OPTIONS', value: EXTRA_OPTIONS)])
@@ -258,7 +257,6 @@ def build_with_artifactory(JOB_NAME, NODE, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SH
             string(name: 'CUSTOMIZED_SDK_URL', value: CUSTOMIZED_SDK_URL),
             string(name: 'CUSTOMIZED_SDK_URL_CREDENTIAL_ID', value: ARTIFACTORY_CREDS),
             string(name: 'TEST_FLAG', value: TEST_FLAG),
-            string(name: 'KEEP_REPORTDIR', value: 'false'),
             string(name: 'BUILD_IDENTIFIER', value: BUILD_IDENTIFIER),
             booleanParam(name: 'IS_PARALLEL', value: IS_PARALLEL),
             string(name: 'EXTRA_OPTIONS', value: EXTRA_OPTIONS)])
