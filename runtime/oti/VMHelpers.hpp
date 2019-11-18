@@ -1041,6 +1041,16 @@ done:
 		return hash;
 	}
 
+   /**
+    * Copies a UTF8 string into a UTF16 string at a specific index.
+    *
+    * @param vmThread[in] the current J9VMThread
+    * @param data[in] points to raw UTF8 bytes, some of which may be multi-byte UTF8 encoded Unicode characters
+    * @param length[in] the number of bytes representing characters in data
+    * @param stringFlags[in] string flags corresponding to data
+    * @param charArray[in] the character array (can be either byte[] or char[]) to copy the UTF8 string into
+    * @param startIndex the start index of charArray at which to begin the copy
+    */
 	static VMINLINE void
 	copyUTF8ToUTF16(J9VMThread * vmThread, U_8 * data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
 	{
@@ -1088,13 +1098,14 @@ done:
 	}
 
    /**
-    * Compress the UTF8 string into compressed format into byteArray at offset
-    * @param *vmThread
-    * @param *data
-    * @param length
-    * @param stringFlags
-    * @param byteArray
-    * @param offset
+    * Copies a UTF8 string into a Latin1 compact string at a specific index.
+    *
+    * @param vmThread[in] the current J9VMThread
+    * @param data[in] points to raw UTF8 bytes, all of which are within the Latin1 subset ord. [0, 255]
+    * @param length[in] the number of bytes representing characters in data
+    * @param stringFlags[in] string flags corresponding to data
+    * @param charArray[in] the character array (can be either byte[] or char[]) to copy the UTF8 string into
+    * @param startIndex the start index of charArray at which to begin the copy
     */
    static VMINLINE void
    copyUTF8ToASCII(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
