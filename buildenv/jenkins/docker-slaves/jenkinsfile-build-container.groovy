@@ -73,7 +73,11 @@ timeout(time: 5, unit: 'HOURS') {
                         if(env.KNOWN_HOSTS){
                             sh "ssh-keyscan ${KNOWN_HOSTS} >> ./known_hosts"
                         }
-                        sh "docker build -f Dockerfile ${TAGS} ."
+                        def ARTIFACTORY_API_KEY = (params.ARTIFACTORY_API_KEY) ? params.ARTIFACTORY_API_KEY : ""
+                        def ARTIFACTORY_DOWNLOAD_LINK = (params.ARTIFACTORY_DOWNLOAD_LINK) ? params.ARTIFACTORY_DOWNLOAD_LINK : ""
+                        withCredentials([usernamePassword(credentialsId: ARTIFACTORY_API_KEY, passwordVariable: 'ARTPASS', usernameVariable: 'ARTUSER')]) {
+                            sh "docker build -f Dockerfile ${TAGS} --build-arg artifactory_username=${ARTUSER} --build-arg artifactory_password=${ARTPASS} --build-arg artifactory_download_link=${ARTIFACTORY_DOWNLOAD_LINK} ."
+                        }
                     }
                 }
                 stage("Push") {
