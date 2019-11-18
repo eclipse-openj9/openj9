@@ -47,7 +47,6 @@ typedef struct stringTableUTF8Query {
 static UDATA stringHashFn (void *key, void *userData);
 static UDATA stringHashEqualFn (void *leftKey, void *rightKey, void *userData);
 static IDATA stringComparatorFn(struct J9AVLTree *tree, struct J9AVLTreeNode *leftNode, struct J9AVLTreeNode *rightNode);
-static UDATA getUnicodeLength (U_8 *data, UDATA length, bool *isCompressible);
 static j9object_t setupCharArray(J9VMThread *vmThread, j9object_t sourceString, j9object_t newString);
 
 MM_StringTable *
@@ -605,7 +604,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			if (J9_STR_UNICODE == (stringFlags & J9_STR_UNICODE)) {
 				unicodeLength = length / 2;
 			} else {
-				unicodeLength = getUnicodeLength(data, length, &isCompressible);
+				unicodeLength = VM_VMHelpers::getUTF8UnicodeLength(data, length, stringFlags);
 			}
 		} else {
 			if (J9_STR_UNICODE == (stringFlags & J9_STR_UNICODE)) {
@@ -613,7 +612,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			} else {
 				unicodeLength = length;
 				if (!isCompressible) {
-					unicodeLength = getUnicodeLength(data, length, NULL);
+					unicodeLength = VM_VMHelpers::getUTF8UnicodeLength(data, length, stringFlags);
 				}
 			}
 		}
@@ -877,6 +876,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 	J9IndexableObject* charArray;
 	UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
 	UDATA unicodeLength;
+	UDATA stringFlags = J9_STR_INTERN;
 	bool isCompressible = false;
 
 	U_32 hash = (U_32)VM_VMHelpers::computeHashForUTF8(data, length);
@@ -899,14 +899,9 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 		goto nomem;
 	}
 
-	if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
-		unicodeLength = getUnicodeLength(data, length, &isCompressible);
-	} else {
-		unicodeLength = getUnicodeLength(data, length, NULL);
-	}
+	unicodeLength = VM_VMHelpers::getUTF8UnicodeLength(data, length, stringFlags);
 
-/* This option is disabled as its not supported by Tarok */
-
+	/* This option is disabled as its not supported by Tarok */
 	PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, string);
 
 	if (isCompressible) {
@@ -932,7 +927,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 		if (charArray == NULL) {
 			goto nomem;
 		}
-		VM_VMHelpers::copyUTF8ToUTF16(vmThread, data, length, J9_STR_INTERN, (j9object_t)charArray, 0);
+		VM_VMHelpers::copyUTF8ToUTF16(vmThread, data, length, stringFlags, (j9object_t)charArray, 0);
 	}
 
 	J9VMJAVALANGSTRING_SET_VALUE(vmThread, string, charArray);
@@ -997,43 +992,6 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 nomem:
 	vmFuncs->setHeapOutOfMemoryError(vmThread);
 	return NULL;
-}
-
-/**
- * Determine the unicode length of a UTF8 string, while testing its compressability
- * @param data A pointer to a UTF8 string
- * @param length The length of the UTF8 string
- * @param isCompressible[out] Is the string compressable, or NULL
- * @return the length of the UTF8 string in unicode characters
- */
-static UDATA
-getUnicodeLength(U_8 *data, UDATA length, bool *isCompressible)
-{
-	UDATA unicodeLength = 0;
-	bool canCompress = true;
-
-	while (length != 0) {
-		U_16 unicode = 0;
-		U_32 consumed =  decodeUTF8CharN(data, &unicode, length);
-
-		/* This constant will need to be updated if we go change the compression strategy */
-		if (unicode > J9_STR_COMPRESSION_THRESHOLD) {
-			canCompress = false;
-		}
-
-		Assert_MM_true(0 < consumed);
-		Assert_MM_true(consumed <= length);
-
-		data += consumed;
-		length -= consumed;
-		++unicodeLength;
-	}
-
-	if (NULL != isCompressible) {
-		*isCompressible = canCompress;
-	}
-
-	return unicodeLength;
 }
 
 } /* end of extern "C" */

@@ -1158,6 +1158,42 @@ done:
 	}
 
 	/**
+	 * Determine the unicode length of a UTF8 string
+	 *
+	 * @param data[in] points to raw UTF8 bytes
+	 * @param length[in] the number of bytes representing characters in data
+	 * @param stringFlags[out] string flags corresponding to data which will be modified with the J9_STR_LATIN1 flag if
+	 * we determine all characters within data are within the Latin1 subset
+	 *
+	 * @return the length of the UTF8 string in unicode characters
+	 */
+	static UDATA
+	getUTF8UnicodeLength(U_8 *data, UDATA length, UDATA &stringFlags)
+	{
+		UDATA unicodeLength = 0;
+		bool isLatin1 = true;
+
+		while (length != 0) {
+			U_16 unicode = 0;
+			U_32 consumed = decodeUTF8CharN(data, &unicode, length);
+
+			if (unicode > 0xFF) {
+				isLatin1 = false;
+			}
+
+			data += consumed;
+			length -= consumed;
+			++unicodeLength;
+		}
+
+		if (isLatin1) {
+			stringFlags |= J9_STR_LATIN1;
+		}
+
+		return unicodeLength;
+	}
+
+	/**
 	 * Determine the JIT to JIT start address by skipping over the interpreter
 	 * pre-prologue at the interpreter to JIT start address.
 	 *

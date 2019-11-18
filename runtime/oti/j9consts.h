@@ -568,7 +568,6 @@ extern "C" {
 #define J9_STR_NULL_TERMINATE_RESULT 0x40
 /* Determines whether the string contains only ASCII characters (ord <= 127) */
 #define J9_STR_ASCII 0x80
-#define J9_STR_COMPRESSION_THRESHOLD 0xFF
 
 #define J9_JCL_FLAG_REFERENCE_OBJECTS 0x1
 #define J9_JCL_FLAG_FINALIZATION 0x2
