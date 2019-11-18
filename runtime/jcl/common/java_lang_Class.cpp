@@ -1838,7 +1838,6 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 	U_16 nestMemberCount = 0;
 	J9Class *jlClass = NULL;
 	J9Class *arrayClass = NULL;
-	J9Class *nestMember = NULL;
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 
@@ -1882,7 +1881,7 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 			J9UTF8 *nestMemberName = NNSRP_GET(nestMembers[i], J9UTF8 *);
 
 			PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, resultObject);
-			nestMember = vmFuncs->internalFindClassUTF8(currentThread, J9UTF8_DATA(nestMemberName), J9UTF8_LENGTH(nestMemberName), classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+			J9Class *nestMember = vmFuncs->internalFindClassUTF8(currentThread, J9UTF8_DATA(nestMemberName), J9UTF8_LENGTH(nestMemberName), classLoader, J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 			resultObject = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
 
 			if (NULL == nestMember) {

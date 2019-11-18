@@ -259,7 +259,6 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	}
 	
 /*[IF Java11]*/
-	/* Store the results of getNestHostImpl() and getNestMembersImpl() respectively */
 	private Class<?> nestHost;
 /*[ENDIF] Java11*/
 	
