@@ -1162,8 +1162,8 @@ done:
 	 *
 	 * @param data[in] points to raw UTF8 bytes
 	 * @param length[in] the number of bytes representing characters in data
-	 * @param stringFlags[out] string flags corresponding to data which will be modified with the J9_STR_LATIN1 flag if
-	 * we determine all characters within data are within the Latin1 subset
+	 * @param stringFlags[out] string flags corresponding to data which will be modified with the J9_STR_ASCII flag if
+	 * we determine all characters within data are within the ASCII subset
 	 *
 	 * @return the length of the UTF8 string in unicode characters
 	 */
@@ -1171,14 +1171,14 @@ done:
 	getUTF8UnicodeLength(U_8 *data, UDATA length, UDATA &stringFlags)
 	{
 		UDATA unicodeLength = 0;
-		bool isLatin1 = true;
+		bool isASCII = true;
 
 		while (length != 0) {
 			U_16 unicode = 0;
 			U_32 consumed = decodeUTF8CharN(data, &unicode, length);
 
-			if (unicode > 0xFF) {
-				isLatin1 = false;
+			if (unicode > 0x7F) {
+				isASCII = false;
 			}
 
 			data += consumed;
@@ -1186,8 +1186,8 @@ done:
 			++unicodeLength;
 		}
 
-		if (isLatin1) {
-			stringFlags |= J9_STR_LATIN1;
+		if (isASCII) {
+			stringFlags |= J9_STR_ASCII;
 		}
 
 		return unicodeLength;
