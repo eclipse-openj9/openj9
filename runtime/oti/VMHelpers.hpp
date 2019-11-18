@@ -1040,6 +1040,29 @@ done:
 		}
 		return hash;
 	}
+	
+	/**
+	 * Determines whether the UTF8 string is an ASCII string.
+	 *
+	 * @param data[in] points to raw UTF8 bytes
+	 * @param length[in] the number of bytes representing characters in data
+	 *
+	 * @return true if all of the characters in the UTF8 input string are ASCII; false otherwise
+	 */
+	static VMINLINE bool
+	isUTF8ASCII(const U_8 *data, UDATA length)
+	{
+		bool isASCII = true;
+
+		for (UDATA i = 0; i < length; ++i) {
+			if (data[i] > 0x7F) {
+				isASCII = false;
+				break;
+			}
+		}
+
+		return isASCII;
+	}
 
 	/**
 	 * Copies a UTF8 string into a UTF16 string at a specific index.

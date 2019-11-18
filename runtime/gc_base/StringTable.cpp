@@ -48,7 +48,6 @@ static UDATA stringHashFn (void *key, void *userData);
 static UDATA stringHashEqualFn (void *leftKey, void *rightKey, void *userData);
 static IDATA stringComparatorFn(struct J9AVLTree *tree, struct J9AVLTreeNode *leftNode, struct J9AVLTreeNode *rightNode);
 static UDATA getUnicodeLength (U_8 *data, UDATA length, bool *isCompressible);
-static bool isUnicodeCompressable(U_16 *data, UDATA length);
 static j9object_t setupCharArray(J9VMThread *vmThread, j9object_t sourceString, j9object_t newString);
 
 MM_StringTable *
@@ -554,18 +553,8 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	j9object_t result = NULL;
 	j9object_t charArray = NULL;
 	UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
-	UDATA unicodeLength = 0;
 
-	bool isCompressible = true;
-
-	for (UDATA i = 0; i < length; ++i) {
-		if (data[i] > 127) {
-			isCompressible = false;
-			break;
-		}
-	}
-
-	if (isCompressible) {
+	if (VM_VMHelpers::isUTF8ASCII(data, length)) {
 		stringFlags |= J9_STR_ASCII;
 	}
 
@@ -597,6 +586,8 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 	}
 
 	if (NULL == result) {
+		UDATA unicodeLength = 0;
+
 		if (stringFlags & J9_STR_INSTRUMENTABLE) {
 			allocateFlags = J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE;
 		}
@@ -613,7 +604,6 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 		if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
 			if (J9_STR_UNICODE == (stringFlags & J9_STR_UNICODE)) {
 				unicodeLength = length / 2;
-				isCompressible = isUnicodeCompressable((U_16*)data, unicodeLength);
 			} else {
 				unicodeLength = getUnicodeLength(data, length, &isCompressible);
 			}
@@ -1044,26 +1034,6 @@ getUnicodeLength(U_8 *data, UDATA length, bool *isCompressible)
 	}
 
 	return unicodeLength;
-}
-
-/**
- * Determine if the Unicode string is compressible or not
- * @param data A pointer to the Unicode data
- * @param length Length of the Unicode string
- * @return true if the string is compressible, false otherwise.
- */
-static bool
-isUnicodeCompressable(U_16 *data, UDATA length)
-{
-	UDATA i = 0;
-
-	for (i = 0; i < length; i++) {
-		/* This constant will need to be updated if we go change the compression strategy */
-		if (data[i] > J9_STR_COMPRESSION_THRESHOLD) {
-			return false;
-		}
-	}
-	return true;
 }
 
 } /* end of extern "C" */
