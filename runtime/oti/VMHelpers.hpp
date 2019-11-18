@@ -1042,7 +1042,7 @@ done:
 	}
 
 	static VMINLINE void
-	copyUTF8ToUnicode(J9VMThread * vmThread, U_8 * data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
+	copyUTF8ToUTF16(J9VMThread * vmThread, U_8 * data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
 	{
 		UDATA originalLength = length;
 
@@ -1097,7 +1097,7 @@ done:
     * @param offset
     */
    static VMINLINE void
-   copyUTF8ToCompressedUnicode(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
+   copyUTF8ToASCII(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
    {
 	   UDATA writeIndex = startIndex;
 	   UDATA originalLength = length;
