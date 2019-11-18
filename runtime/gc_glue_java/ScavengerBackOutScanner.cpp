@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2018 IBM Corp. and others
+ * Copyright (c) 2015, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -79,6 +79,7 @@ MM_ScavengerBackOutScanner::scanAllSlots(MM_EnvironmentBase *env)
 void
 MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *env)
 {
+	bool const compressed = _extensions->compressObjectReferences();
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
 	if (_extensions->isConcurrentScavengerEnabled()) {
 		GC_FinalizeListManager * finalizeListManager = _extensions->finalizeListManager;
@@ -87,7 +88,7 @@ MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *en
 			/* walk finalizable objects loaded by the system class loader */
 			omrobjectptr_t systemObject = finalizeListManager->resetSystemFinalizableObjects();
 			while (NULL != systemObject) {
-				MM_ForwardedHeader forwardHeader(systemObject);
+				MM_ForwardedHeader forwardHeader(systemObject, compressed);
 				omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
 
 				if (NULL != forwardPtr) {
@@ -110,7 +111,7 @@ MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *en
 			/* walk finalizable objects loaded by the all other class loaders */
 			omrobjectptr_t defaultObject = finalizeListManager->resetDefaultFinalizableObjects();
 			while (NULL != defaultObject) {
-				MM_ForwardedHeader forwardHeader(defaultObject);
+				MM_ForwardedHeader forwardHeader(defaultObject, compressed);
 				omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
 
 				if (NULL != forwardPtr) {
@@ -133,7 +134,7 @@ MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *en
 			GC_FinalizableReferenceBuffer referenceBuffer(_extensions);
 			omrobjectptr_t referenceObject = finalizeListManager->resetReferenceObjects();
 			while (NULL != referenceObject) {
-				MM_ForwardedHeader forwardHeader(referenceObject);
+				MM_ForwardedHeader forwardHeader(referenceObject, compressed);
 				omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
 
 				if (NULL != forwardPtr) {
@@ -160,7 +161,7 @@ MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *en
 			omrobjectptr_t systemObject = finalizeListManager->resetSystemFinalizableObjects();
 			while (NULL != systemObject) {
 				omrobjectptr_t next = NULL;
-				MM_ForwardedHeader forwardHeader(systemObject);
+				MM_ForwardedHeader forwardHeader(systemObject, compressed);
 				Assert_MM_false(forwardHeader.isForwardedPointer());
 				if (forwardHeader.isReverseForwardedPointer()) {
 					omrobjectptr_t originalObject = forwardHeader.getReverseForwardedPointer();
@@ -187,7 +188,7 @@ MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *en
 			omrobjectptr_t defaultObject = finalizeListManager->resetDefaultFinalizableObjects();
 			while (NULL != defaultObject) {
 				omrobjectptr_t next = NULL;
-				MM_ForwardedHeader forwardHeader(defaultObject);
+				MM_ForwardedHeader forwardHeader(defaultObject, compressed);
 				Assert_MM_false(forwardHeader.isForwardedPointer());
 				if (forwardHeader.isReverseForwardedPointer()) {
 					omrobjectptr_t originalObject = forwardHeader.getReverseForwardedPointer();
@@ -210,7 +211,7 @@ MM_ScavengerBackOutScanner::backoutFinalizableObjects(MM_EnvironmentStandard *en
 			omrobjectptr_t referenceObject = finalizeListManager->resetReferenceObjects();
 			while (NULL != referenceObject) {
 				omrobjectptr_t next = NULL;
-				MM_ForwardedHeader forwardHeader(referenceObject);
+				MM_ForwardedHeader forwardHeader(referenceObject, compressed);
 				Assert_MM_false(forwardHeader.isForwardedPointer());
 				if (forwardHeader.isReverseForwardedPointer()) {
 					omrobjectptr_t originalObject = forwardHeader.getReverseForwardedPointer();
@@ -242,6 +243,7 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 	MM_Heap *heap = _extensions->heap;
 	MM_HeapRegionManager *regionManager = heap->getHeapRegionManager();
 	MM_HeapRegionDescriptorStandard *region = NULL;
+	bool const compressed = _extensions->compressObjectReferences();
 
 	GC_HeapRegionIteratorStandard regionIterator(regionManager);
 	while(NULL != (region = regionIterator.nextRegion())) {
@@ -262,7 +264,7 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 				if (!list->wasEmpty()) {
 					omrobjectptr_t object = list->getPriorList();
 					while (NULL != object) {
-						MM_ForwardedHeader forwardHeader(object);
+						MM_ForwardedHeader forwardHeader(object, compressed);
 						omrobjectptr_t forwardPtr = forwardHeader.getNonStrictForwardedObject();
 						if (NULL != forwardPtr) {
 							if (forwardHeader.isSelfForwardedPointer()) {
@@ -292,7 +294,7 @@ MM_ScavengerBackOutScanner::backoutUnfinalizedObjects(MM_EnvironmentStandard *en
 					omrobjectptr_t object = list->getPriorList();
 					while (NULL != object) {
 						omrobjectptr_t next = NULL;
-						MM_ForwardedHeader forwardHeader(object);
+						MM_ForwardedHeader forwardHeader(object, compressed);
 						Assert_MM_false(forwardHeader.isForwardedPointer());
 						if (forwardHeader.isReverseForwardedPointer()) {
 							omrobjectptr_t originalObject = forwardHeader.getReverseForwardedPointer();
