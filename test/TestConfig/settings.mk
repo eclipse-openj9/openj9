@@ -36,6 +36,7 @@ help:
 
 CD        = cd
 ECHO      = echo
+FIND      = find
 MKDIR     = mkdir
 MKTREE    = mkdir -p
 PWD       = pwd
@@ -198,7 +199,7 @@ REPORTDIR = $(Q)$(REPORTDIR_NQ)$(Q)
 RM_REPORTDIR=
 KEEP_REPORTDIR?=true
 ifeq ($(KEEP_REPORTDIR), false)
-	RM_REPORTDIR=$(RM) -r $(REPORTDIR);
+	RM_REPORTDIR=$(FIND) $(REPORTDIR) \! -name '*.xml' -delete;
 endif
 ifeq ($(TEST_ITERATIONS), 1) 
 	TEST_STATUS=if [ $$? -eq 0 ] ; then $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_PASSED$(Q); $(ECHO) $(Q)$(Q); $(CD) $(TEST_ROOT); $(RM_REPORTDIR) else $(ECHO) $(Q)$(Q); $(ECHO) $(Q)$@$(Q)$(Q)_FAILED$(Q); $(ECHO) $(Q)$(Q); fi
