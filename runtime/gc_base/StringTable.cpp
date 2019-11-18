@@ -667,29 +667,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressible) {
 				VM_VMHelpers::copyUTF8ToCompressedUnicode(vmThread, data, length, stringFlags, charArray, 0);
 			} else {
-				if (isCompressible) {
-					if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
-						for (UDATA i = 0; i < length; ++i) {
-							U_8 c = data[i];
-							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, c != '/' ? c : '.');
-						}
-					} else {
-						for (UDATA i = 0; i < length; ++i) {
-							J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, data[i]);
-						}
-					}
-
-					if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME)) {
-						for (IDATA i = length - 1; i >= 0; --i) {
-							if ('.' == J9JAVAARRAYOFCHAR_LOAD(vmThread, charArray, i)) {
-								J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, '/');
-								break;
-							}
-						}
-					}
-				} else {
-					VM_VMHelpers::copyUTF8ToUnicode(vmThread, data, length, stringFlags, charArray, 0);
-				}
+				VM_VMHelpers::copyUTF8ToUnicode(vmThread, data, length, stringFlags, charArray, 0);
 			}
 		}
 
