@@ -1369,7 +1369,19 @@ scan_udata_memory_size_helper(J9JavaVM *javaVM, char **cursor, UDATA *value, con
 		return false;
 	}
 	
-	if(try_scan(cursor, "G") || try_scan(cursor, "g")) {
+	if(try_scan(cursor, "T") || try_scan(cursor, "t")) {
+		if (0 != *value) {
+#if defined(J9VM_ENV_DATA64)
+			if (*value <= (((UDATA)-1) >> 40)) {
+				*value <<= 40;
+			} else
+#endif /* defined(J9VM_ENV_DATA64) */
+			{
+				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_GC_OPTIONS_VALUE_OVERFLOWED, argName);
+				return false;
+			}
+		}
+	} else if(try_scan(cursor, "G") || try_scan(cursor, "g")) {
 		if (*value <= (((UDATA)-1) >> 30)) {
 			*value <<= 30;
 		} else {

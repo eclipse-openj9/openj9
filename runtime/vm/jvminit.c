@@ -5176,6 +5176,50 @@ static void testOptionValueOps(J9JavaVM* vm) {
 	TEST_INT(uResult, (1024*1024*1024));
 	TEST_INT(intResult, OPTION_OK);
 
+#if defined(J9VM_ENV_DATA64)
+	SET_TO(1, "-Xfog16777215T");			/* (2^24-1)*2^40 */
+	optName = "-Xfog";
+	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+	TEST_INT(uResult, (16777215UL*1024UL*1024UL*1024UL*1024UL));
+	TEST_INT(intResult, OPTION_OK);
+
+	SET_TO(1, "-Xfoh1t");
+	optName = "-Xfoh";
+	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+	TEST_INT(uResult, (1024*1024*1024*1024L));
+	TEST_INT(intResult, OPTION_OK);
+
+	SET_TO(1, "-Xfoi16777216T");			/* 2^64 */
+	optName = "-Xfoi";
+	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+	TEST_INT(intResult, OPTION_OVERFLOW);
+
+	SET_TO(1, "-Xfoj16777216t");			/* 2^64 */
+	optName = "-Xfoj";
+	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+	TEST_INT(intResult, OPTION_OVERFLOW);
+#else	/* defined(J9VM_ENV_DATA64) */
+	SET_TO(1, "-Xfog1T");
+	optName = "-Xfog";
+	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+	TEST_INT(intResult, OPTION_OVERFLOW);
+
+	SET_TO(1, "-Xfoh1t");
+	optName = "-Xfoh";
+	intResult = GET_MEMORY_VALUE(1, optName, uResult);
+	TEST_INT(intResult, OPTION_OVERFLOW);
+
+	SET_TO(1, "-Xfoi0T");
+	optName = "-Xfoi";
+	TEST_INT(uResult, 0);
+	TEST_INT(intResult, OPTION_OK);
+
+	SET_TO(1, "-Xfoj0t");
+	optName = "-Xfoj";
+	TEST_INT(uResult, 0);
+	TEST_INT(intResult, OPTION_OK);
+#endif /* defined(J9VM_ENV_DATA64) */
+
 	SET_TO(1, "-Xfoz0.1");
 	optName = "-Xfoz";
 	intResult = GET_MEMORY_VALUE(1, optName, uResult);
