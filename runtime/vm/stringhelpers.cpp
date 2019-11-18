@@ -33,47 +33,6 @@
 extern "C" {
 
 /**
- * Compress the UTF8 string into compressed format into byteArray at offset
- * @param *vmThread
- * @param *data
- * @param length
- * @param stringFlags
- * @param byteArray
- * @param offset
- */
-void
-copyUTF8ToCompressedUnicode(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
-{
-	UDATA writeIndex = startIndex;
-	UDATA originalLength = length;
-	while (length > 0) {
-		U_16 unicode = 0;
-		UDATA consumed = VM_VMHelpers::decodeUTF8Char(data, &unicode);
-		if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
-			if ((U_16)'/' == unicode) {
-				unicode = (U_16)'.';
-			}
-		}
-		J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, writeIndex, (U_8)unicode);
-		writeIndex += 1;
-		data += consumed;
-		length -= consumed;
-	}
-
-	/* anonClasses have the following name format [className]/[ROMADDRESS], we have to
-	 * to fix up the name because the previous functions automatically convert '/' to '.'
-	 */
-	if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME)) {
-		for (IDATA i = (IDATA) originalLength - 1; i >= 0; i--) {
-			if ((U_8)'.' == J9JAVAARRAYOFBYTE_LOAD(vmThread, charArray, i)) {
-				J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, (U_8) '/');
-				break;
-			}
-		}
-	}
-}
-
-/**
  * Compare a uncompressed java unicode array to another uncompressed java unicode array for equality.
  * @param *vmThread
  * @param *unicodeBytes1
@@ -502,38 +461,6 @@ fixBadUtf8(const U_8 * original, U_8 *corrected, size_t length)
 		length -= consumed;
 	}
 	*corrected = '\0';
-}
-
-void
-copyUTF8ToUnicode(J9VMThread * vmThread, U_8 * data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
-{
-	UDATA writeIndex = startIndex;
-	UDATA originalLength = length;
-	while (length > 0) {
-		U_16 unicode = 0;
-		UDATA consumed = VM_VMHelpers::decodeUTF8Char(data, &unicode);
-		if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
-			if ((U_16)'/' == unicode) {
-				unicode = (U_16)'.';
-			}
-		}
-		J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, writeIndex, unicode);
-		writeIndex += 1;
-		data += consumed;
-		length -= consumed;
-	}
-
-	/* anonClasses have the following name format [className]/[ROMADDRESS], we have to
-	 * to fix up the name because the previous functions automatically convert '/' to '.'
-	 */
-	if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME)) {
-		for (IDATA i = (IDATA) originalLength - 1; i >= 0; i--) {
-			if ((U_16)'.' == J9JAVAARRAYOFCHAR_LOAD(vmThread, charArray, i)) {
-				J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, (U_16) '/');
-				break;
-			}
-		}
-	}
 }
 
 j9object_t

@@ -665,7 +665,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			}
 		} else {
 			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && isCompressible) {
-				vmFuncs->copyUTF8ToCompressedUnicode(vmThread, data, length, stringFlags, charArray, 0);
+				VM_VMHelpers::copyUTF8ToCompressedUnicode(vmThread, data, length, stringFlags, charArray, 0);
 			} else {
 				if (isCompressible) {
 					if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
@@ -688,7 +688,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 						}
 					}
 				} else {
-					vmFuncs->copyUTF8ToUnicode(vmThread, data, length, stringFlags, charArray, 0);
+					VM_VMHelpers::copyUTF8ToUnicode(vmThread, data, length, stringFlags, charArray, 0);
 				}
 			}
 		}
@@ -952,7 +952,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 		if (charArray == NULL) {
 			goto nomem;
 		}
-		vmFuncs->copyUTF8ToCompressedUnicode(vmThread, data, length, J9_STR_INTERN, (j9object_t)charArray, 0);
+		VM_VMHelpers::copyUTF8ToCompressedUnicode(vmThread, data, length, J9_STR_INTERN, (j9object_t)charArray, 0);
 	} else {
 		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
 			charArray = (J9IndexableObject*)J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) unicodeLength * 2, allocateFlags);
@@ -964,7 +964,7 @@ j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length
 		if (charArray == NULL) {
 			goto nomem;
 		}
-		vmFuncs->copyUTF8ToUnicode(vmThread, data, length, J9_STR_INTERN, (j9object_t)charArray, 0);
+		VM_VMHelpers::copyUTF8ToUnicode(vmThread, data, length, J9_STR_INTERN, (j9object_t)charArray, 0);
 	}
 
 	J9VMJAVALANGSTRING_SET_VALUE(vmThread, string, charArray);
