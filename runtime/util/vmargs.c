@@ -608,6 +608,21 @@ optionValueOperations(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, IDATA
 							}
 							cursor++;
 							break;
+						case 't':
+						case 'T':
+#if defined(J9VM_ENV_DATA64)
+							if (value <= (((UDATA)-1) >> 40)) {
+								value <<= 40;
+							} else {
+								return OPTION_OVERFLOW;
+							}
+#else /* defined(J9VM_ENV_DATA64) */
+							if (0 != value) {
+								return OPTION_OVERFLOW;
+							}
+#endif /* defined(J9VM_ENV_DATA64) */
+							cursor++;
+							break;
 						default:
 							return OPTION_MALFORMED;
 					}
