@@ -1041,22 +1041,22 @@ done:
 		return hash;
 	}
 
-   /**
-    * Copies a UTF8 string into a UTF16 string at a specific index.
-    *
-    * @param vmThread[in] the current J9VMThread
-    * @param data[in] points to raw UTF8 bytes, some of which may be multi-byte UTF8 encoded Unicode characters
-    * @param length[in] the number of bytes representing characters in data
-    * @param stringFlags[in] string flags corresponding to data
-    * @param charArray[in] the character array (can be either byte[] or char[]) to copy the UTF8 string into
-    * @param startIndex the start index of charArray at which to begin the copy
-    */
+	/**
+	 * Copies a UTF8 string into a UTF16 string at a specific index.
+	 *
+	 * @param vmThread[in] the current J9VMThread
+	 * @param data[in] points to raw UTF8 bytes, some of which may be multi-byte UTF8 encoded Unicode characters
+	 * @param length[in] the number of bytes representing characters in data
+	 * @param stringFlags[in] string flags corresponding to data
+	 * @param charArray[in] the character array (can be either byte[] or char[]) to copy the UTF8 string into
+	 * @param startIndex the start index of charArray at which to begin the copy
+	 */
 	static VMINLINE void
 	copyUTF8ToUTF16(J9VMThread * vmThread, U_8 * data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
 	{
 		UDATA originalLength = length;
 
-      if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ASCII)) {
+		if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ASCII)) {
 			if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
 				for (UDATA i = 0; i < length; ++i) {
 					U_8 c = data[i];
@@ -1068,20 +1068,20 @@ done:
 				}
 			}
 		} else {
-		   UDATA writeIndex = startIndex;
-		   while (length > 0) {
-			   U_16 unicode = 0;
-			   UDATA consumed = decodeUTF8Char(data, &unicode);
-			   if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
-				   if ((U_16)'/' == unicode) {
-					   unicode = (U_16)'.';
-				   }
-			   }
-			   J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, writeIndex, unicode);
-			   writeIndex += 1;
-			   data += consumed;
-			   length -= consumed;
-		   }
+			UDATA writeIndex = startIndex;
+			while (length > 0) {
+				U_16 unicode = 0;
+				UDATA consumed = decodeUTF8Char(data, &unicode);
+				if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
+					if ((U_16)'/' == unicode) {
+						unicode = (U_16)'.';
+					}
+				}
+				J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, writeIndex, unicode);
+				writeIndex += 1;
+				data += consumed;
+				length -= consumed;
+			}
 		}
 
 		/* Anonymous classes have the following name format [className]/[ROMADDRESS], so we have to to fix up the name
@@ -1097,47 +1097,42 @@ done:
 		}
 	}
 
-   /**
-    * Copies a UTF8 string into a Latin1 compact string at a specific index.
-    *
-    * @param vmThread[in] the current J9VMThread
-    * @param data[in] points to raw UTF8 bytes, all of which are within the Latin1 subset ord. [0, 255]
-    * @param length[in] the number of bytes representing characters in data
-    * @param stringFlags[in] string flags corresponding to data
-    * @param charArray[in] the character array (can be either byte[] or char[]) to copy the UTF8 string into
-    * @param startIndex the start index of charArray at which to begin the copy
-    */
-   static VMINLINE void
-   copyUTF8ToASCII(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
-   {
-	   UDATA writeIndex = startIndex;
-	   UDATA originalLength = length;
-	   while (length > 0) {
-		   U_16 unicode = 0;
-		   UDATA consumed = VM_VMHelpers::decodeUTF8Char(data, &unicode);
-		   if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
-			   if ((U_16)'/' == unicode) {
-				   unicode = (U_16)'.';
-			   }
-		   }
-		   J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, writeIndex, (U_8)unicode);
-		   writeIndex += 1;
-		   data += consumed;
-		   length -= consumed;
-	   }
+	/**
+	 * Copies a UTF8 string into a ASCII compact string at a specific index.
+	 *
+	 * @param vmThread[in] the current J9VMThread
+	 * @param data[in] points to raw UTF8 bytes, all of which are within the ASCII subset ord. [0, 127]
+	 * @param length[in] the number of bytes representing characters in data
+	 * @param stringFlags[in] string flags corresponding to data
+	 * @param charArray[in] the character array (can be either byte[] or char[]) to copy the UTF8 string into
+	 * @param startIndex the start index of charArray at which to begin the copy
+	 */
+	static VMINLINE void
+	copyUTF8ToASCII(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
+	{
+		if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
+			for (UDATA i = 0; i < length; ++i) {
+				U_8 c = data[i];
+				J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, c != '/' ? c : '.');
+			}
+		} else {
+			for (UDATA i = 0; i < length; ++i) {
+				J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, data[i]);
+			}
+		}
 
 		/* Anonymous classes have the following name format [className]/[ROMADDRESS], so we have to to fix up the name
 		 * because the previous loops have converted '/' to '.' already.
 		 */
-	   if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME)) {
-		   for (IDATA i = (IDATA) originalLength - 1; i >= 0; --i) {
-			   if ((U_8)'.' == J9JAVAARRAYOFBYTE_LOAD(vmThread, charArray, i)) {
-				   J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, (U_8)'/');
-				   break;
-			   }
-		   }
-	   }
-   }
+		if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME)) {
+			for (IDATA i = (IDATA)length - 1; i >= 0; --i) {
+				if ((U_8)'.' == J9JAVAARRAYOFBYTE_LOAD(vmThread, charArray, i)) {
+					J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, (U_8)'/');
+					break;
+				}
+			}
+		}
+	}
 
 	/**
 	 * Determine the JIT to JIT start address by skipping over the interpreter
