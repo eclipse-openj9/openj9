@@ -1847,7 +1847,6 @@ Java_java_lang_Class_getNestMembersImpl(JNIEnv *env, jobject recv)
 
 	if (NULL == nestHost) {
 		if (J9_VISIBILITY_ALLOWED != vmFuncs->loadAndVerifyNestHost(currentThread, clazz, 0)) {
-			nestMember = clazz;
 			goto _done;
 		}
 		nestHost = clazz->nestHost;

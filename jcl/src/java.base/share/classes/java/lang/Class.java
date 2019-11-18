@@ -261,7 +261,6 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 /*[IF Java11]*/
 	/* Store the results of getNestHostImpl() and getNestMembersImpl() respectively */
 	private Class<?> nestHost;
-	private Class<?>[] nestMembers;
 /*[ENDIF] Java11*/
 	
 /**
@@ -4585,28 +4584,26 @@ public boolean isNestmateOf(Class<?> that) {
  */
 @CallerSensitive
 public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
-	if (nestMembers == null) {
-		nestMembers = getNestMembersImpl();
-	}
-	if (nestMembers.length == 1 && nestMembers[0] == this) {
-		/* This is a Class object that belongs to the nest consisting only of itself,
-		 * or a Class object representing array types, primitive types, or void.
+	if (isArray() || isPrimitive()) {
+		/* By spec, Class objects representing array types or primitive types
+		 * belong to the nest consisting only of itself.
 		 */
-	} else {
-		SecurityManager securityManager = System.getSecurityManager();
-		if (securityManager != null) {
-			/* All classes in a nest must be in the same runtime package and therefore same classloader */
-			ClassLoader nestMemberClassLoader = this.internalGetClassLoader();
-			ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
-			if (!doesClassLoaderDescendFrom(nestMemberClassLoader, callerClassLoader)) {
-				String nestMemberPackageName = this.getPackageName();
-				if ((nestMemberPackageName != null) && (nestMemberPackageName != "")) {
-					securityManager.checkPackageAccess(nestMemberPackageName);
-				}
+		return new Class<?>[] { this };
+	}
+	SecurityManager securityManager = System.getSecurityManager();
+	if (securityManager != null) {
+		/* All classes in a nest must be in the same runtime package and therefore same classloader */
+		ClassLoader nestMemberClassLoader = this.internalGetClassLoader();
+		ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
+		if (!doesClassLoaderDescendFrom(nestMemberClassLoader, callerClassLoader)) {
+			String nestMemberPackageName = this.getPackageName();
+			if ((nestMemberPackageName != null) && (nestMemberPackageName != "")) {
+				securityManager.checkPackageAccess(nestMemberPackageName);
 			}
 		}
 	}
-	return nestMembers;
+
+	return getNestMembersImpl();
 }
 /*[ENDIF] Java11 */
 
