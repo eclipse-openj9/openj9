@@ -26,6 +26,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     compiler/optimizer/DataAccessAccelerator.cpp \
     compiler/optimizer/DynamicLiteralPool.cpp \
     compiler/optimizer/EscapeAnalysis.cpp \
+    compiler/optimizer/EscapeAnalysisTools.cpp \
     compiler/optimizer/PreEscapeAnalysis.cpp \
     compiler/optimizer/PostEscapeAnalysis.cpp \
     compiler/optimizer/FearPointAnalysis.cpp \

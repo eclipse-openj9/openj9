@@ -25,6 +25,7 @@
 #endif
 
 #include "optimizer/EscapeAnalysis.hpp"
+#include "optimizer/EscapeAnalysisTools.hpp"
 
 #include <algorithm>
 #include <stdint.h>
@@ -256,6 +257,11 @@ int32_t TR_EscapeAnalysis::perform()
       _maxInlinedBytecodeSize = 4000 - nodeCount;
       }
 
+   // under HCR we can protect the top level sniff with an HCR guard
+   // nested sniffs are not currently supported
+   if (comp()->getHCRMode() != TR::none)
+      _maxSniffDepth = 1;
+
    TR_ASSERT_FATAL(_maxSniffDepth < 16, "The argToCall and nonThisArgToCall flags are 16 bits - a depth limit greater than 16 will not fit in these flags");
 
    if (getLastRun())
@@ -275,12 +281,16 @@ int32_t TR_EscapeAnalysis::perform()
       {
       //
       void *data = manager()->getOptData();
+      TR_BitVector *peekableCalls = NULL;
       if (data != NULL)
          {
+         peekableCalls = ((TR_EscapeAnalysis::PersistentData *)data)->_peekableCalls;
          delete ((TR_EscapeAnalysis::PersistentData *) data) ;
          manager()->setOptData(NULL);
          }
       manager()->setOptData(new (comp()->allocator()) TR_EscapeAnalysis::PersistentData(comp()));
+      if (peekableCalls != NULL)
+         ((TR_EscapeAnalysis::PersistentData *)manager()->getOptData())->_peekableCalls = peekableCalls;
       }
    else
       {
@@ -294,6 +304,7 @@ int32_t TR_EscapeAnalysis::perform()
 
    {
    TR::StackMemoryRegion stackMemoryRegion(*trMemory());
+   _callsToProtect = new (trStackMemory()) CallLoadMap(CallLoadMapComparator(), comp()->trMemory()->currentStackRegion());
 
 #if CHECK_MONITORS
    /* monitors */
@@ -307,6 +318,99 @@ int32_t TR_EscapeAnalysis::perform()
 #endif
 
    cost = performAnalysisOnce();
+
+   if (!_callsToProtect->empty() && manager()->numPassesCompleted() < _maxPassNumber)
+      {
+      TR::CFG *cfg = comp()->getFlowGraph();
+      TR::Block *block = NULL;
+      TR::TreeTop *lastTree = comp()->findLastTree();
+      TR_EscapeAnalysisTools tools(comp());
+      RemainingUseCountMap *remainingUseCount = new (comp()->trStackMemory()) RemainingUseCountMap(RemainingUseCountMapComparator(), comp()->trMemory()->currentStackRegion());
+      for (TR::TreeTop *tt = comp()->findLastTree(); tt != NULL; tt = tt->getPrevTreeTop())
+         {
+         TR::Node *node = tt->getNode();
+         if (node->getOpCodeValue() == TR::BBEnd)
+            block = node->getBlock();
+         else if (node->getStoreNode() && node->getStoreNode()->getOpCode().isStoreDirect())
+            node = node->getStoreNode()->getFirstChild();
+         else if (node->getOpCode().isCheck() || node->getOpCode().isAnchor() || node->getOpCodeValue() == TR::treetop)
+            node = node->getFirstChild();
+
+         auto nodeLookup = _callsToProtect->find(node);
+         if (nodeLookup == _callsToProtect->end()
+             || TR_EscapeAnalysisTools::isFakeEscape(node)
+             || node->getSymbol() == NULL
+             || node->getSymbol()->getResolvedMethodSymbol() == NULL
+             || node->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod() == NULL)
+            continue;
+
+         if (node->getReferenceCount() > 1)
+            {
+            auto useCount = remainingUseCount->find(node);
+            if (useCount == remainingUseCount->end())
+               {
+               (*remainingUseCount)[node] = node->getReferenceCount() - 1;
+               continue;
+               }
+            if (useCount->second > 1)
+               {
+               useCount->second -= 1;
+               continue;
+               }
+            }
+
+         if (!performTransformation(comp(), "%sHCR CALL PEEKING: Protecting call [%p] n%dn with an HCR guard and escape helper\n", OPT_DETAILS, node, node->getGlobalIndex()))
+            continue;
+
+         ((TR_EscapeAnalysis::PersistentData*)manager()->getOptData())->_processedCalls->set(node->getGlobalIndex());
+
+         _repeatAnalysis = true;
+
+         optimizer()->setValueNumberInfo(NULL);
+         cfg->invalidateStructure();
+
+         TR::TreeTop *prevTT = tt->getPrevTreeTop();
+         TR::Block *callBlock = block->split(tt, comp()->getFlowGraph(), true, true);
+
+         // check uncommoned nodes for stores of the candidate - if so we need to add the new temp to the
+         // list of loads
+         for (TR::TreeTop *itr = block->getExit(); itr != prevTT; itr = itr->getPrevTreeTop())
+            {
+            TR::Node *storeNode = itr->getNode()->getStoreNode();
+            if (storeNode
+                && storeNode->getOpCodeValue() == TR::astore
+                && nodeLookup->second.first->get(storeNode->getFirstChild()->getGlobalIndex()))
+               nodeLookup->second.second->push_back(TR::Node::createWithSymRef(TR::aload, 0, storeNode->getSymbolReference()));
+            }
+
+         TR::Node *guard = TR_VirtualGuard::createHCRGuard(comp(),
+                              node->getByteCodeInfo().getCallerIndex(),
+                              node,
+                              NULL,
+                              node->getSymbol()->getResolvedMethodSymbol(),
+                              node->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->classOfMethod());
+         block->getExit()->insertBefore(TR::TreeTop::create(comp(), guard));
+
+         TR::Block *heapificationBlock = TR::Block::createEmptyBlock(node, comp(), MAX_COLD_BLOCK_COUNT);
+         heapificationBlock->getExit()->join(lastTree->getNextTreeTop());
+         lastTree->join(heapificationBlock->getEntry());
+         lastTree = heapificationBlock->getExit();
+         heapificationBlock->setIsCold();
+
+         guard->setBranchDestination(heapificationBlock->getEntry());
+         cfg->addNode(heapificationBlock);
+         cfg->addEdge(block, heapificationBlock);
+         cfg->addEdge(heapificationBlock, callBlock);
+
+         heapificationBlock->getExit()->insertBefore(TR::TreeTop::create(comp(), TR::Node::create(node, TR::Goto, 0, callBlock->getEntry())));
+         tools.insertFakeEscapeForLoads(heapificationBlock, node, nodeLookup->second.second);
+         traceMsg(comp(), "Created heapification block_%d\n", heapificationBlock->getNumber());
+
+         ((TR_EscapeAnalysis::PersistentData*)manager()->getOptData())->_peekableCalls->set(node->getGlobalIndex());
+         _callsToProtect->erase(nodeLookup);
+         tt = prevTT->getNextTreeTop();
+         }
+      }
    } // scope of the stack memory region
 
    if (_repeatAnalysis && manager()->numPassesCompleted() < _maxPassNumber)
@@ -4971,13 +5075,90 @@ int32_t TR_EscapeAnalysis::sniffCall(TR::Node *callNode, TR::ResolvedMethodSymbo
 
       dumpOptDetails(comp(), "O^O ESCAPE ANALYSIS: Peeking into the IL to check for escaping objects \n");
 
-      bool ilgenFailed = (NULL == methodSymbol->getResolvedMethod()->genMethodILForPeeking(methodSymbol, comp()));
+      bool ilgenFailed = false;
+      bool isPeekableCall = ((PersistentData *)manager()->getOptData())->_peekableCalls->get(callNode->getGlobalIndex());
+      if (isPeekableCall)
+         ilgenFailed = (NULL == methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp()));
+      else
+         ilgenFailed = (NULL == methodSymbol->getResolvedMethod()->genMethodILForPeeking(methodSymbol, comp()));
       //comp()->setVisitCount(visitCount);
 
+      /*
+       * Under HCR we cannot generally peek methods because the method could be
+       * redefined and any assumptions we made about the contents of the method
+       * would no longer hold. Peeking is only safe when we add a compensation
+       * path that would handle potential escape of candidates if a method were
+       * redefined.
+       *
+       * Under OSR we know the live locals from the OSR book keeping information
+       * so can construct a helper call which appears to make those calls escape.
+       * Such a call will force heapification of any candidates ahead of the
+       * helper call.
+       *
+       * We, therefore, queue this call node to be protected if we are in a mode
+       * where protection is possible (voluntary OSR, HCR on). The actual code
+       * transformation is delayed to the end of EA since it will disrupt value
+       * numbering. The transform will insert an HCR guard with an escape helper
+       * call as follows:
+       *
+       * |   ...  |      |      ...      |
+       * | call m |  =>  | hcr guard (m) |
+       * |   ...  |      +---------------+
+       *                         |        \
+       *                         |         +-(cold)-------------------+
+       *                         |         | call eaEscapeHelper      |
+       *                         |         |   <loads of live locals> |
+       *                         |         +--------------------------+
+       *                         V        /
+       *                 +---------------+
+       *                 | call m        |
+       *                 |      ...      |
+       *
+       * Once EA finishes the postEscapeAnalysis pass will clean-up all
+       * eaEscapeHelper calls. Code will only remain in the taken side of the
+       * guard if candidtes were stack allocated and required heapficiation.
+       *
+       * This code transformation is protected with a perform transformation at
+       * the site of tree manipulation at the end of this pass of EA.
+       * Protecting any call is considered a reason to enable another pass of
+       * EA if we have not yet reached the enable limit.
+       *
+       * Note that the result of the call can continue to participate in
+       * commoning with the above design. If we duplicated the call on both
+       * sides of the guard the result could not participate in commoning.
+       *
+       */
       if (ilgenFailed)
          {
-         if (trace())
-            traceMsg(comp(), "   (IL generation failed)\n");
+         traceMsg(comp(), "   (IL generation failed)\n");
+         static char *disableHCRCallPeeking = feGetEnv("TR_disableEAHCRCallPeeking");
+         if (!isPeekableCall
+             && disableHCRCallPeeking == NULL
+             && comp()->getOSRMode() == TR::voluntaryOSR
+             && comp()->getHCRMode() == TR::osr
+             && !_candidates.isEmpty()
+             && !((TR_EscapeAnalysis::PersistentData*)manager()->getOptData())->_processedCalls->get(callNode->getGlobalIndex()))
+            {
+            dumpOptDetails(comp(), "%sAdding call [%p] n%dn to list of calls to protect for peeking to increase opportunities for stack allocation\n", OPT_DETAILS, callNode, callNode->getGlobalIndex());
+            TR_BitVector *candidateNodes = new (comp()->trStackMemory()) TR_BitVector(0, trMemory(), stackAlloc);
+            NodeDeque *loads = new (comp()->trMemory()->currentStackRegion()) NodeDeque(NodeDequeAllocator(comp()->trMemory()->currentStackRegion()));
+            for (int32_t arg = callNode->getFirstArgumentIndex(); arg < callNode->getNumChildren(); ++arg)
+               {
+               TR::Node *child = callNode->getChild(arg);
+               int32_t valueNumber = _valueNumberInfo->getValueNumber(child);
+               for (Candidate *candidate = _candidates.getFirst(); candidate; candidate = candidate->getNext())
+                  {
+                  if (usesValueNumber(candidate, valueNumber))
+                     {
+                     candidateNodes->set(candidate->_node->getGlobalIndex());
+                     ListIterator<TR::SymbolReference> itr(candidate->getSymRefs());
+                     for (TR::SymbolReference *symRef = itr.getFirst(); symRef; symRef = itr.getNext())
+                        loads->push_back(TR::Node::createWithSymRef(TR::aload, 0, symRef));
+                     }
+                  }
+               }
+            (*_callsToProtect)[callNode] = std::make_pair(candidateNodes, loads);
+            }
          return 0;
          }
 
