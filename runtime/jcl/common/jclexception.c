@@ -91,7 +91,6 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 	J9MemoryManagerFunctions const * mmfns = vm->memoryManagerFunctions;
 	j9object_t element = NULL;
 	UDATA rc = TRUE;
-	J9Class* clazz = NULL;
 	const I_32 currentIndex = (I_32)userData->index;
 
 	/* If the stack trace is larger than the array, bail */
@@ -118,21 +117,36 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 		/* If there is a valid method at this frame, fill in the information for it in the StackTraceElement */
 
 		if (romMethod != NULL) {
+			J9UTF8 const * utfClassName = J9ROMCLASS_CLASSNAME(romClass);
 			J9UTF8 * utf = NULL;
 			j9object_t string = NULL;
 			UDATA j2seVersion = J2SE_VERSION(vm) & J2SE_VERSION_MASK;
+			J9Class* clazz = NULL;
 
 			PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, element);
+
+			/* Lookup the J9Class for this method if it can be found as it makes
+			 * a number of the remaining operations faster.  Code still needs to be
+			 * able to handle the case where the J9Class cannot be found
+			 */
+			if (NULL != classLoader) {
+				clazz = vmFuncs->peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+				if (NULL != clazz) {
+					/* clazz can never be an array here as arrays can't define methods so we don't need to
+					* take them into account in the code below when writing the interned string back to
+					* the Class object.
+					*/
+					Assert_JCL_false(J9CLASS_IS_ARRAY(clazz));
+				}
+			}
 
 			/* Fill in module name and version */
 			if (j2seVersion >= J2SE_V11) {
 				J9Module *module = NULL;
-				U_8 *classNameUTF = NULL;
-				UDATA length = 0;
-				/* TODO: this can be null */
-				j9object_t classLoaderName = J9VMJAVALANGCLASSLOADER_CLASSLOADERNAME(vmThread, classLoader->classLoaderObject);
-
-				J9VMJAVALANGSTACKTRACEELEMENT_SET_CLASSLOADERNAME(vmThread, element, classLoaderName);
+				if (classLoader != NULL) {
+					j9object_t classLoaderName = J9VMJAVALANGCLASSLOADER_CLASSLOADERNAME(vmThread, classLoader->classLoaderObject);
+					J9VMJAVALANGSTACKTRACEELEMENT_SET_CLASSLOADERNAME(vmThread, element, classLoaderName);
+				}
 				if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED)) {
 					string = mmfns->j9gc_createJavaLangString(vmThread, (U_8 *)JAVA_BASE_MODULE, LITERAL_STRLEN(JAVA_BASE_MODULE), J9_STR_XLAT);
 					if (string == NULL) {
@@ -152,11 +166,18 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 					element = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
 					J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULEVERSION(vmThread, element, string);
 				} else {
-					classNameUTF = J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass));
-					length = packageNameLength(romClass);
-					omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
-					module = vmFuncs->findModuleForPackage(vmThread, classLoader, classNameUTF, (U_32) length);
-					omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
+					/* Fetch the J9Module from the j.l.Class->j.l.Module field if we have a class.
+					 * Otherwise the more painful package-based lookup must be performed
+					 */
+					if (clazz != NULL) {
+						j9object_t moduleObject = J9VMJAVALANGCLASS_MODULE(vmThread, clazz->classObject);
+						module = J9OBJECT_ADDRESS_LOAD(vmThread, moduleObject, vm->modulePointerOffset);
+					} else {
+						UDATA length = packageNameLength(romClass);
+						omrthread_monitor_enter(vm->classLoaderModuleAndLocationMutex);
+						module = vmFuncs->findModuleForPackage(vmThread, classLoader, J9UTF8_DATA(utfClassName), (U_32) length);
+						omrthread_monitor_exit(vm->classLoaderModuleAndLocationMutex);
+					}
 
 					if (NULL != module) {
 						J9VMJAVALANGSTACKTRACEELEMENT_SET_MODULENAME(vmThread, element, module->moduleName);
@@ -166,26 +187,17 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 			}
 
 			/* Fill in method class */
-			utf = J9ROMCLASS_CLASSNAME(romClass);
 			string = NULL;
 			{
-				if (NULL != classLoader) {
-					clazz = vmFuncs->peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utf), J9UTF8_LENGTH(utf));
-					if (NULL != clazz) {
-						/* clazz can never be an array here as arrays can't define methods so we don't need to
-						 * take them into account in the code below when writing the interned string back to
-						 * the Class object.
-						 */
-						Assert_JCL_false(J9CLASS_IS_ARRAY(clazz));
-						string = J9VMJAVALANGCLASS_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
-					}
+				if (NULL != clazz) {
+					string = J9VMJAVALANGCLASS_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 				}
 				if (NULL == string) {
 					UDATA flags = J9_STR_XLAT | J9_STR_TENURE | J9_STR_INTERN;
 					if (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass)) {
 						flags |= J9_STR_ANON_CLASS_NAME;
 					}
-					string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utf), (U_32) J9UTF8_LENGTH(utf), flags);
+					string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utfClassName), (U_32) J9UTF8_LENGTH(utfClassName), flags);
 					if (NULL == string) {
 						rc = FALSE;
 						/* exception is pending from the call */
