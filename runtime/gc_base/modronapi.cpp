@@ -545,7 +545,7 @@ j9gc_pool_maxmemory(J9JavaVM *javaVM, UDATA poolID)
 			MM_MemorySubSpace *tenureMemorySubspace = defaultMemorySpace->getTenureMemorySubSpace();
 			MM_MemoryPoolLargeObjects *memoryPool = (MM_MemoryPoolLargeObjects *) tenureMemorySubspace->getMemoryPool();
 			UDATA loaSize = (UDATA) (memoryPool->getLOARatio() * extensions->maxOldSpaceSize);
-			loaSize = MM_Math::roundToFloor(extensions->heapAlignment, loaSize);
+			loaSize = MM_Math::roundToCeiling(extensions->heapAlignment, loaSize);
 			maxsize = extensions->maxOldSpaceSize - loaSize;
 		}
 		break;
@@ -555,7 +555,7 @@ j9gc_pool_maxmemory(J9JavaVM *javaVM, UDATA poolID)
 			MM_MemorySubSpace *tenureMemorySubspace = defaultMemorySpace->getTenureMemorySubSpace();
 			MM_MemoryPoolLargeObjects *memoryPool = (MM_MemoryPoolLargeObjects *) tenureMemorySubspace->getMemoryPool();
 			UDATA loaSize = (UDATA) (memoryPool->getLOARatio() * extensions->maxOldSpaceSize);
-			loaSize = MM_Math::roundToFloor(extensions->heapAlignment, loaSize);
+			loaSize = MM_Math::roundToCeiling(extensions->heapAlignment, loaSize);
 			maxsize = loaSize;
 		}
 		break;
