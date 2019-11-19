@@ -20,7 +20,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 import groovy.json.JsonSlurper;
-
+import groovy.json.JsonOutput;
 pipelineFunctions = load 'buildenv/jenkins/common/pipeline-functions.groovy'
 
 def get_source() {
@@ -294,21 +294,39 @@ def archive_sdk() {
                     sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},test-images,'"
                 }
             }
+            if (params.ARCHIVE_JAVADOC) {
+                def javadocDir = "docs"
+                def extractDir = "build/${RELEASE}/images/"
+                if (SDK_VERSION == "8") {
+                    extractDir = "build/${RELEASE}/"
+                }
+                if (fileExists("${extractDir}${javadocDir}")) {
+                    if (SPEC.contains('zos')) {
+                        // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
+                        sh "pax -wvzf ${JAVADOC_FILENAME} ${extractDir}${javadocDir}"
+                    } else {
+                        sh "tar -C ${extractDir} -zcvf ${JAVADOC_FILENAME} ${javadocDir}"
+                    }
+                }
+            }
             if (ARTIFACTORY_SERVER) {
-                def uploadSpec = """{
-                        "files":[
-                            {
-                                "pattern": "${OPENJDK_CLONE_DIR}/${SDK_FILENAME}",
+                def specs = []
+                def sdkSpec = ["pattern": "${OPENJDK_CLONE_DIR}/${SDK_FILENAME}",
+                               "target": "${ARTIFACTORY_UPLOAD_DIR}",
+                               "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
+                specs.add(sdkSpec)
+                def testSpec = ["pattern": "${OPENJDK_CLONE_DIR}/${TEST_FILENAME}",
                                 "target": "${ARTIFACTORY_UPLOAD_DIR}",
-                                "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"
-                            },
-                            {
-                                "pattern": "${OPENJDK_CLONE_DIR}/${TEST_FILENAME}",
-                                "target": "${ARTIFACTORY_UPLOAD_DIR}",
-                                "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"
-                            }
-                        ]
-                    }"""
+                                "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
+                specs.add(testSpec)
+                if (params.ARCHIVE_JAVADOC) {
+                    def javadocSpec = ["pattern": "${OPENJDK_CLONE_DIR}/${JAVADOC_FILENAME}",
+                                       "target": "${ARTIFACTORY_UPLOAD_DIR}",
+                                       "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
+                    specs.add(javadocSpec)
+                }
+                def uploadFiles =   [files : specs]
+                def uploadSpec = JsonOutput.toJson(uploadFiles)
                 upload_artifactory(uploadSpec)
                 env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_URL}/${ARTIFACTORY_UPLOAD_DIR}${SDK_FILENAME}"
                 currentBuild.description += "<br><a href=${CUSTOMIZED_SDK_URL}>${SDK_FILENAME}</a>"
@@ -317,10 +335,21 @@ def archive_sdk() {
                     env.CUSTOMIZED_SDK_URL += " " + TEST_LIB_URL
                     currentBuild.description += "<br><a href=${TEST_LIB_URL}>${TEST_FILENAME}</a>"
                 }
+                if (params.ARCHIVE_JAVADOC) {
+                    if (fileExists("${JAVADOC_FILENAME}")) {
+                        JAVADOC_LIB_URL = "${ARTIFACTORY_URL}/${ARTIFACTORY_UPLOAD_DIR}${JAVADOC_FILENAME}"
+                        env.CUSTOMIZED_SDK_URL += " " + JAVADOC_LIB_URL
+                        currentBuild.description += "<br><a href=${JAVADOC_LIB_URL}>${JAVADOC_FILENAME}</a>"
+                    }
+                }
                 echo "CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
             } else {
                 echo "ARTIFACTORY server is not set saving artifacts on jenkins."
-                archiveArtifacts artifacts: "**/${SDK_FILENAME},**/${TEST_FILENAME}", fingerprint: false, onlyIfSuccessful: true
+                def ARTIFACTS_FILES = "**/${SDK_FILENAME},**/${TEST_FILENAME}"
+                if (params.ARCHIVE_JAVADOC) {
+                    ARTIFACTS_FILES += ",**/${JAVADOC_FILENAME}"
+                }
+                archiveArtifacts artifacts: ARTIFACTS_FILES, fingerprint: false, onlyIfSuccessful: true
             }
         }
     }
