@@ -142,6 +142,8 @@ TIMEOUT_UNIT = (params.TIMEOUT_UNITS) ? params.TIMEOUT_UNITS : 'HOURS'
 echo "TIMEOUT_UNIT: ${TIMEOUT_UNIT}"
 CUSTOM_DESCRIPTION = (params.CUSTOM_DESCRIPTION) ? params.CUSTOM_DESCRIPTION : ""
 echo "CUSTOM_DESCRIPTION:'${CUSTOM_DESCRIPTION}'"
+ARCHIVE_JAVADOC = (params.ARCHIVE_JAVADOC) ? params.ARCHIVE_JAVADOC : 'false'
+echo "ARCHIVE_JAVADOC:'${ARCHIVE_JAVADOC}'"
 
 // param PLATFORMS is a string, we convert it to an array later on
 PLATFORMS = []
@@ -264,7 +266,7 @@ try {
                                             variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline', 'Pipeline')
                                         }
                                     }
-                                    build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION)
+                                    build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION, ARCHIVE_JAVADOC)
                                 }
                             }
                         }
@@ -331,7 +333,7 @@ try {
 }
 
 
-def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION) {
+def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION, ARCHIVE_JAVADOC) {
     stage ("${JOB_NAME}") {
         SCM_BRANCH = (ghprbPullId && ghprbGhRepository == GHPRB_REPO_OPENJ9) ? "origin/pr/${ghprbPullId}/merge" : 'refs/heads/master'
         SCM_REFSPEC = (ghprbPullId && ghprbGhRepository == GHPRB_REPO_OPENJ9) ? "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge" : ''
@@ -373,7 +375,8 @@ def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRAN
                     string(name: 'ghprbTargetBranch', value: ghprbTargetBranch),
                     string(name: 'ghprbActualCommit', value: ghprbActualCommit),
                     string(name: 'SCM_BRANCH', value: SCM_BRANCH),
-                    string(name: 'SCM_REFSPEC', value: SCM_REFSPEC)]
+                    string(name: 'SCM_REFSPEC', value: SCM_REFSPEC),
+                    booleanParam(name: 'ARCHIVE_JAVADOC', value: ARCHIVE_JAVADOC)]
         return JOB
     }
 }
