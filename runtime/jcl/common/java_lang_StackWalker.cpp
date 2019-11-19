@@ -191,23 +191,28 @@ Java_java_lang_StackWalker_getImpl(JNIEnv *env, jobject clazz, jlong walkStateP)
 			}
 			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_LINENUMBER(vmThread, frame, (I_32) lineNumber);
 
-			UDATA flags = J9_STR_XLAT;
-			if (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass)) {
-				flags |= J9_STR_ANON_CLASS_NAME;
-			}
-
 			j9object_t stringObject = J9VMJAVALANGCLASSLOADER_CLASSLOADERNAME(vmThread, classLoader->classLoaderObject);
 			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_CLASSLOADERNAME(vmThread, frame, stringObject);
 
-			J9UTF8 *nameUTF =  J9ROMCLASS_CLASSNAME(romClass);
 			J9Module *module = ramClass->module;
 			if (NULL != module) {
 				J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_FRAMEMODULE(vmThread, frame, module->moduleObject);
 			}
 
-			stringObject = utfToStringObject(env, nameUTF, flags);
-			if (VM_VMHelpers::exceptionPending(vmThread)) {
-				goto _pop_frame;
+			stringObject = J9VMJAVALANGCLASS_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass));
+			if (stringObject == NULL) {
+				UDATA flags = J9_STR_XLAT;
+				if (J9_ARE_ALL_BITS_SET(romClass->extraModifiers, J9AccClassAnonClass)) {
+					flags |= J9_STR_ANON_CLASS_NAME;
+				}
+				J9UTF8 *nameUTF = J9ROMCLASS_CLASSNAME(romClass);
+				stringObject = utfToStringObject(env, nameUTF, flags);
+				if (VM_VMHelpers::exceptionPending(vmThread)) {
+					goto _pop_frame;
+				}
+				/* Class name was interned so it's safe to write it back to the Class Object */
+				Assert_JCL_false(J9CLASS_IS_ARRAY(ramClass));
+				J9VMJAVALANGCLASS_SET_CLASSNAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), stringObject);
 			}
 			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_CLASSNAME(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), stringObject);
 
@@ -223,9 +228,14 @@ Java_java_lang_StackWalker_getImpl(JNIEnv *env, jobject clazz, jlong walkStateP)
 			}
 			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_METHODSIGNATURE(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), stringObject);
 
-			stringObject = utfToStringObject(env, getSourceFileNameForROMClass(vm, classLoader, romClass), J9_STR_INTERN);
-			if (VM_VMHelpers::exceptionPending(vmThread)) {
-				goto _pop_frame;
+			stringObject = J9VMJAVALANGCLASS_FILENAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass));
+			if (stringObject == NULL) {
+				stringObject = utfToStringObject(env, getSourceFileNameForROMClass(vm, classLoader, romClass), J9_STR_INTERN);
+				if (VM_VMHelpers::exceptionPending(vmThread)) {
+					goto _pop_frame;
+				}
+				/* Update the cached fileNameString on the class so subsequent calls will find it */
+				J9VMJAVALANGCLASS_SET_FILENAMESTRING(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(ramClass), stringObject);
 			}
 			J9VMJAVALANGSTACKWALKERSTACKFRAMEIMPL_SET_FILENAME(vmThread, PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0), stringObject);
 
