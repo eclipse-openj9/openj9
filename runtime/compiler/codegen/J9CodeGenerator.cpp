@@ -4712,6 +4712,11 @@ J9::CodeGenerator::needClassAndMethodPointerRelocations()
    return self()->fej9()->needClassAndMethodPointerRelocations();
    }
 
+bool
+J9::CodeGenerator::needRelocationsForLookupEvaluationData()
+   {
+   return self()->fej9()->needRelocationsForLookupEvaluationData();
+   }
 
 bool
 J9::CodeGenerator::needRelocationsForStatics()
