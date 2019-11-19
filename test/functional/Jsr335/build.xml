@@ -53,10 +53,10 @@
 			<src path="${src}" />
 			<src path="${transformerListener}" />
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/junit4.jar" />
+				<pathelement location="${LIB_DIR}/asm-all.jar" />
+				<pathelement location="${LIB_DIR}/testng.jar" />
+				<pathelement location="${LIB_DIR}/jcommander.jar" />
+				<pathelement location="${LIB_DIR}/junit4.jar" />
 			</classpath>
 		</javac>
 	</target>

@@ -52,8 +52,8 @@
 		<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}"/>
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
+				<pathelement location="${LIB_DIR}/testng.jar"/>
+				<pathelement location="${LIB_DIR}/jcommander.jar"/>
 				<pathelement location="${build}" />
 			</classpath>
 		</javac>

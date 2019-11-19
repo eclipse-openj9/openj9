@@ -36,7 +36,7 @@
 	<property name="src_80" location="./src_80"/>
 	<property name="src_90" location="./src_90"/>
 	<property name="build" location="./bin"/>
-	<property name="asm.jar" location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+	<property name="asm.jar" location="${LIB_DIR}/asm-all.jar" />
 
 	<target name="init">
 		<mkdir dir="${build}" />

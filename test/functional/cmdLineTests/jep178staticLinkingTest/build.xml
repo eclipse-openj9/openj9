@@ -32,7 +32,7 @@
 	<property name="DEST" value="${BUILD_ROOT}/functional/cmdLineTests/jep178staticLinkingTest" />
 	<property name="src" location="./src"/>
 	<property name="build" location="./bin"/>
-	<property name="commons-exec.jar" value="${TEST_ROOT}/TestConfig/lib/commons-exec.jar"/>
+	<property name="commons-exec.jar" value="${LIB_DIR}/commons-exec.jar"/>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />

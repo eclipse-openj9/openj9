@@ -44,9 +44,9 @@
 	<property name="TestUtilities" location="../TestUtilities/src"/>
 
 	<path id="build.cp">
-		<fileset  dir="${TEST_ROOT}/TestConfig/lib/" includes="junit4.jar" />
-		<fileset dir="${TEST_ROOT}/TestConfig/lib/" includes="asm-all.jar"/>
-		<fileset dir="${TEST_ROOT}/TestConfig/lib/" includes="javassist.jar"/>
+		<fileset  dir="${LIB_DIR}/" includes="junit4.jar" />
+		<fileset dir="${LIB_DIR}/" includes="asm-all.jar"/>
+		<fileset dir="${LIB_DIR}/" includes="javassist.jar"/>
 	</path>
 
 	<target name="init">
@@ -90,7 +90,7 @@
 					<src path="${TestUtilities}" />
 					<exclude name="**/attachAPI/**" />
 					<classpath>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
+						<pathelement location="${LIB_DIR}/testng.jar"/>
 					</classpath>
 				</javac>
 			</then>
@@ -108,7 +108,7 @@
 						<exclude name="**/ClassPathSettingClassLoaderTest.java" />
 						<compilerarg line='${addExports}' />
 						<classpath>
-							<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
+							<pathelement location="${LIB_DIR}/testng.jar"/>
 						</classpath>
 					</javac>
 				</then>
@@ -124,7 +124,7 @@
 					<exclude name="**/ClassPathSettingClassLoaderTest.java" />
 					<compilerarg line='${addExports}' />
 					<classpath>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
+						<pathelement location="${LIB_DIR}/testng.jar"/>
 					</classpath>
 				</javac>
 			</else>

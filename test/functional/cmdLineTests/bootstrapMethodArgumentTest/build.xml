@@ -42,22 +42,22 @@
 	<target name="generate" depends="init" description="Run with asmtools.jar to generate bytecode">
 		<echo>Generating bytecode from jcod files</echo>
 		<exec executable="${javaexecutable}" dir="${build}">
-			<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jcoder ${src}/org/openj9/test/bsmargs/RejectInvalidCPEntryUtf8.jcod"/>
+			<arg line="-jar ${LIB_DIR}/asmtools.jar jcoder ${src}/org/openj9/test/bsmargs/RejectInvalidCPEntryUtf8.jcod"/>
 		</exec>
 		<exec executable="${javaexecutable}" dir="${build}">
-			<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jcoder ${src}/org/openj9/test/bsmargs/RejectInvalidCPEntryFieldref.jcod"/>
+			<arg line="-jar ${LIB_DIR}/asmtools.jar jcoder ${src}/org/openj9/test/bsmargs/RejectInvalidCPEntryFieldref.jcod"/>
 		</exec>
 		<exec executable="${javaexecutable}" dir="${build}">
-			<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jcoder ${src}/org/openj9/test/bsmargs/RejectInvalidCPEntryMethodref.jcod"/>
+			<arg line="-jar ${LIB_DIR}/asmtools.jar jcoder ${src}/org/openj9/test/bsmargs/RejectInvalidCPEntryMethodref.jcod"/>
 		</exec>
 		<exec executable="${javaexecutable}" dir="${build}">
-			<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jcoder ${src}/org/openj9/test/bsmargs/RejectInvalidCPEntryNameAndType.jcod"/>
+			<arg line="-jar ${LIB_DIR}/asmtools.jar jcoder ${src}/org/openj9/test/bsmargs/RejectInvalidCPEntryNameAndType.jcod"/>
 		</exec>
 		<exec executable="${javaexecutable}" dir="${build}">
-			<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jcoder ${src}/org/openj9/test/bsmargs/RejectInvalidCPEntryInvokeDynamic.jcod"/>
+			<arg line="-jar ${LIB_DIR}/asmtools.jar jcoder ${src}/org/openj9/test/bsmargs/RejectInvalidCPEntryInvokeDynamic.jcod"/>
 		</exec>
 		<exec executable="${javaexecutable}" dir="${build}">
-			<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jcoder ${src}/org/openj9/test/bsmargs/RejectInvalidCPEntryInterfaceMethodref.jcod"/>
+			<arg line="-jar ${LIB_DIR}/asmtools.jar jcoder ${src}/org/openj9/test/bsmargs/RejectInvalidCPEntryInterfaceMethodref.jcod"/>
 		</exec>
 	</target>
 	

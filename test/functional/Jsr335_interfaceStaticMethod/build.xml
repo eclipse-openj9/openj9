@@ -55,9 +55,9 @@
 			<src path="${src}"/>
 			<src path="${transformerListener}" />
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
+				<pathelement location="${LIB_DIR}/asm-all.jar" />
+				<pathelement location="${LIB_DIR}/testng.jar" />
+				<pathelement location="${LIB_DIR}/jcommander.jar" />
 			</classpath>
 		</javac>
 	</target>
@@ -68,7 +68,7 @@
 		<java classname="org.openj9.test.jsr335.interfaceStaticMethod.SimpleInvokeStaticGenerator" failonerror="true" fork="true" logError="true"
 				jvm="${build.javaexecutable.java}">
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+				<pathelement location="${LIB_DIR}/asm-all.jar" />
 				<pathelement location="${build}" />
 			</classpath>
 		</java>
@@ -91,9 +91,9 @@
 				<src path="${src}"/>
 				<src path="${transformerListener}" />
 				<classpath>
-					<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
-					<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
-					<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
+					<pathelement location="${LIB_DIR}/asm-all.jar" />
+					<pathelement location="${LIB_DIR}/testng.jar" />
+					<pathelement location="${LIB_DIR}/jcommander.jar" />
 					<pathelement location="${build}" />
 				</classpath>
 		</javac>

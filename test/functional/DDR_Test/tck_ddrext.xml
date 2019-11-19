@@ -25,6 +25,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 	<property name="JAVA_COMMAND" value="${JAVA_COMMAND}" />
 	<property name="TEST_ROOT" value="${TEST_ROOT}" />
+	<property name="LIB_DIR" value="${LIB_DIR}" />
 	<property name="TEST_JDK_HOME" value="${TEST_JDK_HOME}" />
 	<property name="TEST_RESROOT" value="${TEST_RESROOT}" />
 	<property name="REPORTDIR" value="${REPORTDIR}" />
@@ -65,11 +66,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	</if>
 
 	<path id="tck.class.path">
-		<pathelement location="${TEST_ROOT}/TestConfig/lib/junit4.jar" />
-		<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
-		<pathelement location="${TEST_ROOT}/TestConfig/lib/commons-exec.jar" />
-		<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
-		<pathelement location="${TEST_ROOT}/TestConfig/lib/commons-cli.jar" />
+		<pathelement location="${LIB_DIR}/junit4.jar" />
+		<pathelement location="${LIB_DIR}/testng.jar" />
+		<pathelement location="${LIB_DIR}/commons-exec.jar" />
+		<pathelement location="${LIB_DIR}/asm-all.jar" />
+		<pathelement location="${LIB_DIR}/commons-cli.jar" />
 		<pathelement location="${RESOURCES_DIR}" />
 		<pathelement location="${TEST_RESROOT}/DDR_Test.jar" />
 		<pathelement location="${j9ddr}" />
