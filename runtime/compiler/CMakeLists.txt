@@ -87,16 +87,15 @@ if(JITSERVER_SUPPORT)
 	set(Protobuf_USE_STATIC_LIBS ON)
 	find_package(Protobuf REQUIRED)
 
-	if(Protobuf_FOUND)
-		include_directories(${Protobuf_INCLUDE_DIRS})
+	if(PROTOBUF_FOUND)
+		include_directories(${PROTOBUF_INCLUDE_DIRS})
 		string(REPLACE
 			"${CMAKE_SHARED_LIBRARY_PREFIX}protobuf${J9VM_OLD_SHARED_SUFFIX}"
 			"${CMAKE_STATIC_LIBRARY_PREFIX}protobuf${CMAKE_STATIC_LIBRARY_SUFFIX}"
-			Protobuf_LIBRARIES
-			${Protobuf_LIBRARIES})
-		message(STATUS "Protobuf found version : ${Protobuf_VERSION}")
-		message(STATUS "Protobuf include path : ${Protobuf_INCLUDE_DIRS}" )
-		message(STATUS "Protobuf libraries : ${Protobuf_LIBRARIES}" )
+			PROTOBUF_LIBRARY
+			${PROTOBUF_LIBRARY})
+		message(STATUS "Protobuf include path: ${PROTOBUF_INCLUDE_DIRS}")
+		message(STATUS "Protobuf library: ${PROTOBUF_LIBRARY}")
 	else()
 		message(FATAL_ERROR "Protobuf not found")
 	endif()
@@ -350,7 +349,7 @@ target_link_libraries(j9jit
 )
 
 if(JITSERVER_SUPPORT)
-	target_link_libraries(j9jit PRIVATE ${Protobuf_LIBRARIES})
+	target_link_libraries(j9jit PRIVATE ${PROTOBUF_LIBRARY})
 endif()
 
 # This is a bit hokey, but cmake can't track the fact that files are generated across directories.

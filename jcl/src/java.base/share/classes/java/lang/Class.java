@@ -166,6 +166,9 @@ public final class Class<T> implements java.io.Serializable, GenericDeclaration,
 	private transient ProtectionDomain protectionDomain;
 	private transient String classNameString;
 
+	/* Cache filename on Class to avoid repeated lookups / allocations in stack traces */
+	private transient String fileNameString;
+
 	private static final class AnnotationVars {
 		AnnotationVars() {}
 		static long annotationTypeOffset = -1;
