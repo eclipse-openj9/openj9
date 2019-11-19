@@ -213,10 +213,9 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 				J9VMJAVALANGSTACKTRACEELEMENT_SET_DECLARINGCLASS(vmThread, element, string);
 			}
 
-			/* Fill in method name */
-
+			/* Fill in method name - intern the string as it's also interned by the StackWalker API and by Reflection */
 			utf = J9ROMMETHOD_NAME(romMethod);
-			string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utf), (U_32) J9UTF8_LENGTH(utf), 0);
+			string = mmfns->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(utf), (U_32) J9UTF8_LENGTH(utf), J9_STR_TENURE | J9_STR_INTERN);
 			if (string == NULL) {
 				rc = FALSE;
 				/* exception is pending from the call */
