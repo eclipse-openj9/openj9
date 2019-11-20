@@ -105,6 +105,9 @@ class OMR_EXTENSIBLE TreeEvaluator: public J9::TreeEvaluator
    static TR::Register *fremHelper(TR::Node *node, TR::CodeGenerator *cg, bool isSinglePrecision);
    static TR::Register *fremEvaluator(TR::Node *node, TR::CodeGenerator *cg);
    static TR::Register *dremEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *NULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *resolveAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg);
+   static TR::Register *evaluateNULLCHKWithPossibleResolve(TR::Node *node, bool needResolution, TR::CodeGenerator *cg);
    };
 
 }
