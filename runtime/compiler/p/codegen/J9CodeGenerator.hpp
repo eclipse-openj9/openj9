@@ -93,6 +93,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
 
    int32_t getInternalPtrMapBit() { return 18;}
 
+   bool canEmitDataForExternallyRelocatableInstructions();
+
 #ifdef J9VM_OPT_JAVA_CRYPTO_ACCELERATION
    bool suppressInliningOfCryptoMethod(TR::RecognizedMethod method);
    bool inlineCryptoMethod(TR::Node *node, TR::Register *&resultReg);
