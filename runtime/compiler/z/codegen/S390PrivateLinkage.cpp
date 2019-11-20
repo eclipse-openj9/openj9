@@ -2267,8 +2267,8 @@ J9::S390PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference
 
 #if defined(TR_TARGET_64BIT)
 #if defined(J9ZOS390)
-   // Reserve a trampoline for this direct call only if it is a helper call. It may not be used, depending on how far
-   // away the helper is located, but we only sacrifice a little trampoline space for it.
+   // Reserve a trampoline for this direct call only if it is not a helper call.  It may not be used, but we only
+   // sacrifice a little trampoline space for it.
    if (comp()->getOption(TR_EnableRMODE64))
 #endif
       {
