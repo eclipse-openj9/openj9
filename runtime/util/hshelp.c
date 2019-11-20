@@ -2289,28 +2289,6 @@ fixLoadingConstraints(J9JavaVM * vm, J9Class * oldClass, J9Class * newClass)
 	}
 }
 
-#ifdef J9VM_OPT_SIDECAR
-void
-fixReturnsInUnsafeMethods(J9VMThread * currentThread, J9HashTable * classPairs)
-{
-    J9JavaVM * vm = currentThread->javaVM;
-    J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-    J9HashTableState hashTableState;
-    J9JVMTIClassPair * classPair;
-
-    classPair = hashTableStartDo(classPairs, &hashTableState);
-    while (classPair != NULL) {
-        J9Class * replacementRAMClass = classPair->replacementClass.ramClass;
-
-        if ((replacementRAMClass != NULL) && J9CLASS_IS_EXEMPT_FROM_VALIDATION(replacementRAMClass)) {
-             vmFuncs->fixUnsafeMethods(currentThread, (jclass) &replacementRAMClass->classObject);
-        }
-        classPair = hashTableNextDo(&hashTableState);
-    }
-
-}
-#endif
-
 
 /**
  * \brief	Flush the annotation and reflection caches.

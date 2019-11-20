@@ -424,14 +424,6 @@ contendedLoadTableNew(J9JavaVM* vm, J9PortLibrary *portLib);
 void
 contendedLoadTableFree(J9JavaVM* vm);
 
-/**
-* @brief
-* @param clazz
-* @param cpIndex
-*/
-void
-fixCPShapeDescription(J9Class * clazz, UDATA cpIndex);
-
 /* ---------------- createramclass.c ---------------- */
 
 /**

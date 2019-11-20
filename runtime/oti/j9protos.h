@@ -990,7 +990,6 @@ extern J9_CFUNC UDATA  dispatchBigJNICall (J9VMThread *vmThread, void *functionA
 extern J9_CFUNC UDATA  internalCreateBaseTypePrimitiveAndArrayClasses (J9VMThread *currentThread);
 extern J9_CFUNC struct J9Class*  internalFindClassUTF8 (J9VMThread *currentThread, U_8 *className, UDATA classNameLength, J9ClassLoader *classLoader, UDATA options);
 extern J9_CFUNC struct J9Class*  internalFindKnownClass (J9VMThread *currentThread, UDATA index, UDATA flags);
-extern J9_CFUNC void  fixUnsafeMethods (J9VMThread* vmThread, jclass clazz);
 #endif /* _J9VMCLASSSUPPORT_ */
 
 /* J9SourceJvmriSupport*/
