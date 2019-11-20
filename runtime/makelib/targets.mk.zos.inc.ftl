@@ -92,14 +92,6 @@ ifdef j9vm_env_data64
   UMA_M4_FLAGS += -DTR_64Bit -DTR_HOST_64BIT
 endif
 
-ifdef j9vm_jit_32bitUses64bitRegisters
-  UMA_M4_FLAGS += -DJ9VM_JIT_32BIT_USES64BIT_REGISTERS
-endif
-
-ifdef j9vm_jit_freeSystemStackPointer
-  UMA_M4_FLAGS += -DJ9VM_JIT_FREE_SYSTEM_STACK_POINTER
-endif
-
 COMMA := ,
 
 # Compile jniargtestssystemlink with non-XPLINK (system) linkage

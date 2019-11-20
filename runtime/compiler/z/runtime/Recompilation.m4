@@ -33,10 +33,12 @@ ZZ For zLinux GAS assembler and zOS HLASM assembler
 ZZ ===================================================================
 
 ZZ ===================================================================
-ZZ changequote is used to replace ` with { and ' with }
-ZZ For better readability
+ZZ jilvalues.m4 is a j9 m4 include that definesoffsets of various
+ZZ fields in structs used by jit
+ZZ Note that it changes the quoting style to use { and }
 ZZ ===================================================================
-changequote({,})dnl
+
+include(`jilvalues.m4')dnl
 
 ZZ ===================================================================
 ZZ For zOS, We declare just one csect with multiple entry points.
@@ -60,13 +62,6 @@ ZZ Author  : Chris Donawa
 ZZ Version : 0.0
 ZZ Date    : Aug 2003
 ZZ ===================================================================
-
-ZZ ===================================================================
-ZZ codert/jilconsts.inc is a j9 assembler include that defines
-ZZ offsets of various fields in structs used by jit
-ZZ ===================================================================
-
-include({jilconsts.inc})dnl
 
 ZZ ===================================================================
 ZZ codert.dev/s390_asdef.inc is a JIT assembler include that defines
@@ -958,7 +953,7 @@ ZZ            rEP - new method Entry Point
 
 ZZ Get the lastCacheSlot pointer into r3.
     L_GPR     r3,eq_lastCachedSlotField_inInterfaceSnippet(r2)
-ifdef({OMR_GC_COMPRESSED_POINTERS},{dnl
+ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
 ZZ Load the class offset (32 bits)
     L         r0,J9TR_J9Object_class(,r1)
     LLGFR     r0,r0
@@ -978,7 +973,7 @@ ZZ slots or slots are uninitialized.
     JL        LJumpToNewRoutine
 
 ZZ Compare our class pointer with the class pointer in current slot
-ifdef({OMR_GC_COMPRESSED_POINTERS},{dnl
+ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
     CL        r0,0(,r3)
 },{dnl
     CL_GPR    r0,0(,r3)
