@@ -109,6 +109,29 @@
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 	</test>
 	
+	<test id="APITests.NullPointerAndEmptyArrayTest" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$ -Xtrace:print={j9jcl.162,j9jcl.163,j9jcl.486} APITests.NullPointerAndEmptyArrayTest </command>
+		<output type="success" caseSensitive="yes" regex="no">NullPointerAndEmptyArrayTest : TEST PASSED</output>
+		<output type="required" caseSensitive="yes" regex="no">Exiting because URL count is 0</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">Entering with url (00000000|0000000000000000)</output>
+		<output type="required" caseSensitive="yes" regex="no">Exiting with 0 as CallObjectMethod failed for URLgetPathID</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="no" regex="no">ASSERTION FAILED</output>
+	</test>
+
+	<test id="destroy cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xshareclasses:name=URLHelperTests,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="failure" caseSensitive="yes" regex="no">Error:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+	</test>
+	
 		<!-- Run APITests.URLGetDifferentHelperTest -->
 	<test id="APITests.URLGetDifferentHelperTest" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$ APITests.URLGetDifferentHelperTest</command>
