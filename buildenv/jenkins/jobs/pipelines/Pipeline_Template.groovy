@@ -27,7 +27,7 @@ if (!binding.hasVariable('VENDOR_REPO_DEFAULT')) VENDOR_REPO_DEFAULT = ''
 if (!binding.hasVariable('VENDOR_BRANCH_DEFAULT')) VENDOR_BRANCH_DEFAULT = ''
 if (!binding.hasVariable('VENDOR_CREDENTIALS_ID_DEFAULT')) VENDOR_CREDENTIALS_ID_DEFAULT = ''
 if (!binding.hasVariable('DISCARDER_NUM_BUILDS')) DISCARDER_NUM_BUILDS = '1'
-if (!binding.hasVariable('SCM_URL')) SCM_URL = 'https://github.com/eclipse/openj9.git'
+if (!binding.hasVariable('SCM_REPO')) SCM_REPO = 'https://github.com/eclipse/openj9.git'
 if (!binding.hasVariable('SCM_BRANCH')) SCM_BRANCH = 'refs/heads/master'
 if (!binding.hasVariable('SCM_REFSPEC')) SCM_REFSPEC = 'refs/heads/*:refs/remotes/origin/*'
 
@@ -46,7 +46,7 @@ pipelineJob("$JOB_NAME") {
             scm {
                 git {
                     remote {
-                        url(SCM_URL)
+                        url('$SCM_REPO')
                         refspec('$SCM_REFSPEC')
                     }
                     branch('$SCM_BRANCH')
@@ -95,6 +95,7 @@ pipelineJob("$JOB_NAME") {
         stringParam('OPENJDK_CLONE_DIR')
         stringParam('PERSONAL_BUILD')
         stringParam('CUSTOM_DESCRIPTION')
+        stringParam('SCM_REPO', SCM_REPO)
         stringParam('SCM_BRANCH', SCM_BRANCH)
         stringParam('SCM_REFSPEC', SCM_REFSPEC)
         booleanParam('ARCHIVE_JAVADOC', false)

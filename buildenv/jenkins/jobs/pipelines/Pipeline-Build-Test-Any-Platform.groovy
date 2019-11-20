@@ -34,7 +34,7 @@ timestamps {
             currentBuild.description = "<a href=\"${RUN_DISPLAY_URL}\">Blue Ocean</a>"
 
             def gitConfig = scm.getUserRemoteConfigs().get(0)
-            def remoteConfigParameters = [url: "${gitConfig.getUrl()}"]
+            def remoteConfigParameters = [url: params.SCM_REPO]
             def scmBranch = params.SCM_BRANCH
             if (!scmBranch) {
                 scmBranch = scm.branches[0].name

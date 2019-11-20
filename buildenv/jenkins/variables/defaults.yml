@@ -95,7 +95,6 @@ tests_targets:
     ? extended.system
     ? sanity.functional
     ? sanity.system
-ghprbGhRepository_openj9: 'eclipse/openj9'
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
