@@ -40,6 +40,7 @@ RUN apt-get update \
 	  libelf-dev \
 	  libfontconfig1-dev \
 	  libfreetype6-dev \
+	  libmpc3 \
 	  libx11-dev \
 	  libxext-dev \
 	  libxrender-dev \
@@ -72,6 +73,9 @@ RUN ln -s /usr/lib/s390x-linux-gnu /usr/lib64 \
   && ln -s /usr/include/s390x-linux-gnu/* /usr/local/include \
   && ln -s /usr/local/bin/g++-7.4 /usr/bin/g++ \
   && ln -s /usr/local/bin/gcc-7.4 /usr/bin/gcc
+
+# Fixup libmpfr version
+RUN ln -s /usr/lib/s390x-linux-gnu/libmpfr.so.6 /usr/lib/s390x-linux-gnu/libmpfr.so.4
 
 # Download and unpack freemarker.
 RUN cd /root \
