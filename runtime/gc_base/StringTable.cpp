@@ -580,7 +580,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 		UDATA tableIndex = stringTable->getTableIndex(hash);
 
 		stringTable->lockTable(tableIndex);
-		result = stringTable->hashAtUTF8(tableIndex, data, length, hash);
+		result = stringTable->hashAtUTF8(tableIndex, data, length, (U_32)hash);
 		stringTable->unlockTable(tableIndex);
 	}
 
@@ -606,7 +606,7 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
          if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
 			   unicodeLength = length;
 		   } else {
-			   unicodeLength = VM_VMHelpers::getUTF8UnicodeLength(data, length, stringFlags);
+			   unicodeLength = VM_VMHelpers::getUTF8UnicodeLength(data, length);
 			}
 		}
 
@@ -857,133 +857,6 @@ j9gc_internString(J9VMThread *vmThread, j9object_t sourceString)
 	*candidatePtr = internedString;
 	Trc_MM_stringTableCacheMiss(vmThread, internedString);
 	return internedString;
-}
-
-j9object_t
-j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA resolveFlags) {
-/* This option is disabled as its not supported by Tarok */
-	J9JavaVM *vm = vmThread->javaVM;
-	J9InternalVMFunctions * const vmFuncs = vm->internalVMFunctions;
-	MM_StringTable *stringTable = MM_GCExtensions::getExtensions(vm->omrVM)->getStringTable();
-	j9object_t string, internedString;
-	J9IndexableObject* charArray;
-	UDATA allocateFlags = J9_GC_ALLOCATE_OBJECT_TENURED | J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE;
-	UDATA unicodeLength = 0;
-	UDATA stringFlags = J9_STR_INTERN;
-
-	U_32 hash = (U_32)VM_VMHelpers::computeHashForUTF8(data, length);
-	UDATA tableIndex = stringTable->getTableIndex(hash);
-
-	/* see if the string is already in the table. Race condition where another thread may add the string
-	 * before this one is not fatal and is ignored.
-	 */
-	stringTable->lockTable(tableIndex);
-	internedString = stringTable->hashAtUTF8(tableIndex, data, length, hash);
-	stringTable->unlockTable(tableIndex);
-
-	if (internedString != NULL) {
-		return internedString;
-	}
-
-	J9Class * stringClass = J9VMJAVALANGSTRING_OR_NULL(vm);
-	string = J9AllocateObject(vmThread, stringClass, allocateFlags);
-	if (string == NULL) {
-		goto nomem;
-	}
-
-	unicodeLength = VM_VMHelpers::getUTF8UnicodeLength(data, length, stringFlags);
-
-	/* This option is disabled as its not supported by Tarok */
-	PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, string);
-
-	if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
-		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
-			charArray = (J9IndexableObject*)J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) unicodeLength, allocateFlags);
-		} else {
-			charArray = (J9IndexableObject*)J9AllocateIndexableObject(vmThread, vm->charArrayClass, (U_32) (unicodeLength + 1) / 2, allocateFlags);
-		}
-
-		string = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
-		if (charArray == NULL) {
-			goto nomem;
-		}
-		VM_VMHelpers::copyUTF8ToASCII(vmThread, data, length, stringFlags, (j9object_t)charArray, 0);
-	} else {
-		if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_STRING_BYTE_ARRAY)) {
-			charArray = (J9IndexableObject*)J9AllocateIndexableObject(vmThread, vm->byteArrayClass, (U_32) unicodeLength * 2, allocateFlags);
-		} else {
-			charArray = (J9IndexableObject*)J9AllocateIndexableObject(vmThread, vm->charArrayClass, (U_32) unicodeLength, allocateFlags);
-		}
-
-		string = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
-		if (charArray == NULL) {
-			goto nomem;
-		}
-		VM_VMHelpers::copyUTF8ToUTF16(vmThread, data, length, stringFlags, (j9object_t)charArray, 0);
-	}
-
-	J9VMJAVALANGSTRING_SET_VALUE(vmThread, string, charArray);
-
-	if (IS_STRING_COMPRESSION_ENABLED_VM(vm)) {
-		if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
-			if (J2SE_VERSION(vm) >= J2SE_V11) {
-				J9VMJAVALANGSTRING_SET_CODER(vmThread, string, 0);
-			} else {
-				J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32)unicodeLength);
-			}
-		} else {
-			if (J2SE_VERSION(vm) >= J2SE_V11) {
-				J9VMJAVALANGSTRING_SET_CODER(vmThread, string, 1);
-			} else {
-				J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32)unicodeLength | (I_32)0x80000000);
-			}
-
-			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && J9VMJAVALANGSTRING_COMPRESSIONFLAG(vmThread, stringClass) == 0) {
-				/**
-				 * jitHookClassPreinitialize will process initialization events for String compression sideEffectGuards
-				 * so we must initialize the class if this is the first time we are loading it
-				 */
-				J9Class* flagClass = vmFuncs->internalFindKnownClass(vmThread, J9VMCONSTANTPOOL_JAVALANGSTRINGSTRINGCOMPRESSIONFLAG, J9_FINDKNOWNCLASS_FLAG_INITIALIZE);
-
-				if (NULL == flagClass) {
-					goto nomem;
-				} else {
-					j9object_t flag = J9AllocateObject(vmThread, flagClass, allocateFlags);
-
-					if (NULL == flag) {
-						goto nomem;
-					}
-
-					J9VMJAVALANGSTRING_SET_COMPRESSIONFLAG(vmThread, stringClass, flag);
-				}
-			}
-		}
-	} else {
-		if (J2SE_VERSION(vm) >= J2SE_V11) {
-			J9VMJAVALANGSTRING_SET_CODER(vmThread, string, 1);
-		} else {
-			J9VMJAVALANGSTRING_SET_COUNT(vmThread, string, (I_32)unicodeLength);
-		}
-	}
-
-	MM_AtomicOperations::writeBarrier();
-
-	/* Intern the String */
-	internedString = stringTable->addStringToInternTable(vmThread, string);
-	if (NULL == internedString) {
-		goto nomem;
-	}
-	if (internedString != string) {
-		return internedString;
-	}
-
-/* This option is disabled as its not supported by Tarok */
-
-	return string;
-
-nomem:
-	vmFuncs->setHeapOutOfMemoryError(vmThread);
-	return NULL;
 }
 
 } /* end of extern "C" */

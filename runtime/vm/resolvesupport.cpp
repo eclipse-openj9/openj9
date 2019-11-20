@@ -168,8 +168,8 @@ resolveStringRef(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA cpIndex, UDA
 	
 	Trc_VM_resolveStringRef_utf8(vmStruct, &utf8Wrapper, J9UTF8_LENGTH(utf8Wrapper), J9UTF8_DATA(utf8Wrapper));
 
-	/* Create a new string with shared char[] data */
-	stringRef = vmStruct->javaVM->memoryManagerFunctions->j9gc_allocStringWithSharedCharData(vmStruct, J9UTF8_DATA(utf8Wrapper), J9UTF8_LENGTH(utf8Wrapper), resolveFlags);
+	/* Create a new string */
+	stringRef = vmStruct->javaVM->memoryManagerFunctions->j9gc_createJavaLangString(vmStruct, J9UTF8_DATA(utf8Wrapper), J9UTF8_LENGTH(utf8Wrapper), J9_STR_TENURE | J9_STR_INTERN);
 	
 	/* If stringRef is NULL, the exception has already been set. */
 	if (stringRef != NULL) {

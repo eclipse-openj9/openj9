@@ -1081,12 +1081,12 @@ done:
 
 		if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ASCII)) {
 			if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
-				for (UDATA i = 0; i < length; ++i) {
+				for (UDATA i = startIndex; i < length; ++i) {
 					U_8 c = data[i];
 					J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, c != '/' ? c : '.');
 				}
 			} else {
-				for (UDATA i = 0; i < length; ++i) {
+				for (UDATA i = startIndex; i < length; ++i) {
 					J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, data[i]);
 				}
 			}
@@ -1134,12 +1134,12 @@ done:
 	copyUTF8ToASCII(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
 	{
 		if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
-			for (UDATA i = 0; i < length; ++i) {
+			for (UDATA i = startIndex; i < length; ++i) {
 				U_8 c = data[i];
 				J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, c != '/' ? c : '.');
 			}
 		} else {
-			for (UDATA i = 0; i < length; ++i) {
+			for (UDATA i = startIndex; i < length; ++i) {
 				J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, data[i]);
 			}
 		}
@@ -1162,32 +1162,21 @@ done:
 	 *
 	 * @param data[in] points to raw UTF8 bytes
 	 * @param length[in] the number of bytes representing characters in data
-	 * @param stringFlags[out] string flags corresponding to data which will be modified with the J9_STR_ASCII flag if
-	 * we determine all characters within data are within the ASCII subset
 	 *
 	 * @return the length of the UTF8 string in unicode characters
 	 */
 	static UDATA
-	getUTF8UnicodeLength(U_8 *data, UDATA length, UDATA &stringFlags)
+	getUTF8UnicodeLength(U_8 *data, UDATA length)
 	{
 		UDATA unicodeLength = 0;
-		bool isASCII = true;
 
 		while (length != 0) {
 			U_16 unicode = 0;
-			U_32 consumed = decodeUTF8CharN(data, &unicode, length);
-
-			if (unicode > 0x7F) {
-				isASCII = false;
-			}
+			UDATA consumed = decodeUTF8CharN(data, &unicode, length);
 
 			data += consumed;
 			length -= consumed;
 			++unicodeLength;
-		}
-
-		if (isASCII) {
-			stringFlags |= J9_STR_ASCII;
 		}
 
 		return unicodeLength;

@@ -4429,7 +4429,6 @@ typedef struct J9MemoryManagerFunctions {
 	I_32  ( *j9gc_objaccess_getObjectHashCode)(struct J9JavaVM *vm, J9Object* object) ;
 	j9object_t  ( *j9gc_createJavaLangString)(struct J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags) ;
 	j9object_t  ( *j9gc_internString)(struct J9VMThread *vmThread, j9object_t sourceString) ;
-	j9object_t  ( *j9gc_allocStringWithSharedCharData)(struct J9VMThread *vmThread, U_8 *data, UDATA length, UDATA resolveFlags) ;
 #if defined(J9VM_GC_FINALIZATION)
 	void  ( *j9gc_runFinalizersOnExit)(struct J9VMThread* vmThread, UDATA run) ;
 #endif /* J9VM_GC_FINALIZATION */
