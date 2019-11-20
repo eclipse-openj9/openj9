@@ -85,6 +85,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
 
    bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg);
 
+   TR::Linkage *deriveCallingLinkage(TR::Node *node, bool isIndirect);
+
    bool suppressInliningOfRecognizedMethod(TR::RecognizedMethod method);
 
    bool enableAESInHardwareTransformations();
