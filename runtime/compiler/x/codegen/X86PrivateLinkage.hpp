@@ -220,7 +220,10 @@ struct PicParameters
 namespace J9
 {
 
-class X86PrivateLinkage : public PrivateLinkage
+namespace X86
+{
+
+class PrivateLinkage : public J9::PrivateLinkage
    {
    protected:
 
@@ -228,7 +231,7 @@ class X86PrivateLinkage : public PrivateLinkage
 
    public:
 
-   X86PrivateLinkage(TR::CodeGenerator *cg);
+   PrivateLinkage(TR::CodeGenerator *cg);
 
    virtual const TR::X86LinkageProperties& getProperties();
 
@@ -292,6 +295,8 @@ class X86PrivateLinkage : public PrivateLinkage
    TR::Instruction *copyParametersToHomeLocation(TR::Instruction *cursor, bool parmsHaveBeenStored);
 
    };
+
+}
 
 }
 

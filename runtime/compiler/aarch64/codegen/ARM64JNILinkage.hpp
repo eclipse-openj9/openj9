@@ -25,15 +25,20 @@
 
 #include "codegen/ARM64PrivateLinkage.hpp"
 
-namespace TR
+namespace J9
 {
 
-class ARM64JNILinkage : public J9::ARM64PrivateLinkage
+namespace ARM64
+{
+
+class JNILinkage : public PrivateLinkage
    {
    public:
 
-   ARM64JNILinkage(TR::CodeGenerator *cg);
+   JNILinkage(TR::CodeGenerator *cg);
    };
+
+}
 
 }
 

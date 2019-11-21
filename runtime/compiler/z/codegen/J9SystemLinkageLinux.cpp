@@ -51,27 +51,27 @@
 #include "z/codegen/S390StackCheckFailureSnippet.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////
-//  TR::J9S390zLinuxSystemLinkage Implementations
+//  J9::Z::zLinuxSystemLinkage Implementations
 ////////////////////////////////////////////////////////////////////////////////
-TR::J9S390zLinuxSystemLinkage::J9S390zLinuxSystemLinkage(TR::CodeGenerator * codeGen)
+J9::Z::zLinuxSystemLinkage::zLinuxSystemLinkage(TR::CodeGenerator * codeGen)
    : TR::S390zLinuxSystemLinkage(codeGen)
    {
    }
 
 /////////////////////////////////////////////////////////////////////////////////
-// TR::J9S390zLinuxSystemLinkage::generateInstructionsForCall - Front-end
+// J9::Z::zLinuxSystemLinkage::generateInstructionsForCall - Front-end
 //  customization of callNativeFunction
 ////////////////////////////////////////////////////////////////////////////////
 void
-TR::J9S390zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode,
+J9::Z::zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode,
 	TR::RegisterDependencyConditions * deps, intptrj_t targetAddress,
-		TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg,
-		TR::LabelSymbol * returnFromJNICallLabel,
-		TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint)
+	TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg,
+	TR::LabelSymbol * returnFromJNICallLabel,
+	TR::S390JNICallDataSnippet * jniCallDataSnippet, bool isJNIGCPoint)
    {
    TR::CodeGenerator * codeGen = cg();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(codeGen->fe());
-   J9::S390PrivateLinkage * privateLinkage = static_cast<J9::S390PrivateLinkage *>(cg()->getLinkage(TR_Private));
+   J9::Z::PrivateLinkage * privateLinkage = static_cast<J9::Z::PrivateLinkage *>(cg()->getLinkage(TR_Private));
    TR::Register * javaLitPoolRegister = privateLinkage->getLitPoolRealRegister();
    TR::Register * javaStackRegister = privateLinkage->getStackPointerRealRegister();
    TR::Register * parm3 = deps->searchPreConditionRegister(getIntegerArgumentRegister(2));
@@ -185,25 +185,25 @@ TR::J9S390zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode,
 }
 
 void
-TR::J9S390zLinuxSystemLinkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_DispatchType dispatchType,
+J9::Z::zLinuxSystemLinkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_DispatchType dispatchType,
    TR::RegisterDependencyConditions * &deps, int64_t & killMask, TR::SystemLinkage * systemLinkage,
    TR::Node * &GlobalRegDeps, bool &hasGlRegDeps, TR::Register ** methodAddressReg, TR::Register * &javaLitOffsetReg)
    {
    // call j9 private linkage specialization
-   J9::S390PrivateLinkage * privateLinkage = static_cast<J9::S390PrivateLinkage *>(cg()->getLinkage(TR_Private));
+   J9::Z::PrivateLinkage * privateLinkage = static_cast<J9::Z::PrivateLinkage *>(cg()->getLinkage(TR_Private));
    privateLinkage->setupRegisterDepForLinkage(callNode, dispatchType, deps, killMask, systemLinkage, GlobalRegDeps, hasGlRegDeps, methodAddressReg, javaLitOffsetReg);
    }
 
 void
-TR::J9S390zLinuxSystemLinkage::setupBuildArgForLinkage(TR::Node * callNode, TR_DispatchType dispatchType, TR::RegisterDependencyConditions * deps, bool isFastJNI,
+J9::Z::zLinuxSystemLinkage::setupBuildArgForLinkage(TR::Node * callNode, TR_DispatchType dispatchType, TR::RegisterDependencyConditions * deps, bool isFastJNI,
       bool isPassReceiver, int64_t & killMask, TR::Node * GlobalRegDeps, bool hasGlRegDeps, TR::SystemLinkage * systemLinkage)
    {
-   J9::S390PrivateLinkage * privateLinkage = static_cast<J9::S390PrivateLinkage *>(cg()->getLinkage(TR_Private));
+   J9::Z::PrivateLinkage * privateLinkage = static_cast<J9::Z::PrivateLinkage *>(cg()->getLinkage(TR_Private));
    privateLinkage->setupBuildArgForLinkage(callNode, dispatchType, deps, isFastJNI, isPassReceiver, killMask, GlobalRegDeps, hasGlRegDeps, systemLinkage);
    }
 
 void
-TR::J9S390zLinuxSystemLinkage::performCallNativeFunctionForLinkage(TR::Node * callNode, TR_DispatchType dispatchType, TR::Register * &javaReturnRegister, TR::SystemLinkage * systemLinkage,
+J9::Z::zLinuxSystemLinkage::performCallNativeFunctionForLinkage(TR::Node * callNode, TR_DispatchType dispatchType, TR::Register * &javaReturnRegister, TR::SystemLinkage * systemLinkage,
       TR::RegisterDependencyConditions * &deps, TR::Register * javaLitOffsetReg, TR::Register * methodAddressReg, bool isJNIGCPoint)
    {
    // call base class implementation first
@@ -212,7 +212,7 @@ TR::J9S390zLinuxSystemLinkage::performCallNativeFunctionForLinkage(TR::Node * ca
    // get javaStack Real Register
    TR::CodeGenerator * codeGen = cg();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(codeGen->fe());
-   J9::S390PrivateLinkage * privateLinkage = static_cast<J9::S390PrivateLinkage *>(cg()->getLinkage(TR_Private));
+   J9::Z::PrivateLinkage * privateLinkage = static_cast<J9::Z::PrivateLinkage *>(cg()->getLinkage(TR_Private));
    TR::RealRegister * javaStackPointerRealRegister = privateLinkage->getStackPointerRealRegister();
 
    // get methodMetaDataVirtualRegister
@@ -224,32 +224,32 @@ TR::J9S390zLinuxSystemLinkage::performCallNativeFunctionForLinkage(TR::Node * ca
    }
 
 void
-TR::J9S390zLinuxSystemLinkage::doNotKillSpecialRegsForBuildArgs (TR::Linkage *linkage, bool isFastJNI, int64_t &killMask)
+J9::Z::zLinuxSystemLinkage::doNotKillSpecialRegsForBuildArgs (TR::Linkage *linkage, bool isFastJNI, int64_t &killMask)
    {
-   J9::S390PrivateLinkage * privateLinkage = static_cast<J9::S390PrivateLinkage *>(cg()->getLinkage(TR_Private));
+   J9::Z::PrivateLinkage * privateLinkage = static_cast<J9::Z::PrivateLinkage *>(cg()->getLinkage(TR_Private));
    privateLinkage->doNotKillSpecialRegsForBuildArgs(linkage, isFastJNI, killMask);
    }
 
 void
-TR::J9S390zLinuxSystemLinkage::addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies, int32_t& from, int32_t step)
+J9::Z::zLinuxSystemLinkage::addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies, int32_t& from, int32_t step)
    {
-   J9::S390PrivateLinkage * privateLinkage = static_cast<J9::S390PrivateLinkage *>(cg()->getLinkage(TR_Private));
+   J9::Z::PrivateLinkage * privateLinkage = static_cast<J9::Z::PrivateLinkage *>(cg()->getLinkage(TR_Private));
    privateLinkage->addSpecialRegDepsForBuildArgs(callNode, dependencies, from, step);
    }
 
 int64_t
-TR::J9S390zLinuxSystemLinkage::addFECustomizedReturnRegDependency(int64_t killMask, TR::Linkage* linkage, TR::DataType resType, TR::RegisterDependencyConditions * dependencies)
+J9::Z::zLinuxSystemLinkage::addFECustomizedReturnRegDependency(int64_t killMask, TR::Linkage* linkage, TR::DataType resType, TR::RegisterDependencyConditions * dependencies)
    {
-   J9::S390PrivateLinkage * privateLinkage = static_cast<J9::S390PrivateLinkage *>(cg()->getLinkage(TR_Private));
+   J9::Z::PrivateLinkage * privateLinkage = static_cast<J9::Z::PrivateLinkage *>(cg()->getLinkage(TR_Private));
    killMask = privateLinkage->addFECustomizedReturnRegDependency(killMask, linkage, resType, dependencies);
    return killMask;
    }
 
 int32_t
-TR::J9S390zLinuxSystemLinkage::storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Linkage* linkage, TR::RegisterDependencyConditions * dependencies,
+J9::Z::zLinuxSystemLinkage::storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Linkage* linkage, TR::RegisterDependencyConditions * dependencies,
       bool isFastJNI, int32_t stackOffset, int8_t gprSize, uint32_t &numIntegerArgs)
    {
-   J9::S390PrivateLinkage * privateLinkage = static_cast<J9::S390PrivateLinkage *>(cg()->getLinkage(TR_Private));
+   J9::Z::PrivateLinkage * privateLinkage = static_cast<J9::Z::PrivateLinkage *>(cg()->getLinkage(TR_Private));
    stackOffset = privateLinkage->storeExtraEnvRegForBuildArgs(callNode, linkage, dependencies, isFastJNI, stackOffset, gprSize, numIntegerArgs);
    return stackOffset;
    }

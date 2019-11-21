@@ -68,7 +68,6 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/z/codegen/J9Instruction.cpp \
     compiler/z/codegen/J9Linkage.cpp \
     compiler/z/codegen/J9MemoryReference.cpp \
-    compiler/z/codegen/J9S390CHelperLinkage.cpp \
     compiler/z/codegen/J9S390Snippet.cpp \
     compiler/z/codegen/J9SystemLinkageLinux.cpp \
     compiler/z/codegen/J9SystemLinkagezOS.cpp \
@@ -78,6 +77,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     compiler/z/codegen/J9ZSnippet.cpp \
     compiler/z/codegen/ReduceSynchronizedFieldLoad.cpp \
     compiler/z/codegen/S390AOTRelocation.cpp \
+    compiler/z/codegen/S390CHelperLinkage.cpp \
     compiler/z/codegen/S390J9CallSnippet.cpp \
     compiler/z/codegen/S390PrivateLinkage.cpp \
     compiler/z/codegen/S390Recompilation.cpp \

@@ -51,7 +51,7 @@
 #include "x/codegen/HelperCallSnippet.hpp"
 #include "x/codegen/X86Instruction.hpp"
 
-TR::Register *TR::AMD64JNILinkage::processJNIReferenceArg(TR::Node *child)
+TR::Register *J9::X86::AMD64::JNILinkage::processJNIReferenceArg(TR::Node *child)
    {
    TR::Register *refReg;
 
@@ -104,7 +104,7 @@ TR::Register *TR::AMD64JNILinkage::processJNIReferenceArg(TR::Node *child)
    }
 
 
-int32_t TR::AMD64JNILinkage::computeMemoryArgSize(
+int32_t J9::X86::AMD64::JNILinkage::computeMemoryArgSize(
    TR::Node *callNode,
    int32_t first,
    int32_t last,
@@ -188,7 +188,7 @@ int32_t TR::AMD64JNILinkage::computeMemoryArgSize(
 
 // Build arguments for system linkage dispatch.
 //
-int32_t TR::AMD64JNILinkage::buildArgs(
+int32_t J9::X86::AMD64::JNILinkage::buildArgs(
       TR::Node *callNode,
       TR::RegisterDependencyConditions *deps,
       bool passThread,
@@ -370,7 +370,7 @@ int32_t TR::AMD64JNILinkage::buildArgs(
 
 
 TR::Register *
-TR::AMD64JNILinkage::buildVolatileAndReturnDependencies(
+J9::X86::AMD64::JNILinkage::buildVolatileAndReturnDependencies(
       TR::Node *callNode,
       TR::RegisterDependencyConditions *deps,
       bool omitDedicatedFrameRegister)
@@ -468,7 +468,7 @@ TR::AMD64JNILinkage::buildVolatileAndReturnDependencies(
    }
 
 
-void TR::AMD64JNILinkage::switchToMachineCStack(TR::Node *callNode)
+void J9::X86::AMD64::JNILinkage::switchToMachineCStack(TR::Node *callNode)
    {
    TR::RealRegister *espReal     = machine()->getRealRegister(TR::RealRegister::esp);
    TR::Register        *vmThreadReg = cg()->getVMThreadRegister();
@@ -492,7 +492,7 @@ void TR::AMD64JNILinkage::switchToMachineCStack(TR::Node *callNode)
    }
 
 
-void TR::AMD64JNILinkage::buildJNICallOutFrame(
+void J9::X86::AMD64::JNILinkage::buildJNICallOutFrame(
       TR::Node *callNode,
       TR::LabelSymbol *returnAddrLabel)
    {
@@ -599,7 +599,7 @@ void TR::AMD64JNILinkage::buildJNICallOutFrame(
    }
 
 void
-TR::AMD64JNILinkage::buildJNIMergeLabelDependencies(TR::Node *callNode, bool killNonVolatileGPRs)
+J9::X86::AMD64::JNILinkage::buildJNIMergeLabelDependencies(TR::Node *callNode, bool killNonVolatileGPRs)
    {
    TR::RegisterDependencyConditions *deps = _JNIDispatchInfo.mergeLabelPostDeps;
 
@@ -689,7 +689,7 @@ TR::AMD64JNILinkage::buildJNIMergeLabelDependencies(TR::Node *callNode, bool kil
    deps->stopAddingPostConditions();
    }
 
-void TR::AMD64JNILinkage::buildOutgoingJNIArgsAndDependencies(
+void J9::X86::AMD64::JNILinkage::buildOutgoingJNIArgsAndDependencies(
       TR::Node *callNode,
       bool passThread,
       bool passReceiver,
@@ -740,7 +740,7 @@ void TR::AMD64JNILinkage::buildOutgoingJNIArgsAndDependencies(
    }
 
 TR::Instruction *
-TR::AMD64JNILinkage::generateMethodDispatch(
+J9::X86::AMD64::JNILinkage::generateMethodDispatch(
       TR::Node *callNode,
       bool isJNIGCPoint,
       uintptrj_t targetAddress)
@@ -830,7 +830,7 @@ TR::AMD64JNILinkage::generateMethodDispatch(
    }
 
 
-void TR::AMD64JNILinkage::switchToJavaStack(TR::Node *callNode)
+void J9::X86::AMD64::JNILinkage::switchToJavaStack(TR::Node *callNode)
    {
    TR::RealRegister *espReal = machine()->getRealRegister(TR::RealRegister::esp);
    TR::Register *vmThreadReg = cg()->getMethodMetaDataRegister();
@@ -847,7 +847,7 @@ void TR::AMD64JNILinkage::switchToJavaStack(TR::Node *callNode)
    }
 
 
-void TR::AMD64JNILinkage::releaseVMAccess(TR::Node *callNode)
+void J9::X86::AMD64::JNILinkage::releaseVMAccess(TR::Node *callNode)
    {
    // Release VM access (spin lock).
    //
@@ -961,7 +961,7 @@ void TR::AMD64JNILinkage::releaseVMAccess(TR::Node *callNode)
    }
 
 
-void TR::AMD64JNILinkage::acquireVMAccess(TR::Node *callNode)
+void J9::X86::AMD64::JNILinkage::acquireVMAccess(TR::Node *callNode)
    {
    // Re-acquire VM access.
    //
@@ -1024,7 +1024,7 @@ void TR::AMD64JNILinkage::acquireVMAccess(TR::Node *callNode)
 
 
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI
-void TR::AMD64JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
+void J9::X86::AMD64::JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
    {
    TR::Register *vmThreadReg = cg()->getMethodMetaDataRegister();
 
@@ -1061,7 +1061,7 @@ void TR::AMD64JNILinkage::releaseVMAccessAtomicFree(TR::Node *callNode)
    }
 
 
-void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
+void J9::X86::AMD64::JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
    {
    TR::Register *vmThreadReg = cg()->getMethodMetaDataRegister();
 
@@ -1100,7 +1100,7 @@ void TR::AMD64JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode)
 
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
-void TR::AMD64JNILinkage::cleanupReturnValue(
+void J9::X86::AMD64::JNILinkage::cleanupReturnValue(
       TR::Node *callNode,
       TR::Register *linkageReturnReg,
       TR::Register *targetReg)
@@ -1161,7 +1161,7 @@ void TR::AMD64JNILinkage::cleanupReturnValue(
    }
 
 
-void TR::AMD64JNILinkage::checkForJNIExceptions(TR::Node *callNode)
+void J9::X86::AMD64::JNILinkage::checkForJNIExceptions(TR::Node *callNode)
    {
    TR::Register *vmThreadReg = cg()->getMethodMetaDataRegister();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
@@ -1190,7 +1190,7 @@ void TR::AMD64JNILinkage::checkForJNIExceptions(TR::Node *callNode)
    }
 
 
-void TR::AMD64JNILinkage::cleanupJNIRefPool(TR::Node *callNode)
+void J9::X86::AMD64::JNILinkage::cleanupJNIRefPool(TR::Node *callNode)
    {
    // Must check to see if the ref pool was used and clean them up if so--or we
    // leave a bunch of pinned garbage behind that screws up the gc quality forever.
@@ -1218,7 +1218,7 @@ void TR::AMD64JNILinkage::cleanupJNIRefPool(TR::Node *callNode)
    }
 
 
-TR::Register *TR::AMD64JNILinkage::buildDirectDispatch(
+TR::Register *J9::X86::AMD64::JNILinkage::buildDirectDispatch(
       TR::Node *callNode,
       bool spillFPRegs)
    {
@@ -1246,7 +1246,7 @@ TR::Register *TR::AMD64JNILinkage::buildDirectDispatch(
 
 
 void
-TR::AMD64JNILinkage::populateJNIDispatchInfo()
+J9::X86::AMD64::JNILinkage::populateJNIDispatchInfo()
    {
    _JNIDispatchInfo.numJNIFrameSlotsPushed = 5;
 
@@ -1266,7 +1266,7 @@ TR::AMD64JNILinkage::populateJNIDispatchInfo()
    }
 
 
-TR::Register *TR::AMD64JNILinkage::buildDirectJNIDispatch(TR::Node *callNode)
+TR::Register *J9::X86::AMD64::JNILinkage::buildDirectJNIDispatch(TR::Node *callNode)
    {
 #ifdef DEBUG
    if (debug("reportJNI"))

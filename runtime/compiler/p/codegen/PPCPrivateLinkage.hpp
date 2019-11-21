@@ -38,7 +38,8 @@ namespace TR { class ParameterSymbol; }
 namespace TR { class RegisterDependencyConditions; }
 namespace TR { class ResolvedMethodSymbol; }
 
-namespace TR {
+namespace J9
+{
 
 struct PPCPICItem
    {
@@ -58,11 +59,14 @@ struct PPCPICItem
 namespace J9
 {
 
-class PPCPrivateLinkage : public PrivateLinkage
+namespace Power
+{
+
+class PrivateLinkage : public J9::PrivateLinkage
    {
    public:
 
-   PPCPrivateLinkage(TR::CodeGenerator *cg);
+   PrivateLinkage(TR::CodeGenerator *cg);
 
    virtual const TR::PPCLinkageProperties& getProperties();
    virtual uint32_t getRightToLeft();
@@ -110,17 +114,12 @@ class PPCPrivateLinkage : public PrivateLinkage
    virtual TR::Register *buildalloca(TR::Node *BIFCallNode);
    };
 
-}
 
-
-namespace TR
-{
-
-class PPCHelperLinkage : public J9::PPCPrivateLinkage
+class HelperLinkage : public PrivateLinkage
    {
    public:
 
-   PPCHelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), J9::PPCPrivateLinkage(cg)
+   HelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), PrivateLinkage(cg)
       {
       TR_ASSERT(helperLinkage == TR_Helper || helperLinkage == TR_CHelper, "Unexpected helper linkage convention");
       }
@@ -132,6 +131,8 @@ class PPCHelperLinkage : public J9::PPCPrivateLinkage
 
    TR_LinkageConventions _helperLinkage;
    };
+
+}
 
 }
 

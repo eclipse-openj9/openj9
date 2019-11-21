@@ -29,6 +29,7 @@
 #include "j9consts.h"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Linkage_inlines.hpp"
+#include "codegen/S390CHelperLinkage.hpp"
 #include "codegen/TreeEvaluator.hpp"
 #include "env/VMJ9.h"
 #include "il/ILOps.hpp"
@@ -41,7 +42,6 @@
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Instruction.hpp"
 #include "z/codegen/S390Register.hpp"
-#include "z/codegen/J9S390CHelperLinkage.hpp"
 
 #define OPT_DETAILS "O^O REDUCE SYNCHRONIZED FIELD LOAD: "
 
@@ -74,7 +74,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
    // Generate a dynamic debug counter for the fallback path whose execution should be extremely rare
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/success/OOL/%s", cg->comp()->signature()));
 
-   TR::S390CHelperLinkage* helperLink = static_cast<TR::S390CHelperLinkage*>(cg->getLinkage(TR_CHelper));
+   J9::Z::CHelperLinkage* helperLink = static_cast<J9::Z::CHelperLinkage*>(cg->getLinkage(TR_CHelper));
 
    // Calling helper with call node which should NULL
    helperLink->buildDirectDispatch(monentSymbolReferenceNode);

@@ -44,7 +44,7 @@
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 
-J9::ARM64PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)
+J9::ARM64::PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)
    : J9::PrivateLinkage(cg),
    _interpretedMethodEntryPoint(NULL),
    _jittedMethodEntryPoint(NULL)
@@ -138,29 +138,29 @@ J9::ARM64PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)
    _properties._offsetToFirstLocal            = -8;
    }
 
-TR::ARM64LinkageProperties& J9::ARM64PrivateLinkage::getProperties()
+TR::ARM64LinkageProperties& J9::ARM64::PrivateLinkage::getProperties()
    {
    return _properties;
    }
 
-uint32_t J9::ARM64PrivateLinkage::getRightToLeft()
+uint32_t J9::ARM64::PrivateLinkage::getRightToLeft()
    {
    return getProperties().getRightToLeft();
    }
 
 intptrj_t
-J9::ARM64PrivateLinkage::entryPointFromCompiledMethod()
+J9::ARM64::PrivateLinkage::entryPointFromCompiledMethod()
    {
    return reinterpret_cast<intptrj_t>(getJittedMethodEntryPoint()->getBinaryEncoding());
    }
 
 intptrj_t
-J9::ARM64PrivateLinkage::entryPointFromInterpretedMethod()
+J9::ARM64::PrivateLinkage::entryPointFromInterpretedMethod()
    {
    return reinterpret_cast<intptrj_t>(getInterpretedMethodEntryPoint()->getBinaryEncoding());
    }
 
-void J9::ARM64PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
+void J9::ARM64::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    {
    const TR::ARM64LinkageProperties& linkageProperties = getProperties();
    int32_t firstLocalOffset = linkageProperties.getOffsetToFirstLocal();
@@ -275,7 +275,7 @@ void J9::ARM64PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    atlas->setParmBaseOffset(atlas->getParmBaseOffset() + offsetToFirstParm - firstLocalOffset);
    }
 
-void J9::ARM64PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex)
+void J9::ARM64::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex)
    {
    int32_t roundup = (comp()->useCompressedPointers() && p->isLocalObject() ? TR::Compiler->om.objectAlignmentInBytes() : TR::Compiler->om.sizeofReferenceAddress()) - 1;
    int32_t roundedSize = (p->getSize() + roundup) & (~roundup);
@@ -291,7 +291,7 @@ static void lockRegister(TR::RealRegister *regToAssign)
    regToAssign->setAssignedRegister(regToAssign);
    }
 
-void J9::ARM64PrivateLinkage::initARM64RealRegisterLinkage()
+void J9::ARM64::PrivateLinkage::initARM64RealRegisterLinkage()
    {
    TR::Machine *machine = cg()->machine();
    TR::RealRegister *reg;
@@ -333,7 +333,7 @@ void J9::ARM64PrivateLinkage::initARM64RealRegisterLinkage()
 
 
 void
-J9::ARM64PrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method)
+J9::ARM64::PrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method)
    {
    ListIterator<TR::ParameterSymbol> paramIterator(&(method->getParameterList()));
    TR::ParameterSymbol *paramCursor = paramIterator.getFirst();
@@ -377,7 +377,7 @@ J9::ARM64PrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymb
 
 
 int32_t
-J9::ARM64PrivateLinkage::calculatePreservedRegisterSaveSize(
+J9::ARM64::PrivateLinkage::calculatePreservedRegisterSaveSize(
       uint32_t &registerSaveDescription,
       uint32_t &numGPRsSaved)
    {
@@ -402,7 +402,7 @@ J9::ARM64PrivateLinkage::calculatePreservedRegisterSaveSize(
    }
 
 
-void J9::ARM64PrivateLinkage::createPrologue(TR::Instruction *cursor)
+void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    {
 
    // Prologues are emitted post-RA so it is fine to use real registers directly
@@ -641,7 +641,7 @@ void J9::ARM64PrivateLinkage::createPrologue(TR::Instruction *cursor)
    setJittedMethodEntryPoint(beforeJittedMethodEntryPointInstruction->getNext());
    }
 
-void J9::ARM64PrivateLinkage::createEpilogue(TR::Instruction *cursor)
+void J9::ARM64::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    {
    const TR::ARM64LinkageProperties& properties = getProperties();
    TR::Machine *machine = cg()->machine();
@@ -691,7 +691,7 @@ void J9::ARM64PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    generateRegBranchInstruction(cg(), TR::InstOpCode::ret, lastNode, lr, cursor);
    }
 
-void J9::ARM64PrivateLinkage::pushOutgoingMemArgument(TR::Register *argReg, int32_t offset, TR::InstOpCode::Mnemonic opCode, TR::ARM64MemoryArgument &memArg)
+void J9::ARM64::PrivateLinkage::pushOutgoingMemArgument(TR::Register *argReg, int32_t offset, TR::InstOpCode::Mnemonic opCode, TR::ARM64MemoryArgument &memArg)
    {
    const TR::ARM64LinkageProperties& properties = self()->getProperties();
    TR::RealRegister *javaSP = cg()->machine()->getRealRegister(properties.getStackPointerRegister()); // x20
@@ -702,13 +702,13 @@ void J9::ARM64PrivateLinkage::pushOutgoingMemArgument(TR::Register *argReg, int3
    memArg.opCode = opCode;
    }
 
-int32_t J9::ARM64PrivateLinkage::buildArgs(TR::Node *callNode,
+int32_t J9::ARM64::PrivateLinkage::buildArgs(TR::Node *callNode,
    TR::RegisterDependencyConditions *dependencies)
    {
    return buildPrivateLinkageArgs(callNode, dependencies, TR_Private);
    }
 
-int32_t J9::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
+int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
    TR::RegisterDependencyConditions *dependencies,
    TR_LinkageConventions linkage)
    {
@@ -1007,7 +1007,7 @@ int32_t J9::ARM64PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
    return totalSize;
    }
 
-void J9::ARM64PrivateLinkage::buildDirectCall(TR::Node *callNode,
+void J9::ARM64::PrivateLinkage::buildDirectCall(TR::Node *callNode,
    TR::SymbolReference *callSymRef,
    TR::RegisterDependencyConditions *dependencies,
    const TR::ARM64LinkageProperties &pp,
@@ -1060,7 +1060,7 @@ void J9::ARM64PrivateLinkage::buildDirectCall(TR::Node *callNode,
    gcPoint->ARM64NeedsGCMap(cg(), callSymbol->getLinkageConvention() == TR_Helper ? 0xffffffff : pp.getPreservedRegisterMapForGC());
    }
 
-TR::Register *J9::ARM64PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
+TR::Register *J9::ARM64::PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
    {
    TR::SymbolReference *callSymRef = callNode->getSymbolReference();
    const TR::ARM64LinkageProperties &pp = getProperties();
@@ -1116,7 +1116,7 @@ static TR::Register *evaluateUpToVftChild(TR::Node *callNode, TR::CodeGenerator 
    return vftReg;
    }
 
-void J9::ARM64PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
+void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
    TR::RegisterDependencyConditions *dependencies,
    uint32_t argSize)
    {
@@ -1221,7 +1221,7 @@ void J9::ARM64PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
    return;
    }
 
-TR::Register *J9::ARM64PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
+TR::Register *J9::ARM64::PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    {
    const TR::ARM64LinkageProperties &pp = getProperties();
    TR::RealRegister *sp = cg()->machine()->getRealRegister(pp.getStackPointerRegister());
@@ -1266,7 +1266,7 @@ TR::Register *J9::ARM64PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    }
 
 TR::Instruction *
-J9::ARM64PrivateLinkage::loadStackParametersToLinkageRegisters(TR::Instruction *cursor)
+J9::ARM64::PrivateLinkage::loadStackParametersToLinkageRegisters(TR::Instruction *cursor)
    {
    TR::Machine *machine = cg()->machine();
    TR::ARM64LinkageProperties& properties = getProperties();
@@ -1312,7 +1312,7 @@ J9::ARM64PrivateLinkage::loadStackParametersToLinkageRegisters(TR::Instruction *
  * See OpenJ9 issue #6657.  Also consider merging with loadStackParametersToLinkageRegisters.
  */
 TR::Instruction *
-J9::ARM64PrivateLinkage::copyParametersToHomeLocation(TR::Instruction *cursor)
+J9::ARM64::PrivateLinkage::copyParametersToHomeLocation(TR::Instruction *cursor)
    {
    TR::Machine *machine = cg()->machine();
    TR::ARM64LinkageProperties& properties = getProperties();
@@ -1353,7 +1353,7 @@ J9::ARM64PrivateLinkage::copyParametersToHomeLocation(TR::Instruction *cursor)
    return cursor;
    }
 
-void J9::ARM64PrivateLinkage::performPostBinaryEncoding()
+void J9::ARM64::PrivateLinkage::performPostBinaryEncoding()
    {
    // --------------------------------------------------------------------------
    // Encode the size of the interpreter entry area into the linkage info word
@@ -1373,7 +1373,7 @@ void J9::ARM64PrivateLinkage::performPostBinaryEncoding()
    *(uint32_t *)(linkageInfoWordInstruction->getBinaryEncoding()) = linkageInfoWord;
    }
 
-int32_t TR::ARM64HelperLinkage::buildArgs(TR::Node *callNode,
+int32_t J9::ARM64::HelperLinkage::buildArgs(TR::Node *callNode,
    TR::RegisterDependencyConditions *dependencies)
    {
    return buildPrivateLinkageArgs(callNode, dependencies, _helperLinkage);

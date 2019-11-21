@@ -59,17 +59,17 @@ J9::ARM64::CodeGenerator::createLinkage(TR_LinkageConventions lc)
    switch (lc)
       {
       case TR_Private:
-         linkage = new (self()->trHeapMemory()) J9::ARM64PrivateLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::ARM64::PrivateLinkage(self());
          break;
       case TR_System:
          linkage = new (self()->trHeapMemory()) TR::ARM64SystemLinkage(self());
          break;
       case TR_CHelper:
       case TR_Helper:
-         linkage = new (self()->trHeapMemory()) TR::ARM64HelperLinkage(self(), lc);
+         linkage = new (self()->trHeapMemory()) J9::ARM64::HelperLinkage(self(), lc);
          break;
       case TR_J9JNILinkage:
-         linkage = new (self()->trHeapMemory()) TR::ARM64JNILinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::ARM64::JNILinkage(self());
          break;
       default :
          linkage = new (self()->trHeapMemory()) TR::ARM64SystemLinkage(self());

@@ -36,11 +36,14 @@ namespace TR { class Snippet; }
 namespace J9
 {
 
+namespace Z
+{
+
 ////////////////////////////////////////////////////////////////////////////////
-//  J9::S390PrivateLinkage Definition for J9
+//  J9::Z::PrivateLinkage Definition for J9
 ////////////////////////////////////////////////////////////////////////////////
 
-class S390PrivateLinkage : public PrivateLinkage
+class PrivateLinkage : public J9::PrivateLinkage
    {
    uint32_t _preservedRegisterMapForGC;
 
@@ -48,7 +51,7 @@ class S390PrivateLinkage : public PrivateLinkage
 
 public:
 
-   S390PrivateLinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaPrivate, TR_LinkageConventions lc=TR_Private);
+   PrivateLinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaPrivate, TR_LinkageConventions lc=TR_Private);
 
    virtual void createPrologue(TR::Instruction * cursor);
    virtual void createEpilogue(TR::Instruction * cursor);
@@ -124,32 +127,28 @@ protected:
 
    };
 
-}
-
-
-namespace TR
-{
 
 ////////////////////////////////////////////////////////////////////////////////
-//  TR::S390HelperLinkage Definition for J9
+//  J9::Z::HelperLinkage Definition for J9
 ////////////////////////////////////////////////////////////////////////////////
 
-class S390HelperLinkage : public J9::S390PrivateLinkage
+class HelperLinkage : public PrivateLinkage
    {
 public:
 
-   S390HelperLinkage(TR::CodeGenerator * cg)
-      : J9::S390PrivateLinkage(cg,TR_JavaHelper, TR_Helper)
+   HelperLinkage(TR::CodeGenerator * cg)
+      : PrivateLinkage(cg,TR_JavaHelper, TR_Helper)
       {
       setProperty(ParmsInReverseOrder);
       }
    };
 
-class J9S390JNILinkage : public J9::S390PrivateLinkage
+
+class JNILinkage : public PrivateLinkage
    {
 public:
 
-   J9S390JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaPrivate, TR_LinkageConventions lc=TR_J9JNILinkage);
+   JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaPrivate, TR_LinkageConventions lc=TR_J9JNILinkage);
    virtual TR::Register * buildDirectDispatch(TR::Node * callNode);
 
    /**
@@ -187,6 +186,8 @@ public:
                                       TR::Register * tempReg1);
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
    };
+
+}
 
 }
 

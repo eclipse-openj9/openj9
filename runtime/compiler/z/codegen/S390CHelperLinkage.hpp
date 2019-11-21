@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2017 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,9 +28,13 @@ namespace TR { class RegisterDependencyConditions; }
 namespace TR { class ResolvedMethodSymbol; }
 namespace TR { class Snippet; }
 
-namespace TR {
+namespace J9
+{
 
-class S390CHelperLinkage : public TR::Linkage
+namespace Z
+{
+
+class CHelperLinkage : public TR::Linkage
    {
    uint32_t _preservedRegisterMapForGC;
    TR::RealRegister::RegNum _methodMetaDataRegister;
@@ -44,11 +48,11 @@ class S390CHelperLinkage : public TR::Linkage
 #endif
 public:
 
-   S390CHelperLinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaHelper, TR_LinkageConventions lc=TR_CHelper);
+   CHelperLinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc=TR_JavaHelper, TR_LinkageConventions lc=TR_CHelper);
 
    virtual void createPrologue(TR::Instruction * cursor) { TR_ASSERT(false, "Not Implemented"); }
    virtual void createEpilogue(TR::Instruction * cursor) { TR_ASSERT(false, "Not Implemented"); }
-   
+
    virtual void mapStack(TR::ResolvedMethodSymbol *symbol) { TR_ASSERT(false, "Not Implemented"); }
    virtual void mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex) { TR_ASSERT(false, "Not Implemented"); }
    virtual bool hasToBeOnStack(TR::ParameterSymbol * parm) { TR_ASSERT(false, "Not Implemented"); return false; }
@@ -73,20 +77,20 @@ public:
     *
     *  \return
     *      Returns _preservedRegisterMapForGC after setting it to m
-    */  
+    */
    virtual uint32_t setPreservedRegisterMapForGC(uint32_t m) {return _preservedRegisterMapForGC = m; }
    /** \brief
     *       Getter for private member _preservedRegisterMapForGC
     *
     *  \return
     *      Returns private member _preservedRegisterMapForGC
-    */  
+    */
    virtual uint32_t getPreservedRegisterMapForGC() {return _preservedRegisterMapForGC; }
 
-   virtual TR::Register * buildIndirectDispatch(TR::Node * callNode) 
-      { 
+   virtual TR::Register * buildIndirectDispatch(TR::Node * callNode)
+      {
       TR_ASSERT(false, "Indirect dispatch is currently not supported");
-      return NULL; 
+      return NULL;
       }
 
    /** \brief
@@ -97,7 +101,7 @@ public:
     *
     *  \return
     *      Returns TR::Register* which contains return value from helper call
-    */  
+    */
    virtual TR::Register * buildDirectDispatch(TR::Node * callNode)
       {
       return buildDirectDispatch(callNode, static_cast<TR::RegisterDependencyConditions**>(NULL));
@@ -116,7 +120,7 @@ public:
     *
     *  \return
     *      Returns TR::Register* which contains return value from helper call
-    */  
+    */
    TR::Register* buildDirectDispatch(TR::Node *callNode, TR::Register *returnReg)
       {
       return buildDirectDispatch(callNode, NULL, returnReg);
@@ -124,4 +128,7 @@ public:
 
    TR::Register *buildDirectDispatch(TR::Node *callNode, TR::RegisterDependencyConditions** deps, TR::Register *returnReg=NULL);
    };
+
+}
+
 }
