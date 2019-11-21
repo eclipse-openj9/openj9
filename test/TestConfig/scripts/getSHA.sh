@@ -52,6 +52,11 @@ parseCommandLineArgs()
 			*) echo >&2 "Invalid option: ${opt}"; echo "This option was unrecognized."; usage; exit 1;
 		esac
 	done
+	if [ -z "$REPO_DIR" ] || [ -z "$OUTPUT_FILE" ] || [ ! -d "$REPO_DIR" ]; then
+		echo "Error, please see the usage and also check if $REPO_DIR is existing"
+		usage
+		exit 1
+	fi
 }
 
 timestamp() {
@@ -60,7 +65,6 @@ timestamp() {
 
 getSHA()
 {
-if [ "$REPO_DIR" != "" ] && [ "$OUTPUT_FILE" != "" ]; then
 	echo "Check sha in $REPO_DIR and store the info in $OUTPUT_FILE"
 	if [ ! -e ${OUTPUT_FILE} ]; then
 		echo "touch $OUTPUT_FILE"
@@ -70,7 +74,6 @@ if [ "$REPO_DIR" != "" ] && [ "$OUTPUT_FILE" != "" ]; then
 	cd $REPO_DIR
 	# append the info into $OUTPUT_FILE
 	{ echo "================================================"; echo "timestamp: $(timestamp)"; echo "repo dir: $REPO_DIR"; echo "git repo: "; git remote show origin -n | grep "Fetch URL:"; echo "sha:"; git rev-parse HEAD; }  2>&1 | tee -a $OUTPUT_FILE
-fi
 }
 parseCommandLineArgs "$@"
 getSHA

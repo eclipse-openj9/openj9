@@ -61,7 +61,7 @@
 	<macrodef name="checkGitRepoSha">
 		<attribute name="repoDir" default="." />
 		<sequential>
-			<exec executable="bash" failonerror="false">
+			<exec executable="bash" failonerror="true">
 				<arg line="${TEST_ROOT}/TestConfig/scripts/getSHA.sh" />
 				<arg line="--repo_dir @{repoDir}" />
 				<arg line="--output_file ${TEST_ROOT}/TestConfig/SHA.txt" />
