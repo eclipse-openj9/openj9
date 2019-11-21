@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,6 +45,7 @@ extern "C" {
 #define J9_CREATEJAVAVM_ARGENCODING_LATIN 2
 #define J9_CREATEJAVAVM_ARGENCODING_UTF8 4
 #define J9_CREATEJAVAVM_ARGENCODING_PLATFORM 8
+#define J9_CREATEJAVAVM_START_JITSERVER 16
 
 typedef struct J9CreateJavaVMParams {
 	UDATA j2seVersion;
@@ -1623,6 +1624,19 @@ registerPredefinedHandler(J9JavaVM *vm, U_32 signal, void **oldOSHandler);
  */
 IDATA
 registerOSHandler(J9JavaVM *vm, U_32 signal, void *newOSHandler, void **oldOSHandler);
+
+#if defined(JITSERVER_SUPPORT)
+/**
+ * @brief checks if the runtime flag for enabling JITServer is set or not
+ *
+ * @param[in] vm pointer to a J9JavaVM
+ *
+ * @return TRUE if the flag for JITServer is set, FALSE otherwise
+ */
+BOOLEAN
+isJITServerEnabled(J9JavaVM *vm);
+
+#endif /* JITSERVER_SUPPORT */
 
 /* ---------------- romutil.c ---------------- */
 
@@ -4140,6 +4154,28 @@ getMonitorForWait (J9VMThread* vmThread, j9object_t object);
  */
 IDATA
 createThreadWithCategory(omrthread_t* handle, UDATA stacksize, UDATA priority, UDATA suspend,
+	omrthread_entrypoint_t entrypoint, void* entryarg, U_32 category);
+
+/**
+ * Helper function to create a joinable thread with a specific thread category.
+ *
+ * @param[out] handle a pointer to a omrthread_t which will point to the thread (if successfully created)
+ * @param[in] stacksize the size of the new thread's stack (bytes)<br>
+ *			0 indicates use default size
+ * @param[in] priority priorities range from J9THREAD_PRIORITY_MIN to J9THREAD_PRIORITY_MAX (inclusive)
+ * @param[in] suspend set to non-zero to create the thread in a suspended state.
+ * @param[in] entrypoint pointer to the function which the thread will run
+ * @param[in] entryarg a value to pass to the entrypoint function
+ * @param[in] category category of the thread to be created
+ *
+ * @return success or error code
+ * @retval J9THREAD_SUCCESS success
+ * @retval J9THREAD_ERR_xxx failure
+ *
+ * @see omrthread_create
+ */
+IDATA
+createJoinableThreadWithCategory(omrthread_t* handle, UDATA stacksize, UDATA priority, UDATA suspend,
 	omrthread_entrypoint_t entrypoint, void* entryarg, U_32 category);
 
 /**
