@@ -2053,9 +2053,6 @@ fixDirectHandles(J9VMThread * currentThread, J9HashTable * classHashTable, J9Has
 void
 copyPreservedValues (J9VMThread * currentThread, J9HashTable* classHashTable, UDATA extensionsUsed);
 
-void
-fixReturnsInUnsafeMethods(J9VMThread * currentThread, J9HashTable * classPairs);
-
 enum jvmtiError
 recreateRAMClasses (J9VMThread * currentThread, J9HashTable* classHashTable, J9HashTable * methodHashTable, UDATA extensionsUsed, BOOLEAN fastHCR);
 
