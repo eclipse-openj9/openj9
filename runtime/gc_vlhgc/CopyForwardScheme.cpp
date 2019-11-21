@@ -1063,6 +1063,7 @@ MM_CopyForwardScheme::reserveMemoryForCache(MM_EnvironmentVLHGC *env, UDATA comp
 MM_CopyScanCacheVLHGC *
 MM_CopyForwardScheme::createScanCacheForOverflowInHeap(MM_EnvironmentVLHGC *env)
 {
+	bool const compressed = _extensions->compressObjectReferences();
 	MM_CopyScanCacheVLHGC * result = NULL;
 	
 	_cacheFreeList.lock();
@@ -1091,7 +1092,7 @@ MM_CopyForwardScheme::createScanCacheForOverflowInHeap(MM_EnvironmentVLHGC *env)
 			/* save out how much memory we wasted so the caller can account for it */
 			memset(extentBase, 0x0, bytesToReserve);
 			void *cacheBase = (void *)((MM_HeapLinkedFreeHeader *)extentBase + 1);
-			MM_HeapLinkedFreeHeader::fillWithHoles(extentBase, bytesToReserve);
+			MM_HeapLinkedFreeHeader::fillWithHoles(extentBase, bytesToReserve, compressed);
 			result = _cacheFreeList.allocateCacheEntriesInExistingMemory(env, cacheBase, cacheSizeInBytes);
 		}
 		suggestedCompactGroup += 1;
@@ -1864,6 +1865,7 @@ MM_CopyForwardScheme::getContextForHeapAddress(void *address)
 J9Object *
 MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ScavengerForwardedHeader* forwardedHeader, bool leafType)
 {
+	bool const compressed = _extensions->compressObjectReferences();
 	J9Object *result = NULL;
 	J9Object *object = forwardedHeader->getObject();
 	UDATA objectCopySizeInBytes = 0;
@@ -1964,7 +1966,7 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 #if defined(J9VM_INTERP_NATIVE_SUPPORT)
 				if (NULL != hotFieldPadBase) {
 					/* lay down a hole (XXX:  This assumes that we are using AOL (address-ordered-list)) */
-					MM_HeapLinkedFreeHeader::fillWithHoles(hotFieldPadBase, hotFieldPadSize);
+					MM_HeapLinkedFreeHeader::fillWithHoles(hotFieldPadBase, hotFieldPadSize, compressed);
 				}
 #endif /* J9VM_INTERP_NATIVE_SUPPORT */
 

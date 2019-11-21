@@ -276,7 +276,7 @@ public:
 	getReverseForwardedPointer()
 	{
 		Assert_MM_true(isReverseForwardedPointer());
-		return (omrobjectptr_t)MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(_objectPtr)->getNext();
+		return (omrobjectptr_t)MM_HeapLinkedFreeHeader::getHeapLinkedFreeHeader(_objectPtr)->getNext(compressObjectReferences());
 	}
 	
 	/**
