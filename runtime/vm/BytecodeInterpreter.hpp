@@ -6498,12 +6498,12 @@ retry:
 						_sp += (slotsToPop - 2);
 						*(U_64*)_sp = _objectAccessBarrier.inlineMixedObjectReadU64(_currentThread, objectref, newValueOffset, isVolatile);
 					} else if (flags & J9FieldFlagObject) {
-						_sp += (slotsToPop - 1);
+						j9object_t newObjectRef = NULL;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 						if (flags & J9FieldFlagFlattened) {
 							J9FlattenedClassCacheEntry *cache = J9_VM_FCC_ENTRY_FROM_CLASS(J9OBJECT_CLAZZ(_currentThread, objectref), valueOffset);
 							J9Class *flattenedFieldClass = cache->clazz;
-							j9object_t newObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, flattenedFieldClass, false, false);
+							newObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, flattenedFieldClass, false, false);
 
 							if (NULL == newObjectRef) {
 								buildGenericSpecialStackFrame(REGISTER_ARGS, 0);
@@ -6527,13 +6527,14 @@ retry:
 												newObjectRef,
 												objectHeaderSize);
 
-							_sp += (slotsToPop - 1);
-							*(j9object_t*)_sp = newObjectRef;
+
 						} else
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 						{
-							*(j9object_t*)_sp = _objectAccessBarrier.inlineMixedObjectReadObject(_currentThread, objectref, newValueOffset, isVolatile);
+							newObjectRef = _objectAccessBarrier.inlineMixedObjectReadObject(_currentThread, objectref, newValueOffset, isVolatile);
 						}
+						_sp += (slotsToPop - 1);
+						*(j9object_t*)_sp = newObjectRef;
 					} else {
 						_sp += (slotsToPop - 1);
 						*(U_32*)_sp = _objectAccessBarrier.inlineMixedObjectReadU32(_currentThread, objectref, newValueOffset, isVolatile);
