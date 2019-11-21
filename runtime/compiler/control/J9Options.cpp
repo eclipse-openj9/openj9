@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1942,27 +1942,31 @@ J9::Options::fePreProcess(void * base)
       self()->setOption(TR_DisableAOTBytesCompression);
 
 #if defined(JITSERVER_SUPPORT)
-   // Check option -XX:+UseJITServer and/or -XX:StartAsJITServer
-   // -XX:-UseJITServer disables JITServer at the client
    static bool JITServerAlreadyParsed = false;
    if (!JITServerAlreadyParsed) // Avoid processing twice for AOT and JIT and produce duplicate messages
       {
       JITServerAlreadyParsed = true;
-
-      const char *xxUseJITServerOption = "-XX:+UseJITServer";
-      const char *xxDisableUseJITServerOption = "-XX:-UseJITServer";
-      const char *xxStartAsJITServerOption = "-XX:StartAsJITServer";
-
-      int32_t xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxUseJITServerOption, 0);
-      int32_t xxDisableUseJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxDisableUseJITServerOption, 0);
-      int32_t xxStartAsJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxStartAsJITServerOption, 0);
-
-      // Check if option is at all specified
-      if ((xxUseJITServerArgIndex > xxDisableUseJITServerArgIndex) ||
-          (xxStartAsJITServerArgIndex >= 0))
+      if (vm->internalVMFunctions->isJITServerEnabled(vm))
          {
-         if (xxUseJITServerArgIndex > xxStartAsJITServerArgIndex) // Client mode
+         compInfo->getPersistentInfo()->setRemoteCompilationMode(JITServer::SERVER);
+         // Increase the default timeout value for JITServer.
+         // It can be overridden with -XX:JITServerTimeout= option in JITServerParseCommonOptions().
+         compInfo->getPersistentInfo()->setSocketTimeout(30000);
+         }
+      else
+         {
+         // Check option -XX:+UseJITServer
+         // -XX:-UseJITServer disables JITServer at the client
+         const char *xxUseJITServerOption = "-XX:+UseJITServer";
+         const char *xxDisableUseJITServerOption = "-XX:-UseJITServer";
+
+         int32_t xxUseJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxUseJITServerOption, 0);
+         int32_t xxDisableUseJITServerArgIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, xxDisableUseJITServerOption, 0);
+
+         // Check if option is at all specified
+         if (xxUseJITServerArgIndex > xxDisableUseJITServerArgIndex)
             {
+            j9tty_printf(PORTLIB, "JITServer is currently a technology preview. Its use is not yet supported\n");
             compInfo->getPersistentInfo()->setRemoteCompilationMode(JITServer::CLIENT);
 
             const char *xxJITServerAddressOption = "-XX:JITServerAddress=";
@@ -1975,16 +1979,8 @@ J9::Options::fePreProcess(void * base)
                compInfo->getPersistentInfo()->setJITServerAddress(address);
                }
             }
-         else // Server mode
-            {
-            compInfo->getPersistentInfo()->setRemoteCompilationMode(JITServer::SERVER);
-            // Increase the default timeout value for JITServer.
-            // It can be overridden with -XX:JITServerTimeout= option in JITServerParseCommonOptions().
-            compInfo->getPersistentInfo()->setSocketTimeout(30000);
-            }
-
-         JITServerParseCommonOptions(vm, compInfo);
          }
+      JITServerParseCommonOptions(vm, compInfo);
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          {
          // Generate a random identifier for this JITServer instance.
@@ -1994,13 +1990,10 @@ J9::Options::fePreProcess(void * base)
          std::mt19937_64 rng(rd());
          std::uniform_int_distribution<uint64_t> dist;
          compInfo->getPersistentInfo()->setClientUID(dist(rng));
+         // _safeReservePhysicalMemoryValue is set as 0 for the JITClient because compilations
+         // are done remotely. The user can still override it with a command line option
+         J9::Options::_safeReservePhysicalMemoryValue = 0;
          }
-      }
-   // _safeReservePhysicalMemoryValue is set as 0 for the JITClient because compilations
-   // are done remotely. The user can still override it with a command line option
-   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
-      {
-      J9::Options::_safeReservePhysicalMemoryValue = 0;
       }
 #endif /* defined(JITSERVER_SUPPORT) */
 

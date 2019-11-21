@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -244,6 +244,8 @@ launchGPU(J9VMThread *vmThread, jobject invokeObject,
 extern "C" void promoteGPUCompile(J9VMThread *vmThread);
 
 extern "C" int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm);
+extern "C" int32_t startJITServer(J9JITConfig *jitConfig);
+extern "C" int32_t waitJITServerTermination(J9JITConfig *jitConfig);
 
 char *AOTcgDiagOn="1";
 
@@ -1132,6 +1134,11 @@ onLoadInternal(
    TR_VerboseLog::initialize(jitConfig);
    initializePersistentMemory(jitConfig);
 
+   // set up entry point for starting JITServer
+#if defined(JITSERVER_SUPPORT)
+   jitConfig->startJITServer = startJITServer;
+   jitConfig->waitJITServerTermination = waitJITServerTermination;
+#endif /* JITSERVER_SUPPORT */
 
    TR_PersistentMemory * persistentMemory = (TR_PersistentMemory *)jitConfig->scratchSegment;
    if (persistentMemory == NULL)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,7 +92,8 @@ void TR_Listener::startListenerThread(J9JavaVM *javaVM)
       {
       // create the thread for listening to a Client compilation request
       const UDATA defaultOSStackSize = javaVM->defaultOSStackSize; //256KB stack size
-      if (javaVM->internalVMFunctions->createThreadWithCategory(&_listenerOSThread, 
+
+      if (J9THREAD_SUCCESS != javaVM->internalVMFunctions->createJoinableThreadWithCategory(&_listenerOSThread,
                                                                defaultOSStackSize,
                                                                priority,
                                                                0,
@@ -120,4 +121,12 @@ void TR_Listener::startListenerThread(J9JavaVM *javaVM)
       {
       j9tty_printf(PORTLIB, "Error: Unable to create JITServer Listener Monitor\n");
       }
+   }
+
+int32_t TR_Listener::waitForListenerThreadExit(J9JavaVM *javaVM)
+   {
+   if (NULL != _listenerOSThread)
+      return omrthread_join(_listenerOSThread);
+   else
+      return 0;
    }
