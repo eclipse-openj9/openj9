@@ -354,7 +354,16 @@ public class Test_Thread {
 	 */
 	@Test
 	public void test_countStackFrames() {
-		AssertJUnit.assertTrue("Test failed.", Thread.currentThread().countStackFrames() == 0);
+		if (org.openj9.test.util.VersionCheck.major() < 14) {
+			AssertJUnit.assertTrue("Test failed.", Thread.currentThread().countStackFrames() == 0);
+		} else {
+			try {
+				Thread.currentThread().countStackFrames();
+				Assert.fail("Should thrown UnsupportedOperationException!");
+			} catch (UnsupportedOperationException uoe) {
+				// pass with expected exception
+			}
+		}
 	}
 
 	/**

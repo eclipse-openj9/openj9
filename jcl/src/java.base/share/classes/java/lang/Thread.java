@@ -528,13 +528,17 @@ public final void checkAccess() {
  *
  * @deprecated	The semantics of this method are poorly defined and it uses the deprecated suspend() method.
  */
-/*[IF Sidecar19-SE]*/
+/*[IF Java11]*/
 @Deprecated(forRemoval=true, since="1.2")
 /*[ELSE]*/
 @Deprecated
 /*[ENDIF]*/
 public int countStackFrames() {
+/*[IF Java14]*/
+	throw new UnsupportedOperationException();
+/*[ELSE]*/
 	return 0;
+/*[ENDIF]*/
 }
 
 /**
