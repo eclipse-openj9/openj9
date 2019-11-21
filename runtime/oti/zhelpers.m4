@@ -20,7 +20,7 @@ dnl SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exc
 
 include(jilvalues.m4)
 
-define({CINTERP_STACK_SIZE},{J9CONST(J9TR_cframe_sizeof,$1,$2)})
+J9CONST({CINTERP_STACK_SIZE},J9TR_cframe_sizeof)
 
 define({r0},0)
 define({r1},1)
@@ -182,7 +182,7 @@ define({CARG2},2)
 define({CARG3},3)
 define({CRA},7)
 define({CRINT},3)
-define({STACK_BIAS},{J9CONST(2048,$1,$2)})
+J9CONST({STACK_BIAS},2048)
 define({LABEL_NAME},{translit({$*},{a-z},{A-Z})})
 define({PLACE_LABEL},{
 LABEL_NAME($1) DS 0H
@@ -347,12 +347,12 @@ CONCAT(PPA,TAGGED_SHORT) DS 0F
     DC CONCAT(CL,len(TAGGED_SHORT))'TAGGED_SHORT'
 })
 
-define({ARG_SAVE_OFFSET},{J9CONST(eval(STACK_BIAS+J9TR_cframe_argRegisterSave),$1,$2)})
-define({OUTGOING_ARG_OFFSET},{J9CONST(eval(ARG_SAVE_OFFSET+(4*J9TR_pointerSize)),$1,$2)})
+J9CONST({ARG_SAVE_OFFSET},eval(STACK_BIAS+J9TR_cframe_argRegisterSave))
+J9CONST({OUTGOING_ARG_OFFSET},eval(ARG_SAVE_OFFSET+(4*J9TR_pointerSize)))
 define({FPR_SAVE_OFFSET},{eval(STACK_BIAS+J9TR_cframe_preservedFPRs+(($1)*8))})
 define({VR_SAVE_OFFSET},{eval(STACK_BIAS+J9TR_cframe_preservedVRs+(($1)*16))})
 ifdef({ASM_J9VM_PORT_ZOS_CEEHDLRSUPPORT},{
-define({CEEHDLR_FPC_SAVE_OFFSET},{J9CONST(eval(STACK_BIAS+J9TR_cframe_fpcCEEHDLR),$1,$2)})
+J9CONST({CEEHDLR_FPC_SAVE_OFFSET},eval(STACK_BIAS+J9TR_cframe_fpcCEEHDLR))
 define({CEEHDLR_GPR_SAVE_OFFSET},{eval(STACK_BIAS+J9TR_cframe_gprCEEHDLR+(($1)*J9TR_pointerSize))})
 })
 
@@ -366,7 +366,7 @@ define({CARG2},3)
 define({CARG3},4)
 define({CRA},14)
 define({CRINT},2)
-define({STACK_BIAS},{J9CONST(0,$1,$2)})
+J9CONST({STACK_BIAS}, 0)
 define({LABEL_NAME},{.$1})
 define({PLACE_LABEL},{
 LABEL_NAME($1):

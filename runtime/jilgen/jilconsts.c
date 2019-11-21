@@ -39,19 +39,14 @@ static jint
 writeHeader(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 {
 	jint rc = JNI_OK;
-	char const *changequote = "changequote({,})dnl\n";
-	char const *j9Const = "define({J9CONST},{{$1}ifelse($2,,,{{($2}ifelse($3,,,{,$3}){)}})})dnl\n";
-	if (0 != omrfile_write_text(fd, changequote, strlen(changequote))) {
-fail:
-		omrtty_printf("ERROR: Failed to write changequote\n");
+	char const *headertext =
+		"changequote({,})dnl\n"
+		"define({J9CONST},{define({$1},{{$2}ifelse($}{#,0,,($}{@))})})dnl\n";
+
+	if (0 != omrfile_write_text(fd, headertext, strlen(headertext))) {
 		rc = JNI_ERR;
-		goto done;
-	}
-	if (0 != omrfile_write_text(fd, j9Const, strlen(j9Const))) {
-		goto fail;
 	}
 
-done:
 	return rc;
 }
 
@@ -70,7 +65,7 @@ static IDATA
 createConstant(OMRPortLibrary *OMRPORTLIB, char const *name, UDATA value)
 {
 	if (values) {
-		return omrstr_printf(line, sizeof(line), "define({%s},{J9CONST(%zu,$1,$2)})dnl\n", name, value);
+		return omrstr_printf(line, sizeof(line), "J9CONST({%s},%zu)dnl\n", name, value);
 	}
 #if defined(J9VM_ARCH_POWER) || defined(J9VM_ARCH_ARM)
 	return omrstr_printf(line, sizeof(line), "#define %s %zu\n", name, value);
