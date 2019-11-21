@@ -20,6 +20,12 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
+# We need to remove the compiler optimization flags to ensure that we get the
+# debug info we want
+
+omr_remove_flags(CMAKE_C_FLAGS "-O3")
+omr_remove_flags(CMAKE_CXX_FLAGS "-O3")
+
 add_library(j9ddr_misc SHARED
 	algorithm_versions.c
 	gcddr.cpp
