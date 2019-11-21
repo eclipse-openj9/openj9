@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -365,6 +365,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::com_ibm_jit_JITHelpers_jitHelpers:
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfLatin1:
       case TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16:
+      case TR::java_lang_String_charAt:
       case TR::java_lang_String_charAtInternal_I:
       case TR::java_lang_String_charAtInternal_IB:
       case TR::java_lang_String_length:
