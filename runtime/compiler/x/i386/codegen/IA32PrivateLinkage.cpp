@@ -22,6 +22,7 @@
 
 #include "codegen/IA32PrivateLinkage.hpp"
 
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/LiveRegister.hpp"
 #include "codegen/Machine.hpp"
