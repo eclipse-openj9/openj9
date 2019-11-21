@@ -20,9 +20,10 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
- #include "codegen/Linkage.hpp"
- #include "codegen/Linkage_inlines.hpp"
- #include "codegen/S390GenerateInstructions.hpp"
+#include "codegen/Linkage.hpp"
+#include "codegen/Linkage_inlines.hpp"
+#include "codegen/S390GenerateInstructions.hpp"
+#include "il/ParameterSymbol.hpp"
 
 TR::Instruction *
 J9::Z::Linkage::loadUpArguments(TR::Instruction * cursor)

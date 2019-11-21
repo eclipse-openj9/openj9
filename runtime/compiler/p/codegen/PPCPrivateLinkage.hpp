@@ -23,6 +23,7 @@
 #ifndef PPC_PRIVATELINKAGE_INCL
 #define PPC_PRIVATELINKAGE_INCL
 
+#include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/PrivateLinkage.hpp"
 #include "infra/Assert.hpp"
 

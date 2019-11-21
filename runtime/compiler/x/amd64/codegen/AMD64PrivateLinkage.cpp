@@ -26,6 +26,7 @@
 #include "codegen/AMD64JNILinkage.hpp"
 
 #include <stdint.h>
+#include "codegen/CodeGenerator.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
 #include "compile/Method.hpp"
@@ -38,6 +39,7 @@
 #include "env/jittypes.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
 #include "x/amd64/codegen/AMD64GuardedDevirtualSnippet.hpp"
 #include "x/codegen/CallSnippet.hpp"
 #include "x/codegen/CheckFailureSnippet.hpp"

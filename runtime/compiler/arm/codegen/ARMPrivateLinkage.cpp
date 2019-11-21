@@ -41,6 +41,7 @@
 #include "il/TreeTop_inlines.hpp"
 #include "il/LabelSymbol.hpp"
 #include "il/MethodSymbol.hpp"
+#include "il/ParameterSymbol.hpp"
 #include "il/RegisterMappedSymbol.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/StaticSymbol.hpp"

@@ -39,6 +39,7 @@
 #include "il/MethodSymbol.hpp"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
+#include "il/ParameterSymbol.hpp"
 #include "il/RegisterMappedSymbol.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/StaticSymbol.hpp"
