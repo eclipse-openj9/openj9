@@ -423,8 +423,6 @@ Java_com_ibm_java_lang_management_internal_MemoryMXBeanImpl_getCurrentGCThreadsI
 
 /* J9SourceJclSidecarInit*/
 extern J9_CFUNC IDATA J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved);
-extern J9_CFUNC void
-fixCPShapeDescription (J9Class * clazz, UDATA cpIndex);
 extern J9_CFUNC jint JNICALL JVM_OnLoad (JavaVM * jvm, char *options, void *reserved);
 
 /* dump.c */

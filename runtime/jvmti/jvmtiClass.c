@@ -1181,11 +1181,6 @@ redefineClassesCommon(jvmtiEnv* env,
 				/* Fix resolved constant pool references to point to new methods. */
 				fixConstantPoolsForFastHCR(currentThread, classPairs, methodPairs);
 
-#ifdef J9VM_OPT_SIDECAR
-				/* Fix return bytecodes in unsafe classes */
-				fixReturnsInUnsafeMethods(currentThread, classPairs);
-#endif
-
 				/* Flush the reflect method cache */
 				flushClassLoaderReflectCache(currentThread, classPairs);
 
@@ -1239,11 +1234,6 @@ redefineClassesCommon(jvmtiEnv* env,
 				if (!extensionsUsed) {
 					fixVTables_forNormalRedefine(currentThread, classPairs, methodPairs, FALSE, &methodEquivalences);
 				}
-
-#ifdef J9VM_OPT_SIDECAR
-				/* Fix return bytecodes in unsafe classes */
-				fixReturnsInUnsafeMethods(currentThread, classPairs);
-#endif
 
 				/* Restore breakpoints in the implicitly replaced classes */
 				restoreBreakpointsInClasses(currentThread, classPairs);
