@@ -1,9 +1,9 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -239,11 +239,15 @@ private void add(ThreadGroup g) throws IllegalThreadStateException {
  *
  * @deprecated 	Required deprecated method suspend().
  */
-/*[IF Sidecar19-SE]*/
+/*[IF Java11]*/
+/*[IF Java14]*/
+@Deprecated(forRemoval=true, since="1.2")
+/*[ELSE] Java14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ELSE]*/
+/*[ENDIF] Java14 */
+/*[ELSE] Java11 */
 @Deprecated
-/*[ENDIF]*/
+/*[ENDIF] Java11 */
 public boolean allowThreadSuspension(boolean b) {
 	// Does not apply to this VM, no-op
 	/*[PR 1PR4U1E]*/
@@ -724,11 +728,15 @@ private void remove(ThreadGroup g) {
  *
  * @deprecated Requires deprecated method Thread.resume().
  */
-/*[IF Sidecar19-SE]*/
+/*[IF Java11]*/
+/*[IF Java14]*/
+@Deprecated(forRemoval=true, since="1.2")
+/*[ELSE] Java14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ELSE]*/
+/*[ENDIF] Java14 */
+/*[ELSE] Java11 */
 @Deprecated
-/*[ENDIF]*/
+/*[ENDIF] Java11 */
 public final void resume() {
 	checkAccess();
 	synchronized (this.childrenThreadsLock) { // Lock this subpart of the tree as we walk
@@ -857,11 +865,15 @@ private final boolean stopHelper() {
  *
  * @deprecated Requires deprecated method Thread.suspend().
  */
-/*[IF Sidecar19-SE]*/
+/*[IF Java11]*/
+/*[IF Java14]*/
+@Deprecated(forRemoval=true, since="1.2")
+/*[ELSE] Java14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ELSE]*/
+/*[ENDIF] Java14 */
+/*[ELSE] Java11 */
 @Deprecated
-/*[ENDIF]*/
+/*[ENDIF] Java11 */
 public final void suspend() {
 	if (suspendHelper())
 		Thread.currentThread().suspend();
