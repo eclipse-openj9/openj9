@@ -20,10 +20,54 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
+include(OmrAssert)
+
+# creates an option which shadows an omr option of the same/similar name
+# j9vm_shadowed_option(<j9_name> [<omr_name>] <help_text>)
+# create a new option named <j9_name>. This option will override the value
+# of <omr_name>. If <omr_name> is not supplied it defaults to <j9_name>
+# with the leading 'J9VM_' replaced with 'OMR_'
+function(j9vm_shadowed_option j9_opt_name)
+    if(ARGC EQUAL 1)
+        message(FATAL_ERROR "Too few arguments passed to j9vm_shadowed_option")
+    elseif(ARGC EQUAL 2)
+        omr_assert(FATAL_ERROR TEST j9_opt_name MATCHES "^J9VM_" MESSAGE "expected name starting with J9VM_")
+        string(REGEX REPLACE "^J9VM_" "OMR_" omr_opt_name "${j9_opt_name}")
+        set(opt_comment "${ARGV1}")
+    elseif(ARGC EQUAL 3)
+        set(omr_opt_name "${ARGV1}")
+        set(opt_comment "${ARGV2}")
+    else()
+        message(FATAL_ERROR "Too many arguments passed to j9vm_shadowed_option")
+    endif()
+    option("${j9_opt_name}" "${opt_comment}")
+    set("${omr_opt_name}" "${${j9_opt_name}}" CACHE BOOL "" FORCE)
+endfunction()
+
 # This replicates the options from j9.flags that I felt were important. Blank lines
 # mark where I skipped options which seemed unimportant.
 # TODO: some options still need to be ported over
 # TODO: at some point we should go through and clean out options which no longer work / make sense
+
+j9vm_shadowed_option(J9VM_GC_ALLOCATION_TAX "Enable allocation tax capabilities")
+j9vm_shadowed_option(J9VM_GC_BATCH_CLEAR_TLH "Zero any TLH allocated")
+j9vm_shadowed_option(J9VM_GC_COMBINATION_SPEC "Set on specs which implement LIR 16325:  reduce memory footprint by combining multiple sidecars into the same set of libraries.")
+j9vm_shadowed_option(J9VM_GC_CONCURRENT_SWEEP "Enable concurrent sweep in Modron")
+j9vm_shadowed_option(J9VM_GC_DEBUG_ASSERTS "Specialized GC assertions are used instead of standard trace asserts for GC assertions")
+j9vm_shadowed_option(J9VM_GC_IDLE_HEAP_MANAGER  "Enable VM idle java heap management(decommit excess free java heap pages)")
+j9vm_shadowed_option(J9VM_GC_LARGE_OBJECT_AREA "Enable large object area (LOA) support")
+j9vm_shadowed_option(J9VM_GC_LEAF_BITS "Add leaf bit instance descriptions to classes")
+j9vm_shadowed_option(J9VM_GC_MINIMUM_OBJECT_SIZE "Guarantee a minimum size to all objects allocated")
+j9vm_shadowed_option(J9VM_GC_MODRON_COMPACTION "Enable compaction in Modron")
+j9vm_shadowed_option(J9VM_GC_MODRON_CONCURRENT_MARK "Enable concurrent mark in Modron")
+j9vm_shadowed_option(J9VM_GC_MODRON_SCAVENGER "Enable scavenger in Modron")
+j9vm_shadowed_option(J9VM_GC_MODRON_STANDARD "Enable Modron standard configuration")
+j9vm_shadowed_option(J9VM_GC_NON_ZERO_TLH "Allocator might use special non-zeroed thread local heap for objects")
+j9vm_shadowed_option(J9VM_GC_REALTIME  "Realtime Garbage Collection is supported")
+j9vm_shadowed_option(J9VM_GC_SEGREGATED_HEAP "Enable Segregated Heap model")
+j9vm_shadowed_option(J9VM_GC_THREAD_LOCAL_HEAP "Allocator uses a thread local heap for objects")
+j9vm_shadowed_option(J9VM_GC_TLH_PREFETCH_FTA  "Enable tlhPrefetchFTA")
+j9vm_shadowed_option(J9VM_GC_VLHGC  "Enables the Very Large Heap Garbage Collector")
 
 option(J9VM_INTERP_AOT_COMPILE_SUPPORT "Controls if the AOT compilation support is included in the VM")
 option(J9VM_INTERP_AOT_RUNTIME_SUPPORT "Controls if the AOT runtime support is included in the VM")

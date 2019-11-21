@@ -34,6 +34,9 @@ project(j9vm VERSION ${J9VM_VERSION} LANGUAGES CXX C)
 set(J9VM_OMR_DIR "${CMAKE_CURRENT_SOURCE_DIR}/omr" CACHE PATH "Path to the OMR directory")
 set(CMAKE_MODULE_PATH "${j9vm_SOURCE_DIR}/cmake/modules" "${J9VM_OMR_DIR}/cmake/modules" ${CMAKE_MODULE_PATH})
 
+# pull in definitions of what options we support
+include(cmake/options.cmake)
+
 ###
 ### End basic housekeeping
 ###
