@@ -36,6 +36,7 @@
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/ConstantDataSnippet.hpp"
 #include "codegen/Linkage_inlines.hpp"
+#include "codegen/S390CHelperLinkage.hpp"
 #include "codegen/S390PrivateLinkage.hpp"
 #include "env/VMJ9.h"
 #include "env/jittypes.h"
@@ -43,7 +44,6 @@
 #include "il/Node_inlines.hpp"
 #include "z/codegen/J9SystemLinkageLinux.hpp"
 #include "z/codegen/J9SystemLinkagezOS.hpp"
-#include "z/codegen/J9S390CHelperLinkage.hpp"
 #include "z/codegen/S390GenerateInstructions.hpp"
 #include "z/codegen/S390Recompilation.hpp"
 #include "z/codegen/S390Register.hpp"
@@ -197,25 +197,25 @@ J9::Z::CodeGenerator::createLinkage(TR_LinkageConventions lc)
    switch (lc)
       {
       case TR_CHelper:
-         linkage = new (self()->trHeapMemory()) TR::S390CHelperLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::Z::CHelperLinkage(self());
          break;
       case TR_Helper:
-         linkage = new (self()->trHeapMemory()) TR::S390HelperLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::Z::HelperLinkage(self());
          break;
 
       case TR_Private:
-         linkage = new (self()->trHeapMemory()) J9::S390PrivateLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::Z::PrivateLinkage(self());
          break;
 
       case TR_J9JNILinkage:
-         linkage = new (self()->trHeapMemory()) TR::J9S390JNILinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::Z::JNILinkage(self());
          break;
 
       case TR_System:
          if (TR::Compiler->target.isLinux())
-            linkage = new (self()->trHeapMemory()) TR::J9S390zLinuxSystemLinkage(self()); //J9
+            linkage = new (self()->trHeapMemory()) J9::Z::zLinuxSystemLinkage(self());
          else
-            linkage = new (self()->trHeapMemory()) TR::J9S390zOSSystemLinkage(self()); //J9
+            linkage = new (self()->trHeapMemory()) J9::Z::zOSSystemLinkage(self());
          break;
 
       default :
@@ -3563,7 +3563,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
    TR::Instruction* vmCallHelperSnippetLabelInstruction = cursor;
 
    // Store all arguments to the stack for access by the interpreted method
-   J9::S390PrivateLinkage *privateLinkage = static_cast<J9::S390PrivateLinkage *>(self()->getLinkage());
+   J9::Z::PrivateLinkage *privateLinkage = static_cast<J9::Z::PrivateLinkage *>(self()->getLinkage());
    cursor = static_cast<TR::Instruction*>(privateLinkage->saveArguments(cursor, false, true));
 
    // Load the EP register with the address of the next instruction

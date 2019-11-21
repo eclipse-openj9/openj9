@@ -150,7 +150,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
 
    uint8_t *cursor = startOfSnippet;
 
-   J9::X86PrivateLinkage *x86Linkage = static_cast<J9::X86PrivateLinkage *>(cg()->getLinkage());
+   J9::X86::PrivateLinkage *x86Linkage = static_cast<J9::X86::PrivateLinkage *>(cg()->getLinkage());
 
    int32_t disp32;
 

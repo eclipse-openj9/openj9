@@ -22,6 +22,7 @@
 
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/ARMAOTRelocation.hpp"
+#include "codegen/ARMJNILinkage.hpp"
 #include "codegen/ARMPrivateLinkage.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "codegen/CodeGenerator.hpp"
@@ -29,7 +30,6 @@
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "arm/codegen/ARMSystemLinkage.hpp"
-#include "arm/codegen/ARMJNILinkage.hpp"
 #include "arm/codegen/ARMRecompilation.hpp"
 #include "env/OMRMemory.hpp"
 #include "codegen/ARMInstruction.hpp"
@@ -335,7 +335,7 @@ TR::Linkage *J9::ARM::CodeGenerator::createLinkage(TR_LinkageConventions lc)
 //       linkage = new (self()->trHeapMemory()) TR::ARMInterpretedStaticLinkage(this);
 //       break;
       case TR_Private:
-         linkage = new (self()->trHeapMemory()) J9::ARMPrivateLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::ARM::PrivateLinkage(self());
          break;
       case TR_System:
          linkage = new (self()->trHeapMemory()) TR::ARMSystemLinkage(self());
@@ -345,10 +345,10 @@ TR::Linkage *J9::ARM::CodeGenerator::createLinkage(TR_LinkageConventions lc)
 //       break;
       case TR_CHelper:
       case TR_Helper:
-         linkage = new (self()->trHeapMemory()) TR::ARMHelperLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::ARM::HelperLinkage(self());
          break;
       case TR_J9JNILinkage:
-         linkage = new (self()->trHeapMemory()) TR::ARMJNILinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::ARM::JNILinkage(self());
          break;
       default :
          TR_ASSERT(0, "using system linkage for unrecognized convention %d\n", lc);

@@ -27,18 +27,23 @@
 
 #include "codegen/X86PrivateLinkage.hpp"
 
-namespace TR { class AMD64PrivateLinkage; }
 class J2IThunk;
 
 
 namespace J9
 {
 
-class AMD64PrivateLinkage : public J9::X86PrivateLinkage
+namespace X86
+{
+
+namespace AMD64
+{
+
+class PrivateLinkage : public J9::X86::PrivateLinkage
    {
    public:
 
-   AMD64PrivateLinkage(TR::CodeGenerator *cg);
+   PrivateLinkage(TR::CodeGenerator *cg);
    virtual TR::Register *buildJNIDispatch(TR::Node *callNode);
 
    protected:
@@ -91,6 +96,10 @@ class AMD64PrivateLinkage : public J9::X86PrivateLinkage
          int32_t offset,
          TR::CodeGenerator *cg);
    };
+
+}
+
+}
 
 }
 

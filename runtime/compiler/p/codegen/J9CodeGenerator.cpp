@@ -28,6 +28,8 @@
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
+#include "codegen/PPCJNILinkage.hpp"
+#include "codegen/PPCPrivateLinkage.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/OMRMemory.hpp"
 #include "env/VMJ9.h"
@@ -37,8 +39,6 @@
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
 #include "p/codegen/PPCInstruction.hpp"
-#include "p/codegen/PPCJNILinkage.hpp"
-#include "p/codegen/PPCPrivateLinkage.hpp"
 #include "p/codegen/PPCRecompilation.hpp"
 #include "p/codegen/PPCSystemLinkage.hpp"
 
@@ -136,17 +136,17 @@ J9::Power::CodeGenerator::createLinkage(TR_LinkageConventions lc)
    switch (lc)
       {
       case TR_Private:
-         linkage = new (self()->trHeapMemory()) J9::PPCPrivateLinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::Power::PrivateLinkage(self());
          break;
       case TR_System:
          linkage = new (self()->trHeapMemory()) TR::PPCSystemLinkage(self());
          break;
       case TR_CHelper:
       case TR_Helper:
-         linkage = new (self()->trHeapMemory()) TR::PPCHelperLinkage(self(), lc);
+         linkage = new (self()->trHeapMemory()) J9::Power::HelperLinkage(self(), lc);
          break;
       case TR_J9JNILinkage:
-         linkage = new (self()->trHeapMemory()) TR::PPCJNILinkage(self());
+         linkage = new (self()->trHeapMemory()) J9::Power::JNILinkage(self());
          break;
       default :
          linkage = new (self()->trHeapMemory()) TR::PPCSystemLinkage(self());

@@ -50,14 +50,14 @@
 #include "x/codegen/X86Instruction.hpp"
 
 
-TR::Register *TR::IA32JNILinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPRegs)
+TR::Register *J9::X86::I386::JNILinkage::buildDirectDispatch(TR::Node *callNode, bool spillFPRegs)
    {
    TR::MethodSymbol* methodSymbol = callNode->getSymbolReference()->getSymbol()->castToMethodSymbol();
-   TR_ASSERT(methodSymbol->isJNI(), "TR::IA32JNILinkage::buildDirectDispatch can't hanlde this case.\n");
+   TR_ASSERT(methodSymbol->isJNI(), "J9::X86::I386::JNILinkage::buildDirectDispatch can't hanlde this case.\n");
    return buildJNIDispatch(callNode);
    }
 
-TR::Register *TR::IA32JNILinkage::buildJNIDispatch(TR::Node *callNode)
+TR::Register *J9::X86::I386::JNILinkage::buildJNIDispatch(TR::Node *callNode)
    {
 #ifdef DEBUG
    if (debug("reportJNI"))

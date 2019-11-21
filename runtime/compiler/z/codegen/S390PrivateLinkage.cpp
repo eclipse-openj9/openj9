@@ -56,9 +56,9 @@
 #define MIN_PROFILED_CALL_FREQUENCY (.075f)
 
 ////////////////////////////////////////////////////////////////////////////////
-// J9::S390PrivateLinkage for J9
+// J9::Z::PrivateLinkage for J9
 ////////////////////////////////////////////////////////////////////////////////
-J9::S390PrivateLinkage::S390PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions elc, TR_LinkageConventions lc)
+J9::Z::PrivateLinkage::PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390LinkageConventions elc, TR_LinkageConventions lc)
    : J9::PrivateLinkage(codeGen)
    {
    setExplicitLinkageType(elc);
@@ -166,11 +166,11 @@ J9::S390PrivateLinkage::S390PrivateLinkage(TR::CodeGenerator * codeGen,TR_S390Li
    }
 
 ////////////////////////////////////////////////////////////////////////////////
-// J9::S390PrivateLinkage::initS390RealRegisterLinkage - initialize the state
+// J9::Z::PrivateLinkage::initS390RealRegisterLinkage - initialize the state
 //    of real register for register allocator
 ////////////////////////////////////////////////////////////////////////////////
 void
-J9::S390PrivateLinkage::initS390RealRegisterLinkage()
+J9::Z::PrivateLinkage::initS390RealRegisterLinkage()
    {
    TR::RealRegister * sspReal = getSystemStackPointerRealRegister();
    TR::RealRegister * spReal  = getStackPointerRealRegister();
@@ -223,7 +223,7 @@ J9::S390PrivateLinkage::initS390RealRegisterLinkage()
       }
    }
 
-void J9::S390PrivateLinkage::alignLocalsOffset(uint32_t &stackIndex, uint32_t localObjectAlignment)
+void J9::Z::PrivateLinkage::alignLocalsOffset(uint32_t &stackIndex, uint32_t localObjectAlignment)
    {
    if (stackIndex % localObjectAlignment != 0)
       {
@@ -245,7 +245,7 @@ void J9::S390PrivateLinkage::alignLocalsOffset(uint32_t &stackIndex, uint32_t lo
 
 
 ////////////////////////////////////////////////////////////////////////////////
-// J9::S390PrivateLinkage::mapCompactedStack - maps variables onto the stack, sharing
+// J9::Z::PrivateLinkage::mapCompactedStack - maps variables onto the stack, sharing
 //     stack slots for automatic variables with non-interfering live ranges.
 ////////////////////////////////////////////////////////////////////////////////
 #ifdef DEBUG
@@ -257,7 +257,7 @@ static uint32_t accumMappedSize = 0;
 #endif
 
 void
-J9::S390PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
+J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
    {
    ListIterator<TR::AutomaticSymbol>  automaticIterator(&method->getAutomaticList());
    TR::AutomaticSymbol               *localCursor       = automaticIterator.getFirst();
@@ -649,7 +649,7 @@ J9::S390PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
    }
 
    void
-J9::S390PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
+J9::Z::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
    {
 
    if (cg()->getLocalsIG() && cg()->getSupportsCompactedLocals())
@@ -821,28 +821,28 @@ J9::S390PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
    }
 
 ////////////////////////////////////////////////////////////////////////////////
-// J9::S390PrivateLinkage::mapSingleAutomatic - maps an automatic onto the stack
+// J9::Z::PrivateLinkage::mapSingleAutomatic - maps an automatic onto the stack
 // with size p->getRoundedSize()
 ////////////////////////////////////////////////////////////////////////////////
 void
-J9::S390PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol * p, uint32_t & stackIndex)
+J9::Z::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol * p, uint32_t & stackIndex)
    {
 
    mapSingleAutomatic(p, p->getRoundedSize(), stackIndex);
    }
 
 ////////////////////////////////////////////////////////////////////////////////
-// J9::S390PrivateLinkage::mapSingleAutomatic - maps an automatic onto the stack
+// J9::Z::PrivateLinkage::mapSingleAutomatic - maps an automatic onto the stack
 ////////////////////////////////////////////////////////////////////////////////
 void
-J9::S390PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol * p, uint32_t size, uint32_t & stackIndex)
+J9::Z::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol * p, uint32_t size, uint32_t & stackIndex)
    {
 
    p->setOffset(stackIndex -= size);
    }
 
 bool
-J9::S390PrivateLinkage::hasToBeOnStack(TR::ParameterSymbol * parm)
+J9::Z::PrivateLinkage::hasToBeOnStack(TR::ParameterSymbol * parm)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    TR::ResolvedMethodSymbol * bodySymbol = comp()->getJittedMethodSymbol();
@@ -946,7 +946,7 @@ initStg(TR::CodeGenerator * codeGen, TR::Node * node, TR::RealRegister * tmpReg,
    }
 
 int32_t
-J9::S390PrivateLinkage::calculateRegisterSaveSize(TR::RealRegister::RegNum firstUsedReg,
+J9::Z::PrivateLinkage::calculateRegisterSaveSize(TR::RealRegister::RegNum firstUsedReg,
                                                  TR::RealRegister::RegNum lastUsedReg,
                                                  int32_t &registerSaveDescription,
                                                  int32_t &numIntSaved, int32_t &numFloatSaved)
@@ -990,7 +990,7 @@ J9::S390PrivateLinkage::calculateRegisterSaveSize(TR::RealRegister::RegNum first
    }
 
 int32_t
-J9::S390PrivateLinkage::setupLiteralPoolRegister(TR::Snippet *firstSnippet)
+J9::Z::PrivateLinkage::setupLiteralPoolRegister(TR::Snippet *firstSnippet)
    {
    // setup literal pool register if needed
    // on freeway:
@@ -1017,7 +1017,7 @@ J9::S390PrivateLinkage::setupLiteralPoolRegister(TR::Snippet *firstSnippet)
 // TS_390PrivateLinkage::createPrologue() - create prolog for private linkage
 ////////////////////////////////////////////////////////////////////////////////
 void
-J9::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
+J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
    {
    TR::RealRegister * spReg = getStackPointerRealRegister();
    TR::RealRegister * lpReg = getLitPoolRealRegister();
@@ -1110,7 +1110,7 @@ J9::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
 
    //  We assume frame size is less than 32k
    //TR_ASSERT(size<=MAX_IMMEDIATE_VAL,
-   //   "J9::S390PrivateLinkage::createPrologue -- Frame size (0x%x) greater than 0x7FFF\n",size);
+   //   "J9::Z::PrivateLinkage::createPrologue -- Frame size (0x%x) greater than 0x7FFF\n",size);
 
    TR::MemoryReference * retAddrMemRef = NULL;
 
@@ -1359,7 +1359,7 @@ J9::S390PrivateLinkage::createPrologue(TR::Instruction * cursor)
 //  47 00 b0 00                    BC      GPR14
 ////////////////////////////////////////////////////////////////////////////////
 void
-J9::S390PrivateLinkage::createEpilogue(TR::Instruction * cursor)
+J9::Z::PrivateLinkage::createEpilogue(TR::Instruction * cursor)
    {
    TR::RealRegister * spReg = getRealRegister(getStackPointerRegister());
    TR::Node * currentNode = cursor->getNode();
@@ -1492,10 +1492,10 @@ J9::S390PrivateLinkage::createEpilogue(TR::Instruction * cursor)
    }
 
 ////////////////////////////////////////////////////////////////////////////////
-// J9::S390PrivateLinkage::buildVirtualDispatch - build virtual function call
+// J9::Z::PrivateLinkage::buildVirtualDispatch - build virtual function call
 ////////////////////////////////////////////////////////////////////////////////
 void
-J9::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies,
+J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies,
    TR::Register * vftReg, uint32_t sizeOfArguments)
    {
    TR_S390RegisterDependencyGroup * Dgroup = dependencies->getPreConditions();
@@ -1856,7 +1856,7 @@ J9::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
       if (!TR::Compiler->cls.classesOnHeap() && methodSymRef == comp()->getSymRefTab()->findObjectNewInstanceImplSymbol())
          {
          classReg = RegThis;
-         TR_ASSERT( offset >= 0,"J9::S390PrivateLinkage::buildVirtualDispatch - Offset to instanceOf method is assumed positive\n");
+         TR_ASSERT( offset >= 0,"J9::Z::PrivateLinkage::buildVirtualDispatch - Offset to instanceOf method is assumed positive\n");
          }
       else
          {
@@ -2253,7 +2253,7 @@ J9::S390PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDe
    }
 
 TR::Instruction *
-J9::S390PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference * callSymRef,
+J9::Z::PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference * callSymRef,
    TR::RegisterDependencyConditions * dependencies, int32_t argSize)
    {
    TR::Instruction * gcPoint = NULL;
@@ -2355,7 +2355,7 @@ J9::S390PrivateLinkage::buildDirectCall(TR::Node * callNode, TR::SymbolReference
 
 
 void
-J9::S390PrivateLinkage::callPreJNICallOffloadCheck(TR::Node * callNode)
+J9::Z::PrivateLinkage::callPreJNICallOffloadCheck(TR::Node * callNode)
    {
    TR::CodeGenerator * codeGen = cg();
    TR::LabelSymbol * offloadOffRestartLabel = generateLabelSymbol(codeGen);
@@ -2372,7 +2372,7 @@ J9::S390PrivateLinkage::callPreJNICallOffloadCheck(TR::Node * callNode)
    }
 
 void
-J9::S390PrivateLinkage::callPostJNICallOffloadCheck(TR::Node * callNode)
+J9::Z::PrivateLinkage::callPostJNICallOffloadCheck(TR::Node * callNode)
    {
    TR::CodeGenerator * codeGen = cg();
    TR::LabelSymbol * offloadOnRestartLabel = generateLabelSymbol(codeGen);
@@ -2387,7 +2387,7 @@ J9::S390PrivateLinkage::callPostJNICallOffloadCheck(TR::Node * callNode)
    generateS390LabelInstruction(codeGen, TR::InstOpCode::LABEL, callNode, offloadOnRestartLabel);
    }
 
-void J9::S390PrivateLinkage::collapseJNIReferenceFrame(TR::Node * callNode,
+void J9::Z::PrivateLinkage::collapseJNIReferenceFrame(TR::Node * callNode,
    TR::RealRegister * javaStackPointerRealRegister,
    TR::Register * javaLitPoolVirtualRegister,
    TR::Register * tempReg)
@@ -2435,7 +2435,7 @@ void J9::S390PrivateLinkage::collapseJNIReferenceFrame(TR::Node * callNode,
 //                we potentially go out to call a helper before jumping to the native.
 //                but the helper call saves and restores all regs
 void
-J9::S390PrivateLinkage::setupJNICallOutFrame(TR::Node * callNode,
+J9::Z::PrivateLinkage::setupJNICallOutFrame(TR::Node * callNode,
    TR::RealRegister * javaStackPointerRealRegister,
    TR::Register * methodMetaDataVirtualRegister,
    TR::LabelSymbol * returnFromJNICallLabel,
@@ -2514,7 +2514,7 @@ J9::S390PrivateLinkage::setupJNICallOutFrame(TR::Node * callNode,
  *                we potentially go out to call a helper before jumping to the native.
  *                but the helper call saves and restores all regs
  */
-void TR::J9S390JNILinkage::releaseVMAccessMask(TR::Node * callNode,
+void J9::Z::JNILinkage::releaseVMAccessMask(TR::Node * callNode,
    TR::Register * methodMetaDataVirtualRegister, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg,
    TR::S390JNICallDataSnippet * jniCallDataSnippet, TR::RegisterDependencyConditions * deps)
    {
@@ -2598,7 +2598,7 @@ void TR::J9S390JNILinkage::releaseVMAccessMask(TR::Node * callNode,
    }
 
 
-void TR::J9S390JNILinkage::acquireVMAccessMask(TR::Node * callNode, TR::Register * javaLitPoolVirtualRegister,
+void J9::Z::JNILinkage::acquireVMAccessMask(TR::Node * callNode, TR::Register * javaLitPoolVirtualRegister,
    TR::Register * methodMetaDataVirtualRegister, TR::Register * methodAddressReg, TR::Register * javaLitOffsetReg)
    {
    // start of acquire vm access
@@ -2668,7 +2668,7 @@ void TR::J9S390JNILinkage::acquireVMAccessMask(TR::Node * callNode, TR::Register
  *
 */
 void
-TR::J9S390JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
+J9::Z::JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
                                                     TR::Register * methodMetaDataVirtualRegister,
                                                     TR::Register * tempReg1)
    {
@@ -2722,7 +2722,7 @@ TR::J9S390JNILinkage::releaseVMAccessMaskAtomicFree(TR::Node * callNode,
  *
  * */
 void
-TR::J9S390JNILinkage::acquireVMAccessMaskAtomicFree(TR::Node * callNode,
+J9::Z::JNILinkage::acquireVMAccessMaskAtomicFree(TR::Node * callNode,
                                                     TR::Register * methodMetaDataVirtualRegister,
                                                     TR::Register * tempReg1)
    {
@@ -2759,7 +2759,7 @@ TR::J9S390JNILinkage::acquireVMAccessMaskAtomicFree(TR::Node * callNode,
    }
 #endif
 
-void TR::J9S390JNILinkage::checkException(TR::Node * callNode,
+void J9::Z::JNILinkage::checkException(TR::Node * callNode,
    TR::Register * methodMetaDataVirtualRegister,
    TR::Register * tempReg)
    {
@@ -2780,7 +2780,7 @@ void TR::J9S390JNILinkage::checkException(TR::Node * callNode,
    }
 
 void
-TR::J9S390JNILinkage::processJNIReturnValue(TR::Node * callNode,
+J9::Z::JNILinkage::processJNIReturnValue(TR::Node * callNode,
                                             TR::CodeGenerator* cg,
                                             TR::Register* javaReturnRegister)
    {
@@ -2829,7 +2829,7 @@ TR::J9S390JNILinkage::processJNIReturnValue(TR::Node * callNode,
       }
    }
 
-TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
+TR::Register * J9::Z::JNILinkage::buildDirectDispatch(TR::Node * callNode)
    {
     if (comp()->getOption(TR_TraceCG))
        traceMsg(comp(), "\nbuildDirectDispatch\n");
@@ -3055,11 +3055,11 @@ TR::Register * TR::J9S390JNILinkage::buildDirectDispatch(TR::Node * callNode)
    }
 
 ////////////////////////////////////////////////////////////////////////////////
-// J9::S390PrivateLinkage::doNotKillSpecialRegsForBuildArgs -  Do not kill
+// J9::Z::PrivateLinkage::doNotKillSpecialRegsForBuildArgs -  Do not kill
 // special regs (java stack ptr, system stack ptr, and method metadata reg)
 ////////////////////////////////////////////////////////////////////////////////
 void
-J9::S390PrivateLinkage::doNotKillSpecialRegsForBuildArgs (TR::Linkage *linkage, bool isFastJNI, int64_t &killMask)
+J9::Z::PrivateLinkage::doNotKillSpecialRegsForBuildArgs (TR::Linkage *linkage, bool isFastJNI, int64_t &killMask)
    {
    TR::SystemLinkage * systemLinkage = (TR::SystemLinkage *) cg()->getLinkage(TR_System);
 
@@ -3094,11 +3094,11 @@ J9::S390PrivateLinkage::doNotKillSpecialRegsForBuildArgs (TR::Linkage *linkage, 
    }
 
 ////////////////////////////////////////////////////////////////////////////////
-// J9::S390PrivateLinkage::addSpecialRegDepsForBuildArgs -  add special argument
+// J9::Z::PrivateLinkage::addSpecialRegDepsForBuildArgs -  add special argument
 // register dependencies for buildArgs
 ////////////////////////////////////////////////////////////////////////////////
 void
-J9::S390PrivateLinkage::addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies, int32_t& from, int32_t step)
+J9::Z::PrivateLinkage::addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::RegisterDependencyConditions * dependencies, int32_t& from, int32_t step)
    {
    TR::Node * child;
    TR::RealRegister::RegNum specialArgReg = TR::RealRegister::NoReg;
@@ -3136,11 +3136,11 @@ J9::S390PrivateLinkage::addSpecialRegDepsForBuildArgs(TR::Node * callNode, TR::R
    }
 
 ////////////////////////////////////////////////////////////////////////////////
-// J9::S390PrivateLinkage::storeExtraEnvRegForBuildArgs -  JNI specific,
+// J9::Z::PrivateLinkage::storeExtraEnvRegForBuildArgs -  JNI specific,
 // account for extra env param. Return stackOffset.
 ////////////////////////////////////////////////////////////////////////////////
 int32_t
-J9::S390PrivateLinkage::storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Linkage* linkage, TR::RegisterDependencyConditions * dependencies,
+J9::Z::PrivateLinkage::storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Linkage* linkage, TR::RegisterDependencyConditions * dependencies,
       bool isFastJNI, int32_t stackOffset, int8_t gprSize, uint32_t &numIntegerArgs)
    {
   //In XPLINK, when the called function has variable number of args, all args are passed on stack,
@@ -3163,11 +3163,11 @@ J9::S390PrivateLinkage::storeExtraEnvRegForBuildArgs(TR::Node * callNode, TR::Li
    }
 
 ////////////////////////////////////////////////////////////////////////////////
-// J9::S390PrivateLinkage::addFECustomizedReturnRegDependency -  add extra
+// J9::Z::PrivateLinkage::addFECustomizedReturnRegDependency -  add extra
 // linkage specific return register dependency
 ////////////////////////////////////////////////////////////////////////////////
 int64_t
-J9::S390PrivateLinkage::addFECustomizedReturnRegDependency(int64_t killMask, TR::Linkage* linkage, TR::DataType resType,
+J9::Z::PrivateLinkage::addFECustomizedReturnRegDependency(int64_t killMask, TR::Linkage* linkage, TR::DataType resType,
       TR::RegisterDependencyConditions * dependencies)
    {
    TR::Register * javaResultReg;
@@ -3184,11 +3184,11 @@ J9::S390PrivateLinkage::addFECustomizedReturnRegDependency(int64_t killMask, TR:
    }
 
 ////////////////////////////////////////////////////////////////////////////////
-// J9::S390PrivateLinkage::buildDirectDispatch - build direct function call
+// J9::Z::PrivateLinkage::buildDirectDispatch - build direct function call
 //   eg. Static, helpers... etc.
 ////////////////////////////////////////////////////////////////////////////////
 TR::Register *
-J9::S390PrivateLinkage::buildDirectDispatch(TR::Node * callNode)
+J9::Z::PrivateLinkage::buildDirectDispatch(TR::Node * callNode)
    {
    TR::SymbolReference * callSymRef = callNode->getSymbolReference();
    TR::MethodSymbol * callSymbol = callSymRef->getSymbol()->castToMethodSymbol();
@@ -3268,12 +3268,12 @@ J9::S390PrivateLinkage::buildDirectDispatch(TR::Node * callNode)
    }
 
 ////////////////////////////////////////////////////////////////////////////////
-// J9::S390PrivateLinkage::buildIndirectDispatch - build indirect function call.
+// J9::Z::PrivateLinkage::buildIndirectDispatch - build indirect function call.
 //   This function handles the arguments setup and the return register. It will
 //   buildVirtualDispatch() to handle the call sequence.
 ////////////////////////////////////////////////////////////////////////////////
 TR::Register *
-J9::S390PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
+J9::Z::PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
    {
    TR::RegisterDependencyConditions * dependencies = NULL;
    int32_t argSize = 0;
@@ -3356,14 +3356,14 @@ J9::S390PrivateLinkage::buildIndirectDispatch(TR::Node * callNode)
    }
 
 ////////////////////////////////////////////////////////////////////////////////
-// J9::S390PrivateLinkage::mapIncomingParms - maps parameters onto the stack for the given method.
+// J9::Z::PrivateLinkage::mapIncomingParms - maps parameters onto the stack for the given method.
 //   This function iterates over the parameters, mapping them onto the stack, either right
 //   to left, or left to right, depending on S390Linkage properties.
-//   This code was removed from J9::S390PrivateLinkage::mapStack as it is common code that
-//   is now called by J9::S390PrivateLinkage::mapCompactedStack as well.
+//   This code was removed from J9::Z::PrivateLinkage::mapStack as it is common code that
+//   is now called by J9::Z::PrivateLinkage::mapCompactedStack as well.
 ////////////////////////////////////////////////////////////////////////////////
 void
-J9::S390PrivateLinkage::mapIncomingParms(TR::ResolvedMethodSymbol *method)
+J9::Z::PrivateLinkage::mapIncomingParms(TR::ResolvedMethodSymbol *method)
    {
    ListIterator<TR::ParameterSymbol> parameterIterator(&method->getParameterList());
    TR::ParameterSymbol * parmCursor = parameterIterator.getFirst();
@@ -3403,7 +3403,7 @@ J9::S390PrivateLinkage::mapIncomingParms(TR::ResolvedMethodSymbol *method)
    }
 
 void
-J9::S390PrivateLinkage::setupBuildArgForLinkage(TR::Node * callNode, TR_DispatchType dispatchType, TR::RegisterDependencyConditions * deps, bool isFastJNI,
+J9::Z::PrivateLinkage::setupBuildArgForLinkage(TR::Node * callNode, TR_DispatchType dispatchType, TR::RegisterDependencyConditions * deps, bool isFastJNI,
       bool isPassReceiver, int64_t & killMask, TR::Node * GlobalRegDeps, bool hasGlRegDeps, TR::SystemLinkage * systemLinkage)
    {
    TR::CodeGenerator * codeGen = cg();
@@ -3418,7 +3418,7 @@ J9::S390PrivateLinkage::setupBuildArgForLinkage(TR::Node * callNode, TR_Dispatch
    if (dispatchType == TR_JNIDispatch)  return;
 
 
-   J9::S390PrivateLinkage * privateLinkage = (J9::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
+   J9::Z::PrivateLinkage * privateLinkage = (J9::Z::PrivateLinkage *) cg()->getLinkage(TR_Private);
    TR::RealRegister * javaStackPointerRealRegister = privateLinkage->getStackPointerRealRegister();
    TR::Register * methodMetaDataVirtualRegister = privateLinkage->getMethodMetaDataRealRegister();
 
@@ -3429,7 +3429,7 @@ J9::S390PrivateLinkage::setupBuildArgForLinkage(TR::Node * callNode, TR_Dispatch
    }
 
 void
-J9::S390PrivateLinkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_DispatchType dispatchType,
+J9::Z::PrivateLinkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_DispatchType dispatchType,
    TR::RegisterDependencyConditions * &deps, int64_t & killMask, TR::SystemLinkage * systemLinkage,
    TR::Node * &GlobalRegDeps, bool &hasGlRegDeps, TR::Register ** methodAddressReg, TR::Register * &javaLitOffsetReg)
    {
@@ -3469,7 +3469,7 @@ J9::S390PrivateLinkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_Dispa
       }
 
    /*****************/
-   J9::S390PrivateLinkage * privateLinkage = (J9::S390PrivateLinkage *) cg()->getLinkage(TR_Private);
+   J9::Z::PrivateLinkage * privateLinkage = (J9::Z::PrivateLinkage *) cg()->getLinkage(TR_Private);
 
 
    TR::RealRegister * javaLitPoolRealRegister = privateLinkage->getLitPoolRealRegister();
@@ -3500,15 +3500,13 @@ J9::S390PrivateLinkage::setupRegisterDepForLinkage(TR::Node * callNode, TR_Dispa
 
 
 TR::RealRegister::RegNum
-J9::S390PrivateLinkage::getSystemStackPointerRegister()
+J9::Z::PrivateLinkage::getSystemStackPointerRegister()
    {
    return cg()->getLinkage(TR_System)->getStackPointerRegister();
    }
 
 
-TR::J9S390JNILinkage::J9S390JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc, TR_LinkageConventions lc)
-   :J9::S390PrivateLinkage(cg, elc, lc)
+J9::Z::JNILinkage::JNILinkage(TR::CodeGenerator * cg, TR_S390LinkageConventions elc, TR_LinkageConventions lc)
+   :J9::Z::PrivateLinkage(cg, elc, lc)
    {
    }
-
-

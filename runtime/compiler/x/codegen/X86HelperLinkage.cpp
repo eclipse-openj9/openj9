@@ -106,7 +106,7 @@ class RealRegisterManager
 #define USE_FASTCALL
 #endif
 
-const TR::RealRegister::RegNum TR::X86HelperCallSite::IntParamRegisters[] =
+const TR::RealRegister::RegNum J9::X86::HelperCallSite::IntParamRegisters[] =
    {
 #ifdef USE_FASTCALL
    TR::RealRegister::ecx,
@@ -125,7 +125,7 @@ const TR::RealRegister::RegNum TR::X86HelperCallSite::IntParamRegisters[] =
 #endif
    };
 
-const TR::RealRegister::RegNum TR::X86HelperCallSite::CallerSavedRegisters[] =
+const TR::RealRegister::RegNum J9::X86::HelperCallSite::CallerSavedRegisters[] =
    {
    TR::RealRegister::eax,
    TR::RealRegister::ecx,
@@ -161,7 +161,7 @@ const TR::RealRegister::RegNum TR::X86HelperCallSite::CallerSavedRegisters[] =
 #endif
    };
 
-const TR::RealRegister::RegNum TR::X86HelperCallSite::CalleeSavedRegisters[] =
+const TR::RealRegister::RegNum J9::X86::HelperCallSite::CalleeSavedRegisters[] =
    {
    TR::RealRegister::ebx,
 #ifdef USE_FASTCALL
@@ -183,20 +183,20 @@ const TR::RealRegister::RegNum TR::X86HelperCallSite::CalleeSavedRegisters[] =
 // X86-32 requires callee to cleanup stack, X86-64 requires caller to cleanup stack
 // Stack slot size is 4 bytes on X86-32 and 8 bytes on X86-64
 #ifdef TR_TARGET_32BIT
-const bool   TR::X86HelperCallSite::CalleeCleanup = true;
-const size_t TR::X86HelperCallSite::StackSlotSize = 4;
+const bool   J9::X86::HelperCallSite::CalleeCleanup = true;
+const size_t J9::X86::HelperCallSite::StackSlotSize = 4;
 #else
-const bool   TR::X86HelperCallSite::CalleeCleanup = false;
-const size_t TR::X86HelperCallSite::StackSlotSize = 8;
+const bool   J9::X86::HelperCallSite::CalleeCleanup = false;
+const size_t J9::X86::HelperCallSite::StackSlotSize = 8;
 #endif
 // Windows X86-64 requires caller reserves shadow space for parameters passed via registers
 #if defined(WINDOWS) && defined(TR_TARGET_64BIT)
-const bool   TR::X86HelperCallSite::RegisterParameterShadowOnStack = true;
+const bool   J9::X86::HelperCallSite::RegisterParameterShadowOnStack = true;
 #else
-const bool   TR::X86HelperCallSite::RegisterParameterShadowOnStack = false;
+const bool   J9::X86::HelperCallSite::RegisterParameterShadowOnStack = false;
 #endif
-const size_t TR::X86HelperCallSite::NumberOfIntParamRegisters = sizeof(IntParamRegisters) / sizeof(IntParamRegisters[0]);
-const size_t TR::X86HelperCallSite::StackIndexAdjustment      = RegisterParameterShadowOnStack ? 0 : NumberOfIntParamRegisters;
+const size_t J9::X86::HelperCallSite::NumberOfIntParamRegisters = sizeof(IntParamRegisters) / sizeof(IntParamRegisters[0]);
+const size_t J9::X86::HelperCallSite::StackIndexAdjustment      = RegisterParameterShadowOnStack ? 0 : NumberOfIntParamRegisters;
 
 // Code below should not need the #define
 
@@ -206,16 +206,16 @@ static uint32_t X86HelperCallSiteCalculatePreservedRegisterMapForGC()
    {
    uint32_t ret = 0;
    for (size_t i = 0;
-        i < sizeof(TR::X86HelperCallSite::CalleeSavedRegisters) / sizeof(TR::X86HelperCallSite::CalleeSavedRegisters[0]);
+        i < sizeof(J9::X86::HelperCallSite::CalleeSavedRegisters) / sizeof(J9::X86::HelperCallSite::CalleeSavedRegisters[0]);
         i++)
       {
-      ret |= TR::RealRegister::gprMask(TR::X86HelperCallSite::CalleeSavedRegisters[i]);
+      ret |= TR::RealRegister::gprMask(J9::X86::HelperCallSite::CalleeSavedRegisters[i]);
       }
    return ret;
    }
-const uint32_t TR::X86HelperCallSite::PreservedRegisterMapForGC = X86HelperCallSiteCalculatePreservedRegisterMapForGC();
+const uint32_t J9::X86::HelperCallSite::PreservedRegisterMapForGC = X86HelperCallSiteCalculatePreservedRegisterMapForGC();
 
-TR::Register* TR::X86HelperCallSite::BuildCall()
+TR::Register* J9::X86::HelperCallSite::BuildCall()
    {
    TR_ASSERT(CalleeCleanup || cg()->getLinkage()->getProperties().getReservesOutgoingArgsInPrologue(),
              "Caller must reserve outgoing args in prologue unless callee cleans up stack");

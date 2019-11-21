@@ -6,17 +6,17 @@ define(`ZZ',`##')
 
 ZZ Copyright (c) 2000, 2019 IBM Corp. and others
 ZZ
-ZZ This program and the accompanying materials are made 
-ZZ available under the terms of the Eclipse Public License 2.0 
-ZZ which accompanies this distribution and is available at 
-ZZ https://www.eclipse.org/legal/epl-2.0/ or the Apache License, 
-ZZ Version 2.0 which accompanies this distribution and is available 
+ZZ This program and the accompanying materials are made
+ZZ available under the terms of the Eclipse Public License 2.0
+ZZ which accompanies this distribution and is available at
+ZZ https://www.eclipse.org/legal/epl-2.0/ or the Apache License,
+ZZ Version 2.0 which accompanies this distribution and is available
 ZZ at https://www.apache.org/licenses/LICENSE-2.0.
 ZZ
 ZZ This Source Code may also be made available under the following
 ZZ Secondary Licenses when the conditions for such availability set
 ZZ forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
-ZZ General Public License, version 2 with the GNU Classpath 
+ZZ General Public License, version 2 with the GNU Classpath
 ZZ Exception [1] and GNU General Public License, version 2 with the
 ZZ OpenJDK Assembly Exception [2].
 ZZ
@@ -1807,11 +1807,11 @@ ZZ R3 - JIT'd code Return Address
 
 ZZ Following snippet prepares JIT helper call sequence
 ZZ which needs r14 to be free which holds address of
-ZZ Snippet from where this is called. 
-ZZ As jitResolveConstantDynamic is called via 
+ZZ Snippet from where this is called.
+ZZ As jitResolveConstantDynamic is called via
 ZZ SLOW_PATH_ONLY_HELPER glue, it is guaranteed that
 ZZ all the registers (volatile and non-volatile) are preserved.
-ZZ This allows us to use R0 to preserve R14 
+ZZ This allows us to use R0 to preserve R14
 LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveConstantDynamic)
     LR_GPR r0,r14
     BASR r14,rEP
@@ -1819,8 +1819,8 @@ LOAD_ADDR_FROM_TOC(rEP,TR_S390jitResolveConstantDynamic)
 
 ZZ Load the address of literal pool
 ZZ Store the return value of helper call which
-ZZ is address of resolved constant dynamic 
-ZZ into the Literal Pool 
+ZZ is address of resolved constant dynamic
+ZZ into the Literal Pool
     L_GPR   r1,eq_literalPoolAddr_inDataSnippet(r14)
     ST_GPR  r2,0(,r1)
     RestoreRegs
@@ -2482,7 +2482,7 @@ LABEL(ifCHMLTypeCheckIFCPrivate)
 ZZ  Call fast_jitInstanceOf
 ZZ  with three args: VMthread, object, and castClass.
 ZZ
-ZZ  The call to this helper follows J9S390CHelperLinkage except
+ZZ  The call to this helper follows J9::Z::CHelperLinkage except
 ZZ  that all volatiles are saved here.
 ZZ  instance of result is indicated in return reg
 ZZ

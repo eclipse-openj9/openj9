@@ -36,7 +36,10 @@ namespace TR { class ResolvedMethodSymbol; }
 namespace J9
 {
 
-class ARM64PrivateLinkage : public PrivateLinkage
+namespace ARM64
+{
+
+class PrivateLinkage : public J9::PrivateLinkage
    {
    protected:
 
@@ -72,7 +75,7 @@ class ARM64PrivateLinkage : public PrivateLinkage
     * @brief Constructor
     * @param[in] cg : CodeGenerator
     */
-   ARM64PrivateLinkage(TR::CodeGenerator *cg);
+   PrivateLinkage(TR::CodeGenerator *cg);
 
    /**
     * @brief Answers linkage properties
@@ -253,12 +256,9 @@ class ARM64PrivateLinkage : public PrivateLinkage
    TR::Instruction *_jittedMethodEntryPoint;
 
    };
-}
 
-namespace TR
-{
 
-class ARM64HelperLinkage : public J9::ARM64PrivateLinkage
+class HelperLinkage : public PrivateLinkage
    {
    public:
 
@@ -267,7 +267,7 @@ class ARM64HelperLinkage : public J9::ARM64PrivateLinkage
     * @param[in] cg : CodeGenerator
     * @param[in] helperLinkage : linkage convention
     */
-   ARM64HelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), J9::ARM64PrivateLinkage(cg)
+   HelperLinkage(TR::CodeGenerator *cg, TR_LinkageConventions helperLinkage) : _helperLinkage(helperLinkage), PrivateLinkage(cg)
       {
       TR_ASSERT(helperLinkage == TR_Helper || helperLinkage == TR_CHelper, "Unexpected helper linkage convention");
       }
@@ -286,6 +286,8 @@ class ARM64HelperLinkage : public J9::ARM64PrivateLinkage
    TR_LinkageConventions _helperLinkage;
 
    };
+
+}
 
 }
 

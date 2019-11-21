@@ -59,7 +59,7 @@
 #define MIN_PROFILED_CALL_FREQUENCY (.075f)
 #define MAX_PROFILED_CALL_FREQUENCY (.90f)
 
-J9::PPCPrivateLinkage::PPCPrivateLinkage(TR::CodeGenerator *cg)
+J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    : J9::PrivateLinkage(cg)
    {
    int i = 0;
@@ -353,12 +353,12 @@ J9::PPCPrivateLinkage::PPCPrivateLinkage(TR::CodeGenerator *cg)
    _properties._j9methodArgumentRegister    = TR::RealRegister::gr3; // TODO:JSR292: Confirm
    }
 
-const TR::PPCLinkageProperties& J9::PPCPrivateLinkage::getProperties()
+const TR::PPCLinkageProperties& J9::Power::PrivateLinkage::getProperties()
    {
    return _properties;
    }
 
-void J9::PPCPrivateLinkage::initPPCRealRegisterLinkage()
+void J9::Power::PrivateLinkage::initPPCRealRegisterLinkage()
    {
    TR::Machine *machine = cg()->machine();
    const TR::PPCLinkageProperties &linkage = getProperties();
@@ -453,12 +453,12 @@ void J9::PPCPrivateLinkage::initPPCRealRegisterLinkage()
    machine->setNumberOfLockedRegisters(TR_VRF, 0);
    }
 
-uint32_t J9::PPCPrivateLinkage::getRightToLeft()
+uint32_t J9::Power::PrivateLinkage::getRightToLeft()
    {
    return getProperties().getRightToLeft();
    }
 
-void J9::PPCPrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
+void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    {
    ListIterator<TR::AutomaticSymbol>  automaticIterator(&method->getAutomaticList());
    TR::AutomaticSymbol               *localCursor       = automaticIterator.getFirst();
@@ -601,7 +601,7 @@ void J9::PPCPrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    atlas->setParmBaseOffset(atlas->getParmBaseOffset() + offsetToFirstParm - firstLocalOffset);
    }
 
-void J9::PPCPrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex)
+void J9::Power::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex)
    {
    int32_t roundup = (comp()->useCompressedPointers() && p->isLocalObject() ? TR::Compiler->om.objectAlignmentInBytes() : TR::Compiler->om.sizeofReferenceAddress()) - 1;
    int32_t roundedSize = (p->getSize() + roundup) & (~roundup);
@@ -611,7 +611,7 @@ void J9::PPCPrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t 
    p->setOffset(stackIndex -= roundedSize);
    }
 
-void J9::PPCPrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method)
+void J9::Power::PrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method)
    {
    ListIterator<TR::ParameterSymbol>   paramIterator(&(method->getParameterList()));
    TR::ParameterSymbol      *paramCursor = paramIterator.getFirst();
@@ -660,7 +660,7 @@ void J9::PPCPrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodS
       }
    }
 
-bool J9::PPCPrivateLinkage::hasToBeOnStack(TR::ParameterSymbol *parm)
+bool J9::Power::PrivateLinkage::hasToBeOnStack(TR::ParameterSymbol *parm)
    {
    TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
    TR_OpaqueClassBlock *throwableClass;
@@ -938,7 +938,7 @@ static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
    return registerSaveDescription;
    }
 
-void J9::PPCPrivateLinkage::createPrologue(TR::Instruction *cursor)
+void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    {
    TR::Machine *machine = cg()->machine();
    const TR::PPCLinkageProperties& properties = getProperties();
@@ -1302,7 +1302,7 @@ void J9::PPCPrivateLinkage::createPrologue(TR::Instruction *cursor)
       }
    }
 
-TR::MemoryReference *J9::PPCPrivateLinkage::getOutgoingArgumentMemRef(int32_t argSize, TR::Register *argReg, TR::InstOpCode::Mnemonic opCode, TR::PPCMemoryArgument &memArg, uint32_t length)
+TR::MemoryReference *J9::Power::PrivateLinkage::getOutgoingArgumentMemRef(int32_t argSize, TR::Register *argReg, TR::InstOpCode::Mnemonic opCode, TR::PPCMemoryArgument &memArg, uint32_t length)
    {
    TR::MemoryReference *result=new (trHeapMemory()) TR::MemoryReference(cg()->getStackPointerRegister(), argSize, length, cg());
    memArg.argRegister = argReg;
@@ -1311,7 +1311,7 @@ TR::MemoryReference *J9::PPCPrivateLinkage::getOutgoingArgumentMemRef(int32_t ar
    return(result);
    }
 
-void J9::PPCPrivateLinkage::createEpilogue(TR::Instruction *cursor)
+void J9::Power::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    {
    int32_t                   blockNumber = cursor->getNext()->getBlockIndex();
    TR::Machine *machine = cg()->machine();
@@ -1394,13 +1394,13 @@ void J9::PPCPrivateLinkage::createEpilogue(TR::Instruction *cursor)
       }
    }
 
-int32_t J9::PPCPrivateLinkage::buildArgs(TR::Node *callNode,
+int32_t J9::Power::PrivateLinkage::buildArgs(TR::Node *callNode,
                                         TR::RegisterDependencyConditions *dependencies)
    {
    return buildPrivateLinkageArgs(callNode, dependencies, TR_Private);
    }
 
-int32_t J9::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                         *callNode,
+int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node                         *callNode,
                                                        TR::RegisterDependencyConditions *dependencies,
                                                        TR_LinkageConventions             linkage)
    {
@@ -1989,7 +1989,7 @@ int32_t J9::PPCPrivateLinkage::buildPrivateLinkageArgs(TR::Node                 
    return totalSize;
    }
 
-static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, uint32_t maxStaticPICs, TR_ScratchList<TR::PPCPICItem> &values)
+static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, uint32_t maxStaticPICs, TR_ScratchList<J9::PPCPICItem> &values)
    {
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
@@ -2052,7 +2052,7 @@ static bool getProfiledCallSiteInfo(TR::CodeGenerator *cg, TR::Node *callNode, u
       if (!method || method->isInterpreted())
          continue;
 
-      values.add(new (comp->trStackMemory()) TR::PPCPICItem(clazz, method, freq));
+      values.add(new (comp->trStackMemory()) J9::PPCPICItem(clazz, method, freq));
       ++numStaticPics;
       }
 
@@ -2226,7 +2226,7 @@ static TR::Register* evaluateUpToVftChild(TR::Node *callNode, TR::CodeGenerator 
    return vftReg;
    }
 
-void J9::PPCPrivateLinkage::buildVirtualDispatch(TR::Node                         *callNode,
+void J9::Power::PrivateLinkage::buildVirtualDispatch(TR::Node                         *callNode,
                                                 TR::RegisterDependencyConditions *dependencies,
                                                 uint32_t                           sizeOfArguments)
    {
@@ -2483,13 +2483,13 @@ void J9::PPCPrivateLinkage::buildVirtualDispatch(TR::Node                       
       static char     *maxInterfaceStaticPICsString = feGetEnv("TR_ppcMaxInterfaceStaticPICs");
       static uint32_t  maxInterfaceStaticPICs = maxInterfaceStaticPICsString ? atoi(maxInterfaceStaticPICsString) : 1;
 
-      TR_ScratchList<TR::PPCPICItem> values(cg()->trMemory());
+      TR_ScratchList<J9::PPCPICItem> values(cg()->trMemory());
       const uint32_t maxStaticPICs = methodSymbol->isInterface() ? maxInterfaceStaticPICs : maxVirtualStaticPICs;
 
       if (getProfiledCallSiteInfo(cg(), callNode, maxStaticPICs, values))
          {
-         ListIterator<TR::PPCPICItem>  i(&values);
-         TR::PPCPICItem               *pic = i.getFirst();
+         ListIterator<J9::PPCPICItem>  i(&values);
+         J9::PPCPICItem               *pic = i.getFirst();
 
          // If this value is dominant, optimize exclusively for it
          if (pic->_frequency > MAX_PROFILED_CALL_FREQUENCY)
@@ -2651,7 +2651,7 @@ void inlineCharacterIsMethod(TR::Node *node, TR::MethodSymbol* methodSymbol, TR:
    cg->stopUsingRegister(tmpReg);
    }
 
-void J9::PPCPrivateLinkage::buildDirectCall(TR::Node *callNode,
+void J9::Power::PrivateLinkage::buildDirectCall(TR::Node *callNode,
                                            TR::SymbolReference *callSymRef,
                                            TR::RegisterDependencyConditions *dependencies,
                                            const TR::PPCLinkageProperties &pp,
@@ -2714,7 +2714,7 @@ void J9::PPCPrivateLinkage::buildDirectCall(TR::Node *callNode,
    }
 
 
-TR::Register *J9::PPCPrivateLinkage::buildDirectDispatch(TR::Node *callNode)
+TR::Register *J9::Power::PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
    {
    TR::SymbolReference *callSymRef = callNode->getSymbolReference();
 
@@ -2803,7 +2803,7 @@ TR::Register *J9::PPCPrivateLinkage::buildDirectDispatch(TR::Node *callNode)
    return(returnRegister);
    }
 
-TR::Register *J9::PPCPrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
+TR::Register *J9::Power::PrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    {
    const TR::PPCLinkageProperties &pp = getProperties();
    TR::RegisterDependencyConditions *dependencies =
@@ -2864,19 +2864,19 @@ TR::Register *J9::PPCPrivateLinkage::buildIndirectDispatch(TR::Node *callNode)
    return(returnRegister);
    }
 
-TR::Register *J9::PPCPrivateLinkage::buildalloca(TR::Node *BIFCallNode)
+TR::Register *J9::Power::PrivateLinkage::buildalloca(TR::Node *BIFCallNode)
    {
-   TR_ASSERT(0,"PPCPrivateLinkage does not support alloca.\n");
+   TR_ASSERT(0,"J9::Power::PrivateLinkage does not support alloca.\n");
    return NULL;
    }
 
-int32_t TR::PPCHelperLinkage::buildArgs(TR::Node *callNode,
-                                       TR::RegisterDependencyConditions *dependencies)
+int32_t J9::Power::HelperLinkage::buildArgs(TR::Node *callNode,
+                                            TR::RegisterDependencyConditions *dependencies)
    {
    return buildPrivateLinkageArgs(callNode, dependencies, _helperLinkage);
    }
 
-TR::MemoryReference *J9::PPCPrivateLinkage::getOutgoingArgumentMemRef(int32_t argSize, TR::Register *argReg, TR::InstOpCode::Mnemonic opCode, TR::PPCMemoryArgument &memArg, uint32_t length, const TR::PPCLinkageProperties& properties)
+TR::MemoryReference *J9::Power::PrivateLinkage::getOutgoingArgumentMemRef(int32_t argSize, TR::Register *argReg, TR::InstOpCode::Mnemonic opCode, TR::PPCMemoryArgument &memArg, uint32_t length, const TR::PPCLinkageProperties& properties)
    {
    TR::Machine *machine = cg()->machine();
 

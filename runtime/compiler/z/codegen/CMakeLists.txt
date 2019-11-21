@@ -30,7 +30,6 @@ j9jit_files(
 	z/codegen/J9Instruction.cpp
 	z/codegen/J9Linkage.cpp
 	z/codegen/J9MemoryReference.cpp
-	z/codegen/J9S390CHelperLinkage.cpp
 	z/codegen/J9S390Snippet.cpp
 	z/codegen/J9SystemLinkageLinux.cpp
 	z/codegen/J9SystemLinkagezOS.cpp
@@ -40,6 +39,7 @@ j9jit_files(
 	z/codegen/J9ZSnippet.cpp
 	z/codegen/ReduceSynchronizedFieldLoad.cpp
 	z/codegen/S390AOTRelocation.cpp
+	z/codegen/S390CHelperLinkage.cpp
 	z/codegen/S390J9CallSnippet.cpp
 	z/codegen/S390PrivateLinkage.cpp
 	z/codegen/S390Recompilation.cpp
