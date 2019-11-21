@@ -53,7 +53,7 @@
 #include "runtime/RuntimeAssumptions.hpp"
 #include "runtime/J9Profiler.hpp"
 #include "OMR/Bytes.hpp"
-
+#include "il/ParameterSymbol.hpp"
 #include "j9.h"
 #include "j9cfg.h"
 
@@ -196,6 +196,25 @@ J9::Compilation::Compilation(int32_t id,
 
    for (int i = 0; i < CACHED_CLASS_POINTER_COUNT; i++)
       _cachedClassPointers[i] = NULL;
+
+
+   // Add known object index to parm 0 so that other optmizations can be unlocked.
+   // It is safe to do so because method and method symbols of a archetype specimen
+   // are not shared other methods.
+   //
+   TR::KnownObjectTable *knot = self()->getOrCreateKnownObjectTable();
+   TR::IlGeneratorMethodDetails & details = ilGenRequest.details();
+   if (knot && details.isMethodHandleThunk())
+      {
+      J9::MethodHandleThunkDetails & thunkDetails = static_cast<J9::MethodHandleThunkDetails &>(details);
+      if (thunkDetails.isCustom())
+         {
+         TR::KnownObjectTable::Index index = knot->getIndexAt(thunkDetails.getHandleRef());
+         ListIterator<TR::ParameterSymbol> parms(&_methodSymbol->getParameterList());
+         TR::ParameterSymbol* parm0 = parms.getFirst();
+         parm0->setKnownObjectIndex(index);
+         }
+      }
    }
 
 J9::Compilation::~Compilation()
