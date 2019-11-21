@@ -1,4 +1,4 @@
-dnl Copyright (c) 1991, 2018 IBM Corp. and others
+dnl Copyright (c) 1991, 2019 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,7 +86,7 @@ define({fp29},29)
 define({fp30},30)
 define({fp31},31)
 
-define({CINTERP_STACK_SIZE},{J9CONST(J9TR_cframe_sizeof,$1,$2)})
+J9CONST({CINTERP_STACK_SIZE},J9TR_cframe_sizeof)
 
 ifdef({ASM_J9VM_ENV_DATA64},{
 
@@ -100,7 +100,7 @@ define({staddrx},stdx)
 define({staddru},stdu)
 define({cmpliaddr},{cmpli 0,1,})
 define({ADDR},.llong)
-define({ALen},{J9CONST(8,$1,$2)})
+J9CONST({ALen},8)
 define({J9VMTHREAD},{r15})
 
 },{ dnl ASM_J9VM_ENV_DATA64
@@ -115,7 +115,7 @@ define({staddrx},stwx)
 define({staddru},stwu)
 define({cmpliaddr},{cmpli 0,0,})
 define({ADDR},.long)
-define({ALen},{J9CONST(4,$1,$2)})     
+J9CONST({ALen},4)
 
 define({J9VMTHREAD},{r13})
 
@@ -183,14 +183,14 @@ define({CALL_DIRECT},{
 	cror 31,31,31
 })
 
-define({TOC_SAVE_OFFSET},{J9CONST(J9TR_cframe_currentTOC,$1,$2)})
+J9CONST({TOC_SAVE_OFFSET},J9TR_cframe_currentTOC)
 define({SAVE_R13})
 define({GPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedGPRs+((($1)-13)*ALen))})
 define({GPR_SAVE_SLOT},{GPR_SAVE_OFFSET($1)(r1)})
 define({FPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedFPRs+((($1)-14)*8))})
 define({FPR_SAVE_SLOT},{FPR_SAVE_OFFSET($1)(r1)})
-define({CR_SAVE_OFFSET},{J9CONST(eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedCR),$1,$2)})
-define({LR_SAVE_OFFSET},{J9CONST(eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedLR),$1,$2)})
+J9CONST({CR_SAVE_OFFSET},eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedCR))
+J9CONST({LR_SAVE_OFFSET},eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedLR))
 
 },{ dnl AIXPPC
 
@@ -238,13 +238,13 @@ define({START_PROC},{
 
 define({END_PROC})
 
-define({TOC_SAVE_OFFSET},{J9CONST(J9TR_cframe_currentTOC,$1,$2)})
+J9CONST({TOC_SAVE_OFFSET},J9TR_cframe_currentTOC)
 define({GPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedGPRs+((($1)-14)*ALen))})
 define({GPR_SAVE_SLOT},{GPR_SAVE_OFFSET($1)(r1)})
 define({FPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedFPRs+((($1)-14)*8))})
 define({FPR_SAVE_SLOT},{FPR_SAVE_OFFSET($1)(r1)})
-define({CR_SAVE_OFFSET},{J9CONST(eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedCR),$1,$2)})
-define({LR_SAVE_OFFSET},{J9CONST(eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedLR),$1,$2)})
+J9CONST({CR_SAVE_OFFSET},eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedCR))
+J9CONST({LR_SAVE_OFFSET},eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedLR))
 
 },{ dnl ASM_J9VM_ENV_LITTLE_ENDIAN
 
@@ -302,13 +302,13 @@ define({START_PROC},{
 
 define({END_PROC})
 
-define({TOC_SAVE_OFFSET},{J9CONST(J9TR_cframe_currentTOC,$1,$2)})
+J9CONST({TOC_SAVE_OFFSET},J9TR_cframe_currentTOC)
 define({GPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedGPRs+((($1)-14)*ALen))})
 define({GPR_SAVE_SLOT},{GPR_SAVE_OFFSET($1)(r1)})
 define({FPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedFPRs+((($1)-14)*8))})
 define({FPR_SAVE_SLOT},{FPR_SAVE_OFFSET($1)(r1)})
-define({CR_SAVE_OFFSET},{J9CONST(eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedCR),$1,$2)})
-define({LR_SAVE_OFFSET},{J9CONST(eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedLR),$1,$2)})
+J9CONST({CR_SAVE_OFFSET},eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedCR))
+J9CONST({LR_SAVE_OFFSET},eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedLR))
 
 define({CALL_DIRECT},{
 	ld FUNC_PTR, .tocL_$1@toc(r2)
@@ -361,12 +361,12 @@ define({SAVE_R29_FOR_ALL})
 define({RESTORE_R29_FOR_ALL})
 
 define({SAVE_R13})
-define({CR_SAVE_OFFSET},{J9CONST(J9TR_cframe_preservedCR,$1,$2)})
+J9CONST({CR_SAVE_OFFSET},J9TR_cframe_preservedCR)
 define({GPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedGPRs+((($1)-13)*ALen))})
 define({GPR_SAVE_SLOT},{GPR_SAVE_OFFSET($1)(r1)})
 define({FPR_SAVE_OFFSET},{eval(J9TR_cframe_preservedFPRs+((($1)-14)*8))})
 define({FPR_SAVE_SLOT},{FPR_SAVE_OFFSET($1)(r1)})
-define({LR_SAVE_OFFSET},{J9CONST(eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedLR),$1,$2)})
+J9CONST({LR_SAVE_OFFSET},eval(CINTERP_STACK_SIZE+J9TR_cframe_preservedLR))
 
 }) dnl ASM_J9VM_ENV_DATA64
 }) dnl AIXPPC
@@ -386,9 +386,9 @@ define({JIT_GPR_SAVE_OFFSET},{eval(J9TR_cframe_jitGPRs+(($1)*ALen))})
 define({JIT_GPR_SAVE_SLOT},{JIT_GPR_SAVE_OFFSET($1)(r1)})
 define({JIT_FPR_SAVE_OFFSET},{eval(J9TR_cframe_jitFPRs+(($1)*8))})
 define({JIT_FPR_SAVE_SLOT},{JIT_FPR_SAVE_OFFSET($1)(r1)})
-define({JIT_CR_SAVE_OFFSET},{J9CONST(J9TR_cframe_jitCR,$1,$2)})
+J9CONST({JIT_CR_SAVE_OFFSET},J9TR_cframe_jitCR)
 define({JIT_CR_SAVE_SLOT},{JIT_CR_SAVE_OFFSET(r1)})
-define({JIT_LR_SAVE_OFFSET},{J9CONST(J9TR_cframe_jitLR,$1,$2)})
+J9CONST({JIT_LR_SAVE_OFFSET},J9TR_cframe_jitLR)
 define({JIT_LR_SAVE_SLOT},{JIT_LR_SAVE_OFFSET(r1)})
 
 define({SAVE_LR},{
