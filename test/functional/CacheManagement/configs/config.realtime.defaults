@@ -1,0 +1,44 @@
+##############################################################################
+#  Copyright (c) 2010, 2019 IBM Corp. and others
+#
+#  This program and the accompanying materials are made available under
+#  the terms of the Eclipse Public License 2.0 which accompanies this
+#  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+#  or the Apache License, Version 2.0 which accompanies this distribution and
+#  is available at https://www.apache.org/licenses/LICENSE-2.0.
+#
+#  This Source Code may also be made available under the following
+#  Secondary Licenses when the conditions for such availability set
+#  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+#  General Public License, version 2 with the GNU Classpath
+#  Exception [1] and GNU General Public License, version 2 with the
+#  OpenJDK Assembly Exception [2].
+#
+#  [1] https://www.gnu.org/software/classpath/license.html
+#  [2] http://openjdk.java.net/legal/assembly-exception.html
+#
+#  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
+##############################################################################
+# commands 
+# %n% indicates an insert supplied for a particular command instance
+# %xx% indicates something replaced by a value elsewhere in this config file
+cmd.getCacheFileName=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:grow,printCacheFilename,name=%1%,persistent 
+cmd.getCacheFileNameNonPersist=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:grow,printCacheFilename,name=%1%,nonpersistent
+cmd.destroyCache=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:name=%1%,destroy
+cmd.destroyPersistentCache=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:name=%1%,destroy
+cmd.destroyNonPersistentCache=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:name=%1%,nonpersistent,destroy
+cmd.destroyAllCaches=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:destroyAll%1%
+cmd.runSimpleJavaProgramWithPersistentCache=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:grow,name=%1%,verbose -cp . SimpleApp
+cmd.runSimpleJavaProgramWithNonPersistentCache=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:grow,name=%1%,nonpersistent,verbose -cp . SimpleApp
+cmd.runSimpleJavaProgram=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:grow,name=%1%,verbose -cp . SimpleApp
+cmd.listAllCaches=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:listAllCaches%1%
+cmd.createNonPersistentCache=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:grow,name=%1%,nonpersistent,verbose -cp . SimpleApp
+cmd.expireAllCaches=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:expire=0,verbose%1% -cp . SimpleApp
+cmd.createIncompatibleCache=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:grow,name=%1%,verbose -cp . SimpleApp
+cmd.runPrintStats=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:grow,name=%1%,printStats,verbose%2%
+cmd.runPrintAllStats=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:grow,name=%1%,printAllStats,verbose%2%
+cmd.runResetPersistentCache=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:grow,name=%1%,reset,verbose -cp . ResetApp
+cmd.runResetNonPersistentCache=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:grow,name=%1%,reset,nonpersistent,verbose -cp . ResetApp
+cmd.runComplexJavaProgram=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:grow,name=%1%,verbose -Dconfig.properties=%2% %apploc% tests.sharedclasses.options.TestCorruptedCaches04Helper %1% 
+cmd.runSimpleJavaProgramWithPersistentCachePlusOptions=%java_exe% -Xtrace:maximal=j9shr -Xrealtime -Xshareclasses:name=%1%,verbose  %2% -cp . SimpleApp
+cmd.runInfiniteLoopJavaProgramWithPersistentCache=%java_exe% -Xrealtime -Xshareclasses:grow,name=%1%,verbose -cp . InfiniteLoop
