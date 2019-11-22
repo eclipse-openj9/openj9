@@ -25,6 +25,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/Machine.hpp"
+#include "codegen/PrivateLinkage.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
@@ -550,7 +551,7 @@ void TR_S390Recompilation::postCompilation()
    if(!couldBeCompiledAgain()) return;
 
    uint8_t  *startPC = _compilation->cg()->getCodeStart();
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    int32_t jitEntryOffset = linkageInfo->getReservedWord() & 0x0ffff;
    uint32_t * jitEntryPoint = (uint32_t*)(startPC + jitEntryOffset);
    uint32_t * saveLocn = (uint32_t*)(startPC + OFFSET_INTEP_JITEP_SAVE_RESTORE_LOCATION);

@@ -39,6 +39,7 @@
 #include "emfloat.h"
 #include "codegen/FrontEnd.hpp"
 #include "codegen/PreprologueConst.hpp"
+#include "codegen/PrivateLinkage.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/jittypes.h"
@@ -53,17 +54,6 @@ extern J9JITConfig *jitConfig;
 extern "C" int32_t _getnumRTHelpers();  /* 390 asm stub */
 
 extern TR_PersistentMemory * trPersistentMemory;
-
-void TR_LinkageInfo::setHasBeenRecompiled()
-   {
-   TR_ASSERT((_word & HasFailedRecompilation)==0, "Cannot setHasBeenRecompiled because method has failed recompilation");
-   _word |= HasBeenRecompiled;
-   }
-void TR_LinkageInfo::setHasFailedRecompilation()
-   {
-   TR_ASSERT((_word & HasBeenRecompiled) == 0, "Cannot setHasFailedRecompilation because method has been recompiled");
-   _word |= HasFailedRecompilation;
-   }
 
 extern "C" {
 TR_UnloadedClassPicSite *createClassUnloadPicSite(void *classPointer, void *addressToBePatched, uint32_t size,
@@ -1723,10 +1713,10 @@ void replaceFirstTwoBytesWithData(void *startPC, int32_t startPCToData)
 
 extern "C"
    {
-   // The patching offset is not fixed due to recompilation  
+   // The patching offset is not fixed due to recompilation
    int32_t adjustPatchingOffset(void *startPC)
       {
-      TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
+      J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
       return (linkageInfo->isSamplingMethodBody()? -SAMPLING_CALL_SIZE: 0) + (linkageInfo->isRecompMethodBody()? -JITTED_BODY_INFO_SIZE: 0);
       }
 
@@ -1787,7 +1777,7 @@ extern "C"
    {
    void _fsdSwitchToInterpPatchEntry(void* intEP)
       {
-      TR_LinkageInfo* linkageInfo = TR_LinkageInfo::get(intEP);
+      J9::PrivateLinkage::LinkageInfo* linkageInfo = J9::PrivateLinkage::LinkageInfo::get(intEP);
 
       uint8_t* jitEP = (uint8_t*)intEP + linkageInfo->getJitEntryOffset();
 
@@ -1801,7 +1791,7 @@ extern "C"
 
    void _fsdRestoreToJITPatchEntry(void* intEP)
       {
-      TR_LinkageInfo* linkageInfo = TR_LinkageInfo::get(intEP);
+      J9::PrivateLinkage::LinkageInfo* linkageInfo = J9::PrivateLinkage::LinkageInfo::get(intEP);
 
       uint8_t* jitEP = (uint8_t*)intEP + linkageInfo->getReservedWord();
 
@@ -1817,7 +1807,7 @@ void saveFirstInstruction(void *startPC, int32_t startPCToSaveArea)
    {
    // Save the first instruction of the method
    // Calculate entry point
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    char *startByte = (char *) startPC + getJitEntryOffset(linkageInfo);
 
    uint32_t* address = (uint32_t*)((uint8_t*)startPC + startPCToSaveArea +
@@ -1831,7 +1821,7 @@ void replaceFirstInstructionWithJump(void *startPC, int32_t startPCToTarget)
    int32_t distance;
 
    // common with Recomp.cpp
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    char *startByte = (char *) startPC + getJitEntryOffset(linkageInfo);
 
    distance = startPCToTarget - 2*getJitEntryOffset(linkageInfo);
@@ -1849,7 +1839,7 @@ void restoreFirstInstruction(void *startPC, int32_t startPCToData)
    {
    // Restore the original instructions
    // Calculate entry point
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    char *startByte = (char *) startPC + getJitEntryOffset(linkageInfo);
 
    uint32_t* address = (uint32_t*)((uint8_t*)startPC + startPCToData +
@@ -1865,14 +1855,14 @@ extern "C"
    {
    void _fsdSwitchToInterpPatchEntry(void *startPC)
       {
-      TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
+      J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
       saveFirstInstruction(startPC, OFFSET_REVERT_INTP_PRESERVED_FSD);
       replaceFirstInstructionWithJump(startPC, OFFSET_REVERT_INTP_FIXED_PORTION);
       }
 
    void _fsdRestoreToJITPatchEntry(void *startPC)
       {
-      TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
+      J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
       restoreFirstInstruction(startPC, OFFSET_REVERT_INTP_PRESERVED_FSD);
       }
    }
@@ -1911,7 +1901,7 @@ char * feGetEnv2(const char * s, const void * vm)
             // failed to read the env: either mis-sized buffer or no env set
             j9mem_free_memory(envSpace);
             envSpace = NULL;
-            } 
+            }
           else
             {
             int32_t res = j9sysinfo_get_env("TR_silentEnv", NULL, 0);
@@ -1977,7 +1967,7 @@ extern "C" void jitReportDynamicCodeLoadEvents(J9VMThread *currentThread)
 
                   if (ccMethodHeader && (metaData->bodyInfo != NULL))
                      {
-                     TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get((void *)metaData->startPC);
+                     J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get((void *)metaData->startPC);
                      if (linkageInfo->isRecompMethodBody())
                         {
                         ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_LOAD(vm->hookInterface, currentThread, metaData->ramMethod, (void *)((char*)ccMethodHeader->_eyeCatcher+4), metaData->startPC - (UDATA)((char*)ccMethodHeader->_eyeCatcher+4), "JIT method header", metaData);

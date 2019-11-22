@@ -26,6 +26,7 @@
 #include "jithash.h"
 #include "j9.h"
 #include "util_api.h"
+#include "codegen/PrivateLinkage.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "control/Options.hpp"
@@ -80,7 +81,7 @@ namespace  {
          // The bodyInfo is reclaimed only for class unloading, not for recompilation
          if (ccMethodHeader && (metaData->bodyInfo != NULL))
             {
-            TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get((void *)metaData->startPC);
+            J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get((void *)metaData->startPC);
             if (linkageInfo->isRecompMethodBody())
                {
                ALWAYS_TRIGGER_J9HOOK_VM_DYNAMIC_CODE_UNLOAD(vm->hookInterface, vmThread, metaData->ramMethod, (U_8 *)((char*)ccMethodHeader->_eyeCatcher+4));
@@ -124,7 +125,7 @@ namespace  {
       // expunge any runtime assumptions in the RAT that have previously been marked
       pointer_cast<TR_PersistentMemory *>( jitConfig->scratchSegment )->getPersistentInfo()->getRuntimeAssumptionTable()->reclaimMarkedAssumptionsFromRAT(cleanUpCount);
       }
-   
+
    // We need to update the nextMethod and prevMethod pointers of the J9JITExceptionTable that
    // point to the old J9JITExceptionTable to now point to the new (stub) J9JITExceptionTable.
    inline void updateExceptionTableLinkedList(J9VMThread *vmThread, J9JITExceptionTable *oldMetadata, J9JITExceptionTable *newMetadata)
@@ -158,22 +159,22 @@ namespace  {
       if (next)
          next->prevMethod = newMetadata;
       }
-   
+
    inline J9JITExceptionTable * createStubExceptionTable(J9VMThread *vmThread, J9JITExceptionTable *metaData)
       {
       J9JITExceptionTable *stubMetadata = NULL;
-      
+
       if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableMetadataReclamation))
          {
          uint32_t numBytes = sizeof(J9JITExceptionTable);
          uint32_t size = 0;
          stubMetadata = (J9JITExceptionTable *)TR_DataCacheManager::getManager()->allocateDataCacheRecord(numBytes, J9_JIT_DCE_EXCEPTION_INFO, &size);
-         
+
          if (stubMetadata)
             {
             // Make a copy of just the J9JITExceptionTable Struct (excluding the variable length section)
             memcpy((uint8_t *)stubMetadata, (uint8_t *)metaData, numBytes);
-            
+
             // Set the various pointers to NULL since this J9JITExceptionTable has no variable length section
             // However, the bodyInfo needs to exist.
             stubMetadata->inlinedCalls = NULL;
@@ -182,21 +183,21 @@ namespace  {
             stubMetadata->riData = NULL;
             stubMetadata->osrInfo = NULL;
             stubMetadata->runtimeAssumptionList = NULL;
-            
+
             // FASTWALK
             freeFastWalkCache(vmThread, stubMetadata);
-            
+
             // Update J9JITExceptionTable Linked List
             updateExceptionTableLinkedList(vmThread, metaData, stubMetadata);
-            
+
             // Set the IS_STUB flag
             stubMetadata->flags |= JIT_METADATA_IS_STUB;
             }
          }
-      
+
       return stubMetadata;
       }
-   
+
 }
 
 /*Below is a mirror struct with the one in MethodMetaData.c.*/
@@ -270,7 +271,7 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
    static const char *useOldRAReclaim = feGetEnv("TR_useOldRAReclaim");
    TR_TranslationArtifactManager *artifactManager = TR_TranslationArtifactManager::getGlobalArtifactManager();
    bool freeExistingExceptionTable = false;
-   
+
    if (
       !TR::Options::getCmdLineOptions()->getOption(TR_DisableCodeCacheReclamation)
       && artifactManager->containsArtifact(metaData)
@@ -316,20 +317,20 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
          {
          // This updates the existing J9JITExceptionTable to keep track of the stub left behind
          TR::CodeCacheManager::instance()->freeFaintCacheBlock(faintCacheBlock, (uint8_t *) faintCacheBlock->_metaData->startPC);
-         
+
          // Create a new J9JITExceptionTable for the stub
          J9JITExceptionTable *stubMetadata = createStubExceptionTable(vmThread, metaData);
-         
+
          if (stubMetadata)
             {
             // Mark the stub's artifact as unloaded
             markMetaDataAsUnloaded(stubMetadata);
-            
+
             // We need to add the stub's artifact so as to be able to remove it on class unloading.
             artifactManager->insertArtifact(stubMetadata);
-            
+
             freeExistingExceptionTable = true;
-            
+
             if (TR::Options::getVerboseOption(TR_VerboseReclamation))
                {
                TR_VerboseLog::writeLineLocked(TR_Vlog_RECLAMATION, "Reclaiming old metadata 0x%p, new metadata = 0x%p", metaData, stubMetadata);
@@ -341,7 +342,7 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
                {
                TR_VerboseLog::writeLineLocked(TR_Vlog_RECLAMATION, "Did not allocate stub metadata, reusing existing metadata 0x%p", metaData);
                }
-            
+
             // We failed to allocate a new J9JITExceptionTable so we
             // need to re-add the stub's artifact so as to be able to remove it on class unloading.
             artifactManager->insertArtifact(metaData);
@@ -354,10 +355,10 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
          }
       renewCodeCachePessimism(vmThread);
       }
-   
+
    // Mark the stub's artifact as unloaded
    markMetaDataAsUnloaded(metaData);
-   
+
    if (freeExistingExceptionTable)
       {
       /*
@@ -389,7 +390,7 @@ void jitReleaseCodeCollectMetaData(J9JITConfig *jitConfig, J9VMThread *vmThread,
       if (metaData->nextMethod)
          metaData->nextMethod->prevMethod = metaData->prevMethod;
       */
-      
+
       TR_DataCacheManager::getManager()->freeDataCacheRecord(metaData);
       }
    }

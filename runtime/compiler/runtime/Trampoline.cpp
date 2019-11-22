@@ -23,6 +23,7 @@
 #include "j9.h"
 #include "j9consts.h"
 #include "codegen/FrontEnd.hpp"
+#include "codegen/PrivateLinkage.hpp"
 #include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -130,7 +131,7 @@ void ppcCreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
    static TR_Processor proc = customP4 ? portLibCall_getProcessorType() :
       TR_DefaultPPCProcessor;
    uint8_t *buffer = (uint8_t *)trampPtr;
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    intptrj_t dispatcher = (intptrj_t)((uint8_t *)startPC + linkInfo->getReservedWord());
 
       // Take advantage of both gr0 and gr11 ...
@@ -306,7 +307,7 @@ static bool isInterfaceCallSite(uint8_t *callSite, int32_t& distanceToActualCall
 
 bool ppcCodePatching(void *method, void *callSite, void *currentPC, void *currentTramp, void *newPC, void *extra)
    {
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(newPC);
+   J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(newPC);
    uint8_t        *entryAddress = (uint8_t *)newPC + linkInfo->getReservedWord();
    intptrj_t       distance;
    uint8_t        *patchAddr;
@@ -547,7 +548,7 @@ void amd64CreateMethodTrampoline(void *trampPtr, void *startPC, TR_OpaqueMethodB
    {
    J9Method *ramMethod = reinterpret_cast<J9Method *>(method);
    uint8_t *buffer = (uint8_t *)trampPtr;
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    intptrj_t dispatcher = (intptrj_t)((uint8_t *)startPC + linkInfo->getReservedWord());
 
    // The code below is disabled because of a problem with direct call to JNI methods
@@ -608,7 +609,7 @@ int32_t amd64CodePatching(void *theMethod, void *callSite, void *currentPC, void
    J9Method *method = reinterpret_cast<J9Method *>(theMethod);
    // We already checked the call site for immediate call. No need to check again ...
    //
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(newPC);
+   J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(newPC);
    uint8_t        *entryAddress = (uint8_t *)newPC + linkInfo->getReservedWord();
    uint8_t        *patchAddr = (uint8_t *)callSite;
    intptrj_t       distance;
@@ -763,7 +764,7 @@ void armCreateHelperTrampolines(void *trampPtr, int32_t numHelpers)
 void armCreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
    {
    uint32_t *buffer = (uint32_t *)trampPtr;
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    intptrj_t dispatcher = (intptrj_t)((uint8_t *)startPC + linkInfo->getReservedWord());
 
    // LDR  PC, [PC, #-4]
@@ -783,7 +784,7 @@ void armCreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
 
 bool armCodePatching(void *callee, void *callSite, void *currentPC, void *currentTramp, void *newAddrOfCallee, void *extra)
    {
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(newAddrOfCallee);
+   J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(newAddrOfCallee);
    uint8_t        *entryAddress = (uint8_t *)newAddrOfCallee + linkInfo->getReservedWord();
    intptrj_t       distance;
    int32_t         currentDistance;
@@ -873,7 +874,7 @@ void arm64CreateHelperTrampolines(void *trampPtr, int32_t numHelpers)
    for (int32_t i=1; i<numHelpers; i++)
       {
       *((int32_t *)buffer) = 0x58000050; //LDR R16 PC+8
-      buffer += 1; 
+      buffer += 1;
       *buffer = 0xD61F0200; //BR R16
       buffer += 1;
       *((intptrj_t *)buffer) = (intptrj_t)runtimeHelperValue((TR_RuntimeHelper)i);
@@ -884,11 +885,11 @@ void arm64CreateHelperTrampolines(void *trampPtr, int32_t numHelpers)
 void arm64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
    {
    uint32_t *buffer = (uint32_t *)trampPtr;
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    intptrj_t dispatcher = (intptrj_t)((uint8_t *)startPC + linkInfo->getReservedWord());
 
    *buffer = 0x58000050; //LDR R16 PC+8
-   buffer += 1; 
+   buffer += 1;
    *buffer = 0xD61F0200; //BR R16
    buffer += 1;
    *((intptrj_t *)buffer) = dispatcher;
@@ -896,7 +897,7 @@ void arm64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method)
 
 bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *currentTramp, void *newAddrOfCallee, void *extra)
    {
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(newAddrOfCallee);
+   J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(newAddrOfCallee);
    uint8_t        *entryAddress = (uint8_t *)newAddrOfCallee + linkInfo->getReservedWord();
    intptrj_t       distance;
    int32_t         currentDistance;
@@ -906,7 +907,7 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
    distance = entryAddress - (uint8_t *)callSite;
    currentDistance = (branchInstr << 6) >> 4;
    branchInstr &= 0xfc000000;
-   
+
    if (branchInstr != 0x94000000)
       {
       // This is not a 'bl' instruction -- Don't patch
@@ -914,12 +915,12 @@ bool arm64CodePatching(void *callee, void *callSite, void *currentPC, void *curr
       }
 
    if (TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines)
-            || distance>(intptrj_t)TR::Compiler->target.cpu.maxUnconditionalBranchImmediateForwardOffset() 
+            || distance>(intptrj_t)TR::Compiler->target.cpu.maxUnconditionalBranchImmediateForwardOffset()
             || distance<(intptrj_t)TR::Compiler->target.cpu.maxUnconditionalBranchImmediateBackwardOffset()
    )  {
       if (currentPC == newAddrOfCallee)
          {
-         newTramp = currentTramp; 
+         newTramp = currentTramp;
          }
       else
          {
@@ -1066,7 +1067,7 @@ void s390zOS64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method
    uint8_t     *buffer = (uint8_t *)trampPtr;
    // Get the Entry Pointer (should be r15 for zOS64).
    uint16_t rEP = 15;
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    intptrj_t dispatcher = (intptrj_t)((uint8_t *)startPC + linkInfo->getReservedWord());
 
    // Trampoline Code:
@@ -1097,7 +1098,7 @@ void s390zOS64CreateMethodTrampoline(void *trampPtr, void *startPC, void *method
 // zOS64 Code Patching.
 bool s390zOS64CodePatching(void *method, void *callSite, void *currentPC, void *currentTramp, void *newPC, void *extra)
    {
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(newPC);
+   J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(newPC);
    // The location of the method call branch.
    uint8_t        *entryAddress = (uint8_t *)newPC + linkInfo->getReservedWord();
    // The location of the callsite.
@@ -1282,7 +1283,7 @@ void s390zLinux64CreateMethodTrampoline(void *trampPtr, void *startPC, void *met
    uint8_t     *buffer = (uint8_t *)trampPtr;
    // Get the Entry Pointer (should be r4 for zLinux64).
    uint16_t rEP = 4;  // Joran TODO: useEPRegNum instead.
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    intptrj_t dispatcher = (intptrj_t)((uint8_t *) startPC + linkInfo->getReservedWord());
 
    //Alternative Trampoline code
@@ -1313,7 +1314,7 @@ void s390zLinux64CreateMethodTrampoline(void *trampPtr, void *startPC, void *met
 // zLinux64 Code Patching.
 bool s390zLinux64CodePatching (void *method, void *callSite, void *currentPC, void *currentTramp, void *newPC, void *extra)
    {
-   TR_LinkageInfo *linkInfo = TR_LinkageInfo::get(newPC);
+   J9::PrivateLinkage::LinkageInfo *linkInfo = J9::PrivateLinkage::LinkageInfo::get(newPC);
    // The location of the method call branch.
    uint8_t        *entryAddress = (uint8_t *)newPC + linkInfo->getReservedWord();
    // The location of the callsite.
