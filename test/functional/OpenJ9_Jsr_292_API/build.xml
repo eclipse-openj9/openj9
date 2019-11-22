@@ -146,9 +146,9 @@
 					<src path="${transformerListener}" />
 					<compilerarg line='${addModules}' />
 					<classpath>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
+						<pathelement location="${LIB_DIR}/asm-all.jar" />
+						<pathelement location="${LIB_DIR}/testng.jar"/>
+						<pathelement location="${LIB_DIR}/jcommander.jar"/>
 					</classpath>
 				</javac>
 			</then>

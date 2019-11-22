@@ -62,9 +62,9 @@
 					<src path="${transformerListener}" />
 					<src path="${TestUtilities}" />
 					<classpath>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/commons-exec.jar" />
+						<pathelement location="${LIB_DIR}/testng.jar" />
+						<pathelement location="${LIB_DIR}/jcommander.jar" />
+						<pathelement location="${LIB_DIR}/commons-exec.jar" />
 						<pathelement location="${TEST_JDK_HOME}/lib/tools.jar" />
 					</classpath>
 				</javac>
@@ -87,9 +87,9 @@
 					<src path="${TestUtilities}" />
 					<compilerarg line='${addExports} ${TestUtilitiesExports}' />
 					<classpath>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/commons-exec.jar" />
+						<pathelement location="${LIB_DIR}/testng.jar" />
+						<pathelement location="${LIB_DIR}/jcommander.jar" />
+						<pathelement location="${LIB_DIR}/commons-exec.jar" />
 					</classpath>
 				</javac>
 			</else>

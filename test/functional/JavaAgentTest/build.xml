@@ -63,9 +63,9 @@
 					<src path="${src_version}" />
 					<src path="${transformerListener}" />
 					<classpath>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar"/>
+						<pathelement location="${LIB_DIR}/testng.jar" />
+						<pathelement location="${LIB_DIR}/jcommander.jar" />
+						<pathelement location="${LIB_DIR}/asm-all.jar"/>
 					</classpath>
 				</javac>
 			</then>
@@ -77,9 +77,9 @@
 					<src path="${transformerListener}" />
 					<compilerarg line='${addExports}' />
 					<classpath>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar"/>
+						<pathelement location="${LIB_DIR}/testng.jar" />
+						<pathelement location="${LIB_DIR}/jcommander.jar" />
+						<pathelement location="${LIB_DIR}/asm-all.jar"/>
 					</classpath>
 				</javac>
 			</else>

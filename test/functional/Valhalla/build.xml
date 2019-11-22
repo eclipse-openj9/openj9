@@ -56,9 +56,9 @@
 			<src path="${transformerListener}" />
 			<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED' />
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar"/>
+				<pathelement location="${LIB_DIR}/testng.jar"/>
+				<pathelement location="${LIB_DIR}/jcommander.jar"/>
+				<pathelement location="${LIB_DIR}/asm-all.jar"/>
 			</classpath>
 		</javac>
 	</target>

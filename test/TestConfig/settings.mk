@@ -167,7 +167,7 @@ JAVA_COMMAND:=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)java$(Q)
 #######################################
 # common dir and jars
 #######################################
-LIB_DIR=$(JVM_TEST_ROOT)$(D)TestConfig$(D)lib
+LIB_DIR=$(TEST_ROOT)$(D)TestConfig$(D)lib
 TESTNG=$(LIB_DIR)$(D)testng.jar$(P)$(LIB_DIR)$(D)jcommander.jar
 RESOURCES_DIR=$(JVM_TEST_ROOT)$(D)TestConfig$(D)resources
 

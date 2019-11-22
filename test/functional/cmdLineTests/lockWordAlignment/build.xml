@@ -52,7 +52,7 @@
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<classpath>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+						<pathelement location="${LIB_DIR}/asm-all.jar" />
 					</classpath>
 				</javac>
 			</then>
@@ -71,7 +71,7 @@
 					<src path="${src}" />
 					<compilerarg line='${addExports}' />
 					<classpath>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+						<pathelement location="${LIB_DIR}/asm-all.jar" />
 					</classpath>
 				</javac>
 			</else>
@@ -83,7 +83,7 @@
 		<java classname="IntLongObjectAlignmentTestGenerator" failonerror="true" fork="true" logError="true" jvm="${build.javaexecutable}">
 			<classpath>
 				<pathelement path="${build}"/>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+				<pathelement location="${LIB_DIR}/asm-all.jar" />
 			</classpath>
 		</java>
 	</target>

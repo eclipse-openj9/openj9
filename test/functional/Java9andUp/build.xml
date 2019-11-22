@@ -63,9 +63,9 @@
 			<src path="${transformerListener}" />
 			<compilerarg line="--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/sun.security.internal.spec=ALL-UNNAMED --add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED" />
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
+				<pathelement location="${LIB_DIR}/asm-all.jar" />
+				<pathelement location="${LIB_DIR}/testng.jar" />
+				<pathelement location="${LIB_DIR}/jcommander.jar" />
 			</classpath>
 		</javac>
 	</target>
@@ -74,8 +74,8 @@
 	<property name="MODULE_PATH_ROOT" value="org/openj9/test/modularity"/>
 	<target name="build_modules" depends="init" description="Create the base modules for the modularity tests ">
 		<mkdir dir="${module_bin_root}" />
-		<copy file="${TEST_ROOT}/TestConfig/lib/testng.jar" todir="${module_bin_root}" />
-		<copy file="${TEST_ROOT}/TestConfig/lib/jcommander.jar" todir="${module_bin_root}" />
+		<copy file="${LIB_DIR}/testng.jar" todir="${module_bin_root}" />
+		<copy file="${LIB_DIR}/jcommander.jar" todir="${module_bin_root}" />
 		<for list="common,moduleD,moduleC,moduleB,moduleA,testerModule,dummy" param="mod">
 			<sequential>
 				<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
@@ -94,7 +94,7 @@
 				<var name="module_src_dir" value="${module_src_root}/${MODULE_NAME_ROOT}.@{mod}" />
 				<var name="module_bin_dir" value="${module_bin_root}/${MODULE_NAME_ROOT}.@{mod}" />
 				<mkdir dir="${module_bin_dir}" />
-				<var name="modpath" value="-cp ${TEST_ROOT}/TestConfig/lib/testng.jar --module-path ${module_bin_root} -d ${module_bin_dir} --add-modules org.openj9test.modularity.dummy --add-exports org.openj9test.modularity.dummy/org.openj9.test.modularity.dummy=ALL-UNNAMED" />
+				<var name="modpath" value="-cp ${LIB_DIR}/testng.jar --module-path ${module_bin_root} -d ${module_bin_dir} --add-modules org.openj9test.modularity.dummy --add-exports org.openj9test.modularity.dummy/org.openj9.test.modularity.dummy=ALL-UNNAMED" />
 				<javac srcdir="${module_src_dir}" destdir="${module_bin_dir}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${module_src_dir}" />
 					<compilerarg line="${modpath}" />
@@ -112,14 +112,14 @@
 					<src path="${module_src_dir}" />
 					<classpath>
 						<pathelement location="${module_bin_root}/org.openj9test.modularity.unnamed" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+						<pathelement location="${LIB_DIR}/testng.jar" />
 					</classpath>
 					<compilerarg line="${modpath}" />
 				</javac>
 			</sequential>
 		</for>
 		<exec executable="${TEST_JDK_HOME}/bin/java" failonerror="true">
-			<arg line="-jar ${TEST_ROOT}/TestConfig/lib/asmtools.jar jasm -d ${module_bin_root}/${MODULE_NAME_ROOT}.testerModule ${module_src_root}/${MODULE_NAME_ROOT}.testerModule/${MODULE_PATH_ROOT}/tests/MethodHandleTester.jasm" />
+			<arg line="-jar ${LIB_DIR}/asmtools.jar jasm -d ${module_bin_root}/${MODULE_NAME_ROOT}.testerModule ${module_src_root}/${MODULE_NAME_ROOT}.testerModule/${MODULE_PATH_ROOT}/tests/MethodHandleTester.jasm" />
 		</exec>
 	</target>
 
