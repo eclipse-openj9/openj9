@@ -460,11 +460,11 @@ x86-64_windows:
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
   extra_configure_options:
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
-    11: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
+    11: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
     12: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
-    13: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
-    next: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
+    13: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
+    next: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
@@ -507,11 +507,11 @@ x86-64_windows_xl:
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
   extra_configure_options:
-    8: '--with-noncompressedrefs --with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
-    11: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
+    8: '--with-noncompressedrefs --with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
+    11: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
     12: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
-    13: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
-    next: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
+    13: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
+    next: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
