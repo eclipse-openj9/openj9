@@ -44,7 +44,7 @@
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 
-J9::ARM64::PrivateLinkage::ARM64PrivateLinkage(TR::CodeGenerator *cg)
+J9::ARM64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    : J9::PrivateLinkage(cg),
    _interpretedMethodEntryPoint(NULL),
    _jittedMethodEntryPoint(NULL)
