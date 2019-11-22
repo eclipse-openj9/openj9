@@ -622,3 +622,5 @@ TraceEntry=Trc_JVMTI_jvmtiSetHeapSamplingInterval_Entry Overhead=1 Level=5 Noenv
 TraceExit=Trc_JVMTI_jvmtiSetHeapSamplingInterval_Exit Overhead=1 Level=5 Noenv Template="SetHeapSamplingInterval: returning %d"
 TraceEntry=Trc_JVMTI_jvmtiHookSampledObjectAlloc_Entry Overhead=1 Level=5 Noenv Template="HookSampledObjectAlloc starts"
 TraceExit=Trc_JVMTI_jvmtiHookSampledObjectAlloc_Exit Overhead=1 Level=5 Noenv Template="HookSampledObjectAlloc"
+
+TraceException=Trc_JVMTI_issueAgentOnLoadAttach_strConvertFailed Overhead=1 Level=1 Noenv Template="issueAgentOnLoadAttach: j9str_convert (%s) failed"

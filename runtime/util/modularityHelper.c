@@ -23,7 +23,6 @@
 #include "j2sever.h"
 #include "j9protos.h"
 #include "ut_j9util.h"
-#include "j9java8packages.h"
 
 static J9Package* hashPackageTableAtWithUTF8Name(J9VMThread *currentThread, J9ClassLoader *classLoader, J9UTF8 *packageName);
 static BOOLEAN isPackageExportedToModuleHelper(J9VMThread *currentThread, J9Module *fromModule, J9Package *j9package, J9Module *toModule, BOOLEAN toUnnamed);
@@ -213,7 +212,7 @@ isPackageExportedToModuleHelper(J9VMThread *currentThread, J9Module *fromModule,
 	} else if (NULL != j9package) {
 		/* First try the general export rules */
 		BOOLEAN const isExportedAll = j9package->exportToAll || (toUnnamed ? j9package->exportToAllUnnamed : FALSE);
-		/* ... then look for an specific export rule */
+		/* then look for an specific export rule */
 		if (isExportedAll) {
 			isExported = TRUE;
 		} else if (!toUnnamed) {
@@ -228,16 +227,13 @@ isPackageExportedToModuleHelper(J9VMThread *currentThread, J9Module *fromModule,
 				 */
 				isExported = (*targetPtr == toModule);
 			}
-		} else if (J9_ARE_NO_BITS_SET(vm->runtimeFlags, J9_RUNTIME_DENY_ILLEGAL_ACCESS)) {
-			/* in Java9 --illegal-access=permit is turned on by default. This opens
-			 * each package (that existed in java8) to all-unnamed modules unless
-			 * illegal-access=deny is specified.
-			 */
-			J9UTF8 *pkgName = j9package->packageName;
-			if (NULL != lookupJava8Package((const char*) J9UTF8_DATA(pkgName), J9UTF8_LENGTH(pkgName))) {
-				isExported = TRUE;
-			}
 		}
+		/* In Java11+ --illegal-access=permit is turned on by default. This opens each package (that existed in java8)
+		 * to ALL-UNNAMED unless illegal-access=deny is specified.
+		 * Those packages are listed in jdk8_packages.dat, read by jdk.internal.module.IllegalAccessMaps.generate(),
+		 * and exported to ALL-UNNAMED by jdk.internal.module.ModuleBootstrap.addIllegalAccess().
+		 * j9package->exportToAll is true for such packages, and this method will return TRUE in checking above.
+		 */
 	}
 	return isExported;
 }

@@ -1519,10 +1519,11 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 	IDATA xoss = -1;
 	IDATA ibmMallocTraceSet = FALSE;
  	char cwd[J9_MAX_PATH];
-#ifdef WIN32
+#if defined(WIN32)
 	wchar_t unicodeTemp[J9_MAX_PATH];
 	char *altLibraryPathBuffer = NULL;
-#endif /* WIN32 */
+	char *executableJarPath = NULL;
+#endif /* defined(WIN32) */
 	UDATA argEncoding = ARG_ENCODING_DEFAULT;
 	UDATA altJavaHomeSpecified = 0; /* not used on non-Windows */
 	J9PortLibraryVersion portLibraryVersion;
@@ -1817,6 +1818,39 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 #else /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 			zipFuncs = (J9ZipFunctionTable*) J9_GetInterface(IF_ZIPSUP, &j9portLibrary, j9binBuffer);
 #endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
+#if defined(WIN32)
+			{
+				BOOLEAN conversionSucceed = FALSE;
+				int32_t size = 0;
+				UDATA pathLen = strlen(specialArgs.executableJarPath);
+			
+				PORT_ACCESS_FROM_PORT(&j9portLibrary);
+				/* specialArgs.executableJarPath is retrieved from JavaVMInitArgs.options[i].optionString
+				 * which was set by Java Launcher in system default code page encoding.
+				 */
+				size = j9str_convert(J9STR_CODE_WINDEFAULTACP, J9STR_CODE_MUTF8, specialArgs.executableJarPath, pathLen, NULL, 0);
+				if (size > 0) {
+					size += 1; /* leave room for null */
+					executableJarPath = j9mem_allocate_memory(size, OMRMEM_CATEGORY_VM);
+					if (NULL != executableJarPath) {
+						size = j9str_convert(J9STR_CODE_WINDEFAULTACP, J9STR_CODE_MUTF8, specialArgs.executableJarPath, pathLen, executableJarPath, size);
+						if (size > 0) {
+							conversionSucceed = TRUE;
+						}
+					}
+				}
+				if (!conversionSucceed) {
+					result = JNI_ERR;
+					goto exit;
+				}
+				/* specialArgs.executableJarPath was assigned with javaCommandValue which is 
+				 * args->options[argCursor].optionString + strlen(javaCommand) within initialArgumentScan().
+				 * The optionString will be freed later at destroyJvmInitArgs().
+				 * Hence overwriting specialArgs.executableJarPath won't cause memory leak.
+				 */
+				specialArgs.executableJarPath = executableJarPath;
+			}
+#endif /* defined(WIN32) */
 		}
 		if (J2SE_CURRENT_VERSION >= J2SE_V11) {
 			optionsDefaultFileLocation = jvmBufferData(j9libBuffer);
@@ -1995,6 +2029,17 @@ exit:
 		f_threadDetach(attachedThread);
 	}
 #endif /* CALL_BUNDLED_FUNCTIONS_DIRECTLY */
+#if defined(WIN32)
+	if (NULL != executableJarPath) {
+		PORT_ACCESS_FROM_PORT(&j9portLibrary);
+		/* specialArgs.executableJarPath (overwritten with executableJarPath) is only used by 
+		 * addJarArguments(... specialArgs.executableJarPath, ...) which uses the path to load the jar files
+		 * and doesn't require the path afterwards.
+		 * So executableJarPath can be freed after that usage.
+		 */
+		j9mem_free_memory(executableJarPath);
+	}
+#endif /* defined(WIN32) */
 
 	return result;
 }
