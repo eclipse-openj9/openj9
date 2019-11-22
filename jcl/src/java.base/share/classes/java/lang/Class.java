@@ -4592,20 +4592,25 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 		 */
 		return new Class<?>[] { this };
 	}
-	SecurityManager securityManager = System.getSecurityManager();
-	if (securityManager != null) {
-		/* All classes in a nest must be in the same runtime package and therefore same classloader */
-		ClassLoader nestMemberClassLoader = this.internalGetClassLoader();
-		ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
-		if (!doesClassLoaderDescendFrom(nestMemberClassLoader, callerClassLoader)) {
-			String nestMemberPackageName = this.getPackageName();
-			if ((nestMemberPackageName != null) && (nestMemberPackageName != "")) {
-				securityManager.checkPackageAccess(nestMemberPackageName);
+
+	Class<?>[] members = getNestMembersImpl();
+	/* Skip security check for the Class object that belongs to the nest consisting only of itself */
+	if (members.length > 1) {
+		SecurityManager securityManager = System.getSecurityManager();
+		if (securityManager != null) {
+			/* All classes in a nest must be in the same runtime package and therefore same classloader */
+			ClassLoader nestMemberClassLoader = this.internalGetClassLoader();
+			ClassLoader callerClassLoader = ClassLoader.getCallerClassLoader();
+			if (!doesClassLoaderDescendFrom(nestMemberClassLoader, callerClassLoader)) {
+				String nestMemberPackageName = this.getPackageName();
+				if ((nestMemberPackageName != null) && (nestMemberPackageName != "")) { //$NON-NLS-1$
+					securityManager.checkPackageAccess(nestMemberPackageName);
+				}
 			}
 		}
 	}
 
-	return getNestMembersImpl();
+	return members;
 }
 /*[ENDIF] Java11 */
 
