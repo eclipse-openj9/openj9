@@ -880,11 +880,15 @@ private synchronized static String newName() {
  *
  * @deprecated	Used with deprecated method Thread.suspend().
  */
-/*[IF Sidecar19-SE]*/
+/*[IF Java11]*/
+/*[IF Java14]*/
+@Deprecated(forRemoval=true, since="1.2")
+/*[ELSE] Java14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ELSE]*/
+/*[ENDIF] Java14 */
+/*[ELSE] Java11 */
 @Deprecated
-/*[ENDIF]*/
+/*[ENDIF] Java11 */
 public final void resume() {
 	checkAccess();
 	synchronized(lock) {
@@ -1201,11 +1205,15 @@ private native void stopImpl(Throwable throwable);
  *
  * @deprecated May cause deadlocks.
  */
-/*[IF Sidecar19-SE]*/
+/*[IF Java11]*/
+/*[IF Java14]*/
+@Deprecated(forRemoval=true, since="1.2")
+/*[ELSE] Java14 */
 @Deprecated(forRemoval=false, since="1.2")
-/*[ELSE]*/
+/*[ENDIF] Java14 */
+/*[ELSE] Java11 */
 @Deprecated
-/*[ENDIF]*/
+/*[ENDIF] Java11 */
 public final void suspend() { 
 	checkAccess();
 	/*[PR 106321]*/
