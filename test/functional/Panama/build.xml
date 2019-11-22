@@ -44,7 +44,7 @@
 		<mkdir dir="${build}"/>
 		<copy todir="${DEST}">
 			<fileset dir="${TEST_ROOT}/functional/Panama" includes="libpanamatest.so" />
-			<fileset dir="${TEST_ROOT}/TestConfig/lib" includes="panamatest.jar" />
+			<fileset dir="${LIB_DIR}" includes="panamatest.jar" />
 		</copy>
 	</target>
 
@@ -59,8 +59,8 @@
 				<src path="${src}"/>
 				<src path="${transformerListener}" />
 				<classpath>
-					<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
-					<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
+					<pathelement location="${LIB_DIR}/testng.jar"/>
+					<pathelement location="${LIB_DIR}/jcommander.jar"/>
 					<pathelement location="${DEST}/panamatest.jar"/>
 				</classpath>
 		</javac>

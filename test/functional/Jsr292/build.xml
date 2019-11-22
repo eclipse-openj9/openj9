@@ -65,8 +65,8 @@
 			<include name="**/indyn/SimpleIndyGenerator.java" />
 			<include name="**/CrossPackageHelper.java"/>
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/junit4.jar" />
+				<pathelement location="${LIB_DIR}/asm-all.jar" />
+				<pathelement location="${LIB_DIR}/junit4.jar" />
 			</classpath>
 		</javac>
 	</target>
@@ -77,7 +77,7 @@
 		<java classname="com.ibm.j9.jsr292.indyn.SimpleIndyGenerator" failonerror="true" fork="true" logError="true" 
 				jvm="${javaexecutable.java}">
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+				<pathelement location="${LIB_DIR}/asm-all.jar" />
 				<pathelement location="${build}"/>
 			</classpath>
 		</java>
@@ -91,7 +91,7 @@
 		<java classname="com.ibm.j9.jsr292.indyn.ComplexIndyGenerator" failonerror="true" fork="true" logError="true" 
 				jvm="${javaexecutable.java}">
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
+				<pathelement location="${LIB_DIR}/asm-all.jar" />
 				<pathelement location="${build}"/>
 			</classpath>
 		</java>
@@ -180,10 +180,10 @@
 					<exclude name="**/attachAPI/**" />
 					<classpath>
 						<pathelement location="${bootstrapBuild}"/>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/junit4.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
+						<pathelement location="${LIB_DIR}/asm-all.jar" />
+						<pathelement location="${LIB_DIR}/junit4.jar" />
+						<pathelement location="${LIB_DIR}/testng.jar"/>
+						<pathelement location="${LIB_DIR}/jcommander.jar"/>
 					</classpath>
 				</javac>
 			</then>
@@ -201,10 +201,10 @@
 					<exclude name="**/attachAPI/**" />
 					<classpath>
 						<pathelement location="${bootstrapBuild}"/>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-all.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/junit4.jar" />
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
+						<pathelement location="${LIB_DIR}/asm-all.jar" />
+						<pathelement location="${LIB_DIR}/junit4.jar" />
+						<pathelement location="${LIB_DIR}/testng.jar"/>
+						<pathelement location="${LIB_DIR}/jcommander.jar"/>
 					</classpath>
 				</javac>
 			</else>

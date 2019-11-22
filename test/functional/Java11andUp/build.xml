@@ -56,7 +56,7 @@
 			<include name="**/condy/BootstrapMethods.java" />
 			<include name="**/condy/CondyGenerator.java" />
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-7.2.jar" />
+				<pathelement location="${LIB_DIR}/asm-7.2.jar" />
 			</classpath>
 		</javac>
 	</target>
@@ -67,7 +67,7 @@
 		<java classname="org.openj9.test.condy.CondyGenerator" fork="true" failonerror="true" logError="true" jvm="${javaexecutable.java}">
 			<jvmarg value="-Xverify:none" />
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-7.2.jar" />
+				<pathelement location="${LIB_DIR}/asm-7.2.jar" />
 				<pathelement location="${build}" />
 			</classpath>
 		</java>
@@ -92,9 +92,9 @@
 			<src path="${transformerListener}" />
 			<compilerarg line="--add-exports java.base/jdk.internal.reflect=ALL-UNNAMED --add-exports java.base/openj9.internal.tools.attach.target=ALL-UNNAMED" />
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar"/>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar"/>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/asm-7.2.jar" />
+				<pathelement location="${LIB_DIR}/testng.jar"/>
+				<pathelement location="${LIB_DIR}/jcommander.jar"/>
+				<pathelement location="${LIB_DIR}/asm-7.2.jar" />
 				<pathelement location="${build}" />
 			</classpath>
 		</javac>

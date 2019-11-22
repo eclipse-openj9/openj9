@@ -58,7 +58,7 @@
 					<src path="${src_80}" />
 					<src path="${transformerListener}" />
 					<classpath>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+						<pathelement location="${LIB_DIR}/testng.jar" />
 					</classpath>
 				</javac>
 			</then>
@@ -68,7 +68,7 @@
 					<src path="${transformerListener}" />
 					<compilerarg line='--add-exports java.base/jdk.internal.misc=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED' />
 					<classpath>
-						<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
+						<pathelement location="${LIB_DIR}/testng.jar" />
 					</classpath>
 				</javac>
 			</else>

@@ -53,8 +53,8 @@
 			<src path="${src}" />
 			<src path="${transformerListener}" />
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/testng.jar" />
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/jcommander.jar" />
+				<pathelement location="${LIB_DIR}/testng.jar" />
+				<pathelement location="${LIB_DIR}/jcommander.jar" />
 			</classpath>
 		</javac>
 	</target>
