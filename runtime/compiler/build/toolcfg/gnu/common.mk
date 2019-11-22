@@ -141,10 +141,6 @@ ifeq ($(HOST_ARCH),x)
 
     ifneq ($(JITSERVER_SUPPORT),)
         CX_DEFINES+=JITSERVER_SUPPORT
-
-        ifneq ($(JITSERVER_ENABLE_SSL),)
-            CX_DEFINES+=JITSERVER_ENABLE_SSL
-        endif
     endif
 endif
 
@@ -167,6 +163,10 @@ ifeq ($(HOST_ARCH),p)
         CX_DEFINES+=ENABLE_SPMD_SIMD
         CX_FLAGS+=-qaltivec -qarch=pwr7 -qtune=pwr7
     endif
+
+    ifneq ($(JITSERVER_SUPPORT),)
+        CX_DEFINES+=JITSERVER_SUPPORT
+    endif
 endif
 
 ifeq ($(HOST_ARCH),z)
@@ -184,10 +184,6 @@ ifeq ($(HOST_ARCH),z)
 
     ifneq ($(JITSERVER_SUPPORT),)
         CX_DEFINES+=JITSERVER_SUPPORT
-
-        ifneq ($(JITSERVER_ENABLE_SSL),)
-            CX_DEFINES+=JITSERVER_ENABLE_SSL
-        endif
     endif
 endif
 
@@ -532,30 +528,20 @@ ifneq ($(JITSERVER_SUPPORT),)
     SOLINK_SLINK_STATIC=-l:libprotobuf.a
     CXX_DEFINES+=GOOGLE_PROTOBUF_NO_RTTI
 
-    ifneq ($(JITSERVER_ENABLE_SSL),)
-        SOLINK_SLINK+=ssl
+    SOLINK_SLINK+=ssl
 
-        ifneq ($(OPENSSL_CFLAGS),)
-            ADD_OPENSSL_CFLAGS=false
-            # --with-openssl=system, OPENSSL_LIBS looks like "-L/path/to/system/openssllib -lssl -lcrypto"
-            ifneq ($(OPENSSL_LIBS),)
-                SOLINK_LIBPATH+=$(subst -L,,$(firstword $(OPENSSL_LIBS)))
-                ADD_OPENSSL_CFLAGS=true
-            # --with-openssl=fetched --enable-openssl-bundling
-            else ifneq ($(OPENSSL_BUNDLE_LIB_PATH),)
-                SOLINK_LIBPATH+=$(OPENSSL_BUNDLE_LIB_PATH)
-                SOLINK_FLAGS+=-Wl,-rpath,\$$ORIGIN/..
-                ADD_OPENSSL_CFLAGS=true
-            # --with-openssl=fetched only
-            else ifneq ($(OPENSSL_DIR),)
-                SOLINK_LIBPATH+=$(OPENSSL_DIR)
-                ADD_OPENSSL_CFLAGS=true
-            endif
+    ifneq ($(OPENSSL_CFLAGS),)
+        C_FLAGS+=$(OPENSSL_CFLAGS)
+        CXX_FLAGS+=$(OPENSSL_CFLAGS)
+    endif
 
-            ifeq (true, $(ADD_OPENSSL_CFLAGS))
-                C_INCLUDES+=$(subst -I,,$(OPENSSL_CFLAGS))
-                CXX_INCLUDES+=$(subst -I,,$(OPENSSL_CFLAGS))
-            endif
-        endif # OPENSSL_CFLAGS
-    endif # JITSERVER_ENABLE_SSL
+    # --with-openssl=fetched --enable-openssl-bundling
+    ifneq ($(OPENSSL_BUNDLE_LIB_PATH),)
+        SOLINK_SLINK+=crypto
+        SOLINK_LIBPATH+=$(OPENSSL_BUNDLE_LIB_PATH)
+        SOLINK_FLAGS+=-Wl,-rpath,\$$ORIGIN/..
+    # --with-openssl=fetched only
+    else ifneq ($(OPENSSL_DIR),)
+        SOLINK_LIBPATH+=$(OPENSSL_DIR)
+    endif
 endif # JITSERVER_SUPPORT
