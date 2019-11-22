@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +49,12 @@ MM_VerboseEventMetronomeOutOfMemory::initialize(MM_OutOfMemoryEvent *event)
 {
 	OMRPORT_ACCESS_FROM_OMRVMTHREAD(_omrThread);
 	_timeInMilliSeconds = omrtime_current_time_millis();
-	strncpy(_memorySpaceString, event->memorySpaceString, 64);
+	size_t stringLength = strlen(event->memorySpaceString);
+	if (stringLength > sizeof(_memorySpaceString) - 1) {
+		stringLength = sizeof(_memorySpaceString) - 1;
+	}
+	memcpy(_memorySpaceString, event->memorySpaceString, stringLength);
+	_memorySpaceString[stringLength] = '\0';
 }
 
 /**
@@ -74,9 +78,9 @@ MM_VerboseEventMetronomeOutOfMemory::formattedOutput(MM_VerboseOutputAgent *agen
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(_omrThread->_vm);
 	MM_VerboseManagerBase *manager = extensions->verboseGCManager;
 	char timestamp[32];
-	
+
 	omrstr_ftime(timestamp, sizeof(timestamp), VERBOSEGC_DATE_FORMAT, _timeInMilliSeconds);
-	
+
 	agent->formatAndOutput(static_cast<J9VMThread*>(_omrThread->_language_vmthread), manager->getIndentLevel(), "<event details=\"out of memory\" timestamp=\"%s\" memoryspace=\"%s\" J9MemorySpace=\"0x%p\" />",
 		timestamp,
 		_memorySpaceString,
