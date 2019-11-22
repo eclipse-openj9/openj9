@@ -26,6 +26,7 @@ JIT_PRODUCT_BACKEND_SOURCES+= \
     omr/compiler/aarch64/codegen/ARM64OutOfLineCodeSection.cpp \
     omr/compiler/aarch64/codegen/ARM64SystemLinkage.cpp \
     omr/compiler/aarch64/codegen/BinaryEvaluator.cpp \
+    omr/compiler/aarch64/codegen/ConstantDataSnippet.cpp \
     omr/compiler/aarch64/codegen/ControlFlowEvaluator.cpp \
     omr/compiler/aarch64/codegen/FPTreeEvaluator.cpp \
     omr/compiler/aarch64/codegen/GenerateInstructions.cpp \
