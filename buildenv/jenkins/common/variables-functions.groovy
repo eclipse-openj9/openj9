@@ -42,8 +42,8 @@ class Buildspec {
 
     /* perform a repeated map lookup of a given '.' separated name in my def
      * eg. getNestedField('foo.bar.baz') is equivilent to
-     * my_def['foo']['bar']['baz'], with the added benefirt that if any lookup
-     * along the path fails, null is returned rather than trhowing an exception
+     * my_def['foo']['bar']['baz'], with the added benefit that if any lookup
+     * along the path fails, null is returned rather than throwing an exception
      */
     private getNestedField(String full_name){
         def names = full_name.split("\\.")

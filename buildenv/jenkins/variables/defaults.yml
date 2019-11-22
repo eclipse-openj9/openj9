@@ -87,14 +87,39 @@ restart_timeout:
   units: 'HOURS'
 tests_targets:
   sanity:
-    ? sanity.functional
+    - sanity.functional
   extended:
-    ? extended.functional
+    - extended.functional
   default: &defaultTests
-    ? extended.functional
-    ? extended.system
-    ? sanity.functional
-    ? sanity.system
+    - extended.functional
+    - extended.system
+    - sanity.functional
+    - sanity.system
+#========================================#
+# Large heap build
+#========================================#
+largeheap:
+  extra_configure_options: '--with-noncompressedrefs'
+#========================================#
+# Build with cmake
+#========================================#
+cmake:
+  extra_configure_options:
+    all: '--with-cmake'
+    12: '--disable-ddr'
+    13: '--disable-ddr'
+    next: '--disable-ddr'
+  extra_make_options: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
+  build_env:
+    cmd:
+      8: 'source /opt/rh/devtoolset-7/enable'
+      11: 'source /opt/rh/devtoolset-7/enable'
+      12: 'source /opt/rh/devtoolset-7/enable'
+      13: 'source /opt/rh/devtoolset-7/enable'
+      next: 'source /opt/rh/devtoolset-7/enable'
+  excluded_tests:
+      - *defaultTests
+      - special.system
 #========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
@@ -141,58 +166,17 @@ ppc64le_linux:
       next: 'CC=gcc-7 CXX=g++-7'
   excluded_tests:
     13:
-      ? special.system
+      - special.system
 #========================================#
 # Linux PPCLE 64bits Large Heap
 #========================================#
 ppc64le_linux_xl:
-  boot_jdk:
-    8: '/usr/lib/jvm/adoptojdk-java-80'
-    11: '/usr/lib/jvm/adoptojdk-java-11'
-    12: '/usr/lib/jvm/adoptojdk-java-11'
-    13: '/usr/lib/jvm/adoptojdk-java-12'
-    next: '/usr/lib/jvm/adoptojdk-java-13'
-  release:
-    8: 'linux-ppc64le-normal-server-release'
-    11: 'linux-ppc64le-normal-server-release'
-    12: 'linux-ppc64le-server-release'
-    13: 'linux-ppc64le-server-release'
-    next: 'linux-ppc64le-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      11: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      12: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      13: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      next: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-  extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
-    12: '--openssl-version=1.1.1d'
-    13: '--openssl-version=1.1.1d'
-    next: '--openssl-version=1.1.1d'
-  extra_configure_options:
-    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
-    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
-    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
-    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
-    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
-  build_env:
-    vars:
-      8: 'CC=gcc-7 CXX=g++-7'
-      11: 'CC=gcc-7 CXX=g++-7'
-      12: 'CC=gcc-7 CXX=g++-7'
-      13: 'CC=gcc-7 CXX=g++-7'
-      next: 'CC=gcc-7 CXX=g++-7'
+  extends: ['ppc64le_linux', 'largeheap']
   excluded_tests:
     8:
-      ? special.system
+      - special.system
     11:
-      ? special.system
-    13:
-      ? special.system
+      - special.system
 #========================================#
 # Linux S390 64bits Compressed Pointers
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
@@ -241,62 +225,19 @@ s390x_linux:
     next: '--with-openssl=fetched'
   excluded_tests:
     11:
-      ? special.system
+      - special.system
     13:
-      ? special.system
+      - special.system
 #========================================#
 # Linux S390 64bits Large Heap
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
 # IBM 7 for the bootJDK or compiling corba will fail to find Object.
 #========================================#
 s390x_linux_xl:
-  boot_jdk:
-    8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
-    11: '/usr/lib/jvm/adoptojdk-java-11'
-    12: '/usr/lib/jvm/adoptojdk-java-11'
-    13: '/usr/lib/jvm/adoptojdk-java-12'
-    next: '/usr/lib/jvm/adoptojdk-java-13'
-  release:
-    8: 'linux-s390x-normal-server-release'
-    11: 'linux-s390x-normal-server-release'
-    12: 'linux-s390x-server-release'
-    13: 'linux-s390x-server-release'
-    next: 'linux-s390x-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      11: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      12: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      13: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      next: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-  build_env:
-    vars:
-      8: 'CC=gcc-7 CXX=g++-7'
-      11: 'CC=gcc-7 CXX=g++-7'
-      12: 'CC=gcc-7 CXX=g++-7'
-      13: 'CC=gcc-7 CXX=g++-7'
-      next: 'CC=gcc-7 CXX=g++-7'
-  extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
-    12: '--openssl-version=1.1.1d'
-    13: '--openssl-version=1.1.1d'
-    next: '--openssl-version=1.1.1d'
-  extra_configure_options:
-    8: '--with-noncompressedrefs --with-openssl=fetched'
-    11: '--with-noncompressedrefs --with-openssl=fetched'
-    12: '--with-noncompressedrefs --with-openssl=fetched'
-    13: '--with-noncompressedrefs --with-openssl=fetched'
-    next: '--with-noncompressedrefs --with-openssl=fetched'
+  extends: ['s390x_linux', 'largeheap']
   excluded_tests:
     8:
-      ? special.system
-    11:
-      ? special.system
-    13:
-      ? special.system
+      - special.system
 #========================================#
 # AIX PPC 64bits Compressed Pointers
 #========================================#
@@ -343,11 +284,11 @@ ppc64_aix:
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
   excluded_tests:
     11:
-      ? special.system
+      - special.system
     12:
-      ? special.system
+      - special.system
     13:
-      ? special.system
+      - special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
@@ -394,145 +335,24 @@ x86-64_linux:
       next: 'source /opt/rh/devtoolset-7/enable'
   excluded_tests:
     11:
-      ? special.system
+      - special.system
     12:
-      ? special.system
+      - special.system
     13:
-      ? special.system
+      - special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers /w CMake
 #========================================#
 x86-64_linux_cm:
-  boot_jdk:
-    8: '/usr/lib/jvm/jdk-7'
-    11: '/usr/lib/jvm/jdk-11'
-    12: '/usr/lib/jvm/jdk-11'
-    13: '/usr/lib/jvm/adoptojdk-java-12'
-    next: '/usr/lib/jvm/adoptojdk-java-13'
-  release:
-    8: 'linux-x86_64-normal-server-release'
-    11: 'linux-x86_64-normal-server-release'
-    12: 'linux-x86_64-server-release'
-    13: 'linux-x86_64-server-release'
-    next: 'linux-x86_64-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      11: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      12: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      13: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      next: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-  extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
-    12: '--openssl-version=1.1.1d'
-    13: '--openssl-version=1.1.1d'
-    next: '--openssl-version=1.1.1d'
-  extra_configure_options:
-    8: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
-    11: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
-    12: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
-    13: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
-    next: '--with-cmake --enable-cuda --with-cuda=/usr/local/cuda-9.0 --disable-ddr --with-openssl=fetched'
-  extra_make_options:
-    8: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
-    11: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
-    12: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
-    13: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
-    next: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
-  build_env:
-    cmd:
-      8: 'source /opt/rh/devtoolset-7/enable'
-      11: 'source /opt/rh/devtoolset-7/enable'
-      12: 'source /opt/rh/devtoolset-7/enable'
-      13: 'source /opt/rh/devtoolset-7/enable'
-      next: 'source /opt/rh/devtoolset-7/enable'
-  excluded_tests:
-    8:
-      <<: *defaultTests
-      ? special.system
-    11:
-      <<: *defaultTests
-      ? special.system
-    12:
-      <<: *defaultTests
-      ? special.system
-    13:
-      <<: *defaultTests
-      ? special.system
-    next:
-      <<: *defaultTests
-      ? special.system
+  extends: ['x86-64_linux', 'cmake']
 #========================================#
 # Linux x86 64bits Large Heap
 #========================================#
 x86-64_linux_xl:
-  boot_jdk:
-    8: '/usr/lib/jvm/jdk-7'
-    11: '/usr/lib/jvm/jdk-11'
-    12: '/usr/lib/jvm/jdk-11'
-    13: '/usr/lib/jvm/adoptojdk-java-12'
-    next: '/usr/lib/jvm/adoptojdk-java-13'
-  release:
-    8: 'linux-x86_64-normal-server-release'
-    11: 'linux-x86_64-normal-server-release'
-    12: 'linux-x86_64-server-release'
-    13: 'linux-x86_64-server-release'
-    next: 'linux-x86_64-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      11: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      12: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      13: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      next: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-  extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
-    12: '--openssl-version=1.1.1d'
-    13: '--openssl-version=1.1.1d'
-    next: '--openssl-version=1.1.1d'
-  extra_configure_options:
-    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
-    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
-    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
-    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
-    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
-  build_env:
-    cmd:
-      8: 'source /opt/rh/devtoolset-7/enable'
-      11: 'source /opt/rh/devtoolset-7/enable'
-      12: 'source /opt/rh/devtoolset-7/enable'
-      13: 'source /opt/rh/devtoolset-7/enable'
-      next: 'source /opt/rh/devtoolset-7/enable'
+  extends: ['x86-64_linux', 'largeheap']
   excluded_tests:
     8:
-      ? special.system
-    11:
-      ? special.system
-    12:
-      ? special.system
-    13:
-      ? special.system
-#========================================#
-# Linux Aarch 64bits Large Heap
-#========================================#
-aarch64_linux_xl:
-  boot_jdk:
-    11: '/usr/lib/jvm/adoptojdk-java-11'
-  release:
-    11: 'linux-aarch64-normal-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  extra_configure_options:
-    11: '--with-noncompressedrefs'
-  node_labels:
-    build:
-      11: 'ci.role.build && hw.arch.aarch64 && sw.os.cent.7'
+      - special.system
 #========================================#
 # Linux Aarch 64bits Compressed Pointers
 #========================================#
@@ -546,6 +366,11 @@ aarch64_linux:
   node_labels:
     build:
       11: 'ci.role.build && hw.arch.aarch64 && sw.os.cent.7'
+#========================================#
+# Linux Aarch 64bits Large Heap
+#========================================#
+aarch64_linux_xl:
+  extends: ['aarch64_linux', 'largeheap']
 #========================================#
 # Windows x86 64bits Compressed Pointers
 #========================================#
@@ -586,60 +411,18 @@ x86-64_windows:
       next: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
   excluded_tests:
     8:
-      ? special.system
+      - special.system
     11:
-      ? special.system
+      - special.system
     12:
-      ? special.system
+      - special.system
     13:
-      ? special.system
+      - special.system
 #========================================#
 # Windows x86 64bits Large Heap
 #========================================#
 x86-64_windows_xl:
-  boot_jdk:
-    8: '/cygdrive/c/openjdk/jdk7'
-    11: '/cygdrive/c/openjdk/jdk11'
-    12: '/cygdrive/c/openjdk/jdk11'
-    13: '/cygdrive/c/openjdk/jdk12'
-    next: '/cygdrive/c/openjdk/jdk13'
-  release:
-    8: 'windows-x86_64-normal-server-release'
-    11: 'windows-x86_64-normal-server-release'
-    12: 'windows-x86_64-server-release'
-    13: 'windows-x86_64-server-release'
-    next: 'windows-x86_64-server-release'
-  freemarker: '/cygdrive/c/openjdk/freemarker.jar'
-  openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
-  extra_configure_options:
-    8: '--with-noncompressedrefs --with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-    11: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-    12: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
-    13: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-    next: '--with-noncompressedrefs --with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-  node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-      11: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-      12: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-      13: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-      next: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-  build_env:
-    vars:
-      8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-      11: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-      12: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-      13: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-      next: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-  excluded_tests:
-    8:
-      ? special.system
-    11:
-      ? special.system
-    12:
-      ? special.system
-    13:
-      ? special.system
+  extends: ['x86-64_windows', 'largeheap']
 #========================================#
 # Windows x86 32bits
 #========================================#
@@ -660,13 +443,13 @@ x86-32_windows:
       8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM32/bin:/cygdrive/c/openjdk/nasm-2.13.03'
   excluded_tests:
     8:
-      ? special.system
+      - special.system
     11:
-      ? special.system
+      - special.system
     12:
-      ? special.system
+      - special.system
     13:
-      ? special.system
+      - special.system
 #========================================#
 # OSX x86 64bits Compressed Pointers
 #========================================#
@@ -709,57 +492,16 @@ x86-64_mac:
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
   excluded_tests:
     11:
-      ? special.system
+      - special.system
     12:
-      ? special.system
+      - special.system
     13:
-      ? special.system
+      - special.system
 #========================================#
 # OSX x86 64bits Large Heap
 #========================================#
 x86-64_mac_xl:
-  boot_jdk:
-    8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
-    11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
-    12: '/Users/jenkins/bootjdks/adoptojdk-java-11'
-    13: '/Users/jenkins/bootjdks/adoptojdk-java-12'
-    next: '/Users/jenkins/bootjdks/adoptojdk-java-13'
-  release:
-    8: 'macosx-x86_64-normal-server-release'
-    11: 'macosx-x86_64-normal-server-release'
-    12: 'macosx-x86_64-server-release'
-    13: 'macosx-x86_64-server-release'
-    next: 'macosx-x86_64-server-release'
-  extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
-    12: '--openssl-version=1.1.1d'
-    13: '--openssl-version=1.1.1d'
-    next: '--openssl-version=1.1.1d'
-  extra_configure_options:
-    8: '--with-noncompressedrefs --with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer --with-openssl=fetched --enable-openssl-bundling'
-    11: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
-    12: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
-    13: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
-    next: '--with-noncompressedrefs --with-openssl=fetched --enable-openssl-bundling'
-  freemarker: '/Users/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_11'
-      11: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
-      12: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
-      13: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
-      next: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
-  build_env:
-    vars:
-      8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
+  extends: ['x86-64_mac', 'largeheap']
   excluded_tests:
     8:
-      ? special.system
-    11:
-      ? special.system
-    12:
-      ? special.system
-    13:
-      ? special.system
+      - special.system
