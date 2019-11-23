@@ -27,7 +27,13 @@ ZZ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR
 ZZ GPL-2.0 WITH Classpath-exception-2.0 OR
 ZZ LicenseRef-GPL-2.0 WITH Assembly-exception
 
-changequote({,})dnl
+ZZ ===================================================================
+ZZ jilvalues.m4 is a j9 m4 include that defines offsets of various
+ZZ fields in structs used by jit
+ZZ Note that it changes the quoting style to use { and }
+ZZ ===================================================================
+
+include(`jilvalues.m4')dnl
 
 ifdef({J9ZOS390},{dnl
 
@@ -43,13 +49,6 @@ VALPROF#START      AMODE 31
 })dnl
 
 define({VALPROF_M4},{1})
-
-ZZ ===================================================================
-ZZ codert/jilconsts.inc is a j9 assembler include that defines
-ZZ offsets of various fields in structs used by jit
-ZZ ===================================================================
-
-include({jilconsts.inc})dnl
 
 
 include({z/runtime/s390_macros.inc})dnl
@@ -70,7 +69,7 @@ SETVAL(PVFPSize,0)
 SETVAL(PVFPSize,8*DblLen)
 })dnl
 
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
 SETVAL(PVGPRSize,27*PTR_SIZE)
 },{dnl
 SETVAL(PVGPRSize,11*PTR_SIZE)
@@ -506,7 +505,7 @@ START_FUNC(_jitProfileValueWrap,_jitPVW)
 
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,44(J9SP)
 })dnl
 ifdef({J9_SOFT_FLOAT},{dnl
@@ -552,7 +551,7 @@ ZZ do nothing
     LD f7,ProfileVFPSlot7(J9SP)
 })dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,44(J9SP)
 })dnl
     AHI_GPR J9SP,ProfileValueStackSize
@@ -564,7 +563,7 @@ ZZ ------------------------------------------
 START_FUNC(_jitProfileAddressWrap,_jitPAW)
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,44(J9SP)
 })dnl
 ifdef({J9_SOFT_FLOAT},{dnl
@@ -611,7 +610,7 @@ ZZ do nothing
     LD f7,ProfileVFPSlot7(J9SP)
 })dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,44(J9SP)
 })dnl
     AHI_GPR J9SP,ProfileValueStackSize
@@ -623,7 +622,7 @@ ZZ ------------------------------------------
 START_FUNC(_jitProfileLongValueWrap,_jitPLW)
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,44(J9SP)
 })dnl
 ifdef({J9_SOFT_FLOAT},{dnl
@@ -669,7 +668,7 @@ ZZ do nothing
     LD f7,ProfileVFPSlot7(J9SP)
 })dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,44(J9SP)
 })dnl
     AHI_GPR J9SP,ProfileValueStackSize
@@ -681,7 +680,7 @@ ZZ ------------------------------------------
 START_FUNC(_jitProfileBigDecimalValueWrap,_jitPBDW)
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,44(J9SP)
 })dnl
 ifdef({J9_SOFT_FLOAT},{dnl
@@ -727,7 +726,7 @@ ZZ do nothing
     LD f7,ProfileVFPSlot7(J9SP)
 })dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,44(J9SP)
 })dnl
     AHI_GPR J9SP,ProfileValueStackSize
@@ -739,7 +738,7 @@ ZZ ------------------------------------------
 START_FUNC(_jitProfileStringValueWrap,_jitPSW)
     AHI_GPR J9SP,-ProfileValueStackSize
     STM_GPR r5,r15,0(J9SP)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,44(J9SP)
 })dnl
 ifdef({J9_SOFT_FLOAT},{dnl
@@ -785,7 +784,7 @@ ZZ do nothing
     LD f7,ProfileVFPSlot7(J9SP)
 })dnl
     LM_GPR r5,r15,0(J9SP)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,44(J9SP)
 })dnl
     AHI_GPR J9SP,ProfileValueStackSize
