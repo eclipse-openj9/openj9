@@ -423,12 +423,6 @@ endif
   </#if>
 </#if>
 
-<#if uma.spec.processor.s390>
-  ifdef j9vm_jit_32bitUses64bitRegisters
-    UMA_M4_FLAGS += -DJ9VM_JIT_32BIT_USES64BIT_REGISTERS
-  endif
-</#if>
-
 <#if uma.spec.processor.arm>
 $(patsubst %.s,%.o,$(filter %.s,$(UMA_FILES_TO_PREPROCESS))) : %$(UMA_DOT_O) : %.s
 	sed -f $(UMA_PATH_TO_ROOT)compiler/build/scripts/armasm2gas.sed $*.s > $*.S

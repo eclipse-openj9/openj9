@@ -146,7 +146,7 @@ SETVAL(eq_picreg_inInterfaceSnippetSingleDynamicSlot,33)
 
 })dnl
 
-ifdef({J9VM_JIT_FREE_SYSTEM_STACK_POINTER},{dnl
+ifdef({ASM_J9VM_JIT_FREE_SYSTEM_STACK_POINTER},{dnl
 SETVAL(eq_j9vmthr_ssp,J9TR_VMThread_systemStackPointer)
 })dnl
 
@@ -444,7 +444,7 @@ ZZ ============================================================
 
 define(SaveSSP,
 {dnl
-ifdef({J9VM_JIT_FREE_SYSTEM_STACK_POINTER},{dnl
+ifdef({ASM_J9VM_JIT_FREE_SYSTEM_STACK_POINTER},{dnl
      ST_GPR  r4,eq_j9vmthr_ssp(r13)
 },{dnl
 })dnl
@@ -457,7 +457,7 @@ ZZ ========================================================  #
 
 define(RestoreSSP,
 {dnl
-ifdef({J9VM_JIT_FREE_SYSTEM_STACK_POINTER},{dnl
+ifdef({ASM_J9VM_JIT_FREE_SYSTEM_STACK_POINTER},{dnl
      L_GPR  r4,eq_j9vmthr_ssp(r13)
      xc  eq_j9vmthr_ssp(PTR_SIZE,r13),eq_j9vmthr_ssp(r13)
 },{dnl
@@ -473,7 +473,7 @@ ZZ ============================================================
 define(SaveRegs,
 {dnl
 
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
      AHI_GPR  r5,-(32*PTR_SIZE)
      STM_GPR  r0,r15,0(r5)            # save all registers
      STMH_GPR  r0,r15,64(r5)  # save all hi regs (16*4)
@@ -496,7 +496,7 @@ define(RestoreRegs,
 {dnl
 
      ST_GPR   r5,(5*PTR_SIZE)(r5)     # store the new J9SP
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
      LMH_GPR  r0,r15,64(r5) # restore all hi regs (16*4)
      LM_GPR   r0,r15,0(r5)            # restore all registers
      AHI_GPR  r5,(32*PTR_SIZE)
@@ -540,7 +540,7 @@ define(MTComputeStaticAddress,{dnl
     NILH    r2,0                      # get col index
     SLLG    r2,r2,0(r1)               # col offset, data size
 
-ifdef({OMR_GC_COMPRESSED_POINTERS},{dnl
+ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
     LGR     r14,r0                    # restore r14
     LG      r1,28(,r14)               # load CP word
     SRLG    r1,r1,8                   # shift amount

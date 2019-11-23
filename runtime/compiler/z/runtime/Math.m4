@@ -28,7 +28,13 @@ ZZ GPL-2.0 WITH Classpath-exception-2.0 OR
 ZZ LicenseRef-GPL-2.0 WITH Assembly-exception
 
 
-changequote({,})dnl
+ZZ ===================================================================
+ZZ jilvalues.m4 is a j9 m4 include that defines offsets of various
+ZZ fields in structs used by jit
+ZZ Note that it changes the quoting style to use { and }
+ZZ ===================================================================
+
+include(`jilvalues.m4')dnl
 
 ifdef({J9ZOS390},{dnl
 
@@ -44,13 +50,6 @@ MATH#START      AMODE 31
 })dnl
 
 define({MATH_M4},{1})
-
-ZZ ===================================================================
-ZZ codert/jilconsts.inc is a j9 assembler include that defines
-ZZ offsets of various fields in structs used by jit
-ZZ ===================================================================
-
-include({jilconsts.inc})dnl
 
 
 include({z/runtime/s390_macros.inc})dnl
@@ -722,7 +721,7 @@ LABEL(LDIVExit)
     END_FUNC(_longDivide,_LDIV,7)
 
 SETVAL(rdsa,5)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
 SETVAL(dsaSize,32*PTR_SIZE)
 },{dnl
 SETVAL(dsaSize,16*PTR_SIZE)
@@ -739,7 +738,7 @@ ZZ
     ST_GPR   r14,PTR_SIZE(,rdsa)
     AHI_GPR  rdsa,-dsaSize
     STM_GPR  r0,r15,0(rdsa)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,64(rdsa)
 })dnl
 
@@ -769,7 +768,7 @@ ifdef({TR_HOST_64BIT},{dnl
 
     LR_GPR  rdsa,r8 #restore dsa from r8
     LM_GPR r0,r15,0(rdsa)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,64(rdsa)
 })dnl
     AHI_GPR rdsa,dsaSize
@@ -789,7 +788,7 @@ ZZ
     ST_GPR   r14,PTR_SIZE(,rdsa)
     AHI_GPR  rdsa,-dsaSize
     STM_GPR  r0,r15,0(rdsa)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     STMH_GPR r0,r15,64(rdsa)
 })dnl
 
@@ -821,7 +820,7 @@ ZZ load up the C Environment addr into r5 and Entry point in R6
 
     LR_GPR  rdsa,r8
     LM_GPR r0,r15,0(rdsa)
-ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
+ifdef({ASM_J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
     LMH_GPR r0,r15,64(rdsa)
 })dnl
     AHI_GPR rdsa,dsaSize
