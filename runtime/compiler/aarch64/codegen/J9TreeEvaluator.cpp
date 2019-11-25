@@ -68,7 +68,7 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    // TODO:ARM64: Enable when Implemented: tet[TR::BNDCHKwithSpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
    // TODO:ARM64: Enable when Implemented: tet[TR::SpineCHK] = TR::TreeEvaluator::BNDCHKwithSpineCHKEvaluator;
    tet[TR::ArrayStoreCHK] = TR::TreeEvaluator::ArrayStoreCHKEvaluator;
-   // TODO:ARM64: Enable when Implemented: tet[TR::ArrayCHK] = TR::TreeEvaluator::ArrayCHKEvaluator;
+   tet[TR::ArrayCHK] = TR::TreeEvaluator::ArrayCHKEvaluator;
    tet[TR::MethodEnterHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
    tet[TR::MethodExitHook] = TR::TreeEvaluator::conditionalHelperEvaluator;
    tet[TR::allocationFence] = TR::TreeEvaluator::flushEvaluator;
@@ -323,8 +323,172 @@ J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
       snippet->gcMap().setGCRegisterMask(0xffffffff);
       }
 
-   cg->evaluate(node->getFirstChild());
+TR::Register *
+J9::ARM64::TreeEvaluator::ArrayCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Register *obj1Reg = cg->evaluate(node->getFirstChild());
+   TR::Register *obj2Reg = cg->evaluate(node->getSecondChild());
+   TR::Register *tmp1Reg = cg->allocateRegister();
+   TR::Register *tmp2Reg = cg->allocateRegister();
+   TR::LabelSymbol *doneLabel = generateLabelSymbol(cg);
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(4, 4, cg->trMemory());
+   TR::Compilation* comp = cg->comp();
+   TR::LabelSymbol *snippetLabel;
+   TR::Instruction *gcPoint;
+   TR::Snippet *snippet;
+   bool isLong = TR::Compiler->target.is64Bit();
+
+   TR::addDependency(deps, obj1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, obj2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, tmp1Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, tmp2Reg, TR::RealRegister::NoReg, TR_GPR, cg);
+
+   // Same array, we are done.
+   generateCompareInstruction(cg, node, obj1Reg, obj2Reg);
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+
+   // If we know nothing about either object, test object1 first. It has to be an array.
+   if ((!node->isArrayChkPrimitiveArray1())
+         && (!node->isArrayChkReferenceArray1())
+         && (!node->isArrayChkPrimitiveArray2())
+         && (!node->isArrayChkReferenceArray2()))
+      {
+#ifdef OMR_GC_COMPRESSED_POINTERS
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, tmp1Reg,
+            new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg));
+#else
+      generateTrg1MemInstruction(cg, isLong ? TR::InstOpCode::ldrx : TR::InstOpCode::ldrw, node, tmp1Reg,
+            new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
+#endif
+      TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tmp1Reg);
+      generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, tmp1Reg,
+            new (cg->trHeapMemory()) TR::MemoryReference(tmp1Reg, offsetof(J9Class, classDepthAndFlags), cg));
+
+      loadConstant32(cg, node, J9AccClassRAMArray, tmp2Reg);
+      generateTrg1Src2Instruction(cg, TR::InstOpCode::andw, node, tmp2Reg, tmp1Reg, tmp2Reg);
+
+      generateCompareImmInstruction(cg, node, tmp2Reg, NULLVALUE);
+
+      snippetLabel = generateLabelSymbol(cg);
+      gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_EQ);
+      snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), doneLabel);
+      cg->addSnippet(snippet);
+      }
+
+   // One of the object is array. Test equality of two objects' classes.
+#ifdef OMR_GC_COMPRESSED_POINTERS
+   // must read only 32 bits
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, tmp2Reg,
+         new (cg->trHeapMemory()) TR::MemoryReference(obj2Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg));
+   generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, tmp1Reg,
+         new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg));
+#else
+   generateTrg1MemInstruction(cg, isLong ? TR::InstOpCode::ldrx : TR::InstOpCode::ldrw, node, tmp2Reg,
+         new (cg->trHeapMemory()) TR::MemoryReference(obj2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
+   generateTrg1MemInstruction(cg, isLong ? TR::InstOpCode::ldrx : TR::InstOpCode::ldrw, node, tmp1Reg,
+         new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
+#endif
+   TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tmp2Reg);
+   TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tmp1Reg);
+   generateCompareInstruction(cg, node, tmp1Reg, tmp2Reg);
+
+   // If either object is known to be of primitive component type,
+   // we are done: since both of them have to be of equal class.
+   if (node->isArrayChkPrimitiveArray1() || node->isArrayChkPrimitiveArray2())
+      {
+      if (NULL == snippetLabel)
+         {
+         snippetLabel = generateLabelSymbol(cg);
+         gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+         snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), doneLabel);
+         cg->addSnippet(snippet);
+         }
+      else
+         generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+      }
+   // We have to take care of the un-equal class situation: both of them must be of reference array
+   else
+      {
+      generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, doneLabel, TR::CC_EQ);
+
+      // Object1 must be of reference component type, otherwise throw exception
+      if (!node->isArrayChkReferenceArray1())
+         {
+
+         // Loading the Class Pointer -> classDepthAndFlags
+#ifdef OMR_GC_COMPRESSED_POINTERS
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, tmp1Reg,
+               new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg));
+#else
+         generateTrg1MemInstruction(cg, isLong ? TR::InstOpCode::ldrx : TR::InstOpCode::ldrw, node, tmp1Reg,
+               new (cg->trHeapMemory()) TR::MemoryReference(obj1Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
+#endif
+         TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tmp1Reg);
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, tmp1Reg,
+               new (cg->trHeapMemory()) TR::MemoryReference(tmp1Reg, offsetof(J9Class, classDepthAndFlags), cg));
+
+         // We need to perform a X & OBJECT_HEADER_SHAPE_MASK
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andimmw, node, tmp1Reg, tmp1Reg, OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift);
+         generateCompareImmInstruction(cg, node, tmp1Reg, OBJECT_HEADER_SHAPE_POINTERS << J9AccClassRAMShapeShift);
+
+         if (NULL == snippetLabel)
+            {
+            snippetLabel = generateLabelSymbol(cg);
+            gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+            snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), doneLabel);
+            cg->addSnippet(snippet);
+            }
+         else
+            generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+         }
+
+      // Object2 must be of reference component type array, otherwise throw exception
+      if (!node->isArrayChkReferenceArray2())
+         {
+#ifdef OMR_GC_COMPRESSED_POINTERS
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, tmp1Reg,
+               new (cg->trHeapMemory()) TR::MemoryReference(obj2Reg, (int32_t) TR::Compiler->om.offsetOfObjectVftField(), cg));
+#else
+         generateTrg1MemInstruction(cg, isLong ? TR::InstOpCode::ldrx : TR::InstOpCode::ldrw, node, tmp1Reg,
+               new (cg->trHeapMemory()) TR::MemoryReference(obj2Reg, TR::Compiler->om.offsetOfObjectVftField(), cg));
+#endif
+         TR::TreeEvaluator::generateVFTMaskInstruction(cg, node, tmp1Reg);
+         generateTrg1MemInstruction(cg, TR::InstOpCode::ldrw, node, tmp1Reg,
+               new (cg->trHeapMemory()) TR::MemoryReference(tmp1Reg, offsetof(J9Class, classDepthAndFlags), cg));
+
+         loadConstant32(cg, node, J9AccClassRAMArray, tmp2Reg);
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::andw, node, tmp2Reg, tmp1Reg, tmp2Reg);
+
+         TR::Instruction * i = generateCompareImmInstruction(cg, node, tmp2Reg, NULLVALUE);
+
+         if (NULL == snippetLabel)
+            {
+            snippetLabel = generateLabelSymbol(cg);
+            gcPoint = generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_EQ);
+            snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), doneLabel);
+            cg->addSnippet(snippet);
+            }
+         else
+            generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_EQ);
+
+         // We need to perform a X & OBJECT_HEADER_SHAPE_MASK
+         generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::andimmw, node, tmp2Reg, tmp2Reg, OBJECT_HEADER_SHAPE_MASK << J9AccClassRAMShapeShift);
+         generateCompareImmInstruction(cg, node, tmp2Reg, OBJECT_HEADER_SHAPE_POINTERS << J9AccClassRAMShapeShift);
+         generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, snippetLabel, TR::CC_NE);
+         }
+      }
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
+   if (NULL != snippetLabel)
+      {
+      gcPoint->ARM64NeedsGCMap(cg, 0x0);
+      snippet->gcMap().setGCRegisterMask(0x0);
+      }
+
+   cg->stopUsingRegister(tmp1Reg);
+   cg->stopUsingRegister(tmp2Reg);
    cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
    return NULL;
    }
 
