@@ -6580,7 +6580,7 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
    if (resolvedMethod == NULL)
       {
       if (unresolvedInCP)
-         handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
+         handleUnresolvedSpecialMethodInCP(cpIndex, unresolvedInCP);
       }
 
 #endif
