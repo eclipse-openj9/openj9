@@ -1235,6 +1235,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<platformRequirements>^spec.linux_390</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
@@ -1263,6 +1264,7 @@
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
+		<platformRequirements>^spec.linux_390</platformRequirements>
 		<levels>
 			<level>extended</level>
 		</levels>
