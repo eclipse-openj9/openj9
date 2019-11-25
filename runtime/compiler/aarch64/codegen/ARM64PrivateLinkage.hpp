@@ -24,6 +24,7 @@
 #define ARM64_PRIVATELINKAGE_INCL
 
 #include "codegen/Linkage.hpp"
+#include "codegen/LinkageConventionsEnum.hpp"
 #include "codegen/PrivateLinkage.hpp"
 
 #include "infra/Assert.hpp"
