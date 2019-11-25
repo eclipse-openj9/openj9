@@ -27,6 +27,7 @@
 #include "codegen/GCStackAtlas.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Machine.hpp"
+#include "il/ParameterSymbol.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
 
 uint8_t *
