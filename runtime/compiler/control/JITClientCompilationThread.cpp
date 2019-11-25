@@ -2398,12 +2398,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          {
          client->getRecvData<JITServer::Void>();
          auto table = (JITClientPersistentCHTable*)comp->getPersistentInfo()->getPersistentCHTable();
-         TR_OpaqueClassBlock *rootClass = fe->TR_J9VM::getSystemClassFromClassName("java/lang/Object", 16);
-         TR_PersistentClassInfo* result = table->findClassInfoAfterLocking(
-                                                   rootClass,
-                                                   comp,
-                                                   true);
-         std::string encoded = FlatPersistentClassInfo::serializeHierarchy(result);
+         std::string encoded = FlatPersistentClassInfo::serializeHierarchy(table);
          client->write(response, encoded);
          }
          break;
