@@ -1,4 +1,3 @@
-
 /*******************************************************************************
  * Copyright (c) 1991, 2019 IBM Corp. and others
  *
@@ -186,10 +185,11 @@ public:
 	virtual void
 	doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator)
 	{
+		bool const compressed = _extensions->compressObjectReferences();
 		J9ThreadAbstractMonitor * monitor = (J9ThreadAbstractMonitor*)objectMonitor->monitor;
 		omrobjectptr_t objectPtr = (omrobjectptr_t )monitor->userData;
 		if(_scavenger->isObjectInEvacuateMemory(objectPtr)) {
-			MM_ForwardedHeader forwardedHeader(objectPtr);
+			MM_ForwardedHeader forwardedHeader(objectPtr, compressed);
 			omrobjectptr_t forwardPtr = forwardedHeader.getForwardedObject();
 			if(NULL != forwardPtr) {
 				monitor->userData = (uintptr_t)forwardPtr;
@@ -232,9 +232,10 @@ public:
 	virtual void
 	doJNIWeakGlobalReference(omrobjectptr_t *slotPtr)
 	{
+		bool const compressed = _extensions->compressObjectReferences();
 		omrobjectptr_t objectPtr = *slotPtr;
 		if(objectPtr && _scavenger->isObjectInEvacuateMemory(objectPtr)) {
-			MM_ForwardedHeader forwardedHeader(objectPtr);
+			MM_ForwardedHeader forwardedHeader(objectPtr, compressed);
 			*slotPtr = forwardedHeader.getForwardedObject();
 		}
 	}
@@ -243,9 +244,10 @@ public:
 	virtual void
 	doJVMTIObjectTagSlot(omrobjectptr_t *slotPtr, GC_JVMTIObjectTagTableIterator *objectTagTableIterator)
 	{
+		bool const compressed = _extensions->compressObjectReferences();
 		omrobjectptr_t objectPtr = *slotPtr;
 		if(objectPtr && _scavenger->isObjectInEvacuateMemory(objectPtr)) {
-			MM_ForwardedHeader forwardedHeader(objectPtr);
+			MM_ForwardedHeader forwardedHeader(objectPtr, compressed);
 			*slotPtr = forwardedHeader.getForwardedObject();
 		}
 	}
