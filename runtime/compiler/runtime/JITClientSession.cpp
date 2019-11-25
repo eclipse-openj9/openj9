@@ -155,7 +155,7 @@ ClientSessionData::processUnloadedClasses(JITServer::ServerStream *stream, const
                IPTable_t *ipDataHT = iter->second._IPData;
                if (ipDataHT)
                   {
-                  for (auto entryIt : *ipDataHT)
+                  for (auto& entryIt : *ipDataHT)
                      {
                      auto entryPtr = entryIt.second;
                      if (entryPtr)
@@ -276,7 +276,7 @@ ClientSessionData::printStats()
    j9tty_printf(PORTLIB, "\tNum cached ROM classes: %d\n", _romClassMap.size());
    j9tty_printf(PORTLIB, "\tNum cached ROM methods: %d\n", _J9MethodMap.size());
    size_t total = 0;
-   for (auto it : _romClassMap)
+   for (auto& it : _romClassMap)
       total += it.second._romClass->romSize;
 
    j9tty_printf(PORTLIB, "\tTotal size of cached ROM classes + methods: %d bytes\n", total);
@@ -395,13 +395,13 @@ ClientSessionData::clearCaches()
       }
    OMR::CriticalSection getRemoteROMClass(getROMMapMonitor());
    // Free memory for all hashtables with IProfiler info
-   for (auto it : _J9MethodMap)
+   for (auto& it : _J9MethodMap)
       {
       IPTable_t *ipDataHT = it.second._IPData;
       // It it exists, walk the collection of <pc, TR_IPBytecodeHashTableEntry*> mappings
       if (ipDataHT)
          {
-         for (auto entryIt : *ipDataHT)
+         for (auto& entryIt : *ipDataHT)
             {
             auto entryPtr = entryIt.second;
             if (entryPtr)
@@ -415,7 +415,7 @@ ClientSessionData::clearCaches()
 
    _J9MethodMap.clear();
    // Free memory for j9class info
-   for (auto it : _romClassMap)
+   for (auto& it : _romClassMap)
       it.second.freeClassInfo();
 
    _romClassMap.clear();
@@ -423,7 +423,7 @@ ClientSessionData::clearCaches()
    _classChainDataMap.clear();
 
    // Free CHTable 
-   for (auto it : _chTableClassMap)
+   for (auto& it : _chTableClassMap)
       {
       TR_PersistentClassInfo *classInfo = it.second;
       classInfo->removeSubClasses();
@@ -524,7 +524,7 @@ ClientSessionData::ClassInfo::getROMString(int32_t &len, void *basePtr, std::ini
    }
 
 template <typename map, typename key>
-void ClientSessionData::purgeCache(std::vector<ClassUnloadedData> *unloadedClasses, map m, key ClassUnloadedData::*k)
+void ClientSessionData::purgeCache(std::vector<ClassUnloadedData> *unloadedClasses, map& m, key ClassUnloadedData::*k)
    {
    ClassUnloadedData *data = unloadedClasses->data();
    std::vector<ClassUnloadedData>::iterator it = unloadedClasses->begin();
