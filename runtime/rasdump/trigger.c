@@ -210,20 +210,23 @@ static J9RASdumpMatchResult
 matchesObjectAllocationFilter(J9RASdumpEventData *eventData, char *filter)
 {
 	char *message = eventData->detailData;
-	char* msgPtr;
-	UDATA msgValue;
+	char *msgPtr = NULL;
+	UDATA msgValue = 0;
 	char msgText[20];
-	char* fltPtr;
-	UDATA fltValueMin, fltValueMax;
+	char *fltPtr = NULL;
+	UDATA fltValueMin = 0;
+	UDATA fltValueMax = 0;
 	char fltText[20];
-	
+
 	if (!filter) {
 		/* Must have a filter for matching object allocation */
 		return J9RAS_DUMP_NO_MATCH;
 	}
-	
-	strncpy(msgText, message, sizeof(msgText));
-	strncpy(fltText, filter, sizeof(fltText));
+
+	strncpy(msgText, message, sizeof(msgText) - 1);
+	msgText[sizeof(msgText) - 1] = '\0';
+	strncpy(fltText, filter, sizeof(fltText) - 1);
+	fltText[sizeof(fltText) - 1] = '\0';
 
 	/* Convert the message to a number */
 	msgPtr = msgText;
@@ -250,15 +253,17 @@ static J9RASdumpMatchResult
 matchesSlowExclusiveEnterFilter(J9RASdumpEventData *eventData, char *filter)
 {
 	char *message = eventData->detailData;
-	char* msgPtr;
-	IDATA msgValue;
+	char *msgPtr = NULL;
+	IDATA msgValue = 0;
 	char msgText[20];
-	char* fltPtr;
-	IDATA fltValue;
+	char *fltPtr = NULL;
+	IDATA fltValue = 0;
 	char fltText[20];
 
-	strncpy(msgText, message, sizeof(msgText));
-	strncpy(fltText, filter, sizeof(fltText));
+	strncpy(msgText, message, sizeof(msgText) - 1);
+	msgText[sizeof(msgText) - 1] = '\0';
+	strncpy(fltText, filter, sizeof(fltText) - 1);
+	fltText[sizeof(fltText) - 1] = '\0';
 
 	/* convert the message value to a number */
 	msgPtr = msgText;
