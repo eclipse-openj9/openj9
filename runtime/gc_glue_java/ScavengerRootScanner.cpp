@@ -72,6 +72,7 @@ void
 MM_ScavengerRootScanner::scavengeFinalizableObjects(MM_EnvironmentStandard *env)
 {
 	GC_FinalizeListManager * const finalizeListManager = _extensions->finalizeListManager;
+	bool const compressed = _extensions->compressObjectReferences();
 
 	/* this code must be run single-threaded and we should only be here if work is actually required */
 	Assert_MM_true(env->_currentTask->isSynchronized());
@@ -85,7 +86,7 @@ MM_ScavengerRootScanner::scavengeFinalizableObjects(MM_EnvironmentStandard *env)
 		while (NULL != systemObject) {
 			omrobjectptr_t next = NULL;
 			if(_scavenger->isObjectInEvacuateMemory(systemObject)) {
-				MM_ForwardedHeader forwardedHeader(systemObject);
+				MM_ForwardedHeader forwardedHeader(systemObject, compressed);
 				if (!forwardedHeader.isForwardedPointer()) {
 					next = _extensions->accessBarrier->getFinalizeLink(systemObject);
 					omrobjectptr_t copiedObject = _scavenger->copyObject(env, &forwardedHeader);
@@ -117,7 +118,7 @@ MM_ScavengerRootScanner::scavengeFinalizableObjects(MM_EnvironmentStandard *env)
 		while (NULL != defaultObject) {
 			omrobjectptr_t next = NULL;
 			if(_scavenger->isObjectInEvacuateMemory(defaultObject)) {
-				MM_ForwardedHeader forwardedHeader(defaultObject);
+				MM_ForwardedHeader forwardedHeader(defaultObject, compressed);
 				if (!forwardedHeader.isForwardedPointer()) {
 					next = _extensions->accessBarrier->getFinalizeLink(defaultObject);
 					omrobjectptr_t copiedObject = _scavenger->copyObject(env, &forwardedHeader);
@@ -149,7 +150,7 @@ MM_ScavengerRootScanner::scavengeFinalizableObjects(MM_EnvironmentStandard *env)
 		while (NULL != referenceObject) {
 			omrobjectptr_t next = NULL;
 			if(_scavenger->isObjectInEvacuateMemory(referenceObject)) {
-				MM_ForwardedHeader forwardedHeader(referenceObject);
+				MM_ForwardedHeader forwardedHeader(referenceObject, compressed);
 				if (!forwardedHeader.isForwardedPointer()) {
 					next = _extensions->accessBarrier->getReferenceLink(referenceObject);
 					omrobjectptr_t copiedObject = _scavenger->copyObject(env, &forwardedHeader);
