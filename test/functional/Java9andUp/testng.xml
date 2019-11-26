@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,6 +95,16 @@
 	<test name="Test_Class">
 		<classes>
 			<class name="org.openj9.test.java.lang.Test_Class" />
+ 		</classes>
+	</test>
+	<test name="Test_Math_Fma">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_Math_Fma" />
+ 		</classes>
+	</test>
+	<test name="Test_StrictMath_Fma">
+		<classes>
+			<class name="org.openj9.test.java.lang.Test_StrictMath_Fma" />
  		</classes>
 	</test>
 	<test name="TestJava9AttachAPI">
