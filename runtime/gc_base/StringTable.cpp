@@ -600,13 +600,13 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			goto nomem;
 		}
 
-      if (J9_STR_UNICODE == (stringFlags & J9_STR_UNICODE)) {
+		if (J9_STR_UNICODE == (stringFlags & J9_STR_UNICODE)) {
 			unicodeLength = length / 2;
 		} else {
-         if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
-			   unicodeLength = length;
-		   } else {
-			   unicodeLength = VM_VMHelpers::getUTF8UnicodeLength(data, length);
+			if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
+				unicodeLength = length;
+			} else {
+				unicodeLength = VM_VMHelpers::getUTF8UnicodeLength(data, length);
 			}
 		}
 
@@ -647,9 +647,9 @@ j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA s
 			}
 		} else {
 			if (IS_STRING_COMPRESSION_ENABLED_VM(vm) && J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_ASCII)) {
-				VM_VMHelpers::copyUTF8ToASCII(vmThread, data, length, stringFlags, charArray, 0);
+				VM_VMHelpers::copyUTF8ToBackingArrayAsASCII(vmThread, data, length, stringFlags, charArray, 0);
 			} else {
-				VM_VMHelpers::copyUTF8ToUTF16(vmThread, data, length, stringFlags, charArray, 0);
+				VM_VMHelpers::copyUTF8ToBackingArrayAsUTF16(vmThread, data, length, stringFlags, charArray, 0);
 			}
 		}
 

@@ -1014,7 +1014,7 @@ done:
 		const U_8 * end = data + length;
 
 		while (data < end) {
-			U_16 c;
+			U_16 c = 0;
 
 			data += decodeUTF8Char(data, &c);
 			hash = (hash << 5) - hash + c;
@@ -1065,17 +1065,19 @@ done:
 	}
 
 	/**
-	 * Copies a UTF8 string into a UTF16 string at a specific index.
+	 * Copies a UTF8 string into a backing array containing UTF16 characters at a specific index.
 	 *
 	 * @param vmThread[in] the current J9VMThread
 	 * @param data[in] points to raw UTF8 bytes, some of which may be multi-byte UTF8 encoded Unicode characters
 	 * @param length[in] the number of bytes representing characters in data
 	 * @param stringFlags[in] string flags corresponding to data
-	 * @param charArray[in] the character array (can be either byte[] or char[]) to copy the UTF8 string into
-	 * @param startIndex the start index of charArray at which to begin the copy
+	 * @param backingArray[in] the backing character array to copy the UTF8 string into
+	 * @param startIndex the start index of backingArray at which to begin the copy
+    *
+    * @implNote copyUTF8ToBackingArrayAsUTF16 and copyUTF8ToBackingArrayAsASCII must be kept in sync.
 	 */
 	static VMINLINE void
-	copyUTF8ToUTF16(J9VMThread * vmThread, U_8 * data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
+	copyUTF8ToBackingArrayAsUTF16(J9VMThread * vmThread, U_8 * data, UDATA length, UDATA stringFlags, j9object_t backingArray, UDATA startIndex)
 	{
 		UDATA originalLength = length;
 
@@ -1083,11 +1085,11 @@ done:
 			if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
 				for (UDATA i = startIndex; i < length; ++i) {
 					U_8 c = data[i];
-					J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, c != '/' ? c : '.');
+					J9JAVAARRAYOFCHAR_STORE(vmThread, backingArray, i, c != '/' ? c : '.');
 				}
 			} else {
 				for (UDATA i = startIndex; i < length; ++i) {
-					J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, data[i]);
+					J9JAVAARRAYOFCHAR_STORE(vmThread, backingArray, i, data[i]);
 				}
 			}
 		} else {
@@ -1100,7 +1102,7 @@ done:
 						unicode = (U_16)'.';
 					}
 				}
-				J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, writeIndex, unicode);
+				J9JAVAARRAYOFCHAR_STORE(vmThread, backingArray, writeIndex, unicode);
 				writeIndex += 1;
 				data += consumed;
 				length -= consumed;
@@ -1112,8 +1114,8 @@ done:
 		 */
 		if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME)) {
 			for (IDATA i = (IDATA) originalLength - 1; i >= 0; --i) {
-				if ((U_16)'.' == J9JAVAARRAYOFCHAR_LOAD(vmThread, charArray, i)) {
-					J9JAVAARRAYOFCHAR_STORE(vmThread, charArray, i, (U_16)'/');
+				if ((U_16)'.' == J9JAVAARRAYOFCHAR_LOAD(vmThread, backingArray, i)) {
+					J9JAVAARRAYOFCHAR_STORE(vmThread, backingArray, i, (U_16)'/');
 					break;
 				}
 			}
@@ -1121,26 +1123,28 @@ done:
 	}
 
 	/**
-	 * Copies a UTF8 string into a ASCII compact string at a specific index.
+	 * Copies a UTF8 string into into a backing array containing ASCII characters at a specific index.
 	 *
 	 * @param vmThread[in] the current J9VMThread
 	 * @param data[in] points to raw UTF8 bytes, all of which are within the ASCII subset ord. [0, 127]
 	 * @param length[in] the number of bytes representing characters in data
 	 * @param stringFlags[in] string flags corresponding to data
-	 * @param charArray[in] the character array (can be either byte[] or char[]) to copy the UTF8 string into
+	 * @param backingArray[in] the backing character array to copy the UTF8 string into
 	 * @param startIndex the start index of charArray at which to begin the copy
+    *
+    * @implNote copyUTF8ToBackingArrayAsUTF16 and copyUTF8ToBackingArrayAsASCII must be kept in sync.
 	 */
 	static VMINLINE void
-	copyUTF8ToASCII(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex)
+	copyUTF8ToBackingArrayAsASCII(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags, j9object_t backingArray, UDATA startIndex)
 	{
 		if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
 			for (UDATA i = startIndex; i < length; ++i) {
 				U_8 c = data[i];
-				J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, c != '/' ? c : '.');
+				J9JAVAARRAYOFBYTE_STORE(vmThread, backingArray, i, c != '/' ? c : '.');
 			}
 		} else {
 			for (UDATA i = startIndex; i < length; ++i) {
-				J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, data[i]);
+				J9JAVAARRAYOFBYTE_STORE(vmThread, backingArray, i, data[i]);
 			}
 		}
 
@@ -1149,8 +1153,8 @@ done:
 		 */
 		if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME)) {
 			for (IDATA i = (IDATA)length - 1; i >= 0; --i) {
-				if ((U_8)'.' == J9JAVAARRAYOFBYTE_LOAD(vmThread, charArray, i)) {
-					J9JAVAARRAYOFBYTE_STORE(vmThread, charArray, i, (U_8)'/');
+				if ((U_8)'.' == J9JAVAARRAYOFBYTE_LOAD(vmThread, backingArray, i)) {
+					J9JAVAARRAYOFBYTE_STORE(vmThread, backingArray, i, (U_8)'/');
 					break;
 				}
 			}
