@@ -2258,7 +2258,7 @@ static uint8_t* initializeCCPreLoadedWriteBarrier(uint8_t *buffer, void **CCPreL
    if (TR::Compiler->target.is32Bit() && !comp->compileRelocatableCode() && constHeapBase)
       {
       heapBase = comp->getOptions()->getHeapBaseForBarrierRange0();
-      cursor = loadAddressConstant(cg, n, heapBase, r5, cursor);
+      cursor = loadAddressConstant(cg, false, n, heapBase, r5, cursor);
       }
    else
       cursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, n, r5,
@@ -2267,7 +2267,7 @@ static uint8_t* initializeCCPreLoadedWriteBarrier(uint8_t *buffer, void **CCPreL
    if (TR::Compiler->target.is32Bit() && !comp->compileRelocatableCode() && constHeapSize)
       {
       heapSize = comp->getOptions()->getHeapSizeForBarrierRange0();
-      cursor = loadAddressConstant(cg, n, heapSize, r6, cursor);
+      cursor = loadAddressConstant(cg, false, n, heapSize, r6, cursor);
       }
    else
       cursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, n, r6,
@@ -2369,7 +2369,7 @@ static uint8_t* initializeCCPreLoadedWriteBarrierAndCardMark(uint8_t *buffer, vo
    if (TR::Compiler->target.is32Bit() && !comp->compileRelocatableCode() && constHeapBase)
       {
       heapBase = comp->getOptions()->getHeapBaseForBarrierRange0();
-      cursor = loadAddressConstant(cg, n, heapBase, r5, cursor);
+      cursor = loadAddressConstant(cg, false, n, heapBase, r5, cursor);
       }
    else
       cursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, n, r5,
@@ -2378,7 +2378,7 @@ static uint8_t* initializeCCPreLoadedWriteBarrierAndCardMark(uint8_t *buffer, vo
    if (TR::Compiler->target.is32Bit() && !comp->compileRelocatableCode() && constHeapSize)
       {
       heapSize = comp->getOptions()->getHeapSizeForBarrierRange0();
-      cursor = loadAddressConstant(cg, n, heapSize, r6, cursor);
+      cursor = loadAddressConstant(cg, false, n, heapSize, r6, cursor);
       }
    else
       cursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, n, r6,

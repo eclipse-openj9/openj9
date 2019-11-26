@@ -194,11 +194,11 @@ static void genInlineTest(TR::Node * node, TR_OpaqueClassBlock* castClassAddr, T
          sym->setStaticAddress(guessClassArray[i]);
          sym->setClassObject();
 
-         iCursor = loadAddressConstant(cg, node, (intptrj_t) new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), sym), scratch1Reg, iCursor, false, TR_ClassAddress);
+         iCursor = loadAddressConstant(cg, true, node, (intptrj_t) new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), sym), scratch1Reg, iCursor, false, TR_ClassAddress);
          }
       else
          {
-         iCursor = loadAddressConstant(cg, node, (intptrj_t) (guessClassArray[i]), scratch1Reg, iCursor);
+         iCursor = loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptrj_t) (guessClassArray[i]), scratch1Reg, iCursor);
          }
       result_bool = fej9->instanceOfOrCheckCast((J9Class*) guessClassArray[i], (J9Class*) castClassAddr);
       int32_t result_value = result_bool ? 1 : 0;
@@ -220,11 +220,11 @@ static void genInlineTest(TR::Node * node, TR_OpaqueClassBlock* castClassAddr, T
       sym->setStaticAddress(guessClassArray[num_PICS - 1]);
       sym->setClassObject();
 
-      iCursor = loadAddressConstant(cg, node, (intptrj_t) new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), sym), scratch1Reg, iCursor, false, TR_ClassAddress);
+      iCursor = loadAddressConstant(cg, true, node, (intptrj_t) new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), sym), scratch1Reg, iCursor, false, TR_ClassAddress);
       }
    else
       {
-      iCursor = loadAddressConstant(cg, node, (intptrj_t) (guessClassArray[num_PICS - 1]), scratch1Reg, iCursor);
+      iCursor = loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptrj_t) (guessClassArray[num_PICS - 1]), scratch1Reg, iCursor);
       }
    iCursor = generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, cndReg, objClassReg, scratch1Reg, iCursor);
    iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, snippetLabel, cndReg, iCursor);
@@ -1030,7 +1030,7 @@ J9::Power::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(TR::
    // Store cpAddressReg
    // TODO: Replace when AOT TR_ConstantPool Discontiguous support is enabled
    //loadAddressConstant(cg, node, (uintptrj_t)methodSymbol->getResolvedMethod()->constantPool(), resultReg, NULL, false, TR_ConstantPool);
-   loadAddressConstant(cg, node, reinterpret_cast<uintptrj_t>(methodSymbol->getResolvedMethod()->constantPool()), resultReg);
+   loadAddressConstant(cg, comp->compileRelocatableCode(), node, reinterpret_cast<uintptrj_t>(methodSymbol->getResolvedMethod()->constantPool()), resultReg);
    loadConstant(cg, node, symRef->getCPIndex(), cpIndexReg);
 
    // cpAddress is the first argument of VMHelper
@@ -1317,7 +1317,7 @@ J9::Power::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGe
       else
          {
          J9Class * fieldClass = static_cast<TR::J9PPCWatchedStaticFieldSnippet *>(dataSnippet)->getFieldClass();
-         loadAddressConstant(cg, node, reinterpret_cast<uintptrj_t>(fieldClass), fieldClassReg);
+         loadAddressConstant(cg, false, node, reinterpret_cast<uintptrj_t>(fieldClass), fieldClassReg);
          }
       }
    else
@@ -3409,7 +3409,7 @@ static void VMoutlinedHelperArrayStoreCHKEvaluator(TR::Node *node, TR::Register 
    if (cg->wantToPatchClassPointer(rootClass, node))
       loadAddressConstantInSnippet(cg, node, (intptrj_t) rootClass, rootClassReg, scratchReg,TR::InstOpCode::Op_load, false, NULL);
    else
-      loadAddressConstant(cg, node, (intptrj_t) rootClass, rootClassReg);
+      loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptrj_t) rootClass, rootClassReg);
 
    TR_CCPreLoadedCode helper = TR_arrayStoreCHK;
    uintptrj_t helperAddr = (uintptrj_t) codeCache->getCCPreLoadedCodeAddress(helper, cg);
@@ -3570,11 +3570,11 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *src, TR::Regi
          sym->setStaticAddress(rootClass);
          sym->setClassObject();
 
-         loadAddressConstant(cg, node, (intptrj_t) new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), sym), t3Reg, NULL, false, TR_ClassAddress);
+         loadAddressConstant(cg, true, node, (intptrj_t) new (comp->trHeapMemory()) TR::SymbolReference(comp->getSymRefTab(), sym), t3Reg, NULL, false, TR_ClassAddress);
          }
       else
          {
-         loadAddressConstant(cg, node, (intptrj_t) rootClass, t3Reg);
+         loadAddressConstant(cg, false, node, (intptrj_t) rootClass, t3Reg);
          }
 
       generateTrg1Src2Instruction(cg, TR::InstOpCode::Op_cmpl, node, cndReg, t1Reg, t3Reg);
@@ -3600,7 +3600,7 @@ static void VMarrayStoreCHKEvaluator(TR::Node *node, TR::Register *src, TR::Regi
       if (cg->wantToPatchClassPointer(castClass, node))
          loadAddressConstantInSnippet(cg, node, (intptrj_t) castClass, t3Reg, t4Reg,TR::InstOpCode::Op_load, false, NULL);
       else
-         loadAddressConstant(cg, node, (intptrj_t) castClass, t3Reg);
+         loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptrj_t) castClass, t3Reg);
 
       generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, cndReg, t1Reg, t3Reg);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, toWB, cndReg);
@@ -4225,11 +4225,11 @@ void genInstanceOfOrCheckCastArbitraryClassTest(TR::Node *node, TR::Register *co
       sym->setStaticAddress(arbitraryClass);
       sym->setClassObject();
 
-      loadAddressConstant(cg, node, (intptr_t) new (cg->comp()->trHeapMemory()) TR::SymbolReference(cg->comp()->getSymRefTab(), sym), arbitraryClassReg, NULL, false, TR_ClassAddress);
+      loadAddressConstant(cg, true, node, (intptr_t) new (cg->comp()->trHeapMemory()) TR::SymbolReference(cg->comp()->getSymRefTab(), sym), arbitraryClassReg, NULL, false, TR_ClassAddress);
       }
    else
       {
-      loadAddressConstant(cg, node, (intptr_t)arbitraryClass, arbitraryClassReg);
+      loadAddressConstant(cg, cg->comp()->compileRelocatableCode(), node, (intptr_t)arbitraryClass, arbitraryClassReg);
       }
    genInstanceOfOrCheckCastClassEqualityTest(node, condReg, instanceClassReg, arbitraryClassReg, cg);
    srm->reclaimScratchRegister(arbitraryClassReg);
@@ -5391,7 +5391,7 @@ TR::Register * J9::Power::TreeEvaluator::VMgenCoreInstanceofEvaluator(TR::Node *
             J9Class* jlobjectarrayclassBlock = jlobjectclassBlock ? (J9Class*)fej9->getArrayClassFromComponentClass((TR_OpaqueClassBlock*)jlobjectclassBlock) : NULL;
             if (jlobjectarrayclassBlock != NULL)
                {
-               iCursor = loadAddressConstant(cg, node, (intptrj_t) (jlobjectarrayclassBlock), scratch1Reg, iCursor);
+               iCursor = loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptrj_t) (jlobjectarrayclassBlock), scratch1Reg, iCursor);
                iCursor = generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, crReg, objClassReg, scratch1Reg, iCursor);
                if (needResult)
                   {
@@ -8726,12 +8726,12 @@ void J9::Power::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR:
       {
       intptrj_t target_ip = funcdescrptr[0];
       intptrj_t target_toc = funcdescrptr[1];
-      iCursor = loadAddressConstant(cg, node, target_ip, temp1Reg, NULL, false, TR_ArrayCopyHelper);
-      iCursor = loadAddressConstant(cg, node, target_toc, gr2Reg, iCursor, false, TR_ArrayCopyToc);
+      iCursor = loadAddressConstant(cg, comp->compileRelocatableCode(), node, target_ip, temp1Reg, NULL, false, TR_ArrayCopyHelper);
+      iCursor = loadAddressConstant(cg, comp->compileRelocatableCode(), node, target_toc, gr2Reg, iCursor, false, TR_ArrayCopyToc);
       }
    else
       {
-      iCursor = loadAddressConstant(cg, node, (intptrj_t) funcdescrptr, temp1Reg, NULL, false, TR_ArrayCopyHelper);
+      iCursor = loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptrj_t) funcdescrptr, temp1Reg, NULL, false, TR_ArrayCopyHelper);
       }
 
    iCursor = generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, temp1Reg, NULL, iCursor);
@@ -11154,8 +11154,8 @@ static TR::Register *dangerousGetCPU(
    xx[0] = ((intptr_t *)(void *)&mycpu)[0];
    xx[1] = ((intptr_t *)(void *)&mycpu)[1];
    xx[2] = ((intptr_t *)(void *)&mycpu)[2];
-   loadAddressConstant(cg, node, xx[0], tmpReg);
-   loadAddressConstant(cg, node, xx[1], gr2);
+   loadAddressConstant(cg, comp->compileRelocatableCode(), node, xx[0], tmpReg);
+   loadAddressConstant(cg, comp->compileRelocatableCode(), node, xx[1], gr2);
    generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, tmpReg);
    generateInstruction(cg, TR::InstOpCode::bctrl, node);
 
@@ -11414,9 +11414,9 @@ static TR::Register *inlineStringHashcode(TR::Node *node, TR::CodeGenerator *cg)
     static uint32_t multiplierVectors_le[12] = {0x94446F01, 0x94446F01, 0x94446F01, 0x94446F01, 1, 31, 961, 29791, 923521, 28629151, 887503681, 0x67E12CDF};
 
     if (isLE){
-        loadAddressConstant(cg, node, (intptrj_t)multiplierVectors_le, multiplierAddrReg);
+        loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptrj_t)multiplierVectors_le, multiplierAddrReg);
     }else{
-        loadAddressConstant(cg, node, (intptrj_t)multiplierVectors_be, multiplierAddrReg);
+        loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptrj_t)multiplierVectors_be, multiplierAddrReg);
     }
     generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg, new (cg->trHeapMemory()) TR::MemoryReference(multiplierAddrReg, constant0Reg, 16, cg));
     generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, high4Reg, high4Reg, high4Reg);
@@ -13092,7 +13092,7 @@ void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceI
       TR::Register *biAddrReg = cg->allocateRegister();
       TR::Register *recompCounterReg = cg->allocateRegister();
       intptrj_t addr = (intptrj_t) (comp->getRecompilationInfo()->getCounterAddress());
-      TR::Instruction *cursor = loadAddressConstant(cg, node, addr, biAddrReg);
+      TR::Instruction *cursor = loadAddressConstant(cg, comp->compileRelocatableCode(), node, addr, biAddrReg);
       TR::MemoryReference *loadbiMR = new (cg->trHeapMemory()) TR::MemoryReference(biAddrReg, 0, TR::Compiler->om.sizeofReferenceAddress(), cg);
       TR::MemoryReference *storebiMR = new (cg->trHeapMemory()) TR::MemoryReference(biAddrReg, 0, TR::Compiler->om.sizeofReferenceAddress(), cg);
       cursor = generateTrg1MemInstruction(cg,TR::InstOpCode::Op_load, node, recompCounterReg, loadbiMR);
