@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -283,6 +283,11 @@ scarInit(J9JavaVM * vm)
 	default:
 		Assert_JCL_unreachable();
 	}
+
+	/* Preload this dependency from the JVM directories so the system does not load it from system path, as the wrong version could be found.
+	 * Ignore the return value, if jsig isn't present the JVM won't start anyway.
+	 */
+	vmFuncs->registerBootstrapLibrary( vm->mainThread, "jsig", (J9NativeLibrary**)&handle, FALSE);
 
 	/* Preload this dependency from the JVM directories so the system does not load it from system path, as the wrong version could be found. */
 	result = (jint)vmFuncs->registerBootstrapLibrary( vm->mainThread, dbgwrapperStr, (J9NativeLibrary**)&handle, FALSE);
