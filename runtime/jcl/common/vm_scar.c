@@ -284,6 +284,11 @@ scarInit(J9JavaVM * vm)
 		Assert_JCL_unreachable();
 	}
 
+	/* Preload this dependency from the JVM directories so the system does not load it from system path, as the wrong version could be found.
+	 * Ignore the return value, if jsig isn't present the JVM won't start anyway.
+	 */
+	vmFuncs->registerBootstrapLibrary( vm->mainThread, "jsig", (J9NativeLibrary**)&handle, FALSE);
+
 	/* Preload this dependency from the JVM directories so the system does not load it from system path, as the wrong version could be found. */
 	result = (jint)vmFuncs->registerBootstrapLibrary( vm->mainThread, dbgwrapperStr, (J9NativeLibrary**)&handle, FALSE);
 	if (0 != result) {
