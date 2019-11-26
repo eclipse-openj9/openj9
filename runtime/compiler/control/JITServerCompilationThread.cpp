@@ -1039,3 +1039,14 @@ TR::CompilationInfoPerThreadRemote::deleteClientSessionData(uint64_t clientId, T
       }
    compInfo->releaseCompMonitor(compThread);
    }
+
+void
+TR::CompilationInfoPerThreadRemote::freeAllResources()
+   {
+   if (_recompilationMethodInfo)
+      {
+      TR_Memory::jitPersistentFree(_recompilationMethodInfo);
+      }
+
+   TR::CompilationInfoPerThread::freeAllResources();
+   }
