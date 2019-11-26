@@ -77,6 +77,8 @@
  *   OPENJDK<version>_REPO_<platform>: String - the OpenJDK<version> repository URL for <platform>
  *   OPENJDK<version>_BRANCH_<platform>: String - the branch to clone from
  *   OPENJDK<version>_SHA_<platform>: String - the last commit SHA
+ *   SUMMARY_AUTO_REFRESH_TIME: String - the downstream summary badge auto-refresh time [in minutes], default: 5
+ *   ENABLE_SUMMARY_AUTO_REFRESH: Boolean - flag to enable the downstream summary auto-refresh, default: false
  */
 
 CURRENT_RELEASES = ['8', '11', '13', 'next']
@@ -196,6 +198,11 @@ if (params.SCM_REFSPEC) {
 }
 echo "SCM_REFSPEC:'${SCM_REFSPEC}'"
 
+SUMMARY_AUTO_REFRESH_TIME = (params.SUMMARY_AUTO_REFRESH_TIME) ? params.SUMMARY_AUTO_REFRESH_TIME : '5'
+echo "SUMMARY_AUTO_REFRESH_TIME:'${SUMMARY_AUTO_REFRESH_TIME}' [minutes]"
+ENABLE_SUMMARY_AUTO_REFRESH = (params.keySet().contains('ENABLE_SUMMARY_AUTO_REFRESH')) ? params.ENABLE_SUMMARY_AUTO_REFRESH : false
+echo "ENABLE_SUMMARY_AUTO_REFRESH:'${ENABLE_SUMMARY_AUTO_REFRESH}'"
+
 RELEASES = []
 
 OPENJDK_REPO = [:]
@@ -205,6 +212,8 @@ OPENJDK_SHA = [:]
 BUILD_SPECS = [:]
 builds = [:]
 pipelineNames = []
+summaryAutoRefresh = true
+pipelinesStatus = [:]
 
 try {
     timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNIT) {
@@ -296,6 +305,7 @@ try {
                                             variableFile.create_job(job_name, SDK_VERSION, SPEC, 'pipeline', 'Pipeline')
                                         }
                                     }
+                                    pipelinesStatus[job_name] = 'RUNNING'
                                     build(job_name, REPO, BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION, ARCHIVE_JAVADOC)
                                 }
                             }
@@ -305,6 +315,10 @@ try {
                     // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
                     cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
                 }
+            }
+
+            if (ENABLE_SUMMARY_AUTO_REFRESH) {
+                builds["downstream_jobs_summary"] = { refresh_summary_table() }
             }
 
             // launch all pipeline builds
@@ -353,11 +367,7 @@ try {
         }
     }
 } finally {
-    // add summary badge
-    table = get_summary_table(BUILD_IDENTIFIER)
-    if (table) {
-        manager.createSummary("plugin.png").appendText(table)
-    }
+    draw_summary_table()
 }
 
 
@@ -522,6 +532,11 @@ def get_summary_table(identifier) {
                     pipelineLink = buildFile.get_build_embedded_status_link(build)
                     downstreamBuilds.putAll(buildFile.get_downstream_builds(build, pipelineName, downstreamJobNames.values()))
                     pipelineDuration = build.getDurationString()
+
+                    if (build.getResult()) {
+                        // pipeline finished, cache its status
+                        pipelinesStatus[pipelineName] = build.getResult()
+                    }
                 }
             }
 
@@ -578,4 +593,29 @@ def get_sorted_releases() {
     }
 
     return sortedReleases
+}
+
+def draw_summary_table() {
+    def table = get_summary_table(BUILD_IDENTIFIER)
+
+    if (table) {
+        if (ENABLE_SUMMARY_AUTO_REFRESH) {
+            def actions = manager.build.actions
+            for (int i = 0; i < actions.size(); i++) {
+                 def action = actions.get(i)
+                 if (action.metaClass && action.metaClass.hasProperty(action, "text") && action.text.contains("Downstream Jobs Status")) {
+                     actions.remove(action)
+                 }
+            }
+        }
+
+        manager.createSummary('plugin.png').appendText(table)
+    }
+}
+
+def refresh_summary_table() {
+    while(summaryAutoRefresh ) {
+        sleep(time: SUMMARY_AUTO_REFRESH_TIME.toInteger(), unit: 'MINUTES')
+        draw_summary_table()
+    }
 }
