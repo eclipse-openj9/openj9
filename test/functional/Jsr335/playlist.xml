@@ -90,6 +90,38 @@
 	</test>
 
 	<test>
+		<testCaseName>jsr335tests_openj9_none_SCC</testCaseName>
+		<variations>
+			<variation>Mode100</variation>
+			<variation>Mode600</variation>
+			<variation>Mode101</variation>
+			<variation>Mode601</variation>
+			<variation>Mode110</variation>
+			<variation>Mode610</variation>
+			<variation>Mode301</variation>
+			<variation>Mode501</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none --add-opens=java.base/java.lang.invoke=ALL-UNNAMED \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)junit4.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(P)$(TEST_RESROOT)$(D)Jsr335.jar$(P).$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames jsr335 \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<subsets>
+			<subset>9+</subset>
+		</subsets>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+
+	<test>
 		<testCaseName>jsr335tests_defendersupersends_SE80</testCaseName>
 		<variations>
 			<variation>Mode100</variation>
