@@ -166,6 +166,10 @@ if(OMR_OS_LINUX)
 	target_link_libraries(j9prt PRIVATE rt)
 endif()
 
+if(OMR_OS_OSX OR OMR_OS_AIX)
+	target_link_libraries(j9prt PRIVATE iconv)
+endif()
+
 target_compile_definitions(j9prt
 	PRIVATE
 		-DJ9PORT_LIBRARY_DEFINE

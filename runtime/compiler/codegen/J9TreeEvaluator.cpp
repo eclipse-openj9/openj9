@@ -77,7 +77,7 @@ J9::TreeEvaluator::rdWrtbarHelperForFieldWatch(TR::Node *node, TR::CodeGenerator
    // If unresolved, then we generate instructions to populate the data snippet's fields correctly at runtime.
    // Note: We also call the VM Helper routine to fill in the data snippet's fields if this is an AOT compilation.
    // Once the infrastructure to support AOT during fieldwatch is enabled and functionally correct, we can remove is check.
-   if (isUnresolved || cg->comp()->compileRelocatableCode() /* isAOTCompile */)
+   if (isUnresolved || cg->needClassAndMethodPointerRelocations())
       {
       // Resolve and populate dataSnippet fields.
       TR::TreeEvaluator::generateFillInDataBlockSequenceForUnresolvedField(cg, node, dataSnippet, isWrite, sideEffectRegister, dataSnippetRegister);
