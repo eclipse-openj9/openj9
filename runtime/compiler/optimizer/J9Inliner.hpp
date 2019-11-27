@@ -148,6 +148,7 @@ class TR_J9InlinerUtil: public OMR_InlinerUtil
       virtual TR_PrexArgInfo* createPrexArgInfoForCallTarget(TR_VirtualGuardSelection *guard, TR_ResolvedMethod *implementer);
       virtual TR_InlinerTracer * getInlinerTracer(TR::Optimization *optimization);
       virtual TR_PrexArgInfo *computePrexInfo(TR_CallTarget *target);
+      virtual TR_PrexArgInfo *computePrexInfo(TR_CallTarget *target, TR_PrexArgInfo *callerArgInfo);
       virtual void refineInlineGuard(TR::Node *callNode, TR::Block *&block1, TR::Block *&block2,
                    bool &appendTestToBlock1, TR::ResolvedMethodSymbol * callerSymbol, TR::TreeTop *cursorTree,
                    TR::TreeTop *&virtualGuard, TR::Block *block4);
