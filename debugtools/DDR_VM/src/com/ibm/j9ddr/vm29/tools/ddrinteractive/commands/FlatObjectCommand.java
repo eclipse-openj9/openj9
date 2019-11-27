@@ -31,10 +31,13 @@ import com.ibm.j9ddr.tools.ddrinteractive.Context;
 import com.ibm.j9ddr.tools.ddrinteractive.DDRInteractiveCommandException;
 import com.ibm.j9ddr.vm29.j9.ObjectModel;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ArrayClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ClassHelper;
+import com.ibm.j9ddr.vm29.pointer.helper.J9IndexableObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.PrintObjectFieldsHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
@@ -97,6 +100,7 @@ public class FlatObjectCommand extends Command {
 
 			object = J9ObjectPointer.cast(address);
 			clazz = J9ObjectHelper.clazz(object);
+			U8Pointer dataStart =  U8Pointer.cast(object).add(ObjectModel.getHeaderSize(object));
 
 			if (clazz.isNull()) {
 				out.println("<can not read RAM class address>");
@@ -104,26 +108,42 @@ public class FlatObjectCommand extends Command {
 			}
 
 			if (J9ClassHelper.isArrayClass(clazz)) {
-				out.println("<instance an array and not a flatobject>");
-				return;
-			}
-
-			U8Pointer dataStart =  U8Pointer.cast(object).add(ObjectModel.getHeaderSize(object));
-
-			if (null != nestingHeirarchy) {
-				out.format("!flatobject %s %s {%n", object.getHexAddress(), nestingHeirarchy);
+				J9IndexableObjectPointer array = J9IndexableObjectPointer.cast(object);
+				int length = J9IndexableObjectHelper.size(array).intValue();
+				if (ValueTypeHelper.getValueTypeHelper().isJ9ClassIsFlattened(clazz)) {
+					if (null == nestingHeirarchy) {
+						for (int i = 0; i < length; i++) {
+							String arrayIndex = "[" + i + "]";
+							String[] newArgs = { argElements[0], arrayIndex };
+							printFlatObject(command, newArgs, context, out);
+						}
+					} else {
+						out.format("!flatobject %s %s {%n", object.getHexAddress(), nestingHeirarchy);
+						PrintObjectFieldsHelper.printJ9ObjectFields(out, 1, J9ArrayClassPointer.cast(clazz).componentType(), dataStart, object, address, nestingHeirarchy.split("\\."), true);
+						out.println("}");
+					}
+				} else {
+					J9ObjectPointer[] data = (J9ObjectPointer[]) J9IndexableObjectHelper.getData(array);
+					for (int i = 0; i < length; i++) {
+						String[] newArgs = { data[i].getHexAddress() };
+						printFlatObject(command, newArgs, context, out);
+					}
+				}
 			} else {
-				out.format("!flatobject %s {%n", object.getHexAddress());
+				if (null != nestingHeirarchy) {
+					out.format("!flatobject %s %s {%n", object.getHexAddress(), nestingHeirarchy);
+				} else {
+					out.format("!flatobject %s {%n", object.getHexAddress());
+				}
+
+				PrintObjectFieldsHelper.printJ9ObjectFields(out, 1, clazz, dataStart, object, address, nestingHeirarchy == null ? null : nestingHeirarchy.split("\\."), true);
+				out.println("}");
 			}
-
-			PrintObjectFieldsHelper.printJ9ObjectFields(out, 1, clazz, dataStart, object, address, nestingHeirarchy == null ? null : nestingHeirarchy.split("\\."), true);
-			out.println("}");
-
 		} catch (MemoryFault ex2) {
 			if ((object == null) || (clazz == null)) {
 				out.format("Unable to read object with command !flatobject %s%n", argElements[0]);
 			} else {
-				out.format("Unable to read object clazz at %s (clazz = %s) with command !flatoject %s%n", object.getHexAddress(), clazz.getHexAddress(), argElements[0]);
+				out.format("Unable to read object clazz at %s (clazz = %s) with command !flatobject %s%n", object.getHexAddress(), clazz.getHexAddress(), argElements[0]);
 			}
 		} catch (CorruptDataException | DDRInteractiveCommandException ex) {
 			out.println("Error for");

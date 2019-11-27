@@ -28,6 +28,7 @@ import java.lang.invoke.MethodType;
 import java.lang.invoke.WrongMethodTypeException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.logging.LoggerNames;
@@ -177,11 +178,17 @@ public class ValueTypeHelper {
 		public J9ClassPointer[] findNestedClassHierarchy(J9ClassPointer containerClazz, String[] nestingHierarchy) throws CorruptDataException {
 			J9ClassPointer[] resultClasses = new J9ClassPointer[nestingHierarchy.length + 1];
 			J9ClassPointer clazz = containerClazz;
-			resultClasses[0] = containerClazz;
+			int index = 0;
 
-			for (int i = 0; i < nestingHierarchy.length; i++) {
-				clazz = findJ9ClassInFlattenedClassCacheWithFieldName(clazz, nestingHierarchy[i]);
-				resultClasses[i + 1] = clazz;
+			if (Pattern.matches("\\[\\d+\\]", nestingHierarchy[0])) {
+				resultClasses[0] = containerClazz.arrayClass();
+				index = 1;
+			}
+			resultClasses[index] = containerClazz;
+
+			for (; index < nestingHierarchy.length; index++) {
+				clazz = findJ9ClassInFlattenedClassCacheWithFieldName(clazz, nestingHierarchy[index]);
+				resultClasses[index + 1] = clazz;
 			}
 
 			return resultClasses;

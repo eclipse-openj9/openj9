@@ -42,6 +42,7 @@ import com.ibm.j9ddr.vm29.pointer.U16Pointer;
 import com.ibm.j9ddr.vm29.pointer.U32Pointer;
 import com.ibm.j9ddr.vm29.pointer.U8Pointer;
 import com.ibm.j9ddr.vm29.pointer.VoidPointer;
+import com.ibm.j9ddr.vm29.pointer.generated.J9ArrayClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9BuildFlags;
 import com.ibm.j9ddr.vm29.pointer.generated.J9ClassPointer;
 import com.ibm.j9ddr.vm29.pointer.generated.J9IndexableObjectPointer;
@@ -89,17 +90,24 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 				if (className.equals("java/lang/String")) {
 					formatStringObject(out, 0, clazz, dataStart, object, address);
 				} else if (isArray) {
-					int begin = DEFAULT_ARRAY_FORMAT_BEGIN;
-					int end = DEFAULT_ARRAY_FORMAT_END;
-					if (extraArgs.length > 0) {
-						begin = Integer.parseInt(extraArgs[0]);
+					if (ValueTypeHelper.getValueTypeHelper().isJ9ClassIsFlattened(clazz)
+						&& (extraArgs.length > 0)
+						&& (extraArgs[0].startsWith("["))
+					) {
+						formatObject(out, J9ArrayClassPointer.cast(clazz).componentType(), dataStart, object, address, extraArgs);
+					} else {
+						int begin = DEFAULT_ARRAY_FORMAT_BEGIN;
+						int end = DEFAULT_ARRAY_FORMAT_END;
+						if (extraArgs.length > 0) {
+							begin = Integer.parseInt(extraArgs[0]);
+						}
+	
+						if (extraArgs.length > 1) {
+							end = Integer.parseInt(extraArgs[1]);
+						}
+	
+						formatArrayObject(out, clazz, dataStart, J9IndexableObjectPointer.cast(object), begin, end);
 					}
-
-					if (extraArgs.length > 1) {
-						end = Integer.parseInt(extraArgs[1]);
-					}
-
-					formatArrayObject(out, clazz, dataStart, J9IndexableObjectPointer.cast(object), begin, end);
 				} else {
 					formatObject(out, clazz, dataStart, object, address, extraArgs);
 				}
@@ -211,23 +219,12 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 				break;
 			case 'L':
 			case '[':
-				for (int index = begin; index < finish; index++) {
-					VoidPointer slot = J9IndexableObjectHelper.getElementEA(array, index, (int)ObjectReferencePointer.SIZEOF);
-					if (slot.notNull()) {
-						long compressedPtrValue;
-						if (J9BuildFlags.gc_compressedPointers) {
-							compressedPtrValue = I32Pointer.cast(slot).at(0).longValue();
-						} else {
-							compressedPtrValue = DataType.getProcess().getPointerAt(slot.getAddress());
-						}
-						PrintObjectFieldsHelper.padding(out, tabLevel);
-						out.format("[%d] = !fj9object 0x%x = !j9object 0x%x%n", index, compressedPtrValue, ObjectReferencePointer.cast(slot).at(0).longValue());
-					} else {
-						PrintObjectFieldsHelper.padding(out, tabLevel);
-						out.format("[%d] = null%n", slot);
-					}
+				if (ValueTypeHelper.getValueTypeHelper().isJ9ClassIsFlattened(localClazz)) {
+					formatFlattenedObjectArray(out, tabLevel, begin, finish, array);
+				} else {
+					formatReferenceObjectArray(out, tabLevel, localClazz, begin, finish, array);
 				}
-				break;
+			break;
 			}
 		}
 
@@ -235,6 +232,34 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 		arraySize = J9IndexableObjectHelper.size(array);
 		if (begin > 0 || arraySize.longValue() > finish ) {
 			out.format("To print entire range: !j9indexableobject %s %d %d%n", array.getHexAddress(), 0, arraySize.longValue());
+		}
+	}
+
+	private void formatReferenceObjectArray(PrintStream out, int tabLevel, J9ClassPointer localClazz, int begin, int finish, J9IndexableObjectPointer array) throws CorruptDataException
+	{
+		for (int index = begin; index < finish; index++) {
+			VoidPointer slot = J9IndexableObjectHelper.getElementEA(array, index, (int) ObjectReferencePointer.SIZEOF);
+			if (slot.notNull()) {
+				long compressedPtrValue;
+				if (J9BuildFlags.gc_compressedPointers) {
+					compressedPtrValue = I32Pointer.cast(slot).at(0).longValue();
+				} else {
+					compressedPtrValue = DataType.getProcess().getPointerAt(slot.getAddress());
+				}
+				PrintObjectFieldsHelper.padding(out, tabLevel);
+				out.format("[%d] = !fj9object 0x%x = !j9object 0x%x%n", index, compressedPtrValue, ObjectReferencePointer.cast(slot).at(0).longValue());
+			} else {
+				PrintObjectFieldsHelper.padding(out, tabLevel);
+				out.format("[%d] = null%n", slot);
+			}
+		}
+	}
+
+	private void formatFlattenedObjectArray(PrintStream out, int tabLevel, int begin, int finish, J9IndexableObjectPointer array) throws CorruptDataException
+	{
+		for (int index = begin; index < finish; index++) {
+			PrintObjectFieldsHelper.padding(out, tabLevel);
+			out.format("[%d] = !j9object 0x%x [%d]%n", index, array.getAddress(), index);
 		}
 	}
 

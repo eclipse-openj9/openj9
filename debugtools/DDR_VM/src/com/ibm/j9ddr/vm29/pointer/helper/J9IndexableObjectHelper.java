@@ -85,6 +85,7 @@ public class J9IndexableObjectHelper extends J9ObjectHelper
 	}
 	
 	/**
+	 * @param objPointer array object who's elements we are outputting to dst
 	 * @param index the desired index within then array
 	 * @param dataSize size of the data held in the array
 	 * @return the address for the desired element in the array
