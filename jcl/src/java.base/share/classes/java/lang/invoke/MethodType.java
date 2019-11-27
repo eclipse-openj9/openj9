@@ -343,6 +343,12 @@ public final class MethodType implements Serializable
 	public static MethodType fromMethodDescriptorString(String methodDescriptor, ClassLoader loader) {
 		ClassLoader classLoader = loader; 
 		if (classLoader == null) {
+			/*[IF Java14]*/
+			SecurityManager security = System.getSecurityManager();
+			if (security != null) {
+				security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionGetClassLoader);
+			}
+			/*[ENDIF]*/
 			classLoader = ClassLoader.getSystemClassLoader();
 		}
 		
