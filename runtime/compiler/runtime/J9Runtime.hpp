@@ -25,6 +25,7 @@
 
 #include "runtime/Runtime.hpp"
 #include "codegen/PreprologueConst.hpp"
+#include "codegen/PrivateLinkage.hpp"
 
 
 #if defined(TR_HOST_S390)
@@ -39,7 +40,7 @@ void saveJitEntryPoint(uint8_t* intEP, uint8_t* jitEP);
 inline uint16_t jitEntryOffset(void *startPC)
    {
 #if defined(TR_HOST_64BIT)
-   return TR_LinkageInfo::get(startPC)->getReservedWord();
+   return J9::PrivateLinkage::LinkageInfo::get(startPC)->getReservedWord();
 #else
    return 0;
 #endif
@@ -69,7 +70,7 @@ void replaceFirstTwoBytesWithData(void *startPC, int32_t startPCToData);
 #define  OFFSET_SAMPLING_METHODINFO_FROM_STARTPC         (-(8+sizeof(intptrj_t)))
 #define  OFFSET_SAMPLING_PRESERVED_FROM_STARTPC          (-8)
 
-inline uint32_t getJitEntryOffset(TR_LinkageInfo *linkageInfo)
+inline uint32_t getJitEntryOffset(J9::PrivateLinkage::LinkageInfo *linkageInfo)
    {
    return linkageInfo->getReservedWord() & 0x0ffff;
    }

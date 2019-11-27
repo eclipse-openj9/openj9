@@ -48,6 +48,7 @@
 #include "env/annotations/AnnotationBase.hpp"
 
 #define J9_EXTERNAL_TO_VM
+#include "codegen/PrivateLinkage.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "control/Recompilation.hpp"
@@ -107,7 +108,7 @@
 #include "env/exports.h"
 #if defined(JITSERVER_SUPPORT)
 #include "env/JITServerPersistentCHTable.hpp"
-#include "net/CommunicationStream.hpp" 
+#include "net/CommunicationStream.hpp"
 #include "net/ClientStream.hpp"
 #include "runtime/JITClientSession.hpp"
 #include "runtime/Listener.hpp"
@@ -274,7 +275,7 @@ j9jit_testarossa_err(
    if (oldStartPC)
       {
       // any recompilation attempt using fixUpMethodCode would go here
-      TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(oldStartPC);
+      J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(oldStartPC);
       TR_PersistentJittedBodyInfo* jbi = TR::Recompilation::getJittedBodyInfoFromPC(oldStartPC);
 
       if (jbi)
@@ -425,7 +426,7 @@ retranslateWithPreparation(
       void *oldStartPC,
       UDATA reason)
    {
-   if (!TR::CompilationInfo::get()->asynchronousCompilation() && !TR_LinkageInfo::get(oldStartPC)->recompilationAttempted())
+   if (!TR::CompilationInfo::get()->asynchronousCompilation() && !J9::PrivateLinkage::LinkageInfo::get(oldStartPC)->recompilationAttempted())
       {
       TR::Recompilation::fixUpMethodCode(oldStartPC);
       }
@@ -1135,7 +1136,7 @@ onLoadInternal(
    // JITServer: persistentCHTable used to be inited here, but we have to move it after JITServer commandline opts
    // setting it to null here to catch anything that assumes it's set between here and the new init code.
    persistentMemory->getPersistentInfo()->setPersistentCHTable(NULL);
-   
+
    if (!TR::CompilationInfo::createCompilationInfo(jitConfig))
       return -1;
 

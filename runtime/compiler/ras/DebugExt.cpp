@@ -30,6 +30,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/PrivateLinkage.hpp"
 #include "codegen/Relocation.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/CompilationTypes.hpp"
@@ -2395,10 +2396,10 @@ void TR_DebugExt::dxPrintMethodToBeCompiled(TR_MethodToBeCompiled *remoteCompEnt
    _dbgPrintf("\tbool                          _freeTag = %d\n",localCompEntry->_freeTag);
    _dbgPrintf("\tuint8_t                       _weight = %u\n",localCompEntry->_weight);
    _dbgPrintf("\tbool                          _hasIncrementedNumCompThreadsCompilingHotterMethods = %d\n",localCompEntry->_hasIncrementedNumCompThreadsCompilingHotterMethods);
-#if defined(JITSERVER_SUPPORT)   
+#if defined(JITSERVER_SUPPORT)
    _dbgPrintf("\tTR_Hotness                    _origOptLevel = 0x%p\n\n", localCompEntry->_origOptLevel);
 #endif
-   
+
    struct J9Method *ramMethod = (struct J9Method *)dxGetJ9MethodFromMethodToBeCompiled(remoteCompEntry);
    if (ramMethod)
       _dbgPrintf("\tAssociated J9Method = !trprint j9method 0x%p\n", ramMethod);
@@ -3228,7 +3229,7 @@ TR_DebugExt::dxPrintMethodName(char *p, int32_t searchLimit)
    if (hotness == -1)
       hotness = localMetadata->hotness;
 
-   TR_LinkageInfo *linkageInfo = (TR_LinkageInfo *) dxMallocAndRead(sizeof(TR_LinkageInfo), (void*)((char *)localMetadata->startPC - 4) );
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = (J9::PrivateLinkage::LinkageInfo *) dxMallocAndRead(sizeof(J9::PrivateLinkage::LinkageInfo), (void*)((char *)localMetadata->startPC - 4) );
 
    _dbgPrintf("\n\nMethod:\t%s.%s%s\n\n", className, methodName, methodSignature);
    dxPrintJ9RamAndRomMethod(localMetadata->ramMethod);
