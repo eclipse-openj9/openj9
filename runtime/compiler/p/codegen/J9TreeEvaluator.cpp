@@ -8731,7 +8731,11 @@ void J9::Power::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR:
       }
    else
       {
-      iCursor = loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptrj_t) funcdescrptr, temp1Reg, NULL, false, TR_ArrayCopyHelper);
+      bool doRelocation = cg->comp()->compileRelocatableCode();
+#ifdef JITSERVER_SUPPORT
+      doRelocation = doRelocation || cg->comp()->isOutOfProcessCompilation();
+#endif
+      iCursor = loadAddressConstant(cg, doRelocation, node, (intptrj_t) funcdescrptr, temp1Reg, NULL, false, TR_ArrayCopyHelper);
       }
 
    iCursor = generateSrc1Instruction(cg, TR::InstOpCode::mtctr, node, temp1Reg, NULL, iCursor);
