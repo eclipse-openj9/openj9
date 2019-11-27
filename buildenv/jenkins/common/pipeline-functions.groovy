@@ -183,8 +183,6 @@ def cancel_running_builds(JOB_NAME, BUILD_IDENTIFIER) {
 
 def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO, OPENJ9_BRANCH, OPENJ9_SHA, OMR_REPO, OMR_BRANCH, OMR_SHA, VARIABLE_FILE, VENDOR_REPO, VENDOR_BRANCH, VENDOR_CREDENTIALS_ID, NODE, SETUP_LABEL, BUILD_IDENTIFIER, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, CUSTOM_DESCRIPTION, ghprbPullId, ghprbCommentBody, ghprbTargetBranch, ARCHIVE_JAVADOC) {
     stage ("${BUILD_JOB_NAME}") {
-        SCM_BRANCH = (ghprbPullId && ghprbGhRepository == GHPRB_REPO_OPENJ9) ? "origin/pr/${ghprbPullId}/merge" : 'refs/heads/master'
-        SCM_REFSPEC = (ghprbPullId && ghprbGhRepository == GHPRB_REPO_OPENJ9) ? "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge" : ''
         return build_with_slack(BUILD_JOB_NAME, ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
             [string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),
             string(name: 'OPENJDK_BRANCH', value: OPENJDK_BRANCH),
@@ -213,6 +211,7 @@ def build(BUILD_JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, OPENJDK_SHA, OPENJ9_REPO
             string(name: 'ghprbTargetBranch', value: ghprbTargetBranch),
             string(name: 'SCM_BRANCH', value: SCM_BRANCH),
             string(name: 'SCM_REFSPEC', value: SCM_REFSPEC),
+            string(name: 'SCM_REPO', value: SCM_REPO),
             booleanParam(name: 'ARCHIVE_JAVADOC', value: ARCHIVE_JAVADOC)])
     }
 }
@@ -433,7 +432,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             if (TEST_JOB_NAME.contains("special.system")){
                 IS_PARALLEL = true
             }
-            
+
             def EXTRA_OPTIONS = ""
             if (TEST_JOB_NAME.contains("jck")){
                 EXTRA_OPTIONS = "-Xfuture"
@@ -441,7 +440,7 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                     EXTRA_OPTIONS += " --enable-preview"
                 }
             }
-            
+
             testjobs["${TEST_JOB_NAME}"] = {
                 if (params.ghprbPullId) {
                     cancel_running_builds(TEST_JOB_NAME, BUILD_IDENTIFIER)

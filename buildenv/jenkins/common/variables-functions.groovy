@@ -607,7 +607,6 @@ def set_job_variables(job_type) {
             set_slack_channel()
             set_restart_timeout()
             add_pr_to_description()
-            set_misc_variables()
             break
         case "wrapper":
             //set variable for pipeline all/personal
@@ -615,7 +614,6 @@ def set_job_variables(job_type) {
             set_build_extra_options(BUILD_SPECS)
             set_adoptopenjdk_tests_repository(get_build_releases(BUILD_SPECS))
             set_restart_timeout()
-            set_misc_variables()
             break
         default:
             error("Unknown Jenkins job type:'${job_type}'")
@@ -1052,10 +1050,6 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
     pipelineFunctions.retry_and_delay({
         jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params}, 
         3, 120)
-}
-
-def set_misc_variables() {
-    GHPRB_REPO_OPENJ9 = VARIABLES.ghprbGhRepository_openj9
 }
 
 return this
