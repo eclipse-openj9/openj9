@@ -53,6 +53,7 @@ public:
    virtual bool canDevirtualizeDispatch() override                       { return true; }
    virtual bool needRelocationsForBodyInfoData() override                { return true; }
    virtual bool needRelocationsForPersistentInfoData() override          { return true; }
+   virtual bool needRelocationsForLookupEvaluationData() override        { return true; }
    virtual void markHotField(TR::Compilation *, TR::SymbolReference *, TR_OpaqueClassBlock *, bool) override { return; }
    virtual bool isClassLibraryMethod(TR_OpaqueMethodBlock *method, bool vettedForAOT) override;
    virtual bool isClassLibraryClass(TR_OpaqueClassBlock *clazz) override;
@@ -218,6 +219,7 @@ public:
    virtual bool       supportsEmbeddedHeapBounds() override                    { return false; }
    virtual bool       supportsFastNanoTime() override                          { return false; }
    virtual bool       needRelocationsForStatics() override                     { return true; }
+   virtual bool       needRelocationsForLookupEvaluationData() override        { return true; }
    virtual bool       needRelocationsForBodyInfoData() override                { return true; }
    virtual bool       needRelocationsForPersistentInfoData() override          { return true; }
    virtual bool       forceUnresolvedDispatch() override                       { return true; }
