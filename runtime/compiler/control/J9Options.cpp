@@ -1849,7 +1849,7 @@ J9::Options::fePreProcess(void * base)
       UDATA numCompThreads;
       IDATA ret = GET_INTEGER_VALUE(argIndex, compThreadsOption, numCompThreads);
 
-      if (ret == OPTION_OK)
+      if (ret == OPTION_OK && numCompThreads > 0)
          {
          _numUsableCompilationThreads = numCompThreads;
          compInfo->updateNumUsableCompThreads(_numUsableCompilationThreads);
