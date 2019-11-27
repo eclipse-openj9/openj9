@@ -441,7 +441,6 @@ def set_sdk_variables() {
     echo "Using SDK_FILENAME = ${SDK_FILENAME}"
     echo "Using TEST_FILENAME = ${TEST_FILENAME}"
     echo "Using JAVADOC_FILENAME = ${JAVADOC_FILENAME}"
-    echo "Using ARCHIVE_JAVADOC = ${ARCHIVE_JAVADOC}"
     DIAGNOSTICS_FILENAME = "${JOB_NAME}-${BUILD_NUMBER}-${DATESTAMP}-diagnostics.tar.gz"
 }
 
@@ -587,6 +586,10 @@ def set_job_variables(job_type) {
     // Add custom description
     set_custom_description()
 
+    // Set ARCHIVE_JAVADOC flag
+    ARCHIVE_JAVADOC = (params.ARCHIVE_JAVADOC) ? params.ARCHIVE_JAVADOC : false
+    echo "Using ARCHIVE_JAVADOC = ${ARCHIVE_JAVADOC}"
+
     switch (job_type) {
         case "build":
             // set the node the Jenkins build would run on
@@ -607,7 +610,6 @@ def set_job_variables(job_type) {
             set_slack_channel()
             set_restart_timeout()
             add_pr_to_description()
-            set_misc_variables()
             break
         case "wrapper":
             //set variable for pipeline all/personal
@@ -615,7 +617,6 @@ def set_job_variables(job_type) {
             set_build_extra_options(BUILD_SPECS)
             set_adoptopenjdk_tests_repository(get_build_releases(BUILD_SPECS))
             set_restart_timeout()
-            set_misc_variables()
             break
         default:
             error("Unknown Jenkins job type:'${job_type}'")
@@ -1052,10 +1053,6 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
     pipelineFunctions.retry_and_delay({
         jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params}, 
         3, 120)
-}
-
-def set_misc_variables() {
-    GHPRB_REPO_OPENJ9 = VARIABLES.ghprbGhRepository_openj9
 }
 
 return this

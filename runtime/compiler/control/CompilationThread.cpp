@@ -2626,14 +2626,14 @@ void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThrea
 #if defined(JITSERVER_SUPPORT)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
-      numUsableCompThreads = ((numUsableCompThreads < 0) ||
+      numUsableCompThreads = ((numUsableCompThreads <= 0) ||
                               (numUsableCompThreads > MAX_SERVER_USABLE_COMP_THREADS)) ?
                                MAX_SERVER_USABLE_COMP_THREADS : numUsableCompThreads;
       }
    else
 #endif /* defined(JITSERVER_SUPPORT) */
       {
-      numUsableCompThreads = ((numUsableCompThreads < 0) ||
+      numUsableCompThreads = ((numUsableCompThreads <= 0) ||
                               (numUsableCompThreads > MAX_CLIENT_USABLE_COMP_THREADS)) ?
                                MAX_CLIENT_USABLE_COMP_THREADS : numUsableCompThreads;
       }

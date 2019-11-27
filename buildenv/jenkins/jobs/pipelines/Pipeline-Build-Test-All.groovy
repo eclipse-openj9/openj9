@@ -142,8 +142,6 @@ TIMEOUT_UNIT = (params.TIMEOUT_UNITS) ? params.TIMEOUT_UNITS : 'HOURS'
 echo "TIMEOUT_UNIT: ${TIMEOUT_UNIT}"
 CUSTOM_DESCRIPTION = (params.CUSTOM_DESCRIPTION) ? params.CUSTOM_DESCRIPTION : ""
 echo "CUSTOM_DESCRIPTION:'${CUSTOM_DESCRIPTION}'"
-ARCHIVE_JAVADOC = (params.ARCHIVE_JAVADOC) ? params.ARCHIVE_JAVADOC : 'false'
-echo "ARCHIVE_JAVADOC:'${ARCHIVE_JAVADOC}'"
 
 // param PLATFORMS is a string, we convert it to an array later on
 PLATFORMS = []
@@ -160,6 +158,29 @@ ghprbTargetBranch = (params.ghprbTargetBranch) ? params.ghprbTargetBranch : ""
 echo "ghprbTargetBranch:'${ghprbTargetBranch}'"
 ghprbActualCommit = (params.ghprbActualCommit) ? params.ghprbActualCommit : ""
 echo "ghprbActualCommit:'${ghprbActualCommit}'"
+
+// If custom repo/branch/refspec is passed, use it,
+// elif build is OpenJ9 PR, use pr merge-ref/refspec,
+// else use eclipse/master/blank for defaults respectively.
+SCM_REPO = 'https://github.com/eclipse/openj9.git'
+if (params.SCM_REPO) {
+    SCM_REPO = params.SCM_REPO
+}
+echo "SCM_REPO:'${SCM_REPO}'"
+SCM_BRANCH = 'refs/heads/master'
+if (params.SCM_BRANCH) {
+    SCM_BRANCH = params.SCM_BRANCH
+} else if (ghprbPullId && ghprbGhRepository == 'eclipse/openj9') {
+    SCM_BRANCH = sha1
+}
+echo "SCM_BRANCH:'${SCM_BRANCH}'"
+SCM_REFSPEC = ''
+if (params.SCM_REFSPEC) {
+    SCM_REFSPEC = params.SCM_REFSPEC
+} else if (ghprbPullId && ghprbGhRepository == 'eclipse/openj9') {
+    SCM_REFSPEC = "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge"
+}
+echo "SCM_REFSPEC:'${SCM_REFSPEC}'"
 
 RELEASES = []
 
@@ -178,12 +199,7 @@ try {
                 try {
                     def gitConfig = scm.getUserRemoteConfigs().get(0)
                     def remoteConfigParameters = [url: "${gitConfig.getUrl()}"]
-                    def scmBranch = scm.branches[0].name
-                    if (ghprbGhRepository == 'eclipse/openj9') {
-                        // OpenJ9 PR build
-                        scmBranch = params.sha1
-                        remoteConfigParameters.put("refspec", "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge")
-                    }
+                    remoteConfigParameters.put("refspec", SCM_REFSPEC)
 
                     if (gitConfig.getCredentialsId()) {
                         remoteConfigParameters.put("credentialsId", "${gitConfig.getCredentialsId()}")
@@ -192,7 +208,7 @@ try {
                     checkout changelog: false,
                             poll: false,
                             scm: [$class: 'GitSCM',
-                            branches: [[name: "${scmBranch}"]],
+                            branches: [[name: SCM_BRANCH]],
                             doGenerateSubmoduleConfigurations: false,
                             extensions: [[$class: 'CloneOption',
                                           reference: "${HOME}/openjdk_cache"]],
@@ -335,8 +351,6 @@ try {
 
 def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, SPEC, SDK_VERSION, BUILD_NODE, TEST_NODE, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, AUTOMATIC_GENERATION, CUSTOM_DESCRIPTION, ARCHIVE_JAVADOC) {
     stage ("${JOB_NAME}") {
-        SCM_BRANCH = (ghprbPullId && ghprbGhRepository == GHPRB_REPO_OPENJ9) ? "origin/pr/${ghprbPullId}/merge" : 'refs/heads/master'
-        SCM_REFSPEC = (ghprbPullId && ghprbGhRepository == GHPRB_REPO_OPENJ9) ? "+refs/pull/${ghprbPullId}/merge:refs/remotes/origin/pr/${ghprbPullId}/merge" : ''
         JOB = build job: JOB_NAME,
                 parameters: [
                     string(name: 'OPENJDK_REPO', value: OPENJDK_REPO),
@@ -376,6 +390,7 @@ def build(JOB_NAME, OPENJDK_REPO, OPENJDK_BRANCH, SHAS, OPENJ9_REPO, OPENJ9_BRAN
                     string(name: 'ghprbActualCommit', value: ghprbActualCommit),
                     string(name: 'SCM_BRANCH', value: SCM_BRANCH),
                     string(name: 'SCM_REFSPEC', value: SCM_REFSPEC),
+                    string(name: 'SCM_REPO', value: SCM_REPO),
                     booleanParam(name: 'ARCHIVE_JAVADOC', value: ARCHIVE_JAVADOC)]
         return JOB
     }
