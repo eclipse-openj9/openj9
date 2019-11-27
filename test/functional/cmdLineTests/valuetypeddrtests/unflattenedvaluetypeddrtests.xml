@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2019, 2019 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 Value Type ddr test with flattening disabled" timeout="600">
+	<variable name="ARGS" value="-Xint -XX:+EnableValhalla -Xverify:none --add-opens java.base/jdk.internal.misc=ALL-UNNAMED" />
+	<variable name="JARS" value="-cp $ASMJAR$:$JCOMMANDERJAR$:$TESTNGJAR$:$VALUETYPEJAR$" />
+	<variable name="PROGRAM" value="org.openj9.test.lworld.DDRValueTypeTest" />
+	<variable name="DUMPFILE" value="j9core.dmp" />
+
+	<test id="Create core file">
+		<exec command="tso delete J9CORE.DMP.*" platforms="zos_390-64.*" />
+		<exec command="tso delete J9CORE.DMP" platforms="zos_390-31.*" />
+		<exec command="rm -f $DUMPFILE$" />
+		<exec command="rm -f core*" />
+		<command showMatch="yes">$EXE$ $ARGS$ $JARS$ $PROGRAM$</command>
+		<output regex="no" type="success" showMatch="yes">System dump written</output>
+		<saveoutput regex="no" type="required" saveName="DUMPFILE" splitIndex="1" splitBy="System dump written to ">System dump written to </saveoutput>
+		<output regex="no" type="failure">Exception caught!</output>
+	</test>
+
+ 	<test id="Run !threads">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!threads</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">!stack 0x</output>
+		<saveoutput regex="no" type="required" saveName="mainThreadId" splitIndex="1" splitBy="!stack ">!stack 0x</saveoutput>
+		<output regex="no" type="failure">DDR is not enabled for this core file</output>
+ 	</test>
+
+	<test id="Run !stackslots $mainThreadId$">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!stackslots $mainThreadId$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">I-Slot: a0[0x</output>
+		<saveoutput regex="no" type="required" saveName="objectAddr" splitIndex="1" splitBy="= " showMatch="yes">I-Slot: a0[0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $objectAddr$ to display container array contents">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $objectAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">!J9IndexableObject 0x</output>
+		<saveoutput regex="no" type="required" saveName="valueAddr1" splitIndex="1" splitBy="= !j9object " showMatch="yes">[0] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="valueAddr2" splitIndex="1" splitBy="= !j9object " showMatch="yes">[1] = !fj9object 0x</saveoutput>
+		<saveoutput regex="no" type="required" saveName="arrayAddr" splitIndex="1" splitBy="= !j9object " showMatch="yes">[2] = !fj9object 0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $valueAddr1$ to show the contents of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $valueAddr1$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">QValueInt; i = !fj9object 0x</output>
+		<saveoutput regex="no" type="required" saveName="intAddr1" splitIndex="4" splitBy=" " showMatch="yes">QValueInt; i = !fj9object 0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !fj9object $intAddr1$ to show the int contents of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!fj9object $intAddr1$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">I i = 0x7FFFFFFF (offset = 0) (ValueInt)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $valueAddr2$ to show the contents of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $valueAddr2$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">QValueInt; i = !fj9object 0x</output>
+		<saveoutput regex="no" type="required" saveName="intAddr2" splitIndex="4" splitBy=" " showMatch="yes">QValueInt; i = !fj9object 0x</saveoutput>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !fj9object $intAddr2$ to show the int contents of the reference object">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!fj9object $intAddr2$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">I i = 0xB670C61E (offset = 0) (ValueInt)</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !j9object $arrayAddr$ to display array contents">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!j9object $arrayAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">!j9object $valueAddr1$</output>
+		<output regex="no" type="success" showMatch="yes">!j9object $valueAddr2$</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+
+	<test id="Run !flatobject $arrayAddr$ to display array contents">
+		<command command="$JDMPVIEW_EXE$">
+			<arg>-core $DUMPFILE$</arg>
+			<input>!flatobject $arrayAddr$</input>
+			<input>quit</input>
+		</command>
+		<output regex="no" type="success" showMatch="yes">QTriangle2D; tri = !fj9object</output>
+		<output regex="no" type="success" showMatch="yes">QValueInt; i = !fj9object</output>
+		<output regex="no" type="success" showMatch="yes">QTriangle2D; tri2 = !fj9object</output>
+		<output regex="no" type="failure">Problem running command</output>
+	</test>
+</suite>
