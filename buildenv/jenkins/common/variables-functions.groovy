@@ -441,7 +441,6 @@ def set_sdk_variables() {
     echo "Using SDK_FILENAME = ${SDK_FILENAME}"
     echo "Using TEST_FILENAME = ${TEST_FILENAME}"
     echo "Using JAVADOC_FILENAME = ${JAVADOC_FILENAME}"
-    echo "Using ARCHIVE_JAVADOC = ${ARCHIVE_JAVADOC}"
     DIAGNOSTICS_FILENAME = "${JOB_NAME}-${BUILD_NUMBER}-${DATESTAMP}-diagnostics.tar.gz"
 }
 
@@ -586,6 +585,10 @@ def set_job_variables(job_type) {
 
     // Add custom description
     set_custom_description()
+
+    // Set ARCHIVE_JAVADOC flag
+    ARCHIVE_JAVADOC = (params.ARCHIVE_JAVADOC) ? params.ARCHIVE_JAVADOC : false
+    echo "Using ARCHIVE_JAVADOC = ${ARCHIVE_JAVADOC}"
 
     switch (job_type) {
         case "build":
