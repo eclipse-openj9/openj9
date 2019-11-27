@@ -40,7 +40,9 @@ add_library(j9vrb SHARED
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vrb.c
 )
 
-if(CMAKE_C_COMPILER_ID STREQUAL "GNU")
+
+# Note: OMR_TOOLCONFIG=gnu also captures gnu-like compilers, such as clang
+if(OMR_TOOLCONFIG STREQUAL "gnu")
 	set_property(SOURCE ../compiler/runtime/MethodMetaData.c APPEND_STRING PROPERTY COMPILE_FLAGS  " -std=gnu89")
 endif()
 
