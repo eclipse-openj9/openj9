@@ -171,6 +171,7 @@ public:
                                           TR::Node *node);
 
    bool needClassAndMethodPointerRelocations();
+   bool needRelocationsForLookupEvaluationData();
    bool needRelocationsForStatics();
    bool needRelocationsForHelpers();
 #if defined(JITSERVER_SUPPORT)
