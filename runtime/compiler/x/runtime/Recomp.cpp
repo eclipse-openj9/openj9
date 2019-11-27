@@ -24,6 +24,7 @@
 
 #include <limits.h>
 #include <stdint.h>
+#include "codegen/PrivateLinkage.hpp"
 #include "env/jittypes.h"
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/J9Runtime.hpp"
@@ -121,7 +122,7 @@ TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *st
    // header-type bits in the linkage info fields to determine what kind of header
    // this is.
    //
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    return linkageInfo->isRecompMethodBody() ?
       *(TR_PersistentJittedBodyInfo **)((uint8_t*)startPC + START_PC_TO_METHOD_INFO_ADDRESS) :
       NULL;
@@ -147,7 +148,7 @@ bool J9::Recompilation::isAlreadyPreparedForRecompile(void *startPC)
 //
 void J9::Recompilation::fixUpMethodCode(void *startPC)
    {
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    if (linkageInfo->isCountingMethodBody())
       {
       TR_PersistentJittedBodyInfo   *bodyInfo = getJittedBodyInfoFromPC(startPC);
@@ -174,7 +175,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
    char *startByte = (char*)oldStartPC + jitEntryOffset(oldStartPC);
    char *p;
    int32_t offset, bytesToSaveAtStart;
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(oldStartPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(oldStartPC);
    if (linkageInfo->isCountingMethodBody())
       {
       // The start of the old method looks like on IA32:
@@ -283,7 +284,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
 void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *fe)
    {
    char *startByte = (char*)oldStartPC + jitEntryOffset(oldStartPC);
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(oldStartPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(oldStartPC);
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    TR_ASSERT( linkageInfo->isSamplingMethodBody() && !linkageInfo->isCountingMethodBody() ||
           !linkageInfo->isSamplingMethodBody() &&  linkageInfo->isCountingMethodBody(),
@@ -352,7 +353,7 @@ void J9::Recompilation::invalidateMethodBody(void *startPC, TR_FrontEnd *fe)
    // Preexistence assumptions for this method have been violated.  Make the
    // method no-longer runnable and schedule it for a sync recompilation
    //
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    //linkageInfo->setInvalidated();
    TR_PersistentJittedBodyInfo* bodyInfo = getJittedBodyInfoFromPC(startPC);
    bodyInfo->setIsInvalidated(); // bodyInfo must exist

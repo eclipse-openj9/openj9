@@ -26,6 +26,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/PrivateLinkage.hpp"
 #include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"
 #include "runtime/CodeCacheManager.hpp"
@@ -45,7 +46,7 @@ extern void ppcCodeSync(uint8_t *, uint32_t);
 //
 TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *startPC)
    {
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    int32_t  jitEntryOffset = getJitEntryOffset(linkageInfo);
    int32_t *jitEntry = (int32_t *)((int8_t *)startPC + jitEntryOffset);
 
@@ -76,7 +77,7 @@ TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *st
 
 bool J9::Recompilation::isAlreadyPreparedForRecompile(void *startPC)
    {
-   int32_t  jitEntryOffset = getJitEntryOffset(TR_LinkageInfo::get(startPC));
+   int32_t  jitEntryOffset = getJitEntryOffset(J9::PrivateLinkage::LinkageInfo::get(startPC));
    int32_t *jitEntry = (int32_t *)((int8_t *)startPC + jitEntryOffset);
 
    return ((*jitEntry & 0xff000000) == 0x4b000000);
@@ -93,7 +94,7 @@ bool J9::Recompilation::isAlreadyPreparedForRecompile(void *startPC)
 //
 void J9::Recompilation::fixUpMethodCode(void *startPC)
    {
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC); //(TR_LinkageInfo *) (((uint8_t*)startPC) + PC_TO_LINKAGE_INFO);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    if (linkageInfo->isCountingMethodBody())
       {
       TR_PersistentJittedBodyInfo *bodyInfo = getJittedBodyInfoFromPC(startPC);
@@ -127,7 +128,7 @@ void J9::Recompilation::fixUpMethodCode(void *startPC)
 
 void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStartPC, TR_FrontEnd *fe)
    {
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(oldStartPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(oldStartPC);
    int32_t   bytesToSaveAtStart = 0;
    int32_t   *patchAddr, newInstr;
 
@@ -194,7 +195,7 @@ void J9::Recompilation::methodHasBeenRecompiled(void *oldStartPC, void *newStart
 
 void J9::Recompilation::methodCannotBeRecompiled(void *oldStartPC, TR_FrontEnd *fe)
    {
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(oldStartPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(oldStartPC);
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
    int32_t  *patchAddr, newInstr, distance;
    TR_ASSERT( linkageInfo->isSamplingMethodBody() && !linkageInfo->isCountingMethodBody() ||
@@ -269,7 +270,7 @@ void J9::Recompilation::invalidateMethodBody(void *startPC, TR_FrontEnd *fe)
    // Pre-existence assumptions for this method have been violated. Make the
    // method no-longer runnable and schedule it for sync recompilation
    //
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    //linkageInfo->setInvalidated();
    TR_PersistentJittedBodyInfo* bodyInfo = getJittedBodyInfoFromPC(startPC);
    bodyInfo->setIsInvalidated(); // bodyInfo must exist
@@ -295,7 +296,7 @@ void ppcIndirectCallPatching_unwrapper(void **argsPtr, void **resPtr)
 #if defined(TR_HOST_POWER)
 void fixupMethodInfoAddressInCodeCache(void *startPC, void *bodyInfo)
    {
-   TR_LinkageInfo *linkageInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    int32_t  jitEntryOffset = getJitEntryOffset(linkageInfo);
    int32_t *jitEntry = (int32_t *)((int8_t *)startPC + jitEntryOffset);
 

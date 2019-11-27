@@ -29,6 +29,7 @@
 #include "codegen/CodeGenerator_inlines.hpp"
 #include "codegen/Linkage.hpp"
 #include "codegen/Linkage_inlines.hpp"
+#include "codegen/PrivateLinkage.hpp"
 #include "arm/codegen/ARMSystemLinkage.hpp"
 #include "arm/codegen/ARMRecompilation.hpp"
 #include "env/OMRMemory.hpp"
@@ -289,7 +290,7 @@ void J9::ARM::CodeGenerator::doBinaryEncoding()
 
          if (recomp != NULL && recomp->couldBeCompiledAgain())
             {
-            TR_LinkageInfo *lkInfo = TR_LinkageInfo::get(self()->getCodeStart());
+            J9::PrivateLinkage::LinkageInfo *lkInfo = J9::PrivateLinkage::LinkageInfo::get(self()->getCodeStart());
             if (recomp->useSampling())
                lkInfo->setSamplingMethodBody();
             else

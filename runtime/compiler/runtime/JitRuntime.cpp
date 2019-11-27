@@ -37,6 +37,7 @@
 #include "jitprotos.h"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/FrontEnd.hpp"
+#include "codegen/PrivateLinkage.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"
 #include "control/CompilationController.hpp"
@@ -244,7 +245,7 @@ J9::Recompilation::induceRecompilation(
       bool *queued,
       TR_OptimizationPlan *optimizationPlan)
    {
-   TR_LinkageInfo              *linkageInfo = TR_LinkageInfo::get(startPC);
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = J9::PrivateLinkage::LinkageInfo::get(startPC);
    TR_PersistentMethodInfo     *methodInfo;
    TR_PersistentJittedBodyInfo *bodyInfo;
 
@@ -1329,12 +1330,12 @@ void platformUnlock(uint32_t *ptr)
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
 uint32_t *getLinkageInfo(void *startPC)
    {
-   return (uint32_t *)TR_LinkageInfo::get(startPC);
+   return (uint32_t *)J9::PrivateLinkage::LinkageInfo::get(startPC);
    }
 
 uint32_t isRecompMethBody(void *li)
    {
-   TR_LinkageInfo *linkageInfo = (TR_LinkageInfo *)li;
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = (J9::PrivateLinkage::LinkageInfo *)li;
    return linkageInfo->isRecompMethodBody();
    }
 
@@ -1699,7 +1700,7 @@ void *initialInvokeExactThunk(j9object_t methodHandle, J9VMThread *vmThread)
       uintptrj_t fieldOffset = fej9->getInstanceFieldOffset(fej9->getObjectClass(thunkTuple), "invokeExactThunk", "J");
 #if defined(TR_HOST_X86)
       bool success = fej9->compareAndSwapInt64Field(thunkTuple, "invokeExactThunk", (uint64_t)(uintptrj_t)initialInvokeExactThunkGlue, (uint64_t)(uintptrj_t)addressToDispatch);
-      
+
       if (details)
          TR_VerboseLog::writeLineLocked(TR_Vlog_MHD, "%p   %s updating ThunkTuple %p field %+d from %p to %p",
             vmThread, success? "Succeeded" : "Failed", thunkTuple, (int)fieldOffset, initialInvokeExactThunkGlue, addressToDispatch);
