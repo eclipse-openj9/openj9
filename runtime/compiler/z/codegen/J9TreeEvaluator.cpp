@@ -3967,9 +3967,9 @@ J9::Z::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGenera
       if (isResolved)
          {
          fieldClassReg = cg->allocateRegister();
-         if (!(cg->comp()->compileRelocatableCode()))
+         if (!(cg->needClassAndMethodPointerRelocations()))
             {
-            // For non-AOT compiles we don't need to use sideEffectRegister here as the class information is available to us at compile time.
+            // For non-AOT (JIT and JITServer) compiles we don't need to use sideEffectRegister here as the class information is available to us at compile time.
             J9Class *fieldClass = static_cast<TR::J9WatchedStaticFieldSnippet *>(dataSnippet)->getFieldClass();
             TR_ASSERT_FATAL(fieldClass != NULL, "A valid J9Class must be provided for direct rdbar/wrtbar opcodes %p\n", node);
             generateRILInstruction(cg, TR::InstOpCode::LARL, node, fieldClassReg, static_cast<void *>(fieldClass));

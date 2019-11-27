@@ -88,7 +88,9 @@ uint8_t *TR::J9WatchedStaticFieldSnippet::emitSnippetBody()
             __LINE__,
             node);
          }
-      else
+      // relocations for TR_ClassAddress are needed for AOT/AOTaaS compiles and not needed for regular JIT and JITServer compiles. 
+      // cg->needClassAndMethodPointerRelocations() tells us whether a relocation is needed depending on the type of compile being performed.
+      else if (cg()->needClassAndMethodPointerRelocations())
          {
          // As things currently stand, this will not work on Power because TR_ClassAddress is used to a generate a 5 instruction sequence that materializes the address into a register. Meanwhile we are using TR_ClassAddress here to represent a contiguous word.
          // A short-term solution would be to use TR_ClassPointer. However this is hacky because TR_ClassPointer expects an aconst node (so we would have to create a dummy node). The proper solution would be to implement the functionality in the power

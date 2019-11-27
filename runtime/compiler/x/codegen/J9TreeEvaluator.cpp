@@ -12659,7 +12659,7 @@ void generateReportFieldAccessOutlinedInstructions(TR::Node *node, TR::LabelSymb
 static uint8_t getNumOfConditionsForReportFieldAccess(TR::Node *node, bool isResolved, bool isWrite, bool isInstanceField, TR::CodeGenerator *cg)
    {
    uint8_t numOfConditions = 1; // 1st arg is always the data block
-   if (!isResolved || isInstanceField || cg->comp()->compileRelocatableCode() /* isAOTCompile */)
+   if (!isResolved || isInstanceField || cg->needClassAndMethodPointerRelocations())
       numOfConditions = numOfConditions+1; // classReg is needed in both cases.
    if (isWrite)
       {
@@ -12695,7 +12695,7 @@ J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGene
    TR::MemoryReference *classFlagsMemRef = NULL;
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    bool isInstanceField = node->getOpCode().isIndirect();
-   bool isAOTCompile = cg->comp()->compileRelocatableCode();
+   bool fieldClassNeedsRelocation = cg->needClassAndMethodPointerRelocations();
 
    if (isInstanceField)
       {
@@ -12708,9 +12708,9 @@ J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGene
       {
       if (isResolved)
          {
-         if (!isAOTCompile)
+         if (!fieldClassNeedsRelocation)
             {
-            // For non-AOT compiles we don't need to use sideEffectRegister here as the class information is available to us at compile time.
+            // For non-AOT (JIT and JITServer) compiles we don't need to use sideEffectRegister here as the class information is available to us at compile time.
             J9Class *fieldClass = static_cast<TR::J9WatchedStaticFieldSnippet *>(dataSnippet)->getFieldClass();
             classFlagsMemRef = generateX86MemoryReference((uintptrj_t)fieldClass + fej9->getOffsetOfClassFlags(), cg);
             }
@@ -12744,7 +12744,7 @@ J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGene
 
    uint8_t numOfConditions = getNumOfConditionsForReportFieldAccess(node, !node->getSymbolReference()->isUnresolved(), isWrite, isInstanceField, cg);
    TR::RegisterDependencyConditions  *deps =  generateRegisterDependencyConditions(numOfConditions, numOfConditions, cg);
-   if (isInstanceField || !isResolved || isAOTCompile)
+   if (isInstanceField || !isResolved || fieldClassNeedsRelocation)
       {
       deps->addPreCondition(fieldClassReg, TR::RealRegister::NoReg, cg);
       deps->addPostCondition(fieldClassReg, TR::RealRegister::NoReg, cg);
@@ -12757,7 +12757,7 @@ J9::X86::TreeEvaluator::generateTestAndReportFieldWatchInstructions(TR::CodeGene
    deps->stopAddingConditions();
    generateLabelInstruction(LABEL, node, endLabel, deps, cg);
 
-   if (isInstanceField || (!isResolved && isWrite) || isAOTCompile)
+   if (isInstanceField || (!isResolved && isWrite) || fieldClassNeedsRelocation)
       {
       cg->stopUsingRegister(fieldClassReg);
       }
