@@ -78,6 +78,7 @@ J9::CodeGenerator::CodeGenerator() :
    _liveMonitors(NULL),
    _nodesSpineCheckedList(getTypedAllocator<TR::Node*>(TR::comp()->allocator())),
    _jniCallSites(getTypedAllocator<TR_Pair<TR_ResolvedMethod,TR::Instruction> *>(TR::comp()->allocator())),
+   _monitorMapping(self()->comp()->trMemory(), 256),
    _dummyTempStorageRefNode(NULL)
    {
    }
@@ -4885,4 +4886,26 @@ J9::CodeGenerator::generatePoisonNode(TR::Block *currentBlock, TR::SymbolReferen
       }
 
    return storeNode;
+   }
+
+
+// I need to preserve the type information for monitorenter/exit through
+// code generation, but the secondChild is being used for other monitor
+// optimizations and I can't find anywhere to stick it on the TR::Node.
+// Creating the node with more children doesn't seem to help either.
+//
+void
+J9::CodeGenerator::addMonClass(TR::Node* monNode, TR_OpaqueClassBlock* clazz)
+   {
+   _monitorMapping.add(monNode);
+   _monitorMapping.add(clazz);
+   }
+
+TR_OpaqueClassBlock *
+J9::CodeGenerator::getMonClass(TR::Node* monNode)
+   {
+   for (int i = 0; i < _monitorMapping.size(); i += 2)
+      if (_monitorMapping[i] == monNode)
+         return (TR_OpaqueClassBlock *) _monitorMapping[i+1];
+   return 0;
    }
