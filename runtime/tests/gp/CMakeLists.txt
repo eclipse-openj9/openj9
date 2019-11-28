@@ -48,4 +48,5 @@ omr_add_exports(gptest
 install(
 	TARGETS gptest
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
+	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )
