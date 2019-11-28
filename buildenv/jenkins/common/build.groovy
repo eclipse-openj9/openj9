@@ -272,9 +272,11 @@ def build() {
         }
     }
     stage('Java Version') {
+        slackSend channel: "#jenkins-sandbox", color: 'good', message: "Adam: Win compile passed, you have 30 minutes to zip WORKSPACE"
         dir(OPENJDK_CLONE_DIR) {
             sh "build/$RELEASE/images/$JDK_FOLDER/bin/java -version"
         }
+        sleep time: 30, unit: 'MINUTES'
     }
 }
 
