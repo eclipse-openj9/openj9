@@ -57,6 +57,9 @@ class TR_J9VM;
 class TR_AccessedProfileInfo;
 class TR_RelocationRuntime;
 namespace TR { class IlGenRequest; }
+#ifdef JITSERVER_SUPPORT
+struct SerializedRuntimeAssumption;
+#endif
 
 #define COMPILATION_AOT_HAS_INVOKEHANDLE -9
 #define COMPILATION_RESERVE_RESOLVED_TRAMPOLINE_FATAL_ERROR -10
@@ -318,6 +321,7 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
    void setOutOfProcessCompilation() { _outOfProcessCompilation = true; }
    bool isRemoteCompilation() const { return _remoteCompilation; } // client side
    void setRemoteCompilation() { _remoteCompilation = true; }
+   TR::list<SerializedRuntimeAssumption*>& getSerializedRuntimeAssumptions() { return _serializedRuntimeAssumptions; }
 #endif /* defined(JITSERVER_SUPPORT) */
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
@@ -410,6 +414,9 @@ private:
    TR_RelocationRuntime *_reloRuntime;
 
 #if defined(JITSERVER_SUPPORT)
+   // This list contains assumptions created during the compilation at the JITServer
+   // It needs to be sent to the client at the end of compilation
+   TR::list<SerializedRuntimeAssumption*> _serializedRuntimeAssumptions;
    // The following flag is set when this compilation is performed in a
    // VM that does not have the runtime part (server side in JITServer)
    bool _outOfProcessCompilation;

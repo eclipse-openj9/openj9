@@ -4644,21 +4644,59 @@ J9::CodeGenerator::registerAssumptions()
       {
       TR_OpaqueMethodBlock *method = (*it)->getKey()->getPersistentIdentifier();
       TR::Instruction *i = (*it)->getValue();
-      TR_PatchJNICallSite::make(self()->fe(), self()->trPersistentMemory(), (uintptrj_t) method, i->getBinaryEncoding(), self()->comp()->getMetadataAssumptionList());
+#ifdef JITSERVER_SUPPORT
+      if (self()->comp()->isOutOfProcessCompilation())
+         {
+         // For JITServer we need to build a list of assumptions that will be sent to client at end of compilation
+         intptr_t offset = i->getBinaryEncoding() - self()->getCodeStart();
+         SerializedRuntimeAssumption* sar = 
+            new (self()->trHeapMemory()) SerializedRuntimeAssumption(RuntimeAssumptionOnRegisterNative, (uintptrj_t)method, offset);
+         self()->comp()->getSerializedRuntimeAssumptions().push_front(sar);
+         }
+      else
+#endif // JITSERVER_SUPPORT
+         {
+         TR_PatchJNICallSite::make(self()->fe(), self()->trPersistentMemory(), (uintptrj_t) method, i->getBinaryEncoding(), self()->comp()->getMetadataAssumptionList());
+         }
       }
    }
 
 void
 J9::CodeGenerator::jitAddPicToPatchOnClassUnload(void *classPointer, void *addressToBePatched)
    {
-   createClassUnloadPicSite(classPointer, addressToBePatched, sizeof(uintptrj_t), self()->comp()->getMetadataAssumptionList());
-   self()->comp()->setHasClassUnloadAssumptions();
+#ifdef JITSERVER_SUPPORT
+   if (self()->comp()->isOutOfProcessCompilation())
+      {
+      intptr_t offset = (uint8_t*)addressToBePatched - self()->getCodeStart();
+      SerializedRuntimeAssumption* sar = 
+         new (self()->trHeapMemory()) SerializedRuntimeAssumption(RuntimeAssumptionOnClassUnload, (uintptrj_t)classPointer, offset, sizeof(uintptrj_t));
+      self()->comp()->getSerializedRuntimeAssumptions().push_front(sar);
+      }
+   else
+#endif // JITSERVER_SUPPORT
+      {
+      createClassUnloadPicSite(classPointer, addressToBePatched, sizeof(uintptrj_t), self()->comp()->getMetadataAssumptionList());
+      self()->comp()->setHasClassUnloadAssumptions();
+      }
    }
+
 void
 J9::CodeGenerator::jitAdd32BitPicToPatchOnClassUnload(void *classPointer, void *addressToBePatched)
    {
-   createClassUnloadPicSite(classPointer, addressToBePatched,4, self()->comp()->getMetadataAssumptionList());
-   self()->comp()->setHasClassUnloadAssumptions();
+#ifdef JITSERVER_SUPPORT
+   if (self()->comp()->isOutOfProcessCompilation())
+      {
+      intptr_t offset = (uint8_t*)addressToBePatched - self()->getCodeStart();
+      SerializedRuntimeAssumption* sar = 
+         new (self()->trHeapMemory()) SerializedRuntimeAssumption(RuntimeAssumptionOnClassUnload, (uintptrj_t)classPointer, offset, 4);
+      self()->comp()->getSerializedRuntimeAssumptions().push_front(sar);
+      }
+   else
+#endif // JITSERVER_SUPPORT
+      {
+      createClassUnloadPicSite(classPointer, addressToBePatched,4, self()->comp()->getMetadataAssumptionList());
+      self()->comp()->setHasClassUnloadAssumptions();
+      }
    }
 
 void
@@ -4666,8 +4704,22 @@ J9::CodeGenerator::jitAddPicToPatchOnClassRedefinition(void *classPointer, void 
    {
     if (!self()->comp()->compileRelocatableCode())
       {
-      createClassRedefinitionPicSite(unresolved? (void*)-1 : classPointer, addressToBePatched, sizeof(uintptrj_t), unresolved, self()->comp()->getMetadataAssumptionList());
-      self()->comp()->setHasClassRedefinitionAssumptions();
+#ifdef JITSERVER_SUPPORT
+      if (self()->comp()->isOutOfProcessCompilation())
+         {
+         TR_RuntimeAssumptionKind kind = unresolved ? RuntimeAssumptionOnClassRedefinitionUPIC : RuntimeAssumptionOnClassRedefinitionPIC;
+         uintptrj_t key = unresolved ? (uintptrj_t)-1 : (uintptrj_t)classPointer;
+         intptr_t offset = (uint8_t*)addressToBePatched - self()->getCodeStart();
+         SerializedRuntimeAssumption* sar = 
+            new (self()->trHeapMemory()) SerializedRuntimeAssumption(kind, key, offset, sizeof(uintptrj_t));
+         self()->comp()->getSerializedRuntimeAssumptions().push_front(sar);
+         }
+      else
+#endif // JITSERVER_SUPPORT
+         {
+         createClassRedefinitionPicSite(unresolved? (void*)-1 : classPointer, addressToBePatched, sizeof(uintptrj_t), unresolved, self()->comp()->getMetadataAssumptionList());
+         self()->comp()->setHasClassRedefinitionAssumptions();
+         }
       }
    }
 
@@ -4676,10 +4728,25 @@ J9::CodeGenerator::jitAdd32BitPicToPatchOnClassRedefinition(void *classPointer, 
    {
    if (!self()->comp()->compileRelocatableCode())
       {
-      createClassRedefinitionPicSite(unresolved? (void*)-1 : classPointer, addressToBePatched, 4, unresolved, self()->comp()->getMetadataAssumptionList());
-      self()->comp()->setHasClassRedefinitionAssumptions();
+#ifdef JITSERVER_SUPPORT
+      if (self()->comp()->isOutOfProcessCompilation())
+         {
+         TR_RuntimeAssumptionKind kind = unresolved ? RuntimeAssumptionOnClassRedefinitionUPIC : RuntimeAssumptionOnClassRedefinitionPIC;
+         uintptrj_t key = unresolved ? (uintptrj_t)-1 : (uintptrj_t)classPointer;
+         intptr_t offset = (uint8_t*)addressToBePatched - self()->getCodeStart();
+         SerializedRuntimeAssumption* sar = 
+            new (self()->trHeapMemory()) SerializedRuntimeAssumption(kind, key, offset, 4);
+         self()->comp()->getSerializedRuntimeAssumptions().push_front(sar);
+         }
+      else
+#endif // JITSERVER_SUPPORT
+         {
+         createClassRedefinitionPicSite(unresolved? (void*)-1 : classPointer, addressToBePatched, 4, unresolved, self()->comp()->getMetadataAssumptionList());
+         self()->comp()->setHasClassRedefinitionAssumptions();
+         }
       }
    }
+
 
 void
 J9::CodeGenerator::createHWPRecords()
