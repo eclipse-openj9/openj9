@@ -6594,7 +6594,6 @@ TR_CISCTransformer::analyzeBoolTable(TR_BitVector **bv, TR::TreeTop **retSameExi
                switch(n->getOpcode())
                   {
                   case TR::ifbcmpeq:
-                  case TR::ifsucmpeq:
                   case TR::ificmpeq:
                      takenBV.empty();
                      ntakenBV = *bv[tID];
@@ -6605,7 +6604,6 @@ TR_CISCTransformer::analyzeBoolTable(TR_BitVector **bv, TR::TreeTop **retSameExi
                         }
                      break;
                   case TR::ifbcmpne:
-                  case TR::ifsucmpne:
                   case TR::ificmpne:
                      takenBV = *bv[tID];
                      ntakenBV.empty();
