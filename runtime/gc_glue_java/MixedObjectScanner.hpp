@@ -57,16 +57,6 @@ protected:
 		_typeId = __FUNCTION__;
 	}
 
-	/**
-	 * Subclasses must call this method to set up the instance description bits and description pointer.
-	 * @param[in] env The scanning thread environment
-	 */
-	MMINLINE void
-	initialize(MM_EnvironmentBase *env, J9Class *clazzPtr)
-	{
-		GC_HeadlessMixedObjectScanner::initialize(env, clazzPtr);
-	}
-
 public:
 	/**
 	 * In-place instantiation and initialization for mixed object scanner.
@@ -79,10 +69,7 @@ public:
 	MMINLINE static GC_MixedObjectScanner *
 	newInstance(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, void *allocSpace, uintptr_t flags)
 	{
-		GC_MixedObjectScanner *objectScanner = (GC_MixedObjectScanner *)allocSpace;
-		new(objectScanner) GC_MixedObjectScanner(env, objectPtr, flags);
-		objectScanner->initialize(env, J9GC_J9OBJECT_CLAZZ(objectPtr, env));
-		return objectScanner;
+		return new(allocSpace) GC_MixedObjectScanner(env, objectPtr, flags);
 	}
 };
 #endif /* MIXEDOBJECTSCANNER_HPP_ */

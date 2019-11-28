@@ -57,24 +57,33 @@ protected:
 	 * @param[in] endPtr pointer to the array cell where scanning will stop
 	 * @param[in] flags Scanning context flags
 	 */
-	MMINLINE GC_PointerArrayObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t arrayPtr, fomrobject_t *basePtr, fomrobject_t *limitPtr, fomrobject_t *scanPtr, fomrobject_t *endPtr, uintptr_t flags)
-		: GC_IndexableObjectScanner(env, arrayPtr, basePtr, limitPtr, scanPtr, endPtr, ((endPtr - scanPtr) < _bitsPerScanMap) ? (((uintptr_t)1 << (endPtr - scanPtr)) - 1) : UDATA_MAX, sizeof(fomrobject_t), flags)
-		, _mapPtr(_scanPtr)
+	MMINLINE GC_PointerArrayObjectScanner(
+		MM_EnvironmentBase *env
+		, omrobjectptr_t arrayPtr
+		, fomrobject_t *basePtr
+		, fomrobject_t *limitPtr
+		, fomrobject_t *scanPtr
+		, fomrobject_t *endPtr
+		, uintptr_t flags
+	)
+	: GC_IndexableObjectScanner(
+		env
+		, arrayPtr
+		, basePtr
+		, limitPtr
+		, scanPtr
+		, endPtr
+		, ((endPtr - scanPtr) < _bitsPerScanMap) ? (((uintptr_t)1 << (endPtr - scanPtr)) - 1) : UDATA_MAX
+		, sizeof(fomrobject_t)
+		, flags
+	)
+	, _mapPtr(_scanPtr)
 	{
 		_typeId = __FUNCTION__;
 	}
 
-	/**
-	 * Set up the scanner.
-	 * @param[in] env Current environment
-	 */
-	MMINLINE void
-	initialize(MM_EnvironmentBase *env)
-	{
-		GC_IndexableObjectScanner::initialize(env);
-	}
-
 public:
+
 	/**
 	 * @param[in] env The scanning thread environment
 	 * @param[in] objectPtr pointer to the array to be processed
@@ -104,7 +113,6 @@ public:
 			}
 
 			new(objectScanner) GC_PointerArrayObjectScanner(env, objectPtr, basePtr, limitPtr, scanPtr, endPtr, flags);
-			objectScanner->initialize(env);
 			if (0 != startIndex) {
 				objectScanner->clearHeadObjectScanner();
 			}
@@ -133,13 +141,9 @@ public:
 		}
 
 		Assert_MM_true(NULL != allocSpace);
-		/* If splitAmount is 0 the new scanner will return NULL on the first call to getNextSlot(). */
-		splitScanner = (GC_PointerArrayObjectScanner *)allocSpace;
-		/* Create new scanner for next chunk of array starting at the end of current chunk size splitAmount elements */
-		new(splitScanner) GC_PointerArrayObjectScanner(env, getArrayObject(), _basePtr, _limitPtr, _endPtr, _endPtr + splitAmount, _flags);
-		splitScanner->initialize(env);
 
-		return splitScanner;
+		/* Create new scanner for next chunk of array starting at the end of current chunk size splitAmount elements */
+		return new(allocSpace) GC_PointerArrayObjectScanner(env, getArrayObject(), _basePtr, _limitPtr, _endPtr, _endPtr + splitAmount, _flags);
 	}
 
 	/**

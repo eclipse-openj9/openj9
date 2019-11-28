@@ -46,6 +46,9 @@ public:
 private:
 
 protected:
+
+public:
+
 	/**
 	 * @param env The scanning thread environment
 	 * @param[in] objectPtr the object to be processed
@@ -61,16 +64,7 @@ protected:
 #endif /* J9VM_GC_LEAF_BITS */
 	{
 		_typeId = __FUNCTION__;
-	}
 
-	/**
-	 * Subclasses must call this method to set up the instance description bits and description pointer.
-	 * @param[in] env The scanning thread environment
-	 */
-	MMINLINE void
-	initialize(MM_EnvironmentBase *env, J9Class *clazzPtr)
-	{
-		GC_ObjectScanner::initialize(env);
 
 		if (J9_IS_J9CLASS_FLATTENED(clazzPtr)) {
 			fprintf(stderr, "!!! Found flattened class\n");
@@ -101,7 +95,6 @@ protected:
 		}
 	}
 
-public:
 	/**
 	 * In-place instantiation and initialization for mixed object scanner.
 	 * @param[in] env The scanning thread environment
@@ -113,10 +106,7 @@ public:
 	MMINLINE static GC_HeadlessMixedObjectScanner *
 	newInstance(MM_EnvironmentBase *env, J9Class* clazzPtr, fomrobject_t* scanPtr, void *allocSpace, uintptr_t flags)
 	{
-		GC_HeadlessMixedObjectScanner *objectScanner = (GC_HeadlessMixedObjectScanner *)allocSpace;
-		new(objectScanner) GC_HeadlessMixedObjectScanner(env, clazzPtr, scanPtr, flags);
-		objectScanner->initialize(env, clazzPtr);
-		return objectScanner;
+		return new(allocSpace) GC_HeadlessMixedObjectScanner(env, clazzPtr, scanPtr, flags);
 	}
 	
 	MMINLINE uintptr_t getBytesRemaining() { return sizeof(fomrobject_t) * (_endPtr - _scanPtr); }
