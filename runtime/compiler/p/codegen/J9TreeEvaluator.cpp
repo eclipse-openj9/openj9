@@ -350,6 +350,8 @@ extern void TEMPORARY_initJ9PPCTreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::tfinish] = TR::TreeEvaluator::tfinishEvaluator;
    tet[TR::tabort] = TR::TreeEvaluator::tabortEvaluator;
 
+   tet[TR::NULLCHK] = TR::TreeEvaluator::NULLCHKEvaluator;
+   tet[TR::ResolveAndNULLCHK] = TR::TreeEvaluator::resolveAndNULLCHKEvaluator;
    }
 
 
@@ -14102,3 +14104,123 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
 // the following is to force an export to keep ilib happy
 int J9PPCEvaluator=0;
 #endif /* TR_TARGET_POWER */
+
+TR::Register *
+J9::Power::TreeEvaluator::NULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(node, false, cg);
+   }
+
+TR::Register *
+J9::Power::TreeEvaluator::resolveAndNULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   return TR::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(node, true, cg);
+   }
+
+TR::Register *
+J9::Power::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, bool needsResolve, TR::CodeGenerator *cg)
+   {
+   // NOTE:
+   // If in the future no code is generated for the null check, just evaluate the
+   // child and decrement its use count UNLESS the child is a pass-through node
+   // in which case some kind of explicit test or indirect load must be generated
+   // to force the null check at this point.
+
+   TR::Node     *firstChild     = node->getFirstChild();
+   TR::ILOpCode &opCode = firstChild->getOpCode();
+   TR::Node *reference = NULL;
+   TR::Compilation *comp = cg->comp();
+
+   bool hasCompressedPointers = false;
+   if (comp->useCompressedPointers()
+         && firstChild->getOpCodeValue() == TR::l2a)
+      {
+      hasCompressedPointers = true;
+      TR::ILOpCodes loadOp = cg->comp()->il.opCodeForIndirectLoad(TR::Int32);
+      TR::ILOpCodes rdbarOp = cg->comp()->il.opCodeForIndirectReadBarrier(TR::Int32);
+      TR::Node *n = firstChild;
+      while ((n->getOpCodeValue() != loadOp) && (n->getOpCodeValue() != rdbarOp))
+         n = n->getFirstChild();
+      reference = n->getFirstChild();
+      }
+   else
+      reference = node->getNullCheckReference();
+
+   // TODO - If a resolve check is needed as well, the resolve must be done
+   // before the null check, so that exceptions are handled in the correct
+   // order.
+   //
+   ///// if (needsResolve)
+   /////    {
+   /////    ...
+   /////    }
+
+   TR::Register *trgReg = cg->evaluate(reference);
+   TR::Instruction *gcPoint;
+
+   gcPoint = TR::TreeEvaluator::generateNullTestInstructions(cg, trgReg, node);
+
+   gcPoint->PPCNeedsGCMap(0xFFFFFFFF);
+
+   TR::Node *n = NULL;
+   if (comp->useCompressedPointers()
+         && reference->getOpCodeValue() == TR::l2a)
+      {
+      reference->setIsNonNull(true);
+      n = reference->getFirstChild();
+      TR::ILOpCodes loadOp = cg->comp()->il.opCodeForIndirectLoad(TR::Int32);
+      TR::ILOpCodes rdbarOp = cg->comp()->il.opCodeForIndirectReadBarrier(TR::Int32);
+      while ((n->getOpCodeValue() != loadOp) && (n->getOpCodeValue() != rdbarOp))
+         {
+         n->setIsNonZero(true);
+         n = n->getFirstChild();
+         }
+      n->setIsNonZero(true);
+      }
+
+   reference->setIsNonNull(true);
+
+   /*
+   * If the first child is a load with a ref count of 1, just decrement the reference count on the child.
+   * If the first child does not have a register, it means it was never evaluated.
+   * As a result, the grandchild (the variable reference) needs to be decremented as well.
+   *
+   * In other cases, evaluate the child node.
+   *
+   * Under compressedpointers, the first child will have a refCount of at least 2 (the other under an anchor node).
+   */
+   if (opCode.isLoad() && firstChild->getReferenceCount()==1
+         && !firstChild->getSymbolReference()->isUnresolved())
+      {
+      cg->decReferenceCount(firstChild);
+      if (firstChild->getRegister() == NULL)
+         {
+         cg->decReferenceCount(reference);
+         }
+      }
+   else
+      {
+      if (comp->useCompressedPointers())
+         {
+         // for stores under NULLCHKs, artificially bump
+         // down the reference count before evaluation (since stores
+         // return null as registers)
+         //
+         bool fixRefCount = false;
+         if (firstChild->getOpCode().isStoreIndirect()
+               && firstChild->getReferenceCount() > 1)
+            {
+            firstChild->decReferenceCount();
+            fixRefCount = true;
+            }
+         cg->evaluate(firstChild);
+         if (fixRefCount)
+            firstChild->incReferenceCount();
+         }
+      else
+         cg->evaluate(firstChild);
+      cg->decReferenceCount(firstChild);
+      }
+
+   return NULL;
+   }

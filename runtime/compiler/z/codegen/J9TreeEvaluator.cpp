@@ -1136,6 +1136,8 @@ extern void TEMPORARY_initJ9S390TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::tfinish] = TR::TreeEvaluator::tfinishEvaluator;
    tet[TR::tabort] = TR::TreeEvaluator::tabortEvaluator;
 
+   tet[TR::NULLCHK] =               TR::TreeEvaluator::NULLCHKEvaluator;
+   tet[TR::ResolveAndNULLCHK] =     TR::TreeEvaluator::resolveAndNULLCHKEvaluator;
    }
 
 
@@ -5326,6 +5328,469 @@ J9::Z::TreeEvaluator::conditionalHelperEvaluator(TR::Node * node, TR::CodeGenera
    cg->decReferenceCount(testNode);
    cg->stopUsingRegister(tempReg1);
    cg->stopUsingRegister(tempReg2);
+
+   return NULL;
+   }
+
+/**
+ * Null check a pointer.  child 1 is indirect reference. Symbolref
+ * indicates failure action/destination
+ */
+TR::Register *
+J9::Z::TreeEvaluator::NULLCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return TR::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(node, false, cg);
+   }
+
+/**
+ * resolveAndNULLCHKEvaluator - Resolve check a static, field or method and Null check
+ *    the underlying pointer.  child 1 is reference to be resolved. Symbolref indicates
+ *    failure action/destination
+ */
+TR::Register *
+J9::Z::TreeEvaluator::resolveAndNULLCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
+   {
+   return TR::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(node, true, cg);
+   }
+
+/**
+ * This is a helper function used to generate the snippet
+ */
+TR::Register *
+J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool needsResolve, TR::CodeGenerator * cg)
+   {
+   // NOTE:
+   // If no code is generated for the null check, just evaluate the
+   // child and decrement its use count UNLESS the child is a pass-through node
+   // in which case some kind of explicit test or indirect load must be generated
+   // to force the null check at this point.
+
+   TR::Node * firstChild = node->getFirstChild();
+   TR::ILOpCode & opCode = firstChild->getOpCode();
+   TR::Compilation *comp = cg->comp();
+   TR::Node * reference = NULL;
+   TR::InstOpCode::S390BranchCondition branchOpCond = TR::InstOpCode::COND_BZ;
+
+   bool hasCompressedPointers = false;
+
+   TR::Node * n = firstChild;
+
+   // NULLCHK has a special case with compressed pointers.
+   // In the scenario where the first child is TR::l2a, the
+   // node to be null checked is not the iiload, but its child.
+   // i.e. aload, aRegLoad, etc.
+   if (comp->useCompressedPointers()
+         && firstChild->getOpCodeValue() == TR::l2a)
+      {
+      hasCompressedPointers = true;
+      TR::ILOpCodes loadOp = comp->il.opCodeForIndirectLoad(TR::Int32);
+      TR::ILOpCodes rdbarOp = comp->il.opCodeForIndirectReadBarrier(TR::Int32);
+      while (n->getOpCodeValue() != loadOp && n->getOpCodeValue() != rdbarOp)
+         n = n->getFirstChild();
+      reference = n->getFirstChild();
+      }
+   else
+      {
+      reference = node->getNullCheckReference();
+      }
+
+   // Skip the NULLCHK for TR::loadaddr nodes.
+   //
+   if (cg->getSupportsImplicitNullChecks()
+         && reference->getOpCodeValue() == TR::loadaddr)
+      {
+      cg->evaluate(firstChild);
+      cg->decReferenceCount(firstChild);
+      return NULL;
+      }
+
+   bool needExplicitCheck  = true;
+   bool needLateEvaluation = true;
+
+   // Add the explicit check after this instruction
+   //
+   TR::Instruction *appendTo = NULL;
+
+   // determine if an explicit check is needed
+   if (cg->getSupportsImplicitNullChecks()
+         && !firstChild->isUnneededIALoad())
+      {
+      if (opCode.isLoadVar()
+            || (TR::Compiler->target.is64Bit() && opCode.getOpCodeValue()==TR::l2i)
+            || (hasCompressedPointers && firstChild->getFirstChild()->getOpCode().getOpCodeValue() == TR::i2l))
+         {
+         TR::SymbolReference *symRef = NULL;
+
+         if (opCode.getOpCodeValue()==TR::l2i)
+            symRef = n->getFirstChild()->getSymbolReference();
+         else
+            symRef = n->getSymbolReference();
+
+         // We prefer to generate an explicit NULLCHK vs an implicit one
+         // to prevent potential costs of a cache miss on an unnecessary load.
+         if (n->getReferenceCount() == 1
+               && !n->getSymbolReference()->isUnresolved())
+            {
+            // If the child is only used here, we don't need to evaluate it
+            // since all we need is the grandchild which will be evaluated by
+            // the generation of the explicit check below.
+            needLateEvaluation = false;
+
+            // at this point, n is the raw iiload (created by lowerTrees) and
+            // reference is the aload of the object. node->getFirstChild is the
+            // l2a sequence; as a result, n's refCount will always be 1
+            // and node->getFirstChild's refCount will be at least 2 (one under the nullchk
+            // and the other under the translate treetop)
+            //
+            if (hasCompressedPointers
+                  && node->getFirstChild()->getReferenceCount() > 2)
+               needLateEvaluation = true;
+            }
+
+         // Check if offset from a NULL reference will fall into the inaccessible bytes,
+         // resulting in an implicit trap being raised.
+         else if (symRef
+               && ((symRef->getSymbol()->getOffset() + symRef->getOffset()) < cg->getNumberBytesReadInaccessible()))
+            {
+            needExplicitCheck = false;
+
+            // If the child is an arraylength which has been reduced to an iiload,
+            // and is only going to be used immediately in a BNDCHK, combine the checks.
+            //
+            TR::TreeTop *nextTreeTop = cg->getCurrentEvaluationTreeTop()->getNextTreeTop();
+            if (n->getReferenceCount() == 2 && nextTreeTop)
+               {
+               TR::Node *nextTopNode = nextTreeTop->getNode();
+
+               if (nextTopNode)
+                  {
+                  if (nextTopNode->getOpCode().isBndCheck())
+                     {
+                     if ((nextTopNode->getOpCode().isSpineCheck() && (nextTopNode->getChild(2) == n))
+                           || (!nextTopNode->getOpCode().isSpineCheck() && (nextTopNode->getFirstChild() == n)))
+                        {
+                        needLateEvaluation = false;
+                        nextTopNode->setHasFoldedImplicitNULLCHK(true);
+                        traceMsg(comp, "\nMerging NULLCHK [%p] and BNDCHK [%p] of load child [%p]", node, nextTopNode, n);
+                        }
+                     }
+                  else if (nextTopNode->getOpCode().isIf()
+                        && nextTopNode->isNonoverriddenGuard()
+                        && nextTopNode->getFirstChild() == firstChild)
+                     {
+                     needLateEvaluation = false;
+                     needExplicitCheck = true;
+                     reference->incReferenceCount(); // will be decremented again later
+                     }
+                  }
+               }
+            }
+         }
+      else if (opCode.isStore())
+         {
+         TR::SymbolReference *symRef = n->getSymbolReference();
+         if (n->getOpCode().hasSymbolReference()
+               && (symRef->getSymbol()->getOffset() + symRef->getOffset() < cg->getNumberBytesWriteInaccessible()))
+            {
+            needExplicitCheck = false;
+            }
+         }
+      else if (opCode.isCall()
+            && opCode.isIndirect()
+            && (cg->getNumberBytesReadInaccessible() > TR::Compiler->om.offsetOfObjectVftField()))
+         {
+         needExplicitCheck = false;
+         }
+      else if (opCode.getOpCodeValue() == TR::iushr
+            && (cg->getNumberBytesReadInaccessible() > cg->fe()->getOffsetOfContiguousArraySizeField()))
+         {
+         // If the child is an arraylength which has been reduced to an iushr,
+         // we must evaluate it here so that the implicit exception will occur
+         // at the right point in the program.
+         //
+         // This can occur when the array length is represented in bytes, not elements.
+         // The optimizer must intervene for this to happen.
+         //
+         cg->evaluate(n->getFirstChild());
+         needExplicitCheck = false;
+         }
+      else if (opCode.getOpCodeValue() == TR::monent
+            || opCode.getOpCodeValue() == TR::monexit)
+         {
+         // The child may generate inline code that provides an implicit null check
+         // but we won't know until the child is evaluated.
+         //
+         reference->incReferenceCount(); // will be decremented again later
+         needLateEvaluation = false;
+         cg->evaluate(reference);
+         appendTo = cg->getAppendInstruction();
+         cg->evaluate(firstChild);
+
+         if (cg->getImplicitExceptionPoint()
+               && (cg->getNumberBytesReadInaccessible() > cg->fe()->getOffsetOfContiguousArraySizeField()))
+            {
+            needExplicitCheck = false;
+            cg->decReferenceCount(reference);
+            }
+         }
+      }
+
+   // Generate the code for the null check
+   //
+   if(needExplicitCheck)
+      {
+      TR::Register * targetRegister = NULL;
+      if (cg->getHasResumableTrapHandler())
+         {
+         // Use Load-And-Trap on zHelix if available.
+         // This loads the field and performance a NULLCHK on the field value.
+         // i.e.  o.f == NULL
+         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zEC12)
+               && reference->getOpCode().isLoadVar()
+               && (reference->getOpCodeValue() != TR::ardbari)
+               && reference->getRegister() == NULL)
+            {
+            targetRegister = cg->allocateCollectedReferenceRegister();
+            appendTo = generateRXInstruction(cg, TR::InstOpCode::getLoadAndTrapOpCode(), node, targetRegister, generateS390MemoryReference(reference, cg), appendTo);
+            reference->setRegister(targetRegister);
+            }
+         else if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zEC12)
+               && reference->getRegister() == NULL
+               && comp->useCompressedPointers()
+               && reference->getOpCodeValue() == TR::l2a
+               && reference->getFirstChild()->getOpCodeValue() == TR::iu2l
+               && reference->getFirstChild()->getFirstChild()->getOpCode().isLoadVar()
+               && TR::Compiler->om.compressedReferenceShiftOffset() == 0)
+            {
+            targetRegister = cg->evaluate(reference);
+            appendTo = cg->getAppendInstruction();
+            if (appendTo->getOpCodeValue() == TR::InstOpCode::LLGF)
+               {
+               appendTo->setOpCodeValue(TR::InstOpCode::LLGFAT);
+               appendTo->setNode(node);
+               }
+            else
+               {
+               appendTo = generateRIEInstruction(cg, TR::InstOpCode::getCmpImmTrapOpCode(), node, targetRegister, (int16_t)0, TR::InstOpCode::COND_BE, appendTo);
+               }
+            }
+         else
+            {
+            targetRegister = reference->getRegister();
+
+            if (targetRegister == NULL)
+               targetRegister = cg->evaluate(reference);
+
+            appendTo = generateRIEInstruction(cg, TR::InstOpCode::getCmpImmTrapOpCode(), node, targetRegister, (int16_t)0, TR::InstOpCode::COND_BE, appendTo);
+            }
+
+         TR::Instruction* cursor = appendTo;
+         cursor->setThrowsImplicitException();
+         cursor->setExceptBranchOp();
+         cg->setCanExceptByTrap(true);
+         cursor->setNeedsGCMap(0x0000FFFF);
+         if (TR::Compiler->target.isZOS())
+            killRegisterIfNotLocked(cg, TR::RealRegister::GPR4, cursor);
+         }
+      else
+         {
+         // NULLCHK snippet label.
+         TR::LabelSymbol * snippetLabel = generateLabelSymbol(cg);
+         TR::SymbolReference *symRef = node->getSymbolReference();
+         cg->addSnippet(new (cg->trHeapMemory()) TR::S390HelperCallSnippet(cg, node, snippetLabel, symRef));
+
+         if (!firstChild->getOpCode().isCall()
+               && reference->getOpCode().isLoadVar()
+               && (reference->getOpCodeValue() != TR::ardbari) // ardbari needs to be evaluated before being NULLCHK'ed because of its side effect.
+               && reference->getOpCode().hasSymbolReference()
+               && reference->getRegister() == NULL)
+            {
+            TR_ASSERT( NULLVALUE == 0, "Can not generate ICM if NULL is not 0");
+            bool isInternalPointer = reference->getSymbolReference()->getSymbol()->isInternalPointer();
+            if ((reference->getOpCode().isLoadIndirect() || reference->getOpCodeValue() == TR::aload)
+                  && !isInternalPointer)
+               {
+               targetRegister = cg->allocateCollectedReferenceRegister();
+               }
+            else
+               {
+               targetRegister = cg->allocateRegister();
+               if (isInternalPointer)
+                  {
+                  targetRegister->setPinningArrayPointer(reference->getSymbolReference()->getSymbol()->castToInternalPointerAutoSymbol()->getPinningArrayPointer());
+                  targetRegister->setContainsInternalPointer();
+                  }
+               }
+
+            reference->setRegister(targetRegister);
+            TR::MemoryReference * tempMR = generateS390MemoryReference(reference, cg);
+            appendTo = generateRXInstruction(cg, TR::InstOpCode::getLoadTestOpCode(), reference, targetRegister, tempMR, appendTo);
+            tempMR->stopUsingMemRefRegister(cg);
+
+            appendTo = generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, snippetLabel, appendTo);
+            TR::Instruction *brInstr = appendTo;
+            brInstr->setExceptBranchOp();
+            }
+         else
+            {
+            TR::Node *n = NULL;
+
+            // After the NULLCHK is generated, the nodes are guaranteed
+            // to be non-zero.  Mark the nodes, so that subsequent
+            // evaluations can be optimized.
+            if (comp->useCompressedPointers()
+                  && reference->getOpCodeValue() == TR::l2a)
+               {
+               reference->setIsNonNull(true);
+               n = reference->getFirstChild();
+               TR::ILOpCodes loadOp = comp->il.opCodeForIndirectLoad(TR::Int32);
+               TR::ILOpCodes rdbarOp = comp->il.opCodeForIndirectReadBarrier(TR::Int32);
+               while (n->getOpCodeValue() != loadOp && n->getOpCodeValue() != rdbarOp)
+                  {
+                  n->setIsNonZero(true);
+                  n = n->getFirstChild();
+                  }
+               n->setIsNonZero(true);
+               }
+
+            TR::InstOpCode::Mnemonic cmpOpCode = TR::InstOpCode::BAD;
+
+            // For compressed pointers case, if we find the compressed value,
+            // and it has already been evaluated into a register,
+            // we can take advantage of the uncompressed value and evaluate
+            // the compare result earlier.
+            //
+            // If it hasn't been evalauted yet, we want to evaluate the entire
+            // l2a tree, which might generate LLGF.  In that case, the better
+            // choice is to perform the NULLCHK on the decompressed address.
+            if (n != NULL && n->getRegister() != NULL)
+               {
+               targetRegister = n->getRegister();
+               cg->evaluate(reference);
+
+               // For concurrent scavenge the source is loaded and shifted by the guarded load, thus we need to use CG
+               // here for a non-zero compressedrefs shift value
+               if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
+                  {
+                  cmpOpCode = TR::InstOpCode::getCmpOpCode();
+                  }
+               else
+                  {
+                  cmpOpCode = (n->getOpCode().getSize() > 4) ? TR::InstOpCode::CG: TR::InstOpCode::C;
+                  }
+               }
+            else
+               {
+               targetRegister = cg->evaluate(reference);
+               cmpOpCode = TR::InstOpCode::getCmpOpCode();   // reference is always an address type
+               }
+            appendTo = generateS390CompareAndBranchInstruction(cg, cmpOpCode, node, targetRegister, NULLVALUE, branchOpCond, snippetLabel, false, true, appendTo);
+            TR::Instruction * cursor = appendTo;
+            cursor->setExceptBranchOp();
+            }
+         }
+      }
+
+   if (needLateEvaluation)
+      {
+      // If this is a load with ref count of 1, just decrease the ref count
+      // since it must have been evaluated. Otherwise, evaluate it.
+      // for compressedPointers, the firstChild will have a refCount
+      // of atleast 2 (the other under an anchor node)
+      //
+      if (opCode.isLoad() && firstChild->getReferenceCount() == 1
+            && !firstChild->getSymbolReference()->isUnresolved())
+         {
+         if (needExplicitCheck && firstChild->getRegister() == NULL)
+            {
+            // load with reference count 1 and no register, this means load is not evaluated
+            // this load is only meaningful for explicit NULL CHK
+            // it should not be evaluated yet. Its reference counter will be decrease later.
+            cg->decReferenceCount(reference);
+            }
+         else
+            {
+            cg->decReferenceCount(firstChild);
+            cg->decReferenceCount(reference);
+            }
+         }
+      else
+         {
+         // cg->comp()->useCompressedPointers
+         // this will end up evaluating either the l2a sequence (for loads)
+         // or the iistore (in case of iastores)
+         //
+         // for stores under NULLCHKs, artificially bump
+         // down the reference count before evaluation (since stores
+         // return null as registers)
+         //
+         bool fixRefCount = false;
+         if (comp->useCompressedPointers())
+            {
+            if (firstChild->getOpCode().isStoreIndirect()
+                  && firstChild->getReferenceCount() > 1)
+               {
+               firstChild->decReferenceCount();
+               fixRefCount = true;
+               }
+            }
+         cg->evaluate(firstChild);
+         if (fixRefCount)
+            firstChild->incReferenceCount();
+         }
+      }
+   else if (needExplicitCheck)
+      {
+      cg->decReferenceCount(reference);
+      }
+
+   if (comp->useCompressedPointers())
+      cg->decReferenceCount(node->getFirstChild());
+   else
+      cg->decReferenceCount(firstChild);
+
+   // If an explicit check has not been generated for the null check, there is
+   // an instruction that will cause a hardware trap if the exception is to be
+   // taken. If this method may catch the exception, a GC stack map must be
+   // created for this instruction. All registers are valid at this GC point
+   // TODO - if the method may not catch the exception we still need to note
+   // that the GC point exists, since maps before this point and after it cannot
+   // be merged.
+   //
+   if (cg->getSupportsImplicitNullChecks() && !needExplicitCheck)
+      {
+      TR::Instruction *faultingInstruction = cg->getImplicitExceptionPoint();
+      if (faultingInstruction)
+         {
+         faultingInstruction->setNeedsGCMap(0x0000FFFF);
+         faultingInstruction->setThrowsImplicitNullPointerException();
+         cg->setCanExceptByTrap(true);
+
+         TR_Debug * debugObj = cg->getDebug();
+         if (debugObj)
+            {
+            debugObj->addInstructionComment(faultingInstruction, "Throws Implicit Null Pointer Exception");
+            }
+         }
+      }
+
+   if (comp->useCompressedPointers()
+         && reference->getOpCodeValue() == TR::l2a)
+      {
+      reference->setIsNonNull(true);
+      TR::Node *n = NULL;
+      n = reference->getFirstChild();
+      TR::ILOpCodes loadOp = comp->il.opCodeForIndirectLoad(TR::Int32);
+      TR::ILOpCodes rdbarOp = comp->il.opCodeForIndirectReadBarrier(TR::Int32);
+      while (n->getOpCodeValue() != loadOp && n->getOpCodeValue() != rdbarOp)
+         {
+         n->setIsNonZero(true);
+         n = n->getFirstChild();
+         }
+      n->setIsNonZero(true);
+      }
+
+   reference->setIsNonNull(true);
 
    return NULL;
    }
