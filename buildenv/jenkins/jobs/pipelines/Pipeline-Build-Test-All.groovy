@@ -313,9 +313,7 @@ try {
                             PROMOTE_JOB = buildFile.build_with_slack('Promote_OMR', ghprbGhRepository, ghprbActualCommit, GITHUB_SERVER,
                                                                     [string(name: 'REPO', value: OMR_REPO),
                                                                     string(name: 'TARGET_BRANCH', value: 'openj9'),
-                                                                    string(name: 'COMMIT', value: "${SHAS['OMR']}"),
-                                                                    string(name: 'TAG_DESCRIPTION', value: "OpenJ9: ${SHAS['OPENJ9']}"),
-                                                                    booleanParam(name: 'TAG', value: 'true')])
+                                                                    string(name: 'COMMIT', value: "${SHAS['OMR']}")])
                             break
                         case 'OpenJDK':
                             def SDK_VERSION = ''
