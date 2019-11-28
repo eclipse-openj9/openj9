@@ -34,6 +34,7 @@
  *              linux_x86-64,
  *              linux_x86-64_cmprssptrs,
  *              linux_ppc-64_cmprssptrs_le,
+ *              linux_390-64,
  *              linux_390-64_cmprssptrs,
  *              win_x86-64_cmprssptrs,
  *              win_x86 (Java 8 support only),
@@ -77,11 +78,12 @@
  *   OPENJDK<version>_SHA_<platform>: String - the last commit SHA
  */
 
-CURRENT_RELEASES = ['8', '11', '12', '13', 'next']
+CURRENT_RELEASES = ['8', '11', '13', 'next']
 
 SPECS = ['ppc64_aix'      : CURRENT_RELEASES,
          'ppc64le_linux'  : CURRENT_RELEASES,
          's390x_linux'    : CURRENT_RELEASES,
+         's390x_linux_xl' : CURRENT_RELEASES,
          's390x_zos'      : ['11'],
          'x86-64_linux_xl': CURRENT_RELEASES,
          'x86-64_linux'   : CURRENT_RELEASES,
@@ -96,9 +98,11 @@ SPECS = ['ppc64_aix'      : CURRENT_RELEASES,
 
 // SHORT_NAMES is used for PullRequest triggers
 // TODO Combine SHORT_NAMES and SPECS
-SHORT_NAMES = ['all' : ['ppc64le_linux','s390x_linux','x86-64_linux','x86-64_linux_xl','ppc64_aix','x86-64_windows','x86-32_windows','x86-64_mac'],
+SHORT_NAMES = ['all' : ['ppc64le_linux','s390x_linux','s390x_linux_xl','x86-64_linux','x86-64_linux_xl','ppc64_aix','x86-64_windows','x86-32_windows','x86-64_mac'],
             'aix' : ['ppc64_aix'],
             'zlinux' : ['s390x_linux'],
+            'zlinuxlargeheap' : ['s390x_linux_xl'],
+            'zlinuxxl' : ['s390x_linux_xl'],
             'plinux' : ['ppc64le_linux'],
             'xlinuxlargeheap' : ['x86-64_linux_xl'],
             'xlinuxxl' : ['x86-64_linux_xl'],
