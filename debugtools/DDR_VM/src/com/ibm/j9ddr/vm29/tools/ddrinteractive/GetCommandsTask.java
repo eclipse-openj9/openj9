@@ -84,6 +84,7 @@ import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.MethodForNameCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.MonitorsCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.NativeMemInfoCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.ObjectSizeInfo;
+import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.PatchMemoryCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.QueryRomClassCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.RamClassSummaryCommand;
 import com.ibm.j9ddr.vm29.tools.ddrinteractive.commands.RomClassForNameCommand;
@@ -198,6 +199,7 @@ public class GetCommandsTask extends BaseJVMCommands implements IBootstrapRunnab
 		toPassBack.add(new FindModulesCommand());
 		toPassBack.add(new DumpModuleCommand());
 		toPassBack.add(new DumpPackageCommand());
+		toPassBack.add(new PatchMemoryCommand());
 
 		if (ValueTypeHelper.getValueTypeHelper().areValueTypesSupported()) {
 			toPassBack.add(new FlatObjectCommand());

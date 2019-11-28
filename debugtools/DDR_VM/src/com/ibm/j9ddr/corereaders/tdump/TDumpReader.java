@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2018 IBM Corp. and others
+ * Copyright (c) 2009, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,6 +23,7 @@ package com.ibm.j9ddr.corereaders.tdump;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,7 +55,9 @@ import com.ibm.j9ddr.corereaders.memory.IProcess;
 import com.ibm.j9ddr.corereaders.memory.ISymbol;
 import com.ibm.j9ddr.corereaders.memory.MemoryFault;
 import com.ibm.j9ddr.corereaders.memory.MemoryRange;
+import com.ibm.j9ddr.corereaders.memory.MemoryRecord;
 import com.ibm.j9ddr.corereaders.memory.Module;
+import com.ibm.j9ddr.corereaders.memory.PatchedMemoryList;
 import com.ibm.j9ddr.corereaders.memory.ProtectedMemoryRange;
 import com.ibm.j9ddr.corereaders.memory.SearchableMemory;
 import com.ibm.j9ddr.corereaders.memory.Symbol;
@@ -390,6 +393,10 @@ public class TDumpReader implements ICoreFileReader
 
 		public byte getByteAt(long address) throws MemoryFault
 		{
+			if (PatchedMemoryList.isPatched(address, 1)) {
+				return PatchedMemoryList.getPatched(address, 1).get(0).getContent()[0];
+			}
+			
 			try {
 				return addressSpace.readByte(address);
 			} catch (IOException e) {
@@ -411,30 +418,58 @@ public class TDumpReader implements ICoreFileReader
 				int length) throws MemoryFault
 		{
 			try {
-				addressSpace.read(address, buffer, offset, length);
+				if (PatchedMemoryList.isPatched(address, length) == false) {
+					addressSpace.read(address, buffer, offset, length);
+					return length;
+				}
+				List<MemoryRecord> list = PatchedMemoryList.getPatched(address, length);
+				if (list == null) {
+					return getBytesAt(address, buffer, 0, buffer.length);
+				}
+				int cursor = offset;
+				for (MemoryRecord mr : list) {
+					byte [] content = mr.getContent();
+					if (content == null) {
+						content = new byte [mr.getLength()];
+						addressSpace.read(mr.getStart(), content, 0, content.length);
+					}
+					System.arraycopy(content, 0, buffer, cursor, mr.getLength());
+					cursor += mr.getLength();
+				}
+				return length;
 			} catch (IOException e) {
 				throw new MemoryFault(address, e);
 			}
-			
-			return length;
 		}
 
 		public int getIntAt(long address) throws MemoryFault
 		{
 			try {
-				return addressSpace.readInt(address);
+				if (PatchedMemoryList.isPatched(address, 4) == false) {
+					return addressSpace.readInt(address);
+				}				
 			} catch (IOException e) {
 				throw new MemoryFault(address, e);
 			}
+			
+			byte [] buffer = new byte[4];
+			getBytesAt(address, buffer);
+			return ByteBuffer.wrap(buffer).getInt();
 		}
 
 		public long getLongAt(long address) throws MemoryFault
 		{
 			try {
-				return addressSpace.readLong(address);
+				if (PatchedMemoryList.isPatched(address, 8) == false) {
+					return addressSpace.readLong(address);
+				}
 			} catch (IOException e) {
 				throw new MemoryFault(address, e);
 			}
+
+			byte [] buffer = new byte[8];
+			getBytesAt(address, buffer);
+			return ByteBuffer.wrap(buffer).getLong();
 		}
 
 		public Collection<? extends IMemoryRange> getMemoryRanges()
@@ -452,10 +487,16 @@ public class TDumpReader implements ICoreFileReader
 		public short getShortAt(long address) throws MemoryFault
 		{
 			try {
-				return addressSpace.readShort(address);
+				if (PatchedMemoryList.isPatched(address, 2) == false) {
+					return addressSpace.readShort(address);
+				}
 			} catch (IOException e) {
 				throw new MemoryFault(address, e);
 			}
+
+			byte [] buffer = new byte[2];
+			getBytesAt(address, buffer);
+			return ByteBuffer.wrap(buffer).getShort();
 		}
 
 		//TODO look into these

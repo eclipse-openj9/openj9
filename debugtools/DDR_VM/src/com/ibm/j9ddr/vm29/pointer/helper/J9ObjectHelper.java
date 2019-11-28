@@ -413,7 +413,7 @@ public class J9ObjectHelper
 		counts[minIndex] = 1;
 	}
 	
-	private static void initializeCache()
+	public static void initializeCache()
 	{
 		keys = new J9ObjectPointer[cacheSize];
 		values = new J9ClassPointer[cacheSize];

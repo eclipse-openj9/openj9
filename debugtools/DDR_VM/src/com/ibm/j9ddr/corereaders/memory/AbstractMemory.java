@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2014 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -174,7 +174,24 @@ public abstract class AbstractMemory extends SearchableMemory implements IMemory
 	 * @see com.ibm.dtfj.j9ddr.corereaders.memory.IMemory#getBytesAt(long, byte[])
 	 */
 	public int getBytesAt(long address, byte[] buffer) throws MemoryFault {
-		return getBytesAt(address,buffer,0,buffer.length);
+		if (PatchedMemoryList.isPatched(address, buffer.length) == false) {
+			return getBytesAt(address, buffer, 0, buffer.length);
+		}
+		List<MemoryRecord> list = PatchedMemoryList.getPatched(address, buffer.length);
+		if (list == null) {
+			return getBytesAt(address, buffer, 0, buffer.length);
+		}
+		int cursor = 0;
+		for (MemoryRecord mr : list) {
+			byte [] content = mr.getContent();
+			if (content == null) {
+				content = new byte [mr.getLength()];
+				getBytesAt(mr.getStart(), content, 0, content.length);
+			}
+			System.arraycopy(content, 0, buffer, cursor, mr.getLength());
+			cursor += mr.getLength();
+		}
+		return buffer.length;
 	}
 	
 	public int getBytesAt(final long address, byte[] buffer, final int offset,final int length) throws MemoryFault {
