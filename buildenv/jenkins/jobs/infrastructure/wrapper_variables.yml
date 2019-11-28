@@ -36,7 +36,7 @@ Nightly:
             Java12: true
             Javanext: false
         string_parameters:
-            PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,x86-64_linux_cm,ppc64le_linux,s390x_linux,x86-64_windows,x86-32_windows,x86-64_mac"
+            PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,x86-64_linux_cm,ppc64le_linux,s390x_linux,s390x_linux_xl,x86-64_windows,x86-32_windows,x86-64_mac"
             TEST_TARGETS: "sanity.functional,extended.functional,sanity.system,extended.system"
             RESTART_TIMEOUT: "12"
             TIMEOUT_TIME: "14"
@@ -71,7 +71,7 @@ OMR_Acceptance:
             Java12: false
             PROMOTE_OMR: true
         string_parameters:
-            PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,x86-64_linux_cm,ppc64le_linux,s390x_linux,x86-64_windows,x86-32_windows,x86-64_mac"
+            PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,x86-64_linux_cm,ppc64le_linux,s390x_linux,s390x_linux_xl,x86-64_windows,x86-32_windows,x86-64_mac"
             TEST_TARGETS: "sanity.functional"
             RESTART_TIMEOUT: ""
         choice_parameters:
@@ -101,7 +101,7 @@ Release:
             OPENJDK12_BRANCH:
             OPENJ9_BRANCH:
             OMR_BRANCH:
-            PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,ppc64le_linux,s390x_linux,x86-64_windows,x86-32_windows,x86-64_mac"
+            PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,ppc64le_linux,s390x_linux,s390x_linux_xl,x86-64_windows,x86-32_windows,x86-64_mac"
             TEST_TARGETS: "sanity.functional,extended.functional,sanity.system,extended.system"
         choice_parameters:
             OPENJDK8_REPO:
@@ -160,7 +160,7 @@ PullRequest-OpenJDK:
 general:
     parameter_descriptions:
         TEST_TARGETS: "Use `none` for no testing.\nsanity.functional,extended.functional,sanity.system,extended.system"
-        PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,x86-64_linux_cm,ppc64le_linux,s390x_linux,x86-64_windows,x86-32_windows,x86-64_mac"
+        PLATFORMS: "ppc64_aix,x86-64_linux,x86-64_linux_xl,x86-64_linux_cm,ppc64le_linux,s390x_linux,s390x_linux_xl,x86-64_windows,x86-32_windows,x86-64_mac"
         RESTART_TIMEOUT: "Time allowed to restart a job"
         TIMEOUT_TIME: "Overall build timeout"
     repository_url: "https://github.com/eclipse/openj9.git"
