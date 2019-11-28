@@ -1771,7 +1771,7 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
                   constValue = ((constValue << 8) | constValue);
                   }
 
-               constValueNode = TR::Node::cconst(istoreNode, constValue);
+               constValueNode = TR::Node::sconst(istoreNode, constValue);
                break;
                }
             case 4:
