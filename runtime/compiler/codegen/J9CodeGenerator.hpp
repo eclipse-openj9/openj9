@@ -129,6 +129,7 @@ public:
    bool enableAESInHardwareTransformations() {return false;}
 
    bool isMethodInAtomicLongGroup(TR::RecognizedMethod rm);
+   bool arithmeticNeedsLiteralFromPool(TR::Node *node) { return false; }
 
    // OSR
    //

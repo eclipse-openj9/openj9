@@ -325,6 +325,9 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
       return _ignoreDecimalOverflowException;
       }
 
+   // LL: move to .cpp
+   bool arithmeticNeedsLiteralFromPool(TR::Node *node);
+
    private:
 
    /** \brief
