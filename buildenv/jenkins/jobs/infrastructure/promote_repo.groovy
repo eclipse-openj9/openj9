@@ -25,9 +25,7 @@ properties([
     parameters([
         string(name: 'REPO', defaultValue: '', description: 'Git repository to promote. Must be in https format', trim: true),
         string(name: 'TARGET_BRANCH', defaultValue: '', description: 'Git branch to merge COMMIT onto.', trim: true),
-        string(name: 'COMMIT', defaultValue: '', description: 'Git SHA to merge onto TARGET_BRANCH.', trim: true),
-        booleanParam(name: 'TAG', defaultValue: false, description: 'Lay down a tag on the merge commit'),
-        string(name: 'TAG_DESCRIPTION', defaultValue: '', description: 'If TAG, the description message to be used in the tag')
+        string(name: 'COMMIT', defaultValue: '', description: 'Git SHA to merge onto TARGET_BRANCH.', trim: true)
     ])
 ])
 
@@ -63,12 +61,6 @@ timestamps {
                         sh "git merge ${COMMIT} -m 'Merge ${COMMIT} into ${OLD_SHA}'"
 
                         buildfile.git_push_auth(REPO, TARGET_BRANCH, CRED_ID)
-
-                        if (TAG == 'true') {
-                            sh """git tag -a 'promote_merge_${MERGE_DATE}' \
-                                -m '${TAG_DESCRIPTION}'"""
-                            buildfile.git_push_auth(REPO, '--tags', CRED_ID)
-                        }
 
                         currentBuild.description = sh (
                             script: 'git log --oneline -1',
