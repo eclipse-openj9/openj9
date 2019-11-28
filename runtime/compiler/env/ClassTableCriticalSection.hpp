@@ -23,7 +23,7 @@
 #ifndef TR_CLASSTABLECRITICALSECTION_INCL
 #define TR_CLASSTABLECRITICALSECTION_INCL
 
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "env/VMJ9.h"
 
 namespace TR

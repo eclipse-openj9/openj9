@@ -22,7 +22,7 @@
 
 #include "j9.h"
 #include "j9consts.h"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/PrivateLinkage.hpp"
 #include "env/jittypes.h"
 #include "env/CompilerEnv.hpp"

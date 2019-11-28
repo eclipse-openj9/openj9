@@ -22,7 +22,7 @@
 
 #include "runtime/RuntimeAssumptions.hpp"
 
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/CHTable.hpp"

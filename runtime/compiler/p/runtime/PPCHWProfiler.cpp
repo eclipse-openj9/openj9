@@ -25,7 +25,7 @@
 #include "j9cfg.h"
 #include "j9port_generated.h"
 #include "util_api.h"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "env/jittypes.h"

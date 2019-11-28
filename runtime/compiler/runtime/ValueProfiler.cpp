@@ -24,7 +24,7 @@
 #include <math.h>
 #include <stdint.h>
 #include "j9.h"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "env/jittypes.h"

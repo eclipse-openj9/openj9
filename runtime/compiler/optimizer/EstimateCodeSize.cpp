@@ -23,7 +23,7 @@
 #include "env/StackMemoryRegion.hpp"
 #include "optimizer/EstimateCodeSize.hpp"
 
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "il/ResolvedMethodSymbol.hpp"
 #include "infra/Assert.hpp"
