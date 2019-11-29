@@ -30,7 +30,7 @@ function(jvm_add_exports tgt)
 		# for each symbol name of the form '_foo@1234' replace with 'foo'
 		foreach(symbol IN LISTS ARGN)
 			string(REGEX REPLACE "^_([a-zA-Z0-9_]+)@[0-9]+$" "\\1" stripped_sym ${symbol})
-			list(APPEND filtered_exports  "${stripped_sym}")
+			list(APPEND filtered_exports "${stripped_sym}")
 		endforeach()
 	endif()
 	omr_add_exports(${tgt} ${filtered_exports})
@@ -243,16 +243,16 @@ jvm_add_exports(jvm
 	_JVM_SetPrimitiveField@24
 	_JVM_SetNativeThreadName@12
 
-	#Additions used on linux-x86
+	# Additions used on linux-x86
 	_JVM_SetSockOpt@20
 	_JVM_SocketShutdown@8
 	_JVM_GetSockName@12
 	_JVM_GetHostName@8
 
-	#Additions to support the JDWP agent
+	# Additions to support the JDWP agent
 	JVM_InitAgentProperties
 
-	#Additions to support Java 7 verification
+	# Additions to support Java 7 verification
 	_JVM_GetMethodIxLocalsCount@12
 	_JVM_GetCPMethodNameUTF@12
 	_JVM_GetMethodIxExceptionTableEntry@20
@@ -284,7 +284,7 @@ jvm_add_exports(jvm
 	_JVM_GetMethodIxExceptionsCount@12
 	_JVM_ReleaseUTF@4
 
-	#Additions for Java 8
+	# Additions for Java 8
 	_JVM_GetClassTypeAnnotations@8
 	_JVM_GetFieldTypeAnnotations@8
 	_JVM_GetMethodParameters@8
@@ -292,14 +292,15 @@ jvm_add_exports(jvm
 	_JVM_IsVMGeneratedMethodIx@12
 	JVM_GetTemporaryDirectory
 	_JVM_CopySwapMemory@44
-
 )
 
-
-if(NOT JAVA_SPEC_VERSION LESS 11)
+if(JAVA_SPEC_VERSION LESS 11)
+	# i.e. JAVA_SPEC_VERSION < 11
+	jvm_add_exports(jvm _JVM_GetCallerClass@4)
+else()
 	jvm_add_exports(jvm
 		_JVM_GetCallerClass@8
-		#Additions for Java 9 (Modularity)
+		# Additions for Java 9 (Modularity)
 		JVM_DefineModule
 		JVM_AddModuleExports
 		JVM_AddModuleExportsToAll
@@ -310,7 +311,7 @@ if(NOT JAVA_SPEC_VERSION LESS 11)
 		JVM_SetBootLoaderUnnamedModule
 		JVM_GetModuleByPackageName
 
-		#Additions for Java 9 RAW
+		# Additions for Java 9 RAW
 		JVM_GetSimpleBinaryName
 		JVM_SetMethodInfo
 		JVM_ConstantPoolGetNameAndTypeRefIndexAt
@@ -330,10 +331,10 @@ if(NOT JAVA_SPEC_VERSION LESS 11)
 		JVM_HasReferencePendingList
 		JVM_WaitForReferencePendingList
 
-		#Additions for Java 9 (General)
+		# Additions for Java 9 (General)
 		_JVM_GetNanoTimeAdjustment@16
 
-		#Additions for Java 11 (General)
+		# Additions for Java 11 (General)
 		JVM_BeforeHalt
 		JVM_GetNestHost
 		JVM_GetNestMembers
@@ -341,15 +342,11 @@ if(NOT JAVA_SPEC_VERSION LESS 11)
 		JVM_InitClassName
 		JVM_InitializeFromArchive
 	)
-
-else()
-	# ie. JAVA_SPEC_VERSION <= 10
-	jvm_add_exports(jvm _JVM_GetCallerClass@4)
 endif()
 
 if(NOT JAVA_SPEC_VERSION LESS 14)
-jvm_add_exports(jvm
-	# Additions for Java 14 (General)
-	JVM_GetExtendedNPEMessage
-)
+	jvm_add_exports(jvm
+		# Additions for Java 14 (General)
+		JVM_GetExtendedNPEMessage
+	)
 endif()
