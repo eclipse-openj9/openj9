@@ -46,3 +46,7 @@ endif()
 
 target_enable_ddr(j9ddr_misc)
 ddr_set_add_targets(j9ddr j9ddr_misc)
+
+# At least one symbol must be exported, but because this shared library
+# is only used by ddrgen it doesn't matter which name is exported.
+omr_add_exports(j9ddr_misc getAlgorithmVersionStructTable)
