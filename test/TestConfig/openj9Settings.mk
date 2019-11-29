@@ -84,7 +84,7 @@ ifneq (, $(findstring current, $(JCL_VERSION)))
 			JAVA_SHARED_LIBRARIES_DIR:=$(TEST_JRE_LIB_DIR)$(D)$(ARCH_DIR)$(D)$(VM_SUBDIR)
 			J9VM_PATH=$(TEST_JRE_LIB_DIR)$(D)$(ARCH_DIR)$(D)j9vm
 		endif
-		ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(LIBPATH)$(P)$(TEST_JRE_LIB_DIR)$(D)$(VM_SUBDIR)$(P)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(TEST_JRE_BIN)$(D)j9vm$(Q);
+		ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(TEST_JRE_LIB_DIR)$(D)$(VM_SUBDIR)$(P)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(TEST_JRE_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
 	else
 		ifneq (,$(findstring win,$(SPEC)))
 			JAVA_SHARED_LIBRARIES_DIR:=$(TEST_JDK_BIN)$(D)$(VM_SUBDIR)
@@ -93,7 +93,7 @@ ifneq (, $(findstring current, $(JCL_VERSION)))
 			JAVA_SHARED_LIBRARIES_DIR:=$(TEST_JDK_LIB_DIR)$(D)$(ARCH_DIR)$(D)$(VM_SUBDIR)
 			J9VM_PATH=$(TEST_JDK_LIB_DIR)$(D)$(ARCH_DIR)$(D)j9vm
 		endif
-		ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(LIBPATH)$(P)$(TEST_JDK_LIB_DIR)$(D)$(VM_SUBDIR)$(P)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(TEST_JDK_BIN)$(D)j9vm$(Q);
+		ADD_JVM_LIB_DIR_TO_LIBPATH:=export LIBPATH=$(Q)$(TEST_JDK_LIB_DIR)$(D)$(VM_SUBDIR)$(P)$(JAVA_SHARED_LIBRARIES_DIR)$(P)$(TEST_JDK_BIN)$(D)j9vm$(P)$(LIBPATH)$(Q);
 	endif
 else
 	ifneq (, $(findstring 8, $(JDK_VERSION)))
@@ -130,9 +130,9 @@ else
 	ifneq (,$(findstring win,$(SPEC)))
 		TEST_LIB_PATH:=PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(PATH)$(Q)
 	else ifneq (,$(findstring aix,$(SPEC)))
-		TEST_LIB_PATH:=LIBPATH=$(Q)$(LIBPATH)$(PS)$(TEST_LIB_PATH_VALUE)$(Q)
+		TEST_LIB_PATH:=LIBPATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(LIBPATH)$(Q)
 	else ifneq (,$(findstring zos,$(SPEC)))
-		TEST_LIB_PATH:=LIBPATH=$(Q)$(LIBPATH)$(PS)$(TEST_LIB_PATH_VALUE)$(Q)
+		TEST_LIB_PATH:=LIBPATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(LIBPATH)$(Q)
 	else ifneq (,$(findstring osx,$(SPEC)))
 		TEST_LIB_PATH:=DYLD_LIBRARY_PATH=$(Q)$(TEST_LIB_PATH_VALUE)$(PS)$(DYLD_LIBRARY_PATH)$(Q)
 	else
