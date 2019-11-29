@@ -134,6 +134,12 @@ public:
 			objectScanner = GC_PointerArrayObjectScanner::newInstance(env, objectPtr, scannerSpace, GC_ObjectScanner::indexableObject, slotsToDo, startIndex);
 			break;
 		}
+		case GC_ObjectModel::SCAN_FLATTENED_ARRAY_OBJECT:
+		{
+			Assert_MM_true(J9_IS_J9CLASS_FLATTENED(clazzPtr));
+			Assert_MM_unimplemented();
+			break;
+		}
 		case GC_ObjectModel::SCAN_REFERENCE_MIXED_OBJECT:
 		{
 			fomrobject_t *referentSlotPtr = setupReferenceObjectScanner(env, objectPtr, reason);
