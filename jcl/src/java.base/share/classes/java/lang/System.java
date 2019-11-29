@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2019 IBM Corp. and others
  *
@@ -860,13 +860,11 @@ public static void setSecurityManager(final SecurityManager s) {
 						// also load security sensitive classes 
 						com.ibm.oti.util.Msg.getString("K002c"); //$NON-NLS-1$
 					}
-					ProtectionDomain oldDomain = currentSecurity == null ?
-						System.class.getPDImpl() : currentSecurity.getClass().getPDImpl();
-					ProtectionDomain newDomain = s.getClass().getPDImpl();
-					if (oldDomain != newDomain) {
+					ProtectionDomain pd = s.getClass().getPDImpl();
+					if (pd != null) {
 						// initialize the protection domain, which may include preloading the
 						// dynamic permissions from the policy before installing
-						newDomain.implies(new AllPermission());
+						pd.implies(sun.security.util.SecurityConstants.ALL_PERMISSION);
 					}
 					return null;
 				}});

@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2019 IBM Corp. and others
  *
@@ -1855,7 +1855,7 @@ public ProtectionDomain getProtectionDomain() {
 
 private void allocateAllPermissionsPD() {
 	Permissions collection = new Permissions();
-	collection.add(new AllPermission());
+	collection.add(sun.security.util.SecurityConstants.ALL_PERMISSION);
 	AllPermissionsPD = new ProtectionDomain(null, collection);
 }
 
