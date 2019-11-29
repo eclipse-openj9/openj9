@@ -506,12 +506,13 @@ JITServerIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, 
       {
       OMR::CriticalSection getRemoteROMClass(clientData->getROMMapMonitor());
       auto & j9methodMap = clientData->getJ9MethodMap();
-      bool methodInfoPresentInPersistent = false, methodInfoPresentInHeap = false;
+      bool methodInfoPresentInPersistent = false;
+      bool methodInfoPresentInHeap = false;
       auto compInfoPT = (TR::CompilationInfoPerThreadRemote *) TR::compInfoPT;
       // Check persistent cache first, then per-compilation cache
       TR_IPBytecodeHashTableEntry *entry = clientData->getCachedIProfilerInfo(method, bcIndex, &methodInfoPresentInPersistent);
       if (!methodInfoPresentInPersistent)
-         compInfoPT->getCachedIProfilerInfo(method, bcIndex, &methodInfoPresentInHeap);
+         entry = compInfoPT->getCachedIProfilerInfo(method, bcIndex, &methodInfoPresentInHeap);
 
       // Note that methodInfoPresent means that a profiled method is in the map of (J9Method *) to (IPTable_t *),
       // it does not mean that an entry for a profiled bcIndex is cached.
@@ -538,14 +539,17 @@ JITServerIProfiler::setCallCount(TR_OpaqueMethodBlock *method, int32_t bcIndex, 
             // Info for this bcIndex is missing. 
             // Create a new entry, add it to the cache and send a remote message as well
             uintptrj_t methodStart = TR::Compiler->mtd.bytecodeStart(method);
-            TR_IPBCDataCallGraph *entry = new TR_IPBCDataCallGraph(methodStart + bcIndex);
-            CallSiteProfileInfo *csInfo = entry->getCGData();
+            TR_AllocationKind allocKind = methodInfoPresentInPersistent ? persistentAlloc : heapAlloc;
+            TR_IPBCDataCallGraph *cgEntry = (TR_IPBCDataCallGraph*)comp->trMemory()->allocateMemory(sizeof(TR_IPBCDataCallGraph), allocKind, TR_Memory::IPBCDataCallGraph);
+            cgEntry = new (cgEntry) TR_IPBCDataCallGraph(methodStart + bcIndex);
+
+            CallSiteProfileInfo *csInfo = cgEntry->getCGData();
             csInfo->_weight[0] = count;
             // TODO: we should probably add some class as well
             if (methodInfoPresentInPersistent)
-               clientData->cacheIProfilerInfo(method, bcIndex, entry);
+               clientData->cacheIProfilerInfo(method, bcIndex, cgEntry);
             else
-               compInfoPT->cacheIProfilerInfo(method, bcIndex, entry);
+               compInfoPT->cacheIProfilerInfo(method, bcIndex, cgEntry);
 
             sendRemoteMessage = true;
             }
