@@ -333,7 +333,7 @@ issueAgentOnLoadAttach(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, const 
 	jint (JNICALL * agentInitFunction)(J9InvocationJavaVM *, const char *, void *);
 	jint rc = JNI_ERR;
 	J9InvocationJavaVM * invocationJavaVM = NULL;
-	const char* jarPath = NULL;
+	const char* jarPath = options;
 
 	Trc_JVMTI_issueAgentOnLoadAttach_Entry(agentLibrary->nativeLib.name);
 
@@ -379,31 +379,32 @@ issueAgentOnLoadAttach(J9JavaVM * vm, J9JVMTIAgentLibrary * agentLibrary, const 
 		/* agentInitFunction invokes java.instrument/share/native/libinstrument/InvocationAdapter.c
 		 * which expects jarPath in system default code page encoding.
 		 */
-		char *tempJarPath = NULL;
-		BOOLEAN conversionSucceed = FALSE;
-		int32_t size = j9str_convert(J9STR_CODE_MUTF8, J9STR_CODE_WINDEFAULTACP, options, strlen(options), NULL, 0);
-		if (size > 0) {
-			size += 1; /* leave room for null */
-			tempJarPath = j9mem_allocate_memory(size, OMRMEM_CATEGORY_VM);
-			if (NULL != tempJarPath) {
-				size = j9str_convert(J9STR_CODE_MUTF8, J9STR_CODE_WINDEFAULTACP, options, strlen(options), tempJarPath, size);
-				if (size > 0) {
-					conversionSucceed = TRUE;
+		IDATA optionLen = strlen(options);
+		if (optionLen > 0) {
+			char *tempJarPath = NULL;
+			BOOLEAN conversionSucceed = FALSE;
+			int32_t size = j9str_convert(J9STR_CODE_MUTF8, J9STR_CODE_WINDEFAULTACP, options, optionLen, NULL, 0);
+			if (size > 0) {
+				size += 1; /* leave room for null */
+				tempJarPath = j9mem_allocate_memory(size, OMRMEM_CATEGORY_VM);
+				if (NULL != tempJarPath) {
+					size = j9str_convert(J9STR_CODE_MUTF8, J9STR_CODE_WINDEFAULTACP, options, optionLen, tempJarPath, size);
+					if (size > 0) {
+						conversionSucceed = TRUE;
+					}
+				} else {
+					j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JVMTI_OUT_OF_MEMORY, "j9str_convert");
+					rc = JNI_ENOMEM;
 				}
+			}
+			if (conversionSucceed) {
+				jarPath = tempJarPath;
 			} else {
-				j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_JVMTI_OUT_OF_MEMORY, "j9str_convert");
-				rc = JNI_ENOMEM;
+				Trc_JVMTI_issueAgentOnLoadAttach_strConvertFailed(options);
+				goto closeLibrary;
 			}
 		}
-		if (conversionSucceed) {
-			jarPath = tempJarPath;
-		} else {
-			Trc_JVMTI_issueAgentOnLoadAttach_strConvertFailed(options);
-			goto closeLibrary;
-		}
 	}
-#else /* defined(WIN32) */
-	jarPath = options;
 #endif /* defined(WIN32) */
 	rc = agentInitFunction(invocationJavaVM, jarPath, NULL);
 	if (JNI_OK != rc) {
@@ -435,7 +436,7 @@ closeLibrary:
 	}
 
 #if defined(WIN32)
-	if (NULL != jarPath) {
+	if (options != jarPath) {
 		/* jarPath is tempJarPath allocated earlier and can be freed. */
 		j9mem_free_memory((char*)jarPath);
 	}
