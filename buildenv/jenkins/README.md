@@ -48,6 +48,9 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - Linux on ppc64le
         - Spec: ppc64le_linux
         - Shortname: plinux
+    - Linux on ppc64le largeheap/non-compressed references
+        - Spec: ppc64le_linux_xl
+        - Shortname: plinuxlargeheap or plinuxxl
     - Linux on aarch64
         - Spec: aarch64_linux
         - Shortname: alinux64
@@ -74,7 +77,7 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
         - Shortname: osxlargeheap or osxxl
     - ALL
         - Launches a subset of 'all' platforms
-        - ppc64le_linux, s390x_linux, s390x_linux_xl, x86-64_linux, x86-64_linux_xl, ppc64_aix, x86-64_windows, x86-32_windows, x86-64_mac
+        - ppc64le_linux, ppc64le_linux_xl, s390x_linux, s390x_linux_xl, x86-64_linux, x86-64_linux_xl, ppc64_aix, x86-64_windows, x86-32_windows, x86-64_mac
 
 - OpenJ9 committers can request builds by commenting in a pull request
     - Format: `Jenkins <build type> <level>.<group>[+<test_flag>] <platform>[,<platform>,...,<platform>] jdk<version>[,jdk<version>,...,jdk<version>]`

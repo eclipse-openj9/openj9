@@ -143,6 +143,57 @@ ppc64le_linux:
     13:
       ? special.system
 #========================================#
+# Linux PPCLE 64bits Large Heap
+#========================================#
+ppc64le_linux_xl:
+  boot_jdk:
+    8: '/usr/lib/jvm/adoptojdk-java-80'
+    11: '/usr/lib/jvm/adoptojdk-java-11'
+    12: '/usr/lib/jvm/adoptojdk-java-11'
+    13: '/usr/lib/jvm/adoptojdk-java-12'
+    next: '/usr/lib/jvm/adoptojdk-java-13'
+  release:
+    8: 'linux-ppc64le-normal-server-release'
+    11: 'linux-ppc64le-normal-server-release'
+    12: 'linux-ppc64le-server-release'
+    13: 'linux-ppc64le-server-release'
+    next: 'linux-ppc64le-server-release'
+  freemarker: '/home/jenkins/freemarker.jar'
+  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
+  node_labels:
+    build:
+      8: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+      11: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+      12: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+      13: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+      next: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+  extra_getsource_options:
+    8: '--openssl-version=1.1.1d'
+    11: '--openssl-version=1.1.1d'
+    12: '--openssl-version=1.1.1d'
+    13: '--openssl-version=1.1.1d'
+    next: '--openssl-version=1.1.1d'
+  extra_configure_options:
+    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
+    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
+    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
+    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
+    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-noncompressedrefs --with-openssl=fetched'
+  build_env:
+    vars:
+      8: 'CC=gcc-7 CXX=g++-7'
+      11: 'CC=gcc-7 CXX=g++-7'
+      12: 'CC=gcc-7 CXX=g++-7'
+      13: 'CC=gcc-7 CXX=g++-7'
+      next: 'CC=gcc-7 CXX=g++-7'
+  excluded_tests:
+    8:
+      ? special.system
+    11:
+      ? special.system
+    13:
+      ? special.system
+#========================================#
 # Linux S390 64bits Compressed Pointers
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
 # IBM 7 for the bootJDK or compiling corba will fail to find Object.
