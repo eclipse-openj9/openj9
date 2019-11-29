@@ -120,6 +120,11 @@ public class Thread implements Runnable {
 	int threadLocalRandomProbe;
 	int threadLocalRandomSecondarySeed;
 
+	/*[IF Java13 & !Java14]*/
+	/* The flag to indicate if this thread is suspended. */
+	private volatile boolean isSuspended;
+	/*[ENDIF] Java 13 & !Java14 */
+
 /**
  * 	Constructs a new Thread with no runnable object and a newly generated name.
  * The new Thread will belong to the same ThreadGroup as the Thread calling
@@ -525,20 +530,40 @@ public final void checkAccess() {
  * 	Returns the number of stack frames in this thread.
  *
  * @return		Number of stack frames
+ * 
+/*[IF Java14]
+ * @exception	UnsupportedOperationException
+/*[ELSE] Java14 
+/*[IF Java13]
+ * @exception	IllegalThreadStateException
+ *					if this thread has not been suspended.
+/*[ENDIF] Java13
+/*[ENDIF] Java14 
  *
  * @deprecated	The semantics of this method are poorly defined and it uses the deprecated suspend() method.
  */
 /*[IF Java11]*/
 @Deprecated(forRemoval=true, since="1.2")
-/*[ELSE]*/
+/*[ELSE] Java11 */
 @Deprecated
-/*[ENDIF]*/
+/*[ENDIF] Java11 */
 public int countStackFrames() {
 /*[IF Java14]*/
 	throw new UnsupportedOperationException();
-/*[ELSE]*/
-	return 0;
-/*[ENDIF]*/
+/*[ELSE] Java14 */
+/*[IF Java13]*/
+	if (isAlive()) {
+		if (isSuspended) {
+			return 0;
+		}
+		throw new IllegalThreadStateException();
+	} else {
+/*[ENDIF] Java13 */
+		return 0;
+/*[IF Java13]*/
+	}
+/*[ENDIF] Java13 */
+/*[ENDIF] Java14 */
 }
 
 /**
@@ -898,6 +923,9 @@ public final void resume() {
 	synchronized(lock) {
 		resumeImpl();
 	}
+/*[IF Java13 & !Java14]*/
+	isSuspended = false;
+/*[ENDIF] Java13 & !Java14 */
 }
 
 /**
@@ -1227,6 +1255,9 @@ public final void suspend() {
 			suspendImpl();
 		}
 	}
+/*[IF Java13 & !Java14]*/
+	isSuspended = true;
+/*[ENDIF] Java13 & !Java14 */
 }
 
 /**
