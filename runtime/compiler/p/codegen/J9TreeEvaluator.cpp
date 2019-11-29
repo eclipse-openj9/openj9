@@ -11420,9 +11420,9 @@ static TR::Register *inlineStringHashcode(TR::Node *node, TR::CodeGenerator *cg)
     static uint32_t multiplierVectors_le[12] = {0x94446F01, 0x94446F01, 0x94446F01, 0x94446F01, 1, 31, 961, 29791, 923521, 28629151, 887503681, 0x67E12CDF};
 
     if (isLE){
-        loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptrj_t)multiplierVectors_le, multiplierAddrReg);
+        loadAddressConstant(cg, false, node, (intptrj_t)multiplierVectors_le, multiplierAddrReg);
     }else{
-        loadAddressConstant(cg, comp->compileRelocatableCode(), node, (intptrj_t)multiplierVectors_be, multiplierAddrReg);
+        loadAddressConstant(cg, false, node, (intptrj_t)multiplierVectors_be, multiplierAddrReg);
     }
     generateTrg1MemInstruction(cg, TR::InstOpCode::lxvw4x, node, multiplierReg, new (cg->trHeapMemory()) TR::MemoryReference(multiplierAddrReg, constant0Reg, 16, cg));
     generateTrg1Src2Instruction(cg, TR::InstOpCode::vxor, node, high4Reg, high4Reg, high4Reg);
@@ -12819,7 +12819,11 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          return true;
 
       case TR::java_lang_String_hashCodeImplDecompressed:
-         if (!TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.cpu.id() >= TR_PPCp8 && TR::Compiler->target.cpu.getPPCSupportsVSX() && !cg->comp()->compileRelocatableCode())
+         if (!TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.cpu.id() >= TR_PPCp8 && TR::Compiler->target.cpu.getPPCSupportsVSX() && !cg->comp()->compileRelocatableCode() 
+#ifdef JITSERVER_SUPPORT
+               && !cg->comp()->isOutOfProcessCompilation()
+#endif
+            )
             {
             resultReg = inlineStringHashcode(node, cg);
             return true;
