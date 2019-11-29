@@ -123,7 +123,20 @@ J9::Power::CodeGenerator::CodeGenerator() :
 
    }
 
-
+bool
+J9::Power::CodeGenerator::canEmitDataForExternallyRelocatableInstructions()
+   {
+   // On Power, data cannot be emitted inside instructions that will be associated with an
+   // external relocation record (ex. AOT or Remote compiles in OpenJ9). This is because when the
+   // relocation is applied when a method is loaded, the new data in the instruction is OR'ed in (The reason
+   // for OR'ing is that sometimes usefule information such as flags and hints can be stored during compilation in these data fields).
+   // Hence, for the relocation to be applied correctly, we must ensure that the data fields inside the instruction
+   // initially are zero.
+#ifdef JITSERVER_SUPPORT
+   return !self()->comp()->compileRelocatableCode() && !self()->comp()->isOutOfProcessCompilation();
+#endif
+   return !self()->comp()->compileRelocatableCode();
+   }
 
 // Get or create the TR::Linkage object that corresponds to the given linkage
 // convention.
