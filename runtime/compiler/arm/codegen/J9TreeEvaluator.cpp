@@ -65,7 +65,7 @@ J9::ARM::TreeEvaluator::resolveAndNULLCHKEvaluator(TR::Node *node, TR::CodeGener
    return TR::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(node, true, cg);
    }
 
-static TR::Register *
+TR::Register *
 J9::ARM::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, bool needsResolve, TR::CodeGenerator *cg)
    {
    // NOTE:
