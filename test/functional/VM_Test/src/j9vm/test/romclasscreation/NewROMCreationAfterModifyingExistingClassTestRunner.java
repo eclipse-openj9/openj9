@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@ import java.util.regex.Pattern;
  * 
  * It runs three commands:
  * <p>
- * Command 1 is used to create a shared cache with -Xshareclasse:enableBCI
+ * Command 1 is used to create a shared cache with -Xshareclasse:name=romclasscreation,enableBCI
  * option.
  * <p>
  * Command 2 uses the same cache but uses a JVMTI agent that modifies a
@@ -44,6 +44,8 @@ import java.util.regex.Pattern;
  * <p>
  * Command 3 uses the same cache but uses a JVMTI agent that modifies a
  * non-bootstrap class.
+ * <p>
+ * Command 4 destroys the cache.
  * 
  * Output of Command 2 and 3 is analyzed to verify that a local ROMClass is
  * created for the modified class and the class loaded from shared cache is not
@@ -66,7 +68,7 @@ public class NewROMCreationAfterModifyingExistingClassTestRunner extends Runner 
 
 	public static final String BOOTSTRAP_CLASS = "java/lang/Class";
 	public static final String NON_BOOTSTRAP_CLASS = "j9vm/test/romclasscreation/NewROMCreationAfterModifyingExistingClassTest";
-	public static final int NUM_COMMANDS = 3;
+	public static final int NUM_COMMANDS = 4;
 	public static int commandIndex = 1;
 
 	private static Pattern hexPattern = Pattern.compile("([0-9]|[a-f]|[A-F])*");
@@ -81,13 +83,13 @@ public class NewROMCreationAfterModifyingExistingClassTestRunner extends Runner 
 	public String getCustomCommandLineOptions() {
 		String customOptions = super.getCustomCommandLineOptions();
 		if (commandIndex == 1) {
-			customOptions += "-Xshareclasses:enableBCI,reset";
+			customOptions += "-Xshareclasses:name=romclasscreation,enableBCI,reset";
 		} else if (commandIndex == 2) {
 			/* CMVC 195054: Disable AttachAPI because the classes loaded by AttachAPI thread 
 			 * can break the expected order of trace points and cause the test to fail.
 			 */ 
 			customOptions += "-Dcom.ibm.tools.attach.enable=no"
-					+ " -Xshareclasses:enableBCI -agentlib:jvmtitest=test:ecflh001,args:modifyBootstrap="
+					+ " -Xshareclasses:name=romclasscreation,enableBCI -agentlib:jvmtitest=test:ecflh001,args:modifyBootstrap="
 					+ BOOTSTRAP_CLASS
 					+ " -Xtrace:print=tpnid{j9shr.150} -Xtrace:print=tpnid{j9bcu.205} -Xtrace:print=tpnid{j9bcu.31}";
 		} else if (commandIndex == 3) {
@@ -95,9 +97,11 @@ public class NewROMCreationAfterModifyingExistingClassTestRunner extends Runner 
 			 * can break the expected order of trace points and cause the test to fail.
 			 */
 			customOptions += "-Dcom.ibm.tools.attach.enable=no"
-					+ " -Xshareclasses:enableBCI -agentlib:jvmtitest=test:ecflh001,args:modifyNonBootstrap="
+					+ " -Xshareclasses:name=romclasscreation,enableBCI -agentlib:jvmtitest=test:ecflh001,args:modifyNonBootstrap="
 					+ NON_BOOTSTRAP_CLASS
 					+ " -Xtrace:print=tpnid{j9shr.150} -Xtrace:print=tpnid{j9bcu.205} -Xtrace:print=tpnid{j9bcu.31}";
+		} else if (commandIndex == 4) {
+			customOptions += "-Xshareclasses:name=romclasscreation,destroy";
 		}
 
 		return customOptions;
@@ -117,6 +121,11 @@ public class NewROMCreationAfterModifyingExistingClassTestRunner extends Runner 
 					success = false;
 					System.out.println("Unexpected Exception:");
 					e.printStackTrace();
+				}
+			} else {
+				if (NUM_COMMANDS == i) {
+					/* last command is -Xshareclasses:destroy which returns non-zero exit code */
+					success = true;
 				}
 			}
 			if (success == false) {
@@ -149,7 +158,7 @@ public class NewROMCreationAfterModifyingExistingClassTestRunner extends Runner 
 								+ "\" not found");
 				return false;
 			}
-		} else {
+		} else if (commandIndex != NUM_COMMANDS) {
 			String modifiedClass = null;
 			String sharedROMClass = null;
 			String privateROMClass = null;
