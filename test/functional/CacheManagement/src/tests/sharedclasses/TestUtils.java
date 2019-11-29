@@ -634,7 +634,6 @@ public class TestUtils {
 		RunCommand.execute(cmd,false);
 		String stderr = RunCommand.lastCommandStderr;
 
-		System.out.println("stderr is :"+ stderr);
 		String[] stderrarray = stderr.split("\n");
 
 		for (int j=0; j<stderrarray.length;j+=1)
