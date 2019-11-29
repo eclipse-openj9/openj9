@@ -338,10 +338,18 @@ if(NOT JAVA_SPEC_VERSION LESS 11)
 		JVM_GetNestHost
 		JVM_GetNestMembers
 		JVM_AreNestMates
+		JVM_InitClassName
+		JVM_InitializeFromArchive
 	)
-	if(NOT JAVA_SPEC_VERSION EQUAL 12)
-		jvm_add_exports(jvm JVM_InitClassName)
-	endif()
+
 else()
+	# ie. JAVA_SPEC_VERSION <= 10
 	jvm_add_exports(jvm _JVM_GetCallerClass@4)
+endif()
+
+if(NOT JAVA_SPEC_VERSION LESS 14)
+jvm_add_exports(jvm
+	# Additions for Java 14 (General)
+	JVM_GetExtendedNPEMessage
+)
 endif()
