@@ -1,5 +1,5 @@
 <#--
-Copyright (c) 1998, 2019 IBM Corp. and others
+Copyright (c) 1998, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,13 +33,13 @@ $(UMA_LIBTARGET) : $(UMA_OBJECTS)
 <#assign dll_target_rule>
 $(UMA_DLLTARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 	$(UMA_DLL_LD) $(UMA_DLL_LINK_FLAGS) \
-		$(VMLINK) $(UMA_LINK_PATH) -o $(UMA_DLLTARGET)\
+		$(VMLINK) $(UMA_LINK_PATH) -o $@ \
 		$(UMA_OBJECTS) \
 		$(UMA_DLL_LINK_POSTFLAGS)
 ifdef j9vm_uma_gnuDebugSymbols
-	cp $(UMA_DLLTARGET) $(UMA_DLLTARGET).dbg
-	objcopy --strip-debug $(UMA_DLLTARGET)
-	objcopy --add-gnu-debuglink=$(UMA_DLLTARGET).dbg $(UMA_DLLTARGET)
+	cp $@ $(@:$(UMA_DOT_DLL)=.debuginfo)
+	objcopy --strip-debug $@
+	objcopy --add-gnu-debuglink=$(@:$(UMA_DOT_DLL)=.debuginfo) $@
 endif
 </#assign>
 
