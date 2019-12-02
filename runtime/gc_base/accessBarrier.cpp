@@ -609,6 +609,16 @@ j9gc_objaccess_cloneObject(J9VMThread *vmThread, J9Object *srcObject, J9Object *
 }
 
 /**
+ *
+ */
+BOOLEAN
+j9gc_objaccess_structuralCompareFlattenedObjects(J9VMThread *vmThread, J9Class *valueClass, j9object_t lhsObject, j9object_t rhsObject, UDATA startOffset)
+{
+	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
+	return barrier->structuralCompareFlattenedObjects(vmThread, valueClass, lhsObject, rhsObject, startOffset);
+}
+
+/**
  * Called by certain specs to copy objects
  */
 void

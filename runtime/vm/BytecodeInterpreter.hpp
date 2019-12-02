@@ -5821,7 +5821,7 @@ done:
 			} else {
 				j9object_t value = NULL;
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-				J9ArrayClass *arrayrefClass = J9OBJECT_CLAZZ(_currentThread, arrayref);
+				J9Class *arrayrefClass = J9OBJECT_CLAZZ(_currentThread, arrayref);
 				if (J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
 					j9object_t newObjectRef = _objectAllocate.inlineAllocateObject(_currentThread, ((J9ArrayClass*)arrayrefClass)->leafComponentType, false, false);
 
@@ -5840,7 +5840,7 @@ done:
 						arrayrefClass = VM_VMHelpers::currentClass(arrayrefClass);
 					}
 
-					_objectAccessBarrier.copyObjectFieldsFromFlattenedArrayElement(_currentThread, arrayrefClass, newObjectRef, (J9IndexableObject *) arrayref, index);
+					_objectAccessBarrier.copyObjectFieldsFromFlattenedArrayElement(_currentThread, (J9ArrayClass *) arrayrefClass, newObjectRef, (J9IndexableObject *) arrayref, index);
 					value = newObjectRef;
 				} else
 #endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
@@ -5879,9 +5879,9 @@ done:
 					rc = THROW_ARRAY_STORE;
 				} else {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-					J9ArrayClass *arrayrefClass = J9OBJECT_CLAZZ(_currentThread, arrayref);
+					J9Class *arrayrefClass = J9OBJECT_CLAZZ(_currentThread, arrayref);
 					if (J9_IS_J9CLASS_FLATTENED(arrayrefClass)) {
-						_objectAccessBarrier.copyObjectFieldsToFlattenedArrayElement(_currentThread, arrayrefClass, value, (J9IndexableObject *) arrayref, index);
+						_objectAccessBarrier.copyObjectFieldsToFlattenedArrayElement(_currentThread, (J9ArrayClass *) arrayrefClass, value, (J9IndexableObject *) arrayref, index);
 					} else 
 #endif /* if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 					{
