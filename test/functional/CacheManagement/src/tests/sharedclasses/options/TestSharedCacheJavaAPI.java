@@ -258,9 +258,10 @@ public class TestSharedCacheJavaAPI extends TestUtils {
 			    						"\n cacheInfo.isCacheCompatible() is " + cacheInfo.isCacheCompatible() +
 			    						"\n cacheInfo.isCacheCorrupt() is " + cacheInfo.isCacheCorrupt() +
 			    						"\n cacheInfo.getOSshmid() is " + cacheInfo.getOSshmid() + 
-			    						"\n cacheInfo.getOSsemid() is " + cacheInfo.getLastDetach() + 
+			    						"\n cacheInfo.getOSsemid() is " + cacheInfo.getOSsemid() + 
 			    						"\n cacheInfo.getCacheCompressedRefsMode() is " + cacheInfo.getCacheCompressedRefsMode() +
 			    						"\n cacheInfo.getCacheLayer() is " + cacheInfo.getCacheLayer() +
+			    						"\n cacheInfo.getLastDetach().getTime() is " + cacheInfo.getLastDetach().getTime() +
 			    						"\n System.currentTimeMillis() - cacheInfo.getLastDetach().getTime() is " + ( System.currentTimeMillis() - cacheInfo.getLastDetach().getTime())) ;
 	  		    			}	
 			    			if ((addrMode.equals("32") && (cacheInfo.getCacheAddressMode() != SharedClassCacheInfo.ADDRESS_MODE_32)) ||
@@ -309,9 +310,10 @@ public class TestSharedCacheJavaAPI extends TestUtils {
 				    						"\n cacheInfo.isCacheCompatible() is " + cacheInfo.isCacheCompatible() +
 				    						"\n cacheInfo.isCacheCorrupt() is " + cacheInfo.isCacheCorrupt() +
 				    						"\n cacheInfo.getOSshmid() is " + cacheInfo.getOSshmid() + 
-				    						"\n cacheInfo.getOSsemid() is " + cacheInfo.getLastDetach() + 
+				    						"\n cacheInfo.getOSsemid() is " + cacheInfo.getOSsemid() + 
 				    						"\n cacheInfo.getCacheCompressedRefsMode() is " + cacheInfo.getCacheCompressedRefsMode() +
 				    						"\n cacheInfo.getCacheLayer() is " + cacheInfo.getCacheLayer() +
+				    						"\n cacheInfo.getLastDetach().getTime() is " + cacheInfo.getLastDetach().getTime() +
 				    						"\n System.currentTimeMillis() - cacheInfo.getLastDetach().getTime() is " + ( System.currentTimeMillis() - cacheInfo.getLastDetach().getTime())) ;
 		  		    			}	
 				    			if ((addrMode.equals("32") && (cacheInfo.getCacheAddressMode() != SharedClassCacheInfo.ADDRESS_MODE_32)) ||
@@ -358,6 +360,7 @@ public class TestSharedCacheJavaAPI extends TestUtils {
 			    						"\n cacheInfo.isCacheCorrupt() is " + cacheInfo.isCacheCorrupt() +
 			    						"\n cacheInfo.getCacheCompressedRefsMode() is " + cacheInfo.getCacheCompressedRefsMode() +
 			    						"\n cacheInfo.getCacheLayer() is " + cacheInfo.getCacheLayer() +
+			    						"\n cacheInfo.getLastDetach().getTime() is " + cacheInfo.getLastDetach().getTime() +
 			    						"\n System.currentTimeMillis() - cacheInfo.getLastDetach().getTime() is " + ( System.currentTimeMillis() - cacheInfo.getLastDetach().getTime())) ;
 			    			}	
 			    			if ((addrMode.equals("32") && (cacheInfo.getCacheAddressMode() != SharedClassCacheInfo.ADDRESS_MODE_32)) ||
@@ -411,6 +414,7 @@ public class TestSharedCacheJavaAPI extends TestUtils {
 			    						"\n cacheInfo.isCacheCorrupt() is " + cacheInfo.isCacheCorrupt() +
 			    						"\n cacheInfo.getCacheCompressedRefsMode() is " + cacheInfo.getCacheCompressedRefsMode() +
 			    						"\n cacheInfo.getCacheLayer() is " + cacheInfo.getCacheLayer() +
+			    						"\n cacheInfo.getLastDetach().getTime() is " + cacheInfo.getLastDetach().getTime() +
 			    						"\n System.currentTimeMillis() - cacheInfo.getLastDetach().getTime() is " + ( System.currentTimeMillis() - cacheInfo.getLastDetach().getTime())) ;
 				    			}	
 				    			if ((addrMode.equals("32") && (cacheInfo.getCacheAddressMode() != SharedClassCacheInfo.ADDRESS_MODE_32)) ||
@@ -464,8 +468,7 @@ public class TestSharedCacheJavaAPI extends TestUtils {
 			    						"\n cacheInfo.isCacheCompatible() is " + cacheInfo.isCacheCompatible() +
 			    						"\n cacheInfo.isCacheCorrupt() is " + cacheInfo.isCacheCorrupt() +
 			    						"\n cacheInfo.getCacheCompressedRefsMode() is " + cacheInfo.getCacheCompressedRefsMode() +
-			    						"\n cacheInfo.getCacheLayer() is " + cacheInfo.getCacheLayer() +
-			    						"\n System.currentTimeMillis() - cacheInfo.getLastDetach().getTime() is " + ( System.currentTimeMillis() - cacheInfo.getLastDetach().getTime())) ;
+			    						"\n cacheInfo.getCacheLayer() is " + cacheInfo.getCacheLayer()) ;
 				    			}	
 				    			if ((addrMode.equals("32") && (cacheInfo.getCacheAddressMode() != SharedClassCacheInfo.ADDRESS_MODE_32)) ||
 				    				(addrMode.equals("64") && (cacheInfo.getCacheAddressMode() != SharedClassCacheInfo.ADDRESS_MODE_64))
@@ -486,7 +489,6 @@ public class TestSharedCacheJavaAPI extends TestUtils {
 			    
 		    if (isMVS() == false) {
 		    	for(String cacheName: persistentList) {
-		    		System.out.println("javaapi destroy cache dir is " + dir);
 		    		int ret;
 		    		try {
 			        	SharedClassUtilities.destroySharedCache(dir, INVALID_CACHE_TYPE, cacheName, false);
@@ -548,8 +550,6 @@ public class TestSharedCacheJavaAPI extends TestUtils {
 		    if (realtimeTestsSelected() == false) {
 			    for(String cacheName: nonpersistentList) {
 			    	int ret;
-			    	System.out.println("javaapi destroy nonpersistent cache dir is " + dir);
-		    		
 			    	try {
 			    		SharedClassUtilities.destroySharedCache(dir, INVALID_CACHE_TYPE, cacheName, false);
 			    		fail("SharedClassUtilities.destroySharedCache (non-persistent) failed: should have thrown IllegalArgumentException");
