@@ -20,17 +20,40 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-	.file "Recompilation.s"
+#ifndef ARM64RECOMPILATIONSNIPPET_INCL
+#define ARM64RECOMPILATIONSNIPPET_INCL
 
-	.globl	_countingRecompileMethod
-	.globl	_initialInvokeExactThunkGlue
-	.globl	_revertToInterpreterGlue
+#include "codegen/Snippet.hpp"
 
-_countingRecompileMethod:
-	hlt	#0	// Not implemented yet
+namespace TR { class CodeGenerator; }
+namespace TR { class Instruction; }
+namespace TR { class LabelSymbol; }
 
-_initialInvokeExactThunkGlue:
-	hlt	#0	// Not implemented yet
+namespace TR {
 
-_revertToInterpreterGlue:
-	hlt	#0	// Not implemented yet
+class ARM64RecompilationSnippet : public TR::Snippet
+   {
+   TR::Instruction *branchToSnippet;
+
+   public:
+
+   ARM64RecompilationSnippet(
+         TR::LabelSymbol *snippetlab,
+         TR::Instruction *bts,
+         TR::CodeGenerator *cg)
+      : TR::Snippet(cg, 0, snippetlab, false), branchToSnippet(bts)
+      {
+      }
+
+   virtual Kind getKind() { return IsRecompilation; }
+
+   TR::Instruction *getBranchToSnippet() { return branchToSnippet; }
+
+   virtual uint8_t *emitSnippetBody();
+
+   virtual uint32_t getLength(int32_t estimatedSnippetStart);
+   };
+
+} // TR
+
+#endif

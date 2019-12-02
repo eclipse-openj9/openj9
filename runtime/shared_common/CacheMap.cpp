@@ -7797,6 +7797,7 @@ checkROMClassUTF8SRPs(J9ROMClass *romClass)
 		|| (UnitTest::CACHE_FULL_TEST == UnitTest::unitTest)
 		|| (UnitTest::PROTECTA_SHARED_CACHE_DATA_TEST == UnitTest::unitTest)
 		|| (UnitTest::PROTECT_NEW_ROMCLASS_DATA_TEST == UnitTest::unitTest)
+		|| (UnitTest::ATTACHED_DATA_TEST == UnitTest::unitTest)
 	) {
 		return;
 	}
