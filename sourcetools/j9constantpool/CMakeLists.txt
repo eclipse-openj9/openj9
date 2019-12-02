@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2018 IBM Corp. and others
+# Copyright (c) 2017, 2019 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -19,6 +19,20 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
+
+# CMake doesn't properly handle directory separators when building in cygwin
+# but using a windows java binary. IE it uses ':' as a directory separator,
+# rather than required ';'
+
+# WIN32 will be true when the build is targeting windows, but CMAKE_HOST_WIN32 is false on cygwin
+if(WIN32 AND NOT CMAKE_HOST_WIN32)
+	# put  "-cp <Path_to_objectmodel_jar>" into a text file we will pass in with '@file'
+	file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/cygwin_classpath" CONTENT "-cp\n$<TARGET_PROPERTY:objectmodel,JAR_FILE>\n")
+	set(CYGWIN_CP "@${CMAKE_CURRENT_BINARY_DIR}/cygwin_classpath")
+else()
+	set(CYGWIN_CP)
+endif()
+
 
 add_jar(j9vmcp
 	SOURCES
@@ -41,6 +55,6 @@ add_jar(j9vmcp
 		com/ibm/oti/VMCPTool/UmaFlagInfo.java
 		com/ibm/oti/VMCPTool/Util.java
 		com/ibm/oti/VMCPTool/VirtualMethodRef.java
-
+		${CYGWIN_CP}
 	INCLUDE_JARS objectmodel
 )
