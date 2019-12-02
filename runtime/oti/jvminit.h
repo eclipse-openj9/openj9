@@ -464,6 +464,9 @@ enum INIT_STAGE {
 #define VMOPT_XXDEEP_SCAN "-XX:+GCDeepStructurePriorityScan"
 #define VMOPT_XXNODEEP_SCAN "-XX:-GCDeepStructurePriorityScan"
 
+#define VMOPT_XXFORCE_FULL_HEAP_ADDRESS_RANGE_SEARCH "-XX:+ForceFullHeapAddressRangeSearch"
+#define VMOPT_XXNOFORCE_FULL_HEAP_ADDRESS_RANGE_SEARCH "-XX:-ForceFullHeapAddressRangeSearch"
+
 #define VMOPT_XXCLASSRELATIONSHIPVERIFIER "-XX:+ClassRelationshipVerifier"
 #define VMOPT_XXNOCLASSRELATIONSHIPVERIFIER "-XX:-ClassRelationshipVerifier"
 

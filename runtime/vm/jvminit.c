@@ -1984,6 +1984,16 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 				goto _memParseError;
 			}
 
+			/* workaround option in case if OMRPORT_VMEM_ALLOC_QUICK Smart Address feature still be not reliable  */
+			argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOFORCE_FULL_HEAP_ADDRESS_RANGE_SEARCH, NULL);
+			argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXFORCE_FULL_HEAP_ADDRESS_RANGE_SEARCH, NULL);
+
+			if (argIndex2 > argIndex) {
+				j9port_control(OMRPORT_CTLDATA_VMEM_PERFORM_FULL_MEMORY_SEARCH, 1);
+			} else {
+				j9port_control(OMRPORT_CTLDATA_VMEM_PERFORM_FULL_MEMORY_SEARCH, 0);
+			}
+
 			break;
 
 		case ALL_DEFAULT_LIBRARIES_LOADED :
