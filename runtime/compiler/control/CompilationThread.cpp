@@ -8340,11 +8340,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             {
             uint64_t proposedScratchMemoryLimit = (uint64_t)TR::Options::getScratchSpaceLimit();
 
-#if defined(JITSERVER_SUPPORT)
-            bool isJSR292 = TR::CompilationInfo::getStream() ? false : TR::CompilationInfo::isJSR292(details.getRomMethod());
-#else
             bool isJSR292 = TR::CompilationInfo::isJSR292(details.getMethod());
-#endif /* defined(JITSERVER_SUPPORT) */
 
             // Check if the method to be compiled is a JSR292 method
             if (isJSR292)
@@ -8356,6 +8352,13 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                // Try to increase scratch space limit for JSR292 compilations
                proposedScratchMemoryLimit *= TR::Options::getScratchSpaceFactorWhenJSR292Workload();
                }
+#if defined(JITSERVER_SUPPORT)
+            else if (compiler->isOutOfProcessCompilation())
+               {
+               // We want to increase the scratch memory if it's a out of process compilation
+               proposedScratchMemoryLimit *= TR::Options::getScratchSpaceFactorWhenJITServerWorkload();
+               }
+#endif
 
             // Check if the method to be compiled is a Thunk Archetype
             if (details.isMethodHandleThunk())
