@@ -22,7 +22,7 @@
 
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Instruction.hpp"
 #include "compile/AOTClassInfo.hpp"
 #include "compile/Compilation.hpp"

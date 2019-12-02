@@ -37,7 +37,7 @@
 #include "jitprotos.h"
 #include "rommeth.h"
 #include "emfloat.h"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/PreprologueConst.hpp"
 #include "codegen/PrivateLinkage.hpp"
 #include "control/Recompilation.hpp"

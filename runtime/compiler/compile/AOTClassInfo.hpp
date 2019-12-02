@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -23,7 +23,7 @@
 #ifndef TR_AOTCLASSINFO_INCL
 #define TR_AOTCLASSINFO_INCL
 
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "runtime/J9Runtime.hpp"
 #include "env/jittypes.h"
 #include "env/VMJ9.h"

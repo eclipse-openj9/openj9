@@ -31,7 +31,7 @@
 #include "j9protos.h"
 #include "jvminit.h"
 #include "jitprotos.h"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/PicHelpers.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"

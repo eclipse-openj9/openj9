@@ -27,7 +27,7 @@
 #include "j9protos.h"
 #include "j9consts.h"
 #include "j9comp.h"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "env/IO.hpp"
 
 class TR_VMField

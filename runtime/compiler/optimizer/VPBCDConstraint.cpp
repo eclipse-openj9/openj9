@@ -24,7 +24,7 @@
 
 #include <ctype.h>
 #include <stddef.h>
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "env/PersistentCHTable.hpp"
 #include "env/VMJ9.h"

@@ -23,7 +23,7 @@
 #ifndef j9method_h
 #define j9method_h
 
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"

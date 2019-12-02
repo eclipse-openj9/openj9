@@ -31,7 +31,7 @@
 #endif
 
 #include "j9.h"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/IO.hpp"

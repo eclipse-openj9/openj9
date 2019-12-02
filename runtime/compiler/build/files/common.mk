@@ -70,7 +70,7 @@ JIT_PRODUCT_BACKEND_SOURCES+=\
     omr/compiler/codegen/CodeGenPrep.cpp \
     omr/compiler/codegen/CodeGenRA.cpp \
     omr/compiler/codegen/ELFGenerator.cpp \
-    omr/compiler/codegen/FrontEnd.cpp \
+    omr/compiler/env/FrontEnd.cpp \
     omr/compiler/codegen/LiveRegister.cpp \
     omr/compiler/codegen/NodeEvaluation.cpp \
     omr/compiler/codegen/OMRAheadOfTimeCompile.cpp \
