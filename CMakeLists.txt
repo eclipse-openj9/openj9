@@ -35,7 +35,10 @@ find_program(CMAKE_Java_COMPILER NAMES javac PATHS ${BOOT_JDK}/bin NO_DEFAULT_PA
 find_program(CMAKE_Java_RUNTIME  NAMES java  PATHS ${BOOT_JDK}/bin NO_DEFAULT_PATH)
 find_program(CMAKE_Java_AR       NAMES jar   PATHS ${BOOT_JDK}/bin NO_DEFAULT_PATH)
 
+# Variables used by the "UseJava" module (predates "Java" language support)
 set(Java_JAVA_EXECUTABLE ${CMAKE_Java_RUNTIME})
+set(Java_JAVAC_EXECUTABLE ${CMAKE_Java_COMPILER})
+set(Java_JAR_EXECUTABLE ${CMAKE_Java_AR})
 
 # Note: this is a temporary transition variable.
 set(J9VM_IS_NON_STAGING TRUE)
