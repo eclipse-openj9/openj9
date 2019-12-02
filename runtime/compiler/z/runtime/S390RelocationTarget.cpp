@@ -32,7 +32,7 @@
 #include "j9cp.h"
 #include "j9protos.h"
 #include "rommeth.h"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "runtime/J9Runtime.hpp"

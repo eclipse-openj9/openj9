@@ -34,7 +34,7 @@
 #include "infra/Monitor.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "env/ut_j9jit.h"
 #include "infra/CriticalSection.hpp"
 #include "runtime/CodeCacheManager.hpp"

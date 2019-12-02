@@ -36,7 +36,7 @@
 #include "j9.h"
 #include "jitprotos.h"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/PrivateLinkage.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"

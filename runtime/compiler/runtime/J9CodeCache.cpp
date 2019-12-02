@@ -38,7 +38,7 @@
 #include "infra/Monitor.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #ifdef CODECACHE_STATS
 #include "infra/Statistics.hpp"
 #endif

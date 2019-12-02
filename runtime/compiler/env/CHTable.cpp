@@ -23,7 +23,7 @@
 #include "env/CHTable.hpp"
 
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "compile/CompilationTypes.hpp"

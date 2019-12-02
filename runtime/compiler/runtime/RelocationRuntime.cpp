@@ -49,7 +49,7 @@
 #include "runtime/CodeCacheManager.hpp"
 #include "runtime/ArtifactManager.hpp"
 #include "runtime/DataCache.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "infra/Monitor.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/VMAccessCriticalSection.hpp"

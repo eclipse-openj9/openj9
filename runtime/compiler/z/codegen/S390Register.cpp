@@ -26,7 +26,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Register.hpp"
 #include "codegen/RegisterConstants.hpp"
 #include "compile/Compilation.hpp"

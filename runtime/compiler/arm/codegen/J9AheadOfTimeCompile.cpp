@@ -24,7 +24,7 @@
 #include "codegen/ARMAOTRelocation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/Instruction.hpp"
 #include "compile/AOTClassInfo.hpp"
 #include "compile/Compilation.hpp"

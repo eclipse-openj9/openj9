@@ -29,7 +29,7 @@
 #include "j9cp.h"
 #include "j9cfg.h"
 #include "rommeth.h"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "env/KnownObjectTable.hpp"
 #include "compile/CompilationTypes.hpp"
 #include "compile/Method.hpp"

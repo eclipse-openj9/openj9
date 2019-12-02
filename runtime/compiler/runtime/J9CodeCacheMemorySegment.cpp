@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@
 #include "infra/Monitor.hpp"
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #ifdef CODECACHE_STATS
 #include "infra/Statistics.hpp"
 #endif

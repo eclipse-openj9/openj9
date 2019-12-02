@@ -31,7 +31,7 @@
 #include "j9protos.h"
 #include "rommeth.h"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "codegen/PicHelpers.hpp"
 #include "codegen/Relocation.hpp"
 #include "compile/ResolvedMethod.hpp"

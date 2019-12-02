@@ -25,7 +25,7 @@
 #include <stdint.h>
 #include <string.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/StackMemoryRegion.hpp"

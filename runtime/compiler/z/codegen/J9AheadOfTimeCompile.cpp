@@ -26,7 +26,7 @@
 
 #include "codegen/AheadOfTimeCompile.hpp"
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "compile/AOTClassInfo.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/ResolvedMethod.hpp"

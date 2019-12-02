@@ -23,7 +23,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "codegen/CodeGenerator.hpp"
-#include "codegen/FrontEnd.hpp"
+#include "env/FrontEnd.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
 #include "env/jittypes.h"
