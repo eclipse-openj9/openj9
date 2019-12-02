@@ -741,6 +741,9 @@ TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_Per
 TR_PersistentJittedBodyInfo *
 J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory *trMemory)
    {
+   if (bodyInfoStr.empty())
+      return NULL;
+   TR_ASSERT_FATAL(!methodInfoStr.empty(), "If we have a persistentBodyInfo we must have a persistentMethodInfo too");
    auto bodyInfo = (TR_PersistentJittedBodyInfo*) trMemory->allocateHeapMemory(sizeof(TR_PersistentJittedBodyInfo), TR_MemoryBase::Recompilation);
    auto methodInfo = (TR_PersistentMethodInfo*) trMemory->allocateHeapMemory(sizeof(TR_PersistentMethodInfo), TR_MemoryBase::Recompilation);
 
