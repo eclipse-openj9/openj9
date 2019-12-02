@@ -75,12 +75,14 @@
 		<reason>Only applies to Linux SRT</reason>
 	</include>
 
-	<exclude id="j9vm.test.xlpcodecache" platform="aix_ppc.* | osx_x86.*">
-		<reason>OpenJ9 Issue I8437. This test is unstable on AIXPPC. Xlp is not supported on OSX. </reason>
+	<exclude id="j9vm.test.xlpcodecache" platform="aix_ppc.* | osx_x86.* | zos.*">
+		<reason>This test is unstable on AIXPPC, and S390 Z/OS: OpenJ9 Issue 8437, and 8798 respectively. 
+				Xlp is not supported on OSX.
+		</reason>
 	</exclude>
 
-	<exclude id="j9vm.test.xlp" platform="osx_x86.*">
-		<reason>Xlp is not supported on OSX. </reason>
+	<exclude id="j9vm.test.xlp" platform="osx_x86.* | zos.*">
+		<reason>This test is unstable on S390 Z/OS: OpenJ9 Issue 8798. Xlp is not supported on OSX. </reason>
 	</exclude>
 
 	<exclude id="j9vm.test.classloader.LazyClassLoaderInitTest" platform="all">
