@@ -1696,10 +1696,23 @@ loadSuperClassAndInterfaces(J9VMThread *vmThread, J9ClassLoader *classLoader, J9
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 /**
- * Attempts to pre-load classes of fields with Q signatures and no static
- * access modifier set. Also records largest field type in valueTypeFlags.
- * 0 for single 1 for ref and 2 for double. Records total number of
- * flattenable instance fields in flattenableInstanceFieldCount.
+ * This method has four main functions:
+ * 1. Attempts to pre-load Q instace fields.
+ * 
+ * 2. Records total number of flattenable instance fields 
+ * to flattenedClassCache->numberOfEntries.
+ * 
+ * 3. Sets the J9ClassLargestAlignmentConstraintDouble flag if any
+ * of the fields are double-aligned. Similarily, it sets the 
+ * J9ClassLargestAlignmentConstraintReference flag given there is atleast one
+ * reference field. For single-aligned fields, nothing else is done. Eventually,
+ * only the highest prioritized flag (Double > Reference > Single) will be used.
+ * 
+ * 4. Sets the J9ClassCanSupportFastSubstitutability flag in 
+ * valuetypeFlags given that the class does not contain any field of 
+ * type double (D), float (F), nullable-class/interface type (L) or null-free 
+ * class type (Q) that are not both flattened and recursively compatible for
+ * the fast substitutability optimization.
  *
  * Caller should not hold the classTableMutex.
  *
@@ -1713,6 +1726,7 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 	J9ROMFieldShape *field = romFieldsStartDo(romClass, &fieldWalkState);
 	BOOLEAN result = TRUE;
 	UDATA flattenableInstanceFieldCount = 0;
+	bool eligibleForFastSubstitutability = true;
 
 	/* iterate over fields and load classes of fields marked as QTypes */
 	while (NULL != field) {
@@ -1750,6 +1764,9 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 
 					if (!J9_IS_J9CLASS_FLATTENED(valueClass)) {
 						*valueTypeFlags |= J9ClassContainsUnflattenedFlattenables;
+						eligibleForFastSubstitutability = false;
+					} else if (J9_ARE_NO_BITS_SET(valueClass->classFlags, J9ClassCanSupportFastSubstitutability)) {
+						eligibleForFastSubstitutability = false;
 					}
 					
 					J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, flattenableInstanceFieldCount);
@@ -1761,12 +1778,18 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 				*valueTypeFlags |= (valueClass->classFlags & (J9ClassLargestAlignmentConstraintDouble | J9ClassLargestAlignmentConstraintReference));
 				break;
 			}
-			case 'J':
 			case 'D':
+				eligibleForFastSubstitutability = false;
+				/* Fall through */
+			case 'J':
 				*valueTypeFlags |= J9ClassLargestAlignmentConstraintDouble;
 				break;
 			case 'L':
 				*valueTypeFlags |= J9ClassLargestAlignmentConstraintReference;
+				eligibleForFastSubstitutability = false;
+				break;
+			case 'F':
+				eligibleForFastSubstitutability = false;
 				break;
 			default:
 				/* Do nothing for now. If we eventually decide to pack fields smaller than 32 bits we'll
@@ -1776,6 +1799,9 @@ loadFlattenableFieldValueClasses(J9VMThread *currentThread, J9ClassLoader *class
 			}
 		}
 		field = romFieldsNextDo(&fieldWalkState);
+	}
+	if (eligibleForFastSubstitutability) {
+		*valueTypeFlags |= J9ClassCanSupportFastSubstitutability;
 	}
 	flattenedClassCache->numberOfEntries = flattenableInstanceFieldCount;
 
@@ -2616,7 +2642,7 @@ fail:
 			 *
 			 *                        + J9ClassLargestAlignmentConstraintDouble
 			 *                       + J9ClassIsExemptFromValidation (inherited)
-			 *                      + Unused
+			 *                      + J9ClassCanSupportFastSubstitutability
 			 *                     + Unused
 			 *
 			 *                   + Unused
@@ -3122,6 +3148,9 @@ retry:
 			if ((result->totalInstanceSize <= javaVM->valueFlatteningThreshold) && !J9ROMCLASS_IS_CONTENDED(romClass)) {
 				Trc_VM_CreateRAMClassFromROMClass_valueTypeIsFlattened(vmThread, J9UTF8_LENGTH(className), J9UTF8_DATA(className), result);
 				classFlags |= J9ClassIsFlattened;
+			}
+			if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassCanSupportFastSubstitutability)) {
+				classFlags |= J9ClassCanSupportFastSubstitutability;
 			}
 
 			if (J9_ARE_ALL_BITS_SET(valueTypeFlags, J9ClassLargestAlignmentConstraintDouble)) {

@@ -78,6 +78,7 @@
 #define J9ClassLargestAlignmentConstraintDouble 0x1000
 #define J9ClassIsExemptFromValidation 0x2000
 #define J9ClassContainsUnflattenedFlattenables 0x4000
+#define J9ClassCanSupportFastSubstitutability 0x8000
 
 /* @ddr_namespace: map_to_type=J9FieldFlags */
 
