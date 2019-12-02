@@ -177,6 +177,7 @@ J9::Compilation::Compilation(int32_t id,
 #if defined(JITSERVER_SUPPORT)
    _outOfProcessCompilation(false),
    _remoteCompilation(false),
+   _serializedRuntimeAssumptions(getTypedAllocator<SerializedRuntimeAssumption>(self()->allocator())),
 #endif /* defined(JITSERVER_SUPPORT) */
    _osrProhibitedOverRangeOfTrees(false)
    {

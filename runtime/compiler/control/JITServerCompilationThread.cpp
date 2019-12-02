@@ -89,6 +89,17 @@ outOfProcessCompilationEnd(
       svmSymbolToIdStr = comp->getSymbolValidationManager()->serializeSymbolToIDMap();
       }
 
+   // Send runtime assumptions created during compilation to the client
+   std::vector<SerializedRuntimeAssumption> serializedRuntimeAssumptions;
+   if (comp->getSerializedRuntimeAssumptions().size() > 0)
+      {
+      serializedRuntimeAssumptions.reserve(comp->getSerializedRuntimeAssumptions().size());
+      for (auto it : comp->getSerializedRuntimeAssumptions())
+         {
+         serializedRuntimeAssumptions.push_back(*it);
+         }
+      }
+
    auto resolvedMirrorMethodsPersistIPInfo = compInfoPT->getCachedResolvedMirrorMethodsPersistIPInfo();
    entry->_stream->finishCompilation(codeCacheStr, dataCacheStr, chTableData,
                                      std::vector<TR_OpaqueClassBlock*>(classesThatShouldNotBeNewlyExtended->begin(), classesThatShouldNotBeNewlyExtended->end()),
@@ -96,7 +107,7 @@ outOfProcessCompilationEnd(
                                      (resolvedMirrorMethodsPersistIPInfo) ?
                                                          std::vector<TR_ResolvedJ9Method*>(resolvedMirrorMethodsPersistIPInfo->begin(), resolvedMirrorMethodsPersistIPInfo->end()) :
                                                          std::vector<TR_ResolvedJ9Method*>(),
-                                     *entry->_optimizationPlan
+                                     *entry->_optimizationPlan, serializedRuntimeAssumptions
                                      );
    compInfoPT->clearPerCompilationCaches();
 
@@ -389,7 +400,7 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       clientSession->getSequencingMonitor()->enter();
       // Update the expecting sequence number. This will allow subsequent
       // threads to pass through once we've released the sequencing monitor.
-      TR_ASSERT(seqNo == clientSession->getExpectedSeqNo(), "Unexpected seqNo");
+      TR_ASSERT(seqNo == clientSession->getExpectedSeqNo(), "Unexpected seqNo=%u expected=%u\n", seqNo, clientSession->getExpectedSeqNo());
       updateSeqNo(clientSession);
       // Increment the number of active threads before issuing the read for ramClass
       clientSession->incNumActiveThreads();
