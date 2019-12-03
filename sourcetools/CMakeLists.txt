@@ -23,7 +23,6 @@
 # set JAVA_HOME to guide FindJava
 set(JAVA_HOME ${BOOT_JDK})
 
-include(FindJava)
 include(UseJava)
 
 project(j9_sourcetools VERSION 1.0)
