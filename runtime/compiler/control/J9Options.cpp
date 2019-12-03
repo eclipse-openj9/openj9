@@ -2069,6 +2069,10 @@ J9::Options::setupJITServerOptions()
          // to support the relocation of some of those instructions is not available. Thus we disable
          // this option for remote compilations.
          self()->setOption(TR_DisableSIMDArrayTranslate);
+
+         // Infrastructure to support the TOC is currently not available for Remote Compilations. We disable the feature
+         // here so that the codegen doesn't generate TOC enabled code as it won't be valid on the client JVM.
+         self()->setOption(TR_DisableTOC);
          }
 
       // In the JITServer world, expensive compilations are performed remotely so there is no risk of blowing the footprint limit on the JVM
