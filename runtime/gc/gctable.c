@@ -177,8 +177,8 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_objaccess_getLockwordAddress,
 	j9gc_objaccess_cloneObject,
 	j9gc_objaccess_copyObjectFields,
-	j9gc_objaccess_copyObjectFieldsToArrayElement,
-	j9gc_objaccess_copyObjectFieldsFromArrayElement,
+	j9gc_objaccess_copyObjectFieldsToFlattenedArrayElement,
+	j9gc_objaccess_copyObjectFieldsFromFlattenedArrayElement,
 	j9gc_objaccess_cloneIndexableObject,
 	j9gc_objaccess_asConstantPoolObject,
 #if defined(J9VM_GC_REALTIME)
