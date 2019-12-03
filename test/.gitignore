@@ -24,21 +24,11 @@
 # misc auto generated folders
 bin
 test_output_*
+TKG
 
 # misc auto generated files
 *.mk.tkgj
 autoGen.mk
-TestConfig/dependencies.mk
-TestConfig/utils.mk
-TestConfig/count.mk
-TestConfig/specToPlat.mk
-TestConfig/*.log
-TestConfig/*.tap
-TestConfig/machineConfigure.mk
-TestConfig/tempTestTargetResult
-TestConfig/failedtargets.mk
-TestConfig/autoGenEnv.mk
-TestConfig/SHA.txt
 
 .DS_Store
 
