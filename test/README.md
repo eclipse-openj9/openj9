@@ -22,6 +22,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 # Quick Start
 
+
 Below is an example to run all sanity.functional tests against a JDK8
 Linux x86-64 cmprssptrs OpenJ9 SDK:
 
