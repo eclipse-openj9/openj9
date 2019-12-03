@@ -49,17 +49,17 @@ RUN apt-get update \
     libxml-parser-perl \
  && rm -rf /var/lib/apt/lists/*
 
-# Install Docker module to run test framework
-RUN echo yes | cpan install JSON Text::CSV
-
 ENV JAVA_VERSION=SE80
 ENV JAVA_BIN=/root/j2sdk-image/jre/bin
 ENV SPEC=linux_s390-64_cmprssptrs
 ENV JAVA_HOME=/root/j2sdk-image
 
 # Builds tests
-RUN cd /root/test/TestConfig \
+
+RUN cd /root/test \
+ && git clone https://github.com/AdoptOpenJDK/TKG.git \
+ && cd TKG \
  && make -f run_configure.mk \
  && make compile
 
-WORKDIR /root/test/TestConfig
+WORKDIR /root/test/TKG

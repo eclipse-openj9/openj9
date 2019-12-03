@@ -53,7 +53,7 @@
 		<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 			<src path="${src}"/>
 			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/junit4.jar" />
+				<pathelement location="${LIB_DIR}/junit4.jar" />
 			</classpath>
 		</javac>
 	</target>

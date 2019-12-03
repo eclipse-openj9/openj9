@@ -23,7 +23,7 @@
 -->
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
+	xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
 	<test>
 		<testCaseName>JLM_Tests_interface_SE80</testCaseName>
 		<variations>
