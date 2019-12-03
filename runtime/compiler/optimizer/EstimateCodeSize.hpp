@@ -101,14 +101,6 @@ class TR_EstimateCodeSize
 
    bool returnCleanup(int32_t);      // common tasks requiring completion before returning from estimation
 
-   enum
-      {
-      bbStart        = 0x01,
-      isCold         = 0x02,
-      isBranch         = 0x04,
-      isUnsanitizeable = 0x08,
-      };
-
    /* Fields */
 
    bool _isLeaf;
