@@ -291,7 +291,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
          if (comp->getOption(TR_EnableAOTStats))
             aotStats = & (((TR_JitPrivateConfig *)_fe->_jitConfig->privateConfig)->aotStats->virtualMethods);
 
-         TR_ResolvedJ9JITServerMethodInfo methodInfo = std::get<3>(recv);
+         TR_ResolvedJ9JITServerMethodInfo &methodInfo = std::get<3>(recv);
          
          // call constructor without making a new query
          if (createResolvedMethod)
@@ -612,7 +612,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedStaticMethod(TR::Compilation * comp, I_
          }
       }
 
-   auto methodInfo = std::get<1>(recv);
+   auto &methodInfo = std::get<1>(recv);
    if (ramMethod && !skipForDebugging)
       {
       TR_AOTInliningStats *aotStats = NULL;
@@ -661,7 +661,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedSpecialMethod(TR::Compilation * comp, I
    _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedSpecialMethodAndMirror, _remoteMirror, cpIndex);
    auto recv = _stream->read<J9Method *, TR_ResolvedJ9JITServerMethodInfo>();
    J9Method * ramMethod = std::get<0>(recv);
-   auto methodInfo = std::get<1>(recv);
+   auto &methodInfo = std::get<1>(recv);
 
    if (ramMethod)
       {
@@ -849,7 +849,7 @@ TR_ResolvedJ9JITServerMethod::getResolvedImproperInterfaceMethod(TR::Compilation
       _stream->write(JITServer::MessageType::ResolvedMethod_getResolvedImproperInterfaceMethodAndMirror, _remoteMirror, cpIndex);
       auto recv = _stream->read<J9Method *, TR_ResolvedJ9JITServerMethodInfo, UDATA>();
       auto j9method = std::get<0>(recv);
-      auto methodInfo = std::get<1>(recv);
+      auto &methodInfo = std::get<1>(recv);
       auto vtableOffset = std::get<2>(recv);
 
       if (comp->getOption(TR_UseSymbolValidationManager) && j9method)
@@ -1606,7 +1606,7 @@ TR_ResolvedJ9JITServerMethod::packMethodInfo(TR_ResolvedJ9JITServerMethodInfo &m
 void
 TR_ResolvedJ9JITServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, uint32_t vTableSlot, TR::CompilationInfoPerThread *threadCompInfo, const TR_ResolvedJ9JITServerMethodInfo &methodInfo)
    {
-   auto methodInfoStruct = std::get<0>(methodInfo);
+   auto &methodInfoStruct = std::get<0>(methodInfo);
    
    
    _ramMethod = (J9Method *)aMethod;
@@ -1655,7 +1655,7 @@ TR_ResolvedJ9JITServerMethod::unpackMethodInfo(TR_OpaqueMethodBlock * aMethod, T
    setRecognizedMethod(rm);
 
    JITServerIProfiler *iProfiler = (JITServerIProfiler *) ((TR_J9VMBase *) fe)->getIProfiler();
-   const std::string entryStr = std::get<3>(methodInfo);
+   const std::string &entryStr = std::get<3>(methodInfo);
    const auto serialEntry = (TR_ContiguousIPMethodHashTableEntry*) &entryStr[0];
    _iProfilerMethodEntry = (iProfiler && !entryStr.empty()) ? iProfiler->deserializeMethodEntry(serialEntry, trMemory) : NULL; 
    }
@@ -2117,7 +2117,7 @@ TR_ResolvedRelocatableJ9JITServerMethod::createResolvedMethodFromJ9Method(TR::Co
    // Calling constructor would be simpler, but we would have to make another message to update stats
    _stream->write(JITServer::MessageType::ResolvedRelocatableMethod_createResolvedRelocatableJ9Method, getRemoteMirror(), j9method, cpIndex, vTableSlot);
    auto recv = _stream->read<TR_ResolvedJ9JITServerMethodInfo, bool, bool, bool>();
-   auto methodInfo = std::get<0>(recv);
+   auto &methodInfo = std::get<0>(recv);
    // These parameters are only needed to update AOT stats. 
    // Maybe we shouldn't even track them, because another version of this method doesn't.
    bool isRomClassForMethodInSharedCache = std::get<1>(recv);

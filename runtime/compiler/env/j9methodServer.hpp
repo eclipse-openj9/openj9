@@ -23,6 +23,7 @@
 #ifndef J9METHODSERVER_H
 #define J9METHODSERVER_H
 
+#include "control/J9Recompilation.hpp"
 #include "env/j9method.h"
 #include "env/PersistentCollections.hpp"
 #include "runtime/JITServerIProfiler.hpp"
@@ -113,7 +114,10 @@ TR_ResolvedMethodCacheEntry
    {
    TR_OpaqueMethodBlock *method;
    uint32_t vTableSlot;
-   TR_ResolvedJ9JITServerMethodInfo methodInfo;
+   TR_ResolvedJ9JITServerMethodInfoStruct methodInfoStruct;
+   TR_PersistentJittedBodyInfo *persistentBodyInfo;
+   TR_PersistentMethodInfo *persistentMethodInfo;
+   TR_ContiguousIPMethodHashTableEntry *IPMethodInfo;
    };
 
 using TR_ResolvedMethodInfoCache = UnorderedMap<TR_ResolvedMethodKey, TR_ResolvedMethodCacheEntry>;
