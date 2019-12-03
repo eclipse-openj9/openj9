@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corp. and others
+ * Copyright (c) 2008, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,6 @@ extern UDATA getInflLock(J9ObjectMonitor *monitor);
 
 extern UDATA checkObjAnswers(JNIEnv *env, J9VMThread *vmthread, UDATA exp_vmstate, j9object_t exp_lockObj, J9VMThread *exp_owner, UDATA exp_count);
 extern UDATA checkRawAnswers(JNIEnv *env, J9VMThread *vmthread, UDATA exp_vmstate, j9object_t exp_lockObj, omrthread_monitor_t exp_rawLock, J9VMThread *exp_owner, UDATA exp_count);
-extern UDATA checkOldAnswers(JNIEnv *env, J9VMThread *vmthread, UDATA exp_vmstate, omrthread_monitor_t exp_rawLock, J9VMThread *exp_owner, UDATA exp_count);
 
 extern UDATA test_setup(JNIEnv *env, BOOLEAN ignoreExpectedFailures);
 extern UDATA test_cleanup(JNIEnv *env, BOOLEAN ignoreExpectedFailures);

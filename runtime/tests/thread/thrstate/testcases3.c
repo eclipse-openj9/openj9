@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2008 IBM Corp. and others
+ * Copyright (c) 2008, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,7 +50,6 @@ test_vBfOC_nBMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	explainThreadIsNotBlocked(env);
 	if (ignoreExpectedFailures) {
@@ -69,7 +68,6 @@ test_vBfOC_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	explainThreadIsNotBlocked(env);
 	if (ignoreExpectedFailures) {
@@ -89,7 +87,6 @@ test_vBfOC_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It reports the thread blocked on the object monitor, which it already owns, instead of the raw monitor.\n");
@@ -110,7 +107,6 @@ test_vBfOC_nBMNC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, NULL, TESTDATA(rawMonitor)->monitor, NULL, 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(rawMonitor)->monitor, NULL, 1);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It reports the thread blocked on the object monitor, which it already owns, instead of the raw monitor.\n");
@@ -132,7 +128,6 @@ test_vBaOC_nBMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -148,7 +143,6 @@ test_vBaOC_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -164,7 +158,6 @@ test_vBaOC_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -180,7 +173,6 @@ test_vBaOC_nBMNC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, NULL, TESTDATA(rawMonitor)->monitor, NULL, 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -200,7 +192,6 @@ test_vBfOC_nWMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	explainThreadIsNotBlocked(env);
 	if (ignoreExpectedFailures) {
@@ -220,7 +211,6 @@ test_vBfOC_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	/* the thread has not yet released the monitor to wait on it, so still runnable */
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	explainThreadIsNotBlocked(env);
 	if (ignoreExpectedFailures) {
@@ -239,7 +229,6 @@ test_vBfOC_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	explainThreadIsNotBlocked(env);
 	if (ignoreExpectedFailures) {
@@ -258,7 +247,6 @@ test_vBfOC_nWMNC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, NULL, 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	explainThreadIsNotBlocked(env);
 	if (ignoreExpectedFailures) {
@@ -279,7 +267,6 @@ test_vBaOC_nWMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -296,7 +283,6 @@ test_vBaOC_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	/* the thread has not yet released the monitor to wait on it, so still runnable */
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -312,7 +298,6 @@ test_vBaOC_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -328,7 +313,6 @@ test_vBaOC_nWMNC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, NULL, 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -349,7 +333,6 @@ test_vBfVC_nStMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 	
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(otherVmthread), 1);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(objMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(objMonitor)->monitor, TESTDATA(otherVmthread), 1);
 	
 	return rc;
 }
@@ -363,7 +346,6 @@ test_vBfVC_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 	
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(otherVmthread), 1);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(objMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(objMonitor)->monitor, TESTDATA(otherVmthread), 1);
 	
 	return rc;
 }
@@ -378,7 +360,6 @@ test_vBfVC_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 	
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(otherVmthread), 1);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(objMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(objMonitor)->monitor, TESTDATA(otherVmthread), 1);
 	
 	return rc;
 }
@@ -393,7 +374,6 @@ test_vBfVC_nStMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 	
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(otherVmthread), 1);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(objMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(objMonitor)->monitor, TESTDATA(otherVmthread), 1);
 	
 	return rc;
 }
@@ -408,7 +388,6 @@ test_vBfVC_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 	
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(otherVmthread), 1);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(objMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(objMonitor)->monitor, TESTDATA(otherVmthread), 1);
 	
 	return rc;
 }
@@ -423,7 +402,6 @@ test_vBfVC_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 	
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(otherVmthread), 1);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(blockingObject), TESTDATA(objMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(objMonitor)->monitor, TESTDATA(otherVmthread), 1);
 	
 	return rc;
 }

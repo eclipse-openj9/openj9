@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2018 IBM Corp. and others
+ * Copyright (c) 2008, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -313,31 +313,6 @@ checkRawAnswers(JNIEnv *env, J9VMThread *vmthread, UDATA exp_vmstate, j9object_t
 		j9tty_printf(PORTLIB, "getVMThreadRawState %s:\n", (rc == 0)? "passed" : "failed");
 		j9tty_printf(PORTLIB, "\tactual: vmstate %d lockObj %p rawLock %p lockOwner %p count %d\n", vmstate, lockObj, rawLock, owner, count);
 		j9tty_printf(PORTLIB, "\texpect: vmstate %d lockObj %p rawLock %p lockOwner %p count %d\n", exp_vmstate, exp_lockObj, exp_rawLock, exp_owner, exp_count);
-	}
-	return rc;
-}
-
-UDATA
-checkOldAnswers(JNIEnv *env, J9VMThread *vmthread, UDATA exp_vmstate, omrthread_monitor_t exp_rawLock, J9VMThread *exp_owner, UDATA exp_count)
-{
-	PORT_ACCESS_FROM_ENV(env);
-	UDATA rc = 0;
-	UDATA vmstate;
-	omrthread_monitor_t rawLock;
-	J9VMThread *owner;
-	UDATA count;
-	
-	vmstate = getVMThreadStatus_DEPRECATED(vmthread, (J9ThreadAbstractMonitor **)&rawLock, &owner, &count);
-	
-	if (vmstate != exp_vmstate) rc = FAILED_OLDSTATE;
-	if (rawLock != exp_rawLock) rc = FAILED_OLDSTATE;
-	if (owner != exp_owner) rc = FAILED_OLDSTATE;
-	if (count != exp_count) rc = FAILED_OLDSTATE;
-
-	if (rc) {
-		j9tty_printf(PORTLIB, "getVMThreadStatus %s:\n", (rc == 0)? "passed" : "failed");
-		j9tty_printf(PORTLIB, "\tactual: vmstate %d rawLock %p lockOwner %p count %d\n", vmstate, rawLock, owner, count);
-		j9tty_printf(PORTLIB, "\texpect: vmstate %d rawLock %p lockOwner %p count %d\n", exp_vmstate, exp_rawLock, exp_owner, exp_count);
 	}
 	return rc;
 }
