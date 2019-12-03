@@ -271,7 +271,6 @@ void j9mm_get_guaranteed_nursery_range(J9JavaVM* javaVM, void** start, void** en
 /* StringTable.cpp */
 extern J9_CFUNC j9object_t j9gc_createJavaLangString(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags);
 extern J9_CFUNC j9object_t j9gc_internString(J9VMThread *vmThread, j9object_t sourceString);
-extern J9_CFUNC j9object_t j9gc_allocStringWithSharedCharData(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA resolveFlags);
 extern UDATA j9gc_stringHashFn (void *key, void *userData);
 extern UDATA j9gc_stringHashEqualFn (void *leftKey, void *rightKey, void *userData);
 

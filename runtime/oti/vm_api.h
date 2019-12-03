@@ -2814,18 +2814,6 @@ getStatistic (J9JavaVM* javaVM, U_8 * name);
 /* ---------------- stringhelpers.c ---------------- */
 
 /**
- * @brief
- * @param *vmThread
- * @param *data
- * @param length
- * @param stringFlags
- * @param byteArray
- * @param offset
- */
-void
-copyUTF8ToCompressedUnicode(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags, j9object_t byteArray, UDATA offset);
-
-/**
  * @brief Compare a java string to another java string for character equality.
  * @param *vmThread
  * @param *string1

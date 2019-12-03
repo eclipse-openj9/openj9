@@ -236,7 +236,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	compareStrings,
 	compareStringToUTF8,
 	prepareForExceptionThrow,
-	copyUTF8ToUnicode,
 	verifyQualifiedName,
 	copyStringToUTF8Helper,
 	sendCompleteInitialization,
@@ -306,7 +305,6 @@ J9InternalVMFunctions J9InternalFunctions = {
 	clearHaltFlag,
 	setHeapOutOfMemoryError,
 	initializeHeapOOMMessage,
-	copyUTF8ToCompressedUnicode,
 	threadAboutToStart,
 	mustHaveVMAccess,
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)

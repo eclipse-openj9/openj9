@@ -4430,7 +4430,6 @@ typedef struct J9MemoryManagerFunctions {
 	I_32  ( *j9gc_objaccess_getObjectHashCode)(struct J9JavaVM *vm, J9Object* object) ;
 	j9object_t  ( *j9gc_createJavaLangString)(struct J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags) ;
 	j9object_t  ( *j9gc_internString)(struct J9VMThread *vmThread, j9object_t sourceString) ;
-	j9object_t  ( *j9gc_allocStringWithSharedCharData)(struct J9VMThread *vmThread, U_8 *data, UDATA length, UDATA resolveFlags) ;
 #if defined(J9VM_GC_FINALIZATION)
 	void  ( *j9gc_runFinalizersOnExit)(struct J9VMThread* vmThread, UDATA run) ;
 #endif /* J9VM_GC_FINALIZATION */
@@ -4667,7 +4666,6 @@ typedef struct J9InternalVMFunctions {
 	UDATA  ( *compareStrings)(struct J9VMThread * vmThread, j9object_t string1, j9object_t string2) ;
 	UDATA  ( *compareStringToUTF8)(struct J9VMThread * vmThread, j9object_t stringObject, UDATA stringFlags, const U_8 * utfData, UDATA utfLength) ;
 	void  ( *prepareForExceptionThrow)(struct J9VMThread * currentThread) ;
-	void  ( *copyUTF8ToUnicode)(struct J9VMThread * vmThread, U_8 * data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex) ;
 	UDATA  ( *verifyQualifiedName)(struct J9VMThread *vmThread, j9object_t string) ;
 	UDATA ( *copyStringToUTF8Helper)(struct J9VMThread *vmThread, j9object_t string, UDATA stringFlags, UDATA stringOffset, UDATA stringLength, U_8 *utf8Data, UDATA utf8DataLength);
 	void  (JNICALL *sendCompleteInitialization)(struct J9VMThread *vmContext) ;
@@ -4737,7 +4735,6 @@ typedef struct J9InternalVMFunctions {
 	void  ( *clearHaltFlag)(struct J9VMThread * vmThread, UDATA flag) ;
 	void  ( *setHeapOutOfMemoryError)(struct J9VMThread * currentThread) ;
 	jint  ( *initializeHeapOOMMessage)(struct J9VMThread *currentThread) ;
-	void  ( *copyUTF8ToCompressedUnicode)(struct J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags, j9object_t byteArray, UDATA offset) ;
 	void  ( *threadAboutToStart)(struct J9VMThread *currentThread) ;
 	void  ( *mustHaveVMAccess)(struct J9VMThread * vmThread) ;
 #if defined(J9VM_PORT_ZOS_CEEHDLRSUPPORT)
