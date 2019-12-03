@@ -227,7 +227,6 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_objaccess_getObjectHashCode,
 	j9gc_createJavaLangString,
 	j9gc_internString,
-	j9gc_allocStringWithSharedCharData,
 #if defined(J9VM_GC_FINALIZATION)
 	j9gc_runFinalizersOnExit,
 #endif /* J9VM_GC_FINALIZATION */

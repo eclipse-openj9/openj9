@@ -1230,7 +1230,6 @@ extern J9_CFUNC UDATA  romImageLoad (J9VMThread *currentThread, void *segmentPoi
 /* J9VMStringSupport*/
 #ifndef _J9VMSTRINGSUPPORT_
 #define _J9VMSTRINGSUPPORT_
-extern J9_CFUNC void  copyUTF8ToUnicode (J9VMThread * vmThread, U_8 * data, UDATA length, UDATA stringFlags, j9object_t charArray, UDATA startIndex);
 extern J9_CFUNC j9object_t  catUtfToString4 (J9VMThread * vmThread, const U_8 *data1, UDATA length1, const U_8 *data2, UDATA length2, const U_8 *data3, UDATA length3, const U_8 *data4, UDATA length4);
 extern J9_CFUNC j9object_t  methodToString (J9VMThread * vmThread, J9Method* method);
 #endif /* _J9VMSTRINGSUPPORT_ */

@@ -999,6 +999,194 @@ done:
 	}
 
 	/**
+	 * Computes the hash value for an input string using the hash algorithm defined by the java/lang/String.hashCode()I
+	 * method.
+	 *
+	 * @param data points to raw UTF8 bytes, assumed to be a valid (potentially multi-byte) encoding
+	 * @param length the number of bytes to hash
+	 *
+	 * @return hash code for the UTF8 string
+	 */
+	static VMINLINE UDATA
+	computeHashForUTF8(const U_8 *data, UDATA length)
+	{
+		UDATA hash = 0;
+		const U_8 * end = data + length;
+
+		while (data < end) {
+			U_16 c = 0;
+
+			data += decodeUTF8Char(data, &c);
+			hash = (hash << 5) - hash + c;
+		}
+		return hash;
+	}
+
+	/**
+	 * Computes the hash value for an input string using the hash algorithm defined by the java/lang/String.hashCode()I
+	 * method.
+	 *
+	 * @param data points to raw UTF8 bytes, all of which are within the ASCII subset ord. [0, 127]
+	 * @param length the number of bytes to hash
+	 *
+	 * @return hash code for the UTF8 string
+	 */
+	static VMINLINE UDATA
+	computeHashForASCII(const U_8 *data, UDATA length)
+	{
+		UDATA hash = 0;
+		for (UDATA i = 0; i < length; ++i) {
+			hash = (hash << 5) - hash + data[i];
+		}
+		return hash;
+	}
+	
+	/**
+	 * Determines whether the UTF8 string is an ASCII string.
+	 *
+	 * @param data[in] points to raw UTF8 bytes
+	 * @param length[in] the number of bytes representing characters in data
+	 *
+	 * @return true if all of the characters in the UTF8 input string are ASCII; false otherwise
+	 */
+	static VMINLINE bool
+	isUTF8ASCII(const U_8 *data, UDATA length)
+	{
+		bool isASCII = true;
+
+		for (UDATA i = 0; i < length; ++i) {
+			if (data[i] > 0x7F) {
+				isASCII = false;
+				break;
+			}
+		}
+
+		return isASCII;
+	}
+
+	/**
+	 * Copies a UTF8 string into a backing array containing UTF16 characters at a specific index.
+	 *
+	 * @param vmThread[in] the current J9VMThread
+	 * @param data[in] points to raw UTF8 bytes, some of which may be multi-byte UTF8 encoded Unicode characters
+	 * @param length[in] the number of bytes representing characters in data
+	 * @param stringFlags[in] string flags corresponding to data
+	 * @param backingArray[in] the backing character array to copy the UTF8 string into
+	 * @param startIndex the start index of backingArray at which to begin the copy
+    *
+    * @implNote copyUTF8ToBackingArrayAsUTF16 and copyUTF8ToBackingArrayAsASCII must be kept in sync.
+	 */
+	static VMINLINE void
+	copyUTF8ToBackingArrayAsUTF16(J9VMThread * vmThread, U_8 * data, UDATA length, UDATA stringFlags, j9object_t backingArray, UDATA startIndex)
+	{
+		UDATA originalLength = length;
+
+		if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ASCII)) {
+			if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
+				for (UDATA i = startIndex; i < length; ++i) {
+					U_8 c = data[i];
+					J9JAVAARRAYOFCHAR_STORE(vmThread, backingArray, i, c != '/' ? c : '.');
+				}
+			} else {
+				for (UDATA i = startIndex; i < length; ++i) {
+					J9JAVAARRAYOFCHAR_STORE(vmThread, backingArray, i, data[i]);
+				}
+			}
+		} else {
+			UDATA writeIndex = startIndex;
+			while (length > 0) {
+				U_16 unicode = 0;
+				UDATA consumed = decodeUTF8Char(data, &unicode);
+				if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
+					if ((U_16)'/' == unicode) {
+						unicode = (U_16)'.';
+					}
+				}
+				J9JAVAARRAYOFCHAR_STORE(vmThread, backingArray, writeIndex, unicode);
+				writeIndex += 1;
+				data += consumed;
+				length -= consumed;
+			}
+		}
+
+		/* Anonymous classes have the following name format [className]/[ROMADDRESS], so we have to to fix up the name
+		 * because the previous loops have converted '/' to '.' already.
+		 */
+		if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME)) {
+			for (IDATA i = (IDATA) originalLength - 1; i >= 0; --i) {
+				if ((U_16)'.' == J9JAVAARRAYOFCHAR_LOAD(vmThread, backingArray, i)) {
+					J9JAVAARRAYOFCHAR_STORE(vmThread, backingArray, i, (U_16)'/');
+					break;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Copies a UTF8 string into into a backing array containing ASCII characters at a specific index.
+	 *
+	 * @param vmThread[in] the current J9VMThread
+	 * @param data[in] points to raw UTF8 bytes, all of which are within the ASCII subset ord. [0, 127]
+	 * @param length[in] the number of bytes representing characters in data
+	 * @param stringFlags[in] string flags corresponding to data
+	 * @param backingArray[in] the backing character array to copy the UTF8 string into
+	 * @param startIndex the start index of charArray at which to begin the copy
+    *
+    * @implNote copyUTF8ToBackingArrayAsUTF16 and copyUTF8ToBackingArrayAsASCII must be kept in sync.
+	 */
+	static VMINLINE void
+	copyUTF8ToBackingArrayAsASCII(J9VMThread *vmThread, U_8 *data, UDATA length, UDATA stringFlags, j9object_t backingArray, UDATA startIndex)
+	{
+		if (J9_ARE_ANY_BITS_SET(stringFlags, J9_STR_XLAT)) {
+			for (UDATA i = startIndex; i < length; ++i) {
+				U_8 c = data[i];
+				J9JAVAARRAYOFBYTE_STORE(vmThread, backingArray, i, c != '/' ? c : '.');
+			}
+		} else {
+			for (UDATA i = startIndex; i < length; ++i) {
+				J9JAVAARRAYOFBYTE_STORE(vmThread, backingArray, i, data[i]);
+			}
+		}
+
+		/* Anonymous classes have the following name format [className]/[ROMADDRESS], so we have to to fix up the name
+		 * because the previous loops have converted '/' to '.' already.
+		 */
+		if (J9_ARE_ALL_BITS_SET(stringFlags, J9_STR_ANON_CLASS_NAME)) {
+			for (IDATA i = (IDATA)length - 1; i >= 0; --i) {
+				if ((U_8)'.' == J9JAVAARRAYOFBYTE_LOAD(vmThread, backingArray, i)) {
+					J9JAVAARRAYOFBYTE_STORE(vmThread, backingArray, i, (U_8)'/');
+					break;
+				}
+			}
+		}
+	}
+
+	/**
+	 * Determine the unicode length of a UTF8 string
+	 *
+	 * @param data[in] points to raw UTF8 bytes
+	 * @param length[in] the number of bytes representing characters in data
+	 *
+	 * @return the length of the UTF8 string in unicode characters
+	 */
+	static UDATA
+	getUTF8UnicodeLength(U_8 *data, UDATA length)
+	{
+		UDATA unicodeLength = 0;
+
+		while (length != 0) {
+			U_16 unicode = 0;
+			UDATA consumed = decodeUTF8CharN(data, &unicode, length);
+
+			data += consumed;
+			length -= consumed;
+			++unicodeLength;
+		}
+
+		return unicodeLength;
+	}
+
+	/**
 	 * Determine the JIT to JIT start address by skipping over the interpreter
 	 * pre-prologue at the interpreter to JIT start address.
 	 *
