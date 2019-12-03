@@ -350,6 +350,12 @@ MM_ScavengerDelegate::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr
 			objectScanner = GC_PointerArrayObjectScanner::newInstance(env, objectPtr, allocSpace, flags, splitAmount);
 		}
 		break;
+		case GC_ObjectModel::SCAN_FLATTENED_ARRAY_OBJECT:
+		{
+			Assert_MM_true(J9_IS_J9CLASS_FLATTENED(clazzPtr));
+			Assert_MM_unimplemented();
+		}
+		break;
 	case GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT:
 		break;
 	default:
