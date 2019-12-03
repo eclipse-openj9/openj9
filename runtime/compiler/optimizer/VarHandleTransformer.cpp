@@ -137,7 +137,7 @@ TR::RecognizedMethod TR_VarHandleTransformer::getVarHandleAccessMethod(TR::Node 
    TR::SymbolReference *symRef = node->getSymbolReference();
    TR::RecognizedMethod varHandleAccessMethod = TR::unknownMethod;
    OMR::MethodSymbol *symbol = node->getSymbol()->getMethodSymbol();
-      TR_J9Method * method = (TR_J9Method*)(symbol->getMethod());
+   TR::Method * method = (TR::Method *)(symbol->getMethod());
    if (symRef->isUnresolved())
       {
       char *className    = method->classNameChars();

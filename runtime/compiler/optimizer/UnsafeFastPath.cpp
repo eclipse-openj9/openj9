@@ -27,6 +27,7 @@
 #include "codegen/CodeGenerator.hpp"
 #include "env/FrontEnd.hpp"
 #include "compile/Compilation.hpp"
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/SymbolReferenceTable.hpp"
 #include "control/Options.hpp"
@@ -59,7 +60,7 @@ static TR::RecognizedMethod getVarHandleAccessMethodFromInlinedCallStack(TR::Com
       {
       TR_ResolvedMethod* caller = comp->getInlinedResolvedMethod(callerIndex);
       TR::RecognizedMethod callerRm = caller->getRecognizedMethod();
-      if (TR_J9MethodBase::isVarHandleOperationMethod(callerRm))
+      if (TR::Method::isVarHandleOperationMethod(callerRm))
          {
          return callerRm;
          }
@@ -69,7 +70,7 @@ static TR::RecognizedMethod getVarHandleAccessMethodFromInlinedCallStack(TR::Com
       }
 
    TR::RecognizedMethod rm = comp->getJittedMethodSymbol()->getRecognizedMethod();
-   if (TR_J9MethodBase::isVarHandleOperationMethod(rm))
+   if (TR::Method::isVarHandleOperationMethod(rm))
       return rm;
 
    return TR::unknownMethod;
@@ -341,7 +342,7 @@ int32_t TR_UnsafeFastPath::perform()
             {
             TR::RecognizedMethod caller = getVarHandleAccessMethodFromInlinedCallStack(comp(), node);
             TR::RecognizedMethod callee = symbol->getRecognizedMethod();
-            if (TR_J9MethodBase::isVarHandleOperationMethod(caller) &&
+            if (TR::Method::isVarHandleOperationMethod(caller) &&
                 (isTransformableUnsafeAtomic(callee) ||
                  symbol->getMethod()->isUnsafeCAS(comp())))
                {
@@ -680,7 +681,7 @@ int32_t TR_UnsafeFastPath::perform()
          TR::RecognizedMethod callerMethod = methodSymbol->getRecognizedMethod();
          TR::RecognizedMethod calleeMethod = symbol->getRecognizedMethod();
          if (isKnownUnsafeCaller(callerMethod) &&
-             TR_J9MethodBase::isUnsafeGetPutWithObjectArg(calleeMethod))
+             TR::Method::isUnsafeGetPutWithObjectArg(calleeMethod))
             {
             if (isUnsafeCallerAccessingStaticField(callerMethod))
                 isStatic = true;
@@ -688,15 +689,15 @@ int32_t TR_UnsafeFastPath::perform()
                 isArrayOperation = true;
 
             if (isArrayOperation)
-               type = TR_J9MethodBase::unsafeDataTypeForArray(calleeMethod);
+               type = TR::Method::unsafeDataTypeForArray(calleeMethod);
             else
-               type = TR_J9MethodBase::unsafeDataTypeForObject(calleeMethod);
+               type = TR::Method::unsafeDataTypeForObject(calleeMethod);
 
 
-            if (TR_J9MethodBase::isUnsafePut(calleeMethod))
+            if (TR::Method::isUnsafePut(calleeMethod))
                value = node->getChild(3);
 
-            if (TR_J9MethodBase::isVolatileUnsafe(calleeMethod))
+            if (TR::Method::isVolatileUnsafe(calleeMethod))
                isVolatile = true;
 
             if (trace())
@@ -718,7 +719,7 @@ int32_t TR_UnsafeFastPath::perform()
          if (type != TR::NoType && performTransformation(comp(), "%s Found unsafe/JITHelpers calls, turning node [" POINTER_PRINTF_FORMAT "] into a load/store\n", optDetailString(), node))
             {
 
-            if (TR_J9MethodBase::isUnsafeGetPutBoolean(calleeMethod))
+            if (TR::Method::isUnsafeGetPutBoolean(calleeMethod))
                {
                TR::TransformUtil::truncateBooleanForUnsafeGetPut(comp(), tt);
                }

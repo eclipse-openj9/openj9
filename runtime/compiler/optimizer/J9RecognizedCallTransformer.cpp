@@ -22,6 +22,7 @@
 
 #include "optimizer/RecognizedCallTransformer.hpp"
 
+#include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/VMJ9.h"
@@ -261,7 +262,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       auto isObjectNullTreeTop = TR::TreeTop::create(comp(), isObjectNullNode);
       treetop->insertBefore(isObjectNullTreeTop);
       treetop->getEnclosingBlock()->split(treetop, cfg, fixupCommoning);
- 
+
       if (enableTrace)
          traceMsg(comp(), "Created isObjectNull test node n%dn, non-null object will fall through to Block_%d\n", isObjectNullNode->getGlobalIndex(), treetop->getEnclosingBlock()->getNumber());
 
@@ -281,7 +282,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       // Test if the call is a write to a static final field
       if (!disableIllegalWriteReport
           && !comp()->getOption(TR_DisableGuardedStaticFinalFieldFolding)
-          && TR_J9MethodBase::isUnsafePut(unsafeCall->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod()))
+          && TR::Method::isUnsafePut(unsafeCall->getSymbol()->castToMethodSymbol()->getMandatoryRecognizedMethod()))
          {
          // If the field is static final
          auto isFinalNode = TR::Node::createif(TR::iflcmpeq,

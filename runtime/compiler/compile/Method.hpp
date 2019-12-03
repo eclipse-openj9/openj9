@@ -24,6 +24,12 @@
 
 #include "compile/J9Method.hpp"
 #include "infra/Annotations.hpp"
+#include <stdint.h>
+
+class TR_FrontEnd;
+class TR_Memory;
+class TR_OpaqueMethodBlock;
+extern "C" { struct J9Class; }
 
 namespace TR
 {
@@ -33,6 +39,19 @@ class Method : public J9::MethodConnector
 public:
 
    Method(Type t = J9) : J9::MethodConnector(t) {}
+
+   Method(TR_FrontEnd *trvm, TR_Memory *m, J9Class *aClazz, uintptr_t cpIndex) :
+      J9::MethodConnector(trvm, m, aClazz, cpIndex) {}
+
+   Method(TR_FrontEnd *trvm, TR_Memory *m, TR_OpaqueMethodBlock *aMethod) :
+      J9::MethodConnector(trvm, m, aMethod) {}
+
+#if defined(JITSERVER_SUPPORT)
+protected:
+   // To be used by JITServer.
+   // Warning: some initialization must be done manually after calling this constructor
+   Method() {}
+#endif /* defined(JITSERVER_SUPPORT) */
 
    };
 

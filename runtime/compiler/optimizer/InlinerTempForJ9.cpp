@@ -1093,7 +1093,7 @@ TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSy
        traceMsg(comp(),"\tcreateUnsafePutWithOffset.  call tree %p offset(datatype) %d isvolatile %d needNullCheck %d isOrdered %d\n", callNodeTreeTop, type.getDataType(),isVolatile,needNullCheck,isOrdered);
 
    // Truncate the value before inlining the call
-   if (TR_J9MethodBase::isUnsafeGetPutBoolean(calleeSymbol->getRecognizedMethod()))
+   if (TR::Method::isUnsafeGetPutBoolean(calleeSymbol->getRecognizedMethod()))
       {
       TR::TransformUtil::truncateBooleanForUnsafeGetPut(comp(), callNodeTreeTop);
       }
@@ -1436,7 +1436,7 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
       printf("createUnsafeGetWithOffset %s in %s\n", type.toString(), comp()->signature());
 
    // Truncate the return before inlining the call
-   if (TR_J9MethodBase::isUnsafeGetPutBoolean(calleeSymbol->getRecognizedMethod()))
+   if (TR::Method::isUnsafeGetPutBoolean(calleeSymbol->getRecognizedMethod()))
       {
       TR::TransformUtil::truncateBooleanForUnsafeGetPut(comp(), callNodeTreeTop);
       }
@@ -4799,7 +4799,7 @@ bool TR_J9InlinerPolicy::isJSR292AlwaysWorthInlining(TR_ResolvedMethod *resolved
    if (method == TR::java_lang_invoke_MethodHandle_invokeExact)
       return true;
 
-   if (TR_J9MethodBase::isVarHandleOperationMethod(method))
+   if (TR::Method::isVarHandleOperationMethod(method))
       return true;
 
    if (isJSR292SmallGetterMethod(resolvedMethod))

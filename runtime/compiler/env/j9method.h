@@ -84,7 +84,7 @@ inline char *nthSignatureArgument(int32_t n, char *currentArgument)
    return currentArgument;
    }
 
-class TR_J9MethodBase;
+
 class TR_J9MethodParameterIterator : public TR_MethodParameterIterator
    {
 public:
@@ -97,110 +97,14 @@ public:
    virtual bool                    atEnd();
    virtual void                    advanceCursor();
 private:
-   TR_J9MethodParameterIterator(TR_J9MethodBase &j9Method, TR::Compilation& comp, TR_ResolvedMethod * resolveMethod);
-   TR_J9MethodBase &    _j9Method;
+   TR_J9MethodParameterIterator(TR::Method &j9Method, TR::Compilation& comp, TR_ResolvedMethod * resolveMethod);
+   TR::Method &         _j9Method;
    TR_ResolvedMethod *  _resolvedMethod;
    char *               _sig;
    uintptr_t            _nextIncrBy;
-   friend class TR_J9MethodBase;
+   friend class J9::Method;
    };
 
-class TR_J9MethodBase : public TR::Method
-   {
-public:
-   TR_ALLOC(TR_Memory::Method)
-
-   static bool                     isBigDecimalNameAndSignature(J9UTF8 *name, J9UTF8 *signature);
-   static bool                     isBigDecimalMethod(J9ROMMethod * romMethod, J9ROMClass * romClass);
-   static bool                     isBigDecimalMethod(J9UTF8 * className, J9UTF8 * name, J9UTF8 * signature);
-   static bool                     isBigDecimalMethod(J9Method * j9Method);
-   bool                            isBigDecimalMethod( TR::Compilation * comp = NULL);
-   static bool                     isBigDecimalConvertersNameAndSignature(J9UTF8 *name, J9UTF8 *signature);
-   static bool                     isBigDecimalConvertersMethod(J9ROMMethod * romMethod, J9ROMClass * romClass);
-   static bool                     isBigDecimalConvertersMethod(J9UTF8 * className, J9UTF8 * name, J9UTF8 * signature);
-   static bool                     isBigDecimalConvertersMethod(J9Method * j9Method);
-   bool                            isBigDecimalConvertersMethod( TR::Compilation * comp = NULL);
-
-   static bool                     isUnsafeGetPutWithObjectArg(TR::RecognizedMethod rm);
-   static bool                     isUnsafeGetPutBoolean(TR::RecognizedMethod rm);
-   static bool                     isUnsafePut(TR::RecognizedMethod rm);
-   static bool                     isVolatileUnsafe(TR::RecognizedMethod rm);
-   static TR::DataType             unsafeDataTypeForArray(TR::RecognizedMethod rm);
-   static TR::DataType             unsafeDataTypeForObject(TR::RecognizedMethod rm);
-   static bool                     isVarHandleOperationMethod(TR::RecognizedMethod rm);
-   virtual bool                    isVarHandleAccessMethod(TR::Compilation * = NULL);
-
-   virtual bool                    isUnsafeWithObjectArg( TR::Compilation * comp = NULL);
-   virtual bool                    isUnsafeCAS(TR::Compilation * = NULL);
-   virtual uint32_t                numberOfExplicitParameters();
-   virtual TR::DataType            parmType(uint32_t parmNumber); // returns the type of the parmNumber'th parameter (0-based)
-
-   virtual TR::ILOpCodes           directCallOpCode();
-   virtual TR::ILOpCodes           indirectCallOpCode();
-
-   virtual TR::DataType            returnType();
-   virtual uint32_t                returnTypeWidth();
-   virtual bool                    returnTypeIsUnsigned();
-   virtual TR::ILOpCodes           returnOpCode();
-
-   virtual const char *            signature(TR_Memory  *, TR_AllocationKind = heapAlloc); // this actually returns the class, method, and signature!
-   virtual uint16_t                classNameLength();
-   virtual uint16_t                nameLength();
-   virtual uint16_t                signatureLength();
-   virtual char *                  classNameChars(); // returns the utf8 of the class that this method is in.
-   virtual char *                  nameChars(); // returns the utf8 of the method name
-   virtual char *                  signatureChars(); // returns the utf8 of the signature
-
-   void                            setSignature(char *newSignature, int32_t newSignatureLength, TR_Memory *); // JSR292
-   virtual void                    setArchetypeSpecimen(bool b = true);
-
-   virtual bool                    isConstructor();
-   virtual bool                    isFinalInObject();
-   virtual TR_MethodParameterIterator* getParameterIterator( TR::Compilation &comp, TR_ResolvedMethod *r)
-      { return new (comp.trHeapMemory()) TR_J9MethodParameterIterator(*this, comp, r); }
-
-   virtual bool                    isArchetypeSpecimen(){ return _flags.testAny(ArchetypeSpecimen); }
-
-protected:
-   friend class TR_Debug;
-   friend class TR_DebugExt;
-   uintptr_t    j9returnType();
-   void         parseSignature(TR_Memory *);
-
-
-   uintptr_t    _paramElements;
-   uintptr_t    _paramSlots;
-public:
-   J9UTF8 *     _signature;
-   J9UTF8 *     _name;
-   J9UTF8 *     _className;
-protected:
-   uint8_t *    _argTypes;
-   char *       _fullSignature;
-   flags32_t    _flags;
-
-   enum Flags
-      {
-      ArchetypeSpecimen = 0x00000001, // An "instance" of an archetype method, where the varargs portion of the signature has been expanded into zero or more args
-
-      dummyLastEnum
-      };
-   };
-
-
-class TR_J9Method : public TR_J9MethodBase
-   {
-public:
-   TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, J9Class * aClazz, uintptr_t cpIndex);
-   TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, TR_OpaqueMethodBlock * aMethod);
-
-#if defined(JITSERVER_SUPPORT)
-protected:
-   // To be used by JITServer.
-   // Warning: some initialization must be done manually after calling this constructor
-   TR_J9Method();
-#endif /* defined(JITSERVER_SUPPORT) */
-   };
 
 class TR_ResolvedJ9MethodBase : public TR_ResolvedMethod
    {
@@ -250,7 +154,7 @@ public:
 
    virtual char *                  fieldOrStaticName(int32_t cpIndex, int32_t & len, TR_Memory *, TR_AllocationKind kind = heapAlloc);
    int32_t                         exceptionData(J9ExceptionHandler *, int32_t, int32_t, int32_t *, int32_t *, int32_t *);
-   virtual TR_J9MethodBase *       asJ9Method() = 0;
+   virtual TR::Method *            asJ9Method() = 0;
 
    TR_J9VMBase *                   _fe;
    TR_ResolvedMethod *             _owningMethod;
@@ -259,7 +163,7 @@ public:
 
    };
 
-class TR_ResolvedJ9Method : public TR_J9Method, public TR_ResolvedJ9MethodBase
+class TR_ResolvedJ9Method : public TR::Method, public TR_ResolvedJ9MethodBase
    {
 public:
    TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd *, TR_Memory *, TR_ResolvedMethod * owningMethod = 0, uint32_t vTableSlot = 0);
@@ -505,7 +409,7 @@ public:
    virtual void makeParameterList(TR::ResolvedMethodSymbol *methodSym);
 
 protected:
-   virtual TR_J9MethodBase *       asJ9Method(){ return this; }
+   virtual TR::Method *asJ9Method() { return this; }
    TR_ResolvedJ9Method(TR_FrontEnd *, TR_ResolvedMethod * owningMethod = 0);
    virtual void construct();
    virtual TR_ResolvedMethod *     createResolvedMethodFromJ9Method( TR::Compilation *comp, int32_t cpIndex, uint32_t vTableSlot, J9Method *j9Method, bool * unresolvedInCP, TR_AOTInliningStats *aotStats);

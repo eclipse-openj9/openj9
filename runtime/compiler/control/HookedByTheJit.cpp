@@ -437,7 +437,7 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
        || TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility()
 #endif
        )
-       && TR_J9MethodBase::isBigDecimalMethod(method)
+       && TR::Method::isBigDecimalMethod(method)
       )
       {
       count = 0;
@@ -4145,7 +4145,7 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
    cl->newInstanceCount = options->getInitialCount();
 #endif
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() 
+   if (TR::Options::getCmdLineOptions()->allowRecompilation()
       && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
 #if defined(JITSERVER_SUPPORT)
       && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
@@ -4300,7 +4300,7 @@ static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA e
 
    jitAcquireClassTableMutex(vmThread);
 
-   if (TR::Options::getCmdLineOptions()->allowRecompilation() 
+   if (TR::Options::getCmdLineOptions()->allowRecompilation()
       && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
 #if defined(JITSERVER_SUPPORT)
       && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
@@ -5852,7 +5852,7 @@ static void iProfilerActivationLogic(J9JITConfig * jitConfig, TR::CompilationInf
          TR_J9VMBase *fej9 = (TR_J9VMBase *)(TR_J9VMBase::get(jitConfig, 0));
          TR_IProfiler *iProfiler = fej9->getIProfiler();
          TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
-         if (iProfiler 
+         if (iProfiler
             && iProfiler->getProfilerMemoryFootprint() < TR::Options::_iProfilerMemoryConsumptionLimit
 #if defined(JITSERVER_SUPPORT)
             && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
@@ -7003,7 +7003,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    jitConfig->samplerMonitor = NULL; // initialize this field just in case
    TR::CompilationInfo *compInfo = getCompilationInfo(jitConfig);
    compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_NOT_CREATED); // just in case
-   if (jitConfig->samplingFrequency 
+   if (jitConfig->samplingFrequency
       && !vmj9->isAOT_DEPRECATED_DO_NOT_USE()
 #if defined(JITSERVER_SUPPORT)
       && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
@@ -7145,7 +7145,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          }
       }
 
-#if defined(JITSERVER_SUPPORT)   
+#if defined(JITSERVER_SUPPORT)
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener;
