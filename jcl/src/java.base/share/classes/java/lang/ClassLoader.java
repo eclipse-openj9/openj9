@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2019 IBM Corp. and others
  *
@@ -46,6 +46,7 @@ import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.*;
 import java.security.cert.Certificate;
+import sun.security.util.SecurityConstants;
 
 /*[IF Sidecar19-SE]
 import java.lang.reflect.Modifier;
@@ -814,7 +815,7 @@ public final ClassLoader getParent() {
 		ClassLoader callersClassLoader = callerClassLoader();
 		/*[PR JAZZ103 76960] permission check is needed against the parent instead of this classloader */
 		if (needsClassLoaderPermissionCheck(callersClassLoader, parent)) {
-			security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionGetClassLoader);
+			security.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		}
 	}
 	return parent;
@@ -1038,7 +1039,7 @@ public static ClassLoader getPlatformClassLoader() {
 	if (security != null) {
 		ClassLoader callersClassLoader = callerClassLoader();
 		if (needsClassLoaderPermissionCheck(callersClassLoader, platformClassLoader)) {
-			security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionGetClassLoader);
+			security.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		}
 	}
 	return platformClassLoader;
@@ -1117,7 +1118,7 @@ public static ClassLoader getSystemClassLoader () {
 	if (security != null) {	
 		ClassLoader callersClassLoader = callerClassLoader();
 		if (needsClassLoaderPermissionCheck(callersClassLoader, sysLoader)) {
-			security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionGetClassLoader);
+			security.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		}
 	}
 

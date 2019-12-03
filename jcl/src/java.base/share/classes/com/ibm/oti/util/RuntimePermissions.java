@@ -2,7 +2,7 @@
 package com.ibm.oti.util;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2017 IBM Corp. and others
+ * Copyright (c) 1998, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,38 +24,14 @@ package com.ibm.oti.util;
  *******************************************************************************/
 
 /**
- * RuntimePermission objects represent access to runtime
- * support.
- *
- * @author		IBM
- * @version		initial
+ * RuntimePermission objects represent access to runtime support.
  */
 public class RuntimePermissions {
 
 	/**
-	 * RuntimePermission "accessDeclaredMembers"
-	 */
-	public static final RuntimePermission permissionAccessDeclaredMembers = new RuntimePermission("accessDeclaredMembers");	//$NON-NLS-1$ 
-	/**
 	 * RuntimePermission "enableContextClassLoaderOverride"
 	 */
 	public static final RuntimePermission permissionEnableContextClassLoaderOverride = new RuntimePermission("enableContextClassLoaderOverride");	//$NON-NLS-1$
-	/**
-	 * RuntimePermission "getClassLoader"
-	 */
-	public static final RuntimePermission permissionGetClassLoader = new RuntimePermission("getClassLoader");	//$NON-NLS-1$ 
-	/**
-	 * RuntimePermission "getProtectionDomain"
-	 */
-	public static final RuntimePermission permissionGetProtectionDomain = new RuntimePermission("getProtectionDomain");	//$NON-NLS-1$ 
-	/**
-	 * RuntimePermission "getStackTrace"
-	 */
-	public static final RuntimePermission permissionGetStackTrace = new RuntimePermission("getStackTrace");	//$NON-NLS-1$ 
-	/**
-	 * RuntimePermission "modifyThreadGroup"
-	 */
-	public static final RuntimePermission permissionModifyThreadGroup = new RuntimePermission("modifyThreadGroup");	//$NON-NLS-1$ 
 	/**
 	 * RuntimePermission "setContextClassLoader"
 	 */
@@ -72,10 +48,6 @@ public class RuntimePermissions {
 	 * RuntimePermission "setSecurityManager"
 	 */
 	public static final RuntimePermission permissionSetSecurityManager = new RuntimePermission("setSecurityManager");	//$NON-NLS-1$
-	/**
-	 * RuntimePermission "stopThread"
-	 */
-	public static final RuntimePermission permissionStopThread = new RuntimePermission("stopThread");	//$NON-NLS-1$
 	/**
 	 * RuntimePermission "loggerFinder"
 	 */
