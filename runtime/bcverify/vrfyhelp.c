@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,7 +43,6 @@
 
 static VMINLINE UDATA compareTwoUTF8s (J9UTF8 * first, J9UTF8 * second);
 static UDATA addClassName (J9BytecodeVerificationData * verifyData, U_8 * name, UDATA length, UDATA index);
-static void getNameAndLengthFromClassNameList (J9BytecodeVerificationData *verifyData, UDATA listIndex, U_8 ** name, UDATA * length);
 static IDATA findFieldFromRamClass (J9Class ** ramClass, J9ROMFieldRef * field, UDATA firstSearch);
 static IDATA findMethodFromRamClass (J9BytecodeVerificationData * verifyData, J9Class ** ramClass, J9ROMNameAndSignature * method, UDATA firstSearch);
 static VMINLINE UDATA * pushType (J9BytecodeVerificationData *verifyData, U_8 * signature, UDATA * stackTop);
@@ -454,9 +453,7 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 	IDATA rc;
 	U_8 *sourceName, *targetName;
 	UDATA sourceLength, targetLength;
-
-	/* Record class relationship if -XX:+ClassRelationshipVerifier is used */
-	BOOLEAN classRelationshipVerifierEnabled = J9_ARE_ANY_BITS_SET(verifyData->vmStruct->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER);
+	BOOLEAN classRelationshipSnippetsEnabled = (NULL == verifyData->classRelationshipSnippetsHashTable) ? FALSE : TRUE;
 
 	*reasonCode = 0;
 
@@ -511,7 +508,7 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 			return (IDATA) TRUE;
 		}
 
-		getNameAndLengthFromClassNameList (verifyData, targetIndex, &targetName, &targetLength);
+		getNameAndLengthFromClassNameList(verifyData, targetIndex, &targetName, &targetLength);
 
 		/* Jazz 109803: Java 8 VM Spec at 4.10.1.2 Verification Type System says:
 		 * For assignments, interfaces are treated like Object.
@@ -538,9 +535,13 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		) {
 			rc = isInterfaceClass(verifyData, targetName, targetLength, reasonCode);
 
-			if ((classRelationshipVerifierEnabled) && (BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED == *reasonCode)) {
-				getNameAndLengthFromClassNameList (verifyData, sourceIndex, &sourceName, &sourceLength);
-				rc = j9bcv_recordClassRelationship (verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
+			if (BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED == *reasonCode) {
+				if (classRelationshipSnippetsEnabled) {
+					rc = j9bcv_recordClassRelationshipSnippet(verifyData, sourceIndex, targetIndex, reasonCode);
+				} else {
+					getNameAndLengthFromClassNameList(verifyData, sourceIndex, &sourceName, &sourceLength);
+					rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
+				}
 			}
 
 			return rc;
@@ -559,16 +560,18 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		return (IDATA) TRUE;
 	}
 
-	getNameAndLengthFromClassNameList (verifyData, targetIndex, &targetName, &targetLength);
+	getNameAndLengthFromClassNameList(verifyData, targetIndex, &targetName, &targetLength);
 
 	/* if the target is an interface, be permissive */
 	rc = isInterfaceClass(verifyData, targetName, targetLength, reasonCode);
 
-	getNameAndLengthFromClassNameList (verifyData, sourceIndex, &sourceName, &sourceLength);
-
-	/* classRelationshipVerifierEnabled and target not already loaded, so record the class relationship */
-	if ((classRelationshipVerifierEnabled) && (BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED == *reasonCode)) {
-		rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
+	if (BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED == *reasonCode) {
+		if (classRelationshipSnippetsEnabled) {
+			rc = j9bcv_recordClassRelationshipSnippet(verifyData, sourceIndex, targetIndex, reasonCode);
+		} else {
+			getNameAndLengthFromClassNameList(verifyData, sourceIndex, &sourceName, &sourceLength);
+			rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
+		}
 	}
 
 	if ((IDATA) FALSE != rc) {
@@ -579,11 +582,16 @@ isClassCompatible(J9BytecodeVerificationData *verifyData, UDATA sourceClass, UDA
 		return (IDATA) FALSE;
 	}
 
+	getNameAndLengthFromClassNameList(verifyData, sourceIndex, &sourceName, &sourceLength);
 	rc = isRAMClassCompatible(verifyData, targetName, targetLength , sourceName, sourceLength, reasonCode);
 
-	/* classRelationshipVerifierEnabled and source and/or target not already loaded, so record the class relationship */
-	if ((classRelationshipVerifierEnabled) && (BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED == *reasonCode)) {
-		rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
+	if (BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED == *reasonCode) {
+		if (classRelationshipSnippetsEnabled) {
+			rc = j9bcv_recordClassRelationshipSnippet(verifyData, sourceIndex, targetIndex, reasonCode);
+		} else {
+			getNameAndLengthFromClassNameList(verifyData, sourceIndex, &sourceName, &sourceLength);
+			rc = j9bcv_recordClassRelationship(verifyData->vmStruct, verifyData->classLoader, sourceName, sourceLength, targetName, targetLength, reasonCode);
+		}
 	}
 
 	return rc;
@@ -1009,7 +1017,7 @@ isProtectedAccessPermitted(J9BytecodeVerificationData *verifyData, J9UTF8* decla
 			/* NULL is compatible */
 			if (targetClass != BCV_BASE_TYPE_NULL) {
 				/* Get the targetRamClass */
-				getNameAndLengthFromClassNameList (verifyData, J9CLASS_INDEX_FROM_CLASS_ENTRY(targetClass), &targetClassName, &targetClassLength);
+				getNameAndLengthFromClassNameList(verifyData, J9CLASS_INDEX_FROM_CLASS_ENTRY(targetClass), &targetClassName, &targetClassLength);
 				targetRamClass = j9rtv_verifierGetRAMClass (verifyData, verifyData->classLoader, targetClassName, targetClassLength, reasonCode);
 				if (NULL == targetRamClass) {
 					return FALSE;
@@ -1042,7 +1050,7 @@ static UDATA compareTwoUTF8s(J9UTF8 * first, J9UTF8 * second)
 
 
 
-static void getNameAndLengthFromClassNameList (J9BytecodeVerificationData *verifyData, UDATA listIndex, U_8 ** name, UDATA * length)
+void getNameAndLengthFromClassNameList(J9BytecodeVerificationData *verifyData, UDATA listIndex, U_8 **name, UDATA *length)
 {
 	U_32 * offset;
 

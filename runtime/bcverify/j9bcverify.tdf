@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2006, 2019 IBM Corp. and others
+// Copyright (c) 2006, 2020 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -212,3 +212,35 @@ TraceExit=Trc_RTV_findClassRelationship_Exit Overhead=1 Level=3 Template="findCl
 TraceEntry=Trc_RTV_freeClassRelationshipParentNodes_Entry Overhead=1 Level=3 Template="freeClassRelationshipParentNodes - class: %.*s"
 TraceEvent=Trc_RTV_freeClassRelationshipParentNodes_Parent Overhead=1 Level=3 Template="freeClassRelationshipParentNodes - parent: %.*s"
 TraceExit=Trc_RTV_freeClassRelationshipParentNodes_Exit Overhead=1 Level=3 Template="freeClassRelationshipParentNodes - returning"
+
+TraceEntry=Trc_RTV_recordClassRelationshipSnippet_Entry Overhead=1 Level=3 Template="recordClassRelationshipSnippet - sourceClassNameIndex: %x, targetClassNameIndex: %x"
+TraceException=Trc_RTV_recordClassRelationshipSnippet_EntryAllocationFailed Overhead=1 Level=1 Template="recordClassRelationshipSnippet - failed to allocate snippet entry"
+TraceExit=Trc_RTV_recordClassRelationshipSnippet_Exit Overhead=1 Level=3 Template="recordClassRelationshipSnippet - snippet: %p, error code: %x"
+
+TraceEntry=Trc_RTV_processClassRelationshipSnippets_Entry Overhead=1 Level=3 Template="processClassRelationshipSnippets - romClass: %.*s"
+TraceEvent=Trc_RTV_processClassRelationshipSnippets_NoCachedData Overhead=1 Level=3 Template="processClassRelationshipSnippets - processing snippets from local hash table"
+TraceEvent=Trc_RTV_processClassRelationshipSnippets_UsingCachedData Overhead=1 Level=3 Template="processClassRelationshipSnippets - processing snippets from cached data descriptor"
+TraceException=Trc_RTV_processClassRelationshipSnippets_ErrorWhileProcessing Overhead=1 Level=1 Template="processClassRelationshipSnippets - error occurred while processing sourceClass: %.*s, targetClass: %.*s"
+TraceExit=Trc_RTV_processClassRelationshipSnippets_Exit Overhead=1 Level=3 Template="processClassRelationshipSnippets - returning error code: %x"
+
+TraceException=Trc_RTV_generateClassRelationshipSnippetsKey_GenerateKeyFailed Overhead=1 Level=1 Template="generateClassRelationshipSnippetsKey - failed to generate key for romClass: %.*s"
+
+TraceEntry=Trc_RTV_storeClassRelationshipSnippetsToSharedCache_Entry Overhead=1 Level=3 Template="storeClassRelationshipSnippetsToSharedCache - romClass: %.*s"
+TraceEvent=Trc_RTV_storeClassRelationshipSnippetsToSharedCache_NoSnippets Overhead=1 Level=3 Template="storeClassRelationshipSnippetsToSharedCache - no snippets to store"
+TraceEvent=Trc_RTV_storeClassRelationshipSnippetsToSharedCache_Allocation Overhead=1 Level=3 Template="storeClassRelationshipSnippetsToSharedCache - allocating %d bytes for %d snippets"
+TraceException=Trc_RTV_storeClassRelationshipSnippetsToSharedCache_AllocationFailed Overhead=1 Level=1 Template="storeClassRelationshipSnippetsToSharedCache - failed to allocate local data buffer"
+TraceEvent=Trc_RTV_storeClassRelationshipSnippetsToSharedCache_StoreSuccessful Overhead=1 Level=3 Template="storeClassRelationshipSnippetsToSharedCache - stored snippets to shared cache at %p"
+TraceException=Trc_RTV_storeClassRelationshipSnippetsToSharedCache_StoreFailed Overhead=1 Level=1 Template="storeClassRelationshipSnippetsToSharedCache - failed to store to shared cache"
+TraceExit=Trc_RTV_storeClassRelationshipSnippetsToSharedCache_Exit Overhead=1 Level=3 Template="storeClassRelationshipSnippetsToSharedCache - storeResult: %d"
+
+TraceEvent=Trc_RTV_storeToDataBuffer_Hashtable Overhead=1 Level=3 Template="storeToDataBuffer - using hashtable to map snippet indices to class names"
+TraceEvent=Trc_RTV_storeToDataBuffer_Array Overhead=1 Level=3 Template="storeToDataBuffer - using array to map snippet indices to class names"
+TraceException=Trc_RTV_storeToDataBuffer_HashtableAllocationFailed Overhead=1 Level=1 Template="storeToDataBuffer - failed to allocate hash table"
+TraceException=Trc_RTV_storeToDataBuffer_ArrayAllocationFailed Overhead=1 Level=1 Template="storeToDataBuffer - failed to allocate array"
+TraceEvent=Trc_RTV_storeToDataBuffer_StoredSnippet Overhead=1 Level=3 Template="storeToDataBuffer - stored snippet for source: %.*s, target: %.*s"
+TraceException=Trc_RTV_storeToDataBuffer_getUTF8AddressFailed Overhead=1 Level=1 Template="storeToDataBuffer - failed to get UTF8 address for class at index %d in classNameList"
+
+TraceEntry=Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Entry Overhead=1 Level=3 Template="fetchClassRelationshipSnippetsFromSharedCache - romClass: %.*s"
+TraceEvent=Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_FoundSnippets Overhead=1 Level=3 Template="fetchClassRelationshipSnippetsFromSharedCache - found snippets in shared cache"
+TraceException=Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Error Overhead=1 Level=1 Template="fetchClassRelationshipSnippetsFromSharedCache - error while finding snippets in shared cache"
+TraceExit=Trc_RTV_fetchClassRelationshipSnippetsFromSharedCache_Exit Overhead=1 Level=3 Template="fetchClassRelationshipSnippetsFromSharedCache - findSharedDataResult: %d, snippetTableAllocationResult: %d"

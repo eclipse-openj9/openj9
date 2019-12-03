@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,7 +76,7 @@ j9rtv_verifierGetRAMClass( J9BytecodeVerificationData *verifyData, J9ClassLoader
 
 	if (!found) {
 		/* Set reasonCode to BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED if -XX:+ClassRelationshipVerifier is used, the class is not already loaded and if the classfile major version is at least 51 (Java 7) */
-		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER) && (verifyData->romClass->majorVersion >= 51)) {
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER) && (verifyData->romClass->majorVersion >= CFR_MAJOR_VERSION_REQUIRING_STACKMAPS)) {
 			*reasonCode = BCV_ERR_CLASS_RELATIONSHIP_RECORD_REQUIRED;
 			return NULL;
 		} else {

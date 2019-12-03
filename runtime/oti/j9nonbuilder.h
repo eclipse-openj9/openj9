@@ -1905,6 +1905,7 @@ typedef struct J9BytecodeVerificationData {
 	struct J9PortLibrary * portLib;
 	struct J9JavaVM* javaVM;
 	BOOLEAN createdStackMap;
+	struct J9HashTable* classRelationshipSnippetsHashTable;
 } J9BytecodeVerificationData;
 
 /* @ddr_namespace: map_to_type=J9NativeLibrary */

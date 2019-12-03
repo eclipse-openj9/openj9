@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-   Copyright (c) 2006, 2019 IBM Corp. and others
+   Copyright (c) 2006, 2020 IBM Corp. and others
 
    This program and the accompanying materials are made available under
    the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,10 @@
 		<export name='j9bcv_checkClassLoadingConstraintForName'/>
 		<export name='j9bcv_satisfyClassLoadingConstraint'/>
 		<export name='j9bcv_J9VMDllMain'/>
+		<export name='j9bcv_recordClassRelationshipSnippet'/>
+		<export name='j9bcv_processClassRelationshipSnippets'/>
+		<export name='j9bcv_storeClassRelationshipSnippetsToSharedCache'/>
+		<export name='j9bcv_fetchClassRelationshipSnippetsFromSharedCache'/>
 		<export name='j9bcv_recordClassRelationship'/>
 		<export name='j9bcv_validateClassRelationships'/>
 		<export name='j9bcv_hashClassRelationshipTableNew'/>

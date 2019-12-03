@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,8 @@
 #define J9SHR_DATA_TYPE_STARTUP_HINTS 10
 #define J9SHR_DATA_TYPE_AOTCLASSCHAIN 11
 #define J9SHR_DATA_TYPE_AOTTHUNK 12
-#define J9SHR_DATA_TYPE_MAX 12
+#define J9SHR_DATA_TYPE_CRVSNIPPET 13
+#define J9SHR_DATA_TYPE_MAX 13
 
 #define J9SHR_ATTACHED_DATA_TYPE_UNKNOWN  0
 #define J9SHR_ATTACHED_DATA_TYPE_JITPROFILE  1

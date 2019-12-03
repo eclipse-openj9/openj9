@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -208,6 +208,54 @@ unlinkClassLoadingConstraints (J9JavaVM* jvm);
 /* ---------------- classrelationships.c ---------------- */
 
 /**
+ * @brief Record a class relationship snippet and save it locally in verifyData->classRelationshipSnippetsHashTable.
+ *
+ * @param *verifyData Bytecode verification data where the classRelationshipSnippetTable is stored
+ * @param sourceClassIndex The index of the source class name in verifyData->classNameList
+ * @param targetClassIndex The index of the target class name in verifyData->classNameList
+ * @param *reasonCode Set to BCV_ERR_INSUFFICIENT_MEMORY if a snippet entry cannot be allocated, otherwise 0
+ * @return IDATA Returns TRUE if recording the snippet is successful, FALSE otherwise
+ */
+IDATA
+j9bcv_recordClassRelationshipSnippet(J9BytecodeVerificationData *verifyData, UDATA childClassIndex, UDATA parentClassIndex, IDATA *reasonCode);
+
+/**
+ * @brief Process class relationship snippets for a ROM class.
+ *
+ * @param *verifyData Bytecode verification data where the classRelationshipSnippetTable is stored
+ * @param *snippetsDataDescriptor Data descriptor populated with snippet data from the SCC, or empty
+ * @return IDATA Returns BCV_SUCCESS on success, BCV_ERR_INTERNAL_ERROR on verification error, BCV_ERR_INSUFFICIENT_MEMORY on OOM
+ */
+IDATA
+j9bcv_processClassRelationshipSnippets(J9BytecodeVerificationData *verifyData, J9SharedDataDescriptor *snippetsDataDescriptor);
+
+/**
+ * @brief Store class relationship snippets for a romClass to the Shared Classes Cache.
+ *
+ * @param *verifyData Bytecode verification data where the classRelationshipSnippetTable is stored
+ * @return IDATA Returns BCV_SUCCESS on success, BCV_ERR_INSUFFICIENT_MEMORY on OOM
+ */
+IDATA
+j9bcv_storeClassRelationshipSnippetsToSharedCache(J9BytecodeVerificationData *verifyData);
+
+/**
+ * @brief Fetch class relationship snippets for a romClass from the Shared Classes Cache.
+ *
+ * @param *verifyData Bytecode verification data for the romClass
+ * @param *snippetsDataDescriptor Pointer to the descriptor where the snippet data will be stored to
+ * @param *snippetTableAllocationResult Default BCV_SUCCESS, BCV_ERR_INSUFFICIENT_MEMORY on OOM
+ * @return BOOLEAN Returns TRUE if snippets are found in the cache, FALSE otherwise
+ */
+BOOLEAN
+j9bcv_fetchClassRelationshipSnippetsFromSharedCache(J9BytecodeVerificationData *verifyData, J9SharedDataDescriptor *snippetsDataDescriptor, IDATA *snippetTableAllocationResult);
+
+/**
+ * Class Relationships APIs (J9ClassRelationship)
+ *
+ * Relationships are stored in the class loader's class relationships table for deferred validation.
+ */
+
+/**
  * @brief Record a class relationship in the class relationships table.
  *
  * @param *vmThread The calling vmThread
@@ -386,6 +434,17 @@ getSpecialType(J9BytecodeVerificationData *verifyData, UDATA type, U_8* bytecode
 */
 void
 initializeClassNameList(J9BytecodeVerificationData *verifyData);
+
+/**
+* @brief
+* @param *verifyData
+* @param listIndex Index in the classNameList corresponding to a class
+* @param **name Pointer to class name string
+* @param *length Pointer to class name string length
+* @return void
+*/
+void
+getNameAndLengthFromClassNameList(J9BytecodeVerificationData *verifyData, UDATA listIndex, U_8 **name, UDATA *length);
 
 /**
 * @brief

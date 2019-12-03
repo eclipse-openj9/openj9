@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2358,6 +2358,7 @@ error_no_memory:
  *
  * returns BCV_SUCCESS on success
  * returns BCV_ERR_INSUFFICIENT_MEMORY on OOM
+ * returns BCV_ERR_INTERNAL_ERROR on verification error
  */
 
 IDATA 
@@ -2382,7 +2383,11 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 	BOOLEAN classVersionRequiresStackmaps = romClass->majorVersion >= CFR_MAJOR_VERSION_REQUIRING_STACKMAPS;
 	BOOLEAN newFormat = (classVersionRequiresStackmaps || hasStackMaps);
 	BOOLEAN verboseVerification = (J9_VERIFY_VERBOSE_VERIFICATION == (verifyData->verificationFlags & J9_VERIFY_VERBOSE_VERIFICATION));
-
+	BOOLEAN classRelationshipVerifierEnabled = (J9_ARE_ANY_BITS_SET(verifyData->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER) && classVersionRequiresStackmaps);
+	BOOLEAN sharedCacheEnabled = NULL != verifyData->javaVM->sharedClassConfig;
+	BOOLEAN cacheRelationshipSnippetsEnabled = FALSE;
+	BOOLEAN foundSnippetsInCache = FALSE;
+	J9SharedDataDescriptor classRelationshipSnippetsDataDescriptor = {0};
 	PORT_ACCESS_FROM_PORT(portLib);
 	
 	Trc_BCV_j9bcv_verifyBytecodes_Entry(verifyData->vmStruct,
@@ -2406,6 +2411,31 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 
 	if (verboseVerification) {
 		ALWAYS_TRIGGER_J9HOOK_VM_CLASS_VERIFICATION_START(verifyData->javaVM->hookInterface, verifyData, newFormat);
+	}
+
+	/* Enable snippets if -XX:+ClassRelationshipVerifier is used, the shared cache is enabled and the class is in the cache */
+	cacheRelationshipSnippetsEnabled = classRelationshipVerifierEnabled && sharedCacheEnabled && verifyData->romClassInSharedClasses;
+
+	if (cacheRelationshipSnippetsEnabled) {
+		foundSnippetsInCache = j9bcv_fetchClassRelationshipSnippetsFromSharedCache(verifyData, &classRelationshipSnippetsDataDescriptor, &result);
+
+		if (foundSnippetsInCache) {
+			/**
+			 * Skip the linear bytecode walk. Snippets already exist in the shared cache since this class
+			 * was already verified and processed during the initial run.
+			 */
+			goto _done;
+		} else {
+			/**
+			 * Otherwise, snippets do not already exist in the shared cache (initial run).
+			 * Continue to the linear bytecode walk, storing snippets as isClassCompatible() is called.
+			 */
+			if (BCV_ERR_INSUFFICIENT_MEMORY == result) {
+				/* Failed to allocate snippet table */
+				goto _done;
+			}
+		}
+
 	}
 
 	/* For each method in the class */
@@ -2606,6 +2636,10 @@ _fallBack:
 		romMethod = J9_NEXT_ROM_METHOD(romMethod);
 	}
 
+	if (cacheRelationshipSnippetsEnabled) {
+		result = j9bcv_storeClassRelationshipSnippetsToSharedCache(verifyData);
+	}
+
 _done:
 	verifyData->vmStruct->omrVMThread->vmState = oldState;
 	if (result == BCV_ERR_INSUFFICIENT_MEMORY) {
@@ -2616,6 +2650,10 @@ _done:
 				J9UTF8_DATA(J9ROMMETHOD_NAME(romMethod)),
 				(UDATA) J9UTF8_LENGTH(J9ROMMETHOD_SIGNATURE(romMethod)),
 				J9UTF8_DATA(J9ROMMETHOD_SIGNATURE(romMethod)));
+	}
+
+	if (cacheRelationshipSnippetsEnabled) {
+		result = j9bcv_processClassRelationshipSnippets(verifyData, &classRelationshipSnippetsDataDescriptor);
 	}
 
 	if (verboseVerification) {
