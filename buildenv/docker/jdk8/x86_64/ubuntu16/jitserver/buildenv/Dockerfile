@@ -34,27 +34,9 @@ FROM openj9:latest
 ENV JITSERVER_SUPPORT=1
 
 RUN apt-get update \
- && apt-get install -qq -y --no-install-recommends \
-    automake \
-    curl \
+  && apt-get install -qq -y --no-install-recommends \
     libssl-dev \
-    libtool \
-    build-essential \ 
-    autoconf \
-    pkg-config \
- && rm -rf /var/lib/apt/lists/*
-
-RUN apt-get update \
- && add-apt-repository ppa:ubuntu-toolchain-r/test -y \
- && apt-get update \
- && apt-get install -qq -y --no-install-recommends gcc-7 g++-7 \
- && rm -rf /var/lib/apt/lists/*
-
-# JITServer needs to be built with a newer GCC
-RUN ln -sf /usr/bin/g++ /usr/bin/c++ \
- && ln -sf /usr/bin/g++-7 /usr/bin/g++ \
- && ln -sf /usr/bin/gcc /usr/bin/cc \
- && ln -sf /usr/bin/gcc-7 /usr/bin/gcc
+  && rm -rf /var/lib/apt/lists/*
 
 # Install protobuf 3.5.1
 WORKDIR /

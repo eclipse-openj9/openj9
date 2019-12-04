@@ -32,33 +32,15 @@
 #    --build-arg omr_branch=<your-omr-branch> \
 #    -t=openj9-jitserver-build .`
 #
-
-FROM openj9:latest
+FROM openj9:latest AS jitserver_build
 
 ARG openj9_repo=https://github.com/eclipse/openj9.git
 ARG omr_repo=https://github.com/eclipse/openj9-omr.git
 
-ENV JITSERVER_SUPPORT=1
-
 RUN apt-get update \
- && apt-get install -qq -y --no-install-recommends \
-    automake \
-    curl \
-    g++-7 \
-    gcc-7 \
+  && apt-get install -qq -y --no-install-recommends \
     libssl-dev \
-    libtool \
-    build-essential \ 
-    autoconf \
-    pkg-config \
-    libfontconfig1-dev \
- && rm -rf /var/lib/apt/lists/*
-
-# JITServer needs to be built with a newer GCC
-RUN ln -sf /usr/bin/g++ /usr/bin/c++ \
- && ln -sf /usr/bin/g++-7 /usr/bin/g++ \
- && ln -sf /usr/bin/gcc /usr/bin/cc \
- && ln -sf /usr/bin/gcc-7 /usr/bin/gcc
+  && rm -rf /var/lib/apt/lists/*
 
 # Install protobuf 3.5.1
 WORKDIR /
@@ -74,14 +56,10 @@ WORKDIR /root
 RUN git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8 \
  && cd openj9-openjdk-jdk8 \
  && bash ./get_source.sh -openj9-repo=$openj9_repo -omr-repo=$omr_repo \
- && bash ./configure --with-freemarker-jar=/root/freemarker.jar \
+ && bash ./configure --with-freemarker-jar=/root/freemarker.jar --enable-jitserver \
+ && make clean \
  && make all
 
-# Clean up
-RUN mv /root/openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/j2sdk-image /root/ \
- && mv /root/openj9-openjdk-jdk8/openj9/test /root/ \
- && rm -rf /root/openj9-openjdk-jdk8 \
- && rm -rf /root/bootjdk8 \
- && rm -rf /root/freemarker.jar
-
+FROM openj9:latest 
+COPY --from=jitserver_build /root/openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/j2sdk-image /root/j2sdk-image
 WORKDIR /root

@@ -23,7 +23,7 @@
 #   image from the Dockerfile in buildenv/docker/jdk<version>/
 #   `docker build -f buildenv/docker/jdk<version>/<platform>/ubuntu<version>/Dockerfile -t=openj9 .`
 #
-# 2.Build the jitserver docker image from buildenv/docker/jitserver/.../build/ to fetch dependencies, source code and build jitserver binaries
+# 2.Build the jitserver docker image from buildenv/docker/jitserver/.../build/ to fetch dependencies, source code and build jitserver
 #   `docker build -f \
 #    buildenv/docker/jitserver/jdk<version>/<platform>/ubuntu<version>/build/Dockerfile \
 #    --build-arg openj9_repo=<your-openj9-repo> \
@@ -32,14 +32,35 @@
 #    --build-arg omr_branch=<your-omr-branch> \
 #    -t=openj9-jitserver-build .`
 #
-# 3.Build the jitserver server docker image from buildenv/docker/jitserver/.../run/
-#   `docker build -f \
-#   buildenv/docker/jitserver/jdk<version>/<platform>/ubuntu<version>/run/Dockerfile \
-#   -t=openj9-jitserver-run .`
-#
+FROM openj9:latest AS jitserver_build
 
-FROM openj9-jitserver-build:latest
+ARG openj9_repo=https://github.com/eclipse/openj9.git
+ARG omr_repo=https://github.com/eclipse/openj9-omr.git
 
+RUN apt-get update \
+  && apt-get install -qq -y --no-install-recommends \
+    libssl-dev \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install protobuf 3.5.1
+WORKDIR /
+RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
+ && tar -xvzf protobuf-cpp-3.5.1.tar.gz \
+ && cd protobuf-3.5.1 \
+ && ./configure --disable-shared --with-pic && make && make install && ldconfig \
+ && rm -rf /protobuf-3.5.1 && rm -rf /protobuf-cpp-3.5.1.tar.gz
+
+# Grab sources from openj9-openjdk-jdk8 and JITServer repos
+# Then builds JITServer
+WORKDIR /root
+RUN git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8 \
+ && cd openj9-openjdk-jdk8 \
+ && bash ./get_source.sh -openj9-repo=$openj9_repo -omr-repo=$omr_repo \
+ && bash ./configure --with-freemarker-jar=/root/freemarker.jar --enable-jitserver \
+ && make clean \
+ && make all
+
+FROM openj9:latest 
+COPY --from=jitserver_build /root/openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/j2sdk-image /root/j2sdk-image
 ENTRYPOINT ["/root/j2sdk-image/jre/bin/java", "-XX:StartAsJITServer", "-Xjit:verbose={JITServer}"]
-
 EXPOSE 38400
