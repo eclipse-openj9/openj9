@@ -132,6 +132,8 @@ public:
 			return _pointerContiguousArrayIterator.restore(objectIteratorState);
 		case GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT:
 			return;
+		default:
+			Assert_MM_unreachable();
 		}
 	}
 
@@ -157,6 +159,8 @@ public:
 			return _pointerContiguousArrayIterator.save(objectIteratorState);
 		case GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT:
 			return;
+		default:
+			Assert_MM_unreachable();
 		}
 	}
 
