@@ -172,6 +172,8 @@ typedef struct J9PortLibrary {
 	int32_t  ( *sysinfo_get_hw_info)(struct J9PortLibrary *portLibrary, uint32_t infoType, char * buf, uint32_t bufLen);
 	/** see @ref j9sysinfo.c::j9sysinfo_get_cache_info "j9sysinfo_get_cache_info"*/
 	int32_t ( *sysinfo_get_cache_info)(struct J9PortLibrary *portLibrary, const J9CacheInfoQuery * query);
+	/** see @ref j9sysinfo.c::j9sysinfo_get_cpu_governor_info "j9sysinfo_get_cpu_governor_info"*/
+	int32_t ( *sysinfo_get_cpu_governor_info)(struct J9PortLibrary *portLibrary, struct J9CpuGovernorDetails *governorDetails);
 	/** see @ref j9sock.c::j9sock_startup "j9sock_startup"*/
 	int32_t  ( *sock_startup)(struct J9PortLibrary *portLibrary) ;
 	/** see @ref j9sock.c::j9sock_shutdown "j9sock_shutdown"*/
@@ -630,6 +632,7 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9sysinfo_processor_has_feature(param1,param2) privatePortLibrary->sysinfo_processor_has_feature(privatePortLibrary,param1,param2)
 #define j9sysinfo_get_hw_info(param1,param2,param3) privatePortLibrary->sysinfo_get_hw_info(privatePortLibrary,param1,param2,param3)
 #define j9sysinfo_get_cache_info(param1) privatePortLibrary->sysinfo_get_cache_info(privatePortLibrary,param1)
+#define j9sysinfo_get_cpu_governor_info(param1) privatePortLibrary->sysinfo_get_cpu_governor_info(privatePortLibrary,param1)
 #define j9file_startup() OMRPORT_FROM_J9PORT(privatePortLibrary)->file_startup(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #define j9file_shutdown() OMRPORT_FROM_J9PORT(privatePortLibrary)->file_shutdown(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #define j9file_write(param1,param2,param3) OMRPORT_FROM_J9PORT(privatePortLibrary)->file_write(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3)

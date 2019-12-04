@@ -1672,3 +1672,96 @@ j9sysinfo_get_cache_info(struct J9PortLibrary *portLibrary, const J9CacheInfoQue
 	Trc_PRT_sysinfo_get_cache_info_exit(result);
 	return result;
 }
+
+#if defined(LINUX)
+#define CPU_INDEX_LENGTH 5
+char const *cpuGovernorPathPattern = "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_governor";
+#define CPU_GOVERNOR_PATTERN_SIZE (strlen(cpuGovernorPathPattern) + (CPU_INDEX_LENGTH) + 1)
+#define NUM_AVAILABLE_GOVERNORS 6
+static char governors[NUM_AVAILABLE_GOVERNORS][13] = { "powersave", "performance", "userspace", "ondemand", "conservative", "schedutil" };
+static int32_t
+getCpuGovernorDetails(struct J9PortLibrary *portLibrary, struct J9CpuGovernorDetails *governorDetails, cpu_set_t *cpuSet)
+{
+
+	int32_t rc = 0;
+	int32_t i = 0;
+	int32_t result = CPU_COUNT(cpuSet);
+	OMRPORT_ACCESS_FROM_J9PORT(portLibrary);
+	uint32_t numCpus = omrsysinfo_get_number_CPUs_by_type(OMRPORT_CPU_PHYSICAL);
+	for(i = 0; i < numCpus; i++) {
+		if (1 == CPU_ISSET(i, cpuSet)) {
+			char pathBuffer[CPU_GOVERNOR_PATTERN_SIZE];
+			int32_t cpuGovernorPathLength = 0;
+			cpuGovernorPathLength = omrstr_printf(pathBuffer, sizeof(pathBuffer), cpuGovernorPathPattern, i);
+			if (0 == cpuGovernorPathLength) {
+				rc = J9PORT_ERROR_STRING_ILLEGAL_STRING;
+				goto _end;
+			}
+			char tempBuff[20];
+			FILE *file = fopen(pathBuffer, "r");
+			if (NULL == file) {
+				rc = J9PORT_ERROR_FILE_OPFAILED;
+				goto _end;
+			}
+			struct J9CpuGovernorDetails *currentNode = governorDetails;
+			if (NULL == fgets(&tempBuff[0], 20, file)) {
+				rc = J9PORT_ERROR_FILE_OPFAILED;
+			} else {
+				int32_t j = 0;
+				BOOLEAN check = FALSE;
+				for ( j = 0; j < NUM_AVAILABLE_GOVERNORS; j++ ) {
+					if (0 == strncmp(tempBuff, governors[j], strlen(governors[j]))) {
+						if (NULL == currentNode->type) {
+							currentNode->type = &governors[j][0];
+							currentNode->counter += 1;
+							currentNode->cpuList = omrmem_allocate_memory(result * sizeof(uint32_t), OMRMEM_CATEGORY_VM);
+							*(currentNode->cpuList) = i;
+						} else {
+							struct J9CpuGovernorDetails *prevNode = currentNode;
+							while (NULL != currentNode){
+								if (0 == strncmp(governors[j], currentNode->type, strlen(governors[j]))){
+									check = TRUE;
+									currentNode->counter += 1;
+									*(currentNode->cpuList + currentNode->counter) = i;
+									break;
+								}
+								prevNode = currentNode;
+								currentNode = currentNode->next;
+							}
+							currentNode = prevNode;
+							if (!check) {
+								struct J9CpuGovernorDetails *node = omrmem_allocate_memory(sizeof(J9CpuGovernorDetails), OMRMEM_CATEGORY_VM);
+								node->type = &governors[j][0];
+								node->counter = 1;
+								node->cpuList = omrmem_allocate_memory(result * sizeof(uint32_t),OMRMEM_CATEGORY_VM);
+								node->cpuList[0] = i;
+								node->next = NULL;
+								currentNode->next = node;
+							}
+						}
+						break;
+					}
+				}
+			}
+			fclose(file);
+		}
+	}
+_end:
+	return rc;
+}
+#endif
+
+int32_t
+j9sysinfo_get_cpu_governor_info(struct J9PortLibrary *portLibrary, struct J9CpuGovernorDetails *governorDetails)
+{
+	int32_t rc = J9PORT_ERROR_SYSINFO_NOT_SUPPORTED;
+	cpu_set_t cpuSet;
+	int32_t size = sizeof(cpuSet); /* Size in bytes */
+	pid_t mainProcess = getpid();
+	rc = sched_getaffinity(mainProcess, size, &cpuSet);
+
+	if (0 == rc) {
+		rc = getCpuGovernorDetails(portLibrary, governorDetails, &cpuSet);
+	}
+	return rc;
+}

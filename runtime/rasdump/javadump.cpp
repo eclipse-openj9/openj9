@@ -5243,6 +5243,28 @@ JavaCoreDumpWriter::writeCPUinfo(void)
 			"2CITARGETCPU   Target CPUs: ");
 	_OutputStream.writeInteger(target, "%i\n");
 
+#if defined(LINUX)
+	struct J9CpuGovernorDetails cpugvnr = {0};
+	int32_t rc = j9sysinfo_get_cpu_governor_info(&cpugvnr);
+	if (0 == rc) {
+		_OutputStream.writeCharacters(
+				"NULL           \n");
+		_OutputStream.writeCharacters(
+				"1CICPUGINF     CPU Governor Information\n"
+				"NULL           ------------------------------------------------------------------------\n");
+		struct J9CpuGovernorDetails *current = &cpugvnr;
+		while (NULL != current) {
+			_OutputStream.writeCharacters(current->type);
+			_OutputStream.writeCharacters("		");
+			uint32_t index = 0;
+			for (index = 1; index <= current->counter; index++) {
+				_OutputStream.writeInteger(*((current->cpuList)+index), " %ld");
+			}
+			_OutputStream.writeCharacters("\n");
+			current = current->next;
+		}
+	}
+#endif
 	return;
 }
 
