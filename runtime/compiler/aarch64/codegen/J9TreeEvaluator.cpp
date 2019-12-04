@@ -22,6 +22,7 @@
 
 #include "codegen/ARM64Instruction.hpp"
 #include "codegen/ARM64JNILinkage.hpp"
+#include "codegen/ARM64OutOfLineCodeSection.hpp"
 #include "codegen/ARM64PrivateLinkage.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
@@ -61,6 +62,7 @@ extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg)
    tet[TR::variableNewArray] = TR::TreeEvaluator::anewArrayEvaluator;
    tet[TR::multianewarray] = TR::TreeEvaluator::multianewArrayEvaluator;
    tet[TR::arraylength] = TR::TreeEvaluator::arraylengthEvaluator;
+   tet[TR::ZEROCHK] = TR::TreeEvaluator::ZEROCHKEvaluator;
    tet[TR::ResolveCHK] = TR::TreeEvaluator::resolveCHKEvaluator;
    tet[TR::DIVCHK] = TR::TreeEvaluator::DIVCHKEvaluator;
    tet[TR::BNDCHK] = TR::TreeEvaluator::BNDCHKEvaluator;
@@ -518,6 +520,49 @@ J9::ARM64::TreeEvaluator::arraylengthEvaluator(TR::Node *node, TR::CodeGenerator
    node->setRegister(lengthReg);
 
    return lengthReg;
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::ZEROCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::LabelSymbol *slowPathLabel = generateLabelSymbol(cg);
+   TR::LabelSymbol *restartLabel = generateLabelSymbol(cg);
+   slowPathLabel->setStartInternalControlFlow();
+   restartLabel->setEndInternalControlFlow();
+
+   // Temporarily hide the first child so it doesn't appear in the outlined call
+   //
+   node->rotateChildren(node->getNumChildren()-1, 0);
+   node->setNumChildren(node->getNumChildren()-1);
+
+   // Outlined instructions for check failure
+   // Note: we don't pass the restartLabel in here because we don't want a
+   // restart branch.
+   //
+   TR_ARM64OutOfLineCodeSection *outlinedHelperCall = new (cg->trHeapMemory()) TR_ARM64OutOfLineCodeSection(node, TR::call, NULL, slowPathLabel, restartLabel, cg);
+   cg->getARM64OutOfLineCodeSectionList().push_front(outlinedHelperCall);
+
+   // Restore the first child
+   //
+   node->setNumChildren(node->getNumChildren()+1);
+   node->rotateChildren(0, node->getNumChildren()-1);
+
+   // Children other than the first are only for the outlined path; we don't need them here
+   //
+   for (int32_t i = 1; i < node->getNumChildren(); i++)
+      cg->recursivelyDecReferenceCount(node->getChild(i));
+
+   // In-line instructions for the check
+   // ToDo: Optimize isBooleanCompare() case
+   //
+   TR::Node *valueToCheck = node->getFirstChild();
+   TR::Register *value = cg->evaluate(valueToCheck);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, value, slowPathLabel);
+   cg->decReferenceCount(node->getFirstChild());
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, restartLabel);
+
+   return NULL;
    }
 
 TR::Register *
