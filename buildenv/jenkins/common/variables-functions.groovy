@@ -453,7 +453,8 @@ def get_date() {
 }
 
 /*
-* Set TESTS_TARGETS, indicating the level of testing.
+* Set TESTS_TARGETS, indicating the level of testing
+* and sets TEST_FLAG for all targets if defined in variable file
 */
 def set_test_targets() {
     TESTS_TARGETS = params.TESTS_TARGETS
@@ -470,8 +471,14 @@ def set_test_targets() {
         }
     }
 
+    TEST_FLAG = ''
+    if (VARIABLES."${SPEC}".test_flags) {
+        TEST_FLAG = get_value(VARIABLES."${SPEC}".test_flags, SDK_VERSION)
+    }
+
     echo "TESTS_TARGETS: ${TESTS_TARGETS}"
     echo "EXCLUDED_TESTS: ${EXCLUDED_TESTS}"
+    echo "TEST_FLAG: ${TEST_FLAG}"
 }
 
 def get_default_test_targets() {

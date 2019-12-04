@@ -425,7 +425,12 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
                 echo "The '${name}' test suite will be excluded"
                 continue
             }
-            def TEST_FLAG = (name.contains('+')) ? name.substring(name.indexOf('+')+1).toUpperCase() : ''
+            // Add a TEST_FLAG to a specific target if one was passed with the test target. Eg. sanity.functional+aot
+            if (name.contains('+')) {
+                def temp_test_flag = name.substring(name.indexOf('+')+1).toUpperCase()
+                TEST_FLAG = (TEST_FLAG) ? TEST_FLAG + ',' + temp_test_flag : temp_test_flag
+            }
+            echo "TEST_FLAG:'${TEST_FLAG}'"
             def TEST_JOB_NAME = get_test_job_name(get_target_name(name), SPEC, SDK_VERSION, BUILD_IDENTIFIER)
 
             def IS_PARALLEL = false
@@ -493,7 +498,7 @@ def get_build_job_name(spec, version, identifier) {
 }
 
 def get_test_job_name(targetName, spec, version, identifier) {
-    spec = strip_cmake_specs(spec)
+    spec = strip_spec_suffixes(spec)
     id = convert_build_identifier(identifier)
     return "Test_openjdk${version}_j9_${targetName}_${spec}_${id}"
 }
@@ -614,7 +619,7 @@ def generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO)
     levels.unique(true)
     groups.unique(true)
 
-    spec = strip_cmake_specs(SPEC)
+    spec = strip_spec_suffixes(SPEC)
     if (levels && groups) {
         def parameters = [
             string(name: 'LEVELS', value: levels.join(',')),
@@ -768,11 +773,12 @@ def setup_pull_request_single_comment(PARSED_COMMENT) {
     PERSONAL_BUILD = 'true'
 }
 
-def strip_cmake_specs(spec) {
-    // Strip off cmake from SPEC name
-    // Since cmake is a method for how the SDK is built,
+def strip_spec_suffixes (spec) {
+    // Strip off cmake/jit from SPEC name
+    // Since cmake and JITServer is a method for how the SDK is built,
     // from a test perspective it is the same sdk. Therefore
-    // we will reuse the same test jobs as the non-cmake specs.
-    return spec - '_cm'
+    // we will reuse the same test jobs as the regular specs.
+    return spec - '_cm' - '_jit'
 }
+
 return this
