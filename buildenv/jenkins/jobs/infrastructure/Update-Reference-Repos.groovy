@@ -134,6 +134,12 @@ timeout(time: 6, unit: 'HOURS') {
 
                         // get Eclipse OpenJ9 extensions repositories from variables file
                         def repos = get_openjdk_repos(VARIABLES.openjdk, foundLabel)
+
+                        if (nodeLabels.contains('ci.role.test')) {
+                            // add AdoptOpenJDK/openjdk-tests repository
+                            repos.add([name: "adoptopenjdk", url: VARIABLES.adoptopenjdk.default.get('repoUrl')])
+                        }
+
                         if (jenkins.model.Jenkins.instance.getLabel(SETUP_LABEL).getNodes().contains(aNode)) {
                             // add OpenJ9 repo
                             repos.addAll(EXTENSIONS_REPOS)
