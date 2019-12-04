@@ -441,6 +441,8 @@ bool J9::TransformUtil::foldFinalFieldsIn(TR_OpaqueClassBlock *clazz, const char
       return true;
    else if (classNameLength >= 17 && !strncmp(className, "java/util/EnumMap", 17))
       return true;
+   else if (classNameLength >= 25 && !strncmp(className, "java/nio/DirectByteBuffer", 25))
+      return true;
 
    if (classNameLength == 16 && !strncmp(className, "java/lang/System", 16))
       return false;
