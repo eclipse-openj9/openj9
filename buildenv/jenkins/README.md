@@ -39,6 +39,9 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - Linux on x86-64 with CMake
         - Spec: x86-64_linux_cm
         - Shortname: xlinuxcm or xlinuxcmake
+    - Linux on x86-64 with JITServer
+        - Spec x86-64_linux_jit
+        - Shortname: xlinuxjit
     - Linux on s390x largeheap/non-compressed references
         - Spec: s390x_linux_xl
         - Shortname: zlinuxlargeheap or zlinuxxl
@@ -89,7 +92,7 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - `<version>` is the number of the supported release, e.g. 8 | 11 | next
 - Note: You can use keyword `all` for platform but not for test level/type or JDK versions.
 - Note: For backward compatibility `<level>.<test type>` equal to `sanity` or `extended` is acceptable and will map to `sanity.functional` and `extended.functional` respectively.
-- Note: TEST_FLAG is an optional argument to the test target. It is recommended to only launch 1 test target with 1 TEST_FLAG per comment/build. At the time of writing, the two supported test flags are `+jitaas` and `+aot`. Ex. `Jenkins test sanity.functional+jitaas xlinux jdk8`.
+- Note: TEST_FLAG is an optional argument to the test target. It is recommended to only launch 1 test target with 1 TEST_FLAG per comment/build. At the time of writing, the two supported test flags are `+jitaas` and `+aot`. Ex. `Jenkins test sanity.functional+jitaas xlinux jdk8`. Also note JITServer specs set the TEST_FLAG via the variable file so it is unnecessary to add it to the test target.
 
 ###### Examples
 - Request a Compile-only build on all platforms and multiple versions by commenting in a PR

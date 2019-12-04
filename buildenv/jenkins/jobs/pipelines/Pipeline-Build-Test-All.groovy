@@ -83,13 +83,16 @@ CURRENT_RELEASES = ['8', '11', '13', 'next']
 
 SPECS = ['ppc64_aix'      : CURRENT_RELEASES,
          'ppc64le_linux'  : CURRENT_RELEASES,
+         'ppc64le_linux_jit' : ['8', '11'],
          'ppc64le_linux_xl' : CURRENT_RELEASES,
          's390x_linux'    : CURRENT_RELEASES,
+         's390x_linux_jit' : ['8', '11'],
          's390x_linux_xl' : CURRENT_RELEASES,
          's390x_zos'      : ['11'],
          'x86-64_linux_xl': CURRENT_RELEASES,
          'x86-64_linux'   : CURRENT_RELEASES,
          'x86-64_linux_cm': ['8', '11'],
+         'x86-64_linux_jit' : ['8', '11'],
          'x86-64_mac_xl'  : CURRENT_RELEASES,
          'x86-64_mac'     : CURRENT_RELEASES,
          'x86-32_windows' : ['8'],
@@ -103,9 +106,11 @@ SPECS = ['ppc64_aix'      : CURRENT_RELEASES,
 SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_linux_xl','x86-64_linux','x86-64_linux_xl','ppc64_aix','x86-64_windows','x86-32_windows','x86-64_mac'],
             'aix' : ['ppc64_aix'],
             'zlinux' : ['s390x_linux'],
+            'zlinuxjit' : ['s390x_linux_jit'],
             'zlinuxlargeheap' : ['s390x_linux_xl'],
             'zlinuxxl' : ['s390x_linux_xl'],
             'plinux' : ['ppc64le_linux'],
+            'plinuxjit' : ['ppc64le_linux_jit'],
             'plinuxlargeheap' : ['ppc64le_linux_xl'],
             'plinuxxl' : ['ppc64le_linux_xl'],
             'xlinuxlargeheap' : ['x86-64_linux_xl'],
@@ -113,6 +118,7 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_
             'xlinux' : ['x86-64_linux'],
             'xlinuxcmake' : ['x86-64_linux_cm'],
             'xlinuxcm' : ['x86-64_linux_cm'],
+            'xlinuxjit' : ['x86-64_linux_jit'],
             'win32' : ['x86-32_windows'],
             'win' : ['x86-64_windows'],
             'winlargeheap' : ['x86-64_windows_xl'],
@@ -540,7 +546,6 @@ def get_summary_table(identifier) {
 
                 innerTable += "<tr style=\"vertical-align: bottom;\"><td>${aLabel}</td><td style=\"text-align: right\">${link}</td><td style=\"text-align: right\">${duration}</td></tr>"
             }
- 
 
             innerTable += "</tbody></table>"
             summaryText += "<td>${innerTable}</td>"
