@@ -1457,6 +1457,7 @@ Method getMethodHelper(
 	Method result;
 	Method bestCandidate;
 	String strSig;
+	boolean candidateFromInteface = false;
 	
 	/*[PR CMVC 114820, CMVC 115873, CMVC 116166] add reflection cache */
 	if (parameterTypes == null) {
@@ -1488,13 +1489,29 @@ Method getMethodHelper(
 			return null;
 		}
 	}
-	result = forDeclaredMethod ? getDeclaredMethodImpl(name, parameterTypes, strSig, null) : getMethodImpl(name, parameterTypes, strSig);
+	
+	if (forDeclaredMethod) {
+		result = getDeclaredMethodImpl(name, parameterTypes, strSig, null);
+	} else {
+		result = getMethodImpl(name, parameterTypes, strSig);
+		/* Retrieve the specified method implemented by the superclass from the top to the bottom
+		 * Note: there is no need do so when the method is declared by the current class.
+		 */
+		if ((result != null) && result.getDeclaringClass().isInterface()
+			&& !this.isInterface() && (this != Object.class)
+		) {
+			HashSet<Class<?>> interfaceSet = new HashSet();
+			result = getMostSpecificMethodFromAllInterfaces(this, interfaceSet, name, strSig, parameterTypes);
+			candidateFromInteface = true;
+		}
+	}
+	
 	if (result == null) {
 		return throwExceptionOrReturnNull(throwException, name, parameterTypes);
 	}
 	if (0 == Reflection.filterMethods(this, new Method[] {result}).length) {
 		return throwExceptionOrReturnNull(throwException, name, parameterTypes);
-	}	
+	}
 
 	/*[PR 127079] Use declaring classloader for Methods */
 	/*[PR CMVC 104523] ensure parameter types are visible in the receiver's class loader */
@@ -1530,26 +1547,112 @@ Method getMethodHelper(
 	 * Otherwise, the result method is chosen arbitrarily from specific methods.
 	 */
 	bestCandidate = result;
-	Class<?> declaringClass = forDeclaredMethod ? this : result.getDeclaringClass();
-	while (true) {
-		result = declaringClass.getDeclaredMethodImpl(name, parameterTypes, strSig, result);
-		if (result == null) {
-			break;
-		}
-		boolean publicMethod = ((result.getModifiers() & Modifier.PUBLIC) != 0);
-		if ((methodList != null) && publicMethod) {
-			methodList.add(result);
-		}
-		if (forDeclaredMethod || publicMethod) {
-			// bestCandidate and result have same declaringClass.
-			Class<?> candidateRetType = bestCandidate.getReturnType();
-			Class<?> resultRetType = result.getReturnType();
-			if ((candidateRetType != resultRetType) && candidateRetType.isAssignableFrom(resultRetType)) {
-				bestCandidate = result;
+	if (!candidateFromInteface) {
+		Class<?> declaringClass = forDeclaredMethod ? this : result.getDeclaringClass();
+		while (true) {
+			result = declaringClass.getDeclaredMethodImpl(name, parameterTypes, strSig, result);
+			if (result == null) {
+				break;
+			}
+			boolean publicMethod = ((result.getModifiers() & Modifier.PUBLIC) != 0);
+			if ((methodList != null) && publicMethod) {
+				methodList.add(result);
+			}
+			if (forDeclaredMethod || publicMethod) {
+				// bestCandidate and result have same declaringClass.
+				Class<?> candidateRetType = bestCandidate.getReturnType();
+				Class<?> resultRetType = result.getReturnType();
+				if ((candidateRetType != resultRetType) && candidateRetType.isAssignableFrom(resultRetType)) {
+					bestCandidate = result;
+				}
 			}
 		}
 	}
 	return cacheMethod(bestCandidate);
+}
+
+/**
+ * Helper method searches all interfaces implemented by superclasses from the top to the bottom
+ * for the most specific method declared in one of these interfaces.
+ *
+ * @param currentClass the class to be searched, including the current class and all superclasses
+ * @param interfaceSet the set of interfaces to be collected
+ * @param name the specified method's name
+ * @param strSig the string of the specified method's signature
+ * @param parameterTypes the types of the arguments of the specified method
+ * @return the most specific method selected from all interfaces;
+ *         otherwise, return the method of the first interface from the top superclass
+ *         if the return types of all specified methods are identical.
+ */
+private Method getMostSpecificMethodFromAllInterfaces(Class<?> currentClass, HashSet<Class<?>> interfaceSet, String name, String strSig, Class<?>... parameterTypes) {
+	Method candidateMethod = null;
+
+	if (currentClass != Object.class) {
+		candidateMethod = getMostSpecificMethodFromAllInterfaces(currentClass.getSuperclass(), 
+														interfaceSet, name, strSig, parameterTypes);
+		
+		/* getMethodImpl returns the specified method declared by an interface given that
+		 * the current class has not yet implemented this method.
+		 */
+		Method resultFromInterface = currentClass.getMethodImpl(name, parameterTypes, strSig);
+		if (resultFromInterface != null) {
+			Class<?>[] interfacesFromCurrentClass = currentClass.getInterfaces();
+			for (Class<?> nextInterface : interfacesFromCurrentClass) {				
+				/* No need to search for the duplicate interface */
+				if (!interfaceSet.contains(nextInterface)) {
+					interfaceSet.add(nextInterface);
+					Method resultMethod = getMoreSpecificMethodFromInterface(nextInterface, name, strSig, parameterTypes);
+					
+					if (resultMethod != null) {
+						if (candidateMethod == null) {
+							candidateMethod = resultMethod;
+						} else {
+							Class<?> resultRetType = resultMethod.getReturnType();
+							Class<?> CandidateRetType = candidateMethod.getReturnType();
+							if ((CandidateRetType != resultRetType) && CandidateRetType.isAssignableFrom(resultRetType)) {
+								candidateMethod = resultMethod;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	return candidateMethod;
+}
+
+/**
+ * Helper method obtains the more specific method declared in the interface
+ * 
+ * @param currentInterface the interface that declares the specified method
+ * @param name the specified method's name
+ * @param strSig the string of the specified method's signature
+ * @param parameterTypes the types of the arguments of the specified method
+ * @return the more specific method declared in this interface
+ */
+private Method getMoreSpecificMethodFromInterface(Class<?> currentInterface, String name, String strSig, Class<?>... parameterTypes) {
+	Method resultMethod = currentInterface.getDeclaredMethodImpl(name, parameterTypes, strSig, null);
+	Method bestCandidate = resultMethod;
+	
+	if (resultMethod != null) {
+		while (true) {
+			resultMethod = currentInterface.getDeclaredMethodImpl(name, parameterTypes, strSig, resultMethod);
+			if (resultMethod == null) {
+				break;
+			}
+			if ((resultMethod.getModifiers() & Modifier.PUBLIC) != 0) {
+				// bestCandidate and result have same declaringClass.
+				Class<?> bestCandidateRetType = bestCandidate.getReturnType();
+				Class<?> resultRetType = resultMethod.getReturnType();
+				if ((bestCandidateRetType != resultRetType) && bestCandidateRetType.isAssignableFrom(resultRetType)) {
+					bestCandidate = resultMethod;
+				}
+			}
+		}
+	}
+
+	return bestCandidate;
 }
 
 /**
