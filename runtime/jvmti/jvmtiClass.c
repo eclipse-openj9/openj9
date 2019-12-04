@@ -2607,7 +2607,7 @@ jvmtiGetConstantPool_addMethodHandle(jvmtiGcp_translation *translation, UDATA cp
 	entry.key = (void *) cpIndex;
 	entry.cpType = cpType;
 	entry.sunCpIndex = *sunCpIndex;
-	entry.type.methodHandle.methodOrFieldRefIndex = 0;
+	entry.type.methodHandle.methodOrFieldRefIndex = (*sunCpIndex) + 1;
 	entry.type.methodHandle.handleType = ref->handleTypeAndCpType >> J9DescriptionCpTypeShift;
 	if (NULL == (htEntry = hashTableAdd(translation->ht, &entry))) {
 		return JVMTI_ERROR_OUT_OF_MEMORY;
