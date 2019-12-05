@@ -40,6 +40,18 @@ class Buildspec {
         }
     }
 
+    /*
+     * If x can be converted to integer, return the result.
+     * else return x
+     */
+    private static toKey(x){
+        def key = x
+        try{
+            key = x as int
+        } catch (def e){ }
+        return key
+    }
+
     /* perform a repeated map lookup of a given '.' separated name in my def
      * eg. getNestedField('foo.bar.baz') is equivilent to
      * my_def['foo']['bar']['baz'], with the added benefit that if any lookup
@@ -75,6 +87,7 @@ class Buildspec {
      *  with the parents being evaluated in the the order they are listed in the yaml file
      */
     public getScalarField(name, sdk_ver){
+        def sdk_key = toKey(sdk_ver)
         def field = getNestedField(name)
         if(field == null){
             field = parents.findResult {it.getScalarField(name, sdk_ver)}
@@ -83,8 +96,8 @@ class Buildspec {
         // Does this entry specify different values for different sdk versions?
         if (null != field && isMap(field)){
             // If we have an sdk specific value use that
-            if (field.containsKey(sdk_ver as int)){
-                field = field[sdk_ver as int]
+            if (field.containsKey(sdk_key)){
+                field = field[sdk_key]
             } else {
                 // else fall back to the "all" key
                 field = field['all']
@@ -107,10 +120,7 @@ class Buildspec {
      */
     public List getVectorField(name, sdk_ver) {
         // Yaml will use an integer key if possible, otherwise it falls back to string
-        def sdk_key = sdk_ver
-        try{
-            sdk_key = sdk_ver as int
-        } catch (def e){}
+        def sdk_key = toKey(sdk_ver)
 
         def field_value = []
         parents.each { parent ->
