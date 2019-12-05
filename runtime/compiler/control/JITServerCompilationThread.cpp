@@ -795,13 +795,45 @@ TR::CompilationInfoPerThreadRemote::getCachedIProfilerInfo(TR_OpaqueMethodBlock 
  * @return returns void
  */
 void
-TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, uint32_t vTableSlot, TR_ResolvedJ9JITServerMethodInfo &methodInfo)
+TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key, TR_OpaqueMethodBlock *method, 
+                                                        uint32_t vTableSlot, const TR_ResolvedJ9JITServerMethodInfo &methodInfo)
    {
    static bool useCaching = !feGetEnv("TR_DisableResolvedMethodsCaching");
    if (!useCaching)
       return;
+   // Create a new TR_ResolvedJ9JITServerMethodInfo using scratch memory
 
-   cacheToPerCompilationMap(_resolvedMethodInfoMap, key, {method, vTableSlot, methodInfo});
+   TR_ASSERT_FATAL(getCompilation(), "Must be in compilation when calling cacheResolvedMethod\n");
+   TR_Memory *trMemory = getCompilation()->trMemory();
+
+   TR_PersistentJittedBodyInfo *bodyInfo = NULL;
+   if (!std::get<1>(methodInfo).empty())
+      {
+      bodyInfo = (TR_PersistentJittedBodyInfo*) trMemory->allocateHeapMemory(sizeof(TR_PersistentJittedBodyInfo), TR_MemoryBase::Recompilation);
+      memcpy(bodyInfo, std::get<1>(methodInfo).data(), sizeof(TR_PersistentJittedBodyInfo));
+      }
+   TR_PersistentMethodInfo *pMethodInfo =  NULL;
+   if (!std::get<2>(methodInfo).empty())
+      {
+      pMethodInfo = (TR_PersistentMethodInfo*) trMemory->allocateHeapMemory(sizeof(TR_PersistentMethodInfo), TR_MemoryBase::Recompilation);
+      memcpy(pMethodInfo, std::get<2>(methodInfo).data(), sizeof(TR_PersistentMethodInfo));
+      }
+   TR_ContiguousIPMethodHashTableEntry *entry = NULL;
+   if (!std::get<3>(methodInfo).empty())
+      {
+      entry = (TR_ContiguousIPMethodHashTableEntry*) trMemory->allocateHeapMemory(sizeof(TR_ContiguousIPMethodHashTableEntry), TR_MemoryBase::Recompilation);
+      memcpy(entry, std::get<3>(methodInfo).data(), sizeof(TR_ContiguousIPMethodHashTableEntry));
+      }
+
+   TR_ResolvedMethodCacheEntry cacheEntry;
+   cacheEntry.method = method;
+   cacheEntry.vTableSlot = vTableSlot;
+   cacheEntry.methodInfoStruct = std::get<0>(methodInfo);
+   cacheEntry.persistentBodyInfo = bodyInfo;
+   cacheEntry.persistentMethodInfo = pMethodInfo;
+   cacheEntry.IPMethodInfo = entry;
+
+   cacheToPerCompilationMap(_resolvedMethodInfoMap, key, cacheEntry);
    }
 
 /**
@@ -814,7 +846,8 @@ TR::CompilationInfoPerThreadRemote::cacheResolvedMethod(TR_ResolvedMethodKey key
  * @return returns true if method is cached, sets resolvedMethod and unresolvedInCP to cached values, false otherwise.
  */
 bool
-TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITServerMethod *owningMethod, TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP)
+TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey key, TR_ResolvedJ9JITServerMethod *owningMethod, 
+                                                            TR_ResolvedMethod **resolvedMethod, bool *unresolvedInCP)
    {
    TR_ResolvedMethodCacheEntry methodCacheEntry = {0};
 
@@ -831,9 +864,12 @@ TR::CompilationInfoPerThreadRemote::getCachedResolvedMethod(TR_ResolvedMethodKey
       if (!method)
          return true;
 
-      auto methodInfo = methodCacheEntry.methodInfo;
       uint32_t vTableSlot = methodCacheEntry.vTableSlot;
-
+      auto methodInfoStruct = methodCacheEntry.methodInfoStruct;
+      TR_ResolvedJ9JITServerMethodInfo methodInfo = make_tuple(methodInfoStruct, 
+         methodCacheEntry.persistentBodyInfo ? std::string((const char*)methodCacheEntry.persistentBodyInfo, sizeof(TR_PersistentJittedBodyInfo)) : std::string(), 
+         methodCacheEntry.persistentMethodInfo ? std::string((const char*)methodCacheEntry.persistentMethodInfo, sizeof(TR_PersistentMethodInfo)) : std::string(), 
+         methodCacheEntry.IPMethodInfo ? std::string((const char*)methodCacheEntry.IPMethodInfo, sizeof(TR_ContiguousIPMethodHashTableEntry)) : std::string());
       // Re-add validation record
       if (comp->compileRelocatableCode() && comp->getOption(TR_UseSymbolValidationManager) && !comp->getSymbolValidationManager()->inHeuristicRegion())
          {
