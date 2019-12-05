@@ -44,20 +44,17 @@ extern "C"
 #include "j9.h"
 #include "hookhelpers.hpp"
 
-#define CACHE_SIZE (16*1024*1024)
-#define ROMCLASS_SIZE (4*1024)
+#define CACHE_SIZE (16 * 1024 * 1024)
+#define ROMCLASS_SIZE (4 * 1024)
 #define INVALID_EYECATCHER "XXXX"
 #define INVALID_EYECATCHER_LENGTH 4
 #define BROKEN_TEST_CACHE "BrokenTestCache"
 
 #define ERRPRINTF(args) \
 do { \
-	j9tty_printf(PORTLIB,"\t"); \
-	j9tty_printf(PORTLIB,"ERROR: %s",__FILE__); \
-	j9tty_printf(PORTLIB,"(%d)",__LINE__); \
-	j9tty_printf(PORTLIB," %s ",testName); \
-	j9tty_printf(PORTLIB,args); \
-}while(0) \
+	j9tty_printf(PORTLIB, "\tERROR: %s(%d) %s ", __FILE__, __LINE__, testName); \
+	j9tty_printf(PORTLIB, args); \
+} while (0)
 
 typedef enum CorruptionStage {
 	INVALID_STAGE,
@@ -97,32 +94,31 @@ struct CorruptionInfo {
 	CorruptionType corruptionType;
 	CorruptionStage corruptionStage;
 } corruptionInfo[] = {
-		{ INVALID_CORRUPTION, INVALID_STAGE },
-		{ CACHE_CRC_INVALID_TYPE, DURING_STARTUP },
-		{ WALK_ROMCLASS_CORRUPT_CASE1_TYPE, AFTER_STARTUP },
-		{ WALK_ROMCLASS_CORRUPT_CASE2_TYPE, AFTER_STARTUP },
-		{ ITEM_TYPE_CORRUPT_UNINITIALIZED_TYPE, AFTER_STARTUP },
-		{ ITEM_TYPE_CORRUPT_MAX_DATA_TYPES_TYPE, AFTER_STARTUP },
-		{ ITEM_LENGTH_CORRUPT_TYPE, AFTER_STARTUP },
-		{ ITEM_LENGTH_CORRUPT_TYPE_LEN2LONG, AFTER_STARTUP },
-		{ ITEM_LENGTH_CORRUPT_AFTER_STARTUP_TYPE, AFTER_STARTUP },
-		{ CACHE_HEADER_INCORRECT_DATA_LENGTH_TYPE, DURING_STARTUP },
-		{ CACHE_HEADER_INCORRECT_DATA_START_ADDRESS_TYPE, DURING_STARTUP },
-		{ CACHE_HEADER_BAD_EYECATCHER_TYPE, DURING_STARTUP },
-		{ CACHE_HEADER_INCORRECT_CACHE_SIZE_TYPE, DURING_STARTUP },
-		{ ACQUIRE_HEADER_WRITE_LOCK_FAILED_TYPE, DURING_STARTUP },
-		{ CACHE_SIZE_INVALID_TYPE, DURING_STARTUP },
-		{ BAD_FREESPACE_DEBUG_AREA, DURING_STARTUP },
-		{ BAD_FREESPACE_SIZE_DEBUG_AREA, DURING_STARTUP },
-		{ BAD_LVT_BOUNDS_DEBUG_AREA, DURING_STARTUP },
-		{ BAD_LNT_BOUNDS_DEBUG_AREA, DURING_STARTUP },
-		{ UPDATE_ROMCLASS_CORRUPT_CASE1_TYPE, AFTER_STARTUP },
-		{ UPDATE_ROMCLASS_CORRUPT_CASE2_TYPE, AFTER_STARTUP },
-		{ CACHE_DATA_NULL_TYPE, DURING_STARTUP },
-		{ CACHE_SEMAPHORE_MISMATCH_TYPE, DURING_STARTUP },
-		{ CACHE_CCINITCOMPLETE_UNINITIALIZED, DURING_STARTUP },
+	{ INVALID_CORRUPTION, INVALID_STAGE },
+	{ CACHE_CRC_INVALID_TYPE, DURING_STARTUP },
+	{ WALK_ROMCLASS_CORRUPT_CASE1_TYPE, AFTER_STARTUP },
+	{ WALK_ROMCLASS_CORRUPT_CASE2_TYPE, AFTER_STARTUP },
+	{ ITEM_TYPE_CORRUPT_UNINITIALIZED_TYPE, AFTER_STARTUP },
+	{ ITEM_TYPE_CORRUPT_MAX_DATA_TYPES_TYPE, AFTER_STARTUP },
+	{ ITEM_LENGTH_CORRUPT_TYPE, AFTER_STARTUP },
+	{ ITEM_LENGTH_CORRUPT_TYPE_LEN2LONG, AFTER_STARTUP },
+	{ ITEM_LENGTH_CORRUPT_AFTER_STARTUP_TYPE, AFTER_STARTUP },
+	{ CACHE_HEADER_INCORRECT_DATA_LENGTH_TYPE, DURING_STARTUP },
+	{ CACHE_HEADER_INCORRECT_DATA_START_ADDRESS_TYPE, DURING_STARTUP },
+	{ CACHE_HEADER_BAD_EYECATCHER_TYPE, DURING_STARTUP },
+	{ CACHE_HEADER_INCORRECT_CACHE_SIZE_TYPE, DURING_STARTUP },
+	{ ACQUIRE_HEADER_WRITE_LOCK_FAILED_TYPE, DURING_STARTUP },
+	{ CACHE_SIZE_INVALID_TYPE, DURING_STARTUP },
+	{ BAD_FREESPACE_DEBUG_AREA, DURING_STARTUP },
+	{ BAD_FREESPACE_SIZE_DEBUG_AREA, DURING_STARTUP },
+	{ BAD_LVT_BOUNDS_DEBUG_AREA, DURING_STARTUP },
+	{ BAD_LNT_BOUNDS_DEBUG_AREA, DURING_STARTUP },
+	{ UPDATE_ROMCLASS_CORRUPT_CASE1_TYPE, AFTER_STARTUP },
+	{ UPDATE_ROMCLASS_CORRUPT_CASE2_TYPE, AFTER_STARTUP },
+	{ CACHE_DATA_NULL_TYPE, DURING_STARTUP },
+	{ CACHE_SEMAPHORE_MISMATCH_TYPE, DURING_STARTUP },
+	{ CACHE_CCINITCOMPLETE_UNINITIALIZED, DURING_STARTUP },
 };
-
 
 /*Some strings to make the test output easier to read*/
 static const char * CorruptionTypeStrings[] = {
@@ -215,7 +211,7 @@ CorruptCacheTest::corruptCache(J9JavaVM *vm, I_32 cacheType, IDATA corruptionTyp
 		oscHeader = &((OSCachemmap_header_version_current *)header)->oscHdr;
 	}
 
-	switch(corruptionType) {
+	switch (corruptionType) {
 	case CACHE_HEADER_INCORRECT_DATA_LENGTH_TYPE:
 		/* set dataLength to invalid value */
 		oscHeader->dataLength = 0;
@@ -227,9 +223,9 @@ CorruptCacheTest::corruptCache(J9JavaVM *vm, I_32 cacheType, IDATA corruptionTyp
 	case CACHE_HEADER_BAD_EYECATCHER_TYPE:
 		/* set eye catcher to invalid value */
 		if (J9PORT_SHR_CACHE_TYPE_NONPERSISTENT == cacheType) {
-			strncpy(((OSCachesysv_header_version_current *)header)->eyecatcher, INVALID_EYECATCHER, INVALID_EYECATCHER_LENGTH);
+			memcpy(((OSCachesysv_header_version_current *)header)->eyecatcher, INVALID_EYECATCHER, INVALID_EYECATCHER_LENGTH);
 		} else {
-			strncpy(((OSCachemmap_header_version_current *)header)->eyecatcher, INVALID_EYECATCHER, INVALID_EYECATCHER_LENGTH);
+			memcpy(((OSCachemmap_header_version_current *)header)->eyecatcher, INVALID_EYECATCHER, INVALID_EYECATCHER_LENGTH);
 		}
 		break;
 	case CACHE_HEADER_INCORRECT_CACHE_SIZE_TYPE:
@@ -309,7 +305,7 @@ CorruptCacheTest::corruptCache(J9JavaVM *vm, I_32 cacheType, IDATA corruptionTyp
 			 * Then call runEntryPointChecks() on original CacheMap to detect corruption.
 			 */
 			SH_CompositeCacheImpl *tempCC;
-			
+
 			tempCC = (SH_CompositeCacheImpl *)j9mem_allocate_memory(sizeof(SH_CompositeCacheImpl), J9MEM_CATEGORY_CLASSES);
 			if (NULL == tempCC) {
 				ERRPRINTF("failed to allocate memory for temporary CompositeCache\n");
@@ -469,7 +465,7 @@ CorruptCacheTest::openTestCache(J9JavaVM *vm, I_32 cacheType, I_32 cacheSize, U_
 	sharedClassConfig->sharedClassCache = (void*)cacheMap;
 
 	rc = cacheMap->startup(vm->mainThread, piConfig, BROKEN_TEST_CACHE, NULL, J9SH_DIRPERM_ABSENT, NULL, &cacheHasIntegrity);
-	if (true == startupWillFail) {
+	if (startupWillFail) {
 		if (0 == rc) {
 			ERRPRINTF("CacheMap.startup() passed when a fail was expected\n");
 			rc = FAIL;
@@ -484,7 +480,7 @@ CorruptCacheTest::openTestCache(J9JavaVM *vm, I_32 cacheType, I_32 cacheSize, U_
 	}
 
 done:
-	if ((FAIL == rc) && (true == doCleanupOnFail)) {
+	if ((FAIL == rc) && doCleanupOnFail) {
 		if (NULL != cacheMap) {
 			cacheMap->cleanup(vm->mainThread);
 			j9mem_free_memory(cacheMap);
@@ -538,7 +534,7 @@ CorruptCacheTest::closeTestCache(J9JavaVM *vm, I_32 cacheType, bool saveCRC)
 				/* When ::openTestCacheForStats() is called CacheMap::startup() may fail,
 				 * and cc->getCacheHeaderAddress() will return NULL because the cache was not started.
 				 */
-				if (true == saveCRC) {
+				if (saveCRC) {
 					/* need to explicitly call SH_CacheMap::runExitCode() to populate cache CRC */
 					cacheMap->runExitCode(vm->mainThread);
 					/* clear J9SHR_RUNTIMEFLAG_DENY_CACHE_UPDATES flag in runtimeFlags which is set in the call to SH_CompositeCacheImpl::runExitCode() above. */
@@ -584,7 +580,7 @@ CorruptCacheTest::openCorruptCache(J9JavaVM* vm, I_32 cacheType, bool readOnly, 
 		startupWillFail = true;
 	}
 
-	if (true == readOnly) {
+	if (readOnly) {
 		extraRuntimeFlags |= J9SHR_RUNTIMEFLAG_ENABLE_READONLY;
 		startupWillFail = true;
 	}
@@ -671,7 +667,7 @@ CorruptCacheTest::verifyCorruptionContext(J9JavaVM *vm, IDATA corruptionType) {
 	cc = (SH_CompositeCacheImpl *)cacheMap->getCompositeCacheAPI();
 	cc->getCorruptionContext(&corruptionCode, NULL);
 
-	switch(corruptionType) {
+	switch (corruptionType) {
 	case CACHE_CRC_INVALID_TYPE:
 		expectedCorruptionCode = CACHE_CRC_INVALID;
 		break;
@@ -785,13 +781,13 @@ CorruptCacheTest::findDummyROMClass(J9JavaVM *vm, const char *romClassName)
 	cpEntry.extraInfo = NULL;
 	cpEntry.pathLength = 1;
 	cpEntry.type = CPE_TYPE_DIRECTORY;
-	
+
 	cpi = createClasspath(vm->mainThread, &cpEntry, 1, 0, CP_TYPE_CLASSPATH, 0);
 	if (NULL == cpi) {
 		j9tty_printf(PORTLIB, "testCorruptCache: failed to create dummy classpath\n");
 		return FAIL;
 	}
-	
+
 	cacheMap = (SH_CacheMap *)vm->sharedClassConfig->sharedClassCache;
 	cacheMap->enterLocalMutex(vm->mainThread, vm->classMemorySegments->segmentMutex, "class segment mutex", "findDummyROMClass");
 	cacheMap->findROMClass(vm->mainThread, romClassName, cpi, NULL, NULL, -1, NULL);
@@ -838,9 +834,9 @@ zeroOutCache(J9JavaVM *vm, I_32 cacheType)
 
 	cacheSize = j9file_length(fullPath);
 	if (cacheSize <= 0) {
-                rc = FAIL;
-                ERRPRINTF("Failed to get cache file size\n");
-                goto done;
+				rc = FAIL;
+				ERRPRINTF("Failed to get cache file size\n");
+				goto done;
 	}
 	mapFileHandle = j9mmap_map_file(fd, 0, (UDATA)cacheSize, fullPath, J9PORT_MMAP_FLAG_WRITE, J9MEM_CATEGORY_CLASSES_SHC_CACHE);
 	if ((NULL == mapFileHandle) || (NULL == mapFileHandle->pointer)) {
@@ -1039,13 +1035,13 @@ testCorruptCache(J9JavaVM* vm)
 	UnitTest::unitTest = UnitTest::CORRUPT_CACHE_TEST;
 	vm->internalVMFunctions->internalEnterVMFromJNI(vm->mainThread);
 
-	for(i = 0; i < 6; i++) {
+	for (i = 0; i < 6; i++) {
 		CorruptCacheTest corruptCacheTest;
 		U_64 extraRuntimeFlags = 0;
 		cacheType = 0;
 		IDATA semid = -1;
 
-		switch(i) {
+		switch (i) {
 		case 0:
 #if !defined(J9ZOS390)
 #if !defined(J9SHR_CACHELET_SUPPORT)
@@ -1109,7 +1105,7 @@ testCorruptCache(J9JavaVM* vm)
 		if (0 != cacheType) {
 			j9tty_printf(PORTLIB, "\nRunning tests with cacheType: %d(%s) and readOnly: %d with extraRuntimeFlags: 0x%llx\n", cacheType , cacheTypeString, readOnly, extraRuntimeFlags);
 
-			for(corruptionType = CACHE_CRC_INVALID_TYPE; corruptionType < NUM_CORRUPTION_TYPE; corruptionType++) {
+			for (corruptionType = CACHE_CRC_INVALID_TYPE; corruptionType < NUM_CORRUPTION_TYPE; corruptionType++) {
 				I_32 cacheSize = CACHE_SIZE;
 
 				j9tty_printf(PORTLIB, "\nCorrupt cache with corruption type: %d(%s)\n", corruptionType, CorruptionTypeStrings[corruptionType]);
@@ -1286,7 +1282,7 @@ testCorruptCache(J9JavaVM* vm)
 					}
 					if ((ITEM_LENGTH_CORRUPT_AFTER_STARTUP_TYPE == corruptionType) ||
 						(UPDATE_ROMCLASS_CORRUPT_CASE2_TYPE == corruptionType)
-					){
+					) {
 						rc = corruptCacheTest.verifyCorruptionContext(vm, corruptionType);
 						if (FAIL == rc) {
 							j9tty_printf(PORTLIB, "testCorruptCache: corruption context verification failed\n");
@@ -1305,24 +1301,24 @@ testCorruptCache(J9JavaVM* vm)
 				}
 
 				/*
-				 * Jazz 40220: Design: Don't destroy caches with bad CRCs during -Xshareclasses:printStats 
-				 * 
+				 * Jazz 40220: Design: Don't destroy caches with bad CRCs during -Xshareclasses:printStats
+				 *
 				 * Open the cache with J9SHR_RUNTIMEFLAG_ENABLE_STATS set to simulate using -Xshareclasses:printXXXStats.
 				 * If the cache is deleted incorrectly during this, then the below call to verifyCorruptionContext() will
 				 * not find the expected corruption context, because the cache was deleted.
-				 * 
-				 * It should also be noted that opening the cache with J9SHR_RUNTIMEFLAG_ENABLE_STATS from this test 
+				 *
+				 * It should also be noted that opening the cache with J9SHR_RUNTIMEFLAG_ENABLE_STATS from this test
 				 * will not set the cache header as corrupt.
 				 */
 
-				/* Set the flag to open the cache for stats so that cache is not recreated if corruption is detected during startup. 
+				/* Set the flag to open the cache for stats so that cache is not recreated if corruption is detected during startup.
 				 * This will ensure corruption context is preserved.
 				 * Opening the cache for stats does not detect CACHE_SEMAPHORE_MISMATCH_TYPE corruption.
 				 */
 				if (CACHE_SEMAPHORE_MISMATCH_TYPE != corruptionType) {
 #if defined(J9SHR_CACHELET_SUPPORT)
 					if ((WALK_ROMCLASS_CORRUPT_CASE1_TYPE == corruptionType) || (WALK_ROMCLASS_CORRUPT_CASE2_TYPE == corruptionType)) {
-						/* For realtime cache, cachelets are not started during startup. 
+						/* For realtime cache, cachelets are not started during startup.
 						 * As a result sanityWalkROMClassSegment() is not called during startup.
 						 * To startup a cachelet and perform sanity walk, we try to find a previously added dummy class
 						 * which should result in detecting cache as corrupt in sanityWalkROMClassSegment().

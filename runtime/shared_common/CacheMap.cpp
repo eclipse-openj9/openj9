@@ -7972,7 +7972,7 @@ SH_CacheMap::getPrereqCache(J9VMThread* currentThread, const char* cacheDir, SH_
 
 		J9UTF8* utfKeyStruct = (J9UTF8*)utfKeyPtr;
 		J9UTF8_SET_LENGTH(utfKeyStruct, (U_16)keylen);
-		strncpy((char*)J9UTF8_DATA(utfKeyStruct), (char*)key, keylen);
+		memcpy((char*)J9UTF8_DATA(utfKeyStruct), key, keylen);
 
 		tokenKey = addScopeToCache(currentThread, utfKeyStruct, TYPE_PREREQ_CACHE);
 		if (NULL == tokenKey) {

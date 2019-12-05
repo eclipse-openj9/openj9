@@ -24,6 +24,7 @@
 #include "dmpsup.h"
 #include "j9dmpnls.h"
 #include "rasdump_internal.h"
+#include "ut_j9dmp.h"
 
 #define DG_SYSTEM_DUMPS  "system+snap+tool"
 
@@ -380,19 +381,20 @@ mapDumpActions(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum, char 
 			cursor++;
 
 			if ( countRHS >= cursor && countRHS < actionsRHS) { /* valid dump count found */
+				size_t eventStringLength = strlen(dgConditions[condition].eventString);
 				countChars = countRHS - cursor;
 				/* allocate a string for the mapped event string with the count chars appended */
-				length = strlen(dgConditions[condition].eventString) + countChars;
+				length = eventStringLength + countChars;
 				eventString = j9mem_allocate_memory(length, OMRMEM_CATEGORY_VM);
 				if (NULL == eventString) {
 					j9tty_err_printf(PORTLIB, 
 						"Could not allocate memory to handle JAVA_DUMP_OPTS dump count option, option ignored.\n");
 					countChars = 0;
 				} else {
-					memset(eventString, 0, length);
-					strncpy(eventString, dgConditions[condition].eventString, 
-						strlen(dgConditions[condition].eventString) - 1);
-					strncat(eventString, cursor, countChars);
+					/* eventString ends with "..0"; the '0' is replaced by countChars */
+					memcpy(eventString, dgConditions[condition].eventString, eventStringLength - 1);
+					memcpy(eventString + eventStringLength - 1, cursor, countChars);
+					eventString[length - 1] = '\0';
 				}
 			}
 		}
@@ -571,28 +573,28 @@ enableDumpOnOutOfMemoryError(J9RASdumpOption agentOpts[], IDATA *agentNum)
 omr_error_t
 mapDumpSettings(J9JavaVM *vm, J9RASdumpOption agentOpts[], IDATA *agentNum)
 {
-	IDATA i, kind, len;
-
 	PORT_ACCESS_FROM_JAVAVM(vm);
-
+	IDATA i = 0;
 	char buf[J9_MAX_DUMP_PATH];
-	char *finalArg;
 
 	for (i = 0; i < numDumpEnvSettings; i++) {
-
-		len = strlen(dgSettings[i].prefixOpt);
-		strncpy(buf, dgSettings[i].prefixOpt, len);
+		IDATA len = strlen(dgSettings[i].prefixOpt);
+		Assert_dump_true(len < J9_MAX_DUMP_PATH);
+		memcpy(buf, dgSettings[i].prefixOpt, len);
 
 		/* Tack on user setting */
-		if ( j9sysinfo_get_env(dgSettings[i].name, buf+len, J9_MAX_DUMP_PATH-len) == 0 ) {
-
+		if (j9sysinfo_get_env(dgSettings[i].name, buf + len, J9_MAX_DUMP_PATH - len) == 0) {
 			char *typeString = dgSettings[i].typeString;
-			buf[J9_MAX_DUMP_PATH-1] = '\0';
 
 			/* Handle multiple dump types */
-			while ( (kind = scanDumpType(&typeString)) >= 0 ) {
+			for (;;) {
+				IDATA kind = scanDumpType(&typeString);
+				char *finalArg = NULL;
+				if (kind < 0) {
+					break;
+				}
 				finalArg = j9mem_allocate_memory(strlen(buf) + 1, OMRMEM_CATEGORY_VM);
-				if(!finalArg) {
+				if (NULL == finalArg) {
 					return OMR_ERROR_INTERNAL;
 				}
 				strcpy(finalArg, buf);
