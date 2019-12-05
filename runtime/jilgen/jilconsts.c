@@ -632,6 +632,8 @@ writeConstants(OMRPortLibrary *OMRPORTLIB, IDATA fd)
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportStaticFieldRead", offsetof(J9JITConfig, old_slow_jitReportStaticFieldRead)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_old_slow_jitReportStaticFieldWrite", offsetof(J9JITConfig, old_slow_jitReportStaticFieldWrite)) |
 
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_fast_jitNewValue", offsetof(J9JITConfig, fast_jitNewValue)) |
+			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_fast_jitNewValueNoZeroInit", offsetof(J9JITConfig, fast_jitNewValueNoZeroInit)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_fast_jitNewObject", offsetof(J9JITConfig, fast_jitNewObject)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_fast_jitNewObjectNoZeroInit", offsetof(J9JITConfig, fast_jitNewObjectNoZeroInit)) |
 			writeConstant(OMRPORTLIB, fd, "J9TR_JitConfig_fast_jitANewArray", offsetof(J9JITConfig, fast_jitANewArray)) |
