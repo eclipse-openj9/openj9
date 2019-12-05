@@ -3098,7 +3098,10 @@ typedef struct J9ArrayClass {
 #if defined(__cplusplus)
 /* Hide the asserts from DDR */
 #if !defined(TYPESTUBS_H)
+#if defined(static_assert)
+/* older compiler versions do not support static asserts */
 static_assert(sizeof(J9Class) == sizeof(J9ArrayClass), "J9Class and J9ArrayClass must be the same size");
+#endif /* defined(static_assert) */
 #endif /* !TYPESTUBS_H */
 #endif /* __cplusplus */
 #endif /* LINUX && J9VM_ARCH_X86 */
