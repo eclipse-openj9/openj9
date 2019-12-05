@@ -382,6 +382,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    void                   setLastCompilationDuration(int32_t t) { _lastCompilationDuration = t; }
    bool                   isDiagnosticThread() const { return _isDiagnosticThread; }
    CpuSelfThreadUtilization& getCompThreadCPU() { return _compThreadCPU; }
+   virtual void           freeAllResources();
 
 #if defined(JITSERVER_SUPPORT)
    TR_J9ServerVM            *getServerVM() const { return _serverVM; }
