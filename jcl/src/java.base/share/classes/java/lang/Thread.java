@@ -27,6 +27,7 @@ import java.util.Map;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import sun.security.util.SecurityConstants;
 /*[IF Java11]
 import jdk.internal.misc.TerminatingThreadLocal;
 import jdk.internal.reflect.CallerSensitive;
@@ -637,7 +638,7 @@ public ClassLoader getContextClassLoader() {
 	if (currentManager != null) {
 		ClassLoader callerClassLoader = ClassLoader.callerClassLoader();
 		if (ClassLoader.needsClassLoaderPermissionCheck(callerClassLoader, contextClassLoader)) {
-			currentManager.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionGetClassLoader);
+			currentManager.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		}	
 	}	
 	return contextClassLoader;
@@ -1195,7 +1196,7 @@ private final synchronized void stopWithThrowable(Throwable throwable) {
 	if (currentThread() != this || !(throwable instanceof ThreadDeath)) {
 		SecurityManager currentManager = System.getSecurityManager();
 		if (currentManager != null)	{
-			currentManager.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionStopThread);
+			currentManager.checkPermission(SecurityConstants.STOP_THREAD_PERMISSION);
 		}
 	}
 
@@ -1334,7 +1335,7 @@ public StackTraceElement[] getStackTrace() {
 	if (Thread.currentThread() != this) {
 		SecurityManager security = System.getSecurityManager();
 		if (security != null)
-			security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionGetStackTrace); //$NON-NLS-1$
+			security.checkPermission(SecurityConstants.GET_STACK_TRACE_PERMISSION); //$NON-NLS-1$
 	}
 	Throwable t;
 
@@ -1361,8 +1362,8 @@ public StackTraceElement[] getStackTrace() {
 public static Map<Thread, StackTraceElement[]> getAllStackTraces() {
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
-		security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionGetStackTrace);
-		security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionModifyThreadGroup);
+		security.checkPermission(SecurityConstants.GET_STACK_TRACE_PERMISSION);
+		security.checkPermission(SecurityConstants.MODIFY_THREADGROUP_PERMISSION);
 	}
 	// Allow room for more Threads to be created before calling enumerate()
 	int count = systemThreadGroup.activeCount() + 20;

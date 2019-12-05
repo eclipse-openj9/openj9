@@ -83,6 +83,7 @@ import java.lang.annotation.Repeatable;
 import java.lang.invoke.*;
 import com.ibm.oti.reflect.TypeAnnotationParser;
 import java.security.PrivilegedActionException;
+import sun.security.util.SecurityConstants;
 
 /**
  * An instance of class Class is the in-image representation
@@ -285,7 +286,7 @@ void checkMemberAccess(SecurityManager security, ClassLoader callerClassLoader, 
 		/*[PR CMVC 82311] Spec is incorrect before 1.5, RI has this behavior since 1.2 */
 		/*[PR CMVC 201490] To remove CheckPackageAccess call from more Class methods */
 		if (type == Member.DECLARED && callerClassLoader != loader) {
-			security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionAccessDeclaredMembers);
+			security.checkPermission(SecurityConstants.CHECK_MEMBER_ACCESS_PERMISSION);
 		}
 		/*[PR CMVC 195558, 197433, 198986] Various fixes. */
 		if (sun.reflect.misc.ReflectUtil.needsPackageAccessCheck(callerClassLoader, loader)) {	
@@ -314,7 +315,7 @@ private void checkNonSunProxyMemberAccess(SecurityManager security, ClassLoader 
 	if (callerClassLoader != ClassLoader.bootstrapClassLoader) {
 		ClassLoader loader = getClassLoaderImpl();
 		if (type == Member.DECLARED && callerClassLoader != loader) {
-			security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionAccessDeclaredMembers);
+			security.checkPermission(SecurityConstants.CHECK_MEMBER_ACCESS_PERMISSION);
 		}
 		String packageName = this.getPackageName();
 		if (!(Proxy.isProxyClass(this) && packageName.equals(sun.reflect.misc.ReflectUtil.PROXY_PACKAGE)) &&
@@ -468,7 +469,7 @@ public static Class<?> forName(String className, boolean initializeBoolean, Clas
 			ClassLoader callerClassLoader = caller.getClassLoaderImpl();
 			if (callerClassLoader != ClassLoader.bootstrapClassLoader) {
 				/* only allowed if caller has RuntimePermission("getClassLoader") permission */
-				sm.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionGetClassLoader);
+				sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 			}
 		}
 	}
@@ -517,7 +518,7 @@ public static Class<?> forName(Module module, String name)
 	if (null != sm) {
 		/* If the caller is not the specified module and RuntimePermission("getClassLoader") permission is denied, throw SecurityException */
 		if ((null != caller) && (caller.getModule() != module)) {
-			sm.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionGetClassLoader);
+			sm.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 		}
 		classLoader = AccessController.doPrivileged(new PrivilegedAction<ClassLoader>() {
 	        public ClassLoader run() {
@@ -626,7 +627,7 @@ public ClassLoader getClassLoader() {
 		if (null != security) {
 			ClassLoader callersClassLoader = ClassLoader.callerClassLoader();
 			if (ClassLoader.needsClassLoaderPermissionCheck(callersClassLoader, classLoader)) {
-				security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionGetClassLoader);
+				security.checkPermission(SecurityConstants.GET_CLASSLOADER_PERMISSION);
 			}
 		}
 	}
@@ -1841,7 +1842,7 @@ public String getName() {
 public ProtectionDomain getProtectionDomain() {
 	SecurityManager security = System.getSecurityManager();
 	if (security != null) {
-		security.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionGetProtectionDomain);
+		security.checkPermission(sun.security.util.SecurityConstants.GET_PD_PERMISSION);
 	}
 
 	ProtectionDomain result = getPDImpl();
