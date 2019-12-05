@@ -287,4 +287,23 @@ class TR_UnloadedClassPicSite : public OMR::ValueModifyRuntimeAssumption
    uint32_t    _size;
    };
 
+#ifdef JITSERVER_SUPPORT
+// The following needs to have enough fields to cover any possible
+// runtime assumption that we may want to send from the server to the client
+struct SerializedRuntimeAssumption
+   {
+   SerializedRuntimeAssumption(TR_RuntimeAssumptionKind kind, uintptrj_t key, intptr_t offset, uint32_t size = 0)
+      : _kind(kind), _key(key), _offsetFromStartPC(offset), _size(size) {}
+   TR_RuntimeAssumptionKind getKind() const { return _kind; }
+   uintptrj_t getKey() const { return _key; }
+   intptr_t getOffsetFromStartPC() const { return _offsetFromStartPC; }
+   uint32_t getSize() const { return _size; }
+
+   TR_RuntimeAssumptionKind _kind;
+   uint32_t   _size;
+   uintptrj_t _key;
+   intptr_t  _offsetFromStartPC; // can be negative
+   };
+#endif // JITSERVER_SUPPORT
+
 #endif

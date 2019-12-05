@@ -7874,6 +7874,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             TR_ASSERT(that->_methodBeingCompiled->isOutOfProcessCompReq(), "Options are already provided only for JITServer");
             options = TR::Options::unpackOptions(that->_methodBeingCompiled->_clientOptions, that->_methodBeingCompiled->_clientOptionsSize, that, vm, p->trMemory());
             options->setLogFileForClientOptions();
+            // The following is a hack to prevent the JITServer from allocating
+            // a sentinel entry for the list of runtime assumptions kept in the compiler object
+            options->setOption(TR_DisableFastAssumptionReclamation);
             }
          else
 #endif /* defined(JITSERVER_SUPPORT) */
