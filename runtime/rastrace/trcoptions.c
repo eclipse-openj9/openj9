@@ -31,7 +31,7 @@
 
 typedef omr_error_t (*uteOptionFunction)(UtThreadData **thr,const char * value, BOOLEAN atRuntime);
 
-/** 
+/**
  * Structure representing a UTE option such maximal or debug
  */
 struct uteOption {
@@ -67,37 +67,37 @@ static omr_error_t setFatalAssert(UtThreadData **thr, const char * spec, BOOLEAN
 static omr_error_t clearFatalAssert(UtThreadData **thr, const char * spec, BOOLEAN atRuntime);
 
 const struct uteOption UTE_OPTIONS[] = {
-/*		{ Keyword, Can be configured at runtime, Configuration function} */
-		
-		/* These four don't have any action */
-		{UT_DEBUG_KEYWORD, FALSE, NULL},
-		{UT_SUFFIX_KEYWORD, FALSE, NULL},
-		{UT_LIBPATH_KEYWORD, FALSE, NULL},
-		{UT_FORMAT_KEYWORD, FALSE, NULL},
-		
-		{UT_RESET_KEYWORD, FALSE, processResetOption},
-		{UT_PROPERTIES_KEYWORD, FALSE, processPropertiesOption},
-		{UT_MINIMAL_KEYWORD, TRUE, setMinimal},
-		{UT_MAXIMAL_KEYWORD, TRUE, setMaximal},
-		{UT_EXCEPTION_KEYWORD, TRUE, setException},
-		{UT_COUNT_KEYWORD, TRUE, setCount},
-		{UT_PRINT_KEYWORD, TRUE, setPrint},
-		{UT_NONE_KEYWORD, TRUE, setNone},
-		{UT_IPRINT_KEYWORD, TRUE, setIprint},
-		{UT_PLATFORM_KEYWORD, FALSE, setPlatform},
-		{UT_EXTERNAL_KEYWORD, TRUE, setExternal},
-		{UT_EXCEPT_OUT_KEYWORD, FALSE, setExceptOut},
-		{UT_STATE_OUT_KEYWORD, FALSE, setStateOut},
-		{UT_OUTPUT_KEYWORD, FALSE, setOutput},
-		{UT_BUFFERS_KEYWORD, TRUE, setBuffers}, /* Not all buffers functions are exposed - but are controlled in the set function*/
-		{UT_TRIGGER_KEYWORD, TRUE, setTrigger},
-		{UT_SUSPEND_KEYWORD, TRUE, processSuspendOption},
-		{UT_RESUME_KEYWORD, TRUE, processResumeOption},
-		{UT_RESUME_COUNT_KEYWORD, TRUE, processResumeOption},
-		{UT_SUSPEND_COUNT_KEYWORD, TRUE, processSuspendCountOption},
-		{UT_FATAL_ASSERT_KEYWORD, TRUE, setFatalAssert},
-		{UT_NO_FATAL_ASSERT_KEYWORD, TRUE, clearFatalAssert},
-		{UT_SLEEPTIME_KEYWORD, TRUE, setSleepTime},
+	/* { Keyword, Can be configured at runtime, Configuration function } */
+
+	/* These four don't have any action */
+	{UT_DEBUG_KEYWORD, FALSE, NULL},
+	{UT_SUFFIX_KEYWORD, FALSE, NULL},
+	{UT_LIBPATH_KEYWORD, FALSE, NULL},
+	{UT_FORMAT_KEYWORD, FALSE, NULL},
+
+	{UT_RESET_KEYWORD, FALSE, processResetOption},
+	{UT_PROPERTIES_KEYWORD, FALSE, processPropertiesOption},
+	{UT_MINIMAL_KEYWORD, TRUE, setMinimal},
+	{UT_MAXIMAL_KEYWORD, TRUE, setMaximal},
+	{UT_EXCEPTION_KEYWORD, TRUE, setException},
+	{UT_COUNT_KEYWORD, TRUE, setCount},
+	{UT_PRINT_KEYWORD, TRUE, setPrint},
+	{UT_NONE_KEYWORD, TRUE, setNone},
+	{UT_IPRINT_KEYWORD, TRUE, setIprint},
+	{UT_PLATFORM_KEYWORD, FALSE, setPlatform},
+	{UT_EXTERNAL_KEYWORD, TRUE, setExternal},
+	{UT_EXCEPT_OUT_KEYWORD, FALSE, setExceptOut},
+	{UT_STATE_OUT_KEYWORD, FALSE, setStateOut},
+	{UT_OUTPUT_KEYWORD, FALSE, setOutput},
+	{UT_BUFFERS_KEYWORD, TRUE, setBuffers}, /* Not all buffers functions are exposed - but are controlled in the set function*/
+	{UT_TRIGGER_KEYWORD, TRUE, setTrigger},
+	{UT_SUSPEND_KEYWORD, TRUE, processSuspendOption},
+	{UT_RESUME_KEYWORD, TRUE, processResumeOption},
+	{UT_RESUME_COUNT_KEYWORD, TRUE, processResumeOption},
+	{UT_SUSPEND_COUNT_KEYWORD, TRUE, processSuspendCountOption},
+	{UT_FATAL_ASSERT_KEYWORD, TRUE, setFatalAssert},
+	{UT_NO_FATAL_ASSERT_KEYWORD, TRUE, clearFatalAssert},
+	{UT_SLEEPTIME_KEYWORD, TRUE, setSleepTime},
 };
 
 #define NUMBER_OF_UTE_OPTIONS (sizeof(UTE_OPTIONS) / sizeof(struct uteOption))
@@ -111,16 +111,15 @@ const struct uteOption UTE_OPTIONS[] = {
 static omr_error_t
 addTraceCmd(UtThreadData **thr, const char *cmd, const char *value, BOOLEAN atRuntime)
 {
-	omr_error_t rc = OMR_ERROR_NONE;
-	char *str;
-
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
 
-	str = (char *)j9mem_allocate_memory(strlen(cmd) + (value == NULL ? 1 :
-												   strlen(value) + 2), OMRMEM_CATEGORY_TRACE);
-	if (str != NULL) {
+	omr_error_t rc = OMR_ERROR_NONE;
+	size_t valueLen = (NULL == value) ? 0 : strlen(value);
+	char * str = (char *)j9mem_allocate_memory(strlen(cmd) + valueLen + 2, OMRMEM_CATEGORY_TRACE);
+
+	if (NULL != str) {
 		strcpy(str, cmd);
-		if (value != NULL && strlen(value) > 0) {
+		if (valueLen > 0) {
 			strcat(str, "=");
 			strcat(str, value);
 		}
@@ -144,12 +143,12 @@ parseBufferSize(const char * const str, const int argSize, BOOLEAN atRuntime)
 	/* It's either invalid input or a number with an optional suffix
 	 * Find the position of the first digit and non-digit character.
 	 */
-	int32_t newBufferSize;
+	int32_t newBufferSize = 0;
 	intptr_t firstNonDigit = -1;
 	intptr_t firstDigit = -1;
 	const char * p = str;
-	
-	while( *p ) {
+
+	for (; '\0' != *p; ++p) {
 		if (isdigit(*p)) {
 			if (-1 == firstDigit) {
 				firstDigit = p - str;
@@ -159,13 +158,11 @@ parseBufferSize(const char * const str, const int argSize, BOOLEAN atRuntime)
 				firstNonDigit = p - str;
 			}
 		}
-		
-		p++;
 	}
-	
+
 	/* The only valid place for a non-digit is the final character */
 	if (firstNonDigit != -1) {
-		if (firstNonDigit == (argSize - 1) && firstDigit != -1) {
+		if ((firstNonDigit == (argSize - 1)) && (-1 != firstDigit)) {
 			int multiplier = 1;
 			switch (j9_cmdla_toupper(str[argSize - 1])) {
 			case 'K':
@@ -175,10 +172,10 @@ parseBufferSize(const char * const str, const int argSize, BOOLEAN atRuntime)
 				multiplier = 1024 * 1024;
 				break;
 			default:
-				reportCommandLineError(atRuntime, "Unrecognised suffix %c specified for buffer size",str[argSize - 1]);
+				reportCommandLineError(atRuntime, "Unrecognised suffix %c specified for buffer size", str[argSize - 1]);
 				return OMR_ERROR_ILLEGAL_ARGUMENT;
 			}
-			
+
 			newBufferSize = atoi(str) * multiplier;
 		} else {
 			/* Invalid */
@@ -189,14 +186,14 @@ parseBufferSize(const char * const str, const int argSize, BOOLEAN atRuntime)
 		/* The string contains no non-digits */
 		newBufferSize = atoi(str);
 	}
-	
+
 	if (newBufferSize < UT_MINIMUM_BUFFERSIZE) {
 		reportCommandLineError(atRuntime, "Specified buffer size %d bytes is too small. Minimum is %d bytes.", newBufferSize, UT_MINIMUM_BUFFERSIZE);
 		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	} else {
 		UT_GLOBAL(bufferSize) = newBufferSize;
 	}
-	
+
 	return OMR_ERROR_NONE;
 }
 
@@ -212,33 +209,33 @@ setBuffers(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 	char * localBuffer = NULL;
 	omr_error_t rc = OMR_ERROR_NONE;
 	const int numberOfArgs = getParmNumber(value);
-	int i;
-	
+	int i = 0;
+
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
 
 	if (NULL == value) {
 		reportCommandLineError(atRuntime, "-Xtrace:buffers expects an argument.");
 		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	}
-    localBuffer = (char *)j9mem_allocate_memory(strlen(value) + 1, OMRMEM_CATEGORY_TRACE);
-    if (NULL == localBuffer) {
-    	UT_DBGOUT(1, ("<UT> Out of memory in setBuffers\n"));
+	localBuffer = (char *)j9mem_allocate_memory(strlen(value) + 1, OMRMEM_CATEGORY_TRACE);
+	if (NULL == localBuffer) {
+		UT_DBGOUT(1, ("<UT> Out of memory in setBuffers\n"));
 		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 	}
 
-	for (i=0;i<numberOfArgs;i++) {
-		int argSize;
-		const char * startOfThisArg = getPositionalParm(i+1,value,&argSize);
-		
-		if (argSize == 0) {
+	for (i = 0; i < numberOfArgs; ++i) {
+		int argSize = 0;
+		const char * startOfThisArg = getPositionalParm(i + 1, value, &argSize);
+
+		if (0 == argSize) {
 			reportCommandLineError(atRuntime, "Empty option passed to -Xtrace:buffers");
 			rc = OMR_ERROR_ILLEGAL_ARGUMENT;
 			goto end;
 		}
-		
-		strncpy(localBuffer,startOfThisArg,argSize);
+
+		strncpy(localBuffer, startOfThisArg, argSize);
 		localBuffer[argSize] = '\0';
-		
+
 		if (j9_cmdla_stricmp(localBuffer, "DYNAMIC") == 0) {
 			UT_GLOBAL(dynamicBuffers) = TRUE;
 		} else if (j9_cmdla_stricmp(localBuffer, "NODYNAMIC") == 0) {
@@ -246,7 +243,7 @@ setBuffers(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 		} else {
 			if (!atRuntime) {
 				rc = parseBufferSize(localBuffer,argSize,atRuntime);
-			
+
 				if (rc != OMR_ERROR_NONE) {
 					goto end;
 				}
@@ -258,14 +255,14 @@ setBuffers(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 			}
 		}
 	}
-	
+
 	UT_DBGOUT(1, ("<UT> Trace buffer size: %d\n",UT_GLOBAL(bufferSize)));
-	
+
 end:
 	if (localBuffer != NULL) {
 		j9mem_free_memory(localBuffer);
 	}
-	
+
 	return rc;
 }
 
@@ -278,7 +275,7 @@ end:
 static omr_error_t
 setMinimal(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 {
-	return  addTraceCmd(thr, UT_MINIMAL_KEYWORD, value, atRuntime);
+	return addTraceCmd(thr, UT_MINIMAL_KEYWORD, value, atRuntime);
 }
 
 /*******************************************************************************
@@ -303,7 +300,7 @@ static omr_error_t
 setCount(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 {
 	UT_GLOBAL(traceCount) = TRUE;
-	return  addTraceCmd(thr, UT_COUNT_KEYWORD, value, atRuntime);
+	return addTraceCmd(thr, UT_COUNT_KEYWORD, value, atRuntime);
 }
 
 /*******************************************************************************
@@ -315,8 +312,8 @@ setCount(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 static omr_error_t
 setPrint(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 {
-	/* UT_GLOBAL(loadFormatFile) =  TRUE; */
-	return  addTraceCmd(thr, UT_PRINT_KEYWORD, value, atRuntime);
+	/* UT_GLOBAL(loadFormatFile) = TRUE; */
+	return addTraceCmd(thr, UT_PRINT_KEYWORD, value, atRuntime);
 }
 
 /*******************************************************************************
@@ -338,7 +335,7 @@ setNone(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 		clearAllTriggerActions();
 	}
 
-	return  rc;
+	return rc;
 }
 
 /*******************************************************************************
@@ -350,8 +347,8 @@ setNone(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 static omr_error_t
 setIprint(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 {
-	/* UT_GLOBAL(loadFormatFile) =  TRUE; */
-	return  addTraceCmd(thr, UT_IPRINT_KEYWORD, value, atRuntime);
+	/* UT_GLOBAL(loadFormatFile) = TRUE; */
+	return addTraceCmd(thr, UT_IPRINT_KEYWORD, value, atRuntime);
 }
 
 /*******************************************************************************
@@ -363,10 +360,10 @@ setIprint(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 static omr_error_t
 setPlatform(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 {
-  if (!UT_GLOBAL(platformTraceStarted)) {
-	  UT_GLOBAL(platformTraceStarted) = TRUE;
-  }
-  return  addTraceCmd(thr, UT_PLATFORM_KEYWORD, value, atRuntime);
+	if (!UT_GLOBAL(platformTraceStarted)) {
+		UT_GLOBAL(platformTraceStarted) = TRUE;
+	}
+	return addTraceCmd(thr, UT_PLATFORM_KEYWORD, value, atRuntime);
 }
 
 /*******************************************************************************
@@ -378,7 +375,7 @@ setPlatform(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 static omr_error_t
 setExternal(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 {
-	return  addTraceCmd(thr, UT_EXTERNAL_KEYWORD, value, atRuntime);
+	return addTraceCmd(thr, UT_EXTERNAL_KEYWORD, value, atRuntime);
 }
 
 /*******************************************************************************
@@ -413,7 +410,6 @@ setExceptOut(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
 
 	UT_GLOBAL(extExceptTrace) = TRUE;
-
 
 	/*
 	 * check for and expand %p or %p characters
@@ -462,7 +458,7 @@ setExceptOut(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 					str[length] = '\0';
 					UT_GLOBAL(exceptTraceWrap) = atoi(str) * multiplier;
 					UT_DBGOUT(1, ("<UT> Trace exception file wrap: %d\n",
-							   UT_GLOBAL(exceptTraceWrap)));
+								UT_GLOBAL(exceptTraceWrap)));
 				}
 			} else {
 				reportCommandLineError(atRuntime, "Length of wrap limit parameter invalid");
@@ -472,7 +468,7 @@ setExceptOut(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 	}
 
 	/*
-	 *  That should be it
+	 * That should be it
 	 */
 
 	if (getParmNumber(instring) > 2) {
@@ -542,7 +538,7 @@ setStateOut(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 	}
 
 	/*
-	 *  That should be it
+	 * That should be it
 	 */
 	if (getParmNumber(instring) > 2) {
 		reportCommandLineError(atRuntime, "Too many keywords in state.output specification");
@@ -575,7 +571,6 @@ setOutput(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 
 	UT_GLOBAL(externalTrace) = TRUE;
 
-
 	/*
 	 * check for and expand %p or %p characters
 	 */
@@ -592,7 +587,7 @@ setOutput(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 				memcpy(UT_GLOBAL(traceFilename), p, length);
 				UT_GLOBAL(traceFilename[length]) = '\0';
 				UT_DBGOUT(1, ("<UT> Output filename: %s\n",
-						   UT_GLOBAL(traceFilename)));
+							UT_GLOBAL(traceFilename)));
 
 			} else {
 				UT_DBGOUT(1, ("<UT> Out of memory handling output property\n"));
@@ -643,7 +638,7 @@ setOutput(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 				str[length] = '\0';
 				UT_GLOBAL(traceGenerations) = atoi(str);
 				UT_DBGOUT(1, ("<UT> Trace file generations: %d\n",
-						   UT_GLOBAL(traceGenerations)));
+							UT_GLOBAL(traceGenerations)));
 				if ((UT_GLOBAL(traceGenerations) < 2) ||
 					(UT_GLOBAL(traceGenerations) >36)) {
 					reportCommandLineError(atRuntime, "Invalid number of trace generations");
@@ -651,7 +646,7 @@ setOutput(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 				} else {
 					if ((UT_GLOBAL(generationChar) =
 						strchr(UT_GLOBAL(traceFilename), '#')) == NULL) {
-						reportCommandLineError(atRuntime, "Invalid filename for generation mode," 
+						reportCommandLineError(atRuntime, "Invalid filename for generation mode,"
 								" the filename must contain a \"#\"");
 						rc = OMR_ERROR_ILLEGAL_ARGUMENT;
 					}
@@ -666,7 +661,7 @@ setOutput(UtThreadData **thr, const char *value, BOOLEAN atRuntime)
 	}
 
 	/*
-	 *  That should be it
+	 * That should be it
 	 */
 	if (getParmNumber(instring) > 3) {
 		reportCommandLineError(atRuntime, "Too many keywords in output specification");
@@ -689,8 +684,8 @@ omr_error_t
 setTrigger(UtThreadData **thr, const char *triggerStr, BOOLEAN atRuntime)
 {
 	omr_error_t rc = OMR_ERROR_NONE;
-	char   *clause = NULL;
-	char   *str;
+	char *clause = NULL;
+	char *str = NULL;
 	const char *value = triggerStr;
 	int32_t done = FALSE;
 
@@ -700,17 +695,17 @@ setTrigger(UtThreadData **thr, const char *triggerStr, BOOLEAN atRuntime)
 	/*
 	 * Ignore empty value
 	 */
-	if(value == NULL || strlen(value) == 0) {
+	if (value == NULL || strlen(value) == 0) {
 		return rc;
 	}
 
 	/*
 	 * Keep calling getNextBracketedParm until done comes back TRUE
 	 */
-	for (;(OMR_ERROR_NONE == rc) && (!done);) {
+	for (; (OMR_ERROR_NONE == rc) && !done;) {
 		clause = getNextBracketedParm(value, &rc, &done, atRuntime);
-		if(OMR_ERROR_NONE == rc){
-			if(strlen(clause) == 0) {
+		if (OMR_ERROR_NONE == rc) {
+			if (strlen(clause) == 0) {
 				reportCommandLineError(atRuntime, "Empty clauses not allowed in trigger property.");
 				rc = OMR_ERROR_INTERNAL;
 			} else {
@@ -724,38 +719,36 @@ setTrigger(UtThreadData **thr, const char *triggerStr, BOOLEAN atRuntime)
 				} else {
 					workingClause = clause;
 				}
-				
+
 				/*
 				 * Tracepoint ID specified ?
 				 */
 				if (0 == j9_cmdla_strnicmp(workingClause, "tpnid{", strlen("tpnid{"))) {
-					
 					if (strchr(clause, ',') != NULL) {
 						str = strchr(clause, ',');
 						str[0] = '}';
 						str[1] = '\0';
 					}
-					
+
 					rc = addTraceCmd(thr, UT_TRIGGER_KEYWORD, clause, atRuntime);
 				}
 				/*
-				 * Group specified ?  =>  map to "all{name}"
+				 * Group specified ? => map to "all{name}"
 				 */
 				if (0 == j9_cmdla_strnicmp(workingClause, "group{", strlen("group{"))) {
-					
 					if (strchr(clause, ',') != NULL) {
 						str = strchr(clause, ',');
 						str[0] = '}';
 						str[1] = '\0';
 					}
-					
+
 					str = clause + 2;
 					if (disabling) {
-						strncpy(str, "!all", 4);
+						memcpy(str, "!all", 4);
 					} else {
-						strncpy(str, "all", 3);
+						memcpy(str, "all", 3);
 					}
-					
+
 					rc = addTraceCmd(thr, UT_TRIGGER_KEYWORD, str, atRuntime);
 				}
 			}
@@ -770,13 +763,12 @@ setTrigger(UtThreadData **thr, const char *triggerStr, BOOLEAN atRuntime)
 	 * Now we need to process the trigger actions so we can look up what to
 	 * do when one of those trace points fires.
 	 */
-	if( OMR_ERROR_NONE == rc ) {
+	if (OMR_ERROR_NONE == rc) {
 		rc = setTriggerActions(thr, triggerStr, atRuntime);
 	}
 
 	return rc;
 }
-
 
 /*******************************************************************************
  * name        - setFormat
@@ -816,28 +808,28 @@ setFormat(const char *value)
 omr_error_t
 setSuspendResumeCount(UtThreadData **thr, const char *value, int32_t resume, BOOLEAN atRuntime)
 {
-	omr_error_t     rc = OMR_ERROR_NONE;
-	const char    *p;
-	int     length;
-	int     maxLength=5;
+	omr_error_t rc = OMR_ERROR_NONE;
+	const char *p = NULL;
+	int length = 0;
+	int maxLength = 5;
 
 	/*
 	 * check for basic formatting errors
 	 */
 	p = getPositionalParm(1, value, &length);
 
-	if (getParmNumber(value) != 1) {  /* problem if not just the one parm */
+	if (getParmNumber(value) != 1) { /* problem if not just the one parm */
 		rc = OMR_ERROR_INTERNAL;
-	} else if (length == 0) {         /* first (only) parm must be non null */
+	} else if (length == 0) { /* first (only) parm must be non null */
 		rc = OMR_ERROR_INTERNAL;
 	}
 
-	if (OMR_ERROR_NONE == rc) {               /* max 5 chars long            */
-		if (*p == '+' || *p == '-') { /* but must allow 6 if signed  */
+	if (OMR_ERROR_NONE == rc) { /* max 5 chars long */
+		if (*p == '+' || *p == '-') { /* but must allow 6 if signed */
 			maxLength++;
 		}
-		if (length > maxLength){
-			rc=OMR_ERROR_INTERNAL;
+		if (length > maxLength) {
+			rc = OMR_ERROR_INTERNAL;
 		}
 	}
 
@@ -845,14 +837,14 @@ setSuspendResumeCount(UtThreadData **thr, const char *value, int32_t resume, BOO
 	 * If any of the above checks failed, issue message.
 	 */
 	if (OMR_ERROR_NONE != rc) {
-		if(resume) {
+		if (resume) {
 			reportCommandLineError(atRuntime, "resumecount takes a single integer value from -99999 to +99999");
 		} else {
 			reportCommandLineError(atRuntime, "suspendcount takes a single integer value from -99999 to +99999");
 		}
 	}
 
-	if(OMR_ERROR_NONE == rc) {
+	if (OMR_ERROR_NONE == rc) {
 		/*
 		 * Enforce that users may not use resumecount and suspendcount together !
 		 */
@@ -864,7 +856,7 @@ setSuspendResumeCount(UtThreadData **thr, const char *value, int32_t resume, BOO
 			int value = decimalString2Int(p, TRUE, &rc, atRuntime);
 
 			if (OMR_ERROR_NONE == rc) {
-				if(resume){
+				if (resume) {
 					UT_GLOBAL(initialSuspendResume) = (0 - value);
 				} else {
 					UT_GLOBAL(initialSuspendResume) = (value - 1);
@@ -888,23 +880,22 @@ setSuspendResumeCount(UtThreadData **thr, const char *value, int32_t resume, BOO
 static omr_error_t
 processPropertyFile(UtThreadData **thr, const char *filename, BOOLEAN atRuntime)
 {
-	intptr_t          propFile;
-	int64_t         size;
-	int            i;
-	omr_error_t            rc = OMR_ERROR_NONE;
-	char          *buffer = NULL;
-	char          *p;
-	char           name[MAX_IMAGE_PATH_LENGTH];
-	char          *separator = DIR_SEPARATOR_STR;
+	intptr_t propFile = 0;
+	int64_t size = 0;
+	int i = 0;
+	omr_error_t rc = OMR_ERROR_NONE;
+	char *buffer = NULL;
+	char *p = NULL;
+	char name[MAX_IMAGE_PATH_LENGTH];
+	char *separator = DIR_SEPARATOR_STR;
 
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
 
 	/*
-	 *  Process properties file, if any
+	 * Process properties file, if any
 	 */
 
 	if (filename == NULL || *filename == '\0') {
-
 		*name = '\0';
 
 		if (UT_GLOBAL(propertyFilePath) != NULL) {
@@ -923,7 +914,7 @@ processPropertyFile(UtThreadData **thr, const char *filename, BOOLEAN atRuntime)
 		reportCommandLineError(atRuntime, "Unable to open properties file %s", name);
 	} else {
 		/*
-		 *  Get the file size
+		 * Get the file size
 		 */
 		size = j9file_flength(propFile);
 		if ( 0 > size ) {
@@ -936,7 +927,7 @@ processPropertyFile(UtThreadData **thr, const char *filename, BOOLEAN atRuntime)
 			if (buffer == NULL) {
 				UT_DBGOUT(1, ("<UT> Cannot obtain memory to process %s\n", name));
 			} else {
-				if ((size = j9file_read(propFile, buffer, (int)size)) == 0){
+				if ((size = j9file_read(propFile, buffer, (int)size)) == 0) {
 					reportCommandLineError(atRuntime, "Error reading properties file %s", name);
 				} else {
 					buffer[size] = '\0';
@@ -948,7 +939,7 @@ processPropertyFile(UtThreadData **thr, const char *filename, BOOLEAN atRuntime)
 		j9file_close(propFile);
 	}
 	/*
-	 *  Transform all CR/LF's to binary zeroes and tabs to blanks
+	 * Transform all CR/LF's to binary zeroes and tabs to blanks
 	 */
 	if (rc == OMR_ERROR_NONE) {
 		*(buffer + size) = '\0';
@@ -962,7 +953,7 @@ processPropertyFile(UtThreadData **thr, const char *filename, BOOLEAN atRuntime)
 			}
 		}
 		/*
-		 *  Parse the file a line at a time
+		 * Parse the file a line at a time
 		 */
 		for (p = buffer;
 			 (rc == OMR_ERROR_NONE) && (p < (buffer + size));
@@ -974,7 +965,7 @@ processPropertyFile(UtThreadData **thr, const char *filename, BOOLEAN atRuntime)
 			if (0 == j9_cmdla_strnicmp(p, UT_PROPERTIES_COMMENT, strlen(UT_PROPERTIES_COMMENT))) {
 				continue;
 			}
-			if(0 == j9_cmdla_strnicmp(p, UT_DEBUG_KEYWORD, strlen(UT_DEBUG_KEYWORD))) {
+			if (0 == j9_cmdla_strnicmp(p, UT_DEBUG_KEYWORD, strlen(UT_DEBUG_KEYWORD))) {
 				if (strlen(p) > strlen(UT_DEBUG_KEYWORD)) {
 					p += strlen(UT_DEBUG_KEYWORD);
 					if (strlen(p) == 2 &&
@@ -1030,7 +1021,7 @@ processPropertyFile(UtThreadData **thr, const char *filename, BOOLEAN atRuntime)
 					   (*(p + strlen(UT_FORMAT_KEYWORD)) == '=')) {
 				char * tempSpec;
 				p += strlen(UT_FORMAT_KEYWORD) + 1;
-				tempSpec =  j9mem_allocate_memory(strlen(p) + 1, OMRMEM_CATEGORY_TRACE );
+				tempSpec = j9mem_allocate_memory(strlen(p) + 1, OMRMEM_CATEGORY_TRACE );
 				if (tempSpec != NULL) {
 					strcpy(tempSpec, p);
 					UT_GLOBAL(traceFormatSpec) = tempSpec;
@@ -1089,11 +1080,11 @@ processPropertyFile(UtThreadData **thr, const char *filename, BOOLEAN atRuntime)
 				rc = setSleepTime(thr, p, FALSE);
 			} else {
 				/*
-				 *  Check for options to quietly ignore
+				 * Check for options to quietly ignore
 				 */
 
 				if (UT_GLOBAL(ignore) != NULL) {
-					for(i = 0; UT_GLOBAL(ignore[i]) != NULL; i++) {
+					for (i = 0; UT_GLOBAL(ignore[i]) != NULL; i++) {
 						if (0 == j9_cmdla_strnicmp(p, UT_GLOBAL(ignore[i]), strlen(UT_GLOBAL(ignore[i])))) {
 							rc = propertyFileOption(p);
 							break;
@@ -1112,7 +1103,7 @@ processPropertyFile(UtThreadData **thr, const char *filename, BOOLEAN atRuntime)
 		j9mem_free_memory(buffer);
 	}
 	UT_DBGOUT(1, ("<UT> Properties file processing complete, RC=%d\n", rc));
-	
+
 	if (UT_GLOBAL(externalTrace) || UT_GLOBAL(extExceptTrace)) {
 		UT_GLOBAL(traceInCore) = FALSE;
 	}
@@ -1132,21 +1123,20 @@ processEarlyOptions(const char **opts)
 	omr_error_t rc = OMR_ERROR_NONE;
 
 	/*
-	 *  Process the options passed
+	 * Process the options passed
 	 */
-
 
 	/*
-	 *  Options are in name / value pairs, and terminate with a NULL
+	 * Options are in name / value pairs, and terminate with a NULL
 	 */
 
-	for(i = 0; opts[i] != NULL; i += 2) {
+	for (i = 0; opts[i] != NULL; i += 2) {
 		/* DEBUG is handled elsewhere, SUFFIX and LIBPATH are obsolete. */
-		if(j9_cmdla_stricmp((char *)opts[i], UT_DEBUG_KEYWORD) == 0) {
+		if (j9_cmdla_stricmp((char *)opts[i], UT_DEBUG_KEYWORD) == 0) {
 		} else if (j9_cmdla_stricmp((char *)opts[i], UT_SUFFIX_KEYWORD) == 0) {
 		} else if (j9_cmdla_stricmp((char *)opts[i], UT_LIBPATH_KEYWORD) == 0) {
 		} else if (j9_cmdla_stricmp((char *)opts[i], UT_FORMAT_KEYWORD) == 0) {
-			if ( opts[i+1] == NULL ){
+			if (opts[i + 1] == NULL) {
 				return OMR_ERROR_ILLEGAL_ARGUMENT;
 			}
 			rc = setFormat(opts[i + 1]);
@@ -1219,13 +1209,13 @@ processOptions(UtThreadData **thr, const char **opts, BOOLEAN atRuntime)
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
 
 	/*
-	 *  Check options for the debug switch. Options are in name / value pairs
-	 *  so only look at the first of each pair
+	 * Check options for the debug switch. Options are in name / value pairs
+	 * so only look at the first of each pair
 	 */
 
 	if (! atRuntime) {
-		for(i = 0; opts[i] != NULL; i += 2) {
-			if(j9_cmdla_stricmp((char *)opts[i], UT_DEBUG_KEYWORD) == 0) {
+		for (i = 0; opts[i] != NULL; i += 2) {
+			if (j9_cmdla_stricmp((char *)opts[i], UT_DEBUG_KEYWORD) == 0) {
 				if (opts[i + 1] != NULL &&
 						strlen(opts[i + 1]) == 1 &&
 						*opts[i + 1] >= '0' &&
@@ -1240,18 +1230,18 @@ processOptions(UtThreadData **thr, const char **opts, BOOLEAN atRuntime)
 	}
 
 	/*
-	 *  Process the options passed
-	 *  Options are in name / value pairs, and terminate with a NULL
+	 * Process the options passed
+	 * Options are in name / value pairs, and terminate with a NULL
 	 */
 
-	for(i = 0; opts[i] != NULL; i += 2) {
+	for (i = 0; opts[i] != NULL; i += 2) {
 		int32_t found = 0;
 		const char *optName = opts[i];
 		char *optValue = (char*)opts[i+1];
 		size_t optNameLen = strlen(optName);
 		UT_DBGOUT(1, ("<UT> Processing option %s=%s\n", optName, (optValue == NULL)? "NULL" : optValue ));
-		
-		if( NULL != optValue ) {
+
+		if ( NULL != optValue ) {
 			size_t optValueLen = strlen(optValue);
 			/* Values enclosed in {...} should have the brackets removed */
 			if (optValue[0] == '{' && optValue[optValueLen-1] == '}') {
@@ -1268,21 +1258,21 @@ processOptions(UtThreadData **thr, const char **opts, BOOLEAN atRuntime)
 		for (j=0; j < NUMBER_OF_UTE_OPTIONS; j++) {
 			if (optNameLen == strlen(UTE_OPTIONS[j].name) && 0 == j9_cmdla_stricmp((char *)optName,(char *)UTE_OPTIONS[j].name)) {
 				found = 1;
-				
+
 				if (atRuntime && ! UTE_OPTIONS[j].runtimeModifiable) {
 					reportCommandLineError(atRuntime, "Option \"%s\" cannot be set at run-time. Set it on the command line at start-up.", optName);
-					
+
 					rc = OMR_ERROR_ILLEGAL_ARGUMENT;
 				} else {
 					if (NULL != UTE_OPTIONS[j].optionFunction) {
 						rc = UTE_OPTIONS[j].optionFunction(thr,optValue,atRuntime);
 					}
 				}
-				
+
 				break;
 			}
 		}
-		
+
 		/*
 		 * Handle any non-OMR options by calling back to the language layer.
 		 */
@@ -1291,13 +1281,13 @@ processOptions(UtThreadData **thr, const char **opts, BOOLEAN atRuntime)
 				found = 1;
 			}
 		}
-		
+
 		/*
-		 *  Check for options to quietly ignore
+		 * Check for options to quietly ignore
 		 */
 		if (! found) {
 			if (UT_GLOBAL(ignore) != NULL) {
-				for(j = 0; UT_GLOBAL(ignore[j]) != NULL; j++) {
+				for (j = 0; UT_GLOBAL(ignore[j]) != NULL; j++) {
 					if (j9_cmdla_stricmp((char *)optName, (char *)UT_GLOBAL(ignore[j])) == 0) {
 						break;
 					}
@@ -1307,18 +1297,17 @@ processOptions(UtThreadData **thr, const char **opts, BOOLEAN atRuntime)
 				}
 			}
 		}
-		
+
 		if (! found) {
 			if (!atRuntime) {
 				j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_UNRECOGNISED_OPTION_STR, optName);
 			}
 			rc = OMR_ERROR_ILLEGAL_ARGUMENT;
 		}
-		
-		
+
 		if (OMR_ERROR_NONE != rc) {
 			if (!atRuntime) {
-				if( optValue == NULL ) {
+				if ( optValue == NULL ) {
 					j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_ERROR_IN_OPTION_STR, optName);
 				} else {
 					j9nls_printf(PORTLIB, J9NLS_ERROR | J9NLS_STDERR, J9NLS_TRC_ERROR_IN_OPTION_WITH_ARG_STR, optName, optValue);
@@ -1329,9 +1318,9 @@ processOptions(UtThreadData **thr, const char **opts, BOOLEAN atRuntime)
 			/* Add to trace config if the option was valid and actually set. */
 			addTraceConfigKeyValuePair(thr, optName, optValue);
 		}
-		
+
 		/* Check if we allocated a new string for optValue and free */
-		if( optValue != opts[i+1] ) {
+		if ( optValue != opts[i+1] ) {
 			j9mem_free_memory(optValue);
 		}
 	}
@@ -1339,9 +1328,9 @@ processOptions(UtThreadData **thr, const char **opts, BOOLEAN atRuntime)
 	if (UT_GLOBAL(externalTrace) || UT_GLOBAL(extExceptTrace)) {
 		UT_GLOBAL(traceInCore) = FALSE;
 	}
-	
+
 	/*
-	 *  Set active flag
+	 * Set active flag
 	 */
 
 	UT_GLOBAL(traceActive) = TRUE;
@@ -1351,7 +1340,7 @@ processOptions(UtThreadData **thr, const char **opts, BOOLEAN atRuntime)
 /**************************************************************************
  * name        - reportCommandLineError
  * description - Report an error in a command line option and put the given
- * 			   - string in as detail in an NLS enabled message.
+ *             - string in as detail in an NLS enabled message.
  * parameters  - detailStr, args for formatting into detailStr.
  *             - suppressMessages, a flag that says whether messages should
  *               be displayed at the moment.
@@ -1372,7 +1361,7 @@ reportCommandLineError(BOOLEAN suppressMessages, const char* detailStr, ...)
 /**************************************************************************
  * name        - selectSpecial
  * description - Selects special option - provides argument parsing only to
- * 				 allow backwards command line compatibility.
+ *               allow backwards command line compatibility.
  * parameters  - Component name, component array,
  * returns     - size of the match
  *************************************************************************/
@@ -1393,10 +1382,10 @@ selectSpecial(const char *string)
 			(p[strlen(UT_BACKTRACE)] == '\0'))) {
 		UT_DBGOUT(3, ("<UT> Backtrace specifier found\n"));
 		p += strlen(UT_BACKTRACE);
-		if((*p == ',') && ((*(p+1) >= '0') && (*(p+1) <= '9'))) {
+		if ((*p == ',') && ((*(p+1) >= '0') && (*(p+1) <= '9'))) {
 			depth = 0;
 			p++;
-			while((*p != '\0') && (*p >= '0') && (*p <= '9')) {
+			while ((*p != '\0') && (*p >= '0') && (*p <= '9')) {
 				depth *= 10;
 				depth += (*p - '0');
 				p++;
@@ -1404,18 +1393,17 @@ selectSpecial(const char *string)
 		}
 		UT_DBGOUT(3, ("<UT> Depth set to %d\n", depth));
 	}
-	if(*p == ',') {
+	if (*p == ',') {
 		p++;
 	}
 	return((int)(p - string));
 }
 
-
 /*******************************************************************************
  * name        - selectComponent
  * description - Selects a component name
  * parameters  - Component name, component array, first time
-  *              through flag
+ *               through flag
  * returns     - size of the match
  ******************************************************************************/
 static int
@@ -1424,16 +1412,16 @@ selectComponent(const char *cmd, int32_t *first, char traceType, int32_t setActi
 	int length = 0;
 
 	/*
-	 *  If no component specified and first time through, default to all
+	 * If no component specified and first time through, default to all
 	 */
 	UT_DBGOUT(2, ("<UT> selectComponent: %s\n", cmd));
 	if (*cmd == '\0') {
 		if (*first) {
 			omr_error_t rc = OMR_ERROR_NONE;
-			
+
 			UT_DBGOUT(1, ("<UT> Defaulting to All components\n"));
 			/*
-			 *  Set all components and applications, but ignore groups
+			 * Set all components and applications, but ignore groups
 			 */
 			rc = setTracePointsTo((const char*) UT_ALL, UT_GLOBAL(componentList), TRUE, 0, 0, traceType, -1, NULL, atRuntime, setActive);
 			if (OMR_ERROR_NONE != rc) {
@@ -1441,12 +1429,12 @@ selectComponent(const char *cmd, int32_t *first, char traceType, int32_t setActi
 				return -1;
 			}
 		}
-		*first = FALSE;   
+		*first = FALSE;
 	} else {
 		omr_error_t rc = OMR_ERROR_NONE;
-		
+
 		*first = FALSE;
-		
+
 		UT_DBGOUT(2, ("<UT> Component %s selected\n", cmd));
 		rc = setTracePointsTo(cmd, UT_GLOBAL(componentList), TRUE, 0, 0, traceType, -1, NULL, atRuntime, setActive);
 		if (OMR_ERROR_NONE != rc) {
@@ -1472,22 +1460,21 @@ selectComponent(const char *cmd, int32_t *first, char traceType, int32_t setActi
 omr_error_t
 setTraceState(const char *cmd, BOOLEAN atRuntime)
 {
-	omr_error_t	rc = OMR_ERROR_NONE;
-	int	i;
-	int32_t	first = TRUE;
-	int	context = UT_CONTEXT_INITIAL;
-	char	traceType = UT_NONE;
-	int	length;
-	const char  *p;
-	int32_t	explicitClass;
-	int32_t	setActive = TRUE;
+	omr_error_t rc = OMR_ERROR_NONE;
+	int i = 0;
+	int32_t first = TRUE;
+	int context = UT_CONTEXT_INITIAL;
+	char traceType = UT_NONE;
+	int length = 0;
+	const char *p = NULL;
+	int32_t explicitClass = 0;
+	int32_t setActive = TRUE;
 
 	/*
-	 *  Initialize temporary boolean arrays to reflect whether a particular
-	 *  component or class is the target of this command
+	 * Initialize temporary boolean arrays to reflect whether a particular
+	 * component or class is the target of this command
 	 */
 	UT_DBGOUT(1, ("<UT> setTraceState %s\n", cmd));
-
 
 	/*
 	 * Parse the command using a finite state machine
@@ -1500,11 +1487,11 @@ setTraceState(const char *cmd, BOOLEAN atRuntime)
 
 	p = cmd;
 	explicitClass = FALSE;
-	while((OMR_ERROR_NONE == rc)  &&
+	while ((OMR_ERROR_NONE == rc) &&
 		  (UT_CONTEXT_FINAL != context)) {
 		switch (context) {
 		/*
-		 *  Start of line
+		 * Start of line
 		 */
 		case UT_CONTEXT_INITIAL:
 			UT_DBGOUT(2, ("<UT> setTraceState: Initial\n"));
@@ -1560,10 +1547,10 @@ setTraceState(const char *cmd, BOOLEAN atRuntime)
 				p += strlen(UT_EXCEPTION_KEYWORD);
 			} else {
 				/*
-				 *  Check for options to quietly ignore
+				 * Check for options to quietly ignore
 				 */
 				if (UT_GLOBAL(ignore) != NULL) {
-					for(i = 0; UT_GLOBAL(ignore[i]) != NULL; i++) {
+					for (i = 0; UT_GLOBAL(ignore[i]) != NULL; i++) {
 						if (0 == j9_cmdla_strnicmp(p, UT_GLOBAL(ignore[i]), strlen(UT_GLOBAL(ignore[i])))) {
 							p += strlen(p);
 							break;
@@ -1580,20 +1567,20 @@ setTraceState(const char *cmd, BOOLEAN atRuntime)
 
 			if (*p == '=') {
 				p++;
-			} 
-			
+			}
+
 			if (*p == '\0' && traceType != UT_NONE) {
 				/* Only the keyword has been specified and the option isn't -Xtrace:none */
 				reportCommandLineError(atRuntime, "Option %s requires an argument.",cmd);
 				rc = OMR_ERROR_ILLEGAL_ARGUMENT;
 			}
-			
+
 			context = UT_CONTEXT_COMPONENT;
 			UT_GLOBAL(traceDests) |= traceType;
 			break;
 
 		/*
-		 *  Looking for a component or TPID
+		 * Looking for a component or TPID
 		 */
 		case UT_CONTEXT_COMPONENT:
 			UT_DBGOUT(2, ("<UT> setTraceState: Component\n"));
@@ -1602,10 +1589,10 @@ setTraceState(const char *cmd, BOOLEAN atRuntime)
 			if (*p == '!') {
 				UT_DBGOUT(2, ("<UT> Reset of tracepoints requested\n"));
 				p++;
-				setActive = FALSE;                
+				setActive = FALSE;
 			}
 			/* Parse deprecated option -Xtrace:maximal={backtrace[,depth]} */
-			if((length = selectSpecial(p)) != 0) {
+			if ((length = selectSpecial(p)) != 0) {
 				if (length < 0) {
 					rc = OMR_ERROR_ILLEGAL_ARGUMENT;
 				} else {
@@ -1633,7 +1620,7 @@ setTraceState(const char *cmd, BOOLEAN atRuntime)
 			}
 			break;
 		/*
-		 *  Looking for classes
+		 * Looking for classes
 		 */
 		case UT_CONTEXT_CLASS:
 			UT_DBGOUT(2, ("<UT> setTraceState: Class\n"));
@@ -1641,22 +1628,21 @@ setTraceState(const char *cmd, BOOLEAN atRuntime)
 						context = UT_CONTEXT_PROCESS;
 			break;
 		/*
-		 *  Process the state so far.
+		 * Process the state so far.
 		 */
 		case UT_CONTEXT_PROCESS:
 			UT_DBGOUT(2, ("<UT> setTraceState: Process\n"));
-						if (*p == '\0'){
-							context = UT_CONTEXT_FINAL;
-						} else {
-							setActive = TRUE;
-							context = UT_CONTEXT_COMPONENT;
-						}
+			if (*p == '\0') {
+				context = UT_CONTEXT_FINAL;
+			} else {
+				setActive = TRUE;
+				context = UT_CONTEXT_COMPONENT;
+			}
 			break;
 		}
 
-
 		/*
-		 *  Check for more input
+		 * Check for more input
 		 */
 		if (OMR_ERROR_ILLEGAL_ARGUMENT != rc) {
 			if (*p =='\0') {
@@ -1675,7 +1661,7 @@ setTraceState(const char *cmd, BOOLEAN atRuntime)
 	}
 
 	/*
-	 *  Expecting more input ?
+	 * Expecting more input ?
 	 */
 	if (explicitClass) {
 		rc = OMR_ERROR_ILLEGAL_ARGUMENT;
@@ -1698,17 +1684,16 @@ setTraceState(const char *cmd, BOOLEAN atRuntime)
  * parameters  - char **options, atRuntime
  * returns     - OMR return code
  ******************************************************************************/
-
-omr_error_t 
+omr_error_t
 setOptions(UtThreadData **thr, const char **opts, BOOLEAN atRuntime)
 {
-	omr_error_t	rc = OMR_ERROR_NONE;
+	omr_error_t rc = OMR_ERROR_NONE;
 
 	UT_DBGOUT(1, ("<UT> Initializing options \n"));
 
 	if (!atRuntime) {
 		/*
-		 *  Process any additional early options
+		 * Process any additional early options
 		 */
 		rc = processEarlyOptions(opts);
 		if (OMR_ERROR_NONE != rc) {
@@ -1718,7 +1703,7 @@ setOptions(UtThreadData **thr, const char **opts, BOOLEAN atRuntime)
 	}
 
 	/*
-	 *  Process the rest of the options
+	 * Process the rest of the options
 	 */
 	rc = processOptions(thr, opts, atRuntime);
 	if (OMR_ERROR_NONE != rc) {
@@ -1736,7 +1721,7 @@ setOptions(UtThreadData **thr, const char **opts, BOOLEAN atRuntime)
  * parameters  - thread and option.
  * returns     - UTE error code
  *************************************************************************/
-static omr_error_t 
+static omr_error_t
 propertyFileOption(const char *value)
 {
 
@@ -1752,7 +1737,7 @@ propertyFileOption(const char *value)
 	if (!value) {
 		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	}
-	
+
 	if (NULL == optionCallback) {
 		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	}
@@ -1767,7 +1752,7 @@ propertyFileOption(const char *value)
 	/* If this is a name/value pair split it up. */
 	optName = tempStr;
 	optValue = strchr(tempStr, '=');
-	if( optValue != NULL ) {
+	if ( optValue != NULL ) {
 		size_t optValueLen = strlen(optValue);
 		*optValue = '\0';
 		optValue++;
@@ -1775,10 +1760,9 @@ propertyFileOption(const char *value)
 		/* Values enclosed in {...} should have the brackets removed */
 		if (optValue[0] == '{' && optValue[optValueLen-1] == '}') {
 			optValue++;
-			optValue[strlen(optValue)-1] = '\0';
+			optValue[strlen(optValue) - 1] = '\0';
 		}
 	}
-
 
 	/*
 	 * Handle any non-OMR options by calling back to the language layer.
@@ -1787,7 +1771,7 @@ propertyFileOption(const char *value)
 		j9mem_free_memory(tempStr);
 		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	}
-	
+
 	j9mem_free_memory(tempStr);
 	return OMR_ERROR_NONE;
 }

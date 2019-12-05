@@ -192,7 +192,13 @@ typedef struct
 	char *actionString;
 } CFDumpOptions;
 
-#define j9tty_output_char(c) tty_output_char(privatePortLibrary, (c))
+#define j9tty_output_char(c) tty_output_char(PORTLIB, (c))
+
+#if defined(WIN32) || defined(OS2)
+#define PATH_SEP_CHAR '\\'
+#else /* defined(WIN32) || defined(OS2) */
+#define PATH_SEP_CHAR '/'
+#endif /* defined(WIN32) || defined(OS2) */
 
 static J9TranslationBufferSet *translationBuffers;
 static J9BytecodeVerificationData *verifyBuffers;
@@ -2399,52 +2405,43 @@ static I_32 processClassFile(J9CfrClassFile* classfile, U_32 dataLength, char* r
 }
 
 
-static I_32 processAllFiles(char** files, U_32 flags)
+static I_32
+processAllFiles(char **files, U_32 flags)
 {
-	char* currentFile;
-	char* dirCopy;
-	char sep;
-	I_32 i;
-	IDATA length;
+	I_32 i = 0;
 
 	PORT_ACCESS_FROM_PORT(portLib);
 
-	i = 0;
-	while(NULL != (currentFile = files[i++]))
-	{
-		if(j9file_attr(currentFile) == EsIsDir)
-		{
-#if defined(WIN32) || defined(OS2)
-			sep = '\\';
-#else
-			sep = '/';
-#endif
-			length = strlen(currentFile);
-			if(currentFile[length - 1] == sep)
-			{
+	for (i = 0; ; ++i) {
+		char *currentFile = files[i];
+		if (NULL == currentFile) {
+			break;
+		}
+		if (j9file_attr(currentFile) != EsIsDir) {
+			processSingleFile(currentFile, flags);
+		} else {
+			IDATA length = strlen(currentFile);
+			if ((length > 0) && (PATH_SEP_CHAR == currentFile[length - 1])) {
 				processDirectory(currentFile, (BOOLEAN) ((options.options & OPTION_recursive) != 0), flags);
-			}
-			else
-			{
-				dirCopy = j9mem_allocate_memory(length + 2, J9MEM_CATEGORY_CLASSES);
-				if(dirCopy == NULL) return RET_ALLOCATE_FAILED;
-				strncpy(dirCopy, currentFile, length);
-				dirCopy[length] = sep;
+			} else {
+				char *dirCopy = j9mem_allocate_memory(length + 2, J9MEM_CATEGORY_CLASSES);
+				if (NULL == dirCopy) {
+					return RET_ALLOCATE_FAILED;
+				}
+				memcpy(dirCopy, currentFile, length);
+				dirCopy[length] = PATH_SEP_CHAR;
 				dirCopy[length + 1] = '\0';
 				processDirectory(dirCopy, (BOOLEAN) ((options.options & OPTION_recursive) != 0), flags);
 				j9mem_free_memory(dirCopy);
 			}
-		}
-		else
-		{
-			processSingleFile(currentFile, flags);
 		}
 	}
 	return 0;
 }
 
 
-static I_32 processAllInZIP(char* zipFilename, U_32 flags)
+static I_32
+processAllInZIP(char* zipFilename, U_32 flags)
 {
 	J9ROMClass* romClass = NULL;
 	J9CfrClassFile* classfile = NULL;
@@ -2458,7 +2455,7 @@ static I_32 processAllInZIP(char* zipFilename, U_32 flags)
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	/* Open the zip file (in non-cached mode) */
-	result = zip_openZipFile(PORTLIB, (char*)zipFilename, &zipFile, NULL, J9ZIP_OPEN_NO_FLAGS);
+	result = zip_openZipFile(PORTLIB, zipFilename, &zipFile, NULL, J9ZIP_OPEN_NO_FLAGS);
 	if(result)
 	{
 		j9tty_printf(PORTLIB, "Could not open or read %s\n", zipFilename);
@@ -6656,54 +6653,58 @@ static void j9_formatBytecodes(J9ROMClass* romClass, J9ROMMethod* method, U_8* b
 }
 
 
-
-static I_32 processDirectory(char* dir, BOOLEAN recursive, U_32 flags)
+static I_32
+processDirectory(char *dir, BOOLEAN recursive, U_32 flags)
 {
-	char *pathBuffer;
-	char *resultBuffer;
-	UDATA handle;
-	IDATA result, length, length2;
+	char *pathBuffer = NULL;
+	char *resultBuffer = NULL;
+	UDATA handle = 0;
+	IDATA result = 0;
+	IDATA length = 0;
 
 	PORT_ACCESS_FROM_PORT(portLib);
 
 	pathBuffer = j9mem_allocate_memory(EsMaxPath, J9MEM_CATEGORY_CLASSES);
-	if(pathBuffer == NULL) return RET_ALLOCATE_FAILED;
+	if (NULL == pathBuffer) {
+		return RET_ALLOCATE_FAILED;
+	}
+
 	resultBuffer = j9mem_allocate_memory(EsMaxPath, J9MEM_CATEGORY_CLASSES);
-	if(resultBuffer == NULL)
-	{
+	if (NULL == resultBuffer) {
 		j9mem_free_memory(pathBuffer);
 		return RET_ALLOCATE_FAILED;
 	}
+
 	length = strlen(dir);
-	strncpy(resultBuffer, dir, length);
+	if (length >= EsMaxPath) {
+		j9tty_printf(PORTLIB, "Could not open directory %s (path too long)\n", dir);
+		goto cleanup;
+	}
+	memcpy(resultBuffer, dir, length + 1);
 
 	handle = j9file_findfirst(dir, pathBuffer);
-	if(handle == (UDATA)-1)
-	{
+	if (~(UDATA)0 == handle) {
 		j9tty_printf(PORTLIB, "Could not open directory %s\n", dir);
 		goto cleanup;
 	}
+
 	result = handle;
-	while(result != -1)
-	{
-		if(!(pathBuffer[0] == '.' && (pathBuffer[1] == '\0' || (pathBuffer[1] == '.' && pathBuffer[2] == '\0'))))
-		{
+	while (-1 != result) {
+		/* ignore "." and ".." */
+		if ((0 != strcmp(pathBuffer, ".")) && (0 != strcmp(pathBuffer, ".."))) {
+			IDATA length2 = length + strlen(pathBuffer);
+			if (length2 + 1 >= EsMaxPath) {
+				j9tty_printf(PORTLIB, "Could not open %s%s (path too long)\n", dir, pathBuffer);
+				break;
+			}
 			strcpy(resultBuffer + length, pathBuffer);
-			length2 = strlen(resultBuffer);
-			if(recursive && (j9file_attr(resultBuffer) == EsIsDir))
-			{
-#if defined(WIN32) || defined(OS2)
-				resultBuffer[length2] = '\\';
-#else
-				resultBuffer[length2] = '/';
-#endif
+
+			if (recursive && (j9file_attr(resultBuffer) == EsIsDir)) {
+				resultBuffer[length2] = PATH_SEP_CHAR;
 				resultBuffer[length2 + 1] = '\0';
 				processDirectory(resultBuffer, TRUE, flags);
-			}
-			else
-			{
-				if((length2 > 6) && !strcmp(resultBuffer + length2 - 6, ".class"))
-				{
+			} else {
+				if ((length2 > 6) && (0 == strcmp(resultBuffer + length2 - 6, ".class"))) {
 					processSingleFile(resultBuffer, flags);
 				}
 			}

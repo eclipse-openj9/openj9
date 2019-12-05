@@ -31,14 +31,14 @@
 #include "j9comp.h"
 #include "j9trcnls.h"
 
-
 /*******************************************************************************
  * name        - getTraceLock
  * description - Obtains the trace lock
  * parameters  - UtThreadData
  * returns     - True or false
  ******************************************************************************/
-int32_t getTraceLock(UtThreadData **thr)
+int32_t
+getTraceLock(UtThreadData **thr)
 {
 	incrementRecursionCounter(*thr);
 	omrthread_monitor_enter(UT_GLOBAL(traceLock));
@@ -51,19 +51,22 @@ int32_t getTraceLock(UtThreadData **thr)
  * parameters  - UtThreadData
  * returns     - True or false
  ******************************************************************************/
-int32_t freeTraceLock(UtThreadData **thr)
+int32_t
+freeTraceLock(UtThreadData **thr)
 {
 	omrthread_monitor_exit(UT_GLOBAL(traceLock));
 	decrementRecursionCounter(*thr);
 	return TRUE;
 }
 
-void incrementRecursionCounter(UtThreadData *thr)
+void
+incrementRecursionCounter(UtThreadData *thr)
 {
 	thr->recursion++;
 }
 
-void decrementRecursionCounter(UtThreadData *thr)
+void
+decrementRecursionCounter(UtThreadData *thr)
 {
 	thr->recursion--;
 }
@@ -80,70 +83,78 @@ omr_error_t
 expandString(char *returnBuffer, const char *original, BOOLEAN atRuntime)
 {
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
-	
-	char *pidTokenString = "%pid";
-	char *dateTokenString = "%Y" "%m" "%d";
-	char *timeTokenString = "%H" "%M" "%S";
+
 	char formatString[MAX_IMAGE_PATH_LENGTH];
 	char resultString[MAX_IMAGE_PATH_LENGTH];
-	size_t originalLen, originalCursor = 0, formatCursor = 0;
-	struct J9StringTokens* stringTokens;
-	int64_t curTime;
-	
-	if ((returnBuffer == NULL) || (original == NULL)) {
+	const char *originalCursor = original;
+	char *formatCursor = formatString;
+	size_t formatSpace = sizeof(formatString) - 1; /* leave room for trailing NUL */
+
+	if ((NULL == returnBuffer) || (NULL == original)) {
 		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	}
 
-	originalLen = strlen(original);
+	for (;; originalCursor += 1) {
+		char originalChar = *originalCursor;
+		const char * replacement = originalCursor;
+		size_t replacementLength = 1;
 
-	for (; originalCursor < originalLen ; originalCursor++) {
-		if (original[originalCursor] == '%') {
-			originalCursor++;
-			if (original[originalCursor] == 'p') {
-				strncpy(&formatString[formatCursor], pidTokenString, strlen(pidTokenString));
-				formatCursor+=strlen(pidTokenString);
-			}
-			else if (original[originalCursor] == 'd') {
-				strncpy(&formatString[formatCursor], dateTokenString, strlen(dateTokenString));
-				formatCursor+=strlen(dateTokenString);
-			}
-			else if (original[originalCursor] == 't') {
-				strncpy(&formatString[formatCursor], timeTokenString, strlen(timeTokenString));
-				formatCursor+=strlen(timeTokenString);
-			}
-			else {
+		if ('\0' == originalChar) {
+			break;
+		}
+		if ('%' == originalChar) {
+			originalCursor += 1;
+			originalChar = *originalCursor;
+			if ('p' == originalChar) {
+				const char * const pidTokenString = "%pid";
+				replacement = pidTokenString;
+				replacementLength = strlen(pidTokenString);
+			} else if ('d' == originalChar) {
+				const char * const dateTokenString = "%Y%m%d";
+				replacement = dateTokenString;
+				replacementLength = strlen(dateTokenString);
+			} else if ('t' == originalChar) {
+				const char * const timeTokenString = "%H%M%S";
+				replacement = timeTokenString;
+				replacementLength = strlen(timeTokenString);
+			} else {
 				/* character following % was not 'p', 'd' or 't' */
-				reportCommandLineError(atRuntime, "Invalid special character '%%%c' in a trace filename. Only %%p, %%d and %%t are allowed.", original[originalCursor]);
-				returnBuffer[0]='\0';
+				reportCommandLineError(
+						atRuntime,
+						"Invalid special character '%%%c' in a trace filename. Only %%p, %%d and %%t are allowed.",
+						originalChar);
+				returnBuffer[0] = '\0';
 				return OMR_ERROR_ILLEGAL_ARGUMENT;
 			}
 		}
-		else {
-			formatString[formatCursor] = original[originalCursor];
-			formatCursor++;
-		}
-		if (formatCursor >= MAX_IMAGE_PATH_LENGTH - 1 ) {
-			formatCursor = MAX_IMAGE_PATH_LENGTH - 1;
+		if (formatSpace < replacementLength) {
+			/* insufficient space for replacement */
 			break;
 		}
+		memcpy(formatCursor, replacement, replacementLength);
+		formatCursor += replacementLength;
+		formatSpace -= replacementLength;
 	}
-	formatString[formatCursor] = '\0';
-	curTime = j9time_current_time_millis();
-	stringTokens = j9str_create_tokens(curTime);
-	if (NULL == stringTokens) {
-		returnBuffer[0]='\0';
-		return OMR_ERROR_ILLEGAL_ARGUMENT;
-	}
+	*formatCursor = '\0';
 
-	if (j9str_subst_tokens(resultString, MAX_IMAGE_PATH_LENGTH, formatString, stringTokens) > MAX_IMAGE_PATH_LENGTH) {
-		returnBuffer[0]='\0';
+	{
+		int64_t curTime = j9time_current_time_millis();
+		struct J9StringTokens *stringTokens = j9str_create_tokens(curTime);
+		if (NULL == stringTokens) {
+			returnBuffer[0] = '\0';
+			return OMR_ERROR_ILLEGAL_ARGUMENT;
+		}
+
+		if (j9str_subst_tokens(resultString, MAX_IMAGE_PATH_LENGTH, formatString, stringTokens) > MAX_IMAGE_PATH_LENGTH) {
+			returnBuffer[0] = '\0';
+			j9str_free_tokens(stringTokens);
+			return OMR_ERROR_ILLEGAL_ARGUMENT;
+		}
 		j9str_free_tokens(stringTokens);
-		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	}
-	j9str_free_tokens(stringTokens);
 
 	strncpy(returnBuffer, resultString, 255);
-	returnBuffer[255]='\0';
+	returnBuffer[255] = '\0';
 	return OMR_ERROR_NONE;
 }
 
@@ -175,11 +186,11 @@ listCounters(void)
 	/* Writing trace count info to %s */
 	j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_TRC_COUNTER_BEING_WRITTEN, "utTrcCounters");
 
-	/* list currently loaded components */        
-	while (compData != NULL){
+	/* list currently loaded components */
+	while (compData != NULL) {
 		if ( compData->tracepointcounters != NULL) {
-			for (i = 0; i < compData->tracepointCount; i++){
-				if ( compData->tracepointcounters[i] > 0 ){
+			for (i = 0; i < compData->tracepointCount; i++) {
+				if ( compData->tracepointcounters[i] > 0 ) {
 					if (f < 0) {
 						j9tty_err_printf(PORTLIB, "%s.%d %ld \n", compData->qualifiedComponentName, i, compData->tracepointcounters[i]);
 					} else {
@@ -195,10 +206,10 @@ listCounters(void)
 
 	/* list the unloaded components */
 	compData = UT_GLOBAL(unloadedComponentList)->head;
-	while (compData != NULL){
+	while (compData != NULL) {
 		if ( compData->tracepointcounters != NULL) {
-			for (i = 0; i < compData->tracepointCount; i++){
-				if ( compData->tracepointcounters[i] > 0 ){
+			for (i = 0; i < compData->tracepointCount; i++) {
+				if ( compData->tracepointcounters[i] > 0 ) {
 					if (f < 0) {
 						j9tty_err_printf(PORTLIB, "%s.%d %ld \n", compData->qualifiedComponentName, i, compData->tracepointcounters[i]);
 					} else {
@@ -228,23 +239,18 @@ listCounters(void)
 void
 getTimestamp(int64_t time, uint32_t* pHours, uint32_t* pMinutes, uint32_t* pSeconds, uint32_t* pMillis)
 {
-	uint32_t hours, minutes, seconds, millis;
-
 #define MILLIS2SECONDS 1000
 #define SECONDS2MINUTES 60
 #define MINUTES2HOURS 60
 #define HOURS2DAYS 24
 
-	seconds = (uint32_t) (time / MILLIS2SECONDS);
+	uint32_t millis = (uint32_t)(time % MILLIS2SECONDS);
+	uint32_t seconds = (uint32_t)(time / MILLIS2SECONDS);
+	uint32_t minutes = seconds / SECONDS2MINUTES;
+	uint32_t hours = minutes / MINUTES2HOURS;
 
-	millis = (uint32_t) (time % MILLIS2SECONDS);
-
-	minutes = seconds / SECONDS2MINUTES;
 	seconds = seconds % SECONDS2MINUTES;
-
-	hours = minutes / MINUTES2HOURS;
 	minutes = minutes % MINUTES2HOURS;
-
 	hours = hours % HOURS2DAYS;
 
 	*pHours = hours;
@@ -268,12 +274,12 @@ getTimestamp(int64_t time, uint32_t* pHours, uint32_t* pMinutes, uint32_t* pSeco
  * returns     - a const char* pointing to an option or NULL when there are no more
  *               options.
  ******************************************************************************/
-const char*
+const char *
 walkTraceConfig(void **cursor)
-{	
-	UtTraceCfg *traceCfgCursor = (NULL==*cursor)?UT_GLOBAL(config):(UtTraceCfg *)*cursor;
-	
-	if( NULL != traceCfgCursor ) {
+{
+	UtTraceCfg *traceCfgCursor = (NULL == *cursor) ? UT_GLOBAL(config) : (UtTraceCfg *)*cursor;
+
+	if (NULL != traceCfgCursor) {
 		*cursor = traceCfgCursor->next;
 		return traceCfgCursor->command;
 	} else {
@@ -291,19 +297,21 @@ walkTraceConfig(void **cursor)
 omr_error_t
 addTraceConfig(UtThreadData **thr, const char *cmd)
 {
-	UtTraceCfg *cfg;
-	UtTraceCfg *tmp;
-	omr_error_t rc = OMR_ERROR_NONE;
-
 	PORT_ACCESS_FROM_PORT(UT_GLOBAL(portLibrary));
+	omr_error_t rc = OMR_ERROR_NONE;
+	size_t allocSize = sizeof(UtTraceCfg) + strlen(cmd) + 1;
+	UtTraceCfg *cfg = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_TRACE);
 
 	/*
-	 *  Obtain and initialize a config buffer
+	 * Obtain and initialize a config buffer
 	 */
-	if ((cfg = j9mem_allocate_memory(sizeof(UtTraceCfg)
-						   + strlen(cmd) + 1, OMRMEM_CATEGORY_TRACE)) != NULL) {
-		initHeader(&cfg->header, UT_TRACE_CONFIG_NAME, sizeof(UtTraceCfg) +
-				   strlen(cmd) + 1);
+	if (NULL == cfg) {
+		UT_DBGOUT(1, ("<UT> Out of memory in addTraceConfig\n"));
+		rc = OMR_ERROR_OUT_OF_NATIVE_MEMORY;
+	} else {
+		UtTraceCfg *tmp = NULL;
+
+		initHeader(&cfg->header, UT_TRACE_CONFIG_NAME, allocSize);
 		cfg->next = NULL;
 		strcpy(cfg->command, cmd);
 		/*
@@ -329,9 +337,6 @@ addTraceConfig(UtThreadData **thr, const char *cmd)
 		 */
 
 		freeTraceLock(thr);
-	} else {
-		UT_DBGOUT(1, ("<UT> Out of memory in addTraceConfig\n"));
-		rc = OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 	}
 
 	return rc;
@@ -358,39 +363,39 @@ addTraceConfigKeyValuePair(UtThreadData **thr, const char *cmdKey, const char *c
 
 	/* could use a sprintf equivalent, but would have to mock up empty strings
 	 * for cases where cmdValue was null */
-	if (cmdKey != NULL){
+	if (cmdKey != NULL) {
 		cmdLen += strlen(cmdKey);
 	} else {
 		UT_DBGOUT(1, ("<UT> Out of memory recording option : \"%s\"\n", cmdKey));
 		return OMR_ERROR_ILLEGAL_ARGUMENT;
 	}
 
-	if (cmdValue != NULL){
+	if (cmdValue != NULL) {
 		cmdLen += strlen("=");
 		cmdLen += strlen(cmdValue);
-		if (strchr(cmdValue, ',')!=NULL){
+		if (strchr(cmdValue, ',') != NULL) {
 			/* we have a comma separated item who's braces will have been stripped */
 			addBraces = TRUE;
 			cmdLen += strlen("{}");
 		}
-	} 
+	}
 
 	cmd = (char *)j9mem_allocate_memory(cmdLen, OMRMEM_CATEGORY_TRACE);
-	if (NULL == cmd){
+	if (NULL == cmd) {
 		UT_DBGOUT(1, ("<UT> Out of memory recording option : \"%s\"\n", cmdKey));
 		return OMR_ERROR_OUT_OF_NATIVE_MEMORY;
 	}
 
-	if (cmdKey != NULL){
+	if (cmdKey != NULL) {
 		strcpy(cmd, cmdKey);
 	}
-	if (cmdValue != NULL){
+	if (cmdValue != NULL) {
 		strcat(cmd, "=");
-		if (addBraces == TRUE){
+		if (addBraces) {
 			strcat(cmd, "{");
 		}
 		strcat(cmd, cmdValue);
-		if (addBraces == TRUE){
+		if (addBraces) {
 			strcat(cmd, "}");
 		}
 	}
@@ -399,8 +404,6 @@ addTraceConfigKeyValuePair(UtThreadData **thr, const char *cmdKey, const char *c
 	j9mem_free_memory(cmd);
 	return rc;
 }
-
-
 
 /*******************************************************************************
  * name        - initHeader
@@ -411,10 +414,10 @@ addTraceConfigKeyValuePair(UtThreadData **thr, const char *cmdKey, const char *c
 void
 initHeader(UtDataHeader * header, char * name, uintptr_t size)
 {
-		memcpy(header->eyecatcher, name, 4);
-		header->length = (int32_t)size;
-		header->version = UT_VERSION;
-		header->modification = UT_MODIFICATION;
+	memcpy(header->eyecatcher, name, 4);
+	header->length = (int32_t)size;
+	header->version = UT_VERSION;
+	header->modification = UT_MODIFICATION;
 }
 
 /*******************************************************************************
