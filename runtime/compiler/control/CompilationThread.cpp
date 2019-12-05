@@ -762,17 +762,72 @@ TR::CompilationInfo::createCompilationInfo(J9JITConfig * jitConfig)
    return true;
    }
 
+void
+TR::CompilationInfo::freeAllCompilationThreads()
+   {
+   if (_compThreadActivationThresholds)
+      {
+      jitPersistentFree(_compThreadActivationThresholds);
+      }
+
+   if (_compThreadSuspensionThresholds)
+      {
+      jitPersistentFree(_compThreadSuspensionThresholds);
+      }
+
+   if (_compThreadActivationThresholdsonStarvation)
+      {
+      jitPersistentFree(_compThreadActivationThresholdsonStarvation);
+      }
+
+   if (_arrayOfCompilationInfoPerThread)
+      {
+      for (int32_t i=0; i < getNumTotalCompilationThreads(); ++i)
+         {
+            if (_arrayOfCompilationInfoPerThread[i])
+               _arrayOfCompilationInfoPerThread[i]->freeAllResources();
+         }
+
+      jitPersistentFree(_arrayOfCompilationInfoPerThread);
+      }
+   }
+
+void TR::CompilationInfo::freeAllResources()
+   {
+   if (_compInfoForCompOnAppThread)
+      {
+      jitPersistentFree(_compInfoForCompOnAppThread);
+      }
+
+   if (_interpSamplTrackingInfo)
+      {
+      jitPersistentFree(_interpSamplTrackingInfo);
+      }
+
+   freeAllCompilationThreads();
+   }
+
 void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
    {
    TR_ASSERT(_compilationRuntime, "The global compilation info has already been freed.");
    TR::CompilationInfo * compilationRuntime = _compilationRuntime;
    _compilationRuntime = NULL;
 
-   compilationRuntime->freeAllCompilationThreads();
+   compilationRuntime->freeAllResources();
 
    TR::RawAllocator rawAllocator(jitConfig->javaVM);
    compilationRuntime->~CompilationInfo();
    rawAllocator.deallocate(compilationRuntime);
+   }
+
+void TR::CompilationInfoPerThread::freeAllResources()
+   {
+#if defined(JITSERVER_SUPPORT)
+   if (_classesThatShouldNotBeNewlyExtended)
+      {
+      TR_Memory::jitPersistentFree(_classesThatShouldNotBeNewlyExtended);
+      }
+#endif /* defined(JITSERVER_SUPPORT) */
    }
 
 #if defined(JITSERVER_SUPPORT)
@@ -2730,32 +2785,6 @@ TR::CompilationInfo::allocateCompilationThreads(int32_t numUsableCompThreads)
       return true;
       }
    return false;
-   }
-
-void
-TR::CompilationInfo::freeAllCompilationThreads()
-   {
-   if (_compThreadActivationThresholds)
-      {
-      jitPersistentFree(_compThreadActivationThresholds);
-      }
-
-   if (_compThreadSuspensionThresholds)
-      {
-      jitPersistentFree(_compThreadSuspensionThresholds);
-      }
-
-   if (_compThreadActivationThresholdsonStarvation)
-      {
-      jitPersistentFree(_compThreadActivationThresholdsonStarvation);
-      }
-
-   if (_arrayOfCompilationInfoPerThread)
-      {
-      // TODO: Need to properly free all dynamically allocated objects from
-      // CompilationInfoPerThread and CompilationInfoPerThreadRemote first
-      jitPersistentFree(_arrayOfCompilationInfoPerThread);
-      }
    }
 
 //-------------------------- startCompilationThread --------------------------
@@ -11834,6 +11863,12 @@ TR_LowPriorityCompQueue::TR_LowPriorityCompQueue()
      _STAT_LPQcompFromInterpreter(0), _STAT_LPQcompUpgrade(0), _STAT_compReqQueuedByInterpreter(0),
      _STAT_numFailedToEnqueueInLPQ(0)
    {
+   }
+
+TR_LowPriorityCompQueue::~TR_LowPriorityCompQueue()
+   {
+   if (_spine)
+      jitPersistentFree(_spine);
    }
 
 void TR_LowPriorityCompQueue::startTrackingIProfiledCalls(int32_t threshold)
