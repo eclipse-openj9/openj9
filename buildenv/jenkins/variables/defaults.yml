@@ -380,11 +380,11 @@ ppc64_aix:
     13: '--openssl-version=1.1.1d'
     next: '--openssl-version=1.1.1d'
   extra_configure_options:
-    8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-jobs=8 --with-openssl=fetched'
-    11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched'
-    12: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched'
-    13: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched --disable-ddr'
-    next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-jobs=8 --with-openssl=fetched --disable-ddr'
+    8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-openssl=fetched'
+    11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-openssl=fetched'
+    12: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-openssl=fetched'
+    13: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-openssl=fetched --disable-ddr'
+    next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-openssl=fetched --disable-ddr'
   build_env:
     vars:
       8: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
