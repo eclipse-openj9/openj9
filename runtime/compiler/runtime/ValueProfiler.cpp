@@ -229,7 +229,15 @@ TR_AbstractHashTableProfilerInfo::tryLock(bool disableJITAccess)
    MetaData unlocked = _metaData;
    unlocked.lock = 0;
 
-   return unlocked.rawData == VM_AtomicSupport::lockCompareExchangeU32((uint32_t*) &_metaData, unlocked.rawData, locked.rawData);
+   if (unlocked.rawData == VM_AtomicSupport::lockCompareExchangeU32((uint32_t*) &_metaData, unlocked.rawData, locked.rawData))
+      {
+      VM_AtomicSupport::readBarrier();
+      return true;
+      }
+   else
+      {
+      return false;
+      }
    }
 
 /**
@@ -242,6 +250,8 @@ TR_AbstractHashTableProfilerInfo::unlock(bool enableJITAccess)
    {
    MetaData locked = _metaData;
    MetaData unlocked = _metaData;
+
+   VM_AtomicSupport::writeBarrier();
 
    do {
       locked.rawData = _metaData.rawData;
