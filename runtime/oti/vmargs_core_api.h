@@ -53,6 +53,7 @@ typedef struct J9JavaVMArgInfoList {
 #define ARG_CONSUMED 4
 #define ARG_REQUIRES_LIBRARY 8
 #define ARG_MEMORY_ALLOCATION 16
+#define USER_ARG 32
 
 #define VMOPT_XOPTIONSFILE_EQUALS "-Xoptionsfile="
 
@@ -69,10 +70,11 @@ newJavaVMArgInfo(J9JavaVMArgInfoList *vmArgumentsList, char *optString, uintptr_
  * @param xOptionsfileArg -Xoptionsfile=<path>
  * @param vmArgumentsList current list of arguments
  * @param verboseFlags set to VERBOSE_INIT for verbosity
+ * @param containsUserArgs set to TRUE if not using default optionfile
  * @return 0 on success, negative value on failure
  */
 intptr_t
-addXOptionsFile(J9PortLibrary* portLib, const char *xOptionsfileArg, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags);
+addXOptionsFile(J9PortLibrary* portLib, const char *xOptionsfileArg, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags, UDATA containsUserArgs);
 
 /**
  * Scan an argument buffer containing multiple options to find the options and add them to the list.
@@ -89,16 +91,32 @@ intptr_t
 parseOptionsBuffer(J9PortLibrary* portLib, char* argumentBuffer, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags, BOOLEAN parseOptionsFileFlag);
 
 /**
+ * Scan an argument buffer containing multiple options to find the options and add them to the list.
+ * The argument buffer must point to an allocated section of memory.  It will be freed if no valid arguments
+ * other than -Xoptionsfile are found. Its contents may be changed.
+ * @param portLib port library
+ * @param argumentBuffer buffer holding the raw string
+ * @param vmArgumentsList list of arguments so far.
+ * @param verboseFlags turn on verbosity
+ * @param parseOptionsFileFlag Set to false to ignore embedded -Xoptionsfile arguments
+ * @param parseEnvVar Set to true if parsing options from the OPENJ9_JAVA_OPTIONS, JAVA_TOOL_OPTIONS and IBM_JAVA_OPTIONS environment variable
+ * @return number of arguments on success, negative on error
+ */
+intptr_t
+parseOptionsBufferImpl(J9PortLibrary* portLib, char* argumentBuffer, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags, BOOLEAN parseOptionsFileFlag, BOOLEAN parseEnvVar);
+
+/**
  * Scan fileText containing multiple options to find the options and add them to the list.
  * The argument buffer  contents may be changed.
  * @param portLib port library
  * @param fileText buffer holding the raw string
  * @param vmArgumentsList list of arguments so far.
  * @param verboseFlags turn on verbosity
+ * @param containsUserArgs set to TRUE if not using default optionfile
  * @return 0 on success, negative on error
  */
 intptr_t
-parseOptionsFileText(J9PortLibrary* portLibrary, const char* fileText, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags);
+parseOptionsFileText(J9PortLibrary* portLibrary, const char* fileText, J9JavaVMArgInfoList *vmArgumentsList, uintptr_t verboseFlags, UDATA containsUserArgs);
 
 /**
  * Parses the Hypervisor Environment Variable string into a J9JavaVMArgInfoList list

@@ -76,7 +76,40 @@
 
 #define LARGE_STRING_BUF_SIZE 256
 
+#define JAVA_CLASS_PATH_EQUALS "-Djava.class.path="
+#define SUN_JAVA_COMMAND_EQUALS "-Dsun.java.command="
+#define SUN_JAVA_LAUNCHER_PID_EQUALS "-Dsun.java.launcher.pid="
+#define SUN_JAVA_LAUNCHER_EQUALS "-Dsun.java.launcher="
+
+struct JavaLauncherOption {
+	const char *optionName;
+	int optionNameLength;
+};
+
+/* Options in this table will be not treated as user arguments */
+static const struct JavaLauncherOption JavaLauncherOptionTable[] = {
+	{JAVA_CLASS_PATH_EQUALS, LITERAL_STRLEN(JAVA_CLASS_PATH_EQUALS)},
+	{SUN_JAVA_COMMAND_EQUALS, LITERAL_STRLEN(SUN_JAVA_COMMAND_EQUALS)},
+	{SUN_JAVA_LAUNCHER_PID_EQUALS, LITERAL_STRLEN(SUN_JAVA_LAUNCHER_PID_EQUALS)},
+	{SUN_JAVA_LAUNCHER_EQUALS, LITERAL_STRLEN(SUN_JAVA_LAUNCHER_EQUALS)},
+	{VMOPT_XJCL_COLON, LITERAL_STRLEN(VMOPT_XJCL_COLON)}, /* macro from jvminit.h */
+	{NULL, 0} /* The last entry in the table must be Null in order for the search function to exit.*/
+};
+
 static char * getStartOfOptionValue(J9VMInitArgs* j9vm_args, IDATA element, const char *optionName);
+
+/* Binary Search function that searches if optionName is in JavaLauncherOptionTable */
+BOOLEAN
+isGeneratedArgument(const char *optionName) {
+	const struct JavaLauncherOption *tableOptionName = JavaLauncherOptionTable;
+	while (tableOptionName->optionName != NULL) {
+		if (0 == strncmp(optionName, tableOptionName->optionName, tableOptionName->optionNameLength)) {
+			break;
+		}
+		++tableOptionName;
+	}
+	return (tableOptionName->optionName != NULL);
+}
 
 IDATA
 findArgInVMArgs(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA match, const char* optionName, const char* optionValue, UDATA doConsumeArgs) {
@@ -198,7 +231,7 @@ findArgInVMArgs(J9PortLibrary *portLibrary, J9VMInitArgs* j9vm_args, UDATA match
 						if (hasBeenSet) {
 							/* duplicate cmd-line value which is going to be ignored */
 							j9vm_args->j9Options[optionCntr].flags = NOT_CONSUMABLE_ARG /* override any flags that already exist */
-									| (j9vm_args->j9Options[optionCntr].flags & ARG_MEMORY_ALLOCATION);
+									| (j9vm_args->j9Options[optionCntr].flags & (ARG_MEMORY_ALLOCATION | USER_ARG));
 						} else {
 							j9vm_args->j9Options[optionCntr].flags |= ARG_CONSUMED;
 						}
@@ -678,7 +711,7 @@ addOptionsDefaultFile(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsL
 	if (resultLength > (sizeof(VMOPT_XOPTIONSFILE_EQUALS) + MAX_PATH)) {
 		return -1; /* overflow */
 	}
-	return addXOptionsFile(portLib, optionsArgumentBuffer, vmArgumentsList, verboseFlags);
+	return addXOptionsFile(portLib, optionsArgumentBuffer, vmArgumentsList, verboseFlags, FALSE);
 }
 
 IDATA
@@ -1278,7 +1311,7 @@ addJarArguments(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, c
 								}
 							}
 							*argEnd = '\0';
-							if (parseOptionsFileText(portLib, argStart, vmArgumentsList, verboseFlags) < 0) {
+							if (parseOptionsFileText(portLib, argStart, vmArgumentsList, verboseFlags, TRUE) < 0) {
 								status = OMRPORT_ERROR_INVALID;
 							}
 						}
@@ -1366,6 +1399,7 @@ static IDATA
 addEnvironmentVariableArguments(J9PortLibrary* portLib, const char* envVarName, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags) 
 {
 	PORT_ACCESS_FROM_PORT(portLib);
+	IDATA envVarNameLength = LITERAL_STRLEN(envVarName);
 	IDATA envVarSize = j9sysinfo_get_env(envVarName, NULL, 0);
 	char* argumentBuffer = NULL;
 
@@ -1378,8 +1412,12 @@ addEnvironmentVariableArguments(J9PortLibrary* portLib, const char* envVarName, 
 	}
 	JVMINIT_VERBOSE_INIT_TRACE1(verboseFlags, "Parsing environment variable %s\n", envVarName);
 	j9sysinfo_get_env(envVarName, argumentBuffer, envVarSize);
-
-	return parseOptionsBuffer(portLib, argumentBuffer, vmArgumentsList, verboseFlags, TRUE);
+	if ((J9UTF8_DATA_EQUALS(ENVVAR_JAVA_TOOL_OPTIONS, LITERAL_STRLEN(ENVVAR_JAVA_TOOL_OPTIONS), envVarName, envVarNameLength)) || (J9UTF8_DATA_EQUALS(ENVVAR_OPENJ9_JAVA_OPTIONS, LITERAL_STRLEN(ENVVAR_OPENJ9_JAVA_OPTIONS), envVarName, envVarNameLength)) || (J9UTF8_DATA_EQUALS(ENVVAR_IBM_JAVA_OPTIONS, LITERAL_STRLEN(ENVVAR_IBM_JAVA_OPTIONS), envVarName, envVarNameLength))) {
+		return parseOptionsBufferImpl(portLib, argumentBuffer, vmArgumentsList, verboseFlags, TRUE, TRUE);
+	} else {
+		return parseOptionsBuffer(portLib, argumentBuffer, vmArgumentsList, verboseFlags, TRUE);
+	}
+	
 }
 
 IDATA
@@ -1437,7 +1475,6 @@ addLauncherArgs(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, UDATA lau
 		J9JavaVMArgInfo *optArg = NULL;
 		char *optString = currentOpt->optionString;
 		char *transcodedString = optString;
-		UDATA consumableFlag = CONSUMABLE_ARG;
 
 		Assert_Util_notNull(optString);
 		if (0 == strcmp(optString, "-Xprod") ) {
@@ -1503,7 +1540,7 @@ addLauncherArgs(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, UDATA lau
 		}
 #endif
 		if (strncmp(optString, VMOPT_XOPTIONSFILE_EQUALS, xOptLen) == 0) {
-			UDATA rc = addXOptionsFile(portLib, transcodedString, vmArgumentsList, verboseFlags);
+			UDATA rc = addXOptionsFile(portLib, transcodedString, vmArgumentsList, verboseFlags, TRUE);
 #ifdef WIN32
 			if (TRUE == convertEncoding) {
 				/* addXOptionsFile makes a copy of the text */
@@ -1519,11 +1556,10 @@ addLauncherArgs(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, UDATA lau
 		}
 
 		if (TRUE == convertEncoding) {
-			optArg = newJavaVMArgInfo(vmArgumentsList, transcodedString, ARG_MEMORY_ALLOCATION|consumableFlag);
+			optArg = newJavaVMArgInfo(vmArgumentsList, transcodedString, ARG_MEMORY_ALLOCATION | CONSUMABLE_ARG | ((!isGeneratedArgument(transcodedString))? USER_ARG : 0));
 		} else {
-
 			strcpy(cursor, optString); /* safe because the lengths of all strings have been measured and included in argumentLength */
-			optArg = newJavaVMArgInfo(vmArgumentsList, cursor, (consumableFlag | ((0 == optInd) ? ARG_MEMORY_ALLOCATION: 0)));
+			optArg = newJavaVMArgInfo(vmArgumentsList, cursor, ((!isGeneratedArgument(cursor) ? USER_ARG : 0) | CONSUMABLE_ARG | ((0 == optInd) ? ARG_MEMORY_ALLOCATION: 0)));
 			/* the first argument points to the head of the buffer */
 			cursor += (strlen(cursor) + 1);
 		}

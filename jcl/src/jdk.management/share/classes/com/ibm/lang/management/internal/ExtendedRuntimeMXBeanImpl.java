@@ -26,6 +26,10 @@ import com.ibm.java.lang.management.internal.RuntimeMXBeanImpl;
 import com.ibm.lang.management.RuntimeMXBean;
 import openj9.internal.tools.attach.target.AttachHandler;
 
+import com.ibm.oti.vm.VM;
+import java.util.List;
+import com.ibm.java.lang.management.internal.ManagementUtils;
+
 
 /**
  * Runtime type for {@link com.ibm.lang.management.RuntimeMXBean}.
@@ -127,4 +131,11 @@ public final class ExtendedRuntimeMXBeanImpl extends RuntimeMXBeanImpl implement
 		checkMonitorPermission();
 		return AttachHandler.getVmId();
 	}
+
+	@Override
+	public final List<String> getAllInputArguments() {
+		checkMonitorPermission();
+		return ManagementUtils.convertStringArrayToList(VM.getAllVMArgs());
+	}
+
 }

@@ -2707,36 +2707,38 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 		}
 #endif
 
+		uintptr_t argFlag = NOT_CONSUMABLE_ARG | (j9vm_args->j9Options[i].flags & (USER_ARG));	
+
 		if (strcmp(testString, VMOPT_XINT)==0) {
 			if (xjit || xnojit || xnoaot || xaot) {
-				SET_FLAG_AT_INDEX( NOT_CONSUMABLE_ARG, i );
+				SET_FLAG_AT_INDEX( argFlag, i );
 			} else {
 				xint = TRUE;
 			}
 		} else if ((strcmp(testString, VMOPT_XJIT)==0) ||
 					(strstr(testString, VMOPT_XJIT_COLON)==testString)) {
 			if (xint || xnojit) {
-				SET_FLAG_AT_INDEX( NOT_CONSUMABLE_ARG, i );
+				SET_FLAG_AT_INDEX( argFlag, i );
 			} else {
 				ADD_FLAG_AT_INDEX( ARG_REQUIRES_LIBRARY, i );
 				xjit = TRUE;
 			}
 		} else if (strcmp(testString, VMOPT_XNOJIT)==0) {
 			if (xint || xjit) {
-				SET_FLAG_AT_INDEX( NOT_CONSUMABLE_ARG, i );
+				SET_FLAG_AT_INDEX( argFlag, i );
 			} else {
 				xnojit = TRUE;
 			}
 		} else if (strcmp(testString, VMOPT_XNOAOT)==0) {
 			if (xint || xaot) {
-				SET_FLAG_AT_INDEX( NOT_CONSUMABLE_ARG, i );
+				SET_FLAG_AT_INDEX( argFlag, i );
 			} else {
 				xnoaot = TRUE;
 			}
 		} else if ((strcmp(testString, VMOPT_XAOT)==0) ||
 					(strstr(testString, VMOPT_XAOT_COLON)==testString)) {
 			if (xint || xnoaot) {
-				SET_FLAG_AT_INDEX( NOT_CONSUMABLE_ARG, i );
+				SET_FLAG_AT_INDEX( argFlag, i );
 			} else {
 				xaot = TRUE;
 			}
@@ -3534,7 +3536,7 @@ static void registerIgnoredOptions(J9PortLibrary *portLibrary, J9VMInitArgs* j9v
 			switch (option[1]) {
 				/* Mark all -D options as non-consumable */
 				case 'D' :
-					SET_FLAG_AT_INDEX(NOT_CONSUMABLE_ARG, i);
+					SET_FLAG_AT_INDEX(NOT_CONSUMABLE_ARG | (j9vm_args->j9Options[i].flags & USER_ARG), i);
 					break;
 			}
 		}

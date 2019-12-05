@@ -21,7 +21,7 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 package com.ibm.lang.management;
-
+import java.util.List;
 /**
  * The IBM-specific interface for the runtime system of the virtual machine.
  */
@@ -149,4 +149,11 @@ public interface RuntimeMXBean extends java.lang.management.RuntimeMXBean {
 	 */
 	public String getVmId();
 
+	/**
+	 * Return a list of JVM arguments. 
+	 * Note that this does not include arguments passed to the main method.
+	 * 
+	 * @return a list of strings, one per JVM argument. Empty list if no arguments were supplied
+	 */
+	public List<String> getAllInputArguments();
 }

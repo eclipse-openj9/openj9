@@ -140,6 +140,7 @@ extern "C" {
 #define IS_CONSUMED(j9vm_args, element) (j9vm_args->j9Options[element].flags & ARG_CONSUMED)
 #define IS_CONSUMABLE(j9vm_args, element) (j9vm_args->j9Options[element].flags & CONSUMABLE_ARG)
 #define REQUIRES_LIBRARY(j9vm_args, element) (j9vm_args->j9Options[element].flags & ARG_REQUIRES_LIBRARY)
+#define IS_USER_ARG(j9vm_args, element) (j9vm_args->j9Options[element].flags & USER_ARG)
 
 #define COMPLETE_STAGE(flags, stage) (flags |= ((UDATA)1 << stage))
 #define IS_STAGE_COMPLETED(flags, stage) (flags & ((UDATA)1 << stage))

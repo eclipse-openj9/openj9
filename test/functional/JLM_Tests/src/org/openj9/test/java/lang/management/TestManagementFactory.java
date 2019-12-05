@@ -39,7 +39,7 @@ import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryUsage;
 import java.lang.management.OperatingSystemMXBean;
 import java.lang.management.PlatformManagedObject;
-import java.lang.management.RuntimeMXBean;
+import com.ibm.lang.management.RuntimeMXBean;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.util.ArrayList;
@@ -275,11 +275,11 @@ public class TestManagementFactory {
 
 	@Test
 	public final void testGetRuntimeMXBean() {
-		RuntimeMXBean rb = ManagementFactory.getRuntimeMXBean();
+		RuntimeMXBean rb = (RuntimeMXBean) ManagementFactory.getRuntimeMXBean();
 		AssertJUnit.assertNotNull(rb);
 
 		// Verify that there is only instance of the this bean
-		RuntimeMXBean rb2 = ManagementFactory.getRuntimeMXBean();
+		RuntimeMXBean rb2 = (RuntimeMXBean) ManagementFactory.getRuntimeMXBean();
 		AssertJUnit.assertNotNull(rb2);
 		AssertJUnit.assertSame(rb, rb2);
 	}
@@ -1190,7 +1190,7 @@ public class TestManagementFactory {
 	@Test
 	public void testRuntimeMXBeanProxy() {
 		try {
-			RuntimeMXBean proxy = ManagementFactory.newPlatformMXBeanProxy(ManagementFactory.getPlatformMBeanServer(),
+			RuntimeMXBean proxy = (RuntimeMXBean) ManagementFactory.newPlatformMXBeanProxy(ManagementFactory.getPlatformMBeanServer(),
 					"java.lang:type=Runtime", RuntimeMXBean.class);
 			AssertJUnit.assertNotNull(proxy);
 			AssertJUnit.assertFalse(proxy instanceof NotificationEmitter);
@@ -1212,9 +1212,9 @@ public class TestManagementFactory {
 			}
 
 			AssertJUnit.assertEquals(proxy.getClassPath(), ManagementFactory.getRuntimeMXBean().getClassPath());
-			AssertJUnit.assertEquals(proxy.getInputArguments(),
-					ManagementFactory.getRuntimeMXBean().getInputArguments());
-			List<String> args = proxy.getInputArguments();
+			AssertJUnit.assertEquals(proxy.getAllInputArguments(),
+					((RuntimeMXBean) ManagementFactory.getRuntimeMXBean()).getAllInputArguments());
+			List<String> args = proxy.getAllInputArguments();
 			AssertJUnit.assertNotNull(args);
 			AssertJUnit.assertEquals(proxy.getLibraryPath(), ManagementFactory.getRuntimeMXBean().getLibraryPath());
 			AssertJUnit.assertEquals(proxy.getManagementSpecVersion(),

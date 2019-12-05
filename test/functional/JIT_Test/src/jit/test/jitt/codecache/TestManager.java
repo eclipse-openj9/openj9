@@ -23,7 +23,7 @@ package jit.test.jitt.codecache;
 
 import java.io.File;
 import java.lang.management.ManagementFactory;
-import java.lang.management.RuntimeMXBean;
+import com.ibm.lang.management.RuntimeMXBean;
 import java.util.List;
 
 import jit.runner.JarTesterMT;
@@ -68,6 +68,10 @@ public class TestManager {
 
 	/*Total number of code caches being used at startup, this is equivalent to -Xjit:numOfCodeCachesOnStartup*/
 	private static int numCodeCacheOnStartup = 0;
+
+	/* list of all input arguments from RuntimemxBean */
+	private static RuntimeMXBean RuntimemxBean = (RuntimeMXBean)ManagementFactory.getRuntimeMXBean();
+	private static List<String> inputArgs = RuntimemxBean.getAllInputArguments();
 
 	/*This is the entry point to JIT code cache Test harness.*/
 	public static void main( String args[] ) {
@@ -243,17 +247,15 @@ public class TestManager {
 		boolean XshareclassesSet = false;
 
 		try {
-			RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
-			List<String> aList=RuntimemxBean.getInputArguments();
-			for( int i=0;i<aList.size();i++ ) {
-			    if ( aList.get( i ).contains( "-Xaot" ) ) {
-			    	String xjitOptions = aList.get( i );
+			for( int i=0;i<inputArgs.size();i++ ) {
+			    if ( inputArgs.get( i ).contains( "-Xaot" ) ) {
+			    	String xjitOptions = inputArgs.get( i );
 			    	if ( xjitOptions.contains( "count=5" ) ) {
 			    		XaotSet = true;
 			    	} else {
 			    		System.out.println("Please set -Xaot:count=5 in VM options");
 			    	}
-			    } else if ( aList.get( i ).contains( "-Xshareclasses" ) ) {
+			    } else if ( inputArgs.get( i ).contains( "-Xshareclasses" ) ) {
 			    	XshareclassesSet = true;
 			    }
 
@@ -282,10 +284,8 @@ public class TestManager {
 	 * @return true if -Xshareclasscache VM option is in use, false otherwise
 	 */
 	public static boolean isShareClassesSet() {
-		RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
-		List<String> aList=RuntimemxBean.getInputArguments();
-		for( int i=0;i<aList.size();i++ ) {
-		    if ( aList.get( i ).contains( "-Xshareclasses" ) ) {
+		for( int i=0;i<inputArgs.size();i++ ) {
+		    if ( inputArgs.get( i ).contains( "-Xshareclasses" ) ) {
 		    	return true;
 		    }
 		}
@@ -424,11 +424,9 @@ public class TestManager {
 	private static String getLodDirPath() {
 		String logDirPath = null;
 		try {
-			RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
-			List<String> aList=RuntimemxBean.getInputArguments();
-			for( int i=0;i<aList.size();i++ ) {
-			    if ( aList.get( i ).contains( "-Xjit" ) ) {
-			    	String xjitOptions = aList.get( i );
+			for( int i=0;i<inputArgs.size();i++ ) {
+			    if ( inputArgs.get( i ).contains( "-Xjit" ) ) {
+			    	String xjitOptions = inputArgs.get( i );
 			    	if ( xjitOptions.contains( "vlog=" ) ) {
 			    		if ( xjitOptions.contains("jit.log") == false ) {
 			    			System.out.println("The name of the JIT verbose log must be jit.log");
@@ -468,11 +466,9 @@ public class TestManager {
 			boolean returnVal = false;
 			int num = -1;
 			try {
-				RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
-				List<String> aList=RuntimemxBean.getInputArguments();
-				for( int i=0;i<aList.size();i++ ) {
-				    if ( aList.get( i ).contains( "-Xjit" ) ) {
-				    	String xjitOptions = aList.get( i );
+				for( int i=0;i<inputArgs.size();i++ ) {
+				    if ( inputArgs.get( i ).contains( "-Xjit" ) ) {
+				    	String xjitOptions = inputArgs.get( i );
 				    	if ( xjitOptions.contains( "numCodeCachesOnStartup=" ) ) {
 				    		int s = xjitOptions.indexOf( "numCodeCachesOnStartup=" ) + ("numCodeCachesOnStartup=").length();
 				    		int e = s + 1;
@@ -498,11 +494,9 @@ public class TestManager {
 	 */
 	public static boolean isForceAOT() {
 		try {
-			RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
-			List<String> aList=RuntimemxBean.getInputArguments();
-			for( int i=0;i<aList.size();i++ ) {
-			    if ( aList.get( i ).contains( "-Xaot" ) ) {
-			    	String xaotOption = aList.get( i );
+			for( int i=0;i<inputArgs.size();i++ ) {
+			    if ( inputArgs.get( i ).contains( "-Xaot" ) ) {
+			    	String xaotOption = inputArgs.get( i );
 			    	if ( xaotOption.contains( "forceaot" ) ) {
 			    		return true;
 			    	}

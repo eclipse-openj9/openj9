@@ -41,6 +41,7 @@ import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.PumpStreamHandler;
 
 import com.ibm.lang.management.MemoryMXBean;
+import com.ibm.lang.management.RuntimeMXBean;
 
 @SuppressWarnings({ "nls", "restriction" })
 public class SoftmxRASTest1 {
@@ -180,7 +181,8 @@ public class SoftmxRASTest1 {
 		List<String> arguments = new ArrayList<String>();
 
 		/* pass parent JVM options to the child JVMs. */
-		List<String> inputArgs = ManagementFactory.getRuntimeMXBean().getInputArguments();
+		RuntimeMXBean RuntimemxBean = (RuntimeMXBean) ManagementFactory.getRuntimeMXBean();
+		List<String> inputArgs = RuntimemxBean.getAllInputArguments();
 
 		// Include -X, but not -Xdump, arguments from parent first to allow for later overrides.
 		for (String arg : inputArgs) {

@@ -25,6 +25,7 @@ package com.ibm.oti.vm;
 
 import com.ibm.oti.util.Msg;
 import com.ibm.oti.util.Util;
+import java.util.Arrays;
 
 /*[IF Sidecar19-SE]
 import jdk.internal.reflect.CallerSensitive;
@@ -119,7 +120,8 @@ public final class VM {
 	public static final int J9CLASS_RESERVABLE_LOCK_WORD_INIT;
 	public static final int OBJECT_HEADER_LOCK_RESERVED;
 
-	private static String[] cachedVMArgs;
+	private static String[] cachedVMUserArgs;
+	private static String[] cachedVMGeneratedArgs;
 	/*[PR CMVC 189091] Perf: EnumSet.allOf() is slow */
 	/*[PR CMVC 191554] Provide access to ClassLoader methods to improve performance */
 	private static VMLangAccess javalangVMaccess;
@@ -375,9 +377,28 @@ static final native int getClassPathEntryType(Object classLoader, int cpIndex);
  * @return		a String array containing the optionString part of command line arguments
  */
 public static String [] getVMArgs() {
+	return getVMArgsHelper(true);
+}
+
+/**
+ * Returns command line arguments passed to the VM. Internally these are broken into
+ * optionString and extraInfo. This only returns the optionString part.
+ * <p>
+ * @return		a String array containing the optionString part of USER command line arguments
+ */
+public static String [] getAllVMArgs() {
+	return getVMArgsHelper(false);
+}
+
+/**
+ * Helper function for getVMArgs
+ * @param getUserArgsOnly Tells the function if we want to return user arguments only
+ * @return		a String array containing the optionString part of command line arguments
+ */
+private static String [] getVMArgsHelper(boolean getUserArgsOnly) {
 	/*[PR CMVC 112580] Java cannot handle non-ascii character arguments */
-	if (cachedVMArgs == null) {
-		byte[][] byteArgs = getVMArgsImpl();
+	if ((getUserArgsOnly)? (cachedVMUserArgs == null) : (cachedVMGeneratedArgs == null)) {
+		byte[][] byteArgs = getVMArgsImpl(getUserArgsOnly);
 		if (byteArgs == null) return null;
 		String[] result = new String[byteArgs.length];
 		for (int i=0; i<byteArgs.length; i++) {
@@ -387,12 +408,16 @@ public static String [] getVMArgs() {
 				result[i] = Util.toString(byteArgs[i]);
 			}
 		}
-		cachedVMArgs = result;
+		if (getUserArgsOnly) {
+			cachedVMUserArgs = result;
+		} else {
+			cachedVMGeneratedArgs = result;
+		}
 	}
-	return (String[])cachedVMArgs.clone();
+	return(String[])((getUserArgsOnly)? (Arrays.copyOf(cachedVMUserArgs, cachedVMUserArgs.length)) : (Arrays.copyOf(cachedVMGeneratedArgs, cachedVMGeneratedArgs.length)));
 }
 
-private static native byte[][] getVMArgsImpl();
+private static native byte[][] getVMArgsImpl(boolean getUserArgsOnly);
 
 /**
  * Return the number of entries on the bootclasspath.

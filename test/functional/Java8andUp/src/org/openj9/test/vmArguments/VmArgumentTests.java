@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 package org.openj9.test.vmArguments;
 
 import static org.openj9.test.util.StringPrintStream.logStackTrace;
-import static org.openj9.test.vmArguments.ArgumentDumper.USERARG_TAG;
+import static org.openj9.test.vmArguments.Dumper.USERARG_TAG;
 import static org.testng.Assert.fail;
 import static org.testng.AssertJUnit.assertEquals;
 import static org.testng.AssertJUnit.assertFalse;
@@ -84,6 +84,7 @@ public class VmArgumentTests {
 	private static final String USER_DIR = System.getProperty("user.dir");
 	private static final String OS_NAME_PROPERTY = System.getProperty("os.name");
 	private static final String vmargsJarFilename;
+	private static final String vmUserArgsJarFilename;
 	private static final String XJIT = "-Xjit";
 	private static final String XINT = "-Xint";
 	private static final String XPROD = "-Xprod";
@@ -98,7 +99,8 @@ public class VmArgumentTests {
 	private static final String XOPTIONSFILE = "-Xoptionsfile=";
 	private static final String CLASSPATH=System.getProperty("java.class.path");
 	private static final String JAVA_COMMAND=System.getProperty("java.home")+File.separatorChar+"bin"+File.separatorChar+"java";
-	private static final String APPLICATION_NAME = ArgumentDumper.class.getCanonicalName();
+	private static final String ALL_ARGS_APPLICATION_NAME = ArgumentDumper.class.getCanonicalName();
+	private static final String USER_ARGS_APPLICATION_NAME = UserArgumentDumper.class.getCanonicalName();
 	private static final String HELLO_WORLD = HelloWorld.class.getCanonicalName();
 
 	private static final String[] mandatoryArgumentsJava8;
@@ -164,6 +166,7 @@ public class VmArgumentTests {
 		int javaMajorVersion = VersionCheck.major();
 		isJava8 = (8 == javaMajorVersion);
 		vmargsJarFilename = "vmargs.jar";
+		vmUserArgsJarFilename = "vmuserargs.jar";
 	}
 
 	/* 
@@ -184,6 +187,19 @@ public class VmArgumentTests {
 			ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
 			actualArguments = runAndGetArgumentList(pb);
 			checkArguments(actualArguments, new String[] {});
+		} catch (AssertionError e) {
+			dumpDiagnostics(e, actualArguments);
+			throw e;
+		}
+	}
+
+	@Test
+	public void testUserArgsOnlyNoOptions() {
+		ArrayList<String> actualArguments = null;
+		try {
+			ProcessBuilder pb = makeUserArgsOnlyProcessBuilder(new String[] {}, CLASSPATH);
+			actualArguments = runAndGetArgumentList(pb);
+			checkForUserArgumentsOnly(actualArguments, new String[] {});
 		} catch (AssertionError e) {
 			dumpDiagnostics(e, actualArguments);
 			throw e;
@@ -320,6 +336,18 @@ public class VmArgumentTests {
 		assertTrue(IBM_JAVA_OPTIONS+ " should come last", argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue()); 
 	}
 
+	/* test IBM_JAVA_OPTIONS environment variable for user arguments only*/
+	@Test
+	public void testUserArgsOnlyIbmJavaOptions() {
+		ProcessBuilder pb = makeUserArgsOnlyProcessBuilder(new String[] {}, CLASSPATH);
+		Map<String, String> env = pb.environment();
+		String ibmJavaOptionsArg = "-Dtest.name=testIbmJavaOptions";
+		env.put(IBM_JAVA_OPTIONS, ibmJavaOptionsArg);
+		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		HashMap<String, Integer> argumentPositions = checkForUserArgumentsOnly(actualArguments, new String[] {ibmJavaOptionsArg});
+		assertTrue("missing argument: "+ibmJavaOptionsArg, argumentPositions.containsKey(ibmJavaOptionsArg));
+	}
+
 	/* test IBM_JAVA_OPTIONS environment variable */
 	@Test
 	public void testArgEncodingInIbmJavaOptions() {
@@ -334,7 +362,7 @@ public class VmArgumentTests {
 		assertTrue(IBM_JAVA_OPTIONS+ " should come last", argumentPositions.get(ibmJavaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
 	}
 
-	/* test OPENJ9_JAVA_OPTIONS environment variableS */
+	/* test OPENJ9_JAVA_OPTIONS environment variables */
 	@Test
 	public void testOpenJ9Options() {
 		ProcessBuilder pb = makeProcessBuilder(new String[] {}, CLASSPATH);
@@ -349,6 +377,17 @@ public class VmArgumentTests {
 				argumentPositions.get(openJ9JavaOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue()); 
 	}
 
+	/* test OPENJ9_JAVA_OPTIONS environment variables for user arguments only */
+	@Test
+	public void testUserArgsOnlyOpenJ9Options() {
+		ProcessBuilder pb = makeUserArgsOnlyProcessBuilder(new String[] {}, CLASSPATH);
+		Map<String, String> env = pb.environment();
+		String openJ9JavaOptionsArg = "-Dtest.name=testOpenJ9Options"; //$NON-NLS-1$
+		env.put(OPENJ9_JAVA_OPTIONS, openJ9JavaOptionsArg);
+		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		HashMap<String, Integer> argumentPositions = checkForUserArgumentsOnly(actualArguments, new String[] {openJ9JavaOptionsArg});
+		assertTrue(MISSING_ARGUMENT+openJ9JavaOptionsArg, argumentPositions.containsKey(openJ9JavaOptionsArg));
+	}
 
 	/* this test does not apply to OpenJ9 as OpenJ9 is default compressedrefs and nocompressedrefs is not available */
 	@Test
@@ -372,7 +411,17 @@ public class VmArgumentTests {
 		assertNotNull(vmargsJarFilename+" not found", jarUrl);
 		Path jarPath = null;
 			jarPath = Paths.get(jarUrl.toURI()).toFile().toPath();
-			checkJarArgs(jarPath.toString());
+			checkJarArgs(jarPath.toString(), false);
+	}
+
+	/* test options in runnable jar files for user arguments only*/
+	@Test
+	public void testUserArgsOnlyJarArguments() throws URISyntaxException {
+		URL jarUrl = ClassLoader.getSystemClassLoader().getResource(vmUserArgsJarFilename);
+		assertNotNull(vmargsJarFilename+" not found", jarUrl);
+		Path jarPath = null;
+			jarPath = Paths.get(jarUrl.toURI()).toFile().toPath();
+			checkJarArgs(jarPath.toString(), true);
 	}
 
 	/**
@@ -402,7 +451,7 @@ public class VmArgumentTests {
 			logStackTrace(e, logger);
 			fail("Error creating "+pathString+" from "+jarPath, e);
 		}		
-		checkJarArgs(pathString);
+		checkJarArgs(pathString, false);
 	}
 
 	/* test JAVA_TOOL_OPTIONS environment variable */
@@ -417,6 +466,18 @@ public class VmArgumentTests {
 		assertTrue("missing argument: "+javaToolOptionsArg, argumentPositions.containsKey(javaToolOptionsArg));
 		/* environment variables should come after implicit arguments */
 		assertTrue(JAVA_TOOL_OPTIONS+ " should come last", argumentPositions.get(javaToolOptionsArg).intValue() > argumentPositions.get(DJAVA_HOME).intValue());
+	}
+
+	/* test JAVA_TOOL_OPTIONS environment variable for user arguments only */
+	@Test
+	public void testUserArgsOnlyJavaToolOptions() {
+		ProcessBuilder pb = makeUserArgsOnlyProcessBuilder(new String[] {}, CLASSPATH);
+		Map<String, String> env = pb.environment();
+		String javaToolOptionsArg = "-Dtest.name=testJavaToolOptions";
+		env.put(JAVA_TOOL_OPTIONS, javaToolOptionsArg);
+		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		HashMap<String, Integer> argumentPositions = checkForUserArgumentsOnly(actualArguments, new String[] {javaToolOptionsArg});
+		assertTrue("missing argument: "+javaToolOptionsArg, argumentPositions.containsKey(javaToolOptionsArg));
 	}
 
 	@Test
@@ -531,6 +592,14 @@ public class VmArgumentTests {
 		ProcessBuilder pb = makeProcessBuilder(TEST_ARG_LIST, CLASSPATH);
 		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
 		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, TEST_ARG_LIST);
+		checkArgumentSequence(TEST_ARG_LIST, argumentPositions, true);
+	}
+
+	@Test
+	public void testUserArgsOnlyCommandlineArguments() {
+		ProcessBuilder pb = makeUserArgsOnlyProcessBuilder(TEST_ARG_LIST, CLASSPATH);
+		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		HashMap<String, Integer> argumentPositions = checkForUserArgumentsOnly(actualArguments, TEST_ARG_LIST);
 		checkArgumentSequence(TEST_ARG_LIST, argumentPositions, true);
 	}
 
@@ -893,6 +962,20 @@ public class VmArgumentTests {
 
 		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
 		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, expectedArgs);
+		checkArgumentSequence(expectedArgs, argumentPositions, true);
+	}
+
+	@Test
+	public void testUserArgsOnlyOptionsFile() {
+		String optionFilePath = makeOptionsFile("test1", TEST_ARG_LIST);
+		String optionFileArg=XOPTIONSFILE+optionFilePath;
+		ProcessBuilder pb = makeUserArgsOnlyProcessBuilder(new String[] {optionFileArg}, CLASSPATH);
+		String[] expectedArgs = new String[TEST_ARG_LIST.length+1];
+		expectedArgs[0]=optionFileArg;
+		System.arraycopy(TEST_ARG_LIST, 0, expectedArgs, 1, TEST_ARG_LIST.length);
+
+		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
+		HashMap<String, Integer> argumentPositions = checkForUserArgumentsOnly(actualArguments, expectedArgs);
 		checkArgumentSequence(expectedArgs, argumentPositions, true);
 	}
 
@@ -1517,7 +1600,12 @@ public class VmArgumentTests {
 	}
 
 	private ProcessBuilder makeProcessBuilder(String[] vmArgs, String targetClasspath) {
-		String appName = APPLICATION_NAME;
+		String appName = ALL_ARGS_APPLICATION_NAME;
+		return makeProcessBuilder(appName, vmArgs, targetClasspath);
+	}
+
+	private ProcessBuilder makeUserArgsOnlyProcessBuilder(String[] vmArgs, String targetClasspath) {
+		String appName = USER_ARGS_APPLICATION_NAME;
 		return makeProcessBuilder(appName, vmArgs, targetClasspath);
 	}
 
@@ -1662,6 +1750,48 @@ public class VmArgumentTests {
 		return argPositions;
 	}
 
+	private HashMap<String, Integer> checkForUserArgumentsOnly(ArrayList<String> actualArguments, String[] optionalArguments) {
+		HashMap<String, Integer> argPositions = new HashMap<String, Integer>();
+		String[] mArgs;
+		if (isJava8) {
+			mArgs = mandatoryArgumentsJava8.clone();
+		} else {
+			mArgs = mandatoryArguments.clone();
+		}
+		for (String m: mArgs) {
+			if (null == m) {
+				continue;
+			}
+			boolean found = false;
+			int p = 0;
+			for (String a: actualArguments) {
+				if (a.startsWith(m)) {
+					argPositions.put(m, Integer.valueOf(p));
+					found = true;
+					break;
+				} else {
+					++p;
+				}
+			}
+			assertFalse("A non user Argument was found: "+m, found);
+		}
+
+		for (String op: optionalArguments) {
+			int p = 0;
+			for (String a: actualArguments) {
+				if (a.startsWith(op)) {
+					argPositions.put(op, new Integer(p));
+					break;
+				} else {
+					++p;
+				}
+			}
+		}
+
+		return argPositions;
+
+	}
+
 	/* verify that the arguments appear in the correct order*/
 	/**
 	 * @param expectedArguments list of arguments in the order in which they are expected
@@ -1689,7 +1819,7 @@ public class VmArgumentTests {
 		}
 	}
 
-	private void checkJarArgs(final String pathString) {
+	private void checkJarArgs(final String pathString, boolean checkUserArgOnly) {
 		ProcessBuilder pb = makeProcessBuilder(null, new String[] {DASH_D_CMDLINE_ARG, "-jar", pathString}, null);
 		Map<String, String> env = pb.environment();
 		String javaToolOptionsArg = "-DjavaToolOptionsArg";
@@ -1699,8 +1829,14 @@ public class VmArgumentTests {
 		ArrayList<String> actualArguments = runAndGetArgumentList(pb);
 		String fooBar = "-Dfoo=bar";
 		String longProp = "-Da.long.system.property=this is a long system property value to demonstrate long JVM arguments in the manifest file";
-		HashMap<String, Integer> argumentPositions = checkArguments(actualArguments, 
+		HashMap<String, Integer> argumentPositions;
+		if (checkUserArgOnly) {
+			argumentPositions = checkForUserArgumentsOnly(actualArguments, 
 				new String[] {javaToolOptionsArg, ibmJavaOptionsArg, DASH_D_CMDLINE_ARG, fooBar, longProp});
+		} else {
+			argumentPositions = checkArguments(actualArguments, 
+				new String[] {javaToolOptionsArg, ibmJavaOptionsArg, DASH_D_CMDLINE_ARG, fooBar, longProp});
+		}
 		assertTrue("missing argument: "+fooBar, argumentPositions.containsKey(fooBar));
 		assertTrue("missing argument: "+longProp, argumentPositions.containsKey(longProp));
 		/* environment variables should come after implicit arguments */

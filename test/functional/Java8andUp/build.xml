@@ -327,6 +327,9 @@
 		<jar jarfile="${RESOURCES_DIR}/vmargs.jar" filesonly="true" manifest="./META-INF/MANIFEST.MF">
 			<fileset dir="${build}" includes="org/openj9/test/vmArguments/*.class"/>
 		</jar>
+		<jar jarfile="${RESOURCES_DIR}/vmuserargs.jar" filesonly="true" manifest="./META-INF/MANIFEST1.MF">
+			<fileset dir="${build}" includes="org/openj9/test/vmArguments/*.class"/>
+		</jar>
 		<copy todir="${DEST}">
 			<fileset dir="${src}/../" includes="*.xml,*.policy" />
 			<fileset dir="${src}/../" includes="*.mk" />
