@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2008 IBM Corp. and others
+ * Copyright (c) 2008, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,6 @@ test_vPm_nSt(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -72,7 +71,6 @@ test_vPm_nP(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED, NULL, NULL, 0);
 
 	explainParkedAreIgnored(env);
 	if (ignoreExpectedFailures) {
@@ -92,7 +90,6 @@ test_vPm_nBMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It reports the thread blocked although the monitor is unowned.\n");
@@ -113,7 +110,6 @@ test_vPm_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -133,7 +129,6 @@ test_vPm_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -148,7 +143,6 @@ test_vPm_nWMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, NULL, 0);
 
 	return rc;
 }
@@ -164,7 +158,6 @@ test_vPm_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -184,7 +177,6 @@ test_vPm_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -200,7 +192,6 @@ test_vPm_nZP(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_SUSPENDED, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_SUSPENDED, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_SUSPENDED, NULL, NULL, 0);
 
 	explainAtypicalState(env);
 	if (ignoreExpectedFailures) {
@@ -220,7 +211,6 @@ test_vPm_nZBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_SUSPENDED, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_SUSPENDED, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_SUSPENDED, NULL, NULL, 0);
 
 	explainAtypicalState(env);
 	if (ignoreExpectedFailures) {
@@ -240,7 +230,6 @@ test_vPm_nZWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_SUSPENDED, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_SUSPENDED, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_SUSPENDED, NULL, NULL, 0);
 
 	explainAtypicalState(env);
 	if (ignoreExpectedFailures) {
@@ -259,7 +248,6 @@ test_vPTm_nSt(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -274,7 +262,6 @@ test_vPTm_nPT(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED_TIMED, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED_TIMED, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED_TIMED, NULL, NULL, 0);
 
 	explainParkedAreIgnored(env);
 	if (ignoreExpectedFailures) {
@@ -294,7 +281,6 @@ test_vPTm_nBMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It reports the thread blocked although the monitor is unowned.\n");
@@ -315,7 +301,6 @@ test_vPTm_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -335,7 +320,6 @@ test_vPTm_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -350,7 +334,6 @@ test_vPTm_nWMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, NULL, 0);
 
 	return rc;
 }
@@ -366,7 +349,6 @@ test_vPTm_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -386,7 +368,6 @@ test_vPTm_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -403,7 +384,6 @@ test_vPMoc_nSt(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -418,7 +398,6 @@ test_vPMoc_nP(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED, TESTDATA(blockingObject), NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED, TESTDATA(blockingObject), NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED, NULL, NULL, 0);
 
 	explainParkedAreIgnored(env);
 	if (ignoreExpectedFailures) {
@@ -438,7 +417,6 @@ test_vPMoc_nBMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It reports the thread blocked although the monitor is unowned.\n");
@@ -459,7 +437,6 @@ test_vPMoc_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -479,7 +456,6 @@ test_vPMoc_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -494,7 +470,6 @@ test_vPMoc_nWMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, NULL, 0);
 
 	return rc;
 }
@@ -510,7 +485,6 @@ test_vPMoc_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -530,7 +504,6 @@ test_vPMoc_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -545,7 +518,6 @@ test_vPTMoc_nSt(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -560,7 +532,6 @@ test_vPTMoc_nPT(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED_TIMED, TESTDATA(blockingObject), NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED_TIMED, TESTDATA(blockingObject), NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED_TIMED, NULL, NULL, 0);
 
 	explainParkedAreIgnored(env);
 	if (ignoreExpectedFailures) {
@@ -580,7 +551,6 @@ test_vPTMoc_nBMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It reports the thread blocked although the monitor is unowned.\n");
@@ -601,7 +571,6 @@ test_vPTMoc_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -621,7 +590,6 @@ test_vPTMoc_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -636,7 +604,6 @@ test_vPTMoc_nWMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, NULL, 0);
 
 	return rc;
 }
@@ -652,7 +619,6 @@ test_vPTMoc_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -672,7 +638,6 @@ test_vPTMoc_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -688,7 +653,6 @@ test_vPMOC_nSt(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -703,7 +667,6 @@ test_vPMOC_nP(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED, TESTDATA(blockingObject), NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED, TESTDATA(blockingObject), NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED, NULL, NULL, 0);
 
 	explainParkedAreIgnored(env);
 	if (ignoreExpectedFailures) {
@@ -723,7 +686,6 @@ test_vPMOC_nBMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It reports the thread blocked although the monitor is unowned.\n");
@@ -744,7 +706,6 @@ test_vPMOC_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -764,7 +725,6 @@ test_vPMOC_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -779,7 +739,6 @@ test_vPMOC_nWMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, NULL, 0);
 
 	return rc;
 }
@@ -795,7 +754,6 @@ test_vPMOC_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -815,7 +773,6 @@ test_vPMOC_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -830,7 +787,6 @@ test_vPTMOC_nSt(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -845,7 +801,6 @@ test_vPTMOC_nPT(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED_TIMED, TESTDATA(blockingObject), NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED_TIMED, TESTDATA(blockingObject), NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED_TIMED, NULL, NULL, 0);
 
 	explainParkedAreIgnored(env);
 	if (ignoreExpectedFailures) {
@@ -865,7 +820,6 @@ test_vPTMOC_nBMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It reports the thread blocked although the monitor is unowned.\n");
@@ -886,7 +840,6 @@ test_vPTMOC_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -906,7 +859,6 @@ test_vPTMOC_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -921,7 +873,6 @@ test_vPTMOC_nWMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, NULL, 0);
 
 	return rc;
 }
@@ -937,7 +888,6 @@ test_vPTMOC_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -957,7 +907,6 @@ test_vPTMOC_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -973,7 +922,6 @@ test_vPMVC_nSt(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -988,7 +936,6 @@ test_vPMVC_nP(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED, TESTDATA(blockingObject), NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED, TESTDATA(blockingObject), NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED, NULL, NULL, 0);
 
 	explainParkedAreIgnored(env);
 	if (ignoreExpectedFailures) {
@@ -1008,7 +955,6 @@ test_vPMVC_nBMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It reports the thread blocked although the monitor is unowned.\n");
@@ -1029,7 +975,6 @@ test_vPMVC_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -1049,7 +994,6 @@ test_vPMVC_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -1064,7 +1008,6 @@ test_vPMVC_nWMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, NULL, 0);
 
 	return rc;
 }
@@ -1080,7 +1023,6 @@ test_vPMVC_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -1100,7 +1042,6 @@ test_vPMVC_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -1115,7 +1056,6 @@ test_vPTMVC_nSt(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	return rc;
 }
@@ -1130,7 +1070,6 @@ test_vPTMVC_nPT(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED_TIMED, TESTDATA(blockingObject), NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED_TIMED, TESTDATA(blockingObject), NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_PARKED_TIMED, NULL, NULL, 0);
 
 	explainParkedAreIgnored(env);
 	if (ignoreExpectedFailures) {
@@ -1150,7 +1089,6 @@ test_vPTMVC_nBMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It reports the thread blocked although the monitor is unowned.\n");
@@ -1171,7 +1109,6 @@ test_vPTMVC_nBMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -1191,7 +1128,6 @@ test_vPTMVC_nBMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_BLOCKED, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }
@@ -1206,7 +1142,6 @@ test_vPTMVC_nWMoc(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, NULL, 0);
 
 	return rc;
 }
@@ -1222,7 +1157,6 @@ test_vPTMVC_nWMOC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, NULL, 0);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 
 	j9tty_printf(PORTLIB, "Expected failure in getVMThreadStatus:\n");
 	j9tty_printf(PORTLIB, "It fails to ignore the monitor enter count.\n");
@@ -1242,7 +1176,6 @@ test_vPTMVC_nWMVC(JNIEnv *env, BOOLEAN ignoreExpectedFailures)
 
 	rc |= checkObjAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_RUNNING, NULL, NULL, 0);
 	rc |= checkRawAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, NULL, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
-	rc |= checkOldAnswers(env, TESTDATA(selfVmthread), J9VMTHREAD_STATE_WAITING, TESTDATA(rawMonitor)->monitor, TESTDATA(otherVmthread), 1);
 
 	return rc;
 }

@@ -1678,17 +1678,6 @@ getVMThreadRawState(J9VMThread *targetThread, j9object_t *pLockObject, omrthread
 UDATA
 getVMThreadRawStatesAll(J9VMThread *targetThread, j9object_t *pLockObject, omrthread_monitor_t *pRawLock, J9VMThread **pLockOwner, UDATA *pCount);
 
-
-/**
-* @brief
-* @param thread
-* @param pmonitor
-* @param powner
-* @param pcount
-* @return UDATA
-*/
-UDATA getVMThreadStatus_DEPRECATED(J9VMThread* thread, J9ThreadAbstractMonitor** pmonitor, J9VMThread** powner, UDATA* pcount);
-
 /**
 * @brief
 * @param vm
