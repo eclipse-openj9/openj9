@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2019 IBM Corp. and others
  *
@@ -31,6 +31,7 @@ import java.util.ArrayList;
 /*[IF Sidecar19-SE]*/
 import sun.security.util.FilePermCompat;
 /*[ENDIF] Sidecar19-SE*/
+import sun.security.util.SecurityConstants;
 
 /**
  * An AccessControlContext encapsulates the information which is needed
@@ -77,11 +78,6 @@ public final class AccessControlContext {
 	Permission[] limitedPerms; // the limited permissions when isLimitedContext is true
 	AccessControlContext nextStackAcc; // AccessControlContext in next call stack when isLimitedContext is true
 	private int debugHasCodebase; // Set to the value of DEBUG_UNINITIALIZED_HASCODEBASE be default. Cache the result of hasDebugCodeBase()
-
-	private static final SecurityPermission createAccessControlContext =
-		new SecurityPermission("createAccessControlContext"); //$NON-NLS-1$
-	private static final SecurityPermission getDomainCombiner =
-		new SecurityPermission("getDomainCombiner"); //$NON-NLS-1$
 
 	static final int DEBUG_ACCESS = 1;
 	static final int DEBUG_ACCESS_STACK = 2;
@@ -382,7 +378,7 @@ AccessControlContext(AccessControlContext acc, DomainCombiner combiner, boolean 
 	if (!preauthorized) {
 		SecurityManager security = System.getSecurityManager();
 		if (null != security) {
-			security.checkPermission(createAccessControlContext);
+			security.checkPermission(SecurityConstants.CREATE_ACC_PERMISSION);
 			/*[PR JAZZ 78139] java.security.AccessController.checkPermission invokes untrusted DomainCombiner.combine method */
 		}
 	}
@@ -734,7 +730,7 @@ public void checkPermission(Permission perm) throws AccessControlException {
 	if (null != context && (STATE_AUTHORIZED != authorizeState) && containPrivilegedContext && null != System.getSecurityManager()) {
 		// only check SecurityPermission "createAccessControlContext" when context is not null, not authorized and containPrivilegedContext.
 		if (STATE_UNKNOWN == authorizeState) {
-			if (null == callerPD || callerPD.implies(createAccessControlContext)) {
+			if (null == callerPD || callerPD.implies(SecurityConstants.CREATE_ACC_PERMISSION)) {
 				authorizeState = STATE_AUTHORIZED;
 			} else {
 				authorizeState = STATE_NOT_AUTHORIZED;
@@ -743,7 +739,7 @@ public void checkPermission(Permission perm) throws AccessControlException {
 		}
 		if (STATE_NOT_AUTHORIZED == authorizeState) {
 			/*[MSG "K002d", "Access denied {0} due to untrusted AccessControlContext since {1} is denied"]*/
-			throw new AccessControlException(com.ibm.oti.util.Msg.getString("K002d", perm, createAccessControlContext), perm); //$NON-NLS-1$
+			throw new AccessControlException(com.ibm.oti.util.Msg.getString("K002d", perm, SecurityConstants.CREATE_ACC_PERMISSION), perm); //$NON-NLS-1$
 		}
 	}
 
@@ -900,7 +896,7 @@ public int hashCode() {
 public DomainCombiner getDomainCombiner() {
 	SecurityManager security = System.getSecurityManager();
 	if (security != null)
-		security.checkPermission(getDomainCombiner);
+		security.checkPermission(SecurityConstants.GET_COMBINER_PERMISSION);
 	return domainCombiner;
 }
 

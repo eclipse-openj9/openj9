@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 2009, 2019 IBM Corp. and others
  *
@@ -1632,7 +1632,7 @@ public class MethodHandles {
 
 					if (!Modifier.isPublic(modifiers)) {
 						if (vma.getClassloader(definingClass) != vma.getClassloader(accessClass)) {
-							secmgr.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionAccessDeclaredMembers);
+							secmgr.checkPermission(sun.security.util.SecurityConstants.CHECK_MEMBER_ACCESS_PERMISSION);
 						}
 
 						/* third check */

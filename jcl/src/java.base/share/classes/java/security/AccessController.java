@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar16]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 1998, 2019 IBM Corp. and others
  *
@@ -23,6 +23,7 @@
 package java.security;
 
 import java.security.AccessControlContext.AccessCache;
+import sun.security.util.SecurityConstants;
 
 /*[IF Sidecar19-SE]
 import jdk.internal.reflect.CallerSensitive;
@@ -50,8 +51,6 @@ public final class AccessController {
 	static final int OBJS_INDEX_PERMS_OR_CACHECHECKED = 2;
 
 private static native void initializeInternal();
-/*[PR CMVC 197399] Improve checking order */
-private static final SecurityPermission createAccessControlContext = new SecurityPermission("createAccessControlContext"); //$NON-NLS-1$
 
 /* [PR CMVC 188787] Enabling -Djava.security.debug option within WAS keeps JVM busy */
 static final class DebugRecursionDetection {
@@ -159,7 +158,7 @@ private static void throwACE(boolean debug, Permission perm, ProtectionDomain pD
 		DebugRecursionDetection.getTlDebug().set(""); //$NON-NLS-1$
 		AccessControlContext.debugPrintAccess();
 		if (createACCdenied) {
-			System.err.println("access denied " + perm + " due to untrusted AccessControlContext since " + createAccessControlContext + " is denied."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+			System.err.println("access denied " + perm + " due to untrusted AccessControlContext since " + SecurityConstants.CREATE_ACC_PERMISSION + " is denied."); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 		} else {
 			System.err.println("access denied " + perm); //$NON-NLS-1$
 		}
@@ -169,7 +168,7 @@ private static void throwACE(boolean debug, Permission perm, ProtectionDomain pD
 		DebugRecursionDetection.getTlDebug().set(""); //$NON-NLS-1$
 		new Exception("Stack trace").printStackTrace(); //$NON-NLS-1$
 		if (createACCdenied) {
-			System.err.println("domain that failed " + createAccessControlContext + " check " + pDomain); //$NON-NLS-1$ //$NON-NLS-2$
+			System.err.println("domain that failed " + SecurityConstants.CREATE_ACC_PERMISSION + " check " + pDomain); //$NON-NLS-1$ //$NON-NLS-2$
 		} else {
 			System.err.println("domain that failed " + pDomain); //$NON-NLS-1$
 		}
@@ -177,7 +176,7 @@ private static void throwACE(boolean debug, Permission perm, ProtectionDomain pD
 	}
 	if (createACCdenied) {
 		/*[MSG "K002d", "Access denied {0} due to untrusted AccessControlContext since {1} is denied"]*/
-		throw new AccessControlException(com.ibm.oti.util.Msg.getString("K002d", perm, createAccessControlContext), perm); //$NON-NLS-1$
+		throw new AccessControlException(com.ibm.oti.util.Msg.getString("K002d", perm, SecurityConstants.CREATE_ACC_PERMISSION), perm); //$NON-NLS-1$
 	} else {
 		/*[MSG "K002c", "Access denied {0}"]*/
 		throw new AccessControlException(com.ibm.oti.util.Msg.getString("K002c", perm), perm); //$NON-NLS-1$
@@ -228,7 +227,7 @@ private static boolean checkPermissionHelper(Permission perm, AccessControlConte
 		/*[PR JAZZ 72492] PMR 24367,001,866: Unexpected Security Permission "createAccessControlContext" exception thrown from 1.6SR14 onwards */
 		// startPos: 1 is JEP140 format, 2 is Pre-JEP140 format
 		ProtectionDomain callerPD = (ProtectionDomain) objPDomains[startPos - 1];
-		if (null != callerPD && !callerPD.implies(createAccessControlContext)) {
+		if (null != callerPD && !callerPD.implies(SecurityConstants.CREATE_ACC_PERMISSION)) {
 			/*[PR CMVC 197399] Improve checking order */
 			// new behavior introduced by this fix
 			// an ACE is thrown if there is a untrusted PD but without SecurityPermission createAccessControlContext
@@ -594,7 +593,7 @@ private static int getNewAuthorizedState(AccessControlContext acc, ProtectionDom
 		newAuthorizedState = acc.authorizeState;
 		if (AccessControlContext.STATE_UNKNOWN == newAuthorizedState) {
 			// only change AccessControlContext.authorizeState when it is unknown initially
-			if (null == callerPD || callerPD.implies(createAccessControlContext)) {
+			if (null == callerPD || callerPD.implies(SecurityConstants.CREATE_ACC_PERMISSION)) {
 				newAuthorizedState = AccessControlContext.STATE_AUTHORIZED;
 			} else {
 				newAuthorizedState = AccessControlContext.STATE_NOT_AUTHORIZED;
