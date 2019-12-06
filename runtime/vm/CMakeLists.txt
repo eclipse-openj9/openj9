@@ -21,12 +21,17 @@
 ################################################################################
 
 omr_add_tracegen(j9vm.tdf)
-add_library(j9vm SHARED
+
+if(OMR_OS_AIX AND (OMR_TOOLCONFIG STREQUAL "xlc"))
+	omr_remove_flags(CMAKE_CXX_FLAGS "-O3")
+	omr_remove_flags(CMAKE_C_FLAGS "-O3")
+endif()
+
+set(main_sources
 	annsup.c
 	AsyncMessageHandler.cpp
 	bchelper.c
 	bindnatv.cpp
-	BytecodeInterpreter.cpp
 	callin.cpp
 	classallocation.c
 	ClassInitialization.cpp
@@ -34,7 +39,6 @@ add_library(j9vm SHARED
 	classseg.c
 	classsupport.c
 	createramclass.cpp
-	DebugBytecodeInterpreter.cpp
 	description.c
 	dllsup.c
 	drophelp.c
@@ -81,7 +85,6 @@ add_library(j9vm SHARED
 	logsupport.c
 	lookuphelper.c
 	lookupmethod.c
-	MHInterpreter.cpp
 	ModularityHashTables.c
 	monhelpers.c
 	montable.c
@@ -123,6 +126,23 @@ add_library(j9vm SHARED
 
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vm.c
 )
+
+# Interpreter sources may need special handling on some platforms
+set(interpreter_sources
+	BytecodeInterpreter.cpp
+	DebugBytecodeInterpreter.cpp
+	MHInterpreter.cpp
+)
+
+add_library(j9vm SHARED
+	${main_sources}
+	${interpreter_sources}
+)
+
+if(OMR_OS_AIX AND (OMR_TOOLCONFIG STREQUAL "xlc"))
+	set_source_files_properties(${main_sources} COMPILE_FLAGS "-O3")
+	set_source_files_properties(${interpreter_sources} COMPILE_FLAGS "-O2 -qdebug=lincomm:ptranl:tfbagg")
+endif()
 
 
 if(OMR_ARCH_X86)
