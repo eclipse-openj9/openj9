@@ -123,8 +123,9 @@ class JNILinkage : public PrivateLinkage
     * @param[in] tearDownJNIFrame : true if we need to clean up ref pool
     * @param[in] vmThreadReg : vm thread register
     * @param[in] javaStackReg : java stack register
+    * @param[in] scratchReg : scratch register
     */
-   void restoreJNICallOutFrame(TR::Node *callNode, bool tearDownJNIFrame, TR::Register *vmThreadReg, TR::Register *javaStackReg);
+   void restoreJNICallOutFrame(TR::Node *callNode, bool tearDownJNIFrame, TR::Register *vmThreadReg, TR::Register *javaStackReg, TR::Register *scratchReg);
 
    /**
     * @brief Builds JNI method arguments

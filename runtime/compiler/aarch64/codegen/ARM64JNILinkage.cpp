@@ -86,9 +86,32 @@ void J9::ARM64::JNILinkage::buildJNICallOutFrame(TR::Node *callNode, bool isWrap
    TR_UNIMPLEMENTED();
    }
 
-void J9::ARM64::JNILinkage::restoreJNICallOutFrame(TR::Node *callNode, bool tearDownJNIFrame, TR::Register *vmThreadReg, TR::Register *javaStackReg)
+void J9::ARM64::JNILinkage::restoreJNICallOutFrame(TR::Node *callNode, bool tearDownJNIFrame, TR::Register *vmThreadReg, TR::Register *javaStackReg, TR::Register *scratchReg)
    {
-   TR_UNIMPLEMENTED();
+   TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(fe());
+
+   // restore stack pointer: need to deal with growable stack -- stack may already be moved.
+   generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg, new (trHeapMemory()) TR::MemoryReference(vmThreadReg, fej9->thisThreadGetJavaLiteralsOffset(), cg()));
+   generateTrg1MemInstruction(cg(),TR::InstOpCode::ldrimmx, callNode, javaStackReg, new (trHeapMemory()) TR::MemoryReference(vmThreadReg, fej9->thisThreadGetJavaSPOffset(), cg()));
+   generateTrg1Src2Instruction(cg(), TR::InstOpCode::addx, callNode, javaStackReg, scratchReg, javaStackReg);
+
+   if (tearDownJNIFrame)
+      {
+      // must check to see if the ref pool was used and clean them up if so--or we
+      // leave a bunch of pinned garbage behind that screws up the gc quality forever
+      TR::LabelSymbol      *refPoolRestartLabel = generateLabelSymbol(cg());
+      TR::LabelSymbol      *refPoolSnippetLabel = generateLabelSymbol(cg());
+      TR::SymbolReference *collapseSymRef = cg()->getSymRefTab()->findOrCreateRuntimeHelper(TR_ARM64jitCollapseJNIReferenceFrame, false, false, false);
+      TR::Snippet *snippet = new (trHeapMemory()) TR::ARM64HelperCallSnippet(cg(), callNode, refPoolSnippetLabel, collapseSymRef, refPoolRestartLabel);
+      cg()->addSnippet(snippet);
+      generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, scratchReg, new (trHeapMemory()) TR::MemoryReference(javaStackReg, fej9->constJNICallOutFrameFlagsOffset(), cg()));
+      generateTestImmInstruction(cg(), callNode, scratchReg, fej9->constJNIReferenceFrameAllocatedFlags(), true);
+      generateConditionalBranchInstruction(cg(), TR::InstOpCode::b_cond, callNode, refPoolSnippetLabel, TR::CC_NE);
+      generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, refPoolRestartLabel);
+      }
+
+   // Restore the JIT frame
+   generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, callNode, javaStackReg, javaStackReg, 5*TR::Compiler->om.sizeofReferenceAddress());
    }
 
 size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDependencyConditions *deps, bool passThread, bool passReceiver, bool killNonVolatileGPRs)
@@ -244,7 +267,7 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 
    if (createJNIFrame)
       {
-      restoreJNICallOutFrame(callNode, tearDownJNIFrame, vmThreadReg, javaStackReg);
+      restoreJNICallOutFrame(callNode, tearDownJNIFrame, vmThreadReg, javaStackReg, x9Reg);
       }
 
    if (checkExceptions)
