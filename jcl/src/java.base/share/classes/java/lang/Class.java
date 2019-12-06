@@ -4689,4 +4689,26 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 		return "L"+ name + ";"; //$NON-NLS-1$ //$NON-NLS-2$
 	}
 /*[ENDIF] Java12 */
+
+/*[IF Java14]*/
+	/**
+	 * Returns true if the class instance is a record.
+	 * 
+	 * @return true for a record class, false otherwise
+	 */
+	public boolean isRecord() {
+		throw new InternalError("Compile stub invoked! For JEP 359 support see https://github.com/eclipse/openj9/pull/7946"); //$NON-NLS-1$
+	}
+
+	/**
+	 * Returns an array  of RecordComponent objects for a record class.
+	 * 
+	 * @return array of RecordComponent objects, one for each component in the record.
+	 * For a class that is not a record an empty array is returned.
+	 * For a record with no components an empty array is returned.
+	 */
+	public RecordComponent[] getRecordComponents() {
+		throw new InternalError("Compile stub invoked! For JEP 359 support see https://github.com/eclipse/openj9/pull/7946"); //$NON-NLS-1$
+	}
+/*[ENDIF] Java14 */
 }
