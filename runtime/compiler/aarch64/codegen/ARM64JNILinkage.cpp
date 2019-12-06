@@ -25,7 +25,9 @@
 #include "codegen/ARM64HelperCallSnippet.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage_inlines.hpp"
+#include "codegen/MemoryReference.hpp"
 #include "codegen/RegisterDependency.hpp"
+#include "codegen/Relocation.hpp"
 #include "env/VMJ9.h"
 #include "il/Node.hpp"
 #include "il/SymbolReference.hpp"
@@ -81,9 +83,92 @@ void J9::ARM64::JNILinkage::acquireVMAccessAtomicFree(TR::Node *callNode, TR::Re
 #endif /* J9VM_INTERP_ATOMIC_FREE_JNI */
 
 void J9::ARM64::JNILinkage::buildJNICallOutFrame(TR::Node *callNode, bool isWrapperForJNI, TR::LabelSymbol *returnAddrLabel,
-                                                 TR::Register *vmThreadReg, TR::Register *javaStackReg)
+                                                 TR::Register *vmThreadReg, TR::Register *javaStackReg, TR::Register *scratchReg0, TR::Register *scratchReg1)
    {
-   TR_UNIMPLEMENTED();
+   TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(fe());
+
+   // begin: mask out the magic bit that indicates JIT frames below
+   loadConstant64(cg(), callNode, 0, scratchReg1);
+   generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode, new (trHeapMemory()) TR::MemoryReference(vmThreadReg, fej9->thisThreadGetJavaFrameFlagsOffset(), cg()), scratchReg1);
+
+   // Grab 5 slots in the frame.
+   //
+   //    4:   tag bits (savedA0)
+   //    3:   empty (savedPC)
+   //    2:   return address in this frame (savedCP)
+   //    1:   frame flags
+   //    0:   RAM method
+   //
+   // push tag bits (savedA0)
+   int32_t tagBits = fej9->constJNICallOutFrameSpecialTag();
+   // if the current method is simply a wrapper for the JNI call, hide the call-out stack frame
+   if (isWrapperForJNI)
+      tagBits |= fej9->constJNICallOutFrameInvisibleTag();
+   loadConstant64(cg(), callNode, tagBits, scratchReg0);
+
+   generateMemSrc1Instruction(cg(), TR::InstOpCode::strprex, callNode, new (trHeapMemory()) TR::MemoryReference(javaStackReg, -TR::Compiler->om.sizeofReferenceAddress(), cg()), scratchReg0);
+
+   // empty saved pc slot
+   generateMemSrc1Instruction(cg(), TR::InstOpCode::strprex, callNode, new (trHeapMemory()) TR::MemoryReference(javaStackReg, -TR::Compiler->om.sizeofReferenceAddress(), cg()), scratchReg1);
+
+   // push return address (savedCP)
+   generateTrg1ImmSymInstruction(cg(), TR::InstOpCode::adr, callNode, scratchReg0, 0, returnAddrLabel);
+   generateMemSrc1Instruction(cg(), TR::InstOpCode::strprex, callNode, new (trHeapMemory()) TR::MemoryReference(javaStackReg, -TR::Compiler->om.sizeofReferenceAddress(), cg()), scratchReg0);
+
+   // push flags
+   loadConstant64(cg(), callNode, fej9->constJNICallOutFrameFlags(), scratchReg0);
+   generateMemSrc1Instruction(cg(), TR::InstOpCode::strprex, callNode, new (trHeapMemory()) TR::MemoryReference(javaStackReg, -TR::Compiler->om.sizeofReferenceAddress(), cg()), scratchReg0);
+
+   TR::ResolvedMethodSymbol *resolvedMethodSymbol = callNode->getSymbol()->castToResolvedMethodSymbol();
+   TR_ResolvedMethod *resolvedMethod = resolvedMethodSymbol->getResolvedMethod();
+   uintptrj_t methodAddr = reinterpret_cast<uintptrj_t>(resolvedMethod->resolvedMethodAddress());
+
+   // push the RAM method for the native
+   if (fej9->needClassAndMethodPointerRelocations())
+      {
+      // load a 64-bit constant into a register with a fixed 4 instruction sequence
+      TR::Instruction *firstInstruction;
+
+      TR::Instruction *cursor = firstInstruction = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movzx, callNode, scratchReg0, methodAddr & 0x0000ffff, cursor);
+      cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg0, ((methodAddr >> 16) & 0x0000ffff) | TR::MOV_LSL16, cursor);
+      cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg0, ((methodAddr >> 32) & 0x0000ffff) | TR::MOV_LSL32 , cursor);
+      cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg0, (methodAddr >> 48) | TR::MOV_LSL48 , cursor);
+
+      TR_ExternalRelocationTargetKind reloType;
+      if (resolvedMethodSymbol->isSpecial())
+         reloType = TR_SpecialRamMethodConst;
+      else if (resolvedMethodSymbol->isStatic())
+         reloType = TR_StaticRamMethodConst;
+      else if (resolvedMethodSymbol->isVirtual())
+         reloType = TR_VirtualRamMethodConst;
+      else
+         {
+         reloType = TR_NoRelocation;
+         TR_ASSERT(0, "JNI relocation not supported.");
+         }
+      cg()->addExternalRelocation(new (trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+                                                            firstInstruction,
+                                                            reinterpret_cast<uint8_t *>(callNode->getSymbolReference()),
+                                                            reinterpret_cast<uint8_t *>(callNode->getInlinedSiteIndex()),
+                                                            reloType, cg()),
+                                                          __FILE__,__LINE__, callNode);
+
+      }
+   else
+      {
+      loadConstant64(cg(), callNode, methodAddr, scratchReg0);
+      }
+   generateMemSrc1Instruction(cg(), TR::InstOpCode::strprex, callNode, new (trHeapMemory()) TR::MemoryReference(javaStackReg, -TR::Compiler->om.sizeofReferenceAddress(), cg()), scratchReg0);
+
+   // store out java sp
+   generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode, new (trHeapMemory()) TR::MemoryReference(vmThreadReg, fej9->thisThreadGetJavaSPOffset(), cg()), javaStackReg);
+
+   // store out pc and literals values indicating the callout frame
+   loadConstant64(cg(), callNode, fej9->constJNICallOutFrameType(), scratchReg0);
+   generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode, new (trHeapMemory()) TR::MemoryReference(vmThreadReg, fej9->thisThreadGetJavaPCOffset(), cg()), scratchReg0);
+
+   generateMemSrc1Instruction(cg(), TR::InstOpCode::strimmx, callNode, new (trHeapMemory()) TR::MemoryReference(vmThreadReg, fej9->thisThreadGetJavaLiteralsOffset(), cg()), scratchReg1);
+
    }
 
 void J9::ARM64::JNILinkage::restoreJNICallOutFrame(TR::Node *callNode, bool tearDownJNIFrame, TR::Register *vmThreadReg, TR::Register *javaStackReg)
@@ -193,7 +278,7 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 
    if (createJNIFrame)
       {
-      buildJNICallOutFrame(callNode, (resolvedMethod == comp()->getCurrentMethod()), returnLabel, vmThreadReg, javaStackReg);
+      buildJNICallOutFrame(callNode, (resolvedMethod == comp()->getCurrentMethod()), returnLabel, vmThreadReg, javaStackReg, x9Reg, x10Reg);
       }
 
    if (passThread)

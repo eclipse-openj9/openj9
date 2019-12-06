@@ -112,10 +112,12 @@ class JNILinkage : public PrivateLinkage
     * @param[in] returnAddrLabel : label symbol of return address from JNI method
     * @param[in] vmThreadReg : vm thread register
     * @param[in] javaStackReg : java stack register
+    * @param[in] scratchReg0 : scratch register
+    * @param[in] scratchReg1 : scratch register
     */
    void buildJNICallOutFrame(TR::Node *callNode, bool isWrapperForJNI,
                              TR::LabelSymbol *returnAddrLabel, TR::Register *vmThreadReg,
-                             TR::Register *javaStackReg);
+                             TR::Register *javaStackReg, TR::Register *scratchReg0, TR::Register *scratchReg1);
 
    /**
     * @brief Restores JNI call out frame
