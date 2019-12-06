@@ -111,7 +111,57 @@ TR::Register *J9::ARM64::JNILinkage::pushJNIReferenceArg(TR::Node *child)
 
 void J9::ARM64::JNILinkage::adjustReturnValue(TR::Node *callNode, bool wrapRefs, TR::Register *returnRegister)
    {
-   TR_UNIMPLEMENTED();
+   TR::SymbolReference      *callSymRef = callNode->getSymbolReference();
+   TR::ResolvedMethodSymbol *callSymbol = callNode->getSymbol()->castToResolvedMethodSymbol();
+   TR_ResolvedMethod *resolvedMethod = callSymbol->getResolvedMethod();
+
+   // jni methods may not return a full register in some cases so need to get the declared
+   // type so that we sign and zero extend the narrower integer return types properly
+   TR::LabelSymbol *tempLabel = generateLabelSymbol(cg());
+
+   switch (resolvedMethod->returnType())
+      {
+      case TR::Address:
+         if (wrapRefs)
+            {
+            // unwrap when the returned object is non-null
+            generateCompareBranchInstruction(cg(),TR::InstOpCode::cbzx, callNode, returnRegister, tempLabel);
+            generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, callNode, returnRegister, new (trHeapMemory()) TR::MemoryReference(returnRegister, 0, cg()));
+            generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, tempLabel);
+            }
+         break;
+      case TR::Int8:
+         if (comp()->getSymRefTab()->isReturnTypeBool(callSymRef))
+            {
+            // For bool return type, must check whether value return by
+            // JNI is zero (false) or non-zero (true) to yield Java result
+            generateCompareImmInstruction(cg(), callNode, returnRegister, 0);
+            generateCSetInstruction(cg(), callNode, returnRegister, TR::CC_NE);
+            }
+         else if (resolvedMethod->returnTypeIsUnsigned())
+            {
+            // 7 in immr:imms means 0xff
+            generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::andimmw, callNode, returnRegister, returnRegister, 7);
+            }
+         else
+            {
+            // sxtb (sign extend byte)
+            generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::sbfmw, callNode, returnRegister, returnRegister, 7);
+            }
+         break;
+      case TR::Int16:
+         if (resolvedMethod->returnTypeIsUnsigned())
+            {
+            // 0xf in immr:imms means 0xffff
+            generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::andimmw, callNode, returnRegister, returnRegister, 0xf);
+            }
+         else
+            {
+            // sxth (sign extend halfword)
+            generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::sbfmw, callNode, returnRegister, returnRegister, 0xf);
+            }
+         break;
+      }
    }
 
 void J9::ARM64::JNILinkage::checkForJNIExceptions(TR::Node *callNode, TR::Register *vmThreadReg)
