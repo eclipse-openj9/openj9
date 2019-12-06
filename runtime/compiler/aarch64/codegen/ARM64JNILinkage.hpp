@@ -158,9 +158,10 @@ class JNILinkage : public PrivateLinkage
     * @param[in] isJNIGCPoint : true if the JNI method dispatch is GC point
     * @param[in] deps : register dependency conditions
     * @param[in] targetAddress : address of JNI method
+    * @param[in] scratchReg : scratch register
     * @return instruction of method dispatch
     */
-   TR::Instruction *generateMethodDispatch(TR::Node *callNode, bool isJNIGCPoint, TR::RegisterDependencyConditions *deps, uintptrj_t targetAddress);
+   TR::Instruction *generateMethodDispatch(TR::Node *callNode, bool isJNIGCPoint, TR::RegisterDependencyConditions *deps, uintptrj_t targetAddress, TR::Register *scratchReg);
 
    /**
     * @brief Adjusts return value to java semantics
