@@ -21,6 +21,7 @@
  *******************************************************************************/
 
 #include "codegen/CodeGenerator.hpp"
+#include "codegen/PicHelpers.hpp"
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
@@ -2742,6 +2743,7 @@ remoteCompile(
    std::string svmSymbolToIdStr;
    std::vector<TR_ResolvedJ9Method*> resolvedMirrorMethodsPersistIPInfo;
    TR_OptimizationPlan modifiedOptPlan;
+   std::vector<SerializedRuntimeAssumption> serializedRuntimeAssumptions;
    try
       {
       // Release VM access just before sending the compilation request
@@ -2769,7 +2771,8 @@ remoteCompile(
       if (JITServer::MessageType::compilationCode == response)
          {
          auto recv = client->getRecvData<std::string, std::string, CHTableCommitData, std::vector<TR_OpaqueClassBlock*>,
-                                      std::string, std::string, std::vector<TR_ResolvedJ9Method*>, TR_OptimizationPlan>();
+                                         std::string, std::string, std::vector<TR_ResolvedJ9Method*>, 
+                                         TR_OptimizationPlan, std::vector<SerializedRuntimeAssumption>>();
          statusCode = compilationOK;
          codeCacheStr = std::get<0>(recv);
          dataCacheStr = std::get<1>(recv);
@@ -2779,6 +2782,7 @@ remoteCompile(
          svmSymbolToIdStr = std::get<5>(recv);
          resolvedMirrorMethodsPersistIPInfo = std::get<6>(recv);
          modifiedOptPlan = std::get<7>(recv);
+         serializedRuntimeAssumptions = std::get<8>(recv);
          }
       else
          {
@@ -2855,6 +2859,45 @@ remoteCompile(
 
          // Relocate the received compiled code
          metaData = remoteCompilationEnd(vmThread, compiler, compilee, method, compInfoPT, codeCacheStr, dataCacheStr);
+         if (metaData)
+            {
+            // Must add the runtime assumptions received from the server to the RAT and
+            // update the list in the comp object with persistent entries. A pointer to
+            // this list will be copied into the metadata
+            for (auto& it : serializedRuntimeAssumptions)
+               {
+               uint8_t *addrToPatch = (uint8_t*)(metaData->startPC + it.getOffsetFromStartPC());
+               switch (it.getKind()) 
+                  {
+                  case RuntimeAssumptionOnRegisterNative:
+                     {
+                     TR_PatchJNICallSite::make(compiler->fej9vm(), compiler->trPersistentMemory(), it.getKey(), addrToPatch, compiler->getMetadataAssumptionList());
+                     break;
+                     }
+                  case RuntimeAssumptionOnClassRedefinitionPIC:
+                     {
+                     createClassRedefinitionPicSite((void*)it.getKey(), addrToPatch, it.getSize(), false, compiler->getMetadataAssumptionList());
+                     compiler->setHasClassRedefinitionAssumptions();
+                     break;
+                     }
+                  case RuntimeAssumptionOnClassRedefinitionUPIC:
+                     {
+                     createClassRedefinitionPicSite((void*)it.getKey(), addrToPatch, it.getSize(), true, compiler->getMetadataAssumptionList());
+                     compiler->setHasClassRedefinitionAssumptions();
+                     break;
+                     }
+                  case RuntimeAssumptionOnClassUnload:
+                     {
+                     createClassUnloadPicSite((void*)it.getKey(), addrToPatch, it.getSize(), compiler->getMetadataAssumptionList());
+                     compiler->setHasClassUnloadAssumptions();
+                     break;
+                     }
+                  default:
+                     TR_ASSERT_FATAL(false, "Runtime assumption of kind %d is not handled by JITClient\n", it.getKind());
+                  } // end switch (it->getKind()) 
+               }
+            metaData->runtimeAssumptionList = *(compiler->getMetadataAssumptionList());
+            }
 
          if (!compiler->getOption(TR_DisableCHOpts) && !useAotCompilation)
             {
