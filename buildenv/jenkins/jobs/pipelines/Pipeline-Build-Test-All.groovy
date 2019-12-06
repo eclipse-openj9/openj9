@@ -225,8 +225,8 @@ try {
                             branches: [[name: SCM_BRANCH]],
                             doGenerateSubmoduleConfigurations: false,
                             extensions: [[$class: 'CloneOption',
-                                          reference: "${HOME}/openjdk_cache"]],
-                            submoduleCfg: [],
+                                          reference: "${HOME}/openjdk_cache"],
+                                        [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'buildenv/jenkins']]]],
                             userRemoteConfigs: [remoteConfigParameters]]
 
                     variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
