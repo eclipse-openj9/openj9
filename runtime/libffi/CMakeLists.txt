@@ -117,6 +117,12 @@ elseif(OMR_ARCH_POWER)
 				powerpc/aix.S
 				powerpc/aix_closure.S
 		)
+		set_source_files_properties(
+			powerpc/aix.S
+			powerpc/aix_closure.S
+			PROPERTIES
+			LANGUAGE ASM
+		)
 		if(OMR_ENV_DATA64)
 			target_include_directories(ffi PUBLIC preconf/ap64)
 		else()
