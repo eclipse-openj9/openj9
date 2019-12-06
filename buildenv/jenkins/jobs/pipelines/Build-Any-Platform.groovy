@@ -52,8 +52,8 @@ timeout(time: 10, unit: 'HOURS') {
                         branches: [[name: "${scmBranch}"]],
                         doGenerateSubmoduleConfigurations: false,
                         extensions: [[$class: 'CloneOption',
-                                      reference: "${HOME}/openjdk_cache"]],
-                        submoduleCfg: [],
+                                      reference: "${HOME}/openjdk_cache"],
+                                    [$class: 'SparseCheckoutPaths', sparseCheckoutPaths: [[path: 'buildenv/jenkins']]]],
                         userRemoteConfigs: [remoteConfigParameters]]
 
                 variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'

@@ -26,7 +26,12 @@ omr_platform_global_setup()
 if(OMR_TOOLCONFIG STREQUAL "gnu")
     set(CMAKE_CXX_FLAGS " -g -fno-rtti -fno-exceptions ${CMAKE_CXX_FLAGS}")
     set(CMAKE_C_FLAGS "-g ${CMAKE_C_FLAGS}")
-    set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,defs ${CMAKE_SHARED_LINKER_FLAGS}")
+
+    # Raise an error if a shared library has any unresolved symbols.
+    # This flag isn't supported on OSX, but it has this behaviour by default
+    if(NOT OMR_OS_OSX)
+        set(CMAKE_SHARED_LINKER_FLAGS "-Wl,-z,defs ${CMAKE_SHARED_LINKER_FLAGS}")
+    endif()
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -O3 -fno-strict-aliasing")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -O3 -fno-strict-aliasing -fno-exceptions -fno-rtti -fno-threadsafe-statics")
 elseif(OMR_TOOLCONFIG STREQUAL "xlc")
