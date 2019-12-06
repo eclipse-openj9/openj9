@@ -86,8 +86,11 @@ class JNILinkage : public PrivateLinkage
     * @brief Acquires VM access after returned from JNI method
     * @param[in] callNode : caller node
     * @param[in] vmThreadReg : vm thread register
+    * @param[in] scratchReg0 : scratch register
+    * @param[in] scratchReg1 : scratch register
+    * @param[in] scratchReg2 : scratch register
     */
-   void acquireVMAccess(TR::Node *callNode, TR::Register *vmThreadReg);
+   void acquireVMAccess(TR::Node *callNode, TR::Register *vmThreadReg, TR::Register *scratchReg0, TR::Register *scratchReg1, TR::Register *scratchReg2);
 
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI
    /**
