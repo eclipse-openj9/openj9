@@ -42,20 +42,28 @@
 	</target>
 
 	<target name="compile" depends="init" description="Using java ${JDK_VERSION} to compile the source ">
-		<echo>Ant version is ${ant.version}</echo>
-		<echo>============COMPILER SETTINGS============</echo>
-		<echo>===fork:                         yes</echo>
-		<echo>===executable:                   ${compiler.javac}</echo>
-		<echo>===debug:                        on</echo>
-		<echo>===destdir:                      ${DEST}</echo>
-		<javac srcdir="./testcode" destdir="${testcodebuild}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1"/>
-		<javac srcdir="./testcode" destdir="${build}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1"/>
-		<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
-			<src path="${src}"/>
-			<classpath>
-				<pathelement location="${TEST_ROOT}/TestConfig/lib/junit4.jar" />
-			</classpath>
-		</javac>
+		<if>
+			<or>
+				<equals arg1="${JDK_IMPL}" arg2="ibm" />
+				<equals arg1="${JDK_IMPL}" arg2="openj9" />
+			</or>
+			<then>
+				<echo>Ant version is ${ant.version}</echo>
+				<echo>============COMPILER SETTINGS============</echo>
+				<echo>===fork:                         yes</echo>
+				<echo>===executable:                   ${compiler.javac}</echo>
+				<echo>===debug:                        on</echo>
+				<echo>===destdir:                      ${DEST}</echo>
+				<javac srcdir="./testcode" destdir="${testcodebuild}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1"/>
+				<javac srcdir="./testcode" destdir="${build}" debug="on" debuglevel="lines,vars,source" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1"/>
+				<javac destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${src}"/>
+					<classpath>
+						<pathelement location="${TEST_ROOT}/TestConfig/lib/junit4.jar" />
+					</classpath>
+				</javac>
+			</then>
+		</if>
 	</target>
 	<target name="dist" depends="compile" description="generate the distribution" >
 		<!-- CONFIG ARTEFACTS & TEST ARTEFACTS - move them to the build dir... -->	
@@ -87,7 +95,7 @@
 	<target name="build" >
 		<if>
 			<or>
-				<equals arg1="${JDK_IMPL}" arg2="ibm"  />
+				<equals arg1="${JDK_IMPL}" arg2="ibm" />
 				<equals arg1="${JDK_IMPL}" arg2="openj9" />
 			</or>
 			<then>
