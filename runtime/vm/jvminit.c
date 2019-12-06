@@ -4119,6 +4119,18 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	if (registerCmdLineMapping(vm, MAPOPT_XXDISABLEEXITONOUTOFMEMORYERROR, VMOPT_XDUMP_EXIT_OUTOFMEMORYERROR_DISABLE, EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
+	/* Map -XX:ParallelCMSThreads=N to -Xconcurrentbackground */
+	if (registerCmdLineMapping(vm, MAPOPT_XXPARALLELCMSTHREADS_EQUALS, VMOPT_XCONCURRENTBACKGROUND, EXACT_MAP_WITH_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
+	}
+	/* Map -XX:ConcGCThreads=N  to -Xconcurrentbackground */
+	if (registerCmdLineMapping(vm, MAPOPT_XXCONCGCTHREADS_EQUALS, VMOPT_XCONCURRENTBACKGROUND, EXACT_MAP_WITH_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
+	}
+	/* Map -XX:ParallelGCThreads=N  to -XgcthreadsN */
+	if (registerCmdLineMapping(vm, MAPOPT_XXPARALLELGCTHREADS_EQUALS, VMOPT_XGCTHREADS, EXACT_MAP_WITH_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
+	}
 
 	return 0;
 }
