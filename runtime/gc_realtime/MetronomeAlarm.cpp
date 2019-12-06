@@ -183,9 +183,9 @@ void MM_ITAlarm::alarm_handler(MM_MetronomeAlarmThread *alarmThread) {
 
 #if defined(WIN32)
 static void CALLBACK
-itAlarmThunk(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
+itAlarmThunk(PVOID lpParam, BOOLEAN timerOrWaitFired)
 {
-	MM_ITAlarm::alarm_handler((MM_MetronomeAlarmThread *)dwUser);
+	MM_ITAlarm::alarm_handler((MM_MetronomeAlarmThread *)lpParam);
 }
 #endif /*WIN32*/
 
@@ -207,29 +207,20 @@ MM_ITAlarm::initialize(MM_EnvironmentBase *env, MM_MetronomeAlarmThread* alarmTh
 	}
 	
 #if defined(WIN32)
-	TIMECAPS tc;
-	if (timeGetDevCaps(&tc, sizeof(TIMECAPS)) != TIMERR_NOERROR) {
-		return false;
-	}
-	UINT uDesiredPeriod = (UINT)(_extensions->itPeriodMicro / 1000);
-	UINT uPeriod = (uDesiredPeriod < tc.wPeriodMin) ? tc.wPeriodMin : uDesiredPeriod;
-	UINT uDelay = uPeriod;
-	if (timeBeginPeriod(uPeriod) != TIMERR_NOERROR) {
-		/* Error beginning higher frequency period  */
-		return false;
-	}
-	_uTimerId = (UINT)timeSetEvent(uDelay, uPeriod, itAlarmThunk, (DWORD_PTR)alarmThread, TIME_PERIODIC);
-	if (_uTimerId == 0) {
+	DWORD dwPeriod = (DWORD)(_extensions->itPeriodMicro / 1000);
+	DWORD dwDelay = dwPeriod;
+	BOOL ret = CreateTimerQueueTimer(&_hTimer, NULL, (WAITORTIMERCALLBACK)itAlarmThunk, (PVOID)alarmThread, dwDelay, dwPeriod, 0);
+	if (!ret) {
 		/* Error creating timer */
-		timeEndPeriod(uPeriod);
+		_hTimer = NULL;
 		return false;
 	}
 
 	return true;
-#else
+#else /* !defined(WIN32)*/
 	/* write code if we want this path on other platforms */
 	return false;
-#endif /* WIN32 */
+#endif /* defined(WIN32) */
 }
 
 void
@@ -297,11 +288,9 @@ void
 MM_ITAlarm::tearDown(MM_EnvironmentBase *env)
 {
 #if defined(WIN32)
-	if (_uTimerId != 0) {
-		UINT uPeriod = (UINT)(_extensions->itPeriodMicro / 1000);
-		timeKillEvent(_uTimerId);
-		timeEndPeriod(uPeriod);
+	if (NULL != _hTimer) {
+		DeleteTimerQueueTimer(NULL, _hTimer, NULL);
 	}
-#endif
+#endif /* defined(WIN32) */
 	MM_Alarm::tearDown(env);
 }
