@@ -1117,12 +1117,15 @@ MM_ObjectAccessBarrier::indexableStoreI64(J9VMThread *vmThread, J9IndexableObjec
  * @param index index of array element where fields are copied to
  */
 void
-MM_ObjectAccessBarrier::copyObjectFieldsToArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t srcObject, J9IndexableObject *arrayRef, I_32 index)
+MM_ObjectAccessBarrier::copyObjectFieldsToFlattenedArrayElement(J9VMThread *vmThread, J9ArrayClass *arrayClazz, j9object_t srcObject, J9IndexableObject *arrayRef, I_32 index)
 {
 	UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread);
-	U_8 *elementAddress = (U_8*)indexableEffectiveAddress(vmThread, arrayRef, index, J9ARRAYCLASS_GET_STRIDE(arrayClazz));
+	U_8 *elementAddress = (U_8*)indexableEffectiveAddress(vmThread, arrayRef, index, J9ARRAYCLASS_GET_STRIDE((J9Class *) arrayClazz));
 	IDATA elementOffset = (elementAddress - (U_8*)arrayRef);
-	copyObjectFields(vmThread, J9GC_J9OBJECT_CLAZZ_THREAD(srcObject, vmThread), srcObject, objectHeaderSize, (j9object_t) arrayRef, elementOffset);
+	J9Class *elementClazz = J9GC_J9OBJECT_CLAZZ_THREAD(srcObject, vmThread);
+	Assert_MM_true(J9_IS_J9CLASS_VALUETYPE(elementClazz));
+	Assert_MM_true(elementClazz == arrayClazz->leafComponentType);
+	copyObjectFields(vmThread, elementClazz, srcObject, objectHeaderSize, (j9object_t) arrayRef, elementOffset);
 }
 
 /**
@@ -1135,12 +1138,15 @@ MM_ObjectAccessBarrier::copyObjectFieldsToArrayElement(J9VMThread *vmThread, J9C
  * @param index index of array element where fields are copied to
  */
 void
-MM_ObjectAccessBarrier::copyObjectFieldsFromArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t destObject, J9IndexableObject *arrayRef, I_32 index)
+MM_ObjectAccessBarrier::copyObjectFieldsFromFlattenedArrayElement(J9VMThread *vmThread, J9ArrayClass *arrayClazz, j9object_t destObject, J9IndexableObject *arrayRef, I_32 index)
 {
 	UDATA const objectHeaderSize = J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread);
-	U_8 *elementAddress = (U_8*)indexableEffectiveAddress(vmThread, arrayRef, index, J9ARRAYCLASS_GET_STRIDE(arrayClazz));
+	U_8 *elementAddress = (U_8*)indexableEffectiveAddress(vmThread, arrayRef, index, J9ARRAYCLASS_GET_STRIDE((J9Class *) arrayClazz));
 	IDATA elementOffset = (elementAddress - (U_8*)arrayRef);
-	copyObjectFields(vmThread, J9GC_J9OBJECT_CLAZZ_THREAD(destObject, vmThread), (j9object_t) arrayRef, elementOffset, destObject, objectHeaderSize);
+	J9Class *elementClazz = J9GC_J9OBJECT_CLAZZ_THREAD(destObject, vmThread);
+	Assert_MM_true(J9_IS_J9CLASS_VALUETYPE(elementClazz));
+	Assert_MM_true(elementClazz == arrayClazz->leafComponentType);
+	copyObjectFields(vmThread, elementClazz, (j9object_t) arrayRef, elementOffset, destObject, objectHeaderSize);
 }
 
 

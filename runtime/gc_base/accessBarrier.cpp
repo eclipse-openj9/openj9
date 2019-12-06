@@ -622,20 +622,20 @@ j9gc_objaccess_copyObjectFields(J9VMThread *vmThread, J9Class *valueClass, J9Obj
  * Called by Interpreter during aastore of a flattend array
  */
 void
-j9gc_objaccess_copyObjectFieldsToArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t srcObject, J9IndexableObject *arrayRef, I_32 index)
+j9gc_objaccess_copyObjectFieldsToFlattenedArrayElement(J9VMThread *vmThread, J9ArrayClass *arrayClazz, j9object_t srcObject, J9IndexableObject *arrayRef, I_32 index)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
-	return barrier->copyObjectFieldsToArrayElement(vmThread, arrayClazz, srcObject, arrayRef, index);
+	return barrier->copyObjectFieldsToFlattenedArrayElement(vmThread, arrayClazz, srcObject, arrayRef, index);
 }
 
 /**
  * Called by Interpreter during aaload of a flattend array
  */
 void
-j9gc_objaccess_copyObjectFieldsFromArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t destObject, J9IndexableObject *arrayRef, I_32 index)
+j9gc_objaccess_copyObjectFieldsFromFlattenedArrayElement(J9VMThread *vmThread, J9ArrayClass *arrayClazz, j9object_t destObject, J9IndexableObject *arrayRef, I_32 index)
 {
 	MM_ObjectAccessBarrier *barrier = MM_GCExtensions::getExtensions(vmThread)->accessBarrier;
-	return barrier->copyObjectFieldsFromArrayElement(vmThread, arrayClazz, destObject, arrayRef, index);
+	return barrier->copyObjectFieldsFromFlattenedArrayElement(vmThread, arrayClazz, destObject, arrayRef, index);
 }
 
 /**
