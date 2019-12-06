@@ -193,8 +193,8 @@ public:
 	virtual void indexableStoreI32(J9VMThread *vmThread, J9IndexableObject *destObject, I_32 destIndex, I_32 value, bool isVolatile=false);
 	virtual void indexableStoreU64(J9VMThread *vmThread, J9IndexableObject *destObject, I_32 destIndex, U_64 value, bool isVolatile=false);
 	virtual void indexableStoreI64(J9VMThread *vmThread, J9IndexableObject *destObject, I_32 destIndex, I_64 value, bool isVolatile=false);
-	virtual void copyObjectFieldsToArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t srcObject, J9IndexableObject *arrayRef, I_32 index);
-	virtual void copyObjectFieldsFromArrayElement(J9VMThread *vmThread, J9Class *arrayClazz, j9object_t destObject, J9IndexableObject *arrayRef, I_32 index);
+	virtual void copyObjectFieldsToFlattenedArrayElement(J9VMThread *vmThread, J9ArrayClass *arrayClazz, j9object_t srcObject, J9IndexableObject *arrayRef, I_32 index);
+	virtual void copyObjectFieldsFromFlattenedArrayElement(J9VMThread *vmThread, J9ArrayClass *arrayClazz, j9object_t destObject, J9IndexableObject *arrayRef, I_32 index);
 
 	enum {
 		ARRAY_COPY_SUCCESSFUL = -1,
