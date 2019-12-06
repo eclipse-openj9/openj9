@@ -56,6 +56,15 @@ pipelineJob("$JOB_NAME") {
                         }
                         wipeOutWorkspace()
                     }
+                    configure { git ->
+                        git / 'extensions' / 'hudson.plugins.git.extensions.impl.SparseCheckoutPaths' / 'sparseCheckoutPaths' {
+                            [pipelineScript].each { mypath ->
+                                'hudson.plugins.git.extensions.impl.SparseCheckoutPath' {
+                                    path("${mypath}")
+                                }
+                            }
+                        }
+                    }
                 }
             }
             scriptPath(pipelineScript)
