@@ -214,6 +214,10 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _scratchSpaceFactorWhenJSR292Workload;
    static int32_t getScratchSpaceFactorWhenJSR292Workload() { return _scratchSpaceFactorWhenJSR292Workload; }
 
+#if defined(JITSERVER_SUPPORT)
+   static int32_t getScratchSpaceFactorWhenJITServerWorkload() { return 2; }
+#endif
+
    static int32_t _lowVirtualMemoryMBThreshold;
    static int32_t getLowVirtualMemoryMBThreshold() { return _lowVirtualMemoryMBThreshold; }
 
