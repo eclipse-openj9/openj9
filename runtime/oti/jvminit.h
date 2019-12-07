@@ -511,6 +511,9 @@ enum INIT_STAGE {
 #define MAPOPT_XXONOUTOFMEMORYERROR_EQUALS "-XX:OnOutOfMemoryError="
 #define MAPOPT_XXENABLEEXITONOUTOFMEMORYERROR "-XX:+ExitOnOutOfMemoryError"
 #define MAPOPT_XXDISABLEEXITONOUTOFMEMORYERROR "-XX:-ExitOnOutOfMemoryError"
+#define MAPOPT_XXPARALLELCMSTHREADS_EQUALS "-XX:ParallelCMSThreads="
+#define MAPOPT_XXCONCGCTHREADS_EQUALS "-XX:ConcGCThreads="
+#define MAPOPT_XXPARALLELGCTHREADS_EQUALS "-XX:ParallelGCThreads="
 
 #define VMOPT_XXACTIVEPROCESSORCOUNT_EQUALS "-XX:ActiveProcessorCount="
 
@@ -524,6 +527,8 @@ enum INIT_STAGE {
 #define VMOPT_XXIDLETUNINGCOMPACTONIDLEENABLE "-XX:+IdleTuningCompactOnIdle"
 #define VMOPT_XXIDLETUNINGIGNOREUNRECOGNIZEDOPTIONSDISABLE "-XX:-IdleTuningIgnoreUnrecognizedOptions"
 #define VMOPT_XXIDLETUNINGIGNOREUNRECOGNIZEDOPTIONSENABLE "-XX:+IdleTuningIgnoreUnrecognizedOptions"
+#define VMOPT_XCONCURRENTBACKGROUND "-Xconcurrentbackground"
+#define VMOPT_XGCTHREADS "-Xgcthreads"
 
 /* Modularity command line options */
 #define VMOPT_MODULE_UPGRADE_PATH "--upgrade-module-path"
