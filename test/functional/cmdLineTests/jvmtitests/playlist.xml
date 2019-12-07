@@ -149,6 +149,50 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+
+	<test>
+		<testCaseName>cmdLineTester_jvmtitests_hcr_openi9_none_SCC</testCaseName>
+		<variations>
+			<variation>Mode100</variation>
+			<variation>Mode101</variation>
+			<variation>Mode110</variation>
+			<variation>Mode112</variation>
+			<variation>Mode148</variation>
+			<variation>Mode201</variation>
+			<variation>Mode301</variation>
+			<variation>Mode351</variation>
+			<variation>Mode551</variation>
+			<variation>Mode501</variation>
+			<variation>Mode610</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
+	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
+	-DEXTRA_Add_OPEN_OPTION=$(SQ)--add-opens=java.base/java.lang.reflect=ALL-UNNAMED$(SQ) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_hcr.xml$(Q) \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>^arch.390</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<subsets>
+			<subset>11+</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_debug</testCaseName>
 		<variations>
@@ -189,6 +233,47 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+
+	<test>
+		<testCaseName>cmdLineTester_jvmtitests_debug_openj9_none_SCC</testCaseName>
+		<variations>
+			<variation>Mode100</variation>
+			<variation>Mode107</variation>
+			<variation>Mode108</variation>
+			<variation>Mode154</variation>
+			<variation>Mode307</variation>
+			<variation>Mode357</variation>
+			<variation>Mode507</variation>
+			<variation>Mode557</variation>
+			<variation>Mode607</variation>
+			<variation>Mode608</variation>
+			<variation>Mode107-OSR</variation>
+			<variation>Mode607-OSR</variation>
+		</variations>
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xshareclasses:none \
+	-DTEST_ROOT=$(Q)$(TEST_RESROOT)$(Q) \
+	-DJAR=$(Q)$(TEST_RESROOT)$(D)jvmtitest.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	-DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump $(SQ) \
+	-jar $(CMDLINETESTER_JAR) \
+	-config $(Q)$(TEST_RESROOT)$(D)jvmtitests_extended.xml$(Q) \
+	-explainExcludes -xids all,$(PLATFORM) -xlist $(Q)$(TEST_RESROOT)$(D)jvmtitests_excludes_$(JDK_VERSION).xml$(Q) -nonZeroExitWhenError; \
+	${TEST_STATUS}</command>
+		<platformRequirements>^arch.390</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<types>
+			<type>native</type>
+		</types>
+		<impls>
+			<impl>openj9</impl>
+		</impls>
+	</test>
+
 	<test>
 		<testCaseName>cmdLineTester_jvmtitests_nongold</testCaseName>
 		<variations>
