@@ -1303,6 +1303,7 @@ SH_OSCache::generateCacheUniqueID(J9VMThread* currentThread, const char* cacheDi
 void
 SH_OSCache::getCacheNameAndLayerFromUnqiueID(J9JavaVM* vm, const char* cacheDirName, const char* uniqueID, UDATA idLen, char* nameBuf, UDATA nameBuffLen, I_8* layer)
 {
+	PORT_ACCESS_FROM_JAVAVM(vm);
 	UDATA dirLen = strlen(cacheDirName);
 	const char* cacheNameWithVGenStart = uniqueID + dirLen;
 	char* cacheNameWithVGenEnd = strnrchrHelper(cacheNameWithVGenStart, '-', idLen - dirLen);
@@ -1313,8 +1314,26 @@ SH_OSCache::getCacheNameAndLayerFromUnqiueID(J9JavaVM* vm, const char* cacheDirN
 	char nameWithVGenCopy[J9SH_MAXPATH];
 	memset(nameWithVGenCopy, 0, J9SH_MAXPATH);
 	strncpy(nameWithVGenCopy, cacheNameWithVGenStart, cacheNameWithVGenEnd - cacheNameWithVGenStart);
+	
+	J9PortShcVersion versionData;
+	getValuesFromShcFilePrefix(PORTLIB, nameWithVGenCopy, &versionData);
+	UDATA prefixLen = J9SH_VERSION_STRING_LEN + 1;
+	/* 
+	 * For example, a persistent cache file is C290M11F1A64P_Cache1_G41L00. The prefix size is the length of "C290M11F1A64P"(J9SH_VERSION_STRING_LEN) + the length of "_"(1), which is J9SH_VERSION_STRING_LEN + 1
+	 * A non-persistent cache
+	 * 		On Windows, a cache file is C290M11F1A64_Cache1_G41L00, the prefix size is the length of "C290M11F1A64"(J9SH_VERSION_STRING_LEN - 1) + the length of "_"(1), which is J9SH_VERSION_STRING_LEN.
+	 * 		On non-Windows, a cache file is C290M11F1A64_memory_Cache1_G41L00, the prefix size is the length of "C290M11F1A64"(J9SH_VERSION_STRING_LEN - 1) + the length of "_memory_"(strlen(J9SH_MEMORY_ID)), 
+	 * 		which is J9SH_VERSION_STRING_LEN + strlen(J9SH_MEMORY_ID) - 1.
+	 */
+	if (J9PORT_SHR_CACHE_TYPE_NONPERSISTENT == versionData.cacheType) {
+#if defined(WIN32)
+		prefixLen = J9SH_VERSION_STRING_LEN;
+#else
+		prefixLen = J9SH_VERSION_STRING_LEN + strlen(J9SH_MEMORY_ID) - 1;
+#endif
+	}
 
-	SH_OSCache::removeCacheVersionAndGen(nameBuf, nameBuffLen, J9SH_VERSION_STRING_LEN + 1, nameWithVGenCopy);
+	SH_OSCache::removeCacheVersionAndGen(nameBuf, nameBuffLen, prefixLen, nameWithVGenCopy);
 	I_8 layerNo = getLayerFromName(nameWithVGenCopy);
 	Trc_SHR_Assert_True(((layerNo >= 0)
 						&& (layerNo <= J9SH_LAYER_NUM_MAX_VALUE))
