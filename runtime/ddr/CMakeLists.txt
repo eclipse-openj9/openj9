@@ -50,6 +50,13 @@ if((OMR_TOOLCONFIG STREQUAL "gnu") AND (NOT CMAKE_CXX_COMPILER_ID MATCHES Clang)
 	target_compile_options(j9ddr_misc PRIVATE -femit-class-debug-always)
 endif()
 
+
+if(OMR_OS_AIX)
+	target_link_libraries(j9ddr_misc
+		PRIVATE
+			-Wl,-bexpall
+	)
+endif()
 target_enable_ddr(j9ddr_misc)
 ddr_set_add_targets(j9ddr j9ddr_misc)
 
