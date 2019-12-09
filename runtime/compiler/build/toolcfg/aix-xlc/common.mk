@@ -213,10 +213,6 @@ endif
 
 SOLINK_SLINK+=$(PRODUCT_SLINK) m j9thr$(J9_VERSION) j9hookable$(J9_VERSION)
 
-ifneq (,$(findstring xlclang++,$(notdir $(CXX))))
-  SOLINK_FLAGS+=-bstatic -lc++ -bdynamic
-endif
-
 SOLINK_LIBPATH+=$(PRODUCT_LIBPATH)
 
 SOLINK_EXTRA_ARGS+=-E $(JIT_SCRIPT_DIR)/j9jit.aix.exp
