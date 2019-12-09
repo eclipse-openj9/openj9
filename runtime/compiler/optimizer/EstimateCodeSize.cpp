@@ -73,14 +73,6 @@ TR_EstimateCodeSize::release(TR_EstimateCodeSize *estimator)
    comp->fej9()->releaseCodeEstimator(comp, estimator);
    }
 
-
-void
-TR_EstimateCodeSize::markIsCold(flags8_t * flags, int32_t i)
-   {
-   _isLeaf = false;
-   flags[i].set(isCold);
-   }
-
 bool
 TR_EstimateCodeSize::calculateCodeSize(TR_CallTarget *calltarget, TR_CallStack *callStack, bool recurseDown)
    {
