@@ -19,19 +19,18 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
 # To use this docker file:
-# 1.Depends on your OS platform, build the base openj9 docker
-#   image from the Dockerfile in buildenv/docker/jdk<version>/
-#   `docker build -f buildenv/docker/jdk<version>/<platform>/ubuntu<version>/Dockerfile -t=openj9 .`
+# 1.Prerequisite: build the base openj9 docker image using
+#   the Dockerfile provided in buildenv/docker/jdk8/x86_64/ubuntu18/.
+#   This will provide us with the build time and runtime dependencies needed for jitserver.
+#   `docker build -f buildenv/docker/jdk8/x86_64/ubuntu18/Dockerfile -t=openj9 .`
 #
-# 2.Build the jitserver docker image from buildenv/docker/jitserver/.../buildenv/ to fetch jitserver dependencies
+# 2.Execute the following command to generate the jitserver build environment docker image
 #   `docker build -f \
-#    buildenv/docker/jitserver/jdk<version>/<platform>/ubuntu<version>/buildenv/Dockerfile \
+#    buildenv/docker/jitserver/jdk8/x86_64/ubuntu18/buildenv/Dockerfile \
 #    -t=openj9-jitserver-buildenv .`
 #
 
 FROM openj9:latest
-
-ENV JITSERVER_SUPPORT=1
 
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \

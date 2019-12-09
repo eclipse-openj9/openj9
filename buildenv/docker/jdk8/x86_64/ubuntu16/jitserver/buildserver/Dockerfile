@@ -19,19 +19,17 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
 # To use this docker file:
-# 1.Depends on your OS platform, build the base openj9 docker
-#   image from the Dockerfile in buildenv/docker/jdk<version>/
-#   `docker build -f buildenv/docker/jdk<version>/<platform>/ubuntu<version>/Dockerfile -t=openj9 .`
+# 1.Prerequisite: build the base openj9 docker image using
+#   the Dockerfile provided in buildenv/docker/jdk8/x86_64/ubuntu16/.
+#   This will provide us with the build time and runtime dependencies needed for jitserver.
+#   `docker build -f buildenv/docker/jdk8/x86_64/ubuntu16/Dockerfile -t=openj9 .`
 #
-# 2.Build the jitserver docker image from buildenv/docker/jitserver/.../build/ to fetch dependencies, source code and build jitserver
+# 2.Execute the following command to generate the jitserver docker image
 #   `docker build -f \
-#    buildenv/docker/jitserver/jdk<version>/<platform>/ubuntu<version>/build/Dockerfile \
-#    --build-arg openj9_repo=<your-openj9-repo> \
-#    --build-arg openj9_branch=<your-openj9-branch> \
-#    --build-arg omr_repo=<your-omr-repo> \ 
-#    --build-arg omr_branch=<your-omr-branch> \
-#    -t=openj9-jitserver-build .`
+#    buildenv/docker/jitserver/jdk8/x86_64/ubuntu16/buildenv/Dockerfile \
+#    -t=openj9-jitserver .`
 #
+
 FROM openj9:latest AS jitserver_build
 
 ARG openj9_repo=https://github.com/eclipse/openj9.git
@@ -60,6 +58,8 @@ RUN git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8 \
  && make clean \
  && make all
 
+# Multi-layer build technique to eliminate files generated during the build process
+# We only need the jitserver executable
 FROM openj9:latest 
 COPY --from=jitserver_build /root/openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/j2sdk-image /root/j2sdk-image
 ENTRYPOINT ["/root/j2sdk-image/jre/bin/java", "-XX:StartAsJITServer", "-Xjit:verbose={JITServer}"]

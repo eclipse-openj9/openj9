@@ -21,15 +21,9 @@
 FROM registry.access.redhat.com/rhel7:7.6 AS jitserver_build
 # To use this docker file:
 #
-# 1. Execute the following command and make sure you have a path that maps to /root/j2sdk-image, 
-#    your final sdk build will be availabe under your path.
+# 1.Execute the following command to generate the jitserver build docker image
 #   `docker build -f \
-#    buildenv/docker/jdk<version>/<platform>/rhel<version>/jitserver/build/Dockerfile \
-#    --build-arg openj9_repo=<your-openj9-repo> \
-#    --build-arg openj9_branch=<your-openj9-branch> \
-#    --build-arg omr_repo=<your-omr-repo> \
-#    --build-arg omr_branch=<your-omr-branch> \
-#    -v /your/path/to/j2sdk-image:/root/j2sdk-image \
+#    buildenv/docker/jitserver/jdk8/x86_64/rhel7/jitserver/build/Dockerfile \
 #    -t=openj9-jitserver-build .`
 #
 
