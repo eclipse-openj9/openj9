@@ -50,6 +50,8 @@ J9::ARM64::CodeGenerator::CodeGenerator() :
       }
 
    cg->setSupportsDivCheck();
+   if (!comp()->getOption(TR_FullSpeedDebug))
+      cg->setSupportsDirectJNICalls();
    }
 
 TR::Linkage *
