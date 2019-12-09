@@ -50,7 +50,9 @@ if(OMR_ARCH_X86)
 	omr_append_flags(CMAKE_ASM_NASM_FLAGS ${asm_inc_dirs})
 endif()
 
-if(OMR_TOOLCONFIG STREQUAL "gnu")
+# Using the linker option -static-libgcc results in an error on OSX. The option -static-libstdc++ is unused. Therefore
+# these options have been excluded from OSX
+if((OMR_TOOLCONFIG STREQUAL "gnu") AND (NOT OMR_OS_OSX))
 	check_cxx_compiler_flag("-static-libstdc++" ALLOWS_STATIC_LIBCPP)
 endif()
 
