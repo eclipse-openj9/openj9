@@ -21,7 +21,6 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-/*[IF Java11]*/
 
 package java.lang.invoke;
 
@@ -160,6 +159,16 @@ class MethodHandleNatives {
 		static final byte REF_invokeInterface	= 9;
 		static final byte REF_LIMIT				= 10;
 	}
+
+	static native void init(MemberName mn, Object obj);
+	static native void expand(MemberName mn);
+	static native Object getMemberVMInfo(MemberName mn);
+	static native int getMembers(Class<?> cls, String name, String signature, int index, Class<?> type, int random, MemberName[] mns);
+
+/*[IF Java11]*/
+	static native MemberName resolve(MemberName mn, Class<?> cls, boolean bool) throws LinkageError, ClassNotFoundException;
+/*[ELSE]*/
+	static native MemberName resolve(MemberName mn, Class<?> cls) throws LinkageError, ClassNotFoundException;
+/*[ENDIF]*/
 }
 
-/*[ENDIF] Java11 */
