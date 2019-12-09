@@ -392,6 +392,23 @@ public:
 		vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFieldsFromFlattenedArrayElement(vmThread, arrayClazz, destObject, arrayRef, (I_32)index);
 	}
 
+	VMINLINE BOOLEAN
+	structuralFlattenedCompareObjects(J9VMThread *vmThread, J9Class *valueClass, j9object_t lhsObject, j9object_t rhsObject, UDATA startOffset)
+	{
+#if defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER)
+		return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_structuralCompareFlattenedObjects(vmThread, valueClass, lhsObject, rhsObject, startOffset);
+#else /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
+		if (j9gc_modron_readbar_none != _readBarrierType) {
+			return vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_structuralCompareFlattenedObjects(vmThread, valueClass, lhsObject, rhsObject, startOffset);
+		} else {
+			startOffset += valueClass->backfillOffset;
+			UDATA compareSize = mixedObjectGetDataSize(valueClass) - valueClass->backfillOffset;
+
+			return (0 == memcmp((void*)((UDATA)lhsObject + startOffset), (void*)((UDATA)rhsObject + startOffset), (size_t)compareSize));
+		}
+#endif /* defined(J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER) */
+	}
+
 	/**
 	 * Copy valueType from sourceObject to destObject
 	 * See MM_ObjectAccessBarrier::copyObjectFields for detailed description

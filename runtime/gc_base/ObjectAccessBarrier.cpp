@@ -1377,6 +1377,58 @@ MM_ObjectAccessBarrier::cloneObject(J9VMThread *vmThread, J9Object *srcObject, J
 	copyObjectFields(vmThread, J9GC_J9OBJECT_CLAZZ_THREAD(srcObject, vmThread), srcObject, objectHeaderSize, destObject, objectHeaderSize);
 }
 
+BOOLEAN
+MM_ObjectAccessBarrier::structuralCompareFlattenedObjects(J9VMThread *vmThread, J9Class *valueClass, j9object_t lhsObject, j9object_t rhsObject, UDATA startOffset)
+{
+	bool result = true;
+	const UDATA *descriptionPtr = (UDATA *) valueClass->instanceDescription;
+	UDATA descriptionBits = 0;
+
+	Assert_MM_true(J9_IS_J9CLASS_VALUETYPE(valueClass));
+
+	if(((UDATA)descriptionPtr) & 1) {
+		descriptionBits = ((UDATA)descriptionPtr) >> 1;
+	} else {
+		descriptionBits = *descriptionPtr++;
+	}
+
+	UDATA descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
+	UDATA offset = 0;
+	UDATA limit = valueClass->totalInstanceSize;
+
+	U_32 firstFieldOffset = (U_32) valueClass->backfillOffset;
+	if (0 != firstFieldOffset) {
+		/* subtract padding */
+		offset += firstFieldOffset;
+		descriptionBits >>= 1;
+		descriptionIndex -= 1;
+	}
+
+	while (offset < limit) {
+		/* Determine if the slot contains an object pointer or not */
+		if(descriptionBits & 1) {
+			if (mixedObjectReadObject(vmThread, lhsObject, startOffset + offset, false) != mixedObjectReadObject(vmThread, rhsObject, startOffset + offset, false)) {
+				result = false;
+				break;
+			}
+
+		} else {
+			if (*(fj9object_t *)((UDATA)lhsObject + startOffset + offset) != *(fj9object_t *)((UDATA)rhsObject + startOffset + offset)) {
+				result = false;
+				break;
+			}
+		}
+		descriptionBits >>= 1;
+		if(descriptionIndex-- == 0) {
+			descriptionBits = *descriptionPtr++;
+			descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
+		}
+		offset += sizeof(fj9object_t);
+	}
+
+	return result;
+}
+
 /**
  * Copy all of the fields of a value class instance to another value class instance.
  * The source or destination may be a flattened value within another object, meaning
@@ -1415,7 +1467,7 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 	}
 
 	const UDATA *descriptionPtr = (UDATA *) objectClass->instanceDescription;
-	UDATA descriptionBits;
+	UDATA descriptionBits = 0;
 	if(((UDATA)descriptionPtr) & 1) {
 		descriptionBits = ((UDATA)descriptionPtr) >> 1;
 	} else {
