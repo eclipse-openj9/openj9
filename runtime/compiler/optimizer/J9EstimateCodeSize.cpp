@@ -37,13 +37,13 @@
 #include "optimizer/PreExistence.hpp"
 #include "optimizer/J9CallGraph.hpp"
 #include "optimizer/J9EstimateCodeSize.hpp"
+#include "optimizer/InterpreterEmulator.hpp"
 #include "ras/LogTracer.hpp"
 #include "runtime/J9Profiler.hpp"
 
 // Empirically determined value
 const float TR_J9EstimateCodeSize::STRING_COMPRESSION_ADJUSTMENT_FACTOR = 0.75f;
 
-#define NUM_PREV_BC 5
 
 /*
 DEFINEs are ugly in general, but putting
@@ -236,80 +236,8 @@ class NeedsPeekingHeuristic
 };
 #undef heuristicTraceIfTracerIsNotNull
 
-class TR_prevArgs
-{
-   public:
-      TR_prevArgs() { for (int32_t i = 0 ; i < NUM_PREV_BC ; i++ ) { _prevBC[i] = J9BCunknown ; } }
-
-      void printIndexes(TR::Compilation *comp)
-         {
-         for (int32_t i = 0 ; i < NUM_PREV_BC ; i++)
-            {
-            if(comp->getDebug())
-               traceMsg(comp,"_prevBC[%d] = %s\n" ,i,((TR_J9VM*)(comp->fej9()))->getByteCodeName(_prevBC[i]));
-            }
-         }
-
-      void updateArg(TR_J9ByteCode bc )
-      {
-      for(int32_t i=NUM_PREV_BC-2 ; i>=0 ; i-- )
-         {
-         _prevBC[i+1] = _prevBC[i];
-         }
-      _prevBC[0] = bc;
-      }
-
-      bool isArgAtIndexReceiverObject (int32_t index)
-         {
-         if (  index < NUM_PREV_BC && _prevBC[index] == J9BCaload0)
-            {
-            return true;
-            }
-         else
-            return false;
-         }
-
-      int32_t getNumPrevConstArgs(int32_t numparms)
-      {
-      int32_t count=0;
-
-      for(int32_t i=0 ; i < NUM_PREV_BC && i < numparms ; i++)
-         {
-         switch (_prevBC[i])
-             {
-             case J9BCaconstnull:
-             case J9BCiconstm1:
-             case J9BCiconst0:
-             case J9BCiconst1:
-             case J9BCiconst2:
-             case J9BCiconst3:
-             case J9BCiconst4:
-             case J9BCiconst5:
-             case J9BClconst0:
-             case J9BClconst1:
-             case J9BCfconst0:
-             case J9BCfconst1:
-             case J9BCfconst2:
-             case J9BCdconst0:
-             case J9BCdconst1:
-             case J9BCldc: case J9BCldcw: case J9BCldc2lw: case J9BCldc2dw:
-             case J9BCbipush: case J9BCsipush:
-                count++;
-                break;
-             default:
-            	 break;
-             }
-         }
-      return count;
-      }
-
-
-   protected:
-      TR_J9ByteCode _prevBC[NUM_PREV_BC];
-};
-
-
-static void setupNode(TR::Node *node, uint32_t bcIndex,
+void
+TR_J9EstimateCodeSize::setupNode(TR::Node *node, uint32_t bcIndex,
                       TR_ResolvedMethod *feMethod, TR::Compilation *comp)
    {
    node->getByteCodeInfo().setDoNotProfile(0);
@@ -319,10 +247,8 @@ static void setupNode(TR::Node *node, uint32_t bcIndex,
    }
 
 
-// TODO: use a smaller object to represent the block
-//#define Block TR::CFGNode
-#define Block TR::Block
-static Block * getBlock(TR::Compilation *comp, Block * * blocks,
+TR::Block *
+TR_J9EstimateCodeSize::getBlock(TR::Compilation *comp, TR::Block * * blocks,
       TR_ResolvedMethod *feMethod, int32_t i, TR::CFG & cfg)
    {
    if (!blocks[i])
@@ -334,7 +260,7 @@ static Block * getBlock(TR::Compilation *comp, Block * * blocks,
             NULL, TR::BBEnd, 0));
 
       startTree->join(endTree);
-      blocks[i] = Block::createBlock(startTree, endTree, cfg);
+      blocks[i] = TR::Block::createBlock(startTree, endTree, cfg);
 
       blocks[i]->setBlockBCIndex(i);
       blocks[i]->setNumber(cfg.getNextNodeNumber());
@@ -384,8 +310,9 @@ static TR::ILOpCodes convertBytecodeToIL (TR_J9ByteCode bc)
    return TR::BadILOp;
    }
 
-static void setupLastTreeTop(Block *currentBlock, TR_J9ByteCode bc,
-                             uint32_t bcIndex, Block *destinationBlock, TR_ResolvedMethod *feMethod,
+void
+TR_J9EstimateCodeSize::setupLastTreeTop(TR::Block *currentBlock, TR_J9ByteCode bc,
+                             uint32_t bcIndex, TR::Block *destinationBlock, TR_ResolvedMethod *feMethod,
                              TR::Compilation *comp)
    {
    TR::Node *node = TR::Node::createOnStack(NULL, convertBytecodeToIL(bc), 0);
@@ -418,7 +345,6 @@ TR_J9EstimateCodeSize::isInExceptionRange(TR_ResolvedMethod * feMethod,
    return false;
    }
 
-#undef Block
 
 static bool cameFromArchetypeSpecimen(TR_ResolvedMethod *method)
    {

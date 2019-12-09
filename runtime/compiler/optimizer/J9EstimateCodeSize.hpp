@@ -46,7 +46,7 @@ class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
       TR_J9EstimateCodeSize() : TR_EstimateCodeSize(), _optimisticSize(0), _lastCallBlockFrequency(-1) { }
 
       int32_t getOptimisticSize()       { return _optimisticSize; }
-      
+
    /** \brief
     *     The inliner weight adjustment factor used for java/lang/String* compression related methods.
     */
@@ -76,9 +76,16 @@ class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
     */
    static bool adjustEstimateForStringCompression(TR_ResolvedMethod* method, int32_t& value, float factor);
 
+   static TR::Block *getBlock(TR::Compilation *comp, TR::Block * * blocks, TR_ResolvedMethod *feMethod, int32_t i, TR::CFG & cfg);
+
+   static void setupNode(TR::Node *node, uint32_t bcIndex, TR_ResolvedMethod *feMethod, TR::Compilation *comp);
+   static void setupLastTreeTop(TR::Block *currentBlock, TR_J9ByteCode bc,
+                             uint32_t bcIndex, TR::Block *destinationBlock, TR_ResolvedMethod *feMethod,
+                             TR::Compilation *comp);
+
    protected:
       bool estimateCodeSize(TR_CallTarget *, TR_CallStack * , bool recurseDown = true);
-      
+
      /** \brief
       *     Generates a CFG for the calltarget->_calleeMethod.
       *
@@ -125,6 +132,81 @@ class TR_J9EstimateCodeSize : public TR_EstimateCodeSize
       int32_t _lastCallBlockFrequency;
       int32_t _optimisticSize;          // size if we assume we are doing a partial inline
    };
+
+#define NUM_PREV_BC 5
+class TR_prevArgs
+{
+   public:
+      TR_prevArgs() { for (int32_t i = 0 ; i < NUM_PREV_BC ; i++ ) { _prevBC[i] = J9BCunknown ; } }
+
+      void printIndexes(TR::Compilation *comp)
+         {
+         for (int32_t i = 0 ; i < NUM_PREV_BC ; i++)
+            {
+            if(comp->getDebug())
+               traceMsg(comp,"_prevBC[%d] = %s\n" ,i,((TR_J9VM*)(comp->fej9()))->getByteCodeName(_prevBC[i]));
+            }
+         }
+
+      void updateArg(TR_J9ByteCode bc )
+      {
+      for(int32_t i=NUM_PREV_BC-2 ; i>=0 ; i-- )
+         {
+         _prevBC[i+1] = _prevBC[i];
+         }
+      _prevBC[0] = bc;
+      }
+
+      bool isArgAtIndexReceiverObject (int32_t index)
+         {
+         if (  index < NUM_PREV_BC && _prevBC[index] == J9BCaload0)
+            {
+            return true;
+            }
+         else
+            return false;
+         }
+
+      int32_t getNumPrevConstArgs(int32_t numparms)
+      {
+      int32_t count=0;
+
+      for(int32_t i=0 ; i < NUM_PREV_BC && i < numparms ; i++)
+         {
+         switch (_prevBC[i])
+             {
+             case J9BCaconstnull:
+             case J9BCiconstm1:
+             case J9BCiconst0:
+             case J9BCiconst1:
+             case J9BCiconst2:
+             case J9BCiconst3:
+             case J9BCiconst4:
+             case J9BCiconst5:
+             case J9BClconst0:
+             case J9BClconst1:
+             case J9BCfconst0:
+             case J9BCfconst1:
+             case J9BCfconst2:
+             case J9BCdconst0:
+             case J9BCdconst1:
+             case J9BCldc: case J9BCldcw: case J9BCldc2lw: case J9BCldc2dw:
+             case J9BCbipush: case J9BCsipush:
+                count++;
+                break;
+             default:
+            	 break;
+             }
+         }
+      return count;
+      }
+
+
+   protected:
+      TR_J9ByteCode _prevBC[NUM_PREV_BC];
+};
+
+
 
 
 #endif
