@@ -520,6 +520,7 @@ newStringUTF(JNIEnv *env, const char *bytes)
 				gpCheckSetNativeOutOfMemoryError(currentThread, 0, 0);
 				goto done;
 			}
+			data[length*2-1] = '\0';
 			length = encodeUnverifiedUTF8(bytes, length, data);
 		}
 		resultObject = currentThread->javaVM->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, data, length, J9_STR_INSTRUMENTABLE);
