@@ -1086,10 +1086,6 @@ onLoadInternal(
    ((TR_JitPrivateConfig*)jitConfig->privateConfig)->j9jitrt_lock_log = j9jitrt_lock_log;
    ((TR_JitPrivateConfig*)jitConfig->privateConfig)->j9jitrt_unlock_log = j9jitrt_unlock_log;
 
-   #ifndef J9VM_ENV_DIRECT_FUNCTION_POINTERS
-      jitConfig->jitTranslateMethod = jitTranslateMethod;
-   #endif
-
    // set up the entryPoints for compiling and for support of the
    // java.lang.Compiler class.
    jitConfig->entryPoint = j9jit_testarossa;

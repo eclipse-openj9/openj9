@@ -4876,11 +4876,7 @@ uintptrj_t TR_J9VMBase::mutableCallSiteCookie(uintptrj_t mutableCallSite, uintpt
 bool
 TR_J9VMBase::hasMethodTypesSideTable()
    {
-#if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
    return true;
-#else
-   return false;
-#endif
    }
 
 void *
