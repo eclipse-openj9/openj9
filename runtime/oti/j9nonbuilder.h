@@ -4382,6 +4382,7 @@ typedef struct J9MemoryManagerFunctions {
 	void ( *j9gc_objaccess_copyObjectFields)(struct J9VMThread *vmThread, J9Class* valueClass, j9object_t srcObject, UDATA srcOffset, j9object_t destObject, UDATA destOffset) ;
 	void ( *j9gc_objaccess_copyObjectFieldsToFlattenedArrayElement)(struct J9VMThread *vmThread, J9ArrayClass *arrayClazz, j9object_t srcObject, J9IndexableObject *arrayRef, I_32 index) ;
 	void ( *j9gc_objaccess_copyObjectFieldsFromFlattenedArrayElement)(struct J9VMThread *vmThread, J9ArrayClass *arrayClazz, j9object_t destObject, J9IndexableObject *arrayRef, I_32 index) ;
+	BOOLEAN ( *j9gc_objaccess_structuralCompareFlattenedObjects)(struct J9VMThread *vmThread, J9Class *valueClass, j9object_t lhsObject, j9object_t rhsObject, UDATA startOffset) ;
 	void  ( *j9gc_objaccess_cloneIndexableObject)(struct J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject) ;
 	j9object_t  ( *j9gc_objaccess_asConstantPoolObject)(struct J9VMThread *vmThread, j9object_t toConvert, UDATA allocationFlags) ;
 #if defined(J9VM_GC_REALTIME)
