@@ -117,7 +117,7 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-	
+
 	<test>
 		<testCaseName>jit_compareAndBranch</testCaseName>
 		<variations>
@@ -490,6 +490,48 @@
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
+		</impls>
+	</test>
+
+	<!-- JITServer tests start here. -->
+	<test>
+		<testCaseName>testJITServer</testCaseName>
+		<!-- Variations are passed to the client via the CLIENT_PROGRAM property from $JVM_OPTIONS; neither the test harness nor the server care about these. -->
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>-Xshareclasses:none -Xjit:optLevel=hot</variation>
+		</variations>
+		<!-- Check if the JITServer launcher exists and if so start the test and
+			 - specify the executables for the client and server via the CLIENT_EXE and SERVER_EXE properties respectively,
+			 - specify what the client will run via the CLIENT_PROGRAM property.
+			 If the launcher doesn't exist we assume that the build doesn't support JITServer and trivially pass the test. -->
+		<command>if [ -x $(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) ]; \
+	then \
+		$(JAVA_COMMAND) \
+		-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+		-DSERVER_EXE=$(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) \
+		-DCLIENT_EXE=$(JAVA_COMMAND) \
+		-DCLIENT_PROGRAM=$(SQ)$(JVM_OPTIONS) -cp $(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar -DjarTesterArgs=$(TEST_RESROOT)$(D)jitt.jar org.testng.TestNG -d $(REPORTDIR)$(D)client $(TEST_RESROOT)$(D)testng.xml -testnames JarTesterTest -groups $(TEST_GROUP) -excludegroups $(DEFAULT_EXCLUDE)$(SQ) \
+		org.testng.TestNG \
+		-d $(REPORTDIR) \
+		$(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+		-testnames JITServerTest \
+		-groups $(TEST_GROUP) \
+		-excludegroups $(DEFAULT_EXCLUDE); \
+	else \
+		echo; \
+		echo $(Q)$(TEST_JDK_BIN)$(D)jitserver doesn't exist; assuming this JDK does not support JITServer and trivially passing the test.$(Q); \
+	fi; \
+	$(TEST_STATUS)</command>
+		<platformRequirements>os.linux,arch.x86,bits.64</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
 		</impls>
 	</test>
 </playlist>
