@@ -42,13 +42,13 @@ RUN apt-get update \
     libssl-dev \
   && rm -rf /var/lib/apt/lists/*
 
-# Install protobuf 3.5.1
+# Install protobuf
 WORKDIR /
-RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
- && tar -xvzf protobuf-cpp-3.5.1.tar.gz \
- && cd protobuf-3.5.1 \
+RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.7.1/protobuf-cpp-3.7.1.tar.gz \
+ && tar -xvzf protobuf-cpp-3.7.1.tar.gz \
+ && cd protobuf-3.7.1 \
  && ./configure --disable-shared --with-pic && make && make install && ldconfig \
- && rm -rf /protobuf-3.5.1 && rm -rf /protobuf-cpp-3.5.1.tar.gz
+ && rm -rf /protobuf-3.7.1 && rm -rf /protobuf-cpp-3.7.1.tar.gz
 
 # Grab sources from openj9-openjdk-jdk8 and JITServer repos
 # Then builds JITServer
