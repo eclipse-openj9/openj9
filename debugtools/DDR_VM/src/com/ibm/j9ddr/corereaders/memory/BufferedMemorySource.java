@@ -7,7 +7,6 @@
  * or the Apache License, Version 2.0 which accompanies this distribution and
  * is available at https://www.apache.org/licenses/LICENSE-2.0.
  *
-
  * This Source Code may also be made available under the following
  * Secondary Licenses when the conditions for such availability set
  * forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
@@ -22,14 +21,8 @@
  *******************************************************************************/
 package com.ibm.j9ddr.corereaders.memory;
 
-import java.nio.ByteOrder;
 import java.nio.ByteBuffer;
-import com.ibm.j9ddr.corereaders.memory.MemoryFault;
-import com.ibm.j9ddr.corereaders.Platform;
-import com.ibm.j9ddr.corereaders.memory.AbstractMemory;
-import com.ibm.j9ddr.corereaders.memory.IMemorySource;
-import com.ibm.j9ddr.corereaders.memory.ProtectedMemoryRange;
-import java.nio.BufferUnderflowException;
+import java.nio.ByteOrder;
 
 /**
  * Serves as a ByteBuffer backed memory source.
@@ -37,9 +30,7 @@ import java.nio.BufferUnderflowException;
  * @see com.ibm.j9ddr.tools.ddrinteractive.BufferedMemory
  *
  * @author knewbury01
- *
  */
-
 public class BufferedMemorySource extends ProtectedMemoryRange implements IMemorySource
 {
 	private final ByteBuffer source;

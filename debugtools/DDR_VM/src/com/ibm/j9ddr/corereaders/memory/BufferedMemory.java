@@ -21,24 +21,17 @@
  *******************************************************************************/
 package com.ibm.j9ddr.corereaders.memory;
 
+import java.nio.ByteOrder;
 import java.util.Collection;
 import java.util.Collections;
-import java.nio.ByteOrder;
-import java.util.Properties;
 import java.util.List;
+import java.util.Properties;
 
-import com.ibm.j9ddr.corereaders.memory.AbstractMemory;
-import com.ibm.j9ddr.corereaders.memory.IAddressSpace;
-import com.ibm.j9ddr.corereaders.Platform;
-import com.ibm.j9ddr.corereaders.memory.IModule;
-import com.ibm.j9ddr.corereaders.memory.IProcess;
-import com.ibm.j9ddr.corereaders.memory.IMemorySource;
-import com.ibm.j9ddr.corereaders.memory.MemoryFault;
 import com.ibm.j9ddr.CorruptDataException;
 import com.ibm.j9ddr.DataUnavailableException;
-import com.ibm.j9ddr.corereaders.osthread.IOSThread;
 import com.ibm.j9ddr.corereaders.ICore;
-import com.ibm.j9ddr.corereaders.memory.SymbolUtil;
+import com.ibm.j9ddr.corereaders.Platform;
+import com.ibm.j9ddr.corereaders.osthread.IOSThread;
 
 /**
  * Object representing a single live
@@ -74,9 +67,7 @@ import com.ibm.j9ddr.corereaders.memory.SymbolUtil;
  * during use.
  *
  * @author knewbury01
- *
  */
-
 public class BufferedMemory extends AbstractMemory implements IProcess, IAddressSpace
 {
 	private final int bytesPerPointer;
