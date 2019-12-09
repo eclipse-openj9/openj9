@@ -50,6 +50,10 @@ if(OMR_ARCH_POWER)
     set(J9VM_PORT_RUNTIME_INSTRUMENTATION ON CACHE BOOL "")
 endif()
 
+if(OMR_OS_AIX)
+    # Override cmake default of ".a" for shared libs on aix
+    set(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
+endif()
 
 if(NOT OMR_OS_OSX)
     add_definitions(-DIPv6_FUNCTION_SUPPORT)
