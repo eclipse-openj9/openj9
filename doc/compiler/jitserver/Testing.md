@@ -36,7 +36,9 @@ These are the steps to run the tests on your machine.
    Example installation can be found [here](https://github.com/eclipse/openj9/blob/master/buildenv/docker/test/Dockerfile#L57-L68).
 3. Compile  the tests (only need to compile once):
    ```
-   cd $OPENJ9_DIR/openj9/test/TestConfig
+   cd $OPENJ9_DIR/openj9/test
+   git clone https://github.com/AdoptOpenJDK/TKG.git
+   cd TKG
    export JAVA_VERSION=SE80
    export JAVA_BIN=/your/sdk/jre/bin
    export SPEC=linux_x86-64_cmprssptrs

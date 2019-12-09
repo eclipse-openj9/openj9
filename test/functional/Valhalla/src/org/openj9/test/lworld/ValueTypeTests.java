@@ -38,15 +38,17 @@ import org.testng.annotations.BeforeClass;
 /*
  * Instructions to run this test:
  * 
- * 1) recompile the JVM with J9VM_OPT_VALHALLA_VALUE_TYPES flag turned on in j9cfg.h.ftl (or j9cfg.h.in when cmake is turned on)
- * 2) cd [openj9-openjdk-dir]/openj9/test/TestConfig
- * 3) export TEST_JDK_HOME=[openj9-openjdk-dir]/build/linux-x86_64-server-release/images/jdk
- * 4) export JDK_VERSION=Valhalla
- * 5) export SPEC=linux_x86-64_cmprssptrs
- * 6) export BUILD_LIST=functional/Valhalla
- * 7) export AUTO_DETECT=false
- * 8) export JDK_IMPL=openj9 
- * 9) make -f run_configure.mk && make compile && make _sanity
+ * 1)  recompile the JVM with J9VM_OPT_VALHALLA_VALUE_TYPES flag turned on in j9cfg.h.ftl (or j9cfg.h.in when cmake is turned on)
+ * 2)  cd [openj9-openjdk-dir]/openj9/test
+ * 3)  git clone https://github.com/AdoptOpenJDK/TKG.git
+ * 4)  cd TKG
+ * 5)  export TEST_JDK_HOME=[openj9-openjdk-dir]/build/linux-x86_64-server-release/images/jdk
+ * 6)  export JDK_VERSION=Valhalla
+ * 7)  export SPEC=linux_x86-64_cmprssptrs
+ * 8)  export BUILD_LIST=functional/Valhalla
+ * 9)  export AUTO_DETECT=false
+ * 10) export JDK_IMPL=openj9 
+ * 11) make -f run_configure.mk && make compile && make _sanity
  */
 
 @Test(groups = { "level.sanity" })
