@@ -29,11 +29,9 @@
 #include "net/ProtobufTypeConvert.hpp"
 #include "net/CommunicationStream.hpp"
 
-#if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/ssl.h>
 class SSLOutputStream;
 class SSLInputStream;
-#endif
 
 namespace JITServer
 {
@@ -214,9 +212,7 @@ private:
    static const uint64_t RETRY_COMPATIBILITY_INTERVAL_MS; // (ms) When we should perform again a version compatibilty check
    static const int INCOMPATIBILITY_COUNT_LIMIT;
 
-#if defined(JITSERVER_ENABLE_SSL)
    static SSL_CTX *_sslCtx;
-#endif
    };
 
 }

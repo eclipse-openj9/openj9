@@ -23,7 +23,6 @@
 #ifndef SSL_PROTOBUF_STREAM_HPP
 #define SSL_PROTOBUF_STREAM_HPP
 
-#if defined(JITSERVER_ENABLE_SSL)
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -86,5 +85,4 @@ private:
    BIO *_ssl;
    };
 
-#endif // JITSERVER_ENABLE_SSL
 #endif // SSL_PROTOBUF_STREAM_HPP

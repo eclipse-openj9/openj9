@@ -41,7 +41,6 @@ void CommunicationStream::initVersion()
    CONFIGURATION_FLAGS |= JAVA_SPEC_VERSION & JITServerJavaVersionMask;
    }
 
-#if defined(JITSERVER_ENABLE_SSL)
 bool CommunicationStream::useSSL()
    {
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
@@ -49,5 +48,4 @@ bool CommunicationStream::useSSL()
            compInfo->getJITServerSslCerts().size() ||
            compInfo->getJITServerSslRootCerts().size());
    }
-#endif
 };

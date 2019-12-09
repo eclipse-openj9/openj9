@@ -35,10 +35,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h> /// gethostname, read, write
-#if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/err.h>
 #include "control/CompilationRuntime.hpp"
-#endif
 
 namespace JITServer
 {
@@ -55,7 +53,6 @@ const int ClientStream::INCOMPATIBILITY_COUNT_LIMIT = 5;
 // This is called during startup from rossa.cpp
 int ClientStream::static_init(TR::PersistentInfo *info)
    {
-#if defined(JITSERVER_ENABLE_SSL)
    if (!CommunicationStream::useSSL())
       return 0;
 
@@ -125,13 +122,10 @@ int ClientStream::static_init(TR::PersistentInfo *info)
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Successfully initialized SSL context: OPENSSL_VERSION_NUMBER 0x%lx\n", OPENSSL_VERSION_NUMBER);
-#endif
    return 0;
    }
 
-#if defined(JITSERVER_ENABLE_SSL)
 SSL_CTX *ClientStream::_sslCtx = NULL;
-#endif
 
 int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs)
    {
@@ -192,7 +186,6 @@ int openConnection(const std::string &address, uint32_t port, uint32_t timeoutMs
    return sockfd;
    }
 
-#if defined(JITSERVER_ENABLE_SSL)
 BIO *openSSLConnection(SSL_CTX *ctx, int connfd)
    {
    if (!ctx)
@@ -265,14 +258,4 @@ ClientStream::ClientStream(TR::PersistentInfo *info)
    initStream(connfd, ssl);
    _numConnectionsOpened++;
    }
-#else // JITSERVER_ENABLE_SSL
-ClientStream::ClientStream(TR::PersistentInfo *info)
-   : CommunicationStream(), _versionCheckStatus(NOT_DONE)
-   {
-   int connfd = openConnection(info->getJITServerAddress(), info->getJITServerPort(), info->getSocketTimeout());
-   initStream(connfd);
-   _numConnectionsOpened++;
-   }
-#endif
-
 };
