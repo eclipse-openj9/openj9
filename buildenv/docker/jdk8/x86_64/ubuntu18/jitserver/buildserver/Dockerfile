@@ -22,12 +22,12 @@
 # 1.Prerequisite: build the base openj9 docker image using
 #   the Dockerfile provided in buildenv/docker/jdk8/x86_64/ubuntu18/.
 #   This will provide us with the build time and runtime dependencies needed for jitserver.
-#   `docker build -f buildenv/docker/jdk8/x86_64/ubuntu16/Dockerfile -t=openj9 .`
+#   `docker build -f buildenv/docker/jdk8/x86_64/ubuntu18/Dockerfile -t=openj9 .`
 #
-# 2.Execute the following command to generate the jitserver build environment docker image
+# 2.Execute the following command to generate the jitserver docker image
 #   `docker build -f \
-#    buildenv/docker/jitserver/jdk8/x86_64/ubuntu16/buildenv/Dockerfile \
-#    -t=openj9-jitserver-build .`
+#    buildenv/docker/jitserver/jdk8/x86_64/ubuntu18/buildenv/Dockerfile \
+#    -t=openj9-jitserver .`
 #
 FROM openj9:latest AS jitserver_build
 
@@ -59,4 +59,5 @@ RUN git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8 \
 
 FROM openj9:latest 
 COPY --from=jitserver_build /root/openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/j2sdk-image /root/j2sdk-image
-WORKDIR /root
+ENTRYPOINT ["/root/j2sdk-image/jre/bin/java", "-XX:StartAsJITServer", "-Xjit:verbose={JITServer}"]
+EXPOSE 38400

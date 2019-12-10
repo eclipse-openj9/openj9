@@ -19,54 +19,34 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
 # To use this docker file:
-# 1.Depends on your OS platform, build the base openj9 docker
-#   image from the Dockerfile in buildenv/docker/jdk<version>/
-#   `docker build -f buildenv/docker/jdk<version>/<platform>/ubuntu<version>/Dockerfile -t=openj9 .`
+# 1.Prerequisite: build the base openj9 docker image using
+#   the Dockerfile provided in buildenv/docker/jdk8/x86_64/ubuntu18/.
+#   This will provide us with the build time and runtime dependencies needed for jitserver.
+#   `docker build -f buildenv/docker/jdk8/x86_64/ubuntu18/Dockerfile -t=openj9 .`
 #
-# 2.Build the jitserver docker image from buildenv/docker/jitserver/.../build/ to fetch dependencies, source code and build jitserver
+# 2.Execute the following command to generate the jitserver docker image
 #   `docker build -f \
-#    buildenv/docker/jitserver/jdk<version>/<platform>/ubuntu<version>/build/Dockerfile \
-#    --build-arg openj9_repo=<your-openj9-repo> \
-#    --build-arg openj9_branch=<your-openj9-branch> \
-#    --build-arg omr_repo=<your-omr-repo> \ 
-#    --build-arg omr_branch=<your-omr-branch> \
+#    buildenv/docker/jitserver/jdk8/x86_64/ubuntu18/buildenv/Dockerfile \
 #    -t=openj9-jitserver-build .`
 #
 
-FROM openj9:latest
+FROM openj9:latest AS jitserver_build
 
 ARG openj9_repo=https://github.com/eclipse/openj9.git
 ARG omr_repo=https://github.com/eclipse/openj9-omr.git
 
-ENV JITSERVER_SUPPORT=1
-
 RUN apt-get update \
- && apt-get install -qq -y --no-install-recommends \
-    automake \
-    curl \
-    g++-7 \
-    gcc-7 \
+  && apt-get install -qq -y --no-install-recommends \
     libssl-dev \
-    libtool \
-    build-essential \ 
-    autoconf \
-    pkg-config \
-    libfontconfig1-dev \
- && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/*
 
-# JITServer needs to be built with a newer GCC
-RUN ln -sf /usr/bin/g++ /usr/bin/c++ \
- && ln -sf /usr/bin/g++-7 /usr/bin/g++ \
- && ln -sf /usr/bin/gcc /usr/bin/cc \
- && ln -sf /usr/bin/gcc-7 /usr/bin/gcc
-
-# Install protobuf 3.5.1
+# Install protobuf
 WORKDIR /
-RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
- && tar -xvzf protobuf-cpp-3.5.1.tar.gz \
- && cd protobuf-3.5.1 \
+RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.7.1/protobuf-cpp-3.7.1.tar.gz \
+ && tar -xvzf protobuf-cpp-3.7.1.tar.gz \
+ && cd protobuf-3.7.1 \
  && ./configure --disable-shared --with-pic && make && make install && ldconfig \
- && rm -rf /protobuf-3.5.1 && rm -rf /protobuf-cpp-3.5.1.tar.gz
+ && rm -rf /protobuf-3.7.1 && rm -rf /protobuf-cpp-3.7.1.tar.gz
 
 # Grab sources from openj9-openjdk-jdk8 and JITServer repos
 # Then builds JITServer
@@ -74,14 +54,10 @@ WORKDIR /root
 RUN git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8 \
  && cd openj9-openjdk-jdk8 \
  && bash ./get_source.sh -openj9-repo=$openj9_repo -omr-repo=$omr_repo \
- && bash ./configure --with-freemarker-jar=/root/freemarker.jar \
+ && bash ./configure --with-freemarker-jar=/root/freemarker.jar --enable-jitserver \
+ && make clean \
  && make all
 
-# Clean up
-RUN mv /root/openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/j2sdk-image /root/ \
- && mv /root/openj9-openjdk-jdk8/openj9/test /root/ \
- && rm -rf /root/openj9-openjdk-jdk8 \
- && rm -rf /root/bootjdk8 \
- && rm -rf /root/freemarker.jar
-
+FROM openj9:latest 
+COPY --from=jitserver_build /root/openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/j2sdk-image /root/j2sdk-image
 WORKDIR /root

@@ -99,11 +99,11 @@ cd /root \
 # Version 3.5.1 of protobuf has been validated to work on x86. On Z and PowerPC a version of 3.7.1 or higher is needed.
 #########
 
-wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
- && tar -xvzf protobuf-cpp-3.5.1.tar.gz \
- && cd protobuf-3.5.1 \
+wget https://github.com/protocolbuffers/protobuf/releases/download/v3.7.1/protobuf-cpp-3.7.1.tar.gz \
+ && tar -xvzf protobuf-cpp-3.7.1.tar.gz \
+ && cd protobuf-3.7.1 \
  && ./configure --disable-shared --with-pic && make && make install && ldconfig \
- && rm -rf /protobuf-3.5.1 && rm -rf /protobuf-cpp-3.5.1.tar.gz
+ && rm -rf /protobuf-3.7.1 && rm -rf /protobuf-cpp-3.7.1.tar.gz
 
 export JAVA_HOME=/root/bootjdk8
 export PATH="$JAVA_HOME/bin:$PATH"

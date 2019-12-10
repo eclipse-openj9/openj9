@@ -34,34 +34,16 @@ FROM openj9:latest
 ENV JITSERVER_SUPPORT=1
 
 RUN apt-get update \
- && apt-get install -qq -y --no-install-recommends \
-    automake \
-    curl \
+  && apt-get install -qq -y --no-install-recommends \
     libssl-dev \
-    libtool \
-    build-essential \ 
-    autoconf \
-    pkg-config \
- && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update \
- && add-apt-repository ppa:ubuntu-toolchain-r/test -y \
- && apt-get update \
- && apt-get install -qq -y --no-install-recommends gcc-7 g++-7 \
- && rm -rf /var/lib/apt/lists/*
-
-# JITServer needs to be built with a newer GCC
-RUN ln -sf /usr/bin/g++ /usr/bin/c++ \
- && ln -sf /usr/bin/g++-7 /usr/bin/g++ \
- && ln -sf /usr/bin/gcc /usr/bin/cc \
- && ln -sf /usr/bin/gcc-7 /usr/bin/gcc
-
-# Install protobuf 3.5.1
+# Install protobuf
 WORKDIR /
-RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
- && tar -xvzf protobuf-cpp-3.5.1.tar.gz \
- && cd protobuf-3.5.1 \
+RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.7.1/protobuf-cpp-3.7.1.tar.gz \
+ && tar -xvzf protobuf-cpp-3.7.1.tar.gz \
+ && cd protobuf-3.7.1 \
  && ./configure --disable-shared --with-pic && make && make install && ldconfig \
- && rm -rf /protobuf-3.5.1 && rm -rf /protobuf-cpp-3.5.1.tar.gz
+ && rm -rf /protobuf-3.7.1 && rm -rf /protobuf-cpp-3.7.1.tar.gz
 
 WORKDIR /root
