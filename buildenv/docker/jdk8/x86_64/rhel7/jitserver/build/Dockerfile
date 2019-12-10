@@ -18,25 +18,17 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0
 
-FROM registry.access.redhat.com/rhel7:7.6
+FROM registry.access.redhat.com/rhel7:7.6 AS jitserver_build
 # To use this docker file:
 #
-# 1. Execute the following command and make sure you have a path that maps to /root/j2sdk-image, 
-#    your final sdk build will be availabe under your path.
+# 1.Execute the following command to generate the jitserver build docker image
 #   `docker build -f \
-#    buildenv/docker/jdk<version>/<platform>/rhel<version>/jitserver/build/Dockerfile \
-#    --build-arg openj9_repo=<your-openj9-repo> \
-#    --build-arg openj9_branch=<your-openj9-branch> \
-#    --build-arg omr_repo=<your-omr-repo> \
-#    --build-arg omr_branch=<your-omr-branch> \
-#    -v /your/path/to/j2sdk-image:/root/j2sdk-image \
+#    buildenv/docker/jitserver/jdk8/x86_64/rhel7/jitserver/build/Dockerfile \
 #    -t=openj9-jitserver-build .`
 #
 
 ARG openj9_repo=https://github.com/eclipse/openj9.git
 ARG omr_repo=https://github.com/eclipse/openj9-omr.git
-
-ENV JITSERVER_SUPPORT=1
 
 RUN yum-config-manager --enable rhel-7-server-optional-rpms 
 RUN yum install -y autoconf \
@@ -86,13 +78,13 @@ RUN cd /root \
   && tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2 \
   && rm -f freemarker.tgz
 
-# Install protobuf 3.5.1
+# Install protobuf
 WORKDIR /
-RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.5.1/protobuf-cpp-3.5.1.tar.gz \
- && tar -xvzf protobuf-cpp-3.5.1.tar.gz \
- && cd protobuf-3.5.1 \
+RUN wget https://github.com/protocolbuffers/protobuf/releases/download/v3.7.1/protobuf-cpp-3.7.1.tar.gz \
+ && tar -xvzf protobuf-cpp-3.7.1.tar.gz \
+ && cd protobuf-3.7.1 \
  && ./configure --disable-shared --with-pic && make && make install && ldconfig \
- && rm -rf /protobuf-3.5.1 && rm -rf /protobuf-cpp-3.5.1.tar.gz
+ && rm -rf /protobuf-3.7.1 && rm -rf /protobuf-cpp-3.7.1.tar.gz
 
 # Grab sources from openj9-openjdk-jdk8 and JITServer repos
 # Then builds JITServer
@@ -100,14 +92,10 @@ WORKDIR /root
 RUN git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8 \
  && cd openj9-openjdk-jdk8 \
  && bash ./get_source.sh -openj9-repo=$openj9_repo -omr-repo=$omr_repo \
- && bash ./configure --with-freemarker-jar=/root/freemarker.jar \
+ && bash ./configure --with-freemarker-jar=/root/freemarker.jar --enable-jitserver \
+ && make clean \
  && make all
 
-# Clean up
-RUN mv /root/openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/j2sdk-image /root/ \
- && mv /root/openj9-openjdk-jdk8/openj9/test /root/ \
- && rm -rf /root/openj9-openjdk-jdk8 \
- && rm -rf /root/bootjdk8 \
- && rm -rf /root/freemarker.jar
-
+FROM registry.access.redhat.com/rhel7:7.6
+COPY --from=jitserver_build /root/openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/j2sdk-image /root/j2sdk-image
 WORKDIR /root
