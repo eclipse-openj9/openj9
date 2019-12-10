@@ -110,13 +110,6 @@ cmake:
     13: '--disable-ddr'
     next: '--disable-ddr'
   extra_make_options: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
-  build_env:
-    cmd:
-      8: 'source /opt/rh/devtoolset-7/enable'
-      11: 'source /opt/rh/devtoolset-7/enable'
-      12: 'source /opt/rh/devtoolset-7/enable'
-      13: 'source /opt/rh/devtoolset-7/enable'
-      next: 'source /opt/rh/devtoolset-7/enable'
   excluded_tests:
       - *defaultTests
       - special.system
