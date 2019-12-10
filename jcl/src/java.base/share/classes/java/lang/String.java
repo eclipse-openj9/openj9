@@ -253,8 +253,25 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 	}
 
-	static boolean compressible(char[] c, int start, int length) {
-		for (int i = start; i < length; ++i) {
+	/**
+	 * Determines whether the input character array can be encoded as a compact
+	 * Latin1 string.
+	 *
+	 * <p>This API implicitly assumes the following:
+	 * <blockquote><pre>
+	 *     - {@code length >= 0}
+	 *     - {@code start >= 0}
+	 *     - {@code start + length <= data.length}
+	 * <blockquote><pre>
+	 *
+	 * @param c      the array of characters to check
+	 * @param start  the starting offset in the character array
+	 * @param length the number of characters to check starting at {@code start}
+	 * @return       {@code true} if the input character array can be encoded
+	 *               using the Latin1 encoding; {@code false} otherwise
+	 */
+	static boolean canEncodeAsLatin1(char[] c, int start, int length) {
+		for (int i = start; i < start + length; ++i) {
 			if (c[i] > 255) {
 				return false;
 			}
@@ -703,7 +720,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 *          a non-null array of characters
 	 */
 	String(char[] data, boolean ignore) {
-		if (enableCompression && compressible(data, 0, data.length)) {
+		if (enableCompression && canEncodeAsLatin1(data, 0, data.length)) {
 			value = new byte[data.length];
 			coder = LATIN1;
 
@@ -738,7 +755,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	public String(char[] data, int start, int length) {
 		if (start >= 0 && 0 <= length && length <= data.length - start) {
-			if (enableCompression && compressible(data, start, length)) {
+			if (enableCompression && canEncodeAsLatin1(data, start, length)) {
 				value = new byte[length];
 				coder = LATIN1;
 
@@ -4060,8 +4077,25 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 		}
 	}
 
-	static boolean compressible(char[] c, int start, int length) {
-		for (int i = start; i < length; ++i) {
+	/**
+	 * Determines whether the input character array can be encoded as a compact
+	 * Latin1 string.
+	 *
+	 * <p>This API implicitly assumes the following:
+	 * <blockquote><pre>
+	 *     - {@code length >= 0}
+	 *     - {@code start >= 0}
+	 *     - {@code start + length <= data.length}
+	 * <blockquote><pre>
+	 *
+	 * @param c      the array of characters to check
+	 * @param start  the starting offset in the character array
+	 * @param length the number of characters to check starting at {@code start}
+	 * @return       {@code true} if the input character array can be encoded
+	 *               using the Latin1 encoding; {@code false} otherwise
+	 */
+	static boolean canEncodeAsLatin1(char[] c, int start, int length) {
+		for (int i = start; i < start + length; ++i) {
 			if (c[i] > 255) {
 				return false;
 			}
@@ -4256,7 +4290,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			char[] buffer = StringCoding.decode(data, start, length);
 
 			if (enableCompression) {
-				if (compressible(buffer, 0, buffer.length)) {
+				if (canEncodeAsLatin1(buffer, 0, buffer.length)) {
 					value = new char[(buffer.length + 1) / 2];
 					count = buffer.length;
 
@@ -4376,7 +4410,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 			char[] buffer = StringCoding.decode(encoding, data, start, length);
 
 			if (enableCompression) {
-				if (compressible(buffer, 0, buffer.length)) {
+				if (canEncodeAsLatin1(buffer, 0, buffer.length)) {
 					value = new char[(buffer.length + 1) / 2];
 					count = buffer.length;
 
@@ -4487,7 +4521,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	 */
 	String(char[] data, boolean ignore) {
 		if (enableCompression) {
-			if (compressible(data, 0, data.length)) {
+			if (canEncodeAsLatin1(data, 0, data.length)) {
 				value = new char[(data.length + 1) / 2];
 				count = data.length;
 
@@ -4527,7 +4561,7 @@ public final class String implements Serializable, Comparable<String>, CharSeque
 	public String(char[] data, int start, int length) {
 		if (start >= 0 && 0 <= length && length <= data.length - start) {
 			if (enableCompression) {
-				if (compressible(data, start, length)) {
+				if (canEncodeAsLatin1(data, start, length)) {
 					value = new char[(length + 1) / 2];
 					count = length;
 
@@ -7613,7 +7647,7 @@ written authorization of the copyright holder.
 			int size = 0;
 
 			// Optimistically assume we can compress data[]
-			boolean compressible = enableCompression;
+			boolean canEncodeAsLatin1 = enableCompression;
 
 			for (int i = start; i < start + length; ++i) {
 				int codePoint = data[i];
@@ -7621,20 +7655,20 @@ written authorization of the copyright holder.
 				if (codePoint < Character.MIN_CODE_POINT) {
 					throw new IllegalArgumentException();
 				} else if (codePoint < Character.MIN_SUPPLEMENTARY_CODE_POINT) {
-					if (compressible && codePoint > 255) {
-						compressible = false;
+					if (canEncodeAsLatin1 && codePoint > 255) {
+						canEncodeAsLatin1 = false;
 					}
 
 					++size;
 				} else if (codePoint <= Character.MAX_CODE_POINT) {
-					if (compressible) {
+					if (canEncodeAsLatin1) {
 						codePoint -= Character.MIN_SUPPLEMENTARY_CODE_POINT;
 
 						int codePoint1 = Character.MIN_HIGH_SURROGATE + (codePoint >> 10);
 						int codePoint2 = Character.MIN_LOW_SURROGATE + (codePoint & 0x3FF);
 
 						if (codePoint1 > 255 || codePoint2 > 255) {
-							compressible = false;
+							canEncodeAsLatin1 = false;
 						}
 					}
 
@@ -7644,7 +7678,7 @@ written authorization of the copyright holder.
 				}
 			}
 
-			if (compressible) {
+			if (canEncodeAsLatin1) {
 				value = new char[(size + 1) / 2];
 				count = size;
 
@@ -8140,7 +8174,7 @@ written authorization of the copyright holder.
 			char[] chars = StringCoding.decode(charset, data, start, length);
 
 			if (enableCompression) {
-				if (compressible(chars, 0, chars.length)) {
+				if (canEncodeAsLatin1(chars, 0, chars.length)) {
 					value = new char[(chars.length + 1) / 2];
 					count = chars.length;
 

@@ -199,7 +199,7 @@ public synchronized StringBuffer append (char[] chars) {
 	
 	if (String.enableCompression) {
 		// Check if the StringBuffer is compressed
-		if (count >= 0 && String.compressible(chars, 0, chars.length)) {
+		if (count >= 0 && String.canEncodeAsLatin1(chars, 0, chars.length)) {
 			if (newLength > currentCapacity) {
 				ensureCapacityImpl(newLength);
 			}
@@ -256,7 +256,7 @@ public synchronized StringBuffer append (char chars[], int start, int length) {
 		
 		if (String.enableCompression) {
 			// Check if the StringBuffer is compressed
-			if (count >= 0 && String.compressible(chars, start, length)) {
+			if (count >= 0 && String.canEncodeAsLatin1(chars, start, length)) {
 				if (newLength > currentCapacity) {
 					ensureCapacityImpl(newLength);
 				}
@@ -840,7 +840,7 @@ public synchronized StringBuffer insert(int index, char[] chars) {
 		
 		if (String.enableCompression) {
 			// Check if the StringBuffer is compressed
-			if (count >= 0 && String.compressible(chars, 0, chars.length)) {
+			if (count >= 0 && String.canEncodeAsLatin1(chars, 0, chars.length)) {
 				String.compress(chars, 0, value, index, chars.length);
 				
 				count = currentLength + chars.length;
@@ -894,7 +894,7 @@ public synchronized StringBuffer insert(int index, char[] chars, int start, int 
 			
 			if (String.enableCompression) {
 				// Check if the StringBuffer is compressed
-				if (count >= 0 && String.compressible(chars, start, length)) {
+				if (count >= 0 && String.canEncodeAsLatin1(chars, start, length)) {
 					String.compress(chars, start, value, index, length);
 					
 					count = currentLength + length;
@@ -1788,7 +1788,7 @@ private void readObject(ObjectInputStream stream) throws IOException, ClassNotFo
 	} 
 	
 	if (String.enableCompression) {
-		if (String.compressible(streamValue, 0, streamValue.length)) {
+		if (String.canEncodeAsLatin1(streamValue, 0, streamValue.length)) {
 			if (streamValue.length == Integer.MAX_VALUE) {
 				value = new char[(streamValue.length / 2) + 1];
 			} else {
