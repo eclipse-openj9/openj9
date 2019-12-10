@@ -1,4 +1,4 @@
-ZZ Copyright (c) 2000, 2017 IBM Corp. and others
+ZZ Copyright (c) 2000, 2019 IBM Corp. and others
 ZZ
 ZZ This program and the accompanying materials are made 
 ZZ available under the terms of the Eclipse Public License 2.0 
@@ -33,74 +33,74 @@ ZZ ============================================================
 ZZ ============================================================
 
 define(SETPPA2,
-[dnl
-])dnl
+{dnl
+})dnl
 
 ZZ ============================================================
 
 define(SETVAL,
-[dnl
-    .set $1,$2])dnl
+{dnl
+    .set $1,$2})dnl
 
 ZZ ============================================================
 
 define(EQUVAL,
-[dnl
-    .equ $1,$2])dnl
+{dnl
+    .equ $1,$2})dnl
 
 ZZ ============================================================
 
 define(CONST_4BYTE,
-[dnl
-    .long 0x$1])dnl
+{dnl
+    .long 0x$1})dnl
 
 ZZ ============================================================
 
 define(CONST_4BYTE_WITH_LABEL,
-[dnl
+{dnl
 $1:
-    .long 0x$2])dnl
+    .long 0x$2})dnl
 
 ZZ ============================================================
 
 define(MACRO_BEGIN,
-[dnl
+{dnl
     .macro    $1
-])dnl
+})dnl
 
 ZZ ============================================================
 
 define(MACRO_END,
-[dnl
+{dnl
     .endm
-])dnl
+})dnl
 
 ZZ ============================================================
 
 define(LABEL,
-[dnl
-$1:])dnl
+{dnl
+$1:})dnl
 
 ZZ ============================================================
 
 define(HEX,
-[dnl
-0x$1])dnl
+{dnl
+0x$1})dnl
 
 ZZ ============================================================
 
 define(START_FUNC,
-[dnl
+{dnl
 .align 8
        START $1
-])dnl
+})dnl
 
 ZZ ============================================================
 
 define(END_FUNC,
-[dnl
+{dnl
        END  $1
-])dnl
+})dnl
 
 ZZ ============================================================
 

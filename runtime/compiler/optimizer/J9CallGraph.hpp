@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,7 +31,7 @@ class TR_ProfileableCallSite : public  TR_IndirectCallSite
       virtual bool findProfiledCallTargets (TR_CallStack *callStack, TR_InlinerBase* inliner);
 
    protected :
-      TR_CALLSITE_INHERIT_CONSTRUCTOR_AND_TR_ALLOC(TR_ProfileableCallSite, TR_IndirectCallSite)
+      TR_CALLSITE_TR_ALLOC_AND_INHERIT_EMPTY_CONSTRUCTOR(TR_ProfileableCallSite, TR_IndirectCallSite)
       //capabilities
       void findSingleProfiledReceiver(ListIterator<TR_ExtraAddressInfo>&, TR_AddressInfo * valueInfo, TR_InlinerBase* inliner);
       virtual void findSingleProfiledMethod(ListIterator<TR_ExtraAddressInfo>&, TR_AddressInfo * valueInfo, TR_InlinerBase* inliner);
@@ -41,7 +41,7 @@ class TR_ProfileableCallSite : public  TR_IndirectCallSite
 class TR_J9MethodHandleCallSite : public  TR_FunctionPointerCallSite
    {
    public:
-      TR_CALLSITE_INHERIT_CONSTRUCTOR_AND_TR_ALLOC(TR_J9MethodHandleCallSite, TR_FunctionPointerCallSite)
+      TR_CALLSITE_TR_ALLOC_AND_INHERIT_EMPTY_CONSTRUCTOR(TR_J9MethodHandleCallSite, TR_FunctionPointerCallSite)
       virtual bool findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner);
 		virtual const char*  name () { return "TR_J9MethodHandleCallSite"; }
    };
@@ -50,15 +50,18 @@ class TR_J9MethodHandleCallSite : public  TR_FunctionPointerCallSite
 class TR_J9MutableCallSite : public  TR_FunctionPointerCallSite
    {
    public:
-      TR_CALLSITE_INHERIT_CONSTRUCTOR_AND_TR_ALLOC(TR_J9MutableCallSite, TR_FunctionPointerCallSite)
+      TR_CALLSITE_TR_ALLOC_AND_INHERIT_CONSTRUCTOR(TR_J9MutableCallSite, TR_FunctionPointerCallSite) { _mcsReferenceLocation = NULL; };
       virtual bool findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner);
 		virtual const char*  name () { return "TR_J9MutableCallSite"; }
+      virtual void setMCSReferenceLocation(uintptrj_t *mcsReferenceLocation) { _mcsReferenceLocation = mcsReferenceLocation; }
+   private:
+      uintptrj_t * _mcsReferenceLocation;
    };
 
 class TR_J9VirtualCallSite : public TR_ProfileableCallSite
    {
    public:
-      TR_CALLSITE_INHERIT_CONSTRUCTOR_AND_TR_ALLOC(TR_J9VirtualCallSite, TR_ProfileableCallSite)
+      TR_CALLSITE_TR_ALLOC_AND_INHERIT_EMPTY_CONSTRUCTOR(TR_J9VirtualCallSite, TR_ProfileableCallSite)
       virtual bool findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner);
       virtual TR_ResolvedMethod* findSingleJittedImplementer (TR_InlinerBase *inliner);
       virtual const char*  name () { return "TR_J9VirtualCallSite"; }
@@ -75,7 +78,7 @@ class TR_J9InterfaceCallSite : public TR_ProfileableCallSite
    {
 
    public:
-      TR_CALLSITE_INHERIT_CONSTRUCTOR_AND_TR_ALLOC(TR_J9InterfaceCallSite, TR_ProfileableCallSite)
+      TR_CALLSITE_TR_ALLOC_AND_INHERIT_EMPTY_CONSTRUCTOR(TR_J9InterfaceCallSite, TR_ProfileableCallSite)
       virtual bool findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner);
       virtual TR_OpaqueClassBlock* getClassFromMethod ();
 		virtual const char*  name () { return "TR_J9InterfaceCallSite"; }

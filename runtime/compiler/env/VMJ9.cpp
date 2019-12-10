@@ -2806,13 +2806,6 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
                dontInlineRecognizedMethod = true;
             break;
 
-         case TR::com_ibm_dataaccess_ByteArrayUtils_trailingZerosQuadWordAtATime_:
-            if (!comp->getOption(TR_DisablePackedDecimalIntrinsics) &&
-                    !comp->getOption(TR_DisableDAATrailingZero) &&
-                    !TR::Compiler->om.canGenerateArraylets())
-               dontInlineRecognizedMethod = true;
-            break;
-
          case TR::java_math_BigDecimal_noLLOverflowAdd:
          case TR::java_math_BigDecimal_noLLOverflowMul:
          case TR::java_math_BigDecimal_slowSubMulSetScale:

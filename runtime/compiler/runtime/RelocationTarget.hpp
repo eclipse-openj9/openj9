@@ -134,7 +134,6 @@ class TR_RelocationTarget
       virtual uint32_t loadCPIndex(uint8_t *reloLocationHigh, uint8_t *reloLocationLow);
 
       virtual void performThunkRelocation(uint8_t *thunkAddress, uintptr_t vmHelper);
-
       /**
        * @brief Identifies the correct runtime helper based on thunk signature and relocates helper
        * address. Needed for JITServer.

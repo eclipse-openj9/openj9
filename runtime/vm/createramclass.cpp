@@ -817,9 +817,7 @@ computeVTable(J9VMThread *vmStruct, J9ClassLoader *classLoader, J9Class *supercl
 		if (superclass == NULL) {
 			/* no inherited slots, write default slot in header */
 			vTableHeader->initialVirtualMethod = (J9Method *)vm->initialMethods.initialVirtualMethod;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 			vTableHeader->invokePrivateMethod = (J9Method *)vm->initialMethods.invokePrivateMethod;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 		} else {
 			J9VTableHeader *superVTable = J9VTABLE_HEADER_FROM_RAM_CLASS(superclass);
 			vTableMethodCount = superVTable->size;

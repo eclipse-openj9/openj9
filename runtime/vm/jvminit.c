@@ -1816,19 +1816,13 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			argIndex2 = FIND_ARG_IN_VMARGS(EXACT_MATCH, VMOPT_XXTRANSPARENT_HUGEPAGE, NULL);
 			{
 				/* Last instance of +/- TransparentHugepage found on the command line wins
-				 * Default to -XX:-TransparentHugepage for performance reasons
+				 *
+				 * Default to use OMR setting (Enable for all Linux with THP set to madvise)
 				 */
 				if (argIndex2 > argIndex) {
 					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 1);
-				} else if (argIndex > argIndex2){
+				} else if (argIndex > argIndex2) {
 					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 0);
-				} else {
-#if defined(LINUX) && defined(J9VM_ARCH_X86)
-					/* Enable THP on xLinux by default */
-					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 1);
-#else
-					j9port_control(J9PORT_CTLDATA_VMEM_ADVISE_HUGEPAGE, 0);
-#endif /* defined(LINUX) && defined(J9VM_ARCH_X86) */
 				}
 			}
 
@@ -2002,7 +1996,8 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			}
 
 			/* Parse jcl options */
-			if ((argIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XJCL_COLON, NULL)) >= 0) {
+			argIndex = FIND_ARG_IN_VMARGS(STARTSWITH_MATCH, VMOPT_XJCL_COLON, NULL);
+			if (argIndex >= 0) {
 				loadInfo = FIND_DLL_TABLE_ENTRY( J9_DEFAULT_JCL_DLL_NAME );
 				/* we know there is a colon */
 				GET_OPTION_VALUE(argIndex, ':', &optionValue);
@@ -4104,6 +4099,14 @@ registerVMCmdLineMappings(J9JavaVM* vm)
 	}
 	/* Map -XX:OnOutOfMemoryError= to -Xdump:tool:events=systhrow,filter=java/lang/OutOfMemoryError,exec= */ 
 	if (registerCmdLineMapping(vm, MAPOPT_XXONOUTOFMEMORYERROR_EQUALS, VMOPT_XDUMP_TOOL_OUTOFMEMORYERROR_EXEC_EQUALS, EXACT_MAP_WITH_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
+	}
+	/* Map -XX:+ExitOnOutOfMemoryError to -Xdump:exit:events=throw+systhrow,filter=java/lang/OutOfMemoryError */ 
+	if (registerCmdLineMapping(vm, MAPOPT_XXENABLEEXITONOUTOFMEMORYERROR, VMOPT_XDUMP_EXIT_OUTOFMEMORYERROR, EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
+		return RC_FAILED;
+	}
+	/* Map -XX:-ExitOnOutOfMemoryError to -Xdump:exit:none:events=throw+systhrow,filter=java/lang/OutOfMemoryError */ 
+	if (registerCmdLineMapping(vm, MAPOPT_XXDISABLEEXITONOUTOFMEMORYERROR, VMOPT_XDUMP_EXIT_OUTOFMEMORYERROR_DISABLE, EXACT_MAP_NO_OPTIONS) == RC_FAILED) {
 		return RC_FAILED;
 	}
 

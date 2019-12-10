@@ -45,11 +45,8 @@ class MM_RootScannerReadBarrierVerifier : public MM_RootScanner
 		virtual void doMonitorReference(J9ObjectMonitor *objectMonitor, GC_HashTableIterator *monitorReferenceIterator);
 		virtual void doJNIWeakGlobalReference(omrobjectptr_t *slotPtr);
 		
-		virtual void scanConstantPoolObjectSlots(MM_EnvironmentBase *env);
-		virtual void doConstantPoolObjectSlots(omrobjectptr_t *slotPtr);
-
-		virtual void scanClassStaticSlots(MM_EnvironmentBase *env);
-		virtual void doClassStaticSlots(omrobjectptr_t *slotPtr);
+		virtual void scanClass(MM_EnvironmentBase *env);
+		virtual void doClassVerify(omrobjectptr_t *slotPtr);
 
 		virtual void doSlot(J9Object** slotPtr) {};
 		virtual void doClass(J9Class *clazz) {};

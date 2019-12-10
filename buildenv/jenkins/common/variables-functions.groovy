@@ -436,7 +436,7 @@ def set_build_variables() {
 def set_sdk_variables() {
     DATESTAMP = get_date()
     SDK_FILENAME = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}.tar.gz"
-    TEST_FILENAME = "native-test-libs.tar.gz"
+    TEST_FILENAME = "test-images.tar.gz"
     echo "Using SDK_FILENAME = ${SDK_FILENAME}"
     echo "Using TEST_FILENAME = ${TEST_FILENAME}"
     DIAGNOSTICS_FILENAME = "${JOB_NAME}-${BUILD_NUMBER}-${DATESTAMP}-diagnostics.tar.gz"
@@ -494,11 +494,12 @@ def set_artifactory_config() {
         env.ARTIFACTORY_SERVER = ARTIFACTORY_SERVER
         env.ARTIFACTORY_REPO = VARIABLES.artifactory_repo
         env.ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
-        env.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS = VARIABLES.artifactory_days_to_keep_artifacts // This is being used by the cleanup script
+        env.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS = VARIABLES.artifactory_days_to_keep_artifacts
         env.ARTIFACTORY_MANUAL_CLEANUP = VARIABLES.artifactory_manual_cleanup // This is being used by the cleanup script
         env.ARTIFACTORY_UPLOAD_DIR = "${ARTIFACTORY_REPO}/${JOB_NAME}/${BUILD_ID}/"
         echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER} / ${ARTIFACTORY_REPO}"
         echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
+        echo "Keeping artifacts for '${ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS}' days"
         echo "Artifactory Manual Cleanup: ${env.ARTIFACTORY_MANUAL_CLEANUP}"
     }
 }

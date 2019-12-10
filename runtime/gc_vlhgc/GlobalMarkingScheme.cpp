@@ -1229,6 +1229,17 @@ private:
 		}
 	}
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier) {
+		MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCandidates += 1;
+		if (!_markingScheme->isMarked(objectPtr)) {
+			MM_EnvironmentVLHGC::getEnvironment(_env)->_markVLHGCStats._doubleMappedArrayletsCleared += 1;
+			PORT_ACCESS_FROM_ENVIRONMENT(_env);
+			j9vmem_free_memory(identifier->address, identifier->size, identifier);
+		}
+    }
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+
 	/**
 	 * @Clear the string table cache slot if the object is not marked
 	 */

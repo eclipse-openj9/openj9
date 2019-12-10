@@ -2896,9 +2896,7 @@ typedef struct J9InitializerMethods {
 	void* initialStaticMethod;
 	void* initialSpecialMethod;
 	void* initialVirtualMethod;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	void* invokePrivateMethod;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 } J9InitializerMethods;
 
 typedef struct J9VMInterface {
@@ -3082,14 +3080,27 @@ typedef struct J9ArrayClass {
 	struct J9Method** specialSplitMethodTable;
 	struct J9JITExceptionTable* jitMetaDataList;
 	struct J9Class* gcLink;
+	struct J9Class* hostClass;
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	struct J9Class* nestHost;
 #endif /* defined(J9VM_OPT_VALHALLA_NESTMATES) */
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 	/* Added temporarily for consistency */
 	UDATA flattenedElementSize;
-#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 } J9ArrayClass;
+
+
+#if defined(LINUX) && defined(J9VM_ARCH_X86) && !defined(OSX)
+/* Only enable the assert on linux x86 as not all the versions
+ * of the compilers we use (xlc) support static_asserts in on
+ * all the platforms.
+ */
+#if defined(__cplusplus)
+/* Hide the asserts from DDR */
+#if !defined(TYPESTUBS_H)
+static_assert(sizeof(J9Class) == sizeof(J9ArrayClass), "J9Class and J9ArrayClass must be the same size");
+#endif /* !TYPESTUBS_H */
+#endif /* __cplusplus */
+#endif /* LINUX && J9VM_ARCH_X86 */
 
 typedef struct J9HookedNative {
 	struct J9NativeLibrary* nativeLibrary;
@@ -3427,9 +3438,7 @@ typedef struct J9ITable {
 typedef struct J9VTableHeader {
 	UDATA size;
 	J9Method* initialVirtualMethod;
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	J9Method* invokePrivateMethod;
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 } J9VTableHeader;
 
 typedef struct J9ClassCastParms {

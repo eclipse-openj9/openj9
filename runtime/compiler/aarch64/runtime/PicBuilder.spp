@@ -105,6 +105,8 @@
 	.set	J9TR_UVCSnippet_codeCacheReturnAddress,	0
 	.set	J9TR_UVCSnippet_CP,		8
 	.set	J9TR_UVCSnippet_CPIndex,	16
+	.set	J9TR_UVCSnippet_method,		24
+	.set	J9TR_UVCSnippet_J2IThunk,	32
 
 	.text
 	.align 2
@@ -278,6 +280,12 @@ _interpreterUnresolvedInstanceDataGlue:
 _interpreterUnresolvedInstanceDataStoreGlue:
 	hlt	#0	// Not implemented yet
 
+// Handles calls to virtual unresolved call snippets
+//
+// in: x30 = snippet
+//
+// trash: x10, x11
+
 // For virtual unresolved call, we generate following instructions
 //  movz  x9, #0
 //  movk  x9, #0, LSL #16
@@ -293,11 +301,39 @@ _virtualUnresolvedHelper:
 	stp	x2, x3, [J9SP, #16]
 	stp	x4, x5, [J9SP, #32]
 	stp	x6, x7, [J9SP, #48]
+	ldr	x10, [x30, #J9TR_UVCSnippet_codeCacheReturnAddress]	// get code cache RA (L_commonLookupException expects it to be in x10)
+	mov	x11, x30					// protect snippet address in x11
+	ldr	x0, [x30, #J9TR_UVCSnippet_method]		// Load the J9Method
+	cbnz	x0, L_callPrivate				// If J9Method is not null, this is a prevously resolved private method
 	add	x0, x30, #J9TR_UVCSnippet_CP			// get CP/index pair pointer
-	ldr	x1, [x30, #J9TR_UVCSnippet_codeCacheReturnAddress]	// get code cache RA
-	mov	x10, x1						// protect LR in x10 (in L_commonLookupException, it is expected)
+	mov	x1, x10						// code cache RA
 	bl	jitResolveVirtualMethod				// resolve the method, return value = vTable offset
 	cbz	x0, L_commonLookupException			// if resolve failed, throw the exception
+	ands	x1, x0, #J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG	// Check if result is tagged with J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG
+	beq	L_callVirtual					// If it is not, go to the original path
+	eor	x0, x0, x1					// x1 currently equals 0x1 so this will clear the direct method flag bit
+	str	x0, [x11, #J9TR_UVCSnippet_method]		// stores the J9Method for future calls to this helper
+L_callPrivate:
+	ldr	x1, [x0, #J9TR_MethodPCStartOffset]		// Load startPC/extra field
+	tst	x1, #J9TR_MethodNotCompiledBit			// Check to see if the method has already been compiled
+	bne	L_interpretedPrivate				// If not compiled, handle interpreted case
+	ldr     w2, [x1, #-4]					// Load the linkage info word
+	ubfx	x2, x2, #16, #16				// Extract the bits for distance to j2j entry
+	add	x2, x1, x2					// j2j address of target method
+	b	L_calloutPrivate
+L_interpretedPrivate:
+	orr	x9, x0, J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG	// put tagged J9Method into x9 (for use in j2iVirtual)
+	ldr	x2, [x11, #J9TR_UVCSnippet_J2IThunk]		// Load thunk address
+L_calloutPrivate:
+	mov	x30, x10					// Set up the return addr
+	mov	x10, x2						// destination address
+	ldp	x0, x1, [J9SP, #0]				// restore parameter regs
+	ldp	x2, x3, [J9SP, #16]
+	ldp	x4, x5, [J9SP, #32]
+	ldp	x6, x7, [J9SP, #48]
+	add	J9SP, J9SP, #64
+	br	x10						// Call the target, not returning here
+L_callVirtual:
 	mov	x2, x0
 	sub	x0, x10, #20					// get the address of the movz instruction
 	ldr	w1, [x0]					// fetch the movz instruction

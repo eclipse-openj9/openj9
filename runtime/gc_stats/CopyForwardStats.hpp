@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,6 +64,11 @@ public:
 	UDATA _stringConstantsCleared;  /**< The number of string constants that have been cleared during marking */
 	UDATA _stringConstantsCandidates; /**< The number of string constants that have been visited in string table during marking */
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	UDATA _doubleMappedArrayletsCleared; /**< The number of double mapped arraylets that have been cleared durign marking */
+	UDATA _doubleMappedArrayletsCandidates; /**< The number of double mapped arraylets that have been visited during marking */
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+
 private:
 	
 	/* 
@@ -87,6 +92,11 @@ public:
 
 		_stringConstantsCleared = 0;
 		_stringConstantsCandidates = 0;
+
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		_doubleMappedArrayletsCleared = 0;
+		_doubleMappedArrayletsCandidates = 0;
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	}
 	
 	/**
@@ -106,19 +116,28 @@ public:
 
 		_stringConstantsCleared += stats->_stringConstantsCleared;
 		_stringConstantsCandidates += stats->_stringConstantsCandidates;
+
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		_doubleMappedArrayletsCleared += stats->_doubleMappedArrayletsCleared;
+		_doubleMappedArrayletsCandidates += stats->_doubleMappedArrayletsCandidates;
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	}
 
 	MM_CopyForwardStats() :
 		MM_CopyForwardStatsCore()
-		,_unfinalizedCandidates(0)
-		,_unfinalizedEnqueued(0)
-		,_ownableSynchronizerCandidates(0)
-		,_ownableSynchronizerSurvived(0)
-		,_weakReferenceStats()
-		,_softReferenceStats()
-		,_phantomReferenceStats()
-		,_stringConstantsCleared(0)
-		,_stringConstantsCandidates(0)
+		, _unfinalizedCandidates(0)
+		, _unfinalizedEnqueued(0)
+		, _ownableSynchronizerCandidates(0)
+		, _ownableSynchronizerSurvived(0)
+		, _weakReferenceStats()
+		, _softReferenceStats()
+		, _phantomReferenceStats()
+		, _stringConstantsCleared(0)
+		, _stringConstantsCandidates(0)
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		, _doubleMappedArrayletsCleared(0)
+		, _doubleMappedArrayletsCandidates(0)
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	{}
 };
 

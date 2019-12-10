@@ -286,7 +286,7 @@ GC_CheckEngine::checkJ9ObjectPointer(J9JavaVM *javaVM, J9Object *objectPtr, J9Ob
 		if ((regionType & MEMORY_TYPE_NEW) || extensions->isVLHGC()) {
 			// TODO: ideally, we should only check this in the evacuate segment
 			// TODO: do some safety checks first -- is there enough room in the segment?
-			MM_ScavengerForwardedHeader scavengerForwardedHeader(objectPtr);
+			MM_ScavengerForwardedHeader scavengerForwardedHeader(objectPtr, extensions);
 			if (scavengerForwardedHeader.isForwardedPointer()) {
 				*newObjectPtr = scavengerForwardedHeader.getForwardedObject();
 				

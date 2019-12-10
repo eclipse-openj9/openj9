@@ -173,26 +173,26 @@ TR_J9SharedCache::log(char *format, ...)
    JITRT_UNLOCK_LOG(jitConfig());
    }
 
-uint32_t
+TR_J9SharedCache::SCCHint
 TR_J9SharedCache::getHint(J9VMThread * vmThread, J9Method *method)
    {
-   uint32_t result = 0;
+   SCCHint result;
 
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 
-   unsigned char storeBuffer[4];
-   uint32_t bufferLength = 4;
    J9SharedDataDescriptor descriptor;
-   descriptor.address = storeBuffer;
-   descriptor.length = bufferLength;
+   descriptor.address = (U_8 *)&result;
+   descriptor.length = sizeof(result);
    descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITHINT;
    descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
    IDATA dataIsCorrupt;
-   uint32_t *find = (uint32_t *)sharedCacheConfig()->findAttachedData(vmThread, romMethod, &descriptor, &dataIsCorrupt);
+   SCCHint *find = (SCCHint *)sharedCacheConfig()->findAttachedData(vmThread, romMethod, &descriptor, &dataIsCorrupt);
 
-   if ((find == (uint32_t *)descriptor.address) && (dataIsCorrupt == -1))
-      result = *find;
+   if ((find != (SCCHint *)descriptor.address) || (dataIsCorrupt != -1))
+      {
+      result.clear();
+      }
 #endif // defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    return result;
    }
@@ -206,8 +206,8 @@ TR_J9SharedCache::getAllEnabledHints(J9Method *method)
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       J9VMThread * vmThread = fej9->getCurrentVMThread();
-      uint32_t scHints = getHint(vmThread, method);
-      hintFlags = *((uint16_t *)&scHints) & _hintsEnabledMask;
+      SCCHint scHints = getHint(vmThread, method);
+      hintFlags = scHints.flags & _hintsEnabledMask;
       }
 #endif // defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    return hintFlags;
@@ -226,20 +226,19 @@ TR_J9SharedCache::isHint(J9Method *method, TR_SharedCacheHint theHint, uint16_t 
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       J9ROMMethod * romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
       J9VMThread * vmThread = fej9->getCurrentVMThread();
-      uint32_t scHints = getHint(vmThread, method);
-      uint16_t hintFlags = *((uint16_t *)&scHints);
+      SCCHint scHints = getHint(vmThread, method);
 
       if (dataField)
-         *dataField = *(((uint16_t *)&scHints) + 1);
+         *dataField = scHints.data;
 
       if (_verboseHints)
          {
          char methodSignature[500];
          int32_t maxSignatureLength = 500;
          fej9->printTruncatedSignature(methodSignature, maxSignatureLength, (TR_OpaqueMethodBlock *) method);
-         TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"is hint %x(%x) %s", hintFlags, hint, methodSignature);
+         TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"is hint %x(%x) %s", scHints.flags, hint, methodSignature);
          }
-      isHint = (hintFlags & hint) != 0;
+      isHint = (scHints.flags & hint) != 0;
       }
 #endif // defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    return isHint;
@@ -280,24 +279,21 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
       // won't be registered. The affect, however is minimal, and likely to correct itself in the current run
       // (if the inlining hint is missed) or a subsequent run (if the other hint is missed).
 
-      uint32_t scHintData = getHint(vmThread, method);
-      uint16_t *hintFlags = (uint16_t *)&scHintData;
-      uint16_t *hintCount = ((uint16_t *)&scHintData) + 1; // Flags and new count field needs to be in contiguous location to be stored into sharecache
+      SCCHint scHints = getHint(vmThread, method);
+      const uint32_t scHintDataLength = sizeof(scHints);
 
-      const uint32_t scHintDataLength = sizeof(scHintData);
-
-      if (scHintData == 0) // If no prior hints exist, we can perform a "storeAttachedData" operation
+      if (scHints.flags == 0) // If no prior hints exist, we can perform a "storeAttachedData" operation
          {
          uint32_t bytesToPersist = 0;
  
          if (!SCfull)
             {
-            *hintFlags |= newHint;
+            scHints.flags |= newHint;
             if (isFailedValidationHint)
-               *hintCount = 10 * _initialHintSCount;
+               scHints.data = 10 * _initialHintSCount;
 
             J9SharedDataDescriptor descriptor;
-            descriptor.address = (U_8 *)hintFlags;
+            descriptor.address = (U_8 *)&scHints;
             descriptor.length = scHintDataLength; // Size includes the 2nd data field, currently only used for TR_HintFailedValidation
             descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITHINT;
             descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
@@ -306,7 +302,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
             if (store == 0)
                {
                if (_verboseHints)
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint added 0x%x, key = %s, scount: %d", *hintFlags, methodSignature, *hintCount);
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint added 0x%x, key = %s, scount: %d", scHints.flags, methodSignature, scHints.data);
                }
             else if (store != J9SHR_RESOURCE_STORE_FULL)
                {
@@ -336,25 +332,25 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
       else // Some hints already exist for this method. We must perform an "updateAttachedData"
          {
          bool updateHint = false;
-         bool hintDidNotExist = ((newHint & *hintFlags) == 0);
+         bool hintDidNotExist = ((newHint & scHints.flags) == 0);
          if (hintDidNotExist)
             {
             updateHint = true;
-            *hintFlags |= newHint;
+            scHints.flags |= newHint;
             if (isFailedValidationHint)
-               *hintCount = 10 * _initialHintSCount;
+               scHints.data = 10 * _initialHintSCount;
             }
          else 
             {
             // hint already exists, but maybe we need to update the count
             if (isFailedValidationHint)
                {
-               uint16_t oldCount = *hintCount;
+               uint16_t oldCount = scHints.data;
                uint16_t newCount = std::min(oldCount * 10, TR_DEFAULT_INITIAL_COUNT);
                if (newCount != oldCount)
                   {
                   updateHint = true;
-                  *hintCount = newCount;
+                  scHints.data = newCount;
                   }
                else
                   {
@@ -368,7 +364,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
          if (updateHint)
             {
             J9SharedDataDescriptor descriptor;
-            descriptor.address = (U_8 *)hintFlags;
+            descriptor.address = (U_8 *)&scHints;
             descriptor.length = scHintDataLength; // Size includes the 2nd data field, currently only used for TR_HintFailedValidation
             descriptor.type = J9SHR_ATTACHED_DATA_TYPE_JITHINT;
             descriptor.flags = J9SHR_ATTACHED_DATA_NO_FLAGS;
@@ -378,7 +374,7 @@ TR_J9SharedCache::addHint(J9Method * method, TR_SharedCacheHint theHint)
                {
                if (update == 0)
                   {
-                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint updated 0x%x, key = %s, scount: %d", *hintFlags, methodSignature, *hintCount);
+                  TR_VerboseLog::writeLineLocked(TR_Vlog_SCHINTS,"hint updated 0x%x, key = %s, scount: %d", scHints.flags, methodSignature, scHints.data);
                   }
                else
                   {
@@ -655,6 +651,7 @@ TR_J9SharedCache::rememberDebugCounterName(const char *name)
                                         &dataDescriptor);
 
    offset = data ? offsetInSharedCacheFromPointer((void *)data) : (UDATA)-1;
+
    //printf("\nrememberDebugCounterName: Tried to store %s (%p), data=%p, offset=%p\n", name, name, data, offset);
 #endif
    return offset;
@@ -892,6 +889,7 @@ TR_J9SharedCache::getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR
    return classChainOffsetInSharedCache;
    }
 
+
 const void *
 TR_J9SharedCache::storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataDescriptor *descriptor)
    {
@@ -983,4 +981,5 @@ TR_J9JITServerSharedCache::storeSharedData(J9VMThread *vmThread, char *key, J9Sh
    _stream->write(JITServer::MessageType::SharedCache_storeSharedData, std::string(key, strlen(key)), *descriptor, dataStr);
    return std::get<0>(_stream->read<const void *>());
    }
+
 #endif

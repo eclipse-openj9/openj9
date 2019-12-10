@@ -34,6 +34,7 @@
 #include "infra/Link.hpp"
 #include "runtime/OMRRuntimeAssumptions.hpp"
 
+
 class TR_FrontEnd;
 class TR_OpaqueClassBlock;
 class TR_PatchJNICallSite;

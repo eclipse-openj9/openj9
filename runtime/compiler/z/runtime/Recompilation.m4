@@ -33,10 +33,10 @@ ZZ For zLinux GAS assembler and zOS HLASM assembler
 ZZ ===================================================================
 
 ZZ ===================================================================
-ZZ changequote is used to replace ` with [ and ' with ]
+ZZ changequote is used to replace ` with { and ' with }
 ZZ For better readability
 ZZ ===================================================================
-changequote([,])dnl
+changequote({,})dnl
 
 ZZ ===================================================================
 ZZ For zOS, We declare just one csect with multiple entry points.
@@ -44,16 +44,16 @@ ZZ Each PICBuilder function will be declared as an entrypoint in this
 ZZ csect.
 ZZ ===================================================================
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
         TITLE 'Recompilation.s'
 RECOMP#START      CSECT
 RECOMP#START      RMODE ANY
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
 RECOMP#START      AMODE 64
-],[dnl
+},{dnl
 RECOMP#START      AMODE 31
-])dnl
-])dnl
+})dnl
+})dnl
 
 ZZ ===================================================================
 ZZ Author  : Chris Donawa
@@ -66,7 +66,7 @@ ZZ codert/jilconsts.inc is a j9 assembler include that defines
 ZZ offsets of various fields in structs used by jit
 ZZ ===================================================================
 
-include([jilconsts.inc])dnl
+include({jilconsts.inc})dnl
 
 ZZ ===================================================================
 ZZ codert.dev/s390_asdef.inc is a JIT assembler include that defines
@@ -74,7 +74,7 @@ ZZ macros for instructions for 64 bit and 31 bit mode. Appropriate set
 ZZ of instruction macros are selected for each mode
 ZZ ===================================================================
 
-include([z/runtime/s390_asdef.inc])dnl
+include({z/runtime/s390_asdef.inc})dnl
 
 
 ZZ ===================================================================
@@ -83,7 +83,7 @@ ZZ various m4 macros used in this file. It includes zOS_macros.inc on
 ZZ zOS and zLinux_macros.inc on zLinux
 ZZ ===================================================================
 
-include([z/runtime/s390_macros.inc])dnl
+include({z/runtime/s390_macros.inc})dnl
 
 ZZ ===================================================================
 ZZ codert.dev/codertTOC.inc is a JIT assembler include that defines
@@ -91,7 +91,7 @@ ZZ index of various runtime helper functions addressable from
 ZZ codertTOC.
 ZZ ===================================================================
 
-include([runtime/Helpers.inc])dnl
+include({runtime/Helpers.inc})dnl
 
 ZZ ===================================================================
 ZZ Offsets of items in various code snippets
@@ -153,7 +153,7 @@ SETVAL(CountingFPSlot6,CountingGPRSaveArea+FPSlot6)
 SETVAL(CountingFPSlot7,CountingGPRSaveArea+FPSlot7)
 
 ZZ This is the stack frame for the patching of brasl
-ifdef([MCC_SUPPORTED],[dnl
+ifdef({MCC_SUPPORTED},{dnl
 SETVAL(allocStackSize,9*PTR_SIZE)
 SETVAL(InterfaceSnippetEP_onStack,9*PTR_SIZE)
 SETVAL(ExtraArgPatchCallParam_onStack,8*PTR_SIZE)
@@ -163,14 +163,14 @@ SETVAL(MethPtrPatchCallParam_onStack,5*PTR_SIZE)
 SETVAL(RetAddrPatchCallParam_onStack,4*PTR_SIZE)
 SETVAL(SaveR1PatchCallParam_onStack,3*PTR_SIZE)
 SETVAL(SaveREPPatchCallParam_onStack,2*PTR_SIZE)
-],[dnl
+},{dnl
 ZZ allocStackSize is the number of bytes to be
 ZZ allocated on the stack to spill registers 
 ZZ which are used inside the function
 ZZ for non-MCC we always need 4 64-bit registers
 SETVAL(allocStackSize,32)
 SETVAL(InterfaceSnippetEP_onStack,32)
-])dnl
+})dnl
 
 ZZ Force Recomp Snippet Layout
 SETVAL(RetAddrInForceRecompSnippet,0)
@@ -270,9 +270,9 @@ SETPPA2()
 LABEL(LsamplingRecompileMethod)
     AHI_GPR J9SP,-SamplingFrameSize
 
-ifdef([J9_SOFT_FLOAT],[dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
 
     STD f0,SamplingFPSlot0(J9SP)
     STD f1,SamplingFPSlot1(J9SP)
@@ -282,7 +282,7 @@ ZZ do nothing
     STD f5,SamplingFPSlot5(J9SP)
     STD f6,SamplingFPSlot6(J9SP)
     STD f7,SamplingFPSlot7(J9SP)
-])dnl
+})dnl
 ZZ Save gprs
     ST_GPR r14,5*PTR_SIZE(J9SP)     ZZ store r14 in slot
     ST_GPR r0,4*PTR_SIZE(J9SP)      ZZ store r0 in slot 4
@@ -322,12 +322,12 @@ ZZ The magic word's upper half word contains the # bytes
 ZZ from startPC to the jit method--add it to R4
    LR_GPR r1,rEP
    AHI_GPR r1,-4  ZZ point at magic word
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
    LH_GPR r1,0(r1)
    AR_GPR rEP,r1
-],[dnl
+},{dnl
    AH     rEP,0(r1)
-])dnl
+})dnl
 ZZ Restore Regs
    L_GPR   r3,0*PTR_SIZE(J9SP)
    L_GPR   r2,1*PTR_SIZE(J9SP)
@@ -335,9 +335,9 @@ ZZ Restore Regs
    L_GPR   r0,4*PTR_SIZE(J9SP)
    L_GPR   rSSP,(3*PTR_SIZE)(J9SP)
 
-ifdef([J9_SOFT_FLOAT],[dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
 ZZ restore FP regs if required
     LD f0,SamplingFPSlot0(J9SP)
     LD f1,SamplingFPSlot1(J9SP)
@@ -347,7 +347,7 @@ ZZ restore FP regs if required
     LD f5,SamplingFPSlot5(J9SP)
     LD f6,SamplingFPSlot6(J9SP)
     LD f7,SamplingFPSlot7(J9SP)
-])dnl
+})dnl
 
 ZZ                  make sure to pop off 2 slots added in preprologue
     AHI_GPR J9SP,(SamplingFrameSize+(2*PTR_SIZE))
@@ -415,9 +415,9 @@ ZZ .align 8
     START_FUNC(_countingRecompileMethod,CNTRCMPM)
 LABEL(LcountingRecompileMethod)
     AHI_GPR J9SP,-CountingStackSize
-ifdef([J9_SOFT_FLOAT],[dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
 
     STD f0,CountingFPSlot0(J9SP)
     STD f1,CountingFPSlot1(J9SP)
@@ -427,7 +427,7 @@ ZZ do nothing
     STD f5,CountingFPSlot5(J9SP)
     STD f6,CountingFPSlot6(J9SP)
     STD f7,CountingFPSlot7(J9SP)
-])dnl
+})dnl
     ST_GPR r0,5*PTR_SIZE(J9SP)  ZZ store return address in slot 5
     ST_GPR r0,4*PTR_SIZE(J9SP)  ZZ store r0 in slot 4
     ST_GPR rSSP,3*PTR_SIZE(J9SP)  ZZ store rSSP
@@ -468,12 +468,12 @@ ZZ The magic word's upper half word contains the # bytes
 ZZ from startPC to the jit method--add it to R4
    LR_GPR r1,rEP
    AHI_GPR r1,-4  ZZ point at magic 32-bit word
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
    LH_GPR r1,0(r1)
    AR_GPR rEP,r1
-],[dnl
+},{dnl
    AH     rEP,0(r1)
-])dnl
+})dnl
 LABEL(LcountingRestoreRegs)
 ZZ Restore Regs
    L_GPR   r3,0*PTR_SIZE(J9SP)
@@ -483,9 +483,9 @@ ZZ Restore Regs
    L_GPR   r14,5*PTR_SIZE(J9SP)
    L_GPR   rSSP,3*PTR_SIZE(J9SP)
 
-ifdef([J9_SOFT_FLOAT],[dnl
+ifdef({J9_SOFT_FLOAT},{dnl
 ZZ do nothing
-],[dnl
+},{dnl
 ZZ restore FP regs if required
     LD f0,CountingFPSlot0(J9SP)
     LD f1,CountingFPSlot1(J9SP)
@@ -495,7 +495,7 @@ ZZ restore FP regs if required
     LD f5,CountingFPSlot5(J9SP)
     LD f6,CountingFPSlot6(J9SP)
     LD f7,CountingFPSlot7(J9SP)
-])dnl
+})dnl
 
 ZZ restore stack & pop off 4 elements.
     AHI_GPR J9SP,(CountingStackSize+(4*PTR_SIZE))
@@ -548,12 +548,12 @@ ZZ See _samplingRecompileMethod for why we have to do the following:
 ZZ Use r14 as temp reg
     LR_GPR       r14,rEP
     AHI_GPR r14,-4 ZZ point to magic word
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
     LH_GPR r14,0(r14)
     AR_GPR rEP,r14
-],[dnl
+},{dnl
     AH     rEP,0(r14) ZZ point to beginning of JITted method
-])dnl
+})dnl
 ZZ restore saved r14--have been saved before jumping here
     LR_GPR      r14,r0
     BCR     HEX(f),rEP
@@ -579,12 +579,12 @@ ZZ word contains the # bytes from startPC to the jit method.
     L_GPR   rEP,3*PTR_SIZE(J9SP)  ZZ Load StartPC
     LR_GPR  r1,rEP
     AHI_GPR r1,-4        ZZ point at magic 32-bit word
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
     LH_GPR  r1,0(r1)
     AR_GPR  rEP,r1
-],[dnl
+},{dnl
     AH      rEP,0(r1)
-])dnl
+})dnl
 ZZ Save the JIT EP onto Stack.
     ST_GPR  rEP,0(J9SP)
 
@@ -645,12 +645,12 @@ ZZ See _samplingRecompileMethod for why we have to do the following:
 ZZ Use r14 as temp reg
     LR_GPR      r14,rEP
     AHI_GPR     r14,-4 ZZ point to magic word
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
     LH_GPR r14,0(r14)
     AR_GPR rEP,r14
-],[dnl
+},{dnl
     AH     rEP,0(r14) ZZ point to beginning of JITted method
-])dnl
+})dnl
 
 ZZ restore saved r14--have been saved before jumping here
     LR_GPR      r14,r0
@@ -659,21 +659,21 @@ ZZ restore saved r14--have been saved before jumping here
     END_FUNC(_samplingPatchCallSite,SMPPCS,8)
 
 ZZ clear high order bit in 31 bit version
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
 define(CLEANSE,
-[dnl
+{dnl
 
 ZZ
-])dnl
-],[dnl
+})dnl
+},{dnl
 define(CLEANSE,
-[dnl
+{dnl
 
 ZZ clear high order bit
    sll $1,1
    srl $1,1
-])dnl
-])dnl
+})dnl
+})dnl
 
 
 ZZ ========================================================  ZZ
@@ -741,7 +741,7 @@ ZZ .align 8
     START_FUNC(_checkAndPatchBrasl,PCHBRSL)
 LABEL(LCheckAndPatchBrasl)
 
-ifdef([MCC_SUPPORTED],[dnl
+ifdef({MCC_SUPPORTED},{dnl
 ZZ R14 is currently pointing to BodyInfo.  Get J9Method.
     L_GPR       r14,eq_BodyInfo_MethodInfo(r14)
     L_GPR       r14,eq_VMMethodInfo_j9Method(r14)
@@ -761,26 +761,26 @@ ZZ See _samplingRecompileMethod for why we have to do the following:
 ZZ r14 is temp reg
     LR_GPR    r14,rEP
     AHI_GPR   r14,-4 ZZ point to magic word
-],[dnl
+},{dnl
 ZZ See _samplingRecompileMethod for why we have to do the following:
 ZZ r14 is temp reg
     LR_GPR    r14,rEP
     AHI_GPR   r14,-4 ZZ point to magic word
 
     AHI_GPR   J9SP,-allocStackSize
-])dnl
+})dnl
 
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
     LH_GPR r14,0(r14)
     AR_GPR rEP,r14
-],[dnl
+},{dnl
     AH      rEP,0(r14) ZZ point to beginning of JITted method
-])dnl
-ifdef([MCC_SUPPORTED],[dnl
+})dnl
+ifdef({MCC_SUPPORTED},{dnl
     STM_GPR   r2,r3,0(J9SP)
-],[dnl
+},{dnl
     STMG      r0,r3,0(J9SP)
-])dnl
+})dnl
     LR_GPR      r14,r0
 
     LR_GPR    r2,r14
@@ -838,15 +838,15 @@ ZZ check for direct call BRASL
     JNZ       LJumpToNewRoutine
 
 ZZ Save the call site for MCC Call.
-ifdef([MCC_SUPPORTED],[dnl
+ifdef({MCC_SUPPORTED},{dnl
 ZZ Param2: CallSite.
     ST_GPR    r2,CallSitePatchCallParam_onStack(J9SP)
-])dnl
+})dnl
 
 ZZ Check if BRASL relative immediate field crosses an 8 byte boundary.
 ZZ This only happens if the least significant 3 bits of the BRASL
 ZZ address are 100 (in binary).
-ifdef([DEBUG],[dnl
+ifdef({DEBUG},{dnl
     TML       r2,HEX(0004)     ZZ check if bit 61 is set
     JZ        LSkipAlignCheck  ZZ if not we are OK
     TML       r2,HEX(0003)     ZZ check if bits 62 and 63 are set
@@ -854,7 +854,7 @@ ifdef([DEBUG],[dnl
     LHI_GPR   r2,0
     ST_GPR    r2,0(r2)         ZZ force a crash so we can debug
 LABEL(LSkipAlignCheck)
-])dnl
+})dnl
 
 ZZ patch the BRASL's four byte field
 ZZ rEP contains the new address, r2 address of brasl
@@ -864,7 +864,7 @@ ZZ calculate r3 = (rEP-r3)/2
     LR_GPR    r3,r2
     CLEANSE(r3)
     CLEANSE(rEP)
-ifdef([MCC_SUPPORTED],[dnl
+ifdef({MCC_SUPPORTED},{dnl
 ZZ Call MCC service for code patching of the resolved method.
 ZZ Parameters:
 ZZ       j9method, callSite, newPC, extraArg
@@ -900,14 +900,14 @@ ZZ Restore r1
     L_GPR r1,SaveR1PatchCallParam_onStack(,J9SP)
 ZZ Restore Return Address
     L_GPR r14,RetAddrPatchCallParam_onStack(,J9SP)
-],[dnl
+},{dnl
     SR_GPR    r3,rEP  ZZ because it's destructive,can't say r3=rEP-r3
     LCR_GPR   r3,r3 ZZ negate it
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
     srag     r3,r3,1
-],[dnl
+},{dnl
     sra     r3,1
-])dnl
+})dnl
     TML       r2,HEX(0007)              ZZ check if 8 byte aligned
     JZ        LCompareAndSwapLoopHeader  ZZ patch 8 byte atomically
     ST        r3,2(r2)   ZZ store 4 bytes 2 bytes off of BRASL
@@ -924,17 +924,17 @@ LABEL(LCompareAndSwapLoop)
     CSG       r0,r1,0(r2)
     BRC       HEX(4),LCompareAndSwapLoop
 LABEL(LCompareAndSwapLoopEnd)
-])dnl
+})dnl
 
 
 LABEL(LJumpToNewRoutine)
 ZZ Non-MCC has to restore 4 slots on the stack, while
 ZZ MCC has to restore 9 slots.
-ifdef([MCC_SUPPORTED],[dnl
+ifdef({MCC_SUPPORTED},{dnl
     LM_GPR    r2,r3,0(J9SP)
-],[dnl
+},{dnl
     LMG       r0,r3,0(J9SP)
-])dnl
+})dnl
 ZZ pop MCC params, 2 regs, rEP & reserved slot
     AHI_GPR   J9SP,allocStackSize+2*PTR_SIZE
 
@@ -958,14 +958,14 @@ ZZ            rEP - new method Entry Point
 
 ZZ Get the lastCacheSlot pointer into r3.
     L_GPR     r3,eq_lastCachedSlotField_inInterfaceSnippet(r2)
-ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
+ifdef({OMR_GC_COMPRESSED_POINTERS},{dnl
 ZZ Load the class offset (32 bits)
     L         r0,J9TR_J9Object_class(,r1)
     LLGFR     r0,r0
-],[dnl
+},{dnl
 ZZ Load the class ptr from 'this' param
     L_GPR     r0,J9TR_J9Object_class(r1)
-])dnl
+})dnl
 
 ZZ Mask out low byte flags
     NILL      r0,HEX(10000)-J9TR_RequiredClassAlignment
@@ -978,11 +978,11 @@ ZZ slots or slots are uninitialized.
     JL        LJumpToNewRoutine
 
 ZZ Compare our class pointer with the class pointer in current slot
-ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
+ifdef({OMR_GC_COMPRESSED_POINTERS},{dnl
     CL        r0,0(,r3)
-],[dnl
+},{dnl
     CL_GPR    r0,0(,r3)
-])dnl
+})dnl
     JZ        LPatchInterfaceSlot  ZZ If class ptrs match, we patch!
     AHI_GPR   r3,-2*PTR_SIZE    ZZ Otherwise, we move to previous slot
     J LSearchInterfaceSlotToPatch
@@ -1148,7 +1148,7 @@ ZZ Restore our preserved registers.
 
     END_FUNC(methodHandleJ2IGlue,MHJ2IG,8)
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
     END
-])dnl
+})dnl
 

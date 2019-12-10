@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -53,28 +53,19 @@ class GC_ConstantPoolObjectSlotIterator
 	U_32 *_cpDescriptionSlots;
 	U_32 _cpDescription;
 	UDATA _cpDescriptionIndex;
-	bool _condyOnly;
-	bool _condyEnabled;
 	GC_ConstantDynamicSlotIterator _constantDynamicSlotIterator;
 
 public:
 
-	GC_ConstantPoolObjectSlotIterator(J9JavaVM *vm, J9Class *clazz, bool condyOnly = false) :
+	GC_ConstantPoolObjectSlotIterator(J9JavaVM *vm, J9Class *clazz) :
 		_cpEntry((j9object_t *)J9_CP_FROM_CLASS(clazz)),
 		_cpEntryCount(clazz->romClass->ramConstantPoolCount),
 		_constantDynamicSlotIterator()
 	{
-		_condyOnly = condyOnly;
 		_cpEntryTotal = _cpEntryCount;
 		if(_cpEntryCount) {
 			_cpDescriptionSlots = SRP_PTR_GET(&clazz->romClass->cpShapeDescription, U_32 *);
 			_cpDescriptionIndex = 0;
-		}
-		/* Check if the system is condy-enabled */
-		if (J2SE_VERSION(vm) < J2SE_V11) {
-			_condyEnabled = false;
-		} else {
-			_condyEnabled = true;
 		}
 	};
 

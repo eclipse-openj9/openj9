@@ -82,9 +82,6 @@ RUN apt-get update \
     zip \
   && rm -rf /var/lib/apt/lists/*
 
-# Install Docker module to run test framework
-RUN echo yes | cpan install JSON Text::CSV XML::Parser
-
 # Add user home/USER and copy authorized_keys and known_hosts
 RUN useradd -ms /bin/bash ${USER} \
   && mkdir /home/${USER}/.ssh/

@@ -154,7 +154,7 @@ J9::X86::UnresolvedDataSnippet::emitResolveHelperCall(uint8_t *cursor)
    // Call to the glue routine
    //
    const intptrj_t rip = (intptrj_t)(cursor+5);
-   if ((cg()->fej9()->helpersNeedRelocation() && TR::Compiler->target.is64Bit()) ||
+   if ((cg()->needRelocationsForHelpers() && TR::Compiler->target.is64Bit()) ||
        NEEDS_TRAMPOLINE(glueAddress, rip, cg()))
       {
       TR_ASSERT(TR::Compiler->target.is64Bit(), "should not require a trampoline on 32-bit");

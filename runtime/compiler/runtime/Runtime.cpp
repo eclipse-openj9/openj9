@@ -315,8 +315,6 @@ JIT_HELPER(jitMethodMonitorExitReservedPrimitive);
 JIT_HELPER(jitMethodMonitorExitReserved);
 JIT_HELPER(prefetchTLH);
 JIT_HELPER(newPrefetchTLH);
-JIT_HELPER(outlinedNewObject);
-JIT_HELPER(outlinedNewArray);
 
 JIT_HELPER(arrayTranslateTRTO);
 JIT_HELPER(arrayTranslateTROTNoBreak);
@@ -589,8 +587,6 @@ JIT_HELPER(_nativeStaticHelper);
 JIT_HELPER(_interfaceDispatch);
 
 #elif defined(TR_HOST_S390)
-JIT_HELPER(outlinedNewObject);
-JIT_HELPER(outlinedNewArray);
 JIT_HELPER(__double2Long);
 JIT_HELPER(__doubleRemainder);
 JIT_HELPER(__floatRemainder);
@@ -1543,6 +1539,8 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_ARM64interpreterSyncDoubleStaticGlue,   (void *) _interpreterSyncDoubleStaticGlue, TR_Helper);
    SET(TR_ARM64nativeStaticHelper,                (void *) _nativeStaticHelper,              TR_Helper);
    SET(TR_ARM64interfaceDispatch,                 (void *) _interfaceDispatch,               TR_Helper);
+   SET(TR_ARM64floatRemainder,                    (void *) helperCFloatRemainderFloat,       TR_Helper);
+   SET(TR_ARM64doubleRemainder,                   (void *) helperCDoubleRemainderDouble,     TR_Helper);
 
 #elif defined(TR_HOST_S390)
    SET(TR_S390double2Long,                                (void *) 0,                                              TR_Helper);
@@ -1630,8 +1628,6 @@ void initializeCodeRuntimeHelperTable(J9JITConfig *jitConfig, char isSMP)
    SET(TR_S390jitPreJNICallOffloadCheck,              (void *) jitPreJNICallOffloadCheck,        TR_Helper);
    SET(TR_S390jitPostJNICallOffloadCheck,             (void *) jitPostJNICallOffloadCheck,       TR_Helper);
    SET(TR_S390jitCallCFunction,                       (void *) jitCallCFunction,                 TR_Helper);
-   SET(TR_S390OutlinedNew,                            (void *) outlinedNewObject,                TR_Helper);
-   SET(TR_S390OutlinedNewArray,                       (void *) outlinedNewArray,                 TR_Helper);
    /* required so can be called from Picbuilder/Recompilation asm routines for MCC */
    SET(TR_S390mcc_reservationAdjustment_unwrapper,    (void *) mcc_reservationAdjustment_unwrapper,  TR_Helper);
    SET(TR_S390mcc_callPointPatching_unwrapper,        (void *) mcc_callPointPatching_unwrapper,      TR_Helper);

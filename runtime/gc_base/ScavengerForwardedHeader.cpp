@@ -28,14 +28,6 @@
 #include "SlotObject.hpp"
 
 
-void
-MM_ScavengerForwardedHeader::validateAssumptions()
-{
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-	Assert_MM_true(offsetof(J9IndexableObjectContiguous, size) == offsetof(MutableHeaderFields, overlap));
-#endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
-}
-
 /**
  * Update this object to be forwarded to destinationObjectPtr using atomic operations.
  * If the update fails (because the object has already been forwarded), read the forwarded
@@ -48,33 +40,26 @@ MM_ScavengerForwardedHeader::validateAssumptions()
 omrobjectptr_t
 MM_ScavengerForwardedHeader::setForwardedObject(omrobjectptr_t destinationObjectPtr)
 {
-	/* class slot must be aligned to UDATA */
-	Assert_MM_true(0 == (offsetof(J9Object, clazz) % sizeof(UDATA)));
-
 	Assert_MM_false(isForwardedPointer());
 
-	volatile MutableHeaderFields* objectHeader = (volatile MutableHeaderFields *)_objectPtr;
-	UDATA oldValue = *(UDATA *)&_preserved.clazz;
-
-#if defined (OMR_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN)
-	/*
-	 *  Forwarded tag should be in low bits of the pointer and at the same time be in class slot
-	 * To get it for compressed big endian just swap halves of pointer
-	 */
-	/* low half */
-	UDATA newValue = ((UDATA)destinationObjectPtr >> 32) & 0xffffffff;
-	/* add a high half */
-	newValue |= ((UDATA)destinationObjectPtr | FORWARDED_TAG) << 32;
-
-#else /* defined (OMR_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN) */
-
-	/* little endian or not compressed - write UDATA bytes straight */
+	UDATA oldValue = _preserved;
 	UDATA newValue = (UDATA)destinationObjectPtr | FORWARDED_TAG;
 
-#endif /* defined (OMR_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN) */
+#if defined(OMR_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN)
+	if (compressObjectReferences()) {
+		/* The tag bits are in the low bits of newValue. In order to have those tags
+		 * appear in the class slot of the object header, the pointer must be
+		 * endian-flipped.
+		 *
+		 * A similar flip will be required when reading the forwarded pointer from the header
+		 * (see MM_ScavengerForwardedHeader::getForwardedObjectNoCheck).
+		 */
+		newValue = (newValue >> 32) | (newValue << 32);
+	}
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && !defined(J9VM_ENV_LITTLE_ENDIAN) */
 
-	if (MM_AtomicOperations::lockCompareExchange((volatile UDATA*)&objectHeader->clazz, oldValue, newValue) != oldValue) {
-		MM_ScavengerForwardedHeader forwardedObject(_objectPtr);
+	if (MM_AtomicOperations::lockCompareExchange((volatile UDATA*)_objectPtr, oldValue, newValue) != oldValue) {
+		MM_ScavengerForwardedHeader forwardedObject(_objectPtr, compressObjectReferences());
 		destinationObjectPtr = forwardedObject.getForwardedObjectNoCheck();
 	}
 
@@ -100,6 +85,6 @@ MM_ScavengerForwardedHeader::didObjectGrowOnCopy()
 {
 	/* this only applies to forwarded objects */
 	Assert_MM_true(isForwardedPointer());
-	return (GROW_TAG == ((UDATA)_preserved.clazz & GROW_TAG));
+	return (GROW_TAG == (getPreservedClassAndTags() & GROW_TAG));
 }
 #endif /* defined(J9VM_GC_VLHGC) */

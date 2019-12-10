@@ -758,7 +758,7 @@ error:
 		 */
 		if ((false == _runningNested) && (false == _ccHead->getContainsCachelets())) {
 #endif /*J9SHR_CACHELET_SUPPORT*/
-			updateROMSegmentList(currentThread, false);
+			updateROMSegmentList(currentThread, false, false);
 #if defined(J9SHR_CACHELET_SUPPORT)
 		}
 	} else {
@@ -879,43 +879,40 @@ SH_CacheMap::createNewSegment(J9VMThread* currentThread, UDATA type, J9MemorySeg
  * THREADING: The only time that hasClassSegmentMutex can be false is if the caller does not hold the write mutex
  * findROMClass and storeROMClass prereq that the class segment mutex is held. 
  * Therefore, we can enter the write mutex if we have the class segment mutex, but NOT vice-versa.
+ * 
+ * @param [in] currentThread  The current thread
+ * @param [in] hasClassSegmentMutex  Whether the currrent thread has ClassSegmentMutex
+ * @param [in] topLayerOnly  Whether update romClass segment for top layer cache only
  */
 void
-SH_CacheMap::updateROMSegmentList(J9VMThread* currentThread, bool hasClassSegmentMutex)
+SH_CacheMap::updateROMSegmentList(J9VMThread* currentThread, bool hasClassSegmentMutex, bool topLayerOnly)
 {
-	SH_CompositeCacheImpl* cache;
+	SH_CompositeCacheImpl* cache = _ccHead;
 #if defined(J9VM_THR_PREEMPTIVE)
-	J9JavaVM* vm = currentThread->javaVM;
-
-	omrthread_monitor_t classSegmentMutex = vm->classMemorySegments->segmentMutex;
+	omrthread_monitor_t classSegmentMutex = currentThread->javaVM->classMemorySegments->segmentMutex;
 #endif
 	
 #if defined(J9VM_THR_PREEMPTIVE)
-	if (classSegmentMutex) {
-		if (!hasClassSegmentMutex) {
-			Trc_SHR_Assert_ShouldNotHaveLocalMutex(classSegmentMutex);
-			enterLocalMutex(currentThread, classSegmentMutex, "class segment mutex", "updateROMSegmentList");
-		} else {
-			Trc_SHR_Assert_ShouldHaveLocalMutex(classSegmentMutex);
-		}
+	if (!hasClassSegmentMutex) {
+		Trc_SHR_Assert_ShouldNotHaveLocalMutex(classSegmentMutex);
+		enterLocalMutex(currentThread, classSegmentMutex, "class segment mutex", "updateROMSegmentList");
+	} else {
+		Trc_SHR_Assert_ShouldHaveLocalMutex(classSegmentMutex);
 	}
 #endif
-
-	if (_cacheletHead != NULL) {
-		cache = _cacheletHead;
-	} else {
-		cache = _cc;
-	}
 	
 	while (cache) {
-		if (cache && cache->isStarted()) {
+		if (cache->isStarted()) {
 			updateROMSegmentListForCache(currentThread, cache);
+		}
+		if (topLayerOnly) {
+			break;
 		}
 		cache = cache->getNext();
 	}
 
 #if defined(J9VM_THR_PREEMPTIVE)
-	if (classSegmentMutex && !hasClassSegmentMutex) {
+	if (!hasClassSegmentMutex) {
 		exitLocalMutex(currentThread, classSegmentMutex, "class segment mutex", "updateROMSegmentList");
 	}
 #endif
@@ -930,7 +927,6 @@ SH_CacheMap::updateROMSegmentListForCache(J9VMThread* currentThread, SH_Composit
 {
 	J9JavaVM* vm = currentThread->javaVM;
 	U_8 *currentSegAlloc, *cacheAlloc;
-	UDATA currentSegSize, maxSegmentSize;
 	J9MemorySegment* currentSegment = forCache->getCurrentROMSegment();
 	PORT_ACCESS_FROM_PORT(_portlib);
 	
@@ -945,13 +941,13 @@ SH_CacheMap::updateROMSegmentListForCache(J9VMThread* currentThread, SH_Composit
 		forCache->setCurrentROMSegment(currentSegment);
 	}
 	currentSegAlloc = currentSegment->heapAlloc;
-	currentSegSize = currentSegment->heapAlloc - currentSegment->heapBase;
 	cacheAlloc = (U_8*)forCache->getSegmentAllocPtr();
-	maxSegmentSize = vm->romClassAllocationIncrement;
 
 	/* If there is a cache update which is not reflected in the current ROMClass segment... */
 	if (currentSegAlloc < cacheAlloc) {
 		U_8* currentROMClass = currentSegAlloc;
+		UDATA currentSegSize = currentSegment->heapAlloc - currentSegment->heapBase;
+		UDATA maxSegmentSize = vm->romClassAllocationIncrement;
 
 		/* Walk ROMClasses to the limit of cacheAlloc */
 		while (currentROMClass < cacheAlloc) {
@@ -984,6 +980,8 @@ SH_CacheMap::updateROMSegmentListForCache(J9VMThread* currentThread, SH_Composit
 			currentROMClass += currentROMSize;
 		}
 		currentSegment->heapAlloc = cacheAlloc;
+		VM_AtomicSupport::writeBarrier();
+		Trc_SHR_CM_updateROMSegmentList_NewHeapAlloc(currentThread, currentSegment, cacheAlloc);
 	}
 
 	Trc_SHR_CM_updateROMSegmentList_Exit(currentThread, currentSegment);
@@ -1346,7 +1344,13 @@ SH_CacheMap::refreshHashtables(J9VMThread* currentThread, bool hasClassSegmentMu
 
 	if (enterRefreshMutex(currentThread, "refreshHashtables")==0) {
 		itemsRead = readCacheUpdates(currentThread);
-		if (itemsRead > 0) {
+		if ((UnitTest::CACHE_FULL_TEST != UnitTest::unitTest)
+			|| (itemsRead > 0)
+		) {
+			/* A previous call might enter here with hasClassSegmentMutex = false, which added romclasses to the hashtable without updating the 
+			 * romClass segment list. In this case updateROMSegmentList() needs to be called this time if hasClassSegmentMutex is true, 
+			 * regaredless of the itemsRead value.
+			 */
 			if (hasClassSegmentMutex) {
 				/* Only refresh the segment list if we hold the class segment mutex. This is because:
 				 * a) we need the mutex to call the function
@@ -1355,12 +1359,12 @@ SH_CacheMap::refreshHashtables(J9VMThread* currentThread, bool hasClassSegmentMu
 				 * For other types of find and store, the segment list is irrelevant */ 
 				updateROMSegmentList(currentThread, true);
 			}
-			_ccHead->updateMetadataSegment(currentThread);
-			 if( _ccHead->isCacheCorrupt()) {
-				 exitRefreshMutex(currentThread, "refreshHashtables");
-				 Trc_SHR_CM_refreshHashtables_Corrupt_Exit(currentThread);
-				 return -1;
-			 }
+		}
+		_ccHead->updateMetadataSegment(currentThread);
+		 if( _ccHead->isCacheCorrupt()) {
+			 exitRefreshMutex(currentThread, "refreshHashtables");
+			 Trc_SHR_CM_refreshHashtables_Corrupt_Exit(currentThread);
+				return -1;
 		}
 		exitRefreshMutex(currentThread, "refreshHashtables");
 	}
@@ -2687,7 +2691,14 @@ SH_CacheMap::findROMClass(J9VMThread* currentThread, const char* path, Classpath
 		Trc_SHR_CM_findROMClass_Exit_Null_Event(currentThread, path, cp->getHelperID());
 		Trc_SHR_CM_findROMClass_Exit_Null(currentThread);
 		return NULL;
-	}		
+	}
+	
+	/* There is a time window here that another thread reads new metadata and adds them into the hashtable.
+	 * In this case, localRCM->locateROMClass() below will be able to find and return the new ROMClass. 
+	 * However the above runEntryPointChecks() did not update heapAlloc of the romClass segment to include the returned new ROMClass.
+	 * (The other thread that reads new metadata might not have segmentMutex, so it might not update heapAlloc of the romClass segment either)
+	 * So call updateROMSegmentList() before returning a romClass from this function.
+	 */
 
 	rc = localRCM->locateROMClass(currentThread, path, pathLen, cp, -1, confirmedEntries, cp->getHelperID(), NULL, partition, modContext, &locateResult);
 	if ((rc & LOCATE_ROMCLASS_RETURN_MARKED_ITEM_STALE) != LOCATE_ROMCLASS_RETURN_MARKED_ITEM_STALE) {
@@ -2863,7 +2874,9 @@ SH_CacheMap::findROMClass(J9VMThread* currentThread, const char* path, Classpath
 #endif /* !defined(J9ZOS390) && !defined(AIXPPC) */
 	}
 
-	if (returnVal) { 
+	if (returnVal) {
+		/* Call updateROMSegmentList() to ensure that heapAlloc of the romClass segment is always updated to include the returned romClass */
+		updateROMSegmentList(currentThread, true);
 		updateBytesRead(returnVal->romSize);		/* This is kind of inaccurate as the strings are all external to the ROMClass */
 		/* trace event is at level 1 and trace exit message is at level 2 as per CMVC 155318/157683 */
 		Trc_SHR_CM_findROMClass_Exit_Found_Event(currentThread, path, returnVal, locateResult.foundAtIndex, cp->getHelperID());

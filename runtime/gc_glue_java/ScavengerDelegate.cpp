@@ -374,12 +374,9 @@ MM_ScavengerDelegate::scavengeIndirectObjectSlots(MM_EnvironmentStandard *env, o
 	J9Class *classToScan = classPtr;
 	do {
 		volatile omrobjectptr_t *slotPtr = NULL;
-		GC_ClassStaticsIterator classStaticsIterator(env, classToScan);
-		while((slotPtr = classStaticsIterator.nextSlot()) != NULL) {
-			shouldBeRemembered = _extensions->scavenger->copyObjectSlot(env, slotPtr) || shouldBeRemembered;
-		}
-		GC_ConstantPoolObjectSlotIterator constantPoolObjectSlotIterator((J9JavaVM*)_omrVM->_language_vm, classToScan, true);
-		while ((slotPtr = constantPoolObjectSlotIterator.nextSlot()) != NULL) {
+
+		GC_ClassIterator classIterator(env, classToScan);
+		while((slotPtr = classIterator.nextSlot()) != NULL) {
 			shouldBeRemembered = _extensions->scavenger->copyObjectSlot(env, slotPtr) || shouldBeRemembered;
 		}
 		shouldBeRemembered = _extensions->scavenger->copyObjectSlot(env, (omrobjectptr_t *)&(classToScan->classObject)) || shouldBeRemembered;
@@ -403,23 +400,13 @@ MM_ScavengerDelegate::hasIndirectReferentsInNewSpace(MM_EnvironmentStandard *env
 		 return true;
 	}
 
-	/* Iterate though Class Statics and Constant Dynamics*/
+	/* Iterate over all slots in a class which contain an object reference */
 	do {
 		omrobjectptr_t *slotPtr = NULL;
-		GC_ClassStaticsIterator classStaticsIterator(env, classToScan);
-		while(NULL != (slotPtr = (omrobjectptr_t*)classStaticsIterator.nextSlot())) {
+		GC_ClassIterator classIterator(env, classToScan);
+		while(NULL != (slotPtr = (omrobjectptr_t*)classIterator.nextSlot())) {
 			omrobjectptr_t objectPtr = *slotPtr;
 			if (NULL != objectPtr){
-				if (_extensions->scavenger->isObjectInNewSpace(objectPtr)){
-					Assert_MM_false(_extensions->scavenger->isObjectInEvacuateMemory(objectPtr));
-					return true;
-				}
-			}
-		}
-		GC_ConstantPoolObjectSlotIterator constantPoolObjectSlotIterator((J9JavaVM*)_omrVM->_language_vm, classToScan, true);
-		while (NULL != (slotPtr = (omrobjectptr_t*)constantPoolObjectSlotIterator.nextSlot())) {
-			omrobjectptr_t objectPtr = *slotPtr;
-			if (NULL != objectPtr) {
 				if (_extensions->scavenger->isObjectInNewSpace(objectPtr)){
 					Assert_MM_false(_extensions->scavenger->isObjectInEvacuateMemory(objectPtr));
 					return true;
@@ -441,12 +428,8 @@ MM_ScavengerDelegate::fixupIndirectObjectSlots(MM_EnvironmentStandard *env, omro
 	J9Class *classToScan = clazz;
 	do {
 		volatile omrobjectptr_t *slotPtr = NULL;
-		GC_ClassStaticsIterator classStaticsIterator(env, classToScan);
-		while((slotPtr = classStaticsIterator.nextSlot()) != NULL) {
-			_extensions->scavenger->fixupSlotWithoutCompression(slotPtr);
-		}
-		GC_ConstantPoolObjectSlotIterator constantPoolObjectSlotIterator((J9JavaVM*)_omrVM->_language_vm, classToScan, true);
-		while ((slotPtr = constantPoolObjectSlotIterator.nextSlot()) != NULL) {
+		GC_ClassIterator classIterator(env, classToScan);
+		while((slotPtr = classIterator.nextSlot()) != NULL) {
 			_extensions->scavenger->fixupSlotWithoutCompression(slotPtr);
 		}
 		_extensions->scavenger->fixupSlotWithoutCompression((omrobjectptr_t *)&(classToScan->classObject));
@@ -463,12 +446,8 @@ MM_ScavengerDelegate::backOutIndirectObjectSlots(MM_EnvironmentStandard *env, om
 	J9Class *classToScan = clazz;
 	do {
 		volatile omrobjectptr_t *slotPtr = NULL;
-		GC_ClassStaticsIterator classStaticsIterator(env, classToScan);
-		while((slotPtr = classStaticsIterator.nextSlot()) != NULL) {
-			_extensions->scavenger->backOutFixSlotWithoutCompression(slotPtr);
-		}
-		GC_ConstantPoolObjectSlotIterator constantPoolObjectSlotIterator((J9JavaVM*)_omrVM->_language_vm, classToScan, true);
-		while ((slotPtr = constantPoolObjectSlotIterator.nextSlot()) != NULL) {
+		GC_ClassIterator classIterator(env, classToScan);
+		while((slotPtr = classIterator.nextSlot()) != NULL) {
 			_extensions->scavenger->backOutFixSlotWithoutCompression(slotPtr);
 		}
 		_extensions->scavenger->backOutFixSlotWithoutCompression((omrobjectptr_t *)&(classToScan->classObject));

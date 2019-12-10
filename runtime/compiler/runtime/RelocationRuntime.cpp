@@ -1175,8 +1175,33 @@ TR_SharedCacheRelocationRuntime::storeAOTHeader(TR_FrontEnd *fe, J9VMThread *cur
                                                                   &dataDescriptor);
    if (store)
       {
-      // If a header already exists, the old one is returned
-      // Thus, we must check the validity of the header
+      /* In the case of a single SCC, if a header already exists,
+       * the old one is returned. Thus, we must check the validity
+       * of the header.
+       *
+       * However, in the case of multi-layer SCCs, there are two
+       * scenarios that can occur here:
+       *
+       * 1. The current writable SCC is the very first layer
+       * 2. The current writable SCC is not the first layer
+       *
+       * Scenario 1 is identical to the case when there is only a
+       * single SCC.
+       *
+       * Scenario 2 has two further sub-scenarios:
+       *    1. None of the previous layers have a AOTHeader; in this
+       *       case, the behaviour is identical Scenario 1.
+       *    2. Some previous layer has an AOTHeader; in this case, the
+       *       AOTHeader from said previous layer is returned.
+       *
+       * What all this essentially boils down to is that for a given
+       * layer chain, there will only be one AOTHeader in the lowest
+       * layer that contains AOT code. Any layer lower than that does
+       * not matter from an AOT code compatibility point of view, and
+       * any layer above it will only contain AOT code if the AOTHeader
+       * returned by createAOTHeader is compatible with the one
+       * returned by storeSharedData.
+       */
       return validateAOTHeader(fe, curThread);
       }
    else

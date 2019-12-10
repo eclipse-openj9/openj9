@@ -2759,14 +2759,6 @@ void TR_ResolvedJ9Method::construct()
       { TR::unknownMethod}
    };
 
-   static X DataAccessByteArrayUtilMethods[] =
-      {
-       {x(TR::com_ibm_dataaccess_ByteArrayUtils_trailingZeros,           "trailingZeros"        ,    "([B)I")},
-       {x(TR::com_ibm_dataaccess_ByteArrayUtils_trailingZerosByteAtATime,"trailingZerosByteAtATime", "([BII)I")},
-       {x(TR::com_ibm_dataaccess_ByteArrayUtils_trailingZerosQuadWordAtATime_,   "trailingZerosQuadWordAtATime_", "([BI)I")},
-       { TR::unknownMethod}
-      };
-
    static X DataAccessDecimalDataMethods[] =
    {
       {x(TR::com_ibm_dataaccess_DecimalData_JITIntrinsicsEnabled, "JITIntrinsicsEnabled", "()Z")},
@@ -4360,7 +4352,6 @@ void TR_ResolvedJ9Method::construct()
 
    static Y class33[] =
       {
-      { "com/ibm/dataaccess/ByteArrayUtils", DataAccessByteArrayUtilMethods },
       { "java/util/stream/AbstractPipeline", JavaUtilStreamAbstractPipelineMethods },
       { "java/util/stream/IntPipeline$Head", JavaUtilStreamIntPipelineHeadMethods },
       { 0 }
@@ -6328,11 +6319,7 @@ TR_ResolvedJ9Method::isCompilable(TR_Memory * trMemory)
 bool
 TR_ResolvedJ9Method::isInvokePrivateVTableOffset(UDATA vTableOffset)
    {
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
    return vTableOffset == J9VTABLE_INVOKE_PRIVATE_OFFSET;
-#else
-   return false;
-#endif
    }
 
 TR_OpaqueMethodBlock *
@@ -6558,15 +6545,8 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
 
 #if !TURN_OFF_INLINING
 
-   // See if the constant pool entry is already resolved or not
-   //
-   J9Method * ramMethod;
-   if (unresolvedInCP)
+   if (unresolvedInCP != NULL)
       {
-      ramMethod = jitGetJ9MethodUsingIndex(_fe->vmThread(), cp(), cpIndex);
-      //*unresolvedInCP = !ramMethod || !J9_BYTECODE_START_FROM_RAM_METHOD(ramMethod);
-      //we init the CP with a special magic method, which has no bytecodes (hence bytecode start is NULL)
-      //i.e. the CP will always contain a method for special and static methods
       *unresolvedInCP = true;
       }
 
@@ -6576,7 +6556,7 @@ TR_ResolvedJ9Method::getResolvedSpecialMethod(TR::Compilation * comp, I_32 cpInd
       {
       TR::VMAccessCriticalSection resolveSpecialMethodRef(fej9());
 
-      ramMethod = jitResolveSpecialMethodRef(_fe->vmThread(), cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+      J9Method * ramMethod = jitResolveSpecialMethodRef(_fe->vmThread(), cp(), cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
       if (ramMethod)
          {
          bool createResolvedMethod = true;
@@ -6627,7 +6607,7 @@ TR_ResolvedJ9Method::getResolvedPossiblyPrivateVirtualMethod(TR::Compilation * c
          performTransformation(comp, "Setting as unresolved virtual call cpIndex=%d\n",cpIndex) ) || ignoreRtResolve)
       {
       // only call the resolve if unresolved
-      UDATA vTableOffset;
+      UDATA vTableOffset = 0;
       J9Method * ramMethod = (J9Method *)getVirtualMethod(_fe, cp(), cpIndex, &vTableOffset, unresolvedInCP);
       bool createResolvedMethod = true;
 

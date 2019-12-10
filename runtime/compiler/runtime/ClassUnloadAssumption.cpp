@@ -34,7 +34,7 @@
 #include "runtime/J9RuntimeAssumptions.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
 #if defined(JITSERVER_SUPPORT)
-#include "control/CompilationThread.hpp" // for TR::compInfoPT
+#include "control/CompilationThread.hpp"
 #include "runtime/JITClientSession.hpp"
 #endif
 
@@ -612,7 +612,6 @@ TR_RuntimeAssumptionTable::notifyIllegalStaticFinalFieldModificationEvent(TR_Fro
 
    OMR::RuntimeAssumption **headPtr = getBucketPtr(RuntimeAssumptionOnStaticFinalFieldModification, hashCode((uintptrj_t)key));
    OMR::RuntimeAssumption* cursor = *headPtr;
-   OMR::RuntimeAssumption* prev = NULL;
    bool found = false;
 
    while (cursor)
@@ -632,9 +631,7 @@ TR_RuntimeAssumptionTable::notifyIllegalStaticFinalFieldModificationEvent(TR_Fro
             }
          cursor->compensate(vm, 0, 0);
          markForDetachFromRAT(cursor);
-         continue;
          }
-      prev = cursor;
       cursor = next;
       }
 
@@ -1181,6 +1178,8 @@ J9::PersistentInfo::ensureUnloadedAddressSetsAreInitialized()
       return _unloadedClassAddresses && _unloadedMethodAddresses;
       }
    }
+
+
 
 
 bool

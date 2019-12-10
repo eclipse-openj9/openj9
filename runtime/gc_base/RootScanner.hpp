@@ -91,6 +91,9 @@ protected:
 #endif /* J9VM_GC_MODRON_SCAVENGER */	 	
 	bool _classDataAsRoots; /**< Should all classes (and class loaders) be treated as roots. Default true, should set to false when class unloading */
 	bool _includeJVMTIObjectTagTables; /**< Should the iterator include the JVMTIObjectTagTables. Default true, should set to false when doing JVMTI object walks */
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	bool _includeDoubleMap; /**< Enables doublemap should the GC policy be balanced. Default is false. */
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	bool _trackVisibleStackFrameDepth; /**< Should the stack walker be told to track the visible frame depth. Default false, should set to true when doing JVMTI walks that report stack slots */
 
 	U_64 _entityStartScanTime; /**< The start time of the scan of the current scanning entity, or 0 if no entity is being scanned.  Defaults to 0. */
@@ -304,6 +307,9 @@ public:
 #endif /* J9VM_GC_MODRON_SCAVENGER */
 		, _classDataAsRoots(true)
 		, _includeJVMTIObjectTagTables(true)
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+		, _includeDoubleMap(_extensions->indexableObjectModel.isDoubleMappingEnabled())
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 		, _trackVisibleStackFrameDepth(false)
 		, _entityStartScanTime(0)
 		, _entityIncrementStartTime(0)
@@ -434,6 +440,19 @@ public:
 	void scanJVMTIObjectTagTables(MM_EnvironmentBase *env);
 #endif /* J9VM_OPT_JVMTI */
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	/**
+	 * Scans each heap region for arraylet leaves that contains a not NULL
+	 * contiguous address. This address points to a contiguous representation
+	 * of the arraylet associated with this leaf. Only arraylets that has been
+	 * double mapped will contain such contiguous address, otherwise the
+	 * address will be NULL
+	 * 
+	 * @param env thread GC Environment
+	 */
+	void scanDoubleMappedObjects(MM_EnvironmentBase *env);
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+
 	virtual void doClassLoader(J9ClassLoader *classLoader);
 
 	virtual void scanWeakReferenceObjects(MM_EnvironmentBase *env);
@@ -487,6 +506,17 @@ public:
 	virtual void doStringCacheTableSlot(J9Object **slotPtr);
 	virtual void doVMClassSlot(J9Class **slotPtr, GC_VMClassSlotIterator *vmClassSlotIterator);
 	virtual void doVMThreadSlot(J9Object **slotPtr, GC_VMThreadIterator *vmThreadIterator);
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	/**
+	 * Frees double mapped region associated to objectPtr (arraylet spine) if objectPtr
+	 * is not live
+	 *
+	 * @param objectPtr[in] indexable object's spine
+	 * @param identifier[in/out] identifier associated with object's spine, which contains
+	 * doble mapped address and size
+	 */
+	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier);
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 	
 	/**
 	 * Called for each object stack slot. Subclasses may override.

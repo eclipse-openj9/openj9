@@ -1265,7 +1265,7 @@ MM_CopyForwardScheme::copyAndForward(MM_EnvironmentVLHGC *env, MM_AllocationCont
 
 	if((NULL != objectPtr) && isObjectInEvacuateMemory(objectPtr)) {
 		/* Object needs to be copy and forwarded.  Check if the work has already been done */
-		MM_ScavengerForwardedHeader forwardHeader(objectPtr);
+		MM_ScavengerForwardedHeader forwardHeader(objectPtr, _extensions);
 		objectPtr = forwardHeader.getForwardedObject();
 		
 		if(NULL != objectPtr) {
@@ -1589,9 +1589,6 @@ MM_CopyForwardScheme::copyForwardCollectionSet(MM_EnvironmentVLHGC *env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
-	/* validate our sizing assumptions */
-	MM_ScavengerForwardedHeader::validateAssumptions();
-
 	/* stats management */
 	static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_vlhgcIncrementStats._copyForwardStats._startTime = j9time_hires_clock();
 	/* Clear the gc statistics */
@@ -1848,7 +1845,7 @@ MM_CopyForwardScheme::updateForwardedPointer(J9Object *objectPtr)
 	J9Object *forwardPtr;
 
 	if(isObjectInEvacuateMemory(objectPtr)) {
-		MM_ScavengerForwardedHeader forwardedHeader(objectPtr);
+		MM_ScavengerForwardedHeader forwardedHeader(objectPtr, _extensions);
 		forwardPtr = forwardedHeader.getForwardedObject();
 		if(forwardPtr != NULL) {
 			return forwardPtr;
@@ -1881,7 +1878,7 @@ MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *
 		/* Once threads agreed that abort is in progress or the object is in noEvacuation region, only mark/push should be happening, no attempts even to allocate/copy */
 
 		if (_markMap->atomicSetBit(object)) {
-			Assert_MM_false(MM_ScavengerForwardedHeader(object).isForwardedPointer());
+			Assert_MM_false(MM_ScavengerForwardedHeader(object, _extensions).isForwardedPointer());
 			/* don't need to push leaf object in work stack */
 			if (!leafType) {
 				env->_workStack.push(env, object);
@@ -2338,9 +2335,15 @@ MM_CopyForwardScheme::scanReferenceObjectSlots(MM_EnvironmentVLHGC *env, MM_Allo
 	
 	GC_SlotObject referentPtr(_javaVM->omrVM, &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr));
 
-	/* Iteratoring and copyforwarding  the slot reference */
-	if (success) {
-		success = iterateAndCopyforwardSlotReference(env, reservingContext, objectPtr);
+	/* Iterating and copyforwarding regular reference slots, except the special (soft) referent slot. Not making use of leaf bit optimization,
+	 * sacrificing minor performance to avoid code complication. Could optimize later, if/when using ObjectScanner */
+	GC_MixedObjectIterator mixedObjectIterator(_javaVM->omrVM, objectPtr);
+	GC_SlotObject *slotObject = NULL;
+	while (success && (NULL != (slotObject = mixedObjectIterator.nextSlot()))) {
+		if ((slotObject->readAddressFromSlot() != referentPtr.readAddressFromSlot()) || referentMustBeMarked) {
+			/* Copy/Forward the slot reference and perform any inter-region remember work that is required */
+			success = copyAndForward(env, reservingContext, objectPtr, slotObject);
+		}
 	}
 
 	if (SCAN_REASON_OVERFLOWED_REGION == reason) {
@@ -3239,7 +3242,7 @@ MM_CopyForwardScheme::completeScanForAbort(MM_EnvironmentVLHGC *env)
 	do {
 		while (NULL != (objectPtr = (J9Object *)env->_workStack.pop(env))) {
 			do {
-				Assert_MM_false(MM_ScavengerForwardedHeader(objectPtr).isForwardedPointer());
+				Assert_MM_false(MM_ScavengerForwardedHeader(objectPtr, _extensions).isForwardedPointer());
 				scanObject(env, reservingContext, objectPtr, SCAN_REASON_PACKET);
 
 				objectPtr = (J9Object *)env->_workStack.popNoWait(env);
@@ -3256,7 +3259,7 @@ MM_CopyForwardScheme::completeScanWorkPacket(MM_EnvironmentVLHGC *env)
 	J9Object *objectPtr = NULL;
 
 	while (NULL != (objectPtr = (J9Object *)env->_workStack.popNoWaitFromCurrentInputPacket(env))) {
-		Assert_MM_false(MM_ScavengerForwardedHeader(objectPtr).isForwardedPointer());
+		Assert_MM_false(MM_ScavengerForwardedHeader(objectPtr, _extensions).isForwardedPointer());
 		scanObject(env, reservingContext, objectPtr, SCAN_REASON_PACKET);
 	}
 }
@@ -3346,7 +3349,7 @@ MM_CopyForwardScheme::scanUnfinalizedObjects(MM_EnvironmentVLHGC *env)
 					 * 1. it was copied before unfinalized processing began, or
 					 * 2. it was copied by this thread.
 					 */
-					MM_ScavengerForwardedHeader forwardedHeader(pointer);
+					MM_ScavengerForwardedHeader forwardedHeader(pointer, _extensions);
 					J9Object* forwardedPtr = forwardedHeader.getForwardedObject();
 					if (NULL == forwardedPtr) {
 						if (_markMap->isBitSet(pointer)) {
@@ -3829,7 +3832,7 @@ private:
 		J9Object *objectPtr = (J9Object *)monitor->userData;
 		if(!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
-			MM_ScavengerForwardedHeader forwardedHeader(objectPtr);
+			MM_ScavengerForwardedHeader forwardedHeader(objectPtr, _extensions);
 			J9Object *forwardPtr = forwardedHeader.getForwardedObject();
 			if(NULL != forwardPtr) {
 				monitor->userData = (UDATA)forwardPtr;
@@ -3856,7 +3859,7 @@ private:
 		J9Object *objectPtr = *slotPtr;
 		if(!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
-			MM_ScavengerForwardedHeader forwardedHeader(objectPtr);
+			MM_ScavengerForwardedHeader forwardedHeader(objectPtr, _extensions);
 			*slotPtr = forwardedHeader.getForwardedObject();
 		}
 	}
@@ -3866,7 +3869,7 @@ private:
 		MM_EnvironmentVLHGC::getEnvironment(_env)->_copyForwardStats._stringConstantsCandidates += 1;
 		if(!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
-			MM_ScavengerForwardedHeader forwardedHeader(objectPtr);
+			MM_ScavengerForwardedHeader forwardedHeader(objectPtr, _extensions);
 			objectPtr = forwardedHeader.getForwardedObject();
 			if(NULL == objectPtr) {
 				Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
@@ -3878,6 +3881,24 @@ private:
 		}
 	}
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	virtual void doDoubleMappedObjectSlot(J9Object *objectPtr, struct J9PortVmemIdentifier *identifier) {
+		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(_env);
+		env->_copyForwardStats._doubleMappedArrayletsCandidates += 1;
+		if (!_copyForwardScheme->isLiveObject(objectPtr)) {
+			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
+			MM_ScavengerForwardedHeader forwardedHeader(objectPtr, _extensions);
+			objectPtr = forwardedHeader.getForwardedObject();
+			if (NULL == objectPtr) {
+				Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
+				env->_copyForwardStats._doubleMappedArrayletsCleared += 1;
+				PORT_ACCESS_FROM_ENVIRONMENT(_env);
+				j9vmem_free_memory(identifier->address, identifier->size, identifier);
+			}
+		}
+	}
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+
 	/**
 	 * @Clear the string table cache slot if the object is not marked
 	 */
@@ -3885,7 +3906,7 @@ private:
 		J9Object *objectPtr = *slotPtr;
 		if(!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
-			MM_ScavengerForwardedHeader forwardedHeader(objectPtr);
+			MM_ScavengerForwardedHeader forwardedHeader(objectPtr, _extensions);
 			*slotPtr = forwardedHeader.getForwardedObject();
 		}
 	}
@@ -3896,7 +3917,7 @@ private:
 		J9Object *objectPtr = *slotPtr;
 		if(!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
-			MM_ScavengerForwardedHeader forwardedHeader(objectPtr);
+			MM_ScavengerForwardedHeader forwardedHeader(objectPtr, _extensions);
 			*slotPtr = forwardedHeader.getForwardedObject();
 		}
 	}
@@ -4400,7 +4421,7 @@ MM_CopyForwardScheme::verifyCopyForwardResult(MM_EnvironmentVLHGC *env)
 			/* the spine must be marked if it was copied as a live object or if we aborted the copy-forward */
 			/* otherwise, it must not be forwarded (since that would imply that the spine survived but the pointer wasn't updated) */
 			if(!_markMap->isBitSet(spineObject)) {
-				MM_ScavengerForwardedHeader forwardedSpine(spineObject);
+				MM_ScavengerForwardedHeader forwardedSpine(spineObject, _extensions);
 				if (forwardedSpine.isForwardedPointer()) {
 					PORT_ACCESS_FROM_ENVIRONMENT(env);
 					j9tty_printf(PORTLIB, "Spine pointer is not marked and is forwarded (leaf region's pointer to spine not updated)!  Region %p Spine %p (should be %p)\n", region, spineObject, forwardedSpine.getForwardedObject());
@@ -4927,7 +4948,7 @@ MM_CopyForwardScheme::processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegi
 			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj, env)) & J9AccClassReferenceMask;
 			
 			/* update the referent if it's been forwarded */
-			MM_ScavengerForwardedHeader forwardedReferent(referent);
+			MM_ScavengerForwardedHeader forwardedReferent(referent, _extensions);
 			if (forwardedReferent.isForwardedPointer()) {
 				referent = forwardedReferent.getForwardedObject();
 				referentSlotObject.writeReferenceToSlot(referent);
@@ -5133,7 +5154,7 @@ MM_CopyForwardScheme::scanFinalizableObjects(MM_EnvironmentVLHGC *env)
 			j9object_t next = NULL;
 			if(!isLiveObject(referenceObject)) {
 				Assert_MM_true(isObjectInEvacuateMemory(referenceObject));
-				MM_ScavengerForwardedHeader forwardedHeader(referenceObject);
+				MM_ScavengerForwardedHeader forwardedHeader(referenceObject, _extensions);
 				if (!forwardedHeader.isForwardedPointer()) {
 					Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
 					next = _extensions->accessBarrier->getReferenceLink(referenceObject);
@@ -5174,7 +5195,7 @@ MM_CopyForwardScheme::scanFinalizableList(MM_EnvironmentVLHGC *env, j9object_t h
 
 		if(!isLiveObject(headObject)) {
 			Assert_MM_true(isObjectInEvacuateMemory(headObject));
-			MM_ScavengerForwardedHeader forwardedHeader(headObject);
+			MM_ScavengerForwardedHeader forwardedHeader(headObject, _extensions);
 			if (!forwardedHeader.isForwardedPointer()) {
 				Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
 				next = _extensions->accessBarrier->getFinalizeLink(headObject);

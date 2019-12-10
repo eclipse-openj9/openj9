@@ -219,6 +219,7 @@ char *compilationErrorNames[]={
 
 int32_t aggressiveOption = 0;
 
+
 // Tells the sampler thread whether it is being interrupted to resume it or to
 // shut it down.
 //
@@ -1672,7 +1673,6 @@ onLoadInternal(
 
       compInfo->setNewlyExtendedClasses(new (PERSISTENT_NEW) PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t>(
          PersistentUnorderedMap<TR_OpaqueClassBlock*, uint8_t>::allocator_type(TR::Compiler->persistentAllocator())));
-
       // Try to initialize SSL
       if (JITServer::ClientStream::static_init(compInfo->getPersistentInfo()) != 0)
          return -1;

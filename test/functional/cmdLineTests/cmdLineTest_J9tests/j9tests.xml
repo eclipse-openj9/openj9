@@ -71,5 +71,25 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
         <output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">java (.)* -version</output>
         <output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
     </test>
+
+    <test id="Verify Xdump:exit behaves as expected">
+        <command>$EXE$ -Xdump:exit:events=vmstart</command>
+        <output type="success" caseSensitive="yes" regex="no">VM is shutting down. Reason: Unknown</output>
+        <output type="failure" caseSensitive="yes" regex="no">dump written to</output>
+    </test>
+
+    <!-- -XX:+ExitOnOutOfMemoryError -->
+    <test id="Verify -XX:+ExitOnOutOfMemoryError behaves as expected with OutOfMemoryError">
+        <command>$EXE$ $JVM_HEAP_LIMIT$ -XX:+ExitOnOutOfMemoryError $ONOUTOFMEMORYERROR_JAR$</command>
+        <output type="success" caseSensitive="yes" regex="no">dump written to</output>
+        <output type="success" caseSensitive="yes" regex="no">VM is shutting down. Reason: java/lang/OutOfMemoryError</output>
+    </test>
+
+    <!-- -XX:+ExitOnOutOfMemoryError -XX:-HeapDumpOnOutOfMemoryError -->
+    <test id="Verify -XX:+ExitOnOutOfMemoryError -XX:-HeapDumpOnOutOfMemoryError behaves as expected with OutOfMemoryError">
+        <command>$EXE$ $JVM_HEAP_LIMIT$ -XX:+ExitOnOutOfMemoryError -XX:-HeapDumpOnOutOfMemoryError $ONOUTOFMEMORYERROR_JAR$</command>
+        <output type="failure" caseSensitive="yes" regex="no">dump written to</output>
+        <output type="success" caseSensitive="yes" regex="no">VM is shutting down. Reason: java/lang/OutOfMemoryError</output>
+    </test>
 </suite>
 

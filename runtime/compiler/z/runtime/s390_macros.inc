@@ -21,15 +21,15 @@ ZZ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR
 ZZ GPL-2.0 WITH Classpath-exception-2.0 OR
 ZZ LicenseRef-GPL-2.0 WITH Assembly-exception
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
 
-include([z/runtime/zOS_macros.inc])dnl
+include({z/runtime/zOS_macros.inc})dnl
 
-],[dnl
+},{dnl
 
-include([z/runtime/zLinux_macros.inc])dnl
+include({z/runtime/zLinux_macros.inc})dnl
 
-])dnl
+})dnl
 
 ZZ ============================================================
 
@@ -88,7 +88,7 @@ EQUVAL(f15,15)
 
 ZZ ============================================================
 
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
 EQUVAL(PTR_SIZE,8)
 
 ZZ Interface Snippet Layout (64-bit mode)
@@ -117,7 +117,7 @@ SETVAL(eq_implementerMethod_inInterfaceSnippet,56)
 SETVAL(eq_flag_inInterfaceSnippetSingleDynamicSlot,64)
 SETVAL(eq_picreg_inInterfaceSnippetSingleDynamicSlot,65)
 
-],[dnl
+},{dnl
 EQUVAL(PTR_SIZE,4)
 
 ZZ Interface Snippet Layout (31 bit mode)
@@ -144,40 +144,40 @@ SETVAL(eq_implementerMethod_inInterfaceSnippet,28)
 SETVAL(eq_flag_inInterfaceSnippetSingleDynamicSlot,32)
 SETVAL(eq_picreg_inInterfaceSnippetSingleDynamicSlot,33)
 
-])dnl
+})dnl
 
-ifdef([J9VM_JIT_FREE_SYSTEM_STACK_POINTER],[dnl
+ifdef({J9VM_JIT_FREE_SYSTEM_STACK_POINTER},{dnl
 SETVAL(eq_j9vmthr_ssp,J9TR_VMThread_systemStackPointer)
-])dnl
+})dnl
 
 ZZ ============================================================
 
-ifdef([J9ZOS390],[dnl
+ifdef({J9ZOS390},{dnl
 ZZ under xplink, need a 4 byte nop for 31 bit, 2 for 64
 ZZ after each call to a C routine
 define(RETURN_NOP,
-[dnl
-ifdef([TR_HOST_64BIT],[dnl
+{dnl
+ifdef({TR_HOST_64BIT},{dnl
     LR r0,r0
-],[dnl
+},{dnl
     LR_GPR r0,r0
     LR_GPR r0,r0
-])dnl
-])dnl
+})dnl
+})dnl
 
-],[dnl
+},{dnl
 
 define(RETURN_NOP,
-[dnl
+{dnl
 
 ZZ no nop required
-])dnl
-])dnl
+})dnl
+})dnl
 
 ZZ ============================================================
 define(SAVE_FP_REGS,
-[dnl
-ifdef([TR_HOST_64BIT],[dnl
+{dnl
+ifdef({TR_HOST_64BIT},{dnl
         std     f0,PTR_SIZE*16+0*PTR_SIZE($1)
         std     f1,PTR_SIZE*16+1*PTR_SIZE($1)
         std     f2,PTR_SIZE*16+2*PTR_SIZE($1)
@@ -194,7 +194,7 @@ ifdef([TR_HOST_64BIT],[dnl
         std     f13,PTR_SIZE*16+13*PTR_SIZE($1)
         std     f14,PTR_SIZE*16+14*PTR_SIZE($1)
         std     f15,PTR_SIZE*16+15*PTR_SIZE($1)
-],[dnl
+},{dnl
         std      f0,PTR_SIZE*16+0*PTR_SIZE($1)
         std      f1,PTR_SIZE*16+2*PTR_SIZE($1)
         std      f2,PTR_SIZE*16+4*PTR_SIZE($1)
@@ -211,13 +211,13 @@ ifdef([TR_HOST_64BIT],[dnl
         std      f13,PTR_SIZE*16+26*PTR_SIZE($1)
         std      f14,PTR_SIZE*16+28*PTR_SIZE($1)
         std      f15,PTR_SIZE*16+30*PTR_SIZE($1)
-])dnl
-])dnl
+})dnl
+})dnl
 
 ZZ ============================================================
 define(RESTORE_FP_REGS,
-[dnl
-ifdef([TR_HOST_64BIT],[dnl
+{dnl
+ifdef({TR_HOST_64BIT},{dnl
         ld      f0,PTR_SIZE*16+0*PTR_SIZE($1)
         ld      f1,PTR_SIZE*16+1*PTR_SIZE($1)
         ld      f2,PTR_SIZE*16+2*PTR_SIZE($1)
@@ -234,7 +234,7 @@ ifdef([TR_HOST_64BIT],[dnl
         ld      f13,PTR_SIZE*16+13*PTR_SIZE($1)
         ld      f14,PTR_SIZE*16+14*PTR_SIZE($1)
         ld      f15,PTR_SIZE*16+15*PTR_SIZE($1)
-],[dnl
+},{dnl
         ld       f0,PTR_SIZE*16+0*PTR_SIZE($1)
         ld       f1,PTR_SIZE*16+2*PTR_SIZE($1)
         ld       f2,PTR_SIZE*16+4*PTR_SIZE($1)
@@ -251,28 +251,28 @@ ifdef([TR_HOST_64BIT],[dnl
         ld       f13,PTR_SIZE*16+26*PTR_SIZE($1)
         ld       f14,PTR_SIZE*16+28*PTR_SIZE($1)
         ld       f15,PTR_SIZE*16+30*PTR_SIZE($1)
-])dnl
-])dnl
+})dnl
+})dnl
 
 ZZ ============================================================
 
 define(LOAD_ADDR_FROM_TOC,
-[dnl
+{dnl
 ZZ Load TOC address
    L_GPR $1,J9TR_VMThread_codertTOC(,r13)
 ZZ Load callee address
    L_GPR $1,(($2-1)*PTR_SIZE)(,$1)
-])dnl
+})dnl
 
 ZZ ============================================================
 
 define(LOAD_ADDR_FROM_TOC_IND_REG,
-[dnl
+{dnl
 ZZ Load TOC address
    L_GPR $1,J9TR_VMThread_codertTOC(,r13)
 ZZ Load callee address
    L_GPR $1,(($2-1)*PTR_SIZE)($3,$1)
-])dnl
+})dnl
 
 ZZ ============================================================
 
@@ -292,7 +292,7 @@ ZZ Patch Kills breg(r10),r1,r2,r3, and r14
 ZZ ============================================================
 
 define(PATCH,
-[dnl
+{dnl
 
 ZZ  # derive base pointer into table
     BRAS    breg,$1PatchLbl0
@@ -400,7 +400,7 @@ LABEL($1PatchLbl8)
 
 LABEL($1PatchLbl2)
 
-])dnl
+})dnl
 
 ZZ ============================================================
 ZZ This macro is used to align the snippet base pointer.
@@ -408,11 +408,11 @@ ZZ Snippet base pointer points to the data area of a snippet.
 ZZ In 32-bit, this area is word-aligned and in 64-bit, it is
 ZZ double word aligned
 ZZ ============================================================
-ifdef([TR_HOST_64BIT],[dnl
+ifdef({TR_HOST_64BIT},{dnl
 
 ZZ  64-bit version
 define(AlignSB,
-[dnl
+{dnl
     TML       r14,HEX(0007)   # check alignment
     JZ        $1AlignSBExit   # exit if dbl word aligned
 
@@ -421,20 +421,20 @@ ZZ  advance r14 to next 8 multiple
     NILL      r14,HEX(FFF8)   # mask off last 3bits
     AGHI      r14,8           # add 8
 LABEL($1AlignSBExit)
-])dnl
+})dnl
 
-],[dnl
+},{dnl
 
 ZZ  32-bit version
 define(AlignSB,
-[dnl
+{dnl
     TML       r14,HEX(0002)   # check alignment
     JZ        $1AlignSBExit   # exit if word aligned
     AHI       r14,2           # advance snippet base reg by 2-bytes
 LABEL($1AlignSBExit)
-])dnl
+})dnl
 
-])dnl
+})dnl
 
 
 ZZ ============================================================
@@ -443,12 +443,12 @@ ZZ after returning from native (C/C++) function
 ZZ ============================================================
 
 define(SaveSSP,
-[dnl
-ifdef([J9VM_JIT_FREE_SYSTEM_STACK_POINTER],[dnl
+{dnl
+ifdef({J9VM_JIT_FREE_SYSTEM_STACK_POINTER},{dnl
      ST_GPR  r4,eq_j9vmthr_ssp(r13)
-],[dnl
-])dnl
-])dnl
+},{dnl
+})dnl
+})dnl
 
 ZZ ========================================================  #
 ZZ Restore system stack register from save area
@@ -456,13 +456,13 @@ ZZ Clear the save area to indicate the SSP is now in register
 ZZ ========================================================  #
 
 define(RestoreSSP,
-[dnl
-ifdef([J9VM_JIT_FREE_SYSTEM_STACK_POINTER],[dnl
+{dnl
+ifdef({J9VM_JIT_FREE_SYSTEM_STACK_POINTER},{dnl
      L_GPR  r4,eq_j9vmthr_ssp(r13)
      xc  eq_j9vmthr_ssp(PTR_SIZE,r13),eq_j9vmthr_ssp(r13)
-],[dnl
-])dnl
-])dnl
+},{dnl
+})dnl
+})dnl
 
 
 ZZ ============================================================
@@ -471,18 +471,18 @@ ZZ before and after call out to the data resolution helpers.
 ZZ ============================================================
 
 define(SaveRegs,
-[dnl
+{dnl
 
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
      AHI_GPR  r5,-(32*PTR_SIZE)
      STM_GPR  r0,r15,0(r5)            # save all registers
      STMH_GPR  r0,r15,64(r5)  # save all hi regs (16*4)
-],[dnl
+},{dnl
      AHI_GPR  r5,-(16*PTR_SIZE)
      STM_GPR  r0,r15,0(r5)            # save all registers
-])dnl
+})dnl
 
-])dnl
+})dnl
 
 ZZ ========================================================  #
 ZZ In the J9 VM, the java stack starts out small and grows if
@@ -493,29 +493,29 @@ ZZ the helper call and before restoring it.
 ZZ ========================================================  #
 
 define(RestoreRegs,
-[dnl
+{dnl
 
      ST_GPR   r5,(5*PTR_SIZE)(r5)     # store the new J9SP
-ifdef([J9VM_JIT_32BIT_USES64BIT_REGISTERS],[dnl
+ifdef({J9VM_JIT_32BIT_USES64BIT_REGISTERS},{dnl
      LMH_GPR  r0,r15,64(r5) # restore all hi regs (16*4)
      LM_GPR   r0,r15,0(r5)            # restore all registers
      AHI_GPR  r5,(32*PTR_SIZE)
-],[dnl
+},{dnl
      LM_GPR   r0,r15,0(r5)            # restore all registers
      AHI_GPR  r5,(16*PTR_SIZE)
-])dnl
+})dnl
 
-])dnl
+})dnl
 
 ZZ ============================================================
 ZZ For multi-code cache support
 ZZ ============================================================
-ifdef([TR_HOST_64BIT],[dnl
-ifdef([J9ZOS390],[dnl
-],[dnl
-define([MCC_SUPPORTED],[SUPPORT_MCC])
-])dnl
-])dnl
+ifdef({TR_HOST_64BIT},{dnl
+ifdef({J9ZOS390},{dnl
+},{dnl
+define({MCC_SUPPORTED},{SUPPORT_MCC})
+})dnl
+})dnl
 
 ZZ ============================================================
 ZZ For multi-tenancy support
@@ -526,7 +526,7 @@ ZZ r2 = resolved address
 ZZ output:
 ZZ r2 = address of the data
 ZZ ============================================================
-define(MTComputeStaticAddress,[dnl
+define(MTComputeStaticAddress,{dnl
 
     NILL    r2,HEX(FFFE)                      # mask off clinit
     TML     r2,HEX(0002)                      # if not isolated
@@ -540,7 +540,7 @@ define(MTComputeStaticAddress,[dnl
     NILH    r2,0                      # get col index
     SLLG    r2,r2,0(r1)               # col offset, data size
 
-ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
+ifdef({OMR_GC_COMPRESSED_POINTERS},{dnl
     LGR     r14,r0                    # restore r14
     LG      r1,28(,r14)               # load CP word
     SRLG    r1,r1,8                   # shift amount
@@ -548,12 +548,12 @@ ifdef([OMR_GC_COMPRESSED_POINTERS],[dnl
     LLGF    r3,8(r6,r3)               # tenantData[row]
     SLLG    r3,r3,0(r1)               # decompress
     LA      r2,8(r2,r3)               # tenantData[row][col]
-],[dnl
+},{dnl
 
     SLLG    r6,r6,3                   # row offset, 64-bit data
     LG      r3,16(r6,r3)              # tenantData[row]
     LA      r2,16(r2,r3)              # tenantData[row][col]
-])dnl
+})dnl
 LABEL(LMTComputeStaticAddress$1End)
-])dnl
+})dnl
 

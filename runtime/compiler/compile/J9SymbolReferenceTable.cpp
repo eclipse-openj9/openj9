@@ -1384,7 +1384,7 @@ J9::SymbolReferenceTable::findOrCreateStaticSymbol(TR::ResolvedMethodSymbol * ow
    TR::DataType type = TR::NoType;
    bool isVolatile, isFinal, isPrivate, isUnresolvedInCP;
    bool resolved = owningMethod->staticAttributes(comp(), cpIndex, &dataAddress, &type, &isVolatile, &isFinal, &isPrivate, isStore, &isUnresolvedInCP);
-   
+
    if (  isUnresolvedInCP && (type != TR::Address && _compilation->cg()->getAccessStaticsIndirectly()))
       resolved = false;
 

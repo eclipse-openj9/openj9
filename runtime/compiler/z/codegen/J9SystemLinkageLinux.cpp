@@ -107,7 +107,7 @@ TR::J9S390zLinuxSystemLinkage::generateInstructionsForCall(TR::Node * callNode,
     * of type TR_AbsoluteHelperAddress with _targetAddress set to TR::SymbolReference from the call
     *
     */
-   if (fej9->helpersNeedRelocation()
+   if (fej9->needRelocationsForHelpers()
 		   && !(callNode->getSymbol()->isResolvedMethod()
 				   || jniCallDataSnippet))
       {

@@ -41,6 +41,8 @@ namespace J9 { typedef J9::ClassEnv ClassEnvConnector; }
 #include "j9.h"
 
 namespace TR { class SymbolReference; }
+namespace TR { class TypeLayout; }
+namespace TR { class Region; }
 
 namespace J9
 {
@@ -101,6 +103,20 @@ public:
    bool isString(TR::Compilation *comp, uintptrj_t objectPointer);
    bool jitStaticsAreSame(TR::Compilation *comp, TR_ResolvedMethod * method1, int32_t cpIndex1, TR_ResolvedMethod * method2, int32_t cpIndex2);
    bool jitFieldsAreSame(TR::Compilation *comp, TR_ResolvedMethod * method1, int32_t cpIndex1, TR_ResolvedMethod * method2, int32_t cpIndex2, int32_t isStatic);
+
+   /** \brief
+    *	    Populates a TypeLayout object.
+    *
+    *  \param region
+    *     The region used to allocate TypeLayout.
+    * 
+    *  \param opaqueClazz
+    *     Class of the type whose layout needs to be populated.
+    * 
+    *  \return
+    *     Returns a pointer to the TypeLayout object populated.
+    */
+   const TR::TypeLayout* enumerateFields(TR::Region& region, TR_OpaqueClassBlock * clazz, TR::Compilation *comp);
 
    uintptrj_t getArrayElementWidthInBytes(TR::Compilation *comp, TR_OpaqueClassBlock* arrayClass);
 

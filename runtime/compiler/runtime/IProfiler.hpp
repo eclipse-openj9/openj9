@@ -313,14 +313,12 @@ public:
    virtual void setInvalid() { data = IPROFILING_INVALID; }
    virtual TR_IPBCDataFourBytes  *asIPBCDataFourBytes() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataFourBytesStorage);}
-
 #if defined(JITSERVER_SUPPORT)
    virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void deserialize(TR_IPBCDataStorageHeader *storage);
 #endif
    virtual void createPersistentCopy(TR_J9SharedCache *sharedCache, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void loadFromPersistentCopy(TR_IPBCDataStorageHeader *storage, TR::Compilation *comp);
-
    int16_t getSumBranchCount();
    virtual void copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry, TR::Compilation *comp);
 private:
@@ -373,7 +371,6 @@ public:
    virtual void setInvalid() { data[0] = IPROFILING_INVALID; }
    virtual TR_IPBCDataEightWords  *asIPBCDataEightWords() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof(TR_IPBCDataEightWordsStorage);}
-
 #if defined(JITSERVER_SUPPORT)
    virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void deserialize(TR_IPBCDataStorageHeader *storage);

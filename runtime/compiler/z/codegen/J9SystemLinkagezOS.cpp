@@ -108,7 +108,7 @@ TR::J9S390zOSSystemLinkage::generateInstructionsForCall(TR::Node * callNode, TR:
     *
     */
    // get the address of the function descriptor
-   if (fej9->helpersNeedRelocation()
+   if (fej9->needRelocationsForHelpers()
          && !(callNode->getSymbol()->isResolvedMethod() || jniCallDataSnippet))
       {
       generateRegLitRefInstruction(cg(), TR::InstOpCode::getLoadOpCode(), callNode, methodAddressReg, (uintptrj_t) callNode->getSymbolReference(),

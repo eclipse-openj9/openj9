@@ -29,11 +29,13 @@
 #include "env/ClassEnv.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
+#include "env/TypeLayout.hpp"
 #include "env/VMJ9.h"
 #include "j9.h"
 #include "j9protos.h"
 #include "j9cp.h"
 #include "j9cfg.h"
+#include "j9fieldsInfo.h"
 #include "rommeth.h"
 
 
@@ -409,6 +411,60 @@ J9::ClassEnv::isAnonymousClass(TR::Compilation *comp, TR_OpaqueClassBlock *clazz
    return comp->fej9()->isAnonymousClass(clazz);
    }
 
+const TR::TypeLayout*
+J9::ClassEnv::enumerateFields(TR::Region& region, TR_OpaqueClassBlock * opaqueClazz, TR::Compilation *comp)
+   {  
+   J9Class *clazz = (J9Class*)opaqueClazz;
+   TR_VMFieldsInfo fieldsInfo(comp, clazz, 1, stackAlloc);
+   ListIterator<TR_VMField> iter(fieldsInfo.getFields());
+   TR::TypeLayoutBuilder tlb(region);
+   for (TR_VMField *field = iter.getFirst(); field; field = iter.getNext())
+      {
+      char *signature = field->signature;
+      char charSignature = *signature;
+      TR::DataType dataType;
+      switch(charSignature)
+         {
+         case 'Z': 
+         case 'B': 
+         case 'C': 
+         case 'S': 
+         case 'I':
+            {
+            dataType = TR::Int32;
+            break;
+            }
+         case 'J':
+            {
+            dataType = TR::Int64;
+            break;
+            }
+         case 'F':
+            {
+            dataType = TR::Float;
+            break;
+            }
+         case 'D':
+            {
+            dataType = TR::Double;
+            break;
+            }
+         case 'L': 
+         case '[':
+            {
+            dataType = TR::Address;
+            break;
+            }
+         }
+      size_t nameSize = strlen(field->name)+1;
+      char *fieldName = new (region) char[nameSize];
+      strncpy(fieldName, field->name, nameSize);
+      TR_ASSERT_FATAL(fieldName[nameSize-1] == '\0', "fieldName buffer was too small.");
+      int32_t offset = field->offset + TR::Compiler->om.objectHeaderSizeInBytes();
+      tlb.add(TR::TypeLayoutEntry(dataType, offset, fieldName));
+      }
+   return tlb.build();
+   }
 
 int32_t
 J9::ClassEnv::vTableSlot(TR::Compilation *comp, TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz)

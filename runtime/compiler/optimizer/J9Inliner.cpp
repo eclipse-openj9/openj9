@@ -674,8 +674,9 @@ bool TR_J9MethodHandleCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_
 
 bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_InlinerBase* inliner)
    {
-   uintptrj_t * mcsReferenceLocation = isMutableCallSiteTargetInvokeExact(this, inliner); // JSR292: Looking for calls through MutableCallSite
-   if (mcsReferenceLocation)
+   if (!_mcsReferenceLocation)
+      _mcsReferenceLocation = isMutableCallSiteTargetInvokeExact(this, inliner); // JSR292: Looking for calls through MutableCallSite
+   if (_mcsReferenceLocation)
       {
       // TODO:JSR292: This belongs behind the FE interface
       heuristicTrace(inliner->tracer(),"Call is MutableCallSite.target.invokeExact call.");
@@ -685,13 +686,13 @@ bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inlin
          return false;
          }
       TR_VirtualGuardSelection *vgs = new (comp()->trHeapMemory()) TR_VirtualGuardSelection(TR_MutableCallSiteTargetGuard, TR_DummyTest);
-      vgs->_mutableCallSiteObject = mcsReferenceLocation;
+      vgs->_mutableCallSiteObject = _mcsReferenceLocation;
       TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
 
          {
          TR::VMAccessCriticalSection mutableCallSiteEpoch(comp()->fej9());
          vgs->_mutableCallSiteEpoch = TR::KnownObjectTable::UNKNOWN;
-         uintptrj_t mcsObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)mcsReferenceLocation);
+         uintptrj_t mcsObject = comp()->fej9()->getStaticReferenceFieldAtAddress((uintptrj_t)_mcsReferenceLocation);
          if (mcsObject)
             {
             TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp()->fej9());
@@ -707,9 +708,8 @@ bool TR_J9MutableCallSite::findCallSiteTarget (TR_CallStack *callStack, TR_Inlin
 
       if (vgs->_mutableCallSiteEpoch != TR::KnownObjectTable::UNKNOWN)
          {
-         TR::ResolvedMethodSymbol *owningMethod   = _callNode->getSymbolReference()->getOwningMethodSymbol(comp());
          TR_ResolvedMethod       *specimenMethod = comp()->fej9()->createMethodHandleArchetypeSpecimen(comp()->trMemory(),
-            knot->getPointerLocation(vgs->_mutableCallSiteEpoch), owningMethod->getResolvedMethod());
+            knot->getPointerLocation(vgs->_mutableCallSiteEpoch), _callerResolvedMethod);
          TR_CallTarget *target = addTarget(comp()->trMemory(), inliner, vgs,
             specimenMethod, _receiverClass, heapAlloc);
          TR_ASSERT(target , "There should be only one target for TR_MutableCallSite");

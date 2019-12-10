@@ -173,6 +173,7 @@ extern void rtHookClassLoaderUnload(J9HookInterface * *, UDATA , void *, void *)
 #define BC_OP_U16(bcPtr)  (*((uint16_t*)(bcPtr)))
 #endif
 
+
 TR::OptionSet *findOptionSet(J9Method *method, bool isAOT)
    {
    TR::OptionSet *optionSet = NULL;
@@ -522,7 +523,8 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                   // Default SCC is set because, when -Xshareclasses option is used, by default non
                   // bootstrap loaded classes are put into the SCC. However, if the -Xshareclasses
                   // option isn't used, then the Default SCC only contains bootstrap loaded classes.
-                  if (J9_ARE_ALL_BITS_SET(jitConfig->javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES))
+                  if (J9_SHARED_CACHE_DEFAULT_BOOT_SHARING(jitConfig->javaVM) &&
+                      J9_ARE_ALL_BITS_SET(jitConfig->javaVM->sharedClassConfig->runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_CACHE_NON_BOOT_CLASSES))
                      {
                      useLowerCountsForAOTCold = true;
                      }
@@ -552,7 +554,6 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
                // We may lower or increase the counts based on TR_HintMethodCompiledDuringStartup
                if (count == -1 && // Not yet changed
                    jitConfig->javaVM->phase != J9VM_PHASE_NOT_STARTUP &&
-
                    (TR_HintMethodCompiledDuringStartup & TR::Options::getAOTCmdLineOptions()->getEnableSCHintFlags()) && sc)
                   {
                   bool wasCompiledDuringStartup = sc->isHint(method, TR_HintMethodCompiledDuringStartup);
@@ -3046,7 +3047,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
       else
          staleClass = ((TR_J9VMBase *)fe)->convertClassPtrToClassOffset(classPair->oldClass);
       methodCount = classPair->methodCount;
-      methodList = classPair->methodList; 
+      methodList = classPair->methodList;
 
       // Step 3  patch modified classes
       if (rat)
@@ -3579,7 +3580,6 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
 
    TR_PersistentCHTable * table = 0;
-
    if (TR::Options::getCmdLineOptions()->allowRecompilation()
       && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
 #if defined(JITSERVER_SUPPORT)
@@ -7144,6 +7144,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          jProfiler->start(javaVM);
          }
       }
+
 #if defined(JITSERVER_SUPPORT)   
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {

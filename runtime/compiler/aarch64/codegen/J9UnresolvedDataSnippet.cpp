@@ -25,6 +25,14 @@
 #include "compile/Compilation.hpp"
 #include "il/StaticSymbol.hpp"
 
+J9::ARM64::UnresolvedDataSnippet::UnresolvedDataSnippet(TR::CodeGenerator *cg, TR::Node *node, TR::SymbolReference *symRef, bool isStore, bool isGCSafePoint) :
+   J9::UnresolvedDataSnippet(cg, node, symRef, isStore, isGCSafePoint),
+   _memoryReference(NULL)
+   {
+   // Implement this in OpenJ9 PR #5985
+   cg->comp()->failCompilation<TR::AssertionFailure>("UnresolvedDataSnippet");
+   }
+
 uint8_t *
 J9::ARM64::UnresolvedDataSnippet::emitSnippetBody()
    {

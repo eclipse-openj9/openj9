@@ -8944,6 +8944,115 @@ inlineNanoTime(
 #endif
 #endif // LINUX
 
+static bool
+inlineMathSQRT(
+      TR::Node *node,
+      TR::CodeGenerator *cg)
+   {
+   // Sometimes the call can have 2 children, where the first one is loadaddr
+   TR::Node *operand = NULL;
+   TR::Node *firstChild = NULL;
+   TR::Register *targetRegister = NULL;
+
+   if (node->getNumChildren() == 1)
+      {
+      operand = node->getFirstChild();
+      }
+   else
+      {
+      firstChild = node->getFirstChild();
+      operand    = node->getSecondChild();
+      }
+
+   if (node->getReferenceCount()==1)
+      {
+      if (firstChild)
+         cg->recursivelyDecReferenceCount(firstChild);
+
+      cg->recursivelyDecReferenceCount(operand);
+      return true;
+      }
+
+
+   // The current Neutrino sqrt() runtime function does not always return
+   // a result in the expected precision.  Hence, do not fold constants
+   // at compile time.
+   //
+   // TODO: Instead of avoiding it altogether the preferred fix is to call
+   // the fdlibm version of sqrt (involves linking in the fdlibm library).
+   //
+   if (operand->getOpCode().isLoadConst())
+      {
+      union
+         {
+         struct
+            {
+            uint32_t lower;
+            uint32_t upper;
+            } s;
+         double   doubleVal;
+         int64_t  rawBits;
+         } d;
+
+      d.doubleVal = operand->getDouble();
+
+      // Do not assume that the C runtime will return the correct values that Java requires
+      // for a j/l/Math.sqrt() call.  Provide the correct values for the special cases.
+      //
+      if (d.s.upper & 0x80000000)
+         {
+         if (d.s.upper != 0x80000000 || d.s.lower != 0x00000000)
+            {
+            // -ve number other than -0.0 returns NaN.
+            // -0.0 returns -0.0.
+            //
+            d.s.lower = 0;
+            d.s.upper = 0x7ff80000;
+            }
+         }
+      else if (! ((d.s.lower == 0) && (d.s.upper == 0 || d.s.upper == 0x7ff00000 || d.s.upper == 0x7ff80000)))
+         {
+         // +0.0 or +INF or NaN returns the argument.
+         // Anything else can be computed from the sqrt() function.
+         //
+         d.doubleVal = sqrt(d.doubleVal);
+         }
+
+      auto cds = cg->findOrCreate8ByteConstant(operand, d.rawBits);
+
+      targetRegister = cg->allocateRegister(TR_FPR);
+      generateRegMemInstruction(MOVSDRegMem, node, targetRegister, generateX86MemoryReference(cds, cg), cg);
+      }
+   else
+      {
+      TR::Register *opRegister = NULL;
+      opRegister = cg->evaluate(operand);
+
+      if (opRegister->getKind() == TR_FPR)
+         {
+         if (operand->getReferenceCount()==1)
+            targetRegister = opRegister;
+         else
+            targetRegister = cg->allocateRegister(TR_FPR);
+
+         generateRegRegInstruction(SQRTSDRegReg, node, targetRegister, opRegister, cg);
+         }
+      else
+         {
+         targetRegister = cg->doubleClobberEvaluate(operand);
+         generateFPRegInstruction(DSQRTReg, node, targetRegister, cg);
+         }
+      }
+
+   node->setRegister(targetRegister);
+   if (firstChild)
+      cg->recursivelyDecReferenceCount(firstChild);
+
+   cg->decReferenceCount(operand);
+   return true;
+
+   }
+
 // Convert serial String.hashCode computation into vectorization copy and implement with SSE instruction
 //
 // Conversion process example:
@@ -9895,6 +10004,11 @@ bool J9::X86::TreeEvaluator::VMinlineCallEvaluator(
             }
             break;
 
+         case TR::java_lang_Math_sqrt:
+         case TR::java_lang_StrictMath_sqrt:
+            {
+            return inlineMathSQRT(node, cg);
+            }
 
          case TR::java_lang_Long_reverseBytes:
          case TR::java_lang_Integer_reverseBytes:

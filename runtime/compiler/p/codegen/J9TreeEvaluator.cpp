@@ -200,7 +200,7 @@ static void genInlineTest(TR::Node * node, TR_OpaqueClassBlock* castClassAddr, T
          {
          iCursor = loadAddressConstant(cg, node, (intptrj_t) (guessClassArray[i]), scratch1Reg, iCursor);
          }
-      result_bool = instanceOfOrCheckCast((J9Class*) guessClassArray[i], (J9Class*) castClassAddr);
+      result_bool = fej9->instanceOfOrCheckCast((J9Class*) guessClassArray[i], (J9Class*) castClassAddr);
       int32_t result_value = result_bool ? 1 : 0;
       result_label = (falseLabel != trueLabel) ? (result_bool ? trueLabel : falseLabel) : doneLabel;
       iCursor = generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, cndReg, objClassReg, scratch1Reg, iCursor);
@@ -228,7 +228,7 @@ static void genInlineTest(TR::Node * node, TR_OpaqueClassBlock* castClassAddr, T
       }
    iCursor = generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, cndReg, objClassReg, scratch1Reg, iCursor);
    iCursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, snippetLabel, cndReg, iCursor);
-   result_bool = instanceOfOrCheckCast((J9Class*) guessClassArray[num_PICS - 1], (J9Class*) castClassAddr);
+   result_bool = fej9->instanceOfOrCheckCast((J9Class*) guessClassArray[num_PICS - 1], (J9Class*) castClassAddr);
    result_value = result_bool ? 1 : 0;
    result_label = (falseLabel != trueLabel) ? (result_bool ? trueLabel : falseLabel) : doneLabel;
    if (needsResult)
@@ -4737,7 +4737,7 @@ TR::Register *J9::Power::TreeEvaluator::VMcheckcastEvaluator(TR::Node *node, TR:
       for (uint8_t i = 0; i < num_PICS; i++)
          {
          tmpClassAddr = guessClassArray[i];
-         if (instanceOfOrCheckCast((J9Class*) tmpClassAddr, (J9Class*) castClassAddr))
+         if (fej9->instanceOfOrCheckCast((J9Class*) tmpClassAddr, (J9Class*) castClassAddr))
             {
             foundGuessClass = true;
             validGuessClassArray[numberOfValidGuessClasses] = tmpClassAddr;
@@ -7164,201 +7164,6 @@ static void genZeroInit(TR::CodeGenerator *cg, TR::Node *node, TR::Register *obj
    cg->stopUsingRegister(zeroReg);
    }
 
-TR::Register *outlinedHelperNewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
-   {
-#if (defined(__IBMCPP__) || defined(__IBMC__)) && (!defined(__ibmxl__))
-     // __func__ is not defined for this function on XLC compilers (Notably XLC on Linux PPC and ZOS)
-     static const char __func__[] = "outlinedHelperNewEvaluator";
-#endif
-   TR::Compilation * comp = cg->comp();
-   TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
-   const TR::ILOpCodes opCode = node->getOpCodeValue();
-   const bool isArray = opCode != TR::New;
-   TR_OpaqueClassBlock *clazz;
-   const int32_t objectSizeBytes = comp->canAllocateInline(node, clazz);
-   bool doInline = true;
-
-   TR_ASSERT(!isArray || opCode == TR::newarray || opCode == TR::anewarray, "Unexpected op for new evaluator");
-
-   if (objectSizeBytes < 0)
-      doInline = false;
-   else if (isArray && TR::Compiler->om.useHybridArraylets() && comp->getOption(TR_DisableTarokInlineArrayletAllocation))
-      doInline = false;
-
-   if (OMR_UNLIKELY(!doInline))
-      {
-      TR::Node::recreate(node, TR::acall);
-      TR::Register *callResult = TR::TreeEvaluator::directCallEvaluator(node, cg);
-      TR::Node::recreate(node, opCode);
-      return callResult;
-      }
-
-   //
-   // Inline allocation starts here
-   //
-
-   const bool isVariableLen = objectSizeBytes == 0;
-   const int32_t allocSizeBytes = isVariableLen ? TR::Compiler->om.contiguousArrayHeaderSizeInBytes() : (objectSizeBytes + fej9->getObjectAlignmentInBytes() - 1) & (-fej9->getObjectAlignmentInBytes());
-   const bool needsZeroInit = !fej9->tlhHasBeenCleared() && !node->canSkipZeroInitialization();
-   // Only zero-init inline if the object size is known and relatively small, otherwise do in the helper
-   const int32_t maxInitSlots = 8;
-   const bool useInitInfo = node->getSymbolReference()->getExtraInfo() && (node->getSymbolReference()->getExtraInfo())->zeroInitSlots
-         && (node->getSymbolReference()->getExtraInfo())->numZeroInitSlots > 0
-         && (node->getSymbolReference()->getExtraInfo())->numZeroInitSlots <= maxInitSlots;
-   const bool doZeroInitInline = needsZeroInit && !isVariableLen && (useInitInfo || (objectSizeBytes <= TR::Compiler->om.sizeofReferenceAddress() * maxInitSlots));
-
-   TR::Instruction *appendInstruction = cg->getAppendInstruction();
-
-   TR_ASSERT(objectSizeBytes >= J9_GC_MINIMUM_OBJECT_SIZE || isVariableLen, "Expecting object to be at least minimum required by GC");
-   TR_ASSERT((objectSizeBytes & TR::Compiler->om.sizeofReferenceAddress() - 1) == 0, "Expecting object size to be aligned");
-   TR_ASSERT(((allocSizeBytes & fej9->getObjectAlignmentInBytes() - 1) == 0 || isVariableLen), "Expecting allocation to be aligned");
-
-   // Scheduling barrier
-   generateLabelInstruction(cg, TR::InstOpCode::label, node, generateLabelSymbol(cg));
-
-   // Class reg (r3) is clobbered by the helper to return the newly allocated object
-   TR::Register *classReg = cg->gprClobberEvaluate(node->getLastChild());
-   TR::Register *objectReg = cg->allocateCollectedReferenceRegister();
-   TR::Register *gr11 = cg->allocateRegister();
-   TR::CodeCache *codeCache = cg->getCodeCache();
-   uintptrj_t helperAddr;
-   TR::Instruction *gcPoint;
-
-   TR_PPCScratchRegisterDependencyConditions preDeps, postDeps;
-
-   preDeps.addDependency(cg, classReg, TR::RealRegister::gr3);
-   postDeps.addDependency(cg, objectReg, TR::RealRegister::gr3);
-   // Clobbered by the helper
-   postDeps.addDependency(cg, NULL, TR::RealRegister::cr0);
-   postDeps.addDependency(cg, NULL, TR::RealRegister::cr1);
-   postDeps.addDependency(cg, NULL, TR::RealRegister::cr2);
-   // Clobbered by the helper, and used in the zero-init case
-   postDeps.addDependency(cg, gr11, TR::RealRegister::gr11);
-
-   bool useNonZeroTLH = cg->isDualTLH() && node->canSkipZeroInitialization();
-   static bool verboseDualTLH = feGetEnv("TR_verboseDualTLH") != NULL;
-
-   TR_Debug *debugObj = cg->getDebug();
-
-   //In Snippet, if (r11 == 1) --> do nonZeroTLHAlloc, else do zeroTLHAlloc
-   TR::Instruction* tlhHeapSelector = generateTrg1ImmInstruction(cg, TR::InstOpCode::li, node, gr11, useNonZeroTLH ? 1 : 0);
-
-   if (debugObj)
-      debugObj->addInstructionComment(tlhHeapSelector, "Toggle between zeroInitialized (gr11 <-- 0) and non-zeroIntialized (gr11 <-- 1) TLHs.");
-
-   if (!isArray)
-      {
-      if (verboseDualTLH)
-         fprintf(stderr, "DELETEME outlinedHelperNewEvaluator useNonZeroTLH [%d] isArray [%d] node: [%p] %s [@%s]\n", useNonZeroTLH, isArray, node, comp->signature(),
-               comp->getHotnessName(comp->getMethodHotness()));
-
-      TR::Register *allocSizeBytesReg = cg->allocateRegister();
-
-      postDeps.addDependency(cg, allocSizeBytesReg, TR::RealRegister::gr4);
-      // Clobbered by the helper
-      if (cg->enableTLHPrefetching())
-         postDeps.addDependency(cg, NULL, TR::RealRegister::gr8);
-      postDeps.addDependency(cg, NULL, TR::RealRegister::gr10);
-
-      loadConstant(cg, node, allocSizeBytes, allocSizeBytesReg);
-      helperAddr = (uintptrj_t) codeCache->getCCPreLoadedCodeAddress(TR_ObjAlloc, cg);
-      gcPoint = generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, helperAddr, TR_PPCScratchRegisterDependencyConditions::createDependencyConditions(cg, &preDeps, &postDeps),
-      // Grab the right symref rather than using node->getSymbolReference(), which will refer to jitNewObject
-            comp->getSymRefTab()->findOrCreatePerCodeCacheHelperSymbolRef(TR_ObjAlloc, helperAddr));
-
-      cg->stopUsingRegister(allocSizeBytesReg);
-      } //if (!isArray)
-   else
-      {
-
-      if (verboseDualTLH)
-         fprintf(stderr, "DELETEME outlinedHelperNewEvaluator useNonZeroTLH [%d] isArray [%d] isVariableLen [%d] node: [%p]  %s [@%s]\n", useNonZeroTLH, isArray, isVariableLen,
-               node, comp->signature(), comp->getHotnessName(comp->getMethodHotness()));
-
-      TR::Register *numElementsReg = cg->evaluate(node->getFirstChild());
-      TR::Register *allocSizeBytesReg = cg->allocateRegister();
-      TR::Register *arrayClassReg = cg->allocateRegister();
-      TR::Register *gr10 = cg->allocateRegister();
-
-      postDeps.addDependency(cg, numElementsReg, TR::RealRegister::gr4);
-      postDeps.addDependency(cg, allocSizeBytesReg, TR::RealRegister::gr5);
-      postDeps.addDependency(cg, arrayClassReg, TR::RealRegister::gr8);
-
-      //TODO: What HCR case?
-      // Clobbered by the helper, and used in the HCR case
-      postDeps.addDependency(cg, gr10, TR::RealRegister::gr10);
-
-      if (isVariableLen)
-         {
-         const uint32_t elementSize = TR::Compiler->om.getSizeOfArrayElement(node);
-         switch (elementSize)
-            {
-         case 2:
-            // RS64 prefers addition to shifts
-            generateTrg1Src2Instruction(cg, TR::InstOpCode::add, node, allocSizeBytesReg, numElementsReg, numElementsReg);
-            break;
-         case 1:
-            generateTrg1Src1Instruction(cg, TR::InstOpCode::mr, node, allocSizeBytesReg, numElementsReg);
-            break;
-         default:
-            TR_ASSERT(elementSize != 0 && (elementSize & 3) == 0, "Expecting element size to be a multiple of 4");
-            if (TR::Compiler->target.is64Bit())
-               generateShiftLeftImmediateLong(cg, node, allocSizeBytesReg, numElementsReg, trailingZeroes(elementSize));
-            else
-               generateShiftLeftImmediate(cg, node, allocSizeBytesReg, numElementsReg, trailingZeroes(elementSize));
-            }
-         }
-      else
-         loadConstant(cg, node, allocSizeBytes, allocSizeBytesReg);
-
-      if (cg->wantToPatchClassPointer(clazz, node))
-         loadAddressConstantInSnippet(cg, node, (intptrj_t) clazz, arrayClassReg, gr10,TR::InstOpCode::Op_load, false);
-      else
-         loadAddressConstant(cg, node, (intptrj_t) clazz, arrayClassReg);
-
-      TR_CCPreLoadedCode helper = isVariableLen ? TR_VariableLenArrayAlloc : TR_ConstLenArrayAlloc;
-      helperAddr = (uintptrj_t) codeCache->getCCPreLoadedCodeAddress(helper, cg);
-      gcPoint = generateDepImmSymInstruction(cg, TR::InstOpCode::bl, node, helperAddr, TR_PPCScratchRegisterDependencyConditions::createDependencyConditions(cg, &preDeps, &postDeps),
-      // Grab the right symref rather than using node->getSymbolReference(), which will refer to jitNewArray
-            comp->getSymRefTab()->findOrCreatePerCodeCacheHelperSymbolRef(helper, helperAddr));
-
-      cg->stopUsingRegister(allocSizeBytesReg);
-      cg->stopUsingRegister(arrayClassReg);
-      cg->stopUsingRegister(gr10);
-      }
-
-   gcPoint->PPCNeedsGCMap(0xFFFFFFFF);
-   cg->machine()->setLinkRegisterKilled(true);
-   cg->setHasCall();
-
-   cg->stopUsingRegister(gr11);
-   if (node->getLastChild()->getRegister() != classReg)
-      cg->stopUsingRegister(classReg);
-   cg->decReferenceCount(node->getFirstChild());
-   if (isArray)
-      cg->decReferenceCount(node->getSecondChild());
-
-   node->setRegister(objectReg);
-
-   if (OMR_UNLIKELY(cg->comp()->compileRelocatableCode()) && opCode != TR::newarray)
-      {
-      TR_ASSERT(opCode == TR::New || opCode == TR::anewarray, "Unexpected op for new evaluator AOT relo");
-      TR::Instruction *firstInstruction = appendInstruction->getNext();
-      TR_RelocationRecordInformation *recordInfo = (TR_RelocationRecordInformation *) comp->trMemory()->allocateMemory(sizeof(TR_RelocationRecordInformation), heapAlloc);
-      recordInfo->data1 = allocSizeBytes;
-      recordInfo->data2 = node->getInlinedSiteIndex();
-      recordInfo->data3 = helperAddr;
-      recordInfo->data4 = (uintptr_t) firstInstruction;
-      TR::SymbolReference *classSymRef = node->getChild(opCode == TR::New ? 0 : 1)->getSymbolReference();
-      TR_ExternalRelocationTargetKind reloKind = opCode == TR::New ? TR_VerifyClassObjectForAlloc : TR_VerifyRefArrayForAlloc;
-
-      TR::Relocation *r = new (cg->trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(firstInstruction, (uint8_t *) classSymRef, (uint8_t *) recordInfo, reloKind, cg);
-      cg->addExternalRelocation(r, __FILE__, __LINE__, node);
-      }
-
-   return objectReg;
-   }
-
 TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *) (cg->fe());
@@ -7395,28 +7200,6 @@ TR::Register *J9::Power::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeG
    bool isArrayAlloc = (opCode == TR::newarray || opCode == TR::anewarray);
    bool isConstantLenArrayAlloc = isArrayAlloc && node->getFirstChild()->getOpCode().isLoadConst();
    bool isConstantZeroLenArrayAlloc = isConstantLenArrayAlloc && (node->getFirstChild()->getInt() == 0);
-   bool canOutlineNew = false;
-
-   if (isConstantZeroLenArrayAlloc)
-      canOutlineNew = false;
-
-   if (canOutlineNew && comp->isOptServer())
-      {
-      if (TR::Compiler->target.cpu.id() < TR_PPCp8)
-         {
-         if (!comp->getOption(TR_DisableOutlinedNew))
-            {
-            return outlinedHelperNewEvaluator(node, cg);
-            }
-         }
-      else
-         {
-         if (comp->getOption(TR_EnableOutlinedNew))
-            {
-            return outlinedHelperNewEvaluator(node, cg);
-            }
-         }
-      }
 
    TR_ASSERT(objectSize <= 0 || (objectSize & (TR::Compiler->om.sizeofReferenceAddress() - 1)) == 0, "object size causes an alignment problem");
    if (objectSize < 0 || (objectSize == 0 && !usingTLH))

@@ -205,7 +205,7 @@ static char scanSign (char **cursor);
 omr_error_t doToolDump (J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
 static omr_error_t doJitDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
 static char * scanSubFilter(J9JavaVM *vm, const J9RASdumpSettings *settings, const char **cursor, UDATA *actionPtr);
-
+static omr_error_t doJavaVMExit(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context);
 
 /* Known dump specifications */
 static const J9RASdumpSpec rasDumpSpecs[] =
@@ -299,7 +299,7 @@ static const J9RASdumpSpec rasDumpSpecs[] =
 		  NULL,
 #endif /* defined(WIN32) */
 		  NULL,
-		  0,
+		  1,
 		  J9RAS_DUMP_DO_SUSPEND_OTHER_DUMPS,
 		  NULL }
 	},
@@ -422,6 +422,22 @@ static const J9RASdumpSpec rasDumpSpecs[] =
 		  NULL,
 		  5,
 		  0,
+		  NULL }
+	},
+	{
+		"exit",
+		"Shutdown the JVM",
+		"",
+		NULL,
+		NULL,
+		doJavaVMExit,
+		{ 0,
+		  NULL,
+		  1, 0, 
+		  NULL,
+		  NULL,
+		  0,
+		  J9RAS_DUMP_DO_SUSPEND_OTHER_DUMPS,
 		  NULL }
 	}
 };
@@ -652,6 +668,23 @@ omr_error_t
 doSilentDump(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
 {
 	/* Do nothing */
+	return OMR_ERROR_NONE;
+}
+
+static omr_error_t
+doJavaVMExit(J9RASdumpAgent *agent, char *label, J9RASdumpContext *context)
+{
+	J9JavaVM *vm = context->javaVM;
+	J9VMThread *vmThread = vm->internalVMFunctions->currentVMThread(vm);
+
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	if (NULL != context->eventData) {
+		j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_EXIT_SHUTDOWN, context->eventData->detailLength, context->eventData->detailData);
+	} else {
+		j9nls_printf(PORTLIB, J9NLS_INFO | J9NLS_STDERR, J9NLS_DMP_EXIT_SHUTDOWN_UNKNOWN);
+	}
+	vm->internalVMFunctions->exitJavaVM(vmThread, 3);
+	
 	return OMR_ERROR_NONE;
 }
 
@@ -2160,6 +2193,8 @@ printDumpAgent(struct J9JavaVM *vm, struct J9RASdumpAgent *agent)
 		j9tty_err_printf(PORTLIB, "snap:\n");
 	} else if (agent->dumpFn == doStackDump) {
 		j9tty_err_printf(PORTLIB, "stack:\n");
+	} else if (agent->dumpFn == doJavaVMExit) {
+		j9tty_err_printf(PORTLIB, "exit:\n");
 	} else {
 		j9tty_err_printf(PORTLIB, "dumpFn=%p\n", agent->dumpFn);
 	}

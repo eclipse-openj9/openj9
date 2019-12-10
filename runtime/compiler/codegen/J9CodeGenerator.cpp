@@ -4786,6 +4786,12 @@ J9::CodeGenerator::needRelocationsForStatics()
    return self()->fej9()->needRelocationsForStatics();
    }
 
+bool
+J9::CodeGenerator::needRelocationsForHelpers()
+   {
+   return self()->fej9()->needRelocationsForHelpers();
+   }
+
 #if defined(JITSERVER_SUPPORT)
 bool
 J9::CodeGenerator::needRelocationsForBodyInfoData()

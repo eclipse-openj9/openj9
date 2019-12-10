@@ -1608,12 +1608,11 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 
 		/* If method is NULL, the exception has already been set. */
 		if (NULL != method) {
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 			J9ROMMethod* romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
 			/* Only allow non-interface method to call invokePrivate, private interface method should use "invokeInterface" bytecode
 			 * The else case will throw ICCE for private interface method 
 			 */
-			if (J9_ARE_ALL_BITS_SET(romMethod->modifiers, J9AccPrivate) && J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9AccInterface)) {
+			if (!J9ROMMETHOD_HAS_VTABLE(romMethod) && J9_ARE_NO_BITS_SET(resolvedClass->romClass->modifiers, J9AccInterface)) {
 				/* Private method found, will not be in vTable, point vTable index to invokePrivate */
 				if (NULL != ramCPEntry) {
 					ramCPEntry->method = method;
@@ -1625,9 +1624,7 @@ resolveVirtualMethodRefInto(J9VMThread *vmStruct, J9ConstantPool *ramCP, UDATA c
 					/* save away method for callee */
 					*resolvedMethod = method;
 				}
-			} else
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
-			{
+			} else {
 				/* Fill in the constant pool entry. Don't bother checking for failure on the vtable index, since we know the method is there. */
 				vTableOffset = getVTableOffsetForMethod(method, resolvedClass, vmStruct);
 				if (0 == vTableOffset) {

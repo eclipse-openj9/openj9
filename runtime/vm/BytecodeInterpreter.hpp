@@ -697,13 +697,11 @@ done:
 		J9Method *method = NULL;
 		void* const jitReturnAddress = VM_JITInterface::peekJITReturnAddress(_currentThread, _sp);
 		UDATA jitVTableOffset = VM_JITInterface::jitVTableIndex(jitReturnAddress, interfaceVTableIndex);
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
+
 		if (J9_ARE_ANY_BITS_SET(jitVTableOffset, J9_VTABLE_INDEX_DIRECT_METHOD_FLAG)) {
 			/* Nestmates: vtable index is really a J9Method to directly invoke */
 			method = (J9Method*)(jitVTableOffset & ~J9_VTABLE_INDEX_DIRECT_METHOD_FLAG);
-		} else
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
-		{
+		} else {
 			UDATA vTableOffset = sizeof(J9Class) - jitVTableOffset;
 			J9Class *clazz = J9OBJECT_CLAZZ(_currentThread, receiver);
 			method = *(J9Method**)((UDATA)clazz + vTableOffset);
@@ -1983,7 +1981,6 @@ done:
 		return rc;
 	}
 
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	VMINLINE VM_BytecodeAction
 	invokePrivateMethod(REGISTER_ARGS_LIST)
 	{
@@ -1994,7 +1991,6 @@ done:
 
 		return GOTO_RUN_METHOD;
 	}
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 
 	VMINLINE VM_BytecodeAction
 	bindNative(REGISTER_ARGS_LIST)
@@ -8864,9 +8860,7 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_STATIC),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_SPECIAL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INITIAL_VIRTUAL),
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INVOKE_PRIVATE),
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_UNSATISFIED_OR_ABSTRACT),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_DEFAULT_CONFLICT),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_COUNT_NON_SYNC),
@@ -9277,10 +9271,8 @@ runMethod: {
 		PERFORM_ACTION(initialSpecialMethod(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INITIAL_VIRTUAL):
 		PERFORM_ACTION(initialVirtualMethod(REGISTER_ARGS));
-#if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_INVOKE_PRIVATE):
 		PERFORM_ACTION(invokePrivateMethod(REGISTER_ARGS));
-#endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_UNSATISFIED_OR_ABSTRACT):
 		PERFORM_ACTION(throwUnsatisfiedLinkOrAbstractMethodError(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_DEFAULT_CONFLICT):

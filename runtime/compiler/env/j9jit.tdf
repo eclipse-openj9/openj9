@@ -1,4 +1,4 @@
-// Copyright (c) 2000, 2017 IBM Corp. and others
+// Copyright (c) 2000, 2019 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,4 +80,6 @@ TraceEvent=Trc_JIT_AotLoadEnd             Group=perfmon Overhead=1 Level=1 Test 
 TraceEvent=Trc_JIT_OverallCompCPU         Group=perfmon Overhead=1 Level=5 Test Template="JIT: compCPUPercent=%d"
 
 TraceEvent=Trc_JIT_SCCInfo                Group=perfmon Overhead=1 Level=5 Test Template="SCC: name=%s path=%s size=%u free=%u softMax=%u ROMClass=%u AOTCode=%u AOTData=%u JITHint=%u JITProfile=%u ROMClasses=%u AOTMethods=%u disabledReason=%d"
+
+TraceException=Trc_JIT_IProfiler_unrecognized Overhead=1 Level=1 Test Template="Unrecognized bytecode (pc=%p, bc=%u) cursor %p in buffer %p of size %zu"
 
