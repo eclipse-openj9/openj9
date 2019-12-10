@@ -985,6 +985,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
+			<variation>-XX:+CompactStrings</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
@@ -1044,7 +1045,7 @@
 		<testCaseName>JCL_Test_openj9_none_SCC</testCaseName>
 		<variations>
 			<variation>-Xshareclasses:none</variation>
-			<variation>-XX:RecreateClassfileOnload -Xshareclasses:none</variation>
+			<variation>-Xshareclasses:none -XX:RecreateClassfileOnload</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
@@ -1144,6 +1145,7 @@
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
+			<variation>-XX:+CompactStrings</variation>
 		</variations>
 		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
@@ -1264,7 +1266,7 @@
 	-Xbootclasspath/a:$(TEST_RESROOT)$(D)TestResources.jar \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-	-testnames  JCL_TEST_Java-Internals \
+	-testnames JCL_TEST_Java-Internals \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
@@ -1377,12 +1379,12 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-    <variations>
-      <variation>-Xjit:count=0 -XX:-CompactStrings</variation>
-      <variation>-Xjit:count=0 -XX:+CompactStrings</variation>
-      <variation>-Xjit:count=1,disableAsyncCompilation -XX:-CompactStrings</variation>
-      <variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
-    </variations>
+		<variations>
+			<variation>-Xjit:count=0 -XX:-CompactStrings</variation>
+			<variation>-Xjit:count=0 -XX:+CompactStrings</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -XX:-CompactStrings</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
+		</variations>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -1407,12 +1409,12 @@
 		<groups>
 			<group>functional</group>
 		</groups>
-    <variations>
-      <variation>-Xjit:count=0 -XX:-CompactStrings</variation>
-      <variation>-Xjit:count=0 -XX:+CompactStrings</variation>
-      <variation>-Xjit:count=1,disableAsyncCompilation -XX:-CompactStrings</variation>
-      <variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
-    </variations>
+		<variations>
+			<variation>-Xjit:count=0 -XX:-CompactStrings</variation>
+			<variation>-Xjit:count=0 -XX:+CompactStrings</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -XX:-CompactStrings</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation -XX:+CompactStrings</variation>
+		</variations>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -1745,7 +1747,7 @@
 			<variation>Mode351</variation>
 			<variation>Mode551</variation>
 		</variations>
-		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS)  \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames jniOnLoadExceptions \
@@ -1775,7 +1777,7 @@
 			<variation>Mode610</variation>
 			<variation>Mode551</variation>
 		</variations>
-		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS)  \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames badUTF8inJNI \
@@ -1800,7 +1802,7 @@
 
 	<test>
 		<testCaseName>pthreadDestructor</testCaseName>
-		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS)  \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames pthreadDestructor \
@@ -2095,7 +2097,7 @@
 
 	<test>
 		<testCaseName>hanoiTest</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump  \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames hanoiTest \
@@ -2120,7 +2122,7 @@
 	<test>
 		<testCaseName>hanoiTestTM_NATIVE</testCaseName>
 		<command>JAVA_THREAD_MODEL=NATIVE \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump  \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames hanoiTest \
@@ -2143,7 +2145,7 @@
 	<test>
 		<testCaseName>hanoiTestTM_MEDIUM</testCaseName>
 		<command>JAVA_THREAD_MODEL=MEDIUM \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump  \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames hanoiTest \
@@ -2166,7 +2168,7 @@
 	<test>
 		<testCaseName>hanoiTestTM_HEAVY</testCaseName>
 		<command>JAVA_THREAD_MODEL=HEAVY \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump  \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames hanoiTest \
@@ -2190,7 +2192,7 @@
 	<test>
 		<testCaseName>hanoiTestTM_SHOULDFAIL</testCaseName>
 		<command>JAVA_THREAD_MODEL=SHOULDFAIL \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump  \
+	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xdump \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames hanoiTest \
@@ -2235,7 +2237,7 @@
 
 	<test>
 		<testCaseName>fibTest</testCaseName>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint -Xdump  \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint -Xdump \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames fibTest \
@@ -2310,7 +2312,7 @@
 			<variation>Mode110</variation>
 			<variation>Mode150</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS)  \
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 	-testnames floatSanityTests \
@@ -2401,7 +2403,7 @@
 
 	<test>
 		<testCaseName>loadLegacyLibrary</testCaseName>
-		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS)  \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
 			-testnames loadLegacyLibrary \
@@ -2423,7 +2425,7 @@
 
 	<test>
 		<testCaseName>classRelationshipVerifierTests</testCaseName>
-		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS)  \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-XX:+ClassRelationshipVerifier \
 			-cp $(Q)$(LIB_DIR)$(D)asm-all.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
