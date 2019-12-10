@@ -723,6 +723,9 @@ def setup_pull_request_single_comment(PARSED_COMMENT) {
             if ("${TESTS_TARGETS}" == "all") {
                 error("Test Target 'all' not allowed for Pull Request builds")
             }
+            if ("${TESTS_TARGETS}" == "compile") {
+                TESTS_TARGETS = 'none'
+            }
             OFFSET = 1
             break
         default:
