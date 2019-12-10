@@ -212,7 +212,6 @@ OPENJDK_SHA = [:]
 BUILD_SPECS = [:]
 builds = [:]
 pipelineNames = []
-summaryAutoRefresh = true
 pipelinesStatus = [:]
 
 try {
@@ -614,7 +613,7 @@ def draw_summary_table() {
 }
 
 def refresh_summary_table() {
-    while(summaryAutoRefresh ) {
+    while(pipelinesStatus.values().isEmpty() || pipelinesStatus.values().contains('RUNNING')) {
         sleep(time: SUMMARY_AUTO_REFRESH_TIME.toInteger(), unit: 'MINUTES')
         draw_summary_table()
     }
