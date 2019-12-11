@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -468,7 +468,7 @@ public class Test_ClassLoader {
 			 * not already loaded by another classloader. If it starts failing,
 			 * find another library to load.
 			 */
-			loader2.loadLibrary("awt");
+			loader2.loadLibrary("unpack");
 		} catch (UnsatisfiedLinkError e) {
 			e.printStackTrace();
 			Assert.fail("expected to find library");
