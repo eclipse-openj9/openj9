@@ -165,13 +165,16 @@ timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNITS) {
                                     // cleanup test results
                                     sh "rm -fr ${cleanDirsStr}"
 
-                                    // Cleanup OSX shared memory
+                                    // Cleanup OSX shared memory and content in /cores
                                     if (nodeLabels.contains('sw.os.osx')) {
                                         retry(2) {
                                             sh """
                                                 ipcs -ma
                                                 ipcs -ma | awk '/^m / { if (\$9 == 0) { print \$2 }}' | xargs -n 1 ipcrm -m
                                                 ipcs -ma
+						du -sh /cores
+						rm -rf /cores/*
+						du -sh /cores
                                             """
                                         }
                                     }
