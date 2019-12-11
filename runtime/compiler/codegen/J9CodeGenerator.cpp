@@ -4793,6 +4793,12 @@ J9::CodeGenerator::needRelocationsForStatics()
    }
 
 bool
+J9::CodeGenerator::needRelocationsForCurrentMethodPC()
+   {
+   return self()->fej9()->needRelocationsForCurrentMethodPC();
+   }
+
+bool
 J9::CodeGenerator::needRelocationsForHelpers()
    {
    return self()->fej9()->needRelocationsForHelpers();

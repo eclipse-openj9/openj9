@@ -284,6 +284,7 @@ public:
    virtual bool needRelocationsForHelpers() { return false; }
    virtual bool needClassAndMethodPointerRelocations() { return false; }
    virtual bool needRelocationsForStatics() { return false; }
+   virtual bool needRelocationsForCurrentMethodPC() { return false; }
    virtual bool needRelocationsForBodyInfoData() { return false; }
    virtual bool needRelocationsForPersistentInfoData() { return false; }
    virtual bool needRelocationsForLookupEvaluationData() { return false; }
@@ -1147,6 +1148,7 @@ public:
    virtual bool               supportsEmbeddedHeapBounds()                    { return false; }
    virtual bool               supportsFastNanoTime()                          { return false; }
    virtual bool               needRelocationsForStatics()                     { return true; }
+   virtual bool               needRelocationsForCurrentMethodPC()             { return true; }
    virtual bool               needRelocationsForLookupEvaluationData()        { return true; }
    virtual bool               needRelocationsForBodyInfoData()                { return true; }
    virtual bool               needRelocationsForPersistentInfoData()          { return true; }
