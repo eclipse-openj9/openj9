@@ -175,6 +175,7 @@ public:
    bool needRelocationsForLookupEvaluationData();
    bool needRelocationsForStatics();
    bool needRelocationsForHelpers();
+   bool needRelocationsForCurrentMethodPC();
 #if defined(JITSERVER_SUPPORT)
    bool needRelocationsForBodyInfoData();
    bool needRelocationsForPersistentInfoData();
