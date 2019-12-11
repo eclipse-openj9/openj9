@@ -117,8 +117,8 @@ class MM_ITAlarm : public MM_Alarm
 {
 private:
 #if defined(WIN32)
-	UINT _uTimerId;
-#endif /* WIN32 */
+	HANDLE _hTimer;
+#endif /* defined(WIN32) */
 protected:
 	virtual void tearDown(MM_EnvironmentBase *env);
 
@@ -126,6 +126,9 @@ public:
 	static MM_ITAlarm * newInstance(MM_EnvironmentBase *env);
 
 	MM_ITAlarm() : MM_Alarm()
+#if defined(WIN32)
+	, _hTimer(NULL)
+#endif /* defined(WIN32) */
 	{
 		_typeId = __FUNCTION__;
 	}
