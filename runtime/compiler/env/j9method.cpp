@@ -70,6 +70,7 @@
 #include "ras/DebugCounter.hpp"
 #include "env/JSR292Methods.h"
 #include "control/MethodToBeCompiled.hpp"
+#include <set>
 
 
 #if defined(_MSC_VER)
@@ -2379,7 +2380,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       _jniTargetAddress = NULL;
       }
 
-   construct();
+   construct(trMemory);
    }
 
 #if defined(JITSERVER_SUPPORT)
@@ -2391,11 +2392,60 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
    }
 #endif /* defined(JITSERVER_SUPPORT) */
 
-void TR_ResolvedJ9Method::construct()
-   {
+// AllPastJavaVer and AllFutureJavaVer are used as lower and upper bounds for
+// ranges of Java versions.  AllVersionRange encompasses all Java versions.
+// NoVersionRange encompasses no Java versions.
+#define AllPastJavaVer (std::numeric_limits<int8_t>::min())
+#define AllFutureJavaVer (std::numeric_limits<int8_t>::max())
+#define AllVersionRange   AllPastJavaVer, AllFutureJavaVer
+#define NoVersionRange    AllPastJavaVer, AllPastJavaVer
+
+   // W is used to describe dependencies of potentially recognized methods
+   // that are not expected to be native on other methods, which ultimately
+   // may depend on methods that are expected to be native
+   struct W
+      {
+      // _enum is the recognized method enum for a method under consideration
+      TR::RecognizedMethod _enum;
+
+      // _dependencyEnum is the enum for a method on which _enum depends
+      TR::RecognizedMethod _dependencyEnum;
+
+      // _depClassName and _depClassNameLen refer to the class containing _dependencyEnum
+      int16_t _depClassNameLen;
+      const char *_depClassName;
+
+      typedef int8_t javaVersion_t;
+
+      // _depMinVersion and _depMaxVersion indicate the range of Java versions
+      // over which the dependency of _enum upon _dependencyEnum exists
+      javaVersion_t _depMinVersion;
+      javaVersion_t _depMaxVersion;
+
+// w is used to initialize an element in an array of struct W, where the
+// relationship between the two methods exists for all Java versions
+//    me is the enum of the method
+//    de is the enum of the method on which it depends
+//    dcl is the class containing method de
+//
+// wVer is used to initialize an element in an array of struct W, where the
+// relationship between the two methods exists for a subset of Java versions
+//    me is the enum of the method
+//    de is the enum of the method on which it depends
+//    dcl is the class containing method de
+//    lb is the first Java version for which this dependency exists
+//    lb is the last Java version for which this dependency exists
+//
+#define w(me, de, dcl)  me, de, (int16_t) sizeof(dcl) - 1, dcl, AllVersionRange
+#define wVer(me, de, dcl, lb, ub)   me, de, (int16_t) sizeof(dcl) - 1, dcl, lb, ub
+      };
+
    struct X
       {
       TR::RecognizedMethod _enum;
+#if defined(DEBUG_DUMP_RECOGNIZED_METHODS)
+      const char *_enumName;
+#endif
       char _nameLen;
       const char * _name;
       int16_t _sigLen;
@@ -2413,12 +2463,16 @@ void TR_ResolvedJ9Method::construct()
 #define AllPastJavaVer   INT8_MIN
 #define AllFutureJavaVer INT8_MAX
 
-// xClMeth, xSig, xWCSig and xNonNativeRange are intermediate macros used in
-// the macros used to initialize entries in the tables of recognized methods
-#define xClMeth(cl, meth) cl, sizeof(meth) - 1, meth
+// xClMeth, xSig and xWCSig are intermediate macros used in the macros
+// used to initialize entries in the tables of recognized methods
+#if defined(DEBUG_DUMP_RECOGNIZED_METHODS)
+#define xClMeth(me, meth) me, #me, sizeof(meth) - 1, meth
+#else
+#define xClMeth(me, meth) me, sizeof(meth) - 1, meth
+#endif
+
 #define xSig(sig)         (int16_t) sizeof(sig) - 1, sig
 #define xWCSig            (int16_t) -1, "*"
-#define xNonNativeRange   AllPastJavaVer, AllPastJavaVer
 
 // The following four macros are used to intialize entries in the tables
 // of recognized methods:
@@ -2431,10 +2485,10 @@ void TR_ResolvedJ9Method::construct()
 //     expected to be native
 //   - xAnySigNative is used for methods with a specific name, but arbitrary/
 //     signature, that are expected to be native
-#define x(cl, meth, sig) xClMeth(cl, meth), xSig(sig), xNonNativeRange
-#define xAnySig(cl, meth) xClMeth(cl, meth), xWCSig, xNonNativeRange
-#define xNative(cl, meth, sig, lb, ub) xClMeth(cl, meth), xSig(sig), (lb), (ub)
-#define xAnySigNative(cl, meth, lb, ub) xClMeth(cl, meth), xWCSig, (lb), (ub)
+#define x(me, meth, sig) xClMeth(me, meth), xSig(sig), NoVersionRange
+#define xAnySig(me, meth) xClMeth(me, meth), xWCSig, NoVersionRange
+#define xNative(me, meth, sig, lb, ub) xClMeth(me, meth), xSig(sig), (lb), (ub)
+#define xAnySigNative(me, meth, lb, ub) xClMeth(me, meth), xWCSig, (lb), (ub)
       };
 
    static X ArrayListMethods[] =
@@ -3405,6 +3459,95 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod}
       };
 
+   // Dependencies of methods in sun/misc/Unsafe on methods in other classes
+   static W SunUnsafeDependencies[] =
+      {
+      {wVer(TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V, TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putByte_jlObjectJB_V, TR::sun_misc_Unsafe_putByte_jlObjectJB_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putChar_jlObjectJC_V, TR::sun_misc_Unsafe_putChar_jlObjectJC_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putShort_jlObjectJS_V, TR::sun_misc_Unsafe_putShort_jlObjectJS_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putInt_jlObjectJI_V, TR::sun_misc_Unsafe_putInt_jlObjectJI_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putLong_jlObjectJJ_V, TR::sun_misc_Unsafe_putLong_jlObjectJJ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putFloat_jlObjectJF_V, TR::sun_misc_Unsafe_putFloat_jlObjectJF_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putDouble_jlObjectJD_V, TR::sun_misc_Unsafe_putDouble_jlObjectJD_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V, TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V, TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V, TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V, TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V, TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V, TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V, TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V, TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V, TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z, TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getByte_jlObjectJ_B, TR::sun_misc_Unsafe_getByte_jlObjectJ_B, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getChar_jlObjectJ_C, TR::sun_misc_Unsafe_getChar_jlObjectJ_C, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getShort_jlObjectJ_S, TR::sun_misc_Unsafe_getShort_jlObjectJ_S, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getInt_jlObjectJ_I, TR::sun_misc_Unsafe_getInt_jlObjectJ_I, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getLong_jlObjectJ_J, TR::sun_misc_Unsafe_getLong_jlObjectJ_J, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getFloat_jlObjectJ_F, TR::sun_misc_Unsafe_getFloat_jlObjectJ_F, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getDouble_jlObjectJ_D, TR::sun_misc_Unsafe_getDouble_jlObjectJ_D, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject, TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z, TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B, TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C, TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S, TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I, TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J, TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F, TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D, TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject, TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putByte_JB_V, TR::sun_misc_Unsafe_putByte_JB_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putShort_JS_V, TR::sun_misc_Unsafe_putShort_JS_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putChar_JC_V, TR::sun_misc_Unsafe_putChar_JC_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putInt_JI_V, TR::sun_misc_Unsafe_putInt_JI_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putLong_JJ_V, TR::sun_misc_Unsafe_putLong_JJ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putFloat_JF_V, TR::sun_misc_Unsafe_putFloat_JF_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putDouble_JD_V, TR::sun_misc_Unsafe_putDouble_JD_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putAddress_JJ_V, TR::sun_misc_Unsafe_putAddress_JJ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getByte_J_B, TR::sun_misc_Unsafe_getByte_J_B, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getShort_J_S, TR::sun_misc_Unsafe_getShort_J_S, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getChar_J_C, TR::sun_misc_Unsafe_getChar_J_C, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getInt_J_I, TR::sun_misc_Unsafe_getInt_J_I, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getLong_J_J, TR::sun_misc_Unsafe_getLong_J_J, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getFloat_J_F, TR::sun_misc_Unsafe_getFloat_J_F, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getDouble_J_D, TR::sun_misc_Unsafe_getDouble_J_D, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getAddress_J_J, TR::sun_misc_Unsafe_getAddress_J_J, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z, TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_staticFieldBase, TR::sun_misc_Unsafe_staticFieldBase, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_staticFieldOffset, TR::sun_misc_Unsafe_staticFieldOffset, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_objectFieldOffset, TR::sun_misc_Unsafe_objectFieldOffset, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V, TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putOrderedLong_jlObjectJJ_V, TR::sun_misc_Unsafe_putOrderedLong_jlObjectJJ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_putOrderedObject_jlObjectJjlObject_V, TR::sun_misc_Unsafe_putOrderedObject_jlObjectJjlObject_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_monitorEnter_jlObject_V, TR::sun_misc_Unsafe_monitorEnter_jlObject_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_monitorEnter_jlObject_V, TR::sun_misc_Unsafe_monitorEnter_jlObject_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_monitorExit_jlObject_V, TR::sun_misc_Unsafe_monitorExit_jlObject_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_tryMonitorEnter_jlObject_Z, TR::sun_misc_Unsafe_tryMonitorEnter_jlObject_Z, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_copyMemory, TR::sun_misc_Unsafe_copyMemory, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_setMemory, TR::sun_misc_Unsafe_setMemory, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_loadFence, TR::sun_misc_Unsafe_loadFence, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_storeFence, TR::sun_misc_Unsafe_storeFence, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_fullFence, TR::sun_misc_Unsafe_fullFence, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_ensureClassInitialized, TR::sun_misc_Unsafe_ensureClassInitialized, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+
+      {wVer(TR::sun_misc_Unsafe_getAndAddInt, TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::sun_misc_Unsafe_getAndAddInt, TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::sun_misc_Unsafe_getAndAddInt, TR::sun_misc_Unsafe_getAndAddInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getAndAddLong, TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::sun_misc_Unsafe_getAndAddLong, TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::sun_misc_Unsafe_getAndAddLong, TR::sun_misc_Unsafe_getAndAddLong, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getAndSetInt, TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::sun_misc_Unsafe_getAndSetInt, TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::sun_misc_Unsafe_getAndSetInt, TR::sun_misc_Unsafe_getAndSetInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::sun_misc_Unsafe_getAndSetLong, TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::sun_misc_Unsafe_getAndSetLong, TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::sun_misc_Unsafe_getAndSetLong, TR::sun_misc_Unsafe_getAndSetLong, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {  TR::unknownMethod}
+      };
+
    static X InternalUnsafeMethods[] =
       {
       {xNative(TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V,       "putBoolean", "(Ljava/lang/Object;JZ)V", 9, AllFutureJavaVer)},
@@ -3896,6 +4039,32 @@ void TR_ResolvedJ9Method::construct()
       {TR::unknownMethod}
       };
 
+   // Dependencies of methods in java/util/concurrent/atomic/AtomicInteger on methods in other classes
+   static W JavaUtilConcurrentAtomicIntegerDependencies[] =
+      {
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd, TR::sun_misc_Unsafe_getAndAddInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement, TR::sun_misc_Unsafe_getAndAddInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement, TR::sun_misc_Unsafe_getAndAddInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndSet, TR::sun_misc_Unsafe_getAndSetInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_addAndGet, TR::sun_misc_Unsafe_getAndSetInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet, TR::sun_misc_Unsafe_getAndAddInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet, TR::sun_misc_Unsafe_getAndAddInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_weakCompareAndSet, TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_lazySet, TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V, "sun/misc/Unsafe", AllPastJavaVer, 8)},
+
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd, TR::sun_misc_Unsafe_getAndAddInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement, TR::sun_misc_Unsafe_getAndAddInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement, TR::sun_misc_Unsafe_getAndAddInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndSet, TR::sun_misc_Unsafe_getAndSetInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_addAndGet, TR::sun_misc_Unsafe_getAndSetInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet, TR::sun_misc_Unsafe_getAndAddInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet, TR::sun_misc_Unsafe_getAndAddInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_weakCompareAndSet, TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_lazySet, TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
+
+      {TR::unknownMethod}
+      };
+
    static X JavaUtilConcurrentAtomicIntegerArrayMethods[] =
       {
 /*
@@ -4373,7 +4542,7 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod},
       };
 
-   struct Y { const char * _class; X * _methods; };
+   struct Y { const char * _class; X * _methods; W * _nativeDeps; };
 
    /* classXX where XX is the number of characters in the class name */
    static Y class13[] =
@@ -4395,7 +4564,7 @@ void TR_ResolvedJ9Method::construct()
       {
       { "java/lang/Class", ClassMethods },
       { "java/lang/Float", FloatMethods },
-      { "sun/misc/Unsafe", SunUnsafeMethods },
+      { "sun/misc/Unsafe", SunUnsafeMethods, SunUnsafeDependencies },
       { "java/lang/Short", ShortMethods },
       { 0 }
       };
@@ -4627,7 +4796,7 @@ void TR_ResolvedJ9Method::construct()
       {
       { "org/apache/harmony/luni/platform/OSMemory", OSMemoryMethods },
       { "java/util/concurrent/atomic/AtomicBoolean", JavaUtilConcurrentAtomicBooleanMethods },
-      { "java/util/concurrent/atomic/AtomicInteger", JavaUtilConcurrentAtomicIntegerMethods },
+      { "java/util/concurrent/atomic/AtomicInteger", JavaUtilConcurrentAtomicIntegerMethods, JavaUtilConcurrentAtomicIntegerDependencies },
       { "java/lang/invoke/BruteArgumentMoverHandle", BruteArgumentMoverHandleMethods },
       { 0 }
       };
@@ -4716,6 +4885,239 @@ void TR_ResolvedJ9Method::construct()
       class17
       };
 
+/**
+ * Look for entry for the specified class in the arrays of recognized classes
+ * @param className The name of the class which is not necessarily null terminated
+ * @param classNameLen The length of the class name
+ * @returns The entry of type <code>struct Y</code> for the specified class or
+ *          <code>NULL</code> if no entry was found
+ */
+static Y * lookupRecognizedClass(char *className, int classNameLen)
+   {
+   if (classNameLen >= minRecognizedClassLength && classNameLen <= maxRecognizedClassLength)
+      {
+      Y * cl = recognizedClasses[classNameLen - minRecognizedClassLength];
+      if (cl)
+         {
+         for (; cl->_class; ++cl)
+            {
+            if (!strncmp(cl->_class, className, classNameLen))
+               {
+               return cl;
+               }
+            }
+         }
+      }
+
+
+   return NULL;
+   }
+
+static bool areNativeDependenciesSatisfied(TR_ResolvedJ9Method *resolvedMethod, X *m, Y *cl, std::set<X *> *visited)
+   {
+   // Break cycles in native method dependencies
+   auto entryLookup = visited->find(m);
+
+   if (entryLookup != visited->end())
+      {
+      return true;
+      }
+
+   visited->insert(m);
+
+   TR::RecognizedMethod methodEnum = m->_enum;
+
+   TR_J9VMBase *fej9 = resolvedMethod->fej9();
+   TR::Compilation *comp = TR::comp();
+   W *relation = cl->_nativeDeps;
+
+   if (comp && comp->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp, "   Checking native dependencies\n");
+      }
+
+   // Check whether methods in the current class have dependencies on native methods in other classes
+   if (relation)
+      {
+      for (; relation->_enum != TR::unknownMethod; relation++)
+         {
+         // Check for the current method in array with a relationship that's
+         // valid for the current version of Java
+         //
+         if (relation->_enum == methodEnum && relation->_depMinVersion <= JAVA_SPEC_VERSION
+             && JAVA_SPEC_VERSION <= relation->_depMaxVersion)
+            {
+            int depClassNameLen = relation->_depClassNameLen;
+            const char *depClassName = relation->_depClassName;
+
+            // Look up the class containing the method on which this method depends
+            Y *depClass = lookupRecognizedClass((char *)depClassName, depClassNameLen);
+
+            if (comp && comp->getOption(TR_TraceILGen))
+               {
+               traceMsg(comp, "   Checking dependencies in class %.*s\n", depClassNameLen, depClassName);
+               }
+
+            // If the class on which this method depends cannot be found, be
+            // conservative by assuming dependencies are not satisfied
+            if (!depClass)
+               {
+               if (comp && comp->getOption(TR_TraceILGen))
+                  {
+                  traceMsg(comp, "   Class %.*s not found\n", depClassNameLen, depClassName);
+                  }
+
+               return false;
+               }
+
+            TR_OpaqueClassBlock *clazz = NULL;
+
+            for (X * depMethod =  depClass->_methods; depMethod->_enum != TR::unknownMethod; depMethod++)
+               {
+               // Look for the method on which the current method depends in
+               // the table of methods for the class that contains it
+               if (relation->_dependencyEnum == depMethod->_enum)
+                  {
+                  if (!clazz)
+                     {
+                     // Look up the class as a system class.  If not found,
+                     // be conservative and assume that dependencies on native
+                     // methods are not satisfied
+                     clazz = fej9->getSystemClassFromClassName(depClassName, depClassNameLen);
+                     if (!clazz)
+                        {
+                        if (comp && comp->getOption(TR_TraceILGen))
+                           {
+                           traceMsg(comp, "   System class %.*s not found\n", depClassNameLen, depClassName);
+                           }
+
+                        return false;
+                        }
+                     }
+
+                  TR_ASSERT_FATAL(depMethod->_sigLen != -1, "Unexpected native dependency upon a method with a wildcard for signature:  class '%s', method '%s', method enum %d\n", depClassName, depMethod->_name, depMethod->_enum);
+
+                  bool expectNative = depMethod->_nativeMinVersion <= JAVA_SPEC_VERSION
+                                      && JAVA_SPEC_VERSION <= depMethod->_nativeMaxVersion;
+
+                  if (comp && comp->getOption(TR_TraceILGen))
+                     {
+                     traceMsg(comp, "   Dependent on method %.*s.%.*s%.*s that is %sexpected to be native\n", depClassNameLen, depClassName, depMethod->_nameLen, depMethod->_name, depMethod->_sigLen, depMethod->_sig, expectNative ? "" : "not ");
+                     }
+
+                  // Is the method on which the current method depends expected
+                  // to be native for the current version of Java?  If so, check
+                  // whether it is.  If it's not expected to be native,
+                  // recursively call areNativeDependenciesSatisfied to check
+                  // for native methods on which that method depends in turn
+                  if (expectNative)
+                     {
+                     char *depMethodName = (char *)depMethod->_name;
+                     char *depMethodSig = (char *)depMethod->_sig;
+
+                     TR_OpaqueMethodBlock *depMethodBlock = fej9->getMethodFromClass(clazz, depMethodName, depMethodSig);
+
+                     if (!fej9->isNativeMethod(depMethodBlock))
+                        {
+                        if (comp && comp->getOption(TR_TraceILGen))
+                           {
+                           traceMsg(comp, "   But it was not native\n");
+                           }
+
+                        return false;
+                        }
+                     }
+                  else if (!areNativeDependenciesSatisfied(resolvedMethod, depMethod, depClass, visited))
+                     {
+                     if (comp && comp->getOption(TR_TraceILGen))
+                        {
+                        traceMsg(comp, "   Native dependencies for %.*s.%.*s%.*s %d were not satisfied\n", depClassNameLen, depClassName, depMethod->_nameLen, depMethod->_name, depMethod->_sigLen, depMethod->_sig, depMethod->_enum);
+                        }
+
+                     return false;
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+   if (comp && comp->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp, "   Native dependencies were satisfied\n");
+      }
+
+   return true;
+   }
+
+/**
+ * Check whether the current method has any dependencies on methods that are
+ * expected to be native, and verify that they are native
+ * @param resolvedMethod
+ * @param m  The X table entry for the method under consideration
+ * @param cl Pointer to an array describing the dependencies of methods in the
+ *           class that contains the method under consideration
+ * @returns <code>false</code> if any method on which the current method depends
+ *          is expected to be native but is not native, or if information for
+ *          a method on which is depends cannot be found; <code>true</code>,
+ *          otherwise
+ */
+static bool areNativeDependenciesSatisfied(TR_ResolvedJ9Method *resolvedMethod, TR_Memory *trMemory, X *m, Y *cl)
+   {
+   TR::StackMemoryRegion stackMemoryRegion(*trMemory);
+
+   std::set<X *> *visited = new (trMemory->trStackMemory()) std::set<X *>();
+   return areNativeDependenciesSatisfied(resolvedMethod, m, cl, visited);
+   }
+
+#if defined(DEBUG_DUMP_RECOGNIZED_METHODS)
+void printRecognizedMethodArrays(TR_J9VMBase *fej9)
+   {
+   TR::VMAccessCriticalSection dumpOnce(fej9);
+
+   static bool alreadyDumped = false;
+   if (alreadyDumped)
+      {
+      return;
+      }
+
+   alreadyDumped = true;
+
+   fprintf(stderr, "<recognizedMethods>\n");
+
+   for (int i = minRecognizedClassLength; i <= maxRecognizedClassLength; i++)
+      {
+      for (Y *cl = recognizedClasses[i - minRecognizedClassLength]; cl && cl->_class; ++cl)
+         {
+         for (X *m = cl->_methods; m->_enum != TR::unknownMethod; ++m)
+            {
+            // Allow * to printed for wildcard signatures
+            int sigLen = m->_sigLen == -1 ? 1 : m->_sigLen;
+
+            bool hasLT = (m->_name[0] == '<');
+
+            fprintf(stderr, "<method className='%.*s' name='%s%.*s' signature='%.*s' enum='%s' nativeMinVersion='%d' nativeMaxVersion='%d'/>\n", i, cl->_class, (hasLT ? "&lt;" : ""), m->_nameLen - (hasLT ? 1 : 0), m->_name + (hasLT ? 1 : 0), m->_sigLen, m->_sig, m->_enumName, m->_nativeMinVersion, m->_nativeMaxVersion);
+            //fprintf(stderr, "   Dependencies:\n");
+            //W *dep = m->
+            }
+         }
+      }
+
+   fprintf(stderr, "</recognizedMethods>\n");
+   }
+#endif
+
+void TR_ResolvedJ9Method::construct(TR_Memory *trMemory)
+   {
+#if defined(DEBUG_DUMP_RECOGNIZED_METHODS)
+   static char *dumpRecognizedMethods = feGetEnv("TR_dumpRecognizedMethods");
+
+   if (dumpRecognizedMethods)
+      {
+      printRecognizedMethodArrays(fej9());
+      }
+#endif
+
    if (isMethodInValidLibrary())
       {
       char *className    = convertToMethod()->classNameChars();
@@ -4725,15 +5127,18 @@ void TR_ResolvedJ9Method::construct()
       char *sig          = convertToMethod()->signatureChars();
       int   sigLen       = convertToMethod()->signatureLength();
 
+      TR::Compilation *comp = TR::comp();
+
+      if (comp && comp->getOption(TR_TraceILGen))
+         {
+         traceMsg(comp,  "Checking whether method %.*s.%.*s%.*s is recognized\n", classNameLen, className, nameLen, name, sigLen, sig);
+         }
+
       if (classNameLen >= minRecognizedClassLength && classNameLen <= maxRecognizedClassLength)
          {
-         Y * cl = recognizedClasses[classNameLen - minRecognizedClassLength];
+         Y * cl = lookupRecognizedClass(className, classNameLen);
          if (cl)
             {
-            for (; cl->_class; ++cl)
-               {
-               if (!strncmp(cl->_class, className, classNameLen))
-                  {
                   for (X * m =  cl->_methods; m->_enum != TR::unknownMethod; ++m)
                      {
                      if (m->_nameLen == nameLen && (m->_sigLen == sigLen || m->_sigLen == (int16_t)-1) &&
@@ -4751,20 +5156,30 @@ void TR_ResolvedJ9Method::construct()
                            TR_ASSERT_FATAL(expectNative == isNative(), "Java method %s.%s%s - setting of isNative() == %d did not match expectNative == %d (native version range == [%d,%d] - JAVA_SPEC_VERSION == %d)\n", cl->_class, m->_name, m->_sig, isNative(), expectNative, m->_nativeMinVersion, m->_nativeMaxVersion, JAVA_SPEC_VERSION);
                            }
 
+                        if (comp && comp->getOption(TR_TraceILGen))
+                           {
+                           traceMsg(comp, "   %.*s%.*s is %sexpected to be native\n", nameLen, name, sigLen, sig, expectNative ? "" : "not ");
+                           }
+
                         // If the method is expected to be native, but it isn't,
                         // don't mark it as recognized.  Otherwise (i.e., if it
                         // is expected to be native and is native, or it is not
-                        // expected to be native, and regardless of wheter it is),
+                        // expected to be native and any native methods on which
+                        // it depends actually are native),
                         // mark it as recognized.
-                        if (!expectNative || isNative())
+                        if ((!expectNative && areNativeDependenciesSatisfied(this, trMemory, m, cl))
+                            || isNative())
                            {
+                           if (comp && comp->getOption(TR_TraceILGen))
+                              {
+                              traceMsg(comp, "   Marked as recognized %d\n", m->_enum);
+                              }
+
                            setRecognizedMethodInfo(m->_enum);
                            break;
                            }
                         }
                      }
-                  }
-               }
             }
          }
 

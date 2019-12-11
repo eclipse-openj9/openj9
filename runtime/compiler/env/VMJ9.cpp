@@ -7124,6 +7124,13 @@ TR_J9VM::isDecimalFormatPattern(TR::Compilation *comp, TR_ResolvedMethod *method
    return true;
    }
 
+bool
+TR_J9VM::isNativeMethod(TR_OpaqueMethodBlock *method)
+   {
+   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+   return (romMethod->modifiers & J9AccNative) != 0;
+   }
+
 TR_EstimateCodeSize *
 TR_J9VMBase::getCodeEstimator(TR::Compilation *comp)
    {
