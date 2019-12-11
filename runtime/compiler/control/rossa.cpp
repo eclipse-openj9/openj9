@@ -1291,8 +1291,13 @@ onLoadInternal(
       numCodeCachesToCreateAtStartup = 4;
 #endif
 
-   if (!persistentMemory->getPersistentInfo()->getRuntimeAssumptionTable()->init())
-      return -1;
+#if defined(JITSERVER_SUPPORT)
+   if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
+#endif
+      {
+      if (!persistentMemory->getPersistentInfo()->getRuntimeAssumptionTable()->init())
+         return -1;
+      }
 
    TR_PersistentClassLoaderTable *loaderTable = new (PERSISTENT_NEW) TR_PersistentClassLoaderTable(persistentMemory);
    if (loaderTable == NULL)
@@ -1726,6 +1731,7 @@ onLoadInternal(
          return -1;
       persistentMemory->getPersistentInfo()->setInvokeExactJ2IThunkTable(ieThunkTable);
       }
+
    return 0;
    }
 
