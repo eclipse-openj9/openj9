@@ -6377,34 +6377,11 @@ void TR_EscapeAnalysis::makeLocalObject(Candidate *candidate)
       traceMsg(comp(), " }\n");
       }
 
-   //bool insertInitAtStart = false;
-   //if (referenceSlots)
-   //   {
-   //   for (i = 0; referenceSlots[i]; i++)
-   //      {
-   //      insertInitAtStart = true;
-   //      break;
-   //      }
-   //   }
-
-   TR::TreeTop *insertionPoint;
-   TR::Node *nodeToUseInInit;
-   //if (insertInitAtStart)
-   if (  referenceSlots
-      || (candidate->_kind != TR::New) // 174954: array size field must be initialized in the first block until we put a sumref on TR::arraylength
-      || candidate->isInsideALoop())
-      {
-      nodeToUseInInit = allocationNode->duplicateTree();
-      insertionPoint = comp()->getStartTree();
-      }
-   else
-      {
-      nodeToUseInInit = allocationNode;
-      insertionPoint = candidate->_treeTop;
-      }
-
    // Initialize the header of the local object
    //
+   TR::Node *nodeToUseInInit = allocationNode->duplicateTree();
+   TR::TreeTop *insertionPoint = comp()->getStartTree();
+
    if (candidate->_kind == TR::New)
       comp()->fej9()->initializeLocalObjectHeader(comp(), nodeToUseInInit, insertionPoint);
    else
