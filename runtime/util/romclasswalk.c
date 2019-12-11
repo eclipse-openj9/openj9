@@ -701,6 +701,49 @@ static void allSlotsInConstantPoolDo(J9ROMClass* romClass, J9ROMClassWalkCallbac
 	}
 }
 
+static UDATA
+allSlotsInRecordComponentDo(J9ROMClass* romClass, J9ROMRecordComponentShape* recordComponent, J9ROMClassWalkCallbacks* callbacks, void* userData) {
+	BOOLEAN rangeValid;
+	U_32 attributeFlags;
+	J9ROMNameAndSignature *recordComponentNAS;
+	UDATA recordComponentLength = 0;
+	U_32 *cursor;
+
+	rangeValid = callbacks->validateRangeCallback(romClass, recordComponent, sizeof(J9ROMRecordComponentShape), userData);
+	if (FALSE == rangeValid) {
+		return 0;
+	}
+
+	attributeFlags = recordComponent->attributeFlags;
+	recordComponentNAS = &recordComponent->nameAndSignature;
+
+	SLOT_CALLBACK(romClass, J9ROM_UTF8, recordComponentNAS, name);
+	SLOT_CALLBACK(romClass, J9ROM_UTF8, recordComponentNAS, signature);
+	SLOT_CALLBACK(romClass, J9ROM_U32, recordComponent, attributeFlags);
+
+	cursor = (U_32*)(recordComponent + 1);
+
+	if (J9_ARE_ANY_BITS_SET(attributeFlags, J9RecordComponentFlagHasGenericSignature)) {
+		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(J9SRP), userData);
+		if (rangeValid) {
+			callbacks->slotCallback(romClass, J9ROM_UTF8, cursor, "recordComponentGenSigUTF8", userData);
+		}
+		cursor += 1;
+	}
+
+	if (J9_ARE_ANY_BITS_SET(attributeFlags, J9RecordComponentFlagHasAnnotations)) {
+		cursor += allSlotsInAnnotationDo(romClass, cursor, "recordComponentAnnotation", callbacks, userData);
+	}
+
+	if (J9_ARE_ANY_BITS_SET(attributeFlags, J9RecordComponentFlagHasTypeAnnotations)) {
+		cursor += allSlotsInAnnotationDo(romClass, cursor, "recordComponentTypeAnnotations", callbacks, userData);
+	}
+
+	recordComponentLength = (UDATA)cursor - (UDATA)recordComponent;
+
+	return recordComponentLength;
+}
+
 /*
  * See ROMClassWriter::writeOptionalInfo for illustration of the layout.
  */
@@ -772,6 +815,18 @@ allSlotsInOptionalInfoDo(J9ROMClass* romClass, J9ROMClassWalkCallbacks* callback
 			allSlotsInAnnotationDo(romClass, SRP_PTR_GET(cursor, U_32 *), "classTypeAnnotations", callbacks, userData);
 		}
 		cursor++;
+	}
+	if (J9_ARE_ANY_BITS_SET(romClass->optionalFlags, J9_ROMCLASS_OPTINFO_RECORD_ATTRIBUTE)) {
+		rangeValid = callbacks->validateRangeCallback(romClass, cursor, sizeof(U_32), userData);
+		if (rangeValid) {
+			U_32 numberOfRecords = *((U_32*)cursor);
+			callbacks->slotCallback(romClass, J9ROM_U32, cursor, "number of records", userData);
+			cursor = (J9SRP*)((U_32*)cursor + 1);
+			for (U_32 i = 0; i < numberOfRecords; i++) {
+				UDATA recordComponentLength = allSlotsInRecordComponentDo(romClass, (J9ROMRecordComponentShape*)cursor, callbacks, userData);
+				cursor = (J9SRP*)((UDATA)cursor + recordComponentLength);
+			}
+		}
 	}
 
 	callbacks->sectionCallback(romClass, optionalInfo, (UDATA)cursor - (UDATA)optionalInfo, "optionalInfo", userData);

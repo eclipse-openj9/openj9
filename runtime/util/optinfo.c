@@ -25,6 +25,7 @@
 #include "j9cp.h"
 #include "rommeth.h"
 #include "util_internal.h"
+#include "ut_j9vmutil.h"
 
 #define BE_INT_AT(address) \
 	(((U_32)((U_8 *)address)[3])+\
@@ -672,3 +673,99 @@ getLineNumberForROMClassFromROMMethod(J9JavaVM *vm, J9ROMMethod *romMethod, J9RO
 	return number;
 }
 
+U_32
+getNumberOfRecordComponents(J9ROMClass *romClass)
+{
+	U_32 *ptr;
+
+	ptr = getSRPPtr(J9ROMCLASS_OPTIONALINFO(romClass), romClass->optionalFlags, J9_ROMCLASS_OPTINFO_RECORD_ATTRIBUTE);
+
+	Assert_VMUtil_true(ptr != NULL);
+
+	return *SRP_PTR_GET(ptr, U_32*);
+}
+
+J9UTF8*
+getRecordComponentGenericSignature(J9ROMRecordComponentShape* recordComponent)
+{
+	if (recordComponent->attributeFlags & J9RecordComponentFlagHasGenericSignature) {	
+		U_32* signaturePtr = (U_32*) ((UDATA)recordComponent + sizeof(J9ROMRecordComponentShape));
+		return NNSRP_PTR_GET(signaturePtr, J9UTF8*);
+	}
+	return NULL;
+}
+
+U_32*
+getRecordComponentAnnotationData(J9ROMRecordComponentShape* recordComponent)
+{
+	U_32* result = NULL;
+	if (recordComponent->attributeFlags & J9RecordComponentFlagHasAnnotations) {
+		/* calculate offset from start of record component */
+		UDATA offset = sizeof(J9ROMRecordComponentShape);
+		/* U_32 for generic signature if it exists */
+		if (recordComponent->attributeFlags & J9RecordComponentFlagHasGenericSignature) {
+			offset += sizeof(U_32);
+		}
+		result = (U_32*)((UDATA)recordComponent + offset);
+	}
+	return result;
+}
+
+static UDATA
+annotationAttributeSize(U_8* annotationAttribute) {
+	Assert_VMUtil_true(((UDATA)annotationAttribute % sizeof(U_32)) == 0);
+	UDATA size = sizeof(U_32);							/* size of length */
+	size += *((U_32 *)annotationAttribute);						/* length of attribute */
+	return ROUND_UP_TO_POWEROF2(size, sizeof(U_32));	/* padding */
+} 
+
+U_32*
+getRecordComponentTypeAnnotationData(J9ROMRecordComponentShape* recordComponent)
+{
+	U_32* result = NULL;
+	if (recordComponent->attributeFlags & J9RecordComponentFlagHasTypeAnnotations) {
+		if (recordComponent->attributeFlags & J9RecordComponentFlagHasAnnotations) {
+			/* use previous annotation result to calculate offset since size is not known */
+			U_8 *recordComponentAnnotationData = (U_8 *)getRecordComponentAnnotationData(recordComponent);
+			result = (U_32*)(recordComponentAnnotationData + annotationAttributeSize(recordComponentAnnotationData));
+		} else {
+			UDATA offset = sizeof(J9ROMRecordComponentShape);
+			if (recordComponent->attributeFlags & J9RecordComponentFlagHasGenericSignature) {
+				offset += sizeof(U_32);
+			}
+			result = (U_32*)((UDATA)recordComponent + offset);
+		}
+	}
+	return result;
+}
+
+J9ROMRecordComponentShape* 
+recordComponentStartDo(J9ROMClass *romClass)
+{
+	U_32 *ptr;
+
+	ptr = getSRPPtr(J9ROMCLASS_OPTIONALINFO(romClass), romClass->optionalFlags, J9_ROMCLASS_OPTINFO_RECORD_ATTRIBUTE);
+
+	Assert_VMUtil_true(ptr != NULL);
+
+	/* first 4 bytes of record entry is the size */
+	ptr += 1;
+	return SRP_PTR_GET(ptr, J9ROMRecordComponentShape *);
+}
+
+J9ROMRecordComponentShape* 
+recordComponentNextDo(J9ROMRecordComponentShape* recordComponent)
+{
+	UDATA recordComponentSize = sizeof(J9ROMRecordComponentShape);
+
+	if (recordComponent->attributeFlags & J9RecordComponentFlagHasGenericSignature) {
+		recordComponentSize += sizeof(U_32);
+	}
+	if (recordComponent->attributeFlags & J9RecordComponentFlagHasAnnotations) {
+		recordComponentSize += annotationAttributeSize((U_8*)recordComponent + recordComponentSize);
+	}
+	if (recordComponent->attributeFlags & J9RecordComponentFlagHasTypeAnnotations) {
+		recordComponentSize += annotationAttributeSize((U_8*)recordComponent + recordComponentSize);
+	}
+	return (J9ROMRecordComponentShape*)((U_8*)recordComponent + recordComponentSize);
+}

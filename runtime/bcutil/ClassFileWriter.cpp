@@ -62,6 +62,7 @@ DECLARE_UTF8_ATTRIBUTE_NAME(RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS, "RuntimeVisib
 DECLARE_UTF8_ATTRIBUTE_NAME(RUNTIME_VISIBLE_TYPE_ANNOTATIONS, "RuntimeVisibleTypeAnnotations");
 DECLARE_UTF8_ATTRIBUTE_NAME(ANNOTATION_DEFAULT, "AnnotationDefault");
 DECLARE_UTF8_ATTRIBUTE_NAME(BOOTSTRAP_METHODS, "BootstrapMethods");
+DECLARE_UTF8_ATTRIBUTE_NAME(RECORD, "Record");
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 DECLARE_UTF8_ATTRIBUTE_NAME(NEST_MEMBERS, "NestMembers");
 DECLARE_UTF8_ATTRIBUTE_NAME(NEST_HOST, "NestHost");
@@ -86,6 +87,10 @@ ClassFileWriter::analyzeROMClass()
 	/* Super class name is NULL only for java/lang/Object */
 	if (NULL != J9ROMCLASS_SUPERCLASSNAME(_romClass)) {
 		addClassEntry(J9ROMCLASS_SUPERCLASSNAME(_romClass), 0);
+	}
+
+	if (J9_ARE_ANY_BITS_SET(_romClass->extraModifiers, J9AccRecord)) {
+		analyzeRecordAttribute();
 	}
 
 	J9EnclosingObject * enclosingObject = getEnclosingMethodForROMClass(_javaVM, NULL, _romClass);
@@ -490,6 +495,37 @@ ClassFileWriter::analyzeMethods()
 			}
 		}
 		method = nextROMMethod(method);
+	}
+}
+
+void
+ClassFileWriter::analyzeRecordAttribute()
+{
+	addEntry((void *) &RECORD, 0, CFR_CONSTANT_Utf8);
+
+	/* first 4 bytes contains number of record components */
+	U_32 numberOfRecords = getNumberOfRecordComponents(_romClass);
+	J9ROMRecordComponentShape* recordComponentShape = recordComponentStartDo(_romClass);
+	for (U_32 i = 0; i < numberOfRecords; i++) {
+
+		/* record component name and signature */
+		addEntry(J9ROMRECORDCOMPONENTSHAPE_NAME(recordComponentShape), 0, CFR_CONSTANT_Utf8);
+		addEntry(J9ROMRECORDCOMPONENTSHAPE_SIGNATURE(recordComponentShape), 0, CFR_CONSTANT_Utf8);
+
+		/* analyze attributes */
+		J9UTF8* genericSignature = getRecordComponentGenericSignature(recordComponentShape);
+		if (NULL != genericSignature) {
+			addEntry((void *) &SIGNATURE, 0, CFR_CONSTANT_Utf8);
+			addEntry(genericSignature, 0, CFR_CONSTANT_Utf8);
+		}
+		if (J9RecordComponentFlagHasAnnotations & recordComponentShape->attributeFlags) {
+			addEntry((void *) &RUNTIME_VISIBLE_ANNOTATIONS, 0, CFR_CONSTANT_Utf8);
+		}
+		if (J9RecordComponentFlagHasTypeAnnotations & recordComponentShape->attributeFlags) {
+			addEntry((void *) &RUNTIME_VISIBLE_TYPE_ANNOTATIONS, 0, CFR_CONSTANT_Utf8);
+		}
+
+		recordComponentShape = recordComponentNextDo(recordComponentShape);
 	}
 }
 
@@ -918,6 +954,9 @@ ClassFileWriter::writeAttributes()
 	if (0 != _romClass->bsmCount) {
 		attributesCount += 1;
 	}
+	if (J9_ARE_ANY_BITS_SET(_romClass->extraModifiers, J9AccRecord)) {
+		attributesCount += 1;
+	}
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	/* Class can not have both a nest members and member of nest attribute */
 	if ((0 != _romClass->nestMemberCount) || (NULL != nestHost)) {
@@ -1041,6 +1080,68 @@ ClassFileWriter::writeAttributes()
 			}
 		}
 	}
+
+	/* record attribute */
+	if (J9_ARE_ANY_BITS_SET(_romClass->extraModifiers, J9AccRecord)) {
+		writeRecordAttribute();
+	}
+}
+
+void ClassFileWriter::writeRecordAttribute()
+{
+	/* Write header - size calculation will be written specially at the end.
+	 * Write zero as a placeholder for length. */
+	writeU16(indexForUTF8((J9UTF8 *) &RECORD));
+	U_8* recordAttributeLengthAddr = _classFileCursor;
+	writeU32(0);
+	U_8* startLengthCalculationAddr = _classFileCursor;
+	
+	/* write number of record components (components_count).
+	 * Stored as U32 in the ROM class, U16 in class file. */
+	U_32 numberOfRecords = getNumberOfRecordComponents(_romClass);
+	writeU16(numberOfRecords);
+
+	/* write record components */
+	J9ROMRecordComponentShape* recordComponentShape = recordComponentStartDo(_romClass);
+	for (U_32 i = 0; i < numberOfRecords; i++) {
+		J9UTF8 * name = J9ROMRECORDCOMPONENTSHAPE_NAME(recordComponentShape);
+		J9UTF8 * signature = J9ROMRECORDCOMPONENTSHAPE_SIGNATURE(recordComponentShape);
+		J9UTF8 * genericSignature = getRecordComponentGenericSignature(recordComponentShape);
+		U_32 * annotationsData = getRecordComponentAnnotationData(recordComponentShape);
+		U_32 * typeAnnotationsData = getRecordComponentTypeAnnotationData(recordComponentShape);
+		U_16 attributesCount = 0;
+
+		writeU16(indexForUTF8(name));
+		writeU16(indexForUTF8(signature));
+
+		if (NULL != genericSignature) {
+			attributesCount += 1;
+		}
+		if (NULL != annotationsData) {
+			attributesCount += 1;
+		}
+		if (NULL != typeAnnotationsData) {
+			attributesCount += 1;
+		}
+		writeU16(attributesCount);
+
+
+		if (NULL != genericSignature) {
+			writeSignatureAttribute(genericSignature);
+		}
+		if (NULL != annotationsData) {
+			writeAnnotationsAttribute(annotationsData);
+		}
+		if (NULL != typeAnnotationsData) {
+			writeTypeAnnotationsAttribute(typeAnnotationsData);
+		}
+
+		recordComponentShape = recordComponentNextDo(recordComponentShape);
+	}
+
+	/* calculate and write record attribute length */
+	U_8* endLengthCalculationAddr = _classFileCursor;
+	writeU32At(U_32(endLengthCalculationAddr - startLengthCalculationAddr), recordAttributeLengthAddr);
 }
 
 U_8
