@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+
+<!--
+  Copyright (c) 2019, 2020 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
+
+<suite id="J9 Class Relationship Verifier Command-Line Tests" timeout="600">
+	<variable name="ENABLE_CLASS_RELATIONSHIP_VERIFIER" value="-XX:+ClassRelationshipVerifier"/>
+	<variable name="ENABLE_CLASS_RELATIONSHIP_VERIFIER_IGNORE_SCC" value="-XX:+ClassRelationshipVerifierIgnoreSCC"/>
+	<variable name="ENABLE_SHARED_CLASSES_CACHE" value="-Xshareclasses"/>
+
+	<variable name="CP_CRVSNIPPETS" value="-cp $UTILSDIR$$PATHSEP$utils.jar" />
+	<variable name="PROGRAM_CRVSNIPPETS" value="org.openj9.test.classrelationships.A" />
+	<variable name="CLASS_A" value="$CP_CRVSNIPPETS$ $PROGRAM_CRVSNIPPETS$"/>
+
+	<variable name="XTRACE_PRINT" value="-Xtrace:print="/>
+	<variable name="J9BCVERIFY_RECORD_CLASS_RELATIONSHIP" value="j9bcverify.123"/>
+	<variable name="J9BCVERIFY_PROCESS_SNIPPETS_NO_CACHED_DATA" value="j9bcverify.147"/>
+	<variable name="J9BCVERIFY_PROCESS_SNIPPETS_USING_CACHED_DATA" value="j9bcverify.148"/>
+	<variable name="J9BCVERIFY_SCC_SNIPPET_STORE_SUCCESSFUL" value="j9bcverify.156"/>
+	<variable name="J9BCVERIFY_SCC_SNIPPET_STORE_FAILED" value="j9bcverify.157"/>
+	<variable name="J9BCVERIFY_STORED_SNIPPET_FOR_SOURCE_TARGET" value="j9bcverify.163"/>
+	<variable name="J9BCVERIFY_FETCH_SNIPPETS_FROM_SCC" value="j9bcverify.165"/>
+	<variable name="J9BCVERIFY_FOUND_SNIPPETS_IN_SCC" value="j9bcverify.166"/>
+	<variable name="PROCESS_SNIPPETS_NO_CACHED_DATA_MSG" value="processClassRelationshipSnippets - processing snippets from local hash table"/>
+
+	<test id="test -XX:+ClassRelationshipVerifier initial run">
+		<command>$EXE$ $XTRACE_PRINT${$J9BCVERIFY_SCC_SNIPPET_STORE_SUCCESSFUL$,$J9BCVERIFY_STORED_SNIPPET_FOR_SOURCE_TARGET$,$J9BCVERIFY_PROCESS_SNIPPETS_NO_CACHED_DATA$,$J9BCVERIFY_SCC_SNIPPET_STORE_FAILED$} $ENABLE_CLASS_RELATIONSHIP_VERIFIER$ $ENABLE_SHARED_CLASSES_CACHE$ $CLASS_A$</command>
+		<output type="success" regex="no">storeClassRelationshipSnippetsToSharedCache - stored snippets to shared cache</output>
+		<output type="required" regex="no">storeToDataBuffer - stored snippet for source: org/openj9/test/classrelationships/B, target: org/openj9/test/classrelationships/C</output>
+		<output type="required" regex="no">$PROCESS_SNIPPETS_NO_CACHED_DATA_MSG$</output>
+		<output type="failure" regex="no">storeClassRelationshipSnippetsToSharedCache - failed to store to shared cache</output>
+	</test>
+
+	<test id="test -XX:+ClassRelationshipVerifier subsequent run">
+		<command>$EXE$ $XTRACE_PRINT${$J9BCVERIFY_PROCESS_SNIPPETS_USING_CACHED_DATA$,$J9BCVERIFY_PROCESS_SNIPPETS_NO_CACHED_DATA$,$J9BCVERIFY_FOUND_SNIPPETS_IN_SCC$} $ENABLE_CLASS_RELATIONSHIP_VERIFIER$ $ENABLE_SHARED_CLASSES_CACHE$ $CLASS_A$</command>
+		<output type="success" regex="no">processClassRelationshipSnippets - processing snippets from cached data descriptor</output>
+		<output type="required" regex="no">fetchClassRelationshipSnippetsFromSharedCache - found snippets in shared cache</output>
+		<output type="failure" regex="no">$PROCESS_SNIPPETS_NO_CACHED_DATA_MSG$</output>
+	</test>
+</suite>
