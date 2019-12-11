@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -134,6 +134,7 @@ private:
 	void writeConstantPoolShapeDescriptions(Cursor *cursor, bool markAndCountOnly);
 	void writeAnnotationInfo(Cursor *cursor);
 	void writeSourceDebugExtension(Cursor *cursor);
+	void writeRecordComponents(Cursor *cursor, bool markAndCountOnly);
 	void writeStackMaps(Cursor *cursor);
 	void writeOptionalInfo(Cursor *cursor);
 	void writeCallSiteData(Cursor *cursor, bool markAndCountOnly);
@@ -171,6 +172,7 @@ private:
 	UDATA _varHandleMethodTypeLookupTableSRPKey;
 	UDATA _staticSplitTableSRPKey;
 	UDATA _specialSplitTableSRPKey;
+	UDATA _recordInfoSRPKey;
 };
 
 #endif /* ROMCLASSWRITER_HPP_ */

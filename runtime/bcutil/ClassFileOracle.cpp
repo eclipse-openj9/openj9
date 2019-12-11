@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -171,6 +171,7 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_annotationRefersDoubleSlotEntry(false),
 	_fieldsInfo(NULL),
 	_methodsInfo(NULL),
+	_recordComponentsInfo(NULL),
 	_genericSignature(NULL),
 	_enclosingMethod(NULL),
 	_sourceFile(NULL),
@@ -185,7 +186,9 @@ ClassFileOracle::ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *c
 	_isClassContended(false),
 	_isClassUnmodifiable(context->isClassUnmodifiable()),
 	_isInnerClass(false),
-	_needsStaticConstantInit(false)
+	_needsStaticConstantInit(false),
+	_isRecord(false),
+	_recordComponentCount(0)
 {
 	Trc_BCU_Assert_NotEquals( classFile, NULL );
 
@@ -486,6 +489,11 @@ ClassFileOracle::walkAttributes()
 			}
 			break;
 		}
+		case CFR_ATTRIBUTE_Record: {
+			_isRecord = true;
+			walkRecordComponents((J9CfrAttributeRecord *)attrib);
+			break;
+		}
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 		case CFR_ATTRIBUTE_NestMembers:
 			_nestMembers = (J9CfrAttributeNestMembers *)attrib;
@@ -516,6 +524,55 @@ ClassFileOracle::walkAttributes()
 			&& ((found == _verifyExcludeAttribute) || (';' == (*(found - 1))))
 			&& (('\0' == found[getUTF8Length(attrib->nameIndex)]) || (';' == found[getUTF8Length(attrib->nameIndex)]))) {
 				_hasVerifyExcludeAttribute = true;
+			}
+		}
+	}
+}
+
+void
+ClassFileOracle::walkRecordComponents(J9CfrAttributeRecord *attrib)
+{
+	ROMClassVerbosePhase v(_context, ClassFileAttributesRecordAnalysis);
+
+	_recordComponentCount = attrib->numberOfRecordComponents;
+	_recordComponentsInfo = (RecordComponentInfo *) _bufferManager->alloc(_recordComponentCount * sizeof(RecordComponentInfo));
+	if (NULL == _recordComponentsInfo) {
+		Trc_BCU_ClassFileOracle_OutOfMemory((U_32)getUTF8Length(getClassNameIndex()), getUTF8Data(getClassNameIndex()));
+		_buildResult = OutOfMemory;
+		return;
+	}
+	memset(_recordComponentsInfo, 0, _recordComponentCount * sizeof(RecordComponentInfo));
+
+	for (U_16 i = 0; i < _recordComponentCount; i++) {
+		J9CfrRecordComponent* recordComponent = &attrib->recordComponents[i];
+
+		markConstantUTF8AsReferenced(recordComponent->nameIndex);
+		_recordComponentsInfo[i].nameIndex = recordComponent->nameIndex;
+		markConstantUTF8AsReferenced(recordComponent->descriptorIndex);
+		_recordComponentsInfo[i].descriptorIndex = recordComponent->descriptorIndex;
+
+		/* track record component attributes */
+		for (U_16 j = 0; j < recordComponent->attributesCount; j++) {
+			J9CfrAttribute* recordComponentAttr = recordComponent->attributes[j];
+			switch(recordComponentAttr->tag) {
+			case CFR_ATTRIBUTE_Signature: {
+				J9CfrAttributeSignature *signature = (J9CfrAttributeSignature *) recordComponentAttr;
+				markConstantUTF8AsReferenced(signature->signatureIndex);
+				_recordComponentsInfo[i].hasGenericSignature = true;
+				_recordComponentsInfo[i].genericSignatureIndex = signature->signatureIndex;
+				break;
+			}
+			case CFR_ATTRIBUTE_RuntimeVisibleAnnotations: {
+				_recordComponentsInfo[i].annotationsAttribute = (J9CfrAttributeRuntimeVisibleAnnotations *) recordComponentAttr;
+				break;
+			}
+			case CFR_ATTRIBUTE_RuntimeVisibleTypeAnnotations: {
+				_recordComponentsInfo[i].typeAnnotationsAttribute = (J9CfrAttributeRuntimeVisibleTypeAnnotations *) recordComponentAttr;
+				break;
+			}
+			default:
+				Trc_BCU_ClassFileOracle_walkFields_UnknownAttribute((U_32)attrib->tag, (U_32)getUTF8Length(attrib->nameIndex), getUTF8Data(attrib->nameIndex), attrib->length);
+				break;
 			}
 		}
 	}

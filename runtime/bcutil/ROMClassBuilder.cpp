@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1054,7 +1054,7 @@ ROMClassBuilder::finishPrepareAndLaydown(
  *
  *                             + UNUSED
  *                            + UNUSED
- *                           + UNUSED
+ *                           + AccRecord
  *                          + AccClassAnonClass
  *
  *                        + AccSynthetic (matches Oracle modifier position)
@@ -1162,8 +1162,6 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 		}
 	}
 
-
-
 	if ( classFileOracle->isSynthetic() ) {
 		/* handle the synthetic attribute. In java 1.5 synthetic may be specified in the access flags as well so do not unset bit here */
 		//		Trc_BCU_createRomClassEndian_Synthetic(romClass);
@@ -1192,6 +1190,10 @@ ROMClassBuilder::computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClas
 
 	if (classFileOracle->needsStaticConstantInit()) {
 		modifiers |= J9AccClassNeedsStaticConstantInit;
+	}
+
+	if (classFileOracle->isRecord()) {
+		modifiers |= J9AccRecord;
 	}
 
 	return modifiers;
@@ -1227,6 +1229,9 @@ ROMClassBuilder::computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClass
 	}
 	if (classFileOracle->hasVerifyExcludeAttribute()) {
 		optionalFlags |= J9_ROMCLASS_OPTINFO_VERIFY_EXCLUDE;
+	}
+	if (classFileOracle->isRecord()) {
+		optionalFlags |= J9_ROMCLASS_OPTINFO_RECORD_ATTRIBUTE;
 	}
 	return optionalFlags;
 }

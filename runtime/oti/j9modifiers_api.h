@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,6 +65,7 @@
 #define J9ROMCLASS_IS_CLONEABLE(romClass)		_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassCloneable)
 #define J9ROMCLASS_ANNOTATION_REFERS_DOUBLE_SLOT_ENTRY(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassAnnnotionRefersDoubleSlotEntry)
 #define J9ROMCLASS_IS_UNMODIFIABLE(romClass)	_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccClassIsUnmodifiable)
+#define J9ROMCLASS_IS_RECORD(romClass)			_J9ROMCLASS_J9MODIFIER_IS_SET((romClass), J9AccRecord)
 
 /* 
  * Note that resolvefield ignores this flag if the cache line size cannot be determined.

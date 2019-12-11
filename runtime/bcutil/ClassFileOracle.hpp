@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -111,6 +111,16 @@ public:
 		J9CfrAttributeMethodParameters *methodParametersAttribute;
 		BytecodeFixupEntry *byteCodeFixupTable;
 		bool isByteCodeFixupDone;
+	};
+
+	struct RecordComponentInfo
+	{
+		U_16 nameIndex;
+		U_16 descriptorIndex;
+		bool hasGenericSignature;
+		U_16 genericSignatureIndex;
+		J9CfrAttributeRuntimeVisibleAnnotations *annotationsAttribute;
+		J9CfrAttributeRuntimeVisibleTypeAnnotations *typeAnnotationsAttribute;
 	};
 
 	/*
@@ -587,6 +597,34 @@ class NameAndTypeIterator
 		J9CfrConstantPoolInfo *_entry;
 	};
 
+class RecordComponentIterator
+{
+	public:
+		RecordComponentIterator(RecordComponentInfo *recordComponentsInfo, U_16 recordComponentCount) :
+			_recordComponentsInfo(recordComponentsInfo),
+			_recordComponentCount(recordComponentCount),
+			_index(0)
+		{
+		}
+
+		U_16 getNameIndex() const { return _recordComponentsInfo[_index].nameIndex; }
+		U_16 getDescriptorIndex() const { return _recordComponentsInfo[_index].descriptorIndex; }		
+		U_16 getGenericSignatureIndex() const { return _recordComponentsInfo[_index].genericSignatureIndex; }
+		U_16 getRecordComponentIndex() const { return _index; }
+
+		bool hasGenericSignature() const { return _recordComponentsInfo[_index].hasGenericSignature; }
+		bool hasAnnotation() const { return _recordComponentsInfo[_index].annotationsAttribute != NULL; }
+		bool hasTypeAnnotation() const { return _recordComponentsInfo[_index].typeAnnotationsAttribute != NULL; }
+
+		bool isNotDone() const { return _index < _recordComponentCount; }
+		void next() { _index++; }
+
+	private:
+		RecordComponentInfo *_recordComponentsInfo;
+		U_16 _recordComponentCount;
+		U_16 _index;
+};
+
 	/*
 	 * Iteration functions.
 	 */
@@ -699,6 +737,14 @@ class NameAndTypeIterator
 	void methodCodeTypeAnnotationDo(U_16 methodIndex, AnnotationsAttributeVisitor *annotationsAttributeVisitor, AnnotationVisitor *annotationVisitor, AnnotationElementVisitor *annotationElementVisitor)
 	{
 		typeAnnotationsDo(methodIndex, _methodsInfo[methodIndex].codeTypeAnnotationsAttribute, annotationsAttributeVisitor, annotationVisitor, annotationElementVisitor);
+	}
+
+	void recordComponentAnnotationDo(U_16 recordComponentIndex, AnnotationsAttributeVisitor *annotationsAttributeVisitor, AnnotationVisitor *annotationVisitor, AnnotationElementVisitor *annotationElementVisitor) {
+		annotationsDo(recordComponentIndex, _recordComponentsInfo[recordComponentIndex].annotationsAttribute, annotationsAttributeVisitor, annotationVisitor, annotationElementVisitor);
+	}
+
+	void recordComponentTypeAnnotationDo(U_16 recordComponentIndex, AnnotationsAttributeVisitor *annotationsAttributeVisitor, AnnotationVisitor *annotationVisitor, AnnotationElementVisitor *annotationElementVisitor) {
+		typeAnnotationsDo(recordComponentIndex, _recordComponentsInfo[recordComponentIndex].typeAnnotationsAttribute, annotationsAttributeVisitor, annotationVisitor, annotationElementVisitor);
 	}
 
 	void parameterAnnotationsDo(U_16 methodIndex, AnnotationsAttributeVisitor *annotationsAttributeVisitor, AnnotationVisitor *annotationVisitor, AnnotationElementVisitor *annotationElementVisitor)
@@ -830,6 +876,7 @@ class NameAndTypeIterator
 	NameAndTypeIterator getNameAndTypeIterator() const { return NameAndTypeIterator(_classFile); }
 	FieldIterator getFieldIterator() { return FieldIterator(_fieldsInfo, _classFile); }
 	MethodIterator getMethodIterator() { return MethodIterator(_methodsInfo, _classFile); }
+	RecordComponentIterator getRecordComponentIterator() { return RecordComponentIterator(_recordComponentsInfo, _recordComponentCount); }
 
 	ClassFileOracle(BufferManager *bufferManager, J9CfrClassFile *classFile, ConstantPoolMap *constantPoolMap, U_8 * verifyExcludeAttribute, U_8 * romBuilderClassFileBuffer, ROMClassCreationContext *context);
 	~ClassFileOracle();
@@ -924,6 +971,8 @@ class NameAndTypeIterator
 	bool annotationRefersDoubleSlotEntry() const { return _annotationRefersDoubleSlotEntry; }
 	bool isInnerClass() const { return _isInnerClass; }
 	bool needsStaticConstantInit() const { return _needsStaticConstantInit; }
+	bool isRecord() const { return _isRecord; }
+	U_16 getRecordComponentCount() const { return _recordComponentCount; }
 
 	U_8 constantDynamicType(U_16 cpIndex) const
 	{
@@ -983,6 +1032,7 @@ private:
 	U_32 _maxBranchCount;
 	U_16 _outerClassNameIndex;
 	U_16 _simpleNameIndex;
+	U_16 _recordComponentCount;
 
 	bool _hasEmptyFinalizeMethod;
 	bool _hasFinalFields;
@@ -999,9 +1049,11 @@ private:
 	bool _annotationRefersDoubleSlotEntry;
 	bool _isInnerClass;
 	bool _needsStaticConstantInit;
+	bool _isRecord;
 
 	FieldInfo *_fieldsInfo;
 	MethodInfo *_methodsInfo;
+	RecordComponentInfo *_recordComponentsInfo;
 
 	J9CfrAttributeSignature *_genericSignature;
 	J9CfrAttributeEnclosingMethod *_enclosingMethod;
@@ -1020,6 +1072,7 @@ private:
 	void walkAttributes();
 	void walkInterfaces();
 	void walkMethods();
+	void walkRecordComponents(J9CfrAttributeRecord *attrib);
 
 	UDATA walkAnnotations(U_16 annotationsCount, J9CfrAnnotation *annotations, UDATA knownAnnotationSet);
 	void walkTypeAnnotations(U_16 annotationsCount, J9CfrTypeAnnotation *annotations);
