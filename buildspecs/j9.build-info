@@ -118,6 +118,7 @@
 		<builder id="LinuxPPC64"/>
 		<builder id="LinuxPPC64LE"/>
 		<builder id="LinuxPPCStatic"/>
+		<builder id="LinuxRISCV64"/>
 		<builder id="LinuxS390"/>
 		<builder id="Microtec68000"/>
 		<builder id="Microtec68360"/>

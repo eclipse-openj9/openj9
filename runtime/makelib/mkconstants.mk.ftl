@@ -152,6 +152,8 @@ TR_HOST=TR_HOST_ARM
 TR_HOST=TR_HOST_ARM64
 <#elseif uma.spec.processor.ppc>
 TR_HOST=TR_HOST_POWER
+<#elseif uma.spec.processor.riscv64>
+TR_HOST=TR_HOST_RISCV
 <#elseif uma.spec.processor.s390>
 TR_HOST=TR_HOST_S390
 </#if>

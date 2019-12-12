@@ -28,6 +28,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<precludes>
 			<preclude flag="arch_arm"/>
 			<preclude flag="arch_power"/>
+			<preclude flag="arch_riscv"/>
 			<preclude flag="arch_s390"/>
 			<preclude flag="arch_x86"/>
 		</precludes>
@@ -38,6 +39,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<precludes>
 			<preclude flag="arch_aarch64"/>
 			<preclude flag="arch_power"/>
+			<preclude flag="arch_riscv"/>
 			<preclude flag="arch_s390"/>
 			<preclude flag="arch_x86"/>
 		</precludes>
@@ -48,6 +50,18 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<precludes>
 			<preclude flag="arch_aarch64"/>
 			<preclude flag="arch_arm"/>
+			<preclude flag="arch_riscv"/>
+			<preclude flag="arch_s390"/>
+			<preclude flag="arch_x86"/>
+		</precludes>
+	</flag>
+	<flag id="arch_riscv">
+		<description>This spec targets RISC-V processors.</description>
+		<ifRemoved></ifRemoved>
+		<precludes>
+			<preclude flag="arch_aarch64"/>
+			<preclude flag="arch_arm"/>
+			<preclude flag="arch_power"/>
 			<preclude flag="arch_s390"/>
 			<preclude flag="arch_x86"/>
 		</precludes>
@@ -59,6 +73,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<preclude flag="arch_aarch64"/>
 			<preclude flag="arch_arm"/>
 			<preclude flag="arch_power"/>
+			<preclude flag="arch_riscv"/>
 			<preclude flag="arch_x86"/>
 		</precludes>
 	</flag>
@@ -69,6 +84,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<preclude flag="arch_aarch64"/>
 			<preclude flag="arch_arm"/>
 			<preclude flag="arch_power"/>
+			<preclude flag="arch_riscv"/>
 			<preclude flag="arch_s390"/>
 		</precludes>
 	</flag>
@@ -1266,6 +1282,10 @@ Only available on zOS</description>
 		<description>Enables compilation of the codegen_ppc module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
+	<flag id="module_codegen_riscv">
+		<description>Enables compilation of the codegen_riscv module.</description>
+		<ifRemoved>The module will not be compiled.</ifRemoved>
+	</flag>
 	<flag id="module_codegen_s390">
 		<description>Enables compilation of the codegen_s390 module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
@@ -1296,6 +1316,10 @@ Only available on zOS</description>
 	</flag>
 	<flag id="module_codert_ppc">
 		<description>Enables compilation of the codert_ppc module.</description>
+		<ifRemoved>The module will not be compiled.</ifRemoved>
+	</flag>
+	<flag id="module_codert_riscv">
+		<description>Enables compilation of the codert_riscv module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_codert_s390">
@@ -1496,6 +1520,14 @@ Only available on zOS</description>
 		<description>Enables compilation of the jit_ppcaot module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
+	<flag id="module_jit_riscv">
+		<description>Enables compilation of the jit_riscv module.</description>
+		<ifRemoved>The module will not be compiled.</ifRemoved>
+	</flag>
+	<flag id="module_jit_riscvaot">
+		<description>Enables compilation of the jit_riscvaot module.</description>
+		<ifRemoved>The module will not be compiled.</ifRemoved>
+	</flag>
 	<flag id="module_jit_s390">
 		<description>Enables compilation of the jit_s390 module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
@@ -1526,6 +1558,10 @@ Only available on zOS</description>
 	</flag>
 	<flag id="module_jitrt_ppc">
 		<description>Enables compilation of the jitrt_ppc module.</description>
+		<ifRemoved>The module will not be compiled.</ifRemoved>
+	</flag>
+	<flag id="module_jitrt_riscv">
+		<description>Enables compilation of the jitrt_riscv module.</description>
 		<ifRemoved>The module will not be compiled.</ifRemoved>
 	</flag>
 	<flag id="module_jitrt_s390">
