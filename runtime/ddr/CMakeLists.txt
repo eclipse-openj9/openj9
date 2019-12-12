@@ -31,17 +31,23 @@ add_library(j9ddr_misc SHARED
 
 target_link_libraries(j9ddr_misc
 	PRIVATE
-	j9vm_interface
-	j9vm_gc_includes
+		j9vm_interface
+		j9vm_gc_includes
 )
 target_include_directories(j9ddr_misc
 	PRIVATE
-	${j9vm_SOURCE_DIR}/
-	${omr_SOURCE_DIR}/compiler
+		${j9vm_SOURCE_DIR}/
+		${j9vm_SOURCE_DIR}/bcutil
+		${j9vm_BINARY_DIR}/bcutil
+		${j9vm_SOURCE_DIR}/shared_common/include
+		${omr_SOURCE_DIR}/compiler
 )
 
+# remove all optimization options so needed debugging information is not suppressed
+omr_remove_flags(CMAKE_CXX_FLAGS -O -O1 -O2 -O3 /Ox)
+
 if(OMR_TOOLCONFIG STREQUAL "gnu")
-	target_compile_options(j9ddr_misc PRIVATE  -femit-class-debug-always)
+	target_compile_options(j9ddr_misc PRIVATE -femit-class-debug-always)
 endif()
 
 target_enable_ddr(j9ddr_misc)

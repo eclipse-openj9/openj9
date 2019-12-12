@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-
 /**
  * @file
  * @ingroup GC_Base
@@ -37,12 +36,12 @@ class MM_EnvironmentBase;
 
 class MM_StringTable : public MM_BaseVirtual {
 private:
-	UDATA _tableCount;				/**< count of hash sub-tables */
-	J9HashTable **_table;			/**< pointer to an array  of hash sub-tables */
-	omrthread_monitor_t *_mutex;		/**< pointer to an array  of monitors associated with each hash sub-table */
+	UDATA _tableCount;              /**< count of hash sub-tables */
+	J9HashTable **_table;           /**< pointer to an array of hash sub-tables */
+	omrthread_monitor_t *_mutex;    /**< pointer to an array of monitors associated with each hash sub-table */
 
-	enum { cacheSize = 511 };
-	j9object_t _cache[cacheSize];	/**< interned string table cash */
+    ddr_constant(cacheSize, 511);
+	j9object_t _cache[cacheSize];   /**< interned string table cash */
 public:
 
 private:
@@ -58,23 +57,23 @@ public:
 	/**
 	 * @return the address of cache (represented as an array)
 	 */
-	j9object_t *getStringInternCache() { return  _cache; }
+	j9object_t *getStringInternCache() { return _cache; }
 	/**
 	 * @param hash hash value of the string being cached
 	 * @return the address of an entry into the cache array
 	 */
-	j9object_t *getStringInternCache(UDATA hash) { return  &_cache[hash % cacheSize]; }
+	j9object_t *getStringInternCache(UDATA hash) { return &_cache[hash % cacheSize]; }
 
 	/**
 	 * @return hash sub-table count
 	 */
 	UDATA getTableCount() { return _tableCount; }
 
-	/* 
+	/*
 	 * @param hash value of a string
-	 * @return tableIndex given a hash value 
+	 * @return tableIndex given a hash value
 	 */
-	UDATA getTableIndex(UDATA  hash) {
+	UDATA getTableIndex(UDATA hash) {
 		return hash % _tableCount;
 	}
 	/**
@@ -131,7 +130,6 @@ public:
 
 	static MM_StringTable *newInstance(MM_EnvironmentBase *env, UDATA tableCount);
 	virtual void kill(MM_EnvironmentBase *env);
-	
 
 	MM_StringTable(MM_EnvironmentBase *env, UDATA tableCount) :
 		MM_BaseVirtual(),
@@ -141,8 +139,7 @@ public:
 	{
 		_typeId = __FUNCTION__;
 	}
-	
-};
 
+};
 
 #endif /* STRING_TABLE_HPP_ */

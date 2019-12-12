@@ -400,6 +400,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<include path="$(OMR_DIR)/compiler" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
 			</include>
+			<include path="bcutil" type="rootpath"/>
+			<include path="j9shr_include"/>
 		</includes>
 		<makefilestubs>
 			<makefilestub data="CFLAGS += -femit-class-debug-always">
@@ -412,6 +414,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<include-if condition="spec.linux_ppc.*_gcc"/>
 				<include-if condition="spec.linux_x86.*"/>
 			</makefilestub>
+			<makefilestub data="UMA_DO_NOT_OPTIMIZE_CCODE = 1"/>
 			<makefilestub data="UMA_DLL_LINK_FLAGS += -bexpall">
 				<include-if condition="spec.aix_ppc.*"/>
 			</makefilestub>
