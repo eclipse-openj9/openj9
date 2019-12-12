@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2019 IBM Corp. and others
+dnl Copyright (c) 2017, 2018 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -251,8 +251,6 @@ END_PROC($1)
 
 dnl Runtime helpers
 
-DUAL_MODE_HELPER(jitNewValue,1)
-DUAL_MODE_HELPER(jitNewValueNoZeroInit,1)
 DUAL_MODE_HELPER(jitNewObject,1)
 DUAL_MODE_HELPER(jitNewObjectNoZeroInit,1)
 DUAL_MODE_HELPER(jitANewArray,2)
