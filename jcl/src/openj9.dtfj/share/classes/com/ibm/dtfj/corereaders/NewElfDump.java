@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2018 IBM Corp. and others
+ * Copyright (c) 2004, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,6 +60,7 @@ public class NewElfDump extends CoreReaderSupport {
 	private final static int ARCH_ARM32 = 40;
 	private final static int ARCH_IA64 = 50;
 	private final static int ARCH_AMD64 = 62;
+	private final static int ARCH_RISCV64 = 243;
 	
 	private final static int DT_NULL = 0;
 	private final static int DT_STRTAB = 5;
@@ -469,6 +470,43 @@ public class NewElfDump extends CoreReaderSupport {
 			return file.readInt() & 0xffffffffL;
 		}
     }
+    
+	private static class ArchRISCV64 implements Arch {
+		public Map readRegisters(ElfFile file, Builder builder, Object addressSpace) throws IOException {
+			String[] registerNames = { "pc", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1",
+					"a0", "a1", "a2", "a3", "a4", "a5", "a6", "a7", "s2", "s3",
+					"s4", "s5", "s6", "s7", "s8", "s9", "s10", "s11", "t3", "t4",
+					"t5", "t6", "ft0", "ft1", "ft2", "ft3", "ft4", "ft5", "ft6", "ft7",
+					"fs0", "fs1", "fa0", "fa1", "fa2", "fa3", "fa4", "fa5", "fa6", "fa7",
+					"fs2", "fs3", "fs4", "fs5", "fs6", "fs7", "fs8", "fs9", "fs10", "fs11",
+					"ft8", "ft9", "ft10", "ft11", "fcsr" };
+			Map registers = new TreeMap();
+			for (int i = 0; i < registerNames.length; i++)
+				registers.put(registerNames[i], new Address64(file.readLong()));
+			
+			return registers;
+		}
+
+		public Address getStackPointerFrom(Map registers) {
+			return (Address) registers.get("sp");
+		}
+
+		public Address getBasePointerFrom(Map registers) {
+			return getStackPointerFrom(registers);
+		}
+
+		public Address getInstructionPointerFrom(Map registers) {
+			return (Address) registers.get("pc");
+		}
+
+		public Address getLinkRegisterFrom(Map registers) {
+			return (Address) registers.get("ra");
+		}
+
+		public long readUID(ElfFile file) throws IOException {
+			return file.readInt() & 0xffffffffL;
+		}
+	}
 
     private static class DataEntry {
     	final long offset;
@@ -722,6 +760,8 @@ public class NewElfDump extends CoreReaderSupport {
 				return new ArchAMD64();
 			case ARCH_ARM32:
 				return new ArchARM32();
+			case ARCH_RISCV64:
+				return new ArchRISCV64();
 			default:
 				// TODO throw exception for unsupported arch?
 				return null;
