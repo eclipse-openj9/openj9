@@ -27,6 +27,7 @@
 #include "codegen/ARM64SystemLinkage.hpp"
 #include "codegen/CodeGenerator.hpp"
 #include "codegen/CodeGenerator_inlines.hpp"
+#include "codegen/GenerateInstructions.hpp"
 #include "runtime/CodeCacheManager.hpp"
 
 extern void TEMPORARY_initJ9ARM64TreeEvaluatorTable(TR::CodeGenerator *cg);
@@ -108,4 +109,25 @@ J9::ARM64::CodeGenerator::encodeHelperBranchAndLink(TR::SymbolReference *symRef,
 
    uintptr_t distance = target - (uintptr_t)cursor;
    return TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::bl) | ((distance >> 2) & 0x3ffffff); /* imm26 */
+   }
+
+void
+J9::ARM64::CodeGenerator::generateBinaryEncodingPrePrologue(TR_ARM64BinaryEncodingData &data)
+   {
+   TR::Compilation *comp = self()->comp();
+   data.recomp = NULL;
+   data.cursorInstruction = self()->getFirstInstruction();
+   data.i2jEntryInstruction = data.cursorInstruction;
+   TR::Node *startNode = comp->getStartTree()->getNode();
+
+   /* save the original JNI native address if a JNI thunk is generated */
+   TR::ResolvedMethodSymbol *methodSymbol = comp->getMethodSymbol();
+   if (methodSymbol->isJNI())
+      {
+      uintptr_t methodAddress = reinterpret_cast<uintptr_t>(methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp));
+      uint32_t low = methodAddress & static_cast<uint32_t>(0xffffffff);
+      uint32_t high = (methodAddress >> 32) & static_cast<uint32_t>(0xffffffff);
+      TR::Instruction *cursor = new (self()->trHeapMemory()) TR::ARM64ImmInstruction(TR::InstOpCode::dd, startNode, low, NULL, self());
+      generateImmInstruction(self(), TR::InstOpCode::dd, startNode, high, cursor);
+      }
    }

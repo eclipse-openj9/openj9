@@ -78,6 +78,11 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    
    bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg);
    
+   /**
+    * @brief Generates pre-prologue
+    * @param[in] data : binary encoding data
+    */
+   void generateBinaryEncodingPrePrologue(TR_ARM64BinaryEncodingData &data);
    };
 
 }
