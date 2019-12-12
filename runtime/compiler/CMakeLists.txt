@@ -117,6 +117,22 @@ if(JITSERVER_SUPPORT)
 	)
 
 	add_custom_target(j9jit_proto DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.h ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.cpp)
+
+	if(OPENSSL_CFLAGS)
+		set(J9_CFLAGS "${J9_CFLAGS} ${OPENSSL_CFLAGS}")
+		set(J9_CXXFLAGS "${J9_CXXFLAGS} ${OPENSSL_CFLAGS}")
+	endif()
+
+	if(OPENSSL_BUNDLE_LIB_PATH) # --enable-openssl-bundling
+		set(OPENSSL_ROOT_DIR ${OPENSSL_BUNDLE_LIB_PATH})
+		set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,-rpath,$ORIGIN/..")
+	elseif(OPENSSL_DIR) # --with-openssl=fetched only
+		set(OPENSSL_ROOT_DIR ${OPENSSL_DIR})
+	endif()
+
+	include(FindOpenSSL)
+	find_package(OpenSSL REQUIRED)
+	include_directories(${OPENSSL_INCLUDE_DIR})
 endif()
 
 #TODO We should get rid of this, but its still required by the compiler_support module in omr
@@ -351,7 +367,7 @@ target_link_libraries(j9jit
 )
 
 if(JITSERVER_SUPPORT)
-	target_link_libraries(j9jit PRIVATE ${PROTOBUF_LIBRARY})
+	target_link_libraries(j9jit PRIVATE ${PROTOBUF_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
 endif()
 
 # This is a bit hokey, but cmake can't track the fact that files are generated across directories.
