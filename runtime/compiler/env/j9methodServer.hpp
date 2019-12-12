@@ -186,10 +186,8 @@ public:
    virtual bool isSubjectToPhaseChange(TR::Compilation *comp) override;
    virtual void * stringConstant(int32_t cpIndex) override;
    virtual TR_ResolvedMethod *getResolvedHandleMethod( TR::Compilation *, int32_t cpIndex, bool * unresolvedInCP) override;
-#if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
    virtual bool isUnresolvedMethodTypeTableEntry(int32_t cpIndex) override;
    virtual void * methodTypeTableEntryAddress(int32_t cpIndex) override;
-#endif
    virtual bool isUnresolvedCallSiteTableEntry(int32_t callSiteIndex) override;
    virtual void * callSiteTableEntryAddress(int32_t callSiteIndex) override;
    virtual bool isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex) override;

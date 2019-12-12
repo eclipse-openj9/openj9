@@ -6164,7 +6164,6 @@ TR_ResolvedJ9Method::isUnresolvedVarHandleMethodTypeTableEntry(int32_t cpIndex)
    return *(j9object_t*)varHandleMethodTypeTableEntryAddress(cpIndex) == NULL;
    }
 
-#if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
 void *
 TR_ResolvedJ9Method::methodTypeTableEntryAddress(int32_t cpIndex)
    {
@@ -6179,7 +6178,6 @@ TR_ResolvedJ9Method::isUnresolvedMethodTypeTableEntry(int32_t cpIndex)
    {
    return *(j9object_t*)methodTypeTableEntryAddress(cpIndex) == NULL;
    }
-#endif
 
 TR_OpaqueClassBlock *
 TR_ResolvedJ9Method::getClassFromCP(TR_J9VMBase *fej9, J9ConstantPool *cp, TR::Compilation *comp, uint32_t cpIndex)
@@ -6759,7 +6757,6 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
       {
       TR::VMAccessCriticalSection getResolvedHandleMethod(fej9());
 
-#if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
       if (unresolvedInCP)
          *unresolvedInCP = isUnresolvedMethodTypeTableEntry(cpIndex);
       TR_OpaqueMethodBlock *dummyInvokeExact = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "invokeExact", JSR292_invokeExactSig);
@@ -6767,14 +6764,6 @@ TR_ResolvedJ9Method::getResolvedHandleMethod(TR::Compilation * comp, I_32 cpInde
       J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
       int32_t signatureLength;
       char   *signature = utf8Data(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig), signatureLength);
-#else
-      if (unresolvedInCP)
-         *unresolvedInCP = isUnresolvedMethodType(cpIndex);
-      TR_OpaqueMethodBlock *dummyInvokeExact = _fe->getMethodFromName("java/lang/invoke/MethodHandle", "invokeExact", JSR292_invokeExactSig, getNonPersistentIdentifier());
-      J9ROMMethodTypeRef *romMethodTypeRef = (J9ROMMethodTypeRef *)(cp()->romConstantPool + cpIndex);
-      int32_t signatureLength;
-      char   *signature = utf8Data(J9ROMMETHODTYPEREF_SIGNATURE(romMethodTypeRef), signatureLength);
-#endif
       result = _fe->createResolvedMethodWithSignature(comp->trMemory(), dummyInvokeExact, NULL, signature, signatureLength, this);
       }
 

@@ -1209,7 +1209,6 @@ TR_ResolvedJ9JITServerMethod::getResolvedHandleMethod(TR::Compilation * comp, I_
 #endif
    }
 
-#if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
 void *
 TR_ResolvedJ9JITServerMethod::methodTypeTableEntryAddress(int32_t cpIndex)
    {
@@ -1223,7 +1222,6 @@ TR_ResolvedJ9JITServerMethod::isUnresolvedMethodTypeTableEntry(int32_t cpIndex)
    _stream->write(JITServer::MessageType::ResolvedMethod_isUnresolvedMethodTypeTableEntry, _remoteMirror, cpIndex);
    return std::get<0>(_stream->read<bool>());
    }
-#endif
 
 bool
 TR_ResolvedJ9JITServerMethod::isUnresolvedCallSiteTableEntry(int32_t callSiteIndex)
