@@ -463,7 +463,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
 
       if (blockStart) //&& calltarget->_calleeSymbol)
          {
-         flags[i].set(bbStart);
+         flags[i].set(InterpreterEmulator::BytecodePropertyFlag::bbStart);
          blockStart = false;
          foundNewAllocation = false;
          }
@@ -502,8 +502,8 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
          case J9BCifle:
          case J9BCgoto:
          case J9BCgotow:
-            flags[i].set(isBranch);
-            flags[i + bci.relativeBranch()].set(bbStart);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isBranch);
+            flags[i + bci.relativeBranch()].set(InterpreterEmulator::BytecodePropertyFlag::bbStart);
             blockStart = true;
             break;
          case J9BCReturnC:
@@ -511,7 +511,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
          case J9BCReturnB:
          case J9BCReturnZ:
          case J9BCgenericReturn:
-            flags[i].set(isBranch);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isBranch);
             blockStart = true;
             break;
          case J9BCnew:
@@ -520,42 +520,42 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
          case J9BCmultianewarray:
             if (calltarget->_calleeSymbol)
                foundNewAllocation = true;
-            flags[i].set(isUnsanitizeable);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCathrow:
             _foundThrow = true;
-            flags[i].set(isBranch);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isBranch);
             blockStart = true;
             if (!_aggressivelyInlineThrows)
-               flags[i].set(isCold);
-            flags[i].set(isUnsanitizeable);
+               flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isCold);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCtableswitch:
             {
-            flags[i].set(isBranch);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isBranch);
             int32_t index = bci.defaultTargetIndex();
-            flags[i + bci.nextSwitchValue(index)].set(bbStart);
+            flags[i + bci.nextSwitchValue(index)].set(InterpreterEmulator::BytecodePropertyFlag::bbStart);
             int32_t low = bci.nextSwitchValue(index);
             int32_t high = bci.nextSwitchValue(index) - low + 1;
             for (int32_t j = 0; j < high; ++j)
-               flags[i + bci.nextSwitchValue(index)].set(bbStart);
+               flags[i + bci.nextSwitchValue(index)].set(InterpreterEmulator::BytecodePropertyFlag::bbStart);
             blockStart = true;
-            flags[i].set(isUnsanitizeable);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
             }
          case J9BClookupswitch:
             {
-            flags[i].set(isBranch);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isBranch);
             int32_t index = bci.defaultTargetIndex();
-            flags[i + bci.nextSwitchValue(index)].set(bbStart);
+            flags[i + bci.nextSwitchValue(index)].set(InterpreterEmulator::BytecodePropertyFlag::bbStart);
             int32_t tableSize = bci.nextSwitchValue(index);
             for (int32_t j = 0; j < tableSize; ++j)
                {
                index += 4; // match value
-               flags[i + bci.nextSwitchValue(index)].set(bbStart);
+               flags[i + bci.nextSwitchValue(index)].set(InterpreterEmulator::BytecodePropertyFlag::bbStart);
                }
             blockStart = true;
-            flags[i].set(isUnsanitizeable);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
             }
          case J9BCinvokevirtual:
@@ -584,13 +584,13 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
                      }
                   }
                if (unresolvedSymbolsAreCold)
-                  flags[i].set(isCold);
+                  flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isCold);
                _isLeaf = false;
                }
             }
 
             callExists = true;
-            flags[i].set(isUnsanitizeable);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCinvokespecial:
          case J9BCinvokespecialsplit:
@@ -623,12 +623,12 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
                       }
                    }
                if (unresolvedSymbolsAreCold)
-                  flags[i].set(isCold);
+                  flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isCold);
                _isLeaf = false;
                }
             }
             callExists = true;
-            flags[i].set(isUnsanitizeable);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCinvokestatic:
          case J9BCinvokestaticsplit:
@@ -645,7 +645,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
             if (!resolvedMethod || isUnresolvedInCP || resolvedMethod->isCold(comp(), false))
                {
                if (unresolvedSymbolsAreCold)
-                  flags[i].set(isCold);
+                  flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isCold);
                if(tracer()->heuristicLevel())
                    {
                    if(resolvedMethod)
@@ -661,57 +661,57 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
                }
             }
             callExists = true;
-            flags[i].set(isUnsanitizeable);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCinvokeinterface:
             cpIndex = bci.next2Bytes();
-            flags[i].set(isUnsanitizeable);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCgetfield:
             resolved = calltarget->_calleeMethod->fieldAttributes(comp(), bci.next2Bytes(), &fieldOffset, &type, &isVolatile, 0, &isPrivate, false, &isUnresolvedInCP, false);
             if (!resolved || isUnresolvedInCP)
                {
                if (unresolvedSymbolsAreCold)
-                  flags[i].set(isCold);
+                  flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isCold);
                if (!resolved)
                   _isLeaf = false;
                }
             if (isInExceptionRange(calltarget->_calleeMethod, i))
-               flags[i].set(isUnsanitizeable);
+               flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCputfield:
             resolved = calltarget->_calleeMethod->fieldAttributes(comp(), bci.next2Bytes(), &fieldOffset, &type, &isVolatile, 0, &isPrivate, true, &isUnresolvedInCP, false);
             if (!resolved || isUnresolvedInCP)
                {
                if (unresolvedSymbolsAreCold)
-                  flags[i].set(isCold);
+                  flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isCold);
                if (!resolved)
                   _isLeaf = false;
                }
-            flags[i].set(isUnsanitizeable);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCgetstatic:
             resolved = calltarget->_calleeMethod->staticAttributes(comp(), bci.next2Bytes(), &staticAddress, &type, &isVolatile, 0, &isPrivate, false, &isUnresolvedInCP, false);
             if (!resolved || isUnresolvedInCP)
                {
                if (unresolvedSymbolsAreCold)
-                  flags[i].set(isCold);
+                  flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isCold);
                if (!resolved)
                   _isLeaf = false;
                }
             if (isInExceptionRange(calltarget->_calleeMethod, i))
-               flags[i].set(isUnsanitizeable);
+               flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCputstatic:
             resolved = calltarget->_calleeMethod->staticAttributes(comp(), bci.next2Bytes(), &staticAddress, &type, &isVolatile, 0, &isPrivate, true, &isUnresolvedInCP, false);
             if (!resolved || isUnresolvedInCP)
                {
                if (unresolvedSymbolsAreCold)
-                  flags[i].set(isCold);
+                  flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isCold);
                if (!resolved)
                   _isLeaf = false;
                }
-            flags[i].set(isUnsanitizeable);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCaload0:
             if (calltarget->_myCallSite->_isIndirectCall)
@@ -725,7 +725,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
          case J9BCbastore:
          case J9BCcastore:
          case J9BCsastore: //array stores can change the global state - hence unsanitizeable
-            flags[i].set(isUnsanitizeable);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCiaload:
          case J9BClaload:
@@ -748,7 +748,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
          case J9BCinstanceof:
          case J9BCasyncCheck:
             if (isInExceptionRange(calltarget->_calleeMethod, i))
-               flags[i].set(isUnsanitizeable);
+               flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          case J9BCinvokedynamic:
          case J9BCinvokehandle:
@@ -757,15 +757,15 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
          case J9BCmonitorenter:
          case J9BCmonitorexit:
          case J9BCunknown:
-            flags[i].set(isUnsanitizeable);
+            flags[i].set(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable);
             break;
          default:
          	break;
          }
 
-      if (flags[i].testAny(isUnsanitizeable))
+      if (flags[i].testAny(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable))
          debugTrace(tracer(),"BC at index %d is unsanitizeable.", i);
-      else if (flags[i].testAny(isCold))
+      else if (flags[i].testAny(InterpreterEmulator::BytecodePropertyFlag::isCold))
          debugTrace(tracer(),"BC at index %d is cold.", i);
       else
          debugTrace(tracer(),"BC iteration at index %d.", i); //only print this index if we are debugging
@@ -808,9 +808,9 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
       int32_t handler = calltarget->_calleeMethod->exceptionData(i, &start,
             &end, &type);
 
-      flags[start].set(bbStart);
-      flags[end + 1].set(bbStart);
-      flags[handler].set(bbStart);
+      flags[start].set(InterpreterEmulator::BytecodePropertyFlag::bbStart);
+      flags[end + 1].set(InterpreterEmulator::BytecodePropertyFlag::bbStart);
+      flags[handler].set(InterpreterEmulator::BytecodePropertyFlag::bbStart);
 
       tryCatchInfo[i].initialize((uint16_t) start, (uint16_t) end,
             (uint16_t) handler, (uint32_t) type);
@@ -869,7 +869,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
    for (TR_J9ByteCode bc = bci.first(); bc != J9BCunknown; bc = bci.next())
       {
       int32_t i = bci.bcIndex();
-      if (flags[i].testAny(bbStart))
+      if (flags[i].testAny(InterpreterEmulator::BytecodePropertyFlag::bbStart))
          {
          debugTrace(tracer(),"Calling getBlock.  blocks[%d] = %p", i, blocks[i]);
          TR::Block * newBlock = getBlock(comp(), blocks,
@@ -899,19 +899,19 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
          blockStartSize = bcSizes[i];
          }
 
-      if (flags[i].testAny(isCold))
+      if (flags[i].testAny(InterpreterEmulator::BytecodePropertyFlag::isCold))
          {
          partialTrace(tracer(), "Setting block %p[%d] blocks[%d]=%p as cold because bytecode %d was identified as cold",currentBlock, currentBlock->getNumber(), i, blocks[i], i);
          currentBlock->setIsCold();
          currentBlock->setFrequency(0);
          }
-      if (flags[i].testAny(isUnsanitizeable))
+      if (flags[i].testAny(InterpreterEmulator::BytecodePropertyFlag::isUnsanitizeable))
          {
          partialTrace(tracer(), "Setting unsanitizeable flag on block %p[%d] blocks[%d]=%p",currentBlock, currentBlock->getNumber(), i, blocks[i]);
          currentBlock->setIsUnsanitizeable();
          }
 
-      if (flags[i].testAny(isBranch))
+      if (flags[i].testAny(InterpreterEmulator::BytecodePropertyFlag::isBranch))
          {
          if (startIndex != i)
             {
@@ -1107,10 +1107,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       return returnCleanup(1);
       }
 
-   TR_J9ByteCodeIterator bci(0, static_cast<TR_ResolvedJ9Method *> (calltarget->_calleeMethod), static_cast<TR_J9VMBase *> (comp()->fej9()), comp());
-
-   bool inlineableCallExists = false;
-   bool nonColdCallExists = false;
+   InterpreterEmulator bci(calltarget, methodSymbol, static_cast<TR_J9VMBase *> (comp()->fej9()), comp(), tracer(), this);
 
    int32_t maxIndex = bci.maxByteCodeIndex() + 5;
 
@@ -1145,8 +1142,11 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
    bool wasPeekingSuccessfull = false;
 
-   if (nph.doPeeking() && recurseDown
-      || calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen())
+   const static bool debugMHInlineWithOutPeeking = feGetEnv("TR_DebugMHInlineWithOutPeeking") ? true: false;
+   bool mhInlineWithPeeking =  comp()->getOption(TR_DisableMHInlineWithoutPeeking);
+   bool isCalleeMethodHandleThunk = calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen();
+   if (nph.doPeeking() && recurseDown ||
+       isCalleeMethodHandleThunk && mhInlineWithPeeking)
       {
 
       heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- needsPeeking is true for calltarget %p",
@@ -1160,12 +1160,16 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          wasPeekingSuccessfull = true;
          }
       }
+   else if (isCalleeMethodHandleThunk && !mhInlineWithPeeking && debugMHInlineWithOutPeeking)
+      {
+      traceMsg(comp(), "printing out trees and bytecodes through peeking because DebugMHInlineWithOutPeeking is on\n");
+      methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, NULL);
+      }
 
    TR::Block * * blocks =
          (TR::Block * *) comp()->trMemory()->allocateStackMemory(maxIndex
                * sizeof(TR::Block *));
    memset(blocks, 0, maxIndex * sizeof(TR::Block *));
-
 
    TR::CFG &cfg = processBytecodeAndGenerateCFG(calltarget, cfgRegion, bci, nph, blocks, flags);
    int size = calltarget->_fullSize;
@@ -1174,7 +1178,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    //
    TR_ValueProfileInfoManager * profileManager = TR_ValueProfileInfoManager::get(comp());
    bool callGraphEnabled = !comp()->getOption(TR_DisableCallGraphInlining);//profileManager->isCallGraphProfilingEnabled(comp());
-   if (!_inliner->firstPass())
+   if (!_inliner->firstPass() || isCalleeMethodHandleThunk)
       callGraphEnabled = false; // TODO: Work out why this doesn't function properly on subsequent passes
    if (callGraphEnabled && recurseDown)
       {
@@ -1211,16 +1215,14 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
       heuristicTrace(tracer(), "</cfg>");
       }
 
-
-   TR_prevArgs pca;
-   TR::Block *currentInlinedBlock = NULL;
-   TR_J9ByteCode bc = bci.first(), nextBC;
+   bool callsitesAreCreatedFromTrees = false;
    if (wasPeekingSuccessfull
        && comp()->getOrCreateKnownObjectTable()
        && calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen())
       {
-      // call sites in method handle thunks are created from trees so skip bytecode iteration below
-      bc = J9BCunknown;
+      TR::Block *currentInlinedBlock = NULL;
+      // call sites in method handle thunks are created from trees so skip bci.findAndCreateCallsitesFromBytecodes below
+      callsitesAreCreatedFromTrees = true;
       TR::NodeChecklist visited(comp());
       for (TR::TreeTop* tt = methodSymbol->getFirstTreeTop(); tt; tt = tt->getNextTreeTop())
          {
@@ -1254,10 +1256,10 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                if (isInlineable(&callStack, callsite))
                   {
                   callSites[i] = callsite;
-                  inlineableCallExists = true;
+                  bci._inlineableCallExists = true;
 
                   if (!currentInlinedBlock->isCold())
-                      nonColdCallExists = true;
+                      _hasNonColdCalls = true;
                   for (int j = 0; j < callSites[i]->numTargets(); j++)
                       callSites[i]->getTarget(j)->_originatingBlock = currentInlinedBlock;
                   }
@@ -1266,464 +1268,18 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
                   //support counters
                   calltarget->addDeadCallee(callsite);
                   }
-               flags[i].set(isUnsanitizeable);
                }
             }
          }
       }
 
-   for (; bc != J9BCunknown; bc = bci.next())
+   if (!callsitesAreCreatedFromTrees)
       {
-      TR_ResolvedMethod * resolvedMethod;
-      int32_t cpIndex;
-      bool isVolatile, isPrivate, isUnresolvedInCP, resolved;
-      TR::DataType type = TR::NoType;
-      void * staticAddress;
-      uint32_t fieldOffset;
-
-      newBCInfo.setByteCodeIndex(bci.bcIndex());
-      int32_t i = bci.bcIndex();
-
-      if (flags[i].testAny(bbStart))
-         {
-         currentInlinedBlock = getBlock(comp(), blocks,
-               calltarget->_calleeMethod, i, cfg);
-         debugTrace(tracer(),"Found current block %p, number %d\n", currentInlinedBlock, (currentInlinedBlock) ? currentInlinedBlock->getNumber() : -1);
-         }
-
-      switch (bc)
-         {
-         case J9BCinvokedynamic:
-            {
-            cpIndex = bci.next2Bytes();
-            bool isInterface = false;
-            bool isIndirectCall = false;
-            TR::Method *interfaceMethod = 0;
-            TR::TreeTop *callNodeTreeTop = 0;
-            TR::Node *parent = 0;
-            TR::Node *callNode = 0;
-            TR::ResolvedMethodSymbol *resolvedSymbol = 0;
-
-            TR_ResolvedMethod * owningMethod = methodSymbol->getResolvedMethod();
-            TR::KnownObjectTable *knot = comp()->getOrCreateKnownObjectTable();
-            if (knot && !owningMethod->isUnresolvedCallSiteTableEntry(cpIndex))
-               {
-               isIndirectCall = true;
-               uintptrj_t *entryLocation = (uintptrj_t*)owningMethod->callSiteTableEntryAddress(cpIndex);
-               // Add callsite handle to known object table
-               knot->getIndexAt((uintptrj_t*)entryLocation);
-               resolvedMethod = comp()->fej9()->createMethodHandleArchetypeSpecimen(comp()->trMemory(), entryLocation, owningMethod);
-               bool allconsts= false;
-
-               heuristicTrace(tracer(),"numberOfExplicitParameters = %d  pca.getNumPrevConstArgs = %d\n",resolvedMethod->numberOfExplicitParameters() ,pca.getNumPrevConstArgs(resolvedMethod->numberOfExplicitParameters()));
-               if ( resolvedMethod->numberOfExplicitParameters() > 0 && resolvedMethod->numberOfExplicitParameters() <= pca.getNumPrevConstArgs(resolvedMethod->numberOfExplicitParameters()))
-                  allconsts = true;
-
-               TR_CallSite *callsite = new (comp()->trHeapMemory()) TR_J9MethodHandleCallSite( callStack._method, callNodeTreeTop,   parent,
-                                                                                 callNode, interfaceMethod, resolvedMethod->classOfMethod(),
-                                                                                 (int32_t) resolvedMethod->virtualCallSelector(cpIndex), cpIndex, resolvedMethod,
-                                                                                 resolvedSymbol, isIndirectCall, isInterface, newBCInfo, comp(),
-                                                                                 _recursionDepth, allconsts);
-
-               TR_PrexArgInfo *argInfo = calltarget->_ecsPrexArgInfo;
-               callsite->_callerBlock = currentInlinedBlock;
-               if (isInlineable(&callStack, callsite))
-                  {
-                  callSites[i] = callsite;
-                  inlineableCallExists = true;
-
-                  if (!currentInlinedBlock->isCold())
-                       nonColdCallExists = true;
-
-                  if (wasPeekingSuccessfull)
-                     {
-                     TR_PrexArgInfo::propagateArgsFromCaller(methodSymbol, callsite, argInfo, tracer());
-                     if (tracer()->heuristicLevel())
-                        {
-                        alwaysTrace(tracer(), "propagateArgs :");
-                        if (callsite->numTargets() && callsite->getTarget(0)->_ecsPrexArgInfo)
-                           tracer()->dumpPrexArgInfo(callsite->getTarget(0)->_ecsPrexArgInfo);
-                        }
-                     }
-                  }
-               else
-                  //support counters
-                  calltarget->addDeadCallee(callsite);
-
-               }
-            flags[i].set(isUnsanitizeable);
-            break;
-            }
-
-         case J9BCinvokevirtual:
-            {
-            cpIndex = bci.next2Bytes();
-            auto calleeMethod = (TR_ResolvedJ9Method*)calltarget->_calleeMethod;
-            resolvedMethod = calleeMethod->getResolvedPossiblyPrivateVirtualMethod(comp(), cpIndex, true, &isUnresolvedInCP);
-            bool isIndirectCall =
-               resolvedMethod == NULL
-               || (!resolvedMethod->isFinal() && !resolvedMethod->isPrivate());
-            bool isInterface = false;
-            TR::Method *interfaceMethod = 0;
-            TR::TreeTop *callNodeTreeTop = 0;
-            TR::Node *parent = 0;
-            TR::Node *callNode = 0;
-            TR::ResolvedMethodSymbol *resolvedSymbol = 0;
-            ///if (!resolvedMethod || isUnresolvedInCP || resolvedMethod->isCold(comp(), true))
-            if ((isUnresolvedInCP && !resolvedMethod) || (resolvedMethod && resolvedMethod->isCold(comp(), true)))
-               {
-               if(tracer()->heuristicLevel())
-                  {
-                  if(resolvedMethod)
-                     heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(resolvedMethod));
-                  else
-                     {
-                     TR::Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
-                     heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(meth));
-                     }
-                  }
-               if (unresolvedSymbolsAreCold)
-                  flags[i].set(isCold);
-                  _isLeaf = false;
-               }
-            else if (resolvedMethod)
-               {
-               bool allconsts= false;
-
-
-               heuristicTrace(tracer(),"numberOfExplicitParameters = %d  pca.getNumPrevConstArgs = %d\n",resolvedMethod->numberOfExplicitParameters() ,pca.getNumPrevConstArgs(resolvedMethod->numberOfExplicitParameters()));
-               if ( resolvedMethod->numberOfExplicitParameters() > 0 && resolvedMethod->numberOfExplicitParameters() <= pca.getNumPrevConstArgs(resolvedMethod->numberOfExplicitParameters()))
-                  allconsts = true;
-
-
-               TR_CallSite *callsite;
-
-               if (resolvedMethod->convertToMethod()->isArchetypeSpecimen() && resolvedMethod->getMethodHandleLocation())
-                  {
-                  callsite = new (comp()->trHeapMemory()) TR_J9MethodHandleCallSite( callStack._method, callNodeTreeTop,   parent,
-                                                                                 callNode, interfaceMethod, resolvedMethod->classOfMethod(),
-                                                                                 (int32_t) resolvedMethod->virtualCallSelector(cpIndex), cpIndex, resolvedMethod,
-                                                                                 resolvedSymbol, isIndirectCall, isInterface, newBCInfo, comp(),
-                                                                                 _recursionDepth, allconsts);
-                  }
-               else if (resolvedMethod->getRecognizedMethod() == TR::java_lang_invoke_MethodHandle_invokeExact)
-                  {
-                  callsite = new (comp()->trHeapMemory()) TR_J9MutableCallSite( callStack._method, callNodeTreeTop,   parent,
-                                                               callNode, interfaceMethod, resolvedMethod->classOfMethod(),
-                                                               (int32_t) resolvedMethod->virtualCallSelector(cpIndex), cpIndex, resolvedMethod,
-                                                               resolvedSymbol, isIndirectCall, isInterface, newBCInfo, comp(),
-                                                               _recursionDepth, allconsts);
-                  }
-               else if (isIndirectCall)
-                  {
-                  callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite( callStack._method, callNodeTreeTop, parent,
-                                                                                 callNode, interfaceMethod, resolvedMethod->classOfMethod(),
-                                                                                 (int32_t) resolvedMethod->virtualCallSelector(cpIndex), cpIndex, resolvedMethod,
-                                                                                 resolvedSymbol, isIndirectCall, isInterface, newBCInfo, comp(),
-                                                                                 _recursionDepth, allconsts);
-
-                  }
-               else
-                  {
-                  callsite = new (comp()->trHeapMemory()) TR_DirectCallSite( callStack._method, callNodeTreeTop, parent,
-                                                                                 callNode, interfaceMethod, resolvedMethod->classOfMethod(),
-                                                                                 (int32_t) resolvedMethod->virtualCallSelector(cpIndex), cpIndex, resolvedMethod,
-                                                                                 resolvedSymbol, isIndirectCall, isInterface, newBCInfo, comp(),
-                                                                                 _recursionDepth, allconsts);
-
-                  }
-
-
-               if(tracer()->debugLevel())
-                  {
-                  pca.printIndexes(comp());
-                  }
-
-               TR_PrexArgInfo *argInfo = calltarget->_ecsPrexArgInfo;
-
-               if (wasPeekingSuccessfull)
-                  {
-                  TR_PrexArgInfo::propagateReceiverInfoIfAvailable(methodSymbol, callsite, argInfo, tracer());
-                  if (tracer()->heuristicLevel())
-                     {
-                     alwaysTrace(tracer(), "propagateReceiverInfoIfAvailable :");
-                     if (callsite->_ecsPrexArgInfo)
-                        tracer()->dumpPrexArgInfo(callsite->_ecsPrexArgInfo);
-                     }
-                  }
-
-              callsite->_callerBlock = currentInlinedBlock;
-              if (isInlineable(&callStack, callsite))
-                  {
-                  callSites[i] = callsite;
-                  inlineableCallExists = true;
-
-                  if (wasPeekingSuccessfull)
-                     {
-                     TR_PrexArgInfo::propagateArgsFromCaller(methodSymbol, callsite, argInfo, tracer());
-                     if (tracer()->heuristicLevel())
-                        {
-                        alwaysTrace(tracer(), "propagateArgs :");
-                        if (callsite->numTargets() && callsite->getTarget(0)->_ecsPrexArgInfo)
-                           tracer()->dumpPrexArgInfo(callsite->getTarget(0)->_ecsPrexArgInfo);
-                        }
-                     }
-
-                     if (!currentInlinedBlock->isCold())
-                          nonColdCallExists = true;
-                     }
-                  else
-                     //support counters
-                     calltarget->addDeadCallee(callsite);
-               }
-            flags[i].set(isUnsanitizeable);
-            break;
-            }
-
-         case J9BCinvokespecial:
-         case J9BCinvokespecialsplit:
-            {
-            cpIndex = bci.next2Bytes();
-            resolvedMethod = calltarget->_calleeMethod->getResolvedSpecialMethod(comp(), (bc == J9BCinvokespecialsplit)?cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG:cpIndex, &isUnresolvedInCP);
-            bool isIndirectCall = false;
-            bool isInterface = false;
-            TR::Method *interfaceMethod = 0;
-            TR::TreeTop *callNodeTreeTop = 0;
-            TR::Node *parent = 0;
-            TR::Node *callNode = 0;
-            TR::ResolvedMethodSymbol *resolvedSymbol = 0;
-            if (!resolvedMethod || isUnresolvedInCP || resolvedMethod->isCold(comp(), false))
-               {
-               if(tracer()->heuristicLevel())
-                   {
-                   if(resolvedMethod)
-                      heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(resolvedMethod));
-                   else
-                      {
-                      if (bc == J9BCinvokespecialsplit)
-                         cpIndex |= J9_SPECIAL_SPLIT_TABLE_INDEX_FLAG;
-                      TR::Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
-                      heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(meth));
-                      }
-                   }
-               if (unresolvedSymbolsAreCold)
-                  flags[i].set(isCold);
-               _isLeaf = false;
-               }
-            else
-               {
-               bool allconsts= false;
-
-               heuristicTrace(tracer(),"numberOfExplicitParameters = %d  pca.getNumPrevConstArgs = %d\n",resolvedMethod->numberOfExplicitParameters() ,pca.getNumPrevConstArgs(resolvedMethod->numberOfExplicitParameters()));
-               if ( resolvedMethod->numberOfExplicitParameters() > 0 && resolvedMethod->numberOfExplicitParameters() <= pca.getNumPrevConstArgs(resolvedMethod->numberOfExplicitParameters()))
-                  allconsts = true;
-
-               TR_CallSite *callsite = new (comp()->trHeapMemory()) TR_DirectCallSite( callStack._method, callNodeTreeTop, parent,
-                                                                                 callNode, interfaceMethod, resolvedMethod->classOfMethod(), -1, cpIndex,
-                                                                                 resolvedMethod, resolvedSymbol, isIndirectCall, isInterface, newBCInfo, comp(),
-                                                                                 _recursionDepth, allconsts);
-
-               TR_PrexArgInfo *argInfo = calltarget->_ecsPrexArgInfo;
-               callsite->_callerBlock = currentInlinedBlock;
-
-               if (isInlineable(&callStack, callsite))
-                  {
-
-                  if (wasPeekingSuccessfull)
-                     {
-                     TR_PrexArgInfo::propagateArgsFromCaller(methodSymbol, callsite, argInfo, tracer());
-                     }
-
-                  callSites[i] = callsite;
-                  inlineableCallExists = true;
-                  if (!currentInlinedBlock->isCold())
-                       nonColdCallExists = true;
-                  }
-               else
-                  calltarget->addDeadCallee(callsite);
-               }
-            flags[i].set(isUnsanitizeable);
-            break;
-            }
-
-         case J9BCinvokestatic:
-         case J9BCinvokestaticsplit:
-            {
-            cpIndex = bci.next2Bytes();
-            resolvedMethod = calltarget->_calleeMethod->getResolvedStaticMethod(comp(), (bc == J9BCinvokestaticsplit)?cpIndex |= J9_STATIC_SPLIT_TABLE_INDEX_FLAG:cpIndex, &isUnresolvedInCP);
-            bool isIndirectCall = false;
-            bool isInterface = false;
-            TR::Method *interfaceMethod = 0;
-            TR::TreeTop *callNodeTreeTop = 0;
-            TR::Node *parent = 0;
-            TR::Node *callNode = 0;
-            TR::ResolvedMethodSymbol *resolvedSymbol = 0;
-            if (!resolvedMethod || isUnresolvedInCP || resolvedMethod->isCold(comp(), false))
-               {
-               if (unresolvedSymbolsAreCold)
-                  flags[i].set(isCold);
-               if(tracer()->heuristicLevel())
-                  {
-                  if(resolvedMethod)
-                     heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(resolvedMethod));
-                   else
-                      {
-                      if (bc == J9BCinvokestaticsplit)
-                         cpIndex |= J9_STATIC_SPLIT_TABLE_INDEX_FLAG;
-                      TR::Method *meth = comp()->fej9()->createMethod(comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
-                      heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s",_recursionDepth,i,tracer()->traceSignature(meth));
-                      }
-                   }
-               }
-            else
-               {
-               bool allconsts= false;
-
-               heuristicTrace(tracer(),"numberOfExplicitParameters = %d  pca.getNumPrevConstArgs = %d\n",resolvedMethod->numberOfExplicitParameters() ,pca.getNumPrevConstArgs(resolvedMethod->numberOfExplicitParameters()));
-               if ( resolvedMethod->numberOfExplicitParameters() > 0 && resolvedMethod->numberOfExplicitParameters() <= pca.getNumPrevConstArgs(resolvedMethod->numberOfExplicitParameters()))
-                  allconsts = true;
-
-               TR_CallSite *callsite = new (comp()->trHeapMemory()) TR_DirectCallSite( callStack._method, callNodeTreeTop, parent, callNode, interfaceMethod,
-                                                                                 resolvedMethod->classOfMethod(), -1, cpIndex, resolvedMethod, resolvedSymbol,
-                                                                                 isIndirectCall, isInterface, newBCInfo, _inliner->comp(),
-                                                                                 _recursionDepth, allconsts);
-
-               TR_PrexArgInfo *argInfo = calltarget->_ecsPrexArgInfo;
-               callsite->_callerBlock = currentInlinedBlock;
-               if (isInlineable(&callStack, callsite))
-                  {
-
-                  if (wasPeekingSuccessfull)
-                     {
-                     TR_PrexArgInfo::propagateArgsFromCaller(methodSymbol, callsite, argInfo, tracer());
-                     }
-
-                  callSites[i] = callsite;
-                  inlineableCallExists = true;
-                  if (!currentInlinedBlock->isCold())
-                     nonColdCallExists = true;
-                  }
-               else
-                  calltarget->addDeadCallee(callsite);
-               }
-            flags[i].set(isUnsanitizeable);
-            break;
-            }
-         case J9BCinvokeinterface:
-            {
-            cpIndex = bci.next2Bytes();
-
-            auto calleeMethod = (TR_ResolvedJ9Method*)calltarget->_calleeMethod;
-            resolvedMethod = calleeMethod->getResolvedImproperInterfaceMethod(comp(), cpIndex);
-            bool isIndirectCall = true;
-            bool isInterface = true;
-            if (resolvedMethod != NULL)
-               {
-               isInterface = false;
-               isIndirectCall =
-                  !resolvedMethod->isPrivate()
-                  && !resolvedMethod->convertToMethod()->isFinalInObject();
-               }
-
-            TR::Method * interfaceMethod = NULL;
-            if (isInterface)
-               interfaceMethod = comp()->fej9()->createMethod( comp()->trMemory(), calltarget->_calleeMethod->containingClass(), cpIndex);
-
-            TR::TreeTop *callNodeTreeTop = 0;
-            TR::Node *parent = 0;
-            TR::Node *callNode = 0;
-            TR::ResolvedMethodSymbol *resolvedSymbol = 0;
-
-            uint32_t explicitParams = 0;
-            if (isInterface)
-               explicitParams = interfaceMethod->numberOfExplicitParameters();
-            else
-               explicitParams = resolvedMethod->numberOfExplicitParameters();
-
-            bool allconsts= false;
-            heuristicTrace(tracer(), "numberOfExplicitParameters = %d  pca.getNumPrevConstArgs = %d\n", explicitParams, pca.getNumPrevConstArgs(explicitParams));
-            if (explicitParams > 0 && explicitParams <= pca.getNumPrevConstArgs(explicitParams))
-               allconsts = true;
-
-            TR_CallSite *callsite = NULL;
-            if (isInterface)
-               {
-               TR_OpaqueClassBlock * thisClass = NULL;
-               callsite = new (comp()->trHeapMemory()) TR_J9InterfaceCallSite(
-                  callStack._method, callNodeTreeTop, parent, callNode,
-                  interfaceMethod, thisClass, -1, cpIndex, resolvedMethod,
-                  resolvedSymbol, isIndirectCall, isInterface, newBCInfo,
-                  comp(), _recursionDepth, allconsts);
-               }
-            else if (isIndirectCall)
-               {
-               callsite = new (comp()->trHeapMemory()) TR_J9VirtualCallSite(
-                  callStack._method, callNodeTreeTop, parent, callNode,
-                  interfaceMethod, resolvedMethod->classOfMethod(), (int32_t) resolvedMethod->virtualCallSelector(cpIndex), cpIndex,
-                  resolvedMethod, resolvedSymbol, isIndirectCall, isInterface,
-                  newBCInfo, comp(), _recursionDepth, allconsts);
-               }
-            else
-               {
-               callsite = new (comp()->trHeapMemory()) TR_DirectCallSite(
-                  callStack._method, callNodeTreeTop, parent, callNode,
-                  interfaceMethod, resolvedMethod->classOfMethod(), -1, cpIndex,
-                  resolvedMethod, resolvedSymbol, isIndirectCall, isInterface,
-                  newBCInfo, comp(), _recursionDepth, allconsts);
-               }
-
-            if(tracer()->debugLevel())
-               {
-               pca.printIndexes(comp());
-               }
-            if(isInterface && pca.isArgAtIndexReceiverObject(interfaceMethod->numberOfExplicitParameters()))
-               {
-               //heuristicTrace(tracer(),"Arg at index %d is receiver object.  Propagating prexarginfo",interfaceMethod->numberOfExplicitParameters());
-               //callsite->_ecsPrexArgInfo = calltarget->_ecsPrexArgInfo;
-               }
-
-
-            TR_PrexArgInfo *argInfo = calltarget->_ecsPrexArgInfo;
-
-            if (wasPeekingSuccessfull)
-               {
-               TR_PrexArgInfo::propagateReceiverInfoIfAvailable(methodSymbol, callsite, argInfo, tracer());
-               }
-
-            callsite->_callerBlock = currentInlinedBlock;
-
-            if (isInlineable(&callStack, callsite))
-               {
-
-               if (wasPeekingSuccessfull)
-                  {
-                  TR_PrexArgInfo::propagateArgsFromCaller(methodSymbol, callsite, argInfo, tracer());
-                  }
-
-               callSites[i] = callsite;
-               inlineableCallExists = true;
-               if (!currentInlinedBlock->isCold())
-                  nonColdCallExists = true;
-               }
-            else
-               calltarget->addDeadCallee(callsite);
-
-            flags[i].set(isUnsanitizeable);
-            break;
-            }
-         default:
-            break;
-         }
-
-      pca.updateArg(bc );
-
-      if (callSites[i])
-         {
-         for (int kk = 0; kk < callSites[i]->numTargets(); kk++)
-            callSites[i]->getTarget(kk)->_originatingBlock = currentInlinedBlock;
-         }
+      bci.prepareToFindAndCreateCallsites(blocks, flags, callSites, &cfg, &newBCInfo, _recursionDepth, &callStack);
+      bool iteratorWithState = isCalleeMethodHandleThunk && !mhInlineWithPeeking;
+      bci.findAndCreateCallsitesFromBytecodes(wasPeekingSuccessfull, iteratorWithState);
+      _hasNonColdCalls = bci._nonColdCallExists;
       }
-   _hasNonColdCalls = nonColdCallExists;
 
    if (comp()->isServerInlining())
       {
@@ -1836,7 +1392,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
    /****************** Phase 4: Deal with Inlineable Calls **************************/
    TR::Block *currentBlock = NULL;
-   for (TR_J9ByteCode bc = bci.first(); bc != J9BCunknown && inlineableCallExists; bc = bci.next())
+   for (TR_J9ByteCode bc = bci.first(); bc != J9BCunknown && bci._inlineableCallExists; bc = bci.next())
       {
       int32_t i = bci.bcIndex();
       //heuristicTrace(tracer(),"--- Depth %d: Checking _real size vs Size Threshold: _realSize %d _sizeThreshold %d sizeThreshold %d ",_recursionDepth, _realSize, _sizeThreshold, sizeThreshold);
@@ -1857,8 +1413,6 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          debugTrace(tracer(),"Found a call at bytecode %d, depth = %d", i, _recursionDepth);
 
          // TODO: Investigate if we should add BigAppOpts opts here
-
-
          for (int32_t j = 0; j < callSites[i]->numTargets(); j++)
             {
             TR_CallTarget *targetCallee = callSites[i]->getTarget(j);
@@ -2522,4 +2076,3 @@ TR_J9EstimateCodeSize::isPartialInliningCandidate(TR_CallTarget *calltarget,
 
    return true;
    }
-
