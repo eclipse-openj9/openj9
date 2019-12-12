@@ -3556,8 +3556,6 @@ typedef struct J9JITConfig {
 	void *old_slow_jitNewInstanceImplAccessCheck;
 	void *old_slow_jitTranslateNewInstanceMethod;
 	void *old_slow_jitReportFinalFieldModified;
-	void *fast_jitNewValue;
-	void *fast_jitNewValueNoZeroInit;
 	void *fast_jitNewObject;
 	void *fast_jitNewObjectNoZeroInit;
 	void *fast_jitANewArray;
