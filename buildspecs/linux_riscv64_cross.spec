@@ -119,7 +119,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 	<flags>
 		<flag id="arch_riscv" value="true"/>
 		<flag id="build_SE6_package" value="false"/>
-		<flag id="build_autobuild" value="true"/>
+		<flag id="build_autobuild" value="false"/>
 		<flag id="build_dropToHursley" value="true"/>
 		<flag id="build_dropToToronto" value="true"/>
 		<flag id="build_j2se" value="true"/>
