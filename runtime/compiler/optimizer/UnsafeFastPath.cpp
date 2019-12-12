@@ -75,7 +75,7 @@ static TR::RecognizedMethod getVarHandleAccessMethodFromInlinedCallStack(TR::Com
    return TR::unknownMethod;
    }
 
-static TR::SymbolReferenceTable::CommonNonhelperSymbol equivalentAtomicIntrinsic(TR::RecognizedMethod rm)
+static TR::SymbolReferenceTable::CommonNonhelperSymbol equivalentAtomicIntrinsic(TR::Compilation *comp, TR::RecognizedMethod rm)
    {
    switch (rm)
       {
@@ -93,9 +93,9 @@ static TR::SymbolReferenceTable::CommonNonhelperSymbol equivalentAtomicIntrinsic
    return TR::SymbolReferenceTable::lastCommonNonhelperSymbol;
    }
 
-static bool isTransformableUnsafeAtomic(TR::RecognizedMethod rm)
+static bool isTransformableUnsafeAtomic(TR::Compilation *comp, TR::RecognizedMethod rm)
    {
-   if (equivalentAtomicIntrinsic(rm) != TR::SymbolReferenceTable::lastCommonNonhelperSymbol)
+   if (equivalentAtomicIntrinsic(comp, rm) != TR::SymbolReferenceTable::lastCommonNonhelperSymbol)
       return true;
 
    return false;
@@ -234,7 +234,7 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
       return false;
       }
 
-   TR::SymbolReferenceTable::CommonNonhelperSymbol helper = equivalentAtomicIntrinsic(calleeMethod);
+   TR::SymbolReferenceTable::CommonNonhelperSymbol helper = equivalentAtomicIntrinsic(comp(), calleeMethod);
    if (!comp()->cg()->supportsNonHelper(helper))
       {
       if (trace())
@@ -342,7 +342,7 @@ int32_t TR_UnsafeFastPath::perform()
             TR::RecognizedMethod caller = getVarHandleAccessMethodFromInlinedCallStack(comp(), node);
             TR::RecognizedMethod callee = symbol->getRecognizedMethod();
             if (TR_J9MethodBase::isVarHandleOperationMethod(caller) &&
-                (isTransformableUnsafeAtomic(callee) ||
+                (isTransformableUnsafeAtomic(comp(), callee) ||
                  symbol->getMethod()->isUnsafeCAS(comp())))
                {
                if (tryTransformUnsafeAtomicCallInVarHandleAccessMethod(tt, caller, callee))
