@@ -30,7 +30,7 @@ FindAllFiles = \
 	$(wildcard $1/$2) \
 	$(foreach i,$(wildcard $1/*),$(call FindAllFiles,$i,$2))
 
-DDR_INPUT_MODULES := j9ddr_misc j9gc j9jvmti j9prt j9shr j9thr j9trc j9vm jclse
+DDR_INPUT_MODULES := j9ddr_misc j9gc j9jvmti j9prt j9shr j9thr j9trc j9vm j9vrb jclse
 DDR_INPUT_DEPENDS := $(addprefix $(TOP_DIR)/,$(foreach module,$(DDR_INPUT_MODULES),$($(module)_depend)))
 
 <#if uma.spec.type.windows>

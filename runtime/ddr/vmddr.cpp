@@ -28,6 +28,8 @@
 #include "shcdatatypes.h"
 #include "srphashtable_api.h"
 #include "stackwalk.h"
+#include "ComparingCursor.hpp"
+#include "ComparingCursorHelper.hpp"
 #include "ddrhelp.h"
 
 #define VM_DdrDebugLink(type) DdrDebugLink(vm, type)
@@ -35,6 +37,15 @@
 VM_DdrDebugLink(CacheletHints)
 VM_DdrDebugLink(CacheletWrapper)
 VM_DdrDebugLink(CharArrayWrapper)
+VM_DdrDebugLink(ComparingCursor)
+VM_DdrDebugLink(ComparingCursorHelper)
+
+const void *
+DDR_ComparingCursorHelper(ComparingCursorHelper * helper)
+{
+	return helper->getBaseAddress();
+}
+
 VM_DdrDebugLink(J9DbgROMClassBuilder)
 VM_DdrDebugLink(J9DbgStringInternTable)
 VM_DdrDebugLink(J9IndexableObject)
@@ -59,6 +70,20 @@ VM_DdrDebugLink(J9ROMConstantDynamicRef)
 VM_DdrDebugLink(J9SFStackFrame)
 VM_DdrDebugLink(J9SRPHashTable)
 VM_DdrDebugLink(J9VMPopFramesInterruptEvent)
+
+VM_DdrDebugLink(_jbooleanArray)
+VM_DdrDebugLink(_jbyteArray)
+VM_DdrDebugLink(_jcharArray)
+VM_DdrDebugLink(_jclass)
+VM_DdrDebugLink(_jdoubleArray)
+VM_DdrDebugLink(_jfloatArray)
+VM_DdrDebugLink(_jintArray)
+VM_DdrDebugLink(_jlongArray)
+VM_DdrDebugLink(_jobjectArray)
+VM_DdrDebugLink(_jshortArray)
+VM_DdrDebugLink(_jstring)
+VM_DdrDebugLink(_jthrowable)
+VM_DdrDebugLink(_jweak)
 
 /*
  * All builds now validate that DTFJ code is compatible with generating pointer

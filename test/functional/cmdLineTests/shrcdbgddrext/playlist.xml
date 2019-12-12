@@ -47,46 +47,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<groups>
 			<group>functional</group>
 		</groups>
-		<subsets>
-			<subset>8</subset>
-			<subset>11</subset>
-		</subsets>
-		<impls>
-			<impl>openj9</impl>
-			<impl>ibm</impl>
-		</impls>
-	</test>
-
-	<test>
-		<testCaseName>cmdLineTester_shrcdbgddrext_jdk13+</testCaseName>
-		<variations>
-			<variation>Mode110</variation>
-			<variation>Mode610</variation>
-			<variation>Mode201</variation>
-		</variations>
-		<command>perl $(JVM_TEST_ROOT)$(D)TestConfig$(D)scripts$(D)tools$(D)sysvcleanup.pl zos ; \
-	cp $(CMDLINETESTER_RESJAR) .; \
-	$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jar$(EXECUTABLE_SUFFIX)$(Q) xf cmdlinetestresources.jar; \
-	$(JAVA_COMMAND) $(JVM_OPTIONS) -Xint \
-	-DUTILSJAR=$(Q)$(JVM_TEST_ROOT)$(D)functional$(D)cmdLineTests$(D)utils$(D)utils.jar$(Q) \
-	-DRESJAR=$(CMDLINETESTER_RESJAR) -DEXE=$(SQ)$(JAVA_COMMAND) $(JVM_OPTIONS)$(SQ) \
-	-DCONCAT=$(TEST_RESROOT)$(D)concatenate_dumps.sh \
-	-DJDMPVIEW_EXE=$(Q)$(TEST_JDK_HOME)$(D)bin$(D)jdmpview$(EXECUTABLE_SUFFIX)$(Q) \
-	-jar $(CMDLINETESTER_JAR) \
-	-config $(Q)$(TEST_RESROOT)$(D)shrcdbgextddrtests.xml$(Q) -plats all,$(PLATFORM),$(VARIATION) -nonZeroExitWhenError; \
-	${TEST_STATUS}</command>
-		<!-- temporarily disable this test on z/OS; github.com/eclipse/openj9/issues/1511 -->
-		<!-- temporarily disable this test on JDK13+ aix; https://github.com/eclipse/openj9/issues/7612 -->
-		<platformRequirements>^os.zos,^os.aix</platformRequirements>
-		<levels>
-			<level>extended</level>
-		</levels>
-		<groups>
-			<group>functional</group>
-		</groups>
-		<subsets>
-			<subset>13+</subset>
-		</subsets>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
