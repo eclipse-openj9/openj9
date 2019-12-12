@@ -413,6 +413,10 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       clientOptions = new (PERSISTENT_NEW) char[clientOptSize];
       memcpy(clientOptions, clientOptStr.data(), clientOptSize);
 
+      // _recompilationMethodInfo will be passed to J9::Recompilation::_methodInfo,
+      // which will get freed in populateBodyInfo() when creating the
+      // method meta data during the compilation. Since _recompilationMethodInfo is already
+      // freed in populateBodyInfo(), no need to free it at the end of the compilation in this method.
       if (recompInfoStr.size() > 0)
          {
          _recompilationMethodInfo = new (PERSISTENT_NEW) TR_PersistentMethodInfo();
@@ -565,7 +569,10 @@ TR::CompilationInfoPerThreadRemote::processEntry(TR_MethodToBeCompiled &entry, J
       if (optPlan)
          TR_OptimizationPlan::freeOptimizationPlan(optPlan);
       if (_recompilationMethodInfo)
+         {
          TR_Memory::jitPersistentFree(_recompilationMethodInfo);
+         _recompilationMethodInfo = NULL;
+         }
 
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
          {
@@ -1093,6 +1100,7 @@ TR::CompilationInfoPerThreadRemote::freeAllResources()
    if (_recompilationMethodInfo)
       {
       TR_Memory::jitPersistentFree(_recompilationMethodInfo);
+      _recompilationMethodInfo = NULL;
       }
 
    TR::CompilationInfoPerThread::freeAllResources();
