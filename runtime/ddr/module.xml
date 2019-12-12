@@ -58,6 +58,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<flag name="TR_TARGET_POWER">
 				<include-if condition="spec.flags.module_jit_ppc"/>
 			</flag>
+			<flag name="TR_TARGET_RISCV">
+				<include-if condition="spec.flags.module_jit_riscv"/>
+			</flag>
 			<flag name="TR_TARGET_S390">
 				<include-if condition="spec.flags.module_jit_s390"/>
 			</flag>
@@ -154,6 +157,9 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<flag name="TR_TARGET_POWER">
 				<include-if condition="spec.flags.module_jit_ppc"/>
 			</flag>
+			<flag name="TR_TARGET_RISCV">
+				<include-if condition="spec.flags.module_jit_riscv"/>
+			</flag>
 			<flag name="TR_TARGET_S390">
 				<include-if condition="spec.flags.module_jit_s390"/>
 			</flag>
@@ -208,6 +214,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<include-if condition="spec.linux_x86-64.*"/>
 			</vpath>
 
+			<vpath pattern="%" path="$(OMR_DIR)/port/linuxriscv64" augmentIncludes="true" type="relativepath">
+				<include-if condition="spec.linux_riscv64.*"/>
+			</vpath>
+			
 			<vpath pattern="%" path="$(OMR_DIR)/port/linuxs39064" augmentIncludes="true" type="relativepath">
 				<include-if condition="spec.linux_390-64.*"/>
 				<include-if condition="spec.linux_ztpf.*"/>
@@ -407,11 +417,13 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<makefilestub data="CFLAGS += -femit-class-debug-always">
 				<include-if condition="spec.linux_390.*"/>
 				<include-if condition="spec.linux_ppc.*_gcc"/>
+				<include-if condition="spec.linux_riscv64.*"/>
 				<include-if condition="spec.linux_x86.*"/>
 			</makefilestub>
 			<makefilestub data="CXXFLAGS += -femit-class-debug-always">
 				<include-if condition="spec.linux_390.*"/>
 				<include-if condition="spec.linux_ppc.*_gcc"/>
+				<include-if condition="spec.linux_riscv64.*"/>
 				<include-if condition="spec.linux_x86.*"/>
 			</makefilestub>
 			<makefilestub data="UMA_DO_NOT_OPTIMIZE_CCODE = 1"/>
