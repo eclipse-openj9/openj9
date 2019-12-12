@@ -1529,7 +1529,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          I_32 cpIndex = std::get<1>(recv);
          TR::VMAccessCriticalSection getResolvedHandleMethod(fe);
 
-#if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
          bool unresolvedInCP = mirror->isUnresolvedMethodTypeTableEntry(cpIndex);
          TR_OpaqueMethodBlock *dummyInvokeExact = fe->getMethodFromName("java/lang/invoke/MethodHandle",
                "invokeExact", "([Ljava/lang/Object;)Ljava/lang/Object;");
@@ -1537,18 +1536,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          J9ROMNameAndSignature *nameAndSig = J9ROMMETHODREF_NAMEANDSIGNATURE(romMethodRef);
          int32_t signatureLength;
          char   *signature = utf8Data(J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig), signatureLength);
-#else
-         bool unresolvedInCP = mirror->isUnresolvedMethodType(cpIndex);
-         TR_OpaqueMethodBlock *dummyInvokeExact = fe->getMethodFromName("java/lang/invoke/MethodHandle",
-               "invokeExact", "([Ljava/lang/Object;)Ljava/lang/Object;");
-         J9ROMMethodTypeRef *romMethodTypeRef = (J9ROMMethodTypeRef *)(mirror->cp()->romConstantPool + cpIndex);
-         int32_t signatureLength;
-         char   *signature = utf8Data(J9ROMMETHODTYPEREF_SIGNATURE(romMethodTypeRef), signatureLength);
-#endif
          client->write(response, dummyInvokeExact, std::string(signature, signatureLength), unresolvedInCP);
          }
          break;
-#if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)
       case MessageType::ResolvedMethod_methodTypeTableEntryAddress:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, I_32>();
@@ -1565,7 +1555,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, mirror->isUnresolvedMethodTypeTableEntry(cpIndex));
          }
          break;
-#endif
       case MessageType::ResolvedMethod_isUnresolvedCallSiteTableEntry:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, int32_t>();

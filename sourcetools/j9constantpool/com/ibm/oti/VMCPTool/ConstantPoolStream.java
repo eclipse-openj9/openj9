@@ -304,11 +304,7 @@ public class ConstantPoolStream {
 
 	private void writeFooter() {
 		out.println("\t},");
-		out.println("#if defined(J9VM_OPT_REMOVE_CONSTANT_POOL_SPLITTING)");
 		writeUnsplitDescription();
-		out.println("#else");
-		writeDescription();
-		out.println("#endif");
 		out.println("};");
 		out.println();
 		out.println("const J9ROMClass * jclROMClass = &_jclROMClass.romClass;");
@@ -356,14 +352,6 @@ public class ConstantPoolStream {
 				}
 			}
 			out.print("0x" + Integer.toHexString(descriptionWord) + ", ");
-		}
-		out.println("}");
-	}
-
-	private void writeDescription() {
-		out.print("\t{");
-		for (int i = 0; i < cpDescription.length; i++) {
-			out.print("0x" + Integer.toHexString(cpDescription[i]) + ", ");
 		}
 		out.println("}");
 	}
