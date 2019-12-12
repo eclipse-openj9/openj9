@@ -61,7 +61,7 @@ class UnresolvedDataSnippet : public J9::UnresolvedDataSnippet
 
    UnresolvedDataSnippet(TR::CodeGenerator *cg, TR::Node *node, TR::SymbolReference *symRef, bool isStore, bool isGCSafePoint);
 
-   Kind getKind() { return TR::Compiler->target.is64Bit() ? IsUnresolvedDataAMD64 : IsUnresolvedDataIA32; }
+   Kind getKind() { return J9::X86::UnresolvedDataSnippet::cg()->comp()->target().is64Bit() ? IsUnresolvedDataAMD64 : IsUnresolvedDataIA32; }
 
    virtual uint8_t *emitSnippetBody();
 
@@ -85,7 +85,7 @@ class UnresolvedDataSnippet : public J9::UnresolvedDataSnippet
       {
       // On 64-bit, only unresolved fields require 4-byte patching.
       //
-      return TR::Compiler->target.is64Bit() && !getDataSymbol()->isShadow();
+      return J9::X86::UnresolvedDataSnippet::cg()->comp()->target().is64Bit() && !getDataSymbol()->isShadow();
       }
 
    uint8_t setNumLiveX87Registers(uint8_t live)

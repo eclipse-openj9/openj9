@@ -439,7 +439,7 @@ J9::Node::processJNICall(TR::TreeTop * callNodeTreeTop, TR::ResolvedMethodSymbol
       TR::Node *addressOfJavaLangClassReference;
 
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-      if (TR::Compiler->target.is64Bit())
+      if (comp->target().is64Bit())
          {
          addressOfJavaLangClassReference =
                TR::Node::create(TR::aladd, 2,

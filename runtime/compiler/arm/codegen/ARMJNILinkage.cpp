@@ -181,12 +181,12 @@ int32_t J9::ARM::JNILinkage::buildJNIArgs(TR::Node *callNode,
                           bool passReceiver,
                           bool passEnvArg)
    {
-   TR::Compilation *comp = TR::comp();
    TR::CodeGenerator  *codeGen      = cg();
+   TR::Compilation *comp = codeGen->comp();
    TR::ARMMemoryArgument *pushToMemory = NULL;
    const TR::ARMLinkageProperties &jniLinkageProperties = getProperties();
 
-   bool bigEndian = TR::Compiler->target.cpu.isBigEndian();
+   bool bigEndian = comp->target().cpu.isBigEndian();
    int32_t   i;
    uint32_t  numIntegerArgRegIndex = 0;
    uint32_t  numFloatArgRegIndex = 0;
@@ -196,7 +196,7 @@ int32_t J9::ARM::JNILinkage::buildJNIArgs(TR::Node *callNode,
    uint32_t  stackOffset = 0;
    uint32_t  numIntArgRegs = jniLinkageProperties.getNumIntArgRegs();
    uint32_t  numFloatArgRegs = jniLinkageProperties.getNumFloatArgRegs();
-   bool      isEABI = TR::Compiler->target.isEABI();
+   bool      isEABI = comp->target().isEABI();
    uint32_t  firstArgumentChild = callNode->getFirstArgumentIndex();
    TR::DataType callNodeDataType = callNode->getDataType();
    TR::DataType resType = callNode->getType();
@@ -779,7 +779,7 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
       case TR::dcall:
 #endif
          {
-         if(TR::Compiler->target.cpu.isBigEndian())
+         if(codeGen->comp()->target().cpu.isBigEndian())
             {
             if (!gr0Reg)
                {
@@ -1004,7 +1004,7 @@ TR::Register *J9::ARM::JNILinkage::buildDirectDispatch(TR::Node *callNode)
             TR_ASSERT(fej9->thisThreadGetFloatTemp2Offset() - fej9->thisThreadGetFloatTemp1Offset() == 4,"floatTemp1 and floatTemp2 not contiguous");
             tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetFloatTemp1Offset(), codeGen);
             generateMemSrc1Instruction(codeGen, ARMOp_fstd, callNode, tempMR, fdReg);
-            bool bigEndian = TR::Compiler->target.cpu.isBigEndian();
+            bool bigEndian = codeGen->comp()->target().cpu.isBigEndian();
             generateTrg1MemInstruction(codeGen, ARMOp_ldr, callNode, bigEndian ? returnRegister->getHighOrder() : returnRegister->getLowOrder(), tempMR);
             tempMR = new (trHeapMemory()) TR::MemoryReference(metaReg, fej9->thisThreadGetFloatTemp2Offset(), codeGen);
             generateTrg1MemInstruction(codeGen, ARMOp_ldr, callNode, bigEndian ? returnRegister->getLowOrder() : returnRegister->getHighOrder(), tempMR);

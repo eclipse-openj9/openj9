@@ -768,7 +768,7 @@ J9::SymbolReferenceTable::findOrCreateInstanceShapeSymbolRef()
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       TR::Symbol * sym;
-      if (TR::Compiler->target.is64Bit())
+      if (self()->comp()->target().is64Bit())
          sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int64);
       else
          sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int32);
@@ -786,7 +786,7 @@ J9::SymbolReferenceTable::findOrCreateInstanceDescriptionSymbolRef()
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       TR::Symbol * sym;
-      if (TR::Compiler->target.is64Bit())
+      if (self()->comp()->target().is64Bit())
          sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int64);
       else
          sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int32);
@@ -805,7 +805,7 @@ J9::SymbolReferenceTable::findOrCreateDescriptionWordFromPtrSymbolRef()
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       TR::Symbol * sym;
-      if (TR::Compiler->target.is64Bit())
+      if (self()->comp()->target().is64Bit())
          sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int64);
       else
          sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int32);
@@ -851,7 +851,7 @@ J9::SymbolReferenceTable::findOrCreateArrayComponentTypeAsPrimitiveSymbolRef()
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       TR::Symbol * sym;
-      if (TR::Compiler->target.is64Bit())
+      if (self()->comp()->target().is64Bit())
          sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int64);
       else
          sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int32);
@@ -976,7 +976,7 @@ J9::SymbolReferenceTable::findOrCreateJ9MethodConstantPoolFieldSymbolRef(intptrj
    if (!element(j9methodConstantPoolSymbol))
       {
       TR::Symbol * sym;
-      if (TR::Compiler->target.is64Bit())
+      if (self()->comp()->target().is64Bit())
          sym = TR::Symbol::createShadow(trHeapMemory(),TR::Int64);
       else
          sym = TR::Symbol::createShadow(trHeapMemory(),TR::Int32);
@@ -995,7 +995,7 @@ J9::SymbolReferenceTable::findOrCreateJ9MethodExtraFieldSymbolRef(intptrj_t offs
    if (!element(j9methodExtraFieldSymbol))
       {
       TR::Symbol * sym;
-      if (TR::Compiler->target.is64Bit())
+      if (self()->comp()->target().is64Bit())
          sym = TR::Symbol::createShadow(trHeapMemory(),TR::Int64);
       else
          sym = TR::Symbol::createShadow(trHeapMemory(),TR::Int32);
@@ -1207,7 +1207,7 @@ J9::SymbolReferenceTable::findOrCreateClassFromJavaLangClassAsPrimitiveSymbolRef
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       TR::Symbol * sym;
-      if (TR::Compiler->target.is64Bit())
+      if (self()->comp()->target().is64Bit())
          sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int64);
       else
          sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int32);
@@ -1660,7 +1660,7 @@ J9::SymbolReferenceTable::findOrCreateInitializeStatusFromClassSymbolRef()
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       TR::Symbol * sym = NULL;
-      if (TR::Compiler->target.is64Bit())
+      if (self()->comp()->target().is64Bit())
          sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int64);
       else
          sym = TR::Symbol::createShadow(trHeapMemory(), TR::Int32);
@@ -1693,7 +1693,7 @@ J9::SymbolReferenceTable::findOrCreateGlobalFragmentSymbolRef()
       {
       TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
       TR::Symbol * sym;
-      if (TR::Compiler->target.is64Bit())
+      if (self()->comp()->target().is64Bit())
          sym = TR::Symbol::createShadow(trHeapMemory(),TR::Int64);
       else
          sym = TR::Symbol::createShadow(trHeapMemory(),TR::Int32);

@@ -222,7 +222,7 @@ J9::Z::TreeEvaluator::ud2pdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register* targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() &&
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() &&
            !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isVectorBCDEnv)
       {
@@ -299,7 +299,7 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
          // code is present. Because of this deviation from the COBOL treatment of sign codes we must
          // take a specialized control path when generating instructions for Java.
 
-         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10))
+         if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
             {
             generateSILInstruction(cg, TR::InstOpCode::CLHHSI, node, generateS390LeftAlignedMemoryReference(*sourceMR, node, 0, cg, sourceSignEndByte), 0x002D);
             generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BNE, node, cFlowRegionEnd);
@@ -348,7 +348,7 @@ J9::Z::TreeEvaluator::udsl2pdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    //at this point targetReg is PseudoRegister that has converted Packed decimal value.
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if (TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() &&
+   if (cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() &&
            !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isVectorBCDEnv)
       {
@@ -391,7 +391,7 @@ J9::Z::TreeEvaluator::pd2udslEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR_StorageReference* pdStorageRef = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !comp->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !comp->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       // Perform an intermediate vector store. See pd2udVectorEvaluateHelper().
       TR::Register* pdValueReg = cg->evaluate(childNode);
@@ -554,7 +554,7 @@ J9::Z::TreeEvaluator::pd2udEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->traceBCDEntry("pd2ud",node);
    TR::Register* targetReg = NULL;
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pd2udVectorEvaluatorHelper(node, cg);
       }
@@ -1577,7 +1577,7 @@ J9::Z::TreeEvaluator::zd2pdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register* targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = zd2pdVectorEvaluatorHelper(node, cg);
       }
@@ -1950,7 +1950,7 @@ J9::Z::TreeEvaluator::pd2zdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    cg->generateDebugCounter("PD-Op/pd2zd", 1, TR::DebugCounter::Cheap);
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() &&
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() &&
            !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isVectorBCDEnv)
       {
@@ -1991,7 +1991,7 @@ J9::Z::TreeEvaluator::df2zdEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    cg->traceBCDExit("df2zd",node);
 
-   TR_ASSERT( TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zEC12),"CDZT/CXZT only valid on >= arch(10)\n");
+   TR_ASSERT( cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12),"CDZT/CXZT only valid on >= arch(10)\n");
    TR_ASSERT(node->getDecimalFraction() == 0,"frac should be 0 and not %d\n",node->getDecimalFraction());
 
    TR::Node *srcNode = node->getFirstChild();
@@ -2264,7 +2264,7 @@ J9::Z::TreeEvaluator::zd2ddEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    cg->traceBCDEntry("zd2dd",node);
 
-   TR_ASSERT( TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zEC12),"CDZT/CXZT only valid on >= arch(10)\n");
+   TR_ASSERT( cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12),"CDZT/CXZT only valid on >= arch(10)\n");
    TR_ASSERT(node->getDataType() == TR::DecimalDouble || node->getDataType() == TR::DecimalLongDouble,"expecting op to be zd2dd or zd2de and not %d\n",node->getOpCodeValue());
    TR_ASSERT(node->getDecimalFraction() == 0,"frac should be 0 and not %d\n",node->getDecimalFraction());
 
@@ -2549,7 +2549,7 @@ J9::Z::TreeEvaluator::BCDCHKEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    uint32_t firstCallParamIndex = 0;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   bool isEnableVectorBCD = TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility()
+   bool isEnableVectorBCD = cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility()
                                && !cg->comp()->getOption(TR_DisableVectorBCD)
                                || isVectorBCDEnv;
 
@@ -2769,7 +2769,7 @@ J9::Z::TreeEvaluator::pdcmpeqEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Register *targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pdcmpVectorEvaluatorHelper(node, cg);
       }
@@ -2792,7 +2792,7 @@ J9::Z::TreeEvaluator::pdcmpneEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Register *targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pdcmpVectorEvaluatorHelper(node, cg);
       }
@@ -2815,7 +2815,7 @@ J9::Z::TreeEvaluator::pdcmpltEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    TR::Register *targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pdcmpVectorEvaluatorHelper(node, cg);
       }
@@ -2837,7 +2837,7 @@ TR::Register *J9::Z::TreeEvaluator::pdcmpgeEvaluator(TR::Node *node, TR::CodeGen
    TR::Register *targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pdcmpVectorEvaluatorHelper(node, cg);
       }
@@ -2859,7 +2859,7 @@ TR::Register *J9::Z::TreeEvaluator::pdcmpgtEvaluator(TR::Node *node, TR::CodeGen
    TR::Register *targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pdcmpVectorEvaluatorHelper(node, cg);
       }
@@ -2881,7 +2881,7 @@ TR::Register *J9::Z::TreeEvaluator::pdcmpleEvaluator(TR::Node *node, TR::CodeGen
    TR::Register *targetReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = pdcmpVectorEvaluatorHelper(node, cg);
       }
@@ -3722,7 +3722,7 @@ J9::Z::TreeEvaluator::pd2iEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = generateVectorPackedToBinaryConversion(node, TR::InstOpCode::VCVB, cg);
       }
@@ -3744,7 +3744,7 @@ J9::Z::TreeEvaluator::pd2lEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = generateVectorPackedToBinaryConversion(node, TR::InstOpCode::VCVBG, cg);
       }
@@ -3782,7 +3782,7 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
 
    // byteLength = precision/2 + 1. Note that the length codes of all instructions are (byteLength-1).
    // Thus, lengthCode = precision/2
-   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
       {
       generateRSInstruction(cg, TR::InstOpCode::SRAK, pdOpNode, lengthReg, precisionReg, 0x1, NULL);
       }
@@ -3811,7 +3811,7 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
 
       uint8_t ignoreOverflowMask = 0;
 
-      if (TR::Compiler->target.cpu.getSupportsVectorPackedDecimalEnhancementFacility() && cg->getIgnoreDecimalOverflowException())
+      if (cg->comp()->target().cpu.getSupportsVectorPackedDecimalEnhancementFacility() && cg->getIgnoreDecimalOverflowException())
          {
          ignoreOverflowMask = 0x8;
          }
@@ -3866,7 +3866,7 @@ J9::Z::TreeEvaluator::pd2lVariableEvaluator(TR::Node* node, TR::CodeGenerator* c
          {
          TR::Register* tempLengthForTP = cg->allocateRegister();
 
-         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
+         if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
             {
             generateRSInstruction(cg, TR::InstOpCode::SLAK, node, tempLengthForTP, lengthReg, 4);
             }
@@ -3945,7 +3945,7 @@ J9::Z::TreeEvaluator::generateVectorPackedToBinaryConversion(TR::Node * node, TR
 
    uint8_t ignoreOverflowMask = 0;
 
-   if (TR::Compiler->target.cpu.getSupportsVectorPackedDecimalEnhancementFacility() && cg->getIgnoreDecimalOverflowException())
+   if (cg->comp()->target().cpu.getSupportsVectorPackedDecimalEnhancementFacility() && cg->getIgnoreDecimalOverflowException())
       {
       ignoreOverflowMask = 0x8;
       }
@@ -4010,7 +4010,7 @@ J9::Z::TreeEvaluator::i2pdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = generateVectorBinaryToPackedConversion(node, TR::InstOpCode::VCVD, cg);
       }
@@ -4031,7 +4031,7 @@ J9::Z::TreeEvaluator::l2pdEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = generateVectorBinaryToPackedConversion(node, TR::InstOpCode::VCVDG, cg);
       }
@@ -4100,7 +4100,7 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
    // also do for assumed (PFD) preferred and clean signs?
    int32_t srcSign = srcReg->hasKnownOrAssumedSignCode() ? srcReg->getKnownOrAssumedSignCode() : TR::DataType::getInvalidSignCode();
-   bool useRegBasedSequence = TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) && srcReg->hasKnownValidSign();
+   bool useRegBasedSequence = cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && srcReg->hasKnownValidSign();
    bool isSrcSign0xF     = srcSign == 0xf;
    bool isSimpleSignFlip = srcSign == TR::DataType::getPreferredPlusCode() ||
                            srcSign == TR::DataType::getPreferredMinusCode() ||
@@ -4187,12 +4187,12 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       if (targetReg->getDataType() == TR::PackedDecimal && targetReg->isEvenPrecision())
          cg->genZeroLeftMostDigitsIfNeeded(node, targetReg, targetReg->getSize(), 1, destMR);
 
-      if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zEC12))
+      if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12))
          generateRIEInstruction(cg, TR::InstOpCode::RISBGN, node, targetData, tempSign, 63, 63, 64-3);
       else
          generateRIEInstruction(cg, TR::InstOpCode::RISBG, node, targetData, tempSign, 63, 63, 64-3);
 
-      generateRRInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::NGR : TR::InstOpCode::NR, node, targetSign, targetData);
+      generateRRInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::NGR : TR::InstOpCode::NR, node, targetSign, targetData);
       generateRILInstruction(cg, TR::InstOpCode::XILF, node, targetSign, 13);
 
       generateRXInstruction(cg, TR::InstOpCode::STC, node, targetSign, reuseS390LeftAlignedMemoryReference(destMR, node, targetReg->getStorageReference(), cg, 1));
@@ -4210,7 +4210,7 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
       TR::Register *sourceSign = cg->allocateRegister();
       TR::Register *regMask = NULL;
 
-      generateRXInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::LLGC : TR::InstOpCode::LLC,
+      generateRXInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::LLGC : TR::InstOpCode::LLC,
            node, sourceSign, reuseS390LeftAlignedMemoryReference(sourceMR, srcNode, srcReg->getStorageReference(), cg, 1));
 
       uint8_t signCodes[TR_NUM_DECIMAL_CODES];
@@ -4241,7 +4241,7 @@ J9::Z::TreeEvaluator::pdnegEvaluator(TR::Node * node, TR::CodeGenerator * cg)
 
       generateRIInstruction(cg, TR::InstOpCode::NILL, node, sourceSign, 0x0F);
 
-      generateRRInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::ALGR : TR::InstOpCode::ALR, node, litPoolBaseReg, sourceSign);
+      generateRRInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::ALGR : TR::InstOpCode::ALR, node, litPoolBaseReg, sourceSign);
 
       if (targetReg->getDataType() == TR::PackedDecimal && targetReg->isEvenPrecision())
          cg->genZeroLeftMostDigitsIfNeeded(node, targetReg, targetReg->getSize(), 1, destMR);
@@ -4587,7 +4587,7 @@ TR::Register *J9::Z::TreeEvaluator::pdloadEvaluator(TR::Node *node, TR::CodeGene
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "PD-Op/%s", node->getOpCode().getName()),
                             1, TR::DebugCounter::Cheap);
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if((TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv) &&
+   if((cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv) &&
            (node->getOpCodeValue() == TR::pdload || node->getOpCodeValue() == TR::pdloadi))
       {
       reg = pdloadVectorEvaluatorHelper(node, cg);
@@ -4901,7 +4901,7 @@ J9::Z::TreeEvaluator::pdstoreEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->generateDebugCounter(TR::DebugCounter::debugCounterName(cg->comp(), "PD-Op/%s", node->getOpCode().getName()),
                             1, TR::DebugCounter::Cheap);
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if((TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() &&
+   if((cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() &&
        !cg->comp()->getOption(TR_DisableVectorBCD) ||
        isVectorBCDEnv) &&
            (node->getOpCodeValue() == TR::pdstore || node->getOpCodeValue() == TR::pdstorei))
@@ -6146,7 +6146,7 @@ J9::Z::TreeEvaluator::pdSetSignEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    cg->decReferenceCount(signNode);
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       targetReg = vectorPerformSignOperationHelper(node, cg, false, 0, node->hasKnownOrAssumedCleanSign(), SignOperationType::setSign, false, true, sign);
       }
@@ -6315,13 +6315,13 @@ TR::Register *
 J9::Z::TreeEvaluator::pdchkEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
    TR::Register *chkResultReg  = cg->allocateRegister(TR_GPR);
-   generateRRInstruction(cg, TR::Compiler->target.is64Bit() ? TR::InstOpCode::XGR : TR::InstOpCode::XR, node, chkResultReg, chkResultReg);
+   generateRRInstruction(cg, cg->comp()->target().is64Bit() ? TR::InstOpCode::XGR : TR::InstOpCode::XR, node, chkResultReg, chkResultReg);
 
    TR::Node * pdloadNode = node->getFirstChild();
    TR::Register* pdReg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() &&
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() &&
            !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isVectorBCDEnv)
       {
@@ -6338,7 +6338,7 @@ J9::Z::TreeEvaluator::pdchkEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 
    generateRRInstruction(cg, TR::InstOpCode::IPM, node, chkResultReg, chkResultReg);
 
-   if(TR::Compiler->target.is64Bit())
+   if(cg->comp()->target().is64Bit())
       {
       generateRRInstruction(cg, TR::InstOpCode::LLGTR, node, chkResultReg, chkResultReg);
       generateRSInstruction(cg, TR::InstOpCode::SRLG, node, chkResultReg, chkResultReg, 28);
@@ -6381,7 +6381,7 @@ J9::Z::TreeEvaluator::pdaddEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = pdArithmeticVectorEvaluatorHelper(node, TR::InstOpCode::VAP, cg);
       }
@@ -6403,7 +6403,7 @@ J9::Z::TreeEvaluator::pdsubEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = pdArithmeticVectorEvaluatorHelper(node, TR::InstOpCode::VSP, cg);
       }
@@ -6451,7 +6451,7 @@ J9::Z::TreeEvaluator::pdArithmeticVectorEvaluatorHelper(TR::Node * node, TR::Ins
    int32_t immediateValue = node->getDecimalPrecision();
    TR_ASSERT_FATAL((immediateValue >> 8) == 0, "Decimal precision (%d) exceeds 1 byte", immediateValue);
 
-   if (TR::Compiler->target.cpu.getSupportsVectorPackedDecimalEnhancementFacility() && cg->getIgnoreDecimalOverflowException())
+   if (cg->comp()->target().cpu.getSupportsVectorPackedDecimalEnhancementFacility() && cg->getIgnoreDecimalOverflowException())
       {
       immediateValue |= 0x80;
       }
@@ -6619,7 +6619,7 @@ J9::Z::TreeEvaluator::pdmulEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() &&
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() &&
            !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isVectorBCDEnv)
       {
@@ -6718,7 +6718,7 @@ J9::Z::TreeEvaluator::pddivremEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register * reg = NULL;
 
    static char* isVectorBCDEnv = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() && !cg->comp()->getOption(TR_DisableVectorBCD) || isVectorBCDEnv)
       {
       reg = pddivremVectorEvaluatorHelper(node, cg);
       }
@@ -6918,7 +6918,7 @@ J9::Z::TreeEvaluator::pdshrEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register* targetReg = NULL;
 
    static char* isEnableVectorBCD = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() &&
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() &&
            !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isEnableVectorBCD)
       {
@@ -7129,14 +7129,14 @@ J9::Z::TreeEvaluator::pdModifyPrecisionEvaluator(TR::Node * node, TR::CodeGenera
    TR::Register* targetReg = NULL;
 
    static char* isEnableVectorBCD = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() &&
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() &&
            !cg->comp()->getOption(TR_DisableVectorBCD)
            || isEnableVectorBCD)
       {
       int32_t targetPrec = node->getDecimalPrecision();
       targetReg = cg->allocateRegister(TR_VRF);
 
-      if (TR::Compiler->target.cpu.getSupportsVectorPackedDecimalEnhancementFacility())
+      if (cg->comp()->target().cpu.getSupportsVectorPackedDecimalEnhancementFacility())
          {
          // Overflow exceptions can be ignored for z15 vector packed decimal VRI-i,f,g and VRR-i instructions. Given
          // this, VPSOP now becomes suitable for data truncations without incurring exceptions which eventually lead to
@@ -7186,7 +7186,7 @@ J9::Z::TreeEvaluator::pdshlEvaluator(TR::Node * node, TR::CodeGenerator * cg)
    TR::Register* targetReg = NULL;
 
    static char* isEnableVectorBCD = feGetEnv("TR_enableVectorBCD");
-   if(TR::Compiler->target.cpu.getSupportsVectorPackedDecimalFacility() &&
+   if(cg->comp()->target().cpu.getSupportsVectorPackedDecimalFacility() &&
            !cg->comp()->getOption(TR_DisableVectorBCD) ||
            isEnableVectorBCD)
       {
@@ -7489,7 +7489,7 @@ J9::Z::TreeEvaluator::generateVectorBinaryToPackedConversion(TR::Node * node, TR
 
    uint8_t decimalPrecision = node->getDecimalPrecision();
 
-   if (TR::Compiler->target.cpu.getSupportsVectorPackedDecimalEnhancementFacility() && cg->getIgnoreDecimalOverflowException())
+   if (cg->comp()->target().cpu.getSupportsVectorPackedDecimalEnhancementFacility() && cg->getIgnoreDecimalOverflowException())
       {
       decimalPrecision |= 0x80;
       }
@@ -7549,7 +7549,7 @@ J9::Z::TreeEvaluator::pdshlVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
       {
       TR_ASSERT_FATAL((shiftAmount >= -32 && shiftAmount <= 31), "TR::pdshl/r shift amount (%d )not in range [-32, 31]", shiftAmount);
 
-      if (TR::Compiler->target.cpu.getSupportsVectorPackedDecimalEnhancementFacility() && cg->getIgnoreDecimalOverflowException())
+      if (cg->comp()->target().cpu.getSupportsVectorPackedDecimalEnhancementFacility() && cg->getIgnoreDecimalOverflowException())
          {
          decimalPrecision |= 0x80;
          }
@@ -7594,7 +7594,7 @@ J9::Z::TreeEvaluator::pdshrVectorEvaluatorHelper(TR::Node *node, TR::CodeGenerat
    TR::Register* targetReg = cg->allocateRegister(TR_VRF);
    uint8_t decimalPrecision = node->getDecimalPrecision();
 
-   if (TR::Compiler->target.cpu.getSupportsVectorPackedDecimalEnhancementFacility() && cg->getIgnoreDecimalOverflowException())
+   if (cg->comp()->target().cpu.getSupportsVectorPackedDecimalEnhancementFacility() && cg->getIgnoreDecimalOverflowException())
       {
       decimalPrecision |= 0x80;
       }

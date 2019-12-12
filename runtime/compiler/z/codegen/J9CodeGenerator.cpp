@@ -129,7 +129,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
    cg->setSupportsCompactedLocals();
 
    // Enable Implicit NULL Checks on zLinux.  On zOS, page zero is readable, so we need explicit checks.
-   cg->setSupportsImplicitNullChecks(TR::Compiler->target.isLinux() && cg->getHasResumableTrapHandler() && !comp->getOption(TR_DisableZImplicitNullChecks));
+   cg->setSupportsImplicitNullChecks(cg->comp()->target().isLinux() && cg->getHasResumableTrapHandler() && !comp->getOption(TR_DisableZImplicitNullChecks));
 
    // Enable Monitor cache lookup for monent/monexit
    static char *disableMonitorCacheLookup = feGetEnv("TR_disableMonitorCacheLookup");
@@ -145,7 +145,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
    // Hardware clock, however, can be used for calculating System.nanoTime() on zLinux
    // since java/lang/System.nanoTime() returns an arbitrary number, rather than the current time
    // (see the java/lang/System.nanoTime() spec for details).
-   if (TR::Compiler->target.isZOS())
+   if (cg->comp()->target().isZOS())
       cg->setSupportsMaxPrecisionMilliTime();
 
    // Support BigDecimal Long Lookaside versioning optimizations.
@@ -155,8 +155,8 @@ J9::Z::CodeGenerator::CodeGenerator() :
    // RI support
    if (comp->getOption(TR_HWProfilerDisableRIOverPrivateLinkage)
        && comp->getPersistentInfo()->isRuntimeInstrumentationEnabled()
-       && TR::Compiler->target.cpu.getSupportsArch(TR::CPU::zEC12)
-       && TR::Compiler->target.cpu.getSupportsRuntimeInstrumentationFacility())
+       && cg->comp()->target().cpu.getSupportsArch(TR::CPU::zEC12)
+       && cg->comp()->target().cpu.getSupportsRuntimeInstrumentationFacility())
       {
       cg->setSupportsRuntimeInstrumentation();
       cg->setEnableRIOverPrivateLinkage(false);  // Disable RI over private linkage, since RION/OFF will be controlled over J2I / I2J.
@@ -175,7 +175,7 @@ J9::Z::CodeGenerator::CodeGenerator() :
 
    cg->getS390Linkage()->initS390RealRegisterLinkage();
 
-   const bool accessStaticsIndirectly = !TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) ||
+   const bool accessStaticsIndirectly = !cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10) ||
          comp->getOption(TR_DisableDirectStaticAccessOnZ) ||
          (comp->compileRelocatableCode() && !comp->getOption(TR_UseSymbolValidationManager));
 
@@ -212,7 +212,7 @@ J9::Z::CodeGenerator::createLinkage(TR_LinkageConventions lc)
          break;
 
       case TR_System:
-         if (TR::Compiler->target.isLinux())
+         if (self()->comp()->target().isLinux())
             linkage = new (self()->trHeapMemory()) J9::Z::zLinuxSystemLinkage(self());
          else
             linkage = new (self()->trHeapMemory()) J9::Z::zOSSystemLinkage(self());
@@ -483,7 +483,7 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
    // J9, Z
    //
    // On zseries, convert aconst to iaload of aconst 0 and move it to its own new treetop
-   if (TR::Compiler->target.cpu.isZ() && !self()->comp()->cg()->profiledPointersRequireRelocation() &&
+   if (self()->comp()->target().cpu.isZ() && !self()->comp()->cg()->profiledPointersRequireRelocation() &&
          node->getOpCodeValue() == TR::aconst && node->isClassUnloadingConst())
       {
       TR::Node * dummyNode = TR::Node::create(node, TR::aconst, 0);
@@ -509,7 +509,7 @@ J9::Z::CodeGenerator::lowerTreeIfNeeded(
 
    // J9, Z
    //
-   if (TR::Compiler->target.cpu.isZ() && node->getOpCodeValue() == TR::aloadi && node->isUnneededIALoad())
+   if (self()->comp()->target().cpu.isZ() && node->getOpCodeValue() == TR::aloadi && node->isUnneededIALoad())
       {
       ListIterator<TR_Pair<TR::Node, int32_t> > listIter(&_ialoadUnneeded);
       TR_Pair<TR::Node, int32_t> *ptr;
@@ -2038,7 +2038,7 @@ J9::Z::CodeGenerator::genSignCodeSetting(TR::Node *node, TR_PseudoRegister *targ
       case TR::ZonedDecimal:
       case TR::ZonedDecimalSignLeadingEmbedded:
          {
-         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) && isPacked && digitsToClear >= 3)
+         if (self()->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && isPacked && digitsToClear >= 3)
             {
             int32_t bytesToSet = (digitsToClear+1)/2;
             int32_t leftMostByte = 0;
@@ -2981,7 +2981,7 @@ J9::Z::CodeGenerator::canCopyWithOneOrTwoInstrs(char *lit, size_t size)
       }
 
    // z9 does not support these complex move instructions
-   if (!TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10) && size > 2)
+   if (!self()->comp()->target().cpu.getSupportsArch(TR::CPU::z10) && size > 2)
       {
       return false;
       }
@@ -3080,7 +3080,7 @@ J9::Z::CodeGenerator::useMoveImmediateCommon(TR::Node *node,
          break;
       case 2:  // MVI/MVI or MVHHI
          {
-         if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10))
+         if (self()->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
             {
             genMVHHI(destMR, node, (lit[0]<<8)|lit[1], cg);
             }
@@ -3602,7 +3602,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
    const intptrj_t vmCallHelperAddress = reinterpret_cast<intptrj_t>(helperSymRef->getMethodAddress());
 
    // Encode the address of the VM call helper
-   if (TR::Compiler->target.is64Bit())
+   if (self()->comp()->target().is64Bit())
       {
       cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, UPPER_4_BYTES(vmCallHelperAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);
@@ -3625,7 +3625,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperSnippet(TR::Instructi
 
    const intptrj_t j9MethodAddress = reinterpret_cast<intptrj_t>(methodSymbol->getResolvedMethod()->resolvedMethodAddress());
 
-   if (TR::Compiler->target.is64Bit())
+   if (self()->comp()->target().is64Bit())
       {
       cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, UPPER_4_BYTES(j9MethodAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);
@@ -3675,7 +3675,7 @@ TR::Instruction* J9::Z::CodeGenerator::generateVMCallHelperPrePrologue(TR::Instr
    cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, 0xdeafbeef, cursor);
 
    // Generated a pad for the body info address to keep offsets in PreprologueConst.hpp constant for simplicity
-   if (TR::Compiler->target.is64Bit())
+   if (self()->comp()->target().is64Bit())
       {
       cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, 0x00000000, cursor);
       cursor = generateDataConstantInstruction(self(), TR::InstOpCode::DC, node, 0x00000000, cursor);
@@ -3694,7 +3694,7 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
    if (self()->isMethodInAtomicLongGroup(method))
       return true;
 
-   if (!self()->comp()->compileRelocatableCode() && !self()->comp()->getOption(TR_DisableDFP) && TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility())
+   if (!self()->comp()->compileRelocatableCode() && !self()->comp()->getOption(TR_DisableDFP) && self()->comp()->target().cpu.getSupportsDecimalFloatingPointFacility())
       {
       if (method == TR::java_math_BigDecimal_DFPIntConstructor ||
           method == TR::java_math_BigDecimal_DFPLongConstructor ||
@@ -3880,7 +3880,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
          if (!methodSymbol->isNative())
             break;
 
-         if (TR::Compiler->target.is64Bit() && (!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
+         if (self()->comp()->target().is64Bit() && (!TR::Compiler->om.canGenerateArraylets() || node->isUnsafeGetPutCASCallOnNonArray()) && node->isSafeForCGToFastPathUnsafeCall())
             {
             resultReg = VMinlineCompareAndSwap(node, cg, TR::InstOpCode::CSG, IS_NOT_OBJ);
             return true;
@@ -3936,7 +3936,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLong_getAndIncrement:
       case TR::java_util_concurrent_atomic_AtomicLong_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLong_getAndDecrement:
-         if (cg->checkFieldAlignmentForAtomicLong() && TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
+         if (cg->checkFieldAlignmentForAtomicLong() && self()->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
             {
             // TODO: I'm not sure we need the z196 restriction here given that the function already checks for z196 and
             // has a compare and swap fallback path
@@ -3951,7 +3951,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
       case TR::java_util_concurrent_atomic_AtomicLongArray_getAndIncrement:
       case TR::java_util_concurrent_atomic_AtomicLongArray_decrementAndGet:
       case TR::java_util_concurrent_atomic_AtomicLongArray_getAndDecrement:
-         if (cg->checkFieldAlignmentForAtomicLong() && TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
+         if (cg->checkFieldAlignmentForAtomicLong() && self()->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
             {
             // TODO: I'm not sure we need the z196 restriction here given that the function already checks for z196 and
             // has a compare and swap fallback path
@@ -4124,7 +4124,7 @@ J9::Z::CodeGenerator::inlineDirectCall(
         }
 
    if (!comp->compileRelocatableCode() && !comp->getOption(TR_DisableDFP) &&
-       TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility())
+       self()->comp()->target().cpu.getSupportsDecimalFloatingPointFacility())
       {
       TR_ASSERT( methodSymbol, "require a methodSymbol for DFP on Z\n");
       if (methodSymbol)

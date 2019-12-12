@@ -663,7 +663,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
       }
 
    uint8_t *endOfData;
-      bool is64BitTarget = TR::Compiler->target.is64Bit();
+      bool is64BitTarget = self()->comp()->target().is64Bit();
       if (is64BitTarget)
       {
       endOfData = cursor + *(uint64_t *)cursor;

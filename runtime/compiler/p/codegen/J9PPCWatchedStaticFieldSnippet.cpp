@@ -39,7 +39,7 @@ uint8_t* TR::J9PPCWatchedStaticFieldSnippet::emitSnippetBody()
 
    // Insert the Snippet Address into TOC or patch the materalisation instructions
    // Insert into TOC 
-   if (TR::Compiler->target.is64Bit() && getTOCOffset() != PTOC_FULL_INDEX)
+   if (cg()->comp()->target().is64Bit() && getTOCOffset() != PTOC_FULL_INDEX)
       {
       TR_PPCTableOfConstants::setTOCSlot(getTOCOffset(), reinterpret_cast<uintptrj_t>(snippetLocation));
       }
@@ -49,7 +49,7 @@ uint8_t* TR::J9PPCWatchedStaticFieldSnippet::emitSnippetBody()
       int32_t *patchAddr = reinterpret_cast<int32_t *>(getLowerInstruction()->getBinaryEncoding());
       intptrj_t addrValue = reinterpret_cast<intptrj_t>(snippetLocation);
 
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          *patchAddr |= LO_VALUE(addrValue) & 0x0000ffff;
          addrValue = cg()->hiValue(addrValue);

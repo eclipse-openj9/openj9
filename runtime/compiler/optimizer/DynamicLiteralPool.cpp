@@ -363,7 +363,7 @@ bool TR_DynamicLiteralPool::transformNeeded(TR::Node *grandParent, TR::Node *par
    if (parentOpCode.isAdd() || parentOpCode.isSub() ||
        (parentOpCode.isBooleanCompare() && !parent->isTheVirtualGuardForAGuardedInlinedCall()))
       {
-      if (child->getOpCode().isLong() && (TR::Compiler->target.is32Bit()))
+      if (child->getOpCode().isLong() && (comp()->target().is32Bit()))
          return false; //avasilev: to be handled better
       else
          {
@@ -375,7 +375,7 @@ bool TR_DynamicLiteralPool::transformNeeded(TR::Node *grandParent, TR::Node *par
       }
    if (parentOpCode.isAnd() || parentOpCode.isOr() || parentOpCode.isXor() || parentOpCode.isNeg())
       {
-      if (child->getOpCode().isLong() && (TR::Compiler->target.is32Bit()))
+      if (child->getOpCode().isLong() && (comp()->target().is32Bit()))
          return false; // to be handled better
       else
          return (cg()->bitwiseOpNeedsLiteralFromPool(parent,child));

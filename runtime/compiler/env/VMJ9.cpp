@@ -2913,7 +2913,7 @@ bool TR_J9VMBase::supressInliningRecognizedInitialCallee(TR_CallSite* callsite, 
              * for java_lang_String_hashCodeImplCompressed instead of using a fallthrough.
              */
             if (!TR::Compiler->om.canGenerateArraylets() &&
-                TR::Compiler->target.cpu.isPower() && TR::Compiler->target.cpu.id() >= TR_PPCp8 && getPPCSupportsVSXRegisters() && !comp->compileRelocatableCode())
+                comp->target().cpu.isPower() && comp->target().cpu.id() >= TR_PPCp8 && getPPCSupportsVSXRegisters() && !comp->compileRelocatableCode())
                   {
                   dontInlineRecognizedMethod = true;
                   break;
@@ -3121,7 +3121,7 @@ TR_J9VMBase::refineColdness (TR::Node* node, bool& isCold)
 
 static TR::ILOpCodes udataIndirectLoadOpCode(TR::Compilation * comp)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       {
       return TR::lloadi;
       }
@@ -3133,7 +3133,7 @@ static TR::ILOpCodes udataIndirectLoadOpCode(TR::Compilation * comp)
 
 static TR::ILOpCodes udataIndirectStoreOpCode(TR::Compilation * comp)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       {
       return TR::lstorei;
       }
@@ -3145,7 +3145,7 @@ static TR::ILOpCodes udataIndirectStoreOpCode(TR::Compilation * comp)
 
 static TR::ILOpCodes udataConstOpCode(TR::Compilation * comp)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       {
       return TR::lconst;
       }
@@ -3157,7 +3157,7 @@ static TR::ILOpCodes udataConstOpCode(TR::Compilation * comp)
 
 static TR::ILOpCodes udataLoadOpCode(TR::Compilation * comp)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       {
       return TR::lload;
       }
@@ -3169,7 +3169,7 @@ static TR::ILOpCodes udataLoadOpCode(TR::Compilation * comp)
 
 static TR::ILOpCodes udataCmpEqOpCode(TR::Compilation * comp)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       {
       return TR::lcmpeq;
       }
@@ -3191,7 +3191,7 @@ TR_J9VMBase::lowerAsyncCheck(TR::Compilation * comp, TR::Node * root, TR::TreeTo
 
    TR::Node * loadNode  = TR::Node::createWithSymRef(root, udataLoadOpCode(comp), 0, stackOverflowSymRef);
    TR::Node * constNode = TR::Node::create(root, udataConstOpCode(comp), 0, 0);
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       {
       constNode->setLongInt(-1L);
       }
@@ -3557,7 +3557,7 @@ TR_J9VMBase::lowerMultiANewArray(TR::Compilation * comp, TR::Node * root, TR::Tr
    root->setNumChildren(3);
 
    static bool recreateRoot = feGetEnv("TR_LowerMultiANewArrayRecreateRoot") ? true : false;
-   if (!TR::Compiler->target.is64Bit() || recreateRoot || dims > 2 || secondDimConstNonZero)
+   if (!comp->target().is64Bit() || recreateRoot || dims > 2 || secondDimConstNonZero)
       TR::Node::recreate(root, TR::acall);
 
    return treeTop;
@@ -4007,9 +4007,9 @@ TR_J9VMBase::methodMayHaveBeenInterpreted(TR::Compilation *comp)
    {
    if ((!TR::Options::getCmdLineOptions()->getOption(TR_DisableDFP) &&
         !TR::Options::getAOTCmdLineOptions()->getOption(TR_DisableDFP)) &&
-       (TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
+       (comp->target().cpu.supportsDecimalFloatingPoint()
 #ifdef TR_TARGET_S390
-       || TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility()
+       || comp->target().cpu.getSupportsDecimalFloatingPointFacility()
 #endif
          ))
       {
@@ -4383,7 +4383,7 @@ TR::TreeTop* TR_J9VMBase::initializeClazzFlagsMonitorFields(TR::Compilation* com
       if (TR::Compiler->cls.classFlagReservableWordInitValue(ramClass))
          lwInitialValue = OBJECT_HEADER_LOCK_RESERVED;
 
-      if (!TR::Compiler->target.is64Bit() || generateCompressedLockWord())
+      if (!comp->target().is64Bit() || generateCompressedLockWord())
          {
          node = TR::Node::iconst(allocationNode, lwInitialValue);
          node = TR::Node::createWithSymRef(TR::istorei, 2, 2, allocationNode, node,
@@ -7180,7 +7180,7 @@ TR_J9VM::transformJavaLangClassIsArray(TR::Compilation * comp, TR::Node * callNo
 
    TR::Node * vftLoad = TR::Node::createWithSymRef(callNode, TR::aloadi, 1, jlClass, comp->getSymRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
 
-   if (TR::Compiler->target.is32Bit())
+   if (comp->target().is32Bit())
       {
       classFlag = TR::Node::createWithSymRef(callNode, TR::iloadi, 1, vftLoad, symRefTab->findOrCreateClassAndDepthFlagsSymbolRef());
       }
@@ -7714,7 +7714,7 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          {
          // these methods are static so there are no child to worry about
          int32_t intValue = 0;
-         if (TR::Compiler->target.is32Bit())
+         if (comp->target().is32Bit())
             intValue = 1;
          TR::Node::recreate(callNode, TR::iconst);
          callNode->setNumChildren(0);
@@ -8615,9 +8615,9 @@ TR_J9SharedCacheVM::supportAllocationInlining(TR::Compilation *comp, TR::Node *n
    if (comp->getOptions()->realTimeGC())
       return false;
 
-   if ((TR::Compiler->target.cpu.isX86() ||
-        TR::Compiler->target.cpu.isPower() ||
-        TR::Compiler->target.cpu.isZ()) &&
+   if ((comp->target().cpu.isX86() ||
+        comp->target().cpu.isPower() ||
+        comp->target().cpu.isZ()) &&
        !comp->getOption(TR_DisableAllocationInlining))
       return true;
 

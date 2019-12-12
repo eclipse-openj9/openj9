@@ -75,8 +75,8 @@ J9::Power::CodeGenerator::CodeGenerator() :
    cg->setSupportsPartialInlineOfMethodHooks();
    cg->setSupportsInliningOfTypeCoersionMethods();
 
-   if (TR::Compiler->target.cpu.id() >= TR_PPCp8 && TR::Compiler->target.cpu.getPPCSupportsVSX() &&
-      TR::Compiler->target.is64Bit() && !comp->getOption(TR_DisableFastStringIndexOf) &&
+   if (cg->comp()->target().cpu.id() >= TR_PPCp8 && cg->comp()->target().cpu.getPPCSupportsVSX() &&
+      cg->comp()->target().is64Bit() && !comp->getOption(TR_DisableFastStringIndexOf) &&
       !TR::Compiler->om.canGenerateArraylets())
       cg->setSupportsInlineStringIndexOf();
 
@@ -210,13 +210,13 @@ J9::Power::CodeGenerator::generateBinaryEncodingPrologue(
             {
             uintptrj_t JNIMethodAddress = (uintptrj_t)methodSymbol->getResolvedMethod()->startAddressForJNIMethod(comp);
             TR::Node *firstNode = comp->getStartTree()->getNode();
-            if (TR::Compiler->target.is64Bit())
+            if (comp->target().is64Bit())
                {
                int32_t highBits = (int32_t)(JNIMethodAddress>>32), lowBits = (int32_t)JNIMethodAddress;
                TR::Instruction *cursor = new (self()->trHeapMemory()) TR::PPCImmInstruction(TR::InstOpCode::dd, firstNode,
-                  TR::Compiler->target.cpu.isBigEndian()?highBits:lowBits, NULL, self());
+                  comp->target().cpu.isBigEndian()?highBits:lowBits, NULL, self());
                generateImmInstruction(self(), TR::InstOpCode::dd, firstNode,
-                  TR::Compiler->target.cpu.isBigEndian()?lowBits:highBits, cursor);
+                  comp->target().cpu.isBigEndian()?lowBits:highBits, cursor);
                }
             else
                {
@@ -311,7 +311,7 @@ bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::Recognized
 
    if (!self()->comp()->compileRelocatableCode() &&
        !self()->comp()->getOption(TR_DisableDFP) &&
-       TR::Compiler->target.cpu.supportsDecimalFloatingPoint())
+       self()->comp()->target().cpu.supportsDecimalFloatingPoint())
       {
       if (method == TR::java_math_BigDecimal_DFPIntConstructor ||
           method == TR::java_math_BigDecimal_DFPLongConstructor ||
@@ -371,7 +371,7 @@ bool J9::Power::CodeGenerator::suppressInliningOfRecognizedMethod(TR::Recognized
 bool
 J9::Power::CodeGenerator::enableAESInHardwareTransformations()
    {
-   if ( (TR::Compiler->target.cpu.getPPCSupportsAES() || (TR::Compiler->target.cpu.getPPCSupportsVMX() && TR::Compiler->target.cpu.getPPCSupportsVSX())) &&
+   if ( (self()->comp()->target().cpu.getPPCSupportsAES() || (self()->comp()->target().cpu.getPPCSupportsVMX() && self()->comp()->target().cpu.getPPCSupportsVSX())) &&
          !self()->comp()->getOption(TR_DisableAESInHardware))
       return true;
    else
@@ -388,12 +388,12 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
    bool optDisabled = false;
 
    if (node->getOpCodeValue() == TR::aloadi ||
-        (TR::Compiler->target.is64Bit() &&
+        (self()->comp()->target().is64Bit() &&
          comp()->useCompressedPointers() &&
          node->getOpCodeValue() == TR::l2a &&
          comp()->getMethodHotness() >= scorching &&
          TR::Compiler->om.compressedReferenceShiftOffset() == 0 &&
-         TR::Compiler->target.cpu.id() >= TR_PPCp6)
+         self()->comp()->target().cpu.id() >= TR_PPCp6)
       )
       {
       int32_t prefetchOffset = comp()->findPrefetchInfo(node);
@@ -439,7 +439,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
             deps->addPostCondition(tempReg, TR::RealRegister::NoReg);
             TR::addDependency(deps, condReg, TR::RealRegister::NoReg, TR_CCR, self());
 
-            if (TR::Compiler->target.is64Bit() && !comp()->useCompressedPointers())
+            if (self()->comp()->target().is64Bit() && !comp()->useCompressedPointers())
                {
                TR::MemoryReference *tempMR = new (self()->trHeapMemory()) TR::MemoryReference(targetRegister, prefetchOffset, 8, self());
                generateTrg1MemInstruction(self(), TR::InstOpCode::ld, node, tempReg, tempMR);
@@ -479,7 +479,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
          if (!disableHotFieldNextElementPrefetch)
             {
             // 32bit
-            if (TR::Compiler->target.is32Bit())
+            if (self()->comp()->target().is32Bit())
                {
                if (!(firstChild->getOpCodeValue() == TR::aiadd &&
                      firstChild->getFirstChild() &&
@@ -520,7 +520,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
                   }
                }
             // 64bit CR
-            else if (TR::Compiler->target.is64Bit() && comp()->useCompressedPointers())
+            else if (self()->comp()->target().is64Bit() && comp()->useCompressedPointers())
                {
                if (!(firstChild->getOpCodeValue() == TR::iu2l &&
                      firstChild->getFirstChild() &&
@@ -553,7 +553,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
                {
                TR::Register *temp3Reg = self()->allocateRegister();
                static bool prefetch2Ahead = (feGetEnv("TR_Prefetch2Ahead") != NULL);
-               if (TR::Compiler->target.is64Bit() && !comp()->useCompressedPointers())
+               if (self()->comp()->target().is64Bit() && !comp()->useCompressedPointers())
                   {
                   if (!prefetch2Ahead)
                      generateTrg1MemInstruction(self(), TR::InstOpCode::ld, node, temp3Reg, new (self()->trHeapMemory()) TR::MemoryReference(pointerReg, (int32_t)TR::Compiler->om.sizeofReferenceField(), 8, self()));
@@ -616,7 +616,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
       }
 
    if (node->getOpCodeValue() == TR::aloadi ||
-         (TR::Compiler->target.is64Bit() &&
+         (self()->comp()->target().is64Bit() &&
           comp()->useCompressedPointers() &&
           (node->getOpCodeValue() == TR::iloadi || node->getOpCodeValue() == TR::irdbari) &&
           comp()->getMethodHotness() >= hot))
@@ -626,7 +626,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
       if (!disableIteratorPrefetch)
          {
          // 32bit
-         if (TR::Compiler->target.is32Bit())
+         if (self()->comp()->target().is32Bit())
             {
             if (!(firstChild &&
                 firstChild->getOpCodeValue() == TR::aiadd &&
@@ -639,7 +639,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
                }
             }
          // 64bit cr
-         else if (TR::Compiler->target.is64Bit() && comp()->useCompressedPointers())
+         else if (self()->comp()->target().is64Bit() && comp()->useCompressedPointers())
             {
             if (!(firstChild &&
                 firstChild->getOpCodeValue() == TR::aladd &&
@@ -704,7 +704,7 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
             {
             TR::Register *tempReg = self()->allocateRegister();
             generateTrg1Src1ImmInstruction(self(), TR::InstOpCode::addi, node, tempReg, indexReg, (int32_t)(prefetchElementStride * TR::Compiler->om.sizeofReferenceField()));
-            if (TR::Compiler->target.is64Bit() && !comp()->useCompressedPointers())
+            if (self()->comp()->target().is64Bit() && !comp()->useCompressedPointers())
                {
                TR::MemoryReference *targetMR = new (self()->trHeapMemory()) TR::MemoryReference(baseReg, tempReg, 8, self());
                generateTrg1MemInstruction(self(), TR::InstOpCode::ld, node, tempReg, targetMR);
@@ -728,9 +728,9 @@ J9::Power::CodeGenerator::insertPrefetchIfNecessary(TR::Node *node, TR::Register
       }
    else if (node->getOpCodeValue() == TR::awrtbari &&
             comp()->getMethodHotness() >= scorching &&
-            TR::Compiler->target.cpu.id() >= TR_PPCp6 &&
-              (TR::Compiler->target.is32Bit() ||
-                (TR::Compiler->target.is64Bit() &&
+            self()->comp()->target().cpu.id() >= TR_PPCp6 &&
+              (self()->comp()->target().is32Bit() ||
+                (self()->comp()->target().is64Bit() &&
                  comp()->useCompressedPointers() &&
                  TR::Compiler->om.compressedReferenceShiftOffset() == 0
                 )

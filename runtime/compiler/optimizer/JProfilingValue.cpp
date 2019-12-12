@@ -489,7 +489,7 @@ TR_JProfilingValue::addProfilingTrees(
    // Common types used in calculation
    TR::DataType counterType = TR::Int32;
    TR::DataType lockType    = TR::Int16;
-   TR::DataType systemType  = TR::Compiler->target.is64Bit() ? TR::Int64 : TR::Int32;
+   TR::DataType systemType  = comp->target().is64Bit() ? TR::Int64 : TR::Int32;
 
    // Type to use in calculations and table access
    TR::DataType roundedType    = value->getType();
@@ -940,7 +940,7 @@ TR_JProfilingValue::incrementMemory(TR::Compilation *comp, TR::DataType counterT
 TR::Node *
 TR_JProfilingValue::systemConst(TR::Node *example, uint64_t value)
    {
-   TR::ILOpCodes constOp = TR::Compiler->target.is64Bit() ? TR::lconst : TR::iconst;
+   TR::ILOpCodes constOp = TR::comp()->target().is64Bit() ? TR::lconst : TR::iconst;
    return TR::Node::create(example, constOp, 0, value);
    }
 
@@ -978,8 +978,8 @@ TR_JProfilingValue::computeHash(TR::Compilation *comp, TR_AbstractHashTableProfi
    if (!baseAddr)
       baseAddr = TR::Node::aconst(value, (uintptr_t) table);
 
-   TR::ILOpCodes addSys   = TR::Compiler->target.is64Bit() ? TR::aladd : TR::aiadd;
-   TR::ILOpCodes constSys = TR::Compiler->target.is64Bit() ? TR::lconst : TR::iconst;
+   TR::ILOpCodes addSys   = comp->target().is64Bit() ? TR::aladd : TR::aiadd;
+   TR::ILOpCodes constSys = comp->target().is64Bit() ? TR::lconst : TR::iconst;
 
    TR::Node *hash = NULL;
    if (table->getHashType() == BitIndexHash)

@@ -46,7 +46,7 @@ TR::X86RecompilationSnippet::X86RecompilationSnippet(TR::LabelSymbol    *lab,
                                                          TR::CodeGenerator *cg)
    : TR::Snippet(cg, node, lab, true)
    {
-   setDestination(cg->symRefTab()->findOrCreateRuntimeHelper(TR::Compiler->target.is64Bit()? TR_AMD64countingRecompileMethod : TR_IA32countingRecompileMethod, false, false, false));
+   setDestination(cg->symRefTab()->findOrCreateRuntimeHelper(cg->comp()->target().is64Bit()? TR_AMD64countingRecompileMethod : TR_IA32countingRecompileMethod, false, false, false));
    }
 
 uint32_t TR::X86RecompilationSnippet::getLength(int32_t estimatedSnippetStart)

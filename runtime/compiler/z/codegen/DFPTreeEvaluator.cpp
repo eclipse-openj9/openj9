@@ -207,7 +207,7 @@ genLoadDFP(
       fprRegister = cg->allocateRegister(TR_FPR);
 
       // move it from GPR to FPR
-      if (TR::Compiler->target.cpu.getSupportsFloatingPointExtensionFacility())
+      if (cg->comp()->target().cpu.getSupportsFloatingPointExtensionFacility())
          {
          generateRRInstruction(cg, TR::InstOpCode::LDGR, node, fprRegister, newRegister);
          }
@@ -1879,7 +1879,7 @@ fixedToDFP(TR::Node * node, TR::CodeGenerator * cg)
 
    TR::Register *tempReg = cg->allocateRegister();
    TR::RegisterDependencyConditions * deps = NULL;
-   if (TR::Compiler->target.is32Bit())
+   if (cg->comp()->target().is32Bit())
       {
       deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(0, 1, cg);
       deps->addPostCondition(tempReg, TR::RealRegister::GPR0);

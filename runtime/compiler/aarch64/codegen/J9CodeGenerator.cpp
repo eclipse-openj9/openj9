@@ -100,7 +100,7 @@ J9::ARM64::CodeGenerator::encodeHelperBranchAndLink(TR::SymbolReference *symRef,
       {
       target = TR::CodeCacheManager::instance()->findHelperTrampoline(symRef->getReferenceNumber(), (void *)cursor);
 
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinUnconditionalBranchImmediateRange(target, (intptrj_t)cursor),
+      TR_ASSERT_FATAL(cg->comp()->target().cpu.isTargetWithinUnconditionalBranchImmediateRange(target, (intptrj_t)cursor),
                       "Target address is out of range");
       }
 

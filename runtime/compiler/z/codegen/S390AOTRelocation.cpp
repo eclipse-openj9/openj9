@@ -107,7 +107,7 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
    else if (_reloType==TR_ConstantPool)
       {
       AOTcgDiag1(  comp, "TR_ConstantPool cursor=%x\n", cursor);
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          {
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) *((uint64_t*) cursor), (uint8_t *)_inlinedSiteIndex, TR_ConstantPool, cg),
                               file, line, node);
@@ -136,7 +136,7 @@ void TR::S390EncodingRelocation::addRelocation(TR::CodeGenerator *cg, uint8_t *c
    else if (_reloType==TR_BodyInfoAddress)
       {
       AOTcgDiag1(  comp, "TR_BodyInfoAddress cursor=%x\n", cursor);
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          {
          cg->addExternalRelocation(new (cg->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *) *((uint64_t*) cursor), TR_BodyInfoAddress, cg),
                               file, line, node);

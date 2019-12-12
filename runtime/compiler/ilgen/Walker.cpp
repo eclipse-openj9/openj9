@@ -2043,7 +2043,7 @@ TR_J9ByteCodeIlGenerator::calculateElementAddressInContiguousArray(int32_t width
       {
       loadConstant(TR::iconst, shift);
       // generate a TR::aladd instead if required
-      if (TR::Compiler->target.is64Bit())
+      if (comp()->target().is64Bit())
          {
          // stack is now ...index,shift<===
          TR::Node *second = pop();
@@ -2054,7 +2054,7 @@ TR_J9ByteCodeIlGenerator::calculateElementAddressInContiguousArray(int32_t width
       else
          genBinary(TR::ishl);
       }
-   if (TR::Compiler->target.is64Bit())
+   if (comp()->target().is64Bit())
       {
       if (headerSize > 0)
          {
@@ -2096,7 +2096,7 @@ void
 TR_J9ByteCodeIlGenerator::calculateIndexFromOffsetInContiguousArray(int32_t width, int32_t headerSize)
    {
 
-   if (TR::Compiler->target.is64Bit())
+   if (comp()->target().is64Bit())
       {
       if (headerSize > 0)
          {
@@ -2118,7 +2118,7 @@ TR_J9ByteCodeIlGenerator::calculateIndexFromOffsetInContiguousArray(int32_t widt
    if (shift)
       {
       loadConstant(TR::iconst, shift);
-      if (TR::Compiler->target.is64Bit())
+      if (comp()->target().is64Bit())
          {
          genBinary(TR::lshr);
          genUnary(TR::l2i);
@@ -2530,13 +2530,13 @@ TR_J9ByteCodeIlGenerator::genIfOneOperand(TR::ILOpCodes nodeop)
          loadConstant(TR::iconst, 0);
          break;
       case J9BCifnull:
-         if (TR::Compiler->target.is64Bit())
+         if (comp()->target().is64Bit())
             loadConstant(TR::aconst, (int64_t)0);
          else
             loadConstant(TR::aconst, (int32_t)0);
          break;
       case J9BCifnonnull:
-         if (TR::Compiler->target.is64Bit())
+         if (comp()->target().is64Bit())
             loadConstant(TR::aconst, (int64_t)0);
          else
             loadConstant(TR::aconst, (int32_t)0);
@@ -3387,7 +3387,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
             opcode = TR::ihbit;
             break;
          case TR::java_lang_Integer_lowestOneBit:
-            if(TR::Compiler->target.cpu.isX86())
+            if(comp()->target().cpu.isX86())
                opcode = TR::ilbit;
             else
                opcode = TR::BadILOp;
@@ -3399,7 +3399,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
             opcode = TR::inotz;
             break;
          case TR::java_lang_Integer_bitCount:
-            if (TR::Compiler->target.cpu.hasPopulationCountInstruction())
+            if (comp()->target().cpu.hasPopulationCountInstruction())
                opcode = TR::ipopcnt;
             else
                opcode = TR::BadILOp;
@@ -3408,7 +3408,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
             opcode = TR::lhbit;
             break;
          case TR::java_lang_Long_lowestOneBit:
-            if(TR::Compiler->target.cpu.isX86())
+            if(comp()->target().cpu.isX86())
                opcode = TR::llbit;
             else
                opcode = TR::BadILOp;
@@ -3420,7 +3420,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
             opcode = TR::lnotz;
             break;
          case TR::java_lang_Long_bitCount:
-            if (TR::Compiler->target.cpu.hasPopulationCountInstruction())
+            if (comp()->target().cpu.hasPopulationCountInstruction())
                opcode = TR::lpopcnt;
             else
                opcode = TR::BadILOp;
@@ -3685,7 +3685,7 @@ TR_J9ByteCodeIlGenerator::genInvoke(TR::SymbolReference * symRef, TR::Node *indi
              if (offset)
                {
                TR::Node * n ;
-               if (TR::Compiler->target.is32Bit() ||
+               if (comp()->target().is32Bit() ||
                    (int32_t)(((uint32_t)((uint64_t)offset >> 32)) & 0xffffffff) == (uint32_t)0)
                   {
                   n = TR::Node::create(TR::iconst, 0, offset);
@@ -3850,8 +3850,8 @@ break
 
    if(symbol->getRecognizedMethod() == TR::com_ibm_dataaccess_DecimalData_JITIntrinsicsEnabled)
       {
-      bool isZLinux = TR::Compiler->target.isLinux() && TR::Compiler->target.cpu.isZ();
-      int32_t constVal = (TR::Compiler->target.isZOS() || isZLinux) &&
+      bool isZLinux = comp()->target().isLinux() && comp()->target().cpu.isZ();
+      int32_t constVal = (comp()->target().isZOS() || isZLinux) &&
               !comp()->getOption(TR_DisablePackedDecimalIntrinsics) ? 1 : 0;
 
       loadConstant(TR::iconst, constVal);
@@ -3862,10 +3862,10 @@ break
       {
       bool dfpbd = comp()->getOption(TR_DisableHysteresis);
       bool nodfpbd =  comp()->getOption(TR_DisableDFP);
-      bool isPOWERDFP = TR::Compiler->target.cpu.isPower() && TR::Compiler->target.cpu.supportsDecimalFloatingPoint();
+      bool isPOWERDFP = comp()->target().cpu.isPower() && comp()->target().cpu.supportsDecimalFloatingPoint();
       bool is390DFP =
 #ifdef TR_TARGET_S390
-         TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility();
+         comp()->target().cpu.isZ() && comp()->target().cpu.getSupportsDecimalFloatingPointFacility();
 #else
          false;
 #endif
@@ -4037,7 +4037,7 @@ break
        if (fold && indirectCallFirstChild && isCall32bit)
           {
           // fold away the check if possible
-          int32_t value = TR::Compiler->target.is64Bit() ? 0 : 1;
+          int32_t value = comp()->target().is64Bit() ? 0 : 1;
           loadConstant(TR::iconst, value);
           // cleanup the receiver because its not going to be used anymore
           //
@@ -4180,7 +4180,7 @@ break
 
    if (!comp()->getOption(TR_DisableSIMDDoubleMaxMin))
       {
-      bool platformSupported = TR::Compiler->target.cpu.isZ();
+      bool platformSupported = comp()->target().cpu.isZ();
       bool vecInstrAvailable = cg()->getSupportsVectorRegisters();
 
       if (platformSupported && vecInstrAvailable &&
@@ -4486,7 +4486,7 @@ break
       TR::Node* obj = callNode->getChild(1);
       TR::Node* vftLoad = TR::Node::createWithSymRef(callNode, TR::aloadi, 1, obj, symRefTab()->findOrCreateVftSymbolRef());
 
-      if (TR::Compiler->target.is32Bit())
+      if (comp()->target().is32Bit())
          {
          resultNode = TR::Node::createWithSymRef(callNode, TR::iloadi, 1, vftLoad, symRefTab()->findOrCreateClassAndDepthFlagsSymbolRef());
          }
@@ -4515,7 +4515,7 @@ break
       TR::Node* jlClass = callNode->getChild(1);
       TR::Node* j9Class = TR::Node::createWithSymRef(callNode, TR::aloadi, 1, jlClass, symRefTab()->findOrCreateClassFromJavaLangClassSymbolRef());
 
-      if (TR::Compiler->target.is32Bit())
+      if (comp()->target().is32Bit())
          {
          resultNode = TR::Node::createWithSymRef(callNode, TR::iloadi, 1, j9Class, symRefTab()->findOrCreateInitializeStatusFromClassSymbolRef());
          }
@@ -4939,9 +4939,9 @@ TR_J9ByteCodeIlGenerator::loadInstance(int32_t cpIndex)
    // performed only when DFP isn't disabled, and the target
    // is DFP enabled (i.e. Power6, zSeries6)
    if (!comp()->compileRelocatableCode() && !comp()->getOption(TR_DisableDFP) &&
-       ((TR::Compiler->target.cpu.isPower() && TR::Compiler->target.cpu.supportsDecimalFloatingPoint())
+       ((comp()->target().cpu.isPower() && comp()->target().cpu.supportsDecimalFloatingPoint())
 #ifdef TR_TARGET_S390
-         || (TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility())
+         || (comp()->target().cpu.isZ() && comp()->target().cpu.getSupportsDecimalFloatingPointFacility())
 #endif
          ))
       {
@@ -5030,7 +5030,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
             }
          case TR::Symbol::Com_ibm_jit_JITHelpers_IS_32_BIT:
             {
-            int32_t constValue = TR::Compiler->target.is64Bit() ? 0 : 1;
+            int32_t constValue = comp()->target().is64Bit() ? 0 : 1;
             loadConstant(TR::iconst, constValue);
             return;
             }
@@ -5274,7 +5274,7 @@ TR_J9ByteCodeIlGenerator::loadStatic(int32_t cpIndex)
          default:         loadConstant(TR::iconst, *(int32_t *)p); break;
          }
       }
-   else if (symbol->isVolatile() && type == TR::Int64 && isResolved && TR::Compiler->target.is32Bit() &&
+   else if (symbol->isVolatile() && type == TR::Int64 && isResolved && comp()->target().is32Bit() &&
             !comp()->cg()->getSupportsInlinedAtomicLongVolatiles() && 0)
       {
       TR::SymbolReference * volatileLongSymRef =
@@ -6036,7 +6036,7 @@ TR_J9ByteCodeIlGenerator::genNewArray(int32_t typeIndex)
 
       TR::Node *arrayRefNode;
       int32_t hdrSize = (int32_t) TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-      bool is64BitTarget = TR::Compiler->target.is64Bit();
+      bool is64BitTarget = comp()->target().is64Bit();
 
       if (is64BitTarget)
          {
@@ -6460,7 +6460,7 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
 
       node = TR::Node::createWithSymRef(comp()->il.opCodeForDirectWriteBarrier(type), 2, 2, value, pop(), symRef);
       }
-   else if (symbol->isVolatile() && type == TR::Int64 && !symRef->isUnresolved() && TR::Compiler->target.is32Bit() &&
+   else if (symbol->isVolatile() && type == TR::Int64 && !symRef->isUnresolved() && comp()->target().is32Bit() &&
             !comp()->cg()->getSupportsInlinedAtomicLongVolatiles() && 0)
       {
       TR::SymbolReference *volatileLongSymRef =

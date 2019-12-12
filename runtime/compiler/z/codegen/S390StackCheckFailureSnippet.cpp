@@ -69,7 +69,7 @@ TR::S390StackCheckFailureSnippet::emitSnippetBody()
    uint8_t * callSite = cursor;
    uint8_t * returnLocationInSnippet;
    uint32_t rEP = (uint32_t) cg()->getEntryPointRegister() - 1;
-   bool is64BitTarget = TR::Compiler->target.is64Bit();
+   bool is64BitTarget = cg()->comp()->target().is64Bit();
    TR::Linkage * linkage = cg()->getS390Linkage();
    TR::Compilation* comp = cg()->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg()->fe());
@@ -362,7 +362,7 @@ uint32_t
 TR::S390StackCheckFailureSnippet::getLength(int32_t)
    {
    int32_t size = 0;
-   bool is64BitTarget = TR::Compiler->target.is64Bit();
+   bool is64BitTarget = cg()->comp()->target().is64Bit();
    TR::Linkage * linkage = cg()->getS390Linkage();
 
    //  We need the extra RA store/reload in two cases:
@@ -427,7 +427,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::S390StackCheckFailureSnippet * snippet)
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, "Stack Check Failure/Overflow  Snippet",
       getName(snippet->getDestination()));
 
-   bool is64BitTarget = TR::Compiler->target.is64Bit();
+   bool is64BitTarget = _comp->target().is64Bit();
    bool requireRAStore = !linkage->getRaContextRestoreNeeded();
    bool requireRALoad  = requireRAStore;
 

@@ -110,7 +110,7 @@ TR_Debug::print(J9JITExceptionTable * data, TR_ResolvedMethod * feMethod, bool f
             method = (J9Method *) inlinedCallSite->_methodInfo;
             }
 
-         if (TR::Compiler->target.is64Bit())
+         if (_comp->target().is64Bit())
             {
             trfprintf(_file, "method=\"%016llx\" ", method);
             cursor += 8;

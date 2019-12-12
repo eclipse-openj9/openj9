@@ -42,7 +42,7 @@
 
 bool TR::X86PicDataSnippet::shouldEmitJ2IThunkPointer()
    {
-   if (!TR::Compiler->target.is64Bit())
+   if (!cg()->comp()->target().is64Bit())
       return false; // no j2i thunks on 32-bit
 
    if (!isInterface())
@@ -75,7 +75,7 @@ uint8_t *TR::X86PicDataSnippet::encodeConstantPoolInfo(uint8_t *cursor)
    if (_hasJ2IThunkInPicData)
       {
       TR_ASSERT(
-         TR::Compiler->target.is64Bit(),
+         cg()->comp()->target().is64Bit(),
          "expecting a 64-bit target for thunk relocations");
 
       auto info =
@@ -102,7 +102,7 @@ uint8_t *TR::X86PicDataSnippet::encodeConstantPoolInfo(uint8_t *cursor)
       }
    else if (_thunkAddress)
       {
-      TR_ASSERT(TR::Compiler->target.is64Bit(), "expecting a 64-bit target for thunk relocations");
+      TR_ASSERT(cg()->comp()->target().is64Bit(), "expecting a 64-bit target for thunk relocations");
       cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor,
                                                                              *(uint8_t **)cursor,
                                                                              (uint8_t *)inlinedSiteIndex,
@@ -233,7 +233,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
       *(uintptrj_t*)cursor = 0;
       cursor += sizeof(uintptrj_t);
 
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          // REX+MOV of MOVRegImm64 instruction
          //
@@ -277,7 +277,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
          intptrj_t entryPoint = ((intptrj_t)cursor +
                                  ((3 * sizeof(uintptrj_t)) +
                                   (hasJ2IThunkInPicData() ? sizeof(uintptrj_t) : 0) +
-                                  (TR::Compiler->target.is64Bit() ? 4 : 1)));
+                                  (cg()->comp()->target().is64Bit() ? 4 : 1)));
 
          intptrj_t requiredEntryPoint =
             (entryPoint + (cg()->getLowestCommonCodePatchingAlignmentBoundary()-1) &
@@ -289,7 +289,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
          // directMethod (which is mutable) will be aligned simply as a
          // consequence of the alignment required for patching the code that
          // immediately follows the VPIC data.
-         if (TR::Compiler->target.is64Bit())
+         if (cg()->comp()->target().is64Bit())
             {
             // REX prefix of MOVRegImm64 instruction
             //
@@ -334,7 +334,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
          *(uintptrj_t *)cursor = 0;
          cursor += sizeof(uintptrj_t);
 
-         if (TR::Compiler->target.is64Bit())
+         if (cg()->comp()->target().is64Bit())
             {
             // DD/DQ j2iThunk
             cursor = encodeJ2IThunkPointer(cursor);
@@ -372,7 +372,7 @@ uint8_t *TR::X86PicDataSnippet::emitSnippetBody()
 
       // Add padding after the call to snippet to hold the eventual indirect call instruction.
       //
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          *(uint16_t *)cursor = 0;
          cursor += 2;
@@ -468,7 +468,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
       {
       // TODO: clean this up!
       //
-      bufferPos -= TR::Compiler->target.is64Bit() ? 4 : 1;
+      bufferPos -= _comp->target().is64Bit() ? 4 : 1;
       bufferPos -= 2 * sizeof(uintptrj_t);
       if (snippet->unresolvedDispatch())
          {
@@ -546,7 +546,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
             snippet->hasJ2IThunkInPicData() ? " or direct J9Method" : "");
          bufferPos += sizeof(uintptrj_t);
 
-         if (TR::Compiler->target.is64Bit())
+         if (_comp->target().is64Bit())
             {
             // REX+MOV of MOVRegImm64 instruction
             //
@@ -601,7 +601,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
          {
          const char *op = (sizeof(uintptrj_t) == 4) ? "DD" : "DQ";
 
-         if (TR::Compiler->target.is64Bit())
+         if (_comp->target().is64Bit())
             {
             printPrefix(pOutFile, NULL, bufferPos, 1);
             trfprintf(pOutFile, "%s\t%02x\t\t\t\t\t\t\t\t%s REX of MOVRegImm64",
@@ -668,7 +668,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
             commentString());
          bufferPos += sizeof(uintptrj_t);
 
-         if (TR::Compiler->target.is64Bit())
+         if (_comp->target().is64Bit())
             {
             printPrefix(pOutFile, NULL, bufferPos, sizeof(uintptrj_t));
             trfprintf(
@@ -681,14 +681,14 @@ TR_Debug::print(TR::FILE *pOutFile, TR::X86PicDataSnippet *snippet)
             }
          }
 
-      if (TR::Compiler->target.is64Bit())
+      if (_comp->target().is64Bit())
          printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet));
 
       // Call through vtable.
       //
       int32_t length;
 
-      if (TR::Compiler->target.is64Bit())
+      if (_comp->target().is64Bit())
          {
          length = 7;
          if (callModRM == 0x94)
@@ -724,14 +724,14 @@ uint32_t TR::X86PicDataSnippet::getLength(int32_t estimatedSnippetStart)
       return   5                                 // Lookup dispatch
              + 5                                 // JMP done
              + (4 * sizeof(uintptrj_t))          // Resolve slots
-             + (TR::Compiler->target.is64Bit() ? 2 : 1)   // ModRM or REX+MOV
+             + (cg()->comp()->target().is64Bit() ? 2 : 1)   // ModRM or REX+MOV
              + (_hasJ2IThunkInPicData ? sizeof(uintptrj_t) : 0) // j2i thunk pointer
              + sizeof (uintptrj_t) - 1;          // alignment
       }
    else
       {
       return   6                                 // CALL [Mem] (pessimistically assume a SIB is needed)
-             + (TR::Compiler->target.is64Bit() ? 2 : 0)   // REX for CALL + SIB for CALL (64-bit)
+             + (cg()->comp()->target().is64Bit() ? 2 : 0)   // REX for CALL + SIB for CALL (64-bit)
              + 5                                 // JMP done
              + (2 * sizeof(uintptrj_t))          // cpAddr, cpIndex
              + (unresolvedDispatch() ? sizeof(uintptrj_t) : 0)  // directMethod
@@ -746,7 +746,7 @@ uint32_t TR::X86PicDataSnippet::getLength(int32_t estimatedSnippetStart)
              // -----------
              //  1 (ModRM for CMP)
              //
-             + (TR::Compiler->target.is64Bit() ? 4 : 1)
+             + (cg()->comp()->target().is64Bit() ? 4 : 1)
              + cg()->getLowestCommonCodePatchingAlignmentBoundary()-1;
       }
    }
@@ -785,14 +785,14 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
    bool needToSetCodeLocation = true;
    bool isJitInduceOSRCall    = false;
 
-   if (TR::Compiler->target.is64Bit() &&
+   if (cg()->comp()->target().is64Bit() &&
        methodSymbol->isHelper() &&
        methodSymRef->isOSRInductionHelper())
       {
       isJitInduceOSRCall = true;
       }
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().is64Bit())
       {
       // Backspill register linkage arguments to the stack.
       //
@@ -837,7 +837,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
       //
 
       TR_ASSERT(!isJitInduceOSRCall || !forceUnresolvedDispatch, "calling jitInduceOSR is not supported yet under AOT\n");
-      cursor = alignCursorForCodePatching(cursor, TR::Compiler->target.is64Bit());
+      cursor = alignCursorForCodePatching(cursor, cg()->comp()->target().is64Bit());
 
       if (comp->getOption(TR_EnableHCR))
          {
@@ -868,7 +868,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
                                   __FILE__, __LINE__, getNode());
       cursor += 4;
 
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          // 5 bytes of zeros to fill out the MOVRegImm64 instruction.
          //
@@ -954,7 +954,7 @@ uint8_t *TR::X86CallSnippet::emitSnippetBody()
          intptrj_t ramMethod = (intptr_t)methodSymbol->getMethodAddress();
 #endif /* defined(JITSERVER_SUPPORT) */
 
-         if (TR::Compiler->target.is64Bit())
+         if (cg()->comp()->target().is64Bit())
             {
             // MOV rdi, Imm64
             //
@@ -1018,7 +1018,7 @@ uint32_t TR::X86CallSnippet::getLength(int32_t estimatedSnippetStart)
    TR::SymbolReference *methodSymRef = _realMethodSymbolReference ? _realMethodSymbolReference : getNode()->getSymbolReference();
    TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().is64Bit())
       {
       TR::Linkage *linkage = cg()->getLinkage(methodSymbol->getLinkageConvention());
 
@@ -1036,14 +1036,14 @@ uint32_t TR::X86CallSnippet::getLength(int32_t estimatedSnippetStart)
       {
       // +7 accounts for maximum length alignment padding.
       //
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          length += (7+10+5+2+8+4);
       else
          length += (7+5+3+5+2+4+4);
       }
    else
       {
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          length += (10+5);
       else
          length += (5+5);

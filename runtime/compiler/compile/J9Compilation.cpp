@@ -473,7 +473,7 @@ bool
 J9::Compilation::useCompressedPointers()
    {
    //FIXME: probably have to query the GC as well
-   return (TR::Compiler->target.is64Bit() && TR::Options::useCompressedPointers());
+   return (self()->target().is64Bit() && TR::Options::useCompressedPointers());
    }
 
 

@@ -2087,7 +2087,7 @@ TR_RelocationRecordInlinedAllocation::applyRelocation(TR_RelocationRuntime *relo
       uint8_t *destination = (uint8_t *) (reloLocation + (UDATA) branchOffset(reloTarget));
 
       RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: inlined alloc not OK, patch destination %p\n", destination);
-      _patchVirtualGuard(reloLocation, destination, TR::Compiler->target.isSMP());
+      _patchVirtualGuard(reloLocation, destination, reloRuntime->comp()->target().isSMP());
       reloRuntime->incNumFailedAllocInlinedRelos();
       }
    else

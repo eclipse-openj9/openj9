@@ -113,7 +113,7 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
 
    bool constLoadNeedsLiteralFromPool(TR::Node *node);
 
-   bool supportsTrapsInTMRegion(){ return TR::Compiler->target.isZOS();}
+   bool supportsTrapsInTMRegion(){ return J9::Z::CodeGenerator::comp()->target().isZOS(); }
 
    using J9::CodeGenerator::addAllocatedRegister;
    void addAllocatedRegister(TR_PseudoRegister * temp);

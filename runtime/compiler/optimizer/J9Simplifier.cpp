@@ -766,7 +766,7 @@ J9::Simplifier::simplifyiOrPatterns(TR::Node *node)
        (byte3 = getUnsafeIorByteChild(firstChild->getFirstChild(), TR::bu2i, 256)) &&
        (byte4 = getLastUnsafeIorByteChild(node->getSecondChild())))
       {
-      if (TR::Compiler->target.cpu.isLittleEndian())
+      if (comp()->target().cpu.isLittleEndian())
          {
          temp = byte1, byte1 = byte4, byte4 = temp;
          temp = byte2, byte2 = byte3, byte3 = temp;
@@ -795,7 +795,7 @@ J9::Simplifier::simplifyiOrPatterns(TR::Node *node)
    firstChild = node->getFirstChild();
    secondChild = node->getSecondChild();
    if (!disableIORByteSwap &&
-       !TR::Compiler->target.cpu.isBigEndian() &&  // the bigEndian case needs more thought
+       !comp()->target().cpu.isBigEndian() &&  // the bigEndian case needs more thought
        secondChild->getOpCodeValue() == TR::ior)
       {
       /*
@@ -860,7 +860,7 @@ J9::Simplifier::simplifyiOrPatterns(TR::Node *node)
          {
 
          // This caused incorrect behaviour, so I've disabled the entire code path for bigEndian (see above)
-         //if (TR::Compiler->target.cpu.isBigEndian())
+         //if (comp()->target().cpu.isBigEndian())
          //   {
          //   temp = byte1, byte1 = byte4, byte4 = temp;
          //   temp = byte2, byte2 = byte3, byte3 = temp;
@@ -995,7 +995,7 @@ J9::Simplifier::getOrOfTwoConsecutiveBytes(TR::Node * ior)
    if ((byte1 = getUnsafeIorByteChild(ior->getFirstChild(), TR::b2i, 256)) &&
        (byte2 = getLastUnsafeIorByteChild(ior->getSecondChild())))
       {
-      if (TR::Compiler->target.cpu.isLittleEndian())
+      if (comp()->target().cpu.isLittleEndian())
          temp = byte1, byte1 = byte2, byte2 = temp;
 
       if ((addr = getUnsafeBaseAddr(byte2, -1)) && addr == byte1)

@@ -147,7 +147,7 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    TR::Node *findNullChkInfo(TR::Node *node);
 
-   bool isAlignStackMaps() { return TR::Compiler->target.cpu.isARM(); }
+   bool isAlignStackMaps() { return J9::Compilation::target().cpu.isARM(); }
 
    void changeOptLevel(TR_Hotness);
 

@@ -199,7 +199,7 @@ TR_S390Recompilation::generatePrePrologue()
       const intptrj_t samplingRecompileMethodAddress = reinterpret_cast<intptrj_t>(helperSymRef->getMethodAddress());
 
       // Encode the address of the sampling method
-      if (TR::Compiler->target.is64Bit())
+      if (cg->comp()->target().is64Bit())
          {
          cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, UPPER_4_BYTES(samplingRecompileMethodAddress), cursor);
          cursor->setEncodingRelocation(encodingRelocation);
@@ -244,7 +244,7 @@ TR_S390Recompilation::generatePrePrologue()
 
    // Encode the persistent body info address. Note that we must generate this irregardless of whether we are sampling
    // or not as the counting recompilation generated in the prologue will use this location.
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, UPPER_4_BYTES(bodyInfoAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);
@@ -412,7 +412,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
 
    const intptrj_t countingRecompileMethodAddress = reinterpret_cast<intptrj_t>(helperSymRef->getMethodAddress());
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, UPPER_4_BYTES(countingRecompileMethodAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);
@@ -497,7 +497,7 @@ TR_S390Recompilation::generatePrologue(TR::Instruction* cursor)
 
    const intptrj_t countingPatchCallSiteAddress = reinterpret_cast<intptrj_t>(helperSymRef->getMethodAddress());
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       cursor = generateDataConstantInstruction(cg, TR::InstOpCode::DC, node, UPPER_4_BYTES(countingPatchCallSiteAddress), cursor);
       cursor->setEncodingRelocation(encodingRelocation);

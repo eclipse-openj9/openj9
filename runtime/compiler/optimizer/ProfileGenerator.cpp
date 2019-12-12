@@ -677,7 +677,7 @@ void TR_ProfileGenerator::createProfiledMethod()
             // freqArray and cntrArray (defined in TR_PersistentProfileInfo);
             // If the type of these arrays changes the future, this code will need to be adjusted
             TR::ILOpCodes opCode = TR::aiadd;
-            if (TR::Compiler->target.is64Bit())
+            if (comp()->target().is64Bit())
                {
                offsetNode = TR::Node::create(TR::i2l, 1, offsetNode);
                opCode = TR::aladd;

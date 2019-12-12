@@ -50,7 +50,7 @@ void J9::X86::AheadOfTimeCompile::processRelocations()
    // calculate the amount of memory needed to hold the relocation data
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(_cg->fe());
 
-   if (TR::Compiler->target.is64Bit()
+   if (_cg->comp()->target().is64Bit()
        && TR::CodeCacheManager::instance()->codeCacheConfig().needsMethodTrampolines()
        && _cg->getPicSlotCount())
       {
@@ -448,7 +448,7 @@ uint8_t *J9::X86::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterated
 
       case TR_PicTrampolines:
          {
-         TR_ASSERT(TR::Compiler->target.is64Bit(), "TR_PicTrampolines not supported on 32-bit");
+         TR_ASSERT(_cg->comp()->target().is64Bit(), "TR_PicTrampolines not supported on 32-bit");
          numTrampolines = (uintptrj_t)relocation->getTargetAddress();
          *wordAfterHeader = numTrampolines;
          cursor = (uint8_t*)wordAfterHeader;

@@ -170,7 +170,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
 
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
 
             // first word is the inlined site index for the constant pool
@@ -271,7 +271,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
       case TR_ConstantPoolOrderedPair:
          {
          // constant pool address is placed as the last word of the header
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             *(uint64_t *)cursor = (uint64_t)(uintptrj_t)relocation->getTargetAddress2();
             cursor += 8;
@@ -307,7 +307,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
       case TR_CheckMethodExit:
          {
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             *(uint64_t *)cursor = (uint64_t)(uintptrj_t)relocation->getTargetAddress();
             cursor += 8;

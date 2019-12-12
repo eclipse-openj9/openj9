@@ -88,7 +88,7 @@ TR::Instruction *TR_X86Recompilation::generatePrePrologue()
    TR::Instruction *prev = 0;
 
    uint8_t alignmentMargin = useSampling()? SAMPLING_CALL_SIZE /* allow for the helper call */ : 0;
-   if (TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().is64Bit())
       alignmentMargin += SAVE_AREA_SIZE +JITTED_BODY_INFO_SIZE + LINKAGE_INFO_SIZE; // save area for the first two bytes of the method + jitted body info pointer + linkageinfo
    else
       alignmentMargin += JITTED_BODY_INFO_SIZE + LINKAGE_INFO_SIZE; // jitted body info pointer + linkageinfo
@@ -110,7 +110,7 @@ TR::Instruction *TR_X86Recompilation::generatePrePrologue()
       prev = generateAlignmentInstruction(prev, alignmentBoundary, alignmentMargin, cg());
       }
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().is64Bit())
       {
       // A copy of the first two bytes of the method, in case we need to un-patch them
       //
@@ -131,7 +131,7 @@ TR::Instruction *TR_X86Recompilation::generatePrePrologue()
    // information. If the method is not to be compiled again a null value is
    // inserted.
    //
-   if (TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().is64Bit())
       {
       // TODO:AMD64: This ought to be a relative address, but that requires
       // binary-encoding-time support.  If you change this, be sure to adjust
@@ -166,7 +166,7 @@ TR::Instruction *TR_X86Recompilation::generatePrologue(TR::Instruction *cursor)
          //
       TR::MemoryReference *mRef;
 
-         if (TR::Compiler->target.is64Bit())
+         if (cg()->comp()->target().is64Bit())
             {
             TR_ASSERT(linkage->getMinimumFirstInstructionSize() <= 10, "Can't satisfy first instruction size constraint");
             TR::RealRegister *scratchReg = machine->getRealRegister(TR::RealRegister::edi);

@@ -105,7 +105,7 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
          }
       else
          {
-         if (TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(imm, (intptrj_t)cursor))
+         if (cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(imm, (intptrj_t)cursor))
             {
             *(int32_t *)cursor |= (imm - (intptrj_t)cursor) & 0x03fffffc;
             }
@@ -131,7 +131,7 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
                targetAddress = (intptrj_t)fej9->methodTrampolineLookup(comp, getSymbolReference(), (void *)cursor);
                }
 
-            TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(targetAddress, (intptrj_t)cursor),
+            TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(targetAddress, (intptrj_t)cursor),
                             "Call target address is out of range");
             *(int32_t *)cursor |= (targetAddress - (intptrj_t)cursor) & 0x03fffffc;
             }

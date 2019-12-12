@@ -114,7 +114,7 @@ J9::X86::UnresolvedDataSnippet::emitSnippetBody()
 
    _glueSymRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper(), false, false, false);
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().is64Bit())
       {
       cursor = emitResolveHelperCall(cursor);
       cursor = emitConstantPoolAddress(cursor);
@@ -154,10 +154,10 @@ J9::X86::UnresolvedDataSnippet::emitResolveHelperCall(uint8_t *cursor)
    // Call to the glue routine
    //
    const intptrj_t rip = (intptrj_t)(cursor+5);
-   if ((cg()->needRelocationsForHelpers() && TR::Compiler->target.is64Bit()) ||
+   if ((cg()->needRelocationsForHelpers() && cg()->comp()->target().is64Bit()) ||
        NEEDS_TRAMPOLINE(glueAddress, rip, cg()))
       {
-      TR_ASSERT(TR::Compiler->target.is64Bit(), "should not require a trampoline on 32-bit");
+      TR_ASSERT(cg()->comp()->target().is64Bit(), "should not require a trampoline on 32-bit");
       glueAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(_glueSymRef->getReferenceNumber(), (void *)cursor);
       TR_ASSERT(IS_32BIT_RIP(glueAddress, rip), "Local helper trampoline should be reachable directly.\n");
       }
@@ -250,7 +250,7 @@ J9::X86::UnresolvedDataSnippet::emitUnresolvedInstructionDescriptor(uint8_t *cur
    // On 64-bit a descriptor byte is only required for unresolved fields because
    // the 4-byte disp32 field
    //
-   if (TR::Compiler->target.is64Bit() && !getDataSymbol()->isShadow())
+   if (cg()->comp()->target().is64Bit() && !getDataSymbol()->isShadow())
       return cursor;
 
 
@@ -279,7 +279,7 @@ uint8_t *
 J9::X86::UnresolvedDataSnippet::emitConstantPoolAddress(uint8_t *cursor)
    {
    TR::Compilation *comp = cg()->comp();
-   if (TR::Compiler->target.is32Bit())
+   if (cg()->comp()->target().is32Bit())
       {
       *cursor++ = 0x68;  // push imm4
       }
@@ -347,7 +347,7 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
       }
 
    if (getNumLiveX87Registers() > 0) cpIndex |= (getNumLiveX87Registers() << 24);
-   if (hasLiveXMMRegisters() && TR::Compiler->target.is32Bit()) cpIndex |= cpIndex_hasLiveXMMRegisters;
+   if (hasLiveXMMRegisters() && cg()->comp()->target().is32Bit()) cpIndex |= cpIndex_hasLiveXMMRegisters;
 
    // For unresolved object refs, the snippet need not be patched because its
    // data is already correct.
@@ -363,11 +363,11 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
 
    if (resolveMustPatch8Bytes())
       {
-      TR_ASSERT(TR::Compiler->target.is64Bit(), "resolveMustPatch8Bytes must only be set on 64-bit");
+      TR_ASSERT(cg()->comp()->target().is64Bit(), "resolveMustPatch8Bytes must only be set on 64-bit");
       cpIndex |= cpIndex_patch8ByteResolution;
       }
 
-   if (TR::Compiler->target.is32Bit())
+   if (cg()->comp()->target().is32Bit())
       {
       if (getDataSymbolReference()->getOffset() == 4)
          {
@@ -388,13 +388,13 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
 
       // If this is a store operation on an unresolved field, set the volatility check flag.
       //
-      if (TR::Compiler->target.isSMP())
+      if (cg()->comp()->target().isSMP())
          {
          if (!getDataSymbol()->isClassObject() && !getDataSymbol()->isConstObjectRef() &&  isUnresolvedStore() && opCode != CMPXCHG8BMem && getDataSymbol()->isVolatile())
             {
             cpIndex |= cpIndex_checkVolatility;
 
-            if (TR::Compiler->target.is64Bit() && ((TR::X86MemInstruction *)dataRefInst)->getMemoryReference())
+            if (cg()->comp()->target().is64Bit() && ((TR::X86MemInstruction *)dataRefInst)->getMemoryReference())
                {
                if (((TR::X86MemInstruction *)dataRefInst)->getMemoryReference()->processAsFPVolatile())
                   {
@@ -402,7 +402,7 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
                   }
                }
 
-            if (TR::Compiler->target.is64Bit() && !getDataSymbol()->isShadow())
+            if (cg()->comp()->target().is64Bit() && !getDataSymbol()->isShadow())
                {
                //If this is a store into a static field, we need to know the offset between the start of the store instruction and the memory barrier.
                //
@@ -410,7 +410,7 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
                }
             }
 
-         if (TR::Compiler->target.is32Bit())
+         if (cg()->comp()->target().is32Bit())
             {
             // If this is a portion of a long store, flag which half of the long
             // is being stored
@@ -430,7 +430,7 @@ J9::X86::UnresolvedDataSnippet::emitConstantPoolIndex(uint8_t *cursor)
          }
       }
 
-   if (TR::Compiler->target.is32Bit())
+   if (cg()->comp()->target().is32Bit())
       {
       if (cpIndex <= 127 && cpIndex >= -128)
          {
@@ -493,7 +493,7 @@ J9::X86::UnresolvedDataSnippet::fixupDataReferenceInstruction(uint8_t *cursor)
       }
    else
       {
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          // Unresolved instance fields require 4 byte patching at a variable instruction
          // offset so the 8 bytes following the start of the instruction need to be
@@ -524,7 +524,7 @@ J9::X86::UnresolvedDataSnippet::fixupDataReferenceInstruction(uint8_t *cursor)
       // This assumes that the string reference instruction is a MOV Reg, Imm32 (32-bit)
       // or a MOV Reg, Imm64 (64-bit) instruction.
       //
-      if (TR::Compiler->target.is32Bit() && getDataSymbol()->isConstObjectRef())
+      if (cg()->comp()->target().is32Bit() && getDataSymbol()->isConstObjectRef())
          {
          uint8_t *stringConstantPtr = (cursor - bytesToCopy) + getDataReferenceInstruction()->getBinaryLength() - TR::Compiler->om.sizeofReferenceAddress();
 
@@ -563,7 +563,7 @@ J9::X86::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart)
 
    // 32-bit adjustments
    //
-   if (TR::Compiler->target.is32Bit())
+   if (cg()->comp()->target().is32Bit())
       {
       length += (
                   1  // PUSHImm4 for cpAddr
@@ -585,7 +585,7 @@ J9::X86::UnresolvedDataSnippet::getLength(int32_t estimatedSnippetStart)
       }
    else
       {
-      if (TR::Compiler->target.is32Bit())
+      if (cg()->comp()->target().is32Bit())
          {
          if (getDataSymbol()->isConstObjectRef())
             {
@@ -627,7 +627,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
    printSnippetLabel(pOutFile, snippet->getSnippetLabel(), bufferPos, getName(snippet));
    trfprintf(pOutFile, " for instr [%s]", getName(snippet->getDataReferenceInstruction()));
 
-   if (TR::Compiler->target.is64Bit())
+   if (_comp->target().is64Bit())
       {
       printPrefix(pOutFile, NULL, bufferPos, 5);
 
@@ -746,7 +746,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
       {
       int32_t bytesToCopy;
 
-      if (TR::Compiler->target.is64Bit())
+      if (_comp->target().is64Bit())
          {
          if (snippet->getDataSymbol()->isShadow())
             {

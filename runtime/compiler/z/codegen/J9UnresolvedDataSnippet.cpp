@@ -245,7 +245,7 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
    *(int16_t *) cursor = 0x0de0;                              // BASR   r14,0
    cursor += 2;
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().is64Bit())
       {
       // LG     r14,8(,r14)
       *(uint32_t *) cursor = 0xe3e0e008;
@@ -361,7 +361,7 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
       // Load the resolved offset into R14.
       // Add the resolved offset into base register.
       uint8_t* offsetLoad = cursor;
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          *(int32_t *) cursor = 0xe3e0e000;                       // 64Bit: LGF R14, (R14)
          cursor += sizeof(int32_t);
@@ -415,10 +415,10 @@ J9::Z::UnresolvedDataSnippet::emitSnippetBody()
 uint32_t
 J9::Z::UnresolvedDataSnippet::getLength(int32_t  estimatedSnippetStart)
    {
-   uint32_t length = (TR::Compiler->target.is64Bit() ? (14 + 5 * sizeof(uintptrj_t)) : (12 + 5 * sizeof(uintptrj_t)));
+   uint32_t length = (cg()->comp()->target().is64Bit() ? (14 + 5 * sizeof(uintptrj_t)) : (12 + 5 * sizeof(uintptrj_t)));
    // For instance snippets, we have the out-of-line sequence
    if (isInstanceData())
-      length += (TR::Compiler->target.is64Bit()) ? 36 : 28;
+      length += (cg()->comp()->target().is64Bit()) ? 36 : 28;
 
 #if !defined(PUBLIC_BUILD)
    length += getRuntimeInstrumentationOnOffInstructionLength(cg());
@@ -445,7 +445,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
    trfprintf(pOutFile, "BASR \tGPR14, 0");
    bufferPos += 2;
 
-   if (TR::Compiler->target.is64Bit())
+   if (_comp->target().is64Bit())
       {
       printPrefix(pOutFile, NULL, bufferPos, 6);
       trfprintf(pOutFile, "LG   \tGPR14, 6(,GPR14)");
@@ -577,7 +577,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::UnresolvedDataSnippet * snippet)
       trfprintf(pOutFile, "BASR \tGPR14, 0");
       bufferPos += 2;
 
-      if (TR::Compiler->target.is64Bit())
+      if (_comp->target().is64Bit())
          {
          printPrefix(pOutFile, NULL, bufferPos, 6);
          trfprintf(pOutFile, "LGF   \tGPR14, Offset(,GPR14)");

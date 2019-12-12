@@ -228,7 +228,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
    if (isNotStaticField)
       {
       // It is safe to skip diamond, the address can be calculated directly via [object+offset]
-      address = TR::Compiler->target.is32Bit() ? TR::Node::create(TR::aiadd, 2, objectNode, TR::Node::create(TR::l2i, 1, offsetNode)) :
+      address = comp()->target().is32Bit() ? TR::Node::create(TR::aiadd, 2, objectNode, TR::Node::create(TR::l2i, 1, offsetNode)) :
                                               TR::Node::create(TR::aladd, 2, objectNode, offsetNode);
       if (enableTrace)
          traceMsg(comp(), "Field is not static, use the object and offset directly\n");
@@ -335,7 +335,7 @@ void J9::RecognizedCallTransformer::processUnsafeAtomicCall(TR::TreeTop* treetop
       cfg->addEdge(TR::CFGEdge::createEdge(isObjectNullTreeTop->getEnclosingBlock(), treetop->getEnclosingBlock(), comp()->trMemory()));
       isNotLowTaggedNode->setBranchDestination(treetop->getEnclosingBlock()->getEntry());
       cfg->addEdge(TR::CFGEdge::createEdge(isNotLowTaggedTreeTop->getEnclosingBlock(), treetop->getEnclosingBlock(), comp()->trMemory()));
-      address = TR::Compiler->target.is32Bit() ? TR::Node::create(TR::aiadd, 2, objectNode->duplicateTree(), TR::Node::create(TR::l2i, 1, offsetNode->duplicateTree())) :
+      address = comp()->target().is32Bit() ? TR::Node::create(TR::aiadd, 2, objectNode->duplicateTree(), TR::Node::create(TR::l2i, 1, offsetNode->duplicateTree())) :
                                               TR::Node::create(TR::aladd, 2, objectNode->duplicateTree(), offsetNode->duplicateTree());
       }
 
@@ -359,24 +359,24 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
          return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() &&
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicSwapSymbol);
       case TR::sun_misc_Unsafe_getAndAddLong:
-         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.is64Bit() &&
+         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && comp()->target().is64Bit() &&
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicFetchAndAddSymbol);
       case TR::sun_misc_Unsafe_getAndSetLong:
-         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && TR::Compiler->target.is64Bit() &&
+         return !comp()->getOption(TR_DisableUnsafe) && !comp()->compileRelocatableCode() && !TR::Compiler->om.canGenerateArraylets() && comp()->target().is64Bit() &&
             cg()->supportsNonHelper(TR::SymbolReferenceTable::atomicSwapSymbol);
       case TR::java_lang_Class_isAssignableFrom:
          return cg()->supportsInliningOfIsAssignableFrom();
       case TR::java_lang_Integer_rotateLeft:
       case TR::java_lang_Integer_rotateRight:
-         return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ() || TR::Compiler->target.cpu.isPower();
+         return comp()->target().cpu.isX86() || comp()->target().cpu.isZ() || comp()->target().cpu.isPower();
       case TR::java_lang_Long_rotateLeft:
       case TR::java_lang_Long_rotateRight:
-         return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ() || (TR::Compiler->target.cpu.isPower() && TR::Compiler->target.is64Bit());
+         return comp()->target().cpu.isX86() || comp()->target().cpu.isZ() || (comp()->target().cpu.isPower() && comp()->target().is64Bit());
       case TR::java_lang_Math_abs_I:
       case TR::java_lang_Math_abs_L:
       case TR::java_lang_Math_abs_F:
       case TR::java_lang_Math_abs_D:
-         return TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isZ() || TR::Compiler->target.cpu.isPower();
+         return comp()->target().cpu.isX86() || comp()->target().cpu.isZ() || comp()->target().cpu.isPower();
       case TR::java_lang_Math_max_I:
       case TR::java_lang_Math_min_I:
       case TR::java_lang_Math_max_L:
@@ -386,7 +386,7 @@ bool J9::RecognizedCallTransformer::isInlineable(TR::TreeTop* treetop)
          return !comp()->compileRelocatableCode();
       case TR::java_lang_StrictMath_sqrt:
       case TR::java_lang_Math_sqrt:
-         return TR::Compiler->target.cpu.getSupportsHardwareSQRT();;
+         return comp()->target().cpu.getSupportsHardwareSQRT();;
       default:
          return false;
       }

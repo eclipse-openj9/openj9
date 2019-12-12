@@ -262,7 +262,7 @@ uint8_t *TR::ARMMonitorExitSnippet::emitSnippetBody()
       metaReg->setRegisterFieldRB((uint32_t *)buffer);
       buffer += ARM_INSTRUCTION_LENGTH;
 
-      if (TR::Compiler->target.is64Bit() && !fej9->generateCompressedLockWord())
+      if (cg()->comp()->target().is64Bit() && !fej9->generateCompressedLockWord())
          opCodeValue = ARMOp_stdcx_r;
       else
          opCodeValue = ARMOp_stwcx_r;

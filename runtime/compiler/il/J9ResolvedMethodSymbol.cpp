@@ -29,12 +29,12 @@ J9::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod *method, TR::Co
    OMR::ResolvedMethodSymbolConnector(method, comp)
    {
 
-   if ((TR::Compiler->target.cpu.getSupportsHardwareRound() &&
+   if ((comp->target().cpu.getSupportsHardwareRound() &&
         ((method->getRecognizedMethod() == TR::java_lang_Math_floor) ||
          (method->getRecognizedMethod() == TR::java_lang_StrictMath_floor) ||
          (method->getRecognizedMethod() == TR::java_lang_Math_ceil) ||
          (method->getRecognizedMethod() == TR::java_lang_StrictMath_ceil))) ||
-       (TR::Compiler->target.cpu.getSupportsHardwareCopySign() &&
+       (comp->target().cpu.getSupportsHardwareCopySign() &&
         ((method->getRecognizedMethod() == TR::java_lang_Math_copySign_F) ||
          (method->getRecognizedMethod() == TR::java_lang_Math_copySign_D))))
       {

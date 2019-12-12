@@ -1551,7 +1551,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
             methodCall = TR::Node::createWithSymRef(TR::acall, 3, 3,
                                          valueOf1Node, mul1Child, TR::Node::create(node, TR::iconst, 0, mul1Scale),
                                          callSymRef);
-            if (TR::Compiler->target.cpu.isPower())
+            if (comp()->target().cpu.isPower())
                {
                static bool disableBDPrefetch = (feGetEnv("TR_DisableBDPrefetch") != NULL);
                TR::Node *sourceNode = NULL;
@@ -1611,7 +1611,7 @@ TR::TreeTop *TR_StringPeepholes::detectBDPattern(TR::TreeTop *tt, TR::TreeTop *e
                      }
                   }
                }
-            else if (TR::Compiler->target.cpu.isZ())
+            else if (comp()->target().cpu.isZ())
                {
                TR::Node *pNode = TR::Node::createWithSymRef(node, TR::Prefetch, 4, callSymRef);
                pNode->setAndIncChild(0, mul1Child);

@@ -3176,7 +3176,7 @@ makeCopyingTROOSpecialGraph(TR::Compilation *c, int32_t ctrl)
    tgt->setMinCounts(1, 2, 1);  // minimum ifCount, indirectLoadCount, indirectStoreCount
    tgt->setHotness(warm, false);
    static char *versionLengthStr = feGetEnv("TR_CopyingTROOSpecialGraph_versionLength");
-   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (TR::Compiler->target.cpu.isPower() ? 0 : 19);
+   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (c->target().cpu.isPower() ? 0 : 19);
    tgt->setVersionLength(versionLength);   // depending on each architecture
    tgt->setPatternType(1); // dest. induction variable is updated by incrementing
    return tgt;
@@ -3285,7 +3285,7 @@ makeCopyingTROxGraph(TR::Compilation *c, int32_t ctrl, int pattern)
    tgt->setMinCounts(1, 1, 1);  // minimum ifCount, indirectLoadCount, indirectStoreCount
    tgt->setHotness(warm, false);
    static char *versionLengthStr = feGetEnv("TR_CopyingTROxGraph_versionLength");
-   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (TR::Compiler->target.cpu.isPower() ? 0 : 8);
+   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (c->target().cpu.isPower() ? 0 : 8);
    tgt->setVersionLength(versionLength);   // depending on each architecture
 
    tgt->setPatternType(pattern);
@@ -3369,7 +3369,7 @@ makeCopyingTROTInduction1Graph(TR::Compilation *c, int32_t ctrl, int32_t pattern
    tgt->setMinCounts(1, 1, 1);  // minimum ifCount, indirectLoadCount, indirectStoreCount
    tgt->setHotness(warm, false);
    static char *versionLengthStr = feGetEnv("TR_CopyingTROTInduction1Graph_versionLength");
-   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (TR::Compiler->target.cpu.isPower() ? 0 : 8);
+   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (c->target().cpu.isPower() ? 0 : 8);
    tgt->setVersionLength(versionLength);   // depending on each architecture
    return tgt;
    }
@@ -3669,7 +3669,7 @@ makeTROTArrayGraph(TR::Compilation *c, int32_t ctrl)
    tgt->setMinCounts(1, 1, 1);  // minimum ifCount, indirectLoadCount, indirectStoreCount
    tgt->setHotness(warm, false);
    static char *versionLengthStr = feGetEnv("TR_CopyingTRTOInduction1Graph_versionLength");
-   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (TR::Compiler->target.cpu.isPower() ? 0 : 8);
+   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (c->target().cpu.isPower() ? 0 : 8);
    tgt->setVersionLength(versionLength);   // depending on each architecture
    return tgt;
    }
@@ -4456,7 +4456,7 @@ makeCopyingTRTxGraph(TR::Compilation *c, int32_t ctrl, int pattern)
    tgt->setMinCounts(2, 1, 1);  // minimum ifCount, indirectLoadCount, indirectStoreCount
    tgt->setHotness(warm, false);
    static char *versionLengthStr = feGetEnv("TR_CopyingTRTxGraph_versionLength");
-   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (TR::Compiler->target.cpu.isPower() ? 0 : 15);
+   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (c->target().cpu.isPower() ? 0 : 15);
    tgt->setVersionLength(versionLength);   // depending on each architecture
 
    tgt->setPatternType(pattern);
@@ -4536,7 +4536,7 @@ makeCopyingTRTxThreeIfsGraph(TR::Compilation *c, int32_t ctrl)
    tgt->setMinCounts(3, 1, 1);  // minimum ifCount, indirectLoadCount, indirectStoreCount
    tgt->setHotness(warm, false);
    static char *versionLengthStr = feGetEnv("TR_CopyingTRTxThreeIfsGraph_versionLength");
-   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (TR::Compiler->target.cpu.isPower() ? 0 : 15);
+   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (c->target().cpu.isPower() ? 0 : 15);
    tgt->setVersionLength(versionLength);   // depending on each architecture
    return tgt;
    }
@@ -4596,7 +4596,7 @@ makeCopyingTRTOGraphSpecial(TR::Compilation *c, int32_t ctrl)
    tgt->setMinCounts(2, 1, 1);  // minimum ifCount, indirectLoadCount, indirectStoreCount
    tgt->setHotness(warm, false);
    static char *versionLengthStr = feGetEnv("TR_CopyingTRTOGraphSpecial_versionLength");
-   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (TR::Compiler->target.cpu.isPower() ? 0 : 15);
+   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (c->target().cpu.isPower() ? 0 : 15);
    tgt->setVersionLength(versionLength);   // depending on each architecture
 
    // needs induction variable init
@@ -4712,7 +4712,7 @@ makeCopyingTRTOInduction1Graph(TR::Compilation *c, int32_t ctrl, int32_t pattern
    tgt->setMinCounts(1, 1, 1);  // minimum ifCount, indirectLoadCount, indirectStoreCount
    tgt->setHotness(warm, false);
    static char *versionLengthStr = feGetEnv("TR_CopyingTRTOInduction1Graph_versionLength");
-   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (TR::Compiler->target.cpu.isPower() ? 0 : 8);
+   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (c->target().cpu.isPower() ? 0 : 8);
    tgt->setVersionLength(versionLength);   // depending on each architecture
    return tgt;
    }
@@ -4780,7 +4780,7 @@ makeCopyingTRTTSpecialGraph(TR::Compilation *c, int32_t ctrl)
    tgt->setMinCounts(2, 2, 1);  // minimum ifCount, indirectLoadCount, indirectStoreCount
    tgt->setHotness(warm, false);
    static char *versionLengthStr = feGetEnv("TR_CopyingTRTTSpecialGraph_versionLength");
-   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (TR::Compiler->target.cpu.isPower() ? 0 : 20);
+   static int   versionLength = versionLengthStr ? atoi(versionLengthStr) : (c->target().cpu.isPower() ? 0 : 20);
    tgt->setVersionLength(versionLength);   // depending on each architecture
    return tgt;
    }
@@ -4874,7 +4874,7 @@ CISCTransform2TRTOArray(TR_CISCTransformer *trans)
 
    // Prepare arraytranslate node
    TR::Node * tableNode = createLoad(mapBaseRepNode);
-   if (tableNode->getOpCode().isLong() && TR::Compiler->target.is32Bit())
+   if (tableNode->getOpCode().isLong() && comp->target().is32Bit())
       tableNode = TR::Node::create(TR::l2i, 1, tableNode);
    TR::Node * indexNode = TR::Node::createWithSymRef(indexRepNode, TR::iload, 0, indexVarSymRef);
    TR::Node * lengthNode = createI2LIfNecessary(comp, trans->isGenerateI2L(),
@@ -5196,7 +5196,7 @@ makeTRTOArrayGraph(TR::Compilation *c, int32_t ctrl)
    tgt->setNoAspects(call|bndchk|bitop1, 0, 0);
    tgt->setMinCounts(2, 2, 1);  // minimum ifCount, indirectLoadCount, indirectStoreCount
    tgt->setHotness(warm, false);
-   tgt->setVersionLength(TR::Compiler->target.cpu.isPower() ? 0 : 11);   // depending on each architecture
+   tgt->setVersionLength(c->target().cpu.isPower() ? 0 : 11);   // depending on each architecture
    return tgt;
    }
 
@@ -5284,7 +5284,7 @@ makeTRTOArrayGraphSpecial(TR::Compilation *c, int32_t ctrl)
    tgt->setNoAspects(call|bndchk|bitop1, 0, 0);
    tgt->setMinCounts(2, 1, 1);  // minimum ifCount, indirectLoadCount, indirectStoreCount
    tgt->setHotness(warm, false);
-   tgt->setVersionLength(TR::Compiler->target.cpu.isPower() ? 0 : 11);   // depending on each architecture
+   tgt->setVersionLength(c->target().cpu.isPower() ? 0 : 11);   // depending on each architecture
    return tgt;
    }
 
@@ -5308,7 +5308,7 @@ static StatusArrayStore checkArrayStore(TR::Compilation *comp, TR::Node *inputNo
    // and a typical arraycopy loop. loops like above cannot be reduced to an arraycopy
    // (look at the java semantics for arraycopy)
    //
-   if (TR::Compiler->target.cpu.isZ())
+   if (comp->target().cpu.isZ())
       return NO_NEED_TO_CHECK;       // On 390, MVC (which performs byte copies) is generated.
 
    if (inputNode->getFirstChild()->getSymbol()->getRegisterMappedSymbol() == outputNode->getFirstChild()->getSymbol()->getRegisterMappedSymbol())
@@ -6115,7 +6115,7 @@ CISCTransform2ArrayCopyB2CorC2B(TR_CISCTransformer *trans)
    List<TR_CISCNode> *P2T = trans->getP2T();
    TR::Compilation *comp = trans->comp();
 
-   bool bigEndian = TR::Compiler->target.cpu.isBigEndian();
+   bool bigEndian = comp->target().cpu.isBigEndian();
 
    TR_ASSERT(trans->getP()->getVersionLength() == 0, "Versioning code is not implemented yet");
 
@@ -6740,7 +6740,7 @@ CISCTransform2ArrayCopyC2BMixed(TR_CISCTransformer *trans)
    TR_ASSERT(!searchNodeInBlock(flagIf->getSucc(1), LEloadMem) ||
           !searchNodeInBlock(flagIf->getSucc(1), BEloadMem), "error");
    bool LEalongJumpPath = searchNodeInBlock(flagIf->getSucc(1), LEloadMem);
-   bool isBig = TR::Compiler->target.cpu.isBigEndian();
+   bool isBig = comp->target().cpu.isBigEndian();
    if (!isBig) LEalongJumpPath = !LEalongJumpPath;
    if (DISPTRACE(trans)) traceMsg(comp, "LEalongJumpPath = %d\n",LEalongJumpPath);
 
@@ -6797,11 +6797,11 @@ CISCTransform2ArrayCopyC2BMixed(TR_CISCTransformer *trans)
       int childNum = -1;
       bool ret;
       TR::Node * LEStoreAddrTree2 = LEStoreAddrTree->duplicateTree();
-      TR::Node *arrayHeaderConst = createArrayHeaderConst(comp, TR::Compiler->target.is64Bit(), trNode);
+      TR::Node *arrayHeaderConst = createArrayHeaderConst(comp, comp->target().is64Bit(), trNode);
       ret = trans->searchNodeInTrees(isBig ? LEStoreAddrTree2 : LEStoreAddrTree,
                                      arrayHeaderConst, &replaceParent, &childNum);
       TR_ASSERT(ret, "error");
-      if (TR::Compiler->target.is64Bit())
+      if (comp->target().is64Bit())
          {
          arrayHeaderConst->setLongInt(arrayHeaderConst->getLongInt()-1);
          }
@@ -7706,7 +7706,7 @@ CISCTransform2PtrArraySet(TR_CISCTransformer *trans)
    // all good..  now actual transformations
    auto startPtr = TR::Node::createWithSymRef(TR::aload, 0, astoreNode->getSymbolReference());
    TR::Node *length, *arrayset;
-   bool use64bit = TR::Compiler->target.is64Bit();
+   bool use64bit = comp->target().is64Bit();
    bool equal = ifcmpNode->getOpCode().isCompareTrueIfEqual();  // fix off by one.
    if (increment < 0)
       {
@@ -8315,7 +8315,7 @@ n28n      BBEnd </block_5> =====                                                
 TR_PCISCGraph *
 makePtrArraySetGraph(TR::Compilation *c, int32_t ctrl)
    {
-   bool is64bit = TR::Compiler->target.is64Bit();
+   bool is64bit = c->target().is64Bit();
    TR_PCISCGraph *tgt = new (PERSISTENT_NEW) TR_PCISCGraph(c->trMemory(), "PtrArraySet", 0, 10);
    /******************************************************************************    opc          id         dagId #cfg #child other/pred/children */
    auto entry      = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR_entrynode, TR::NoType,  tgt->incNumNodes(), 9, 1, 0);
@@ -8920,7 +8920,7 @@ CISCTransform2ArrayCmp2Ifs(TR_CISCTransformer *trans)
       //
       TR::ILOpCodes mulOp = TR::imul;
 #if 0
-      if (TR::Compiler->target.is64Bit())
+      if (comp->target().is64Bit())
          {
          elementSizeNode = TR::Node::create(mulFactorNode, TR::lconst);
          elementSizeNode->setLongInt(elementSize);
@@ -9461,7 +9461,7 @@ CISCTransform2ArrayCmp(TR_CISCTransformer *trans)
       //
       TR::ILOpCodes mulOp = TR::imul;
 #if 0
-      if (TR::Compiler->target.is64Bit())
+      if (comp->target().is64Bit())
          {
          elementSizeNode = TR::Node::create(mulFactorNode, TR::lconst);
          elementSizeNode->setLongInt(elementSize);
@@ -10124,7 +10124,7 @@ CISCTransform2BitOpMem(TR_CISCTransformer *trans)
    if (elementSize > 1)
       {
       TR::ILOpCodes mulOp = TR::imul;
-      if (TR::Compiler->target.is64Bit())
+      if (comp->target().is64Bit())
          {
          elementSizeNode = TR::Node::create(mulFactorNode, TR::lconst);
          elementSizeNode->setLongInt(elementSize);
@@ -10532,7 +10532,7 @@ static const struct ppcDigit10TableEnt ppcDigit10Table[64 + 1] =
 static TR::SymbolReference *
 getSymrefDigit10(TR::Compilation *comp, TR::Node *trNode)
    {
-   if (TR::Compiler->target.cpu.isZ())
+   if (comp->target().cpu.isZ())
       {
       return comp->getSymRefTab()->createKnownStaticDataSymbolRef((void *)digit10Table, TR::Address);
       }
@@ -10608,7 +10608,7 @@ CISCTransform2CountDecimalDigit(TR_CISCTransformer *trans)
 
 
    // The countDigitsEvaluator does not handle long (register pairs) on 31-bit.
-   if (inputVar->getDataType() == TR::Int64 && (!TR::Compiler->target.cpu.isPower() && TR::Compiler->target.is32Bit()))
+   if (inputVar->getDataType() == TR::Int64 && (!comp->target().cpu.isPower() && comp->target().is32Bit()))
       {
       return false;
       }
@@ -10836,7 +10836,7 @@ while(true) {
 static TR::SymbolReference *
 getSymrefLocalArray(TR::Compilation *comp, int size)
    {
-   if (TR::Compiler->target.cpu.isZ())
+   if (comp->target().cpu.isZ())
       {
       TR::SymbolReference *workSymRef = comp->getSymRefTab()->createLocalPrimArray(size, comp->getMethodSymbol(), 8);      // work area for CVD(G)
       workSymRef->setStackAllocatedArrayAccess();

@@ -1839,9 +1839,9 @@ TR_J9SharedCacheServerVM::supportAllocationInlining(TR::Compilation *comp, TR::N
    if (comp->getOptions()->realTimeGC())
       return false;
 
-   if ((TR::Compiler->target.cpu.isX86() ||
-        TR::Compiler->target.cpu.isPower() ||
-        TR::Compiler->target.cpu.isZ()) &&
+   if ((comp->target().cpu.isX86() ||
+        comp->target().cpu.isPower() ||
+        comp->target().cpu.isZ()) &&
        !comp->getOption(TR_DisableAllocationInlining))
       return true;
 

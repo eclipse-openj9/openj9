@@ -196,7 +196,7 @@ J9::ObjectModel::maxArraySizeInElements(
       // getMaximumHeapSize has an irritating habit of returning -1 sometimes,
       // for some reason.  Must compensate for this corner case here.
       //
-      if (TR::Compiler->target.is64Bit())
+      if (comp->target().is64Bit())
          {
          // Ok, in theory it could be TR::getMaxUnsigned<TR::Int64>().  This isn't worth the
          // hassle of using uint64_t and worrying about signedness.  When the

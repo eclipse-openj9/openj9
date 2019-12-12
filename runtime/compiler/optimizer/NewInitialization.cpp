@@ -98,7 +98,7 @@ int32_t TR_NewInitialization::performAnalysis(bool doGlobalAnalysis)
    // to make int fields 4 bytes in size in a J9 object is made at the
    // FE side. Remember to allow new init opt if the target is 64 bit.
    //
-   if (TR::Compiler->target.is64Bit() && !comp()->useCompressedPointers())
+   if (comp()->target().is64Bit() && !comp()->useCompressedPointers())
       return 0;
 
    // When TLH is batch cleared, explicit initialization should be disabled.
@@ -1675,7 +1675,7 @@ void TR_NewInitialization::modifyReferences(Candidate *candidate, Candidate *sta
             {
             if (c != startCandidate && c->canBeMerged && child == c->node)
                {
-               if (((TR::Compiler->target.is64Bit()
+               if (((comp()->target().is64Bit()
                      ) ?
                   dumpOptDetails(comp(), "%s Changing child %d of node [%p] into a TR::aladd\n", OPT_DETAILS, i, node)
                   : dumpOptDetails(comp(), "%s Changing child %d of node [%p] into a TR::aiadd\n", OPT_DETAILS, i, node)))
@@ -1686,7 +1686,7 @@ void TR_NewInitialization::modifyReferences(Candidate *candidate, Candidate *sta
                   if (!c->offsetReference)
                      {
                      // build a TR::aladd node instead if required
-                     if (TR::Compiler->target.is64Bit())
+                     if (comp()->target().is64Bit())
                         {
                         TR::Node *offsetNode = TR::Node::create(child, TR::lconst, 0);
                         offsetNode->setLongInt((int64_t)c->startOffset);
