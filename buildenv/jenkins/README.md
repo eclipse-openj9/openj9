@@ -137,13 +137,13 @@ You can request a Pull Request build from the Eclipse OpenJ9 repository - [openj
 ##### Other Pull Requests builds
 
 - To trigger a Line Endings Check
-   - `Jenkins line endings check`
+    - `Jenkins line endings check`
 
 - To trigger a Copyright Check
-   - `Jenkins copyright check`
+    - `Jenkins copyright check`
 
 - To trigger a SignedOffBy Check (Only applicable to the Extensions repos)
-   - `Jenkins signed off by check`
+    - `Jenkins signed off by check`
 
 ### Jenkins Pipelines
 
@@ -209,7 +209,6 @@ Pipelines for all platforms and versions are available [**here**](https://ci.ecl
             - `Promote_OMR` once all testing is passed
     - Trigger: Triggered by `Mirror-OMR-to-OpenJ9-OMR`
 
-
 #### Build
 
 Build pipelines for all platforms and versions are available [**here**](https://ci.eclipse.org/openj9/view/Build/).
@@ -223,7 +222,6 @@ Build pipelines for all platforms and versions are available [**here**](https://
         - This job is used in other pipelines but can be launched manually
 
 **Note:** Windows 32 is available only for JDK8. Thus the only available build for win_x86 platform (Windows 32bits) is [Build-JDK8-win_x86](https://ci.eclipse.org/openj9/view/Build/job/Build-JDK8-win_x86/).
-
 
 #### Test
 
@@ -247,7 +245,7 @@ Infrastructure pipelines are available [**here**](https://ci.eclipse.org/openj9/
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Mirror-OMR-to-OpenJ9-OMR)](https://ci.eclipse.org/openj9/job/Mirror-OMR-to-OpenJ9-OMR)
     - Description:
         - Mirrors [eclipse/omr/master](https://github.com/eclipse/omr/tree/master) to [eclipse/openj9-omr/master](https://github.com/eclipse/openj9-omr/tree/master)
-        - Triggers `Pipeline-OMR-Acceptance` when there is new content        
+        - Triggers `Pipeline-OMR-Acceptance` when there is new content
     - Trigger:
         - Build periodically, 15 minutes
 
@@ -255,7 +253,6 @@ Infrastructure pipelines are available [**here**](https://ci.eclipse.org/openj9/
     - [![Build Status](https://ci.eclipse.org/openj9/buildStatus/icon?job=Promote_OMR)](https://ci.eclipse.org/openj9/job/Promote_OMR)
     - Description:
         - Promotes eclipse/openj9-omr branch master to branch openj9
-        - Lays a tag down on the promoted SHA in the format `promote_merge_YYYYMMDD_HHMMSS` with annotations including the current OpenJ9 and OpenJDK SHAs
     - Trigger:
         - Last step of `Pipeline-OMR-Acceptance`
 
@@ -265,7 +262,6 @@ Infrastructure pipelines are available [**here**](https://ci.eclipse.org/openj9/
         - Mirrors [github.com/eclipse/openj9-website](https://github.com/eclipse/openj9-website/tree/master) to the Eclipse.org repo
     - Trigger:
         - Poll Github repo for changes
-
 
 ### Adding Builds
 - Always add pipeline style jobs so the code can be committed to the repo once it is ready

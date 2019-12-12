@@ -86,7 +86,6 @@ JIT_HELPER(jitMonitorExit);  // asm calling-convention helper
 JIT_HELPER(jitNewArray);  // asm calling-convention helper
 JIT_HELPER(jitNewInstanceImplAccessCheck);  // asm calling-convention helper
 JIT_HELPER(jitNewObject);  // asm calling-convention helper
-JIT_HELPER(jitNewValue);  // asm calling-convention helper
 JIT_HELPER(jitObjectHashCode);  // asm calling-convention helper
 JIT_HELPER(jitPostJNICallOffloadCheck);  // asm calling-convention helper
 JIT_HELPER(jitPreJNICallOffloadCheck);  // asm calling-convention helper
@@ -159,7 +158,6 @@ JIT_HELPER(jitReportExceptionCatch);  // asm calling-convention helper
 JIT_HELPER(jitANewArrayNoZeroInit);  // asm calling-convention helper
 JIT_HELPER(jitNewArrayNoZeroInit);  // asm calling-convention helper
 JIT_HELPER(jitNewObjectNoZeroInit);  // asm calling-convention helper
-JIT_HELPER(jitNewValueNoZeroInit);  // asm calling-convention helper
 JIT_HELPER(jitReportFinalFieldModified); // asm calling-convention helper
 JIT_HELPER(jitReportInstanceFieldRead); // asm calling-convention helper
 JIT_HELPER(jitReportInstanceFieldWrite); // asm calling-convention helper

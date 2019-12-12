@@ -296,8 +296,6 @@ define({CINTERP},{
 
 dnl Runtime helpers
 
-DUAL_MODE_HELPER(jitNewValue,1)
-DUAL_MODE_HELPER(jitNewValueNoZeroInit,1)
 DUAL_MODE_HELPER(jitNewObject,1)
 DUAL_MODE_HELPER(jitNewObjectNoZeroInit,1)
 DUAL_MODE_HELPER(jitANewArray,2)

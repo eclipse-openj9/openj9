@@ -466,37 +466,6 @@ slow:
 	goto done;
 }
 
-static VMINLINE bool
-fast_jitNewValueImpl(J9VMThread *currentThread, J9Class *objectClass, bool checkClassInit, bool nonZeroTLH)
-{
-	bool slowPathRequired = false;
-	if (checkClassInit) {
-		if (J9_UNEXPECTED(VM_VMHelpers::classRequiresInitialization(currentThread, objectClass))) {
-			goto slow;
-		}
-	}
-	if (J9_UNEXPECTED(!J9_IS_J9CLASS_VALUETYPE(objectClass))) {
-		goto slow;
-	}
-	{
-		UDATA allocationFlags = J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE;
-		if (nonZeroTLH) {
-			allocationFlags |= J9_GC_ALLOCATE_OBJECT_NON_ZERO_TLH;
-		}
-		j9object_t obj = currentThread->javaVM->memoryManagerFunctions->J9AllocateObjectNoGC(currentThread, objectClass, allocationFlags);
-		if (J9_UNEXPECTED(NULL == obj)) {
-			goto slow;
-		}
-		JIT_RETURN_UDATA(obj);
-	}
-done:
-	return slowPathRequired;
-slow:
-	currentThread->floatTemp1 = (void*)objectClass;
-	slowPathRequired = true;
-	goto done;
-}
-
 static VMINLINE void*
 slow_jitNewObjectImpl(J9VMThread *currentThread, bool checkClassInit, bool nonZeroTLH)
 {
@@ -540,51 +509,6 @@ done:
 	SLOW_JIT_HELPER_EPILOGUE();
 	return addr;
 }
-
-static VMINLINE void*
-slow_jitNewValueImpl(J9VMThread *currentThread, bool checkClassInit, bool nonZeroTLH)
-{
-	SLOW_JIT_HELPER_PROLOGUE();
-	J9Class *objectClass = (J9Class*)currentThread->floatTemp1;
-	j9object_t obj = NULL;
-	void *oldPC = currentThread->jitReturnAddress;
-	void *addr = NULL;
-	UDATA allocationFlags = J9_GC_ALLOCATE_OBJECT_INSTRUMENTABLE;
-	if (nonZeroTLH) {
-		allocationFlags |= J9_GC_ALLOCATE_OBJECT_NON_ZERO_TLH;
-	}
-	if (!J9_IS_J9CLASS_VALUETYPE(objectClass)) {
-		buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
-		addr = setCurrentExceptionFromJIT(currentThread, J9VMCONSTANTPOOL_JAVALANGINSTANTIATIONERROR | J9_EX_CTOR_CLASS, J9VM_J9CLASS_TO_HEAPCLASS(objectClass));
-		goto done;
-	}
-	if (checkClassInit) {
-		if (VM_VMHelpers::classRequiresInitialization(currentThread, objectClass)) {
-			buildJITResolveFrameForRuntimeHelper(currentThread, parmCount);
-			currentThread->javaVM->internalVMFunctions->initializeClass(currentThread, objectClass);
-			addr = restoreJITResolveFrame(currentThread, oldPC);
-			if (NULL != addr) {
-				goto done;
-			}
-		}
-	}
-	buildJITResolveFrameWithPC(currentThread, J9_STACK_FLAGS_JIT_ALLOCATION_RESOLVE | J9_SSF_JIT_RESOLVE, parmCount, true, 0, oldPC);
-	obj = currentThread->javaVM->memoryManagerFunctions->J9AllocateObject(currentThread, objectClass, allocationFlags);
-	if (NULL == obj) {
-		addr = setHeapOutOfMemoryErrorFromJIT(currentThread);
-		goto done;
-	}
-	currentThread->floatTemp1 = (void*)obj; // in case of decompile
-	addr = restoreJITResolveFrame(currentThread, oldPC, false, false);
-	if (NULL != addr) {
-		goto done;
-	}
-	JIT_RETURN_UDATA(obj);
-done:
-	SLOW_JIT_HELPER_EPILOGUE();
-	return addr;
-}
-
 
 void* J9FASTCALL
 old_slow_jitNewObject(J9VMThread *currentThread)
@@ -2835,32 +2759,6 @@ fast_jitObjectHashCode(J9VMThread *currentThread, j9object_t object)
 }
 
 void* J9FASTCALL
-fast_jitNewValue(J9VMThread *currentThread, J9Class *objectClass)
-{
-//	extern void* slow_jitNewObject(J9VMThread *currentThread);
-	JIT_HELPER_PROLOGUE();
-	void *slowPath = NULL;
-	if (J9_UNEXPECTED(fast_jitNewValueImpl(currentThread, objectClass, true, false))) {
-		SET_PARM_COUNT(0);
-		slowPath = (void*) slow_jitNewValueImpl(currentThread, true, false);
-	}
-	return slowPath;
-}
-
-void* J9FASTCALL
-fast_jitNewValueNoZeroInit(J9VMThread *currentThread, J9Class *objectClass)
-{
-//	extern void* slow_jitNewObjectNoZeroInit(J9VMThread *currentThread);
-	JIT_HELPER_PROLOGUE();
-	void *slowPath = NULL;
-	if (J9_UNEXPECTED(fast_jitNewValueImpl(currentThread, objectClass, true, true))) {
-		SET_PARM_COUNT(0);
-		slowPath = (void*)slow_jitNewValueImpl(currentThread, true, true);
-	}
-	return slowPath;
-}
-
-void* J9FASTCALL
 fast_jitNewObject(J9VMThread *currentThread, J9Class *objectClass)
 {
 //	extern void* slow_jitNewObject(J9VMThread *currentThread);
@@ -3357,8 +3255,6 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->old_slow_jitNewInstanceImplAccessCheck = (void*)old_slow_jitNewInstanceImplAccessCheck;
 	jitConfig->old_slow_jitTranslateNewInstanceMethod = (void*)old_slow_jitTranslateNewInstanceMethod;
 	jitConfig->old_slow_jitReportFinalFieldModified = (void*)old_slow_jitReportFinalFieldModified;
-	jitConfig->fast_jitNewValue = (void*)fast_jitNewValue;
-	jitConfig->fast_jitNewValueNoZeroInit = (void*)fast_jitNewValueNoZeroInit;
 	jitConfig->fast_jitNewObject = (void*)fast_jitNewObject;
 	jitConfig->fast_jitNewObjectNoZeroInit = (void*)fast_jitNewObjectNoZeroInit;
 	jitConfig->fast_jitANewArray = (void*)fast_jitANewArray;
