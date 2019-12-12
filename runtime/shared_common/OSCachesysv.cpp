@@ -840,7 +840,8 @@ SH_OSCachesysv::cleanup(void)
 #if !defined(WIN32)
 	if (_semFileName) {
 		j9mem_free_memory(_semFileName);
-	}
+	} 
+	
 #endif
 	Trc_SHR_OSC_cleanup_Exit();
 
@@ -1754,7 +1755,7 @@ SH_OSCachesysv::getCacheStatsHelper(J9JavaVM* vm, const char* cacheDirName, UDAT
 		Trc_SHR_OSC_Sysv_getCacheStatsHelper_cacheStatFailed();
 		return -1;
 	}
-	Trc_SHR_OSC_Sysv_getCacheStatsHelper_Exit();
+	Trc_SHR_OSC_Sysv_getCacheStatsHelper_Exit1(cacheInfo->name, cacheInfo->os_shmid, cacheInfo->lastattach, cacheInfo->lastdetach, cacheInfo->nattach);
 	return 0;
 }
 
@@ -1767,11 +1768,12 @@ SH_OSCachesysv::getCacheStatsHelper(J9JavaVM* vm, const char* cacheDirName, UDAT
  * @param [in] cacheNameWithVGen current cache name
  * @param [out] cacheInfo structure to be populated with cache statistics
  * @param [in] reason Indicates the reason for getting cache stats. Refer sharedconsts.h for valid values.
+ * @param [out] lowerLayerList A list of SH_OSCache_Info for lower layer caches.
  *
  * @return 0 on success
  */
-IDATA
-SH_OSCachesysv::getCacheStats(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, const char* cacheNameWithVGen, SH_OSCache_Info* cacheInfo, UDATA reason)
+IDATA 
+SH_OSCachesysv::getCacheStats(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, const char* cacheNameWithVGen, SH_OSCache_Info* cacheInfo, UDATA reason, J9Pool** lowerLayerList)
 {
 	IDATA retval = 0;
 	PORT_ACCESS_FROM_JAVAVM(vm);
@@ -1821,7 +1823,7 @@ SH_OSCachesysv::getCacheStats(J9JavaVM* vm, const char* ctrlDirName, UDATA group
 				}
 
 				if (SHR_STATS_REASON_ITERATE == reason) {
-					getCacheStatsCommon(vm, cache, cacheInfo);
+					getCacheStatsCommon(vm, ctrlDirName, groupPerm, cache, cacheInfo, lowerLayerList);
 				}
 
 				if (attachedMem == true) {
@@ -1834,6 +1836,52 @@ SH_OSCachesysv::getCacheStats(J9JavaVM* vm, const char* ctrlDirName, UDATA group
 		retval = -1;
 	}
 done:
+	return retval;
+}
+
+/**
+ * Method to get a SH_OSCache_Info for a compatible non-top layer shared classes cache.
+ * 
+ * @param[in] vm The Java VM
+ * @param[in] ctrlDirName Cache directory
+ * @param[in] groupPerm Group permissions to open the cache directory
+ * @param[in] cacheNameWithVGen Filename of the cache to stat
+ * @param[out] cacheInfo Pointer to the structure to be completed with the cache's details
+ * @param[in] reason Indicates the reason for getting cache stats. Refer sharedconsts.h for valid values.
+ * @param[in] A pointer of SH_OSCachesysv
+ * 
+ * @return 0 on success and -1 for failure
+ */
+IDATA 
+SH_OSCachesysv::getNonTopLayerCacheInfo(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, const char *cacheNameWithVGen, SH_OSCache_Info *cacheInfo, UDATA reason, SH_OSCachesysv* oscache)
+{
+	IDATA retval = 0;
+	PORT_ACCESS_FROM_JAVAVM(vm);
+	char cacheDirName[J9SH_MAXPATH];
+	
+	Trc_SHR_OSC_Sysv_getNonTopLayerCacheInfo_Entry(ctrlDirName, groupPerm, cacheNameWithVGen, reason);
+
+	Trc_SHR_Assert_True(SHR_STATS_REASON_ITERATE == reason);
+	SH_OSCache::getCacheDir(vm, ctrlDirName, cacheDirName, J9SH_MAXPATH, J9PORT_SHR_CACHE_TYPE_NONPERSISTENT);
+	if (SH_OSCachesysv::getCacheStatsHelper(vm, cacheDirName, groupPerm, cacheNameWithVGen, cacheInfo, reason) == 0) {
+		/* Using 'SH_OSCachesysv cacheStruct' breaks the pattern of calling getRequiredConstrBytes(), and then allocating memory.
+		 * However it is consistent with 'SH_OSCachemmap::getCacheStats'.
+		 */
+		J9PortShcVersion versionData;
+
+		getValuesFromShcFilePrefix(PORTLIB, cacheNameWithVGen, &versionData);
+		versionData.cacheType = J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
+
+		Trc_SHR_Assert_True(1 == cacheInfo->isCompatible);
+		if (0 != oscache->_semid) {
+			cacheInfo->os_semid = oscache->_semid;
+		}
+
+	} else {
+		retval = -1;
+	}
+	
+	Trc_SHR_OSC_Sysv_getNonTopLayerCacheInfo_Exit(retval);
 	return retval;
 }
 

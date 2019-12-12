@@ -39,7 +39,9 @@
 class SH_OSCachemmap : public SH_OSCacheFile
 {
 public:
-	static IDATA getCacheStats(J9JavaVM* vm, const char* cacheDirName, const char* filePath, SH_OSCache_Info* returnVal, UDATA reason);
+	static IDATA getCacheStats(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, const char *cacheNameWithVGen, SH_OSCache_Info *cacheInfo, UDATA reason, J9Pool** lowerLayerList);
+	
+	static IDATA getNonTopLayerCacheInfo(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, const char *cacheNameWithVGen, SH_OSCache_Info *cacheInfo, UDATA reason, SH_OSCachemmap* oscache);
 	  
 	SH_OSCachemmap(J9PortLibrary* portlib, J9JavaVM* vm, const char* cacheDirName, const char* cacheName, J9SharedClassPreinitConfig* piconfig, IDATA numLocks,
 			UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, J9PortShcVersion* versionData, SH_OSCacheInitializer* initializer);
@@ -63,6 +65,8 @@ public:
 	virtual void cleanup();
 	
 	virtual void* attach(J9VMThread *currentThread, J9PortShcVersion* expectedVersionData);
+
+	virtual IDATA detach(void);
 	
 #if defined (J9SHR_MSYNC_SUPPORT)
 	virtual IDATA syncUpdates(void* start, UDATA length, U_32 flags);
@@ -114,7 +118,6 @@ private:
 	I_32 createCacheHeader(OSCachemmap_header_version_current *cacheHeader, J9PortShcVersion* versionData);
 	bool setCacheLength(U_32 cacheSize, LastErrorInfo *lastErrorInfo);
 	I_32 initializeDataHeader(SH_OSCacheInitializer *initializer);
-	void detach();
 	
 	bool deleteCacheFile(LastErrorInfo *lastErrorInfo);
 	

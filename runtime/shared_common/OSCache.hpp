@@ -201,7 +201,10 @@ public:
 	static UDATA statCache(J9PortLibrary* portLibrary, const char* cacheDirName, const char* cacheNameWithVGen, bool displayNotFoundMsg);
 
 	static J9Pool* getAllCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, UDATA localVerboseFlags, UDATA j2seVersion, bool includeOldGenerations, bool ignoreCompatible, UDATA reason, bool isCache);
-	static IDATA getCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, const char* cacheNameWithVGen, UDATA groupPerm, UDATA localVerboseFlags, UDATA j2seVersion, SH_OSCache_Info* result, UDATA reason);
+
+	static IDATA getCacheStatistics(J9JavaVM* vm, const char* ctrlDirName, const char* cacheNameWithVGen, UDATA groupPerm, UDATA localVerboseFlags, UDATA j2seVersion, SH_OSCache_Info* result, UDATA reason, bool getLowerLayerStats, bool isTopLayer, J9Pool** lowerLayerList, SH_OSCache* oscache);
+	
+	static bool isTopLayerCache(J9JavaVM* vm, const char* ctrlDirName, char* nameWithVGen);
 	
 	static IDATA getCachePathName(J9PortLibrary* portLibrary, const char* cacheDirName, char* buffer, UDATA bufferSize, const char* cacheNameWithVGen);
 	
@@ -212,8 +215,12 @@ public:
 	const char* getCacheUniqueID(J9VMThread* currentThread);
 
 	I_8 getLayer();
+	
+	const char* getCacheNameWithVGen();
 
 	bool isRunningReadOnly();
+	
+	U_32 getCacheType();
 
 	virtual bool startup(J9JavaVM* vm, const char* cacheDirName, UDATA cacheDirPerm, const char* cacheName, J9SharedClassPreinitConfig* piconfig_, IDATA numLocks,
 			UDATA createFlag, UDATA verboseFlags, U_64 runtimeFlags, I_32 openMode, UDATA storageKeyTesting, J9PortShcVersion* versionData, SH_OSCacheInitializer* i, UDATA reason) = 0;
@@ -260,6 +267,8 @@ public:
 	virtual SH_CacheAccess isCacheAccessible(void) const { return J9SH_CACHE_ACCESS_ALLOWED; }
 
 	virtual void  dontNeedMetadata(J9VMThread* currentThread, const void* startAddress, size_t length);
+	
+	virtual IDATA detach(void) = 0;
 
 protected:	
 	/*This constructor should only be used by this class*/
@@ -289,7 +298,7 @@ protected:
 	
 	static U_64 getCacheVersionToU64(U_32 major, U_32 minor);
 
-	static bool getCacheStatsCommon(J9JavaVM* vm, SH_OSCache *cache, SH_OSCache_Info *cacheInfo);
+	static bool getCacheStatsCommon(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, SH_OSCache *cache, SH_OSCache_Info *cacheInfo, J9Pool **lowerLayerList);
 
 	char* _cacheName;
 	/* Align the U_64 so we don't have too many platform specific structure padding
