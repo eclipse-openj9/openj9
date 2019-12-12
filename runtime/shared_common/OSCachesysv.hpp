@@ -132,9 +132,13 @@ public:
 	IDATA acquireWriteLock(UDATA lockID);
 	IDATA releaseWriteLock(UDATA lockID);
   	
-	static IDATA getCacheStats(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, const char* filePath, SH_OSCache_Info* cacheInfo, UDATA reason);
+	static IDATA getCacheStats(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, const char* cacheNameWithVGen, SH_OSCache_Info* cacheInfo, UDATA reason, J9Pool** lowerLayerList);
+	
+	static IDATA getNonTopLayerCacheInfo(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, const char *cacheNameWithVGen, SH_OSCache_Info *cacheInfo, UDATA reason, SH_OSCachesysv* oscache);
 	
 	void *attach(J9VMThread *currentThread, J9PortShcVersion* expectedVersionData);
+	
+	virtual IDATA detach(void);
 	
 #if defined (J9SHR_MSYNC_SUPPORT)
 	IDATA syncUpdates(void* start, UDATA length, U_32 flags); 
@@ -206,8 +210,6 @@ private:
 	SH_SysvShmAccess _shmAccess;
 
 	J9ControlFileStatus _controlFileStatus;
-
-	IDATA detach(void);
 
 	IDATA openCache(const char* ctrlDirName, J9PortShcVersion* versionData, bool semCreated);
 

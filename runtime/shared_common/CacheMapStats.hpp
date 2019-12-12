@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,7 +35,7 @@
 class SH_CacheMapStats
 {
 public:
-	virtual IDATA startupForStats(J9VMThread* currentThread, SH_OSCache * oscache, U_64 * runtimeflags) = 0;
+	virtual IDATA startupForStats(J9VMThread* currentThread, const char* ctrlDirName, UDATA groupPerm, SH_OSCache * oscache, U_64 * runtimeflags, J9Pool **lowerLayerList) = 0;
 
 	virtual IDATA shutdownForStats(J9VMThread* currentThread) = 0;
 

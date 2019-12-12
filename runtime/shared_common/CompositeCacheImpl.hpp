@@ -342,7 +342,11 @@ public:
 	void * getClassDebugDataStartAddress(void);
 
 	IDATA startupForStats(J9VMThread* currentThread, SH_OSCache * oscache, U_64 * runtimeFlags, UDATA verboseFlags);
-
+	
+	IDATA startupNonTopLayerForStats(J9VMThread* currentThread, const char* cacheDirName, const char* cacheName, U_32 cacheType, I_8 layer, U_64 * runtimeFlags, UDATA verboseFlags);
+	
+	IDATA getNonTopLayerCacheInfo(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, SH_OSCache_Info *cacheInfo);
+	
 	IDATA shutdownForStats(J9VMThread* currentThread);
 
 #if defined(J9SHR_CACHELET_SUPPORT)
@@ -431,6 +435,8 @@ public:
 	bool verifyCacheUniqueID(J9VMThread* currentThread, const char* expectedCacheUniqueID) const;
 	
 	void setMetadataMemorySegment(J9MemorySegment** segment);
+	
+	const char* getCacheNameWithVGen(void) const;
 
 private:
 	J9SharedClassConfig* _sharedClassConfig;

@@ -2160,7 +2160,7 @@ TraceExit=Trc_SHR_OSC_Sysv_DestroySysVMemoryHelper_Exit NoEnv Overhead=1 Level=3
 TraceEntry=Trc_SHR_OSC_Sysv_getCacheStatsHelper_Entry NoEnv Overhead=1 Level=1 Template="SH_OSCachesysv::getCacheStatsHelper: Entered - cacheNameWithVGen=%s"
 TraceExit=Trc_SHR_OSC_Sysv_getCacheStatsHelper_removeCacheVersionAndGenFailed NoEnv Overhead=1 Level=1 Template="SH_OSCachesysv::getCacheStatsHelper: Exit - failed removeCacheVersionAndGen"
 TraceExit=Trc_SHR_OSC_Sysv_getCacheStatsHelper_cacheStatFailed NoEnv Overhead=1 Level=1 Template="SH_OSCachesysv::getCacheStatsHelper: Exit - failed j9shmem_stat"
-TraceExit=Trc_SHR_OSC_Sysv_getCacheStatsHelper_Exit NoEnv Overhead=1 Level=1 Template="SH_OSCachesysv::getCacheStatsHelper: Exit"
+TraceExit=Trc_SHR_OSC_Sysv_getCacheStatsHelper_Exit NoEnv Obsolete Overhead=1 Level=1 Template="SH_OSCachesysv::getCacheStatsHelper: Exit"
 
 TraceExit=Trc_SHR_OSC_getCacheDir_j9shmem_createDir_failed NoEnv Overhead=1 Level=1 Template="OSCache::getCacheDir: createDir failed"
 
@@ -2966,3 +2966,13 @@ TraceEvent=Trc_SHR_RRM_storeNew_existingEntryRemoved Overhead=1 Level=6 Template
 TraceExit-Exception=Trc_SHR_CM_updateROMClassResource_Exit8 Overhead=1 Level=1 Template="CM updateROMClassResource: Failed to allocate memory for ROMClass resource"
 
 TraceEvent=Trc_SHR_CM_updateROMSegmentList_NewHeapAlloc Overhead=1 Level=4 Template="CM updateROMSegmentList: Updated class segment list - currentSegment is %p, new heapAlloc=%p"
+
+TraceEntry=Trc_SHR_OSC_Sysv_getNonTopLayerCacheInfo_Entry NoEnv Overhead=1 Level=9 Template="SH_OSCachesysv::getNonTopLayerCacheInfo: Entering ctrlDirName is %s, groupPerm is %zu, cacheNameWithVGen is %s, reason is %zu"
+TraceExit=Trc_SHR_OSC_Sysv_getNonTopLayerCacheInfo_Exit NoEnv Overhead=1 Level=9 Template="SH_OSCachesysv::getNonTopLayerCacheInfo: Exit retval is %zd"
+TraceExit=Trc_SHR_OSC_Sysv_getCacheStatsHelper_Exit1 NoEnv Overhead=1 Level=1 Template="SH_OSCachesysv::getCacheStatsHelper: Exit. cacheInfo->name is %s, cacheInfo->os_shmid is %zu, cacheInfo->lastattach is %lld, cacheInfo->lastdetach is %lld, cacheInfo->nattach is %zd"
+TraceEntry=Trc_SHR_OSC_Mmap_getNonTopLayerCacheInfo_Entry NoEnv Overhead=1 Level=9 Template="SH_OSCachemmap::getNonTopLayerCacheInfo: Entering ctrlDirName is %s, groupPerm is %zu, cacheNameWithVGen is %s, reason is %zu"
+TraceExit=Trc_SHR_OSC_Mmap_getNonTopLayerCacheInfo_Exit NoEnv Overhead=1 Level=9 Template="SH_OSCachemmap::getNonTopLayerCacheInfo: Exit retval is %zd, cacheInfo->name is %s, cacheInfo->lastattach is %lld, cacheInfo->lastdetach is %lld, cacheInfo->createtime %lld"
+TraceEntry=Trc_SHR_CC_startupNonTopLayerForStats_Entry Overhead=1 Level=9 Template="CC::startupNonTopLayerForStats: Entering ctrlDirName is %s, cacheName is %s, cacheType %u, layer is %d, runtimeFlags is %llu, verboseFlags is %zu"
+TraceExit=Trc_SHR_CC_startupNonTopLayerForStats_Exit Overhead=1 Level=9 Template="CC::startupNonTopLayerForStats: Exit retVal is %zd"
+TraceException=Trc_SHR_OSC_getAllCacheStatistics_pool_newElement_failed NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache::getAllCacheStatistics: (%d) Failed to get a new pool element"
+TraceException=Trc_SHR_CM_startupForStats_pool_newElement_failed Overhead=1 Level=1 Template="SH_CacheMap::startupForStats: Failed to get a new pool element"
