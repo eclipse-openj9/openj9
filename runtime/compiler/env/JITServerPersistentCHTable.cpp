@@ -53,6 +53,8 @@ JITServerPersistentCHTable::initializeIfNeeded(TR_J9VMBase *fej9)
    auto stream = TR::CompilationInfo::getStream();
    stream->write(JITServer::MessageType::CHTable_getAllClassInfo, JITServer::Void());
    std::string rawData = std::get<0>(stream->read<std::string>());
+   if (rawData.length() == 0)
+      return false;
    auto infos = FlatPersistentClassInfo::deserializeHierarchy(rawData);
       {
       TR::ClassTableCriticalSection initializeIfNeeded(fej9);
@@ -254,14 +256,6 @@ JITClientPersistentCHTable::serializeUpdates()
    return {removes, mods};
    }
 
-void 
-collectHierarchy(std::unordered_set<TR_PersistentClassInfo*> &out, TR_PersistentClassInfo *root)
-   {
-   out.insert(root);
-   for (TR_SubClass *c = root->getFirstSubclass(); c; c = c->getNext())
-      collectHierarchy(out, c->getClassInfo());
-   }
-
 size_t 
 FlatPersistentClassInfo::classSize(TR_PersistentClassInfo *clazz)
    {
@@ -293,23 +287,13 @@ FlatPersistentClassInfo::serializeClass(TR_PersistentClassInfo *clazz, FlatPersi
    }
 
 std::string 
-FlatPersistentClassInfo::serializeHierarchy(TR_PersistentClassInfo *root)
+FlatPersistentClassInfo::serializeHierarchy(const JITClientPersistentCHTable *chTable)
    {
-   if (!root)
-      return "";
-
-   // walk class hierarchy to find all referenced classes
    TR::ClassTableCriticalSection serializePersistentClassInfo(TR::comp()->fe());
-   std::unordered_set<TR_PersistentClassInfo*> classes;
-   collectHierarchy(classes, root);
-
-   // Find output size
-   size_t numBytes = 0;
-   for (auto clazz : classes)
-      {
-      size_t size = classSize(clazz);
-      numBytes += size;
-      }
+   // walk class hierarchy to find all referenced classes
+   std::vector<TR_PersistentClassInfo*> classes;
+   classes.reserve(300); // a guestimate to avoid resizing
+   size_t numBytes = chTable->collectEntireHierarchy(classes);
 
    // Serialize to string
    std::string data(numBytes, '\0');
@@ -339,18 +323,19 @@ FlatPersistentClassInfo::deserializeClassSimple(TR_PersistentClassInfo *clazz, F
    }
 
 std::vector<TR_PersistentClassInfo*> 
-FlatPersistentClassInfo::deserializeHierarchy(std::string& data)
+FlatPersistentClassInfo::deserializeHierarchy(const std::string& data)
    {
    std::vector<TR_PersistentClassInfo*> out;
    std::unordered_map<TR_OpaqueClassBlock*, std::pair<FlatPersistentClassInfo*, TR_PersistentClassInfo*>> infoMap;
-
    size_t bytesRead = 0;
+   uint32_t numClasses = 0;
    while (bytesRead != data.length())
       {
-      TR_ASSERT(bytesRead < data.length(), "Corrupt CHTable!!");
+      TR_ASSERT_FATAL(bytesRead < data.length(), "Corrupt CHTable!! bytesRead=%lu data.length=%lu numClasses=%u\n", bytesRead, data.length(), numClasses);
       FlatPersistentClassInfo* info = (FlatPersistentClassInfo*)&data[bytesRead];
       TR_PersistentClassInfo *clazz = new (PERSISTENT_NEW) TR_PersistentClassInfo(NULL);
       bytesRead += deserializeClassSimple(clazz, info);
+      numClasses++;
       out.push_back(clazz);
       infoMap.insert({clazz->getClassId(), {info, clazz}});
       }
@@ -483,6 +468,20 @@ JITClientPersistentCHTable::markDirty(TR_OpaqueClassBlock *clazz)
    _dirty.insert(clazz);
    _remove.erase(clazz);
    }
+
+size_t
+JITClientPersistentCHTable::collectEntireHierarchy(std::vector<TR_PersistentClassInfo*> &out) const
+   {
+   size_t spaceNeeded = 0;
+   for (size_t bucketIdx = 0; bucketIdx < CLASSHASHTABLE_SIZE + 1; ++bucketIdx)
+      for (TR_PersistentClassInfo *cl = (getClasses())[bucketIdx].getFirst(); cl; cl = cl->getNext())
+         {
+         spaceNeeded += FlatPersistentClassInfo::classSize(cl);
+         out.push_back(cl);
+         }
+   return spaceNeeded;
+   }
+
 
 
 // TR_JITClientPersistentClassInfo
