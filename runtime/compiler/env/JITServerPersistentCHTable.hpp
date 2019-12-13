@@ -112,7 +112,12 @@ public:
    virtual void removeClass(TR_FrontEnd *, TR_OpaqueClassBlock *classId, TR_PersistentClassInfo *info, bool removeInfo) override;
    virtual bool classGotExtended(TR_FrontEnd *vm, TR_PersistentMemory *, TR_OpaqueClassBlock *superClassId, TR_OpaqueClassBlock *subClassId) override;
 
-  
+   /** 
+    * @brief Collect entire class hierarchy into a vector
+    * @param[out] out : The vector that gets populated with pointers to all existing TR_PersistentClassInfo
+    * @return Returns the amount of space needed to serialize the entire hierarchy
+    */
+   size_t collectEntireHierarchy(std::vector<TR_PersistentClassInfo*> &out) const;
    void markForRemoval(TR_OpaqueClassBlock *clazz);
    void markDirty(TR_OpaqueClassBlock *clazz);
 #ifdef COLLECT_CHTABLE_STATS
@@ -146,8 +151,8 @@ private:
 class FlatPersistentClassInfo
    {
 public:
-   static std::string serializeHierarchy(TR_PersistentClassInfo *orig);
-   static std::vector<TR_PersistentClassInfo*> deserializeHierarchy(std::string& data);
+   static std::string serializeHierarchy(const JITClientPersistentCHTable *chTable);
+   static std::vector<TR_PersistentClassInfo*> deserializeHierarchy(const std::string& data);
    static size_t classSize(TR_PersistentClassInfo *clazz);
    static size_t serializeClass(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo* info);
    static size_t deserializeClassSimple(TR_PersistentClassInfo *clazz, FlatPersistentClassInfo *info);
