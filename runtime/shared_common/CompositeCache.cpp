@@ -74,6 +74,8 @@
 #define READWRITEAREASTART(ca) (((BlockPtr)(ca)) + sizeof(J9SharedCacheHeader))
 
 #define FREEBYTES(ca) ((ca)->updateSRP - (ca)->segmentSRP)
+#define METADATASECTIONBYTES(ca) ((ca)->totalBytes - (ca)->debugRegionSize - (ca)->updateSRP)
+#define CLASSSECTIONBYTES(ca) ((ca)->segmentSRP - (ca)->readWriteBytes)
 #define FREEREADWRITEBYTES(ca) ((ca)->readWriteBytes - (U_32)(ca)->readWriteSRP)
 
 #define CC_TRACE(verboseLevel, nlsFlags, var1) if (_verboseFlags & verboseLevel) j9nls_printf(PORTLIB, nlsFlags, var1)
@@ -1709,6 +1711,14 @@ releaseLockCheck:
 	}
 	if (rc == CC_STARTUP_OK) {
 		_started = true;
+		if (NULL == cacheMemory) {
+			Trc_SHR_CC_startup_getCacheUniqueID_before(currentThread, getCreateTime(), getMetadataBytes(), getClassesBytes(), getLineNumberTableBytes(), getLocalVariableTableBytes());
+			const char* uniqueId = getCacheUniqueID(currentThread);
+			Trc_SHR_CC_startup_getCacheUniqueID_after(currentThread, uniqueId);
+			if (NULL == uniqueId) {
+				rc = CC_STARTUP_FAILED;
+			}
+		}
 		protectHeaderReadWriteArea(currentThread, false);
 	}
 	Trc_SHR_CC_startup_Exit5(currentThread, rc);
@@ -3647,6 +3657,37 @@ SH_CompositeCacheImpl::getFreeBytes(void)
 	return FREEBYTES(_theca);
 }
 
+
+/**
+ * Get the number of bytes in the shared classes cache between UPDATEPTR and CADEBUGSTART
+ *
+ * @return the size of the metadata section in cache.
+ */
+UDATA
+SH_CompositeCacheImpl::getMetadataBytes(void) const
+{
+	if (!_started) {
+		Trc_SHR_Assert_ShouldNeverHappen();
+		return 0;
+	}
+	return METADATASECTIONBYTES(_theca);
+}
+
+/**
+ * Get the number of bytes in the shared classes cache between CASTART and SEGUPDATEPTR
+ *
+ * @return the size of the classes section in cache.
+ */
+UDATA
+SH_CompositeCacheImpl::getClassesBytes(void) const
+{
+	if (!_started) {
+		Trc_SHR_Assert_ShouldNeverHappen();
+		return 0;
+	}
+	return CLASSSECTIONBYTES(_theca);
+}
+
 /**
  * Get the number of free available bytes within softmx (softmx - usedBytes).
  *
@@ -3732,7 +3773,7 @@ SH_CompositeCacheImpl::getFreeDebugSpaceBytes(void)
  * @return number of bytes
  */
 U_32
-SH_CompositeCacheImpl::getLineNumberTableBytes(void)
+SH_CompositeCacheImpl::getLineNumberTableBytes(void) const
 {
 	if (!_started) {
 		Trc_SHR_Assert_ShouldNeverHappen();
@@ -3747,7 +3788,7 @@ SH_CompositeCacheImpl::getLineNumberTableBytes(void)
  * @return number of bytes
  */
 U_32
-SH_CompositeCacheImpl::getLocalVariableTableBytes(void)
+SH_CompositeCacheImpl::getLocalVariableTableBytes(void) const
 {
 	if (!_started) {
 		Trc_SHR_Assert_ShouldNeverHappen();
@@ -7180,6 +7221,11 @@ SH_CompositeCacheImpl::isAddressInReleasedMetaDataBounds(J9VMThread* currentThre
  * Return the unique ID of the current cache
  *
  * @param [in] currentThread The current JVM thread
+ * @param [in] createtime The cache create time which is stored in OSCache_header2.
+ * @param [in] metadataBytes  The size of the metadata section of current oscache.
+ * @param [in] classesBytes  The size of the classes section of current oscache.
+ * @param [in] lineNumTabBytes  The size of the line number table section of current oscache.
+ * @param [in] varTabBytes  The size of the variable table section of current oscache.
  *
  * @return NULL if the cache is not started. Otherwise, return the unique ID of the current cache.
  *
@@ -7190,7 +7236,7 @@ SH_CompositeCacheImpl::getCacheUniqueID(J9VMThread* currentThread) const
 	if (!_started) {
 		return NULL;
 	}
-	return _oscache->getCacheUniqueID(currentThread);
+	return _oscache->getCacheUniqueID(currentThread, getCreateTime(), getMetadataBytes(), getClassesBytes(), getLineNumberTableBytes(), getLocalVariableTableBytes());
 }
 
 /**
@@ -7205,9 +7251,10 @@ SH_CompositeCacheImpl::getCacheUniqueID(J9VMThread* currentThread) const
 bool
 SH_CompositeCacheImpl::verifyCacheUniqueID(J9VMThread* currentThread, const char* expectedCacheUniqueID) const
 {
-	bool rc = (0 == strcmp(expectedCacheUniqueID, getCacheUniqueID(currentThread)));
+	const char* actualCacheUniqueID = getCacheUniqueID(currentThread);
+	bool rc = (0 == strcmp(expectedCacheUniqueID, actualCacheUniqueID));
 	if (false == rc) {
-		Trc_SHR_CC_verifyCacheUniqueID_Failed(currentThread, expectedCacheUniqueID, getCacheUniqueID(currentThread));
+		Trc_SHR_CC_verifyCacheUniqueID_Failed(currentThread, expectedCacheUniqueID, actualCacheUniqueID);
 	}
 	return rc;
 }
@@ -7252,4 +7299,13 @@ IDATA
 SH_CompositeCacheImpl::getNonTopLayerCacheInfo(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, SH_OSCache_Info *cacheInfo) 
 {
 	return SH_OSCache::getCacheStatistics(vm, ctrlDirName, _oscache->getCacheNameWithVGen(), groupPerm, 0, J2SE_VERSION(vm), cacheInfo, SHR_STATS_REASON_ITERATE, true, false, NULL, _oscache);
+}
+
+/**
+ * Return the cache create time.
+ */
+U_64
+SH_CompositeCacheImpl::getCreateTime(void) const
+{
+	return _oscache->getCreateTime();
 }

@@ -187,6 +187,10 @@ public:
 	void getMinMaxBytes(U_32 *softmx, I_32 *minAOT, I_32 *maxAOT, I_32 *minJIT, I_32 *maxJIT);
 
 	UDATA getFreeBytes(void);
+
+	UDATA getMetadataBytes(void) const;
+
+	UDATA getClassesBytes(void) const;
 	
 	UDATA getFreeAvailableBytes(void);
 
@@ -198,9 +202,9 @@ public:
 
 	U_32 getFreeDebugSpaceBytes(void);
 
-	U_32 getLineNumberTableBytes(void);
+	U_32 getLineNumberTableBytes(void) const;
 
-	U_32 getLocalVariableTableBytes(void);
+	U_32 getLocalVariableTableBytes(void) const;
 
 	UDATA getFreeReadWriteBytes(void);
 	
@@ -431,6 +435,8 @@ public:
 	const char* getCacheName(void) const;
 	
 	I_8 getLayer(void) const;
+
+	U_64 getCreateTime(void) const;
 
 	bool verifyCacheUniqueID(J9VMThread* currentThread, const char* expectedCacheUniqueID) const;
 	

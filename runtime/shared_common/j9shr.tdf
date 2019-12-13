@@ -2951,8 +2951,8 @@ TraceEvent=Trc_SHR_CM_getPrereqCache_Found Overhead=1 Level=6 Template="CM::getP
 TraceEvent=Trc_SHR_CM_getPrereqCache_NotFound Overhead=1 Level=1 Template="CM::getPrereqCache(): This shared cache does not have a prerequisite cache"
 TraceException=Trc_SHR_CM_getPrereqCache_Failed_To_Start_Manager Overhead=1 Level=1 Template="CM::getPrereqCache(): Failed to startup the corresponding manager"
 TraceException=Trc_SHR_CM_getPrereqCache_Failed_To_Add_ID Overhead=1 Level=1 Template="CM::getPrereqCache(): Failed to add unique ID of prerequisite cache"
-TraceException=Trc_SHR_CM_getPrereqCache_Failed_To_Get_Manager Overhead=1 Level=1 Template="CM::getPrereqCache(): Failed to get the corresponding manger"
-TraceException=Trc_SHR_CM_getPrereqCache_Failed_To_Store_Prereq_UniqueID Overhead=1 Level=1 Template="CM::getPrereqCache(): Failed to store the prerequisite cache unique ID %.*s"
+TraceException=Trc_SHR_CM_getPrereqCache_Failed_To_Get_Manager Obsolete Overhead=1 Level=1 Template="CM::getPrereqCache(): Failed to get the corresponding manger"
+TraceException=Trc_SHR_CM_getPrereqCache_Failed_To_Store_Prereq_UniqueID Obsolete Overhead=1 Level=1 Template="CM::getPrereqCache(): Failed to store the prerequisite cache unique ID %.*s"
 TraceException=Trc_SHR_CC_verifyCacheUniqueID_Failed Overhead=1 Level=1 Template="CC verify Cache Unique ID Failed. The Expected ID is %s, the current ID is %s"
 TraceExit-Exception=Trc_SHR_CM_startup_Exit8 Overhead=1 Level=1 Template="CM startup: Cache Unique ID Verification Failed"
 TraceExit-Exception=Trc_SHR_CM_startup_Exit9 Overhead=1 Level=1 Template="CM startup: Failed to get prerequisite unqiue cache ID, error is %d"
@@ -2976,3 +2976,11 @@ TraceEntry=Trc_SHR_CC_startupNonTopLayerForStats_Entry Overhead=1 Level=9 Templa
 TraceExit=Trc_SHR_CC_startupNonTopLayerForStats_Exit Overhead=1 Level=9 Template="CC::startupNonTopLayerForStats: Exit retVal is %zd"
 TraceException=Trc_SHR_OSC_getAllCacheStatistics_pool_newElement_failed NoEnv Overhead=1 Level=1 Group=OSCache Template="OSCache::getAllCacheStatistics: (%d) Failed to get a new pool element"
 TraceException=Trc_SHR_CM_startupForStats_pool_newElement_failed Overhead=1 Level=1 Template="SH_CacheMap::startupForStats: Failed to get a new pool element"
+
+TraceException=Trc_SHR_CM_storeCacheUniqueID_Failed_To_Get_Manager Overhead=1 Level=1 Template="CM::storeCacheUniqueID(): Failed to get the corresponding manger"
+TraceException=Trc_SHR_CM_storeCacheUniqueID_Failed_To_Store_Prereq_UniqueID Overhead=1 Level=1 Template="CM::storeCacheUniqueID(): Failed to store the prerequisite cache unique ID %.*s"
+TraceEvent=Trc_SHR_CM_storeCacheUniqueID_generateCacheUniqueID_before Overhead=1 Level=7 Template="CM::storeCacheUniqueID(): generateCacheUniqueID() - (createTime: %llx, metadataBytes: %zx, classesBytes: %zx, lineNumTabBytes: %zx, varTabBytes: %zx) "
+TraceEvent=Trc_SHR_CM_storeCacheUniqueID_generateCacheUniqueID_after Overhead=1 Level=7 Template="CM::storeCacheUniqueID(): generateCacheUniqueID() - the generated cache unique ID is %.*s"
+
+TraceEvent=Trc_SHR_CC_startup_getCacheUniqueID_before Overhead=1 Level=7 Template="CC::startup(): getCacheUniqueID() - (createTime: %llx, metadataBytes: %zx, classesBytes: %zx, lineNumTabBytes: %zx, varTabBytes: %zx) "
+TraceEvent=Trc_SHR_CC_startup_getCacheUniqueID_after Overhead=1 Level=7 Template="CC::startup(): getCacheUniqueID() - the cache unique ID is %s"

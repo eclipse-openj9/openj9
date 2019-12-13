@@ -131,6 +131,7 @@ public:
 	IDATA getReadWriteLockID(void);
 	IDATA acquireWriteLock(UDATA lockID);
 	IDATA releaseWriteLock(UDATA lockID);
+	U_64 getCreateTime(void);
   	
 	static IDATA getCacheStats(J9JavaVM* vm, const char* ctrlDirName, UDATA groupPerm, const char* cacheNameWithVGen, SH_OSCache_Info* cacheInfo, UDATA reason, J9Pool** lowerLayerList);
 	
