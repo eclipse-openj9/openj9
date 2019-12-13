@@ -146,6 +146,9 @@ extern "C" UDATA initializeJITRuntimeInstrumentation(J9JavaVM *vm);
 extern void *ppcPicTrampInit(TR_FrontEnd *, TR::PersistentInfo *);
 extern TR_Debug *createDebugObject(TR::Compilation *);
 
+#if defined(JITSERVER_SUPPORT)
+extern bool isJITServerReady;
+#endif
 
 bool isQuickstart = false;
 
@@ -1896,6 +1899,11 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
    #endif
 
    TR::CodeCacheManager::instance()->lateInitialization();
+
+#if defined(JITSERVER_SUPPORT)
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::NONE)
+      isJITServerReady = true;
+#endif
 
    /* Do not set up the following hooks if we are in testmode */
    if (!(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))

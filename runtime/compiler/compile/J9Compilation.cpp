@@ -60,17 +60,20 @@
 
 /*
  * There should be no allocations that use the global operator new, since
- * all allocations should go through the JitMemory allocation routines.
+ * all allocations should go through the JitMemory allocation routines. 
+ * (JITServer is an exception as protobuf uses new and delete).
  * To catch cases that we miss, we define global operator new and delete here.
  * (xlC won't link statically with the -noe flag when we override these.)
  */
 bool firstCompileStarted = false;
 
-// JITSERVER_TODO: disabled to allow for JITServer
-#if !defined(JITSERVER_SUPPORT)
-void *operator new(size_t size)
+#if defined(JITSERVER_SUPPORT)
+bool isJITServerReady = false;
+#endif
+
+void *operator new(size_t size) throw (std::bad_alloc)
    {
-#if defined(DEBUG)
+#if defined(DEBUG) && !defined(JITSERVER_SUPPORT)
    #if LINUX
    // glibc allocates something at dl_init; check if a method is being compiled to avoid
    // getting assumes at _dl_init
@@ -80,20 +83,39 @@ void *operator new(size_t size)
       printf( "\n*** ERROR *** Invalid use of global operator new\n");
       TR_ASSERT(0,"Invalid use of global operator new");
       }
-#endif
-   return malloc(size);
+#endif // DEBUG && !JITSERVER_SUPPORT
+
+   void* pMemory = malloc(size);
+   if (pMemory)
+      return pMemory;
+   else
+      throw std::bad_alloc();
    }
 
 /**
  * Since we are using arena allocation, heap deletions must be a no-op, and
- * can't be used by JIT code, so we inject an assertion here.
+ * can't be used by JIT code (JITServer is an exception as protobuf uses new and delete), 
+ * so we inject an assertion here.
  */
-void operator delete(void *)
+void operator delete(void * pMemory) throw()
    {
-   TR_ASSERT(0, "Invalid use of global operator delete");
-   }
-#endif /* !defined(JITSERVER_SUPPORT) */
+#if defined(DEBUG) && !defined(JITSERVER_SUPPORT)
+   #if LINUX
+   if (firstCompileStarted)
+   #endif
+      {
+      TR_ASSERT(0, "Invalid use of global operator delete");
+      }
+#endif // DEBUG && !JITSERVER_SUPPORT
 
+#if defined(JITSERVER_SUPPORT)
+   if (isJITServerReady)
+      {
+      if (pMemory)
+         free(pMemory);
+      }
+#endif
+   }
 
 
 
