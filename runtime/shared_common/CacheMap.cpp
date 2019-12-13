@@ -451,6 +451,8 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 	PORT_ACCESS_FROM_PORT(_portlib);
 	SH_CompositeCacheImpl* ccToUse = _ccHead;
 	SH_CompositeCacheImpl* ccNext = NULL;
+	SH_CompositeCacheImpl* ccPrevious = NULL;
+	bool isCacheUniqueIdStored = false;
 
 	_actualSize = (U_32)piconfig->sharedClassCacheSize;
 
@@ -485,6 +487,7 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 	do {
 		IDATA tryCntr = 0;
 		bool isCcHead = (ccToUse == _ccHead);
+		bool storeToCcHead = (ccPrevious == _ccHead);
 		const char* cacheUniqueIDPtr = NULL;
 
 		/* start up _ccHead (the top layer cache) and then statrt its pre-requiste cache (ccNext). Contine to startup ccNext and its pre-requiste cache, util there is no more pre-requiste cache.
@@ -518,13 +521,37 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 						return -1;
 					}
 				}
+				
+				UDATA idLen = 0;
+				bool isReadOnly = ccToUse->isRunningReadOnly();
+				char cacheDirBuf[J9SH_MAXPATH];
+				U_32 cacheType = J9_ARE_ALL_BITS_SET(*runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE) ? J9PORT_SHR_CACHE_TYPE_PERSISTENT : J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
+				SH_OSCache::getCacheDir(vm, cacheDirName, cacheDirBuf, J9SH_MAXPATH, cacheType, false);
+
+				if (storeToCcHead && !isCacheUniqueIdStored && !ccPrevious->isRunningReadOnly()) {
+					if (ccPrevious->enterWriteMutex(currentThread, false, fnName) == 0) {
+						storeCacheUniqueID(currentThread, cacheDirBuf, ccToUse->getCreateTime(), ccToUse->getMetadataBytes(), ccToUse->getClassesBytes(), ccToUse->getLineNumberTableBytes(), ccToUse->getLocalVariableTableBytes(), &cacheUniqueIDPtr, &idLen);
+						Trc_SHR_Assert_True(idLen < sizeof(cacheUniqueID));
+						memcpy(cacheUniqueID, cacheUniqueIDPtr, idLen);
+						cacheUniqueID[idLen] = 0;
+						ccPrevious->exitWriteMutex(currentThread, fnName);
+					} else {
+						CACHEMAP_TRACE(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_FAILED_ENTER_WRITE_MUTEX_STARTUP);
+						Trc_SHR_CM_startup_Exit7(currentThread);
+						return -1;
+					}
+				}
+
 				if (ccToUse->enterWriteMutex(currentThread, false, fnName) == 0) {
-					UDATA idLen = 0;
-					bool isReadOnly = ccToUse->isRunningReadOnly();
+
 					if (false == isCcHead) {
 						if (strlen(cacheUniqueID) > 0) {
 							if (false == ccToUse->verifyCacheUniqueID(currentThread, cacheUniqueID)) {
 								/* modification to a low layer cache has been detected */
+								if (_ccHead->isNewCache()) {
+									CACHEMAP_TRACE4(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED, _ccHead->getLayer(), ccToUse->getLayer(), cacheUniqueID, ccToUse->getCacheUniqueID(currentThread));
+									_ccHead->deleteCache(currentThread, true);
+								}
 								CACHEMAP_TRACE1(J9SHR_VERBOSEFLAG_ENABLE_VERBOSE_DEFAULT, J9NLS_ERROR, J9NLS_SHRC_CM_VERIFY_CACHE_ID_FAILED, cacheUniqueID);
 								ccToUse->exitWriteMutex(currentThread, fnName);
 								Trc_SHR_CM_startup_Exit8(currentThread);
@@ -536,11 +563,8 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 					if (J9_ARE_ANY_BITS_SET(*runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_REDUCE_STORE_CONTENTION) && !isReadOnly) {
 						ccToUse->setWriteHash(currentThread, 0);				/* Initialize to zero so that peek will work */
 					}
-					char cacheDirBuf[J9SH_MAXPATH];
-					U_32 cacheType = J9_ARE_ALL_BITS_SET(*runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_PERSISTENT_CACHE) ? J9PORT_SHR_CACHE_TYPE_PERSISTENT : J9PORT_SHR_CACHE_TYPE_NONPERSISTENT;
 
-					SH_OSCache::getCacheDir(vm, cacheDirName, cacheDirBuf, J9SH_MAXPATH, cacheType, false);
-					IDATA preqRC = getPrereqCache(currentThread, cacheDirBuf, ccToUse, false, &cacheUniqueIDPtr, &idLen);
+					IDATA preqRC = getPrereqCache(currentThread, cacheDirBuf, ccToUse, false, &cacheUniqueIDPtr, &idLen, &isCacheUniqueIdStored);
 
 					if (0 > preqRC) {
 						if (CM_CACHE_CORRUPT == preqRC) {
@@ -571,16 +595,28 @@ SH_CacheMap::startup(J9VMThread* currentThread, J9SharedClassPreinitConfig* pico
 							_readOnlyCacheRuntimeFlags = &_sharedClassConfig->readOnlyCacheRuntimeFlags;
 						}
 						I_8 preLayer = 0;
+						const char* cacheName = _cacheName;
 						char cacheNameBuf[USER_SPECIFIED_CACHE_NAME_MAXLEN];
+						
+						if (isCacheUniqueIdStored) {
+							Trc_SHR_Assert_True(idLen < sizeof(cacheUniqueID));
+							memcpy(cacheUniqueID, cacheUniqueIDPtr, idLen);
+							cacheUniqueID[idLen] = 0;
+							SH_OSCache::getCacheNameAndLayerFromUnqiueID(vm, cacheUniqueID, idLen, cacheNameBuf, USER_SPECIFIED_CACHE_NAME_MAXLEN, &preLayer);
+							cacheName = cacheNameBuf;
+						} else {
+							/**
+							 * 	The CacheUniqueID of the pre-requisite cache is not stored when a new layer of cache is created (using createLayer or layer=<num> option).
+							 * 	Thus, we get the CacheUniqueID of the current cache and decrement the layer number by 1 to get the cacheName and layer number of the pre-requisite cache.
+							 */
+							preLayer = _sharedClassConfig->layer - 1; 
+						}
 
-						memset(cacheUniqueID, 0, sizeof(cacheUniqueID));
-						strncpy(cacheUniqueID, cacheUniqueIDPtr, idLen);
-						SH_OSCache::getCacheNameAndLayerFromUnqiueID(vm, cacheDirBuf, cacheUniqueID, idLen, cacheNameBuf, USER_SPECIFIED_CACHE_NAME_MAXLEN, &preLayer);
-						const char* cacheName = cacheNameBuf;
 						ccNext = SH_CompositeCacheImpl::newInstance(vm, _sharedClassConfig, allocPtr, cacheName, cacheType, false, preLayer);
 						ccNext->setNext(NULL);
 						ccNext->setPrevious(ccToUse);
 						ccToUse->setNext(ccNext);
+						ccPrevious = ccToUse;
 						_ccTail = ccNext;
 					} else {
 						/* no prereq cache, do nothing */
@@ -7103,8 +7139,9 @@ SH_CacheMap::startupLowerLayerForStats(J9VMThread* currentThread, const char* ct
 	do {
 		const char* cacheUniqueIDPtr = NULL;
 		UDATA idLen = 0;
+		bool isCacheUniqueIdStored = false;
 		
-		IDATA preqRC = getPrereqCache(currentThread, cacheDirBuf, ccToUse, true, &cacheUniqueIDPtr, &idLen);
+		IDATA preqRC = getPrereqCache(currentThread, cacheDirBuf, ccToUse, true, &cacheUniqueIDPtr, &idLen, &isCacheUniqueIdStored);
 		I_8 layer = 0;
 
 		if (0 > preqRC) {
@@ -7133,7 +7170,7 @@ SH_CacheMap::startupLowerLayerForStats(J9VMThread* currentThread, const char* ct
 			Trc_SHR_Assert_True(idLen < sizeof(cacheUniqueID));
 			memcpy(cacheUniqueID, cacheUniqueIDPtr, idLen);
 			cacheUniqueID[idLen] = '\0';
-			SH_OSCache::getCacheNameAndLayerFromUnqiueID(vm, cacheDirBuf, cacheUniqueID, idLen, cacheNameBuf, USER_SPECIFIED_CACHE_NAME_MAXLEN, &layer);
+			SH_OSCache::getCacheNameAndLayerFromUnqiueID(vm, cacheUniqueID, idLen, cacheNameBuf, USER_SPECIFIED_CACHE_NAME_MAXLEN, &layer);
 			cacheName = cacheNameBuf;
 			SH_CompositeCacheImpl* ccNext = SH_CompositeCacheImpl::newInstance(vm, _sharedClassConfig, allocPtr, cacheName, cacheType, true, layer);
 			ccNext->setNext(NULL);
@@ -7981,13 +8018,14 @@ SH_CacheMap::isAddressInReleasedMetaDataBounds(J9VMThread* currentThread, UDATA 
  *  Get the unique ID of a pre-requisite cache at a lower layer
  *
  *	@param [in] currentThread The current JVM thread
- *	@pamra [in] the cache directory
+ *	@param [in] the cache directory
  *	@param [in] ccToUse The current cache that depends on lower layer cache.
  *	@param [in] startupForStats If the cache is started up for cache statistics
- * 	@param [out] the Unique ID of a re-requiste cache.
- * 	@param [out] the length of the Unique ID string.
+ *	@param [out] the Unique ID of a pre-requisite cache.
+ *	@param [out] the length of the Unique ID string.
+ *	@param [out] true if the unique id of pre-requisite cache is found, false otherwise.
  *
- *	@return 1 This cache depends on a lower layer cache. The unique ID of the re-requisite cache is found in or stored to this cache as metadata.
+ *	@return 1 This cache depends on a lower layer cache. The unique ID of the pre-requisite cache is found in ccToUse as metadata or needs to be stored as metadata.
  *			0 This cache does not depend on a low layer cache.
  *			CM_CACHE_CORRUPT if cache is corrupted.
  *			CM_READ_CACHE_FAILED if failed to get the existing pre-requisite cache ID from metadata.
@@ -7996,7 +8034,7 @@ SH_CacheMap::isAddressInReleasedMetaDataBounds(J9VMThread* currentThread, UDATA 
  *
  */
 IDATA
-SH_CacheMap::getPrereqCache(J9VMThread* currentThread, const char* cacheDir, SH_CompositeCacheImpl* ccToUse, bool startupForStats, const char** prereqCacheID, UDATA* idLen)
+SH_CacheMap::getPrereqCache(J9VMThread* currentThread, const char* cacheDir, SH_CompositeCacheImpl* ccToUse, bool startupForStats, const char** prereqCacheID, UDATA* idLen, bool *isCacheUniqueIdStored)
 {
 	ShcItem* it = NULL;
 	IDATA result = 0;
@@ -8011,7 +8049,7 @@ SH_CacheMap::getPrereqCache(J9VMThread* currentThread, const char* cacheDir, SH_
 		return 0;
 	}
 
-	/* If there is a pre-requite cache, the re-requites cache ID the first metadate item */
+	/* If there is a pre-requisite cache, then re-requites cache ID is the first metadate item */
 	it = (ShcItem*)ccToUse->nextEntry(currentThread, NULL);
 	if (it) {
 		UDATA itemType = ITEMTYPE(it);
@@ -8029,6 +8067,7 @@ SH_CacheMap::getPrereqCache(J9VMThread* currentThread, const char* cacheDir, SH_
 			const J9UTF8* scopeUTF8 = (const J9UTF8*)ITEMDATA(it);
 			*prereqCacheID = (const char*)J9UTF8_DATA(scopeUTF8);
 			*idLen = J9UTF8_LENGTH(scopeUTF8);
+			*isCacheUniqueIdStored = true;
 			Trc_SHR_CM_getPrereqCache_Found(currentThread, J9UTF8_LENGTH(scopeUTF8), J9UTF8_DATA(scopeUTF8));
 			result = 1;
 		} else {
@@ -8063,46 +8102,86 @@ SH_CacheMap::getPrereqCache(J9VMThread* currentThread, const char* cacheDir, SH_
 			ccToUse->doneReadUpdates(currentThread, 1);
 		}
 	} else if (!startupForStats) {
-		if (isReadOnly) {
-			goto done;
-		}
-
-		SH_ScopeManager* localSCM = getScopeManager(currentThread);
-		if (NULL == localSCM) {
-			Trc_SHR_CM_getPrereqCache_Failed_To_Get_Manager(currentThread);
-			result = CM_CACHE_STORE_PREREQ_ID_FAILED;
-			goto done;
-		}
-
-		const J9UTF8* tokenKey = NULL;
-		char utfKey[J9SHR_UNIQUE_CACHE_ID_BUFSIZE];
-		char key[J9SHR_UNIQUE_CACHE_ID_BUFSIZE];
-		char* utfKeyPtr = (char*)&utfKey;
-		I_8 layer = _sharedClassConfig->layer;
-		if (0 == layer) {
+		I_8 layer = _sharedClassConfig->layer;	
+		if (0 == layer || isReadOnly) {
 			result = 0;
-			goto done;
+		} else {
+			/* A new layer is created and the CacheUniqueID of pre-requisite cache is not stored */
+			result = 1;
 		}
-
-		SH_OSCache::generateCacheUniqueID(currentThread, cacheDir, _cacheName, layer - 1, getCacheTypeFromRuntimeFlags(*_runtimeFlags), key, J9SHR_UNIQUE_CACHE_ID_BUFSIZE);
-		UDATA keylen = strlen(key);
-
-		J9UTF8* utfKeyStruct = (J9UTF8*)utfKeyPtr;
-		J9UTF8_SET_LENGTH(utfKeyStruct, (U_16)keylen);
-		memcpy((char*)J9UTF8_DATA(utfKeyStruct), key, keylen);
-
-		tokenKey = addScopeToCache(currentThread, utfKeyStruct, TYPE_PREREQ_CACHE);
-		if (NULL == tokenKey) {
-			Trc_SHR_CM_getPrereqCache_Failed_To_Store_Prereq_UniqueID(currentThread, J9UTF8_LENGTH(tokenKey), (char*)J9UTF8_DATA(tokenKey));
-			result = CM_CACHE_STORE_PREREQ_ID_FAILED;
-			goto done;
-		}
-		result = 1;
-		*prereqCacheID = (const char*)J9UTF8_DATA(tokenKey);
-		*idLen = J9UTF8_LENGTH(tokenKey);
 	}
 
-done:
+	return result;
+}
+
+/**
+ *  Store the actual cache unique ID in the previous cache 
+ *
+ *	@param [in] currentThread The current JVM thread
+ *	@param [in] the cache directory
+ *	@param [in] createtime The cache create time which is stored in OSCache_header2.
+ *	@param [in] metadataBytes  The size of the metadata section of current oscache.
+ *	@param [in] classesBytes  The size of the classes section of current oscache.
+ *	@param [in] lineNumTabBytes  The size of the line number table section of current oscache.
+ *	@param [in] varTabBytes  The size of the variable table section of current oscache.
+ *	@param [out] the Unique ID of a pre-requisite cache.
+ *	@param [out] the length of the Unique ID string.
+ *
+ *	@return 1 This cache depends on a lower layer cache. The unique ID of the pre-requisite cache is found in or stored to this cache as metadata.
+ *			0 This cache does not depend on a low layer cache.
+ *			CM_CACHE_CORRUPT if cache is corrupted.
+ *			CM_READ_CACHE_FAILED if failed to get the existing pre-requisite cache ID from metadata.
+ *			CM_CACHE_STORE_PREREQ_ID_FAILED if failed to store the pre-requisite cache ID
+ *
+ *
+ */
+IDATA
+SH_CacheMap::storeCacheUniqueID(J9VMThread* currentThread, const char* cacheDir, U_64 createtime, UDATA metadataBytes, UDATA classesBytes, UDATA lineNumTabBytes, UDATA varTabBytes, const char** prereqCacheID, UDATA* idLen)
+{
+	IDATA result = 0;
+
+	if (UnitTest::CORRUPT_CACHE_TEST == UnitTest::unitTest) {
+		return 0;
+	}
+
+	SH_ScopeManager* localSCM = getScopeManager(currentThread);
+	if (NULL == localSCM) {
+		Trc_SHR_CM_storeCacheUniqueID_Failed_To_Get_Manager(currentThread);
+		result = CM_CACHE_STORE_PREREQ_ID_FAILED;
+		return result;
+	}
+
+	const J9UTF8* tokenKey = NULL;
+	char utfKey[J9SHR_UNIQUE_CACHE_ID_BUFSIZE + sizeof(J9UTF8)];
+	char key[J9SHR_UNIQUE_CACHE_ID_BUFSIZE];
+	char* utfKeyPtr = (char*)&utfKey;
+
+	I_8 layer = _sharedClassConfig->layer;
+	if (0 == layer) {
+		result = 0;
+		return result;
+	}
+
+	Trc_SHR_CM_storeCacheUniqueID_generateCacheUniqueID_before(currentThread, createtime, metadataBytes, classesBytes, lineNumTabBytes, varTabBytes);
+	SH_OSCache::generateCacheUniqueID(currentThread, cacheDir, _cacheName, layer - 1, getCacheTypeFromRuntimeFlags(*_runtimeFlags), key, sizeof(key), createtime, metadataBytes, classesBytes, lineNumTabBytes, varTabBytes);
+	UDATA keylen = strlen(key);
+	Trc_SHR_CM_storeCacheUniqueID_generateCacheUniqueID_after(currentThread, keylen, key);
+
+	J9UTF8* utfKeyStruct = (J9UTF8*)utfKeyPtr;
+	J9UTF8_SET_LENGTH(utfKeyStruct, (U_16)keylen);
+	memcpy((char*)J9UTF8_DATA(utfKeyStruct), (char*)key, keylen);
+
+	tokenKey = addScopeToCache(currentThread, utfKeyStruct, TYPE_PREREQ_CACHE);
+	if (NULL == tokenKey) {
+		Trc_SHR_CM_storeCacheUniqueID_Failed_To_Store_Prereq_UniqueID(currentThread, J9UTF8_LENGTH(tokenKey), (char*)J9UTF8_DATA(tokenKey));
+		result = CM_CACHE_STORE_PREREQ_ID_FAILED;
+		return result;
+	}
+
+	result = 1;
+	*prereqCacheID = (const char*)J9UTF8_DATA(tokenKey);
+	*idLen = J9UTF8_LENGTH(tokenKey);
+
 	return result;
 }
 
