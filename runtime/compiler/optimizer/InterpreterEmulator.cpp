@@ -505,7 +505,7 @@ InterpreterEmulator::visitInvokedynamic()
 
       TR_CallSite *callsite = new (comp()->trHeapMemory()) TR_J9MethodHandleCallSite(_calltarget->_calleeMethod, callNodeTreeTop,   parent,
                                                                         callNode, interfaceMethod, resolvedMethod->classOfMethod(),
-                                                                        (int32_t) resolvedMethod->virtualCallSelector(cpIndex), cpIndex, resolvedMethod,
+                                                                        -1, cpIndex, resolvedMethod,
                                                                         resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                                                                         _recursionDepth, allconsts);
 
@@ -580,7 +580,7 @@ InterpreterEmulator::visitInvokevirtual()
          {
          callsite = new (comp()->trHeapMemory()) TR_J9MethodHandleCallSite(_calltarget->_calleeMethod, callNodeTreeTop,   parent,
                                                                         callNode, interfaceMethod, resolvedMethod->classOfMethod(),
-                                                                        (int32_t) resolvedMethod->virtualCallSelector(cpIndex), cpIndex, resolvedMethod,
+                                                                        -1, cpIndex, resolvedMethod,
                                                                         resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                                                                         _recursionDepth, allconsts);
          }
@@ -691,7 +691,7 @@ InterpreterEmulator::visitInvokestatic()
          {
          callsite = new (comp()->trHeapMemory()) TR_J9MethodHandleCallSite( _calltarget->_calleeMethod, callNodeTreeTop,   parent,
                callNode, interfaceMethod, resolvedMethod->classOfMethod(),
-               (int32_t) resolvedMethod->virtualCallSelector(cpIndex), cpIndex, resolvedMethod,
+               -1, cpIndex, resolvedMethod,
                resolvedSymbol, isIndirectCall, isInterface, *_newBCInfo, comp(),
                _recursionDepth, allconsts);
          }
