@@ -397,7 +397,14 @@ public:
    void * operator new (size_t size) throw();
    void * operator new (size_t size, void * placement) {return placement;}
 
+#ifdef OMR_GC_COMPRESSED_POINTERS
+   // Set the higher 32 bits to zero under compressedref to avoid assertion in
+   // CallSiteProfileInfo::setClazz, which is called by setInvalid with IPROFILING_INVALID
+   //
+   static const uintptrj_t IPROFILING_INVALID = 0x00000000FFFFFFFF;
+#else
    static const uintptrj_t IPROFILING_INVALID = ~0;
+#endif
 
    virtual uintptrj_t getData(TR::Compilation *comp = NULL);
    virtual CallSiteProfileInfo* getCGData() { return &_csInfo; } // overloaded
