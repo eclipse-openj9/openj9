@@ -300,6 +300,7 @@ public:
 		, finalizeMasterPriority(J9THREAD_PRIORITY_NORMAL)
 		, finalizeSlavePriority(J9THREAD_PRIORITY_NORMAL)
 #endif /* J9VM_GC_FINALIZATION */
+		, classLoaderManager(NULL)
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		, deadClassLoaderCacheSize(1024 * 1024) /* default is one MiB */
 #endif /* defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING) */
