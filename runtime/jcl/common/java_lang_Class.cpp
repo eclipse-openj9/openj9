@@ -1757,7 +1757,7 @@ storePDobjectsHelper(J9VMThread* vmThread, J9Class* arrayClass, J9StackWalkState
 		j9object_t lastPD = NULL;
 		I_32 resultIndex = startPos;
 		UDATA *cachePtr = walkState->cache;
-		j9object_t pd;
+		j9object_t pd = NULL;
 		for (i = framesWalked; i > 0; i--) {
 			pd = J9VMJAVALANGCLASS_PROTECTIONDOMAIN(vmThread, J9VM_J9CLASS_TO_HEAPCLASS(J9_CLASS_FROM_CP(*cachePtr)));
 			cachePtr += 1;
