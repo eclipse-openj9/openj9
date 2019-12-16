@@ -1292,7 +1292,7 @@ onLoadInternal(
 #endif
 
 #if defined(JITSERVER_SUPPORT)
-   if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
+   //if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
 #endif
       {
       if (!persistentMemory->getPersistentInfo()->getRuntimeAssumptionTable()->init())

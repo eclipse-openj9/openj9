@@ -3179,7 +3179,8 @@ void jitIllegalFinalFieldModification(J9VMThread *currentThread, J9Class *fieldC
 
    TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
    TR_RuntimeAssumptionTable * rat = compInfo->getPersistentInfo()->getRuntimeAssumptionTable();
-   if (rat && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
+   if (rat)
+   // && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
       {
       rat->notifyIllegalStaticFinalFieldModificationEvent(fe, fieldClass);
       }
@@ -4301,11 +4302,14 @@ static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA e
    jitAcquireClassTableMutex(vmThread);
 
 #if defined(JITSERVER_SUPPORT)
-   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
+   //if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
 #endif
       {
       if (TR::Options::getCmdLineOptions()->allowRecompilation() 
          && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
+#if defined(JITSERVER_SUPPORT)
+         && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
+#endif
          )
          {
          if (!initFailed && !compInfo->getPersistentInfo()->getPersistentCHTable()->classGotInitialized(vm, compInfo->persistentMemory(), clazz))
@@ -7285,7 +7289,8 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       }
    j9thread_monitor_exit(javaVM->vmThreadListMutex);
 
-   if (!vmj9->isAOT_DEPRECATED_DO_NOT_USE() && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
+   if (!vmj9->isAOT_DEPRECATED_DO_NOT_USE())
+   // && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
       {
       if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_JNI_NATIVE_REGISTERED, jitHookJNINativeRegistered, OMR_GET_CALLSITE(), NULL))
          {
