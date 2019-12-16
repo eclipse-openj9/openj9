@@ -570,11 +570,7 @@ x86-64_windows:
       13: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
       next: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
   excluded_tests:
-    8:
-      - special.system
     11:
-      - special.system
-    12:
       - special.system
     13:
       - special.system
