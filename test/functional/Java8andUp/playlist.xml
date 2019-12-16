@@ -986,7 +986,7 @@
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED \
@@ -1028,9 +1028,12 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9+</subset>
+			<subset>11+</subset>
 		</subsets>
 		<aot>nonapplicable</aot>
+		<types>
+			<type>native</type>
+		</types>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>
@@ -1043,7 +1046,7 @@
 			<variation>-Xshareclasses:none</variation>
 			<variation>-XX:RecreateClassfileOnload -Xshareclasses:none</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	--add-modules openj9.sharedclasses $(ADD_MODULE_JAVA_SE_EE) \
 	--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED \
@@ -1085,9 +1088,12 @@
 			<group>functional</group>
 		</groups>
 		<subsets>
-			<subset>9+</subset>
+			<subset>11+</subset>
 		</subsets>
 		<aot>nonapplicable</aot>
+		<types>
+			<type>native</type>
+		</types>
 		<impls>
 			<impl>openj9</impl>
 		</impls>
@@ -1139,7 +1145,7 @@
 			<variation>NoOptions</variation>
 			<variation>-XX:RecreateClassfileOnload</variation>
 		</variations>
-		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+		<command>$(ADD_JVM_LIB_DIR_TO_LIBPATH) $(JAVA_COMMAND) $(JVM_OPTIONS) -verbose:stacktrace -Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(P)$(TEST_RESROOT)$(D)TestResources.jar$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	-Drowset.provider.classname=org.openj9.resources.classloader.CustomSyncProvider \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
@@ -1172,6 +1178,9 @@
 		<subsets>
 			<subset>8</subset>
 		</subsets>
+		<types>
+			<type>native</type>
+		</types>
 		<impls>
 			<impl>openj9</impl>
 			<impl>ibm</impl>

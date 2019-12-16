@@ -29,11 +29,9 @@
 #include "env/VerboseLog.hpp"
 #include "control/Options.hpp"
 
-#if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/ssl.h>
 class SSLOutputStream;
 class SSLInputStream;
-#endif
 
 namespace JITServer
 {
@@ -73,11 +71,7 @@ public:
       @param ssl  BIO for the SSL enabled stream
       @param timeout timeout value (ms) to be set for connfd
    */
-#if defined(JITSERVER_ENABLE_SSL)
    explicit ServerStream(int connfd, BIO *ssl);
-#else
-   explicit ServerStream(int connfd);
-#endif
    virtual ~ServerStream()
       {
       _numConnectionsClosed++;

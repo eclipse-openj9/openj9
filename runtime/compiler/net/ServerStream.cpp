@@ -35,33 +35,21 @@
 #include "ServerStream.hpp"
 #include "env/TRMemory.hpp"
 #include "net/SSLProtobufStream.hpp"
-#if defined(JITSERVER_ENABLE_SSL)
 #include <openssl/err.h>
 #include "control/CompilationRuntime.hpp"
-#endif
 
 namespace JITServer
 {
 int ServerStream::_numConnectionsOpened = 0;
 int ServerStream::_numConnectionsClosed = 0;
 
-#if defined(JITSERVER_ENABLE_SSL)
 ServerStream::ServerStream(int connfd, BIO *ssl)
    : CommunicationStream()
    {
    initStream(connfd, ssl);
    _numConnectionsOpened++;
    }
-#else // JITSERVER_ENABLE_SSL
-ServerStream::ServerStream(int connfd)
-   : CommunicationStream()
-   {
-   initStream(connfd);
-   _numConnectionsOpened++;
-   }
-#endif
 
-#if defined(JITSERVER_ENABLE_SSL)
 SSL_CTX *createSSLContext(TR::PersistentInfo *info)
    {
    SSL_CTX *ctx = SSL_CTX_new(SSLv23_server_method());
@@ -199,19 +187,16 @@ acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio)
                                                      connfd, SSL_get_version(ssl), SSL_get_cipher(ssl));
    return true;
    }
-#endif
 
 void
 ServerStream::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR::PersistentInfo *info)
    {
-#if defined(JITSERVER_ENABLE_SSL)
    SSL_CTX *sslCtx = NULL;
    if (CommunicationStream::useSSL())
       {
       CommunicationStream::initSSL();
       sslCtx = createSSLContext(info);
       }
-#endif
 
    uint32_t port = info->getJITServerPort();
    uint32_t timeoutMs = info->getSocketTimeout();
@@ -277,25 +262,20 @@ ServerStream::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR
          exit(-1);
          }
 
-#if defined(JITSERVER_ENABLE_SSL)
       BIO *bio = NULL;
       if (sslCtx && !acceptOpenSSLConnection(sslCtx, connfd, bio))
          continue;
 
       ServerStream *stream = new (PERSISTENT_NEW) ServerStream(connfd, bio);
-#else
-      ServerStream *stream = new (PERSISTENT_NEW) ServerStream(connfd);
-#endif
+
       compiler->compile(stream);
       }
 
-#if defined(JITSERVER_ENABLE_SSL)
    // The following piece of code will be executed only if the server shuts down properly
    if (sslCtx)
       {
       SSL_CTX_free(sslCtx);
       EVP_cleanup();
       }
-#endif
    }
 }
