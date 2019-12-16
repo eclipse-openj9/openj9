@@ -7922,7 +7922,18 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                   that->getCompThreadId());
             // JITServer TODO determine if we care to support annotations
             if (that->_methodBeingCompiled->isRemoteCompReq())
+               {
                options->setOption(TR_EnableAnnotations,false);
+
+               // This option is used to generate SIMD instructions on Z. Currently the infrastructure
+               // to support the relocation of some of those instructions is not available. Thus we disable
+               // this option for remote compilations.
+               options->setOption(TR_DisableSIMDArrayTranslate);
+
+               // Infrastructure to support the TOC is currently not available for Remote Compilations. We disable the feature
+               // here so that the codegen doesn't generate TOC enabled code as it won't be valid on the client JVM.
+               options->setOption(TR_DisableTOC);
+               }
             // Determine if known annotations exist and if so, keep annotations enabled
             if (!that->_methodBeingCompiled->isAotLoad() && !vm->isAOT_DEPRECATED_DO_NOT_USE() && options->getOption(TR_EnableAnnotations))
                {
