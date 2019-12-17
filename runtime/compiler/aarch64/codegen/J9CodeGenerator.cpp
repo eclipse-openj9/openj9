@@ -50,6 +50,7 @@ J9::ARM64::CodeGenerator::CodeGenerator() :
       initTreeEvaluatorTable = true;
       }
 
+   cg->setSupportsInliningOfTypeCoersionMethods();
    cg->setSupportsDivCheck();
    }
 
