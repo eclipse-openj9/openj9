@@ -31,6 +31,3 @@ TKG
 autoGen.mk
 
 .DS_Store
-
-# directory for misc downloaded dependent files
-TestConfig/lib
