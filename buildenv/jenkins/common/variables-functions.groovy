@@ -668,8 +668,7 @@ def set_test_targets() {
 
 def get_default_test_targets() {
     if (VARIABLES.tests_targets && VARIABLES.tests_targets.default) {
-        // VARIABLES.tests_targets.default is a map where all values are null
-        return VARIABLES.tests_targets.default.keySet().join(',')
+        return VARIABLES.tests_targets.default.join(',')
     }
 
     return ''
