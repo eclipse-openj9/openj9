@@ -1,4 +1,4 @@
-# Copyright (c) 2018, 2019 IBM Corp. and others
+# Copyright (c) 2018, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -318,10 +318,10 @@ RUN cd /home/${USER} \
 RUN mkdir /home/${USER}/openjdk_cache \
   && cd /home/${USER}/openjdk_cache \
   && git init --bare \
-  && git remote add jdk13 https://github.com/ibmruntimes/openj9-openjdk-jdk13.git \
+  && git remote add jdk13 https://github.com/ibmruntimes/openj9-openjdk-jdk14.git \
   && git remote add jdk8 https://github.com/ibmruntimes/openj9-openjdk-jdk8.git \
   && git remote add jdk11 https://github.com/ibmruntimes/openj9-openjdk-jdk11.git \
-  && git remote add jdk12 https://github.com/ibmruntimes/openj9-openjdk-jdk12.git \
+  && git remote add jdk12 https://github.com/ibmruntimes/openj9-openjdk-jdk13.git \
   && git remote add jdk https://github.com/ibmruntimes/openj9-openjdk-jdk.git \
   && git remote add openj9 https://github.com/eclipse/openj9.git \
   && git remote add omr https://github.com/eclipse/openj9-omr.git \
