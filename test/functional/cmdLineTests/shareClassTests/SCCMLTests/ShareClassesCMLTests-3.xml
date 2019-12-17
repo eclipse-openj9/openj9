@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2012, 2018 IBM Corp. and others
+  Copyright (c) 2012, 2019 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
-<!--  Test 120s-a to Test 179: 72 tests -->
+<!--  Test 120s-a to Test 197: 90 tests -->
 
 <suite id="Shared Classes CommandLineOptionTests Suite ">
 
@@ -124,6 +124,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
+
 	<test id="Test 120s-d: Add url entry to the current cache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ $BOOTCLASSPATH$ APITests.URLStoreFindTest</command>
 		<output type="success" caseSensitive="yes" regex="no">TEST PASSED</output>
@@ -132,6 +133,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
+
 	<test id="Test 120s-e: Check the datacaching classloader is ok" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$ -classpath . apitesting.datahelper.DataCachingTest01</command>
 		<output type="success" caseSensitive="yes" regex="no">test successful</output>
@@ -471,6 +473,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
+
 	<test id="Test 133: Test -Xshareclasses:printallstats=zipcache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printallstats=zipcache</command>
 		<output type="failure" caseSensitive="yes" regex="no">CLASSPATH</output>
@@ -691,7 +694,6 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 
-
 	<test id="Test 141: Test -Xshareclasses:printallstats=token+orphan" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printallstats=token+orphan</command>
 		<output type="failure" caseSensitive="yes" regex="no">CLASSPATH</output>
@@ -764,7 +766,7 @@
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
 	
-		<test id="Test 144: Test -Xshareclasses:printstats=all" timeout="600" runPath=".">
+	<test id="Test 144: Test -Xshareclasses:printstats=all" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printstats=all</command>
 		<output type="success" caseSensitive="yes" regex="no">CLASSPATH</output>
 		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">[\d]: 0x[\w]* URL[\s]</output>
@@ -836,8 +838,6 @@
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-
-
 
 	<test id="Test 147: Test -Xshareclasses:printstats=classpath" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printstats=classpath</command>
@@ -1015,6 +1015,7 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
+
 	<test id="Test 154: Test -Xshareclasses:printstats=zipcache" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printstats=zipcache</command>
 		<output type="failure" caseSensitive="yes" regex="no">CLASSPATH</output>
@@ -1234,7 +1235,6 @@
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
-
 
 	<test id="Test 162: Test -Xshareclasses:printstats=token+orphan" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,printstats=token+orphan</command>
@@ -1621,7 +1621,359 @@
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
 	</test>
+
+	<test id="Test 179: cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Java dump</output>
+		<output type="failure" caseSensitive="yes" regex="no">JVM requested Snap dump</output>
+	</test>
+
+	<test id="Test 180: Setup for Tests from 181 - 196. Create the layer 0 cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 181: Test the sub-option createLayer" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,createLayer -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Failed to start up the shared cache</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 182: Test the sub-option Layer= with an incorrect layer number" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,layer=3 -version</command>
+		<output type="success" caseSensitive="yes" regex="no">JVMSHRC844E Invalid layer number 3</output>
+		<output type="required" caseSensitive="yes" regex="no">The existing top layer is 1</output>
+		<output type="required" caseSensitive="yes" regex="no">The new layer number should be 2</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<exec command="rm -f testjavacore.txt" quiet="false"/>	
+
+	<!-- Generate the javacore file here in order to test it on test 185-->
+	<test id="Test 183: Test the sub-option Layer= with a correct layer number and generate the javacore file" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ -Xdump:java:events=vmstop,file=testjavacore.txt $currentMode$,layer=2 $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="required" caseSensitive="yes" regex="no">JVMDUMP010I Java dump written to</output>
+		<output type="required" caseSensitive="yes" regex="no">JVMDUMP013I Processed dump event "vmstop"</output>
+		
+		<output type="failure" caseSensitive="yes" regex="no">JVMDUMP030W Cannot write dump to file</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+	</test>
+
+	<test id="Test 184: Verify that layer information is listed in the javacore">
+		<command>cat testjavacore.txt</command>				
+		<output type="success" caseSensitive="no" regex="no">1SCLTEXTCSTL   Cache Statistics for Top Layer</output>
+		<output type="required" caseSensitive="no" regex="yes" javaUtilPattern="yes">2SCLTEXTCLY[\s]*Cache layer[\s]*= 2</output>
+		<output type="required" caseSensitive="no" regex="no">1SCLTEXTCSAL   Cache Statistics for All Layers</output>
+
+		<output type="failure" caseSensitive="no" regex="no">No such file or directory</output>
+	</test>
+	
+	<exec command="rm -f testjavacore.txt" quiet="false"/>
+
+	<test id="Test 185: Check the number of Layers" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,listAllCaches</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ShareClassesCMLTests[\s]*Java(.)*(non-persistent|persistent)(.)*(cr|non-cr|default)[\s]*0</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ShareClassesCMLTests[\s]*Java(.)*(non-persistent|persistent)(.)*(cr|non-cr|default)[\s]*1</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ShareClassesCMLTests[\s]*Java(.)*(non-persistent|persistent)(.)*(cr|non-cr|default)[\s]*2</output>
+		
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">ShareClassesCMLTests[\s]*Java(.)*(non-persistent|persistent)(.)*(cr|non-cr|default)[\s]*(([3-9][\d]*)|([0-2][\d]+))</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 186: Test -Xshareclasses:printtoplayerstats=help" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printtoplayerstats=help</command>
+		<output type="success" caseSensitive="yes" regex="no">all</output>
+
+		<output type="required" caseSensitive="yes" regex="no">all</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints all the following types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">classpath</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only classpath types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">url</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only url types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">token</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only token types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">romclass</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only romclass types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">rommethod</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only rommethod types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">aot</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only aot types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">jitprofile</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only jitprofile types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">jithint</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only jithint types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">zipcache</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only zipcache types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">stale</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints all the stale entries in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">startuphint</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only startup hint types in the shared cache</output>
+
+		<output type="failure" caseSensitive="yes" regex="no">extra</output>
+		<output type="failure" caseSensitive="yes" regex="no">Prints all the following private types in the shared cache</output>
+		<output type="failure" caseSensitive="yes" regex="no">orphan</output>
+		<output type="failure" caseSensitive="yes" regex="no">Prints only orphan types in the shared cache</output>
+		<output type="failure" caseSensitive="yes" regex="no">aotch</output>
+		<output type="failure" caseSensitive="yes" regex="no">Prints only aotch types in the shared cache</output>
+		<output type="failure" caseSensitive="yes" regex="no">aotthunk</output>
+		<output type="failure" caseSensitive="yes" regex="no">Prints only aotthunk types in the shared cache</output>
+		<output type="failure" caseSensitive="yes" regex="no">aotdata</output>
+		<output type="failure" caseSensitive="yes" regex="no">Prints only aotdata types in the shared cache</output>
+		<output type="failure" caseSensitive="yes" regex="no">jcl</output>
+		<output type="failure" caseSensitive="yes" regex="no">Prints only jcl types in the shared cache</output>
+		<output type="failure" caseSensitive="yes" regex="no">bytedata</output>
+		<output type="failure" caseSensitive="yes" regex="no">Prints all other bytedata types in the shared cache</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 187: Test -Xshareclasses:printtoplayerstats=morehelp" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printtoplayerstats=morehelp</command>
+		<output type="success" caseSensitive="yes" regex="no">all</output>
+
+		<output type="required" caseSensitive="yes" regex="no">all</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints all the following types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">classpath</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only classpath types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">url</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only url types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">token</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only token types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">romclass</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only romclass types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">rommethod</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only rommethod types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">aot</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only aot types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">jitprofile</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only jitprofile types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">zipcache</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only zipcache types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">rommethod</output>
+		<output type="required" caseSensitive="yes" regex="no">extra</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints all the following private types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">orphan</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only orphan types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">jithint</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only jithint types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">aotch</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only aotch types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">aotthunk</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only aotthunk types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">aotdata</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only aotdata types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">jcl</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only jcl types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">bytedata</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints all other bytedata types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">stale</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints all the stale entries in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">startuphint</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only startup hint types in the shared cache</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 188: Check whether the total layer stats (printstats) shows up correctly" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printstats=all</command>
+		<output type="success" caseSensitive="yes" regex="no">ROMCLASS: java/lang/Object at</output>
+
+		<output type="required" caseSensitive="yes" regex="no">ROMCLASS: org/openj9/test/ivj/Hanoi</output>
+		<output type="required" caseSensitive="yes" regex="no">Current statistics for top layer of cache</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">cache layer[\s]*= 2</output>
+		<output type="required" caseSensitive="yes" regex="no">Current statistics for all layers of cache</output>	
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ROMClass bytes</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># ROMClasses</output>			
+		
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 189: Test -Xshareclasses:printtoplayerstats=all" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printtoplayerstats=all</command>
+		<output type="success" caseSensitive="yes" regex="no">CLASSPATH</output>
+
+		<output type="required" caseSensitive="yes" regex="no">ROMCLASS: org/openj9/test/ivj/Hanoi</output>
+		<output type="required" caseSensitive="yes" regex="no">ROMMETHOD:</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">cache layer[\s]*= 2</output>
+
+		<output type="failure" caseSensitive="yes" regex="no">ROMCLASS: java/lang/Object at</output>
+		<output type="failure" caseSensitive="yes" regex="no">Current statistics for all layers of cache</output>	
+		<output type="failure" caseSensitive="yes" regex="no">ORPHAN:</output>
+		<output type="failure" caseSensitive="yes" regex="no">AOTCH:</output>
+		<output type="failure" caseSensitive="yes" regex="no">AOTDATA:</output>
+		<output type="failure" caseSensitive="yes" regex="no">AOTTHUNK:</output>
+		<output type="failure" caseSensitive="yes" regex="no">JCL:</output>
+		<output type="failure" caseSensitive="yes" regex="no">BYTEDATA:</output>
+		<output type="failure" caseSensitive="yes" regex="no"># Java Objects</output>
+		<output type="failure" caseSensitive="yes" regex="no">Class LineNumberTable bytes</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 190: Test -Xshareclasses:printtoplayerstats=romclass" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printtoplayerstats=romclass</command>
+		<output type="success" caseSensitive="yes" regex="no" showMatch="yes">ROMCLASS: org/openj9/test/ivj/Disk</output>
+
+		<output type="failure" caseSensitive="yes" regex="no">AOT:</output>
+		<output type="failure" caseSensitive="yes" regex="no">ROMMETHOD:</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITPROFILE:</output>
+		<output type="failure" caseSensitive="yes" regex="no">ZIPCACHE:</output>
+		<output type="failure" caseSensitive="yes" regex="no">ORPHAN:</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITHINT:</output>
+		<output type="failure" caseSensitive="yes" regex="no">AOTCH:</output>
+		<output type="failure" caseSensitive="yes" regex="no">AOTDATA:</output>
+		<output type="failure" caseSensitive="yes" regex="no">AOTTHUNK:</output>
+		<output type="failure" caseSensitive="yes" regex="no">JCL:</output>
+		<output type="failure" caseSensitive="yes" regex="no">BYTEDATA:</output>
+		<output type="failure" caseSensitive="yes" regex="no"># Java Objects</output>
+		<output type="failure" caseSensitive="yes" regex="no">Class LineNumberTable bytes</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 191: Test -Xshareclasses:printtoplayerstats=orphan+aotch" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,printtoplayerstats=orphan+aotch</command>
+		<output type="success" caseSensitive="yes" regex="no">ORPHAN:</output>
+
+		<output type="required" caseSensitive="yes" regex="no">AOTCH:</output>
+		<output type="required" caseSensitive="yes" regex="no"># Java Objects</output>
+		<output type="required" caseSensitive="yes" regex="no">Class LineNumberTable bytes</output>
+
+		<output type="failure" caseSensitive="yes" regex="no">CLASSPATH</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">[\d]: 0x[\w]* URL[\s]</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">[\d]: 0x[\w]* TOKEN[\s]</output>
+		<output type="failure" caseSensitive="yes" regex="no">ROMMETHOD:</output>
+		<output type="failure" caseSensitive="yes" regex="no">AOT:</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITPROFILE:</output>
+		<output type="failure" caseSensitive="yes" regex="no">ZIPCACHE:</output>
+		<output type="failure" caseSensitive="yes" regex="no">JITHINT:</output>
+		<output type="failure" caseSensitive="yes" regex="no">AOTDATA:</output>
+		<output type="failure" caseSensitive="yes" regex="no">AOTTHUNK:</output>
+		<output type="failure" caseSensitive="yes" regex="no">JCL:</output>
+		<output type="failure" caseSensitive="yes" regex="no">BYTEDATA:</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 192: Try to load the cache and make sure classes are being found in the cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,verboseIO $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Found class java/.* in shared cache for class-loader id 0</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">Found class org/openj9/test/ivj/Disk in shared cache for class-loader id [2-9]</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 193: Modify the middle layer (layer 1)" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,layer=1 $CP_HANOI$ $PROGRAM_HANOI$</command>
+		<output type="success" caseSensitive="yes" regex="no">Puzzle solved!</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 194: Try to load the cache again and expect to get a failure" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$ -version</command>
+		<output type="success" caseSensitive="yes" regex="no">JVMSHRC838E Failed to start up the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">Modification to a lower layer shared cache has been detected</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 195: Destroy the top layer" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 196: Check the number of Layers" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,listAllCaches</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ShareClassesCMLTests[\s]*Java(.)*(non-persistent|persistent)(.)*(cr|non-cr|default)[\s]*0</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">ShareClassesCMLTests[\s]*Java(.)*(non-persistent|persistent)(.)*(cr|non-cr|default)[\s]*1</output>
+		
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes" showMatch="yes">ShareClassesCMLTests[\s]*Java(.)*(non-persistent|persistent)(.)*(cr|non-cr|default)[\s]*(([2-9][\d]*)|([01][\d]+))</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>	
+
+	<test id="Test 197: After the invalid layer has been destroyed, try to create a new layer of the cache" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,createLayer -version</command>
+		<output type="success" caseSensitive="yes" regex="yes" javaUtilPattern="yes">(java|openjdk) version</output>
+
+		<output type="failure" caseSensitive="no" regex="no">Failed to start up the shared cache</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 180 - 197 clean up with destroyAllLayers" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroyAllLayers</command>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
 	<test id="At end destroy cache for cleanup" timeout="600" runPath=".">
 		<command>$JAVA_EXE$ $currentMode$,destroy</command>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
