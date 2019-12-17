@@ -263,4 +263,61 @@
 	<exclude id="Test 65-b: Make sure none of the classes has been stored in the cache" platform="8">
 		<reason>Only Java 11 and up use jdk.internal.misc.Unsafe  </reason>
 	</exclude>
+	<exclude id="Test 180: Setup for Tests from 181 - 196. Create the layer 0 cache" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 181: Test the sub-option createLayer" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 182: Test the sub-option Layer= with an incorrect layer number" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 183: Test the sub-option Layer= with a correct layer number and generate the javacore file" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 184: Verify that layer information is listed in the javacore" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 185: Check the number of Layers" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 186: Test -Xshareclasses:printtoplayerstats=help" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 187: Test -Xshareclasses:printtoplayerstats=morehelp" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 188: Check whether the total layer stats (printstats) shows up correctly" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 189: Test -Xshareclasses:printtoplayerstats=all" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 190: Test -Xshareclasses:printtoplayerstats=romclass" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 191: Test -Xshareclasses:printtoplayerstats=orphan+aotch" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 192: Try to load the cache and make sure classes are being found in the cache" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 193: Modify the middle layer (layer 1)" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 194: Try to load the cache again and expect to get a failure" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 195: Destroy the top layer" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 196: Check the number of Layers" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 197: After the invalid layer has been destroyed, try to create a new layer of the cache" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
+	<exclude id="Test 180 - 197 clean up with destroyAllLayers" platform=".*-3[12].*">
+		<reason> The multi-layer cache feature is only supported on 64-bit platforms </reason>
+	</exclude>
 </suite>
