@@ -20,10 +20,15 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+/* Ensure standard limit macros are defined on all platforms */
+#if !defined(__STDC_LIMIT_MACROS)
+#define __STDC_LIMIT_MACROS 1
+#endif
+#include <stdint.h>
+
 #include "env/j9method.h"
 
 #include <stddef.h>
-#include <limits>
 #include "bcnames.h"
 #include "fastJNI.h"
 #include "j9.h"
@@ -2405,13 +2410,13 @@ void TR_ResolvedJ9Method::construct()
 // ranges of Java versions over which a recognized method is expected to be
 // native, where that range is (currently) unbounded.  An upper bound of
 // AllPastJaveVer is used if the method has never been expected to be native.
-#define AllPastJavaVer (std::numeric_limits<int8_t>::min())
-#define AllFutureJavaVer (std::numeric_limits<int8_t>::max())
+#define AllPastJavaVer   INT8_MIN
+#define AllFutureJavaVer INT8_MAX
 
 // xClMeth, xSig, xWCSig and xNonNativeRange are intermediate macros used in
 // the macros used to initialize entries in the tables of recognized methods
 #define xClMeth(cl, meth) cl, sizeof(meth) - 1, meth
-#define xSig(sig)         (int16_t) strlen(sig), sig
+#define xSig(sig)         (int16_t) sizeof(sig) - 1, sig
 #define xWCSig            (int16_t) -1, "*"
 #define xNonNativeRange   AllPastJavaVer, AllPastJavaVer
 
