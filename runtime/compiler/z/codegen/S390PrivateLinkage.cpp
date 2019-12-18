@@ -1975,41 +1975,34 @@ J9::Z::PrivateLinkage::buildVirtualDispatch(TR::Node * callNode, TR::RegisterDep
          }
       else
          {
-         cursor =
-            generateRXInstruction(cg(), TR::InstOpCode::getExtendedLoadOpCode(), callNode, RegRA,
-                                   generateS390MemoryReference(classReg, offset, cg()));
+         // It should be impossible to have a offset that can't fit in 20bit given Java method table limitations.
+         // We assert here to insure limitation/assumption remains true. If this fires we need to fix this code
+         // and the _virtualUnresolvedHelper() code to deal with a new worst case scenario for patching.
+         TR_ASSERT_FATAL(offset>MINLONGDISP, "JIT VFT offset does not fit in 20bits");
+         TR_ASSERT_FATAL(offset!=0 || unresolvedSnippet, "Offset is 0 yet unresolvedSnippet is NULL");
+         TR_ASSERT_FATAL(offset<=MAX_IMMEDIATE_VAL, "Offset is larger then MAX_IMMEDIATE_VAL");
+
+         // If unresolved/AOT, this instruction will be patched by _virtualUnresolvedHelper() with the correct offset
+         cursor = generateRXInstruction(cg(), TR::InstOpCode::getExtendedLoadOpCode(), callNode, RegRA,
+                                        generateS390MemoryReference(classReg, offset, cg()));
 
          if (unresolvedSnippet)
             {
             ((TR::S390VirtualUnresolvedSnippet *)unresolvedSnippet)->setPatchVftInstruction(cursor);
             }
 
-         /* A load immediate (LHI/LGHI) instruction MUST be generated here for all virtual calls because
-          *
-          * 1. picbuilder looks for this load immediate (and an LG before it) and patches in the correct offset at
-          * runtime for unresolved virtual calls
-          *
-          * 2. for all virtual calls, resolved or not, this load immediate is used by the VM to find where
-          * the method is in the VFT table when doing J2I transitions. We need this negative offset in a register
-          * because S390 load address instruction used to find VFT table entires can't handle negative offsets.
-          * (VFT table precedes the J9Class in memory; as a result of this, all VFT entries are some negative offsets
-          * away from the J9Class)
-          *
-          *
-          * In fact we should not be using APIs (such as genLoadLongConstant) at all and be explicitly generating
-          * LHI/LGHI instruction. Similar occurrence below.
-          */
-         if (offset >= (-32768))
+         // A load immediate into R0 instruction (LHI/LGFI) MUST be generated here because the "LA" instruction used by
+         // the VM to find VFT table entries can't handle negative displacements. For unresolved/AOT targets we must assume
+         // the worse case (offset can't fit in 16bits). VFT offset 0 means unresolved/AOT, otherwise offset is negative.
+         // Some special cases have positive offsets i.e. java/lang/Object.newInstancePrototype()
+         if (!unresolvedSnippet && offset >= MIN_IMMEDIATE_VAL && offset <= MAX_IMMEDIATE_VAL) // Offset fits in 16bits
             {
             cursor = generateRIInstruction(cg(), TR::InstOpCode::getLoadHalfWordImmOpCode(), callNode, RegZero, offset);
             }
-         else if (cg()->comp()->target().is64Bit())
+         else // if unresolved || offset can't fit in 16bits
             {
-            cursor = genLoadLongConstant(cg(), callNode, (int64_t)offset, RegZero);
-            }
-         else
-            {
-            cursor = generateLoad32BitConstant(cg(), callNode, offset, RegZero, false);
+            // If unresolved/AOT, this instruction will be patched by _virtualUnresolvedHelper() with the correct offset
+            cursor = generateRILInstruction(cg(), TR::InstOpCode::LGFI, callNode, RegZero, static_cast<int32_t>(offset));
             }
          }
 
