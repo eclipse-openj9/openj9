@@ -528,8 +528,6 @@ ifneq ($(JITSERVER_SUPPORT),)
     SOLINK_SLINK_STATIC=-l:libprotobuf.a
     CXX_DEFINES+=GOOGLE_PROTOBUF_NO_RTTI
 
-    SOLINK_SLINK+=ssl
-
     ifneq ($(OPENSSL_CFLAGS),)
         C_FLAGS+=$(OPENSSL_CFLAGS)
         CXX_FLAGS+=$(OPENSSL_CFLAGS)
@@ -537,11 +535,12 @@ ifneq ($(JITSERVER_SUPPORT),)
 
     # --with-openssl=fetched --enable-openssl-bundling
     ifneq ($(OPENSSL_BUNDLE_LIB_PATH),)
-        SOLINK_SLINK+=crypto
-        SOLINK_LIBPATH+=$(OPENSSL_BUNDLE_LIB_PATH)
         SOLINK_FLAGS+=-Wl,-rpath,\$$ORIGIN/..
+        C_INCLUDES+=$(OPENSSL_BUNDLE_LIB_PATH)
+        CXX_INCLUDES+=$(OPENSSL_BUNDLE_LIB_PATH)
     # --with-openssl=fetched only
     else ifneq ($(OPENSSL_DIR),)
-        SOLINK_LIBPATH+=$(OPENSSL_DIR)
+        C_INCLUDES+=$(OPENSSL_DIR)
+        CXX_INCLUDES+=$(OPENSSL_DIR)
     endif
 endif # JITSERVER_SUPPORT

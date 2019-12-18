@@ -367,7 +367,7 @@ target_link_libraries(j9jit
 )
 
 if(JITSERVER_SUPPORT)
-	target_link_libraries(j9jit PRIVATE ${PROTOBUF_LIBRARY} ${OPENSSL_SSL_LIBRARY} ${OPENSSL_CRYPTO_LIBRARY})
+	target_link_libraries(j9jit PRIVATE ${PROTOBUF_LIBRARY})
 endif()
 
 # This is a bit hokey, but cmake can't track the fact that files are generated across directories.

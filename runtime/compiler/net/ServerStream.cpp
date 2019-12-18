@@ -32,11 +32,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h> /// gethostname, read, write
-#include "ServerStream.hpp"
-#include "env/TRMemory.hpp"
-#include "net/SSLProtobufStream.hpp"
 #include <openssl/err.h>
+#include "ServerStream.hpp"
 #include "control/CompilationRuntime.hpp"
+#include "env/TRMemory.hpp"
+#include "net/LoadSSLLibs.hpp"
+#include "net/SSLProtobufStream.hpp"
 
 namespace JITServer
 {
@@ -52,21 +53,22 @@ ServerStream::ServerStream(int connfd, BIO *ssl)
 
 SSL_CTX *createSSLContext(TR::PersistentInfo *info)
    {
-   SSL_CTX *ctx = SSL_CTX_new(SSLv23_server_method());
+   SSL_CTX *ctx = (*OSSL_CTX_new)((*OSSLv23_server_method)());
+
    if (!ctx)
       {
       perror("can't create SSL context");
-      ERR_print_errors_fp(stderr);
+      (*OERR_print_errors_fp)(stderr);
       exit(1);
       }
 
    const char *sessionIDContext = "JITServer";
-   SSL_CTX_set_session_id_context(ctx, (const unsigned char*)sessionIDContext, strlen(sessionIDContext));
+   (*OSSL_CTX_set_session_id_context)(ctx, (const unsigned char*)sessionIDContext, strlen(sessionIDContext));
 
-   if (SSL_CTX_set_ecdh_auto(ctx, 1) != 1)
+   if ((*OSSL_CTX_set_ecdh_auto)(ctx, 1) != 1)
       {
       perror("failed to configure SSL ecdh");
-      ERR_print_errors_fp(stderr);
+      (*OERR_print_errors_fp)(stderr);
       exit(1);
       }
 
@@ -79,62 +81,62 @@ SSL_CTX *createSSLContext(TR::PersistentInfo *info)
    TR_ASSERT_FATAL(sslRootCerts.size() == 0, "server does not understand root certs yet");
 
    // Parse and set private key
-   BIO *keyMem = BIO_new_mem_buf(&sslKeys[0][0], sslKeys[0].size());
+   BIO *keyMem = (*OBIO_new_mem_buf)(&sslKeys[0][0], sslKeys[0].size());
    if (!keyMem)
       {
       perror("cannot create memory buffer for private key (OOM?)");
-      ERR_print_errors_fp(stderr);
+      (*OERR_print_errors_fp)(stderr);
       exit(1);
       }
-   EVP_PKEY *privKey = PEM_read_bio_PrivateKey(keyMem, NULL, NULL, NULL);
+   EVP_PKEY *privKey = (*OPEM_read_bio_PrivateKey)(keyMem, NULL, NULL, NULL);
    if (!privKey)
       {
       perror("cannot parse private key");
-      ERR_print_errors_fp(stderr);
+      (*OERR_print_errors_fp)(stderr);
       exit(1);
       }
-   if (SSL_CTX_use_PrivateKey(ctx, privKey) != 1)
+   if ((*OSSL_CTX_use_PrivateKey)(ctx, privKey) != 1)
       {
       perror("cannot use private key");
-      ERR_print_errors_fp(stderr);
+      (*OERR_print_errors_fp)(stderr);
       exit(1);
       }
 
    // Parse and set certificate
-   BIO *certMem = BIO_new_mem_buf(&sslCerts[0][0], sslCerts[0].size());
+   BIO *certMem = (*OBIO_new_mem_buf)(&sslCerts[0][0], sslCerts[0].size());
    if (!certMem)
       {
       perror("cannot create memory buffer for cert (OOM?)");
-      ERR_print_errors_fp(stderr);
+      (*OERR_print_errors_fp)(stderr);
       exit(1);
       }
-   X509 *certificate = PEM_read_bio_X509(certMem, NULL, NULL, NULL);
+   X509 *certificate = (*OPEM_read_bio_X509)(certMem, NULL, NULL, NULL);
    if (!certificate)
       {
       perror("cannot parse cert");
-      ERR_print_errors_fp(stderr);
+      (*OERR_print_errors_fp)(stderr);
       exit(1);
       }
-   if (SSL_CTX_use_certificate(ctx, certificate) != 1)
+   if ((*OSSL_CTX_use_certificate)(ctx, certificate) != 1)
       {
       perror("cannot use cert");
-      ERR_print_errors_fp(stderr);
+      (*OERR_print_errors_fp)(stderr);
       exit(1);
       }
 
    // Verify key and cert are valid
-   if (SSL_CTX_check_private_key(ctx) != 1)
+   if ((*OSSL_CTX_check_private_key)(ctx) != 1)
       {
       perror("private key check failed");
-      ERR_print_errors_fp(stderr);
+      (*OERR_print_errors_fp)(stderr);
       exit(1);
       }
 
    // verify server identity using standard method
-   SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
+   (*OSSL_CTX_set_verify)(ctx, SSL_VERIFY_PEER, NULL);
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Successfully initialized SSL context: OPENSSL_VERSION_NUMBER 0x%lx\n", OPENSSL_VERSION_NUMBER);
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Successfully initialized SSL context (%s)\n", (*OOpenSSL_version)(0));
 
    return ctx;
    }
@@ -144,17 +146,17 @@ handleOpenSSLConnectionError(int connfd, SSL *&ssl, BIO *&bio, const char *errMs
 {
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
        TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "%s: errno=%d", errMsg, errno);
-   ERR_print_errors_fp(stderr);
+   (*OERR_print_errors_fp)(stderr);
 
    close(connfd);
    if (bio)
       {
-      BIO_free_all(bio);
+      (*OBIO_free_all)(bio);
       bio = NULL;
       }
    if (ssl)
       {
-      SSL_free(ssl);
+      (*OSSL_free)(ssl);
       ssl = NULL;
       }
    return false;
@@ -163,28 +165,28 @@ handleOpenSSLConnectionError(int connfd, SSL *&ssl, BIO *&bio, const char *errMs
 static bool
 acceptOpenSSLConnection(SSL_CTX *sslCtx, int connfd, BIO *&bio)
    {
-   SSL *ssl = SSL_new(sslCtx);
+   SSL *ssl = (*OSSL_new)(sslCtx);
    if (!ssl)
       return handleOpenSSLConnectionError(connfd, ssl, bio, "Error creating SSL connection");
 
-   SSL_set_accept_state(ssl);
+   (*OSSL_set_accept_state)(ssl);
 
-   if (SSL_set_fd(ssl, connfd) != 1)
+   if ((*OSSL_set_fd)(ssl, connfd) != 1)
       return handleOpenSSLConnectionError(connfd, ssl, bio, "Error setting SSL file descriptor");
 
-   if (SSL_accept(ssl) <= 0)
+   if ((*OSSL_accept)(ssl) <= 0)
       return handleOpenSSLConnectionError(connfd, ssl, bio, "Error accepting SSL connection");
 
-   bio = BIO_new_ssl(sslCtx, false);
+   bio = (*OBIO_new_ssl)(sslCtx, false);
    if (!bio)
       return handleOpenSSLConnectionError(connfd, ssl, bio, "Error creating new BIO");
 
-   if (BIO_set_ssl(bio, ssl, true) != 1)
+   if ((*OBIO_ctrl)(bio, BIO_C_SET_SSL, true, (char *)ssl) != 1) // BIO_set_ssl(bio, ssl, true)
       return handleOpenSSLConnectionError(connfd, ssl, bio, "Error setting BIO SSL");
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "SSL connection on socket 0x%x, Version: %s, Cipher: %s\n",
-                                                     connfd, SSL_get_version(ssl), SSL_get_cipher(ssl));
+                                                     connfd, (*OSSL_get_version)(ssl), (*OSSL_get_cipher)(ssl));
    return true;
    }
 
@@ -274,8 +276,8 @@ ServerStream::serveRemoteCompilationRequests(BaseCompileDispatcher *compiler, TR
    // The following piece of code will be executed only if the server shuts down properly
    if (sslCtx)
       {
-      SSL_CTX_free(sslCtx);
-      EVP_cleanup();
+      (*OSSL_CTX_free)(sslCtx);
+      (*OEVP_cleanup)();
       }
    }
 }
