@@ -1361,29 +1361,62 @@ mapEnvVarToArgument(J9PortLibrary* portLibrary, const char* envVar, const char* 
 	return 0;
 }
 
-
 static IDATA
-addEnvironmentVariableArguments(J9PortLibrary* portLib, const char* envVarName, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags) 
+parseEnvironmentVariable(J9PortLibrary *portLib, const char *envVarName, IDATA envVarSize, UDATA verboseFlags, J9JavaVMArgInfoList* vmArgumentsList)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
-	IDATA envVarSize = j9sysinfo_get_env(envVarName, NULL, 0);
-	char* argumentBuffer = NULL;
-
-	if (envVarSize <= 0) {
-		return 0; /* variable not defined or empty */
-	}
-	argumentBuffer = j9mem_allocate_memory(envVarSize, OMRMEM_CATEGORY_VM);
+	IDATA result = 0;
+	char *argumentBuffer = j9mem_allocate_memory(envVarSize, OMRMEM_CATEGORY_VM);
 	if (NULL == argumentBuffer) {
-		return -1;
+		result = -1;
+	} else {
+		JVMINIT_VERBOSE_INIT_TRACE1(verboseFlags, "Parsing environment variable %s\n", envVarName);
+		j9sysinfo_get_env(envVarName, argumentBuffer, envVarSize);
+		result = parseOptionsBuffer(portLib, argumentBuffer, vmArgumentsList, verboseFlags, TRUE);
 	}
-	JVMINIT_VERBOSE_INIT_TRACE1(verboseFlags, "Parsing environment variable %s\n", envVarName);
-	j9sysinfo_get_env(envVarName, argumentBuffer, envVarSize);
+	return result;
+}
 
-	return parseOptionsBuffer(portLib, argumentBuffer, vmArgumentsList, verboseFlags, TRUE);
+/**
+ * Parse the contents of a specified environment variable if it is set to a non-trivial string.
+ * @param portLibrary port library
+ * @param envVarName name of the environment variable
+ * @param vmArgumentsList current list of arguments
+ * @param verboseFlags set to VERBOSE_INIT for verbosity
+ * @return 0 on success, negative on failure
+ */
+static IDATA
+addEnvironmentVariableArguments(J9PortLibrary *portLib, const char *envVarName, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags)
+{
+	OMRPORT_ACCESS_FROM_J9PORT(portLib);
+	IDATA envVarSize = omrsysinfo_get_env(envVarName, NULL, 0);
+	return (envVarSize > 0) ? parseEnvironmentVariable(portLib, envVarName, envVarSize, verboseFlags, vmArgumentsList)
+		: 0;
+}
+
+/**
+ * Parse the contents of OPENJ9_JAVA_OPTIONS.  If it is not defined, fall back to IBM_JAVA_OPTIONS.
+ * @param portLibrary port library
+ * @param vmArgumentsList current list of arguments
+ * @param verboseFlags set to VERBOSE_INIT for verbosity
+ * @return 0 on success, negative on failure
+ */
+static IDATA
+addOpenJ9EnvironmentVariableArguments(J9PortLibrary *portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags)
+{
+	OMRPORT_ACCESS_FROM_J9PORT(portLib);
+	IDATA result = 0;
+	IDATA envVarSize = omrsysinfo_get_env(ENVVAR_OPENJ9_JAVA_OPTIONS, NULL, 0);
+	if (envVarSize > 0) {
+		result = parseEnvironmentVariable(portLib, ENVVAR_OPENJ9_JAVA_OPTIONS, envVarSize, verboseFlags, vmArgumentsList);
+	} else {
+		result = addEnvironmentVariableArguments(portLib, ENVVAR_IBM_JAVA_OPTIONS, vmArgumentsList, verboseFlags);
+	}
+	return result;
 }
 
 IDATA
-addEnvironmentVariables(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags) 
+addEnvironmentVariables(J9PortLibrary *portLib, JavaVMInitArgs *launcherArgs, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags)
 {
 	IDATA status = 0;
 	if (
@@ -1395,8 +1428,7 @@ addEnvironmentVariables(J9PortLibrary * portLib, JavaVMInitArgs *launcherArgs, J
 			|| (0 != mapEnvVarToArgument(portLib, ENVVAR_IBM_JAVA_ENABLE_ASCII_FILETAG, VMOPT_XASCII_FILETAG, vmArgumentsList, EXACT_MAP_NO_OPTIONS, verboseFlags))
 #endif
 			|| (0 != addEnvironmentVariableArguments(portLib, ENVVAR_JAVA_TOOL_OPTIONS, vmArgumentsList, verboseFlags))
-			|| (0 != addEnvironmentVariableArguments(portLib, ENVVAR_OPENJ9_JAVA_OPTIONS, vmArgumentsList, verboseFlags))
-			|| (0 != addEnvironmentVariableArguments(portLib, ENVVAR_IBM_JAVA_OPTIONS, vmArgumentsList, verboseFlags))
+			|| (0 != addOpenJ9EnvironmentVariableArguments(portLib, vmArgumentsList, verboseFlags))
 			|| (0 != mapEnvVarToArgument(portLib, ENVVAR_IBM_JAVA_JITLIB, MAPOPT_XXJITDIRECTORY, vmArgumentsList, EXACT_MAP_WITH_OPTIONS, verboseFlags))
 	) {
 		status = -1;
