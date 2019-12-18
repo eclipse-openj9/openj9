@@ -110,6 +110,7 @@
 #include "env/JITServerPersistentCHTable.hpp"
 #include "net/CommunicationStream.hpp"
 #include "net/ClientStream.hpp"
+#include "net/LoadSSLLibs.hpp"
 #include "runtime/JITClientSession.hpp"
 #include "runtime/Listener.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
@@ -1634,6 +1635,12 @@ onLoadInternal(
    persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
 
 #if defined(JITSERVER_SUPPORT)
+   if (JITServer::CommunicationStream::useSSL())
+      {
+      if (!JITServer::loadLibsslAndFindSymbols())
+         return -1;
+      }
+
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       JITServer::CommunicationStream::initVersion();
