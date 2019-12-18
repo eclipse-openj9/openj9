@@ -823,10 +823,11 @@ IDATA J9VMDllMain(J9JavaVM* vm, IDATA stage, void* reserved) {
 
 
 static IDATA
-initializeVerbosegclogFromOptions(J9JavaVM* vm, char* vbgclogBuffer) 
+initializeVerbosegclogFromOptions(J9JavaVM* vm, char* vbgclogBuffer, UDATA bufferSize)
 {
 	char* vbgclogBufferPtr;
 	char* gclogName = NULL;
+
 	UDATA fileCount = 0;
 	UDATA blockCount = 0;
 	UDATA scanResult;
@@ -835,7 +836,7 @@ initializeVerbosegclogFromOptions(J9JavaVM* vm, char* vbgclogBuffer)
 	
 	vbgclogBufferPtr = vbgclogBuffer;
 	
-	if (*vbgclogBufferPtr) {
+	if ('\0' != *vbgclogBufferPtr) {
 		/* User might not specify the filename, so we may be assigning a NULL value here */
 		gclogName = vbgclogBufferPtr;
 	} else {
@@ -845,7 +846,8 @@ initializeVerbosegclogFromOptions(J9JavaVM* vm, char* vbgclogBuffer)
 
 	/* Now look for fileCount */
 	vbgclogBufferPtr += strlen(vbgclogBufferPtr) + 1;
-	if (*vbgclogBufferPtr) {
+	/* if vbgclogBufferPtr point to behind bufferSize, there is no fileCount option */
+	if ((vbgclogBufferPtr < (vbgclogBuffer + bufferSize)) && ('\0' != *vbgclogBufferPtr)) {
 		scanResult = scan_udata(&vbgclogBufferPtr, &fileCount);
 		if (scanResult || (0 == fileCount)) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VERB_XVERBOSEGCLOG_NUM_FILES);
@@ -855,7 +857,8 @@ initializeVerbosegclogFromOptions(J9JavaVM* vm, char* vbgclogBuffer)
 
 	/* Now look for blockCount */	
 	vbgclogBufferPtr += strlen(vbgclogBufferPtr) + 1;
-	if (*vbgclogBufferPtr) {
+	/* if vbgclogBufferPtr point to behind bufferSize, there is no blockCount option */
+	if ((vbgclogBufferPtr < (vbgclogBuffer + bufferSize)) && ('\0' != *vbgclogBufferPtr)) {
 		scanResult = scan_udata(&vbgclogBufferPtr, &blockCount);
 		if (scanResult || (0 == blockCount)) {
 			j9nls_printf(PORTLIB, J9NLS_ERROR, J9NLS_VERB_XVERBOSEGCLOG_NUM_CYCLES);
@@ -899,7 +902,7 @@ initializeVerbosegclog(J9JavaVM* vm, IDATA vbgclogIndex)
 		}
 	} while (OPTION_BUFFER_OVERFLOW == GET_OPTION_VALUES(vbgclogIndex, ':', ',', &vbgclogBuffer, bufferSize));
 
-	result = initializeVerbosegclogFromOptions(vm, vbgclogBuffer);
+	result = initializeVerbosegclogFromOptions(vm, vbgclogBuffer, bufferSize);
 	
 	j9mem_free_memory(vbgclogBuffer);
 	
