@@ -219,17 +219,18 @@ TR_AbstractHashTableProfilerInfo::lock()
 bool
 TR_AbstractHashTableProfilerInfo::tryLock(bool disableJITAccess)
    {
+   // Current state must be unlocked
+   MetaData unlocked;
+   unlocked.rawData = *(volatile uint32_t*)&_metaData.rawData;
+   unlocked.lock = 0;
+
    // Set lock and, if desired, clear high bit in other index
-   MetaData locked = _metaData;
+   MetaData locked = unlocked;
    if (disableJITAccess && locked.otherIndex < 0)
       locked.otherIndex = ~locked.otherIndex;
    locked.lock = 1;
 
-   // Current state must be unlocked
-   MetaData unlocked = _metaData;
-   unlocked.lock = 0;
-
-   if (unlocked.rawData == VM_AtomicSupport::lockCompareExchangeU32((uint32_t*) &_metaData, unlocked.rawData, locked.rawData))
+   if (unlocked.rawData == VM_AtomicSupport::lockCompareExchangeU32(&_metaData.rawData, unlocked.rawData, locked.rawData))
       {
       VM_AtomicSupport::readBarrier();
       return true;
