@@ -114,9 +114,19 @@ void J9::ARM64::JNILinkage::adjustReturnValue(TR::Node *callNode, bool wrapRefs,
    TR_UNIMPLEMENTED();
    }
 
-void J9::ARM64::JNILinkage::checkForJNIExceptions(TR::Node *callNode, TR::Register *vmThreadReg)
+void J9::ARM64::JNILinkage::checkForJNIExceptions(TR::Node *callNode, TR::Register *vmThreadReg, TR::Register *scratchReg)
    {
-   TR_UNIMPLEMENTED();
+   TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(fe());
+
+   generateTrg1MemInstruction(cg(),TR::InstOpCode::ldrimmx, callNode, scratchReg, new (trHeapMemory()) TR::MemoryReference(vmThreadReg, fej9->thisThreadGetCurrentExceptionOffset(), cg()));
+
+   TR::SymbolReference *throwSymRef = cg()->getSymRefTab()->findOrCreateThrowCurrentExceptionSymbolRef(comp()->getJittedMethodSymbol());
+   TR::LabelSymbol *exceptionSnippetLabel = generateLabelSymbol(cg());
+   TR::Snippet *snippet = new (trHeapMemory()) TR::ARM64HelperCallSnippet(cg(), callNode, exceptionSnippetLabel, throwSymRef);
+   cg()->addSnippet(snippet);
+   TR::Instruction *gcPoint = generateCompareBranchInstruction(cg(),TR::InstOpCode::cbnzx, callNode, scratchReg, exceptionSnippetLabel);
+   // x0 may contain a reference returned by JNI method
+   snippet->gcMap().setGCRegisterMask(1);
    }
 
 TR::Instruction *J9::ARM64::JNILinkage::generateMethodDispatch(TR::Node *callNode, bool isJNIGCPoint,
@@ -249,7 +259,7 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 
    if (checkExceptions)
       {
-      checkForJNIExceptions(callNode, vmThreadReg);
+      checkForJNIExceptions(callNode, vmThreadReg, x9Reg);
       }
 
    TR::LabelSymbol *depLabel = generateLabelSymbol(cg());
