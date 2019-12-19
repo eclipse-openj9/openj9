@@ -103,7 +103,7 @@ typedef struct J9ZipEntry {
     I_32 fileCommentPointer;
     U_32 compressedSize;
     U_32 uncompressedSize;
-    U_32 crc32;
+    U_32 crc32Value;
     U_16 filenameLength;
     U_16 extraFieldLength;
     U_16 fileCommentLength;
