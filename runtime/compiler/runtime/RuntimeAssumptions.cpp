@@ -127,7 +127,7 @@ TR_PreXRecompile::compensate(TR_FrontEnd *fe, bool, void *)
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)fe;
 
-#if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    TR::Recompilation::invalidateMethodBody(_startPC, fe);
    // Generate a trace point
    fej9->reportPrexInvalidation(_startPC);
