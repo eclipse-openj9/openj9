@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2018, 2019 IBM Corp. and others
+# Copyright (c) 2018, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -398,8 +398,8 @@ x86-64_linux:
     13: '--openssl-version=1.1.1d'
     next: '--openssl-version=1.1.1d'
   extra_configure_options:
-    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
-    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
+    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
     12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
     13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
     next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
