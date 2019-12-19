@@ -174,8 +174,9 @@ class JNILinkage : public PrivateLinkage
     * @brief Throws exception if it is set in JNI method
     * @param[in] callNode : caller node
     * @param[in] vmThreadReg : vm thread register
+    * @param[in] scratchReg : scratch register
     */
-   void checkForJNIExceptions(TR::Node *callNode, TR::Register *vmThreadReg);
+   void checkForJNIExceptions(TR::Node *callNode, TR::Register *vmThreadReg, TR::Register *scratchReg);
 
    TR::Linkage *_systemLinkage;
 
