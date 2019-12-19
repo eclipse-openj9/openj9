@@ -1755,14 +1755,6 @@ Only available on zOS</description>
 		<description>Support the Open Source Harmony project</description>
 		<ifRemoved>No Harmony support.</ifRemoved>
 	</flag>
-	<flag id="opt_icbuilderSupport">
-		<description>Determines if opposite-endian bytecode translation is included (required by JXELink).</description>
-		<ifRemoved>No JXELink support.</ifRemoved>
-	</flag>
-	<flag id="opt_infoServer">
-		<description>Determines if info server support is included.</description>
-		<ifRemoved>Info server DLL cannot be used.</ifRemoved>
-	</flag>
 	<flag id="opt_inlineJsrs">
 		<description>Turns on JSR inlining in the dynamic loader.</description>
 		<ifRemoved>Only pre-inlined classes supported.</ifRemoved>

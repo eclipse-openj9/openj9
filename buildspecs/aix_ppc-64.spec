@@ -225,8 +225,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="opt_debugJsr45Support" value="true"/>
 		<flag id="opt_deprecatedMethods" value="true"/>
 		<flag id="opt_dynamicLoadSupport" value="true"/>
-		<flag id="opt_icbuilderSupport" value="true"/>
-		<flag id="opt_infoServer" value="true"/>
 		<flag id="opt_invariantInterning" value="true"/>
 		<flag id="opt_jvmti" value="true"/>
 		<flag id="opt_jxeLoadSupport" value="true"/>

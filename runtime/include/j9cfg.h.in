@@ -212,8 +212,6 @@ extern "C" {
 #cmakedefine J9VM_OPT_FIPS
 #cmakedefine J9VM_OPT_FRAGMENT_RAM_CLASSES
 #cmakedefine J9VM_OPT_HARMONY
-#cmakedefine J9VM_OPT_ICBUILDER_SUPPORT
-#cmakedefine J9VM_OPT_INFO_SERVER
 #cmakedefine J9VM_OPT_INLINE_JSRS
 #cmakedefine J9VM_OPT_INVARIANT_INTERNING
 #cmakedefine J9VM_OPT_JAVA_OFFLOAD_SUPPORT
