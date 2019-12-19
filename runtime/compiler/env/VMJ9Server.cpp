@@ -1464,7 +1464,7 @@ TR_J9ServerVM::isClassArray(TR_OpaqueClassBlock *klass)
    }
 
 bool
-TR_J9ServerVM::instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass)
+TR_J9ServerVM::instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* castClass, bool cacheUpdate)
    {
    if (instanceClass == castClass)
       return true;
@@ -1490,8 +1490,7 @@ TR_J9ServerVM::instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass)
             auto interfaces = it->second._interfaces;
             return std::find(interfaces->begin(), interfaces->end(), castClassOffset) != interfaces->end();
             }
-
-         if (isClassArray(instanceClassOffset) && isClassArray(castClassOffset))
+         else if (isClassArray(instanceClassOffset) && isClassArray(castClassOffset))
             {
             int instanceNumDims = 0, castNumDims = 0;
             // these are the leaf classes of the arrays, unless the leaf class is primitive.
@@ -1505,23 +1504,39 @@ TR_J9ServerVM::instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass)
             if (instanceNumDims != 0 && instanceNumDims == castNumDims)
                return instanceOfOrCheckCast((J9Class *) instanceClassOffset, (J9Class *) castClassOffset);
 
-            // reached when (instanceNumDims > castNumDims), or when one of the arrays contains primitive values.
-            // to correctly deal with these cases on the server, need to call
+            // We reach the end of this block when instanceNumDims > castNumDims, or when one of the arrays contains primitive values.
+            // To correctly deal with these cases on the server, we need to call
             // getComponentFromArrayClass multiple times, or getLeafComponentTypeFromArrayClass.
-            // each call requires a remote message, faster and easier to call instanceOfOrCheckCast on the client
-            JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-            stream->write(JITServer::MessageType::VM_instanceOfOrCheckCast, instanceClass, castClass);
-            return std::get<0>(stream->read<bool>());
+            // Each of these calls requires a remote message. It's faster and easier to just call instanceOfOrCheckCast
+            // on the client. So we exit out of the critical section here and do the remote call.
             }
-         // instance class is cached, and all of the checks failed, cast is invalid
-         return false;
+         else
+            {
+            // instance class is cached, and all of the checks failed, cast is invalid
+            return false;
+            }
          }
       }
 
-   // instance class is not cached, make a remote call
+   // instance class is not cached or isClassArray(instanceClassOffset) && isClassArray(castClassOffset). So make a remote call.
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_instanceOfOrCheckCast, instanceClass, castClass);
+   if (cacheUpdate)
+      stream->write(JITServer::MessageType::VM_instanceOfOrCheckCast, instanceClass, castClass);
+   else
+      stream->write(JITServer::MessageType::VM_instanceOfOrCheckCastNoCacheUpdate, instanceClass, castClass);
    return std::get<0>(stream->read<bool>());
+   }
+
+bool
+TR_J9ServerVM::instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass)
+   {
+   return instanceOfOrCheckCastHelper(instanceClass, castClass, true);
+   }
+
+bool
+TR_J9ServerVM::instanceOfOrCheckCastNoCacheUpdate(J9Class *instanceClass, J9Class* castClass)
+   {
+   return instanceOfOrCheckCastHelper(instanceClass, castClass, false);
    }
 
 bool
