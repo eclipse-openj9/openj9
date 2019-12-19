@@ -99,8 +99,33 @@ size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDepen
 
 TR::Register *J9::ARM64::JNILinkage::getReturnRegisterFromDeps(TR::Node *callNode, TR::RegisterDependencyConditions *deps)
    {
-   TR_UNIMPLEMENTED();
-   return NULL;
+   const TR::ARM64LinkageProperties &pp = _systemLinkage->getProperties();
+   TR::Register *retReg;
+
+   switch(callNode->getOpCodeValue())
+      {
+      case TR::icall:
+         retReg = deps->searchPostConditionRegister(
+                     pp.getIntegerReturnRegister());
+         break;
+      case TR::lcall:
+      case TR::acall:
+         retReg = deps->searchPostConditionRegister(
+                     pp.getLongReturnRegister());
+         break;
+      case TR::fcall:
+      case TR::dcall:
+         retReg = deps->searchPostConditionRegister(
+                     pp.getFloatReturnRegister());
+         break;
+      case TR::call:
+         retReg = NULL;
+         break;
+      default:
+         retReg = NULL;
+         TR_ASSERT_FATAL(false, "Unsupported direct call Opcode.");
+      }
+   return retReg;
    }
 
 TR::Register *J9::ARM64::JNILinkage::pushJNIReferenceArg(TR::Node *child)
