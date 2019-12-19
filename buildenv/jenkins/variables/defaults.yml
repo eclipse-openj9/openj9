@@ -139,8 +139,8 @@ ppc64le_linux:
       13: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
       next: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
   extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
+    8: '--openssl-version=1.0.2t'
+    11: '--openssl-version=1.0.2t'
     12: '--openssl-version=1.1.1d'
     13: '--openssl-version=1.1.1d'
     next: '--openssl-version=1.1.1d'
@@ -418,8 +418,8 @@ x86-64_linux:
       13: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
       next: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
   extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
+    8: '--openssl-version=1.0.2t'
+    11: '--openssl-version=1.0.2t'
     12: '--openssl-version=1.1.1d'
     13: '--openssl-version=1.1.1d'
     next: '--openssl-version=1.1.1d'
