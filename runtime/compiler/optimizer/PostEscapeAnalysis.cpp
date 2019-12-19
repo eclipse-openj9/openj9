@@ -24,6 +24,7 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "il/SymbolReference.hpp"
+#include "optimizer/EscapeAnalysisTools.hpp"
 #include "optimizer/PostEscapeAnalysis.hpp"
 #include "optimizer/TransformUtil.hpp"
 #include "optimizer/Optimizer.hpp"
@@ -57,31 +58,25 @@ int32_t TR_PostEscapeAnalysis::perform()
       return 0;
       }
 
-   for (TR::Block *block = comp()->getStartBlock(); block != NULL; block = block->getNextBlock())
+   for (TR::TreeTop *itr = comp()->getStartTree(); itr; itr = itr->getNextTreeTop())
       {
-      if (!block->isOSRInduceBlock())
-         continue;
-
-      for (TR::TreeTop *itr = block->getEntry(), *end = block->getExit(); itr != end; itr = itr->getNextTreeTop())
+      // Remove any fake escape calls that were added to OSR
+      // induction blocks by TR_PreEscapeAnalysis
+      if (itr->getNode()->getNumChildren() == 1
+          && itr->getNode()->getFirstChild()->getOpCodeValue() == TR::call
+          && TR_EscapeAnalysisTools::isFakeEscape(itr->getNode()->getFirstChild()))
          {
-         // Remove any fake prepareForOSR calls that were added to OSR
-         // induction blocks by TR_PreEscapeAnalysis
-         if (itr->getNode()->getNumChildren() == 1
-             && itr->getNode()->getFirstChild()->getOpCodeValue() == TR::call
-             && itr->getNode()->getFirstChild()->getSymbolReference()->getReferenceNumber() == TR_prepareForOSR)
+         dumpOptDetails(comp(), " Removing fake call <eaEscapeHelper> n%dn\n", itr->getNode()->getFirstChild()->getGlobalIndex());
+         itr = itr->getPrevTreeTop();
+         if (optimizer()->getUseDefInfo() != NULL)
             {
-            dumpOptDetails(comp(), " Removing fake call prepareForOSR n%dn from induction block_%d\n", itr->getNode()->getFirstChild()->getGlobalIndex(), block->getNumber());
-            itr = itr->getPrevTreeTop();
-            if (optimizer()->getUseDefInfo() != NULL)
-               {
-               optimizer()->setUseDefInfo(NULL);
-               }
-            if (optimizer()->getValueNumberInfo())
-               {
-               optimizer()->setValueNumberInfo(NULL);
-               }
-            TR::TransformUtil::removeTree(comp(), itr->getNextTreeTop());
+            optimizer()->setUseDefInfo(NULL);
             }
+         if (optimizer()->getValueNumberInfo())
+            {
+            optimizer()->setValueNumberInfo(NULL);
+            }
+         TR::TransformUtil::removeTree(comp(), itr->getNextTreeTop());
          }
       }
 

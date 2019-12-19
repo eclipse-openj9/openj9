@@ -27,6 +27,7 @@
 #include "il/ResolvedMethodSymbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
+#include "optimizer/EscapeAnalysisTools.hpp"
 #include "optimizer/Optimizer.hpp"
 #include "optimizer/OptimizationManager.hpp"
 
@@ -58,8 +59,7 @@ int32_t TR_PreEscapeAnalysis::perform()
       return 0;
       }
 
-   _loads = new (comp()->trMemory()->currentStackRegion()) NodeDeque(NodeDequeAllocator(comp()->trMemory()->currentStackRegion()));
-
+   TR_EscapeAnalysisTools tools(comp());
    for (TR::Block *block = comp()->getStartBlock(); block != NULL; block = block->getNextBlock())
       {
       if (!block->isOSRInduceBlock())
@@ -71,7 +71,7 @@ int32_t TR_PreEscapeAnalysis::perform()
              && itr->getNode()->getFirstChild()->getOpCodeValue() == TR::call
              && itr->getNode()->getFirstChild()->getSymbolReference()->isOSRInductionHelper())
             {
-            _loads->clear();
+            //_loads->clear();
             if (optimizer()->getUseDefInfo() != NULL)
                {
                optimizer()->setUseDefInfo(NULL);
@@ -80,7 +80,7 @@ int32_t TR_PreEscapeAnalysis::perform()
                {
                optimizer()->setValueNumberInfo(NULL);
                }
-            insertFakePrepareForOSR(block, itr->getNode()->getFirstChild());
+            tools.insertFakeEscapeForOSR(block, itr->getNode()->getFirstChild());
             break;
             }
          }
@@ -92,67 +92,6 @@ int32_t TR_PreEscapeAnalysis::perform()
       }
 
    return 1;
-   }
-
-void TR_PreEscapeAnalysis::insertFakePrepareForOSR(TR::Block *block, TR::Node *induceCall)
-   {
-   TR_ByteCodeInfo &bci = induceCall->getByteCodeInfo();
-
-   int32_t inlinedIndex = bci.getCallerIndex();
-   int32_t byteCodeIndex = bci.getByteCodeIndex();
-   TR_OSRCompilationData *osrCompilationData = comp()->getOSRCompilationData();
-
-   // Gather all live autos and pending pushes at this point for inlined methods in _loads
-   // This ensures objects that EA can stack allocate will be heapified if OSR is induced
-   while (inlinedIndex > -1)
-      {
-      TR::ResolvedMethodSymbol *rms = comp()->getInlinedResolvedMethodSymbol(inlinedIndex);
-      TR_OSRMethodData *methodData = osrCompilationData->findOSRMethodData(inlinedIndex, rms);
-      processAutosAndPendingPushes(rms, methodData, byteCodeIndex);
-      byteCodeIndex = comp()->getInlinedCallSite(inlinedIndex)._byteCodeInfo.getByteCodeIndex();
-      inlinedIndex = comp()->getInlinedCallSite(inlinedIndex)._byteCodeInfo.getCallerIndex();
-      }
-
-   // handle the outermost method
-      {
-      TR_OSRMethodData *methodData = osrCompilationData->findOSRMethodData(-1, comp()->getMethodSymbol());
-      processAutosAndPendingPushes(comp()->getMethodSymbol(), methodData, byteCodeIndex);
-      }
-
-   // Create fake call to prepareForOSR with references to all live autos and pending pushes
-   TR::Node *fakePrepare = TR::Node::createWithSymRef(induceCall, TR::call, _loads->size(), comp()->getSymRefTab()->findOrCreateRuntimeHelper(TR_prepareForOSR, false, false, true));
-   int idx = 0;
-   for (auto itr = _loads->begin(), end = _loads->end(); itr != end; ++itr)
-      {
-      (*itr)->setByteCodeInfo(induceCall->getByteCodeInfo());
-      fakePrepare->setAndIncChild(idx++, *itr);
-      }
-   dumpOptDetails(comp(), " Adding fake prepare n%dn to OSR induction block_%d\n", fakePrepare->getGlobalIndex(), block->getNumber());
-   block->getLastRealTreeTop()->insertBefore(
-      TR::TreeTop::create(comp(), TR::Node::create(induceCall, TR::treetop, 1, fakePrepare)));
-   }
-
-void TR_PreEscapeAnalysis::processAutosAndPendingPushes(TR::ResolvedMethodSymbol *rms, TR_OSRMethodData *methodData, int32_t byteCodeIndex)
-   {
-   processSymbolReferences(rms->getAutoSymRefs(), methodData->getLiveRangeInfo(byteCodeIndex));
-   processSymbolReferences(rms->getPendingPushSymRefs(), methodData->getPendingPushLivenessInfo(byteCodeIndex));
-   }
-
-void TR_PreEscapeAnalysis::processSymbolReferences(TR_Array<List<TR::SymbolReference>> *symbolReferences, TR_BitVector *deadSymRefs)
-   {
-   for (int i = 0; symbolReferences && i < symbolReferences->size(); i++)
-      {
-      List<TR::SymbolReference> autosList = (*symbolReferences)[i];
-      ListIterator<TR::SymbolReference> autosIt(&autosList);
-      for (TR::SymbolReference* symRef = autosIt.getFirst(); symRef; symRef = autosIt.getNext())
-         {
-         TR::AutomaticSymbol *p = symRef->getSymbol()->getAutoSymbol();
-         if (p && p->getDataType() == TR::Address && (deadSymRefs == NULL || !deadSymRefs->isSet(symRef->getReferenceNumber())))
-            {
-            _loads->push_back(TR::Node::createWithSymRef(TR::aload, 0, symRef));
-            }
-         }
-      }
    }
 
 const char *

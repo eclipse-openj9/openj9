@@ -55,6 +55,17 @@ namespace TR { class SymbolReference; }
 namespace TR { class TreeTop; }
 template <class T> class TR_Array;
 
+typedef TR::typed_allocator<TR::Node *, TR::Region &> NodeDequeAllocator;
+typedef std::deque<TR::Node *, NodeDequeAllocator> NodeDeque;
+
+typedef TR::typed_allocator<std::pair<TR::Node* const, std::pair<TR_BitVector *, NodeDeque*> >, TR::Region&> CallLoadMapAllocator;
+typedef std::less<TR::Node *> CallLoadMapComparator;
+typedef std::map<TR::Node *, std::pair<TR_BitVector *, NodeDeque *>, CallLoadMapComparator, CallLoadMapAllocator> CallLoadMap;
+
+typedef TR::typed_allocator<std::pair<TR::Node *const, int32_t>, TR::Region&> RemainingUseCountMapAllocator;
+typedef std::less<TR::Node *> RemainingUseCountMapComparator;
+typedef std::map<TR::Node *, int32_t, RemainingUseCountMapComparator, RemainingUseCountMapAllocator> RemainingUseCountMap;
+
 // Escape analysis
 //
 // Find object allocations that are either method local or thread local.
@@ -615,10 +626,14 @@ class TR_EscapeAnalysis : public TR::Optimization
            _totalPeekedBytecodeSize(0)
          {
          _symRefList.setFirst(NULL);
+         _peekableCalls = new (comp->trHeapMemory()) TR_BitVector(0, comp->trMemory(), heapAlloc);
+         _processedCalls = new (comp->trHeapMemory()) TR_BitVector(0, comp->trMemory(), heapAlloc);
          }
 
       int32_t                    _totalInlinedBytecodeSize;
       int32_t                    _totalPeekedBytecodeSize;
+      TR_BitVector              *_peekableCalls;
+      TR_BitVector              *_processedCalls;
       TR_LinkHead<SymRefCache>   _symRefList;
       };
 
@@ -640,6 +655,8 @@ class TR_EscapeAnalysis : public TR::Optimization
    TR_BitVector              *_notOptimizableLocalStringObjectsValueNumbers;
    TR_BitVector              *_blocksWithFlushOnEntry;
    TR_BitVector              *_visitedNodes;
+
+   CallLoadMap               *_callsToProtect;
 
    /**
     * Contains sym refs that are just aliases for a fresh allocation
