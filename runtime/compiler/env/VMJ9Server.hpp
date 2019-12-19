@@ -170,6 +170,7 @@ public:
    virtual uintptrj_t getFieldOffset(TR::Compilation * comp, TR::SymbolReference* classRef, TR::SymbolReference* fieldRef) override { return 0; } // safe answer
    virtual bool canDereferenceAtCompileTime(TR::SymbolReference *fieldRef,  TR::Compilation *comp) { return false; } // safe answer, might change in the future
    virtual bool instanceOfOrCheckCast(J9Class *instanceClass, J9Class* castClass) override;
+   virtual bool instanceOfOrCheckCastNoCacheUpdate(J9Class *instanceClass, J9Class* castClass) override;
    virtual bool transformJlrMethodInvoke(J9Method *callerMethod, J9Class *callerClass) override;
    using TR_J9VM :: isAnonymousClass;
    virtual bool isAnonymousClass(TR_OpaqueClassBlock *j9clazz) override;
@@ -183,6 +184,9 @@ public:
    virtual J9ROMMethod *getROMMethodFromRAMMethod(J9Method *ramMethod) override;
    virtual bool getReportByteCodeInfoAtCatchBlock() override;
    virtual void *getInvokeExactThunkHelperAddress(TR::Compilation *comp, TR::SymbolReference *glueSymRef, TR::DataType dataType) override;
+
+private:
+   bool instanceOfOrCheckCastHelper(J9Class *instanceClass, J9Class* castClass, bool cacheUpdate);
 
 protected:
    void getResolvedMethodsAndMethods(TR_Memory *trMemory, TR_OpaqueClassBlock *classPointer, List<TR_ResolvedMethod> *resolvedMethodsInClass, J9Method **methods, uint32_t *numMethods);
