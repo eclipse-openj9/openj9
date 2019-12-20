@@ -76,6 +76,7 @@ public class TestOperatingSystemMXBean {
 	 * available on z/OS and OSX.
 	 */
 	private static final boolean isSupportedOS;
+	private static final int verMajor = org.openj9.test.util.VersionCheck.major();
 
 	static {
 		ignoredAttributes = new HashSet<>();
@@ -105,6 +106,11 @@ public class TestOperatingSystemMXBean {
 		attribs.put("HardwareModel", new AttributeData(String.class.getName(), true, false, false));
 		attribs.put("HardwareEmulated", new AttributeData(Boolean.TYPE.getName(), true, false, true));
 		attribs.put("ProcessRunning", new AttributeData(Boolean.TYPE.getName(), true, false, true)); //$NON-NLS-1$
+		if (verMajor >= 14) {
+			attribs.put("CpuLoad", new AttributeData(Double.TYPE.getName(), true, false, false));
+			attribs.put("FreeMemorySize", new AttributeData(Long.TYPE.getName(), true, false, false));
+			attribs.put("TotalMemorySize", new AttributeData(Long.TYPE.getName(), true, false, false));
+		}
 
 		/* When we run on Unix, the implementation returned is that of
 		 * UnixExtendedOperatingSystem.  It adds a couple of APIs to the
@@ -197,6 +203,11 @@ public class TestOperatingSystemMXBean {
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "TotalSwapSpaceSize") instanceof Long);
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "FreeSwapSpaceSize") instanceof Long);
 			AssertJUnit.assertTrue(mbs.getAttribute(objName, "ProcessCpuLoad") instanceof Double);
+			if (verMajor >= 14) {
+				AssertJUnit.assertTrue(mbs.getAttribute(objName, "CpuLoad") instanceof Double);
+				AssertJUnit.assertTrue(mbs.getAttribute(objName, "FreeMemorySize") instanceof Long);
+				AssertJUnit.assertTrue(mbs.getAttribute(objName, "TotalMemorySize") instanceof Long);
+			}
 
 			if (TestUtil.isRunningOnUnix()) {
 				AssertJUnit.assertTrue(mbs.getAttribute(objName, "MaxFileDescriptorCount") instanceof Long);
@@ -420,6 +431,9 @@ public class TestOperatingSystemMXBean {
 				} else if (name.equals("TotalPhysicalMemorySize")) {
 					AssertJUnit.assertTrue(value instanceof Long);
 					AssertJUnit.assertTrue(((Long)(value)) > -1);
+				} else if (name.equals("TotalMemorySize")) {
+					AssertJUnit.assertTrue(value instanceof Long);
+					AssertJUnit.assertTrue(((Long)(value)) > -1);
 				} else if (name.equals("ProcessingCapacity")) {
 					AssertJUnit.assertTrue(value instanceof Integer);
 					AssertJUnit.assertTrue(((Integer)(value)) > -1);
@@ -432,7 +446,11 @@ public class TestOperatingSystemMXBean {
 					AssertJUnit.assertTrue(value instanceof Long);
 				} else if (name.equals("SystemCpuLoad")) {
 					AssertJUnit.assertTrue(value instanceof Double);
+				} else if (name.equals("CpuLoad")) {
+					AssertJUnit.assertTrue(value instanceof Double);
 				} else if (name.equals("FreePhysicalMemorySize")) {
+					AssertJUnit.assertTrue(value instanceof Long);
+				} else if (name.equals("FreeMemorySize")) {
 					AssertJUnit.assertTrue(value instanceof Long);
 				} else if (name.equals("ProcessVirtualMemorySize")) {
 					AssertJUnit.assertTrue(value instanceof Long);
@@ -555,11 +573,22 @@ public class TestOperatingSystemMXBean {
 		/* Under UNIX, we expect a couple more APIs, since the instance would be
 		 * that of UnixExtendedOperatingSystem.
 		 */
-		if (TestUtil.isRunningOnUnix()) {
-			AssertJUnit.assertEquals(24, attributes.length);
+		int attrNbr;
+		if (verMajor >= 14) {
+			if (TestUtil.isRunningOnUnix()) {
+				attrNbr = 27;
+			} else {
+				attrNbr = 25;
+			}
 		} else {
-			AssertJUnit.assertEquals(22, attributes.length);
+			// Java 8 - 13
+			if (TestUtil.isRunningOnUnix()) {
+				attrNbr = 24;
+			} else {
+				attrNbr = 22;
+			}
 		}
+		AssertJUnit.assertEquals(attrNbr, attributes.length);
 		for (int i = 0; i < attributes.length; i++) {
 			MBeanAttributeInfo info = attributes[i];
 			AssertJUnit.assertNotNull(info);
