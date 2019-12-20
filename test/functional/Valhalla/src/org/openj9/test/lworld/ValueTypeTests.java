@@ -1720,37 +1720,41 @@ public class ValueTypeTests {
 	}
 
 	static Object createAssorted(MethodHandle makeMethod, String[] fields) throws Throwable {
+		return createAssorted(makeMethod, fields, null);
+	}
+	static Object createAssorted(MethodHandle makeMethod, String[] fields, Object[] initFields) throws Throwable {
 		Object[] args = new Object[fields.length];
+		boolean useInitFields = initFields != null;
 		for (int i = 0; i < fields.length; i++) {
 			String nameAndSigValue[] = fields[i].split(":");
 			String signature = nameAndSigValue[1];
 			switch (signature) {
 			case "QPoint2D;":
-				args[i] = createPoint2D(defaultPointPositions1);
+				args[i] = createPoint2D(useInitFields ? (int[])initFields[i] : defaultPointPositions1);
 				break;
 			case "QFlattenedLine2D;":
-				args[i] = createFlattenedLine2D(defaultLinePositions1);
+				args[i] = createFlattenedLine2D(useInitFields ? (int[][])initFields[i] : defaultLinePositions1);
 				break;
 			case "QTriangle2D;":
-				args[i] = createTriangle2D(defaultTrianglePositions);
+				args[i] = createTriangle2D(useInitFields ? (int[][][])initFields[i] : defaultTrianglePositions);
 				break;
 			case "QValueInt;":
-				args[i] = makeValueInt.invoke(defaultInt);
+				args[i] = makeValueInt.invoke(useInitFields ? (int)initFields[i] : defaultInt);
 				break;
 			case "QValueFloat;":
-				args[i] = makeValueFloat.invoke(defaultFloat);
+				args[i] = makeValueFloat.invoke(useInitFields ? (float)initFields[i] : defaultFloat);
 				break;
 			case "QValueDouble;":
-				args[i] = makeValueDouble.invoke(defaultDouble);
+				args[i] = makeValueDouble.invoke(useInitFields ? (double)initFields[i] : defaultDouble);
 				break;
 			case "QValueObject;":
-				args[i] = makeValueObject.invoke(defaultObject);
+				args[i] = makeValueObject.invoke(useInitFields ? (Object)initFields[i] : defaultObject);
 				break;
 			case "QValueLong;":
-				args[i] = makeValueLong.invoke(defaultLong);
+				args[i] = makeValueLong.invoke(useInitFields ? (long)initFields[i] : defaultLong);
 				break;
 			case "QLargeObject;":
-				args[i] = createLargeObject(defaultObject);
+				args[i] = createLargeObject(useInitFields ? (Object)initFields[i] : defaultObject);
 				break;
 			default:
 				args[i] = null;
