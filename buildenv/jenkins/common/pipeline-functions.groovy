@@ -506,8 +506,9 @@ def get_build_job_name(spec, version, identifier) {
 }
 
 def get_test_job_name(targetName, spec, version, identifier) {
-    spec = strip_spec_suffixes(spec)
-    id = convert_build_identifier(identifier)
+    // No need to use function 'move_spec_suffix_to_id' since the test job name returned below will match.
+    // Although we may want to in case behaviour changes.
+    def id = convert_build_identifier(identifier)
     return "Test_openjdk${version}_j9_${targetName}_${spec}_${id}"
 }
 
@@ -627,14 +628,14 @@ def generate_test_jobs(TARGET_NAMES, SPEC, ARTIFACTORY_SERVER, ARTIFACTORY_REPO)
     levels.unique(true)
     groups.unique(true)
 
-    spec = strip_spec_suffixes(SPEC)
+    def spec_id = move_spec_suffix_to_id(SPEC, convert_build_identifier(BUILD_IDENTIFIER))
     if (levels && groups) {
         def parameters = [
             string(name: 'LEVELS', value: levels.join(',')),
             string(name: 'GROUPS', value: groups.join(',')),
             string(name: 'JDK_VERSIONS', value: SDK_VERSION),
-            string(name: 'SUFFIX', value: "_${convert_build_identifier(BUILD_IDENTIFIER)}"),
-            string(name: 'ARCH_OS_LIST', value: spec),
+            string(name: 'SUFFIX', value: "_${spec_id['id']}"),
+            string(name: 'ARCH_OS_LIST', value: spec_id['spec']),
             string(name: 'JDK_IMPL', value: 'openj9'),
             string(name: 'ARTIFACTORY_SERVER', value: ARTIFACTORY_SERVER),
             string(name: 'ARTIFACTORY_REPO', value: ARTIFACTORY_REPO),
@@ -784,12 +785,25 @@ def setup_pull_request_single_comment(PARSED_COMMENT) {
     PERSONAL_BUILD = 'true'
 }
 
-def strip_spec_suffixes (spec) {
-    // Strip off cmake/jit from SPEC name
-    // Since cmake and JITServer is a method for how the SDK is built,
-    // from a test perspective it is the same sdk. Therefore
-    // we will reuse the same test jobs as the regular specs.
-    return spec - '_cm' - '_jit'
+def move_spec_suffix_to_id(spec, id) {
+    /*
+     * Move spec suffixes (eg. cmake/jit) from SPEC name to BUILD_IDENTIFIER
+     * Since cmake and JITServer is a method for how the SDK is built,
+     * from a test perspective it is the same sdk. Therefore the test jobs use
+     * the same Jenkinsfiles. In order to keep the test jobs separated, we will
+     * move the suffix from the spec to the identifier since test auto-gen allows
+     * a build suffix for identification purposes.
+     */
+    def spec_id = [:]
+    spec_id['spec'] = spec
+    spec_id['id'] = id
+    for (suffix in ['cm', 'jit']) {
+        if (spec.contains("_${suffix}")) {
+            spec_id['spec'] = spec - "_${suffix}"
+            spec_id['id'] = "${suffix}_" + id
+        }
+    }
+    return spec_id
 }
 
 return this
