@@ -575,7 +575,7 @@ def set_build_variables() {
     set_repos_variables()
 
     def buildspec = buildspec_manager.getSpec(SPEC)
-   
+
     // fetch values per spec and Java version from the variables file
     BOOT_JDK = buildspec.getScalarField("boot_jdk", SDK_VERSION)
     FREEMARKER = buildspec.getScalarField("freemarker", SDK_VERSION)
@@ -586,7 +586,7 @@ def set_build_variables() {
 
     // set variables for the build environment configuration
     // check job parameters, if not provided default to variables file
-    BUILD_ENV_VARS = params.BUILD_ENV_VARS 
+    BUILD_ENV_VARS = params.BUILD_ENV_VARS
     if (!BUILD_ENV_VARS) {
         BUILD_ENV_VARS = buildspec.getVectorField("build_env.vars", SDK_VERSION).join(" ")
     }
