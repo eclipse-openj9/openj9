@@ -98,8 +98,8 @@ ADD \
     http://ftp.us.debian.org/debian/pool/main/libp/libpng1.6/libpng16-16_1.6.28-1+deb9u1_arm64.deb   \
     http://ftp.us.debian.org/debian/pool/main/libp/libpng1.6/libpng-dev_1.6.28-1+deb9u1_arm64.deb    \
     http://ftp.us.debian.org/debian/pool/main/libs/libsm/libsm-dev_1.2.2-1+b3_arm64.deb              \
-    http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl1.1_1.1.1c-1_arm64.deb                 \
-    http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl-dev_1.1.1c-1_arm64.deb                \
+    http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl1.1_1.1.1d-2_arm64.deb                 \
+    http://ftp.us.debian.org/debian/pool/main/o/openssl/libssl-dev_1.1.1d-2_arm64.deb                \
     http://ftp.us.debian.org/debian/pool/main/libx/libx11/libx11-6_1.6.4-3%2bdeb9u1_arm64.deb        \
     http://ftp.us.debian.org/debian/pool/main/libx/libx11/libx11-dev_1.6.4-3%2bdeb9u1_arm64.deb      \
     http://ftp.us.debian.org/debian/pool/main/libx/libxext/libxext6_1.3.3-1+b2_arm64.deb             \
