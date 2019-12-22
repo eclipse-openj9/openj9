@@ -626,7 +626,14 @@ public class TestRuntimeMXBean {
 		// Sixteen attributes - none writable - and eight IBM specific.
 		MBeanAttributeInfo[] attributes = mbi.getAttributes();
 		AssertJUnit.assertNotNull(attributes);
-		org.testng.Assert.assertEquals(25, attributes.length, "wrong number of attributes");
+		int attrNbr;
+		if (org.openj9.test.util.VersionCheck.major() >=14) {
+			attrNbr = 26;
+		} else {
+			// Java 8 - 13
+			attrNbr = 25;
+		}
+		org.testng.Assert.assertEquals(attributes.length, attrNbr, "wrong number of attributes");
 		for (int i = 0; i < attributes.length; i++) {
 			MBeanAttributeInfo info = attributes[i];
 			AssertJUnit.assertNotNull(info);
