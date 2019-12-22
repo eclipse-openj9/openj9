@@ -1,4 +1,4 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
  * Copyright (c) 2012, 2019 IBM Corp. and others
  *
@@ -165,6 +165,32 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 * @return amount of physical memory available in bytes
 	 */
 	private native long getFreePhysicalMemorySizeImpl();
+
+/*[IF Java14]*/
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public final double getCpuLoad() {
+		return cpuUtilizationHelper.getSystemCpuLoad();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getTotalMemorySize() {
+		return getTotalPhysicalMemoryImpl();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	@Override
+	public long getFreeMemorySize() {
+		return getFreePhysicalMemorySizeImpl();
+	}
+/*[ENDIF] Java14 */
 
 	/**
 	 * {@inheritDoc}

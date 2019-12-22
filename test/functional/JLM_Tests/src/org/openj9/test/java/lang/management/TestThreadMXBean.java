@@ -1318,10 +1318,16 @@ public class TestThreadMXBean {
 		AssertJUnit.assertNotNull(constructors);
 		AssertJUnit.assertEquals(0, constructors.length);
 
-		// 14 operations
+		int opNbr;
+		if (org.openj9.test.util.VersionCheck.major() >=14) {
+			opNbr = 16;
+		} else {
+			// Java 8 - 13
+			opNbr = 14;
+		}
 		MBeanOperationInfo[] operations = mbi.getOperations();
 		AssertJUnit.assertNotNull(operations);
-		AssertJUnit.assertEquals(14, operations.length);
+		AssertJUnit.assertEquals(opNbr, operations.length);
 
 		// No notifications
 		MBeanNotificationInfo[] notifications = mbi.getNotifications();

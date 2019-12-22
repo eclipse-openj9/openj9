@@ -57,16 +57,7 @@
 				</javac>
 			</then>
 			<else>
-				<if>
-					<equals arg1="${JCL_VERSION}" arg2="latest"/>
-					<then>
-						<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED" />
-					</then>
-					<else>
-						<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED" />
-					<!--	<property name="addExports" value='-XaddExports:java.base/com.ibm.oti.vm=ALL-UNNAMED' /> -->
-					</else>
-				</if>
+				<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED" />
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<compilerarg line='${addExports}' />
