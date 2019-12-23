@@ -121,9 +121,44 @@ void J9::ARM64::JNILinkage::releaseVMAccess(TR::Node *callNode, TR::Register *vm
    generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, releaseVMAccessRestartLabel);
    }
 
-void J9::ARM64::JNILinkage::acquireVMAccess(TR::Node *callNode, TR::Register *vmThreadReg)
+void J9::ARM64::JNILinkage::acquireVMAccess(TR::Node *callNode, TR::Register *vmThreadReg, TR::Register *scratchReg0, TR::Register *scratchReg1, TR::Register *scratchReg2)
    {
-   TR_UNIMPLEMENTED();
+   TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(fe());
+
+   // Re-acquire VM access.
+   //    addimmx scratch0, vmThreadReg, #publicFlagsOffset
+   //    movzx   scratch1, constAcquireMAccessOutOfLineMask
+   //
+   // loopHead:
+   //    ldxrx   scratch2, [scratch0]
+   //    cbnzx   scratch2, reacquireVMAccessSnippet
+   //    stxrx   scratch2, scratch1, [scratch0]
+   //    cbnz    scratch2, loopHead
+   //    dmb ishld
+   // reacquireVMAccessRestartLabel:
+   //
+   generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, callNode, scratchReg0, vmThreadReg, fej9->thisThreadGetPublicFlagsOffset());
+   loadConstant64(cg(), callNode, fej9->constAcquireVMAccessOutOfLineMask(), scratchReg1);
+
+   TR::LabelSymbol *loopHead = generateLabelSymbol(cg());
+   generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, loopHead);
+   generateTrg1MemInstruction(cg(), TR::InstOpCode::ldxrx, callNode, scratchReg2, new (trHeapMemory()) TR::MemoryReference(scratchReg0, 0, cg()));
+
+   TR::LabelSymbol *reacquireVMAccessSnippetLabel = generateLabelSymbol(cg());
+   TR::LabelSymbol *reacquireVMAccessRestartLabel = generateLabelSymbol(cg());
+   TR::SymbolReference *acqVMSymRef = comp()->getSymRefTab()->findOrCreateAcquireVMAccessSymbolRef(comp()->getJittedMethodSymbol());
+
+   TR::Snippet *reacquireVMAccessSnippet = new (trHeapMemory()) TR::ARM64HelperCallSnippet(cg(), callNode, reacquireVMAccessSnippetLabel, acqVMSymRef, reacquireVMAccessRestartLabel);
+   cg()->addSnippet(reacquireVMAccessSnippet);
+   generateCompareBranchInstruction(cg(), TR::InstOpCode::cbnzx, callNode, scratchReg2, reacquireVMAccessSnippetLabel);
+   reacquireVMAccessSnippet->gcMap().setGCRegisterMask(0);
+
+   generateTrg1MemSrc1Instruction(cg(), TR::InstOpCode::stxrx, callNode, scratchReg2, new (trHeapMemory()) TR::MemoryReference(scratchReg0, 0, cg()), scratchReg1);
+   generateCompareBranchInstruction(cg(), TR::InstOpCode::cbnzx, callNode, scratchReg2, loopHead);
+   // dmb ishld (Inner Shareable load barrier)
+   generateSynchronizationInstruction(cg(), TR::InstOpCode::dmb, callNode, 0x9);
+
+   generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, reacquireVMAccessRestartLabel);
    }
 
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI
@@ -482,7 +517,7 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI
       acquireVMAccessAtomicFree(callNode, vmThreadReg);
 #else
-      acquireVMAccess(callNode, vmThreadReg);
+      acquireVMAccess(callNode, vmThreadReg, x9Reg, x10Reg, x11Reg);
 #endif
       }
 
