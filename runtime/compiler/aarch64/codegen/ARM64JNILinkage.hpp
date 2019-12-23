@@ -79,8 +79,12 @@ class JNILinkage : public PrivateLinkage
     * @brief Releases VM access before calling into JNI method
     * @param[in] callNode : caller node
     * @param[in] vmThreadReg : vm thread register
+    * @param[in] scratchReg0 : scratch register
+    * @param[in] scratchReg1 : scratch register
+    * @param[in] scratchReg2 : scratch register
+    * @param[in] scratchReg3 : scratch register
     */
-   void releaseVMAccess(TR::Node *callNode, TR::Register *vmThreadReg);
+   void releaseVMAccess(TR::Node *callNode, TR::Register *vmThreadReg, TR::Register *scratchReg0, TR::Register *scratchReg1, TR::Register *scratchReg2, TR::Register *scratchReg3);
 
    /**
     * @brief Acquires VM access after returned from JNI method

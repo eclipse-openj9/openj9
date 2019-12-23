@@ -60,9 +60,65 @@ void J9::ARM64::JNILinkage::buildVirtualDispatch(
    TR_ASSERT(0, "Calling J9::ARM64::JNILinkage::buildVirtualDispatch does not make sense.");
    }
 
-void J9::ARM64::JNILinkage::releaseVMAccess(TR::Node *callNode, TR::Register *vmThreadReg)
+void J9::ARM64::JNILinkage::releaseVMAccess(TR::Node *callNode, TR::Register *vmThreadReg, TR::Register *scratchReg0, TR::Register *scratchReg1, TR::Register *scratchReg2, TR::Register *scratchReg3)
    {
-   TR_UNIMPLEMENTED();
+   TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(fe());
+
+   // Release VM access (spin lock)
+   //
+   //    addimmx scratch0, vmThreadReg, #publicFlagsOffset
+   //    movzx   scratch1, constReleaseVMAccessOutOfLineMask
+   //
+   //    dmb ishst
+   // loopHead:
+   //    ldxrx   scratch2, [scratch0]
+   //    tst     scratch2, scratch1
+   //    b.ne    releaseVMAccessSnippet
+   //    andimmx scratch2, scratch2, constReleaseVMAccessMask
+   //    stxrx   scratch2, scratch2, [scratch0]
+   //    cbnz    scratch2, loopHead
+   // releaseVMRestart:
+   //
+
+   const int releaseVMAccessMask = fej9->constReleaseVMAccessMask();
+
+   generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, callNode, scratchReg0, vmThreadReg, fej9->thisThreadGetPublicFlagsOffset());
+   loadConstant64(cg(), callNode, fej9->constReleaseVMAccessOutOfLineMask(), scratchReg1);
+   // dmb ishst (Inner Shareable store barrier)
+   // Arm Architecture Reference Manual states:
+   // "This architecture assumes that all PEs that use the same operating system or hypervisor are in the same Inner Shareable shareability domain"
+   // thus, inner shareable dmb suffices
+   generateSynchronizationInstruction(cg(), TR::InstOpCode::dmb, callNode, 0xb);
+
+   TR::LabelSymbol *loopHead = generateLabelSymbol(cg());
+   generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, loopHead);
+   generateTrg1MemInstruction(cg(), TR::InstOpCode::ldxrx, callNode, scratchReg2, new (trHeapMemory()) TR::MemoryReference(scratchReg0, 0, cg()));
+   generateTestInstruction(cg(), callNode, scratchReg2, scratchReg1, true);
+
+   TR::LabelSymbol *releaseVMAccessSnippetLabel = generateLabelSymbol(cg());
+   TR::LabelSymbol *releaseVMAccessRestartLabel = generateLabelSymbol(cg());
+   TR::SymbolReference *relVMSymRef = comp()->getSymRefTab()->findOrCreateReleaseVMAccessSymbolRef(comp()->getJittedMethodSymbol());
+
+   TR::Snippet *releaseVMAccessSnippet = new (trHeapMemory()) TR::ARM64HelperCallSnippet(cg(), callNode, releaseVMAccessSnippetLabel, relVMSymRef, releaseVMAccessRestartLabel);
+   cg()->addSnippet(releaseVMAccessSnippet);
+   generateConditionalBranchInstruction(cg(), TR::InstOpCode::b_cond, callNode, releaseVMAccessSnippetLabel, TR::CC_NE);
+   releaseVMAccessSnippet->gcMap().setGCRegisterMask(0);
+
+   uint64_t mask = fej9->constReleaseVMAccessMask();
+   bool n;
+   uint32_t imm;
+   if (logicImmediateHelper(mask, true, n, imm))
+      {
+      generateLogicalImmInstruction(cg(), TR::InstOpCode::andimmx, callNode, scratchReg2, scratchReg2, n, imm);
+      }
+   else
+      {
+      loadConstant64(cg(), callNode, mask, scratchReg3);
+      generateTrg1Src2Instruction(cg(), TR::InstOpCode::andx, callNode, scratchReg2, scratchReg2, scratchReg3);
+      }
+   generateTrg1MemSrc1Instruction(cg(), TR::InstOpCode::stxrx, callNode, scratchReg2, new (trHeapMemory()) TR::MemoryReference(scratchReg0, 0, cg()), scratchReg2);
+   generateCompareBranchInstruction(cg(), TR::InstOpCode::cbnzx, callNode, scratchReg2, loopHead);
+   generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, releaseVMAccessRestartLabel);
    }
 
 void J9::ARM64::JNILinkage::acquireVMAccess(TR::Node *callNode, TR::Register *vmThreadReg)
@@ -401,7 +457,7 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 #ifdef J9VM_INTERP_ATOMIC_FREE_JNI
       releaseVMAccessAtomicFree(callNode, vmThreadReg);
 #else
-      releaseVMAccess(callNode, vmThreadReg);
+      releaseVMAccess(callNode, vmThreadReg, x9Reg, x10Reg, x11Reg, x12Reg);
 #endif
       }
 
