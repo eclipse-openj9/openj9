@@ -140,8 +140,8 @@ extern J9_CFUNC jlong JNICALL
 Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProcessPrivateMemorySizeImpl (JNIEnv *env, jobject instance);
 extern J9_CFUNC jlong JNICALL
 Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProcessPhysicalMemorySizeImpl (JNIEnv *env, jobject instance);
-extern J9_CFUNC jobject JNICALL
-Java_com_ibm_lang_management_internal_SysinfoCpuTime_getCpuUtilizationImpl (JNIEnv *env, jclass clazz);
+extern J9_CFUNC jdouble JNICALL
+Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getSystemCpuLoadImpl (JNIEnv *env, jobject instance);
 
 /* BBresmanNativesCommonMemorySpace*/
 jboolean JNICALL Java_com_ibm_oti_vm_MemorySpace_isObjectInMemorySpace (JNIEnv * env, jobject memorySpace, jlong memorySpaceAddress, jobject anObject);

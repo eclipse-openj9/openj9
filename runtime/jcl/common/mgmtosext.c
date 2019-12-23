@@ -79,6 +79,32 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProce
 	return (0 == rc)? (jlong) size: (jlong) -1;
 }
 
+jdouble JNICALL
+Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getSystemCpuLoadImpl(JNIEnv *env, jobject instance) {
+	PORT_ACCESS_FROM_ENV(env);
+	double cpuLoad;
+
+	intptr_t portLibraryStatus = j9sysinfo_get_CPU_load(&cpuLoad);
+
+	if (portLibraryStatus < 0) {
+		switch (portLibraryStatus) {
+		case OMRPORT_ERROR_SYSINFO_INSUFFICIENT_PRIVILEGE:
+			portLibraryStatus = -2;
+			break;
+		case OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED:
+			portLibraryStatus = -3;
+			break;
+		default:
+			portLibraryStatus = OMRPORT_ERROR_OPFAILED;
+			break;
+		}
+
+		cpuLoad = (double)portLibraryStatus;
+	}
+
+	return (jdouble)cpuLoad;
+}
+
 /**
  * Returns the amount of private memory used by the process
  * in bytes. It is platform specific whether this value includes

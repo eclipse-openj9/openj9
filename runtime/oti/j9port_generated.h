@@ -620,6 +620,7 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9sysinfo_get_groupname(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_groupname(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
 #define j9sysinfo_get_load_average(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_load_average(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9sysinfo_get_CPU_utilization(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_CPU_utilization(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
+#define j9sysinfo_get_CPU_load(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_get_CPU_load(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9sysinfo_limit_iterator_init(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_limit_iterator_init(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9sysinfo_limit_iterator_hasNext(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_limit_iterator_hasNext(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9sysinfo_limit_iterator_next(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->sysinfo_limit_iterator_next(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)

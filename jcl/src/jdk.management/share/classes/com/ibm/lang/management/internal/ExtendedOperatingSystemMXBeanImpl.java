@@ -101,8 +101,6 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 		return false;
 	}
 
-	private final CpuUtilizationHelper cpuUtilizationHelper = new CpuUtilizationHelper();
-
 	private HwEmulResult isHwEmulated = HwEmulResult.UNKNOWN;
 
 	/**
@@ -426,8 +424,10 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 */
 	@Override
 	public final double getSystemCpuLoad() {
-		return cpuUtilizationHelper.getSystemCpuLoad();
+		return this.getSystemCpuLoadImpl();
 	}
+
+	private native double getSystemCpuLoadImpl();
 
 	/**
 	 * {@inheritDoc}

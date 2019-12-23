@@ -163,9 +163,9 @@
 	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProcessVirtualMemorySizeImpl" />
 	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProcessPrivateMemorySizeImpl" />
 	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProcessPhysicalMemorySizeImpl" />
+	<export name="Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getSystemCpuLoadImpl" />
 	<export name="Java_com_ibm_lang_management_internal_OperatingSystemNotificationThread_processNotificationLoop" />
 	<export name="Java_com_ibm_lang_management_internal_OperatingSystemNotificationThreadShutdown_sendShutdownNotification" />
-	<export name="Java_com_ibm_lang_management_internal_SysinfoCpuTime_getCpuUtilizationImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_getNameImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_getStartTimeImpl" />
 	<export name="Java_com_ibm_java_lang_management_internal_RuntimeMXBeanImpl_getUptimeImpl" />

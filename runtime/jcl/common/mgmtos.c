@@ -197,59 +197,6 @@ Java_com_ibm_lang_management_internal_OperatingSystemNotificationThreadShutdown_
 
 }
 
-/**
- * Call j9sysinfo_get_CPU_utilization to get CPU utilization statistics.
- * Create and populate a SysinfoCpuTime with the results.
- * The status field is a summary
- * of the status code returned by the port library.  For more error details, use the
- * port library tracepoints.
- * @return SysinfoCpuTime or NULL if the object could  not be created.
- */
-jobject JNICALL
-Java_com_ibm_lang_management_internal_SysinfoCpuTime_getCpuUtilizationImpl(JNIEnv *env, jclass clazz) {
-	jmethodID tempMethod;
-	J9SysinfoCPUTime cpuTime;
-	IDATA portLibraryStatus;
-	IDATA myStatus = 0;
-	jobject result;
-	PORT_ACCESS_FROM_ENV(env);
-
-	tempMethod = JCL_CACHE_GET(env, MID_com_ibm_lang_management_SysinfoCpuTime_getCpuUtilization_init);
-
-	if (NULL == tempMethod) {
-
-		tempMethod = (*env)->GetMethodID(env, clazz, "<init>", "(JJII)V");
-		if (NULL == tempMethod) {
-			return NULL;
-		}
-
-		JCL_CACHE_SET(env, MID_com_ibm_lang_management_SysinfoCpuTime_getCpuUtilization_init, tempMethod);
-	}
-
-	portLibraryStatus = j9sysinfo_get_CPU_utilization(&cpuTime);
-	if (portLibraryStatus < 0) {
-		const IDATA ERROR_VALUE = -1;
-		const IDATA INSUFFICIENT_PRIVILEGE = -2;
-		const IDATA UNSUPPORTED_VALUE = -3;
-/*		const IDATA INTERNAL_ERROR = -4; placeholder.  Not used in this context */
-
-		switch (portLibraryStatus) {
-		case J9PORT_ERROR_SYSINFO_INSUFFICIENT_PRIVILEGE:
-			myStatus = INSUFFICIENT_PRIVILEGE;
-			break;
-		case J9PORT_ERROR_SYSINFO_NOT_SUPPORTED:
-			myStatus = UNSUPPORTED_VALUE;
-			break;
-		default:
-			myStatus = ERROR_VALUE;
-			break;
-		}
-	}
-	result = (*env)->NewObject(env, clazz, tempMethod,
-			cpuTime.timestamp, cpuTime.cpuTime, cpuTime.numberOfCpus, myStatus);
-	return result;
-}
-
 static UDATA 
 reconfigHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData)
 {
