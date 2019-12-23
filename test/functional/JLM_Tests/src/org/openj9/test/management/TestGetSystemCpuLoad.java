@@ -38,20 +38,9 @@ public class TestGetSystemCpuLoad {
 
 	/* convert ns to ms and round up */
 	private static final long MINIMUM_INTERVAL = (long) Math.ceil(CpuLoadCalculationConstants.MINIMUM_INTERVAL / 1e6);
-	private boolean supported;
 	private final double MIN_LOAD = 0.0;
 	private final double MAX_LOAD = 1.0;
 	private final double NO_ERROR = -100; /* should never get this */
-
-	@BeforeMethod
-	protected void setUp() throws Exception {
-		String osName = System.getProperty("os.name");
-		if ((null == osName) || osName.equalsIgnoreCase("z/OS")) {
-			supported = false;
-		} else {
-			supported = true;
-		}
-	}
 
 	@Test
 	public void testSingleCpuLoadObject() {
@@ -64,12 +53,7 @@ public class TestGetSystemCpuLoad {
 			return;
 		}
 		double load = ibmBean.getSystemCpuLoad();
-		if (!supported) {
-			validateLoad(load, true, CpuLoadCalculationConstants.UNSUPPORTED_VALUE, "initial call");
-			return;
-		} else {
-			validateLoad(load, true, CpuLoadCalculationConstants.ERROR_VALUE, "initial call");
-		}
+		validateLoad(load, true, CpuLoadCalculationConstants.ERROR_VALUE, "initial call");
 		load = ibmBean.getSystemCpuLoad();
 		if (load < 0.0) { /* normal case (insufficient time since last call) */
 			validateLoad(load, true, CpuLoadCalculationConstants.ERROR_VALUE, "call getSystemCpuLoad immediately after the previous call");
@@ -102,10 +86,7 @@ public class TestGetSystemCpuLoad {
 			com.ibm.lang.management.OperatingSystemMXBean ibmBean1 =
 					(com.ibm.lang.management.OperatingSystemMXBean) osBean;
 			double load = ibmBean1.getSystemCpuLoad();
-			if (!supported) {
-				validateLoad(load, true, CpuLoadCalculationConstants.UNSUPPORTED_VALUE, "initial getSystemCpuLoad");
-				return;
-			} else if (load < 0.0) { /* normal case (insufficient time since last call) */
+			if (load < 0.0) { /* normal case (insufficient time since last call) */
 				validateLoad(load, true, CpuLoadCalculationConstants.ERROR_VALUE, "initial getSystemCpuLoad");
 			} else {
 				validateLoad(load, false, NO_ERROR, "initial getSystemCpuLoad");
