@@ -1106,6 +1106,30 @@ extern "C" void _patchJNICallSite(J9Method *method, uint8_t *pc, uint8_t *newAdd
    // simply patch in the new address
    *(uint8_t**)pc = newAddress;
    }
+#elif defined(TR_HOST_ARM64)
+extern "C" void _patchJNICallSite(J9Method *method, uint8_t *pc, uint8_t *newAddress, TR_FrontEnd *fe, int32_t smpFlag)
+   {
+   // We expect the following code sequence:
+   // movzx scratchReg, imm16
+   // movkx scratchReg, imm16, LSL16
+   // movkx scratchReg, imm16, LSL32
+   // movkx scratchReg, imm16, LSL48
+   uintptr_t address = reinterpret_cast<uintptr_t>(newAddress);
+   uint32_t *cursor = reinterpret_cast<uint32_t*>(pc);
+
+   TR_ASSERT((*cursor & 0xffe00000) == 0xd2800000, "unexpected JNI call sequence at %p: 0x%08x", cursor, *cursor);
+   *cursor = (*cursor & 0xffe0001f) | ((address & 0x0000ffff) << 5);
+   cursor++;
+   TR_ASSERT((*cursor & 0xffe00000) == 0xf2a00000, "unexpected JNI call sequence at %p: 0x%08x", cursor, *cursor);
+   *cursor = (*cursor & 0xffe0001f) | (((address >> 16) & 0x0000ffff) << 5);
+   cursor++;
+   TR_ASSERT((*cursor & 0xffe00000) == 0xf2c00000, "unexpected JNI call sequence at %p: 0x%08x", cursor, *cursor);
+   *cursor = (*cursor & 0xffe0001f) | (((address >> 32) & 0x0000ffff) << 5);
+   cursor++;
+   TR_ASSERT((*cursor & 0xffe00000) == 0xf2e00000, "unexpected JNI call sequence at %p: 0x%08x", cursor, *cursor);
+   *cursor = (*cursor & 0xffe0001f) | (((address >> 48) & 0x0000ffff) << 5);
+   TR::CodeGenerator::syncCode(pc, 16);
+   }
 #endif
 
 #if defined(TR_HOST_X86)
