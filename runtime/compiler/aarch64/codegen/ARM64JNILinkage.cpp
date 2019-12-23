@@ -404,10 +404,54 @@ void J9::ARM64::JNILinkage::checkForJNIExceptions(TR::Node *callNode, TR::Regist
    }
 
 TR::Instruction *J9::ARM64::JNILinkage::generateMethodDispatch(TR::Node *callNode, bool isJNIGCPoint,
-                                                               TR::RegisterDependencyConditions *deps, uintptrj_t targetAddress)
+                                                               TR::RegisterDependencyConditions *deps, uintptrj_t targetAddress, TR::Register *scratchReg)
    {
-   TR_UNIMPLEMENTED();
-   return NULL;
+   TR::ResolvedMethodSymbol *resolvedMethodSymbol = callNode->getSymbol()->castToResolvedMethodSymbol();
+   TR_ResolvedMethod *resolvedMethod = resolvedMethodSymbol->getResolvedMethod();
+   TR_J9VMBase *fej9 = reinterpret_cast<TR_J9VMBase *>(fe());
+
+   TR::Instruction *cursor = cg()->getAppendInstruction();
+
+   // load a 64-bit constant into a register with a fixed 4 instruction sequence
+   TR::Instruction *firstInstruction;
+   cursor = firstInstruction = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movzx, callNode, scratchReg, targetAddress & 0x0000ffff, cursor);
+   cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg, ((targetAddress >> 16) & 0x0000ffff) | TR::MOV_LSL16, cursor);
+   cursor = generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg, ((targetAddress >> 32) & 0x0000ffff) | TR::MOV_LSL32, cursor);
+   generateTrg1ImmInstruction(cg(), TR::InstOpCode::movkx, callNode, scratchReg, (targetAddress >> 48) | TR::MOV_LSL48, cursor);
+
+   if (fej9->needClassAndMethodPointerRelocations())
+      {
+      TR_ExternalRelocationTargetKind reloType;
+      if (resolvedMethodSymbol->isSpecial())
+         reloType = TR_JNISpecialTargetAddress;
+      else if (resolvedMethodSymbol->isStatic())
+         reloType = TR_JNIStaticTargetAddress;
+      else if (resolvedMethodSymbol->isVirtual())
+         reloType = TR_JNIVirtualTargetAddress;
+      else
+         {
+         reloType = TR_NoRelocation;
+         TR_ASSERT(0, "JNI relocation not supported.");
+         }
+      cg()->addExternalRelocation(new (trHeapMemory()) TR::BeforeBinaryEncodingExternalRelocation(
+                                                            firstInstruction,
+                                                            reinterpret_cast<uint8_t *>(callNode->getSymbolReference()),
+                                                            reinterpret_cast<uint8_t *>(callNode->getInlinedSiteIndex()),
+                                                            reloType, cg()),
+                                                          __FILE__,__LINE__, callNode);
+
+      }
+
+   // Add the first instruction of address materialization sequence to JNI call sites
+   cg()->getJNICallSites().push_front(new (trHeapMemory()) TR_Pair<TR_ResolvedMethod, TR::Instruction>(resolvedMethod, firstInstruction));
+
+   TR::Instruction *gcPoint = generateRegBranchInstruction(cg(), TR::InstOpCode::blr, callNode, scratchReg, deps);
+   if (isJNIGCPoint)
+      {
+      // preserved registers are killed
+      gcPoint->ARM64NeedsGCMap(cg(), 0);
+      }
+   return gcPoint;
    }
 
 TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
@@ -496,9 +540,8 @@ TR::Register *J9::ARM64::JNILinkage::buildDirectDispatch(TR::Node *callNode)
 #endif
       }
 
-
-   TR::Instruction *callInstr = generateMethodDispatch(callNode, isJNIGCPoint, deps, targetAddress);
-   generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, returnLabel, deps, callInstr);
+   TR::Instruction *callInstr = generateMethodDispatch(callNode, isJNIGCPoint, deps, targetAddress, x9Reg);
+   generateLabelInstruction(cg(), TR::InstOpCode::label, callNode, returnLabel, callInstr);
 
    if (spSize > 0)
       {
