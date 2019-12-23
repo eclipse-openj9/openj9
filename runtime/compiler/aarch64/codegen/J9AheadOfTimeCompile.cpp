@@ -219,6 +219,12 @@ uint8_t *J9::ARM64::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          }
          break;
 
+      case TR_BodyInfoAddressLoad:
+         {
+         // Nothing to do
+         }
+         break;
+
       case TR_ConstantPoolOrderedPair:
          {
          *(uintptrj_t *)cursor = (uintptrj_t)relocation->getTargetAddress2(); // inlined site index
