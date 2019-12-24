@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,6 +28,7 @@ import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.ARCH_PPC64;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.ARCH_RISCV64;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.ARCH_S390;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.ARCH_ARM;
+import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.ARCH_AARCH64;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.AT_ENTRY;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.AT_HWCAP;
 import static com.ibm.j9ddr.corereaders.elf.ELFFileReader.AT_NULL;
@@ -229,11 +230,9 @@ public abstract class ELFDumpReader implements ILibraryDependentCore
 				return new ELFS39031DumpReader(reader);
 			}
 		case (ARCH_ARM) :
-			if(reader.is64Bit()) {
-				throw new IOException("Unsupported architecture - ARM 64");
-			} else {
-				return new ELFARM32DumpReader(reader);
-			}
+			return new ELFARM32DumpReader(reader);
+		case (ARCH_AARCH64) :
+			return new ELFAArch64DumpReader(reader);
 		case (ARCH_RISCV64) :
 			return new ELFRISCV64DumpReader(reader);
 		default:

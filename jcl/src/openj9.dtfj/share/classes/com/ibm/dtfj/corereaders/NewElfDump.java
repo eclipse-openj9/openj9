@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -60,6 +60,7 @@ public class NewElfDump extends CoreReaderSupport {
 	private final static int ARCH_ARM32 = 40;
 	private final static int ARCH_IA64 = 50;
 	private final static int ARCH_AMD64 = 62;
+	private final static int ARCH_AARCH64 = 183;
 	private final static int ARCH_RISCV64 = 243;
 	
 	private final static int DT_NULL = 0;
@@ -435,9 +436,9 @@ public class NewElfDump extends CoreReaderSupport {
 		}
     }
 
-    private static class ArchARM32 implements Arch {
+	private static class ArchARM32 implements Arch {
 		public Map readRegisters(ElfFile file, Builder builder, Object addressSpace) throws IOException {
-			Map registers = new TreeMap();	
+			Map registers = new TreeMap();
 			for (int i = 0; i < 13; i++) {
 				registers.put( "r"+i, new Address32(file.readInt()));
 			}
@@ -469,8 +470,44 @@ public class NewElfDump extends CoreReaderSupport {
 		public long readUID(ElfFile file) throws IOException {
 			return file.readInt() & 0xffffffffL;
 		}
-    }
-    
+	}
+
+	private static class ArchAARCH64 implements Arch {
+		public Map readRegisters(ElfFile file, Builder builder, Object addressSpace) throws IOException {
+			Map registers = new TreeMap();
+			for (int i = 0; i < 30; i++) {
+				registers.put( "x"+i, new Address64(file.readLong()) );
+			}
+			// The next registers have names
+			registers.put( "lr", new Address64(file.readLong()) );
+			registers.put( "sp", new Address64(file.readLong()) );
+			registers.put( "pc", new Address64(file.readLong()) );
+			registers.put( "pstate", new Address64(file.readLong()) );
+
+			return registers;
+		}
+
+		public Address getStackPointerFrom(Map registers) {
+			return (Address) registers.get("sp");
+		}
+
+		public Address getBasePointerFrom(Map registers) {
+			return getStackPointerFrom(registers);
+		}
+
+		public Address getInstructionPointerFrom(Map registers) {
+			return (Address) registers.get("pc");
+		}
+
+		public Address getLinkRegisterFrom(Map registers) {
+			return (Address) registers.get("lr");
+		}
+
+		public long readUID(ElfFile file) throws IOException {
+			return file.readInt() & 0xffffffffL;
+		}
+	}
+
 	private static class ArchRISCV64 implements Arch {
 		public Map readRegisters(ElfFile file, Builder builder, Object addressSpace) throws IOException {
 			String[] registerNames = { "pc", "ra", "sp", "gp", "tp", "t0", "t1", "t2", "s0", "s1",
@@ -760,6 +797,8 @@ public class NewElfDump extends CoreReaderSupport {
 				return new ArchAMD64();
 			case ARCH_ARM32:
 				return new ArchARM32();
+			case ARCH_AARCH64:
+				return new ArchAARCH64();
 			case ARCH_RISCV64:
 				return new ArchRISCV64();
 			default:
