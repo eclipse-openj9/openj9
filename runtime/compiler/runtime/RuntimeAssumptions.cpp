@@ -143,7 +143,7 @@ TR_PatchJNICallSite::compensate(
       bool isSMP,
       void *newAddress)
    {
-#if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM))
+#if (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
    _patchJNICallSite((J9Method*)getKey(), getPc(), (uint8_t*) newAddress, fe, isSMP);
 #else
    TR_ASSERT(0, "Direct JNI support not present on this platform yet");
