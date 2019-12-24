@@ -123,6 +123,9 @@ const char * callingContextNames[] = {
    "LAST_CONTEXT"
 };
 
+#if defined(JITSERVER_SUPPORT)
+bool J9::Compilation::_outOfProcessCompilation = false;
+#endif  /* defined(JITSERVER_SUPPORT) */
 
 J9::Compilation::Compilation(int32_t id,
       J9VMThread *j9vmThread,
@@ -175,7 +178,6 @@ J9::Compilation::Compilation(int32_t id,
    _skippedJProfilingBlock(false),
    _reloRuntime(reloRuntime),
 #if defined(JITSERVER_SUPPORT)
-   _outOfProcessCompilation(false),
    _remoteCompilation(false),
    _serializedRuntimeAssumptions(getTypedAllocator<SerializedRuntimeAssumption>(self()->allocator())),
 #endif /* defined(JITSERVER_SUPPORT) */

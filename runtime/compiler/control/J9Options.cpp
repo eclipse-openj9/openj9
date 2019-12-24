@@ -2064,12 +2064,12 @@ J9::Options::setupJITServerOptions()
          // IProfiler thread is not needed at JITServer because
          // no IProfiler info is collected at the server itself
          self()->setOption(TR_DisableIProfilerThread);
+         J9::Compilation::setOutOfProcessCompilation();
          }
 
       // In the JITServer world, expensive compilations are performed remotely so there is no risk of blowing the footprint limit on the JVM
       // Setting _expensiveCompWeight to a large value so that JSR292/hot/scorching compilation are allowed to be executed concurrently
       TR::Options::_expensiveCompWeight = TR::CompilationInfo::MAX_WEIGHT;
-
       }
 
    if (TR::Options::getVerboseOption(TR_VerboseJITServer))
