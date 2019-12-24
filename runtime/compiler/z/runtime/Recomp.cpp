@@ -28,6 +28,7 @@
 #include "env/jittypes.h"
 #include "env/VMJ9.h"
 #include "z/codegen/SystemLinkage.hpp"
+#include "control/CompilationRuntime.hpp"
 
 // Recompilation Support Runtime methods
 //
