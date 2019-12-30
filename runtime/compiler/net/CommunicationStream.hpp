@@ -43,15 +43,9 @@ class CommunicationStream
    {
 public:
    static bool useSSL();
-   static void initSSL()
-      {
-      SSL_load_error_strings();
-      SSL_library_init();
-      OpenSSL_add_ssl_algorithms();
-      }
+   static void initSSL();
 
    static void initVersion();
-
 
    static uint64_t getJITServerVersion()
       {
@@ -107,7 +101,7 @@ protected:
          TR_Memory::jitPersistentFree(_sslInputStream);
          _sslOutputStream->~SSLOutputStream();
          TR_Memory::jitPersistentFree(_sslOutputStream);
-         BIO_free_all(_ssl);
+         (*OBIO_free_all)(_ssl);
          }
       if (_connfd != -1)
          {

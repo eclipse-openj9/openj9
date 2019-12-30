@@ -26,6 +26,7 @@
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include "net/LoadSSLLibs.hpp"
 
 class SSLOutputStream : public google::protobuf::io::CopyingOutputStream
    {
@@ -40,16 +41,16 @@ public:
    virtual bool Write(const void *buffer, int size) override
       {
       TR_ASSERT(size > 0, "writing zero bytes is undefined behavior");
-      int n = BIO_write(_ssl, buffer, size);
+      int n = (*OBIO_write)(_ssl, buffer, size);
       if (n <= 0)
          {
-         ERR_print_errors_fp(stderr);
+         (*OERR_print_errors_fp)(stderr);
          return false;
          }
       /*if (BIO_flush(_ssl) != 1)
          {
          perror("flushing");
-         ERR_print_errors_fp(stderr);
+         (*OERR_print_errors_fp)(stderr);
          return false;
          }*/
       TR_ASSERT(n == size, "not expecting partial write");
@@ -73,10 +74,10 @@ public:
    virtual int Read(void *buffer, int size) override
       {
       TR_ASSERT(size > 0, "reading zero bytes is undefined behavior");
-      int n = BIO_read(_ssl, buffer, size);
+      int n = (*OBIO_read)(_ssl, buffer, size);
       if (n <= 0)
          {
-         ERR_print_errors_fp(stderr);
+         (*OERR_print_errors_fp)(stderr);
          }
       return n;
       }

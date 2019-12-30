@@ -48,4 +48,13 @@ bool CommunicationStream::useSSL()
            compInfo->getJITServerSslCerts().size() ||
            compInfo->getJITServerSslRootCerts().size());
    }
+
+void CommunicationStream::initSSL()
+   {
+   (*OSSL_load_error_strings)();
+   (*OSSL_library_init)();
+   // OpenSSL_add_ssl_algorithms() is a synonym for SSL_library_init() and is implemented as a macro
+   // It's redundant, should be able to remove it later
+   // OpenSSL_add_ssl_algorithms();
+   }
 };
