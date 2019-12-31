@@ -1498,10 +1498,21 @@ uint8_t *compileMethodHandleThunk(j9object_t methodHandle, j9object_t arg, J9VMT
       TR_VerboseLog::vlogRelease();
       }
    bool disabled = false;
-   if (flags & TRANSLATE_METHODHANDLE_FLAG_CUSTOM)
-      disabled = cmdLineOptions->getOption(TR_DisableCustomMethodHandleThunks);
+#if defined(JITSERVER_SUPPORT)
+   // Do not allow local compilations in JITServer server mode
+   TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      {
+      disabled = true;
+      }
    else
-      disabled = cmdLineOptions->getOption(TR_DisableShareableMethodHandleThunks);
+#endif
+      {
+      if (flags & TRANSLATE_METHODHANDLE_FLAG_CUSTOM)
+         disabled = cmdLineOptions->getOption(TR_DisableCustomMethodHandleThunks);
+      else
+         disabled = cmdLineOptions->getOption(TR_DisableShareableMethodHandleThunks);
+      }
    if (disabled)
       {
       if (verbose)
