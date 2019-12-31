@@ -1978,6 +1978,9 @@ J9::Options::fePreProcess(void * base)
          else // Server mode
             {
             compInfo->getPersistentInfo()->setRemoteCompilationMode(JITServer::SERVER);
+            // Increase the default timeout value for JITServer.
+            // It can be overridden with -XX:JITServerTimeout= option in JITServerParseCommonOptions().
+            compInfo->getPersistentInfo()->setSocketTimeout(30000);
             }
 
          JITServerParseCommonOptions(vm, compInfo);
