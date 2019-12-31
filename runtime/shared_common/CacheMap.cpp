@@ -4450,6 +4450,10 @@ SH_CacheMap::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescriptor* 
 				descriptor->numStartupHints = _bdm->getNumOfType(type);
 				descriptor->startupHintBytes = _bdm->getDataBytesForType(type);
 				break;
+			case J9SHR_DATA_TYPE_CRVSNIPPET:
+				descriptor->numCRVSnippets = _bdm->getNumOfType(type);
+				descriptor->crvSnippetBytes = _bdm->getDataBytesForType(type);
+				break;
 			default:
 				descriptor->indexedDataBytes += _bdm->getDataBytesForType(type);
 			}
@@ -4464,6 +4468,7 @@ SH_CacheMap::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescriptor* 
 		descriptor->aotClassChainDataBytes = 0;
 		descriptor->aotThunkDataBytes = 0;
 		descriptor->startupHintBytes = 0;
+		descriptor->crvSnippetBytes = 0;
 		descriptor->numJclEntries = 0;
 		descriptor->numZipCaches = 0;
 		descriptor->numJitHints = 0;
@@ -4472,6 +4477,7 @@ SH_CacheMap::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescriptor* 
 		descriptor->numAotClassChains = 0;
 		descriptor->numAotThunks = 0;
 		descriptor->numStartupHints = 0;
+		descriptor->numCRVSnippets = 0;
 	}
 
 	descriptor->objectBytes = 0;
@@ -4507,6 +4513,7 @@ SH_CacheMap::getJavacoreData(J9JavaVM *vm, J9SharedClassJavacoreDataDescriptor* 
 					descriptor->romClassBytes - descriptor->readWriteBytes - 
 					descriptor->zipCacheDataBytes -
 					descriptor->startupHintBytes-
+					descriptor->crvSnippetBytes -
 					descriptor->jclDataBytes -
 					descriptor->jitHintDataBytes -
 					descriptor->jitProfileDataBytes -
@@ -4930,6 +4937,15 @@ SH_CacheMap::printAllCacheStats(J9VMThread* currentThread, UDATA showFlags, SH_C
 						if (isStale) {
 							CACHEMAP_PRINT((J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE), J9NLS_SHRC_CM_PRINTSTATS_STALE);
 						}
+					}
+				} else if (J9SHR_DATA_TYPE_CRVSNIPPET == type) {
+					if ((J9_ARE_ANY_BITS_SET(showFlags, PRINTSTATS_SHOW_CRVSNIPPET))
+						|| (isStale && showAllStaleFlag)
+					) {
+						CACHEMAP_PRINT6((J9NLS_DO_NOT_PRINT_MESSAGE_TAG), J9NLS_SHRC_CM_PRINTSTATS_CRVSNIPPET_DISPLAY, ITEMJVMID(it), (UDATA)it, J9UTF8_LENGTH(pointer), J9UTF8_DATA(pointer), getDataFromByteDataWrapper(bdw), BDWLEN(bdw));
+						if (isStale) {
+							CACHEMAP_PRINT((J9NLS_DO_NOT_PRINT_MESSAGE_TAG | J9NLS_DO_NOT_APPEND_NEWLINE), J9NLS_SHRC_CM_PRINTSTATS_STALE);
+						}
 						j9tty_printf(_portlib, "\n");
 					}
 				} else if ((PRINTSTATS_SHOW_BYTEDATA == (showFlags & PRINTSTATS_SHOW_BYTEDATA))
@@ -5321,6 +5337,7 @@ SH_CacheMap::printCacheStatsAllLayersStatsHelper(J9VMThread* currentThread, UDAT
 	}
 	CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_ZIP_CACHE_DATA_BYTES_V2, javacoreData->zipCacheDataBytes);
 	CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_STARTUP_HINT_BYTES, javacoreData->startupHintBytes);
+	CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CRVSNIPPET_BYTES, javacoreData->crvSnippetBytes);
 
 	if (J9_ARE_ALL_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_DETAILED_STATS)) {
 		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_JCL_DATA_BYTES, javacoreData->jclDataBytes);
@@ -5356,6 +5373,7 @@ SH_CacheMap::printCacheStatsAllLayersStatsHelper(J9VMThread* currentThread, UDAT
 	}
 	CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_ZIP_CACHES_V2, javacoreData->numZipCaches);
 	CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_STARTUP_HINTS, javacoreData->numStartupHints);
+	CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CRVSNIPPETS, javacoreData->numCRVSnippets);
 	if (J9_ARE_ALL_BITS_SET(runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_DETAILED_STATS)) {
 		CACHEMAP_FMTPRINT1(J9NLS_DO_NOT_PRINT_MESSAGE_TAG, J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_JCL_ENTRIES, javacoreData->numJclEntries);
 	}

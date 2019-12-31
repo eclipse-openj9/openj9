@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2012, 2019 IBM Corp. and others
+  Copyright (c) 2012, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
-<!-- Test 200-a to Test 208 cleanup: 89 tests -->
+<!-- Test 200-a to Test 209 cleanup: 92 tests -->
 
 <suite id="Shared Classes CommandLineOptionTests Suite">
 
@@ -45,7 +45,11 @@
  	
  	<variable name="CP_FIB" value="-cp $UTILSDIR$$PATHSEP$utilsBK.jar" />
  	<variable name="PROGRAM_FIB" value="VMBench/FibBench" />
- 	
+
+	<variable name="ENABLE_CLASS_RELATIONSHIP_VERIFIER" value="-XX:+ClassRelationshipVerifier"/>
+	<variable name="CP_CRVSNIPPETS" value="-cp $UTILSDIR$$PATHSEP$utils.jar" />
+	<variable name="PROGRAM_CRVSNIPPETS" value="org.openj9.test.classrelationships.A" />
+
 	<variable name="NON_WINDOWS_PLATFORMS" value="aix.*,linux.*,zos.*,osx.*" />
 	<variable name="WINDOWS_PLATFORMS" value="win.*" />
 		
@@ -997,6 +1001,37 @@
 		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
 		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
 		<output type="failure" caseSensitive="no"  regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 209-a: Create cache and store snippets for -Xshareclasses:printStats=crvsnippet">
+		<command>$JAVA_EXE$ $currentMode$ $ENABLE_CLASS_RELATIONSHIP_VERIFIER$ $CP_CRVSNIPPETS$ $PROGRAM_CRVSNIPPETS$</command>
+		<output type="success" caseSensitive="yes" regex="no">Running org.openj9.test.classrelationships.A</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 209-b: Verify output of -Xshareclasses:printStats=crvsnippet is correct">
+		<command>$JAVA_EXE$ $currentMode$,printStats=crvsnippet</command>
+		<output type="success" caseSensitive="yes" regex="no">CRV SNIPPET KEY:</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># CRV Snippets[\s]*= 1</output>
+		<output type="required" caseSensitive="yes" regex="yes" javaUtilPattern="yes">CRV Snippet bytes[\s]*= [1-9][0-9]*</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes"># CRV Snippets[\s]*= 0</output>
+		<output type="failure" caseSensitive="yes" regex="yes" javaUtilPattern="yes">CRV Snippet bytes[\s]*= 0</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
+		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
+		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>
+	</test>
+
+	<test id="Test 209 cleanup" timeout="600" runPath=".">
+		<command>$JAVA_EXE$ $currentMode$,destroy</command>
+		<output type="success" caseSensitive="yes" regex="no">has been destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">is destroyed</output>
+		<output type="success" caseSensitive="yes" regex="no">Cache does not exist</output>
+		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>
 		<output type="failure" caseSensitive="no" regex="no">corrupt</output>
 		<output type="failure" caseSensitive="yes" regex="no">Processing dump event</output>

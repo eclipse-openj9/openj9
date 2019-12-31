@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -209,6 +209,7 @@ typedef struct J9SharedClassesOptions {
 #define SUB_OPTION_PRINTSTATS_JITHINT "jithint"
 #define SUB_OPTION_PRINTSTATS_STALE "stale"
 #define SUB_OPTION_PRINTSTATS_STARTUPHINT "startuphint"
+#define SUB_OPTION_PRINTSTATS_CRVSNIPPET "crvsnippet"
 /* private options for printallstats= and printstats= */
 #define SUB_OPTION_PRINTSTATS_EXTRA "extra"
 #define SUB_OPTION_PRINTSTATS_ORPHAN "orphan"

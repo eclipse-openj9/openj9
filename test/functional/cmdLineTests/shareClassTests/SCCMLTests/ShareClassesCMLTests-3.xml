@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 
 <!--
-  Copyright (c) 2012, 2019 IBM Corp. and others
+  Copyright (c) 2012, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1736,6 +1736,8 @@
 		<output type="required" caseSensitive="yes" regex="no">Prints all the stale entries in the shared cache</output>
 		<output type="required" caseSensitive="yes" regex="no">startuphint</output>
 		<output type="required" caseSensitive="yes" regex="no">Prints only startup hint types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">crvsnippet</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only class relationship verifier snippet types in the shared cache</output>
 
 		<output type="failure" caseSensitive="yes" regex="no">extra</output>
 		<output type="failure" caseSensitive="yes" regex="no">Prints all the following private types in the shared cache</output>
@@ -1799,6 +1801,8 @@
 		<output type="required" caseSensitive="yes" regex="no">Prints all the stale entries in the shared cache</output>
 		<output type="required" caseSensitive="yes" regex="no">startuphint</output>
 		<output type="required" caseSensitive="yes" regex="no">Prints only startup hint types in the shared cache</output>
+		<output type="required" caseSensitive="yes" regex="no">crvsnippet</output>
+		<output type="required" caseSensitive="yes" regex="no">Prints only class relationship verifier snippet types in the shared cache</output>
 		
 		<output type="failure" caseSensitive="no" regex="no">Unhandled Exception</output>
 		<output type="failure" caseSensitive="yes" regex="no">Exception:</output>

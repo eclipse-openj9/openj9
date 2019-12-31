@@ -922,6 +922,9 @@ parseArgs(J9JavaVM* vm, char* options, U_64* runtimeFlags, UDATA* verboseFlags, 
 		         } else if ((filterLength == sizeof(SUB_OPTION_PRINTSTATS_STARTUPHINT))
 		        		 && (0 != try_scan(&filter, SUB_OPTION_PRINTSTATS_STARTUPHINT))) {
 		        	  *printStatsOptions |= PRINTSTATS_SHOW_STARTUPHINT;
+				 } else if ((filterLength == sizeof(SUB_OPTION_PRINTSTATS_CRVSNIPPET))
+		        		 && (0 != try_scan(&filter, SUB_OPTION_PRINTSTATS_CRVSNIPPET))) {
+		        	  *printStatsOptions |= PRINTSTATS_SHOW_CRVSNIPPET;
 		         /* -Xshareclasses:printallstats=<private options> For private options, it is default to print details. */
 		         } else if ((filterLength == sizeof(SUB_OPTION_PRINTSTATS_EXTRA))
 		        		 && (0 != try_scan(&filter, SUB_OPTION_PRINTSTATS_EXTRA))) {
@@ -2451,6 +2454,7 @@ static void j9shr_printStats_dump_help(J9JavaVM* vm, bool moreHelp, UDATA comman
 	SHRINIT_TRACE_NOTAG(1, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_ZIPCACHE);
 	SHRINIT_TRACE_NOTAG(1, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STALE);
 	SHRINIT_TRACE_NOTAG(1, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_STARTUPHINT);
+	SHRINIT_TRACE_NOTAG(1, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CRVSNIPPET);
 	j9tty_printf(PORTLIB, "\n");
 	if (moreHelp) {
 		SHRINIT_TRACE_NOTAG(1, J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_EXTRA);

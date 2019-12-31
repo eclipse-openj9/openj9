@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -6886,4 +6886,44 @@ J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.sample_input_4=Cache_2
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.explanation=An error has occurred in shared class processing. A lower layer shared cache should not be modified. Any modification to a lower layer shared cache invalidates all the higher layers shared caches built on top of it.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.system_action=The JVM terminates, unless you have specified the nonfatal option with "-Xshareclasses:nonfatal", in which case the JVM continues without using Shared Classes.
 J9NLS_SHRC_CM_NEW_LAYER_CACHE_DESTROYED.user_response=Use -Xshareclasses:name=<cacheName>,destroy to destroy all invalid layers (all the higher layers which are built on top of the modified layer) and retry.
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_CRVSNIPPET_DISPLAY=%1$d: 0x%2$p CRV SNIPPET KEY: %4$.*3$s Address: 0x%5$p Size: %6$d
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_CRVSNIPPET_DISPLAY.sample_input_1=1
+J9NLS_SHRC_CM_PRINTSTATS_CRVSNIPPET_DISPLAY.sample_input_2=00721BDC
+J9NLS_SHRC_CM_PRINTSTATS_CRVSNIPPET_DISPLAY.sample_input_3=1
+J9NLS_SHRC_CM_PRINTSTATS_CRVSNIPPET_DISPLAY.sample_input_4=A
+J9NLS_SHRC_CM_PRINTSTATS_CRVSNIPPET_DISPLAY.sample_input_5=00721BFC
+J9NLS_SHRC_CM_PRINTSTATS_CRVSNIPPET_DISPLAY.sample_input_6=43
+J9NLS_SHRC_CM_PRINTSTATS_CRVSNIPPET_DISPLAY.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_CRVSNIPPET_DISPLAY.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_CRVSNIPPET_DISPLAY.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CRVSNIPPET_BYTES=CRV Snippet bytes                   %*c= %d
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CRVSNIPPET_BYTES.sample_input_1=0
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CRVSNIPPET_BYTES.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CRVSNIPPET_BYTES.sample_input_3=3456
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CRVSNIPPET_BYTES.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CRVSNIPPET_BYTES.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_CRVSNIPPET_BYTES.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CRVSNIPPETS=# CRV Snippets                      %*c= %d
+# START NON-TRANSLATABLE
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CRVSNIPPETS.sample_input_1=0
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CRVSNIPPETS.sample_input_2= 
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CRVSNIPPETS.sample_input_3=234
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CRVSNIPPETS.explanation=NOTAG
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CRVSNIPPETS.system_action=
+J9NLS_SHRC_CM_PRINTSTATS_SUMMARY_NUM_CRVSNIPPETS.user_response=
+# END NON-TRANSLATABLE
+
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CRVSNIPPET=\t crvsnippet	Prints only class relationship verifier snippet types in the shared cache.
+# START NON-TRANSLATABLE
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CRVSNIPPET.explanation=NOTAG
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CRVSNIPPET.system_action=
+J9NLS_SHRC_SHRINIT_HELPTEXT_PRINTSTATS_CRVSNIPPET.user_response=
 # END NON-TRANSLATABLE
