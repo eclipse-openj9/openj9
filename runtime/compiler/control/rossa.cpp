@@ -512,6 +512,13 @@ j9jit_createNewInstanceThunk_err(
       *compErrCode = compilationFailure;
       return 0;
       }
+
+#if defined(JITSERVER_SUPPORT)
+   // Do not allow local compilations in JITServer server mode
+   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+      return 0;
+#endif
+
    bool queued = false;
 
    TR_MethodEvent event;
