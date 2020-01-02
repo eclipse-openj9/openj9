@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1586,6 +1586,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          int32_t cpIndex = std::get<1>(recv);
          client->write(response, mirror->varHandleMethodTypeTableEntryAddress(cpIndex));
          }
+         break;
       case MessageType::ResolvedMethod_isUnresolvedVarHandleMethodTypeTableEntry:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method*, int32_t>();
@@ -1593,6 +1594,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          int32_t cpIndex = std::get<1>(recv);
          client->write(response, mirror->isUnresolvedVarHandleMethodTypeTableEntry(cpIndex));
          }
+         break;
       case MessageType::ResolvedMethod_getResolvedDynamicMethod:
          {
          auto recv = client->getRecvData<int32_t, J9Class *>();
