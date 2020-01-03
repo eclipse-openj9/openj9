@@ -24,9 +24,10 @@
 
 <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
 <suite name="Java14andUp suite" parallel="none" verbose="2">
-    <test name="Jep359Tests_Jcl">
+    <test name="Jep359Tests">
         <classes>
             <class name="org.openj9.test.java.lang.Test_Class"/>
+            <class name="org.openj9.test.records.RecordClassTests" />
         </classes>
     </test>
 </suite>

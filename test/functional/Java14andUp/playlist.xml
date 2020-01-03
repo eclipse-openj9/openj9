@@ -24,14 +24,14 @@
 
 <playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TestConfig/playlist.xsd">
       <test>
-          <testCaseName>Jep359Tests_Jcl</testCaseName>
+          <testCaseName>Jep359Tests</testCaseName>
           <variations>
                   <variation>NoOptions</variation>
           </variations>
           <command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
                   --enable-preview \
-                  -cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
-                  org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Jep359Tests_Jcl \
+                  -cp $(Q)$(LIB_DIR)$(D)asm-7.3.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
+                  org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames Jep359Tests \
                   -groups $(TEST_GROUP) \
                   -excludegroups $(DEFAULT_EXCLUDE); \
                   $(TEST_STATUS)

@@ -59,7 +59,7 @@ static UDATA isPrivilegedFrameIterator(J9VMThread * currentThread, J9StackWalkSt
 static UDATA isPrivilegedFrameIteratorGetAccSnapshot(J9VMThread * currentThread, J9StackWalkState * walkState);
 static UDATA frameIteratorGetAccSnapshotHelper(J9VMThread * currentThread, J9StackWalkState * walkState, j9object_t acc, j9object_t perm);
 static j9object_t storePDobjectsHelper(J9VMThread* vmThread, J9Class* arrayClass, J9StackWalkState* walkState, j9object_t contextObject, U_32 arraySize, UDATA framesWalked, I_32 startPos, BOOLEAN dupCallerPD);
-
+static jarray getRecordComponentsHelper(JNIEnv *env, jobject recv);
 jobject JNICALL 
 Java_java_lang_Class_getDeclaredAnnotationsData(JNIEnv *env, jobject jlClass)
 {
@@ -1170,6 +1170,43 @@ skip: ;
 	}
 done:
 	vmFuncs->internalExitVMToJNI(currentThread);
+	return result;
+}
+
+jarray JNICALL
+Java_java_lang_Class_getRecordComponentsImpl(JNIEnv *env, jobject recv)
+{
+	return getRecordComponentsHelper(env, recv);
+}
+
+static jarray
+getRecordComponentsHelper(JNIEnv *env, jobject recv)
+{
+	J9VMThread *vmThread = (J9VMThread *)env;
+	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	vmFuncs->internalEnterVMFromJNI(vmThread);
+
+	J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(vmThread, J9_JNI_UNWRAP_REFERENCE(recv));
+	J9ROMClass *romClass = clazz->romClass;
+
+	// TODO not sure about jarray or jobject
+	jarray result = NULL;
+
+	if (TRUE == J9ROMCLASS_IS_RECORD(romClass)) {
+
+		// parts of the record component that should be set natively:
+		// - Class<?> clazz (?)
+		// - String name (nameIndex)
+		// - Class<?> type (descriptorIndex)
+		// - Method accesor (?)
+		// - String signature (signatureIndex)
+		// - byte[] annotations (annotationsAttribute)
+		// - byte[] typeAnnotations (typeAnnotationsAttribute)
+		// - RecordComponent root (?)
+	}
+
+	vmFuncs->internalExitVMToJNI(vmThread);
 	return result;
 }
 

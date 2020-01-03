@@ -27,11 +27,25 @@ import org.testng.log4testng.Logger;
 
 import org.testng.AssertJUnit;
 
-/*
+import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.AnnotatedType;
+import java.lang.reflect.Field;
+import java.lang.reflect.RecordComponent;
+
+import org.openj9.test.utilities.RecordClassGenerator;
+import org.openj9.test.utilities.CustomClassLoader;
+
+/**
  * Test JCL additions to java.lang.Class from JEP 359: Records preview.
  * 
  * New methods include:
  * - boolean isRecord()
+ * - Object[] getRecordComponents()
  */
 
  @Test(groups = { "level.sanity" })
@@ -41,11 +55,147 @@ import org.testng.AssertJUnit;
     /* Test classes and records */
     class TestClass {}
     record TestRecordEmpty() {}
+    record TestRecordPrim(int x, long y) {}
+    record TestRecordObj(String x, Double y, Object[] z) {}
+
+    /* constants for asm tests */
+    String name = "TestRecordComponents";
+    String rcName = "x";
+    String rcType = "I";
+    String rcSignature = "I";
+    
+    @Retention(RetentionPolicy.RUNTIME)
+    @Inherited()
+    public @interface TestAnnotation {}
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE_USE)
+    public @interface TestTypeAnnotation {}
 
     @Test
     public void test_isRecord() {
         AssertJUnit.assertTrue("TestRecordEmpty is a record", TestRecordEmpty.class.isRecord());
         AssertJUnit.assertTrue("TestClass is not a record", !TestClass.class.isRecord());
+    }
+
+    @Test
+    public void test_getRecordComponent_nonRecordClass() throws Throwable {
+        /* by default records will not have optional attributes */
+        RecordComponent[] rc = TestClass.class.getRecordComponents();
+        AssertJUnit.assertEquals(0, rc.length);
+    }
+
+    @Test
+    public void test_getRecordComponent_recordWithNoComponents() throws Throwable {
+        /* record with no components */
+        RecordComponent[] rc1 = TestRecordEmpty.class.getRecordComponents();
+        AssertJUnit.assertEquals(0, rc1.length);
+    }
+
+    @Test
+    public void test_getRecordComponent_noOptionalAttributes() throws Throwable {
+        /* record with primitive type components */
+        RecordComponent[] rc2 = TestRecordPrim.class.getRecordComponents();
+        AssertJUnit.assertEquals(2, rc2.length);
+        test_RecordComponentContents_noAttributes(rc2[0], TestRecordPrim.class, "x", int.class);
+        test_RecordComponentContents_noAttributes(rc2[1], TestRecordPrim.class, "y", long.class);
+
+        /* record with Object components */
+        RecordComponent[] rc3 = TestRecordObj.class.getRecordComponents();
+        AssertJUnit.assertEquals(3, rc3.length);
+        test_RecordComponentContents_noAttributes(rc3[0], TestRecordObj.class, "x", String.class);
+        test_RecordComponentContents_noAttributes(rc3[1], TestRecordObj.class, "y", Double.class);
+        test_RecordComponentContents_noAttributes(rc3[2], TestRecordObj.class, "z", Object[].class);
+    }
+
+    @Test
+    public void test_getRecordComponent_signatureAttribute() throws Throwable {
+        CustomClassLoader classloader = new CustomClassLoader();
+        byte[] bytes = RecordClassGenerator.generateRecordAttributes(name, rcName, rcType, rcSignature, null, null);
+        Class<?> clazz = classloader.getClass(name, bytes);
+
+        RecordComponent[] rc = clazz.getRecordComponents();
+        AssertJUnit.assertEquals(1, rc.length);
+        test_RecordComponentContents(rc[0], clazz, rcName, int.class, rcSignature, null, null);
+    }
+
+    @Test
+    public void test_getRecordComponent_annotationsAttribute() throws Throwable {
+        CustomClassLoader classloader = new CustomClassLoader();
+        byte[] bytes = RecordClassGenerator.generateRecordAttributes(name, rcName, rcType, null, 
+            TestAnnotation.class.descriptorString(), null);
+        Class<?> clazz = classloader.getClass(name, bytes);
+
+        RecordComponent[] rc = clazz.getRecordComponents();
+        AssertJUnit.assertEquals(1, rc.length);
+        test_RecordComponentContents(rc[0], clazz, rcName, int.class, null, TestAnnotation.class, null);
+    }
+
+    @Test
+    public void test_getRecordComponent_typeAnnotationsAttribute() throws Throwable {
+        CustomClassLoader classloader = new CustomClassLoader();
+        byte[] bytes = RecordClassGenerator.generateRecordAttributes(name, rcName, rcType, null, 
+            null, TestTypeAnnotation.class.descriptorString());
+        Class<?> clazz = classloader.getClass(name, bytes);
+
+        RecordComponent[] rc = clazz.getRecordComponents();
+        AssertJUnit.assertEquals(1, rc.length);
+        test_RecordComponentContents(rc[0], clazz, rcName, int.class, null, null, TestTypeAnnotation.class);
+    }
+
+    @Test
+    public void test_getRecordComponent_multipleAttributes() throws Throwable {
+        CustomClassLoader classloader = new CustomClassLoader();
+        /* generate a record class with all three types of optional attributes */
+        byte[] bytes = RecordClassGenerator.generateRecordAttributes(name, rcName, rcType, rcSignature, 
+            TestAnnotation.class.descriptorString(), TestTypeAnnotation.class.descriptorString());
+        Class<?> clazz = classloader.getClass(name, bytes);
+
+        RecordComponent[] rc = clazz.getRecordComponents();
+        AssertJUnit.assertEquals(1, rc.length);
+        test_RecordComponentContents(rc[0], clazz, rcName, int.class, rcSignature, TestAnnotation.class, TestTypeAnnotation.class);
+    }
+
+    private void test_RecordComponentContents_noAttributes(RecordComponent rc, Class<?> declaringRecord, String name, 
+                    Class<?> type) throws Throwable {
+        test_RecordComponentContents(rc, declaringRecord, name, type, null, null, null);
+    }
+
+    /* test all fields that are set from record_component_info attribute */
+    private void test_RecordComponentContents(RecordComponent rc, Class<?> declaringRecord, String name, Class<?> type,
+                    String signature, Class annotationsClass, Class typeAnnotationsClass) throws Throwable {
+        logger.info("test components for component " + name + " in record " + declaringRecord.toString());
+
+        AssertJUnit.assertEquals(declaringRecord, rc.getDeclaringRecord());
+        AssertJUnit.assertEquals(name, rc.getName());
+        AssertJUnit.assertEquals(type, rc.getType());
+        AssertJUnit.assertEquals(declaringRecord.getMethod(name), rc.getAccessor());
+
+        /* check signature attribte */
+        AssertJUnit.assertEquals(signature, rc.getGenericSignature());
+
+        /* check annotations attributes */
+        if (null == annotationsClass) {
+            /* RecordComponent should have no annotation data */
+            Field annotationsField = RecordComponent.class.getDeclaredField("annotations");
+            annotationsField.setAccessible(true);
+            byte[] annotations = (byte[])annotationsField.get(rc);
+            AssertJUnit.assertNull(annotations);
+        } else {
+            AssertJUnit.assertNotNull(rc.getAnnotation(annotationsClass));
+        }
+
+        /* check type annotations attribute */
+        if (null == typeAnnotationsClass) {
+            /* RecordComponent should have no type annotation data */
+            Field typeAnnotationsField = RecordComponent.class.getDeclaredField("typeAnnotations");
+            typeAnnotationsField.setAccessible(true);
+            byte[] typeAnnotations = (byte[])typeAnnotationsField.get(rc);
+            AssertJUnit.assertNull(typeAnnotations);
+        } else {
+            AnnotatedType annotatedType = rc.getAnnotatedType();
+            AssertJUnit.assertNotNull(annotatedType);
+        }
     }
  }
  

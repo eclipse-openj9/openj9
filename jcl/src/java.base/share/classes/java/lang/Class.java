@@ -4698,7 +4698,14 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	 * For a record with no components an empty array is returned.
 	 */
 	public RecordComponent[] getRecordComponents() {
-		throw new InternalError("Compile stub invoked! For JEP 359 support see https://github.com/eclipse/openj9/pull/7946"); //$NON-NLS-1$
+		SecurityManager security = System.getSecurityManager();
+		if (security != null) {
+			// TODO
+		}
+		RecordComponent[] rcs = getRecordComponentsImpl();
+		return (null == rcs) ? new RecordComponent[0] : rcs;
 	}
+
+	private native RecordComponent[] getRecordComponentsImpl();
 /*[ENDIF] Java14 */
 }
