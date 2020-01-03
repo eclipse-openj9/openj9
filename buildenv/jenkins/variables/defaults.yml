@@ -202,11 +202,11 @@ ppc64le_linux_jit:
     13: '--openssl-version=1.1.1d'
     next: '--openssl-version=1.1.1d'
   extra_configure_options:
-    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
-    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
-    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
-    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
-    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
+    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
+    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
+    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
+    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
+    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
   build_env:
     vars:
       8: 'CC=gcc-7 CXX=g++-7'
@@ -325,11 +325,11 @@ s390x_linux_jit:
     13: '--openssl-version=1.1.1d'
     next: '--openssl-version=1.1.1d'
   extra_configure_options:
-    8: '--with-openssl=fetched --enable-jitserver=yes'
-    11: '--with-openssl=fetched --enable-jitserver=yes'
-    12: '--with-openssl=fetched --enable-jitserver=yes'
-    13: '--with-openssl=fetched --enable-jitserver=yes'
-    next: '--with-openssl=fetched --enable-jitserver=yes'
+    8: '--with-openssl=fetched --enable-jitserver'
+    11: '--with-openssl=fetched --enable-jitserver'
+    12: '--with-openssl=fetched --enable-jitserver'
+    13: '--with-openssl=fetched --enable-jitserver'
+    next: '--with-openssl=fetched --enable-jitserver'
   excluded_tests:
     11:
       ? special.system
@@ -424,8 +424,8 @@ x86-64_linux:
     13: '--openssl-version=1.1.1d'
     next: '--openssl-version=1.1.1d'
   extra_configure_options:
-    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
-    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
+    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
+    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
     12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
     13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
     next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
@@ -480,11 +480,11 @@ x86-64_linux_jit:
     13: '--openssl-version=1.1.1d'
     next: '--openssl-version=1.1.1d'
   extra_configure_options:
-    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
-    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
-    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
-    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
-    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver=yes'
+    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
+    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
+    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
+    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
+    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
   build_env:
     cmd:
       8: 'source /opt/rh/devtoolset-7/enable'
