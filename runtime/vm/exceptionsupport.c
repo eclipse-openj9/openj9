@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1001,7 +1001,8 @@ setClassLoadingConstraintOverrideError(J9VMThread *currentThread, J9UTF8 *newCla
 				 loader1ClassNameLength, loader1ClassName, loader1Hash,
 				 class1ClassNameLength, class1ClassName,
 				 loader2ClassNameLength, loader2ClassName, loader2Hash,
-				 class2ClassNameLength, class2ClassName
+				 class2ClassNameLength, class2ClassName,
+				 newClassNameLength, newClassName
 			);
 	}
 
