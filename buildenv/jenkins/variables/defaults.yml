@@ -425,7 +425,7 @@ x86-64_linux:
     next: '--openssl-version=1.1.1d'
   extra_configure_options:
     8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
-    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
+    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
     12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
     13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
     next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
