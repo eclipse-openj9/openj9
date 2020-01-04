@@ -26,7 +26,7 @@ add_library(j9lazyClassLoad SHARED
 target_link_libraries(j9lazyClassLoad
 	PRIVATE
 		j9vm_interface
-		jvm
+		j9jvm
 )
 
 omr_add_exports(j9lazyClassLoad

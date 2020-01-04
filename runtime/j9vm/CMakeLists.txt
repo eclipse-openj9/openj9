@@ -64,28 +64,28 @@ target_link_libraries(jvm_common
 target_include_directories(jvm_common
 	INTERFACE
 		${CMAKE_CURRENT_BINARY_DIR}
-		#TODO we have to repeat ../include because of duplication of vmi.h
+		# TODO we have to repeat ../include because of duplication of vmi.h
 		../include
 		../hyvm
 		../harmony/include
 		../jcl/
 )
 
-add_library(jvm SHARED ${CMAKE_CURRENT_BINARY_DIR}/ut_j9scar.c)
-target_link_libraries(jvm
+add_library(j9jvm SHARED ${CMAKE_CURRENT_BINARY_DIR}/ut_j9scar.c)
+target_link_libraries(j9jvm
 	PRIVATE
 		jvm_common
 		j9util
 )
 
 if(OMR_OS_WINDOWS)
-	target_link_libraries(jvm PRIVATE ws2_32)
+	target_link_libraries(j9jvm PRIVATE ws2_32)
 endif()
-add_dependencies(jvm omrgc_hookgen)
+add_dependencies(j9jvm omrgc_hookgen)
 include(exports.cmake)
 
 install(
-	TARGETS jvm
+	TARGETS j9jvm
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
 	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

@@ -55,8 +55,8 @@ set_target_properties(jvm_redirect PROPERTIES
 	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
 )
 
-# The redirector should have the same exports as the jvm
-get_target_property(jvm_exports jvm EXPORTED_SYMBOLS)
+# The redirector should have the same exports as j9jvm.
+get_target_property(jvm_exports j9jvm EXPORTED_SYMBOLS)
 omr_add_exports(jvm_redirect ${jvm_exports})
 
 install(
