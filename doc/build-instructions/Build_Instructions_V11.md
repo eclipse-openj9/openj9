@@ -129,7 +129,7 @@ ln -s gcc-7 /usr/bin/gcc
 
 3. Download and setup **freemarker.jar** into a directory.
 ```
-cd /<my_home_dir>
+cd <my_home_dir>
 wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
 tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
 rm -f freemarker.tgz
@@ -137,13 +137,13 @@ rm -f freemarker.tgz
 
 4. Download and setup the boot JDK using the latest AdoptOpenJDK v11 build.
 ```
-cd /<my_home_dir>
+cd <my_home_dir>
 wget -O bootjdk11.tar.gz "https://api.adoptopenjdk.net/v2/binary/releases/openjdk11?openjdk_impl=openj9&os=linux&arch=x64&release=latest&type=jdk&heap_size=normal"
 tar -xzf bootjdk11.tar.gz
 rm -f bootjdk11.tar.gz
 mv $(ls | grep -i jdk) bootjdk11
 
-export JAVA_HOME="/<my_home_dir>/bootjdk11"
+export JAVA_HOME="<my_home_dir>/bootjdk11"
 export PATH="${JAVA_HOME}/bin:${PATH}"
 ```
 
@@ -167,8 +167,13 @@ bash get_source.sh
 ### 3. Configure
 :penguin:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
+#### From your build environment with Docker :whale:
 ```
-bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar
+bash configure --with-freemarker-jar=/root/freemarker.jar
+```
+#### From your build environment without Docker
+```
+bash configure --with-freemarker-jar=<my_home_dir>/freemarker.jar
 ```
 :warning: You must give an absolute path to freemarker.jar
 
@@ -264,7 +269,7 @@ It is important to take the list of package dependencies from this file because 
 Download and setup freemarker.jar into your home directory by running the following commands:
 
 ```
-cd /<my_home_dir>
+cd <my_home_dir>
 wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
 tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip=2
 rm -f freemarker.tgz
@@ -292,7 +297,7 @@ bash get_source.sh
 :blue_book:
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 ```
-bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
+bash configure --with-freemarker-jar=<my_home_dir>/freemarker.jar \
                --with-cups-include=<cups_include_path> \
                --disable-warnings-as-errors
 ```
@@ -532,7 +537,7 @@ The following dependencies can be installed by using [Homebrew](https://brew.sh/
 [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download) is also required, which can be obtained and installed with the following commands:
 
 ```
-cd /<my_home_dir>
+cd <my_home_dir>
 wget https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download -O freemarker.tgz
 tar -xzf freemarker.tgz freemarker-2.3.8/lib/freemarker.jar --strip-components=2
 rm -f freemarker.tgz
@@ -583,7 +588,7 @@ bash ./get_source.sh
 When you have all the source files that you need, run the configure script, which detects how to build in the current build environment.
 
 ```
-bash configure --with-freemarker-jar=/<my_home_dir>/freemarker.jar \
+bash configure --with-freemarker-jar=<my_home_dir>/freemarker.jar \
                --with-boot-jdk=<path_to_macOS_JDK10> \
                --disable-warnings-as-errors
 ```
