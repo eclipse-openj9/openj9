@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3595,6 +3595,7 @@ void TR_ResolvedJ9Method::construct()
    static X ReflectionMethods[] =
       {
       {x(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "(I)Ljava/lang/Class;")},
+      {x(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "()Ljava/lang/Class;")},
       {x(TR::sun_reflect_Reflection_getClassAccessFlags, "getClassAccessFlags", "(Ljava/lang/Class;)I")},
       {  TR::unknownMethod}
       };
@@ -4340,6 +4341,7 @@ void TR_ResolvedJ9Method::construct()
    static Y class31[] =
       {
       { "com/ibm/jit/DecimalFormatHelper", DecimalFormatHelperMethods},
+      { "jdk/internal/reflect/Reflection", ReflectionMethods },
       { 0 }
       };
    static Y class32[] =
