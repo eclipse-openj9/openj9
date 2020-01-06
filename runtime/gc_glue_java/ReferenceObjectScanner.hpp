@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,7 +54,7 @@ private:
 	{
 		if (_referentSlotAddress > mapPtr) {
 			/* Skip over referent slot */
-			intptr_t referentSlotDistance = _referentSlotAddress - mapPtr;
+			intptr_t referentSlotDistance = GC_SlotObject::subtractSlotAddresses(_referentSlotAddress, mapPtr, compressObjectReferences());
 			if (referentSlotDistance < _bitsPerScanMap) {
 				scanMap &= ~((uintptr_t)1 << referentSlotDistance);
 			}

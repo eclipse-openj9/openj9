@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -201,7 +201,7 @@ public:
 	scanPointerArraylet(MM_EnvironmentRealtime *env, fomrobject_t *arraylet)
 	{
 		fomrobject_t *startScanPtr = arraylet;
-		fomrobject_t *endScanPtr = startScanPtr + (_javaVM->arrayletLeafSize / sizeof(fj9object_t));
+		fomrobject_t *endScanPtr = (fomrobject_t*)((uintptr_t)startScanPtr + _javaVM->arrayletLeafSize);
 		return scanPointerRange(env, startScanPtr, endScanPtr);
 	}
 
@@ -237,17 +237,27 @@ public:
 	MMINLINE UDATA
 	scanPointerRange(MM_EnvironmentRealtime *env, fj9object_t *startScanPtr, fj9object_t *endScanPtr)
 	{
-		fj9object_t *scanPtr = startScanPtr;
-		UDATA pointerFieldBytes = (UDATA)(endScanPtr - scanPtr);
-		UDATA pointerField = pointerFieldBytes / sizeof(fj9object_t);
-		while(scanPtr < endScanPtr) {
-			GC_SlotObject slotObject(_javaVM->omrVM, scanPtr);
-			_markingScheme->markObject(env, slotObject.readReferenceFromSlot());
-			scanPtr++;
+		UDATA pointerField = 0;
+	
+		if (env->compressObjectReferences()) {
+			uint32_t *scanPtr = (uint32_t*)startScanPtr;
+			uint32_t *endPtr = (uint32_t*)endScanPtr;
+			pointerField = endPtr - scanPtr;
+			while(scanPtr < endPtr) {
+				GC_SlotObject slotObject(_javaVM->omrVM, (fj9object_t*)scanPtr);
+				_markingScheme->markObject(env, slotObject.readReferenceFromSlot());
+				scanPtr++;
+			}
+		} else {
+			uintptr_t *scanPtr = (uintptr_t*)startScanPtr;
+			uintptr_t *endPtr = (uintptr_t*)endScanPtr;
+			pointerField = endPtr - scanPtr;
+			while(scanPtr < endPtr) {
+				GC_SlotObject slotObject(_javaVM->omrVM, (fj9object_t*)scanPtr);
+				_markingScheme->markObject(env, slotObject.readReferenceFromSlot());
+				scanPtr++;
+			}
 		}
-
-		env->addScannedBytes(pointerFieldBytes);
-		env->addScannedPointerFields(pointerField);
 
 		return pointerField;
 	}
@@ -257,6 +267,7 @@ public:
 	{
 		/* Object slots */
 
+		bool const compressed = env->compressObjectReferences();
 		fj9object_t *scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
 		UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
 		fj9object_t *endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
@@ -315,11 +326,9 @@ public:
 #endif /* J9VM_GC_LEAF_BITS */
 				descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 			}
-			scanPtr += 1;
+			scanPtr = GC_SlotObject::addToSlotAddress(scanPtr, 1, compressed);
 		}
 
-		env->addScannedBytes(objectSize);
-		env->addScannedPointerFields(pointerFields);
 		env->incScannedObjects();
 
 		return pointerFields;
@@ -329,6 +338,7 @@ public:
 	scanPointerArrayObject(MM_EnvironmentRealtime *env, J9IndexableObject *objectPtr)
 	{
 		UDATA pointerFields = 0;
+		bool const compressed = env->compressObjectReferences();
 		
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 		if(isDynamicClassUnloadingEnabled()) {
@@ -351,7 +361,7 @@ public:
 		UDATA sizeInElements = _extensions->indexableObjectModel.getSizeInElements(objectPtr);
 		if (isContiguous || (0 == sizeInElements)) {
 			fj9object_t *startScanPtr = (fj9object_t *)_extensions->indexableObjectModel.getDataPointerForContiguous(objectPtr);
-			fj9object_t *endScanPtr = startScanPtr + sizeInElements;
+			fj9object_t *endScanPtr = GC_SlotObject::addToSlotAddress(startScanPtr, sizeInElements, compressed);
 			pointerFields += scanPointerRange(env, startScanPtr, endScanPtr);
 		} else {
 			fj9object_t *arrayoid = _extensions->indexableObjectModel.getArrayoidPointer(objectPtr);
@@ -359,10 +369,10 @@ public:
 			for (UDATA i=0; i<numArraylets; i++) {
 				UDATA arrayletSize = _extensions->indexableObjectModel.arrayletSize(objectPtr, i);
 				/* need to check leaf pointer because this can be a partially allocated arraylet (not all leafs are allocated) */
-				GC_SlotObject slotObject(_javaVM->omrVM, &arrayoid[i]);
+				GC_SlotObject slotObject(_javaVM->omrVM, GC_SlotObject::addToSlotAddress(arrayoid, i, compressed));
 				fj9object_t *startScanPtr = (fj9object_t*) (slotObject.readReferenceFromSlot());
 				if (NULL != startScanPtr) {
-					fj9object_t *endScanPtr = startScanPtr + arrayletSize / sizeof(fj9object_t);
+					fj9object_t *endScanPtr = (fj9object_t*)((uintptr_t)startScanPtr + arrayletSize);
 					if (i == (numArraylets - 1)) {
 						pointerFields += scanPointerRange(env, startScanPtr, endScanPtr);
 						if (canSetAsScanned) {
@@ -388,6 +398,7 @@ public:
 	MMINLINE UDATA
 	scanReferenceMixedObject(MM_EnvironmentRealtime *env, J9Object *objectPtr)
 	{
+		bool const compressed = env->compressObjectReferences();
 		fj9object_t *scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
 		UDATA objectSize = _extensions->mixedObjectModel.getSizeInBytesWithHeader(objectPtr);
 		fj9object_t *endScanPtr = (fj9object_t*)(((U_8 *)objectPtr) + objectSize);
@@ -447,7 +458,7 @@ public:
 			Assert_MM_unreachable();
 		}
 
-		GC_SlotObject referentPtr(_javaVM->omrVM, &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr));
+		GC_SlotObject referentPtr(_javaVM->omrVM, J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(env, objectPtr));
 
 		if (referentMustBeCleared) {
 			/* Discovering this object at this stage in the GC indicates that it is being resurrected. Clear its referent slot. */
@@ -486,11 +497,9 @@ public:
 #endif /* J9VM_GC_LEAF_BITS */
 				descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 			}
-			scanPtr++;
+			scanPtr = GC_SlotObject::addToSlotAddress(scanPtr, 1, compressed);
 		}
 		
-		env->addScannedBytes(objectSize);
-		env->addScannedPointerFields(pointerFields);
 		env->incScannedObjects();
 		
 		return pointerFields;

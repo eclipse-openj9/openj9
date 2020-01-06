@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -151,7 +151,7 @@ j9gc_ext_check_is_valid_heap_object(J9JavaVM *javaVM, J9Object *ptr, UDATA flags
 	if (extensions->objectModel.isObjectArray(ptr)
 		|| extensions->objectModel.isPrimitiveArray(ptr)) {
 		/* ensure that the array size fits into the segment */
-		if (((UDATA)highAddress - (UDATA)ptr) < sizeof(J9IndexableObjectContiguous)) {
+		if (((UDATA)highAddress - (UDATA)ptr) < J9JAVAVM_CONTIGUOUS_HEADER_SIZE(javaVM)) {
 			return J9OBJECTCHECK_INVALID;
 		}
 	}

@@ -669,7 +669,7 @@ TR_J9ServerVM::getAllocationSize(TR::StaticSymbol *classSym, TR_OpaqueClassBlock
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_TOTAL_INSTANCE_SIZE, (void *)&totalInstanceSize);
 
-   uint32_t objectSize = sizeof(J9Object) + (uint32_t)totalInstanceSize;
+   uint32_t objectSize = getObjectHeaderSizeInBytes() + (uint32_t)totalInstanceSize;
    return ((objectSize >= J9_GC_MINIMUM_OBJECT_SIZE) ? objectSize : J9_GC_MINIMUM_OBJECT_SIZE);
    }
 

@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +48,9 @@ class GC_PointerArrayletIterator
 private:
 	J9IndexableObject *_arrayPtr;	/**< pointer to the array object being iterated */
 	GC_SlotObject _slotObject;		/**< Create own SlotObject class to provide output */
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool const _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 
 	UDATA const _arrayletLeafSize; 		/* The size of an arraylet leaf */
 	UDATA const _fobjectsPerLeaf; 		/* The number of fj9object_t's per leaf */
@@ -65,7 +67,7 @@ private:
 			_currentArrayletOffset = ((U_32)_index-1) % _fobjectsPerLeaf; /* The offset of _index in the current arraylet */
 
 			fj9object_t *arrayoidPointer = extensions->indexableObjectModel.getArrayoidPointer(_arrayPtr);
-			GC_SlotObject arrayletBaseSlotObject(_javaVM->omrVM, arrayoidPointer + _currentArrayletIndex);
+			GC_SlotObject arrayletBaseSlotObject(_javaVM->omrVM, GC_SlotObject::addToSlotAddress(arrayoidPointer, _currentArrayletIndex, compressObjectReferences()));
 			_currentArrayletBaseAddress = (fj9object_t *)arrayletBaseSlotObject.readReferenceFromSlot();
 
 			/* note that we need to check the arraylet base address before reading it since we might be walking
@@ -85,6 +87,22 @@ protected:
 	J9JavaVM *const _javaVM;	/**< A cached pointer to the shared JavaVM instance */
 
 public:
+	/**
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
+	 */
+	MMINLINE bool compressObjectReferences() {
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+		return _compressObjectReferences;
+#else /* defined(OMR_GC_FULL_POINTERS) */
+		return true;
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return false;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+	}
+
 	MMINLINE void initialize(J9Object *objectPtr) {
 		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_javaVM->omrVM);
 
@@ -106,7 +124,7 @@ public:
 	MMINLINE GC_SlotObject *nextSlot()
 	{
 		if (_index > 0) {
-			_slotObject.writeAddressToSlot(_currentArrayletBaseAddress + _currentArrayletOffset);
+			_slotObject.writeAddressToSlot(GC_SlotObject::addToSlotAddress(_currentArrayletBaseAddress, _currentArrayletOffset, compressObjectReferences()));
 
 			_index -= 1;
 			/* If we reach the end of the arraylet leaf, we need to recalculate our arrayletBaseAddress for the next _index */
@@ -126,8 +144,11 @@ public:
 	GC_PointerArrayletIterator(J9JavaVM *javaVM)
 		: _arrayPtr(NULL)
 		, _slotObject(GC_SlotObject(javaVM->omrVM, NULL))
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		, _compressObjectReferences(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM))
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 		, _arrayletLeafSize(javaVM->arrayletLeafSize)
-		, _fobjectsPerLeaf(_arrayletLeafSize/sizeof(fj9object_t))
+		, _fobjectsPerLeaf(_arrayletLeafSize / J9JAVAVM_REFERENCE_SIZE(javaVM))
 		, _index(0)
 		, _currentArrayletBaseAddress(NULL)
 		, _currentArrayletIndex(0)
@@ -142,8 +163,11 @@ public:
 	GC_PointerArrayletIterator(J9JavaVM *javaVM, J9Object *objectPtr)
 		: _arrayPtr(NULL)
 		, _slotObject(GC_SlotObject(javaVM->omrVM, NULL))
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		, _compressObjectReferences(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM))
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 		, _arrayletLeafSize(javaVM->arrayletLeafSize)
-		, _fobjectsPerLeaf(_arrayletLeafSize/sizeof(fj9object_t))
+		, _fobjectsPerLeaf(_arrayletLeafSize / J9JAVAVM_REFERENCE_SIZE(javaVM))
 		, _index(0)
 		, _currentArrayletBaseAddress(NULL)
 		, _currentArrayletIndex(0)

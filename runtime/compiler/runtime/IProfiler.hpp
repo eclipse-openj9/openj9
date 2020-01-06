@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,6 +65,7 @@
 #include "j9.h"
 #include "j9cfg.h"
 #include "env/jittypes.h"
+#include "env/CompilerEnv.hpp"
 #include "il/Node.hpp"
 #include "infra/Link.hpp"
 #include "runtime/ExternalProfiler.hpp"
@@ -397,14 +398,14 @@ public:
    void * operator new (size_t size) throw();
    void * operator new (size_t size, void * placement) {return placement;}
 
-#ifdef OMR_GC_COMPRESSED_POINTERS
    // Set the higher 32 bits to zero under compressedref to avoid assertion in
    // CallSiteProfileInfo::setClazz, which is called by setInvalid with IPROFILING_INVALID
    //
-   static const uintptrj_t IPROFILING_INVALID = 0x00000000FFFFFFFF;
-#else
+   // Set the higher 32 bits to zero under compressedref to avoid assertion in
+   // CallSiteProfileInfo::setClazz, which is called by setInvalid with IPROFILING_INVALID
+   //
+   static const uintptrj_t IPROFILING_INVALID_COMPRESSED = 0x00000000FFFFFFFF;
    static const uintptrj_t IPROFILING_INVALID = ~0;
-#endif
 
    virtual uintptrj_t getData(TR::Compilation *comp = NULL);
    virtual CallSiteProfileInfo* getCGData() { return &_csInfo; } // overloaded
@@ -421,8 +422,8 @@ public:
    void setWarmCallGraphTooBig(bool set=true) { _csInfo._tooBigToBeInlined = (set) ? 1 : 0; }
    bool isWarmCallGraphTooBig() { return (_csInfo._tooBigToBeInlined == 1); }
 
-   virtual bool isInvalid() { if (_csInfo.getClazz(0) == IPROFILING_INVALID) return true; return false; }
-   virtual void setInvalid() { _csInfo.setClazz(0, IPROFILING_INVALID); }
+   virtual bool isInvalid() { if (_csInfo.getClazz(0) == (TR::Compiler->om.compressObjectReferences() ? IPROFILING_INVALID_COMPRESSED : IPROFILING_INVALID)) return true; return false; }
+   virtual void setInvalid() { _csInfo.setClazz(0, (TR::Compiler->om.compressObjectReferences() ? IPROFILING_INVALID_COMPRESSED : IPROFILING_INVALID)); }
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataCallGraphStorage);}
 
 #if defined(JITSERVER_SUPPORT)

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,12 +103,16 @@
  * NOTE: since these macros use getOmrVM() they only work in-process (not out-of-process).
  * They may not be used in gccheck.
  */
-#define J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, object) (*(fj9object_t*)((U_8*)(object) + J9VMJAVALANGREFREFERENCE_REFERENT_OFFSET((J9VMThread*)(env)->getLanguageVMThread())))
-#define J9GC_J9VMJAVALANGREFERENCE_QUEUE(env, object) (*(fj9object_t*)((U_8*)(object) + J9VMJAVALANGREFREFERENCE_QUEUE_OFFSET((J9VMThread*)(env)->getLanguageVMThread())))
+#define J9GC_READ_OBJECT_SLOT(env, object, offset) \
+	((env)->compressObjectReferences() \
+		? (fj9object_t)(*(uint32_t*)((U_8*)(object) + (offset))) \
+		: (fj9object_t)(*(uintptr_t*)((U_8*)(object) + (offset))) \
+	)
+#define J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(env, object) ((fj9object_t*)((U_8*)(object) + J9VMJAVALANGREFREFERENCE_REFERENT_OFFSET((J9VMThread*)(env)->getLanguageVMThread())))
+#define J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, object) J9GC_READ_OBJECT_SLOT(env, object, J9VMJAVALANGREFREFERENCE_REFERENT_OFFSET((J9VMThread*)(env)->getLanguageVMThread()))
+#define J9GC_J9VMJAVALANGREFERENCE_QUEUE(env, object) J9GC_READ_OBJECT_SLOT(env, object, J9VMJAVALANGREFREFERENCE_QUEUE_OFFSET((J9VMThread*)(env)->getLanguageVMThread()))
 #define J9GC_J9VMJAVALANGREFERENCE_STATE(env, object) (*(I_32*)((U_8*)(object) + J9VMJAVALANGREFREFERENCE_STATE_OFFSET((J9VMThread*)(env)->getLanguageVMThread())))
 #define J9GC_J9VMJAVALANGSOFTREFERENCE_AGE(env, object) (*(I_32*)((U_8*)(object) + J9VMJAVALANGREFSOFTREFERENCE_AGE_OFFSET((J9VMThread*)(env)->getLanguageVMThread())))
-
-#define J9GC_J9OBJECT_FIELD_EA(object, byteOffset) ((fj9object_t*)((U_8 *)(object) + (byteOffset) + sizeof(J9Object)))
 
 #define J9GC_J9CLASSLOADER_CLASSLOADEROBJECT(classLoader) ((j9object_t)(classLoader)->classLoaderObject)
 #define J9GC_J9CLASSLOADER_CLASSLOADEROBJECT_EA(classLoader) (&(classLoader)->classLoaderObject)

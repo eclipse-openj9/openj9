@@ -3292,10 +3292,9 @@ processVMArgsFromFirstToLast(J9JavaVM * vm)
 	{
 		IDATA compressed = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XCOMPRESSEDREFS, NULL);
 		IDATA nocompressed = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XNOCOMPRESSEDREFS, NULL);
-		if (compressed > nocompressed) {
+		/* Compressed refs by default */
+		if (compressed >= nocompressed) {
 			vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES;
-		} else if (compressed < nocompressed) {
-			vm->extendedRuntimeFlags2 &= ~(UDATA)J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES;
 		}
 	}
 #endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
@@ -5807,8 +5806,6 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	}
 #endif
 
-	initializeROMClasses(vm);
-
 #ifdef J9VM_RAS_EYECATCHERS
 	J9RASInitialize(vm);
 #endif
@@ -5994,6 +5991,9 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	if (JNI_OK != processVMArgsFromFirstToLast(vm)) {
 		goto error;
 	}
+
+	/* Must be done after the compressed/full determination has been made */
+	initializeROMClasses(vm);
 
 #if !defined(WIN32)
 	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags,J9_EXTENDED_RUNTIME_HANDLE_SIGXFSZ)) {

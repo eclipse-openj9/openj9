@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,7 +155,7 @@ MM_StandardAccessBarrier::preObjectStoreImpl(J9VMThread *vmThread, J9Object *des
 
 			J9Object *oldObject = NULL;
 			protectIfVolatileBefore(vmThread, isVolatile, true, false);
-			oldObject = mmPointerFromToken(vmThread, *destAddress);
+			oldObject = mmPointerFromToken(vmThread, GC_SlotObject::readSlot(destAddress, compressObjectReferences()));
 			protectIfVolatileAfter(vmThread, isVolatile, true, false);
 			rememberObjectToRescan(env, oldObject);
 		}
@@ -609,14 +609,26 @@ MM_StandardAccessBarrier::doCopyContiguousBackwardWithReadBarrier(J9VMThread *vm
 	srcIndex += lengthInSlots;
 	destIndex += lengthInSlots;
 
-	fj9object_t *srcSlot = (fj9object_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(fj9object_t));
-	fj9object_t *destSlot = (fj9object_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(fj9object_t));
-	fj9object_t *srcEndSlot = srcSlot - lengthInSlots;
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+		uint32_t *srcSlot = (uint32_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(uint32_t));
+		uint32_t *destSlot = (uint32_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(uint32_t));
+		uint32_t *srcEndSlot = srcSlot - lengthInSlots;
 
-	while (srcSlot-- > srcEndSlot) {
-		preObjectRead(vmThread, (J9Object *)srcObject, srcSlot);
+		while (srcSlot-- > srcEndSlot) {
+			preObjectRead(vmThread, (J9Object *)srcObject, (fj9object_t*)srcSlot);
 
-		*--destSlot = *srcSlot;
+			*--destSlot = *srcSlot;
+		}
+	} else {
+		uintptr_t *srcSlot = (uintptr_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(uintptr_t));
+		uintptr_t *destSlot = (uintptr_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(uintptr_t));
+		uintptr_t *srcEndSlot = srcSlot - lengthInSlots;
+
+		while (srcSlot-- > srcEndSlot) {
+			preObjectRead(vmThread, (J9Object *)srcObject, (fj9object_t*)srcSlot);
+
+			*--destSlot = *srcSlot;
+		}	
 	}
 
 	return ARRAY_COPY_SUCCESSFUL;
@@ -625,14 +637,26 @@ MM_StandardAccessBarrier::doCopyContiguousBackwardWithReadBarrier(J9VMThread *vm
 I_32
 MM_StandardAccessBarrier::doCopyContiguousForwardWithReadBarrier(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
 {
-	fj9object_t *srcSlot = (fj9object_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(fj9object_t));
-	fj9object_t *destSlot = (fj9object_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(fj9object_t));
-	fj9object_t *srcEndSlot = srcSlot + lengthInSlots;
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+		uint32_t *srcSlot = (uint32_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(uint32_t));
+		uint32_t *destSlot = (uint32_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(uint32_t));
+		uint32_t *srcEndSlot = srcSlot + lengthInSlots;
 
-	while (srcSlot < srcEndSlot) {
-		preObjectRead(vmThread, (J9Object *)srcObject, srcSlot);
+		while (srcSlot < srcEndSlot) {
+			preObjectRead(vmThread, (J9Object *)srcObject, (fj9object_t*)srcSlot);
+	
+			*destSlot++ = *srcSlot++;
+		}
+	} else {
+		uintptr_t *srcSlot = (uintptr_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(uintptr_t));
+		uintptr_t *destSlot = (uintptr_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(uintptr_t));
+		uintptr_t *srcEndSlot = srcSlot + lengthInSlots;
 
-		*destSlot++ = *srcSlot++;
+		while (srcSlot < srcEndSlot) {
+			preObjectRead(vmThread, (J9Object *)srcObject, (fj9object_t*)srcSlot);
+	
+			*destSlot++ = *srcSlot++;
+		}
 	}
 
 	return ARRAY_COPY_SUCCESSFUL;
@@ -745,7 +769,7 @@ bool
 MM_StandardAccessBarrier::preMonitorTableSlotRead(J9VMThread *vmThread, j9object_t *srcAddress)
 {
 	omrobjectptr_t object = (omrobjectptr_t)*srcAddress;
-	bool const compressed = _extensions->compressObjectReferences();
+	bool const compressed = compressObjectReferences();
 
 	if ((NULL != _extensions->scavenger) && _extensions->scavenger->isObjectInEvacuateMemory(object)) {
 		MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(vmThread->omrVMThread);
@@ -775,7 +799,7 @@ bool
 MM_StandardAccessBarrier::preMonitorTableSlotRead(J9JavaVM *vm, j9object_t *srcAddress)
 {
 	omrobjectptr_t object = (omrobjectptr_t)*srcAddress;
-	bool const compressed = _extensions->compressObjectReferences();
+	bool const compressed = compressObjectReferences();
 
 	if ((NULL != _extensions->scavenger) && _extensions->scavenger->isObjectInEvacuateMemory(object)) {
 		Assert_MM_true(_extensions->scavenger->isConcurrentInProgress());
@@ -800,7 +824,7 @@ bool
 MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Class *srcClass, j9object_t *srcAddress)
 {
 	omrobjectptr_t object = *(volatile omrobjectptr_t *)srcAddress;
-	bool const compressed = _extensions->compressObjectReferences();
+	bool const compressed = compressObjectReferences();
 
 	if ((NULL != _extensions->scavenger) && _extensions->scavenger->isObjectInEvacuateMemory(object)) {
 		MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(vmThread->omrVMThread);
@@ -842,9 +866,9 @@ bool
 MM_StandardAccessBarrier::preObjectRead(J9VMThread *vmThread, J9Object *srcObject, fj9object_t *srcAddress)
 {
 	/* with volatile cast, ensure that we are really getting a snapshot (instead of the slot being re-read at later points with possibly different values) */
-	fomrobject_t objectToken = *(volatile fomrobject_t *)srcAddress;
+	bool const compressed = compressObjectReferences();
+	fomrobject_t objectToken = (fomrobject_t)(compressed ? (uintptr_t)*(volatile uint32_t *)srcAddress: *(volatile uintptr_t *)srcAddress);
 	omrobjectptr_t object = convertPointerFromToken(objectToken);
-	bool const compressed = _extensions->compressObjectReferences();
 
 	if (NULL != _extensions->scavenger) {
 		MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(vmThread->omrVMThread);

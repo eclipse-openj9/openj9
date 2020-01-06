@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -141,14 +141,14 @@ MM_ReadBarrierVerifier::healSlot(MM_GCExtensionsBase *extensions, fomrobject_t *
 {
 	uintptr_t shadowHeapBase = (uintptr_t)extensions->shadowHeapBase;
 	uintptr_t shadowHeapTop = (uintptr_t)extensions->shadowHeapTop;
-	omrobjectptr_t object = convertPointerFromToken(*srcAddress);
+	GC_SlotObject slotObject(extensions->getOmrVM(), srcAddress);
+	omrobjectptr_t object = slotObject.readReferenceFromSlot();
 
 	if ((shadowHeapTop > (uintptr_t)object) && (shadowHeapBase <= (uintptr_t)object)) {
 
 		uintptr_t heapBase = (uintptr_t)extensions->heap->getHeapBase();
 		uintptr_t healedAddress = heapBase + ((uintptr_t)object - shadowHeapBase);
 
-		GC_SlotObject slotObject(extensions->getOmrVM(), srcAddress);
 		/* We don't care if the write fails, some other thread probably wrote a healed value to the slot */
 		slotObject.atomicWriteReferenceToSlot(object, (omrobjectptr_t)healedAddress);
 

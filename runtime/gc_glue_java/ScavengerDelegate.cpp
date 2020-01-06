@@ -336,7 +336,7 @@ MM_ScavengerDelegate::getObjectScanner(MM_EnvironmentStandard *env, omrobjectptr
 				Assert_MM_unreachable();
 			}
 
-			GC_SlotObject referentPtr(env->getOmrVM(), &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr));
+			GC_SlotObject referentPtr(env->getOmrVM(), J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(env, objectPtr));
 			if (referentMustBeCleared) {
 				/* Discovering this object at this stage in the GC indicates that it is being resurrected. Clear its referent slot. */
 				referentPtr.writeReferenceToSlot(NULL);
@@ -540,9 +540,9 @@ MM_ScavengerDelegate::reverseForwardedObject(MM_EnvironmentBase *env, MM_Forward
 		if ((J9CLASS_FLAGS(forwardedClass) & J9AccClassReferenceMask)) {
 			I_32 forwadedReferenceState = J9GC_J9VMJAVALANGREFERENCE_STATE(env, fwdObjectPtr);
 			J9GC_J9VMJAVALANGREFERENCE_STATE(env, objectPtr) = forwadedReferenceState;
-			GC_SlotObject referentSlotObject(_omrVM, &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, fwdObjectPtr));
+			GC_SlotObject referentSlotObject(_omrVM, J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(env, fwdObjectPtr));
 			if (NULL == referentSlotObject.readReferenceFromSlot()) {
-				GC_SlotObject slotObject(_omrVM, &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr));
+				GC_SlotObject slotObject(_omrVM, J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(env, objectPtr));
 				slotObject.writeReferenceToSlot(NULL);
 			}
 			/* Copy back the reference link */
@@ -552,7 +552,7 @@ MM_ScavengerDelegate::reverseForwardedObject(MM_EnvironmentBase *env, MM_Forward
 		/* Copy back the finalize link */
 		fomrobject_t *finalizeLinkAddress = barrier->getFinalizeLinkAddress(fwdObjectPtr);
 		if (NULL != finalizeLinkAddress) {
-			barrier->setFinalizeLink(objectPtr, barrier->convertPointerFromToken(*finalizeLinkAddress));
+			barrier->setFinalizeLink(objectPtr, barrier->getFinalizeLink(fwdObjectPtr));
 		}
 	}
 }
@@ -778,6 +778,9 @@ MM_ScavengerDelegate::MM_ScavengerDelegate(MM_EnvironmentBase* env)
 	: _omrVM(MM_GCExtensions::getExtensions(env)->getOmrVM())
 	, _javaVM(MM_GCExtensions::getExtensions(env)->getJavaVM())
 	, _extensions(MM_GCExtensions::getExtensions(env))
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	, _compressObjectReferences(env-compressObjectReferences())
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	, _shouldScavengeFinalizableObjects(false)
 	, _shouldScavengeUnfinalizedObjects(false)
 	, _shouldScavengeSoftReferenceObjects(false)

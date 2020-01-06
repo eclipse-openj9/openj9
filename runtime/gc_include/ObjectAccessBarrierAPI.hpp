@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -429,17 +429,22 @@ public:
 		if (j9gc_modron_readbar_none != _readBarrierType) {	
 			vmThread->javaVM->memoryManagerFunctions->j9gc_objaccess_copyObjectFields(vmThread, objectClass, srcObject, srcOffset, destObject, destOffset);
 		} else {
-			UDATA const referenceSize = J9VMTHREAD_REFERENCE_SIZE(vmThread);
 			UDATA offset = 0;
 			UDATA limit = mixedObjectGetDataSize(objectClass);
-			
 			if (J9_IS_J9CLASS_VALUETYPE(objectClass)) {
 				offset += objectClass->backfillOffset;
 			}
-			
-			while (offset < limit) {
-				*(fj9object_t *)((UDATA)destObject + offset + destOffset) = *(fj9object_t *)((UDATA)srcObject + offset + srcOffset);
-				offset += referenceSize;
+
+			if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+				while (offset < limit) {
+					*(uint32_t*)((UDATA)destObject + offset + destOffset) = *(uint32_t*)((UDATA)srcObject + offset + srcOffset);
+					offset += sizeof(uint32_t);
+				}
+			} else {
+				while (offset < limit) {
+					*(uintptr_t*)((UDATA)destObject + offset + destOffset) = *(uintptr_t*)((UDATA)srcObject + offset + srcOffset);
+					offset += sizeof(uintptr_t);
+				}
 			}
 		
 			/* zero lockword, if present */
@@ -2029,38 +2034,6 @@ public:
 #endif /* J9VM_GC_ALWAYS_CALL_OBJECT_ACCESS_BARRIER */
 	}
 
-	/**
-	 * Call to convert an object pointer to an object token
-	 *
-	 * @param pointer the object pointer to convert
-	 * @return the object token
-	 */
-	static VMINLINE fj9object_t
-	convertTokenFromPointer(j9object_t pointer, UDATA compressedPointersShift)
-	{
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-		return (fj9object_t)((UDATA)pointer >> compressedPointersShift);
-#else /* OMR_GC_COMPRESSED_POINTERS */
-		return (fj9object_t)pointer;
-#endif /* OMR_GC_COMPRESSED_POINTERS */
-	}
-
-	/**
-	 * Call to convert an object token to an object pointer
-	 *
-	 * @param token the object token to convert
-	 * @return the object pointer
-	 */
-	static VMINLINE j9object_t
-	convertPointerFromToken(fj9object_t token, UDATA compressedPointersShift)
-	{
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-		return (mm_j9object_t)((UDATA)token << compressedPointersShift);
-#else /* OMR_GC_COMPRESSED_POINTERS */
-		return (mm_j9object_t)token;
-#endif /* OMR_GC_COMPRESSED_POINTERS */
-	}
-
 	/* Return an j9object_t that can be stored in the constantpool.
 	 *
 	 * Not all collectors scan the constantpool on every GC and therefore for
@@ -2675,10 +2648,13 @@ protected:
 	internalConvertTokenFromPointer(j9object_t pointer)
 	{
 #if defined (OMR_GC_COMPRESSED_POINTERS)
-		return convertTokenFromPointer(pointer, _compressedPointersShift);
-#else /* OMR_GC_COMPRESSED_POINTERS */
-		return (fj9object_t)pointer;
+		if (compressObjectReferences()) {
+			return (fj9object_t)((UDATA)pointer >> _compressedPointersShift);
+		} else
 #endif /* OMR_GC_COMPRESSED_POINTERS */
+		{
+			return (fj9object_t)(UDATA)pointer;
+		}
 	}
 
 	/**
@@ -2691,10 +2667,13 @@ protected:
 	internalConvertPointerFromToken(fj9object_t token)
 	{
 #if defined (OMR_GC_COMPRESSED_POINTERS)
-		return convertPointerFromToken(token, _compressedPointersShift);
-#else /* OMR_GC_COMPRESSED_POINTERS */
-		return (mm_j9object_t)token;
+		if (compressObjectReferences()) {
+			return (mm_j9object_t)((UDATA)token << _compressedPointersShift);
+		} else
 #endif /* OMR_GC_COMPRESSED_POINTERS */
+		{
+			return (mm_j9object_t)(UDATA)token;
+		}
 	}
 
 private:
@@ -2759,7 +2738,7 @@ private:
 			if (0 == fragment->localFragmentIndex) {
 				vmThread->javaVM->memoryManagerFunctions->J9MetronomeWriteBarrierStore(vmThread, object, destAddress, value);
 			} else {
-				j9object_t oldObject = internalConvertPointerFromToken(*destAddress);
+				j9object_t oldObject = readObjectImpl(vmThread, destAddress, false);
 				if (NULL != oldObject) {
 					if (!isMarked(vmThread, oldObject)) {
 						vmThread->javaVM->memoryManagerFunctions->J9MetronomeWriteBarrierStore(vmThread, object, destAddress, value);
