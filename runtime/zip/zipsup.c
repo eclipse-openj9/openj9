@@ -692,7 +692,7 @@ I_32 scanForDataDescriptor(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipEntr
 						}
 							
 						/* Read the data from the descriptor. */
-						ZIP_NEXT_U32(zipEntry->crc32Value, current);
+						ZIP_NEXT_U32(zipEntry->crc32, current);
 						ZIP_NEXT_U32(zipEntry->compressedSize, current);
 						ZIP_NEXT_U32(zipEntry->uncompressedSize, current);
 
@@ -844,7 +844,7 @@ static I_32 zip_populateCache(J9PortLibrary* portLib, J9ZipFile *zipFile, J9ZipC
 			ZIP_NEXT_U16(entry.compressionMethod, current);
 			ZIP_NEXT_U16(entry.lastModTime, current);
 			ZIP_NEXT_U16(entry.lastModDate, current);
-			ZIP_NEXT_U32(entry.crc32Value, current);
+			ZIP_NEXT_U32(entry.crc32, current);
 			ZIP_NEXT_U32(entry.compressedSize, current);
 			ZIP_NEXT_U32(entry.uncompressedSize, current);
 			ZIP_NEXT_U16(entry.filenameLength, current);
@@ -1075,7 +1075,7 @@ readZipEntry(J9PortLibrary * portLib, J9ZipFile * zipFile, J9ZipEntry * zipEntry
 	ZIP_NEXT_U16(zipEntry->compressionMethod, current);
 	ZIP_NEXT_U16(zipEntry->lastModTime, current);
 	ZIP_NEXT_U16(zipEntry->lastModDate, current);
-	ZIP_NEXT_U32(zipEntry->crc32Value, current);
+	ZIP_NEXT_U32(zipEntry->crc32, current);
 	ZIP_NEXT_U32(zipEntry->compressedSize, current);
 	ZIP_NEXT_U32(zipEntry->uncompressedSize, current);
 	ZIP_NEXT_U16(zipEntry->filenameLength, current);

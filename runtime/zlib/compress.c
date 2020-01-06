@@ -1,9 +1,9 @@
 /* compress.c -- compress a memory buffer
- * Copyright (C) 1995-2005, 2014, 2016 Jean-loup Gailly, Mark Adler
+ * Copyright (C) 1995-2003 Jean-loup Gailly.
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id$ */
+/* @(#) $Id: compress.c,v 1.1 2006-09-07 17:56:01 j9build Exp $ */
 
 #define ZLIB_INTERNAL
 #include "zlib.h"
@@ -28,11 +28,16 @@ int ZEXPORT compress2 (dest, destLen, source, sourceLen, level)
 {
     z_stream stream;
     int err;
-    const uInt max = (uInt)-1;
-    uLong left;
 
-    left = *destLen;
-    *destLen = 0;
+    stream.next_in = (Bytef*)source;
+    stream.avail_in = (uInt)sourceLen;
+#ifdef MAXSEG_64K
+    /* Check for source > 64K on 16-bit machine: */
+    if ((uLong)stream.avail_in != sourceLen) return Z_BUF_ERROR;
+#endif
+    stream.next_out = dest;
+    stream.avail_out = (uInt)*destLen;
+    if ((uLong)stream.avail_out != *destLen) return Z_BUF_ERROR;
 
     stream.zalloc = (alloc_func)0;
     stream.zfree = (free_func)0;
@@ -41,26 +46,15 @@ int ZEXPORT compress2 (dest, destLen, source, sourceLen, level)
     err = deflateInit(&stream, level);
     if (err != Z_OK) return err;
 
-    stream.next_out = dest;
-    stream.avail_out = 0;
-    stream.next_in = (z_const Bytef *)source;
-    stream.avail_in = 0;
-
-    do {
-        if (stream.avail_out == 0) {
-            stream.avail_out = left > (uLong)max ? max : (uInt)left;
-            left -= stream.avail_out;
-        }
-        if (stream.avail_in == 0) {
-            stream.avail_in = sourceLen > (uLong)max ? max : (uInt)sourceLen;
-            sourceLen -= stream.avail_in;
-        }
-        err = deflate(&stream, sourceLen ? Z_NO_FLUSH : Z_FINISH);
-    } while (err == Z_OK);
-
+    err = deflate(&stream, Z_FINISH);
+    if (err != Z_STREAM_END) {
+        deflateEnd(&stream);
+        return err == Z_OK ? Z_BUF_ERROR : err;
+    }
     *destLen = stream.total_out;
-    deflateEnd(&stream);
-    return err == Z_STREAM_END ? Z_OK : err;
+
+    err = deflateEnd(&stream);
+    return err;
 }
 
 /* ===========================================================================
@@ -81,6 +75,5 @@ int ZEXPORT compress (dest, destLen, source, sourceLen)
 uLong ZEXPORT compressBound (sourceLen)
     uLong sourceLen;
 {
-    return sourceLen + (sourceLen >> 12) + (sourceLen >> 14) +
-           (sourceLen >> 25) + 13;
+    return sourceLen + (sourceLen >> 12) + (sourceLen >> 14) + 11;
 }
