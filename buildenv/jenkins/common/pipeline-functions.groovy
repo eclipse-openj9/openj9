@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -777,7 +777,11 @@ def setup_pull_request_single_comment(PARSED_COMMENT) {
         if (LONG_PLATFORM) {
             PLATFORMS.addAll(LONG_PLATFORM)
         } else {
-            error("Unknown PLATFORM short:'${SHORT}'\nExpected one of:${SHORT_NAMES}")
+            def shortNamesList = []
+            SHORT_NAMES.each {
+                shortNamesList.add(it.key)
+            }
+            error("Unknown PLATFORM short:'${SHORT}'\nExpected one of:${shortNamesList}")
         }
     }
     echo "PLATFORMS:'${PLATFORMS}'"
