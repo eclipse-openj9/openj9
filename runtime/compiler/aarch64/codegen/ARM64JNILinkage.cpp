@@ -30,6 +30,7 @@
 #include "codegen/Relocation.hpp"
 #include "env/VMJ9.h"
 #include "il/Node.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "infra/Assert.hpp"
 
@@ -329,8 +330,94 @@ TR::Register *J9::ARM64::JNILinkage::getReturnRegisterFromDeps(TR::Node *callNod
 
 TR::Register *J9::ARM64::JNILinkage::pushJNIReferenceArg(TR::Node *child)
    {
-   TR_UNIMPLEMENTED();
-   return NULL;
+   TR::Register *pushRegister;
+   bool         checkSplit = true;
+
+   if (child->getOpCodeValue() == TR::loadaddr)
+      {
+      TR::SymbolReference * symRef = child->getSymbolReference();
+      TR::StaticSymbol *sym = symRef->getSymbol()->getStaticSymbol();
+      if (sym)
+         {
+         if (sym->isAddressOfClassObject())
+            {
+            pushRegister = pushAddressArg(child);
+            }
+         else
+            {
+            TR::Register *addrReg = cg()->evaluate(child);
+            TR::MemoryReference *tmpMemRef = new (trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg());
+            TR::Register *whatReg = cg()->allocateCollectedReferenceRegister();
+
+            checkSplit = false;
+            generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, child, whatReg, tmpMemRef);
+            if (!cg()->canClobberNodesRegister(child))
+               {
+               // Since this is a static variable, it is non-collectable.
+               TR::Register *tempRegister = cg()->allocateRegister();
+               generateMovInstruction(cg(), child, tempRegister, addrReg);
+               pushRegister = tempRegister;
+               }
+            else
+               pushRegister = addrReg;
+            generateCompareImmInstruction(cg(), child, whatReg, 0, true);
+            generateCondTrg1Src2Instruction(cg(), TR::InstOpCode::cselx, child, pushRegister, pushRegister, whatReg, TR::CC_NE);
+
+            cg()->stopUsingRegister(whatReg);
+            cg()->decReferenceCount(child);
+            }
+         }
+      else // must be loadaddr of parm or local
+         {
+         if (child->pointsToNonNull())
+            {
+            pushRegister = pushAddressArg(child);
+            }
+         else if (child->pointsToNull())
+            {
+            checkSplit = false;
+            pushRegister = cg()->allocateRegister();
+            loadConstant64(cg(), child, 0, pushRegister);
+            cg()->decReferenceCount(child);
+            }
+         else
+            {
+            TR::Register *addrReg = cg()->evaluate(child);
+            TR::MemoryReference *tmpMemRef = new (trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg());
+            TR::Register *whatReg = cg()->allocateCollectedReferenceRegister();
+
+            checkSplit = false;
+            generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, child, whatReg, tmpMemRef);
+            if (!cg()->canClobberNodesRegister(child))
+               {
+               // Since this points at a parm or local location, it is non-collectable.
+               TR::Register *tempRegister = cg()->allocateRegister();
+               generateMovInstruction(cg(), child, tempRegister, addrReg);
+               pushRegister = tempRegister;
+               }
+            else
+               pushRegister = addrReg;
+            generateCompareImmInstruction(cg(), child, whatReg, 0, true);
+            generateCondTrg1Src2Instruction(cg(), TR::InstOpCode::cselx, child, pushRegister, pushRegister, whatReg, TR::CC_NE);
+
+            cg()->stopUsingRegister(whatReg);
+            cg()->decReferenceCount(child);
+            }
+         }
+      }
+   else
+      {
+      pushRegister = pushAddressArg(child);
+      }
+
+   if (checkSplit && !cg()->canClobberNodesRegister(child, 0))
+      {
+      TR::Register *tempReg = pushRegister->containsCollectedReference()?
+        cg()->allocateCollectedReferenceRegister():cg()->allocateRegister();
+      generateMovInstruction(cg(), child, tempReg, pushRegister);
+      pushRegister = tempReg;
+      }
+   return pushRegister;
    }
 
 void J9::ARM64::JNILinkage::adjustReturnValue(TR::Node *callNode, bool wrapRefs, TR::Register *returnRegister)
