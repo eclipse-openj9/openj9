@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,14 +22,19 @@
 
 #include "codegen/ARM64JNILinkage.hpp"
 
+#include <algorithm>
 #include "codegen/ARM64HelperCallSnippet.hpp"
+#include "codegen/CodeGeneratorUtils.hpp"
 #include "codegen/GenerateInstructions.hpp"
 #include "codegen/Linkage_inlines.hpp"
 #include "codegen/MemoryReference.hpp"
 #include "codegen/RegisterDependency.hpp"
 #include "codegen/Relocation.hpp"
+#include "env/StackMemoryRegion.hpp"
 #include "env/VMJ9.h"
 #include "il/Node.hpp"
+#include "il/Node_inlines.hpp"
+#include "il/StaticSymbol.hpp"
 #include "il/SymbolReference.hpp"
 #include "infra/Assert.hpp"
 
@@ -290,10 +295,282 @@ void J9::ARM64::JNILinkage::restoreJNICallOutFrame(TR::Node *callNode, bool tear
    generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::addimmx, callNode, javaStackReg, javaStackReg, 5*TR::Compiler->om.sizeofReferenceAddress());
    }
 
-size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDependencyConditions *deps, bool passThread, bool passReceiver, bool killNonVolatileGPRs)
+
+size_t J9::ARM64::JNILinkage::buildJNIArgs(TR::Node *callNode, TR::RegisterDependencyConditions *dependencies, bool passThread, bool passReceiver, bool killNonVolatileGPRs)
    {
-   TR_UNIMPLEMENTED();
-   return 0;
+   const TR::ARM64LinkageProperties &properties = _systemLinkage->getProperties();
+   TR::ARM64MemoryArgument *pushToMemory = NULL;
+   TR::Register *argMemReg;
+   TR::Register *tempReg;
+   int32_t argIndex = 0;
+   int32_t numMemArgs = 0;
+   int32_t argSize = 0;
+   int32_t numIntegerArgs = 0;
+   int32_t numFloatArgs = 0;
+   int32_t totalSize;
+   int32_t i;
+
+   TR::Node *child;
+   TR::DataType childType;
+   TR::DataType resType = callNode->getType();
+
+   uint32_t firstArgumentChild = callNode->getFirstArgumentIndex();
+   if (passThread)
+      {
+      numIntegerArgs += 1;
+      }
+   // if fastJNI do not pass the receiver just evaluate the first child
+   if (!passReceiver)
+      {
+      TR::Node *firstArgChild = callNode->getChild(firstArgumentChild);
+      cg()->evaluate(firstArgChild);
+      cg()->decReferenceCount(firstArgChild);
+      firstArgumentChild += 1;
+      }
+   /* Step 1 - figure out how many arguments are going to be spilled to memory i.e. not in registers */
+   for (i = firstArgumentChild; i < callNode->getNumChildren(); i++)
+      {
+      child = callNode->getChild(i);
+      childType = child->getDataType();
+
+      switch (childType)
+         {
+         case TR::Int8:
+         case TR::Int16:
+         case TR::Int32:
+         case TR::Int64:
+         case TR::Address:
+            if (numIntegerArgs >= properties.getNumIntArgRegs())
+               numMemArgs++;
+            numIntegerArgs++;
+            break;
+
+         case TR::Float:
+         case TR::Double:
+            if (numFloatArgs >= properties.getNumFloatArgRegs())
+                  numMemArgs++;
+            numFloatArgs++;
+            break;
+
+         default:
+            TR_ASSERT(false, "Argument type %s is not supported\n", childType.toString());
+         }
+      }
+
+   // From here, down, any new stack allocations will expire / die when the function returns
+   TR::StackMemoryRegion stackMemoryRegion(*trMemory());
+   /* End result of Step 1 - determined number of memory arguments! */
+   if (numMemArgs > 0)
+      {
+      pushToMemory = new (trStackMemory()) TR::ARM64MemoryArgument[numMemArgs];
+
+      argMemReg = cg()->allocateRegister();
+      }
+
+   totalSize = numMemArgs * 8;
+   // align to 16-byte boundary
+   totalSize = (totalSize + 15) & (~15);
+
+   numIntegerArgs = 0;
+   numFloatArgs = 0;
+
+   if (passThread)
+      {
+      // first argument is JNIenv
+      numIntegerArgs += 1;
+      }
+
+   for (i = firstArgumentChild; i < callNode->getNumChildren(); i++)
+      {
+      TR::MemoryReference *mref = NULL;
+      TR::Register *argRegister;
+      TR::InstOpCode::Mnemonic op;
+      bool           checkSplit = true;
+
+      child = callNode->getChild(i);
+      childType = child->getDataType();
+
+      switch (childType)
+         {
+         case TR::Int8:
+         case TR::Int16:
+         case TR::Int32:
+         case TR::Int64:
+         case TR::Address:
+            if (childType == TR::Address)
+               {
+               argRegister = pushJNIReferenceArg(child);
+               checkSplit = false;
+               }
+            else if (childType == TR::Int64)
+               argRegister = pushLongArg(child);
+            else
+               argRegister = pushIntegerWordArg(child);
+
+            if (numIntegerArgs < properties.getNumIntArgRegs())
+               {
+               if (checkSplit && !cg()->canClobberNodesRegister(child, 0))
+                  {
+                  if (argRegister->containsCollectedReference())
+                     tempReg = cg()->allocateCollectedReferenceRegister();
+                  else
+                     tempReg = cg()->allocateRegister();
+                  generateMovInstruction(cg(), callNode, tempReg, argRegister);
+                  argRegister = tempReg;
+                  }
+               if (numIntegerArgs == 0 &&
+                  (resType.isAddress() || resType.isInt32() || resType.isInt64()))
+                  {
+                  TR::Register *resultReg;
+                  if (resType.isAddress())
+                     resultReg = cg()->allocateCollectedReferenceRegister();
+                  else
+                     resultReg = cg()->allocateRegister();
+
+                  dependencies->addPreCondition(argRegister, TR::RealRegister::x0);
+                  dependencies->addPostCondition(resultReg, TR::RealRegister::x0);
+                  }
+               else
+                  {
+                  TR::addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
+                  }
+               }
+            else
+               {
+               // numIntegerArgs >= properties.getNumIntArgRegs()
+               if (childType == TR::Address || childType == TR::Int64)
+                  {
+                  op = TR::InstOpCode::strpostx;
+                  }
+               else
+                  {
+                  op = TR::InstOpCode::strpostw;
+                  }
+               mref = getOutgoingArgumentMemRef(argMemReg, argRegister, op, pushToMemory[argIndex++]);
+               argSize += 8; // always 8-byte aligned
+               }
+            numIntegerArgs++;
+            break;
+
+         case TR::Float:
+         case TR::Double:
+            if (childType == TR::Float)
+               argRegister = pushFloatArg(child);
+            else
+               argRegister = pushDoubleArg(child);
+
+            if (numFloatArgs < properties.getNumFloatArgRegs())
+               {
+               if (!cg()->canClobberNodesRegister(child, 0))
+                  {
+                  tempReg = cg()->allocateRegister(TR_FPR);
+                  op = (childType == TR::Float) ? TR::InstOpCode::fmovs : TR::InstOpCode::fmovd;
+                  generateTrg1Src1Instruction(cg(), op, callNode, tempReg, argRegister);
+                  argRegister = tempReg;
+                  }
+               if ((numFloatArgs == 0 && resType.isFloatingPoint()))
+                  {
+                  TR::Register *resultReg;
+                  if (resType.getDataType() == TR::Float)
+                     resultReg = cg()->allocateSinglePrecisionRegister();
+                  else
+                     resultReg = cg()->allocateRegister(TR_FPR);
+
+                  dependencies->addPreCondition(argRegister, TR::RealRegister::v0);
+                  dependencies->addPostCondition(resultReg, TR::RealRegister::v0);
+                  }
+               else
+                  {
+                  TR::addDependency(dependencies, argRegister, properties.getFloatArgumentRegister(numFloatArgs), TR_FPR, cg());
+                  }
+               }
+            else
+               {
+               // numFloatArgs >= properties.getNumFloatArgRegs()
+               if (childType == TR::Double)
+                  {
+                  op = TR::InstOpCode::vstrpostd;
+                  }
+               else
+                  {
+                  op = TR::InstOpCode::vstrposts;
+                  }
+               mref = getOutgoingArgumentMemRef(argMemReg, argRegister, op, pushToMemory[argIndex++]);
+               argSize += 8; // always 8-byte aligned
+               }
+            numFloatArgs++;
+            break;
+         } // end of switch
+      } // end of for
+
+   for (int32_t i = TR::RealRegister::FirstGPR; i <= TR::RealRegister::LastGPR; ++i)
+      {
+      TR::RealRegister::RegNum realReg = (TR::RealRegister::RegNum)i;
+      if (getProperties().getRegisterFlags(realReg) & ARM64_Reserved)
+         {
+         continue;
+         }
+      if (properties.getPreserved(realReg))
+         {
+         if (killNonVolatileGPRs)
+            {
+            // We release VM access around the native call,
+            // so even though the callee's linkage won't alter a
+            // given register, we still have a problem if a stack walk needs to
+            // inspect/modify that register because once we're in C-land, we have
+            // no idea where that regsiter's value is located.  Therefore, we need
+            // to spill even the callee-saved registers around the call.
+            //
+            // In principle, we only need to do this for registers that contain
+            // references.  However, at this location in the code, we don't yet
+            // know which real registers those would be.  Tragically, this causes
+            // us to save/restore ALL preserved registers in any method containing
+            // a JNI call.
+            TR::addDependency(dependencies, NULL, realReg, TR_GPR, cg());
+            }
+         continue;
+         }
+
+      if (!dependencies->searchPreConditionRegister(realReg))
+         {
+         if (realReg == properties.getIntegerArgumentRegister(0) && callNode->getDataType() == TR::Address)
+            {
+            dependencies->addPreCondition(cg()->allocateRegister(), TR::RealRegister::x0);
+            dependencies->addPostCondition(cg()->allocateCollectedReferenceRegister(), TR::RealRegister::x0);
+            }
+         else
+            {
+            TR::addDependency(dependencies, NULL, realReg, TR_GPR, cg());
+            }
+         }
+      }
+
+   int32_t floatRegsUsed = std::min<int32_t>(numFloatArgs, properties.getNumFloatArgRegs());
+   for (i = (TR::RealRegister::RegNum)((uint32_t)TR::RealRegister::v0 + floatRegsUsed); i <= TR::RealRegister::LastFPR; i++)
+      {
+      if (!properties.getPreserved((TR::RealRegister::RegNum)i))
+         {
+         // NULL dependency for non-preserved regs
+         TR::addDependency(dependencies, NULL, (TR::RealRegister::RegNum)i, TR_FPR, cg());
+         }
+      }
+
+   if (numMemArgs > 0)
+      {
+      TR::RealRegister *sp = cg()->machine()->getRealRegister(properties.getStackPointerRegister());
+      generateTrg1Src1ImmInstruction(cg(), TR::InstOpCode::subimmx, callNode, argMemReg, sp, totalSize);
+
+      for (argIndex = 0; argIndex < numMemArgs; argIndex++)
+         {
+         TR::Register *aReg = pushToMemory[argIndex].argRegister;
+         generateMemSrc1Instruction(cg(), pushToMemory[argIndex].opCode, callNode, pushToMemory[argIndex].argMemory, aReg);
+         cg()->stopUsingRegister(aReg);
+         }
+
+      cg()->stopUsingRegister(argMemReg);
+      }
+
+   return totalSize;
    }
 
 TR::Register *J9::ARM64::JNILinkage::getReturnRegisterFromDeps(TR::Node *callNode, TR::RegisterDependencyConditions *deps)
@@ -329,8 +606,94 @@ TR::Register *J9::ARM64::JNILinkage::getReturnRegisterFromDeps(TR::Node *callNod
 
 TR::Register *J9::ARM64::JNILinkage::pushJNIReferenceArg(TR::Node *child)
    {
-   TR_UNIMPLEMENTED();
-   return NULL;
+   TR::Register *pushRegister;
+   bool         checkSplit = true;
+
+   if (child->getOpCodeValue() == TR::loadaddr)
+      {
+      TR::SymbolReference * symRef = child->getSymbolReference();
+      TR::StaticSymbol *sym = symRef->getSymbol()->getStaticSymbol();
+      if (sym)
+         {
+         if (sym->isAddressOfClassObject())
+            {
+            pushRegister = pushAddressArg(child);
+            }
+         else
+            {
+            TR::Register *addrReg = cg()->evaluate(child);
+            TR::MemoryReference *tmpMemRef = new (trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg());
+            TR::Register *whatReg = cg()->allocateCollectedReferenceRegister();
+
+            checkSplit = false;
+            generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, child, whatReg, tmpMemRef);
+            if (!cg()->canClobberNodesRegister(child))
+               {
+               // Since this is a static variable, it is non-collectable.
+               TR::Register *tempRegister = cg()->allocateRegister();
+               generateMovInstruction(cg(), child, tempRegister, addrReg);
+               pushRegister = tempRegister;
+               }
+            else
+               pushRegister = addrReg;
+            generateCompareImmInstruction(cg(), child, whatReg, 0, true);
+            generateCondTrg1Src2Instruction(cg(), TR::InstOpCode::cselx, child, pushRegister, pushRegister, whatReg, TR::CC_NE);
+
+            cg()->stopUsingRegister(whatReg);
+            cg()->decReferenceCount(child);
+            }
+         }
+      else // must be loadaddr of parm or local
+         {
+         if (child->pointsToNonNull())
+            {
+            pushRegister = pushAddressArg(child);
+            }
+         else if (child->pointsToNull())
+            {
+            checkSplit = false;
+            pushRegister = cg()->allocateRegister();
+            loadConstant64(cg(), child, 0, pushRegister);
+            cg()->decReferenceCount(child);
+            }
+         else
+            {
+            TR::Register *addrReg = cg()->evaluate(child);
+            TR::MemoryReference *tmpMemRef = new (trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg());
+            TR::Register *whatReg = cg()->allocateCollectedReferenceRegister();
+
+            checkSplit = false;
+            generateTrg1MemInstruction(cg(), TR::InstOpCode::ldrimmx, child, whatReg, tmpMemRef);
+            if (!cg()->canClobberNodesRegister(child))
+               {
+               // Since this points at a parm or local location, it is non-collectable.
+               TR::Register *tempRegister = cg()->allocateRegister();
+               generateMovInstruction(cg(), child, tempRegister, addrReg);
+               pushRegister = tempRegister;
+               }
+            else
+               pushRegister = addrReg;
+            generateCompareImmInstruction(cg(), child, whatReg, 0, true);
+            generateCondTrg1Src2Instruction(cg(), TR::InstOpCode::cselx, child, pushRegister, pushRegister, whatReg, TR::CC_NE);
+
+            cg()->stopUsingRegister(whatReg);
+            cg()->decReferenceCount(child);
+            }
+         }
+      }
+   else
+      {
+      pushRegister = pushAddressArg(child);
+      }
+
+   if (checkSplit && !cg()->canClobberNodesRegister(child, 0))
+      {
+      TR::Register *tempReg = pushRegister->containsCollectedReference()?
+        cg()->allocateCollectedReferenceRegister():cg()->allocateRegister();
+      generateMovInstruction(cg(), child, tempReg, pushRegister);
+      pushRegister = tempReg;
+      }
+   return pushRegister;
    }
 
 void J9::ARM64::JNILinkage::adjustReturnValue(TR::Node *callNode, bool wrapRefs, TR::Register *returnRegister)
