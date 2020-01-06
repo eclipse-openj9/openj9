@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2010, 2019 IBM Corp. and others
+ * Copyright (c) 2010, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,10 +27,8 @@ package com.ibm.jvm;
 /*[ENDIF]*/
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.RandomAccessFile;
@@ -83,7 +81,6 @@ public class TraceFormat
 		ProgramOption.addOption(Verbose.class);
 		ProgramOption.addOption(Debug.class);
 		ProgramOption.addOption(Statistics.class);
-		
 		
 		/* The trace context holds the configuration and state for the parsing */
 		TraceContext context;
@@ -234,8 +231,7 @@ public class TraceFormat
 		
 		/* output the summary information */
 		output.println(context.summary());
-		
-		
+
 		if (summary.booleanValue() && !statistics.booleanValue()) {
 			/* we've requested only the summary so exit here */
 			output.close();
@@ -479,7 +475,6 @@ class Verbose extends ProgramOption {
 	
 }
 
-
 class Statistics extends ProgramOption {
 	boolean statistics;
 	
@@ -530,8 +525,12 @@ class MessageFile extends ProgramOption {
 		String eol = System.getProperty("line.separator", "\n");
 		return "A comma separated list of files containing the trace format strings. By default the following files are used:" + eol
 			 + "  $JAVA_HOME/lib/J9TraceFormat.dat" + eol
-			 + "  $JAVA_HOME/lib/OMRTraceFormat.dat" + eol
-			 + "  $JAVA_HOME/lib/TraceFormat.dat";
+			 + "  $JAVA_HOME/lib/OMRTraceFormat.dat"
+			 /*[IF !Sidecar18-SE-OpenJ9]*/
+			 + eol
+			 + "  $JAVA_HOME/lib/TraceFormat.dat"
+			 /*[ENDIF] !Sidecar18-SE-OpenJ9 */
+			 ;
 	}
 
 	String getName() {
@@ -571,11 +570,13 @@ class MessageFile extends ProgramOption {
 		
 		setValue(dir + "J9TraceFormat.dat");
 		setValue(dir + "OMRTraceFormat.dat");
+		/*[IF !Sidecar18-SE-OpenJ9]*/
 		try {
 			setValue(dir + "TraceFormat.dat");
 		} catch (IllegalArgumentException e) {
 			System.out.println("Warning: " + e.getMessage());
 		}
+		/*[ENDIF] !Sidecar18-SE-OpenJ9 */
 	}
 }
 
