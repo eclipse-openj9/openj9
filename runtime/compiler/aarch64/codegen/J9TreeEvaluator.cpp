@@ -1016,3 +1016,20 @@ J9::ARM64::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, boo
 
    return NULL;
    }
+
+TR::Register *J9::ARM64::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::SymbolReference *symRef = node->getSymbolReference();
+   TR::MethodSymbol *callee = symRef->getSymbol()->castToMethodSymbol();
+   TR::Linkage *linkage;
+
+   if (callee->isJNI() && (node->isPreparedForDirectJNI() || callee->getResolvedMethodSymbol()->canDirectNativeCall()))
+      {
+      linkage = cg->getLinkage(TR_J9JNILinkage);
+      }
+   else
+      {
+      linkage = cg->getLinkage(callee->getLinkageConvention());
+      }
+   return linkage->buildDirectDispatch(node);
+   }
