@@ -34,7 +34,6 @@
 #include "CardTable.hpp"
 #include "ClassLoaderRememberedSet.hpp"
 #include "CollectionStatisticsVLHGC.hpp"
-#include "CompressedCardTable.hpp"
 #include "CycleState.hpp"
 #include "Dispatcher.hpp"
 #include "EnvironmentVLHGC.hpp"
@@ -914,7 +913,12 @@ void
 MM_InterRegionRememberedSet::clearFromRegionReferencesForMarkDirect(MM_EnvironmentVLHGC* env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	MM_CardTable *cardTable = MM_GCExtensions::getExtensions(env)->cardTable;
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	MM_CardTable *cardTable = extensions->cardTable;
+	MM_MarkMap *markMap = NULL;
+	if (static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_schedulingDelegate->isFirstPGCAfterGMP()) {
+		markMap = env->_cycleState->_markMap;
+	}
 	U_64 startTime = j9time_hires_clock();
 
 	GC_HeapRegionIteratorVLHGC regionIterator(_heapRegionManager);
@@ -933,11 +937,12 @@ MM_InterRegionRememberedSet::clearFromRegionReferencesForMarkDirect(MM_Environme
 				while(0 != (card = rsclCardIterator.nextReferencingCard(env))) {
 					MM_HeapRegionDescriptorVLHGC *fromRegion = tableDescriptorForRememberedSetCard(card);
 					Card * cardAddress = rememberedSetCardToCardAddr(env, card);
-					/* Regions that are completely swept after a GMP, might still have outgoing references (thus we consider empty regions too) */
-					if (fromRegion->_markData._shouldMark  || !fromRegion->containsObjects() || isDirtyCardForPartialCollect(env, cardTable, cardAddress)) {
+					/* Regions that are completely swept or parts of regions that are partially swept after a GMP might still have outgoing references. If they do, cards should be removed. */
+					if (fromRegion->_markData._shouldMark  || !cardMayContainObjects(card, fromRegion, markMap) || isDirtyCardForPartialCollect(env, cardTable, cardAddress)) {
 						toRemoveCount += 1;
 						rsclCardIterator.removeCurrentCard(env);
 					}
+
 					totalCountBefore +=1;
 				}
 
@@ -969,8 +974,13 @@ void
 MM_InterRegionRememberedSet::clearFromRegionReferencesForMarkOptimized(MM_EnvironmentVLHGC* env)
 {
 	PORT_ACCESS_FROM_ENVIRONMENT(env);
-	MM_CardTable *cardTable = MM_GCExtensions::getExtensions(env)->cardTable;
-	MM_CompressedCardTable *compressedCardTable = MM_GCExtensions::getExtensions(env)->compressedCardTable;
+	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	MM_CardTable *cardTable = extensions->cardTable;
+	MM_CompressedCardTable *compressedCardTable = extensions->compressedCardTable;
+	MM_MarkMap *markMap = NULL;
+	if (static_cast<MM_CycleStateVLHGC*>(env->_cycleState)->_schedulingDelegate->isFirstPGCAfterGMP()) {
+		markMap = env->_cycleState->_markMap;
+	}
 	U_64 startTime = j9time_hires_clock();
 
 	rebuildCompressedCardTableForMark(env);
@@ -996,16 +1006,16 @@ MM_InterRegionRememberedSet::clearFromRegionReferencesForMarkOptimized(MM_Enviro
 					bool remove = true;
 					if (tableIsReady) {
 						/* Rebuild of Compressed Card Table has been completed - use it */
-						remove = compressedCardTable->isCompressedCardDirtyForPartialCollect(env, convertHeapAddressFromRememberedSetCard(card));
+						remove = isCompressedCardDirtyForPartialCollect(env, card, compressedCardTable, markMap);
 					} else {
 						if (compressedCardTable->isReady()) {
 							tableIsReady = true;
 							/* Rebuild of Compressed Card Table has been completed - use it for first time */
-							remove = compressedCardTable->isCompressedCardDirtyForPartialCollect(env, convertHeapAddressFromRememberedSetCard(card));
+							remove = isCompressedCardDirtyForPartialCollect(env, card, compressedCardTable, markMap);
 						} else {
 							/* rebuild is not complete - look at the region PGC selection and card itself directly */
 							MM_HeapRegionDescriptorVLHGC *fromRegion = tableDescriptorForRememberedSetCard(card);
-							if (fromRegion->containsObjects() && !fromRegion->_markData._shouldMark) {
+							if (cardMayContainObjects(card, fromRegion, markMap) && !fromRegion->_markData._shouldMark) {
 								Card * cardAddress = rememberedSetCardToCardAddr(env, card);
 								remove = isDirtyCardForPartialCollect(env, cardTable, cardAddress);
 							}
