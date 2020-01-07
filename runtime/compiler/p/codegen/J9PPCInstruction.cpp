@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@
 #include "infra/Assert.hpp"
 #include "p/codegen/CallSnippet.hpp"
 #include "runtime/CodeCacheManager.hpp"
+#include "runtime/Runtime.hpp"
 
 uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
    {
@@ -144,7 +145,8 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
           label == NULL && 
           !callToSelf)
          {
-         if (sym && !sym->isHelper() && resolvedMethod)
+         bool callIsJ2ITransition = runtimeHelperValue(TR_j2iTransition) == getSymbolReference()->getMethodAddress();
+         if (sym && !sym->isHelper() && resolvedMethod && !callIsJ2ITransition)
             {
             cg()->addProjectSpecializedRelocation(cursor, (uint8_t *)getSymbolReference()->getMethodAddress(), NULL, TR_MethodCallAddress,
                                __FILE__, __LINE__, getNode());
