@@ -2,9 +2,9 @@
      * Generated automatically by makefixed().
      */
 
-    /* WARNING: this file should *not* be used by applications. It
-       is part of the implementation of the compression library and
-       is subject to change. Applications should only use zlib.h.
+    /* WARNING: this file should *not* be used by applications.
+       It is part of the implementation of this library and is
+       subject to change. Applications should only use zlib.h.
      */
 
     static const code lenfix[512] = {
@@ -92,4 +92,3 @@
         {16,5,4},{24,5,769},{20,5,49},{28,5,12289},{18,5,13},{26,5,3073},
         {22,5,193},{64,5,0}
     };
-
