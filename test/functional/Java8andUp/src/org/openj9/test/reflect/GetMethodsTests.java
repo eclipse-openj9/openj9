@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,7 +44,6 @@ public class GetMethodsTests {
 	private static final String EXAMPLE_CLASS = "org.openj9.test.reflect.ExampleClass."; //$NON-NLS-1$
 	
 	public static final Logger logger = Logger.getLogger(GetMethodsTests.class);
-	private final static boolean isJava8 = System.getProperty("java.specification.version").equals("1.8");  //$NON-NLS-1$//$NON-NLS-2$
 
 	private AsmLoader loader;
 
@@ -119,21 +118,9 @@ public class GetMethodsTests {
 	static HashMap<String, String[]> makeMethodLists() {
 		/* 
 		 * Class.getMethods() erroneously included methods in superinterfaces which are
-		 * overridden in subinterfaces.  This has been corrected in Java 9.
+		 * overridden in subinterfaces.  This has been corrected as of Java 8 151.
 		 */
-		String[] methodList_C_I_SupDuperSupA = isJava8? new String[] {
-				"org.openj9.test.reflect.SuperA.abstractInSuperA_abstractInSuperDuper()void",
-				"org.openj9.test.reflect.SuperA.abstractInSuperA_defaultInSuperDuper()void",
-				"org.openj9.test.reflect.SuperA.defaultInSuperA_abstractInSuperDuper()void",
-				"org.openj9.test.reflect.SuperA.defaultInSuperA_defaultInSuperDuper()void",
-				/* 
-				 * include these because of a known issue in Java 8:
-				 * JDK-8029459 (reflect) getMethods returns methods that are not members of the class
-				 */
-				"org.openj9.test.reflect.SuperDuper.abstractInSuperA_abstractInSuperDuper()void",
-				"org.openj9.test.reflect.SuperDuper.abstractInSuperA_defaultInSuperDuper()void" 
-				}:
-			new String[] {
+		String[] methodList_C_I_SupDuperSupA = new String[] {
 					"org.openj9.test.reflect.SuperA.abstractInSuperA_abstractInSuperDuper()void",
 					"org.openj9.test.reflect.SuperA.abstractInSuperA_defaultInSuperDuper()void",
 					"org.openj9.test.reflect.SuperA.defaultInSuperA_abstractInSuperDuper()void",

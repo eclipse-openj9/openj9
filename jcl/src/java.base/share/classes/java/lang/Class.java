@@ -3836,16 +3836,8 @@ private class MethodInfo {
 
 static boolean methodAOverridesMethodB(Class<?> methodAClass,	boolean methodAIsAbstract, boolean methodAClassIsInterface,
 		Class<?> methodBClass, boolean methodBIsAbstract, boolean methodBClassIsInterface) {
-	return (methodBIsAbstract && methodBClassIsInterface && !methodAIsAbstract && !methodAClassIsInterface) ||
-			(methodBClass.isAssignableFrom(methodAClass)
-					/*[IF !Sidecar19-SE]*/
-					/*
-					 * In Java 8, abstract methods in subinterfaces do not hide abstract methods in superinterfaces.
-					 * This is fixed in Java 9.
-					 */
-					&& (!methodAClassIsInterface || !methodAIsAbstract)
-					/*[ENDIF]*/
-					);
+	return (methodBIsAbstract && methodBClassIsInterface && !methodAIsAbstract && !methodAClassIsInterface) 
+		|| (methodBClass.isAssignableFrom(methodAClass));
 }
 
 /*[PR 125873] Improve reflection cache */
