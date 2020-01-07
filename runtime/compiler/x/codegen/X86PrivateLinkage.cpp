@@ -450,7 +450,6 @@ static TR::Instruction *initializeLocals(TR::Instruction      *cursor,
       //    framePointer[offset + loopReg * pointerSize] = sourceReg;
       //
       TR_ASSERT(count > 0, "positive count required for dword RegImm instruction");
-      TR_ASSERT(NULLVALUE == 0, "sourceReg cannot be used as a base register for non-zero NULL values");
 
       cursor = new (cg->trHeapMemory()) TR::X86RegMemInstruction(
                   cursor,

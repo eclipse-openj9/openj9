@@ -2027,7 +2027,6 @@ VMwrtbarEvaluator(
       if (srcNonNull == false)
          {
          // If object is NULL, done
-         static_assert(NULLVALUE == 0, "NULLVALUE is assumed to be zero here");
          generateRRInstruction(cg, TR::InstOpCode::getLoadTestRegOpCode(), node, srcReg, srcReg);
          generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BE, node, doneLabel);
          }
@@ -5605,7 +5604,6 @@ J9::Z::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node * node, bool n
                && reference->getOpCode().hasSymbolReference()
                && reference->getRegister() == NULL)
             {
-            TR_ASSERT( NULLVALUE == 0, "Can not generate ICM if NULL is not 0");
             bool isInternalPointer = reference->getSymbolReference()->getSymbol()->isInternalPointer();
             if ((reference->getOpCode().isLoadIndirect() || reference->getOpCodeValue() == TR::aload)
                   && !isInternalPointer)
