@@ -114,9 +114,32 @@ cmake:
       - *defaultTests
       - special.system
 #========================================#
+# JITServer
+#========================================#
+jitserver:
+  extra_configure_options: '--enable-jitserver'
+  test_flags: 'JITAAS'
+#========================================#
+# OpenSSL
+#========================================#
+openssl:
+  extra_getsource_options: '--openssl-version=1.1.1d'
+  extra_configure_options: '--with-openssl=fetched'
+#========================================#
+# Freemarker
+#========================================#
+freemarker:
+  freemarker: '/home/jenkins/freemarker.jar'
+#========================================#
+# Reference Repo
+#========================================#
+openjdk_reference_repo:
+  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
+#========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
 ppc64le_linux:
+  extends: ['freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
@@ -124,39 +147,14 @@ ppc64le_linux:
     13: '/usr/lib/jvm/adoptojdk-java-12'
     next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
+    all: 'linux-ppc64le-server-release'
     8: 'linux-ppc64le-normal-server-release'
     11: 'linux-ppc64le-normal-server-release'
-    12: 'linux-ppc64le-server-release'
-    13: 'linux-ppc64le-server-release'
-    next: 'linux-ppc64le-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      11: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      12: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      13: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      next: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-  extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
-    12: '--openssl-version=1.1.1d'
-    13: '--openssl-version=1.1.1d'
-    next: '--openssl-version=1.1.1d'
-  extra_configure_options:
-    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
-    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
-    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
-    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
-    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    build: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
+  extra_configure_options: '--enable-cuda --with-cuda=/usr/local/cuda-9.0'
   build_env:
-    vars:
-      8: 'CC=gcc-7 CXX=g++-7'
-      11: 'CC=gcc-7 CXX=g++-7'
-      12: 'CC=gcc-7 CXX=g++-7'
-      13: 'CC=gcc-7 CXX=g++-7'
-      next: 'CC=gcc-7 CXX=g++-7'
+    vars: 'CC=gcc-7 CXX=g++-7'
   excluded_tests:
     13:
       - special.system
@@ -174,61 +172,14 @@ ppc64le_linux_xl:
 # Linux PPCLE 64bits Compressed Pointers /w JITSERVER
 #========================================#
 ppc64le_linux_jit:
-  boot_jdk:
-    8: '/usr/lib/jvm/adoptojdk-java-80'
-    11: '/usr/lib/jvm/adoptojdk-java-11'
-    12: '/usr/lib/jvm/adoptojdk-java-11'
-    13: '/usr/lib/jvm/adoptojdk-java-12'
-    next: '/usr/lib/jvm/adoptojdk-java-13'
-  release:
-    8: 'linux-ppc64le-normal-server-release'
-    11: 'linux-ppc64le-normal-server-release'
-    12: 'linux-ppc64le-server-release'
-    13: 'linux-ppc64le-server-release'
-    next: 'linux-ppc64le-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      11: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      12: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      13: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-      next: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-  extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
-    12: '--openssl-version=1.1.1d'
-    13: '--openssl-version=1.1.1d'
-    next: '--openssl-version=1.1.1d'
-  extra_configure_options:
-    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
-    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
-    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
-    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
-    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
-  build_env:
-    vars:
-      8: 'CC=gcc-7 CXX=g++-7'
-      11: 'CC=gcc-7 CXX=g++-7'
-      12: 'CC=gcc-7 CXX=g++-7'
-      13: 'CC=gcc-7 CXX=g++-7'
-      next: 'CC=gcc-7 CXX=g++-7'
-  excluded_tests:
-    13:
-      ? special.system
-  test_flags:
-    8: 'JITAAS'
-    11: 'JITAAS'
-    12: 'JITAAS'
-    13: 'JITAAS'
-    next: 'JITAAS'
+  extends: ['ppc64le_linux', 'jitserver']
 #========================================#
 # Linux S390 64bits Compressed Pointers
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
 # IBM 7 for the bootJDK or compiling corba will fail to find Object.
 #========================================#
 s390x_linux:
+  extends: ['freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
@@ -236,39 +187,13 @@ s390x_linux:
     13: '/usr/lib/jvm/adoptojdk-java-12'
     next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
+    all: 'linux-s390x-server-release'
     8: 'linux-s390x-normal-server-release'
     11: 'linux-s390x-normal-server-release'
-    12: 'linux-s390x-server-release'
-    13: 'linux-s390x-server-release'
-    next: 'linux-s390x-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      11: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      12: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      13: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      next: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
+    build: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
   build_env:
-    vars:
-      8: 'CC=gcc-7 CXX=g++-7'
-      11: 'CC=gcc-7 CXX=g++-7'
-      12: 'CC=gcc-7 CXX=g++-7'
-      13: 'CC=gcc-7 CXX=g++-7'
-      next: 'CC=gcc-7 CXX=g++-7'
-  extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
-    12: '--openssl-version=1.1.1d'
-    13: '--openssl-version=1.1.1d'
-    next: '--openssl-version=1.1.1d'
-  extra_configure_options:
-    8: '--with-openssl=fetched'
-    11: '--with-openssl=fetched'
-    12: '--with-openssl=fetched'
-    13: '--with-openssl=fetched'
-    next: '--with-openssl=fetched'
+    vars: 'CC=gcc-7 CXX=g++-7'
   excluded_tests:
     11:
       - special.system
@@ -286,65 +211,14 @@ s390x_linux_xl:
       - special.system
 #========================================#
 # Linux S390 64bits Compressed Pointers /w JITSERVER
-# Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
-# IBM 7 for the bootJDK or compiling corba will fail to find Object.
 #========================================#
 s390x_linux_jit:
-  boot_jdk:
-    8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
-    11: '/usr/lib/jvm/adoptojdk-java-11'
-    12: '/usr/lib/jvm/adoptojdk-java-11'
-    13: '/usr/lib/jvm/adoptojdk-java-12'
-    next: '/usr/lib/jvm/adoptojdk-java-13'
-  release:
-    8: 'linux-s390x-normal-server-release'
-    11: 'linux-s390x-normal-server-release'
-    12: 'linux-s390x-server-release'
-    13: 'linux-s390x-server-release'
-    next: 'linux-s390x-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      11: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      12: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      13: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-      next: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
-  build_env:
-    vars:
-      8: 'CC=gcc-7 CXX=g++-7'
-      11: 'CC=gcc-7 CXX=g++-7'
-      12: 'CC=gcc-7 CXX=g++-7'
-      13: 'CC=gcc-7 CXX=g++-7'
-      next: 'CC=gcc-7 CXX=g++-7'
-  extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
-    12: '--openssl-version=1.1.1d'
-    13: '--openssl-version=1.1.1d'
-    next: '--openssl-version=1.1.1d'
-  extra_configure_options:
-    8: '--with-openssl=fetched --enable-jitserver'
-    11: '--with-openssl=fetched --enable-jitserver'
-    12: '--with-openssl=fetched --enable-jitserver'
-    13: '--with-openssl=fetched --enable-jitserver'
-    next: '--with-openssl=fetched --enable-jitserver'
-  excluded_tests:
-    11:
-      ? special.system
-    13:
-      ? special.system
-  test_flags:
-    8: 'JITAAS'
-    11: 'JITAAS'
-    12: 'JITAAS'
-    13: 'JITAAS'
-    next: 'JITAAS'
+  extends: ['s390x_linux', 'jitserver']
 #========================================#
 # AIX PPC 64bits Compressed Pointers
 #========================================#
 ppc64_aix:
+  extends: ['freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     8: '/usr/java7'
     11: '/usr/java11_64'
@@ -352,32 +226,18 @@ ppc64_aix:
     13: '/usr/java12_64'
     next: '/usr/java13_64'
   release:
+    all: 'aix-ppc64-server-release'
     8: 'aix-ppc64-normal-server-release'
     11: 'aix-ppc64-normal-server-release'
-    12: 'aix-ppc64-server-release'
-    13: 'aix-ppc64-server-release'
-    next: 'aix-ppc64-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
-      11: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
-      12: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
-      13: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
-      next: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
-  extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
-    12: '--openssl-version=1.1.1d'
-    13: '--openssl-version=1.1.1d'
-    next: '--openssl-version=1.1.1d'
+    build: 'ci.role.build && hw.arch.ppc64 && sw.os.aix'
   extra_configure_options:
-    8: '--with-cups-include=/opt/freeware/include --disable-ccache --with-openssl=fetched'
-    11: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-openssl=fetched'
-    12: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-openssl=fetched'
-    13: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-openssl=fetched'
-    next: '--with-cups-include=/opt/freeware/include --disable-warnings-as-errors --with-openssl=fetched'
+    all: '--with-cups-include=/opt/freeware/include'
+    8: ' --disable-ccache'
+    11: '--disable-warnings-as-errors'
+    12: '--disable-warnings-as-errors'
+    13: '--disable-warnings-as-errors'
+    next: '--disable-warnings-as-errors'
   build_env:
     vars:
       8: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
@@ -396,6 +256,7 @@ ppc64_aix:
 # Linux x86 64bits Compressed Pointers
 #========================================#
 x86-64_linux:
+  extends: ['freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     8: '/usr/lib/jvm/jdk-7'
     11: '/usr/lib/jvm/jdk-11'
@@ -403,39 +264,17 @@ x86-64_linux:
     13: '/usr/lib/jvm/adoptojdk-java-12'
     next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
+    all: 'linux-x86_64-server-release'
     8: 'linux-x86_64-normal-server-release'
     11: 'linux-x86_64-normal-server-release'
-    12: 'linux-x86_64-server-release'
-    13: 'linux-x86_64-server-release'
-    next: 'linux-x86_64-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      11: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      12: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      13: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      next: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-  extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
-    12: '--openssl-version=1.1.1d'
-    13: '--openssl-version=1.1.1d'
-    next: '--openssl-version=1.1.1d'
+    build: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
   extra_configure_options:
-    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
-    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
-    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
-    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
-    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched'
+    all: '--enable-cuda --with-cuda=/usr/local/cuda-9.0'
+    8: '--enable-jitserver'
+    11: '--enable-jitserver'
   build_env:
-    cmd:
-      8: 'source /opt/rh/devtoolset-7/enable'
-      11: 'source /opt/rh/devtoolset-7/enable'
-      12: 'source /opt/rh/devtoolset-7/enable'
-      13: 'source /opt/rh/devtoolset-7/enable'
-      next: 'source /opt/rh/devtoolset-7/enable'
+    cmd: 'source /opt/rh/devtoolset-7/enable'
   excluded_tests:
     11:
       - special.system
@@ -452,59 +291,7 @@ x86-64_linux_cm:
 # Linux x86 64bits Compressed Pointers /w JITSERVER
 #========================================#
 x86-64_linux_jit:
-  boot_jdk:
-    8: '/usr/lib/jvm/jdk-7'
-    11: '/usr/lib/jvm/jdk-11'
-    12: '/usr/lib/jvm/jdk-11'
-    13: '/usr/lib/jvm/adoptojdk-java-12'
-    next: '/usr/lib/jvm/adoptojdk-java-13'
-  release:
-    8: 'linux-x86_64-normal-server-release'
-    11: 'linux-x86_64-normal-server-release'
-    12: 'linux-x86_64-server-release'
-    13: 'linux-x86_64-server-release'
-    next: 'linux-x86_64-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
-  node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      11: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      12: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      13: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-      next: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
-  extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
-    12: '--openssl-version=1.1.1d'
-    13: '--openssl-version=1.1.1d'
-    next: '--openssl-version=1.1.1d'
-  extra_configure_options:
-    8: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
-    11: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
-    12: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
-    13: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
-    next: '--enable-cuda --with-cuda=/usr/local/cuda-9.0 --with-openssl=fetched --enable-jitserver'
-  build_env:
-    cmd:
-      8: 'source /opt/rh/devtoolset-7/enable'
-      11: 'source /opt/rh/devtoolset-7/enable'
-      12: 'source /opt/rh/devtoolset-7/enable'
-      13: 'source /opt/rh/devtoolset-7/enable'
-      next: 'source /opt/rh/devtoolset-7/enable'
-  excluded_tests:
-    11:
-      ? special.system
-    12:
-      ? special.system
-    13:
-      ? special.system
-  test_flags:
-    8: 'JITAAS'
-    11: 'JITAAS'
-    12: 'JITAAS'
-    13: 'JITAAS'
-    next: 'JITAAS'
+  extends: ['x86-64_linux', 'jitserver']
 #========================================#
 # Linux x86 64bits Large Heap
 #========================================#
@@ -517,12 +304,11 @@ x86-64_linux_xl:
 # Linux Aarch 64bits Compressed Pointers
 #========================================#
 aarch64_linux:
+  extends: ['freemarker', 'openjdk_reference_repo']
   boot_jdk:
     11: '/usr/lib/jvm/adoptojdk-java-11'
   release:
     11: 'linux-aarch64-normal-server-release'
-  freemarker: '/home/jenkins/freemarker.jar'
-  openjdk_reference_repo: '/home/jenkins/openjdk_cache'
   node_labels:
     build:
       11: 'ci.role.build && hw.arch.aarch64 && sw.os.cent.7'
@@ -542,11 +328,9 @@ x86-64_windows:
     13: '/cygdrive/c/openjdk/jdk12'
     next: '/cygdrive/c/openjdk/jdk13'
   release:
+    all: 'windows-x86_64-server-release'
     8: 'windows-x86_64-normal-server-release'
     11: 'windows-x86_64-normal-server-release'
-    12: 'windows-x86_64-server-release'
-    13: 'windows-x86_64-server-release'
-    next: 'windows-x86_64-server-release'
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
   openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
   extra_configure_options:
@@ -556,19 +340,9 @@ x86-64_windows:
     13: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
     next: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
   node_labels:
-    build:
-      8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-      11: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-      12: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-      13: 'ci.role.build && hw.arch.x86 && sw.os.windows'
-      next: 'ci.role.build && hw.arch.x86 && sw.os.windows'
+    build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
   build_env:
-    vars:
-      8: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-      11: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-      12: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-      13: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
-      next: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
+    vars: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
   excluded_tests:
     11:
       - special.system
@@ -610,6 +384,7 @@ x86-32_windows:
 # OSX x86 64bits Compressed Pointers
 #========================================#
 x86-64_mac:
+  extends: ['openssl']
   boot_jdk:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
@@ -617,32 +392,18 @@ x86-64_mac:
     13: '/Users/jenkins/bootjdks/adoptojdk-java-12'
     next: '/Users/jenkins/bootjdks/adoptojdk-java-13'
   release:
+    all: 'macosx-x86_64-server-release'
     8: 'macosx-x86_64-normal-server-release'
     11: 'macosx-x86_64-normal-server-release'
-    12: 'macosx-x86_64-server-release'
-    13: 'macosx-x86_64-server-release'
-    next: 'macosx-x86_64-server-release'
-  extra_getsource_options:
-    8: '--openssl-version=1.1.1d'
-    11: '--openssl-version=1.1.1d'
-    12: '--openssl-version=1.1.1d'
-    13: '--openssl-version=1.1.1d'
-    next: '--openssl-version=1.1.1d'
   extra_configure_options:
-    8: '--with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer --with-openssl=fetched --enable-openssl-bundling'
-    11: '--with-openssl=fetched --enable-openssl-bundling'
-    12: '--with-openssl=fetched --enable-openssl-bundling'
-    13: '--with-openssl=fetched --enable-openssl-bundling'
-    next: '--with-openssl=fetched --enable-openssl-bundling'
+    all: '--enable-openssl-bundling'
+    8: '--with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer'
   freemarker: '/Users/jenkins/freemarker.jar'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
   node_labels:
     build:
+      all: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
       8: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_11'
-      11: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
-      12: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
-      13: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
-      next: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_13'
   build_env:
     vars:
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
