@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -6333,14 +6333,18 @@ TR_ResolvedJ9Method::getVirtualMethod(TR_J9VMBase *fej9, J9ConstantPool *cp, I_3
       TR::VMAccessCriticalSection resolveVirtualMethodRef(fej9);
       *vTableOffset = fej9->_vmFunctionTable->resolveVirtualMethodRefInto(fej9->vmThread(), cp, cpIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME, &ramMethod, NULL);
       }
-   else if (!isInvokePrivateVTableOffset(*vTableOffset))
+   else
       {
-      // go fishing for the J9Method...
-      uint32_t classIndex = ((J9ROMMethodRef *) cp->romConstantPool)[cpIndex].classRefCPIndex;
-      J9Class * classObject = (((J9RAMClassRef*) literals)[classIndex]).value;
-      ramMethod = *(J9Method **)((char *)classObject + *vTableOffset);
       if (unresolvedInCP)
          *unresolvedInCP = false;
+
+      if (!isInvokePrivateVTableOffset(*vTableOffset))
+         {
+         // go fishing for the J9Method...
+         uint32_t classIndex = ((J9ROMMethodRef *) cp->romConstantPool)[cpIndex].classRefCPIndex;
+         J9Class * classObject = (((J9RAMClassRef*) literals)[classIndex]).value;
+         ramMethod = *(J9Method **)((char *)classObject + *vTableOffset);
+         }
       }
 
    if (isInvokePrivateVTableOffset(*vTableOffset))
