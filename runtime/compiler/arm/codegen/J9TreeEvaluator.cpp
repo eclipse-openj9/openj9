@@ -106,11 +106,7 @@ J9::ARM::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, bool 
 
       TR::Register    *targetRegister = cg->evaluate(reference);
 
-#if (NULLVALUE==0)
       generateSrc2Instruction(cg, ARMOp_tst, node, targetRegister, targetRegister);
-#else
-#error("NULL is not 0, must fix");
-#endif
 
       TR::SymbolReference *NULLCHKException = node->getSymbolReference();
       TR::Instruction *instr1 = generateImmSymInstruction(cg, ARMOp_bl, node, (uintptr_t)NULLCHKException->getMethodAddress(), NULL, NULLCHKException, NULL, NULL, ARMConditionCodeEQ);
