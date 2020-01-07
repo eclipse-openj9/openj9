@@ -273,7 +273,7 @@ public void test_getMethods_subtest1() {
 		AssertJUnit.assertTrue("Expected method " + expected_IC[i] + " not found.", match);
 	}
 
-	/* as of Java 9, IC.method_L() masks IA.method_L() */
+	/* as of Java 8 151, IC.method_L() masks IA.method_L() */
 	String[]	expected_CD = new String[] {
 			"CD.method_N(java.lang.String)",
 			"IA.method_M(java.lang.String)",
@@ -444,7 +444,7 @@ public void testInterfaceMethodInheritance() {
 	HashMap<Class, String[]> expectedMethods = new HashMap<>();
 	
 	/*
-	 * As of Java 9, method declarations in subinterfaces hide declarations of the same method in superinterfaces.
+	 * As of Java 8 151, method declarations in subinterfaces hide declarations of the same method in superinterfaces.
 	 * This means that the following methods are not inherited by implementers of M3:
 	 * InterfaceTestClasses$I1.m1
 	 * InterfaceTestClasses$I1.m2
@@ -501,7 +501,7 @@ public void testDefaultMethodInheritance() {
 	Class testClasses[] = new Class[] {C_CSuperA_SuperDuper.class, C_I_SupDuperSupA.class, C_SuperA.class, I_SupDuper_SupA.class, SuperA.class, SuperDuper.class};
 	HashMap<Class, String[]> expectedMethods = new HashMap<>();
 	/*
-	 * As of Java 9, method declarations in subinterfaces hide declarations of the same method in superinterfaces.
+	 * As of Java 8 151, method declarations in subinterfaces hide declarations of the same method in superinterfaces.
 	 * This means that the following methods are now hidden in implementers of SuperA:
 	 * SuperDuper.abstractInSuperA_abstractInSuperDuper()
 	 * SuperDuper.abstractInSuperA_defaultInSuperDuper()
