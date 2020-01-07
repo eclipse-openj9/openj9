@@ -3,7 +3,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 2005, 2018 IBM Corp. and others
+ * Copyright (c) 2005, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -198,7 +198,7 @@ public StringBuilder append (char[] chars) {
 	
 	if (String.enableCompression) {
 		// Check if the StringBuilder is compressed
-		if (count >= 0 && String.compressible(chars, 0, chars.length)) {
+		if (count >= 0 && String.canEncodeAsLatin1(chars, 0, chars.length)) {
 			if (newLength > currentCapacity) {
 				ensureCapacityImpl(newLength);
 			}
@@ -255,7 +255,7 @@ public StringBuilder append (char chars[], int start, int length) {
 		
 		if (String.enableCompression) {
 			// Check if the StringBuilder is compressed
-			if (count >= 0 && String.compressible(chars, start, length)) {
+			if (count >= 0 && String.canEncodeAsLatin1(chars, start, length)) {
 				if (newLength > currentCapacity) {
 					ensureCapacityImpl(newLength);
 				}
@@ -839,7 +839,7 @@ public StringBuilder insert(int index, char[] chars) {
 		
 		if (String.enableCompression) {
 			// Check if the StringBuilder is compressed
-			if (count >= 0 && String.compressible(chars, 0, chars.length)) {
+			if (count >= 0 && String.canEncodeAsLatin1(chars, 0, chars.length)) {
 				String.compress(chars, 0, value, index, chars.length);
 				
 				count = currentLength + chars.length;
@@ -893,7 +893,7 @@ public StringBuilder insert(int index, char[] chars, int start, int length) {
 			
 			if (String.enableCompression) {
 				// Check if the StringBuilder is compressed
-				if (count >= 0 && String.compressible(chars, start, length)) {
+				if (count >= 0 && String.canEncodeAsLatin1(chars, start, length)) {
 					String.compress(chars, start, value, index, length);
 					
 					count = currentLength + length;
@@ -1783,7 +1783,7 @@ private void readObject(ObjectInputStream stream) throws IOException, ClassNotFo
 	} 
 	
 	if (String.enableCompression) {
-		if (String.compressible(streamValue, 0, streamValue.length)) {
+		if (String.canEncodeAsLatin1(streamValue, 0, streamValue.length)) {
 			if (streamValue.length == Integer.MAX_VALUE) {
 				value = new char[(streamValue.length / 2) + 1];
 			} else {
