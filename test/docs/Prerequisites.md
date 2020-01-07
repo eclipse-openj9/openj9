@@ -31,4 +31,3 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 Note for Windows testing, cygwin is also required.  
 
-** If using old Perl based Testkitgen, need additional JSON, Text::CSV and XML::Parser module installed
