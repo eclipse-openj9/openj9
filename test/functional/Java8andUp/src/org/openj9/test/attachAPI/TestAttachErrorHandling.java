@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,15 +96,17 @@ public class TestAttachErrorHandling extends AttachApiTest implements TestConsta
 	public void test_startupShutdownRobustness() throws IOException {
 		File ipcDir=new File(System.getProperty("java.io.tmpdir"), testName);
 		ipcDir.mkdir();
+		logger.debug("test_startupShutdownRobustness ipcDir = " + ipcDir.getAbsolutePath());
 		File logDir=new File(System.getProperty("java.io.tmpdir"), testName+"_logs");
 		logDir.mkdir();
+		logger.debug("test_startupShutdownRobustness logDir = " + logDir.getAbsolutePath());
 		
 		ArrayList<TargetManager> targets = new ArrayList<TargetManager>();
 		ArrayList<String> vmArgs = new ArrayList<String>();
 		vmArgs.add("-Dcom.ibm.tools.attach.directory="+ ipcDir.getAbsolutePath());
 		vmArgs.add("-Dcom.ibm.tools.attach.logging=yes");
 		vmArgs.add("-Dcom.ibm.tools.attach.log.name="+logDir.getAbsolutePath()+File.separatorChar);
-		for (int i = 0; i < 10; ++i)  {
+		for (int i = 0; i < 5; ++i)  {
 			TargetManager tgt = new TargetManager(TARGET_VM_CLASS, null, vmArgs, null);
 			targets.add(tgt);
 			tgt.syncWithTarget();
@@ -134,21 +136,31 @@ public class TestAttachErrorHandling extends AttachApiTest implements TestConsta
 			}
 			File targetDir = new File(ipcDir, targetId);
 			if (targetDir.exists()) {
-				logger.debug("delete "+victim.getTargetPid());
+				logger.debug("delete " + victim.getTargetPid() + ", " + targetDir.getAbsolutePath());
 				/* note that the error recovery mechanisms may recreate files */
 				deleteRecursive(targetDir, false);
+			} else {
+				logger.debug("targetDir NOT exists for targetID (" + victim.getTargetPid() + ") at " + targetDir.getAbsolutePath());
 			}
 		}
 	}
 
 	private void terminateAndCheckLogs(File logDir, TargetManager tgt) {
 		String targetPid = tgt.getTargetPid();
-		logger.debug("terminate "+targetPid);
+		logger.debug("terminateAndCheckLogs: terminate " + tgt + " with targetPid = " + targetPid);
 		tgt.terminateTarget(true);
-		File logfile = new File(logDir, "_"+targetPid+".log");
+		File logfile = new File(logDir, "_" + targetPid + ".log");
 		String logfilePath = logfile.getAbsolutePath();
 
-		AssertJUnit.assertTrue("cannot find "+logfilePath, logfile.exists());
+		logger.debug("logfilePath = " + logfilePath);
+		AssertJUnit.assertTrue("cannot find " + logfilePath, logfile.exists());
+		logger.debug("******* tgt.getOutOutput() starts *******");
+		logger.debug(tgt.getOutOutput());
+		logger.debug("******* tgt.getOutOutput() ends   *******");
+		logger.debug("******* tgt.getErrOutput() starts *******");
+		logger.debug(tgt.getErrOutput());
+		logger.debug("******* tgt.getErrOutput() ends   *******");
+		
 		try {
 			BufferedReader logReader = new BufferedReader(new FileReader(logfile));
 			String line;
