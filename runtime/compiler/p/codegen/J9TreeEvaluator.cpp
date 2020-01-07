@@ -135,25 +135,14 @@ static TR::RegisterDependencyConditions *createConditionsAndPopulateVSXDeps(TR::
 
 static TR::Instruction *genNullTest(TR::Node *node, TR::Register *objectReg, TR::Register *crReg, TR::CodeGenerator *cg, TR::Instruction *cursor = NULL)
    {
-#if (NULLVALUE <= UPPER_IMMED && NULLVALUE >= LOWER_IMMED)
    cursor = generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpli, node, crReg, objectReg, NULLVALUE, cursor);
-#else
-#error "The NULL value cannot be contained in a 16-bit signed immediate."
-#endif
    return cursor;
    }
 
 static inline TR::Instruction *genNullTest(TR::Node *node, TR::Register *objectReg, TR::Register *crReg, TR::Register *scratchReg, TR::Instruction *cursor, TR::CodeGenerator *cg)
    {
    TR::Instruction *iRet;
-
-#if (NULLVALUE<=UPPER_IMMED && NULLVALUE>=LOWER_IMMED)
    iRet = generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpli, node, crReg, objectReg, NULLVALUE, cursor);
-#else
-   iRet = loadConstant(cg, node, NULLVALUE, scratchReg, cursor);
-   iRet = generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, crReg, objectReg,
-         scratchReg, (cursor==NULL)?NULL:iRet);
-#endif
    return (iRet);
    }
 
@@ -386,7 +375,6 @@ VMoutlinedHelperWrtbarEvaluator(
 
    if (!srcIsNonNull)
       {
-      TR_ASSERT(NULLVALUE <= UPPER_IMMED && NULLVALUE >= LOWER_IMMED, "Expecting NULLVALUE to fit in immediate field");
       srcNullCondReg = cg->allocateRegister(TR_CCR);
       generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpli, node, srcNullCondReg, srcObjectReg, NULLVALUE);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, doneWrtbarLabel, srcNullCondReg);
@@ -885,12 +873,7 @@ static void VMwrtbarEvaluator(TR::Node *node, TR::Register *srcReg, TR::Register
          }
       if (!srcNonNull && !TR::Options::getCmdLineOptions()->realTimeGC())
          {
-#if (NULLVALUE <= UPPER_IMMED && NULLVALUE >= LOWER_IMMED)
          generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpi, node, cr0, srcReg, NULLVALUE);
-#else
-         loadConstant(node, NULLVALUE, temp1Reg);
-         generateTrg1Src2Instruction(cg,TR::InstOpCode::Op_cmpl, node, cr0, srcReg, temp1Reg);
-#endif
          generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, label, cr0);
          }
 
@@ -3393,7 +3376,6 @@ static void VMoutlinedHelperArrayStoreCHKEvaluator(TR::Node *node, TR::Register 
 
    if (!srcIsNonNull)
       {
-      TR_ASSERT(NULLVALUE <= UPPER_IMMED && NULLVALUE >= LOWER_IMMED, "Expecting NULLVALUE to fit in immediate field");
       srcNullCondReg = cg->allocateRegister(TR_CCR);
       generateTrg1Src1ImmInstruction(cg,TR::InstOpCode::Op_cmpli, node, srcNullCondReg, srcReg, NULLVALUE);
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, doneArrayStoreCHKLabel, srcNullCondReg);
