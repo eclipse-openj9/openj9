@@ -6896,6 +6896,10 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
       (!JITServerHelpers::isServerAvailable() && !JITServerHelpers::shouldRetryConnection(OMRPORT_FROM_J9PORT(_jitConfig->javaVM->portLibrary))))
       doLocalComp = true;
 
+   // Do a local compile because the Power codegen is missing some FieldWatch relocation support.
+   if (TR::Compiler->target.cpu.isPower() && _jitConfig->inlineFieldWatches)
+      doLocalComp = true;
+
    return doLocalComp;
    }
 #endif /* defined(JITSERVER_SUPPORT) */
