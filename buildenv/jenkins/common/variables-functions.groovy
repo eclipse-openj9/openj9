@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -543,8 +543,7 @@ def set_node(job_type) {
 
     if (!NODE) {
         // fetch from variables file
-        def spec = buildspec_manager.getSpec(SPEC)
-        NODE = spec.getScalarField("node_labels.${job_type}", SDK_VERSION)
+        NODE = buildspec_manager.getSpec(SPEC).getScalarField("node_labels.${job_type}", SDK_VERSION)
         if (!NODE) {
             error("Missing ${job_type} NODE!")
         }
@@ -556,15 +555,14 @@ def set_node(job_type) {
 * Set the RELEASE variable with the value provided in the variables file.
 */
 def set_release() {
-    def spec = buildspec_manager.getSpec(SPEC)
-    RELEASE = spec.getScalarField("release", SDK_VERSION)
+    RELEASE = buildspec_manager.getSpec(SPEC).getScalarField("release", SDK_VERSION)
 }
 
 /*
 * Set the JDK_FOLDER variable with the value provided in the variables file.
 */
 def set_jdk_folder() {
-    JDK_FOLDER = get_value(VARIABLES.jdk_image_dir, SDK_VERSION)
+    JDK_FOLDER = buildspec_manager.getSpec('misc').getScalarField("jdk_image_dir", SDK_VERSION)
 }
 
 /*
