@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -348,5 +348,11 @@ if(NOT JAVA_SPEC_VERSION LESS 14)
 	jvm_add_exports(jvm
 		# Additions for Java 14 (General)
 		JVM_GetExtendedNPEMessage
+	)
+endif()
+
+if(JITSERVER_SUPPORT)
+	jvm_add_exports(jvm
+		JITServer_CreateServer
 	)
 endif()

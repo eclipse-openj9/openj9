@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,6 +68,12 @@ extern "C" {
 
 #if defined(J9VM_ENV_DATA64)
 #define J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
+#endif
+
+#if defined(J9VM_BUILD_JITSERVER)
+#ifndef JITSERVER_SUPPORT
+#define JITSERVER_SUPPORT
+#endif
 #endif
 
 #ifdef __cplusplus

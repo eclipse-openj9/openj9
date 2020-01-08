@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -635,19 +635,6 @@ static void jitHookInitializeSendTarget(J9HookInterface * * hook, UDATA eventNum
             TR::Options::sharedClassCache() ? TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM)->sharedCache()->isPointerInSharedCache(J9_CLASS_FROM_METHOD(method)->romClass) : 0,containsInfo) ; fflush(stdout);
       }
    }
-
-#if defined(JITSERVER_SUPPORT)
-static void jitHookVMInitialized(J9HookInterface * * hook, UDATA eventNum, void * eventData, void * userData)
-   {
-   J9VMThread* vmThread = ((J9VMInitEvent *)eventData)->vmThread;
-   TR::CompilationInfo *compInfo = getCompilationInfo(vmThread->javaVM->jitConfig);
-   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-      {
-      fprintf(stderr, "\nJITServer ready to accept incoming requests\n");
-      j9thread_sleep(10000000000);
-      }
-   }
-#endif
 
 #if defined(J9VM_INTERP_PROFILING_BYTECODES)
 
@@ -7145,39 +7132,6 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
          }
       }
 
-#if defined(JITSERVER_SUPPORT)   
-   if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-      {
-      TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener;
-      listener->startListenerThread(javaVM);
-
-      if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Started JITServer listener thread: %p ", listener->getListenerThread());
-
-      if (jitConfig->samplingFrequency != 0)
-         {
-         JITServerStatisticsThread *statsThreadObj = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject;
-         // statsThreadObj is guaranteed to be non-null because JITServer will not start if statisticsThreadObject cannot be created
-         statsThreadObj->startStatisticsThread(javaVM);
-         // Verify that statistics thread was started
-         if (!statsThreadObj->getStatisticsThread())
-            {
-            j9tty_printf(PORTLIB, "Error: Unable to start the statistics thread\n");
-            return -1;
-            // If we decide to start even without a statistics thread, we must
-            // free `statsThreadObj` and set the corresponding jitConfig field to NULL
-            }
-         }
-
-      // Give the JIT a chance to do stuff after the VM is initialized
-      if ((*vmHooks)->J9HookRegisterWithCallSite(vmHooks, J9HOOK_VM_INITIALIZED, jitHookVMInitialized, OMR_GET_CALLSITE(), NULL))
-         {
-         j9tty_printf(PORTLIB, "Error: Unable to install J9HOOK_VM_INITIALIZED\n");
-         return -1;
-         }
-      }
-#endif // JITSERVER_SUPPORT
-
    if ((*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_START, jitHookLocalGCStart, OMR_GET_CALLSITE(), NULL) ||
        (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_LOCAL_GC_END, jitHookLocalGCEnd, OMR_GET_CALLSITE(), NULL) ||
        (*gcOmrHooks)->J9HookRegisterWithCallSite(gcOmrHooks, J9HOOK_MM_OMR_GLOBAL_GC_START, jitHookGlobalGCStart, OMR_GET_CALLSITE(), NULL) ||
@@ -7294,5 +7248,50 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    return 0;
    }
 
+#if defined(JITSERVER_SUPPORT)
+int32_t startJITServer(J9JITConfig *jitConfig)
+   {
+   J9JavaVM *javaVM = jitConfig->javaVM;
+   TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener;
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   PORT_ACCESS_FROM_JAVAVM(javaVM);
+
+   TR_ASSERT(compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER, "startJITServer cannot be called in non-server mode\n");
+
+   listener->startListenerThread(javaVM);
+
+   if (TR::Options::getVerboseOption(TR_VerboseJITServer))
+      TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Started JITServer listener thread: %p ", listener->getListenerThread());
+
+   if (jitConfig->samplingFrequency != 0)
+      {
+      JITServerStatisticsThread *statsThreadObj = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject;
+      // statsThreadObj is guaranteed to be non-null because JITServer will not start if statisticsThreadObject cannot be created
+      statsThreadObj->startStatisticsThread(javaVM);
+      // Verify that statistics thread was started
+      if (!statsThreadObj->getStatisticsThread())
+         {
+         j9tty_printf(PORTLIB, "Error: Unable to start the statistics thread\n");
+         return -1;
+         // If we decide to start even without a statistics thread, we must
+         // free `statsThreadObj` and set the corresponding jitConfig field to NULL
+         }
+      }
+   return 0;
+   }
+
+int32_t waitJITServerTermination(J9JITConfig *jitConfig)
+   {
+   J9JavaVM *javaVM = jitConfig->javaVM;
+   TR_Listener *listener = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->listener;
+   TR::CompilationInfo * compInfo = TR::CompilationInfo::get(jitConfig);
+   int32_t rc = 0;
+
+   TR_ASSERT(compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER, "waitJITServerTermination cannot be called in non-server mode\n");
+
+   rc = listener->waitForListenerThreadExit(javaVM);
+   return rc;
+   }
+#endif /* JITSERVER_SUPPORT */
 
 } /* extern "C" */

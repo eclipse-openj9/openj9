@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2019 IBM Corp. and others
+ * Copyright (c) 2002, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,6 +62,11 @@
 #include "vmi.h"
 #include "vmzipcachehook.h"
 #endif
+#if defined(JITSERVER_SUPPORT)
+#include "jitserver_api.h"
+#include "jitserver_error.h"
+#endif /* JITSERVER_SUPPORT */
+
 
 /* Must include this after j9vm_internal.h */
 #include <string.h>
@@ -280,6 +285,7 @@ static void testBackupAndRestoreLibpath(void);
 extern OMRMemCategorySet j9MasterMemCategorySet;
 
 void exitHook(J9JavaVM *vm);
+static jint JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITServer);
 static void* preloadLibrary(char* dllName, BOOLEAN inJVMDir);
 static UDATA protectedStrerror(J9PortLibrary* portLib, void* savedErrno);
 static UDATA strerrorSignalHandler(struct J9PortLibrary* portLibrary, U_32 gpType, void* gpInfo, void* userData);
@@ -292,6 +298,10 @@ static void truncatePath(char *inputPath);
 static jint formatErrorMessage(int errorCode, char *inBuffer, jint inBufferLength);
 #endif
 
+#if defined(JITSERVER_SUPPORT)
+static int32_t startJITServer(struct JITServer *);
+static int32_t waitForJITServerTermination(struct JITServer *);
+#endif /* JITSERVER_SUPPORT */
 
 /**
  * Preload the VM, Thread, and Port libraries using platform-specific
@@ -1496,24 +1506,131 @@ static jint initializeReflectionGlobals(JNIEnv * env, BOOLEAN includeAccessors) 
 	return JNI_OK;
 }
 
-
-
 /**
- *  jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args)
- *  Load and initialize a virtual machine instance.
- *	This provides an invocation API that runs the J9 VM in BFU/sidecar mode
+ * jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args)
+ * Load and initialize a virtual machine instance.
+ * This provides an invocation API that runs the J9 VM in BFU/sidecar mode.
  *
- *  @param pvm pointer to the location where the JavaVM interface
+ * @param pvm pointer to the location where the JavaVM interface
  *			pointer will be placed
- *  @param penv pointer to the location where the JNIEnv interface
+ * @param penv pointer to the location where the JNIEnv interface
  *			pointer for the main thread will be placed
- *	@param vm_args java virtual machine initialization arguments
+ * @param vm_args java virtual machine initialization arguments
  *
- *  @returns zero on success; otherwise, return a negative number
+ * @returns zero on success; otherwise, return a negative number
  *
- *	DLL: jvm
+ * DLL: jvm
  */
 jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
+	return JNI_CreateJavaVM_impl(pvm, penv, vm_args, FALSE);
+}
+
+#if defined(JITSERVER_SUPPORT)
+int32_t JNICALL
+JITServer_CreateServer(JITServer **jitServer, void *serverArgs)
+{
+	JNIEnv *env = NULL;
+	JITServer *server = NULL;
+	jint rc = JITSERVER_OK;
+
+	server = malloc(sizeof(JITServer));
+	if (NULL == server) {
+		rc = JITSERVER_OOM;
+		goto _end;
+	}
+	server->startJITServer = startJITServer;
+	server->waitForJITServerTermination = waitForJITServerTermination;
+	rc = JNI_CreateJavaVM_impl(&server->jvm, (void **)&env, serverArgs, TRUE);
+
+	if (JNI_OK != rc) {
+		rc = JITSERVER_CREATE_FAILED;
+		goto _end;
+	}
+	*jitServer = server;
+	rc = JITSERVER_OK; /* success */
+
+_end:
+	if ((JITSERVER_OK != rc) && (NULL != server)) {
+		free(server);
+	}
+	return rc;
+}
+
+/**
+ * Starts an instance of JITServer.
+ *
+ * @param jitServer pointer to the JITServer interface
+ *
+ * @returns zero on success, else negative error code
+ */
+static int32_t
+startJITServer(JITServer *jitServer)
+{
+	JavaVM *vm = jitServer->jvm;
+	JNIEnv *env = NULL;
+	int32_t rc = JITSERVER_OK;
+
+	rc = (*vm)->AttachCurrentThread(vm, (void **)&env, NULL);
+	if (JNI_OK == rc) {
+		J9JITConfig *jitConfig = ((J9JavaVM *)vm)->jitConfig;
+		rc = jitConfig->startJITServer(jitConfig);
+		if (0 != rc) {
+			rc = JITSERVER_STARTUP_FAILED;
+		} else {
+			rc = JITSERVER_OK;
+		}
+		(*vm)->DetachCurrentThread(vm);
+	} else {
+		rc = JITSERVER_THREAD_ATTACH_FAILED;
+	}
+	return rc;
+}
+
+/**
+ * Wait for JITServer to terminate.
+ *
+ * @param jitServer pointer to the JITServer interface
+ *
+ * @returns zero on success, else negative error code
+ */
+static int32_t
+waitForJITServerTermination(JITServer *jitServer)
+{
+	JavaVM *vm = jitServer->jvm;
+	JNIEnv *env = NULL;
+	int32_t rc = JITSERVER_OK;
+
+	rc = (*vm)->AttachCurrentThread(vm, (void **)&env, NULL);
+	if (JNI_OK == rc) {
+		J9JITConfig *jitConfig = ((J9JavaVM *)vm)->jitConfig;
+		rc = jitConfig->waitJITServerTermination(jitConfig);
+		if (0 != rc) {
+			rc = JITSERVER_WAIT_TERM_FAILED;
+		} else {
+			rc = JITSERVER_OK;
+		}
+		(*vm)->DetachCurrentThread(vm);
+	} else {
+		rc = JITSERVER_THREAD_ATTACH_FAILED;
+	}
+	return rc;
+}
+#endif /* JITSERVER_SUPPORT */
+
+/*
+ * Helper method to load and initialize a virtual machine instance.
+ *
+ * @param pvm pointer to the location where the JavaVM interface
+ *			pointer will be placed
+ * @param penv pointer to the location where the JNIEnv interface
+ *			pointer for the main thread will be placed
+ * @param vm_args java virtual machine initialization arguments
+ *
+ * @returns zero on success; otherwise, return a negative number
+ */
+static jint
+JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITServer)
+{
 	J9JavaVM *j9vm = NULL;
 	jint result = JNI_OK;
 	IDATA xoss = -1;
@@ -1779,6 +1896,11 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 	if (VERBOSE_INIT == localVerboseLevel) {
 		createParams.flags |= J9_CREATEJAVAVM_VERBOSE_INIT;
 	}
+#if defined(JITSERVER_SUPPORT)
+	if (isJITServer) {
+		createParams.flags |= J9_CREATEJAVAVM_START_JITSERVER;
+	}
+#endif /* JITSERVER_SUPPORT */
 
 	if (ibmMallocTraceSet) {
 		/* We have no access to the original command line, so cannot
