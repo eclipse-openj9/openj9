@@ -65,7 +65,7 @@ static UDATA addMulPackageDefinitions(J9VMThread * currentThread, J9Module * fro
 static void removeMulPackageDefinitions(J9VMThread * currentThread, J9Module * fromModule, const char* const* packages, U_32 packagesIndex);
 static UDATA addModuleDefinition(J9VMThread * currentThread, J9Module * fromModule, const char* const* packages, U_32 numPackages, jstring version);
 static BOOLEAN isPackageDefined(J9VMThread * currentThread, J9ClassLoader * classLoader, const char *packageName);
-static BOOLEAN areNoPackagesDefined(J9VMThread * currentThread, J9ClassLoader * classLoader, const char* const* packages, U_32 numPackages, BOOLEAN checkUnnamedModule);
+static BOOLEAN areNoPackagesDefined(J9VMThread * currentThread, J9ClassLoader * classLoader, const char* const* packages, U_32 numPackages);
 static UDATA exportPackageToAll(J9VMThread * currentThread, J9Module * fromModule, const char *package);
 static UDATA exportPackageToAllUnamed(J9VMThread * currentThread, J9Module * fromModule, const char *package);
 static UDATA exportPackageToModule(J9VMThread * currentThread, J9Module * fromModule, const char *package, J9Module * toModule);
@@ -80,8 +80,8 @@ static void freePackage(J9VMThread * currentThread, J9Package * j9package);
 static J9ClassLoader * getModuleObjectClassLoader(J9VMThread * currentThread, j9object_t moduleObject);
 static J9Module * createModule(J9VMThread * currentThread, j9object_t moduleObject, J9ClassLoader * classLoader, j9object_t moduleName);
 static J9Module * getJ9Module(J9VMThread * currentThread, jobject module);
-static BOOLEAN isModuleNameValid(J9VMThread * currentThread, j9object_t moduleName);
-static BOOLEAN isModuleJavaBase(J9VMThread * currentThread, j9object_t moduleName);
+static BOOLEAN isModuleNameValid(j9object_t moduleName);
+static BOOLEAN isModuleJavaBase(j9object_t moduleName);
 static BOOLEAN isModuleNameGood(j9object_t moduleName);
 static UDATA allowReadAccessToModule(J9VMThread * currentThread, J9Module * fromModule, J9Module * toModule);
 static void trcModulesAddReadsModule(J9VMThread *currentThread, jobject toModule, J9Module *j9FromMod, J9Module *j9ToMod);
@@ -419,15 +419,7 @@ addModuleDefinition(J9VMThread * currentThread, J9Module * fromModule, const cha
 	J9ClassLoader * const classLoader = fromModule->classLoader;
 
 	UDATA retval = ERRCODE_GENERAL_FAILURE;
-	int checkUnnamedModule =
-			(classLoader != currentThread->javaVM->systemClassLoader)
-					|| !isModuleJavaBase(currentThread, fromModule->moduleName);
-	/* the bootstrap classloader is exempt from unnamed module checks
-	 * because it may place classes in the unnamed
-	 * module before java.base is created.
-	 */
-	if (!areNoPackagesDefined(currentThread, classLoader, packages, numPackages, checkUnnamedModule))
-	{
+	if (!areNoPackagesDefined(currentThread, classLoader, packages, numPackages)) {
 		retval = ERRCODE_PACKAGE_ALREADY_DEFINED;
 	} else if (isModuleDefined(currentThread, fromModule)) {
 		retval = ERRCODE_MODULE_ALREADY_DEFINED;
@@ -464,10 +456,19 @@ isPackageDefined(J9VMThread * currentThread, J9ClassLoader * classLoader, const 
 }
 
 static BOOLEAN
-areNoPackagesDefined(J9VMThread * currentThread, J9ClassLoader * classLoader, const char* const* packages, U_32 numPackages, BOOLEAN checkUnnamedModule)
+areNoPackagesDefined(J9VMThread * currentThread, J9ClassLoader * classLoader, const char* const* packages, U_32 numPackages)
 {
 	BOOLEAN success = TRUE;
-	J9InternalVMFunctions const * const vmFuncs = currentThread->javaVM->internalVMFunctions;
+	J9JavaVM * vm = currentThread->javaVM;
+	J9InternalVMFunctions const * const vmFuncs = vm->internalVMFunctions;
+
+	 /*
+	 * This check will be ignored for calls to this method that occur before java.base is defined. 
+	 * Classes are loaded before java.base is created that are added to the classHashTable. 
+	 * These classes will eventually be fixed up to be part of java.base, but should not be considered duplicate packages
+	 * before that happens.
+	 */
+	BOOLEAN checkDefinedPackages = J9_ARE_ALL_BITS_SET(vm->runtimeFlags, J9_RUNTIME_JAVA_BASE_MODULE_CREATED);
 
 	if (NULL != packages) {
 		U_32 const arrayLength = numPackages;
@@ -475,10 +476,8 @@ areNoPackagesDefined(J9VMThread * currentThread, J9ClassLoader * classLoader, co
 			U_32 i = 0;
 			for (i = 0; success && (i < arrayLength); i++) {
 				const char *packageName = packages[i];
-				if (isPackageDefined(currentThread, classLoader, packageName)) {
-					success = FALSE;
-				} else if (checkUnnamedModule
-						&& vmFuncs->isAnyClassLoadedFromPackage(classLoader, (U_8*) packageName, strlen(packageName))
+				if (checkDefinedPackages
+				&& vmFuncs->isAnyClassLoadedFromPackage(classLoader, (U_8*) packageName, strlen(packageName))
 				) {
 					success = FALSE;
 				}
@@ -564,10 +563,10 @@ getJ9Module(J9VMThread * currentThread, jobject module)
 }
 
 static BOOLEAN
-isModuleJavaBase(J9VMThread * currentThread, j9object_t moduleName)
+isModuleJavaBase(j9object_t moduleName)
 {
-	return (0 != currentThread->javaVM->internalVMFunctions->compareStringToUTF8(currentThread, moduleName, FALSE,
-			(const U_8 *) "java.base", strlen("java.base")));
+	/** @todo compare against string 'java.base' */
+	return FALSE;
 }
 
 static BOOLEAN
@@ -578,15 +577,14 @@ isModuleNameGood(j9object_t moduleName)
 }
 
 static BOOLEAN
-isModuleNameValid(J9VMThread * currentThread, j9object_t moduleName)
+isModuleNameValid(j9object_t moduleName)
 {
 	BOOLEAN retval = FALSE;
 
 	if (NULL != moduleName) {
-		if (!isModuleJavaBase(currentThread, moduleName)) {
+		retval = TRUE;
+		if (!isModuleJavaBase(moduleName)) {
 			retval = isModuleNameGood(moduleName);
-		} else {
-			retval = TRUE;
 		}
 	}
 
@@ -815,7 +813,7 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 
 		if (NULL == moduleName) {
 			vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, J9NLS_VM_MODULE_IS_UNNAMED);
-		} else if (!isModuleNameValid(currentThread, moduleName)) {
+		} else if (!isModuleNameValid(moduleName)) {
 			vmFuncs->setCurrentExceptionNLS(currentThread, J9VMCONSTANTPOOL_JAVALANGILLEGALARGUMENTEXCEPTION, J9NLS_VM_MODULE_NAME_IS_INVALID);
 		} else if (NULL == classLoader) {
 			/* An exception should be pending if classLoader is null */
