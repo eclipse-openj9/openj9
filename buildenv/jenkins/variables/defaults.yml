@@ -60,12 +60,10 @@ artifactory_manual_cleanup: true
 #========================================#
 # Miscellaneous settings
 #========================================#
-jdk_image_dir:
-  8: 'j2sdk-image'
-  11: 'jdk'
-  13: 'jdk'
-  14: 'jdk'
-  next: 'jdk'
+misc:
+  jdk_image_dir:
+    all: 'jdk'
+    8: 'j2sdk-image'
 credentials:
   github: 'b6987280-6402-458f-bdd6-7affc2e360d4'
 test_dependencies_job_name: 'test.getDependency'

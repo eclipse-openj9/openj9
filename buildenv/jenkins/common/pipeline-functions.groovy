@@ -678,18 +678,18 @@ def setup_pull_request() {
        Jenkins test extended <platform>
        It was tested*/
 
-    def PARSED_BY_NEWLINE_COMMENT = params.ghprbCommentBody.split(/\\r?\\n/)
-    for (COMMENT in PARSED_BY_NEWLINE_COMMENT) {
-        def comment = COMMENT.toLowerCase().tokenize(' ')
-        if (("${comment[0]}" == "jenkins") && (("${comment[1]}" == "compile") || ("${comment[1]}" == "test"))) {
-            setup_pull_request_single_comment(comment)
+    def parsedByNewlineComment = ghprbCommentBody.split(/\\r?\\n/)
+    for (comment in parsedByNewlineComment) {
+        def lowerCaseComment = comment.toLowerCase().tokenize(' ')
+        if (("${lowerCaseComment[0]}" == "jenkins") && (["compile", "test"].contains(lowerCaseComment[1]))) {
+            setup_pull_request_single_comment(lowerCaseComment)
             return
         }
     }
     error("Invalid trigger comment")
 }
 
-def setup_pull_request_single_comment(PARSED_COMMENT) {
+def setup_pull_request_single_comment(parsedComment) {
     // Parse Github trigger comment
     // Jenkins test sanity <platform>*
     // Jenkins test extended <platform>*
@@ -705,62 +705,64 @@ def setup_pull_request_single_comment(PARSED_COMMENT) {
     *
     * Note: Depends logic is already part of the build/compile job and is located in the checkout_pullrequest() function.
     */
-    // Don't both checking PARSED_COMMENT[0] since it is hardcoded in the trigger regex of the Jenkins job.
+    // Don't both checking parsedComment[0] since it is hardcoded in the trigger regex of the Jenkins job.
 
     // Setup TESTS_TARGETS
-    switch ("${PARSED_COMMENT[1]}") {
+    def offset
+    switch ("${parsedComment[1]}") {
         case "compile":
-            if (PARSED_COMMENT.size() < 4) {
+            if (parsedComment.size() < 4) {
                 error("Pull Request trigger comment needs to specify PLATFORM and SDK_VERSION")
             }
             TESTS_TARGETS = 'none'
-            OFFSET = 0
+            offset = 0
             break
         case "test":
-            if (PARSED_COMMENT.size() < 5) {
+            if (parsedComment.size() < 5) {
                 error("Pull Request trigger comment needs to specify TESTS_TARGET, PLATFORM and SDK_VERSION")
             }
-            TESTS_TARGETS = "${PARSED_COMMENT[2]}"
+            TESTS_TARGETS = "${parsedComment[2]}"
             if ("${TESTS_TARGETS}" == "all") {
                 error("Test Target 'all' not allowed for Pull Request builds")
             }
             if ("${TESTS_TARGETS}" == "compile") {
                 TESTS_TARGETS = 'none'
             }
-            OFFSET = 1
+            offset = 1
             break
         default:
-            error("Unable to parse trigger comment. Unknown build option:'${PARSED_COMMENT[1]}'")
+            error("Unable to parse trigger comment. Unknown build option:'${parsedComment[1]}'")
     }
     echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
 
+    def minCommentSize = 1
     // Setup JDK VERSIONS
     switch (ghprbGhRepository) {
         case   ~/.*openj9-openjdk-jdk.*/:
-            TMP_VERSION = ghprbGhRepository.substring(ghprbGhRepository.indexOf('-jdk')+4)
-            if ("${TMP_VERSION}" == "") {
-                TMP_VERSION = 'next'
+            def tmp_version = ghprbGhRepository.substring(ghprbGhRepository.indexOf('-jdk')+4)
+            if ("${tmp_version}" == "") {
+                tmp_version = 'next'
             }
-            RELEASES.add(TMP_VERSION)
-            MIN_COMMENT_SIZE = 3
+            RELEASES.add(tmp_version)
+            minCommentSize = 3
             break
         case "eclipse/openj9":
-            TMP_VERSIONS = PARSED_COMMENT[3+OFFSET].tokenize(',')
-            TMP_VERSIONS.each { VERSION ->
-                echo "VERSION:'${VERSION}'"
-                if ("${VERSION}" == "all") {
+            def tmpVersions = parsedComment[3+offset].tokenize(',')
+            tmpVersions.each { version ->
+                echo "VERSION:'${version}'"
+                if ("${version}" == "all") {
                     error("JDK version 'all' not allowed for Pull Request builds\nExpected 'jdkX' where X is one of ${CURRENT_RELEASES}")
                 }
-                if (!("${VERSION}" ==~ /jdk.*/)) {
-                    error("Incorrect syntax for requested JDK version:'${VERSION}'\nExpected 'jdkX' where X is one of ${CURRENT_RELEASES}")
+                if (!("${version}" ==~ /jdk.*/)) {
+                    error("Incorrect syntax for requested JDK version:'${version}'\nExpected 'jdkX' where X is one of ${CURRENT_RELEASES}")
                 }
-                if (CURRENT_RELEASES.contains(VERSION.substring(3))) {
-                    RELEASES.add(VERSION.substring(3))
+                if (CURRENT_RELEASES.contains(version.substring(3))) {
+                    RELEASES.add(version.substring(3))
                 } else {
-                    error("Unsupported JDK version or incorrect syntax:'${VERSION}'\nExpected 'jdkX' where X is one of ${CURRENT_RELEASES}")
+                    error("Unsupported JDK version or incorrect syntax:'${version}'\nExpected 'jdkX' where X is one of ${CURRENT_RELEASES}")
                 }
             }
-            MIN_COMMENT_SIZE = 4
+            minCommentSize = 4
             break
         default:
             error("Unknown source repo:'${ghprbGhRepository}'")
@@ -768,25 +770,31 @@ def setup_pull_request_single_comment(PARSED_COMMENT) {
 
     echo "RELEASES:'${RELEASES}'"
 
-    if (PARSED_COMMENT.size() < MIN_COMMENT_SIZE) { error("Pull Request trigger comment does not contain enough elements.")}
+    if (parsedComment.size() < minCommentSize) { error("Pull Request trigger comment does not contain enough elements.")}
 
     // Setup PLATFORMS
-    PARSED_PLATFORMS = PARSED_COMMENT[2+OFFSET].tokenize(',')
-    PARSED_PLATFORMS.each { SHORT ->
-        LONG_PLATFORM = SHORT_NAMES["${SHORT}"]
-        if (LONG_PLATFORM) {
-            PLATFORMS.addAll(LONG_PLATFORM)
+    def parsedPlatforms = parsedComment[2+offset].tokenize(',')
+    parsedPlatforms.each { shortName ->
+        def longPlatform = SHORT_NAMES["${shortName}"]
+        if (longPlatform) {
+            PLATFORMS.addAll(longPlatform)
         } else {
             def shortNamesList = []
             SHORT_NAMES.each {
                 shortNamesList.add(it.key)
             }
-            error("Unknown PLATFORM short:'${SHORT}'\nExpected one of:${shortNamesList}")
+            error("Unknown PLATFORM short:'${shortName}'\nExpected one of:${shortNamesList}")
         }
     }
     echo "PLATFORMS:'${PLATFORMS}'"
 
     PERSONAL_BUILD = 'true'
+
+    /*
+     * Override ghprcomment with single line comment. Since checkout_pullrequest
+     * in build.groovy is expecting a single line comment.
+     */
+     ghprbCommentBody = parsedComment.join(' ')
 }
 
 def move_spec_suffix_to_id(spec, id) {

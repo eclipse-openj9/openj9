@@ -594,6 +594,7 @@ jvmtiGetBytecodes(jvmtiEnv* env,
 				case JBcheckcast:
 				case JBldcw:
 				case JBnew:
+				case JBnewdup:
 				case JBinvokehandle:
 				case JBinvokehandlegeneric:
 				case JBinvokestaticsplit:
@@ -606,6 +607,9 @@ jvmtiGetBytecodes(jvmtiEnv* env,
 						U_16 cpIndex = *(U_16 *) &bytecodes[index + 1];
 
 						switch (bc) {
+						case JBnewdup:
+							bytecodes[index] = CFR_BC_new;
+							break;
 						case JBinvokestaticsplit:
 							/* treat cpIndex as index into static split table */
 							cpIndex = *(U_16 *)(J9ROMCLASS_STATICSPLITMETHODREFINDEXES(class->romClass) + cpIndex);
@@ -722,10 +726,6 @@ readdWide:
 
 				case JBaload0getfield:
 					bytecodes[index] = JBaload0;
-					break;
-
-				case JBnewdup:
-					bytecodes[index] = JBnew;
 					break;
 
 				case JBinvokeinterface2:

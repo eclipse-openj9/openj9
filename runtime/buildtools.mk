@@ -1,7 +1,7 @@
 # buildtools Makefile
 
 ###############################################################################
-# Copyright (c) 1998, 2019 IBM Corp. and others
+# Copyright (c) 1998, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -115,9 +115,12 @@ intrel : all makeLibDir
 
 checkSpec :
 
+J9TOOLS_JAR_DIR := $(if $(DEST_DIR),$(DEST_DIR),sourcetools/lib)
+SOURCETOOLS_DIR ?= sourcetools
+
 # build java tools
 buildtools :
-	$(MAKE) -C sourcetools -f buildj9tools.mk FREEMARKER_JAR=$(FREEMARKER_JAR)
+	$(MAKE) -C $(SOURCETOOLS_DIR) -f buildj9tools.mk FREEMARKER_JAR=$(FREEMARKER_JAR)
 
 buildtrace : configure
 ifneq ($(CALLED_BY_SOURCE_ZIP),yes)
@@ -155,7 +158,7 @@ tracing : buildtrace
 	$(MAKE) -f buildtools.mk 'SPEC=$(SPEC)' all_tracesentinels
 	$(MAKE) -f buildtools.mk 'SPEC=$(SPEC)' trace_merge
 
-NLS_NLSTOOL := $(JAVA) -cp sourcetools/lib/j9nls.jar com.ibm.oti.NLSTool.J9NLS
+NLS_NLSTOOL := $(JAVA) -cp $(J9TOOLS_JAR_DIR)/j9nls.jar com.ibm.oti.NLSTool.J9NLS
 NLS_OPTIONS :=
 
 # process NLS files to generate java.properties and NLS header files
@@ -219,7 +222,7 @@ endif
 J9VM_GIT_DIR := $(firstword $(wildcard $(J9_ROOT)/.git) $(wildcard $(J9_ROOT)/workspace/.git))
 J9VM_SHA     ?= $(if $(J9VM_GIT_DIR),$(shell git -C $(dir $(J9VM_GIT_DIR)) rev-parse --short HEAD),developer.compile)
 SPEC_DIR     := buildspecs
-UMA_TOOL     := $(JAVA) -cp "sourcetools/lib/om.jar$(PATHSEP)$(FREEMARKER_JAR)$(PATHSEP)sourcetools/lib/uma.jar" com.ibm.j9.uma.Main
+UMA_TOOL     := $(JAVA) -cp "$(J9TOOLS_JAR_DIR)/om.jar$(PATHSEP)$(FREEMARKER_JAR)$(PATHSEP)$(J9TOOLS_JAR_DIR)/uma.jar" com.ibm.j9.uma.Main
 UMA_OPTIONS  := -rootDir . -configDir $(SPEC_DIR) -buildSpecId $(SPEC)
 UMA_OPTIONS  += -buildId $(BUILD_ID) -buildTag $(J9VM_SHA) -jvf compiler/jit.version
 UMA_OPTIONS  += $(UMA_OPTIONS_EXTRA)
@@ -237,7 +240,7 @@ uma : buildtools copya2e
 	$(UMA_TOOL) $(UMA_OPTIONS)
 
 # process constant pool definition file to generate jcl constant pool definitions and header file
-CONSTANTPOOL_TOOL    := $(JAVA) -cp "sourcetools/lib/om.jar$(PATHSEP)sourcetools/lib/j9vmcp.jar" com.ibm.oti.VMCPTool.Main
+CONSTANTPOOL_TOOL    := $(JAVA) -cp "$(J9TOOLS_JAR_DIR)/om.jar$(PATHSEP)$(J9TOOLS_JAR_DIR)/j9vmcp.jar" com.ibm.oti.VMCPTool.Main
 CONSTANTPOOL_OPTIONS := \
 	-rootDir . \
 	-buildSpecId $(SPEC) \
