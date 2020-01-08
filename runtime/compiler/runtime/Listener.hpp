@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,6 +43,7 @@ public:
    TR_Listener();
    static TR_Listener* allocate();
    void startListenerThread(J9JavaVM *javaVM);
+   int32_t waitForListenerThreadExit(J9JavaVM *javaVM);
    void setAttachAttempted(bool b) { _listenerThreadAttachAttempted = b; }
    bool getAttachAttempted() const { return _listenerThreadAttachAttempted; }
 

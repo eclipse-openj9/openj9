@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,6 +34,7 @@
 #include "jni.h"
 #include "exelib_api.h"
 #include "j9exelibnls.h"
+#include "j9arch.h"
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -156,45 +157,14 @@ static void jvmBufferFree(J9StringBuffer* buffer);
 static BOOLEAN parseGCPolicy(char *buffer, int *value);
 #define MIN_GROWTH 128
 
-#if defined(RS6000) || defined(LINUXPPC)
-#ifdef PPC64
-#ifdef J9VM_ENV_LITTLE_ENDIAN
-#define JVM_ARCH_DIR "ppc64le"
-#else /* J9VM_ENV_LITTLE_ENDIAN */
-#define JVM_ARCH_DIR "ppc64"
-#endif /* J9VM_ENV_LITTLE_ENDIAN */
-#else
-#define JVM_ARCH_DIR "ppc"
-#endif /* PPC64*/
-#elif defined(J9X86) || defined(WIN32)
-#define JVM_ARCH_DIR "i386"
-#elif defined(S390) || defined(J9ZOS390)
-#if defined(S39064) || defined(J9ZOS39064)
-#define JVM_ARCH_DIR "s390x"
-#else
-#define JVM_ARCH_DIR "s390"
-#endif /* S39064 || J9ZOS39064 */
-#elif defined(J9HAMMER)
-#define JVM_ARCH_DIR "amd64"
-#elif defined(J9ARM)
-#define JVM_ARCH_DIR "arm"
-#elif defined(J9AARCH64)
-#define JVM_ARCH_DIR "aarch64"
-#else
-#error "Must define an architecture"
-#endif
-
-#define COMPRESSEDREFS_DIR "compressedrefs"
-#define DEFAULT_DIR "default"
-
 #define XMX	"-Xmx"
 
 /* We use forward slashes here because J9VM_LIB_ARCH_DIR is not used on Windows. */
 #if (JAVA_SPEC_VERSION >= 9) || defined(OSX)
-/* On OSX, <arch> doesn't exist, so JVM_ARCH_DIR shouldn't be included in J9VM_LIB_ARCH_DIR. */
+/* On OSX, <arch> doesn't exist, so OPENJ9_ARCH_DIR shouldn't be included in J9VM_LIB_ARCH_DIR. */
 #define J9VM_LIB_ARCH_DIR "/lib/"
 #else /* (JAVA_SPEC_VERSION >= 9) || defined(OSX) */
-#define J9VM_LIB_ARCH_DIR "/lib/" JVM_ARCH_DIR "/"
+#define J9VM_LIB_ARCH_DIR "/lib/" OPENJ9_ARCH_DIR "/"
 #endif /* (JAVA_SPEC_VERSION >= 9) || defined(OSX) */
 
 #if defined(WIN32)
@@ -632,12 +602,12 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 	}
 
 	/* decode which VM directory to use */
-	basePointer = DEFAULT_DIR;
+	basePointer = OPENJ9_NOCR_JVM_DIR;
 	if ((xnocompressed != -1) && (xcompressed < xnocompressed)) {
-		basePointer = DEFAULT_DIR;
+		basePointer = OPENJ9_NOCR_JVM_DIR;
 		optionUsed = xnocompressedstr;
 	} else if ((xcompressed != -1) && (xnocompressed < xcompressed)) {
-		basePointer = COMPRESSEDREFS_DIR;
+		basePointer = OPENJ9_CR_JVM_DIR;
 		optionUsed = xcompressedstr;
 	} else if (xjvm != -1) {
 		optionUsed = xjvmstr;
@@ -649,7 +619,7 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 		 * and requested heap size is smaller then maximum heap size recommended for compressed refs VM
 		 * set VM to be launched to Compressed References VM
 		 */
-		if (isPackagedWithSubdir(COMPRESSEDREFS_DIR)) {
+		if (isPackagedWithSubdir(OPENJ9_CR_JVM_DIR)) {
 			U_64 maxHeapForCR = 0;
 #if defined(J9ZOS39064)
 			switch (getUserExtendedPrivateAreaMemoryType()) {
@@ -673,7 +643,7 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 			}
 
 			if (requestedHeapSize <= maxHeapForCR) {
-				basePointer = COMPRESSEDREFS_DIR;
+				basePointer = OPENJ9_CR_JVM_DIR;
 			}
 		}
 		}
@@ -683,7 +653,7 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 	 * (eg. compressed ref vm) can't be found, revert to default VM.
 	 */
 	if (!isPackagedWithSubdir(basePointer) && (1 == ignoreUnrecognizedEnabled)) {
-		basePointer = DEFAULT_DIR;
+		basePointer = OPENJ9_NOCR_JVM_DIR;
 	}
 
 	/* if we didn't set the string length already, do it now for the comparison and copy */
@@ -711,7 +681,7 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 		fprintf(stdout, "does not exist.\n");
 
 		/* direct user to OpenJ9 build configurations to properly generate the requested build. */
-		if (DEFAULT_DIR == basePointer) {
+		if (OPENJ9_NOCR_JVM_DIR == basePointer) {
 			fprintf(stdout,
 					"This JVM package only includes the '-Xcompressedrefs' configuration. Please run "
 					"the VM without specifying the '-Xnocompressedrefs' option or by specifying the "
@@ -719,7 +689,7 @@ chooseJVM(JavaVMInitArgs *args, char *retBuffer, size_t bufferLength)
 					"with '--with-noncompressedrefs.\n"
 			);
 		}
-		if (COMPRESSEDREFS_DIR == basePointer) {
+		if (OPENJ9_CR_JVM_DIR == basePointer) {
 			fprintf(stdout,
 					"This JVM package only includes the '-Xnocompressedrefs' configuration. Please run "
 					"the VM without specifying the '-Xcompressedrefs' option or by specifying the "
@@ -949,7 +919,7 @@ JNI_GetDefaultJavaVMInitArgs(void *vm_args)
 static const char *
 isPackagedWithCompressedRefs(void)
 {
-	return strsubdir(COMPRESSEDREFS_DIR);
+	return strsubdir(OPENJ9_CR_JVM_DIR);
 }
 
 static BOOLEAN
