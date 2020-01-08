@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3145,7 +3145,12 @@ TR_IPBCDataCallGraph::loadFromPersistentCopy(TR_IPBCDataStorageHeader * storage,
       {
       if (store->_csInfo.getClazz(i))
          {
-         J9Class *ramClass = ((TR_J9VM *)comp->fej9())->matchRAMclassFromROMclass((J9ROMClass *)comp->fej9()->sharedCache()->pointerFromOffsetInSharedCache(store->_csInfo.getClazz(i)), comp);
+         J9Class *ramClass = NULL;
+
+         uintptrj_t csInfoClazz = store->_csInfo.getClazz(i);
+         if (comp->fej9()->sharedCache()->isPointerInSharedCache((void *)csInfoClazz))
+            ramClass = ((TR_J9VM *)comp->fej9())->matchRAMclassFromROMclass((J9ROMClass *)comp->fej9()->sharedCache()->pointerFromOffsetInSharedCache(csInfoClazz), comp);
+
          if (ramClass)
             {
             _csInfo.setClazz(i, (uintptrj_t)ramClass);
