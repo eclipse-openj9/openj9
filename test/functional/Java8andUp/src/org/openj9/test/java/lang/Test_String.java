@@ -162,9 +162,9 @@ public class Test_String {
 	 */
 	@Test
 	public void test_Constructor10() {
-		char[] buf = { 'H', 'e', 'l', 'l', 'o', 'W', 'o', 'r', 'l', 'd' };
-		String s = new String(buf, 0, buf.length);
-		AssertJUnit.assertTrue("Incorrect string created", hw1.equals(s));
+		char[] buf1 = { 'H', 'e', 'l', 'l', 'o', 'W', 'o', 'r', 'l', 'd' };
+		String s1 = new String(buf1, 0, buf1.length);
+		AssertJUnit.assertTrue("Incorrect string created", hw1.equals(s1));
 
 		boolean exception = false;
 		try {
@@ -173,6 +173,10 @@ public class Test_String {
 			exception = true;
 		}
 		AssertJUnit.assertTrue("Did not throw exception", exception);
+
+		char[] buf2 = { '\u201c', 'X', '\u201d', '\n', '\u201c', 'X', '\u201d' };
+		String s2 = new String(buf2, 4, 3);
+		AssertJUnit.assertTrue("Incorrect string created", s2.equals("\u201cX\u201d"));
 	}
 
 	/**
