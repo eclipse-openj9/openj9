@@ -1107,7 +1107,6 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
          TR::RealRegister *nullValueRegister = gr0;
          int32_t            offset = atlas->getLocalBaseOffset();
 
-         // Note: gr0 will not be suitable if NULLVALUE is out of [LOWER, UPPER)
          cursor = loadConstant(cg(), firstNode, NULLVALUE, nullValueRegister, cursor);
 
          static bool disableUnrollPrologueInitLoop = (feGetEnv("TR_DisableUnrollPrologueInitLoop") != NULL);
