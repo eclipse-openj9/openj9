@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -104,6 +104,9 @@ include(cmake/omr_config.cmake)
 
 if(OPENJ9_BUILD)
 	add_definitions(-DOPENJ9_BUILD)
+endif()
+if (JITSERVER_SUPPORT)
+	add_definitions(-DJITSERVER_SUPPORT)
 endif()
 
 # clean up the variables we used
@@ -591,3 +594,7 @@ endif()
 
 # NOTE this is not conditional in the UMA module.xml
 add_subdirectory(tests)
+
+if (JITSERVER_SUPPORT)
+	add_subdirectory(jitserver_launcher)
+endif()
