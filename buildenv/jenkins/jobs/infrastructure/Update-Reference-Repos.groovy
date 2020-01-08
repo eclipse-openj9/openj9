@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -212,7 +212,7 @@ def config(remoteName, remoteUrl) {
 */
 def get_openjdk_repos(openJdkMap, useDefault) {
     def repos = []
-    def releases = ['8', '11', '12', '13']
+    def releases = ['8', '11', '13', '14', 'next']
 
     // iterate over VARIABLES.openjdk map and fetch the repository URL
     openJdkMap.entrySet().each { mapEntry ->
