@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -81,7 +81,7 @@
  *   ENABLE_SUMMARY_AUTO_REFRESH: Boolean - flag to enable the downstream summary auto-refresh, default: false
  */
 
-CURRENT_RELEASES = ['8', '11', '13', 'next']
+CURRENT_RELEASES = ['8', '11', '13', '14', 'next']
 
 SPECS = ['ppc64_aix'      : CURRENT_RELEASES,
          'ppc64le_linux'  : CURRENT_RELEASES,

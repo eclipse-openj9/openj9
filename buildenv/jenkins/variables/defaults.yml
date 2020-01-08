@@ -32,13 +32,13 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk11.git'
       branch: 'openj9'
-  12:
-    default:
-      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk12.git'
-      branch: 'openj9'
   13:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk13.git'
+      branch: 'openj9'
+  14:
+    default:
+      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk14.git'
       branch: 'openj9'
   next:
     default:
@@ -63,8 +63,8 @@ artifactory_manual_cleanup: true
 jdk_image_dir:
   8: 'j2sdk-image'
   11: 'jdk'
-  12: 'jdk'
   13: 'jdk'
+  14: 'jdk'
   next: 'jdk'
 credentials:
   github: 'b6987280-6402-458f-bdd6-7affc2e360d4'
@@ -77,8 +77,8 @@ build_discarder:
     OMR: 20
     OpenJDK8: 20
     OpenJDK11: 20
-    OpenJDK12: 20
     OpenJDK13: 20
+    OpenJDK14: 20
     OpenJDK: 20
     Personal: 50
     Pipeline: 100
@@ -106,8 +106,8 @@ largeheap:
 cmake:
   extra_configure_options:
     all: '--with-cmake'
-    12: '--disable-ddr'
     13: '--disable-ddr'
+    14: '--disable-ddr'
     next: '--disable-ddr'
   extra_make_options: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
   excluded_tests:
@@ -143,8 +143,8 @@ ppc64le_linux:
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
-    12: '/usr/lib/jvm/adoptojdk-java-11'
     13: '/usr/lib/jvm/adoptojdk-java-12'
+    14: '/usr/lib/jvm/adoptojdk-java-13'
     next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
     all: 'linux-ppc64le-server-release'
@@ -155,9 +155,6 @@ ppc64le_linux:
   extra_configure_options: '--enable-cuda --with-cuda=/usr/local/cuda-9.0'
   build_env:
     vars: 'CC=gcc-7 CXX=g++-7'
-  excluded_tests:
-    13:
-      - special.system
 #========================================#
 # Linux PPCLE 64bits Large Heap
 #========================================#
@@ -183,8 +180,8 @@ s390x_linux:
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
-    12: '/usr/lib/jvm/adoptojdk-java-11'
     13: '/usr/lib/jvm/adoptojdk-java-12'
+    14: '/usr/lib/jvm/adoptojdk-java-13'
     next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
     all: 'linux-s390x-server-release'
@@ -196,8 +193,6 @@ s390x_linux:
     vars: 'CC=gcc-7 CXX=g++-7'
   excluded_tests:
     11:
-      - special.system
-    13:
       - special.system
 #========================================#
 # Linux S390 64bits Large Heap
@@ -222,8 +217,8 @@ ppc64_aix:
   boot_jdk:
     8: '/usr/java7'
     11: '/usr/java11_64'
-    12: '/usr/java11_64'
     13: '/usr/java12_64'
+    14: '/usr/java13_64'
     next: '/usr/java13_64'
   release:
     all: 'aix-ppc64-server-release'
@@ -235,22 +230,18 @@ ppc64_aix:
     all: '--with-cups-include=/opt/freeware/include'
     8: ' --disable-ccache'
     11: '--disable-warnings-as-errors'
-    12: '--disable-warnings-as-errors'
     13: '--disable-warnings-as-errors'
+    14: '--disable-warnings-as-errors'
     next: '--disable-warnings-as-errors'
   build_env:
     vars:
       8: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
       11: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
-      12: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
       13: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
+      14: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
   excluded_tests:
     11:
-      - special.system
-    12:
-      - special.system
-    13:
       - special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers
@@ -260,8 +251,8 @@ x86-64_linux:
   boot_jdk:
     8: '/usr/lib/jvm/jdk-7'
     11: '/usr/lib/jvm/jdk-11'
-    12: '/usr/lib/jvm/jdk-11'
     13: '/usr/lib/jvm/adoptojdk-java-12'
+    14: '/usr/lib/jvm/adoptojdk-java-13'
     next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
     all: 'linux-x86_64-server-release'
@@ -277,10 +268,6 @@ x86-64_linux:
     cmd: 'source /opt/rh/devtoolset-7/enable'
   excluded_tests:
     11:
-      - special.system
-    12:
-      - special.system
-    13:
       - special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers /w CMake
@@ -324,8 +311,8 @@ x86-64_windows:
   boot_jdk:
     8: '/cygdrive/c/openjdk/jdk7'
     11: '/cygdrive/c/openjdk/jdk11'
-    12: '/cygdrive/c/openjdk/jdk11'
     13: '/cygdrive/c/openjdk/jdk12'
+    14: '/cygdrive/c/openjdk/jdk13'
     next: '/cygdrive/c/openjdk/jdk13'
   release:
     all: 'windows-x86_64-server-release'
@@ -336,8 +323,8 @@ x86-64_windows:
   extra_configure_options:
     8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
     11: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-    12: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling'
     13: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
+    14: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
     next: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
@@ -345,8 +332,6 @@ x86-64_windows:
     vars: 'PATH+TOOLS=/cygdrive/c/openjdk/LLVM64/bin:/cygdrive/c/openjdk/nasm-2.13.03'
   excluded_tests:
     11:
-      - special.system
-    13:
       - special.system
 #========================================#
 # Windows x86 64bits Large Heap
@@ -374,12 +359,6 @@ x86-32_windows:
   excluded_tests:
     8:
       - special.system
-    11:
-      - special.system
-    12:
-      - special.system
-    13:
-      - special.system
 #========================================#
 # OSX x86 64bits Compressed Pointers
 #========================================#
@@ -388,8 +367,8 @@ x86-64_mac:
   boot_jdk:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
-    12: '/Users/jenkins/bootjdks/adoptojdk-java-11'
     13: '/Users/jenkins/bootjdks/adoptojdk-java-12'
+    14: '/Users/jenkins/bootjdks/adoptojdk-java-13'
     next: '/Users/jenkins/bootjdks/adoptojdk-java-13'
   release:
     all: 'macosx-x86_64-server-release'
@@ -409,10 +388,6 @@ x86-64_mac:
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
   excluded_tests:
     11:
-      - special.system
-    12:
-      - special.system
-    13:
       - special.system
 #========================================#
 # OSX x86 64bits Large Heap
