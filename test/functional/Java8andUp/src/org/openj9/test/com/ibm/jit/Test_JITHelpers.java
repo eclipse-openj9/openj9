@@ -382,13 +382,8 @@ public class Test_JITHelpers {
 			char[] converted = Arrays.copyOfRange(uppercaseLatin1Char, 0, (j + 1) / 2);
 
 			if (j % 2 == 1) {
-				if (byteOrder == ByteOrder.LITTLE_ENDIAN) {
-					source[source.length - 1] &= 0x00FF;
-					converted[source.length - 1] &= 0x00FF;
-				} else {
-					source[source.length - 1] &= 0xFF00;
-					converted[source.length - 1] &= 0xFF00;
-				}
+				helpers.putByteInArrayByIndex(source, (2 * (source.length - 1) + 1), (byte)0);
+				helpers.putByteInArrayByIndex(converted, (2 * (source.length - 1) + 1), (byte)0);
 			}
 
 			char[] buffer = new char[(j + 1) / 2];
@@ -416,13 +411,8 @@ public class Test_JITHelpers {
 			char[] converted = Arrays.copyOfRange(lowercaseLatin1Char, 0, (j + 1) / 2);
 
 			if (j % 2 == 1) {
-				if (byteOrder == ByteOrder.LITTLE_ENDIAN) {
-					source[source.length - 1] &= 0x00FF;
-					converted[source.length - 1] &= 0x00FF;
-				} else {
-					source[source.length - 1] &= 0xFF00;
-					converted[source.length - 1] &= 0xFF00;
-				}
+				helpers.putByteInArrayByIndex(source, (2 * (source.length - 1) + 1), (byte)0);
+				helpers.putByteInArrayByIndex(converted, (2 * (source.length - 1) + 1), (byte)0);
 			}
 
 			char[] buffer = new char[(j + 1) / 2];
