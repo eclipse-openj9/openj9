@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,15 @@
 	<property name="PROJECT_ROOT" location="." />
 	<property name="src" location="./src"/>
 	<property name="build" location="./bin"/>
+	<if>
+		<equals arg1="${JDK_VERSION}" arg2="8"/>
+		<then>
+			<property name="addExports" value="" />
+		</then>
+		<else>
+			<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED" />
+		</else>
+	</if>
 
 	<target name="init">
 		<mkdir dir="${DEST}" />
@@ -57,7 +66,6 @@
 				</javac>
 			</then>
 			<else>
-				<property name="addExports" value="--add-exports java.base/com.ibm.oti.vm=ALL-UNNAMED --add-exports java.base/jdk.internal.org.objectweb.asm=ALL-UNNAMED" />
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<compilerarg line='${addExports}' />
@@ -72,6 +80,7 @@
 	<target name="generateTestClass" depends="compile" description="Generate test class files ">
 		<property name="build.javaexecutable" value="${TEST_JDK_HOME}/bin/java"/>
 		<java classname="IntLongObjectAlignmentTestGenerator" failonerror="true" fork="true" logError="true" jvm="${build.javaexecutable}">
+			<jvmarg line="${addExports}" />
 			<classpath>
 				<pathelement path="${build}"/>
 				<pathelement location="${LIB_DIR}/asm-all.jar" />
