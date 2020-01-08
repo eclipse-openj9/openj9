@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1872,7 +1872,7 @@ static ClassLoader callerClassLoader() {
  * @exception	SecurityException
  *							if the library was not allowed to be loaded
  */
-static synchronized void loadLibraryWithClassLoader(String libName, ClassLoader loader) {
+static void loadLibraryWithClassLoader(String libName, ClassLoader loader) {
 	SecurityManager smngr = System.getSecurityManager();
 	if (smngr != null)
 		smngr.checkLink(libName);
@@ -1948,7 +1948,7 @@ static void loadLibraryWithPath(String libName, ClassLoader loader, String libra
 	}
 }
 
-private static native byte[] loadLibraryWithPath(byte[] libName, ClassLoader loader, byte[] libraryPath);
+private static synchronized native byte[] loadLibraryWithPath(byte[] libName, ClassLoader loader, byte[] libraryPath);
 
 static void loadLibrary(Class<?> caller, String name, boolean fullPath) {
 	if (fullPath)
