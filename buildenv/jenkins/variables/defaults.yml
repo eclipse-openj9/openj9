@@ -150,10 +150,7 @@ ppc64le_linux:
     11: 'linux-ppc64le-normal-server-release'
   node_labels:
     build: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
-  extra_configure_options:
-    all: '--enable-cuda --with-cuda=/usr/local/cuda-9.0'
-    8: '--enable-jitserver'
-    11: '--enable-jitserver'
+  extra_configure_options: '--enable-cuda --with-cuda=/usr/local/cuda-9.0'
   build_env:
     vars: 'CC=gcc-7 CXX=g++-7'
 #========================================#
