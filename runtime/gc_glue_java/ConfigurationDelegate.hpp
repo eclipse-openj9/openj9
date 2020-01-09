@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -325,7 +325,8 @@ public:
 			vmThread->cardTableShiftSize = 0;
 		}
 
-		if (extensions->fvtest_disableInlineAllocation) {
+		if ((extensions->fvtest_disableInlineAllocation) || (extensions->disableInlineAllocationForSamplingBytesGranularity)) {
+			env->disableInlineTLHAllocate();
 			env->_objectAllocationInterface->disableCachedAllocations(env);
 		}
 

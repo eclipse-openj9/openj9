@@ -381,10 +381,7 @@ jvmtiAddCapabilities(jvmtiEnv* env,
 				goto fail;
 			}
 
-			/* Initial sampling interval is MM_GCExtensions::oolObjectSamplingBytesGranularity which is 16M by default
-			 * or set by command line option -Xgc:allocationSamplingGranularity.
-			 * Set it to 512KB which is default sampling interval as per JEP 331 specification.
-			 */
+			/* Initial sampling interval is MM_GCExtensions::objectSamplingBytesGranularity which is 512KB by default. */
 			vm->memoryManagerFunctions->j9gc_set_allocation_sampling_interval(vm, 512 * 1024);
 			jvmtiData->flags |= J9JVMTI_FLAG_SAMPLED_OBJECT_ALLOC_ENABLED;
 		}

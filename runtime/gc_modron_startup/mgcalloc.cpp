@@ -61,7 +61,7 @@ static uintptr_t stackIterator(J9VMThread *currentThread, J9StackWalkState *walk
 static void dumpStackFrames(J9VMThread *currentThread);
 static void traceAllocateIndexableObject(J9VMThread *vmThread, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields);
 static J9Object * traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields=0);
-static bool traceObjectCheck(J9VMThread *vmThread);
+static bool traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling = NULL);
 
 #define STACK_FRAMES_TO_DUMP	8
 
@@ -87,7 +87,7 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	if (extensions->instrumentableAllocateHookEnabled || !env->isInlineTLHAllocateEnabled()) {
+	if (extensions->instrumentableAllocateHookEnabled || extensions->disableInlineAllocationForSamplingBytesGranularity || !env->isInlineTLHAllocateEnabled()) {
 		/* This function is restricted to only being used for instrumentable allocates so we only need to check that one allocation hook.
 		 * Note that we can't handle hooked allocates since we might be called without a JIT resolve frame and that is required for us to
 		 * report the allocation event.
@@ -225,12 +225,14 @@ traceAllocateIndexableObject(J9VMThread *vmThread, J9Class* clazz, uintptr_t obj
 static J9Object *
 traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uintptr_t objSize, uintptr_t numberOfIndexedFields)
 {
-	if(traceObjectCheck(vmThread)){
-		PORT_ACCESS_FROM_VMC(vmThread);
+	bool shouldTrigggerObjectAllocationSampling = false;
+	uintptr_t byteGranularity = 0;
+
+	if (traceObjectCheck(vmThread, &shouldTrigggerObjectAllocationSampling)){
 		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-		uintptr_t byteGranularity = extensions->oolObjectSamplingBytesGranularity;
 		J9ROMClass *romClass = clazz->romClass;
+		byteGranularity = extensions->oolObjectSamplingBytesGranularity;
 	
 		if (J9ROMCLASS_IS_ARRAY(romClass)){
 			traceAllocateIndexableObject(vmThread, clazz, objSize, numberOfIndexedFields);
@@ -238,6 +240,18 @@ traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uin
 			Trc_MM_J9AllocateObject_outOfLineObjectAllocation(
 				vmThread, clazz, J9UTF8_LENGTH(J9ROMCLASS_CLASSNAME(romClass)), J9UTF8_DATA(J9ROMCLASS_CLASSNAME(romClass)), objSize);
 		}
+
+		/* Keep the remainder, want this to happen so that we don't miss objects
+		 * after seeing large objects
+		 */
+		env->_oolTraceAllocationBytes = (env->_oolTraceAllocationBytes) % byteGranularity;
+	}
+
+	if (shouldTrigggerObjectAllocationSampling) {
+		PORT_ACCESS_FROM_VMC(vmThread);
+		MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
+		MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+		byteGranularity = extensions->objectSamplingBytesGranularity;
 
 		TRIGGER_J9HOOK_MM_OBJECT_ALLOCATION_SAMPLING(
 			extensions->hookInterface,
@@ -251,7 +265,7 @@ traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uin
 		/* Keep the remainder, want this to happen so that we don't miss objects
 		 * after seeing large objects
 		 */
-		env->_oolTraceAllocationBytes = (env->_oolTraceAllocationBytes) % byteGranularity;
+		env->_traceAllocationBytes = (env->_traceAllocationBytes) % byteGranularity;
 	}
 	return object;
 }
@@ -262,14 +276,19 @@ traceAllocateObject(J9VMThread *vmThread, J9Object * object, J9Class* clazz, uin
  * Returns true if we should trace the object
  *  */
 static bool
-traceObjectCheck(J9VMThread *vmThread)
+traceObjectCheck(J9VMThread *vmThread, bool *shouldTriggerAllocationSampling)
 {
 	MM_EnvironmentBase *env = MM_EnvironmentBase::getEnvironment(vmThread->omrVMThread);
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	uintptr_t byteGranularity = 0;
 
-	if(extensions->doOutOfLineAllocationTrace){
-		uintptr_t byteGranularity = extensions->oolObjectSamplingBytesGranularity;
-	
+	if (NULL != shouldTriggerAllocationSampling) {
+		byteGranularity = extensions->objectSamplingBytesGranularity;
+		*shouldTriggerAllocationSampling = env->_traceAllocationBytes >= byteGranularity;
+	}
+
+	if (extensions->doOutOfLineAllocationTrace){
+		byteGranularity = extensions->oolObjectSamplingBytesGranularity;
 		if(env->_oolTraceAllocationBytes >= byteGranularity){
 			return true;
 		}
@@ -300,7 +319,7 @@ J9AllocateIndexableObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uint32_t num
 	
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
-	if (extensions->instrumentableAllocateHookEnabled || !env->isInlineTLHAllocateEnabled()) {
+	if (extensions->instrumentableAllocateHookEnabled || extensions->disableInlineAllocationForSamplingBytesGranularity || !env->isInlineTLHAllocateEnabled()) {
 		/* This function is restricted to only being used for instrumentable allocates so we only need to check that one allocation hook.
 		 * Note that we can't handle hooked allocates since we might be called without a JIT resolve frame and that is required for us to
 		 * report the allocation event.
@@ -478,7 +497,7 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 	}
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-	if (extensions->fvtest_disableInlineAllocation || extensions->instrumentableAllocateHookEnabled || extensions->disableInlineCacheForAllocationThreshold) {
+	if (extensions->fvtest_disableInlineAllocation || extensions->instrumentableAllocateHookEnabled || extensions->disableInlineCacheForAllocationThreshold || extensions->disableInlineAllocationForSamplingBytesGranularity) {
 		env->disableInlineTLHAllocate();
 	}	
 #endif /* J9VM_GC_THREAD_LOCAL_HEAP */	
@@ -617,7 +636,7 @@ J9AllocateIndexableObject(J9VMThread *vmThread, J9Class *clazz, uint32_t numberO
 	}
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-	if (extensions->fvtest_disableInlineAllocation || extensions->instrumentableAllocateHookEnabled || extensions->disableInlineCacheForAllocationThreshold ) {
+	if (extensions->fvtest_disableInlineAllocation || extensions->instrumentableAllocateHookEnabled || extensions->disableInlineCacheForAllocationThreshold || extensions->disableInlineAllocationForSamplingBytesGranularity) {
 		env->disableInlineTLHAllocate();
 	}	
 #endif /* J9VM_GC_THREAD_LOCAL_HEAP */	
@@ -662,7 +681,7 @@ memoryManagerTLHAsyncCallbackHandler(J9VMThread *vmThread, IDATA handlerKey, voi
 	
 	if (extensions->isStandardGC() || extensions->isVLHGC()) {
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
-		if (extensions->fvtest_disableInlineAllocation || extensions->instrumentableAllocateHookEnabled || extensions->disableInlineCacheForAllocationThreshold) {
+		if (extensions->fvtest_disableInlineAllocation || extensions->instrumentableAllocateHookEnabled || extensions->disableInlineCacheForAllocationThreshold || extensions->disableInlineAllocationForSamplingBytesGranularity) {
 			Trc_MM_memoryManagerTLHAsyncCallbackHandler_disableInlineTLHAllocates(vmThread,extensions->lowAllocationThreshold,extensions->highAllocationThreshold,extensions->tlhMinimumSize,extensions->tlhMaximumSize);
 			if (env->isInlineTLHAllocateEnabled()) {
 				/* BEN TODO: Collapse the env->enable/disableInlineTLHAllocate with these enable/disableCachedAllocations */
