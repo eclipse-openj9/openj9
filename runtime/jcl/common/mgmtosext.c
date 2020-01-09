@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -82,9 +82,10 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProce
 jdouble JNICALL
 Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getSystemCpuLoadImpl(JNIEnv *env, jobject instance) {
 	PORT_ACCESS_FROM_ENV(env);
-	double cpuLoad;
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+	double cpuLoad = 0.0;
 
-	intptr_t portLibraryStatus = j9sysinfo_get_CPU_load(&cpuLoad);
+	intptr_t portLibraryStatus = omrsysinfo_get_CPU_load(&cpuLoad);
 
 	if (portLibraryStatus < 0) {
 		switch (portLibraryStatus) {

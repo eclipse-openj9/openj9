@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,7 +68,7 @@ public class TestGetSystemCpuLoad {
 		}
 	}
 
-	public static void testMxBeanImpl(com.ibm.lang.management.OperatingSystemMXBean ibmBean) {
+	private static void testMxBeanImpl(com.ibm.lang.management.OperatingSystemMXBean ibmBean) {
 		double load = ibmBean.getSystemCpuLoad();
 		if (load < 0.0) { /* normal case (insufficient time since last call) */
 			validateLoad(load, true, CpuLoadCalculationConstants.ERROR_VALUE, "initial getSystemCpuLoad");
