@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -432,6 +432,18 @@ TR_J9SharedCache::isPointerInCache(const J9SharedClassCacheDescriptor *cacheDesc
 void *
 TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
    {
+   uintptrj_t ptr = NULL;
+   if (isOffsetInSharedCache(offset, &ptr))
+      {
+      return (void *)ptr;
+      }
+   TR_ASSERT_FATAL(false, "Shared cache offset out of bounds");
+   return (void *)ptr;
+   }
+
+bool
+TR_J9SharedCache::isOffsetInSharedCache(uintptrj_t offset, void *ptr)
+   {
 #if defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
 #if defined(J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE)
    // The cache descriptor list is linked last to first and is circular, so last->previous == first.
@@ -441,7 +453,12 @@ TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
       {
       if (offset < curCache->cacheSizeBytes)
          {
-         return (void *)(offset + (uintptr_t)curCache->cacheStartAddress);
+         if (ptr)
+            {
+            uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress;
+            *(uintptrj_t *)ptr = offset + cacheStart;
+            }
+         return true;
          }
       offset -= curCache->cacheSizeBytes;
       curCache = curCache->previous;
@@ -451,12 +468,16 @@ TR_J9SharedCache::pointerFromOffsetInSharedCache(uintptr_t offset)
    J9SharedClassCacheDescriptor *curCache = getCacheDescriptorList();
    if (offset < curCache->cacheSizeBytes)
       {
-      return (void *)(offset + (uintptr_t)curCache->cacheStartAddress);
+      if (ptr)
+         {
+         uintptr_t cacheStart = (uintptr_t)curCache->cacheStartAddress;
+         *(uintptrj_t *)ptr = offset + cacheStart;
+         }
+      return true;
       }
 #endif // J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
-   TR_ASSERT_FATAL(false, "Shared cache offset out of bounds");
 #endif
-   return NULL;
+   return false;
    }
 
 uintptr_t
