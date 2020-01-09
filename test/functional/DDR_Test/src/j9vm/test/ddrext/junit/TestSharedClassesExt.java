@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -118,6 +118,13 @@ public class TestSharedClassesExt extends DDRExtTesterBase {
 				new String[] { Constants.SHRC_STARTUPHINT });
 		assertTrue(validate(statsOutput, Constants.SHRC_STARTUPHINT_SUCCESS_KEY,
 				Constants.SHRC_STARTUPHINT_FAILURE_KEY, true));
+	}
+
+	public void testShrcCRVSnippetExt() {
+		String statsOutput = exec(Constants.SHRC_CMD,
+				new String[] { Constants.SHRC_CRVSNIPPETSTATS });
+		assertTrue(validate(statsOutput, Constants.SHRC_CRVSNIPPETSTATS_SUCCESS_KEY,
+				Constants.SHRC_CRVSNIPPETSTATS_FAILURE_KEY, true));
 	}
 
 	public void testShrcUByteStatsExt() {

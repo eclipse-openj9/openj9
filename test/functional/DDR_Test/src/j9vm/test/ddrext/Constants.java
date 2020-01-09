@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -173,6 +173,10 @@ public class Constants {
 	public static final String SHRC_STARTUPHINT = "startuphint";
 	public static final String SHRC_STARTUPHINT_SUCCESS_KEY = "STARTUPHINT BYTEDATA";
 	public static final String SHRC_STARTUPHINT_FAILURE_KEY = "STARTUPHINTS 0";
+
+	public static final String SHRC_CRVSNIPPETSTATS = "crvsnippetstats";
+	public static final String SHRC_CRVSNIPPETSTATS_SUCCESS_KEY = "CRVSNIPPET BYTEDATA";
+	public static final String SHRC_CRVSNIPPETSTATS_FAILURE_KEY = "CRVSNIPPET 0";
 
 	public static final String SHRC_UBYTESTATS = "ubytestats";
 

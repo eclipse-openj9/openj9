@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,6 +65,7 @@ public class ShrCCommand extends Command
 	private static final long CACHELET_STATS = 0x100L;
 	private static final long PREREQ_CACHE_STATS = 0x200L;
 	private static final long STARTUPHINT_STATS = 0x400L;
+	private static final long CRV_SNIPPET_STATS = 0x800L;
 	private static final long FIND_METHOD = 0x1000L;
 	private static final long JITPROFILE_STATS = 0x2000L;
 	private static final long JITHINT_STATS = 0x4000L;
@@ -80,6 +81,7 @@ public class ShrCCommand extends Command
 	private static long cacheTotalSize = 0;
 	private static final long TYPE_PREREQ_CACHE = J9ConstantHelper.getLong(ShcdatatypesConstants.class, "TYPE_PREREQ_CACHE", -1);
 	private static final long J9SHR_DATA_TYPE_STARTUP_HINTS = J9ConstantHelper.getLong(ShCFlags.class, "J9SHR_DATA_TYPE_STARTUP_HINTS", -1);
+	private static final long J9SHR_DATA_TYPE_CRVSNIPPET = J9ConstantHelper.getLong(ShCFlags.class, "J9SHR_DATA_TYPE_CRVSNIPPET", -1);
 
 
 	public ShrCCommand()
@@ -190,6 +192,8 @@ public class ShrCCommand extends Command
 					dbgShrcPrintAllStats(out, vm, sharedClassConfig, metaStart, metaEnd, UNINDEXED_BYTE_STATS, null, false, VoidPointer.NULL, false);
 				} else if (args[0].equals("startuphint")) {
 					dbgShrcPrintAllStats(out, vm, sharedClassConfig, metaStart, metaEnd, STARTUPHINT_STATS, null, false, VoidPointer.NULL, false);
+				} else if (args[0].equals("crvsnippetstats")) {
+					dbgShrcPrintAllStats(out, vm, sharedClassConfig, metaStart, metaEnd, CRV_SNIPPET_STATS, null, false, VoidPointer.NULL, false);
 				} else if (args[0].equals("clstats")) {
 					dbgShrcPrintAllStats(out, vm, sharedClassConfig, metaStart, metaEnd, CACHELET_STATS, null, false, VoidPointer.NULL, false);
 				} else if (args[0].equals("preqstats")) {
@@ -662,6 +666,7 @@ public class ShrCCommand extends Command
 		CommandUtils.dbgPrint(out, "!shrc scopestats [range|layer=<n>]             -- Print scope cache contents\n");
 		CommandUtils.dbgPrint(out, "!shrc bytestats [range|layer=<n>]              -- Print byte data cache contents\n");
 		CommandUtils.dbgPrint(out, "!shrc startuphint [range|layer=<n>]            -- Print startup hint data cache contents\n");
+		CommandUtils.dbgPrint(out, "!shrc crvsnippetstats [range|layer=<n>]        -- Print class relationship snippet cache contents\n");
 		CommandUtils.dbgPrint(out, "!shrc ubytestats [range|layer=<n>]             -- Print unindexed byte data cache contents\n");
 		CommandUtils.dbgPrint(out, "!shrc stalestats [range|layer=<n>]             -- Print all the stale cache contents\n");
 		CommandUtils.dbgPrint(out, "!shrc clstats [range|layer=<n>]                -- Print cachelet cache contents\n");
@@ -1003,37 +1008,22 @@ public class ShrCCommand extends Command
 					} else {
 						numByteOfType[(int) J9SHR_DATA_TYPE_UNKNOWN] += len.longValue();
 					}
+					String byteDataTypeString = getType(byteDataType);
+					boolean shouldPrintDbg = ((statTypes & BYTE_STATS) != 0) || byteDataTypeMatchesStatTypes(byteDataTypeString, statTypes);
 					if (rwOffset.eq(0)) {
 						byteDataLen += len.longValue();
-						if (((statTypes & BYTE_STATS) != 0) 
-							|| ((statTypes & STARTUPHINT_STATS) != 0)
-						) {
-							if (((statTypes & BYTE_STATS) == 0) 
-								&& (!getType(byteDataType).equals("STARTUPHINT"))
-							) {
-								continue;
-							} 
+						if (shouldPrintDbg) {
 							entryFound = true;
-							CommandUtils.dbgPrint(out, "%d: %s %s BYTEDATA !j9x %s,%s", it.jvmID().longValue(), it.getHexAddress(), getType(byteDataType), ByteDataWrapperHelper.getDataFromByteDataWrapper(bdw, cacheHeaderPtr).getHexAddress(), len.getHexValue());
+							CommandUtils.dbgPrint(out, "%d: %s %s BYTEDATA !j9x %s,%s", it.jvmID().longValue(), it.getHexAddress(), byteDataTypeString, ByteDataWrapperHelper.getDataFromByteDataWrapper(bdw, cacheHeaderPtr).getHexAddress(), len.getHexValue());
 						}
 					} else {
 						byteDataRWLen += len.longValue();
-						if (((statTypes & BYTE_STATS) != 0)
-							|| ((statTypes & STARTUPHINT_STATS) != 0)						
-						) {
-							if (((statTypes & BYTE_STATS) == 0) 
-								&& (!getType(byteDataType).equals("STARTUPHINT"))
-							) {
-								continue;
-							} 
+						if (shouldPrintDbg) {
 							entryFound = true;
 							CommandUtils.dbgPrint(out, "%d: %s BYTEDATA RW !j9x %s,%s", it.jvmID().longValue(), it.getHexAddress(), ByteDataWrapperHelper.getDataFromByteDataWrapper(bdw, cacheHeaderPtr).getHexAddress(), len.getHexValue());
 						}
 					}
-					if (((statTypes & BYTE_STATS) != 0)
-						|| ((statTypes & STARTUPHINT_STATS) != 0)
-						|| (showAllStaleFlag && isStale)
-					) {
+					if ((shouldPrintDbg) || (showAllStaleFlag && isStale)) {
 						if (isStale) {
 							CommandUtils.dbgPrint(out, "!STALE!");
 						}
@@ -1152,7 +1142,11 @@ public class ShrCCommand extends Command
 			} else {
 				CommandUtils.dbgPrint(out, "\tJCL %d  VM %d  ROMSTRING %d  ZIPCACHE %d  STARTUPHINTS %d\n", numByteOfType[(int) J9SHR_DATA_TYPE_JCL], numByteOfType[(int) J9SHR_DATA_TYPE_VM], numByteOfType[(int) J9SHR_DATA_TYPE_ROMSTRING], numByteOfType[(int) J9SHR_DATA_TYPE_ZIPCACHE], numByteOfType[(int) J9SHR_DATA_TYPE_STARTUP_HINTS]);
 			}
-			CommandUtils.dbgPrint(out, "\tJITHINT %d  AOTCLASSCHAIN %d AOTTHUNK %d\n", numByteOfType[(int) J9SHR_DATA_TYPE_JITHINT], numByteOfType[(int) J9SHR_DATA_TYPE_AOTCLASSCHAIN], numByteOfType[(int) J9SHR_DATA_TYPE_AOTTHUNK]);
+			if (J9SHR_DATA_TYPE_CRVSNIPPET < 0) {
+				CommandUtils.dbgPrint(out, "\tJITHINT %d  AOTCLASSCHAIN %d AOTTHUNK %d\n", numByteOfType[(int) J9SHR_DATA_TYPE_JITHINT], numByteOfType[(int) J9SHR_DATA_TYPE_AOTCLASSCHAIN], numByteOfType[(int) J9SHR_DATA_TYPE_AOTTHUNK]);
+			} else {
+				CommandUtils.dbgPrint(out, "\tJITHINT %d  AOTCLASSCHAIN %d AOTTHUNK %d CRVSNIPPET %d\n", numByteOfType[(int) J9SHR_DATA_TYPE_JITHINT], numByteOfType[(int) J9SHR_DATA_TYPE_AOTCLASSCHAIN], numByteOfType[(int) J9SHR_DATA_TYPE_AOTTHUNK], numByteOfType[(int) J9SHR_DATA_TYPE_CRVSNIPPET]);
+			}
 			if (cacheletMetaLen > 0) {
 				CommandUtils.dbgPrint(out, "CACHELET count %d (without segments %d) metadata %d\n", numCachelets, numCacheletsNoSegments, cacheletMetaLen);
 			}
@@ -1388,8 +1382,20 @@ public class ShrCCommand extends Command
 			return "AOTCLASSCHAIN";
 		} else if (type == J9SHR_DATA_TYPE_AOTTHUNK) {
 			return "AOTTHUNK";
+		} else if (type == J9SHR_DATA_TYPE_CRVSNIPPET) {
+			return "CRVSNIPPET";
 		} else {
 			return "UNKNOWN(" + type + ")";
+		}
+	}
+
+	private boolean byteDataTypeMatchesStatTypes(String dataType, long statTypes) {
+		if (((dataType.equals("STARTUPHINT")) && (0 != (statTypes & STARTUPHINT_STATS)))
+			|| ((dataType.equals("CRVSNIPPET")) && (0 != (statTypes & CRV_SNIPPET_STATS)))
+		) {
+			return true;
+		} else {
+			return false;
 		}
 	}
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2016, 2019 IBM Corp. and others
+Copyright (c) 2016, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -132,13 +132,22 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<echo>DUMP_OPTION: ${DUMP_OPTION}</echo>
 		<echo>EXTRADUMPOPT: ${EXTRADUMPOPT}</echo>
 
-		<!-- We use the -Xint option to store the startup hint into the shared chache. -->
+		<!-- We use the -Xint option to store the startup hint into the shared cache. -->
 		<exec executable="${JAVA_COMMAND}" failonerror="true">
 			<arg line="-Xscmx16m -Xshareclasses:name=ddrextjunitSCC -Xgcpolicy:gencon" />
 			<arg line="-Xint" />
 			<arg value="-cp" />
 			<arg value="${TEST_RESROOT}/DDR_Test.jar" />
 			<arg value="j9vm.test.corehelper.SCCTestHelper" />
+		</exec>
+
+		<!-- Command to generate Class Relationship Verifier snippets. -->
+		<exec executable="${JAVA_COMMAND}" failonerror="true">
+			<arg line="-Xscmx16m -Xshareclasses:name=ddrextjunitSCC" />
+			<arg line="-XX:+ClassRelationshipVerifier" />
+			<arg value="-cp" />
+			<arg value="${TEST_RESROOT}/DDR_Test.jar" />
+			<arg value="j9vm.test.corehelper.CRVSnippetTestHelper" />
 		</exec>
 
 		<exec executable="${JAVA_COMMAND}" failonerror="true">
