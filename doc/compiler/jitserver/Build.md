@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2019 IBM Corp. and others
+Copyright (c) 2018, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,13 +24,11 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 There are currently 3 supported build procedures. Select the one that best suits your needs.
 
 - [Building the whole VM](#vm). The complete build process (Most correct and recommended). Produces a complete JVM as output (including the JIT).
-- [Building only the JIT](#jit). Choose this if you have an existing SDK and have no need to modify the VM or JCL. This only builds OMR and everything in the `runtime/compiler` directory. Output artifact is `libj9jit29.so`. (Fastest way to get JITServer built)
+- [Building only the JIT](#jit). Choose this if you have an existing SDK (with JITServer enabled) and have no need to modify the VM or JCL. This only builds OMR and everything in the `runtime/compiler` directory. Output artifact is `libj9jit29.so`. (Fastest way to get JITServer built)
 - [Building in Docker](#docker). Choose this if you don't want to deal with build dependencies. Takes the longest.
 
 For building the whole VM and building only the JIT, you will have to go through the [Prepare your system](#prerequisites) step.
 For building in Docker, you can skip [Prepare your system](#prerequisites).
-
-The `JITServer` feature is not enabled by default on the `master` branch at the moment. **`export JITSERVER_SUPPORT=1` needs to be added to the build environment.**
 
 If you run into issues during this process, please document any solutions here.
 
@@ -111,6 +109,8 @@ export PATH="$JAVA_HOME/bin:$PATH"
 
 ## VM
 
+The `JITServer` feature is not enabled by default on the `master` branch at the moment. **`--enable-jitserver` option needs to be passed in the configure step`**
+
 ```
 git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8.git
 
@@ -118,9 +118,7 @@ cd openj9-openjdk-jdk8
 
 bash get_source.sh -openj9-repo=https://github.com/eclipse/openj9.git -omr-repo=https://github.com/eclipse/openj9-omr.git
 
-bash configure --with-freemarker-jar=/root/freemarker.jar --with-boot-jdk=/root/bootjdk8
-
-export JITSERVER_SUPPORT=1
+bash configure --with-freemarker-jar=/root/freemarker.jar --with-boot-jdk=/root/bootjdk8 --enable-jitserver
 
 make all
 ```
@@ -131,6 +129,8 @@ bash get_source.sh -openj9-repo=https://github.com/<Your GitHub UserID>/openj9.g
 See https://www.eclipse.org/openj9/oj9_build.html for more detail. The only difference is you need to check out the JITServer code instead of upstream OpenJ9.
 
 ## JIT
+
+If you already have an SDK enabled with JITServer and just want to rebuild the JIT library, then **`export JITSERVER_SUPPORT=1` needs to be added to the build environment**.
 
 ```
 export JAVA_HOME=/your/sdk
