@@ -1,7 +1,7 @@
 package org.openj9.test.java.lang;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2018 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -296,6 +296,7 @@ public class Test_Class {
 		String[] expected_CD = new String[] {
 				"CD.method_N(java.lang.String)",
 				"IA.method_M(java.lang.String)",
+				"IA.method_L(java.lang.String)",
 				"IC.method_L(java.lang.String)",
 				"IB.method_M(java.lang.String)" };
 		Method[] methodNames_CD = CD.class.getMethods();
@@ -312,6 +313,7 @@ public class Test_Class {
 		}
 
 		String[] expected_CF = new String[] {
+				"IA.method_L(java.lang.String)",
 				"IA.method_M(java.lang.String)",
 				"CF.method_N(java.lang.String)",
 				"IC.method_L(java.lang.String)",
@@ -525,21 +527,6 @@ public class Test_Class {
 				InterfaceTestClasses.SuperClass.class,
 				InterfaceTestClasses.SubClass.class };
 		HashMap<Class, String[]> expectedMethods = new HashMap<>();
-		/*
-		* As of Java 8 151, method declarations in subinterfaces hide declarations of the same method in superinterfaces.
-		* This means that the following methods are not inherited by implementors of M3:
-		* InterfaceTestClasses$I1.m1
-		* InterfaceTestClasses$I1.m2
-		* InterfaceTestClasses$I1.m3
-		* InterfaceTestClasses$I2.m1
-		* InterfaceTestClasses$I2.m2
-		* InterfaceTestClasses$I2.m3
-		*/
-		final String[] interfaceMethodList = concatenateObjectMethods(new String [] {
-			specimenPackage+".InterfaceTestClasses$I3.m1()void",
-			specimenPackage+".InterfaceTestClasses$I3.m2()void",
-			specimenPackage+".InterfaceTestClasses$I3.m3()void"
-		});
 		expectedMethods.put(testClasses[0],
 				new String[] {
 						specimenPackage + ".InterfaceTestClasses$I1.m1()void",
@@ -556,11 +543,38 @@ public class Test_Class {
 						specimenPackage + ".InterfaceTestClasses$I3.m2()void",
 						specimenPackage + ".InterfaceTestClasses$I3.m3()void" });
 		expectedMethods.put(testClasses[3],
-				interfaceMethodList);
+				concatenateObjectMethods(new String[] {
+						specimenPackage + ".InterfaceTestClasses$I1.m1()void",
+						specimenPackage + ".InterfaceTestClasses$I1.m2()void",
+						specimenPackage + ".InterfaceTestClasses$I1.m3()void",
+						specimenPackage + ".InterfaceTestClasses$I2.m1()void",
+						specimenPackage + ".InterfaceTestClasses$I2.m2()void",
+						specimenPackage + ".InterfaceTestClasses$I2.m3()void",
+						specimenPackage + ".InterfaceTestClasses$I3.m1()void",
+						specimenPackage + ".InterfaceTestClasses$I3.m2()void",
+						specimenPackage + ".InterfaceTestClasses$I3.m3()void" }));
 		expectedMethods.put(testClasses[4],
-				interfaceMethodList);
+				concatenateObjectMethods(new String[] {
+						specimenPackage + ".InterfaceTestClasses$I1.m1()void",
+						specimenPackage + ".InterfaceTestClasses$I1.m2()void",
+						specimenPackage + ".InterfaceTestClasses$I1.m3()void",
+						specimenPackage + ".InterfaceTestClasses$I2.m1()void",
+						specimenPackage + ".InterfaceTestClasses$I2.m2()void",
+						specimenPackage + ".InterfaceTestClasses$I2.m3()void",
+						specimenPackage + ".InterfaceTestClasses$I3.m1()void",
+						specimenPackage + ".InterfaceTestClasses$I3.m2()void",
+						specimenPackage + ".InterfaceTestClasses$I3.m3()void" }));
 		expectedMethods.put(testClasses[5],
-				interfaceMethodList);
+				concatenateObjectMethods(new String[] {
+						specimenPackage + ".InterfaceTestClasses$I1.m1()void",
+						specimenPackage + ".InterfaceTestClasses$I1.m2()void",
+						specimenPackage + ".InterfaceTestClasses$I1.m3()void",
+						specimenPackage + ".InterfaceTestClasses$I2.m1()void",
+						specimenPackage + ".InterfaceTestClasses$I2.m2()void",
+						specimenPackage + ".InterfaceTestClasses$I2.m3()void",
+						specimenPackage + ".InterfaceTestClasses$I3.m1()void",
+						specimenPackage + ".InterfaceTestClasses$I3.m2()void",
+						specimenPackage + ".InterfaceTestClasses$I3.m3()void" }));
 		compareMethods(testClasses, expectedMethods);
 	}
 
@@ -574,19 +588,22 @@ public class Test_Class {
 				SuperA.class,
 				SuperDuper.class };
 		HashMap<Class, String[]> expectedMethods = new HashMap<>();
-		/*
-		* As of Java 8 151, method declarations in subinterfaces hide declarations of the same method in superinterfaces.
-		* This means that the following methods are now hidden in implementors of SuperA:
-		* SuperDuper.abstractInSuperA_abstractInSuperDuper()
-		* SuperDuper.abstractInSuperA_defaultInSuperDuper()
-		*/
-		final String[] interfaceMethodList = concatenateObjectMethods(new String [] {
-			specimenPackage+".SuperA.abstractInSuperA_abstractInSuperDuper()void",
-			specimenPackage+".SuperA.abstractInSuperA_defaultInSuperDuper()void",
-			specimenPackage+".SuperA.defaultInSuperA_abstractInSuperDuper()void",
-			specimenPackage+".SuperA.defaultInSuperA_defaultInSuperDuper()void"});
-		expectedMethods.put(testClasses[0], interfaceMethodList);
-		expectedMethods.put(testClasses[1], interfaceMethodList);
+		expectedMethods.put(testClasses[0],
+				concatenateObjectMethods(new String[] {
+						specimenPackage + ".SuperA.abstractInSuperA_abstractInSuperDuper()void",
+						specimenPackage + ".SuperA.abstractInSuperA_defaultInSuperDuper()void",
+						specimenPackage + ".SuperA.defaultInSuperA_abstractInSuperDuper()void",
+						specimenPackage + ".SuperA.defaultInSuperA_defaultInSuperDuper()void",
+						specimenPackage + ".SuperDuper.abstractInSuperA_abstractInSuperDuper()void",
+						specimenPackage + ".SuperDuper.abstractInSuperA_defaultInSuperDuper()void" }));
+		expectedMethods.put(testClasses[1],
+				concatenateObjectMethods(new String[] {
+						specimenPackage + ".SuperA.abstractInSuperA_abstractInSuperDuper()void",
+						specimenPackage + ".SuperA.abstractInSuperA_defaultInSuperDuper()void",
+						specimenPackage + ".SuperA.defaultInSuperA_abstractInSuperDuper()void",
+						specimenPackage + ".SuperA.defaultInSuperA_defaultInSuperDuper()void",
+						specimenPackage + ".SuperDuper.abstractInSuperA_abstractInSuperDuper()void",
+						specimenPackage + ".SuperDuper.abstractInSuperA_defaultInSuperDuper()void" }));
 		expectedMethods.put(testClasses[2],
 				concatenateObjectMethods(new String[] {
 						specimenPackage + ".SuperA.abstractInSuperA_abstractInSuperDuper()void",
