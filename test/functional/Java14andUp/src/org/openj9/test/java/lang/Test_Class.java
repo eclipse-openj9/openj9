@@ -25,6 +25,8 @@ package org.openj9.test.java.lang;
 import org.testng.annotations.Test;
 import org.testng.log4testng.Logger;
 
+import jdk.jfr.Timestamp;
+
 import org.testng.AssertJUnit;
 
 import java.lang.annotation.Annotation;
@@ -80,9 +82,8 @@ import org.openj9.test.utilities.CustomClassLoader;
 
     @Test
     public void test_getRecordComponent_nonRecordClass() throws Throwable {
-        /* by default records will not have optional attributes */
         RecordComponent[] rc = TestClass.class.getRecordComponents();
-        AssertJUnit.assertEquals(0, rc.length);
+        AssertJUnit.assertNull(rc);
     }
 
     @Test
@@ -154,6 +155,11 @@ import org.openj9.test.utilities.CustomClassLoader;
         RecordComponent[] rc = clazz.getRecordComponents();
         AssertJUnit.assertEquals(1, rc.length);
         test_RecordComponentContents(rc[0], clazz, rcName, int.class, rcSignature, TestAnnotation.class, TestTypeAnnotation.class);
+    }
+
+    @Test
+    public void test_getRecordComponent_securityException() throws Throwable {
+        // TODO
     }
 
     private void test_RecordComponentContents_noAttributes(RecordComponent rc, Class<?> declaringRecord, String name, 

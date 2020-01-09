@@ -4694,16 +4694,18 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	 * Returns an array of RecordComponent objects for a record class.
 	 * 
 	 * @return array of RecordComponent objects, one for each component in the record.
-	 * For a class that is not a record an empty array is returned.
+	 * For a class that is not a record, null is returned.
 	 * For a record with no components an empty array is returned.
+	 * 
+	 * @throws SecurityException TODO
 	 */
 	public RecordComponent[] getRecordComponents() {
 		SecurityManager security = System.getSecurityManager();
 		if (security != null) {
 			// TODO
 		}
-		RecordComponent[] rcs = getRecordComponentsImpl();
-		return (null == rcs) ? new RecordComponent[0] : rcs;
+
+		return getRecordComponentsImpl();
 	}
 
 	private native RecordComponent[] getRecordComponentsImpl();

@@ -1365,6 +1365,7 @@ getDeclaredFieldsHelper(JNIEnv *env, jobject declaringClass)
 		goto done;
 	}
 
+	// find field type
 	fieldArrayClass = fetchArrayClass(vmThread, fieldClass);
 	if (NULL != vmThread->currentException) {
 		goto done;
@@ -1380,6 +1381,7 @@ retry:
 		fieldCount = romClass->romFieldCount;
 	}
 
+	// allocate final array
 	fieldArrayObject = (j9array_t)vm->memoryManagerFunctions->J9AllocateIndexableObject(vmThread, fieldArrayClass,
 			fieldCount, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 	if (vm->hotSwapCount != preCount) {
@@ -1393,7 +1395,7 @@ retry:
 		goto nativeoutofmemory;
 	}
 
-	if (fieldCount > 0) {
+	if (fieldCount > 0) { // create fields
 		J9ROMFieldShape *romField = NULL;
 		J9ROMFieldWalkState state;
 		U_32 fieldIndex = 0;
@@ -1401,16 +1403,16 @@ retry:
 		/* loop over the fields */
 		memset(&state, 0, sizeof(state));
 		romField = romFieldsStartDo(romClass, &state);
-		while (NULL != romField) {
+		while (NULL != romField) { // for each field
 			UDATA inconsistentData = 0;
 			j9object_t fieldObject = NULL;
 
 			if (romField->modifiers & J9AccStatic) {
 				/* create static field object */
-				fieldObject = createStaticFieldObject(romField, clazz, clazz, vmThread, &inconsistentData);
+				fieldObject = createStaticFieldObject(romField, clazz, clazz, vmThread, &inconsistentData); // look at this
 			} else {
 				/* create instance field object */
-				fieldObject = createInstanceFieldObject(romField, clazz, clazz, vmThread, &inconsistentData);
+				fieldObject = createInstanceFieldObject(romField, clazz, clazz, vmThread, &inconsistentData); // look at this
 			}
 
 			if (NULL != vmThread->currentException) {
@@ -1682,7 +1684,7 @@ retry:
 		goto nativeoutofmemory;
 	}
 
-	if (fieldCount > 0) {
+	if (fieldCount > 0) { // TODO see here
 		J9WalkFieldHierarchyState state;
 		AllFieldData data;
 
@@ -1711,6 +1713,78 @@ retry:
 nativeoutofmemory:
 	vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
 	goto done;
+
+heapoutofmemory:
+	vmFuncs->setHeapOutOfMemoryError(vmThread);
+	goto done;
+
+done:
+	vmFuncs->internalExitVMToJNI(vmThread);
+	return result;
+}
+
+jarray
+getRecordComponentsHelper(JNIEnv *env, jobject cls)
+{
+	J9VMThread *vmThread = (J9VMThread *)env;
+	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	jarray result = NULL;
+	J9Class *recordComponentClass = NULL;
+	J9Class *recordComponentArrayClass = NULL;
+	U_32 recordComponentCount = 0;
+	j9array_t recordComponentArrayObject = NULL;
+
+	vmFuncs->internalEnterVMFromJNI(vmThread);
+
+	J9Class *clazz = J9VM_J9CLASS_FROM_JCLASS(vmThread, (jclass)cls);
+	J9ROMClass *romClass = clazz->romClass;
+
+	if (FALSE == J9ROMCLASS_IS_RECORD(romClass)) {
+		goto done;
+	}
+
+	/* allocate an array of RecordComponent objects */
+	recordComponentClass = J9VMJAVALANGREFLECTRECORDCOMPONENT(vm);
+	if (NULL != vmThread->currentException) {
+		goto done;
+	}
+
+	recordComponentArrayClass = fetchArrayClass(vmThread, recordComponentClass);
+	if (NULL != vmThread->currentException) {
+		goto done;
+	}
+
+	// TODO set record component count
+
+	recordComponentArrayObject = (j9array_t) vm->memoryManagerFunctions->J9AllocateIndexableObject(vmThread, recordComponentArrayClass,
+			recordComponentCount, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+	if (NULL == recordComponentArrayObject) {
+		goto heapoutofmemory;
+	}
+
+	// result = vmFuncs->j9jni_createLocalRef(env, (j9object_t)recordComponentArrayObject);
+	// if (NULL == result) {
+	// 	goto nativeoutofmemory;
+	// }
+
+	// TODO
+	// if (recordComponentCount > 0) {
+	// 	// parts of the record component that should be set natively (I think)
+	// 	// - Class<?> clazz (?)
+	// 	// - String name (nameIndex)
+	// 	// - Class<?> type (descriptorIndex)
+	// 	// - Method accesor (not sure where to get this - find the method in the class with the same name)
+	// 	// - String signature (signatureIndex)
+	// 	// - byte[] annotations (annotationsAttribute)
+	// 	// - byte[] typeAnnotations (typeAnnotationsAttribute)
+	// 	// - RecordComponent root (? - I think was was null in my scenarios?)
+	// }
+	goto done;
+
+// nativeoutofmemory:
+// 	vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
+// 	goto done;
 
 heapoutofmemory:
 	vmFuncs->setHeapOutOfMemoryError(vmThread);
