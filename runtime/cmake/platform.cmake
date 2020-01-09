@@ -21,6 +21,19 @@
 ################################################################################
 
 include(OmrPlatform)
+# Note: we need to inject WIN32 et al, as OMR no longer uses them
+if(OMR_OS_WINDOWS)
+    list(APPEND OMR_PLATFORM_DEFINITIONS
+        -DWIN32
+        -D_WIN32
+    )
+    if(OMR_ENV_DATA64)
+        list(APPEND OMR_PLATFORM_DEFINITIONS
+            -DWIN64
+            -D_WIN64
+        )
+    endif()
+endif()
 omr_platform_global_setup()
 
 if(OMR_TOOLCONFIG STREQUAL "gnu")
