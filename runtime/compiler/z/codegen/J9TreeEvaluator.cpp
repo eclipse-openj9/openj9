@@ -673,6 +673,7 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    cg->stopUsingRegister(maxIndexReg);
    cg->stopUsingRegister(s2VecStartIndexReg);
    cg->stopUsingRegister(loadLenReg);
+   cg->stopUsingRegister(fromIndexReg);
 
    cg->stopUsingRegister(s1PartialVReg);
    cg->stopUsingRegister(s2PartialVReg);
