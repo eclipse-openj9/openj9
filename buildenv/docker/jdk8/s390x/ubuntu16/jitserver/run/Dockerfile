@@ -1,4 +1,4 @@
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,6 +40,6 @@
 
 FROM openj9-jitserver-build:latest
 
-ENTRYPOINT ["/root/j2sdk-image/jre/bin/java", "-XX:StartAsJITServer", "-Xjit:verbose={JITServer}"]
+ENTRYPOINT ["/root/j2sdk-image/jre/bin/jitserver", "-Xjit:verbose={JITServer}"]
 
 EXPOSE 38400

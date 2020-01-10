@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,5 +59,5 @@ RUN git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8 \
 
 FROM openj9:latest 
 COPY --from=jitserver_build /root/openj9-openjdk-jdk8/build/linux-x86_64-normal-server-release/images/j2sdk-image /root/j2sdk-image
-ENTRYPOINT ["/root/j2sdk-image/jre/bin/java", "-XX:StartAsJITServer", "-Xjit:verbose={JITServer}"]
+ENTRYPOINT ["/root/j2sdk-image/jre/bin/jitserver", "-Xjit:verbose={JITServer}"]
 EXPOSE 38400
