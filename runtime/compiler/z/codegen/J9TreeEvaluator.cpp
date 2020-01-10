@@ -261,7 +261,8 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    const uint32_t elementSizeMask = isUTF16 ? 1 : 0;
    const int8_t vectorSize = cg->machine()->getVRFSize();
    const uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   const bool supportsVSTRS = TR::Compiler->target.cpu.getSupportsVectorFacilityEnhancement2();
+   // TODO (#8274): Re-enable VSTRS support in inlineVectorizedStringIndexOf
+   const bool supportsVSTRS = TR::Compiler->target.cpu.getSupportsVectorFacilityEnhancement2() && feGetEnv("TR_EnableVectorStringSearch") != NULL;
    TR::Compilation* comp = cg->comp();
 
    if (comp->getOption(TR_TraceCG))
