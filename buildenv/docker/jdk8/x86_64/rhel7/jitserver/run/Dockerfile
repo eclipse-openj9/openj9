@@ -1,4 +1,4 @@
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,5 +36,5 @@ COPY j2sdk-image /opt/sdk-ubi
 RUN adduser --uid 10000 --gid 0 default
 USER 10000
 
-ENTRYPOINT ["/opt/sdk-ubi/jre/bin/java", "-XX:StartAsJITServer", "-Xjit:verbose"]
+ENTRYPOINT ["/opt/sdk-ubi/jre/bin/jitserver", "-Xjit:verbose"]
 EXPOSE 38400

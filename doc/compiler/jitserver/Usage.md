@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2019 IBM Corp. and others
+Copyright (c) 2018, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,14 +20,16 @@ OpenJDK Assembly Exception [2].
 SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 -->
 
-JITServer adds an additional two *personas* to the `java` executable: client mode and server mode. There are two new command line options that can be used to select a persona: `-XX:StartAsJITServer` and `-XX:+UseJITServer`.
+JITServer adds two additional *personas* to the JVM: client mode and server mode. To start the JVM in server mode, run the `jitserver` launcher present under `bin` directory (along side `java` launcher). To start the JVM in client mode, there is a new command line option: `-XX:+UseJITServer`
 
-In server mode, the JVM will halt after startup and begin listening for compilation requests from clients. No Java application is given to the server on the command line.
+In server mode, the JVM will halt after startup and begin listening for compilation requests from clients. No Java application is given to the `jitserver` launcher on the command line. Any option accepted by JVM can also be passed to the `jitserver` launcher.
 
 ```
-$ java -XX:StartAsJITServer
+$ jitserver
+JITServer is currently a technology preview. Its use is not yet supported
 
-JITServer ready to accept incoming requests
+JITServer is ready to accept incoming requests
+
 ```
 
 Clients can then be started. For this example, we assume the client and server are running on the same machine. The server needs to continue running, so you will need to start clients in a new terminal.
@@ -45,26 +47,29 @@ JCL      - 03cb3a3cb4 based on jdk8u232-b09)
 ```
 Note that `java -version` is itself a small Java application! If you have some application you'd like to test, you can substitute it in for `-version`. Run it as usual, but with the flag `-XX:+UseJITServer` before the application name.
 
-You might have noticed that running the client without any server to connect to still appears to work. This is because the client will fall back to running the interpreter (slow path) if it cannot connect to a server. To ensure that everything is really working as intended, it is a good idea to enable some logging. It's often most convenient on the server side, because log messages will not interfere with application output, but logging can be added to either the server or the client.
+You might have noticed that running the client without any server to connect to still appears to work. This is because the client performs required JIT compilations locally if it cannot connect to a server. To ensure that everything is really working as intended, it is a good idea to enable some logging. It's often most convenient on the server side, because log messages will not interfere with application output, but logging can be added to either the server or the client.
 
 With verbose logging, if a client connects successfully then server output should look something like this:
 ```
-$ java -XX:StartAsJITServer -Xjit:verbose=\{JITServer\}
+$ jitserver -Xjit:verbose=\{JITServer\}
 
-#JITServer: JITServer in Server Mode. Port: 38400
-#JITServer: Started JITServer listener thread: 0000000001B8DE00
-JITServer ready to accept incoming requests
+JITServer is currently a technology preview. Its use is not yet supported
 
-#JITServer: Server allocated data for a new clientUID 7273413081043723869
-#JITServer: Server received request to compile sun/reflect/Reflection.getCallerClass @ cold
-#JITServer: Server queued compilation for sun/reflect/Reflection.getCallerClass
-#JITServer: Server cached clientSessionData=00007FFFDA1973E0 for clientUID=7273413081043723869 compThreadID=0
-#JITServer: Server has successfully compiled sun/reflect/Reflection.getCallerClass()Ljava/lang/Class;
-#JITServer: Server received request to compile java/lang/Double.longBitsToDouble @ cold
-#JITServer: Server queued compilation for java/lang/Double.longBitsToDouble
-#JITServer: Server cached clientSessionData=00007FFFDA1973E0 for clientUID=7273413081043723869 compThreadID=1
-#JITServer: Server has successfully compiled java/lang/Double.longBitsToDouble(J)D
-#JITServer: Server received request to compile java/lang/System.getEncoding @ cold
+#JITServer: JITServer Server Mode. Port: 38400. Connection Timeout 30000ms
+#JITServer: Started JITServer listener thread: 0000000000226C00
+JITServer is ready to accept incoming requests
+
+#JITServer: Server received request for stream 00007FEC658EF720
+#JITServer: Server allocated data for a new clientUID 11129135271614904954
+#JITServer: compThreadID=0 created clientSessionData=00007FEC658EFBE0 for clientUID=11129135271614904954 seqNo=0
+#JITServer: Server will process a list of 0 unloaded classes for clientUID 11129135271614904954
+#JITServer: compThreadID=0 has successfully compiled java/lang/Double.longBitsToDouble(J)D
+#JITServer: compThreadID=0 found clientSessionData=00007FEC658EFBE0 for clientUID=11129135271614904954 seqNo=1
+#JITServer: Server will process a list of 0 unloaded classes for clientUID 11129135271614904954
+#JITServer: compThreadID=0 has successfully compiled jdk/internal/reflect/Reflection.getCallerClass()Ljava/lang/Class;
+#JITServer: compThreadID=0 found clientSessionData=00007FEC658EFBE0 for clientUID=11129135271614904954 seqNo=2
+#JITServer: Server will process a list of 0 unloaded classes for clientUID 11129135271614904954
+#JITServer: compThreadID=0 has successfully compiled java/lang/System.getEncoding(I)Ljava/lang/String;
 ...
 ```
 
@@ -73,20 +78,20 @@ JITServer ready to accept incoming requests
 #### Hostname
 On the client, you can specify the server hostname or IP.
 ```
-$ java -XX:+UseJITServer:server=example.com
+$ java -XX:+UseJITServerAddress=example.com
 ```
 
 #### Port
-By default, communication occurs on port 38400. You can change this by specifying the `port` suboption as follows:
+By default, communication occurs on port 38400. You can change this by specifying the `-XX:JITServerPort` suboption as follows:
 ```
-$ java -XX:StartAsJITServer -XX:JITServerPort=1234
+$ jitserver -XX:JITServerPort=1234
 $ java -XX:+UseJITServer -XX:JITServerPort=1234 MyApplication
 ```
 
 #### Timeout
-If your network connection is flaky, you may want to specify a timeout. By default there is no timeout. Timeout is given in milliseconds. Client and server timeouts do not need to match, but there's usually no reason for them to differ.
+If your network connection is flaky, you may want to adjust the timeout. Timeout is given in milliseconds using `-XX:JITServerTimeout` suboption. Client and server timeouts do not need to match. By default there is timeout of 30000 ms at the server and 2000 ms at the client. Typically the timeout at the server can be larger; it can afford to wait because there is nothing else to do anyway. Waiting too much at the client can be detrimental because the client has the option of compiling locally and make progress.
 ```
-$ java -XX:StartAsJITServer -XX:JITServerTimeout=5000
+$ jitserver -XX:JITServerTimeout=5000
 $ java -XX:+UseJITServer -XX:JITServerTimeout=5000 MyApplication
 ```
 
@@ -104,7 +109,7 @@ Make sure you specify localhost for the common name, but other fields don't matt
 
 On the server, there are two options `sslKey` and `sslCert`, which are used to specify the filenames of PEM-encoded keypair.
 ```
-$ java -XX:StartAsJITServer -XX:JITServerSSLKey=key.pem -XX:JITServerSSLCert=cert.pem
+$ jitserver -XX:JITServerSSLKey=key.pem -XX:JITServerSSLCert=cert.pem
 ```
 The client currently accepts a single option `sslRootCerts`, which is the filename of a PEM-encoded certificate chain.
 ```
