@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -397,10 +397,15 @@ public:
     *  \param cpIndex
     *     The constant pool index of the constant dynamic.
     *
+    *  \param obj
+    *     Return the resolved constant dynamic value.
+    *
     *  \return
     *     Opaque pointer to the slot containing the resolved constant dynamic value.
+    *     The returned pointer should always be dereferenced by using the passed-in
+    *     parameter "obj".
     */
-   virtual void *                  dynamicConstant(int32_t cpIndex);
+   virtual void *                  dynamicConstant(int32_t cpIndex, uintptrj_t *obj);
    virtual void *                  methodTypeConstant(int32_t cpIndex);
    virtual bool                    isUnresolvedMethodType(int32_t cpIndex);
    virtual void *                  methodHandleConstant(int32_t cpIndex);
