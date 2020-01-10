@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2017, 2019 IBM Corp. and others
+  Copyright (c) 2017, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,13 +25,12 @@
 	<test>
 		<testCaseName>ValueTypeTests</testCaseName>
 		<variations>
-                  <variation>-XX:ValueTypeFlatteningThreshold=1</variation>
-		  <variation>NoOptions</variation>
-          	</variations>
+			<variation>-XX:ValueTypeFlatteningThreshold=1</variation>
+			<variation>-Xgcpolicy:nogc</variation>
+		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 		-Xverify:none \
 		-Xint \
-		-Xgcpolicy:nogc \
 		--add-opens java.base/jdk.internal.misc=ALL-UNNAMED \
 		-XX:+EnableValhalla \
 		-cp $(Q)$(LIB_DIR)$(D)asm-all.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)ValhallaTests.jar$(Q) \

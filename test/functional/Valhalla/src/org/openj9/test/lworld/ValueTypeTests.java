@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1381,7 +1381,7 @@ public class ValueTypeTests {
 	 * 	int y;
 	 * }
 	 */
-	@Test(priority=1)
+	@Test(enabled = false, priority=1)
 	static public void testCreateLargeNumberOfPoint2D() throws Throwable {
 		String fields[] = {"x:I", "y:I"};
 		String className = "Point2D";
