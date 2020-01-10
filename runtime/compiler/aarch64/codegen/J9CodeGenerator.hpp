@@ -83,6 +83,8 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
     * @param[in] data : binary encoding data
     */
    void generateBinaryEncodingPrePrologue(TR_ARM64BinaryEncodingData &data);
+
+   bool supportsDirectJNICallsForAOT() { return true;}
    };
 
 }

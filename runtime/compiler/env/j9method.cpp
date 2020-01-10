@@ -1504,7 +1504,7 @@ TR_ResolvedRelocatableJ9Method::startAddressForJittedMethod()
 void *
 TR_ResolvedRelocatableJ9Method::startAddressForJNIMethod(TR::Compilation * comp)
    {
-#if defined(TR_TARGET_S390)  || defined(TR_TARGET_X86) || defined(TR_TARGET_POWER)
+#if defined(TR_TARGET_S390)  || defined(TR_TARGET_X86) || defined(TR_TARGET_POWER) || defined(TR_TARGET_ARM64)
    return TR_ResolvedJ9Method::startAddressForJNIMethod(comp);
 #else
    return NULL;

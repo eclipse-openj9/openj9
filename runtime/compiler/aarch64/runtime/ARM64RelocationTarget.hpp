@@ -52,6 +52,10 @@ class TR_ARM64RelocationTarget : public TR_RelocationTarget
 
       virtual uint8_t *arrayCopyHelperAddress(J9JavaVM *javaVM);
       virtual void flushCache(uint8_t *codeStart, unsigned long size);
+      virtual void storeAddressRAM(uint8_t *address, uint8_t *reloLocation)
+         {
+         storeAddressSequence(address, reloLocation, 0);
+         }
    };
 
 
