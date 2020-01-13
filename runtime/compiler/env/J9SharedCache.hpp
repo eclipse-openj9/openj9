@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -122,6 +122,15 @@ public:
     * \return True if the pointer points into the shared cache, false otherwise.
     */
    virtual bool isPointerInSharedCache(void *ptr, uintptrj_t *cacheOffset = NULL);
+
+   /**
+    * \brief Checks whether the specified offset is within the shared cache.
+    *
+    * \param[in] offset The offset to check.
+    * \param[out] ptr If offset is within the shared cache and this parameter is not NULL the result of converting offset into a pointer will be returned here. If offset is not within the shared cache this parameter is ignored.
+    * \return True if the offset is within the shared cache, false otherwise.
+    */
+   virtual bool isOffsetInSharedCache(uintptrj_t offset, void *ptr = NULL);
 
    J9ROMClass *startingROMClassOfClassChain(UDATA *classChain);
 
