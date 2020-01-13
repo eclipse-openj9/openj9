@@ -379,6 +379,8 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       case TR::java_lang_String_getChars_charArray:
       case TR::java_lang_String_getChars_byteArray:
       case TR::java_lang_Integer_toUnsignedLong:
+      case TR::java_nio_Bits_byteOrder:
+      case TR::java_nio_ByteOrder_nativeOrder:
          return true;
 
       // In Java9 the following enum values match both sun.misc.Unsafe and
