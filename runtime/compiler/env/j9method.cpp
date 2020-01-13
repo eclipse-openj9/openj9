@@ -65,6 +65,7 @@
 #include "env/JSR292Methods.h"
 #include "control/MethodToBeCompiled.hpp"
 
+
 #if defined(_MSC_VER)
 #include <malloc.h>
 #endif
@@ -7789,11 +7790,13 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 #if defined(JITSERVER_SUPPORT)
          if (comp()->isOutOfProcessCompilation())
             {
+            std::vector<uintptrj_t> listOfOffsets;
+            if (!returnFromArchetype)
+               {
+               packReferenceChainOffsets(methodHandleExpression, listOfOffsets);
+               }
             auto stream = TR::CompilationInfo::getStream();
-            stream->write(JITServer::MessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
-            receiverHandle = std::get<0>(stream->read<uintptrj_t>());
-            methodHandle = returnFromArchetype ? receiverHandle : walkReferenceChain(methodHandleExpression, receiverHandle);
-            stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup, methodHandle);
+            stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup, thunkDetails->getHandleRef(), listOfOffsets);
             auto recv = stream->read<std::string>();
             std::string methodDescriptorString = std::get<0>(recv);
             methodDescriptorLength = methodDescriptorString.length();
@@ -9200,3 +9203,45 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver
 
    return result;
    }
+
+
+#if defined(JITSERVER_SUPPORT)
+void
+TR_J9ByteCodeIlGenerator::packReferenceChainOffsets(TR::Node *node, std::vector<uintptrj_t>& listOfOffsets)
+   {
+   if (node->getOpCode().isLoadDirect() && node->getType() == TR::Address)
+      {
+      TR_ASSERT(node->getSymbolReference()->getCPIndex() == 0, "walkReferenceChain expecting aload of 'this'; found aload of %s", comp()->getDebug()->getName(node->getSymbolReference()));
+      return;
+      }
+   else if (node->getOpCode().isLoadIndirect() && node->getType() == TR::Address)
+      {
+      TR::SymbolReference *symRef = node->getSymbolReference();
+      if (symRef->isUnresolved())
+         {
+         if (comp()->getOption(TR_TraceILGen))
+            traceMsg(comp(), "  walkReferenceChain hit unresolved symref %s; aborting\n", symRef->getName(comp()->getDebug()));
+         comp()->failCompilation<TR::ILGenFailure>("Symbol reference is unresolved");
+         }
+      TR::Symbol *sym = symRef->getSymbol();
+      TR_ASSERT(sym->isShadow() && symRef->getCPIndex() > 0, "walkReferenceChain expecting field load; found load of %s", comp()->getDebug()->getName(symRef));
+      uintptrj_t fieldOffset = symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes(); // blah
+      packReferenceChainOffsets(node->getFirstChild(), listOfOffsets);
+      listOfOffsets.push_back(fieldOffset);
+      }
+   else
+      {
+      TR_ASSERT(0, "Unexpected opcode in walkReferenceChain: %s", node->getOpCode().getName());
+      comp()->failCompilation<TR::ILGenFailure>("Unexpected opcode in walkReferenceChain");
+      }
+
+   if (comp()->getOption(TR_TraceILGen))
+      {
+      TR_ASSERT(node->getOpCode().hasSymbolReference(), "Can't get here without a symref");
+      traceMsg(comp(), "  walkReferenceChain(%s) // %s\n",
+         comp()->getDebug()->getName(node),
+         comp()->getDebug()->getName(node->getSymbolReference()));
+      }
+   return;
+   }
+#endif

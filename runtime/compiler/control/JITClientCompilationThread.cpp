@@ -2072,17 +2072,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup:
          {
-         auto recv = client->getRecvData<uintptrj_t>();
          TR::VMAccessCriticalSection invokeILGenMacrosInvokeExactAndFixup(fe);
-
-         if (compInfoPT->getLastLocalGCCounter() != compInfoPT->getCompilationInfo()->getLocalGCCounter())
-            {
-            // GC happened, fail compilation
-            auto comp = compInfoPT->getCompilation();
-            comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted due to GC");
-            }
-
-         uintptrj_t methodHandle = std::get<0>(recv);
+         auto recv = client->getRecvData<uintptrj_t*, std::vector<uintptrj_t> >();
+         uintptrj_t receiverHandle = *std::get<0>(recv);
+         std::vector<uintptrj_t> listOfOffsets = std::get<1>(recv);
+         uintptrj_t methodHandle = listOfOffsets.size() == 0 ? receiverHandle : JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
          uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "type",             "Ljava/lang/invoke/MethodType;"),

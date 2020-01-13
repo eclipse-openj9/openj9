@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,6 +96,8 @@ class JITServerHelpers
    static uint32_t serverMsgTypeCount[JITServer::MessageType_ARRAYSIZE];
 
    static bool isAddressInROMClass(const void *address, const J9ROMClass *romClass);
+
+   static uintptrj_t walkReferenceChainWithOffsets(TR_J9VM * fe, std::vector<uintptrj_t>& listOfOffsets, uintptrj_t receiver);
 
    private:
    static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);
