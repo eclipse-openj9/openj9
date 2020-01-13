@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -166,7 +166,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
          uint8_t flags = (uint8_t) recordInfo->data3;
 
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             *(uint64_t *) cursor = (uint64_t) (uintptrj_t) tempSR->getOwningMethod(comp)->constantPool();
             cursor += 8;
@@ -219,7 +219,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
 
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             *(uint64_t *) cursor = (uint64_t) self()->findCorrectInlinedSiteIndex(tempSR->getOwningMethod(comp)->constantPool(), recordInfo->data2); //inlineSiteIndex
             cursor += 8;
@@ -292,7 +292,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          table = (TR::LabelSymbol *) relocation->getTargetAddress();
          codeLocation = table->getCodeLocation();
 
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             *(uint64_t *) cursor = (uint64_t)(codeLocation - aotMethodCodeStart);
             cursor += 8;
@@ -310,7 +310,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
 
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             if (relocation->getTargetAddress() == NULL)
                printf("target address NULL!!\n");
@@ -329,7 +329,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
       case TR_ArrayCopyHelper:
       case TR_ArrayCopyToc:
          {
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             uint8_t flags = (uint8_t) ((uintptr_t) relocation->getTargetAddress2());
             TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
@@ -349,7 +349,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
       case TR_BodyInfoAddressLoad:
          {
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             uint8_t flags = (uint8_t) ((uintptr_t) relocation->getTargetAddress2());
             TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
@@ -371,7 +371,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
          uint8_t flags = (uint8_t) recordInfo->data3;
          TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");
          *flagsCursor |= (flags & RELOCATION_RELOC_FLAGS_MASK);
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             *(uint64_t *) cursor = (uint64_t) (uintptrj_t) recordInfo->data2;
             cursor += 8;
@@ -422,7 +422,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
 
       case TR_CheckMethodExit:
          {
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             *(uint64_t *) cursor = (uint64_t) (uintptrj_t) relocation->getTargetAddress();
             cursor += 8;
@@ -438,7 +438,7 @@ uint8_t *J9::Power::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::Iterat
       case TR_RamMethodSequence:
       case TR_RamMethodSequenceReg:
          {
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             uint8_t flags = (uint8_t) ((uintptr_t) relocation->getTargetAddress2());
             TR_ASSERT((flags & RELOCATION_CROSS_PLATFORM_FLAGS_MASK) == 0,  "reloFlags bits overlap cross-platform flags bits\n");

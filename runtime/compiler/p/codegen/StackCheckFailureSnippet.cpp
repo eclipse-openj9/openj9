@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -152,7 +152,7 @@ uint8_t *TR::PPCStackCheckFailureSnippet::emitSnippetBody()
 
    if (saveLR)
       {
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
         // std [gr14, 0], gr0
         *(int32_t *)buffer = 0xf80e0000;
       else
@@ -165,7 +165,7 @@ uint8_t *TR::PPCStackCheckFailureSnippet::emitSnippetBody()
    if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)buffer))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(sofRef->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)buffer), "Helper address is out of range");
+      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)buffer), "Helper address is out of range");
       }
 
    // bl distance
@@ -182,7 +182,7 @@ uint8_t *TR::PPCStackCheckFailureSnippet::emitSnippetBody()
       // For FSD, we have to reload the return address
       if (comp->getOption(TR_FullSpeedDebug))
 	 {
-         if (TR::Compiler->target.is64Bit())
+         if (cg()->comp()->target().is64Bit())
             // ld gr0, [gr14, 0]
             *(int32_t *)buffer = 0xe80e0000;
          else
@@ -341,7 +341,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCStackCheckFailureSnippet * snippet)
    if (saveLR)
       {
       printPrefix(pOutFile, NULL, cursor, 4);
-      if (TR::Compiler->target.is64Bit())
+      if (_comp->target().is64Bit())
          trfprintf(pOutFile, "std \t[gr14, 0], gr0");
       else
          trfprintf(pOutFile, "stw \t[gr14, 0], gr0");

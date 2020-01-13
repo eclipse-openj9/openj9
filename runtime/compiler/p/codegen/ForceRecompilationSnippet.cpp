@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
 
    TR::InstOpCode opcode;
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().is64Bit())
       {
       // put jit entry point address in startPCReg
       uint32_t hhval, hlval, lhval, llval;
@@ -122,7 +122,7 @@ uint8_t *TR::PPCForceRecompilationSnippet::emitSnippetBody()
    if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)buffer))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(induceRecompilationSymRef->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)buffer),
+      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)buffer),
                       "Helper address is out of range");
       }
 
@@ -151,7 +151,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCForceRecompilationSnippet * snippet)
 
    int32_t value;
 
-   if (TR::Compiler->target.is64Bit())
+   if (_comp->target().is64Bit())
       {
       printPrefix(pOutFile, NULL, cursor, 4);
       value = *((int32_t *) cursor) & 0x0ffff;
@@ -203,5 +203,5 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCForceRecompilationSnippet * snippet)
 
 uint32_t TR::PPCForceRecompilationSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   return(TR::Compiler->target.is64Bit() ? 6*PPC_INSTRUCTION_LENGTH : 3*PPC_INSTRUCTION_LENGTH);
+   return(cg()->comp()->target().is64Bit() ? 6*PPC_INSTRUCTION_LENGTH : 3*PPC_INSTRUCTION_LENGTH);
    }

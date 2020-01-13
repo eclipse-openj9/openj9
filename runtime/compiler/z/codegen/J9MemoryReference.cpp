@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -348,7 +348,7 @@ J9::Z::MemoryReference::createPatchableDataInLitpool(TR::Node * node, TR::CodeGe
    TR::S390WritableDataSnippet * litpool = cg->CreateWritableConstant(node);
    litpool->setUnresolvedDataSnippet(uds);
 
-   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z10))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z10))
       {
       litpool->resetNeedLitPoolBasePtr();
       TR::S390RILInstruction * LRLinst;

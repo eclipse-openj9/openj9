@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -315,12 +315,12 @@ J9::CodeGenerator::lowerCompressedRefs(
    // trees may appear after checks (in which case the node
    // would have already been visited, preventing lowering)
    //
-   TR::ILOpCodes convertOp = TR::Compiler->target.is64Bit() ? TR::l2a : TR::i2a;
+   TR::ILOpCodes convertOp = self()->comp()->target().is64Bit() ? TR::l2a : TR::i2a;
    if (loadOrStoreNode->getOpCodeValue() == convertOp)
       return;
    else if (loadOrStoreNode->getOpCode().isStoreIndirect())
       {
-      convertOp = TR::Compiler->target.is64Bit() ? TR::l2i : TR::iushr;
+      convertOp = self()->comp()->target().is64Bit() ? TR::l2i : TR::iushr;
       if (loadOrStoreNode->getSecondChild()->getOpCodeValue() == convertOp)
          return;
       }
@@ -355,7 +355,7 @@ J9::CodeGenerator::lowerCompressedRefs(
 
    if (loadOrStoreNode->getOpCode().isLoadIndirect() && shouldBeCompressed)
       {
-      if (TR::Compiler->target.cpu.isZ() && TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
+      if (self()->comp()->target().cpu.isZ() && TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
          {
          dumpOptDetails(self()->comp(), "converting to ardbari %p under concurrent scavenge on Z.\n", node);
          self()->createReferenceReadBarrier(treeTop, loadOrStoreNode);
@@ -683,7 +683,7 @@ J9::CodeGenerator::lowerTreesPreChildrenVisit(TR::Node *parent, TR::TreeTop *tre
       // Hiding compressedref logic from CodeGen doesn't seem a good practise, the evaluator always need the uncompressedref node for write barrier,
       // therefore, this part is deprecated. It'll be removed once P and Z update their corresponding evaluators.
       static bool UseOldCompareAndSwapObject = (bool)feGetEnv("TR_UseOldCompareAndSwapObject");
-      if (self()->comp()->useCompressedPointers() && (UseOldCompareAndSwapObject || !TR::Compiler->target.cpu.isX86()))
+      if (self()->comp()->useCompressedPointers() && (UseOldCompareAndSwapObject || !self()->comp()->target().cpu.isX86()))
          {
          TR::MethodSymbol *methodSymbol = parent->getSymbol()->castToMethodSymbol();
          // In Java9 Unsafe could be the jdk.internal JNI method or the sun.misc ordinary method wrapper,
@@ -861,7 +861,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
          }
 
       TR::Node *javaOffset;
-      if (TR::Compiler->target.is64Bit())
+      if (self()->comp()->target().is64Bit())
          javaOffset = TR::Node::lconst(node, (int64_t) TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
       else
          javaOffset = TR::Node::iconst(node, TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
@@ -872,7 +872,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       TR::Node *oldNativeOffset = nativeOffset;
       TR::Node *oldLen = len;
 
-      if (TR::Compiler->target.is32Bit())
+      if (self()->comp()->target().is32Bit())
          {
          nativeSrc = TR::Node::create(TR::l2i, 1, nativeSrc);
          nativeOffset = TR::Node::create(TR::l2i, 1, nativeOffset);
@@ -884,7 +884,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       TR::Node *nativeAddr;
       TR::Node *javaAddr;
 
-      if (TR::Compiler->target.is32Bit())
+      if (self()->comp()->target().is32Bit())
          {
          nativeAddr = nativeSrc;
          javaOffset = TR::Node::create(TR::iadd, 2, javaOffset, nativeOffset);
@@ -934,7 +934,7 @@ J9::CodeGenerator::lowerTreeIfNeeded(
       {
       TR::SymbolReference *symRef = node->getSymbolReference();
       TR::Symbol *symbol = symRef->getSymbol();
-      if (symbol->isVolatile() && node->getDataType() == TR::Int64 && !symRef->isUnresolved() && TR::Compiler->target.is32Bit() &&
+      if (symbol->isVolatile() && node->getDataType() == TR::Int64 && !symRef->isUnresolved() && self()->comp()->target().is32Bit() &&
           !self()->getSupportsInlinedAtomicLongVolatiles())
          {
          bool isLoad = false;
@@ -3817,12 +3817,12 @@ J9::CodeGenerator::genSymRefStoreToArray(
    else
       offsetNode = TR::Node::create(refNode, TR::iconst, 0, secondOffset);
 
-   if (TR::Compiler->target.is64Bit())
+   if (self()->comp()->target().is64Bit())
       {
       offsetNode = TR::Node::create(TR::i2l, 1, offsetNode);
       }
 
-   TR::Node* addrNode = TR::Node::create(TR::Compiler->target.is64Bit()?TR::aladd:TR::aiadd,
+   TR::Node* addrNode = TR::Node::create(self()->comp()->target().is64Bit()?TR::aladd:TR::aiadd,
       2, arrayAddressNode, offsetNode);
    TR::Node* storeNode =
       TR::Node::createWithSymRef(self()->comp()->il.opCodeForIndirectStore(loadNode->getDataType()), 2, 2,
@@ -3979,7 +3979,7 @@ J9::CodeGenerator::fixUpProfiledInterfaceGuardTest()
                   comp->failCompilation<TR::CompilationException>("Abort compilation as Virtual Guard has generated illegal memory reference");
                TR::Node *vTableSizeOfReceiver = NULL;
                TR::Node *rangeCheckTest = NULL;
-               if (TR::Compiler->target.is64Bit())
+               if (self()->comp()->target().is64Bit())
                   {
                   vTableSizeOfReceiver = TR::Node::createWithSymRef(TR::lloadi, 1, 1, vTableLoad->getFirstChild(),
                                                                            comp->getSymRefTab()->findOrCreateVtableEntrySymbolRef(comp->getMethodSymbol(),
@@ -4075,7 +4075,7 @@ J9::CodeGenerator::allocateLinkageRegisters()
          TR_ASSERT(regLoad->getSymbol() && regLoad->getSymbol()->isParm(), "First basic block can have only parms live on entry");
          dumpOptDetails(self()->comp(), "  Parm %d has RegLoad %s\n", regLoad->getSymbol()->getParmSymbol()->getOrdinal(), self()->comp()->getDebug()->getName(regLoad));
          regLoads[regLoad->getSymbol()->getParmSymbol()->getOrdinal()] = regLoad;
-         if (regLoad->getType().isInt64() && TR::Compiler->target.is32Bit() && !self()->use64BitRegsOn32Bit())
+         if (regLoad->getType().isInt64() && self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit())
             {
             globalRegsWithRegLoad.set(regLoad->getLowGlobalRegisterNumber());
             globalRegsWithRegLoad.set(regLoad->getHighGlobalRegisterNumber());
@@ -4227,7 +4227,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
          {
          // Transmute this node into a regLoad
 
-         if ((node->getType().isInt64() && TR::Compiler->target.is32Bit() && !self()->use64BitRegsOn32Bit())
+         if ((node->getType().isInt64() && self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit())
               || node->getType().isLongDouble())
             {
             if (self()->getDisableLongGRA())
@@ -4239,7 +4239,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                // Endianness affects how longs are passed
                //
                int8_t lowLRI, highLRI;
-               if (TR::Compiler->target.cpu.isBigEndian() || node->getType().isLongDouble())
+               if (self()->comp()->target().cpu.isBigEndian() || node->getType().isLongDouble())
                   {
                   highLRI = lri;
                   lowLRI  = lri+1;
@@ -4278,7 +4278,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                   }
                }
             }
-         else if (TR::Compiler->target.cpu.isZ() && TR::Compiler->target.isLinux() && parm->getDataType() == TR::Aggregate &&
+         else if (self()->comp()->target().cpu.isZ() && self()->comp()->target().isLinux() && parm->getDataType() == TR::Aggregate &&
                   (parm->getSize() <= 2 ||  parm->getSize() == 4 ||  parm->getSize() == 8))
             {
             // On zLinux aggregates with a size of 1, 2, 4 or 8 bytes are passed by value in registers.
@@ -4295,7 +4295,7 @@ J9::CodeGenerator::changeParmLoadsToRegLoads(TR::Node *node, TR::Node **regLoads
                dt = TR::Int8;
 
             // if not 64 bit and data type is 64 bit, need to place it into two registers
-            if ((TR::Compiler->target.is32Bit() && !self()->use64BitRegsOn32Bit()) && dt == TR::Int64)
+            if ((self()->comp()->target().is32Bit() && !self()->use64BitRegsOn32Bit()) && dt == TR::Int64)
                {
                TR_GlobalRegisterNumber lowReg  = self()->getLinkageGlobalRegisterNumber(lri+1, dt);
                TR_GlobalRegisterNumber highReg = self()->getLinkageGlobalRegisterNumber(lri, dt);
@@ -4569,7 +4569,7 @@ J9::CodeGenerator::setUpForInstructionSelection()
       if (!_refinedAliasWalkCollector.killsNonIntPrimitiveArrayShadows)  methodInfo->setDoesntKillNonIntPrimitiveArrayShadows(true);
       }
 
-   if (TR::Compiler->target.cpu.isX86() && self()->getInlinedGetCurrentThreadMethod())
+   if (self()->comp()->target().cpu.isX86() && self()->getInlinedGetCurrentThreadMethod())
       {
       TR::RealRegister *ebpReal = self()->getRealVMThreadRegister();
 

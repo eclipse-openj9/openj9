@@ -1230,9 +1230,9 @@ TR_ResolvedJ9MethodBase::isCold(TR::Compilation * comp, bool isIndirectCall, TR:
    if ((!comp->getOption(TR_DisableDFP)) &&
        (
 #ifdef TR_TARGET_S390
-       TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility() ||
+       comp->target().cpu.getSupportsDecimalFloatingPointFacility() ||
 #endif
-       TR::Compiler->target.cpu.supportsDecimalFloatingPoint()) && sym != NULL)
+       comp->target().cpu.supportsDecimalFloatingPoint()) && sym != NULL)
       {
       TR::MethodSymbol * methodSymbol = sym->getMethodSymbol();
       switch(methodSymbol->getRecognizedMethod())
@@ -2177,9 +2177,9 @@ TR_ResolvedRelocatableJ9Method::createResolvedMethodFromJ9Method(TR::Compilation
       return NULL;
 
    if (comp->getOption(TR_DisableDFP) ||
-       (!(TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
+       (!(comp->target().cpu.supportsDecimalFloatingPoint()
 #ifdef TR_TARGET_S390
-       || TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility()
+       || comp->target().cpu.getSupportsDecimalFloatingPointFacility()
 #endif
          ) ||
           !TR_J9MethodBase::isBigDecimalMethod(j9method)))
@@ -6269,7 +6269,7 @@ TR_ResolvedJ9Method::startAddressForJNIMethod(TR::Compilation * comp)
    if (isInterpreted())
       return (void*)((intptrj_t)address & ~J9_STARTPC_NOT_TRANSLATED);
 
-   return *(void * *)(TR::CompilationInfo::getJ9MethodExtra(ramMethod()) - (TR::Compiler->target.is64Bit() ? 12 : 8));
+   return *(void * *)(TR::CompilationInfo::getJ9MethodExtra(ramMethod()) - (comp->target().is64Bit() ? 12 : 8));
    }
 
 U_32
@@ -8324,7 +8324,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          TR::SymbolReference *extraField = comp()->getSymRefTab()->findOrCreateJ9MethodExtraFieldSymbolRef(offsetof(struct J9Method, extra));
          TR::Node *j9methodAddress = pop();
-         if (TR::Compiler->target.is64Bit())
+         if (comp()->target().is64Bit())
             j9methodAddress = TR::Node::create(TR::l2a, 1, j9methodAddress);
          else
             j9methodAddress = TR::Node::create(TR::i2a, 1, TR::Node::create(TR::l2i, 1, j9methodAddress));
@@ -8334,10 +8334,10 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             {
             case TR::java_lang_invoke_DirectHandle_isAlreadyCompiled:
                {
-               TR::ILOpCodes xcmpeq = TR::Compiler->target.is64Bit()? TR::lcmpeq : TR::icmpeq;
-               TR::ILOpCodes xand   = TR::Compiler->target.is64Bit()? TR::land   : TR::iand;
-               TR::Node *zero = TR::Compiler->target.is64Bit()? TR::Node::lconst(extra, 0) : TR::Node::iconst(extra, 0);
-               TR::Node *mask = TR::Compiler->target.is64Bit()? TR::Node::lconst(extra, J9_STARTPC_NOT_TRANSLATED) : TR::Node::iconst(extra, J9_STARTPC_NOT_TRANSLATED);
+               TR::ILOpCodes xcmpeq = comp()->target().is64Bit()? TR::lcmpeq : TR::icmpeq;
+               TR::ILOpCodes xand   = comp()->target().is64Bit()? TR::land   : TR::iand;
+               TR::Node *zero = comp()->target().is64Bit()? TR::Node::lconst(extra, 0) : TR::Node::iconst(extra, 0);
+               TR::Node *mask = comp()->target().is64Bit()? TR::Node::lconst(extra, J9_STARTPC_NOT_TRANSLATED) : TR::Node::iconst(extra, J9_STARTPC_NOT_TRANSLATED);
                result =
                   TR::Node::create(xcmpeq, 2,
                      TR::Node::create(xand, 2, extra, mask),
@@ -8345,7 +8345,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                }
                break;
             case TR::java_lang_invoke_DirectHandle_compiledEntryPoint:
-               if (TR::Compiler->target.cpu.isI386())
+               if (comp()->target().cpu.isI386())
                   {
                   // IA32 does not store jitEntryOffset in the linkageInfo word
                   // so it would be incorrect to try to load it from there.
@@ -8356,10 +8356,10 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
                else
                   {
                   TR::SymbolReference *linkageInfoSymRef = comp()->getSymRefTab()->findOrCreateStartPCLinkageInfoSymbolRef(-4);
-                  TR::ILOpCodes x2a = TR::Compiler->target.is64Bit()? TR::l2a : TR::i2a;
+                  TR::ILOpCodes x2a = comp()->target().is64Bit()? TR::l2a : TR::i2a;
                   TR::Node *linkageInfo    = TR::Node::createWithSymRef(TR::iloadi, 1, 1, TR::Node::create(x2a, 1, extra), linkageInfoSymRef);
                   TR::Node *jitEntryOffset = TR::Node::create(TR::ishr,   2, linkageInfo, TR::Node::iconst(extra, 16));
-                  if (TR::Compiler->target.is64Bit())
+                  if (comp()->target().is64Bit())
                      result = TR::Node::create(TR::ladd, 2, extra, TR::Node::create(TR::i2l, 1, jitEntryOffset));
                   else
                      result = TR::Node::create(TR::iadd, 2, extra, jitEntryOffset);

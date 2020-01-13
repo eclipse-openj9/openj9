@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -69,7 +69,7 @@ J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Linkage
 #if defined(ENABLE_PRESERVED_FPRS)
    // In case of 32bit Linux on Z, System Linkage only preserves FPR4 and FPR6. For all other targets, FPR8-FPR15 is
    // preserved.
-   if (TR::Compiler->target.isLinux() && TR::Compiler->target.is32Bit())
+   if (codeGen->comp()->target().isLinux() && codeGen->comp()->target().is32Bit())
       {
       setRegisterFlag(TR::RealRegister::FPR4, Preserved);
       setRegisterFlag(TR::RealRegister::FPR6, Preserved);
@@ -88,7 +88,7 @@ J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Linkage
 #endif
 
    // Platform specific linkage settings
-   if (TR::Compiler->target.isLinux())
+   if (codeGen->comp()->target().isLinux())
       {
       setRegisterFlag(TR::RealRegister::GPR6, Preserved);
       setRegisterFlag(TR::RealRegister::GPR7, Preserved);
@@ -113,11 +113,11 @@ J9::Z::CHelperLinkage::CHelperLinkage(TR::CodeGenerator * codeGen,TR_S390Linkage
       setNumIntegerArgumentRegisters(3);
       }
 
-   if (TR::Compiler->target.isZOS())
+   if (codeGen->comp()->target().isZOS())
       {
       setRegisterFlag(TR::RealRegister::GPR14, Preserved);
 
-      if (TR::Compiler->target.is64Bit())
+      if (codeGen->comp()->target().is64Bit())
          {
          setRegisterFlag(TR::RealRegister::GPR12, Preserved);
 
@@ -212,7 +212,7 @@ class RealRegisterManager
    // For the post dependency conditions we need return address register to be assigned to proper virtual register instead of the dummy virtual register
    TR::RegisterDependencyConditions* buildRegisterDependencyConditions(TR::RealRegister::RegNum returnAddressReg)
       {
-      uint32_t numDeps = numberOfRegistersInUse() - 1 + (TR::Compiler->target.is32Bit() ? 1 : 0);
+      uint32_t numDeps = numberOfRegistersInUse() - 1 + (_cg->comp()->target().is32Bit() ? 1 : 0);
 
       // Helper function to generate RegisterDependencyCondition adds one more to post deps for return address.
       // Hence asking one less post deps so this won't create a problem when combined with other dependency condition for ICF.
@@ -229,7 +229,7 @@ class RealRegisterManager
 
       // spill all high regs
       //
-      if (TR::Compiler->target.is32Bit())
+      if (_cg->comp()->target().is32Bit())
          {
          TR::Register *reg = _cg->allocateRegister();
          deps->addPostCondition(reg, TR::RealRegister::KillVolHighRegs);
@@ -297,7 +297,7 @@ TR::Register * J9::Z::CHelperLinkage::buildDirectDispatch(TR::Node * callNode, T
 #if defined(J9ZOS390)
    TR::Register *DSAPointerReg = NULL;
    uint32_t offsetOfSSP = static_cast<uint32_t>(offsetof(J9VMThread, systemStackPointer));
-   uint32_t pointerSize = TR::Compiler->target.is64Bit() ? 7 : 3;
+   uint32_t pointerSize = cg()->comp()->target().is64Bit() ? 7 : 3;
 #endif
 
    TR::RegisterDependencyConditions * postDeps = RealRegisters.buildRegisterDependencyConditions(regRANum);

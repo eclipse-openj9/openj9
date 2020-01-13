@@ -42,7 +42,7 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
    {
    int32_t        intArgNum=0, floatArgNum=0, offset;
    TR::Compilation* comp = cg->comp();
-   TR::InstOpCode::Mnemonic  storeGPROp= TR::Compiler->target.is64Bit() ? TR::InstOpCode::std : TR::InstOpCode::stw;
+   TR::InstOpCode::Mnemonic  storeGPROp= cg->comp()->target().is64Bit() ? TR::InstOpCode::std : TR::InstOpCode::stw;
    TR::Machine *machine = cg->machine();
    const TR::PPCLinkageProperties &linkage = cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention())->getProperties();
    int32_t argStart = callNode->getFirstArgumentIndex();
@@ -87,7 +87,7 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
             if (intArgNum < linkage.getNumIntArgRegs())
                {
                buffer = storeArgumentItem(storeGPROp, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
-               if (TR::Compiler->target.is32Bit())
+               if (cg->comp()->target().is32Bit())
                   {
                   if (intArgNum < linkage.getNumIntArgRegs()-1)
                      {
@@ -95,7 +95,7 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
                      }
                   }
                }
-            intArgNum += TR::Compiler->target.is64Bit() ? 1 : 2;
+            intArgNum += cg->comp()->target().is64Bit() ? 1 : 2;
             if (linkage.getRightToLeft())
                offset += 2*TR::Compiler->om.sizeofReferenceAddress();
             break;
@@ -129,7 +129,7 @@ uint8_t *flushArgumentsToStack(uint8_t *buffer, TR::Node *callNode, int32_t argS
 uint8_t *TR::PPCCallSnippet::setUpArgumentsInRegister(uint8_t *buffer, TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
    {
    int32_t        intArgNum=0, floatArgNum=0, offset;
-   TR::InstOpCode::Mnemonic  loadGPROp= TR::Compiler->target.is64Bit() ? TR::InstOpCode::ld : TR::InstOpCode::lwz;
+   TR::InstOpCode::Mnemonic  loadGPROp= cg->comp()->target().is64Bit() ? TR::InstOpCode::ld : TR::InstOpCode::lwz;
    TR::Machine *machine = cg->machine();
    TR::Compilation* comp = cg->comp();
    const TR::PPCLinkageProperties &linkage = cg->getLinkage(callNode->getSymbol()->castToMethodSymbol()->getLinkageConvention())->getProperties();
@@ -175,12 +175,12 @@ uint8_t *TR::PPCCallSnippet::setUpArgumentsInRegister(uint8_t *buffer, TR::Node 
             if (intArgNum < linkage.getNumIntArgRegs())
                {
                buffer = loadArgumentItem(loadGPROp, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), offset, cg);
-               if (TR::Compiler->target.is32Bit() && (intArgNum < linkage.getNumIntArgRegs()-1))
+               if (cg->comp()->target().is32Bit() && (intArgNum < linkage.getNumIntArgRegs()-1))
                      {
                      buffer = loadArgumentItem(TR::InstOpCode::lwz, buffer, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum+1)), offset+4, cg);
                      }
                }
-            intArgNum += TR::Compiler->target.is64Bit() ? 1 : 2;
+            intArgNum += cg->comp()->target().is64Bit() ? 1 : 2;
             if (linkage.getRightToLeft())
                offset += 2*TR::Compiler->om.sizeofReferenceAddress();
             break;
@@ -236,12 +236,12 @@ int32_t TR::PPCCallSnippet::instructionCountForArguments(TR::Node *callNode, TR:
             if (intArgNum < linkage.getNumIntArgRegs())
                {
                            count++;
-               if (TR::Compiler->target.is32Bit() && (intArgNum < linkage.getNumIntArgRegs()-1))
+               if (cg->comp()->target().is32Bit() && (intArgNum < linkage.getNumIntArgRegs()-1))
                      {
                                   count++;
                      }
                }
-            intArgNum += TR::Compiler->target.is64Bit() ? 1 : 2;
+            intArgNum += cg->comp()->target().is64Bit() ? 1 : 2;
                         break;
          case TR::Float:
             if (floatArgNum < linkage.getNumFloatArgRegs())
@@ -310,7 +310,7 @@ TR_RuntimeHelper TR::PPCCallSnippet::getInterpretedDispatchHelper(
          case TR::Int32:
             return isSynchronised?TR_PPCinterpreterSyncGPR3StaticGlue:TR_PPCinterpreterGPR3StaticGlue;
          case TR::Address:
-            if (TR::Compiler->target.is64Bit())
+            if (cg->comp()->target().is64Bit())
                return isSynchronised?TR_PPCinterpreterSyncGPR3GPR4StaticGlue:TR_PPCinterpreterGPR3GPR4StaticGlue;
             else
                return isSynchronised?TR_PPCinterpreterSyncGPR3StaticGlue:TR_PPCinterpreterGPR3StaticGlue;
@@ -353,7 +353,7 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
    if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)cursor))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor),
+      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor),
                       "Helper address is out of range");
       }
 
@@ -376,7 +376,7 @@ uint8_t *TR::PPCCallSnippet::emitSnippetBody()
       cursor += PPC_INSTRUCTION_LENGTH;
 
       // Padding; VM helper depends this gap being present
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          *(int32_t *)cursor = 0xdeadc0de;
          cursor += PPC_INSTRUCTION_LENGTH;
@@ -464,7 +464,7 @@ uint8_t *TR::PPCUnresolvedCallSnippet::emitSnippetBody()
          helperLookupOffset = TR::Compiler->om.sizeofReferenceAddress();
          break;
       case TR::Address:
-         if (TR::Compiler->target.is64Bit())
+         if (cg()->comp()->target().is64Bit())
             helperLookupOffset = 2*TR::Compiler->om.sizeofReferenceAddress();
       else
          helperLookupOffset = TR::Compiler->om.sizeofReferenceAddress();
@@ -535,7 +535,7 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
    uint8_t *j2iThunkRelocationPoint;
 
    // We want the data in the snippet to be naturally aligned
-   if (TR::Compiler->target.is64Bit() && (((uint64_t)cursor % TR::Compiler->om.sizeofReferenceAddress()) == 4))
+   if (cg()->comp()->target().is64Bit() && (((uint64_t)cursor % TR::Compiler->om.sizeofReferenceAddress()) == 4))
       {
       *(int32_t *)cursor = 0xdeadc0de;
       cursor += 4;
@@ -547,7 +547,7 @@ uint8_t *TR::PPCVirtualUnresolvedSnippet::emitSnippetBody()
    if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)cursor))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor),
+      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor),
                       "Helper address is out of range");
       }
 
@@ -653,7 +653,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    uint8_t *j2iThunkRelocationPoint;
 
    // We want the data in the snippet to be naturally aligned
-   if (TR::Compiler->target.is64Bit() && (((uint64_t)cursor % TR::Compiler->om.sizeofReferenceAddress()) == 0))
+   if (cg()->comp()->target().is64Bit() && (((uint64_t)cursor % TR::Compiler->om.sizeofReferenceAddress()) == 0))
       {
       // icallVMprJavaSendPatchupVirtual needs to determine if it was called for virtual dispatch as opposed to interface dispatch
       // To do that it checks for 'mtctr r12' at -8(LR), which points here when it's called for interface dispatch in 64 bit mode
@@ -668,7 +668,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)cursor))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor),
+      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor),
                       "Helper address is out of range");
       }
 
@@ -689,7 +689,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    cursor += PPC_INSTRUCTION_LENGTH;
 
    // Padding; jitLookupInterfaceMethod depends on this gap being present
-   if (TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().is64Bit())
       {
       *(int32_t *)cursor = 0xdeadc0de;
       cursor += PPC_INSTRUCTION_LENGTH;
@@ -709,7 +709,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
    ((uintptrj_t *)cursor)[1] = 0;
    cursor += 2*TR::Compiler->om.sizeofReferenceAddress();
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().is64Bit())
       {
       if (getTOCOffset() != PTOC_FULL_INDEX)
          {
@@ -843,14 +843,14 @@ uint32_t TR::PPCInterfaceCallSnippet::getLength(int32_t estimatedSnippetStart)
     *   - J2I thunk address
     */
    TR::Compilation* comp = cg()->comp();
-   return(4 + 8 + (TR::Compiler->target.is64Bit() ? 4 : 0) + (9 * TR::Compiler->om.sizeofReferenceAddress()));
+   return(4 + 8 + (cg()->comp()->target().is64Bit() ? 4 : 0) + (9 * TR::Compiler->om.sizeofReferenceAddress()));
    }
 
 uint8_t *TR::PPCCallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
    {
    TR::Compilation * comp = cg->comp();
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
-   int32_t  codeSize = 4*(instructionCountForArguments(callNode, cg) + (TR::Compiler->target.is64Bit()?7:4)) + 8; // Additional 4 bytes to hold size of thunk
+   int32_t  codeSize = 4*(instructionCountForArguments(callNode, cg) + (cg->comp()->target().is64Bit()?7:4)) + 8; // Additional 4 bytes to hold size of thunk
    uint8_t *thunk, *buffer, *returnValue;
    intptrj_t  dispatcher;
    int32_t sizeThunk;
@@ -864,7 +864,7 @@ uint8_t *TR::PPCCallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize
                  dispatcher = (intptrj_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_PPCicallVMprJavaSendVirtual1, false, false, false)->getMethodAddress();
                  break;
           case TR::Address:
-                 if (TR::Compiler->target.is64Bit())
+                 if (cg->comp()->target().is64Bit())
                     dispatcher = (intptrj_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_PPCicallVMprJavaSendVirtualJ, false, false, false)->getMethodAddress();
                  else
                     dispatcher = (intptrj_t)cg->symRefTab()->findOrCreateRuntimeHelper(TR_PPCicallVMprJavaSendVirtual1, false, false, false)->getMethodAddress();
@@ -883,7 +883,7 @@ uint8_t *TR::PPCCallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize
                                   comp->getDebug()->getName(callNode->getDataType()));
           }
 
-   if ( TR::Compiler->target.is32Bit() && (((dispatcher&0x80008000) == 0x80008000) || cg->comp()->compileRelocatableCode()) )
+   if ( cg->comp()->target().is32Bit() && (((dispatcher&0x80008000) == 0x80008000) || cg->comp()->compileRelocatableCode()) )
       codeSize += 4;
 
    if (cg->comp()->compileRelocatableCode())
@@ -896,7 +896,7 @@ uint8_t *TR::PPCCallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize
    *((int32_t *)thunk + 1)= buffer - returnValue; // patch offset for AOT relocation
 
    // NOTE: modification of the layout of the following will require a corresponding change in AOT relocation code (codert/ppc/AOTRelocations.cpp)
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       // todo64: fix me, I'm just a temporary kludge
       // lis gr4, upper 16-bits
@@ -962,7 +962,7 @@ uint8_t *TR::PPCCallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize
    buffer += 4;
 
    sizeThunk = buffer - returnValue;
-   if (TR::Compiler->target.is32Bit() && comp->compileRelocatableCode() && !((dispatcher&0x80008000) == 0x80008000)) // Make size of thunk larger for AOT even if extra instruction is not generated at compile time.  The extra instruction could be needed for the runtime address.
+   if (cg->comp()->target().is32Bit() && comp->compileRelocatableCode() && !((dispatcher&0x80008000) == 0x80008000)) // Make size of thunk larger for AOT even if extra instruction is not generated at compile time.  The extra instruction could be needed for the runtime address.
       sizeThunk += 4;
 
    // patch size of thunk
@@ -975,7 +975,7 @@ uint8_t *TR::PPCCallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize
 
 TR_J2IThunk *TR::PPCCallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg, char *signature)
    {
-   int32_t  codeSize = 4*(instructionCountForArguments(callNode, cg) + (TR::Compiler->target.is64Bit()?7:4)) + 8; // Additional 4 bytes to hold size of thunk
+   int32_t  codeSize = 4*(instructionCountForArguments(callNode, cg) + (cg->comp()->target().is64Bit()?7:4)) + 8; // Additional 4 bytes to hold size of thunk
    intptrj_t  dispatcher;
    int32_t sizeThunk;
    TR::Compilation *comp = cg->comp();
@@ -995,7 +995,7 @@ TR_J2IThunk *TR::PPCCallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNode,
                  dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1, false, false, false);
                  break;
           case TR::Address:
-                 if (TR::Compiler->target.is64Bit())
+                 if (comp->target().is64Bit())
                     dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactJ, false, false, false);
                  else
                     dispatcherSymbol = cg->symRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExact1, false, false, false);
@@ -1017,13 +1017,13 @@ TR_J2IThunk *TR::PPCCallSnippet::generateInvokeExactJ2IThunk(TR::Node *callNode,
 
    dispatcher = (intptrj_t)(cg->fej9()->getInvokeExactThunkHelperAddress(comp, dispatcherSymbol, callNode->getDataType()));
 
-   if ( TR::Compiler->target.is32Bit() && (((dispatcher&0x80008000) == 0x80008000) || comp->compileRelocatableCode()) )
+   if ( comp->target().is32Bit() && (((dispatcher&0x80008000) == 0x80008000) || comp->compileRelocatableCode()) )
       codeSize += 4;
 
    buffer = flushArgumentsToStack(buffer, callNode, argSize, cg);
 
    // NOTE: modification of the layout of the following will require a corresponding change in AOT relocation code (codert/ppc/AOTRelocations.cpp)
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       // todo64: fix me, I'm just a temporary kludge
       // lis gr4, upper 16-bits
@@ -1102,7 +1102,7 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
            intArgNum = 0,
            floatArgNum = 0;
 
-   if (TR::Compiler->target.is64Bit())
+   if (_comp->target().is64Bit())
      {
      storeGPROpName="std";
      }
@@ -1172,7 +1172,7 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
                trfprintf(pOutFile, ", %d], ", offset);
                print(pOutFile, machine->getRealRegister(linkage.getIntegerArgumentRegister(intArgNum)), TR_WordReg);
                cursor += 4;
-               if (TR::Compiler->target.is32Bit() && (intArgNum < linkage.getNumIntArgRegs() - 1))
+               if (_comp->target().is32Bit() && (intArgNum < linkage.getNumIntArgRegs() - 1))
                   {
                   printPrefix(pOutFile, NULL, cursor, 4);
                   trfprintf(pOutFile, "stw [");
@@ -1182,7 +1182,7 @@ TR_Debug::printPPCArgumentsFlush(TR::FILE *pOutFile, TR::Node *node, uint8_t *cu
                   cursor += 4;
                   }
                }
-            if (TR::Compiler->target.is64Bit())
+            if (_comp->target().is64Bit())
                intArgNum += 1;
             else
                intArgNum += 2;
@@ -1295,7 +1295,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCCallSnippet * snippet)
                break;
 
             case TR::Address:
-               if (TR::Compiler->target.is64Bit())
+               if (_comp->target().is64Bit())
                   {
                   if (synchronised)
                      glueRef = _cg->getSymRef(TR_PPCinterpreterSyncGPR3GPR4StaticGlue);
@@ -1364,7 +1364,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCCallSnippet * snippet)
       trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t;%s", (intptrj_t)cursor + distance, " back to program code");
       cursor += 4;
 
-      if (TR::Compiler->target.is64Bit())
+      if (_comp->target().is64Bit())
          {
          printPrefix(pOutFile, NULL, cursor, 4);
          trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Padding", *(int32_t *)cursor);
@@ -1510,7 +1510,7 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCInterfaceCallSnippet * snippet)
    trfprintf(pOutFile, "b \t" POINTER_PRINTF_FORMAT "\t\t; Back to program code", (intptrj_t)cursor + distance);
    cursor += 4;
 
-   if (TR::Compiler->target.is64Bit())
+   if (_comp->target().is64Bit())
       {
       printPrefix(pOutFile, NULL, cursor, 4);
       trfprintf(pOutFile, ".long \t" POINTER_PRINTF_FORMAT "\t\t; Padding", *(int32_t *)cursor);

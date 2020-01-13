@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -133,7 +133,7 @@ TR_EscapeAnalysis::TR_EscapeAnalysis(TR::OptimizationManager *manager)
    _dememoizationSymRef = NULL;
 
    _createStackAllocations   = true;
-   _createLocalObjects       = TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isPower() || TR::Compiler->target.cpu.isZ();
+   _createLocalObjects       = comp()->target().cpu.isX86() || comp()->target().cpu.isPower() || comp()->target().cpu.isZ();
    _desynchronizeCalls       = true;
 #if CHECK_MONITORS
    /* monitors */
@@ -4118,7 +4118,7 @@ static bool isFinalizableInlineTest(TR::Compilation *comp, TR::Node *candidate, 
 
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
 
-   bool is64Bit = TR::Compiler->target.is64Bit();
+   bool is64Bit = comp->target().is64Bit();
 
    // root
    //   r1      - first child of root
@@ -4426,7 +4426,7 @@ void TR_EscapeAnalysis::checkEscapeViaNonCall(TR::Node *node, TR::NodeChecklist&
                if ((!_nonColdLocalObjectsValueNumbers ||
                     !_notOptimizableLocalObjectsValueNumbers ||
                     !resolvedBaseObject ||
-                    (comp()->useCompressedPointers() && (TR::Compiler->om.compressedReferenceShift() > 3) && !TR::Compiler->target.cpu.isX86() && !TR::Compiler->target.cpu.isPower() && !TR::Compiler->target.cpu.isZ()) ||
+                    (comp()->useCompressedPointers() && (TR::Compiler->om.compressedReferenceShift() > 3) && !comp()->target().cpu.isX86() && !comp()->target().cpu.isPower() && !comp()->target().cpu.isZ()) ||
                     !resolvedBaseObject->getOpCode().hasSymbolReference() ||
                     !_nonColdLocalObjectsValueNumbers->get(_valueNumberInfo->getValueNumber(resolvedBaseObject)) ||
                     (((node->getSymbolReference()->getSymbol()->getRecognizedField() != TR::Symbol::Java_lang_String_value) ||

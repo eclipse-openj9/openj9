@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1285,7 +1285,7 @@ TR_J9ByteCodeIlGenerator::createGeneratedFirstBlock()
 bool
 TR_J9ByteCodeIlGenerator::hasFPU()
    {
-   bool result = !comp()->getOption(TR_DisableFPCodeGen) ? TR::Compiler->target.cpu.hasFPU() : false;
+   bool result = !comp()->getOption(TR_DisableFPCodeGen) ? comp()->target().cpu.hasFPU() : false;
    return result;
    }
 
@@ -1361,11 +1361,11 @@ TR_J9ByteCodeIlGenerator::genDFPGetHWAvailable()
       {
       bool dfpbd = comp()->getOption(TR_DisableHysteresis);
       bool nodfpbd =  comp()->getOption(TR_DisableDFP);
-      bool isPOWERDFP = TR::Compiler->target.cpu.isPower() && TR::Compiler->target.cpu.supportsDecimalFloatingPoint();
+      bool isPOWERDFP = comp()->target().cpu.isPower() && comp()->target().cpu.supportsDecimalFloatingPoint();
 
       bool is390DFP =
 #ifdef TR_TARGET_S390
-         TR::Compiler->target.cpu.isZ() && TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility();
+         comp()->target().cpu.isZ() && comp()->target().cpu.getSupportsDecimalFloatingPointFacility();
 #else
          false;
 #endif
@@ -1430,9 +1430,9 @@ TR_J9ByteCodeIlGenerator::genHWOptimizedStrProcessingAvailable()
 void
 TR_J9ByteCodeIlGenerator::genJITIntrinsicsEnabled()
    {
-   bool isZLinux = TR::Compiler->target.cpu.isZ() && TR::Compiler->target.isLinux();
+   bool isZLinux = comp()->target().cpu.isZ() && comp()->target().isLinux();
 
-   static int32_t constToLoad = (TR::Compiler->target.isZOS() || isZLinux) &&
+   static int32_t constToLoad = (comp()->target().isZOS() || isZLinux) &&
            !comp()->getOption(TR_DisablePackedDecimalIntrinsics) ? 1 : 0;
 
    initialize();
@@ -1788,7 +1788,7 @@ TR_J9ByteCodeIlGenerator::genDLTransfer(TR::Block *firstBlock)
       dltBufChild = TR::Node::createWithSymRef(TR::loadaddr, 0, symRefTab()->findOrCreateDLTBlockSymbolRef());
 
       fixedOffset = fej9()->getDLTBufferOffsetInBlock();
-      if (TR::Compiler->target.is64Bit())
+      if (comp()->target().is64Bit())
          {
          TR::Node  *constNode = TR::Node::create(TR::lconst, 0);
          constNode->setLongInt(fixedOffset);
@@ -1909,7 +1909,7 @@ TR_J9ByteCodeIlGenerator::genDLTransfer(TR::Block *firstBlock)
                if (addrNode==NULL || nodeRealOffset!=realOffset)
                   {
                   nodeRealOffset = realOffset;
-                  if (TR::Compiler->target.is64Bit())
+                  if (comp()->target().is64Bit())
                      {
                      TR::Node *constNode = TR::Node::create(TR::lconst, 0);
                      constNode->setLongInt(realOffset);
@@ -2015,7 +2015,7 @@ TR_J9ByteCodeIlGenerator::genDLTransfer(TR::Block *firstBlock)
                if (addrNode==NULL || nodeRealOffset!=realOffset)
                   {
                   nodeRealOffset = realOffset;
-                  if (TR::Compiler->target.is64Bit())
+                  if (comp()->target().is64Bit())
                      {
                      TR::Node *constNode = TR::Node::create(TR::lconst, 0);
                      constNode->setLongInt(realOffset);
@@ -2113,7 +2113,7 @@ TR_J9ByteCodeIlGenerator::inlineJitCheckIfFinalizeObject(TR::Block *firstBlock)
          // else
          //    remainder
          //
-         bool is64bit = TR::Compiler->target.is64Bit();
+         bool is64bit = comp()->target().is64Bit();
          //
          if (node->getOpCode().isCall() &&
                (node->getSymbolReference() == finalizeSymRef))

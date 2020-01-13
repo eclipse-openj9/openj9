@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -97,13 +97,13 @@ TR::Instruction *TR_PPCRecompilation::generatePrePrologue()
       // gr0 must contain the saved LR; see Recompilation.s
       cursor = new (cg()->trHeapMemory()) TR::PPCTrg1Instruction(TR::InstOpCode::mflr, firstNode, gr0, cursor, cg());
       cursor = generateDepImmSymInstruction(cg(), TR::InstOpCode::bl, firstNode, (uintptrj_t)recompileMethodSymRef->getMethodAddress(), new (cg()->trHeapMemory()) TR::RegisterDependencyConditions(0,0, cg()->trMemory()), recompileMethodSymRef, NULL, cursor);
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          int32_t highBits = (int32_t)((intptrj_t)info>>32), lowBits = (int32_t)((intptrj_t)info);
          cursor = generateImmInstruction(cg(), TR::InstOpCode::dd, firstNode,
-            TR::Compiler->target.cpu.isBigEndian()?highBits:lowBits, TR_BodyInfoAddress, cursor);
+            cg()->comp()->target().cpu.isBigEndian()?highBits:lowBits, TR_BodyInfoAddress, cursor);
          cursor = generateImmInstruction(cg(), TR::InstOpCode::dd, firstNode,
-            TR::Compiler->target.cpu.isBigEndian()?lowBits:highBits, cursor);
+            cg()->comp()->target().cpu.isBigEndian()?lowBits:highBits, cursor);
          }
       else
          {
@@ -130,7 +130,7 @@ TR::Instruction *TR_PPCRecompilation::generatePrologue(TR::Instruction *cursor)
       intptrj_t        addr = (intptrj_t)getCounterAddress();          // What is the RL category?
       TR::LabelSymbol *snippetLabel = generateLabelSymbol(cg());
 
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          {
          intptrj_t  adjustedAddr =  ((addr>>16) + ((addr&0x00008000)==0?0:1)) << 16 ;
          // lis gr11, upper 16-bits

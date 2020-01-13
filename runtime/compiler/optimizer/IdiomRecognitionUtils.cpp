@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1423,7 +1423,7 @@ createTableAlignmentCheck(TR::Compilation *comp, TR::Node *tableNode, bool isByt
    TR::Node * compareNode = NULL;
    if (mask != 0 && mask != 7)
       {
-      if (TR::Compiler->target.is64Bit())
+      if (comp->target().is64Bit())
          {
          TR::Node * zeroNode = TR::Node::create(tableNode, TR::lconst);
          zeroNode->setLongInt(0);

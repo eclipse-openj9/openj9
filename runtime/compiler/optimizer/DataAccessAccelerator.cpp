@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -282,8 +282,8 @@ int32_t TR_DataAccessAccelerator::performOnBlock(TR::Block* block, TreeTopContai
                   }
                }
 
-            bool isZLinux = TR::Compiler->target.cpu.isZ() && TR::Compiler->target.isLinux();
-            bool isZOS = TR::Compiler->target.isZOS();
+            bool isZLinux = comp()->target().cpu.isZ() && comp()->target().isLinux();
+            bool isZOS = comp()->target().isZOS();
 
             if (!matched && (isZOS || isZLinux) &&
                 !comp()->getOption(TR_DisablePackedDecimalIntrinsics))
@@ -467,9 +467,9 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalGetIntrinsic(TR::TreeTop* callT
       }
 
    // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
-   bool requiresByteSwap = TR::Compiler->target.cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
+   bool requiresByteSwap = comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
 
-   if (requiresByteSwap && !TR::Compiler->target.cpu.isZ())
+   if (requiresByteSwap && !comp()->target().cpu.isZ())
       {
       printInliningStatus (false, callNode, "Unmarshalling is not supported because ByteSwap IL evaluators are not implemented.");
       return NULL;
@@ -563,9 +563,9 @@ TR::Node* TR_DataAccessAccelerator::insertDecimalSetIntrinsic(TR::TreeTop* callT
       }
 
    // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
-   bool requiresByteSwap = TR::Compiler->target.cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
+   bool requiresByteSwap = comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
 
-   if (requiresByteSwap && !TR::Compiler->target.cpu.isZ())
+   if (requiresByteSwap && !comp()->target().cpu.isZ())
       {
       printInliningStatus (false, callNode, "Unmarshalling is not supported because ByteSwap IL evaluators are not implemented.");
       return NULL;
@@ -750,9 +750,9 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerGetIntrinsic(TR::TreeTop* callT
       }
 
    // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
-   bool requiresByteSwap = TR::Compiler->target.cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
+   bool requiresByteSwap = comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
 
-   if (requiresByteSwap && !TR::Compiler->target.cpu.isZ())
+   if (requiresByteSwap && !comp()->target().cpu.isZ())
       {
       printInliningStatus (false, callNode, "Unmarshalling is not supported because ByteSwap IL evaluators are not implemented.");
       return NULL;
@@ -873,9 +873,9 @@ TR::Node* TR_DataAccessAccelerator::insertIntegerSetIntrinsic(TR::TreeTop* callT
       }
 
    // Determines whether a TR::ByteSwap needs to be inserted before the store to the byteArray
-   bool requiresByteSwap = TR::Compiler->target.cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
+   bool requiresByteSwap = comp()->target().cpu.isBigEndian() != static_cast <bool> (bigEndianNode->getInt());
 
-   if (requiresByteSwap && !TR::Compiler->target.cpu.isZ())
+   if (requiresByteSwap && !comp()->target().cpu.isZ())
       {
       printInliningStatus (false, callNode, "Marshalling is not supported because ByteSwap IL evaluators are not implemented.");
       return NULL;
@@ -1002,7 +1002,7 @@ TR::Node* TR_DataAccessAccelerator::constructAddressNode(TR::Node* callNode, TR:
          }
       }
 
-   if (TR::Compiler->target.is64Bit())
+   if (comp()->target().is64Bit())
       {
       headerConstNode = TR::Node::create(callNode, TR::lconst, 0, 0);
       headerConstNode->setLongInt(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
@@ -2282,7 +2282,7 @@ bool TR_DataAccessAccelerator::generateUD2PD(TR::TreeTop* treeTop, TR::Node* cal
       TR::Node * multipliedOffsetNode;
       TR::Node * totalOffsetNode;
       TR::Node * headerConstNode;
-      if (TR::Compiler->target.is64Bit())
+      if (comp()->target().is64Bit())
          {
          headerConstNode = TR::Node::create(callNode, TR::lconst, 0, 0);
          headerConstNode->setLongInt(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
@@ -2489,7 +2489,7 @@ bool TR_DataAccessAccelerator::generatePD2UD(TR::TreeTop* treeTop, TR::Node* cal
          TR::Node * multipliedOffsetNode;
          TR::Node * totalOffsetNode;
          TR::Node * headerConstNode;
-         if (TR::Compiler->target.is64Bit())
+         if (comp()->target().is64Bit())
             {
             headerConstNode = TR::Node::create(callNode, TR::lconst, 0, 0);
             headerConstNode->setLongInt(TR::Compiler->om.contiguousArrayHeaderSizeInBytes());
@@ -2668,7 +2668,7 @@ TR::Node* TR_DataAccessAccelerator::createByteArrayElementAddress(TR::TreeTop* c
 
    TR::Node* byteArrayElementAddressNode;
 
-   if (TR::Compiler->target.is64Bit())
+   if (comp()->target().is64Bit())
       {
       byteArrayElementAddressNode = TR::Node::create(TR::aladd, 2, byteArrayNode, TR::Node::create(TR::ladd, 2, TR::Node::create(callNode, TR::lconst, 0, TR::Compiler->om.contiguousArrayHeaderSizeInBytes()), TR::Node::create(TR::i2l, 1, offsetNode)));
       }

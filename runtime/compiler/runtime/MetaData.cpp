@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1250,7 +1250,7 @@ static void populateInlineCalls(
                        callSiteCursor);
                }
 #if (defined(TR_HOST_64BIT) && defined(TR_HOST_POWER))
-            createClassUnloadPicSite((void*) clazzOfInlinedMethod, (void*) (callSiteCursor+(TR::Compiler->target.cpu.isBigEndian()?4:0)), 4, comp->getMetadataAssumptionList());
+            createClassUnloadPicSite((void*) clazzOfInlinedMethod, (void*) (callSiteCursor+(comp->target().cpu.isBigEndian()?4:0)), 4, comp->getMetadataAssumptionList());
 #else
             createClassUnloadPicSite((void*) clazzOfInlinedMethod, (void*) callSiteCursor, sizeof(uintptrj_t), comp->getMetadataAssumptionList());
 #endif

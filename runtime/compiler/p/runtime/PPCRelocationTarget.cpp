@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -188,7 +188,7 @@ TR_PPC32RelocationTarget::storeRelativeAddressSequence(uint8_t *address, uint8_t
    uint16_t *patchAddr1, *patchAddr2;
 
    uintptr_t value = (uintptr_t)address;
-   uint32_t *patchAddr = (uint32_t *)((U_8 *)reloLocation+ (TR::Compiler->target.cpu.isBigEndian()?2:0));
+   uint32_t *patchAddr = (uint32_t *)((U_8 *)reloLocation+ (reloRuntime()->comp()->target().cpu.isBigEndian()?2:0));
 
    value1 = ((value>>16) & 0xffff);
    value2 = (value & 0xffff);
@@ -207,7 +207,7 @@ TR_PPC64RelocationTarget::storeAddressSequence(uint8_t *address, uint8_t *reloLo
    uintptr_t highValue;
 
    uintptr_t value = (uintptr_t)address;
-   uint32_t *patchAddr = (uint32_t *)((U_8 *)reloLocation+ (TR::Compiler->target.cpu.isBigEndian()?2:0));
+   uint32_t *patchAddr = (uint32_t *)((U_8 *)reloLocation+ (reloRuntime()->comp()->target().cpu.isBigEndian()?2:0));
 
    if (seqNumber % 2 == 0)
       highValue = HI_VALUE(value);
@@ -323,7 +323,7 @@ TR_PPC32RelocationTarget::isOrderedPairRelocation(TR_RelocationRecord *reloRecor
 bool TR_PPCRelocationTarget::useTrampoline(uint8_t * helperAddress, uint8_t *baseLocation)
    {
    return
-      !TR::Compiler->target.cpu.isTargetWithinIFormBranchRange((intptrj_t)helperAddress, (intptrj_t)baseLocation) ||
+      !reloRuntime()->comp()->target().cpu.isTargetWithinIFormBranchRange((intptrj_t)helperAddress, (intptrj_t)baseLocation) ||
       TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines);
    }
 
@@ -354,8 +354,8 @@ TR_PPCRelocationTarget::patchMTIsolatedOffset(uint32_t offset, uint8_t *reloLoca
     */
    uint16_t highBits = offset >> 16;
    uint16_t lowBits = offset &0xffff;
-   storeUnsigned16b(highBits, reloLocation+(TR::Compiler->target.cpu.isBigEndian()?2:0));
-   storeUnsigned16b(lowBits, reloLocation+(TR::Compiler->target.cpu.isBigEndian()?6:4));
+   storeUnsigned16b(highBits, reloLocation+(reloRuntime()->comp()->target().cpu.isBigEndian()?2:0));
+   storeUnsigned16b(lowBits, reloLocation+(reloRuntime()->comp()->target().cpu.isBigEndian()?6:4));
    }
 
 void
@@ -366,6 +366,6 @@ TR_PPC64RelocationTarget::platformAddPICtoPatchPtrOnClassUnload(TR_OpaqueClassBl
     * Because the platform is (currently) big-endian, if we send them the full pointer, it will set 33rd bit one, which is not what we want.
     * Instead, we will create the PIC site on the low bits directly so that it flags the right bit.
     */
-   uint8_t *sitePointer = static_cast<uint8_t *>(ptr) + (TR::Compiler->target.cpu.isBigEndian()?4:0);
+   uint8_t *sitePointer = static_cast<uint8_t *>(ptr) + (reloRuntime()->comp()->target().cpu.isBigEndian()?4:0);
    createClassUnloadPicSite(classKey, sitePointer, sizeof(int32_t), reloRuntime()->comp()->getMetadataAssumptionList());
    }

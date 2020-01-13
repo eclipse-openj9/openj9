@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -349,7 +349,7 @@ TR_J9InlinerPolicy::alwaysWorthInlining(TR_ResolvedMethod * calleeMethod, TR::No
       {
       case TR::sun_misc_Unsafe_getAndAddLong:
       case TR::sun_misc_Unsafe_getAndSetLong:
-         return TR::Compiler->target.is32Bit();
+         return comp()->target().is32Bit();
       case TR::java_lang_J9VMInternals_fastIdentityHashCode:
       case TR::java_lang_Class_getSuperclass:
       case TR::java_lang_String_regionMatchesInternal:
@@ -516,7 +516,7 @@ TR_J9InlinerPolicy::genCompressedRefs(TR::Node * address, bool genTT, int32_t is
 TR::Node *
 TR_J9InlinerPolicy::createUnsafeAddressWithOffset(TR::Node * unsafeCall)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (comp()->target().is64Bit())
       {
       TR::Node *constNode = TR::Node::lconst(unsafeCall, ~(J9_SUN_FIELD_OFFSET_MASK));
       return TR::Node::create(TR::aladd, 2, unsafeCall->getChild(1), TR::Node::create(TR::land, 2, unsafeCall->getChild(2), constNode));
@@ -906,7 +906,7 @@ TR_J9InlinerPolicy::genCodeForUnsafeGetPut(TR::Node* unsafeAddress,
    if (conversionNeeded || javaLangClass == NULL)
       {
       TR::Node *isArrayField = NULL;
-      if (TR::Compiler->target.is32Bit())
+      if (comp()->target().is32Bit())
          {
          isArrayField = TR::Node::createWithSymRef(TR::iloadi, 1, 1, vftLoad, comp()->getSymRefTab()->findOrCreateClassAndDepthFlagsSymbolRef());
          }
@@ -1083,7 +1083,7 @@ Unsafe.getShort.
 bool
 TR_J9InlinerPolicy::createUnsafePutWithOffset(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, TR::DataType type, bool isVolatile, bool needNullCheck, bool isOrdered)
    {
-   if (isVolatile && type == TR::Int64 && TR::Compiler->target.is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
+   if (isVolatile && type == TR::Int64 && comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
       return false;
    TR_ASSERT(TR::Compiler->cls.classesOnHeap(), "Unsafe inlining code assumes classes are on heap\n");
    if (debug("traceUnsafe"))
@@ -1428,7 +1428,7 @@ TR_J9InlinerPolicy::createUnsafeCASCallDiamond( TR::TreeTop *callNodeTreeTop, TR
 bool
 TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSymbol, TR::ResolvedMethodSymbol *callerSymbol, TR::TreeTop * callNodeTreeTop, TR::Node * unsafeCall, TR::DataType type, bool isVolatile, bool needNullCheck)
    {
-   if (isVolatile && type == TR::Int64 && TR::Compiler->target.is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
+   if (isVolatile && type == TR::Int64 && comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
       return false;
    TR_ASSERT(TR::Compiler->cls.classesOnHeap(), "Unsafe inlining code assumes classes are on heap\n");
 
@@ -1565,7 +1565,7 @@ TR_J9InlinerPolicy::createUnsafeGetWithOffset(TR::ResolvedMethodSymbol *calleeSy
 TR::Node *
 TR_J9InlinerPolicy::createUnsafeAddress(TR::Node * unsafeCall)
    {
-   if (TR::Compiler->target.is64Bit())
+   if (comp()->target().is64Bit())
       return unsafeCall->getChild(1);  // should use l2a if we ever have one
 
    return TR::Node::create(TR::l2i, 1, unsafeCall->getChild(1)); // should use i2a if we ever have one
@@ -1587,7 +1587,7 @@ TR_J9InlinerPolicy::createUnsafePut(TR::ResolvedMethodSymbol *calleeSymbol, TR::
    TR::Node * unsafeNode;
    if (type == TR::Address)
       {
-      if (TR::Compiler->target.is64Bit())
+      if (comp()->target().is64Bit())
          {
          unsafeNode = TR::Node::createWithSymRef(TR::lstorei, 2, 2, address, value, comp()->getSymRefTab()->findOrCreateUnsafeSymbolRef(TR::Int64));
          }
@@ -1640,7 +1640,7 @@ TR_J9InlinerPolicy::createUnsafeGet(TR::ResolvedMethodSymbol *calleeSymbol, TR::
    TR::Node * unsafeNode;
    if (type == TR::Address)
       {
-      if (TR::Compiler->target.is64Bit())
+      if (comp()->target().is64Bit())
          {
          unsafeAddress->incReferenceCount();
 

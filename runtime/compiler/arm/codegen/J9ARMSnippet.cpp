@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -262,7 +262,7 @@ uint8_t *TR::ARMMonitorExitSnippet::emitSnippetBody()
       metaReg->setRegisterFieldRB((uint32_t *)buffer);
       buffer += ARM_INSTRUCTION_LENGTH;
 
-      if (TR::Compiler->target.is64Bit() && !fej9->generateCompressedLockWord())
+      if (cg()->comp()->target().is64Bit() && !fej9->generateCompressedLockWord())
          opCodeValue = ARMOp_stdcx_r;
       else
          opCodeValue = ARMOp_stwcx_r;

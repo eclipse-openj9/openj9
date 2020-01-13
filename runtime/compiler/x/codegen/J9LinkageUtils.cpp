@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,21 +66,21 @@ void J9LinkageUtils::cleanupReturnValue(
          case TR::Int8:
             if (isUnsigned)
                {
-               op = TR::Compiler->target.is64Bit() ? MOVZXReg8Reg1 : MOVZXReg4Reg1;
+               op = cg->comp()->target().is64Bit() ? MOVZXReg8Reg1 : MOVZXReg4Reg1;
                }
             else
                {
-               op = TR::Compiler->target.is64Bit() ? MOVSXReg8Reg1 : MOVSXReg4Reg1;
+               op = cg->comp()->target().is64Bit() ? MOVSXReg8Reg1 : MOVSXReg4Reg1;
                }
             break;
          case TR::Int16:
             if (isUnsigned)
                {
-               op = TR::Compiler->target.is64Bit() ? MOVZXReg8Reg2 : MOVZXReg4Reg2;
+               op = cg->comp()->target().is64Bit() ? MOVZXReg8Reg2 : MOVZXReg4Reg2;
                }
             else
                {
-               op = TR::Compiler->target.is64Bit() ? MOVSXReg8Reg2 : MOVSXReg4Reg2;
+               op = cg->comp()->target().is64Bit() ? MOVSXReg8Reg2 : MOVSXReg4Reg2;
                }
             break;
          default:

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -86,7 +86,7 @@ J9::Z::Linkage::loadUpArguments(TR::Instruction * cursor)
                cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::getLoadOpCode(), firstNode, argRegister,
                            memRef, cursor);
                cursor->setBinLocalFreeRegs(binLocalRegs);
-               if (TR::Compiler->target.is32Bit() && numIntArgs < self()->getNumIntegerArgumentRegisters() - 1)
+               if (self()->cg()->comp()->target().is32Bit() && numIntArgs < self()->getNumIntegerArgumentRegisters() - 1)
                   {
                   argRegister = self()->getRealRegister(self()->getIntegerArgumentRegister(numIntArgs + 1));
                   cursor = generateRXInstruction(self()->cg(), TR::InstOpCode::L, firstNode, argRegister,
@@ -94,7 +94,7 @@ J9::Z::Linkage::loadUpArguments(TR::Instruction * cursor)
                   cursor->setBinLocalFreeRegs(binLocalRegs);
                   }
                }
-            numIntArgs += (TR::Compiler->target.is64Bit()) ? 1 : 2;
+            numIntArgs += (self()->cg()->comp()->target().is64Bit()) ? 1 : 2;
             break;
          case TR::Float:
          case TR::DecimalFloat:

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ uint8_t *TR::PPCRecompilationSnippet::emitSnippetBody()
    if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)buffer))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(countingRecompMethodSymRef->getReferenceNumber(), (void *)buffer);
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)buffer), "Helper address is out of range");
+      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)buffer), "Helper address is out of range");
       }
 
    // bl distance
@@ -112,5 +112,5 @@ TR_Debug::print(TR::FILE *pOutFile, TR::PPCRecompilationSnippet * snippet)
 
 uint32_t TR::PPCRecompilationSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   return(TR::Compiler->target.is64Bit()? 20 : 12);
+   return(cg()->comp()->target().is64Bit()? 20 : 12);
    }

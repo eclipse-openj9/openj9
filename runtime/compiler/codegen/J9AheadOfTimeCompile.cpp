@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -663,7 +663,7 @@ J9::AheadOfTimeCompile::dumpRelocationData()
       }
 
    uint8_t *endOfData;
-      bool is64BitTarget = TR::Compiler->target.is64Bit();
+      bool is64BitTarget = self()->comp()->target().is64Bit();
       if (is64BitTarget)
       {
       endOfData = cursor + *(uint64_t *)cursor;

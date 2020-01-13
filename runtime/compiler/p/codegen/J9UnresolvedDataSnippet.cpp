@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -128,7 +128,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    if (cg()->directCallRequiresTrampoline(helperAddress, (intptrj_t)cursor))
       {
       helperAddress = TR::CodeCacheManager::instance()->findHelperTrampoline(glueRef->getReferenceNumber(), (void *)cursor);
-      TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor), "Helper address is out of range");
+      TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(helperAddress, (intptrj_t)cursor), "Helper address is out of range");
       }
 
    // bl distance
@@ -214,7 +214,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
 	    }
          else
 	    {
-	    *(int32_t *)cursor = TR::Compiler->target.is64Bit()?0xe8000000:0x80000000;
+       *(int32_t *)cursor = cg()->comp()->target().is64Bit()?0xe8000000:0x80000000;
             getDataRegister()->setRegisterFieldRT((uint32_t *)cursor);
 	    }
          cg()->getTOCBaseRegister()->setRegisterFieldRA((uint32_t *)cursor);
@@ -247,7 +247,7 @@ uint8_t *J9::Power::UnresolvedDataSnippet::emitSnippetBody()
    *(int32_t *)cursor = 0xdeadbeef; // Patched with lis via runtime code
    cursor += 4;
    intptrj_t targetAddress = (intptrj_t)getAddressOfDataReference()+4;
-   TR_ASSERT_FATAL(TR::Compiler->target.cpu.isTargetWithinIFormBranchRange(targetAddress, (intptrj_t)cursor),
+   TR_ASSERT_FATAL(cg()->comp()->target().cpu.isTargetWithinIFormBranchRange(targetAddress, (intptrj_t)cursor),
                    "Return address is out of range");
    *(int32_t *)cursor = 0x48000000 | ((targetAddress - (intptrj_t)cursor) & 0x03fffffc);
 
