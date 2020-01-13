@@ -116,6 +116,4 @@ Copyright (c) 2017, 2018 IBM Corp. and others
 
 
 Translated by: MJARDI Yassine
-
 Signed-off-by: MJARDI Yassine <yassine_mjardi@ens.univ-artois.fr>
-
