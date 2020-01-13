@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,12 +29,12 @@ J9::ResolvedMethodSymbol::ResolvedMethodSymbol(TR_ResolvedMethod *method, TR::Co
    OMR::ResolvedMethodSymbolConnector(method, comp)
    {
 
-   if ((TR::Compiler->target.cpu.getSupportsHardwareRound() &&
+   if ((comp->target().cpu.getSupportsHardwareRound() &&
         ((method->getRecognizedMethod() == TR::java_lang_Math_floor) ||
          (method->getRecognizedMethod() == TR::java_lang_StrictMath_floor) ||
          (method->getRecognizedMethod() == TR::java_lang_Math_ceil) ||
          (method->getRecognizedMethod() == TR::java_lang_StrictMath_ceil))) ||
-       (TR::Compiler->target.cpu.getSupportsHardwareCopySign() &&
+       (comp->target().cpu.getSupportsHardwareCopySign() &&
         ((method->getRecognizedMethod() == TR::java_lang_Math_copySign_F) ||
          (method->getRecognizedMethod() == TR::java_lang_Math_copySign_D))))
       {

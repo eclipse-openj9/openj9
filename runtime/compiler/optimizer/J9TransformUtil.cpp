@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1851,7 +1851,7 @@ TR::Node * J9::TransformUtil::calculateElementAddress(TR::Compilation *comp, TR:
    offset->setIsNonNegative(true);
    // Calculate element address
    TR::Node *addrCalc = NULL;
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       addrCalc = TR::Node::create(TR::aladd, 2, array, offset);
    else
       addrCalc = TR::Node::create(TR::aiadd, 2, array, TR::Node::create(TR::l2i, 1, offset));
@@ -1882,12 +1882,12 @@ TR::Node * J9::TransformUtil::calculateOffsetFromIndexInContiguousArray(TR::Comp
    TR::Node * offset = index;
 
    // Return type must be Int64 and the index parameter is Int32 so we must do a conversion here
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       offset = TR::Node::create(TR::i2l, 1, index);
 
-   TR::ILOpCodes constOp = TR::Compiler->target.is64Bit() ? TR::lconst : TR::iconst;
-   TR::ILOpCodes shlOp = TR::Compiler->target.is64Bit() ? TR::lshl : TR::ishl;
-   TR::ILOpCodes addOp = TR::Compiler->target.is64Bit() ? TR::ladd : TR::iadd;
+   TR::ILOpCodes constOp = comp->target().is64Bit() ? TR::lconst : TR::iconst;
+   TR::ILOpCodes shlOp = comp->target().is64Bit() ? TR::lshl : TR::ishl;
+   TR::ILOpCodes addOp = comp->target().is64Bit() ? TR::ladd : TR::iadd;
 
    if (shift)
       {
@@ -1903,7 +1903,7 @@ TR::Node * J9::TransformUtil::calculateOffsetFromIndexInContiguousArray(TR::Comp
       }
 
    // Return type must be Int64 but on 32-bit platforms we carry out the above arithmetic using Int32 so this conversion is necessary
-   if (!TR::Compiler->target.is64Bit())
+   if (!comp->target().is64Bit())
       offset = TR::Node::create(TR::i2l, 1, offset);
 
    return offset;
@@ -1932,12 +1932,12 @@ TR::Node * J9::TransformUtil::calculateIndexFromOffsetInContiguousArray(TR::Comp
    TR::Node * index = offset;
 
    // Offset must be in an Int32 range on 32-bit platforms so carry out the conversion early so arithmetic can be done using integers rather than longs
-   if (!TR::Compiler->target.is64Bit())
+   if (!comp->target().is64Bit())
       index = TR::Node::create(TR::l2i, 1, index);
 
-   TR::ILOpCodes constOp = TR::Compiler->target.is64Bit() ? TR::lconst : TR::iconst;
-   TR::ILOpCodes shrOp = TR::Compiler->target.is64Bit() ? TR::lshr : TR::ishr;
-   TR::ILOpCodes subOp = TR::Compiler->target.is64Bit() ? TR::lsub : TR::isub;
+   TR::ILOpCodes constOp = comp->target().is64Bit() ? TR::lconst : TR::iconst;
+   TR::ILOpCodes shrOp = comp->target().is64Bit() ? TR::lshr : TR::ishr;
+   TR::ILOpCodes subOp = comp->target().is64Bit() ? TR::lsub : TR::isub;
 
    if (headerSize > 0)
       {
@@ -1953,7 +1953,7 @@ TR::Node * J9::TransformUtil::calculateIndexFromOffsetInContiguousArray(TR::Comp
       }
 
    // Return type must be Int32 and the offset parameter is Int64 so we must do a conversion here
-   if (TR::Compiler->target.is64Bit())
+   if (comp->target().is64Bit())
       index = TR::Node::create(TR::l2i, 1, index);
 
    return index;

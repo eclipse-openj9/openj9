@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -892,9 +892,9 @@ TR::Register *OMR::ARM::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Co
    TR::Instruction *instr = generateTrg1ImmInstruction(cg, ARMOp_mov, node, flagReg, 0, 0);
    instr->setConditionCode(ARMConditionCodeEQ);
 
-   if (TR::Compiler->target.isSMP() && TR::Compiler->target.cpu.id() != TR_DefaultARMProcessor)
+   if (cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
-      //instr = generateInstruction(cg, (TR::Compiler->target.cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
+      //instr = generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
       instr = generateInstruction(cg, ARMOp_dmb_v6 , node); // v7 version is unconditional
       instr->setConditionCode(ARMConditionCodeEQ);
       }
@@ -1480,9 +1480,9 @@ OMR::ARM::TreeEvaluator::VMmonentEvaluator(TR::Node *node, TR::CodeGenerator *cg
    generateSrc1ImmInstruction(cg, ARMOp_cmp, node, tempReg, 0, 0);
    generateConditionalBranchInstruction(cg, node, ARMConditionCodeNE, loopLabel);
 
-   if (TR::Compiler->target.isSMP() && TR::Compiler->target.cpu.id() != TR_DefaultARMProcessor)
+   if (cg->comp()->target().isSMP() && cg->comp()->target().cpu.id() != TR_DefaultARMProcessor)
       {
-      generateInstruction(cg, (TR::Compiler->target.cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
+      generateInstruction(cg, (cg->comp()->target().cpu.id() == TR_ARMv6) ? ARMOp_dmb_v6 : ARMOp_dmb, node);
       }
 
    generateLabelInstruction(cg, ARMOp_label, node, doneLabel, deps);

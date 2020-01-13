@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -170,7 +170,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
          {
          TR::SymbolReference *tempSR = (TR::SymbolReference *)relocation->getTargetAddress();
 
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
 
             // first word is the inlined site index for the constant pool
@@ -271,7 +271,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
       case TR_ConstantPoolOrderedPair:
          {
          // constant pool address is placed as the last word of the header
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             *(uint64_t *)cursor = (uint64_t)(uintptrj_t)relocation->getTargetAddress2();
             cursor += 8;
@@ -307,7 +307,7 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
 
       case TR_CheckMethodExit:
          {
-         if (TR::Compiler->target.is64Bit())
+         if (comp->target().is64Bit())
             {
             *(uint64_t *)cursor = (uint64_t)(uintptrj_t)relocation->getTargetAddress();
             cursor += 8;
@@ -1010,250 +1010,6 @@ uint8_t *J9::Z::AheadOfTimeCompile::initializeAOTRelocationHeader(TR::IteratedEx
       }
    return cursor;
    }
-
-#if 0
-
-void J9::Z::AheadOfTimeCompile::dumpRelocationData()
-   {
-   uint8_t *cursor;
-   AOTcgDiag0(comp(), "J9::Z::AheadOfTimeCompile::dumpRelocationData\n");
-   cursor = getRelocationData();
-   AOTcgDiag1(comp(), "cursor=%x\n", cursor);
-   if (cursor)
-      {
-      uint8_t *endOfData;
-      if (TR::Compiler->target.is64Bit())
-         {
-         endOfData = cursor + *(uint64_t *)cursor;
-         diagnostic("Size of relocation data in AOT object is %d bytes\n"
-                    "Size field in relocation data is         %d bytes\n", getSizeOfAOTRelocations(),
-                    *(uint64_t *)cursor);
-         cursor += 8;
-         }
-      else
-         {
-         endOfData = cursor + *(uint32_t *)cursor;
-         diagnostic("Size of relocation data in AOT object is %d bytes\n"
-                    "Size field in relocation data is         %d bytes\n", getSizeOfAOTRelocations(),
-                    *(uint32_t *)cursor);
-         cursor += 4;
-         }
-
-      while (cursor < endOfData)
-         {
-         diagnostic("\nSize of relocation is %d bytes.\n", *(uint16_t *)cursor);
-         uint8_t *endOfCurrentRecord = cursor + *(uint16_t *)cursor;
-         cursor += 2;
-         TR_ExternalRelocationTargetKind kind = (TR_ExternalRelocationTargetKind)(*cursor & TR_ExternalRelocationTargetKindMask);
-         diagnostic("Relocation type is %s.\n", TR::ExternalRelocation::getName(kind));
-         int32_t offsetSize = (*cursor & WIDE_OFFSETS) ? 4 : 2;
-         bool    isOrderedPair = (*cursor & ORDERED_PAIR)? true : false;
-         diagnostic("Relocation uses %d-byte wide offsets.\n", offsetSize);
-         diagnostic("Relocation uses %s offsets.\n", isOrderedPair ? "ordered-pair" : "non-paired");
-         diagnostic("Relocation is %s.\n", (*cursor & EIP_RELATIVE) ? "EIP Relative" : "Absolute");
-         cursor++;
-         diagnostic("Target Info:\n");
-         switch (kind)
-            {
-            case TR_ConstantPool:
-               // constant pool address is placed as the last word of the header
-               if (TR::Compiler->target.is64Bit())
-                  {
-                  cursor++;    // unused field
-                  cursor += 4; // padding
-                  diagnostic("Constant pool %p", *(uint64_t *)cursor);
-                  cursor += 8;
-                  }
-               else
-                  {
-                  diagnostic("Constant pool %p", *(uint32_t *)++cursor);
-                  cursor += 4;
-                  }
-               break;
-            case TR_HelperAddress:
-               {
-               // final byte of header is the index which indicates the particular helper being relocated to
-               TR::SymbolReference *tempSR = comp()->getSymRefTab()->getSymRef(*cursor);
-               diagnostic("Helper method address of %s(%d)", comp()->getDebug()->getName(tempSR), (int32_t)*cursor++);
-               }
-               break;
-            case TR_RelativeMethodAddress:
-               // next word is the address of the constant pool to which the index refers
-               // second word is the index in the above stored constant pool that indicates the particular
-               // relocation target
-               if (TR::Compiler->target.is64Bit())
-                  {
-                  cursor++; // unused field
-                  cursor += 4; // padding
-                  diagnostic("Relative Method Address: Constant pool = %p, index = %d",
-                              *(uint64_t *)(cursor),
-                              *(uint64_t *)(cursor+8));
-                  cursor += 16;
-                  }
-               else
-                  {
-                  diagnostic("Relative Method Address: Constant pool = %p, index = %d",
-                              *(uint32_t *)(cursor+1),
-                              *(uint32_t *)(cursor+5));
-                  cursor += 9;
-                  }
-               break;
-            case TR_AbsoluteMethodAddress:
-               // Reference to the current method, no other information
-               diagnostic("Absolute Method Address:");
-               cursor++;
-               break;
-            case TR_DataAddress:
-               // next word is the address of the constant pool to which the index refers
-               // second word is the index in the above stored constant pool that indicates the particular
-               // relocation target
-               if (TR::Compiler->target.is64Bit())
-                  {
-                  cursor++; // unused field
-                  cursor += 4; // padding
-                  diagnostic("Data Address: Constant pool = %p, index = %d",
-                              *(uint64_t *)(cursor),
-                              *(uint64_t *)(cursor+8));
-                  cursor += 16;
-                  }
-               else
-                  {
-                  diagnostic("Data Address: Constant pool = %p, index = %d",
-                              *(uint32_t *)(cursor+1),
-                              *(uint32_t *)(cursor+5));
-                  cursor += 9;
-                  }
-               break;
-            case TR_ClassObject:
-               // next word is the address of the constant pool to which the index refers
-               // second word is the index in the above stored constant pool that indicates the particular
-               // relocation target
-               if (TR::Compiler->target.is64Bit())
-                  {
-                  cursor++; // unused field
-                  cursor += 4; // padding
-                  diagnostic("Class Object: Constant pool = %p, index = %d",
-                              *(uint64_t *)(cursor),
-                              *(uint64_t *)(cursor+8));
-                  cursor += 16;
-                  }
-               else
-                  {
-                  diagnostic("Class Object: Constant pool = %p, index = %d",
-                              *(uint32_t *)(cursor+1),
-                              *(uint32_t *)(cursor+5));
-                  cursor += 9;
-                  }
-               break;
-            case TR_MethodObject:
-               // next word is the address of the constant pool to which the index refers
-               // second word is the index in the above stored constant pool that indicates the particular
-               // relocation target
-               if (TR::Compiler->target.is64Bit())
-                  {
-                  cursor++; // unused field
-                  cursor += 4; // padding
-                  diagnostic("Method Object: Constant pool = %p, index = %d",
-                              *(uint64_t *)(cursor),
-                              *(uint64_t *)(cursor+8));
-                  cursor += 16;
-                  }
-               else
-                  {
-                  diagnostic("Method Object: Constant pool = %p, index = %d",
-                              *(uint32_t *)(cursor+1),
-                              *(uint32_t *)(cursor+5));
-                  cursor += 9;
-                  }
-               break;
-            case TR_InterfaceObject:
-               // next word is the address of the constant pool to which the index refers
-               // second word is the index in the above stored constant pool that indicates the particular
-               // relocation target
-               if (TR::Compiler->target.is64Bit())
-                  {
-                  cursor++; // unused field
-                  cursor += 4; // padding
-                  diagnostic("Interface Object: Constant pool = %p, index = %d",
-                              *(uint64_t *)(cursor),
-                              *(uint64_t *)(cursor+8));
-                  cursor += 16;
-                  }
-               else
-                  {
-                  diagnostic("Interface Object: Constant pool = %p, index = %d",
-                              *(uint32_t *)(cursor+1),
-                              *(uint32_t *)(cursor+5));
-                  cursor += 9;
-                  }
-               break;
-            case TR_BodyInfoAddress:
-               // Reference to the method, no other information
-               diagnostic("Body Info Address:");
-               cursor++;
-               break;
-            }
-         diagnostic("\nUpdate location offsets:");
-         uint8_t count = 0;
-         if (offsetSize == 2)
-            {
-            while (cursor < endOfCurrentRecord)
-               {
-               if ((isOrderedPair && (count % 4)==0) ||
-                   (!isOrderedPair && (count % 16)==0))
-                  {
-                  diagnostic("\n");
-                  }
-               count++;
-               if (isOrderedPair)
-                  {
-                  diagnostic("(%04x ", *(uint16_t *)cursor);
-                  cursor += 2;
-                  diagnostic("%04x) ", *(uint16_t *)cursor);
-                  cursor += 2;
-                  }
-               else
-                  {
-                  diagnostic("%04x ", *(uint16_t *)cursor);
-                  cursor += 2;
-                  }
-               }
-            }
-         else
-            {
-            while (cursor < endOfCurrentRecord)
-               {
-               if ((isOrderedPair && (count % 2)==0) ||
-                   (!isOrderedPair && (count % 8)==0))
-                  {
-                  diagnostic("\n");
-                  }
-               count++;
-               if (isOrderedPair)
-                  {
-                  diagnostic("(%08x ", *(uint32_t *)cursor);
-                  cursor += 4;
-                  diagnostic("%08x) ", *(uint32_t *)cursor);
-                  cursor += 4;
-                  }
-               else
-                  {
-                  diagnostic("%08x ", *(uint32_t *)cursor);
-                  cursor += 4;
-                  }
-               }
-            }
-         diagnostic("\n");
-         }
-
-      diagnostic("\n\n");
-      }
-   else
-      {
-      diagnostic("No relocation data allocated\n");
-      }
-   }
-#endif
 
 #if defined(TR_HOST_64BIT)
 uint32_t J9::Z::AheadOfTimeCompile::_relocationTargetTypeToHeaderSizeMap[TR_NumExternalRelocationKinds] =

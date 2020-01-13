@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,7 +119,7 @@ ReduceSynchronizedFieldLoad::inlineSynchronizedFieldLoad(TR::Node* node, TR::Cod
 
    const bool generateCompressedLockWord = static_cast<TR_J9VMBase*>(cg->comp()->fe())->generateCompressedLockWord();
 
-   const bool is32BitLock = TR::Compiler->target.is32Bit() || generateCompressedLockWord;
+   const bool is32BitLock = cg->comp()->target().is32Bit() || generateCompressedLockWord;
    const bool is32BitLoad = J9::DataType::getSize(loadNode->getDataType()) == 4;
 
    bool lockRegisterRequiresZeroExt = false;
@@ -254,7 +254,7 @@ ReduceSynchronizedFieldLoad::perform()
    {
    bool transformed = false;
 
-   if (TR::Compiler->target.cpu.getSupportsArch(TR::CPU::z196))
+   if (cg->comp()->target().cpu.getSupportsArch(TR::CPU::z196))
       {
       if (!cg->comp()->getOption(TR_DisableSynchronizedFieldLoad) && cg->comp()->getMethodSymbol()->mayContainMonitors())
          {
@@ -319,7 +319,7 @@ ReduceSynchronizedFieldLoad::performOnTreeTops(TR::TreeTop* startTreeTop, TR::Tr
                   if (loadNode != NULL)
                      {
                      // Disallow this optimization for 64-bit loads on 31-bit JVM due to register pairs
-                     if (TR::Compiler->target.is32Bit() && J9::DataType::getSize(loadNode->getDataType()) == 8)
+                     if (cg->comp()->target().is32Bit() && J9::DataType::getSize(loadNode->getDataType()) == 8)
                         {
                         TR::DebugCounter::incStaticDebugCounter(cg->comp(), TR::DebugCounter::debugCounterName(cg->comp(), "codegen/z/ReduceSynchronizedFieldLoad/failure/31-bit-register-pairs/%s", cg->comp()->signature()));
 

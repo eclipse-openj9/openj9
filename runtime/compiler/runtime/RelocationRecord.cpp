@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2087,7 +2087,7 @@ TR_RelocationRecordInlinedAllocation::applyRelocation(TR_RelocationRuntime *relo
       uint8_t *destination = (uint8_t *) (reloLocation + (UDATA) branchOffset(reloTarget));
 
       RELO_LOG(reloRuntime->reloLogger(), 6, "\t\tapplyRelocation: inlined alloc not OK, patch destination %p\n", destination);
-      _patchVirtualGuard(reloLocation, destination, TR::Compiler->target.isSMP());
+      _patchVirtualGuard(reloLocation, destination, reloRuntime->comp()->target().isSMP());
       reloRuntime->incNumFailedAllocInlinedRelos();
       }
    else

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -57,7 +57,7 @@ J9::X86::i386::CodeGenerator::createLinkage(TR_LinkageConventions lc)
          break;
 
       case TR_J9JNILinkage:
-         if (TR::Compiler->target.isWindows() || TR::Compiler->target.isLinux())
+         if (self()->comp()->target().isWindows() || self()->comp()->target().isLinux())
             {
             linkage = new (self()->trHeapMemory()) J9::X86::I386::JNILinkage(self());
             }
@@ -69,7 +69,7 @@ J9::X86::i386::CodeGenerator::createLinkage(TR_LinkageConventions lc)
          break;
 
       case TR_System:
-         if (TR::Compiler->target.isWindows() || TR::Compiler->target.isLinux())
+         if (self()->comp()->target().isWindows() || self()->comp()->target().isLinux())
             {
             linkage = new (self()->trHeapMemory()) TR::IA32J9SystemLinkage(self());
             }

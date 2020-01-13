@@ -71,17 +71,17 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    _properties._registerFlags[TR::RealRegister::gr1]   = Preserved|PPC_Reserved; // system sp
 
    // gr2 is Preserved in 32-bit Linux
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       _properties._registerFlags[TR::RealRegister::gr2]   = 0;
       }
    else
       {
-      if (TR::Compiler->target.isAIX())
+      if (cg->comp()->target().isAIX())
          {
          _properties._registerFlags[TR::RealRegister::gr2] = 0;
          }
-      else if (TR::Compiler->target.isLinux())
+      else if (cg->comp()->target().isLinux())
          {
          _properties._registerFlags[TR::RealRegister::gr2] = Preserved|PPC_Reserved;
          is32bitLinux = true;
@@ -94,7 +94,7 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
 
    _properties._registerFlags[TR::RealRegister::gr3]  = IntegerReturn|IntegerArgument;
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       _properties._registerFlags[TR::RealRegister::gr4]  = IntegerArgument;
    else
       _properties._registerFlags[TR::RealRegister::gr4]  = IntegerReturn|IntegerArgument;
@@ -109,7 +109,7 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    _properties._registerFlags[TR::RealRegister::gr12] = 0;
    _properties._registerFlags[TR::RealRegister::gr13] = Preserved|PPC_Reserved; // meta data for 32bit, system for 64bit;
    _properties._registerFlags[TR::RealRegister::gr14] = Preserved|PPC_Reserved; // J9 sp
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       _properties._registerFlags[TR::RealRegister::gr15] = Preserved|PPC_Reserved; // meta data
       _properties._registerFlags[TR::RealRegister::gr16] = Preserved|PPC_Reserved; // JTOC
@@ -166,7 +166,7 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    _properties._firstIntegerReturnRegister = 0;
    _properties._returnRegisters[0] = TR::RealRegister::gr3;
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       _properties._firstFloatReturnRegister = 1;
       _properties._returnRegisters[1]  = TR::RealRegister::fp0;
@@ -239,7 +239,7 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    _properties._allocationOrder[i++] = TR::RealRegister::gr18;
    _properties._allocationOrder[i++] = TR::RealRegister::gr17;
 
-   if (TR::Compiler->target.is32Bit())
+   if (cg->comp()->target().is32Bit())
       {
       _properties._allocationOrder[i++] = TR::RealRegister::gr16;
       _properties._allocationOrder[i++] = TR::RealRegister::gr15;
@@ -320,7 +320,7 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    _properties._allocationOrder[i++] = TR::RealRegister::cr3;
    _properties._allocationOrder[i++] = TR::RealRegister::cr4;
 
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       _properties._preservedRegisterMapForGC     = 0x00007fff;
       _properties._methodMetaDataRegister        = TR::RealRegister::gr15;
@@ -520,7 +520,7 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
 
    while (localCursor != NULL)
       {
-      if (TR::Compiler->target.is64Bit())
+      if (comp()->target().is64Bit())
          {
          if (localCursor->getGCMapIndex() < 0 &&
              localCursor->getSize() != 8)
@@ -544,7 +544,7 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
 
    while (localCursor != NULL)
       {
-      if (TR::Compiler->target.is64Bit())
+      if (comp()->target().is64Bit())
          {
          if (localCursor->getGCMapIndex() < 0 &&
              localCursor->getSize() == 8)
@@ -582,7 +582,7 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
       uint32_t sizeOfParameterArea = method->getNumParameterSlots() * TR::Compiler->om.sizeofReferenceAddress();
       while (parmCursor != NULL)
          {
-         if (TR::Compiler->target.is64Bit() &&
+         if (comp()->target().is64Bit() &&
              parmCursor->getDataType() != TR::Address)
             parmCursor->setParameterOffset(sizeOfParameterArea -
                                         parmCursor->getParameterOffset() -
@@ -641,7 +641,7 @@ void J9::Power::PrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMet
                {
                index = numIntArgs;
                }
-            if (TR::Compiler->target.is64Bit())
+            if (comp()->target().is64Bit())
                numIntArgs ++;
             else
                numIntArgs += 2;
@@ -723,7 +723,7 @@ static TR::Instruction *unrollPrologueInitLoop(TR::CodeGenerator *cg, TR::Node *
 
    static bool disableVSXMemInit = (feGetEnv("TR_disableVSXMemInit") != NULL); //Disable toggle incase we break in production.
    bool use8Bytes                = ((cg->is64BitProcessor() && TR::Compiler->om.sizeofReferenceAddress() == 4) || TR::Compiler->om.sizeofReferenceAddress() == 8);
-   bool useVectorStores          = (TR::Compiler->target.cpu.id() >= TR_PPCp8 && TR::Compiler->target.cpu.getPPCSupportsVSX() && !disableVSXMemInit);
+   bool useVectorStores          = (cg->comp()->target().cpu.id() >= TR_PPCp8 && cg->comp()->target().cpu.getPPCSupportsVSX() && !disableVSXMemInit);
 
    if (useVectorStores)
       {
@@ -873,7 +873,7 @@ static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
              cg->canExceptByTrap()           ||
              machine->getLinkRegisterKilled());
 
-   if (0 && TR::Compiler->target.is64Bit())
+   if (0 && cg->comp()->target().is64Bit())
       {
       argSize = (cg->getLargestOutgoingArgSize() * 2) + properties.getOffsetToFirstParm();
       }
@@ -1057,7 +1057,7 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
       TR::LabelSymbol *reStartLabel = generateLabelSymbol(cg());
 
       // Branch to StackOverflow snippet if javaSP > stack limit
-      if (TR::Compiler->target.cpu.id() >= TR_PPCgp)
+      if (cg()->comp()->target().cpu.id() >= TR_PPCgp)
          // use PPC AS branch hint
          cursor = generateConditionalBranchInstruction(cg(), TR::InstOpCode::ble, PPCOpProp_BranchUnlikely, firstNode, snippetLabel, cr0, cursor);
       else
@@ -1069,7 +1069,7 @@ void J9::Power::PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
    if (intSavedFirst <= TR::RealRegister::LastGPR)
       {
-      if (TR::Compiler->target.is64Bit() ||
+      if (cg()->comp()->target().is64Bit() ||
           (!comp()->getOption(TR_OptimizeForSpace) &&
            TR::RealRegister::LastGPR - intSavedFirst <= 3))
          {
@@ -1339,7 +1339,7 @@ void J9::Power::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
       cursor = generateSrc1Instruction(cg(), TR::InstOpCode::mtlr, currentNode, gr0, 0, cursor);
       }
 
-   if (0 && TR::Compiler->target.is64Bit())
+   if (0 && cg()->comp()->target().is64Bit())
       {
       saveSize = (cg()->getLargestOutgoingArgSize() * 2) + properties.getOffsetToFirstParm();
       }
@@ -1353,7 +1353,7 @@ void J9::Power::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
 
    if (savedFirst <= TR::RealRegister::LastGPR)
       {
-      if (TR::Compiler->target.is64Bit() ||
+      if (cg()->comp()->target().is64Bit() ||
           (!comp()->getOption(TR_OptimizeForSpace) &&
            TR::RealRegister::LastGPR - savedFirst <= 3))
          {
@@ -1501,7 +1501,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
             totalSize += TR::Compiler->om.sizeofReferenceAddress();
             break;
          case TR::Int64:
-            if (TR::Compiler->target.is64Bit())
+            if (cg()->comp()->target().is64Bit())
                {
                if (numIntegerArgs >= numIntArgRegs)
                   memArgs++;
@@ -1632,7 +1632,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
                      if (firstExplicitArg == 1)
                         dependencies->addPostCondition(argRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
                      }
-                  else if (TR::Compiler->target.is32Bit() && numIntegerArgs == (firstExplicitArg + 1) && resType.isInt64())
+                  else if (cg()->comp()->target().is32Bit() && numIntegerArgs == (firstExplicitArg + 1) && resType.isInt64())
                      {
                      TR::Register *resultReg = cg()->allocateRegister();
                      dependencies->addPreCondition(argRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
@@ -1685,7 +1685,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
                   {
                   if (!cg()->canClobberNodesRegister(child, 0))
                      {
-                     if (TR::Compiler->target.is64Bit())
+                     if (cg()->comp()->target().is64Bit())
                         {
                         if (argRegister->containsCollectedReference())
                            tempRegister = cg()->allocateCollectedReferenceRegister();
@@ -1709,7 +1709,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
                         resultReg = cg()->allocateCollectedReferenceRegister();
                      else
                         resultReg = cg()->allocateRegister();
-                     if (TR::Compiler->target.is64Bit())
+                     if (cg()->comp()->target().is64Bit())
                         dependencies->addPreCondition(argRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
                      else
                         dependencies->addPreCondition(argRegister->getRegisterPair()->getHighOrder(), properties.getIntegerArgumentRegister(numIntegerArgs));
@@ -1717,7 +1717,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
                      if (firstExplicitArg == 1)
                         dependencies->addPostCondition(argRegister, properties.getIntegerArgumentRegister(numIntegerArgs));
                      }
-                  else if (TR::Compiler->target.is32Bit() && numIntegerArgs == (firstExplicitArg + 1) && resType.isInt64())
+                  else if (cg()->comp()->target().is32Bit() && numIntegerArgs == (firstExplicitArg + 1) && resType.isInt64())
                      {
                      TR::Register *resultReg = cg()->allocateRegister();
                      dependencies->addPreCondition(argRegister->getRegisterPair()->getHighOrder(), properties.getIntegerArgumentRegister(numIntegerArgs));
@@ -1727,12 +1727,12 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
                       }
                   else
                      {
-                     if (TR::Compiler->target.is64Bit())
+                     if (cg()->comp()->target().is64Bit())
                         TR::addDependency(dependencies, argRegister, properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                      else
                         TR::addDependency(dependencies, argRegister->getRegisterPair()->getHighOrder(), properties.getIntegerArgumentRegister(numIntegerArgs), TR_GPR, cg());
                      }
-                  if (TR::Compiler->target.is32Bit())
+                  if (cg()->comp()->target().is32Bit())
                      {
                      if (numIntegerArgs+1 < numIntArgRegs)
                         {
@@ -1761,7 +1761,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
                   }
                else // numIntegerArgs >= numIntArgRegs
                   {
-                  if (TR::Compiler->target.is64Bit())
+                  if (cg()->comp()->target().is64Bit())
                      mref = getOutgoingArgumentMemRef(totalSize-argSize, argRegister, TR::InstOpCode::std, pushToMemory[argIndex++], 8);
                   else
                      {
@@ -1928,14 +1928,14 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
    */
    if(linkage == TR_CHelper)
    {
-      if(TR::Compiler->target.isLinux() && TR::Compiler->target.is64Bit() && TR::Compiler->target.cpu.isLittleEndian())
+      if(cg()->comp()->target().isLinux() && cg()->comp()->target().is64Bit() && cg()->comp()->target().cpu.isLittleEndian())
       {
          int32_t helperOffset = (callNode->getSymbolReference()->getReferenceNumber() - 1)*sizeof(intptrj_t);
          generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, dependencies->searchPreConditionRegister(TR::RealRegister::gr12),
             new(trHeapMemory()) TR::MemoryReference(cg()->getTOCBaseRegister(), helperOffset, TR::Compiler->om.sizeofReferenceAddress(), cg()));
 
       }
-      else if (TR::Compiler->target.isAIX() || (TR::Compiler->target.isLinux() && TR::Compiler->target.is64Bit()))
+      else if (cg()->comp()->target().isAIX() || (cg()->comp()->target().isLinux() && cg()->comp()->target().is64Bit()))
       {
          generateTrg1MemInstruction(cg(), TR::InstOpCode::Op_load, callNode, dependencies->searchPreConditionRegister(TR::RealRegister::gr2),
             new(trHeapMemory()) TR::MemoryReference(cg()->getMethodMetaDataRegister(), offsetof(J9VMThread, jitTOC), TR::Compiler->om.sizeofReferenceAddress(), cg()));
@@ -2112,7 +2112,7 @@ static void buildInterfaceCall(TR::CodeGenerator *cg, TR::Node *callNode, TR::Re
    // jitrt.dev/ppc/Recompilation.s is dependent on the code sequence
    // generated from here to the bctrl below!!
    // DO NOT MODIFY without also changing Recompilation.s!!
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       {
       int32_t beginIndex = TR_PPCTableOfConstants::allocateChunk(1, cg);
       if (beginIndex != PTOC_FULL_INDEX)
@@ -2729,7 +2729,7 @@ TR::Register *J9::Power::PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
    // SG - start
    int32_t           argSize = buildArgs(callNode, dependencies);
    bool inlinedCharacterIsMethod = false;
-   if (TR::Compiler->target.cpu.id() >= TR_PPCp9 && TR::Compiler->target.is64Bit())
+   if (cg()->comp()->target().cpu.id() >= TR_PPCp9 && cg()->comp()->target().is64Bit())
       {
       switch(callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod())
          {
@@ -2761,7 +2761,7 @@ TR::Register *J9::Power::PrivateLinkage::buildDirectDispatch(TR::Node *callNode)
          break;
       case TR::lcall:
          {
-         if (TR::Compiler->target.is64Bit())
+         if (cg()->comp()->target().is64Bit())
             returnRegister = dependencies->searchPostConditionRegister(
                                 pp.getLongReturnRegister());
          else
@@ -2827,7 +2827,7 @@ TR::Register *J9::Power::PrivateLinkage::buildIndirectDispatch(TR::Node *callNod
          break;
       case TR::lcalli:
          {
-         if (TR::Compiler->target.is64Bit())
+         if (cg()->comp()->target().is64Bit())
             returnRegister = dependencies->searchPostConditionRegister(
                                 pp.getLongReturnRegister());
          else

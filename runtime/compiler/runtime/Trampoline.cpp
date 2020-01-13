@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1392,74 +1392,38 @@ void s390zLinux64CodeCacheParameters(int32_t *trampolineSize, void **callBacks, 
 void setupCodeCacheParameters(int32_t *trampolineSize, OMR::CodeCacheCodeGenCallbacks *callBacks, int32_t * numHelpers, int32_t *CCPreLoadedCodeSize)
    {
 #if defined(TR_TARGET_POWER)
-   if (TR::Compiler->target.cpu.isPower())
-      {
       ppcCodeCacheParameters(trampolineSize, (void **)callBacks, numHelpers, CCPreLoadedCodeSize);
-      return;
-      }
 #endif
 
 #if defined(TR_TARGET_X86) && defined(TR_TARGET_32BIT)
-   if (TR::Compiler->target.cpu.isI386())
-      {
       ia32CodeCacheParameters(trampolineSize, callBacks, numHelpers, CCPreLoadedCodeSize);
-      return;
-      }
 #endif
 
 #if defined(TR_TARGET_X86) && defined(TR_TARGET_64BIT)
-   if (TR::Compiler->target.cpu.isAMD64())
-      {
       amd64CodeCacheParameters(trampolineSize, callBacks, numHelpers, CCPreLoadedCodeSize);
-      return;
-      }
 #endif
 
 #if defined(TR_TARGET_ARM)
-   if (TR::Compiler->target.cpu.isARM())
-      {
       armCodeCacheParameters(trampolineSize, (void **)callBacks, numHelpers, CCPreLoadedCodeSize);
-      return;
-      }
 #endif
 
 #if defined(TR_TARGET_ARM64)
-   if (TR::Compiler->target.cpu.isARM64())
-      {
       arm64CodeCacheParameters(trampolineSize, (void **)callBacks, numHelpers, CCPreLoadedCodeSize);
-      return;
-      }
 #endif
 
 #if defined(TR_TARGET_S390) && !defined(TR_TARGET_64BIT) && defined(J9ZOS390)
-   // zOS 31 code cache support.
-   if (TR::Compiler->target.cpu.isZ())
-      {
       s390zOS31CodeCacheParameters(trampolineSize, (void **)callBacks, numHelpers, CCPreLoadedCodeSize);
-      }
 #endif
 
 #if defined(TR_TARGET_S390) && defined(TR_TARGET_64BIT) && defined(J9ZOS390)
-   // zOS 64 code cache support.
-   if (TR::Compiler->target.cpu.isZ())
-      {
       s390zOS64CodeCacheParameters(trampolineSize, (void **)callBacks, numHelpers, CCPreLoadedCodeSize);
-      }
 #endif
 
 #if defined(TR_TARGET_S390) && !defined(TR_TARGET_64BIT) && !defined(J9ZOS390)
-   // zLinux 31 code cache support.
-   if (TR::Compiler->target.cpu.isZ())
-      {
       s390zLinux31CodeCacheParameters(trampolineSize, (void **)callBacks, numHelpers, CCPreLoadedCodeSize);
-      }
 #endif
 
 #if defined(TR_TARGET_S390) && defined(TR_TARGET_64BIT) && !defined(J9ZOS390)
-   // zLinux 64 code cache support.
-   if (TR::Compiler->target.cpu.isZ())
-      {
       s390zLinux64CodeCacheParameters(trampolineSize, (void **)callBacks, numHelpers, CCPreLoadedCodeSize);
-      }
 #endif
    }

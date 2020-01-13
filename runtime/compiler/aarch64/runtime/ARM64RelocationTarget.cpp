@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,7 +103,7 @@ bool
 TR_ARM64RelocationTarget::useTrampoline(uint8_t *helperAddress, uint8_t *baseLocation)
    {
    return
-      !TR::Compiler->target.cpu.isTargetWithinUnconditionalBranchImmediateRange((intptrj_t)helperAddress, (intptrj_t)baseLocation) ||
+      !reloRuntime()->comp()->target().cpu.isTargetWithinUnconditionalBranchImmediateRange((intptrj_t)helperAddress, (intptrj_t)baseLocation) ||
       TR::Options::getCmdLineOptions()->getOption(TR_StressTrampolines);
    }
 

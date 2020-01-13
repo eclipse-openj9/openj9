@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,14 +50,14 @@
 bool shouldEnableSEL(TR::Compilation *comp)
    {
    static char * enableSEL = feGetEnv("TR_SIGNEXTENDLOADS");
-   if (TR::Compiler->target.cpu.isZ())
+   if (comp->target().cpu.isZ())
       {
       // enable only for 390
       static char * nenableSEL = feGetEnv("TR_NSIGNEXTENDLOADS");
       if(nenableSEL ==NULL) enableSEL = "enable";
       }
    return ((enableSEL != NULL) &&
-           TR::Compiler->target.is64Bit());
+           comp->target().is64Bit());
    }
 
 

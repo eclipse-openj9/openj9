@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1051,13 +1051,13 @@ TR_CISCGraph::makePreparedCISCGraphs(TR::Compilation *c)
 #if defined(JITSERVER_SUPPORT)
    // Enabling genDecimal generates the TROT instruction on Z which is currently not
    // relocatable for remote compiles. Thus we disable this option for remote compiles for now.
-   bool genDecimal = TR::Compiler->target.cpu.isZ() && !c->isOutOfProcessCompilation();
+   bool genDecimal = c->target().cpu.isZ() && !c->isOutOfProcessCompilation();
 #else
-   bool genDecimal = TR::Compiler->target.cpu.isZ();
+   bool genDecimal = c->target().cpu.isZ();
 #endif /* defined(JITSERVER_SUPPORT) */
-   bool genBitOpMem = TR::Compiler->target.cpu.isZ();
-   bool is64Bit = TR::Compiler->target.is64Bit();
-   bool isBig = TR::Compiler->target.cpu.isBigEndian();
+   bool genBitOpMem = c->target().cpu.isZ();
+   bool is64Bit = c->target().is64Bit();
+   bool isBig = c->target().cpu.isBigEndian();
    int32_t ctrl = (is64Bit ? CISCUtilCtl_64Bit : 0) | (isBig ? CISCUtilCtl_BigEndian : 0);
 
    // THESE ARE NOT GUARANTEED OR TESTED TO WORK ON WCODE.
@@ -2935,8 +2935,8 @@ TR_CISCTransformer::makeCISCGraph(List<TR::Block> *pred,
 
    // add "iconst -ahsize" if nonexistent
    int32_t ahsize = -(int32_t)TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   uint32_t opcode = TR::Compiler->target.is64Bit() ? TR::lconst : TR::iconst;
-   TR::DataType nodeDataType = TR::Compiler->target.is64Bit() ? TR::Int64 : TR::Int32;
+   uint32_t opcode = comp()->target().is64Bit() ? TR::lconst : TR::iconst;
+   TR::DataType nodeDataType = comp()->target().is64Bit() ? TR::Int64 : TR::Int32;
 
    if (!graph->getCISCNode(opcode, true, ahsize))
       {
@@ -3009,7 +3009,7 @@ int32_t TR_CISCTransformer::perform()
    _cfg = comp()->getFlowGraph();
    _rootStructure = _cfg->getStructure();
    _nodesInCycle = new (trStackMemory()) TR_BitVector(_cfg->getNextNodeNumber(), trMemory(), stackAlloc);
-   _isGenerateI2L = TR::Compiler->target.is64Bit();
+   _isGenerateI2L = comp()->target().is64Bit();
    _showMesssagesStdout = (VERBOSE || showStdout);
 
    // make loop candidates

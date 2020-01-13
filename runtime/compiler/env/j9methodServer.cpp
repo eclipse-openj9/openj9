@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1506,9 +1506,9 @@ TR_ResolvedJ9JITServerMethod::createResolvedMethodFromJ9MethodMirror(TR_Resolved
       J9Method *j9method = (J9Method *) method;
 
       if (comp->getOption(TR_DisableDFP) ||
-          (!(TR::Compiler->target.cpu.supportsDecimalFloatingPoint()
+          (!(comp->target().cpu.supportsDecimalFloatingPoint()
 #ifdef TR_TARGET_S390
-          || TR::Compiler->target.cpu.getSupportsDecimalFloatingPointFacility()
+          || comp->target().cpu.getSupportsDecimalFloatingPointFacility()
 #endif
             ) ||
              !TR_J9MethodBase::isBigDecimalMethod(j9method)))

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,7 +113,7 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
 
    bool constLoadNeedsLiteralFromPool(TR::Node *node);
 
-   bool supportsTrapsInTMRegion(){ return TR::Compiler->target.isZOS();}
+   bool supportsTrapsInTMRegion(){ return J9::Z::CodeGenerator::comp()->target().isZOS(); }
 
    using J9::CodeGenerator::addAllocatedRegister;
    void addAllocatedRegister(TR_PseudoRegister * temp);

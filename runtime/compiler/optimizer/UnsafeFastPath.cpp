@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,27 +75,27 @@ static TR::RecognizedMethod getVarHandleAccessMethodFromInlinedCallStack(TR::Com
    return TR::unknownMethod;
    }
 
-static TR::SymbolReferenceTable::CommonNonhelperSymbol equivalentAtomicIntrinsic(TR::RecognizedMethod rm)
+static TR::SymbolReferenceTable::CommonNonhelperSymbol equivalentAtomicIntrinsic(TR::Compilation *comp, TR::RecognizedMethod rm)
    {
    switch (rm)
       {
       case TR::sun_misc_Unsafe_getAndSetInt:
            return TR::SymbolReferenceTable::atomicSwapSymbol;
       case TR::sun_misc_Unsafe_getAndSetLong:
-           return TR::Compiler->target.is64Bit() ? TR::SymbolReferenceTable::atomicSwapSymbol : TR::SymbolReferenceTable::lastCommonNonhelperSymbol;
+           return comp->target().is64Bit() ? TR::SymbolReferenceTable::atomicSwapSymbol : TR::SymbolReferenceTable::lastCommonNonhelperSymbol;
       case TR::sun_misc_Unsafe_getAndAddInt:
            return TR::SymbolReferenceTable::atomicFetchAndAddSymbol;
       case TR::sun_misc_Unsafe_getAndAddLong:
-           return TR::Compiler->target.is64Bit() ? TR::SymbolReferenceTable::atomicFetchAndAddSymbol : TR::SymbolReferenceTable::lastCommonNonhelperSymbol;
+           return comp->target().is64Bit() ? TR::SymbolReferenceTable::atomicFetchAndAddSymbol : TR::SymbolReferenceTable::lastCommonNonhelperSymbol;
       default:
          break;
       }
    return TR::SymbolReferenceTable::lastCommonNonhelperSymbol;
    }
 
-static bool isTransformableUnsafeAtomic(TR::RecognizedMethod rm)
+static bool isTransformableUnsafeAtomic(TR::Compilation *comp, TR::RecognizedMethod rm)
    {
-   if (equivalentAtomicIntrinsic(rm) != TR::SymbolReferenceTable::lastCommonNonhelperSymbol)
+   if (equivalentAtomicIntrinsic(comp, rm) != TR::SymbolReferenceTable::lastCommonNonhelperSymbol)
       return true;
 
    return false;
@@ -234,7 +234,7 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
       return false;
       }
 
-   TR::SymbolReferenceTable::CommonNonhelperSymbol helper = equivalentAtomicIntrinsic(calleeMethod);
+   TR::SymbolReferenceTable::CommonNonhelperSymbol helper = equivalentAtomicIntrinsic(comp(), calleeMethod);
    if (!comp()->cg()->supportsNonHelper(helper))
       {
       if (trace())
@@ -258,14 +258,14 @@ bool TR_UnsafeFastPath::tryTransformUnsafeAtomicCallInVarHandleAccessMethod(TR::
       //
       offset = TR::Node::create(node, TR::land, 2, offset,
                                                    TR::Node::lconst(node, ~J9_SUN_FIELD_OFFSET_MASK));
-      unsafeAddress = TR::Compiler->target.is32Bit() ? TR::Node::create(node, TR::aiadd, 2, ramStatics, TR::Node::create(node, TR::l2i, 1, offset)) :
+      unsafeAddress = comp()->target().is32Bit() ? TR::Node::create(node, TR::aiadd, 2, ramStatics, TR::Node::create(node, TR::l2i, 1, offset)) :
                                                        TR::Node::create(node, TR::aladd, 2, ramStatics, offset);
       }
    else
       {
       TR::Node* object = node->getChild(1);
       TR::Node* offset = node->getChild(2);
-      unsafeAddress = TR::Compiler->target.is32Bit() ? TR::Node::create(node, TR::aiadd, 2, object, TR::Node::create(node, TR::l2i, 1, offset)) :
+      unsafeAddress = comp()->target().is32Bit() ? TR::Node::create(node, TR::aiadd, 2, object, TR::Node::create(node, TR::l2i, 1, offset)) :
                                                        TR::Node::create(node, TR::aladd, 2, object, offset);
       unsafeAddress->setIsInternalPointer(true);
       }
@@ -342,7 +342,7 @@ int32_t TR_UnsafeFastPath::perform()
             TR::RecognizedMethod caller = getVarHandleAccessMethodFromInlinedCallStack(comp(), node);
             TR::RecognizedMethod callee = symbol->getRecognizedMethod();
             if (TR_J9MethodBase::isVarHandleOperationMethod(caller) &&
-                (isTransformableUnsafeAtomic(callee) ||
+                (isTransformableUnsafeAtomic(comp(), callee) ||
                  symbol->getMethod()->isUnsafeCAS(comp())))
                {
                if (tryTransformUnsafeAtomicCallInVarHandleAccessMethod(tt, caller, callee))
@@ -368,7 +368,7 @@ int32_t TR_UnsafeFastPath::perform()
 
             prepareToReplaceNode(node); // This will remove the usedef info, valueNumber info and all children of the node
             TR::Node *addrCalc;
-            if (TR::Compiler->target.is64Bit())
+            if (comp()->target().is64Bit())
                {
                addrCalc = TR::Node::create(TR::aladd, 2, charArray,
                      TR::Node::create(TR::ladd, 2, TR::Node::create(TR::lmul, 2, TR::Node::create(TR::i2l, 1, index), TR::Node::lconst(index, 4)),
@@ -609,7 +609,7 @@ int32_t TR_UnsafeFastPath::perform()
                break;
             case TR::com_ibm_jit_JITHelpers_getLongFromArrayVolatile:
             case TR::com_ibm_jit_JITHelpers_getLongFromObjectVolatile:
-               if (TR::Compiler->target.is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
+               if (comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
                   break; // if the platform cg does not support volatile longs just generate the call
                isVolatile = true;
             case TR::com_ibm_jit_JITHelpers_getLongFromArray:
@@ -655,7 +655,7 @@ int32_t TR_UnsafeFastPath::perform()
                break;
             case TR::com_ibm_jit_JITHelpers_putLongInArrayVolatile:
             case TR::com_ibm_jit_JITHelpers_putLongInObjectVolatile:
-               if (TR::Compiler->target.is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
+               if (comp()->target().is32Bit() && !comp()->cg()->getSupportsInlinedAtomicLongVolatiles())
                   break; // if the platform cg does not support volatile longs just generate the call
                isVolatile = true;
             case TR::com_ibm_jit_JITHelpers_putLongInArray:
@@ -790,7 +790,7 @@ int32_t TR_UnsafeFastPath::perform()
                TR::Node *addrCalc = NULL;
 
                // Calculate element address
-               if (TR::Compiler->target.is64Bit())
+               if (comp()->target().is64Bit())
                   addrCalc = TR::Node::create(TR::aladd, 2, object, offset);
                else
                   addrCalc = TR::Node::create(TR::aiadd, 2, object, TR::Node::create(TR::l2i, 1, offset));
@@ -893,7 +893,7 @@ int32_t TR_UnsafeFastPath::perform()
                TR::Node *addrCalc = NULL;
 
                // Calculate element address
-               if (TR::Compiler->target.is64Bit())
+               if (comp()->target().is64Bit())
                   addrCalc = TR::Node::create(TR::aladd, 2, object, offset);
                else
                   addrCalc = TR::Node::create(TR::aiadd, 2, object, TR::Node::create(TR::l2i, 1, offset));

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -378,7 +378,7 @@ J9::CodeGenerator::createStackAtlas()
             localObjectsFound = true;
             int32_t localObjectAlignment = comp->fej9()->getLocalObjectAlignmentInBytes();
             if (localObjectAlignment > stackSlotSize &&
-                (TR::Compiler->target.cpu.isX86() || TR::Compiler->target.cpu.isPower() || TR::Compiler->target.cpu.isZ()))
+                (comp->target().cpu.isX86() || comp->target().cpu.isPower() || comp->target().cpu.isZ()))
                {
                // We only get here in compressedrefs mode
                int32_t gcMapIndexAlignment = localObjectAlignment / stackSlotSize;

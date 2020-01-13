@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -815,7 +815,7 @@ J9::X86::AMD64::JNILinkage::generateMethodDispatch(
       {
       intptrj_t cleanUpSize = argSize - TR::Compiler->om.sizeofReferenceAddress();
 
-      if (TR::Compiler->target.is64Bit())
+      if (cg()->comp()->target().is64Bit())
          TR_ASSERT(cleanUpSize <= 0x7fffffff, "Caller cleanup argument size too large for one instruction on AMD64.");
 
 
@@ -890,7 +890,7 @@ void J9::X86::AMD64::JNILinkage::releaseVMAccess(TR::Node *callNode)
 
    uintptrj_t mask = fej9->constReleaseVMAccessOutOfLineMask();
 
-   if (TR::Compiler->target.is64Bit() && (mask > 0x7fffffff))
+   if (cg()->comp()->target().is64Bit() && (mask > 0x7fffffff))
       {
       if (!scratchReg3)
          scratchReg3 = cg()->allocateRegister();
@@ -914,7 +914,7 @@ void J9::X86::AMD64::JNILinkage::releaseVMAccess(TR::Node *callNode)
 
    mask = fej9->constReleaseVMAccessMask();
 
-   if (TR::Compiler->target.is64Bit() && (mask > 0x7fffffff))
+   if (cg()->comp()->target().is64Bit() && (mask > 0x7fffffff))
       {
       if (!scratchReg3)
          scratchReg3 = cg()->allocateRegister();
@@ -928,7 +928,7 @@ void J9::X86::AMD64::JNILinkage::releaseVMAccess(TR::Node *callNode)
       generateRegImmInstruction(op, callNode, scratchReg2, mask, cg());
       }
 
-   op = TR::Compiler->target.isSMP() ? LCMPXCHGMemReg() : CMPXCHGMemReg(cg());
+   op = cg()->comp()->target().isSMP() ? LCMPXCHGMemReg() : CMPXCHGMemReg(cg());
    generateMemRegInstruction(
       op,
       callNode,
@@ -981,7 +981,7 @@ void J9::X86::AMD64::JNILinkage::acquireVMAccess(TR::Node *callNode)
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
    uintptrj_t mask = fej9->constAcquireVMAccessOutOfLineMask();
 
-   if (TR::Compiler->target.is64Bit() && (mask > 0x7fffffff))
+   if (cg()->comp()->target().is64Bit() && (mask > 0x7fffffff))
       generateRegImm64Instruction(MOV8RegImm64, callNode, scratchReg2, mask, cg());
    else
       generateRegImmInstruction(MOV4RegImm4, callNode, scratchReg2, mask, cg());
@@ -989,7 +989,7 @@ void J9::X86::AMD64::JNILinkage::acquireVMAccess(TR::Node *callNode)
    TR::LabelSymbol *longReacquireSnippetLabel = generateLabelSymbol(cg());
    TR::LabelSymbol *longReacquireRestartLabel = generateLabelSymbol(cg());
 
-   TR_X86OpCodes op = TR::Compiler->target.isSMP() ? LCMPXCHGMemReg() : CMPXCHGMemReg(cg());
+   TR_X86OpCodes op = cg()->comp()->target().isSMP() ? LCMPXCHGMemReg() : CMPXCHGMemReg(cg());
    generateMemRegInstruction(
       op,
       callNode,
@@ -1127,25 +1127,25 @@ void J9::X86::AMD64::JNILinkage::cleanupReturnValue(
                generateRegRegInstruction(TEST1RegReg, callNode,
                      linkageReturnReg, linkageReturnReg, cg());
                generateRegInstruction(SETNE1Reg, callNode, linkageReturnReg, cg());
-               op = TR::Compiler->target.is64Bit() ? MOVZXReg8Reg1 : MOVZXReg4Reg1;
+               op = cg()->comp()->target().is64Bit() ? MOVZXReg8Reg1 : MOVZXReg4Reg1;
                }
             else if (isUnsigned)
                {
-               op = TR::Compiler->target.is64Bit() ? MOVZXReg8Reg1 : MOVZXReg4Reg1;
+               op = cg()->comp()->target().is64Bit() ? MOVZXReg8Reg1 : MOVZXReg4Reg1;
                }
             else
                {
-               op = TR::Compiler->target.is64Bit() ? MOVSXReg8Reg1 : MOVSXReg4Reg1;
+               op = cg()->comp()->target().is64Bit() ? MOVSXReg8Reg1 : MOVSXReg4Reg1;
                }
             break;
          case TR::Int16:
             if (isUnsigned)
                {
-               op = TR::Compiler->target.is64Bit() ? MOVZXReg8Reg2 : MOVZXReg4Reg2;
+               op = cg()->comp()->target().is64Bit() ? MOVZXReg8Reg2 : MOVZXReg4Reg2;
                }
             else
                {
-               op = TR::Compiler->target.is64Bit() ? MOVSXReg8Reg2 : MOVSXReg4Reg2;
+               op = cg()->comp()->target().is64Bit() ? MOVSXReg8Reg2 : MOVSXReg4Reg2;
                }
             break;
          default:
@@ -1174,7 +1174,7 @@ void J9::X86::AMD64::JNILinkage::checkForJNIExceptions(TR::Node *callNode)
    TR::Instruction *instr = generateLabelInstruction(JNE4, callNode, snippetLabel, cg());
 
    uint32_t gcMap = _systemLinkage->getProperties().getPreservedRegisterMapForGC();
-   if (TR::Compiler->target.is32Bit())
+   if (cg()->comp()->target().is32Bit())
       {
       gcMap |= (_JNIDispatchInfo.argSize<<14);
       }

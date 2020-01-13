@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -677,7 +677,7 @@ void TR_ProfileGenerator::createProfiledMethod()
             // freqArray and cntrArray (defined in TR_PersistentProfileInfo);
             // If the type of these arrays changes the future, this code will need to be adjusted
             TR::ILOpCodes opCode = TR::aiadd;
-            if (TR::Compiler->target.is64Bit())
+            if (comp()->target().is64Bit())
                {
                offsetNode = TR::Node::create(TR::i2l, 1, offsetNode);
                opCode = TR::aladd;

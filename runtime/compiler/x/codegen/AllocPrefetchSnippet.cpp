@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -318,7 +318,7 @@ void TR::createCCPreLoadedCode(uint8_t *CCPreLoadedCodeBase, uint8_t *CCPreLoade
    uint8_t *cursor = CCPreLoadedCodeBase;
 
    CCPreLoadedCodeTable[TR_CCPreLoadedCode::TR_AllocPrefetch] = static_cast<void *>(cursor);
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::ZeroedHeap, true>(cursor, cg->getX86ProcessorInfo());
    else
       cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::ZeroedHeap, false>(cursor, cg->getX86ProcessorInfo());
@@ -326,7 +326,7 @@ void TR::createCCPreLoadedCode(uint8_t *CCPreLoadedCodeBase, uint8_t *CCPreLoade
    cursor = static_cast<uint8_t *>( TR::alignAllocation<32>(cursor) );
 
    CCPreLoadedCodeTable[TR_CCPreLoadedCode::TR_NonZeroAllocPrefetch] = static_cast<void *>(cursor);
-   if (TR::Compiler->target.is64Bit())
+   if (cg->comp()->target().is64Bit())
       cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::NonZeroedHeap, true>(cursor, cg->getX86ProcessorInfo());
    else
       cursor = TR::X86AllocPrefetchSnippet::emitSharedBody<TR::HeapTypes::NonZeroedHeap, false>(cursor, cg->getX86ProcessorInfo());
