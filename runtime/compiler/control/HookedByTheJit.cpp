@@ -1563,11 +1563,6 @@ static void jitHookLocalGCEnd(J9HookInterface * * hookInterface, UDATA eventNum,
 
    if (jitConfig->runtimeFlags & J9JIT_GC_NOTIFY)
       printf("}");
-
-#if defined(JITSERVER_SUPPORT)
-   TR::CompilationInfo *compInfo = TR::CompilationInfo::get(jitConfig);
-   compInfo->incrementLocalGCCounter();
-#endif
    }
 
 static void initThreadAfterCreation(J9VMThread *vmThread)

@@ -393,8 +393,6 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    J9ROMClass               *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=NULL);
    J9ROMClass               *getRemoteROMClassIfCached(J9Class *);
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *getClassesThatShouldNotBeNewlyExtended() const { return _classesThatShouldNotBeNewlyExtended; }
-   uint32_t                  getLastLocalGCCounter() const { return _lastLocalGCCounter; }
-   void                      updateLastLocalGCCounter();
 #endif /* defined(JITSERVER_SUPPORT) */
 
    protected:
@@ -418,7 +416,6 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    // The following hastable caches <classLoader,classname> --> <J9Class> mappings
    // The cache only lives during a compilation due to class unloading concerns
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *_classesThatShouldNotBeNewlyExtended;
-   uint32_t               _lastLocalGCCounter;
 #endif /* defined(JITSERVER_SUPPORT) */
 
    }; // CompilationInfoPerThread

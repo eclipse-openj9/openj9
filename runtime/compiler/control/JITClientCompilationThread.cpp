@@ -656,13 +656,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::VM_getInt32FieldAt:
          {
-         if (compInfoPT->getLastLocalGCCounter() != compInfoPT->getCompilationInfo()->getLocalGCCounter())
-            {
-            // GC happened, fail compilation
-            auto comp = compInfoPT->getCompilation();
-            comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted due to GC");
-            }
-
          auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
          uintptrj_t objectPointer = std::get<0>(recv);
          uintptrj_t fieldOffset = std::get<1>(recv);
@@ -699,13 +692,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::VM_getArrayLengthInElements:
          {
-         if (compInfoPT->getLastLocalGCCounter() != compInfoPT->getCompilationInfo()->getLocalGCCounter())
-            {
-            // GC happened, fail compilation
-            auto comp = compInfoPT->getCompilation();
-            comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted due to GC");
-            }
-
          uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
          client->write(response, fe->getArrayLengthInElements(objectPointer));
          }
