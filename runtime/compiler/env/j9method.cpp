@@ -8630,6 +8630,24 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          uintptrj_t methodHandle;
          uintptrj_t argumentIndices;
+
+#if defined(JITSERVER_SUPPORT)
+         if (comp()->isOutOfProcessCompilation())
+            {
+            auto stream = TR::CompilationInfo::getStream();
+            stream->write(JITServer::MessageType::runFEMacro_invokeFilterArgumentsWithCombinerHandleArgumentIndices, thunkDetails->getHandleRef());
+
+            auto recv = stream->read<int32_t, std::vector<int32_t>>();
+            int32_t arrayLength = std::get<0>(recv);
+            std::vector<int32_t> argIndices = std::get<1>(recv);
+            // Push the indices in reverse order
+            for (int i = arrayLength - 1; i >= 0; i--) {
+               loadConstant(TR::iconst, argIndices[i]);
+            }
+            loadConstant(TR::iconst, arrayLength); // number of arguments
+            }
+         else
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8683,6 +8701,16 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
 
          uintptrj_t methodHandle;
          int32_t filterPosition;
+
+#if defined(JITSERVER_SUPPORT)
+         if (comp()->isOutOfProcessCompilation())
+            {
+            auto stream = TR::CompilationInfo::getStream();
+            stream->write(JITServer::MessageType::runFEMacro_invokeFilterArgumentsWithCombinerHandleFilterPosition, thunkDetails->getHandleRef());
+            filterPosition = std::get<0>(stream->read<int32_t>());
+            }
+         else
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fej9);
             methodHandle = *thunkDetails->getHandleRef();
@@ -8788,6 +8816,17 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          int32_t numArguments;
          int32_t filterPos;
 
+#if defined(JITSERVER_SUPPORT)
+         if (comp()->isOutOfProcessCompilation())
+            {
+            auto stream = TR::CompilationInfo::getStream();
+            stream->write(JITServer::MessageType::runFEMacro_invokeFilterArgumentsWithCombinerHandleNumSuffixArgs, thunkDetails->getHandleRef());
+            auto recv = stream->read<int32_t, int32_t>();
+            numArguments = std::get<0>(recv);
+            filterPos = std::get<1>(recv);
+            }
+         else
+#endif /* defined(JITSERVER_SUPPORT) */
             {
             TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fej9);
             methodHandle = *thunkDetails->getHandleRef();

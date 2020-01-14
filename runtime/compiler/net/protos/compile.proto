@@ -284,6 +284,9 @@ enum MessageType
    runFEMacro_invokeILGenMacrosParameterCount = 717;
    runFEMacro_invokeILGenMacrosArrayLength = 718;
    runFEMacro_invokeILGenMacrosGetField = 719;
+   runFEMacro_invokeFilterArgumentsWithCombinerHandleNumSuffixArgs = 720;
+   runFEMacro_invokeFilterArgumentsWithCombinerHandleFilterPosition = 721;
+   runFEMacro_invokeFilterArgumentsWithCombinerHandleArgumentIndices = 722;
 
    // for JITServerPersistentCHTable
    CHTable_getAllClassInfo = 800;

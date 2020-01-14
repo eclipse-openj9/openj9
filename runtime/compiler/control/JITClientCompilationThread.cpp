@@ -2252,6 +2252,30 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, foldPosition);
          }
          break;
+      case MessageType::runFEMacro_invokeFilterArgumentsWithCombinerHandleArgumentIndices:
+         {
+         auto recv = client->getRecvData<uintptrj_t*>();
+         TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
+         uintptrj_t argumentIndices = fe->getReferenceField(methodHandle, "argumentIndices", "[I");
+         int32_t arrayLength = fe->getArrayLengthInElements(argumentIndices);
+         std::vector<int32_t> argIndices(arrayLength);
+         for (int i = arrayLength - 1; i >= 0; i--)
+            {
+            argIndices[i] = fe->getInt32Element(argumentIndices, i);
+            }
+         client->write(response, arrayLength, argIndices);
+         }
+         break;
+      case MessageType::runFEMacro_invokeFilterArgumentsWithCombinerHandleFilterPosition:
+         {
+         auto recv = client->getRecvData<uintptrj_t*>();
+         TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
+         int32_t filterPosition = fe->getInt32Field(methodHandle, "filterPosition");
+         client->write(response, filterPosition);
+         }
+         break;
       case MessageType::runFEMacro_invokeFinallyHandle:
          {
          auto recv = client->getRecvData<uintptrj_t*>();
@@ -2267,6 +2291,17 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          char *methodDescriptor = (char*)alloca(methodDescriptorLength+1);
          fe->getStringUTF8(methodDescriptorRef, methodDescriptor, methodDescriptorLength+1);
          client->write(response, numArgsPassToFinallyTarget, std::string(methodDescriptor, methodDescriptorLength));
+         }
+         break;
+      case MessageType::runFEMacro_invokeFilterArgumentsWithCombinerHandleNumSuffixArgs:
+         {
+         auto recv = client->getRecvData<uintptrj_t*>();
+         TR::VMAccessCriticalSection invokeFilterArgumentsWithCombinerHandle(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
+         uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
+         int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
+         int32_t filterPos     = (int32_t)fe->getInt32Field(methodHandle, "filterPosition");
+         client->write(response, numArguments, filterPos);
          }
          break;
       case MessageType::runFEMacro_invokeFilterArgumentsHandle:
