@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -177,7 +177,7 @@ public final class System {
 		/*[ELSE]*/
 		StringCoding.encode(new char[1], 0, 1);
 		/*[ENDIF]*/
-		/*[IF Sidecar18-SE-OpenJ9|Sidecar19-SE]*/
+		/*[IF (Sidecar18-SE-OpenJ9|Sidecar19-SE)&!(PLATFORM-mz31|PLATFORM-mz64)]*/
 		setErr(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.err)), true));
 		setOut(new PrintStream(new BufferedOutputStream(new FileOutputStream(FileDescriptor.out)), true));
 		/*[IF Sidecar19-SE_RAWPLUSJ9]*/
@@ -220,7 +220,7 @@ static void completeInitialization() {
 	}
 	/*[ENDIF]*/ // Sidecar18-SE-OpenJ9
 	
-	/*[IF Sidecar18-SE-OpenJ9|Sidecar19-SE]*/
+	/*[IF (Sidecar18-SE-OpenJ9|Sidecar19-SE)&!(PLATFORM-mz31|PLATFORM-mz64)]*/
 	setIn(new BufferedInputStream(new FileInputStream(FileDescriptor.in)));
 	/*[ELSE]*/
 	/*[PR 100718] Initialize System.in after the main thread*/
