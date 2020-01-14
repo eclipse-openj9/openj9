@@ -2065,6 +2065,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_derefUintptrjPtr:
          {
+         // should not be used anymore
          TR::VMAccessCriticalSection deref(fe);
          compInfoPT->updateLastLocalGCCounter();
          client->write(response, *std::get<0>(client->getRecvData<uintptrj_t*>()));
@@ -2072,8 +2073,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup:
          {
-         TR::VMAccessCriticalSection invokeILGenMacrosInvokeExactAndFixup(fe);
          auto recv = client->getRecvData<uintptrj_t*, std::vector<uintptrj_t> >();
+         TR::VMAccessCriticalSection invokeILGenMacrosInvokeExactAndFixup(fe);
          uintptrj_t receiverHandle = *std::get<0>(recv);
          std::vector<uintptrj_t> listOfOffsets = std::get<1>(recv);
          uintptrj_t methodHandle = listOfOffsets.size() == 0 ? receiverHandle : JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
@@ -2090,9 +2091,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::runFEMacro_invokeCollectHandleNumArgsToCollect:
          {
          auto recv = client->getRecvData<uintptrj_t*, bool>();
+         TR::VMAccessCriticalSection invokeCollectHandleNumArgsToCollect(fe);
          uintptrj_t methodHandle = *std::get<0>(recv);
          bool getPos = std::get<1>(recv);
-         TR::VMAccessCriticalSection invokeCollectHandleNumArgsToCollect(fe);
          int32_t collectArraySize = fe->getInt32Field(methodHandle, "collectArraySize");
          uintptrj_t arguments = fe->getReferenceField(
                   fe->getReferenceField(methodHandle, "type", "Ljava/lang/invoke/MethodType;"),
@@ -2135,9 +2136,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::runFEMacro_targetTypeL:
          {
          auto recv = client->getRecvData<uintptrj_t*, int32_t>();
-         int32_t argIndex = std::get<1>(recv);
          TR::VMAccessCriticalSection targetTypeL(fe);
          uintptrj_t methodHandle = *std::get<0>(recv);
+         int32_t argIndex = std::get<1>(recv);
          uintptrj_t targetArguments = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "next",             "Ljava/lang/invoke/MethodHandle;"),
@@ -2186,8 +2187,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeSpreadHandleArrayArg:
          {
-         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokeSpreadHandleArrayArg(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
          uintptrj_t arrayClass   = fe->getReferenceField(methodHandle, "arrayClass", "Ljava/lang/Class;");
          J9ArrayClass *arrayJ9Class = (J9ArrayClass*)(intptrj_t)fe->getInt64Field(arrayClass,
                                                                       "vmRef" /* should use fej9->getOffsetOfClassFromJavaLangClassField() */);
@@ -2207,10 +2209,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::runFEMacro_invokeSpreadHandle:
          {
          auto recv = client->getRecvData<uintptrj_t*, bool>();
+         TR::VMAccessCriticalSection invokeSpreadHandle(fe);
          uintptrj_t methodHandle = *std::get<0>(recv);
          bool getSpreadPosition = std::get<1>(recv);
-
-         TR::VMAccessCriticalSection invokeSpreadHandle(fe);
          uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          uintptrj_t next = fe->getReferenceField(methodHandle, "next", "Ljava/lang/invoke/MethodHandle;");
@@ -2225,8 +2226,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeInsertHandle:
          {
-         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokeInsertHandle(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
          int32_t insertionIndex = fe->getInt32Field(methodHandle, "insertionIndex");
          uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(methodHandle, "type",
                   "Ljava/lang/invoke/MethodType;"), "arguments", "[Ljava/lang/Class;");
@@ -2238,8 +2240,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeFoldHandle:
          {
-         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokeFoldHandle(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
          uintptrj_t argIndices = fe->getReferenceField(methodHandle, "argumentIndices", "[I");
          int32_t arrayLength = (int32_t)fe->getArrayLengthInElements(argIndices);
          int32_t foldPosition = fe->getInt32Field(methodHandle, "foldPosition");
@@ -2264,16 +2267,18 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeFoldHandle2:
          {
-         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokeFoldHandle(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
          int32_t foldPosition = fe->getInt32Field(methodHandle, "foldPosition");
          client->write(response, foldPosition);
          }
          break;
       case MessageType::runFEMacro_invokeFinallyHandle:
          {
-         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokeFinallyHandle(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
          uintptrj_t finallyTarget = fe->getReferenceField(methodHandle, "finallyTarget", "Ljava/lang/invoke/MethodHandle;");
          uintptrj_t finallyType = fe->getReferenceField(finallyTarget, "type", "Ljava/lang/invoke/MethodType;");
          uintptrj_t arguments        = fe->getReferenceField(finallyType, "arguments", "[Ljava/lang/Class;");
@@ -2288,9 +2293,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeFilterArgumentsHandle:
          {
-         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokeFilterArgumentsHandle(fe);
-
+         uintptrj_t methodHandle = *std::get<0>(recv);
          int32_t startPos = (int32_t)fe->getInt32Field(methodHandle, "startPos");
 
          uintptrj_t filters = fe->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
@@ -2315,8 +2320,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeFilterArgumentsHandle2:
          {
-         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokeFilderArgumentsHandle(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
          uintptrj_t arguments = fe->getReferenceField(fe->methodHandle_type(methodHandle), "arguments", "[Ljava/lang/Class;");
          int32_t numArguments = (int32_t)fe->getArrayLengthInElements(arguments);
          int32_t startPos     = (int32_t)fe->getInt32Field(methodHandle, "startPos");
@@ -2327,8 +2333,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeCatchHandle:
          {
-         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokeCatchHandle(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
          uintptrj_t catchTarget    = fe->getReferenceField(methodHandle, "catchTarget", "Ljava/lang/invoke/MethodHandle;");
          uintptrj_t catchArguments = fe->getReferenceField(fe->getReferenceField(
             catchTarget,
@@ -2340,8 +2347,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeArgumentMoverHandlePermuteArgs:
          {
-         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokeArgumentMoverHandlePermuteArgs(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
          uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "next",             "Ljava/lang/invoke/MethodHandle;"),
@@ -2355,8 +2363,9 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokePermuteHandlePermuteArgs:
          {
-         uintptrj_t methodHandle = *std::get<0>(client->getRecvData<uintptrj_t*>());
+         auto recv = client->getRecvData<uintptrj_t*>();
          TR::VMAccessCriticalSection invokePermuteHandlePermuteArgs(fe);
+         uintptrj_t methodHandle = *std::get<0>(recv);
          uintptrj_t permuteArray = fe->getReferenceField(methodHandle, "permute", "[I");
          int32_t permuteLength = fe->getArrayLengthInElements(permuteArray);
          std::vector<int32_t> argIndices(permuteLength);
@@ -2369,15 +2378,11 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::runFEMacro_invokeILGenMacros:
          {
-         if (compInfoPT->getLastLocalGCCounter() != compInfoPT->getCompilationInfo()->getLocalGCCounter())
-            {
-            // GC happened, fail compilation
-            auto comp = compInfoPT->getCompilation();
-            comp->failCompilation<TR::CompilationInterrupted>("Compilation interrupted due to GC");
-            }
-
-         uintptrj_t methodHandle = std::get<0>(client->getRecvData<uintptrj_t>());
+         auto recv = client->getRecvData<uintptrj_t*, std::vector<uintptrj_t> >();
          TR::VMAccessCriticalSection invokeILGenMacros(fe);
+         uintptrj_t receiverHandle = *std::get<0>(recv);
+         std::vector<uintptrj_t> listOfOffsets = std::get<1>(recv);
+         uintptrj_t methodHandle = JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
          uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
             "type", "Ljava/lang/invoke/MethodType;"),

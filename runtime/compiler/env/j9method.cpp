@@ -9053,11 +9053,9 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
-            stream->write(JITServer::MessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
-            uintptrj_t receiverHandle = std::get<0>(stream->read<uintptrj_t>());
-            uintptrj_t methodHandle     = walkReferenceChain(pop(), receiverHandle);
-
-            stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacros, methodHandle);
+            std::vector<uintptrj_t> listOfOffsets;
+            packReferenceChainOffsets(pop(), listOfOffsets);
+            stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacros, thunkDetails->getHandleRef(), listOfOffsets);
             parameterCount = std::get<0>(stream->read<int32_t>());
             }
          else
