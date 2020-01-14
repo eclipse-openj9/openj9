@@ -2063,14 +2063,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, ptr);
          }
          break;
-      case MessageType::runFEMacro_derefUintptrjPtr:
-         {
-         // should not be used anymore
-         TR::VMAccessCriticalSection deref(fe);
-         compInfoPT->updateLastLocalGCCounter();
-         client->write(response, *std::get<0>(client->getRecvData<uintptrj_t*>()));
-         }
-         break;
       case MessageType::runFEMacro_invokeILGenMacrosInvokeExactAndFixup:
          {
          auto recv = client->getRecvData<uintptrj_t*, std::vector<uintptrj_t> >();
@@ -2398,7 +2390,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          uintptrj_t receiverHandle = *std::get<0>(recv);
          std::vector<uintptrj_t> listOfOffsets = std::get<1>(recv);
          uintptrj_t array = JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
-         int32_t arrayLength = (int32_t)fej9->getArrayLengthInElements(array);
+         int32_t arrayLength = (int32_t)fe->getArrayLengthInElements(array);
          client->write(response, arrayLength);
          }
          break;
@@ -2410,7 +2402,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          uintptrj_t fieldOffset = std::get<1>(recv);
          std::vector<uintptrj_t> listOfOffsets = std::get<2>(recv);
          uintptrj_t baseObject = JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
-         int32_t result = fej9->getInt32FieldAt(baseObject, fieldOffset);;
+         int32_t result = fe->getInt32FieldAt(baseObject, fieldOffset);
          client->write(response, result);
          }
          break;

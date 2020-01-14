@@ -284,7 +284,6 @@ enum MessageType
    runFEMacro_invokeILGenMacrosParameterCount = 717;
    runFEMacro_invokeILGenMacrosArrayLength = 718;
    runFEMacro_invokeILGenMacrosGetField = 719;
-   runFEMacro_derefUintptrjPtr = 720;
 
    // for JITServerPersistentCHTable
    CHTable_getAllClassInfo = 800;
