@@ -1049,7 +1049,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    if (tracer()->heuristicLevel() && calltarget->_ecsPrexArgInfo)
       {
       heuristicTrace(tracer(), "ECS CSI -- ArgInfo :");
-      tracer()->dumpPrexArgInfo(calltarget->_ecsPrexArgInfo);
+      calltarget->_ecsPrexArgInfo->dumpTrace();
       }
 
    TR_InlinerDelimiter delimiter(tracer(), "realEstimateCodeSize");

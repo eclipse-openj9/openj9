@@ -562,7 +562,7 @@ InterpreterEmulator::debugUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod)
    if(tracer()->heuristicLevel())
       {
       if (resolvedMethod)
-         heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s", _recursionDepth, _bcIndex ,tracer()->traceSignature(resolvedMethod));
+         heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s", _recursionDepth, _bcIndex, resolvedMethod->signature(comp()->trMemory()));
       else
          {
          switch (current())
@@ -575,7 +575,7 @@ InterpreterEmulator::debugUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod)
                break;
             }
          TR::Method *meth = comp()->fej9()->createMethod(this->trMemory(), _calltarget->_calleeMethod->containingClass(), cpIndex);
-         heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s", _recursionDepth, _bcIndex, tracer()->traceSignature(meth));
+         heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s", _recursionDepth, _bcIndex, meth->signature(comp()->trMemory()));
          }
       }
    }
@@ -848,7 +848,7 @@ InterpreterEmulator::findTargetAndUpdateInfoForCallsite(TR_CallSite *callsite)
             {
             alwaysTrace(tracer(), "propagateReceiverInfoIfAvailable :");
             if (callsite->_ecsPrexArgInfo)
-               tracer()->dumpPrexArgInfo(callsite->_ecsPrexArgInfo);
+               callsite->_ecsPrexArgInfo->dumpTrace();
             }
          }
       }
@@ -865,7 +865,7 @@ InterpreterEmulator::findTargetAndUpdateInfoForCallsite(TR_CallSite *callsite)
             {
             alwaysTrace(tracer(), "propagateArgs :");
             if (callsite->numTargets() && callsite->getTarget(0)->_ecsPrexArgInfo)
-               tracer()->dumpPrexArgInfo(callsite->getTarget(0)->_ecsPrexArgInfo);
+               callsite->getTarget(0)->_ecsPrexArgInfo->dumpTrace();
             }
          }
 
