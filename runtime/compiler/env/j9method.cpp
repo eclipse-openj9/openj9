@@ -9055,7 +9055,7 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             auto stream = TR::CompilationInfo::getStream();
             std::vector<uintptrj_t> listOfOffsets;
             packReferenceChainOffsets(pop(), listOfOffsets);
-            stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacros, thunkDetails->getHandleRef(), listOfOffsets);
+            stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacrosParameterCount, thunkDetails->getHandleRef(), listOfOffsets);
             parameterCount = std::get<0>(stream->read<int32_t>());
             }
          else
@@ -9086,10 +9086,10 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
-            stream->write(JITServer::MessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
-            uintptrj_t receiverHandle = std::get<0>(stream->read<uintptrj_t>());
-            uintptrj_t array            = walkReferenceChain(pop(), receiverHandle);
-            arrayLength = (int32_t)fej9->getArrayLengthInElements(array);
+            std::vector<uintptrj_t> listOfOffsets;
+            packReferenceChainOffsets(pop(), listOfOffsets);
+            stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacrosArrayLength, thunkDetails->getHandleRef(), listOfOffsets);
+            arrayLength = std::get<0>(stream->read<int32_t>());
             }
          else
 #endif /* defined(JITSERVER_SUPPORT) */
@@ -9123,11 +9123,11 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
-            stream->write(JITServer::MessageType::runFEMacro_derefUintptrjPtr, thunkDetails->getHandleRef());
-            uintptrj_t receiverHandle = std::get<0>(stream->read<uintptrj_t>());
-            uintptrj_t baseObject       = walkReferenceChain(baseObjectNode, receiverHandle);
+            std::vector<uintptrj_t> listOfOffsets;
+            packReferenceChainOffsets(baseObjectNode, listOfOffsets);
             TR_ASSERT(fieldSym->getDataType() == TR::Int32, "ILGenMacros.getField expecting int field; found load of %s", comp()->getDebug()->getName(symRef));
-            result = fej9->getInt32FieldAt(baseObject, fieldOffset); // TODO: Handle types other than int32
+            stream->write(JITServer::MessageType::runFEMacro_invokeILGenMacrosGetField, thunkDetails->getHandleRef(), fieldOffset, listOfOffsets);
+            result = std::get<0>(stream->read<int32_t>());
             }
          else
 #endif /* defined(JITSERVER_SUPPORT) */
