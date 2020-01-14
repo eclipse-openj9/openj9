@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -374,12 +374,13 @@ SH_CacheMap::cleanup(J9VMThread* currentThread)
 		walkManager = managers()->nextDo(&state);
 	}
 	while (theCC) {
+		SH_CompositeCacheImpl* nextCC = theCC->getNext();
 		theCC->cleanup(currentThread);
-		theCC = theCC->getNext();
 		if (_ccHead != theCC) {
 			/* _ccHead is deallocated together with sharedClassConfig in j9shr_shutdown() */
 			j9mem_free_memory(theCC);
 		}
+		theCC = nextCC;
 	}
 	
 	if (_sharedClassConfig) {
