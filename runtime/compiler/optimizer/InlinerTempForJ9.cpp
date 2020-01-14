@@ -5103,7 +5103,7 @@ void TR_J9InlinerUtil::checkForConstClass(TR_CallTarget *target, TR_InlinerTrace
    TR_PrexArgInfo *ecsArgInfo = target->_ecsPrexArgInfo;
    if (!ecsArgInfo) return;
 
-   TR::Compilation * comp = tracer->comp();
+   TR::Compilation * comp = TR::comp();
    bool tracePrex = comp->trace(OMR::inlining) || comp->trace(OMR::invariantArgumentPreexistence);
 
    if (tracePrex)
@@ -5398,7 +5398,7 @@ void TR_PrexArgInfo::propagateReceiverInfoIfAvailable (TR::ResolvedMethodSymbol*
 
 bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* argsFromSymbol, TR_PrexArgInfo* argsFromTarget, TR_InlinerTracer *tracer)
    {
-   if (!argsFromSymbol || !argsFromTarget || tracer->comp()->getOption(TR_DisableInlinerArgsPropagation))
+   if (!argsFromSymbol || !argsFromTarget || TR::comp()->getOption(TR_DisableInlinerArgsPropagation))
       {
       heuristicTrace(tracer, "ARGS PROPAGATION: argsFromSymbol %p or argsFromTarget %p are missing\n", argsFromSymbol, argsFromTarget);
       return true;
@@ -5408,7 +5408,7 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
    tracer->dumpPrexArgInfo(argsFromSymbol);
 
    //validation
-   TR_FrontEnd* fe = tracer->comp()->fe();
+   TR_FrontEnd* fe = TR::comp()->fe();
    int32_t numArgsToEnhance = std::min(argsFromTarget->getNumArgs(), argsFromSymbol->getNumArgs());
    for (int32_t i = 0; i < numArgsToEnhance; i++)
       {
@@ -5435,7 +5435,7 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
       }
 
 
-   TR_PrexArgInfo::enhance(argsFromTarget, argsFromSymbol, tracer->comp()); //otherwise just pick more specific
+   TR_PrexArgInfo::enhance(argsFromTarget, argsFromSymbol, TR::comp()); //otherwise just pick more specific
 
    heuristicTrace(tracer, "ARGS PROPAGATION: final argInfo after merging argsFromTarget %p", argsFromTarget);
    tracer->dumpPrexArgInfo(argsFromTarget);
@@ -5446,7 +5446,7 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
 
    void TR_PrexArgInfo::clearArgInfoForNonInvariantArguments(TR::ResolvedMethodSymbol* methodSymbol, TR_InlinerTracer* tracer)
       {
-      if (tracer->comp()->getOption(TR_DisableInlinerArgsPropagation))
+      if (TR::comp()->getOption(TR_DisableInlinerArgsPropagation))
          return;
 
       bool cleanedAnything = false;
@@ -5478,7 +5478,7 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
 void TR_PrexArgInfo::propagateArgsFromCaller(TR::ResolvedMethodSymbol* methodSymbol, TR_CallSite* callsite,
                            TR_PrexArgInfo * argInfo, TR_InlinerTracer *tracer)
    {
-   if (tracer->comp()->getOption(TR_DisableInlinerArgsPropagation))
+   if (TR::comp()->getOption(TR_DisableInlinerArgsPropagation))
       return;
 
    TR_ASSERT(argInfo, "otherwise we shouldn't even peek");
