@@ -78,6 +78,7 @@ j9vm_shadowed_option(J9VM_GC_VLHGC  "Enables the Very Large Heap Garbage Collect
 option(J9VM_INTERP_AOT_COMPILE_SUPPORT "Controls if the AOT compilation support is included in the VM")
 option(J9VM_INTERP_AOT_RUNTIME_SUPPORT "Controls if the AOT runtime support is included in the VM")
 option(J9VM_INTERP_ATOMIC_FREE_JNI "Use the new atomic-free JNI support")
+option(J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH "Atomic free uses FlushProcessWriteBuffers instead of barriers")
 option(J9VM_INTERP_BYTECODE_PREVERIFICATION "Does this VM support 1st pass bytecode verification (able to dynamically generate pre-verify data)")
 option(J9VM_INTERP_BYTECODE_VERIFICATION "Does this VM support 2nd pass bytecode verification (pre-verify data in .jxe only)")
 
@@ -105,7 +106,7 @@ option(J9VM_INTERP_ROMABLE_AOT_SUPPORT "ROMable AOT Support for TJ Watson")
 
 
 option(J9VM_INTERP_TRACING "DEBUGGING FEATURE.  Determines if the interpreter produces debug information at every bytecode.")
-
+option(J9VM_INTERP_TWO_PASS_EXCLUSIVE "Exclusive VM access - Set halt bit in one pass, count responders in another pass")
 
 option(J9VM_INTERP_USE_SPLIT_SIDE_TABLES "Use split side tables for handling constant pool entry shared between multiple invoke bytecodes")
 option(J9VM_INTERP_USE_UNSAFE_HELPER "If set, use helper functions in UnsafeAPI to access native memory")

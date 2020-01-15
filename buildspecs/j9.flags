@@ -999,13 +999,13 @@ all data is stored in their own region. It additionaly reduces footprint, mainly
 		<description>DEBUGGING FEATURE.  Determines if the interpreter produces debug information at every bytecode.</description>
 		<ifRemoved>No full trace available.</ifRemoved>
 	</flag>
-	<flag id="interp_updateVMCTracing">
-		<description>Debug mode for tracing uses of updateVMStruct</description>
-		<ifRemoved>No tracing of updateVMStruct helpers</ifRemoved>
-	</flag>
 	<flag id="interp_twoPassExclusive">
 		<description>Exclusive VM access - Set halt bit in one pass, count responders in another pass</description>
 		<ifRemoved>Set and count in a single pass</ifRemoved>
+	</flag>
+	<flag id="interp_updateVMCTracing">
+		<description>Debug mode for tracing uses of updateVMStruct</description>
+		<ifRemoved>No tracing of updateVMStruct helpers</ifRemoved>
 	</flag>
 	<flag id="interp_useUnsafeHelper">
 		<description>If set, use helper functions in UnsafeAPI to access native memory</description>
