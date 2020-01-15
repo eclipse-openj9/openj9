@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2019 IBM Corp. and others
+ * Copyright (c) 2012, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -106,7 +106,7 @@ final class SecurityFrameInjector {
 								return Lookup.class.getResourceAsStream("/java/lang/invoke/SecurityFrame.class").readAllBytes(); //$NON-NLS-1$
 								/*[ELSE]*/
 								InputStream is = Lookup.class.getResourceAsStream("/java/lang/invoke/SecurityFrame.class"); //$NON-NLS-1$
-								return IOUtils.readFully(is, -1, true);
+								return IOUtils.readAllBytes(is);
 								/*[ENDIF]*/
 							} catch(java.io.IOException e) {
 								/*[MSG "K056A", "Unable to read java.lang.invoke.SecurityFrame.class bytes"]*/
