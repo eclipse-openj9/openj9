@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1055,6 +1055,11 @@ void J9::ARM64::PrivateLinkage::buildDirectCall(TR::Node *callNode,
          0, dependencies,
          new (trHeapMemory()) TR::SymbolReference(comp()->getSymRefTab(), label),
          snippet);
+
+      // Nop is necessary due to confusion when resolving shared slots at a transition
+      if (callSymRef->isOSRInductionHelper())
+         cg()->generateNop(callNode);
+
       }
 
    gcPoint->ARM64NeedsGCMap(cg(), callSymbol->getLinkageConvention() == TR_Helper ? 0xffffffff : pp.getPreservedRegisterMapForGC());
