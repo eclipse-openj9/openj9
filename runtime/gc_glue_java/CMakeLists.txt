@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -50,6 +50,12 @@ target_link_libraries(j9vm_gc_glue
 	INTERFACE
 		j9vm_interface
 		j9vm_gc_includes
+
+		j9gcvlhgc
+		j9modronstandard
+		j9realtime
+		j9gcstats
+		j9util
 )
 target_include_directories(j9vm_gc_glue
 	INTERFACE
