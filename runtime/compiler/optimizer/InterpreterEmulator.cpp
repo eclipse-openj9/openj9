@@ -815,7 +815,7 @@ InterpreterEmulator::findTargetAndUpdateInfoForCallsite(TR_CallSite *callsite)
             {
             alwaysTrace(tracer(), "propagateReceiverInfoIfAvailable :");
             if (callsite->_ecsPrexArgInfo)
-               tracer()->dumpPrexArgInfo(callsite->_ecsPrexArgInfo);
+               callsite->_ecsPrexArgInfo->dumpTrace();
             }
          }
       }
@@ -832,7 +832,7 @@ InterpreterEmulator::findTargetAndUpdateInfoForCallsite(TR_CallSite *callsite)
             {
             alwaysTrace(tracer(), "propagateArgs :");
             if (callsite->numTargets() && callsite->getTarget(0)->_ecsPrexArgInfo)
-               tracer()->dumpPrexArgInfo(callsite->getTarget(0)->_ecsPrexArgInfo);
+               callsite->getTarget(0)->_ecsPrexArgInfo->dumpTrace();
             }
          }
 

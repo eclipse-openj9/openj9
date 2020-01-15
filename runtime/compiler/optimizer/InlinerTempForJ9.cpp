@@ -3228,14 +3228,14 @@ bool TR_MultipleCallTargetInliner::inlineCallTargets(TR::ResolvedMethodSymbol *c
                   if (tracer()->heuristicLevel())
                      {
                      alwaysTrace(tracer(), "compArgInfo :");
-                     tracer()->dumpPrexArgInfo(compArgInfo);
+                     compArgInfo->dumpTrace();
                      }
                   compArgInfo->clearArgInfoForNonInvariantArguments(thisCallSiteCallerSymbol, tracer());
                   TR_PrexArgInfo::propagateArgsFromCaller(thisCallSiteCallerSymbol, callsite, compArgInfo, tracer());
                   if (tracer()->heuristicLevel())
                      {
                      alwaysTrace(tracer(), "callsite->getTarget(0)->_ecsPrexArgInfo :");
-                     tracer()->dumpPrexArgInfo(callsite->getTarget(0)->_ecsPrexArgInfo);
+                     callsite->getTarget(0)->_ecsPrexArgInfo->dumpTrace();
                      }
                   }
 
@@ -5405,7 +5405,7 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
       }
 
    heuristicTrace(tracer, "ARGS PROPAGATION: argsFromSymbol (from calleeSymbol)");
-   tracer->dumpPrexArgInfo(argsFromSymbol);
+   argsFromSymbol->dumpTrace();
 
    //validation
    TR_FrontEnd* fe = TR::comp()->fe();
@@ -5438,7 +5438,7 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
    TR_PrexArgInfo::enhance(argsFromTarget, argsFromSymbol, TR::comp()); //otherwise just pick more specific
 
    heuristicTrace(tracer, "ARGS PROPAGATION: final argInfo after merging argsFromTarget %p", argsFromTarget);
-   tracer->dumpPrexArgInfo(argsFromTarget);
+   argsFromTarget->dumpTrace();
 
    return true;
    }
@@ -5471,7 +5471,7 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
       if (cleanedAnything)
          {
          debugTrace(tracer, "ARGS PROPAGATION: argInfo %p after clear arg info for non-invariant arguments", this);
-         tracer->dumpPrexArgInfo(this);
+         dumpTrace();
          }
       }
 
@@ -5506,7 +5506,7 @@ void TR_PrexArgInfo::propagateArgsFromCaller(TR::ResolvedMethodSymbol* methodSym
 
    heuristicTrace(tracer, "ARGS PROPAGATION: argsFromTarget before args propagation");
    for (int i = 0; i < callsite->numTargets(); i++)
-      tracer->dumpPrexArgInfo(callsite->getTarget(i)->_ecsPrexArgInfo);
+      callsite->getTarget(i)->_ecsPrexArgInfo->dumpTrace();
 
    for (int i = callNode->getFirstArgumentIndex(); i < callNode->getNumChildren(); i++)
       {
@@ -5548,7 +5548,7 @@ void TR_PrexArgInfo::propagateArgsFromCaller(TR::ResolvedMethodSymbol* methodSym
       {
       heuristicTrace(tracer, "ARGS PROPAGATION: ArgInfo after propagating the args from the caller");
       for (int i = 0; i < callsite->numTargets(); i++)
-         tracer->dumpPrexArgInfo(callsite->getTarget(i)->_ecsPrexArgInfo);
+         callsite->getTarget(i)->_ecsPrexArgInfo->dumpTrace();
       }
    }
 
