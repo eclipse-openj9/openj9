@@ -1275,4 +1275,6 @@ public abstract class VarHandle extends VarHandleInternal
 		}		
 	}
 /*[ENDIF] Java12 */ 
+
+	abstract MethodType accessModeTypeUncached(AccessMode accessMode);
 }

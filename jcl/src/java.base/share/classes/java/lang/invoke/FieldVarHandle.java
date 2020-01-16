@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2016, 2019 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -168,5 +168,9 @@ abstract class FieldVarHandle extends VarHandle {
 	@Override
 	final String getFieldName() {
 		return fieldName;
+	}
+
+	public MethodType accessModeTypeUncached(AccessMode accessMode) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
 }
