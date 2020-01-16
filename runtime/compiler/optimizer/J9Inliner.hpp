@@ -153,7 +153,7 @@ class TR_J9InlinerUtil: public OMR_InlinerUtil
                    bool &appendTestToBlock1, TR::ResolvedMethodSymbol * callerSymbol, TR::TreeTop *cursorTree,
                    TR::TreeTop *&virtualGuard, TR::Block *block4);
       virtual void refineInliningThresholds(TR::Compilation *comp, int32_t &callerWeightLimit, int32_t &maxRecursiveCallByteCodeSizeEstimate, int32_t &methodByteCodeSizeThreshold, int32_t &methodInWarmBlockByteCodeSizeThreshold, int32_t &methodInColdBlockByteCodeSizeThreshold, int32_t &nodeCountThreshold, int32_t size);
-      static void checkForConstClass(TR_CallTarget *target, TR_InlinerTracer *tracer);
+      static void checkForConstClass(TR_CallTarget *target, TR_LogTracer *tracer);
       virtual bool needTargetedInlining(TR::ResolvedMethodSymbol *callee);
       virtual void requestAdditionalOptimizations(TR_CallTarget *calltarget);
    protected:
