@@ -2423,7 +2423,7 @@ TR::Register *J9::Power::TreeEvaluator::BNDCHKEvaluator(TR::Node *node, TR::Code
       conditions = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(4, 4, cg->trMemory());
       }
 
-   if (firstChild->getOpCode().isLoadConst() && firstChild->getInt() <= UPPER_IMMED && firstChild->getRegister() == NULL && !noReversedTrap)
+   if (firstChild->getOpCode().isLoadConst() && firstChild->getInt() >= LOWER_IMMED && firstChild->getInt() <= UPPER_IMMED && firstChild->getRegister() == NULL && !noReversedTrap)
       {
       src2Reg = cg->evaluate(secondChild);
       reversed = true;
