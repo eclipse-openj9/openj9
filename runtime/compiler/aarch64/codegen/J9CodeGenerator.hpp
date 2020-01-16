@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,13 +68,14 @@ class OMR_EXTENSIBLE CodeGenerator : public J9::CodeGenerator
    TR::Linkage *createLinkage(TR_LinkageConventions lc);
 
    /**
-    * @brief Encode a BL instruction to the specified symbol
+    * @brief Encode a BL (or B) instruction to the specified symbol
     * @param[in] symRef : target symbol
     * @param[in] cursor : instruction cursor
     * @param[in] node : node
-    * @return Endoded BL instruction
+    * @param[in] omitLink : use `b` instruction if true
+    * @return Endoded BL (or B) instruction
     */
-   uint32_t encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node);
+   uint32_t encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node, bool omitLink = false);
    
    bool inlineDirectCall(TR::Node *node, TR::Register *&resultReg);
    
