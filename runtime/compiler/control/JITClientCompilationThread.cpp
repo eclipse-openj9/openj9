@@ -659,6 +659,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
          uintptrj_t objectPointer = std::get<0>(recv);
          uintptrj_t fieldOffset = std::get<1>(recv);
+         TR::VMAccessCriticalSection getInt32FieldAt(fe);
          client->write(response, fe->getInt32FieldAt(objectPointer, fieldOffset));
          }
          break;
@@ -667,6 +668,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<uintptrj_t, uintptrj_t>();
          uintptrj_t objectPointer = std::get<0>(recv);
          uintptrj_t fieldOffset = std::get<1>(recv);
+         TR::VMAccessCriticalSection getInt64FieldAt(fe);
          client->write(response, fe->getInt64FieldAt(objectPointer, fieldOffset));
          }
          break;
@@ -693,6 +695,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::VM_getArrayLengthInElements:
          {
          uintptrj_t objectPointer = std::get<0>(client->getRecvData<uintptrj_t>());
+         TR::VMAccessCriticalSection getArrayLengthInElements(fe);
          client->write(response, fe->getArrayLengthInElements(objectPointer));
          }
          break;
