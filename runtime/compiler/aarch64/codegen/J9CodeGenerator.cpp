@@ -91,7 +91,7 @@ J9::ARM64::CodeGenerator::allocateRecompilationInfo()
    }
 
 uint32_t
-J9::ARM64::CodeGenerator::encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node)
+J9::ARM64::CodeGenerator::encodeHelperBranchAndLink(TR::SymbolReference *symRef, uint8_t *cursor, TR::Node *node, bool omitLink)
    {
    TR::CodeGenerator *cg = self();
    uintptrj_t target = (uintptrj_t)symRef->getMethodAddress();
@@ -111,7 +111,7 @@ J9::ARM64::CodeGenerator::encodeHelperBranchAndLink(TR::SymbolReference *symRef,
                              __FILE__, __LINE__, node);
 
    uintptr_t distance = target - (uintptr_t)cursor;
-   return TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::bl) | ((distance >> 2) & 0x3ffffff); /* imm26 */
+   return TR::InstOpCode::getOpCodeBinaryEncoding(omitLink ? (TR::InstOpCode::b) : (TR::InstOpCode::bl)) | ((distance >> 2) & 0x3ffffff); /* imm26 */
    }
 
 void
