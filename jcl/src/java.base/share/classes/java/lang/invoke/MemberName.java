@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,10 @@
 
 package java.lang.invoke;
 
+/*[IF Java14]*/
+import java.lang.reflect.Method;
+/*[ENDIF] Java14 */
+
 /*
  * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
  */
@@ -45,6 +49,16 @@ final class MemberName {
 		mh = methodHandle;
 	}
 	/*[ENDIF] Java11 */
+
+	/*[IF Java14]*/
+	public MemberName(Method method) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	public boolean isStatic() {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+	/*[ENDIF] Java14 */
 
 	public boolean isVarargs() {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
