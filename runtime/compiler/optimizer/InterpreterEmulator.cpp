@@ -529,7 +529,7 @@ InterpreterEmulator::debugUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod)
    if(tracer()->heuristicLevel())
       {
       if (resolvedMethod)
-         heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s", _recursionDepth, _bcIndex ,tracer()->traceSignature(resolvedMethod));
+         heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s", _recursionDepth, _bcIndex, resolvedMethod->signature(TR::comp()->trMemory()));
       else
          {
          switch (current())
@@ -542,7 +542,7 @@ InterpreterEmulator::debugUnresolvedOrCold(TR_ResolvedMethod *resolvedMethod)
                break;
             }
          TR::Method *meth = comp()->fej9()->createMethod(this->trMemory(), _calltarget->_calleeMethod->containingClass(), cpIndex);
-         heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s", _recursionDepth, _bcIndex, tracer()->traceSignature(meth));
+         heuristicTrace(tracer(), "Depth %d: Call at bc index %d is Cold.  Not searching for targets. Signature %s", _recursionDepth, _bcIndex, meth->signature(TR::comp()->trMemory()));
          }
       }
    }
