@@ -106,7 +106,7 @@ final class SecurityFrameInjector {
 								return Lookup.class.getResourceAsStream("/java/lang/invoke/SecurityFrame.class").readAllBytes(); //$NON-NLS-1$
 								/*[ELSE]*/
 								InputStream is = Lookup.class.getResourceAsStream("/java/lang/invoke/SecurityFrame.class"); //$NON-NLS-1$
-								return IOUtils.readAllBytes(is);
+								return IOUtils.readFully(is, Integer.MAX_VALUE, false);
 								/*[ENDIF]*/
 							} catch(java.io.IOException e) {
 								/*[MSG "K056A", "Unable to read java.lang.invoke.SecurityFrame.class bytes"]*/
