@@ -1879,6 +1879,17 @@ uint32_t TR::getCCPreLoadedCodeSize()
 #define CCEYECATCHER(a, b, c, d) (((a) << 24) | ((b) << 16) | ((c) << 8) | ((d) << 0))
 #endif
 
+static void performCCPreLoadedBinaryEncoding(uint8_t *buffer, TR::CodeGenerator *cg)
+   {
+   cg->setBinaryBufferStart(buffer);
+   cg->setBinaryBufferCursor(buffer);
+   for (TR::Instruction *i = cg->getFirstInstruction(); i != NULL; i = i->getNext())
+      {
+      i->estimateBinaryLength(cg->getBinaryBufferCursor() - cg->getBinaryBufferStart());
+      cg->setBinaryBufferCursor(i->generateBinaryEncoding());
+      }
+   }
+
 static uint8_t* initializeCCPreLoadedPrefetch(uint8_t *buffer, void **CCPreLoadedCodeTable, TR::CodeGenerator *cg)
    {
    TR::Compilation *comp = cg->comp();
@@ -1994,11 +2005,7 @@ static uint8_t* initializeCCPreLoadedPrefetch(uint8_t *buffer, void **CCPreLoade
 
    cursor = generateInstruction(cg, TR::InstOpCode::blr, n, cursor);
 
-   cg->setBinaryBufferStart(buffer);
-   cg->setBinaryBufferCursor(buffer);
-
-   for (TR::Instruction *i = eyecatcher; i != NULL; i = i->getNext())
-      cg->setBinaryBufferCursor(i->generateBinaryEncoding());
+   performCCPreLoadedBinaryEncoding(buffer, cg);
 
    helperSize += 3;
    TR_ASSERT(cg->getBinaryBufferCursor() - entryLabel->getCodeLocation() == helperSize * PPC_INSTRUCTION_LENGTH,
@@ -2124,11 +2131,7 @@ static uint8_t* initializeCCPreLoadedNonZeroPrefetch(uint8_t *buffer, void **CCP
 
    cursor = generateInstruction(cg, TR::InstOpCode::blr, n, cursor);
 
-   cg->setBinaryBufferStart(buffer);
-   cg->setBinaryBufferCursor(buffer);
-
-   for (TR::Instruction *i = eyecatcher; i != NULL; i = i->getNext())
-      cg->setBinaryBufferCursor(i->generateBinaryEncoding());
+   performCCPreLoadedBinaryEncoding(buffer, cg);
 
    helperSize += 3;
    TR_ASSERT(cg->getBinaryBufferCursor() - entryLabel->getCodeLocation() == helperSize * PPC_INSTRUCTION_LENGTH,
@@ -2286,11 +2289,7 @@ static uint8_t* initializeCCPreLoadedWriteBarrier(uint8_t *buffer, void **CCPreL
    cursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bnelr, n, NULL, cr0, cursor);
    cursor = generateLabelInstruction(cg, TR::InstOpCode::b, n, helperTrampolineLabel, cursor);
 
-   cg->setBinaryBufferStart(buffer);
-   cg->setBinaryBufferCursor(buffer);
-
-   for (TR::Instruction *i = eyecatcher; i != NULL; i = i->getNext())
-      cg->setBinaryBufferCursor(i->generateBinaryEncoding());
+   performCCPreLoadedBinaryEncoding(buffer, cg);
 
    const uint32_t helperSize = 12 +
       (cg->comp()->target().is32Bit() && !comp->compileRelocatableCode() && constHeapBase && heapBase > UPPER_IMMED && heapBase < LOWER_IMMED ? 1 : 0) +
@@ -2414,11 +2413,7 @@ static uint8_t* initializeCCPreLoadedWriteBarrierAndCardMark(uint8_t *buffer, vo
    cursor = generateConditionalBranchInstruction(cg, TR::InstOpCode::bnelr, n, NULL, cr0, cursor);
    cursor = generateLabelInstruction(cg, TR::InstOpCode::b, n, helperTrampolineLabel, cursor);
 
-   cg->setBinaryBufferStart(buffer);
-   cg->setBinaryBufferCursor(buffer);
-
-   for (TR::Instruction *i = eyecatcher; i != NULL; i = i->getNext())
-      cg->setBinaryBufferCursor(i->generateBinaryEncoding());
+   performCCPreLoadedBinaryEncoding(buffer, cg);
 
    const uint32_t helperSize = 19 +
       (cg->comp()->target().is32Bit() && !comp->compileRelocatableCode() && constHeapBase && heapBase > UPPER_IMMED && heapBase < LOWER_IMMED ? 1 : 0) +
@@ -2502,11 +2497,7 @@ static uint8_t* initializeCCPreLoadedCardMark(uint8_t *buffer, void **CCPreLoade
                                        r11, cursor);
    cursor = generateInstruction(cg, TR::InstOpCode::blr, n, cursor);
 
-   cg->setBinaryBufferStart(buffer);
-   cg->setBinaryBufferCursor(buffer);
-
-   for (TR::Instruction *i = eyecatcher; i != NULL; i = i->getNext())
-      cg->setBinaryBufferCursor(i->generateBinaryEncoding());
+   performCCPreLoadedBinaryEncoding(buffer, cg);
 
    const uint32_t helperSize = TR::Compiler->om.writeBarrierType() != gc_modron_wrtbar_cardmark_incremental ? 13 : 10;
    TR_ASSERT(cg->getBinaryBufferCursor() - entryLabel->getCodeLocation() == helperSize * PPC_INSTRUCTION_LENGTH,
@@ -2612,11 +2603,7 @@ static uint8_t* initializeCCPreLoadedArrayStoreCHK(uint8_t *buffer, void **CCPre
    cursor = generateLabelInstruction(cg, TR::InstOpCode::label, n, skipSuperclassTestLabel, cursor);
    cursor = generateLabelInstruction(cg, TR::InstOpCode::b, n, helperTrampolineLabel, cursor);
 
-   cg->setBinaryBufferStart(buffer);
-   cg->setBinaryBufferCursor(buffer);
-
-   for (TR::Instruction *i = eyecatcher; i != NULL; i = i->getNext())
-      cg->setBinaryBufferCursor(i->generateBinaryEncoding());
+   performCCPreLoadedBinaryEncoding(buffer, cg);
 
    const uint32_t helperSize = 25;
    TR_ASSERT(cg->getBinaryBufferCursor() - entryLabel->getCodeLocation() == helperSize * PPC_INSTRUCTION_LENGTH,
