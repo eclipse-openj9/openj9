@@ -1101,6 +1101,29 @@ inlineDoubleMin(TR::Node *node, TR::CodeGenerator *cg)
    return doubleMaxMinHelper(node, cg, false);
    }
 
+extern TR::Register * 
+inlineMathFma(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT_FATAL(node->getNumChildren() == 3, 
+   "In function inlineMathFma, the node at address %p should have exactly 3 children, but got %u instead", node, node->getNumChildren());
+
+   TR::Register      * targetRegister      = cg->allocateRegister(TR_FPR);  
+
+   TR::Register      * v1      = cg->evaluate(node->getFirstChild());
+   TR::Register      * v2      = cg->evaluate(node->getSecondChild());
+   TR::Register      * v3      = cg->evaluate(node->getThirdChild());
+
+   uint8_t mask6 = getVectorElementSizeMask(TR::DataType::getSize(node->getDataType()));
+   generateVRReInstruction(cg, TR::InstOpCode::VFMA, node, targetRegister, v1, v2, v3, mask6, 0);
+
+   node->setRegister(targetRegister);
+
+   cg->decReferenceCount(node->getFirstChild());
+   cg->decReferenceCount(node->getSecondChild());
+   cg->decReferenceCount(node->getThirdChild());
+
+   return targetRegister;
+   }
 
 /*
  * J9 S390 specific tree evaluator table overrides
