@@ -165,11 +165,11 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		if (try_scan(&scan_start, "enableArrayletDoubleMapping")) {
+		if (try_scan(&scan_start, "enableDoubleMapping")) {
 			extensions->isArrayletDoubleMapRequested = true;
 			continue;
                 }
-		if (try_scan(&scan_start, "disableArrayletDoubleMapping")) {
+		if (try_scan(&scan_start, "disableDoubleMapping")) {
 			extensions->isArrayletDoubleMapRequested = false;
 			continue;
 		}
