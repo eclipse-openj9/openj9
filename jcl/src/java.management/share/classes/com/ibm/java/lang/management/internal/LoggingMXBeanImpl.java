@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 /*[IF Sidecar19-SE]*/
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
@@ -84,7 +85,7 @@ public final class LoggingMXBeanImpl
 	}
 
 	/*[IF Sidecar19-SE]*/
-	private final String logManager_LOGGING_MXBEAN_NAME;
+	private final Field logManager_LOGGING_MXBEAN_NAME;
 	private final Method logManager_getLogManager;
 	private final Method logManager_getLogger;
 	private final Method logManager_getLoggerNames;
@@ -112,7 +113,7 @@ public final class LoggingMXBeanImpl
 
 		Class<?> managerClass = Class.forName(logging, "java.util.logging.LogManager"); //$NON-NLS-1$
 
-		logManager_LOGGING_MXBEAN_NAME = (String) managerClass.getField("LOGGING_MXBEAN_NAME").get(null); //$NON-NLS-1$
+		logManager_LOGGING_MXBEAN_NAME = managerClass.getField("LOGGING_MXBEAN_NAME"); //$NON-NLS-1$
 		logManager_getLogManager = managerClass.getMethod("getLogManager"); //$NON-NLS-1$
 		logManager_getLogger = managerClass.getMethod("getLogger", String.class); //$NON-NLS-1$
 		logManager_getLoggerNames = managerClass.getMethod("getLoggerNames"); //$NON-NLS-1$
@@ -142,7 +143,12 @@ public final class LoggingMXBeanImpl
 	public ObjectName getObjectName() {
 		if (objectName == null) {
 /*[IF Sidecar19-SE]*/
-			objectName = ManagementUtils.createObjectName(logManager_LOGGING_MXBEAN_NAME);
+			try {
+				objectName = ManagementUtils.createObjectName((String) logManager_LOGGING_MXBEAN_NAME.get(null));
+			} catch (IllegalAccessException e) {
+				/* The field is public so this should never happen. */
+				throw new InternalError(e);
+			}
 /*[ELSE]*/
 			objectName = ManagementUtils.createObjectName(LogManager.LOGGING_MXBEAN_NAME);
 /*[ENDIF]*/
