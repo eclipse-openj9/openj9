@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -487,6 +487,15 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
 
    cg()->setRegisterSaveDescription(registerSaveDescription);
 
+   // In FSD, we must save linkage regs to the incoming argument area because
+   // the stack overflow check doesn't preserve them.
+   bool parmsHaveBeenStored = false;
+   if (comp()->getOption(TR_FullSpeedDebug))
+      {
+      cursor = saveParametersToStack(cursor);
+      parmsHaveBeenStored = true;
+      }
+
    // --------------------------------------------------------------------------
    // Store return address (RA)
    //
@@ -634,7 +643,7 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    // Ensure arguments reside where the method body expects them to be (either in registers or
    // on the stack).  This state is influenced by global register assignment.
    //
-   cursor = copyParametersToHomeLocation(cursor);
+   cursor = copyParametersToHomeLocation(cursor, parmsHaveBeenStored);
 
    // Set the instructions for method entry points
    setInterpretedMethodEntryPoint(beforeInterpreterMethodEntryPointInstruction->getNext());
@@ -1307,12 +1316,8 @@ J9::ARM64::PrivateLinkage::loadStackParametersToLinkageRegisters(TR::Instruction
     return cursor;
     }
 
-/**
- * A more optimal implementation of this function will be required when GRA is enabled.
- * See OpenJ9 issue #6657.  Also consider merging with loadStackParametersToLinkageRegisters.
- */
 TR::Instruction *
-J9::ARM64::PrivateLinkage::copyParametersToHomeLocation(TR::Instruction *cursor)
+J9::ARM64::PrivateLinkage::saveParametersToStack(TR::Instruction *cursor)
    {
    TR::Machine *machine = cg()->machine();
    TR::ARM64LinkageProperties& properties = getProperties();
@@ -1347,6 +1352,55 @@ J9::ARM64::PrivateLinkage::copyParametersToHomeLocation(TR::Instruction *cursor)
 
          TR::MemoryReference *stackMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, parmCursor->getParameterOffset(), cg());
          cursor = generateMemSrc1Instruction(cg(), op, NULL, stackMR, linkageReg, cursor);
+         }
+      }
+
+   return cursor;
+   }
+
+/**
+ * A more optimal implementation of this function will be required when GRA is enabled.
+ * See OpenJ9 issue #6657.  Also consider merging with loadStackParametersToLinkageRegisters.
+ */
+TR::Instruction *
+J9::ARM64::PrivateLinkage::copyParametersToHomeLocation(TR::Instruction *cursor, bool parmsHaveBeenStored)
+   {
+   TR::Machine *machine = cg()->machine();
+   TR::ARM64LinkageProperties& properties = getProperties();
+   TR::RealRegister *javaSP = machine->getRealRegister(properties.getStackPointerRegister());       // x20
+
+   TR::ResolvedMethodSymbol *bodySymbol = comp()->getJittedMethodSymbol();
+   ListIterator<TR::ParameterSymbol> parmIterator(&(bodySymbol->getParameterList()));
+   TR::ParameterSymbol *parmCursor;
+
+   // Store to stack all parameters passed in linkage registers
+   //
+   for (parmCursor = parmIterator.getFirst();
+        parmCursor != NULL;
+        parmCursor = parmIterator.getNext())
+      {
+      if (parmCursor->isParmPassedInRegister())
+         {
+         if (!parmsHaveBeenStored)
+            {
+            int8_t lri = parmCursor->getLinkageRegisterIndex();
+            TR::RealRegister *linkageReg;
+            TR::InstOpCode::Mnemonic op;
+
+            if (parmCursor->getDataType() == TR::Double || parmCursor->getDataType() == TR::Float)
+               {
+               linkageReg = machine->getRealRegister(properties.getFloatArgumentRegister(lri));
+               op = (parmCursor->getDataType() == TR::Double) ? TR::InstOpCode::vstrimmd : TR::InstOpCode::vstrimms;
+               }
+            else
+               {
+               linkageReg = machine->getRealRegister(properties.getIntegerArgumentRegister(lri));
+               op = TR::InstOpCode::strimmx;
+               }
+
+            TR::MemoryReference *stackMR = new (cg()->trHeapMemory()) TR::MemoryReference(javaSP, parmCursor->getParameterOffset(), cg());
+            cursor = generateMemSrc1Instruction(cg(), op, NULL, stackMR, linkageReg, cursor);
+            }
          }
       }
 

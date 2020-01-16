@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,10 +155,20 @@ class PrivateLinkage : public J9::PrivateLinkage
     *        method body expects to find them.
     *
     * @param[in] cursor : the instruction cursor to begin inserting copy instructions
+    * @param[in] parmsHaveBeenStored : true if the parameters have been stored to the stack
     *
     * @return The instruction cursor after copies inserted.
     */
-   TR::Instruction *copyParametersToHomeLocation(TR::Instruction *cursor);
+   TR::Instruction *copyParametersToHomeLocation(TR::Instruction *cursor, bool parmsHaveBeenStored);
+
+   /**
+    * @brief Stores parameters passed in linkage registers to the stack. This method is used only in FSD mode.
+    *
+    * @param[in] cursor : the instruction cursor to begin inserting copy instructions
+    *
+    * @return The instruction cursor after copies inserted.
+    */
+   TR::Instruction *saveParametersToStack(TR::Instruction *cursor);
 
    /**
     * @brief Builds method arguments
