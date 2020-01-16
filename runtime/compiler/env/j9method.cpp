@@ -9220,7 +9220,7 @@ TR_J9ByteCodeIlGenerator::walkReferenceChain(TR::Node *node, uintptrj_t receiver
          }
       TR::Symbol *sym = symRef->getSymbol();
       TR_ASSERT(sym->isShadow() && symRef->getCPIndex() > 0, "walkReferenceChain expecting field load; found load of %s", comp()->getDebug()->getName(symRef));
-      uintptrj_t fieldOffset = symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes(); // blah
+      uintptrj_t fieldOffset = symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes();
       result = fej9->getReferenceFieldAt(walkReferenceChain(node->getFirstChild(), receiver), fieldOffset);
       }
    else
@@ -9262,7 +9262,7 @@ TR_J9ByteCodeIlGenerator::packReferenceChainOffsets(TR::Node *node, std::vector<
          }
       TR::Symbol *sym = symRef->getSymbol();
       TR_ASSERT(sym->isShadow() && symRef->getCPIndex() > 0, "walkReferenceChain expecting field load; found load of %s", comp()->getDebug()->getName(symRef));
-      uintptrj_t fieldOffset = symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes(); // blah
+      uintptrj_t fieldOffset = symRef->getOffset() - TR::Compiler->om.objectHeaderSizeInBytes();
       packReferenceChainOffsets(node->getFirstChild(), listOfOffsets);
       listOfOffsets.push_back(fieldOffset);
       }

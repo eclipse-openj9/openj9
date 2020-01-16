@@ -2054,7 +2054,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<uintptrj_t*, std::vector<uintptrj_t> >();
          TR::VMAccessCriticalSection invokeILGenMacrosInvokeExactAndFixup(fe);
          uintptrj_t receiverHandle = *std::get<0>(recv);
-         std::vector<uintptrj_t> listOfOffsets = std::get<1>(recv);
+         const std::vector<uintptrj_t>& listOfOffsets = std::get<1>(recv);
          uintptrj_t methodHandle = listOfOffsets.size() == 0 ? receiverHandle : JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
          uintptrj_t methodDescriptorRef = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
@@ -2394,7 +2394,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<uintptrj_t*, std::vector<uintptrj_t> >();
          TR::VMAccessCriticalSection invokeILGenMacrosParameterCount(fe);
          uintptrj_t receiverHandle = *std::get<0>(recv);
-         std::vector<uintptrj_t> listOfOffsets = std::get<1>(recv);
+         const std::vector<uintptrj_t>& listOfOffsets = std::get<1>(recv);
          uintptrj_t methodHandle = JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
          uintptrj_t arguments = fe->getReferenceField(fe->getReferenceField(
             methodHandle,
@@ -2409,7 +2409,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          auto recv = client->getRecvData<uintptrj_t*, std::vector<uintptrj_t> >();
          TR::VMAccessCriticalSection invokeILGenMacrosArrayLength(fe);
          uintptrj_t receiverHandle = *std::get<0>(recv);
-         std::vector<uintptrj_t> listOfOffsets = std::get<1>(recv);
+         const std::vector<uintptrj_t>& listOfOffsets = std::get<1>(recv);
          uintptrj_t array = JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
          int32_t arrayLength = (int32_t)fe->getArrayLengthInElements(array);
          client->write(response, arrayLength);
@@ -2421,7 +2421,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          TR::VMAccessCriticalSection invokeILGenMacrosGetField(fe);
          uintptrj_t receiverHandle = *std::get<0>(recv);
          uintptrj_t fieldOffset = std::get<1>(recv);
-         std::vector<uintptrj_t> listOfOffsets = std::get<2>(recv);
+         const std::vector<uintptrj_t>& listOfOffsets = std::get<2>(recv);
          uintptrj_t baseObject = JITServerHelpers::walkReferenceChainWithOffsets(fe, listOfOffsets, receiverHandle);
          int32_t result = fe->getInt32FieldAt(baseObject, fieldOffset);
          client->write(response, result);

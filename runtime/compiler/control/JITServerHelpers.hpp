@@ -97,7 +97,7 @@ class JITServerHelpers
 
    static bool isAddressInROMClass(const void *address, const J9ROMClass *romClass);
 
-   static uintptrj_t walkReferenceChainWithOffsets(TR_J9VM * fe, std::vector<uintptrj_t>& listOfOffsets, uintptrj_t receiver);
+   static uintptrj_t walkReferenceChainWithOffsets(TR_J9VM * fe, const std::vector<uintptrj_t>& listOfOffsets, uintptrj_t receiver);
 
    private:
    static void getROMClassData(const ClientSessionData::ClassInfo &classInfo, ClassInfoDataType dataType, void *data);

@@ -553,7 +553,7 @@ JITServerHelpers::isAddressInROMClass(const void *address, const J9ROMClass *rom
 
 
 uintptrj_t
-JITServerHelpers::walkReferenceChainWithOffsets(TR_J9VM * fe, std::vector<uintptrj_t>& listOfOffsets, uintptrj_t receiver)
+JITServerHelpers::walkReferenceChainWithOffsets(TR_J9VM * fe, const std::vector<uintptrj_t>& listOfOffsets, uintptrj_t receiver)
    {
    uintptrj_t result = receiver;
    for (size_t i = 0; i < listOfOffsets.size(); i++)
