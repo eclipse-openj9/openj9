@@ -5735,7 +5735,7 @@ reservationLockExit(TR::Node *node, int32_t lwOffset, TR::Register *objectClassR
       generateConditionalBranchInstruction(cg, TR::InstOpCode::bne, node, doneLabel, cndReg);
    else
       generateConditionalBranchInstruction(cg, TR::InstOpCode::beq, node, callLabel, cndReg);
-   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, monitorReg, monitorReg, (isPrimitive ? LOCK_INC_DEC_VALUE : -LOCK_INC_DEC_VALUE) & 0x0000FFFF);
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addi, node, monitorReg, monitorReg, isPrimitive ? LOCK_INC_DEC_VALUE : -LOCK_INC_DEC_VALUE);
    generateMemSrc1Instruction(cg, lockSize == 8 ? TR::InstOpCode::std : TR::InstOpCode::stw, node, new (cg->trHeapMemory()) TR::MemoryReference(objReg, lwOffset, lockSize, cg), monitorReg);
    if (!isPrimitive)
       generateLabelInstruction(cg, TR::InstOpCode::b, node, doneLabel);
