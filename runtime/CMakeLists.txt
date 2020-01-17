@@ -287,6 +287,7 @@ add_dependencies(j9vm_interface
 	j9vm_hookgen
 	j9vm_m4gen
 	j9vm_nlsgen
+	run_tracegen
 )
 
 # j9vm_gc_includes is used to track the include directories that are consumed by the various gc components
