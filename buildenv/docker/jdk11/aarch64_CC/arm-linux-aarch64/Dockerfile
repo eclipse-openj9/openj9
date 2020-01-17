@@ -1,4 +1,4 @@
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -90,6 +90,7 @@ ADD \
     http://ftp.us.debian.org/debian/pool/main/c/cups/libcups2-dev_2.2.1-8%2bdeb9u4_arm64.deb         \
     http://ftp.us.debian.org/debian/pool/main/c/cups/libcupsimage2-dev_2.2.1-8%2bdeb9u4_arm64.deb    \
     http://ftp.us.debian.org/debian/pool/main/d/dwarfutils/libdwarf-dev_20161124-1+deb9u1_arm64.deb  \
+    http://ftp.us.debian.org/debian/pool/main/e/elfutils/libelf-dev_0.176-1.1_arm64.deb \
     http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6_2.6.3-3.2_arm64.deb            \
     http://ftp.us.debian.org/debian/pool/main/f/freetype/libfreetype6-dev_2.6.3-3.2_arm64.deb        \
     http://ftp.us.debian.org/debian/pool/main/f/fontconfig/libfontconfig1_2.13.1-2_arm64.deb         \
