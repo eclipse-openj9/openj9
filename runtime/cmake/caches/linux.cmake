@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2018, 2020 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,20 +20,4 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-set(J9VM_ARCH_X86 ON CACHE BOOL "")
-set(J9VM_ENV_DATA64 ON CACHE BOOL "")
-set(J9VM_ENV_HAS_FPU ON CACHE BOOL "")
-set(J9VM_ENV_LITTLE_ENDIAN ON CACHE BOOL "")
-
-set(OMR_GC_IDLE_HEAP_MANAGER ON CACHE BOOL "")
-set(OMR_GC_TLH_PREFETCH_FTA ON CACHE BOOL "")
-set(J9VM_PORT_RUNTIME_INSTRUMENTATION OFF CACHE BOOL "")
-set(J9VM_MODULE_CODEGEN_IA32 ON CACHE BOOL "")
-set(J9VM_MODULE_CODERT_IA32 ON CACHE BOOL "")
-set(J9VM_MODULE_JIT_IA32 ON CACHE BOOL "")
-set(J9VM_MODULE_JITRT_IA32 ON CACHE BOOL "")
-set(J9VM_MODULE_MASM2GAS ON CACHE BOOL "")
-set(J9VM_GC_IDLE_HEAP_MANAGER ON CACHE BOOL "")
-set(J9VM_OPT_SWITCH_STACKS_FOR_SIGNAL_HANDLER ON CACHE BOOL "")
-
-include(${CMAKE_CURRENT_LIST_DIR}/common.cmake)
+set(J9VM_GC_ENABLE_DOUBLE_MAP ON CACHE BOOL "")

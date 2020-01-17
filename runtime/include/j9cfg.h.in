@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -111,6 +111,7 @@ extern "C" {
 #cmakedefine J9VM_GC_DEBUG_ASSERTS
 #cmakedefine J9VM_GC_DYNAMIC_CLASS_UNLOADING
 #cmakedefine J9VM_GC_DYNAMIC_NEW_SPACE_SIZING
+#cmakedefine J9VM_GC_ENABLE_DOUBLE_MAP
 #cmakedefine J9VM_GC_FINALIZATION
 #cmakedefine J9VM_GC_FRAGMENTED_HEAP
 #cmakedefine J9VM_GC_GENERATIONAL
