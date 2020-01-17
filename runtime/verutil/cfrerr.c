@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -58,6 +58,32 @@ getJ9CfrErrorNormalMessage(J9PortLibrary* portLib, J9CfrError* error, const U_8*
 }
 
 const char*
+getJ9CfrErrorClassNameMessage(J9PortLibrary* portLib, J9CfrError* error, const U_8* className, UDATA classNameLength)
+{
+	PORT_ACCESS_FROM_PORT(portLib);
+	UDATA allocSize = 0;
+	char *errorString = NULL;
+	J9CfrConstantPoolInfo *info = &error->constantPool[error->errorCPIndex];
+	UDATA utf8NameLength = error->constantPool[info->slot1].slot1;
+	U_8* utf8NameBytes = error->constantPool[info->slot1].bytes;
+	UDATA thisClassNameLength = (NULL != className) ? classNameLength : error->constantPool[error->thisClassIndex].slot1;
+	const U_8* thisClassNameBytes = (NULL != className) ? className : error->constantPool[error->thisClassIndex].bytes;
+
+	/* J9NLS_CFR_ERR_CP_BAD_CLASS_NAME=The class name (errorNo=#%1$u) in the constant pool entry at index (#%2$u) is invalid; utf8name=%4$.*3$s, class=%6$.*5$s, offset=%7$u */
+	const char *template = j9nls_lookup_message(J9NLS_ERROR | J9NLS_DO_NOT_APPEND_NEWLINE, J9NLS_CFR_ERR_CP_BAD_CLASS_NAME,
+			"The class name (errorNo=#%u) in the constant pool entry at index (#%u) is invalid; utf8name=%.*s, class=%.*s, offset=%u");
+
+	allocSize = strlen(template) + utf8NameLength + thisClassNameLength + (MAX_INT_SIZE * 3);
+	errorString = j9mem_allocate_memory(allocSize, OMRMEM_CATEGORY_VM);
+	if (NULL != errorString) {
+		j9str_printf(PORTLIB, errorString, allocSize, template, error->classNameErrNo,
+			error->errorCPIndex, utf8NameLength, utf8NameBytes, thisClassNameLength, thisClassNameBytes, error->errorOffset);
+	}
+
+	return errorString;
+}
+
+const char*
 getJ9CfrErrorBsmMessage(J9PortLibrary* portLib, J9CfrError* error, const U_8* className, UDATA classNameLength)
 {
 	PORT_ACCESS_FROM_PORT(portLib);
@@ -86,6 +112,9 @@ getJ9CfrErrorDetailMessageNoMethod(J9PortLibrary* portLib, J9CfrError* error, co
 	switch (error->errorCode) {
 	case J9NLS_CFR_ERR_BAD_BOOTSTRAP_ARGUMENT_ENTRY__ID:
 		errorString = getJ9CfrErrorBsmMessage(portLib, error, className, classNameLength);
+		break;
+	case J9NLS_CFR_ERR_CP_BAD_CLASS_NAME__ID:
+		errorString = getJ9CfrErrorClassNameMessage(portLib, error, className, classNameLength);
 		break;
 	default:
 		errorString = getJ9CfrErrorNormalMessage(portLib, error, className, classNameLength);
@@ -156,6 +185,16 @@ buildError(J9CfrError * errorStruct, UDATA code, UDATA action, UDATA offset)
 	errorStruct->errorBsmIndex = -1;
 	errorStruct->errorBsmArgsIndex = 0;
 	errorStruct->errorCPType = 0;
+}
+
+void
+buildClassNameError(J9CfrError * errorStruct, UDATA code, UDATA action, UDATA offset, U_32 classNameErrNo, U_32 cpIndex, U_32 thisClassIndex, J9CfrConstantPoolInfo* constantPoolPointer)
+{
+	buildError(errorStruct, code, action, offset);
+	errorStruct->constantPool = constantPoolPointer;
+	errorStruct->classNameErrNo = classNameErrNo;
+	errorStruct->errorCPIndex = cpIndex;
+	errorStruct->thisClassIndex = thisClassIndex;
 }
 
 void

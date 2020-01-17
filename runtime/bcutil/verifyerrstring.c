@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,7 +38,7 @@ buildVerifyErrorString( J9JavaVM *javaVM, J9CfrError *error, U_8* className, UDA
 	if(error->errorMethod == -1) {
 		errorString = getJ9CfrErrorDetailMessageNoMethod(
 			PORTLIB,
-			error, 
+			error,
 			className,
 			classNameLength);
 	} else {
@@ -69,11 +69,11 @@ buildVerifyErrorString( J9JavaVM *javaVM, J9CfrError *error, U_8* className, UDA
 
 		/* Jazz 82615: Append the error message framework to the existing error string */
 		errorString = getJ9CfrErrorDetailMessageForMethod(
-			PORTLIB, 
-			error, 
-			className, 
-			classNameLength, 
-			name->bytes, 
+			PORTLIB,
+			error,
+			className,
+			classNameLength,
+			name->bytes,
 			name->slot1,
 			sig->bytes,
 			sig->slot1,

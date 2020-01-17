@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,11 @@
 #define FATAL_CLASS_FORMAT_ERROR -1
 #define FALLBACK_CLASS_FORMAT_ERROR -2
 #define FALLBACK_VERIFY_ERROR -3
+
+#define CLASS_NAME_ERR_UTF8             1
+#define CLASS_NAME_ERR_OBJECT_ARRAY     2
+#define CLASS_NAME_ERR_BASE_TYPE_ARRAY  3
+#define CLASS_NAME_ERR_DEFAULT          4
 
 typedef struct StackmapExceptionDetails {
 	I_32 stackmapFrameIndex;
@@ -1635,9 +1640,12 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 	J9CfrConstantPoolInfo *info;
 	J9CfrConstantPoolInfo *utf8;
 	J9CfrMethod *method;
+	const U_32 thisClassIndex = classfile->constantPool[classfile->thisClass].slot1;
+	J9CfrConstantPoolInfo classNameInfo = {0, 0, 0, 0, 0, NULL, 0};
+	U_32 classNameErrNo = 0;
+	U_32 cpIndex = 0;
 
-	Trc_STV_j9bcv_verifyClassStructure_Entry(classfile->constantPool[classfile->constantPool[classfile->thisClass].slot1].slot1,
-																						classfile->constantPool[classfile->constantPool[classfile->thisClass].slot1].bytes);
+	Trc_STV_j9bcv_verifyClassStructure_Entry(classfile->constantPool[thisClassIndex].slot1, classfile->constantPool[thisClassIndex].bytes);
 
 	for (i = 1; i < classfile->constantPoolCount; i++) {
 		J9CfrConstantPoolInfo *nameAndSig;
@@ -1650,10 +1658,14 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 		case CFR_CONSTANT_Class:
 			/* Must be a UTF8. */
 			utf8 = &classfile->constantPool[info->slot1];
+			classNameInfo.slot1 = utf8->slot1;
+			classNameInfo.bytes = utf8->bytes;
+			cpIndex = i;
 			arity = bcvCheckClassName(utf8);
 			if (arity < 0) {
-				errorType = J9NLS_CFR_ERR_BAD_CLASS_NAME__ID;
-				goto _formatError;
+				errorType = J9NLS_CFR_ERR_CP_BAD_CLASS_NAME__ID;
+				classNameErrNo = CLASS_NAME_ERR_UTF8;
+				goto _classNameError;
 			}
 
 			if (arity > 0) {	/* we have some sort of array */
@@ -1666,8 +1678,9 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 				switch (utf8->bytes[arity]) {
 				case 'L':		/* object array */
 					if (utf8->bytes[--end] != ';') {
-						errorType = J9NLS_CFR_ERR_BAD_CLASS_NAME__ID;
-						goto _formatError;
+						errorType = J9NLS_CFR_ERR_CP_BAD_CLASS_NAME__ID;
+						classNameErrNo = CLASS_NAME_ERR_OBJECT_ARRAY;
+						goto _classNameError;
 					}
 					break;
 				case 'B':		/* base type array */
@@ -1679,13 +1692,15 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 				case 'S':
 				case 'Z':
 					if (--end != (UDATA) arity) {
-						errorType = J9NLS_CFR_ERR_BAD_CLASS_NAME__ID;
-						goto _formatError;
+						errorType = J9NLS_CFR_ERR_CP_BAD_CLASS_NAME__ID;
+						classNameErrNo = CLASS_NAME_ERR_BASE_TYPE_ARRAY;
+						goto _classNameError;
 					}
 					break;
 				default:
-					errorType = J9NLS_CFR_ERR_BAD_CLASS_NAME__ID;
-					goto _formatError;
+					errorType = J9NLS_CFR_ERR_CP_BAD_CLASS_NAME__ID;
+					classNameErrNo = CLASS_NAME_ERR_DEFAULT;
+					goto _classNameError;
 				}
 			}
 
@@ -1893,6 +1908,12 @@ j9bcv_verifyClassStructure (J9PortLibrary * portLib, J9CfrClassFile * classfile,
 	}
 
 	goto _leaveProc;			/* All is well */
+
+  _classNameError:
+	Trc_STV_j9bcv_verifyClassStructure_BadClassNameError(J9NLS_CFR_ERR_CP_BAD_CLASS_NAME__ID, classNameErrNo, cpIndex, classNameInfo.slot1, classNameInfo.bytes);
+	buildClassNameError((J9CfrError *)segment, errorType, CFR_ThrowClassFormatError, info->romAddress, classNameErrNo, cpIndex, thisClassIndex, classfile->constantPool);
+	result = -1;
+	goto _leaveProc;
 
   _formatError:
 	Trc_STV_j9bcv_verifyClassStructure_ClassError(errorType, info->romAddress);

@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2006, 2019 IBM Corp. and others
+// Copyright (c) 2006, 2020 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -212,3 +212,5 @@ TraceExit=Trc_RTV_findClassRelationship_Exit Overhead=1 Level=3 Template="findCl
 TraceEntry=Trc_RTV_freeClassRelationshipParentNodes_Entry Overhead=1 Level=3 Template="freeClassRelationshipParentNodes - class: %.*s"
 TraceEvent=Trc_RTV_freeClassRelationshipParentNodes_Parent Overhead=1 Level=3 Template="freeClassRelationshipParentNodes - parent: %.*s"
 TraceExit=Trc_RTV_freeClassRelationshipParentNodes_Exit Overhead=1 Level=3 Template="freeClassRelationshipParentNodes - returning"
+
+TraceException=Trc_STV_j9bcv_verifyClassStructure_BadClassNameError NoEnv Overhead=1 Level=1 Template="j9bcv_verifyClassStructure: BadClassNameError - formatError %x, errorNo = %d, cpIndex = %d, className = %.*s"

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -155,6 +155,20 @@ getJ9CfrErrorDetailMessageForMethod(J9PortLibrary* portLib, J9CfrError* error, c
 
 void
 buildError(J9CfrError * errorStruct, UDATA code, UDATA action, UDATA offset);
+
+/**
+ * Set up bootstrap method errors if the verification error occurs.
+ * @param[in] errorStruct - pointer to J9CfrError
+ * @param[in] code - the error code
+ * @param[in] action - the errorAction
+ * @param[in] offset - the errorOffset
+ * @param[in] classNameErrNo - the number of the bad class name being captured
+ * @param[in] cpIndex - index to the bad class name in the constant pool
+ * @param[in] thisClassIndex -  index to this class in the constant pool
+ * @param[in] constantPoolPointer - pointer to the constant pool
+ */
+void
+buildClassNameError(J9CfrError * errorStruct, UDATA code, UDATA action, UDATA offset, U_32 classNameErrNo, U_32 cpIndex, U_32 thisClassIndex, J9CfrConstantPoolInfo* constantPoolPointer);
 
 /**
  * Set up bootstrap method errors if the verification error occurs.
