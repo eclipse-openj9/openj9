@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -158,7 +158,7 @@ protected:
    ZeroCopyOutputStream *_outputStream;
 
    static const uint8_t MAJOR_NUMBER = 0;
-   static const uint16_t MINOR_NUMBER = 1;
+   static const uint16_t MINOR_NUMBER = 2;
    static const uint8_t PATCH_NUMBER = 0;
    static uint32_t CONFIGURATION_FLAGS;
    };

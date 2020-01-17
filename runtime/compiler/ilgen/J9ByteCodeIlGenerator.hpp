@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -342,6 +342,10 @@ private:
    bool replaceStatic(TR::Node* node, char* dstClassName, char* staticName, char* type);
 
    uintptrj_t walkReferenceChain(TR::Node *node, uintptrj_t receiver);
+#if defined(JITSERVER_SUPPORT)
+   void packReferenceChainOffsets(TR::Node *node, std::vector<uintptrj_t>& listOfOffsets);
+#endif
+
    bool hasFPU();
 
    // data
