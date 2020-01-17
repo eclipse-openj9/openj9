@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1049,8 +1049,6 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
       {
       _classesThatShouldNotBeNewlyExtended = NULL;
       }
-
-   _lastLocalGCCounter = 0;
 #endif /* defined(JITSERVER_SUPPORT) */
    }
 
@@ -12854,12 +12852,6 @@ TR::CompilationInfo::canRelocateMethod(TR::Compilation *comp)
    }
 
 #if defined(JITSERVER_SUPPORT)
-void
-TR::CompilationInfoPerThread::updateLastLocalGCCounter()
-   {
-   _lastLocalGCCounter = getCompilationInfo()->getLocalGCCounter();
-   }
-
 // This method is executed by the JITServer to queue a placeholder for
 // a compilation request received from the client. At the time the new
 // entry is queued we do not know any details about the compilation request.

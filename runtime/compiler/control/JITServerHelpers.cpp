@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,6 +26,7 @@
 #include "control/JITServerCompilationThread.hpp"
 #include "control/MethodToBeCompiled.hpp"
 #include "infra/CriticalSection.hpp"
+
 
 uint32_t     JITServerHelpers::serverMsgTypeCount[] = {};
 uint64_t     JITServerHelpers::_waitTimeMs = 1000;
@@ -549,3 +550,16 @@ JITServerHelpers::isAddressInROMClass(const void *address, const J9ROMClass *rom
    {
    return ((address >= romClass) && (address < (((uint8_t*) romClass) + romClass->romSize)));
    }
+
+
+uintptrj_t
+JITServerHelpers::walkReferenceChainWithOffsets(TR_J9VM * fe, const std::vector<uintptrj_t>& listOfOffsets, uintptrj_t receiver)
+   {
+   uintptrj_t result = receiver;
+   for (size_t i = 0; i < listOfOffsets.size(); i++)
+      {
+      result = fe->getReferenceFieldAt(result, listOfOffsets[i]);
+      }
+   return result;
+   }
+

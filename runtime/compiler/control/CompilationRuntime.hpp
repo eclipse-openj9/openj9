@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1014,8 +1014,6 @@ public:
    void markCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags |= (1 << threadId); }
    void resetCHTableUpdateDone(uint8_t threadId) { _chTableUpdateFlags &= ~(1 << threadId); }
    uint8_t getCHTableUpdateDone() const { return _chTableUpdateFlags; }
-   uint32_t getLocalGCCounter() const { return _localGCCounter; }
-   void incrementLocalGCCounter() { _localGCCounter++; }
 
    const PersistentVector<std::string> &getJITServerSslKeys() const { return _sslKeys; }
    void  addJITServerSslKey(const std::string &key) { _sslKeys.push_back(key); }
