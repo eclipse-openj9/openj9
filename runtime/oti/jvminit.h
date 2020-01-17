@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -469,6 +469,9 @@ enum INIT_STAGE {
 
 #define VMOPT_XXCLASSRELATIONSHIPVERIFIER "-XX:+ClassRelationshipVerifier"
 #define VMOPT_XXNOCLASSRELATIONSHIPVERIFIER "-XX:-ClassRelationshipVerifier"
+
+#define VMOPT_XXCLASSRELATIONSHIPVERIFIER_IGNORESCC "-XX:+ClassRelationshipVerifierIgnoreSCC"
+#define VMOPT_XXNOCLASSRELATIONSHIPVERIFIER_IGNORESCC "-XX:-ClassRelationshipVerifierIgnoreSCC"
 
 #define MAPOPT_AGENTLIB_JDWP_EQUALS "-agentlib:jdwp="
 

@@ -2384,7 +2384,8 @@ j9bcv_verifyBytecodes (J9PortLibrary * portLib, J9Class * clazz, J9ROMClass * ro
 	BOOLEAN newFormat = (classVersionRequiresStackmaps || hasStackMaps);
 	BOOLEAN verboseVerification = (J9_VERIFY_VERBOSE_VERIFICATION == (verifyData->verificationFlags & J9_VERIFY_VERBOSE_VERIFICATION));
 	BOOLEAN classRelationshipVerifierEnabled = (J9_ARE_ANY_BITS_SET(verifyData->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER) && classVersionRequiresStackmaps);
-	BOOLEAN sharedCacheEnabled = NULL != verifyData->javaVM->sharedClassConfig;
+	BOOLEAN classRelationshipVerifierIgnoreSCCEnabled = (J9_ARE_ANY_BITS_SET(verifyData->javaVM->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER_IGNORE_SCC));
+	BOOLEAN sharedCacheEnabled = (FALSE == classRelationshipVerifierIgnoreSCCEnabled) && (NULL != verifyData->javaVM->sharedClassConfig);
 	BOOLEAN cacheRelationshipSnippetsEnabled = FALSE;
 	BOOLEAN foundSnippetsInCache = FALSE;
 	J9SharedDataDescriptor classRelationshipSnippetsDataDescriptor = {0};
@@ -2686,6 +2687,8 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 	IDATA noVerifyErrorDetailsIndex = -1;
 	IDATA classRelationshipVerifierIndex = -1;
 	IDATA noClassRelationshipVerifierIndex = -1;
+	IDATA classRelationshipVerifierIgnoreSCCIndex = -1;
+	IDATA noClassRelationshipVerifierIgnoreSCCIndex = -1;
 	IDATA returnVal = J9VMDLLMAIN_OK;
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	J9HookInterface ** vmHooks = vm->internalVMFunctions->getVMHookInterface(vm);
@@ -2771,6 +2774,30 @@ j9bcv_J9VMDllMain (J9JavaVM* vm, IDATA stage, void* reserved)
 					returnVal = J9VMDLLMAIN_FAILED;
 				} else {
 					vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER;
+				}
+			}
+
+			/**
+			 * Set runtime flag for -XX:+ClassRelationshipVerifierIgnoreSCC
+			 *
+			 * If both -XX:+ClassRelationshipVerifier and -XX:+ClassRelationshipVerifierIgnoreSCC are used,
+			 * the right-most option will take precedence.
+			 */
+			classRelationshipVerifierIgnoreSCCIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXCLASSRELATIONSHIPVERIFIER_IGNORESCC, NULL);
+			noClassRelationshipVerifierIgnoreSCCIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOCLASSRELATIONSHIPVERIFIER_IGNORESCC, NULL);
+			if (classRelationshipVerifierIgnoreSCCIndex > noClassRelationshipVerifierIgnoreSCCIndex) {
+				if ((classRelationshipVerifierIgnoreSCCIndex > classRelationshipVerifierIndex) &&
+					(classRelationshipVerifierIgnoreSCCIndex > noClassRelationshipVerifierIndex)
+				) {
+					if (J9_ARE_ANY_BITS_SET(vm->runtimeFlags, J9_RUNTIME_XFUTURE)) {
+						loadInfo->fatalErrorStr = "-XX:+ClassRelationshipVerifierIgnoreSCC cannot be used if -Xfuture or if -Xverify:all is enabled";
+						returnVal = J9VMDLLMAIN_FAILED;
+					} else {
+						if (-1 == classRelationshipVerifierIndex) {
+							vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER;
+						}
+						vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_CLASS_RELATIONSHIP_VERIFIER_IGNORE_SCC;
+					}
 				}
 			}
 
