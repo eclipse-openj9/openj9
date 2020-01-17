@@ -7770,18 +7770,17 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
    // cleanup the compilationShouldBeInterrupted flag.
    that->setCompilationShouldBeInterrupted(0);
-
-   if (that->_methodBeingCompiled->isDLTCompile())
-      {
-      TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
-      if (sc)
-        sc->addHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintDLT);
-      }
-
    that->setMetadata(NULL);
 
    try
       {
+      if (that->_methodBeingCompiled->isDLTCompile())
+         {
+         TR_J9SharedCache *sc = (TR_J9SharedCache *) (vm->sharedCache());
+         if (sc)
+            sc->addHint(that->_methodBeingCompiled->getMethodDetails().getMethod(), TR_HintDLT);
+         }
+
       InterruptibleOperation generatingCompilationObject(*that);
       TR::IlGeneratorMethodDetails & details = that->_methodBeingCompiled->getMethodDetails();
       TR_OpaqueMethodBlock *method = (TR_OpaqueMethodBlock *) details.getMethod();
