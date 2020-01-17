@@ -46,6 +46,10 @@ import java.lang.constant.DynamicConstantDesc;
 import java.util.Objects;
 /*[ENDIF] Java12 */
 
+/*[IF Java14]*/
+import java.util.Map;
+/*[ENDIF] Java14 */
+
 /**
  * Dynamically typed reference to a field, allowing read and write operations, 
  * both atomic and with/without memory barriers. See {@link AccessMode} for
@@ -221,7 +225,11 @@ public abstract class VarHandle extends VarHandleInternal
 		AccessType at;
 		boolean isSetter;
 		private String methodName;
-		
+
+/*[IF Java14]*/
+		static final Map<String, AccessMode> methodNameToAccessMode = null;
+/*[ENDIF] Java14 */
+
 		AccessMode(String methodName, AccessType signatureType, boolean isSetter) {
 			this.methodName = methodName;
 			this.at = signatureType;
