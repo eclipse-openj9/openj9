@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -287,7 +287,18 @@ public abstract class VarHandle extends VarHandleInternal
 		this.handleTable = handleTable;
 		this.modifiers = modifiers;
 	}
-	
+
+/*[IF Java14]*/
+	/**
+	 * Constructs a generic VarHandle instance.
+	 *
+	 * @param varForm An instance of VarForm.
+	 */
+	VarHandle(VarForm varForm) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF] Java14 */
+
 	Class<?> getDefiningClass() {
 		/*[MSG "K0627", "Expected override of this method."]*/
 		throw new InternalError(com.ibm.oti.util.Msg.getString("K0627")); //$NON-NLS-1$
