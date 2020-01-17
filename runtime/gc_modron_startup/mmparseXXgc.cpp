@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -165,12 +165,12 @@ gcParseXXgcArguments(J9JavaVM *vm, char *optArg)
 			continue;
 		}
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-		if (try_scan(&scan_start, "enableArrayletDoubleMapping")) {
-			extensions->isArrayletDoubleMapRequested = true;
+		if (try_scan(&scan_start, "enableDoubleMapping")) {
+			extensions->indexableObjectModel.setEnableDoubleMapping(true);
 			continue;
                 }
-		if (try_scan(&scan_start, "disableArrayletDoubleMapping")) {
-			extensions->isArrayletDoubleMapRequested = false;
+		if (try_scan(&scan_start, "disableDoubleMapping")) {
+			extensions->indexableObjectModel.setEnableDoubleMapping(false);
 			continue;
 		}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
