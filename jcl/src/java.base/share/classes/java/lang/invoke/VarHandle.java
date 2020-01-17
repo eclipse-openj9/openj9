@@ -48,6 +48,7 @@ import java.util.Objects;
 
 /*[IF Java14]*/
 import java.util.Map;
+import java.util.function.BiFunction;
 /*[ENDIF] Java14 */
 
 /**
@@ -308,6 +309,8 @@ public abstract class VarHandle extends VarHandleInternal
 	VarHandle(VarForm varForm) {
 		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 	}
+
+	static final BiFunction<String, List<Integer>, ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
 /*[ENDIF] Java14 */
 
 	Class<?> getDefiningClass() {
