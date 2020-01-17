@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2020 IBM Corp. and others
+ * Copyright (c) 1991, 2019 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -96,20 +96,6 @@ MM_ConfigurationIncrementalGenerational::createHeapWithManager(MM_EnvironmentBas
 	if (NULL == heap) {
 		return NULL;
 	}
-
-#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
-	/* Disable double map if requested page sizes used is equal to huge pages.
-	 * Currently double map is not supported when huge pages are used.
-	 * Note that we keep two double map fields: one for requested and another for
-	 * status. If large pages is enabled, it  will only change the STATUS of double
-	 * mapping, keeping the REQUESTED double mapping field intact.
-	 */
-	if (extensions->isArrayletDoubleMapRequested) {
-		if (!extensions->memoryManager->isLargePage(env, heap->getPageSize())) {
-			extensions->indexableObjectModel.setEnableDoubleMapping(true);
-		}
-	}
-#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 	/* when we try to attach this heap to a region manager, we will need the card table since it needs to be NUMA-affinitized using the same logic as the heap so initialize it here */
 	extensions->cardTable = MM_IncrementalCardTable::newInstance(MM_EnvironmentVLHGC::getEnvironment(env), heap);
