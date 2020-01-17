@@ -150,13 +150,15 @@ public:
 		_doDebugCompare(false),
 		_existingRomMethod(NULL),
 		_reusingIntermediateClassData(false),
-		_creatingIntermediateROMClass(creatingIntermediateROMClass)
+		_creatingIntermediateROMClass(creatingIntermediateROMClass),
+		_cpMapping(NULL)
 	{
 		if ((NULL != _javaVM) && (NULL != _javaVM->dynamicLoadBuffers)) {
 			/* localBuffer should not be NULL */
 			Trc_BCU_Assert_True(NULL != localBuffer);
 			_cpIndex = localBuffer->entryIndex;
 			_loadLocation = localBuffer->loadLocationType;
+			_cpPatch = localBuffer->cpPatch;
 			_sharedStringInternTable = _javaVM->sharedInvariantInternTable;
 			_interningEnabled = J9_ARE_ALL_BITS_SET(_bcuFlags, BCU_ENABLE_INVARIANT_INTERNING) && J9_ARE_NO_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_ANON);
 			if (0 != (bcuFlags & BCU_VERBOSE)) {
@@ -222,6 +224,7 @@ public:
 	bool isClassUnsafe() const { return J9_FINDCLASS_FLAG_UNSAFE == (_findClassFlags & J9_FINDCLASS_FLAG_UNSAFE); }
 	bool isClassAnon() const { return J9_FINDCLASS_FLAG_ANON == (_findClassFlags & J9_FINDCLASS_FLAG_ANON); }
 	bool alwaysSplitBytecodes() const { return J9_ARE_ANY_BITS_SET(_bctFlags, BCT_AlwaysSplitBytecodes); }
+	bool hasCPPatch() const { return NULL != _cpPatch; }
 
 	bool isClassUnmodifiable() const {
 		bool unmodifiable = false;
@@ -538,6 +541,11 @@ public:
 		}
 	}
 
+	void recordCPMapping(U_16 *cpMapping)
+	{
+		_cpMapping = cpMapping;
+	}
+
 	void reportStatistics(J9TranslationLocalBuffer *localBuffer)
 	{
 		if (NULL != _dynamicLoadStats) {
@@ -694,6 +702,15 @@ public:
 		return (0 != (romClassOptionalFlags() & J9_ROMCLASS_OPTINFO_SOURCE_FILE_NAME));
 	}
 
+	jobjectArray getCPPatch()
+	{
+		return _cpPatch;
+	}
+
+	U_16* getCPMapping() {
+		return _cpMapping;
+	}
+
 private:
 	void reportVerboseStatistics();
 	void verbosePrintPhase(ROMClassCreationPhase phase, bool *printedPhases, UDATA indent);
@@ -741,6 +758,8 @@ private:
 	J9ROMMethod * _existingRomMethod;
 	bool _reusingIntermediateClassData;
 	bool _creatingIntermediateROMClass;
+	jobjectArray _cpPatch;
+	U_16 *_cpMapping;
 
 	J9ROMMethod * romMethodFromOffset(IDATA offset);
 };

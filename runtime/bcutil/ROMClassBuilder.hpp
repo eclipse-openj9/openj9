@@ -123,6 +123,7 @@ private:
 	StringInternTable _stringInternTable;
 
 	BuildResult handleAnonClassName(J9CfrClassFile *classfile, bool *isLambda);
+	BuildResult patchConstantPool(J9CfrClassFile *classfile, ROMClassCreationContext *context);
 	U_32 computeExtraModifiers(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);
 	U_32 computeOptionalFlags(ClassFileOracle *classFileOracle, ROMClassCreationContext *context);
 	BuildResult prepareAndLaydown( BufferManager *bufferManager, ClassFileParser *classFileParser, ROMClassCreationContext *context );

@@ -1824,6 +1824,8 @@ typedef struct J9TranslationLocalBuffer {
 	IDATA entryIndex;
 	I_32 loadLocationType;
 	struct J9ClassPathEntry* cpEntryUsed;
+	jobjectArray cpPatch;
+	U_16* cpIndexMap;
 } J9TranslationLocalBuffer;
 
 typedef struct J9TranslationBufferSet {

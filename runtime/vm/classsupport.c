@@ -581,7 +581,7 @@ attemptDynamicClassLoad(J9VMThread* vmThread, J9Module *j9module, U_8* className
 		|| ((NULL != classLoader->classPathEntries) && (classLoader == vmThread->javaVM->systemClassLoader))
 	) {
 		IDATA findResult = -1;
-		J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL};
+		J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL, NULL, NULL};
 
 		findResult = callFindLocallyDefinedClass(vmThread, j9module, className, classNameLength, classLoader, options, &localBuffer);
 

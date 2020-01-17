@@ -302,6 +302,17 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 			}
 		}
 	}
+
+	if (_context->hasCPPatch()) {
+		PORT_ACCESS_FROM_PORT(_context->portLibrary());
+		U_16 *cpMapping = (U_16*)j9mem_allocate_memory(cfrCPCount * sizeof(U_16), J9MEM_CATEGORY_VM);
+
+		for (U_16 cfrCPIndex = 0; cfrCPIndex < cfrCPCount; cfrCPIndex++) {
+			cpMapping[cfrCPIndex] = _constantPoolEntries[cfrCPIndex].romCPIndex;
+		}
+
+		_context->recordCPMapping(cpMapping);
+	}
 }
 
 bool

@@ -70,7 +70,7 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
 
 	/* For JSR335 this should be NULL */
-	Assert_JCL_true(constPatches == NULL);
+	/* Assert_JCL_true(constPatches == NULL); */
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	if (NULL == bytecodes) {
@@ -101,7 +101,7 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 	jsize length = env->GetArrayLength(bytecodes);
 
 	/* acquires access internally */
-	jclass anonClass = defineClassCommon(env, hostClassLoaderLocalRef, NULL,bytecodes, 0, length, protectionDomainLocalRef, J9_FINDCLASS_FLAG_UNSAFE | J9_FINDCLASS_FLAG_ANON, hostClazz);
+	jclass anonClass = defineClassAnonymous(env, hostClassLoaderLocalRef,bytecodes, length, protectionDomainLocalRef, J9_FINDCLASS_FLAG_UNSAFE | J9_FINDCLASS_FLAG_ANON, hostClazz, constPatches);
 	if (env->ExceptionCheck()) {
 		return NULL;
 	} else if (NULL == anonClass) {

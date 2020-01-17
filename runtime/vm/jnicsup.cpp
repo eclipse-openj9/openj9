@@ -2413,7 +2413,7 @@ defineClass(JNIEnv *env, const char *name, jobject loader, const jbyte *buf, jsi
 				 * entryIndex only applies to the system classloader, but since the classTableMutex is acquired,
 				 * there is no threading problem.
 				 */
-				J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL};
+				J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL, NULL, NULL};
 				/* this function exits the class table mutex */
 				clazz = dynamicLoadBuffers->internalDefineClassFunction(currentThread, className, classNameLength,
 						(U_8 *) buf, (UDATA) bufLen, NULL, classLoader, NULL, J9_FINDCLASS_FLAG_THROW_ON_FAIL, NULL, NULL, &localBuffer);

@@ -2539,7 +2539,7 @@ jvmDefineClassHelper(JNIEnv *env, jobject classLoaderObject,
 	J9ROMClass *loadedClass = NULL;
 	U_8 *tempClassBytes = NULL;
 	I_32 tempLength = 0;
-	J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL};
+	J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL, NULL, NULL};
 	PORT_ACCESS_FROM_JAVAVM(vm);
 
 	if (vm->dynamicLoadBuffers == NULL) {

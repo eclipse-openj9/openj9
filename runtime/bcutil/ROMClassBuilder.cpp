@@ -191,6 +191,7 @@ j9bcutil_buildRomClass(J9LoadROMClassData *loadData, U_8 * intermediateData, UDA
 	BuildResult result = romClassBuilder->buildROMClass(&context);
 	loadData->romClass = context.romClass();
 	context.reportStatistics(localBuffer);
+	localBuffer->cpIndexMap = context.getCPMapping();
 
 	return IDATA(result);
 }
@@ -355,6 +356,48 @@ done:
 	return result;
 }
 
+BuildResult
+ROMClassBuilder::patchConstantPool(J9CfrClassFile *classfile, ROMClassCreationContext *context) {
+	J9CfrConstantPoolInfo* constantPool = classfile->constantPool;
+	U_16 i = 0;
+	BuildResult result = OK;
+	PORT_ACCESS_FROM_PORT(_portLibrary);
+	J9VMThread *currentThread = context->currentVMThread();
+
+	j9array_t array = (j9array_t)J9_JNI_UNWRAP_REFERENCE(context->getCPPatch());;
+	j9object_t item = NULL;
+	jsize arrayBound = J9INDEXABLEOBJECT_SIZE(currentThread, array);
+
+	for (U_16 i = 0; i < arrayBound; i++) {
+		item = J9JAVAARRAYOFOBJECT_LOAD(currentThread, array, i);
+		if (item != NULL) {
+			switch(constantPool[i].tag) {
+			case CFR_CONSTANT_Utf8:
+				/* NYI - requires extra buffer array for utf8 longer than original */
+				/* Do nothing for UTF8 at the moment
+				constantPool[i].slot1 = 0;
+				constantPool[i].bytes = NULL;
+				*/
+				break;
+			case CFR_CONSTANT_Integer:
+				constantPool[i].slot1 = J9VMJAVALANGINTEGER_VALUE(currentThread, item);
+				break;
+			case CFR_CONSTANT_Float:
+				constantPool[i].slot1 = J9VMJAVALANGFLOAT_VALUE(currentThread, item);
+				break;
+			case CFR_CONSTANT_Double:
+				*(U_64*)&constantPool[i].slot1 = (U_64)J9VMJAVALANGDOUBLE_VALUE(currentThread, item);
+				break;
+			case CFR_CONSTANT_Long:
+				*(U_64*)&constantPool[i].slot1 = (U_64)J9VMJAVALANGLONG_VALUE(currentThread, item);
+				break;
+			}
+		}
+	}
+
+	return result;
+}
+
 U_8 *
 ROMClassBuilder::releaseClassFileBuffer()
 {
@@ -434,6 +477,12 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 		BuildResult res = handleAnonClassName(classFileParser->getParsedClassFile(), &isLambda);
 		if (OK != res) {
 			return res;
+		}
+		if (context->hasCPPatch()) {
+			res = patchConstantPool(classFileParser->getParsedClassFile(), context);
+			if (OK != res) {
+				return res;
+			}
 		}
 	}
 

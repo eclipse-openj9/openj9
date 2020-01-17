@@ -3376,7 +3376,7 @@ reloadROMClasses(J9VMThread * currentThread, jint class_count, const jvmtiClassD
 		UDATA loadRC;
 		J9LoadROMClassData loadData;
 		j9object_t heapClass = J9VM_J9CLASS_TO_HEAPCLASS(originalRAMClass);
-		J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL};
+		J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL, NULL, NULL};
 
 		/* The original rom class might have been marked unsafe (we loaded it via
 		 * sun.misc.Unsafe). The new class version must also be marked as unsafe
