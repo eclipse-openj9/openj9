@@ -66,165 +66,165 @@ public abstract class VarHandle extends VarHandleInternal
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#get(Object...) get(Object...)}.
 		 */
-		GET("get", SignatureType.getter, false), //$NON-NLS-1$
+		GET("get", AccessType.GET, false), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#set(Object...) set(Object...)}.
 		 */
-		SET("set", SignatureType.setter, true), //$NON-NLS-1$
+		SET("set", AccessType.SET, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getVolatile(Object...) getVolatile(Object...)}.
 		 */
-		GET_VOLATILE("getVolatile", SignatureType.getter, false), //$NON-NLS-1$
+		GET_VOLATILE("getVolatile", AccessType.GET, false), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#setVolatile(Object...) setVolatile(Object...)}.
 		 */
-		SET_VOLATILE("setVolatile", SignatureType.setter, true), //$NON-NLS-1$
+		SET_VOLATILE("setVolatile", AccessType.SET, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getOpaque(Object...) getOpaque(Object...)}.
 		 */
-		GET_OPAQUE("getOpaque", SignatureType.getter, false), //$NON-NLS-1$
+		GET_OPAQUE("getOpaque", AccessType.GET, false), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#setOpaque(Object...) setOpaque(Object...)}.
 		 */
-		SET_OPAQUE("setOpaque", SignatureType.setter, true), //$NON-NLS-1$
+		SET_OPAQUE("setOpaque", AccessType.SET, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAcquire(Object...) getAcquire(Object...)}.
 		 */
-		GET_ACQUIRE("getAcquire", SignatureType.getter, false), //$NON-NLS-1$
+		GET_ACQUIRE("getAcquire", AccessType.GET, false), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#setRelease(Object...) setRelease(Object...)}.
 		 */
-		SET_RELEASE("setRelease", SignatureType.setter, true), //$NON-NLS-1$
+		SET_RELEASE("setRelease", AccessType.SET, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#compareAndSet(Object...) compareAndSet(Object...)}.
 		 */
-		COMPARE_AND_SET("compareAndSet", SignatureType.compareAndSet, true), //$NON-NLS-1$
+		COMPARE_AND_SET("compareAndSet", AccessType.COMPARE_AND_SET, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#compareAndExchange(Object...) compareAndExchange(Object...)}.
 		 */
-		COMPARE_AND_EXCHANGE("compareAndExchange", SignatureType.compareAndExchange, true), //$NON-NLS-1$
+		COMPARE_AND_EXCHANGE("compareAndExchange", AccessType.COMPARE_AND_EXCHANGE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#compareAndExchangeAcquire(Object...) compareAndExchangeAcquire(Object...)}.
 		 */
-		COMPARE_AND_EXCHANGE_ACQUIRE("compareAndExchangeAcquire", SignatureType.compareAndExchange, true), //$NON-NLS-1$
+		COMPARE_AND_EXCHANGE_ACQUIRE("compareAndExchangeAcquire", AccessType.COMPARE_AND_EXCHANGE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#compareAndExchangeRelease(Object...) compareAndExchangeRelease(Object...)}.
 		 */
-		COMPARE_AND_EXCHANGE_RELEASE("compareAndExchangeRelease", SignatureType.compareAndExchange, true), //$NON-NLS-1$
+		COMPARE_AND_EXCHANGE_RELEASE("compareAndExchangeRelease", AccessType.COMPARE_AND_EXCHANGE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#weakCompareAndSet(Object...) weakCompareAndSet(Object...)}.
 		 */
-		WEAK_COMPARE_AND_SET("weakCompareAndSet", SignatureType.compareAndSet, true), //$NON-NLS-1$
+		WEAK_COMPARE_AND_SET("weakCompareAndSet", AccessType.COMPARE_AND_SET, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#weakCompareAndSetAcquire(Object...) weakCompareAndSetAcquire(Object...)}.
 		 */
-		WEAK_COMPARE_AND_SET_ACQUIRE("weakCompareAndSetAcquire", SignatureType.compareAndSet, true), //$NON-NLS-1$
+		WEAK_COMPARE_AND_SET_ACQUIRE("weakCompareAndSetAcquire", AccessType.COMPARE_AND_SET, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#weakCompareAndSetRelease(Object...) weakCompareAndSetRelease(Object...)}.
 		 */
-		WEAK_COMPARE_AND_SET_RELEASE("weakCompareAndSetRelease", SignatureType.compareAndSet, true), //$NON-NLS-1$
+		WEAK_COMPARE_AND_SET_RELEASE("weakCompareAndSetRelease", AccessType.COMPARE_AND_SET, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#weakCompareAndSetPlain(Object...) weakCompareAndSetPlain(Object...)}.
 		 */
-		WEAK_COMPARE_AND_SET_PLAIN("weakCompareAndSetPlain", SignatureType.compareAndSet, true), //$NON-NLS-1$
+		WEAK_COMPARE_AND_SET_PLAIN("weakCompareAndSetPlain", AccessType.COMPARE_AND_SET, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndSet(Object...) getAndSet(Object...)}.
 		 */
-		GET_AND_SET("getAndSet", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_SET("getAndSet", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndSetAcquire(Object...) getAndSetAcquire(Object...)}.
 		 */
-		GET_AND_SET_ACQUIRE("getAndSetAcquire", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_SET_ACQUIRE("getAndSetAcquire", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndSetRelease(Object...) getAndSetRelease(Object...)}.
 		 */
-		GET_AND_SET_RELEASE("getAndSetRelease", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_SET_RELEASE("getAndSetRelease", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndAdd(Object...) getAndAdd(Object...)}.
 		 */
-		GET_AND_ADD("getAndAdd", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_ADD("getAndAdd", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndAddAcquire(Object...) getAndAddAcquire(Object...)}.
 		 */
-		GET_AND_ADD_ACQUIRE("getAndAddAcquire", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_ADD_ACQUIRE("getAndAddAcquire", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndAddRelease(Object...) getAndAddRelease(Object...)}.
 		 */
-		GET_AND_ADD_RELEASE("getAndAddRelease", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_ADD_RELEASE("getAndAddRelease", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseAnd(Object...) getAndBitwiseAnd(Object...)}.
 		 */
-		GET_AND_BITWISE_AND("getAndBitwiseAnd", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_BITWISE_AND("getAndBitwiseAnd", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseAndAcquire(Object...) getAndBitwiseAndAcquire(Object...)}.
 		 */
-		GET_AND_BITWISE_AND_ACQUIRE("getAndBitwiseAndAcquire", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_BITWISE_AND_ACQUIRE("getAndBitwiseAndAcquire", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseAndRelease(Object...) getAndBitwiseAndRelease(Object...)}.
 		 */
-		GET_AND_BITWISE_AND_RELEASE("getAndBitwiseAndRelease", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_BITWISE_AND_RELEASE("getAndBitwiseAndRelease", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseOr(Object...) getAndBitwiseOr(Object...)}.
 		 */
-		GET_AND_BITWISE_OR("getAndBitwiseOr", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_BITWISE_OR("getAndBitwiseOr", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseOrAcquire(Object...) getAndBitwiseOrAcquire(Object...)}.
 		 */
-		GET_AND_BITWISE_OR_ACQUIRE("getAndBitwiseOrAcquire", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_BITWISE_OR_ACQUIRE("getAndBitwiseOrAcquire", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseOrRelease(Object...) getAndBitwiseOrRelease(Object...)}.
 		 */
-		GET_AND_BITWISE_OR_RELEASE("getAndBitwiseOrRelease", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_BITWISE_OR_RELEASE("getAndBitwiseOrRelease", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseXor(Object...) getAndBitwiseXor(Object...)}.
 		 */
-		GET_AND_BITWISE_XOR("getAndBitwiseXor", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_BITWISE_XOR("getAndBitwiseXor", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseXorAcquire(Object...) getAndBitwiseXorAcquire(Object...)}.
 		 */
-		GET_AND_BITWISE_XOR_ACQUIRE("getAndBitwiseXorAcquire", SignatureType.getAndSet, true), //$NON-NLS-1$
+		GET_AND_BITWISE_XOR_ACQUIRE("getAndBitwiseXorAcquire", AccessType.GET_AND_UPDATE, true), //$NON-NLS-1$
 		
 		/**
 		 * The {@link AccessMode} corresponding to {@link VarHandle#getAndBitwiseXorRelease(Object...) getAndBitwiseXorRelease(Object...)}.
 		 */
-		GET_AND_BITWISE_XOR_RELEASE("getAndBitwiseXorRelease", SignatureType.getAndSet, true); //$NON-NLS-1$
+		GET_AND_BITWISE_XOR_RELEASE("getAndBitwiseXorRelease", AccessType.GET_AND_UPDATE, true); //$NON-NLS-1$
 		
-		SignatureType signatureType;
+		AccessType at;
 		boolean isSetter;
 		private String methodName;
 		
-		AccessMode(String methodName, SignatureType signatureType, boolean isSetter) {
+		AccessMode(String methodName, AccessType signatureType, boolean isSetter) {
 			this.methodName = methodName;
-			this.signatureType = signatureType;
+			this.at = signatureType;
 			this.isSetter = isSetter;
 		}
 		
@@ -253,13 +253,16 @@ public abstract class VarHandle extends VarHandleInternal
 		}
 	}
 	
-	enum SignatureType {
-		getter,
-		setter,
-		compareAndSet,
-		compareAndExchange,
-		getAndSet,
-		invalid;
+	enum AccessType {
+		GET,
+		SET,
+		COMPARE_AND_SET,
+		COMPARE_AND_EXCHANGE,
+		GET_AND_UPDATE;
+
+		MethodType accessModeType(Class<?> param1, Class<?> param2, Class<?>... params) {
+			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		}
 	}
 	
 	static final Unsafe _unsafe = Unsafe.getUnsafe();
