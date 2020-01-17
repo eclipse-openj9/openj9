@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 1991, 2019 IBM Corp. and others
+# Copyright (c) 1991, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,4 +38,5 @@ set(J9VM_GC_IDLE_HEAP_MANAGER OFF CACHE BOOL "")
 set(J9VM_OPT_SWITCH_STACKS_FOR_SIGNAL_HANDLER OFF CACHE BOOL "")
 set(J9VM_PORT_RUNTIME_INSTRUMENTATION ON CACHE BOOL "")
 
+include("${CMAKE_CURRENT_LIST_DIR}/linux.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/common.cmake")
