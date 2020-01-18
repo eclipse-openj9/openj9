@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -141,8 +141,10 @@ public:
 
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 	/**
-	 * Sets enable double mapping
-	 * 
+	 * Sets enable double mapping status. Note that the double map
+	 * status value may differ from the requested one in certain
+	 * circuntances.
+	 *
 	 * @param enableDoubleMapping
 	 */
 	MMINLINE void
@@ -152,9 +154,9 @@ public:
 	}
 
 	/**
-	 * Returns enable double mapping
+	 * Returns enable double mapping status
 	 * 
-	 * @return true if double mapping is enabled, false otherwise
+	 * @return true if double mapping status is set to true, false otherwise.
 	 */
 	MMINLINE bool
 	isDoubleMappingEnabled()
