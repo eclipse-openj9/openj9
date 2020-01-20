@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -187,6 +187,12 @@ TR_RuntimeHelper TR::ARM64CallSnippet::getHelper()
    TR::SymbolReference *methodSymRef = callNode->getSymbolReference();
    TR::MethodSymbol    *methodSymbol = methodSymRef->getSymbol()->castToMethodSymbol();
    TR::SymbolReference *glueRef = NULL;
+   bool isJitInduceOSRCall = false;
+   if (methodSymbol->isHelper() &&
+       methodSymRef->isOSRInductionHelper())
+      {
+      isJitInduceOSRCall = true;
+      }
 
    if (methodSymRef->isUnresolved() || comp->compileRelocatableCode())
       {
@@ -199,6 +205,9 @@ TR_RuntimeHelper TR::ARM64CallSnippet::getHelper()
 
    if (methodSymbol->isVMInternalNative() || methodSymbol->isJITInternalNative())
       return TR_ARM64nativeStaticHelper;
+
+   if (isJitInduceOSRCall)
+      return (TR_RuntimeHelper) methodSymRef->getReferenceNumber();
 
    bool synchronised = methodSymbol->isSynchronised();
 
@@ -240,8 +249,9 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
 
    glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(getHelper(), false, false, false);
 
-   // bl glueRef
-   *(int32_t *)cursor = cg()->encodeHelperBranchAndLink(glueRef, cursor, callNode);
+   // 'b glueRef' for jitInduceOSRAtCurrentPC, 'bl glueRef' otherwise
+   // we use "b" for induceOSR because we want the helper to think that it's been called from the mainline code and not from the snippet.
+   *(int32_t *)cursor = cg()->encodeHelperBranchAndLink(glueRef, cursor, callNode, glueRef->isOSRInductionHelper());
    cursor += 4;
 
    // Store the code cache RA
@@ -253,28 +263,33 @@ uint8_t *TR::ARM64CallSnippet::emitSnippetBody()
                                __FILE__, __LINE__, getNode());
    cursor += 8;
 
-   // Store the method pointer: it is NULL for unresolved
-   if (methodSymRef->isUnresolved() || comp->compileRelocatableCode())
+   //induceOSRAtCurrentPC is implemented in the VM, and it knows, by looking at the current PC, what method it needs to
+   //continue execution in interpreted mode. Therefore, it doesn't need the method pointer.
+   if (!glueRef->isOSRInductionHelper())
       {
-      *(intptrj_t *)cursor = 0;
-      if (comp->getOption(TR_EnableHCR))
+      // Store the method pointer: it is NULL for unresolved
+      if (methodSymRef->isUnresolved() || comp->compileRelocatableCode())
          {
-         cg()->jitAddPicToPatchOnClassRedefinition((void*)-1, (void *)cursor, true);
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, NULL,(uint8_t *)needsFullSizeRuntimeAssumption,
-                                   TR_HCR, cg()),
-                                     __FILE__, __LINE__, getNode());
+         *(intptrj_t *)cursor = 0;
+         if (comp->getOption(TR_EnableHCR))
+            {
+            cg()->jitAddPicToPatchOnClassRedefinition((void*)-1, (void *)cursor, true);
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation((uint8_t *)cursor, NULL,(uint8_t *)needsFullSizeRuntimeAssumption,
+                                    TR_HCR, cg()),
+                                       __FILE__, __LINE__, getNode());
+            }
          }
-      }
-   else
-      {
-      *(intptrj_t *)cursor = (intptrj_t)methodSymbol->getMethodAddress();
-      if (comp->getOption(TR_EnableHCR))
+      else
          {
-         cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);
-         cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)methodSymRef,
-                                                                                 getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                                                                                 TR_MethodObject, cg()),
-                                     __FILE__, __LINE__, callNode);
+         *(intptrj_t *)cursor = (intptrj_t)methodSymbol->getMethodAddress();
+         if (comp->getOption(TR_EnableHCR))
+            {
+            cg()->jitAddPicToPatchOnClassRedefinition((void *)methodSymbol->getMethodAddress(), (void *)cursor);
+            cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(cursor, (uint8_t *)methodSymRef,
+                                                                                    getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
+                                                                                    TR_MethodObject, cg()),
+                                       __FILE__, __LINE__, callNode);
+            }
          }
       }
    cursor += 8;
