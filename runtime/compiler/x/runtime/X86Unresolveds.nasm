@@ -1,4 +1,4 @@
-; Copyright (c) 2000, 2019 IBM Corp. and others
+; Copyright (c) 2000, 2020 IBM Corp. and others
 ;
 ; This program and the accompanying materials are made available under
 ; the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,7 +76,6 @@
       DECLARE_EXTERN jitResolveStaticFieldSetter
       DECLARE_EXTERN jitResolveField
       DECLARE_EXTERN jitResolveFieldSetter
-      ;1179
       DECLARE_EXTERN jitResolvedFieldIsVolatile
 
 %ifdef WINDOWS
@@ -116,20 +115,22 @@
 ;
       align 16
 interpreterUnresolvedStaticGlue:
-      pop         edi                                       ; RA in snippet (see [1] above)
+      pop         edi                                          ; RA in snippet (see [1] above)
 
-      push        dword  [edi+14]                           ; p3) cpIndex
-                                                            ; 14 = 3 (NOP) + 5 (CALL) + 2 (DW) + 4 (cpAddr)
-      push        dword  [edi+10]                           ; p2) cpAddr
-                                                            ; 10 = 3 (NOP) + 5 (CALL) + 2 (DW)
-      push        dword  [esp+8]                            ; p1) RA in mainline code
+      push        dword [edi+14]                               ; p3) cpIndex
+                                                               ; 14 = 3 (NOP) + 5 (CALL) + 2 (DW) + 4 (cpAddr)
+      push        dword [edi+10]                               ; p2) cpAddr
+                                                               ; 10 = 3 (NOP) + 5 (CALL) + 2 (DW)
+      push        dword [esp+8]                                ; p1) RA in mainline code
       call        jitResolveStaticMethod
 
       ; The interpreter may low-tag the result to avoid populating the constant pool -- whack it and record in CF.
       ;
       btr         eax, 0
+
       ; Load the resolved RAM method into EDI so that the caller doesn't have to re-run patched code
       xchg        edi, eax
+
       ; Skip code patching if the interpreter low-tag the RAM method
       jc          .skippatching
 
@@ -137,16 +138,16 @@ interpreterUnresolvedStaticGlue:
       ;
       sub         esp, 16
       movdqu      [esp], xmm0
-      push        001f0f00h                                 ; NOP
-      push        000000bfh                                 ; 1st byte of MOV edi, 0xaabbccdd
+      push        001f0f00h                                    ; NOP
+      push        000000bfh                                    ; 1st byte of MOV edi, 0xaabbccdd
       mov         dword [esp+1], edi
       movsd       xmm0, qword [esp]
       movsd       qword [eax-5], xmm0
       movdqu      xmm0, [esp+8]
-      add         esp, 24                                   ; 24 = 16 + 4*2 (for two pushes)
-      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
-                                                            ; jump to its target directly.
-   .skippatching:
+      add         esp, 24                                      ; 24 = 16 + 4*2 (for two pushes)
+      jmp         interpreterStaticAndSpecialGlue              ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
+                                                               ; jump to its target directly.
+.skippatching:
       test        byte [edi+J9TR_MethodPCStartOffset], J9TR_MethodNotCompiledBit
       jnz         j2iTransition
       jmp         dword [edi+J9TR_MethodPCStartOffset]
@@ -154,31 +155,32 @@ interpreterUnresolvedStaticGlue:
 
       align 16
 interpreterUnresolvedSpecialGlue:
-      pop         edi                                       ; RA in snippet (see [1] above)
+      pop         edi                                          ; RA in snippet (see [1] above)
 
-      push        dword  [edi+14]                           ; p3) cpIndex
-                                                            ; 14 = 3 (NOP) + 5 (CALL) + 2 (DW) + 4 (cpAddr)
-      push        dword  [edi+10]                           ; p2) cpAddr
-                                                            ; 10 = 3 (NOP) + 5 (CALL) + 2 (DW)
-      push        dword  [esp+8]                            ; p1) RA in mainline code
+      push        dword [edi+14]                               ; p3) cpIndex
+                                                               ; 14 = 3 (NOP) + 5 (CALL) + 2 (DW) + 4 (cpAddr)
+      push        dword [edi+10]                               ; p2) cpAddr
+                                                               ; 10 = 3 (NOP) + 5 (CALL) + 2 (DW)
+      push        dword [esp+8]                                ; p1) RA in mainline code
       call        jitResolveSpecialMethod
 
       ; Load the resolved RAM method into EDI so that the caller doesn't have to re-run patched code
+      ;
       xchg        edi, eax
 
       ; Patch the call that brought us here into a load of the resolved RAM method into EDI.
       ;
       sub         esp, 16
       movdqu      [esp], xmm0
-      push        001f0f00h                                 ; NOP
-      push        000000bfh                                 ; 1st byte of MOV edi, 0xaabbccdd
+      push        001f0f00h                                    ; NOP
+      push        000000bfh                                    ; 1st byte of MOV edi, 0xaabbccdd
       mov         dword [esp+1], edi
       movsd       xmm0, qword [esp]
       movsd       qword [eax-5], xmm0
       movdqu      xmm0, [esp+8]
-      add         esp, 24                                   ; 24 = 16 + 4*2 (for two pushes)
-      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
-                                                            ; jump to its target directly.
+      add         esp, 24                                      ; 24 = 16 + 4*2 (for two pushes)
+      jmp         interpreterStaticAndSpecialGlue              ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
+                                                               ; jump to its target directly.
 
 
 ; interpreterStaticAndSpecialGlue
@@ -209,52 +211,50 @@ interpreterStaticAndSpecialGlue:
       jmp         edi
 
 
-;1179
-    align 16
+      align 16
 checkReferenceVolatility:
-
       ; preserve register states
       ;
       push        ebp
-      push        ebx                                        ; Low dword of patch instruction in snippet
-      push        ecx                                        ; High dword of patch instruction in snippet
-      push        eax                                        ; The call instruction (edx:eax) that should have brought
-      push        edx                                        ; us to this snippet + the following 3 bytes.
-      push        esi                                        ; The RA in mainline code
+      push        ebx                                          ; Low dword of patch instruction in snippet
+      push        ecx                                          ; High dword of patch instruction in snippet
+      push        eax                                          ; The call instruction (edx:eax) that should have brought
+      push        edx                                          ; us to this snippet + the following 3 bytes.
+      push        esi                                          ; The RA in mainline code
 
       ; jitResolvedFieldIsVolatile requires us to restore ebp before calling it
       ;
-      mov         ebp, dword  [esp + 28]                     ; [esp + 4 + 24]
+      mov         ebp, dword [esp + 28]                        ; [esp + 4 + 24]
 
-      ; determine if the field is volatile.
+      ; Determine if the field is volatile.
       ;
-      mov         ecx, dword  [esp + 152]                    ; load the cpIndex [esp + 124 + 24 + 4]
+      mov         ecx, dword [esp + 152]                       ; load the cpIndex [esp + 124 + 24 + 4]
       mov         ebx, ecx
       mov         edx, ecx
-      and         ebx, eq_ResolveStatic                     ; get the static flag bit
+      and         ebx, eq_ResolveStatic                        ; get the static flag bit
       and         ecx, eq_CPIndexMask
 
-      ; push the parameters for the volatile check
+      ; Push the parameters for the volatile check
       ;
-      push        ebx                                       ; push isStatic
-      push        ecx                                       ; push cpIndex
-      push        dword  [esp + eq_MemFenceRAOffset32]      ; push cpAddr
+      push        ebx                                          ; push isStatic
+      push        ecx                                          ; push cpIndex
+      push        dword [esp + eq_MemFenceRAOffset32]          ; push cpAddr
 
-      ; call the volatile check
+      ; Call the volatile check
       ;
       xor         eax, eax
       CallHelperUseReg jitResolvedFieldIsVolatile, eax
 
-      ;clear ebp which will be used as to tell if we need to patch over a barrier in the mainline code.
+      ; Clear ebp which will be used as to tell if we need to patch over a barrier in the mainline code.
       ;
       xor         ebp, ebp
 
-      ; if this field is not volatile, patch the mfence with a nop
+      ; If this field is not volatile, patch the mfence with a nop
       ;
       test        eax, eax
       jnz         patchMainlineInstructionFromCache
 
-      ; check to see if we are patching the lower or upper half of a long store.
+      ; Check to see if we are patching the lower or upper half of a long store.
       ;
       test        edx, eq_UpperLongCheck
       jnz         patchUpperLong
@@ -262,74 +262,71 @@ checkReferenceVolatility:
       test        edx, eq_LowerLongCheck
       jnz         patchLowerLong
 
-      ; check to see if we are patching the lock cmpxchng8b of a long store.
+      ; Check to see if we are patching the lock cmpxchng8b of a long store.
       ;
-      mov         esi, dword  [esp + 144]                   ; find the instruction in the snippet cache.
-      mov         dx, word  [esi + 1]
-      cmp         dx, eq_MemFenceLCXHG                      ; check if the opcode is for a lock cmpxchng
-      je          patchCmpxchgForLongStore                  ; lock cmpxchng should appear ONLY for a long store
+      mov         esi, dword [esp + 144]                       ; find the instruction in the snippet cache.
+      mov         dx, word [esi + 1]
+      cmp         dx, eq_MemFenceLCXHG                         ; check if the opcode is for a lock cmpxchng
+      je          patchCmpxchgForLongStore                     ; lock cmpxchng should appear ONLY for a long store
 
-
-      ; we need to patch an mfence in the mainline code, set the flag
+      ; We need to patch an mfence in the mainline code, set the flag
       ;
       or          ebp, 001h
 
       jmp         patchMainlineInstructionFromCache
 
 patchBarrierWithNop:
+      mov         esi, dword [esp + eq_MemFenceRAOffset32]     ; esp + 128 = RA of mainline code (mfence instruction or nop)
 
-      mov         esi, dword  [esp + eq_MemFenceRAOffset32] ; esp + 128 = RA of mainline code (mfence instruction or nop)
-
-      ; patch the mfence following a non-long store.
-      ; get the instruction descriptor and find the length of the store instruction
+      ; Patch the mfence following a non-long store.
+      ; Get the instruction descriptor and find the length of the store instruction
       ;
-      mov         edx, dword  [esp + 144]                   ; get instruction descriptor address [esp + 116 + 24 + 4]
-      mov         bl, byte  [edx]                           ; get instruction length from instruction descriptor
-      and         ebx, 0f0h                                 ; mask size of instruction
-      shr         ebx, 4                                    ; shift size to last nibble of byte
-      lea         ebx, [ebx - eq_MemFenceCallLength32] ; get the delta between the RA in the mainline code and
-                                                            ; the end of the store instruction
-      lea         esi, [esi + ebx]                   ; find the end of the store instruction
+      mov         edx, dword [esp + 144]                       ; get instruction descriptor address [esp + 116 + 24 + 4]
+      mov         bl, byte [edx]                               ; get instruction length from instruction descriptor
+      and         ebx, 0f0h                                    ; mask size of instruction
+      shr         ebx, 4                                       ; shift size to last nibble of byte
+      lea         ebx, [ebx - eq_MemFenceCallLength32]         ; get the delta between the RA in the mainline code and
+                                                               ; the end of the store instruction
+      lea         esi, [esi + ebx]                             ; find the end of the store instruction
 
-      ; determine what kind of fence we are dealing with: mfence or LOCK OR [ESP] (on legacy systems)
+      ; Determine what kind of fence we are dealing with: mfence or LOCK OR [ESP] (on legacy systems)
       ;
-      mov         edx, dword  [esp + 28]
+      mov         edx, dword [esp + 28]
       mov         edx, [edx+J9TR_VMThread_javaVM]
       mov         edx, [edx+J9TR_JavaVMJitConfig]
       mov         edx, [edx+J9TR_JitConfig_runtimeFlags]
       test        edx, J9TR_runtimeFlags_PatchingFenceType
       jz          short doLOCKORESP
 
-      ; 3 byte memory fence
+      ; 3-byte memory fence
       ;
-      lea         esi, [esi + 3]                     ; find the 4 byte aligned address
-      and         esi, 0fffffffch                           ; should now have a 4 byte aligned instruction of the memfence
+      lea         esi, [esi + 3]                               ; find the 4 byte aligned address
+      and         esi, 0fffffffch                              ; should now have a 4 byte aligned instruction of the memfence
 
-      ;make sure we are patching over an mfence (avoids potential race condition with lock cmpxchg patching)
+      ; Make sure we are patching over an mfence (avoids potential race condition with lock cmpxchg patching)
       ;
-      cmp         word  [esi], 0ae0fh
+      cmp         word [esi], 0ae0fh
       jne         restoreRegs
 
-      mov         ecx, 001f0f00h                            ; load the 3 byte nop instruction plus padding
-      mov         cl, byte  [esi + 3]                       ; get the byte following the memory fence
-      ror         ecx, 8                                    ; realign and copied byte
-      mov         dword  [esi], ecx                         ; write the nop
+      mov         ecx, 001f0f00h                               ; load the 3 byte nop instruction plus padding
+      mov         cl, byte [esi + 3]                           ; get the byte following the memory fence
+      ror         ecx, 8                                       ; realign and copied byte
+      mov         dword [esi], ecx                             ; write the nop
       jmp         restoreRegs
 
       ; 5 byte lock or esp
       ;
 doLOCKORESP:
-
       ; ecx:ebx nop instruction
       ; edx:eax original instruction
       ;
-      mov         esi, dword  [esp + eq_MemFenceRAOffset32]         ; esp + 128 = RA of mainline code (mfence instruction or nop)
-      lea         esi, [esi + ebx]                           ; find the end of the store instruction
-      lea         esi, [esi + 7]                             ; find the 8 byte aligned address of the lock or [esp]
+      mov         esi, dword [esp + eq_MemFenceRAOffset32]     ; esp + 128 = RA of mainline code (mfence instruction or nop)
+      lea         esi, [esi + ebx]                             ; find the end of the store instruction
+      lea         esi, [esi + 7]                               ; find the 8 byte aligned address of the lock or [esp]
       and         esi, 0fffffff8h
-      mov         eax, dword  [esi]                                 ; construct the edx:eax pair (original instruction)
-      mov         edx, dword  [esi + 4]
-      mov         ebx, 00441f0fh                                    ; construct the ecx:ebx pair (nop and trailing bytes)
+      mov         eax, dword [esi]                             ; construct the edx:eax pair (original instruction)
+      mov         edx, dword [esi + 4]
+      mov         ebx, 00441f0fh                               ; construct the ecx:ebx pair (nop and trailing bytes)
       mov         ecx, edx
       mov         cl, 00h
 
@@ -337,51 +334,39 @@ doLOCKORESP:
 
       jmp restoreRegs
 
-
-
       ; Loading a long in 32 bit is done with a lock cmpxchng by default.
       ; We need to switch the op bits of the instructions that performs loads for the lock cmpxchng setup
       ; to stores. We also need to patch over the lock cmpxchg with nops.
       ;
 patchLowerLong:
-
-      mov         esi, dword  [esp + 144]
-      mov         ebx, dword  [esi + 1]
-      and         ebx, 0fffffffdh                                   ; change the mov reg mem opcode (8b) into a mov mem reg opcode (89)
-      or          ebx, 000001800h                                   ; change EAX to EBX
-      mov         ecx, dword  [esp + 12]
+      mov         esi, dword [esp + 144]
+      mov         ebx, dword [esi + 1]
+      and         ebx, 0fffffffdh                              ; change the mov reg mem opcode (8b) into a mov mem reg opcode (89)
+      or          ebx, 000001800h                              ; change EAX to EBX
+      mov         ecx, dword [esp + 12]
       jmp         patchMainlineInstruction
-
 
 patchUpperLong:
-
-      mov         esi, dword  [esp + 144]
-      mov         ebx, dword  [esi + 1]
-      and         ebx, 0ffffeffdh                                    ; change the mov reg mem opcode (8b) into a mov mem reg opcode (89)
-      or          ebx, 000000800h                                    ; change EDX to ECX
-      mov         ecx, dword  [esp + 12]
+      mov         esi, dword [esp + 144]
+      mov         ebx, dword [esi + 1]
+      and         ebx, 0ffffeffdh                              ; change the mov reg mem opcode (8b) into a mov mem reg opcode (89)
+      or          ebx, 000000800h                              ; change EDX to ECX
+      mov         ecx, dword [esp + 12]
       jmp         patchMainlineInstruction
 
-
 patchCmpxchgForLongStore:
-
-      mov         ebx, 090666666h                                    ; setup the ecx:ebx pair (nop instruction)
+      mov         ebx, 090666666h                              ; setup the ecx:ebx pair (nop instruction)
       mov         ecx, 090666666h
       jmp         patchMainlineInstruction
 
-
 patchMainlineInstructionFromCache:
-
-      mov         ecx, dword  [esp + 12]                            ; Load low dword of patch instruction in snippet BEFORE volatile resolution
-      mov         ebx, dword  [esp + 16]                            ; Load high dword of patch instruction in snippet BEFORE volatile resolution
-
+      mov         ecx, dword [esp + 12]                        ; Load low dword of patch instruction in snippet BEFORE volatile resolution
+      mov         ebx, dword [esp + 16]                        ; Load high dword of patch instruction in snippet BEFORE volatile resolution
 
 patchMainlineInstruction:
-
-
-      mov         esi, dword  [esp]                                 ; Restore RA in mainline code.
-      mov         edx, dword  [esp + 4]                             ; Restore the call instruction (edx:eax) that should have brought
-      mov         eax, dword  [esp + 8]                             ; us to this snippet + the following 3 bytes.
+      mov         esi, dword [esp]                             ; Restore RA in mainline code.
+      mov         edx, dword [esp + 4]                         ; Restore the call instruction (edx:eax) that should have brought
+      mov         eax, dword [esp + 8]                         ; us to this snippet + the following 3 bytes.
 
       lock cmpxchg8b [esi - 5]
 
@@ -389,15 +374,13 @@ patchMainlineInstruction:
       jnz         patchBarrierWithNop
 
 restoreRegs:
-
       pop         esi
       pop         edx
       pop         eax
       pop         ecx
       pop         ebx
       pop         ebp
-
-ret
+      ret
 
 
 ; --------------------------------------------------------------------------------
@@ -406,18 +389,17 @@ ret
 ;
 ; --------------------------------------------------------------------------------
 
-
 %macro DataResolvePrologue 0
       ; local: doneFPRpreservation, preserveX87loop
 
-      pushfd                        ; save flags , addr=esp+28
-      push        ebp               ; save register, addr=esp+24
-      push        esi               ; save register, addr=esp+20
-      push        edi               ; save register, addr=esp+16
-      push        edx               ; save register, addr=esp+12
-      push        ecx               ; save register, addr=esp+8
-      push        ebx               ; save register, addr=esp+4
-      push        eax               ; save register, addr=esp+0
+      pushfd                                                   ; save flags , addr=esp+28
+      push        ebp                                          ; save register, addr=esp+24
+      push        esi                                          ; save register, addr=esp+20
+      push        edi                                          ; save register, addr=esp+16
+      push        edx                                          ; save register, addr=esp+12
+      push        ecx                                          ; save register, addr=esp+8
+      push        ebx                                          ; save register, addr=esp+4
+      push        eax                                          ; save register, addr=esp+0
 
 %ifdef WINDOWS
       ; Restore the VMThread into ebp
@@ -427,78 +409,78 @@ ret
       push        eax
       call        j9thread_tls_get
       add         esp, 8
-      mov         ebp, dword  [eax+8]       ; get J9JavaVM from OMR_VMThread in tls
+      mov         ebp, dword [eax+8]                           ; get J9JavaVM from OMR_VMThread in tls
 %endif
 
-      mov         esi,          dword  [esp+32]      ; esi = return address in snippet
-      mov         eax,          dword  [esp+36]      ; eax = cpAddr
-      mov         ecx,          dword  [esp+40]      ; ecx = cpIndex
-      mov         edx,          ecx                  ; edx = cpIndex
+      mov         esi, dword [esp+32]                          ; esi = return address in snippet
+      mov         eax, dword [esp+36]                          ; eax = cpAddr
+      mov         ecx, dword [esp+40]                          ; ecx = cpIndex
+      mov         edx, ecx                                     ; edx = cpIndex
 
-      sub         esp,          J9PreservedFPRStackSize     ; reserve stack space for all possible FPRs
-      shr         edx,          24
-      and         edx,          01fh                        ; isolate number of live FPRs across this resolution
-      jz          short .doneFPRpreservation                ; none, so were done
+      sub         esp, J9PreservedFPRStackSize                 ; reserve stack space for all possible FPRs
+      shr         edx, 24
+      and         edx, 01fh                                    ; isolate number of live FPRs across this resolution
+      jz          short .doneFPRpreservation                   ; none, so were done
 
-      test        edx, 010h                                 ; test SSE bit
+      test        edx, 010h                                    ; test SSE bit
       jz          short .preserveX87loop
-      movq        qword  [esp], xmm0
-      movq        qword  [esp+8], xmm1
-      movq        qword  [esp+16], xmm2
-      movq        qword  [esp+24], xmm3
-      movq        qword  [esp+32], xmm4
-      movq        qword  [esp+40], xmm5
-      movq        qword  [esp+48], xmm6
-      movq        qword  [esp+56], xmm7
+      movq        qword [esp], xmm0
+      movq        qword [esp+8], xmm1
+      movq        qword [esp+16], xmm2
+      movq        qword [esp+24], xmm3
+      movq        qword [esp+32], xmm4
+      movq        qword [esp+40], xmm5
+      movq        qword [esp+48], xmm6
+      movq        qword [esp+56], xmm7
       jmp         short .doneFPRpreservation
 
 .preserveX87loop:
       dec         edx
       lea         edi, [edx+edx*4]
-      fstp        tword  [esp+edi*2]                        ; store and pop from the FP stack
+      fstp        tword [esp+edi*2]                            ; store and pop from the FP stack
       jnz         short .preserveX87loop
 .doneFPRpreservation:
 
 %endmacro
 
 
-%macro DispatchUnresolvedDataHelper 1 ; arg: helper
-      and         ecx, 1ffffh                               ; isolate the cpIndex
-      push        dword  [esp+124]                          ; p) RA in mainline code
-      push        ecx                                       ; p) cpIndex
-      push        eax                                       ; p) cpAddr
-      CallHelperUseReg %1,eax                               ; helper
+%macro DispatchUnresolvedDataHelper 1                          ; arg: helper
+      and         ecx, 1ffffh                                  ; isolate the cpIndex
+      push        dword [esp+124]                              ; p) RA in mainline code
+      push        ecx                                          ; p) cpIndex
+      push        eax                                          ; p) cpAddr
+      CallHelperUseReg %1,eax                                  ; helper
 %endmacro
 
 
-%macro FPRDataResolveEpilogue 3 ; args: cpScratchReg, scratchReg, scratchReg2
+%macro FPRDataResolveEpilogue 3                                ; args: cpScratchReg, scratchReg, scratchReg2
       ; local restoreX87stack, restoreX87loop, doneFPRrestoration
 
-      movzx       %1, byte [esp+123]                        ; &cpScratchReg ; load number of FPRs live across this resolution
-      and         %1, 01fh                                  ; isolate number of live FPRs across this resolution
+      movzx       %1, byte [esp+123]                           ; &cpScratchReg ; load number of FPRs live across this resolution
+      and         %1, 01fh                                     ; isolate number of live FPRs across this resolution
       test        %1, %1
-      jz          short .doneFPRrestoration                 ; none, so leave
+      jz          short .doneFPRrestoration                    ; none, so leave
 
-      test        %1, 010h                                  ; test SSE bit
+      test        %1, 010h                                     ; test SSE bit
       jz          short .restoreX87stack
-      movq        xmm0, qword  [esp]
-      movq        xmm1, qword  [esp +8]
-      movq        xmm2, qword  [esp +16]
-      movq        xmm3, qword  [esp +24]
-      movq        xmm4, qword  [esp +32]
-      movq        xmm5, qword  [esp +40]
-      movq        xmm6, qword  [esp +48]
-      movq        xmm7, qword  [esp +56]
+      movq        xmm0, qword [esp]
+      movq        xmm1, qword [esp +8]
+      movq        xmm2, qword [esp +16]
+      movq        xmm3, qword [esp +24]
+      movq        xmm4, qword [esp +32]
+      movq        xmm5, qword [esp +40]
+      movq        xmm6, qword [esp +48]
+      movq        xmm7, qword [esp +56]
       jmp         short .doneFPRrestoration
 
 .restoreX87stack:
-      lea         %2, [%1 + %1 * 4]                         ;&scratchReg, [&cpScratchReg+&cpScratchReg*4]
-      lea         %3, [esp + %2*2 - 10]                     ;&scratchReg2, [esp+&scratchReg*2-10] ; first FPR preserved
-      neg         %1                                        ;&cpScratchReg
+      lea         %2, [%1 + %1 * 4]                            ;&scratchReg, [&cpScratchReg+&cpScratchReg*4]
+      lea         %3, [esp + %2*2 - 10]                        ;&scratchReg2, [esp+&scratchReg*2-10] ; first FPR preserved
+      neg         %1                                           ;&cpScratchReg
 .restoreX87loop:
-      inc         %1                                        ;&cpScratchReg
-      lea         %2, [%1 + %1 * 4]                         ;&scratchReg, [&cpScratchReg+&cpScratchReg*4]
-      fld         tword [%3 + %2 * 2]                       ;[&scratchReg2+&scratchReg*2] ; restore FP stack register
+      inc         %1                                           ;&cpScratchReg
+      lea         %2, [%1 + %1 * 4]                            ;&scratchReg, [&cpScratchReg+&cpScratchReg*4]
+      fld         tword [%3 + %2 * 2]                          ;[&scratchReg2+&scratchReg*2] ; restore FP stack register
       jnz         short .restoreX87loop
 .doneFPRrestoration:
       add         esp, J9PreservedFPRStackSize
@@ -559,106 +541,85 @@ ret
 interpreterUnresolvedStringGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveString
-; int 3
       jmp commonUnresolvedCode
-retn
+      retn
 
       align 16
 interpreterUnresolvedConstantDynamicGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveConstantDynamic
-;      int 3
       jmp commonUnresolvedCode
-retn
+      retn
 
       align 16
 interpreterUnresolvedMethodTypeGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveMethodType
-; int 3
       jmp commonUnresolvedCode
-retn
-
+      retn
 
       align 16
 interpreterUnresolvedMethodHandleGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveMethodHandle
-; int 3
       jmp commonUnresolvedCode
-retn
-
+      retn
 
       align 16
 interpreterUnresolvedCallSiteTableEntryGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveInvokeDynamic
-; int 3
       jmp commonUnresolvedCode
-retn
-
+      retn
 
       align 16
 interpreterUnresolvedMethodTypeTableEntryGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveHandleMethod
-; int 3
       jmp commonUnresolvedCode
-retn
-
+      retn
 
       align 16
 interpreterUnresolvedClassGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveClass
-; int 3
       jmp commonUnresolvedCode
-retn
-
+      retn
 
       align 16
 interpreterUnresolvedClassFromStaticFieldGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveClassFromStaticField
-; int 3
       jmp commonUnresolvedCode
-retn
-
+      retn
 
       align 16
 interpreterUnresolvedStaticFieldGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveStaticField
-; int 3
       jmp commonUnresolvedCode
-retn
-
+      retn
 
       align 16
 interpreterUnresolvedStaticFieldSetterGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveStaticFieldSetter
-; int 3
       jmp commonUnresolvedCode
-retn
+      retn
 
       align 16
 interpreterUnresolvedFieldGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveField
-; int 3
       jmp commonUnresolvedCode
-retn
-
+      retn
 
       align 16
 interpreterUnresolvedFieldSetterGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveFieldSetter
-; int 3
 
 commonUnresolvedCode:
-
       ; STACK SHAPE:
       ;
       ;          esp+128 : RA in mainline code
@@ -694,10 +655,8 @@ commonUnresolvedCode:
       ;                |
       ;
       ;            esp+0 : vmThread address
-
-
-      push        ebp                           ; keep the address of the vmThread at the top of the stack
-      mov         ecx, dword  [esp+124]         ; ecx = full cpIndex dword
+      push        ebp                                          ; keep the address of the vmThread at the top of the stack
+      mov         ecx, dword [esp+124]                         ; ecx = full cpIndex dword
 
       ; Check for the special case of a data resolution without code patching.
       ; This happens when you have an explicit NULLCHK guarding a data resolution and
@@ -715,7 +674,7 @@ commonUnresolvedCode:
       test        ecx, eq_ResolveWithoutPatchingSnippet
       jnz         disp32AlreadyPatched
 
-      mov         edx, dword  [esp+116]         ; edx = EA of header byte in snippet
+      mov         edx, dword [esp+116]                         ; edx = EA of header byte in snippet
 
       ; Patch the cached instruction bytes in the snippet. The disp32 field must lie within
       ; the first 8 bytes of the instruction. Valid default values for the disp32 field
@@ -724,20 +683,19 @@ commonUnresolvedCode:
       ; Multiple threads can be executing this code, but all threads must be patching the
       ; same value.
       ;
-      movzx       edx, byte  [edx]              ; header byte
-      and         edx, 0fh                      ; isolate disp32 offset in first nibble
-      mov         edi, eax                      ; edi = resolve result
-      and         edi, 0fffffffeh               ; whack any low tagging of resolve result
-      test        ecx, eq_HighWordOfLongPair    ; is this the high word of a long pair?
+      movzx       edx, byte [edx]                              ; header byte
+      and         edx, 0fh                                     ; isolate disp32 offset in first nibble
+      mov         edi, eax                                     ; edi = resolve result
+      and         edi, 0fffffffeh                              ; whack any low tagging of resolve result
+      test        ecx, eq_HighWordOfLongPair                   ; is this the high word of a long pair?
       jz          short patchDisp32
-      add         edi, 4                        ; yes, offset address by 4 bytes
+      add         edi, 4                                       ; yes, offset address by 4 bytes
 
 patchDisp32:
-      mov         dword  [esi+edx+1], edi       ; patch the disp32 field in the snippet
-      call        memoryFence                  ; make sure all stores crossing a line are issued
+      mov         dword [esi+edx+1], edi                       ; patch the disp32 field in the snippet
+      call        memoryFence                                  ; make sure all stores crossing a line are issued
 
 disp32AlreadyPatched:
-
       ; For static resolves if the address from the resolution helper is low tagged then
       ; this means that class initialization has not completed yet and we should not
       ; be patching the mainline code (in case the remaining initialization were to fail).
@@ -745,97 +703,90 @@ disp32AlreadyPatched:
       ; We could probably get away with just testing whether the resolve result was low-tagged
       ; in order to do this.
       ;
-      mov         ebp, dword  [esp+116]         ; ebp = EA of header byte in snippet
-      test        ecx, eq_ResolveStatic         ; static resolve?
+      mov         ebp, dword [esp+116]                         ; ebp = EA of header byte in snippet
+      test        ecx, eq_ResolveStatic                        ; static resolve?
       jz          short patchMainlineCode
-      test        eax, 1                        ; low-tagged resolution result (clinit not finished)?
+      test        eax, 1                                       ; low-tagged resolution result (clinit not finished)?
       jnz         executeSnippetCode
 
 patchMainlineCode:
-
       ; Construct the call instruction in edx:eax that should have brought
       ; us to this snippet + the following 3 bytes.
       ;
-      lea         eax, [ebp-12]                 ; assume short cpIndex push
+      lea         eax, [ebp-12]                                ; assume short cpIndex push
       test        ecx, eq_WideCPIndexPush
       jz          short shortCPIndexPush
-      lea         eax, [eax-3]                  ; account for wide cpIndex push
+      lea         eax, [eax-3]                                 ; account for wide cpIndex push
 
 shortCPIndexPush:
-      mov         esi, dword  [esp+128]         ; edx = RA in mainline
-      mov         edx, dword  [esi-1]           ; edx = 3 bytes after the call to snippet + high byte of disp32
-      sub         eax, esi                      ; calculate disp32
+      mov         esi, dword [esp+128]                         ; edx = RA in mainline
+      mov         edx, dword [esi-1]                           ; edx = 3 bytes after the call to snippet + high byte of disp32
+      sub         eax, esi                                     ; calculate disp32
       rol         eax, 8
-      mov         dl, al                        ; Copy high byte of calculated disp32 to expected word
-      mov         al, 0e8h                      ; add CALL opcode
+      mov         dl, al                                       ; Copy high byte of calculated disp32 to expected word
+      mov         al, 0e8h                                     ; add CALL opcode
 
-      test        ecx, eq_ResolveStatic         ; static resolve?
+      test        ecx, eq_ResolveStatic                        ; static resolve?
       jnz         patchUnresolvedStatic
 
 loadTargetInstruction:
-
       ; Load the patched data reference instruction in ecx:ebx.
       ;
-      mov         ebx, dword  [ebp+1]           ; low dword of patch instruction in snippet
-      mov         ecx, dword  [ebp+5]           ; high dword of patch instruction in snippet
+      mov         ebx, dword [ebp+1]                           ; low dword of patch instruction in snippet
+      mov         ecx, dword [ebp+5]                           ; high dword of patch instruction in snippet
 
 mergePatchUnresolvedDataReference:
-
-; determine if nop patching might be necessary
-; if a volatile check is necessary, code patching will occur within the check.
-;
-      test        dword  [esp+124], eq_VolatilityCheck ; get the cpIndex
+      ; Determine if nop patching might be necessary
+      ; If a volatile check is necessary, code patching will occur within the check.
+      ;
+      test        dword [esp+124], eq_VolatilityCheck          ; get the cpIndex
       jz          short noVolatileCheck
 
       call        checkReferenceVolatility
       jmp         doneDataResolution
 
 noVolatileCheck:
-
       ; Attempt to patch the code.
       ;
-
       lock cmpxchg8b [esi-5]
 
 doneDataResolution:
-
-      pop         eax                           ; remove the vmThread address from the top of the stack
+      pop         eax                                          ; remove the vmThread address from the top of the stack
       FPRDataResolveEpilogue ecx, edi, edx
 
-      pop         eax                           ; restore
-      pop         ebx                           ; restore
-      pop         ecx                           ; restore
-      pop         edx                           ; restore
-      pop         edi                           ; restore
-      pop         esi                           ; restore
-      pop         ebp                           ; restore
-      add         dword  [esp+16], -5           ; re-run patched instruction
-      popfd                                     ; restore
-      lea         esp, [esp+12]                 ; skip over cpAddr, cpIndex, RA in snippet
+      pop         eax                                          ; restore
+      pop         ebx                                          ; restore
+      pop         ecx                                          ; restore
+      pop         edx                                          ; restore
+      pop         edi                                          ; restore
+      pop         esi                                          ; restore
+      pop         ebp                                          ; restore
+      add         dword [esp+16], -5                           ; re-run patched instruction
+      popfd                                                    ; restore
+      lea         esp, [esp+12]                                ; skip over cpAddr, cpIndex, RA in snippet
       ret
 
 doneDataResolutionAndNoRerun:
-      pop         eax                                   ; remove the vmThread address from the top of the stack
+      pop         eax                                          ; remove the vmThread address from the top of the stack
       FPRDataResolveEpilogue ecx, edi, edx
 
-      pop         eax                           ; restore
-      pop         ebx                           ; restore
-      pop         ecx                           ; restore
-      pop         edx                           ; restore
-      pop         edi                           ; restore
-      pop         esi                           ; restore
-      pop         ebp                           ; restore
-      popfd                                     ; restore
-      lea         esp, [esp+12]                 ; skip over cpAddr, cpIndex, RA in snippet
+      pop         eax                                          ; restore
+      pop         ebx                                          ; restore
+      pop         ecx                                          ; restore
+      pop         edx                                          ; restore
+      pop         edi                                          ; restore
+      pop         esi                                          ; restore
+      pop         ebp                                          ; restore
+      popfd                                                    ; restore
+      lea         esp, [esp+12]                                ; skip over cpAddr, cpIndex, RA in snippet
       ret
 
 patchUnresolvedStatic:
-
       ; For unresolved statics the RET instruction may need to be overwritten
       ; if the static instruction length < 8.
       ;
-      movzx       ecx, byte  [ebp]              ; header byte
-      cmp         ecx, 080h                     ; length < 8?
+      movzx       ecx, byte [ebp]                              ; header byte
+      cmp         ecx, 080h                                    ; length < 8?
       jge         loadTargetInstruction
 
       ; The RET instruction must be inserted at least 4 bytes past the start
@@ -843,15 +794,15 @@ patchUnresolvedStatic:
       ; unresolved static will have a disp32 field. Since this is true, then
       ; only the instruction data in ECX needs to be patched.
       ;
-      and         ecx, 030h                     ; isolate dword offset
-      shr         ecx, 1                        ; number of bits to rotate by
+      and         ecx, 030h                                    ; isolate dword offset
+      shr         ecx, 1                                       ; number of bits to rotate by
 
-      mov         ebx, dword  [ebp+5]           ; high dword of patch instruction in snippet
+      mov         ebx, dword [ebp+5]                           ; high dword of patch instruction in snippet
       ror         ebx, cl
-      mov         bl, byte  [ebp+9]             ; replace RET instruction by cached original value
+      mov         bl, byte [ebp+9]                             ; replace RET instruction by cached original value
       rol         ebx, cl
 
-      mov         ecx, dword  [ebp+1]           ; low dword of patch instruction in snippet
+      mov         ecx, dword [ebp+1]                           ; low dword of patch instruction in snippet
       xchg        ebx, ecx
       jmp         mergePatchUnresolvedDataReference
 
@@ -860,30 +811,26 @@ executeSnippetCode:
       ; by a 1-byte RET to route control to after the data reference instruction in the
       ; mainline code.
       ;
-      pop         eax                           ; remove the vmThread address from the top of the stack
+      pop         eax                                          ; remove the vmThread address from the top of the stack
       FPRDataResolveEpilogue ecx, edi, edx
 
-      movzx       ecx, byte  [ebp]              ; header byte in snippet
-      and         ecx, 0f0h                     ; mask off static instruction length
+      movzx       ecx, byte [ebp]                              ; header byte in snippet
+      and         ecx, 0f0h                                    ; mask off static instruction length
       shr         ecx, 4
-      sub         ecx, 5                        ; account for length of CALL instruction
-      add         dword  [esp+44], ecx          ; adjust RA in mainline code to point to the
-                                                ; instruction following the patched instruction
+      sub         ecx, 5                                       ; account for length of CALL instruction
+      add         dword [esp+44], ecx                          ; adjust RA in mainline code to point to the
+                                                               ; instruction following the patched instruction
 
-      pop         eax                           ; restore
-      pop         ebx                           ; restore
-      pop         ecx                           ; restore
-      pop         edx                           ; restore
-      pop         edi                           ; restore
-      pop         esi                           ; restore
-      pop         ebp                           ; restore
-      add         dword  [esp+4], 1             ; adjust RA in snippet to patched instruction in snippet
-      popfd                                     ; restore
-      ret 8                                     ; execute patched instruction in snippet
-
-retn
-
-
+      pop         eax                                          ; restore
+      pop         ebx                                          ; restore
+      pop         ecx                                          ; restore
+      pop         edx                                          ; restore
+      pop         edi                                          ; restore
+      pop         esi                                          ; restore
+      pop         ebp                                          ; restore
+      add         dword [esp+4], 1                             ; adjust RA in snippet to patched instruction in snippet
+      popfd                                                    ; restore
+      ret 8                                                    ; execute patched instruction in snippet
 
 MTUnresolvedInt32Load:
 retn
@@ -923,13 +870,10 @@ retn
 ;
 ; --------------------------------------------------------------------------------
 
-
       %include "jilconsts.inc"
       %include "X86PicBuilder.inc"
 
-
-
-segment .text
+      segment .text
 
       DECLARE_GLOBAL interpreterUnresolvedStaticGlue
       DECLARE_GLOBAL interpreterUnresolvedSpecialGlue
@@ -976,7 +920,6 @@ segment .text
       DECLARE_EXTERN jitResolveStaticFieldSetter
       DECLARE_EXTERN jitResolveField
       DECLARE_EXTERN jitResolveFieldSetter
-      ;1179
       DECLARE_EXTERN jitResolvedFieldIsVolatile
 
       DECLARE_EXTERN mcc_callPointPatching_unwrapper
@@ -1013,35 +956,39 @@ segment .text
 ;
       align 16
 interpreterUnresolvedStaticGlue:
-      pop         rdi                                       ; RA in snippet (see [2] above)
+      pop         rdi                                          ; RA in snippet (see [2] above)
 
       ; Attempt to resolve static method.
       ;
-      mov         rax, qword [rsp]                          ; p1) rax = RA in mainline code
-      mov         rsi, qword [rdi+12]                       ; p2) rsi = cpAddr
-                                                            ;        12 = 5 + 5 (call update) + 2 (DW)
-      mov         edx, dword [rdi+20]                       ; p3) rdx = cpIndex
-                                                            ;        20 = 5 + 5 (call update) + 2 (DW) + 8 (cpAddr)
+      mov         rax, qword [rsp]                             ; p1) rax = RA in mainline code
+      mov         rsi, qword [rdi+12]                          ; p2) rsi = cpAddr
+                                                               ;        12 = 5 + 5 (call update) + 2 (DW)
+      mov         edx, dword [rdi+20]                          ; p3) rdx = cpIndex
+                                                               ;        20 = 5 + 5 (call update) + 2 (DW) + 8 (cpAddr)
       call        jitResolveStaticMethod
-      mov         rsi, rdi                                  ; Save the return address
+      mov         rsi, rdi                                     ; Save the return address
 
-      ; The interpreter may low-tag the result to avoid populating the constant pool -- whack it and record in CF. 
+      ; The interpreter may low-tag the result to avoid populating the constant pool -- whack it and record in CF.
       ;
       btr         rax, 0
+
       ; Load the resolved RAM method into RDI so that the caller doesn't have to re-run patched code
+      ;
       mov         rdi, rax
-      ; Skip code patching if the interpreter low-tag the RAM method 
+
+      ; Skip code patching if the interpreter low-tag the RAM method
+      ;
       jc          .skippatching
 
       ; Patch the call that brought us here into a load of the resolved RAM method into RDI.
       ;
       shl         rax, 16
-      xor         rax, 0bf48h                               ; REX+MOV bytes
-      mov         qword [rsi-5], rax                        ; Replaced current call with "mov rdi, 0x0000aabbccddeeff"
-      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
-                                                            ; jump to its target directly.
-   .skippatching:
-      mov         rcx, qword [rdi+J9TR_MethodPCStartOffset] ; rcx = interpreter entry point of the compiled method
+      xor         rax, 0bf48h                                  ; REX+MOV bytes
+      mov         qword [rsi-5], rax                           ; Replaced current call with "mov rdi, 0x0000aabbccddeeff"
+      jmp         interpreterStaticAndSpecialGlue              ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
+                                                               ; jump to its target directly.
+.skippatching:
+      mov         rcx, qword [rdi+J9TR_MethodPCStartOffset]    ; rcx = interpreter entry point of the compiled method
       test        cl, J9TR_MethodNotCompiledBit
       jnz         j2iTransition
       jmp         rcx
@@ -1049,28 +996,29 @@ interpreterUnresolvedStaticGlue:
 
       align 16
 interpreterUnresolvedSpecialGlue:
-      pop         rdi                                       ; RA in snippet
+      pop         rdi                                          ; RA in snippet
 
       ; Attempt to resolve special method.
       ;
-      mov         rax, qword [rsp]                          ; p1) rax = RA in mainline code
-      mov         rsi, qword [rdi+12]                       ; p2) rsi = cpAddr
-                                                            ;        12 = 5 + 5 (call update) + 2 (DW)
-      mov         edx, dword [rdi+20]                       ; p3) rdx = cpIndex
-                                                            ;        20 = 5 + 5 (call update) + 2 (DW) + 8 (cpAddr)
+      mov         rax, qword [rsp]                             ; p1) rax = RA in mainline code
+      mov         rsi, qword [rdi+12]                          ; p2) rsi = cpAddr
+                                                               ;        12 = 5 + 5 (call update) + 2 (DW)
+      mov         edx, dword [rdi+20]                          ; p3) rdx = cpIndex
+                                                               ;        20 = 5 + 5 (call update) + 2 (DW) + 8 (cpAddr)
       call        jitResolveSpecialMethod
-      mov         rsi, rdi                                  ; Save the return address
+      mov         rsi, rdi                                     ; Save the return address
 
       ; Load the resolved RAM method into RDI so that the caller doesn't have to re-run patched code
+      ;
       mov         rdi, rax
 
       ; Patch the call that brought us here into a load of the resolved RAM method into RDI.
       ;
       shl         rax, 16
-      xor         rax, 0bf48h                               ; REX+MOV bytes
-      mov         qword [rsi-5], rax                        ; Replaced current call with "mov rdi, 0x0000aabbccddeeff"
-      jmp         interpreterStaticAndSpecialGlue           ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
-                                                            ; jump to its target directly.
+      xor         rax, 0bf48h                                  ; REX+MOV bytes
+      mov         qword [rsi-5], rax                           ; Replaced current call with "mov rdi, 0x0000aabbccddeeff"
+      jmp         interpreterStaticAndSpecialGlue              ; The next instruction is always "jmp interpreterStaticAndSpecialGlue",
+                                                               ; jump to its target directly.
 
 
 ; interpreterStaticAndSpecialGlue
@@ -1091,24 +1039,24 @@ interpreterUnresolvedSpecialGlue:
 ;
       align 16
 interpreterStaticAndSpecialGlue:
-      mov         rcx, qword [rdi + J9TR_MethodPCStartOffset]     ; rcx = interpreter entry point of the compiled method
+      mov         rcx, qword [rdi + J9TR_MethodPCStartOffset]  ; rcx = interpreter entry point of the compiled method
       test        cl, J9TR_MethodNotCompiledBit
       jnz         j2iTransition
 
-      mov         rsi, qword [rsp]                                ; rsi = RA in mainline code
+      mov         rsi, qword [rsp]                             ; rsi = RA in mainline code
       sub         rsi, 5
-      push        0                                               ; descriptor+24: 0
-      push        rcx                                             ; descriptor+16: compiled method PC
-      push        rsi                                             ; descriptor+8: call site
-      push        rdi                                             ; descriptor+0: RAM method
-      MoveHelper  rax, mcc_callPointPatching_unwrapper            ; p1) rax = helper
-      lea         rsi, [rsp]                                      ; p2) rsi = EA of descriptor
-      lea         rdx, [rsp]                                      ; p3) rdx = EA of return value
+      push        0                                            ; descriptor+24: 0
+      push        rcx                                          ; descriptor+16: compiled method PC
+      push        rsi                                          ; descriptor+8: call site
+      push        rdi                                          ; descriptor+0: RAM method
+      MoveHelper  rax, mcc_callPointPatching_unwrapper         ; p1) rax = helper
+      lea         rsi, [rsp]                                   ; p2) rsi = EA of descriptor
+      lea         rdx, [rsp]                                   ; p3) rdx = EA of return value
       call        jitCallCFunction
-      add         rsp, 32                                         ; tear down descriptor
-      jmp         rcx                                             ; Dispatch compiled method through the interpreted entry
-                                                                  ; point. This is because the linkage registers may not be
-                                                                  ; set up any longer.
+      add         rsp, 32                                      ; tear down descriptor
+      jmp         rcx                                          ; Dispatch compiled method through the interpreted entry
+                                                               ; point. This is because the linkage registers may not be
+                                                               ; set up any longer.
 
 
 ; --------------------------------------------------------------------------------
@@ -1118,71 +1066,71 @@ interpreterStaticAndSpecialGlue:
 ; --------------------------------------------------------------------------------
 
 %macro DataResolvePrologue 0
-      pushfq                              ; rsp+256 = flags
-      push        r15                     ; rsp+248
-      push        r14                     ; rsp+240
-      push        r13                     ; rsp+232
-      push        r12                     ; rsp+224
-      push        r11                     ; rsp+216
-      push        r10                     ; rsp+208
-      push        r9                      ; rsp+200
-      push        r8                      ; rsp+192
-      push        rsp                     ; rsp+184 -- Ugh
-      push        rbp                     ; rsp+176
-      push        rsi                     ; rsp+168
-      push        rdi                     ; rsp+160
-      push        rdx                     ; rsp+152
-      push        rcx                     ; rsp+144
-      push        rbx                     ; rsp+136
-      push        rax                     ; rsp+128
+      pushfq                                                   ; rsp+256 = flags
+      push        r15                                          ; rsp+248
+      push        r14                                          ; rsp+240
+      push        r13                                          ; rsp+232
+      push        r12                                          ; rsp+224
+      push        r11                                          ; rsp+216
+      push        r10                                          ; rsp+208
+      push        r9                                           ; rsp+200
+      push        r8                                           ; rsp+192
+      push        rsp                                          ; rsp+184 -- Ugh
+      push        rbp                                          ; rsp+176
+      push        rsi                                          ; rsp+168
+      push        rdi                                          ; rsp+160
+      push        rdx                                          ; rsp+152
+      push        rcx                                          ; rsp+144
+      push        rbx                                          ; rsp+136
+      push        rax                                          ; rsp+128
       sub         rsp, 128
-      movsd       qword  [rsp+0], xmm0
-      movsd       qword  [rsp+8], xmm1
-      movsd       qword  [rsp+16], xmm2
-      movsd       qword  [rsp+24], xmm3
-      movsd       qword  [rsp+32], xmm4
-      movsd       qword  [rsp+40], xmm5
-      movsd       qword  [rsp+48], xmm6
-      movsd       qword  [rsp+56], xmm7
-      movsd       qword  [rsp+64], xmm8
-      movsd       qword  [rsp+72], xmm9
-      movsd       qword  [rsp+80], xmm10
-      movsd       qword  [rsp+88], xmm11
-      movsd       qword  [rsp+96], xmm12
-      movsd       qword  [rsp+104], xmm13
-      movsd       qword  [rsp+112], xmm14
-      movsd       qword  [rsp+120], xmm15
+      movsd       qword [rsp+0], xmm0
+      movsd       qword [rsp+8], xmm1
+      movsd       qword [rsp+16], xmm2
+      movsd       qword [rsp+24], xmm3
+      movsd       qword [rsp+32], xmm4
+      movsd       qword [rsp+40], xmm5
+      movsd       qword [rsp+48], xmm6
+      movsd       qword [rsp+56], xmm7
+      movsd       qword [rsp+64], xmm8
+      movsd       qword [rsp+72], xmm9
+      movsd       qword [rsp+80], xmm10
+      movsd       qword [rsp+88], xmm11
+      movsd       qword [rsp+96], xmm12
+      movsd       qword [rsp+104], xmm13
+      movsd       qword [rsp+112], xmm14
+      movsd       qword [rsp+120], xmm15
 %endmacro
 
 
-%macro DispatchUnresolvedDataHelper 1 ; helper
-      mov         rdi, qword [rsp+264]                ; RA in snippet (see stack shape below)
-      mov         rax, qword [rdi]                    ; p1) rax = cpAddr
-      mov         esi, dword [rdi+8]                  ; p2) rsi = cpIndex
-      and         esi, 1ffffh                         ; isolate the cpIndex
-      mov         rdx, qword [rsp+272]                ; p3) rdx = RA in mainline code
-                                                      ; (see stack shape below)
+%macro DispatchUnresolvedDataHelper 1                          ; helper
+      mov         rdi, qword [rsp+264]                         ; RA in snippet (see stack shape below)
+      mov         rax, qword [rdi]                             ; p1) rax = cpAddr
+      mov         esi, dword [rdi+8]                           ; p2) rsi = cpIndex
+      and         esi, 1ffffh                                  ; isolate the cpIndex
+      mov         rdx, qword [rsp+272]                         ; p3) rdx = RA in mainline code
+                                                               ; (see stack shape below)
       CallHelperUseReg %1, rax
 %endmacro
 
 
 %macro DataResolveEpilogue 0
-      movsd       xmm0, qword  [rsp+0]
-      movsd       xmm1, qword  [rsp+8]
-      movsd       xmm2, qword  [rsp+16]
-      movsd       xmm3, qword  [rsp+24]
-      movsd       xmm4, qword  [rsp+32]
-      movsd       xmm5, qword  [rsp+40]
-      movsd       xmm6, qword  [rsp+48]
-      movsd       xmm7, qword  [rsp+56]
-      movsd       xmm8, qword  [rsp+64]
-      movsd       xmm9, qword  [rsp+72]
-      movsd       xmm10, qword  [rsp+80]
-      movsd       xmm11, qword  [rsp+88]
-      movsd       xmm12, qword  [rsp+96]
-      movsd       xmm13, qword  [rsp+104]
-      movsd       xmm14, qword  [rsp+112]
-      movsd       xmm15, qword  [rsp+120]
+      movsd       xmm0, qword [rsp+0]
+      movsd       xmm1, qword [rsp+8]
+      movsd       xmm2, qword [rsp+16]
+      movsd       xmm3, qword [rsp+24]
+      movsd       xmm4, qword [rsp+32]
+      movsd       xmm5, qword [rsp+40]
+      movsd       xmm6, qword [rsp+48]
+      movsd       xmm7, qword [rsp+56]
+      movsd       xmm8, qword [rsp+64]
+      movsd       xmm9, qword [rsp+72]
+      movsd       xmm10, qword [rsp+80]
+      movsd       xmm11, qword [rsp+88]
+      movsd       xmm12, qword [rsp+96]
+      movsd       xmm13, qword [rsp+104]
+      movsd       xmm14, qword [rsp+112]
+      movsd       xmm15, qword [rsp+120]
       add         rsp, 128
       pop         rax
       pop         rbx
@@ -1207,11 +1155,9 @@ interpreterStaticAndSpecialGlue:
 %endmacro
 
 
-         align 16
-;1179
+      align 16
 checkReferenceVolatility:
-
-      ; preserve register states
+      ; Preserve register states
       ;
       push        rbp
       push        rax
@@ -1223,98 +1169,90 @@ checkReferenceVolatility:
 
       ; jitResolvedFieldIsVolatile requires us to restore ebp before calling it
       ;
-      mov         rbp, qword  [rsp + 240]             ; [rsp + 176 + 8 + 56]
-                                                      ; [rsp + rbp stack slot + proc RA + local reg preservation]
+      mov         rbp, qword [rsp + 240]                       ; [rsp + 176 + 8 + 56]
+                                                               ; [rsp + rbp stack slot + proc RA + local reg preservation]
 
-      ; determine if the field is volatile.
+      ; Determine if the field is volatile.
       ;
-      mov         rbx, qword  [rsp + 328]             ; load the snippet RA [rsp + 264 + 8 + 56]
-      mov         edx, dword  [rbx + 8]               ; load the cpIndex [snippet RA + size of cpAddr]
+      mov         rbx, qword [rsp + 328]                       ; load the snippet RA [rsp + 264 + 8 + 56]
+      mov         edx, dword [rbx + 8]                         ; load the cpIndex [snippet RA + size of cpAddr]
       mov         esi, edx
-      and         edx, eq_ResolveStatic               ; get the static flag bit
-      and         esi, eq_CPIndexMask                 ; mask with the CPIndexMask
-      mov         rax, qword  [rbx]                   ; load the cpAddr [snippet RA]
+      and         edx, eq_ResolveStatic                        ; get the static flag bit
+      and         esi, eq_CPIndexMask                          ; mask with the CPIndexMask
+      mov         rax, qword [rbx]                             ; load the cpAddr [snippet RA]
 
-      ; call the volatile check
+      ; Call the volatile check
       ;
       CallHelperUseReg jitResolvedFieldIsVolatile,rax
 
-      ; if this field is not volatile, patch the barrier with a nop
+      ; If this field is not volatile, patch the barrier with a nop
       ;
       test        eax, eax
       jnz         restoreRegs
 
-
-      ; determine what kind of fence we are dealing with: LOCK OR [ESP] (or mfence using appropriate command line option)
+      ; Determine what kind of fence we are dealing with: LOCK OR [ESP] (or mfence using appropriate command line option)
       ;
       mov         rsi, [J9TR_VMThread_javaVM + rbp]
       mov         rsi, [J9TR_JavaVMJitConfig + rsi]
       mov         rsi, [J9TR_JitConfig_runtimeFlags + rsi]
 
-      ; get the RA in the mainline code
+      ; Get the RA in the mainline code
       ;
-      mov         r9, qword  [rsp + 336]
+      mov         r9, qword [rsp + 336]
 
-      ; determine if we are looking at a store to a static field
+      ; Determine if we are looking at a store to a static field
       ;
       cmp         edx, eq_ResolveStatic
       je          patchStatic
 
-      ; get the instruction descriptor and find the length of the patched instruction
+      ; Get the instruction descriptor and find the length of the patched instruction
       ;
-
-      mov         bl, byte  [rbx + 12]                ; get the first byte of the instruction descriptor (+ 8 (length of cpAddr) + 4 (length of cpIndex))
-      and         rbx, 0f0h                           ; find the length of the instruction stored in the upper nibble
+      mov         bl, byte [rbx + 12]                          ; get the first byte of the instruction descriptor
+                                                               ;    12 =  8 (length of cpAddr) + 4 (length of cpIndex)
+      and         rbx, 0f0h                                    ; find the length of the instruction stored in the upper nibble
       shr         rbx, 4
       lea         rbx,   [rbx - 5]
       lea         rax,   [r9 + rbx]
 
-      ; select the patching path based on the type of barrier being used
+      ; Select the patching path based on the type of barrier being used
       ;
-
       test        esi, J9TR_runtimeFlags_PatchingFenceType
       jnz         short patchOverMfence
       jmp         patchOverLockOrESP
 
 patchStatic:
-
-
-      ; select the patching path based on the type of barrier being used
+      ; Select the patching path based on the type of barrier being used
       ;
       sub         r9, 5
       test        esi, J9TR_runtimeFlags_PatchingFenceType
       jz          short patchOverLockOrESPStatic
 
-
 patchOverMfenceStatic:
-     ; find the address of the LOR instruction. It is either 16 or 24 bytes from the start of the resolved instruction.
-     ;
+      ; Find the address of the LOR instruction.
+      ; It is either 16 or 24 bytes from the start of the resolved instruction.
+      ;
+      test        edx, eq_ExtremeStaticMemBarPos
+      jnz         barrierAt20Offset
 
-     test         edx, eq_ExtremeStaticMemBarPos
-     jnz          barrierAt20Offset
-
-     lea          rax, [r9 + 16]
-     jmp          patchWith3ByteNOP
+      lea         rax, [r9 + 16]
+      jmp         patchWith3ByteNOP
 
 barrierAt20Offset:
-
-     lea          rax, [r9 + 20]
-     jmp          patchWith3ByteNOP
+      lea         rax, [r9 + 20]
+      jmp         patchWith3ByteNOP
 
 patchOverMfence:
-
-      ; patch over 3 byte mfence
+      ; Patch over 3 byte mfence
       ;
       lea         rax, [rax + 3]
       mov         rcx, 0fffffffffffffffch
-      and         rax, rcx                            ; should now have the 4 byte aligned instruction of the memfence
+      and         rax, rcx                                     ; should now have the 4 byte aligned instruction of the memfence
 
 patchWith3ByteNOP:
-
-      mov         ecx, dword  [rax]                   ; load existing double word containing mfence
-      and         ecx, 0ff000000h                     ; insert trailing byte of 3 word nop
-      or          ecx, 000001f0fh                     ; load the the first 2 bytes of the 3 word nop
-      mov         dword  [rax], ecx                   ; write the nop
+      mov         ecx, dword [rax]                             ; load existing double word containing mfence
+      and         ecx, 0ff000000h                              ; insert trailing byte of 3 word nop
+      or          ecx, 000001f0fh                              ; load the the first 2 bytes of the 3 word nop
+      mov         dword [rax], ecx                             ; write the nop
 
       pop         r9
       pop         rbx
@@ -1327,33 +1265,30 @@ patchWith3ByteNOP:
       ret
 
 patchOverLockOrESPStatic:
+      ; Find the address of the LOR instruction.
+      ; It is either 16 or 24 bytes from the start of the resolved instruction.
+      ;
+      mov         edx, dword [rbx + 8]                         ; get unchanged CPindex
 
-     ; find the address of the LOR instruction. It is either 16 or 24 bytes from the start of the resolved instruction.
-     ;
-     mov          edx, dword  [rbx + 8]               ; get unchanged CPindex
+      test        edx, eq_ExtremeStaticMemBarPos
+      jnz         barrierAt24Offset
 
-     test         edx, eq_ExtremeStaticMemBarPos
-     jnz          barrierAt24Offset
-
-     lea          rax, [r9 + 16]
-     jmp          patchWith5ByteNOP
+      lea         rax, [r9 + 16]
+      jmp         patchWith5ByteNOP
 
 barrierAt24Offset:
-
-     lea rax, [r9 + 24]
-     jmp patchWith5ByteNOP
-
+      lea rax, [r9 + 24]
+      jmp patchWith5ByteNOP
 
 patchOverLockOrESP:
+      mov         rbx, qword [rsp + 328]                       ; load the cpIndex [rsp + 272 + 8 + 56 + 8]
+      mov         edx, dword [rbx + 8]                         ; get unchanged CPindex
 
-      mov         rbx, qword  [rsp + 328]             ; load the cpIndex [rsp + 272 + 8 + 56 + 8]
-      mov         edx, dword  [rbx + 8]               ; get unchanged CPindex
-
-      ; patch over 5 byte lock or esp
+      ; Patch over 5 byte lock or esp
       ;
       lea         rax, [rax + 7]
 
-      ; if this is a float, we need to add an extra 8 bytes to account for the LEA.
+      ; If this is a float, we need to add an extra 8 bytes to account for the LEA.
       ;
       test        edx, eq_IsFloatOp
       jz          findOffset
@@ -1361,22 +1296,17 @@ patchOverLockOrESP:
       lea         rax, [rax + 8]
 
 findOffset:
-
-      mov         rcx, 0fffffffffffffff8h             ; find the 8 byte aligned LOR instruction
+      mov         rcx, 0fffffffffffffff8h                      ; find the 8 byte aligned LOR instruction
       and         rax, rcx
 
 patchWith5ByteNOP:
-      ;cmp word ptr[rax], eq_LORBinaryWord ; make sure we are patching over a lock or [esp] ;TEMP
-      ;je restoreRegs
-
-      mov         ecx,    dword  [rax + 4]            ; load the existing dword with the last byte of the lock and the following 3 bytes
-      and         ecx, 0ffffff00h                     ; insert the last byte if the 5 byte nop
+      mov         ecx, dword [rax + 4]                         ; load the existing dword with the last byte of the lock and the following 3 bytes
+      and         ecx, 0ffffff00h                              ; insert the last byte if the 5 byte nop
       rol         rcx, 32
-      or          rcx, 00441f0fh                      ; insert the first 4 bytes of the 5 byte nop
-      mov         qword  [rax], rcx                   ; write the nop
+      or          rcx, 00441f0fh                               ; insert the first 4 bytes of the 5 byte nop
+      mov         qword [rax], rcx                             ; write the nop
 
 restoreRegs:
-
       pop         r9
       pop         rbx
       pop         rsi
@@ -1384,10 +1314,8 @@ restoreRegs:
       pop         rcx
       pop         rax
       pop         rbp
+      ret
 
-ret
-
-;1179
 
 ; interpreterUnresolved{*}Glue
 ;
@@ -1440,105 +1368,85 @@ ret
 interpreterUnresolvedStringGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveString
-; int 3
       jmp         commonUnresolvedCode
-ret
+      ret
 
       align 16
 interpreterUnresolvedConstantDynamicGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveConstantDynamic
-;      int 3
       jmp         commonUnresolvedCode
-ret
+      ret
 
       align 16
 interpreterUnresolvedMethodTypeGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveMethodType
-; int 3
       jmp         commonUnresolvedCode
-ret
-
+      ret
 
       align 16
 interpreterUnresolvedMethodHandleGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveMethodHandle
-; int 3
       jmp         commonUnresolvedCode
-ret
-
+      ret
 
       align 16
 interpreterUnresolvedCallSiteTableEntryGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveInvokeDynamic
-; int 3
       jmp         commonUnresolvedCode
-ret
-
+      ret
 
       align 16
 interpreterUnresolvedMethodTypeTableEntryGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveHandleMethod
-; int 3
       jmp         commonUnresolvedCode
-ret
-
+      ret
 
       align 16
 interpreterUnresolvedClassGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveClass
-; int 3
       jmp         commonUnresolvedCode
-ret
-
+      ret
 
       align 16
 interpreterUnresolvedClassFromStaticFieldGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveClassFromStaticField
-; int 3
       jmp         commonUnresolvedCode
-ret
-
+      ret
 
       align 16
 interpreterUnresolvedStaticFieldGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveStaticField
-; int 3
       jmp         commonUnresolvedCode
-ret
-
+      ret
 
       align 16
 interpreterUnresolvedStaticFieldSetterGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveStaticFieldSetter
-; int 3
       jmp         commonUnresolvedCode
-ret
+      ret
 
       align 16
 interpreterUnresolvedFieldGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveField
-; int 3
       jmp         commonUnresolvedCode
-ret
+      ret
 
       align 16
 interpreterUnresolvedFieldSetterGlue:
       DataResolvePrologue
       DispatchUnresolvedDataHelper jitResolveFieldSetter
-; int 3
 
 commonUnresolvedCode:
-
       ; STACK SHAPE:
       ;
       ; rsp+272 : RA in mainline
@@ -1580,7 +1488,7 @@ commonUnresolvedCode:
       ; rax = result from resolve helper
       ; rdi = return address in snippet
 
-      mov         esi, dword [rdi+8]                        ; full cpIndex word
+      mov         esi, dword [rdi+8]                           ; full cpIndex word
 
       ; Check for the special case of a data resolution without code patching.
       ; This happens when you have an explicit NULLCHK guarding a data resolution and
@@ -1604,59 +1512,56 @@ commonUnresolvedCode:
       jnz         patchStaticResolution
 
 mergePatch8ByteResolution:
-      movzx       edx, word  [rdi+12]                       ; rdx = REX + OpCode
-      mov         rbx, rax                                  ; rbx = resolve result
-      and         rbx, -2                                   ; whack any low tagging of resolve result
+      movzx       edx, word [rdi+12]                           ; rdx = REX + OpCode
+      mov         rbx, rax                                     ; rbx = resolve result
+      and         rbx, -2                                      ; whack any low tagging of resolve result
       shl         rbx, 16
-      or          rdx, rbx                                  ; synthesize patched instruction bytes
+      or          rdx, rbx                                     ; synthesize patched instruction bytes
 
-      mov         rbx, qword  [rsp+272]                     ; rbx = RA in mainline
-      mov         qword  [rbx-5], rdx                       ; patch mainline
+      mov         rbx, qword [rsp+272]                         ; rbx = RA in mainline
+      mov         qword [rbx-5], rdx                           ; patch mainline
 
-; determine if nop patching might be necessary
-;
+      ; Determine if nop patching might be necessary
+      ;
+      test        dword [rdi + 8], eq_VolatilityCheck          ; test for the volatility check flag
+      jz          short noVolatileCheck8Byte
 
-     test         dword  [rdi + 8], eq_VolatilityCheck      ; test for the volatility check flag
-     jz           short noVolatileCheck8Byte
-
-     call         checkReferenceVolatility
-
+      call        checkReferenceVolatility
 
 noVolatileCheck8Byte:
-
       DataResolveEpilogue
 
-      add         qword  [rsp+16], -5                       ; re-run patched instruction
-      popfq                                                 ; restore
-      lea         rsp, [rsp+8]                              ; skip over RA in snippet--mispredict
+      add         qword [rsp+16], -5                           ; re-run patched instruction
+      popfq                                                    ; restore
+      lea         rsp, [rsp+8]                                 ; skip over RA in snippet--mispredict
       ret
 
 patchStaticResolution:
-      test        rax, 1                                    ; low-tagged resolution result (clinit not finished)?
+      test        rax, 1                                       ; low-tagged resolution result (clinit not finished)?
       jz          mergePatch8ByteResolution
 
       ; Static resolves have the entire unresolved address load instruction
       ; embedded in the snippet plus a RET instruction. The snippet must
       ; be patched and executed.
       ;
-      movzx       edx, word  [rdi+12]                       ; rdx = REX + OpCode
-      mov         rbx, rax                                  ; rbx = resolve result
-      and         rbx, -2                                   ; whack any low tagging of resolve result
+      movzx       edx, word [rdi+12]                           ; rdx = REX + OpCode
+      mov         rbx, rax                                     ; rbx = resolve result
+      and         rbx, -2                                      ; whack any low tagging of resolve result
       shl         rbx, 16
-      or          rdx, rbx                                  ; synthesize patched instruction bytes
+      or          rdx, rbx                                     ; synthesize patched instruction bytes
 
-      mov         qword  [rdi+12], rdx                      ; patch snippet
-      mfence                                                ; make sure memory stores are seen
+      mov         qword [rdi+12], rdx                          ; patch snippet
+      mfence                                                   ; make sure memory stores are seen
 
 doneDataResolution:
       DataResolveEpilogue
 
-      add         qword  [rsp+16], 5                           ; patch the RA in the mainline code to skip
+      add         qword [rsp+16], 5                            ; patch the RA in the mainline code to skip
                                                                ; over the remaining 5 bytes of what would
                                                                ; have been the 10-byte MOV R,Imm64 instruction
                                                                ; that did not get patched.
 
-      add         qword  [rsp+8], 12                           ; patch RA in snippet such that the instruction
+      add         qword [rsp+8], 12                            ; patch RA in snippet such that the instruction
                                                                ; patched in the snippet is re-run.
                                                                ; +12 = +8 (cpAddr) + 4 (cpIndex)
       popfq
@@ -1670,46 +1575,42 @@ doneDataResolutionAndNoRerun:
       ret
 
 patch4ByteResolution:
-
       ; Patch the cached instruction bytes in the snippet. The disp32 field must lie within
       ; the first 8 bytes of the instruction.
       ;
       ; Multiple threads can be executing this code, but all threads must be patching the
       ; same value.
       ;
-      movzx       ecx, byte  [rdi+12]                       ; rcx = header byte
-      and         ecx, 0fh                                  ; isolate disp32 offset in first nibble
+      movzx       ecx, byte [rdi+12]                           ; rcx = header byte
+      and         ecx, 0fh                                     ; isolate disp32 offset in first nibble
 
-      mov         rdx, qword  [rdi+13]                      ; rdx = cached instruction bytes
-                                                            ; +13 = +8 (cpAddr) + 4 (cpIndex) + 1 (header)
+      mov         rdx, qword [rdi+13]                          ; rdx = cached instruction bytes
+                                                               ; +13 = +8 (cpAddr) + 4 (cpIndex) + 1 (header)
       shl         ecx, 3
-      ror         rdx, cl                                   ; rotate disp32 into lower dword
+      ror         rdx, cl                                      ; rotate disp32 into lower dword
 
       ; The dword field from the snippet is assumed to be 0.
       ;
-      or          rdx, rax                                  ; patch the disp32 field
+      or          rdx, rax                                     ; patch the disp32 field
       rol         rdx, cl
 
-      mov         rbx, qword  [rsp+272]                     ; rbx = RA in mainline
-      mov         qword  [rbx-5], rdx                       ; patch mainline
+      mov         rbx, qword [rsp+272]                         ; rbx = RA in mainline
+      mov         qword [rbx-5], rdx                           ; patch mainline
 
-; determine if nop patching might be necessary
-;
-      test        dword  [rdi + 8], eq_VolatilityCheck      ; test for the check volatility flag
+      ; Determine if nop patching might be necessary
+      ;
+      test        dword [rdi + 8], eq_VolatilityCheck          ; test for the check volatility flag
       jz          short noVolatileCheck4Byte
 
       call        checkReferenceVolatility
 
 noVolatileCheck4Byte:
-
       DataResolveEpilogue
 
-      add qword  [rsp+16], -5                               ; re-run patched instruction
-      popfq                                                 ; restore
-      lea rsp, [rsp+8]                                      ; skip over RA in snippet--mispredict
+      add qword [rsp+16], -5                                   ; re-run patched instruction
+      popfq                                                    ; restore
+      lea rsp, [rsp+8]                                         ; skip over RA in snippet--mispredict
       ret
-
-ret
 
 
 MTUnresolvedInt32Load:
