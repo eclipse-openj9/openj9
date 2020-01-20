@@ -5405,7 +5405,8 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
       }
 
    heuristicTrace(tracer, "ARGS PROPAGATION: argsFromSymbol (from calleeSymbol)");
-   argsFromSymbol->dumpTrace();
+   if (tracer->heuristicLevel())
+      argsFromSymbol->dumpTrace();
 
    //validation
    TR_FrontEnd* fe = TR::comp()->fe();
@@ -5438,7 +5439,8 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
    TR_PrexArgInfo::enhance(argsFromTarget, argsFromSymbol, TR::comp()); //otherwise just pick more specific
 
    heuristicTrace(tracer, "ARGS PROPAGATION: final argInfo after merging argsFromTarget %p", argsFromTarget);
-   argsFromTarget->dumpTrace();
+   if (tracer->heuristicLevel())
+      argsFromTarget->dumpTrace();
 
    return true;
    }
@@ -5471,7 +5473,8 @@ bool TR_PrexArgInfo::validateAndPropagateArgsFromCalleeSymbol(TR_PrexArgInfo* ar
       if (cleanedAnything)
          {
          debugTrace(tracer, "ARGS PROPAGATION: argInfo %p after clear arg info for non-invariant arguments", this);
-         dumpTrace();
+         if (tracer->heuristicLevel())
+            dumpTrace();
          }
       }
 
@@ -5506,7 +5509,8 @@ void TR_PrexArgInfo::propagateArgsFromCaller(TR::ResolvedMethodSymbol* methodSym
 
    heuristicTrace(tracer, "ARGS PROPAGATION: argsFromTarget before args propagation");
    for (int i = 0; i < callsite->numTargets(); i++)
-      callsite->getTarget(i)->_ecsPrexArgInfo->dumpTrace();
+      if (tracer->heuristicLevel())
+         callsite->getTarget(i)->_ecsPrexArgInfo->dumpTrace();
 
    for (int i = callNode->getFirstArgumentIndex(); i < callNode->getNumChildren(); i++)
       {
