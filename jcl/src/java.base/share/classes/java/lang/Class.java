@@ -2288,6 +2288,10 @@ public String toGenericString() {
 		kindOfType = "interface "; //$NON-NLS-1$
 	} else if ((!isArray) && ((modifiers & ENUM) != 0) && (getSuperclass() == Enum.class)) {
 		kindOfType = "enum "; //$NON-NLS-1$
+/*[IF Java14]*/
+	} else if (isRecord()) {
+		kindOfType = "record"; //$NON-NLS-1$
+/*[ENDIF]*/
 	} else {
 		kindOfType = "class "; //$NON-NLS-1$	
 	}
@@ -4702,11 +4706,26 @@ public Class<?>[] getNestMembers() throws LinkageError, SecurityException {
 	 * Returns an array of RecordComponent objects for a record class.
 	 * 
 	 * @return array of RecordComponent objects, one for each component in the record.
-	 * For a class that is not a record an empty array is returned.
+	 * For a class that is not a record, null is returned.
 	 * For a record with no components an empty array is returned.
+	 * 
+	 * @throws SecurityException 
 	 */
+	@CallerSensitive
 	public RecordComponent[] getRecordComponents() {
-		throw new InternalError("Compile stub invoked! For JEP 359 support see https://github.com/eclipse/openj9/pull/7946"); //$NON-NLS-1$
+		SecurityManager security = System.getSecurityManager();
+		if (security != null) {
+			ClassLoader callerClassLoader = ClassLoader.getStackClassLoader(1);
+			checkMemberAccess(security, callerClassLoader, Member.DECLARED);
+		}
+
+		if (!isRecord()) {
+			return null;
+		}
+
+		return getRecordComponentsImpl();
 	}
+
+	private native RecordComponent[] getRecordComponentsImpl();
 /*[ENDIF] Java14 */
 }

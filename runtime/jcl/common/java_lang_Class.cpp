@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1171,6 +1171,12 @@ skip: ;
 done:
 	vmFuncs->internalExitVMToJNI(currentThread);
 	return result;
+}
+
+jarray JNICALL
+Java_java_lang_Class_getRecordComponentsImpl(JNIEnv *env, jobject cls)
+{
+	return getRecordComponentsHelper(env, cls);
 }
 
 static UDATA
