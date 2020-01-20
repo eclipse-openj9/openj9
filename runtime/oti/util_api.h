@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1274,6 +1274,94 @@ void validateLibrary(J9JavaVM *javaVM, J9NativeLibrary *library);
 #endif
 
 /* ---------------- optinfo.c ---------------- */
+
+/**
+ * Retrieves number of record components in this record. Assumes that 
+ * ROM class parameter references a record class.
+ * 
+ * @param J9ROMClass record class
+ * @return U_32 number of record components in optionalinfo
+ */
+U_32
+getNumberOfRecordComponents(J9ROMClass *romClass);
+
+/**
+ * Reason if record component has an optional signature attribute.
+ * 
+ * @param J9ROMRecordComponentShape* record component
+ * @return true if record component has an optional signature attribute
+ */
+BOOLEAN
+recordComponentHasSignature(J9ROMRecordComponentShape* recordComponent);
+
+/**
+ * Reason if record component has an optional annotations attribute.
+ * 
+ * @param J9ROMRecordComponentShape* record component
+ * @return true if record component has an optional annotations attribute
+ */
+BOOLEAN
+recordComponentHasAnnotations(J9ROMRecordComponentShape* recordComponent);
+
+/**
+ * Reason if record component has an optional type annotations attribute.
+ * 
+ * @param J9ROMRecordComponentShape* record component
+ * @return true if record component has an optional type annotations attribute
+ */
+BOOLEAN
+recordComponentHasTypeAnnotations(J9ROMRecordComponentShape* recordComponent);
+
+/**
+ * Return the generic signature attribute from record component parameter.
+ * 
+ * @param J9ROMRecordComponentShape* record component
+ * @return J9UTF8* generic signature attribute, or null if one does
+ * not exist for this record component.
+ *
+ */
+J9UTF8*
+getRecordComponentGenericSignature(J9ROMRecordComponentShape* recordComponent);
+
+/**
+ * Return the annotation attribute data from the record component parameter.
+ * 
+ * @param J9ROMRecordComponentShape* record component
+ * @return U_32* annotation attribute data, or null is it does not exist 
+ * for this record component.
+ */
+U_32*
+getRecordComponentAnnotationData(J9ROMRecordComponentShape* recordComponent);
+
+/**
+ * Return the type annotation attribute data from the record component parameter.
+ * 
+ * @param J9ROMRecordComponentShape* record component
+ * @return U_32* type annotation attribute data, or null is it does not exist 
+ * for this record component.
+ */
+U_32*
+getRecordComponentTypeAnnotationData(J9ROMRecordComponentShape* recordComponent);
+
+/**
+ * Find first record component in the optional data of the ROM class parameter.
+ * This method assumes there is at least one record component in the ROM class.
+ * 
+ * @param J9ROMClass* record class
+ * @return first record component from ROM class
+ */
+J9ROMRecordComponentShape* 
+recordComponentStartDo(J9ROMClass *romClass);
+
+/**
+ * Find the record component. This method assumes there is
+ * at least one more record component.
+ * 
+ * @param J9ROMRecordComponentShape* last record component
+ * @return J9ROMRecordComponentShape* next record component
+ */
+J9ROMRecordComponentShape* 
+recordComponentNextDo(J9ROMRecordComponentShape* recordComponent);
 
 /**
 * @brief
