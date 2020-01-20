@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -297,10 +297,10 @@ _interpreterUnresolvedInstanceDataStoreGlue:
 // Then the b instruction is changed to "blr dstReg"
 //
 _virtualUnresolvedHelper:
-	stp	x0, x1, [J9SP, #-64]!				// save parameter regs
-	stp	x2, x3, [J9SP, #16]
-	stp	x4, x5, [J9SP, #32]
-	stp	x6, x7, [J9SP, #48]
+	stp	x7, x6, [J9SP, #-64]!				// save parameter regs. jitWalkResolveMethodFrame assumes that argument registers are saved in this order
+	stp	x5, x4, [J9SP, #16]
+	stp	x3, x2, [J9SP, #32]
+	stp	x1, x0, [J9SP, #48]
 	ldr	x10, [x30, #J9TR_UVCSnippet_codeCacheReturnAddress]	// get code cache RA (L_commonLookupException expects it to be in x10)
 	mov	x11, x30					// protect snippet address in x11
 	ldr	x0, [x30, #J9TR_UVCSnippet_method]		// Load the J9Method
@@ -327,10 +327,10 @@ L_interpretedPrivate:
 L_calloutPrivate:
 	mov	x30, x10					// Set up the return addr
 	mov	x10, x2						// destination address
-	ldp	x0, x1, [J9SP, #0]				// restore parameter regs
-	ldp	x2, x3, [J9SP, #16]
-	ldp	x4, x5, [J9SP, #32]
-	ldp	x6, x7, [J9SP, #48]
+	ldp	x7, x6, [J9SP, #0]				// restore parameter regs
+	ldp	x5, x4, [J9SP, #16]
+	ldp	x3, x2, [J9SP, #32]
+	ldp	x1, x0, [J9SP, #48]
 	add	J9SP, J9SP, #64
 	br	x10						// Call the target, not returning here
 L_callVirtual:
@@ -356,10 +356,10 @@ L_callVirtual:
 	mov	x1, #4						// 1 instruction to flush
 	bl	flushICache
 	sub	x30, x10, #20					// set the movk instruction as the destination
-	ldp	x0, x1, [J9SP, #0]				// restore other parameter regs
-	ldp	x2, x3, [J9SP, #16]
-	ldp	x4, x5, [J9SP, #32]
-	ldp	x6, x7, [J9SP, #48]
+	ldp	x7, x6, [J9SP, #0]				// restore other parameter regs
+	ldp	x5, x4, [J9SP, #16]
+	ldp	x3, x2, [J9SP, #32]
+	ldp	x1, x0, [J9SP, #48]
 	add	J9SP, J9SP, #64
 	ret							// jump back to the movk instruction
 
