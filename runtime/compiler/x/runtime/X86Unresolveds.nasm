@@ -48,18 +48,6 @@
       DECLARE_GLOBAL interpreterUnresolvedFieldSetterGlue
       DECLARE_GLOBAL interpreterUnresolvedConstantDynamicGlue
 
-      DECLARE_GLOBAL MTUnresolvedInt32Load
-      DECLARE_GLOBAL MTUnresolvedInt64Load
-      DECLARE_GLOBAL MTUnresolvedFloatLoad
-      DECLARE_GLOBAL MTUnresolvedDoubleLoad
-      DECLARE_GLOBAL MTUnresolvedAddressLoad
-
-      DECLARE_GLOBAL MTUnresolvedInt32Store
-      DECLARE_GLOBAL MTUnresolvedInt64Store
-      DECLARE_GLOBAL MTUnresolvedFloatStore
-      DECLARE_GLOBAL MTUnresolvedDoubleStore
-      DECLARE_GLOBAL MTUnresolvedAddressStore
-
       DECLARE_EXTERN j2iTransition
       DECLARE_EXTERN jitResolveStaticMethod
       DECLARE_EXTERN jitResolveSpecialMethod
@@ -832,36 +820,6 @@ executeSnippetCode:
       popfd                                                    ; restore
       ret 8                                                    ; execute patched instruction in snippet
 
-MTUnresolvedInt32Load:
-retn
-
-MTUnresolvedInt64Load:
-retn
-
-MTUnresolvedFloatLoad:
-retn
-
-MTUnresolvedDoubleLoad:
-retn
-
-MTUnresolvedAddressLoad:
-retn
-
-MTUnresolvedInt32Store:
-retn
-
-MTUnresolvedInt64Store:
-retn
-
-MTUnresolvedFloatStore:
-retn
-
-MTUnresolvedDoubleStore:
-retn
-
-MTUnresolvedAddressStore:
-retn
-
 %else
 
 ; --------------------------------------------------------------------------------
@@ -891,18 +849,6 @@ retn
       DECLARE_GLOBAL interpreterUnresolvedFieldGlue
       DECLARE_GLOBAL interpreterUnresolvedFieldSetterGlue
       DECLARE_GLOBAL interpreterUnresolvedConstantDynamicGlue
-
-      DECLARE_GLOBAL MTUnresolvedInt32Load
-      DECLARE_GLOBAL MTUnresolvedInt64Load
-      DECLARE_GLOBAL MTUnresolvedFloatLoad
-      DECLARE_GLOBAL MTUnresolvedDoubleLoad
-      DECLARE_GLOBAL MTUnresolvedAddressLoad
-
-      DECLARE_GLOBAL MTUnresolvedInt32Store
-      DECLARE_GLOBAL MTUnresolvedInt64Store
-      DECLARE_GLOBAL MTUnresolvedFloatStore
-      DECLARE_GLOBAL MTUnresolvedDoubleStore
-      DECLARE_GLOBAL MTUnresolvedAddressStore
 
       DECLARE_EXTERN j2iTransition
       DECLARE_EXTERN jitResolveStaticMethod
@@ -1611,36 +1557,5 @@ noVolatileCheck4Byte:
       popfq                                                    ; restore
       lea rsp, [rsp+8]                                         ; skip over RA in snippet--mispredict
       ret
-
-
-MTUnresolvedInt32Load:
-ret
-
-MTUnresolvedInt64Load:
-ret
-
-MTUnresolvedFloatLoad:
-ret
-
-MTUnresolvedDoubleLoad:
-ret
-
-MTUnresolvedAddressLoad:
-ret
-
-MTUnresolvedInt32Store:
-ret
-
-MTUnresolvedInt64Store:
-ret
-
-MTUnresolvedFloatStore:
-ret
-
-MTUnresolvedDoubleStore:
-ret
-
-MTUnresolvedAddressStore:
-ret
 
 %endif
