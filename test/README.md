@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2019 IBM Corp. and others
+Copyright (c) 2016, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,10 +30,9 @@ Linux x86-64 cmprssptrs OpenJ9 SDK:
     git clone https://github.com/AdoptOpenJDK/TKG.git
     cd TKG
     export TEST_JDK_HOME=/my/openj9/jdk
-    make -f run_configure.mk   // generates makefiles
     make compile               // downloads test related material/libs
                                // and compiles test material
-    make _sanity.functional    // runs tests
+    make _sanity.functional    // generates makefiles and runs tests
 ```
 
 Please read [OpenJ9 Test User Guide](./docs/OpenJ9TestUserGuide.md) for
@@ -61,7 +60,6 @@ names that match within `BUILD_LIST`.
 
 ```
     export BUILD_LIST=functional/TestUtilities,functional/Java8andUp
-    make -f run_configure.mk
     make compile
 ```
 
@@ -145,7 +143,6 @@ Only the tests in `BUILD_LIST` will be executed.
 
 ```
     export BUILD_LIST=functional/JIT_Test
-    make -f run_configure.mk
     make compile
     make _sanity
 ```

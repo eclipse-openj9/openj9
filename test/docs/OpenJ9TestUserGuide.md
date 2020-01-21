@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2016, 2019 IBM Corp. and others
+Copyright (c) 2016, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,6 @@ git clone https://github.com/AdoptOpenJDK/TKG.git
 cd TKG
 export TEST_JDK_HOME=<path to JDK directory that you wish to test>
 export BUILD_LIST=functional
-make -f run_configure.mk
 make compile
 make _sanity.regular
 ```
