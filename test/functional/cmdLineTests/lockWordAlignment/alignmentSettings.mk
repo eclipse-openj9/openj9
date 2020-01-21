@@ -1,5 +1,5 @@
 ##############################################################################
-#  Copyright (c) 2019, 2019 IBM Corp. and others
+#  Copyright (c) 2019, 2020 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,5 +26,5 @@ ASM_JAR=$(LIB_DIR)$(D)asm-all.jar
 # if JDK_VERSION is not 8
 ifeq ($(filter 8, $(JDK_VERSION)),)
  ADD_EXPORTS=--add-exports=java.base/com.ibm.oti.vm=ALL-UNNAMED
- ASM_JAR=$(LIB_DIR)$(D)asm-7.2.jar
+ ASM_JAR=$(LIB_DIR)$(D)asm-7.3.jar
 endif
