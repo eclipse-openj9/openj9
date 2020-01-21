@@ -54,7 +54,7 @@ public class ZFile {
 	public long getRecordCount() throws IOException {
 		return 0;
 	}
-	
+
 	public int read(byte[] buffer) throws IOException {
 		return 0;
 	}

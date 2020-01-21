@@ -107,7 +107,6 @@
 		  flags="Sidecar18-SE-OpenJ9, DAA, Open-Module-Support,Sidecar19-SE,Sidecar19-SE-OpenJ9,Java10,Java11"
 		  dependencies="SIDECAR18-SE"
 		  jdkcompliance="1.8">
-		<classpathentry kind="src" path="src/com.ibm.jzos/share/classes"/>
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
@@ -131,41 +130,11 @@
 	</configuration>
 
 	<configuration
-		  label="JAVA13"
-		  outputpath="JAVA13/src"
-		  flags="Java12,Java13"
-		  dependencies="JAVA11"
-		  jdkcompliance="1.8">
-		<classpathentry kind="src" path="src/com.ibm.jzos/share/classes"/>
-		<classpathentry kind="src" path="src/java.base/share/classes"/>
-		<classpathentry kind="src" path="src/java.management/share/classes"/>
-		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
-		<classpathentry kind="src" path="src/jdk.jcmd/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.jvm/share/classes"/>
-		<classpathentry kind="src" path="src/jdk.management/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.cuda/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.dataaccess/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.dtfj/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.dtfjview/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.gpu/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
-		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
-		<classpathentry kind="lib" path="/binaries/common/ibm/ibmjzos.jar"/>
-		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava13.jar"/>
-		<source path="src"/>
-		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
-		<parameter name="msg:outputdir" value="java.base/share/classes/com/ibm/oti/util"/>
-		<parameter name="jxerules:outputdir" value="java/lang"/>
-	</configuration>
-
-	<configuration
 		  label="JAVA14"
 		  outputpath="JAVA14/src"
-		  flags="Java14"
-		  dependencies="JAVA13"
+		  flags="Java12,Java13,Java14"
+		  dependencies="JAVA11"
 		  jdkcompliance="1.8">
-		<classpathentry kind="src" path="src/com.ibm.jzos/share/classes"/>
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
@@ -194,7 +163,6 @@
 		  flags="Java15"
 		  dependencies="JAVA14"
 		  jdkcompliance="1.8">
-		<classpathentry kind="src" path="src/com.ibm.jzos/share/classes"/>
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
@@ -223,7 +191,6 @@
 		  flags="OpenJ9-RawBuild"
 		  dependencies="JAVA11"
 		  jdkcompliance="1.8">
-		<classpathentry kind="src" path="src/com.ibm.jzos/share/classes"/>
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
@@ -250,9 +217,8 @@
 		  label="PANAMA"
 		  outputpath="PANAMA/src"
 		  flags="Panama"
-		  dependencies="JAVA13"
+		  dependencies="JAVA14"
 		  jdkcompliance="1.8">
-		<classpathentry kind="src" path="src/com.ibm.jzos/share/classes"/>
 		<classpathentry kind="src" path="src/java.base/share/classes"/>
 		<classpathentry kind="src" path="src/java.management/share/classes"/>
 		<classpathentry kind="src" path="src/jdk.attach/share/classes"/>
@@ -267,7 +233,7 @@
 		<classpathentry kind="src" path="src/openj9.sharedclasses/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.traceformat/share/classes"/>
 		<classpathentry kind="src" path="src/openj9.zosconditionhandling/share/classes"/>
-		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava13.jar"/>
+		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sunJava14.jar"/>
 		<classpathentry kind="lib" path="/binaries/vm/third/rt-compressed.sun190Panama.jar"/>
 		<source path="src"/>
 		<parameter name="macro:define" value="com.ibm.oti.vm.library.version=29"/>
