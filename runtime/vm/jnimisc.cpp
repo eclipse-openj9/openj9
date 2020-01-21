@@ -515,13 +515,13 @@ newStringUTF(JNIEnv *env, const char *bytes)
 			/* Slow case -- verify the encoding, fix if necessary.
 			 * String may double in size (invalid singles becoming doubles).
 			 */
-			data = (U_8*)jniArrayAllocateMemoryFromThread(currentThread, length * 2);
+			data = (U_8*)jniArrayAllocateMemoryFromThread(currentThread, length * 2 + 1);
 			if (NULL == data) {
 				gpCheckSetNativeOutOfMemoryError(currentThread, 0, 0);
 				goto done;
 			}
-			data[length*2-1] = '\0';
 			length = encodeUnverifiedUTF8(bytes, length, data);
+			data[length] = '\0';
 		}
 		resultObject = currentThread->javaVM->memoryManagerFunctions->j9gc_createJavaLangString(currentThread, data, length, J9_STR_INSTRUMENTABLE);
 		if (data != (U_8*)bytes) {
