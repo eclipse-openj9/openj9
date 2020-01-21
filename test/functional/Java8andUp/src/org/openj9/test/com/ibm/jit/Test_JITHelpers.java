@@ -1,7 +1,7 @@
 package org.openj9.test.com.ibm.jit;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -912,6 +912,7 @@ public class Test_JITHelpers {
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), 34, valueField.get("de"), 2, 5), 20);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), 34, valueField.get("def"), 3, 5), 20);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), 34, valueField.get("defghijklmn"), 11, 5), 20);
+				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghiklmnopqrstwyzabcdefghikabcdefghiklmnopqlmmnopqrstwyzabcdepoisd"), 71, valueField.get("abcdefghiklmnopqlmmnopqrstwyzabcdepoisd"), 39, 0), 32);
 			}
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException(e);
