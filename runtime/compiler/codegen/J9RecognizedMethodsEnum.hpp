@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -262,6 +262,9 @@
    java_util_concurrent_atomic_Fences_orderReads,
    java_util_concurrent_atomic_Fences_orderWrites,
    java_util_concurrent_atomic_Fences_reachabilityFence,
+
+   java_util_regex_Matcher_init,
+   java_util_regex_Matcher_usePattern,
 
    java_util_HashMap_all,
    java_util_ArrayList_all,

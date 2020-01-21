@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -494,6 +494,8 @@ static TR::RecognizedMethod canSkipZeroInitializationOnNewarrays[] =
    //TR::java_util_Arrays_copyOf,
    TR::java_io_Writer_write_lStringII,
    TR::java_io_Writer_write_I,
+   TR::java_util_regex_Matcher_init,
+   TR::java_util_regex_Matcher_usePattern,
    TR::unknownMethod
    };
 
