@@ -1,4 +1,4 @@
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,7 +59,6 @@ ENV JAVA_HOME=/root/j2sdk-image
 RUN cd /root/test \
  && git clone https://github.com/AdoptOpenJDK/TKG.git \
  && cd TKG \
- && make -f run_configure.mk \
  && make compile
 
 WORKDIR /root/test/TKG

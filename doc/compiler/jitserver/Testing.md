@@ -56,7 +56,6 @@ These are the steps to run the tests on your machine.
 
    Compile the test
    ```
-   make -f run_configure.mk
    make compile
    ```
    NOTE: to compile and run tests, ant-contrib.jar is needed, and on some systems just installing ant will not install ant-contrib.
