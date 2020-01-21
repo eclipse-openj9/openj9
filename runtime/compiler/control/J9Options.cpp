@@ -2078,6 +2078,8 @@ J9::Options::setupJITServerOptions()
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer Client Mode. Server address: %s port: %d. Connection Timeout %ums",
                persistentInfo->getJITServerAddress().c_str(), persistentInfo->getJITServerPort(),
                persistentInfo->getSocketTimeout());
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,"Identifier for current client JVM: %llu\n", 
+               compInfo->getPersistentInfo()->getClientUID());
       }
 
    }
