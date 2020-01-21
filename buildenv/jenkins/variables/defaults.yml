@@ -264,6 +264,7 @@ x86-64_linux:
     11: '--enable-jitserver'
   build_env:
     cmd: 'source /opt/rh/devtoolset-7/enable'
+    vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
   excluded_tests:
     11:
       - special.system
@@ -383,6 +384,7 @@ x86-64_mac:
       8: 'ci.role.build && hw.arch.x86 && sw.os.osx.10_11'
   build_env:
     vars:
+      all: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
       8: 'MACOSX_DEPLOYMENT_TARGET=10.9.0 SDKPATH=/Users/jenkins/Xcode4/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk'
   excluded_tests:
     11:
