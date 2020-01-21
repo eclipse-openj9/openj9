@@ -129,12 +129,12 @@ public:
 	 * For non-contiguous arraylets (discontiguous arraylets, hybrid not allowed
 	 * when double map is enabled), double maps the arraylet leaves to a contiguous
 	 * region outside the heap, making a discontiguous arraylet look contiguous.
-	 * Currently double map is enabled by manually passing command line option
-	 * XXgc:enableDoubleMapping; however, if the system supports huge pages and
-	 * double map gets manually enabled, then double map will be disabled. That's
-	 * because double map does support huge pages yet. If one still wants to
-	 * enable double map in such systems, one must manually force the application
-	 * to use the small system page size
+	 * Double map is enabled by default, if one wants to disable it, manually pass
+	 * command line option -Xgc:disableArrayletDoubleMapping; however, if the
+	 * system supports huge pages then double map will be disabled. That's because
+	 * double map does support huge pages yet. If one still wants to enable double
+	 * map in such systems, one must manually force the application to use the
+	 * small system page size
 	 *
 	 * @param env thread GC Environment
 	 * @param objectPtr indexable object spine
