@@ -440,4 +440,31 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+
+<!-- jit.test.recognizedMethod tests start here -->
+	<test>
+		<testCaseName>jit_recognizedMethod</testCaseName>
+		<variations>
+			<variation>-Xint</variation>
+			<variation>-Xjit:count=1,disableAsyncCompilation</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames \
+	RecognizedMethodTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 </playlist>
