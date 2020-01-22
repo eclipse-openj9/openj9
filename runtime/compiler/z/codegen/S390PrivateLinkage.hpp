@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,6 +73,8 @@ public:
    void         mapSingleAutomatic(TR::AutomaticSymbol * p, uint32_t size, uint32_t & stackIndex);
    uint32_t     getS390RoundedSize(uint32_t size);
    virtual bool hasToBeOnStack(TR::ParameterSymbol * parm);
+   virtual void setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol * method);
+   virtual void setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method, List<TR::ParameterSymbol>&parmList);
 
    virtual void initS390RealRegisterLinkage();
    virtual void doNotKillSpecialRegsForBuildArgs (TR::Linkage *linkage, bool isFastJNI, int64_t &killMask);
