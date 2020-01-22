@@ -3,7 +3,7 @@
 package java.lang;
 
 /*******************************************************************************
- * Copyright (c) 2005, 2019 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -64,6 +64,7 @@ public final class StringBuilder extends AbstractStringBuilder implements Serial
 	
 	
 	private static boolean TOSTRING_COPY_BUFFER_ENABLED = false;
+	private static boolean growAggressively = false;
 	
 	// Used to access compression related helper methods
 	private static final com.ibm.jit.JITHelpers helpers = com.ibm.jit.JITHelpers.getHelpers();
@@ -759,6 +760,10 @@ private void ensureCapacityImpl(int min) {
 	int currentCapacity = capacityInternal();
 	
 	int newCapacity = (currentCapacity << 1) + 2;
+
+	if (growAggressively && (newCapacity < currentCapacity)) {
+		newCapacity = Integer.MAX_VALUE;
+	}
 
 	int newLength = min > newCapacity ? min : newCapacity;
 	
@@ -1709,6 +1714,9 @@ public String substring(int start, int end) {
 static void initFromSystemProperties(Properties props) {
 	String prop = props.getProperty("java.lang.string.create.unique"); //$NON-NLS-1$
 	TOSTRING_COPY_BUFFER_ENABLED = "true".equals(prop) || "StringBuilder".equals(prop); //$NON-NLS-1$ //$NON-NLS-2$
+
+	String growAggressivelyProperty = props.getProperty("java.lang.stringBufferAndBuilder.growAggressively"); //$NON-NLS-1$
+	growAggressively = "".equals(growAggressivelyProperty) || "true".equalsIgnoreCase(growAggressivelyProperty); //$NON-NLS-1$ //$NON-NLS-2$
 }
 
 /**
