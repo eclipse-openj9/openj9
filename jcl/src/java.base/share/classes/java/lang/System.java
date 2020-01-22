@@ -451,6 +451,8 @@ private static void ensureProperties(boolean isInitialization) {
 	StringBuilder.initFromSystemProperties(systemProperties);
 /*[ENDIF] Sidecar19-SE */
 /*[ENDIF] Java12 */
+	/* Preload system property jdk.serialFilter to prevent later modification */
+	jdk.internal.util.StaticProperty.jdkSerialFilter();
 
 /*[IF Java12]*/
 	String javaRuntimeVersion = initializedProperties.get("java.runtime.version"); //$NON-NLS-1$
