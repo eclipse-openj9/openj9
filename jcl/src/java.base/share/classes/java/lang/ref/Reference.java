@@ -22,7 +22,7 @@ import sun.misc.SharedSecrets;
 /*[ENDIF]*/
 
 /*******************************************************************************
- * Copyright (c) 1998, 2018 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -115,6 +115,13 @@ public abstract class Reference<T> extends Object {
  * Make the referent null.  This does not force the reference object to be enqueued.
  */	
 public void clear() {
+	clearImpl();
+}
+
+/**
+ * set the referent to null.
+ */	
+private void clearImpl() {
 	synchronized(this) {
 		referent = null;
 		/* change the state to cleared if it's not already cleared or enqueued */
@@ -132,7 +139,7 @@ public void clear() {
 public boolean enqueue() {
 	/*[IF Sidecar19-SE]*/
 	if (ClearBeforeEnqueue.ENABLED) {
-		clear();
+		clearImpl();
 	}
 	/*[ENDIF]*/
 	return enqueueImpl();
