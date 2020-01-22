@@ -903,6 +903,110 @@ J9::Z::PrivateLinkage::hasToBeOnStack(TR::ParameterSymbol * parm)
    return result;
    }
 
+void
+J9::Z::PrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol * method)
+   {
+   self()->setParameterLinkageRegisterIndex(method, method->getParameterList());
+   }
+
+void
+J9::Z::PrivateLinkage::setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol * method, List<TR::ParameterSymbol> &parmList)
+   {
+   ListIterator<TR::ParameterSymbol> paramIterator(&parmList);
+   TR::ParameterSymbol * paramCursor=paramIterator.getFirst();
+   int32_t numIntArgs = 0, numFloatArgs = 0, numVectorArgs = 0;
+
+   int32_t paramNum = -1;
+   while ((paramCursor != NULL) &&
+          (numIntArgs < self()->getNumIntegerArgumentRegisters() ||
+           numFloatArgs < self()->getNumFloatArgumentRegisters() ||
+           numVectorArgs < self()->getNumVectorArgumentRegisters()))
+      {
+      int32_t index = -1;
+      paramNum++;
+
+      TR::DataType dt = paramCursor->getDataType();
+
+      switch (dt)
+         {
+         case TR::Int8:
+         case TR::Int16:
+         case TR::Int32:
+         case TR::Address:
+            if (numIntArgs < self()->getNumIntegerArgumentRegisters())
+               {
+               index = numIntArgs;
+               }
+            numIntArgs++;
+            break;
+         case TR::Int64:
+            if(numIntArgs < self()->getNumIntegerArgumentRegisters())
+               {
+               index = numIntArgs;
+               }
+            numIntArgs += (self()->cg()->comp()->target().is64Bit() ? 1 : 2);
+            break;
+         case TR::Float:
+         case TR::Double:
+         case TR::DecimalFloat:
+            if (numFloatArgs < self()->getNumFloatArgumentRegisters())
+               {
+               index = numFloatArgs;
+               }
+            numFloatArgs++;
+            break;
+         case TR::DecimalLongDouble:
+            // On zLinux Long Double is passed in memory using a pointer to buffer
+            if(self()->cg()->comp()->target().isLinux())
+               {
+               if(numIntArgs < self()->getNumIntegerArgumentRegisters())
+                  index = numIntArgs++;
+               break;
+               }
+            if ((numFloatArgs & 0x1) !=0)  // if there are odd number of fp args in before a long double arg, need to skip one
+               numFloatArgs++;
+            if (numFloatArgs < self()->getNumFloatArgumentRegisters())
+               {
+               index = numFloatArgs;
+               }
+            numFloatArgs +=2;
+            break;
+         case TR::PackedDecimal:
+         case TR::ZonedDecimal:
+         case TR::ZonedDecimalSignLeadingEmbedded:
+         case TR::ZonedDecimalSignLeadingSeparate:
+         case TR::ZonedDecimalSignTrailingSeparate:
+         case TR::UnicodeDecimal:
+         case TR::UnicodeDecimalSignLeading:
+         case TR::UnicodeDecimalSignTrailing:
+         case TR::Aggregate:
+            break;
+         case TR::VectorInt8:
+         case TR::VectorInt16:
+         case TR::VectorInt32:
+         case TR::VectorInt64:
+         case TR::VectorDouble:
+            if (numVectorArgs < self()->getNumVectorArgumentRegisters())
+               {
+               index = numVectorArgs;
+               }
+            numVectorArgs++;
+            break;
+         }
+      paramCursor->setLinkageRegisterIndex(index);
+      paramCursor = paramIterator.getNext();
+
+      if (self()->isFastLinkLinkageType())
+         {
+         if ((numFloatArgs == 1) || (numIntArgs >= self()->getNumIntegerArgumentRegisters()))
+            {
+            // force fastlink ABI condition of only one float parameter for fastlink parameter and it must be within first slots
+            numFloatArgs = self()->getNumFloatArgumentRegisters();   // no more float args possible now
+            }
+         }
+      }
+   }
+
 //Clears numBytes bytes of storage from baseOffset(srcReg)
 static TR::Instruction *
 initStg(TR::CodeGenerator * codeGen, TR::Node * node, TR::RealRegister * tmpReg, TR::RealRegister * srcReg,TR::RealRegister * itersReg, int32_t baseOffset, int32_t numBytes,
