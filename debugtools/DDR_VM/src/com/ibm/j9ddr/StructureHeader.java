@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2019 IBM Corp. and others
+ * Copyright (c) 2013, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -133,7 +133,11 @@ public class StructureHeader {
 		ddrStream.mark();
 		coreVersion = ddrStream.readInt();
 		if (coreVersion > 0xFFFF) {
-			ddrStream.setByteOrder(ByteOrder.LITTLE_ENDIAN);
+			if (ddrStream.getByteOrder() == ByteOrder.BIG_ENDIAN) {
+				ddrStream.setByteOrder(ByteOrder.LITTLE_ENDIAN);
+			} else {
+				ddrStream.setByteOrder(ByteOrder.BIG_ENDIAN);
+			}
 			ddrStream.reset();
 			coreVersion = ddrStream.readInt();
 		}
