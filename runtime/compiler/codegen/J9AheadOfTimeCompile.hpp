@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,7 +89,7 @@ class OMR_EXTENSIBLE AheadOfTimeCompile : public OMR::AheadOfTimeCompileConnecto
     * pointer passed in as a parameter.
     *
     * If the ptr isn't in the the SCC, then the current method will abort the
-    * compilation. If the ptr is in the SCC, then the updated cacheOffset will
+    * compilation. If the ptr is in the SCC, then the cacheOffset will be updated.
     *
     * @param sharedCache pointer to the TR_SharedCache object
     * @param ptr pointer whose offset in the SCC is required
