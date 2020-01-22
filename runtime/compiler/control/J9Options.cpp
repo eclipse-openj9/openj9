@@ -1989,11 +1989,15 @@ J9::Options::fePreProcess(void * base)
          std::random_device rd;
          std::mt19937_64 rng(rd());
          std::uniform_int_distribution<uint64_t> dist;
-         compInfo->getPersistentInfo()->setClientUID(dist(rng));
+         uint64_t clientUID = dist(rng);
+         compInfo->getPersistentInfo()->setClientUID(clientUID);
+         jitConfig->clientUID = clientUID;
+
          // _safeReservePhysicalMemoryValue is set as 0 for the JITClient because compilations
          // are done remotely. The user can still override it with a command line option
          J9::Options::_safeReservePhysicalMemoryValue = 0;
          }
+      jitConfig->isClient = (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT) ? 1 : 0; 
       }
 #endif /* defined(JITSERVER_SUPPORT) */
 

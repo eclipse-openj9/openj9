@@ -3763,6 +3763,8 @@ typedef struct J9JITConfig {
 #if defined(JITSERVER_SUPPORT)
 	int32_t (*startJITServer)(struct J9JITConfig *jitConfig);
 	int32_t (*waitJITServerTermination)(struct J9JITConfig *jitConfig);
+	int32_t isClient;
+	int64_t clientUID;
 #endif /* JITSERVER_SUPPORT */
 } J9JITConfig;
 

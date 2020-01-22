@@ -1052,13 +1052,30 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	/* Write the running mode data */
 	_OutputStream.writeCharacters("1CIRUNNINGAS   Running as ");
 
+	/* If JITServer enabled, print running mode as JITServer and client UID*/
+#ifdef JITSERVER_SUPPORT
+	if (jitConfig->isClient == 1) {
+		_OutputStream.writeCharacters("a JITServer Client");
+	} else {
+		_OutputStream.writeCharacters("a JITServer Server");
+	}
 	/* NB : I can't find any code for making this decision in the existing implementation */
-#ifdef J9VM_BUILD_J2SE
+#elif J9VM_BUILD_J2SE
 	_OutputStream.writeCharacters("a standalone");
 #else
 	_OutputStream.writeCharacters("an embedded");
 #endif
 	_OutputStream.writeCharacters(" JVM\n");
+
+#ifdef JITSERVER_SUPPORT
+	if (jitConfig->isClient == 1) {
+		char valueString[_MaximumGPValueLength]; 
+		sprintf(valueString, "%llu", (unsigned long long) jitConfig->clientUID);
+		_OutputStream.writeCharacters("1CICLIENTID    Client UID "); 
+		_OutputStream.writeCharacters(valueString);
+		_OutputStream.writeCharacters("\n");
+	}
+#endif
 
 	_OutputStream.writeCharacters("1CIVMIDLESTATE VM Idle State: ");
 	writeVMRuntimeState(_VirtualMachine->internalVMFunctions->getVMRuntimeState(_VirtualMachine));
