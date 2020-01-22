@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -608,32 +608,44 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 			sizeRequirements.lineNumberTableSize = U_32(sizeInformation.lineNumberSize);
 			sizeRequirements.localVariableTableSize = U_32(sizeInformation.variableInfoSize);
 
-			if ( sharedStoreClassTransaction.allocateSharedClass(&sizeRequirements) ){
-				U_8 *romClassBuffer = (U_8*)sharedStoreClassTransaction.getRomClass();
-				/*
-				 * Make note that the laydown is occurring in SharedClasses
-				 */
-				romSize = finishPrepareAndLaydown(
-						(U_8*)sharedStoreClassTransaction.getRomClass(),
-						(U_8*)sharedStoreClassTransaction.getLineNumberTable(),
-						(U_8*)sharedStoreClassTransaction.getLocalVariableTable(),
-						&sizeInformation, modifiers, extraModifiers, optionalFlags,
-						true, sharedStoreClassTransaction.hasSharedStringTableLock(),
-						&classFileOracle, &srpOffsetTable, &srpKeyProducer, &romClassWriter,
-						context, &constantPoolMap
-						);
+			/* 
+			 * Check sharedStoreClassTransaction.isCacheFull() here because for performance concerns on a full cache, we don't have write mutex if the cache is full/soft full.
+			 * Without this check, j9shr_classStoreTransaction_createSharedClass() does not guarantee returning on checking J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL in runtimeFlags, 
+			 * as another thread that has write mutex may unset this flag, leading to unexpected write operation to the cache without the write mutex.
+			 */
+			if (!sharedStoreClassTransaction.isCacheFull()) {
+				if ( sharedStoreClassTransaction.allocateSharedClass(&sizeRequirements) ){
+					U_8 *romClassBuffer = (U_8*)sharedStoreClassTransaction.getRomClass();
+					/*
+					 * Make note that the laydown is occurring in SharedClasses
+					 */
+					romSize = finishPrepareAndLaydown(
+							(U_8*)sharedStoreClassTransaction.getRomClass(),
+							(U_8*)sharedStoreClassTransaction.getLineNumberTable(),
+							(U_8*)sharedStoreClassTransaction.getLocalVariableTable(),
+							&sizeInformation, modifiers, extraModifiers, optionalFlags,
+							true, sharedStoreClassTransaction.hasSharedStringTableLock(),
+							&classFileOracle, &srpOffsetTable, &srpKeyProducer, &romClassWriter,
+							context, &constantPoolMap
+							);
 
-				fixReturnBytecodes(_portLibrary, (J9ROMClass *)romClassBuffer);
+					fixReturnBytecodes(_portLibrary, (J9ROMClass *)romClassBuffer);
 
-				/*
-				 * inform the shared class transaction what the final ROMSize is
-				 */
-				sharedStoreClassTransaction.updateSharedClassSize(romSize);
-				context->recordROMClass((J9ROMClass *)romClassBuffer);
-				if ((NULL != _javaVM) && (_javaVM->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_CHECK_DEBUG_INFO_COMPRESSION)) {
-					checkDebugInfoCompression((J9ROMClass *)romClassBuffer, classFileOracle, &srpKeyProducer, &constantPoolMap, &srpOffsetTable);
+					/*
+					 * inform the shared class transaction what the final ROMSize is
+					 */
+					sharedStoreClassTransaction.updateSharedClassSize(romSize);
+					context->recordROMClass((J9ROMClass *)romClassBuffer);
+					if ((NULL != _javaVM) && (_javaVM->extendedRuntimeFlags & J9_EXTENDED_RUNTIME_CHECK_DEBUG_INFO_COMPRESSION)) {
+						checkDebugInfoCompression((J9ROMClass *)romClassBuffer, classFileOracle, &srpKeyProducer, &constantPoolMap, &srpOffsetTable);
+					}
+					return OK;
 				}
-				return OK;
+				/* If sharedStoreClassTransaction.allocateSharedClass() returned false due to the shared cache softmx, unstored bytes is increased inside 
+				 * SH_CompositeCacheImpl::allocate(). No need to call sharedStoreClassTransaction.updateUnstoredBytes() here.
+				 */
+			} else {
+				sharedStoreClassTransaction.updateUnstoredBytes(sizeRequirements.romClassSizeFullSize);
 			}
 		}
 

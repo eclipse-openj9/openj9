@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,7 @@ IDATA j9shr_classStoreTransaction_createSharedClass(void * tobj, const J9RomClas
 IDATA j9shr_classStoreTransaction_updateSharedClassSize(void * tobj, U_32 sizeUsed);
 BOOLEAN j9shr_classStoreTransaction_isOK(void * tobj);
 BOOLEAN j9shr_classStoreTransaction_hasSharedStringTableLock(void * tobj);
+void j9shr_classStoreTransaction_updateUnstoredBytes(U_32 romClassSizeFullSize, void * tobj);
 
 J9ROMClass * j9shr_jclUpdateROMClassMetaData(J9VMThread* currentThread, J9ClassLoader* classloader, J9ClassPathEntry* classPathEntries, UDATA cpEntryCount, UDATA entryIndex, const J9UTF8* partition, const J9ROMClass * existingClass);
 
