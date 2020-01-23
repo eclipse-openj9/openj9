@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2014, 2018 IBM Corp. and others
+Copyright (c) 2014, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,11 +45,10 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 				<include-if condition="spec.linux_390.*"/>
 			</makefilestub>
 			<makefilestub data="UMA_EXE_POSTFIX_FLAGS += --export-dynamic">
-				<include-if condition="spec.linux_ppc.*"/>
-				<exclude-if condition="spec.linux_ppc.*_gcc"/>
+				<include-if condition="spec.linux_ppc.* and not spec.flags.env_littleEndian"/>
 			</makefilestub>
 			<makefilestub data="UMA_EXE_POSTFIX_FLAGS += -export-dynamic">
-				<include-if condition="spec.linux_ppc.*_gcc"/>
+				<include-if condition="spec.linux_ppc.*_le"/>
 			</makefilestub>
 		</makefilestubs>
 		<objects>
