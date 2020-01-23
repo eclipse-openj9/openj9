@@ -1959,15 +1959,18 @@ J9::SymbolReferenceTable::checkImmutable(TR::SymbolReference *symRef)
       "java/lang/String"
       };
 
-   TR_ASSERT(sizeof(names)/sizeof(char *) == _numImmutableClasses,"Size of names array is not correct\n");
-   int32_t i;
-   for (i = 0; i < _numImmutableClasses; i++)
+   if (!comp()->getOption(TR_DisableImmutableFieldAliasing))
       {
-      if (strcmp(names[i].name, name) == 0)
+      TR_ASSERT(sizeof(names)/sizeof(char *) == _numImmutableClasses,"Size of names array is not correct\n");
+      int32_t i;
+      for (i = 0; i < _numImmutableClasses; i++)
          {
-         _hasImmutable = true;
-         _immutableSymRefNumbers[i]->set(symRef->getReferenceNumber());
-         break;
+         if (strcmp(names[i].name, name) == 0)
+            {
+            _hasImmutable = true;
+            _immutableSymRefNumbers[i]->set(symRef->getReferenceNumber());
+            break;
+            }
          }
       }
 
