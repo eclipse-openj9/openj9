@@ -1,4 +1,4 @@
-!! Copyright (c) 2000, 2019 IBM Corp. and others
+!! Copyright (c) 2000, 2020 IBM Corp. and others
 !!
 !! This program and the accompanying materials are made available under
 !! the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,7 +192,7 @@
 	lfd  	fp3, 24(J9SP);                               \
 	lfd  	fp4, 32(J9SP);                               \
 	lfd  	fp5, 40(J9SP);                               \
-	lfd  	fp6, 48(J9SP);                               \                      
+	lfd  	fp6, 48(J9SP);                               \
 	lfd  	fp7, 56(J9SP);                               \
 	addi	J9SP, J9SP, 64;
 
@@ -227,26 +227,6 @@
 	.globl    ._interpreterUnresolvedMethodTypeTableEntryGlue
 	.globl    _interpreterUnresolvedMethodTypeTableEntryGlue{DS}
 	.globl    ._interpreterUnresolvedStaticDataGlue
-	.globl    .MTUnresolvedInt32Load
-	.globl    MTUnresolvedInt32Load{DS}
-	.globl    .MTUnresolvedInt64Load
-	.globl    MTUnresolvedInt64Load{DS}
-	.globl    .MTUnresolvedFloatLoad
-	.globl    MTUnresolvedFloatLoad{DS}
-	.globl    .MTUnresolvedDoubleLoad
-	.globl    MTUnresolvedDoubleLoad{DS}
-	.globl    .MTUnresolvedAddressLoad
-	.globl    MTUnresolvedIAddressLoad{DS}
-	.globl    .MTUnresolvedInt32Store
-	.globl    MTUnresolvedInt32Store{DS}
-	.globl    .MTUnresolvedInt64Store
-	.globl    MTUnresolvedInt64Store{DS}
-	.globl    .MTUnresolvedIntFloatStore
-	.globl    MTUnresolvedFloatStore{DS}
-	.globl    .MTUnresolvedDoubleStore
-	.globl    MTUnresolvedDoubleLoad{DS}
-	.globl    .MTUnresolvedAddressStore
-	.globl    MTUnresolvedIAddressStore{DS}
 	.globl    _interpreterUnresolvedStaticDataGlue{DS}
 	.globl	  ._interpreterUnresolvedStaticDataStoreGlue
 	.globl	  _interpreterUnresolvedStaticDataStoreGlue{DS}
@@ -316,7 +296,7 @@
 	.type  FUNC_LABEL(_interpreterSyncGPR3StaticGlue),@function
 	.globl FUNC_LABEL(_interpreterSyncVoidStaticGlue)
 	.type  FUNC_LABEL(_interpreterSyncVoidStaticGlue),@function
-    .globl FUNC_LABEL(_interpreterUnresolvedClassGlue)
+        .globl FUNC_LABEL(_interpreterUnresolvedClassGlue)
 	.type  FUNC_LABEL(_interpreterUnresolvedClassGlue),@function
 	.globl FUNC_LABEL(_interpreterUnresolvedClassGlue2)
 	.type  FUNC_LABEL(_interpreterUnresolvedClassGlue2),@function
@@ -328,26 +308,6 @@
 	.type  FUNC_LABEL(_interpreterUnresolvedInstanceDataStoreGlue),@function
 	.globl FUNC_LABEL(_interpreterUnresolvedSpecialGlue)
 	.type  FUNC_LABEL(_interpreterUnresolvedSpecialGlue),@function
-	.globl FUNC_LABEL(MTUnresolvedInt32Load)
-	.type  FUNC_LABEL(MTUnresolvedInt32Load),@function
-	.globl FUNC_LABEL(MTUnresolvedInt64Load)
-	.type  FUNC_LABEL(MTUnresolvedInt64Load),@function
-	.globl FUNC_LABEL(MTUnresolvedFloatLoad)
-	.type  FUNC_LABEL(MTUnresolvedFloatLoad),@function
-	.globl FUNC_LABEL(MTUnresolvedDoubleLoad)
-	.type  FUNC_LABEL(MTUnresolvedDoubleLoad),@function
-	.globl FUNC_LABEL(MTUnresolvedAddressLoad)
-	.type  FUNC_LABEL(MTUnresolvedAddressLoad),@function
-	.globl FUNC_LABEL(MTUnresolvedInt32Store)
-	.type  FUNC_LABEL(MTUnresolvedInt32Store),@function
-	.globl FUNC_LABEL(MTUnresolvedInt64Store)
-	.type  FUNC_LABEL(MTUnresolvedInt64Store),@function
-	.globl FUNC_LABEL(MTUnresolvedFloatStore)
-	.type  FUNC_LABEL(MTUnresolvedFloatStore),@function
-	.globl FUNC_LABEL(MTUnresolvedDoubleStore)
-	.type  FUNC_LABEL(MTUnresolvedDoubleStore),@function
-	.globl FUNC_LABEL(MTUnresolvedAddressStore)
-	.type  FUNC_LABEL(MTUnresolvedAddressStore),@function
 	.globl FUNC_LABEL(_interpreterUnresolvedStaticDataGlue)
 	.type  FUNC_LABEL(_interpreterUnresolvedStaticDataGlue),@function
 	.globl FUNC_LABEL(_interpreterUnresolvedStaticDataStoreGlue)
@@ -393,22 +353,12 @@
 	.globl _interpreterSyncGPR3GPR4StaticGlue
 	.globl _interpreterSyncGPR3StaticGlue
 	.globl _interpreterSyncVoidStaticGlue
-    .globl _interpreterUnresolvedClassGlue
+        .globl _interpreterUnresolvedClassGlue
 	.globl _interpreterUnresolvedClassGlue2
 	.globl _interpreterUnresolvedDirectVirtualGlue
 	.globl _interpreterUnresolvedInstanceDataGlue
 	.globl _interpreterUnresolvedInstanceDataStoreGlue
 	.globl _interpreterUnresolvedSpecialGlue
-	.globl MTUnresolvedInt32Load
-	.globl MTUnresolvedInt64Load
-	.globl MTUnresolvedFloatLoad
-	.globl MTUnresolvedDoubleLoad
-	.globl MTUnresolvedAddressLoad
-	.globl MTUnresolvedInt32Store
-	.globl MTUnresolvedInt64Store
-	.globl MTUnresolvedFloatStore
-	.globl MTUnresolvedDoubleStore
-	.globl MTUnresolvedAddressStore
 	.globl _interpreterUnresolvedStaticDataGlue
 	.globl _interpreterUnresolvedStaticDataStoreGlue
 	.globl _interpreterUnresolvedStaticGlue
@@ -1416,411 +1366,6 @@ _interpreterUnresolvedStaticDataGlue:
 	endproc._interpreterUnresolvedStaticDataGlue:
 
 #ifdef AIXPPC
-.MTUnresolvedInt32Load:
-	.function .MTUnresolvedInt32Load,startproc.MTUnresolvedInt32Load,16,0,(endproc.MTUnresolvedInt32Load-startproc.MTUnresolvedInt32Load)
-#elif defined(LINUXPPC64)
-FUNC_LABEL(MTUnresolvedInt32Load):
-#else
-MTUnresolvedInt32Load:
-.MTUnresolvedInt32Load:
-#endif
-	startproc.MTUnresolvedInt32Load:
-#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
-	#include "p/runtime/SaveGPRs.inc"
-	mfcr    r0
-	stw     r0,-4(J9SP)					! Save CR also
-	addi    J9SP,J9SP,-(33*ALen)
-	mfspr   r7, LR						! Get the RA in snippet
-
-    MT_ResovleStaticField               ! call jitResovleStaticField
-
-    laddr	r6, 0(r7)					! Load code cache RA
-    clrrdi r3, r3, 1                    ! <clinit> clear up the last bit, which must be zero
-
-    andi. r4, r3, 0x2                   ! check r3 if r3 is isolated field
-    cmpi  cr0, CmpAddr, r4, 2
-    bne	cr0, .MTUnresolvedInt32LoadNoneIsolated		! Not isolated, branch to none isolated case
-
-    MT_ComputeStaticFieldAddress(J9TR_VMThread_tenantData32, 2) ! extract address from isolate field index
-    lwzx   r3, r3, r5                               ! load result to r3, input r3 has col offset, r5 has row base
-    isync
-    b .MTUnresolvedInt32LoadRestore
-.MTUnresolvedInt32LoadNoneIsolated:
-    lwz    r3, 0(r3)                               ! r3 contains load result
-    isync
-.MTUnresolvedInt32LoadRestore:
-    std     r3, 24(J9SP)                    ! store r3 value into r3 slot
-    b .L_restore_and_return
-#endif
-	endproc.MTUnresolvedInt32Load:
-
-#ifdef AIXPPC
-.MTUnresolvedInt64Load:
-	.function .MTUnresolvedInt64Load,startproc.MTUnresolvedInt64Load,16,0,(endproc.MTUnresolvedInt64Load-startproc.MTUnresolvedInt64Load)
-#elif defined(LINUXPPC64)
-FUNC_LABEL(MTUnresolvedInt64Load):
-#else
-MTUnresolvedInt64Load:
-.MTUnresolvedInt64Load:
-#endif
-	startproc.MTUnresolvedInt64Load:
-#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
-#include "p/runtime/SaveGPRs.inc"
-	mfcr    r0
-	stw     r0,-4(J9SP)					! Save CR also
-	addi    J9SP,J9SP,-(33*ALen)
-	mfspr   r7, LR						! Get the RA in snippet
-
-    MT_ResovleStaticField
-
-    laddr	r6, 0(r7)					! Load code cache RA
-    clrrdi r3, r3, 1           ! <clinit> clear up the last bit, which must be zero
-
-    andi. r4, r3, 0x2
-    cmpi  cr0, CmpAddr, r4, 2
-    bne	cr0, .MTUnresolvedInt64LoadNoneIsolated		! Not isolated, branch to none isolated case
-
-    MT_ComputeStaticFieldAddress(J9TR_VMThread_tenantData64, 3)
-    ldx r3, r3, r5                               ! r3 contains load result
-    isync
-    b .MTUnresolvedInt64LoadRestore
-.MTUnresolvedInt64LoadNoneIsolated:
-    ld    r3, 0(r3)                               ! r3 contains load result
-    isync
-.MTUnresolvedInt64LoadRestore:
-    std     r3, 24(J9SP)                          ! store r3 value into r3 slot
-    b .L_restore_and_return
-#endif
-	endproc.MTUnresolvedInt64Load:
-
-#ifdef AIXPPC
-.MTUnresolvedFloatLoad:
-	.function .MTUnresolvedFloatLoad,startproc.MTUnresolvedFloatLoad,16,0,(endproc.MTUnresolvedFloatLoad-startproc.MTUnresolvedFloatLoad)
-#elif defined(LINUXPPC64)
-FUNC_LABEL(MTUnresolvedFloatLoad):
-#else
-MTUnresolvedFloatLoad:
-.MTUnresolvedFloatLoad:
-#endif
-	startproc.MTUnresolvedFloatLoad:
-#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
-#include "p/runtime/SaveGPRs.inc"
-	mfcr    r0
-	stw     r0,-4(J9SP)					! Save CR also
-	addi    J9SP,J9SP,-(33*ALen)
-	mfspr   r7, LR						! Get the RA in snippet
-
-    MT_ResovleStaticField
-
-    laddr	r6, 0(r7)					! Load code cache RA
-    clrrdi r3, r3, 1                   ! <clinit> clear up the last bit, which must be zero
-
-    andi. r4, r3, 0x2                               ! check r3 if r3 is isolated field
-    cmpi  cr0, CmpAddr, r4, 2
-    bne	cr0, .MTUnresolvedFloatLoadNoneIsolated		! Not isolated, branch to none isolated case
-
-    MT_ComputeStaticFieldAddress(J9TR_VMThread_tenantData32, 2)
-    lfsx fp0, r3, r5                               ! r3 contains load result
-    isync
-    b .MTUnresolvedFloatLoadRestore
-.MTUnresolvedFloatLoadNoneIsolated:
-    lfs    fp0, 0(r3)                               ! r3 contains load result
-    isync
-.MTUnresolvedFloatLoadRestore:
-
-    b .L_restore_and_return
-#endif
-	endproc.MTUnresolvedFloatLoad:
-
-#ifdef AIXPPC
-.MTUnresolvedDoubleLoad:
-	.function .MTUnresolvedDoubleLoad,startproc.MTUnresolvedDoubleLoad,16,0,(endproc.MTUnresolvedDoubleLoad-startproc.MTUnresolvedDoubleLoad)
-#elif defined(LINUXPPC64)
-FUNC_LABEL(MTUnresolvedDoubleLoad):
-#else
-MTUnresolvedDoubleLoad:
-.MTUnresolvedDoubleLoad:
-#endif
-	startproc.MTUnresolvedDoubleLoad:
-#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
-#include "p/runtime/SaveGPRs.inc"
-	mfcr    r0
-	stw     r0,-4(J9SP)					! Save CR also
-	addi    J9SP,J9SP,-(33*ALen)
-	mfspr   r7, LR						! Get the RA in snippet
-
-    MT_ResovleStaticField
-
-    laddr	r6, 0(r7)					! Load code cache RA
-    clrrdi r3, r3, 1                ! <clinit> clear up the last bit, which must be zero
-
-    andi. r4, r3, 0x2               ! check r3 if r3 is isolated field
-    cmpi  cr0, CmpAddr, r4, 2
-    bne	cr0, .MTUnresolvedDoubleLoadNoneIsolated		! Not isolated, branch to none isolated case
-
-    MT_ComputeStaticFieldAddress(J9TR_VMThread_tenantData64, 3)
-    lfdx fp0, r3, r5                               ! r3 contains load result
-    isync
-    b .MTUnresolvedDoubleLoadRestore
-.MTUnresolvedDoubleLoadNoneIsolated:
-    lfd    fp0, 0(r3)                               ! r3 contains load result
-    isync
-.MTUnresolvedDoubleLoadRestore:
-    b .L_restore_and_return
-#endif
-	endproc.MTUnresolvedDoubleLoad:
-
-#ifdef AIXPPC
-.MTUnresolvedAddressLoad:
-	.function .MTUnresolvedAddressLoad,startproc.MTUnresolvedAddressLoad,16,0,(endproc.MTUnresolvedAddressLoad-startproc.MTUnresolvedAddressLoad)
-#elif defined(LINUXPPC64)
-FUNC_LABEL(MTUnresolvedAddressLoad):
-#else
-MTUnresolvedAddressLoad:
-.MTUnresolvedAddressLoad:
-#endif
-	startproc.MTUnresolvedAddressLoad:
-#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
-#include "p/runtime/SaveGPRs.inc"
-	mfcr    r0
-	stw     r0,-4(J9SP)					! Save CR also
-	addi    J9SP,J9SP,-(33*ALen)
-	mfspr   r7, LR						! Get the RA in snippet
-
-    MT_ResovleStaticField
-
-    laddr	r6, 0(r7)					! Load code cache RA
-    clrrdi r3, r3, 1          ! <clinit> clear up the last bit, which must be zero
-
-    andi. r4, r3, 0x2                   ! check r3 if r3 is isolated field
-    cmpi  cr0, CmpAddr, r4, 2
-    bne	cr0, .MTUnresolvedObjLoadNoneIsolated		! Not isolated, branch to none isolated case
-
-    MT_ComputeStaticFieldAddress(J9TR_VMThread_tenantDataObj, 2)
-    lwzx r3, r3, r5                               ! r3 contains load result
-    isync
-    lwz    r4, 20(r7)                              ! get compressed shift size
-    sld    r3, r3, r4                              ! decompress pointer
-    b .MTUnresolvedObjLoadRestore
-.MTUnresolvedObjLoadNoneIsolated:
-    ld    r3, 0(r3)                               ! r3 contains load result
-    isync
-.MTUnresolvedObjLoadRestore:
-    std     r3, 24(J9SP)                    ! store r3 value into r3 slot
-    b .L_restore_and_return
-#endif
-	endproc.MTUnresolvedAddressLoad:
-
-#ifdef AIXPPC
-.MTUnresolvedInt32Store:
-	.function .MTUnresolvedInt32Store,startproc.MTUnresolvedInt32Store,16,0,(endproc.MTUnresolvedInt32Store-startproc.MTUnresolvedInt32Store)
-#elif defined(LINUXPPC64)
-FUNC_LABEL(MTUnresolvedInt32Store):
-#else
-MTUnresolvedInt32Store:
-.MTUnresolvedInt32Store:
-#endif
-	startproc.MTUnresolvedInt32Store:
-#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
-#include "p/runtime/SaveGPRs.inc"
-	mfcr    r0
-	stw     r0,-4(J9SP)					! Save CR also
-	addi    J9SP,J9SP,-(33*ALen)
-	mfspr   r7, LR						! Get the RA in snippet
-
-    MT_ResovleStaticFieldSetter         ! call jitResovleStaticFieldSetter
-
-    laddr	r6, 0(r7)					! Load code cache RA
-    clrrdi r3, r3, 1                    ! <clinit> clear up the last bit, which must be zero
-    ld r29, 24(J9SP)                    ! load store value into r29
-
-    andi. r4, r3, 0x2                   ! check r3 if r3 is isolated field
-    cmpi  cr0, CmpAddr, r4, 2
-    bne	cr0, .MTUnresolvedInt32StoreNoneIsolated		! Not isolated, branch to none isolated case
-
-    MT_ComputeStaticFieldAddress(J9TR_VMThread_tenantData32, 2)
-    lwsync
-    stwx   r29, r3, r5                               ! r29 contains store value
-    sync
-    b .MTUnresolvedInt32StoreRestore
-.MTUnresolvedInt32StoreNoneIsolated:
-    lwsync
-    stw    r29, 0(r3)                               ! r29 contains store value
-    sync
-.MTUnresolvedInt32StoreRestore:
-    b .L_restore_and_return
-#endif
-	endproc.MTUnresolvedInt32Store:
-
-#ifdef AIXPPC
-.MTUnresolvedInt64Store:
-	.function .MTUnresolvedInt64Store,startproc.MTUnresolvedInt64Store,16,0,(endproc.MTUnresolvedInt64Store-startproc.MTUnresolvedInt64Store)
-#elif defined(LINUXPPC64)
-FUNC_LABEL(MTUnresolvedInt64Store):
-#else
-MTUnresolvedInt64Store:
-.MTUnresolvedInt64Store:
-#endif
-	startproc.MTUnresolvedInt64Store:
-#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
-#include "p/runtime/SaveGPRs.inc"
-	mfcr    r0
-	stw     r0,-4(J9SP)					! Save CR also
-	addi    J9SP,J9SP,-(33*ALen)
-	mfspr   r7, LR						! Get the RA in snippet
-
-    MT_ResovleStaticFieldSetter
-
-    laddr	r6, 0(r7)					! Load code cache RA
-    clrrdi r3, r3, 1                   ! <clinit> clear up the last bit, which must be zero
-    ld r29, 24(J9SP)                   ! load store value into r29
-
-    andi. r4, r3, 0x2                           ! check r3 if r3 is isolated field
-    cmpi  cr0, CmpAddr, r4, 2
-    bne	cr0, .MTUnresolvedInt64StoreNoneIsolated		! Not isolated, branch to none isolated case
-
-    MT_ComputeStaticFieldAddress(J9TR_VMThread_tenantData64, 3)
-    lwsync
-    stdx   r29, r3, r5                               ! r29 contains store value
-    sync
-    b .MTUnresolvedInt64StoreRestore
-.MTUnresolvedInt64StoreNoneIsolated:
-    lwsync
-    std    r29, 0(r3)                               ! r29 contains store value
-    sync
-.MTUnresolvedInt64StoreRestore:
-    b .L_restore_and_return
-#endif
-	endproc.MTUnresolvedInt64Store:
-
-#ifdef AIXPPC
-.MTUnresolvedFloatStore:
-	.function .MTUnresolvedFloatStore,startproc.MTUnresolvedFloatStore,16,0,(endproc.MTUnresolvedFloatStore-startproc.MTUnresolvedFloatStore)
-#elif defined(LINUXPPC64)
-FUNC_LABEL(MTUnresolvedFloatStore):
-#else
-MTUnresolvedFloatStore:
-.MTUnresolvedFloatStore:
-#endif
-	startproc.MTUnresolvedFloatStore:
-#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
-#include "p/runtime/SaveGPRs.inc"
-	mfcr    r0
-	stw     r0,-4(J9SP)					! Save CR also
-	addi    J9SP,J9SP,-(33*ALen)
-	mfspr   r7, LR						! Get the RA in snippet
-
-    MT_ResovleStaticFieldSetter
-
-    laddr	r6, 0(r7)					! Load code cache RA
-    clrrdi r3, r3, 1                    ! <clinit> clear up the last bit, which must be zero
-
-    ! check r3 if r3 is isolated field
-    andi. r4, r3, 0x2
-    cmpi  cr0, CmpAddr, r4, 2
-    bne	cr0, .MTUnresolvedFloatStoreNoneIsolated		! Not isolated, branch to none isolated case
-
-    MT_ComputeStaticFieldAddress(J9TR_VMThread_tenantData32, 2)
-    lwsync
-    stfsx   fp0, r3, r5                               ! fp0 contains store value
-    sync
-    b .MTUnresolvedFloatStoreRestore
-.MTUnresolvedFloatStoreNoneIsolated:
-    lwsync
-    stfs   fp0, 0(r3)                               ! fp0 contains store value
-    sync
-.MTUnresolvedFloatStoreRestore:
-    b .L_restore_and_return
-#endif
-	endproc.MTUnresolvedFloatStore:
-
-#ifdef AIXPPC
-.MTUnresolvedDoubleStore:
-	.function .MTUnresolvedDoubleStore,startproc.MTUnresolvedDoubleStore,16,0,(endproc.MTUnresolvedDoubleStore-startproc.MTUnresolvedDoubleStore)
-#elif defined(LINUXPPC64)
-FUNC_LABEL(MTUnresolvedDoubleStore):
-#else
-MTUnresolvedDoubleStore:
-.MTUnresolvedDoubleStore:
-#endif
-	startproc.MTUnresolvedDoubleStore:
-#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
-#include "p/runtime/SaveGPRs.inc"
-	mfcr    r0
-	stw     r0,-4(J9SP)					! Save CR also
-	addi    J9SP,J9SP,-(33*ALen)
-	mfspr   r7, LR						! Get the RA in snippet
-
-    MT_ResovleStaticFieldSetter
-
-    laddr	r6, 0(r7)					! Load code cache RA
-    clrrdi r3, r3, 1                    ! <clinit> clear up the last bit, which must be zero
-
-    andi. r4, r3, 0x2
-    cmpi  cr0, CmpAddr, r4, 2
-    bne	cr0, .MTUnresolvedDoubleStoreNoneIsolated		! Not isolated, branch to none isolated case
-
-    MT_ComputeStaticFieldAddress(J9TR_VMThread_tenantData64, 3)
-    lwsync
-    stfdx   fp0, r3, r5                               ! fp0 contains store value
-    sync
-    b .MTUnresolvedDoubleStoreRestore
-.MTUnresolvedDoubleStoreNoneIsolated:
-    lwsync
-    stfd   fp0, 0(r3)                               ! fp0 contains store value
-    sync
-.MTUnresolvedDoubleStoreRestore:
-    b .L_restore_and_return
-#endif
-	endproc.MTUnresolvedDoubleStore:
-
-#ifdef AIXPPC
-.MTUnresolvedAddressStore:
-	.function .MTUnresolvedAddressStore,startproc.MTUnresolvedAddressStore,16,0,(endproc.MTUnresolvedAddressStore-startproc.MTUnresolvedAddressStore)
-#elif defined(LINUXPPC64)
-FUNC_LABEL(MTUnresolvedAddressStore):
-#else
-MTUnresolvedAddressStore:
-.MTUnresolvedAddressStore:
-#endif
-	startproc.MTUnresolvedAddressStore:
-#if defined(TR_HOST_64BIT) && defined(OMR_GC_COMPRESSED_POINTERS) && defined(J9VM_OPT_TENANT)
-#include "p/runtime/SaveGPRs.inc"
-	mfcr    r0
-	stw     r0,-4(J9SP)					! Save CR also
-	addi    J9SP,J9SP,-(33*ALen)
-	mfspr   r7, LR						! Get the RA in snippet
-
-	MT_ResovleStaticFieldSetter
-
-    laddr	r6, 0(r7)					! Load code cache RA
-    clrrdi r3, r3, 1                    ! <clinit> clear up the last bit, which must be zero
-    ld r29, 24(J9SP)                ! load store value into r29
-
-    andi. r4, r3, 0x2               ! check r3 if r3 is isolated field
-    cmpi  cr0, CmpAddr, r4, 2
-    bne	cr0, .MTUnresolvedObjStoreNoneIsolated		! Not isolated, branch to none isolated case
-
-    MT_ComputeStaticFieldAddress(J9TR_VMThread_tenantDataObj, 2)
-    ! compress store value
-    lwz    r4, 20(r7)                              ! get compressed shift size
-    srd    r29, r29, r4                              ! compress pointer
-
-    lwsync
-    stwx   r29, r3, r5                               ! r29 contains store value
-    sync
-    std r5, 32(J9SP)                            ! update owning object, overwrite r4 slot
-    b .MTUnresolvedObjStoreRestore
-.MTUnresolvedObjStoreNoneIsolated:
-    lwsync
-    std    r29, 0(r3)                               ! r29 contains store value, in ramstatic its not compressed
-    sync
-.MTUnresolvedObjStoreRestore:
-    b .L_restore_and_return
-#endif
-	endproc.MTUnresolvedAddressStore:
-
-#ifdef AIXPPC
 ._interpreterUnresolvedStaticDataStoreGlue:
 	.function ._interpreterUnresolvedStaticDataStoreGlue,startproc._interpreterUnresolvedStaticDataStoreGlue,16,0,(endproc._interpreterUnresolvedStaticDataStoreGlue-startproc._interpreterUnresolvedStaticDataStoreGlue)
 #elif defined(LINUXPPC64)
@@ -2341,7 +1886,7 @@ _interpreterUnresolvedStaticGlue:
 	laddr 	r0, j2iTransition@got(RTOC)
 #endif
 	mtspr 	CTR, r0  											! Set up to call
-	bcctr BO_ALWAYS, CR0_LT 									! Dispatch 
+	bcctr BO_ALWAYS, CR0_LT 									! Dispatch
 .L22.common_code:							!   be modified, r3 is result.
 #ifdef TR_HOST_64BIT
         clrrdi r3, r3, 1                                                ! <clinit> clear up the last bit, which must be zero
@@ -3178,7 +2723,7 @@ _interfaceSlotsUnavailable:
         ! of the method being called and if so, use it to quickly look up the vtable offset and make the call
 #ifdef OMR_GC_COMPRESSED_POINTERS
         lwz     r10, J9TR_J9Object_class(r3)                    ! Load class
-#else  
+#else
         laddr   r10, J9TR_J9Object_class(r3)                    ! Load class
 #endif
         maskVFT(r10)
@@ -3409,66 +2954,6 @@ __staticGlueTable:
 	ADDR      TOC{TC0}
 	ADDR      0x00000000
 ! End   csect     _interpreterUnresolvedMethodTypeTableEntryGlue{DS}
-
-	.csect    MTUnresolvedInt32Load{DS}
-	ADDR      .MTUnresolvedInt32Load
-	ADDR      TOC{TC0}
-	ADDR      0x00000000
-! End   csect     MTUnresolvedInt32Load{DS}
-
-	.csect    MTUnresolvedInt64Load{DS}
-	ADDR      .MTUnresolvedInt64Load
-	ADDR      TOC{TC0}
-	ADDR      0x00000000
-! End   csect     MTUnresolvedInt64Load{DS}
-
-	.csect    MTUnresolvedFloatLoad{DS}
-	ADDR      .MTUnresolvedFloatLoad
-	ADDR      TOC{TC0}
-	ADDR      0x00000000
-! End   csect     MTUnresolvedFloatLoad{DS}
-
-	.csect    MTUnresolvedDoubleLoad{DS}
-	ADDR      .MTUnresolvedDoubleLoad
-	ADDR      TOC{TC0}
-	ADDR      0x00000000
-! End   csect     MTUnresolvedDoubleLoad{DS}
-
-	.csect    MTUnresolvedAddressLoad{DS}
-	ADDR      .MTUnresolvedAddressLoad
-	ADDR      TOC{TC0}
-	ADDR      0x00000000
-! End   csect     MTUnresolvedAddressLoad{DS}
-
-	.csect    MTUnresolvedInt32Store{DS}
-	ADDR      .MTUnresolvedInt32Store
-	ADDR      TOC{TC0}
-	ADDR      0x00000000
-! End   csect     MTUnresolvedInt32Store{DS}
-
-	.csect    MTUnresolvedInt64Store{DS}
-	ADDR      .MTUnresolvedInt64Store
-	ADDR      TOC{TC0}
-	ADDR      0x00000000
-! End   csect     MTUnresolvedInt64Store{DS}
-
-	.csect    MTUnresolvedFloatStore{DS}
-	ADDR      .MTUnresolvedFloatStore
-	ADDR      TOC{TC0}
-	ADDR      0x00000000
-! End   csect     MTUnresolvedFloatStore{DS}
-
-	.csect    MTUnresolvedDoubleStore{DS}
-	ADDR      .MTUnresolvedDoubleStore
-	ADDR      TOC{TC0}
-	ADDR      0x00000000
-! End   csect     MTUnresolvedDoubleStore{DS}
-
-	.csect    MTUnresolvedAddressStore{DS}
-	ADDR      .MTUnresolvedAddressStore
-	ADDR      TOC{TC0}
-	ADDR      0x00000000
-! End   csect     MTUnresolvedAddressStore{DS}
 
 	.csect    _interpreterUnresolvedStaticDataGlue{DS}
 	ADDR      ._interpreterUnresolvedStaticDataGlue
@@ -3792,86 +3277,6 @@ _interpreterUnresolvedCallSiteTableEntryGlue:
 	.size     _interpreterUnresolvedMethodTypeTableEntryGlue,24
 _interpreterUnresolvedMethodTypeTableEntryGlue:
 	.quad     ._interpreterUnresolvedMethodTypeTableEntryGlue
-	.quad     .TOC.@tocbase
-	.long     0x00000000
-	.long     0x00000000
-
-	.globl    MTUnresolvedInt32Load
-	.size     MTUnresolvedInt32Load,24
-MTUnresolvedInt32Load:
-	.quad     .MTUnresolvedInt32Load
-	.quad     .TOC.@tocbase
-	.long     0x00000000
-	.long     0x00000000
-
-	.globl    MTUnresolvedInt64Load
-	.size     MTUnresolvedInt64Load,24
-MTUnresolvedInt64Load:
-	.quad     .MTUnresolvedInt64Load
-	.quad     .TOC.@tocbase
-	.long     0x00000000
-	.long     0x00000000
-
-	.globl    MTUnresolvedFloatLoad
-	.size     MTUnresolvedFloatLoad,24
-MTUnresolvedFloatLoad:
-	.quad     .MTUnresolvedFloatLoad
-	.quad     .TOC.@tocbase
-	.long     0x00000000
-	.long     0x00000000
-
-	.globl    MTUnresolvedDoubleLoad
-	.size     MTUnresolvedDoubleLoad,24
-MTUnresolvedDoubleLoad:
-	.quad     .MTUnresolvedDoubleLoad
-	.quad     .TOC.@tocbase
-	.long     0x00000000
-	.long     0x00000000
-
-	.globl    MTUnresolvedAddressLoad
-	.size     MTUnresolvedAddressLoad,24
-MTUnresolvedAddressLoad:
-	.quad     .MTUnresolvedAddressLoad
-	.quad     .TOC.@tocbase
-	.long     0x00000000
-	.long     0x00000000
-
-	.globl    MTUnresolvedInt32Store
-	.size     MTUnresolvedInt32Store,24
-MTUnresolvedInt32Store:
-	.quad     .MTUnresolvedInt32Store
-	.quad     .TOC.@tocbase
-	.long     0x00000000
-	.long     0x00000000
-
-	.globl    MTUnresolvedInt64Store
-	.size     MTUnresolvedInt64Store,24
-MTUnresolvedInt64Store:
-	.quad     .MTUnresolvedInt64Store
-	.quad     .TOC.@tocbase
-	.long     0x00000000
-	.long     0x00000000
-
-	.globl    MTUnresolvedFloatStore
-	.size     MTUnresolvedFloatStore,24
-MTUnresolvedFloatStore:
-	.quad     .MTUnresolvedFloatStore
-	.quad     .TOC.@tocbase
-	.long     0x00000000
-	.long     0x00000000
-
-	.globl    MTUnresolvedDoubleStore
-	.size     MTUnresolvedDoubleStore,24
-MTUnresolvedDoubleStore:
-	.quad     .MTUnresolvedDoubleStore
-	.quad     .TOC.@tocbase
-	.long     0x00000000
-	.long     0x00000000
-
-	.globl    MTUnresolvedAddressStore
-	.size     MTUnresolvedAddressStore,24
-MTUnresolvedAddressStore:
-	.quad     .MTUnresolvedAddressStore
 	.quad     .TOC.@tocbase
 	.long     0x00000000
 	.long     0x00000000
