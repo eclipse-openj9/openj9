@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -324,7 +324,7 @@ extern "C" {
 
 /* @ddr_namespace: map_to_type=J9StackWalkFlags */
 
-#define J9SW_JIT_FLOATS_PASSED_AS_DOUBLES
+#undef  J9SW_JIT_FLOATS_PASSED_AS_DOUBLES
 #undef  J9SW_JIT_HELPERS_PASS_PARAMETERS_ON_STACK
 #undef  J9SW_NEEDS_JIT_2_INTERP_CALLEE_ARG_POP
 #define J9SW_NEEDS_JIT_2_INTERP_THUNKS
