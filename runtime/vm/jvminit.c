@@ -1870,6 +1870,22 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			}
 #endif /* !defined(WIN32) && !defined(J9ZTPF) */
 
+#if defined(AIXPPC)
+			/* Override the AIX soft limit on the data segment to avoid getting EAGAIN when creating a new thread,
+			 * which results in an OutOfMemoryException. Also provides compatibility with IBM Java 8.
+			 */
+			{
+				uint64_t limit = 0;
+				uint32_t rc = omrsysinfo_get_limit(OMRPORT_RESOURCE_DATA | OMRPORT_LIMIT_SOFT, &limit);
+				if (OMRPORT_LIMIT_UNLIMITED != rc) {
+					uint32_t rc = omrsysinfo_get_limit(OMRPORT_RESOURCE_DATA | OMRPORT_LIMIT_HARD, &limit);
+					if (OMRPORT_LIMIT_UNKNOWN != rc) {
+						omrsysinfo_set_limit(OMRPORT_RESOURCE_DATA | OMRPORT_LIMIT_SOFT, limit);
+					}
+				}
+			}
+#endif /* defined(AIXPPC) */
+
 			/* Parse options related to idle tuning */
 			{
 				IDATA argIndexGcOnIdleEnable = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXIDLETUNINGGCONIDLEENABLE, NULL);
