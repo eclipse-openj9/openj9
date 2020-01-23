@@ -479,10 +479,12 @@ ROMClassBuilder::prepareAndLaydown( BufferManager *bufferManager, ClassFileParse
 			return res;
 		}
 		if (context->hasCPPatch()) {
+			/* Patch ROM Class constant pool
 			res = patchConstantPool(classFileParser->getParsedClassFile(), context);
 			if (OK != res) {
 				return res;
 			}
+			*/
 		}
 	}
 
