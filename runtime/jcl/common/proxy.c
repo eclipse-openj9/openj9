@@ -88,7 +88,7 @@ static jclass proxyDefineClass(
 		defineClassOptions |= J9_FINDCLASS_FLAG_UNSAFE;
 	}
 #endif /* JAVA_SPEC_VERSION == 8 */
-	return defineClassCommon(env, classLoader, className, classBytes, offset, length, pd, defineClassOptions, NULL);
+	return defineClassCommon(env, classLoader, className, classBytes, offset, length, pd, defineClassOptions, NULL, NULL);
 }
 
 jclass JNICALL Java_java_lang_reflect_Proxy_defineClassImpl(JNIEnv * env, jclass recvClass, jobject classLoader, jstring className, jbyteArray classBytes)
@@ -119,7 +119,7 @@ Java_java_lang_reflect_Proxy_defineClass0__Ljava_lang_ClassLoader_2Ljava_lang_St
 			defineClassOptions |= J9_FINDCLASS_FLAG_UNSAFE;
 		}
 #endif /* JAVA_SPEC_VERSION == 8 */
-		return defineClassCommon(env, classLoader, className, classBytes, offset, length, pd, defineClassOptions, NULL);
+		return defineClassCommon(env, classLoader, className, classBytes, offset, length, pd, defineClassOptions, NULL, NULL);
 	}
 }
 

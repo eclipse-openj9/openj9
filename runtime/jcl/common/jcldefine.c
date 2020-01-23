@@ -26,10 +26,11 @@
 #include "j9protos.h"
 
 
+void patchRAMConstantPool(J9VMThread *currentThread, J9Class *clazz, jobjectArray cpPatch, U_16 *cpIndexMap);
 
 jclass 
 defineClassCommon(JNIEnv *env, jobject classLoaderObject,
-	jstring className, jbyteArray classRep, jint offset, jint length, jobject protectionDomain, UDATA options, J9Class *hostClass)
+	jstring className, jbyteArray classRep, jint offset, jint length, jobject protectionDomain, UDATA options, J9Class *hostClass, jobjectArray cpPatch)
 {
 #ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
 
@@ -54,6 +55,10 @@ defineClassCommon(JNIEnv *env, jobject classLoaderObject,
 	U_8 *tempClassBytes = NULL;
 	I_32 tempLength = 0;
 	J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL, NULL, NULL};
+
+	if (cpPatch != NULL) {
+		localBuffer.cpPatch = cpPatch;
+	}
 
 	if (vm->dynamicLoadBuffers == NULL) {
 		if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
@@ -225,6 +230,10 @@ done:
 			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGCLASSFORMATERROR, NULL);
 		}
 	} else {
+		/* Patch RAM Class constant pool */
+		if (cpPatch != NULL) {
+			patchRAMConstantPool(currentThread, clazz, cpPatch, localBuffer.cpIndexMap);
+		}
 		result = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
 	}
 
@@ -238,178 +247,6 @@ done:
 		j9mem_free_memory(classBytes);
 	}
 
-	return result;
-
-#else /* J9VM_OPT_DYNAMIC_LOAD_SUPPORT */
-	throwNewInternalError(env, "Dynamic loading not supported");
-	return NULL;
-#endif /* J9VM_OPT_DYNAMIC_LOAD_SUPPORT */
-}
-
-jclass
-defineClassAnonymous(JNIEnv *env, jobject classLoaderObject, jbyteArray classRep, jint length, jobject protectionDomain, UDATA options, J9Class *hostClass, jobjectArray cpPatch)
-{
-#ifdef J9VM_OPT_DYNAMIC_LOAD_SUPPORT
-
-	J9VMThread *currentThread = (J9VMThread *)env;
-	J9JavaVM *vm = currentThread->javaVM;
-	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-	J9TranslationBufferSet *dynFuncs = NULL;
-	J9ClassLoader *classLoader = NULL;
-	UDATA retried = FALSE;
-	UDATA utf8Length = 0;
-	U_8 *utf8Name = NULL;
-	U_8 *classBytes = NULL;
-	J9Class *clazz = NULL;
-	jclass result = NULL;
-	PORT_ACCESS_FROM_JAVAVM(vm);
-	UDATA isContiguousClassBytes = 0;
-	J9ROMClass *loadedClass = NULL;
-	U_8 *tempClassBytes = NULL;
-	I_32 tempLength = 0;
-	J9TranslationLocalBuffer localBuffer = {J9_CP_INDEX_NONE, LOAD_LOCATION_UNKNOWN, NULL, cpPatch, NULL};
-
-	if (vm->dynamicLoadBuffers == NULL) {
-		if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
-			throwNewInternalError(env, "Dynamic loader is unavailable");
-		}
-		goto done;
-	}
-	dynFuncs = vm->dynamicLoadBuffers;
-
-	vmFuncs->internalEnterVMFromJNI(currentThread);
-	isContiguousClassBytes = J9ISCONTIGUOUSARRAY(currentThread, *(J9IndexableObject **)classRep);
-	if (!isContiguousClassBytes) {
-		vmFuncs->internalExitVMToJNI(currentThread);
-		/* Make a "flat" copy of classRep */
-		if (length < 0) {
-			if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
-				throwNewIndexOutOfBoundsException(env, NULL);
-			}
-			goto done;
-		}
-		classBytes = j9mem_allocate_memory(length, J9MEM_CATEGORY_CLASSES);
-		if (classBytes == NULL) {
-			if (J9_ARE_NO_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
-				vmFuncs->throwNativeOOMError(env, 0, 0);
-			}
-			goto done;
-		}
-		(*env)->GetByteArrayRegion(env, classRep, 0, length, (jbyte *)classBytes);
-		if ((*env)->ExceptionCheck(env)) {
-			j9mem_free_memory(classBytes);
-			goto done;
-		}
-		vmFuncs->internalEnterVMFromJNI(currentThread);
-	}
-
-	if (isContiguousClassBytes) {
-		/* For ARRAYLETS case, we get free range checking from GetByteArrayRegion JNI call */
-		if ((length < 0) ||
-			((U_32)length > J9INDEXABLEOBJECT_SIZE(currentThread, *(J9IndexableObject **)classRep))) {
-			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGINDEXOUTOFBOUNDSEXCEPTION, NULL);
-			goto done;
-		}
-	}
-
-	classLoader = J9VMJAVALANGCLASSLOADER_VMREF(currentThread, J9_JNI_UNWRAP_REFERENCE(classLoaderObject));
-
-	if (NULL == classLoader) {
-		classLoader = vmFuncs->internalAllocateClassLoader(vm, J9_JNI_UNWRAP_REFERENCE(classLoaderObject));
-		if (NULL == classLoader) {
-			goto done;
-		}
-	}
-
-retry:
-
-	if (isContiguousClassBytes) {
-		/* Always re-load the classBytes pointer, as GC required in OutOfMemory case may have moved things */
-		/* TMP_J9JAVACONTIGUOUSARRAYOFBYTE_EA returns I_8 * (since Java bytes are I_8) so this cast will silence the warning */
-		classBytes = (U_8 *) TMP_J9JAVACONTIGUOUSARRAYOFBYTE_EA(currentThread, *(J9IndexableObject **)classRep, 0);
-	}
-
-	tempClassBytes = classBytes;
-	tempLength = length;
-
-
-	/* The defineClass helper requires you hold the class table mutex and releases it for you */
-
-	clazz = dynFuncs->internalDefineClassFunction(currentThread,
-				utf8Name, utf8Length,
-				tempClassBytes, (UDATA) tempLength, NULL,
-				classLoader,
-				protectionDomain ? *(j9object_t*)protectionDomain : NULL,
-				options | J9_FINDCLASS_FLAG_THROW_ON_FAIL | J9_FINDCLASS_FLAG_NO_CHECK_FOR_EXISTING_CLASS,
-				loadedClass,
-				hostClass,
-				&localBuffer);
-
-	/* If OutOfMemory, try a GC to free up some memory */
-
-	if (currentThread->privateFlags & J9_PRIVATE_FLAGS_CLOAD_NO_MEM) {
-		if (!retried) {
-			/*Trc_VM_internalFindClass_gcAndRetry(vmThread);*/
-			currentThread->javaVM->memoryManagerFunctions->j9gc_modron_global_collect_with_overrides(currentThread, J9MMCONSTANT_EXPLICIT_GC_NATIVE_OUT_OF_MEMORY);
-			retried = TRUE;
-			goto retry;
-		}
-		vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
-	}
-
-done:
-	if (NULL == clazz) {
-		if (J9_ARE_ANY_BITS_SET(options, J9_FINDCLASS_FLAG_NAME_IS_INVALID)) {
-			/*
-			 * The caller signalled that the name is invalid. Leave the result NULL and
-			 * clear any pending exception; the caller will throw NoClassDefFoundError.
-			 */
-			currentThread->currentException = NULL;
-			currentThread->privateFlags &= ~(UDATA)J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
-		} else if (NULL == currentThread->currentException) {
-			/* should not get here -- throw the default exception just in case */
-			vmFuncs->setCurrentException(currentThread, J9VMCONSTANTPOOL_JAVALANGCLASSFORMATERROR, NULL);
-		}
-	} else {
-		if (localBuffer.cpIndexMap != NULL && cpPatch != NULL) {
-			/* Patch ramClass constantpool */
-			j9array_t array = NULL;
-			jsize arrayBound = -1;
-			j9object_t item = NULL;
-			U_32 * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(clazz->romClass);
-			J9ConstantPool * ramCP = J9_CP_FROM_CLASS(clazz);
-
-			array = (j9array_t)J9_JNI_UNWRAP_REFERENCE(cpPatch);
-			arrayBound = J9INDEXABLEOBJECT_SIZE(currentThread, array);
-
-			for (U_16 i = 0; i < arrayBound; i++) {
-				item = J9JAVAARRAYOFOBJECT_LOAD(currentThread, array, i);
-				if (item != NULL) {
-					switch (J9_CP_TYPE(cpShapeDescription, i)) {
-						case J9CPTYPE_CLASS:
-							if (!J9ROMCLASS_IS_PRIMITIVE_TYPE(clazz->romClass)) {
-								J9RAMClassRef *ramClassRef = ((J9RAMClassRef*)ramCP) + localBuffer.cpIndexMap[i];
-								ramClassRef->value = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, item);
-							}
-							break;
-						case J9CPTYPE_STRING:
-						{
-							J9RAMStringRef *ramStringRef = ((J9RAMStringRef *)ramCP) + localBuffer.cpIndexMap[i];
-							J9STATIC_OBJECT_STORE(currentThread, clazz, &ramStringRef->stringObject, item);
-							break;
-						}
-					}
-				}
-			}
-		}
-		result = vmFuncs->j9jni_createLocalRef(env, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
-	}
-
-	vmFuncs->internalExitVMToJNI(currentThread);
-
-	if (!isContiguousClassBytes) {
-		j9mem_free_memory(classBytes);
-	}
 	if (localBuffer.cpIndexMap != NULL) {
 		j9mem_free_memory(localBuffer.cpIndexMap);
 	}
@@ -420,4 +257,35 @@ done:
 	throwNewInternalError(env, "Dynamic loading not supported");
 	return NULL;
 #endif /* J9VM_OPT_DYNAMIC_LOAD_SUPPORT */
+}
+
+void
+patchRAMConstantPool(J9VMThread *currentThread, J9Class *clazz, jobjectArray cpPatch, U_16 *cpIndexMap)
+{
+	/* Patch ramClass constantpool */
+	j9array_t array = (j9array_t)J9_JNI_UNWRAP_REFERENCE(cpPatch);
+	jsize arrayBound = J9INDEXABLEOBJECT_SIZE(currentThread, array);
+	j9object_t item = NULL;
+	U_32 * cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(clazz->romClass);
+	J9ConstantPool * ramCP = J9_CP_FROM_CLASS(clazz);
+
+	for (U_16 i = 0; i < arrayBound; i++) {
+		item = J9JAVAARRAYOFOBJECT_LOAD(currentThread, array, i);
+		if (item != NULL) {
+			switch (J9_CP_TYPE(cpShapeDescription, i)) {
+				case J9CPTYPE_CLASS:
+					if (!J9ROMCLASS_IS_PRIMITIVE_TYPE(clazz->romClass)) {
+						J9RAMClassRef *ramClassRef = ((J9RAMClassRef*)ramCP) + cpIndexMap[i];
+						ramClassRef->value = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, item);
+					}
+					break;
+				case J9CPTYPE_STRING:
+				{
+					J9RAMStringRef *ramStringRef = ((J9RAMStringRef *)ramCP) + cpIndexMap[i];
+					J9STATIC_OBJECT_STORE(currentThread, clazz, &ramStringRef->stringObject, item);
+					break;
+				}
+			}
+		}
+	}
 }
