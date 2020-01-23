@@ -207,7 +207,7 @@ target
 ```
 - run all tests without recompiling them
 ```
-        make runtest
+        make _all
 ```
 
 #### Run tests against specific (e.g., hotspot 8) SDK
