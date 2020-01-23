@@ -641,12 +641,7 @@ def get_date() {
 * and sets TEST_FLAG for all targets if defined in variable file
 */
 def set_test_targets() {
-    TESTS_TARGETS = params.TESTS_TARGETS
-    if (!TESTS_TARGETS) {
-        // set default TESTS_TARGETS for pipeline job (fetch from variables file)
-        TESTS_TARGETS = get_default_test_targets()
-    }
-
+    TESTS_TARGETS = (params.TESTS_TARGETS) ? params.TESTS_TARGETS : "none"
     EXCLUDED_TESTS = []
     def buildspec = buildspec_manager.getSpec(SPEC)
     def excludedTests = buildspec.getVectorField("excluded_tests", SDK_VERSION)
@@ -664,13 +659,6 @@ def set_test_targets() {
     echo "TEST_FLAG: ${TEST_FLAG}"
 }
 
-def get_default_test_targets() {
-    if (VARIABLES.tests_targets && VARIABLES.tests_targets.default) {
-        return VARIABLES.tests_targets.default.join(',')
-    }
-
-    return ''
-}
 
 def set_slack_channel() {
     SLACK_CHANNEL = params.SLACK_CHANNEL

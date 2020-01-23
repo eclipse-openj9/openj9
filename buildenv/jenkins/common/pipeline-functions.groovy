@@ -473,18 +473,12 @@ def get_test_target_names() {
 
     if (TESTS_TARGETS && TESTS_TARGETS.trim() != 'none') {
         for (target in TESTS_TARGETS.trim().replaceAll("\\s","").toLowerCase().tokenize(',')) {
-            if (VARIABLES.tests_targets && VARIABLES.tests_targets."${target}") {
-                // we might be dealing with a map or a list depending if the variables file has been updated
-                // to use inheritance or not
-                def test_target_names =  VARIABLES.tests_targets."${target}"
-                switch(test_target_names){
-                case Map:
-                    targetNames.addAll(test_target_names.keySet())
+            switch (target) {
+                case ["sanity", "extended"]:
+                    targetNames.add("${target}.functional")
+                    break
                 default:
-                    targetNames.addAll(test_target_names)
-                }
-            } else {
-                targetNames.add(target)
+                    targetNames.add(target)
             }
         }
     }

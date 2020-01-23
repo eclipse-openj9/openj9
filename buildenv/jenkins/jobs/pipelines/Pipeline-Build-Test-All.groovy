@@ -136,7 +136,7 @@ SHORT_NAMES = ['all' : ['ppc64le_linux','ppc64le_linux_xl','s390x_linux','s390x_
 echo "Initialize all PARAMETERS..."
 SETUP_LABEL = (params.SETUP_LABEL) ? params.SETUP_LABEL : "worker"
 echo "Setup SETUP_LABEL:'${SETUP_LABEL}'"
-TESTS_TARGETS = (params.TESTS_TARGETS) ? params.TESTS_TARGETS : ""
+TESTS_TARGETS = (params.TESTS_TARGETS) ? params.TESTS_TARGETS : "none"
 echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
 PERSONAL_BUILD = (params.PERSONAL_BUILD) ? params.PERSONAL_BUILD : ""
 echo "PERSONAL_BUILD:'${PERSONAL_BUILD}'"
@@ -477,11 +477,6 @@ def get_summary_table(identifier) {
     def pipelineBuilds = buildFile.get_downstream_builds(currentBuild, currentBuild.projectName, pipelineNames)
     if (pipelineBuilds.isEmpty()) {
         return ''
-    }
-
-    if (!TESTS_TARGETS) {
-        // default to value set in variables file
-        TESTS_TARGETS = variableFile.get_default_test_targets()
     }
 
     def buildReleases = get_sorted_releases()
