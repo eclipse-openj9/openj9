@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -891,6 +891,22 @@ static void dumpAttribute(J9CfrClassFile* classfile, J9CfrAttribute* attrib, U_3
 			dumpStackMap((J9CfrAttributeStackMap *)attrib, classfile, tabLevel + 2);
 			break;
 
+		case CFR_ATTRIBUTE_Record:
+			for(i = 0; i < ((J9CfrAttributeRecord*)attrib)->numberOfRecordComponents; i++) {
+				J9CfrRecordComponent* recordComponent = &(((J9CfrAttributeRecord*)attrib)->recordComponents[i]);
+
+				for(j = 0; j < tabLevel + 1; j++) j9tty_printf( PORTLIB, "  ");
+				j9tty_printf( PORTLIB, "Record Component Name: %i -> %s\n", recordComponent->nameIndex, classfile->constantPool[recordComponent->nameIndex].bytes);
+				for(j = 0; j < tabLevel + 1; j++) j9tty_printf( PORTLIB, "  ");
+				j9tty_printf( PORTLIB, "Record Component Signature: %i -> %s\n", recordComponent->descriptorIndex, classfile->constantPool[recordComponent->descriptorIndex].bytes);
+
+				for(j = 0; j < tabLevel + 1; j++) j9tty_printf( PORTLIB, "  ");
+				j9tty_printf( PORTLIB, "Attributes (%i):\n", recordComponent->attributesCount);
+				for(j = 0; j < recordComponent->attributesCount; j++)
+					dumpAttribute(classfile, recordComponent->attributes[j], tabLevel + 2);
+			}
+			break;
+
 		case CFR_ATTRIBUTE_StrippedLineNumberTable:
 		case CFR_ATTRIBUTE_StrippedLocalVariableTable:
 		case CFR_ATTRIBUTE_StrippedLocalVariableTypeTable:
@@ -923,6 +939,10 @@ static void printClassFile(J9CfrClassFile* classfile)
 	if(classfile->accessFlags & CFR_ACC_PROTECTED) j9tty_printf( PORTLIB, "private ");
 	if(classfile->accessFlags & CFR_ACC_INTERFACE)
 		j9tty_printf( PORTLIB, "interface ");
+	else if (classfile->j9Flags & CFR_J9FLAG_IS_RECORD)
+	{
+		j9tty_printf( PORTLIB, "record ");
+	}
 	else
 	{
 		if(classfile->accessFlags & CFR_ACC_ABSTRACT) j9tty_printf( PORTLIB, "abstract ");
