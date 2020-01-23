@@ -83,16 +83,6 @@ build_discarder:
 restart_timeout:
   time: '5'
   units: 'HOURS'
-tests_targets:
-  sanity:
-    - sanity.functional
-  extended:
-    - extended.functional
-  default: &defaultTests
-    - extended.functional
-    - extended.system
-    - sanity.functional
-    - sanity.system
 #========================================#
 # Large heap build
 #========================================#
@@ -109,7 +99,10 @@ cmake:
     next: '--disable-ddr'
   extra_make_options: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
   excluded_tests:
-      - *defaultTests
+      - sanity.functional
+      - extended.functional
+      - sanity.system
+      - extended.system
       - special.system
 #========================================#
 # JITServer
