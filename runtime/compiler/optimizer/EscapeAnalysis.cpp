@@ -1290,7 +1290,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
 
             if (candidate->escapesInColdBlocks())
                {
-               heapifyBeforeColdBlocks(candidate);
+               heapifyForColdBlocks(candidate);
                if (candidate->_fields)
                   {
                   int32_t i;
@@ -7053,8 +7053,11 @@ void TR_EscapeAnalysis::makeNonContiguousLocalAllocation(Candidate *candidate)
 
 
 
-void TR_EscapeAnalysis::heapifyBeforeColdBlocks(Candidate *candidate)
+void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
    {
+   static char *disableTernaryOpForEA = feGetEnv("TR_disableTernaryOpForEA");
+   bool useTernaryOp = !disableTernaryOpForEA && cg()->getSupportsTernary();
+
    if (comp()->suppressAllocationInlining())
       return;
 
@@ -7406,73 +7409,103 @@ void TR_EscapeAnalysis::heapifyBeforeColdBlocks(Candidate *candidate)
             }
         }
 
+      TR::TreeTop *insertSymRefStoresAfter = NULL;
+
+      // If using aternary to perform comparisons, all compares and stores are
+      // inserted directly at the start of the cold block
+      if (useTernaryOp)
+         {
+         insertSymRefStoresAfter = coldBlock->getEntry();
+         }
+
       ListIterator<TR::SymbolReference> symRefsIt(candidate->getSymRefs());
       TR::SymbolReference *symRef;
+      bool generatedReusedOperations = false;
+      TR::Node *heapTempLoad = NULL;
+      TR::Node *candidateStackAddrLoad = NULL;
+
       for (symRef = symRefsIt.getFirst(); symRef; symRef = symRefsIt.getNext())
         {
         //
-        // Now create the compares (one for each node) and
-        // stores if required
+        // Now create the compares (one for each node) and stores
         //
-        TR::Node *comparisonNode = TR::Node::createif(TR::ifacmpne, TR::Node::createWithSymRef(candidate->_node, TR::aload, 0, symRef), candidate->_node->duplicateTree(), targetBlock->getEntry());
-        TR::TreeTop *comparisonTree = TR::TreeTop::create(comp(), comparisonNode, NULL, NULL);
-        TR::Block *comparisonBlock = toBlock(cfg->addNode(TR::Block::createEmptyBlock(comparisonNode, comp(), coldBlock->getFrequency())));
-        comparisonBlock->inheritBlockInfo(coldBlock, coldBlock->isCold());
-
-        TR::TreeTop *comparisonEntryTree = comparisonBlock->getEntry();
-        TR::TreeTop *comparisonExitTree = comparisonBlock->getExit();
-        comparisonEntryTree->join(comparisonTree);
-        comparisonTree->join(comparisonExitTree);
-
-        comparisonExitTree->join(insertionPoint);
-
-        if (treeBeforeInsertionPoint)
-           treeBeforeInsertionPoint->join(comparisonEntryTree);
-        else
-           comp()->setStartTree(comparisonEntryTree);
-
-        TR::Node *storeNode = TR::Node::createWithSymRef(TR::astore, 1, 1, TR::Node::createWithSymRef(comparisonNode, TR::aload, 0, heapSymRef), symRef);
-        if (symRef->getSymbol()->holdsMonitoredObject())
-           storeNode->setLiveMonitorInitStore(true);
-        storeNode->setHeapificationStore(true);
-        TR::TreeTop *storeTree = TR::TreeTop::create(comp(), storeNode, NULL, NULL);
-
-
-        if (!symRef->getSymbol()->isParm())
+        if (useTernaryOp)
            {
-           TR::Node *initStoreNode = TR::Node::createWithSymRef(TR::astore, 1, 1, TR::Node::aconst(comparisonNode, 0), symRef);
-           if (symRef->getSymbol()->holdsMonitoredObject())
-              initStoreNode->setLiveMonitorInitStore(true);
-           TR::TreeTop *initStoreTree = TR::TreeTop::create(comp(), initStoreNode, NULL, NULL);
-           TR::TreeTop *startTree = comp()->getStartTree();
-           TR::TreeTop *nextToStart = startTree->getNextTreeTop();
-           startTree->join(initStoreTree);
-           initStoreTree->join(nextToStart);
+           // Reload address of object on heap just once for this block
+           if (!heapTempLoad)
+              {
+              heapTempLoad = TR::Node::createWithSymRef(candidate->_node, TR::aload, 0, heapSymRef);
+              candidateStackAddrLoad = candidate->_node->duplicateTree();
+              }
+
+           // If variable has address of the stack allocated object, replace
+           // with the value of the heap allocated object; otherwise, keep the
+           // current value
+           //
+           // astore <object-temp>
+           //   aternary
+           //     acmpeq
+           //       aload <object-temp>
+           //       loadaddr <stack-obj>
+           //     aload <heap-allocated-obj>
+           //     aload <object-temp>
+           //
+           TR::Node *symLoad = TR::Node::createWithSymRef(candidate->_node, TR::aload, 0, symRef);
+           TR::Node *addrCompareNode = TR::Node::create(candidate->_node, TR::acmpeq, 2, symLoad, candidateStackAddrLoad);
+           TR::Node *chooseAddrNode = TR::Node::create(TR::aternary, 3, addrCompareNode, heapTempLoad, symLoad);
+
+           TR::TreeTop *storeTree = storeHeapifiedToTemp(candidate, chooseAddrNode, symRef);
+
+           storeTree->join(insertSymRefStoresAfter->getNextTreeTop());
+           insertSymRefStoresAfter->join(storeTree);
            }
+        else
+           {
+           TR::Node *comparisonNode = TR::Node::createif(TR::ifacmpne, TR::Node::createWithSymRef(candidate->_node, TR::aload, 0, symRef), candidate->_node->duplicateTree(), targetBlock->getEntry());
+           TR::TreeTop *comparisonTree = TR::TreeTop::create(comp(), comparisonNode, NULL, NULL);
+           TR::Block *comparisonBlock = toBlock(cfg->addNode(TR::Block::createEmptyBlock(comparisonNode, comp(), coldBlock->getFrequency())));
+           comparisonBlock->inheritBlockInfo(coldBlock, coldBlock->isCold());
 
-        TR::Block *storeBlock = toBlock(cfg->addNode(TR::Block::createEmptyBlock(storeNode, comp(), coldBlock->getFrequency())));
-        storeBlock->inheritBlockInfo(coldBlock, coldBlock->isCold());
+           TR::TreeTop *comparisonEntryTree = comparisonBlock->getEntry();
+           TR::TreeTop *comparisonExitTree = comparisonBlock->getExit();
+           comparisonEntryTree->join(comparisonTree);
+           comparisonTree->join(comparisonExitTree);
 
-        cfg->addEdge(comparisonBlock, storeBlock);
-        cfg->addEdge(comparisonBlock, targetBlock);
-        cfg->addEdge(storeBlock, targetBlock);
-        if (targetBlock == coldBlock)
-          {
-          lastComparisonBlock = comparisonBlock;
-          lastStoreBlock = storeBlock;
-          }
+           comparisonExitTree->join(insertionPoint);
 
-        TR::TreeTop *storeEntryTree = storeBlock->getEntry();
-        TR::TreeTop *storeExitTree = storeBlock->getExit();
+           if (treeBeforeInsertionPoint)
+              treeBeforeInsertionPoint->join(comparisonEntryTree);
+           else
+              comp()->setStartTree(comparisonEntryTree);
 
-        comparisonExitTree->join(storeEntryTree);
-        storeEntryTree->join(storeTree);
-        storeTree->join(storeExitTree);
-        storeExitTree->join(insertionPoint);
+           TR::Node *heapifiedObjAddrLoad = TR::Node::createWithSymRef(comparisonNode, TR::aload, 0, heapSymRef);
 
-        insertionPoint = comparisonEntryTree;
-        treeBeforeInsertionPoint = insertionPoint->getPrevTreeTop();
-        targetBlock = comparisonBlock;
+           TR::TreeTop *storeTree = storeHeapifiedToTemp(candidate, heapifiedObjAddrLoad, symRef);
+
+           TR::Block *storeBlock = toBlock(cfg->addNode(TR::Block::createEmptyBlock(storeTree->getNode(), comp(), coldBlock->getFrequency())));
+           storeBlock->inheritBlockInfo(coldBlock, coldBlock->isCold());
+
+           cfg->addEdge(comparisonBlock, storeBlock);
+           cfg->addEdge(comparisonBlock, targetBlock);
+           cfg->addEdge(storeBlock, targetBlock);
+           if (targetBlock == coldBlock)
+             {
+             lastComparisonBlock = comparisonBlock;
+             lastStoreBlock = storeBlock;
+             }
+
+           TR::TreeTop *storeEntryTree = storeBlock->getEntry();
+           TR::TreeTop *storeExitTree = storeBlock->getExit();
+
+           comparisonExitTree->join(storeEntryTree);
+           storeEntryTree->join(storeTree);
+           storeTree->join(storeExitTree);
+           storeExitTree->join(insertionPoint);
+
+           insertionPoint = comparisonEntryTree;
+           treeBeforeInsertionPoint = insertionPoint->getPrevTreeTop();
+           targetBlock = comparisonBlock;
+           }
         }
 
       cfg->addEdge(heapAllocationBlock, targetBlock);
@@ -7484,9 +7517,11 @@ void TR_EscapeAnalysis::heapifyBeforeColdBlocks(Candidate *candidate)
          TR::CFGNode *predNode = (*pred)->getFrom();
          /* might be removed, keep reference to next object in list */
          pred++;
-         if (((predNode != lastComparisonBlock) &&
-              (predNode != lastStoreBlock)) ||
-             coldBlock->isCatchBlock())
+         if ((useTernaryOp && (predNode != heapComparisonBlock)
+                 && (predNode != heapAllocationBlock))
+             || (!useTernaryOp && (predNode != lastComparisonBlock)
+                 && (predNode != lastStoreBlock))
+             || coldBlock->isCatchBlock())
             {
             TR::Block *predBlock = toBlock(predNode);
             if (!coldBlock->isCatchBlock() &&
@@ -7607,6 +7642,31 @@ void TR_EscapeAnalysis::heapifyBeforeColdBlocks(Candidate *candidate)
    }
 
 
+TR::TreeTop *TR_EscapeAnalysis::storeHeapifiedToTemp(Candidate *candidate, TR::Node *value, TR::SymbolReference *symRef)
+   {
+   TR::Node *storeNode = TR::Node::createWithSymRef(TR::astore, 1, 1, value, symRef);
+   TR::TreeTop *storeTree = TR::TreeTop::create(comp(), storeNode, NULL, NULL);
+
+   if (symRef->getSymbol()->holdsMonitoredObject())
+      {
+      storeNode->setLiveMonitorInitStore(true);
+      }
+   storeNode->setHeapificationStore(true);
+
+   if (!symRef->getSymbol()->isParm())
+      {
+      TR::Node *initStoreNode = TR::Node::createWithSymRef(TR::astore, 1, 1, TR::Node::aconst(candidate->_node, 0), symRef);
+      if (symRef->getSymbol()->holdsMonitoredObject())
+         initStoreNode->setLiveMonitorInitStore(true);
+      TR::TreeTop *initStoreTree = TR::TreeTop::create(comp(), initStoreNode, NULL, NULL);
+      TR::TreeTop *startTree = comp()->getStartTree();
+      TR::TreeTop *nextToStart = startTree->getNextTreeTop();
+           startTree->join(initStoreTree);
+      initStoreTree->join(nextToStart);
+      }
+
+   return storeTree;
+   }
 
 
 bool TR_EscapeAnalysis::devirtualizeCallSites()
