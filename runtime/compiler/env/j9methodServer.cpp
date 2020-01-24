@@ -257,6 +257,26 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
          if (unresolvedInCP)
             handleUnresolvedVirtualMethodInCP(cpIndex, unresolvedInCP);
          }
+      else
+         {
+         if (((TR_ResolvedJ9Method*)resolvedMethod)->isVarHandleAccessMethod())
+            {
+            // VarHandle access methods are resolved to *_impl()V, restore their signatures to obtain function correctness in the Walker
+            J9ROMConstantPoolItem *cpItem = (J9ROMConstantPoolItem *)romLiterals();
+            J9ROMMethodRef *romMethodRef = (J9ROMMethodRef *)(cpItem + cpIndex);
+            int32_t signatureLength = 0;
+            char *signature = getROMString(signatureLength, romMethodRef,
+                                 {
+                                 offsetof(J9ROMMethodRef, nameAndSignature),
+                                 offsetof(J9ROMNameAndSignature, signature)
+                                 });
+
+            ((TR_ResolvedJ9Method *)resolvedMethod)->setSignature(signature, signatureLength, comp->trMemory());
+            }
+
+         TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual");
+         TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
+         }
       return resolvedMethod;
       }
 
@@ -327,7 +347,6 @@ TR_ResolvedJ9JITServerMethod::getResolvedPossiblyPrivateVirtualMethod(TR::Compil
 
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual");
       TR::DebugCounter::incStaticDebugCounter(comp, "resources.resolvedMethods/virtual:#bytes", sizeof(TR_ResolvedJ9Method));
-      
       }
 
    return resolvedMethod;
