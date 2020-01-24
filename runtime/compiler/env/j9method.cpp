@@ -3459,95 +3459,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
       {  TR::unknownMethod}
       };
 
-   // Dependencies of methods in sun/misc/Unsafe on methods in other classes
-   static W SunUnsafeDependencies[] =
-      {
-      {wVer(TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V, TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putByte_jlObjectJB_V, TR::sun_misc_Unsafe_putByte_jlObjectJB_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putChar_jlObjectJC_V, TR::sun_misc_Unsafe_putChar_jlObjectJC_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putShort_jlObjectJS_V, TR::sun_misc_Unsafe_putShort_jlObjectJS_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putInt_jlObjectJI_V, TR::sun_misc_Unsafe_putInt_jlObjectJI_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putLong_jlObjectJJ_V, TR::sun_misc_Unsafe_putLong_jlObjectJJ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putFloat_jlObjectJF_V, TR::sun_misc_Unsafe_putFloat_jlObjectJF_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putDouble_jlObjectJD_V, TR::sun_misc_Unsafe_putDouble_jlObjectJD_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V, TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V, TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V, TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V, TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V, TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V, TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V, TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V, TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V, TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z, TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getByte_jlObjectJ_B, TR::sun_misc_Unsafe_getByte_jlObjectJ_B, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getChar_jlObjectJ_C, TR::sun_misc_Unsafe_getChar_jlObjectJ_C, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getShort_jlObjectJ_S, TR::sun_misc_Unsafe_getShort_jlObjectJ_S, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getInt_jlObjectJ_I, TR::sun_misc_Unsafe_getInt_jlObjectJ_I, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getLong_jlObjectJ_J, TR::sun_misc_Unsafe_getLong_jlObjectJ_J, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getFloat_jlObjectJ_F, TR::sun_misc_Unsafe_getFloat_jlObjectJ_F, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getDouble_jlObjectJ_D, TR::sun_misc_Unsafe_getDouble_jlObjectJ_D, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject, TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z, TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B, TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C, TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S, TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I, TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J, TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F, TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D, TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject, TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putByte_JB_V, TR::sun_misc_Unsafe_putByte_JB_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putShort_JS_V, TR::sun_misc_Unsafe_putShort_JS_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putChar_JC_V, TR::sun_misc_Unsafe_putChar_JC_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putInt_JI_V, TR::sun_misc_Unsafe_putInt_JI_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putLong_JJ_V, TR::sun_misc_Unsafe_putLong_JJ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putFloat_JF_V, TR::sun_misc_Unsafe_putFloat_JF_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putDouble_JD_V, TR::sun_misc_Unsafe_putDouble_JD_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putAddress_JJ_V, TR::sun_misc_Unsafe_putAddress_JJ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getByte_J_B, TR::sun_misc_Unsafe_getByte_J_B, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getShort_J_S, TR::sun_misc_Unsafe_getShort_J_S, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getChar_J_C, TR::sun_misc_Unsafe_getChar_J_C, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getInt_J_I, TR::sun_misc_Unsafe_getInt_J_I, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getLong_J_J, TR::sun_misc_Unsafe_getLong_J_J, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getFloat_J_F, TR::sun_misc_Unsafe_getFloat_J_F, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getDouble_J_D, TR::sun_misc_Unsafe_getDouble_J_D, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getAddress_J_J, TR::sun_misc_Unsafe_getAddress_J_J, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z, TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_staticFieldBase, TR::sun_misc_Unsafe_staticFieldBase, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_staticFieldOffset, TR::sun_misc_Unsafe_staticFieldOffset, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_objectFieldOffset, TR::sun_misc_Unsafe_objectFieldOffset, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V, TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putOrderedLong_jlObjectJJ_V, TR::sun_misc_Unsafe_putOrderedLong_jlObjectJJ_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_putOrderedObject_jlObjectJjlObject_V, TR::sun_misc_Unsafe_putOrderedObject_jlObjectJjlObject_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_monitorEnter_jlObject_V, TR::sun_misc_Unsafe_monitorEnter_jlObject_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_monitorEnter_jlObject_V, TR::sun_misc_Unsafe_monitorEnter_jlObject_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_monitorExit_jlObject_V, TR::sun_misc_Unsafe_monitorExit_jlObject_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_tryMonitorEnter_jlObject_Z, TR::sun_misc_Unsafe_tryMonitorEnter_jlObject_Z, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_copyMemory, TR::sun_misc_Unsafe_copyMemory, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_setMemory, TR::sun_misc_Unsafe_setMemory, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_loadFence, TR::sun_misc_Unsafe_loadFence, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_storeFence, TR::sun_misc_Unsafe_storeFence, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_fullFence, TR::sun_misc_Unsafe_fullFence, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_ensureClassInitialized, TR::sun_misc_Unsafe_ensureClassInitialized, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-
-      {wVer(TR::sun_misc_Unsafe_getAndAddInt, TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::sun_misc_Unsafe_getAndAddInt, TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::sun_misc_Unsafe_getAndAddInt, TR::sun_misc_Unsafe_getAndAddInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getAndAddLong, TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::sun_misc_Unsafe_getAndAddLong, TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::sun_misc_Unsafe_getAndAddLong, TR::sun_misc_Unsafe_getAndAddLong, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getAndSetInt, TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::sun_misc_Unsafe_getAndSetInt, TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::sun_misc_Unsafe_getAndSetInt, TR::sun_misc_Unsafe_getAndSetInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::sun_misc_Unsafe_getAndSetLong, TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::sun_misc_Unsafe_getAndSetLong, TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::sun_misc_Unsafe_getAndSetLong, TR::sun_misc_Unsafe_getAndSetLong, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {  TR::unknownMethod}
-      };
-
    static X InternalUnsafeMethods[] =
       {
       {xNative(TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V,       "putBoolean", "(Ljava/lang/Object;JZ)V", 9, AllFutureJavaVer)},
@@ -3945,6 +3856,14 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
       {  TR::unknownMethod}
       };
 
+   static X JdkInternalReflectionMethods[] =
+      {
+      {xNative(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "(I)Ljava/lang/Class;", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "()Ljava/lang/Class;", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_reflect_Reflection_getClassAccessFlags, "getClassAccessFlags", "(Ljava/lang/Class;)I", 9, AllFutureJavaVer)},
+      {  TR::unknownMethod}
+      };
+
    static X X10Methods [] =
       {
       {x(TR::x10JITHelpers_speculateIndex, "speculateIndex","(II)I")},
@@ -4035,32 +3954,6 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
       {x(TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet,    "decrementAndGet",    "()I")},
       {x(TR::java_util_concurrent_atomic_AtomicInteger_weakCompareAndSet,  "weakCompareAndSet",  "(II)Z")},
       {x(TR::java_util_concurrent_atomic_AtomicInteger_lazySet,            "lazySet",            "(I)V")},
-
-      {TR::unknownMethod}
-      };
-
-   // Dependencies of methods in java/util/concurrent/atomic/AtomicInteger on methods in other classes
-   static W JavaUtilConcurrentAtomicIntegerDependencies[] =
-      {
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd, TR::sun_misc_Unsafe_getAndAddInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement, TR::sun_misc_Unsafe_getAndAddInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement, TR::sun_misc_Unsafe_getAndAddInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndSet, TR::sun_misc_Unsafe_getAndSetInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_addAndGet, TR::sun_misc_Unsafe_getAndSetInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet, TR::sun_misc_Unsafe_getAndAddInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet, TR::sun_misc_Unsafe_getAndAddInt, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_weakCompareAndSet, TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_lazySet, TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V, "sun/misc/Unsafe", AllPastJavaVer, 8)},
-
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndAdd, TR::sun_misc_Unsafe_getAndAddInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndIncrement, TR::sun_misc_Unsafe_getAndAddInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndDecrement, TR::sun_misc_Unsafe_getAndAddInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_getAndSet, TR::sun_misc_Unsafe_getAndSetInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_addAndGet, TR::sun_misc_Unsafe_getAndSetInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_incrementAndGet, TR::sun_misc_Unsafe_getAndAddInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_decrementAndGet, TR::sun_misc_Unsafe_getAndAddInt, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_weakCompareAndSet, TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
-      {wVer(TR::java_util_concurrent_atomic_AtomicInteger_lazySet, TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V, "jdk/internal/misc/Unsafe", 9, AllFutureJavaVer)},
 
       {TR::unknownMethod}
       };
@@ -4542,6 +4435,8 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
       {  TR::unknownMethod},
       };
 
+#include "j9method_dependencies.h"
+
    struct Y { const char * _class; X * _methods; W * _nativeDeps; };
 
    /* classXX where XX is the number of characters in the class name */
@@ -4553,28 +4448,28 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
 
    static Y class14[] =
       {
-      { "java/lang/Math", MathMethods },
-      { "java/lang/Long", LongMethods },
+      { "java/lang/Math", MathMethods, java_lang_Math_Dependencies },
+      { "java/lang/Long", LongMethods, java_lang_Long_Dependencies },
       { "java/lang/Byte", ByteMethods },
-      { "java/io/Writer", WriterMethods },
+      { "java/io/Writer", WriterMethods, java_io_Writer_Dependencies },
       { 0 }
       };
 
    static Y class15[] =
       {
-      { "java/lang/Class", ClassMethods },
-      { "java/lang/Float", FloatMethods },
-      { "sun/misc/Unsafe", SunUnsafeMethods, SunUnsafeDependencies },
+      { "java/lang/Class", ClassMethods, java_lang_Class_Dependencies },
+      { "java/lang/Float", FloatMethods, java_lang_Float_Dependencies },
+      { "sun/misc/Unsafe", SunUnsafeMethods, sun_misc_Unsafe_Dependencies },
       { "java/lang/Short", ShortMethods },
       { 0 }
       };
 
    static Y class16[] =
       {
-      { "java/lang/Double", DoubleMethods },
-      { "java/lang/Object", ObjectMethods },
-      { "java/lang/String", StringMethods },
-      { "java/lang/System", SystemMethods },
+      { "java/lang/Double", DoubleMethods, java_lang_Double_Dependencies },
+      { "java/lang/Object", ObjectMethods, java_lang_Object_Dependencies },
+      { "java/lang/String", StringMethods, java_lang_String_Dependencies },
+      { "java/lang/System", SystemMethods, java_lang_System_Dependencies },
       { "java/lang/Thread", ThreadMethods },
       { "java/util/Vector", VectorMethods },
       { "java/util/Arrays", ArraysMethods },
@@ -4584,10 +4479,10 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
    static Y class17[] =
       {
       { "com/ibm/oti/vm/VM", otivmMethods },
-      { "java/lang/Integer", IntegerMethods },
+      { "java/lang/Integer", IntegerMethods, java_lang_Integer_Dependencies },
       { "java/lang/Boolean", BooleanMethods },
       { "java/util/TreeMap", TreeMapMethods },
-      { "java/util/HashMap", HashMapMethods },
+      { "java/util/HashMap", HashMapMethods, java_util_HashMap_Dependencies },
       { 0 }
       };
 
@@ -4599,41 +4494,41 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
 
    static Y class19[] =
       {
-      { "java/util/Hashtable", HashtableMethods },
+      { "java/util/Hashtable", HashtableMethods, java_util_Hashtable_Dependencies },
       { "java/lang/Throwable", ThrowableMethods },
       { "java/lang/Character", CharacterMethods },
-      { "java/util/ArrayList", ArrayListMethods },
+      { "java/util/ArrayList", ArrayListMethods, java_util_ArrayList_Dependencies },
       { "java/util/zip/CRC32", CRC32Methods     },
       { 0 }
       };
 
    static Y class20[] =
       {
-      { "java/lang/StrictMath", StrictMathMethods },
-      { "java/math/BigDecimal", BigDecimalMethods },
+      { "java/lang/StrictMath", StrictMathMethods, java_lang_StrictMath_Dependencies },
+      { "java/math/BigDecimal", BigDecimalMethods, java_math_BigDecimal_Dependencies },
       { "java/math/BigInteger", BigIntegerMethods },
       { "java/lang/FdLibm$Exp", FdLibmExpMethods },
-      { "java/lang/FdLibm$Pow", FdLibmPowMethods },
+      { "java/lang/FdLibm$Pow", FdLibmPowMethods, java_lang_FdLibm_Pow_Dependencies },
       { 0 }
       };
 
    static Y class21[] =
       {
-      { "java/lang/ClassLoader", ClassLoaderMethods },
+      { "java/lang/ClassLoader", ClassLoaderMethods, java_lang_ClassLoader_Dependencies },
       { "java/lang/StringUTF16", StringUTF16Methods },
-      { "java/lang/FdLibm$Cbrt", FdLibmCbrtMethods },
+      { "java/lang/FdLibm$Cbrt", FdLibmCbrtMethods, java_lang_FdLibm_Cbrt_Dependencies },
       { 0 }
       };
 
    static Y class22[] =
       {
-      { "java/lang/StringBuffer", StringBufferMethods },
+      { "java/lang/StringBuffer", StringBufferMethods, java_lang_StringBuffer_Dependencies },
       { "sun/reflect/Reflection", ReflectionMethods },
       { "java/text/NumberFormat", NumberFormatMethods },
-      { "com/ibm/jit/JITHelpers", JITHelperMethods},
-      { "java/lang/StringCoding", StringCodingMethods },
+      { "com/ibm/jit/JITHelpers", JITHelperMethods, com_ibm_jit_JITHelpers_Dependencies },
+      { "java/lang/StringCoding", StringCodingMethods, java_lang_StringCoding_Dependencies },
       { "java/lang/StringLatin1", StringLatin1Methods },
-      { "java/lang/FdLibm$Hypot", FdLibmHypotMethods },
+      { "java/lang/FdLibm$Hypot", FdLibmHypotMethods, java_lang_FdLibm_Hypot_Dependencies },
       { 0 }
       };
 
@@ -4643,10 +4538,10 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
       { "com/ibm/simt/SPMDKernel", SPMDKernelBaseMethods }, // 23
 #endif
       { "x10/runtime/VMInterface", X10Methods },
-      { "java/lang/J9VMInternals", VMInternalsMethods },
+      { "java/lang/J9VMInternals", VMInternalsMethods, java_lang_J9VMInternals_Dependencies },
       { "java/lang/ref/Reference", ReferenceMethods },
-      { "java/lang/StringBuilder", StringBuilderMethods },
-      { "java/lang/reflect/Array", ArrayMethods},
+      { "java/lang/StringBuilder", StringBuilderMethods, java_lang_StringBuilder_Dependencies },
+      { "java/lang/reflect/Array", ArrayMethods, java_lang_reflect_Array_Dependencies },
       { "java/nio/HeapByteBuffer", HeapByteBufferMethods},
       { "sun/nio/ch/NativeThread", NativeThreadMethods},
       { 0 }
@@ -4656,9 +4551,9 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
       {
       { "java/util/TreeMap$SubMap", SubMapMethods },
       { "sun/nio/cs/UTF_8$Decoder", EncodeMethods },
-      { "sun/nio/cs/UTF_8$Encoder", EncodeMethods },
+      { "sun/nio/cs/UTF_8$Encoder", EncodeMethods, sun_nio_cs_UTF_8_Encoder_Dependencies },
       { "sun/nio/cs/UTF16_Encoder", EncodeMethods },
-      { "jdk/internal/misc/Unsafe", InternalUnsafeMethods },
+      { "jdk/internal/misc/Unsafe", InternalUnsafeMethods, jdk_internal_misc_Unsafe_Dependencies },
       { 0 }
       };
 
@@ -4671,10 +4566,10 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
       {
       { "sun/io/ByteToCharSingleByte", DoubleByteConverterMethods },
       { "com/ibm/oti/vm/ORBVMHelpers", ORBVMHelperMethods },
-      { "java/util/GregorianCalendar", GregorianCalendarMethods },
-      { "sun/nio/cs/US_ASCII$Encoder", EncodeMethods },
+      { "java/util/GregorianCalendar", GregorianCalendarMethods, java_util_GregorianCalendar_Dependencies },
+      { "sun/nio/cs/US_ASCII$Encoder", EncodeMethods, sun_nio_cs_US_ASCII_Encoder_Dependencies },
       { "sun/nio/cs/US_ASCII$Decoder", EncodeMethods },
-      { "sun/nio/cs/ext/SBCS_Encoder", EncodeMethods },
+      { "sun/nio/cs/ext/SBCS_Encoder", EncodeMethods, sun_nio_cs_ext_SBCS_Encoder_Dependencies },
       { "sun/nio/cs/ext/SBCS_Decoder", EncodeMethods },
       { "java/lang/invoke/FoldHandle", FoldHandleMethods },
       { "java/lang/ref/SoftReference", JavaLangRefSoftReferenceMethods },
@@ -4693,25 +4588,25 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
 
    static Y class29[] =
       {
-      { "java/lang/invoke/MethodHandle", MethodHandleMethods },
+      { "java/lang/invoke/MethodHandle", MethodHandleMethods, java_lang_invoke_MethodHandle_Dependencies },
       { "java/lang/invoke/AsTypeHandle", AsTypeHandleMethods },
       { "java/lang/invoke/InsertHandle", InsertHandleMethods },
       { "java/lang/invoke/SpreadHandle", SpreadHandleMethods },
-      { "java/lang/invoke/DirectHandle", DirectHandleMethods },
-      { "sun/nio/cs/ISO_8859_1$Encoder", EncodeMethods },
+      { "java/lang/invoke/DirectHandle", DirectHandleMethods, java_lang_invoke_DirectHandle_Dependencies },
+      { "sun/nio/cs/ISO_8859_1$Encoder", EncodeMethods, sun_nio_cs_ISO_8859_1_Encoder_Dependencies },
       { "sun/nio/cs/ISO_8859_1$Decoder", EncodeMethods },
-      { "java/io/ByteArrayOutputStream", ByteArrayOutputStreamMethods },
+      { "java/io/ByteArrayOutputStream", ByteArrayOutputStreamMethods, java_io_ByteArrayOutputStream_Dependencies },
       { 0 }
       };
 
    static Y class30[] =
       {
       { "com/ibm/Compiler/Internal/Quad", QuadMethods },
-      { "java/lang/invoke/CollectHandle", CollectHandleMethods },
+      { "java/lang/invoke/CollectHandle", CollectHandleMethods, java_lang_invoke_CollectHandle_Dependencies },
       { "java/lang/invoke/FinallyHandle", FinallyHandleMethods },
       { "java/lang/invoke/PermuteHandle", PermuteHandleMethods },
       { "java/lang/invoke/MethodHandles", MethodHandlesMethods },
-      { "com/ibm/dataaccess/DecimalData", DataAccessDecimalDataMethods },
+      { "com/ibm/dataaccess/DecimalData", DataAccessDecimalDataMethods, com_ibm_dataaccess_DecimalData_Dependencies },
       { "sun/nio/cs/ext/IBM1388$Encoder", IBM1388EncoderMethods },
       { "java/util/HashMap$HashIterator", HashMapHashIteratorMethods },
       { 0 }
@@ -4720,21 +4615,22 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
    static Y class31[] =
       {
       { "com/ibm/jit/DecimalFormatHelper", DecimalFormatHelperMethods},
-      { "jdk/internal/reflect/Reflection", ReflectionMethods },
+      { "jdk/internal/reflect/Reflection", JdkInternalReflectionMethods },
+      { "com/ibm/jit/DecimalFormatHelper", DecimalFormatHelperMethods, com_ibm_jit_DecimalFormatHelper_Dependencies},
       { 0 }
       };
    static Y class32[] =
       {
       { "java/lang/invoke/MutableCallSite", MutableCallSiteMethods },
-      { "java/lang/invoke/PrimitiveHandle", PrimitiveHandleMethods },
-      { "com/ibm/dataaccess/PackedDecimal", DataAccessPackedDecimalMethods },
+      { "java/lang/invoke/PrimitiveHandle", PrimitiveHandleMethods, java_lang_invoke_PrimitiveHandle_Dependencies },
+      { "com/ibm/dataaccess/PackedDecimal", DataAccessPackedDecimalMethods, com_ibm_dataaccess_PackedDecimal_Dependencies },
       { 0 }
       };
 
    static Y class33[] =
       {
       { "java/util/stream/AbstractPipeline", JavaUtilStreamAbstractPipelineMethods },
-      { "java/util/stream/IntPipeline$Head", JavaUtilStreamIntPipelineHeadMethods },
+      { "java/util/stream/IntPipeline$Head", JavaUtilStreamIntPipelineHeadMethods, java_util_stream_IntPipeline_Head_Dependencies },
       { 0 }
       };
 
@@ -4767,11 +4663,11 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
    //1421
    static Y class38[] =
       {
-      { "java/util/concurrent/atomic/AtomicLong", JavaUtilConcurrentAtomicLongMethods },
+      { "java/util/concurrent/atomic/AtomicLong", JavaUtilConcurrentAtomicLongMethods, java_util_concurrent_atomic_AtomicLong_Dependencies },
       { "java/lang/invoke/FilterArgumentsHandle", FilterArgumentsHandleMethods },
-      { "com/ibm/dataaccess/ByteArrayMarshaller", DataAccessByteArrayMarshallerMethods },
-      { "java/util/concurrent/ConcurrentHashMap", JavaUtilConcurrentConcurrentHashMapMethods},
-      { "com/ibm/crypto/provider/P224PrimeField", CryptoECC224Methods},
+      { "com/ibm/dataaccess/ByteArrayMarshaller", DataAccessByteArrayMarshallerMethods, com_ibm_dataaccess_ByteArrayMarshaller_Dependencies },
+      { "java/util/concurrent/ConcurrentHashMap", JavaUtilConcurrentConcurrentHashMapMethods, java_util_concurrent_ConcurrentHashMap_Dependencies },
+      { "com/ibm/crypto/provider/P224PrimeField", CryptoECC224Methods, com_ibm_crypto_provider_P256PrimeField_Dependencies },
       { "com/ibm/crypto/provider/P256PrimeField", CryptoECC256Methods},
       { "com/ibm/crypto/provider/P384PrimeField", CryptoECC384Methods},
       { 0 }
@@ -4786,7 +4682,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
    static Y class40[] =
       {
       { "java/util/TreeMap$UnboundedValueIterator", TreeMapUnboundedValueIteratorMethods },
-      { "com/ibm/dataaccess/ByteArrayUnmarshaller", DataAccessByteArrayUnmarshallerMethods },
+      { "com/ibm/dataaccess/ByteArrayUnmarshaller", DataAccessByteArrayUnmarshallerMethods, com_ibm_dataaccess_ByteArrayUnmarshaller_Dependencies },
       { "com/ibm/jit/crypto/JITFullHardwareDigest", CryptoDigestMethods },
       { "com/ibm/jit/crypto/JITAESCryptInHardware", XPCryptoMethods },
       { 0 }
@@ -4796,14 +4692,14 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
       {
       { "org/apache/harmony/luni/platform/OSMemory", OSMemoryMethods },
       { "java/util/concurrent/atomic/AtomicBoolean", JavaUtilConcurrentAtomicBooleanMethods },
-      { "java/util/concurrent/atomic/AtomicInteger", JavaUtilConcurrentAtomicIntegerMethods, JavaUtilConcurrentAtomicIntegerDependencies },
+      { "java/util/concurrent/atomic/AtomicInteger", JavaUtilConcurrentAtomicIntegerMethods, java_util_concurrent_atomic_AtomicInteger_Dependencies },
       { "java/lang/invoke/BruteArgumentMoverHandle", BruteArgumentMoverHandleMethods },
       { 0 }
       };
 
    static Y class42[] =
       {
-      { "com/ibm/crypto/provider/AESCryptInHardware", CryptoAESMethods},
+      { "com/ibm/crypto/provider/AESCryptInHardware", CryptoAESMethods, com_ibm_crypto_provider_AESCryptInHardware_Dependencies },
       { "java/util/concurrent/ConcurrentLinkedQueue", JavaUtilConcurrentConcurrentLinkedQueueMethods },
       { 0 }
       };
@@ -4820,7 +4716,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
 
    static Y class44[] =
       {
-      { "java/lang/invoke/ConvertHandle$FilterHelpers", ConvertHandleFilterHelpersMethods },
+      { "java/lang/invoke/ConvertHandle$FilterHelpers", ConvertHandleFilterHelpersMethods, java_lang_invoke_ConvertHandle_FilterHelpers_Dependencies },
       { 0 }
       };
 
@@ -4836,7 +4732,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
       {
       { "java/util/concurrent/atomic/AtomicIntegerArray", JavaUtilConcurrentAtomicIntegerArrayMethods },
       { "java/util/concurrent/ConcurrentHashMap$TreeBin", JavaUtilConcurrentConcurrentHashMapTreeBinMethods },
-      { "java/io/ObjectInputStream$BlockDataInputStream", ObjectInputStream_BlockDataInputStreamMethods },
+      { "java/io/ObjectInputStream$BlockDataInputStream", ObjectInputStream_BlockDataInputStreamMethods, java_io_ObjectInputStream_BlockDataInputStream_Dependencies },
       { 0 }
       };
 
