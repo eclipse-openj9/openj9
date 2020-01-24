@@ -297,6 +297,7 @@ public:
    virtual TR::DataType dataTypeForLoadOrStore(TR::DataType dt) { return (dt == TR::Int8 || dt == TR::Int16) ? TR::Int32 : dt; }
 
    virtual bool isDecimalFormatPattern(TR::Compilation *comp, TR_ResolvedMethod *method) { return false; }
+   virtual bool isNativeMethod(TR_OpaqueMethodBlock *method) { return false; }
 
    static bool createGlobalFrontEnd(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo);
    static TR_J9VMBase * get(J9JITConfig *, J9VMThread *, VM_TYPE vmType=DEFAULT_VM);
@@ -1117,6 +1118,7 @@ public:
    virtual uint32_t               getPrimitiveArrayOffsetInJavaVM(uint32_t arrayType);
 
    virtual bool isDecimalFormatPattern( TR::Compilation *comp, TR_ResolvedMethod *method);
+   virtual bool isNativeMethod(TR_OpaqueMethodBlock *method);
 
    virtual TR_StaticFinalData dereferenceStaticFinalAddress(void *staticAddress, TR::DataType addressType);
    virtual TR_OpaqueClassBlock *getClassFromCP(J9ConstantPool *cp);

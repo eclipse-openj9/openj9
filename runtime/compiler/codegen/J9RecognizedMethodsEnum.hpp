@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -382,15 +382,15 @@
    sun_misc_Unsafe_getAndAddLong,
    sun_misc_Unsafe_getAndSetLong,
 
-   sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V,
-   sun_misc_Unsafe_putByteOrdered_jlObjectJB_V,
-   sun_misc_Unsafe_putCharOrdered_jlObjectJC_V,
-   sun_misc_Unsafe_putShortOrdered_jlObjectJS_V,
-   sun_misc_Unsafe_putIntOrdered_jlObjectJI_V,
-   sun_misc_Unsafe_putLongOrdered_jlObjectJJ_V,
-   sun_misc_Unsafe_putFloatOrdered_jlObjectJF_V,
-   sun_misc_Unsafe_putDoubleOrdered_jlObjectJD_V,
-   sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V,
+   sun_misc_Unsafe_putOrderedBoolean_jlObjectJZ_V,
+   sun_misc_Unsafe_putOrderedByte_jlObjectJB_V,
+   sun_misc_Unsafe_putOrderedChar_jlObjectJC_V,
+   sun_misc_Unsafe_putOrderedShort_jlObjectJS_V,
+   sun_misc_Unsafe_putOrderedInt_jlObjectJI_V,
+   sun_misc_Unsafe_putOrderedLong_jlObjectJJ_V,
+   sun_misc_Unsafe_putOrderedFloat_jlObjectJF_V,
+   sun_misc_Unsafe_putOrderedDouble_jlObjectJD_V,
+   sun_misc_Unsafe_putOrderedObject_jlObjectJjlObject_V,
 
    sun_misc_Unsafe_monitorEnter_jlObject_V,
    sun_misc_Unsafe_monitorExit_jlObject_V,
@@ -767,11 +767,11 @@
    com_ibm_oti_vm_ORBVMHelpers_getNumBytesInDescriptionWord,
    com_ibm_oti_vm_ORBVMHelpers_getNumBytesInJ9ObjectHeader,
    com_ibm_oti_vm_ORBVMHelpers_getJ9ClassFromClass32,
-   com_ibm_oti_vm_ORBVMHelpers_getInstanceShapeFromJ9Class32,
+   com_ibm_oti_vm_ORBVMHelpers_getTotalInstanceSizeFromJ9Class32,
    com_ibm_oti_vm_ORBVMHelpers_getInstanceDescriptionFromJ9Class32,
    com_ibm_oti_vm_ORBVMHelpers_getDescriptionWordFromPtr32,
    com_ibm_oti_vm_ORBVMHelpers_getJ9ClassFromClass64,
-   com_ibm_oti_vm_ORBVMHelpers_getInstanceShapeFromJ9Class64,
+   com_ibm_oti_vm_ORBVMHelpers_getTotalInstanceSizeFromJ9Class64,
    com_ibm_oti_vm_ORBVMHelpers_getInstanceDescriptionFromJ9Class64,
    com_ibm_oti_vm_ORBVMHelpers_getDescriptionWordFromPtr64,
    com_ibm_rmi_io_FastPathForCollocated_isVMDeepCopySupported,
@@ -1060,11 +1060,11 @@
    java_lang_J9VMInternals_getNumBytesInDescriptionWord,
    java_lang_J9VMInternals_getNumBytesInJ9ObjectHeader,
    java_lang_J9VMInternals_getJ9ClassFromClass32,
-   java_lang_J9VMInternals_getInstanceShapeFromJ9Class32,
+   java_lang_J9VMInternals_getTotalInstanceSizeFromJ9Class32,
    java_lang_J9VMInternals_getInstanceDescriptionFromJ9Class32,
    java_lang_J9VMInternals_getDescriptionWordFromPtr32,
    java_lang_J9VMInternals_getJ9ClassFromClass64,
-   java_lang_J9VMInternals_getInstanceShapeFromJ9Class64,
+   java_lang_J9VMInternals_getTotalInstanceSizeFromJ9Class64,
    java_lang_J9VMInternals_getInstanceDescriptionFromJ9Class64,
    java_lang_J9VMInternals_getDescriptionWordFromPtr64,
    java_lang_J9VMInternals_getSuperclass,

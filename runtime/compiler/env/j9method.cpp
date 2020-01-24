@@ -20,6 +20,12 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+/* Ensure standard limit macros are defined on all platforms */
+#if !defined(__STDC_LIMIT_MACROS)
+#define __STDC_LIMIT_MACROS 1
+#endif
+#include <stdint.h>
+
 #include "env/j9method.h"
 
 #include <stddef.h>
@@ -64,6 +70,7 @@
 #include "ras/DebugCounter.hpp"
 #include "env/JSR292Methods.h"
 #include "control/MethodToBeCompiled.hpp"
+#include <set>
 
 
 #if defined(_MSC_VER)
@@ -2373,7 +2380,7 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_OpaqueMethodBlock * aMethod, TR_Fron
       _jniTargetAddress = NULL;
       }
 
-   construct();
+   construct(trMemory);
    }
 
 #if defined(JITSERVER_SUPPORT)
@@ -2385,17 +2392,103 @@ TR_ResolvedJ9Method::TR_ResolvedJ9Method(TR_FrontEnd * fe, TR_ResolvedMethod * o
    }
 #endif /* defined(JITSERVER_SUPPORT) */
 
-void TR_ResolvedJ9Method::construct()
-   {
-#define x(a, b, c) a, sizeof(b) - 1, b, (int16_t)strlen(c), c
+// AllPastJavaVer and AllFutureJavaVer are used as lower and upper bounds for
+// ranges of Java versions.  AllVersionRange encompasses all Java versions.
+// NoVersionRange encompasses no Java versions.
+#define AllPastJavaVer (std::numeric_limits<int8_t>::min())
+#define AllFutureJavaVer (std::numeric_limits<int8_t>::max())
+#define AllVersionRange   AllPastJavaVer, AllFutureJavaVer
+#define NoVersionRange    AllPastJavaVer, AllPastJavaVer
+
+   // W is used to describe dependencies of potentially recognized methods
+   // that are not expected to be native on other methods, which ultimately
+   // may depend on methods that are expected to be native
+   struct W
+      {
+      // _enum is the recognized method enum for a method under consideration
+      TR::RecognizedMethod _enum;
+
+      // _dependencyEnum is the enum for a method on which _enum depends
+      TR::RecognizedMethod _dependencyEnum;
+
+      // _depClassName and _depClassNameLen refer to the class containing _dependencyEnum
+      int16_t _depClassNameLen;
+      const char *_depClassName;
+
+      typedef int8_t javaVersion_t;
+
+      // _depMinVersion and _depMaxVersion indicate the range of Java versions
+      // over which the dependency of _enum upon _dependencyEnum exists
+      javaVersion_t _depMinVersion;
+      javaVersion_t _depMaxVersion;
+
+// w is used to initialize an element in an array of struct W, where the
+// relationship between the two methods exists for all Java versions
+//    me is the enum of the method
+//    de is the enum of the method on which it depends
+//    dcl is the class containing method de
+//
+// wVer is used to initialize an element in an array of struct W, where the
+// relationship between the two methods exists for a subset of Java versions
+//    me is the enum of the method
+//    de is the enum of the method on which it depends
+//    dcl is the class containing method de
+//    lb is the first Java version for which this dependency exists
+//    lb is the last Java version for which this dependency exists
+//
+#define w(me, de, dcl)  me, de, (int16_t) sizeof(dcl) - 1, dcl, AllVersionRange
+#define wVer(me, de, dcl, lb, ub)   me, de, (int16_t) sizeof(dcl) - 1, dcl, lb, ub
+      };
 
    struct X
       {
       TR::RecognizedMethod _enum;
+#if defined(DEBUG_DUMP_RECOGNIZED_METHODS)
+      const char *_enumName;
+#endif
       char _nameLen;
       const char * _name;
       int16_t _sigLen;
       const char * _sig;
+
+      typedef int8_t javaVersion_t;
+
+      javaVersion_t _nativeMinVersion;
+      javaVersion_t _nativeMaxVersion;
+
+// AllPastJavaVer and AllFutureJavaVer are used as lower and upper bounds for
+// ranges of Java versions over which a recognized method is expected to be
+// native, where that range is (currently) unbounded.  An upper bound of
+// AllPastJaveVer is used if the method has never been expected to be native.
+#define AllPastJavaVer   INT8_MIN
+#define AllFutureJavaVer INT8_MAX
+
+// xClMeth, xSig and xWCSig are intermediate macros used in the macros
+// used to initialize entries in the tables of recognized methods
+#if defined(DEBUG_DUMP_RECOGNIZED_METHODS)
+#define xClMeth(me, meth) me, #me, sizeof(meth) - 1, meth
+#else
+#define xClMeth(me, meth) me, sizeof(meth) - 1, meth
+#endif
+
+#define xSig(sig)         (int16_t) sizeof(sig) - 1, sig
+#define xWCSig            (int16_t) -1, "*"
+
+// The following four macros are used to intialize entries in the tables
+// of recognized methods:
+//
+//   - x is used for methods that with specific signatures that are not expected
+//     to be native
+//   - xAnySig is used for methods with a specific name, but arbitrary
+//     signature, that are not expected to be native
+//   - xNative is used for methods that with specific signatures that are
+//     expected to be native
+//   - xAnySigNative is used for methods with a specific name, but arbitrary/
+//     signature, that are expected to be native
+#define x(me, meth, sig) xClMeth(me, meth), xSig(sig), NoVersionRange
+#define xAnySig(me, meth) xClMeth(me, meth), xWCSig, NoVersionRange
+#define xNative(me, meth, sig, lb, ub) xClMeth(me, meth), xSig(sig), (lb), (ub)
+#define xAnySigNative(me, meth, lb, ub) xClMeth(me, meth), xWCSig, (lb), (ub)
       };
 
    static X ArrayListMethods[] =
@@ -2413,12 +2506,12 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Class_newInstancePrototype, "newInstancePrototype", "(Ljava/lang/Class;)Ljava/lang/Object;")},
       //{x(TR::java_lang_Class_newInstanceImpl,      "newInstanceImpl",      "()Ljava/lang/Object;")},
       {x(TR::java_lang_Class_newInstance,          "newInstance",          "()Ljava/lang/Object;")},
-      {x(TR::java_lang_Class_isArray,              "isArray",              "()Z")},
-      {x(TR::java_lang_Class_isPrimitive,          "isPrimitive",          "()Z")},
-      {x(TR::java_lang_Class_getComponentType,     "getComponentType",     "()Ljava/lang/Class;")},
-      {x(TR::java_lang_Class_getModifiersImpl,     "getModifiersImpl",     "()I")},
-      {x(TR::java_lang_Class_isAssignableFrom,     "isAssignableFrom",     "(Ljava/lang/Class;)Z")},
-      {x(TR::java_lang_Class_isInstance,           "isInstance",           "(Ljava/lang/Object;)Z")},
+      {xNative(TR::java_lang_Class_isArray,              "isArray",              "()Z", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_Class_isPrimitive,          "isPrimitive",          "()Z", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_Class_getComponentType,     "getComponentType",     "()Ljava/lang/Class;", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_Class_getModifiersImpl,     "getModifiersImpl",     "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_Class_isAssignableFrom,     "isAssignableFrom",     "(Ljava/lang/Class;)Z", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_Class_isInstance,           "isInstance",           "(Ljava/lang/Object;)Z", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::java_lang_Class_isInterface,          "isInterface",          "()Z")},
       {  TR::unknownMethod}
       };
@@ -2427,25 +2520,25 @@ void TR_ResolvedJ9Method::construct()
       {
       {x(TR::java_lang_ClassLoader_callerClassLoader,     "callerClassLoader",    "()Ljava/lang/ClassLoader;")},
       {x(TR::java_lang_ClassLoader_getCallerClassLoader,  "getCallerClassLoader", "()Ljava/lang/ClassLoader;")},
-      {x(TR::java_lang_ClassLoader_getStackClassLoader,   "getStackClassLoader",  "(I)Ljava/lang/ClassLoader;")},
+      {xNative(TR::java_lang_ClassLoader_getStackClassLoader,   "getStackClassLoader",  "(I)Ljava/lang/ClassLoader;", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X DoubleMethods[] =
       {
-      {x(TR::java_lang_Double_longBitsToDouble, "longBitsToDouble", "(J)D")},
+      {xNative(TR::java_lang_Double_longBitsToDouble, "longBitsToDouble", "(J)D", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::java_lang_Double_doubleToLongBits, "doubleToLongBits", "(D)J")},
-      {x(TR::java_lang_Double_doubleToRawLongBits, "doubleToRawLongBits", "(D)J")},
-      {  TR::java_lang_Double_init,                  6,    "<init>", (int16_t)-1,    "*"},
+      {xNative(TR::java_lang_Double_doubleToRawLongBits, "doubleToRawLongBits", "(D)J", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySig(TR::java_lang_Double_init, "<init>")},
       {  TR::unknownMethod}
       };
 
    static X FloatMethods[] =
       {
-      {x(TR::java_lang_Float_intBitsToFloat, "intBitsToFloat", "(I)F")},
+      {xNative(TR::java_lang_Float_intBitsToFloat, "intBitsToFloat", "(I)F", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::java_lang_Float_floatToIntBits, "floatToIntBits", "(F)I")},
-      {x(TR::java_lang_Float_floatToRawIntBits, "floatToRawIntBits", "(F)I")},
-      {  TR::java_lang_Float_init,                  6,    "<init>", (int16_t)-1,    "*"},
+      {xNative(TR::java_lang_Float_floatToRawIntBits, "floatToRawIntBits", "(F)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySig(TR::java_lang_Float_init, "<init>")},
       {  TR::unknownMethod}
       };
 
@@ -2587,48 +2680,72 @@ void TR_ResolvedJ9Method::construct()
 
    static X StrictMathMethods[] =
       {
-      {x(TR::java_lang_StrictMath_acos,       "acos",            "(D)D")},
-      {x(TR::java_lang_StrictMath_asin,       "asin",            "(D)D")},
-      {x(TR::java_lang_StrictMath_atan,       "atan",            "(D)D")},
-      {x(TR::java_lang_StrictMath_atan2,      "atan2",           "(DD)D")},
-      {x(TR::java_lang_StrictMath_cbrt,       "cbrt",            "(D)D")},
+      {xNative(TR::java_lang_StrictMath_acos,       "acos",            "(D)D", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_StrictMath_asin,       "asin",            "(D)D", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_StrictMath_atan,       "atan",            "(D)D", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_StrictMath_atan2,      "atan2",           "(DD)D", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_StrictMath_cbrt,       "cbrt",            "(D)D", AllPastJavaVer, 8)},
       {x(TR::java_lang_StrictMath_ceil,       "ceil",            "(D)D")},
       {x(TR::java_lang_StrictMath_copySign_F, "copySign",       "(FF)F")},
       {x(TR::java_lang_StrictMath_copySign_D, "copySign",       "(DD)D")},
-      {x(TR::java_lang_StrictMath_cos,        "cos",             "(D)D")},
-      {x(TR::java_lang_StrictMath_cosh,       "cosh",            "(D)D")},
-      {x(TR::java_lang_StrictMath_exp,        "exp",             "(D)D")},
-      {x(TR::java_lang_StrictMath_expm1,      "expm1",           "(D)D")},
+      {xNative(TR::java_lang_StrictMath_cos,        "cos",             "(D)D", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_StrictMath_cosh,       "cosh",            "(D)D", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_StrictMath_exp,        "exp",             "(D)D", AllPastJavaVer, 8)},
+      {xNative(TR::java_lang_StrictMath_expm1,      "expm1",           "(D)D", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::java_lang_StrictMath_floor,      "floor",           "(D)D")},
-      {x(TR::java_lang_StrictMath_hypot,      "hypot",           "(DD)D")},
-      {x(TR::java_lang_StrictMath_IEEEremainder,"IEEEremainder", "(DD)D")},
-      {x(TR::java_lang_StrictMath_log,        "log",             "(D)D")},
-      {x(TR::java_lang_StrictMath_log10,      "log10",           "(D)D")},
-      {x(TR::java_lang_StrictMath_log1p,      "log1p",           "(D)D")},
+      {xNative(TR::java_lang_StrictMath_hypot,      "hypot",           "(DD)D", AllPastJavaVer, 8)},
+      {xNative(TR::java_lang_StrictMath_IEEEremainder,"IEEEremainder", "(DD)D", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_StrictMath_log,        "log",             "(D)D", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_StrictMath_log10,      "log10",           "(D)D", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_StrictMath_log1p,      "log1p",           "(D)D", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::java_lang_StrictMath_max_F,      "max",            "(FF)F")},
       {x(TR::java_lang_StrictMath_max_D,      "max",            "(DD)D")},
       {x(TR::java_lang_StrictMath_min_F,      "min",            "(FF)F")},
       {x(TR::java_lang_StrictMath_min_D,      "min",            "(DD)D")},
       {x(TR::java_lang_StrictMath_nextAfter_F,"nextAfter",      "(FD)F")},
       {x(TR::java_lang_StrictMath_nextAfter_D,"nextAfter",      "(DD)D")},
-      {x(TR::java_lang_StrictMath_pow,        "pow",             "(DD)D")},
+      {xNative(TR::java_lang_StrictMath_pow,        "pow",             "(DD)D", AllPastJavaVer, 8)},
       {x(TR::java_lang_StrictMath_rint,       "rint",            "(D)D")},
       {x(TR::java_lang_StrictMath_round_F,    "round",          "(F)I")},
       {x(TR::java_lang_StrictMath_round_D,    "round",          "(D)J")},
       {x(TR::java_lang_StrictMath_scalb_F,    "scalb",          "(FI)F")},
       {x(TR::java_lang_StrictMath_scalb_D,    "scalb",          "(DI)F")},
-      {x(TR::java_lang_StrictMath_sin,        "sin",             "(D)D")},
-      {x(TR::java_lang_StrictMath_sinh,       "sinh",            "(D)D")},
-      {x(TR::java_lang_StrictMath_sqrt,       "sqrt",            "(D)D")},
-      {x(TR::java_lang_StrictMath_tan,        "tan",             "(D)D")},
-      {x(TR::java_lang_StrictMath_tanh,       "tan",             "(D)D")},
+      {xNative(TR::java_lang_StrictMath_sin,        "sin",             "(D)D", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_StrictMath_sinh,       "sinh",            "(D)D", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_StrictMath_sqrt,       "sqrt",            "(D)D", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_StrictMath_tan,        "tan",             "(D)D", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_StrictMath_tanh,       "tanh",            "(D)D", AllPastJavaVer, AllFutureJavaVer)},
+      {  TR::unknownMethod}
+      };
+
+   static X FdLibmCbrtMethods[] =
+      {
+      {x(TR::java_lang_StrictMath_cbrt,  "compute", "(D)D")},
+      {  TR::unknownMethod}
+      };
+
+   static X FdLibmExpMethods[] =
+      {
+      {x(TR::java_lang_StrictMath_exp,   "compute", "(D)D")},
+      {  TR::unknownMethod}
+      };
+
+   static X FdLibmHypotMethods[] =
+      {
+      {x(TR::java_lang_StrictMath_hypot, "compute", "(DD)D")},
+      {  TR::unknownMethod}
+      };
+
+   static X FdLibmPowMethods[] =
+      {
+      {x(TR::java_lang_StrictMath_pow,   "compute", "(DD)D")},
       {  TR::unknownMethod}
       };
 
    static X ObjectMethods[] =
       {
-      {TR::java_lang_Object_init,                 6,    "<init>", (int16_t)-1,    "*"},
-      {x(TR::java_lang_Object_getClass,             "getClass",             "()Ljava/lang/Class;")},
+      {xAnySig(TR::java_lang_Object_init, "<init>")},
+      {xNative(TR::java_lang_Object_getClass,             "getClass",             "()Ljava/lang/Class;", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::java_lang_Object_clone,                "clone",                "()Ljava/lang/Object;")},
       {x(TR::java_lang_Object_newInstancePrototype, "newInstancePrototype", "(Ljava/lang/Class;)Ljava/lang/Object;")},
       {x(TR::java_lang_Object_getAddressAsPrimitive, "getAddressAsPrimitive", "(Ljava/lang/Object;)I")},
@@ -2637,9 +2754,9 @@ void TR_ResolvedJ9Method::construct()
 
    static X XPCryptoMethods[] =
       {
-      {x(TR::com_ibm_jit_crypto_JITAESCryptInHardware_isAESSupportedByHardwareImpl, "isAESSupportedByHardwareImpl", "()Z")},
-      {x(TR::com_ibm_jit_crypto_JITAESCryptInHardware_doAESInHardware, "doAESInHardware", "([BII[BI[IIZ)Z")},
-      {x(TR::com_ibm_jit_crypto_JITAESCryptInHardware_expandAESKeyInHardware, "expandAESKeyInHardware", "([B[II)Z")},
+      {xNative(TR::com_ibm_jit_crypto_JITAESCryptInHardware_isAESSupportedByHardwareImpl, "isAESSupportedByHardwareImpl", "()Z", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_crypto_JITAESCryptInHardware_doAESInHardware, "doAESInHardware", "([BII[BI[IIZ)Z", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_crypto_JITAESCryptInHardware_expandAESKeyInHardware, "expandAESKeyInHardware", "([B[II)Z", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
@@ -3033,15 +3150,15 @@ void TR_ResolvedJ9Method::construct()
 
    static X otivmMethods[] =
       {
-      {  TR::com_ibm_oti_vm_VM_callerClass,      11, "callerClass",  (int16_t)-1, "*"},
+      {xAnySig(TR::com_ibm_oti_vm_VM_callerClass, "callerClass")},
       {x(TR::java_lang_ClassLoader_callerClassLoader, "callerClassLoader", "()Ljava/lang/ClassLoader;")},
       {  TR::unknownMethod}
       };
 
    static X ArraysMethods[] =
       {
-      {  TR::java_util_Arrays_fill,      4, "fill",    (int16_t)-1, "*"},
-      {  TR::java_util_Arrays_equals,    6, "equals",  (int16_t)-1, "*"},
+      {xAnySig(TR::java_util_Arrays_fill, "fill")},
+      {xAnySig(TR::java_util_Arrays_equals, "equals")},
       {x(TR::java_util_Arrays_copyOf_byte,   "copyOf",     "([BI)[B")},
       {x(TR::java_util_Arrays_copyOf_short,  "copyOf",     "([SI)[S")},
       {x(TR::java_util_Arrays_copyOf_char,   "copyOf",     "([CI)[C")},
@@ -3073,7 +3190,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_String_init_String_char,    "<init>",              "(Ljava/lang/String;C)V")},
       {x(TR::java_lang_String_init_int_String_int_String_String, "<init>","(ILjava/lang/String;ILjava/lang/String;Ljava/lang/String;)V")},
       {x(TR::java_lang_String_init_int_int_char_boolean, "<init>",       "(II[CZ)V")},
-      {  TR::java_lang_String_init,          6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_String_init, "<init>")},
       {x(TR::java_lang_String_charAt,              "charAt",              "(I)C")},
       {x(TR::java_lang_String_charAtInternal_I,    "charAtInternal",      "(I)C")},
       {x(TR::java_lang_String_charAtInternal_IB,   "charAtInternal",      "(I[B)C")},
@@ -3110,7 +3227,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_String_toCharArray,         "toCharArray",         "()[C")},
       {x(TR::java_lang_String_regionMatches,       "regionMatches",       "(ILjava/lang/String;II)Z")},
       {x(TR::java_lang_String_regionMatches_bool,  "regionMatches",       "(ZILjava/lang/String;II)Z")},
-      {  TR::java_lang_String_regionMatchesInternal, 21, "regionMatchesInternal", (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_String_regionMatchesInternal, "regionMatchesInternal")},
       {x(TR::java_lang_String_equalsIgnoreCase,    "equalsIgnoreCase",    "(Ljava/lang/String;)Z")},
       {x(TR::java_lang_String_compareToIgnoreCase, "compareToIgnoreCase", "(Ljava/lang/String;)I")},
       {x(TR::java_lang_String_compress,            "compress",            "([C[BII)I")},
@@ -3183,9 +3300,10 @@ void TR_ResolvedJ9Method::construct()
 
    static X SystemMethods[] =
       {
-      {  TR::java_lang_System_arraycopy,      9, "arraycopy",    (int16_t)-1, "*"},
-      {x(TR::java_lang_System_currentTimeMillis, "currentTimeMillis",   "()J")},
-      {x(TR::java_lang_System_nanoTime,          "nanoTime",   "()J")},
+      {xNative(TR::java_lang_System_arraycopy,   "arraycopy",    "(Ljava/lang/Object;ILjava/lang/Object;II)V", AllPastJavaVer, AllFutureJavaVer)},
+      {x(TR::java_lang_System_arraycopy,         "arraycopy",    "([Ljava/lang/Object;I[Ljava/lang/Object;II)V")},
+      {xNative(TR::java_lang_System_currentTimeMillis, "currentTimeMillis",   "()J", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_System_nanoTime,          "nanoTime",   "()J", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::java_lang_System_hiresClockImpl,          "hiresClockImpl",   "()J")},
       {x(TR::java_lang_System_identityHashCode,  "identityHashCode",    "(Ljava/lang/Object;)I")},
       {  TR::unknownMethod}
@@ -3193,39 +3311,39 @@ void TR_ResolvedJ9Method::construct()
 
    static X ThreadMethods[] =
       {
-      {x(TR::java_lang_Thread_currentThread,     "currentThread",   "()Ljava/lang/Thread;")},
+      {xNative(TR::java_lang_Thread_currentThread,     "currentThread",   "()Ljava/lang/Thread;", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X ThrowableMethods[] =
       {
-      {  TR::java_lang_Throwable_printStackTrace,     15, "printStackTrace",   (int16_t)-1, "*"},
-      {x(TR::java_lang_Throwable_fillInStackTrace,    "fillInStackTrace",  "()Ljava/lang/Throwable;")},
+      {xAnySig(TR::java_lang_Throwable_printStackTrace, "printStackTrace")},
+      {xNative(TR::java_lang_Throwable_fillInStackTrace,    "fillInStackTrace",  "()Ljava/lang/Throwable;", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
-   static X UnsafeMethods[] =
+   static X SunUnsafeMethods[] =
       {
-      {x(TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V,       "putBoolean", "(Ljava/lang/Object;JZ)V")},
-      {x(TR::sun_misc_Unsafe_putByte_jlObjectJB_V,          "putByte",    "(Ljava/lang/Object;JB)V")},
-      {x(TR::sun_misc_Unsafe_putChar_jlObjectJC_V,          "putChar",    "(Ljava/lang/Object;JC)V")},
-      {x(TR::sun_misc_Unsafe_putShort_jlObjectJS_V,         "putShort",   "(Ljava/lang/Object;JS)V")},
-      {x(TR::sun_misc_Unsafe_putInt_jlObjectJI_V,           "putInt",     "(Ljava/lang/Object;JI)V")},
-      {x(TR::sun_misc_Unsafe_putLong_jlObjectJJ_V,          "putLong",    "(Ljava/lang/Object;JJ)V")},
-      {x(TR::sun_misc_Unsafe_putFloat_jlObjectJF_V,         "putFloat",   "(Ljava/lang/Object;JF)V")},
-      {x(TR::sun_misc_Unsafe_putDouble_jlObjectJD_V,        "putDouble",  "(Ljava/lang/Object;JD)V")},
-      {x(TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V, "putObject",  "(Ljava/lang/Object;JLjava/lang/Object;)V")},
+      {xNative(TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V,       "putBoolean", "(Ljava/lang/Object;JZ)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putByte_jlObjectJB_V,          "putByte",    "(Ljava/lang/Object;JB)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putChar_jlObjectJC_V,          "putChar",    "(Ljava/lang/Object;JC)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putShort_jlObjectJS_V,         "putShort",   "(Ljava/lang/Object;JS)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putInt_jlObjectJI_V,           "putInt",     "(Ljava/lang/Object;JI)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putLong_jlObjectJJ_V,          "putLong",    "(Ljava/lang/Object;JJ)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putFloat_jlObjectJF_V,         "putFloat",   "(Ljava/lang/Object;JF)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putDouble_jlObjectJD_V,        "putDouble",  "(Ljava/lang/Object;JD)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V, "putObject",  "(Ljava/lang/Object;JLjava/lang/Object;)V", AllPastJavaVer, 8)},
       {x(TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V, "putReference",  "(Ljava/lang/Object;JLjava/lang/Object;)V")},
 
-      {x(TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V,       "putBooleanVolatile", "(Ljava/lang/Object;JZ)V")},
-      {x(TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V,          "putByteVolatile",    "(Ljava/lang/Object;JB)V")},
-      {x(TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V,          "putCharVolatile",    "(Ljava/lang/Object;JC)V")},
-      {x(TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V,         "putShortVolatile",   "(Ljava/lang/Object;JS)V")},
-      {x(TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V,           "putIntVolatile",     "(Ljava/lang/Object;JI)V")},
-      {x(TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V,          "putLongVolatile",    "(Ljava/lang/Object;JJ)V")},
-      {x(TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V,         "putFloatVolatile",   "(Ljava/lang/Object;JF)V")},
-      {x(TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V,        "putDoubleVolatile",  "(Ljava/lang/Object;JD)V")},
-      {x(TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, "putObjectVolatile",  "(Ljava/lang/Object;JLjava/lang/Object;)V")},
+      {xNative(TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V,       "putBooleanVolatile", "(Ljava/lang/Object;JZ)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V,          "putByteVolatile",    "(Ljava/lang/Object;JB)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V,          "putCharVolatile",    "(Ljava/lang/Object;JC)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V,         "putShortVolatile",   "(Ljava/lang/Object;JS)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V,           "putIntVolatile",     "(Ljava/lang/Object;JI)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V,          "putLongVolatile",    "(Ljava/lang/Object;JJ)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V,         "putFloatVolatile",   "(Ljava/lang/Object;JF)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V,        "putDoubleVolatile",  "(Ljava/lang/Object;JD)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, "putObjectVolatile",  "(Ljava/lang/Object;JLjava/lang/Object;)V", AllPastJavaVer, 8)},
       {x(TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, "putReferenceVolatile",  "(Ljava/lang/Object;JLjava/lang/Object;)V")},
 
       {x(TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V,       "putBooleanRelease", "(Ljava/lang/Object;JZ)V")},
@@ -3240,27 +3358,164 @@ void TR_ResolvedJ9Method::construct()
 
       {x(TR::sun_misc_Unsafe_putInt_jlObjectII_V,           "putInt",     "(Ljava/lang/Object;II)V")},
 
-      {x(TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z,        "getBoolean", "(Ljava/lang/Object;J)Z")},
-      {x(TR::sun_misc_Unsafe_getByte_jlObjectJ_B,           "getByte",    "(Ljava/lang/Object;J)B")},
-      {x(TR::sun_misc_Unsafe_getChar_jlObjectJ_C,           "getChar",    "(Ljava/lang/Object;J)C")},
-      {x(TR::sun_misc_Unsafe_getShort_jlObjectJ_S,          "getShort",   "(Ljava/lang/Object;J)S")},
-      {x(TR::sun_misc_Unsafe_getInt_jlObjectJ_I,            "getInt",     "(Ljava/lang/Object;J)I")},
-      {x(TR::sun_misc_Unsafe_getLong_jlObjectJ_J,           "getLong",    "(Ljava/lang/Object;J)J")},
-      {x(TR::sun_misc_Unsafe_getFloat_jlObjectJ_F,          "getFloat",   "(Ljava/lang/Object;J)F")},
-      {x(TR::sun_misc_Unsafe_getDouble_jlObjectJ_D,         "getDouble",  "(Ljava/lang/Object;J)D")},
-      {x(TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject,  "getObject",  "(Ljava/lang/Object;J)Ljava/lang/Object;")},
+      {xNative(TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z,        "getBoolean", "(Ljava/lang/Object;J)Z", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getByte_jlObjectJ_B,           "getByte",    "(Ljava/lang/Object;J)B", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getChar_jlObjectJ_C,           "getChar",    "(Ljava/lang/Object;J)C", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getShort_jlObjectJ_S,          "getShort",   "(Ljava/lang/Object;J)S", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getInt_jlObjectJ_I,            "getInt",     "(Ljava/lang/Object;J)I", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getLong_jlObjectJ_J,           "getLong",    "(Ljava/lang/Object;J)J", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getFloat_jlObjectJ_F,          "getFloat",   "(Ljava/lang/Object;J)F", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getDouble_jlObjectJ_D,         "getDouble",  "(Ljava/lang/Object;J)D", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject,  "getObject",  "(Ljava/lang/Object;J)Ljava/lang/Object;", AllPastJavaVer, 8)},
       {x(TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject,  "getReference",  "(Ljava/lang/Object;J)Ljava/lang/Object;")},
 
-      {x(TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z,        "getBooleanVolatile", "(Ljava/lang/Object;J)Z")},
-      {x(TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B,           "getByteVolatile",    "(Ljava/lang/Object;J)B")},
-      {x(TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C,           "getCharVolatile",    "(Ljava/lang/Object;J)C")},
-      {x(TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S,          "getShortVolatile",   "(Ljava/lang/Object;J)S")},
-      {x(TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I,            "getIntVolatile",     "(Ljava/lang/Object;J)I")},
-      {x(TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J,           "getLongVolatile",    "(Ljava/lang/Object;J)J")},
-      {x(TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F,          "getFloatVolatile",   "(Ljava/lang/Object;J)F")},
-      {x(TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D,         "getDoubleVolatile",  "(Ljava/lang/Object;J)D")},
-      {x(TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject,  "getObjectVolatile",  "(Ljava/lang/Object;J)Ljava/lang/Object;")},
+      {xNative(TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z,        "getBooleanVolatile", "(Ljava/lang/Object;J)Z", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B,           "getByteVolatile",    "(Ljava/lang/Object;J)B", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C,           "getCharVolatile",    "(Ljava/lang/Object;J)C", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S,          "getShortVolatile",   "(Ljava/lang/Object;J)S", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I,            "getIntVolatile",     "(Ljava/lang/Object;J)I", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J,           "getLongVolatile",    "(Ljava/lang/Object;J)J", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F,          "getFloatVolatile",   "(Ljava/lang/Object;J)F", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D,         "getDoubleVolatile",  "(Ljava/lang/Object;J)D", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject,  "getObjectVolatile",  "(Ljava/lang/Object;J)Ljava/lang/Object;", AllPastJavaVer, 8)},
       {x(TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject,  "getReferenceVolatile",  "(Ljava/lang/Object;J)Ljava/lang/Object;")},
+
+      {x(TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z,        "getBooleanAcquire", "(Ljava/lang/Object;J)Z")},
+      {x(TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B,           "getByteAcquire",    "(Ljava/lang/Object;J)B")},
+      {x(TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C,           "getCharAcquire",    "(Ljava/lang/Object;J)C")},
+      {x(TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S,          "getShortAcquire",   "(Ljava/lang/Object;J)S")},
+      {x(TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I,            "getIntAcquire",     "(Ljava/lang/Object;J)I")},
+      {x(TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J,           "getLongAcquire",    "(Ljava/lang/Object;J)J")},
+      {x(TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F,          "getFloatAcquire",   "(Ljava/lang/Object;J)F")},
+      {x(TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D,         "getDoubleAcquire",  "(Ljava/lang/Object;J)D")},
+      {x(TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject,  "getObjectAcquire",  "(Ljava/lang/Object;J)Ljava/lang/Object;")},
+
+      {xNative(TR::sun_misc_Unsafe_putByte_JB_V,                  "putByte",    "(JB)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putShort_JS_V,                 "putShort",   "(JS)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putChar_JC_V,                  "putChar",    "(JC)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putInt_JI_V,                   "putInt",     "(JI)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putLong_JJ_V,                  "putLong",    "(JJ)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putFloat_JF_V,                 "putFloat",   "(JF)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putDouble_JD_V,                "putDouble",  "(JD)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putAddress_JJ_V,               "putAddress", "(JJ)V", AllPastJavaVer, 8)},
+
+      {xNative(TR::sun_misc_Unsafe_getByte_J_B,                   "getByte",    "(J)B", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getShort_J_S,                  "getShort",   "(J)S", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getChar_J_C,                   "getChar",    "(J)C", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getInt_J_I,                    "getInt",     "(J)I", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getLong_J_J,                   "getLong",    "(J)J", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getFloat_J_F,                  "getFloat",   "(J)F", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getDouble_J_D,                 "getDouble",  "(J)D", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_getAddress_J_J,                "getAddress", "(J)J", AllPastJavaVer, 8)},
+
+      {xNative(TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z,                  "compareAndSwapInt",    "(Ljava/lang/Object;JII)Z", AllPastJavaVer, 8)},
+      {x(TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z,                  "compareAndSetInt",    "(Ljava/lang/Object;JII)Z")},
+      {xNative(TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z,                 "compareAndSwapLong",   "(Ljava/lang/Object;JJJ)Z", AllPastJavaVer, 8)},
+      {x(TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z,                 "compareAndSetLong",   "(Ljava/lang/Object;JJJ)Z")},
+      {xNative(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSwapObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z", AllPastJavaVer, 8)},
+      {x(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSetObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
+      {x(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSetReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
+
+      {x(TR::sun_misc_Unsafe_compareAndExchangeInt_jlObjectJII_Z,                  "compareAndExchangeInt",    "(Ljava/lang/Object;JII)I")},
+      {x(TR::sun_misc_Unsafe_compareAndExchangeLong_jlObjectJJJ_Z,                 "compareAndExchangeLong",   "(Ljava/lang/Object;JJJ)J")},
+      {x(TR::sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z, "compareAndExchangeObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
+      {x(TR::sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z, "compareAndExchangeReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
+
+      {x(TR::sun_misc_Unsafe_compareAndExchangeInt_jlObjectJII_Z,                  "compareAndExchangeIntVolatile",    "(Ljava/lang/Object;JII)I")},
+      {x(TR::sun_misc_Unsafe_compareAndExchangeLong_jlObjectJJJ_Z,                 "compareAndExchangeLongVolatile",   "(Ljava/lang/Object;JJJ)J")},
+      {x(TR::sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z, "compareAndExchangeObjectVolatile", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
+
+      {xNative(TR::sun_misc_Unsafe_staticFieldBase,               "staticFieldBase",   "(Ljava/lang/reflect/Field;)Ljava/lang/Object", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_staticFieldOffset,             "staticFieldOffset", "(Ljava/lang/reflect/Field;)J", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_objectFieldOffset,             "objectFieldOffset", "(Ljava/lang/reflect/Field;)J", AllPastJavaVer, 8)},
+      {x(TR::sun_misc_Unsafe_getAndAddInt,                  "getAndAddInt",      "(Ljava/lang/Object;JI)I")},
+      {x(TR::sun_misc_Unsafe_getAndSetInt,                  "getAndSetInt",      "(Ljava/lang/Object;JI)I")},
+      {x(TR::sun_misc_Unsafe_getAndAddLong,                 "getAndAddLong",     "(Ljava/lang/Object;JJ)J")},
+      {x(TR::sun_misc_Unsafe_getAndSetLong,                 "getAndSetLong",     "(Ljava/lang/Object;JJ)J")},
+
+      {x(TR::sun_misc_Unsafe_putOrderedBoolean_jlObjectJZ_V,       "putOrderedBoolean", "(Ljava/lang/Object;JZ)V")},
+      {x(TR::sun_misc_Unsafe_putOrderedByte_jlObjectJB_V,          "putOrderedByte",    "(Ljava/lang/Object;JB)V")},
+      {x(TR::sun_misc_Unsafe_putOrderedChar_jlObjectJC_V,          "putOrderedChar",    "(Ljava/lang/Object;JC)V")},
+      {x(TR::sun_misc_Unsafe_putOrderedShort_jlObjectJS_V,         "putOrderedShort",   "(Ljava/lang/Object;JS)V")},
+      {xNative(TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V,           "putOrderedInt",     "(Ljava/lang/Object;JI)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_putOrderedLong_jlObjectJJ_V,          "putOrderedLong",    "(Ljava/lang/Object;JJ)V", AllPastJavaVer, 8)},
+      {x(TR::sun_misc_Unsafe_putOrderedFloat_jlObjectJF_V,         "putOrderedFloat",   "(Ljava/lang/Object;JF)V")},
+      {x(TR::sun_misc_Unsafe_putOrderedDouble_jlObjectJD_V,        "putOrderedDouble",  "(Ljava/lang/Object;JD)V")},
+      {xNative(TR::sun_misc_Unsafe_putOrderedObject_jlObjectJjlObject_V, "putOrderedObject",  "(Ljava/lang/Object;JLjava/lang/Object;)V", AllPastJavaVer, 8)},
+
+      {xNative(TR::sun_misc_Unsafe_monitorEnter_jlObject_V,       "monitorEnter",    "(Ljava/lang/Object;)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_monitorExit_jlObject_V,        "monitorExit",     "(Ljava/lang/Object;)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_tryMonitorEnter_jlObject_Z,    "tryMonitorEnter", "(Ljava/lang/Object;)Z", AllPastJavaVer, 8)},
+
+      {xNative(TR::sun_misc_Unsafe_copyMemory,    "copyMemory", "(Ljava/lang/Object;JLjava/lang/Object;JJ)V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_setMemory,     "setMemory",  "(Ljava/lang/Object;JJB)V", AllPastJavaVer, 8)},
+
+      {xNative(TR::sun_misc_Unsafe_loadFence,     "loadFence",  "()V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_storeFence,    "storeFence", "()V", AllPastJavaVer, 8)},
+      {xNative(TR::sun_misc_Unsafe_fullFence,     "fullFence",  "()V", AllPastJavaVer, 8)},
+
+      {xNative(TR::sun_misc_Unsafe_ensureClassInitialized,     "ensureClassInitialized", "(Ljava/lang/Class;)V", AllPastJavaVer, 8)},
+
+      {  TR::unknownMethod}
+      };
+
+   static X InternalUnsafeMethods[] =
+      {
+      {xNative(TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V,       "putBoolean", "(Ljava/lang/Object;JZ)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putByte_jlObjectJB_V,          "putByte",    "(Ljava/lang/Object;JB)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putChar_jlObjectJC_V,          "putChar",    "(Ljava/lang/Object;JC)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putShort_jlObjectJS_V,         "putShort",   "(Ljava/lang/Object;JS)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putInt_jlObjectJI_V,           "putInt",     "(Ljava/lang/Object;JI)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putLong_jlObjectJJ_V,          "putLong",    "(Ljava/lang/Object;JJ)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putFloat_jlObjectJF_V,         "putFloat",   "(Ljava/lang/Object;JF)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putDouble_jlObjectJD_V,        "putDouble",  "(Ljava/lang/Object;JD)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V, "putObject",  "(Ljava/lang/Object;JLjava/lang/Object;)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V, "putReference",  "(Ljava/lang/Object;JLjava/lang/Object;)V", 12, AllFutureJavaVer)},
+
+      {xNative(TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V,       "putBooleanVolatile", "(Ljava/lang/Object;JZ)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V,          "putByteVolatile",    "(Ljava/lang/Object;JB)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V,          "putCharVolatile",    "(Ljava/lang/Object;JC)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V,         "putShortVolatile",   "(Ljava/lang/Object;JS)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V,           "putIntVolatile",     "(Ljava/lang/Object;JI)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V,          "putLongVolatile",    "(Ljava/lang/Object;JJ)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V,         "putFloatVolatile",   "(Ljava/lang/Object;JF)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V,        "putDoubleVolatile",  "(Ljava/lang/Object;JD)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, "putObjectVolatile",  "(Ljava/lang/Object;JLjava/lang/Object;)V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, "putReferenceVolatile",  "(Ljava/lang/Object;JLjava/lang/Object;)V", 12, AllFutureJavaVer)},
+
+      {x(TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V,       "putBooleanRelease", "(Ljava/lang/Object;JZ)V")},
+      {x(TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V,          "putByteRelease",    "(Ljava/lang/Object;JB)V")},
+      {x(TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V,          "putCharRelease",    "(Ljava/lang/Object;JC)V")},
+      {x(TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V,         "putShortRelease",   "(Ljava/lang/Object;JS)V")},
+      {x(TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V,           "putIntRelease",     "(Ljava/lang/Object;JI)V")},
+      {x(TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V,          "putLongRelease",    "(Ljava/lang/Object;JJ)V")},
+      {x(TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V,         "putFloatRelease",   "(Ljava/lang/Object;JF)V")},
+      {x(TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V,        "putDoubleRelease",  "(Ljava/lang/Object;JD)V")},
+      {x(TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V, "putObjectRelease",  "(Ljava/lang/Object;JLjava/lang/Object;)V")},
+
+      {x(TR::sun_misc_Unsafe_putInt_jlObjectII_V,           "putInt",     "(Ljava/lang/Object;II)V")},
+
+      {xNative(TR::sun_misc_Unsafe_getBoolean_jlObjectJ_Z,        "getBoolean", "(Ljava/lang/Object;J)Z", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getByte_jlObjectJ_B,           "getByte",    "(Ljava/lang/Object;J)B", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getChar_jlObjectJ_C,           "getChar",    "(Ljava/lang/Object;J)C", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getShort_jlObjectJ_S,          "getShort",   "(Ljava/lang/Object;J)S", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getInt_jlObjectJ_I,            "getInt",     "(Ljava/lang/Object;J)I", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getLong_jlObjectJ_J,           "getLong",    "(Ljava/lang/Object;J)J", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getFloat_jlObjectJ_F,          "getFloat",   "(Ljava/lang/Object;J)F", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getDouble_jlObjectJ_D,         "getDouble",  "(Ljava/lang/Object;J)D", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject,  "getObject",  "(Ljava/lang/Object;J)Ljava/lang/Object;", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getObject_jlObjectJ_jlObject,  "getReference",  "(Ljava/lang/Object;J)Ljava/lang/Object;", 12, AllFutureJavaVer)},
+
+      {xNative(TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z,        "getBooleanVolatile", "(Ljava/lang/Object;J)Z", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B,           "getByteVolatile",    "(Ljava/lang/Object;J)B", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getCharVolatile_jlObjectJ_C,           "getCharVolatile",    "(Ljava/lang/Object;J)C", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getShortVolatile_jlObjectJ_S,          "getShortVolatile",   "(Ljava/lang/Object;J)S", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getIntVolatile_jlObjectJ_I,            "getIntVolatile",     "(Ljava/lang/Object;J)I", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getLongVolatile_jlObjectJ_J,           "getLongVolatile",    "(Ljava/lang/Object;J)J", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F,          "getFloatVolatile",   "(Ljava/lang/Object;J)F", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D,         "getDoubleVolatile",  "(Ljava/lang/Object;J)D", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject,  "getObjectVolatile",  "(Ljava/lang/Object;J)Ljava/lang/Object;", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject,  "getReferenceVolatile",  "(Ljava/lang/Object;J)Ljava/lang/Object;", 12, AllFutureJavaVer)},
 
       {x(TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z,        "getBooleanAcquire", "(Ljava/lang/Object;J)Z")},
       {x(TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B,           "getByteAcquire",    "(Ljava/lang/Object;J)B")},
@@ -3291,17 +3546,17 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_getAddress_J_J,                "getAddress", "(J)J")},
 
       {x(TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z,                  "compareAndSwapInt",    "(Ljava/lang/Object;JII)Z")},
-      {x(TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z,                  "compareAndSetInt",    "(Ljava/lang/Object;JII)Z")},
+      {xNative(TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z,                  "compareAndSetInt",    "(Ljava/lang/Object;JII)Z", 9, AllFutureJavaVer)},
       {x(TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z,                 "compareAndSwapLong",   "(Ljava/lang/Object;JJJ)Z")},
-      {x(TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z,                 "compareAndSetLong",   "(Ljava/lang/Object;JJJ)Z")},
+      {xNative(TR::sun_misc_Unsafe_compareAndSwapLong_jlObjectJJJ_Z,                 "compareAndSetLong",   "(Ljava/lang/Object;JJJ)Z", 9, AllFutureJavaVer)},
       {x(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSwapObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
-      {x(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSetObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
-      {x(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSetReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
+      {xNative(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSetObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_compareAndSwapObject_jlObjectJjlObjectjlObject_Z, "compareAndSetReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z", 12, AllFutureJavaVer)},
 
-      {x(TR::sun_misc_Unsafe_compareAndExchangeInt_jlObjectJII_Z,                  "compareAndExchangeInt",    "(Ljava/lang/Object;JII)I")},
-      {x(TR::sun_misc_Unsafe_compareAndExchangeLong_jlObjectJJJ_Z,                 "compareAndExchangeLong",   "(Ljava/lang/Object;JJJ)J")},
-      {x(TR::sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z, "compareAndExchangeObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
-      {x(TR::sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z, "compareAndExchangeReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;")},
+      {xNative(TR::sun_misc_Unsafe_compareAndExchangeInt_jlObjectJII_Z,                  "compareAndExchangeInt",    "(Ljava/lang/Object;JII)I", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_compareAndExchangeLong_jlObjectJJJ_Z,                 "compareAndExchangeLong",   "(Ljava/lang/Object;JJJ)J", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z, "compareAndExchangeObject", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_compareAndExchangeObject_jlObjectJjlObjectjlObject_Z, "compareAndExchangeReference", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", 12, AllFutureJavaVer)},
 
       {x(TR::sun_misc_Unsafe_compareAndExchangeInt_jlObjectJII_Z,                  "compareAndExchangeIntVolatile",    "(Ljava/lang/Object;JII)I")},
       {x(TR::sun_misc_Unsafe_compareAndExchangeLong_jlObjectJJJ_Z,                 "compareAndExchangeLongVolatile",   "(Ljava/lang/Object;JJJ)J")},
@@ -3315,15 +3570,15 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_getAndAddLong,                 "getAndAddLong",     "(Ljava/lang/Object;JJ)J")},
       {x(TR::sun_misc_Unsafe_getAndSetLong,                 "getAndSetLong",     "(Ljava/lang/Object;JJ)J")},
 
-      {x(TR::sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V,       "putOrderedBoolean", "(Ljava/lang/Object;JZ)V")},
-      {x(TR::sun_misc_Unsafe_putByteOrdered_jlObjectJB_V,          "putOrderedByte",    "(Ljava/lang/Object;JB)V")},
-      {x(TR::sun_misc_Unsafe_putCharOrdered_jlObjectJC_V,          "putOrderedChar",    "(Ljava/lang/Object;JC)V")},
-      {x(TR::sun_misc_Unsafe_putShortOrdered_jlObjectJS_V,         "putOrderedShort",   "(Ljava/lang/Object;JS)V")},
-      {x(TR::sun_misc_Unsafe_putIntOrdered_jlObjectJI_V,           "putOrderedInt",     "(Ljava/lang/Object;JI)V")},
-      {x(TR::sun_misc_Unsafe_putLongOrdered_jlObjectJJ_V,          "putOrderedLong",    "(Ljava/lang/Object;JJ)V")},
-      {x(TR::sun_misc_Unsafe_putFloatOrdered_jlObjectJF_V,         "putOrderedFloat",   "(Ljava/lang/Object;JF)V")},
-      {x(TR::sun_misc_Unsafe_putDoubleOrdered_jlObjectJD_V,        "putOrderedDouble",  "(Ljava/lang/Object;JD)V")},
-      {x(TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V, "putOrderedObject",  "(Ljava/lang/Object;JLjava/lang/Object;)V")},
+      {x(TR::sun_misc_Unsafe_putOrderedBoolean_jlObjectJZ_V,       "putOrderedBoolean", "(Ljava/lang/Object;JZ)V")},
+      {x(TR::sun_misc_Unsafe_putOrderedByte_jlObjectJB_V,          "putOrderedByte",    "(Ljava/lang/Object;JB)V")},
+      {x(TR::sun_misc_Unsafe_putOrderedChar_jlObjectJC_V,          "putOrderedChar",    "(Ljava/lang/Object;JC)V")},
+      {x(TR::sun_misc_Unsafe_putOrderedShort_jlObjectJS_V,         "putOrderedShort",   "(Ljava/lang/Object;JS)V")},
+      {x(TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V,           "putOrderedInt",     "(Ljava/lang/Object;JI)V")},
+      {x(TR::sun_misc_Unsafe_putOrderedLong_jlObjectJJ_V,          "putOrderedLong",    "(Ljava/lang/Object;JJ)V")},
+      {x(TR::sun_misc_Unsafe_putOrderedFloat_jlObjectJF_V,         "putOrderedFloat",   "(Ljava/lang/Object;JF)V")},
+      {x(TR::sun_misc_Unsafe_putOrderedDouble_jlObjectJD_V,        "putOrderedDouble",  "(Ljava/lang/Object;JD)V")},
+      {x(TR::sun_misc_Unsafe_putOrderedObject_jlObjectJjlObject_V, "putOrderedObject",  "(Ljava/lang/Object;JLjava/lang/Object;)V")},
 
       {x(TR::sun_misc_Unsafe_monitorEnter_jlObject_V,       "monitorEnter",    "(Ljava/lang/Object;)V")},
       {x(TR::sun_misc_Unsafe_monitorExit_jlObject_V,        "monitorExit",     "(Ljava/lang/Object;)V")},
@@ -3332,9 +3587,9 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::sun_misc_Unsafe_copyMemory,    "copyMemory", "(Ljava/lang/Object;JLjava/lang/Object;JJ)V")},
       {x(TR::sun_misc_Unsafe_setMemory,     "setMemory",  "(Ljava/lang/Object;JJB)V")},
 
-      {x(TR::sun_misc_Unsafe_loadFence,     "loadFence",  "()V")},
-      {x(TR::sun_misc_Unsafe_storeFence,    "storeFence", "()V")},
-      {x(TR::sun_misc_Unsafe_fullFence,     "fullFence",  "()V")},
+      {xNative(TR::sun_misc_Unsafe_loadFence,     "loadFence",  "()V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_storeFence,    "storeFence", "()V", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_misc_Unsafe_fullFence,     "fullFence",  "()V", 9, AllFutureJavaVer)},
 
       {x(TR::sun_misc_Unsafe_ensureClassInitialized,     "ensureClassInitialized", "(Ljava/lang/Class;)V")},
 
@@ -3349,7 +3604,7 @@ void TR_ResolvedJ9Method::construct()
 
    static X VectorMethods[] =
       {
-      {  TR::java_util_Vector_subList,    7, "subList",  (int16_t)-1, "*"},
+      {xAnySig(TR::java_util_Vector_subList, "subList")},
       {x(TR::java_util_Vector_contains,      "contains",     "(Ljava/lang/Object;)Z")},
       {x(TR::java_util_Vector_addElement,    "addElement",   "(Ljava/lang/Object;)V")},
       {  TR::unknownMethod}
@@ -3371,22 +3626,22 @@ void TR_ResolvedJ9Method::construct()
 
    static X ORBVMHelperMethods[] =
       {
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_is32Bit,                             "is32Bit", "()Z")},
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_getNumBitsInReferenceField,          "getNumBitsInReferenceField", "()I")},
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_getNumBytesInReferenceField,         "getNumBytesInReferenceField", "()I")},
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_getNumBitsInDescriptionWord,         "getNumBitsInDescriptionWord", "()I")},
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_getNumBytesInDescriptionWord,        "getNumBytesInDescriptionWord", "()I")},
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_getNumBytesInJ9ObjectHeader,         "getNumBytesInJ9ObjectHeader", "()I")},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_is32Bit,                             "is32Bit", "()Z", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_getNumBitsInReferenceField,          "getNumBitsInReferenceField", "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_getNumBytesInReferenceField,         "getNumBytesInReferenceField", "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_getNumBitsInDescriptionWord,         "getNumBitsInDescriptionWord", "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_getNumBytesInDescriptionWord,        "getNumBytesInDescriptionWord", "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_getNumBytesInJ9ObjectHeader,         "getNumBytesInJ9ObjectHeader", "()I", AllPastJavaVer, AllFutureJavaVer)},
 
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_getJ9ClassFromClass32,               "getJ9ClassFromClass32", "(Ljava/lang/Class;)I")},
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_getInstanceShapeFromJ9Class32,       "getTotalInstanceSizeFromJ9Class32", "(I)I")},
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_getInstanceDescriptionFromJ9Class32, "getInstanceDescriptionFromJ9Class32", "(I)I")},
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_getDescriptionWordFromPtr32,         "getDescriptionWordFromPtr32", "(I)I")},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_getJ9ClassFromClass32,               "getJ9ClassFromClass32", "(Ljava/lang/Class;)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_getTotalInstanceSizeFromJ9Class32,   "getTotalInstanceSizeFromJ9Class32", "(I)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_getInstanceDescriptionFromJ9Class32, "getInstanceDescriptionFromJ9Class32", "(I)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_getDescriptionWordFromPtr32,         "getDescriptionWordFromPtr32", "(I)I", AllPastJavaVer, AllFutureJavaVer)},
 
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_getJ9ClassFromClass64,               "getJ9ClassFromClass64", "(Ljava/lang/Class;)J")},
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_getInstanceShapeFromJ9Class64,       "getTotalInstanceSizeFromJ9Class64", "(J)J")},
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_getInstanceDescriptionFromJ9Class64, "getInstanceDescriptionFromJ9Class64", "(J)J")},
-      {x(TR::com_ibm_oti_vm_ORBVMHelpers_getDescriptionWordFromPtr64,         "getDescriptionWordFromPtr64", "(J)J")},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_getJ9ClassFromClass64,               "getJ9ClassFromClass64", "(Ljava/lang/Class;)J", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_getTotalInstanceSizeFromJ9Class64,   "getTotalInstanceSizeFromJ9Class64", "(J)J", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_getInstanceDescriptionFromJ9Class64, "getInstanceDescriptionFromJ9Class64", "(J)J", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_oti_vm_ORBVMHelpers_getDescriptionWordFromPtr64,         "getDescriptionWordFromPtr64", "(J)J", AllPastJavaVer, AllFutureJavaVer)},
 
       {  TR::unknownMethod}
       };
@@ -3394,7 +3649,7 @@ void TR_ResolvedJ9Method::construct()
    // some of these take a long and return an int
    static X JITHelperMethods[] =
       {
-      {x(TR::com_ibm_jit_JITHelpers_is32Bit,                                  "is32Bit", "()Z")},
+      {xNative(TR::com_ibm_jit_JITHelpers_is32Bit,                                  "is32Bit", "()Z", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::com_ibm_jit_JITHelpers_isArray,                                  "isArray", "(Ljava/lang/Object;)Z")},
       {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringLatin1,             "intrinsicIndexOfStringLatin1", "(Ljava/lang/Object;ILjava/lang/Object;II)I")},
       {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfStringUTF16,              "intrinsicIndexOfStringUTF16", "(Ljava/lang/Object;ILjava/lang/Object;II)I")},
@@ -3402,28 +3657,28 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::com_ibm_jit_JITHelpers_intrinsicIndexOfUTF16,                    "intrinsicIndexOfUTF16", "(Ljava/lang/Object;CII)I")},
 #ifdef TR_TARGET_32BIT
       {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject32,                   "getJ9ClassFromObject32", "(Ljava/lang/Object;)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromClass32,                    "getJ9ClassFromClass32", "(Ljava/lang/Class;)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getBackfillOffsetFromJ9Class32,           "getBackfillOffsetFromJ9Class32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getRomClassFromJ9Class32,                 "getRomClassFromJ9Class32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getArrayShapeFromRomClass32,              "getArrayShapeFromRomClass32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getSuperClassesFromJ9Class32,             "getSuperClassesFromJ9Class32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getClassDepthAndFlagsFromJ9Class32,       "getClassDepthAndFlagsFromJ9Class32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getClassFlagsFromJ9Class32,               "getClassFlagsFromJ9Class32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getModifiersFromRomClass32,               "getModifiersFromRomClass32", "(I)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getClassFromJ9Class32,                    "getClassFromJ9Class32", "(I)Ljava/lang/Class;")},
+      {xNative(TR::com_ibm_jit_JITHelpers_getJ9ClassFromClass32,                    "getJ9ClassFromClass32", "(Ljava/lang/Class;)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getBackfillOffsetFromJ9Class32,           "getBackfillOffsetFromJ9Class32", "(I)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getRomClassFromJ9Class32,                 "getRomClassFromJ9Class32", "(I)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getArrayShapeFromRomClass32,              "getArrayShapeFromRomClass32", "(I)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getSuperClassesFromJ9Class32,             "getSuperClassesFromJ9Class32", "(I)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getClassDepthAndFlagsFromJ9Class32,       "getClassDepthAndFlagsFromJ9Class32", "(I)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getClassFlagsFromJ9Class32,               "getClassFlagsFromJ9Class32", "(I)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getModifiersFromRomClass32,               "getModifiersFromRomClass32", "(I)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getClassFromJ9Class32,                    "getClassFromJ9Class32", "(I)Ljava/lang/Class;", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::com_ibm_jit_JITHelpers_getAddressAsPrimitive32,                  "getAddressAsPrimitive32", "(Ljava/lang/Object;)I")},
 #endif
 #ifdef TR_TARGET_64BIT
       {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromObject64,                   "getJ9ClassFromObject64", "(Ljava/lang/Object;)J")},
-      {x(TR::com_ibm_jit_JITHelpers_getJ9ClassFromClass64,                    "getJ9ClassFromClass64", "(Ljava/lang/Class;)J")},
-      {x(TR::com_ibm_jit_JITHelpers_getBackfillOffsetFromJ9Class64,           "getBackfillOffsetFromJ9Class64", "(J)J")},
-      {x(TR::com_ibm_jit_JITHelpers_getRomClassFromJ9Class64,                 "getRomClassFromJ9Class64", "(J)J")},
-      {x(TR::com_ibm_jit_JITHelpers_getArrayShapeFromRomClass64,              "getArrayShapeFromRomClass64", "(J)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getSuperClassesFromJ9Class64,             "getSuperClassesFromJ9Class64", "(J)J")},
-      {x(TR::com_ibm_jit_JITHelpers_getClassDepthAndFlagsFromJ9Class64,       "getClassDepthAndFlagsFromJ9Class64", "(J)J")},
-      {x(TR::com_ibm_jit_JITHelpers_getClassFlagsFromJ9Class64,               "getClassFlagsFromJ9Class64", "(J)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getModifiersFromRomClass64,               "getModifiersFromRomClass64", "(J)I")},
-      {x(TR::com_ibm_jit_JITHelpers_getClassFromJ9Class64,                    "getClassFromJ9Class64", "(J)Ljava/lang/Class;")},
+      {xNative(TR::com_ibm_jit_JITHelpers_getJ9ClassFromClass64,                    "getJ9ClassFromClass64", "(Ljava/lang/Class;)J", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getBackfillOffsetFromJ9Class64,           "getBackfillOffsetFromJ9Class64", "(J)J", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getRomClassFromJ9Class64,                 "getRomClassFromJ9Class64", "(J)J", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getArrayShapeFromRomClass64,              "getArrayShapeFromRomClass64", "(J)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getSuperClassesFromJ9Class64,             "getSuperClassesFromJ9Class64", "(J)J", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getClassDepthAndFlagsFromJ9Class64,       "getClassDepthAndFlagsFromJ9Class64", "(J)J", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getClassFlagsFromJ9Class64,               "getClassFlagsFromJ9Class64", "(J)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getModifiersFromRomClass64,               "getModifiersFromRomClass64", "(J)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_getClassFromJ9Class64,                    "getClassFromJ9Class64", "(J)Ljava/lang/Class;", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::com_ibm_jit_JITHelpers_getAddressAsPrimitive64,                  "getAddressAsPrimitive64", "(Ljava/lang/Object;)J")},
 #endif
       {x(TR::com_ibm_jit_JITHelpers_getSuperclass,                            "getSuperclass", "(Ljava/lang/Class;)Ljava/lang/Class;")},
@@ -3432,8 +3687,8 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::com_ibm_jit_JITHelpers_getPackedDataSizeFromJ9Class64,           "getPackedDataSizeFromJ9Class64", "(J)J")},
       {x(TR::com_ibm_jit_JITHelpers_getComponentTypeFromJ9Class32,            "getComponentTypeFromJ9Class32", "(I)I")},
       {x(TR::com_ibm_jit_JITHelpers_getComponentTypeFromJ9Class64,            "getComponentTypeFromJ9Class64", "(J)J")},
-      {x(TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big,                "transformedEncodeUTF16Big",       "(JJI)I")},
-      {x(TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Little,             "transformedEncodeUTF16Little",    "(JJI)I")},
+      {xNative(TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Big,                "transformedEncodeUTF16Big",       "(JJI)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::com_ibm_jit_JITHelpers_transformedEncodeUTF16Little,             "transformedEncodeUTF16Little",    "(JJI)I", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::com_ibm_jit_JITHelpers_getIntFromObject,                         "getIntFromObject", "(Ljava/lang/Object;J)I")},
       {x(TR::com_ibm_jit_JITHelpers_getIntFromObjectVolatile,                 "getIntFromObjectVolatile", "(Ljava/lang/Object;J)I")},
       {x(TR::com_ibm_jit_JITHelpers_getLongFromObject,                        "getLongFromObject", "(Ljava/lang/Object;J)J")},
@@ -3477,7 +3732,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::com_ibm_jit_JITHelpers_compareAndSwapLongInArray,                "compareAndSwapLongInArray", "(Ljava/lang/Object;JJJ)Z")},
       {x(TR::com_ibm_jit_JITHelpers_compareAndSwapObjectInArray,              "compareAndSwapObjectInArray", "(Ljava/lang/Object;JLjava/lang/Object;Ljava/lang/Object;)Z")},
       {x(TR::com_ibm_jit_JITHelpers_byteToCharUnsigned,                       "byteToCharUnsigned", "(B)C")},
-      {x(TR::com_ibm_jit_JITHelpers_acmplt,                                   "acmplt", "(Ljava/lang/Object;Ljava/lang/Object;)Z")},
+      {xNative(TR::com_ibm_jit_JITHelpers_acmplt,                                   "acmplt", "(Ljava/lang/Object;Ljava/lang/Object;)Z", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::com_ibm_jit_JITHelpers_getClassInitializeStatus,                 "getClassInitializeStatus", "(Ljava/lang/Class;)I")},
       {x(TR::com_ibm_jit_JITHelpers_supportsIntrinsicCaseConversion,          "supportsIntrinsicCaseConversion", "()Z")},
       {x(TR::com_ibm_jit_JITHelpers_toUpperIntrinsicLatin1,                   "toUpperIntrinsicLatin1", "([B[BI)Z")},
@@ -3535,7 +3790,7 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Integer_rotateLeft,              "rotateLeft",            "(II)I")},
       {x(TR::java_lang_Integer_rotateRight,             "rotateRight",           "(II)I")},
       {x(TR::java_lang_Integer_valueOf,                 "valueOf",               "(I)Ljava/lang/Integer;")},
-      {  TR::java_lang_Integer_init,              6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Integer_init, "<init>")},
       {x(TR::java_lang_Integer_toUnsignedLong,          "toUnsignedLong",         "(I)J")},
       {  TR::unknownMethod}
       };
@@ -3550,19 +3805,19 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Long_reverseBytes,              "reverseBytes",           "(J)J")},
       {x(TR::java_lang_Long_rotateLeft,                 "rotateLeft",            "(JI)J")},
       {x(TR::java_lang_Long_rotateRight,                "rotateRight",           "(JI)J")},
-      {  TR::java_lang_Long_init,                  6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Long_init, "<init>")},
       {  TR::unknownMethod}
       };
 
    static X BooleanMethods[] =
       {
-      {  TR::java_lang_Boolean_init,          6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Boolean_init, "<init>")},
       {  TR::unknownMethod}
       };
 
    static X CharacterMethods[] =
       {
-      {  TR::java_lang_Character_init,          6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Character_init, "<init>")},
       {x(TR::java_lang_Character_isDigit,             "isDigit",              "(I)Z")},
       {x(TR::java_lang_Character_isLetter,            "isLetter",             "(I)Z")},
       {x(TR::java_lang_Character_isUpperCase,         "isUpperCase",          "(I)Z")},
@@ -3574,30 +3829,38 @@ void TR_ResolvedJ9Method::construct()
 
    static X CRC32Methods[] =
       {
-      {x(TR::java_util_zip_CRC32_update,              "update",               "(II)I")},
-      {x(TR::java_util_zip_CRC32_updateBytes,         "updateBytes",          "(I[BII)I")},
-      {x(TR::java_util_zip_CRC32_updateByteBuffer,    "updateByteBuffer",     "(IJII)I")},
+      {xNative(TR::java_util_zip_CRC32_update,              "update",               "(II)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_util_zip_CRC32_updateBytes,         "updateBytes",          "(I[BII)I", AllPastJavaVer, 8)},
+      {xNative(TR::java_util_zip_CRC32_updateByteBuffer,    "updateByteBuffer",     "(IJII)I", AllPastJavaVer, 8)},
       {  TR::unknownMethod}
       };
 
    static X ByteMethods[] =
       {
-      {  TR::java_lang_Byte_init,          6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Byte_init, "<init>")},
       {  TR::unknownMethod}
       };
 
    static X ShortMethods[] =
       {
       {x(TR::java_lang_Short_reverseBytes,             "reverseBytes",         "(S)S")},
-      {  TR::java_lang_Short_init,          6,    "<init>", (int16_t)-1,    "*"},
+      {xAnySig(TR::java_lang_Short_init, "<init>")},
       {  TR::unknownMethod}
       };
 
    static X ReflectionMethods[] =
       {
-      {x(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "(I)Ljava/lang/Class;")},
-      {x(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "()Ljava/lang/Class;")},
-      {x(TR::sun_reflect_Reflection_getClassAccessFlags, "getClassAccessFlags", "(Ljava/lang/Class;)I")},
+      {xNative(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "(I)Ljava/lang/Class;", AllPastJavaVer, 8)},
+      {xNative(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "()Ljava/lang/Class;", AllPastJavaVer, 8)},
+      {xNative(TR::sun_reflect_Reflection_getClassAccessFlags, "getClassAccessFlags", "(Ljava/lang/Class;)I", AllPastJavaVer, 8)},
+      {  TR::unknownMethod}
+      };
+
+   static X JdkInternalReflectionMethods[] =
+      {
+      {xNative(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "(I)Ljava/lang/Class;", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_reflect_Reflection_getCallerClass, "getCallerClass", "()Ljava/lang/Class;", 9, AllFutureJavaVer)},
+      {xNative(TR::sun_reflect_Reflection_getClassAccessFlags, "getClassAccessFlags", "(Ljava/lang/Class;)I", 9, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
@@ -3622,7 +3885,7 @@ void TR_ResolvedJ9Method::construct()
 
    static X VMInternalsMethods[] =
       {
-      {x(TR::java_lang_Class_newInstanceImpl,      "newInstanceImpl",      "(Ljava/lang/Class;)Ljava/lang/Object;")},
+      {xNative(TR::java_lang_Class_newInstanceImpl,      "newInstanceImpl",      "(Ljava/lang/Class;)Ljava/lang/Object;", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::java_lang_J9VMInternals_is32Bit,                             "is32Bit", "()Z")},
       {x(TR::java_lang_J9VMInternals_isClassModifierPublic,               "isClassModifierPublic", "(I)Z")},
       {x(TR::java_lang_J9VMInternals_getArrayLengthAsObject,              "getArrayLengthAsObject", "(Ljava/lang/Object;)I")},
@@ -3636,24 +3899,24 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_J9VMInternals_getNumBytesInJ9ObjectHeader,         "getNumBytesInJ9ObjectHeader", "()I")},
 
       {x(TR::java_lang_J9VMInternals_getJ9ClassFromClass32,               "getJ9ClassFromClass32", "(Ljava/lang/Class;)I")},
-      {x(TR::java_lang_J9VMInternals_getInstanceShapeFromJ9Class32,       "getTotalInstanceSizeFromJ9Class32", "(I)I")},
+      {x(TR::java_lang_J9VMInternals_getTotalInstanceSizeFromJ9Class32,   "getTotalInstanceSizeFromJ9Class32", "(I)I")},
       {x(TR::java_lang_J9VMInternals_getInstanceDescriptionFromJ9Class32, "getInstanceDescriptionFromJ9Class32", "(I)I")},
       {x(TR::java_lang_J9VMInternals_getDescriptionWordFromPtr32,         "getDescriptionWordFromPtr32", "(I)I")},
 
       {x(TR::java_lang_J9VMInternals_getJ9ClassFromClass64,               "getJ9ClassFromClass64", "(Ljava/lang/Class;)J")},
-      {x(TR::java_lang_J9VMInternals_getInstanceShapeFromJ9Class64,       "getTotalInstanceSizeFromJ9Class64", "(J)J")},
+      {x(TR::java_lang_J9VMInternals_getTotalInstanceSizeFromJ9Class64,   "getTotalInstanceSizeFromJ9Class64", "(J)J")},
       {x(TR::java_lang_J9VMInternals_getInstanceDescriptionFromJ9Class64, "getInstanceDescriptionFromJ9Class64", "(J)J")},
       {x(TR::java_lang_J9VMInternals_getDescriptionWordFromPtr64,         "getDescriptionWordFromPtr64", "(J)J")},
-      {x(TR::java_lang_J9VMInternals_getSuperclass,                       "getSuperclass", "(Ljava/lang/Class;)Ljava/lang/Class;")},
-      {x(TR::java_lang_J9VMInternals_identityHashCode,                    "identityHashCode", "(Ljava/lang/Object;)I")},
+      {xNative(TR::java_lang_J9VMInternals_getSuperclass,                       "getSuperclass", "(Ljava/lang/Class;)Ljava/lang/Class;", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_J9VMInternals_identityHashCode,                    "identityHashCode", "(Ljava/lang/Object;)I", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::java_lang_J9VMInternals_fastIdentityHashCode,                "fastIdentityHashCode", "(Ljava/lang/Object;)I")},
-      {x(TR::java_lang_J9VMInternals_primitiveClone,                      "primitiveClone", "(Ljava/lang/Object;)Ljava/lang/Object;")},
+      {xNative(TR::java_lang_J9VMInternals_primitiveClone,                      "primitiveClone", "(Ljava/lang/Object;)Ljava/lang/Object;", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X ReferenceMethods [] =
       {
-      {x(TR::java_lang_ref_Reference_getImpl, "getImpl", "()Ljava/lang/Object;")},
+      {xNative(TR::java_lang_ref_Reference_getImpl, "getImpl", "()Ljava/lang/Object;", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::java_lang_ref_Reference_reachabilityFence, "reachabilityFence", "(Ljava/lang/Object;)V")},
       {TR::unknownMethod}
       };
@@ -3737,7 +4000,7 @@ void TR_ResolvedJ9Method::construct()
       {
 /*    These are disabled because the codegens don't recognize them anymore.
  *    The reason codegens stopped recognizing these is because of missing wrtbar support.
- *    {x(TR::java_util_concurrent_atomic_AtomicReference_getAndSet,        "getAndSet",          "(Ljava/lang/Object;)Ljava/lang/Object;")},
+ *     X(TR::java_util_concurrent_atomic_AtomicReference_getAndSet,        "getAndSet",          "(Ljava/lang/Object;)Ljava/lang/Object;"),
       {x(TR::java_util_concurrent_atomic_AtomicReference_weakCompareAndSet,"weakCompareAndSet",  "(Ljava/lang/Object;Ljava/lang/Object;)Z")},
       {x(TR::java_util_concurrent_atomic_AtomicReference_lazySet,          "lazySet",            "(Ljava/lang/Object;)V")},
 */
@@ -3837,8 +4100,8 @@ void TR_ResolvedJ9Method::construct()
    // Transactional Memory
    static X JavaUtilConcurrentConcurrentLinkedQueueMethods[] =
       {
-      {x(TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer,     "tmOffer", "(Ljava/util/concurrent/ConcurrentLinkedQueue$Node;)I")},
-      {x(TR::java_util_concurrent_ConcurrentLinkedQueue_tmPoll,      "tmPoll",  "()Ljava/lang/Object;")},
+      {xNative(TR::java_util_concurrent_ConcurrentLinkedQueue_tmOffer,     "tmOffer", "(Ljava/util/concurrent/ConcurrentLinkedQueue$Node;)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_util_concurrent_ConcurrentLinkedQueue_tmPoll,      "tmPoll",  "()Ljava/lang/Object;", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::java_util_concurrent_ConcurrentLinkedQueue_tmEnabled,   "tmEnabled",  "()Z")},
 
       {TR::unknownMethod}
@@ -3859,14 +4122,14 @@ void TR_ResolvedJ9Method::construct()
 
    static X MethodHandleMethods[] =
       {
-      {  TR::java_lang_invoke_MethodHandle_doCustomizationLogic     ,   20, "doCustomizationLogic",       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_MethodHandle_undoCustomizationLogic   ,   22, "undoCustomizationLogic",     (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_MethodHandle_invoke                   ,    6, "invoke",                     (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_MethodHandle_invoke                   ,   13, "invokeGeneric",              (int16_t)-1, "*"}, // Older name from early versions of the jsr292 spec
-      {  TR::java_lang_invoke_MethodHandle_invokeExact              ,   11, "invokeExact",                (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress ,   24, "invokeExactTargetAddress",   (int16_t)-1, "*"},
+      {xAnySig(TR::java_lang_invoke_MethodHandle_doCustomizationLogic     , "doCustomizationLogic")},
+      {xAnySig(TR::java_lang_invoke_MethodHandle_undoCustomizationLogic   , "undoCustomizationLogic")},
+      {xAnySigNative(TR::java_lang_invoke_MethodHandle_invoke                   , "invoke", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySig(TR::java_lang_invoke_MethodHandle_invoke                   , "invokeGeneric")}, // Older name from early versions of the jsr292 spec
+      {xAnySigNative(TR::java_lang_invoke_MethodHandle_invokeExact              , "invokeExact", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySig(TR::java_lang_invoke_MethodHandle_invokeExactTargetAddress , "invokeExactTargetAddress")},
       {x(TR::java_lang_invoke_MethodHandle_type                     ,   "type",                       "()Ljava/lang/invoke/MethodType;")},
-      {x(TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper,   "invokeWithArgumentsHelper",  "(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;")},
+      {xNative(TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper,   "invokeWithArgumentsHelper",  "(Ljava/lang/invoke/MethodHandle;[Ljava/lang/Object;)Ljava/lang/Object;", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::java_lang_invoke_MethodHandle_asType, "asType", "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")},
       {x(TR::java_lang_invoke_MethodHandle_asType_instance, "asType", "(Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;")},
       {  TR::unknownMethod}
@@ -3884,82 +4147,82 @@ void TR_ResolvedJ9Method::construct()
       // Resolved VarHandle access methods are suffixed with _impl in their names
       // A list for unresolved VarHandle access methods is in VarHandleTransformer.cpp,
       // changes in the following list need to be reflected in the other
-      {  TR::java_lang_invoke_VarHandle_get                       ,    8, "get_impl",                             (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_set                       ,    8, "set_impl",                             (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getVolatile               ,   16, "getVolatile_impl",                     (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_setVolatile               ,   16, "setVolatile_impl",                     (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getOpaque                 ,   14, "getOpaque_impl",                       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_setOpaque                 ,   14, "setOpaque_impl",                       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAcquire                ,   15, "getAcquire_impl",                      (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_setRelease                ,   15, "setRelease_impl",                      (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_compareAndSet             ,   18, "compareAndSet_impl",                   (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_compareAndExchange        ,   23, "compareAndExchange_impl",              (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_compareAndExchangeAcquire ,   30, "compareAndExchangeAcquire_impl",       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_compareAndExchangeRelease ,   30, "compareAndExchangeRelease_impl",       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_weakCompareAndSet         ,   22, "weakCompareAndSet_impl",               (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_weakCompareAndSetAcquire  ,   29, "weakCompareAndSetAcquire_impl",        (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_weakCompareAndSetRelease  ,   29, "weakCompareAndSetRelease_impl",        (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_weakCompareAndSetPlain    ,   27, "weakCompareAndSetPlain_impl",          (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndSet                 ,   14, "getAndSet_impl",                       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndSetAcquire          ,   21, "getAndSetAcquire_impl",                (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndSetRelease          ,   21, "getAndSetRelease_impl",                (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndAdd                 ,   14, "getAndAdd_impl",                       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndAddAcquire          ,   21, "getAndAddAcquire_impl",                (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndAddRelease          ,   21, "getAndAddRelease_impl",                (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseAnd          ,   21, "getAndBitwiseAnd_impl",                (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseAndAcquire   ,   28, "getAndBitwiseAndAcquire_impl",         (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseAndRelease   ,   28, "getAndBitwiseAndRelease_impl",         (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseOr           ,   20, "getAndBitwiseOr_impl",                 (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseOrAcquire    ,   27, "getAndBitwiseOrAcquire_impl",         (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseOrRelease    ,   27, "getAndBitwiseOrRelease_impl",         (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXor          ,   21, "getAndBitwiseXor_impl",                 (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXorAcquire   ,   28, "getAndBitwiseXorAcquire_impl",         (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_VarHandle_getAndBitwiseXorRelease   ,   28, "getAndBitwiseXorRelease_impl",         (int16_t)-1, "*"},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_get                       , "get_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_set                       , "set_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getVolatile               , "getVolatile_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_setVolatile               , "setVolatile_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getOpaque                 , "getOpaque_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_setOpaque                 , "setOpaque_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAcquire                , "getAcquire_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_setRelease                , "setRelease_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_compareAndSet             , "compareAndSet_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_compareAndExchange        , "compareAndExchange_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_compareAndExchangeAcquire , "compareAndExchangeAcquire_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_compareAndExchangeRelease , "compareAndExchangeRelease_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_weakCompareAndSet         , "weakCompareAndSet_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_weakCompareAndSetAcquire  , "weakCompareAndSetAcquire_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_weakCompareAndSetRelease  , "weakCompareAndSetRelease_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_weakCompareAndSetPlain    , "weakCompareAndSetPlain_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndSet                 , "getAndSet_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndSetAcquire          , "getAndSetAcquire_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndSetRelease          , "getAndSetRelease_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndAdd                 , "getAndAdd_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndAddAcquire          , "getAndAddAcquire_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndAddRelease          , "getAndAddRelease_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndBitwiseAnd          , "getAndBitwiseAnd_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndBitwiseAndAcquire   , "getAndBitwiseAndAcquire_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndBitwiseAndRelease   , "getAndBitwiseAndRelease_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndBitwiseOr           , "getAndBitwiseOr_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndBitwiseOrAcquire    , "getAndBitwiseOrAcquire_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndBitwiseOrRelease    , "getAndBitwiseOrRelease_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndBitwiseXor          , "getAndBitwiseXor_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndBitwiseXorAcquire   , "getAndBitwiseXorAcquire_impl", 9, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_VarHandle_getAndBitwiseXorRelease   , "getAndBitwiseXorRelease_impl", 9, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X ILGenMacrosMethods[] =
       {
-      {  TR::java_lang_invoke_ILGenMacros_placeholder ,      11, "placeholder",      (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_numArguments,      12, "numArguments",     (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_populateArray,     13, "populateArray",    (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_arrayElements,     13, "arrayElements",    (int16_t)-1, "*"},
-      {x(TR::java_lang_invoke_ILGenMacros_arrayLength,           "arrayLength",      "(Ljava/lang/Object;)I")},
-      {  TR::java_lang_invoke_ILGenMacros_firstN,             6, "firstN",           (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_dropFirstN,        10, "dropFirstN",       (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_getField,           8, "getField",         (int16_t)-1, "*"},
-      {x(TR::java_lang_invoke_ILGenMacros_invokeExact_X,         "invokeExact_X",    "(Ljava/lang/invoke/MethodHandle;I)I")},
-      {x(TR::java_lang_invoke_ILGenMacros_invokeExactAndFixup,   "invokeExact",      "(Ljava/lang/invoke/MethodHandle;I)I")},
-      {x(TR::java_lang_invoke_ILGenMacros_isCustomThunk,         "isCustomThunk",    "()Z")},
-      {x(TR::java_lang_invoke_ILGenMacros_isShareableThunk,      "isShareableThunk", "()Z")},
-      {  TR::java_lang_invoke_ILGenMacros_lastN,              5, "lastN",            (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_middleN,            7, "middleN",          (int16_t)-1, "*"},
-      {x(TR::java_lang_invoke_ILGenMacros_rawNew,                "rawNew",           "(Ljava/lang/Class;)Ljava/lang/Object;")},
-      {x(TR::java_lang_invoke_ILGenMacros_parameterCount,        "parameterCount",   "(Ljava/lang/invoke/MethodHandle;)I")},
-      {  TR::java_lang_invoke_ILGenMacros_push,               4, "push",             (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_pop,                5, "pop_I",            (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_pop,                5, "pop_J",            (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_pop,                5, "pop_F",            (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_pop,                5, "pop_D",            (int16_t)-1, "*"},
-      {  TR::java_lang_invoke_ILGenMacros_pop,                5, "pop_L",            (int16_t)-1, "*"},
-      {x(TR::java_lang_invoke_ILGenMacros_typeCheck,             "typeCheck",        "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)V")},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_placeholder , "placeholder", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_numArguments, "numArguments", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_populateArray, "populateArray", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_arrayElements, "arrayElements", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_ILGenMacros_arrayLength,           "arrayLength",      "(Ljava/lang/Object;)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_firstN, "firstN", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_dropFirstN, "dropFirstN", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySig(TR::java_lang_invoke_ILGenMacros_getField, "getField")},
+      {xNative(TR::java_lang_invoke_ILGenMacros_invokeExact_X,         "invokeExact_X",    "(Ljava/lang/invoke/MethodHandle;I)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_ILGenMacros_invokeExactAndFixup,   "invokeExact",      "(Ljava/lang/invoke/MethodHandle;I)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_ILGenMacros_isCustomThunk,         "isCustomThunk",    "()Z", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_ILGenMacros_isShareableThunk,      "isShareableThunk", "()Z", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_lastN, "lastN", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_middleN, "middleN", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_ILGenMacros_rawNew,                "rawNew",           "(Ljava/lang/Class;)Ljava/lang/Object;", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_ILGenMacros_parameterCount,        "parameterCount",   "(Ljava/lang/invoke/MethodHandle;)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_push, "push", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_pop, "pop_I", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_pop, "pop_J", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_pop, "pop_F", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_pop, "pop_D", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_ILGenMacros_pop, "pop_L", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_ILGenMacros_typeCheck,             "typeCheck",        "(Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)V", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X CollectHandleMethods[] =
       {
-      {x(TR::java_lang_invoke_CollectHandle_allocateArray,                 "allocateArray",               "(Ljava/lang/invoke/CollectHandle;)Ljava/lang/Object;")},
+      { x(TR::java_lang_invoke_CollectHandle_allocateArray,                 "allocateArray",               "(Ljava/lang/invoke/CollectHandle;)Ljava/lang/Object;")},
       {x(TR::java_lang_invoke_CollectHandle_numArgsToPassThrough,          "numArgsToPassThrough",        "()I")},
-      {x(TR::java_lang_invoke_CollectHandle_numArgsToCollect,              "numArgsToCollect",            "()I")},
-      {x(TR::java_lang_invoke_CollectHandle_collectionStart,               "collectionStart",             "()I")},
-      {x(TR::java_lang_invoke_CollectHandle_numArgsAfterCollectArray,      "numArgsAfterCollectArray",    "()I")},
-      {  TR::java_lang_invoke_CollectHandle_invokeExact,          28,  "invokeExact_thunkArchetype_X",    (int16_t)-1, "*"},
+      {xNative(TR::java_lang_invoke_CollectHandle_numArgsToCollect,              "numArgsToCollect",            "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_CollectHandle_collectionStart,     	         "collectionStart",             "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_CollectHandle_numArgsAfterCollectArray,      "numArgsAfterCollectArray",    "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySig(TR::java_lang_invoke_CollectHandle_invokeExact, "invokeExact_thunkArchetype_X")},
       {  TR::unknownMethod}
       };
 
    static X AsTypeHandleMethods[] =
       {
-      {  TR::java_lang_invoke_AsTypeHandle_convertArgs,   11, "convertArgs",     (int16_t)-1, "*"},
+      {xAnySigNative(TR::java_lang_invoke_AsTypeHandle_convertArgs, "convertArgs", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
@@ -3987,89 +4250,89 @@ void TR_ResolvedJ9Method::construct()
 
    static X ExplicitCastHandleMethods[] =
       {
-      {  TR::java_lang_invoke_ExplicitCastHandle_convertArgs,   11, "convertArgs",     (int16_t)-1, "*"},
+      {xAnySigNative(TR::java_lang_invoke_ExplicitCastHandle_convertArgs, "convertArgs", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X ArgumentMoverHandleMethods[] =
       {
-      {x(TR::java_lang_invoke_ArgumentMoverHandle_permuteArgs,  "permuteArgs",   "(I)I")},
+      {xNative(TR::java_lang_invoke_ArgumentMoverHandle_permuteArgs,  "permuteArgs",   "(I)I", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X BruteArgumentMoverHandleMethods[] =
       {
-      {  TR::java_lang_invoke_BruteArgumentMoverHandle_permuteArgs,     11, "permuteArgs",   (int16_t)-1, "*"},
+      {xAnySigNative(TR::java_lang_invoke_BruteArgumentMoverHandle_permuteArgs, "permuteArgs", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X PermuteHandleMethods[] =
       {
-      {x(TR::java_lang_invoke_PermuteHandle_permuteArgs, "permuteArgs", "(I)I")},
+      {xNative(TR::java_lang_invoke_PermuteHandle_permuteArgs, "permuteArgs", "(I)I", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X GuardWithTestHandleMethods[] =
       {
-      {x(TR::java_lang_invoke_GuardWithTestHandle_numGuardArgs,  "numGuardArgs", "()I")},
+      {xNative(TR::java_lang_invoke_GuardWithTestHandle_numGuardArgs,  "numGuardArgs", "()I", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X InsertHandleMethods[] =
       {
-      {x(TR::java_lang_invoke_InsertHandle_numPrefixArgs,      "numPrefixArgs",     "()I")},
-      {x(TR::java_lang_invoke_InsertHandle_numSuffixArgs,      "numSuffixArgs",     "()I")},
-      {x(TR::java_lang_invoke_InsertHandle_numValuesToInsert,  "numValuesToInsert", "()I")},
+      {xNative(TR::java_lang_invoke_InsertHandle_numPrefixArgs,      "numPrefixArgs",     "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_InsertHandle_numSuffixArgs,      "numSuffixArgs",     "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_InsertHandle_numValuesToInsert,  "numValuesToInsert", "()I", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X DirectHandleMethods[] =
       {
-      {x(TR::java_lang_invoke_DirectHandle_isAlreadyCompiled,   "isAlreadyCompiled",  "(J)Z")},
-      {x(TR::java_lang_invoke_DirectHandle_compiledEntryPoint,  "compiledEntryPoint", "(J)J")},
+      {xNative(TR::java_lang_invoke_DirectHandle_isAlreadyCompiled,   "isAlreadyCompiled",  "(J)Z", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_DirectHandle_compiledEntryPoint,  "compiledEntryPoint", "(J)J", AllPastJavaVer, AllFutureJavaVer)},
       {x(TR::java_lang_invoke_DirectHandle_nullCheckIfRequired,  "nullCheckIfRequired", "(Ljava/lang/Object;)V")},
       {  TR::unknownMethod}
       };
 
    static X SpreadHandleMethods[] =
       {
-      {x(TR::java_lang_invoke_SpreadHandle_numArgsToPassThrough,  "numArgsToPassThrough",   "()I")},
-      {x(TR::java_lang_invoke_SpreadHandle_numArgsToSpread,       "numArgsToSpread",        "()I")},
-      {x(TR::java_lang_invoke_SpreadHandle_spreadStart,           "spreadStart",            "()I")},
-      {x(TR::java_lang_invoke_SpreadHandle_numArgsAfterSpreadArray,       "numArgsAfterSpreadArray",        "()I")},
-      {  TR::java_lang_invoke_SpreadHandle_arrayArg,           8, "arrayArg",  (int16_t)-1, "*"},
+      {xNative(TR::java_lang_invoke_SpreadHandle_numArgsToPassThrough,  "numArgsToPassThrough",   "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_SpreadHandle_numArgsToSpread,       "numArgsToSpread",        "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_SpreadHandle_spreadStart,           "spreadStart",            "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_SpreadHandle_numArgsAfterSpreadArray,       "numArgsAfterSpreadArray",        "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_SpreadHandle_arrayArg, "arrayArg", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X FoldHandleMethods[] =
       {
-      {x(TR::java_lang_invoke_FoldHandle_foldPosition,               "foldPosition",            "()I")},
-      {x(TR::java_lang_invoke_FoldHandle_argIndices,                 "argIndices",               "()I")},
-      {  TR::java_lang_invoke_FoldHandle_argumentsForCombiner,  20,  "argumentsForCombiner",    (int16_t)-1, "*"},
+      {xNative(TR::java_lang_invoke_FoldHandle_foldPosition,               "foldPosition",            "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_FoldHandle_argIndices,                 "argIndices",               "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_FoldHandle_argumentsForCombiner, "argumentsForCombiner", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
    static X FilterArgumentsWithCombinerHandleMethods[] =
       {
-      {x(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_filterPosition,               "filterPosition",            "()I")},
-      {x(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentIndices,               "argumentIndices",            "()I")},
-      {x(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_numSuffixArgs,      "numSuffixArgs",     "()I")},
-      {  TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentsForCombiner,  20,  "argumentsForCombiner",    (int16_t)-1, "*"},
+      {xNative(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_filterPosition,               "filterPosition",            "()I", 12, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentIndices,               "argumentIndices",            "()I", 12, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_numSuffixArgs,      "numSuffixArgs",     "()I", 12, AllFutureJavaVer)},
+      {xAnySigNative(TR::java_lang_invoke_FilterArgumentsWithCombinerHandle_argumentsForCombiner, "argumentsForCombiner", 12, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X FinallyHandleMethods[]=
       {
-      {x(TR::java_lang_invoke_FinallyHandle_numFinallyTargetArgsToPassThrough,    "numFinallyTargetArgsToPassThrough",   "()I")},
+      {xNative(TR::java_lang_invoke_FinallyHandle_numFinallyTargetArgsToPassThrough,    "numFinallyTargetArgsToPassThrough",   "()I", 9, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
     static X FilterArgumentsHandleMethods[] =
       {
-      {x(TR::java_lang_invoke_FilterArgumentsHandle_numPrefixArgs,         "numPrefixArgs",    "()I")},
-      {x(TR::java_lang_invoke_FilterArgumentsHandle_numSuffixArgs,         "numSuffixArgs",    "()I")},
-      {x(TR::java_lang_invoke_FilterArgumentsHandle_numArgsToFilter,       "numArgsToFilter",  "()I")},
-      {x(TR::java_lang_invoke_FilterArgumentsHandle_filterArguments,       "filterArguments",  "([Ljava/lang/invoke/MethodHandle;I)I")},
-      {  TR::java_lang_invoke_FilterArgumentsHandle_invokeExact,  28,  "invokeExact_thunkArchetype_X",    (int16_t)-1, "*"},
+      {xNative(TR::java_lang_invoke_FilterArgumentsHandle_numPrefixArgs,         "numPrefixArgs",    "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_FilterArgumentsHandle_numSuffixArgs,         "numSuffixArgs",    "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_FilterArgumentsHandle_numArgsToFilter,       "numArgsToFilter",  "()I", AllPastJavaVer, AllFutureJavaVer)},
+      {xNative(TR::java_lang_invoke_FilterArgumentsHandle_filterArguments,       "filterArguments",  "([Ljava/lang/invoke/MethodHandle;I)I", AllPastJavaVer, AllFutureJavaVer)},
+      {xAnySig(TR::java_lang_invoke_FilterArgumentsHandle_invokeExact, "invokeExact_thunkArchetype_X")},
       {  TR::unknownMethod}
       };
 
@@ -4081,13 +4344,13 @@ void TR_ResolvedJ9Method::construct()
 
    static X CatchHandleMethods[] =
       {
-      {x(TR::java_lang_invoke_CatchHandle_numCatchTargetArgsToPassThrough,       "numCatchTargetArgsToPassThrough",  "()I")},
+      {xNative(TR::java_lang_invoke_CatchHandle_numCatchTargetArgsToPassThrough,       "numCatchTargetArgsToPassThrough",  "()I", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
    static X MethodHandlesMethods[] =
       {
-      {x(TR::java_lang_invoke_MethodHandles_getStackClass,   "getStackClass",  "(I)Ljava/lang/Class;")},
+      {xNative(TR::java_lang_invoke_MethodHandles_getStackClass,   "getStackClass",  "(I)Ljava/lang/Class;", AllPastJavaVer, AllFutureJavaVer)},
       {  TR::unknownMethod}
       };
 
@@ -4105,7 +4368,11 @@ void TR_ResolvedJ9Method::construct()
 
    static X NativeThreadMethods[] =
       {
+#if defined(WINDOWS)
       {x(TR::sun_nio_ch_NativeThread_current, "current", "()J")},
+#else
+      {xNative(TR::sun_nio_ch_NativeThread_current, "current", "()J", AllPastJavaVer, AllFutureJavaVer)},
+#endif
       {  TR::unknownMethod}
       };
 
@@ -4168,7 +4435,9 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod},
       };
 
-   struct Y { const char * _class; X * _methods; };
+#include "j9method_dependencies.h"
+
+   struct Y { const char * _class; X * _methods; W * _nativeDeps; };
 
    /* classXX where XX is the number of characters in the class name */
    static Y class13[] =
@@ -4179,28 +4448,28 @@ void TR_ResolvedJ9Method::construct()
 
    static Y class14[] =
       {
-      { "java/lang/Math", MathMethods },
-      { "java/lang/Long", LongMethods },
+      { "java/lang/Math", MathMethods, java_lang_Math_Dependencies },
+      { "java/lang/Long", LongMethods, java_lang_Long_Dependencies },
       { "java/lang/Byte", ByteMethods },
-      { "java/io/Writer", WriterMethods },
+      { "java/io/Writer", WriterMethods, java_io_Writer_Dependencies },
       { 0 }
       };
 
    static Y class15[] =
       {
-      { "java/lang/Class", ClassMethods },
-      { "java/lang/Float", FloatMethods },
-      { "sun/misc/Unsafe", UnsafeMethods },
+      { "java/lang/Class", ClassMethods, java_lang_Class_Dependencies },
+      { "java/lang/Float", FloatMethods, java_lang_Float_Dependencies },
+      { "sun/misc/Unsafe", SunUnsafeMethods, sun_misc_Unsafe_Dependencies },
       { "java/lang/Short", ShortMethods },
       { 0 }
       };
 
    static Y class16[] =
       {
-      { "java/lang/Double", DoubleMethods },
-      { "java/lang/Object", ObjectMethods },
-      { "java/lang/String", StringMethods },
-      { "java/lang/System", SystemMethods },
+      { "java/lang/Double", DoubleMethods, java_lang_Double_Dependencies },
+      { "java/lang/Object", ObjectMethods, java_lang_Object_Dependencies },
+      { "java/lang/String", StringMethods, java_lang_String_Dependencies },
+      { "java/lang/System", SystemMethods, java_lang_System_Dependencies },
       { "java/lang/Thread", ThreadMethods },
       { "java/util/Vector", VectorMethods },
       { "java/util/Arrays", ArraysMethods },
@@ -4210,10 +4479,10 @@ void TR_ResolvedJ9Method::construct()
    static Y class17[] =
       {
       { "com/ibm/oti/vm/VM", otivmMethods },
-      { "java/lang/Integer", IntegerMethods },
+      { "java/lang/Integer", IntegerMethods, java_lang_Integer_Dependencies },
       { "java/lang/Boolean", BooleanMethods },
       { "java/util/TreeMap", TreeMapMethods },
-      { "java/util/HashMap", HashMapMethods },
+      { "java/util/HashMap", HashMapMethods, java_util_HashMap_Dependencies },
       { 0 }
       };
 
@@ -4225,37 +4494,41 @@ void TR_ResolvedJ9Method::construct()
 
    static Y class19[] =
       {
-      { "java/util/Hashtable", HashtableMethods },
+      { "java/util/Hashtable", HashtableMethods, java_util_Hashtable_Dependencies },
       { "java/lang/Throwable", ThrowableMethods },
       { "java/lang/Character", CharacterMethods },
-      { "java/util/ArrayList", ArrayListMethods },
+      { "java/util/ArrayList", ArrayListMethods, java_util_ArrayList_Dependencies },
       { "java/util/zip/CRC32", CRC32Methods     },
       { 0 }
       };
 
    static Y class20[] =
       {
-      { "java/lang/StrictMath", StrictMathMethods },
-      { "java/math/BigDecimal", BigDecimalMethods },
+      { "java/lang/StrictMath", StrictMathMethods, java_lang_StrictMath_Dependencies },
+      { "java/math/BigDecimal", BigDecimalMethods, java_math_BigDecimal_Dependencies },
       { "java/math/BigInteger", BigIntegerMethods },
+      { "java/lang/FdLibm$Exp", FdLibmExpMethods },
+      { "java/lang/FdLibm$Pow", FdLibmPowMethods, java_lang_FdLibm_Pow_Dependencies },
       { 0 }
       };
 
    static Y class21[] =
       {
-      { "java/lang/ClassLoader", ClassLoaderMethods },
+      { "java/lang/ClassLoader", ClassLoaderMethods, java_lang_ClassLoader_Dependencies },
       { "java/lang/StringUTF16", StringUTF16Methods },
+      { "java/lang/FdLibm$Cbrt", FdLibmCbrtMethods, java_lang_FdLibm_Cbrt_Dependencies },
       { 0 }
       };
 
    static Y class22[] =
       {
-      { "java/lang/StringBuffer", StringBufferMethods },
+      { "java/lang/StringBuffer", StringBufferMethods, java_lang_StringBuffer_Dependencies },
       { "sun/reflect/Reflection", ReflectionMethods },
       { "java/text/NumberFormat", NumberFormatMethods },
-      { "com/ibm/jit/JITHelpers", JITHelperMethods},
-      { "java/lang/StringCoding", StringCodingMethods },
+      { "com/ibm/jit/JITHelpers", JITHelperMethods, com_ibm_jit_JITHelpers_Dependencies },
+      { "java/lang/StringCoding", StringCodingMethods, java_lang_StringCoding_Dependencies },
       { "java/lang/StringLatin1", StringLatin1Methods },
+      { "java/lang/FdLibm$Hypot", FdLibmHypotMethods, java_lang_FdLibm_Hypot_Dependencies },
       { 0 }
       };
 
@@ -4265,10 +4538,10 @@ void TR_ResolvedJ9Method::construct()
       { "com/ibm/simt/SPMDKernel", SPMDKernelBaseMethods }, // 23
 #endif
       { "x10/runtime/VMInterface", X10Methods },
-      { "java/lang/J9VMInternals", VMInternalsMethods },
+      { "java/lang/J9VMInternals", VMInternalsMethods, java_lang_J9VMInternals_Dependencies },
       { "java/lang/ref/Reference", ReferenceMethods },
-      { "java/lang/StringBuilder", StringBuilderMethods },
-      { "java/lang/reflect/Array", ArrayMethods},
+      { "java/lang/StringBuilder", StringBuilderMethods, java_lang_StringBuilder_Dependencies },
+      { "java/lang/reflect/Array", ArrayMethods, java_lang_reflect_Array_Dependencies },
       { "java/nio/HeapByteBuffer", HeapByteBufferMethods},
       { "sun/nio/ch/NativeThread", NativeThreadMethods},
       { 0 }
@@ -4278,9 +4551,9 @@ void TR_ResolvedJ9Method::construct()
       {
       { "java/util/TreeMap$SubMap", SubMapMethods },
       { "sun/nio/cs/UTF_8$Decoder", EncodeMethods },
-      { "sun/nio/cs/UTF_8$Encoder", EncodeMethods },
+      { "sun/nio/cs/UTF_8$Encoder", EncodeMethods, sun_nio_cs_UTF_8_Encoder_Dependencies },
       { "sun/nio/cs/UTF16_Encoder", EncodeMethods },
-      { "jdk/internal/misc/Unsafe", UnsafeMethods },
+      { "jdk/internal/misc/Unsafe", InternalUnsafeMethods, jdk_internal_misc_Unsafe_Dependencies },
       { 0 }
       };
 
@@ -4293,10 +4566,10 @@ void TR_ResolvedJ9Method::construct()
       {
       { "sun/io/ByteToCharSingleByte", DoubleByteConverterMethods },
       { "com/ibm/oti/vm/ORBVMHelpers", ORBVMHelperMethods },
-      { "java/util/GregorianCalendar", GregorianCalendarMethods },
-      { "sun/nio/cs/US_ASCII$Encoder", EncodeMethods },
+      { "java/util/GregorianCalendar", GregorianCalendarMethods, java_util_GregorianCalendar_Dependencies },
+      { "sun/nio/cs/US_ASCII$Encoder", EncodeMethods, sun_nio_cs_US_ASCII_Encoder_Dependencies },
       { "sun/nio/cs/US_ASCII$Decoder", EncodeMethods },
-      { "sun/nio/cs/ext/SBCS_Encoder", EncodeMethods },
+      { "sun/nio/cs/ext/SBCS_Encoder", EncodeMethods, sun_nio_cs_ext_SBCS_Encoder_Dependencies },
       { "sun/nio/cs/ext/SBCS_Decoder", EncodeMethods },
       { "java/lang/invoke/FoldHandle", FoldHandleMethods },
       { "java/lang/ref/SoftReference", JavaLangRefSoftReferenceMethods },
@@ -4315,25 +4588,25 @@ void TR_ResolvedJ9Method::construct()
 
    static Y class29[] =
       {
-      { "java/lang/invoke/MethodHandle", MethodHandleMethods },
+      { "java/lang/invoke/MethodHandle", MethodHandleMethods, java_lang_invoke_MethodHandle_Dependencies },
       { "java/lang/invoke/AsTypeHandle", AsTypeHandleMethods },
       { "java/lang/invoke/InsertHandle", InsertHandleMethods },
       { "java/lang/invoke/SpreadHandle", SpreadHandleMethods },
-      { "java/lang/invoke/DirectHandle", DirectHandleMethods },
-      { "sun/nio/cs/ISO_8859_1$Encoder", EncodeMethods },
+      { "java/lang/invoke/DirectHandle", DirectHandleMethods, java_lang_invoke_DirectHandle_Dependencies },
+      { "sun/nio/cs/ISO_8859_1$Encoder", EncodeMethods, sun_nio_cs_ISO_8859_1_Encoder_Dependencies },
       { "sun/nio/cs/ISO_8859_1$Decoder", EncodeMethods },
-      { "java/io/ByteArrayOutputStream", ByteArrayOutputStreamMethods },
+      { "java/io/ByteArrayOutputStream", ByteArrayOutputStreamMethods, java_io_ByteArrayOutputStream_Dependencies },
       { 0 }
       };
 
    static Y class30[] =
       {
       { "com/ibm/Compiler/Internal/Quad", QuadMethods },
-      { "java/lang/invoke/CollectHandle", CollectHandleMethods },
+      { "java/lang/invoke/CollectHandle", CollectHandleMethods, java_lang_invoke_CollectHandle_Dependencies },
       { "java/lang/invoke/FinallyHandle", FinallyHandleMethods },
       { "java/lang/invoke/PermuteHandle", PermuteHandleMethods },
       { "java/lang/invoke/MethodHandles", MethodHandlesMethods },
-      { "com/ibm/dataaccess/DecimalData", DataAccessDecimalDataMethods },
+      { "com/ibm/dataaccess/DecimalData", DataAccessDecimalDataMethods, com_ibm_dataaccess_DecimalData_Dependencies },
       { "sun/nio/cs/ext/IBM1388$Encoder", IBM1388EncoderMethods },
       { "java/util/HashMap$HashIterator", HashMapHashIteratorMethods },
       { 0 }
@@ -4342,21 +4615,22 @@ void TR_ResolvedJ9Method::construct()
    static Y class31[] =
       {
       { "com/ibm/jit/DecimalFormatHelper", DecimalFormatHelperMethods},
-      { "jdk/internal/reflect/Reflection", ReflectionMethods },
+      { "jdk/internal/reflect/Reflection", JdkInternalReflectionMethods },
+      { "com/ibm/jit/DecimalFormatHelper", DecimalFormatHelperMethods, com_ibm_jit_DecimalFormatHelper_Dependencies},
       { 0 }
       };
    static Y class32[] =
       {
       { "java/lang/invoke/MutableCallSite", MutableCallSiteMethods },
-      { "java/lang/invoke/PrimitiveHandle", PrimitiveHandleMethods },
-      { "com/ibm/dataaccess/PackedDecimal", DataAccessPackedDecimalMethods },
+      { "java/lang/invoke/PrimitiveHandle", PrimitiveHandleMethods, java_lang_invoke_PrimitiveHandle_Dependencies },
+      { "com/ibm/dataaccess/PackedDecimal", DataAccessPackedDecimalMethods, com_ibm_dataaccess_PackedDecimal_Dependencies },
       { 0 }
       };
 
    static Y class33[] =
       {
       { "java/util/stream/AbstractPipeline", JavaUtilStreamAbstractPipelineMethods },
-      { "java/util/stream/IntPipeline$Head", JavaUtilStreamIntPipelineHeadMethods },
+      { "java/util/stream/IntPipeline$Head", JavaUtilStreamIntPipelineHeadMethods, java_util_stream_IntPipeline_Head_Dependencies },
       { 0 }
       };
 
@@ -4389,11 +4663,11 @@ void TR_ResolvedJ9Method::construct()
    //1421
    static Y class38[] =
       {
-      { "java/util/concurrent/atomic/AtomicLong", JavaUtilConcurrentAtomicLongMethods },
+      { "java/util/concurrent/atomic/AtomicLong", JavaUtilConcurrentAtomicLongMethods, java_util_concurrent_atomic_AtomicLong_Dependencies },
       { "java/lang/invoke/FilterArgumentsHandle", FilterArgumentsHandleMethods },
-      { "com/ibm/dataaccess/ByteArrayMarshaller", DataAccessByteArrayMarshallerMethods },
-      { "java/util/concurrent/ConcurrentHashMap", JavaUtilConcurrentConcurrentHashMapMethods},
-      { "com/ibm/crypto/provider/P224PrimeField", CryptoECC224Methods},
+      { "com/ibm/dataaccess/ByteArrayMarshaller", DataAccessByteArrayMarshallerMethods, com_ibm_dataaccess_ByteArrayMarshaller_Dependencies },
+      { "java/util/concurrent/ConcurrentHashMap", JavaUtilConcurrentConcurrentHashMapMethods, java_util_concurrent_ConcurrentHashMap_Dependencies },
+      { "com/ibm/crypto/provider/P224PrimeField", CryptoECC224Methods, com_ibm_crypto_provider_P256PrimeField_Dependencies },
       { "com/ibm/crypto/provider/P256PrimeField", CryptoECC256Methods},
       { "com/ibm/crypto/provider/P384PrimeField", CryptoECC384Methods},
       { 0 }
@@ -4408,7 +4682,7 @@ void TR_ResolvedJ9Method::construct()
    static Y class40[] =
       {
       { "java/util/TreeMap$UnboundedValueIterator", TreeMapUnboundedValueIteratorMethods },
-      { "com/ibm/dataaccess/ByteArrayUnmarshaller", DataAccessByteArrayUnmarshallerMethods },
+      { "com/ibm/dataaccess/ByteArrayUnmarshaller", DataAccessByteArrayUnmarshallerMethods, com_ibm_dataaccess_ByteArrayUnmarshaller_Dependencies },
       { "com/ibm/jit/crypto/JITFullHardwareDigest", CryptoDigestMethods },
       { "com/ibm/jit/crypto/JITAESCryptInHardware", XPCryptoMethods },
       { 0 }
@@ -4418,14 +4692,14 @@ void TR_ResolvedJ9Method::construct()
       {
       { "org/apache/harmony/luni/platform/OSMemory", OSMemoryMethods },
       { "java/util/concurrent/atomic/AtomicBoolean", JavaUtilConcurrentAtomicBooleanMethods },
-      { "java/util/concurrent/atomic/AtomicInteger", JavaUtilConcurrentAtomicIntegerMethods },
+      { "java/util/concurrent/atomic/AtomicInteger", JavaUtilConcurrentAtomicIntegerMethods, java_util_concurrent_atomic_AtomicInteger_Dependencies },
       { "java/lang/invoke/BruteArgumentMoverHandle", BruteArgumentMoverHandleMethods },
       { 0 }
       };
 
    static Y class42[] =
       {
-      { "com/ibm/crypto/provider/AESCryptInHardware", CryptoAESMethods},
+      { "com/ibm/crypto/provider/AESCryptInHardware", CryptoAESMethods, com_ibm_crypto_provider_AESCryptInHardware_Dependencies },
       { "java/util/concurrent/ConcurrentLinkedQueue", JavaUtilConcurrentConcurrentLinkedQueueMethods },
       { 0 }
       };
@@ -4442,7 +4716,7 @@ void TR_ResolvedJ9Method::construct()
 
    static Y class44[] =
       {
-      { "java/lang/invoke/ConvertHandle$FilterHelpers", ConvertHandleFilterHelpersMethods },
+      { "java/lang/invoke/ConvertHandle$FilterHelpers", ConvertHandleFilterHelpersMethods, java_lang_invoke_ConvertHandle_FilterHelpers_Dependencies },
       { 0 }
       };
 
@@ -4458,7 +4732,7 @@ void TR_ResolvedJ9Method::construct()
       {
       { "java/util/concurrent/atomic/AtomicIntegerArray", JavaUtilConcurrentAtomicIntegerArrayMethods },
       { "java/util/concurrent/ConcurrentHashMap$TreeBin", JavaUtilConcurrentConcurrentHashMapTreeBinMethods },
-      { "java/io/ObjectInputStream$BlockDataInputStream", ObjectInputStream_BlockDataInputStreamMethods },
+      { "java/io/ObjectInputStream$BlockDataInputStream", ObjectInputStream_BlockDataInputStreamMethods, java_io_ObjectInputStream_BlockDataInputStream_Dependencies },
       { 0 }
       };
 
@@ -4507,6 +4781,239 @@ void TR_ResolvedJ9Method::construct()
       class17
       };
 
+/**
+ * Look for entry for the specified class in the arrays of recognized classes
+ * @param className The name of the class which is not necessarily null terminated
+ * @param classNameLen The length of the class name
+ * @returns The entry of type <code>struct Y</code> for the specified class or
+ *          <code>NULL</code> if no entry was found
+ */
+static Y * lookupRecognizedClass(char *className, int classNameLen)
+   {
+   if (classNameLen >= minRecognizedClassLength && classNameLen <= maxRecognizedClassLength)
+      {
+      Y * cl = recognizedClasses[classNameLen - minRecognizedClassLength];
+      if (cl)
+         {
+         for (; cl->_class; ++cl)
+            {
+            if (!strncmp(cl->_class, className, classNameLen))
+               {
+               return cl;
+               }
+            }
+         }
+      }
+
+
+   return NULL;
+   }
+
+static bool areNativeDependenciesSatisfied(TR_ResolvedJ9Method *resolvedMethod, X *m, Y *cl, std::set<X *> *visited)
+   {
+   // Break cycles in native method dependencies
+   auto entryLookup = visited->find(m);
+
+   if (entryLookup != visited->end())
+      {
+      return true;
+      }
+
+   visited->insert(m);
+
+   TR::RecognizedMethod methodEnum = m->_enum;
+
+   TR_J9VMBase *fej9 = resolvedMethod->fej9();
+   TR::Compilation *comp = TR::comp();
+   W *relation = cl->_nativeDeps;
+
+   if (comp && comp->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp, "   Checking native dependencies\n");
+      }
+
+   // Check whether methods in the current class have dependencies on native methods in other classes
+   if (relation)
+      {
+      for (; relation->_enum != TR::unknownMethod; relation++)
+         {
+         // Check for the current method in array with a relationship that's
+         // valid for the current version of Java
+         //
+         if (relation->_enum == methodEnum && relation->_depMinVersion <= JAVA_SPEC_VERSION
+             && JAVA_SPEC_VERSION <= relation->_depMaxVersion)
+            {
+            int depClassNameLen = relation->_depClassNameLen;
+            const char *depClassName = relation->_depClassName;
+
+            // Look up the class containing the method on which this method depends
+            Y *depClass = lookupRecognizedClass((char *)depClassName, depClassNameLen);
+
+            if (comp && comp->getOption(TR_TraceILGen))
+               {
+               traceMsg(comp, "   Checking dependencies in class %.*s\n", depClassNameLen, depClassName);
+               }
+
+            // If the class on which this method depends cannot be found, be
+            // conservative by assuming dependencies are not satisfied
+            if (!depClass)
+               {
+               if (comp && comp->getOption(TR_TraceILGen))
+                  {
+                  traceMsg(comp, "   Class %.*s not found\n", depClassNameLen, depClassName);
+                  }
+
+               return false;
+               }
+
+            TR_OpaqueClassBlock *clazz = NULL;
+
+            for (X * depMethod =  depClass->_methods; depMethod->_enum != TR::unknownMethod; depMethod++)
+               {
+               // Look for the method on which the current method depends in
+               // the table of methods for the class that contains it
+               if (relation->_dependencyEnum == depMethod->_enum)
+                  {
+                  if (!clazz)
+                     {
+                     // Look up the class as a system class.  If not found,
+                     // be conservative and assume that dependencies on native
+                     // methods are not satisfied
+                     clazz = fej9->getSystemClassFromClassName(depClassName, depClassNameLen);
+                     if (!clazz)
+                        {
+                        if (comp && comp->getOption(TR_TraceILGen))
+                           {
+                           traceMsg(comp, "   System class %.*s not found\n", depClassNameLen, depClassName);
+                           }
+
+                        return false;
+                        }
+                     }
+
+                  TR_ASSERT_FATAL(depMethod->_sigLen != -1, "Unexpected native dependency upon a method with a wildcard for signature:  class '%s', method '%s', method enum %d\n", depClassName, depMethod->_name, depMethod->_enum);
+
+                  bool expectNative = depMethod->_nativeMinVersion <= JAVA_SPEC_VERSION
+                                      && JAVA_SPEC_VERSION <= depMethod->_nativeMaxVersion;
+
+                  if (comp && comp->getOption(TR_TraceILGen))
+                     {
+                     traceMsg(comp, "   Dependent on method %.*s.%.*s%.*s that is %sexpected to be native\n", depClassNameLen, depClassName, depMethod->_nameLen, depMethod->_name, depMethod->_sigLen, depMethod->_sig, expectNative ? "" : "not ");
+                     }
+
+                  // Is the method on which the current method depends expected
+                  // to be native for the current version of Java?  If so, check
+                  // whether it is.  If it's not expected to be native,
+                  // recursively call areNativeDependenciesSatisfied to check
+                  // for native methods on which that method depends in turn
+                  if (expectNative)
+                     {
+                     char *depMethodName = (char *)depMethod->_name;
+                     char *depMethodSig = (char *)depMethod->_sig;
+
+                     TR_OpaqueMethodBlock *depMethodBlock = fej9->getMethodFromClass(clazz, depMethodName, depMethodSig);
+
+                     if (!fej9->isNativeMethod(depMethodBlock))
+                        {
+                        if (comp && comp->getOption(TR_TraceILGen))
+                           {
+                           traceMsg(comp, "   But it was not native\n");
+                           }
+
+                        return false;
+                        }
+                     }
+                  else if (!areNativeDependenciesSatisfied(resolvedMethod, depMethod, depClass, visited))
+                     {
+                     if (comp && comp->getOption(TR_TraceILGen))
+                        {
+                        traceMsg(comp, "   Native dependencies for %.*s.%.*s%.*s %d were not satisfied\n", depClassNameLen, depClassName, depMethod->_nameLen, depMethod->_name, depMethod->_sigLen, depMethod->_sig, depMethod->_enum);
+                        }
+
+                     return false;
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+   if (comp && comp->getOption(TR_TraceILGen))
+      {
+      traceMsg(comp, "   Native dependencies were satisfied\n");
+      }
+
+   return true;
+   }
+
+/**
+ * Check whether the current method has any dependencies on methods that are
+ * expected to be native, and verify that they are native
+ * @param resolvedMethod
+ * @param m  The X table entry for the method under consideration
+ * @param cl Pointer to an array describing the dependencies of methods in the
+ *           class that contains the method under consideration
+ * @returns <code>false</code> if any method on which the current method depends
+ *          is expected to be native but is not native, or if information for
+ *          a method on which is depends cannot be found; <code>true</code>,
+ *          otherwise
+ */
+static bool areNativeDependenciesSatisfied(TR_ResolvedJ9Method *resolvedMethod, TR_Memory *trMemory, X *m, Y *cl)
+   {
+   TR::StackMemoryRegion stackMemoryRegion(*trMemory);
+
+   std::set<X *> *visited = new (trMemory->trStackMemory()) std::set<X *>();
+   return areNativeDependenciesSatisfied(resolvedMethod, m, cl, visited);
+   }
+
+#if defined(DEBUG_DUMP_RECOGNIZED_METHODS)
+void printRecognizedMethodArrays(TR_J9VMBase *fej9)
+   {
+   TR::VMAccessCriticalSection dumpOnce(fej9);
+
+   static bool alreadyDumped = false;
+   if (alreadyDumped)
+      {
+      return;
+      }
+
+   alreadyDumped = true;
+
+   fprintf(stderr, "<recognizedMethods>\n");
+
+   for (int i = minRecognizedClassLength; i <= maxRecognizedClassLength; i++)
+      {
+      for (Y *cl = recognizedClasses[i - minRecognizedClassLength]; cl && cl->_class; ++cl)
+         {
+         for (X *m = cl->_methods; m->_enum != TR::unknownMethod; ++m)
+            {
+            // Allow * to printed for wildcard signatures
+            int sigLen = m->_sigLen == -1 ? 1 : m->_sigLen;
+
+            bool hasLT = (m->_name[0] == '<');
+
+            fprintf(stderr, "<method className='%.*s' name='%s%.*s' signature='%.*s' enum='%s' nativeMinVersion='%d' nativeMaxVersion='%d'/>\n", i, cl->_class, (hasLT ? "&lt;" : ""), m->_nameLen - (hasLT ? 1 : 0), m->_name + (hasLT ? 1 : 0), m->_sigLen, m->_sig, m->_enumName, m->_nativeMinVersion, m->_nativeMaxVersion);
+            //fprintf(stderr, "   Dependencies:\n");
+            //W *dep = m->
+            }
+         }
+      }
+
+   fprintf(stderr, "</recognizedMethods>\n");
+   }
+#endif
+
+void TR_ResolvedJ9Method::construct(TR_Memory *trMemory)
+   {
+#if defined(DEBUG_DUMP_RECOGNIZED_METHODS)
+   static char *dumpRecognizedMethods = feGetEnv("TR_dumpRecognizedMethods");
+
+   if (dumpRecognizedMethods)
+      {
+      printRecognizedMethodArrays(fej9());
+      }
+#endif
+
    if (isMethodInValidLibrary())
       {
       char *className    = convertToMethod()->classNameChars();
@@ -4516,24 +5023,60 @@ void TR_ResolvedJ9Method::construct()
       char *sig          = convertToMethod()->signatureChars();
       int   sigLen       = convertToMethod()->signatureLength();
 
+      TR::Compilation *comp = TR::comp();
+
+      if (comp && comp->getOption(TR_TraceILGen))
+         {
+         traceMsg(comp,  "Checking whether method %.*s.%.*s%.*s is recognized\n", classNameLen, className, nameLen, name, sigLen, sig);
+         }
+
       if (classNameLen >= minRecognizedClassLength && classNameLen <= maxRecognizedClassLength)
          {
-         Y * cl = recognizedClasses[classNameLen - minRecognizedClassLength];
+         Y * cl = lookupRecognizedClass(className, classNameLen);
          if (cl)
-            for (; cl->_class; ++cl)
-               if (!strncmp(cl->_class, className, classNameLen))
-                  {
+            {
                   for (X * m =  cl->_methods; m->_enum != TR::unknownMethod; ++m)
                      {
                      if (m->_nameLen == nameLen && (m->_sigLen == sigLen || m->_sigLen == (int16_t)-1) &&
                          !strncmp(m->_name, name, nameLen) &&
                          (m->_sigLen == (int16_t)-1 || !strncmp(m->_sig,  sig,  sigLen)))
                         {
-                        setRecognizedMethodInfo(m->_enum);
-                        break;
+                        bool expectNative = m->_nativeMinVersion <= JAVA_SPEC_VERSION &&
+                           JAVA_SPEC_VERSION <= m->_nativeMaxVersion;
+
+                        // Sanity check that the expectation of whether this
+                        // method is native matches the reality?
+                        static char *tryIsNativeAssert = feGetEnv("TR_CheckRecognizedMethodNativeness");
+                        if (tryIsNativeAssert)
+                           {
+                           TR_ASSERT_FATAL(expectNative == isNative(), "Java method %s.%s%s - setting of isNative() == %d did not match expectNative == %d (native version range == [%d,%d] - JAVA_SPEC_VERSION == %d)\n", cl->_class, m->_name, m->_sig, isNative(), expectNative, m->_nativeMinVersion, m->_nativeMaxVersion, JAVA_SPEC_VERSION);
+                           }
+
+                        if (comp && comp->getOption(TR_TraceILGen))
+                           {
+                           traceMsg(comp, "   %.*s%.*s is %sexpected to be native\n", nameLen, name, sigLen, sig, expectNative ? "" : "not ");
+                           }
+
+                        // If the method is expected to be native, but it isn't,
+                        // don't mark it as recognized.  Otherwise (i.e., if it
+                        // is expected to be native and is native, or it is not
+                        // expected to be native and any native methods on which
+                        // it depends actually are native),
+                        // mark it as recognized.
+                        if ((!expectNative && areNativeDependenciesSatisfied(this, trMemory, m, cl))
+                            || isNative())
+                           {
+                           if (comp && comp->getOption(TR_TraceILGen))
+                              {
+                              traceMsg(comp, "   Marked as recognized %d\n", m->_enum);
+                              }
+
+                           setRecognizedMethodInfo(m->_enum);
+                           break;
+                           }
                         }
                      }
-                  }
+            }
          }
 
       if (TR::Method::getMandatoryRecognizedMethod() == TR::unknownMethod)
@@ -4783,15 +5326,15 @@ TR_ResolvedJ9Method::setRecognizedMethodInfo(TR::RecognizedMethod rm)
             case TR::sun_misc_Unsafe_monitorEnter_jlObject_V:
             case TR::sun_misc_Unsafe_monitorExit_jlObject_V:
 
-            case TR::sun_misc_Unsafe_putByteOrdered_jlObjectJB_V:
-            case TR::sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V:
-            case TR::sun_misc_Unsafe_putCharOrdered_jlObjectJC_V:
-            case TR::sun_misc_Unsafe_putShortOrdered_jlObjectJS_V:
-            case TR::sun_misc_Unsafe_putIntOrdered_jlObjectJI_V:
-            case TR::sun_misc_Unsafe_putLongOrdered_jlObjectJJ_V:
-            case TR::sun_misc_Unsafe_putFloatOrdered_jlObjectJF_V:
-            case TR::sun_misc_Unsafe_putDoubleOrdered_jlObjectJD_V:
-            case TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V: // used in inliner for TR_InlinerBase::isInlineableJNI and TR_InlinerBase::inlineUnsafeCall
+            case TR::sun_misc_Unsafe_putOrderedByte_jlObjectJB_V:
+            case TR::sun_misc_Unsafe_putOrderedBoolean_jlObjectJZ_V:
+            case TR::sun_misc_Unsafe_putOrderedChar_jlObjectJC_V:
+            case TR::sun_misc_Unsafe_putOrderedShort_jlObjectJS_V:
+            case TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V:
+            case TR::sun_misc_Unsafe_putOrderedLong_jlObjectJJ_V:
+            case TR::sun_misc_Unsafe_putOrderedFloat_jlObjectJF_V:
+            case TR::sun_misc_Unsafe_putOrderedDouble_jlObjectJD_V:
+            case TR::sun_misc_Unsafe_putOrderedObject_jlObjectJjlObject_V: // used in inliner for TR_InlinerBase::isInlineableJNI and TR_InlinerBase::inlineUnsafeCall
 
             case TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z:
             case TR::sun_misc_Unsafe_getByteVolatile_jlObjectJ_B:
@@ -5437,15 +5980,15 @@ TR_J9MethodBase::isUnsafeWithObjectArg(TR::Compilation * c)
       case TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F:
       case TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D:
       case TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject:
-      case TR::sun_misc_Unsafe_putByteOrdered_jlObjectJB_V:
-      case TR::sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V:
-      case TR::sun_misc_Unsafe_putCharOrdered_jlObjectJC_V:
-      case TR::sun_misc_Unsafe_putShortOrdered_jlObjectJS_V:
-      case TR::sun_misc_Unsafe_putIntOrdered_jlObjectJI_V:
-      case TR::sun_misc_Unsafe_putLongOrdered_jlObjectJJ_V:
-      case TR::sun_misc_Unsafe_putFloatOrdered_jlObjectJF_V:
-      case TR::sun_misc_Unsafe_putDoubleOrdered_jlObjectJD_V:
-      case TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V:
+      case TR::sun_misc_Unsafe_putOrderedByte_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_putOrderedBoolean_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_putOrderedChar_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_putOrderedShort_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_putOrderedLong_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_putOrderedFloat_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putOrderedDouble_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_putOrderedObject_jlObjectJjlObject_V:
          return true;
       default:
          return false;
@@ -5495,15 +6038,15 @@ TR_J9MethodBase::isUnsafeGetPutWithObjectArg(TR::RecognizedMethod rm)
       case TR::sun_misc_Unsafe_getFloatVolatile_jlObjectJ_F:
       case TR::sun_misc_Unsafe_getDoubleVolatile_jlObjectJ_D:
       case TR::sun_misc_Unsafe_getObjectVolatile_jlObjectJ_jlObject:
-      case TR::sun_misc_Unsafe_putByteOrdered_jlObjectJB_V:
-      case TR::sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V:
-      case TR::sun_misc_Unsafe_putCharOrdered_jlObjectJC_V:
-      case TR::sun_misc_Unsafe_putShortOrdered_jlObjectJS_V:
-      case TR::sun_misc_Unsafe_putIntOrdered_jlObjectJI_V:
-      case TR::sun_misc_Unsafe_putLongOrdered_jlObjectJJ_V:
-      case TR::sun_misc_Unsafe_putFloatOrdered_jlObjectJF_V:
-      case TR::sun_misc_Unsafe_putDoubleOrdered_jlObjectJD_V:
-      case TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V:
+      case TR::sun_misc_Unsafe_putOrderedByte_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_putOrderedBoolean_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_putOrderedChar_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_putOrderedShort_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_putOrderedLong_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_putOrderedFloat_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putOrderedDouble_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_putOrderedObject_jlObjectJjlObject_V:
          return true;
       default:
          return false;
@@ -5679,38 +6222,38 @@ TR_J9MethodBase::isUnsafePut(TR::RecognizedMethod rm)
       case TR::sun_misc_Unsafe_getAndSetInt:
       case TR::sun_misc_Unsafe_getAndSetLong:
       case TR::sun_misc_Unsafe_putAddress_JJ_V:
-      case TR::sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V:
       case TR::sun_misc_Unsafe_putBooleanVolatile_jlObjectJZ_V:
       case TR::sun_misc_Unsafe_putBoolean_jlObjectJZ_V:
-      case TR::sun_misc_Unsafe_putByteOrdered_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_putOrderedByte_jlObjectJB_V:
       case TR::sun_misc_Unsafe_putByteVolatile_jlObjectJB_V:
       case TR::sun_misc_Unsafe_putByte_JB_V:
       case TR::sun_misc_Unsafe_putByte_jlObjectJB_V:
-      case TR::sun_misc_Unsafe_putCharOrdered_jlObjectJC_V:
       case TR::sun_misc_Unsafe_putCharVolatile_jlObjectJC_V:
       case TR::sun_misc_Unsafe_putChar_JC_V:
       case TR::sun_misc_Unsafe_putChar_jlObjectJC_V:
-      case TR::sun_misc_Unsafe_putDoubleOrdered_jlObjectJD_V:
       case TR::sun_misc_Unsafe_putDoubleVolatile_jlObjectJD_V:
       case TR::sun_misc_Unsafe_putDouble_JD_V:
       case TR::sun_misc_Unsafe_putDouble_jlObjectJD_V:
-      case TR::sun_misc_Unsafe_putFloatOrdered_jlObjectJF_V:
       case TR::sun_misc_Unsafe_putFloatVolatile_jlObjectJF_V:
       case TR::sun_misc_Unsafe_putFloat_JF_V:
       case TR::sun_misc_Unsafe_putFloat_jlObjectJF_V:
-      case TR::sun_misc_Unsafe_putIntOrdered_jlObjectJI_V:
       case TR::sun_misc_Unsafe_putIntVolatile_jlObjectJI_V:
       case TR::sun_misc_Unsafe_putInt_JI_V:
       case TR::sun_misc_Unsafe_putInt_jlObjectII_V:
       case TR::sun_misc_Unsafe_putInt_jlObjectJI_V:
-      case TR::sun_misc_Unsafe_putLongOrdered_jlObjectJJ_V:
       case TR::sun_misc_Unsafe_putLongVolatile_jlObjectJJ_V:
       case TR::sun_misc_Unsafe_putLong_JJ_V:
       case TR::sun_misc_Unsafe_putLong_jlObjectJJ_V:
-      case TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V:
       case TR::sun_misc_Unsafe_putObjectVolatile_jlObjectJjlObject_V:
       case TR::sun_misc_Unsafe_putObject_jlObjectJjlObject_V:
-      case TR::sun_misc_Unsafe_putShortOrdered_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_putOrderedBoolean_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_putOrderedChar_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_putOrderedDouble_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_putOrderedFloat_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_putOrderedLong_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_putOrderedObject_jlObjectJjlObject_V:
+      case TR::sun_misc_Unsafe_putOrderedShort_jlObjectJS_V:
       case TR::sun_misc_Unsafe_putShortVolatile_jlObjectJS_V:
       case TR::sun_misc_Unsafe_putShort_JS_V:
       case TR::sun_misc_Unsafe_putShort_jlObjectJS_V:

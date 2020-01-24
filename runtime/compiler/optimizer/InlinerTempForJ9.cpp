@@ -1929,23 +1929,23 @@ TR_J9InlinerPolicy::inlineUnsafeCall(TR::ResolvedMethodSymbol *calleeSymbol, TR:
       case TR::sun_misc_Unsafe_monitorExit_jlObject_V:
          return createUnsafeMonitorOp(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, false);
 
-      case TR::sun_misc_Unsafe_putByteOrdered_jlObjectJB_V:
+      case TR::sun_misc_Unsafe_putOrderedByte_jlObjectJB_V:
          return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, false, false, true);
-      case TR::sun_misc_Unsafe_putBooleanOrdered_jlObjectJZ_V:
+      case TR::sun_misc_Unsafe_putOrderedBoolean_jlObjectJZ_V:
          return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int8, false, false, true);
-      case TR::sun_misc_Unsafe_putCharOrdered_jlObjectJC_V:
+      case TR::sun_misc_Unsafe_putOrderedChar_jlObjectJC_V:
          return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, false, false, true);
-      case TR::sun_misc_Unsafe_putShortOrdered_jlObjectJS_V:
+      case TR::sun_misc_Unsafe_putOrderedShort_jlObjectJS_V:
          return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int16, false, false, true);
-      case TR::sun_misc_Unsafe_putIntOrdered_jlObjectJI_V:
+      case TR::sun_misc_Unsafe_putOrderedInt_jlObjectJI_V:
          return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int32, false, false, true);
-      case TR::sun_misc_Unsafe_putLongOrdered_jlObjectJJ_V:
+      case TR::sun_misc_Unsafe_putOrderedLong_jlObjectJJ_V:
          return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Int64, false, false, true);
-      case TR::sun_misc_Unsafe_putFloatOrdered_jlObjectJF_V:
+      case TR::sun_misc_Unsafe_putOrderedFloat_jlObjectJF_V:
          return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Float, false, false, true);
-      case TR::sun_misc_Unsafe_putDoubleOrdered_jlObjectJD_V:
+      case TR::sun_misc_Unsafe_putOrderedDouble_jlObjectJD_V:
          return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Double, false, false, true);
-      case TR::sun_misc_Unsafe_putObjectOrdered_jlObjectJjlObject_V:
+      case TR::sun_misc_Unsafe_putOrderedObject_jlObjectJjlObject_V:
          return createUnsafePutWithOffset(calleeSymbol, callerSymbol, callNodeTreeTop, callNode, TR::Address, false, true, true);
 
       case TR::sun_misc_Unsafe_getBooleanVolatile_jlObjectJ_Z:

@@ -7124,6 +7124,13 @@ TR_J9VM::isDecimalFormatPattern(TR::Compilation *comp, TR_ResolvedMethod *method
    return true;
    }
 
+bool
+TR_J9VM::isNativeMethod(TR_OpaqueMethodBlock *method)
+   {
+   J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(method);
+   return (romMethod->modifiers & J9AccNative) != 0;
+   }
+
 TR_EstimateCodeSize *
 TR_J9VMBase::getCodeEstimator(TR::Compilation *comp)
    {
@@ -7782,8 +7789,8 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
 
          return callNode;
          }
-      case TR::java_lang_J9VMInternals_getInstanceShapeFromJ9Class32:
-      case TR::com_ibm_oti_vm_ORBVMHelpers_getInstanceShapeFromJ9Class32:
+      case TR::java_lang_J9VMInternals_getTotalInstanceSizeFromJ9Class32:
+      case TR::com_ibm_oti_vm_ORBVMHelpers_getTotalInstanceSizeFromJ9Class32:
          {
          TR::Node::recreate(callNode, TR::iloadi);
          callNode->setSymbolReference(comp->getSymRefTab()->findOrCreateInstanceShapeSymbolRef());
@@ -7812,8 +7819,8 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
          callNode->setSymbolReference(comp->getSymRefTab()->findOrCreateClassFromJavaLangClassAsPrimitiveSymbolRef());
          return callNode;
          }
-      case TR::java_lang_J9VMInternals_getInstanceShapeFromJ9Class64:
-      case TR::com_ibm_oti_vm_ORBVMHelpers_getInstanceShapeFromJ9Class64:
+      case TR::java_lang_J9VMInternals_getTotalInstanceSizeFromJ9Class64:
+      case TR::com_ibm_oti_vm_ORBVMHelpers_getTotalInstanceSizeFromJ9Class64:
          {
          TR::Node::recreate(callNode, TR::lloadi);
          callNode->setSymbolReference(comp->getSymRefTab()->findOrCreateInstanceShapeSymbolRef());
