@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-	Copyright (c) 2016, 2019 IBM Corp. and others
+	Copyright (c) 2016, 2020 IBM Corp. and others
 
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,6 +103,31 @@
 	resolvesTest,\
 	sieveTest,\
 	transitionsTest \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	
+	<test>
+		<testCaseName>jit_compareAndBranch</testCaseName>
+		<variations>
+			<variation>-Xjit:count=1,limit={*testAddressCompare*},optlevel=hot,disableCFGSimplification,disableGRA,disableAsyncCompilation</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames \
+	compareAndBranchTest \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
