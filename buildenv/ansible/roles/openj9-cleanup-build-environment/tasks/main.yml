@@ -19,6 +19,8 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ###############################################################################
+# Copyright (c) 2020, 2020 IBM Corp. and others
+###############################################################################
 ---
 - name: Remove the building environment
   docker_container:
@@ -29,7 +31,7 @@
     - cleanup
 - name: Remove the docker image for the building environment
   docker_image:
-    name: "openj9-{{ version }}-build"    
+    name: "openj9-{{ version }}-build"
     tag: latest
     state: absent
   when: build.cleanup
@@ -37,14 +39,14 @@
     - cleanup
 - name: Drop the build result folder
   file:
-    dest: "{{ host_dir }}" 
+    dest: "{{ host_dir }}"
     state: absent
   when: build.cleanup
   tags:
     - cleanup
 - name: Drop the build folder
   file:
-    dest: "{{ build_dir }}" 
+    dest: "{{ build_dir }}"
     state: absent
   when: build.cleanup
   tags:

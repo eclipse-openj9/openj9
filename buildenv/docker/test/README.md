@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2019 IBM Corp. and others
+Copyright (c) 2017, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,8 +22,8 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 
 # To use this docker file:
 1. Depends on your OS platform, build the base openj9 docker
-  image from the Dockerfile in buildenv/docker/jdk11/
-  `docker build -f buildenv/docker/jdk11/<platform>/ubuntu/Dockerfile -t=openj9 .`
+  image from the script in buildenv/docker/mkdocker.sh
+  `bash mkdocker.sh --tag=openj9 --dist=ubuntu --version=16 --build`
 
 2. Build the Docker image from buildenv/docker/test/ for testing
   `docker build -t=openj9-buildandtest .`
