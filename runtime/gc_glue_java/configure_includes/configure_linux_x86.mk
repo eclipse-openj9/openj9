@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2016, 2019 IBM Corp. and others
+# Copyright (c) 2016, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,8 +39,6 @@ ifeq (linux_x86-64_cmprssptrs, $(SPEC))
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
-		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-		--enable-OMR_INTERP_SMALL_MONITOR_SLOT \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT
 endif
@@ -55,8 +53,6 @@ ifeq (linux_x86-64_cmprssptrs_panama, $(SPEC))
 		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
-		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-		--enable-OMR_INTERP_SMALL_MONITOR_SLOT \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT \
 		--enable-OMR_JITBUILDER
@@ -118,8 +114,6 @@ ifeq (linux_x86-64_cmprssptrs_purec, $(SPEC))
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
-		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-		--enable-OMR_INTERP_SMALL_MONITOR_SLOT \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS \
 		--enable-OMR_PORT_NUMA_SUPPORT
 endif
