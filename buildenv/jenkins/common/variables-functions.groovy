@@ -654,14 +654,11 @@ def set_test_targets() {
         EXCLUDED_TESTS.addAll(excludedTests)
     }
 
-    TEST_FLAG = ''
-    if (VARIABLES."${SPEC}".test_flags) {
-        TEST_FLAG = get_value(VARIABLES."${SPEC}".test_flags, SDK_VERSION)
-    }
+    TEST_FLAG = buildspec.getScalarField("test_flags", SDK_VERSION) ?: ''
 
-    echo "TESTS_TARGETS: ${TESTS_TARGETS}"
-    echo "EXCLUDED_TESTS: ${EXCLUDED_TESTS}"
-    echo "TEST_FLAG: ${TEST_FLAG}"
+    echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
+    echo "EXCLUDED_TESTS:'${EXCLUDED_TESTS}'"
+    echo "TEST_FLAG:'${TEST_FLAG}'"
 }
 
 def get_default_test_targets() {
