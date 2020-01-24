@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2019 IBM Corp. and others
+Copyright (c) 2017, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -365,7 +365,7 @@ The following instructions guide you through the process of building a Windows *
 :ledger:
 You must install a number of software dependencies to create a suitable build environment on your system:
 
-- [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. Included in this package is mingw, a minimalist subset of GNU tools for Microsoft Windows. OpenJ9 uses the mingw/GCC compiler and is tested with version 6.4.0 of same. Other versions are expected to work also. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
+- [Cygwin](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
 - [Windows JDK 12](https://adoptopenjdk.net/releases.html?variant=openjdk12#x64_win), which is used as the boot JDK.
 - [Microsoft Visual Studio 2017](https://aka.ms/vs/15/release/vs_community.exe), which is the default compiler level used by OpenJDK13.
 - [Freemarker V2.3.8](https://sourceforge.net/projects/freemarker/files/freemarker/2.3.8/freemarker-2.3.8.tar.gz/download)
