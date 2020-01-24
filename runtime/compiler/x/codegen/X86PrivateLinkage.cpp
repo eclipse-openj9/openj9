@@ -1297,120 +1297,153 @@ void TR::X86CallSite::setupVirtualGuardInfo()
    TR_ASSERT((_devirtualizedMethod == NULL) == (_devirtualizedMethodSymRef == NULL), "_devirtualizedMethod requires _devirtualizedMethodSymRef");
    }
 
+bool TR::X86CallSite::tryToAddStaticPIC(uintptrj_t classAddress,
+                                        TR::Node *callNode,
+                                        TR_ResolvedMethod *profiledResolvedMethod,
+                                        TR_J9VMBase *fej9,
+                                        int32_t numStaticPICSlots,
+                                        float frequency,
+                                        bool isVirtual,
+                                        bool force)
+   {
+   TR_ASSERT_FATAL(_profiledTargets != NULL, "_profiledTargets should be initialized already!\n");
+
+   TR_OpaqueMethodBlock *methodToBeCompared = NULL;
+   int32_t slot = -1;
+   bool added = false;
+
+   if (comp()->getOption(TR_TraceCG))
+      traceMsg(comp(), "  Profiled target frequency %f", frequency);
+
+   if (profiledResolvedMethod &&
+       (!profiledResolvedMethod->isInterpreted() ||
+        profiledResolvedMethod->isJITInternalNative()))
+      {
+      if (!force && frequency < getMinProfiledCallFrequency())
+         {
+         if (comp()->getOption(TR_TraceCG))
+            traceMsg(comp(), " - Too infrequent");
+         }
+      else if (!force && numStaticPICSlots >= comp()->getOptions()->getMaxStaticPICSlots(comp()->getMethodHotness()))
+         {
+         if (comp()->getOption(TR_TraceCG))
+            traceMsg(comp(), " - Already reached limit of %d static PIC slots", numStaticPICSlots);
+         }
+      else
+         {
+         if (isVirtual && profiledResolvedMethod->isJITInternalNative())
+            {
+            int32_t offset = callNode->getSymbolReference()->getOffset();
+            slot = fej9->virtualCallOffsetToVTableSlot(offset);
+            methodToBeCompared = profiledResolvedMethod->getPersistentIdentifier();
+            }
+
+         _profiledTargets->add(new(comp()->trStackMemory()) TR::X86PICSlot(classAddress,
+                                                                           profiledResolvedMethod,
+                                                                           true,
+                                                                           methodToBeCompared,
+                                                                           slot));
+
+         if (comp()->getOption(TR_TraceCG))
+            traceMsg(comp(), " + Added static PIC slot");
+
+         added = true;
+         }
+      if (comp()->getOption(TR_TraceCG))
+         traceMsg(comp(), " for %s\n", profiledResolvedMethod->signature(comp()->trMemory(), stackAlloc));
+      }
+   else
+      {
+      if (comp()->getOption(TR_TraceCG))
+         traceMsg(comp(), " * Can't find suitable method from profile info\n");
+      }
+
+   return added;
+   }
+
 void TR::X86CallSite::computeProfiledTargets()
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(fe());
 
+   // bail until create appropriate relocations to validate profiled targets
    if (cg()->profiledPointersRequireRelocation())
-      // bail until create appropriate relocations to validate profiled targets
       return;
 
-   // Use static PICs for guarded calls as well
-   //
+   if (comp()->getOption(TR_DisableInterpreterProfiling) || !TR_ValueProfileInfoManager::get(comp()))
+      return;
 
    _profiledTargets = new(comp()->trStackMemory()) TR_ScratchList<TR::X86PICSlot>(comp()->trMemory());
 
-   TR::SymbolReference *methodSymRef = getSymbolReference();
-   TR::Node            *callNode     = getCallNode();
+   TR::SymbolReference *methodSymRef      = getSymbolReference();
+   TR::Node            *callNode          = getCallNode();
+   float                missRatio         = 0.0;
+   int32_t              numStaticPICSlots = 0;
 
-   // TODO: Note the different logic for virtual and interface calls.  Is this necessary?
-   //
+   bool isVirtual   = getMethodSymbol()->isVirtual();
+   bool isInterface = getMethodSymbol()->isInterface();
 
-   if (getMethodSymbol()->isVirtual() && !callNode->getSymbolReference()->isUnresolved() &&
-       (callNode->getSymbolReference() != comp()->getSymRefTab()->findObjectNewInstanceImplSymbol()) &&
-       callNode->getOpCode().isIndirect())
+   if ((isVirtual  &&
+        !callNode->getSymbolReference()->isUnresolved() &&
+        (callNode->getSymbolReference() != comp()->getSymRefTab()->findObjectNewInstanceImplSymbol()) &&
+        callNode->getOpCode().isIndirect())
+       ||
+       isInterface)
       {
-      if (!comp()->getOption(TR_DisableInterpreterProfiling) &&
-          TR_ValueProfileInfoManager::get(comp()))
+      uintptrj_t topValue;
+      TR_AddressInfo *valueInfo = static_cast<TR_AddressInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(callNode, comp(), AddressInfo));
+
+      if (!valueInfo || valueInfo->getTopValue(topValue) <= 0)
+         topValue = 0;
+
+      // Is the topValue valid?
+      if (topValue)
          {
-         TR::Node *callNode = getCallNode();
-         TR_AddressInfo *valueInfo = static_cast<TR_AddressInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(callNode, comp(), AddressInfo));
-
-         // PMR 05447,379,000 getTopValue may return array length profile data instead of a class pointer
-         // (when the virtual call feeds an arraycopy method length parameter). We need to defend this case to
-         // avoid attempting to use the length as a pointer, so use asAddressInfo() to gate assignment of topValue.
-         uintptrj_t topValue = (valueInfo) ? valueInfo->getTopValue() : 0;
-
-         // if the call to hashcode is a virtual call node, the top value was already inlined.
-         if (callNode->isTheVirtualCallNodeForAGuardedInlinedCall())
-            topValue = 0;
-
-         // Is the topValue valid?
-         if (topValue)
+         if (valueInfo->getTopProbability() < getMinProfiledCallFrequency() ||
+             comp()->getPersistentInfo()->isObsoleteClass((void*)topValue, fej9))
             {
-            if (valueInfo->getTopProbability() < getMinProfiledCallFrequency() ||
-                comp()->getPersistentInfo()->isObsoleteClass((void*)topValue, fej9))
+            topValue = 0;
+            }
+         else if (isVirtual)
+            {
+            TR_OpaqueClassBlock *callSiteMethod = methodSymRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->classOfMethod();
+
+            // We can't do this guarded devirtualization if the profile data is not correct for this context. See defect 98813
+            if (fej9->isInstanceOf((TR_OpaqueClassBlock *)topValue, callSiteMethod, true, true) != TR_yes)
                {
                topValue = 0;
                }
-            // We can't do this guarded devirtualization if the profile data is not correct for this context. See defect 98813
-            else
+            // if the call to hashcode is a virtual call node, the top value was already inlined.
+            else if (callNode->isTheVirtualCallNodeForAGuardedInlinedCall())
                {
-               //printf("Checking is instanceof for top %p for %s\n", topValue, methodSymRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->signature(comp()->trMemory())); fflush(stdout);
-               TR_OpaqueClassBlock *callSiteMethod = methodSymRef->getSymbol()->getResolvedMethodSymbol()->getResolvedMethod()->classOfMethod();
-               if (fej9->isInstanceOf((TR_OpaqueClassBlock *)topValue, callSiteMethod, true, true) != TR_yes)
-                  {
-                  topValue = 0;
-                  }
-               }
-            }
-
-         if (!topValue && !callNode->getSymbolReference()->isUnresolved() &&
-             (callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_lang_Object_clone))
-            topValue = (uintptrj_t) comp()->getObjectClassPointer();
-
-         if (topValue)
-            {
-
-            TR_ResolvedMethod *profiledVirtualMethod = callNode->getSymbolReference()->getOwningMethod(comp())->getResolvedVirtualMethod(comp(),
-               (TR_OpaqueClassBlock *)topValue, methodSymRef->getOffset());
-            if (profiledVirtualMethod &&
-                (!profiledVirtualMethod->isInterpreted() ||
-                profiledVirtualMethod->isJITInternalNative()))
-               {
-               //if (!getMethodSymbol()->isInterface() && profiledVirtualMethod->isJITInternalNative())
-               //printf("New opportunity in %s to callee %s\n", comp()->signature(), profiledVirtualMethod->signature(comp()->trMemory(), stackAlloc));
-               //TR_ASSERT(profiledVirtualMethod->classOfMethod() == (TR_OpaqueClassBlock *)topValue, "assertion failure");
-
-               TR_OpaqueMethodBlock *methodToBeCompared = NULL;
-               int32_t slot = -1;
-               if (profiledVirtualMethod->isJITInternalNative())
-                  {
-                  int32_t offset = callNode->getSymbolReference()->getOffset();
-                  slot = fej9->virtualCallOffsetToVTableSlot(offset);
-                  methodToBeCompared = profiledVirtualMethod->getPersistentIdentifier();
-                  }
-
-               _profiledTargets->add(new(comp()->trStackMemory()) TR::X86PICSlot((uintptrj_t)topValue, profiledVirtualMethod, true, methodToBeCompared, slot));
+               topValue = 0;
                }
             }
          }
-      }
-   else if (getMethodSymbol()->isInterface())
-      {
-      bool staticPICsExist = false;
-      int32_t numStaticPICSlots = 0;
 
-
-      TR_AddressInfo *addressInfo = static_cast<TR_AddressInfo*>(TR_ValueProfileInfoManager::getProfiledValueInfo(callNode, comp(), AddressInfo));
-#if defined(OSX)
-      uint64_t topValue;
-#else
-      uintptr_t topValue;
-#endif /* OSX */
-      float missRatio = 0.0;
-      if (addressInfo && addressInfo->getTopValue(topValue) > 0 && topValue && !comp()->getPersistentInfo()->isObsoleteClass((void*)topValue, fej9) &&
-          addressInfo->getTopProbability() >= getMinProfiledCallFrequency())
+      if (!topValue)
          {
-         uint32_t totalFrequency = addressInfo->getTotalFrequency();
+         if (isVirtual &&
+             (callNode->getSymbol()->castToMethodSymbol()->getRecognizedMethod() == TR::java_lang_Object_clone))
+            {
+            TR_ResolvedMethod *profiledVirtualMethod =
+                  methodSymRef->getOwningMethod(comp())->getResolvedVirtualMethod(comp(),
+                     (TR_OpaqueClassBlock *)comp()->getObjectClassPointer(),
+                     methodSymRef->getOffset());
+
+            tryToAddStaticPIC((uintptrj_t)comp()->getObjectClassPointer(), callNode, profiledVirtualMethod, fej9, 0, 0.0, true, true);
+            }
+         }
+      else
+         {
+         uint32_t totalFrequency = valueInfo->getTotalFrequency();
          TR_ScratchList<TR_ExtraAddressInfo> valuesSortedByFrequency(comp()->trMemory());
-         addressInfo->getSortedList(comp(), &valuesSortedByFrequency);
+         valueInfo->getSortedList(comp(), &valuesSortedByFrequency);
 
          static const char *p = feGetEnv("TR_TracePIC");
          if (p)
             {
             traceMsg(comp(), "Value profile info for callNode %p in %s\n", callNode, comp()->signature());
-            addressInfo->getProfiler()->dumpInfo(comp()->getOutFile());
+            valueInfo->getProfiler()->dumpInfo(comp()->getOutFile());
             traceMsg(comp(), "\n");
             }
 
@@ -1420,85 +1453,74 @@ void TR::X86CallSite::computeProfiledTargets()
          for (TR_ExtraAddressInfo *profiledInfo = sortedValuesIt.getFirst(); profiledInfo != NULL; profiledInfo = sortedValuesIt.getNext())
             {
             float frequency = ((float)profiledInfo->_frequency) / totalFrequency;
-            if (comp()->getOption(TR_TraceCG))
-               traceMsg(comp(), "  Profiled target frequency %f", frequency);
 
-            TR_OpaqueClassBlock *thisType = (TR_OpaqueClassBlock *) profiledInfo->_value;
-            TR_ResolvedMethod *profiledInterfaceMethod = NULL;
-            TR::SymbolReference *methodSymRef = getSymbolReference();
+            TR_OpaqueClassBlock *thisType = (TR_OpaqueClassBlock *)profiledInfo->_value;
+            TR_ResolvedMethod *profiledResolvedMethod = NULL;
             if (!comp()->getPersistentInfo()->isObsoleteClass((void *)thisType, fej9))
                {
-               profiledInterfaceMethod = methodSymRef->getOwningMethod(comp())->getResolvedInterfaceMethod(comp(),
-                  thisType, methodSymRef->getCPIndex());
-               }
-            if (profiledInterfaceMethod &&
-                (!profiledInterfaceMethod->isInterpreted() ||
-                 profiledInterfaceMethod->isJITInternalNative()))
-               {
-               if (frequency < getMinProfiledCallFrequency())
+               if (isVirtual)
                   {
-                  if (comp()->getOption(TR_TraceCG))
-                     traceMsg(comp(), " - Too infrequent");
-                  totalPICMissFrequency += profiledInfo->_frequency;
-                  }
-               else if (numStaticPICSlots >= comp()->getOptions()->getMaxStaticPICSlots(comp()->getMethodHotness()))
-                  {
-                  if (comp()->getOption(TR_TraceCG))
-                     traceMsg(comp(), " - Already reached limit of %d static PIC slots", numStaticPICSlots);
-                  totalPICMissFrequency += profiledInfo->_frequency;
+                  profiledResolvedMethod = methodSymRef->getOwningMethod(comp())->getResolvedVirtualMethod(comp(),
+                     thisType, methodSymRef->getOffset());
                   }
                else
                   {
-                  _profiledTargets->add(new(comp()->trStackMemory()) TR::X86PICSlot((uintptrj_t)thisType, profiledInterfaceMethod));
-                  if (comp()->getOption(TR_TraceCG))
-                     traceMsg(comp(), " + Added static PIC slot");
-                  numStaticPICSlots++;
-                  totalPICHitFrequency += profiledInfo->_frequency;
+                  profiledResolvedMethod = methodSymRef->getOwningMethod(comp())->getResolvedInterfaceMethod(comp(),
+                     thisType, methodSymRef->getCPIndex());
                   }
-               if (comp()->getOption(TR_TraceCG))
-                  traceMsg(comp(), " for %s\n", profiledInterfaceMethod->signature(comp()->trMemory(), stackAlloc));
+               }
+
+            if (tryToAddStaticPIC((uintptrj_t)thisType, callNode, profiledResolvedMethod, fej9, numStaticPICSlots, frequency, isVirtual))
+               {
+               numStaticPICSlots++;
+               totalPICHitFrequency += profiledInfo->_frequency;
                }
             else
                {
-               if (comp()->getOption(TR_TraceCG))
-                  traceMsg(comp(), " * Can't find suitable method from profile info\n");
+               totalPICMissFrequency += profiledInfo->_frequency;
                }
 
+            /* Only add one vPIC (if at all) */
+            if (isVirtual)
+               break;
             }
          missRatio = 1.0 * totalPICMissFrequency / totalFrequency;
          }
 
-      _useLastITableCache = !comp()->getOption(TR_DisableLastITableCache) ? true : false;
-      // Disable lastITable logic if all the implementers can fit into the pic slots during non-startup state
-      if (_useLastITableCache && cg()->comp()->target().is64Bit() && _interfaceClassOfMethod && comp()->getPersistentInfo()->getJitState() != STARTUP_STATE)
+      if (isInterface)
          {
-         J9::X86::PrivateLinkage *privateLinkage = static_cast<J9::X86::PrivateLinkage *>(getLinkage());
-         int32_t numPICSlots = numStaticPICSlots + privateLinkage->IPicParameters.defaultNumberOfSlots;
-         TR_ResolvedMethod **implArray = new (comp()->trStackMemory()) TR_ResolvedMethod*[numPICSlots+1];
-         TR_PersistentCHTable * chTable = comp()->getPersistentInfo()->getPersistentCHTable();
-         int32_t cpIndex = getSymbolReference()->getCPIndex();
-         int32_t numImplementers = chTable->findnInterfaceImplementers(_interfaceClassOfMethod, numPICSlots+1, implArray, cpIndex, getSymbolReference()->getOwningMethod(comp()), comp());
-         if (numImplementers <= numPICSlots)
+         _useLastITableCache = !comp()->getOption(TR_DisableLastITableCache) ? true : false;
+         // Disable lastITable logic if all the implementers can fit into the pic slots during non-startup state
+         if (_useLastITableCache && cg()->comp()->target().is64Bit() && _interfaceClassOfMethod && comp()->getPersistentInfo()->getJitState() != STARTUP_STATE)
             {
-            _useLastITableCache = false;
-            if (comp()->getOption(TR_TraceCG))
-               traceMsg(comp(),"Found %d implementers for call to %s, can be fit into %d pic slots, disabling lastITable cache\n", numImplementers, getMethodSymbol()->getMethod()->signature(comp()->trMemory()), numPICSlots);
+            J9::X86::PrivateLinkage *privateLinkage = static_cast<J9::X86::PrivateLinkage *>(getLinkage());
+            int32_t numPICSlots = numStaticPICSlots + privateLinkage->IPicParameters.defaultNumberOfSlots;
+            TR_ResolvedMethod **implArray = new (comp()->trStackMemory()) TR_ResolvedMethod*[numPICSlots+1];
+            TR_PersistentCHTable * chTable = comp()->getPersistentInfo()->getPersistentCHTable();
+            int32_t cpIndex = methodSymRef->getCPIndex();
+            int32_t numImplementers = chTable->findnInterfaceImplementers(_interfaceClassOfMethod, numPICSlots+1, implArray, cpIndex, getSymbolReference()->getOwningMethod(comp()), comp());
+            if (numImplementers <= numPICSlots)
+               {
+               _useLastITableCache = false;
+               if (comp()->getOption(TR_TraceCG))
+                  traceMsg(comp(),"Found %d implementers for call to %s, can be fit into %d pic slots, disabling lastITable cache\n", numImplementers, getMethodSymbol()->getMethod()->signature(comp()->trMemory()), numPICSlots);
+               }
             }
-         }
-      else if (_useLastITableCache && cg()->comp()->target().is32Bit())  // Use the original heuristic for ia32 due to defect 111651
-         {
-         _useLastITableCache = false; // Default on ia32 is not to use the last itable cache
-         static char *lastITableCacheThresholdStr = feGetEnv("TR_lastITableCacheThreshold");
-
-         // With 4 static and 2 dynamic PIC slots, the cache starts to be used
-         // for 7 equally-likely targets.  We want to catch that case, so the
-         // threshold must be comfortably below 3/7 = 28%.
-         //
-         float lastITableCacheThreshold = lastITableCacheThresholdStr? atof(lastITableCacheThresholdStr) : 0.2;
-         if (  missRatio >= lastITableCacheThreshold
-            && performTransformation(comp(), "O^O PIC miss ratio is %f >= %f -- adding lastITable cache\n", missRatio, lastITableCacheThreshold))
+         else if (_useLastITableCache && cg()->comp()->target().is32Bit())  // Use the original heuristic for ia32 due to defect 111651
             {
-            _useLastITableCache = true;
+            _useLastITableCache = false; // Default on ia32 is not to use the last itable cache
+            static char *lastITableCacheThresholdStr = feGetEnv("TR_lastITableCacheThreshold");
+
+            // With 4 static and 2 dynamic PIC slots, the cache starts to be used
+            // for 7 equally-likely targets.  We want to catch that case, so the
+            // threshold must be comfortably below 3/7 = 28%.
+            //
+            float lastITableCacheThreshold = lastITableCacheThresholdStr? atof(lastITableCacheThresholdStr) : 0.2;
+            if (  missRatio >= lastITableCacheThreshold
+               && performTransformation(comp(), "O^O PIC miss ratio is %f >= %f -- adding lastITable cache\n", missRatio, lastITableCacheThreshold))
+               {
+               _useLastITableCache = true;
+               }
             }
          }
       }
