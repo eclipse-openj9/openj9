@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -296,8 +296,9 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(vmThread);
 		if (indexableObjectModel->isDoubleMappingEnabled()) {
+			fj9object_t *arrayoidPtr = indexableObjectModel->getArrayoidPointer(arrayObject);
 			if (indexableObjectModel->isArrayletDataDiscontiguous(arrayObject)) {
-				GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
+				GC_SlotObject objectSlot(env->getOmrVM(), arrayoidPtr);
 				J9Object *firstLeafSlot = objectSlot.readReferenceFromSlot();
 				MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)_extensions->heapRegionManager->tableDescriptorForAddress(firstLeafSlot);
 				data = firstLeafRegionDescriptor->_arrayletDoublemapID.address;
@@ -311,10 +312,13 @@ MM_VLHGCAccessBarrier::jniGetPrimitiveArrayCritical(J9VMThread* vmThread, jarray
 				/* Solo arraylet leaf is contiguous so we can simply return the data associated with it */
 				MM_JNICriticalRegion::enterCriticalRegion(vmThread, true);
 				Assert_MM_true(vmThread->publicFlags & J9_PUBLIC_FLAGS_VM_ACCESS);
-				GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
+				GC_SlotObject objectSlot(env->getOmrVM(), arrayoidPtr);
 				data = objectSlot.readReferenceFromSlot();
 			} else {
-				/* Possible to reach here if arraylet leaf has one leaf and no elements in it */
+				/* Possible to reach here if arraylet leaf has one leaf and no elements in it.
+				 * Even though there are no elements in it the caller expects a non NULL value
+				 * therefore we just return the address after the object header. */
+				data = (void *)GC_SlotObject::addToSlotAddress((fomrobject_t*)arrayoidPtr, 1, env->compressObjectReferences());
 				Assert_MM_true((1 == indexableObjectModel->numArraylets(arrayObject)) && (0 == indexableObjectModel->getSizeInElements(arrayObject)));
 			}
 		} else
@@ -380,8 +384,9 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 		MM_EnvironmentVLHGC *env = MM_EnvironmentVLHGC::getEnvironment(vmThread);
 		if (indexableObjectModel->isDoubleMappingEnabled()) {
+			fj9object_t *arrayoidPtr = indexableObjectModel->getArrayoidPointer(arrayObject);
 			if (indexableObjectModel->isArrayletDataDiscontiguous(arrayObject)) {
-				GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
+				GC_SlotObject objectSlot(env->getOmrVM(), arrayoidPtr);
 				J9Object *firstLeafSlot = objectSlot.readReferenceFromSlot();
 				MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)_extensions->heapRegionManager->tableDescriptorForAddress(firstLeafSlot);
 
@@ -394,7 +399,7 @@ MM_VLHGCAccessBarrier::jniReleasePrimitiveArrayCritical(J9VMThread* vmThread, ja
 				 * Objects can not be moved if critical section is active
 				 * This trace point will be generated if object has been moved or passed value of elems is corrupted
 				 */
-				GC_SlotObject objectSlot(env->getOmrVM(), &indexableObjectModel->getArrayoidPointer(arrayObject)[0]);
+				GC_SlotObject objectSlot(env->getOmrVM(), arrayoidPtr);
 				void *data = objectSlot.readReferenceFromSlot();
 
 				if (elems != data) {
