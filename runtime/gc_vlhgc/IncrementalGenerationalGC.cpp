@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -623,7 +623,7 @@ MM_IncrementalGenerationalGC::heapRemoveRange(MM_EnvironmentBase *env, MM_Memory
  * @see MM_GlobalCollector::heapReconfigured()
  */
 void
-MM_IncrementalGenerationalGC::heapReconfigured(MM_EnvironmentBase *env)
+MM_IncrementalGenerationalGC::heapReconfigured(MM_EnvironmentBase *env, HeapReconfigReason reason, MM_MemorySubSpace *subspace, void *lowAddress, void *highAddress)
 {
 	MM_EnvironmentVLHGC *envVLHGC = MM_EnvironmentVLHGC::getEnvironment(env);
 	

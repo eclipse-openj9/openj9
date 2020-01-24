@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -198,7 +198,6 @@ public:
 	virtual bool heapRemoveRange(
 		MM_EnvironmentBase *env, MM_MemorySubSpace *subspace, uintptr_t size, void *lowAddress, void *highAddress,
 		void *lowValidAddress, void *highValidAddress);
-	virtual void heapReconfigured(MM_EnvironmentBase *env);
 
 	void workerSetupForGC(MM_EnvironmentBase *env);
 	void allThreadsAllocateUnmarked(MM_EnvironmentBase *env);

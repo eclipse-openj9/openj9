@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -690,17 +690,6 @@ MM_RealtimeGC::heapRemoveRange(
 		result = result && _extensions->referenceChainWalkerMarkMap->heapRemoveRange(env, size, lowAddress, highAddress, lowValidAddress, highValidAddress);
 	}
 	return result;
-}
-
-/**
- * Re-size all structures which are dependent on the current size of the heap.
- * No new memory has been added to a heap reconfiguration.  This call typically is the result
- * of having segment range changes (memory redistributed between segments) or the meaning of
- * memory changed.
- */
-void
-MM_RealtimeGC::heapReconfigured(MM_EnvironmentBase *env)
-{
 }
 
 /**
