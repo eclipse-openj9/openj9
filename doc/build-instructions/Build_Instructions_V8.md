@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2019 IBM Corp. and others
+Copyright (c) 2017, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -350,8 +350,7 @@ The following instructions guide you through the process of building a Windows 6
 :ledger:
 You must install a number of software dependencies to create a suitable build environment on your system:
 
-- [Cygwin for 64-bit versions of Windows](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category, which includes `mingw`, a minimalist subset of GNU tools for Microsoft Windows.
-OpenJ9 uses the mingw/GCC compiler during the build process. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
+- [Cygwin for 64-bit versions of Windows](https://cygwin.com/install.html), which provides a Unix-style command line interface. Install all packages in the `Devel` category. In the `Archive` category, install the packages `zip` and `unzip`. In the `Utils` category, install the `cpio` package. Install any further package dependencies that are identified by the installer. More information about using Cygwin can be found [here](https://cygwin.com/docs.html).
 - [Windows JDK 7](http://www.oracle.com/technetwork/java/javase/downloads/java-archive-downloads-javase7-521261.html), which is used as the boot JDK.
 - [Windows SDK 7 Debugging tools](https://www.microsoft.com/download/confirmation.aspx?id=8279).
 - [Microsoft Visual Studio 2010 Professional](https://www.visualstudio.com/vs/older-downloads/).
