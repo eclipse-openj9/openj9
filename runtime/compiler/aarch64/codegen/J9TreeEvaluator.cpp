@@ -253,12 +253,54 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
    TR::Node *secondChild = node->getSecondChild();
    TR::Register *sourceRegister;
    bool killSource = false;
-   // assuming usingCompressedPointers is always false for now
+   bool usingCompressedPointers = false;
    bool needSync = (node->getSymbolReference()->getSymbol()->isSyncVolatile() && cg->comp()->target().isSMP());
 
    if (node->getSymbolReference()->getSymbol()->isShadow() && node->getSymbolReference()->getSymbol()->isOrdered() && cg->comp()->target().isSMP())
       {
       needSync = true;
+      }
+
+   if (comp->useCompressedPointers() && (node->getSymbolReference()->getSymbol()->getDataType() == TR::Address) && (node->getSecondChild()->getDataType() != TR::Address))
+      {
+      // pattern match the sequence
+      //     awrtbari f    awrtbari f         <- node
+      //       aload O       aload O
+      //     value           l2i
+      //                       lshr         <- translatedNode
+      //                         lsub
+      //                           a2l
+      //                             value   <- secondChild
+      //                           lconst HB
+      //                         iconst shftKonst
+      //
+      // -or- if the field is known to be null or usingLowMemHeap
+      // awrtbari f
+      //    aload O
+      //    l2i
+      //      a2l
+      //        value  <- secondChild
+      //
+      TR::Node *translatedNode = secondChild;
+      if (translatedNode->getOpCode().isConversion())
+         translatedNode = translatedNode->getFirstChild();
+      if (translatedNode->getOpCode().isRightShift()) // optional
+         translatedNode = translatedNode->getFirstChild();
+
+      bool usingLowMemHeap = false;
+      if (TR::Compiler->vm.heapBaseAddress() == 0 || secondChild->isNull())
+         usingLowMemHeap = true;
+
+      if (translatedNode->getOpCode().isSub() || usingLowMemHeap)
+         usingCompressedPointers = true;
+
+      if (usingCompressedPointers)
+         {
+         while (secondChild->getNumChildren() && secondChild->getOpCodeValue() != TR::a2l)
+            secondChild = secondChild->getFirstChild();
+         if (secondChild->getNumChildren())
+            secondChild = secondChild->getFirstChild();
+         }
       }
 
    if (secondChild->getReferenceCount() > 1 && secondChild->getRegister() != NULL)
@@ -279,12 +321,16 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
       sourceRegister = cg->evaluate(secondChild);
       }
 
-   TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, TR::Compiler->om.sizeofReferenceAddress(), cg);
+   TR::InstOpCode::Mnemonic storeOp = usingCompressedPointers ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
+   TR::Register *translatedSrcReg = usingCompressedPointers ? cg->evaluate(node->getSecondChild()) : sourceRegister;
+   int32_t sizeofMR = usingCompressedPointers ? TR::Compiler->om.sizeofReferenceField() : TR::Compiler->om.sizeofReferenceAddress();
+
+   TR::MemoryReference *tempMR = new (cg->trHeapMemory()) TR::MemoryReference(node, sizeofMR, cg);
 
    if (needSync)
       generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xE);
 
-   generateMemSrc1Instruction(cg,TR::InstOpCode::strimmx, node, tempMR, sourceRegister);
+   generateMemSrc1Instruction(cg, storeOp, node, tempMR, translatedSrcReg);
 
    wrtbarEvaluator(node, sourceRegister, destinationRegister, secondChild->isNonNull(), true, cg);
 
@@ -294,6 +340,9 @@ J9::ARM64::TreeEvaluator::awrtbariEvaluator(TR::Node *node, TR::CodeGenerator *c
    cg->decReferenceCount(node->getSecondChild());
    cg->decReferenceCount(node->getChild(2));
    tempMR->decNodeReferenceCounts(cg);
+
+   if (comp->useCompressedPointers())
+      node->setStoreAlreadyEvaluated(true);
 
    return NULL;
    }
