@@ -10986,6 +10986,10 @@ TR::CompilationInfoPerThreadBase::processException(
       {
       _methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
       }
+   catch (const TR::NoRecompilationRecoverableILGenException &e)
+      {
+      _methodBeingCompiled->_compErrCode = compilationRestrictedMethod;
+      }
    catch (const TR::ILGenFailure &e)
       {
       _methodBeingCompiled->_compErrCode = compilationILGenFailure;
