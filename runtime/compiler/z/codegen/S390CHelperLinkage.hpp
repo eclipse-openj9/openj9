@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,6 +52,16 @@ public:
 
    virtual void createPrologue(TR::Instruction * cursor) { TR_ASSERT(false, "Not Implemented"); }
    virtual void createEpilogue(TR::Instruction * cursor) { TR_ASSERT(false, "Not Implemented"); }
+
+   virtual void setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol * method)
+      {
+      TR_ASSERT_FATAL(false, "CHelperLinkage should only be used for call-outs");
+      }
+
+   virtual void setParameterLinkageRegisterIndex(TR::ResolvedMethodSymbol *method, List<TR::ParameterSymbol>&parmList)
+      {
+      TR_ASSERT_FATAL(false, "CHelperLinkage should only be used for call-outs");
+      }
 
    virtual void mapStack(TR::ResolvedMethodSymbol *symbol) { TR_ASSERT(false, "Not Implemented"); }
    virtual void mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex) { TR_ASSERT(false, "Not Implemented"); }
