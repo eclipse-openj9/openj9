@@ -51,6 +51,7 @@ import java.util.HashMap;
 
 /*[IF Java14]*/
 import java.util.function.BiFunction;
+import java.lang.reflect.Method;
 /*[ENDIF] Java14 */
 
 /**
@@ -281,6 +282,10 @@ public abstract class VarHandle extends VarHandleInternal
 	
 	static final Unsafe _unsafe = Unsafe.getUnsafe();
 	static final Lookup _lookup = Lookup.internalPrivilegedLookup;
+
+/*[IF Java14]*/
+	static final BiFunction<String, List<Integer>, ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
+/*[ENDIF] Java14 */
 	
 	private final MethodHandle[] handleTable;
 	final Class<?> fieldType;
@@ -309,13 +314,72 @@ public abstract class VarHandle extends VarHandleInternal
 	/**
 	 * Constructs a generic VarHandle instance.
 	 *
-	 * @param varForm An instance of VarForm.
+	 * @param varForm an instance of VarForm.
 	 */
 	VarHandle(VarForm varForm) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		AccessMode[] accessModes = AccessMode.values();
+		int numAccessModes = accessModes.length;
+		MethodType[] operationMTs = new MethodType[numAccessModes];
+		Class<?> operationsClass = null;
+
+		for (int i = 0; i < numAccessModes; i++) {
+			MemberName memberName = varForm.memberName_table[i];
+			if (memberName != null) {
+				Method method = memberName.method;
+				if (method != null) {
+					operationMTs[i] = MethodType.methodType(method.getReturnType(), method.getParameterTypes());
+					if (operationsClass == null) {
+						operationsClass = method.getDeclaringClass();
+					}
+				}
+			}
+		}
+
+		MethodType getter = operationMTs[AccessMode.GET.ordinal()];
+		MethodType setter = operationMTs[AccessMode.SET.ordinal()];
+
+		this.fieldType = setter.parameterType(setter.parameterCount() - 1);
+		this.coordinateTypes = getter.parameterArray();
+		this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTs);
+		this.modifiers = 0;
 	}
 
-	static final BiFunction<String, List<Integer>, ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
+	/**
+	 * This is derived from populateMHs in order to support the OpenJDK VarHandle operations classes, which
+	 * don't extend the VarHandleOperations class. 
+	 *
+	 * @param operationsClass the class which has all AccessMode methods defined.
+	 * @param lookupTypes the method types for the AccessMode methods in the operationsClass.
+	 * @param exactType the exact method types to be expected when VarHandle AccessMode methods are invoked.
+	 * @return a MethodHandle array which is used to initialize the handleTable.
+	 */
+	static MethodHandle[] populateMHsJEP370(Class<?> operationsClass, MethodType[] lookupTypes, MethodType[] exactTypes) {
+		MethodHandle[] operationMHs = new MethodHandle[AccessMode.values().length];
+
+		try {
+			/* Lookup the MethodHandles corresponding to access modes. */
+			for (AccessMode accessMode : AccessMode.values()) {
+				MethodType lookupType = lookupTypes[accessMode.ordinal()];
+				if (lookupType != null) {
+					operationMHs[accessMode.ordinal()] = _lookup.findStatic(operationsClass, accessMode.methodName(), lookupType);
+					if (lookupTypes != exactTypes) {
+						/* Clone the MethodHandles with the exact types if different set of exactTypes are provided. */
+						MethodType exactType = exactTypes[accessMode.ordinal()];
+						if (exactType != null) {
+							operationMHs[accessMode.ordinal()] = operationMHs[accessMode.ordinal()].cloneWithNewType(exactType);
+						}
+					}
+				}
+			}
+		} catch (IllegalAccessException | NoSuchMethodException e) {
+			/* [MSG "K0623", "Unable to create MethodHandle to VarHandle operation."] */
+			InternalError error = new InternalError(com.ibm.oti.util.Msg.getString("K0623")); //$NON-NLS-1$
+			error.initCause(e);
+			throw error;
+		}
+
+		return operationMHs;
+	}
 /*[ENDIF] Java14 */
 
 	Class<?> getDefiningClass() {
