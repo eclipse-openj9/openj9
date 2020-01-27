@@ -46,8 +46,10 @@ import java.lang.constant.DynamicConstantDesc;
 import java.util.Objects;
 /*[ENDIF] Java12 */
 
-/*[IF Java14]*/
 import java.util.Map;
+import java.util.HashMap;
+
+/*[IF Java14]*/
 import java.util.function.BiFunction;
 /*[ENDIF] Java14 */
 
@@ -227,9 +229,13 @@ public abstract class VarHandle extends VarHandleInternal
 		boolean isSetter;
 		private String methodName;
 
-/*[IF Java14]*/
-		static final Map<String, AccessMode> methodNameToAccessMode = null;
-/*[ENDIF] Java14 */
+		static final Map<String, AccessMode> methodNameToAccessMode;
+		static {
+			methodNameToAccessMode = new HashMap<>();
+			for (AccessMode accessMode : values()) {
+				methodNameToAccessMode.put(accessMode.methodName, accessMode);
+			}
+		}
 
 		AccessMode(String methodName, AccessType signatureType, boolean isSetter) {
 			this.methodName = methodName;
@@ -251,10 +257,9 @@ public abstract class VarHandle extends VarHandleInternal
 		 * @return The AccessMode associated with the provided method name.
 		 */
 		public static AccessMode valueFromMethodName(String methodName) {
-			for (AccessMode m : values()) {
-				if (m.methodName.equals(methodName)) {
-					return m;
-				}
+			AccessMode accessMode = methodNameToAccessMode.get(methodName);
+			if (accessMode != null) {
+				return accessMode;
 			}
 
 			/*[MSG "K0633", "{0} is not a valid AccessMode."]*/
