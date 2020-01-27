@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,13 +83,16 @@ timestamps {
 def cleanupBuilds(artifactory_server, artifactory_repo, jobToCheck, artifactory_num_artifacts, artifactoryCreds) {
     // This parameter is originally a string and needs to be casted as an Integer
     def artifactory_max_num_artifacts = artifactory_num_artifacts as Integer
-
+    def testSubfolder = ''
+    if (jobToCheck.contains("Test")) {
+        testSubfolder = '/Test'
+    }
     stage('Discover Stored Artifacts') {
         echo "Cleaning up ${jobToCheck}"
         echo "Keeping the latest ${artifactory_max_num_artifacts} builds"
         currentBuild.description = "Keeping ${artifactory_max_num_artifacts} builds of ${jobToCheck}"
 
-        def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/storage/${artifactory_repo}/${jobToCheck}"
+        def request = httpRequest authentication: artifactoryCreds, consoleLogResponseBody: true, validResponseCodes: '200,404', url: "${artifactory_server}/api/storage/${artifactory_repo}${testSubfolder}/${jobToCheck}"
 
         requestStatus = request.getStatus()
         if (requestStatus == 200) {
@@ -111,7 +114,7 @@ def cleanupBuilds(artifactory_server, artifactory_repo, jobToCheck, artifactory_
             def folderNames = getFolderNumbers(data.children.uri)
             for (i = 0; i < amount_deleted; i++) {
                 echo "Deleting Build #${folderNames[i]}"
-                httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: "${artifactory_server}/${env.ARTIFACTORY_REPO}/${jobToCheck}/${folderNames[i]}"
+                httpRequest authentication: artifactoryCreds, httpMode: 'DELETE', consoleLogResponseBody: true, url: "${artifactory_server}/${env.ARTIFACTORY_REPO}${testSubfolder}/${jobToCheck}/${folderNames[i]}"
             }
         } else {
             echo 'There are no artifacts to delete'
