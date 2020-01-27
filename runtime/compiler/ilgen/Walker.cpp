@@ -6363,7 +6363,6 @@ TR_J9ByteCodeIlGenerator::storeInstance(int32_t cpIndex)
          TR::Node *secondChild = node->getChild(1);
          if (secondChild && secondChild->getOpCodeValue() == TR::iconst && secondChild->getInt() == 0)
             {
-            symbol->resetVolatile();
             handleSideEffect(node);
             genTreeTop(node);
             genFullFence(node);

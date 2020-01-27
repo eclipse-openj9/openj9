@@ -786,6 +786,14 @@ J9::SymbolReferenceTable::findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * ow
    bool sharesSymbol = false;
 
    TR_OpaqueClassBlock *containingClass = NULL;
+   TR::Symbol::RecognizedField recognizedField = TR::Symbol::searchRecognizedField(comp(), owningMethod, cpIndex, false);
+
+   if (isStore && isPrivate && !comp()->getOptions()->realTimeGC() &&
+       owningMethodSymbol->getResolvedMethod()->getRecognizedMethod() == TR::java_lang_ref_SoftReference_get &&
+       recognizedField == TR::Symbol::Java_lang_ref_SoftReference_age)
+      {
+      isVolatile = false;
+      }
 
    if (resolved)
       {
@@ -809,7 +817,6 @@ J9::SymbolReferenceTable::findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * ow
 
    TR::Symbol * sym = 0;
 
-   TR::Symbol::RecognizedField recognizedField = TR::Symbol::searchRecognizedField(comp(), owningMethod, cpIndex, false);
    TR::SymbolReference * symRef = findShadowSymbol(owningMethod, cpIndex, type, &recognizedField);
    if (symRef)
       {
