@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 1991, 2019 IBM Corp. and others
+# Copyright (c) 1991, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,7 +40,7 @@ set(OMR_JIT ON CACHE BOOL "")
 set(OMR_COMPILER ON CACHE BOOL "")
 set(OMR_PORT_ASYNC_HANDLER ON CACHE BOOL "")
 set(OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS ON CACHE BOOL "")
-set(OMR_PORT_NUMA_SUPPORT ON CACHE BOOL "")
+set(OMR_PORT_NUMA_SUPPORT OFF CACHE BOOL "")
 set(OMR_THR_JLM ON CACHE BOOL "")
 set(OMR_THR_YIELD_ALG ON CACHE BOOL "")
 set(OMR_THR_SPIN_WAKE_CONTROL ON CACHE BOOL "")

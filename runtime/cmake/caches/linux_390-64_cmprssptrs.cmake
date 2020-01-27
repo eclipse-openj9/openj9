@@ -20,23 +20,5 @@
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 ################################################################################
 
-
-#TODO Platform hacks
-set(J9VM_ARCH_POWER ON CACHE BOOL "")
-set(J9VM_ENV_DATA64 ON CACHE BOOL "")
-set(J9VM_ENV_HAS_FPU ON CACHE BOOL "")
-set(J9VM_ENV_SHARED_LIBS_CALLEE_GLOBAL_TABLE_SETUP OFF CACHE BOOL "")
-set(J9VM_ENV_SHARED_LIBS_USE_GLOBAL_TABLE ON CACHE BOOL "")
-
-set(OMR_GC_TLH_PREFETCH_FTA OFF CACHE BOOL "")
-set(J9VM_PORT_RUNTIME_INSTRUMENTATION ON CACHE BOOL "")
-set(J9VM_MODULE_CODEGEN_PPC ON CACHE BOOL "")
-set(J9VM_GC_IDLE_HEAP_MANAGER OFF CACHE BOOL "")
-set(J9VM_OPT_SWITCH_STACKS_FOR_SIGNAL_HANDLER OFF CACHE BOOL "")
-set(J9VM_THR_ASYNC_NAME_UPDATE OFF CACHE BOOL "")
-
-# Note: In CMake, 'set's on cache variables only apply if the cache variable
-# is not already set. Thus any cache varaibles set in this file, override
-# anything set in common.cmake
-
-include("${CMAKE_CURRENT_LIST_DIR}/common.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/cmprssptrs.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/linux_390-64.cmake")
