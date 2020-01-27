@@ -51,8 +51,10 @@ final class MemberName {
 	/*[ENDIF] Java11 */
 
 	/*[IF Java14]*/
+	Method method;
+
 	public MemberName(Method method) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		this.method = method;
 	}
 
 	public boolean isStatic() {
