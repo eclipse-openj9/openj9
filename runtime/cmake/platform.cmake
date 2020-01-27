@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,3 +74,29 @@ endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=1")
+
+# Hook add_library and add_executable so that we can add rules to strip debug info
+# on all targets.
+# Note: when defining a function 'foo()' any existing definition of 'foo' gets mapped to '_foo'
+
+function(add_library target)
+    # Call the real add_library
+    _add_library(${ARGV})
+
+    # We only need to split debug info on shared libraries
+    if(("SHARED" IN_LIST ARGV) AND (NOT "IMPORTED" IN_LIST ARGV))
+        omr_split_debug("${target}")
+    endif()
+endfunction()
+
+function(add_executable target)
+    # Call the real add_executable
+    _add_executable(${ARGV})
+
+    if(NOT (
+        ("ALIAS" IN_LIST ARGV) OR
+        ("IMPORTED" IN_LIST ARGV)
+    ))
+        omr_split_debug("${target}")
+    endif()
+endfunction()
