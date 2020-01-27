@@ -25,6 +25,7 @@
 package java.lang.invoke;
 
 import java.lang.reflect.Method;
+import sun.invoke.util.Wrapper;
 
 /*
  * Stub class to compile OpenJDK j.l.i.MethodHandleImpl
@@ -116,7 +117,30 @@ class LambdaForm {
 		V_TYPE;
 
 		static BasicType basicType(Class<?> cls) {
-			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+			/* Wrapper.forPrimitiveType throws an IllegalArgumentException for
+			 * non-primitive types (L_TYPE).
+			 */
+			Wrapper wrapper = Wrapper.forPrimitiveType(cls);
+			BasicType basicType = null;
+			if (wrapper != null) {
+				char basicTypeChar = wrapper.basicTypeChar();
+				if ((basicTypeChar == 'C') || (basicTypeChar == 'B') || (basicTypeChar == 'Z')
+					|| (basicTypeChar == 'I') || (basicTypeChar == 'S')
+				) {
+					basicType = I_TYPE;
+				} else if (basicTypeChar == 'J') {
+					basicType = J_TYPE;
+				} else if (basicTypeChar == 'F') {
+					basicType = F_TYPE;
+				} else if (basicTypeChar == 'D') {
+					basicType = D_TYPE;
+				} else if (basicTypeChar == 'V') {
+					basicType = V_TYPE;
+				} else {
+					throw new InternalError("Unknown basic type char: " + basicTypeChar);
+				}
+			}
+			return basicType;
 		}
 	}
 	/*[IF Java10]*/
