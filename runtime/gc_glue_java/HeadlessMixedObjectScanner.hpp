@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,11 +31,11 @@ class GC_HeadlessMixedObjectScanner : public GC_ObjectScanner
 {
 	/* Data Members */
 private:
+	fomrobject_t *_slotPtr; /**< pointer to first slot in current scan segment */
 	fomrobject_t * const _endPtr; /**< end scan pointer */
-	fomrobject_t *_mapPtr; /**< pointer to first slot in current scan segment */
-	uintptr_t *_descriptionPtr; /**< current description pointer */
+	uintptr_t *_slotMapPtr; /**< current description pointer */
 #if defined(J9VM_GC_LEAF_BITS)
-	uintptr_t *_leafPtr; /**< current leaf description pointer */
+	uintptr_t *_leafMapPtr; /**< current leaf description pointer */
 #endif /* J9VM_GC_LEAF_BITS */
 
 protected:
@@ -45,22 +45,40 @@ public:
 	/* Member Functions */
 private:
 
+	MMINLINE bool
+	scanForwards()
+	{
+		while (_slotPtr < _endPtr) {
+			if (*_slotMapPtr != 0) {
+				return true;
+			}
+			_slotPtr += _bitsPerScanMap;
+			_slotMapPtr += 1;
+#if defined(J9VM_GC_LEAF_BITS)
+			_leafMapPtr += 1;
+#endif /* J9VM_GC_LEAF_BITS */
+		}
+		return false;
+	}
+
 protected:
 
 public:
 
 	/**
 	 * @param env The scanning thread environment
-	 * @param[in] objectPtr the object to be processed
+	 * @param[in] clazzPtr Pointer to the object's class
+	 * @param[in] slotPtr Pointer to the first field of the object
+	 * @param[in] objectPtr The object to be processed
 	 * @param[in] flags Scanning context flags
 	 */
-	MMINLINE GC_HeadlessMixedObjectScanner(MM_EnvironmentBase *env, J9Class *clazzPtr, fomrobject_t *scanPtr, uintptr_t flags)
-		: GC_ObjectScanner(env, scanPtr, 0, flags)
+	MMINLINE GC_HeadlessMixedObjectScanner(MM_EnvironmentBase *env, J9Class *clazzPtr, fomrobject_t *slotPtr, uintptr_t flags)
+		: GC_ObjectScanner(env, slotPtr, 0, flags)
+		, _slotPtr(slotPtr)
 		, _endPtr((fomrobject_t *)((uint8_t*)_scanPtr + env->getExtensions()->mixedObjectModel.getSizeInBytesWithoutHeader(clazzPtr)))
-		, _mapPtr(_scanPtr)
-		, _descriptionPtr(NULL)
+		, _slotMapPtr(NULL)
 #if defined(J9VM_GC_LEAF_BITS)
-		, _leafPtr(NULL)
+		, _leafMapPtr(NULL)
 #endif /* J9VM_GC_LEAF_BITS */
 	{
 		_typeId = __FUNCTION__;
@@ -80,22 +98,24 @@ public:
 #if defined(J9VM_GC_LEAF_BITS)
 		_leafMap = (uintptr_t)clazzPtr->instanceLeafDescription;
 #endif /* J9VM_GC_LEAF_BITS */
+
+		/* If the instanceDescription is low tagged, then there is only 1 slot map, and it is
+		 * encoded directly in the instance description.
+		 */
 		if (_scanMap & 1) {
 			_scanMap >>= 1;
-			_descriptionPtr = NULL;
+			_slotMapPtr = NULL;
 #if defined(J9VM_GC_LEAF_BITS)
 			_leafMap >>= 1;
-			_leafPtr = NULL;
+			_leafMapPtr = NULL;
 #endif /* J9VM_GC_LEAF_BITS */
 			setNoMoreSlots();
 		} else {
-			_descriptionPtr = (uintptr_t *)_scanMap;
-			_scanMap = *_descriptionPtr;
-			_descriptionPtr += 1;
+			_slotMapPtr = (uintptr_t *)_scanMap;
+			_scanMap = *_slotMapPtr;
 #if defined(J9VM_GC_LEAF_BITS)
-			_leafPtr = (uintptr_t *)_leafMap;
-			_leafMap = *_leafPtr;
-			_leafPtr += 1;
+			_leafMapPtr = (uintptr_t *)_leafMap;
+			_leafMap = *_leafMapPtr;
 #endif /* J9VM_GC_LEAF_BITS */
 		}
 	}
@@ -115,21 +135,18 @@ public:
 	virtual fomrobject_t *
 	getNextSlotMap(uintptr_t *slotMap, bool *hasNextSlotMap)
 	{
-		fomrobject_t *result = NULL;
+		_slotPtr += _bitsPerScanMap;
+		_slotMapPtr += 1;
+		
+		if (scanForwards()) {
+			*slotMap = *_slotMapPtr;
+			*hasNextSlotMap = _bitsPerScanMap < (_endPtr - _slotPtr);
+			return _slotPtr;
+		}
+
 		*slotMap = 0;
 		*hasNextSlotMap = false;
-		_mapPtr += _bitsPerScanMap;
-		while (_endPtr > _mapPtr) {
-			*slotMap = *_descriptionPtr;
-			_descriptionPtr += 1;
-			if (0 != *slotMap) {
-				*hasNextSlotMap = _bitsPerScanMap < (_endPtr - _mapPtr);
-				result = _mapPtr;
-				break;
-			}
-			_mapPtr += _bitsPerScanMap;
-		}
-		return result;
+		return NULL;
 	}
 
 #if defined(J9VM_GC_LEAF_BITS)
@@ -147,24 +164,21 @@ public:
 	virtual fomrobject_t *
 	getNextSlotMap(uintptr_t *slotMap, uintptr_t *leafMap, bool *hasNextSlotMap)
 	{
-		fomrobject_t *result = NULL;
+		_slotPtr += _bitsPerScanMap;
+		_slotMapPtr += 1;
+		_leafMapPtr += 1;
+		
+		if (scanForwards()) {
+			*slotMap = *_slotMapPtr;
+			*leafMap = *_leafMapPtr;
+			*hasNextSlotMap = _bitsPerScanMap < (_endPtr - _slotPtr);
+			return _slotPtr;
+		}
+
 		*slotMap = 0;
 		*leafMap = 0;
 		*hasNextSlotMap = false;
-		_mapPtr += _bitsPerScanMap;
-		while (_endPtr > _mapPtr) {
-			*slotMap = *_descriptionPtr;
-			_descriptionPtr += 1;
-			*leafMap = *_leafPtr;
-			_leafPtr += 1;
-			if (0 != *slotMap) {
-				*hasNextSlotMap = _bitsPerScanMap < (_endPtr - _mapPtr);
-				result = _mapPtr;
-				break;
-			}
-			_mapPtr += _bitsPerScanMap;
-		}
-		return result;
+		return NULL;
 	}
 #endif /* J9VM_GC_LEAF_BITS */
 };
