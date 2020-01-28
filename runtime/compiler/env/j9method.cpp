@@ -2582,6 +2582,8 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_Math_sqrt,             "sqrt",           "(D)D")},
       {x(TR::java_lang_Math_tan,              "tan",            "(D)D")},
       {x(TR::java_lang_Math_tanh,             "tanh",           "(D)D")},
+      {x(TR::java_lang_Math_fma_D,            "fma",            "(DDD)D")},
+      {x(TR::java_lang_Math_fma_F,            "fma",            "(FFF)F")},
       {  TR::unknownMethod}
       };
 
@@ -2622,6 +2624,8 @@ void TR_ResolvedJ9Method::construct()
       {x(TR::java_lang_StrictMath_sqrt,       "sqrt",            "(D)D")},
       {x(TR::java_lang_StrictMath_tan,        "tan",             "(D)D")},
       {x(TR::java_lang_StrictMath_tanh,       "tan",             "(D)D")},
+      {x(TR::java_lang_StrictMath_fma_D,      "fma",            "(DDD)D")},
+      {x(TR::java_lang_StrictMath_fma_F,      "fma",            "(FFF)F")},
       {  TR::unknownMethod}
       };
 
