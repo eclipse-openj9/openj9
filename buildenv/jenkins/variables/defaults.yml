@@ -152,7 +152,7 @@ ppc64le_linux:
     build: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
   extra_configure_options: '--enable-cuda --with-cuda=/usr/local/cuda-9.0'
   build_env:
-    vars: 'CC=gcc-7 CXX=g++-7'
+    vars: 'PATH+GCC7=/usr/local/gcc-7.5.0/bin LD_LIBRARY_PATH=/usr/local/gcc-7.5.0/lib64:$LD_LIBRARY_PATH'
 #========================================#
 # Linux PPCLE 64bits Large Heap
 #========================================#
@@ -188,7 +188,7 @@ s390x_linux:
   node_labels:
     build: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
   build_env:
-    vars: 'CC=gcc-7 CXX=g++-7'
+    vars: 'PATH+GCC7=/usr/local/gcc-7.5.0/bin LD_LIBRARY_PATH=/usr/local/gcc-7.5.0/lib64:$LD_LIBRARY_PATH'
   excluded_tests:
     11:
       - special.system
@@ -263,7 +263,7 @@ x86-64_linux:
     8: '--enable-jitserver'
     11: '--enable-jitserver'
   build_env:
-    cmd: 'source /opt/rh/devtoolset-7/enable'
+    cmd: 'source /home/jenkins/set_gcc7.5.0_env'
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
   excluded_tests:
     11:
