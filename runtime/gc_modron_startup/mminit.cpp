@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -855,41 +855,6 @@ gcInitializeCalculatedValues(J9JavaVM *javaVM, IDATA* memoryParameters)
 
 	/* Number of GC threads must be initialized at this point */
 	Assert_MM_true(0 < extensions->gcThreadCount);
-
-	/* initialize packet lock splitting factor */
-	if (0 == extensions->packetListSplit) {
-		if (16 >= extensions->gcThreadCount) {
-			extensions->packetListSplit = extensions->gcThreadCount;
-		} else if (32 >= extensions->gcThreadCount) {
-			extensions->packetListSplit = 16 + ((extensions->gcThreadCount - 16) / 4);
-		} else {
-			extensions->packetListSplit = 20 + ((extensions->gcThreadCount - 32) / 8);
-		}
-	}
-
-	/* initialize scan cache lock splitting factor */
-	if (0 == extensions->cacheListSplit) {
-		if (16 >= extensions->gcThreadCount) {
-			extensions->cacheListSplit = extensions->gcThreadCount;
-		} else if (32 >= extensions->gcThreadCount) {
-			extensions->cacheListSplit = 16 + ((extensions->gcThreadCount - 16) / 4);
-		} else {
-			extensions->cacheListSplit = 20 + ((extensions->gcThreadCount - 32) / 8);
-		}
-	}
-
-	/* initialize default split freelist split amount */
-	if (0 == extensions->splitFreeListSplitAmount) {
-#if defined(J9VM_GC_MODRON_SCAVENGER)
-		if (extensions->scavengerEnabled) {
-			extensions->splitFreeListSplitAmount = (extensions->gcThreadCount - 1) / 8  +  1;
-		} else
-#endif /* J9VM_GC_MODRON_SCAVENGER */
-		{
-			PORT_ACCESS_FROM_JAVAVM(javaVM);
-			extensions->splitFreeListSplitAmount = (j9sysinfo_get_number_CPUs_by_type(J9PORT_CPU_ONLINE) - 1) / 8  +  1;
-		}
-	}
 
 	/* initialize the size of Local Object Buffer */
 	if (0 == extensions->objectListFragmentCount) {
@@ -2697,8 +2662,6 @@ setConfigOptionsForNoGc(MM_GCExtensions *extensions)
 	extensions->gcThreadCountForced = true;
 	extensions->gcThreadCount = 1;
 
-	extensions->packetListSplit = 1;
-	extensions->cacheListSplit = 1;
 	extensions->splitFreeListSplitAmount = 1;
 	extensions->objectListFragmentCount = 1;
 
