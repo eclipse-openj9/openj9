@@ -362,12 +362,15 @@ public abstract class VarHandle extends VarHandleInternal
 				MethodType lookupType = lookupTypes[accessMode.ordinal()];
 				if (lookupType != null) {
 					operationMHs[accessMode.ordinal()] = _lookup.findStatic(operationsClass, accessMode.methodName(), lookupType);
-					if (lookupTypes != exactTypes) {
+					if (lookupTypes == exactTypes) {
+						operationMHs[accessMode.ordinal()] = permuateHandleJEP370(operationMHs[accessMode.ordinal()]);
+					} else {
 						/* Clone the MethodHandles with the exact types if different set of exactTypes are provided. */
 						MethodType exactType = exactTypes[accessMode.ordinal()];
 						if (exactType != null) {
 							operationMHs[accessMode.ordinal()] = operationMHs[accessMode.ordinal()].cloneWithNewType(exactType);
 						}
+						operationMHs[accessMode.ordinal()] = permuateHandleJEP370(operationMHs[accessMode.ordinal()]);
 					}
 				}
 			}
@@ -379,6 +382,39 @@ public abstract class VarHandle extends VarHandleInternal
 		}
 
 		return operationMHs;
+	}
+
+	/**
+	 * Generate a MethodHandle which translates:
+	 *     FROM {Receiver, Intermediate ..., Value, VarHandle}ReturnType
+	 *     TO   {VarHandle, Receiver, Intermediate ..., Value}ReturnType
+	 *     
+	 * @param methodHandle to be permuted.
+	 * @return the adapter MethodHandle which performs the translation.
+	 */
+	static MethodHandle permuateHandleJEP370(MethodHandle methodHandle) {
+		/* HandleType = {VarHandle, Receiver, Intermediate ..., Value}
+		 * PermuteType = {Receiver, Intermediate ..., Value, VarHandle}
+		 */
+		MethodType permuteMethodType = methodHandle.type;
+		int parameterCount = permuteMethodType.parameterCount();
+		Class<?> firstParameter = permuteMethodType.parameterType(0);
+		permuteMethodType = permuteMethodType.dropFirstParameterType();
+		permuteMethodType = permuteMethodType.appendParameterTypes(firstParameter);
+
+		/* reorder specifies the mapping between PermuteType and HandleType
+		 * reorder = {parameterCount - 1, 0, 1, 2, ..., parameterCount - 2}
+		 */
+		int[] reorder = new int[parameterCount];
+		for (int i = 0; i < parameterCount; i++) {
+			if (i == 0) {
+				reorder[i] = parameterCount - 1;
+			} else {
+				reorder[i] = i - 1;
+			}
+		}
+
+		return MethodHandles.permuteArguments(methodHandle, permuteMethodType, reorder);
 	}
 /*[ENDIF] Java14 */
 
