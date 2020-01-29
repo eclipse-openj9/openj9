@@ -998,9 +998,8 @@ J9::ARM64::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, boo
    TR::ILOpCode &opCode = firstChild->getOpCode();
    TR::Node *reference = NULL;
    TR::Compilation *comp = cg->comp();
-   bool useCompressedPointers = comp->useCompressedPointers();
 
-   if (useCompressedPointers && firstChild->getOpCodeValue() == TR::l2a)
+   if (comp->useCompressedPointers() && firstChild->getOpCodeValue() == TR::l2a)
       {
       TR::ILOpCodes loadOp = cg->comp()->il.opCodeForIndirectLoad(TR::Int32);
       TR::ILOpCodes rdbarOp = cg->comp()->il.opCodeForIndirectReadBarrier(TR::Int32);
@@ -1020,10 +1019,26 @@ J9::ARM64::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, boo
    TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64HelperCallSnippet(cg, node, snippetLabel, node->getSymbolReference(), NULL);
    cg->addSnippet(snippet);
    TR::Register *referenceReg = cg->evaluate(reference);
-   TR::InstOpCode::Mnemonic compareOp = useCompressedPointers ? TR::InstOpCode::cbzw : TR::InstOpCode::cbzx;
-   TR::Instruction *cbzInstruction = generateCompareBranchInstruction(cg, compareOp, node, referenceReg, snippetLabel, NULL);
+   TR::Instruction *cbzInstruction = generateCompareBranchInstruction(cg, TR::InstOpCode::cbzx, node, referenceReg, snippetLabel, NULL);
    cbzInstruction->setNeedsGCMap(0xffffffff);
    snippet->gcMap().setGCRegisterMask(0xffffffff);
+
+   if (comp->useCompressedPointers()
+         && reference->getOpCodeValue() == TR::l2a)
+      {
+      TR::Node *n = reference->getFirstChild();
+      reference->setIsNonNull(true);
+      TR::ILOpCodes loadOp = cg->comp()->il.opCodeForIndirectLoad(TR::Int32);
+      TR::ILOpCodes rdbarOp = cg->comp()->il.opCodeForIndirectReadBarrier(TR::Int32);
+      while ((n->getOpCodeValue() != loadOp) && (n->getOpCodeValue() != rdbarOp))
+         {
+         n->setIsNonZero(true);
+         n = n->getFirstChild();
+         }
+      n->setIsNonZero(true);
+      }
+
+   reference->setIsNonNull(true);
 
    /*
    * If the first child is a load with a ref count of 1, just decrement the reference count on the child.
@@ -1045,7 +1060,7 @@ J9::ARM64::TreeEvaluator::evaluateNULLCHKWithPossibleResolve(TR::Node *node, boo
       }
    else
       {
-      if (useCompressedPointers)
+      if (comp->useCompressedPointers())
          {
          bool fixRefCount = false;
          if (firstChild->getOpCode().isStoreIndirect()
