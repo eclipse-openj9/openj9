@@ -106,6 +106,11 @@
 #define J9FieldTypeMask 0x380000
 #define J9FieldTypeShort 0x280000
 
+/* Constants from J9RecordComponentFlags */
+#define J9RecordComponentFlagHasGenericSignature 0x1
+#define J9RecordComponentFlagHasAnnotations 0x2
+#define J9RecordComponentFlagHasTypeAnnotations 0x4
+
 /* @ddr_namespace: map_to_type=J9ArrayShapeFlags */
 
 /* Constants from J9ArrayShapeFlags */
@@ -237,6 +242,7 @@
 #define J9_ROMCLASS_OPTINFO_UNUSED_100000 0x100000
 #define J9_ROMCLASS_OPTINFO_UNUSED 0x200000
 #define J9_ROMCLASS_OPTINFO_TYPE_ANNOTATION_INFO 0x400000
+#define J9_ROMCLASS_OPTINFO_RECORD_ATTRIBUTE 0x800000
 
 /* Constants for checkVisibility return results */
 #define J9_VISIBILITY_ALLOWED 1
@@ -693,6 +699,14 @@ typedef struct J9ROMStaticFieldShape {
 
 #define J9ROMSTATICFIELDSHAPE_NAME(base) NNSRP_GET((&((base)->nameAndSignature))->name, struct J9UTF8*)
 #define J9ROMSTATICFIELDSHAPE_SIGNATURE(base) NNSRP_GET((&((base)->nameAndSignature))->signature, struct J9UTF8*)
+
+typedef struct J9ROMRecordComponentShape {
+	struct J9ROMNameAndSignature nameAndSignature;
+	U_32 attributeFlags;
+} J9ROMRecordComponentShape;
+
+#define J9ROMRECORDCOMPONENTSHAPE_NAME(base) NNSRP_GET((&((base)->nameAndSignature))->name, struct J9UTF8*)
+#define J9ROMRECORDCOMPONENTSHAPE_SIGNATURE(base) NNSRP_GET((&((base)->nameAndSignature))->signature, struct J9UTF8*)
 
 /* @ddr_namespace: map_to_type=J9VMExt */
 

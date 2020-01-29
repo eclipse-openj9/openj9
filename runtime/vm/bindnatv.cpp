@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -85,6 +85,7 @@ static inlMapping mappings[] = {
 	{ "Java_java_lang_Class_getModifiersImpl__", J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_MODIFIERS_IMPL },
 	{ "Java_java_lang_Class_getComponentType__", J9_BCLOOP_SEND_TARGET_INL_CLASS_GET_COMPONENT_TYPE },
 	{ "Java_java_lang_Class_arrayTypeImpl__", J9_BCLOOP_SEND_TARGET_CLASS_ARRAY_TYPE_IMPL },
+	{ "Java_java_lang_Class_isRecord__", J9_BCLOOP_SEND_TARGET_CLASS_IS_RECORD },
 	{ "Java_java_lang_System_arraycopy__Ljava_lang_Object_2ILjava_lang_Object_2II", J9_BCLOOP_SEND_TARGET_INL_SYSTEM_ARRAYCOPY },
 	{ "Java_java_lang_System_currentTimeMillis__", J9_BCLOOP_SEND_TARGET_INL_SYSTEM_CURRENT_TIME_MILLIS },
 	{ "Java_java_lang_System_nanoTime__", J9_BCLOOP_SEND_TARGET_INL_SYSTEM_NANO_TIME },
