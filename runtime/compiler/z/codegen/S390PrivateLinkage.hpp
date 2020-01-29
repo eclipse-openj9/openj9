@@ -114,8 +114,6 @@ protected:
    TR::Instruction * buildDirectCall(TR::Node * callNode, TR::SymbolReference * callSymRef,
    TR::RegisterDependencyConditions * dependencies, int32_t argSize);
 
-   virtual void mapIncomingParms(TR::ResolvedMethodSymbol *method);
-
    void callPreJNICallOffloadCheck(TR::Node * callNode);
    void callPostJNICallOffloadCheck(TR::Node * callNode);
    void collapseJNIReferenceFrame(TR::Node * callNode, TR::RealRegister * javaStackPointerRealRegister,

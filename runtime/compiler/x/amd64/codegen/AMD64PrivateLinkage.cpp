@@ -692,40 +692,6 @@ TR_J2IThunk *J9::X86::AMD64::PrivateLinkage::generateInvokeExactJ2IThunk(TR::Nod
    return thunk;
    }
 
-
-////////////////////////////////////////////////
-//
-// Prologue and Epilogue
-//
-
-void J9::X86::AMD64::PrivateLinkage::mapIncomingParms(TR::ResolvedMethodSymbol *method)
-   {
-   TR_ASSERT(!getProperties().passArgsRightToLeft(), "Right-to-left not yet implemented on AMD64");
-
-   ListIterator<TR::ParameterSymbol> parameterIterator(&method->getParameterList());
-   TR::ParameterSymbol              *parmCursor   = parameterIterator.getFirst();
-
-   // Adjust the offsets to the right relative positions
-   //
-   int32_t offset = 0;
-   for (parmCursor = parameterIterator.getFirst(); parmCursor; parmCursor = parameterIterator.getNext())
-      {
-      offset -= parmCursor->getRoundedSize() * ((DOUBLE_SIZED_ARGS && parmCursor->getDataType() != TR::Address) ? 2 : 1);
-      parmCursor->setParameterOffset(offset);
-      }
-
-   // Now that we know the total size of the parameters, we know where they all go.
-   // Bump the offsets to the right absolute positions.
-   // TODO:AMD64: Isn't there a way to run through the parms backward, and avoid this second pass?
-   //
-   const int32_t bump = getProperties().getOffsetToFirstParm() - offset;
-   for (parmCursor = parameterIterator.getFirst(); parmCursor; parmCursor = parameterIterator.getNext())
-      {
-      parmCursor->setParameterOffset(bump + parmCursor->getParameterOffset());
-      }
-
-   }
-
 TR::Instruction *J9::X86::AMD64::PrivateLinkage::savePreservedRegisters(TR::Instruction *cursor)
    {
    TR::ResolvedMethodSymbol *bodySymbol  = comp()->getJittedMethodSymbol();

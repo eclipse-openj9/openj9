@@ -73,8 +73,6 @@ class PrivateLinkage : public J9::X86::PrivateLinkage
          TR::Node *callNode,
          TR::RegisterDependencyConditions *dependencies);
 
-   virtual void mapIncomingParms(TR::ResolvedMethodSymbol *method);
-
    int32_t buildPrivateLinkageArgs(
          TR::Node *callNode,
          TR::RegisterDependencyConditions *dependencies,

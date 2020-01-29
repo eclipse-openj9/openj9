@@ -566,36 +566,7 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
       }
    method->setLocalMappingCursor(stackIndex);
 
-   ListIterator<TR::ParameterSymbol> parameterIterator(&method->getParameterList());
-   TR::ParameterSymbol              *parmCursor = parameterIterator.getFirst();
-   int32_t                          offsetToFirstParm = linkage.getOffsetToFirstParm();
-   if (linkage.getRightToLeft())
-      {
-      while (parmCursor != NULL)
-         {
-         parmCursor->setParameterOffset(parmCursor->getParameterOffset() + offsetToFirstParm);
-         parmCursor = parameterIterator.getNext();
-         }
-      }
-   else
-      {
-      uint32_t sizeOfParameterArea = method->getNumParameterSlots() * TR::Compiler->om.sizeofReferenceAddress();
-      while (parmCursor != NULL)
-         {
-         if (comp()->target().is64Bit() &&
-             parmCursor->getDataType() != TR::Address)
-            parmCursor->setParameterOffset(sizeOfParameterArea -
-                                        parmCursor->getParameterOffset() -
-                                        parmCursor->getSize()*2 +
-                                        offsetToFirstParm);
-         else
-            parmCursor->setParameterOffset(sizeOfParameterArea -
-                                        parmCursor->getParameterOffset() -
-                                        parmCursor->getSize() +
-                                        offsetToFirstParm);
-         parmCursor = parameterIterator.getNext();
-         }
-      }
+   mapIncomingParms(method);
 
    atlas->setLocalBaseOffset(lowGCOffset - firstLocalOffset);
    atlas->setParmBaseOffset(atlas->getParmBaseOffset() + offsetToFirstParm - firstLocalOffset);
