@@ -272,7 +272,7 @@ patchRAMConstantPool(J9VMThread *currentThread, J9Class *clazz, jobjectArray cpP
 	for (U_16 i = 0; i < arrayBound; i++) {
 		item = J9JAVAARRAYOFOBJECT_LOAD(currentThread, array, i);
 		if (item != NULL) {
-			switch (J9_CP_TYPE(cpShapeDescription, i)) {
+			switch (J9_CP_TYPE(cpShapeDescription, cpIndexMap[i])) {
 				case J9CPTYPE_CLASS:
 					if (!J9ROMCLASS_IS_PRIMITIVE_TYPE(clazz->romClass)) {
 						J9RAMClassRef *ramClassRef = ((J9RAMClassRef*)ramCP) + cpIndexMap[i];
