@@ -258,6 +258,15 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 	if (NULL != spine) {
 		switch (_layout) {
 		case GC_ArrayletObjectModel::Discontiguous:
+			/* if last arraylet leaf is empty (contains 0 bytes) arrayoid pointer is set to NULL */
+			if (arrayoidIndex == (_numberOfArraylets - 1)) {
+				Assert_MM_true(0 == (_dataSize % arrayletLeafSize));
+				GC_SlotObject slotObject(env->getOmrVM(), &(arrayoidPtr[arrayoidIndex]));
+				slotObject.writeReferenceToSlot(NULL);
+			} else {
+				Assert_MM_true(0 != (_dataSize % arrayletLeafSize));
+				Assert_MM_true(arrayoidIndex == _numberOfArraylets);
+			}
 #if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
 			if (extensions->indexableObjectModel.isDoubleMappingEnabled()) {
 				/**
@@ -269,15 +278,6 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 				}
 			}
 #endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
-			/* if last arraylet leaf is empty (contains 0 bytes) arrayoid pointer is set to NULL */
-			if (arrayoidIndex == (_numberOfArraylets - 1)) {
-				Assert_MM_true(0 == (_dataSize % arrayletLeafSize));
-				GC_SlotObject slotObject(env->getOmrVM(), GC_SlotObject::addToSlotAddress(arrayoidPtr, arrayoidIndex, compressed));
-				slotObject.writeReferenceToSlot(NULL);
-			} else {
-				Assert_MM_true(0 != (_dataSize % arrayletLeafSize));
-				Assert_MM_true(arrayoidIndex == _numberOfArraylets);
-			}
 			break;
 
 		case GC_ArrayletObjectModel::Hybrid:
