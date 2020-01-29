@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -150,13 +150,15 @@ public:
 		_doDebugCompare(false),
 		_existingRomMethod(NULL),
 		_reusingIntermediateClassData(false),
-		_creatingIntermediateROMClass(creatingIntermediateROMClass)
+		_creatingIntermediateROMClass(creatingIntermediateROMClass),
+		_patchMap(NULL)
 	{
 		if ((NULL != _javaVM) && (NULL != _javaVM->dynamicLoadBuffers)) {
 			/* localBuffer should not be NULL */
 			Trc_BCU_Assert_True(NULL != localBuffer);
 			_cpIndex = localBuffer->entryIndex;
 			_loadLocation = localBuffer->loadLocationType;
+			_patchMap = localBuffer->patchMap;
 			_sharedStringInternTable = _javaVM->sharedInvariantInternTable;
 			_interningEnabled = J9_ARE_ALL_BITS_SET(_bcuFlags, BCU_ENABLE_INVARIANT_INTERNING) && J9_ARE_NO_BITS_SET(_findClassFlags, J9_FINDCLASS_FLAG_ANON);
 			if (0 != (bcuFlags & BCU_VERBOSE)) {
@@ -189,6 +191,7 @@ public:
 	J9PortLibrary *portLibrary() const { return _portLibrary; }
 	UDATA cpIndex() const { return _cpIndex; }
 	UDATA loadLocation() const {return _loadLocation; }
+	J9ClassPatchMap *patchMap() const { return _patchMap; }
 	J9SharedInvariantInternTable *sharedStringInternTable() const { return _sharedStringInternTable; }
 
 	U_8 *intermediateClassData() const { return _intermediateClassData; }
@@ -741,6 +744,7 @@ private:
 	J9ROMMethod * _existingRomMethod;
 	bool _reusingIntermediateClassData;
 	bool _creatingIntermediateROMClass;
+	J9ClassPatchMap *_patchMap;
 
 	J9ROMMethod * romMethodFromOffset(IDATA offset);
 };

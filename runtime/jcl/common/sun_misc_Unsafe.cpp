@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,8 @@
 
 extern "C" {
 
+#define BUFFER_SIZE 128
+
 jclass JNICALL 
 Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader_2Ljava_security_ProtectionDomain_2(
 	JNIEnv *env, jobject receiver, jstring className, jbyteArray classRep, jint offset, jint length, jobject classLoader, jobject protectionDomain)
@@ -59,7 +61,7 @@ Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader
 		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
-	return defineClassCommon(env, classLoader, className, classRep, offset, length, protectionDomain, J9_FINDCLASS_FLAG_UNSAFE, NULL);
+	return defineClassCommon(env, classLoader, className, classRep, offset, length, protectionDomain, J9_FINDCLASS_FLAG_UNSAFE, NULL, NULL);
 }
 
 jclass JNICALL
@@ -68,9 +70,6 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 	J9VMThread *currentThread = (J9VMThread *)env;
 	J9JavaVM *vm = currentThread->javaVM;
 	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
-
-	/* For JSR335 this should be NULL */
-	Assert_JCL_true(constPatches == NULL);
 
 	vmFuncs->internalEnterVMFromJNI(currentThread);
 	if (NULL == bytecodes) {
@@ -96,17 +95,62 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 		hostClassLoader = vm->systemClassLoader->classLoaderObject;
 	}
 	jobject hostClassLoaderLocalRef = vmFuncs->j9jni_createLocalRef(env, hostClassLoader);
+
+	J9ClassPatchMap cpPatchMap = {0, NULL};
+	j9array_t patchArray = NULL;
+	PORT_ACCESS_FROM_ENV(env);
+
+	U_16 indexMap[BUFFER_SIZE];
+	if (constPatches != NULL) {
+		patchArray = (j9array_t)J9_JNI_UNWRAP_REFERENCE(constPatches);
+		cpPatchMap.size = (U_16)J9INDEXABLEOBJECT_SIZE(currentThread, patchArray);
+		if (cpPatchMap.size <= BUFFER_SIZE) {
+			cpPatchMap.indexMap = indexMap;
+		} else {
+			cpPatchMap.indexMap = (U_16 *)j9mem_allocate_memory(cpPatchMap.size * sizeof(U_16), J9MEM_CATEGORY_VM);
+
+			if (cpPatchMap.indexMap == NULL) {
+				vmFuncs->internalExitVMToJNI(currentThread);
+				vmFuncs->throwNativeOOMError(env, 0, 0);
+				return NULL;
+			}
+		}
+	}
+
 	vmFuncs->internalExitVMToJNI(currentThread);
 
 	jsize length = env->GetArrayLength(bytecodes);
 
 	/* acquires access internally */
-	jclass anonClass = defineClassCommon(env, hostClassLoaderLocalRef, NULL,bytecodes, 0, length, protectionDomainLocalRef, J9_FINDCLASS_FLAG_UNSAFE | J9_FINDCLASS_FLAG_ANON, hostClazz);
+	jclass anonClass = defineClassCommon(env, hostClassLoaderLocalRef, NULL,bytecodes, 0, length, protectionDomainLocalRef, J9_FINDCLASS_FLAG_UNSAFE | J9_FINDCLASS_FLAG_ANON, hostClazz, &cpPatchMap);
 	if (env->ExceptionCheck()) {
 		return NULL;
 	} else if (NULL == anonClass) {
 		throwNewInternalError(env, NULL);
 		return NULL;
+	}
+
+	if (constPatches != NULL) {
+		vmFuncs->internalEnterVMFromJNI(currentThread);
+		J9Class *clazz = J9VM_J9CLASS_FROM_HEAPCLASS(currentThread, J9_JNI_UNWRAP_REFERENCE(anonClass));
+
+		j9object_t item = NULL;
+		U_32 *cpShapeDescription = J9ROMCLASS_CPSHAPEDESCRIPTION(clazz->romClass);
+		J9ConstantPool *ramCP = J9_CP_FROM_CLASS(clazz);
+
+		for (U_16 i = 0; i < cpPatchMap.size; i++) {
+			item = J9JAVAARRAYOFOBJECT_LOAD(currentThread, patchArray, i);
+			if ((item != NULL) && (J9_CP_TYPE(cpShapeDescription, cpPatchMap.indexMap[i]) == J9CPTYPE_STRING)) {
+				J9RAMStringRef *ramStringRef = ((J9RAMStringRef *)ramCP) + cpPatchMap.indexMap[i];
+				J9STATIC_OBJECT_STORE(currentThread, clazz, &ramStringRef->stringObject, item);
+			}
+		}
+
+		if (cpPatchMap.size > BUFFER_SIZE) {
+			j9mem_free_memory(cpPatchMap.indexMap);
+			cpPatchMap.indexMap = NULL;
+		}
+		vmFuncs->internalExitVMToJNI(currentThread);
 	}
 
 	return anonClass;

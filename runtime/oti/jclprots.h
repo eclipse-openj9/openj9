@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -708,7 +708,7 @@ UDATA initializeRequiredClasses(J9VMThread *vmThread, char* libName);
 /* J9SourceJclDefineClass*/
 extern J9_CFUNC jclass 
 defineClassCommon (JNIEnv *env, jobject classLoaderObject,
-	jstring className, jbyteArray classRep, jint offset, jint length, jobject protectionDomain, UDATA options, J9Class *hostClass);
+	jstring className, jbyteArray classRep, jint offset, jint length, jobject protectionDomain, UDATA options, J9Class *hostClass, J9ClassPatchMap *patchMap);
 
 /* BBjclNativesCommonAccessController*/
 jboolean JNICALL Java_java_security_AccessController_initializeInternal (JNIEnv *env, jclass thisClz);
