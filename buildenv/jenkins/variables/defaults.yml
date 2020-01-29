@@ -208,6 +208,11 @@ ppc64le_linux_xl:
     11:
       - special.system
 #========================================#
+# Linux PPCLE 64bits Large Heap /w cmake
+#========================================#
+ppc64le_linux_xl_cm:
+  extends: ['ppc64le_linux_xl', 'cmake']
+#========================================#
 # Linux PPCLE 64bits Compressed Pointers /w JITSERVER
 #========================================#
 ppc64le_linux_jit:
@@ -233,6 +238,11 @@ s390x_linux:
     build: 'ci.role.build && hw.arch.s390x && sw.os.rhel.7'
   build_env:
     cmd: 'source /home/jenkins/set_gcc7.5.0_env'
+#========================================#
+# Linux S390 64bits Compressed Pointers /w CMake
+#========================================#
+s390x_linux_cm:
+  extends: ['s390x_linux', 'cmake']
 #========================================#
 # Linux S390 64bits Large Heap
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an

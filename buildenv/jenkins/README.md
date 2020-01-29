@@ -48,6 +48,9 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - Linux on s390x
         - Spec: s390x_linux
         - Shortname: zlinux
+    - Linux on s390x with CMake
+        - Spec: s390x_linux_cm
+        - Shortname: zlinuxcm or zlinuxcmake
     - Linux on ppc64le
         - Spec: ppc64le_linux
         - Shortname: plinux
