@@ -2308,6 +2308,11 @@ UDATA getJitDataResolvePushes()
       CR
    */
    return 33;
+#elif defined(TR_HOST_ARM64)
+   /* ARM64 data resolve shape
+      29 integer registers (not saving x29/x30/x31)
+   */
+   return 29;
 #else
    return 0;
 #endif
