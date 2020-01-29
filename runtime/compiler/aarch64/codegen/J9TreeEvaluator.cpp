@@ -723,29 +723,102 @@ static void VMoutlinedHelperWrtbarEvaluator(TR::Node *node, TR::Register *srcReg
 TR::Register *
 J9::ARM64::TreeEvaluator::ArrayStoreCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::Node *wrtBarNode = node->getFirstChild();
-   TR::Node *srcNode = wrtBarNode->getSecondChild();
-   TR::Node *dstNode = wrtBarNode->getThirdChild();
-   TR::Register *srcReg = cg->evaluate(srcNode);
-   TR::Register *dstReg = cg->evaluate(dstNode);
+   TR::Compilation *comp = cg->comp();
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *sourceChild = firstChild->getSecondChild();
+   TR::Node *dstNode = firstChild->getThirdChild();
 
-   if (!srcNode->isNull())
+   bool usingCompressedPointers = false;
+   if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
+      {
+      // pattern match the sequence
+      // ArrayStoreCHK     ArrayStoreCHK
+      //   awrtbari          awrtbari               <- firstChild
+      //     aladd             aladd
+      //       ...               ...
+      //     value             l2i
+      //     aload               lshr
+      //                           lsub
+      //                             a2l
+      //                               value        <- sourceChild
+      //                             lconst HB
+      //                           iconst shftKonst
+      //                       aload                <- dstNode
+      //
+      // -or- if the value is known to be null
+      // ArrayStoreCHK
+      //    awrtbari
+      //      aladd
+      //        ...
+      //      l2i
+      //        a2l
+      //          value  <- sourceChild
+      //      aload      <- dstNode
+      //
+      TR::Node *translatedNode = sourceChild;
+      if (translatedNode->getOpCode().isConversion())
+         translatedNode = translatedNode->getFirstChild();
+      if (translatedNode->getOpCode().isRightShift()) // optional
+         translatedNode = translatedNode->getFirstChild();
+
+      bool usingLowMemHeap = false;
+      if (TR::Compiler->vm.heapBaseAddress() == 0 || sourceChild->isNull())
+         usingLowMemHeap = true;
+
+      if ((translatedNode->getOpCode().isSub()) || usingLowMemHeap)
+         usingCompressedPointers = true;
+
+      if (usingCompressedPointers)
+         {
+         while ((sourceChild->getNumChildren() > 0) && (sourceChild->getOpCodeValue() != TR::a2l))
+            sourceChild = sourceChild->getFirstChild();
+         if (sourceChild->getOpCodeValue() == TR::a2l)
+            sourceChild = sourceChild->getFirstChild();
+         }
+      }
+
+   TR::Register *srcReg;
+   TR::Register *dstReg = cg->evaluate(dstNode);
+   bool stopUsingSrc = false;
+   if (sourceChild->getReferenceCount() > 1 && (srcReg = sourceChild->getRegister()) != NULL)
+      {
+      TR::Register *tempReg = cg->allocateCollectedReferenceRegister();
+
+      // Source must be an object.
+      TR_ASSERT(!srcReg->containsInternalPointer(), "Stored value is an internal pointer");
+      generateMovInstruction(cg, node, tempReg, srcReg);
+      srcReg = tempReg;
+      stopUsingSrc = true;
+      }
+   else
+      {
+      srcReg = cg->evaluate(sourceChild);
+      }
+   if (!sourceChild->isNull())
       {
       VMoutlinedHelperArrayStoreCHKEvaluator(node, srcReg, dstReg, cg);
       }
+   TR::InstOpCode::Mnemonic storeOp = usingCompressedPointers ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
+   TR::Register *translatedSrcReg = usingCompressedPointers ? cg->evaluate(firstChild->getSecondChild()) : srcReg;
+   int32_t sizeofMR = usingCompressedPointers ? TR::Compiler->om.sizeofReferenceField() : TR::Compiler->om.sizeofReferenceAddress();
 
-   TR::MemoryReference *storeMR = new (cg->trHeapMemory()) TR::MemoryReference(wrtBarNode, TR::Compiler->om.sizeofReferenceAddress(), cg);
-   generateMemSrc1Instruction(cg, TR::InstOpCode::strimmx, node, storeMR, srcReg);
+   TR::MemoryReference *storeMR = new (cg->trHeapMemory()) TR::MemoryReference(firstChild, sizeofMR, cg);
+   generateMemSrc1Instruction(cg, storeOp, node, storeMR, translatedSrcReg);
 
-   if (!srcNode->isNull())
+   if (!sourceChild->isNull())
       {
-      VMoutlinedHelperWrtbarEvaluator(wrtBarNode, srcReg, dstReg, cg);
+      VMoutlinedHelperWrtbarEvaluator(firstChild, srcReg, dstReg, cg);
       }
 
-   cg->decReferenceCount(srcNode);
+   if (comp->useCompressedPointers() && firstChild->getOpCode().isIndirect())
+      firstChild->setStoreAlreadyEvaluated(true);
+
+   cg->decReferenceCount(firstChild->getSecondChild());
    cg->decReferenceCount(dstNode);
    storeMR->decNodeReferenceCounts(cg);
-   cg->decReferenceCount(wrtBarNode);
+   cg->decReferenceCount(firstChild);
+   if (stopUsingSrc)
+      cg->stopUsingRegister(srcReg);
 
    return NULL;
    }
