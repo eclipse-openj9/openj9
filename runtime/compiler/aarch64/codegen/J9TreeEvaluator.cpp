@@ -384,11 +384,61 @@ J9::ARM64::TreeEvaluator::DIVCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)
 TR::Register *
 J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::ILOpCodes opCode = node->getOpCodeValue();
-   TR::Node::recreate(node, TR::call);
-   TR::Register *targetRegister = directCallEvaluator(node, cg);
-   TR::Node::recreate(node, opCode);
-   return targetRegister;
+   TR::Compilation *comp = TR::comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   int32_t lwOffset = fej9->getByteOffsetToLockword(cg->getMonClass(node));
+   TR::InstOpCode::Mnemonic op;
+
+   if (comp->getOption(TR_OptimizeForSpace) ||
+       comp->getOption(TR_FullSpeedDebug) ||
+       comp->getOption(TR_DisableInlineMonEnt) ||
+       lwOffset <= 0)
+      {
+      TR::ILOpCodes opCode = node->getOpCodeValue();
+      TR::Node::recreate(node, TR::call);
+      TR::Register *targetRegister = directCallEvaluator(node, cg);
+      TR::Node::recreate(node, opCode);
+      return targetRegister;
+      }
+
+   TR::Node *objNode = node->getFirstChild();
+   TR::Register *objReg = cg->evaluate(objNode);
+   TR::Register *dataReg = cg->allocateRegister();
+   TR::Register *addrReg = cg->allocateRegister();
+   TR::Register *tempReg = cg->allocateRegister();
+   TR::Register *metaReg = cg->getMethodMetaDataRegister();
+
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(4, 4, cg->trMemory());
+   TR::addDependency(deps, objReg, TR::RealRegister::x0, TR_GPR, cg);
+   TR::addDependency(deps, dataReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, addrReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
+
+   TR::LabelSymbol *callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *decLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, objReg, lwOffset);
+   op = fej9->generateCompressedLockWord() ? TR::InstOpCode::ldrimmw : TR::InstOpCode::ldrimmx;
+   generateTrg1MemInstruction(cg, op, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
+   generateCompareInstruction(cg, node, dataReg, metaReg, true);
+
+   generateConditionalBranchInstruction(cg, TR::InstOpCode::b_cond, node, decLabel, TR::CC_NE);
+
+   generateTrg1ImmInstruction(cg, TR::InstOpCode::movzx, node, tempReg, 0);
+   generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF); // dmb SY
+   op = fej9->generateCompressedLockWord() ? TR::InstOpCode::strimmw : TR::InstOpCode::strimmx;
+   generateMemSrc1Instruction(cg, op, node, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), tempReg);
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
+
+   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64MonitorExitSnippet(cg, node, decLabel, callLabel, doneLabel);
+   cg->addSnippet(snippet);
+   doneLabel->setEndInternalControlFlow();
+
+   cg->decReferenceCount(objNode);
+   cg->machine()->setLinkRegisterKilled(true);
+   return NULL;
    }
 
 TR::Register *
@@ -537,11 +587,63 @@ J9::ARM64::TreeEvaluator::anewArrayEvaluator(TR::Node *node, TR::CodeGenerator *
 TR::Register *
 J9::ARM64::TreeEvaluator::monentEvaluator(TR::Node *node, TR::CodeGenerator *cg)
    {
-   TR::ILOpCodes opCode = node->getOpCodeValue();
-   TR::Node::recreate(node, TR::call);
-   TR::Register *targetRegister = directCallEvaluator(node, cg);
-   TR::Node::recreate(node, opCode);
-   return targetRegister;
+   TR::Compilation *comp = TR::comp();
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
+   int32_t lwOffset = fej9->getByteOffsetToLockword(cg->getMonClass(node));
+   TR::InstOpCode::Mnemonic op;
+
+   if (comp->getOption(TR_OptimizeForSpace) ||
+       comp->getOption(TR_FullSpeedDebug) ||
+       comp->getOption(TR_DisableInlineMonEnt) ||
+       lwOffset <= 0)
+      {
+      TR::ILOpCodes opCode = node->getOpCodeValue();
+      TR::Node::recreate(node, TR::call);
+      TR::Register *targetRegister = directCallEvaluator(node, cg);
+      TR::Node::recreate(node, opCode);
+      return targetRegister;
+      }
+
+   TR::Node *objNode = node->getFirstChild();
+   TR::Register *objReg = cg->evaluate(objNode);
+   TR::Register *dataReg = cg->allocateRegister();
+   TR::Register *addrReg = cg->allocateRegister();
+   TR::Register *tempReg = cg->allocateRegister();
+   TR::Register *metaReg = cg->getMethodMetaDataRegister();
+
+   TR::RegisterDependencyConditions *deps = new (cg->trHeapMemory()) TR::RegisterDependencyConditions(4, 4, cg->trMemory());
+   TR::addDependency(deps, objReg, TR::RealRegister::x0, TR_GPR, cg);
+   TR::addDependency(deps, dataReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, addrReg, TR::RealRegister::NoReg, TR_GPR, cg);
+   TR::addDependency(deps, tempReg, TR::RealRegister::NoReg, TR_GPR, cg);
+
+   TR::LabelSymbol *callLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *incLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *loopLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+   TR::LabelSymbol *doneLabel = TR::LabelSymbol::create(cg->trHeapMemory(),cg);
+
+   generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, addrReg, objReg, lwOffset); // ldxr/stxr instructions does not take immediate offset
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, loopLabel);
+
+   op = fej9->generateCompressedLockWord() ? TR::InstOpCode::ldxrw : TR::InstOpCode::ldxrx;
+   generateTrg1MemInstruction(cg, op, node, dataReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg));
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, dataReg, incLabel, NULL);
+
+   op = fej9->generateCompressedLockWord() ? TR::InstOpCode::stxrw : TR::InstOpCode::stxrx;
+   generateTrg1MemSrc1Instruction(cg, op, node, tempReg, new (cg->trHeapMemory()) TR::MemoryReference(addrReg, (int32_t)0, cg), metaReg);
+   generateCompareBranchInstruction(cg, TR::InstOpCode::cbnzx, node, tempReg, loopLabel, NULL);
+
+   generateSynchronizationInstruction(cg, TR::InstOpCode::dmb, node, 0xF); // dmb SY
+
+   generateLabelInstruction(cg, TR::InstOpCode::label, node, doneLabel, deps);
+
+   TR::Snippet *snippet = new (cg->trHeapMemory()) TR::ARM64MonitorEnterSnippet(cg, node, incLabel, callLabel, doneLabel);
+   cg->addSnippet(snippet);
+   doneLabel->setEndInternalControlFlow();
+
+   cg->decReferenceCount(objNode);
+   cg->machine()->setLinkRegisterKilled(true);
+   return NULL;
    }
 
 TR::Register *
@@ -962,6 +1064,72 @@ TR::Instruction *J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGe
 TR::Instruction *J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(TR::CodeGenerator *cg, TR::Node *node, TR::Register *reg, TR::Instruction *preced)
    {
    return J9::ARM64::TreeEvaluator::generateVFTMaskInstruction(cg, node, reg, reg, preced);
+   }
+
+TR::Register *
+J9::ARM64::TreeEvaluator::loadaddrEvaluator(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR::Register *resultReg;
+   TR::Symbol *sym = node->getSymbol();
+   TR::Compilation *comp = cg->comp();
+   TR::MemoryReference *mref = new (cg->trHeapMemory()) TR::MemoryReference(node, node->getSymbolReference(), 0, cg);
+
+   if (mref->getUnresolvedSnippet() != NULL)
+      {
+      resultReg = sym->isLocalObject() ? cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
+      if (mref->useIndexedForm())
+         {
+         TR_ASSERT(false, "Unresolved indexed snippet is not supported");
+         }
+      else
+         {
+         generateTrg1MemInstruction(cg, TR::InstOpCode::addx, node, resultReg, mref);
+         }
+      }
+   else
+      {
+      if (mref->useIndexedForm())
+         {
+         resultReg = sym->isLocalObject() ? cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
+         generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, resultReg, mref->getBaseRegister(), mref->getIndexRegister());
+         }
+      else
+         {
+         int32_t offset = mref->getOffset();
+         if (mref->hasDelayedOffset() || offset != 0)
+            {
+            resultReg = sym->isLocalObject() ? cg->allocateCollectedReferenceRegister() : cg->allocateRegister();
+            if (mref->hasDelayedOffset())
+               {
+               generateTrg1MemInstruction(cg, TR::InstOpCode::addimmx, node, resultReg, mref);
+               }
+            else
+               {
+               if (offset >= 0 && constantIsUnsignedImm12(offset))
+                  {
+                  generateTrg1Src1ImmInstruction(cg, TR::InstOpCode::addimmx, node, resultReg, mref->getBaseRegister(), offset);
+                  }
+               else
+                  {
+                  loadConstant64(cg, node, offset, resultReg);
+                  generateTrg1Src2Instruction(cg, TR::InstOpCode::addx, node, resultReg, mref->getBaseRegister(), resultReg);
+                  }
+               }
+            }
+         else
+            {
+            resultReg = mref->getBaseRegister();
+            if (resultReg == cg->getMethodMetaDataRegister())
+               {
+               resultReg = cg->allocateRegister();
+               generateMovInstruction(cg, node, resultReg, mref->getBaseRegister());
+               }
+            }
+         }
+      }
+   node->setRegister(resultReg);
+   mref->decNodeReferenceCounts(cg);
+   return resultReg;
    }
 
 TR::Register *J9::ARM64::TreeEvaluator::fremHelper(TR::Node *node, TR::CodeGenerator *cg, bool isSinglePrecision)
