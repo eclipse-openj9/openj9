@@ -1,4 +1,4 @@
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,8 +36,16 @@ ARG omr_repo=https://github.com/eclipse/openj9-omr.git
 
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \
+    g++-7 \
+    gcc-7 \
     libssl-dev \
   && rm -rf /var/lib/apt/lists/*
+
+# JITServer needs to be built with a newer GCC
+RUN ln -sf /usr/bin/g++ /usr/bin/c++ \
+ && ln -sf /usr/bin/g++-7 /usr/bin/g++ \
+ && ln -sf /usr/bin/gcc /usr/bin/cc \
+ && ln -sf /usr/bin/gcc-7 /usr/bin/gcc
 
 # Install protobuf
 WORKDIR /

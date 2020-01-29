@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2018, 2019 IBM Corp. and others
+Copyright (c) 2018, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,7 +52,7 @@ JITServer Dockerfiles are located under: `openj9/buildenv/docker/jdk<version>/<p
    - Runs make commands to build JITServer
 - `buildenv/Dockerfile`
     - Similar to `jitserver/build/Dockerfile`. The difference is that it does not build JITServer. It only pulls the source code and sets up the environment for JITServer build
-- `run/Dockerfile`
+- `buildserver/Dockerfile`
    - Starts up a JITServer server
 - `test/Dockerfile`
    - Sets up the OpenJ9 test environment for JITServer
@@ -82,12 +82,12 @@ JITServer Dockerfiles are located under: `openj9/buildenv/docker/jdk<version>/<p
   -t=openj9-jitserver-build .
   ```
 
-### [run/Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk8/x86_64/ubuntu18/jitserver/run/Dockerfile)
+### [buildserver/Dockerfile](https://github.com/eclipse/openj9/blob/master/buildenv/docker/jdk8/x86_64/ubuntu18/jitserver/buildserver/Dockerfile)
 - **Prerequisite**: [`openj9-jitserver-build`](#openj9-jitserver-build) image
-- Build `openj9-jitserver-run-server` using `run/Dockerfile`
+- Build `openj9-jitserver-run-server` using `buildserver/Dockerfile`
    ```
    docker build -f \
-   buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitserver/run/Dockerfile \
+   buildenv/docker/jdk<version>/<platform>/ubuntu<version>/jitserver/buildserver/Dockerfile \
    -t=openj9-jitserver-run-server .
    ```
 - <a name="openj9-jitserver-run-server"></a>Use the image to start up a JITServer server:
