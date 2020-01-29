@@ -521,6 +521,11 @@ J9::CodeGenerator::lowerCompressedRefs(
       }
    }
 
+bool 
+J9::CodeGenerator::supportVMInternalNatives() 
+   { 
+   return !self()->comp()->compileRelocatableCode(); 
+   }
 
 // J9
 //
