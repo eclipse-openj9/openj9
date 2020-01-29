@@ -26,11 +26,36 @@
 	.globl	_initialInvokeExactThunkGlue
 	.globl	_revertToInterpreterGlue
 
+	.extern	initialInvokeExactThunk_unwrapper
+	.extern	jitCallCFunction
+
+#define J9VMTHREAD x19
+#define J9SP x20
+
 _countingRecompileMethod:
 	hlt	#0	// Not implemented yet
 
+// _initialInvokeExactThunkGlue
+//
+// trash:	x8
+
 _initialInvokeExactThunkGlue:
-	hlt	#0	// Not implemented yet
+	stp	x0, x1, [J9SP, #-32]!	// save regs
+	stp	x2, x30, [J9SP, #16]	// jitCallCFunction preserves x3-x7
+	stp	x0, J9VMTHREAD, [J9SP, #-16]! // MethodHandle, VMThread
+	ldr	x0, const_initialInvokeExactThunk_unwrapper
+	mov	x1, J9SP		// argument array
+	mov	x2, J9SP		// result pointer
+	bl	jitCallCFunction
+	ldr	x8, [J9SP]		// thunk address
+	ldp	x0, x1, [J9SP, #16]	// restore regs
+	ldp	x2, x30, [J9SP, #32]
+	add	J9SP, J9SP, #48
+	br	x8			// jump to thunk
+
+	.align	3
+const_initialInvokeExactThunk_unwrapper:
+	.dword	initialInvokeExactThunk_unwrapper
 
 _revertToInterpreterGlue:
 	hlt	#0	// Not implemented yet
