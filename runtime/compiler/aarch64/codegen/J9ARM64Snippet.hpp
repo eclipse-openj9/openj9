@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,12 +27,13 @@
 #include "codegen/ARM64HelperCallSnippet.hpp"
 #include "j9cfg.h"
 
+#define LOCK_INC_DEC_VALUE OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT
+
 namespace TR {
 
 class ARM64MonitorEnterSnippet : public TR::ARM64HelperCallSnippet
    {
    TR::LabelSymbol *_incLabel;
-   int32_t _lwOffset;
 
    public:
 
@@ -41,7 +42,6 @@ class ARM64MonitorEnterSnippet : public TR::ARM64HelperCallSnippet
     */
    ARM64MonitorEnterSnippet(TR::CodeGenerator *codeGen,
                             TR::Node *monitorNode,
-                            int32_t lwOffset,
                             TR::LabelSymbol *incLabel,
                             TR::LabelSymbol *callLabel,
                             TR::LabelSymbol *restartLabel);
@@ -79,19 +79,12 @@ class ARM64MonitorEnterSnippet : public TR::ARM64HelperCallSnippet
     * @brief Answers the incLabel
     * @return incLabel
     */
-   TR::LabelSymbol * getIncLabel() { return _incLabel; };
-
-   /**
-    * @brief Answers the lock-word offset
-    * @return lock-word offset
-    */
-   int32_t getLockWordOffset() { return _lwOffset; }
+   TR::LabelSymbol *getIncLabel() { return _incLabel; };
    };
 
 class ARM64MonitorExitSnippet : public TR::ARM64HelperCallSnippet
    {
    TR::LabelSymbol *_decLabel;
-   int32_t _lwOffset;
 
    public:
 
@@ -100,7 +93,6 @@ class ARM64MonitorExitSnippet : public TR::ARM64HelperCallSnippet
     */
    ARM64MonitorExitSnippet(TR::CodeGenerator *codeGen,
                            TR::Node *monitorNode,
-                           int32_t lwOffset,
                            TR::LabelSymbol *decLabel,
                            TR::LabelSymbol *callLabel,
                            TR::LabelSymbol *restartLabel);
@@ -138,13 +130,7 @@ class ARM64MonitorExitSnippet : public TR::ARM64HelperCallSnippet
     * @brief Answers the decLabel
     * @return decLabel
     */
-   TR::LabelSymbol * getDecLabel() { return _decLabel; }
-
-   /**
-    * @brief Answers the lock-word offset
-    * @return lock-word offset
-    */
-   int32_t getLockWordOffset() { return _lwOffset; }
+   TR::LabelSymbol *getDecLabel() { return _decLabel; }
    };
 
 }
