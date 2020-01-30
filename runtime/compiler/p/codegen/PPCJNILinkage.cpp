@@ -63,6 +63,8 @@ J9::Power::JNILinkage::JNILinkage(TR::CodeGenerator *cg)
 
    _properties._preservedRegisterMapForGC = privateLinkageProperties.getPreservedRegisterMapForGC();
 
+   // TODO (#9999): JNI linkage should inherit from system linkage to avoid having to do this copying
+   self()->setOffsetToFirstParm(sysLinkage->getOffsetToFirstParm());
    }
 
 int32_t J9::Power::JNILinkage::buildArgs(TR::Node *callNode,

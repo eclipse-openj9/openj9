@@ -329,7 +329,7 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
       _properties._TOCBaseRegister               = TR::RealRegister::gr16;
       // Volatile GPR (0,2-12) + FPR (0-31) + CCR (0-7) + VR (0-31)
       _properties._numberOfDependencyGPRegisters = 12 + 32 + 8 + 32;
-      _properties._offsetToFirstParm             = 0;
+      self()->setOffsetToFirstParm(0);
       _properties._offsetToFirstLocal            = -8;
       }
    else
@@ -345,7 +345,7 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
       else
          // Volatile GPR (0,2-12) + FPR (0-31) + CCR (0-7) + VR (0-31)
          _properties._numberOfDependencyGPRegisters = 12 + 32 + 8 + 32;
-      _properties._offsetToFirstParm             = 0;
+      self()->setOffsetToFirstParm(0);
       _properties._offsetToFirstLocal            = -4;
       }
    _properties._computedCallTargetRegister  = TR::RealRegister::gr0; // gr11 = interface, gr12 = virtual, so we need something else for computed
@@ -569,7 +569,7 @@ void J9::Power::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    mapIncomingParms(method);
 
    atlas->setLocalBaseOffset(lowGCOffset - firstLocalOffset);
-   atlas->setParmBaseOffset(atlas->getParmBaseOffset() + offsetToFirstParm - firstLocalOffset);
+   atlas->setParmBaseOffset(atlas->getParmBaseOffset() + self()->getOffsetToFirstParm() - firstLocalOffset);
    }
 
 void J9::Power::PrivateLinkage::mapSingleAutomatic(TR::AutomaticSymbol *p, uint32_t &stackIndex)
@@ -830,6 +830,7 @@ static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
    {
    TR::Compilation * comp = cg->comp();
    TR::Machine *machine = cg->machine();
+   TR::Linkage* linkage = cg->getLinkage(TR_Private);
    const TR::PPCLinkageProperties& properties = cg->getProperties();
    int32_t                    firstLocalOffset = properties.getOffsetToFirstLocal();
    int32_t                    registerSaveDescription = 0;
@@ -846,11 +847,11 @@ static int32_t calculateFrameSize(TR::RealRegister::RegNum &intSavedFirst,
 
    if (0 && cg->comp()->target().is64Bit())
       {
-      argSize = (cg->getLargestOutgoingArgSize() * 2) + properties.getOffsetToFirstParm();
+      argSize = (cg->getLargestOutgoingArgSize() * 2) + linkage->getOffsetToFirstParm();
       }
    else
       {
-      argSize = cg->getLargestOutgoingArgSize() + properties.getOffsetToFirstParm();
+      argSize = cg->getLargestOutgoingArgSize() + linkage->getOffsetToFirstParm();
       }
 
    while (intSavedFirst<=TR::RealRegister::LastGPR && !machine->getRealRegister(intSavedFirst)->getHasBeenAssignedInMethod())
@@ -1312,11 +1313,11 @@ void J9::Power::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
 
    if (0 && cg()->comp()->target().is64Bit())
       {
-      saveSize = (cg()->getLargestOutgoingArgSize() * 2) + properties.getOffsetToFirstParm();
+      saveSize = (cg()->getLargestOutgoingArgSize() * 2) + self()->getOffsetToFirstParm();
       }
    else
       {
-      saveSize = cg()->getLargestOutgoingArgSize() + properties.getOffsetToFirstParm();
+      saveSize = cg()->getLargestOutgoingArgSize() + self()->getOffsetToFirstParm();
       }
 
    while (savedFirst<=TR::RealRegister::LastGPR && !machine->getRealRegister(savedFirst)->getHasBeenAssignedInMethod())
@@ -1380,7 +1381,7 @@ int32_t J9::Power::PrivateLinkage::buildPrivateLinkageArgs(TR::Node             
    TR::PPCMemoryArgument           *pushToMemory = NULL;
    TR::Register                    *tempRegister;
    int32_t                          argIndex = 0, memArgs = 0, from, to, step;
-   int32_t                          argSize = -properties.getOffsetToFirstParm(), totalSize = 0;
+   int32_t                          argSize = -self()->getOffsetToFirstParm(), totalSize = 0;
    uint32_t                         numIntegerArgs = 0;
    uint32_t                         numFloatArgs = 0;
    uint32_t                         firstExplicitArg = 0;
@@ -2851,7 +2852,7 @@ TR::MemoryReference *J9::Power::PrivateLinkage::getOutgoingArgumentMemRef(int32_
    TR::Machine *machine = cg()->machine();
 
    TR::MemoryReference *result=new (trHeapMemory()) TR::MemoryReference(machine->getRealRegister(properties.getNormalStackPointerRegister()),
-                                        argSize+properties.getOffsetToFirstParm(), length, cg());
+                                        argSize+self()->getOffsetToFirstParm(), length, cg());
    memArg.argRegister = argReg;
    memArg.argMemory = result;
    memArg.opCode = opCode;

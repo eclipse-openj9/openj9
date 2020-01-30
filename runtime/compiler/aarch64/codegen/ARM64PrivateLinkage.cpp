@@ -209,7 +209,7 @@ J9::ARM64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
 
    // Volatile GPR (0-15, 18) + FPR (0-31) + VFT Reg
    _properties._numberOfDependencyGPRegisters = 17 + 32 + 1;
-   _properties._offsetToFirstParm             = 0;
+   self()->setOffsetToFirstParm(0);
    _properties._offsetToFirstLocal            = -8;
    }
 
@@ -331,7 +331,7 @@ void J9::ARM64::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol *method)
    ListIterator<TR::ParameterSymbol> parameterIterator(&method->getParameterList());
    TR::ParameterSymbol *parmCursor = parameterIterator.getFirst();
 
-   int32_t offsetToFirstParm = linkageProperties.getOffsetToFirstParm();
+   int32_t offsetToFirstParm = self()->getOffsetToFirstParm();
    uint32_t sizeOfParameterArea = method->getNumParameterSlots() * TR::Compiler->om.sizeofReferenceAddress();
 
    while (parmCursor != NULL)
@@ -532,7 +532,7 @@ void J9::ARM64::PrivateLinkage::createPrologue(TR::Instruction *cursor)
    // The offset to the first parm is the offset between the entry JavaSP and the first
    // mapped parameter.  It is a positive (or zero) offset.
    //
-   int32_t outgoingArgsSize = cg()->getLargestOutgoingArgSize() + properties.getOffsetToFirstParm();
+   int32_t outgoingArgsSize = cg()->getLargestOutgoingArgSize() + self()->getOffsetToFirstParm();
 
    int32_t frameSizeIncludingReturnAddress = preservedRegisterSaveSize + localsSize + outgoingArgsSize;
 
@@ -734,7 +734,7 @@ void J9::ARM64::PrivateLinkage::createEpilogue(TR::Instruction *cursor)
    TR::RealRegister *javaSP = machine->getRealRegister(properties.getStackPointerRegister()); // x20
 
    // restore preserved GPRs
-   int32_t preservedRegisterOffsetFromJavaSP = cg()->getLargestOutgoingArgSize() + properties.getOffsetToFirstParm(); // outgoingArgsSize
+   int32_t preservedRegisterOffsetFromJavaSP = cg()->getLargestOutgoingArgSize() + self()->getOffsetToFirstParm(); // outgoingArgsSize
    TR::RealRegister::RegNum firstPreservedGPR = TR::RealRegister::x21;
    TR::RealRegister::RegNum lastPreservedGPR = TR::RealRegister::x28;
    for (TR::RealRegister::RegNum r = firstPreservedGPR; r <= lastPreservedGPR; r = (TR::RealRegister::RegNum)((uint32_t)r+1))

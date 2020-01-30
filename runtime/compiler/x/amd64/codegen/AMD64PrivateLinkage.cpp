@@ -166,7 +166,7 @@ J9::X86::AMD64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
 
    // Offsets relative to where the frame pointer *would* point if we had one;
    // namely, the local with the highest address (ie. the "first" local)
-   _properties._offsetToFirstParm = RETURN_ADDRESS_SIZE;
+   self()->setOffsetToFirstParm(RETURN_ADDRESS_SIZE);
    _properties._offsetToFirstLocal = 0;
 
    // TODO: Need a better way to build the flags so they match the info above

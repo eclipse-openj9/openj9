@@ -106,7 +106,7 @@ J9::X86::I386::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
 
    _properties._numberOfVolatileGPRegisters  = 3;
    _properties._numberOfVolatileXMMRegisters = 8; // xmm0-xmm7
-   _properties._offsetToFirstParm = 4;
+   self()->setOffsetToFirstParm(4);
    _properties._offsetToFirstLocal = 0;
 
 

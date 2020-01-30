@@ -613,7 +613,7 @@ J9::Z::PrivateLinkage::mapCompactedStack(TR::ResolvedMethodSymbol * method)
    mapIncomingParms(method);
 
    atlas->setLocalBaseOffset(lowGCOffset - firstLocalOffset);
-   atlas->setParmBaseOffset(atlas->getParmBaseOffset() + getOffsetToFirstParm() - firstLocalOffset);
+   atlas->setParmBaseOffset(atlas->getParmBaseOffset() + self()->getOffsetToFirstParm() - firstLocalOffset);
 
    } // scope of the stack memory region
 
@@ -807,7 +807,7 @@ J9::Z::PrivateLinkage::mapStack(TR::ResolvedMethodSymbol * method)
    mapIncomingParms(method);
 
    atlas->setLocalBaseOffset(lowGCOffset - firstLocalOffset);
-   atlas->setParmBaseOffset(atlas->getParmBaseOffset() + getOffsetToFirstParm() - firstLocalOffset);
+   atlas->setParmBaseOffset(atlas->getParmBaseOffset() + self()->getOffsetToFirstParm() - firstLocalOffset);
 
 #ifdef DEBUG
       automaticIterator.reset();
@@ -1155,11 +1155,11 @@ J9::Z::PrivateLinkage::createPrologue(TR::Instruction * cursor)
 
    if (0 && cg()->comp()->target().is64Bit())
       {
-      argSize = cg()->getLargestOutgoingArgSize() * 2 + getOffsetToFirstParm();
+      argSize = cg()->getLargestOutgoingArgSize() * 2 + self()->getOffsetToFirstParm();
       }
    else
       {
-      argSize = cg()->getLargestOutgoingArgSize() + getOffsetToFirstParm();
+      argSize = cg()->getLargestOutgoingArgSize() + self()->getOffsetToFirstParm();
       }
    size = regSaveSize + localSize + argSize;
 
