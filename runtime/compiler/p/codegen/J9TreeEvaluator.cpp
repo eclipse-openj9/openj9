@@ -11687,7 +11687,7 @@ static TR::Register *inlineEncodeUTF16(TR::Node *node, TR::CodeGenerator *cg)
 
 static TR::Register *inlineIntrinsicIndexOf(TR::Node *node, TR::CodeGenerator *cg, bool isLatin1)
    {
-   auto vectorCompareOp = isLatin1 ? TR::InstOpCode::vcmpeubr : TR::InstOpCode::vcmpeuhr;
+   auto vectorCompareOp = isLatin1 ? TR::InstOpCode::vcmpequb_r : TR::InstOpCode::vcmpequh_r;
    auto scalarLoadOp = isLatin1 ? TR::InstOpCode::lbzx : TR::InstOpCode::lhzx;
 
    TR::Register *array = cg->evaluate(node->getChild(1));
