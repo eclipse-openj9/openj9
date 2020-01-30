@@ -28,6 +28,7 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 /*[IF Java12]*/
 import java.util.Optional;
 /*[ENDIF]*/
@@ -275,8 +276,56 @@ public abstract class VarHandle extends VarHandleInternal
 		COMPARE_AND_EXCHANGE,
 		GET_AND_UPDATE;
 
-		MethodType accessModeType(Class<?> param1, Class<?> param2, Class<?>... params) {
-			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		/**
+		 * Gets the MethodType associated with the AccessType.
+		 * 
+		 * This method gets invoked by the derived VarHandle classes through accessModeTypeUncached.
+		 * 
+		 * OpenJ9 only uses it to retrieve the receiver class, which is not available from VarForm.
+		 * 
+		 * @param receiver class of the derived VarHandle.
+		 * @param type is the field type or value type.
+		 * @param args is the list of intermediate argument classes in the derived VarHandle's
+		 * AccessMode methods.
+		 * @return the MethodType for the corresponding AccessType.
+		 */
+		MethodType accessModeType(Class<?> receiver, Class<?> type, Class<?>... args) {
+			List<Class<?>> paramList = new ArrayList<>();
+			Class<?> returnType = null;
+			switch (this) {
+			case GET:
+				returnType = type;
+				paramList.add(receiver);
+				Collections.addAll(paramList, args);
+				break;
+			case SET:
+				returnType = void.class;
+				paramList.add(receiver);
+				Collections.addAll(paramList, args);
+				paramList.add(type);
+				break;
+			case COMPARE_AND_SET:
+				returnType = boolean.class;
+				paramList.add(receiver);
+				Collections.addAll(paramList, args);
+				Collections.addAll(paramList, type, type);
+				break;
+			case COMPARE_AND_EXCHANGE:
+				returnType = type;
+				paramList.add(receiver);
+				Collections.addAll(paramList, args);
+				Collections.addAll(paramList, type, type);
+				break;
+			case GET_AND_UPDATE:
+				returnType = type;
+				paramList.add(receiver);
+				Collections.addAll(paramList, args);
+				paramList.add(type);
+				break;
+			default:
+				throw new InternalError("Invalid AccessType.");
+			}
+			return MethodType.methodType(returnType, paramList);
 		}
 	}
 	
