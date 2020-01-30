@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -227,7 +227,6 @@ get_target_property(compiler_defines j9vm_compiler_defines INTERFACE_COMPILE_DEF
 # Extra defines not provided by the create_omr_compiler_library call
 set(TARGET_DEFINES
 	J9_PROJECT_SPECIFIC
-	_LONG_LONG
 	${compiler_defines}
 )
 
