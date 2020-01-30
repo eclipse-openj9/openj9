@@ -368,6 +368,19 @@ public abstract class VarHandle extends VarHandleInternal
 	VarHandle(VarForm varForm) {
 		AccessMode[] accessModes = AccessMode.values();
 		int numAccessModes = accessModes.length;
+
+		/* The first argument in AccessType.GET MethodType is the receiver class. */
+		Class<?> receiverActual = accessModeTypeUncached(AccessMode.GET).parameterType(0);
+		Class<?> receiverVarForm = varForm.methodType_table[AccessType.GET.ordinal()].parameterType(0);
+		
+		/* Specify the exact operation method types if the actual receiver doesn't match the
+		 * receiver derived from VarForm.
+		 */
+		MethodType[] operationMTsExact = null;
+		if (receiverActual != receiverVarForm) {
+			operationMTsExact = new MethodType[numAccessModes];
+		}
+		
 		MethodType[] operationMTs = new MethodType[numAccessModes];
 		Class<?> operationsClass = null;
 
@@ -377,6 +390,12 @@ public abstract class VarHandle extends VarHandleInternal
 				Method method = memberName.method;
 				if (method != null) {
 					operationMTs[i] = MethodType.methodType(method.getReturnType(), method.getParameterTypes());
+					if (operationMTsExact != null) {
+						/* Replace with the actual receiver, which is expected when the operation method
+						 * is invoked. The receiver is the second argument. 
+						 */
+						operationMTsExact[i] = operationMTs[i].changeParameterType(1, receiverActual);
+					}
 					if (operationsClass == null) {
 						operationsClass = method.getDeclaringClass();
 					}
@@ -386,10 +405,19 @@ public abstract class VarHandle extends VarHandleInternal
 
 		MethodType getter = operationMTs[AccessMode.GET.ordinal()];
 		MethodType setter = operationMTs[AccessMode.SET.ordinal()];
+		
+		if (operationMTsExact != null) {
+			getter = operationMTsExact[AccessMode.GET.ordinal()];
+			setter = operationMTsExact[AccessMode.SET.ordinal()];
+		}
 
 		this.fieldType = setter.parameterType(setter.parameterCount() - 1);
 		this.coordinateTypes = getter.parameterArray();
-		this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTs);
+		if (operationMTsExact != null) {
+			this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTsExact);
+		} else {
+			this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTs);
+		}
 		this.modifiers = 0;
 	}
 
