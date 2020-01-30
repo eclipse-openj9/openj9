@@ -106,10 +106,7 @@ final class SecurityFrameInjector {
 								return Lookup.class.getResourceAsStream("/java/lang/invoke/SecurityFrame.class").readAllBytes(); //$NON-NLS-1$
 								/*[ELSE]*/
 								InputStream is = Lookup.class.getResourceAsStream("/java/lang/invoke/SecurityFrame.class"); //$NON-NLS-1$
-								/* This is a change to accommodate lagging IBM JDK8 JCL level.
-								 * The API should be restored to IOUtils.readAllBytes(is) when latest sun.misc.IOUtils class is available.
-								 */
-								return IOUtils.readFully(is, Integer.MAX_VALUE, false);
+								return IOUtils.readAllBytes(is);
 								/*[ENDIF]*/
 							} catch(java.io.IOException e) {
 								/*[MSG "K056A", "Unable to read java.lang.invoke.SecurityFrame.class bytes"]*/
