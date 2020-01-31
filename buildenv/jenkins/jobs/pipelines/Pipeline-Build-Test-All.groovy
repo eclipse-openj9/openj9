@@ -479,11 +479,6 @@ def get_summary_table(identifier) {
         return ''
     }
 
-    if (!TESTS_TARGETS) {
-        // default to value set in variables file
-        TESTS_TARGETS = variableFile.get_default_test_targets()
-    }
-
     def buildReleases = get_sorted_releases()
 
     def headerCols = ['&nbsp;']
