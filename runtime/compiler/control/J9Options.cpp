@@ -28,6 +28,7 @@
 #endif /* defined(JITSERVER_SUPPORT) */
 #include <ctype.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include "jitprotos.h"
 #include "j2sever.h"
 #include "j9.h"
@@ -1989,7 +1990,10 @@ J9::Options::fePreProcess(void * base)
          std::random_device rd;
          std::mt19937_64 rng(rd());
          std::uniform_int_distribution<uint64_t> dist;
+         // clientUID != 0 when running in client mode
          uint64_t clientUID = dist(rng);
+         while (0 == clientUID)
+            clientUID = dist(rng);
          compInfo->getPersistentInfo()->setClientUID(clientUID);
          jitConfig->clientUID = clientUID;
 
@@ -1997,7 +2001,12 @@ J9::Options::fePreProcess(void * base)
          // are done remotely. The user can still override it with a command line option
          J9::Options::_safeReservePhysicalMemoryValue = 0;
          }
-      jitConfig->isClient = (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT) ? 1 : 0; 
+      else
+         {
+         // clientUID == 0 when running in server mode / regular JVM
+         compInfo->getPersistentInfo()->setClientUID(0);
+         jitConfig->clientUID = 0;
+         }
       }
 #endif /* defined(JITSERVER_SUPPORT) */
 
@@ -2076,14 +2085,16 @@ J9::Options::setupJITServerOptions()
       {
       TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
       if (persistentInfo->getRemoteCompilationMode() == JITServer::SERVER)
+         {
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer Server Mode. Port: %d. Connection Timeout %ums",
                persistentInfo->getJITServerPort(), persistentInfo->getSocketTimeout());
+         }
       else if (persistentInfo->getRemoteCompilationMode() == JITServer::CLIENT)
          {
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer Client Mode. Server address: %s port: %d. Connection Timeout %ums",
                persistentInfo->getJITServerAddress().c_str(), persistentInfo->getJITServerPort(),
                persistentInfo->getSocketTimeout());
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer,"Identifier for current client JVM: %llu\n", 
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Identifier for current client JVM: %" PRIu64 "\n",
                compInfo->getPersistentInfo()->getClientUID());
          }
       }

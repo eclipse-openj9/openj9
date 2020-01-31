@@ -39,6 +39,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <time.h>
+#include <inttypes.h>
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9protos.h"
@@ -8793,10 +8794,10 @@ TR::CompilationInfoPerThreadBase::compile(
                   traceMsg(&_compiler, "\thotness=\"%s\"\n", _compiler.getHotnessName(_compiler.getMethodHotness()));
                   traceMsg(&_compiler, "\tisProfilingCompile=%d", _compiler.isProfilingCompilation());
 #if defined(JITSERVER_SUPPORT)
-                  if (TR::compInfoPT->getClientData()) // not NULL
+                  if (_compiler.isOutOfProcessCompilation() && TR::compInfoPT->getClientData()) // using jitserver && client JVM
                      {
                      traceMsg(&_compiler, "\n");
-                     traceMsg(&_compiler, "\tclientID=%llu", TR::compInfoPT->getClientData()->getClientUID());
+                     traceMsg(&_compiler, "\tclientID=%" PRIu64, TR::compInfoPT->getClientData()->getClientUID());
                      }
 #endif /* defined(JITSERVER_SUPPORT) */
                   traceMsg(&_compiler, ">\n");

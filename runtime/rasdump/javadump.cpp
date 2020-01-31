@@ -23,6 +23,7 @@
 /* Includes */
 #include <string.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #ifdef WIN32
 #include <malloc.h>
 #elif defined(LINUX) || defined(AIXPPC)
@@ -1052,30 +1053,31 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	/* Write the running mode data */
 	_OutputStream.writeCharacters("1CIRUNNINGAS   Running as ");
 
+	/* NB : I can't find any code for making this decision in the existing implementation */
+#ifdef J9VM_BUILD_J2SE
 	/* If JITServer enabled, print running mode as JITServer and client UID*/
 #ifdef JITSERVER_SUPPORT
-	if (jitConfig->isClient == 1) {
-		_OutputStream.writeCharacters("a JITServer Client");
-	} else {
+	if (_VirtualMachine->internalVMFunctions->isJITServerEnabled(_VirtualMachine))
 		_OutputStream.writeCharacters("a JITServer Server");
-	}
-	/* NB : I can't find any code for making this decision in the existing implementation */
-#elif J9VM_BUILD_J2SE
+	else if (0 != jitConfig->clientUID)
+		_OutputStream.writeCharacters("a JITServer Client");
+	else
+		_OutputStream.writeCharacters("a standalone");
+#else /* !JITSERVER_SUPPORT */
 	_OutputStream.writeCharacters("a standalone");
-#else
+#endif
+#else /* !J9VM_BUILD_J2SE */
 	_OutputStream.writeCharacters("an embedded");
 #endif
 	_OutputStream.writeCharacters(" JVM\n");
 
-#ifdef JITSERVER_SUPPORT
-	if (jitConfig->isClient == 1) {
-		char valueString[_MaximumGPValueLength]; 
-		sprintf(valueString, "%llu", (unsigned long long) jitConfig->clientUID);
-		_OutputStream.writeCharacters("1CICLIENTID    Client UID "); 
-		_OutputStream.writeCharacters(valueString);
+#if defined(JITSERVER_SUPPORT)
+	if (0 != jitConfig->clientUID) {
+		_OutputStream.writeCharacters("1CICLIENTID    Client UID ");
+		_OutputStream.writeInteger64(jitConfig->clientUID, "%" PRIu64);
 		_OutputStream.writeCharacters("\n");
 	}
-#endif
+#endif /* JITSERVER_SUPPORT */
 
 	_OutputStream.writeCharacters("1CIVMIDLESTATE VM Idle State: ");
 	writeVMRuntimeState(_VirtualMachine->internalVMFunctions->getVMRuntimeState(_VirtualMachine));
