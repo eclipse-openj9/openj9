@@ -64,6 +64,10 @@ misc:
   jdk_image_dir:
     all: 'jdk'
     8: 'j2sdk-image'
+  test_keep_reportdir:
+    sanity.openjdk: 'true'
+    extended.openjdk: 'true'
+    special.openjdk: 'true'
 credentials:
   github: 'b6987280-6402-458f-bdd6-7affc2e360d4'
 test_dependencies_job_name: 'test.getDependency'
