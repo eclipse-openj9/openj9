@@ -8787,13 +8787,20 @@ TR::CompilationInfoPerThreadBase::compile(
                {
                TR_ASSERT(_compiler.getHotnessName(_compiler.getMethodHotness()), "expected to have a hotness string");
                if (_compiler.getOutFile() != NULL && _compiler.getOption(TR_TraceAll))
-                  traceMsg(&_compiler, "<compile\n"
-                          "\tmethod=\"%s\"\n"
-                          "\thotness=\"%s\"\n"
-                          "\tisProfilingCompile=%d>\n",
-                          _compiler.signature(),
-                          _compiler.getHotnessName(_compiler.getMethodHotness()),
-                          _compiler.isProfilingCompilation());
+                  {
+                  traceMsg(&_compiler, "<compile\n");
+                  traceMsg(&_compiler, "\tmethod=\"%s\"\n", _compiler.signature());
+                  traceMsg(&_compiler, "\thotness=\"%s\"\n", _compiler.getHotnessName(_compiler.getMethodHotness()));
+                  traceMsg(&_compiler, "\tisProfilingCompile=%d", _compiler.isProfilingCompilation());
+#if defined(JITSERVER_SUPPORT)
+                  if (TR::compInfoPT->getClientData()) // not NULL
+                     {
+                     traceMsg(&_compiler, "\n");
+                     traceMsg(&_compiler, "\tclientID=%llu", TR::compInfoPT->getClientData()->getClientUID());
+                     }
+#endif /* defined(JITSERVER_SUPPORT) */
+                  traceMsg(&_compiler, ">\n");
+                  }
                }
             ~CompilationTrace() throw()
                {
