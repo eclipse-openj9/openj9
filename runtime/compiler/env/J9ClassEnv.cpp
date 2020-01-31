@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -461,7 +461,10 @@ J9::ClassEnv::enumerateFields(TR::Region& region, TR_OpaqueClassBlock * opaqueCl
       strncpy(fieldName, field->name, nameSize);
       TR_ASSERT_FATAL(fieldName[nameSize-1] == '\0', "fieldName buffer was too small.");
       int32_t offset = field->offset + TR::Compiler->om.objectHeaderSizeInBytes();
-      tlb.add(TR::TypeLayoutEntry(dataType, offset, fieldName));
+      bool isVolatile = (field->modifiers & J9AccVolatile) ? true : false;
+      bool isPrivate = (field->modifiers & J9AccPrivate) ? true : false;
+      bool isFinal = (field->modifiers & J9AccFinal) ? true : false;
+      tlb.add(TR::TypeLayoutEntry(dataType, offset, fieldName, isVolatile, isPrivate, isFinal, signature));
       }
    return tlb.build();
    }
