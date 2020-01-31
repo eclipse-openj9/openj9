@@ -1764,6 +1764,40 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, ramMethods, vTableOffsets, methodInfos);
          }
          break;
+      case MessageType::ResolvedMethod_getConstantDynamicTypeFromCP:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
+         auto mirror = std::get<0>(recv);
+         auto cpIndex = std::get<1>(recv);
+
+         J9UTF8 *constantDynamicTypeUtf8 = (J9UTF8 *)mirror->getConstantDynamicTypeFromCP(cpIndex);
+         int constantDynamicTypeUtf8Length = J9UTF8_LENGTH(constantDynamicTypeUtf8);
+         char* constantDynamicTypeUtf8Data = (char *)J9UTF8_DATA(constantDynamicTypeUtf8);
+
+         client->write(response, std::string(constantDynamicTypeUtf8Data, constantDynamicTypeUtf8Length));
+         }
+         break;
+      case MessageType::ResolvedMethod_isUnresolvedConstantDynamic:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
+         auto mirror = std::get<0>(recv);
+         auto cpIndex = std::get<1>(recv);
+
+         client->write(response, mirror->isUnresolvedConstantDynamic(cpIndex));
+         }
+         break;
+      case MessageType::ResolvedMethod_dynamicConstant:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t>();
+         auto mirror = std::get<0>(recv);
+         auto cpIndex = std::get<1>(recv);
+
+         TR::VMAccessCriticalSection condyCriticalSection(fe);
+         uintptrj_t obj = 0;
+         uintptrj_t *objLocation = (uintptrj_t*)mirror->dynamicConstant(cpIndex, &obj);
+         client->write(response, objLocation, obj);
+         }
+         break;
       case MessageType::ResolvedRelocatableMethod_createResolvedRelocatableJ9Method:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, J9Method *, int32_t, uint32_t>();

@@ -1080,7 +1080,7 @@ TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateConstantDynamicSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, char* symbolTypeSig, int32_t symbolTypeSigLength, bool isCondyPrimitive)
    {
    TR_ResolvedMethod * owningMethod = owningMethodSymbol->getResolvedMethod();
-   void * dynamicConst = owningMethod->dynamicConstant(cpIndex);
+   void * dynamicConst = owningMethod->dynamicConstant(cpIndex, NULL);
    TR::SymbolReference * symRef;
    if (owningMethod->isUnresolvedConstantDynamic(cpIndex))
       {

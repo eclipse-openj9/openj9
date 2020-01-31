@@ -51,6 +51,14 @@ romMethodAtClassIndex(J9ROMClass *romClass, uint64_t methodIndex)
    return romMethod;
    }
 
+static J9UTF8 *str2utf8(const char *str, int32_t length, TR_Memory *trMemory, TR_AllocationKind allocKind)
+   {
+   J9UTF8 *utf8 = (J9UTF8 *) trMemory->allocateMemory(length+sizeof(J9UTF8), allocKind); // This allocates more memory than it needs.
+   J9UTF8_SET_LENGTH(utf8, length);
+   memcpy(J9UTF8_DATA(utf8), str, length);
+   return utf8;
+   }
+
 TR_ResolvedJ9JITServerMethod::TR_ResolvedJ9JITServerMethod(TR_OpaqueMethodBlock * aMethod, TR_FrontEnd * fe, TR_Memory * trMemory, TR_ResolvedMethod * owningMethod, uint32_t vTableSlot)
    : TR_ResolvedJ9Method(fe, owningMethod)
    {
@@ -231,12 +239,49 @@ TR_ResolvedJ9JITServerMethod::classOfStatic(I_32 cpIndex, bool returnClassForAOT
    return classOfStatic;
    }
 
+void *
+TR_ResolvedJ9JITServerMethod::getConstantDynamicTypeFromCP(I_32 cpIndex)
+   {
+   TR_ASSERT_FATAL(cpIndex != -1, "ConstantDynamic cpIndex shouldn't be -1");
+   _stream->write(JITServer::MessageType::ResolvedMethod_getConstantDynamicTypeFromCP, _remoteMirror, cpIndex);
+
+   const std::string &retConstantDynamicTypeStr = std::get<0>(_stream->read<std::string>());
+   TR_Memory *trMemory = ((TR::CompilationInfoPerThreadRemote *) _fe->_compInfoPT)->getCompilation()->trMemory();
+   J9UTF8 * constantDynamicType = str2utf8((char*)&retConstantDynamicTypeStr[0], (int32_t)retConstantDynamicTypeStr.length(), trMemory, heapAlloc);
+   return constantDynamicType;
+   }
+
 bool
 TR_ResolvedJ9JITServerMethod::isConstantDynamic(I_32 cpIndex)
    {
    TR_ASSERT_FATAL(cpIndex != -1, "ConstantDynamic cpIndex shouldn't be -1");
    UDATA cpType = J9_CP_TYPE(J9ROMCLASS_CPSHAPEDESCRIPTION(_romClass), cpIndex);
    return (J9CPTYPE_CONSTANT_DYNAMIC == cpType);
+   }
+
+bool
+TR_ResolvedJ9JITServerMethod::isUnresolvedConstantDynamic(I_32 cpIndex)
+   {
+   TR_ASSERT(cpIndex != -1, "ConstantDynamic cpIndex shouldn't be -1");
+   _stream->write(JITServer::MessageType::ResolvedMethod_isUnresolvedConstantDynamic, _remoteMirror, cpIndex);
+   return std::get<0>(_stream->read<bool>());
+   }
+
+void *
+TR_ResolvedJ9JITServerMethod::dynamicConstant(I_32 cpIndex, uintptrj_t *obj)
+   {
+   TR_ASSERT_FATAL(cpIndex != -1, "ConstantDynamic cpIndex shouldn't be -1");
+
+   _stream->write(JITServer::MessageType::ResolvedMethod_dynamicConstant, _remoteMirror, cpIndex);
+
+   auto recv = _stream->read<uintptrj_t *, uintptrj_t>();
+   uintptrj_t *objLocation = std::get<0>(recv);
+   if (obj)
+      {
+      *obj = std::get<1>(recv);
+      }
+
+   return objLocation;
    }
 
 TR_ResolvedMethod *
@@ -2588,15 +2633,6 @@ TR_ResolvedRelocatableJ9JITServerMethod::validateMethodFieldAttributes(const TR_
    auto clientAttributes = std::get<0>(recv);
    bool equal = (attributes == clientAttributes);
    return equal;
-   }
-
-// TR_J9ServerMethod
-static J9UTF8 *str2utf8(const char *str, int32_t length, TR_Memory *trMemory, TR_AllocationKind allocKind)
-   {
-   J9UTF8 *utf8 = (J9UTF8 *) trMemory->allocateMemory(length+sizeof(J9UTF8), allocKind); // This allocates more memory than it needs.
-   J9UTF8_SET_LENGTH(utf8, length);
-   memcpy(J9UTF8_DATA(utf8), str, length);
-   return utf8;
    }
 
 TR_J9ServerMethod::TR_J9ServerMethod(TR_FrontEnd * fe, TR_Memory * trMemory, J9Class * aClazz, uintptr_t cpIndex)
