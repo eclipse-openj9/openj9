@@ -2,7 +2,7 @@
 package java.lang.ref;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2010 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,9 @@ public SoftReference(T r) {
  */	
 public T get () {
 	/*[PR 124242] SoftReference.get() should reset age*/
-	age = 0;
+	if (age != 0) {
+		age = 0;
+	}
 	return super.get();
 }
 }
