@@ -6045,10 +6045,15 @@ TR_ResolvedJ9Method::isUnresolvedConstantDynamic(I_32 cpIndex)
    }
 
 void *
-TR_ResolvedJ9Method::dynamicConstant(I_32 cpIndex)
+TR_ResolvedJ9Method::dynamicConstant(I_32 cpIndex, uintptrj_t *obj)
    {
    TR_ASSERT_FATAL(cpIndex != -1, "ConstantDynamic cpIndex shouldn't be -1");
-   return &((J9RAMConstantDynamicRef *) literals())[cpIndex].value;
+   uintptrj_t *objLocation = (uintptrj_t *)&(((J9RAMConstantDynamicRef *) literals())[cpIndex].value);
+   if (obj)
+      {
+      *obj = *objLocation;
+      }
+   return objLocation;
    }
 
 bool

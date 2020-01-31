@@ -5466,8 +5466,8 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
             if (!isCondyPrimitive && !isCondyUnresolved)
                {
                TR::VMAccessCriticalSection condyCriticalSection(comp()->fej9());
-               uintptrj_t* objLocation = (uintptrj_t*)_methodSymbol->getResolvedMethod()->dynamicConstant(cpIndex);
-               uintptrj_t obj = *objLocation;
+               uintptrj_t obj = 0;
+               uintptrj_t* objLocation = (uintptrj_t*)_methodSymbol->getResolvedMethod()->dynamicConstant(cpIndex, &obj);
                if (obj == 0)
                   {
                   loadConstant(TR::aconst, (void *)0);
@@ -5568,8 +5568,8 @@ TR_J9ByteCodeIlGenerator::loadFromCP(TR::DataType type, int32_t cpIndex)
                                                             comp());
                   if (primitiveCondyCriticalSection.hasVMAccess())
                      {
-                     uintptrj_t* objLocation = (uintptrj_t*)_methodSymbol->getResolvedMethod()->dynamicConstant(cpIndex);
-                     uintptrj_t obj = *objLocation;
+                     uintptrj_t obj = 0;
+                     uintptrj_t* objLocation = (uintptrj_t*)_methodSymbol->getResolvedMethod()->dynamicConstant(cpIndex, &obj);
                      TR_ASSERT(obj, "Resolved primitive Constant Dynamic-type CP entry %d must have autobox object", cpIndex);
                      switch (returnTypeUtf8Data[0])
                         {

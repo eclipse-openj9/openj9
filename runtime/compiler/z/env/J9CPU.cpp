@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -272,6 +272,11 @@ CPU::initializeS390ProcessorFeatures()
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_PACKED_DECIMAL))
          {
          TR::Compiler->target.cpu.setSupportsVectorPackedDecimalFacility(true);
+         }
+
+      if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_VECTOR_FACILITY_ENHANCEMENT_1))
+         {
+         TR::Compiler->target.cpu.setSupportsVectorFacilityEnhancement1(true);
          }
 
       if (j9sysinfo_processor_has_feature(processorDesc, J9PORT_S390_FEATURE_GUARDED_STORAGE))
