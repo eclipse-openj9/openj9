@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,10 +22,10 @@
 
 ARGS = ['SDK_VERSION', 'PLATFORM']
 
-SETUP_LABEL = params.SETUP_LABEL
-if (!SETUP_LABEL) {
-    SETUP_LABEL = 'worker'
-}
+SETUP_LABEL = (params.SETUP_LABEL) ? params.SETUP_LABEL : 'worker'
+TESTS_TARGETS = (params.TESTS_TARGETS) ? params.TESTS_TARGETS : 'none'
+echo "TESTS_TARGETS:'${TESTS_TARGETS}'"
+
 def BUILD_NAME = 'Build-JDK'
 
 timestamps {
