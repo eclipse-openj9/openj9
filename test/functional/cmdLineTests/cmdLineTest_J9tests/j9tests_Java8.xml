@@ -550,6 +550,7 @@
   <command>$EXE$ -Xdump:none -Xmx7g -Djava.lang.stringBufferAndBuilder.growAggressively -cp $Q$$JARPATH$$Q$ TestStringBufferAndBuilderGrowth</command>
   <output regex="no" type="success">StringBuffer capacity=2147483647 StringBuilder capacity=2147483647</output>
   <output regex="no" type="success">Option too large</output>
+  <output regex="no" type="success">Not enough resource to run test</output>
  </test>
 
 </suite>

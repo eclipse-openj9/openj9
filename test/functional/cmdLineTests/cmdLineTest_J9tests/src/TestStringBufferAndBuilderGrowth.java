@@ -20,6 +20,9 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+import com.sun.management.OperatingSystemMXBean;
+import java.lang.management.ManagementFactory;
+
 /**
  * @file TestStringBufferAndBuilderGrowth.java
  * @brief Grows a StringBuffer and StringBuilder to Integer.MAX_VALUE
@@ -27,6 +30,16 @@
 public class TestStringBufferAndBuilderGrowth {
 
 public static void main(String[] args) {
+	OperatingSystemMXBean opBean = (OperatingSystemMXBean)ManagementFactory.getOperatingSystemMXBean();
+	long physicalMemory = opBean.getTotalPhysicalMemorySize();
+	System.out.println("Machine has physical memory " + physicalMemory + " bytes or " + (physicalMemory >> 20) + " MB or " + (physicalMemory >> 30) + " GB");
+	// An AIX machine with 7616 MB doesn't work
+	long limit = 8000L << 20; 
+	if (physicalMemory < limit) {
+		System.out.println("Not enough resource to run test.");
+		return;
+	}
+
 	char[] cbuf = new char[Integer.MAX_VALUE / 32];
 
 	// Create a StringBuffer big enough that the default algorithm to
