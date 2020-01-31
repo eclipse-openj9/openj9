@@ -679,9 +679,16 @@ def set_test_misc() {
 
     TEST_FLAG = buildspec.getScalarField("test_flags", SDK_VERSION) ?: ''
 
+    // Set test param KEEP_REPORTDIR to false unless set true in variable file.
+    TEST_KEEP_REPORTDIR = [:]
+    TARGET_NAMES.each { target ->
+        TEST_KEEP_REPORTDIR[target] = buildspec_manager.getSpec('misc').getScalarField("test_keep_reportdir", target) ?: 'false'
+    }
+
     echo "EXCLUDED_TESTS:'${EXCLUDED_TESTS}'"
     echo "TEST_FLAG:'${TEST_FLAG}'"
     echo "EXTRA_TEST_LABELS:'${EXTRA_TEST_LABELS}'"
+    echo "TEST_KEEP_REPORTDIR:'${TEST_KEEP_REPORTDIR}'"
 }
 
 
