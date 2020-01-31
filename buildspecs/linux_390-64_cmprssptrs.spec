@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2019 IBM Corp. and others
+Copyright (c) 2006, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<property name="graph_commands.chroot" value=""/>
 		<property name="graph_commands.unix.remote_host" value=""/>
 		<property name="graph_datamines" value="commands.unix.datamine,site-zLinux.datamine,use.local.datamine"/>
-		<property name="graph_enable_gcc7_cmd" value="source {$buildinfo.fsroot.linux390Bin$}/set_gcc7_env &amp;&amp;"/>
+		<property name="graph_enable_gcc7_cmd" value="source {$buildinfo.fsroot.linux390Bin$}/set_gcc7.5_env &amp;&amp;"/>
 		<property name="graph_label.classlib" value="150"/>
 		<property name="graph_label.java5" value="j9vmxz64cmprssptrs24"/>
 		<property name="graph_label.java6" value="pxz64cmprssptrs60"/>
