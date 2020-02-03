@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2019 IBM Corp. and others
+ * Copyright (c) 2010, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,8 +72,6 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 			J9ObjectPointer object = null;
 
 			try {
-				boolean isArray;
-				String className;
 				object = J9ObjectPointer.cast(address);
 				clazz = J9ObjectHelper.clazz(object);
 
@@ -82,8 +80,8 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 					return FormatWalkResult.STOP_WALKING;
 				}
 
-				isArray = J9ClassHelper.isArrayClass(clazz);
-				className = J9UTF8Helper.stringValue(clazz.romClass().className());
+				boolean isArray = J9ClassHelper.isArrayClass(clazz);
+				String className = J9UTF8Helper.stringValue(clazz.romClass().className());
 
 				U8Pointer dataStart =  U8Pointer.cast(object).add(ObjectModel.getHeaderSize(object));
 
@@ -112,7 +110,11 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 					formatObject(out, clazz, dataStart, object, address, extraArgs);
 				}
 			} catch (MemoryFault ex2) {
-				out.println("Unable to read object clazz at " + object.getHexAddress() + " (clazz = "  + clazz.getHexAddress() + ")");
+				out.println("Unable to read object clazz at "
+						+ (object == null ? "(null)" : object.getHexAddress())
+						+ " (clazz = "
+						+ (clazz == null ? "(null)" : clazz.getHexAddress())
+						+ ")");
 			} catch (CorruptDataException ex) {
 				out.println("Error for ");
 				ex.printStackTrace(out);
@@ -239,18 +241,17 @@ public class J9ObjectStructureFormatter extends BaseStructureFormatter
 	{
 		for (int index = begin; index < finish; index++) {
 			VoidPointer slot = J9IndexableObjectHelper.getElementEA(array, index, (int) ObjectReferencePointer.SIZEOF);
-			if (slot.notNull()) {
-				long compressedPtrValue;
-				if (J9BuildFlags.gc_compressedPointers) {
-					compressedPtrValue = I32Pointer.cast(slot).at(0).longValue();
-				} else {
-					compressedPtrValue = DataType.getProcess().getPointerAt(slot.getAddress());
-				}
-				PrintObjectFieldsHelper.padding(out, tabLevel);
-				out.format("[%d] = !fj9object 0x%x = !j9object 0x%x%n", index, compressedPtrValue, ObjectReferencePointer.cast(slot).at(0).longValue());
+			long pointer;
+			if (J9BuildFlags.gc_compressedPointers) {
+				pointer = U32Pointer.cast(slot).at(0).longValue();
 			} else {
-				PrintObjectFieldsHelper.padding(out, tabLevel);
-				out.format("[%d] = null%n", slot);
+				pointer = DataType.getProcess().getPointerAt(slot.getAddress());
+			}
+			PrintObjectFieldsHelper.padding(out, tabLevel);
+			if (pointer != 0) {
+				out.format("[%d] = !fj9object 0x%x = !j9object 0x%x%n", index, pointer, ObjectReferencePointer.cast(slot).at(0).longValue());
+			} else {
+				out.format("[%d] = null%n", index);
 			}
 		}
 	}

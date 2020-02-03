@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,7 @@ import com.ibm.j9ddr.vm29.pointer.generated.J9ObjectPointer;
 import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9RASHelper;
 import com.ibm.j9ddr.vm29.types.I32;
+import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.UDATA;
 import java.lang.reflect.InvocationTargetException;
 
@@ -150,11 +151,11 @@ class MMObjectAccessBarrier_V1 extends MMObjectAccessBarrier
 	@Override
 	public J9ObjectPointer convertPointerFromToken(long token)
 	{
-		if(token == 0) {
+		if (token == 0) {
 			return J9ObjectPointer.NULL;
 		}
-		if(J9BuildFlags.gc_compressedPointers) {
-			UDATA ref = new UDATA(token);
+		if (J9BuildFlags.gc_compressedPointers) {
+			UDATA ref = new UDATA(token & U32.MASK);
 			ref = ref.leftShift(shift);
 			return J9ObjectPointer.cast(ref);
 		} else {
