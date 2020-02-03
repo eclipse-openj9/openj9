@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1107,6 +1107,8 @@ void TR_RedefinedClassPicSite::compensate(TR_FrontEnd *, bool isSMP, void *newKe
 #endif
 #elif defined(TR_HOST_ARM)
    *(int32_t *)_picLocation = (uintptrj_t)newKey;
+#elif defined(TR_HOST_ARM64)
+   *(int64_t *)_picLocation = (uintptrj_t)newKey;
 #else
    //   TR_ASSERT(0, "redefined class PIC patching is not implemented on this platform yet");
 #endif
