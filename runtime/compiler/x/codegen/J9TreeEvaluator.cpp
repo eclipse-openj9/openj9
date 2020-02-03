@@ -9151,6 +9151,26 @@ static TR::Register* inlineStringHashCode(TR::Node* node, bool isCompressed, TR:
       }
    }
 
+static TR::Register* inlineMathFma(TR::Node* node, TR::CodeGenerator* cg)
+   {
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Node *thirdChild = node->getThirdChild();
+   TR::Register *src1Register = cg->evaluate(firstChild);
+   TR::Register *src2Register = cg->evaluate(secondChild);
+   TR::Register *src3Register = cg->evaluate(thirdChild);
+
+   generateRegRegRegInstruction(VFMADD231SRegRegReg(getNodeIs64Bit(node, cg)), node, src2Register, src3Register, src1Register, cg);
+
+   node->setRegister(src2Register);
+
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   cg->decReferenceCount(thirdChild);
+
+   return src2Register;
+   }
+
 static bool
 getNodeIs64Bit(
       TR::Node *node,
@@ -11623,6 +11643,17 @@ J9::X86::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::CodeGenerator *c
          break;
       }
 
+   if (cg->getX86ProcessorInfo().supportsFMA())
+      {
+      switch (symbol->getRecognizedMethod())
+         {
+         case TR::java_lang_Math_fma_D:
+         case TR::java_lang_StrictMath_fma_D:
+         case TR::java_lang_Math_fma_F:
+         case TR::java_lang_StrictMath_fma_F:
+            return inlineMathFma(node, cg);
+         }
+      }
 
    // If the method to be called is marked as an inline method, see if it can
    // actually be generated inline.
