@@ -3727,6 +3727,20 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
          }
       }
 
+   if (self()->getSupportsVectorRegisters()){
+      if (method == TR::java_lang_Math_fma_D ||
+          method == TR::java_lang_StrictMath_fma_D)
+         {
+         return true;
+         }
+      if (self()->comp()->target().cpu.getSupportsVectorFacilityEnhancement1() &&
+            (method == TR::java_lang_Math_fma_F ||
+             method == TR::java_lang_StrictMath_fma_F))
+         { 
+         return true;
+         }
+   }
+
    if (method == TR::java_lang_Integer_highestOneBit ||
        method == TR::java_lang_Integer_numberOfLeadingZeros ||
        method == TR::java_lang_Integer_numberOfTrailingZeros ||
