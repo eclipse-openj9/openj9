@@ -1,4 +1,5 @@
-# Copyright (c) 2009, 2022 IBM Corp. and others
+################################################################################
+# Copyright (c) 2022, 2022 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -17,20 +18,22 @@
 # [2] http://openjdk.java.net/legal/assembly-exception.html
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
-
-# J9 UMA properties file
-# This file contains options that control J9 UMA behaviour
-
-# The product name used in windows resource files, default follows below.
-#rc_productName=IBM SDK, Java(tm) 2 Technology Edition
-
-# mapping of JCL names to their artifact names
-JCL_CLEAR=jclclear_
-Sidecar=jclse
-JCL_HS60=jclhs60_
-
-# Allows us to make phases not parallel to get better performance out of gmake -j
-makefile_phase_prefix=.NOTPARALLEL
-
-# Define phases
-phase_list=omr core jit quick sjit util j2se jvmti_tests rom offload
+################################################################################
+if(J9VM_OPT_MJIT_Standalone)
+j9jit_files(
+	microjit/ExceptionTable.cpp
+	microjit/assembly/utils.nasm
+	microjit/LWMetaDataCreation.cpp
+)
+else()
+j9jit_files(
+	microjit/ExceptionTable.cpp
+	microjit/assembly/utils.nasm
+	microjit/HWMetaDataCreation.cpp
+)
+endif()
+if(TR_HOST_ARCH STREQUAL "x")
+	if(TR_TARGET_ARCH STREQUAL "x")
+		add_subdirectory(x)
+	endif()
+endif()

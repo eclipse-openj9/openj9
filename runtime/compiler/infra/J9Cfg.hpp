@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,6 +39,9 @@ namespace J9 { typedef J9::CFG CFGConnector; }
 #include "cs2/listof.h"
 #include "env/TRMemory.hpp"
 #include "il/Node.hpp"
+#if defined(J9VM_OPT_MICROJIT)
+#include "ilgen/J9ByteCode.hpp"
+#endif /* defined(J9VM_OPT_MICROJIT) */
 #include "infra/Assert.hpp"
 #include "infra/List.hpp"
 #include "infra/TRCfgEdge.hpp"
@@ -88,6 +91,21 @@ public:
    TR_BitVector *setBlockAndEdgeFrequenciesBasedOnJITProfiler();
    void setBlockFrequenciesBasedOnInterpreterProfiler();
    void computeInitialBlockFrequencyBasedOnExternalProfiler(TR::Compilation *comp);
+   // May need MicroJIT versions of each of previous 3 methods in case they are called from outside MicroJIT on MJIT methods
+   #if defined(J9VM_OPT_MICROJIT)
+   // A number of methods here differ from their TR counter parts only in whether the TR::Node
+   // used for information about bytecode is in getLastRealTreeTop(), or getExit() on the asBlock()
+   // of the cfgNode. Once this is working, first clean-up step will be to have these methods
+   // take the node as a parameter instead, to reduce code duplication.
+   TR_J9ByteCode getBytecodeFromIndex(int32_t index); // Helper for getting bytecode from an index
+   TR_J9ByteCode getLastRealBytecodeOfBlock(TR::CFGNode *start); // Helper for getting last byteode in the CFGNode's block
+   //TR_BitVector * setBlockAndEdgeFrequenciesBasedOnJITProfilerMicroJIT(); Uncomment after implementing in the cpp file.
+   void getInterpreterProfilerBranchCountersOnDoubletonMicroJIT(TR::CFGNode *cfgNode, int32_t *taken, int32_t *nottaken);
+   void setSwitchEdgeFrequenciesOnNodeMicroJIT(TR::CFGNode *node, TR::Compilation *comp);
+   bool continueLoop(TR::CFGNode *temp);
+   void setBlockFrequenciesBasedOnInterpreterProfilerMicroJIT();
+   void computeInitialBlockFrequencyBasedOnExternalProfilerMicroJIT(TR::Compilation *comp);
+   #endif /* defined(J9VM_OPT_MICROJIT) */
    void propagateFrequencyInfoFromExternalProfiler(TR_ExternalProfiler *profiler);
    void getInterpreterProfilerBranchCountersOnDoubleton(TR::CFGNode *cfgNode, int32_t *taken, int32_t *nottaken);
    void setSwitchEdgeFrequenciesOnNode(TR::CFGNode *node, TR::Compilation *comp);

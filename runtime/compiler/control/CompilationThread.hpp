@@ -157,6 +157,11 @@ class CompilationInfoPerThreadBase
    TR_MethodMetaData     *getMetadata() {return _metadata;}
    void                   setMetadata(TR_MethodMetaData *m) {_metadata = m;}
    void *compile(J9VMThread *context, TR_MethodToBeCompiled *entry, J9::J9SegmentProvider &scratchSegmentProvider);
+#if defined(J9VM_OPT_MICROJIT)
+   TR_MethodMetaData *mjit(J9VMThread *context, TR::Compilation *,
+                 TR_ResolvedMethod *compilee, TR_J9VMBase &, TR_OptimizationPlan*, TR::SegmentAllocator const &scratchSegmentProvider,
+                 TR_Memory *trMemory);
+#endif
    TR_MethodMetaData *compile(J9VMThread *context, TR::Compilation *,
                  TR_ResolvedMethod *compilee, TR_J9VMBase &, TR_OptimizationPlan*, TR::SegmentAllocator const &scratchSegmentProvider);
    TR_MethodMetaData *performAOTLoad(J9VMThread *context, TR::Compilation *, TR_ResolvedMethod *compilee, TR_J9VMBase *vm, J9Method *method);

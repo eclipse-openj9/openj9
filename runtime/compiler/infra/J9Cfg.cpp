@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,9 @@
 #include "cs2/arrayof.h"
 #include "cs2/bitvectr.h"
 #include "cs2/listof.h"
+#if defined(J9VM_OPT_MICROJIT)
+#include "env/j9method.h"
+#endif /* defined(J9VM_OPT_MICROJIT) */
 #include "env/TRMemory.hpp"
 #include "env/PersistentInfo.hpp"
 #include "env/VMJ9.h"
@@ -47,6 +50,9 @@
 #include "il/SymbolReference.hpp"
 #include "il/TreeTop.hpp"
 #include "il/TreeTop_inlines.hpp"
+#if defined(J9VM_OPT_MICROJIT)
+#include "ilgen/J9ByteCodeIterator.hpp"
+#endif /* defined(J9VM_OPT_MICROJIT) */
 #include "infra/Assert.hpp"
 #include "infra/Cfg.hpp"
 #include "infra/Link.hpp"
@@ -1707,7 +1713,14 @@ void
 J9::CFG::propagateFrequencyInfoFromExternalProfiler(TR_ExternalProfiler *profiler)
    {
    _externalProfiler = profiler;
-
+#if defined(J9VM_OPT_MICROJIT)
+   J9Method *method = static_cast<TR_ResolvedJ9Method *>(comp()->getMethodBeingCompiled())->ramMethod();
+   U_8 *extendedFlags = reinterpret_cast<TR_J9VMBase *>(comp()->fe())->fetchMethodExtendedFlagsPointer(method);
+   if( ((*extendedFlags & 0x10) != 0x10) && (uintptr_t)(method->extra) == 0x1 && TR::Options::getJITCmdLineOptions()->_mjitEnabled){
+      if (!profiler) return;
+      self()->setBlockFrequenciesBasedOnInterpreterProfilerMicroJIT();
+   }
+#endif /* J9VM_OPT_MICROJIT */
    if (profiler)
       {
       self()->setBlockFrequenciesBasedOnInterpreterProfiler();
@@ -1763,3 +1776,741 @@ J9::CFG::emitVerbosePseudoRandomFrequencies()
    comp()->fej9()->emitNewPseudoRandomVerboseSuffix();
    return true;
    }
+
+
+#if defined(J9VM_OPT_MICROJIT)
+/* These methods all use MicroJIT, so we cannot assume all the assumptions about
+ * availability of meta-data structures (such as IL Trees) that TR can usually make.
+ * To that end, there are no real tree tops in this CFG, so we must use the exit
+ * nodes to get the last bytecode index for a given block, and from that get the bytecode.
+ * Since this will be done no less than 3 times, a helper function is provided.
+ */
+TR_J9ByteCode
+J9::CFG::getBytecodeFromIndex(int32_t index)
+   {
+   TR_ResolvedJ9Method *method = static_cast<TR_ResolvedJ9Method*>(_method->getResolvedMethod());
+   TR_J9VMBase * fe = _compilation->fej9();
+   TR_J9ByteCodeIterator bcIterator(_method, method, fe, _compilation);
+   bcIterator.setIndex(index);
+   return bcIterator.next();
+   }
+
+TR_J9ByteCode
+J9::CFG::getLastRealBytecodeOfBlock(TR::CFGNode *start)
+   {
+   return this->getBytecodeFromIndex(start->asBlock()->getExit()->getNode()->getLocalIndex());
+   }
+
+void
+J9::CFG::getInterpreterProfilerBranchCountersOnDoubletonMicroJIT(TR::CFGNode *cfgNode, int32_t *taken, int32_t *nottaken)
+   {
+   // We have not Real Tree Tops, so we need to work around that.
+   TR::Node *node = cfgNode->asBlock()->getExit()->getNode();
+
+   if (this != comp()->getFlowGraph())
+      {
+      TR::TreeTop *entry = (cfgNode->asBlock()->getNextBlock()) ? cfgNode->asBlock()->getNextBlock()->getEntry() : NULL;
+      _externalProfiler->getBranchCounters(node, entry, taken, nottaken, comp());
+      }
+   else
+      {
+      getBranchCounters(node, cfgNode->asBlock(), taken, nottaken, comp());
+      }
+
+   if (*taken || *nottaken)
+      {
+      if (comp()->getOption(TR_TraceBFGeneration))
+         dumpOptDetails(comp(),"If on node %p has branch counts: taken=%d, not taken=%d\n", node, *taken, *nottaken);
+      }
+   else if (isVirtualGuard(node))
+      {
+      *taken = 0;
+      *nottaken = AVG_FREQ;
+      int32_t sumFreq = summarizeFrequencyFromPredecessors(cfgNode, self());
+
+      if (sumFreq>0)
+         *nottaken = sumFreq;
+
+      if (comp()->getOption(TR_TraceBFGeneration))
+         dumpOptDetails(comp(),"Guard on node %p has default branch counts: taken=%d, not taken=%d\n", node, *taken, *nottaken);
+      }
+   else if (!cfgNode->asBlock()->isCold())
+      {
+      if (node->getBranchDestination()->getNode()->getBlock()->isCold())
+         *taken = 0;
+      else
+         *taken = LOW_FREQ;
+
+      if (cfgNode->asBlock()->getNextBlock() &&
+          cfgNode->asBlock()->getNextBlock()->isCold())
+         *nottaken = 0;
+      else
+         *nottaken = LOW_FREQ;
+
+      /*int32_t sumFreq = summarizeFrequencyFromPredecessors(cfgNode, this);
+
+      if (sumFreq>0)
+         {
+         *nottaken = sumFreq>>1;
+         *taken = *nottaken;
+         }
+      else
+         {
+         if (node->getByteCodeIndex()==0)
+            {
+            int32_t callCount = getParentCallCount(this, node);
+
+            // we don't know what the call count is, assign some
+            // moderate frequency
+            if (callCount<=0)
+               callCount = AVG_FREQ;
+
+            *taken = 0;
+            *nottaken = callCount;
+            }
+         }
+      */
+      if (comp()->getOption(TR_TraceBFGeneration))
+         dumpOptDetails(comp(),"If with no profiling information on node %p has low branch counts: taken=%d, not taken=%d\n", node, *taken, *nottaken);
+      }
+   }
+
+void
+J9::CFG::setSwitchEdgeFrequenciesOnNodeMicroJIT(TR::CFGNode *node, TR::Compilation *comp)
+   {
+   TR::Block *block = node->asBlock();
+   TR::Node *treeNode = node->asBlock()->getExit()->getNode();
+   int32_t sumFrequency = _externalProfiler->getSumSwitchCount(treeNode, comp);
+
+   if (sumFrequency < 10)
+      {
+      if (comp->getOption(TR_TraceBFGeneration))
+         dumpOptDetails(comp,"Low count switch I'll set frequencies using uniform edge distribution\n");
+
+      self()->setUniformEdgeFrequenciesOnNode (node, sumFrequency, false, comp);
+      return;
+      }
+
+   if (treeNode->getInlinedSiteIndex() < -1)
+      {
+      if (comp->getOption(TR_TraceBFGeneration))
+         dumpOptDetails(comp,"Dummy switch generated in estimate code size I'll set frequencies using uniform edge distribution\n");
+
+      self()->setUniformEdgeFrequenciesOnNode (node, sumFrequency, false, comp);
+      return;
+      }
+
+   if (_externalProfiler->isSwitchProfileFlat(treeNode, comp))
+      {
+      if (comp->getOption(TR_TraceBFGeneration))
+         dumpOptDetails(comp,"Flat profile switch, setting average frequency on each case.\n");
+
+      self()->setUniformEdgeFrequenciesOnNode(node, _externalProfiler->getFlatSwitchProfileCounts(treeNode, comp), false, comp);
+      return;
+      }
+
+   for ( int32_t count=1; count < treeNode->getNumChildren(); count++)
+      {
+      TR::Node *child = treeNode->getChild(count);
+      TR::CFGEdge *e = getCFGEdgeForNode(node, child);
+
+      int32_t frequency = _externalProfiler->getSwitchCountForValue (treeNode, (count-1), comp);
+      e->setFrequency( std::max(frequency,1) );
+      if (comp->getOption(TR_TraceBFGeneration))
+         dumpOptDetails(comp,"Edge %p between %d and %d has freq %d (Switch)\n", e, e->getFrom()->getNumber(), e->getTo()->getNumber(), e->getFrequency());
+      }
+   }
+
+//TODO: Uncomment this method and implement it using an updated traversal order call that won't look at real tree tops.
+/*
+TR_BitVector *
+J9::CFG::setBlockAndEdgeFrequenciesBasedOnJITProfilerMicroJIT()
+   {
+   // Use the setBlockAndEdgeFrequenciesBasedOnJITProfiler above as a guide should this method need to be implemented.
+   }
+*/
+
+bool isBranch(TR_J9ByteCode bc)
+   {
+   switch(bc)
+      {
+      case J9BCifeq:
+      case J9BCifne:
+      case J9BCiflt:
+      case J9BCifge:
+      case J9BCifgt:
+      case J9BCifle:
+      case J9BCificmpeq:
+      case J9BCificmpne:
+      case J9BCificmplt:
+      case J9BCificmpge:
+      case J9BCificmpgt:
+      case J9BCificmple:
+      case J9BCifacmpeq:
+      case J9BCifacmpne:
+      case J9BCifnull:
+      case J9BCifnonnull:
+         return true;
+      default:
+         return false;
+      }
+   }
+
+bool isTableOp(TR_J9ByteCode bc)
+   {
+   switch(bc)
+      {
+      case J9BClookupswitch:
+      case J9BCtableswitch:
+         return true;
+      default:
+         return false;
+      }
+   }
+
+bool
+J9::CFG::continueLoop(TR::CFGNode *temp) //TODO: Find a better name for this method
+   {
+   if((temp->getSuccessors().size() == 1) && !temp->asBlock()->getEntry())
+      {
+      TR_J9ByteCode bc = this->getLastRealBytecodeOfBlock(temp);
+      return !(isBranch(bc) || isTableOp(bc));
+      }
+      return false;
+   }
+
+void
+J9::CFG::setBlockFrequenciesBasedOnInterpreterProfilerMicroJIT()
+   {
+   TR::StackMemoryRegion stackMemoryRegion(*trMemory());
+   int32_t numBlocks = getNextNodeNumber();
+
+   TR_BitVector *_seenNodes = new (trStackMemory()) TR_BitVector(numBlocks, trMemory(), stackAlloc, notGrowable);
+   TR_BitVector *_seenNodesInCycle = new (trStackMemory()) TR_BitVector(numBlocks, trMemory(), stackAlloc, notGrowable);
+   _frequencySet = new (trHeapMemory()) TR_BitVector(numBlocks, trMemory(), heapAlloc, notGrowable);
+   int32_t startFrequency = AVG_FREQ;
+   int32_t taken          = AVG_FREQ;
+   int32_t nottaken       = AVG_FREQ;
+   int32_t initialCallScanFreq = -1;
+   int32_t inlinedSiteIndex = -1;
+
+   // Walk until we find if or switch statement
+   TR::CFGNode *start = getStart();
+   TR::CFGNode *temp  = start;
+   TR_ScratchList<TR::CFGNode> upStack(trMemory());
+
+   bool backEdgeExists = false;
+   TR::TreeTop *methodScanEntry = NULL;
+   //_maxFrequency = 0;
+   while (continueLoop(temp))
+      {
+      if (_seenNodes->isSet(temp->getNumber()))
+         break;
+
+      upStack.add(temp);
+      _seenNodes->set(temp->getNumber());
+
+      if (!backEdgeExists && !temp->getPredecessors().empty() && !(temp->getPredecessors().size() == 1))
+         {
+         if (comp()->getHCRMode() != TR::osr)
+            backEdgeExists = true;
+         else
+            {
+            // Count the number of edges from non OSR blocks
+            int32_t nonOSREdges = 0;
+            for (auto edge = temp->getPredecessors().begin(); edge != temp->getPredecessors().end(); ++edge)
+               {
+               if ((*edge)->getFrom()->asBlock()->isOSRCodeBlock() || (*edge)->getFrom()->asBlock()->isOSRCatchBlock())
+                  continue;
+               if (nonOSREdges > 0)
+                  {
+                  backEdgeExists = true;
+                  break;
+                  }
+               nonOSREdges++;
+               }
+            }
+         }
+
+      if (temp->asBlock()->getEntry() && initialCallScanFreq < 0)
+         {
+         int32_t methodScanFreq = scanForFrequencyOnSimpleMethod(temp->asBlock()->getEntry(), temp->asBlock()->getExit());
+         if (methodScanFreq > 0)
+            initialCallScanFreq = methodScanFreq;
+         inlinedSiteIndex = temp->asBlock()->getEntry()->getNode()->getInlinedSiteIndex();
+         methodScanEntry = temp->asBlock()->getEntry();
+         }
+
+      if (!temp->getSuccessors().empty())
+         {
+         if ((temp->getSuccessors().size() == 2) && temp->asBlock() && temp->asBlock()->getNextBlock())
+            {
+            temp = temp->asBlock()->getNextBlock();
+            }
+         else
+            temp = temp->getSuccessors().front()->getTo();
+         }
+      else
+         break;
+      }
+
+   if (comp()->getOption(TR_TraceBFGeneration))
+      dumpOptDetails(comp(),"Propagation start block_%d\n", temp->getNumber());
+
+   if (temp->asBlock()->getEntry())
+      inlinedSiteIndex = temp->asBlock()->getEntry()->getNode()->getInlinedSiteIndex();
+
+   if ((temp->getSuccessors().size() == 2) &&
+       temp->asBlock()->getEntry()         &&
+       isBranch(getLastRealBytecodeOfBlock(temp)))
+      {
+      getInterpreterProfilerBranchCountersOnDoubleton(temp, &taken, &nottaken);
+      startFrequency = taken + nottaken;
+      self()->setEdgeFrequenciesOnNode( temp, taken, nottaken, comp());
+      }
+   else if (temp->asBlock()->getEntry() &&
+            isTableOp(this->getBytecodeFromIndex(temp->asBlock()->getExit()->getNode()->getLocalIndex())))
+      {
+      startFrequency = _externalProfiler->getSumSwitchCount(temp->asBlock()->getExit()->getNode(), comp());
+      if (comp()->getOption(TR_TraceBFGeneration))
+         dumpOptDetails(comp(),"Switch with total frequency of %d\n", startFrequency);
+      setSwitchEdgeFrequenciesOnNode(temp, comp());
+      }
+   else
+      {
+      if (_calledFrequency > 0)
+         startFrequency = _calledFrequency;
+      else if (initialCallScanFreq > 0)
+         startFrequency = initialCallScanFreq;
+      else
+         {
+         startFrequency = AVG_FREQ;
+         }
+
+      if ((temp->getSuccessors().size() == 2) && (startFrequency > 0) && temp->asBlock()->getEntry() && isBranch(getLastRealBytecodeOfBlock(temp)))
+         self()->setEdgeFrequenciesOnNode( temp, 0, startFrequency, comp());
+      else
+         self()->setUniformEdgeFrequenciesOnNode(temp, startFrequency, false, comp());
+      }
+
+   setBlockFrequency (temp, startFrequency);
+   _initialBlockFrequency = startFrequency;
+
+   if (comp()->getOption(TR_TraceBFGeneration))
+      dumpOptDetails(comp(),"Set frequency of %d on block_%d\n", temp->asBlock()->getFrequency(), temp->getNumber());
+
+   start = temp;
+
+   // Walk backwards to the start and propagate this frequency
+
+   if (comp()->getOption(TR_TraceBFGeneration))
+      dumpOptDetails(comp(),"Propagating start frequency backwards...\n");
+
+   ListIterator<TR::CFGNode> upit(&upStack);
+   for (temp = upit.getFirst(); temp; temp = upit.getNext())
+      {
+      if (!temp->asBlock()->getEntry())
+         continue;
+      if ((temp->getSuccessors().size() == 2) && (startFrequency > 0) && temp->asBlock()->getEntry() && temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCode().isBranch())
+         self()->setEdgeFrequenciesOnNode( temp, 0, startFrequency, comp());
+      else
+         self()->setUniformEdgeFrequenciesOnNode( temp, startFrequency, false, comp());
+      setBlockFrequency (temp, startFrequency);
+      _seenNodes->set(temp->getNumber());
+
+      if (comp()->getOption(TR_TraceBFGeneration))
+         dumpOptDetails(comp(),"Set frequency of %d on block_%d\n", temp->asBlock()->getFrequency(), temp->getNumber());
+      }
+
+   if (comp()->getOption(TR_TraceBFGeneration))
+      dumpOptDetails(comp(),"Propagating block frequency forward...\n");
+
+   // Walk reverse post-order
+   // we start at the first if or switch statement
+   TR_ScratchList<TR::CFGNode> stack(trMemory());
+   stack.add(start);
+
+   while (!stack.isEmpty())
+      {
+      TR::CFGNode *node = stack.popHead();
+
+      if (comp()->getOption(TR_TraceBFGeneration))
+         traceMsg(comp(), "Considering block_%d\n", node->getNumber());
+
+      if (_seenNodes->isSet(node->getNumber()))
+         continue;
+
+      _seenNodes->set(node->getNumber());
+
+      if (!node->asBlock()->getEntry())
+         continue;
+
+      inlinedSiteIndex = node->asBlock()->getEntry()->getNode()->getInlinedSiteIndex();
+
+      if (node->asBlock()->isCold())
+         {
+         if (comp()->getOption(TR_TraceBFGeneration))
+            dumpOptDetails(comp(),"Analyzing COLD block_%d\n", node->getNumber());
+         //node->asBlock()->setFrequency(0);
+         int32_t freq = node->getFrequency();
+         if ((node->getSuccessors().size() == 2) && (freq > 0) && node->asBlock()->getEntry() && node->asBlock()->getLastRealTreeTop()->getNode()->getOpCode().isBranch())
+            self()->setEdgeFrequenciesOnNode( node, 0, freq, comp());
+         else
+            self()->setUniformEdgeFrequenciesOnNode(node, freq, false, comp());
+         setBlockFrequency (node, freq);
+         //continue;
+         }
+
+      // ignore the first node
+      if (!node->asBlock()->isCold() && (node != start))
+         {
+         if ((node->getSuccessors().size() == 2) &&
+             node->asBlock()->getLastRealTreeTop()->getNode()->getOpCode().isBranch())
+            {
+            // if it's an if and it's not JIT inserted artificial if then just
+            // read the outgoing branches and put that as node frequency
+            // else get frequency from predecessors
+            if (!isVirtualGuard(node->asBlock()->getLastRealTreeTop()->getNode()) &&
+                !node->asBlock()->getLastRealTreeTop()->getNode()->getByteCodeInfo().doNotProfile())
+               {
+               _seenNodesInCycle->empty();
+               getInterpreterProfilerBranchCountersOnDoubleton(node, &taken, &nottaken);
+
+               if ((taken <= 0) && (nottaken <= 0))
+                  {
+                  taken = LOW_FREQ;
+                  nottaken = LOW_FREQ;
+                  }
+
+               self()->setEdgeFrequenciesOnNode( node, taken, nottaken, comp());
+               setBlockFrequency (node, taken + nottaken);
+
+               if (comp()->getOption(TR_TraceBFGeneration))
+                  dumpOptDetails(comp(),"If on node %p is not guard I'm using the taken and nottaken counts for producing block frequency\n", node->asBlock()->getLastRealTreeTop()->getNode());
+               }
+            else
+               {
+               if (comp()->getOption(TR_TraceBFGeneration))
+                  {
+                  TR_PredecessorIterator pit(node);
+                  for (TR::CFGEdge *edge = pit.getFirst(); edge; edge = pit.getNext())
+                     {
+                     TR::CFGNode *pred = edge->getFrom();
+
+                     if (edge->getFrequency()<=0)
+                        continue;
+
+                     int32_t edgeFreq = edge->getFrequency();
+
+                     if (comp()->getOption(TR_TraceBFGeneration))
+                        traceMsg(comp(), "11Pred %d has freq %d\n", pred->getNumber(), edgeFreq);
+                     }
+                  }
+
+               TR::CFGNode *predNotSet = NULL;
+               TR_PredecessorIterator pit(node);
+               for (TR::CFGEdge *edge = pit.getFirst(); edge; edge = pit.getNext())
+                  {
+                  TR::CFGNode *pred = edge->getFrom();
+
+                  if (pred->getFrequency()< 0)
+                     {
+                     predNotSet = pred;
+                     break;
+                     }
+                  }
+
+               if (predNotSet &&
+                   !_seenNodesInCycle->get(node->getNumber()))
+                  {
+                  stack.add(predNotSet);
+                  _seenNodesInCycle->set(node->getNumber());
+                  _seenNodes->reset(node->getNumber());
+                  continue;
+                  }
+
+               if (!predNotSet)
+                  _seenNodesInCycle->empty();
+
+               int32_t sumFreq = summarizeFrequencyFromPredecessors(node, self());
+               if (sumFreq <= 0)
+                  sumFreq = AVG_FREQ;
+               self()->setEdgeFrequenciesOnNode( node, 0, sumFreq, comp());
+               setBlockFrequency (node, sumFreq);
+
+               if (comp()->getOption(TR_TraceBFGeneration))
+                  dumpOptDetails(comp(),"If on node %p is guard I'm using the predecessor frequency sum\n", node->asBlock()->getLastRealTreeTop()->getNode());
+               }
+
+            if (comp()->getOption(TR_TraceBFGeneration))
+               dumpOptDetails(comp(),"Set frequency of %d on block_%d\n", node->asBlock()->getFrequency(), node->getNumber());
+            }
+         else if (node->asBlock()->getEntry() &&
+                  (node->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::lookup ||
+                   node->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::table))
+            {
+            _seenNodesInCycle->empty();
+            int32_t sumFreq = _externalProfiler->getSumSwitchCount(node->asBlock()->getLastRealTreeTop()->getNode(), comp());
+            setSwitchEdgeFrequenciesOnNode(node, comp());
+            setBlockFrequency (node, sumFreq);
+            if (comp()->getOption(TR_TraceBFGeneration))
+               {
+               dumpOptDetails(comp(),"Found a Switch statement at exit of block_%d\n", node->getNumber());
+               dumpOptDetails(comp(),"Set frequency of %d on block_%d\n", node->asBlock()->getFrequency(), node->getNumber());
+               }
+            }
+         else
+            {
+            TR::CFGNode *predNotSet = NULL;
+            int32_t sumFreq = 0;
+            TR_PredecessorIterator pit(node);
+            for (TR::CFGEdge *edge = pit.getFirst(); edge; edge = pit.getNext())
+               {
+               TR::CFGNode *pred = edge->getFrom();
+
+               if (pred->getFrequency()< 0)
+                  {
+                  predNotSet = pred;
+                  break;
+                  }
+
+                int32_t edgeFreq = edge->getFrequency();
+                sumFreq += edgeFreq;
+        }
+
+            if (predNotSet &&
+                !_seenNodesInCycle->get(node->getNumber()))
+               {
+               _seenNodesInCycle->set(node->getNumber());
+               _seenNodes->reset(node->getNumber());
+               stack.add(predNotSet);
+               continue;
+               }
+            else
+               {
+               if (!predNotSet)
+                  _seenNodesInCycle->empty();
+
+               if (comp()->getOption(TR_TraceBFGeneration))
+                  traceMsg(comp(), "2Setting block and uniform freqs\n");
+
+              if ((node->getSuccessors().size() == 2) && (sumFreq > 0) && node->asBlock()->getEntry() && node->asBlock()->getLastRealTreeTop()->getNode()->getOpCode().isBranch())
+                 self()->setEdgeFrequenciesOnNode( node, 0, sumFreq, comp());
+              else
+                 self()->setUniformEdgeFrequenciesOnNode( node, sumFreq, false, comp());
+               setBlockFrequency (node, sumFreq);
+               }
+
+            if (comp()->getOption(TR_TraceBFGeneration))
+               {
+               dumpOptDetails(comp(),"Not an if (or unknown if) at exit of block %d (isSingleton=%d)\n", node->getNumber(), (node->getSuccessors().size() == 1));
+               dumpOptDetails(comp(),"Set frequency of %d on block %d\n", node->asBlock()->getFrequency(), node->getNumber());
+               }
+            }
+         }
+
+      TR_SuccessorIterator sit(node);
+      // add the successors on the list
+      for (TR::CFGEdge *edge = sit.getFirst(); edge; edge = sit.getNext())
+         {
+         TR::CFGNode *succ = edge->getTo();
+
+         if (!_seenNodes->isSet(succ->getNumber()))
+            stack.add(succ);
+         else
+            {
+            if (!(((succ->getSuccessors().size() == 2) &&
+                 succ->asBlock()->getLastRealTreeTop()->getNode()->getOpCode().isBranch()) ||
+                (succ->asBlock()->getEntry() &&
+                  (succ->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::lookup ||
+                   succ->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::table))))
+               {
+               setBlockFrequency ( succ, edge->getFrequency(), true);
+
+               // addup this edge to the frequency of the blocks following it
+               // propagate downward until you reach a block that doesn't end in
+               // goto or cycle
+               if (succ->getSuccessors().size() == 1)
+                  {
+                  TR::CFGNode *tempNode = succ->getSuccessors().front()->getTo();
+                  TR_BitVector *_seenGotoNodes = new (trStackMemory()) TR_BitVector(numBlocks, trMemory(), stackAlloc, notGrowable);
+                   _seenGotoNodes->set(succ->getNumber());
+                  while ((tempNode->getSuccessors().size() == 1) &&
+                         (tempNode != succ) &&
+                         (tempNode != getEnd()) &&
+                         !_seenGotoNodes->isSet(tempNode->getNumber()))
+                     {
+                     TR::CFGNode *nextTempNode = tempNode->getSuccessors().front()->getTo();
+
+                     if (comp()->getOption(TR_TraceBFGeneration))
+                        traceMsg(comp(), "3Setting block and uniform freqs\n");
+
+                     self()->setUniformEdgeFrequenciesOnNode( tempNode, edge->getFrequency(), true, comp());
+                     setBlockFrequency (tempNode, edge->getFrequency(), true);
+
+                     _seenGotoNodes->set(tempNode->getNumber());
+                     tempNode = nextTempNode;
+                     }
+                  }
+               }
+            }
+         }
+      }
+
+
+   if (backEdgeExists)
+      {
+      while (!upStack.isEmpty())
+         {
+         TR::CFGNode *temp = upStack.popHead();
+         if (temp == start)
+            continue;
+
+         if (backEdgeExists)
+            temp->setFrequency(std::max(MAX_COLD_BLOCK_COUNT+1, startFrequency/10));
+         }
+      }
+
+
+   // now set all the blocks that haven't been seen to have 0 frequency
+   // catch blocks are one example, we don't try to set frequency there to
+   // save compilation time, since those are most frequently cold. Future might prove
+   // this otherwise.
+
+   TR::CFGNode *node;
+   start = getStart();
+   for (node = getFirstNode(); node; node=node->getNext())
+      {
+      if ((node == getEnd()) || (node == start))
+          node->asBlock()->setFrequency(0);
+
+      if (_seenNodes->isSet(node->getNumber()))
+         continue;
+
+      if (node->asBlock()->getEntry() &&
+         (node->asBlock()->getFrequency()<0))
+         node->asBlock()->setFrequency(0);
+      }
+
+   //scaleEdgeFrequencies();
+
+   TR_BitVector *nodesToBeNormalized = new (trStackMemory()) TR_BitVector(numBlocks, trMemory(), stackAlloc, notGrowable);
+   nodesToBeNormalized->setAll(numBlocks);
+   _maxFrequency = -1;
+   _maxEdgeFrequency = -1;
+   normalizeFrequencies(nodesToBeNormalized);
+   _oldMaxFrequency = _maxFrequency;
+   _oldMaxEdgeFrequency = _maxEdgeFrequency;
+
+   if (comp()->getOption(TR_TraceBFGeneration))
+      traceMsg(comp(), "max freq %d max edge freq %d\n", _maxFrequency, _maxEdgeFrequency);
+
+   }
+
+void
+J9::CFG::computeInitialBlockFrequencyBasedOnExternalProfilerMicroJIT(TR::Compilation *comp)
+   {
+   TR_ExternalProfiler* profiler = comp->fej9()->hasIProfilerBlockFrequencyInfo(*comp);
+   if (!profiler)
+      {
+      _initialBlockFrequency = AVG_FREQ;
+      return;
+      }
+
+   _externalProfiler = profiler;
+
+   TR::StackMemoryRegion stackMemoryRegion(*trMemory());
+   int32_t numBlocks = getNextNodeNumber();
+
+   TR_BitVector *_seenNodes = new (trStackMemory()) TR_BitVector(numBlocks, trMemory(), stackAlloc, notGrowable);
+   _frequencySet = new (trHeapMemory()) TR_BitVector(numBlocks, trMemory(), heapAlloc, notGrowable);
+   int32_t startFrequency = AVG_FREQ;
+   int32_t taken          = AVG_FREQ;
+   int32_t nottaken       = AVG_FREQ;
+   int32_t initialCallScanFreq = -1;
+   int32_t inlinedSiteIndex = -1;
+
+   // Walk until we find if or switch statement
+   TR::CFGNode *start = getStart();
+   TR::CFGNode *temp  = start;
+
+   bool backEdgeExists = false;
+   TR::TreeTop *methodScanEntry = NULL;
+
+   while (  (temp->getSuccessors().size() == 1) ||
+            !temp->asBlock()->getEntry()        ||
+            !((temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCode().isBranch()
+              && !temp->asBlock()->getLastRealTreeTop()->getNode()->getByteCodeInfo().doNotProfile()) ||
+             temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::lookup ||
+             temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::table))
+      {
+      if (_seenNodes->isSet(temp->getNumber()))
+         break;
+
+      _seenNodes->set(temp->getNumber());
+
+      if (!temp->getPredecessors().empty() && !(temp->getPredecessors().size() == 1))
+         backEdgeExists = true;
+
+      if (temp->asBlock()->getEntry() && initialCallScanFreq < 0)
+         {
+         int32_t methodScanFreq = scanForFrequencyOnSimpleMethod(temp->asBlock()->getEntry(), temp->asBlock()->getExit());
+         if (methodScanFreq > 0)
+            initialCallScanFreq = methodScanFreq;
+         inlinedSiteIndex = temp->asBlock()->getEntry()->getNode()->getInlinedSiteIndex();
+         methodScanEntry = temp->asBlock()->getEntry();
+         }
+
+      if (!temp->getSuccessors().empty())
+         {
+         if ((temp->getSuccessors().size() == 2) && temp->asBlock() && temp->asBlock()->getNextBlock())
+            {
+            temp = temp->asBlock()->getNextBlock();
+            }
+         else
+            temp = temp->getSuccessors().front()->getTo();
+         }
+      else
+         break;
+      }
+
+   if (temp->asBlock()->getEntry())
+      inlinedSiteIndex = temp->asBlock()->getEntry()->getNode()->getInlinedSiteIndex();
+
+   if ((temp->getSuccessors().size() == 2) &&
+       temp->asBlock()->getEntry()         &&
+       temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCode().isBranch() &&
+       !temp->asBlock()->getLastRealTreeTop()->getNode()->getByteCodeInfo().doNotProfile())
+      {
+      getInterpreterProfilerBranchCountersOnDoubleton(temp, &taken, &nottaken);
+      if ((taken <= 0) && (nottaken <= 0))
+         {
+         taken = LOW_FREQ;
+         nottaken = LOW_FREQ;
+         }
+      startFrequency = taken + nottaken;
+      }
+   else if (temp->asBlock()->getEntry() &&
+            (temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::lookup ||
+             temp->asBlock()->getLastRealTreeTop()->getNode()->getOpCodeValue() == TR::table))
+      {
+      startFrequency = _externalProfiler->getSumSwitchCount(temp->asBlock()->getLastRealTreeTop()->getNode(), comp);
+      }
+   else
+      {
+      if (_calledFrequency > 0)
+         startFrequency = _calledFrequency;
+      else if (initialCallScanFreq > 0)
+         startFrequency = initialCallScanFreq;
+      else
+         {
+         startFrequency = AVG_FREQ;
+         }
+      }
+
+   if (startFrequency <= 0)
+      startFrequency = LOW_FREQ;
+
+   _initialBlockFrequency = startFrequency;
+   }
+#endif /* defined(J9VM_OPT_MICROJIT) */

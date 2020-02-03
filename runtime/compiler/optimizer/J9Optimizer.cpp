@@ -86,6 +86,13 @@
 #include "optimizer/MethodHandleTransformer.hpp"
 #include "optimizer/VectorAPIExpansion.hpp"
 
+#if defined(J9VM_OPT_MICROJIT)
+static const OptimizationStrategy J9MicroJITOpts[] =
+   {
+   { OMR::jProfilingBlock,                  OMR::MustBeDone },
+   { OMR::endOpts }
+   };
+#endif
 
 static const OptimizationStrategy J9EarlyGlobalOpts[] =
    {
@@ -1018,6 +1025,13 @@ J9::Optimizer::optimizationStrategy(TR::Compilation *c)
       }
    }
 
+#if defined(J9VM_OPT_MICROJIT)
+const OptimizationStrategy *
+J9::Optimizer::microJITOptimizationStrategy(TR::Compilation *c)
+   {
+   return J9MicroJITOpts;
+   }
+#endif /* J9VM_OPT_MICROJIT */
 
 ValueNumberInfoBuildType
 J9::Optimizer::valueNumberInfoBuildType()

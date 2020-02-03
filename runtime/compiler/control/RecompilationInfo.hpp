@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -44,6 +44,9 @@ class TR_FrontEnd;
 class TR_OpaqueMethodBlock;
 class TR_OptimizationPlan;
 class TR_ResolvedMethod;
+#if defined(J9VM_OPT_MICROJIT)
+namespace MJIT { class CodeGenerator; }
+#endif
 namespace TR { class Instruction; }
 namespace TR { class SymbolReference; }
 
@@ -321,6 +324,9 @@ class TR_PersistentJittedBodyInfo
    friend class TR_EmilyPersistentJittedBodyInfo;
    friend class ::OMR::Options;
    friend class J9::Options;
+#if defined(J9VM_OPT_MICROJIT)
+   friend class MJIT::CodeGenerator;
+#endif
 
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64)
    friend void fixPersistentMethodInfo(void *table, bool isJITClientAOTLoad);
@@ -332,6 +338,10 @@ class TR_PersistentJittedBodyInfo
    static TR_PersistentJittedBodyInfo *get(void *startPC);
 
    bool getHasLoops()               { return _flags.testAny(HasLoops); }
+#if defined(J9VM_OPT_MICROJIT)
+   bool isMJITCompiledMethod() { return _flags.testAny(IsMJITCompiled); }
+   void setIsMJITCompiledMethod(bool b) { _flags.set(IsMJITCompiled, b); }
+#endif /* defined(J9VM_OPT_MICROJIT) */
    bool getUsesPreexistence()       { return _flags.testAny(UsesPreexistence); }
    bool getDisableSampling()        { return _flags.testAny(DisableSampling);  }
    void setDisableSampling(bool b)  { _flags.set(DisableSampling, b); }
@@ -410,7 +420,9 @@ class TR_PersistentJittedBodyInfo
    enum
       {
       HasLoops                = 0x0001,
-      //HasManyIterationsLoops  = 0x0002, // Available
+#if defined(J9VM_OPT_MICROJIT)
+      IsMJITCompiled          = 0x0002,
+#endif /* defined(J9VM_OPT_MICROJIT) */
       UsesPreexistence        = 0x0004,
       DisableSampling         = 0x0008, // This flag disables sampling of this method even though its recompilable
       IsProfilingBody         = 0x0010,

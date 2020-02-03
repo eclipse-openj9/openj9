@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2021 IBM Corp. and others
+ * Copyright (c) 2000, 2022 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,7 @@
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "optimizer/TransformUtil.hpp"
+#include "env/j9method.h"
 
 // Global thresholds for the number of method enters required to trip
 // method recompilation - these are adjusted in the JIT hook control logic
@@ -595,11 +596,22 @@ void TR_JProfilingBlock::computeMinimumSpanningTree(BlockParents &parent, BlockP
    BlockWeights weights(cfg->getNextNodeNumber(), stackMemoryRegion);
    TR::BlockChecklist inMST(comp());
 
+   char* classname = comp()->getMethodBeingCompiled()->classNameChars();
+   uint16_t classnamelength = comp()->getMethodBeingCompiled()->classNameLength();
+
+   char* name = comp()->getMethodBeingCompiled()->nameChars();
+   uint16_t namelength = comp()->getMethodBeingCompiled()->nameLength();
+
    // Prim's init
       {
       TR::Block *first = optimizer()->getMethodSymbol()->getFirstTreeTop()->getNode()->getBlock();
       weights[first] = 0;
       Q.push(std::make_pair(0,first));
+      }
+
+   if (trace())
+      {
+      traceMsg(comp(), "class.method:from_block:to_block:frequency\n");
       }
 
    while (!Q.empty())
@@ -609,14 +621,19 @@ void TR_JProfilingBlock::computeMinimumSpanningTree(BlockParents &parent, BlockP
 
       inMST.add(block);
       if (trace())
-         traceMsg(comp(), "Add block_%d to the MST\n", block->getNumber());
+         {
+         //traceMsg(comp(), "Add block_%d to the MST\n", block->getNumber());
+         }
 
       AdjacentBlockIterator adj(comp(), block);
       while (adj.current())
          {
          TR::Block *candidate = adj.current();
          if (trace())
-            traceMsg(comp(), "  adj block_%d weight %d\n", candidate->getNumber(), adj.frequency());
+            {
+            //traceMsg(comp(), "  adj block_%d weight %d\n", candidate->getNumber(), adj.frequency());
+            traceMsg(comp(), "%s.%s:%d:%d:%d\n", classname, name, block->getNumber(), candidate->getNumber(), adj.frequency());
+            }
          if (!inMST.contains(candidate) && weights[candidate] > -adj.frequency())
             {
             weights[candidate] = -adj.frequency();
@@ -923,6 +940,7 @@ void TR_JProfilingBlock::addRecompilationTests(TR_BlockFrequencyInfo *blockFrequ
  */
 int32_t TR_JProfilingBlock::perform() 
    {
+   // Can we perform these tests before the perform call?
    if (comp()->getOption(TR_EnableJProfiling))
       {
       if (trace())
@@ -962,6 +980,16 @@ int32_t TR_JProfilingBlock::perform()
    // dump the spanning tree which is held in the parent map computed by computeMinimumSpanningTree
    if (trace())
       parent.dump(comp());
+
+//TODO: Remove this when ready to implement counter insertion.
+#if defined(J9VM_OPT_MICROJIT)
+   J9Method *method = static_cast<TR_ResolvedJ9Method *>(comp()->getMethodBeingCompiled())->ramMethod();
+   U_8 *extendedFlags = reinterpret_cast<TR_J9VMBase *>(fe())->fetchMethodExtendedFlagsPointer(method);
+   if( ((*extendedFlags & 0x10) != 0x10) && (uintptr_t)(method->extra) == 0x1 ){
+      comp()->setSkippedJProfilingBlock();
+      return 0;
+   }
+#endif
 
    TR::BlockChecklist countedBlocks(comp());
    int32_t numEdges = processCFGForCounting(parent, countedBlocks, loopBack);

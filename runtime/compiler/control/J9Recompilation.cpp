@@ -497,7 +497,7 @@ J9::Recompilation::getExistingMethodInfo(TR_ResolvedMethod *method)
 /**
  * This method can extract a value profiler from the current list of
  * recompilation profilers.
- * 
+ *
  * \return The first TR_ValueProfiler in the current list of profilers, NULL if there are none.
  */
 TR_ValueProfiler *
@@ -739,7 +739,7 @@ TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_Per
    // Before it can be accessed, inc ref count on new info
    if (newInfo)
       TR_PersistentProfileInfo::incRefCount(newInfo);
-   
+
    // Update ptr as if it was unlocked
    // Doesn't matter what the old info was, as long as it was unlocked
    do {

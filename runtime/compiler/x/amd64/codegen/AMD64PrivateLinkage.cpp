@@ -87,13 +87,20 @@ enum
 J9::X86::AMD64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    : J9::X86::PrivateLinkage(cg)
    {
+      setOffsetToFirstParm(RETURN_ADDRESS_SIZE);
+      setProperties(cg,&_properties);
+   }
+
+void J9::X86::AMD64::setProperties(
+      TR::CodeGenerator *cg,
+      TR::X86LinkageProperties *properties)
+   {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(cg->fe());
    const TR::RealRegister::RegNum noReg = TR::RealRegister::NoReg;
    uint8_t r, p;
 
    TR::RealRegister::RegNum metaReg = TR::RealRegister::ebp;
-
-   _properties._properties =
+   properties->_properties =
         EightBytePointers | EightByteParmSlots
       | IntegersInRegisters | LongsInRegisters | FloatsInRegisters
       | NeedsThunksForIndirectCalls
@@ -101,98 +108,97 @@ J9::X86::AMD64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
       ;
 
    if (!fej9->pushesOutgoingArgsAtCallSite(cg->comp()))
-      _properties._properties |= CallerCleanup | ReservesOutgoingArgsInPrologue;
+      properties->_properties |= CallerCleanup | ReservesOutgoingArgsInPrologue;
 
    // Integer arguments
    p=0;
-   _properties._firstIntegerArgumentRegister = p;
-   _properties._argumentRegisters[p++]    = TR::RealRegister::eax;
-   _properties._argumentRegisters[p++]    = TR::RealRegister::esi;
-   _properties._argumentRegisters[p++]    = TR::RealRegister::edx;
-   _properties._argumentRegisters[p++]    = TR::RealRegister::ecx;
+   properties->_firstIntegerArgumentRegister = p;
+   properties->_argumentRegisters[p++]    = TR::RealRegister::eax;
+   properties->_argumentRegisters[p++]    = TR::RealRegister::esi;
+   properties->_argumentRegisters[p++]    = TR::RealRegister::edx;
+   properties->_argumentRegisters[p++]    = TR::RealRegister::ecx;
    TR_ASSERT(p == NUM_INTEGER_LINKAGE_REGS, "assertion failure");
-   _properties._numIntegerArgumentRegisters = NUM_INTEGER_LINKAGE_REGS;
+   properties->_numIntegerArgumentRegisters = NUM_INTEGER_LINKAGE_REGS;
 
    // Float arguments
-   _properties._firstFloatArgumentRegister = p;
+   properties->_firstFloatArgumentRegister = p;
    for(r=0; r<=7; r++)
-      _properties._argumentRegisters[p++] = TR::RealRegister::xmmIndex(r);
+      properties->_argumentRegisters[p++] = TR::RealRegister::xmmIndex(r);
    TR_ASSERT(p == NUM_INTEGER_LINKAGE_REGS + NUM_FLOAT_LINKAGE_REGS, "assertion failure");
-   _properties._numFloatArgumentRegisters = NUM_FLOAT_LINKAGE_REGS;
+   properties->_numFloatArgumentRegisters = NUM_FLOAT_LINKAGE_REGS;
 
    // Preserved
    p=0;
-   _properties._preservedRegisters[p++]    = TR::RealRegister::ebx;
-   _properties._preservedRegisterMapForGC  = TR::RealRegister::ebxMask;
+   properties->_preservedRegisters[p++]    = TR::RealRegister::ebx;
+   properties->_preservedRegisterMapForGC  = TR::RealRegister::ebxMask;
 
    int32_t lastPreservedRegister = 9; // changed to 9 for liberty, it used to be 15
 
    for (r=9; r<=lastPreservedRegister; r++)
       {
-      _properties._preservedRegisters[p++] = TR::RealRegister::rIndex(r);
-      _properties._preservedRegisterMapForGC |= TR::RealRegister::gprMask(TR::RealRegister::rIndex(r));
+      properties->_preservedRegisters[p++] = TR::RealRegister::rIndex(r);
+      properties->_preservedRegisterMapForGC |= TR::RealRegister::gprMask(TR::RealRegister::rIndex(r));
       }
-   _properties._numberOfPreservedGPRegisters = p;
+   properties->_numberOfPreservedGPRegisters = p;
 
    if (!INTERPRETER_CLOBBERS_XMMS)
       for (r=8; r<=15; r++)
          {
-         _properties._preservedRegisters[p++] = TR::RealRegister::xmmIndex(r);
-         _properties._preservedRegisterMapForGC |= TR::RealRegister::xmmrMask(TR::RealRegister::xmmIndex(r));
+         properties->_preservedRegisters[p++] = TR::RealRegister::xmmIndex(r);
+         properties->_preservedRegisterMapForGC |= TR::RealRegister::xmmrMask(TR::RealRegister::xmmIndex(r));
          }
 
-   _properties._numberOfPreservedXMMRegisters = p - _properties._numberOfPreservedGPRegisters;
-   _properties._maxRegistersPreservedInPrologue = p;
-   _properties._preservedRegisters[p++]    = metaReg;
-   _properties._preservedRegisters[p++]    = TR::RealRegister::esp;
-   _properties._numPreservedRegisters = p;
+   properties->_numberOfPreservedXMMRegisters = p - properties->_numberOfPreservedGPRegisters;
+   properties->_maxRegistersPreservedInPrologue = p;
+   properties->_preservedRegisters[p++]    = metaReg;
+   properties->_preservedRegisters[p++]    = TR::RealRegister::esp;
+   properties->_numPreservedRegisters = p;
 
    // Other
-   _properties._returnRegisters[0] = TR::RealRegister::eax;
-   _properties._returnRegisters[1] = TR::RealRegister::xmm0;
-   _properties._returnRegisters[2] = noReg;
+   properties->_returnRegisters[0] = TR::RealRegister::eax;
+   properties->_returnRegisters[1] = TR::RealRegister::xmm0;
+   properties->_returnRegisters[2] = noReg;
 
-   _properties._scratchRegisters[0] = TR::RealRegister::edi;
-   _properties._scratchRegisters[1] = TR::RealRegister::r8;
-   _properties._numScratchRegisters = 2;
+   properties->_scratchRegisters[0] = TR::RealRegister::edi;
+   properties->_scratchRegisters[1] = TR::RealRegister::r8;
+   properties->_numScratchRegisters = 2;
 
-   _properties._vtableIndexArgumentRegister = TR::RealRegister::r8;
-   _properties._j9methodArgumentRegister = TR::RealRegister::edi;
-   _properties._framePointerRegister = TR::RealRegister::esp;
-   _properties._methodMetaDataRegister = metaReg;
+   properties->_vtableIndexArgumentRegister = TR::RealRegister::r8;
+   properties->_j9methodArgumentRegister = TR::RealRegister::edi;
+   properties->_framePointerRegister = TR::RealRegister::esp;
+   properties->_methodMetaDataRegister = metaReg;
 
-   _properties._numberOfVolatileGPRegisters  = 6; // rax, rsi, rdx, rcx, rdi, r8
-   _properties._numberOfVolatileXMMRegisters = INTERPRETER_CLOBBERS_XMMS? 16 : 8; // xmm0-xmm7
+   properties->_numberOfVolatileGPRegisters  = 6; // rax, rsi, rdx, rcx, rdi, r8
+   properties->_numberOfVolatileXMMRegisters = INTERPRETER_CLOBBERS_XMMS? 16 : 8; // xmm0-xmm7
 
    // Offsets relative to where the frame pointer *would* point if we had one;
    // namely, the local with the highest address (ie. the "first" local)
-   setOffsetToFirstParm(RETURN_ADDRESS_SIZE);
-   _properties._offsetToFirstLocal = 0;
+   properties->_offsetToFirstLocal = 0;
 
    // TODO: Need a better way to build the flags so they match the info above
    //
-   memset(_properties._registerFlags, 0, sizeof(_properties._registerFlags));
+   memset(properties->_registerFlags, 0, sizeof(properties->_registerFlags));
 
    // Integer arguments/return
-   _properties._registerFlags[TR::RealRegister::eax]      = IntegerArgument | IntegerReturn;
-   _properties._registerFlags[TR::RealRegister::esi]      = IntegerArgument;
-   _properties._registerFlags[TR::RealRegister::edx]      = IntegerArgument;
-   _properties._registerFlags[TR::RealRegister::ecx]      = IntegerArgument;
+   properties->_registerFlags[TR::RealRegister::eax]      = IntegerArgument | IntegerReturn;
+   properties->_registerFlags[TR::RealRegister::esi]      = IntegerArgument;
+   properties->_registerFlags[TR::RealRegister::edx]      = IntegerArgument;
+   properties->_registerFlags[TR::RealRegister::ecx]      = IntegerArgument;
 
    // Float arguments/return
-   _properties._registerFlags[TR::RealRegister::xmm0]     = FloatArgument | FloatReturn;
+   properties->_registerFlags[TR::RealRegister::xmm0]     = FloatArgument | FloatReturn;
    for(r=1; r <= 7; r++)
-      _properties._registerFlags[TR::RealRegister::xmmIndex(r)]  = FloatArgument;
+      properties->_registerFlags[TR::RealRegister::xmmIndex(r)]  = FloatArgument;
 
    // Preserved
-   _properties._registerFlags[TR::RealRegister::ebx]      = Preserved;
-   _properties._registerFlags[TR::RealRegister::esp]      = Preserved;
-   _properties._registerFlags[metaReg]                  = Preserved;
+   properties->_registerFlags[TR::RealRegister::ebx]      = Preserved;
+   properties->_registerFlags[TR::RealRegister::esp]      = Preserved;
+   properties->_registerFlags[metaReg]                  = Preserved;
    for(r=9; r <= lastPreservedRegister; r++)
-      _properties._registerFlags[TR::RealRegister::rIndex(r)]    = Preserved;
+      properties->_registerFlags[TR::RealRegister::rIndex(r)]    = Preserved;
    if(!INTERPRETER_CLOBBERS_XMMS)
       for(r=8; r <= 15; r++)
-         _properties._registerFlags[TR::RealRegister::xmmIndex(r)]  = Preserved;
+         properties->_registerFlags[TR::RealRegister::xmmIndex(r)]  = Preserved;
 
 
    p = 0;
@@ -201,8 +207,8 @@ J9::X86::AMD64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
       // Volatiles that aren't linkage regs
       if (TR::Machine::numGPRRegsWithheld(cg) == 0)
          {
-         _properties._allocationOrder[p++] = TR::RealRegister::edi;
-         _properties._allocationOrder[p++] = TR::RealRegister::r8;
+         properties->_allocationOrder[p++] = TR::RealRegister::edi;
+         properties->_allocationOrder[p++] = TR::RealRegister::r8;
          }
       else
          {
@@ -210,20 +216,20 @@ J9::X86::AMD64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
          }
 
       // Linkage regs in reverse order
-      _properties._allocationOrder[p++] = TR::RealRegister::ecx;
-      _properties._allocationOrder[p++] = TR::RealRegister::edx;
-      _properties._allocationOrder[p++] = TR::RealRegister::esi;
-      _properties._allocationOrder[p++] = TR::RealRegister::eax;
+      properties->_allocationOrder[p++] = TR::RealRegister::ecx;
+      properties->_allocationOrder[p++] = TR::RealRegister::edx;
+      properties->_allocationOrder[p++] = TR::RealRegister::esi;
+      properties->_allocationOrder[p++] = TR::RealRegister::eax;
       }
    // Preserved regs
-   _properties._allocationOrder[p++] = TR::RealRegister::ebx;
-   _properties._allocationOrder[p++] = TR::RealRegister::r9;
-   _properties._allocationOrder[p++] = TR::RealRegister::r10;
-   _properties._allocationOrder[p++] = TR::RealRegister::r11;
-   _properties._allocationOrder[p++] = TR::RealRegister::r12;
-   _properties._allocationOrder[p++] = TR::RealRegister::r13;
-   _properties._allocationOrder[p++] = TR::RealRegister::r14;
-   _properties._allocationOrder[p++] = TR::RealRegister::r15;
+   properties->_allocationOrder[p++] = TR::RealRegister::ebx;
+   properties->_allocationOrder[p++] = TR::RealRegister::r9;
+   properties->_allocationOrder[p++] = TR::RealRegister::r10;
+   properties->_allocationOrder[p++] = TR::RealRegister::r11;
+   properties->_allocationOrder[p++] = TR::RealRegister::r12;
+   properties->_allocationOrder[p++] = TR::RealRegister::r13;
+   properties->_allocationOrder[p++] = TR::RealRegister::r14;
+   properties->_allocationOrder[p++] = TR::RealRegister::r15;
 
    TR_ASSERT(p == machine()->getNumGlobalGPRs(), "assertion failure");
 
@@ -232,33 +238,32 @@ J9::X86::AMD64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
       // Linkage regs in reverse order
       if (TR::Machine::numRegsWithheld(cg) == 0)
          {
-         _properties._allocationOrder[p++] = TR::RealRegister::xmm7;
-         _properties._allocationOrder[p++] = TR::RealRegister::xmm6;
+         properties->_allocationOrder[p++] = TR::RealRegister::xmm7;
+         properties->_allocationOrder[p++] = TR::RealRegister::xmm6;
          }
       else
          {
          TR_ASSERT(TR::Machine::numRegsWithheld(cg) == 2, "numRegsWithheld: only 0 and 2 currently supported");
          }
-      _properties._allocationOrder[p++] = TR::RealRegister::xmm5;
-      _properties._allocationOrder[p++] = TR::RealRegister::xmm4;
-      _properties._allocationOrder[p++] = TR::RealRegister::xmm3;
-      _properties._allocationOrder[p++] = TR::RealRegister::xmm2;
-      _properties._allocationOrder[p++] = TR::RealRegister::xmm1;
-      _properties._allocationOrder[p++] = TR::RealRegister::xmm0;
+      properties->_allocationOrder[p++] = TR::RealRegister::xmm5;
+      properties->_allocationOrder[p++] = TR::RealRegister::xmm4;
+      properties->_allocationOrder[p++] = TR::RealRegister::xmm3;
+      properties->_allocationOrder[p++] = TR::RealRegister::xmm2;
+      properties->_allocationOrder[p++] = TR::RealRegister::xmm1;
+      properties->_allocationOrder[p++] = TR::RealRegister::xmm0;
       }
    // Preserved regs
-   _properties._allocationOrder[p++] = TR::RealRegister::xmm8;
-   _properties._allocationOrder[p++] = TR::RealRegister::xmm9;
-   _properties._allocationOrder[p++] = TR::RealRegister::xmm10;
-   _properties._allocationOrder[p++] = TR::RealRegister::xmm11;
-   _properties._allocationOrder[p++] = TR::RealRegister::xmm12;
-   _properties._allocationOrder[p++] = TR::RealRegister::xmm13;
-   _properties._allocationOrder[p++] = TR::RealRegister::xmm14;
-   _properties._allocationOrder[p++] = TR::RealRegister::xmm15;
+   properties->_allocationOrder[p++] = TR::RealRegister::xmm8;
+   properties->_allocationOrder[p++] = TR::RealRegister::xmm9;
+   properties->_allocationOrder[p++] = TR::RealRegister::xmm10;
+   properties->_allocationOrder[p++] = TR::RealRegister::xmm11;
+   properties->_allocationOrder[p++] = TR::RealRegister::xmm12;
+   properties->_allocationOrder[p++] = TR::RealRegister::xmm13;
+   properties->_allocationOrder[p++] = TR::RealRegister::xmm14;
+   properties->_allocationOrder[p++] = TR::RealRegister::xmm15;
 
    TR_ASSERT(p == (machine()->getNumGlobalGPRs() + machine()->_numGlobalFPRs), "assertion failure");
    }
-
 
 ////////////////////////////////////////////////
 //

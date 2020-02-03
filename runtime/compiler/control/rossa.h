@@ -74,14 +74,17 @@ typedef enum {
    compilationAotPatchedCPConstant                      = 45,
    compilationAotHasInvokeSpecialInterface              = 46,
    compilationRelocationFailure                         = 47,
+#if defined(J9VM_OPT_MICROJIT)
+   mjitCompilationFailure                               = 48,
+#endif /* defined(J9VM_OPT_MICROJIT) */
 #if defined(J9VM_OPT_JITSERVER)
    compilationFirstJITServerFailure,
-   compilationStreamFailure                             = compilationFirstJITServerFailure,     // 48
-   compilationStreamLostMessage                         = compilationFirstJITServerFailure + 1, // 49
-   compilationStreamMessageTypeMismatch                 = compilationFirstJITServerFailure + 2, // 50
-   compilationStreamVersionIncompatible                 = compilationFirstJITServerFailure + 3, // 51
-   compilationStreamInterrupted                         = compilationFirstJITServerFailure + 4, // 52
-   aotCacheDeserializationFailure                       = compilationFirstJITServerFailure + 5, // 53
+   compilationStreamFailure                             = compilationFirstJITServerFailure,     // 48 or 49
+   compilationStreamLostMessage                         = compilationFirstJITServerFailure + 1, // 49 or 50
+   compilationStreamMessageTypeMismatch                 = compilationFirstJITServerFailure + 2, // 50 or 51
+   compilationStreamVersionIncompatible                 = compilationFirstJITServerFailure + 3, // 51 or 52
+   compilationStreamInterrupted                         = compilationFirstJITServerFailure + 4, // 52 or 53
+   aotCacheDeserializationFailure                       = compilationFirstJITServerFailure + 5, // 53 or 54
 #endif /* defined(J9VM_OPT_JITSERVER) */
 
    /* must be the last one */

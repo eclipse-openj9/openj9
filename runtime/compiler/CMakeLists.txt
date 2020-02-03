@@ -38,15 +38,28 @@ if(OMR_ARCH_X86)
 		endif()
 	endif()
 	enable_language(ASM_NASM)
-	# We have to manually append "/" to the paths as NASM versions older than v2.14 requires trailing / in the directory paths.
-	set(asm_inc_dirs
-		"-I${j9vm_SOURCE_DIR}/oti/"
-		"-I${j9vm_BINARY_DIR}/oti/"
-		"-I${CMAKE_CURRENT_SOURCE_DIR}/"
-		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/runtime/"
-		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/amd64/runtime/"
-		"-I${CMAKE_CURRENT_SOURCE_DIR}/x/i386/runtime/"
-	)
+	# We have to manually append "/" to the paths as NASM versions older than v2.14 requires trailing / in the directory paths
+	if(J9VM_OPT_MICROJIT)
+		set(asm_inc_dirs
+			"-I${j9vm_SOURCE_DIR}/oti/"
+			"-I${j9vm_BINARY_DIR}/oti/"
+			"-I${CMAKE_CURRENT_SOURCE_DIR}/"
+			"-I${CMAKE_CURRENT_SOURCE_DIR}/x/runtime/"
+			"-I${CMAKE_CURRENT_SOURCE_DIR}/x/amd64/runtime/"
+			"-I${CMAKE_CURRENT_SOURCE_DIR}/x/i386/runtime/"
+			"-I${CMAKE_CURRENT_SOURCE_DIR}/microjit/assembly/"
+			"-I${CMAKE_CURRENT_SOURCE_DIR}/microjit/x/amd64/templates/"
+		)
+	else()
+		set(asm_inc_dirs
+			"-I${j9vm_SOURCE_DIR}/oti/"
+			"-I${j9vm_BINARY_DIR}/oti/"
+			"-I${CMAKE_CURRENT_SOURCE_DIR}/"
+			"-I${CMAKE_CURRENT_SOURCE_DIR}/x/runtime/"
+			"-I${CMAKE_CURRENT_SOURCE_DIR}/x/amd64/runtime/"
+			"-I${CMAKE_CURRENT_SOURCE_DIR}/x/i386/runtime/"
+		)
+	endif()
 	omr_append_flags(CMAKE_ASM_NASM_FLAGS ${asm_inc_dirs})
 	# For whatever reason cmake does not apply compile definitions when building nasm objects.
 	# The if guard is here in case they ever start doing so.
@@ -106,8 +119,12 @@ if(J9VM_OPT_JITSERVER)
 	include_directories(${OPENSSL_INCLUDE_DIR})
 endif()
 
-# TODO We should get rid of this, but it's still required by the compiler_support module in OMR.
-set(J9SRC ${j9vm_SOURCE_DIR})
+if(J9VM_OPT_MICROJIT)
+	message(STATUS "MicroJIT is enabled")
+endif()
+
+#TODO We should get rid of this, but its still required by the compiler_support module in omr
+set(J9SRC  ${j9vm_SOURCE_DIR})
 
 # include compiler support module from OMR
 include(OmrCompilerSupport)
@@ -144,6 +161,10 @@ add_subdirectory(runtime)
 
 if(J9VM_OPT_JITSERVER)
 	add_subdirectory(net)
+endif()
+
+if(J9VM_OPT_MICROJIT)
+	add_subdirectory(microjit)
 endif()
 
 if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${TR_HOST_ARCH}")
