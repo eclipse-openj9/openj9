@@ -24,9 +24,6 @@ clean: jit_cleanobjs jit_cleandeps jit_cleandll
 cleanobjs: jit_cleanobjs
 cleandeps: jit_cleandeps
 cleandll: jit_cleandll
-ifneq ($(J9VM_OPT_JITSERVER),)
-proto: protoc
-endif
 #
 # Define our targets. "jit_cleanobjs" "jit_cleandeps" and "jit_cleandll" are double-colon so they can be appended to
 # throughout the makefile.
@@ -37,8 +34,5 @@ jit_createdirs::
 jit_cleanobjs::
 jit_cleandeps::
 jit_cleandll::
-ifneq ($(J9VM_OPT_JITSERVER),)
-protoc:
-endif
 
 include $(JIT_MAKE_DIR)/rules/$(TOOLCHAIN)/common.mk

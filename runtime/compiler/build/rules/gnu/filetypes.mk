@@ -22,31 +22,6 @@
 # These are the rules to compile files of type ".x" into object files
 # as well as to generate clean and cleandeps rules
 #
-ifneq ($(J9VM_OPT_JITSERVER),)
-   #
-   # Compile .proto files to .cpp files
-   #
-   PROTO_GEN_DIR=$(FIXED_SRCBASE)/compiler/net/gen
-   PROTO_DIR=$(FIXED_SRCBASE)/compiler/net/protos
-
-   #
-   # Compile .proto file into .cpp and .h files
-   #
-   define DEF_RULE.proto
-
-   $(1).pb.cpp $(1).pb.h: $(2) | jit_createdirs
-	   $$(PROTO_CMD) --cpp_out=$$(PROTO_GEN_DIR) -I $$(PROTO_DIR) $$<
-	   cp $(1).pb.cc $(1).pb.cpp
-
-   JIT_DIR_LIST+=$(dir $(1))
-
-   jit_cleanobjs::
-	   rm -f $(1).pb.cpp $(1).pb.cc $(1).pb.h
-
-   endef # DEF_RULE.proto
-
-   RULE.proto=$(eval $(DEF_RULE.proto))
-endif
 
 #
 # Compile .c file into .o file
