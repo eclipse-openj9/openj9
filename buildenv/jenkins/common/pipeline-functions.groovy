@@ -424,10 +424,18 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
         for (name in TARGET_NAMES) {
             target = get_target_name(name)
             // Checking to see if the test should be excluded
+            echo "EXCLUDED_TESTS:'${EXCLUDED_TESTS}'"
+            println EXCLUDED_TESTS[target]
+            println EXCLUDED_TESTS[target].class
+            println target
+            println target.class
             if (EXCLUDED_TESTS.contains(target)){
                 echo "The '${target}' test suite will be excluded"
                 continue
+            } else {
+                echo "does not contain"
             }
+
             // Add a TEST_FLAG to a specific target if one was passed with the test target. Eg. sanity.functional+aot
             if (name.contains('+')) {
                 def temp_test_flag = name.substring(name.indexOf('+')+1).toUpperCase()
@@ -435,11 +443,10 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             }
             echo "TEST_FLAG:'${TEST_FLAG}'"
 
-            def extraTestLabels = EXTRA_TEST_LABELS[target] ?: ''
-            echo "Target:'${target}' extraTestLabels:'${extraTestLabels}'"
-
+            def extraTestLabels = EXTRA_TEST_LABELS[target]
             def keepReportDir = TEST_KEEP_REPORTDIR[target]
-            echo "Target:'${target}' keepReportDir:'${keepReportDir}'"
+            echo "Target:'${target}' extraTestLabels:'${extraTestLabels}', keepReportDir:'${keepReportDir}'"
+            error('stop here')
 
             def TEST_JOB_NAME = get_test_job_name(target, SPEC, SDK_VERSION, BUILD_IDENTIFIER)
 
