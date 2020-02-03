@@ -30,6 +30,9 @@
 
 namespace JITServer
 {
+// A wrapper around a contiguous buffer for storing JITServer message.
+// The buffer is extensible, i.e. it can be reallocated to store a message
+// larger than its current capacity.
 class MessageBuffer
    {
 public:
