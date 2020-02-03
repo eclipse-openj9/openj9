@@ -2024,7 +2024,18 @@ TR_ResolvedRelocatableJ9Method::definingClassFromCPFieldRef(
    I_32 cpIndex,
    bool isStatic)
    {
-   return TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, cp(), cpIndex, isStatic);
+   TR_OpaqueClassBlock *clazz = TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, cp(), cpIndex, isStatic);
+
+   bool valid = false;
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      valid = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(clazz , cp(), cpIndex, isStatic);
+   else
+      valid = storeValidationRecordIfNecessary(comp, cp(), cpIndex, isStatic ? TR_ValidateStaticField : TR_ValidateInstanceField, ramMethod());
+
+   if (!valid)
+      clazz = NULL;
+
+   return clazz;
    }
 
 char *
