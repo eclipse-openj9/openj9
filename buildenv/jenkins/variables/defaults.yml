@@ -114,7 +114,6 @@ cmake:
     all: '--with-cmake'
     14: '--disable-ddr'
     next: '--disable-ddr'
-  extra_make_options: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
   excluded_tests:
     8:
       - special.system
@@ -189,6 +188,7 @@ ppc64le_linux:
 #========================================#
 ppc64le_linux_cm:
   extends: ['ppc64le_linux', 'cmake']
+  extra_cmake_options: ['-DOMR_WARNINGS_AS_ERRORS=FALSE']
 #========================================#
 # Linux PPCLE 64bits Large Heap
 #========================================#
@@ -296,6 +296,7 @@ x86-64_linux:
 #========================================#
 x86-64_linux_cm:
   extends: ['x86-64_linux', 'cmake']
+  extra_cmake_options: ['-DOMR_WARNINGS_AS_ERRORS=FALSE']
   excluded_tests:
       - extended.functional
       - sanity.system
@@ -305,6 +306,7 @@ x86-64_linux_cm:
 #========================================#
 x86-64_linux_xl_cm:
   extends: ['x86-64_linux_xl', 'cmake']
+  extra_cmake_options: ['-DOMR_WARNINGS_AS_ERRORS=FALSE']
   excluded_tests:
       - extended.functional
       - sanity.system

@@ -1259,6 +1259,16 @@ def set_build_extra_options(build_specs=null) {
         if (!EXTRA_MAKE_OPTIONS) {
             EXTRA_MAKE_OPTIONS = buildspec.getVectorField("extra_make_options", SDK_VERSION).join(" ")
         }
+        def cmake_opts = []
+        // Wrap each option in quotes
+        buildspec.getVectorField("extra_cmake_options", SDK_VERSION).each { opt ->
+            cmake_opts << "\"${opt}\""
+        }
+        if(cmake_opts){
+            cmake_opts = cmake_opts.join(" ")
+            // Put the cmake options at the beginning, so that user can override them with the EXTRA_MAKE_OPTIONS if needed
+            EXTRA_MAKE_OPTIONS = "'EXTRA_CMAKE_OPTIONS=${cmake_opts}' " + EXTRA_MAKE_OPTIONS
+        }
 
         OPENJDK_CLONE_DIR = params.OPENJDK_CLONE_DIR
         if (!OPENJDK_CLONE_DIR) {
