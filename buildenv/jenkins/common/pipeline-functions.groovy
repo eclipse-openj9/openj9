@@ -435,11 +435,9 @@ def workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO,
             }
             echo "TEST_FLAG:'${TEST_FLAG}'"
 
-            def extraTestLabels = EXTRA_TEST_LABELS[target] ?: ''
-            echo "Target:'${target}' extraTestLabels:'${extraTestLabels}'"
-
+            def extraTestLabels = EXTRA_TEST_LABELS[target]
             def keepReportDir = TEST_KEEP_REPORTDIR[target]
-            echo "Target:'${target}' keepReportDir:'${keepReportDir}'"
+            echo "Target:'${target}' extraTestLabels:'${extraTestLabels}', keepReportDir:'${keepReportDir}'"
 
             def TEST_JOB_NAME = get_test_job_name(target, SPEC, SDK_VERSION, BUILD_IDENTIFIER)
 
@@ -473,7 +471,7 @@ def get_target_name(name) {
     if (name.contains('+')) {
         name = name.substring(0, name.indexOf('+'))
     }
-    return name
+    return name.toString()
 }
 
 def get_build_job_name(spec, version, identifier) {
