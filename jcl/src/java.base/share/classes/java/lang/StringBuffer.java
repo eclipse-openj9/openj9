@@ -1716,7 +1716,7 @@ static void initFromSystemProperties(Properties props) {
 	String prop = props.getProperty("java.lang.string.create.unique"); //$NON-NLS-1$
 	TOSTRING_COPY_BUFFER_ENABLED = "true".equals(prop) || "StringBuffer".equals(prop); //$NON-NLS-1$ //$NON-NLS-2$
 
-	String growAggressivelyProperty = props.getProperty("java.lang.stringBufferAndBuilder.growAggressively"); //$NON-NLS-1$
+	String growAggressivelyProperty = props.getProperty("java.lang.stringBuffer.growAggressively"); //$NON-NLS-1$
 	growAggressively = "".equals(growAggressivelyProperty) || "true".equalsIgnoreCase(growAggressivelyProperty); //$NON-NLS-1$ //$NON-NLS-2$
 }
 
