@@ -30,7 +30,10 @@
 
 namespace JITServer
 {
-
+// Class representing a JITServer message.
+// Each message has metadata and a vector of
+// datapoints, where each datapoint describes
+// a single value sent inside the message.
 class Message
    {
 public:
