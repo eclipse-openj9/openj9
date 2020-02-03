@@ -79,7 +79,7 @@
 
 /* Callback Function prototypes */
 UDATA writeFrameCallBack          (J9VMThread* vmThread, J9StackWalkState* state);
-UDATA writeExceptionFrameCallBack (J9VMThread* vmThread, void* userData, J9ROMClass* romClass, J9ROMMethod* romMethod, J9UTF8* sourceFile, UDATA lineNumber, J9ClassLoader* classLoader);
+UDATA writeExceptionFrameCallBack (J9VMThread* vmThread, void* userData, J9ROMClass* romClass, J9ROMMethod* romMethod, J9UTF8* sourceFile, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass);
 void  writeLoaderCallBack         (void* classLoader, void* userData);
 void  writeLibrariesCallBack      (void* classLoader, void* userData);
 void  writeClassesCallBack        (void* classLoader, void* userData);
@@ -219,7 +219,7 @@ private :
 
 	/* Allow the callback functions access */
 	friend UDATA writeFrameCallBack          (J9VMThread* vmThread, J9StackWalkState* state);
-	friend UDATA writeExceptionFrameCallBack (J9VMThread* vmThread, void* userData, J9ROMClass* romClass, J9ROMMethod* romMethod, J9UTF8* sourceFile, UDATA lineNumber, J9ClassLoader* classLoader);
+	friend UDATA writeExceptionFrameCallBack (J9VMThread* vmThread, void* userData, J9ROMClass* romClass, J9ROMMethod* romMethod, J9UTF8* sourceFile, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass);
 	friend void  writeLoaderCallBack         (void* classLoader, void* userData);
 	friend void  writeLibrariesCallBack      (void* classLoader, void* userData);
 	friend void  writeClassesCallBack        (void* classLoader, void* userData);
@@ -5356,7 +5356,7 @@ writeFrameCallBack(J9VMThread* vmThread, J9StackWalkState* state)
 }
 
 UDATA
-writeExceptionFrameCallBack(J9VMThread* vmThread, void* userData, J9ROMClass* romClass, J9ROMMethod* romMethod, J9UTF8* sourceFile, UDATA lineNumber, J9ClassLoader* classLoader)
+writeExceptionFrameCallBack(J9VMThread* vmThread, void* userData, J9ROMClass* romClass, J9ROMMethod* romMethod, J9UTF8* sourceFile, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass)
 {
 	JavaCoreDumpWriter *jcdw = (JavaCoreDumpWriter *)((J9StackWalkState*)userData)->userData1;
 	return jcdw->writeExceptionFrame(userData, romClass, romMethod, sourceFile, lineNumber);

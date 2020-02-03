@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2002, 2019 IBM Corp. and others
+ * Copyright (c) 2002, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1421,7 +1421,7 @@ typedef struct GetStackTraceElementUserData {
 
 /* Return TRUE to keep iterating, FALSE to halt the walk. */
 static UDATA
-getStackTraceElementIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader)
+getStackTraceElementIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass)
 {
 	GetStackTraceElementUserData * userData = voidUserData;
 

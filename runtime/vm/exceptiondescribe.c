@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@
 #include "vm_internal.h"
 #include "jvminit.h"
 
-typedef UDATA (*callback_func_t) (J9VMThread * vmThread, void * userData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader);
+typedef UDATA (*callback_func_t) (J9VMThread * vmThread, void * userData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass);
 
 static void printExceptionInThread (J9VMThread* vmThread);
 static UDATA isSubclassOfThreadDeath (J9VMThread *vmThread, j9object_t exception);
@@ -99,7 +99,7 @@ printExceptionMessage(J9VMThread* vmThread, j9object_t exception) {
 
 /* assumes VM access */
 static UDATA
-printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, J9ROMClass *romClass, J9ROMMethod * romMethod, J9UTF8 * sourceFile, UDATA lineNumber, J9ClassLoader* classLoader) {
+printStackTraceEntry(J9VMThread * vmThread, void * voidUserData, J9ROMClass *romClass, J9ROMMethod * romMethod, J9UTF8 * sourceFile, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass) {
 	const char* format;
 	J9JavaVM *vm = vmThread->javaVM;
 	J9InternalVMFunctions * vmFuncs = vm->internalVMFunctions;
@@ -280,6 +280,7 @@ iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t 
 			UDATA lineNumber = 0;
 			J9UTF8 * fileName = NULL;
 			J9ClassLoader *classLoader = NULL;
+			J9Class *ramClass = NULL;
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 			J9JITExceptionTable * metaData = NULL;
 			UDATA inlineDepth = 0;
@@ -308,7 +309,6 @@ iterateStackTrace(J9VMThread * vmThread, j9object_t* exception, callback_func_t 
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 				if (metaData) {
 					J9Method *ramMethod;
-					J9Class *ramClass;
 					UDATA isSameReceiver;
 inlinedEntry:
 					/* Check for metadata unload */
@@ -363,7 +363,7 @@ inlinedEntry:
 				/* Call the callback with the information */
 
 				if (callback != NULL) {
-					callbackResult = callback(vmThread, userData, romClass, romMethod, fileName, lineNumber, classLoader);
+					callbackResult = callback(vmThread, userData, romClass, romMethod, fileName, lineNumber, classLoader, ramClass);
 				}
 
 #ifdef J9VM_OPT_DEBUG_INFO_SERVER
