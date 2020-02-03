@@ -22,7 +22,8 @@
 #ifndef STREAM_EXCEPTIONS_H
 #define STREAM_EXCEPTIONS_H
 
-#include "net/gen/compile.pb.h"
+#include <string>
+#include "net/MessageTypes.hpp"
 #include "infra/Assert.hpp"
 
 namespace JITServer
