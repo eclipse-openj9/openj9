@@ -23,13 +23,10 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
+#include <vector>
 #include <stdlib.h>
 #include "net/MessageBuffer.hpp"
-
-// TODO: when protobuf is completely removed,
-// delete this include and replace it with enum
-// for all message types
-#include "net/gen/compile.pb.h"
+#include "net/MessageTypes.hpp"
 
 namespace JITServer
 {

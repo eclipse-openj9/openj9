@@ -23,22 +23,21 @@
 #ifndef SSL_PROTOBUF_STREAM_HPP
 #define SSL_PROTOBUF_STREAM_HPP
 
-#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include "net/LoadSSLLibs.hpp"
 
-class SSLOutputStream : public google::protobuf::io::CopyingOutputStream
+class SSLOutputStream
    {
 public:
    SSLOutputStream(BIO *bio)
       : _ssl(bio)
       {
       }
-   virtual ~SSLOutputStream() override
+   virtual ~SSLOutputStream()
       {
       }
-   virtual bool Write(const void *buffer, int size) override
+   virtual bool Write(const void *buffer, int size)
       {
       TR_ASSERT(size > 0, "writing zero bytes is undefined behavior");
       int n = (*OBIO_write)(_ssl, buffer, size);
@@ -61,17 +60,17 @@ private:
    BIO *_ssl;
    };
 
-class SSLInputStream : public google::protobuf::io::CopyingInputStream
+class SSLInputStream
    {
 public:
    SSLInputStream(BIO *bio)
       : _ssl(bio)
       {
       }
-   virtual ~SSLInputStream() override
+   virtual ~SSLInputStream()
       {
       }
-   virtual int Read(void *buffer, int size) override
+   virtual int Read(void *buffer, int size)
       {
       TR_ASSERT(size > 0, "reading zero bytes is undefined behavior");
       int n = (*OBIO_read)(_ssl, buffer, size);

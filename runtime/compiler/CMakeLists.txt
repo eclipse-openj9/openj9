@@ -80,42 +80,9 @@ add_custom_command(
 )
 add_custom_target(j9jit_tracegen DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/env/ut_j9jit.h)
 
-# J9VM_OPT_JITSERVER and protobuf
+# J9VM_OPT_JITSERVER
 if(J9VM_OPT_JITSERVER)
 	message(STATUS "JITServer is supported")
-
-	include(FindProtobuf)
-	set(Protobuf_USE_STATIC_LIBS ON)
-	find_package(Protobuf REQUIRED)
-
-	if(PROTOBUF_FOUND)
-		include_directories(${PROTOBUF_INCLUDE_DIRS})
-		string(REPLACE
-			"${CMAKE_SHARED_LIBRARY_PREFIX}protobuf${J9VM_OLD_SHARED_SUFFIX}"
-			"${CMAKE_STATIC_LIBRARY_PREFIX}protobuf${CMAKE_STATIC_LIBRARY_SUFFIX}"
-			PROTOBUF_LIBRARY
-			${PROTOBUF_LIBRARY})
-		message(STATUS "Protobuf include path: ${PROTOBUF_INCLUDE_DIRS}")
-		message(STATUS "Protobuf library: ${PROTOBUF_LIBRARY}")
-	else()
-		message(FATAL_ERROR "Protobuf not found")
-	endif()
-
-	find_program(PROTOC "protoc")
-	if(PROTOC-NOTFOUND)
-		message(FATAL_ERROR "'protoc' not found")
-	endif(PROTOC-NOTFOUND)
-
-	add_custom_command(
-			OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.h ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.cpp
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/net/protos/compile.proto
-			COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_SOURCE_DIR}/net/gen
-			COMMAND ${PROTOC} -I=${CMAKE_CURRENT_SOURCE_DIR}/net/protos --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/net/gen ${CMAKE_CURRENT_SOURCE_DIR}/net/protos/compile.proto
-			COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.cc ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.cpp
-			VERBATIM
-	)
-
-	add_custom_target(j9jit_proto DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.h ${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.cpp)
 
 	if(OPENSSL_CFLAGS)
 		set(J9_CFLAGS "${J9_CFLAGS} ${OPENSSL_CFLAGS}")
@@ -344,10 +311,6 @@ add_dependencies(j9jit
 	j9jit_generate
 )
 
-if(J9VM_OPT_JITSERVER)
-	add_dependencies(j9jit j9jit_proto)
-endif()
-
 target_link_libraries(j9jit
 	PRIVATE
 		j9vm_interface
@@ -363,10 +326,6 @@ target_link_libraries(j9jit
 		j9thr
 		${CMAKE_DL_LIBS}
 )
-
-if(J9VM_OPT_JITSERVER)
-	target_link_libraries(j9jit PRIVATE ${PROTOBUF_LIBRARY})
-endif()
 
 # This is a bit hokey, but cmake can't track the fact that files are generated across directories.
 # Note: while these are only needed on z, setting the properties unconditionally has no ill-effect.
