@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -125,17 +125,7 @@ public final class ObjectAccessBarrier
 	{
 		return mmObjectAccessBarrier.convertPointerFromToken(token);
 	}
-	
-	/**
-	 * Converts token (e.g. compressed pointer value) into real heap pointer.
-	 * @return the heap pointer value.
-	 */
-	public static J9ObjectPointer convertPointerFromToken(int token)
-	{
-		// Zero extend int to long before using
-		return convertPointerFromToken((long)token & 0xFFFFFFFFL);
-	}
-	
+
 	/**
 	 * Converts real heap pointer into token (e.g. compressed pointer value).
 	 * @return the compressed pointer value.
