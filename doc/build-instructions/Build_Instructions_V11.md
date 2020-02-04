@@ -728,7 +728,7 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
                --disable-warnings-as-errors
 ```
 
-:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.  You need this option to use the JIT compiler regardless of heap size: the JIT does not support compressed references yet.
+:pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
 
 :pencil: **OpenSSL support:** If you want to build an OpenJDK that uses OpenSSL, you must specify `--with-openssl={system|path_to_library}`
 
