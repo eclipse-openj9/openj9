@@ -82,6 +82,33 @@ setCurrentExceptionNLS(J9VMThread * vmThread, UDATA exceptionNumber, U_32 module
 	setCurrentExceptionUTF(vmThread, exceptionNumber, msg);
 }
 
+void
+prepareExceptionUsingClassName(J9VMThread *vmThread, const char *exceptionClassName)
+{
+	J9Class *exceptionClass = NULL;
+	j9object_t exception = NULL;
+
+	prepareForExceptionThrow(vmThread);
+
+	exceptionClass = internalFindClassUTF8(
+			vmThread,
+			(U_8 *)exceptionClassName,
+			strlen(exceptionClassName),
+			vmThread->javaVM->systemClassLoader,
+			J9_FINDCLASS_FLAG_THROW_ON_FAIL);
+
+	exception = vmThread->javaVM->memoryManagerFunctions->J9AllocateObject(
+			vmThread,
+			exceptionClass,
+			J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+
+	if (J9_UNEXPECTED(NULL == exception)) {
+		setHeapOutOfMemoryError(vmThread);
+	} else {
+		vmThread->currentException = exception;
+		vmThread->privateFlags |= J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
+	}
+}
 
 /**
  * Creates exception with nls message; substitutes string values into error message.
