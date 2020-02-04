@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2466,9 +2466,13 @@ public class MethodHandles {
 	 * @throws NullPointerException If {@code viewArrayClass} or {@code byteOrder} is null
 	 */
 	public static VarHandle byteArrayViewVarHandle(Class<?> viewArrayClass, ByteOrder byteOrder) throws IllegalArgumentException {
-		checkArrayClass(viewArrayClass);
 		Objects.requireNonNull(byteOrder);
+		/*[IF Java14]*/
+		return VarHandles.byteArrayViewHandle(viewArrayClass, (byteOrder == ByteOrder.BIG_ENDIAN));
+		/*[ELSE] Java14
+		checkArrayClass(viewArrayClass);
 		return new ByteArrayViewVarHandle(viewArrayClass.getComponentType(), byteOrder);
+		/*[ENDIF] Java14 */
 	}
 	
 	/**
@@ -2481,9 +2485,13 @@ public class MethodHandles {
 	 * @throws NullPointerException If {@code viewArrayClass} or {@code byteOrder} is null
 	 */
 	public static VarHandle byteBufferViewVarHandle(Class<?> viewArrayClass, ByteOrder byteOrder) throws IllegalArgumentException {
-		checkArrayClass(viewArrayClass);
 		Objects.requireNonNull(byteOrder);
+		/*[IF Java14]*/
+		return VarHandles.makeByteBufferViewHandle(viewArrayClass, (byteOrder == ByteOrder.BIG_ENDIAN));
+		/*[ELSE] Java14
+		checkArrayClass(viewArrayClass);
 		return new ByteBufferViewVarHandle(viewArrayClass.getComponentType(), byteOrder);
+		/*[ENDIF] Java14 */
 	}
 	
 	private static void checkArrayClass(Class<?> arrayClass) throws IllegalArgumentException {
