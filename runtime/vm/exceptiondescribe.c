@@ -33,6 +33,7 @@
 #include "objhelp.h"
 #include "vm_internal.h"
 #include "jvminit.h"
+#include "SCQueryFunctions.h"
 
 typedef UDATA (*callback_func_t) (J9VMThread * vmThread, void * userData, J9ROMClass * romClass, J9ROMMethod * romMethod, J9UTF8 * fileName, UDATA lineNumber, J9ClassLoader* classLoader, J9Class* ramClass);
 
@@ -343,11 +344,46 @@ inlinedEntry:
 					pruneConstructors = FALSE;
 #endif
 					romClass = findROMClassFromPC(vmThread, methodPC, &classLoader);
-					if(romClass) {
-						romMethod = findROMMethodInROMClass(vmThread, romClass, methodPC);
-						if (romMethod != NULL) {
-							methodPC -= (UDATA) J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
+					if (NULL != romClass) {
+						J9UTF8 const *utfClassName = J9ROMCLASS_CLASSNAME(romClass);
+
+						ramClass = peekClassHashTable(vmThread, classLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+						if (ramClass == NULL) {
+							if (j9shr_Query_IsAddressInCache(vm, romClass, romClass->romSize)) {
+								/* Probe the application loader to determine if it has the J9Class for the current class.
+								 * This secondary probe is required as all ROMClasses from the SCC appear to be owned
+								 * by the bootstrap classloader.
+								 */
+								ramClass = peekClassHashTable(vmThread, vm->applicationClassLoader, J9UTF8_DATA(utfClassName), J9UTF8_LENGTH(utfClassName));
+							}
 						}
+
+						while (NULL != ramClass) {
+							U_32 i = 0;
+							J9Method *methods = ramClass->ramMethods;
+							for (i = 0; i < romClass->romMethodCount; ++i) {
+								J9ROMMethod *possibleMethod = J9_ROM_METHOD_FROM_RAM_METHOD(&methods[i]);
+
+								/* Note that we cannot use `J9_BYTECODE_START_FROM_ROM_METHOD` here because native method PCs
+								 * point to the start of the J9ROMMethod data structure
+								 */
+								if ((methodPC >= (UDATA)possibleMethod) && (methodPC < (UDATA)J9_BYTECODE_END_FROM_ROM_METHOD(possibleMethod))) {
+									romMethod = possibleMethod;
+									methodPC -= (UDATA)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
+									goto foundROMMethod;
+								}
+							}
+
+							ramClass = ramClass->replacedClass;
+						}
+
+						if (NULL == romMethod) {
+							romMethod = findROMMethodInROMClass(vmThread, romClass, methodPC);
+							if (NULL != romMethod) {
+								methodPC -= (UDATA)J9_BYTECODE_START_FROM_ROM_METHOD(romMethod);
+							}
+						}
+foundROMMethod: ;
 					}
 #ifdef J9VM_INTERP_NATIVE_SUPPORT
 				}
@@ -535,7 +571,3 @@ isSubclassOfThreadDeath(J9VMThread *vmThread, j9object_t exception)
 
 	return FALSE;
 }
-
-
-
-
