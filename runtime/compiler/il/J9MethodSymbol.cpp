@@ -144,8 +144,8 @@ J9::MethodSymbol::functionCallDoesNotYieldOSR()
       case TR::java_lang_ref_Reference_reachabilityFence:
       case TR::java_nio_Bits_keepAlive:
          return true;
-      default: 
-         return false;
+      default:
+         return OMR::MethodSymbolConnector::functionCallDoesNotYieldOSR(); 
       }
    return false;
    }
