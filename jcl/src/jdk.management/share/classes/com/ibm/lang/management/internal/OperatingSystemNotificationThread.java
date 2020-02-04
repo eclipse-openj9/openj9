@@ -1,6 +1,6 @@
-/*[INCLUDE-IF Sidecar17]*/
+/*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2005, 2016 IBM Corp. and others
+ * Copyright (c) 2005, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,8 @@
  *******************************************************************************/
 package com.ibm.lang.management.internal;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import javax.management.Notification;
 
 import com.ibm.lang.management.AvailableProcessorsNotificationInfo;
@@ -52,7 +54,12 @@ final class OperatingSystemNotificationThread extends Thread {
 		Thread myShutdownNotifier = new OperatingSystemNotificationThreadShutdown(this);
 
 		try {
-			Runtime.getRuntime().addShutdownHook(myShutdownNotifier);
+			AccessController.doPrivileged(new PrivilegedAction<Void>() {
+				public Void run() {
+					Runtime.getRuntime().addShutdownHook(myShutdownNotifier);
+					return null;
+				}
+			});
 		} catch (IllegalStateException e) {
 			/* if by chance we are already shutting down when we try to
 			 * register the shutdown hook, allow this thread to terminate
