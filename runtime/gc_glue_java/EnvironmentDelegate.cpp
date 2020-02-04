@@ -129,7 +129,7 @@ MM_EnvironmentDelegate::detachVMThread(OMR_VM *omrVM, OMR_VMThread *omrThread, u
 
 #if defined(J9VM_OPT_JAVA_OFFLOAD_SUPPORT)
 	if ((MM_EnvironmentBase::ATTACH_THREAD != reason) &&  (NULL != javaVM->javaOffloadSwitchOnWithReasonFunc)) {
-		(*javaVM->javaOffloadSwitchOffWithReasonFunc)(_vmThread, reason);
+		(*javaVM->javaOffloadSwitchOffWithReasonFunc)((J9VMThread *)omrThread->_language_vmthread, reason);
 	}
 #endif
 
@@ -177,7 +177,7 @@ MM_EnvironmentDelegate::releaseVMAccess()
 bool
 MM_EnvironmentDelegate::inNative()
 {
-	return (bool)_vmThread->inNative;
+	return (FALSE != _vmThread->inNative);
 }
 
 bool
