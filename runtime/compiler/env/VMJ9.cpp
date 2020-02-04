@@ -6760,6 +6760,12 @@ TR_J9VM::getSystemClassFromClassName(const char * name, int32_t length, bool isV
    return result;
    }
 
+TR_OpaqueClassBlock *
+TR_J9VMBase::getByteArrayClass()
+   {
+   return convertClassPtrToClassOffset(_jitConfig->javaVM->byteArrayClass);
+   }
+
 void *
 TR_J9VMBase::getSystemClassLoader()
    {

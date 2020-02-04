@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -66,6 +66,7 @@ public:
                                                                  char *signature, int32_t signatureLength, TR_ResolvedMethod * owningMethod) override;
    virtual TR_YesNoMaybe isInstanceOf(TR_OpaqueClassBlock * a, TR_OpaqueClassBlock *b, bool objectTypeIsFixed, bool castTypeIsFixed = true, bool optimizeForAOT = false) override;
    virtual TR_OpaqueClassBlock * getSystemClassFromClassName(const char * name, int32_t length, bool isVettedForAOT = false) override;
+   virtual TR_OpaqueClassBlock * getByteArrayClass() override;
    virtual bool isMethodTracingEnabled(TR_OpaqueMethodBlock *method) override;
    virtual bool canMethodEnterEventBeHooked() override;
    virtual bool canMethodExitEventBeHooked() override;

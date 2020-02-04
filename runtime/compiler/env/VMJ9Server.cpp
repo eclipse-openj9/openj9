@@ -204,6 +204,14 @@ TR_J9ServerVM::getSystemClassFromClassName(const char * name, int32_t length, bo
    return clazz;
    }
 
+TR_OpaqueClassBlock *
+TR_J9ServerVM::getByteArrayClass()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return vmInfo->_byteArrayClass;
+   }
+
 bool
 TR_J9ServerVM::isMethodTracingEnabled(TR_OpaqueMethodBlock *method)
    {
