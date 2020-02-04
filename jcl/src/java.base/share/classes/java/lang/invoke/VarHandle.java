@@ -717,10 +717,24 @@ public abstract class VarHandle extends VarHandleInternal
 	 */
 	public final MethodHandle toMethodHandle(AccessMode accessMode) {
 		MethodHandle mh = handleTable[accessMode.ordinal()];
-		mh = MethodHandles.insertArguments(mh, mh.type.parameterCount() - 1, this);
-		
-		if (!isAccessModeSupported(accessMode)) {
-			MethodType mt = mh.type;
+
+		if (mh != null) {
+			mh = MethodHandles.insertArguments(mh, mh.type.parameterCount() - 1, this);
+		}
+
+		if ((mh == null) || !isAccessModeSupported(accessMode)) {
+			MethodType mt = null;
+
+			if (mh != null) {
+				mt = mh.type;
+			} else {
+				mt = accessModeTypeUncached(accessMode);
+				/* accessModeTypeUncached does not return null. It throws InternalError if the method type
+				 * cannot be determined.
+				 */
+				mt = mt.appendParameterTypes(this.getClass());
+			}
+
 			try {
 				mh = _lookup.findStatic(VarHandle.class, "throwUnsupportedOperationException", MethodType.methodType(void.class)); //$NON-NLS-1$
 			} catch (Throwable e) {
@@ -728,6 +742,7 @@ public abstract class VarHandle extends VarHandleInternal
 				error.initCause(e);
 				throw error;
 			}
+
 			/* The resulting method handle must come with the same signature as the requested access mode method
 			 * so as to throw out UnsupportedOperationException from that method.
 			 */
