@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,6 +91,15 @@ MM_JNICriticalRegion::releaseAccess(J9VMThread* vmThread, UDATA* accessMask)
 	Assert_MM_true(0 != currentAccess);
 	VM_VMAccess::clearPublicFlags(vmThread, currentAccess);
 
+	if (0 != (currentAccess & J9_PUBLIC_FLAGS_VM_ACCESS)) {
+		TRIGGER_J9HOOK_VM_RELEASEVMACCESS(vmThread->javaVM->hookInterface, vmThread);
+
+		/* Now that the hook has been invoked, allow inline VM access */
+		if (0 != (vmThread->publicFlags & J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS)) {
+			clearEventFlag(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS);
+		}
+	}
+
 	if(0 != (vmThread->publicFlags & J9_PUBLIC_FLAGS_HALT_THREAD_EXCLUSIVE)) {
 		J9JavaVM* vm = vmThread->javaVM;
 		PORT_ACCESS_FROM_JAVAVM(vm);
@@ -118,15 +127,6 @@ MM_JNICriticalRegion::releaseAccess(J9VMThread* vmThread, UDATA* accessMask)
 			VM_VMAccess::respondToExclusiveRequest(vmThread, vm, PORTLIB, timeNow, J9_EXCLUSIVE_SLOW_REASON_JNICRITICAL);
 		}
 		omrthread_monitor_exit(vm->exclusiveAccessMutex);
-	}
-
-	if (0 != (currentAccess & J9_PUBLIC_FLAGS_VM_ACCESS)) {
-		TRIGGER_J9HOOK_VM_RELEASEVMACCESS(vmThread->javaVM->hookInterface, vmThread);
-
-		/* Now that the hook has been invoked, allow inline VM access */
-		if (0 != (vmThread->publicFlags & J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS)) {
-			clearEventFlag(vmThread, J9_PUBLIC_FLAGS_DISABLE_INLINE_VM_ACCESS);
-		}
 	}
 
 	*accessMask = currentAccess;

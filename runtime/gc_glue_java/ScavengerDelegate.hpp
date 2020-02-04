@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -76,6 +76,10 @@ private:
 	bool _finalizationRequired; /**< Scavenger variable used to determine if finalization should be triggered */
 #endif /* J9VM_GC_FINALIZATION */
 
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+	IDATA _flushCachesAsyncCallbackKey;
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
+
 protected:
 public:
 
@@ -129,6 +133,8 @@ public:
 	void switchConcurrentForThread(MM_EnvironmentBase *env);
 	void fixupIndirectObjectSlots(MM_EnvironmentStandard *env, omrobjectptr_t objectPtr);
 	bool shouldYield();
+	void signalThreadsToFlushCaches(MM_EnvironmentBase *env);
+	void cancelSignalToFlushCaches(MM_EnvironmentBase *env);
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 	/**

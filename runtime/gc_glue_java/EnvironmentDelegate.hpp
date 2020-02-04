@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,6 +68,7 @@ class MM_EnvironmentDelegate
 	/* Data members */
 private:
 	MM_EnvironmentBase *_env;
+	J9VMThread *_vmThread;
 	GC_Environment _gcEnv;
 protected:
 public:
@@ -118,6 +119,11 @@ public:
 	 * Release shared VM access.
 	 */
 	void releaseVMAccess();
+	
+	/**
+	 * Returns true if a mutator threads entered native code without releasing VM access
+	 */
+	bool inNative();	
 
 	/**
 	 * Check whether another thread is requesting exclusive VM access. This method must be
@@ -175,7 +181,10 @@ public:
 #endif /* OMR_GC_THREAD_LOCAL_HEAP */
 
 	MM_EnvironmentDelegate()
+		
+	
 		: _env(NULL)
+		, _vmThread(NULL)
 	{ }
 };
 
