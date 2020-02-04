@@ -632,12 +632,17 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @return The {@link MethodType} corresponding to the provided {@link AccessMode}.
 	 */
 	public final MethodType accessModeType(AccessMode accessMode) {
-		MethodType internalType = handleTable[accessMode.ordinal()].type;
-		int numOfArguments = internalType.arguments.length;
-		
-		// Drop the internal VarHandle argument
-		MethodType modifiedType = internalType.dropParameterTypes(numOfArguments - 1, numOfArguments);
-		
+		MethodType modifiedType = null;
+		MethodHandle internalHandle = handleTable[accessMode.ordinal()];
+		if (internalHandle == null) {
+			modifiedType = accessModeTypeUncached(accessMode);
+		} else {
+			MethodType internalType = internalHandle.type;
+			int numOfArguments = internalType.arguments.length;
+
+			/* Drop the internal VarHandle argument. */
+			modifiedType = internalType.dropParameterTypes(numOfArguments - 1, numOfArguments);
+		}
 		return modifiedType;
 	}
 	
