@@ -3023,14 +3023,41 @@ hookAcquireVMAccess(J9HookInterface** hook, UDATA eventNum, void* voidEventData,
 {
 	J9VMAcquireVMAccessEvent* eventData = (J9VMAcquireVMAccessEvent*)voidEventData;
 
-	J9VMThread *vmThread = eventData->currentThread;
-	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(vmThread->omrVMThread);
-	MM_GCExtensions* ext = MM_GCExtensions::getExtensions(vmThread);
+	J9VMThread *currentThread = eventData->currentThread;
+	MM_EnvironmentStandard *env = MM_EnvironmentStandard::getEnvironment(currentThread->omrVMThread);
+	MM_GCExtensions* ext = MM_GCExtensions::getExtensions(currentThread);
 
 	Assert_MM_true(ext->concurrentScavenger);
 
 	ext->scavenger->switchConcurrentForThread(env);
 }
+
+static void
+hookReleaseVMAccess(J9HookInterface** hook, UDATA eventNum, void* voidEventData, void* userData)
+{
+	J9VMReleaseVMAccessEvent* eventData = (J9VMReleaseVMAccessEvent*)voidEventData;
+
+	J9VMThread *currentThread = eventData->currentThread;
+	MM_GCExtensions* ext = MM_GCExtensions::getExtensions(currentThread);
+
+	if (ext->isConcurrentScavengerInProgress()) {
+		/* to call a variant of OMR's flushGCcaches, once it's properly adjusted */
+	}
+}
+
+static void
+hookAcquiringExclusiveInNative(J9HookInterface** hook, UDATA eventNum, void* voidEventData, void* userData)
+{
+	J9VMAcquringExclusiveInNativeEvent* eventData = (J9VMAcquringExclusiveInNativeEvent*)voidEventData;
+
+	J9VMThread *currentThread = eventData->currentThread;
+	MM_GCExtensions* ext = MM_GCExtensions::getExtensions(currentThread);
+
+	if (ext->isConcurrentScavengerInProgress()) {
+		/* to call a variant of OMR's flushGCcaches, once it's properly adjusted */
+	}
+}
+
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
 /**
@@ -3142,8 +3169,14 @@ gcInitializeVMHooks(MM_GCExtensionsBase *extensions)
 		result = false;
 	}
 #if defined(OMR_GC_CONCURRENT_SCAVENGER)
-	else if (extensions->concurrentScavenger && (*vmHookInterface)->J9HookRegisterWithCallSite(vmHookInterface, J9HOOK_VM_ACQUIREVMACCESS, hookAcquireVMAccess, OMR_GET_CALLSITE(), NULL)) {
-		result = false;
+	else if (extensions->concurrentScavenger) {
+		if ((*vmHookInterface)->J9HookRegisterWithCallSite(vmHookInterface, J9HOOK_VM_ACQUIREVMACCESS, hookAcquireVMAccess, OMR_GET_CALLSITE(), NULL)) {
+			result = false;
+		} else if ((*vmHookInterface)->J9HookRegisterWithCallSite(vmHookInterface, J9HOOK_VM_RELEASEVMACCESS, hookReleaseVMAccess, OMR_GET_CALLSITE(), NULL)) {
+			result = false;
+		} else if ((*vmHookInterface)->J9HookRegisterWithCallSite(vmHookInterface, J9HOOK_VM_ACQUIRING_EXCLUSIVE_IN_NATIVE, hookAcquiringExclusiveInNative, OMR_GET_CALLSITE(), NULL)) {
+			result = false;
+		}
 	}
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
 
@@ -3158,6 +3191,13 @@ gcCleanupVMHooks(MM_GCExtensionsBase *extensions)
 	if (NULL != vmHookInterface) {
 		(*vmHookInterface)->J9HookUnregister(vmHookInterface, J9HOOK_VM_THREAD_CRASH, hookValidatorVMThreadCrash, NULL);
 		(*vmHookInterface)->J9HookUnregister(vmHookInterface, J9HOOK_REGISTRATION_EVENT, hookVMRegistrationEvent, javaVM);
+#if defined(OMR_GC_CONCURRENT_SCAVENGER)
+		if (extensions->concurrentScavenger) {
+			(*vmHookInterface)->J9HookUnregister(vmHookInterface, J9HOOK_VM_ACQUIREVMACCESS, hookAcquireVMAccess, NULL);
+			(*vmHookInterface)->J9HookUnregister(vmHookInterface, J9HOOK_VM_RELEASEVMACCESS, hookReleaseVMAccess, NULL);
+			(*vmHookInterface)->J9HookUnregister(vmHookInterface, J9HOOK_VM_ACQUIRING_EXCLUSIVE_IN_NATIVE, hookAcquiringExclusiveInNative, NULL);
+		}
+#endif /* OMR_GC_CONCURRENT_SCAVENGER */
 	}
 }
 
