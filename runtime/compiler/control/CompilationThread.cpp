@@ -3191,6 +3191,22 @@ void TR::CompilationInfo::stopCompilationThreads()
       }
 
    static char * printCompMem = feGetEnv("TR_PrintCompMem");
+   static char * printCCUsage = feGetEnv("TR_PrintCodeCacheUsage");
+
+   // Example:
+   // CodeCache: size=262144Kb used=2048Kb max_used=1079Kb free=260096Kb
+   if (TR::Options::getCmdLineOptions()->getOption(TR_PrintCodeCacheUsage) || printCompMem || printCCUsage)
+      {
+      unsigned long currTotalUsedKB = (unsigned long)(TR::CodeCacheManager::instance()->getCurrTotalUsedInBytes()/1024);
+      unsigned long maxUsedKB = (unsigned long)(TR::CodeCacheManager::instance()->getMaxUsedInBytes()/1024);
+
+      fprintf(stderr, "\nCodeCache: size=%luKb used=%luKb max_used=%luKb free=%luKb\n\n",
+              _jitConfig->codeCacheTotalKB,
+              currTotalUsedKB,
+              maxUsedKB,
+              (_jitConfig->codeCacheTotalKB - currTotalUsedKB));
+      }
+
    if (printCompMem)
       {
       int32_t codeCacheAllocated = TR::CodeCacheManager::instance()->getCurrentNumberOfCodeCaches() * _jitConfig->codeCacheKB;
