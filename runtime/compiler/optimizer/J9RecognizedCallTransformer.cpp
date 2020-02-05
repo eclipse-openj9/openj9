@@ -79,7 +79,7 @@ void J9::RecognizedCallTransformer::process_java_lang_StringUTF16_toBytes(TR::Tr
    anchorAllChildren(node, treetop);
    prepareToReplaceNode(node);
 
-   int32_t byteArrayType = fej9->getNewArrayTypeFromClass(reinterpret_cast<TR_OpaqueClassBlock*>(fej9->getJ9JITConfig()->javaVM->byteArrayClass));
+   int32_t byteArrayType = fej9->getNewArrayTypeFromClass(fej9->getByteArrayClass());
 
    TR::Node::recreateWithoutProperties(node, TR::newarray, 2,
       TR::Node::create(TR::ishl, 2,
