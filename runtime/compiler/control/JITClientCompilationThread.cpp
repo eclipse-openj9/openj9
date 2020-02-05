@@ -487,6 +487,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
             {
             vmInfo._arrayTypeClasses[i] = fe->getClassFromNewArrayTypeNonNull(i + 4);
             }
+         vmInfo._byteArrayClass = fe->getByteArrayClass();
          vmInfo._readBarrierType = TR::Compiler->om.readBarrierType();
          vmInfo._writeBarrierType = TR::Compiler->om.writeBarrierType();
          vmInfo._compressObjectReferences = TR::Compiler->om.compressObjectReferences();
