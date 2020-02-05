@@ -1425,6 +1425,17 @@ J9::Options::fePreProcess(void * base)
          }
       }
 
+   // -XX:+PrintCodeCache will be parsed twice into both AOT and JIT options here.
+   const char *xxPrintCodeCacheOption = "-XX:+PrintCodeCache";
+   const char *xxDisablePrintCodeCacheOption = "-XX:-PrintCodeCache";
+   int32_t xxPrintCodeCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxPrintCodeCacheOption, 0);
+   int32_t xxDisablePrintCodeCacheArgIndex = FIND_ARG_IN_VMARGS(EXACT_MATCH, xxDisablePrintCodeCacheOption, 0);
+
+   if (xxPrintCodeCacheArgIndex > xxDisablePrintCodeCacheArgIndex)
+      {
+      self()->setOption(TR_PrintCodeCacheUsage);
+      }
+
    // Enable on X and Z, also on P.
    // PPC supports -Xlp:codecache option.. since it's set via environment variables.  JVM should always request 4k pages.
    // fePreProcess is called twice - for AOT and JIT options parsing, which is redundant in terms of
