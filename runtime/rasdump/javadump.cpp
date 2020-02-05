@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2003, 2019 IBM Corp. and others
+ * Copyright (c) 2003, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,6 +56,10 @@
 #include "ute.h"
 
 #include "ut_j9dmp.h"
+
+#if defined(JITSERVER_SUPPORT)
+#include "omrformatconsts.h"
+#endif /* defined(JITSERVER_SUPPORT) */
 
 #if defined(J9VM_ENV_DATA64)
 #define SEGMENT_HEADER             "NULL           segment            start              alloc              end                type       size\n"
@@ -1054,11 +1058,29 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 
 	/* NB : I can't find any code for making this decision in the existing implementation */
 #ifdef J9VM_BUILD_J2SE
+	/* If JITServer enabled, print running mode as JITServer and client UID*/
+#ifdef JITSERVER_SUPPORT
+	if (_VirtualMachine->internalVMFunctions->isJITServerEnabled(_VirtualMachine))
+		_OutputStream.writeCharacters("a JITServer Server");
+	else if (0 != jitConfig->clientUID)
+		_OutputStream.writeCharacters("a JITServer Client");
+	else
+		_OutputStream.writeCharacters("a standalone");
+#else /* !JITSERVER_SUPPORT */
 	_OutputStream.writeCharacters("a standalone");
-#else
+#endif
+#else /* !J9VM_BUILD_J2SE */
 	_OutputStream.writeCharacters("an embedded");
 #endif
 	_OutputStream.writeCharacters(" JVM\n");
+
+#if defined(JITSERVER_SUPPORT)
+	if (0 != jitConfig->clientUID) {
+		_OutputStream.writeCharacters("1CICLIENTID    Client UID ");
+		_OutputStream.writeInteger64(jitConfig->clientUID, "%" OMR_PRIu64);
+		_OutputStream.writeCharacters("\n");
+	}
+#endif /* JITSERVER_SUPPORT */
 
 	_OutputStream.writeCharacters("1CIVMIDLESTATE VM Idle State: ");
 	writeVMRuntimeState(_VirtualMachine->internalVMFunctions->getVMRuntimeState(_VirtualMachine));
