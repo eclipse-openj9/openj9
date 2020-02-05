@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -358,14 +358,23 @@ public:
 		J9Class* clazz = (J9Class *)(preservedSlot & ~(UDATA)_delegateHeaderSlotFlagsMask);
 
 		if (J9GC_CLASS_IS_ARRAY(clazz)) {
+			uintptr_t elements = 0;
 #if defined (OMR_GC_COMPRESSED_POINTERS)
-			uintptr_t elements = forwardedHeader->getPreservedOverlap();
-#else /* defined (OMR_GC_COMPRESSED_POINTERS) */
-			uintptr_t elements = ((J9IndexableObjectContiguous *)forwardedHeader->getObject())->size;
+			if (compressObjectReferences()) {
+				elements = forwardedHeader->getPreservedOverlap();
+			} else
 #endif /* defined (OMR_GC_COMPRESSED_POINTERS) */
+			{
+				elements = ((J9IndexableObjectContiguousFull *)forwardedHeader->getObject())->size;
+			}
 
 			if (0 == elements) {
-				elements = ((J9IndexableObjectDiscontiguous *)forwardedHeader->getObject())->size;
+				/* Discontiguous */
+				if (compressObjectReferences()) {
+					elements = ((J9IndexableObjectDiscontiguousCompressed *)forwardedHeader->getObject())->size;
+				} else {
+					elements = ((J9IndexableObjectDiscontiguousFull *)forwardedHeader->getObject())->size;
+				}
 			}
 
 			uintptr_t dataSize = _arrayObjectModel->getDataSizeInBytes(clazz, elements);

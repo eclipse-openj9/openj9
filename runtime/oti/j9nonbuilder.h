@@ -5063,16 +5063,13 @@ typedef struct J9VMThread {
 #if defined(OMR_GC_FULL_POINTERS)
 /* Mixed mode - necessarily 64-bit */
 #define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) (0 != (vmThread)->compressObjectReferences)
-#define J9VMTHREAD_REFERENCE_SHIFT(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? 2 : 3)
 #else /* OMR_GC_FULL_POINTERS */
 /* Compressed only - necessarily 64-bit */
 #define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) TRUE
-#define J9VMTHREAD_REFERENCE_SHIFT(vmThread) 2
 #endif /* OMR_GC_FULL_POINTERS */
 #else /* OMR_GC_COMPRESSED_POINTERS */
 /* Full only - could be 32 or 64-bit */
 #define J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) FALSE
-#define J9VMTHREAD_REFERENCE_SHIFT(vmThread) OMR_LOG_POINTER_SIZE
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 #define J9VMTHREAD_REFERENCE_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(U_32) : sizeof(UDATA))
 #define J9VMTHREAD_OBJECT_HEADER_SIZE(vmThread) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))
@@ -5524,16 +5521,13 @@ typedef struct J9JavaVM {
 #if defined(OMR_GC_FULL_POINTERS)
 /* Mixed mode - necessarily 64-bit */
 #define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) J9_ARE_ANY_BITS_SET((vm)->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_COMPRESS_OBJECT_REFERENCES)
-#define J9JAVAVM_REFERENCE_SHIFT(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? 2 : 3)
 #else /* OMR_GC_FULL_POINTERS */
 /* Compressed only - necessarily 64-bit */
 #define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) TRUE
-#define J9JAVAVM_REFERENCE_SHIFT(vm) 2
 #endif /* OMR_GC_FULL_POINTERS */
 #else /* OMR_GC_COMPRESSED_POINTERS */
 /* Full only - could be 32 or 64-bit */
 #define J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) FALSE
-#define J9JAVAVM_REFERENCE_SHIFT(vm) OMR_LOG_POINTER_SIZE
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 #define J9JAVAVM_REFERENCE_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(U_32) : sizeof(UDATA))
 #define J9JAVAVM_OBJECT_HEADER_SIZE(vm) (J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) ? sizeof(J9ObjectCompressed) : sizeof(J9ObjectFull))

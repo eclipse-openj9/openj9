@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2335,7 +2335,7 @@ MM_CopyForwardScheme::scanReferenceObjectSlots(MM_EnvironmentVLHGC *env, MM_Allo
 		}
 	}
 	
-	GC_SlotObject referentPtr(_javaVM->omrVM, &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr));
+	GC_SlotObject referentPtr(_javaVM->omrVM, J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(env, objectPtr));
 
 	/* Iterating and copyforwarding regular reference slots, except the special (soft) referent slot. Not making use of leaf bit optimization,
 	 * sacrificing minor performance to avoid code complication. Could optimize later, if/when using ObjectScanner */
@@ -3040,7 +3040,7 @@ MM_CopyForwardScheme::incrementalScanReferenceObjectSlots(MM_EnvironmentVLHGC *e
 	bool hasPartiallyScannedObject, MM_CopyScanCacheVLHGC** nextScanCache)
 {
 	GC_MixedObjectIterator mixedObjectIterator(_javaVM->omrVM);
-	fj9object_t *referentPtr = &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr);
+	fj9object_t *referentPtr = J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(env, objectPtr);
 	bool referentMustBeMarked = false;
 
 	if (!hasPartiallyScannedObject) {
@@ -4944,7 +4944,7 @@ MM_CopyForwardScheme::processReferenceList(MM_EnvironmentVLHGC *env, MM_HeapRegi
 
 		J9Object* nextReferenceObj = _extensions->accessBarrier->getReferenceLink(referenceObj);
 
-		GC_SlotObject referentSlotObject(_extensions->getOmrVM(), &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, referenceObj));
+		GC_SlotObject referentSlotObject(_extensions->getOmrVM(), J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(env, referenceObj));
 		J9Object *referent = referentSlotObject.readReferenceFromSlot();
 		if (NULL != referent) {
 			UDATA referenceObjectType = J9CLASS_FLAGS(J9GC_J9OBJECT_CLAZZ(referenceObj, env)) & J9AccClassReferenceMask;

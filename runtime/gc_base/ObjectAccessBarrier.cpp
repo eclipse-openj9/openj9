@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -116,7 +116,13 @@ MM_ObjectAccessBarrier::tearDown(MM_EnvironmentBase *env)
 mm_j9object_t
 MM_ObjectAccessBarrier::readObjectImpl(J9VMThread *vmThread, mm_j9object_t srcObject, fj9object_t *srcAddress, bool isVolatile)
 {
-	return convertPointerFromToken(*srcAddress);
+	mm_j9object_t result = NULL;
+	if (compressObjectReferences()) {
+		result = convertPointerFromToken(*(uint32_t*)srcAddress);
+	} else {
+		result = (mm_j9object_t)*(uintptr_t*)srcAddress;
+	}
+	return result;
 }
 
 /**
@@ -164,7 +170,11 @@ MM_ObjectAccessBarrier::readObjectFromInternalVMSlotImpl(J9VMThread *vmThread, j
 void 
 MM_ObjectAccessBarrier::storeObjectImpl(J9VMThread *vmThread, mm_j9object_t destObject, fj9object_t *destAddress, mm_j9object_t value, bool isVolatile)
 {
-	*destAddress = convertTokenFromPointer(value);
+	if (compressObjectReferences()) {
+		*(uint32_t*)destAddress = (uint32_t)convertTokenFromPointer(value);
+	} else {
+		*(uintptr_t*)destAddress = (uintptr_t)value;
+	}
 }
 
 /**
@@ -780,7 +790,8 @@ MM_ObjectAccessBarrier::mixedObjectStoreI64(J9VMThread *vmThread, J9Object *dest
 J9Object *
 MM_ObjectAccessBarrier::indexableReadObject(J9VMThread *vmThread, J9IndexableObject *srcObject, I_32 srcIndex, bool isVolatile)
 {
-	fj9object_t *actualAddress = (fj9object_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(fj9object_t));
+	UDATA const referenceSize = J9VMTHREAD_REFERENCE_SIZE(vmThread);
+	fj9object_t *actualAddress = (fj9object_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, referenceSize);
 	J9Object *result = NULL;
 
 	/* No preObjectRead yet because no barrier require it */
@@ -953,7 +964,8 @@ MM_ObjectAccessBarrier::indexableReadI64(J9VMThread *vmThread, J9IndexableObject
 void
 MM_ObjectAccessBarrier::indexableStoreObject(J9VMThread *vmThread, J9IndexableObject *destObject, I_32 destIndex, J9Object *value, bool isVolatile)
 {
-	fj9object_t *actualAddress = (fj9object_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(fj9object_t));
+	UDATA const referenceSize = J9VMTHREAD_REFERENCE_SIZE(vmThread);
+	fj9object_t *actualAddress = (fj9object_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, referenceSize);
 	
 	if (preObjectStore(vmThread, (J9Object *)destObject, actualAddress, value)) {
 		protectIfVolatileBefore(vmThread, isVolatile, false, false);
@@ -1383,6 +1395,8 @@ MM_ObjectAccessBarrier::structuralCompareFlattenedObjects(J9VMThread *vmThread, 
 	bool result = true;
 	const UDATA *descriptionPtr = (UDATA *) valueClass->instanceDescription;
 	UDATA descriptionBits = 0;
+	bool const compressed = J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread);
+	UDATA const referenceSize = J9VMTHREAD_REFERENCE_SIZE(vmThread);
 
 	Assert_MM_true(J9_IS_J9CLASS_VALUETYPE(valueClass));
 
@@ -1411,9 +1425,10 @@ MM_ObjectAccessBarrier::structuralCompareFlattenedObjects(J9VMThread *vmThread, 
 				result = false;
 				break;
 			}
-
 		} else {
-			if (*(fj9object_t *)((UDATA)lhsObject + startOffset + offset) != *(fj9object_t *)((UDATA)rhsObject + startOffset + offset)) {
+			fomrobject_t lhsValue = GC_SlotObject::readSlot((fomrobject_t*)((UDATA)lhsObject + startOffset + offset), compressed);
+			fomrobject_t rhsValue = GC_SlotObject::readSlot((fomrobject_t*)((UDATA)rhsObject + startOffset + offset), compressed);
+			if (lhsValue != rhsValue) {
 				result = false;
 				break;
 			}
@@ -1423,7 +1438,7 @@ MM_ObjectAccessBarrier::structuralCompareFlattenedObjects(J9VMThread *vmThread, 
 			descriptionBits = *descriptionPtr++;
 			descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 		}
-		offset += sizeof(fj9object_t);
+		offset += referenceSize;
 	}
 
 	return result;
@@ -1477,6 +1492,7 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 	UDATA descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 	UDATA offset = 0;
 	UDATA limit = objectClass->totalInstanceSize;
+	UDATA const referenceSize = J9VMTHREAD_REFERENCE_SIZE(vmThread);
 
 	if (isValueType) {
 		U_32 firstFieldOffset = (U_32) objectClass->backfillOffset;
@@ -1494,14 +1510,20 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 			J9Object *objectPtr = mixedObjectReadObject(vmThread, srcObject, srcOffset + offset, false);
 			mixedObjectStoreObject(vmThread, destObject, destOffset + offset, objectPtr, false);
 		} else {
-			*(fj9object_t *)((UDATA)destObject + destOffset + offset) = *(fj9object_t *)((UDATA)srcObject + srcOffset + offset);
+			UDATA srcAddress = (UDATA)srcObject + srcOffset + offset;
+			UDATA destAddress = (UDATA)destObject + srcOffset + offset;
+			if (sizeof(uint32_t) == referenceSize) {
+				*(uint32_t *)destAddress = *(uint32_t *)srcAddress;
+			} else {
+				*(uintptr_t *)destAddress = *(uintptr_t *)srcAddress;
+			}
 		}
 		descriptionBits >>= 1;
 		if(descriptionIndex-- == 0) {
 			descriptionBits = *descriptionPtr++;
 			descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 		}
-		offset += sizeof(fj9object_t);
+		offset += referenceSize;
 	}
 
 	if (!isValueType) {
@@ -2034,13 +2056,23 @@ MM_ObjectAccessBarrier::fillArrayOfObjects(J9VMThread *vmThread, j9array_t destO
 	/* (assert here to verify that we aren't defaulting to this implementation through some unknown path - delete once combination is stable) */
 	Assert_MM_unreachable();
 #endif /* defined(J9VM_GC_COMBINATION_SPEC) */
-	fj9object_t *destPtr = (fj9object_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(fj9object_t));
-	fj9object_t actualValue = convertTokenFromPointer(value);
-	fj9object_t *endPtr = destPtr + count;
-
-	while (destPtr < endPtr) {
-		*destPtr++ = actualValue;	
-	} 	
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+		uint32_t *destPtr = (uint32_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(uint32_t));
+		uint32_t actualValue = (uint32_t)convertTokenFromPointer(value);
+		uint32_t *endPtr = destPtr + count;
+	
+		while (destPtr < endPtr) {
+			*destPtr++ = actualValue;	
+		}
+	} else {
+		uintptr_t *destPtr = (uintptr_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(uintptr_t));
+		uintptr_t actualValue = (uintptr_t)convertTokenFromPointer(value);
+		uintptr_t *endPtr = destPtr + count;
+	
+		while (destPtr < endPtr) {
+			*destPtr++ = actualValue;	
+		}
+	}
 }
 
 /**
@@ -2078,12 +2110,22 @@ MM_ObjectAccessBarrier::doCopyContiguousBackward(J9VMThread *vmThread, J9Indexab
 	srcIndex += lengthInSlots;
 	destIndex += lengthInSlots;
 
-	fj9object_t *srcSlot = (fj9object_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(fj9object_t));
-	fj9object_t *destSlot = (fj9object_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(fj9object_t));
-	fj9object_t *srcEndSlot = srcSlot - lengthInSlots;
-	
-	while (srcSlot > srcEndSlot) {
-		*--destSlot = *--srcSlot;
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+		uint32_t *srcSlot = (uint32_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(uint32_t));
+		uint32_t *destSlot = (uint32_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(uint32_t));
+		uint32_t *srcEndSlot = srcSlot - lengthInSlots;
+		
+		while (srcSlot > srcEndSlot) {
+			*--destSlot = *--srcSlot;
+		}
+	} else {
+		uintptr_t *srcSlot = (uintptr_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(uintptr_t));
+		uintptr_t *destSlot = (uintptr_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(uintptr_t));
+		uintptr_t *srcEndSlot = srcSlot - lengthInSlots;
+		
+		while (srcSlot > srcEndSlot) {
+			*--destSlot = *--srcSlot;
+		}	
 	}
 	
 	return ARRAY_COPY_SUCCESSFUL;
@@ -2095,12 +2137,22 @@ MM_ObjectAccessBarrier::doCopyContiguousBackward(J9VMThread *vmThread, J9Indexab
 I_32
 MM_ObjectAccessBarrier::doCopyContiguousForward(J9VMThread *vmThread, J9IndexableObject *srcObject, J9IndexableObject *destObject, I_32 srcIndex, I_32 destIndex, I_32 lengthInSlots)
 {
-	fj9object_t *srcSlot = (fj9object_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(fj9object_t));
-	fj9object_t *destSlot = (fj9object_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(fj9object_t));
-	fj9object_t *srcEndSlot = srcSlot + lengthInSlots;
-	
-	while (srcSlot < srcEndSlot) {
-		*destSlot++ = *srcSlot++;
+	if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread)) {
+		uint32_t *srcSlot = (uint32_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(uint32_t));
+		uint32_t *destSlot = (uint32_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(uint32_t));
+		uint32_t *srcEndSlot = srcSlot + lengthInSlots;
+		
+		while (srcSlot < srcEndSlot) {
+			*destSlot++ = *srcSlot++;
+		}
+	} else {
+		uintptr_t *srcSlot = (uintptr_t *)indexableEffectiveAddress(vmThread, srcObject, srcIndex, sizeof(uintptr_t));
+		uintptr_t *destSlot = (uintptr_t *)indexableEffectiveAddress(vmThread, destObject, destIndex, sizeof(uintptr_t));
+		uintptr_t *srcEndSlot = srcSlot + lengthInSlots;
+		
+		while (srcSlot < srcEndSlot) {
+			*destSlot++ = *srcSlot++;
+		}
 	}
 	
 	return ARRAY_COPY_SUCCESSFUL;	
@@ -2116,7 +2168,8 @@ void
 MM_ObjectAccessBarrier::setFinalizeLink(j9object_t object, j9object_t value)
 {
 	fj9object_t* finalizeLink = getFinalizeLinkAddress(object);
-	*finalizeLink = convertTokenFromPointer(value);
+	GC_SlotObject slot(_extensions->getOmrVM(), finalizeLink);
+	slot.writeReferenceToSlot(value);
 }
 
 void 
@@ -2127,7 +2180,8 @@ MM_ObjectAccessBarrier::setReferenceLink(j9object_t object, j9object_t value)
 	/* offset will be UDATA_MAX until java/lang/ref/Reference is loaded */
 	Assert_MM_true(UDATA_MAX != linkOffset);
 	fj9object_t *referenceLink = (fj9object_t*)((UDATA)object + linkOffset);
-	*referenceLink = convertTokenFromPointer(value);
+	GC_SlotObject slot(_extensions->getOmrVM(), referenceLink);
+	slot.writeReferenceToSlot(value);
 }
 
 void
@@ -2142,7 +2196,8 @@ MM_ObjectAccessBarrier::setOwnableSynchronizerLink(j9object_t object, j9object_t
 		value = object;
 	}
 	fj9object_t *ownableSynchronizerLink = (fj9object_t*)((UDATA)object + linkOffset);
-	*ownableSynchronizerLink = convertTokenFromPointer(value);
+	GC_SlotObject slot(_extensions->getOmrVM(), ownableSynchronizerLink);
+	slot.writeReferenceToSlot(value);
 }
 
 void

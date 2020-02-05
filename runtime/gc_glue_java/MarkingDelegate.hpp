@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -113,6 +112,8 @@ public:
 	getObjectScanner(MM_EnvironmentBase *env, omrobjectptr_t objectPtr, void *scannerSpace, MM_MarkingSchemeScanReason reason, uintptr_t *sizeToDo)
 	{
 		J9Class *clazz = J9GC_J9OBJECT_CLAZZ(objectPtr, env);
+		UDATA const referenceSize = env->compressObjectReferences() ? sizeof(uint32_t) : sizeof(uintptr_t);
+
 		/* object class must have proper eye catcher */
 		Assert_MM_true((UDATA)0x99669966 == clazz->eyecatcher);
 
@@ -125,7 +126,7 @@ public:
 		case GC_ObjectModel::SCAN_CLASS_OBJECT:
 		case GC_ObjectModel::SCAN_CLASSLOADER_OBJECT:
 			objectScanner = GC_MixedObjectScanner::newInstance(env, objectPtr, scannerSpace, 0);
-			*sizeToDo = sizeof(fomrobject_t) + ((GC_MixedObjectScanner *)objectScanner)->getBytesRemaining();
+			*sizeToDo = referenceSize + ((GC_MixedObjectScanner *)objectScanner)->getBytesRemaining();
 			break;
 		case GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT:
 		{
@@ -144,7 +145,7 @@ public:
 		{
 			fomrobject_t *referentSlotPtr = setupReferenceObjectScanner(env, objectPtr, reason);
 			objectScanner = GC_ReferenceObjectScanner::newInstance(env, objectPtr, referentSlotPtr, scannerSpace, 0);
-			*sizeToDo = sizeof(fomrobject_t) + ((GC_ReferenceObjectScanner *)objectScanner)->getBytesRemaining();
+			*sizeToDo = referenceSize + ((GC_ReferenceObjectScanner *)objectScanner)->getBytesRemaining();
 			break;
 		}
 		case GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT:

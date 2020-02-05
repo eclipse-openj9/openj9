@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -453,7 +453,7 @@ MM_MarkingDelegate::processReferenceList(MM_EnvironmentBase *env, MM_HeapRegionD
 
 		omrobjectptr_t nextReferenceObj = _extensions->accessBarrier->getReferenceLink(referenceObj);
 
-		GC_SlotObject referentSlotObject(_extensions->getOmrVM(), &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, referenceObj));
+		GC_SlotObject referentSlotObject(_omrVM, J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(env, referenceObj));
 
 		if (NULL != referentSlotObject.readReferenceFromSlot()) {
 			_markingScheme->fixupForwardedSlot(&referentSlotObject);
@@ -563,7 +563,7 @@ MM_MarkingDelegate::clearReference(MM_EnvironmentBase *env, omrobjectptr_t objec
 {
 	if (referentMustBeCleared) {
 		/* Discovering this object at this stage in the GC indicates that it is being resurrected. Clear its referent slot. */
-		GC_SlotObject referentPtr(_omrVM, &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr));
+		GC_SlotObject referentPtr(_omrVM, J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(env, objectPtr));
 		referentPtr.writeReferenceToSlot(NULL);
 		/* record that the reference has been cleared if it's not already in the cleared or enqueued state */
 		if (!isReferenceCleared) {
@@ -587,7 +587,7 @@ MM_MarkingDelegate::setupReferenceObjectScanner(MM_EnvironmentBase *env, omrobje
 	bool referentMustBeMarked = false;
 	bool referentMustBeCleared = getReferenceStatus(env, objectPtr, &referentMustBeMarked, &isReferenceCleared);
 
-	GC_SlotObject referentSlotObject(_omrVM, &J9GC_J9VMJAVALANGREFERENCE_REFERENT(env, objectPtr));
+	GC_SlotObject referentSlotObject(_omrVM, J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(env, objectPtr));
 	if (SCAN_REASON_PACKET == reason) {
 		clearReference(env, objectPtr, isReferenceCleared, referentMustBeCleared);
 	}
@@ -622,7 +622,8 @@ MM_MarkingDelegate::setupPointerArrayScanner(MM_EnvironmentBase *env, omrobjectp
 	}
 
 	uintptr_t slotsToScan = 0;
-	uintptr_t maxSlotsToScan = OMR_MAX(*sizeToDo / sizeof(fomrobject_t), 1);
+	uintptr_t const referenceSize = env->compressObjectReferences() ? sizeof(uint32_t) : sizeof(uintptr_t);
+	uintptr_t maxSlotsToScan = OMR_MAX(*sizeToDo / referenceSize, 1);
 	Assert_MM_true(maxSlotsToScan > 0);
 	uintptr_t sizeInElements = _extensions->indexableObjectModel.getSizeInElements((J9IndexableObject *)objectPtr);
 	if (sizeInElements > 0) {
@@ -655,7 +656,7 @@ MM_MarkingDelegate::setupPointerArrayScanner(MM_EnvironmentBase *env, omrobjectp
 		}
 	}
 
-	*sizeToDo = headerBytesToScan + (slotsToScan * sizeof(fomrobject_t));
+	*sizeToDo = headerBytesToScan + (slotsToScan * referenceSize);
 	*slotsToDo = slotsToScan;
 	return startIndex;
 }

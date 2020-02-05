@@ -61,12 +61,12 @@ class MM_ParallelSweepScheme;
  */
 class MM_ScavengerDelegate : public MM_BaseNonVirtual {
 private:
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
-	bool _compressObjectReferences;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	OMR_VM *_omrVM;
 	J9JavaVM *_javaVM;
 	MM_GCExtensions *_extensions;
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	volatile bool _shouldScavengeFinalizableObjects; /**< Set to true at the beginning of a collection if there are any pending finalizable objects */
 	volatile bool _shouldScavengeUnfinalizedObjects; /**< Set to true at the beginning of a collection if there are any unfinalized objects */
 	volatile bool _shouldScavengeSoftReferenceObjects; /**< Set to true if there are any SoftReference objects discovered */

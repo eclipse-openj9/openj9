@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -91,7 +90,7 @@ MM_GCExtensions::initialize(MM_EnvironmentBase *env)
 
 #if defined(J9VM_GC_REALTIME)
 	/* only ref slots, size in bytes: 2 * minObjectSize - header size */
-	minArraySizeToSetAsScanned = 2 * (1 << J9VMGC_SIZECLASSES_LOG_SMALLEST) - sizeof(J9IndexableObjectContiguous);
+	minArraySizeToSetAsScanned = 2 * (1 << J9VMGC_SIZECLASSES_LOG_SMALLEST) - J9JAVAVM_CONTIGUOUS_HEADER_SIZE(getJavaVM());
 #endif /* J9VM_GC_REALTIME */
 
 #if defined(J9VM_GC_JNI_ARRAY_CACHE)

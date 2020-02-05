@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -183,10 +182,11 @@ MM_IndexableObjectAllocationModel::layoutContiguousArraylet(MM_EnvironmentBase *
 {
 	Assert_MM_true(_numberOfArraylets == _allocateDescription.getNumArraylets());
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	bool const compressed = env->compressObjectReferences();
 
 	/* set arraylet pointers in the spine. these all point into the data part of the spine */
 	fj9object_t *arrayoidPtr = extensions->indexableObjectModel.getArrayoidPointer(spine);
-	uintptr_t leafOffset = (uintptr_t)(arrayoidPtr + _numberOfArraylets);
+	uintptr_t leafOffset = (uintptr_t)GC_SlotObject::addToSlotAddress(arrayoidPtr, _numberOfArraylets, compressed);
 	if (_alignSpineDataSection) {
 		leafOffset = MM_Math::roundToCeiling(sizeof(uint64_t), leafOffset);
 	}
@@ -195,7 +195,7 @@ MM_IndexableObjectAllocationModel::layoutContiguousArraylet(MM_EnvironmentBase *
 		GC_SlotObject slotObject(env->getOmrVM(), arrayoidPtr);
 		slotObject.writeReferenceToSlot((omrobjectptr_t)leafOffset);
 		leafOffset += arrayletLeafSize;
-		arrayoidPtr += 1;
+		arrayoidPtr = GC_SlotObject::addToSlotAddress(arrayoidPtr, 1, compressed);
 	}
 
 	return spine;
@@ -217,6 +217,7 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 	Assert_MM_true(_numberOfArraylets == _allocateDescription.getNumArraylets());
 
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
+	bool const compressed = env->compressObjectReferences();
 
 	/* determine how many bytes to allocate outside of the spine (in arraylet leaves) */
 	const uintptr_t arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
@@ -247,7 +248,7 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 		arrayoidPtr = extensions->indexableObjectModel.getArrayoidPointer(spine);
 
 		/* set the arrayoid pointer in the spine to point to the new leaf */
-		GC_SlotObject slotObject(env->getOmrVM(), &arrayoidPtr[arrayoidIndex]);
+		GC_SlotObject slotObject(env->getOmrVM(), GC_SlotObject::addToSlotAddress(arrayoidPtr, arrayoidIndex, compressed));
 		slotObject.writeReferenceToSlot((omrobjectptr_t)leaf);
 
 		bytesRemaining -= OMR_MIN(bytesRemaining, arrayletLeafSize);
@@ -271,7 +272,7 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 			/* if last arraylet leaf is empty (contains 0 bytes) arrayoid pointer is set to NULL */
 			if (arrayoidIndex == (_numberOfArraylets - 1)) {
 				Assert_MM_true(0 == (_dataSize % arrayletLeafSize));
-				GC_SlotObject slotObject(env->getOmrVM(), &(arrayoidPtr[arrayoidIndex]));
+				GC_SlotObject slotObject(env->getOmrVM(), GC_SlotObject::addToSlotAddress(arrayoidPtr, arrayoidIndex, compressed));
 				slotObject.writeReferenceToSlot(NULL);
 			} else {
 				Assert_MM_true(0 != (_dataSize % arrayletLeafSize));
@@ -291,12 +292,12 @@ MM_IndexableObjectAllocationModel::layoutDiscontiguousArraylet(MM_EnvironmentBas
 			 */
 			Assert_MM_true(arrayoidIndex == (_numberOfArraylets - 1));
 			{
-				uintptr_t leafOffset = (uintptr_t)&(arrayoidPtr[_numberOfArraylets]);
+				uintptr_t leafOffset = (uintptr_t)GC_SlotObject::addToSlotAddress(arrayoidPtr, _numberOfArraylets, compressed);
 				if (_alignSpineDataSection) {
 					leafOffset = MM_Math::roundToCeiling(env->getObjectAlignmentInBytes(), leafOffset);
 				}
 				/* set the last arrayoid pointer to point to remainder data */
-				GC_SlotObject slotObject(env->getOmrVM(), &(arrayoidPtr[arrayoidIndex]));
+				GC_SlotObject slotObject(env->getOmrVM(), GC_SlotObject::addToSlotAddress(arrayoidPtr, arrayoidIndex, compressed));
 				slotObject.writeReferenceToSlot((omrobjectptr_t)leafOffset);
 			}
 			break;
@@ -356,7 +357,7 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 	/* Number of arraylet leaves in the iterator must match the number of leaves calculated */
 	Assert_MM_true(arrayletLeafCount == count);
 
-	GC_SlotObject objectSlot(env->getOmrVM(), &extensions->indexableObjectModel.getArrayoidPointer((J9IndexableObject *)objectPtr)[0]);
+	GC_SlotObject objectSlot(env->getOmrVM(), extensions->indexableObjectModel.getArrayoidPointer((J9IndexableObject *)objectPtr));
 	J9Object *firstLeafSlot = objectSlot.readReferenceFromSlot();
 
 	MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)heap->getHeapRegionManager()->tableDescriptorForAddress(firstLeafSlot);

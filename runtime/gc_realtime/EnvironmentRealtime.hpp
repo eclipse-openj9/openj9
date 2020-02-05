@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,9 +49,7 @@ private:
 	
 	I_32 _yieldDisableDepth;
 
-	uintptr_t _scannedBytes;         /**< Number of bytes, objects, pointer fields scanned in current major GC */
-	uintptr_t _scannedObjects;
-	uintptr_t _scannedPointerFields;
+	uintptr_t _scannedObjects;			/**< Number of objects scanned in current major GC */
 	
 	MM_HeapRegionDescriptorRealtime **_overflowCache; /**< Local cache of overflowed regions.  Can only be manipulated by IncrementalOverflow */
 	uintptr_t _overflowCacheCount; /**< Count of used elements in the _overflowCache array. Can on be manipulated by IncrementalOverflow */
@@ -105,17 +103,11 @@ public:
 	
 	void setRootScanner(MM_RealtimeRootScanner *rootScanner) { _rootScanner = rootScanner; }
 	
-	uintptr_t getScannedBytes() const { return _scannedBytes; }
-	void addScannedBytes(uintptr_t scannedBytes) { _scannedBytes += scannedBytes; }
 	uintptr_t getScannedObjects() const { return _scannedObjects; }
 	void incScannedObjects() { _scannedObjects++; }
-	uintptr_t getScannedPointerFields() const { return _scannedPointerFields; }
-	void addScannedPointerFields(uintptr_t scannedPointerFields) { _scannedPointerFields += scannedPointerFields; }
 	void resetScannedCounters() 
 	{
-		_scannedBytes = 0;
 		_scannedObjects = 0;
-		_scannedPointerFields = 0;
 	}
 	MM_Timer *getTimer() {return _timer;}
 	

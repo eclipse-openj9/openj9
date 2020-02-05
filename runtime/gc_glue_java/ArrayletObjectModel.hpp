@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -459,12 +459,13 @@ public:
 			UDATA* destData = (UDATA*)getDataPointerForContiguous(destObject);
 			copyInWords(destData, srcData, sizeInBytes);
 		} else {
+			bool const compressed = compressObjectReferences();
 			UDATA arrayletCount = numArraylets(srcObject);
 			fj9object_t *srcArraylets = getArrayoidPointer(srcObject);
 			fj9object_t *destArraylets = getArrayoidPointer(destObject);
 			for (UDATA i = 0; i < arrayletCount; i++) {
-				GC_SlotObject srcSlotObject(_omrVM, &srcArraylets[i]);
-				GC_SlotObject destSlotObject(_omrVM, &destArraylets[i]);
+				GC_SlotObject srcSlotObject(_omrVM, GC_SlotObject::addToSlotAddress(srcArraylets, i, compressed));
+				GC_SlotObject destSlotObject(_omrVM, GC_SlotObject::addToSlotAddress(destArraylets, i, compressed));
 				void* srcLeafAddress = srcSlotObject.readReferenceFromSlot();
 				void* destLeafAddress = destSlotObject.readReferenceFromSlot();
 				
@@ -553,6 +554,7 @@ public:
 				break;
 			}
 		} else {
+			bool const compressed = compressObjectReferences();
 			fj9object_t *srcArraylets = getArrayoidPointer(srcObject);
 			void *outerDestCursor = destData;
 			U_32 outerCount = elementCount;
@@ -560,7 +562,7 @@ public:
 			UDATA arrayletIndex = elementIndex / arrayletLeafElements;
 			UDATA arrayletElementOffset = elementIndex % arrayletLeafElements;
 			while(outerCount > 0) {
-				GC_SlotObject srcSlotObject(_omrVM, &srcArraylets[arrayletIndex++]);
+				GC_SlotObject srcSlotObject(_omrVM, GC_SlotObject::addToSlotAddress(srcArraylets, arrayletIndex++, compressed));
 				void* srcLeafAddress = srcSlotObject.readReferenceFromSlot();
 				U_32 innerCount = outerCount;
 				// Can we fulfill the remainder of the copy from this page?
@@ -711,6 +713,7 @@ public:
 				break;
 			}
 		} else {
+			bool const compressed = compressObjectReferences();
 			fj9object_t *destArraylets = getArrayoidPointer(destObject);
 			void *outerSrcCursor = srcData;
 			U_32 outerCount = elementCount;
@@ -718,7 +721,7 @@ public:
 			UDATA arrayletIndex = elementIndex / arrayletLeafElements;
 			UDATA arrayletElementOffset = elementIndex % arrayletLeafElements;
 			while(outerCount > 0) {
-				GC_SlotObject destSlotObject(_omrVM, &destArraylets[arrayletIndex++]);
+				GC_SlotObject destSlotObject(_omrVM, GC_SlotObject::addToSlotAddress(destArraylets, arrayletIndex++, compressed));
 				void* destLeafAddress = destSlotObject.readReferenceFromSlot();
 				U_32 innerCount = outerCount;
 				// Can we fulfill the remainder of the copy from this page?

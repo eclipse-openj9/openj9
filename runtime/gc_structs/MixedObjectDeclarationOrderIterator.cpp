@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,8 +41,8 @@ GC_MixedObjectDeclarationOrderIterator::nextSlot()
 	if (NULL == _fieldShape) {
 		return NULL;
 	}
-	
-	_slotObject.writeAddressToSlot(J9GC_J9OBJECT_FIELD_EA(_objectPtr, _walkState.fieldOffsetWalkState.result.offset));
+
+	_slotObject.writeAddressToSlot((fomrobject_t*)((uintptr_t)_objectPtr + _walkState.fieldOffsetWalkState.result.offset + J9JAVAVM_OBJECT_HEADER_SIZE(_javaVM)));
 	_index = _walkState.referenceIndexOffset + _walkState.classIndexAdjust + _walkState.fieldOffsetWalkState.result.index - 1;
 	_fieldShape = _javaVM->internalVMFunctions->fullTraversalFieldOffsetsNextDo(&_walkState);
 	return &_slotObject;

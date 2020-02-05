@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -210,7 +210,7 @@ MM_RegionBasedOverflowVLHGC::overflowItemInternal(MM_EnvironmentBase *env, void 
 				}
 
 				if (referentMustBeCleared) {
-					GC_SlotObject referentPtr(envVLHGC->getOmrVM(), &J9GC_J9VMJAVALANGREFERENCE_REFERENT(envVLHGC, objectPtr));
+					GC_SlotObject referentPtr(envVLHGC->getOmrVM(), J9GC_J9VMJAVALANGREFERENCE_REFERENT_ADDRESS(envVLHGC, objectPtr));
 					referentPtr.writeReferenceToSlot(NULL);
 					J9GC_J9VMJAVALANGREFERENCE_STATE(envVLHGC, objectPtr) = GC_ObjectModel::REF_STATE_CLEARED;
 				}
