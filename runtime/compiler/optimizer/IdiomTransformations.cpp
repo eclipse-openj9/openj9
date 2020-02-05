@@ -1954,7 +1954,7 @@ makeTRT2ByteGraph(TR::Compilation *c, int32_t ctrl)
    TR_PCISCNode *nullChk = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::NULLCHK, TR::NoType,  tgt->incNumNodes(), 1, 1, 1, entry, charArray); tgt->addNode(nullChk); // optional
    TR_PCISCNode *bndChk = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::BNDCHK, TR::NoType,  tgt->incNumNodes(), 1, 1, 2, nullChk, arrayLen, iv);
    tgt->addNode(bndChk); // optional
-   TR_PCISCNode *arrayLoad  = createIdiomArrayLoadInLoop(tgt, ctrl, 1, bndChk, TR::cloadi, TR::Int16,  charArray, iv, aHeader, mulFactor);
+   TR_PCISCNode *arrayLoad  = createIdiomArrayLoadInLoop(tgt, ctrl, 1, bndChk, TR::sloadi, TR::Int16,  charArray, iv, aHeader, mulFactor);
    TR_PCISCNode *c2iNode  = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::su2i, TR::Int32,  tgt->incNumNodes(), 1, 1, 1, arrayLoad, arrayLoad);  tgt->addNode(c2iNode);
    TR_PCISCNode *boolTable  = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR_booltable, TR::NoType, tgt->incNumNodes(), 1, 2, 1, c2iNode, c2iNode);  tgt->addNode(boolTable);
    TR_PCISCNode *ivStore  = createIdiomDecVarInLoop(tgt, ctrl, 1, boolTable, iv, increment);
@@ -4641,7 +4641,7 @@ makeCopyingTRTOInduction1Graph(TR::Compilation *c, int32_t ctrl, int32_t pattern
    TR_PCISCNode *c1  = createIdiomArrayRelatedConst(tgt, ctrl, tgt->incNumNodes(), 4, 1);                    // element size
    TR_PCISCNode *c2  = createIdiomArrayRelatedConst(tgt, ctrl, tgt->incNumNodes(), 3, 2);                    // element size
    TR_PCISCNode *ent = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR_entrynode, TR::NoType, tgt->incNumNodes(),  2,   1,   0);        tgt->addNode(ent);
-   TR_PCISCNode *n2  = createIdiomArrayLoadInLoop(tgt, ctrl, 1,   ent, TR::cloadi, TR::Int16,  v0, v1, cmah0, c2);
+   TR_PCISCNode *n2  = createIdiomArrayLoadInLoop(tgt, ctrl, 1,   ent, TR::sloadi, TR::Int16,  v0, v1, cmah0, c2);
    TR_PCISCNode *n3  = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR_conversion, TR::NoType, tgt->incNumNodes(), 1,   1,   1,   n2, n2);  tgt->addNode(n3);
    TR_PCISCNode *n4  = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR_booltable, TR::NoType, tgt->incNumNodes(),  1,   2,   1,   n3, n3);  tgt->addNode(n4);  // optional
    TR_PCISCNode *n5, *nn0, *op1, *n6;
@@ -6331,7 +6331,7 @@ makeMemCpyByteToCharGraph(TR::Compilation *c, int32_t ctrl)
    TR_PCISCNode *nl23= new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::bu2i, TR::Int32,      tgt->incNumNodes(),  1,   1,   1,   nl22, nl22); tgt->addNode(nl23);
    TR_PCISCNode *ns2 = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::ior, TR::Int32,       tgt->incNumNodes(),  1,   1,   2,   nl23, nl14, nl23); tgt->addNode(ns2);
    TR_PCISCNode *ns3 = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::i2s, TR::Int16,       tgt->incNumNodes(),  1,   1,   1,   ns2, ns2); tgt->addNode(ns3);
-   TR_PCISCNode *ns4 = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::cstorei, TR::Int16,   tgt->incNumNodes(),  1,   1,   2,   ns3, ns1, ns3); tgt->addNode(ns4);
+   TR_PCISCNode *ns4 = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::sstorei, TR::Int16,   tgt->incNumNodes(),  1,   1,   2,   ns3, ns1, ns3); tgt->addNode(ns4);
    TR_PCISCNode *n6  = createIdiomDecVarInLoop(tgt, ctrl, 1, ns4, v1, cm2);
    TR_PCISCNode *n7  = createIdiomDecVarInLoop(tgt, ctrl, 1, n6, v3, cm1);
    TR_PCISCNode *n8  = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::ificmpge, TR::NoType,  tgt->incNumNodes(),  1,   2,   2,   n7, v4, vorc);  tgt->addNode(n8);
@@ -6400,7 +6400,7 @@ makeMemCpyCharToByteGraph(TR::Compilation *c, int32_t ctrl)
    TR_PCISCNode *ns11= createIdiomArrayAddressInLoop(tgt, ctrl, 1, ns10, v2, ns10);
    TR_PCISCNode *nl0 = createIdiomArrayAddressIndexTreeInLoop(tgt, ctrl, 1, ns11, v1, cmah, c2);
    TR_PCISCNode *nl1 = createIdiomArrayAddressInLoop(tgt, ctrl, 1, nl0, v0, nl0);
-   TR_PCISCNode *nl2 = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::cloadi, TR::Int16,    tgt->incNumNodes(),  1,   1,   1,   nl1, nl1); tgt->addNode(nl2);
+   TR_PCISCNode *nl2 = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::sloadi, TR::Int16,    tgt->incNumNodes(),  1,   1,   1,   nl1, nl1); tgt->addNode(nl2);
    TR_PCISCNode *cvt0, *cvt1;
    if ((ctrl & CISCUtilCtl_BigEndian))
       {
@@ -6639,7 +6639,7 @@ makeMemCpyByteToCharBndchkGraph(TR::Compilation *c, int32_t ctrl)
    TR_PCISCNode *nl23= new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::bu2i, TR::Int32,      tgt->incNumNodes(),  1,   1,   1,   nl22, nl22); tgt->addNode(nl23);
    TR_PCISCNode *ns2 = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::iadd, TR::Int32,      tgt->incNumNodes(),  1,   1,   2,   nl23, nl14, nl23); tgt->addNode(ns2);
    TR_PCISCNode *ns3 = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::i2s, TR::Int16,       tgt->incNumNodes(),  1,   1,   1,   ns2, ns2); tgt->addNode(ns3);
-   TR_PCISCNode *ns4 = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::cstorei, TR::Int16,   tgt->incNumNodes(),  1,   1,   2,   ns3, ns1, ns3); tgt->addNode(ns4);
+   TR_PCISCNode *ns4 = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::sstorei, TR::Int16,   tgt->incNumNodes(),  1,   1,   2,   ns3, ns1, ns3); tgt->addNode(ns4);
    TR_PCISCNode *n6  = createIdiomDecVarInLoop(tgt, ctrl, 1, ns4, v3, cm1);
    TR_PCISCNode *n7  = createIdiomDecVarInLoop(tgt, ctrl, 1, n6, v4, cm1);
    TR_PCISCNode *n8  = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::ificmpge, TR::NoType,  tgt->incNumNodes(),  1,   2,   2,   n7, v4, vorc);  tgt->addNode(n8);
@@ -7223,7 +7223,7 @@ makeMEMCPYChar2ByteGraph2(TR::Compilation *c, int32_t ctrl)
    TR_PCISCNode *ns11= createIdiomArrayAddressInLoop(tgt, ctrl, 1, ns10, v2, ns10);
    TR_PCISCNode *nl0 = createIdiomArrayAddressIndexTreeInLoop(tgt, ctrl, 1, ns11, lv1, cmah, c2);
    TR_PCISCNode *nl1 = createIdiomArrayAddressInLoop(tgt, ctrl, 1, nl0, v0, nl0);
-   TR_PCISCNode *nl2 = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::cloadi, TR::Int16,    tgt->incNumNodes(),  1,   1,   1,   nl1, nl1); tgt->addNode(nl2);
+   TR_PCISCNode *nl2 = new (PERSISTENT_NEW) TR_PCISCNode(c->trMemory(), TR::sloadi, TR::Int16,    tgt->incNumNodes(),  1,   1,   1,   nl1, nl1); tgt->addNode(nl2);
    TR_PCISCNode *cvt0, *cvt1;
    if ((ctrl & CISCUtilCtl_BigEndian))
       {
