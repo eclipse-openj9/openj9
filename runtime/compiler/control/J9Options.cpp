@@ -28,7 +28,6 @@
 #endif /* defined(JITSERVER_SUPPORT) */
 #include <ctype.h>
 #include <stdint.h>
-#include <inttypes.h>
 #include "jitprotos.h"
 #include "j2sever.h"
 #include "j9.h"
@@ -37,6 +36,7 @@
 #include "jvminit.h"
 #if defined(JITSERVER_SUPPORT)
 #include "j9vmnls.h"
+#include "omrformatconsts.h"
 #endif /* defined(JITSERVER_SUPPORT) */
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
@@ -2094,7 +2094,7 @@ J9::Options::setupJITServerOptions()
          TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer Client Mode. Server address: %s port: %d. Connection Timeout %ums",
                persistentInfo->getJITServerAddress().c_str(), persistentInfo->getJITServerPort(),
                persistentInfo->getSocketTimeout());
-         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Identifier for current client JVM: %" PRIu64 "\n",
+         TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Identifier for current client JVM: %" OMR_PRIu64 "\n",
                compInfo->getPersistentInfo()->getClientUID());
          }
       }

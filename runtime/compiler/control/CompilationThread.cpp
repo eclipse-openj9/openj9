@@ -39,7 +39,6 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <time.h>
-#include <inttypes.h>
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9protos.h"
@@ -101,6 +100,7 @@
 #include "runtime/JITClientSession.hpp"
 #include "net/ClientStream.hpp"
 #include "net/ServerStream.hpp"
+#include "omrformatconsts.h"
 #endif /* defined(JITSERVER_SUPPORT) */
 #ifdef COMPRESS_AOT_DATA
 #include "shcdatatypes.h" // For CompiledMethodWrapper
@@ -8797,7 +8797,7 @@ TR::CompilationInfoPerThreadBase::compile(
                   if (_compiler.isOutOfProcessCompilation() && TR::compInfoPT->getClientData()) // using jitserver && client JVM
                      {
                      traceMsg(&_compiler, "\n");
-                     traceMsg(&_compiler, "\tclientID=%" PRIu64, TR::compInfoPT->getClientData()->getClientUID());
+                     traceMsg(&_compiler, "\tclientID=%" OMR_PRIu64, TR::compInfoPT->getClientData()->getClientUID());
                      }
 #endif /* defined(JITSERVER_SUPPORT) */
                   traceMsg(&_compiler, ">\n");

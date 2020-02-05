@@ -23,7 +23,6 @@
 /* Includes */
 #include <string.h>
 #include <stdlib.h>
-#include <inttypes.h>
 #ifdef WIN32
 #include <malloc.h>
 #elif defined(LINUX) || defined(AIXPPC)
@@ -57,6 +56,10 @@
 #include "ute.h"
 
 #include "ut_j9dmp.h"
+
+#if defined(JITSERVER_SUPPORT)
+#include "omrformatconsts.h"
+#endif /* defined(JITSERVER_SUPPORT) */
 
 #if defined(J9VM_ENV_DATA64)
 #define SEGMENT_HEADER             "NULL           segment            start              alloc              end                type       size\n"
@@ -1074,7 +1077,7 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 #if defined(JITSERVER_SUPPORT)
 	if (0 != jitConfig->clientUID) {
 		_OutputStream.writeCharacters("1CICLIENTID    Client UID ");
-		_OutputStream.writeInteger64(jitConfig->clientUID, "%" PRIu64);
+		_OutputStream.writeInteger64(jitConfig->clientUID, "%" OMR_PRIu64);
 		_OutputStream.writeCharacters("\n");
 	}
 #endif /* JITSERVER_SUPPORT */
