@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -471,7 +471,7 @@ GC_CheckEngine::checkJ9Object(J9JavaVM *javaVM, J9Object* objectPtr, J9MM_Iterat
 		}
 
 		/* TODO: find out what the indexable header size should really be */
-		if (extensions->objectModel.isIndexable(objectPtr) && (delta < sizeof(J9IndexableObjectContiguous))) {
+		if (extensions->objectModel.isIndexable(objectPtr) && (delta < J9JAVAVM_CONTIGUOUS_HEADER_SIZE(javaVM))) {
 			return J9MODRON_GCCHK_RC_INVALID_RANGE;
 		}
 

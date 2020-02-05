@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +48,9 @@ class GC_PointerContiguousArrayIterator
 private:
 	J9IndexableObject *_arrayPtr;	/**< pointer to the array object being iterated */
 	GC_SlotObject _slotObject;		/**< Create own SlotObject class to provide output */
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool const _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 
 	fj9object_t *_scanPtr;			/**< pointer to the current array slot */
 	fj9object_t *_endPtr;			/**< pointer to the array slot where the iteration will terminate */
@@ -57,15 +59,32 @@ protected:
 	OMR_VM *_omrVM;
 
 public:
+	/**
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
+	 */
+	MMINLINE bool compressObjectReferences() {
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+		return _compressObjectReferences;
+#else /* defined(OMR_GC_FULL_POINTERS) */
+		return true;
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return false;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+	}
+
 	MMINLINE void initialize(J9Object *objectPtr)
 	{
 		MM_GCExtensionsBase *extensions = MM_GCExtensionsBase::getExtensions(_omrVM);
+		bool const compressed = compressObjectReferences();
 
 		_arrayPtr = (J9IndexableObject *)objectPtr;
 		
 		/* Set current and end scan pointers */
-		_endPtr = ((fj9object_t *)extensions->indexableObjectModel.getDataPointerForContiguous(_arrayPtr)) - 1;
-		_scanPtr = _endPtr + extensions->indexableObjectModel.getSizeInElements(_arrayPtr);
+		_endPtr = GC_SlotObject::subtractFromSlotAddress((fj9object_t*)extensions->indexableObjectModel.getDataPointerForContiguous(_arrayPtr), 1, compressed);
+		_scanPtr = GC_SlotObject::addToSlotAddress(_endPtr, extensions->indexableObjectModel.getSizeInElements(_arrayPtr), compressed);
 
 	}
 
@@ -76,17 +95,20 @@ public:
 			_slotObject.writeAddressToSlot(_scanPtr);
 
 			/* Advance the scan pointer */
-			_scanPtr -= 1;
+			_scanPtr = GC_SlotObject::subtractFromSlotAddress(_scanPtr, 1, compressObjectReferences());
 
 			return &_slotObject;
 		}
 
 		/* No more object slots to scan */
 		return NULL;
-}
+	}
 
 	GC_PointerContiguousArrayIterator(OMR_VM *omrVM)
 		: _slotObject(GC_SlotObject(omrVM, NULL))
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		, _compressObjectReferences(OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM))
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 		, _omrVM(omrVM)
 	{
 	}
@@ -96,6 +118,9 @@ public:
 	 */
 	GC_PointerContiguousArrayIterator(OMR_VM *omrVM, J9Object *objectPtr)
 		: _slotObject(GC_SlotObject(omrVM, NULL))
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		, _compressObjectReferences(OMRVM_COMPRESS_OBJECT_REFERENCES(omrVM))
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 		, _omrVM(omrVM)
 	{
 		initialize(objectPtr);
@@ -112,12 +137,11 @@ public:
 	 * @return undefined if nextSlot has yet to be called.
 	 */
 	MMINLINE UDATA getIndex() {
-		return ((UDATA)_scanPtr - (UDATA)_endPtr) >> OMRVM_REFERENCE_SHIFT(_omrVM);
+		return GC_SlotObject::subtractSlotAddresses(_scanPtr, _endPtr, compressObjectReferences());
 	}
 
-
 	MMINLINE void setIndex(UDATA index) {
-		_scanPtr = _endPtr + index;
+		_scanPtr =  GC_SlotObject::addToSlotAddress(_endPtr, index, compressObjectReferences());
 	}
 
 	/**

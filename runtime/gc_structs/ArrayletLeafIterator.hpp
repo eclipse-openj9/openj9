@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,6 +46,9 @@ class GC_ArrayletLeafIterator
 {
 protected:
 	OMR_VM *const _omrVM;
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool const _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 	GC_SlotObject _slotObject;
 	J9IndexableObject *_spinePtr; /**< The pointer to the beginning of the actual indexable object (ie: the spine) */
 	GC_ArrayletObjectModel::ArrayLayout _layout; /**< The layout of the arraylet being iterated */
@@ -57,13 +59,29 @@ protected:
 
 public:
 	/**
+	 * Return back true if object references are compressed
+	 * @return true, if object references are compressed
+	 */
+	MMINLINE bool compressObjectReferences() {
+#if defined(OMR_GC_COMPRESSED_POINTERS)
+#if defined(OMR_GC_FULL_POINTERS)
+		return _compressObjectReferences;
+#else /* defined(OMR_GC_FULL_POINTERS) */
+		return true;
+#endif /* defined(OMR_GC_FULL_POINTERS) */
+#else /* defined(OMR_GC_COMPRESSED_POINTERS) */
+		return false;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) */
+	}
+
+	/**
 	 * @return the next leaf reference slot in the arraylet
 	 * @return NULL if there are no more reference slots in the object
 	 */
 	MMINLINE GC_SlotObject *nextLeafPointer()
 	{
 		if (_numLeafsCounted < _numLeafs) {
-			_slotObject.writeAddressToSlot(&_arrayoid[_numLeafsCounted]);
+			_slotObject.writeAddressToSlot(GC_SlotObject::addToSlotAddress(_arrayoid, _numLeafsCounted, compressObjectReferences()));
 			_numLeafsCounted += 1;
 			return &_slotObject;
 		} else {
@@ -102,7 +120,10 @@ public:
 
 	GC_ArrayletLeafIterator(J9JavaVM *javaVM, J9IndexableObject *objectPtr) :
 		_omrVM(javaVM->omrVM)
-	,	_slotObject(GC_SlotObject(_omrVM, NULL))
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+		, _compressObjectReferences(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(javaVM))
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
+		, _slotObject(GC_SlotObject(_omrVM, NULL))
 	{
 		initialize(objectPtr);
 	}

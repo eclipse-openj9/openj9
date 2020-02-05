@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,7 +100,7 @@ public:
 		}
 	}
 	
-	MMINLINE uintptr_t getBytesRemaining() { return sizeof(fomrobject_t) * (_endPtr - _scanPtr); }
+	MMINLINE uintptr_t getBytesRemaining() { return (uintptr_t)_endPtr - (uintptr_t)_scanPtr; }
 
 	/**
 	 * Return base pointer and slot bit map for next block of contiguous slots to be scanned. The
@@ -115,19 +115,20 @@ public:
 	virtual fomrobject_t *
 	getNextSlotMap(uintptr_t *slotMap, bool *hasNextSlotMap)
 	{
+		bool const compressed = compressObjectReferences();
 		fomrobject_t *result = NULL;
 		*slotMap = 0;
 		*hasNextSlotMap = false;
-		_mapPtr += _bitsPerScanMap;
+		_mapPtr = GC_SlotObject::addToSlotAddress(_mapPtr, _bitsPerScanMap, compressed);
 		while (_endPtr > _mapPtr) {
 			*slotMap = *_descriptionPtr;
 			_descriptionPtr += 1;
 			if (0 != *slotMap) {
-				*hasNextSlotMap = _bitsPerScanMap < (_endPtr - _mapPtr);
+				*hasNextSlotMap = _bitsPerScanMap < GC_SlotObject::subtractSlotAddresses(_endPtr, _mapPtr, compressed);
 				result = _mapPtr;
 				break;
 			}
-			_mapPtr += _bitsPerScanMap;
+			_mapPtr = GC_SlotObject::addToSlotAddress(_mapPtr, _bitsPerScanMap, compressed);
 		}
 		return result;
 	}
@@ -147,22 +148,23 @@ public:
 	virtual fomrobject_t *
 	getNextSlotMap(uintptr_t *slotMap, uintptr_t *leafMap, bool *hasNextSlotMap)
 	{
+		bool const compressed = compressObjectReferences();
 		fomrobject_t *result = NULL;
 		*slotMap = 0;
 		*leafMap = 0;
 		*hasNextSlotMap = false;
-		_mapPtr += _bitsPerScanMap;
+		_mapPtr = GC_SlotObject::addToSlotAddress(_mapPtr, _bitsPerScanMap, compressed);
 		while (_endPtr > _mapPtr) {
 			*slotMap = *_descriptionPtr;
 			_descriptionPtr += 1;
 			*leafMap = *_leafPtr;
 			_leafPtr += 1;
 			if (0 != *slotMap) {
-				*hasNextSlotMap = _bitsPerScanMap < (_endPtr - _mapPtr);
+				*hasNextSlotMap = _bitsPerScanMap < GC_SlotObject::subtractSlotAddresses(_endPtr, _mapPtr, compressed);
 				result = _mapPtr;
 				break;
 			}
-			_mapPtr += _bitsPerScanMap;
+			_mapPtr = GC_SlotObject::addToSlotAddress(_mapPtr, _bitsPerScanMap, compressed);
 		}
 		return result;
 	}
