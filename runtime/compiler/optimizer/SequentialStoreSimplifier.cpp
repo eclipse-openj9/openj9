@@ -1099,7 +1099,7 @@ static TR::TreeTop* generateArraycopyFromSequentialStores(TR::Compilation* comp,
       {
       switch(numBytes)
          {
-         case 2: opcode = TR::cstorei; break;
+         case 2: opcode = TR::sstorei; break;
          case 4: opcode = TR::istorei; break;
          case 8: opcode = TR::lstorei; break;
          default: TR_ASSERT(0, " number of bytes unexpected\n"); break;
@@ -1761,7 +1761,7 @@ static TR::TreeTop* generateArraysetFromSequentialStores(TR::Compilation* comp, 
                }
             case 2:
                {
-               opcode = TR::cstorei;
+               opcode = TR::sstorei;
                int32_t constValue = (int32_t)arrayset.getConstant();
                if (istoreNode->getOpCodeValue() == TR::bstorei ||
                    istoreNode->getOpCodeValue() == TR::bustorei)
@@ -2271,8 +2271,8 @@ static TR::TreeTop * reduceArrayLoad(TR_ArrayShiftTreeCollection * storeTrees, T
          // between 2 and 3 bytes go into here, and we will transform the first 2 bytes
          newDataType = TR::Int16;
          numValidTrees = 2 / storeTrees->getTree(0)->getRootNode()->getOpCode().getSize();
-         storeOpCode = TR::cstorei;
-         loadOpCode = TR::cloadi;
+         storeOpCode = TR::sstorei;
+         loadOpCode = TR::sloadi;
          }
 
       if (numValidTrees < 2 ||
