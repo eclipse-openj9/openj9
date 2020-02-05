@@ -125,21 +125,8 @@
 extern "C" mm_j9object_t j9gc_objaccess_pointerFromToken(J9VMThread *vmThread, fj9object_t token);
 extern "C" fj9object_t j9gc_objaccess_tokenFromPointer(J9VMThread *vmThread, mm_j9object_t object);
 
-#if defined (OMR_GC_FULL_POINTERS)
-#define mmPointerFromToken(vmThread, token) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? j9gc_objaccess_pointerFromToken((vmThread), (token)) : ((mm_j9object_t)(UDATA)(token)))
-#define mmTokenFromPointer(vmThread, token) (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) ? j9gc_objaccess_tokenFromPointer((vmThread), (token)) : ((fj9object_t)(object)))
-#else /* defined (OMR_GC_FULL_POINTERS) */
-#define mmPointerFromToken(vmThread, token) (j9gc_objaccess_pointerFromToken((vmThread), (token) ))
-#define mmTokenFromPointer(vmThread, object) (j9gc_objaccess_tokenFromPointer((vmThread), (object) ))
-#endif /* defined (OMR_GC_FULL_POINTERS) */
-
 /* The size of the reserved area at the beginning of the compressed pointer heap */
 #define J9GC_COMPRESSED_POINTER_NULL_REGION_SIZE 4096
-
-#else /* OMR_GC_COMPRESSED_POINTERS */
-
-#define mmPointerFromToken(vmThread, token) ((mm_j9object_t)(token))
-#define mmTokenFromPointer(vmThread, object) ((fj9object_t)(object))
 
 #endif /* OMR_GC_COMPRESSED_POINTERS */
 

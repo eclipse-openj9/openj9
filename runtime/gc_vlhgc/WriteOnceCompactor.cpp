@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1309,6 +1309,7 @@ MM_WriteOnceCompactor::fixupClassLoaderObject(MM_EnvironmentVLHGC* env, J9Object
 void
 MM_WriteOnceCompactor::fixupPointerArrayObject(MM_EnvironmentVLHGC* env, J9Object *objectPtr, J9MM_FixupCache *cache)
 {
+	uintptr_t const referenceSize = env->compressObjectReferences() ? sizeof(uint32_t) : sizeof(uintptr_t);
 	/* object may have moved so ensure that its class loader knows where it is */
 	_extensions->classLoaderRememberedSet->rememberInstance(env, objectPtr);
 
@@ -1329,7 +1330,7 @@ MM_WriteOnceCompactor::fixupPointerArrayObject(MM_EnvironmentVLHGC* env, J9Objec
 				_interRegionRememberedSet->rememberReferenceForCompact(env, objectPtr, forwardedPtr);
 			}
 			UDATA address = (UDATA)slotObject->readAddressFromSlot();
-			Assert_MM_true((0 == previous) || ((address + sizeof(fj9object_t)) == previous));
+			Assert_MM_true((0 == previous) || ((address + referenceSize) == previous));
 			previous = address;
 		}
 		/* if this is a contiguous array, we must have exhausted the iterator */
@@ -1346,7 +1347,7 @@ MM_WriteOnceCompactor::fixupPointerArrayObject(MM_EnvironmentVLHGC* env, J9Objec
 			UDATA totalElementCount = _extensions->indexableObjectModel.getSizeInElements((J9IndexableObject*)objectPtr);
 			UDATA externalArrayletCount = _extensions->indexableObjectModel.numExternalArraylets((J9IndexableObject*)objectPtr);
 			UDATA fullLeafSizeInBytes = _javaVM->arrayletLeafSize;
-			UDATA elementsPerFullLeaf = fullLeafSizeInBytes / sizeof(fj9object_t);
+			UDATA elementsPerFullLeaf = fullLeafSizeInBytes / referenceSize;
 			UDATA elementsToWalk = totalElementCount - (externalArrayletCount * elementsPerFullLeaf);
 			UDATA previous = 0;
 			
@@ -1363,7 +1364,7 @@ MM_WriteOnceCompactor::fixupPointerArrayObject(MM_EnvironmentVLHGC* env, J9Objec
 				}
 				
 				UDATA address = (UDATA)slotObject->readAddressFromSlot();
-				Assert_MM_true((0 == previous) || ((address + sizeof(fj9object_t)) == previous));
+				Assert_MM_true((0 == previous) || ((address + referenceSize) == previous));
 				previous = address;
 			}
 			Assert_MM_true(0 == elementsToWalk);
@@ -1481,7 +1482,7 @@ MM_WriteOnceCompactor::flushRememberedSetIntoCardTable(MM_EnvironmentVLHGC *env)
 			if(region->_compactData._shouldCompact) {
 				if(J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 					Assert_MM_true(region->getRememberedSetCardList()->isAccurate());
-					MM_RememberedSetCard card = 0;
+					UDATA card = 0;
 					GC_RememberedSetCardListCardIterator rsclCardIterator(region->getRememberedSetCardList());
 					while(0 != (card = rsclCardIterator.nextReferencingCard(env))) {
 						/* For Marking purposes we do not need to track references within Collection Set */
@@ -1953,6 +1954,7 @@ MM_WriteOnceCompactor::fixupArrayletLeafRegionSpinePointers()
 void
 MM_WriteOnceCompactor::fixupArrayletLeafRegionContentsAndObjectLists(MM_EnvironmentVLHGC* env)
 {
+	bool const compressed = env->compressObjectReferences();
 	GC_HeapRegionIteratorVLHGC regionIterator(_regionManager);
 	MM_HeapRegionDescriptorVLHGC *region = NULL;
 	
@@ -1969,7 +1971,7 @@ MM_WriteOnceCompactor::fixupArrayletLeafRegionContentsAndObjectLists(MM_Environm
 			fj9object_t* endOfLeaf = (fj9object_t*)region->getHighAddress();
 			while (slotPointer < endOfLeaf) {
 				/* TODO: 4096 elements is an arbitrary number */
-				fj9object_t* endPointer = slotPointer + 4096;
+				fj9object_t* endPointer = GC_SlotObject::addToSlotAddress(slotPointer, 4096, compressed);
 				if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 					while (slotPointer < endPointer) {
 						GC_SlotObject slotObject(_javaVM->omrVM, slotPointer);
@@ -1979,7 +1981,7 @@ MM_WriteOnceCompactor::fixupArrayletLeafRegionContentsAndObjectLists(MM_Environm
 							slotObject.writeReferenceToSlot(forwardedPtr);
 							_interRegionRememberedSet->rememberReferenceForCompact(env, spineObject, forwardedPtr);
 						}
-						slotPointer++;
+						slotPointer = GC_SlotObject::addToSlotAddress(slotPointer, 1, compressed);
 					}
 				}
 				slotPointer = endPointer;

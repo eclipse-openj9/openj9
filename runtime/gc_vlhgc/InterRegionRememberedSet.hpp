@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,9 +49,6 @@ class MM_CollectionStatisticsVLHGC;
 class MM_InterRegionRememberedSet : public MM_BaseVirtual
 {
 private:
-#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
-	bool _compressObjectReferences;
-#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 
 public:
 	MM_HeapRegionManager *_heapRegionManager;				/**< cached pointer to heap region manager */
@@ -69,6 +66,9 @@ public:
 	UDATA _regionSize;  			/**< Cached region size */
 
 	bool _shouldFlushBuffersForDecommitedRegions;			/**< set to true at the end of a GC, if contraction occured. this is a signal for the next GC to perform flush buffers from regions contracted */
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	bool _compressObjectReferences;
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 
 	volatile UDATA _overflowedRegionCount;					/**< count of regions overflowed as full */
 	UDATA _stableRegionCount;								/**< count of regions overflowed as stable */
@@ -385,7 +385,7 @@ public:
 	 * @param object the object who's remembered set card we wish to obtain
 	 * @return the card which the object belongs to
 	 */
-	MMINLINE MM_RememberedSetCard
+	MMINLINE UDATA
 	getRememberedSetCardFromJ9Object(J9Object* object)
 	{
 		void *cardAddress = (void *)((UDATA)object & ~((UDATA)CARD_SIZE - 1));
@@ -397,12 +397,12 @@ public:
 	 * @param address the heap address which we wish to convert
 	 * @return the card which refers to the address
 	 */	
-	MMINLINE MM_RememberedSetCard
+	MMINLINE UDATA
 	convertRememberedSetCardFromHeapAddress(void* address)
 	{
-		MM_RememberedSetCard card = (MM_RememberedSetCard)(UDATA)address;
+		UDATA card = (UDATA)address;
 		if (compressObjectReferences()) {
-			card = (MM_RememberedSetCard)((UDATA)address >> CARD_SIZE_SHIFT);
+			card >>= CARD_SIZE_SHIFT;
 		}
 		return card;
 	}
@@ -413,11 +413,11 @@ public:
 	 * @return the heap address which the card refers to
 	 */	
 	MMINLINE void *
-	convertHeapAddressFromRememberedSetCard(MM_RememberedSetCard card)
+	convertHeapAddressFromRememberedSetCard(UDATA card)
 	{
-		void *address = (void *)(UDATA)card;
+		void *address = (void *)card;
 		if (compressObjectReferences()) {
-			address = (void *)((UDATA)card << CARD_SIZE_SHIFT);
+			address = (void *)(card << CARD_SIZE_SHIFT);
 		}
 		return address;
 	}
@@ -428,13 +428,13 @@ public:
 	 * @param card[in] The MM_RememberedSetCard we are converting
 	 * @return the Card * corresponding to the input MM_RememberedSetCard
 	 */
-	MMINLINE Card *rememberedSetCardToCardAddr(MM_EnvironmentVLHGC *env, MM_RememberedSetCard card)
+	MMINLINE Card *rememberedSetCardToCardAddr(MM_EnvironmentVLHGC *env, UDATA card)
 	{
 		Card *result = NULL;
 		if (compressObjectReferences()) {
 			result = _cardTable->getCardTableVirtualStart() + card;
 		} else {
-			result = _cardTable->heapAddrToCardAddr(env, (void*)(uintptr_t)card);
+			result = _cardTable->heapAddrToCardAddr(env, (void*)card);
 		}
 		return result;
 	}
@@ -445,9 +445,9 @@ public:
 	 * @param card - the MM_RememberedSetCard we are interested in
 	 * @return the region descriptor associated with the card
 	 */
-	MMINLINE MM_HeapRegionDescriptorVLHGC *physicalTableDescriptorForRememberedSetCard(MM_RememberedSetCard card) 
+	MMINLINE MM_HeapRegionDescriptorVLHGC *physicalTableDescriptorForRememberedSetCard(UDATA card) 
 	{
-		UDATA regionIndex = ((UDATA)card-_cardToRegionDisplacement) >> _cardToRegionShift;
+		UDATA regionIndex = (card-_cardToRegionDisplacement) >> _cardToRegionShift;
 		return physicalTableDescriptorForIndex(regionIndex);
 	}
 
@@ -458,7 +458,7 @@ public:
 	 * @param card - the MM_RememberedSetCard whose region we are trying to find
 	 * @return the region descriptor for the specified card
 	 */
-	MMINLINE MM_HeapRegionDescriptorVLHGC *tableDescriptorForRememberedSetCard(MM_RememberedSetCard card) 
+	MMINLINE MM_HeapRegionDescriptorVLHGC *tableDescriptorForRememberedSetCard(UDATA card) 
 	{
 		MM_HeapRegionDescriptorVLHGC *tableDescriptor = physicalTableDescriptorForRememberedSetCard(card);
 		return (MM_HeapRegionDescriptorVLHGC *)tableDescriptor->_headOfSpan;
