@@ -72,6 +72,7 @@
 	.extern	jitResolveInterfaceMethod
 	.extern	jitLookupInterfaceMethod
 	.extern	jitCallCFunction
+	.extern	jitInstanceOf
 	.extern	jitThrowException
 	.extern	mcc_reservationAdjustment_unwrapper
 	.extern	mcc_callPointPatching_unwrapper
@@ -108,7 +109,8 @@
 	.set	J9TR_UICSnippet_CP,		8
 	.set	J9TR_UICSnippet_CPIndex,	16
 	.set	J9TR_ICSnippet_InterfaceClass,	24
-	.set	J9TR_ICSnippet_MethodIndex,	32
+	.set	J9TR_ICSnippet_ITableIndex,	32
+	.set	J9TR_ICSnippet_J2IThunk,	40
 
 // Unresolved virtual call snippet
 
@@ -332,7 +334,7 @@ L_mergedDataResolve:
 	ldp	x14, x15, [J9SP, #112]
 	ldp	x16, x17, [J9SP, #128]
 	ldp	x18, x19, [J9SP, #144]
-	ldr	x21, [J9SP, #168] // not restoring J9SP
+	ldr	x21, [J9SP, #168]				// not restoring J9SP
 	ldp	x22, x23, [J9SP, #176]
 	ldp	x24, x25, [J9SP, #192]
 	ldp	x26, x27, [J9SP, #208]
@@ -519,7 +521,7 @@ _interpreterUnresolvedStaticDataGlue:
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveStaticField		// load resolve helper address
+	ldr	x3, const_jitResolveStaticField			// load resolve helper address
 	b	L_mergedDataResolve
 
 _interpreterUnresolvedStaticDataStoreGlue:
@@ -576,7 +578,7 @@ _interpreterUnresolvedInstanceDataStoreGlue:
 	stp	x24, x25, [J9SP, #192]
 	stp	x26, x27, [J9SP, #208]
 	str	x28, [J9SP, #224]
-	ldr	x3, const_jitResolveFieldSetter		// load resolve helper address
+	ldr	x3, const_jitResolveFieldSetter			// load resolve helper address
 	b	L_mergedDataResolve
 
 _interpreterUnresolvedConstantDynamicGlue:
@@ -681,7 +683,7 @@ L_callVirtual:
 	mov	x2, x0
 	sub	x0, x10, #20					// get the address of the movz instruction
 	ldr	w1, [x0]					// fetch the movz instruction
-	ubfx	x3, x2, #0, #16                                 // lower 16 bits of the index
+	ubfx	x3, x2, #0, #16					// lower 16 bits of the index
 	orr	w1, w1, w3, LSL #5				// encode the index in the movz instruction
 	str	w1, [x0]					// store the movz instruction
 	ldr	w1, [x0, #4]					// fetch the movk instruction
@@ -723,11 +725,59 @@ _interfaceCallHelper:
 	stp	x3, x2, [J9SP, #32]
 	stp	x1, x0, [J9SP, #48]
 	mov	x7, x30						// preserve LR
+	ldr	x10, [x30, #J9TR_ICSnippet_codeCacheReturnAddress]	// protect code cache RA in x10 (in L_commonLookupException, it is expected)
+	ldr	x0, [x30, #J9TR_ICSnippet_ITableIndex]		// Load ITable Index
+	tst	x0, #J9TR_J9_ITABLE_OFFSET_DIRECT		// Check if J9TR_J9_ITABLE_OFFSET_DIRECT flag is set
+	beq	L_callResolve					// If not set, need to call jitResolveInterfaceMethod
+	ldr	x0, [x30, #J9TR_ICSnippet_InterfaceClass]	// Load Interface Class Pointer
+	cbnz	x0, L_typeCheckAndDirectDispatch		// If it is not null, this is a known private interface call
+L_callResolve:
 	add	x0, x30, #J9TR_UICSnippet_CP			// get CP/index pair pointer
-	ldr	x1, [x30, #J9TR_ICSnippet_codeCacheReturnAddress]	// get code cache RA
-	mov	x10, x1						// protect RA in x10 (in L_commonLookupException, it is expected)
+	mov	x1, x10						// get code cache RA
 	bl	jitResolveInterfaceMethod			// call the helper
 	cbz	x0, L_commonLookupException			// if resolve failed, throw the exception
+	ldr	x0, [x7, #J9TR_ICSnippet_ITableIndex]		// Load ITable Index
+	tst	x0, #J9TR_J9_ITABLE_OFFSET_DIRECT		// Check if J9TR_J9_ITABLE_OFFSET_DIRECT flag is set
+	beq	L_callInterface					// If not set, this does not need a direct dispatch
+L_typeCheckAndDirectDispatch:
+	ldr	x0, [x7, #J9TR_ICSnippet_InterfaceClass]	// Load Interface Class Pointer
+	ldr	x1, [J9SP, #56]					// Load 'this' pointer
+	bl	jitInstanceOf
+	cbnz	x0, L_directDispatchInterface			// If jitInstanceOf did not return null, continue on to direct dispatch
+	ldr	x0, [J9SP, #56]					// Load 'this' pointer
+#ifdef OMR_GC_COMPRESSED_POINTERS
+	ldr	w0, [x0, #J9TR_J9Object_class]			// Load the class offset
+#else
+	ldr	x0, [x0, #J9TR_J9Object_class]			// Load the class
+#endif
+	and	x0, x0, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
+	add	x1, x7, J9TR_ICSnippet_InterfaceClass		// Address of InterfaceClass/ITableIndex pair
+	mov	x2, x7						// Load original RA for use inside jitLookupInterfaceMethod
+	bl	jitLookupInterfaceMethod			// Branch to jitLookupInterfaceMethod to trigger exception
+								// The code will not return here after the branch.
+L_directDispatchInterface:
+	ldr	x0, [x7, #J9TR_ICSnippet_ITableIndex]		// Load ITable Index. This is actually a J9Method.
+	eor	x0, x0, #J9TR_J9_ITABLE_OFFSET_DIRECT		// Clear J9TR_J9_ITABLE_OFFSET_DIRECT flag.
+	ldr	x1, [x0, #J9TR_MethodPCStartOffset]		// load startPC/extra field
+	tst	x1, J9TR_MethodNotCompiledBit			// Check to see if the method has already been compiled
+	bne	L_interpretedDispatch				// If not compiled, handle interpreted case
+	ldr	w11, [x1, -4]					// Load offset of JIT-to-JIT
+	lsr	w11, w11, 16					// shift right to get the bits we want
+	add	x11, x11, x1					// Addr of JIT-to-JIT in x11
+	b	L_interfaceCallout
+L_interpretedDispatch:
+	orr	x9, x0, #J9TR_J9_VTABLE_INDEX_DIRECT_METHOD_FLAG	// put tagged J9Method in x9
+	ldr	x11, [x7, #J9TR_ICSnippet_J2IThunk]		// put thunk addr in x11
+L_interfaceCallout:
+	ldr	x0, [J9SP, #56]					// Restore 'this' pointer
+	mov	x30, x10						// set LR = code cache RA
+	ldp	x7, x6, [J9SP, #0]				// restore other parameter regs
+	ldp	x5, x4, [J9SP, #16]
+	ldp	x3, x2, [J9SP, #32]
+	ldr	x1, [J9SP, #48]
+	add	J9SP, J9SP, #64
+	br	x11						// Call: does not return here
+L_callInterface:
 	add	x0, x7, #J9TR_Snippet_CallInstruction		// get address of BL instruction in snippet
 	ldr	x1, const_interfaceDispatch			// get new snippet branch target
 	mov	x2, #TR_ARM64interfaceDispatch
@@ -747,14 +797,14 @@ L_continueInterfaceSend:
 	ldr	x0, [x0, #J9TR_ObjectHeader_class]		// load class of receiver
 #endif
 	and	x0, x0, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
-	add	x1, x30, #J9TR_ICSnippet_InterfaceClass		// get InterfaceClass/MethodIndex pair pointer
+	add	x1, x30, #J9TR_ICSnippet_InterfaceClass		// get InterfaceClass/ITableIndex pair pointer
 	ldr	x2, [x30, #J9TR_ICSnippet_codeCacheReturnAddress]	// get code cache RA
 	mov	x10, x2						// protect LR in x10 (in L_commonLookupException, it is expected)
 	bl	jitLookupInterfaceMethod			// call the helper
 	cbz	x0, L_commonLookupException			// if resolve failed, throw the exception
 	mov	x9, #J9TR_InterpVTableOffset
 	sub	x9, x9, x0					// convert interp vTableIndex to jit index (must be in x9 for patch virtual)
-	mov	x30, x10						// set LR = code cache RA
+	mov	x30, x10					// set LR = code cache RA
 	ldr	x0, [J9SP, #56]					// refetch 'this'
 #ifdef OMR_GC_COMPRESSED_POINTERS
 	ldr	w11, [x0, #J9TR_ObjectHeader_class]		// load class offset of receiver

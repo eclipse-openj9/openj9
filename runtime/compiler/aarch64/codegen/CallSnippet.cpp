@@ -508,15 +508,19 @@ uint32_t TR::ARM64VirtualUnresolvedSnippet::getLength(int32_t estimatedSnippetSt
 
 uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
    {
+   TR::Compilation *comp = cg()->comp();
    uint8_t *cursor = cg()->getBinaryBufferCursor();
+   TR::Node *callNode = getNode();
    TR::SymbolReference *methodSymRef = getNode()->getSymbolReference();
    TR::SymbolReference *glueRef = cg()->symRefTab()->findOrCreateRuntimeHelper(TR_ARM64interfaceCallHelper, false, false, false);
+   TR_J9VMBase *fej9 = (TR_J9VMBase *)(comp->fe());
+   void* thunk = fej9->getJ2IThunk(callNode->getSymbolReference()->getSymbol()->castToMethodSymbol()->getMethod(), comp);
 
    getSnippetLabel()->setCodeLocation(cursor);
 
    // bl glueRef
-   *(int32_t *)cursor = cg()->encodeHelperBranchAndLink(glueRef, cursor, getNode());
-   cursor += 4;
+   *(int32_t *)cursor = cg()->encodeHelperBranchAndLink(glueRef, cursor, callNode);
+   cursor += ARM64_INSTRUCTION_LENGTH;
 
    // Store the code cache RA
    *(intptr_t *)cursor = (intptr_t)getReturnLabel()->getCodeLocation();
@@ -524,28 +528,54 @@ uint8_t *TR::ARM64InterfaceCallSnippet::emitSnippetBody()
                                cursor,
                                NULL,
                                TR_AbsoluteMethodAddress, cg()),
-                               __FILE__, __LINE__, getNode());
-   cursor += 8;
+                               __FILE__, __LINE__, callNode);
+   cursor += sizeof(intptr_t);
 
    // CP
-   *(intptr_t *)cursor = (intptr_t)methodSymRef->getOwningMethod(cg()->comp())->constantPool();
-   cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
-                               cursor,
-                               *(uint8_t **)cursor,
-                               getNode() ? (uint8_t *)getNode()->getInlinedSiteIndex() : (uint8_t *)-1,
-                               TR_Thunks, cg()),
-                               __FILE__, __LINE__, getNode());
-   cursor += 8;
+   intptr_t cpAddr = (intptr_t)methodSymRef->getOwningMethod(comp)->constantPool();
+   *(intptr_t *)cursor = cpAddr;
+   uint8_t *j2iThunkRelocationPoint = cursor;
+   cursor += sizeof(intptr_t);
 
    // CP index
    *(intptr_t *)cursor = methodSymRef->getCPIndexForVM();
-   cursor += 8;
+   cursor += sizeof(intptr_t);
 
-   // Add 2 more slots for resolved values (interface class and iTable offset)
+   // 2 slots for resolved values (interface class and iTable index)
    *(intptr_t *)cursor = 0;
-   cursor += 8;
+   cursor += sizeof(intptr_t);
    *(intptr_t *)cursor = 0;
-   cursor += 8;
+   cursor += sizeof(intptr_t);
+
+   /*
+    * J2I thunk address.
+    * This is used for private nestmate calls.
+    */
+   *(intptr_t*)cursor = (intptr_t)thunk;
+   if (comp->compileRelocatableCode())
+      {
+      auto info =
+         (TR_RelocationRecordInformation *)comp->trMemory()->allocateMemory(
+            sizeof(TR_RelocationRecordInformation),
+            heapAlloc);
+
+      // data1 = constantPool
+      info->data1 = cpAddr;
+
+      // data2 = inlined site index
+      info->data2 = callNode ? callNode->getInlinedSiteIndex() : (uintptr_t)-1;
+
+      // data3 = distance in bytes from Constant Pool Pointer to J2I Thunk
+      info->data3 = (intptr_t)cursor - (intptr_t)j2iThunkRelocationPoint;
+
+      cg()->addExternalRelocation(new (cg()->trHeapMemory()) TR::ExternalRelocation(
+                                  j2iThunkRelocationPoint,
+                                  (uint8_t *)info,
+                                  NULL,
+                                  TR_J2IVirtualThunkPointer, cg()),
+                                  __FILE__, __LINE__, callNode);
+      }
+   cursor += sizeof(intptr_t);
 
    return cursor;
    }
@@ -582,11 +612,23 @@ TR_Debug::print(TR::FILE *pOutFile, TR::ARM64InterfaceCallSnippet * snippet)
 
    printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
    trfprintf(pOutFile, ".dword \t0x%08x\t\t; itable index", *(intptr_t *)cursor);
+   cursor += sizeof(intptr_t);
+
+   printPrefix(pOutFile, NULL, cursor, sizeof(intptr_t));
+   trfprintf(pOutFile, ".dword \t" POINTER_PRINTF_FORMAT "\t\t; J2I thunk address for private", *(intptr_t *)cursor);
    }
 
 uint32_t TR::ARM64InterfaceCallSnippet::getLength(int32_t estimatedSnippetStart)
    {
-   return 44;
+   /* 6 address fields:
+    *   - Code cache RA
+    *   - CP Pointer
+    *   - CP Index
+    *   - Interface Class Pointer
+    *   - ITable Index (may also contain a tagged J9Method* when handling nestmates)
+    *   - J2I thunk address
+    */
+   return ARM64_INSTRUCTION_LENGTH + sizeof(intptr_t)*6;
    }
 
 uint8_t *TR::ARM64CallSnippet::generateVIThunk(TR::Node *callNode, int32_t argSize, TR::CodeGenerator *cg)
