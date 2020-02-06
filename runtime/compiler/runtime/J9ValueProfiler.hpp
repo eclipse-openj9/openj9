@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -692,8 +692,6 @@ TR_EmbeddedHashTable<T, bits>::reset()
 template <typename T, size_t bits> void
 TR_EmbeddedHashTable<T, bits>::addKey(T value)
    {
-   size_t otherIndex = this->getOtherIndex();
-
    static bool dumpInfo = feGetEnv("TR_JProfilingValueDumpInfo") != NULL;
    if (dumpInfo)
       {
@@ -706,7 +704,7 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
    // Lock the table, disabling jitted code access
    if (!this->tryLock(true))
       {
-      _freqs[otherIndex]++;
+      _freqs[this->getOtherIndex()]++;
       return;
       }
 
@@ -714,6 +712,7 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
    TR_ASSERT_FATAL(this->_metaData.otherIndex > -1, "JIT access not disabled");
 
    // Detect whether the value is already present, count populated slots and find the first empty one
+   size_t otherIndex = this->getOtherIndex();
    size_t lastIndex = (1 << bits) - 1;
    int32_t available = -1;
    size_t populated = 0;
@@ -762,7 +761,7 @@ TR_EmbeddedHashTable<T, bits>::addKey(T value)
          {
          // Test if slot is available with current hash method
          size_t defaultIndex = this->applyHash(this->_hashConfig, value);
-         if (defaultIndex != this->getOtherIndex() && _keys[defaultIndex] == getDefault(defaultIndex))
+         if (defaultIndex != otherIndex && _keys[defaultIndex] == getDefault(defaultIndex))
             {
             _keys[defaultIndex] = value;
             _freqs[defaultIndex] = 1;
