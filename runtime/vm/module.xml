@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2001, 2019 IBM Corp. and others
+Copyright (c) 2001, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,28 +75,28 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<makefilestubs>
 			<makefilestub data="UMA_ENABLE_ALL_WARNINGS=1"/>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
-			<makefilestub data="UMA_OBJECTS:=$(filter-out xcinterp%,$(UMA_OBJECTS))\n">
+			<makefilestub data="UMA_OBJECTS:=$(filter-out xcinterp%,$(UMA_OBJECTS))">
 				<exclude-if condition="spec.flags.arch_x86"/>
 			</makefilestub>
-			<makefilestub data="UMA_OBJECTS:=$(filter-out armcinterp%,$(UMA_OBJECTS))\n">
+			<makefilestub data="UMA_OBJECTS:=$(filter-out armcinterp%,$(UMA_OBJECTS))">
 				<exclude-if condition="spec.flags.arch_arm"/>
 			</makefilestub>
-			<makefilestub data="UMA_OBJECTS:=$(filter-out arm64cinterp%,$(UMA_OBJECTS))\n">
+			<makefilestub data="UMA_OBJECTS:=$(filter-out arm64cinterp%,$(UMA_OBJECTS))">
 				<exclude-if condition="spec.flags.arch_aarch64"/>
 			</makefilestub>
-			<makefilestub data="UMA_OBJECTS:=$(filter-out pcinterp%,$(UMA_OBJECTS))\n">
+			<makefilestub data="UMA_OBJECTS:=$(filter-out pcinterp%,$(UMA_OBJECTS))">
 				<exclude-if condition="spec.flags.arch_power"/>
 			</makefilestub>
-			<makefilestub data="UMA_OBJECTS:=$(filter-out zcinterp%,$(UMA_OBJECTS))\n">
+			<makefilestub data="UMA_OBJECTS:=$(filter-out zcinterp%,$(UMA_OBJECTS))">
 				<exclude-if condition="spec.flags.arch_s390"/>
 			</makefilestub>
-			<makefilestub data="UMA_OBJECTS:=$(filter-out leconditionexceptionsup$(UMA_DOT_O),$(UMA_OBJECTS))\n">
+			<makefilestub data="UMA_OBJECTS:=$(filter-out leconditionexceptionsup$(UMA_DOT_O),$(UMA_OBJECTS))">
 				<exclude-if condition="spec.zos_390.* and not spec.flags.J9VM_ENV_DATA64"/>
 			</makefilestub>
-			<makefilestub data="UMA_OBJECTS:=$(filter-out inlineleconditionhandler$(UMA_DOT_O),$(UMA_OBJECTS))\n">
+			<makefilestub data="UMA_OBJECTS:=$(filter-out inlineleconditionhandler$(UMA_DOT_O),$(UMA_OBJECTS))">
 				<exclude-if condition="spec.zos_390.* and not spec.flags.J9VM_ENV_DATA64"/>
 			</makefilestub>
-			<makefilestub data="UMA_OBJECTS:=$(filter-out safeseh$(UMA_DOT_O),$(UMA_OBJECTS))\n">
+			<makefilestub data="UMA_OBJECTS:=$(filter-out safeseh$(UMA_DOT_O),$(UMA_OBJECTS))">
 				<exclude-if condition="spec.win_x86.* and not spec.flags.J9VM_ENV_DATA64"/>
 			</makefilestub>
 		</makefilestubs>
