@@ -291,6 +291,7 @@ enum MessageType
    runFEMacro_invokeFilterArgumentsWithCombinerHandleNumSuffixArgs = 720;
    runFEMacro_invokeFilterArgumentsWithCombinerHandleFilterPosition = 721;
    runFEMacro_invokeFilterArgumentsWithCombinerHandleArgumentIndices = 722;
+   runFEMacro_invokeCollectHandleAllocateArray = 723;
 
    // for JITServerPersistentCHTable
    CHTable_getAllClassInfo = 800;
@@ -308,6 +309,20 @@ enum MessageType
    Recompilation_getJittedBodyInfoFromPC = 1001;
 
    ClassInfo_getRemoteROMString = 1100;
+
+   // for KnownObjectTable
+   KnownObjectTable_getIndex = 1200;
+   KnownObjectTable_getIndexAt = 1201;
+   KnownObjectTable_getPointer = 1202;
+   KnownObjectTable_getExistingIndexAt = 1203;
+   // for KnownObjectTable outside J9::KnownObjectTable class
+   KnownObjectTable_symbolReferenceTableCreateKnownObject = 1204;
+   KnownObjectTable_mutableCallSiteEpoch = 1205;
+   KnownObjectTable_dereferenceKnownObjectField = 1206;
+   KnownObjectTable_dereferenceKnownObjectField2 = 1207;
+   KnownObjectTable_createSymRefWithKnownObject = 1208;
+   KnownObjectTable_getReferenceField = 1209;
+   KnownObjectTable_invokeDirectHandleDirectCall = 1210;
    }
 
 message J9ServerMessage

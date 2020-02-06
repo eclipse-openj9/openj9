@@ -7580,10 +7580,22 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             int32_t collectArraySize = -1;
             int32_t collectPosition = -1;
             TR_OpaqueClassBlock* componentClazz = NULL;
-
+#if defined(J9VM_OPT_JITSERVER)
+            if (comp()->isOutOfProcessCompilation())
+               {
+               auto stream = TR::CompilationInfo::getStream();
+               stream->write(JITServer::MessageType::runFEMacro_invokeCollectHandleAllocateArray,
+                             methodHandleNode->getSymbolReference()->getKnownObjectIndex());
+               auto recv = stream->read<int32_t, int32_t, TR_OpaqueClassBlock *>();
+               collectArraySize = std::get<0>(recv);
+               collectPosition = std::get<1>(recv);
+               componentClazz = std::get<2>(recv);
+               }
+            else
+#endif /* defined(J9VM_OPT_JITSERVER) */
                {
                TR::VMAccessCriticalSection invokeCollectHandleAllocateArray(fej9);
-               uintptrj_t methodHandle = *knot->getPointerLocation(methodHandleNode->getSymbolReference()->getKnownObjectIndex());
+               uintptrj_t methodHandle = knot->getPointer(methodHandleNode->getSymbolReference()->getKnownObjectIndex());
                collectArraySize = fej9->getInt32Field(methodHandle, "collectArraySize");
                collectPosition = fej9->getInt32Field(methodHandle, "collectPosition");
 
@@ -9012,15 +9024,18 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
          bool *haveFilter = NULL;
          bool knotEnabled = !comp()->getOption(TR_DisableKnownObjectTable);
          char *nextSignature;
+         TR::KnownObjectTable *knot = knotEnabled ? comp()->getOrCreateKnownObjectTable() : NULL;
 #if defined(J9VM_OPT_JITSERVER)
          if (comp()->isOutOfProcessCompilation())
             {
             auto stream = TR::CompilationInfo::getStream();
-            stream->write(JITServer::MessageType::runFEMacro_invokeFilterArgumentsHandle, thunkDetails->getHandleRef());
-            auto recv = stream->read<int32_t, std::string, std::vector<uintptrj_t>>();
+            stream->write(JITServer::MessageType::runFEMacro_invokeFilterArgumentsHandle, thunkDetails->getHandleRef(), knotEnabled);
+            auto recv = stream->read<int32_t, std::string, std::vector<uint8_t>, std::vector<TR::KnownObjectTable::Index>, std::vector<uintptrj_t *>>();
             startPos = std::get<0>(recv);
             std::string nextSigStr = std::get<1>(recv);
-            std::vector<uintptrj_t> &filters = std::get<2>(recv);
+            std::vector<uint8_t> &haveFilterList = std::get<2>(recv);
+            std::vector<TR::KnownObjectTable::Index> &recvfilterIndexList = std::get<3>(recv);
+            std::vector<uintptrj_t *> &recvFilterObjectReferenceLocationList = std::get<4>(recv);
 
             // copy the next signature
             intptrj_t methodDescriptorLength = nextSigStr.size();
@@ -9029,11 +9044,19 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             nextSignature[methodDescriptorLength] = 0;
 
             // copy the filters
-            int32_t numFilters = filters.size();
+            int32_t numFilters = haveFilterList.size();
+            filterIndexList = knotEnabled ? (TR::KnownObjectTable::Index *) comp()->trMemory()->allocateMemory(sizeof(TR::KnownObjectTable::Index) * numFilters, stackAlloc) : NULL;
             haveFilter = (bool *) comp()->trMemory()->allocateMemory(sizeof(bool) * numFilters, stackAlloc);
             for (int i = 0; i <numFilters; i++)
                {
-               haveFilter[i] = (filters[i] != 0) ? true: false;
+               haveFilter[i] = haveFilterList[i];
+               if (knotEnabled)
+                  {
+                  filterIndexList[i] = recvfilterIndexList[i];
+
+                  if (recvfilterIndexList[i] != TR::KnownObjectTable::UNKNOWN)
+                     knot->updateKnownObjectTableAtServer(recvfilterIndexList[i], recvFilterObjectReferenceLocationList[i]);
+                  }
                }
             }
          else
@@ -9042,10 +9065,10 @@ TR_J9ByteCodeIlGenerator::runFEMacro(TR::SymbolReference *symRef)
             TR::VMAccessCriticalSection invokeFilterArgumentsHandle(fej9);
             uintptrj_t methodHandle = *thunkDetails->getHandleRef();
             uintptrj_t filters = fej9->getReferenceField(methodHandle, "filters", "[Ljava/lang/invoke/MethodHandle;");
+
             int32_t numFilters = fej9->getArrayLengthInElements(filters);
             filterIndexList = knotEnabled ? (TR::KnownObjectTable::Index *) comp()->trMemory()->allocateMemory(sizeof(TR::KnownObjectTable::Index) * numFilters, stackAlloc) : NULL;
             haveFilter = (bool *) comp()->trMemory()->allocateMemory(sizeof(bool) * numFilters, stackAlloc);
-            TR::KnownObjectTable *knot = knotEnabled ? comp()->getOrCreateKnownObjectTable() : NULL;
             for (int i = 0; i <numFilters; i++)
                {
                // copy filters in a list, so that we don't have to use filterIndexList

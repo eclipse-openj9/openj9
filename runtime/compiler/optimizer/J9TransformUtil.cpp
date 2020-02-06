@@ -530,13 +530,39 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
                && baseObject->getOpCodeValue() == TR::loadaddr
                && !baseObject->getSymbolReference()->isUnresolved())
                {
-               TR::SymbolReference *improvedSymRef;
-
+               TR::SymbolReference *improvedSymRef = node->getSymbolReference();
+               TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+               if (knot)
                   {
-                  TR::VMAccessCriticalSection createSymRefWithKnownObject(comp->fej9());
-                  uintptrj_t jlClass = (uintptrj_t)J9VM_J9CLASS_TO_HEAPCLASS((J9Class*)baseObject->getSymbol()->castToStaticSymbol()->getStaticAddress());
-                  TR_ASSERT(jlClass, "java/lang/Class reference from heap class must be non null");
-                  improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), &jlClass);
+#if defined(J9VM_OPT_JITSERVER)
+                  if (comp->isOutOfProcessCompilation())
+                     {
+                     auto stream = TR::CompilationInfo::getStream();
+                     stream->write(JITServer::MessageType::KnownObjectTable_createSymRefWithKnownObject,
+                           baseObject->getSymbol()->castToStaticSymbol()->getStaticAddress());
+
+                     auto recv = stream->read<TR::KnownObjectTable::Index, uintptrj_t*>();
+                     TR::KnownObjectTable::Index knotIndex = std::get<0>(recv);
+                     uintptrj_t *objectPointerReference = std::get<1>(recv);
+
+                     if (knotIndex != TR::KnownObjectTable::UNKNOWN)
+                        {
+                        knot->updateKnownObjectTableAtServer(knotIndex, objectPointerReference);
+                        improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), knotIndex);
+                        }
+                     }
+                  else
+#endif /* defined(J9VM_OPT_JITSERVER) */
+                     {
+                     TR::VMAccessCriticalSection createSymRefWithKnownObject(comp->fej9());
+                     uintptrj_t jlClass = (uintptrj_t)J9VM_J9CLASS_TO_HEAPCLASS((J9Class*)baseObject->getSymbol()->castToStaticSymbol()->getStaticAddress());
+                     TR_ASSERT(jlClass, "java/lang/Class reference from heap class must be non null");
+                     TR::KnownObjectTable::Index knotIndex = knot->getIndexAt(&jlClass);
+                     if (knotIndex != TR::KnownObjectTable::UNKNOWN)
+                        {
+                        improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), knotIndex);
+                        }
+                     }
                   }
 
                if (improvedSymRef->hasKnownObjectIndex()
@@ -717,7 +743,11 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
                }
             }
 
-         if (!baseObjectRefLocation)
+         if (!baseObjectRefLocation
+#if defined(J9VM_OPT_JITSERVER)
+             || comp->isOutOfProcessCompilation() // The following code requires VM access that's not supported at the server
+#endif /* defined(J9VM_OPT_JITSERVER) */
+            )
             return NULL; // Nothing left we can do
 
          //
@@ -846,9 +876,30 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
                }
             else if (symrefIsImprovable)
                {
-               uintptrj_t targetObjectReference;
-               TR::SymbolReference *improvedSymRef;
+               uintptrj_t targetObjectReference = 0;
+               TR::SymbolReference *improvedSymRef = node->getSymbolReference();
+               TR::KnownObjectTable *knot = comp->getOrCreateKnownObjectTable();
+#if defined(J9VM_OPT_JITSERVER)
+               if (comp->isOutOfProcessCompilation())
+                  {
+                  bool knotEnabled = (knot != NULL);
+                  auto stream = TR::CompilationInfo::getStream();
+                  stream->write(JITServer::MessageType::KnownObjectTable_getReferenceField,
+                        baseObject->getSymbol()->isStatic(), baseObjectRefLocation, fieldOffset, knotEnabled);
 
+                  auto recv = stream->read<TR::KnownObjectTable::Index, uintptrj_t*, uintptrj_t>();
+                  TR::KnownObjectTable::Index knotIndex = std::get<0>(recv);
+                  uintptrj_t *objectPointerReference = std::get<1>(recv);
+                  targetObjectReference = std::get<2>(recv);
+
+                  if (knot && (knotIndex != TR::KnownObjectTable::UNKNOWN))
+                     {
+                     knot->updateKnownObjectTableAtServer(knotIndex, objectPointerReference);
+                     improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), knotIndex);
+                     }
+                  }
+               else
+#endif /* defined(J9VM_OPT_JITSERVER) */
                   {
                   TR::VMAccessCriticalSection getReferenceField(comp->fej9());
                   uintptrj_t baseObjectRef = baseObject->getSymbol()->isStatic() ?
@@ -856,7 +907,12 @@ J9::TransformUtil::transformIndirectLoad(TR::Compilation *comp, TR::Node *node)
                                              *baseObjectRefLocation;
                   targetObjectReference = fej9->getReferenceFieldAt(baseObjectRef, fieldOffset);
 
-                  improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), &targetObjectReference);
+                  if (knot)
+                     {
+                     TR::KnownObjectTable::Index knotIndex = knot->getIndexAt(&targetObjectReference);
+                     if (knotIndex != TR::KnownObjectTable::UNKNOWN)
+                        improvedSymRef = comp->getSymRefTab()->findOrCreateSymRefWithKnownObject(node->getSymbolReference(), knotIndex);
+                     }
                   }
 
                if (targetObjectReference)
@@ -1476,6 +1532,16 @@ J9::TransformUtil::transformIndirectLoadChainAt(TR::Compilation *comp, TR::Node 
 bool
 J9::TransformUtil::transformIndirectLoadChain(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, TR::KnownObjectTable::Index baseKnownObject, TR::Node **removedNode)
    {
+#if defined(J9VM_OPT_JITSERVER)
+   // JITServer KOT: Bypass this method at the JITServer.
+   // transformIndirectLoadChainImpl requires access to the VM.
+   // It is already bypassed by transformIndirectLoadChainAt().
+   if (comp->isOutOfProcessCompilation())
+      {
+      return false;
+      }
+#endif /* defined(J9VM_OPT_JITSERVER) */
+
    TR::VMAccessCriticalSection transformIndirectLoadChain(comp->fej9());
    bool result = TR::TransformUtil::transformIndirectLoadChainImpl(comp, node, baseExpression, (void*)comp->getKnownObjectTable()->getPointer(baseKnownObject), removedNode);
    return result;

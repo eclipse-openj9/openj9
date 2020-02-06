@@ -158,7 +158,7 @@ protected:
    ZeroCopyOutputStream *_outputStream;
 
    static const uint8_t MAJOR_NUMBER = 0;
-   static const uint16_t MINOR_NUMBER = 6;
+   static const uint16_t MINOR_NUMBER = 7;
    static const uint8_t PATCH_NUMBER = 0;
    static uint32_t CONFIGURATION_FLAGS;
    };
