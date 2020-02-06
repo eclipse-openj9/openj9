@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifdef TR_TARGET_POWER
 #include <limits.h>
 #include <math.h>
 #include <stdint.h>
@@ -14130,11 +14129,6 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
    return OMR::TreeEvaluatorConnector::arraycopyEvaluator(node, cg);
 #endif /* OMR_GC_CONCURRENT_SCAVENGER */
    }
-
-#else /* TR_TARGET_POWER */
-// the following is to force an export to keep ilib happy
-int J9PPCEvaluator=0;
-#endif /* TR_TARGET_POWER */
 
 TR::Register *
 J9::Power::TreeEvaluator::NULLCHKEvaluator(TR::Node *node, TR::CodeGenerator *cg)

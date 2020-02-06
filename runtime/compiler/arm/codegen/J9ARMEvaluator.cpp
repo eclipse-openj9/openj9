@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifdef TR_TARGET_ARM
 #include <stdint.h>
 #include "j9.h"
 #include "j9cfg.h"
@@ -1716,11 +1715,3 @@ void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceI
    {
    /* @@ not implemented @@ */
    }
-
-#else /* TR_TARGET_ARM   */
-// the following is to force an export to keep ilib happy
-int J9ARMEvaluator=0;
-#endif /* TR_TARGET_ARM   */
-
-
-
