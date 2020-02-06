@@ -761,8 +761,13 @@ int32_t
 TR_J9ServerVM::getNewArrayTypeFromClass(TR_OpaqueClassBlock *clazz)
    {
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_getNewArrayTypeFromClass, clazz);
-   return std::get<0>(stream->read<int32_t>());
+   ClientSessionData::VMInfo * vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   for (int32_t i = 0; i < 8; ++i)
+      {
+      if ((void*)vmInfo->_arrayTypeClasses[i] == (void*)clazz)
+         return i + 4;
+      }
+   return -1;
    }
 
 TR_OpaqueClassBlock *
