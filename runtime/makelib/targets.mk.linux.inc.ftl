@@ -1,5 +1,5 @@
 <#--
-Copyright (c) 1998, 2019 IBM Corp. and others
+Copyright (c) 1998, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -301,15 +301,15 @@ endif
 <#if uma.spec.processor.amd64>
   CFLAGS += -DJ9HAMMER -m64 -fstack-protector
   CXXFLAGS += -DJ9HAMMER -m64 -fstack-protector
-  CPPFLAGS += -DJ9HAMMER -m64 -fstack-protector
+  CPPFLAGS += -DJ9HAMMER -m64
 <#elseif uma.spec.processor.arm>
   CFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include -fstack-protector
   CXXFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED -I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include -fno-threadsafe-statics -fstack-protector
-  CPPFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED-I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include -fstack-protector
+  CPPFLAGS += -DJ9ARM -DARMGNU -DARM -DFIXUP_UNALIGNED-I$(XCOMP_TOOLCHAIN_BASEDIR)/arm-bcm2708/arm-bcm2708hardfp-linux-gnueabi/arm-bcm2708hardfp-linux-gnueabi/include
 <#elseif uma.spec.processor.aarch64>
   CFLAGS += -DJ9AARCH64 -fstack-protector
   CXXFLAGS += -DJ9AARCH64 -fstack-protector
-  CPPFLAGS += -DJ9AARCH64 -fstack-protector
+  CPPFLAGS += -DJ9AARCH64
 <#elseif uma.spec.processor.ppc>
   CFLAGS += -DLINUXPPC
   CXXFLAGS += -DLINUXPPC
@@ -318,11 +318,11 @@ endif
     ifdef j9vm_env_data64
       CFLAGS += -m64 -DLINUXPPC64 -DPPC64 -fstack-protector
       CXXFLAGS += -m64 -DLINUXPPC64 -DPPC64 -fstack-protector
-      CPPFLAGS += -m64 -DLINUXPPC64 -DPPC64 -fstack-protector
+      CPPFLAGS += -m64 -DLINUXPPC64 -DPPC64
     else
       CFLAGS += -m32 -fstack-protector
       CXXFLAGS += -m32 -fstack-protector
-      CPPFLAGS += -m32 -fstack-protector
+      CPPFLAGS += -m32
     endif
   <#else>
     CFLAGS += -qalias=noansi -qxflag=LTOL:LTOL0 -qxflag=selinux
@@ -373,7 +373,7 @@ endif
 <#elseif uma.spec.processor.x86>
   CFLAGS += -DJ9X86 -m32 -msse2 -fstack-protector
   CXXFLAGS += -DJ9X86 -m32 -msse2 -I/usr/include/nptl -fno-threadsafe-statics -fstack-protector
-  CPPFLAGS += -DJ9X86 -m32 -msse2 -I/usr/include/nptl -fstack-protector
+  CPPFLAGS += -DJ9X86 -m32 -msse2 -I/usr/include/nptl
 </#if>
 
 <#if uma.spec.processor.ppc && !uma.spec.flags.env_gcc.enabled>
