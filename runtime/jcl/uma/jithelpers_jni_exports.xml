@@ -45,9 +45,8 @@
 	<export name="Java_com_ibm_jit_JITHelpers_j9DiscontiguousArrayHeaderSize" />
 	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectContiguousLengthOffset" />
 	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectDiscontiguousLengthOffset" />
-
-	<export name="Java_com_ibm_jit_JITHelpers_isPlatformLittleEndian" />
 	
+	<export name="Java_com_ibm_jit_JITHelpers_isBigEndian" />
 	<export name="Java_com_ibm_jit_JITHelpers_is32Bit" />
 	<export name="Java_com_ibm_jit_JITHelpers_getNumBitsInReferenceField" />
 	<export name="Java_com_ibm_jit_JITHelpers_getNumBytesInReferenceField" />

@@ -811,7 +811,7 @@ jint JNICALL Java_com_ibm_jit_JITHelpers_classIsPrimitiveFlag(JNIEnv *env, jclas
 jint JNICALL Java_com_ibm_jit_JITHelpers_j9ClassSuperclassesOffset(JNIEnv *env, jclass ignored);
 jint JNICALL Java_com_ibm_jit_JITHelpers_j9ClassClassDepthAndFlagsOffset(JNIEnv *env, jclass ignored);
 jint JNICALL Java_com_ibm_jit_JITHelpers_classDepthMask(JNIEnv *env, jclass ignored);
-jboolean JNICALL Java_com_ibm_jit_JITHelpers_isPlatformLittleEndian(JNIEnv *env, jclass ignored);
+jboolean JNICALL Java_com_ibm_jit_JITHelpers_isBigEndian(JNIEnv *env, jclass ignored);
 jboolean JNICALL Java_com_ibm_jit_JITHelpers_is32Bit(JNIEnv *env, jobject rcv);
 jint JNICALL Java_com_ibm_jit_JITHelpers_getNumBitsInReferenceField(JNIEnv *env, jobject rcv);
 jint JNICALL Java_com_ibm_jit_JITHelpers_getNumBytesInReferenceField(JNIEnv *env, jobject rcv);

@@ -78,7 +78,7 @@ public final class JITHelpers {
 	private static final int POINTER_SIZE = VM.ADDRESS_SIZE;
 	private static final boolean IS_32_BIT = (POINTER_SIZE == 4);
 
-	public static final boolean IS_PLATFORM_LITTLE_ENDIAN = isPlatformLittleEndian();
+	public static final boolean IS_BIG_ENDIAN = isBigEndian();
 
 	/*
 	 * The following natives are used by the static initializer. They do not require special treatment by the JIT.
@@ -462,7 +462,7 @@ public final class JITHelpers {
 	public native boolean acmplt(Object lhs, Object rhs);
 
 	private static long storeBits(long dest, int width, long value, int vwidth, int offset) {
-		int offsetToModify = IS_PLATFORM_LITTLE_ENDIAN ? ((offset * vwidth) % width) : ((width - 1) - ((offset * vwidth) % width));
+		int offsetToModify = IS_BIG_ENDIAN ? ((width - 1) - ((offset * vwidth) % width)) : ((offset * vwidth) % width);
 
 		long vmask = (-1 >>> ((8 - vwidth) * 8));
 		long dmask = ~(vmask << (8 * offsetToModify));
@@ -471,7 +471,7 @@ public final class JITHelpers {
 	}
 
 	private static long readBits(long src, int width, int vwidth, int offset) {
-		int offsetToRead = IS_PLATFORM_LITTLE_ENDIAN ? ((offset * vwidth) % width) : ((width - 1) - ((offset * vwidth) % width));
+		int offsetToRead = IS_BIG_ENDIAN ? ((width - 1) - ((offset * vwidth) % width)) : ((offset * vwidth) % width);
 
 		long vmask = (-1 >>> ((8 - vwidth) * 8));
 		long smask = vmask << (8 * offsetToRead);
@@ -523,7 +523,7 @@ public final class JITHelpers {
 		if (clazz == byte[].class) {
 			index = index << 1;
 			byte[] array = (byte[]) obj;
-			if (IS_PLATFORM_LITTLE_ENDIAN) {
+			if (!IS_BIG_ENDIAN) {
 				array[index] = (byte) value;
 				array[index + 1] = (byte) (value >>> 8);
 			} else {
@@ -551,7 +551,7 @@ public final class JITHelpers {
 		if (clazz == byte[].class) {
 			index = index << 1;
 			byte[] array = (byte[]) obj;
-			if (IS_PLATFORM_LITTLE_ENDIAN) {
+			if (!IS_BIG_ENDIAN) {
 				return (char) ((byteToCharUnsigned(array[index + 1]) << 8) | byteToCharUnsigned(array[index]));
 			} else {
 				return (char) (byteToCharUnsigned(array[index + 1]) | (byteToCharUnsigned(array[index]) << 8));
@@ -996,12 +996,12 @@ public final class JITHelpers {
 	}
 
 
-	/**
-	 * Determines whether the underlying platform's memory model is little-endian.
-	 * 
-	 * @return True if the underlying platform's memory model is little-endian, false otherwise.
-	 */
-	private native static final boolean isPlatformLittleEndian();
+	/**		
+	 * Determines whether the underlying platform's memory model is big-endian.		
+	 * 		
+	 * @return True if the underlying platform's memory model is big-endian, false otherwise.		
+	 */		
+	private native static final boolean isBigEndian();
 
 	/* Placeholder for JIT GPU optimizations - this method never actually gets run */
 	public final native void GPUHelper();
