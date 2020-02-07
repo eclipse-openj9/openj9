@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,16 +192,14 @@ Java_com_ibm_jit_JITHelpers_j9ObjectDiscontiguousLengthOffset(JNIEnv *env, jclas
 	return (jint) offsetof(J9IndexableObjectDiscontiguousFull, size);
 }
 
-jboolean JNICALL
-Java_com_ibm_jit_JITHelpers_isPlatformLittleEndian(JNIEnv *env, jclass ignored)
-{
-	unsigned int temp = 1;
-
-	if (*((char*)&temp)) {
-		return JNI_TRUE;
-	} else {
-		return JNI_FALSE;
-	}
+jboolean JNICALL		
+Java_com_ibm_jit_JITHelpers_isBigEndian(JNIEnv *env, jclass ignored)		
+{		
+#if defined(J9VM_ENV_LITTLE_ENDIAN)
+return JNI_FALSE;
+#else
+return JNI_TRUE;
+#endif
 }
 
 /*

@@ -1,5 +1,5 @@
 <!-- 
-	Copyright (c) 2011, 2017 IBM Corp. and others
+	Copyright (c) 2011, 2020 IBM Corp. and others
 	
 	This program and the accompanying materials are made available under
 	the terms of the Eclipse Public License 2.0 which accompanies this
@@ -45,9 +45,8 @@
 	<export name="Java_com_ibm_jit_JITHelpers_j9DiscontiguousArrayHeaderSize" />
 	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectContiguousLengthOffset" />
 	<export name="Java_com_ibm_jit_JITHelpers_j9ObjectDiscontiguousLengthOffset" />
-
-	<export name="Java_com_ibm_jit_JITHelpers_isPlatformLittleEndian" />
 	
+	<export name="Java_com_ibm_jit_JITHelpers_isBigEndian" />
 	<export name="Java_com_ibm_jit_JITHelpers_is32Bit" />
 	<export name="Java_com_ibm_jit_JITHelpers_getNumBitsInReferenceField" />
 	<export name="Java_com_ibm_jit_JITHelpers_getNumBytesInReferenceField" />

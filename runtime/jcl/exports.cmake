@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -119,7 +119,7 @@ omr_add_exports(jclse
 	Java_com_ibm_jit_JITHelpers_getNumBytesInReferenceField
 	Java_com_ibm_jit_JITHelpers_identityHashSaltPolicy
 	Java_com_ibm_jit_JITHelpers_is32Bit
-	Java_com_ibm_jit_JITHelpers_isPlatformLittleEndian
+	Java_com_ibm_jit_JITHelpers_isBigEndian
 	Java_com_ibm_jit_JITHelpers_j9ClassBackfillOffsetOffset
 	Java_com_ibm_jit_JITHelpers_j9ContiguousArrayHeaderSize
 	Java_com_ibm_jit_JITHelpers_j9DiscontiguousArrayHeaderSize
