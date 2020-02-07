@@ -1,7 +1,7 @@
 package org.openj9.test.com.ibm.jit;
 
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -382,13 +382,8 @@ public class Test_JITHelpers {
 			char[] converted = Arrays.copyOfRange(uppercaseLatin1Char, 0, (j + 1) / 2);
 
 			if (j % 2 == 1) {
-				if (byteOrder == ByteOrder.LITTLE_ENDIAN) {
-					source[source.length - 1] &= 0x00FF;
-					converted[source.length - 1] &= 0x00FF;
-				} else {
-					source[source.length - 1] &= 0xFF00;
-					converted[source.length - 1] &= 0xFF00;
-				}
+				helpers.putByteInArrayByIndex(source, (2 * (source.length - 1) + 1), (byte)0);
+				helpers.putByteInArrayByIndex(converted, (2 * (source.length - 1) + 1), (byte)0);
 			}
 
 			char[] buffer = new char[(j + 1) / 2];
@@ -416,13 +411,8 @@ public class Test_JITHelpers {
 			char[] converted = Arrays.copyOfRange(lowercaseLatin1Char, 0, (j + 1) / 2);
 
 			if (j % 2 == 1) {
-				if (byteOrder == ByteOrder.LITTLE_ENDIAN) {
-					source[source.length - 1] &= 0x00FF;
-					converted[source.length - 1] &= 0x00FF;
-				} else {
-					source[source.length - 1] &= 0xFF00;
-					converted[source.length - 1] &= 0xFF00;
-				}
+				helpers.putByteInArrayByIndex(source, (2 * (source.length - 1) + 1), (byte)0);
+				helpers.putByteInArrayByIndex(converted, (2 * (source.length - 1) + 1), (byte)0);
 			}
 
 			char[] buffer = new char[(j + 1) / 2];
