@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,20 +192,12 @@ J9JITConfig * codert_onload(J9JavaVM * javaVM)
 
    TR_ASSERT(!javaVM->jitConfig, "jitConfig already initialized.");
 
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-   javaVM->jitConfig = (J9JITConfig *) j9mem_allocate_memory(sizeof(J9AOTConfig), J9MEM_CATEGORY_JIT);
-#else
    javaVM->jitConfig = (J9JITConfig *) j9mem_allocate_memory(sizeof(J9JITConfig), J9MEM_CATEGORY_JIT);
-#endif
 
    if (!javaVM->jitConfig)
       goto _abort;
 
-#if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-   memset(javaVM->jitConfig, 0, sizeof(J9AOTConfig));
-#else
    memset(javaVM->jitConfig, 0, sizeof(J9JITConfig));
-#endif
    jitConfig = javaVM->jitConfig;
    jitConfig->sampleInterruptHandlerKey = -1;
 
@@ -300,11 +292,11 @@ void codert_freeJITConfig(J9JavaVM * javaVM)
          }
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-      if (((J9AOTConfig*)jitConfig)->aotCompilationInfo)
+      if (jitConfig->aotCompilationInfo)
          {
-         TR_J9VMBase *fej9 = (TR_J9VMBase *)(((J9AOTConfig*)jitConfig)->aotCompilationInfo);
+         TR_J9VMBase *fej9 = (TR_J9VMBase *)(jitConfig->aotCompilationInfo);
          fej9->freeSharedCache();
-         ((J9AOTConfig*)jitConfig)->aotCompilationInfo = 0;
+         jitConfig->aotCompilationInfo = 0;
          }
 #endif
 

@@ -544,7 +544,7 @@ TR_J9VMBase::createGlobalFrontEnd(J9JITConfig * jitConfig, TR::CompilationInfo *
    TR_J9VM * vmWithoutThreadInfo = 0;
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-   TR_ASSERT(!pointer_cast<J9AOTConfig *>(jitConfig)->aotCompilationInfo, "Global AOT front end already exists");
+   TR_ASSERT(!jitConfig->aotCompilationInfo, "Global AOT front end already exists");
    TR_J9SharedCacheVM * aotVMWithoutThreadInfo = 0;
 #endif
 
@@ -576,7 +576,7 @@ TR_J9VMBase::createGlobalFrontEnd(J9JITConfig * jitConfig, TR::CompilationInfo *
    jitConfig->compilationInfo = vmWithoutThreadInfo;
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-   pointer_cast<J9AOTConfig *>(jitConfig)->aotCompilationInfo = aotVMWithoutThreadInfo;
+   jitConfig->aotCompilationInfo = aotVMWithoutThreadInfo;
 #endif
 
    return true;
@@ -593,7 +593,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
    TR_ASSERT(vmThread || vmType==DEFAULT_VM, "Specific VM type ==> must supply vmThread");
    TR_J9VMBase * vmWithoutThreadInfo = static_cast<TR_J9VMBase *>(jitConfig->compilationInfo);
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
-   TR_J9VMBase * aotVMWithoutThreadInfo = static_cast<TR_J9VMBase *>(pointer_cast<J9AOTConfig *>(jitConfig)->aotCompilationInfo);
+   TR_J9VMBase * aotVMWithoutThreadInfo = static_cast<TR_J9VMBase *>(jitConfig->aotCompilationInfo);
 #endif
 
    if (vmThread)
