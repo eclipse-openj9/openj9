@@ -110,8 +110,8 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 			cpPatchMap.indexMap = (U_16 *)j9mem_allocate_memory(cpPatchMap.size * sizeof(U_16), J9MEM_CATEGORY_VM);
 
 			if (cpPatchMap.indexMap == NULL) {
+				vmFuncs->setNativeOutOfMemoryError(currentThread, 0, 0);
 				vmFuncs->internalExitVMToJNI(currentThread);
-				vmFuncs->throwNativeOOMError(env, 0, 0);
 				return NULL;
 			}
 		}
@@ -140,17 +140,23 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 		/* Get J9 constantpool mapped item for patch item, only support patching STRING entries has been added */
 		for (U_16 i = 0; i < cpPatchMap.size; i++) {
 			j9object_t item = J9JAVAARRAYOFOBJECT_LOAD(currentThread, patchArray, i);
-			if ((item != NULL) && (J9_CP_TYPE(cpShapeDescription, cpPatchMap.indexMap[i]) == J9CPTYPE_STRING)) {
-				J9UTF8 *romString = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&romCP[cpPatchMap.indexMap[i]]);
+			if (item != NULL) {
+				if (J9_CP_TYPE(cpShapeDescription, cpPatchMap.indexMap[i]) == J9CPTYPE_STRING) {
 
-				/* For each patch object, search the RAM constantpool for identical string entries */
-				for (U_16 j = 1; j < clazz->romClass->ramConstantPoolCount; j++) {
-					if ((J9_CP_TYPE(cpShapeDescription, j) == J9CPTYPE_STRING)
-						&& J9UTF8_EQUALS(romString, J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&romCP[j]))
-					) {
-						J9RAMStringRef *ramStringRef = ((J9RAMStringRef *)ramCP) + j;
-						J9STATIC_OBJECT_STORE(currentThread, clazz, &ramStringRef->stringObject, item);
+					J9UTF8 *romString = J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&romCP[cpPatchMap.indexMap[i]]);
+
+					/* For each patch object, search the RAM constantpool for identical string entries */
+					for (U_16 j = 1; j < clazz->romClass->ramConstantPoolCount; j++) {
+						if ((J9_CP_TYPE(cpShapeDescription, j) == J9CPTYPE_STRING)
+							&& J9UTF8_EQUALS(romString, J9ROMSTRINGREF_UTF8DATA((J9ROMStringRef *)&romCP[j]))
+						) {
+							J9RAMStringRef *ramStringRef = ((J9RAMStringRef *)ramCP) + j;
+							J9STATIC_OBJECT_STORE(currentThread, clazz, &ramStringRef->stringObject, item);
+						}
 					}
+				} else {
+					/* Only J9CPTYPE_STRING is patched, other CP types are not supported */
+					Assert_JCL_unreachable();
 				}
 			}
 		}
