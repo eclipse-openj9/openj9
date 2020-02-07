@@ -13611,7 +13611,11 @@ TR::Register *J9::Power::TreeEvaluator::arraycopyEvaluator(TR::Node *node, TR::C
    if (node->isForwardArrayCopy() && lengthNode->getOpCode().isLoadConst())
       {
       len = (lengthNode->getType().isInt32() ? lengthNode->getInt() : lengthNode->getLongInt());
-      if (len >= 0)
+
+      // inlineArrayCopy_ICF is not currently capable of handling very long lengths correctly. Under some circumstances,
+      // it will generate an li instruction with an out-of-bounds immediate, which triggers an assert in the binary
+      // encoder.
+      if (len >= 0 && len < 0x100000000LL)
          {
          /*
           * This path generates code to perform a runtime check on whether concurrent GC is done moving objects or not.
