@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 ##############################################################################
-#  Copyright (c) 2017, 2018 IBM Corp. and others
+#  Copyright (c) 2017, 2020 IBM Corp. and others
 #
 #  This program and the accompanying materials are made available under
 #  the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,6 +25,7 @@
 use strict;
 use warnings;
 use IPC::Open3;
+use IO::Select;
 
 my $javaCmd = join(' ', @ARGV);
 
@@ -51,7 +52,23 @@ if ($^O eq 'cygwin') {
 	}
 } else {
 	$perlPid = open3($in, $out, $err, $javaCmd);
-	$javaPid = <$out>;
+	my $s = IO::Select->new();
+	$s->add($out);
+	$javaPid = 0;
+	while (my @ready = $s->can_read(5)) { # set timeout of 5 seconds
+		my $buf = '';
+		$! = 0;
+		my $read = sysread($ready[0], $buf, 1024);
+		if (defined($read)) {
+			if ($buf =~ /^\d+$/) {
+				$javaPid = $buf;
+				last;
+			}
+		} else {
+			print "Error in reading output of the Java process\n";
+			last;
+		}
+	}
 	print $in "getPid finished";
 }
 
