@@ -39,9 +39,7 @@ UPDATE_BUILD_NODES = params.UPDATE_BUILD_NODES
 
 EXTENSIONS_REPOS = [[name: "openj9", url: "https://github.com/eclipse/openj9.git"]]
 
-properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10')),
-            pipelineTriggers([cron('''# Daily at 11:00pm
-                                        0 23 * * *''')])])
+properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '10'))])
 
 def jobs = [:]
 
