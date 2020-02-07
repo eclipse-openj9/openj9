@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,6 +56,7 @@ typedef struct SCAbstractAPI
 	IDATA (*classStoreTransaction_updateSharedClassSize)(void * tobj, U_32 sizeUsed);
 	BOOLEAN (*classStoreTransaction_isOK)(void * tobj);
 	BOOLEAN (*classStoreTransaction_hasSharedStringTableLock)(void * tobj);
+	void (*classStoreTransaction_updateUnstoredBytes) (U_32 romClassSizeFullSize, void * tobj);
 
 	/*Function for JCL to update cache metadata for an existing shared class*/
 	J9ROMClass * (*jclUpdateROMClassMetaData)(J9VMThread* currentThread, J9ClassLoader* classloader, J9ClassPathEntry* classPathEntries, UDATA cpEntryCount, UDATA entryIndex, const J9UTF8* partition, const J9ROMClass * existingClass);

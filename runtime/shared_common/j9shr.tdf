@@ -1,5 +1,5 @@
 //*******************************************************************************
-// Copyright (c) 2006, 2019 IBM Corp. and others
+// Copyright (c) 2006, 2020 IBM Corp. and others
 //
 // This program and the accompanying materials are made available under
 // the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2984,3 +2984,6 @@ TraceEvent=Trc_SHR_CM_storeCacheUniqueID_generateCacheUniqueID_after Overhead=1 
 
 TraceEvent=Trc_SHR_CC_startup_getCacheUniqueID_before Overhead=1 Level=7 Template="CC::startup(): getCacheUniqueID() - (createTime: %llx, metadataBytes: %zx, classesBytes: %zx, lineNumTabBytes: %zx, varTabBytes: %zx) "
 TraceEvent=Trc_SHR_CC_startup_getCacheUniqueID_after Overhead=1 Level=7 Template="CC::startup(): getCacheUniqueID() - the cache unique ID is %s"
+
+TraceEvent=Trc_SHR_API_j9shr_classStoreTransaction_start_cacheFull_Event Overhead=1 Level=3 Template="API j9shr_classStoreTransaction_start : J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL is set. The shared cache is full"
+TraceEvent=Trc_SHR_API_j9shr_classStoreTransaction_start_cacheSoftFull_Event Overhead=1 Level=3 Template="API j9shr_classStoreTransaction_start : J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL is set. The shared cache is soft full"

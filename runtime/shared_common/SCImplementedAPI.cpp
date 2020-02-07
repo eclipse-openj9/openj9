@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -311,6 +311,15 @@ j9shr_classStoreTransaction_hasSharedStringTableLock(void * tobj)
 	return FALSE;
 }
 
+void 
+j9shr_classStoreTransaction_updateUnstoredBytes(U_32 romClassSizeFullSize, void * tobj)
+{
+	J9SharedClassTransaction * obj = (J9SharedClassTransaction *) tobj;
+	J9SharedClassConfig * sconfig = obj->ownerThread->javaVM->sharedClassConfig;
+	SH_CacheMap* cachemap = (SH_CacheMap*) (sconfig->sharedClassCache);
+	cachemap->increaseTransactionUnstoredBytes(romClassSizeFullSize, obj);
+}
+
 /**
  * Start a transaction to store a shared class
  *
@@ -328,7 +337,7 @@ j9shr_classStoreTransaction_hasSharedStringTableLock(void * tobj)
  * THREADING: On success this function will acquire 3 locks:
  * 	- JVM: 				segment mutex
  *  - shared classes: 	string table mutex (if not readonly)
- *  - shared classes: 	write mutex (if not readonly)
+ *  - shared classes: 	write mutex (if not readonly, if cache is not full)
  */
 IDATA
 j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9ClassLoader* classloader, J9ClassPathEntry* classPathEntries, UDATA cpEntryCount, UDATA entryIndex, UDATA loadType, const J9UTF8* partition, U_16 classnameLength, U_8 * classnameData, BOOLEAN isModifiedClassfile, BOOLEAN takeReadWriteLock)
@@ -424,6 +433,7 @@ j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9Clas
 	obj->findNextRomClass = NULL;
 	obj->isModifiedClassfile = ((isModifiedClassfile == TRUE)?1:0);
 	obj->takeReadWriteLock = ((takeReadWriteLock==TRUE)?1:0);
+	obj->cacheFullFlags = 0;
 
 	/*NOTE:
 	 * Must omrthread_monitor_enter(segmentMutex) before enterWriteMutex(). Otherwise we will deadlock with hookFindSharedClass()
@@ -435,7 +445,6 @@ j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9Clas
 	}
 
 	obj->transactionState = TSTATE_ENTER_SEGMENTMUTEX;
-
 
 	if (sconfig->classnameFilterPool) {
 		if (checkForStoreFilter(vm, classloader, (const char*) classnameData, (UDATA)classnameLength, sconfig->classnameFilterPool)) {
@@ -523,6 +532,21 @@ j9shr_classStoreTransaction_start(void * tobj, J9VMThread* currentThread, J9Clas
 				}
 			}
 		}
+	}
+	
+	if (J9_ARE_ALL_BITS_SET(localRuntimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) {
+		obj->cacheFullFlags |= J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL;
+		Trc_SHR_API_j9shr_classStoreTransaction_start_cacheFull_Event(currentThread);
+	} else if (J9_ARE_ALL_BITS_SET(localRuntimeFlags, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL)) {
+		obj->cacheFullFlags |= J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL;
+		Trc_SHR_API_j9shr_classStoreTransaction_start_cacheSoftFull_Event(currentThread);
+	}
+
+	if (0 != obj->cacheFullFlags) {
+		obj->ClasspathWrapper = (void *) classpath;
+		obj->helperID = ((NULL == classpath) ? -1 : classpath->getHelperID());
+		/* let retVal to be 0 */
+		goto done;
 	}
 
 	/*Take a write mutex on the shared cache. This will be released in when the transaction is stopped.*/
@@ -613,7 +637,8 @@ j9shr_classStoreTransaction_stop(void * tobj)
 	bool releaseReadWriteMutex;
 	bool releaseSegmentMutex;
 	UDATA oldVMState = obj->oldVMState;
-	ClasspathWrapper* cpw = (ClasspathWrapper*) obj->ClasspathWrapper;
+	ClasspathWrapper* cpw = NULL;;
+	ClasspathItem* classpath = NULL;;
 	IDATA didWeStore = 0;
 	bool modifiedNoContext = ((obj->isModifiedClassfile == 1) && (NULL == obj->modContextInCache));
 	J9ROMClass * storedClass = NULL;
@@ -621,6 +646,12 @@ j9shr_classStoreTransaction_stop(void * tobj)
 	J9SharedInvariantInternTable* table = currentThread->javaVM->sharedInvariantInternTable;
 
 	Trc_SHR_API_j9shr_classStoreTransaction_stop_Entry(currentThread, obj->transactionState);
+	
+	if (0 != obj->cacheFullFlags) {
+		classpath = (ClasspathItem*) obj->ClasspathWrapper;
+	} else {
+		cpw = (ClasspathWrapper*) obj->ClasspathWrapper;
+	}
 
 	/*if started go to done ...*/
 	if (obj->transactionState == TSTATE_STARTED) {	
@@ -699,9 +730,13 @@ j9shr_classStoreTransaction_stop(void * tobj)
 	}
 
 	/* Display verbose store messages.*/
-	if (cpw != NULL) {
-		ClasspathItem * classpath = ((ClasspathItem*) CPWDATA(cpw));
+	if (classpath != NULL) {
 		storeClassVerboseIO(obj->ownerThread, classpath, obj->entryIndex, obj->classnameLength, obj->classnameData, obj->helperID, (didWeStore == 1));
+	} else {
+		if (cpw != NULL) {
+			ClasspathItem * classpath = ((ClasspathItem*) CPWDATA(cpw));
+			storeClassVerboseIO(obj->ownerThread, classpath, obj->entryIndex, obj->classnameLength, obj->classnameData, obj->helperID, (didWeStore == 1));
+		}
 	}
 
 	/*Clear the transaction object*/
@@ -758,7 +793,7 @@ j9shr_classStoreTransaction_stop(void * tobj)
  *
  * THREADING: Must own (in atleast read only form):
  * 	- JVM: 				segment mutex
- *  - shared classes: 	write mutex (if not readonly)
+ *  - shared classes: 	write mutex (if not readonly, if cache is not full)
  */
 J9ROMClass *
 j9shr_classStoreTransaction_nextSharedClassForCompare(void * tobj)
@@ -770,7 +805,9 @@ j9shr_classStoreTransaction_nextSharedClassForCompare(void * tobj)
 
 	Trc_SHR_API_j9shr_nextSharedClassForCompare_Entry(currentThread);
 
-	if (obj->transactionState != TSTATE_ENTER_WRITEMUTEX) {
+	if ((obj->transactionState != TSTATE_ENTER_WRITEMUTEX)
+		&& (0 == obj->cacheFullFlags)
+	) {
 		Trc_SHR_API_j9shr_nextSharedClassForCompare_NotStarted_Event(currentThread, obj->transactionState);
 		Trc_SHR_API_j9shr_nextSharedClassForCompare_Exit(currentThread);
 		return NULL;

@@ -3022,6 +3022,7 @@ initializeSharedAPI(J9JavaVM *vm)
 	scapi->classStoreTransaction_updateSharedClassSize = j9shr_classStoreTransaction_updateSharedClassSize;
 	scapi->classStoreTransaction_isOK = j9shr_classStoreTransaction_isOK;
 	scapi->classStoreTransaction_hasSharedStringTableLock = j9shr_classStoreTransaction_hasSharedStringTableLock;
+	scapi->classStoreTransaction_updateUnstoredBytes = j9shr_classStoreTransaction_updateUnstoredBytes;
 	/*Set JCL functions*/
 	scapi->jclUpdateROMClassMetaData = j9shr_jclUpdateROMClassMetaData;
 	/*Set up functions for finishing share classes initialization*/
