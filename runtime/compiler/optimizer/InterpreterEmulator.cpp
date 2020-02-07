@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -189,10 +189,21 @@ InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
          popn(2);
          pushUnknownOperand();
          break;
-      case J9BCiload0:
-      case J9BCiload1:
-      case J9BCiload2:
-      case J9BCiload3:
+      case J9BCistore: case J9BClstore: case J9BCfstore: case J9BCdstore: case J9BCastore:
+      case J9BCistorew: case J9BClstorew: case J9BCfstorew: case J9BCdstorew: case J9BCastorew:
+      case J9BCistore0: case J9BCistore1: case J9BCistore2: case J9BCistore3:
+      case J9BClstore0: case J9BClstore1: case J9BClstore2: case J9BClstore3:
+      case J9BCfstore0: case J9BCfstore1: case J9BCfstore2: case J9BCfstore3:
+      case J9BCdstore0: case J9BCdstore1: case J9BCdstore2: case J9BCdstore3:
+      case J9BCastore0: case J9BCastore1: case J9BCastore2: case J9BCastore3:
+         pop();
+         break;
+      case J9BCiload0: case J9BCiload1: case J9BCiload2: case J9BCiload3:
+      case J9BCdload0: case J9BCdload1: case J9BCdload2: case J9BCdload3:
+      case J9BClload0: case J9BClload1: case J9BClload2: case J9BClload3:
+      case J9BCfload0: case J9BCfload1: case J9BCfload2: case J9BCfload3:
+      case J9BCiloadw: case J9BClloadw: case J9BCfloadw: case J9BCdloadw:
+      case J9BCiload:  case J9BClload:  case J9BCfload:  case J9BCdload:
       case J9BCgetstatic:
          pushUnknownOperand();
          break;
