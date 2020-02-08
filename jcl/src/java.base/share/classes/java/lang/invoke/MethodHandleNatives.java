@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
- * Copyright (c) 2017, 2018 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -43,6 +43,20 @@ class MethodHandleNatives {
 		linkageErr.initCause(th == null ? roe : th);
 		return linkageErr;
 	}
+
+/*[IF Java14]*/
+	static long objectFieldOffset(MemberName memberName) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	static long staticFieldOffset(MemberName memberName) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+
+	static Object staticFieldBase(MemberName memberName) {
+		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+	}
+/*[ENDIF] Java14 */
 }
 
-/*[ENDIF]*/
+/*[ENDIF] Java11 */
