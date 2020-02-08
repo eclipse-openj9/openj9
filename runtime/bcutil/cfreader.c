@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -144,6 +144,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 	J9CfrTypeAnnotation *typeAnnotations = NULL;
 	J9CfrAttributeStackMap *stackMap;
 	J9CfrAttributeBootstrapMethods *bootstrapMethods;
+	J9CfrAttributeRecord *record;
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	J9CfrAttributeNestHost *nestHost;
 	J9CfrAttributeNestMembers *nestMembers;
@@ -164,6 +165,7 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 	BOOLEAN invisibleAnnotationsRead  = FALSE;
 	BOOLEAN visibleParameterAnnotationsRead  = FALSE;
 	BOOLEAN invisibleParameterAnnotationsRead  = FALSE;
+	BOOLEAN recordAttributeRead = FALSE;
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 	BOOLEAN nestAttributeRead = FALSE;
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
@@ -765,6 +767,41 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			memcpy (stackMap->entries, index, stackMap->mapLength);
 			index += stackMap->mapLength;
 			
+			break;
+		case CFR_ATTRIBUTE_Record:
+			/* JVMS 4.7.30: There may be at most one Record attribute in the attributes table of a ClassFile structure. */
+			if (recordAttributeRead){
+				errorCode = J9NLS_CFR_ERR_MULTIPLE_RECORD_ATTRIBUTES__ID;
+				offset = address;
+				goto _errorFound;
+			}
+			recordAttributeRead = TRUE;
+
+			if (!ALLOC(record, J9CfrAttributeRecord)) {
+				return -2;
+			}
+			attrib = (J9CfrAttribute*)record;
+
+			CHECK_EOF(2);
+			NEXT_U16(record->numberOfRecordComponents, index);
+
+			if (!ALLOC_ARRAY(record->recordComponents, record->numberOfRecordComponents, J9CfrRecordComponent)) {
+				return -2;
+			}
+			for (j = 0; j < record->numberOfRecordComponents; j++) {
+				CHECK_EOF(6);
+				J9CfrRecordComponent* recordComponent = &(record->recordComponents[j]);
+				NEXT_U16(recordComponent->nameIndex, index);
+				NEXT_U16(recordComponent->descriptorIndex, index);
+				NEXT_U16(recordComponent->attributesCount, index);
+				if (!ALLOC_ARRAY(recordComponent->attributes, recordComponent->attributesCount, J9CfrAttribute *)) {
+					return -2;
+				}
+				result = readAttributes(classfile, &(recordComponent->attributes), recordComponent->attributesCount, data, dataEnd, segment, segmentEnd, &index, &freePointer, flags, NULL);
+				if (result != 0) {
+					return result;
+				}
+			}
 			break;
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 		case CFR_ATTRIBUTE_NestHost:
@@ -2123,6 +2160,50 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 
 			break;
 
+		case CFR_ATTRIBUTE_Record:
+			/* record classes cannot be abstract */
+			if (J9_ARE_ANY_BITS_SET(classfile->accessFlags, CFR_ACC_ABSTRACT)) {
+				errorCode = J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT__ID;
+				goto _errorFound;
+			}
+
+			value = ((J9CfrAttributeRecord*)attrib)->nameIndex;
+			if ((0 == value) || (value > cpCount)) {
+				errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
+				goto _errorFound;
+			}
+			if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Utf8)) {
+				errorCode = J9NLS_CFR_ERR_RECORD_NAME_NOT_UTF8__ID;
+				goto _errorFound;
+			}
+
+			for (j = 0; j < ((J9CfrAttributeRecord*)attrib)->numberOfRecordComponents; j++) {
+				J9CfrRecordComponent* recordComponent = &(((J9CfrAttributeRecord*)attrib)->recordComponents[j]);
+				value = recordComponent->nameIndex;
+				if ((0 == value) || (value > cpCount)) {
+					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
+					goto _errorFound;
+				}
+				if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Utf8)) {
+					errorCode = J9NLS_CFR_ERR_RECORD_COMPONENT_NAME_NOT_UTF8__ID;
+					goto _errorFound;
+				}
+				value = recordComponent->descriptorIndex;
+				if ((0 == value) || (value > cpCount)) {
+					errorCode = J9NLS_CFR_ERR_BAD_INDEX__ID;
+					goto _errorFound;
+				}
+				if ((0 != value) && (cpBase[value].tag != CFR_CONSTANT_Utf8)) {
+					errorCode = J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8__ID;
+					goto _errorFound;
+				}
+				if (checkAttributes(classfile, recordComponent->attributes, recordComponent->attributesCount, segment, -1, code->codeLength, flags)) {
+					return -1;
+				}
+			}
+
+			break;
+
 #if defined(J9VM_OPT_VALHALLA_NESTMATES)
 		case CFR_ATTRIBUTE_NestHost:
 			value = ((J9CfrAttributeNestHost*)attrib)->hostClassIndex;
@@ -3371,6 +3452,5 @@ sortMethodIndex(J9CfrConstantPoolInfo* constantPool, J9CfrMethod *list, IDATA st
 		}
 	}
 }
-
 
 
