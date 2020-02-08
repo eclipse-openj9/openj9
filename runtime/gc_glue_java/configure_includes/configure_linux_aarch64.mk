@@ -39,9 +39,7 @@ CONFIGURE_ARGS += \
 
 ifneq (,$(findstring _cmprssptrs,$(SPEC)))
 	CONFIGURE_ARGS += \
-		--enable-OMR_GC_COMPRESSED_POINTERS \
-		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-		--enable-OMR_INTERP_SMALL_MONITOR_SLOT
+		--enable-OMR_GC_COMPRESSED_POINTERS
 endif
 
 ifneq (,$(findstring _cross,$(SPEC)))

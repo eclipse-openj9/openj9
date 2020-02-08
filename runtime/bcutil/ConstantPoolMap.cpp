@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -300,6 +300,20 @@ ConstantPoolMap::computeConstantPoolMapAndSizes()
 					Trc_BCU_Assert_ShouldNeverHappen();
 					break;
 			}
+		}
+	}
+
+	J9ClassPatchMap *map = _context->patchMap();
+
+	/**
+	 * If a valid patchMap structure is passed, this class requires ConstantPool patching.
+	 * Record the index mapping from Classfile to J9Class constantpool to allow patching
+	 * the RAM CP after it is created by VM.
+	 */
+	if (map != NULL) {
+		Trc_BCU_Assert_Equals(map->size, cfrCPCount);
+		for (U_16 cfrCPIndex = 0; cfrCPIndex < cfrCPCount; cfrCPIndex++) {
+			map->indexMap[cfrCPIndex] = _constantPoolEntries[cfrCPIndex].romCPIndex;
 		}
 	}
 }

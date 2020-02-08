@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -305,6 +305,7 @@ ROMClassWriter::ROMClassWriter(BufferManager *bufferManager, ClassFileOracle *cl
 	_intermediateClassDataSRPKey(srpKeyProducer->generateKey()),
 	_annotationInfoClassSRPKey(srpKeyProducer->generateKey()),
 	_typeAnnotationInfoSRPKey(srpKeyProducer->generateKey()),
+	_recordInfoSRPKey(srpKeyProducer->generateKey()),
 	_callSiteDataSRPKey(srpKeyProducer->generateKey()),
 	_staticSplitTableSRPKey(srpKeyProducer->generateKey()),
 	_specialSplitTableSRPKey(srpKeyProducer->generateKey()),
@@ -425,6 +426,7 @@ ROMClassWriter::writeROMClass(Cursor *cursor,
 	writeConstantPoolShapeDescriptions(cursor, markAndCountOnly);
 	writeAnnotationInfo(cursor);
 	writeSourceDebugExtension(cursor);
+	writeRecordComponents(cursor, markAndCountOnly);
 	writeOptionalInfo(cursor);
 	writeCallSiteData(cursor, markAndCountOnly);
 	writeVarHandleMethodTypeLookupTable(cursor, markAndCountOnly);
@@ -1655,6 +1657,83 @@ ROMClassWriter::writeSourceDebugExtension(Cursor *cursor)
 	}
 }
 
+/* 
+ * Records in the ROM class has the following layout:
+ * 4 bytes for the number of record components in the class
+ * for each record component:
+ * 	J9ROMRecordComponentShape
+ * 	4 bytes SRP to record component's generic signature if the component has a signature annotation.
+ * 	4 bytes length of annotation data in bytes, followed by annotation data. Omitted if there are no annotations.
+ * 	4 bytes length of type annotation data in bytes followed by type annotation data.  Omitted if there are no type annotations.
+ * 
+ * For example, if a record component has a generic signature annotation and no other annotations the record components shape will look like:
+ *  J9ROMRecordComponentShape
+ *  4 bytes SRP
+ */
+void
+ROMClassWriter::writeRecordComponents(Cursor *cursor, bool markAndCountOnly)
+{
+	if (! _classFileOracle->isRecord()) {
+		return;
+	}
+
+	cursor->mark(_recordInfoSRPKey);
+
+	/* number of record components */
+	if (markAndCountOnly) {
+		cursor->skip(sizeof(U_32));
+	} else {
+		cursor->writeU32(_classFileOracle->getRecordComponentCount(), Cursor::GENERIC);
+	}
+
+	ClassFileOracle::RecordComponentIterator iterator = _classFileOracle->getRecordComponentIterator();
+	while ( iterator.isNotDone() ) {
+		if (markAndCountOnly) {
+			cursor->skip(sizeof(J9ROMRecordComponentShape));
+		} else {
+			CheckSize _(cursor, sizeof(J9ROMRecordComponentShape));
+
+			/* record component name and descriptor */
+			cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(iterator.getNameIndex()), Cursor::SRP_TO_UTF8);
+			cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(iterator.getDescriptorIndex()), Cursor::SRP_TO_UTF8);
+
+			/* attribute flags */
+			U_32 attributeFlags = 0;
+			if (iterator.hasGenericSignature()) {
+				attributeFlags |= J9RecordComponentFlagHasGenericSignature;
+			}
+			if (iterator.hasAnnotation()) {
+				attributeFlags |= J9RecordComponentFlagHasAnnotations;
+			}
+			if (iterator.hasTypeAnnotation()) {
+				attributeFlags |= J9RecordComponentFlagHasTypeAnnotations;
+			}
+			cursor->writeU32(attributeFlags, Cursor::GENERIC);
+		}
+
+		/* write optional attributes */
+		if (iterator.hasGenericSignature()) {
+			if (markAndCountOnly) {
+				cursor->skip(sizeof(J9SRP));
+			} else {
+				cursor->writeSRP(_srpKeyProducer->mapCfrConstantPoolIndexToKey(iterator.getGenericSignatureIndex()), Cursor::SRP_TO_UTF8);
+			}
+		}
+		if (iterator.hasAnnotation()) {
+			AnnotationWriter annotationWriter(cursor, _constantPoolMap, _classFileOracle);
+			_classFileOracle->recordComponentAnnotationDo(iterator.getRecordComponentIndex(), &annotationWriter, &annotationWriter, &annotationWriter);
+			cursor->padToAlignment(sizeof(U_32), Cursor::GENERIC);
+		}
+		if (iterator.hasTypeAnnotation()) {
+			AnnotationWriter annotationWriter(cursor, _constantPoolMap, _classFileOracle);
+			_classFileOracle->recordComponentTypeAnnotationDo(iterator.getRecordComponentIndex(), &annotationWriter, &annotationWriter, &annotationWriter);
+			cursor->padToAlignment(sizeof(U_32), Cursor::GENERIC);
+		}
+
+		iterator.next();
+	}
+}
+
 void
 ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 {
@@ -1689,6 +1768,7 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 	 * SRP to 'SRP' (self) if OPTINFO_VERIFY_EXCLUDE.. pretty much a flag, leaving an empty slot.
 	 * SRP to class annotations
 	 * SRP to class Type Annotations
+	 * SRP to record class component attributes
 	 */
 	cursor->mark(_optionalInfoSRPKey);
 
@@ -1723,6 +1803,9 @@ ROMClassWriter::writeOptionalInfo(Cursor *cursor)
 	}
 	if (_classFileOracle->hasTypeAnnotations()) {
 		cursor->writeSRP(_typeAnnotationInfoSRPKey, Cursor::SRP_TO_GENERIC);
+	}
+	if (_classFileOracle->isRecord()) {
+		cursor->writeSRP(_recordInfoSRPKey, Cursor::SRP_TO_GENERIC);
 	}
 }
 

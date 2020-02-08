@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2800,6 +2800,16 @@ done:
 done:
 		return rc;
 	}
+
+	/* java.lang.Class: public native boolean isRecord(); */
+	VMINLINE VM_BytecodeAction
+	inlClassIsRecord(REGISTER_ARGS_LIST)
+	{
+		J9Class *receiverClazz = J9VM_J9CLASS_FROM_HEAPCLASS(_currentThread, *(j9object_t*)_sp);
+		returnSingleFromINL(REGISTER_ARGS, (J9ROMCLASS_IS_RECORD(receiverClazz->romClass) ? 1 : 0), 1);
+		return EXECUTE_BYTECODE;
+	}
+
 
 	/* java.lang.System: public static native void arraycopy(Object src, int srcPos, Object dest, int destPos, int length); */
 	VMINLINE VM_BytecodeAction
@@ -8988,6 +8998,7 @@ public:
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_INL_THREAD_ON_SPIN_WAIT),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_OUT_OF_LINE_INL),
 		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_CLASS_ARRAY_TYPE_IMPL),
+		JUMP_TABLE_ENTRY(J9_BCLOOP_SEND_TARGET_CLASS_IS_RECORD),
 	};
 #endif /* !defined(USE_COMPUTED_GOTO) */
 
@@ -9547,6 +9558,8 @@ runMethod: {
 		PERFORM_ACTION(outOfLineINL(REGISTER_ARGS));
 	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_CLASS_ARRAY_TYPE_IMPL):
 		PERFORM_ACTION(inlClassArrayTypeImpl(REGISTER_ARGS));
+	JUMP_TARGET(J9_BCLOOP_SEND_TARGET_CLASS_IS_RECORD):
+		PERFORM_ACTION(inlClassIsRecord(REGISTER_ARGS));
 #if !defined(USE_COMPUTED_GOTO)
 	default:
 		Assert_VM_unreachable();

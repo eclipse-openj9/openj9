@@ -1,7 +1,7 @@
 /*[INCLUDE-IF Sidecar18-SE-OpenJ9]*/
 
 /*******************************************************************************
- * Copyright (c) 2017, 2017 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -108,8 +108,13 @@ class LambdaForm {
 	}
 	
 	enum BasicType {
-		L_TYPE;
-		
+		L_TYPE,
+		I_TYPE,
+		J_TYPE,
+		F_TYPE,
+		D_TYPE,
+		V_TYPE;
+
 		static BasicType basicType(Class<?> cls) {
 			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
 		}

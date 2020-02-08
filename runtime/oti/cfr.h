@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,6 +71,13 @@ typedef struct J9CfrLocalVariableTypeTableEntry {
     U_16 signatureIndex;
     U_16 index;
 } J9CfrLocalVariableTypeTableEntry;
+
+typedef struct J9CfrRecordComponent {
+    U_16 nameIndex;
+    U_16 descriptorIndex;
+    U_16 attributesCount;
+    struct J9CfrAttribute** attributes;
+} J9CfrRecordComponent;
 
 typedef struct J9CfrAnnotationElement {
     U_8 tag;
@@ -233,6 +240,7 @@ typedef struct J9CfrAttribute {
 #define CFR_ATTRIBUTE_MethodParameters 24
 #define CFR_ATTRIBUTE_NestMembers 25
 #define CFR_ATTRIBUTE_NestHost 26
+#define CFR_ATTRIBUTE_Record 27
 #define CFR_ATTRIBUTE_StrippedLocalVariableTypeTable  122
 #define CFR_ATTRIBUTE_StrippedSourceDebugExtension  123
 #define CFR_ATTRIBUTE_StrippedInnerClasses  124
@@ -504,6 +512,15 @@ typedef struct J9CfrAttributeUnknown {
     UDATA romAddress;
     U_8* value;
 } J9CfrAttributeUnknown;
+
+typedef struct J9CfrAttributeRecord {
+    U_8 tag;
+    U_16 nameIndex;
+    U_32 length;
+    UDATA romAddress;
+    U_16 numberOfRecordComponents;
+    struct J9CfrRecordComponent* recordComponents;
+} J9CfrAttributeRecord;
 
 /* @ddr_namespace: map_to_type=J9CfrConstantPoolInfo */
 

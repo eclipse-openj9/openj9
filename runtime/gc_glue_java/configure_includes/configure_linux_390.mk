@@ -39,8 +39,6 @@ ifeq (linux_390-64_cmprssptrs_codecov, $(SPEC))
 		--enable-OMR_ENV_DATA64 \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_GC_COMPRESSED_POINTERS \
-		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-		--enable-OMR_INTERP_SMALL_MONITOR_SLOT \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
 endif
 
@@ -53,8 +51,6 @@ ifeq (linux_390-64_cmprssptrs, $(SPEC))
 		--enable-OMR_GC_COMPRESSED_POINTERS \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
 		--enable-OMR_GC_IDLE_HEAP_MANAGER \
-		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-		--enable-OMR_INTERP_SMALL_MONITOR_SLOT \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
 endif
 
@@ -65,8 +61,6 @@ ifeq (linux_390-64_cmprssptrs_purec, $(SPEC))
 		--enable-OMR_ENV_DATA64 \
 		--enable-OMR_GC_DOUBLE_MAP_ARRAYLETS \
 		--enable-OMR_GC_COMPRESSED_POINTERS \
-		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-		--enable-OMR_INTERP_SMALL_MONITOR_SLOT \
 		--enable-OMR_PORT_CAN_RESERVE_SPECIFIC_ADDRESS
 endif
 
