@@ -37,9 +37,7 @@ CONFIGURE_ARGS += \
 
 ifeq (osx_x86-64_cmprssptrs, $(SPEC))
 	CONFIGURE_ARGS += \
-		--enable-OMR_GC_COMPRESSED_POINTERS \
-		--enable-OMR_INTERP_COMPRESSED_OBJECT_HEADER \
-		--enable-OMR_INTERP_SMALL_MONITOR_SLOT                
+		--enable-OMR_GC_COMPRESSED_POINTERS
 endif
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.dylib arlibext=.a objext=.o
