@@ -1825,6 +1825,7 @@ typedef struct J9TranslationLocalBuffer {
 	IDATA entryIndex;
 	I_32 loadLocationType;
 	struct J9ClassPathEntry* cpEntryUsed;
+	struct J9ClassPatchMap* patchMap;
 } J9TranslationLocalBuffer;
 
 typedef struct J9TranslationBufferSet {
@@ -1957,6 +1958,11 @@ typedef struct J9ClassPathEntry {
 	U_8 paddingToPowerOf2[12];
 #endif
 } J9ClassPathEntry;
+
+typedef struct J9ClassPatchMap {
+	U_16 size;
+	U_16* indexMap;
+} J9ClassPatchMap;
 
 #define CPE_STATUS_ASSUME_JXE  					0x1
 #define CPE_STATUS_JXE_MISSING_ROM_CLASSES  	0x2
