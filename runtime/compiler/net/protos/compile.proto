@@ -222,7 +222,7 @@ enum MessageType
    VM_createMethodHandleArchetypeSpecimen = 295;
    /* VM_getSystemClassLoader = 296; */
    VM_instanceOfOrCheckCast = 297;
-   VM_getNewArrayTypeFromClass = 298;
+   /* VM_getNewArrayTypeFromClass = 298; */
    VM_getResolvedMethodsAndMirror = 300;
    VM_getVMInfo = 301;
    VM_isAnonymousClass = 302;
