@@ -19,7 +19,8 @@
  *
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
-/* ANSI-C code produced by gperf version 3.1 */
+
+/* ANSI-C code produced by gperf version 3.0.4 */
 /* Command-line: gperf -CD -t --output-file=attrlookup.h attrlookup.gperf  */
 /* Computed positions: -k'2' */
 
@@ -47,7 +48,7 @@
       && ('w' == 119) && ('x' == 120) && ('y' == 121) && ('z' == 122) \
       && ('{' == 123) && ('|' == 124) && ('}' == 125) && ('~' == 126))
 /* The character set is not based on ISO-646.  */
-#error "gperf generated tables don't work with this execution character set. Please report a bug to <bug-gperf@gnu.org>."
+#error "gperf generated tables don't work with this execution character set. Please report a bug to <bug-gnu-gperf@gnu.org>."
 #endif
 
 #line 39 "attrlookup.gperf"
@@ -73,7 +74,7 @@ inline
 #endif
 #endif
 static unsigned int
-attributeHash (register const char *str, register size_t len)
+attributeHash (register const char *str, register unsigned int len)
 {
   static const unsigned char asso_values[] =
     {
@@ -107,8 +108,14 @@ attributeHash (register const char *str, register size_t len)
   return len + asso_values[(unsigned char)str[1]];
 }
 
+#ifdef __GNUC__
+__inline
+#if defined __GNUC_STDC_INLINE__ || defined __GNUC_GNU_INLINE__
+__attribute__ ((__gnu_inline__))
+#endif
+#endif
 const struct AttribType *
-lookupKnownAttribute (register const char *str, register size_t len)
+lookupKnownAttribute (register const char *str, register unsigned int len)
 {
   static const struct AttribType wordlist[] =
     {
@@ -177,9 +184,9 @@ lookupKnownAttribute (register const char *str, register size_t len)
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
     {
-      register unsigned int key = attributeHash (str, len);
+      register int key = attributeHash (str, len);
 
-      if (key <= MAX_HASH_VALUE)
+      if (key <= MAX_HASH_VALUE && key >= 0)
         {
           register int index = lookup[key];
 
