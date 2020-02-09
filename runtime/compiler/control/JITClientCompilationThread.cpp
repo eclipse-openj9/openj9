@@ -596,12 +596,6 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->classInitIsFinished(clazz));
          }
          break;
-      case MessageType::VM_getNewArrayTypeFromClass:
-         {
-         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->getNewArrayTypeFromClass(clazz));
-         }
-         break;
       case MessageType::VM_getClassFromNewArrayType:
          {
          int32_t index = std::get<0>(client->getRecvData<int32_t>());
