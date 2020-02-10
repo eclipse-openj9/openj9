@@ -1953,8 +1953,8 @@ void TR_EscapeAnalysis::checkDefsAndUses()
 
             if ((baseChild && (baseChild->getOpCodeValue() == TR::loadaddr) &&
                 baseChild->getSymbolReference()->getSymbol()->isAuto() &&
-                baseChild->getSymbolReference()->getSymbol()->isLocalObject() &&
-                !baseChild->cannotTrackLocalUses()))
+                baseChild->getSymbolReference()->getSymbol()->isLocalObject())
+               )
                {
                baseChildVN = _valueNumberInfo->getValueNumber(baseChild);
                if (node->getOpCodeValue() == TR::arraycopy)
@@ -1967,10 +1967,19 @@ void TR_EscapeAnalysis::checkDefsAndUses()
                   }
                else
                   {
-                  storeOfObjectIntoField = true;
-                  storeIntoOtherLocalObject = true;
-                  if (trace())
-                     traceMsg(comp(), "Reached 1 with baseChild %p VN %d\n", baseChild, baseChildVN);
+                  if (!baseChild->cannotTrackLocalUses())
+                     {
+                     storeOfObjectIntoField = true;
+                     storeIntoOtherLocalObject = true;
+                     if (trace())
+                        traceMsg(comp(), "Reached 1 with baseChild %p VN %d\n", baseChild, baseChildVN);
+                     }
+                  else
+                     {
+                     _notOptimizableLocalObjectsValueNumbers->set(baseChildVN);
+                     _notOptimizableLocalStringObjectsValueNumbers->set(baseChildVN);
+                     storeOfObjectIntoField = false;
+                     }
                   }
                }
             else if (baseChild && _useDefInfo)
