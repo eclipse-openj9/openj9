@@ -71,7 +71,8 @@ public:
 		_doDebugCompare(false),
 		_existingRomMethod(NULL),
 		_reusingIntermediateClassData(false),
-		_creatingIntermediateROMClass(false)
+		_creatingIntermediateROMClass(false),
+		_patchMap(NULL)
 	{
 	}
 
@@ -107,7 +108,8 @@ public:
 		_doDebugCompare(false),
 		_existingRomMethod(NULL),
 		_reusingIntermediateClassData(false),
-		_creatingIntermediateROMClass(false)
+		_creatingIntermediateROMClass(false),
+		_patchMap(NULL)
 	{
 	}
 

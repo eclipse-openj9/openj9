@@ -789,8 +789,8 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 				return -2;
 			}
 			for (j = 0; j < record->numberOfRecordComponents; j++) {
-				CHECK_EOF(6);
 				J9CfrRecordComponent* recordComponent = &(record->recordComponents[j]);
+				CHECK_EOF(6);
 				NEXT_U16(recordComponent->nameIndex, index);
 				NEXT_U16(recordComponent->descriptorIndex, index);
 				NEXT_U16(recordComponent->attributesCount, index);
