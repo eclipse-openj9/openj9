@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar17]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2019 IBM Corp. and others
+ * Copyright (c) 2007, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -40,6 +40,9 @@ import java.net.URI;
 import java.security.ProtectionDomain;
 import java.util.Iterator;
 import java.util.List;
+/*[IF Java15]*/
+import java.util.Set;
+/*[ENDIF] Java15 */
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 /*[IF Java11]*/
@@ -336,9 +339,15 @@ final class Access implements JavaLangAccess {
 		return clz.getDeclaredPublicMethods(name, types);
 	}
 
-	public void addOpensToAllUnnamed(Module fromModule, Iterator<String> pkgs) {
-		fromModule.implAddOpensToAllUnnamed(pkgs);
+	/*[IF Java15]*/
+	public void addOpensToAllUnnamed(Module fromModule, Set<String> concealedPackages, Set<String> exportedPackages) {
+		fromModule.implAddOpensToAllUnnamed(concealedPackages, exportedPackages);
 	}
+	/*[ELSE] Java15 */
+	public void addOpensToAllUnnamed(Module fromModule, Iterator<String> packages) {
+		fromModule.implAddOpensToAllUnnamed(packages);
+	}
+	/*[ENDIF] Java15 */
 
 	public boolean isReflectivelyOpened(Module fromModule, String pkg, Module toModule) {
 		return fromModule.isReflectivelyOpened(pkg, toModule);
