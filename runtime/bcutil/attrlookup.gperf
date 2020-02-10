@@ -24,7 +24,7 @@
  * This file is the input to the gperf utility for generating a perfect
  * hash table of attribute names, which is used by attributeTagFor().
  *
- * To generate attrlookup.h, use the following command-line:
+ * To generate attrlookup.h, use the following command-line with gperf 3.0.4:
  *
  *   gperf -CD -t --output-file=attrlookup.h attrlookup.gperf
  *
