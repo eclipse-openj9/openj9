@@ -32,10 +32,6 @@ openjdk:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk11.git'
       branch: 'openj9'
-  13:
-    default:
-      repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk13.git'
-      branch: 'openj9'
   14:
     default:
       repoUrl: 'https://github.com/ibmruntimes/openj9-openjdk-jdk14.git'
@@ -79,7 +75,6 @@ build_discarder:
     OMR: 20
     OpenJDK8: 20
     OpenJDK11: 20
-    OpenJDK13: 20
     OpenJDK14: 20
     OpenJDK: 20
     Personal: 50
@@ -98,7 +93,6 @@ largeheap:
 cmake:
   extra_configure_options:
     all: '--with-cmake'
-    13: '--disable-ddr'
     14: '--disable-ddr'
     next: '--disable-ddr'
   extra_make_options: 'EXTRA_CMAKE_ARGS="-DOMR_WARNINGS_AS_ERRORS=FALSE"'
@@ -121,6 +115,11 @@ openssl:
   extra_getsource_options: '--openssl-version=1.1.1d'
   extra_configure_options: '--with-openssl=fetched'
 #========================================#
+# OpenSSL Bundling
+#========================================#
+openssl_bundle:
+  extra_configure_options: --enable-openssl-bundling
+#========================================#
 # Freemarker
 #========================================#
 freemarker:
@@ -131,14 +130,24 @@ freemarker:
 openjdk_reference_repo:
   openjdk_reference_repo: '/home/jenkins/openjdk_cache'
 #========================================#
+# Cuda
+#========================================#
+cuda:
+  extra_configure_options: '--enable-cuda'
+#========================================#
+# Cuda with version
+#========================================#
+cuda_version:
+  extends: ['cuda']
+  extra_configure_options: '--with-cuda=/usr/local/cuda-9.0'
+#========================================#
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
 ppc64le_linux:
-  extends: ['freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['freemarker', 'openjdk_reference_repo', 'openssl', 'cuda_version']
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
-    13: '/usr/lib/jvm/adoptojdk-java-12'
     14: '/usr/lib/jvm/adoptojdk-java-13'
     next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
@@ -148,7 +157,6 @@ ppc64le_linux:
   node_labels:
     build: 'ci.role.build && hw.arch.ppc64le && sw.os.ubuntu'
   extra_configure_options:
-    all: '--enable-cuda --with-cuda=/usr/local/cuda-9.0'
     8: '--enable-jitserver'
     11: '--enable-jitserver'
   build_env:
@@ -178,7 +186,6 @@ s390x_linux:
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
-    13: '/usr/lib/jvm/adoptojdk-java-12'
     14: '/usr/lib/jvm/adoptojdk-java-13'
     next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
@@ -215,7 +222,6 @@ ppc64_aix:
   boot_jdk:
     8: '/usr/java7'
     11: '/usr/java11_64'
-    13: '/usr/java12_64'
     14: '/usr/java13_64'
     next: '/usr/java13_64'
   release:
@@ -228,14 +234,12 @@ ppc64_aix:
     all: '--with-cups-include=/opt/freeware/include'
     8: ' --disable-ccache'
     11: '--disable-warnings-as-errors'
-    13: '--disable-warnings-as-errors'
     14: '--disable-warnings-as-errors'
     next: '--disable-warnings-as-errors'
   build_env:
     vars:
       8: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
       11: 'PATH+XLC=/opt/IBM/xlC/13.1.3/bin:/opt/IBM/xlc/13.1.3/bin'
-      13: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       14: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
   excluded_tests:
@@ -247,11 +251,10 @@ ppc64_aix:
 # Linux x86 64bits Compressed Pointers
 #========================================#
 x86-64_linux:
-  extends: ['freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['freemarker', 'openjdk_reference_repo', 'openssl', 'cuda_version']
   boot_jdk:
     8: '/usr/lib/jvm/jdk-7'
     11: '/usr/lib/jvm/jdk-11'
-    13: '/usr/lib/jvm/adoptojdk-java-12'
     14: '/usr/lib/jvm/adoptojdk-java-13'
     next: '/usr/lib/jvm/adoptojdk-java-13'
   release:
@@ -261,7 +264,6 @@ x86-64_linux:
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.cent.6'
   extra_configure_options:
-    all: '--enable-cuda --with-cuda=/usr/local/cuda-9.0'
     8: '--enable-jitserver'
     11: '--enable-jitserver'
   build_env:
@@ -309,10 +311,10 @@ aarch64_linux_xl:
 # Windows x86 64bits Compressed Pointers
 #========================================#
 x86-64_windows:
+  extends: ['openjdk_reference_repo', 'openssl_bundle', 'cuda']
   boot_jdk:
     8: '/cygdrive/c/openjdk/jdk7'
     11: '/cygdrive/c/openjdk/jdk11'
-    13: '/cygdrive/c/openjdk/jdk12'
     14: '/cygdrive/c/openjdk/jdk13'
     next: '/cygdrive/c/openjdk/jdk13'
   release:
@@ -320,13 +322,12 @@ x86-64_windows:
     8: 'windows-x86_64-normal-server-release'
     11: 'windows-x86_64-normal-server-release'
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
-  openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
   extra_configure_options:
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-    11: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-    13: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-    14: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
-    next: '--with-toolchain-version=2017 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --enable-openssl-bundling --enable-cuda --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
+    all: '--disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_64 --with-cuda="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v9.0"'
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib64'
+    11: '--with-toolchain-version=2017'
+    14: '--with-toolchain-version=2017'
+    next: '--with-toolchain-version=2017'
   node_labels:
     build: 'ci.role.build && hw.arch.x86 && sw.os.windows'
   build_env:
@@ -343,14 +344,14 @@ x86-64_windows_xl:
 # Windows x86 32bits
 #========================================#
 x86-32_windows:
+  extends: ['openjdk_reference_repo', 'openssl_bundle']
   boot_jdk:
     8: '/cygdrive/c/openjdk/jdk7'
   release:
     8: 'windows-x86-normal-server-release'
   extra_configure_options:
-    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib32 --with-target-bits=32 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_32 --enable-openssl-bundling'
+    8: '--with-freetype-include=/cygdrive/c/openjdk/freetype-2.5.3/include --with-freetype-lib=/cygdrive/c/openjdk/freetype-2.5.3/lib32 --with-target-bits=32 --disable-ccache --with-openssl=/cygdrive/c/openjdk/OpenSSL-1.1.1d-x86_32'
   freemarker: '/cygdrive/c/openjdk/freemarker.jar'
-  openjdk_reference_repo: '/cygdrive/c/openjdk/openjdk_cache'
   node_labels:
     build:
       8: 'ci.role.build && hw.arch.x86 && sw.os.windows'
@@ -364,11 +365,10 @@ x86-32_windows:
 # OSX x86 64bits Compressed Pointers
 #========================================#
 x86-64_mac:
-  extends: ['openssl']
+  extends: ['openssl', 'openssl_bundle']
   boot_jdk:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'
-    13: '/Users/jenkins/bootjdks/adoptojdk-java-12'
     14: '/Users/jenkins/bootjdks/adoptojdk-java-13'
     next: '/Users/jenkins/bootjdks/adoptojdk-java-13'
   release:
@@ -376,7 +376,6 @@ x86-64_mac:
     8: 'macosx-x86_64-normal-server-release'
     11: 'macosx-x86_64-normal-server-release'
   extra_configure_options:
-    all: '--enable-openssl-bundling'
     8: '--with-xcode-path=/Users/jenkins/Xcode4/Xcode.app --with-openj9-cc=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang --with-openj9-cxx=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ --with-openj9-developer-dir=/Users/jenkins/Xcode7/Xcode.app/Contents/Developer'
   freemarker: '/Users/jenkins/freemarker.jar'
   openjdk_reference_repo: '/Users/jenkins/openjdk_cache'
