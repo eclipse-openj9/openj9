@@ -4179,6 +4179,13 @@ void TR_ResolvedJ9Method::construct()
       {  TR::unknownMethod},
       };
 
+   static X JavaUtilRegexMatcherMethods [] =
+      {
+      {x(TR::java_util_regex_Matcher_init, "<init>", "(Ljava/util/regex/Pattern;Ljava/lang/CharSequence;)V")},
+      {x(TR::java_util_regex_Matcher_usePattern, "usePattern", "(Ljava/util/regex/Pattern;)Ljava/util/regex/Matcher;")},
+      {TR::unknownMethod}
+      };
+
    struct Y { const char * _class; X * _methods; };
 
    /* classXX where XX is the number of characters in the class name */
@@ -4283,6 +4290,7 @@ void TR_ResolvedJ9Method::construct()
       { "java/lang/reflect/Array", ArrayMethods},
       { "java/nio/HeapByteBuffer", HeapByteBufferMethods},
       { "sun/nio/ch/NativeThread", NativeThreadMethods},
+      { "java/util/regex/Matcher", JavaUtilRegexMatcherMethods },
       { 0 }
       };
 

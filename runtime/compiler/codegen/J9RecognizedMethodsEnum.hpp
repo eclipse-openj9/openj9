@@ -268,6 +268,9 @@
    java_util_concurrent_atomic_Fences_orderWrites,
    java_util_concurrent_atomic_Fences_reachabilityFence,
 
+   java_util_regex_Matcher_init,
+   java_util_regex_Matcher_usePattern,
+
    java_util_HashMap_all,
    java_util_ArrayList_all,
    java_util_Hashtable_all,
