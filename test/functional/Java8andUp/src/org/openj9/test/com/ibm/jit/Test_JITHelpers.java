@@ -746,6 +746,7 @@ public class Test_JITHelpers {
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnop"), 16, valueField.get("ab"), 2, 0), 0);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnop"), 16, valueField.get("abc"), 3, 0), 0);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnop"), 16, valueField.get("abcdefghijklmnop"), 16, 0), 0);
+				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnopx"), 16, valueField.get("x"), 1, 0), -1);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnop"), 16, valueField.get("x"), 1, 0), -1);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnop"), 16, valueField.get("x"), 1, 1), -1);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnop"), 16, valueField.get("x"), 1, 7), -1);
