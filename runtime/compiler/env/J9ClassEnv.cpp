@@ -449,7 +449,9 @@ J9::ClassEnv::enumerateFields(TR::Region& region, TR_OpaqueClassBlock * opaqueCl
             dataType = TR::Double;
             break;
             }
-         case 'L': 
+// VALHALLA_TODO:  Might require different TR::DataType for value types (Q)
+         case 'L':
+         case 'Q':
          case '[':
             {
             dataType = TR::Address;
