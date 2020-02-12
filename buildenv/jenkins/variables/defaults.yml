@@ -267,7 +267,7 @@ x86-64_linux:
     8: '--enable-jitserver'
     11: '--enable-jitserver'
   build_env:
-    cmd: 'source /opt/rh/devtoolset-7/enable'
+    cmd: 'source /home/jenkins/set_gcc7.5.0_env'
     vars: 'OPENJ9_JAVA_OPTIONS=-Xdump:system+java:events=systhrow,filter=java/lang/ClassCastException,request=exclusive+prepwalk+preempt'
   excluded_tests:
     11:
