@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -602,6 +602,10 @@ const uint8_t TR_J9ByteCodeIterator::_byteCodeFlags[] =
                              0x01, // J9BCmonitorenter
                              0x01, // J9BCmonitorexit
                              0x00, // J9BCwide
+                             0x01, // J9BCasyncCheck --- TODO: Is this the right size?
+                             0x03, // J9BCdefaultvalue
+                             0x03, // J9BCwithfield
+                             0x01, // J9BCbreakpoint --- TODO: Is this the right size?
                              0x01, // BCunknown
    };
 

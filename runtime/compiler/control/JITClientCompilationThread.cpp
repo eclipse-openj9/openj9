@@ -1835,7 +1835,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          J9Class *clazz = (J9Class *) J9_CLASS_FROM_METHOD(ramMethod);
          if (!definingClass)
             {
-            definingClass = (J9Class *) compInfoPT->reloRuntime()->getClassFromCP(fe->vmThread(), constantPool, cpIndex, isStatic);
+            definingClass = (J9Class *) TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, constantPool, cpIndex, isStatic);
             }
          UDATA *classChain = NULL;
          if (definingClass)
@@ -1866,7 +1866,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          bool result = method->fieldAttributes(comp, cpIndex, &fieldOffset, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
 
          J9ConstantPool *constantPool = (J9ConstantPool *) J9_CP_FROM_METHOD(method->ramMethod());
-         TR_OpaqueClassBlock *definingClass = compInfoPT->reloRuntime()->getClassFromCP(fe->vmThread(), constantPool, cpIndex, false);
+         TR_OpaqueClassBlock *definingClass = TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, constantPool, cpIndex, false);
 
          TR_J9MethodFieldAttributes attrs(static_cast<uintptr_t>(fieldOffset), type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result, definingClass);
 
@@ -1886,7 +1886,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          bool result = method->staticAttributes(comp, cpIndex, &address, &type, &volatileP, &isFinal, &isPrivate, isStore, &unresolvedInCP, needAOTValidation);
 
          J9ConstantPool *constantPool = (J9ConstantPool *) J9_CP_FROM_METHOD(method->ramMethod());
-         TR_OpaqueClassBlock *definingClass = compInfoPT->reloRuntime()->getClassFromCP(fe->vmThread(), constantPool, cpIndex, true);
+         TR_OpaqueClassBlock *definingClass = TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, constantPool, cpIndex, true);
 
          TR_J9MethodFieldAttributes attrs(reinterpret_cast<uintptr_t>(address), type.getDataType(), volatileP, isFinal, isPrivate, unresolvedInCP, result, definingClass);
 
