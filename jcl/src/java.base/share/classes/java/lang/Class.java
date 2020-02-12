@@ -1501,14 +1501,15 @@ Method getMethodHelper(
 			/* if the result is not in the current class, all superinterfaces will need to be searched */
 			result = getDeclaredMethodImpl(name, parameterTypes, strSig, null);
 			if (null == result) {
-				result = getMostSpecificMethodFromAllInterfacesOfCurrentClass(this, null, name, parameterTypes);
+				result = getMostSpecificMethodFromAllInterfacesOfCurrentClass(null, null, name, parameterTypes);
 				candidateFromInterface = true;
 			}
 		} else {
 			result = getMethodImpl(name, parameterTypes, strSig);
 			/* Retrieve the specified method implemented by the superclass from the top to the bottom. */
 			if ((result != null) && result.getDeclaringClass().isInterface()) {
-				result = getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(this, name, parameterTypes);
+				HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache = new HashMap<>(16);
+				result = getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(infoCache, name, parameterTypes);
 				candidateFromInterface = true;
 			}
 		}
@@ -1583,21 +1584,24 @@ Method getMethodHelper(
  * Helper method searches all interfaces implemented by superclasses from the top to the bottom
  * for the most specific method declared in one of these interfaces.
  *
- * @param currentClass the class to be searched, including the current class and all superclasses
+ * @param infoCache
  * @param name the specified method's name
  * @param parameterTypes the types of the arguments of the specified method
  * @return the most specific method selected from all interfaces from each superclass of the current class;
  *         otherwise, return the method of the first interface from the top superclass
  *         if the return types of all specified methods are identical.
  */
-private Method getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(Class<?> currentClass, String name, Class<?>... parameterTypes) {
+private Method getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache, 
+	String name, Class<?>... parameterTypes) 
+{
 	Method candidateMethod = null;
-	if (currentClass != Object.class) {
+	if (this != Object.class) {
 		/* get to the top superclass first. if all return types end up being the same the interfaces from this superclass have priority. */
-		candidateMethod = getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(currentClass.getSuperclass(), name, parameterTypes);
+		Class superclz = getSuperclass();
+		candidateMethod = superclz.getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(infoCache, name, parameterTypes);
 		
 		/* search all interfaces of current class, comparing against result from previous superclass. */
-		candidateMethod = getMostSpecificMethodFromAllInterfacesOfCurrentClass(currentClass, candidateMethod, name, parameterTypes);
+		candidateMethod = getMostSpecificMethodFromAllInterfacesOfCurrentClass(infoCache, candidateMethod, name, parameterTypes);
 	}
 	return candidateMethod;
 }
@@ -1606,16 +1610,21 @@ private Method getMostSpecificMethodFromAllInterfacesOfAllSuperclasses(Class<?> 
  * Helper method searches all interfaces implemented by the current class or interface 
  * for the most specific method declared in one of these interfaces.
  *
- * @param currentClass the class or interface to be searched
+ * @param infoCache
  * @param potentialCandidate potential candidate from superclass, null if currentClass is an interface
  * @param name the specified method's name
  * @param parameterTypes the types of the arguments of the specified method
  * @return the most specific method selected from all interfaces;
  *         otherwise if return types from all qualifying methods are identical, return an arbitrary method.
  */
-private Method getMostSpecificMethodFromAllInterfacesOfCurrentClass(Class<?> currentClass, Method potentialCandidate, String name, Class<?>... parameterTypes) {
+private Method getMostSpecificMethodFromAllInterfacesOfCurrentClass(HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache,
+	Method potentialCandidate, String name, Class<?>... parameterTypes) 
+{
 	Method bestMethod = potentialCandidate;
-	HashMap<Class<?>, HashMap<MethodInfo, MethodInfo>> infoCache = new HashMap<>(16);
+	/* if infoCache is passed in, reuse from superclass */
+	if (null == infoCache) {
+		infoCache = new HashMap<>(16);
+	}
 	HashMap<MethodInfo, MethodInfo> methodCandidates = getMethodSet(infoCache, false, true);
 
 	for (MethodInfo mi : methodCandidates.values()) {
