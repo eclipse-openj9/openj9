@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -103,7 +103,9 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getCollectionUsa
 jobject JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getPeakUsageImpl(JNIEnv *env, jobject beanInstance, jint id, jclass memoryUsage, jobject memUsageConstructor)
 {
-	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
+	J9VMThread *vmThread = (J9VMThread *) env;
+	J9JavaVM *javaVM = vmThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 
 	if (0 != (id & J9VM_MANAGEMENT_POOL_HEAP)) {
@@ -117,12 +119,17 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getPeakUsageImpl
 		J9MemoryPoolData *pool = &mgmt->memoryPools[idx];
 		UDATA currentUsed = 0;
 		UDATA currentCommitted = 0;
-		UDATA totals[J9_GC_MANAGEMENT_MAX_POOL];
-		UDATA frees[J9_GC_MANAGEMENT_MAX_POOL];
 
-		javaVM->memoryManagerFunctions->j9gc_pools_memory(javaVM, (id&J9VM_MANAGEMENT_POOL_HEAP_ID_MASK), &totals[0], &frees[0], FALSE);
-		currentCommitted = totals[idx];
-		currentUsed = totals[idx] - frees[idx];
+		UDATA total = 0;
+		UDATA free = 0;
+		UDATA maximum = 0;
+
+		/* acquire vmAccess for retrieving memoryUsage for the pool in order to guarantee values of memoryUsage are consistent. */
+		vmFuncs->internalEnterVMFromJNI(vmThread);
+		maximum = javaVM->memoryManagerFunctions->j9gc_pool_memoryusage(javaVM, (id&J9VM_MANAGEMENT_POOL_HEAP_ID_MASK), &free, &total);
+		vmFuncs->internalExitVMToJNI(vmThread);
+		currentCommitted = total;
+		currentUsed = total - free;
 
 		omrthread_rwmutex_enter_read(mgmt->managementDataLock);
 		used = (jlong) pool->peakUsed;
@@ -137,10 +144,10 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getPeakUsageImpl
 			if (currentUsed > pool->peakUsed) {
 				pool->peakUsed = currentUsed;
 				pool->peakSize = currentCommitted;
-				pool->peakMax = pool->postCollectionMaxSize;
+				pool->peakMax = maximum;
 				used = currentUsed;
 				committed = currentCommitted;
-				max = pool->peakMax;
+				max = maximum;
 			}
 			omrthread_rwmutex_exit_write(mgmt->managementDataLock);
 		}
@@ -165,13 +172,13 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getPeakUsageImpl
 jobject JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getUsageImpl(JNIEnv *env, jobject beanInstance, jint id, jclass memoryUsage, jobject memUsageConstructor)
 {
-	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
+	J9VMThread *vmThread = (J9VMThread *) env;
+	J9JavaVM *javaVM = vmThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 
 	if (0 != (id & J9VM_MANAGEMENT_POOL_HEAP)) {
 		/* Heap MemoryPool */
-		UDATA totals[J9_GC_MANAGEMENT_MAX_POOL];
-		UDATA frees[J9_GC_MANAGEMENT_MAX_POOL];
 		jlong used = 0;
 		jlong committed = 0;
 		jlong peak = 0;
@@ -181,14 +188,21 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getUsageImpl(JNI
 		UDATA idx = getIndexFromPoolID(mgmt, id);
 		J9MemoryPoolData *pool = &mgmt->memoryPools[idx];
 
-		javaVM->memoryManagerFunctions->j9gc_pools_memory(javaVM, (id&J9VM_MANAGEMENT_POOL_HEAP_ID_MASK), &totals[0], &frees[0], FALSE);
-		committed = totals[idx];
-		used = committed - frees[idx];
+		UDATA total = 0;
+		UDATA free = 0;
+		UDATA maximum = 0;
+
+		/* acquire vmAccess for retrieving memoryUsage for the pool in order to guarantee values of memoryUsage are consistent. */
+		vmFuncs->internalEnterVMFromJNI(vmThread);
+		maximum = javaVM->memoryManagerFunctions->j9gc_pool_memoryusage(javaVM, (id&J9VM_MANAGEMENT_POOL_HEAP_ID_MASK), &free, &total);
+		vmFuncs->internalExitVMToJNI(vmThread);
+		committed = total;
+		used = committed - free;
 
 		omrthread_rwmutex_enter_read(mgmt->managementDataLock);
 		peak = (jlong) pool->peakUsed;
 		init = (jlong) pool->initialSize;
-		max = (jlong) pool->postCollectionMaxSize;
+		max = maximum;
 		omrthread_rwmutex_exit_read(mgmt->managementDataLock);
 		
 		if (used > peak) {
@@ -197,7 +211,7 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_getUsageImpl(JNI
 			if ((U_64)used > pool->peakUsed) {
 				pool->peakUsed = used;
 				pool->peakSize = committed;
-				pool->peakMax = pool->postCollectionMaxSize;
+				pool->peakMax = max;
 			}
 			omrthread_rwmutex_exit_write(mgmt->managementDataLock);
 		}
@@ -341,26 +355,33 @@ Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_isUsageThreshold
 void JNICALL
 Java_com_ibm_java_lang_management_internal_MemoryPoolMXBeanImpl_resetPeakUsageImpl(JNIEnv *env, jobject beanInstance, jint id)
 {
-	J9JavaVM *javaVM = ((J9VMThread *) env)->javaVM;
+	J9VMThread *vmThread = (J9VMThread *) env;
+	J9JavaVM *javaVM = vmThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = javaVM->internalVMFunctions;
 	J9JavaLangManagementData *mgmt = javaVM->managementData;
 
 	if (0 != (id & J9VM_MANAGEMENT_POOL_HEAP)) {
 		/* Heap MemoryPool */
 		UDATA used = 0;
 		UDATA committed = 0;
-		UDATA totals[J9_GC_MANAGEMENT_MAX_POOL];
-		UDATA frees[J9_GC_MANAGEMENT_MAX_POOL];
 		UDATA idx = getIndexFromPoolID(mgmt, id);
 		J9MemoryPoolData *pool = &mgmt->memoryPools[idx];
 
-		javaVM->memoryManagerFunctions->j9gc_pools_memory(javaVM, (id & J9VM_MANAGEMENT_POOL_HEAP_ID_MASK), &totals[0], &frees[0], FALSE);
-		committed = totals[idx];
-		used = committed - frees[idx];
+		UDATA total = 0;
+		UDATA free = 0;
+		UDATA maximum = 0;
+
+		/* acquire vmAccess for retrieving memoryUsage for the pool in order to guarantee values of memoryUsage are consistent. */
+		vmFuncs->internalEnterVMFromJNI(vmThread);
+		maximum = javaVM->memoryManagerFunctions->j9gc_pool_memoryusage(javaVM, (id&J9VM_MANAGEMENT_POOL_HEAP_ID_MASK), &free, &total);
+		vmFuncs->internalExitVMToJNI(vmThread);
+		committed = total;
+		used = committed - free;
 
 		omrthread_rwmutex_enter_write(mgmt->managementDataLock);
 		pool->peakUsed = used;
 		pool->peakSize = committed;
-		pool->peakMax = pool->postCollectionMaxSize;
+		pool->peakMax = maximum;
 		omrthread_rwmutex_exit_write(mgmt->managementDataLock);
 	} else {
 		/* NonHeap MemoryPool */
@@ -527,7 +548,7 @@ static UDATA
 getIndexFromPoolID(J9JavaLangManagementData *mgmt, UDATA id)
 {
 	UDATA idx = 0;
-	for(; idx < mgmt->supportedMemoryPools; idx++) {
+	for (idx = 0; idx < mgmt->supportedMemoryPools; idx++) {
 		if ((mgmt->memoryPools[idx].id & J9VM_MANAGEMENT_POOL_HEAP_ID_MASK) == (id & J9VM_MANAGEMENT_POOL_HEAP_ID_MASK)) {
 			break;
 		}

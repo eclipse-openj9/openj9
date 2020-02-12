@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,6 +75,7 @@ UDATA j9gc_is_local_collector(J9JavaVM *javaVM, UDATA gcID);
 UDATA j9gc_get_collector_id(OMR_VMThread *omrVMThread);
 UDATA j9gc_pools_memory(J9JavaVM *javaVM, UDATA poolIDs, UDATA *totals, UDATA *frees, BOOLEAN gcEnd);
 UDATA j9gc_pool_maxmemory(J9JavaVM *javaVM, UDATA poolID);
+UDATA j9gc_pool_memoryusage(J9JavaVM *javaVM, UDATA poolID, UDATA *free, UDATA *total);
 const char *j9gc_get_gc_action(J9JavaVM *javaVM, UDATA gcID);
 const char *j9gc_get_gc_cause(OMR_VMThread *omrVMthread);
 
