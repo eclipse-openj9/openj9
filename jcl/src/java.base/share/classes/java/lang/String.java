@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -8487,6 +8487,9 @@ written authorization of the copyright holder.
 				case 'r':
 					builder.append('\r');
 					break;
+				case 's':
+					builder.append(' '); /* '\s' is a new escape sequence for space (U+0020) added in JEP 368: Text Blocks (Second Preview) */
+					break;
 				case '\"':
 				case '\'':
 				case '\\':
@@ -8520,6 +8523,19 @@ written authorization of the copyright holder.
 						octal = (octal * 010) + (charArray[index] - '0');
 					}
 					builder.append((char)octal);
+					break;
+				/**
+				 * JEP 368: Text Blocks (Second Preview)
+				 * '\r', "\r\n" and '\n' are ignored as per new continuation \<line-terminator> escape sequence 
+				 * i.e. ignore line terminator and continue line
+				 * */
+				case '\r':
+					/* Check if the next character is the newline character, i.e. case "\r\n" */
+					if (((index + 1) < strLength) && ('\n' == charArray[index + 1])) {
+						index++;
+					}
+					break;
+				case '\n':
 					break;
 				default:
 					/*[MSG "K0D00", "Invalid escape sequence detected: {0}"]*/
