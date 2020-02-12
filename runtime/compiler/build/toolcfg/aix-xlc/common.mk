@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -214,7 +214,7 @@ endif
 SOLINK_SLINK+=$(PRODUCT_SLINK) m j9thr$(J9_VERSION) j9hookable$(J9_VERSION)
 
 ifneq (,$(findstring xlclang++,$(notdir $(CXX))))
-  SOLINK_FLAGS+=-bstatic -lc++ -bdynamic
+  SOLINK_FLAGS+=-lc++
 endif
 
 SOLINK_LIBPATH+=$(PRODUCT_LIBPATH)
