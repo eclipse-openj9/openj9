@@ -3727,6 +3727,20 @@ J9::Z::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod me
          }
       }
 
+   if (self()->getSupportsVectorRegisters()){
+      if (method == TR::java_lang_Math_fma_D ||
+          method == TR::java_lang_StrictMath_fma_D)
+         {
+         return true;
+         }
+      if (self()->comp()->target().cpu.getSupportsVectorFacilityEnhancement1() &&
+            (method == TR::java_lang_Math_fma_F ||
+             method == TR::java_lang_StrictMath_fma_F))
+         { 
+         return true;
+         }
+   }
+
    if (method == TR::java_lang_Integer_highestOneBit ||
        method == TR::java_lang_Integer_numberOfLeadingZeros ||
        method == TR::java_lang_Integer_numberOfTrailingZeros ||
@@ -3816,6 +3830,8 @@ extern TR::Register *inlineIntrinsicIndexOf(TR::Node* node, TR::CodeGenerator* c
 
 extern TR::Register *inlineDoubleMax(TR::Node *node, TR::CodeGenerator *cg);
 extern TR::Register *inlineDoubleMin(TR::Node *node, TR::CodeGenerator *cg);
+
+extern TR::Register *inlineMathFma(TR::Node *node, TR::CodeGenerator *cg);
 
 #define IS_OBJ      true
 #define IS_NOT_OBJ  false
@@ -4107,6 +4123,28 @@ J9::Z::CodeGenerator::inlineDirectCall(
                break;
             }
          }
+      if (cg->getSupportsVectorRegisters())
+         {
+         switch (methodSymbol->getRecognizedMethod())
+            {
+            case TR::java_lang_Math_fma_D:
+            case TR::java_lang_StrictMath_fma_D:
+               resultReg = inlineMathFma(node, cg);
+               return true;
+
+            case TR::java_lang_Math_fma_F:
+            case TR::java_lang_StrictMath_fma_F:
+               if (comp->target().cpu.getSupportsVectorFacilityEnhancement1())
+                  {
+                  resultReg = inlineMathFma(node, cg);
+                  return true;
+                  }
+               break;
+            default:
+               break;
+            }
+         }
+
 
      switch (methodSymbol->getRecognizedMethod())
         {
