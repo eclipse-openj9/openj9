@@ -1711,7 +1711,7 @@ TR_ResolvedRelocatableJ9Method::storeValidationRecordIfNecessary(TR::Compilation
 
    if (!definingClass)
       {
-      definingClass = (J9Class *) reloRuntime->getClassFromCP(fej9->vmThread(), constantPool, cpIndex, isStatic);
+      definingClass = (J9Class *) TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, constantPool, cpIndex, isStatic);
       traceMsg(comp, "\tdefiningClass recomputed from cp as %p\n", definingClass);
       }
 
@@ -1835,7 +1835,7 @@ TR_ResolvedRelocatableJ9Method::fieldAttributes(TR::Compilation * comp, int32_t 
                else
                   reloRuntime = compInfo->getCompInfoForThread(fej9->vmThread())->reloRuntime();
 
-               TR_OpaqueClassBlock *clazz = reloRuntime->getClassFromCP(fej9->vmThread(), constantPool, cpIndex, false);
+               TR_OpaqueClassBlock *clazz = TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, constantPool, cpIndex, false);
 
                fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(clazz, constantPool, cpIndex);
                }
@@ -1960,7 +1960,7 @@ TR_ResolvedRelocatableJ9Method::staticAttributes(TR::Compilation * comp,
          else
             reloRuntime = compInfo->getCompInfoForThread(fej9->vmThread())->reloRuntime();
 
-         TR_OpaqueClassBlock *clazz = reloRuntime->getClassFromCP(fej9->vmThread(), constantPool, cpIndex, true);
+         TR_OpaqueClassBlock *clazz = TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, constantPool, cpIndex, true);
 
          fieldInfoCanBeUsed = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(clazz, constantPool, cpIndex, true);
          }
@@ -2016,6 +2016,26 @@ TR_ResolvedRelocatableJ9Method::staticAttributes(TR::Compilation * comp,
    setAttributeResult(true, theFieldIsFromLocalClass, ltype, volatileFlag, finalFlag, privateFlag, type, volatileP, isFinal, isPrivate, address);
 
    return theFieldIsFromLocalClass;
+   }
+
+TR_OpaqueClassBlock *
+TR_ResolvedRelocatableJ9Method::definingClassFromCPFieldRef(
+   TR::Compilation *comp,
+   I_32 cpIndex,
+   bool isStatic)
+   {
+   TR_OpaqueClassBlock *clazz = TR_ResolvedJ9Method::definingClassFromCPFieldRef(comp, cp(), cpIndex, isStatic);
+
+   bool valid = false;
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      valid = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(clazz , cp(), cpIndex, isStatic);
+   else
+      valid = storeValidationRecordIfNecessary(comp, cp(), cpIndex, isStatic ? TR_ValidateStaticField : TR_ValidateInstanceField, ramMethod());
+
+   if (!valid)
+      clazz = NULL;
+
+   return clazz;
    }
 
 char *
@@ -7070,6 +7090,57 @@ TR_ResolvedJ9Method::staticAttributes(TR::Compilation * comp, I_32 cpIndex, void
    return resolved;
    }
 
+TR_OpaqueClassBlock *
+TR_ResolvedJ9Method::definingClassFromCPFieldRef(
+   TR::Compilation *comp,
+   J9ConstantPool *constantPool,
+   I_32 cpIndex,
+   bool isStatic)
+   {
+   J9VMThread *vmThread = comp->j9VMThread();
+   J9JavaVM *javaVM = vmThread->javaVM;
+   J9JITConfig *jitConfig = javaVM->jitConfig;
+   TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
+   TR::VMAccessCriticalSection definingClassFromCPFieldRef(fe);
+
+   /* Get the class.  Stop immediately if an exception occurs. */
+   J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&constantPool->romConstantPool[cpIndex];
+
+   J9Class *resolvedClass = javaVM->internalVMFunctions->resolveClassRef(vmThread, constantPool, romFieldRef->classRefCPIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
+
+   if (resolvedClass == NULL)
+      return NULL;
+
+   J9Class *classFromCP = J9_CLASS_FROM_CP(constantPool);
+   J9ROMFieldShape *field;
+   J9Class *definingClass;
+   J9ROMNameAndSignature *nameAndSig;
+   J9UTF8 *name;
+   J9UTF8 *signature;
+
+   nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romFieldRef);
+   name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
+   signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
+   if (isStatic)
+      {
+      void *staticAddress = javaVM->internalVMFunctions->staticFieldAddress(vmThread, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, J9_LOOK_NO_JAVA, classFromCP);
+      }
+   else
+      {
+      IDATA fieldOffset = javaVM->internalVMFunctions->instanceFieldOffset(vmThread, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, J9_LOOK_NO_JAVA);
+      }
+
+   return (TR_OpaqueClassBlock *)definingClass;
+   }
+
+TR_OpaqueClassBlock *
+TR_ResolvedJ9Method::definingClassFromCPFieldRef(
+   TR::Compilation *comp,
+   I_32 cpIndex,
+   bool isStatic)
+   {
+   return definingClassFromCPFieldRef(comp, cp(), cpIndex, isStatic);
+   }
 
 bool
 TR_ResolvedJ9Method::fieldIsFromLocalClass(int32_t cpIndex)

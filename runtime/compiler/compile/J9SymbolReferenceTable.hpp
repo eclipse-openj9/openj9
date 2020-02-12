@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,6 +36,7 @@ namespace J9 { typedef J9::SymbolReferenceTable SymbolReferenceTableConnector; }
 
 #include <stddef.h>
 #include <stdint.h>
+#include <map>
 #include "env/jittypes.h"
 
 class TR_BitVector;
@@ -110,6 +111,33 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    TR::SymbolReference * findOrCreateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex, bool isStore);
    TR::SymbolReference * findOrFabricateShadowSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, TR::Symbol::RecognizedField recognizedField, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal, char* name = NULL);
+
+   /** \brief
+    *     Returns a symbol reference for an entity not present in the constant pool.
+    *
+    *     For resolved symrefs, if an appropriate one is found, it will be returned
+    *     even if it originated from a call to findOrCreateShadowSymbol.
+    *
+    *  \param containingClass
+    *     The class that contains the field.
+    *  \param type
+    *     The data type of the field.
+    *  \param offset
+    *     The offset of the field.
+    *  \param isVolatile
+    *     Specifies whether the field is volatile.
+    *  \param isPrivate
+    *     Specifies whether the field is private.
+    *  \param isFinal
+    *     Specifies whether the field is final.
+    *  \param name
+    *     The name of the field.
+    *  \param signature
+    *     The signature of the field.
+    *  \return
+    *     Returns a symbol reference fabricated for the field.
+    */
+   TR::SymbolReference * findOrFabricateShadowSymbol(TR_OpaqueClassBlock *containingClass, TR::DataType type, uint32_t offset, bool isVolatile, bool isPrivate, bool isFinal,  const char *name, const char *signature);
 
    TR::SymbolReference * findOrCreateObjectNewInstanceImplSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol);
    TR::SymbolReference * findOrCreateDLTBlockSymbolRef();
@@ -307,6 +335,79 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    private:
 
+   struct ResolvedFieldShadowKey
+      {
+      ResolvedFieldShadowKey(
+         TR_OpaqueClassBlock *containingClass,
+         uint32_t offset,
+         TR::DataType type)
+         : _containingClass(containingClass)
+         , _offset(offset)
+         , _type(type)
+         {}
+
+      TR_OpaqueClassBlock * const _containingClass;
+      const uint32_t _offset;
+      const TR::DataType _type;
+
+      bool operator<(const ResolvedFieldShadowKey &rhs) const
+         {
+         const ResolvedFieldShadowKey &lhs = *this;
+         std::less<void*> ptrLt;
+
+         if (lhs._containingClass != rhs._containingClass)
+            return ptrLt(lhs._containingClass, rhs._containingClass);
+         else if (lhs._offset != rhs._offset)
+            return lhs._offset < rhs._offset;
+         else
+            return lhs._type.getDataType() < rhs._type.getDataType();
+         }
+      };
+
+   typedef std::pair<const ResolvedFieldShadowKey, TR::SymbolReference*> ResolvedFieldShadowsEntry;
+   typedef TR::typed_allocator<ResolvedFieldShadowsEntry, TR::Allocator> ResolvedFieldShadowsAlloc;
+   typedef std::map<ResolvedFieldShadowKey, TR::SymbolReference*, std::less<ResolvedFieldShadowKey>, ResolvedFieldShadowsAlloc> ResolvedFieldShadows;
+
+   /**
+    * \brief Find if an existing resolved shadow exists matching the given key.
+    *
+    * The \p key is used to lookup the shadow symref. If a matching symref is found,
+    * the properties specified by the other boolean parameters are checked to make
+    * sure the properties of the symbol either match or have a more conservatively
+    * correct value. In other words, the properties need not match if the values
+    * set on the symbol would still be functionally correct. If they are not, an
+    * assert is fired.
+    *
+    * \param key is the key used to search for the symref
+    * \param isVolatile specifies whether the symbol found must be volatile.
+    *    Expecting a non-volatile symbol but finding a volatile is functionally correct.
+    *    However, expectinga a volatile symbol and finding a non-volatile one is incorrect,
+    *    so an assert is fired.
+    * \param isPrivate specifies whether the symbol found must be private.
+    *    Expecting a private symbol but finding a non-private one is functionally correct.
+    *    However, expecting a non-private symbol and finding a private is incorrect,
+    *    so an assert is fired.
+    * \param isFinal specifies whether the symbol found must be final.
+    *    Expecting a final symbol but finding a non-final one is functionally correct.
+    *    However, expecting a non-final field and finding a final one is incorrect,
+    *    so an assert is fired.
+    * \return TR::SymbolReference* the shadow symref if found, NULL otherwise
+    */
+   TR::SymbolReference * findResolvedFieldShadow(ResolvedFieldShadowKey key, bool isVolatile, bool isPrivate, bool isFinal);
+
+   /**
+    * \brief Create a shadow symbol
+    *
+    * \param type is the type of the shadow
+    * \param isVolatile specifies whether the shadow corresponds to a vloatile field
+    * \param isPrivate specifies whether the shadow corresponds to a private field
+    * \param isFinal specifies whether the shadow corresponds to a final field
+    * \param name is the name of the corresponding field
+    * \param recognizedField sepcifies a recognized field the symbol corresponds to
+    * \return TR::Symbol* the pointer to the new symbol
+    */
+   TR::Symbol * createShadowSymbol(TR::DataType type, bool isVolatile, bool isPrivate, bool isFinal, const char *name, TR::Symbol::RecognizedField recognizedField);
+
    TR::SymbolReference * createShadowSymbolWithoutCpIndex(TR::ResolvedMethodSymbol *, bool , TR::DataType, uint32_t, bool);
    TR::SymbolReference * findJavaLangReferenceReferentShadowSymbol(TR_ResolvedMethod * owningMethod, TR::DataType, uint32_t);
 
@@ -324,6 +425,8 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
     *     Represents the set of symbol references to static volatile fields of Java objects.
     */
    TR_Array<TR::SymbolReference *> * _unsafeJavaStaticVolatileSymRefs;
+
+   ResolvedFieldShadows _resolvedFieldShadows;
    };
 
 }

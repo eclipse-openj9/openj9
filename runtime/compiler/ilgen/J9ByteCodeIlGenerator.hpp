@@ -162,6 +162,7 @@ private:
    // GenLoadStore
    //
    void         loadInstance(int32_t);
+   void         loadInstance(TR::SymbolReference *, int32_t);
    void         loadStatic(int32_t);
    void         loadAuto(TR::DataType type, int32_t slot, bool isAdjunct = false);
    TR::Node     *loadSymbol(TR::ILOpCodes, TR::SymbolReference *);
@@ -183,6 +184,7 @@ private:
    void         loadMonitorArg();
 
    void         storeInstance(int32_t);
+   void         storeInstance(TR::SymbolReference *symRef);
    void         storeStatic(int32_t);
    void         storeAuto(TR::DataType type, int32_t slot, bool isAdjunct = false);
    void         storeArrayElement(TR::DataType dt){ storeArrayElement(dt, comp()->il.opCodeForIndirectArrayStore(dt)); }
@@ -225,6 +227,9 @@ private:
    int32_t      genAThrow();
    void         genMonitorEnter();
    void         genMonitorExit(bool);
+   TR_OpaqueClassBlock *loadValueClass(int32_t classCpIndex);
+   void         genDefaultValue(uint16_t classCpIndex);
+   void         genWithField(uint16_t fieldCpIndex);
    void         genFlush(int32_t nargs);
    void         genFullFence(TR::Node *node);
    void         handlePendingPushSaveSideEffects(TR::Node *, int32_t stackSize = -1);

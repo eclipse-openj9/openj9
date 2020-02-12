@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -778,13 +778,6 @@ TR_RelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)
    return false;
    }
 
-TR_OpaqueClassBlock *
-TR_RelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)
-   {
-   TR_ASSERT(0, "Error: getClassFromCP not supported in this relocation runtime");
-   return NULL;
-   }
-
 #if defined(JITSERVER_SUPPORT)
 J9JITExceptionTable *
 TR_RelocationRuntime::copyMethodMetaData(J9JITDataCacheHeader *dataCacheHeader)
@@ -1214,41 +1207,6 @@ TR_SharedCacheRelocationRuntime::storeAOTHeader(TR_FrontEnd *fe, J9VMThread *cur
       TR_J9SharedCache::setStoreSharedDataFailedLength(aotHeaderLen);
       return false;
       }
-   }
-
-TR_OpaqueClassBlock *
-TR_SharedCacheRelocationRuntime::getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)
-   {
-   J9JITConfig *jitConfig = vmThread->javaVM->jitConfig;
-   TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, vmThread);
-   TR::VMAccessCriticalSection getClassFromCP(fe);
-   // Get the class.  Stop immediately if an exception occurs.
-   J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&constantPool->romConstantPool[cpIndex];
-
-   J9Class *resolvedClass = javaVM()->internalVMFunctions->resolveClassRef(vmThread, constantPool, romFieldRef->classRefCPIndex, J9_RESOLVE_FLAG_JIT_COMPILE_TIME);
-
-   if (resolvedClass == NULL)
-      return NULL;
-
-   J9Class *classFromCP = J9_CLASS_FROM_CP(constantPool);
-   J9ROMFieldShape *field;
-   J9Class *definingClass;
-   J9ROMNameAndSignature *nameAndSig;
-   J9UTF8 *name;
-   J9UTF8 *signature;
-
-   nameAndSig = J9ROMFIELDREF_NAMEANDSIGNATURE(romFieldRef);
-   name = J9ROMNAMEANDSIGNATURE_NAME(nameAndSig);
-   signature = J9ROMNAMEANDSIGNATURE_SIGNATURE(nameAndSig);
-   if (isStatic)
-      {
-      void *staticAddress = javaVM()->internalVMFunctions->staticFieldAddress(vmThread, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, J9_LOOK_NO_JAVA, classFromCP);
-      }
-   else
-      {
-      IDATA fieldOffset = javaVM()->internalVMFunctions->instanceFieldOffset(vmThread, resolvedClass, J9UTF8_DATA(name), J9UTF8_LENGTH(name), J9UTF8_DATA(signature), J9UTF8_LENGTH(signature), &definingClass, (UDATA *)&field, J9_LOOK_NO_JAVA);
-      }
-   return (TR_OpaqueClassBlock *)definingClass;
    }
 
 uintptr_t

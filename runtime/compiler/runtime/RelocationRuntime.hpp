@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -181,8 +181,6 @@ class TR_RelocationRuntime {
       virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
 
-      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
-
       static uintptr_t    getGlobalValue(uint32_t g)
          {
          TR_ASSERT(g >= 0 && g < TR_NumGlobalValueItems, "invalid index for global item");
@@ -350,8 +348,6 @@ public:
       virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe);
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread);
 
-      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic);
-
 private:
       uint32_t getCurrentLockwordOptionHashValue(J9JavaVM *vm) const;
       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize);
@@ -384,7 +380,6 @@ public:
       virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
       virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
 
-      virtual TR_OpaqueClassBlock *getClassFromCP(J9VMThread *vmThread, J9ConstantPool *constantPool, I_32 cpIndex, bool isStatic)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0; }
       static uint8_t *copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe);
 
 private:
