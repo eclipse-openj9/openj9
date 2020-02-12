@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,6 +48,7 @@ J9MemoryManagerFunctions MemoryManagerFunctions = {
 	j9gc_get_collector_id,
 	j9gc_pools_memory,
 	j9gc_pool_maxmemory,
+	j9gc_pool_memoryusage,
 	j9gc_get_gc_action,
 	j9gc_get_gc_cause,
 	j9gc_get_private_hook_interface,
