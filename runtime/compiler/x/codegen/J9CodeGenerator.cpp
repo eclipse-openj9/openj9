@@ -384,12 +384,20 @@ J9::X86::CodeGenerator::enableAESInHardwareTransformations()
 bool
 J9::X86::CodeGenerator::suppressInliningOfRecognizedMethod(TR::RecognizedMethod method)
    {
-   switch (method)
+   if (method == TR::java_lang_Object_clone)
       {
-      case TR::java_lang_Object_clone:
+      return true; 
+      }
+
+   if (self()->getX86ProcessorInfo().supportsFMA())
+      {
+      if (method == TR::java_lang_Math_fma_D       ||
+          method == TR::java_lang_StrictMath_fma_D ||
+          method == TR::java_lang_Math_fma_F       ||
+          method == TR::java_lang_StrictMath_fma_F)
+         {
          return true;
-      default:
-         return false;
+         }
       }
    }
 
