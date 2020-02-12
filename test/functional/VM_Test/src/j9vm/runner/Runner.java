@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2012 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,45 +67,40 @@ public class Runner {
 
 	private void setPlatform() {
 		
-		String OSSpec = System.getProperty("os.name").toLowerCase();
-		if (OSSpec != null) {
+		String spec = System.getProperty("platform");
+		if (spec != null) {
 			/* Get OS from the spec string */
-			if (OSSpec.contains("aix")) {
+			if (spec.indexOf("aix") != -1) {
 				osName = OSName.AIX;
-			} else if (OSSpec.contains("linux")) {
+			} else if (spec.indexOf("linux") != -1){
 				osName = OSName.LINUX;
-			} else if (OSSpec.contains("windows")) {
+			} else if (spec.indexOf("win") != -1) {
 				osName = OSName.WINDOWS;
-			} else if (OSSpec.contains("z/os")) {
+			} else if (spec.indexOf("zos") != -1) {
 				osName = OSName.ZOS;
 			} else {
-				System.out.println("Runner couldn't determine underlying OS. Got OS Name:" + OSSpec);
 				osName = OSName.UNKNOWN;
 			}
-		}
-		String archSpec = System.getProperty("os.arch").toLowerCase();
-		if (archSpec != null) {
+			
 			/* Get arch from spec string */
-			if (archSpec.contains("ppc")) {
+			if (spec.indexOf("ppc") != -1) {
 				osArch = OSArch.PPC;
-			} else if (archSpec.contains("s390")) {
+			} else if (spec.indexOf("390") != -1) {
 				osArch = OSArch.S390X;
-			} else if (archSpec.contains("amd64") || archSpec.contains("x86")) {
+			} else if (spec.indexOf("x86") != -1) {
 				osArch = OSArch.X86;
 			} else {
-				System.out.println("Runner couldn't determine underlying architecture. Got OS Arch:" + archSpec);
 				osArch = OSArch.UNKNOWN;
 			}
 			
 			/* Get address mode */
-			if (archSpec.contains("31")) {
+			if (spec.indexOf("31") != -1) {
 				addrMode = AddrMode.BIT31;
-			} else if (archSpec.contains("32")) {
+			} else if (spec.indexOf("32") != -1) {
 				addrMode = AddrMode.BIT32;
-			} else if (archSpec.contains("64") || archSpec.contains("s390")) {
+			} else if (spec.indexOf("64") != -1) {
 				addrMode = AddrMode.BIT64;
 			} else {
-				System.out.println("Runner couldn't determine underlying addressing mode. Got OS Arch:" + archSpec);
 				addrMode = AddrMode.UNKNOWN;
 			}
 		}
