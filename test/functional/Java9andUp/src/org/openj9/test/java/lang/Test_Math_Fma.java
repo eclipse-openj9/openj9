@@ -24,10 +24,25 @@ package org.openj9.test.java.lang;
 import org.testng.annotations.Test;
 import org.testng.AssertJUnit;
 
-@Test(groups={ "level.sanity" }, invocationCount=2)
 public class Test_Math_Fma 
     {
-    @Test
+    public static void commoning_double(double a)
+        {
+        double b = 2.0, c = 3.0; 
+        double r = Math.fma(a, b, c) + Math.fma(b, c, a);
+        double expected = 18.0;
+        AssertJUnit.assertEquals(r, expected);
+        }
+
+    public static void commoning_float(float a)
+        {
+        float b = 2.0f, c = 3.0f; 
+        float r = Math.fma(a, b, c) + Math.fma(b, c, a);
+        float expected = 18.0f;
+        AssertJUnit.assertEquals(r, expected);
+        }
+
+    @Test(groups={ "level.sanity" }, invocationCount=2)
 	public void test_Math_fma_double() 
         {
         double random_double = 0.9085095723204865;
@@ -205,6 +220,11 @@ public class Test_Math_Fma
         AssertJUnit.assertEquals(r, expected);
 
         /**
+         * Testing with children being commoned in JIT compiler
+         */
+        commoning_double(3.0);
+
+        /**
          * Testing against numbers that invoke rounding: 
          */
         a = 0.3333333333333333;
@@ -315,7 +335,7 @@ public class Test_Math_Fma
         AssertJUnit.assertEquals(r, expected);
         }
 
-    @Test
+    @Test(groups={ "level.sanity" }, invocationCount=2)
     public void test_Math_fma_float() 
         {
         float random_float = 0.5877134f;
@@ -491,6 +511,11 @@ public class Test_Math_Fma
         r = Math.fma(a, b, c);
         expected = 1.1880896f;
         AssertJUnit.assertEquals(r, expected);
+
+        /**
+         * Testing with children being commoned in JIT compiler
+         */
+        commoning_float(3.0f);
         
         /**
          * Testing against numbers that invoke rounding: 
@@ -518,6 +543,7 @@ public class Test_Math_Fma
         //result with higher presicion = 0.02040816326530609183673469387756
         expected = 0.020408165f;
         AssertJUnit.assertEquals(r, expected);
+
 
         /**
          * Testing against boundaries: 
