@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -28,16 +28,11 @@ if (!binding.hasVariable('VENDOR_BRANCH_DEFAULT')) VENDOR_BRANCH_DEFAULT = ''
 if (!binding.hasVariable('VENDOR_CREDENTIALS_ID_DEFAULT')) VENDOR_CREDENTIALS_ID_DEFAULT = ''
 if (!binding.hasVariable('DISCARDER_NUM_BUILDS')) DISCARDER_NUM_BUILDS = '1'
 if (!binding.hasVariable('SCM_REPO')) SCM_REPO = 'https://github.com/eclipse/openj9.git'
-if (!binding.hasVariable('SCM_BRANCH')) SCM_BRANCH = 'refs/heads/master'
-if (!binding.hasVariable('SCM_REFSPEC')) SCM_REFSPEC = 'refs/heads/*:refs/remotes/origin/*'
-
-if (jobType == 'build') {
-    pipelineScript = 'buildenv/jenkins/jobs/pipelines/Build-Any-Platform.groovy'
-} else if (jobType == 'pipeline') {
-    pipelineScript = 'buildenv/jenkins/jobs/pipelines/Pipeline-Build-Test-Any-Platform.groovy'
-} else {
-    error "Unknown build type:'${jobType}'"
+if (SCM_BRANCH ==~ /origin\/pr\/[0-9]+\/merge/) {
+    SCM_BRANCH = 'master'
 }
+
+pipelineScript = 'buildenv/jenkins/jobs/pipelines/Pipeline-Initialize.groovy'
 
 pipelineJob("$JOB_NAME") {
     description('<h3>THIS IS AN AUTOMATICALLY GENERATED JOB DO NOT MODIFY, IT WILL BE OVERWRITTEN.</h3><p>This job is defined in Pipeline_Template.groovy in the openj9 repo, if you wish to change it modify that</p>')
@@ -46,28 +41,18 @@ pipelineJob("$JOB_NAME") {
             scm {
                 git {
                     remote {
-                        url('$SCM_REPO')
-                        refspec('$SCM_REFSPEC')
+                        url(SCM_REPO)
                     }
-                    branch('$SCM_BRANCH')
+                    branch(SCM_BRANCH)
                     extensions {
                         cloneOptions {
                             reference('$HOME/openjdk_cache')
-                        }
-                        wipeOutWorkspace()
-                    }
-                    configure { git ->
-                        git / 'extensions' / 'hudson.plugins.git.extensions.impl.SparseCheckoutPaths' / 'sparseCheckoutPaths' {
-                            [pipelineScript].each { mypath ->
-                                'hudson.plugins.git.extensions.impl.SparseCheckoutPath' {
-                                    path("${mypath}")
-                                }
-                            }
                         }
                     }
                 }
             }
             scriptPath(pipelineScript)
+            lightweight(true)
         }
     }
     logRotator {
@@ -106,7 +91,7 @@ pipelineJob("$JOB_NAME") {
         stringParam('CUSTOM_DESCRIPTION')
         stringParam('SCM_REPO', SCM_REPO)
         stringParam('SCM_BRANCH', SCM_BRANCH)
-        stringParam('SCM_REFSPEC', SCM_REFSPEC)
+        stringParam('SCM_REFSPEC')
         booleanParam('ARCHIVE_JAVADOC', false)
 
         if (jobType == 'pipeline'){
@@ -117,8 +102,10 @@ pipelineJob("$JOB_NAME") {
             stringParam('RESTART_TIMEOUT')
             stringParam('RESTART_TIMEOUT_UNITS')
             choiceParam('AUTOMATIC_GENERATION', ['true', 'false'])
+            choiceParam('JOB_TYPE', ['pipeline'])
         } else if (jobType == 'build'){
             stringParam('NODE')
+            choiceParam('JOB_TYPE', ['build'])
         }
     }
 }

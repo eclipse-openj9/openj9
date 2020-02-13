@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2019 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -20,19 +20,19 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
+SETUP_LABEL = (params.SETUP_LABEL) ? params.SETUP_LABEL : 'worker'
+echo "SETUP_LABEL: ${SETUP_LABEL}"
 ARGS = ['SDK_VERSION', 'PLATFORM']
+def BUILD_NAME
+variableFile = ''
+buildFile = ''
 
-SETUP_LABEL = params.SETUP_LABEL
-if (!SETUP_LABEL) {
-    SETUP_LABEL = 'worker'
-}
-
-timeout(time: 10, unit: 'HOURS') {
-    timestamps {
+timestamps {
+    timeout(time: 20, unit: 'HOURS') {
         node(SETUP_LABEL) {
             try{
                 def gitConfig = scm.getUserRemoteConfigs().get(0)
-                def remoteConfigParameters = [url: "${gitConfig.getUrl()}"]
+                def remoteConfigParameters = [url: params.SCM_REPO]
                 def scmBranch = params.SCM_BRANCH
                 if (!scmBranch) {
                     scmBranch = scm.branches[0].name
@@ -57,18 +57,12 @@ timeout(time: 10, unit: 'HOURS') {
                         userRemoteConfigs: [remoteConfigParameters]]
 
                 variableFile = load 'buildenv/jenkins/common/variables-functions.groovy'
-                variableFile.set_job_variables('build')
-                buildFile = load 'buildenv/jenkins/common/build.groovy'
+                variableFile.setup()
             } finally {
                 // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
                 cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
             }
         }
-
-        stage ('Queue') {
-            node("${NODE}") {
-                buildFile.build_all()
-            }
-        }
+        buildFile.build_all()
     }
 }
