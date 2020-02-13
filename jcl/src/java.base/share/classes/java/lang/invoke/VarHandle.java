@@ -28,6 +28,7 @@ import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 /*[IF Java12]*/
 import java.util.Optional;
 /*[ENDIF]*/
@@ -46,9 +47,12 @@ import java.lang.constant.DynamicConstantDesc;
 import java.util.Objects;
 /*[ENDIF] Java12 */
 
-/*[IF Java14]*/
 import java.util.Map;
+import java.util.HashMap;
+
+/*[IF Java14]*/
 import java.util.function.BiFunction;
+import java.lang.reflect.Method;
 /*[ENDIF] Java14 */
 
 /**
@@ -227,9 +231,13 @@ public abstract class VarHandle extends VarHandleInternal
 		boolean isSetter;
 		private String methodName;
 
-/*[IF Java14]*/
-		static final Map<String, AccessMode> methodNameToAccessMode = null;
-/*[ENDIF] Java14 */
+		static final Map<String, AccessMode> methodNameToAccessMode;
+		static {
+			methodNameToAccessMode = new HashMap<>();
+			for (AccessMode accessMode : values()) {
+				methodNameToAccessMode.put(accessMode.methodName, accessMode);
+			}
+		}
 
 		AccessMode(String methodName, AccessType signatureType, boolean isSetter) {
 			this.methodName = methodName;
@@ -251,10 +259,9 @@ public abstract class VarHandle extends VarHandleInternal
 		 * @return The AccessMode associated with the provided method name.
 		 */
 		public static AccessMode valueFromMethodName(String methodName) {
-			for (AccessMode m : values()) {
-				if (m.methodName.equals(methodName)) {
-					return m;
-				}
+			AccessMode accessMode = methodNameToAccessMode.get(methodName);
+			if (accessMode != null) {
+				return accessMode;
 			}
 
 			/*[MSG "K0633", "{0} is not a valid AccessMode."]*/
@@ -269,13 +276,65 @@ public abstract class VarHandle extends VarHandleInternal
 		COMPARE_AND_EXCHANGE,
 		GET_AND_UPDATE;
 
-		MethodType accessModeType(Class<?> param1, Class<?> param2, Class<?>... params) {
-			throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		/**
+		 * Gets the MethodType associated with the AccessType.
+		 * 
+		 * This method gets invoked by the derived VarHandle classes through accessModeTypeUncached.
+		 * 
+		 * OpenJ9 only uses it to retrieve the receiver class, which is not available from VarForm.
+		 * 
+		 * @param receiver class of the derived VarHandle.
+		 * @param type is the field type or value type.
+		 * @param args is the list of intermediate argument classes in the derived VarHandle's
+		 * AccessMode methods.
+		 * @return the MethodType for the corresponding AccessType.
+		 */
+		MethodType accessModeType(Class<?> receiver, Class<?> type, Class<?>... args) {
+			List<Class<?>> paramList = new ArrayList<>();
+			Class<?> returnType = null;
+			switch (this) {
+			case GET:
+				returnType = type;
+				paramList.add(receiver);
+				Collections.addAll(paramList, args);
+				break;
+			case SET:
+				returnType = void.class;
+				paramList.add(receiver);
+				Collections.addAll(paramList, args);
+				paramList.add(type);
+				break;
+			case COMPARE_AND_SET:
+				returnType = boolean.class;
+				paramList.add(receiver);
+				Collections.addAll(paramList, args);
+				Collections.addAll(paramList, type, type);
+				break;
+			case COMPARE_AND_EXCHANGE:
+				returnType = type;
+				paramList.add(receiver);
+				Collections.addAll(paramList, args);
+				Collections.addAll(paramList, type, type);
+				break;
+			case GET_AND_UPDATE:
+				returnType = type;
+				paramList.add(receiver);
+				Collections.addAll(paramList, args);
+				paramList.add(type);
+				break;
+			default:
+				throw new InternalError("Invalid AccessType.");
+			}
+			return MethodType.methodType(returnType, paramList);
 		}
 	}
 	
 	static final Unsafe _unsafe = Unsafe.getUnsafe();
 	static final Lookup _lookup = Lookup.internalPrivilegedLookup;
+
+/*[IF Java14]*/
+	static final BiFunction<String, List<Integer>, ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
+/*[ENDIF] Java14 */
 	
 	private final MethodHandle[] handleTable;
 	final Class<?> fieldType;
@@ -304,13 +363,136 @@ public abstract class VarHandle extends VarHandleInternal
 	/**
 	 * Constructs a generic VarHandle instance.
 	 *
-	 * @param varForm An instance of VarForm.
+	 * @param varForm an instance of VarForm.
 	 */
 	VarHandle(VarForm varForm) {
-		throw OpenJDKCompileStub.OpenJDKCompileStubThrowError();
+		AccessMode[] accessModes = AccessMode.values();
+		int numAccessModes = accessModes.length;
+
+		/* The first argument in AccessType.GET MethodType is the receiver class. */
+		Class<?> receiverActual = accessModeTypeUncached(AccessMode.GET).parameterType(0);
+		Class<?> receiverVarForm = varForm.methodType_table[AccessType.GET.ordinal()].parameterType(0);
+		
+		/* Specify the exact operation method types if the actual receiver doesn't match the
+		 * receiver derived from VarForm.
+		 */
+		MethodType[] operationMTsExact = null;
+		if (receiverActual != receiverVarForm) {
+			operationMTsExact = new MethodType[numAccessModes];
+		}
+		
+		MethodType[] operationMTs = new MethodType[numAccessModes];
+		Class<?> operationsClass = null;
+
+		for (int i = 0; i < numAccessModes; i++) {
+			MemberName memberName = varForm.memberName_table[i];
+			if (memberName != null) {
+				Method method = memberName.method;
+				if (method != null) {
+					operationMTs[i] = MethodType.methodType(method.getReturnType(), method.getParameterTypes());
+					if (operationMTsExact != null) {
+						/* Replace with the actual receiver, which is expected when the operation method
+						 * is invoked. The receiver is the second argument. 
+						 */
+						operationMTsExact[i] = operationMTs[i].changeParameterType(1, receiverActual);
+					}
+					if (operationsClass == null) {
+						operationsClass = method.getDeclaringClass();
+					}
+				}
+			}
+		}
+
+		MethodType getter = operationMTs[AccessMode.GET.ordinal()];
+		MethodType setter = operationMTs[AccessMode.SET.ordinal()];
+		
+		if (operationMTsExact != null) {
+			getter = operationMTsExact[AccessMode.GET.ordinal()];
+			setter = operationMTsExact[AccessMode.SET.ordinal()];
+		}
+
+		this.fieldType = setter.parameterType(setter.parameterCount() - 1);
+		this.coordinateTypes = getter.parameterArray();
+		if (operationMTsExact != null) {
+			this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTsExact);
+		} else {
+			this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTs);
+		}
+		this.modifiers = 0;
 	}
 
-	static final BiFunction<String, List<Integer>, ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
+	/**
+	 * This is derived from populateMHs in order to support the OpenJDK VarHandle operations classes, which
+	 * don't extend the VarHandleOperations class. 
+	 *
+	 * @param operationsClass the class which has all AccessMode methods defined.
+	 * @param lookupTypes the method types for the AccessMode methods in the operationsClass.
+	 * @param exactType the exact method types to be expected when VarHandle AccessMode methods are invoked.
+	 * @return a MethodHandle array which is used to initialize the handleTable.
+	 */
+	static MethodHandle[] populateMHsJEP370(Class<?> operationsClass, MethodType[] lookupTypes, MethodType[] exactTypes) {
+		MethodHandle[] operationMHs = new MethodHandle[AccessMode.values().length];
+
+		try {
+			/* Lookup the MethodHandles corresponding to access modes. */
+			for (AccessMode accessMode : AccessMode.values()) {
+				MethodType lookupType = lookupTypes[accessMode.ordinal()];
+				if (lookupType != null) {
+					operationMHs[accessMode.ordinal()] = _lookup.findStatic(operationsClass, accessMode.methodName(), lookupType);
+					if (lookupTypes == exactTypes) {
+						operationMHs[accessMode.ordinal()] = permuateHandleJEP370(operationMHs[accessMode.ordinal()]);
+					} else {
+						/* Clone the MethodHandles with the exact types if different set of exactTypes are provided. */
+						MethodType exactType = exactTypes[accessMode.ordinal()];
+						if (exactType != null) {
+							operationMHs[accessMode.ordinal()] = operationMHs[accessMode.ordinal()].cloneWithNewType(exactType);
+						}
+						operationMHs[accessMode.ordinal()] = permuateHandleJEP370(operationMHs[accessMode.ordinal()]);
+					}
+				}
+			}
+		} catch (IllegalAccessException | NoSuchMethodException e) {
+			/* [MSG "K0623", "Unable to create MethodHandle to VarHandle operation."] */
+			InternalError error = new InternalError(com.ibm.oti.util.Msg.getString("K0623")); //$NON-NLS-1$
+			error.initCause(e);
+			throw error;
+		}
+
+		return operationMHs;
+	}
+
+	/**
+	 * Generate a MethodHandle which translates:
+	 *     FROM {Receiver, Intermediate ..., Value, VarHandle}ReturnType
+	 *     TO   {VarHandle, Receiver, Intermediate ..., Value}ReturnType
+	 *     
+	 * @param methodHandle to be permuted.
+	 * @return the adapter MethodHandle which performs the translation.
+	 */
+	static MethodHandle permuateHandleJEP370(MethodHandle methodHandle) {
+		/* HandleType = {VarHandle, Receiver, Intermediate ..., Value}
+		 * PermuteType = {Receiver, Intermediate ..., Value, VarHandle}
+		 */
+		MethodType permuteMethodType = methodHandle.type;
+		int parameterCount = permuteMethodType.parameterCount();
+		Class<?> firstParameter = permuteMethodType.parameterType(0);
+		permuteMethodType = permuteMethodType.dropFirstParameterType();
+		permuteMethodType = permuteMethodType.appendParameterTypes(firstParameter);
+
+		/* reorder specifies the mapping between PermuteType and HandleType
+		 * reorder = {parameterCount - 1, 0, 1, 2, ..., parameterCount - 2}
+		 */
+		int[] reorder = new int[parameterCount];
+		for (int i = 0; i < parameterCount; i++) {
+			if (i == 0) {
+				reorder[i] = parameterCount - 1;
+			} else {
+				reorder[i] = i - 1;
+			}
+		}
+
+		return MethodHandles.permuteArguments(methodHandle, permuteMethodType, reorder);
+	}
 /*[ENDIF] Java14 */
 
 	Class<?> getDefiningClass() {

@@ -376,9 +376,9 @@ public:
       void * operator new(size_t, J9JITConfig *);
       TR_JITServerRelocationRuntime(J9JITConfig *jitCfg) : TR_RelocationRuntime(jitCfg) {}
       // The following public APIs should not be used with this class
-      virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
-      virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
-      virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT(0, "Should not be called in this RelocationRuntime!"); return 0;}
+      virtual bool storeAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
+      virtual TR_AOTHeader *createAOTHeader(TR_FrontEnd *fe)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
+      virtual bool validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)  override { TR_ASSERT_FATAL(0, "Should not be called in this RelocationRuntime!"); return 0;}
 
       static uint8_t *copyDataToCodeCache(const void *startAddress, size_t totalSize, TR_J9VMBase *fe);
 

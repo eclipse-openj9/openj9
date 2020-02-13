@@ -239,25 +239,25 @@ public:
 
    TR_J9JITServerSharedCache(TR_J9VMBase *fe);
 
-   virtual bool isHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT(false, "called"); return false;}
-   virtual bool isHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT(false, "called"); return false;}
-   virtual uint16_t getAllEnabledHints(J9Method *method) override { TR_ASSERT(false, "called"); return 0;}
+   virtual bool isHint(TR_ResolvedMethod *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT_FATAL(false, "called"); return false;}
+   virtual bool isHint(J9Method *, TR_SharedCacheHint, uint16_t *dataField = NULL) override { TR_ASSERT_FATAL(false, "called"); return false;}
+   virtual uint16_t getAllEnabledHints(J9Method *method) override { TR_ASSERT_FATAL(false, "called"); return 0;}
    virtual void addHint(J9Method *, TR_SharedCacheHint) override;
-   virtual bool isMostlyFull() override { TR_ASSERT(false, "called"); return false;}
+   virtual bool isMostlyFull() override { TR_ASSERT_FATAL(false, "called"); return false;}
 
    virtual UDATA *rememberClass(J9Class *clazz, bool create=true) override;
 
-   virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT(false, "called"); return 0;}
-   virtual const char *getDebugCounterName(UDATA offset) override { TR_ASSERT(false, "called"); return NULL;}
+   virtual UDATA rememberDebugCounterName(const char *name) override { TR_ASSERT_FATAL(false, "called"); return 0;}
+   virtual const char *getDebugCounterName(UDATA offset) override { TR_ASSERT_FATAL(false, "called"); return NULL;}
 
-   virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL) override { TR_ASSERT(false, "called"); return false;}
+   virtual bool classMatchesCachedVersion(J9Class *clazz, UDATA *chainData=NULL) override { TR_ASSERT_FATAL(false, "called"); return false;}
 
-   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader) override { TR_ASSERT(false, "called"); return NULL;}
+   virtual TR_OpaqueClassBlock *lookupClassFromChainAndLoader(uintptrj_t *chainData, void *classLoader) override { TR_ASSERT_FATAL(false, "called"); return NULL;}
 
-   static void setSharedCacheDisabledReason(TR_J9SharedCacheDisabledReason state) { TR_ASSERT(false, "called"); }
-   static TR_J9SharedCacheDisabledReason getSharedCacheDisabledReason() { TR_ASSERT(false, "called"); return TR_J9SharedCache::TR_J9SharedCacheDisabledReason::UNINITIALIZED;}
-   static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo) { TR_ASSERT(false, "called"); return TR_no;}
-   static void setStoreSharedDataFailedLength(UDATA length) { TR_ASSERT(false, "called"); }
+   static void setSharedCacheDisabledReason(TR_J9SharedCacheDisabledReason state) { TR_ASSERT_FATAL(false, "called"); }
+   static TR_J9SharedCacheDisabledReason getSharedCacheDisabledReason() { TR_ASSERT_FATAL(false, "called"); return TR_J9SharedCache::TR_J9SharedCacheDisabledReason::UNINITIALIZED;}
+   static TR_YesNoMaybe isSharedCacheDisabledBecauseFull(TR::CompilationInfo *compInfo) { TR_ASSERT_FATAL(false, "called"); return TR_no;}
+   static void setStoreSharedDataFailedLength(UDATA length) { TR_ASSERT_FATAL(false, "called"); }
 
    virtual uintptrj_t getClassChainOffsetOfIdentifyingLoaderForClazzInSharedCache(TR_OpaqueClassBlock *clazz) override;
 
