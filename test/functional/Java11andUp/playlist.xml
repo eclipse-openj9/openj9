@@ -49,43 +49,43 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
-	
-	<!-- 
+
+	<!--
 		The nestmate test specifically exercise the JIT$(SQ)s handling of unresolved virtual and interface private methods.
 		The JIT pibBuilder routines will have to handle virtual and interface private methods that are both JIT compiled and interpreted.
 		These private methods will have to be resolved at runtime and gets handled as a direct dispatch, instead of an indirect virtual/interface
 		dispatch. Hence, the need for -Xjit:rtResolve.
-         
+
 		 Variation 1:
 			This variation tests the handling of nestmate private instance methods with the callee being interpreted.
 			The -Xjit option limits the compilation to just one method (the caller), which invokes only once an inner class$(SQ)s private method (the callee).
 			The callee is interpreted because it$(SQ)s only invoked once.
-			
+
 		 Variation 2:
 			This variation tests the handling of nestmate private instance methods that is JIT compiled.
 			The -Xjit option limits the compilation to two methods: a caller (count=0) and a callee (count=100).
 		    The callee is an nestmate private instance method. It$(SQ)s first invoked by the caller 1000 times in a loopy method. The low count=100
 			on the callee ensures that the callee can get JIT compiled early enough so that the last invocation of it jumps to a JIT$(SQ)ed body.
-			
+
 		 Variation 3:
 			Similar to variation 1 except that the callee is an interface private method.
-			
+
 		 Variation 4:
 			Similar to variation 2 except that the callee is an interface private method.
 		 -->
 	<test>
 		<testCaseName>Nestmate_virtual_private</testCaseName>
-		
+
 		<variations>
-		
+
 			<variation>$(SQ)-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*},{org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*}(count=0)$(SQ)</variation>
 			<variation>$(SQ)-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedJitted*,org/openj9/test/nestmates/NestmatesTest$InnerClass.innerPrivateMethod*},{org/openj9/test/nestmates/NestmatesTest.testVirtualUnresolvedInterpreted*}(count=0),{org/openj9/test/nestmates/NestmatesTest$InnerClass.innerPrivateMethod*}(count=100)$(SQ)</variation>
-			
+
 			<variation>$(SQ)-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedInterpreted*},{org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedInterpreted*}(count=0)$(SQ)</variation>
 			<variation>$(SQ)-Xjit:rtResolve,disableAsyncCompilation,limit={org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedJitted*,org/openj9/test/nestmates/NestmatesTest$InnerInterface.innerInterfacePrivateMethod*},{org/openj9/test/nestmates/NestmatesTest.testInterfaceUnresolvedJitted*}(count=0),{org/openj9/test/nestmates/NestmatesTest$InnerInterface.innerInterfacePrivateMethod*}(count=100)$(SQ)</variation>
-	
+
 		</variations>
-			
+
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
 			-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)GeneralTest.jar$(Q) \
 			org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) -testnames NestmatesTest \
@@ -106,7 +106,7 @@
 			<impl>openj9</impl>
 			<impl>ibm</impl>
 		</impls>
-   </test>
+	</test>
 
 
 	<!--
@@ -179,7 +179,8 @@
 			-excludegroups $(DEFAULT_EXCLUDE); \
 			$(TEST_STATUS)
 		</command>
-
+		<!-- aarch64 JIT lacks the support for -Xgcpolicy:balanced -->
+		<platformRequirements>^arch.aarch64</platformRequirements>
 		<levels>
 			<level>sanity</level>
 		</levels>
