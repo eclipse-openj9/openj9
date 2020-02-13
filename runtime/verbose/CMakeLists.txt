@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,18 +32,17 @@ add_library(j9vrb SHARED
 
 	${j9vm_SOURCE_DIR}/vm/swalk.c
 	${j9vm_SOURCE_DIR}/vm/linearswalk.c
-	
+
 	${j9vm_SOURCE_DIR}/codert_vm/jswalk.c #IF J9VM_INTERP_NATIVE_SUPPORT
 	${j9vm_SOURCE_DIR}/jit_vm/ctsupport.cpp #IF J9VM_INTERP_USE_SPLIT_SIDE_TABLES
 	${j9vm_SOURCE_DIR}/compiler/runtime/MethodMetaData.c
-	
+
 	${CMAKE_CURRENT_BINARY_DIR}/ut_j9vrb.c
 )
 
-
 # Note: OMR_TOOLCONFIG=gnu also captures gnu-like compilers, such as clang
 if(OMR_TOOLCONFIG STREQUAL "gnu")
-	set_property(SOURCE ../compiler/runtime/MethodMetaData.c APPEND_STRING PROPERTY COMPILE_FLAGS  " -std=gnu89")
+	set_property(SOURCE ../compiler/runtime/MethodMetaData.c APPEND_STRING PROPERTY COMPILE_FLAGS " -std=gnu89")
 endif()
 
 target_include_directories(j9vrb
@@ -98,8 +97,6 @@ target_link_libraries(j9vrb
 		j9gc
 )
 
-
-
 target_compile_definitions(j9vrb
 	PRIVATE
 		-DJ9VM_INTERP_STACKWALK_TRACING
@@ -111,6 +108,9 @@ omr_add_exports(j9vrb
 	JVM_OnUnload
 	J9VMDllMain
 )
+
+target_enable_ddr(j9vrb GLOB_HEADERS)
+ddr_set_add_targets(j9ddr j9vrb)
 
 install(
 	TARGETS j9vrb
