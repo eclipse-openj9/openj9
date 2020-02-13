@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2019 IBM Corp. and others
+dnl Copyright (c) 2017, 2020 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -333,6 +333,7 @@ SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportInstanceFieldRead,2)
 SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportInstanceFieldWrite,3)
 SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportStaticFieldRead,1)
 SLOW_PATH_ONLY_HELPER_NO_RETURN_VALUE(jitReportStaticFieldWrite,2)
+FAST_PATH_ONLY_HELPER(jitAcmpHelper,2)
 
 dnl Trap handlers
 

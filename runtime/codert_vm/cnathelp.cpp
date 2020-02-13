@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2250,6 +2250,16 @@ old_fast_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread)
 	return slowPath;
 }
 
+void J9FASTCALL
+old_fast_jitAcmpHelper(J9VMThread *currentThread)
+{
+	OLD_JIT_HELPER_PROLOGUE(2);
+	DECLARE_JIT_PARM(j9object_t, lhs, 1);
+	DECLARE_JIT_PARM(j9object_t, rhs, 2);
+
+	JIT_RETURN_UDATA(currentThread->javaVM->internalVMFunctions->valueTypeCapableAcmp(currentThread, lhs, rhs));
+}
+
 void* J9FASTCALL
 old_fast_jitTypeCheckArrayStore(J9VMThread *currentThread)
 {
@@ -3102,6 +3112,19 @@ fast_jitTypeCheckArrayStoreWithNullCheck(J9VMThread *currentThread, j9object_t d
 	return slowPath;
 }
 
+BOOLEAN J9FASTCALL
+#if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
+/* TODO Will be cleaned once all platforms adopt the correct parameter order */
+fast_jitAcmpHelper(J9VMThread *currentThread, j9object_t lhs, j9object_t rhs)
+#else /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
+fast_jitAcmpHelper(J9VMThread *currentThread, j9object_t rhs, j9object_t lhs)
+#endif /* J9VM_ARCH_X86 || J9VM_ARCH_S390*/
+{
+	JIT_HELPER_PROLOGUE();
+
+	return currentThread->javaVM->internalVMFunctions->valueTypeCapableAcmp(currentThread, lhs, rhs);
+}
+
 void* J9FASTCALL
 #if defined(J9VM_ARCH_X86) || defined(J9VM_ARCH_S390)
 /* TODO Will be cleaned once all platforms adopt the correct parameter order */
@@ -3357,6 +3380,7 @@ initPureCFunctionTable(J9JavaVM *vm)
 	jitConfig->old_slow_jitNewInstanceImplAccessCheck = (void*)old_slow_jitNewInstanceImplAccessCheck;
 	jitConfig->old_slow_jitTranslateNewInstanceMethod = (void*)old_slow_jitTranslateNewInstanceMethod;
 	jitConfig->old_slow_jitReportFinalFieldModified = (void*)old_slow_jitReportFinalFieldModified;
+	jitConfig->old_fast_jitAcmpHelper = (void*)old_fast_jitAcmpHelper;
 	jitConfig->fast_jitNewValue = (void*)fast_jitNewValue;
 	jitConfig->fast_jitNewValueNoZeroInit = (void*)fast_jitNewValueNoZeroInit;
 	jitConfig->fast_jitNewObject = (void*)fast_jitNewObject;
