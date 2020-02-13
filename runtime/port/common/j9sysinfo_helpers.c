@@ -242,7 +242,7 @@ getX86CPUIDext(uint32_t leaf, uint32_t subleaf, uint32_t *cpuInfo)
 /* Implemented for x86 & x86_64 bit platforms */
 #if defined(WIN32)
 	/* Specific CPUID instruction available in Windows */
-	__cpuidex(CPUInfo, cpuInfo[0], cpuInfo[2]);
+	__cpuidex(cpuInfo, cpuInfo[0], cpuInfo[2]);
 
 #elif defined(LINUX) || defined(OSX)
 #if defined(J9X86)

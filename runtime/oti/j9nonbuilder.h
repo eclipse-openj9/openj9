@@ -5114,6 +5114,11 @@ typedef struct J9JavaVM {
 	UDATA valueFlatteningThreshold;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	UDATA dCacheLineSize;
+	/* Indicates processor support for committing cache lines to memory. On X86,
+	 * examples would be CLFLUSH or CLWB instructions. This field takes the value
+	 * of the feature constants listed in j9port.h
+	 */
+	U_32 cpuCacheWritebackCapabilities;
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2
