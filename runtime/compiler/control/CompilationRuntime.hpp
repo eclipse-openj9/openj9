@@ -512,14 +512,14 @@ public:
    static int32_t getJ9MethodVMExtra(J9Method *method)
       {
 #if defined(JITSERVER_SUPPORT)
-      TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
+      TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(JITSERVER_SUPPORT) */
       return (int32_t)((intptrj_t)method->extra);
       }
    static uint32_t getJ9MethodJITExtra(J9Method *method)
       {
 #if defined(JITSERVER_SUPPORT)
-      TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
+      TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(JITSERVER_SUPPORT) */
       TR_ASSERT((intptrj_t)method->extra & J9_STARTPC_NOT_TRANSLATED, "MethodExtra Already Jitted!");
       return (uint32_t)((uintptrj_t)method->extra >> 32);
@@ -556,14 +556,14 @@ public:
    static bool setJ9MethodExtraAtomic(J9Method *method, intptrj_t oldValue, intptrj_t newValue)
       {
 #if defined(JITSERVER_SUPPORT)
-      TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
+      TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(JITSERVER_SUPPORT) */
       return oldValue == VM_AtomicSupport::lockCompareExchange((UDATA*)&method->extra, oldValue, newValue);
       }
    static bool setJ9MethodExtraAtomic(J9Method *method, intptrj_t newValue)
       {
 #if defined(JITSERVER_SUPPORT)
-      TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
+      TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(JITSERVER_SUPPORT) */
       intptrj_t oldValue = (intptrj_t)method->extra;
       return setJ9MethodExtraAtomic(method, oldValue, newValue);
@@ -571,7 +571,7 @@ public:
    static bool setJ9MethodVMExtra(J9Method *method, int32_t value)
       {
 #if defined(JITSERVER_SUPPORT)
-      TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
+      TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(JITSERVER_SUPPORT) */
       intptrj_t oldValue = (intptrj_t)method->extra;
       //intptrj_t newValue = oldValue & (intptrj_t)~J9_INVOCATION_COUNT_MASK;
@@ -621,7 +621,7 @@ public:
    static void setInitialInvocationCountUnsynchronized(J9Method *method, int32_t value)
       {
 #if defined(JITSERVER_SUPPORT)
-      TR_ASSERT(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
+      TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "not yet implemented for JITServer");
 #endif /* defined(JITSERVER_SUPPORT) */
       value = (value << 1) | 1;
       if (value < 0)
