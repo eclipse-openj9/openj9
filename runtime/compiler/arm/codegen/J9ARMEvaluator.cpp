@@ -20,7 +20,6 @@
  * SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
  *******************************************************************************/
 
-#ifdef TR_TARGET_ARM
 #include <stdint.h>
 #include "j9.h"
 #include "j9cfg.h"
@@ -1213,10 +1212,15 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
 
    // AOT does not support inline allocates - cannot currently guarantee totalInstanceSize
 
+   // If the helper symbol set on the node is TR_newValue, we are (expecting to be)
+   // dealing with a value type. Since we do not fully support value types yet, always
+   // call the JIT helper to do the allocation.
+
    TR::ILOpCodes opCode        = node->getOpCodeValue();
    int32_t      objectSize    = cg->comp()->canAllocateInlineOnStack(node, (TR_OpaqueClassBlock *&) clazz);
    bool         isVariableLen = (objectSize == 0);
-   if (objectSize < 0 || comp->compileRelocatableCode() || comp->suppressAllocationInlining())
+   if (objectSize < 0 || comp->compileRelocatableCode() || comp->suppressAllocationInlining() ||
+       (TR::Compiler->om.areValueTypesEnabled() && node->getSymbolReference() == comp->getSymRefTab()->findOrCreateNewValueSymbolRef(comp->getMethodSymbol()))
       {
       TR::Node::recreate(node, TR::acall);
       callResult = directCallEvaluator(node, cg);
@@ -1711,11 +1715,3 @@ void VMgenerateCatchBlockBBStartPrologue(TR::Node *node, TR::Instruction *fenceI
    {
    /* @@ not implemented @@ */
    }
-
-#else /* TR_TARGET_ARM   */
-// the following is to force an export to keep ilib happy
-int J9ARMEvaluator=0;
-#endif /* TR_TARGET_ARM   */
-
-
-
