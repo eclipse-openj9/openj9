@@ -1220,7 +1220,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMnewEvaluator(TR::Node *node, TR::CodeGe
    int32_t      objectSize    = cg->comp()->canAllocateInlineOnStack(node, (TR_OpaqueClassBlock *&) clazz);
    bool         isVariableLen = (objectSize == 0);
    if (objectSize < 0 || comp->compileRelocatableCode() || comp->suppressAllocationInlining() ||
-       (TR::Compiler->om.areValueTypesEnabled() && node->getSymbolReference() == comp->getSymRefTab()->findOrCreateNewValueSymbolRef(comp->getMethodSymbol()))
+       (TR::Compiler->om.areValueTypesEnabled() && node->getSymbolReference() == comp->getSymRefTab()->findOrCreateNewValueSymbolRef(comp->getMethodSymbol())))
       {
       TR::Node::recreate(node, TR::acall);
       callResult = directCallEvaluator(node, cg);
