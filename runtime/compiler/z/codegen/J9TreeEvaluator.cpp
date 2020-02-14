@@ -261,8 +261,7 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
    const uint32_t elementSizeMask = isUTF16 ? 1 : 0;
    const int8_t vectorSize = cg->machine()->getVRFSize();
    const uintptrj_t headerSize = TR::Compiler->om.contiguousArrayHeaderSizeInBytes();
-   // TODO (#8274): Re-enable VSTRS support in inlineVectorizedStringIndexOf
-   const bool supportsVSTRS = cg->comp()->target().cpu.getSupportsVectorFacilityEnhancement2() && feGetEnv("TR_EnableVectorStringSearch") != NULL;
+   const bool supportsVSTRS = cg->comp()->target().cpu.getSupportsVectorFacilityEnhancement2();
    TR::Compilation* comp = cg->comp();
 
    if (comp->getOption(TR_TraceCG))
@@ -450,8 +449,9 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
 
       // s2 header not found in s1
       // Load the next 16 bytes of s1 and continue
+      generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, s1VecStartIndexReg, maxIndexReg, labelStringNotFound, TR::InstOpCode::COND_BNL);
       generateRRInstruction(cg, TR::InstOpCode::getAddRegOpCode(), node, s1VecStartIndexReg, loadLenReg);
-      generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, s1VecStartIndexReg, maxIndexReg, labelStringNotFound, TR::InstOpCode::COND_BHR);
+      generateRIEInstruction(cg, TR::InstOpCode::getCmpRegAndBranchRelOpCode(), node, s1VecStartIndexReg, s1LenReg, labelStringNotFound, TR::InstOpCode::COND_BNL);
       generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelFindS2Head);
 
       // s2 header full match
@@ -613,7 +613,6 @@ inlineVectorizedStringIndexOf(TR::Node* node, TR::CodeGenerator* cg, bool isUTF1
       // Byte-index to char-index conversion
       generateRSInstruction(cg, TR::InstOpCode::SRA, node, resultReg, 1);
       }
-
    generateS390BranchInstruction(cg, TR::InstOpCode::BRC, TR::InstOpCode::COND_BRC, node, labelResultDone);
 
    generateS390LabelInstruction(cg, TR::InstOpCode::LABEL, node, labelStringNotFound);
