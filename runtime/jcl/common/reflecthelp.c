@@ -1837,7 +1837,8 @@ getRecordComponentsHelper(JNIEnv *env, jobject cls)
 
 	if (recordComponentCount > 0) {
 		J9ROMRecordComponentShape* recordComponent = recordComponentStartDo(romClass);
-		for (U_32 rcIndex = 0; rcIndex < recordComponentCount; rcIndex++) {
+		U_32 rcIndex = 0;
+		for (; rcIndex < recordComponentCount; rcIndex++) {
 			j9object_t recordComponentObject = NULL;
 			J9UTF8* nameUTF = NULL;
 			j9object_t nameString = NULL;
