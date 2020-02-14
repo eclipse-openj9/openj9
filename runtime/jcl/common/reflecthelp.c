@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1704,6 +1704,237 @@ retry:
 				result = NULL;
 			}
 			goto retry;
+		}
+	}
+	goto done;
+
+nativeoutofmemory:
+	vmFuncs->setNativeOutOfMemoryError(vmThread, 0, 0);
+	goto done;
+
+heapoutofmemory:
+	vmFuncs->setHeapOutOfMemoryError(vmThread);
+	goto done;
+
+done:
+	vmFuncs->internalExitVMToJNI(vmThread);
+	return result;
+}
+
+/* Determine whether currentMethod is the accessor method for a record component with name componentName.
+ * an accessor method will have the same name as the component and take zero parameters.
+ */
+static U_8
+isRecordComponentAccessorMethodMatch(J9Method *currentMethod, const char* componentName, U_16 componentNameLength, const char* componentSignature, U_16 componentSignatureLength) {
+	J9ROMMethod *romMethod = J9_ROM_METHOD_FROM_RAM_METHOD(currentMethod);
+
+	J9UTF8 *methodNameUtf8 = J9ROMMETHOD_NAME(romMethod);
+	const U_8 *methodName = J9UTF8_DATA(methodNameUtf8);
+	U_16 methodNameLength = J9UTF8_LENGTH(methodNameUtf8);
+
+	J9UTF8 *methodSignatureUtf8 = J9ROMMETHOD_SIGNATURE(romMethod);
+	const U_8 *methodSignature = J9UTF8_DATA(methodSignatureUtf8);
+	U_16 methodSignatureLength = J9UTF8_LENGTH(methodSignatureUtf8);
+
+	/* for a match methodSignature should be "()" + componentSignature */
+	if ((methodNameLength == componentNameLength)
+		&& (methodSignatureLength == (componentSignatureLength + 2))
+	) {
+		if (0 == strcmp((const char*)methodName, componentName)) {
+			if ((0 == strncmp((const char*)methodSignature + 2, componentSignature, methodSignatureLength - 2))) {
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
+}
+
+/* Find the accessor method for a record component with name componantName. 
+ * componentIndex slot for current record component will be used to optimize search
+ */
+static J9Method*
+findRecordComponentAccessorMethod(J9VMThread* currentThread, J9Class* clazz, J9ROMRecordComponentShape* recordComponent, U_32 componentIndex, U_32 recordComponentCount)
+{
+	J9Method *currentMethod = clazz->ramMethods;
+	U_32 romMethodCount = clazz->romClass->romMethodCount;
+	J9Method *resultMethod = NULL;
+
+	const char* componentName = (const char*)J9UTF8_DATA(J9ROMRECORDCOMPONENTSHAPE_NAME(recordComponent));
+	U_16 componentNameLength = J9UTF8_LENGTH(J9ROMRECORDCOMPONENTSHAPE_NAME(recordComponent));
+	const char* componentSignature = (const char*)J9UTF8_DATA(J9ROMRECORDCOMPONENTSHAPE_SIGNATURE(recordComponent));
+	U_16 componentSignatureLength = J9UTF8_LENGTH(J9ROMRECORDCOMPONENTSHAPE_SIGNATURE(recordComponent));
+
+	/* javac typically generates each of the record components in order as the final recordComponentCount methods in the record class. 
+	* Probe the ramMethods array for a match at this point first before iterating through the entire method list. */
+	U_32 testSlot = romMethodCount - recordComponentCount + componentIndex;
+	if ((testSlot < romMethodCount) && isRecordComponentAccessorMethodMatch(currentMethod + testSlot, componentName, componentNameLength, componentSignature, componentSignatureLength)) {
+		resultMethod = currentMethod + testSlot;
+	} else {
+		for (; romMethodCount > 0; romMethodCount--) {
+			if (isRecordComponentAccessorMethodMatch(currentMethod, componentName, componentNameLength, componentSignature, componentSignatureLength)) {
+				resultMethod = currentMethod;
+				break;
+			}
+			currentMethod += 1;
+		}
+	}
+
+	return resultMethod;
+}
+
+/* Creates an array of RecordComponents for the given class and sets the following fields:
+ * - Class<?> clazz 
+ * - String name
+ * - Class<?> type
+ * - Method accessor
+ * - String signature
+ * - byte[] annotations
+ * - byte[] typeAnnotations
+ * - RecordComponent root (currently always null)
+ */
+jarray
+getRecordComponentsHelper(JNIEnv *env, jobject cls)
+{
+	J9VMThread *vmThread = (J9VMThread *)env;
+	J9JavaVM *vm = vmThread->javaVM;
+	J9InternalVMFunctions *vmFuncs = vm->internalVMFunctions;
+	J9MemoryManagerFunctions *mmFuncs = vm->memoryManagerFunctions;
+	jarray result = NULL;
+	J9Class *recordComponentClass = NULL;
+	J9Class *recordComponentArrayClass = NULL;
+	U_32 recordComponentCount = 0;
+	j9array_t recordComponentArrayObject = NULL;
+	J9Class *clazz = NULL;
+	J9ROMClass *romClass = NULL;
+
+	vmFuncs->internalEnterVMFromJNI(vmThread);
+
+	clazz = J9VM_J9CLASS_FROM_JCLASS(vmThread, (jclass)cls);
+	romClass = clazz->romClass;
+
+	recordComponentClass = J9VMJAVALANGREFLECTRECORDCOMPONENT(vm);
+	if (NULL != vmThread->currentException) {
+		goto done;
+	}
+
+	recordComponentArrayClass = fetchArrayClass(vmThread, recordComponentClass);
+	if (NULL != vmThread->currentException) {
+		goto done;
+	}
+
+	recordComponentCount = getNumberOfRecordComponents(romClass);
+
+	recordComponentArrayObject = (j9array_t) mmFuncs->J9AllocateIndexableObject(vmThread, recordComponentArrayClass,
+			recordComponentCount, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+	if (NULL == recordComponentArrayObject) {
+		goto heapoutofmemory;
+	}
+
+	result = vmFuncs->j9jni_createLocalRef(env, (j9object_t)recordComponentArrayObject);
+	if (NULL == result) {
+		goto nativeoutofmemory;
+	}
+
+	if (recordComponentCount > 0) {
+		J9ROMRecordComponentShape* recordComponent = recordComponentStartDo(romClass);
+		for (U_32 rcIndex = 0; rcIndex < recordComponentCount; rcIndex++) {
+			j9object_t recordComponentObject = NULL;
+			J9UTF8* nameUTF = NULL;
+			j9object_t nameString = NULL;
+			U_8 *typeData = NULL;
+			J9Method* accessorMethod = NULL;
+			J9Class *typeClass = NULL;
+
+			recordComponentObject = mmFuncs->J9AllocateObject(vmThread, recordComponentClass, J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+			if (NULL == recordComponentObject) {
+				goto heapoutofmemory;
+			}
+
+			/** set RecordComponent fields **/
+
+			PUSH_OBJECT_IN_SPECIAL_FRAME(vmThread, recordComponentObject);
+
+			/* String name */
+			nameUTF = J9ROMRECORDCOMPONENTSHAPE_NAME(recordComponent);
+			nameString = mmFuncs->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(nameUTF), (U_32) J9UTF8_LENGTH(nameUTF), J9_STR_INTERN);
+			if (NULL == nameString) {
+			 	DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* recordComponentObject */
+			 	goto heapoutofmemory;
+			}
+			recordComponentObject = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
+			J9VMJAVALANGREFLECTRECORDCOMPONENT_SET_NAME(vmThread, recordComponentObject, nameString);
+
+			/* Class<?> type */
+			typeData = J9UTF8_DATA(J9ROMRECORDCOMPONENTSHAPE_SIGNATURE(recordComponent));
+			typeClass = classForSignature(vmThread, &typeData, clazz->classLoader);
+			if (NULL == typeClass) {
+				DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* recordComponentObject */
+				goto heapoutofmemory;
+			}
+			recordComponentObject = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
+			J9VMJAVALANGREFLECTRECORDCOMPONENT_SET_TYPE(vmThread, recordComponentObject, J9VM_J9CLASS_TO_HEAPCLASS(typeClass));
+
+			/* Method accessor - this is the components getter method which will have the same name as the component itself. */
+			accessorMethod = findRecordComponentAccessorMethod(vmThread, clazz, recordComponent, rcIndex, recordComponentCount);
+			if (NULL != accessorMethod) {
+				j9object_t accessorObject = createMethodObject(accessorMethod, clazz, NULL, vmThread);
+				if (NULL == accessorObject) {
+					DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* recordComponentObject */
+					goto heapoutofmemory;
+				}
+				recordComponentObject = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
+				J9VMJAVALANGREFLECTRECORDCOMPONENT_SET_ACCESSOR(vmThread, recordComponentObject, accessorObject);
+			}
+
+			/* String signature */
+			if (recordComponentHasSignature(recordComponent)) {
+				J9UTF8* signatureUTF = getRecordComponentGenericSignature(recordComponent);
+				j9object_t signatureString = mmFuncs->j9gc_createJavaLangString(vmThread, J9UTF8_DATA(signatureUTF), (U_32) J9UTF8_LENGTH(signatureUTF), J9_STR_INTERN);
+				if (NULL == signatureString) {
+					DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* recordComponentObject */
+					goto heapoutofmemory;
+				}
+				recordComponentObject = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
+				J9VMJAVALANGREFLECTRECORDCOMPONENT_SET_SIGNATURE(vmThread, recordComponentObject, signatureString);
+			}
+
+			/* byte[] annotations */
+			if (recordComponentHasAnnotations(recordComponent)) {
+				U_32* annotationData = getRecordComponentAnnotationData(recordComponent);
+				j9object_t byteArray = getAnnotationDataAsByteArray(vmThread, annotationData);
+				if (NULL != vmThread->currentException) {
+					DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* recordComponentObject */
+					goto done;
+				}
+				recordComponentObject = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
+				J9VMJAVALANGREFLECTRECORDCOMPONENT_SET_ANNOTATIONS(vmThread, recordComponentObject, byteArray);
+			}
+
+			/* byte[] typeAnnotations */
+			if (recordComponentHasTypeAnnotations(recordComponent)) {
+				U_32* typeAnnotationData = getRecordComponentTypeAnnotationData(recordComponent);
+				j9object_t byteArray = getAnnotationDataAsByteArray(vmThread, typeAnnotationData);
+				if (NULL != vmThread->currentException) {
+					DROP_OBJECT_IN_SPECIAL_FRAME(vmThread); /* recordComponentObject */
+					goto done;
+				}
+				recordComponentObject = PEEK_OBJECT_IN_SPECIAL_FRAME(vmThread, 0);
+				J9VMJAVALANGREFLECTRECORDCOMPONENT_SET_TYPEANNOTATIONS(vmThread, recordComponentObject, byteArray);
+			}
+
+			/* end of setting parameters where class loading may occur */
+			recordComponentObject = POP_OBJECT_IN_SPECIAL_FRAME(vmThread);
+
+			/* Class<?> clazz */
+			J9VMJAVALANGREFLECTRECORDCOMPONENT_SET_CLAZZ(vmThread, recordComponentObject, J9VM_J9CLASS_TO_HEAPCLASS(clazz));
+
+			/* refetch array object because vmaccess could have been released */
+			recordComponentArrayObject = (j9array_t)J9_JNI_UNWRAP_REFERENCE(result);
+
+			/* store record component object into final array */
+			J9JAVAARRAYOFOBJECT_STORE(vmThread, recordComponentArrayObject, rcIndex, recordComponentObject);
+
+			recordComponent = recordComponentNextDo(recordComponent);
 		}
 	}
 	goto done;
