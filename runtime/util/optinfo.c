@@ -729,8 +729,9 @@ getRecordComponentAnnotationData(J9ROMRecordComponentShape* recordComponent)
 
 static UDATA
 annotationAttributeSize(U_8* annotationAttribute) {
+	UDATA size = 0;
 	Assert_VMUtil_true(((UDATA)annotationAttribute % sizeof(U_32)) == 0);
-	UDATA size = sizeof(U_32);		/* size of length */
+	size = sizeof(U_32);		/* size of length */
 	size += *((U_32 *)annotationAttribute);	/* length of attribute */
 	return ROUND_UP_TO_POWEROF2(size, sizeof(U_32));	/* padding */
 } 
