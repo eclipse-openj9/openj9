@@ -736,6 +736,7 @@ public class Test_JITHelpers {
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnop"), 16, valueField.get("ab"), 2, 0), 0);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnop"), 16, valueField.get("abc"), 3, 0), 0);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnop"), 16, valueField.get("abcdefghijklmnop"), 16, 0), 0);
+				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnopx"), 16, valueField.get("x"), 1, 0), -1);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnop"), 16, valueField.get("x"), 1, 0), -1);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnop"), 16, valueField.get("x"), 1, 1), -1);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghijklmnop"), 16, valueField.get("x"), 1, 7), -1);
@@ -902,6 +903,7 @@ public class Test_JITHelpers {
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), 34, valueField.get("de"), 2, 5), 20);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), 34, valueField.get("def"), 3, 5), 20);
 				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("ab12345678901234567cdefghijklmnopq"), 34, valueField.get("defghijklmn"), 11, 5), 20);
+				Assert.assertEquals(helpers.intrinsicIndexOfStringLatin1(valueField.get("abcdefghiklmnopqrstwyzabcdefghikabcdefghiklmnopqlmmnopqrstwyzabcdepoisd"), 71, valueField.get("abcdefghiklmnopqlmmnopqrstwyzabcdepoisd"), 39, 0), 32);
 			}
 		} catch (IllegalAccessException e) {
 			throw new RuntimeException(e);
