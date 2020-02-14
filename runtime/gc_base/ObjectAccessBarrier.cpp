@@ -1511,7 +1511,7 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 			mixedObjectStoreObject(vmThread, destObject, destOffset + offset, objectPtr, false);
 		} else {
 			UDATA srcAddress = (UDATA)srcObject + srcOffset + offset;
-			UDATA destAddress = (UDATA)destObject + srcOffset + offset;
+			UDATA destAddress = (UDATA)destObject + destOffset + offset;
 			if (sizeof(uint32_t) == referenceSize) {
 				*(uint32_t *)destAddress = *(uint32_t *)srcAddress;
 			} else {
