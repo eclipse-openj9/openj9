@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -130,6 +130,18 @@ getFieldsHelper(JNIEnv *env, jobject cls);
 J9Class *
 fetchArrayClass(struct J9VMThread *vmThread, J9Class *elementTypeClass);
 
+/**
+ * Build an array of java.lang.reflect.RecordComponent for the record components of a record class
+ * 
+ * @param[in] env The JNI context.
+ * @param[in] cls A class.  Must be non-null.
+ * 
+ * @return jarray an array of java.lang.reflect.RecordComponent.
+ * If cls is not a record, return null.
+ * If record class has no record components, return an empty array.
+ */
+jarray
+getRecordComponentsHelper(JNIEnv *env, jobject cls);
 
 /* ---------------- sigquit.c ---------------- */
 void
