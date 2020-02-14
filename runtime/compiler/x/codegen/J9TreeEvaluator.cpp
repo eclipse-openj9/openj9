@@ -678,7 +678,7 @@ static void generateCommonLockNurseryCodes(TR::Node          *node,
       //generateRegMemInstruction(LRegMem(), node, objectClassReg, generateX86MemoryReference(vmThreadReg, offsetOfMonitorLookupCache, cg), cg);
       generateRegRegInstruction(MOVRegReg(), node, lookupOffsetReg, objectReg, cg);
 
-      generateRegImmInstruction(SARRegImm1(cg->comp()->target().is64Bit()), node, lookupOffsetReg, trailingZeroes(fej9->getObjectAlignmentInBytes()), cg);
+      generateRegImmInstruction(SARRegImm1(cg->comp()->target().is64Bit()), node, lookupOffsetReg, trailingZeroes(TR::Compiler->om.objectAlignmentInBytes()), cg);
 
       J9JavaVM * jvm = fej9->getJ9JITConfig()->javaVM;
       generateRegImmInstruction(ANDRegImms(), node, lookupOffsetReg, J9VMTHREAD_OBJECT_MONITOR_CACHE_SIZE - 1, cg);
@@ -1355,7 +1355,7 @@ TR::Register *J9::X86::TreeEvaluator::multianewArrayEvaluator(TR::Node *node, TR
 
    generateRegRegInstruction(MOVRegReg(), node, temp1Reg, firstDimLenReg, cg);
 
-   int32_t round = (elementSize >= fej9->getObjectAlignmentInBytes())? 0 : fej9->getObjectAlignmentInBytes();
+   int32_t round = (elementSize >= TR::Compiler->om.objectAlignmentInBytes())? 0 : TR::Compiler->om.objectAlignmentInBytes();
    int32_t disp32 = round ? (round-1) : 0;
 
    uint8_t shiftVal = TR::MemoryReference::convertMultiplierToStride(elementSize);
@@ -6073,7 +6073,7 @@ static void genHeapAlloc(
             }
 
 
-         round = (elementSize < fej9->getObjectAlignmentInBytes()) ? fej9->getObjectAlignmentInBytes() : 0;
+         round = (elementSize < TR::Compiler->om.objectAlignmentInBytes()) ? TR::Compiler->om.objectAlignmentInBytes() : 0;
 
          int32_t disp32 = round ? (round-1) : 0;
 #ifdef J9VM_INTERP_FLAGS_IN_CLASS_SLOT
@@ -6141,7 +6141,7 @@ static void genHeapAlloc(
       else
          {
          isSmallAllocation = allocationSizeOrDataOffset <= 0x40 ? true : false;
-         allocationSizeOrDataOffset = (allocationSizeOrDataOffset+fej9->getObjectAlignmentInBytes()-1) & (-fej9->getObjectAlignmentInBytes());
+         allocationSizeOrDataOffset = (allocationSizeOrDataOffset+TR::Compiler->om.objectAlignmentInBytes()-1) & (-TR::Compiler->om.objectAlignmentInBytes());
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
          if ((node->getOpCodeValue() == TR::New) &&
@@ -6290,11 +6290,11 @@ static void genHeapAlloc(
       //
       if (generateArraylets && (node->getOpCodeValue() == TR::anewarray || node->getOpCodeValue() == TR::newarray) )
          {
-         generateRegMemInstruction(LEARegMem(),node,tempReg, generateX86MemoryReference(tempReg,fej9->getObjectAlignmentInBytes()-1,cg),cg);
+         generateRegMemInstruction(LEARegMem(),node,tempReg, generateX86MemoryReference(tempReg,TR::Compiler->om.objectAlignmentInBytes()-1,cg),cg);
          if (cg->comp()->target().is64Bit())
-            generateRegImmInstruction(AND8RegImm4,node,tempReg,-fej9->getObjectAlignmentInBytes(),cg);
+            generateRegImmInstruction(AND8RegImm4,node,tempReg,-TR::Compiler->om.objectAlignmentInBytes(),cg);
          else
-            generateRegImmInstruction(AND4RegImm4,node,tempReg,-fej9->getObjectAlignmentInBytes(),cg);
+            generateRegImmInstruction(AND4RegImm4,node,tempReg,-TR::Compiler->om.objectAlignmentInBytes(),cg);
          }
 
       generateMemRegInstruction(SMemReg(),
@@ -6464,7 +6464,7 @@ static void genHeapAlloc2(
 //            TR_ASSERT(allocationSizeOrDataOffset % fej9->getObjectAlignmentInBytes() == 0, "Array header size of %d is not a multiple of %d", allocationSizeOrDataOffset, fej9->getObjectAlignmentInBytes());
             }
 
-         round = (elementSize >= fej9->getObjectAlignmentInBytes())? 0 : fej9->getObjectAlignmentInBytes();
+         round = (elementSize >= TR::Compiler->om.objectAlignmentInBytes())? 0 : TR::Compiler->om.objectAlignmentInBytes();
          int32_t disp32 = round ? (round-1) : 0;
 
 /*
@@ -6529,7 +6529,7 @@ static void genHeapAlloc2(
          if (comp->getOptLevel() < hot)
             isTooSmallToPrefetch = allocationSizeOrDataOffset <= 0x40 ? true : false;
 
-         allocationSizeOrDataOffset = (allocationSizeOrDataOffset+fej9->getObjectAlignmentInBytes()-1) & (-fej9->getObjectAlignmentInBytes());
+         allocationSizeOrDataOffset = (allocationSizeOrDataOffset+TR::Compiler->om.objectAlignmentInBytes()-1) & (-TR::Compiler->om.objectAlignmentInBytes());
 
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP)
          if ((node->getOpCodeValue() == TR::New) &&
@@ -6690,11 +6690,11 @@ static void genHeapAlloc2(
       //
       if (generateArraylets && (node->getOpCodeValue() == TR::anewarray || node->getOpCodeValue() == TR::newarray) )
          {
-         generateRegMemInstruction(LEARegMem(),node,segmentReg, generateX86MemoryReference(tempReg,fej9->getObjectAlignmentInBytes()-1,cg),cg);
+         generateRegMemInstruction(LEARegMem(),node,segmentReg, generateX86MemoryReference(tempReg,TR::Compiler->om.objectAlignmentInBytes()-1,cg),cg);
          if (cg->comp()->target().is64Bit())
-            generateRegImmInstruction(AND8RegImm4,node,segmentReg,-fej9->getObjectAlignmentInBytes(),cg);
+            generateRegImmInstruction(AND8RegImm4,node,segmentReg,-TR::Compiler->om.objectAlignmentInBytes(),cg);
          else
-            generateRegImmInstruction(AND4RegImm4,node,segmentReg,-fej9->getObjectAlignmentInBytes(),cg);
+            generateRegImmInstruction(AND4RegImm4,node,segmentReg,-TR::Compiler->om.objectAlignmentInBytes(),cg);
          }
 
       generateMemRegInstruction(SMemReg(),
