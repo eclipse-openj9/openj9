@@ -919,6 +919,7 @@ typedef struct J9CfrClassFile {
 #define CFR_DECODE_J9_MULTIANEWARRAY	23
 #define CFR_DECODE_J9_METHODTYPEREF		24
 #define CFR_J9FLAG_HAS_JSR  		1
+#define CFR_J9FLAG_IS_RECORD        2
 
 #if defined(J9VM_ENV_DATA64)
 #define ROM_ADDRESS_LENGTH 16

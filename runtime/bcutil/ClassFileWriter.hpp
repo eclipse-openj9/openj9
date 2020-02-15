@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -290,6 +290,7 @@ private:
 	void analyzeInterfaces();
 	void analyzeFields();
 	void analyzeMethods();
+	void analyzeRecordAttribute();
 
 	void writeClassFile();
 	void writeConstantPool();
@@ -310,6 +311,7 @@ private:
 	void writeTypeAnnotationsAttribute(U_32 *typeAnnotationsData);
 	void writeAnnotationDefaultAttribute(U_32 *annotationsDefaultData);
 	void writeAttributeHeader(J9UTF8 * name, U_32 length);
+	void writeRecordAttribute();
 
 	/* Similar to ClassFileOracle::computeSendSlotCount().
 	 * This is used to get the argument count for the method called using invokeinterface bytecode.
