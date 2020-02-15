@@ -36,6 +36,8 @@
                   -excludegroups $(DEFAULT_EXCLUDE); \
                   $(TEST_STATUS)
           </command>
+          <!-- temporary exclusion for https://github.com/eclipse/openj9/issues/8582 -->
+          <platformRequirements>^arch.ppc,^os.osx</platformRequirements>
           <levels>
                   <level>sanity</level>
           </levels>
