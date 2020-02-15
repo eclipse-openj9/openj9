@@ -777,6 +777,9 @@ readAttributes(J9CfrClassFile * classfile, J9CfrAttribute *** pAttributes, U_32 
 			}
 			recordAttributeRead = TRUE;
 
+			/* set classfile flag for record class (used by cfdumper) */
+			classfile->j9Flags |= CFR_J9FLAG_IS_RECORD;
+
 			if (!ALLOC(record, J9CfrAttributeRecord)) {
 				return -2;
 			}
