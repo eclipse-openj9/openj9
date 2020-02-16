@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2012 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -89,7 +89,9 @@ public class XlpCodeCacheOptionsTestRunner extends Runner {
 	 */
 	protected void populateXlpOptionsList() {
 		xlpOptionsList = new ArrayList<XlpOption>();
-		if (osArch == OSArch.PPC) {
+		switch(osName) {
+
+		case AIX:
 			/* No -Xlp option */
 			xlpOptionsList.add(new XlpOption(null, false));
 			
@@ -108,7 +110,10 @@ public class XlpCodeCacheOptionsTestRunner extends Runner {
 			/* Test multiple -Xlp:codecache: options. In such cases rightmost option wins */
 			xlpOptionsList.add(new XlpOption("-Xlp:codecache:pagesize=64K -Xlp:codecache:pagesize=16M", 16 * ONE_MB, XlpUtil.XLP_PAGE_TYPE_NOT_USED, false));
 			xlpOptionsList.add(new XlpOption("-Xlp:codecache:pagesize=16M -Xlp:codecache:pagesize=64K", 64 * ONE_KB, XlpUtil.XLP_PAGE_TYPE_NOT_USED, false));
-		} else if ((osName == OSName.LINUX) || (osName == OSName.WINDOWS)) {
+			break;
+
+		case LINUX:
+		case WINDOWS:
 			/* No -Xlp option */
 			xlpOptionsList.add(new XlpOption(null, false));
 
@@ -125,7 +130,9 @@ public class XlpCodeCacheOptionsTestRunner extends Runner {
 			/* Test multiple -Xlp:codecache: options. In such cases rightmost option wins */
 			xlpOptionsList.add(new XlpOption("-Xlp:codecache:pagesize=2M -Xlp:codecache:pagesize=4M", 4 * ONE_MB, XlpUtil.XLP_PAGE_TYPE_NOT_USED, false));
 			xlpOptionsList.add(new XlpOption("-Xlp:codecache:pagesize=4M -Xlp:codecache:pagesize=2M", 2 * ONE_MB, XlpUtil.XLP_PAGE_TYPE_NOT_USED, false));
-		} else if (osName == OSName.ZOS){
+			break;
+
+		case ZOS:
 			/* No -Xlp option */
 			xlpOptionsList.add(new XlpOption(null, false));
 			
@@ -142,8 +149,11 @@ public class XlpCodeCacheOptionsTestRunner extends Runner {
 			/* Test multiple -Xlp:codecache: options. In such cases rightmost option wins */
 			xlpOptionsList.add(new XlpOption("-Xlp:codecache:pagesize=1M,pageable -Xlp:codecache:pagesize=2G,nonpageable", 2 * ONE_GB, XlpUtil.XLP_PAGE_TYPE_NONPAGEABLE, false));
 			xlpOptionsList.add(new XlpOption("-Xlp:codecache:pagesize=2G,nonpageable -Xlp:codecache:pagesize=1M,pageable", ONE_MB, XlpUtil.XLP_PAGE_TYPE_PAGEABLE, false));
-		} else {
+			break;
+
+		default:
 			System.out.println("WARNING: Failed to determine underlying OS. This test needs to know underlying OS.");
+			break;
 		}
 	}
 	
