@@ -4,7 +4,7 @@
 
 
 <!--
-  Copyright (c) 2016, 2018 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -75,12 +75,12 @@
 		<reason>Only applies to Linux SRT</reason>
 	</include>
 
-	<exclude id="j9vm.test.xlp" platform="all">
-		<reason>This test is run separately and not as part of j9vm test suite</reason>
+	<exclude id="j9vm.test.xlpcodecache" platform="aix_ppc.* | osx_x86.*">
+		<reason>OpenJ9 Issue I8437. This test is unstable on AIXPPC. Xlp is not supported on OSX. </reason>
 	</exclude>
 
-	<exclude id="j9vm.test.xlpcodecache" platform="all">
-		<reason>This test is run separately and not as part of j9vm test suite</reason>
+	<exclude id="j9vm.test.xlp" platform="osx_x86.*">
+		<reason>Xlp is not supported on OSX. </reason>
 	</exclude>
 
 	<exclude id="j9vm.test.classloader.LazyClassLoaderInitTest" platform="all">
