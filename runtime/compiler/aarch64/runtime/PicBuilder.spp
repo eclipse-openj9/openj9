@@ -741,7 +741,7 @@ _interfaceDispatch:
 	stp	x3, x2, [J9SP, #32]
 	stp	x1, x0, [J9SP, #48]
 L_continueInterfaceSend:
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
 	ldr	w0, [x0, #J9TR_ObjectHeader_class]		// load class offset of receiver
 #else
 	ldr	x0, [x0, #J9TR_ObjectHeader_class]		// load class of receiver
@@ -756,7 +756,7 @@ L_continueInterfaceSend:
 	sub	x9, x9, x0					// convert interp vTableIndex to jit index (must be in x9 for patch virtual)
 	mov	x30, x10						// set LR = code cache RA
 	ldr	x0, [J9SP, #56]					// refetch 'this'
-#ifdef J9VM_GC_COMPRESSED_POINTERS
+#ifdef OMR_GC_COMPRESSED_POINTERS
 	ldr	w11, [x0, #J9TR_ObjectHeader_class]		// load class offset of receiver
 #else
 	ldr	x11, [x0, #J9TR_ObjectHeader_class]		// load class of receiver
