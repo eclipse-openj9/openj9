@@ -1288,7 +1288,7 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
          TR::ARM64InterfaceCallSnippet(cg(), callNode, ifcSnippetLabel, argSize, doneLabel, (uint8_t *)thunk);
       cg()->addSnippet(ifcSnippet);
 
-      gcPoint = generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, ifcSnippetLabel, dependencies);
+      gcPoint = generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, ifcSnippetLabel);
       }
 
    gcPoint->ARM64NeedsGCMap(cg(), regMapForGC);
