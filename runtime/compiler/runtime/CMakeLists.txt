@@ -37,7 +37,6 @@ j9jit_files(
 	runtime/J9JitPersistentMemory.cpp
 	runtime/J9Profiler.cpp
 	runtime/JitRuntime.cpp
-	runtime/LMGuardedStorage.cpp
 	runtime/MetaData.cpp
 	runtime/MetaDataDebug.cpp
 	runtime/MethodMetaData.c

@@ -11508,12 +11508,6 @@ TR::CompilationInfo::getHWProfiler() const
    return ((TR_JitPrivateConfig*)_jitConfig->privateConfig)->hwProfiler;
    }
 
-TR_LMGuardedStorage *
-TR::CompilationInfo::getLMGuardedStorage() const
-   {
-   return ((TR_JitPrivateConfig*)_jitConfig->privateConfig)->lmGuardedStorage;
-   }
-
 TR_JProfilerThread *
 TR::CompilationInfo::getJProfilerThread() const
    {

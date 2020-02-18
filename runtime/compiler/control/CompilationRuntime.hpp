@@ -60,7 +60,6 @@ namespace TR { class CompilationInfoPerThreadBase; }
 class TR_FilterBST;
 class TR_FrontEnd;
 class TR_HWProfiler;
-class TR_LMGuardedStorage;
 class TR_J9VMBase;
 class TR_LowPriorityCompQueue;
 class TR_OptimizationPlan;
@@ -941,8 +940,6 @@ public:
    TR::Monitor *getIProfilerBufferArrivalMonitor() const { return _iprofilerBufferArrivalMonitor; }
 
    TR_HWProfiler *getHWProfiler() const;
-
-   TR_LMGuardedStorage *getLMGuardedStorage() const;
 
    TR_JProfilerThread *getJProfilerThread() const;
 
