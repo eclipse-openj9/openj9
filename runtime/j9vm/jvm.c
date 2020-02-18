@@ -79,10 +79,6 @@
 #include "Xj9I5OSInterface.H"
 #endif
 
-#ifdef J9VM_OPT_HARMONY
-#include "harmony_vm.h"
-#endif /* J9VM_OPT_HARMONY */
-
 #if defined(DEBUG)
 #define DBG_MSG(x) printf x
 #else
@@ -226,9 +222,6 @@ static UDATA monitor = 0;
 static J9InternalVMFunctions globalInvokeInterface;
 
 static struct J9PortLibrary j9portLibrary;
-#ifdef J9VM_OPT_HARMONY
-static struct HyPortLibrary * harmonyPortLibrary = NULL;
-#endif /* J9VM_OPT_HARMONY */
 static char * newPath = NULL;
 
 /* cannot be static because it's declared extern in vmi.c */
@@ -538,12 +531,6 @@ jint JNICALL DestroyJavaVM(JavaVM * javaVM)
 	rc = globalDestroyVM(javaVM);
 
 	if (JNI_OK == rc) {
-#ifdef J9VM_OPT_HARMONY
-		if ((NULL != harmonyPortLibrary) && (NULL != j9portLibrary.omrPortLibrary.mem_free_memory)) {
-			j9portLibrary.omrPortLibrary.mem_free_memory(&j9portLibrary.omrPortLibrary, harmonyPortLibrary);
-			harmonyPortLibrary = NULL;
-		}
-#endif /* J9VM_OPT_HARMONY */
 		if (NULL != j9portLibrary.port_shutdown_library) {
 			j9portLibrary.port_shutdown_library(&j9portLibrary);
 		}
@@ -738,18 +725,9 @@ preloadLibraries(void)
 	}
 	preloadLibrary(J9_ZIP_DLL_NAME, TRUE);
 
-#ifdef J9_CLEAR_VM_INTERFACE_DLL_NAME
-	/* CMVC 142575: Harmony JDWP sits apart for the JVM natives including the vmi.
-	 * We must preload the library so that it can be found when JDWP tries to load it. */
-	preloadLibrary(J9_CLEAR_VM_INTERFACE_DLL_NAME, TRUE);
-#endif
-
 #endif /* !CALL_BUNDLED_FUNCTIONS_DIRECTLY */
 	/* CMVC 152702: with other JVM on the path this library can get loaded from the wrong
 	 * location if not preloaded. */
-#ifdef J9VM_OPT_HARMONY
-	preloadLibrary(J9_HARMONY_PORT_LIBRARY_SHIM_DLL_NAME, TRUE);
-#endif /* J9VM_OPT_HARMONY */
 	return TRUE;
 }
 
@@ -1178,17 +1156,6 @@ preloadLibraries(void)
 		exit( -1 );	/* failed */
 	}
 
-#ifdef J9_CLEAR_VM_INTERFACE_DLL_NAME
-	/* CMVC 142575: Harmony JDWP sits apart for the JVM natives including the vmi.
-	 * We must preload the library so that it can be found when JDWP tries to load it. */
-	preloadLibrary(J9_CLEAR_VM_INTERFACE_DLL_NAME, TRUE);
-#endif /* J9_CLEAR_VM_INTERFACE_DLL_NAME */
-
-#ifdef J9VM_OPT_HARMONY
-	/* CMVC 152702: with other JVM on the path this library can get loaded from the wrong
-	 * location if not preloaded. */
-	preloadLibrary(J9_HARMONY_PORT_LIBRARY_SHIM_DLL_NAME, TRUE);
-#endif /* J9VM_OPT_HARMONY */
 	return TRUE;
 }
 #endif /* defined(J9UNIX) || defined(J9ZOS390) */
@@ -1356,21 +1323,6 @@ printVmArgumentsList(J9VMInitArgs *argList)
 				envVar);
 	}
 }
-
-#ifdef J9VM_OPT_HARMONY
-static IDATA
-addHarmonyPortLibrary(J9PortLibrary * portLib, J9JavaVMArgInfoList *vmArgumentsList, UDATA verboseFlags)
-{
-	JavaVMInitArgs dummyArgs = {0, 0, NULL, FALSE}; /* In this case, addHarmonyPortLibToVMArgs looks only at nOptions */
-	J9JavaVMArgInfo *optArg = newJavaVMArgInfo(vmArgumentsList, NULL, CONSUMABLE_ARG);
-	if (NULL == optArg) {
-		return -1;
-	}
-
-	addHarmonyPortLibToVMArgs(portLib, &(optArg->vmOpt), &dummyArgs, &harmonyPortLibrary);
-	return 0;
-}
-#endif /* J9VM_OPT_HARMONY */
 
 static void
 setNLSCatalog(struct J9PortLibrary* portLib)
@@ -2002,10 +1954,6 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 			|| (0 != addEnvironmentVariables(&j9portLibrary, args, &vmArgumentsList, localVerboseLevel))
 			|| (0 != addLauncherArgs(&j9portLibrary, args, launcherArgumentsSize, &vmArgumentsList,
 					&xServiceBuffer, argEncoding, localVerboseLevel))
-#ifdef J9VM_OPT_HARMONY
-			/* pass in the Harmony library */
-			|| (0 != addHarmonyPortLibrary(&j9portLibrary, &vmArgumentsList, localVerboseLevel))
-#endif /* J9VM_OPT_HARMONY */
 			|| (0 != addXserviceArgs(&j9portLibrary, &vmArgumentsList, xServiceBuffer, localVerboseLevel))
 		) {
 			result = JNI_ERR;
@@ -2068,19 +2016,14 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 		JavaVM * vm = (JavaVM*)BFUjavaVM;
 		*pvm = vm;
 
-#if !defined(HARMONY_VM)
 		/* Initialize the Sun VMI */
 		ENSURE_VMI();
-#endif
 
 		memcpy(&globalInvokeInterface, *vm, sizeof(J9InternalVMFunctions));
 		globalDestroyVM = globalInvokeInterface.DestroyJavaVM;
 		globalInvokeInterface.DestroyJavaVM = DestroyJavaVM;
 		issueWriteBarrier();
 		*vm = (struct JNIInvokeInterface_ *) &globalInvokeInterface;
-
-#if !defined(HARMONY_VM)
-		/* Harmony Select does not want any of the Win32 threading or reflection globals init. */
 
 #ifdef WIN32
 		result = initializeWin32ThreadEvents(BFUjavaVM);
@@ -2096,8 +2039,6 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 			(**pvm)->DestroyJavaVM(*pvm);
 			goto exit;
 		}
-#endif /* !defined(HARMONY_VM) */
-
 	} else {
 		freeGlobals();
 	}
@@ -3491,10 +3432,9 @@ truncatePath(char *inputPath) {
 }
 
 /**********************************************************************
- * JVM_ functions start here (and aren't included for Harmony Select).
+ * JVM_ functions start here
  **********************************************************************/
 
-#if !defined(HARMONY_VM)
 /**
  *	void JNICALL JVM_OnExit(void *ptr)
  *	This function seems to be required by fontmanager.dll but is not
@@ -6044,7 +5984,6 @@ JVM_Startup(JavaVM* vm, JNIEnv* env)
 {
 	return JNI_OK;
 }
-#endif /* #if !defined(HARMONY_VM) */
 
 #if defined(J9ZOS390)
 /**

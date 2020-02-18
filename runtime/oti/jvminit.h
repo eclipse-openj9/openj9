@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -303,7 +303,6 @@ enum INIT_STAGE {
 #define VMOPT_XDFPBD "-Xdfpbd"
 #define VMOPT_SHOWVERSION "-showversion"
 #define VMOPT_INTERNALVERSION "-Xinternalversion"
-#define VMOPT_HARMONY_PORT_LIBRARY "_org.apache.harmony.vmi.portlib"
 #define VMOPT_XXALLOWVMSHUTDOWN "-XXallowvmshutdown:true"
 #define VMOPT_XXDISABLEVMSHUTDOWN "-XXallowvmshutdown:false"
 #define VMOPT_XXVM_IGNOREUNRECOGNIZED "-XXvm:ignoreUnrecognized"

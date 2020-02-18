@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -71,12 +71,6 @@ typedef enum
 	VMI_VERSION_2_0 = 0x00020000,								/**< VMInterface version 2.0 */
 	vmiVersionEnsureWideEnum = 0x1000000					/* ensure 4-byte enum */
 } vmiVersion;
-
-/**
- * Constant used in conjunction with GetEnv() to retrieve
- * a Harmony VM Interface table from a JNIEnv / JavaVM.
- */
-#define HARMONY_VMI_VERSION_2_0 0xC01D0020
 
 /**
  * @typedef vmiSystemPropertyIterator

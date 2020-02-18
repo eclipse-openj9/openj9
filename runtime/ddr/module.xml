@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2010, 2019 IBM Corp. and others
+Copyright (c) 2010, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -83,7 +83,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<include path="j9shrcommon"/>
 			<include path="jclcommon"/>
 			<include path="../jcl" type="relativepath"/>
-			<include path="harmony_include"/>
 			<include path="bcverify"/>
 			<include path="../compiler/runtime" type="relativepath">
 				<include-if condition="spec.flags.J9VM_INTERP_NATIVE_SUPPORT"/>
@@ -119,9 +118,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<objects>
 			<object name="algorithm_versions"/>
 			<object name="ddrcppsupportblob"/>
-			<object name="hyportddrblob">
-				<include-if condition="spec.flags.opt_harmony"/>
-			</object>
 			<object name="jitddrblob"/>
 			<object name="jitflagsddr"/>
 			<object name="omrddrblob"/>

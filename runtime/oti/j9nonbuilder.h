@@ -2854,14 +2854,6 @@ typedef struct J9VMInterface {
 	struct J9PortLibrary * portLibrary;
 } J9VMInterface;
 
-#if defined(J9VM_OPT_HARMONY)
-typedef struct HarmonyVMInterface {
-	struct VMInterfaceFunctions_* functions;
-	struct J9JavaVM* javaVM;
-	struct HyPortLibrary* portLibrary;
-} HarmonyVMInterface;
-#endif /* J9VM_OPT_HARMONY */
-
 typedef struct J9CheckJNIData {
 	UDATA options;
 	struct J9HashTable* jniGlobalRefHashTab;
@@ -4760,9 +4752,6 @@ typedef struct J9JavaVM {
 	UDATA j2seVersion;
 	void* zipCachePool;
 	struct J9VMInterface vmInterface;
-#if defined(J9VM_OPT_HARMONY)
-	struct HarmonyVMInterface harmonyVMInterface;
-#endif /* J9VM_OPT_HARMONY */
 	UDATA dynamicLoadClassAllocationIncrement;
 	struct J9TranslationBufferSet* dynamicLoadBuffers;
 	struct J9JImageIntf *jimageIntf;

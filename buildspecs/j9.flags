@@ -1755,10 +1755,6 @@ Only available on zOS</description>
 		<description>Transitional flag for the the GC during the switch to fragmented RAM class allocation</description>
 		<ifRemoved></ifRemoved>
 	</flag>
-	<flag id="opt_harmony">
-		<description>Support the Open Source Harmony project</description>
-		<ifRemoved>No Harmony support.</ifRemoved>
-	</flag>
 	<flag id="opt_inlineJsrs">
 		<description>Turns on JSR inlining in the dynamic loader.</description>
 		<ifRemoved>Only pre-inlined classes supported.</ifRemoved>
@@ -1830,13 +1826,6 @@ Only available on zOS</description>
 	<flag id="opt_nrr">
 		<description>Enables New Reality Runtime (NRR) features.</description>
 		<ifRemoved></ifRemoved>
-	</flag>
-	<flag id="opt_paas">
-		<description></description>
-		<ifRemoved></ifRemoved>
-		<requires>
-			<require flag="opt_harmony"/>
-		</requires>
 	</flag>
 	<flag id="opt_packed">
 		<description>Enables support for @Packed types (Structs)</description>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Copyright (c) 2006, 2019 IBM Corp. and others
+Copyright (c) 2006, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -65,7 +65,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<includes>
 			<include path="j9include"/>
 			<include path="j9oti"/>
-			<include path="harmony_include"/>
 			<include path="jclcommon">
 				<include-if condition="spec.flags.build_realtime"/>
 			</include>
@@ -75,11 +74,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<makefilestubs>
 			<makefilestub data="UMA_TREAT_WARNINGS_AS_ERRORS=1"/>
 		</makefilestubs>
-		<vpaths>
-			<vpath path="harmony_jvm" pattern="%.c" augmentIncludes="true">
-				<include-if condition="spec.flags.opt_harmony"/>
-			</vpath>
-		</vpaths>
 		<objects>
 			<object name="j8vmi"/>
 			<object name="j7vmi"/>
@@ -88,9 +82,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<object name="vmi"/>
 			<object name="ut_j9scar"/>
 			<object name="j9memcategories"/>
-			<object name="harmony_vm">
-				<include-if condition="spec.flags.opt_harmony"/>
-			</object>
 			<object name="java11vmi">
 				<!--
 				This object is mis-named and should have been separated into additions
@@ -120,7 +111,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 			<library name="j9avl" type="external"/>
 			<library name="j9hashtable" type="external"/>
 			<library name="j9pool" type="external"/>
-			<library name="j9vmi"/>
 			<!--  for advance toolchain pthread must be last in the link order -->
 			<library name="pthread" type="system">
 				<include-if condition="spec.linux.* and not spec.linux_ztpf.*"/>

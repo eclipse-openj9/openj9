@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2017 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,9 +36,6 @@
 #define ENTER()
 #define EXIT()
 #endif
-
-/* want to make sure we use the J9 Port library and not the Harmony one */
-#undef USING_VMI
 
 I_32 
 vmizip_getZipEntryData(VMInterface * vmi, VMIZipFile * zipFile, VMIZipEntry * entry, U_8 * buffer, U_32 bufferSize) 

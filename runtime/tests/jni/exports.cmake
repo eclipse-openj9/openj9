@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -205,7 +205,6 @@ omr_add_exports(j9ben
 	Java_j9vm_utils_JNI_NewDirectByteBuffer
 	Java_j9vm_utils_JNI_GetDirectBufferAddress
 	Java_j9vm_utils_JNI_GetDirectBufferCapacity
-	Java_j9vm_test_harmonyvmi_Test_testGetEnv
 	Java_com_ibm_j9_jnimark_Natives_getByteArrayElements
 	Java_j9vm_test_jni_CriticalRegionTest_testGetRelease___3B
 	Java_j9vm_test_jni_CriticalRegionTest_testModify___3BZ
