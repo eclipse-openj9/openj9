@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -92,6 +92,10 @@ public class StackWalkerUtils
 				// 32 bit X86 doesn't use jitArgumentRegisterNumbers
 				jitArgumentRegisterNumbers = new int[0];
 			}
+		} else if (J9ConfigFlags.arch_arm) {
+			jitArgumentRegisterNumbers = new int[] { 0, 1, 2, 3 };
+		} else if (J9ConfigFlags.arch_aarch64) {
+			jitArgumentRegisterNumbers = new int[] { 0, 1, 2, 3, 4, 5, 6, 7 };
 		} else if (J9ConfigFlags.arch_power) {
 			jitArgumentRegisterNumbers = new int[] { 3, 4, 5, 6, 7, 8, 9, 10 };
 		} else if (J9ConfigFlags.arch_s390) {

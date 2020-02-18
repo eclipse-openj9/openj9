@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -73,6 +73,7 @@ public abstract class ELFFileReader
 	public final static int ARCH_ARM = 40;
 	public final static int ARCH_IA64 = 50;
 	public final static int ARCH_AMD64 = 62;
+	public final static int ARCH_AARCH64 = 183;
 	public final static int ARCH_RISCV64 = 243;
 
 	public final static int DT_NULL = 0;
