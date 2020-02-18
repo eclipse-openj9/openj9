@@ -42,8 +42,9 @@
           <groups>
                   <group>functional</group>
           </groups>
+          <!-- Temporarily removed support for JDK 15 due to https://github.com/eclipse/openj9/issues/8590 -->
           <subsets>
-                  <subset>14+</subset>
+                  <subset>14</subset>
           </subsets>
         </test>
 </playlist>
