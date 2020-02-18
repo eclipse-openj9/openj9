@@ -1,7 +1,7 @@
 # Makefile for generating blob C for VM components
 
 ###############################################################################
-# Copyright (c) 1991, 2017 IBM Corp. and others
+# Copyright (c) 1991, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -27,6 +27,6 @@ DISABLE_STUBS := 1
 include j9ddrautoblob.mk
 include autoblob_rules.mk
 
-generate_files : hyportddrblob.c stackwalkddrblob.c vmddrblob.c jitddrblob.c omrddrblob.c ddrcppsupportblob.cpp
+generate_files : stackwalkddrblob.c vmddrblob.c jitddrblob.c omrddrblob.c ddrcppsupportblob.cpp
 
 .PHONY : generate_files
