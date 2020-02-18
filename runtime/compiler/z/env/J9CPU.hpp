@@ -62,9 +62,7 @@ class CPU : public J9::CPU
    {
    protected:
 
-   CPU() :
-         J9::CPU()
-      {}
+   CPU();
 
    public:
 

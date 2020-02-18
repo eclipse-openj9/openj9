@@ -187,6 +187,30 @@ J9::Z::CodeGenerator::CodeGenerator() :
       }
 
    cg->setIgnoreDecimalOverflowException(false);
+
+   TR_ASSERT_FATAL(TR::Compiler->cpu.getSupportsHardwareSQRT() == TR::Compiler->cpu.getSupportsHardwareSQRT(), "getSupportsHardwareSQRT test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_S390_HIGH_WORD) == TR::Compiler->cpu.getSupportsHighWordFacility(), "getSupportsHighWordFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_S390_DFP) == TR::Compiler->cpu.getSupportsDecimalFloatingPointFacility(), "getSupportsDecimalFloatingPointFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_S390_FPE) == TR::Compiler->cpu.getSupportsFloatingPointExtensionFacility(), "getSupportsFloatingPointExtensionFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_S390_TE) == TR::Compiler->cpu.getSupportsTransactionalMemoryFacility(), "getSupportsTransactionalMemoryFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_S390_TE) == TR::Compiler->cpu.supportsTransactionalMemoryInstructions(), "supportsTransactionalMemoryInstructions test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_S390_RI) == TR::Compiler->cpu.getSupportsRuntimeInstrumentationFacility(), "getSupportsRuntimeInstrumentationFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY) == TR::Compiler->cpu.getSupportsVectorFacility(), "getSupportsVectorFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL) == TR::Compiler->cpu.getSupportsVectorPackedDecimalFacility(), "getSupportsVectorPackedDecimalFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_S390_MISCELLANEOUS_INSTRUCTION_EXTENSION_3) == TR::Compiler->cpu.getSupportsMiscellaneousInstructionExtensions3Facility(), "getSupportsMiscellaneousInstructionExtensions3Facility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_FACILITY_ENHANCEMENT_2) == TR::Compiler->cpu.getSupportsVectorFacilityEnhancement2(), "getSupportsVectorFacilityEnhancement2 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_S390_VECTOR_PACKED_DECIMAL_ENHANCEMENT_FACILITY) == TR::Compiler->cpu.getSupportsVectorPackedDecimalEnhancementFacility(), "getSupportsVectorPackedDecimalEnhancementFacility test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE) == TR::Compiler->cpu.getSupportsGuardedStorageFacility(), "getSupportsGuardedStorageFacility test failed!\n");
+
+   TR_ASSERT_FATAL(TR::Compiler->cpu.isAtLeast(OMR_PROCESSOR_S390_Z10) == TR::Compiler->cpu.getSupportsArch(TR::CPU::z10), "OMR_PROCESSOR_S390_Z10 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.isAtLeast(OMR_PROCESSOR_S390_Z196) == TR::Compiler->cpu.getSupportsArch(TR::CPU::z196), "OMR_PROCESSOR_S390_Z196 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.isAtLeast(OMR_PROCESSOR_S390_ZEC12) == TR::Compiler->cpu.getSupportsArch(TR::CPU::zEC12), "OMR_PROCESSOR_S390_ZEC12 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.isAtLeast(OMR_PROCESSOR_S390_Z13) == TR::Compiler->cpu.getSupportsArch(TR::CPU::z13), "OMR_PROCESSOR_S390_Z13 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.isAtLeast(OMR_PROCESSOR_S390_Z14) == TR::Compiler->cpu.getSupportsArch(TR::CPU::z14), "OMR_PROCESSOR_S390_Z14 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.isAtLeast(OMR_PROCESSOR_S390_Z15) == TR::Compiler->cpu.getSupportsArch(TR::CPU::z15), "OMR_PROCESSOR_S390_Z15 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.isAtLeast(OMR_PROCESSOR_S390_ZNEXT) == TR::Compiler->cpu.getSupportsArch(TR::CPU::zNext), "OMR_PROCESSOR_S390_ZNEXT test failed!\n");
+
+   // TR_ASSERT_FATAL(TR::Compiler->cpu.getProcessorDescription().features[0] == TR::Compiler->cpu.getProcessorFeatureFlags().featureFlags[0], "getProcessorFeatureFlags test failed!\n");
    }
 
 

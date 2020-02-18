@@ -49,9 +49,29 @@ namespace J9
 namespace Z
 {
 
+CPU::CPU : 
+   J9::CPU()
+   {
+#if defined(LINUX)
+   if (TR::Compiler->supportsFeature(OMR_FEATURE_S390_RI))
+      {
+      if (0 != j9ri_enableRISupport())
+         TR::Compiler->target.cpu.disableFeature(OMR_FEATURE_S390_RI);
+      }
+#endif
+   if (TR::Compiler->supportsFeature(OMR_FEATURE_S390_GUARDED_STORAGE))
+      {
+      // turn off GS facility if GC has -XXgc:softwareRangeCheckReadBarrier
+      if (!TR::Compiler->javaVM->memoryManagerFunctions->j9gc_software_read_barrier_enabled(TR::Compiler->javaVM))
+         {
+         TR::Compiler->target.cpu.disableFeature(OMR_FEATURE_S390_GUARDED_STORAGE);
+         }
+      }
+  }
+
 int32_t
 CPU::TO_PORTLIB_get390MachineId()
-  {
+   {
 #if defined(J9ZTPF) || defined(J9ZOS390)
    // Note we cannot use utsname on Linux as it simply returns "s390x" in info.machine. On z/OS we can indeed use it [1].
    //
