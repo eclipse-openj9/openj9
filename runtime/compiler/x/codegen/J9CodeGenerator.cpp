@@ -168,6 +168,87 @@ J9::X86::CodeGenerator::CodeGenerator() :
       }
     comp->setReturnInfo(returnInfo);
 
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_OSXSAVE) == self()->enabledXSAVE(), "XSAVE test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_FPU) == self()->hasBuiltInFPU(), "hasBuiltInFPU test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_VME) == self()->supportsVirtualModeExtension(), "supportsVirtualModeExtension test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_DE) == self()->supportsDebuggingExtension(), "supportsDebuggingExtension test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_PSE) == self()->supportsPageSizeExtension(), "supportsPageSizeExtension test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_TSC) == self()->supportsRDTSCInstruction(), "supportsRDTSCInstruction test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_MSR) == self()->hasModelSpecificRegisters(), "hasModelSpecificRegisters test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_PAE) == self()->supportsPhysicalAddressExtension(), "supportsPhysicalAddressExtension test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_MCE) == self()->supportsMachineCheckException(), "supportsMachineCheckException test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_CX8) == self()->supportsCMPXCHG8BInstruction(), "supportsCMPXCHG8BInstruction test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_CMPXCHG16B) == self()->supportsCMPXCHG16BInstruction(), "supportsCMPXCHG16BInstruction test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_APIC) == self()->hasAPICHardware(), "hasAPICHardware test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_MTRR) == self()->hasMemoryTypeRangeRegisters(), "hasMemoryTypeRangeRegisters test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_PGE) == self()->supportsPageGlobalFlag(), "supportsPageGlobalFlag test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_MCA) == self()->hasMachineCheckArchitecture(), "hasMachineCheckArchitecture test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_CMOV) == self()->supportsCMOVInstructions(), "supportsCMOVInstructions test failed!\n");
+
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_FPU) && TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_CMOV) == self()->supportsFCOMIInstructions(), "supportsFCOMIInstructions test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFCOMIInstructions() == self()->supportsFCOMIInstructions(), "supportsFCOMIInstructions test failed!\n");
+   
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_PAT) == self()->hasPageAttributeTable(), "hasPageAttributeTable test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_PSE_36) == self()->has36BitPageSizeExtension(), "has36BitPageSizeExtension test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_PSN) == self()->hasProcessorSerialNumber(), "hasProcessorSerialNumber test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_CLFSH) == self()->supportsCLFLUSHInstruction(), "supportsCLFLUSHInstruction test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_DS) == self()->supportsDebugTraceStore(), "supportsDebugTraceStore test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_ACPI) == self()->hasACPIRegisters(), "hasACPIRegisters test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_MMX) == self()->supportsMMXInstructions(), "supportsMMXInstructions test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_FXSR) == self()->supportsFastFPSavesRestores(), "supportsFastFPSavesRestores test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_SSE) == self()->supportsSSE(), "supportsSSE test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_SSE2) == self()->supportsSSE2(), "supportsSSE2 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_SSE3) == self()->supportsSSE3(), "supportsSSE3 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_SSSE3) == self()->supportsSSSE3(), "supportsSSSE3 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_SSE4_1) == self()->supportsSSE4_1(), "supportsSSE4_1 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_SSE4_2) == self()->supportsSSE4_2(), "supportsSSE4_2 test failed!\n");
+   
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_AVX) && TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_OSXSAVE) == self()->supportsAVX(), "supportsAVX test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_AVX2) && TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_OSXSAVE) == self()->supportsAVX2(), "supportsAVX2 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_BMI1) && TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_OSXSAVE) == self()->supportsBMI1(), "supportsBMI1 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_BMI2) && TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_OSXSAVE) == self()->supportsBMI2(), "supportsBMI2 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_FMA) && TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_OSXSAVE) == self()->supportsFMA(), "supportsFMA test failed!\n");
+
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_PCLMULQDQ) == self()->supportsCLMUL(), "supportsCLMUL test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_AESNI) == self()->supportsAESNI(), "supportsAESNI test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_POPCNT) == self()->supportsPOPCNT(), "supportsPOPCNT test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_SS) == self()->supportsSelfSnoop(), "supportsSelfSnoop test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_RTM) == self()->supportsTM(), "supportsTM test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_HTT) == self()->supportsHyperThreading(), "supportsHyperThreading test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_HLE) == self()->supportsHLE(), "supportsHLE test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsFeature(OMR_FEATURE_X86_TM) == self()->hasThermalMonitor(), "hasThermalMonitor test failed!\n");
+
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsMFence() == self()->supportsMFence(), "supportsMFence test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsLFence() == self()->supportsLFence(), "supportsLFence test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.supportsSFence() == self()->supportsSFence(), "supportsSFence test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.prefersMultiByteNOP() == self()->prefersMultiByteNOP(), "prefersMultiByteNOP test failed!\n");
+
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELPENTIUM) == self()->isIntelPentium(), "isIntelPentium test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELP6) == self()->isIntelP6(), "isIntelP6 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELPENTIUM4) == self()->isIntelPentium4(), "isIntelPentium4 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELCORE2) == self()->isIntelCore2(), "isIntelCore2 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELTULSA) == self()->isIntelTulsa(), "isIntelTulsa test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELNEHALEM) == self()->isIntelNehalem(), "isIntelNehalem test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELWESTMERE) == self()->isIntelWestmere(), "isIntelWestmere test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELSANDYBRIDGE) == self()->isIntelSandyBridge(), "isIntelSandyBridge test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELIVYBRIDGE) == self()->isIntelIvyBridge(), "isIntelIvyBridge test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELHASWELL) == self()->isIntelHaswell(), "isIntelHaswell test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELBROADWELL) == self()->isIntelBroadwell(), "isIntelBroadwell test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELSKYLAKE) == self()->isIntelSkylake(), "isIntelSkylake test failed!\n");
+
+   TR_ASSERT_FATAL(TR::Compiler->cpu.isAMDK6() == self()->isAMDK6(), "isAMDK6 test failed!\n");
+
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_AMDATHLONDURON) == self()->isAMDAthlonDuron(), "isAMDAthlonDuron test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_AMDOPTERON) == self()->isAMDOpteron(), "isAMDOpteron test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H) == self()->isAMD15h(), "isAMD15h test failed!\n");
+
+   TR_ASSERT_FATAL(TR::Compiler->cpu.isGenuineIntel() == self()->isGenuineIntel(), "isGenuineIntel test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.isAuthenticAMD() == self()->isAuthenticAMD(), "isAuthenticAMD test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.requiresLFENCE() == self()->requiresLFENCE(), "requiresLFENCE test failed!\n");
+
+   TR_ASSERT_FATAL(TR::Compiler->cpu.getX86ProcessorFeatureFlagsNew() == TR::Compiler->cpu.getX86ProcessorFeatureFlags(), "getX86ProcessorFeatureFlags test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.getX86ProcessorFeatureFlags2New() == TR::Compiler->cpu.getX86ProcessorFeatureFlags2(), "getX86ProcessorFeatureFlags2 test failed!\n");
+   TR_ASSERT_FATAL(TR::Compiler->cpu.getX86ProcessorFeatureFlags3New() == TR::Compiler->cpu.getX86ProcessorFeatureFlags8(), "getX86ProcessorFeatureFlags8 test failed!\n");
    }
 
 
