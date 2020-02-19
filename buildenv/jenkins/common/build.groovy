@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -454,17 +454,23 @@ def add_node_to_description() {
 }
 
 def build_all() {
-    timeout(time: 6, unit: 'HOURS') {
-        try {
-            // Cleanup in case an old build left anything behind
-            cleanWs()
-            add_node_to_description()
-            get_source()
-            build()
-            archive_sdk()
-        } finally {
-            // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
-            cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
+    stage ('Queue') {
+        timeout(time: 10, unit: 'HOURS') {
+            node("${NODE}") {
+                timeout(time: 5, unit: 'HOURS') {
+                    try {
+                        // Cleanup in case an old build left anything behind
+                        cleanWs()
+                        add_node_to_description()
+                        get_source()
+                        build()
+                        archive_sdk()
+                    } finally {
+                        // disableDeferredWipeout also requires deleteDirs. See https://issues.jenkins-ci.org/browse/JENKINS-54225
+                        cleanWs notFailBuild: true, disableDeferredWipeout: true, deleteDirs: true
+                    }
+                }
+            }
         }
     }
 }

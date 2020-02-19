@@ -792,4 +792,73 @@ def move_spec_suffix_to_id(spec, id) {
     return spec_id
 }
 
+def build_all() {
+    try {
+        if (params.AUTOMATIC_GENERATION != 'false'){
+            node(SETUP_LABEL) {
+                unstash 'DSL'
+                variableFile.create_job(BUILD_NAME, SDK_VERSION, SPEC, 'build', buildFile.convert_build_identifier(BUILD_IDENTIFIER))
+            }
+        }
+        jobs = buildFile.workflow(SDK_VERSION, SPEC, SHAS, OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, TESTS_TARGETS, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_DIRS_MAP, USER_CREDENTIALS_ID, SETUP_LABEL, ghprbGhRepository, ghprbActualCommit, EXTRA_GETSOURCE_OPTIONS, EXTRA_CONFIGURE_OPTIONS, EXTRA_MAKE_OPTIONS, OPENJDK_CLONE_DIR, ADOPTOPENJDK_REPO, ADOPTOPENJDK_BRANCH, BUILD_NAME, CUSTOM_DESCRIPTION, ARCHIVE_JAVADOC)
+    } finally {
+        //display the build status of the downstream jobs
+        def downstreamBuilds = buildFile.get_downstream_builds(currentBuild, currentBuild.projectName, buildFile.get_downstream_job_names(SPEC, SDK_VERSION, BUILD_IDENTIFIER).values())
+        add_badges(downstreamBuilds)
+        add_summary_badge(downstreamBuilds)
+    }
+}
+
+/*
+* Adds status badges for the given downstream build.
+*/
+def add_badges(downstreamBuilds) {
+    downstreamBuilds.entrySet().each { entry ->
+        def build = entry.value
+
+        switch(build.getResult()){
+            case "SUCCESS":
+                icon = "/images/16x16/accept.png"
+                break
+            case "UNSTABLE":
+                icon = "/images/16x16/yellow.png"
+                break
+            case "FAILURE":
+                icon = "/images/16x16/error.png"
+                break
+            case "ABORTED":
+                icon = "/images/16x16/aborted.png"
+                break
+            default:
+                icon = "/images/16x16/grey.png"
+        }
+
+        addBadge icon: "${icon}",
+                 id: "",
+                 link: "${JENKINS_URL}${build.getUrl()}",
+                 text: "${entry.key} - #${build.getNumber()}"
+    }
+}
+
+/*
+* Adds a summary badge.
+* Requires Groovy Postbuild plugin.
+*/
+def add_summary_badge(downstreamBuilds) {
+    def summaryText = "Downstream Jobs Status:<br/>"
+    summaryText += "<table>"
+
+    downstreamBuilds.entrySet().each { entry ->
+        def buildLink = buildFile.get_build_embedded_status_link(entry.value)
+        Job job = entry.value.getParent()
+        def blueLink = "<a href=\"${JENKINS_URL}blue/organizations/jenkins/${job.getFullName()}/detail/${entry.key}/${entry.value.getNumber()}/pipeline\">${entry.key}</a>"
+        summaryText += "<tr><td>${blueLink}</td><td>${buildLink}</td></tr>"
+    }
+
+    summaryText += "</table>"
+
+    // add summary badge
+    manager.createSummary("plugin.png").appendText(summaryText)
+}
+
 return this
