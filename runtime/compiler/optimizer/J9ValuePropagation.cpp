@@ -205,9 +205,11 @@ J9::ValuePropagation::transformCallToNodeDelayedTransformations(TR::TreeTop *cal
    {
    TR::Node * callNode = callTree->getNode()->getFirstChild();
    TR::Method * calledMethod = callNode->getSymbol()->castToMethodSymbol()->getMethod();
-   const char *signature = calledMethod->signature(comp()->trMemory(), stackAlloc);
+   const char *signature = calledMethod ? calledMethod->signature(comp()->trMemory(), stackAlloc) : NULL;
    if (trace())
-          traceMsg(comp(), "The call to %s on node %p will be folded in delayed transformations\n", signature, callNode, result);
+      {
+      traceMsg(comp(), "The call to %s on node %p will be folded in delayed transformations\n", signature ? signature : comp()->getDebug()->getName(callNode->getSymbol()), callNode, result);
+      }
    _callsToBeFoldedToNode.add(new (trStackMemory()) TreeNodeResultPair(callTree, result, requiresGuard));
    }
 /**
@@ -555,12 +557,140 @@ bool J9::ValuePropagation::transformUnsafeCopyMemoryCall(TR::Node *arraycopyNode
          }
       }
    return false;
+   }
 
+/**
+ * Determine whether the type is, or might be, a value type.
+ * \param constraint The \ref TR::VPConstraint type constraint for a node
+ * \returns \c TR_yes if the type is definitely a value type;\n
+ *          \c TR_no if it is definitely not a value type; or\n
+ *          \c TR_maybe otherwise.
+ */
+static TR_YesNoMaybe isValue(TR::VPConstraint *constraint)
+   {
+   // If there's no information is available about the class of the operand,
+   // VP has to assume that it might be a value type
+   //
+   if (constraint == NULL)
+      {
+      return TR_maybe;
+      }
+
+   // A null reference can never be used in a context where a value type is required
+   //
+   if (constraint->isNullObject())
+      {
+      return TR_no;
+      }
+
+   // Instances of java/lang/Class are not value types
+   //
+   if (constraint->isClassObject() == TR_yes)
+      {
+      return TR_no;
+      }
+
+   // If the type is unresolved no information is available -
+   // VP has to assume that it might be a value type
+   //
+   TR::VPClassType *maybeUnresolvedType = constraint->getClassType();
+   if (maybeUnresolvedType == NULL)
+      {
+      return TR_maybe;
+      }
+
+   TR::VPResolvedClass *type = maybeUnresolvedType->asResolvedClass();
+   if (type == NULL)
+      {
+      return TR_maybe;
+      }
+
+   // Check for a type of java/lang/Object.  If the type is fixed to
+   // that class, it's not a value type; if it's not fixed, it could
+   // any subtype of java/lang/Object, which includes all value types
+   //
+   TR::Compilation *comp = TR::comp();
+   TR_OpaqueClassBlock *clazz = type->getClass();
+
+   if (clazz == comp->getObjectClassPointer())
+      {
+      return type->isFixedClass() ? TR_no : TR_maybe;
+      }
+
+   // Is the type either an abstract class or an interface (i.e., not a
+   // concrete class)?  If so, it might be a value type.
+   //
+   // Future refinements:
+   //   The JVM will have classes whose instances must be identity
+   //   objects implement the java/lang/IdentityObject interface, including
+   //   array classes.  Once that happens, the check for isClassArray can
+   //   be replaced with a test of whether the component class implements
+   //   IdentityObject, and the test of !isConcreteClass can be refined
+   //   to distinguish abstract classes that implement IdentityObject from
+   //   those that do not, as well as interfaces that extend IdentityObject.
+   //
+   if (!TR::Compiler->cls.isConcreteClass(comp, clazz))
+      {
+      return TR_maybe;
+      }
+
+   return TR::Compiler->cls.isValueTypeClass(clazz) ? TR_yes : TR_no;
    }
 
 void
 J9::ValuePropagation::constrainRecognizedMethod(TR::Node *node)
    {
+   const bool isObjectEqualityCompare =
+      comp()->getSymRefTab()->isNonHelper(
+         node->getSymbolReference(),
+         TR::SymbolReferenceTable::objectEqualityComparisonSymbol);
+
+   if (isObjectEqualityCompare)
+      {
+      // Only constrain the call in the last run of vp to avoid handling the candidate twice if the call is inside a loop
+      if (lastTimeThrough())
+         {
+         addGlobalConstraint(node, TR::VPIntRange::create(this, 0, 1));
+         }
+      else
+         {
+         return;
+         }
+
+      bool lhsGlobal, rhsGlobal;
+      TR::Node *lhsNode = node->getChild(0);
+      TR::Node *rhsNode = node->getChild(1);
+      TR::VPConstraint *lhs = getConstraint(lhsNode, lhsGlobal);
+      TR::VPConstraint *rhs = getConstraint(rhsNode, rhsGlobal);
+
+      const TR_YesNoMaybe isLhsValue = isValue(lhs);
+      const TR_YesNoMaybe isRhsValue = isValue(rhs);
+      const bool areSameRef = getValueNumber(lhsNode) == getValueNumber(rhsNode)
+        || lhs != NULL && rhs != NULL && lhs->mustBeEqual(rhs, this);
+
+      if (isLhsValue == TR_no || isRhsValue == TR_no || areSameRef)
+         {
+         if (performTransformation(
+               comp(),
+               "%sChanging n%un from <objectEqualityComparison> to acmpeq\n",
+               OPT_DETAILS,
+               node->getGlobalIndex()))
+            {
+            TR::Node::recreate(node, TR::acmpeq);
+
+            // It might now be possible to fold.
+            ValuePropagationPtr acmpeqHandler = constraintHandlers[TR::acmpeq];
+            TR::Node *replacement = acmpeqHandler(this, node);
+            TR_ASSERT_FATAL(
+               replacement == node,
+               "can't replace n%un here",
+               node->getGlobalIndex());
+            }
+         }
+
+      return;
+      }
+
    // Only constrain resolved calls
    if (!node->getSymbol()->isResolvedMethod())
       return;
