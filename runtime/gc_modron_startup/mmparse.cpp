@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1472,6 +1472,20 @@ gcParseCommandLineAndInitializeWithValues(J9JavaVM *vm, IDATA *memoryParameters)
 	/* Parse the command line 
 	 * Order is important for parameters that match as substrings (-Xmrx/-Xmr)
 	 */
+	{
+		bool enableOriginalJDK8HeapSizeCompatibilityOption = false;
+		/* only parse VMOPT_XXENABLEORIGINALJDK8HEAPSIZECOMPATIBILITY option for Java 8 and below */
+		if (J2SE_18 >= J2SE_VERSION(vm)) {
+
+			IDATA enabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXENABLEORIGINALJDK8HEAPSIZECOMPATIBILITY, NULL);
+			IDATA disabled = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXDISABLEORIGINALJDK8HEAPSIZECOMPATIBILITY, NULL);
+			if (enabled > disabled) {
+				enableOriginalJDK8HeapSizeCompatibilityOption = true;
+			}
+		}
+		/* set default max heap for Java */
+		extensions->computeDefaultMaxHeapForJava(enableOriginalJDK8HeapSizeCompatibilityOption);
+	}
 	result = option_set_to_opt(vm, OPT_XMCA, &index, EXACT_MEMORY_MATCH, &vm->ramClassAllocationIncrement);
 	if (OPTION_OK != result) {
 		goto _error;

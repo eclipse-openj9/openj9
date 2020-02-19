@@ -1,6 +1,6 @@
 
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,11 +192,12 @@ private:
 protected:
 	virtual bool initialize(MM_EnvironmentBase* env);
 	virtual void tearDown(MM_EnvironmentBase* env);
-	virtual void computeDefaultMaxHeap(MM_EnvironmentBase* env);
 
 public:
 	static MM_GCExtensions* newInstance(MM_EnvironmentBase* env);
 	virtual void kill(MM_EnvironmentBase* env);
+
+	void computeDefaultMaxHeapForJava(bool enableOriginalJDK8HeapSizeCompatibilityOption);
 
 	MMINLINE J9HookInterface** getHookInterface() { return J9_HOOK_INTERFACE(hookInterface); };
 
