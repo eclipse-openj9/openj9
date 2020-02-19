@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,38 +77,6 @@ vmiError J9VMI_Initialize(J9JavaVM* vm)
 		return VMI_ERROR_INITIALIZATION_FAILED;
 	}
 
-	/* Acquire the initArgs via VMI */
-#if defined(J9VM_OPT_HARMONY)
-	{ /* Introduce a new scope to keep older compilers happy */
-		JavaVMInitArgs* vmInitArgs = NULL;
-		VMInterface* vmi = NULL;
-		/* Initialize the Harmony copy of the VMI */
-		HarmonyVMInterface *harmonyVMI = &vm->harmonyVMInterface;
-		harmonyVMI->functions = GLOBAL_TABLE(J9VMInterfaceFunctions);
-		harmonyVMI->javaVM = vm;
-		harmonyVMI->portLibrary = NULL;
-
-		/* Acquire the initArgs via VMI */
-		vmi = (VMInterface*)j9VMI;
-		vmInitArgs = (*vmi)->GetInitArgs(vmi);
-
-		/* Locate the Harmony portlib (if possible) */
-		if (NULL != vmInitArgs) {
-
-			jint count = vmInitArgs->nOptions;
-			JavaVMOption *option = vmInitArgs->options;
-
-			while (count > 0) {
-				if (!strcmp(option->optionString,"_org.apache.harmony.vmi.portlib")) {
-					harmonyVMI->portLibrary = (struct HyPortLibrary *)option->extraInfo;
-					return VMI_ERROR_NONE;
-				}
-				++option;
-				--count;
-			}
-		}
-	}
-#endif /* J9VM_OPT_HARMONY */
 	return VMI_ERROR_NONE;
 }
 

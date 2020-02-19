@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -266,7 +266,6 @@ public class MemoryAllocator {
 //#define J9MEM_CATEGORY_JIT 10
 //#define J9MEM_CATEGORY_JIT_CODE_CACHE 11
 //#define J9MEM_CATEGORY_JIT_DATA_CACHE 12
-//#define J9MEM_CATEGORY_HARMONY 13
 //#define J9MEM_CATEGORY_SUN_MISC_UNSAFE_ALLOCATE 14
 //#define J9MEM_CATEGORY_VM_JCL 15
 //#define J9MEM_CATEGORY_CLASS_LIBRARIES 16
@@ -334,7 +333,7 @@ public class MemoryAllocator {
 		// categoryCodesToNames.put(10l, "JIT"); //#define J9MEM_CATEGORY_JIT 10 - Moved to omr
 		// categoryCodesToNames.put(11l, "JIT Code Cache"); //#define J9MEM_CATEGORY_JIT_CODE_CACHE 11 - Moved to omr
 		// categoryCodesToNames.put(12l, "JIT Data Cache"); //#define J9MEM_CATEGORY_JIT_DATA_CACHE 12 - Moved to omr
-		categoryCodesToNames.put(13l, "Harmony Class Libraries"); //#define J9MEM_CATEGORY_HARMONY 13
+		// categoryCodesToNames.put(13l, "Harmony Class Libraries"); //#define J9MEM_CATEGORY_HARMONY 13
 		categoryCodesToNames.put(14l, "sun.misc.Unsafe"); //#define J9MEM_CATEGORY_SUN_MISC_UNSAFE_ALLOCATE 14
 		categoryCodesToNames.put(15l, "VM Class Libraries"); //#define J9MEM_CATEGORY_VM_JCL 15
 		categoryCodesToNames.put(16l, "Class Libraries"); //#define J9MEM_CATEGORY_CLASS_LIBRARIES 16

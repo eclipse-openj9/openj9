@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,6 @@ extern"C"{
 #define J9_MANAGEMENT_EXTENSIONS_DLL_NAME "management_ext"
 #define J9_JAVACORE_GENERATOR_DLL_NAME "jcoregen29"
 #define J9_VM_DLL_NAME "j9vm29"
-#define J9_HARMONY_THREAD_API_DLL_NAME "hythr"
 #define J9_SHARED_DLL_NAME "j9shr29"
 #define J9_JAVA_SE_DLL_NAME "jclse29"
 #define J9_TOOLS_MIGRATION_DLL_NAME "migration"
@@ -42,7 +41,6 @@ extern"C"{
 #define J9_VERIFY_DLL_NAME "j9bcv29"
 #define J9_CUDA4J_DLL_NAME "cuda4j29"
 #define J9_ZOS_IFA_SWITCH_TESTING_DLL_NAME "zostesting"
-#define J9_HARMONY_PORT_LIBRARY_DLL_NAME "hyprt"
 #define J9_MANAGEMENT_DLL_NAME "management"
 #define J9_GC_DLL_NAME "j9gc29"
 #define J9_RAS_DUMP_DLL_NAME "j9dmp29"
@@ -51,7 +49,6 @@ extern"C"{
 #define J9_IFA_DLL_NAME "j9ifa29"
 #define J9_CHECK_JNI_DLL_NAME "j9jnichk29"
 #define J9_CHECK_VM_DLL_NAME "j9vmchk29"
-#define J9_HARMONY_PORT_LIBRARY_SHIM_DLL_NAME "hyprtshim29"
 #define J9_CHECK_GC_DLL_NAME "j9gcchk29"
 #define J9_JSIG_DLL_NAME "jsig"
 #define J9_JVMTI_DLL_NAME "j9jvmti29"
@@ -132,12 +129,6 @@ extern"C"{
 #endif
 #ifndef J9_JEXTRACT_DLL_NAME
 #define J9_JEXTRACT_DLL_NAME "j9jextract"
-#endif
-#ifndef J9_JCL_CLEAR_DLL_NAME
-#define J9_JCL_CLEAR_DLL_NAME "jclclear_29"
-#endif
-#ifndef J9_JCL_HS60_DLL_NAME
-#define J9_JCL_HS60_DLL_NAME "jclhs60_29"
 #endif
 #ifndef J9_ZIP_DLL_NAME
 #define J9_ZIP_DLL_NAME "j9zlib29"

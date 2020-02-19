@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -768,7 +768,6 @@ static J9ThreadEnv threadEnv = {
  * JVMRAS_VERSION_1_1       0x7F000001
  * JVMRAS_VERSION_1_3       0x7F000003
  * JVMRAS_VERSION_1_5       0x7F000005
- * HARMONY_VMI_VERSION_2_0 	0xC01D0020
  */
 
 jint JNICALL GetEnv(JavaVM *jvm, void **penv, jint version)
@@ -809,14 +808,6 @@ jint JNICALL GetEnv(JavaVM *jvm, void **penv, jint version)
 	if (rc != JNI_EVERSION) {
 		return rc;
 	}
-
-#ifdef J9VM_OPT_HARMONY
-	/* Allow retrieval of the Harmony VM interface */
-	if (HARMONY_VMI_VERSION_2_0 == version) {
-		*penv = &(vm->harmonyVMInterface);
-		return JNI_OK;
-	}
-#endif /* J9VM_OPT_HARMONY */
 
 	if (version == UTE_VERSION_1_1) {
 		if (vm->j9rasGlobalStorage != NULL) {	
