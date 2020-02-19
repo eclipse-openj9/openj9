@@ -112,10 +112,10 @@ enum MessageType
    ResolvedMethod_getMultipleResolvedMethods = 151;
    ResolvedMethod_varHandleMethodTypeTableEntryAddress = 152;
    ResolvedMethod_isUnresolvedVarHandleMethodTypeTableEntry = 153;
-
    ResolvedMethod_getConstantDynamicTypeFromCP = 154;
    ResolvedMethod_isUnresolvedConstantDynamic = 155;
    ResolvedMethod_dynamicConstant = 156;
+   ResolvedMethod_definingClassFromCPFieldRef = 157;
 
    ResolvedRelocatableMethod_createResolvedRelocatableJ9Method = 160;
    ResolvedRelocatableMethod_storeValidationRecordIfNecessary = 161;
