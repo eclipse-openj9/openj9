@@ -235,9 +235,6 @@ J9::X86::CodeGenerator::CodeGenerator() :
    TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELHASWELL) == self()->isIntelHaswell(), "isIntelHaswell test failed!\n");
    TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELBROADWELL) == self()->isIntelBroadwell(), "isIntelBroadwell test failed!\n");
    TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_INTELSKYLAKE) == self()->isIntelSkylake(), "isIntelSkylake test failed!\n");
-
-   TR_ASSERT_FATAL(TR::Compiler->cpu.isAMDK6() == self()->isAMDK6(), "isAMDK6 test failed!\n");
-
    TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_AMDATHLONDURON) == self()->isAMDAthlonDuron(), "isAMDAthlonDuron test failed!\n");
    TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_AMDOPTERON) == self()->isAMDOpteron(), "isAMDOpteron test failed!\n");
    TR_ASSERT_FATAL(TR::Compiler->cpu.is(OMR_PROCESSOR_X86_AMDFAMILY15H) == self()->isAMD15h(), "isAMD15h test failed!\n");
