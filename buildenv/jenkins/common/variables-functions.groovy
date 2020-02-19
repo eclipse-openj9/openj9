@@ -771,6 +771,29 @@ def add_pr_to_description() {
     }
 }
 
+def setup() {
+    set_job_variables(params.JOB_TYPE)
+
+    switch (params.JOB_TYPE) {
+        case "pipeline":
+            // pipelineFunctions already loads pipeline-functions, so in this case let's just dup the variable buildFile
+            // TODO revisit all the loads and try to optimize.
+            buildFile = pipelineFunctions
+            SHAS = buildFile.get_shas(OPENJDK_REPO, OPENJDK_BRANCH, OPENJ9_REPO, OPENJ9_BRANCH, OMR_REPO, OMR_BRANCH, VENDOR_TEST_REPOS_MAP, VENDOR_TEST_BRANCHES_MAP, VENDOR_TEST_SHAS_MAP)
+            BUILD_NAME = buildFile.get_build_job_name(SPEC, SDK_VERSION, BUILD_IDENTIFIER)
+            // Stash DSL file so we can quickly load it on master
+            if (params.AUTOMATIC_GENERATION != 'false'){
+                stash includes: 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy', name: 'DSL'
+            }
+            break
+        case "build":
+            buildFile = load 'buildenv/jenkins/common/build.groovy'
+            break
+        default:
+            error("Unknown Jenkins job type:'${params.JOB_TYPE}'")
+    }
+}
+
 /*
 * Initializes all of the required variables for a Jenkins job by given job type.
 */
@@ -810,6 +833,7 @@ def set_job_variables(job_type) {
             add_pr_to_description()
             break
         case "pipeline":
+            currentBuild.description = "<a href=\"${RUN_DISPLAY_URL}\">Blue Ocean</a>"
             // set variables for a pipeline job
             set_repos_variables()
             set_adoptopenjdk_tests_repository()
@@ -1261,6 +1285,8 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
     params.put('VENDOR_CREDENTIALS_ID_DEFAULT', VENDOR_CREDENTIALS_ID_DEFAULT)
     params.put('jobType', downstreamJobType)
     params.put('DISCARDER_NUM_BUILDS', DISCARDER_NUM_BUILDS)
+    params.put('SCM_REPO', SCM_REPO)
+    params.put('SCM_BRANCH', SCM_BRANCH)
 
     def templatePath = 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy'
     pipelineFunctions.retry_and_delay({
