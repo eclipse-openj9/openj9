@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2020 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -240,6 +240,14 @@ J9::Simplifier::isRecognizedAbsMethod(TR::Node * node)
              methodSymbol->getRecognizedMethod() == TR::java_lang_Math_abs_I));
    }
 
+bool
+J9::Simplifier::isObjectEqualityComparison(TR::Node *node)
+   {
+   return node->getOpCode().isCall()
+          && comp()->getSymRefTab()->isNonHelper(node->getSymbolReference(),
+                   TR::SymbolReferenceTable::objectEqualityComparisonSymbol);
+   }
+
 TR::Node *
 J9::Simplifier::foldAbs(TR::Node *node)
    {
@@ -298,6 +306,36 @@ J9::Simplifier::simplifyiCallMethods(TR::Node * node, TR::Block * block)
           valueNode->getDouble() == 10.0 && expNode->getDouble() == 4.0)
          {
          foldDoubleConstant(node, 10000.0, (TR::Simplifier *) this);
+         }
+      }
+   else if (isObjectEqualityComparison(node))
+      {
+      TR::Node *lhs = node->getChild(0);
+      const bool lhsNull =
+         lhs->getOpCodeValue() == TR::aconst
+         && lhs->getConstValue() == 0;
+
+      TR::Node *rhs = node->getChild(1);
+      const bool rhsNull =
+         rhs->getOpCodeValue() == TR::aconst
+         && rhs->getConstValue() == 0;
+
+      // If either operand is null, no need to use the equality comparison helper,
+      // as value types cannot have null references.  Also, if both operands
+      // are the same node, no need to use the comparison helper - the comparison
+      // must be true.  Fold both cases to use acmpeq which might be further simplified
+      //
+      if (lhsNull || rhsNull || lhs == rhs)
+         {
+         if (performTransformation(
+               comp(),
+               "%sChanging n%un from <isObjectEqualityComparison> to acmpeq\n",
+               optDetailString(),
+               node->getGlobalIndex()))
+            {
+            TR::Node::recreate(node, TR::acmpeq);
+            node = simplify(node, block);
+            }
          }
       }
 
