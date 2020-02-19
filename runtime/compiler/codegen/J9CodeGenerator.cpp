@@ -156,6 +156,12 @@ static TR::Node *lowerCASValues(
    }
 
 
+void
+J9::CodeGenerator::lowerNonhelperCallIfNeeded(TR::Node *node, TR::TreeTop *tt)
+   {
+   }
+
+
 // J9
 //
 // convert dual operators from DAG representation to cyclic representation by cloning
@@ -808,6 +814,11 @@ J9::CodeGenerator::lowerTreeIfNeeded(
    {
    TR_J9VMBase *fej9 = (TR_J9VMBase *)(self()->comp()->fe());
    OMR::CodeGeneratorConnector::lowerTreeIfNeeded(node, childNumberOfNode, parent, tt);
+
+   if (node->getOpCode().isCall())
+      {
+      self()->lowerNonhelperCallIfNeeded(node, tt);
+      }
 
    // J9
    //
