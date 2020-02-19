@@ -268,6 +268,15 @@ class SymbolReferenceTable : public OMR::SymbolReferenceTableConnector
 
    TR::SymbolReference * findOrCreateCheckCastForArrayStoreSymbolRef(TR::ResolvedMethodSymbol *owningMethodSymbol);
 
+   /** \brief
+    *     Finds the <objectEqualityComparison> "nonhelper" symbol reference,
+    *     creating it if necessary.
+    *
+    *  \return
+    *     The <objectEqualityComparison> symbol reference.
+    */
+   TR::SymbolReference *findOrCreateObjectEqualityComparisonSymbolRef();
+
    /**
     * \brief
     *    Creates a new symbol for a parameter within the supplied owning method of the

@@ -2344,6 +2344,18 @@ J9::SymbolReferenceTable::findOrCreateArrayComponentTypeSymbolRef()
    return element(componentClassSymbol);
    }
 
+TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateObjectEqualityComparisonSymbolRef()
+   {
+   TR::SymbolReference *symRef = element(objectEqualityComparisonSymbol);
+   if (symRef != NULL)
+      return symRef;
+
+   symRef = self()->findOrCreateCodeGenInlinedHelper(objectEqualityComparisonSymbol);
+   symRef->setCanGCandReturn();
+   symRef->setCanGCandExcept();
+   return symRef;
+   }
 
 TR::ParameterSymbol *
 J9::SymbolReferenceTable::createParameterSymbol(
