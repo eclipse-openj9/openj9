@@ -2290,7 +2290,7 @@ public String toGenericString() {
 		kindOfType = "enum "; //$NON-NLS-1$
 /*[IF Java14]*/
 	} else if (isRecord()) {
-		kindOfType = "record"; //$NON-NLS-1$
+		kindOfType = "record "; //$NON-NLS-1$
 /*[ENDIF]*/
 	} else {
 		kindOfType = "class "; //$NON-NLS-1$	
