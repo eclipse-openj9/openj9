@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,6 @@ timestamps {
                             echo "Previous SHA:${previous.omr_sha}\nCurrent SHA:${current_sha}"
                             if ( previous.omr_sha != current_sha ) {
                                 build job: 'Pipeline-OMR-Acceptance', propagate: false, wait: false
-                                build job: 'Pipeline-OMR-Acceptance-11', propagate: false, wait: false
                                 writeFile file: "${ARCHIVE_FILE}", text: "omr_sha=${current_sha}"
                             }
                             archiveArtifacts "${ARCHIVE_FILE}"
