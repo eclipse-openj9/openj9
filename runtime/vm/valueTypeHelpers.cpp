@@ -23,6 +23,7 @@
 #include "j9.h"
 #include "ut_j9vm.h"
 #include "ObjectAccessBarrierAPI.hpp"
+#include "valueTypeHelpers.hpp"
 
 extern "C" {
 void
