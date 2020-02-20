@@ -681,7 +681,7 @@ L_callVirtual:
 	mov	x2, x0
 	sub	x0, x10, #20					// get the address of the movz instruction
 	ldr	w1, [x0]					// fetch the movz instruction
-	ubfx	x3, x2, #0, #16				// lower 16 bits of the index
+	ubfx	x3, x2, #0, #16                                 // lower 16 bits of the index
 	orr	w1, w1, w3, LSL #5				// encode the index in the movz instruction
 	str	w1, [x0]					// store the movz instruction
 	ldr	w1, [x0, #4]					// fetch the movk instruction
@@ -718,10 +718,10 @@ const_blr:
 // trash:	x10, x11
 //
 _interfaceCallHelper:
-	stp	x0, x1, [J9SP, #-64]!
-	stp	x2, x3, [J9SP, #16]
-	stp	x4, x5, [J9SP, #32]
-	stp	x6, x7, [J9SP, #48]
+	stp	x7, x6, [J9SP, #-64]!				// save argument registers
+	stp	x5, x4, [J9SP, #16]
+	stp	x3, x2, [J9SP, #32]
+	stp	x1, x0, [J9SP, #48]
 	mov	x7, x30						// preserve LR
 	add	x0, x30, #J9TR_UICSnippet_CP			// get CP/index pair pointer
 	ldr	x1, [x30, #J9TR_ICSnippet_codeCacheReturnAddress]	// get code cache RA
@@ -733,13 +733,13 @@ _interfaceCallHelper:
 	mov	x2, #TR_ARM64interfaceDispatch
 	bl	L_refreshHelper					// rewrite the BL
 	mov	x30, x7						// restore LR
-	ldr	x0, [J9SP, #0]					// refetch 'this'
+	ldr	x0, [J9SP, #56]					// refetch 'this'
 	b	L_continueInterfaceSend				// lookup interface method and send
 _interfaceDispatch:
-	stp	x0, x1, [J9SP, #-64]!
-	stp	x2, x3, [J9SP, #16]
-	stp	x4, x5, [J9SP, #32]
-	stp	x6, x7, [J9SP, #48]
+	stp	x7, x6, [J9SP, #-64]!				// save argument registers
+	stp	x5, x4, [J9SP, #16]
+	stp	x3, x2, [J9SP, #32]
+	stp	x1, x0, [J9SP, #48]
 L_continueInterfaceSend:
 #ifdef J9VM_GC_COMPRESSED_POINTERS
 	ldr	w0, [x0, #J9TR_ObjectHeader_class]		// load class offset of receiver
@@ -755,18 +755,20 @@ L_continueInterfaceSend:
 	mov	x9, #J9TR_InterpVTableOffset
 	sub	x9, x9, x0					// convert interp vTableIndex to jit index (must be in x9 for patch virtual)
 	mov	x30, x10						// set LR = code cache RA
-	ldr	x0, [J9SP, #0]					// refetch 'this'
+	ldr	x0, [J9SP, #56]					// refetch 'this'
 #ifdef J9VM_GC_COMPRESSED_POINTERS
 	ldr	w11, [x0, #J9TR_ObjectHeader_class]		// load class offset of receiver
 #else
 	ldr	x11, [x0, #J9TR_ObjectHeader_class]		// load class of receiver
 #endif
 	and	x11, x11, #~(J9TR_RequiredClassAlignment-1)	// mask VFT bits
-	ldr	x1, [J9SP, #8]					// restore other parameter regs
-	ldp	x2, x3, [J9SP, #16]
-	ldp	x4, x5, [J9SP, #32]
-	ldp	x6, x7, [J9SP, #48]
+
+	ldp	x7, x6, [J9SP, #0]				// restore other parameter regs
+	ldp	x5, x4, [J9SP, #16]
+	ldp	x3, x2, [J9SP, #32]
+	ldr	x1, [J9SP, #48]
 	add	J9SP, J9SP, #64
+
 	ldr	x11, [x11, x9]					// jump thru vtable
 	br	x11
 
