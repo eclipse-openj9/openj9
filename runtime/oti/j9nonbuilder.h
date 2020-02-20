@@ -3496,6 +3496,7 @@ typedef struct J9JITConfig {
 	void *old_slow_jitNewInstanceImplAccessCheck;
 	void *old_slow_jitTranslateNewInstanceMethod;
 	void *old_slow_jitReportFinalFieldModified;
+	void *old_fast_jitAcmpHelper;
 	void *fast_jitNewValue;
 	void *fast_jitNewValueNoZeroInit;
 	void *fast_jitNewObject;
@@ -4437,6 +4438,7 @@ typedef struct J9InternalVMFunctions {
 	BOOLEAN ( *isJITServerEnabled )(struct J9JavaVM *vm);
 #endif /* JITSERVER_SUPPORT */
 	IDATA ( *createJoinableThreadWithCategory)(omrthread_t* handle, UDATA stacksize, UDATA priority, UDATA suspend, omrthread_entrypoint_t entrypoint, void* entryarg, U_32 category) ;
+	BOOLEAN ( *valueTypeCapableAcmp)(struct J9VMThread *currentThread, j9object_t lhs, j9object_t rhs) ;
 } J9InternalVMFunctions;
 
 /* Jazz 99339: define a new structure to replace JavaVM so as to pass J9NativeLibrary to JVMTIEnv  */
