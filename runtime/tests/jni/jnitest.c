@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -862,37 +862,6 @@ Java_j9vm_test_memory_MemoryAllocator_allocateMemory32(JNIEnv * env, jclass claz
 	void *result;
 	result = j9mem_allocate_memory32((UDATA) byteAmount, OMRMEM_CATEGORY_VM);
 	return (NULL != result);
-}
-
-jboolean JNICALL
-Java_j9vm_test_harmonyvmi_Test_testGetEnv(JNIEnv *env, jclass clazz)
-{
-	JavaVM* javaVM;
-	VMInterface* vmi;
-	vmiVersion version = VMI_VERSION_2_0;
-	vmiError vmiRc;
-	jclass java_lang_Exception = (*env)->FindClass(env, "java/lang/Exception");
-	jint rc;
-
-	rc = (*env)->GetJavaVM(env, &javaVM);
-	if (0 != rc) {
-		(*env)->ThrowNew(env, java_lang_Exception, "Could not navigate env->javaVM");
-		return JNI_FALSE;
-	}
-
-	rc = (*javaVM)->GetEnv(javaVM, (void**)&vmi, HARMONY_VMI_VERSION_2_0);
-	if (0 != rc) {
-		(*env)->ThrowNew(env, java_lang_Exception, "GetEnv(HARMONY_VMI_VERSION_2_0) failed!");
-		return JNI_FALSE;
-	}
-
-	vmiRc = (*vmi)->CheckVersion(vmi, &version);
-	if (VMI_ERROR_NONE != vmiRc) {
-		(*env)->ThrowNew(env, java_lang_Exception, "VMI CheckVersion() failed");
-		return JNI_FALSE;
-	}
-
-	return JNI_TRUE;
 }
 
 typedef struct JvmInfo {

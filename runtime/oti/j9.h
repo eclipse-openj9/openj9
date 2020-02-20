@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -230,14 +230,6 @@ extern J9_CFUNC UtInterface * getTraceInterfaceFromVM(J9JavaVM *j9vm);
  * Macros for accessing port library.
  * @{
  */
-#ifdef USING_VMI
-#define PORT_ACCESS_FROM_ENV(jniEnv) \
-VMInterface *portPrivateVMI = VMI_GetVMIFromJNIEnv(jniEnv); \
-J9PortLibrary *privatePortLibrary = (*portPrivateVMI)->GetPortLibrary(portPrivateVMI)
-#define PORT_ACCESS_FROM_JAVAVM(javaVM) \
-VMInterface *portPrivateVMI = VMI_GetVMIFromJavaVM(javaVM); \
-J9PortLibrary *privatePortLibrary = (*portPrivateVMI)->GetPortLibrary(portPrivateVMI)
-#else
 #define PORT_ACCESS_FROM_ENV(jniEnv) J9PortLibrary *privatePortLibrary = (J9VMTHREAD_FROM_JNIENV(jniEnv))->javaVM->portLibrary
 #define PORT_ACCESS_FROM_JAVAVM(javaVM) J9PortLibrary *privatePortLibrary = (javaVM)->portLibrary
 #define PORT_ACCESS_FROM_VMC(vmContext) J9PortLibrary *privatePortLibrary = (vmContext)->javaVM->portLibrary
@@ -245,7 +237,6 @@ J9PortLibrary *privatePortLibrary = (*portPrivateVMI)->GetPortLibrary(portPrivat
 #define PORT_ACCESS_FROM_JITCONFIG(jitConfig) J9PortLibrary *privatePortLibrary = (jitConfig)->javaVM->portLibrary
 #define PORT_ACCESS_FROM_WALKSTATE(walkState) J9PortLibrary *privatePortLibrary = (walkState)->walkThread->javaVM->portLibrary
 #define OMRPORT_ACCESS_FROM_J9VMTHREAD(vmContext) OMRPORT_ACCESS_FROM_J9PORT((vmContext)->javaVM->portLibrary)
-#endif
 #define PORT_ACCESS_FROM_VMI(vmi) J9PortLibrary *privatePortLibrary = (*vmi)->GetPortLibrary(vmi)
 /** @} */
 

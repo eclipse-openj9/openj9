@@ -303,7 +303,6 @@ enum INIT_STAGE {
 #define VMOPT_XDFPBD "-Xdfpbd"
 #define VMOPT_SHOWVERSION "-showversion"
 #define VMOPT_INTERNALVERSION "-Xinternalversion"
-#define VMOPT_HARMONY_PORT_LIBRARY "_org.apache.harmony.vmi.portlib"
 #define VMOPT_XXALLOWVMSHUTDOWN "-XXallowvmshutdown:true"
 #define VMOPT_XXDISABLEVMSHUTDOWN "-XXallowvmshutdown:false"
 #define VMOPT_XXVM_IGNOREUNRECOGNIZED "-XXvm:ignoreUnrecognized"

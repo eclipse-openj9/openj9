@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -236,7 +236,6 @@ jvmtiRawMonitorWait(jvmtiEnv* env,
 			if (currentThread->omrVMThread->exclusiveCount == 0) {
 				UDATA count = 0;
 
-				/* TODO: revisit and remove all together after we switch to harmony jdwp */
 				while (omrthread_monitor_exit((omrthread_monitor_t) monitor) == 0) {
 					++count;
 				}

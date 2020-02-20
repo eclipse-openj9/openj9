@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -62,7 +62,7 @@
  * @name Shared Semaphore Errors
  * Error codes for shared semaphore operations.
  *
- * @internal J9PORT_ERROR_SHSEM* range from at -150 to -169.  to match hyporterror.h codes.
+ * @internal J9PORT_ERROR_SHSEM* range from at -150 to -169.
  * Overlaps with omrporterror.h
  * @{
  */
@@ -89,7 +89,7 @@
  * @name Shared Memory Errors
  * Error codes for shared memory semaphore operations.
  *
- * @internal J9PORT_ERROR_SHMEM* range from at -170 to -199 to match hyporterror.h codes.
+ * @internal J9PORT_ERROR_SHMEM* range from at -170 to -199.
  * Overlaps with omrporterror.h
  * @{
  */
@@ -126,7 +126,7 @@
  * @name Socket Errors
  * Error codes for socket operations
  *
- * @internal J9PORT_ERROR_SOCKET* range from -200 to -299 to match hyporterror.h codes.
+ * @internal J9PORT_ERROR_SOCKET* range from -200 to -299.
  * Overlaps with omrporterror.h
  * @{
  */

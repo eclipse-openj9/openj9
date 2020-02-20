@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -102,11 +102,7 @@ typedef struct J9VMLSFunctionTable {
  * @return The value stored
  */
 
-#ifdef USING_VMI
-#define J9VMLS_FNTBL(env) (*VMI_GetVMIFromJNIEnv(env))->GetVMLSFunctions(VMI_GetVMIFromJNIEnv(env))
-#else
 #define J9VMLS_FNTBL(env) ((J9VMLSFunctionTable *) ((((void ***) (env))[offsetof(J9VMThread,javaVM)/sizeof(UDATA)])[offsetof(J9JavaVM,vmLocalStorageFunctions)/sizeof(UDATA)]))
-#endif
 
 #ifdef J9VM_OPT_MULTI_VM
 #define J9VMLS_GET(env, key) (J9VMLS_FNTBL(env)->J9VMLSGet(env, (key)))

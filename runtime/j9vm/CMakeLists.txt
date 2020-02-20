@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,12 +39,6 @@ target_sources(jvm_common INTERFACE
 	${CMAKE_CURRENT_SOURCE_DIR}/vmi.c
 )
 
-if(J9VM_OPT_HARMONY)
-	target_sources(jvm_common INTERFACE
-		${j9vm_SOURCE_DIR}/hyvm/harmony_vm.c
-	)
-endif()
-
 target_link_libraries(jvm_common
 	INTERFACE
 		j9vm_interface
@@ -55,7 +49,6 @@ target_link_libraries(jvm_common
 		j9avl
 		j9hashtable
 		j9pool
-		j9vmi
 
 		${CMAKE_DL_LIBS}
 		${OMR_PLATFORM_THREAD_LIBRARY}
@@ -66,8 +59,6 @@ target_include_directories(jvm_common
 		${CMAKE_CURRENT_BINARY_DIR}
 		#TODO we have to repeat ../include because of duplication of vmi.h
 		../include
-		../hyvm
-		../harmony/include
 		../jcl/
 )
 

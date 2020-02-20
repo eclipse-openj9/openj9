@@ -44,7 +44,7 @@
 
 	<set
 		label="oldflags"
-		flags="PaaS,Sidecar19-SE_RAWPLUSJ9"/>
+		flags="Sidecar19-SE_RAWPLUSJ9"/>
 
 	<!-- These flags identify the target platform. -->
 	<set

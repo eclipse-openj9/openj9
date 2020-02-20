@@ -176,7 +176,6 @@ static const struct J9VMIgnoredOption ignoredOptionTable[] = {
 	{ VMOPT_XNOQUICKSTART, EXACT_MATCH }, /* since we eat -Xquickstart, we should eat -Xnoquickstart for the same reason. */
 	{ VMOPT_XJ9, EXACT_MATCH },
 	{ VMOPT_XMXCL, STARTSWITH_MATCH },
-	{ VMOPT_HARMONY_PORT_LIBRARY, EXACT_MATCH },
 	/* extra-extended options start with -XX. Ignore any not explicitly processed. */
 #if defined(J9VM_OPT_SIDECAR)
 	{ VMOPT_XJVM, STARTSWITH_MATCH },
