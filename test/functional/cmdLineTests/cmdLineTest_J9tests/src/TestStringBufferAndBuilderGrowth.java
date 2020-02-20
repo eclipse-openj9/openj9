@@ -34,8 +34,9 @@ public static void main(String[] args) {
 	long physicalMemory = opBean.getTotalPhysicalMemorySize();
 	System.out.println("Machine has physical memory " + physicalMemory + " bytes or " + (physicalMemory >> 20) + " MB or " + (physicalMemory >> 30) + " GB");
 	// An AIX machine with 7616 MB doesn't work
-	long limit = 8000L << 20; 
+	long limit = 8193L << 20; 
 	if (physicalMemory < limit) {
+		// Machines with less memory may swap and timeout trying to run the test
 		System.out.println("Not enough resource to run test.");
 		return;
 	}
