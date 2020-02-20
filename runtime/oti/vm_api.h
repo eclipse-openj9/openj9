@@ -2232,6 +2232,20 @@ fieldOffsetsStartDo(J9JavaVM *vm, J9ROMClass *romClass, J9Class *superClazz, J9R
 void
 defaultValueWithUnflattenedFlattenables(J9VMThread *currentThread, J9Class *clazz, j9object_t instance);
 
+
+/**
+ * Compare two objects for equality. This helper will perform a
+ * structural comparison if both objecst are valueTypes
+ *
+ * @param[in] currentThread the current thread
+ * @param[in] lhs first operand
+ * @param[in] rhs second operand
+ *
+ * @return TRUE if both objects are equal, false otherwise
+ */
+BOOLEAN
+valueTypeCapableAcmp(J9VMThread *currentThread, j9object_t lhs, j9object_t rhs);
+
 /**
 * @brief Iterate over fields of the specified class in JVMTI order.
 * @param state[in/out]  the walk state that was initialized via fieldOffsetsStartDo()

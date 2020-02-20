@@ -374,4 +374,5 @@ J9InternalVMFunctions J9InternalFunctions = {
 	isJITServerEnabled,
 #endif /* JITSERVER_SUPPORT */
 	createJoinableThreadWithCategory,
+	valueTypeCapableAcmp,
 };
