@@ -702,19 +702,133 @@ def set_slack_channel() {
 }
 
 def set_artifactory_config() {
-    ARTIFACTORY_SERVER = VARIABLES.artifactory_server
-    if (ARTIFACTORY_SERVER) {
-        env.ARTIFACTORY_SERVER = ARTIFACTORY_SERVER
-        env.ARTIFACTORY_REPO = VARIABLES.artifactory_repo
-        env.ARTIFACTORY_NUM_ARTIFACTS = VARIABLES.artifactory_num_artifacts
-        env.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS = VARIABLES.artifactory_days_to_keep_artifacts
-        env.ARTIFACTORY_MANUAL_CLEANUP = VARIABLES.artifactory_manual_cleanup // This is being used by the cleanup script
-        env.ARTIFACTORY_UPLOAD_DIR = "${ARTIFACTORY_REPO}/${JOB_NAME}/${BUILD_ID}/"
-        echo "Using artifactory server/repo: ${ARTIFACTORY_SERVER} / ${ARTIFACTORY_REPO}"
-        echo "Keeping '${ARTIFACTORY_NUM_ARTIFACTS}' artifacts"
-        echo "Keeping artifacts for '${ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS}' days"
-        echo "Artifactory Manual Cleanup: ${env.ARTIFACTORY_MANUAL_CLEANUP}"
+    ARTIFACTORY_CONFIG = [:]
+    echo "Configure Artifactory..."
+
+    if (VARIABLES.artifactory.defaultGeo) {
+        // Allow default geo to be overridden with a param. Used by the Clenaup script to target a specific server.
+        ARTIFACTORY_CONFIG['defaultGeo'] = (params.ARTIFACTORY_GEO) ? params.ARTIFACTORY_GEO : VARIABLES.artifactory.defaultGeo
+        ARTIFACTORY_CONFIG['geos'] = VARIABLES.artifactory.server.keySet()
+        ARTIFACTORY_CONFIG['repo'] = VARIABLES.artifactory.repo
+        ARTIFACTORY_CONFIG['uploadDir'] = "${ARTIFACTORY_CONFIG['repo']}/${JOB_NAME}/${BUILD_ID}/"
+
+        for (geo in ARTIFACTORY_CONFIG['geos']) {
+            ARTIFACTORY_CONFIG[geo] = [:]
+            ARTIFACTORY_CONFIG[geo]['server'] = get_value(VARIABLES.artifactory.server, geo)
+            ARTIFACTORY_CONFIG[geo]['numArtifacts'] = get_value(VARIABLES.artifactory.numArtifacts, geo).toInteger()
+            ARTIFACTORY_CONFIG[geo]['daysToKeepArtifacts'] = get_value(VARIABLES.artifactory.daysToKeepArtifacts, geo).toInteger()
+            ARTIFACTORY_CONFIG[geo]['manualCleanup'] = get_value(VARIABLES.artifactory.manualCleanup, geo)
+            ARTIFACTORY_CONFIG[geo]['vpn'] = get_value(VARIABLES.artifactory.vpn, geo)
+        }
+        ARTIFACTORY_CONFIG[VARIABLES.artifactory.defaultGeo]['uploadBool'] = true
+
+        // Determine if we need to upload more than the default server
+        if (ARTIFACTORY_CONFIG['geos'].size() > 1) {
+            // What platform did we build on
+            compilePlatform = get_node_platform(NODE_LABELS)
+
+            // See if there are servers with colocated nodes of matching platform
+            def testNodes = jenkins.model.Jenkins.instance.getLabel('ci.role.test').getNodes()
+            for (node in testNodes) {
+                def nodeGeo = get_node_geo(node.getLabelString())
+                // If we haven't determined yet if we will need to upload to 'nodeGeo'...
+                if (ARTIFACTORY_CONFIG[nodeGeo] && !ARTIFACTORY_CONFIG[nodeGeo]['uploadBool']) {
+                    def nodePlatform = get_node_platform(node.getLabelString())
+                    // Upload if there is a server at geo where there are machines matching our platform.
+                    if (nodePlatform == compilePlatform && ARTIFACTORY_CONFIG['geos'].contains(nodeGeo)) {
+                        ARTIFACTORY_CONFIG[nodeGeo]['uploadBool'] = true
+                    }
+                }
+            }
+        }
+
+        echo "ARTIFACTORY_CONFIG:'${ARTIFACTORY_CONFIG}'"
+        /*
+        * Write out default server values to string variables.
+        * The upstream job calls job.getBuildVariables() which only returns strings.
+        * Rather than parsing out the ARTIFACTORY_CONFIG map that is stored as a string,
+        * we'll write out the values to env here as strings to save work later.
+        */
+        env.ARTIFACTORY_SERVER = ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['server']
+        env.ARTIFACTORY_REPO = ARTIFACTORY_CONFIG['repo']
+        env.ARTIFACTORY_NUM_ARTIFACTS = ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['numArtifacts']
+        env.ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS = ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['daysToKeepArtifacts']
+        env.ARTIFACTORY_MANUAL_CLEANUP = ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['manualCleanup']
     }
+}
+
+def get_node_geo(nodeLabels) {
+    if (nodeLabels.contains('ci.geo.')) {
+        labelArray = nodeLabels.tokenize()
+        for (label in labelArray) {
+            if (label ==~ /ci\.geo\..*/) {
+                return label.substring(7)
+            }
+        }
+    }
+    return ''
+}
+
+def get_node_platform(nodeLabels) {
+    /*
+    * xlinux -> arch=x86 && baseOS=linux
+    * plinux -> arch=ppc64le && baseOS=linux
+    * zlinux -> arch=s390x && baseOS=linux
+    * aix -> baseOS=aix
+    * windows -> baseOS=windows
+    * osx -> baseOS=osx
+    * zos -> baseOS=zos
+    * aarch64 -> arch=aarch64
+    */
+    def arch = ''
+    def baseOS = ''
+    if (nodeLabels.contains('hw.arch.') && nodeLabels.contains('sw.os.')) {
+        labelArray = nodeLabels.tokenize()
+        for (label in labelArray) {
+            switch(label) {
+                case ~/hw\.arch\.[a-z0-9]+/:
+                    arch = label.substring(8)
+                    //println arch
+                    break
+                case ~/sw\.os\.[a-z]+/:
+                    baseOS = label.substring(6)
+                    //println baseOS
+                    break
+            }
+        }
+    }
+    if (!arch || !baseOS) {
+        echo "WARNING: Unable to determine node arch/os:'${nodeLabels}'"
+        return ''
+    }
+    switch(baseOS) {
+        case ['aix', 'windows', 'osx', 'zos']:
+            return baseOS
+            break
+        case ['linux', 'ubuntu', 'rhel', 'cent', 'sles'] :
+            switch(arch) {
+                case 'x86':
+                    return 'xlinux'
+                    break
+                case 'ppc64le':
+                    return 'plinux'
+                    break
+                case 'ppc64':
+                    return 'plinuxBE'
+                case 's390x':
+                    return 'zlinux'
+                    break
+                case ['aarch64', 'aarch32']:
+                    return 'alinux'
+                    break
+                default:
+                    echo "WARNING: Unknown OS:'${baseOS}' for arch:'${arch}'"
+            }
+            break
+        default:
+            echo "WARNING: Unknown baseOS:'${baseOS}'"
+    }
+    return ''
 }
 
 def set_restart_timeout() {
@@ -831,7 +945,6 @@ def set_job_variables(job_type) {
             // set variables for a build job
             set_build_variables()
             set_sdk_variables()
-            set_artifactory_config()
             add_pr_to_description()
             break
         case "pipeline":

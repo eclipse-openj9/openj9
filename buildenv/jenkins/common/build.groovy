@@ -325,45 +325,48 @@ def archive_sdk() {
                     }
                 }
             }
-            if (ARTIFACTORY_SERVER) {
+            if (ARTIFACTORY_CONFIG) {
                 def specs = []
                 def sdkSpec = ["pattern": "${OPENJDK_CLONE_DIR}/${SDK_FILENAME}",
-                               "target": "${ARTIFACTORY_UPLOAD_DIR}",
+                               "target": "${ARTIFACTORY_CONFIG['uploadDir']}",
                                "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
                 specs.add(sdkSpec)
                 def testSpec = ["pattern": "${OPENJDK_CLONE_DIR}/${TEST_FILENAME}",
-                                "target": "${ARTIFACTORY_UPLOAD_DIR}",
+                                "target": "${ARTIFACTORY_CONFIG['uploadDir']}",
                                 "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
                 specs.add(testSpec)
                 def debugImageSpec = ["pattern": "${OPENJDK_CLONE_DIR}/${DEBUG_IMAGE_FILENAME}",
-                                "target": "${ARTIFACTORY_UPLOAD_DIR}",
+                                "target": "${ARTIFACTORY_CONFIG['uploadDir']}",
                                 "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
                 specs.add(debugImageSpec)
                 if (params.ARCHIVE_JAVADOC) {
                     def javadocSpec = ["pattern": "${OPENJDK_CLONE_DIR}/${JAVADOC_FILENAME}",
-                                       "target": "${ARTIFACTORY_UPLOAD_DIR}",
+                                       "target": "${ARTIFACTORY_CONFIG['uploadDir']}",
                                        "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
                     specs.add(javadocSpec)
                 }
                 def uploadFiles = [files : specs]
                 def uploadSpec = JsonOutput.toJson(uploadFiles)
                 upload_artifactory(uploadSpec)
-                env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_URL}/${ARTIFACTORY_UPLOAD_DIR}${SDK_FILENAME}"
+
+                // Always use the default server link for the description and for test.
+                env.CUSTOMIZED_SDK_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${SDK_FILENAME}"
                 currentBuild.description += "<br><a href=${CUSTOMIZED_SDK_URL}>${SDK_FILENAME}</a>"
+
                 if (fileExists("${TEST_FILENAME}")) {
-                    TEST_LIB_URL = "${ARTIFACTORY_URL}/${ARTIFACTORY_UPLOAD_DIR}${TEST_FILENAME}"
-                    env.CUSTOMIZED_SDK_URL += " " + TEST_LIB_URL
+                    TEST_LIB_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${TEST_FILENAME}"
                     currentBuild.description += "<br><a href=${TEST_LIB_URL}>${TEST_FILENAME}</a>"
+                    env.CUSTOMIZED_SDK_URL += " " + TEST_LIB_URL
                 }
                 if (fileExists("${DEBUG_IMAGE_FILENAME}")) {
-                    DEBUG_IMAGE_LIB_URL = "${ARTIFACTORY_URL}/${ARTIFACTORY_UPLOAD_DIR}${DEBUG_IMAGE_FILENAME}"
+                    DEBUG_IMAGE_LIB_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}/${DEBUG_IMAGE_FILENAME}"
                     currentBuild.description += "<br><a href=${DEBUG_IMAGE_LIB_URL}>${DEBUG_IMAGE_FILENAME}</a>"
                 }
                 if (params.ARCHIVE_JAVADOC) {
                     if (fileExists("${JAVADOC_FILENAME}")) {
-                        JAVADOC_LIB_URL = "${ARTIFACTORY_URL}/${ARTIFACTORY_UPLOAD_DIR}${JAVADOC_FILENAME}"
-                        env.CUSTOMIZED_SDK_URL += " " + JAVADOC_LIB_URL
+                        JAVADOC_LIB_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${JAVADOC_FILENAME}"
                         currentBuild.description += "<br><a href=${JAVADOC_LIB_URL}>${JAVADOC_FILENAME}</a>"
+                        echo "Javadoc:'${JAVADOC_LIB_URL}"
                     }
                 }
                 echo "CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
@@ -432,18 +435,18 @@ def archive_diagnostics() {
     } else {
         sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"
     }
-    if (ARTIFACTORY_SERVER) {
+    if (ARTIFACTORY_CONFIG) {
         def uploadSpec = """{
             "files":[
                 {
                     "pattern": "${DIAGNOSTICS_FILENAME}",
-                    "target": "${ARTIFACTORY_UPLOAD_DIR}",
+                    "target": "${ARTIFACTORY_CONFIG['uploadDir']}",
                     "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"
                 }
             ]
         }"""
-        upload_artifactory(uploadSpec)
-        DIAGNOSTICS_FILE_URL = "${ARTIFACTORY_URL}/${ARTIFACTORY_UPLOAD_DIR}${DIAGNOSTICS_FILENAME}"
+        upload_artifactory_core(ARTIFACTORY_CONFIG['defaultGeo'], uploadSpec)
+        DIAGNOSTICS_FILE_URL = "${ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']]['url']}/${ARTIFACTORY_CONFIG['uploadDir']}${DIAGNOSTICS_FILENAME}"
         currentBuild.description += "<br><a href=${DIAGNOSTICS_FILE_URL}>${DIAGNOSTICS_FILENAME}</a>"
     } else {
         archiveArtifacts artifacts: "${DIAGNOSTICS_FILENAME}", fingerprint: false
@@ -451,12 +454,37 @@ def archive_diagnostics() {
 }
 
 def upload_artifactory(uploadSpec) {
-    def server = Artifactory.server ARTIFACTORY_SERVER
+    // Loop all the servers and upload if we've determined we should do so
+    for (geo in ARTIFACTORY_CONFIG['geos']) {
+        if (ARTIFACTORY_CONFIG[geo]['uploadBool']) {
+            /*
+            * If the server is behind a vpn and we aren't on a node behind the vpn,
+            * save the sdk and upload it later on a machine behind the vpn
+            */
+            if (ARTIFACTORY_CONFIG[geo]['vpn'] == 'true' && !NODE_LABELS.contains("ci.geo.${geo}")) {
+                if (!ARTIFACTORY_CONFIG['stashed']) {
+                    // Stash only what test needs (CUSTOMIZED_SDK_URL)
+                    stash includes: "**/${SDK_FILENAME},**/${TEST_FILENAME}", name: 'sdk'
+                    ARTIFACTORY_CONFIG['stashed'] = true
+                    ARTIFACTORY_CONFIG['uploadSpec'] = uploadSpec
+                }
+                ARTIFACTORY_CONFIG[geo]['uploaded'] = false
+            } else {
+                upload_artifactory_core(geo, uploadSpec)
+                ARTIFACTORY_CONFIG[geo]['uploaded'] = true
+            }
+        }
+    }
+}
+
+def upload_artifactory_core(geo, uploadSpec) {
+    echo "Uploading to '${geo}'..."
+    def server = Artifactory.server ARTIFACTORY_CONFIG[geo]['server']
     // set connection timeout to 10 mins to avoid timeout on slow platforms
     server.connection.timeout = 600
 
     def buildInfo = Artifactory.newBuildInfo()
-    buildInfo.retention maxBuilds: ARTIFACTORY_NUM_ARTIFACTS, maxDays: ARTIFACTORY_DAYS_TO_KEEP_ARTIFACTS, deleteBuildArtifacts: true
+    buildInfo.retention maxBuilds: ARTIFACTORY_CONFIG[geo]['numArtifacts'], maxDays: ARTIFACTORY_CONFIG[geo]['daysToKeepArtifacts'], deleteBuildArtifacts: true
     // Add BUILD_IDENTIFIER to the buildInfo. The UploadSpec adds it to the Artifact info
     buildInfo.env.filter.addInclude("BUILD_IDENTIFIER")
     buildInfo.env.capture = true
@@ -464,12 +492,35 @@ def upload_artifactory(uploadSpec) {
     //Retry uploading to Artifactory if errors occur
     pipelineFunctions.retry_and_delay({
         server.upload spec: uploadSpec, buildInfo: buildInfo;
-        server.publishBuildInfo buildInfo},
+        if (!ARTIFACTORY_CONFIG[geo]['vpn']){server.publishBuildInfo buildInfo}},
         3, 300)
 
-    // Write URL to env so that we can pull it from the upstream pipeline job
-    env.ARTIFACTORY_URL = server.getUrl()
-    env.ARTIFACTORY_CREDS = server.getCredentialsId()
+    ARTIFACTORY_CONFIG[geo]['url'] = server.getUrl()
+    ARTIFACTORY_CONFIG[geo]['creds'] = server.getCredentialsId()
+    // If this is the default server, save the creds to pass to test
+    if (geo == ARTIFACTORY_CONFIG['defaultGeo']) {
+        env.ARTIFACTORY_CREDS = ARTIFACTORY_CONFIG[ARTIFACTORY_CONFIG['defaultGeo']].creds
+    }
+}
+
+def upload_artifactory_post() {
+    // Determine if we didn't do any Artifactory uploads because of vpn.
+    // At the time of writing this code, we would only hit this case if we compiled at OSU on plinux and needed to upload to UNB.
+    if (ARTIFACTORY_CONFIG && ARTIFACTORY_CONFIG['stashed']) {
+        for (geo in ARTIFACTORY_CONFIG['geos']) {
+            if (ARTIFACTORY_CONFIG[geo]['uploadBool'] && !ARTIFACTORY_CONFIG[geo]['uploaded']) {
+                // Grab a node with the same geo as the server so we can upload
+                node("ci.geo.${geo}") {
+                    try {
+                        unstash 'sdk'
+                        upload_artifactory_core(geo, ARTIFACTORY_CONFIG['uploadSpec'])
+                    } finally {
+                        cleanWs()
+                    }
+                }
+            }
+        }
+    }
 }
 
 def add_node_to_description() {
@@ -486,6 +537,8 @@ def build_all() {
                         // Cleanup in case an old build left anything behind
                         cleanWs()
                         add_node_to_description()
+                        // Setup Artifactory now that we are on a node. This determines which server(s) we push to.
+                        variableFile.set_artifactory_config()
                         get_source()
                         build()
                         archive_sdk()
@@ -495,6 +548,7 @@ def build_all() {
                     }
                 }
             }
+            upload_artifactory_post()
         }
     }
 }

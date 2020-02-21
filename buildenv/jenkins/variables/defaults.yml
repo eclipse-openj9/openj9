@@ -48,11 +48,24 @@ adoptopenjdk:
 #========================================#
 # Artifactory settings
 #========================================#
-artifactory_server: 'ci-eclipse-openj9'
-artifactory_repo: 'ci-eclipse-openj9'
-artifactory_num_artifacts: 30
-artifactory_days_to_keep_artifacts: 50
-artifactory_manual_cleanup: true
+artifactory:
+  defaultGeo: 'osu'
+  server:
+    osu: 'ci-eclipse-openj9'
+    unb: 'ci-eclipse-openj9-unb'
+  repo: 'ci-eclipse-openj9'
+  numArtifacts:
+    osu: 30
+    unb: 5
+  daysToKeepArtifacts:
+    osu: 50
+    unb: 2
+  manualCleanup:
+    osu: true
+    unb: true
+  vpn:
+    osu: false
+    unb: true
 #========================================#
 # Miscellaneous settings
 #========================================#
