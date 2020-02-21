@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -88,7 +88,7 @@ class ARM64VirtualSnippet : public TR::Snippet
    public:
 
    ARM64VirtualSnippet(TR::CodeGenerator *cg, TR::Node *c, TR::LabelSymbol *lab, int32_t s, TR::LabelSymbol *retl)
-      : TR::Snippet(cg, c, lab, false), sizeOfArguments(s), returnLabel(retl)
+      : TR::Snippet(cg, c, lab, true), sizeOfArguments(s), returnLabel(retl)
       {
       }
 
