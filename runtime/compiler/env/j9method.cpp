@@ -7097,6 +7097,9 @@ TR_ResolvedJ9Method::definingClassFromCPFieldRef(
    I_32 cpIndex,
    bool isStatic)
    {
+#if defined(JITSERVER_SUPPORT)
+   TR_ASSERT_FATAL(!comp->isOutOfProcessCompilation(), "Static version of definingClassFromCPFieldRef should not be called in JITServer mode");
+#endif
    J9VMThread *vmThread = comp->j9VMThread();
    J9JavaVM *javaVM = vmThread->javaVM;
    J9JITConfig *jitConfig = javaVM->jitConfig;

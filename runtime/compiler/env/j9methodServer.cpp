@@ -152,6 +152,15 @@ TR_ResolvedJ9JITServerMethod::staticAttributes(TR::Compilation * comp, I_32 cpIn
    return result;
    }
 
+TR_OpaqueClassBlock * 
+TR_ResolvedJ9JITServerMethod::definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic)
+   {
+   // Send a message to the client
+   _stream->write(JITServer::MessageType::ResolvedMethod_definingClassFromCPFieldRef, _remoteMirror, cpIndex, isStatic);
+   TR_OpaqueClassBlock *resolvedClass = std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
+   return resolvedClass;
+   }
+
 TR_OpaqueClassBlock *
 TR_ResolvedJ9JITServerMethod::getClassFromConstantPool(TR::Compilation * comp, uint32_t cpIndex, bool returnClassForAOT)
    {
@@ -2267,6 +2276,22 @@ void *
 TR_ResolvedRelocatableJ9JITServerMethod::startAddressForInterpreterOfJittedMethod()
    {
    return ((J9Method *)getNonPersistentIdentifier())->extra;
+   }
+
+TR_OpaqueClassBlock * 
+TR_ResolvedRelocatableJ9JITServerMethod::definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic)
+   {
+   TR_OpaqueClassBlock *resolvedClass = TR_ResolvedJ9JITServerMethod::definingClassFromCPFieldRef(comp, cpIndex, isStatic);
+
+   bool valid = false;
+   if (comp->getOption(TR_UseSymbolValidationManager))
+      valid = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(resolvedClass, cp(), cpIndex, isStatic);
+   else
+      valid = storeValidationRecordIfNecessary(comp, cp(), cpIndex, isStatic ? TR_ValidateStaticField : TR_ValidateInstanceField, ramMethod());
+
+   if (!valid)
+      resolvedClass = NULL;
+   return resolvedClass;
    }
 
 TR_OpaqueClassBlock *
