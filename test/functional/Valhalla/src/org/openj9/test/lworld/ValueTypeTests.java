@@ -1580,6 +1580,36 @@ public class ValueTypeTests {
 		}
 	}
 
+	@Test(priority=1)
+	static public void testFlattenedFieldInitSequence() throws Throwable {
+		String fields[] = {"x:I", "y:I"};
+		Class nestAClass = ValueTypeGenerator.generateValueClass("NestedA", fields);
+		
+		String fields2[] = {"a:QNestedA;", "b:QNestedA;"};
+		Class nestBClass = ValueTypeGenerator.generateValueClass("NestedB", fields2);
+		
+		String fields3[] = {"c:QNestedB;", "d:QNestedB;"};
+		Class containerCClass = ValueTypeGenerator.generateValueClass("ContainerC", fields3);
+		
+		MethodHandle defaultValueContainerC = lookup.findStatic(containerCClass, "makeValueTypeDefaultValue", MethodType.methodType(containerCClass));
+		
+		Object containerC = defaultValueContainerC.invoke();
+		
+		MethodHandle getC = generateGenericGetter(containerCClass, "c");
+		MethodHandle getD = generateGenericGetter(containerCClass, "d");
+		MethodHandle getA = generateGenericGetter(nestBClass, "a");
+		MethodHandle getB = generateGenericGetter(nestBClass, "b");
+		
+		assertNotNull(getC.invoke(containerC));
+		assertNotNull(getA.invoke(getC.invoke(containerC)));
+		assertNotNull(getB.invoke(getC.invoke(containerC)));
+		
+		assertNotNull(getD.invoke(containerC));
+		assertNotNull(getA.invoke(getD.invoke(containerC)));
+		assertNotNull(getB.invoke(getD.invoke(containerC)));
+	}
+	
+	
 	static MethodHandle generateGetter(Class<?> clazz, String fieldName, Class<?> fieldType) {
 		try {
 			return lookup.findVirtual(clazz, "get"+fieldName, MethodType.methodType(fieldType));

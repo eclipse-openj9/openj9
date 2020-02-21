@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -371,6 +371,29 @@ doVerify:
 						goto done;
 					}
 				}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				/* verify flattened fields */
+				if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+					UDATA numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
+
+					for (UDATA i = 0; i < numberOfFlattenedFields; i++) {
+						J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, i);
+						Trc_VM_classInitStateMachine_verifyFlattenableField(currentThread, entry->clazz);
+						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
+						classInitStateMachine(currentThread, entry->clazz, J9_CLASS_INIT_VERIFIED);
+						initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+						clazz = VM_VMHelpers::currentClass(clazz);
+
+						if (VM_VMHelpers::exceptionPending(currentThread)) {
+							initializationLock = setInitStatus(currentThread, clazz, J9ClassInitUnverified, initializationLock);
+							clazz = VM_VMHelpers::currentClass(clazz);
+							goto done;
+						}
+					}
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 				/* Verify this class */
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
 				performVerification(currentThread, clazz);
@@ -415,7 +438,7 @@ doVerify:
 					j9object_t *defaultValueAddress = &(clazz->flattenedClassCache->defaultValue);
 					J9STATIC_OBJECT_STORE(currentThread, clazz, defaultValueAddress, defaultValue);
 				}
-#endif
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 				if (((UDATA)currentThread | J9ClassInitUnverified) == clazz->initializeStatus) {
 					initializationLock = setInitStatus(currentThread, clazz, J9ClassInitUnprepared, initializationLock);
 					clazz = VM_VMHelpers::currentClass(clazz);
@@ -468,6 +491,27 @@ doVerify:
 					}
 					iTable = iTable->next;
 				}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				/* prepare flattened fields */
+				if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+					UDATA numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
+
+					for (UDATA i = 0; i < numberOfFlattenedFields; i++) {
+						J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, i);
+						Trc_VM_classInitStateMachine_prepareFlattenableField(currentThread, entry->clazz);
+						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
+						classInitStateMachine(currentThread, entry->clazz, J9_CLASS_INIT_PREPARED);
+						initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+						clazz = VM_VMHelpers::currentClass(clazz);
+
+						if (VM_VMHelpers::exceptionPending(currentThread)) {
+							goto done;
+						}
+					}
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 				/* Prepare this class */
 				initializationLock = enterInitializationLock(currentThread, initializationLock);
 				clazz = VM_VMHelpers::currentClass(clazz);
@@ -564,6 +608,27 @@ doVerify:
 						iTable = iTable->next;
 					}
 				}
+
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				/* init flattened fields */
+				if (J9_IS_J9CLASS_VALUETYPE(clazz)) {
+					UDATA numberOfFlattenedFields = clazz->flattenedClassCache->numberOfEntries;
+
+					for (UDATA i = 0; i < numberOfFlattenedFields; i++) {
+						J9FlattenedClassCacheEntry *entry = J9_VM_FCC_ENTRY_FROM_CLASS(clazz, i);
+						Trc_VM_classInitStateMachine_initFlattenableField(currentThread, entry->clazz);
+						PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
+						classInitStateMachine(currentThread, entry->clazz, J9_CLASS_INIT_INITIALIZED);
+						initializationLock = POP_OBJECT_IN_SPECIAL_FRAME(currentThread);
+						clazz = VM_VMHelpers::currentClass(clazz);
+
+						if (VM_VMHelpers::exceptionPending(currentThread)) {
+							goto initFailed;
+						}
+					}
+				}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
 				/* Initialize this class */
 				PUSH_OBJECT_IN_SPECIAL_FRAME(currentThread, initializationLock);
 				initializeImpl(currentThread, clazz);
