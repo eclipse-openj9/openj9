@@ -1149,6 +1149,15 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, attrs);
          }
          break;
+      case MessageType::ResolvedMethod_definingClassFromCPFieldRef:
+         {
+         auto recv = client->getRecvData<TR_ResolvedJ9Method *, int32_t, bool>();
+         TR_ResolvedJ9Method *method = std::get<0>(recv);
+         int32_t cpIndex = std::get<1>(recv);
+         bool isStatic = std::get<2>(recv);
+         client->write(response, method->definingClassFromCPFieldRef(comp, cpIndex, isStatic));
+         }
+         break;
       case MessageType::ResolvedMethod_getClassFromConstantPool:
          {
          auto recv = client->getRecvData<TR_ResolvedJ9Method *, uint32_t, bool>();
