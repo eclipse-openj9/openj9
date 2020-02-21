@@ -876,6 +876,7 @@ bool
 TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
    {
    uint32_t modifiers = 0;
+   uintptr_t classFlags = 0;
    bool isClassInitialized = false;
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_INITIALIZED, (void *)&isClassInitialized, JITServerHelpers::CLASSINFO_ROMCLASS_MODIFIERS, (void *)&modifiers);
@@ -894,10 +895,13 @@ TR_J9ServerVM::canAllocateInlineClass(TR_OpaqueClassBlock *clazz)
            it->second._classInitialized = isClassInitialized;
            }
         }
+
+        classFlags = TR_J9ServerVM::getClassFlagsValue(clazz);
      }
 
    if (isClassInitialized)
-      return ((modifiers & (J9AccAbstract | J9AccInterface ))?false:true);
+      return ((modifiers & (J9AccAbstract | J9AccInterface | J9AccValueType)
+              || (classFlags & J9ClassContainsUnflattenedFlattenables)) ? false : true);
 
    return false;
    }
