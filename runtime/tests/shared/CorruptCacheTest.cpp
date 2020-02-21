@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2020 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -232,22 +232,22 @@ CorruptCacheTest::corruptCache(J9JavaVM *vm, I_32 cacheType, IDATA corruptionTyp
 	case CACHE_CRC_INVALID_TYPE:
 		/* zero out data part of cache to get invalid CRC */
 		ca = cc->getCacheHeaderAddress();
-		areaStart = (U_8*)CASTART(ca);
+		areaStart = (U_8*)CASEGSTART(ca);
 		areaSize = (U_32)((U_8*)SEGUPDATEPTR(ca) - areaStart);
 		memset(areaStart, 0, areaSize);
 		areaStart = (U_8*)UPDATEPTR(ca);
-		areaSize = (U_32)((U_8*)CADEBUGSTART(ca) - areaStart);
+		areaSize = (U_32)((U_8*)CAEND(ca) - areaStart);
 		memset(areaStart, 0, areaSize);
 		break;
 	case WALK_ROMCLASS_CORRUPT_CASE1_TYPE:
-		romClass = (J9ROMClass *)cc->getBaseAddress();
+		romClass = (J9ROMClass *)cc->getCacheSegmentStartAddress();
 
 		/* set romclass size to zero */
 		romClass->romSize = 0;
 		break;
 	case WALK_ROMCLASS_CORRUPT_CASE2_TYPE:
 		endOfROMSegment = (U_8*)cc->getSegmentAllocPtr();
-		romClass = (J9ROMClass *)cc->getBaseAddress();
+		romClass = (J9ROMClass *)cc->getCacheSegmentStartAddress();
 
 		/* set romclass size more than ROM segment size */
 		romClass->romSize = (U_32)(endOfROMSegment - (U_8*)romClass)*2;

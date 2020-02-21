@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -174,7 +174,7 @@ CompositeCacheTest::createTest(J9JavaVM* vm, IDATA testCacheSize, SH_CompositeCa
 IDATA
 CompositeCacheTest::localTestStats(J9JavaVM* vm, IDATA testCacheSize, UDATA metaBytes, UDATA allocBytes, UDATA AOTBytes,  UDATA JITBytes, UDATA updateCntr, SH_CompositeCacheImpl* cc, char* cacheBase)
 {
-	void* baseAddress = cc->getBaseAddress();
+	void* baseAddress = cc->getCacheSegmentStartAddress();
 	void* endAddress = cc->getCacheEndAddress();
 	void* segmentAllocPtr = cc->getSegmentAllocPtr();
 	UDATA aotResult = cc->getAOTBytes();
@@ -190,7 +190,7 @@ CompositeCacheTest::localTestStats(J9JavaVM* vm, IDATA testCacheSize, UDATA meta
 
 	j9tty_printf(PORTLIB, "Testing stats for cache of size %d, with allocBytes=%d and metaBytes=%d\n", testCacheSize, allocBytes, metaBytes);
 
-	vResult = (cacheBase + sizeof(struct J9SharedCacheHeader));
+	vResult = (cacheBase + sizeof(struct J9SharedCacheHeader) + debugBytes);
 	if (baseAddress != vResult) {
 		j9tty_printf(PORTLIB, "1.) Got %p expected %p\n", baseAddress, vResult);
 		return 1;
