@@ -1282,13 +1282,19 @@ void J9::ARM64::PrivateLinkage::buildVirtualDispatch(TR::Node *callNode,
       // ToDo: Inline interface dispatch
       doneLabel = generateLabelSymbol(cg());
 
+      /**
+       * The vft child is not used by this interface dispatch, but its reference
+       * count must be decremented as if it were.
+       */
+      cg()->recursivelyDecReferenceCount(callNode->getFirstChild());
+
       TR::LabelSymbol *ifcSnippetLabel = generateLabelSymbol(cg());
       TR::ARM64InterfaceCallSnippet *ifcSnippet =
          new (trHeapMemory())
          TR::ARM64InterfaceCallSnippet(cg(), callNode, ifcSnippetLabel, argSize, doneLabel, (uint8_t *)thunk);
       cg()->addSnippet(ifcSnippet);
 
-      gcPoint = generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, ifcSnippetLabel, dependencies);
+      gcPoint = generateLabelInstruction(cg(), TR::InstOpCode::b, callNode, ifcSnippetLabel);
       }
 
    gcPoint->ARM64NeedsGCMap(cg(), regMapForGC);
