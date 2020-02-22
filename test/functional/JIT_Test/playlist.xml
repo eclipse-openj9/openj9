@@ -511,7 +511,7 @@
 		-cp $(Q)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar$(Q) \
 		-DSERVER_EXE=$(Q)$(TEST_JDK_BIN)$(D)jitserver$(Q) \
 		-DCLIENT_EXE=$(JAVA_COMMAND) \
-		-DCLIENT_PROGRAM=$(SQ)$(JVM_OPTIONS) -cp $(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar -DjarTesterArgs=$(TEST_RESROOT)$(D)jitt.jar org.testng.TestNG -d $(REPORTDIR)$(D)client $(TEST_RESROOT)$(D)testng.xml -testnames JarTesterTest -groups $(TEST_GROUP) -excludegroups $(DEFAULT_EXCLUDE)$(SQ) \
+		-DCLIENT_PROGRAM=$(SQ)$(JVM_OPTIONS) -cp $(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(TEST_RESROOT)$(D)jitt.jar -DjarTesterArgs=$(Q)-loopforever $(TEST_RESROOT)$(D)jitt.jar$(Q) org.testng.TestNG -d $(REPORTDIR)$(D)client $(TEST_RESROOT)$(D)testng.xml -testnames JarTesterTest -groups $(TEST_GROUP) -excludegroups $(DEFAULT_EXCLUDE)$(SQ) \
 		org.testng.TestNG \
 		-d $(REPORTDIR) \
 		$(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
