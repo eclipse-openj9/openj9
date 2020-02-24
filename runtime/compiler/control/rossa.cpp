@@ -106,7 +106,7 @@
 #include "j9port.h"
 #include "ras/DebugExt.hpp"
 #include "env/exports.h"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "env/JITServerPersistentCHTable.hpp"
 #include "net/CommunicationStream.hpp"
 #include "net/ClientStream.hpp"
@@ -209,13 +209,13 @@ char *compilationErrorNames[]={
    "compilationSymbolValidationManagerFailure", //50
    "compilationAOTNoSupportForAOTFailure", //51
    "compilationAOTValidateTMFailure", //52
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    "compilationStreamFailure", //53
    "compilationStreamLostMessage", // 54
    "compilationStreamMessageTypeMismatch", // 55
    "compilationStreamVersionIncompatible", // 56
    "compilationStreamInterrupted", // 57
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    "compilationMaxError"
 };
 
@@ -346,7 +346,7 @@ j9jit_testarossa_err(
                }
             }
          }
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       // Do not allow local compilations in JITServer server mode
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          return 0;
@@ -515,7 +515,7 @@ j9jit_createNewInstanceThunk_err(
       return 0;
       }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    // Do not allow local compilations in JITServer server mode
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       return 0;
@@ -1135,10 +1135,10 @@ onLoadInternal(
    initializePersistentMemory(jitConfig);
 
    // set up entry point for starting JITServer
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    jitConfig->startJITServer = startJITServer;
    jitConfig->waitJITServerTermination = waitJITServerTermination;
-#endif /* JITSERVER_SUPPORT */
+#endif /* J9VM_OPT_JITSERVER */
 
    TR_PersistentMemory * persistentMemory = (TR_PersistentMemory *)jitConfig->scratchSegment;
    if (persistentMemory == NULL)
@@ -1545,7 +1545,7 @@ onLoadInternal(
 
    if (!TR::Options::getCmdLineOptions()->getOption(TR_DisableInterpreterProfiling))
       {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->iProfiler = JITServerIProfiler::allocate(jitConfig);
@@ -1630,7 +1630,7 @@ onLoadInternal(
       }
 
    TR_PersistentCHTable *chtable;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (persistentMemory->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       chtable = new (PERSISTENT_NEW) JITServerPersistentCHTable(persistentMemory);
@@ -1648,7 +1648,7 @@ onLoadInternal(
       return -1;
    persistentMemory->getPersistentInfo()->setPersistentCHTable(chtable);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (JITServer::CommunicationStream::useSSL())
       {
       if (!JITServer::loadLibsslAndFindSymbols())
@@ -1697,7 +1697,7 @@ onLoadInternal(
 
       JITServer::CommunicationStream::initVersion();
       }
-#endif // JITSERVER_SUPPORT
+#endif // J9VM_OPT_JITSERVER
 
 #if defined(TR_HOST_S390)
    if (TR::Compiler->om.readBarrierType() != gc_modron_readbar_none)
@@ -1881,7 +1881,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
          {
          javaVM->sharedClassConfig->runtimeFlags &= ~J9SHR_RUNTIMEFLAG_ENABLE_AOT;
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
          if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             {
             fprintf(stderr, "Error: -Xaot:nostore option is not compatible with JITServer mode.");
@@ -1893,7 +1893,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
          {
          TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
          TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
          if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             {
             fprintf(stderr, "Error: -Xnoaot option must not be specified for JITServer.");

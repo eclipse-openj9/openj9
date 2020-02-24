@@ -351,7 +351,7 @@ if(NOT JAVA_SPEC_VERSION LESS 14)
 	)
 endif()
 
-if(JITSERVER_SUPPORT)
+if(J9VM_OPT_JITSERVER)
 	jvm_add_exports(jvm
 		JITServer_CreateServer
 	)

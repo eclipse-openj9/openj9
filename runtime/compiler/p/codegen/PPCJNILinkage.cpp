@@ -122,7 +122,7 @@ TR::Register *J9::Power::JNILinkage::buildDirectDispatch(TR::Node *callNode)
    // match the client-side addresses, so we can't take this shortcut in JITServer mode.
    bool specialCaseJNI = (crc32m1 || crc32m2 || crc32m3) && !comp()->requiresSpineChecks();
 
-#ifdef JITSERVER_SUPPORT
+#ifdef J9VM_OPT_JITSERVER
    specialCaseJNI = specialCaseJNI && !comp()->isOutOfProcessCompilation();
 #endif
 

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -106,7 +106,7 @@ extern "C" void mcc_AMD64callPointPatching_unwrapper(void **argsPtr, void **resP
 //
 TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *startPC)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       TR_ASSERT(TR::comp(), "Must be used during compilation when calling getJittedBodyInfoFromPC on the server");
@@ -116,7 +116,7 @@ TR_PersistentJittedBodyInfo *J9::Recompilation::getJittedBodyInfoFromPC(void *st
       auto &methodInfoStr = std::get<1>(recv);
       return J9::Recompilation::persistentJittedBodyInfoFromString(bodyInfoStr, methodInfoStr, TR::comp()->trMemory());
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    // The body info pointer is stored in the pre-prologue of the method. The
    // location of the field depends upon the type of the method header.  Use the
    // header-type bits in the linkage info fields to determine what kind of header

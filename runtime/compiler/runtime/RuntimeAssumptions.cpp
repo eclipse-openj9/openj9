@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -229,7 +229,7 @@ TR_PersistentCHTable::classGotExtended(
    {
    TR_PersistentClassInfo * cl = findClassInfo(superClassId);
    TR_PersistentClassInfo * subClass = findClassInfo(subClassId); // This is actually the class that got loaded extending the superclass
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    TR::CompilationInfo::get()->classGotNewlyExtended(superClassId);
 #endif
    // should have an assume0(cl && subClass) here - but assume does not work rt-code
@@ -460,7 +460,7 @@ TR_PersistentCHTable::removeAssumptionFromRAT(OMR::RuntimeAssumption *assumption
 void
 TR_PersistentClassInfo::setShouldNotBeNewlyExtended(int32_t ID)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (TR::compInfoPT->getStream())
       {
       auto classesThatShouldNotBeNewlyExtended = TR::compInfoPT->getClassesThatShouldNotBeNewlyExtended();

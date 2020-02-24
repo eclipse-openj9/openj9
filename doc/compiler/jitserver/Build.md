@@ -130,7 +130,7 @@ See https://www.eclipse.org/openj9/oj9_build.html for more detail. The only diff
 
 ## JIT
 
-If you already have an SDK enabled with JITServer and just want to rebuild the JIT library, then **`export JITSERVER_SUPPORT=1` needs to be added to the build environment**.
+If you already have an SDK enabled with JITServer and just want to rebuild the JIT library, then **`export J9VM_OPT_JITSERVER=1` needs to be added to the build environment**.
 
 ```
 export JAVA_HOME=/your/sdk
@@ -138,7 +138,7 @@ export J9SRC="$JAVA_HOME"/jre/lib/amd64/compressedrefs
 export JIT_SRCBASE=/your/openj9/runtime
 export OMR_SRCBASE=/your/omr
 
-export JITSERVER_SUPPORT=1
+export J9VM_OPT_JITSERVER=1
 
 ln -s "$OMR_SRCBASE" "$JIT_SRCBASE"/omr
 cp "$J9SRC"/compiler/env/ut_j9jit.* "$JIT_SRCBASE"/compiler/env/

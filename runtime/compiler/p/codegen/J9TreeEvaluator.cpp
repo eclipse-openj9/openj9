@@ -8721,7 +8721,7 @@ void J9::Power::TreeEvaluator::genArrayCopyWithArrayStoreCHK(TR::Node* node, TR:
    else
       {
       bool doRelocation = cg->comp()->compileRelocatableCode();
-#ifdef JITSERVER_SUPPORT
+#ifdef J9VM_OPT_JITSERVER
       doRelocation = doRelocation || cg->comp()->isOutOfProcessCompilation();
 #endif
       iCursor = loadAddressConstant(cg, doRelocation, node, (intptrj_t) funcdescrptr, temp1Reg, NULL, false, TR_ArrayCopyHelper);
@@ -12846,7 +12846,7 @@ J9::Power::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
 
       case TR::java_lang_String_hashCodeImplDecompressed:
          if (!TR::Compiler->om.canGenerateArraylets() && cg->comp()->target().cpu.id() >= TR_PPCp8 && cg->comp()->target().cpu.getPPCSupportsVSX() && !cg->comp()->compileRelocatableCode()
-#ifdef JITSERVER_SUPPORT
+#ifdef J9VM_OPT_JITSERVER
                && !cg->comp()->isOutOfProcessCompilation()
 #endif
             )

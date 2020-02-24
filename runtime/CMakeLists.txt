@@ -105,8 +105,8 @@ include(cmake/omr_config.cmake)
 if(OPENJ9_BUILD)
 	add_definitions(-DOPENJ9_BUILD)
 endif()
-if (JITSERVER_SUPPORT)
-	add_definitions(-DJITSERVER_SUPPORT)
+if (J9VM_OPT_JITSERVER)
+	add_definitions(-DJ9VM_OPT_JITSERVER)
 endif()
 
 # clean up the variables we used
@@ -590,6 +590,6 @@ endif()
 # NOTE this is not conditional in the UMA module.xml
 add_subdirectory(tests)
 
-if (JITSERVER_SUPPORT)
+if (J9VM_OPT_JITSERVER)
 	add_subdirectory(jitserver_launcher)
 endif()

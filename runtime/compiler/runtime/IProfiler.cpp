@@ -2605,7 +2605,7 @@ TR_IPBCDataFourBytes::operator new (size_t size) throw()
    return TR_IPBytecodeHashTableEntry::alignedPersistentAlloc(size);
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 void
 TR_IPBCDataFourBytes::serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
    {
@@ -2704,7 +2704,7 @@ TR_IPBCDataEightWords::copyFromEntry(TR_IPBytecodeHashTableEntry * originalEntry
       data[i] = entry->data[i];
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 void
 TR_IPBCDataEightWords::serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info)
    {
@@ -2950,7 +2950,7 @@ TR_IPBCDataCallGraph::isLocked()
    return locked;
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 /**
  * API used by JITClient to check whether the current entry can be persisted
  *

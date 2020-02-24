@@ -31,8 +31,6 @@
 
 FROM openj9:latest
 
-ENV JITSERVER_SUPPORT=1
-
 RUN apt-get update \
   && apt-get install -qq -y --no-install-recommends \
     g++-7 \

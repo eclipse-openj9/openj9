@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -80,10 +80,10 @@ add_custom_command(
 )
 add_custom_target(j9jit_tracegen DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/env/ut_j9jit.h)
 
-# JITSERVER_SUPPORT and protobuf
-if(JITSERVER_SUPPORT)
+# J9VM_OPT_JITSERVER and protobuf
+if(J9VM_OPT_JITSERVER)
 	message(STATUS "JITServer is supported")
-	add_definitions(-DJITSERVER_SUPPORT)
+	add_definitions(-DJ9VM_OPT_JITSERVER)
 
 	include(FindProtobuf)
 	set(Protobuf_USE_STATIC_LIBS ON)
@@ -171,7 +171,7 @@ add_subdirectory(optimizer)
 add_subdirectory(ras)
 add_subdirectory(runtime)
 
-if(JITSERVER_SUPPORT)
+if(J9VM_OPT_JITSERVER)
 	j9jit_files(${CMAKE_CURRENT_SOURCE_DIR}/net/gen/compile.pb.cpp)
 	add_subdirectory(net)
 endif()
@@ -288,7 +288,7 @@ if(OMR_OS_LINUX OR OMR_OS_OSX)
 		-fno-threadsafe-statics
 		-Wno-invalid-offsetof
 	)
-	if(NOT JITSERVER_SUPPORT)
+	if(NOT J9VM_OPT_JITSERVER)
 		set(J9_CXXFLAGS
 			${J9_CXXFLAGS}
 			-fno-rtti
@@ -346,7 +346,7 @@ add_dependencies(j9jit
 	j9jit_generate
 )
 
-if(JITSERVER_SUPPORT)
+if(J9VM_OPT_JITSERVER)
 	add_dependencies(j9jit j9jit_proto)
 endif()
 
@@ -366,7 +366,7 @@ target_link_libraries(j9jit
 		${CMAKE_DL_LIBS}
 )
 
-if(JITSERVER_SUPPORT)
+if(J9VM_OPT_JITSERVER)
 	target_link_libraries(j9jit PRIVATE ${PROTOBUF_LIBRARY})
 endif()
 

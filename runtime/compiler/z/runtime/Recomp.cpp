@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -84,7 +84,7 @@ getJitEntryOffset(J9::PrivateLinkage::LinkageInfo * linkageInfo)
 TR_PersistentJittedBodyInfo *
 J9::Recompilation::getJittedBodyInfoFromPC(void * startPC)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "This routine must not be used on the Server for a remote compile!");
 #endif
 
