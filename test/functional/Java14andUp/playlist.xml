@@ -42,7 +42,7 @@
           <groups>
                   <group>functional</group>
           </groups>
-          <!-- Temporarily removed support for JDK 15 due to https://github.com/eclipse/openj9/issues/8590 -->
+          <!-- Run for Java 14 only since this is a preview feature. -->
           <subsets>
                   <subset>14</subset>
           </subsets>
