@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2018, 2018 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -56,13 +56,12 @@ namespace J9
 namespace ARM 
 {
 
-class CPU : public J9::CPU
+class OMR_EXTENSIBLE CPU : public J9::CPU
    {
 protected:
 
-   CPU() :
-         J9::CPU()
-      {}
+   CPU() : J9::CPU() {}
+   CPU(const OMRProcessorDesc& processorDescription) : J9::CPU(processorDescription) {}
 
 public:
 
