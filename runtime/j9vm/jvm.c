@@ -5808,7 +5808,7 @@ JVM_GetEnclosingMethodInfo(JNIEnv *env, jclass theClass)
 	exit(204);
 }
 
-static jint
+static jint JNICALL
 managementVMIVersion(JNIEnv *env)
 {
 	return JNI_VERSION_1_8;
