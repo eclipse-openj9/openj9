@@ -510,12 +510,14 @@ threadParseArguments(J9JavaVM *vm, char *optArg)
 
 	if (cpus > 1) {
 #if defined(AIXPPC) || defined(LINUXPPC)
+		/* Use lower counts as the spin code drops SMT priority when spinning */
 		vm->thrMaxSpins1BeforeBlocking = 96;
+		vm->thrMaxTryEnterSpins1BeforeBlocking = 96;
 #else /* defined(AIXPPC) || defined(LINUXPPC) */
 		vm->thrMaxSpins1BeforeBlocking = 256;
+		vm->thrMaxTryEnterSpins1BeforeBlocking = 256;
 #endif /* defined(AIXPPC) || defined(LINUXPPC) */
 		vm->thrMaxSpins2BeforeBlocking = 32;
-		vm->thrMaxTryEnterSpins1BeforeBlocking = 256;
 		vm->thrMaxTryEnterSpins2BeforeBlocking = 32;
 	} else {
 		/* In ObjectMonitor.cpp:objectMonitorEnterNonBlocking, we converted
