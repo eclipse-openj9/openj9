@@ -312,6 +312,22 @@ public class MethodHandles {
 			return VMLangAccessGetter.vma;
 		}
 		
+		/**
+		 * Determine if we can skip further access checks due to INTERNAL_PRIVILEGED accessMode,
+		 * or need to throw an exception due to NO_ACCESS
+		 * @return true if accessMode is INTERNAL_PRIVILEGED
+		 * @throws IllegalAccessException if accessMode is NO_ACCESS
+		 */
+		private boolean isNonPrivilegedAccessThrowOnNoAccess() throws IllegalAccessException {
+			boolean isNonPrivileged = true;
+			if (INTERNAL_PRIVILEGED == accessMode) {
+				isNonPrivileged = false;
+			} else if (NO_ACCESS == accessMode) {
+				throw new IllegalAccessException(this.toString());
+			}
+			return isNonPrivileged;
+		}
+						
 		/* Verify two classes share the same package in a way to avoid Class.getPackage()
 		 * and the security checks that go with it.
 		 */
@@ -355,49 +371,28 @@ public class MethodHandles {
 		}
 		
 		void checkAccess(MethodHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
-			if (INTERNAL_PRIVILEGED == accessMode) {
-				// Full access for use by MH implementation.
-				return;
+			if (isNonPrivilegedAccessThrowOnNoAccess()) {
+				/* defc (defining class) may be a superclass of the references class.
+				 * Note that we need to check against the requested class, which may have inherited
+				 * the method from an inaccessible class. Protected members of a subclass are accessible to 
+				 * a superclass provided they are inherited from the superclass. 
+				 */
+				checkAccessImpl(handle.getDefc(), handle.getReferenceClass(), handle.getMethodName(), handle.getModifiers(), handle, skipAccessCheckPara);
 			}
-
-			if (NO_ACCESS == accessMode) {
-				throw new IllegalAccessException(this.toString());
-			}
-
-			/* defc (defining class) may be a superclass of the references class.
-			 * Note that we need to check against the requested class, which may have inherited
-			 * the method from an inaccessible class. Protected members of a subclass are accessible to 
-			 * a superclass provided they are inherited from the superclass. 
-			 */
-			checkAccess(handle.getDefc(), handle.getReferenceClass(), handle.getMethodName(), handle.getModifiers(), handle, skipAccessCheckPara);
 		}
 		
 		/*[IF Sidecar19-SE]*/
 		void checkAccess(VarHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
-			if (INTERNAL_PRIVILEGED == accessMode) {
-				// Full access for use by MH implementation.
-				return;
+			if (isNonPrivilegedAccessThrowOnNoAccess()) {
+				/* VarHandles have no reference class */
+				checkAccessImpl(handle.getDefiningClass(), null, handle.getFieldName(), handle.getModifiers(), null, skipAccessCheckPara);
 			}
-			
-			if (NO_ACCESS == accessMode) {
-				throw new IllegalAccessException(this.toString());
-			}
-			
-			/* VarHandles have no reference class */
-			checkAccess(handle.getDefiningClass(), null, handle.getFieldName(), handle.getModifiers(), null, skipAccessCheckPara);
 		}
 		
 		void checkAccess(Class<?> clazz) throws IllegalAccessException {
-			if (INTERNAL_PRIVILEGED == accessMode) {
-				// Full access for use by MH implementation.
-				return;
+			if (isNonPrivilegedAccessThrowOnNoAccess()) {
+				checkClassAccessImpl(clazz);
 			}
-					
-			if (NO_ACCESS == accessMode) {
-				throw new IllegalAccessException(this.toString());
-			}
-			
-			checkClassAccess(clazz);
 		}
 		/*[ENDIF]*/
 						
@@ -417,12 +412,13 @@ public class MethodHandles {
 		 * @param skipAccessCheckPara skip access check for MethodType parameters
 		 * @throws IllegalAccessException If the member is not accessible.
 		 * @throws IllegalAccessError If a handle argument or return type is not accessible.
+		 * @note caller must check for PRIVILEGED_ACCESS or NO_ACCESS
 		 */
-		private void checkAccess(Class<?> definingClass, Class<?> referenceClass, String name, int memberModifiers, MethodHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
+		private void checkAccessImpl(Class<?> definingClass, Class<?> referenceClass, String name, int memberModifiers, MethodHandle handle, boolean skipAccessCheckPara) throws IllegalAccessException {
 			if (null == referenceClass) {
 				referenceClass = definingClass;
 			}
-			checkClassAccess(referenceClass);
+			checkClassAccessImpl(referenceClass);
 
 			/*[IF Sidecar19-SE]*/
 			if (null != handle && !skipAccessCheckPara) {
@@ -442,7 +438,7 @@ public class MethodHandles {
 			}
 			/*[ENDIF]*/
 			if (Modifier.isPublic(memberModifiers)) {
-				/* checkClassAccess already determined that we have more than "no access" (public access) */
+				/* caller already determined that we have more than "no access" (public access) */
 				return;
 			} else if (Modifier.isPrivate(memberModifiers)) {
 				if (Modifier.isPrivate(accessMode) && ((definingClass == accessClass)
@@ -531,34 +527,34 @@ public class MethodHandles {
 		 * Checks whether {@link #accessClass} can access a specific {@link Class}.
 		 * 
 		 * @param targetClass The {@link Class} being accessed.
-		 * @throws IllegalAccessException If the {@link Class} is not accessible from {@link #accessClass}. 
+		 * @throws IllegalAccessException If the {@link Class} is not accessible from {@link #accessClass}.
+		 * @note caller must check for NO_ACCESS or PRIVILEGED_ACCESS
 		 */
-		private void checkClassAccess(Class<?> targetClass) throws IllegalAccessException {
+		private void checkClassAccessImpl(Class<?> targetClass) throws IllegalAccessException {
 			/*[IF Sidecar19-SE]*/
 			checkClassModuleVisibility(accessMode, accessClass.getModule(), targetClass);
 			/*[ENDIF]*/
-			if (NO_ACCESS != accessMode) {
-				/* target class should always be accessible to the lookup class when they are the same class */
-				if (accessClass == targetClass) {
+
+			/* target class should always be accessible to the lookup class when they are the same class */
+			if (accessClass == targetClass) {
+				return;
+			}
+			
+			int modifiers = targetClass.getModifiers();
+			
+			/* A protected class (must be a member class) is compiled to a public class as
+			 * the protected flag of this class doesn't exist on the VM level (there is no 
+			 * access flag in the binary form representing 'protected')
+			 */
+			if (Modifier.isPublic(modifiers) || Modifier.isProtected(modifiers)) {
+				/* Already determined that we have more than "no access" (public access) */
+				return;
+			} else {
+				if (((PACKAGE == (accessMode & PACKAGE)) || Modifier.isPrivate(accessMode)) && isSamePackage(accessClass, targetClass)) {
 					return;
-				}
-				
-				int modifiers = targetClass.getModifiers();
-				
-				/* A protected class (must be a member class) is compiled to a public class as
-				 * the protected flag of this class doesn't exist on the VM level (there is no 
-				 * access flag in the binary form representing 'protected')
-				 */
-				if (Modifier.isPublic(modifiers) || Modifier.isProtected(modifiers)) {
-					/* Already determined that we have more than "no access" (public access) */
-					return;
-				} else {
-					if (((PACKAGE == (accessMode & PACKAGE)) || Modifier.isPrivate(accessMode)) && isSamePackage(accessClass, targetClass)) {
-						return;
-					}
 				}
 			}
-
+		
 			/*[MSG "K0680", "Class '{0}' no access to: class '{1}'"]*/
 			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K0680", accessClass.getName(), targetClass.getName()));  //$NON-NLS-1$
 		}
@@ -928,15 +924,15 @@ public class MethodHandles {
 		 * Check access to the parameter and return classes within incoming MethodType
 		 */
 		final void accessCheckArgRetTypes(MethodType type) throws IllegalAccessException {
-			if (INTERNAL_PRIVILEGED != accessMode) {
+			if (isNonPrivilegedAccessThrowOnNoAccess()) {
 				for (Class<?> para : type.arguments) {
 					if (!para.isPrimitive()) {
-						checkClassAccess(para);
+						checkClassAccessImpl(para);
 					}
 				}
 				Class<?> rType = type.returnType();
 				if (!rType.isPrimitive()) {
-					checkClassAccess(rType);
+					checkClassAccessImpl(rType);
 				}
 			}
 		}
