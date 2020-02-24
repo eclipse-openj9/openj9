@@ -273,7 +273,7 @@ def build() {
     }
     stage('Java Version') {
         dir(OPENJDK_CLONE_DIR) {
-            sh "build/$RELEASE/images/$JDK_FOLDER/bin/java -version"
+            sh "build/$RELEASE/images/$JDK_FOLDER/bin/java -Xjit -version"
         }
     }
 }
