@@ -193,9 +193,9 @@ s390x_linux:
     8: 'linux-s390x-normal-server-release'
     11: 'linux-s390x-normal-server-release'
   node_labels:
-    build: 'ci.role.build && hw.arch.s390x && sw.os.ubuntu'
+    build: 'ci.role.build && hw.arch.s390x && sw.os.rhel.7'
   build_env:
-    vars: 'PATH+GCC7=/usr/local/gcc-7.5.0/bin LD_LIBRARY_PATH=/usr/local/gcc-7.5.0/lib64:$LD_LIBRARY_PATH'
+    cmd: 'source /home/jenkins/set_gcc7.5.0_env'
   excluded_tests:
     11:
       - special.system
