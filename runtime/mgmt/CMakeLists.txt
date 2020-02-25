@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,26 +22,6 @@
 
 set(CMAKE_SHARED_LIBRARY_SUFFIX ${J9VM_OLD_SHARED_SUFFIX})
 
-add_library(management SHARED
-	mgmtinit.c
-)
-
-target_link_libraries(management
-	PRIVATE
-		j9vm_interface
-)
-
-omr_add_exports(management
-	JNI_OnLoad
-	Java_sun_management_FileSystemImpl_isAccessUserOnly0
-)
-if(OMR_OS_WINDOWS)
-	omr_add_exports(management
-		Java_sun_management_FileSystemImpl_init0
-		Java_sun_management_FileSystemImpl_isSecuritySupported0
-	)
-endif()
-
 add_library(management_ext SHARED
 	mgmtinit.c
 )
@@ -53,11 +33,10 @@ target_link_libraries(management_ext
 
 omr_add_exports(management_ext
 	JNI_OnLoad
-	Java_sun_management_FileSystemImpl_isAccessUserOnly0
 )
 
 install(
-	TARGETS management management_ext
+	TARGETS management_ext
 	LIBRARY DESTINATION ${j9vm_SOURCE_DIR}
 	RUNTIME DESTINATION ${j9vm_SOURCE_DIR}
 )

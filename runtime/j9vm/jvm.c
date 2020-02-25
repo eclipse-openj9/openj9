@@ -5808,6 +5808,19 @@ JVM_GetEnclosingMethodInfo(JNIEnv *env, jclass theClass)
 	exit(204);
 }
 
+static jint JNICALL
+managementVMIVersion(JNIEnv *env)
+{
+	return JNI_VERSION_1_8;
+}
+
+typedef struct ManagementVMI {
+	void * unused1;
+	void * unused2;
+	jint (JNICALL *getManagementVMIVersion)(JNIEnv *env);
+} ManagementVMI;
+
+static ManagementVMI globalManagementVMI = {NULL, NULL, &managementVMIVersion};
 
 /**
  * void* JVM_GetManagement(jint)
@@ -5816,7 +5829,7 @@ void* JNICALL
 JVM_GetManagement(jint version)
 {
 	Trc_SC_GetManagement();
-	exit(203);
+	return &globalManagementVMI;
 }
 
 
