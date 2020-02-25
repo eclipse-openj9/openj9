@@ -2254,13 +2254,15 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 				if (classesPotentiallyUnloaded && !isMarked((J9Object *)spine)) {
 					stats->_arrayletUnknownLeaves += 1;
 					/* is this first arraylet leaf? */
-					if (region->getLowAddress() == mmPointerFromToken((J9VMThread*)env->getLanguageVMThread(), _extensions->indexableObjectModel.getArrayoidPointer(spine)[0])) {
+					GC_SlotObject firstArrayletLeafSlot(_javaVM->omrVM, _extensions->indexableObjectModel.getArrayoidPointer(spine));
+					if (region->getLowAddress() == firstArrayletLeafSlot.readReferenceFromSlot()) {
 						stats->_arrayletUnknownObjects += 1;
 					}
 				} else if (GC_ObjectModel::SCAN_POINTER_ARRAY_OBJECT == _extensions->objectModel.getScanType((J9Object *)spine)) {
 					stats->_arrayletReferenceLeaves += 1;
 					/* is this first arraylet leaf? */
-					if (region->getLowAddress() == mmPointerFromToken((J9VMThread*)env->getLanguageVMThread(), _extensions->indexableObjectModel.getArrayoidPointer(spine)[0])) {
+					GC_SlotObject firstArrayletLeafSlot(_javaVM->omrVM, _extensions->indexableObjectModel.getArrayoidPointer(spine));
+					if (region->getLowAddress() == firstArrayletLeafSlot.readReferenceFromSlot()) {
 						stats->_arrayletReferenceObjects += 1;
 						UDATA numExternalArraylets = _extensions->indexableObjectModel.numExternalArraylets(spine);
 						if (stats->_largestReferenceArraylet < numExternalArraylets) {
@@ -2270,7 +2272,8 @@ MM_IncrementalGenerationalGC::exportStats(MM_EnvironmentVLHGC *env, MM_Collectio
 				} else {
 					Assert_MM_true(GC_ObjectModel::SCAN_PRIMITIVE_ARRAY_OBJECT == _extensions->objectModel.getScanType((J9Object *)spine));
 					stats->_arrayletPrimitiveLeaves += 1;
-					if (region->getLowAddress() == mmPointerFromToken((J9VMThread*)env->getLanguageVMThread(), _extensions->indexableObjectModel.getArrayoidPointer(spine)[0])) {
+					GC_SlotObject firstArrayletLeafSlot(_javaVM->omrVM, _extensions->indexableObjectModel.getArrayoidPointer(spine));
+					if (region->getLowAddress() == firstArrayletLeafSlot.readReferenceFromSlot()) {
 						stats->_arrayletPrimitiveObjects += 1;
 						UDATA numExternalArraylets = _extensions->indexableObjectModel.numExternalArraylets(spine);
 						if (stats->_largestPrimitiveArraylet < numExternalArraylets) {

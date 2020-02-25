@@ -842,8 +842,9 @@ gcInitializeCalculatedValues(J9JavaVM *javaVM, IDATA* memoryParameters)
 
 #if defined (J9VM_GC_VLHGC)
 	if (0 == extensions->tarokRememberedSetCardListSize) {
+		uintptr_t cardSize = MM_RememberedSetCard::cardSize(extensions->compressObjectReferences());
 		/* 4% of region size is allocated for region's RSCL memory */
-		extensions->tarokRememberedSetCardListSize = extensions->regionSize * 4 / 100 / sizeof(MM_RememberedSetCard);
+		extensions->tarokRememberedSetCardListSize = extensions->regionSize * 4 / 100 / cardSize;
 	}
 
 	if (0 == extensions->tarokRememberedSetCardListMaxSize) {

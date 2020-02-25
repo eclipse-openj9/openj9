@@ -1,6 +1,5 @@
-
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -115,7 +114,7 @@ MM_CardListFlushTask::run(MM_EnvironmentBase *envBase)
 					Assert_MM_true(region->getRememberedSetCardList()->isAccurate());
 					/* Iterate non-overflowed buckets of the list */
 					GC_RememberedSetCardListCardIterator rsclCardIterator(region->getRememberedSetCardList());
-					MM_RememberedSetCard card = 0;
+					UDATA card = 0;
 					while(0 != (card = rsclCardIterator.nextReferencingCard(env))) {
 						/* For Marking purposes we do not need to track references within Collection Set */
 						MM_HeapRegionDescriptorVLHGC *referencingRegion = interRegionRememberedSet->tableDescriptorForRememberedSetCard(card);
@@ -133,6 +132,7 @@ MM_CardListFlushTask::run(MM_EnvironmentBase *envBase)
 			} else if (shouldFlushBuffersForUnregisteredRegions) {
 				if (J9MODRON_HANDLE_NEXT_WORK_UNIT(env)) {
 					/* flush the content of buffers owned by decommitted regions (but used/borrowed by other active regions) */
+					bool const compressed = env->compressObjectReferences();
 					UDATA toRemoveCount = 0;
 					UDATA totalCountBefore = region->getRememberedSetCardList()->getSize(env);
 					MM_RememberedSetCard *lastCardInCurrentBuffer = NULL;
@@ -145,8 +145,8 @@ MM_CardListFlushTask::run(MM_EnvironmentBase *envBase)
 						if (!bufferOwningRegion->isCommitted()) {
 							Assert_MM_true(NULL != bufferOwningRegion->getRsclBufferPool());
 							rsclBufferIterator.unlinkCurrentBuffer(env);
-							for (MM_RememberedSetCard *cardSlot = cardBufferControlBlockCurrent->_card; cardSlot < lastCardInCurrentBuffer; cardSlot++) {
-								MM_RememberedSetCard card = *cardSlot;
+							for (MM_RememberedSetCard *cardSlot = cardBufferControlBlockCurrent->_card; cardSlot < lastCardInCurrentBuffer; cardSlot = MM_RememberedSetCard::addToCardAddress(cardSlot, 1, compressed)) {
+								UDATA card = MM_RememberedSetCard::readCard(cardSlot, compressed);
 								MM_HeapRegionDescriptorVLHGC *referencingRegion = interRegionRememberedSet->tableDescriptorForRememberedSetCard(card);
 								if (referencingRegion->containsObjects() && !referencingRegion->_markData._shouldMark) {
 									Card *cardAddress = interRegionRememberedSet->rememberedSetCardToCardAddr(env, card);

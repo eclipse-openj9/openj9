@@ -657,7 +657,7 @@ MM_CopyForwardScheme::calculateObjectDetailsForCopy(MM_ScavengerForwardedHeader*
 		*objectCopySizeInBytes = _extensions->indexableObjectModel.getSizeInBytesWithHeader(clazz, layout, numberOfElements);
 		hashcodeOffset = _extensions->indexableObjectModel.getHashcodeOffset(clazz, layout, numberOfElements);
 	} else {
-		*objectCopySizeInBytes = clazz->totalInstanceSize + sizeof(J9Object);
+		*objectCopySizeInBytes = clazz->totalInstanceSize + J9GC_OBJECT_HEADER_SIZE(_extensions);
 		hashcodeOffset = _extensions->mixedObjectModel.getHashcodeOffset(clazz);
 	}
 
@@ -1063,7 +1063,7 @@ MM_CopyForwardScheme::reserveMemoryForCache(MM_EnvironmentVLHGC *env, UDATA comp
 MM_CopyScanCacheVLHGC *
 MM_CopyForwardScheme::createScanCacheForOverflowInHeap(MM_EnvironmentVLHGC *env)
 {
-	bool const compressed = _extensions->compressObjectReferences();
+	bool const compressed = env->compressObjectReferences();
 	MM_CopyScanCacheVLHGC * result = NULL;
 	
 	_cacheFreeList.lock();
@@ -1865,7 +1865,7 @@ MM_CopyForwardScheme::getContextForHeapAddress(void *address)
 J9Object *
 MM_CopyForwardScheme::copy(MM_EnvironmentVLHGC *env, MM_AllocationContextTarok *reservingContext, MM_ScavengerForwardedHeader* forwardedHeader, bool leafType)
 {
-	bool const compressed = _extensions->compressObjectReferences();
+	bool const compressed = env->compressObjectReferences();
 	J9Object *result = NULL;
 	J9Object *object = forwardedHeader->getObject();
 	UDATA objectCopySizeInBytes = 0;
@@ -2048,6 +2048,7 @@ MM_CopyForwardScheme::copyLeafChildren(MM_EnvironmentVLHGC* env, MM_AllocationCo
 		UDATA instanceLeafDescription = (UDATA)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 		/* For now we only support leaf children in small objects. If the leaf description isn't immediate, ignore it to keep the code simple. */
 		if (1 == (instanceLeafDescription & 1)) {
+			bool const compressed = env->compressObjectReferences();
 			fj9object_t* scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
 			UDATA leafBits = instanceLeafDescription >> 1;
 			while (0 != leafBits) {
@@ -2058,7 +2059,7 @@ MM_CopyForwardScheme::copyLeafChildren(MM_EnvironmentVLHGC* env, MM_AllocationCo
 					copyAndForward(env, reservingContext, objectPtr, &slotObject, true);
 				}
 				leafBits >>= 1;
-				scanPtr += 1;
+				scanPtr = GC_SlotObject::addToSlotAddress(scanPtr, 1, compressed);
 			}
 		}
 	}
@@ -2235,6 +2236,7 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 	UDATA *leafPtr = (UDATA *)J9GC_J9OBJECT_CLAZZ(objectPtr, env)->instanceLeafDescription;
 	UDATA leafBits;
 #endif /* J9VM_GC_LEAF_BITS */
+	bool const compressed = env->compressObjectReferences();
 
 	/* Object slots */
 	volatile fj9object_t* scanPtr = _extensions->mixedObjectModel.getHeadlessObject(objectPtr);
@@ -2279,7 +2281,7 @@ MM_CopyForwardScheme::iterateAndCopyforwardSlotReference(MM_EnvironmentVLHGC *en
 #endif /* J9VM_GC_LEAF_BITS */
 			descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 		}
-		scanPtr += 1;
+		scanPtr = GC_SlotObject::addToSlotAddress((fomrobject_t*)scanPtr, 1, compressed);
 	}
 	return success;
 }

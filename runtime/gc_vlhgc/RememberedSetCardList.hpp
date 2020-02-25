@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,8 +54,10 @@ private:
 	/**
 	 * Remove an entry. This just NULLs the entry. Compaction/shifting is to be done later, explicitly.
 	 */
-	void removeCard(MM_RememberedSetCard *bucketCardList, UDATA index) {
-		bucketCardList[index] = 0;
+	void removeCard(MM_EnvironmentBase *env, MM_RememberedSetCard *bucketCardList, UDATA index) {
+		bool const compressed = env->compressObjectReferences();
+		MM_RememberedSetCard *cardAddress = MM_RememberedSetCard::addToCardAddress(bucketCardList, index, compressed);
+		MM_RememberedSetCard::writeCard(cardAddress, 0, compressed);
 	}
 	
 	MM_RememberedSetCardBucket *mapToBucket(MM_EnvironmentVLHGC *env) {
@@ -82,7 +84,7 @@ public:
 	 * Search the list and check if this card is remembered.
 	 * Caller assures the list is not overflowed. Not thread safe.
 	 */
-	bool isRemembered(MM_EnvironmentVLHGC *env, MM_RememberedSetCard card);
+	bool isRemembered(MM_EnvironmentVLHGC *env, UDATA card);
 
 	/**
 	 * Check if list is overflowed
