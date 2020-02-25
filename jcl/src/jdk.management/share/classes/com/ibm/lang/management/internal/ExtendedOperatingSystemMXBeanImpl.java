@@ -170,7 +170,7 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 */
 	@Override
 	public final double getCpuLoad() {
-		return cpuUtilizationHelper.getSystemCpuLoad();
+		return this.getSystemCpuLoad();
 	}
 
 	/**
