@@ -213,6 +213,7 @@ BUILD_SPECS = [:]
 builds = [:]
 pipelineNames = []
 pipelinesStatus = [:]
+buildFile = ''
 
 try {
     timeout(time: TIMEOUT_TIME.toInteger(), unit: TIMEOUT_UNIT) {
@@ -474,6 +475,10 @@ def get_pipeline_name(spec, version) {
 */
 def get_summary_table(identifier) {
     // fetch the downstream builds of the current build
+    if (!buildFile) {
+        echo 'buildFile not loaded. Cannot create summary table.'
+        return ''
+    }
     def pipelineBuilds = buildFile.get_downstream_builds(currentBuild, currentBuild.projectName, pipelineNames)
     if (pipelineBuilds.isEmpty()) {
         return ''
