@@ -35,7 +35,7 @@
 #include "runtime/SymbolValidationManager.hpp"
 
 
-ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_PersistentMemory *persistentMemory, bool usesPerClientMemory) : 
+ClientSessionData::ClientSessionData(uint64_t clientUID, uint32_t seqNo, TR_PersistentMemory *persistentMemory, bool usesPerClientMemory) :
    _clientUID(clientUID), _maxReceivedSeqNo(seqNo), _lastProcessedCriticalSeqNo(seqNo),
    _persistentMemory(persistentMemory),
    _usesPerClientMemory(usesPerClientMemory),
@@ -196,7 +196,10 @@ ClientSessionData::processUnloadedClasses(const std::vector<TR_OpaqueClassBlock*
             }
          else
             {
-            sigStr[0] = 'L';
+            if (TR::Compiler->om.areValueTypesEnabled() && TR::Compiler->cls.isValueTypeClass(clazz))
+               sigStr[0] = 'Q';
+            else
+               sigStr[0] = 'L';
             memcpy(&sigStr[1], className, sigLen - 2);
             sigStr[sigLen-1]=';';
             }
@@ -907,7 +910,7 @@ ClientSessionHT::purgeOldDataIfNeeded()
             crtTime - iter->second->getTimeOflastAccess() > oldAge)
             {
             if (TR::Options::getVerboseOption(TR_VerboseJITServer))
-               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server will purge session data for clientUID %llu of age %lld", 
+               TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Server will purge session data for clientUID %llu of age %lld",
                (unsigned long long)iter->first, (long long)oldAge);
             ClientSessionData::destroy(iter->second); // delete the client data
             _clientSessionMap.erase(iter); // delete the mapping from the hashtable

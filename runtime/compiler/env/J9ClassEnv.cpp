@@ -557,7 +557,6 @@ static void addEntryForFieldImpl(TR_VMField *field, TR::TypeLayoutBuilder &tlb, 
             dataType = TR::Double;
             break;
             }
-         // VALHALLA_TODO:  Might require different TR::DataType for value types (Q)
          case 'L':
          case 'Q':
          case '[':

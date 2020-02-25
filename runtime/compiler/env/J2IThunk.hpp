@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2021 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,7 +72,8 @@ class TR_J2IThunkTable
          case 'J': return TC_LONG;
          case 'F': return TC_FLOAT;
          case 'D': return TC_DOUBLE;
-         case 'L': return TC_REFERENCE;
+         case 'L':
+         case 'Q': return TC_REFERENCE;
          default:
             TR_ASSERT(0, "Unknown type char '%c'", typeChar);
             return -1;
