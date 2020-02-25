@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,8 +38,6 @@ typedef struct JniIDCache {
 	jfieldID FID_java_lang_ClassLoader_vmRef;
 
 	jmethodID MID_com_ibm_lang_management_GarbageCollectorMXBeanImpl_getName;
-	
-	jmethodID MID_com_ibm_lang_management_SysinfoCpuTime_getCpuUtilization_init;
 	
 	jmethodID MID_java_lang_reflect_Parameter_init;
 

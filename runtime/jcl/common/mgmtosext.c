@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2009, 2017 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -77,6 +77,33 @@ Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getProce
 	uint64_t size = 0;
 	int32_t rc = j9vmem_get_process_memory_size(J9PORT_VMEM_PROCESS_VIRTUAL, &size);
 	return (0 == rc)? (jlong) size: (jlong) -1;
+}
+
+jdouble JNICALL
+Java_com_ibm_lang_management_internal_ExtendedOperatingSystemMXBeanImpl_getSystemCpuLoadImpl(JNIEnv *env, jobject instance) {
+	PORT_ACCESS_FROM_ENV(env);
+	OMRPORT_ACCESS_FROM_J9PORT(PORTLIB);
+	double cpuLoad = 0.0;
+
+	intptr_t portLibraryStatus = omrsysinfo_get_CPU_load(&cpuLoad);
+
+	if (portLibraryStatus < 0) {
+		switch (portLibraryStatus) {
+		case OMRPORT_ERROR_SYSINFO_INSUFFICIENT_PRIVILEGE:
+			portLibraryStatus = -2;
+			break;
+		case OMRPORT_ERROR_SYSINFO_NOT_SUPPORTED:
+			portLibraryStatus = -3;
+			break;
+		default:
+			portLibraryStatus = OMRPORT_ERROR_OPFAILED;
+			break;
+		}
+
+		cpuLoad = (double)portLibraryStatus;
+	}
+
+	return (jdouble)cpuLoad;
 }
 
 /**
