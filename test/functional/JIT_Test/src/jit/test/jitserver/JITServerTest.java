@@ -92,11 +92,13 @@ public class JITServerTest {
 	private static void dumpProcessLog(final ProcessBuilder b) {
 		File log = b.redirectOutput().file();
 		try {
+			final String topAndBottom = "////////////////////////////////////////////////////////////////////////";
+			final String leftMargin = "//// ";
 			Scanner s = new Scanner(log);
-			System.err.println("Dumping the contents of log file: " + log.getAbsolutePath() + "\n");
+			System.err.println("Dumping the contents of log file: " + log.getAbsolutePath() + "\n" + topAndBottom);
 			while (s.hasNextLine())
-				System.err.println(s.nextLine());
-			System.err.println("");
+				System.err.println(leftMargin + s.nextLine());
+			System.err.println(topAndBottom);
 		}
 		catch (FileNotFoundException e) {
 			System.err.println("Attempted to dump the log file '" + log.getAbsolutePath() + "' but it was not found.\n" + e.getMessage());
@@ -117,9 +119,10 @@ public class JITServerTest {
 
 		// The process may exit normally before we can destroy it so we have to accept two possible return values.
 		if ((exitValue != SUCCESS_RETURN_VALUE) && (exitValue != SIGTERM_RETURN_VALUE)) {
-			System.err.println("Expected a return value of " + SUCCESS_RETURN_VALUE + " or " + SIGTERM_RETURN_VALUE + ", got " + exitValue + " instead.");
+			final String errorText = "Expected an exit value of " + SUCCESS_RETURN_VALUE + " or " + SIGTERM_RETURN_VALUE + ", got " + exitValue + " instead.";
+			System.err.println(errorText);
 			dumpProcessLog(builder);
-			AssertJUnit.fail();
+			AssertJUnit.fail(errorText);
 		}
 	}
 
@@ -129,9 +132,10 @@ public class JITServerTest {
 		final Process p = builder.start();
 		// We expect these processes to be fairly long running; if they exit almost immediately abort the test.
 		if (p.waitFor(PROCESS_START_WAIT_TIME_MS, TimeUnit.MILLISECONDS)) {
-			System.err.println("Failed to start " + name);
+			final String errorText = "Failed to properly start " + name + ", it terminated prematurely with exit value: " + p.exitValue();
+			System.err.println(errorText);
 			dumpProcessLog(builder);
-			AssertJUnit.fail();
+			AssertJUnit.fail(errorText);
 		}
 		return p;
 	}
