@@ -561,5 +561,11 @@
       <class name="jit.test.recognizedMethod.TestJavaLangMath" />
     </classes>
   </test>
+
+  <test name="JITServerTest">
+    <classes>
+      <class name="jit.test.jitserver.JITServerTest"/>
+    </classes>
+  </test>
 </suite>
 <!-- Suite -->

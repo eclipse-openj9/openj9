@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -5955,6 +5955,7 @@ SH_CompositeCacheImpl::setCorruptionContext(IDATA corruptionCode, UDATA corruptV
 /**
  * Sets runtime cache full flag corresponding to cache full flags set in cache header.
  * It should hold either of write mutex or refresh mutex.
+ * It must hold the _runtimeFlagsProtectMutex mutex.
  *
  * Note that this method takes actions only for those cache full flags that are not already set.
  *
@@ -5967,12 +5968,11 @@ SH_CompositeCacheImpl::setRuntimeCacheFullFlags(J9VMThread* currentThread)
 {
 	PORT_ACCESS_FROM_PORT(_portlib);
 	Trc_SHR_Assert_True(hasWriteMutex(currentThread));
+	Trc_SHR_Assert_True(omrthread_monitor_owned_by_self(_runtimeFlagsProtectMutex));
 
 	if (0 != (_theca->cacheFullFlags & J9SHR_ALL_CACHE_FULL_BITS)) {
 		bool allRuntimeCacheFullFlagsSet = false;
 		U_64 cacheFullFlags = 0;
-
-		omrthread_monitor_enter(_runtimeFlagsProtectMutex);
 
 		/* don't set DENY_CACHE_UPDATES - we still need updates for timestamp optimizations */
 		if ((0 == (*_runtimeFlags & J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) &&
@@ -6030,8 +6030,6 @@ SH_CompositeCacheImpl::setRuntimeCacheFullFlags(J9VMThread* currentThread)
 				protectPartiallyFilledPages(currentThread, false, false, true, false);
 			}
 		}
-
-		omrthread_monitor_exit(_runtimeFlagsProtectMutex);
 
 		if (0 != cacheFullFlags) {
 			if (true == allRuntimeCacheFullFlagsSet) {
@@ -6137,17 +6135,20 @@ SH_CompositeCacheImpl::setCacheHeaderFullFlags(J9VMThread *currentThread, UDATA 
 	Trc_SHR_Assert_True(hasWriteMutex(currentThread));
 
 	if (0 != flags) {
+		/* We are taking _runtimeFlagsProtectMutex here and then _headerProtectMutex inside (un)protectHeaderReadWriteArea().
+		 * So assert we do not hold _headerProtectMutex before taking _runtimeFlagsProtectMutex.
+		 */
+		Trc_SHR_Assert_True(1 != omrthread_monitor_owned_by_self(_headerProtectMutex));
+		omrthread_monitor_enter(_runtimeFlagsProtectMutex);
 		unprotectHeaderReadWriteArea(currentThread, false);
-
 		_theca->cacheFullFlags |= flags;
-		
 		_cacheFullFlags = _theca->cacheFullFlags;
-		
 		protectHeaderReadWriteArea(currentThread, false);
 
 		if (true == setRuntimeFlags) {
 			setRuntimeCacheFullFlags(currentThread);
 		}
+		omrthread_monitor_exit(_runtimeFlagsProtectMutex);
 	}
 	return;
 }
@@ -6799,7 +6800,6 @@ done:
 void
 SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 {
-	UDATA cacheFullFlags = _theca->cacheFullFlags;
 	bool holdWriteMutex = hasWriteMutex(currentThread);
 	const char* fnName = "CC updateRuntimeFullFlags";
 	U_64 flagSet = 0;
@@ -6813,16 +6813,19 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 	if (_readOnlyOSCache || J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_ENABLE_READONLY)) {
 		goto done;
 	}
-
-	if (_cacheFullFlags == cacheFullFlags) {
-		goto done;
-	} else {
-		_cacheFullFlags = cacheFullFlags;
-	}
-
+	
+	/* It is possible we take _headerProtectMutex inside _runtimeFlagsProtectMutex.
+	 * So assert we do not hold _headerProtectMutex before taking _runtimeFlagsProtectMutex.
+	 */
+	Trc_SHR_Assert_True(1 != omrthread_monitor_owned_by_self(_headerProtectMutex));
 	omrthread_monitor_enter(_runtimeFlagsProtectMutex);
+	if (_cacheFullFlags == _theca->cacheFullFlags) {
+		omrthread_monitor_exit(_runtimeFlagsProtectMutex);
+		goto done;
+	}
+	_cacheFullFlags = _theca->cacheFullFlags;
 
-	if (J9_ARE_NO_BITS_SET(cacheFullFlags, J9SHR_BLOCK_SPACE_FULL)) {
+	if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_BLOCK_SPACE_FULL)) {
 		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) {
 			Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL);
 			flagUnset |= J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL;
@@ -6834,7 +6837,7 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 		}
 	}
 
-	if (J9_ARE_NO_BITS_SET(cacheFullFlags, J9SHR_AVAILABLE_SPACE_FULL)) {
+	if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_AVAILABLE_SPACE_FULL)) {
 		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AVAILABLE_SPACE_FULL)) {
 			if (J9_ARE_NO_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_BLOCK_SPACE_FULL)) {
 				if (_reduceStoreContentionDisabled) {
@@ -6862,7 +6865,7 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 		}
 	}
 
-	if (J9_ARE_NO_BITS_SET(cacheFullFlags, J9SHR_AOT_SPACE_FULL)) {
+	if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_AOT_SPACE_FULL)) {
 		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL)) {
 			Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL);
 			flagUnset |= J9SHR_RUNTIMEFLAG_AOT_SPACE_FULL;
@@ -6882,7 +6885,7 @@ SH_CompositeCacheImpl::updateRuntimeFullFlags(J9VMThread *currentThread)
 		}
 	}
 
-	if (J9_ARE_NO_BITS_SET(cacheFullFlags, J9SHR_JIT_SPACE_FULL)) {
+	if (J9_ARE_NO_BITS_SET(_cacheFullFlags, J9SHR_JIT_SPACE_FULL)) {
 		if (J9_ARE_ALL_BITS_SET(*_runtimeFlags, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL)) {
 			Trc_SHR_CC_updateRuntimeFullFlags_flagUnset(currentThread, J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL);
 			flagUnset |= J9SHR_RUNTIMEFLAG_JIT_SPACE_FULL;
