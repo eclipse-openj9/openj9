@@ -730,35 +730,30 @@ END_PROC(jitDecompileAtExceptionCatch)
 
 START_PROC(jitDecompileAtCurrentPC)
 	SWITCH_TO_C_STACK
-	SAVE_PRESERVED_REGS
 	CALL_C_WITH_VMTHREAD(c_jitDecompileAtCurrentPC)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitDecompileAtCurrentPC)
 
 START_PROC(jitDecompileBeforeReportMethodEnter)
 	SWITCH_TO_C_STACK
-	SAVE_PRESERVED_REGS
 	CALL_C_WITH_VMTHREAD(c_jitDecompileBeforeReportMethodEnter)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitDecompileBeforeReportMethodEnter)
 
 START_PROC(jitDecompileBeforeMethodMonitorEnter)
 	SWITCH_TO_C_STACK
-	SAVE_PRESERVED_REGS
 	CALL_C_WITH_VMTHREAD(c_jitDecompileBeforeMethodMonitorEnter)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitDecompileBeforeMethodMonitorEnter)
 
 START_PROC(jitDecompileAfterAllocation)
 	SWITCH_TO_C_STACK
-	SAVE_PRESERVED_REGS
 	CALL_C_WITH_VMTHREAD(c_jitDecompileAfterAllocation)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitDecompileAfterAllocation)
 
 START_PROC(jitDecompileAfterMonitorEnter)
 	SWITCH_TO_C_STACK
-	SAVE_PRESERVED_REGS
 	CALL_C_WITH_VMTHREAD(c_jitDecompileAfterMonitorEnter)
 	BRANCH_VIA_VMTHREAD(J9TR_VMThread_tempSlot)
 END_PROC(jitDecompileAfterMonitorEnter)
