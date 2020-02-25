@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,56 +38,19 @@ public class TestGetSystemCpuLoad {
 
 	/* convert ns to ms and round up */
 	private static final long MINIMUM_INTERVAL = (long) Math.ceil(CpuLoadCalculationConstants.MINIMUM_INTERVAL / 1e6);
-	private boolean supported;
-	private final double MIN_LOAD = 0.0;
-	private final double MAX_LOAD = 1.0;
-	private final double NO_ERROR = -100; /* should never get this */
-
-	@BeforeMethod
-	protected void setUp() throws Exception {
-		String osName = System.getProperty("os.name");
-		if ((null == osName) || osName.equalsIgnoreCase("z/OS")) {
-			supported = false;
-		} else {
-			supported = true;
-		}
-	}
+	private static final double MIN_LOAD = 0.0;
+	private static final double MAX_LOAD = 1.0;
+	private static final double NO_ERROR = -100; /* should never get this */
 
 	@Test
 	public void testSingleCpuLoadObject() {
 		logger.debug("Starting testSingleCpuLoadObject");
-		com.ibm.lang.management.OperatingSystemMXBean ibmBean;
 		try {
-			ibmBean = ManagementFactory.getPlatformMXBean(com.ibm.lang.management.OperatingSystemMXBean.class);
+			com.ibm.lang.management.OperatingSystemMXBean ibmBean = ManagementFactory.getPlatformMXBean(com.ibm.lang.management.OperatingSystemMXBean.class);
+			testMxBeanImpl(ibmBean);
 		} catch (IllegalArgumentException e) {
 			Assert.fail("com.ibm.lang.management.OperatingSystemMXBean is not available" + e, e);
-			return;
 		}
-		double load = ibmBean.getSystemCpuLoad();
-		if (!supported) {
-			validateLoad(load, true, CpuLoadCalculationConstants.UNSUPPORTED_VALUE, "initial call");
-			return;
-		} else {
-			validateLoad(load, true, CpuLoadCalculationConstants.ERROR_VALUE, "initial call");
-		}
-		load = ibmBean.getSystemCpuLoad();
-		if (load < 0.0) { /* normal case (insufficient time since last call) */
-			validateLoad(load, true, CpuLoadCalculationConstants.ERROR_VALUE, "call getSystemCpuLoad immediately after the previous call");
-		} else { /* possible but unlikely: test stalled for an extended time */
-			validateLoad(load, false, NO_ERROR, "call getSystemCpuLoad immediately after the previous call");
-		}
-
-		delayMillis(MINIMUM_INTERVAL);
-		load = ibmBean.getSystemCpuLoad();
-		validateLoad(load, false, NO_ERROR, "call getSystemCpuLoad after the minumum interval");
-
-		delayMillis(1000);
-		load = ibmBean.getSystemCpuLoad();
-		validateLoad(load, false, NO_ERROR, "call getSystemCpuLoad 1 second after previous call");
-
-		delayMillis(1);
-		load = ibmBean.getSystemCpuLoad();
-		validateLoad(load, false, NO_ERROR, "call getSystemCpuLoad 1 millisecond after previous call");
 	}
 
 	@Test
@@ -95,38 +58,41 @@ public class TestGetSystemCpuLoad {
 		logger.debug("Starting testMxBean");
 		java.lang.management.OperatingSystemMXBean osBean = ManagementFactory.getOperatingSystemMXBean();
 		String beanClass = osBean.getClass().getName();
-		logger.debug("osBean class=" + beanClass);
+		logger.debug("osBean class = " + beanClass);
 		Class<?> ibmBeanClass = com.ibm.lang.management.OperatingSystemMXBean.class;
 
 		if (ibmBeanClass.isInstance(osBean)) {
-			com.ibm.lang.management.OperatingSystemMXBean ibmBean1 =
-					(com.ibm.lang.management.OperatingSystemMXBean) osBean;
-			double load = ibmBean1.getSystemCpuLoad();
-			if (!supported) {
-				validateLoad(load, true, CpuLoadCalculationConstants.UNSUPPORTED_VALUE, "initial getSystemCpuLoad");
-				return;
-			} else if (load < 0.0) { /* normal case (insufficient time since last call) */
-				validateLoad(load, true, CpuLoadCalculationConstants.ERROR_VALUE, "initial getSystemCpuLoad");
-			} else {
-				validateLoad(load, false, NO_ERROR, "initial getSystemCpuLoad");
-			}
-			delayMillis(MINIMUM_INTERVAL);
-			load = ibmBean1.getSystemCpuLoad();
-			validateLoad(load, false, NO_ERROR, "getSystemCpuLoad after the minumum interval");
-
-			load = ibmBean1.getSystemCpuLoad();
-			validateLoad(load, false, NO_ERROR, "getSystemCpuLoad again");
-
-			delayMillis(MINIMUM_INTERVAL);
-			load = ibmBean1.getSystemCpuLoad();
-			validateLoad(load, false, NO_ERROR, "getSystemCpuLoad again");
-
-			delayMillis(1000);
-			load = ibmBean1.getSystemCpuLoad();
-			validateLoad(load, false, NO_ERROR, "getSystemCpuLoad after 1 second");
+			testMxBeanImpl((com.ibm.lang.management.OperatingSystemMXBean)osBean);
 		} else {
 			Assert.fail("OperatingSystemMXBean is wrong type: " + osBean.getClass().getName());
 		}
+	}
+
+	private static void testMxBeanImpl(com.ibm.lang.management.OperatingSystemMXBean ibmBean) {
+		double load = ibmBean.getSystemCpuLoad();
+		if (load < 0.0) { /* normal case (insufficient time since last call) */
+			validateLoad(load, true, CpuLoadCalculationConstants.ERROR_VALUE, "initial getSystemCpuLoad");
+		} else {
+			validateLoad(load, false, NO_ERROR, "initial getSystemCpuLoad");
+		}
+		delayMillis(MINIMUM_INTERVAL);
+		load = ibmBean.getSystemCpuLoad();
+		validateLoad(load, false, NO_ERROR, "getSystemCpuLoad after the minumum interval");
+
+		load = ibmBean.getSystemCpuLoad();
+		validateLoad(load, false, NO_ERROR, "getSystemCpuLoad immediately");
+
+		delayMillis(MINIMUM_INTERVAL);
+		load = ibmBean.getSystemCpuLoad();
+		validateLoad(load, false, NO_ERROR, "getSystemCpuLoad after the minumum interval");
+
+		delayMillis(1000);
+		load = ibmBean.getSystemCpuLoad();
+		validateLoad(load, false, NO_ERROR, "getSystemCpuLoad 1 second after previous call");
+
+		delayMillis(1);
+		load = ibmBean.getSystemCpuLoad();
+		validateLoad(load, false, NO_ERROR, "getSystemCpuLoad 1 millisecond after previous call");
 	}
 
 	/**
@@ -147,17 +113,16 @@ public class TestGetSystemCpuLoad {
 		} while (currentNanoTime < endNanoTime);
 	}
 
-	private void validateLoad(double load, boolean expectError, double expectedErrorValue, String msg) {
+	private static void validateLoad(double load, boolean expectError, double expectedErrorValue, String msg) {
 		try {
 			if (expectError) {
 				AssertJUnit.assertEquals("unexpected error value", expectedErrorValue, load, 0);
 			} else {
 				AssertJUnit.assertTrue("load < 0%", load >= MIN_LOAD);
-				AssertJUnit.assertTrue("load > 100 %", load <= MAX_LOAD);
+				AssertJUnit.assertTrue("load > 100%", load <= MAX_LOAD);
 			}
 		} finally {
-			logger.debug(msg + " load = " + load);
+			logger.debug(msg + "  load = " + load);
 		}
 	}
-
 }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,7 +24,7 @@
 #include "RememberedSetCardListBufferIterator.hpp"
 
 void
-GC_RememberedSetCardListBufferIterator::unlinkCurrentBuffer(MM_EnvironmentBase* env)
+GC_RememberedSetCardListBufferIterator::unlinkCurrentBuffer(MM_EnvironmentBase *env)
 {
 	/* remove from the list
 	 * (it's a single linked list, so we keep track of the previous buffer while iterating)
@@ -35,9 +35,10 @@ GC_RememberedSetCardListBufferIterator::unlinkCurrentBuffer(MM_EnvironmentBase* 
 		_cardBufferControlBlockPrevious->_next = _cardBufferControlBlockCurrent->_next;
 	}
 
-	if (_currentBucket->isCurrentSlotWithinBuffer(_bufferCardList)) {
+	if (_currentBucket->isCurrentSlotWithinBuffer(env, _bufferCardList)) {
 		/* make the _current bucket looks like point to the end of a full buffer */
-		_currentBucket->_current = _bufferCardList + MM_RememberedSetCardBucket::MAX_BUFFER_SIZE;
+		bool const compressed = env->compressObjectReferences();
+		_currentBucket->_current = MM_RememberedSetCard::addToCardAddress(_bufferCardList, MM_RememberedSetCardBucket::MAX_BUFFER_SIZE, compressed);
 	}
 
 	_currentBucket->_bufferCount -= 1;
@@ -74,8 +75,9 @@ GC_RememberedSetCardListBufferIterator::nextBucket(MM_EnvironmentBase* env)
 }
 
 MM_CardBufferControlBlock *
-GC_RememberedSetCardListBufferIterator::nextBuffer(MM_EnvironmentBase* env, MM_RememberedSetCard **lastCard)
+GC_RememberedSetCardListBufferIterator::nextBuffer(MM_EnvironmentBase *env, MM_RememberedSetCard **lastCard)
 {
+	bool const compressed = env->compressObjectReferences();
 	do {
 		if (NULL != _cardBufferControlBlockNext) {
 			/* TODO: could this condition be simplified? */
@@ -87,10 +89,10 @@ GC_RememberedSetCardListBufferIterator::nextBuffer(MM_EnvironmentBase* env, MM_R
 			_cardBufferControlBlockNext = _cardBufferControlBlockCurrent->_next;
 
 			_bufferCardList = _cardBufferControlBlockCurrent->_card;
-			if (_currentBucket->isCurrentSlotWithinBuffer(_bufferCardList)) {
+			if (_currentBucket->isCurrentSlotWithinBuffer(env, _bufferCardList)) {
 				*lastCard = _currentBucket->_current;
 			} else {
-				*lastCard = _cardBufferControlBlockCurrent->_card + MM_RememberedSetCardBucket::MAX_BUFFER_SIZE;
+				*lastCard = MM_RememberedSetCard::addToCardAddress(_cardBufferControlBlockCurrent->_card, MM_RememberedSetCardBucket::MAX_BUFFER_SIZE, compressed);
 			}
 			return _cardBufferControlBlockCurrent;
 		}

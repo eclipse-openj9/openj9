@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -61,7 +61,7 @@ MM_RememberedSetCardBucket::setListAsOverflow(MM_EnvironmentVLHGC *env, MM_Remem
 }
 
 void
-MM_RememberedSetCardBucket::addToNewBuffer(MM_EnvironmentVLHGC *env, MM_RememberedSetCard card)
+MM_RememberedSetCardBucket::addToNewBuffer(MM_EnvironmentVLHGC *env, UDATA card)
 {
 	Assert_MM_true(_rscl->_bufferCount >= _bufferCount);
 
@@ -108,8 +108,9 @@ MM_RememberedSetCardBucket::addToNewBuffer(MM_EnvironmentVLHGC *env, MM_Remember
 
 			if (NULL != newBuffer) {
 				/* reserve space for current add */
-				_current = newBuffer->_card + 1;
-				newBuffer->_card[0] = card;
+				bool const compressed = env->compressObjectReferences();
+				_current = MM_RememberedSetCard::addToCardAddress(newBuffer->_card, 1, compressed);
+				MM_RememberedSetCard::writeCard(newBuffer->_card, card, compressed);
 
 				/* link in the buffer in the bucket local list */
 				newBuffer->_next = _cardBufferControlBlockHead;
@@ -125,10 +126,11 @@ MM_RememberedSetCardBucket::addToNewBuffer(MM_EnvironmentVLHGC *env, MM_Remember
 }
 
 bool
-MM_RememberedSetCardBucket::isRemembered(MM_EnvironmentVLHGC *env, MM_RememberedSetCard card)
+MM_RememberedSetCardBucket::isRemembered(MM_EnvironmentVLHGC *env, UDATA card)
 {
 	UDATA bufferCount = 0;
 	MM_CardBufferControlBlock *currentCardBufferControlBlock = _cardBufferControlBlockHead;
+	bool const compressed = env->compressObjectReferences();
 	while (NULL != currentCardBufferControlBlock) {
 		bufferCount += 1;
 
@@ -136,12 +138,13 @@ MM_RememberedSetCardBucket::isRemembered(MM_EnvironmentVLHGC *env, MM_Remembered
 
 		/* find top index for this buffer */
 		UDATA cardIndexTop = MAX_BUFFER_SIZE;
-		if (isCurrentSlotWithinBuffer(bufferCardList)) {
-			cardIndexTop = _current -  bufferCardList;
+		if (isCurrentSlotWithinBuffer(env, bufferCardList)) {
+			cardIndexTop = MM_RememberedSetCard::subtractCardAddresses(_current, bufferCardList, compressed);
 		}
 		
 		for (UDATA cardIndex = 0; cardIndex < cardIndexTop; cardIndex++) {
-			if (bufferCardList[cardIndex] == card) {
+			MM_RememberedSetCard *cardAddress = MM_RememberedSetCard::addToCardAddress(bufferCardList, cardIndex, compressed);
+			if (MM_RememberedSetCard::readCard(cardAddress, compressed) == card) {
 				return true;
 			}
 		}
@@ -184,10 +187,10 @@ MM_RememberedSetCardBucket::getSize(MM_EnvironmentVLHGC *env)
 	UDATA size = _bufferCount * MAX_BUFFER_SIZE;
 	if (_bufferCount > 0) {
 		Assert_MM_true(NULL != _current);
-		UDATA offset = (UDATA)_current & OFFSET_MASK;
+		UDATA offset = (UDATA)_current & offsetMask(env);
 		if (0 != offset) {
 			/* subtract the unused portion of the current buffer */
-			size -= MAX_BUFFER_SIZE - (offset / sizeof (MM_RememberedSetCard));
+			size -= (MAX_BUFFER_SIZE - (offset / MM_RememberedSetCard::cardSize(env->compressObjectReferences())));
 		}
 	}
 
@@ -200,6 +203,7 @@ MM_RememberedSetCardBucket::compact(MM_EnvironmentVLHGC *env)
 	Assert_MM_true(_rscl->_bufferCount >= _bufferCount);
 	
 	if (NULL != _cardBufferControlBlockHead) {
+		bool const compressed = env->compressObjectReferences();
 		UDATA toIndex = 0;
 		MM_CardBufferControlBlock *toCardBufferControlBlock = _cardBufferControlBlockHead;
 		MM_CardBufferControlBlock *prevToCardBufferControlBlock = NULL;
@@ -213,13 +217,17 @@ MM_RememberedSetCardBucket::compact(MM_EnvironmentVLHGC *env)
 
 			/* find top index for this buffer */
 			UDATA fromIndexTop = MAX_BUFFER_SIZE;
-			if (isCurrentSlotWithinBuffer(fromBufferCardList)) {
-				fromIndexTop = _current -  fromBufferCardList;
+			if (isCurrentSlotWithinBuffer(env, fromBufferCardList)) {
+				fromIndexTop = MM_RememberedSetCard::subtractCardAddresses(_current, fromBufferCardList, compressed);
 			}
 
 			for (UDATA fromIndex = 0; fromIndex < fromIndexTop; fromIndex++) {
-				if (0 != fromBufferCardList[fromIndex]) {
-					toBufferCardList[toIndex++] = fromBufferCardList[fromIndex];
+				MM_RememberedSetCard *fromAddress = MM_RememberedSetCard::addToCardAddress(fromBufferCardList, fromIndex, compressed);
+				UDATA card = MM_RememberedSetCard::readCard(fromAddress, compressed);
+				if (0 != card) {
+					MM_RememberedSetCard *toAddress = MM_RememberedSetCard::addToCardAddress(toBufferCardList, toIndex, compressed);
+					MM_RememberedSetCard::writeCard(toAddress, card, compressed);
+					toIndex += 1;
 					if (MAX_BUFFER_SIZE == toIndex) {
 						prevToCardBufferControlBlock = toCardBufferControlBlock;
 						toCardBufferControlBlock = toCardBufferControlBlock->_next;
@@ -244,12 +252,12 @@ MM_RememberedSetCardBucket::compact(MM_EnvironmentVLHGC *env)
 				_current = NULL;
 				_cardBufferControlBlockHead = NULL;
 			} else {
-				_current = prevToCardBufferControlBlock->_card + MAX_BUFFER_SIZE;
+				_current = MM_RememberedSetCard::addToCardAddress(prevToCardBufferControlBlock->_card, MAX_BUFFER_SIZE, compressed);
 				prevToCardBufferControlBlock->_next = NULL;
 			}
 		} else {
 			toDeleteCardBufferControlBlock = toCardBufferControlBlock->_next;
-			_current = &toBufferCardList[toIndex];
+			_current = MM_RememberedSetCard::addToCardAddress(toBufferCardList, toIndex, compressed);
 			toCardBufferControlBlock->_next = NULL;
 		}
 

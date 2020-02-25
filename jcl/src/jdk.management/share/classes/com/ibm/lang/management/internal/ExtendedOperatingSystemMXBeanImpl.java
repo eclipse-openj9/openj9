@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2012, 2019 IBM Corp. and others
+ * Copyright (c) 2012, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -100,8 +100,6 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 
 		return false;
 	}
-
-	private final CpuUtilizationHelper cpuUtilizationHelper = new CpuUtilizationHelper();
 
 	private HwEmulResult isHwEmulated = HwEmulResult.UNKNOWN;
 
@@ -426,8 +424,10 @@ public class ExtendedOperatingSystemMXBeanImpl extends OperatingSystemMXBeanImpl
 	 */
 	@Override
 	public final double getSystemCpuLoad() {
-		return cpuUtilizationHelper.getSystemCpuLoad();
+		return this.getSystemCpuLoadImpl();
 	}
+
+	private native double getSystemCpuLoadImpl();
 
 	/**
 	 * {@inheritDoc}

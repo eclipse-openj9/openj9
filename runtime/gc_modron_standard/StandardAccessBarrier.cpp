@@ -155,7 +155,8 @@ MM_StandardAccessBarrier::preObjectStoreImpl(J9VMThread *vmThread, J9Object *des
 
 			J9Object *oldObject = NULL;
 			protectIfVolatileBefore(vmThread, isVolatile, true, false);
-			oldObject = mmPointerFromToken(vmThread, GC_SlotObject::readSlot(destAddress, compressObjectReferences()));
+			GC_SlotObject slotObject(vmThread->javaVM->omrVM, destAddress);
+			oldObject = slotObject.readReferenceFromSlot();
 			protectIfVolatileAfter(vmThread, isVolatile, true, false);
 			rememberObjectToRescan(env, oldObject);
 		}

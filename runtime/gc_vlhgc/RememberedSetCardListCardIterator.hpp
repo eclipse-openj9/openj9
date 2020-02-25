@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -72,7 +72,7 @@ public:
 	/**
 	 * @return the next referencing card to the region owning this CardList, or 0 if there are no more cards
 	 */
-	MM_RememberedSetCard nextReferencingCard(MM_EnvironmentBase* env);
+	UDATA nextReferencingCard(MM_EnvironmentBase* env);
 
 	/**
 	 * @return the next referencing card's heap address to the region owning this CardList, or NULL if there are no more cards
@@ -80,10 +80,10 @@ public:
 	void * nextReferencingCardHeapAddress(MM_EnvironmentBase* env);
 
 	MMINLINE void
-	removeCurrentCard()
+	removeCurrentCard(MM_EnvironmentBase *env)
 	{
 		if (_cardIndex > 0) {
-			_rscl->removeCard(_bufferCardList, _cardIndex - 1);
+			_rscl->removeCard(env, _bufferCardList, _cardIndex - 1);
 		}
 	}
 };

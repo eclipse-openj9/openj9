@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -127,14 +127,14 @@ void
 MM_RememberedSetCardList::add(MM_EnvironmentVLHGC *env, J9Object *object)
 {
 	MM_InterRegionRememberedSet *interRegionRememberedSet = MM_GCExtensions::getExtensions(env)->interRegionRememberedSet;
-	MM_RememberedSetCard card = interRegionRememberedSet->getRememberedSetCardFromJ9Object(object);
+	UDATA card = interRegionRememberedSet->getRememberedSetCardFromJ9Object(object);
 	MM_RememberedSetCardBucket *bucket = mapToBucket(env);
 	bucket->add(env, card);
 
 }
 
 bool
-MM_RememberedSetCardList::isRemembered(MM_EnvironmentVLHGC *env, MM_RememberedSetCard card)
+MM_RememberedSetCardList::isRemembered(MM_EnvironmentVLHGC *env, UDATA card)
 {
 	Assert_MM_true(FALSE == _overflowed);
 	

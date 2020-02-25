@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,14 +31,7 @@
 #include "BaseNonVirtual.hpp"
 #include "EnvironmentVLHGC.hpp"
 #include "GCExtensions.hpp"
-
-#if defined (OMR_GC_COMPRESSED_POINTERS)
-/* Compresses a heap address by shifting right by CARD_SIZE_SHIFT */
-typedef U_32 MM_RememberedSetCard; 
-#else
-/* Just a heap address */
-typedef UDATA MM_RememberedSetCard;
-#endif /* OMR_GC_COMPRESSED_POINTERS */
+#include "RememberedSetCard.hpp"
 
 class MM_RememberedSetCardList;
 
@@ -53,7 +46,6 @@ private:
 	enum {
 		MAX_BUFFER_SIZE_LOG = 5,
 		MAX_BUFFER_SIZE = (1 << MAX_BUFFER_SIZE_LOG),
-		OFFSET_MASK = MAX_BUFFER_SIZE * sizeof(MM_RememberedSetCard) - 1
 	};
 
 	friend class MM_RememberedSetCardList;
@@ -70,6 +62,11 @@ protected:
 public:
 	/* function members */
 private:
+	MMINLINE uintptr_t offsetMask(MM_EnvironmentVLHGC *env)
+	{
+		return (MAX_BUFFER_SIZE * MM_RememberedSetCard::cardSize(env->compressObjectReferences())) - 1;
+	}
+
 	/**
 	 * Clear the list (release all the buffers back to the buffer pool)
 	 * @param buffersToLocalPoolCount max buffers returned to the local pool. typically UDATA_MAX (all goes to local) or MAX_LOCAL_RSCL_BUFFER_POOL_SIZE (small part goes to local, rest to global)
@@ -84,20 +81,22 @@ public:
 	 * Add a card represented by the object to the list
 	 * @param card  card to be remembered
 	 */
-	MMINLINE void add(MM_EnvironmentVLHGC *env, MM_RememberedSetCard card)
+	MMINLINE void add(MM_EnvironmentVLHGC *env, UDATA card)
 	{
 		MM_RememberedSetCard *current = _current;
-		UDATA offset = (UDATA)current & OFFSET_MASK;
+		UDATA offset = (UDATA)current & offsetMask(env);
 
 		if (0 != offset) {
 			/* there is room in the current buffer
 			 * simple optimization to avoid duplicates: check if this card is same as the last stored card
 			 * (at this point we know current is no NULL)
 			 */
-			if (card != *(current - 1)) {
+			bool const compressed = env->compressObjectReferences();
+			MM_RememberedSetCard *cardAddress = MM_RememberedSetCard::subtractFromCardAddress(current, 1, compressed);
+			if (card != MM_RememberedSetCard::readCard(cardAddress, compressed)) {
 				/* no, not same, add it */
-				_current = current + 1;
-				*current = card;
+				_current = MM_RememberedSetCard::addToCardAddress(current, 1, compressed);
+				MM_RememberedSetCard::writeCard(current, card, compressed);
 			}
 		} else {
 			addToNewBuffer(env, card);
@@ -111,7 +110,7 @@ public:
 	 * or list is already overflowed.
 	 * @param card  card to be remembered
 	 */
-	void addToNewBuffer(MM_EnvironmentVLHGC *env, MM_RememberedSetCard card);
+	void addToNewBuffer(MM_EnvironmentVLHGC *env, UDATA card);
 
 	/**
 	 * Search the list and check if this card is remembered.
@@ -119,7 +118,7 @@ public:
 	 * @param card  card being searched for
 	 * @return true if card is remembered, false otherwise
 	 */
-	bool isRemembered(MM_EnvironmentVLHGC *env, MM_RememberedSetCard card);
+	bool isRemembered(MM_EnvironmentVLHGC *env, UDATA card);
 
 	/**
 	 * Clear the list. Release buffers back to the global buffer pool. A small fraction may be release to the thread local pool.
@@ -168,8 +167,8 @@ public:
 	/**
 	 * @return true if _current pointer points within the provided buffer's card list
 	 */
-	bool isCurrentSlotWithinBuffer(MM_RememberedSetCard *bufferCardList) {
-		return ((bufferCardList < _current) && (_current < bufferCardList + MAX_BUFFER_SIZE));
+	bool isCurrentSlotWithinBuffer(MM_EnvironmentBase *env, MM_RememberedSetCard *bufferCardList) {
+		return ((bufferCardList < _current) && (_current < MM_RememberedSetCard::addToCardAddress(bufferCardList, MAX_BUFFER_SIZE, env->compressObjectReferences())));
 	}
 
 	MM_RememberedSetCardBucket()

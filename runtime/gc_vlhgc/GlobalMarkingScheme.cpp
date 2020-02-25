@@ -494,6 +494,7 @@ MM_GlobalMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, J9Object *obje
 	UDATA *leafPtr;
 	UDATA leafBits;
 #endif /* J9VM_GC_LEAF_BITS */
+	bool const compressed = env->compressObjectReferences();
 
 	markObjectClass(env, objectPtr);
 
@@ -552,7 +553,7 @@ MM_GlobalMarkingScheme::scanMixedObject(MM_EnvironmentVLHGC *env, J9Object *obje
 #endif /* J9VM_GC_LEAF_BITS */
 			descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 		}
-		scanPtr += 1;
+		scanPtr = GC_SlotObject::addToSlotAddress((fomrobject_t*)scanPtr, 1, compressed);
 	}
 }
 
@@ -638,6 +639,7 @@ MM_GlobalMarkingScheme::scanReferenceMixedObject(MM_EnvironmentVLHGC *env, J9Obj
 	}
 	descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 
+	bool const compressed = env->compressObjectReferences();
 	while(scanPtr < endScanPtr) {
 		/* Determine if the slot should be processed */
 		if ((descriptionBits & 1) && ((scanPtr != referentPtr.readAddressFromSlot()) || referentMustBeMarked)) {
@@ -668,7 +670,7 @@ MM_GlobalMarkingScheme::scanReferenceMixedObject(MM_EnvironmentVLHGC *env, J9Obj
 #endif /* J9VM_GC_LEAF_BITS */
 			descriptionIndex = J9_OBJECT_DESCRIPTION_SIZE - 1;
 		}
-		scanPtr += 1;
+		scanPtr = GC_SlotObject::addToSlotAddress((fomrobject_t*)scanPtr, 1, compressed);
 	}
 }
 
@@ -713,7 +715,8 @@ MM_GlobalMarkingScheme::scanPointerArrayObjectSplit(MM_EnvironmentVLHGC *env, J9
 	}
 
 	/* Return number of bytes scanned */
-	return (slotsToScan * sizeof(fj9object_t));
+	uintptr_t const referenceSize = env->compressObjectReferences() ? sizeof(uint32_t) : sizeof(uintptr_t);
+	return (slotsToScan * referenceSize);
 }
 
 void
