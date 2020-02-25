@@ -2200,7 +2200,7 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 					errorCode = J9NLS_CFR_ERR_RECORD_COMPONENT_DESCRIPTOR_NOT_UTF8__ID;
 					goto _errorFound;
 				}
-				if (checkAttributes(classfile, recordComponent->attributes, recordComponent->attributesCount, segment, -1, code->codeLength, flags)) {
+				if (checkAttributes(classfile, recordComponent->attributes, recordComponent->attributesCount, segment, -1, OUTSIDE_CODE, flags)) {
 					return -1;
 				}
 			}
