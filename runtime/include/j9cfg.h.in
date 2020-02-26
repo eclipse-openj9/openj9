@@ -48,8 +48,10 @@ extern "C" {
 /* Note: The following defines record flags used to build the VM. */
 /* Changing them here does not remove the feature and may cause linking problems. */
 
+#cmakedefine J9VM_ARCH_AARCH64
 #cmakedefine J9VM_ARCH_ARM
 #cmakedefine J9VM_ARCH_POWER
+#cmakedefine J9VM_ARCH_RISCV
 #cmakedefine J9VM_ARCH_S390
 #cmakedefine J9VM_ARCH_X86
 #cmakedefine J9VM_BUILD__SE6_PACKAGE
