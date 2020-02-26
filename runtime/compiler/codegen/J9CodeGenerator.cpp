@@ -159,6 +159,14 @@ static TR::Node *lowerCASValues(
 void
 J9::CodeGenerator::lowerNonhelperCallIfNeeded(TR::Node *node, TR::TreeTop *tt)
    {
+   if (TR::Compiler->om.areValueTypesEnabled() &&
+       comp()->getSymRefTab()->isNonHelper(
+       node->getSymbolReference(),
+       TR::SymbolReferenceTable::objectEqualityComparisonSymbol))
+      {
+      // for now, just turn the non-helper call into a jit-helper call
+      node->setSymbolReference(comp()->getSymRefTab()->findOrCreateAcmpHelperSymbolRef());
+      }
    }
 
 
