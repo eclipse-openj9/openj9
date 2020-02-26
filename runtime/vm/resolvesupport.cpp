@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -977,7 +977,7 @@ illegalAccess:
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
 				if ('Q' == J9UTF8_DATA(signature)[0]) {
 					if (fccEntryFieldNotSet) {
-						flattenedClassCache = classFromCP->flattenedClassCache;
+						flattenedClassCache = definingClass->flattenedClassCache;
 						fieldIndex = findIndexInFlattenedClassCache(flattenedClassCache, nameAndSig);
 						flattenableClass = J9_VM_FCC_ENTRY_FROM_FCC(flattenedClassCache, fieldIndex)->clazz;
 					}
