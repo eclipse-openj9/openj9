@@ -155,9 +155,24 @@ TR_ResolvedJ9JITServerMethod::staticAttributes(TR::Compilation * comp, I_32 cpIn
 TR_OpaqueClassBlock * 
 TR_ResolvedJ9JITServerMethod::definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic)
    {
-   // Send a message to the client
+   TR::CompilationInfoPerThread *compInfoPT = _fe->_compInfoPT;
+      {
+      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+      auto &cache = getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDefiningClassCache;
+      auto it = cache.find(cpIndex);
+      if (it != cache.end())
+         return it->second;
+      }
    _stream->write(JITServer::MessageType::ResolvedMethod_definingClassFromCPFieldRef, _remoteMirror, cpIndex, isStatic);
    TR_OpaqueClassBlock *resolvedClass = std::get<0>(_stream->read<TR_OpaqueClassBlock *>());
+   // Do not cache if the class is unresolved, because it may become resolved later on
+   if (resolvedClass)
+      {
+      OMR::CriticalSection getRemoteROMClass(compInfoPT->getClientData()->getROMMapMonitor());
+      auto &cache = getJ9ClassInfo(compInfoPT, _ramClass)._fieldOrStaticDefiningClassCache;
+      cache.insert({cpIndex, resolvedClass});
+      }
+   
    return resolvedClass;
    }
 
@@ -2282,15 +2297,17 @@ TR_OpaqueClassBlock *
 TR_ResolvedRelocatableJ9JITServerMethod::definingClassFromCPFieldRef(TR::Compilation *comp, int32_t cpIndex, bool isStatic)
    {
    TR_OpaqueClassBlock *resolvedClass = TR_ResolvedJ9JITServerMethod::definingClassFromCPFieldRef(comp, cpIndex, isStatic);
+   if (resolvedClass)
+      {
+      bool valid = false;
+      if (comp->getOption(TR_UseSymbolValidationManager))
+         valid = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(resolvedClass, cp(), cpIndex, isStatic);
+      else
+         valid = storeValidationRecordIfNecessary(comp, cp(), cpIndex, isStatic ? TR_ValidateStaticField : TR_ValidateInstanceField, ramMethod());
 
-   bool valid = false;
-   if (comp->getOption(TR_UseSymbolValidationManager))
-      valid = comp->getSymbolValidationManager()->addDefiningClassFromCPRecord(resolvedClass, cp(), cpIndex, isStatic);
-   else
-      valid = storeValidationRecordIfNecessary(comp, cp(), cpIndex, isStatic ? TR_ValidateStaticField : TR_ValidateInstanceField, ramMethod());
-
-   if (!valid)
-      resolvedClass = NULL;
+      if (!valid)
+         resolvedClass = NULL;
+      }
    return resolvedClass;
    }
 
