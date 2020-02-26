@@ -61,14 +61,7 @@ public:
 
    bool mayRequireSpineChecks();
 
-   bool areValueTypesEnabled()
-      {
-      #ifdef J9VM_OPT_VALHALLA_VALUE_TYPES
-      return true;
-      #else
-      return false;
-      #endif
-      }
+   bool areValueTypesEnabled();
 
    int32_t sizeofReferenceField();
    uintptrj_t elementSizeOfBooleanArray();

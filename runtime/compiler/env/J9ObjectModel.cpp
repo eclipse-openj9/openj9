@@ -100,6 +100,14 @@ J9::ObjectModel::initialize()
    }
 
 
+bool
+J9::ObjectModel::areValueTypesEnabled()
+   {
+   J9JavaVM * javaVM = TR::Compiler->javaVM;
+   return javaVM->internalVMFunctions->areValueTypesEnabled(javaVM);
+   }
+
+
 int32_t
 J9::ObjectModel::sizeofReferenceField()
    {
