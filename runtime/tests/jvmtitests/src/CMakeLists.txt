@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2018, 2019 IBM Corp. and others
+# Copyright (c) 2018, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -51,6 +51,8 @@ add_library(jvmti_test_src STATIC
 	com/ibm/jvmti/tests/eventThreadStart/ets001.c
 
 	com/ibm/jvmti/tests/eventVMObjectAllocation/evmoa001.c
+
+	com/ibm/jvmti/tests/fieldwatch/fw001.c
 
 	com/ibm/jvmti/tests/followReferences/fr001.c
 	com/ibm/jvmti/tests/followReferences/fr002.c
