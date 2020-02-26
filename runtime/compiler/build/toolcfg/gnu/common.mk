@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -486,6 +486,13 @@ ifeq ($(HOST_ARCH),z)
         SOLINK_FLAGS+=-m31
     endif
 
+    SUPPORT_STATIC_LIBCXX = $(shell $(SOLINK_CMD) -static-libstdc++ 2>&1 | grep "unrecognized option" > /dev/null; echo $$?)
+    ifneq ($(SUPPORT_STATIC_LIBCXX),0)
+        SOLINK_FLAGS+=-static-libgcc -static-libstdc++
+    endif
+endif
+
+ifeq ($(HOST_ARCH),aarch64)
     SUPPORT_STATIC_LIBCXX = $(shell $(SOLINK_CMD) -static-libstdc++ 2>&1 | grep "unrecognized option" > /dev/null; echo $$?)
     ifneq ($(SUPPORT_STATIC_LIBCXX),0)
         SOLINK_FLAGS+=-static-libgcc -static-libstdc++
