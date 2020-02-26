@@ -244,6 +244,13 @@ J9::SymbolReferenceTable::findOrCreateWriteBarrierBatchStoreSymbolRef(TR::Resolv
 
 
 TR::SymbolReference *
+J9::SymbolReferenceTable::findOrCreateAcmpHelperSymbolRef(TR::ResolvedMethodSymbol * owningMEthodSymbol)
+   {
+   return findOrCreateRuntimeHelper(TR_acmpHelper, true, false, true);
+   }
+
+
+TR::SymbolReference *
 J9::SymbolReferenceTable::findOrCreateFloatSymbol(TR::ResolvedMethodSymbol * owningMethodSymbol, int32_t cpIndex)
    {
    void * dataAddress = owningMethodSymbol->getResolvedMethod()->floatConstant(cpIndex);
