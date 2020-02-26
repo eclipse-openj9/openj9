@@ -334,6 +334,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 /*[IF Java14]*/
 	static final BiFunction<String, List<Integer>, ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
+	private boolean varFormUsed = false;
 /*[ENDIF] Java14 */
 	
 	private final MethodHandle[] handleTable;
@@ -419,6 +420,7 @@ public abstract class VarHandle extends VarHandleInternal
 			this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTs);
 		}
 		this.modifiers = 0;
+		this.varFormUsed = true;
 	}
 
 	/**
@@ -654,6 +656,12 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @return A boolean value indicating whether the {@link AccessMode} is supported.
 	 */
 	boolean isAccessModeSupportedHelper(AccessMode accessMode) {
+/*[IF Java14]*/
+		if (varFormUsed) {
+			return (handleTable[accessMode.ordinal()] != null);
+		}
+/*[ENDIF] Java14 */
+		
 		switch (accessMode) {
 		case GET:
 		case GET_VOLATILE:
