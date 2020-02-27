@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,9 +35,9 @@
 #include "env/FrontEnd.hpp"
 #include "control/Options.hpp"
 #include "control/Options_inlines.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "env/J2IThunk.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #include "runtime/J9Runtime.hpp"
 #include "runtime/MethodMetaData.h"
 #include "runtime/RelocationRuntime.hpp"
@@ -98,7 +98,7 @@ TR_X86RelocationTarget::performThunkRelocation(uint8_t *thunkAddress, uintptr_t 
    *(UDATA *) (thunkAddress + *thunkRelocationData + 2) = vmHelper;
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 static void *
 j9ThunkInvokeExactHelperFromTerseSignature(UDATA signatureLength, char *signatureChars, TR_RelocationRuntime *reloRuntime)
    {
@@ -139,7 +139,7 @@ TR_X86RelocationTarget::performInvokeExactJ2IThunkRelocation(TR_J2IThunk *thunk)
    void *vmHelper = j9ThunkInvokeExactHelperFromTerseSignature(strlen(signature), signature, reloRuntime());
    *(UDATA *)(thunk->entryPoint() + 2) = (UDATA) vmHelper;
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 bool TR_AMD64RelocationTarget::useTrampoline(uint8_t * helperAddress, uint8_t *baseLocation)
    {

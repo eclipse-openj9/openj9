@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,9 +33,9 @@ namespace J9 { typedef J9::PersistentInfo PersistentInfoConnector; }
 #include "env/RuntimeAssumptionTable.hpp"
 
 #include <stdint.h>
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include <string>
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #include "env/jittypes.h"
 
 class TR_FrontEnd;
@@ -61,7 +61,7 @@ enum IprofilerStates {
    IPROFILING_STATE_OFF,
 };
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 namespace JITServer
 {
 enum RemoteCompilationModes
@@ -71,7 +71,7 @@ enum RemoteCompilationModes
    SERVER,
    };
 }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #define MAX_SUPERCLASSES (20000)
 namespace J9
@@ -129,13 +129,13 @@ class PersistentInfo : public OMR::PersistentInfoConnector
          _gpuInitMonitor(NULL),
          _runtimeInstrumentationEnabled(false),
          _runtimeInstrumentationRecompilationEnabled(false),
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
          _remoteCompilationMode(JITServer::NONE),
          _JITServerAddress("localhost"),
          _JITServerPort(38400),
          _socketTimeoutMs(2000),
          _clientUID(0),
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       OMR::PersistentInfoConnector(pm)
       {}
 
@@ -296,7 +296,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    uint8_t _paddingBefore[128];
    int32_t _countForRecompile;
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    JITServer::RemoteCompilationModes getRemoteCompilationMode() const { return _remoteCompilationMode; }
    void setRemoteCompilationMode(JITServer::RemoteCompilationModes m) { _remoteCompilationMode = m; }
    const std::string &getJITServerAddress() const { return _JITServerAddress; }
@@ -307,7 +307,7 @@ class PersistentInfo : public OMR::PersistentInfoConnector
    void setJITServerPort(uint32_t port) { _JITServerPort = port; }
    uint64_t getClientUID() const { return _clientUID; }
    void setClientUID(uint64_t val) { _clientUID = val; }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    private:
    TR_AddressSet *_unloadedClassAddresses;
@@ -391,13 +391,13 @@ class PersistentInfo : public OMR::PersistentInfoConnector
 
 
    int32_t _numLoadedClasses; ///< always increasing
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    JITServer::RemoteCompilationModes _remoteCompilationMode; // JITServer::NONE, JITServer::CLIENT, JITServer::SERVER
    std::string _JITServerAddress;
    uint32_t    _JITServerPort;
    uint32_t    _socketTimeoutMs; // timeout for communication sockets used in out-of-process JIT compilation
    uint64_t    _clientUID;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
 }

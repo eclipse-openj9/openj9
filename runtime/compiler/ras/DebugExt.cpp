@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2396,7 +2396,7 @@ void TR_DebugExt::dxPrintMethodToBeCompiled(TR_MethodToBeCompiled *remoteCompEnt
    _dbgPrintf("\tbool                          _freeTag = %d\n",localCompEntry->_freeTag);
    _dbgPrintf("\tuint8_t                       _weight = %u\n",localCompEntry->_weight);
    _dbgPrintf("\tbool                          _hasIncrementedNumCompThreadsCompilingHotterMethods = %d\n",localCompEntry->_hasIncrementedNumCompThreadsCompilingHotterMethods);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    _dbgPrintf("\tTR_Hotness                    _origOptLevel = 0x%p\n\n", localCompEntry->_origOptLevel);
 #endif
 

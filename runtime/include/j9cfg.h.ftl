@@ -70,12 +70,6 @@ extern "C" {
 #define J9VM_OPT_MULTI_LAYER_SHARED_CLASS_CACHE
 #endif
 
-#if defined(J9VM_BUILD_JITSERVER)
-#ifndef JITSERVER_SUPPORT
-#define JITSERVER_SUPPORT
-#endif
-#endif
-
 #ifdef __cplusplus
 }
 #endif

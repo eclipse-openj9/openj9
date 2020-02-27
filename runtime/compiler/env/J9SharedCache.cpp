@@ -36,7 +36,7 @@
 #include "env/j9method.h"
 #include "runtime/IProfiler.hpp"
 #include "env/ClassLoaderTable.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationThread.hpp" // for TR::compInfoPT
 #include "runtime/JITClientSession.hpp"
 #endif
@@ -107,13 +107,13 @@ TR_J9SharedCache::TR_J9SharedCache(TR_J9VMBase *fe)
    _sharedCacheConfig = _javaVM->sharedClassConfig;
    _numDigitsForCacheOffsets = 8;
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    TR_ASSERT_FATAL(_sharedCacheConfig || _compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER, "Must have _sharedCacheConfig");
 #else
    TR_ASSERT_FATAL(_sharedCacheConfig, "Must have _sharedCacheConfig");
 #endif
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (_sharedCacheConfig)
 #endif
       {
@@ -964,7 +964,7 @@ TR_J9SharedCache::storeSharedData(J9VMThread *vmThread, char *key, J9SharedDataD
 #endif
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 TR_J9JITServerSharedCache::TR_J9JITServerSharedCache(TR_J9VMBase *fe)
    : TR_J9SharedCache(fe)
    {

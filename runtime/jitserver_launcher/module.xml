@@ -22,7 +22,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 -->
 <module xmlns:xi="http://www.w3.org/2001/XInclude">
 	<artifact type="executable" name="jitserver">
-		<include-if condition="spec.flags.build_jitserver"/>
+		<include-if condition="spec.flags.opt_jitserver"/>
 		<options>
 			<option name="doesNotRequireCMAIN"/>
 		</options>

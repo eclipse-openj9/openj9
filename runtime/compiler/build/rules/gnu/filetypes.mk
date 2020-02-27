@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,7 +22,7 @@
 # These are the rules to compile files of type ".x" into object files
 # as well as to generate clean and cleandeps rules
 #
-ifneq ($(JITSERVER_SUPPORT),)
+ifneq ($(J9VM_OPT_JITSERVER),)
    #
    # Compile .proto files to .cpp files
    #

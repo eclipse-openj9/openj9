@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,9 +37,9 @@ namespace J9 { typedef J9::Options OptionsConnector; }
 #include <stdint.h>
 #include "control/OptionsUtil.hpp"
 #include "env/jittypes.h"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 namespace TR { class CompilationInfoPerThreadBase; }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 namespace J9
 {
@@ -85,12 +85,12 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _samplingFrequencyInIdleMode;
    static int32_t getSamplingFrequencyInIdleMode() {return _samplingFrequencyInIdleMode;}
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    static int32_t _statisticsFrequency;
    static int32_t getStatisticsFrequency() {return _statisticsFrequency;}
 
    static uint32_t _compilationSequenceNumber;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    static int32_t _samplingFrequencyInDeepIdleMode;
    static int32_t getSamplingFrequencyInDeepIdleMode() {return _samplingFrequencyInDeepIdleMode;}
@@ -214,7 +214,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    static int32_t _scratchSpaceFactorWhenJSR292Workload;
    static int32_t getScratchSpaceFactorWhenJSR292Workload() { return _scratchSpaceFactorWhenJSR292Workload; }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    static int32_t getScratchSpaceFactorWhenJITServerWorkload() { return 2; }
 #endif
 
@@ -348,7 +348,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    bool  showPID();
    void openLogFiles(J9JITConfig *jitConfig);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    void setupJITServerOptions();
 
    static std::string packOptions(const TR::Options *origOptions);
@@ -358,7 +358,7 @@ class OMR_EXTENSIBLE Options : public OMR::OptionsConnector
    int writeLogFileFromServer(const std::string& logFileContent);
    void setLogFileForClientOptions(int suffixNumber = 0);
    void closeLogFileForClientOptions();
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
 }

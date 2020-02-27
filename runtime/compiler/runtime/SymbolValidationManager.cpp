@@ -49,7 +49,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
      _fej9((TR_J9VM *)TR_J9VMBase::get(
         _vmThread->javaVM->jitConfig,
         _vmThread,
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
         TR::CompilationInfo::get()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ? TR_J9VMBase::J9_SERVER_VM : 
 #endif
         TR_J9VMBase::DEFAULT_VM)),
@@ -69,7 +69,7 @@ TR::SymbolValidationManager::SymbolValidationManager(TR::Region &region, TR_Reso
    {
    assertionsAreFatal(); // Acknowledge the env var whether or not assertions fail
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    auto stream = TR::CompilationInfo::getStream();
    if (stream && _fej9->sharedCache())
       // because a different VM is used here, a new Shared Cache object was created, so
@@ -1417,7 +1417,7 @@ static void printClass(TR_OpaqueClassBlock *clazz)
       }
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 std::string
 TR::SymbolValidationManager::serializeSymbolToIDMap()
    {
@@ -1450,7 +1450,7 @@ TR::SymbolValidationManager::deserializeSymbolToIDMap(const std::string &symbolT
       _symbolToIdMap.insert(std::make_pair(symbol, id));
       }
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 namespace // file-local
    {

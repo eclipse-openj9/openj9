@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -21,11 +21,11 @@
  *******************************************************************************/
 
 #include "compile/Compilation.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #include "env/ClassEnv.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/jittypes.h"
@@ -84,7 +84,7 @@ J9::ClassEnv::isClassSpecialForStackAllocation(TR_OpaqueClassBlock * clazz)
                        J9AccClassFinalizeNeeded |
                        J9AccClassOwnableSynchronizer);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       uintptrj_t classDepthAndFlags = 0;
@@ -92,7 +92,7 @@ J9::ClassEnv::isClassSpecialForStackAllocation(TR_OpaqueClassBlock * clazz)
       return ((classDepthAndFlags & mask)?true:false);
       }
    else
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       {
       if (((J9Class *)clazz)->classDepthAndFlags & mask)
          {
@@ -106,20 +106,20 @@ J9::ClassEnv::isClassSpecialForStackAllocation(TR_OpaqueClassBlock * clazz)
 uintptrj_t
 J9::ClassEnv::classFlagsValue(TR_OpaqueClassBlock * classPointer)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       stream->write(JITServer::MessageType::ClassEnv_classFlagsValue, classPointer);
       return std::get<0>(stream->read<uintptrj_t>());
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classFlags);
    }
 
 uintptrj_t
 J9::ClassEnv::classFlagReservableWordInitValue(TR_OpaqueClassBlock * classPointer)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       uintptrj_t classFlags = 0;
@@ -134,21 +134,21 @@ J9::ClassEnv::classFlagReservableWordInitValue(TR_OpaqueClassBlock * classPointe
 #endif
       return classFlags & J9ClassReservableLockWordInit;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return (TR::Compiler->cls.convertClassOffsetToClassPtr(classPointer)->classFlags) & J9ClassReservableLockWordInit;
    }
 
 uintptrj_t
 J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       uintptrj_t classDepthAndFlags = 0;
       JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_CLASS_DEPTH_AND_FLAGS, (void *)&classDepthAndFlags);
       return (classDepthAndFlags & J9AccClassDepthMask);
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return J9CLASS_DEPTH(TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer));
    }
 
@@ -156,14 +156,14 @@ J9::ClassEnv::classDepthOf(TR_OpaqueClassBlock * clazzPointer)
 uintptrj_t
 J9::ClassEnv::classInstanceSize(TR_OpaqueClassBlock * clazzPointer)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       uintptrj_t totalInstanceSize = 0;
       JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazzPointer, TR::compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_TOTAL_INSTANCE_SIZE, (void *)&totalInstanceSize);
       return totalInstanceSize;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)->totalInstanceSize;
    }
 
@@ -172,82 +172,82 @@ J9ROMClass *
 J9::ClassEnv::romClassOf(TR_OpaqueClassBlock * clazz)
    {
    J9Class *j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazz);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (TR::compInfoPT && TR::compInfoPT->getStream())
       {
       return TR::compInfoPT->getAndCacheRemoteROMClass(j9clazz);
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return j9clazz->romClass;
    }
 
 J9Class **
 J9::ClassEnv::superClassesOf(TR_OpaqueClassBlock * clazz)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       stream->write(JITServer::MessageType::ClassEnv_superClassesOf, clazz);
       return std::get<0>(stream->read<J9Class **>());
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazz)->superclasses;
    }
 
 J9ROMClass *
 J9::ClassEnv::romClassOfSuperClass(TR_OpaqueClassBlock * clazz, size_t index)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       stream->write(JITServer::MessageType::ClassEnv_indexedSuperClassOf, clazz, index);
       J9Class *j9clazz = std::get<0>(stream->read<J9Class *>());
       return TR::compInfoPT->getAndCacheRemoteROMClass(j9clazz);
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return self()->superClassesOf(clazz)[index]->romClass;
    }
 
 J9ITable *
 J9::ClassEnv::iTableOf(TR_OpaqueClassBlock * clazz)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       stream->write(JITServer::MessageType::ClassEnv_iTableOf, clazz);
       return std::get<0>(stream->read<J9ITable*>());
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return (J9ITable*) self()->convertClassOffsetToClassPtr(clazz)->iTable;
    }
 
 J9ITable *
 J9::ClassEnv::iTableNext(J9ITable *current)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       stream->write(JITServer::MessageType::ClassEnv_iTableNext, current);
       return std::get<0>(stream->read<J9ITable*>());
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return current->next;
    }
 
 J9ROMClass *
 J9::ClassEnv::iTableRomClass(J9ITable *current)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       stream->write(JITServer::MessageType::ClassEnv_iTableRomClass, current);
       return std::get<0>(stream->read<J9ROMClass*>());
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return current->interfaceClass->romClass;
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 std::vector<TR_OpaqueClassBlock *>
 J9::ClassEnv::getITable(TR_OpaqueClassBlock *clazz)
    {
@@ -264,7 +264,7 @@ J9::ClassEnv::getITable(TR_OpaqueClassBlock *clazz)
       iTableSerialization.push_back((TR_OpaqueClassBlock *) iTableCur->interfaceClass);
    return iTableSerialization;
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 bool
 J9::ClassEnv::isStringClass(TR_OpaqueClassBlock *clazz)
@@ -347,13 +347,13 @@ J9::ClassEnv::isClassInitialized(TR::Compilation *comp, TR_OpaqueClassBlock *cla
 bool
 J9::ClassEnv::classHasIllegalStaticFinalFieldModification(TR_OpaqueClassBlock * clazzPointer)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       stream->write(JITServer::MessageType::ClassEnv_classHasIllegalStaticFinalFieldModification, clazzPointer);
       return std::get<0>(stream->read<bool>());
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    J9Class* j9clazz = TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer);
    return J9_ARE_ANY_BITS_SET(j9clazz->classFlags, J9ClassHasIllegalFinalFieldModifications);
    }
@@ -572,7 +572,7 @@ uint8_t *
 J9::ClassEnv::getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *clazz, uint32_t cpIndex, int &classRefLen)
    {
    J9ROMConstantPoolItem *romCP = self()->getROMConstantPool(comp, clazz);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (comp->isOutOfProcessCompilation())
       {
       J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&romCP[cpIndex];
@@ -594,7 +594,7 @@ J9::ClassEnv::getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *cla
                              });
       return (uint8_t *) name;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    J9ROMFieldRef *romFieldRef = (J9ROMFieldRef *)&romCP[cpIndex];
    J9ROMClassRef *romClassRef = (J9ROMClassRef *)&romCP[romFieldRef->classRefCPIndex];
    J9UTF8 *classRefNameUtf8 = J9ROMCLASSREF_NAME(romClassRef);
@@ -606,13 +606,13 @@ J9::ClassEnv::getROMClassRefName(TR::Compilation *comp, TR_OpaqueClassBlock *cla
 J9ROMConstantPoolItem *
 J9::ClassEnv::getROMConstantPool(TR::Compilation *comp, TR_OpaqueClassBlock *clazz)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (comp->isOutOfProcessCompilation())
       {
       J9ROMClass *romClass = TR::compInfoPT->getAndCacheRemoteROMClass(reinterpret_cast<J9Class *>(clazz));
       return (J9ROMConstantPoolItem *) ((UDATA) romClass + sizeof(J9ROMClass));
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    J9ConstantPool *ramCP = reinterpret_cast<J9ConstantPool *>(comp->fej9()->getConstantPoolFromClass(clazz));
    return ramCP->romConstantPool;
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,9 +25,10 @@
 
 #pragma once
 
-#if defined(JITSERVER_SUPPORT)
+#include "j9.h"
+#if defined(J9VM_OPT_JITSERVER)
 #include "compile/CompilationTypes.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #include "control/CompilationPriority.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 
@@ -41,9 +42,9 @@
 
 namespace TR { class CompilationInfoPerThreadBase; }
 class TR_OptimizationPlan;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 namespace JITServer { class ServerStream; }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 namespace TR { class Monitor; }
 struct J9JITConfig;
 struct J9VMThread;
@@ -66,7 +67,7 @@ struct TR_MethodToBeCompiled
    void releaseSlotMonitor(J9VMThread *vmThread);
    void setAotCodeToBeRelocated(const void *m);
    bool isAotLoad() const { return _doAotLoad; }
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    bool isRemoteCompReq() const { return _remoteCompReq; } // at the client
    void setRemoteCompReq() { _remoteCompReq = true; }
    void unsetRemoteCompReq() { _remoteCompReq = false; }
@@ -77,7 +78,7 @@ struct TR_MethodToBeCompiled
 #else
    bool isRemoteCompReq() const { return false; } // at the client
    bool isOutOfProcessCompReq() const { return false; } // at the server
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR_MethodToBeCompiled *_next;
    TR::IlGeneratorMethodDetails _methodDetailsStorage;
@@ -132,13 +133,13 @@ struct TR_MethodToBeCompiled
    uint8_t                _weight; // Up to 256 levels of weight
    bool                   _hasIncrementedNumCompThreadsCompilingHotterMethods;
    uint8_t                _jitStateWhenQueued;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    bool                   _remoteCompReq; // Comp request should be sent remotely to JITServer
    JITServer::ServerStream  *_stream; // A non-NULL field denotes an out-of-process compilation request
    char                  *_clientOptions;
    size_t                 _clientOptionsSize;
    TR_Hotness             _origOptLevel; //  Cache original optLevel when transforming a remote sync compilation to a local cheap one
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    }; // TR_MethodToBeCompiled
 
 

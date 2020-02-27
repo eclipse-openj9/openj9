@@ -186,10 +186,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<description>BuildSpec represents a Java 9x configuration.</description>
 		<ifRemoved></ifRemoved>
 	</flag>
-	<flag id="build_jitserver">
-		<description>JITServer support is enabled in the buildspec.</description>
-		<ifRemoved></ifRemoved>
-	</flag>
 	<flag id="build_openj9">
 		<description>Buildspec compiles sources with openjdk.</description>
 		<ifRemoved>Openj9 clone,make jobs longer run on this buildspec.</ifRemoved>
@@ -1772,6 +1768,10 @@ Only available on zOS</description>
 		<requires>
 			<require flag="module_ifa"/>
 		</requires>
+	</flag>
+	<flag id="opt_jitserver">
+		<description>JITServer support is enabled in the buildspec.</description>
+		<ifRemoved></ifRemoved>
 	</flag>
 	<flag id="opt_jvmti">
 		<description>Support for the JVMTI interface</description>

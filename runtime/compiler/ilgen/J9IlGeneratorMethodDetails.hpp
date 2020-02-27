@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ namespace TR { class SymbolReferenceTable;}
 
 namespace J9
 {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 enum IlGeneratorMethodDetailsType
    {
    EMPTY = 0,
@@ -68,7 +68,7 @@ enum IlGeneratorMethodDetailsType
    SHAREABLE_THUNK = 1<<6,
    CUSTOM_THUNK = 1<<7,
    };
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 class OMR_EXTENSIBLE IlGeneratorMethodDetails : public OMR::IlGeneratorMethodDetailsConnector
    {
@@ -94,12 +94,12 @@ public:
 
    static TR::IlGeneratorMethodDetails * clone(TR::IlGeneratorMethodDetails & storage, const TR::IlGeneratorMethodDetails & other);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    // Constructs a new IlGeneratorMethodDetails object of given type based on an existing TR::IlGeneratorMethodDetails object (other).
    // The existing TR::IlGeneratorMethodDetails object (other) is obtained through de-serialization. It is missing the vtable pointer.
    // Therefore the new object instance type cannot be determined through the virtual function calls such as other.isOrdinaryMethod(), etc.
    static TR::IlGeneratorMethodDetails * clone(TR::IlGeneratorMethodDetails & storage, const TR::IlGeneratorMethodDetails & other, const IlGeneratorMethodDetailsType type);
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    virtual const char * name() const { return "OrdinaryMethod"; }
 
@@ -113,9 +113,9 @@ public:
 
    J9Method *getMethod() const { return _method; }
    virtual J9Class *getClass() const;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    IlGeneratorMethodDetailsType getType() const;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    virtual const J9ROMClass *getRomClass() const;
    virtual const J9ROMMethod *getRomMethod() const;
 

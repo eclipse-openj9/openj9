@@ -82,7 +82,7 @@ PRODUCT_SLINK=$(J9LIBS) $(J9LIBS)
 # Optional project-specific settings
 -include $(JIT_MAKE_DIR)/toolcfg/common-extra.mk
 
-ifneq ($(JITSERVER_SUPPORT),)
+ifneq ($(J9VM_OPT_JITSERVER),)
 #
 # Networking
 #

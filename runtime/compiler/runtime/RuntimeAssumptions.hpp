@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -163,7 +163,7 @@ class TR_PersistentClassInfo : public TR_Link0<TR_PersistentClassInfo>
    friend class TR_ClassQueries;
    friend class J9::Options;
    friend class ::OMR::Options;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    friend class FlatPersistentClassInfo;
 #endif
 
@@ -233,7 +233,7 @@ class TR_AddressSet
       _maxAddressRanges(maxAddressRanges)
       {}
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    void destroy();
    void getRanges(std::vector<TR_AddressRange> &ranges); // copies the address ranges stored in the current object into a vector
    void setRanges(const std::vector<TR_AddressRange> &ranges); // loads the address ranges from the vector given as parameter
@@ -287,7 +287,7 @@ class TR_UnloadedClassPicSite : public OMR::ValueModifyRuntimeAssumption
    uint32_t    _size;
    };
 
-#ifdef JITSERVER_SUPPORT
+#ifdef J9VM_OPT_JITSERVER
 // The following needs to have enough fields to cover any possible
 // runtime assumption that we may want to send from the server to the client
 struct SerializedRuntimeAssumption
@@ -304,6 +304,6 @@ struct SerializedRuntimeAssumption
    uintptrj_t _key;
    intptr_t  _offsetFromStartPC; // can be negative
    };
-#endif // JITSERVER_SUPPORT
+#endif // J9VM_OPT_JITSERVER
 
 #endif

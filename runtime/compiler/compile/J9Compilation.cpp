@@ -67,7 +67,7 @@
 bool firstCompileStarted = false;
 
 // JITSERVER_TODO: disabled to allow for JITServer
-#if !defined(JITSERVER_SUPPORT)
+#if !defined(J9VM_OPT_JITSERVER)
 void *operator new(size_t size)
    {
 #if defined(DEBUG)
@@ -92,7 +92,7 @@ void operator delete(void *)
    {
    TR_ASSERT(0, "Invalid use of global operator delete");
    }
-#endif /* !defined(JITSERVER_SUPPORT) */
+#endif /* !defined(J9VM_OPT_JITSERVER) */
 
 
 
@@ -123,9 +123,9 @@ const char * callingContextNames[] = {
    "LAST_CONTEXT"
 };
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 bool J9::Compilation::_outOfProcessCompilation = false;
-#endif  /* defined(JITSERVER_SUPPORT) */
+#endif  /* defined(J9VM_OPT_JITSERVER) */
 
 J9::Compilation::Compilation(int32_t id,
       J9VMThread *j9vmThread,
@@ -177,10 +177,10 @@ J9::Compilation::Compilation(int32_t id,
    _profileInfo(NULL),
    _skippedJProfilingBlock(false),
    _reloRuntime(reloRuntime),
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    _remoteCompilation(false),
    _serializedRuntimeAssumptions(getTypedAllocator<SerializedRuntimeAssumption>(self()->allocator())),
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    _osrProhibitedOverRangeOfTrees(false)
    {
    _symbolValidationManager = new (self()->region()) TR::SymbolValidationManager(self()->region(), compilee);

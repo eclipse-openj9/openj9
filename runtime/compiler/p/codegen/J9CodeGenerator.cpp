@@ -132,7 +132,7 @@ J9::Power::CodeGenerator::canEmitDataForExternallyRelocatableInstructions()
    // for OR'ing is that sometimes usefule information such as flags and hints can be stored during compilation in these data fields).
    // Hence, for the relocation to be applied correctly, we must ensure that the data fields inside the instruction
    // initially are zero.
-#ifdef JITSERVER_SUPPORT
+#ifdef J9VM_OPT_JITSERVER
    return !self()->comp()->compileRelocatableCode() && !self()->comp()->isOutOfProcessCompilation();
 #endif
    return !self()->comp()->compileRelocatableCode();

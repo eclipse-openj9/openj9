@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,11 +26,11 @@
 #include "env/VMJ9.h"
 #include "x/runtime/X86Runtime.hpp"
 #include "env/JitConfig.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "runtime/JITClientSession.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 // This is a workaround to avoid J9_PROJECT_SPECIFIC macros in x/env/OMRCPU.cpp
 // Without this definition, we get an undefined symbol of JITConfig::instance() at runtime
@@ -80,13 +80,13 @@ CPU::hasPopulationCountInstruction()
 TR_ProcessorFeatureFlags
 CPU::getProcessorFeatureFlags()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_processorFeatureFlags;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    TR_ProcessorFeatureFlags processorFeatureFlags = { {self()->getX86ProcessorFeatureFlags(), self()->getX86ProcessorFeatureFlags2(), self()->getX86ProcessorFeatureFlags8()} };
    return processorFeatureFlags;
    }
@@ -106,39 +106,39 @@ CPU::isCompatible(TR_Processor processorSignature, TR_ProcessorFeatureFlags proc
 uint32_t
 CPU::getX86ProcessorFeatureFlags()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_processorFeatureFlags.featureFlags[0];
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return self()->queryX86TargetCPUID()->_featureFlags;
    }
 
 uint32_t
 CPU::getX86ProcessorFeatureFlags2()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_processorFeatureFlags.featureFlags[1];
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return self()->queryX86TargetCPUID()->_featureFlags2;
    }
 
 uint32_t
 CPU::getX86ProcessorFeatureFlags8()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_processorFeatureFlags.featureFlags[2];
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return self()->queryX86TargetCPUID()->_featureFlags8;
    }
 

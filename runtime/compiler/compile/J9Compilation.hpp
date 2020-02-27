@@ -57,7 +57,7 @@ class TR_J9VM;
 class TR_AccessedProfileInfo;
 class TR_RelocationRuntime;
 namespace TR { class IlGenRequest; }
-#ifdef JITSERVER_SUPPORT
+#ifdef J9VM_OPT_JITSERVER
 struct SerializedRuntimeAssumption;
 #endif
 
@@ -316,13 +316,13 @@ class OMR_EXTENSIBLE Compilation : public OMR::CompilationConnector
 
    bool incompleteOptimizerSupportForReadWriteBarriers();
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    static bool isOutOfProcessCompilation() { return _outOfProcessCompilation; } // server side
    static void setOutOfProcessCompilation() { _outOfProcessCompilation = true; }
    bool isRemoteCompilation() const { return _remoteCompilation; } // client side
    void setRemoteCompilation() { _remoteCompilation = true; }
    TR::list<SerializedRuntimeAssumption*>& getSerializedRuntimeAssumptions() { return _serializedRuntimeAssumptions; }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *getSymbolValidationManager() { return _symbolValidationManager; }
 
@@ -413,7 +413,7 @@ private:
 
    TR_RelocationRuntime *_reloRuntime;
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    // This list contains assumptions created during the compilation at the JITServer
    // It needs to be sent to the client at the end of compilation
    TR::list<SerializedRuntimeAssumption*> _serializedRuntimeAssumptions;
@@ -423,7 +423,7 @@ private:
    // The following flag is set when a request to complete this compilation
    // has been sent to a remote VM (client side in JITServer)
    bool _remoteCompilation;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::SymbolValidationManager *_symbolValidationManager;
    bool _osrProhibitedOverRangeOfTrees;

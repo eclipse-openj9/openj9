@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,9 +25,9 @@
 #include "compile/InlineBlock.hpp"
 #include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "env/j9methodServer.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #include "env/VMJ9.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -437,7 +437,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
    size = calltarget->_myCallSite->_isIndirectCall ? 5 : 0;
    TR_J9ByteCode bc = bci.first(), nextBC;
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (comp()->isOutOfProcessCompilation())
       {
       // JITServer optimization:
@@ -446,7 +446,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
       auto calleeMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(calltarget->_calleeMethod);
       calleeMethod->cacheResolvedMethodsCallees();
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    for (; bc != J9BCunknown; bc = bci.next())
       {

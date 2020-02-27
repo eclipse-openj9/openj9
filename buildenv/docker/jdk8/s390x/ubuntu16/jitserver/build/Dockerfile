@@ -1,4 +1,4 @@
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,8 +37,6 @@ FROM openj9:latest
 
 ARG openj9_repo=https://github.com/eclipse/openj9.git
 ARG omr_repo=https://github.com/eclipse/openj9-omr.git
-
-ENV JITSERVER_SUPPORT=1
 
 RUN apt-get update \
  && apt-get install -qq -y --no-install-recommends \
@@ -82,7 +80,7 @@ WORKDIR /root
 RUN git clone https://github.com/ibmruntimes/openj9-openjdk-jdk8 \
  && cd openj9-openjdk-jdk8 \
  && bash ./get_source.sh -openj9-repo=$openj9_repo -omr-repo=$omr_repo \
- && bash ./configure --with-freemarker-jar=/root/freemarker.jar \
+ && bash ./configure --with-freemarker-jar=/root/freemarker.jar --enable-jitserver\
  && make all
 
 # Clean up

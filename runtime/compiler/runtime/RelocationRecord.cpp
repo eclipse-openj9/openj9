@@ -55,11 +55,11 @@
 #include  "runtime/SymbolValidationManager.hpp"
 #include "env/VMJ9.h"
 #include "control/rossa.h"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "control/MethodToBeCompiled.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 // TODO: move this someplace common for RuntimeAssumptions.cpp and here
 #if defined(__IBMCPP__) && !defined(AIXPPC) && !defined(LINUXPPC)
@@ -1603,7 +1603,7 @@ TR_RelocationRecordDataAddress::applyRelocation(TR_RelocationRuntime *reloRuntim
    {
    uint8_t *newAddress = findDataAddress(reloRuntime, reloTarget);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    RELO_LOG(reloRuntime->reloLogger(), 6, "applyRelocation old ptr %p, new ptr %p\n", reloTarget->loadPointer(reloLocation), newAddress);
 #endif
 
@@ -1757,11 +1757,11 @@ TR_RelocationRecordBodyInfo::applyRelocation(TR_RelocationRuntime *reloRuntime, 
    {
    J9JITExceptionTable *exceptionTable = reloRuntime->exceptionTable();
    reloTarget->storeAddress((uint8_t *) exceptionTable->bodyInfo, reloLocation);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    fixPersistentMethodInfo((void *)exceptionTable, !reloRuntime->fej9()->_compInfoPT->getMethodBeingCompiled()->isAotLoad());
 #else
    fixPersistentMethodInfo((void *)exceptionTable, false);
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return 0;
    }
 

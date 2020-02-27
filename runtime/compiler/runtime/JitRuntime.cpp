@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1522,7 +1522,7 @@ uint8_t *compileMethodHandleThunk(j9object_t methodHandle, j9object_t arg, J9VMT
       TR_VerboseLog::vlogRelease();
       }
    bool disabled = false;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    // Do not allow local compilations in JITServer server mode
    TR::CompilationInfo * compInfo = getCompilationInfo(jitConfig);
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)

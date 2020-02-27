@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,9 +30,9 @@
 #include "env/jittypes.h"
 #include "runtime/RelocationRecord.hpp"
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 class TR_J2IThunk;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 /* Mfence patching constants */
 
@@ -76,9 +76,9 @@ class TR_X86RelocationTarget : public TR_RelocationTarget
       
 
       virtual void performThunkRelocation(uint8_t *thunkAddress, uintptr_t vmHelper);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       virtual void performInvokeExactJ2IThunkRelocation(TR_J2IThunk *thunk);
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
       virtual bool useTrampoline(uint8_t * helperAddress, uint8_t *baseLocation) { return false; }
 

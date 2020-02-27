@@ -105,7 +105,7 @@ CX_FLAGS+=\
     -fno-strict-aliasing \
     -fstack-protector
 
-ifneq ($(JITSERVER_SUPPORT),)
+ifneq ($(J9VM_OPT_JITSERVER),)
     CXX_FLAGS+=\
         -std=c++11
 else
@@ -138,10 +138,6 @@ ifeq ($(HOST_ARCH),x)
         CX_DEFINES+=J9HAMMER
         CX_FLAGS+=-m64 -fPIC
     endif
-
-    ifneq ($(JITSERVER_SUPPORT),)
-        CX_DEFINES+=JITSERVER_SUPPORT
-    endif
 endif
 
 ifeq ($(HOST_ARCH),p)
@@ -163,10 +159,6 @@ ifeq ($(HOST_ARCH),p)
         CX_DEFINES+=ENABLE_SPMD_SIMD
         CX_FLAGS+=-qaltivec -qarch=pwr7 -qtune=pwr7
     endif
-
-    ifneq ($(JITSERVER_SUPPORT),)
-        CX_DEFINES+=JITSERVER_SUPPORT
-    endif
 endif
 
 ifeq ($(HOST_ARCH),z)
@@ -181,10 +173,6 @@ ifeq ($(HOST_ARCH),z)
     endif
 
     CX_FLAGS_DEBUG+=-gdwarf-2
-
-    ifneq ($(JITSERVER_SUPPORT),)
-        CX_DEFINES+=JITSERVER_SUPPORT
-    endif
 endif
 
 ifeq ($(HOST_ARCH),arm)
@@ -526,7 +514,7 @@ endif
 
 SOLINK_FLAGS+=$(SOLINK_FLAGS_EXTRA)
 
-ifneq ($(JITSERVER_SUPPORT),)
+ifneq ($(J9VM_OPT_JITSERVER),)
     #
     # Setup protobuf
     #
@@ -550,4 +538,4 @@ ifneq ($(JITSERVER_SUPPORT),)
         C_INCLUDES+=$(OPENSSL_DIR)
         CXX_INCLUDES+=$(OPENSSL_DIR)
     endif
-endif # JITSERVER_SUPPORT
+endif # J9VM_OPT_JITSERVER
