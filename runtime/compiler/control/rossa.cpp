@@ -1868,13 +1868,40 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
 #if defined(J9VM_OPT_SHARED_CLASSES)
    if (isSharedAOT)
       {
-      /* If AOT Shared Classes is turned ON, perform compatibility checks for AOT Shared Classes */
-      if (0) //!validateSharedClassAOTHeader(javaVM, curThread, compInfo))
+      bool validateSCC = true;
+
+#if defined(J9VM_OPT_JITSERVER)
+      if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
+         validateSCC = false;
+#endif
+
+      if (validateSCC)
          {
-         TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
-         TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
-         TR::Options::setSharedClassCache(false);
-         TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+         /* If AOT Shared Classes is turned ON, perform compatibility checks for AOT Shared Classes
+          *
+          * This check has to be done after latePostProcessJIT so that all the necessary JIT options
+          * can be set
+          */
+         TR_J9VMBase *fe = TR_J9VMBase::get(jitConfig, curThread);
+         if (!compInfo->reloRuntime()->validateAOTHeader(fe, curThread))
+            {
+            TR_ASSERT_FATAL(static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader != TR_yes,
+                            "aotValidHeader is TR_yes after failing to validate AOT header\n");
+
+            /* If this is the second run, then failing to validate AOT header will cause aotValidHeader
+             * to be TR_no, in which case the SCC is not valid for use. However, if this is the first
+             * run, then aotValidHeader will be TR_maybe; try to store the AOT Header in this case.
+             */
+            if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_no
+                || !compInfo->reloRuntime()->storeAOTHeader(fe, curThread))
+               {
+               static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader = TR_no;
+               TR::Options::getAOTCmdLineOptions()->setOption(TR_NoLoadAOT);
+               TR::Options::getAOTCmdLineOptions()->setOption(TR_NoStoreAOT);
+               TR::Options::setSharedClassCache(false);
+               TR_J9SharedCache::setSharedCacheDisabledReason(TR_J9SharedCache::AOT_DISABLED);
+               }
+            }
          }
 
       if (TR::Options::getAOTCmdLineOptions()->getOption(TR_NoStoreAOT))
