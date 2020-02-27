@@ -57,9 +57,9 @@
 
 #include "ut_j9dmp.h"
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "omrformatconsts.h"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if defined(J9VM_ENV_DATA64)
 #define SEGMENT_HEADER             "NULL           segment            start              alloc              end                type       size\n"
@@ -1059,14 +1059,14 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 	/* NB : I can't find any code for making this decision in the existing implementation */
 #ifdef J9VM_BUILD_J2SE
 	/* If JITServer enabled, print running mode as JITServer and client UID*/
-#ifdef JITSERVER_SUPPORT
+#ifdef J9VM_OPT_JITSERVER
 	if (_VirtualMachine->internalVMFunctions->isJITServerEnabled(_VirtualMachine))
 		_OutputStream.writeCharacters("a JITServer Server");
 	else if (0 != jitConfig->clientUID)
 		_OutputStream.writeCharacters("a JITServer Client");
 	else
 		_OutputStream.writeCharacters("a standalone");
-#else /* !JITSERVER_SUPPORT */
+#else /* !J9VM_OPT_JITSERVER */
 	_OutputStream.writeCharacters("a standalone");
 #endif
 #else /* !J9VM_BUILD_J2SE */
@@ -1074,13 +1074,13 @@ JavaCoreDumpWriter::writeEnvironmentSection(void)
 #endif
 	_OutputStream.writeCharacters(" JVM\n");
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 	if (0 != jitConfig->clientUID) {
 		_OutputStream.writeCharacters("1CICLIENTID    Client UID ");
 		_OutputStream.writeInteger64(jitConfig->clientUID, "%" OMR_PRIu64);
 		_OutputStream.writeCharacters("\n");
 	}
-#endif /* JITSERVER_SUPPORT */
+#endif /* J9VM_OPT_JITSERVER */
 
 	_OutputStream.writeCharacters("1CIVMIDLESTATE VM Idle State: ");
 	writeVMRuntimeState(_VirtualMachine->internalVMFunctions->getVMRuntimeState(_VirtualMachine));

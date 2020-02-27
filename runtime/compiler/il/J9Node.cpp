@@ -344,7 +344,7 @@ J9::Node::processJNICall(TR::TreeTop * callNodeTreeTop, TR::ResolvedMethodSymbol
         (methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateBytes) ||
         (methodSymbol->getRecognizedMethod() == TR::java_util_zip_CRC32_updateByteBuffer)) &&
        !comp->requiresSpineChecks() 
-      #ifdef JITSERVER_SUPPORT
+      #ifdef J9VM_OPT_JITSERVER
          && !comp->isOutOfProcessCompilation()
       #endif
       )

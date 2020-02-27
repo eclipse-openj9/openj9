@@ -4575,7 +4575,7 @@ break
    // We disable this optimization for JITServer because TR_VMField is not supported on JITServer yet. Once we have decided how to build the data structures
    // required by this optimization efficiently, we can re-enable this optimization.
    if (cg()->getEnforceStoreOrder() && calledMethod->isConstructor()
-      #ifdef JITSERVER_SUPPORT
+      #ifdef J9VM_OPT_JITSERVER
          && !cg()->comp()->isOutOfProcessCompilation()
       #endif
       )
@@ -6944,7 +6944,7 @@ void TR_J9ByteCodeIlGenerator::genFullFence(TR::Node *node)
 
 void TR_J9ByteCodeIlGenerator::performClassLookahead(TR_PersistentClassInfo *classInfo)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    // Do not perform class lookahead in server mode
    if (comp()->isOutOfProcessCompilation())
       return;

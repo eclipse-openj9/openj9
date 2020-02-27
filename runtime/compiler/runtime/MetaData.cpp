@@ -177,7 +177,7 @@ createExceptionTable(
          *(uint32_t *)cursor = e->_instructionHandlerPC, cursor += 4;
          *(uint32_t *)cursor = e->_catchType, cursor += 4;
          if (comp->fej9()->isAOT_DEPRECATED_DO_NOT_USE()
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
             || comp->isOutOfProcessCompilation()
 #endif
             )
@@ -1082,7 +1082,7 @@ populateBodyInfo(
    if (recompInfo)
       {
       if (vm->isAOT_DEPRECATED_DO_NOT_USE()
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
          || comp->isOutOfProcessCompilation()
 #endif
          )
@@ -1148,7 +1148,7 @@ populateBodyInfo(
    else
       {
       if (vm->isAOT_DEPRECATED_DO_NOT_USE()
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
          || comp->isOutOfProcessCompilation()
 #endif
          )
@@ -1231,7 +1231,7 @@ static void populateInlineCalls(
          }
 
       if (!vm->isAOT_DEPRECATED_DO_NOT_USE()
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
          && !comp->isOutOfProcessCompilation()
 #endif
          ) // For AOT, we should only have returned resolved info about a method if the method came from same class loaders.
@@ -1489,14 +1489,14 @@ createMethodMetaData(
 
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
    if (vm->isAOT_DEPRECATED_DO_NOT_USE()
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       || comp->isOutOfProcessCompilation()
 #endif
       )
       {
       TR::CodeCache * codeCache = comp->cg()->getCodeCache(); // MCT
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (!comp->isOutOfProcessCompilation())
 #endif
          /* Align code caches */
@@ -1579,7 +1579,7 @@ createMethodMetaData(
    populateInlineCalls(comp, vm, data, callSiteCursor, numberOfMapBytes);
 
    if (!(vm->_jitConfig->runtimeFlags & J9JIT_TOSS_CODE) && !vm->isAOT_DEPRECATED_DO_NOT_USE()
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       && !comp->isOutOfProcessCompilation()
 #endif
       )

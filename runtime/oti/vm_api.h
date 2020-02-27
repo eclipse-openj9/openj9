@@ -1625,7 +1625,7 @@ registerPredefinedHandler(J9JavaVM *vm, U_32 signal, void **oldOSHandler);
 IDATA
 registerOSHandler(J9JavaVM *vm, U_32 signal, void *newOSHandler, void **oldOSHandler);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 /**
  * @brief checks if the runtime flag for enabling JITServer is set or not
  *
@@ -1636,7 +1636,7 @@ registerOSHandler(J9JavaVM *vm, U_32 signal, void *newOSHandler, void **oldOSHan
 BOOLEAN
 isJITServerEnabled(J9JavaVM *vm);
 
-#endif /* JITSERVER_SUPPORT */
+#endif /* J9VM_OPT_JITSERVER */
 
 /* ---------------- romutil.c ---------------- */
 

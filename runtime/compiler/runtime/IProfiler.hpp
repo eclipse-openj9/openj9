@@ -214,7 +214,7 @@ public:
    // returns the number of bytes the equivalent storage structure needs
    virtual uint32_t                   getBytesFootprint() = 0;
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    // Serialization used for JITServer
    // not sufficient for persisting to the shared cache
    virtual uint32_t canBeSerialized(TR::PersistentInfo *info) { return IPBC_ENTRY_CAN_PERSIST; }
@@ -314,7 +314,7 @@ public:
    virtual void setInvalid() { data = IPROFILING_INVALID; }
    virtual TR_IPBCDataFourBytes  *asIPBCDataFourBytes() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataFourBytesStorage);}
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void deserialize(TR_IPBCDataStorageHeader *storage);
 #endif
@@ -372,7 +372,7 @@ public:
    virtual void setInvalid() { data[0] = IPROFILING_INVALID; }
    virtual TR_IPBCDataEightWords  *asIPBCDataEightWords() { return this; }
    virtual uint32_t getBytesFootprint() {return sizeof(TR_IPBCDataEightWordsStorage);}
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void deserialize(TR_IPBCDataStorageHeader *storage);
 #endif
@@ -426,7 +426,7 @@ public:
    virtual void setInvalid() { _csInfo.setClazz(0, (TR::Compiler->om.compressObjectReferences() ? IPROFILING_INVALID_COMPRESSED : IPROFILING_INVALID)); }
    virtual uint32_t getBytesFootprint() {return sizeof (TR_IPBCDataCallGraphStorage);}
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    virtual uint32_t canBeSerialized(TR::PersistentInfo *info);
    virtual void serialize(uintptrj_t methodStartAddress, TR_IPBCDataStorageHeader *storage, TR::PersistentInfo *info);
    virtual void deserialize(TR_IPBCDataStorageHeader *storage);

@@ -347,7 +347,7 @@ private:
    bool replaceStatic(TR::Node* node, char* dstClassName, char* staticName, char* type);
 
    uintptrj_t walkReferenceChain(TR::Node *node, uintptrj_t receiver);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    void packReferenceChainOffsets(TR::Node *node, std::vector<uintptrj_t>& listOfOffsets);
 #endif
 

@@ -44,10 +44,10 @@
 #include "env/IO.hpp"
 #include "runtime/RelocationRuntime.hpp"
 #include "env/J9SegmentCache.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "env/VMJ9Server.hpp"
 #include "env/PersistentCollections.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #define METHOD_POOL_SIZE_THRESHOLD 64
 #define MAX_SAMPLING_FREQUENCY     0x7FFFFFFF
@@ -67,14 +67,14 @@ namespace TR { class CompilationInfo; }              // forward declaration
 struct TR_MethodToBeCompiled;
 class TR_ResolvedMethod;
 class TR_RelocationRuntime;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 class ClientSessionData;
 namespace JITServer
    {
    class ClientStream;
    class ServerStream;
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 enum CompilationThreadState
    {
@@ -250,23 +250,23 @@ class CompilationInfoPerThreadBase
    static TR::FILE *getPerfFile() { return _perfFile; } // used on Linux for perl tool support
    static void setPerfFile(TR::FILE *f) { _perfFile = f; }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    void                     setClientData(ClientSessionData *data) { _cachedClientDataPtr = data; }
    ClientSessionData       *getClientData() const { return _cachedClientDataPtr; }
 
    void                     setClientStream(JITServer::ClientStream *stream) { _clientStream = stream; }
    JITServer::ClientStream *getClientStream() const { return _clientStream; }
    bool shouldPerformLocalComp(const TR_MethodToBeCompiled *entry);
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    protected:
 
    TR::CompilationInfo &        _compInfo;
    J9JITConfig * const          _jitConfig;
    TR_SharedCacheRelocationRuntime _sharedCacheReloRuntime;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    TR_JITServerRelocationRuntime _remoteCompileReloRuntime;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    int32_t const                _compThreadId; // unique number starting from 0; Only used for compilation on separate thread
    bool const                   _onSeparateThread;
 
@@ -287,10 +287,10 @@ class CompilationInfoPerThreadBase
 
    static TR::FILE *_perfFile; // used on Linux for perl tool support
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    ClientSessionData * _cachedClientDataPtr;
    JITServer::ClientStream * _clientStream;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 private:
    void logCompilationSuccess(
@@ -384,7 +384,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    CpuSelfThreadUtilization& getCompThreadCPU() { return _compThreadCPU; }
    virtual void           freeAllResources();
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    TR_J9ServerVM            *getServerVM() const { return _serverVM; }
    void                      setServerVM(TR_J9ServerVM *vm) { _serverVM = vm; }
    TR_J9SharedCacheServerVM *getSharedCacheServerVM() const { return _sharedCacheServerVM; }
@@ -393,7 +393,7 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    J9ROMClass               *getAndCacheRemoteROMClass(J9Class *, TR_Memory *trMemory=NULL);
    J9ROMClass               *getRemoteROMClassIfCached(J9Class *);
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *getClassesThatShouldNotBeNewlyExtended() const { return _classesThatShouldNotBeNewlyExtended; }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    protected:
    J9::J9SegmentCache initializeSegmentCache(J9::J9SegmentProvider &segmentProvider);
@@ -410,19 +410,19 @@ class CompilationInfoPerThread : public TR::CompilationInfoPerThreadBase
    bool                   _initializationSucceeded;
    bool                   _isDiagnosticThread;
    CpuSelfThreadUtilization _compThreadCPU;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    TR_J9ServerVM         *_serverVM;
    TR_J9SharedCacheServerVM *_sharedCacheServerVM;
    // The following hastable caches <classLoader,classname> --> <J9Class> mappings
    // The cache only lives during a compilation due to class unloading concerns
    PersistentUnorderedSet<TR_OpaqueClassBlock*> *_classesThatShouldNotBeNewlyExtended;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    }; // CompilationInfoPerThread
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 extern thread_local TR::CompilationInfoPerThread * compInfoPT;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 } // namespace TR
 

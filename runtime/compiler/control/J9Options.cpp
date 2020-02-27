@@ -23,9 +23,9 @@
 #include "control/J9Options.hpp"
 
 #include <algorithm>
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include <random>
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #include <ctype.h>
 #include <stdint.h>
 #include "jitprotos.h"
@@ -34,10 +34,10 @@
 #include "j9cfg.h"
 #include "j9modron.h"
 #include "jvminit.h"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "j9vmnls.h"
 #include "omrformatconsts.h"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #include "codegen/CodeGenerator.hpp"
 #include "compile/Compilation.hpp"
 #include "control/Recompilation.hpp"
@@ -50,10 +50,10 @@
 #include "control/CompilationRuntime.hpp"
 #include "control/CompilationThread.hpp"
 #include "runtime/IProfiler.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "env/j9methodServer.hpp"
 #include "control/JITServerCompilationThread.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if defined(J9VM_OPT_SHARED_CLASSES)
 #include "j9jitnls.h"
@@ -73,11 +73,11 @@ bool enableCompiledMethodLoadHookOnly = false;
 bool J9::Options::_doNotProcessEnvVars = false; // set through XX options in Java
 bool J9::Options::_reportByteCodeInfoAtCatchBlock = false;
 int32_t J9::Options::_samplingFrequencyInIdleMode = 1000; // ms
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 int32_t J9::Options::_statisticsFrequency = 0; // ms
 uint32_t J9::Options::_compilationSequenceNumber = 0;
 static const size_t JITSERVER_LOG_FILENAME_MAX_SIZE = 1025;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 int32_t J9::Options::_samplingFrequencyInDeepIdleMode = 100000; // ms
 int32_t J9::Options::_resetCountThreshold = 0; // Disable the feature
 int32_t J9::Options::_scorchingSampleThreshold = 240;
@@ -956,10 +956,10 @@ TR::OptionTable OMR::Options::_feOptions[] = {
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_smallMethodBytecodeSizeThresholdForCold, 0, "F%d", NOT_IN_SUBSET},
    {"stack=",             "C<nnn>\tcompilation thread stack size in KB",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_stackSize, 0, " %d", NOT_IN_SUBSET},
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    {"statisticsFrequency=", "R<nnn>\tnumber of milliseconds between statistics print",
         TR::Options::setStaticNumeric, (intptrj_t)&TR::Options::_statisticsFrequency, 0, "F%d", NOT_IN_SUBSET},
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    {"testMode",           "D\tcompile but do not run the compiled code",  SET_JITCONFIG_RUNTIME_FLAG(J9JIT_TESTMODE) },
 #if defined(TR_HOST_X86) || defined(TR_HOST_POWER)
    {"tlhPrefetchBoundaryLineCount=",    "O<nnn>\tallocation prefetch boundary line for allocation prefetch",
@@ -1042,7 +1042,7 @@ bool J9::Options::showPID()
    return false;
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 static std::string readFileToString(char *fileName)
    {
    I_32 fileId = j9jit_fopen_existing(fileName);
@@ -1123,7 +1123,7 @@ static void JITServerParseCommonOptions(J9JavaVM *vm, TR::CompilationInfo *compI
          compInfo->setJITServerSslRootCerts(cert);
       }
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 bool
 J9::Options::fePreProcess(void * base)
@@ -1962,7 +1962,7 @@ J9::Options::fePreProcess(void * base)
    if (!TR::Compiler->target.cpu.isZ())
       self()->setOption(TR_DisableAOTBytesCompression);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    static bool JITServerAlreadyParsed = false;
    if (!JITServerAlreadyParsed) // Avoid processing twice for AOT and JIT and produce duplicate messages
       {
@@ -2028,7 +2028,7 @@ J9::Options::fePreProcess(void * base)
          jitConfig->clientUID = 0;
          }
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if (defined(TR_HOST_X86) || defined(TR_HOST_S390) || defined(TR_HOST_POWER)) && defined(TR_TARGET_64BIT)
    self()->setOption(TR_EnableSymbolValidationManager);
@@ -2067,7 +2067,7 @@ J9::Options::openLogFiles(J9JITConfig *jitConfig)
       ((TR_JitPrivateConfig*)jitConfig->privateConfig)->rtLogFile = fileOpen(self(), jitConfig, rtLogFileName, "wb", true, false);
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 void
 J9::Options::setupJITServerOptions()
    {
@@ -2120,7 +2120,7 @@ J9::Options::setupJITServerOptions()
       }
 
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 bool
 J9::Options::fePostProcessJIT(void * base)
@@ -2214,9 +2214,9 @@ J9::Options::fePostProcessJIT(void * base)
          }
       }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    self()->setupJITServerOptions();
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    return true;
    }
@@ -2239,9 +2239,9 @@ J9::Options::fePostProcessAOT(void * base)
          }
       }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    self()->setupJITServerOptions();
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    return true;
    }
@@ -2660,7 +2660,7 @@ J9::Options::printPID()
    ((TR_J9VMBase *)_fe)->printPID();
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 void getTRPID(char *buf);
 
 static void
@@ -2982,7 +2982,7 @@ J9::Options::closeLogFileForClientOptions()
       _logFile = NULL;
       }
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if 0
 char*

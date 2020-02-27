@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ endif
 jit: $(JIT_PRODUCT_SONAME)
 
 $(JIT_PRODUCT_SONAME): $(JIT_PRODUCT_OBJECTS) | jit_createdirs
-ifneq ($(JITSERVER_SUPPORT),)
+ifneq ($(J9VM_OPT_JITSERVER),)
 	$(SOLINK_CMD) -shared $(SOLINK_FLAGS) $(patsubst %,-L%,$(SOLINK_LIBPATH)) -o $@ $(SOLINK_PRE_OBJECTS) $(JIT_PRODUCT_OBJECTS) $(SOLINK_POST_OBJECTS) $(LINK_GROUP_START) $(patsubst %,-l%,$(SOLINK_SLINK)) $(SOLINK_SLINK_STATIC) $(LINK_GROUP_END) $(SOLINK_EXTRA_ARGS)
 else
 	$(SOLINK_CMD) -shared $(SOLINK_FLAGS) $(patsubst %,-L%,$(SOLINK_LIBPATH)) -o $@ $(SOLINK_PRE_OBJECTS) $(JIT_PRODUCT_OBJECTS) $(SOLINK_POST_OBJECTS) $(LINK_GROUP_START) $(patsubst %,-l%,$(SOLINK_SLINK)) $(LINK_GROUP_END) $(SOLINK_EXTRA_ARGS)
@@ -69,7 +69,7 @@ JIT_DIR_LIST+=$(dir $(JIT_PRODUCT_BUILDNAME_SRC))
 jit_cleanobjs::
 	rm -f $(JIT_PRODUCT_BUILDNAME_SRC)
 
-ifneq ($(JITSERVER_SUPPORT),)
+ifneq ($(J9VM_OPT_JITSERVER),)
 protoc: $(PROTO_GEN_DIR)/compile.pb.h
 $(call RULE.proto,$(PROTO_GEN_DIR)/compile,$(PROTO_DIR)/compile.proto)
 endif

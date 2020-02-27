@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -95,7 +95,7 @@ endif
 #
 .PHONY: all clean cleanobjs cleandeps cleandll
 all: ; @echo SUCCESS - All files are up-to-date
-ifneq ($(JITSERVER_SUPPORT),)
+ifneq ($(J9VM_OPT_JITSERVER),)
 .PHONY : proto
 all : proto
 endif
@@ -103,7 +103,7 @@ clean: ; @echo SUCCESS - All files are cleaned
 cleanobjs: ; @echo SUCCESS - All objects are cleaned
 cleandeps: ; @echo SUCCESS - All dependencies are cleaned
 cleandll: ; @echo SUCCESS - All shared libraries are cleaned
-ifneq ($(JITSERVER_SUPPORT),)
+ifneq ($(J9VM_OPT_JITSERVER),)
 proto: ; @echo SUCCESS - All proto files are recompiled
 endif
 
@@ -111,7 +111,7 @@ endif
 REQUIRE_VARS=$(foreach VAR,$(1),$(if $($(VAR)),,$(error $(VAR) must be set)))
 
 # Verify SDK pointer for non-cleaning targets
-ifneq ($(JITSERVER_SUPPORT),)
+ifneq ($(J9VM_OPT_JITSERVER),)
     ifeq (,$(filter proto clean cleandeps cleandll,$(MAKECMDGOALS)))
         $(call REQUIRE_VARS,J9SRC)
     endif

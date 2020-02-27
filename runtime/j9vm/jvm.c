@@ -62,10 +62,10 @@
 #include "vmi.h"
 #include "vmzipcachehook.h"
 #endif
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "jitserver_api.h"
 #include "jitserver_error.h"
-#endif /* JITSERVER_SUPPORT */
+#endif /* J9VM_OPT_JITSERVER */
 
 
 /* Must include this after j9vm_internal.h */
@@ -291,10 +291,10 @@ static void truncatePath(char *inputPath);
 static jint formatErrorMessage(int errorCode, char *inBuffer, jint inBufferLength);
 #endif
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 static int32_t startJITServer(struct JITServer *);
 static int32_t waitForJITServerTermination(struct JITServer *);
-#endif /* JITSERVER_SUPPORT */
+#endif /* J9VM_OPT_JITSERVER */
 
 /**
  * Preload the VM, Thread, and Port libraries using platform-specific
@@ -1477,7 +1477,7 @@ jint JNICALL JNI_CreateJavaVM(JavaVM **pvm, void **penv, void *vm_args) {
 	return JNI_CreateJavaVM_impl(pvm, penv, vm_args, FALSE);
 }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 int32_t JNICALL
 JITServer_CreateServer(JITServer **jitServer, void *serverArgs)
 {
@@ -1567,7 +1567,7 @@ waitForJITServerTermination(JITServer *jitServer)
 	}
 	return rc;
 }
-#endif /* JITSERVER_SUPPORT */
+#endif /* J9VM_OPT_JITSERVER */
 
 /*
  * Helper method to load and initialize a virtual machine instance.
@@ -1848,11 +1848,11 @@ JNI_CreateJavaVM_impl(JavaVM **pvm, void **penv, void *vm_args, BOOLEAN isJITSer
 	if (VERBOSE_INIT == localVerboseLevel) {
 		createParams.flags |= J9_CREATEJAVAVM_VERBOSE_INIT;
 	}
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 	if (isJITServer) {
 		createParams.flags |= J9_CREATEJAVAVM_START_JITSERVER;
 	}
-#endif /* JITSERVER_SUPPORT */
+#endif /* J9VM_OPT_JITSERVER */
 
 	if (ibmMallocTraceSet) {
 		/* We have no access to the original command line, so cannot

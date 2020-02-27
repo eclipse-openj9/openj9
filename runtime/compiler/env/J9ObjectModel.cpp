@@ -43,10 +43,10 @@
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
 #include "env/VMJ9.h"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationThread.hpp"
 #include "runtime/JITClientSession.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #define DEFAULT_OBJECT_ALIGNMENT (8)
 
@@ -310,13 +310,13 @@ J9::ObjectModel::compressedReferenceShiftOffset()
 int32_t
 J9::ObjectModel::compressedReferenceShift()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_compressedReferenceShift;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    if (compressObjectReferences())
       {
@@ -578,77 +578,77 @@ J9::ObjectModel::decompressReference(TR::Compilation* comp, uintptrj_t compresse
 bool
 J9::ObjectModel::usesDiscontiguousArraylets()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_usesDiscontiguousArraylets;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return _usesDiscontiguousArraylets;
    }
 
 int32_t 
 J9::ObjectModel::arrayletLeafSize() 
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_arrayletLeafSize;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return _arrayLetLeafSize;
    }
 
 int32_t
 J9::ObjectModel::arrayletLeafLogSize() 
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_arrayletLeafLogSize;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return _arrayLetLeafLogSize;
    }
 
 MM_GCReadBarrierType
 J9::ObjectModel::readBarrierType()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_readBarrierType;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return _readBarrierType;
    }
 
 MM_GCWriteBarrierType
 J9::ObjectModel::writeBarrierType()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_writeBarrierType;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return _writeBarrierType;
    }
 
 bool
 J9::ObjectModel::compressObjectReferences()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_compressObjectReferences;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return _compressObjectReferences;
    }

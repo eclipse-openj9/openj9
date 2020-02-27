@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -68,7 +68,7 @@ IlGeneratorMethodDetails::clone(TR::IlGeneratorMethodDetails &storage, const TR:
    }
 
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 TR::IlGeneratorMethodDetails *
 IlGeneratorMethodDetails::clone(TR::IlGeneratorMethodDetails &storage, const TR::IlGeneratorMethodDetails & other, const IlGeneratorMethodDetailsType type)
    {
@@ -94,7 +94,7 @@ IlGeneratorMethodDetails::clone(TR::IlGeneratorMethodDetails &storage, const TR:
    TR_ASSERT(0, "Unexpected IlGeneratorMethodDetails object\n");
    return NULL; // error case
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 
 IlGeneratorMethodDetails::IlGeneratorMethodDetails(const TR::IlGeneratorMethodDetails & other) :
@@ -120,7 +120,7 @@ IlGeneratorMethodDetails::getRomMethod() const
    return J9_ROM_METHOD_FROM_RAM_METHOD(self()->getMethod());
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 IlGeneratorMethodDetailsType
 IlGeneratorMethodDetails::getType() const
    {
@@ -140,7 +140,7 @@ IlGeneratorMethodDetails::getType() const
       }
    return (IlGeneratorMethodDetailsType) type;
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 
 bool

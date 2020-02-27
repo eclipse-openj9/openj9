@@ -235,9 +235,9 @@ class TR_RelocationRuntime {
       uint32_t getNumInlinedAllocRelos() { return 0; }
       uint32_t getNumFailedAllocInlinedRelos() { return 0; }
 #endif
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       virtual J9JITExceptionTable *copyMethodMetaData(J9JITDataCacheHeader *dataCacheHeader);
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    private:
       virtual uint8_t * allocateSpaceInCodeCache(UDATA codeSize)                           { return NULL; }
@@ -369,7 +369,7 @@ private:
       static const UDATA aotHeaderKeyLength;
 };
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 class TR_JITServerRelocationRuntime : public TR_RelocationRuntime {
 public:
       TR_ALLOC(TR_Memory::Relocation)
@@ -388,6 +388,6 @@ private:
       virtual void initializeCacheDeltas();
       virtual void initializeAotRuntimeInfo() override { _classReloAmount = 1; }
 };
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #endif   // RELOCATION_RUNTIME_INCL

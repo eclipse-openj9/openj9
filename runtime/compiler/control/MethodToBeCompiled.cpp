@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,10 +26,10 @@
 #include "control/CompilationRuntime.hpp"
 #include "ilgen/IlGeneratorMethodDetails_inlines.hpp"
 #include "j9.h"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationThread.hpp"
 #include "net/ServerStream.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 int16_t TR_MethodToBeCompiled::_globalIndex = 0;
 
@@ -84,13 +84,13 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
    _GCRrequest = false;
 
    _methodIsInSharedCache = TR_maybe;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    _remoteCompReq = false;
    _stream = NULL;
    _clientOptions = NULL;
    _clientOptionsSize = 0;
    _origOptLevel = unknownHotness;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR_ASSERT_FATAL(_freeTag & ENTRY_IN_POOL_FREE, "initializing an entry which is not free");
 
@@ -100,9 +100,9 @@ void TR_MethodToBeCompiled::initialize(TR::IlGeneratorMethodDetails & details, v
 void
 TR_MethodToBeCompiled::shutdown()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    freeJITServerAllocations();
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    TR::MonitorTable *table = TR::MonitorTable::get();
    if (!table) return;
    table->removeAndDestroy(_monitor);
@@ -145,7 +145,7 @@ TR_MethodToBeCompiled::setAotCodeToBeRelocated(const void *m)
    _optimizationPlan->setIsAotLoad(m!=0);
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 uint64_t 
 TR_MethodToBeCompiled::getClientUID() const
    {
@@ -161,4 +161,4 @@ TR_MethodToBeCompiled::freeJITServerAllocations()
       _clientOptions = NULL;
       }
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */

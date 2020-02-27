@@ -33,7 +33,7 @@
 #include "infra/CriticalSection.hpp"
 #include "runtime/J9RuntimeAssumptions.hpp"
 #include "runtime/RuntimeAssumptions.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationThread.hpp"
 #include "runtime/JITClientSession.hpp"
 #endif
@@ -1162,7 +1162,7 @@ J9::PersistentInfo::ensureUnloadedAddressSetsAreInitialized()
       {
       return true;
       }
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    else if (getRemoteCompilationMode() == JITServer::SERVER)
       {
       // In JITServer::SERVER mode unloaded addresses are maintained per JITClient
@@ -1189,7 +1189,7 @@ J9::PersistentInfo::isUnloadedClass(
       void *v,
       bool yesIReallyDontCareAboutHCR)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (getRemoteCompilationMode() == JITServer::SERVER)
       {
       auto clientData = TR::compInfoPT->getClientData();
@@ -1222,7 +1222,7 @@ J9::PersistentInfo::isObsoleteClass(void *v, TR_FrontEnd *fe)
 bool
 J9::PersistentInfo::isInUnloadedMethod(uintptrj_t address)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    TR_ASSERT(getRemoteCompilationMode() != JITServer::SERVER, "JITServer does not maintain unloaded method ranges, this method should not be called");
 #endif
    OMR::CriticalSection isInUnloadedMethod(assumptionTableMutex);
@@ -1242,7 +1242,7 @@ J9::PersistentInfo::addUnloadedClass(
    _unloadedMethodAddresses->add(startAddress, startAddress+size);
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 void TR_AddressSet::destroy()
    {
    jitPersistentFree(_addressRanges);
