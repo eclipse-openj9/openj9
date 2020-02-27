@@ -62,7 +62,7 @@ j9jit_files(
 
 if(J9VM_OPT_JITSERVER)
 	j9jit_files(
-                runtime/CompileService.cpp
+		runtime/CompileService.cpp
 		runtime/JITClientSession.cpp
 		runtime/JITServerIProfiler.cpp
 		runtime/JITServerStatisticsThread.cpp

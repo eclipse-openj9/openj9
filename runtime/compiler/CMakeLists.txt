@@ -83,7 +83,6 @@ add_custom_target(j9jit_tracegen DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/env/ut_j9ji
 # J9VM_OPT_JITSERVER and protobuf
 if(J9VM_OPT_JITSERVER)
 	message(STATUS "JITServer is supported")
-	add_definitions(-DJ9VM_OPT_JITSERVER)
 
 	include(FindProtobuf)
 	set(Protobuf_USE_STATIC_LIBS ON)

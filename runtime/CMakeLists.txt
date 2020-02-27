@@ -105,9 +105,6 @@ include(cmake/omr_config.cmake)
 if(OPENJ9_BUILD)
 	add_definitions(-DOPENJ9_BUILD)
 endif()
-if (J9VM_OPT_JITSERVER)
-	add_definitions(-DJ9VM_OPT_JITSERVER)
-endif()
 
 # clean up the variables we used
 set(versionStr)

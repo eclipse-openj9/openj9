@@ -215,6 +215,7 @@ extern "C" {
 #cmakedefine J9VM_OPT_INLINE_JSRS
 #cmakedefine J9VM_OPT_INVARIANT_INTERNING
 #cmakedefine J9VM_OPT_JAVA_OFFLOAD_SUPPORT
+#cmakedefine J9VM_OPT_JITSERVER
 #cmakedefine J9VM_OPT_JVMTI
 #cmakedefine J9VM_OPT_JXE_LOAD_SUPPORT
 #cmakedefine J9VM_OPT_MEMORY_CHECK_SUPPORT
