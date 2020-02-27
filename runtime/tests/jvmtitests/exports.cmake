@@ -1,5 +1,5 @@
 ################################################################################
-# Copyright (c) 2019, 2019 IBM Corp. and others
+# Copyright (c) 2019, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -49,6 +49,9 @@ omr_add_exports(jvmtitest
 	Java_com_ibm_jvmti_tests_addToBootstrapClassLoaderSearch_abcl003_addJar
 	Java_com_ibm_jvmti_tests_addToSystemClassLoaderSearch_ascl002_addJar
 	Java_com_ibm_jvmti_tests_addToSystemClassLoaderSearch_ascl003_addJar
+	Java_com_ibm_jvmti_tests_fieldwatch_fw001_startTest
+	Java_com_ibm_jvmti_tests_fieldwatch_fw001_endTest
+	Java_com_ibm_jvmti_tests_fieldwatch_fw001_modifyWatches
 	Java_com_ibm_jvmti_tests_followReferences_fr002_followRefs
 	Java_com_ibm_jvmti_tests_followReferences_fr003_followFromObject
 	Java_com_ibm_jvmti_tests_followReferences_fr003_followFromArrayObject
