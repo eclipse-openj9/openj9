@@ -468,6 +468,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::VM_getVMInfo:
          {
          ClientSessionData::VMInfo vmInfo = {};
+         J9JavaVM * javaVM = vmThread->javaVM;
          vmInfo._systemClassLoader = fe->getSystemClassLoader();
          vmInfo._processID = fe->getProcessID();
          vmInfo._canMethodEnterEventBeHooked = fe->canMethodEnterEventBeHooked();
@@ -500,6 +501,20 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._floatInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactF, false, false, false)->getMethodAddress();
          vmInfo._doubleInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD, false, false, false)->getMethodAddress();
          vmInfo._interpreterVTableOffset = TR::Compiler->vm.getInterpreterVTableOffset();
+         {
+            TR::VMAccessCriticalSection getVMInfo(fe);
+            vmInfo._jlrMethodInvoke = javaVM->jlrMethodInvoke;
+#if defined(J9VM_OPT_SIDECAR)
+            if (javaVM->srMethodAccessor != NULL)
+               vmInfo._srMethodAccessorClass = (TR_OpaqueClassBlock *) J9VM_J9CLASS_FROM_JCLASS(vmThread, javaVM->srMethodAccessor);
+            else
+               vmInfo._srMethodAccessorClass = NULL;
+            if (javaVM->srConstructorAccessor != NULL)
+               vmInfo._srConstructorAccessorClass = (TR_OpaqueClassBlock *) J9VM_J9CLASS_FROM_JCLASS(vmThread, javaVM->srConstructorAccessor);
+            else
+               vmInfo._srConstructorAccessorClass = NULL;
+#endif // J9VM_OPT_SIDECAR
+         }
 
          // For multi-layered SCC support
          std::vector<uintptr_t> listOfCacheStartAddress;

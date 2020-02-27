@@ -692,9 +692,39 @@ TR_J9ServerVM::getStaticReferenceFieldAtAddress(uintptrj_t fieldAddress)
 bool
 TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueClassBlock *clazz)
    {
+   if(!method)
+      {
+      return false;
+      }
+
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   stream->write(JITServer::MessageType::VM_stackWalkerMaySkipFrames, method, clazz);
-   return std::get<0>(stream->read<bool>());
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   
+   if (vmInfo->_jlrMethodInvoke == NULL)
+      {
+      stream->write(JITServer::MessageType::VM_stackWalkerMaySkipFrames, method, clazz);
+      return std::get<0>(stream->read<bool>());
+      }
+   if (vmInfo->_jlrMethodInvoke == ((J9Method *) method))
+      {
+      return true;
+      }
+   if(!clazz)
+      {
+      return false;
+      }
+#if defined(J9VM_OPT_SIDECAR)
+   if (vmInfo->_srMethodAccessorClass != NULL && TR_J9ServerVM::isInstanceOf( clazz, vmInfo->_srMethodAccessorClass ,false))
+      {
+      return true;
+      }
+   if (vmInfo->_srConstructorAccessorClass != NULL && TR_J9ServerVM::isInstanceOf( clazz, vmInfo->_srConstructorAccessorClass ,false))
+      {
+      return true;
+      }
+#endif // J9VM_OPT_SIDECAR
+
+   return false;
    }
 
 bool
