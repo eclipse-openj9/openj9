@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2018 IBM Corp. and others
+Copyright (c) 2017, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -59,6 +59,24 @@ Following these guidelines will help us merge your pull requests smoothly:
 
 5. Please carefully read and adhere to the legal considerations and
    copyright/license requirements outlined below.
+   
+   
+## Building and testing
+
+In order to build OpenJ9, see the [build instructions](https://github.com/eclipse/openj9/tree/master/doc/build-instructions).
+Once the build system is prepared, building consists of a few simple steps. If
+building the original source fails, check the [level of the compiler](https://eclipse.github.io/openj9-docs/openj9_support/)
+being used. 
+
+
+There are a large number of test cases that are run automatically as part of
+the Eclipse OpenJ9 build and test pipeline. The tests can be triggered by
+committers from pull requests. You can see the latest results on the
+[Eclipse OpenJ9 Jenkins instance](https://ci.eclipse.org/openj9/).
+
+The tests can also be run manually on your own machine, refer to the
+[OpenJ9 test quick start guide](https://github.com/eclipse/openj9/blob/master/test/README.md).
+
 
 ## Commit Guidelines
 
