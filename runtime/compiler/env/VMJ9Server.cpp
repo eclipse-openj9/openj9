@@ -702,8 +702,11 @@ TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueC
    
    if (vmInfo->_jlrMethodInvoke == NULL)
       {
-      stream->write(JITServer::MessageType::VM_stackWalkerMaySkipFrames, method, clazz);
-      return std::get<0>(stream->read<bool>());
+      // Cached information could be outdated. Ask the client again.
+      stream->write(JITServer::MessageType::VM_stackWalkerMaySkipFrames, JITServer::Void());
+      vmInfo->_jlrMethodInvoke = std::get<0>(stream->read<J9Method*>());
+      if (vmInfo->_jlrMethodInvoke == NULL)
+         return true;
       }
    if (vmInfo->_jlrMethodInvoke == ((J9Method *) method))
       {

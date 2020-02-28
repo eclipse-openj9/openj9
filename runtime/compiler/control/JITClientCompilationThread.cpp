@@ -566,10 +566,8 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          break;
       case MessageType::VM_stackWalkerMaySkipFrames:
          {
-         auto recv = client->getRecvData<TR_OpaqueMethodBlock *, TR_OpaqueClassBlock *>();
-         TR_OpaqueMethodBlock *method = std::get<0>(recv);
-         TR_OpaqueClassBlock *clazz = std::get<1>(recv);
-         client->write(response, fe->stackWalkerMaySkipFrames(method, clazz));
+         client->getRecvData<JITServer::Void>();
+         client->write(response, vmThread->javaVM->jlrMethodInvoke);
          }
          break;
       case MessageType::VM_hasFinalFieldsInClass:
