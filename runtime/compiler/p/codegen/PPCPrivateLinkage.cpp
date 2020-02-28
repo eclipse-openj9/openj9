@@ -329,7 +329,7 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
       _properties._TOCBaseRegister               = TR::RealRegister::gr16;
       // Volatile GPR (0,2-12) + FPR (0-31) + CCR (0-7) + VR (0-31)
       _properties._numberOfDependencyGPRegisters = 12 + 32 + 8 + 32;
-      self()->setOffsetToFirstParm(0);
+      setOffsetToFirstParm(0);
       _properties._offsetToFirstLocal            = -8;
       }
    else
@@ -345,7 +345,7 @@ J9::Power::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
       else
          // Volatile GPR (0,2-12) + FPR (0-31) + CCR (0-7) + VR (0-31)
          _properties._numberOfDependencyGPRegisters = 12 + 32 + 8 + 32;
-      self()->setOffsetToFirstParm(0);
+      setOffsetToFirstParm(0);
       _properties._offsetToFirstLocal            = -4;
       }
    _properties._computedCallTargetRegister  = TR::RealRegister::gr0; // gr11 = interface, gr12 = virtual, so we need something else for computed

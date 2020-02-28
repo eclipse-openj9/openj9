@@ -163,7 +163,7 @@ TR::ARMLinkageProperties J9::ARM::PrivateLinkage::properties =
 J9::ARM::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
    : J9::PrivateLinkage(cg)
    {
-   self()->setOffsetToFirstParm(0);
+   setOffsetToFirstParm(0);
    }
 
 TR::ARMLinkageProperties& J9::ARM::PrivateLinkage::getProperties()

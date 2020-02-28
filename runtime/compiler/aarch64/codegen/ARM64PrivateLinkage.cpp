@@ -209,7 +209,7 @@ J9::ARM64::PrivateLinkage::PrivateLinkage(TR::CodeGenerator *cg)
 
    // Volatile GPR (0-15, 18) + FPR (0-31) + VFT Reg
    _properties._numberOfDependencyGPRegisters = 17 + 32 + 1;
-   self()->setOffsetToFirstParm(0);
+   setOffsetToFirstParm(0);
    _properties._offsetToFirstLocal            = -8;
    }
 
