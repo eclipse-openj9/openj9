@@ -23,16 +23,27 @@
 #ifndef MESSAGE_BUFFER_H
 #define MESSAGE_BUFFER_H
 
-#include <stdlib.h>
-#include <cstring>
 #include "env/jittypes.h"
 #include "env/TRMemory.hpp"
 
 namespace JITServer
 {
-// A wrapper around a contiguous buffer for storing JITServer message.
-// The buffer is extensible, i.e. it can be reallocated to store a message
-// larger than its current capacity.
+/**
+   @class MessageBuffer
+   @brief A wrapper around a contiguous, persistent memory allocated buffer
+   for storing a JITServer message.
+
+   The buffer is extensible, i.e. when the current capacity is reached, a new,
+   larger buffer can be allocated and data copied there.
+   Since reallocation causes addresses of values inside the buffer to change, read/write operations
+   return an offset into the buffer to indicate the location of data, instead of pointers.
+
+   Method getValueAtOffset returns a pointer to data at a given offset, but be mindful that
+   the pointer might become invalid if more data is added to the buffer.
+
+   Variable _curPtr defines the boundary of the current data. Reading/writing to/from buffer
+   will always advance the pointer.
+ */
 class MessageBuffer
    {
 public:
@@ -44,25 +55,73 @@ public:
       }
 
 
-   uint32_t size();
-   char *getBufferStart() { return _storage; }
+   /**
+      @brief Get the current active size of the buffer.
 
-   uint32_t offset(char *addr) const { return addr - _storage; }
+      Note: this returns the number of bytes written to the buffer so far,
+      NOT the overall capacity of the buffer. Capacity is the number of
+      bytes allocated, but not necessarily used.
 
+      @return the size of the buffer
+   */
+   uint32_t size() const;
+
+   char *getBufferStart() const { return _storage; }
+
+   /**
+      @brief Return a pointer to the value at given offset inside the buffer.
+
+      Given a type and offset, returns the pointer of that type.
+      Behavior is only defined if offset does not exceed populated buffer size.
+
+      @return ponter of the specified type at given offset
+   */
    template <typename T>
    T *getValueAtOffset(uint32_t offset) const
       {
+      TR_ASSERT_FATAL(offset < size(), "Offset is outside of buffer bounds");
       return reinterpret_cast<T *>(_storage + offset);
       }
 
+   /**
+      @brief Write value of type T to the buffer.
+
+      Copies the value into buffer, expanding it if needed,
+      and advances _curPtr by sizeof(T) bytes.
+      Behavior is undefined if T is not trivially copyable (i.e. not contiguous in memory).
+
+      @param val value to be written
+
+      @return offset to the beginning of written value inside the buffer
+   */
    template <typename T>
    uint32_t writeValue(const T &val)
       {
       return writeData(&val, sizeof(T));
       }
 
+   /**
+      @brief Write a given number of bytes into the buffer.
+
+      Copies dataSize bytes from dataStart into the buffer, expanding it if needed,
+      and advances _curPtr by dataSize bytes.
+
+      @param dataStart pointer to the beginning of the data to be written
+      @param dataSize number of bytes to be written
+
+      @return offset to the beginning of written data inside the buffer
+   */
    uint32_t writeData(const void *dataStart, uint32_t dataSize);
 
+   /**
+      @brief Reserve memory for a value of type T.
+
+      Advances _curPtr by sizeof(T) bytes, expanding the
+      buffer if needed.
+      Behavior is undefined if T is not trivially copyable (i.e. not contiguous in memory).
+
+      @return offset to the beginning of the reserved memory block
+   */
    template <typename T>
    uint32_t reserveValue()
       {
@@ -72,17 +131,46 @@ public:
       return offset(valStart);
       }
 
+   /**
+      @brief Read next value of type T from the buffer.
+
+      Assumes that the next unread value in the buffer is of type T.
+      Advances _curPtr by sizeof(T) bytes.
+
+      @return offset to the beginning of value
+   */
    template <typename T>
    uint32_t readValue()
       {
       return readData(sizeof(T));
       }
+
+   /**
+      @brief Read next dataSize bytes from the buffer.
+
+      Assumes that the buffer contains at least dataSize unread bytes.
+      Advances _curPtr by dataSize bytes.
+
+      @return offset to the beginning of data
+   */
    uint32_t readData(uint32_t dataSize);
 
    void clear() { _curPtr = _storage; }
+
+   /**
+      @brief Expand the underlying buffer if more than allocated memory is needed.
+
+      If requiredSize is greater than _capacity, allocates a new buffer of size
+      requiredSize * 2 (to prevent frequent reallocations),
+      copies all existing data there, and frees the old buffer.
+
+      @param requiredSize the number of bytes the buffer needs to fit.
+   */
    void expandIfNeeded(uint32_t requiredSize);
 
 private:
+   uint32_t offset(char *addr) const { return addr - _storage; }
+
    uint32_t _capacity;
    char *_storage;
    char *_curPtr;

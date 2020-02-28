@@ -28,8 +28,8 @@ namespace JITServer
 {
 Message::Message()
    {
-   // metadata is always in the beginning of the message
-   _serializedSizeOffset = _buffer.reserveValue<uint32_t>();
+   // when the message is constructed, it's not valid
+   _buffer.reserveValue<uint32_t>();
    _metaDataOffset = _buffer.reserveValue<Message::MetaData>();
    }
 
@@ -74,7 +74,8 @@ Message::deserialize()
    // Assume that buffer is populated with data that defines a valid message
    // Reconstruct the message by setting metadata and pointers to descriptors
    _metaDataOffset = _buffer.readValue<MetaData>();
-   for (uint16_t i = 0; i < getMetaData()->numDataPoints; ++i)
+   _descriptorOffsets.reserve(getMetaData()->_numDataPoints);
+   for (uint32_t i = 0; i < getMetaData()->_numDataPoints; ++i)
       {
       uint32_t descOffset = _buffer.readValue<DataDescriptor>();
       _descriptorOffsets.push_back(descOffset);
@@ -88,7 +89,7 @@ Message::serialize()
    {
    // write total message size to the beginning of message buffer
    // and return pointer to it
-   *_buffer.getValueAtOffset<uint32_t>(_serializedSizeOffset) = _buffer.size();
+   *_buffer.getValueAtOffset<uint32_t>(0) = _buffer.size();
    return _buffer.getBufferStart();
    }
 
@@ -112,7 +113,7 @@ Message::clearForWrite()
    {
    _descriptorOffsets.clear();
    _buffer.clear();
-   _serializedSizeOffset = _buffer.reserveValue<uint32_t>();
+   _buffer.reserveValue<uint32_t>();
    _metaDataOffset = _buffer.reserveValue<MetaData>();
    }
 
@@ -120,7 +121,7 @@ void
 Message::DataDescriptor::print()
    {
    TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor[%p]: type=%d size=%lu\n", this, type, size);
-   if (!isContiguous())
+   if (!isPrimitive())
       {
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor[%p]: nested data begin\n", this);
       DataDescriptor *curDesc = static_cast<DataDescriptor *>(getDataStart());
@@ -137,7 +138,7 @@ void
 Message::print()
    {
    TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Message: type=%d numDataPoints=%u version=%lu\n",
-                                  getMetaData()->type, getMetaData()->numDataPoints, getMetaData()->version);
+                                  getMetaData()->_type, getMetaData()->_numDataPoints, getMetaData()->_version);
    for (int32_t i = 0; i < _descriptorOffsets.size(); ++i)
       getDescriptor(i)->print();
    }
