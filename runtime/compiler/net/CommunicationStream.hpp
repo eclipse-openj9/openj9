@@ -67,6 +67,7 @@ protected:
       {
       if (_connfd != -1)
          close(_connfd);
+
       if (_ssl)
          (*OBIO_free_all)(_ssl);
       }
@@ -130,6 +131,7 @@ private:
                }
             totalBytesRead += bytesRead;
             }
+         totalBytesRead += bytesRead;
          }
       }
 
@@ -168,6 +170,7 @@ private:
                }
             totalBytesWritten += bytesWritten;
             }
+         totalBytesWritten += bytesWritten;
          }
       }
    }; // class CommunicationStream

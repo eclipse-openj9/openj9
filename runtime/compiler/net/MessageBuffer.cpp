@@ -29,11 +29,13 @@ MessageBuffer::MessageBuffer() :
    _capacity(10000)
    {
    _storage = static_cast<char *>(TR_Memory::jitPersistentAlloc(_capacity));
+   if (!_storage)
+      throw std::bad_alloc();
    _curPtr = _storage;
    }
 
 uint32_t
-MessageBuffer::size()
+MessageBuffer::size() const
    {
    return _curPtr - _storage;
    }
@@ -48,6 +50,8 @@ MessageBuffer::expandIfNeeded(uint32_t requiredSize)
       char *oldPtr = _curPtr;
       _capacity = requiredSize * 2;
       char *newStorage = static_cast<char *>(TR_Memory::jitPersistentAlloc(_capacity));
+      if (!newStorage)
+         throw std::bad_alloc();
       uint32_t curSize = size();
       memcpy(newStorage, _storage, curSize);
       TR_Memory::jitPersistentFree(_storage);
