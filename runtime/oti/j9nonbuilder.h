@@ -4954,7 +4954,6 @@ typedef struct J9JavaVM {
 #endif /* J9VM_OPT_JAVA_OFFLOAD_SUPPORT */
 	UDATA maxInvariantLocalTableNodeCount;
 	JVMExt jvmExtensionInterface;
-	jclass jlrAccessibleObject;
 	jclass srMethodAccessor;
 	jclass srConstructorAccessor;
 	struct J9Method* jlrMethodInvoke;
