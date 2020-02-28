@@ -391,7 +391,7 @@ J9::ARM64::TreeEvaluator::monexitEvaluator(TR::Node *node, TR::CodeGenerator *cg
 
    if (comp->getOption(TR_OptimizeForSpace) ||
        comp->getOption(TR_FullSpeedDebug) ||
-       comp->getOption(TR_DisableInlineMonEnt) ||
+       comp->getOption(TR_DisableInlineMonExit) ||
        lwOffset <= 0)
       {
       TR::ILOpCodes opCode = node->getOpCodeValue();

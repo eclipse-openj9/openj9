@@ -74,7 +74,10 @@ TR::ARM64MonitorEnterSnippet::emitSnippetBody()
    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::andimmx);
    tempReg->setRegisterFieldRD((uint32_t *)buffer);
    dataReg->setRegisterFieldRN((uint32_t *)buffer);
-   *(int32_t *)buffer |= 0x196000; // immr=25, imms=24 for 0xFFFFFF80
+   // OBJECT_HEADER_LOCK_BITS_MASK is 0xFF
+   // OBJECT_HEADER_LOCK_RECURSION_BIT is 0x80
+   // (OBJECT_HEADER_LOCK_BITS_MASK - OBJECT_HEADER_LOCK_LAST_RECURSION_BIT) is 0x7F
+   *(int32_t *)buffer |= 0x79E000; // immr=57, imms=56 for 0xFFFFFFFFFFFFFF80
    buffer += ARM64_INSTRUCTION_LENGTH;
 
    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::subsx); // for cmp
@@ -155,14 +158,14 @@ TR::ARM64MonitorExitSnippet::emitSnippetBody()
    // The AArch64 code for the snippet looks like:
    //
    // decLabel:
-   //    and     tempReg, dataReg, ~(OBJECT_HEADER_LOCK_BITS_MASK - OBJECT_HEADER_LOCK_LAST_RECURSION_BIT)
+   //    and     tempReg, dataReg, ~OBJECT_HEADER_LOCK_RECURSION_MASK
    //    cmp     metaReg, tempReg
    //    bne     callLabel
    //    sub     dataReg, dataReg, LOCK_INC_DEC_VALUE
    //    str     dataReg, [addrReg]
    //    b       restartLabel
    // callLabel:
-   //    bl      jitMonitorEntry
+   //    bl      jitMonitorExit
    //    b       restartLabel
 
    TR::RegisterDependencyConditions *deps = getRestartLabel()->getInstruction()->getDependencyConditions();
@@ -183,7 +186,8 @@ TR::ARM64MonitorExitSnippet::emitSnippetBody()
    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::andimmx);
    tempReg->setRegisterFieldRD((uint32_t *)buffer);
    dataReg->setRegisterFieldRN((uint32_t *)buffer);
-   *(int32_t *)buffer |= 0x196000; // immr=25, imms=24 for 0xFFFFFF80
+   // OBJECT_HEADER_LOCK_RECURSION_MASK is 0xF8
+   *(int32_t *)buffer |= 0x78E800; // immr=56, imms=58 for 0xFFFFFFFFFFFFFF07
    buffer += ARM64_INSTRUCTION_LENGTH;
 
    *(int32_t *)buffer = TR::InstOpCode::getOpCodeBinaryEncoding(TR::InstOpCode::subsx); // for cmp
