@@ -2202,8 +2202,8 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			/* TODO pick a reasonable default */
-			vm->valueFlatteningThreshold = UDATA_MAX;
+			/* By default flattening is disabled */
+			vm->valueFlatteningThreshold = 0;
 			if ((argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_VALUEFLATTENINGTHRESHOLD_EQUALS, NULL)) >= 0) {
 				UDATA threshold = 0;
 				char *optname = VMOPT_VALUEFLATTENINGTHRESHOLD_EQUALS;
