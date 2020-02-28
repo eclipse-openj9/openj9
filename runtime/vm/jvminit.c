@@ -2827,6 +2827,45 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 			UDATA openFlags = (entry->loadFlags & XRUN_LIBRARY) ? J9PORT_SLOPEN_DECORATE | J9PORT_SLOPEN_LAZY : J9PORT_SLOPEN_DECORATE;
 			UDATA jitFileHandle = 0;
 			UDATA rc = 0;
+
+			/*
+			* On Linux on Z libj9jit dynamically loads libj9zlib as it is used for AOT method data compression
+			* which is currently only enabled on Z platform. We want to ensure that when the JVM loads libj9jit,
+			* libj9zlib is already loaded. See eclipse/openj9#8561 for more details.
+			*/
+#if (defined(S390) && defined(LINUX))
+			{
+			char zlibDll[EsMaxPath];
+			char *zlibDllDir = zlibDll;
+			UDATA expectedZlibPathLength = 0;
+			UDATA zlibDllLength = 0;
+			UDATA zlibFileHandle = 0;
+			UDATA zlibRC = 0;
+			
+			zlibDllLength = strlen(vm->j9libvmDirectory);
+			expectedZlibPathLength = zlibDllLength + (sizeof(DIR_SEPARATOR_STR) - 1) + strlen(J9_ZIP_DLL_NAME) + 1;
+			if (expectedZlibPathLength > EsMaxPath) {
+				zlibDllDir = j9mem_allocate_memory(expectedZlibPathLength, OMRMEM_CATEGORY_VM);
+				if (NULL == zlibDllDir) {
+					return JNI_ERR;
+				}
+			}
+			j9str_printf(PORTLIB, zlibDllDir, expectedZlibPathLength, "%s%s%s",
+					vm->j9libvmDirectory, DIR_SEPARATOR_STR, J9_ZIP_DLL_NAME);
+			zlibFileHandle = j9sl_open_shared_library(zlibDllDir, &(entry->descriptor), openFlags);
+			if (0 != zlibFileHandle) {
+				j9tty_printf(PORTLIB, "Error: Failed to open zlib DLL %s (%s)\n", zlibDllDir, j9error_last_error_message());
+				zlibRC = JNI_ERR;
+			}
+			if (zlibDll != zlibDllDir) {
+				j9mem_free_memory(zlibDllDir);
+				zlibDllDir = NULL;
+			}
+			if (zlibRC != 0) {
+				return JNI_ERR;
+			}
+			}
+#endif /* defined(S390) && defined(LINUX) */
 			
 			optionValueOperations(PORTLIB, j9vm_args, xxjitdirectoryIndex, GET_OPTION, &jitdirectoryValue, 0, '=', 0, NULL); /* get option value for xxjitdirectory= */
 			jitDirectoryLength = strlen(jitdirectoryValue);
@@ -2845,6 +2884,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 			}
 			j9str_printf(PORTLIB, dllCheckPathPtr, expectedPathLength, "%s%s%s",
 					jitdirectoryValue, DIR_SEPARATOR_STR, entry->dllName);
+
 			jitFileHandle = j9sl_open_shared_library(dllCheckPathPtr, &(entry->descriptor), openFlags);
 			/* Confirm that we have a valid path being set */
 			if (0 == jitFileHandle) {
