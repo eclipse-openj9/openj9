@@ -863,7 +863,7 @@ TR::Register *OMR::ARM::TreeEvaluator::VMmonexitEvaluator(TR::Node *node, TR::Co
 
    if (comp->getOption(TR_OptimizeForSpace) ||
        (comp->getOption(TR_FullSpeedDebug) /*&& !comp->getOption(TR_EnableLiveMonitorMetadata)*/) ||
-       comp->getOption(TR_DisableInlineMonEnt) ||
+       comp->getOption(TR_DisableInlineMonExit) ||
        lwOffset <= 0)
       {
       TR::ILOpCodes opCode = node->getOpCodeValue();
