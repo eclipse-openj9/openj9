@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2020, 2020 IBM Corp. and others
+ * Copyright (c) 2018, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,13 +54,15 @@ public:
 
 protected:
    CommunicationStream() :
-      _ssl(NULL)
+      _ssl(NULL),
+      _connfd(-1)
       {
       }
 
-   ~CommunicationStream()
+   virtual ~CommunicationStream()
       {
-      close(_connfd);
+      if (_connfd != -1)
+         close(_connfd);
       }
 
    void initStream(int connfd, BIO *ssl)
@@ -69,14 +71,10 @@ protected:
       _ssl = ssl;
       }
 
-
-
    void readMessage(Message &msg);
    void writeMessage(Message &msg);
 
-   int getConnFD() { return _connfd; }
-
-
+   int getConnFD() const { return _connfd; }
    
    // TODO: verify that ssl actually works (probably not)
    BIO *_ssl; // SSL connection, null if not using SSL
@@ -102,19 +100,16 @@ private:
    template <typename T>
    void readBlocking(T *ptr, size_t size)
       {
-      int32_t bytesRead = read(_connfd, ptr, size);
-      if (bytesRead == -1)
+      int32_t totalBytesRead = 0;
+      char *data = reinterpret_cast<char *>(ptr);
+      while (totalBytesRead < size)
          {
-         throw JITServer::StreamFailure("JITServer I/O error: read error");
-         }
-      else if (bytesRead < size)
-         {
-         char *remainingPtr = reinterpret_cast<char *>(ptr) + bytesRead;
-         int32_t remainingRead = read(_connfd, remainingPtr, size - bytesRead);
-         if (remainingRead != size - bytesRead)
+         int32_t bytesRead = read(_connfd, data + totalBytesRead, size - totalBytesRead);
+         if (bytesRead == -1)
             {
             throw JITServer::StreamFailure("JITServer I/O error: read error");
             }
+         totalBytesRead += bytesRead;
          }
       }
 
@@ -127,19 +122,16 @@ private:
    template <typename T>
    void writeBlocking(T *ptr, size_t size)
       {
-      int32_t bytesWritten = write(_connfd, ptr, size);
-      if (bytesWritten == -1)
+      int32_t totalBytesWritten = 0;
+      char *data = reinterpret_cast<char *>(ptr);
+      while (totalBytesWritten < size)
          {
-         throw JITServer::StreamFailure("JITServer I/O error: write error");
-         }
-      else if (bytesWritten < size)
-         {
-         char *remainingPtr = reinterpret_cast<char *>(ptr) + bytesWritten;
-         int32_t remainingWritten = write(_connfd, remainingPtr, size - bytesWritten);
-         if (remainingWritten != size - bytesWritten)
+         int32_t bytesWritten = write(_connfd, data + totalBytesWritten, size - totalBytesWritten);
+         if (bytesWritten == -1)
             {
             throw JITServer::StreamFailure("JITServer I/O error: write error");
             }
+         totalBytesWritten += bytesWritten;
          }
       }
    };
