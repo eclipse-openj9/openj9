@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -176,32 +176,10 @@ typedef struct J9PortLibrary {
 	int32_t  ( *sock_startup)(struct J9PortLibrary *portLibrary) ;
 	/** see @ref j9sock.c::j9sock_shutdown "j9sock_shutdown"*/
 	int32_t  ( *sock_shutdown)(struct J9PortLibrary *portLibrary) ;
-	/** see @ref j9sock.c::j9sock_htons "j9sock_htons"*/
-	uint16_t  ( *sock_htons)(struct J9PortLibrary *portLibrary, uint16_t val) ;
-	/** see @ref j9sock.c::j9sock_write "j9sock_write"*/
-	int32_t  ( *sock_write)(struct J9PortLibrary *portLibrary, j9socket_t sock, uint8_t *buf, int32_t nbyte, int32_t flags) ;
-	/** see @ref j9sock.c::j9sock_sockaddr "j9sock_sockaddr"*/
-	int32_t  ( *sock_sockaddr)(struct J9PortLibrary *portLibrary, j9sockaddr_t handle, const char *addrStr, uint16_t port) ;
-	/** see @ref j9sock.c::j9sock_read "j9sock_read"*/
-	int32_t  ( *sock_read)(struct J9PortLibrary *portLibrary, j9socket_t sock, uint8_t *buf, int32_t nbyte, int32_t flags) ;
-	/** see @ref j9sock.c::j9sock_socket "j9sock_socket"*/
-	int32_t  ( *sock_socket)(struct J9PortLibrary *portLibrary, j9socket_t *handle, int32_t family, int32_t socktype,  int32_t protocol) ;
-	/** see @ref j9sock.c::j9sock_close "j9sock_close"*/
-	int32_t  ( *sock_close)(struct J9PortLibrary *portLibrary, j9socket_t *sock) ;
-	/** see @ref j9sock.c::j9sock_connect "j9sock_connect"*/
-	int32_t  ( *sock_connect)(struct J9PortLibrary *portLibrary, j9socket_t sock, j9sockaddr_t addr) ;
 	/** see @ref j9sock.c::j9sock_inetaddr "j9sock_inetaddr"*/
 	int32_t  ( *sock_inetaddr)(struct J9PortLibrary *portLibrary, const char *addrStr, uint32_t *addr) ;
 	/** see @ref j9sock.c::j9sock_gethostbyname "j9sock_gethostbyname"*/
 	int32_t  ( *sock_gethostbyname)(struct J9PortLibrary *portLibrary, const char *name, j9hostent_t handle) ;
-	/** see @ref j9sock.c::j9sock_hostent_addrlist "j9sock_hostent_addrlist"*/
-	int32_t  ( *sock_hostent_addrlist)(struct J9PortLibrary *portLibrary, j9hostent_t handle, uint32_t index) ;
-	/** see @ref j9sock.c::j9sock_sockaddr_init "j9sock_sockaddr_init"*/
-	int32_t  ( *sock_sockaddr_init)(struct J9PortLibrary *portLibrary, j9sockaddr_t handle, int16_t family, uint32_t ipAddrNetworkOrder, uint16_t portNetworkOrder) ;
-	/** see @ref j9sock.c::j9sock_linger_init "j9sock_linger_init"*/
-	int32_t  ( *sock_linger_init)(struct J9PortLibrary *portLibrary, j9linger_t handle, int32_t enabled, uint16_t timeout) ;
-	/** see @ref j9sock.c::j9sock_setopt_linger "j9sock_setopt_linger"*/
-	int32_t  ( *sock_setopt_linger)(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  j9linger_t optval) ;
 	/** see @ref j9gp.c::j9gp_startup "j9gp_startup"*/
 	int32_t  ( *gp_startup)(struct J9PortLibrary *portLibrary) ;
 	/** see @ref j9gp.c::j9gp_shutdown "j9gp_shutdown"*/
@@ -232,80 +210,8 @@ typedef struct J9PortLibrary {
 	uintptr_t  ( *sysinfo_DLPAR_max_CPUs)(struct J9PortLibrary *portLibrary) ;
 	/** see @ref j9sysinfo.c::j9sysinfo_weak_memory_consistency "j9sysinfo_weak_memory_consistency"*/
 	uintptr_t  ( *sysinfo_weak_memory_consistency)(struct J9PortLibrary *portLibrary) ;
-	/** see @ref j9sock.c::j9sock_htonl "j9sock_htonl"*/
-	int32_t  ( *sock_htonl)(struct J9PortLibrary *portLibrary, int32_t val) ;
-	/** see @ref j9sock.c::j9sock_bind "j9sock_bind"*/
-	int32_t  ( *sock_bind)(struct J9PortLibrary *portLibrary, j9socket_t sock, j9sockaddr_t addr) ;
-	/** see @ref j9sock.c::j9sock_accept "j9sock_accept"*/
-	int32_t  ( *sock_accept)(struct J9PortLibrary *portLibrary, j9socket_t serverSock, j9sockaddr_t addrHandle, j9socket_t *sockHandle) ;
-	/** see @ref j9sock.c::j9sock_shutdown_input "j9sock_shutdown_input"*/
-	int32_t  ( *sock_shutdown_input)(struct J9PortLibrary *portLibrary, j9socket_t sock) ;
-	/** see @ref j9sock.c::j9sock_shutdown_output "j9sock_shutdown_output"*/
-	int32_t  ( *sock_shutdown_output)(struct J9PortLibrary *portLibrary, j9socket_t sock) ;
-	/** see @ref j9sock.c::j9sock_listen "j9sock_listen"*/
-	int32_t  ( *sock_listen)(struct J9PortLibrary *portLibrary, j9socket_t sock, int32_t backlog ) ;
-	/** see @ref j9sock.c::j9sock_ntohl "j9sock_ntohl"*/
-	int32_t  ( *sock_ntohl)(struct J9PortLibrary *portLibrary, int32_t val) ;
-	/** see @ref j9sock.c::j9sock_ntohs "j9sock_ntohs"*/
-	uint16_t  ( *sock_ntohs)(struct J9PortLibrary *portLibrary, uint16_t val) ;
-	/** see @ref j9sock.c::j9sock_getpeername "j9sock_getpeername"*/
-	int32_t  ( *sock_getpeername)(struct J9PortLibrary *portLibrary, j9socket_t handle, j9sockaddr_t addrHandle) ;
-	/** see @ref j9sock.c::j9sock_getsockname "j9sock_getsockname"*/
-	int32_t  ( *sock_getsockname)(struct J9PortLibrary *portLibrary, j9socket_t handle, j9sockaddr_t addrHandle) ;
-	/** see @ref j9sock.c::j9sock_readfrom "j9sock_readfrom"*/
-	int32_t  ( *sock_readfrom)(struct J9PortLibrary *portLibrary, j9socket_t sock, uint8_t *buf, int32_t nbyte, int32_t flags, j9sockaddr_t addrHandle) ;
-	/** see @ref j9sock.c::j9sock_select "j9sock_select"*/
-	int32_t  ( *sock_select)(struct J9PortLibrary *portLibrary, int32_t nfds, j9fdset_t readfds, j9fdset_t writefds, j9fdset_t exceptfds, j9timeval_t timeout) ;
-	/** see @ref j9sock.c::j9sock_writeto "j9sock_writeto"*/
-	int32_t  ( *sock_writeto)(struct J9PortLibrary *portLibrary, j9socket_t sock, uint8_t *buf, int32_t nbyte, int32_t flags, j9sockaddr_t addrHandle) ;
-	/** see @ref j9sock.c::j9sock_inetntoa "j9sock_inetntoa"*/
-	int32_t  ( *sock_inetntoa)(struct J9PortLibrary *portLibrary, char **addrStr, uint32_t nipAddr) ;
 	/** see @ref j9sock.c::j9sock_gethostbyaddr "j9sock_gethostbyaddr"*/
 	int32_t  ( *sock_gethostbyaddr)(struct J9PortLibrary *portLibrary, char *addr, int32_t length, int32_t type, j9hostent_t handle) ;
-	/** see @ref j9sock.c::j9sock_gethostname "j9sock_gethostname"*/
-	int32_t  ( *sock_gethostname)(struct J9PortLibrary *portLibrary, char *buffer, int32_t length) ;
-	/** see @ref j9sock.c::j9sock_hostent_aliaslist "j9sock_hostent_aliaslist"*/
-	int32_t  ( *sock_hostent_aliaslist)(struct J9PortLibrary *portLibrary, j9hostent_t handle, char ***aliasList) ;
-	/** see @ref j9sock.c::j9sock_hostent_hostname "j9sock_hostent_hostname"*/
-	int32_t  ( *sock_hostent_hostname)(struct J9PortLibrary *portLibrary, j9hostent_t handle, char** hostName) ;
-	/** see @ref j9sock.c::j9sock_sockaddr_port "j9sock_sockaddr_port"*/
-	uint16_t  ( *sock_sockaddr_port)(struct J9PortLibrary *portLibrary, j9sockaddr_t handle) ;
-	/** see @ref j9sock.c::j9sock_sockaddr_address "j9sock_sockaddr_address"*/
-	int32_t  ( *sock_sockaddr_address)(struct J9PortLibrary *portLibrary, j9sockaddr_t handle) ;
-	/** see @ref j9sock.c::j9sock_fdset_init "j9sock_fdset_init"*/
-	int32_t  ( *sock_fdset_init)(struct J9PortLibrary *portLibrary, j9socket_t socketP) ;
-	/** see @ref j9sock.c::j9sock_fdset_size "j9sock_fdset_size"*/
-	int32_t  ( *sock_fdset_size)(struct J9PortLibrary *portLibrary, j9socket_t handle) ;
-	/** see @ref j9sock.c::j9sock_timeval_init "j9sock_timeval_init"*/
-	int32_t  ( *sock_timeval_init)(struct J9PortLibrary *portLibrary, uint32_t secTime, uint32_t uSecTime, j9timeval_t timeP) ;
-	/** see @ref j9sock.c::j9sock_getopt_int "j9sock_getopt_int"*/
-	int32_t  ( *sock_getopt_int)(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  int32_t *optval) ;
-	/** see @ref j9sock.c::j9sock_setopt_int "j9sock_setopt_int"*/
-	int32_t  ( *sock_setopt_int)(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  int32_t *optval) ;
-	/** see @ref j9sock.c::j9sock_getopt_bool "j9sock_getopt_bool"*/
-	int32_t  ( *sock_getopt_bool)(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  BOOLEAN *optval) ;
-	/** see @ref j9sock.c::j9sock_setopt_bool "j9sock_setopt_bool"*/
-	int32_t  ( *sock_setopt_bool)(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  BOOLEAN *optval) ;
-	/** see @ref j9sock.c::j9sock_getopt_byte "j9sock_getopt_byte"*/
-	int32_t  ( *sock_getopt_byte)(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  uint8_t *optval) ;
-	/** see @ref j9sock.c::j9sock_setopt_byte "j9sock_setopt_byte"*/
-	int32_t  ( *sock_setopt_byte)(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  uint8_t *optval) ;
-	/** see @ref j9sock.c::j9sock_getopt_linger "j9sock_getopt_linger"*/
-	int32_t  ( *sock_getopt_linger)(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  j9linger_t optval) ;
-	/** see @ref j9sock.c::j9sock_getopt_sockaddr "j9sock_getopt_sockaddr"*/
-	int32_t  ( *sock_getopt_sockaddr)(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname, j9sockaddr_t optval) ;
-	/** see @ref j9sock.c::j9sock_setopt_sockaddr "j9sock_setopt_sockaddr"*/
-	int32_t  ( *sock_setopt_sockaddr)(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  j9sockaddr_t optval) ;
-	/** see @ref j9sock.c::j9sock_setopt_ipmreq "j9sock_setopt_ipmreq"*/
-	int32_t  ( *sock_setopt_ipmreq)(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  j9ipmreq_t optval) ;
-	/** see @ref j9sock.c::j9sock_linger_enabled "j9sock_linger_enabled"*/
-	int32_t  ( *sock_linger_enabled)(struct J9PortLibrary *portLibrary, j9linger_t handle, BOOLEAN *enabled) ;
-	/** see @ref j9sock.c::j9sock_linger_linger "j9sock_linger_linger"*/
-	int32_t  ( *sock_linger_linger)(struct J9PortLibrary *portLibrary, j9linger_t handle, uint16_t *linger) ;
-	/** see @ref j9sock.c::j9sock_ipmreq_init "j9sock_ipmreq_init"*/
-	int32_t  ( *sock_ipmreq_init)(struct J9PortLibrary *portLibrary, j9ipmreq_t handle, uint32_t nipmcast, uint32_t nipinterface) ;
-	/** see @ref j9sock.c::j9sock_setflag "j9sock_setflag"*/
-	int32_t  ( *sock_setflag)(struct J9PortLibrary *portLibrary, int32_t flag, int32_t *arg) ;
 	/** see @ref j9sock.c::j9sock_freeaddrinfo "j9sock_freeaddrinfo"*/
 	int32_t  ( *sock_freeaddrinfo)(struct J9PortLibrary *portLibrary, j9addrinfo_t handle) ;
 	/** see @ref j9sock.c::j9sock_getaddrinfo "j9sock_getaddrinfo"*/
@@ -320,40 +226,8 @@ typedef struct J9PortLibrary {
 	int32_t  ( *sock_getaddrinfo_length)(struct J9PortLibrary *portLibrary, j9addrinfo_t handle, int32_t *length) ;
 	/** see @ref j9sock.c::j9sock_getaddrinfo_name "j9sock_getaddrinfo_name"*/
 	int32_t  ( *sock_getaddrinfo_name)(struct J9PortLibrary *portLibrary, j9addrinfo_t handle, char *name, int index) ;
-	/** see @ref j9sock.c::j9sock_getnameinfo "j9sock_getnameinfo"*/
-	int32_t  ( *sock_getnameinfo)(struct J9PortLibrary *portLibrary, j9sockaddr_t in_addr, int32_t sockaddr_size, char *name, int32_t name_length, int flags) ;
-	/** see @ref j9sock.c::j9sock_ipv6_mreq_init "j9sock_ipv6_mreq_init"*/
-	int32_t  ( *sock_ipv6_mreq_init)(struct J9PortLibrary *portLibrary, j9ipv6_mreq_t handle, uint8_t *ipmcast_addr, uint32_t ipv6mr_interface) ;
-	/** see @ref j9sock.c::j9sock_setopt_ipv6_mreq "j9sock_setopt_ipv6_mreq"*/
-	int32_t  ( *sock_setopt_ipv6_mreq)(struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  j9ipv6_mreq_t optval) ;
-	/** see @ref j9sock.c::j9sock_sockaddr_address6 "j9sock_sockaddr_address6"*/
-	int32_t  ( *sock_sockaddr_address6)(struct J9PortLibrary *portLibrary, j9sockaddr_t handle, uint8_t *address, uint32_t *length, uint32_t* scope_id) ;
-	/** see @ref j9sock.c::j9sock_sockaddr_family "j9sock_sockaddr_family"*/
-	int32_t  ( *sock_sockaddr_family)(struct J9PortLibrary *portLibrary, int16_t *family, j9sockaddr_t handle) ;
-	/** see @ref j9sock.c::j9sock_sockaddr_init6 "j9sock_sockaddr_init6"*/
-	int32_t  ( *sock_sockaddr_init6)(struct J9PortLibrary *portLibrary, j9sockaddr_t handle, uint8_t *addr, int32_t addrlength, int16_t family, uint16_t portNetworkOrder, uint32_t flowinfo, uint32_t scope_id, j9socket_t sock) ;
-	/** see @ref j9sock.c::j9sock_socketIsValid "j9sock_socketIsValid"*/
-	int32_t  ( *sock_socketIsValid)(struct J9PortLibrary *portLibrary, j9socket_t handle) ;
-	/** see @ref j9sock.c::j9sock_select_read "j9sock_select_read"*/
-	int32_t  ( *sock_select_read)(struct J9PortLibrary *portLibrary, j9socket_t j9socketP, int32_t secTime, int32_t uSecTime, BOOLEAN accept) ;
-	/** see @ref j9sock.c::j9sock_set_nonblocking "j9sock_set_nonblocking"*/
-	int32_t  ( *sock_set_nonblocking)(struct J9PortLibrary *portLibrary, j9socket_t socketP, BOOLEAN nonblocking) ;
 	/** see @ref j9sock.c::j9sock_error_message "j9sock_error_message"*/
 	const char*  ( *sock_error_message)(struct J9PortLibrary *portLibrary) ;
-	/** see @ref j9sock.c::j9sock_get_network_interfaces "j9sock_get_network_interfaces"*/
-	int32_t  ( *sock_get_network_interfaces)(struct J9PortLibrary *portLibrary, struct j9NetworkInterfaceArray_struct *array,BOOLEAN preferIPv4Stack) ;
-	/** see @ref j9sock.c::j9sock_free_network_interface_struct "j9sock_free_network_interface_struct"*/
-	int32_t  ( *sock_free_network_interface_struct)(struct J9PortLibrary *portLibrary, struct j9NetworkInterfaceArray_struct* array) ;
-	/** see @ref j9sock.c::j9sock_connect_with_timeout "j9sock_connect_with_timeout"*/
-	int32_t  ( *sock_connect_with_timeout)(struct J9PortLibrary *portLibrary, j9socket_t sock, j9sockaddr_t addr, uint32_t timeout, uint32_t step, uint8_t** context) ;
-	/** see @ref j9sock.c::j9sock_fdset_zero "j9sock_fdset_zero"*/
-	void  ( *sock_fdset_zero)(struct J9PortLibrary *portLibrary, j9fdset_t j9fdset) ;
-	/** see @ref j9sock.c::j9sock_fdset_set "j9sock_fdset_set"*/
-	void  ( *sock_fdset_set)(struct J9PortLibrary *portLibrary, j9socket_t aSocket, j9fdset_t j9fdset) ;
-	/** see @ref j9sock.c::j9sock_fdset_clr "j9sock_fdset_clr"*/
-	void  ( *sock_fdset_clr)(struct J9PortLibrary *portLibrary, j9socket_t aSocket, j9fdset_t j9fdset) ;
-	/** see @ref j9sock.c::j9sock_fdset_isset "j9sock_fdset_isset"*/
-	BOOLEAN  ( *sock_fdset_isset)(struct J9PortLibrary *portLibrary, j9socket_t aSocket, j9fdset_t j9fdset) ;
 	/** see @ref j9shsem.c::j9shsem_params_init "j9shsem_params_init"*/
 	int32_t  ( *shsem_params_init)(struct J9PortLibrary *portLibrary, struct J9PortShSemParameters *params) ;
 	/** see @ref j9shsem.c::j9shsem_startup "j9shsem_startup"*/
@@ -723,19 +597,8 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9vmem_get_process_memory_size(param1,param2) OMRPORT_FROM_J9PORT(privatePortLibrary)->vmem_get_process_memory_size(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2)
 #define j9sock_startup() privatePortLibrary->sock_startup(privatePortLibrary)
 #define j9sock_shutdown() privatePortLibrary->sock_shutdown(privatePortLibrary)
-#define j9sock_htons(param1) privatePortLibrary->sock_htons(privatePortLibrary,param1)
-#define j9sock_write(param1,param2,param3,param4) privatePortLibrary->sock_write(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_sockaddr(param1,param2,param3) privatePortLibrary->sock_sockaddr(privatePortLibrary,param1,param2,param3)
-#define j9sock_read(param1,param2,param3,param4) privatePortLibrary->sock_read(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_socket(param1,param2,param3,param4) privatePortLibrary->sock_socket(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_close(param1) privatePortLibrary->sock_close(privatePortLibrary,param1)
-#define j9sock_connect(param1,param2) privatePortLibrary->sock_connect(privatePortLibrary,param1,param2)
 #define j9sock_inetaddr(param1,param2) privatePortLibrary->sock_inetaddr(privatePortLibrary,param1,param2)
 #define j9sock_gethostbyname(param1,param2) privatePortLibrary->sock_gethostbyname(privatePortLibrary,param1,param2)
-#define j9sock_hostent_addrlist(param1,param2) privatePortLibrary->sock_hostent_addrlist(privatePortLibrary,param1,param2)
-#define j9sock_sockaddr_init(param1,param2,param3,param4) privatePortLibrary->sock_sockaddr_init(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_linger_init(param1,param2,param3) privatePortLibrary->sock_linger_init(privatePortLibrary,param1,param2,param3)
-#define j9sock_setopt_linger(param1,param2,param3,param4) privatePortLibrary->sock_setopt_linger(privatePortLibrary,param1,param2,param3,param4)
 #define j9gp_startup() privatePortLibrary->gp_startup(privatePortLibrary)
 #define j9gp_shutdown() privatePortLibrary->gp_shutdown(privatePortLibrary)
 #define j9gp_protect(param1,param2) privatePortLibrary->gp_protect(privatePortLibrary,param1,param2)
@@ -808,43 +671,7 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9file_lock_bytes(param1,param2,param3,param4) OMRPORT_FROM_J9PORT(privatePortLibrary)->file_lock_bytes(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3,param4)
 #define j9file_convert_native_fd_to_j9file_fd(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->file_convert_native_fd_to_omrfile_fd(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
 #define j9file_convert_j9file_fd_to_native_fd(param1) OMRPORT_FROM_J9PORT(privatePortLibrary)->file_convert_omrfile_fd_to_native_fd(OMRPORT_FROM_J9PORT(privatePortLibrary),param1)
-#define j9sock_htonl(param1) privatePortLibrary->sock_htonl(privatePortLibrary,param1)
-#define j9sock_bind(param1,param2) privatePortLibrary->sock_bind(privatePortLibrary,param1,param2)
-#define j9sock_accept(param1,param2,param3) privatePortLibrary->sock_accept(privatePortLibrary,param1,param2,param3)
-#define j9sock_shutdown_input(param1) privatePortLibrary->sock_shutdown_input(privatePortLibrary,param1)
-#define j9sock_shutdown_output(param1) privatePortLibrary->sock_shutdown_output(privatePortLibrary,param1)
-#define j9sock_listen(param1,param2) privatePortLibrary->sock_listen(privatePortLibrary,param1,param2)
-#define j9sock_ntohl(param1) privatePortLibrary->sock_ntohl(privatePortLibrary,param1)
-#define j9sock_ntohs(param1) privatePortLibrary->sock_ntohs(privatePortLibrary,param1)
-#define j9sock_getpeername(param1,param2) privatePortLibrary->sock_getpeername(privatePortLibrary,param1,param2)
-#define j9sock_getsockname(param1,param2) privatePortLibrary->sock_getsockname(privatePortLibrary,param1,param2)
-#define j9sock_readfrom(param1,param2,param3,param4,param5) privatePortLibrary->sock_readfrom(privatePortLibrary,param1,param2,param3,param4,param5)
-#define j9sock_select(param1,param2,param3,param4,param5) privatePortLibrary->sock_select(privatePortLibrary,param1,param2,param3,param4,param5)
-#define j9sock_writeto(param1,param2,param3,param4,param5) privatePortLibrary->sock_writeto(privatePortLibrary,param1,param2,param3,param4,param5)
-#define j9sock_inetntoa(param1,param2) privatePortLibrary->sock_inetntoa(privatePortLibrary,param1,param2)
 #define j9sock_gethostbyaddr(param1,param2,param3,param4) privatePortLibrary->sock_gethostbyaddr(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_gethostname(param1,param2) privatePortLibrary->sock_gethostname(privatePortLibrary,param1,param2)
-#define j9sock_hostent_aliaslist(param1,param2) privatePortLibrary->sock_hostent_aliaslist(privatePortLibrary,param1,param2)
-#define j9sock_hostent_hostname(param1,param2) privatePortLibrary->sock_hostent_hostname(privatePortLibrary,param1,param2)
-#define j9sock_sockaddr_port(param1) privatePortLibrary->sock_sockaddr_port(privatePortLibrary,param1)
-#define j9sock_sockaddr_address(param1) privatePortLibrary->sock_sockaddr_address(privatePortLibrary,param1)
-#define j9sock_fdset_init(param1) privatePortLibrary->sock_fdset_init(privatePortLibrary,param1)
-#define j9sock_fdset_size(param1) privatePortLibrary->sock_fdset_size(privatePortLibrary,param1)
-#define j9sock_timeval_init(param1,param2,param3) privatePortLibrary->sock_timeval_init(privatePortLibrary,param1,param2,param3)
-#define j9sock_getopt_int(param1,param2,param3,param4) privatePortLibrary->sock_getopt_int(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_setopt_int(param1,param2,param3,param4) privatePortLibrary->sock_setopt_int(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_getopt_bool(param1,param2,param3,param4) privatePortLibrary->sock_getopt_bool(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_setopt_bool(param1,param2,param3,param4) privatePortLibrary->sock_setopt_bool(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_getopt_byte(param1,param2,param3,param4) privatePortLibrary->sock_getopt_byte(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_setopt_byte(param1,param2,param3,param4) privatePortLibrary->sock_setopt_byte(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_getopt_linger(param1,param2,param3,param4) privatePortLibrary->sock_getopt_linger(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_getopt_sockaddr(param1,param2,param3,param4) privatePortLibrary->sock_getopt_sockaddr(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_setopt_sockaddr(param1,param2,param3,param4) privatePortLibrary->sock_setopt_sockaddr(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_setopt_ipmreq(param1,param2,param3,param4) privatePortLibrary->sock_setopt_ipmreq(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_linger_enabled(param1,param2) privatePortLibrary->sock_linger_enabled(privatePortLibrary,param1,param2)
-#define j9sock_linger_linger(param1,param2) privatePortLibrary->sock_linger_linger(privatePortLibrary,param1,param2)
-#define j9sock_ipmreq_init(param1,param2,param3) privatePortLibrary->sock_ipmreq_init(privatePortLibrary,param1,param2,param3)
-#define j9sock_setflag(param1,param2) privatePortLibrary->sock_setflag(privatePortLibrary,param1,param2)
 #define j9sock_freeaddrinfo(param1) privatePortLibrary->sock_freeaddrinfo(privatePortLibrary,param1)
 #define j9sock_getaddrinfo(param1,param2,param3) privatePortLibrary->sock_getaddrinfo(privatePortLibrary,param1,param2,param3)
 #define j9sock_getaddrinfo_address(param1,param2,param3,param4) privatePortLibrary->sock_getaddrinfo_address(privatePortLibrary,param1,param2,param3,param4)
@@ -852,23 +679,7 @@ extern J9_CFUNC int32_t j9port_isCompatible(struct J9PortLibraryVersion *expecte
 #define j9sock_getaddrinfo_family(param1,param2,param3) privatePortLibrary->sock_getaddrinfo_family(privatePortLibrary,param1,param2,param3)
 #define j9sock_getaddrinfo_length(param1,param2) privatePortLibrary->sock_getaddrinfo_length(privatePortLibrary,param1,param2)
 #define j9sock_getaddrinfo_name(param1,param2,param3) privatePortLibrary->sock_getaddrinfo_name(privatePortLibrary,param1,param2,param3)
-#define j9sock_getnameinfo(param1,param2,param3,param4,param5) privatePortLibrary->sock_getnameinfo(privatePortLibrary,param1,param2,param3,param4,param5)
-#define j9sock_ipv6_mreq_init(param1,param2,param3) privatePortLibrary->sock_ipv6_mreq_init(privatePortLibrary,param1,param2,param3)
-#define j9sock_setopt_ipv6_mreq(param1,param2,param3,param4) privatePortLibrary->sock_setopt_ipv6_mreq(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_sockaddr_address6(param1,param2,param3,param4) privatePortLibrary->sock_sockaddr_address6(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_sockaddr_family(param1,param2) privatePortLibrary->sock_sockaddr_family(privatePortLibrary,param1,param2)
-#define j9sock_sockaddr_init6(param1,param2,param3,param4,param5,param6,param7,param8) privatePortLibrary->sock_sockaddr_init6(privatePortLibrary,param1,param2,param3,param4,param5,param6,param7,param8)
-#define j9sock_socketIsValid(param1) privatePortLibrary->sock_socketIsValid(privatePortLibrary,param1)
-#define j9sock_select_read(param1,param2,param3,param4) privatePortLibrary->sock_select_read(privatePortLibrary,param1,param2,param3,param4)
-#define j9sock_set_nonblocking(param1,param2) privatePortLibrary->sock_set_nonblocking(privatePortLibrary,param1,param2)
 #define j9sock_error_message() privatePortLibrary->sock_error_message(privatePortLibrary)
-#define j9sock_get_network_interfaces(param1,param2) privatePortLibrary->sock_get_network_interfaces(privatePortLibrary,param1,param2)
-#define j9sock_free_network_interface_struct(param1) privatePortLibrary->sock_free_network_interface_struct(privatePortLibrary,param1)
-#define j9sock_connect_with_timeout(param1,param2,param3,param4,param5) privatePortLibrary->sock_connect_with_timeout(privatePortLibrary,param1,param2,param3,param4,param5)
-#define j9sock_fdset_zero(param1) privatePortLibrary->sock_fdset_zero(privatePortLibrary,param1)
-#define j9sock_fdset_set(param1,param2) privatePortLibrary->sock_fdset_set(privatePortLibrary,param1,param2)
-#define j9sock_fdset_clr(param1,param2) privatePortLibrary->sock_fdset_clr(privatePortLibrary,param1,param2)
-#define j9sock_fdset_isset(param1,param2) privatePortLibrary->sock_fdset_isset(privatePortLibrary,param1,param2)
 #define j9str_ftime(param1,param2,param3,param4) OMRPORT_FROM_J9PORT(privatePortLibrary)->str_ftime(OMRPORT_FROM_J9PORT(privatePortLibrary),param1,param2,param3,param4)
 #define j9mmap_startup() OMRPORT_FROM_J9PORT(privatePortLibrary)->mmap_startup(OMRPORT_FROM_J9PORT(privatePortLibrary))
 #define j9mmap_shutdown() OMRPORT_FROM_J9PORT(privatePortLibrary)->mmap_shutdown(OMRPORT_FROM_J9PORT(privatePortLibrary))

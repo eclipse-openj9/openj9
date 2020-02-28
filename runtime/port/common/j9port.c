@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,19 +52,8 @@ static J9PortLibrary MasterPortLibraryTable = {
 	j9sysinfo_get_cache_info, /* sysinfo_get_cache_info */
 	j9sock_startup, /* sock_startup */
 	j9sock_shutdown, /* sock_shutdown */
-	j9sock_htons, /* sock_htons */
-	j9sock_write, /* sock_write */
-	j9sock_sockaddr, /* sock_sockaddr */
-	j9sock_read, /* sock_read */
-	j9sock_socket, /* sock_socket */
-	j9sock_close, /* sock_close */
-	j9sock_connect, /* sock_connect */
 	j9sock_inetaddr, /* sock_inetaddr */
 	j9sock_gethostbyname, /* sock_gethostbyname */
-	j9sock_hostent_addrlist, /* sock_hostent_addrlist */
-	j9sock_sockaddr_init, /* sock_sockaddr_init */
-	j9sock_linger_init, /* sock_linger_init */
-	j9sock_setopt_linger, /* sock_setopt_linger */
 	j9gp_startup, /* gp_startup */
 	j9gp_shutdown, /* gp_shutdown */
 	j9gp_protect, /* gp_protect */
@@ -80,43 +69,7 @@ static J9PortLibrary MasterPortLibraryTable = {
 	j9sysinfo_DLPAR_enabled, /* sysinfo_DLPAR_enabled */
 	j9sysinfo_DLPAR_max_CPUs, /* sysinfo_DLPAR_max_CPUs */
 	j9sysinfo_weak_memory_consistency, /* sysinfo_weak_memory_consistency */
-	j9sock_htonl, /* sock_htonl */
-	j9sock_bind, /* sock_bind */
-	j9sock_accept, /* sock_accept */
-	j9sock_shutdown_input, /* sock_shutdown_input */
-	j9sock_shutdown_output, /* sock_shutdown_output */
-	j9sock_listen, /* sock_listen */
-	j9sock_ntohl, /* sock_ntohl */
-	j9sock_ntohs, /* sock_ntohs */
-	j9sock_getpeername, /* sock_getpeername */
-	j9sock_getsockname, /* sock_getsockname */
-	j9sock_readfrom, /* sock_readfrom */
-	j9sock_select, /* sock_select */
-	j9sock_writeto, /* sock_writeto */
-	j9sock_inetntoa, /* sock_inetntoa */
 	j9sock_gethostbyaddr, /* sock_gethostbyaddr */
-	j9sock_gethostname, /* sock_gethostname */
-	j9sock_hostent_aliaslist, /* sock_hostent_aliaslist */
-	j9sock_hostent_hostname, /* sock_hostent_hostname */
-	j9sock_sockaddr_port, /* sock_sockaddr_port */
-	j9sock_sockaddr_address, /* sock_sockaddr_address */
-	j9sock_fdset_init, /* sock_fdset_init */
-	j9sock_fdset_size, /* sock_fdset_size */
-	j9sock_timeval_init, /* sock_timeval_init */
-	j9sock_getopt_int, /* sock_getopt_int */
-	j9sock_setopt_int, /* sock_setopt_int */
-	j9sock_getopt_bool, /* sock_getopt_bool */
-	j9sock_setopt_bool, /* sock_setopt_bool */
-	j9sock_getopt_byte, /* sock_getopt_byte */
-	j9sock_setopt_byte, /* sock_setopt_byte */
-	j9sock_getopt_linger, /* sock_getopt_linger */
-	j9sock_getopt_sockaddr, /* sock_getopt_sockaddr */
-	j9sock_setopt_sockaddr, /* sock_setopt_sockaddr */
-	j9sock_setopt_ipmreq, /* sock_setopt_ipmreq */
-	j9sock_linger_enabled, /* sock_linger_enabled */
-	j9sock_linger_linger, /* sock_linger_linger */
-	j9sock_ipmreq_init, /* sock_ipmreq_init */
-	j9sock_setflag, /* sock_setflag */
 	j9sock_freeaddrinfo, /* sock_freeaddrinfo */
 	j9sock_getaddrinfo, /* sock_getaddrinfo */
 	j9sock_getaddrinfo_address, /* sock_getaddrinfo_address */
@@ -124,23 +77,7 @@ static J9PortLibrary MasterPortLibraryTable = {
 	j9sock_getaddrinfo_family, /* sock_getaddrinfo_family */
 	j9sock_getaddrinfo_length, /* sock_getaddrinfo_length */
 	j9sock_getaddrinfo_name, /* sock_getaddrinfo_name */
-	j9sock_getnameinfo, /* sock_getnameinfo */
-	j9sock_ipv6_mreq_init, /* sock_ipv6_mreq_init */
-	j9sock_setopt_ipv6_mreq, /* sock_setopt_ipv6_mreq */
-	j9sock_sockaddr_address6, /* sock_sockaddr_address6 */
-	j9sock_sockaddr_family, /* sock_sockaddr_family */
-	j9sock_sockaddr_init6, /* sock_sockaddr_init6 */
-	j9sock_socketIsValid, /* sock_socketIsValid */
-	j9sock_select_read, /* sock_select_read */
-	j9sock_set_nonblocking, /* sock_set_nonblocking */
 	j9sock_error_message, /* sock_error_message */
-	j9sock_get_network_interfaces, /* sock_get_network_interfaces */
-	j9sock_free_network_interface_struct, /* sock_free_network_interface_struct */
-	j9sock_connect_with_timeout,  /* sock_connect_with_timeout */
-	j9sock_fdset_zero, /* sock_fdset_zero */
-	j9sock_fdset_set, /* sock_fdset_set */
-	j9sock_fdset_clr, /* sock_fdset_clr */
-	j9sock_fdset_isset, /* sock_fdset_isset */
 	j9shsem_params_init, /* shsem_parameters_init */
 	j9shsem_startup, /* shsem_startup */
 	j9shsem_shutdown, /* shsem_shutdown */
