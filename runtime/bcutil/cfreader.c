@@ -2169,6 +2169,11 @@ checkAttributes(J9CfrClassFile* classfile, J9CfrAttribute** attributes, U_32 att
 				errorCode = J9NLS_CFR_RECORD_CLASS_CANNOT_BE_ABSTRACT__ID;
 				goto _errorFound;
 			}
+			/* record classes must be final */
+			if (J9_ARE_NO_BITS_SET(classfile->accessFlags, CFR_ACC_FINAL)) {
+				errorCode = J9NLS_CFR_RECORD_CLASS_MUST_BE_FINAL__ID;
+				goto _errorFound;
+			}
 
 			value = ((J9CfrAttributeRecord*)attrib)->nameIndex;
 			if ((0 == value) || (value > cpCount)) {
