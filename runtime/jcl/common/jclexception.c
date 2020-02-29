@@ -292,6 +292,13 @@ getStackTraceIterator(J9VMThread * vmThread, void * voidUserData, J9ROMClass * r
 
 done:
 			DROP_OBJECT_IN_SPECIAL_FRAME(vmThread);
+		} else {
+			/* Update previous filename as it must always match the contents of the StackTraceElement[n-1]'s
+			 * value.  This means it must be null if the previous filename was null or we'll copy the wrong
+			 * name into the StackTraceElement.  As we didn't have a ROMMethod here, nothing to fill in / process
+			 * and so we reset the previousFileName.
+			 */
+			userData->previousFileName = NULL;
 		}
 	}
 	DROP_OBJECT_IN_SPECIAL_FRAME(vmThread);
