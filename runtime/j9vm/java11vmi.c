@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2019 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -730,7 +730,8 @@ JVM_DefineModule(JNIEnv * env, jobject module, jboolean isOpen, jstring version,
 		J9ClassLoader * const classLoader = getModuleObjectClassLoader(currentThread, modObj);
 		j9object_t moduleName = J9VMJAVALANGMODULE_NAME(currentThread, modObj);
 
-		if ((classLoader != vm->systemClassLoader) && (classLoader != vm->platformClassLoader)) {
+		/* extensionClassLoader holds the platform class loader in Java 11+ */
+		if ((classLoader != vm->systemClassLoader) && (classLoader != vm->extensionClassLoader)) {
 			jsize pkgIndex = 0;
 			for (pkgIndex = 0; pkgIndex < numPackages; pkgIndex++) {
 				const char *packageName = packages[pkgIndex];
