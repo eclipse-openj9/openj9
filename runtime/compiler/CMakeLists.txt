@@ -226,7 +226,6 @@ get_target_property(compiler_defines j9vm_compiler_defines INTERFACE_COMPILE_DEF
 # Extra defines not provided by the create_omr_compiler_library call
 set(TARGET_DEFINES
 	J9_PROJECT_SPECIFIC
-	_LONG_LONG
 	${compiler_defines}
 )
 
