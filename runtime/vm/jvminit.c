@@ -5757,17 +5757,19 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 	vm->dCacheLineSize = 0;
 	vm->cpuCacheWritebackCapabilities = 0;
 #if defined(J9X86) || defined(J9HAMMER)
-	J9ProcessorDesc desc;
-	j9sysinfo_get_processor_description(&desc);
-	/* cache line size in bytes is the value of bits 8-15 * 8 */
-	U_32 lineSize = ((desc.features[2] & 0xFF00) >> 8) * 8;
-	vm->dCacheLineSize = lineSize;
-	if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLWB)) {
-		vm->cpuCacheWritebackCapabilities = J9PORT_X86_FEATURE_CLWB;
-	} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLFLUSHOPT)) {
-		vm->cpuCacheWritebackCapabilities = J9PORT_X86_FEATURE_CLFLUSHOPT;
-	} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLFSH)) {
-		vm->cpuCacheWritebackCapabilities = J9PORT_X86_FEATURE_CLFSH;
+	{
+		J9ProcessorDesc desc;
+		j9sysinfo_get_processor_description(&desc);
+		/* cache line size in bytes is the value of bits 8-15 * 8 */
+		U_32 lineSize = ((desc.features[2] & 0xFF00) >> 8) * 8;
+		vm->dCacheLineSize = lineSize;
+		if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLWB)) {
+			vm->cpuCacheWritebackCapabilities = J9PORT_X86_FEATURE_CLWB;
+		} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLFLUSHOPT)) {
+			vm->cpuCacheWritebackCapabilities = J9PORT_X86_FEATURE_CLFLUSHOPT;
+		} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLFSH)) {
+			vm->cpuCacheWritebackCapabilities = J9PORT_X86_FEATURE_CLFSH;
+		}
 	}
 #endif /* x86 */
 
