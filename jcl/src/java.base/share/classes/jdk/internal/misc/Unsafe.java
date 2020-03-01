@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar19-SE]*/
 /*******************************************************************************
- * Copyright (c) 2017, 2019 IBM Corp. and others
+ * Copyright (c) 2017, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -185,7 +185,7 @@ public final class Unsafe {
 
 	/* Mask byte offset of an int. */
 	private static final long BYTE_OFFSET_MASK = 0b11L;
-	
+
 	static {
 		registerNatives();
 
@@ -1041,6 +1041,27 @@ public final class Unsafe {
 
 	/* @return true if machine is big endian, false otherwise */
 	private native boolean isBigEndian0();
+
+/*[IF Java14]*/
+	/**
+	 * Make sure that the virtual memory at address "addr" for length "len" has
+	 * been written back from the cache to physical memory.
+	 * Throw RuntimeException if cache flushing is not enabled on the runtime OS.
+	 * 
+	 * @param addr address to the start of the block of virtual memory to be flushed
+	 * @param len length of the block of virtual memory to be flushed
+	 * @throws RuntimeException if cache flushing not enabled
+	 */
+	public native void writebackMemory(long addr, long len);
+
+	/**
+	 * Check if cache writeback is possible on the runtime platform by checking
+	 * if there is OS and/or CPU support.
+	 * 
+	 * @return true if cache writeback is possible, else false
+	 */
+	public static native boolean isWritebackEnabled();
+/*[ENDIF] Java14 */
 	
 	/**
 	 * Getter for unsafe instance.
@@ -5866,33 +5887,6 @@ public final class Unsafe {
 		}
 	}
 /*[ENDIF] Java12 */
-
-/*[IF Java14]*/
-	/**
-	 * Make sure that the virtual memory at address "addr" for length "len" has been flushed to physical memory.
-	 * Throw RuntimeException if cache flushing not enabled on the runtime OS.
-	 * 
-	 * @param addr address to the start of the block of virtual memory to be flushed
-	 * @param len length of the block of virtual memory to be flushed
-	 * @throws RuntimeException if cache flushing not enabled
-	 * 
-	 * Temporary stub method
-	 */
-	public void writebackMemory(long addr, long len) {
-		throw new UnsupportedOperationException("Stub method"); //$NON-NLS-1$
-	}
-
-	/**
-	 * Check if cache flushing is possible on the runtime OS
-	 * 
-	 * @return true if cache flushing is possible, else false
-	 * 
-	 * Temporary stub method
-	 */
-	public static boolean isWritebackEnabled() {
-		throw new UnsupportedOperationException("Stub method"); //$NON-NLS-1$
-	}
-/*[ENDIF] Java14 */
 
 	/* 
 	 * Private methods 

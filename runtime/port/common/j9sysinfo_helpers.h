@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2013 IBM Corp. and others
+ * Copyright (c) 2013, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,6 +32,9 @@
 
 extern void
 getX86CPUID(uint32_t leaf, uint32_t *cpuInfo);
+
+extern void
+getX86CPUIDext(uint32_t leaf, uint32_t subleaf, uint32_t *cpuInfo);
 
 extern intptr_t
 getX86Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc);
