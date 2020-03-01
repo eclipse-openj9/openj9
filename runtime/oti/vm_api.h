@@ -689,6 +689,21 @@ void
 setCurrentExceptionNLS(J9VMThread * vmThread, UDATA exceptionNumber, U_32 moduleName, U_32 messageNumber);
 
 /**
+ * Prepare for throwing an exception. Find the exception class using its name.
+ * Create an object using the exception class. Set an OutOfMemoryError if the
+ * object cannot be created. Otherwise, set an exception pending using the
+ * created object.
+ *
+ * Note this does not generate the "systhrow" dump event.
+ *
+ * @param vmThread[in] the current J9VMThread
+ * @param exceptionClassName[in] the name of the exception class
+ * @return void
+ */
+void
+prepareExceptionUsingClassName(J9VMThread *vmThread, const char *exceptionClassName);
+
+/**
  * @brief Creates exception with nls message; substitutes string values into error message.
  * @param vmThread current VM thread
  * @param nlsModule nls module name
