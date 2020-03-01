@@ -4208,7 +4208,8 @@ internalError:
 				goto done;
 			}
 			if (J9_CLASSLOADER_TYPE_PLATFORM == loaderType) {
-				_vm->platformClassLoader = result;
+				/* extensionClassLoader holds the platform class loader in Java 11+ */
+				_vm->extensionClassLoader = result;
 			}
 		}
 		restoreInternalNativeStackFrame(REGISTER_ARGS);

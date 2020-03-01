@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -140,7 +140,8 @@ internalError:
 		} else {
 			J9ClassLoader *classLoaderStruct = internalAllocateClassLoader(vm, classLoaderObject);
 			if (J9_CLASSLOADER_TYPE_PLATFORM == loaderType) {
-				vm->platformClassLoader = classLoaderStruct;
+				/* extensionClassLoader holds the platform class loader in Java 11+ */
+				vm->extensionClassLoader = classLoaderStruct;
 			}
 		}
 	}
