@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -555,6 +555,18 @@ VM_MHInterpreter::dispatchLoop(j9object_t methodHandle)
 			/* Get MethodHandle for this operation from the VarHandle's handleTable */
 			j9object_t handleTable = J9VMJAVALANGINVOKEVARHANDLE_HANDLETABLE(_currentThread, varHandle);
 			j9object_t methodHandleFromTable = J9JAVAARRAYOFOBJECT_LOAD(_currentThread, handleTable, operation);
+
+			if (NULL == methodHandleFromTable) {
+				/* Building a method type (MT) frame makes the stack walkable since looking up the class below may
+				 * cause a GC or another exception. Also, the MT frame will make it easier to debug and service the
+				 * error as the VarHandle will be on the stack and findable with DDR. The MT frame does not need to
+				 * be restored since throwing the exception will handle it appropriately.
+				 */
+				buildMethodTypeFrame(_currentThread, type);
+				prepareExceptionUsingClassName(_currentThread, "java/lang/UnsupportedOperationException");
+				goto throwCurrentException;
+			}
+
 			j9object_t handleTypeFromTable = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandleFromTable);
 			j9object_t accessModeType = J9VMJAVALANGINVOKEVARHANDLEINVOKEHANDLE_ACCESSMODETYPE(_currentThread, methodHandle);
 
