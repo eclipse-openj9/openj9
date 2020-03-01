@@ -5760,8 +5760,7 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 		J9ProcessorDesc desc;
 		j9sysinfo_get_processor_description(&desc);
 		/* cache line size in bytes is the value of bits 8-15 * 8 */
-		U_32 lineSize = ((desc.features[2] & 0xFF00) >> 8) * 8;
-		vm->dCacheLineSize = lineSize;
+		vm->dCacheLineSize = ((desc.features[2] & 0xFF00) >> 8) * 8;
 		if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLWB)) {
 			vm->cpuCacheWritebackCapabilities = J9PORT_X86_FEATURE_CLWB;
 		} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLFLUSHOPT)) {
