@@ -334,6 +334,7 @@ public abstract class VarHandle extends VarHandleInternal
 
 /*[IF Java14]*/
 	static final BiFunction<String, List<Integer>, ArrayIndexOutOfBoundsException> AIOOBE_SUPPLIER = null;
+	private boolean varFormUsed = false;
 /*[ENDIF] Java14 */
 	
 	private final MethodHandle[] handleTable;
@@ -419,6 +420,7 @@ public abstract class VarHandle extends VarHandleInternal
 			this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTs);
 		}
 		this.modifiers = 0;
+		this.varFormUsed = true;
 	}
 
 	/**
@@ -632,12 +634,17 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @return The {@link MethodType} corresponding to the provided {@link AccessMode}.
 	 */
 	public final MethodType accessModeType(AccessMode accessMode) {
-		MethodType internalType = handleTable[accessMode.ordinal()].type;
-		int numOfArguments = internalType.arguments.length;
-		
-		// Drop the internal VarHandle argument
-		MethodType modifiedType = internalType.dropParameterTypes(numOfArguments - 1, numOfArguments);
-		
+		MethodType modifiedType = null;
+		MethodHandle internalHandle = handleTable[accessMode.ordinal()];
+		if (internalHandle == null) {
+			modifiedType = accessModeTypeUncached(accessMode);
+		} else {
+			MethodType internalType = internalHandle.type;
+			int numOfArguments = internalType.arguments.length;
+
+			/* Drop the internal VarHandle argument. */
+			modifiedType = internalType.dropParameterTypes(numOfArguments - 1, numOfArguments);
+		}
 		return modifiedType;
 	}
 	
@@ -649,6 +656,12 @@ public abstract class VarHandle extends VarHandleInternal
 	 * @return A boolean value indicating whether the {@link AccessMode} is supported.
 	 */
 	boolean isAccessModeSupportedHelper(AccessMode accessMode) {
+/*[IF Java14]*/
+		if (varFormUsed) {
+			return (handleTable[accessMode.ordinal()] != null);
+		}
+/*[ENDIF] Java14 */
+		
 		switch (accessMode) {
 		case GET:
 		case GET_VOLATILE:
@@ -712,10 +725,24 @@ public abstract class VarHandle extends VarHandleInternal
 	 */
 	public final MethodHandle toMethodHandle(AccessMode accessMode) {
 		MethodHandle mh = handleTable[accessMode.ordinal()];
-		mh = MethodHandles.insertArguments(mh, mh.type.parameterCount() - 1, this);
-		
-		if (!isAccessModeSupported(accessMode)) {
-			MethodType mt = mh.type;
+
+		if (mh != null) {
+			mh = MethodHandles.insertArguments(mh, mh.type.parameterCount() - 1, this);
+		}
+
+		if ((mh == null) || !isAccessModeSupported(accessMode)) {
+			MethodType mt = null;
+
+			if (mh != null) {
+				mt = mh.type;
+			} else {
+				mt = accessModeTypeUncached(accessMode);
+				/* accessModeTypeUncached does not return null. It throws InternalError if the method type
+				 * cannot be determined.
+				 */
+				mt = mt.appendParameterTypes(this.getClass());
+			}
+
 			try {
 				mh = _lookup.findStatic(VarHandle.class, "throwUnsupportedOperationException", MethodType.methodType(void.class)); //$NON-NLS-1$
 			} catch (Throwable e) {
@@ -723,6 +750,7 @@ public abstract class VarHandle extends VarHandleInternal
 				error.initCause(e);
 				throw error;
 			}
+
 			/* The resulting method handle must come with the same signature as the requested access mode method
 			 * so as to throw out UnsupportedOperationException from that method.
 			 */
