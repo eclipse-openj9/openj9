@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013, 2017 IBM Corp. and others
+ * Copyright (c) 2013, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -39,8 +39,9 @@
 #endif /* defined(WIN32) */
 
 /* defines for the CPUID instruction */
-#define CPUID_VENDOR_INFO	0
-#define CPUID_FAMILY_INFO	1
+#define CPUID_VENDOR_INFO						0
+#define CPUID_FAMILY_INFO						1
+#define CPUID_STRUCTURED_EXTENDED_FEATURE_INFO	7
 
 #define CPUID_VENDOR_INTEL		"GenuineIntel"
 #define CPUID_VENDOR_AMD		"AuthenticAMD"
@@ -150,9 +151,15 @@ getX86Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
 	desc->physicalProcessor = desc->processor;
 
 	/* features */
-	desc->features[0] = CPUInfo[3];
-	desc->features[1] = CPUInfo[2];
-	desc->features[2] = 0; /* reserved for future expansion */
+	desc->features[0] = CPUInfo[3]; /* Feature info flags in EDX */
+	desc->features[1] = CPUInfo[2];	/* Feature info flags in ECX */
+	desc->features[2] = CPUInfo[1]; /* EBX register, cache line size info in bits 8-15 */
+
+	/* extended features */
+	getX86CPUIDext(CPUID_STRUCTURED_EXTENDED_FEATURE_INFO, 0, CPUInfo); /* 0x0 is the only valid subleaf value for this leaf */
+	desc->features[3] = CPUInfo[1]; /* Structured Extended Feature Flags in EBX */
+
+	desc->features[4] = 0; /* reserved for future expansion */
 
 	return 0;
 }
@@ -164,10 +171,12 @@ getX86Description(struct J9PortLibrary *portLibrary, J9ProcessorDesc *desc)
  * Name based on the same instruction. The leaf value specifies what information
  * to return.
  *
- * @param[in] 	leaf The leaf value to the CPUID instruction.
+ * @param[in] 	leaf		The leaf value to the CPUID instruction and the value
+ * 							in EAX when CPUID is called. A value of 0x1 returns basic
+ * 							information including feature support.
  * @param[out]	cpuInfo 	Reference to the an integer array which holds the data
  * 							of EAX,EBX,ECX and EDX registers.
- *              cpuInfo[0] To hold the EAX register data, value in this register at
+ *              cpuInfo[0]	To hold the EAX register data, value in this register at
  *							the time of CPUID tells what information to return
  *							EAX=0x1,returns the processor Info and feature bits
  *							in EBX,ECX,EDX registers.
@@ -206,6 +215,49 @@ getX86CPUID(uint32_t leaf, uint32_t *cpuInfo)
   __asm volatile(
      "cpuid;"
      :"+a" (cpuInfo[0]), "=b" (cpuInfo[1]), "=c" (cpuInfo[2]), "=d" (cpuInfo[3])
+        );
+#endif
+#endif
+}
+
+/**
+ * Similar to getX86CPUID() above, but with a second subleaf parameter for the
+ * leaves returned by the 'cpuid' instruction which are further divided into
+ * subleaves.
+ * 
+ * @param[in]	leaf		Value in EAX when cpuid is called to determine what info
+ * 							is returned.
+ * 				subleaf		Value in ECX when cpuid is called which is needed by some
+ * 							leafs returned in order to further specify what is returned
+ * @param[out]	cpuInfo		Reference to the an integer array which holds the data
+ * 							of EAX,EBX,ECX and EDX registers returned by cpuid.
+ * 							cpuInfo[0] holds EAX and cpuInfo[4] holds EDX.
+ */
+void
+getX86CPUIDext(uint32_t leaf, uint32_t subleaf, uint32_t *cpuInfo)
+{
+	cpuInfo[0] = leaf;
+	cpuInfo[2] = subleaf;
+
+/* Implemented for x86 & x86_64 bit platforms */
+#if defined(WIN32)
+	/* Specific CPUID instruction available in Windows */
+	__cpuidex(cpuInfo, cpuInfo[0], cpuInfo[2]);
+
+#elif defined(LINUX) || defined(OSX)
+#if defined(J9X86)
+	__asm volatile
+	("mov %%ebx, %%edi;"
+			"cpuid;"
+			"mov %%ebx, %%esi;"
+			"mov %%edi, %%ebx;"
+			:"+a" (cpuInfo[0]), "=S" (cpuInfo[1]), "+c" (cpuInfo[2]), "=d" (cpuInfo[3])
+			 : :"edi");
+
+#elif defined(J9HAMMER)
+  __asm volatile(
+     "cpuid;"
+     :"+a" (cpuInfo[0]), "=b" (cpuInfo[1]), "+c" (cpuInfo[2]), "=d" (cpuInfo[3])
         );
 #endif
 #endif
