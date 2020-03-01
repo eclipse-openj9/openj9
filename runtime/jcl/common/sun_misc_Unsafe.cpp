@@ -920,10 +920,10 @@ error:
 jboolean JNICALL
 Java_jdk_internal_misc_Unsafe_isWritebackEnabled(JNIEnv *env, jclass clazz)
 {
-	J9VMThread *currentThread = (J9VMThread*)env;
-	J9JavaVM *vm = currentThread->javaVM;
 	jboolean result = JNI_FALSE;
 #if ((defined(J9X86) || defined(J9HAMMER)) && !defined(WIN32))
+	J9VMThread *currentThread = (J9VMThread*)env;
+	J9JavaVM *vm = currentThread->javaVM;
 	if (vm->dCacheLineSize > 0) {
 		switch(vm->cpuCacheWritebackCapabilities) {
 			case J9PORT_X86_FEATURE_CLWB:
