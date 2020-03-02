@@ -97,16 +97,19 @@ prepareExceptionUsingClassName(J9VMThread *vmThread, const char *exceptionClassN
 			vmThread->javaVM->systemClassLoader,
 			J9_FINDCLASS_FLAG_THROW_ON_FAIL);
 
-	exception = vmThread->javaVM->memoryManagerFunctions->J9AllocateObject(
-			vmThread,
-			exceptionClass,
-			J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
+	/* internalFindClassUTF8 will set an exception on failure. */
+	if (J9_EXPECTED(NULL != exceptionClass)) {
+		exception = vmThread->javaVM->memoryManagerFunctions->J9AllocateObject(
+				vmThread,
+				exceptionClass,
+				J9_GC_ALLOCATE_OBJECT_NON_INSTRUMENTABLE);
 
-	if (J9_UNEXPECTED(NULL == exception)) {
-		setHeapOutOfMemoryError(vmThread);
-	} else {
-		vmThread->currentException = exception;
-		vmThread->privateFlags |= J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
+		if (J9_UNEXPECTED(NULL == exception)) {
+			setHeapOutOfMemoryError(vmThread);
+		} else {
+			vmThread->currentException = exception;
+			vmThread->privateFlags |= J9_PRIVATE_FLAGS_REPORT_EXCEPTION_THROW;
+		}
 	}
 }
 
