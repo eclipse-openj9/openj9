@@ -1,4 +1,4 @@
-# Copyright (c) 1998, 2019 IBM Corp. and others
+# Copyright (c) 1998, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -209,6 +209,15 @@ UMA_SOURCE_SUFFIX_LIST+=.m4
 UMA_DOT_EXE=.exe
 <#else>
 UMA_DOT_EXE=
+</#if>
+
+# define the shared library extension
+<#if uma.spec.type.osx>
+UMA_DOT_DLL := .dylib
+<#elseif uma.spec.type.windows>
+UMA_DOT_DLL := .dll
+<#else>
+UMA_DOT_DLL := .so
 </#if>
 
 # define the object extension
