@@ -647,7 +647,7 @@ int32_t TR_EscapeAnalysis::performAnalysisOnce()
    _valueNumberInfo            = NULL;
    _otherDefsForLoopAllocation = NULL;
    _methodSymbol               = NULL;
-   _nodeUsesThroughAternary    = NULL;
+   _nodeUsesThroughAselect     = NULL;
    _repeatAnalysis             = false;
    _somethingChanged           = false;
    _inBigDecimalAdd            = false;
@@ -1862,7 +1862,7 @@ void TR_EscapeAnalysis::checkDefsAndUses()
    {
    Candidate *candidate, *next;
 
-   gatherUsesThroughAternary();
+   gatherUsesThroughAselect();
 
    for (candidate = _candidates.getFirst(); candidate; candidate = next)
       {
@@ -2116,15 +2116,15 @@ void TR_EscapeAnalysis::checkDefsAndUses()
       }
    }
 
-void TR_EscapeAnalysis::printUsesThroughAternary(void)
+void TR_EscapeAnalysis::printUsesThroughAselect(void)
    {
    if (trace())
       {
-      if (_nodeUsesThroughAternary)
+      if (_nodeUsesThroughAselect)
          {
-         traceMsg(comp(), "\nNodes used through aternary operations\n");
+         traceMsg(comp(), "\nNodes used through aselect operations\n");
 
-         for (auto mi = _nodeUsesThroughAternary->begin(); mi != _nodeUsesThroughAternary->end(); mi++)
+         for (auto mi = _nodeUsesThroughAselect->begin(); mi != _nodeUsesThroughAselect->end(); mi++)
             {
             TR::Node *key = mi->first;
             int32_t nodeIdx = key->getGlobalIndex();
@@ -2135,9 +2135,9 @@ void TR_EscapeAnalysis::printUsesThroughAternary(void)
 
             for (auto di = mi->second->begin(), end = mi->second->end(); di != end; di++)
                {
-               TR::Node *aternaryNode = *di;
-               traceMsg(comp(), "%s[%p] n%dn", (first ? "" : ", "), aternaryNode,
-                        aternaryNode->getGlobalIndex());
+               TR::Node *aselectNode = *di;
+               traceMsg(comp(), "%s[%p] n%dn", (first ? "" : ", "), aselectNode,
+                        aselectNode->getGlobalIndex());
                first = false;
                }
 
@@ -2146,12 +2146,12 @@ void TR_EscapeAnalysis::printUsesThroughAternary(void)
          }
       else
          {
-         traceMsg(comp(), "\nNo nodes used through aternary operations\n");
+         traceMsg(comp(), "\nNo nodes used through aselect operations\n");
          }
       }
    }
 
-void TR_EscapeAnalysis::gatherUsesThroughAternary(void)
+void TR_EscapeAnalysis::gatherUsesThroughAselect(void)
    {
    TR::NodeChecklist visited(comp());
    TR::TreeTop *tt = comp()->getStartTree();
@@ -2159,16 +2159,16 @@ void TR_EscapeAnalysis::gatherUsesThroughAternary(void)
    for (; tt; tt = tt->getNextTreeTop())
       {
       TR::Node *node = tt->getNode();
-      gatherUsesThroughAternaryImpl(node, visited);
+      gatherUsesThroughAselectImpl(node, visited);
       }
 
    if (trace())
       {
-      printUsesThroughAternary();
+      printUsesThroughAselect();
       }
    }
 
-void TR_EscapeAnalysis::gatherUsesThroughAternaryImpl(TR::Node *node, TR::NodeChecklist& visited)
+void TR_EscapeAnalysis::gatherUsesThroughAselectImpl(TR::Node *node, TR::NodeChecklist& visited)
    {
    if (visited.contains(node))
       {
@@ -2178,53 +2178,53 @@ void TR_EscapeAnalysis::gatherUsesThroughAternaryImpl(TR::Node *node, TR::NodeCh
 
    for (int32_t i=0; i<node->getNumChildren(); i++)
       {
-      gatherUsesThroughAternaryImpl(node->getChild(i), visited);
+      gatherUsesThroughAselectImpl(node->getChild(i), visited);
       }
 
-   // If this is an aternary operation, for each of its child operands (other than
-   // the condition) add the aternary node to the array of nodes that use that child
-   if (node->getOpCode().isTernary() && node->getDataType() == TR::Address)
+   // If this is an aselect operation, for each of its child operands (other than
+   // the condition) add the aselect node to the array of nodes that use that child
+   if (node->getOpCode().isSelect() && node->getDataType() == TR::Address)
       {
-      associateAternaryWithChild(node, 1);
-      associateAternaryWithChild(node, 2);
+      associateAselectWithChild(node, 1);
+      associateAselectWithChild(node, 2);
       }
    }
 
-void TR_EscapeAnalysis::associateAternaryWithChild(TR::Node *aternaryNode, int32_t idx)
+void TR_EscapeAnalysis::associateAselectWithChild(TR::Node *aselectNode, int32_t idx)
    {
    TR::Region &stackMemoryRegion = trMemory()->currentStackRegion();
-   TR::Node *child = aternaryNode->getChild(idx);
+   TR::Node *child = aselectNode->getChild(idx);
 
    NodeDeque *currChildUses;
 
-   if (NULL == _nodeUsesThroughAternary)
+   if (NULL == _nodeUsesThroughAselect)
       {
-      _nodeUsesThroughAternary =
+      _nodeUsesThroughAselect =
             new (trStackMemory()) NodeToNodeDequeMap((NodeComparator()),
                                                      NodeToNodeDequeMapAllocator(stackMemoryRegion));
       }
 
-   auto search = _nodeUsesThroughAternary->find(child);
-   bool nodeAlreadyMapsToAternary = false;
+   auto search = _nodeUsesThroughAselect->find(child);
+   bool nodeAlreadyMapsToAselect = false;
 
-   if (_nodeUsesThroughAternary->end() != search)
+   if (_nodeUsesThroughAselect->end() != search)
       {
       currChildUses = search->second;
 
-      // Does NodeDeque already contain this aternary node?
-      nodeAlreadyMapsToAternary =
+      // Does NodeDeque already contain this aselect node?
+      nodeAlreadyMapsToAselect =
             (std::find(search->second->begin(), search->second->end(),
-                       aternaryNode) != search->second->end());
+                       aselectNode) != search->second->end());
       }
    else
       {
       currChildUses = new (trStackMemory()) NodeDeque(stackMemoryRegion);
-      (*_nodeUsesThroughAternary)[child] = currChildUses;
+      (*_nodeUsesThroughAselect)[child] = currChildUses;
       }
 
-   if (!nodeAlreadyMapsToAternary)
+   if (!nodeAlreadyMapsToAselect)
       {
-      currChildUses->push_back(aternaryNode);
+      currChildUses->push_back(aselectNode);
       }
    }
 
@@ -2385,43 +2385,43 @@ bool TR_EscapeAnalysis::collectValueNumbersOfIndirectAccessesToObject(TR::Node *
    }
 
 
-bool TR_EscapeAnalysis::checkUsesThroughAternary(TR::Node *node, Candidate *candidate)
+bool TR_EscapeAnalysis::checkUsesThroughAselect(TR::Node *node, Candidate *candidate)
    {
    bool returnValue = true;
 
-   if (_nodeUsesThroughAternary)
+   if (_nodeUsesThroughAselect)
       {
-      auto search = _nodeUsesThroughAternary->find(node);
+      auto search = _nodeUsesThroughAselect->find(node);
 
-      // Is this node referenced directly by any aternary nodes?
-      if (_nodeUsesThroughAternary->end() != search)
+      // Is this node referenced directly by any aselect nodes?
+      if (_nodeUsesThroughAselect->end() != search)
          {
          for (auto di = search->second->begin(), end = search->second->end(); di != end; di++)
             {
-            TR::Node* aternaryNode = *di;
-            int32_t aternaryVN = _valueNumberInfo->getValueNumber(aternaryNode);
+            TR::Node* aselectNode = *di;
+            int32_t aselectVN = _valueNumberInfo->getValueNumber(aselectNode);
             int32_t i;
 
-            // Check whether this aternary has already been accounted for with this candidate
+            // Check whether this aselect has already been accounted for with this candidate
             for (i = candidate->_valueNumbers->size()-1; i >= 0; i--)
                {
-               if (candidate->_valueNumbers->element(i) == aternaryVN)
+               if (candidate->_valueNumbers->element(i) == aselectVN)
                   {
                   break;
                   }
                }
 
-            // If this aternary has not been accounted for with this candidate, check for its uses
+            // If this aselect has not been accounted for with this candidate, check for its uses
             if (i < 0)
                {
-               candidate->_valueNumbers->add(aternaryVN);
+               candidate->_valueNumbers->add(aselectVN);
 
                if (trace())
                   {
-                  traceMsg(comp(), "   Checking uses of node %p through aternary operation %p for candidate %p\n", node, aternaryNode, candidate->_node);
+                  traceMsg(comp(), "   Checking uses of node %p through aselect operation %p for candidate %p\n", node, aselectNode, candidate->_node);
                   }
 
-               if (!checkDefsAndUses(aternaryNode, candidate))
+               if (!checkDefsAndUses(aselectNode, candidate))
                   {
                   returnValue = false;
                   }
@@ -2440,7 +2440,7 @@ bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
    _useDefInfo->buildDefUseInfo();
    bool returnValue = true;
 
-   if (_nodeUsesThroughAternary && !checkUsesThroughAternary(node, candidate))
+   if (_nodeUsesThroughAselect && !checkUsesThroughAselect(node, candidate))
       {
       returnValue = false;
       }
@@ -2535,7 +2535,7 @@ bool TR_EscapeAnalysis::checkDefsAndUses(TR::Node *node, Candidate *candidate)
 
       if (_useDefInfo->isUseIndex(udIndex))
          {
-         if (_nodeUsesThroughAternary && !checkUsesThroughAternary(next, candidate))
+         if (_nodeUsesThroughAselect && !checkUsesThroughAselect(next, candidate))
             {
             returnValue = false;
             }
@@ -7064,8 +7064,8 @@ void TR_EscapeAnalysis::makeNonContiguousLocalAllocation(Candidate *candidate)
 
 void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
    {
-   static char *disableTernaryOpForEA = feGetEnv("TR_disableTernaryOpForEA");
-   bool useTernaryOp = !disableTernaryOpForEA && cg()->getSupportsTernary();
+   static char *disableSelectOpForEA = feGetEnv("TR_disableSelectOpForEA");
+   bool useSelectOp = !disableSelectOpForEA && cg()->getSupportsSelect();
 
    if (comp()->suppressAllocationInlining())
       return;
@@ -7420,9 +7420,9 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
 
       TR::TreeTop *insertSymRefStoresAfter = NULL;
 
-      // If using aternary to perform comparisons, all compares and stores are
+      // If using aselect to perform comparisons, all compares and stores are
       // inserted directly at the start of the cold block
-      if (useTernaryOp)
+      if (useSelectOp)
          {
          insertSymRefStoresAfter = coldBlock->getEntry();
          }
@@ -7438,7 +7438,7 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
         //
         // Now create the compares (one for each node) and stores
         //
-        if (useTernaryOp)
+        if (useSelectOp)
            {
            // Reload address of object on heap just once for this block
            if (!heapTempLoad)
@@ -7452,7 +7452,7 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
            // current value
            //
            // astore <object-temp>
-           //   aternary
+           //   aselect
            //     acmpeq
            //       aload <object-temp>
            //       loadaddr <stack-obj>
@@ -7461,7 +7461,7 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
            //
            TR::Node *symLoad = TR::Node::createWithSymRef(candidate->_node, TR::aload, 0, symRef);
            TR::Node *addrCompareNode = TR::Node::create(candidate->_node, TR::acmpeq, 2, symLoad, candidateStackAddrLoad);
-           TR::Node *chooseAddrNode = TR::Node::create(TR::aternary, 3, addrCompareNode, heapTempLoad, symLoad);
+           TR::Node *chooseAddrNode = TR::Node::create(TR::aselect, 3, addrCompareNode, heapTempLoad, symLoad);
 
            TR::TreeTop *storeTree = storeHeapifiedToTemp(candidate, chooseAddrNode, symRef);
 
@@ -7526,9 +7526,9 @@ void TR_EscapeAnalysis::heapifyForColdBlocks(Candidate *candidate)
          TR::CFGNode *predNode = (*pred)->getFrom();
          /* might be removed, keep reference to next object in list */
          pred++;
-         if ((useTernaryOp && (predNode != heapComparisonBlock)
+         if ((useSelectOp && (predNode != heapComparisonBlock)
                  && (predNode != heapAllocationBlock))
-             || (!useTernaryOp && (predNode != lastComparisonBlock)
+             || (!useSelectOp && (predNode != lastComparisonBlock)
                  && (predNode != lastStoreBlock))
              || coldBlock->isCatchBlock())
             {

@@ -422,7 +422,7 @@ TR_JProfilingValue::lowerCalls()
  * | quickTestBlock                                |                                   |
  * |-----------------------------------------------|                                   |
  * |  treetop (incIndexTreeTop)                    |                                   |
- * |     l/iternary                                |                                   |
+ * |      l/iselect                                |                                   |
  * |        l/icmpeq (conditionNode)               |                                   |
  * |           value                               |                                   |
  * |           i/lloadi                            |                                   |
@@ -452,7 +452,7 @@ TR_JProfilingValue::lowerCalls()
  *          |    al/aiadd                  |                v                          |
  *          |       aconst <table address> |        |-------------------------------|  |
  *          |       l/imul                 |        | helper                        |  |
- *          |          l/iternary          |        |-------------------------------|  |
+ *          |           l/iselect          |        |-------------------------------|  |
  *          |          width               |        | call TR_jProfile32/64BitValue |  |
  *          |     iadd                     |        |    value                      |  |
  *          |        iloadi                |        |    table address              |  |
@@ -605,8 +605,8 @@ TR_JProfilingValue::addProfilingTrees(
    TR::Node *conditionNode = TR::Node::create(value, comp->il.opCodeForCompareEquals(roundedType), 2, quickTestValue,
       loadValue(comp, roundedType, addressOfKeys, convertedHashIndex));
    
-   TR::Node *ternarySelectNode = TR::Node::create(comp->il.opCodeForTernarySelect(roundedType), 3, conditionNode, hashIndex, otherIndex);
-   TR::TreeTop *incIndexTreeTop = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, ternarySelectNode));
+   TR::Node *selectNode = TR::Node::create(comp->il.opCodeForSelect(roundedType), 3, conditionNode, hashIndex, otherIndex);
+   TR::TreeTop *incIndexTreeTop = TR::TreeTop::create(comp, TR::Node::create(TR::treetop, 1, selectNode));
    iter->append(incIndexTreeTop);
 
    TR::Block *quickTestBlock = iter->split(incIndexTreeTop, cfg, false, true);
@@ -633,7 +633,7 @@ TR_JProfilingValue::addProfilingTrees(
    TR::Node *counterOffset = TR::Node::iconst(value, table->getFreqOffset());
    TR::Node *counterBaseAddress = TR::Node::aconst(value, table->getBaseAddress() + table->getFreqOffset());
    TR::TreeTop *incTree = TR::TreeTop::create(comp, checkNodeTreeTop,
-      incrementMemory(comp, counterType, effectiveAddress(counterType, counterBaseAddress, convertType(ternarySelectNode, systemType, true))));
+      incrementMemory(comp, counterType, effectiveAddress(counterType, counterBaseAddress, convertType(selectNode, systemType, true))));
    TR::Block *quickInc = quickTestBlock->split(incTree, cfg, false, true);
    quickInc->setIsExtensionOfPreviousBlock();
    if (trace)
