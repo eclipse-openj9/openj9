@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -36,7 +36,7 @@ extern "C"
 #if defined (J9VM_SHRTEST) && defined (J9SHR_CACHELET_SUPPORT)
 /*This function is not used from shrtest -Xrealtime */
 #else
-static BOOLEAN
+static VMINLINE BOOLEAN
 j9shr_Query_IsCacheFull(J9JavaVM *vm)
 {
 	BOOLEAN retval = TRUE;
@@ -70,7 +70,7 @@ j9shr_Query_IsCacheFull(J9JavaVM *vm)
 #if defined (J9VM_SHRTEST) && defined (J9SHR_CACHELET_SUPPORT)
 /*This function is not used from shrtest -Xrealtime */
 #else
-static BOOLEAN
+static VMINLINE BOOLEAN
 j9shr_Query_IsAddressInCache(J9JavaVM *vm, void *address, UDATA length)
 {
 	BOOLEAN retval = FALSE;
@@ -93,7 +93,7 @@ j9shr_Query_IsAddressInCache(J9JavaVM *vm, void *address, UDATA length)
  * @return TRUE if the the address range is in the readWrite cache. False otherwise.
  **/
 
-static BOOLEAN
+static VMINLINE BOOLEAN
 j9shr_Query_IsAddressInReadWriteCache(J9JavaVM *vm, void *address, UDATA length)
 {
 	BOOLEAN retval = FALSE;
@@ -108,7 +108,7 @@ j9shr_Query_IsAddressInReadWriteCache(J9JavaVM *vm, void *address, UDATA length)
 #endif
 
 #if !defined (J9VM_SHRTEST)
-static void
+static VMINLINE void
 j9shr_Query_PopulatePreinitConfigDefaults(J9JavaVM *vm, J9SharedClassPreinitConfig *updatedWithDefaults)
 {
 	if ((NULL != vm) && (NULL != vm->sharedClassConfig)) {
