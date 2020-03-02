@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -99,7 +99,13 @@ class TR_EstimateCodeSize
    virtual bool estimateCodeSize(TR_CallTarget *, TR_CallStack * , bool recurseDown = true) = 0;
 
 
-   bool returnCleanup(int32_t);      // common tasks requiring completion before returning from estimation
+   /*
+    *  \brief common tasks requiring completion before returning from estimation
+    *
+    *  \param errorNumber
+    *       an unique number used to identify where estimate code size bailed out
+    */
+   bool returnCleanup(int32_t errorNumber );
 
    /* Fields */
 
