@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -245,9 +245,9 @@
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::ddRegStore
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::deRegStore
 
-   TR::TreeEvaluator::unImpOpEvaluator,          // TR::dfternary
-   TR::TreeEvaluator::unImpOpEvaluator,          // TR::ddternary
-   TR::TreeEvaluator::unImpOpEvaluator,          // TR::deternary
+   TR::TreeEvaluator::unImpOpEvaluator,          // TR::dfselect
+   TR::TreeEvaluator::unImpOpEvaluator,          // TR::ddselect
+   TR::TreeEvaluator::unImpOpEvaluator,          // TR::deselect
 
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::dfexp
    TR::TreeEvaluator::unImpOpEvaluator,          // TR::ddexp
