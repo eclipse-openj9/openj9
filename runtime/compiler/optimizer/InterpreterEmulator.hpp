@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -200,8 +200,10 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
        *
        * \param withState
        *       whether the bytecode iteration should be with or without state
+       *
+       * \return whether callsites are created successfully. Return false if failed for reasons like unexpected bytecodes etc.
        */
-      void findAndCreateCallsitesFromBytecodes(bool wasPeekingSuccessfull, bool withState);
+      bool findAndCreateCallsitesFromBytecodes(bool wasPeekingSuccessfull, bool withState);
       void setBlocks(TR::Block **blocks) { _blocks = blocks; }
       TR_StackMemory trStackMemory()            { return _trMemory; }
       bool _nonColdCallExists;
@@ -224,8 +226,10 @@ class InterpreterEmulator : public TR_ByteCodeIteratorWithState<TR_J9ByteCode, J
       void initializeIteratorWithState();
       /*
        * push and pop operands on stack according to given bytecode
+       *
+       * \return false if some error occurred such as unexpected bytecodes.
        */
-      void maintainStack(TR_J9ByteCode bc);
+      bool maintainStack(TR_J9ByteCode bc);
       void maintainStackForIf(TR_J9ByteCode bc);
       void maintainStackForGetField();
       void maintainStackForAload(int slotIndex);

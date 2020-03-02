@@ -1144,9 +1144,9 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
    const static bool debugMHInlineWithOutPeeking = feGetEnv("TR_DebugMHInlineWithOutPeeking") ? true: false;
    bool mhInlineWithPeeking =  comp()->getOption(TR_DisableMHInlineWithoutPeeking);
-   bool isCalleeMethodHandleThunk = calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen();
+   bool isCalleeMethodHandleThunkInFirstPass = calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen() && _inliner->firstPass();
    if (nph.doPeeking() && recurseDown ||
-       isCalleeMethodHandleThunk && mhInlineWithPeeking)
+       isCalleeMethodHandleThunkInFirstPass && mhInlineWithPeeking)
       {
 
       heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- needsPeeking is true for calltarget %p",
@@ -1160,7 +1160,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          wasPeekingSuccessfull = true;
          }
       }
-   else if (isCalleeMethodHandleThunk && !mhInlineWithPeeking && debugMHInlineWithOutPeeking)
+   else if (isCalleeMethodHandleThunkInFirstPass && !mhInlineWithPeeking && debugMHInlineWithOutPeeking)
       {
       traceMsg(comp(), "printing out trees and bytecodes through peeking because DebugMHInlineWithOutPeeking is on\n");
       methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, NULL);
@@ -1178,7 +1178,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    //
    TR_ValueProfileInfoManager * profileManager = TR_ValueProfileInfoManager::get(comp());
    bool callGraphEnabled = !comp()->getOption(TR_DisableCallGraphInlining);//profileManager->isCallGraphProfilingEnabled(comp());
-   if (!_inliner->firstPass() || isCalleeMethodHandleThunk)
+   if (!_inliner->firstPass() || isCalleeMethodHandleThunkInFirstPass)
       callGraphEnabled = false; // TODO: Work out why this doesn't function properly on subsequent passes
    if (callGraphEnabled && recurseDown)
       {
@@ -1276,8 +1276,12 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    if (!callsitesAreCreatedFromTrees)
       {
       bci.prepareToFindAndCreateCallsites(blocks, flags, callSites, &cfg, &newBCInfo, _recursionDepth, &callStack);
-      bool iteratorWithState = isCalleeMethodHandleThunk && !mhInlineWithPeeking;
-      bci.findAndCreateCallsitesFromBytecodes(wasPeekingSuccessfull, iteratorWithState);
+      bool iteratorWithState = isCalleeMethodHandleThunkInFirstPass && !mhInlineWithPeeking;
+      if (!bci.findAndCreateCallsitesFromBytecodes(wasPeekingSuccessfull, iteratorWithState))
+         {
+         heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. bci.findAndCreateCallsitesFromBytecode failed", _recursionDepth, calltarget, callerName);
+         return returnCleanup(7);
+         }
       _hasNonColdCalls = bci._nonColdCallExists;
       }
 

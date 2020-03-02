@@ -141,7 +141,7 @@ InterpreterEmulator::initializeIteratorWithState()
    this->setIndex(0);
    }
 
-void
+bool
 InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
    {
    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
@@ -216,8 +216,23 @@ InterpreterEmulator::maintainStack(TR_J9ByteCode bc)
       case J9BCinvokestaticsplit:
          break;
       default:
-         TR_ASSERT_FATAL(0, "unexpected bytecode in thunk archetype %p at bcIndex %d %s (%d)\n", _calltarget, bcIndex(), comp()->fej9()->getByteCodeName(nextByte(0)), bc);
+         static const bool assertfatal = feGetEnv("TR_AssertFatalForUnexpectedBytecodeInMethodHandleThunk") ? true: false;
+         if (!assertfatal)
+            debugTrace(tracer(), "unexpected bytecode in thunk archetype %s (%p) at bcIndex %d %s (%d)\n", _calltarget->_calleeMethod->signature(comp()->trMemory()), _calltarget, bcIndex(), comp()->fej9()->getByteCodeName(nextByte(0)), bc);
+         else
+            TR_ASSERT_FATAL(0, "unexpected bytecode in thunk archetype %s (%p) at bcIndex %d %s (%d)\n", _calltarget->_calleeMethod->signature(comp()->trMemory()), _calltarget, bcIndex(), comp()->fej9()->getByteCodeName(nextByte(0)), bc);
+
+         TR::DebugCounter::incStaticDebugCounter(comp(),
+            TR::DebugCounter::debugCounterName(comp(),
+               "InterpreterEmulator.unexpectedBytecode/(root=%s)/(%s)/bc=%d/%s",
+               comp()->signature(),
+               _calltarget->_calleeMethod->signature(comp()->trMemory()),
+               _bcIndex,
+               comp()->fej9()->getByteCodeName(nextByte(0)))
+            );
+         return false;
       }
+   return true;
    }
 
 void
@@ -225,14 +240,18 @@ InterpreterEmulator::maintainStackForAload(int slotIndex)
    {
    TR_ASSERT_FATAL(_iteratorWithState, "has to be called when the iterator has state!");
    TR_PrexArgInfo *argInfo = _calltarget->_ecsPrexArgInfo;
-   TR_PrexArgument *prexArgument = argInfo ? argInfo->get(slotIndex): NULL;
    TR_ASSERT_FATAL(argInfo, "thunk archetype target doesn't have _ecsPrexArgInfo %p\n", _calltarget);
-   if (prexArgument && TR_PrexArgument::knowledgeLevel(prexArgument) == KNOWN_OBJECT)
+   if (slotIndex < argInfo->getNumArgs())
       {
-      debugTrace(tracer(), "aload known obj%d from slot %d\n", prexArgument->getKnownObjectIndex(), slotIndex);
-      push(new (trStackMemory()) KnownObjOperand(prexArgument->getKnownObjectIndex()));
+      TR_PrexArgument *prexArgument = argInfo->get(slotIndex);
+      if (prexArgument && TR_PrexArgument::knowledgeLevel(prexArgument) == KNOWN_OBJECT)
+         {
+         debugTrace(tracer(), "aload known obj%d from slot %d\n", prexArgument->getKnownObjectIndex(), slotIndex);
+         push(new (trStackMemory()) KnownObjOperand(prexArgument->getKnownObjectIndex()));
+         return;
+         }
       }
-   else pushUnknownOperand();
+   pushUnknownOperand();
    }
 
 void
@@ -405,7 +424,7 @@ InterpreterEmulator::refineResolvedCalleeForInvokestatic(TR_ResolvedMethod *&cal
       }
    }
 
-void
+bool
 InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuccessfull, bool withState)
    {
    TR::Region findCallsitesRegion(comp()->region());
@@ -439,13 +458,16 @@ InterpreterEmulator::findAndCreateCallsitesFromBytecodes(bool wasPeekingSuccessf
 
       if (_iteratorWithState)
          {
-         maintainStack(bc);
-         dumpStack();
+         if (maintainStack(bc))
+            dumpStack();
+         else
+            return false;
          }
 
       _pca.updateArg(bc);
       bc = findNextByteCodeToVisit();
       }
+   return true;
    }
 
 TR_J9ByteCode
