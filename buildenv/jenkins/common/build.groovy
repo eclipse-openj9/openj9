@@ -281,6 +281,7 @@ def build() {
 def archive_sdk() {
     stage('Archive') {
         def buildDir = "build/${RELEASE}/images/"
+        def debugImageDir = "debug-image"
         def testDir = "test"
 
         dir(OPENJDK_CLONE_DIR) {
@@ -292,6 +293,15 @@ def archive_sdk() {
                     sh "pax  -wvz -s#${buildDir}${testDir}#test-images#g -f ${TEST_FILENAME} ${buildDir}${testDir}"
                 } else {
                     sh "tar -C ${buildDir} -zcvf ${TEST_FILENAME} ${testDir} --transform 's,${testDir},test-images,'"
+                }
+            }
+            // test if the debug-image directory is present
+            if (fileExists("${buildDir}${debugImageDir}")) {
+                if (SPEC.contains('zos')) {
+                    // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
+                    sh "pax  -wvz -s#${buildDir}${debugImageDir}#test-images#g -f ${DEBUG_IMAGE_FILENAME} ${buildDir}${debugImageDir}"
+                } else {
+                    sh "tar -C ${buildDir} -zcvf ${DEBUG_IMAGE_FILENAME} ${debugImageDir}"
                 }
             }
             if (params.ARCHIVE_JAVADOC) {
@@ -319,6 +329,10 @@ def archive_sdk() {
                                 "target": "${ARTIFACTORY_UPLOAD_DIR}",
                                 "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
                 specs.add(testSpec)
+                def debugImageSpec = ["pattern": "${OPENJDK_CLONE_DIR}/${DEBUG_IMAGE_FILENAME}",
+                                "target": "${ARTIFACTORY_UPLOAD_DIR}",
+                                "props": "build.buildIdentifier=${BUILD_IDENTIFIER}"]
+                specs.add(debugImageSpec)
                 if (params.ARCHIVE_JAVADOC) {
                     def javadocSpec = ["pattern": "${OPENJDK_CLONE_DIR}/${JAVADOC_FILENAME}",
                                        "target": "${ARTIFACTORY_UPLOAD_DIR}",
@@ -335,6 +349,11 @@ def archive_sdk() {
                     env.CUSTOMIZED_SDK_URL += " " + TEST_LIB_URL
                     currentBuild.description += "<br><a href=${TEST_LIB_URL}>${TEST_FILENAME}</a>"
                 }
+                if (fileExists("${DEBUG_IMAGE_FILENAME}")) {
+                    DEBUG_IMAGE_LIB_URL = "${ARTIFACTORY_URL}/${ARTIFACTORY_UPLOAD_DIR}${DEBUG_IMAGE_FILENAME}"
+                    env.CUSTOMIZED_SDK_URL += " " + DEBUG_IMAGE_LIB_URL
+                    currentBuild.description += "<br><a href=${DEBUG_IMAGE_LIB_URL}>${DEBUG_IMAGE_FILENAME}</a>"
+                }
                 if (params.ARCHIVE_JAVADOC) {
                     if (fileExists("${JAVADOC_FILENAME}")) {
                         JAVADOC_LIB_URL = "${ARTIFACTORY_URL}/${ARTIFACTORY_UPLOAD_DIR}${JAVADOC_FILENAME}"
@@ -345,7 +364,7 @@ def archive_sdk() {
                 echo "CUSTOMIZED_SDK_URL:'${CUSTOMIZED_SDK_URL}'"
             } else {
                 echo "ARTIFACTORY server is not set saving artifacts on jenkins."
-                def ARTIFACTS_FILES = "**/${SDK_FILENAME},**/${TEST_FILENAME}"
+                def ARTIFACTS_FILES = "**/${SDK_FILENAME},**/${TEST_FILENAME},**/${DEBUG_IMAGE_FILENAME}"
                 if (params.ARCHIVE_JAVADOC) {
                     ARTIFACTS_FILES += ",**/${JAVADOC_FILENAME}"
                 }
@@ -404,9 +423,9 @@ def archive_diagnostics() {
             }
         }
         // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
-        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | pax -wzf ${DIAGNOSTICS_FILENAME}"   
+        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | pax -wzf ${DIAGNOSTICS_FILENAME}"
     } else {
-        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"      
+        sh "find . -name 'core.*.dmp' -o -name 'javacore.*.txt' -o -name 'Snap.*.trc' -o -name 'jitdump.*.dmp' | sed 's#^./##' | tar -zcvf ${DIAGNOSTICS_FILENAME} -T -"
     }
     if (ARTIFACTORY_SERVER) {
         def uploadSpec = """{
