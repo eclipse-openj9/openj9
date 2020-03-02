@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3293,10 +3293,10 @@
    },
 
    {
-   /* .opcode               = */ TR::dfternary,
-   /* .name                 = */ "dfternary",
+   /* .opcode               = */ TR::dfselect,
+   /* .name                 = */ "dfselect",
    /* .properties1          = */ 0,
-   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE | ILProp2::Ternary,
+   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE | ILProp2::Select,
    /* .properties3          = */ 0,
    /* .properties4          = */ 0,
    /* .dataType             = */ TR::DecimalFloat,
@@ -3309,10 +3309,10 @@
    },
 
    {
-   /* .opcode               = */ TR::ddternary,
-   /* .name                 = */ "ddternary",
+   /* .opcode               = */ TR::ddselect,
+   /* .name                 = */ "ddselect",
    /* .properties1          = */ 0,
-   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE | ILProp2::Ternary,
+   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE | ILProp2::Select,
    /* .properties3          = */ 0,
    /* .properties4          = */ 0,
    /* .dataType             = */ TR::DecimalDouble,
@@ -3325,10 +3325,10 @@
    },
 
    {
-   /* .opcode               = */ TR::deternary,
-   /* .name                 = */ "deternary",
+   /* .opcode               = */ TR::deselect,
+   /* .name                 = */ "deselect",
    /* .properties1          = */ 0,
-   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE | ILProp2::Ternary,
+   /* .properties2          = */ ILProp2::ValueNumberShare | ILProp2::SupportedForPRE | ILProp2::Select,
    /* .properties3          = */ 0,
    /* .properties4          = */ 0,
    /* .dataType             = */ TR::DecimalLongDouble,

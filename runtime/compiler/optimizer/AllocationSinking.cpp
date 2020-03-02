@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -74,7 +74,7 @@ int32_t TR_AllocationSinking::perform()
    if (comp()->getOptions()->realTimeGC()) // memory area can be changed by the arg eval call, so better not disturb things
       return 0;
 
-   // Note: if the evaluation of constructor arguments contains control flow (ie. a ternary)
+   // Note: if the evaluation of constructor arguments contains control flow (ie. a select)
    // then the "new" and ctor call will be in different blocks, and this opt won't have the
    // desired effect.
 
