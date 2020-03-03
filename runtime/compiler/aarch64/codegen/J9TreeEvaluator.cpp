@@ -1017,6 +1017,9 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          {
          case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
             {
+            // TODO return false here as this method is still WIP
+            return false;
+
             if (!methodSymbol->isNative())
                break;
 
@@ -1326,15 +1329,21 @@ TR::Register *J9::ARM64::TreeEvaluator::directCallEvaluator(TR::Node *node, TR::
    {
    TR::SymbolReference *symRef = node->getSymbolReference();
    TR::MethodSymbol *callee = symRef->getSymbol()->castToMethodSymbol();
-   TR::Linkage *linkage;
+   TR::Linkage      *linkage;
+   TR::Register     *returnRegister;
 
-   if (callee->isJNI() && (node->isPreparedForDirectJNI() || callee->getResolvedMethodSymbol()->canDirectNativeCall()))
+   if (!cg->inlineDirectCall(node, returnRegister))
       {
-      linkage = cg->getLinkage(TR_J9JNILinkage);
+      if (callee->isJNI() && (node->isPreparedForDirectJNI() || callee->getResolvedMethodSymbol()->canDirectNativeCall()))
+         {
+         linkage = cg->getLinkage(TR_J9JNILinkage);
+         }
+      else
+         {
+         linkage = cg->getLinkage(callee->getLinkageConvention());
+         }
+      returnRegister = linkage->buildDirectDispatch(node);
       }
-   else
-      {
-      linkage = cg->getLinkage(callee->getLinkageConvention());
-      }
-   return linkage->buildDirectDispatch(node);
+
+   return returnRegister;
    }
