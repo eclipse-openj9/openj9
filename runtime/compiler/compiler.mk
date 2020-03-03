@@ -18,12 +18,15 @@
 #
 # SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
 
+#
+# "all" should be the first target to appear so it's the default
+#
+all: ; @echo SUCCESS - All files are up-to-date
+clean: ; @echo SUCCESS - All files are cleaned
+cleanobjs: ; @echo SUCCESS - All objects are cleaned
+cleandeps: ; @echo SUCCESS - All dependencies are cleaned
+cleandll: ; @echo SUCCESS - All shared libraries are cleaned
 .PHONY: all clean cleanobjs cleandeps cleandll
-all:
-clean:
-cleanobjs:
-cleandeps:
-cleandll:
 
 # This is the logic right now for locating Clang and LLVM-config
 # There's probably a nicer way to do all of this... it's pretty bad
@@ -90,35 +93,12 @@ ifneq ($(findstring DPROD_WITH_ASSUMES, $(USERCFLAGS)),)
     ASSUMES=1
 endif
 
-#
-# "all" should be the first target to appear so it's the default
-#
-.PHONY: all clean cleanobjs cleandeps cleandll
-all: ; @echo SUCCESS - All files are up-to-date
-ifneq ($(J9VM_OPT_JITSERVER),)
-.PHONY : proto
-all : proto
-endif
-clean: ; @echo SUCCESS - All files are cleaned
-cleanobjs: ; @echo SUCCESS - All objects are cleaned
-cleandeps: ; @echo SUCCESS - All dependencies are cleaned
-cleandll: ; @echo SUCCESS - All shared libraries are cleaned
-ifneq ($(J9VM_OPT_JITSERVER),)
-proto: ; @echo SUCCESS - All proto files are recompiled
-endif
-
 # Handy macro to check to make sure variables are set
 REQUIRE_VARS=$(foreach VAR,$(1),$(if $($(VAR)),,$(error $(VAR) must be set)))
 
 # Verify SDK pointer for non-cleaning targets
-ifneq ($(J9VM_OPT_JITSERVER),)
-    ifeq (,$(filter proto clean cleandeps cleandll,$(MAKECMDGOALS)))
-        $(call REQUIRE_VARS,J9SRC)
-    endif
-else
-    ifeq (,$(filter clean cleandeps cleandll,$(MAKECMDGOALS)))
-        $(call REQUIRE_VARS,J9SRC)
-    endif
+ifeq (,$(filter clean cleandeps cleandll,$(MAKECMDGOALS)))
+    $(call REQUIRE_VARS,J9SRC)
 endif
 
 #

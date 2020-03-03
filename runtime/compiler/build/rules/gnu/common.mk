@@ -69,17 +69,30 @@ JIT_DIR_LIST+=$(dir $(JIT_PRODUCT_BUILDNAME_SRC))
 jit_cleanobjs::
 	rm -f $(JIT_PRODUCT_BUILDNAME_SRC)
 
-ifneq ($(J9VM_OPT_JITSERVER),)
-protoc: $(PROTO_GEN_DIR)/compile.pb.h
-$(call RULE.proto,$(PROTO_GEN_DIR)/compile,$(PROTO_DIR)/compile.proto)
-endif
-
 #
 # This part calls the "RULE.x" macros for each source file
 #
 $(foreach SRCFILE,$(JIT_PRODUCT_SOURCE_FILES),\
     $(call RULE$(suffix $(SRCFILE)),$(FIXED_OBJBASE)/$(basename $(SRCFILE))$(OBJSUFF),$(FIXED_SRCBASE)/$(SRCFILE)) \
  )
+
+ifneq (,$(J9VM_OPT_JITSERVER))
+#
+# Generate a rule to run the protobuf compiler.
+#
+$(call RULE.proto,$(PROTO_GEN_DIR)/compile,$(PROTO_DIR)/compile.proto)
+
+#
+# Make every object file, for which there is no corresponding depend.mk file,
+# depend on compile.pb.h. If a depend.mk file exists, it will include this
+# dependency only if appropriate. This will ensure the protobuf compilation
+# occurs early enough, but not more than necessary.
+#
+PROTO_DEP = $(if $(wildcard $(1)$(DEPSUFF)),,$(1) : $(PROTO_GEN_DIR)/compile.pb.h)
+
+$(foreach SRCFILE, $(JIT_PRODUCT_SOURCE_FILES), \
+	$(eval $(call PROTO_DEP,$(FIXED_OBJBASE)/$(basename $(SRCFILE))$(OBJSUFF))))
+endif # J9VM_OPT_JITSERVER
 
 #
 # Generate a rule that will create every directory before the build starts
