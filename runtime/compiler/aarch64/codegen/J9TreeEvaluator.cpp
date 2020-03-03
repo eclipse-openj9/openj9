@@ -1005,6 +1005,33 @@ VMinlineCompareAndSwap(TR::Node *node, TR::CodeGenerator *cg, bool isLong)
    return resultReg;
    }
 
+static TR::Register *
+VMinlineFMA(TR::Node *node, TR::CodeGenerator *cg)
+   {
+   TR_ASSERT_FATAL(node->getNumChildren() == 3, "In function VMinlineFMA, the node at address %p should have exactly 3 children, but got %u instead", node, node->getNumChildren());
+
+   TR::DataType type = node->getDataType();
+   TR_ASSERT_FATAL(type == TR::Float || type == TR::Double, "In function VMinlineFMA, the node at address %p should be either TR::Float or TR::Double", node);
+
+   TR::Node *firstChild = node->getFirstChild();
+   TR::Node *secondChild = node->getSecondChild();
+   TR::Node *thirdChild = node->getThirdChild();
+   TR::Register *src1Register = cg->evaluate(firstChild);
+   TR::Register *src2Register = cg->evaluate(secondChild);
+   TR::Register *src3Register = cg->evaluate(thirdChild);
+
+   if(type == TR::Float)
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::fmadds, node, src1Register, src1Register, src2Register, src3Register);
+   else
+      generateTrg1Src3Instruction(cg, TR::InstOpCode::fmaddd, node, src1Register, src1Register, src2Register, src3Register);
+
+   node->setRegister(src1Register);
+   cg->decReferenceCount(firstChild);
+   cg->decReferenceCount(secondChild);
+   cg->decReferenceCount(thirdChild);
+   return src1Register;
+   }
+
 bool
 J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&resultReg)
    {
@@ -1030,6 +1057,12 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
                }
             break;
             }
+         case TR::java_lang_Math_fma_D:
+         case TR::java_lang_StrictMath_fma_D:
+         case TR::java_lang_Math_fma_F:
+         case TR::java_lang_StrictMath_fma_F:
+            resultReg = VMinlineFMA(node, cg);
+            return true;
 
          default:
             break;
