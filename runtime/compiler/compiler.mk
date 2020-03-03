@@ -74,6 +74,7 @@ ifeq ($(PLATFORM),arm-linux-gcc-cross)
     ifeq (default,$(origin AS))
         export AS=$(OPENJ9_CC_PREFIX)-as
     endif
+    export OBJCOPY?=bcm2708hardfp-objcopy
     PLATFORM=arm-linux-gcc
 endif
 
@@ -87,6 +88,7 @@ ifeq ($(PLATFORM),aarch64-linux-gcc)
     ifeq (default,$(origin AS))
         export AS=$(OPENJ9_CC_PREFIX)-as
     endif
+    export OBJCOPY?=$(OPENJ9_CC_PREFIX)-objcopy
 endif
 
 ifneq ($(findstring DPROD_WITH_ASSUMES, $(USERCFLAGS)),)
