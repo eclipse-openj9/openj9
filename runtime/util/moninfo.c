@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -55,7 +55,7 @@ isObjectStackAllocated(J9VMThread *targetThread, j9object_t aObj) {
  * If pcount != NULL, return the entry count in pcount.
 */
 J9VMThread * 
-getObjectMonitorOwner(J9JavaVM *vm, J9VMThread *vmThread, j9object_t object, UDATA *pcount)
+getObjectMonitorOwner(J9JavaVM *vm, j9object_t object, UDATA *pcount)
 {
 
 	UDATA count = 0;
@@ -64,19 +64,19 @@ getObjectMonitorOwner(J9JavaVM *vm, J9VMThread *vmThread, j9object_t object, UDA
 
 	Trc_VMUtil_getObjectMonitorOwner_Entry(vm, object, pcount);
 
-	if (!LN_HAS_LOCKWORD(vmThread,object)) {
-		J9ObjectMonitor *objectMonitor = monitorTablePeek(vm, vmThread, object);
+	if (!LN_HAS_LOCKWORD_VM(vm, object)) {
+		J9ObjectMonitor *objectMonitor = monitorTablePeek(vm, object);
 		if (objectMonitor != NULL){
-			lock = J9_LOAD_LOCKWORD(vmThread, &objectMonitor->alternateLockword);
+			lock = J9_LOAD_LOCKWORD_VM(vm, &objectMonitor->alternateLockword);
 		} else {
 			lock = 0;
 		}
 	} else {
-		lock = J9OBJECT_MONITOR(vmThread, object);
+		lock = J9OBJECT_MONITOR_VM(vm, object);
 	}
 
 	if (J9_LOCK_IS_INFLATED(lock)) {
-		J9ThreadAbstractMonitor *monitor = getInflatedObjectMonitor(vm, vmThread, object, lock);
+		J9ThreadAbstractMonitor *monitor = getInflatedObjectMonitor(vm, object, lock);
 
 		/*
 		 * If the monitor is out-of-line and NULL, then it was never entered,

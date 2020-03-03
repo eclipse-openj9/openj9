@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -996,7 +996,7 @@ ownedMonitorIterator(J9VMThread* targetThread, J9StackWalkState* walkState, j9ob
 		return;
 	}
 
-	if (obj && getObjectMonitorOwner(vm, targetThread, obj, NULL) == walkState->walkThread
+	if (obj && getObjectMonitorOwner(vm, obj, NULL) == walkState->walkThread
 			&& !isObjectStackAllocated(walkState->walkThread, obj)) {
 		if (NULL != locks) {
 			UDATA i;

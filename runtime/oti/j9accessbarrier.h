@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -634,8 +634,11 @@ typedef struct J9IndexableObject* mm_j9array_t;
 				: J9OBJECT_UDATA_STORE_VM(javaVM, object, TMP_OFFSETOF_J9OBJECT_CLAZZ, (UDATA)(((UDATA)(value) & ~((UDATA)(J9_REQUIRED_CLASS_ALIGNMENT - 1))) | J9OBJECT_FLAGS_FROM_CLAZZ_VM((javaVM), (object)))))
 
 #define J9OBJECT_MONITOR_OFFSET(vmThread,object) (J9OBJECT_CLAZZ(vmThread, object)->lockOffset)
+#define J9OBJECT_MONITOR_OFFSET_VM(vm,object) (J9OBJECT_CLAZZ_VM(vm, object)->lockOffset)
 #define LN_HAS_LOCKWORD(vmThread,obj) (((IDATA)J9OBJECT_MONITOR_OFFSET(vmThread, obj)) >= 0)
+#define LN_HAS_LOCKWORD_VM(vm,obj) (((IDATA)J9OBJECT_MONITOR_OFFSET_VM(vm, obj)) >= 0)
 #define J9OBJECT_MONITOR_EA(vmThread, object) ((j9objectmonitor_t*)(((U_8 *)(object)) + J9OBJECT_MONITOR_OFFSET(vmThread, object)))
+#define J9OBJECT_MONITOR_EA_VM(vm, object) ((j9objectmonitor_t*)(((U_8 *)(object)) + J9OBJECT_MONITOR_OFFSET_VM(vm, object)))
 
 /* Note the volatile in these macros may be unncessary, but they replace hard-coded volatile operations in the
  * source, so maintaining the volatility is safest.
@@ -672,6 +675,11 @@ typedef struct J9IndexableObject* mm_j9array_t;
 	(J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmThread) \
 		? (j9objectmonitor_t)J9OBJECT_U32_LOAD(vmThread, object, J9OBJECT_MONITOR_OFFSET(vmThread,object)) \
 		: (j9objectmonitor_t)J9OBJECT_UDATA_LOAD(vmThread, object, J9OBJECT_MONITOR_OFFSET(vmThread,object)))
+
+#define J9OBJECT_MONITOR_VM(vm, object) \
+	(J9JAVAVM_COMPRESS_OBJECT_REFERENCES(vm) \
+		? (j9objectmonitor_t)J9OBJECT_U32_LOAD_VM(vm, object, J9OBJECT_MONITOR_OFFSET_VM(vm,object)) \
+		: (j9objectmonitor_t)J9OBJECT_UDATA_LOAD_VM(vm, object, J9OBJECT_MONITOR_OFFSET_VM(vm,object)))
 
 #define J9OBJECT_SET_MONITOR(vmThread, object, value) \
 	do { \
