@@ -30,8 +30,10 @@ OBJSUFF=.o
 ARSUFF=.a
 ifeq ($(OS),osx)
 SOSUFF=.dylib
+DBGSUFF=$(SOSUFF).dSYM
 else
 SOSUFF=.so
+DBGSUFF=.debuginfo
 endif
 EXESUFF=
 LIBPREFIX=lib
@@ -49,6 +51,11 @@ DEPSUFF=.depend.mk
 M4?=m4
 SED?=sed
 PERL?=perl
+ifeq ($(OS),osx)
+DSYMUTIL?=dsymutil
+else
+OBJCOPY?=objcopy
+endif
 
 #
 # z/Architecture arch and tune level
@@ -420,9 +427,6 @@ endif # HOST_ARCH == aarch64
 # Finally setup the linker
 #
 SOLINK_CMD?=$(CXX)
-
-SOLINK_FLAGS+=
-SOLINK_FLAGS_PROD+=-Wl,-S
 
 SOLINK_LIBPATH+=$(PRODUCT_LIBPATH)
 SOLINK_SLINK+=$(PRODUCT_SLINK) j9thr$(J9_VERSION) j9hookable$(J9_VERSION)
