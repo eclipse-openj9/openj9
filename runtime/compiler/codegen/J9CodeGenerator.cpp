@@ -163,7 +163,7 @@ static TR::Node *lowerCASValues(
 //    luaddh
 //      xh
 //      yh
-//      luadd
+//      ladd
 //        xl
 //        yl
 //        ==> luaddh             <=== replace dummy node with this third child to complete cycle
