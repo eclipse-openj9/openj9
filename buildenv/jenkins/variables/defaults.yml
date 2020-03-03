@@ -162,6 +162,11 @@ ppc64le_linux:
   build_env:
     vars: 'PATH+GCC7=/usr/local/gcc-7.5.0/bin LD_LIBRARY_PATH=/usr/local/gcc-7.5.0/lib64:$LD_LIBRARY_PATH'
 #========================================#
+# Linux PPCLE 64bits Compressed Pointers /w cmake
+#========================================#
+ppc64le_linux_cm:
+  extends: ['ppc64le_linux', 'cmake']
+#========================================#
 # Linux PPCLE 64bits Large Heap
 #========================================#
 ppc64le_linux_xl:
