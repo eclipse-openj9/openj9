@@ -144,9 +144,9 @@ public:
    std::tuple<T...> readCompileRequest()
       {
       readMessage(_cMsg);
-      if (_cMsg.version() != 0 && _cMsg.version() != getJITServerVersion())
+      if (_cMsg.fullVersion() != 0 && _cMsg.fullVersion() != getJITServerFullVersion())
          {
-         throw StreamVersionIncompatible(getJITServerVersion(), _cMsg.version());
+         throw StreamVersionIncompatible(getJITServerFullVersion(), _cMsg.fullVersion());
          }
 
       switch (_cMsg.type())

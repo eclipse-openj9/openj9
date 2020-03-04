@@ -22,9 +22,11 @@
 
 #ifndef MESSAGE_TYPES_HPP
 #define MESSAGE_TYPES_HPP
+#include <cstdint> // for uint16_t
+
 namespace JITServer
    {
-enum MessageType
+enum MessageType : uint16_t
    {
    compilationCode = 0,
    compilationFailure = 1,
@@ -256,8 +258,8 @@ enum MessageType
    Recompilation_getJittedBodyInfoFromPC = 1001,
    ClassInfo_getRemoteROMString = 1100,
    MessageType_MAXTYPE
-   };
+   }; 
 
 const int MessageType_ARRAYSIZE = MessageType_MAXTYPE;
-   };
+   }; // namespace JITServer
 #endif // MESSAGE_TYPES_HPP
