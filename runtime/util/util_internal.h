@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2014 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -192,13 +192,11 @@ char *node_key(node *aNode);
  * 
  * @brief
  * @param vm				the J9JavaVM
- * @param targetVMThread	Used solely by the multi-tenant JVM: identifies the TenantContext of the object, 
- * 								which is needed to determine which monitor table to search
  * @param object			the object who's monitor we are looking for
  * @return J9ThreadAbstractMonitor *
  */
 J9ThreadAbstractMonitor *
-monitorTablePeekMonitor(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t object);
+monitorTablePeekMonitor(J9JavaVM *vm, j9object_t object);
 
 /**
  * Search the monitor tables in vm->monitorTableList for the inflated monitor corresponding to an object.
@@ -209,8 +207,6 @@ monitorTablePeekMonitor(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t obj
  *
  * @param[in] vm the JavaVM. For out-of-process: may be a local or target pointer.
  * vm->monitorTable must be a target value.
- * @param targetVMThread	Used solely by the multi-tenant JVM: identifies the TenantContext of the object, which is needed 
- * 								to determine which monitor table to search	
  * @param[in] object the object. For out-of-process: a target pointer.
  * @returns a J9ObjectMonitor from the monitor hashtable
  * @retval NULL There is no corresponding monitor in vm->monitorTable.
@@ -218,7 +214,7 @@ monitorTablePeekMonitor(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t obj
  * @see monitorTablePeekMonitor
  */
 J9ObjectMonitor *
-monitorTablePeek(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t object);
+monitorTablePeek(J9JavaVM *vm, j9object_t object);
 
 #ifdef __cplusplus
 }

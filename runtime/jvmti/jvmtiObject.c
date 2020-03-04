@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -142,12 +142,7 @@ jvmtiGetObjectMonitorUsage(jvmtiEnv* env,
 
 		vm->internalVMFunctions->acquireExclusiveVMAccess(currentThread);
 
-		/*
-		 * getObjectMonitorOwner requires a J9VMThread solely for multi-tenant support,
-		 *  however, the multi-tenant JVM does not support can_get_monitor_info (see ENSURE_CAPABILITY check above)
-		 *  and therefore will not use jvmtiGetObjectMonitorUsage: so just pass in NULL as the vm thread
-		 */
-		owner = getObjectMonitorOwner(vm, NULL, *((j9object_t*) object), &count);
+		owner = getObjectMonitorOwner(vm, *((j9object_t*) object), &count);
 		memset(info_ptr, 0, sizeof(jvmtiMonitorUsage));
 
 		if (owner && owner->threadObject) {

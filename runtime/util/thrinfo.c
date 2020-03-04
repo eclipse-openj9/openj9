@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -243,7 +243,7 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 			lockWord = getLockWord(targetThread, lockObject);
 	
 			if (J9_LOCK_IS_INFLATED(lockWord)) {
-				J9ThreadAbstractMonitor *objmon = getInflatedObjectMonitor(targetThread->javaVM, targetThread, lockObject, lockWord);
+				J9ThreadAbstractMonitor *objmon = getInflatedObjectMonitor(targetThread->javaVM, lockObject, lockWord);
 
 				/*
 				 * If the monitor is out-of-line and NULL, then it was never entered,
@@ -299,7 +299,7 @@ getVMThreadStateHelper(J9VMThread *targetThread,
 	
 				if (lockOwner && (lockOwner != targetThread)) {
 					count = J9_FLATLOCK_COUNT(lockWord);
-					rawLock = (omrthread_monitor_t)monitorTablePeekMonitor(targetThread->javaVM, targetThread, lockObject);
+					rawLock = (omrthread_monitor_t)monitorTablePeekMonitor(targetThread->javaVM, lockObject);
 					vmstate = J9VMTHREAD_STATE_BLOCKED;
 				}
 			}
@@ -485,7 +485,6 @@ getInflatedMonitorState(const J9VMThread *targetThread, const omrthread_t j9self
  * 
  * @param[in] vm the JavaVM. For out-of-process: may be a local or target pointer. 
  * vm->monitorTable must be a target value.
- * @param[in] targetVMThread the target J9VMThread.
  * @param[in] object the object. For out-of-process: a target pointer.
  * @param[in] lockWord The object's lockword.
  * @returns a J9ThreadAbstractMonitor 
@@ -494,7 +493,7 @@ getInflatedMonitorState(const J9VMThread *targetThread, const omrthread_t j9self
  * @see monitorTablePeekMonitor, monitorTablePeek
  */
 J9ThreadAbstractMonitor *
-getInflatedObjectMonitor(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t object, j9objectmonitor_t lockWord)
+getInflatedObjectMonitor(J9JavaVM *vm, j9object_t object, j9objectmonitor_t lockWord)
 {
 	return J9THREAD_MONITOR_FROM_LOCKWORD(lockWord);
 }
@@ -508,7 +507,7 @@ getLockWord(J9VMThread *vmThread, j9object_t object)
 		j9objectmonitor_t *lwEA = J9OBJECT_MONITOR_EA(vmThread, object);
 		lockWord = J9_LOAD_LOCKWORD(vmThread, lwEA);
 	} else {
-		J9ObjectMonitor *objectMonitor = monitorTablePeek(vmThread->javaVM, vmThread, object);
+		J9ObjectMonitor *objectMonitor = monitorTablePeek(vmThread->javaVM, object);
 		if (objectMonitor != NULL){
 			lockWord = J9_LOAD_LOCKWORD(vmThread, &objectMonitor->alternateLockword);
 		}
@@ -526,7 +525,6 @@ getLockWord(J9VMThread *vmThread, j9object_t object)
  * 
  * @param[in] vm the JavaVM. For out-of-process: may be a local or target pointer. 
  * vm->monitorTable must be a target value.
- * @param[in] targetVMThread	the target J9VMThread
  * @param[in] object the object. For out-of-process: a target pointer.
  * @returns the J9ThreadAbstractMonitor from a hashtable entry
  * @retval NULL There is no corresponding monitor in vm->monitorTable.
@@ -534,12 +532,12 @@ getLockWord(J9VMThread *vmThread, j9object_t object)
  * @see monitorTablePeek
  */
 J9ThreadAbstractMonitor *
-monitorTablePeekMonitor(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t object)
+monitorTablePeekMonitor(J9JavaVM *vm, j9object_t object)
 {
 	J9ThreadAbstractMonitor *monitor = NULL;
 	J9ObjectMonitor *objectMonitor = NULL;
 	
-	objectMonitor = monitorTablePeek(vm, targetVMThread, object);
+	objectMonitor = monitorTablePeek(vm, object);
 	if (objectMonitor) {
 		monitor = (J9ThreadAbstractMonitor *)objectMonitor->monitor;
 	}
@@ -563,7 +561,7 @@ monitorTablePeekMonitor(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t obj
  * @see monitorTablePeekMonitor
  */
 J9ObjectMonitor *
-monitorTablePeek(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t object)
+monitorTablePeek(J9JavaVM *vm, j9object_t object)
 {
 
 	J9ObjectMonitor *monitor = NULL;

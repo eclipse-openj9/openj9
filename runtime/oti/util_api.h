@@ -1243,13 +1243,12 @@ jint request_MonitorJlmDumpSize(J9JavaVM *jvm, UDATA *dump_size, jint dump_forma
 /**
 * @brief
 * @param vm 	the Java VM
-* @param vmThread	the vmThread where the monitor was found
 * @param object
 * @param pcount
 * @return J9VMThread*
 */
 J9VMThread* 
-getObjectMonitorOwner(J9JavaVM* vm, J9VMThread *vmThread, j9object_t object, UDATA* pcount);
+getObjectMonitorOwner(J9JavaVM* vm, j9object_t object, UDATA* pcount);
 
 
 /**
@@ -1769,13 +1768,12 @@ getVMThreadRawStatesAll(J9VMThread *targetThread, j9object_t *pLockObject, omrth
 /**
 * @brief
 * @param vm
-* @param targetVMThread	the vmThread where the monitor was found
 * @param object
 * @param lockWord
 * @return J9ThreadAbstractMonitor *
 */
 J9ThreadAbstractMonitor *
-getInflatedObjectMonitor(J9JavaVM *vm, J9VMThread *targetVMThread, j9object_t object, j9objectmonitor_t lockWord);
+getInflatedObjectMonitor(J9JavaVM *vm, j9object_t object, j9objectmonitor_t lockWord);
 
 /* ---------------- thrname.c ---------------- */
 /**

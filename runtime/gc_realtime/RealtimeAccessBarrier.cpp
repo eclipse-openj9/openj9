@@ -867,6 +867,7 @@ MM_RealtimeAccessBarrier::initializeForNewThread(MM_EnvironmentBase* env)
 void
 MM_RealtimeAccessBarrier::scanContiguousArray(MM_EnvironmentRealtime *env, J9IndexableObject *objectPtr)
 {
+	bool const compressed = env->compressObjectReferences();
 	J9JavaVM *vm = (J9JavaVM *)env->getLanguageVM();
 #if defined(J9VM_GC_DYNAMIC_CLASS_UNLOADING)
 	if(_realtimeGC->getRealtimeDelegate()->isDynamicClassUnloadingEnabled()) {
@@ -876,14 +877,14 @@ MM_RealtimeAccessBarrier::scanContiguousArray(MM_EnvironmentRealtime *env, J9Ind
 
 	/* if NUA is enabled, separate path for contiguous arrays */
 	fj9object_t *scanPtr = (fj9object_t*) _extensions->indexableObjectModel.getDataPointerForContiguous(objectPtr);
-	fj9object_t *endScanPtr = scanPtr + _extensions->indexableObjectModel.getSizeInElements(objectPtr);
+	fj9object_t *endScanPtr = GC_SlotObject::addToSlotAddress(scanPtr, _extensions->indexableObjectModel.getSizeInElements(objectPtr), compressed);
 
 	while(scanPtr < endScanPtr) {
 		/* since this is done from an external thread, we do not markObject, but rememberObject */
 		GC_SlotObject slotObject(vm->omrVM, scanPtr);
 		J9Object *field = slotObject.readReferenceFromSlot();
 		rememberObject(env, field);
-		scanPtr++;
+		scanPtr = GC_SlotObject::addToSlotAddress(scanPtr, 1, compressed);
 	}
 	/* this method assumes the array is large enough to set scan bit */
 	_markingScheme->setScanAtomic((J9Object *)objectPtr);

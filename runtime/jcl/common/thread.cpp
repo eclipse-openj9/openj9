@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -309,7 +309,7 @@ Java_java_lang_Thread_holdsLock(JNIEnv *env, jclass threadClass, jobject obj)
 		j9object_t lockObject = J9_JNI_UNWRAP_REFERENCE(obj);
 		j9objectmonitor_t *lockAddress = VM_ObjectMonitor::inlineGetLockAddress(currentThread, lockObject);
 		if ((NULL == lockAddress) || ((j9objectmonitor_t)(UDATA)currentThread != J9_LOAD_LOCKWORD(currentThread, lockAddress))) {
-			if (currentThread != getObjectMonitorOwner(vm, currentThread, lockObject, NULL)) {
+			if (currentThread != getObjectMonitorOwner(vm, lockObject, NULL)) {
 				result = JNI_FALSE;
 			}
 		}
