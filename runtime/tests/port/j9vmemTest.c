@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -3097,6 +3097,87 @@ j9vmem_testFindValidPageSize_impl(struct J9PortLibrary *portLibrary, char *testN
 									requestedPageSize, requestedPageFlags, isSizeSupported);
 	}
 
+	/* Test -XX:+UseLargePages option */
+	outputComment(PORTLIB, "\nCase %d: -XX:+UseLargePages\n", caseIndex++);
+	if (0 == defaultLargePageSize) {
+		outputComment(PORTLIB, "Skip this test as the configuration does not support default large page size\n");
+	}
+	else {
+		mode = 0;
+		requestedPageSize = 0;
+		requestedPageFlags = J9PORT_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE;
+		PRINT_FIND_VALID_PAGE_SIZE_INPUT(mode, requestedPageSize, requestedPageFlags);
+		
+		j9vmem_default_large_page_size_ex(mode, &requestedPageSize, &requestedPageFlags);
+
+		expectedPageSize = ONE_MB;
+		expectedPageFlags = oneMBPageable? J9PORT_VMEM_PAGE_FLAG_PAGEABLE: J9PORT_VMEM_PAGE_FLAG_FIXED;
+		
+		verifyFindValidPageSizeOutput(portLibrary, testName,
+									expectedPageSize, expectedPageFlags, 0,
+									requestedPageSize, requestedPageFlags, 0);
+	}
+
+	outputComment(PORTLIB, "\nCase %d: -XX:+UseLargePages with J9PORT_VMEM_MEMORY_MODE_EXECUTE\n", caseIndex++);
+	if (0 == defaultLargePageSize) {
+		outputComment(PORTLIB, "Skip this test as the configuration does not support default large page size\n");
+	}
+	else {
+		mode = J9PORT_VMEM_MEMORY_MODE_EXECUTE;
+		requestedPageSize = 0;
+		requestedPageFlags = J9PORT_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE;
+		PRINT_FIND_VALID_PAGE_SIZE_INPUT(mode, requestedPageSize, requestedPageFlags);
+		
+		j9vmem_default_large_page_size_ex(mode, &requestedPageSize, &requestedPageFlags);
+
+		expectedPageSize = oneMBPageable? ONE_MB: 0;
+		expectedPageFlags = oneMBPageable? J9PORT_VMEM_PAGE_FLAG_PAGEABLE: J9PORT_VMEM_PAGE_FLAG_NOT_USED;
+		
+		verifyFindValidPageSizeOutput(portLibrary, testName,
+									expectedPageSize, expectedPageFlags, 0,
+									requestedPageSize, requestedPageFlags, 0);
+	}
+
+	/* Test -XX:LargePageInBytes=1M */
+	outputComment(PORTLIB, "\nCase %d: -XX:LargePageInBytes=1M\n", caseIndex++);
+	if (0 == defaultLargePageSize) {
+		outputComment(PORTLIB, "Skip this test as the configuration does not support default large page size\n");
+	} else {
+		mode = 0;
+		requestedPageSize = ONE_MB;
+		requestedPageFlags = J9PORT_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE;
+		PRINT_FIND_VALID_PAGE_SIZE_INPUT(mode, requestedPageSize, requestedPageFlags);
+
+		j9vmem_find_valid_page_size(mode, &requestedPageSize, &requestedPageFlags, &isSizeSupported);
+
+		expectedPageSize = ONE_MB;
+		expectedPageFlags = oneMBPageable? J9PORT_VMEM_PAGE_FLAG_PAGEABLE: J9PORT_VMEM_PAGE_FLAG_FIXED;
+		expectedIsSizeSupported = TRUE;
+
+		verifyFindValidPageSizeOutput(portLibrary, testName,
+									expectedPageSize, expectedPageFlags, expectedIsSizeSupported,
+									requestedPageSize, requestedPageFlags, isSizeSupported);
+	}
+
+	outputComment(PORTLIB, "\nCase %d: -XX:LargePageInBytes=1M with J9PORT_VMEM_MEMORY_MODE_EXECUTE\n", caseIndex++);
+	if (0 == defaultLargePageSize) {
+		outputComment(PORTLIB, "Skip this test as the configuration does not support default large page size\n");
+	} else {
+		mode = J9PORT_VMEM_MEMORY_MODE_EXECUTE;
+		requestedPageSize = ONE_MB;
+		requestedPageFlags = J9PORT_VMEM_PAGE_FLAG_PAGEABLE_PREFERABLE;
+		PRINT_FIND_VALID_PAGE_SIZE_INPUT(mode, requestedPageSize, requestedPageFlags);
+
+		j9vmem_find_valid_page_size(mode, &requestedPageSize, &requestedPageFlags, &isSizeSupported);
+
+		expectedPageSize = oneMBPageable? ONE_MB: FOUR_KB;
+		expectedPageFlags = J9PORT_VMEM_PAGE_FLAG_PAGEABLE;
+		expectedIsSizeSupported = oneMBPageable? TRUE: FALSE;
+
+		verifyFindValidPageSizeOutput(portLibrary, testName,
+									expectedPageSize, expectedPageFlags, expectedIsSizeSupported,
+									requestedPageSize, requestedPageFlags, isSizeSupported);
+	}
 #endif /* defined(J9VM_ENV_DATA64) */
 
 _exit:
