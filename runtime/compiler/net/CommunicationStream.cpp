@@ -28,7 +28,7 @@ namespace JITServer
 uint32_t CommunicationStream::CONFIGURATION_FLAGS = 0;
 
 void
-CommunicationStream::initVersion()
+CommunicationStream::initConfigurationFlags()
    {
    if (TR::Compiler->target.is64Bit() && TR::Options::useCompressedPointers())
       {

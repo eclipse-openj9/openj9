@@ -30,13 +30,13 @@ Message::Message()
    {
    // when the message is constructed, it's not valid
    _buffer.reserveValue<uint32_t>(); // Reserve space for encoding the size
-   _metaDataOffset = _buffer.reserveValue<Message::MetaData>();
+   _buffer.reserveValue<Message::MetaData>();
    }
 
 Message::MetaData *
 Message::getMetaData() const
    {
-   return _buffer.getValueAtOffset<MetaData>(_metaDataOffset);
+   return _buffer.getValueAtOffset<MetaData>(sizeof(uint32_t)); // sizeof(uint32_t) represents the space for message size
    }
 
 uint32_t
@@ -77,11 +77,14 @@ Message::deserialize()
    // Assume that buffer is populated with data that defines a valid message
    // Reconstruct the message by setting metadata and pointers to descriptors
    // Note that the size of the entire message buffer has already been stripped
-   _metaDataOffset = _buffer.readValue<MetaData>();
+   //
+   _buffer.readValue<MetaData>(); // This only advances curPtr in the MessageBuffer
 
-   _descriptorOffsets.reserve(getMetaData()->_numDataPoints);
+   uint32_t numDataPoints = getMetaData()->_numDataPoints;
+
+   _descriptorOffsets.reserve(numDataPoints);
    // TODO: do I need to clear the vector of _descriptorOffsets just in case?
-   for (uint32_t i = 0; i < getMetaData()->_numDataPoints; ++i)
+   for (uint32_t i = 0; i < numDataPoints; ++i)
       {
       uint32_t descOffset = _buffer.readValue<DataDescriptor>(); // Read the descriptor itself
       _descriptorOffsets.push_back(descOffset);
@@ -111,7 +114,6 @@ Message::clearForRead()
    {
    _descriptorOffsets.clear();
    _buffer.clear();
-   _metaDataOffset = 0;
    }
 
 void
@@ -119,8 +121,8 @@ Message::clearForWrite()
    {
    _descriptorOffsets.clear();
    _buffer.clear();
-   _buffer.reserveValue<uint32_t>();
-   _metaDataOffset = _buffer.reserveValue<MetaData>();
+   _buffer.reserveValue<uint32_t>(); // For writing the size
+   _buffer.reserveValue<MetaData>(); // For writing the metadata
    }
 
 void
@@ -144,8 +146,9 @@ Message::DataDescriptor::print()
 void
 Message::print()
    {
+   const MetaData *metaData = getMetaData();
    TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Message: type=%d numDataPoints=%u version=%lu\n",
-                                  getMetaData()->_type, getMetaData()->_numDataPoints, getMetaData()->_version);
+                                  metaData->_type, metaData->_numDataPoints, metaData->_version);
    for (int32_t i = 0; i < _descriptorOffsets.size(); ++i)
       getDescriptor(i)->print();
    }

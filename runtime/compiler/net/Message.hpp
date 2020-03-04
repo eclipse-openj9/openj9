@@ -48,17 +48,29 @@ public:
    /**
       @class MetaData
       @brief Describes general parameters of a message: number of datapoints, message type, and version.
+
+      It is assumed that the MetaData immediately follows the messages size
+      which is encoded as a uint32_t
    */
    struct MetaData
       {
       MetaData() :
-         _numDataPoints(0)
+         _version(0), _config(0), _type(MessageType_MAXTYPE), _numDataPoints(0)
          {}
-
-      uint32_t _numDataPoints; // number of data points in a message
-      MessageType _type;
-      uint64_t _version;
+      uint32_t _version;
+      uint32_t _config; // includes JITServerCompatibilityFlags which must match
+      MessageType _type; // uint16_t
+      uint16_t _numDataPoints; // number of data points in a message
       };
+
+   /**
+   @brief Utility function that builds the "full version" of client/server as 
+   a composition of the version number and compatibility flags.
+   */
+   static uint64_t buildFullVersion(uint32_t version, uint32_t config) 
+      { 
+      return (((uint64_t)config) << 32) | version;
+      }
 
    /**
       @class DataDescriptor
@@ -266,9 +278,8 @@ public:
 
    void print();
 protected:
-   uint32_t _metaDataOffset;
    std::vector<uint32_t> _descriptorOffsets;
-   MessageBuffer _buffer;
+   MessageBuffer _buffer; // Buffer used for send/receive operations
    };
 
 
@@ -279,9 +290,23 @@ class ServerMessage : public Message
 class ClientMessage : public Message
    {
 public:
-   uint64_t version() { return getMetaData()->_version; }
-   void setVersion(uint64_t version) { getMetaData()->_version = version; }
-   void clearVersion() { getMetaData()->_version = 0; }
+   uint64_t fullVersion() 
+      {
+      const MetaData* metaData = getMetaData();
+      return buildFullVersion(metaData->_version, metaData->_config);
+      }
+   void setFullVersion(uint32_t version, uint32_t config) 
+      {
+      MetaData *metaData = getMetaData();
+      metaData->_version = version;
+      metaData->_config = config;
+      }
+   void clearFullVersion() 
+      { 
+      MetaData *metaData = getMetaData();
+      metaData->_version = 0; 
+      metaData->_config = 0;
+      }
    };
 };
 #endif

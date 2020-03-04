@@ -87,13 +87,13 @@ public:
       {
       if (getVersionCheckStatus() == NOT_DONE)
          {
-         _cMsg.setVersion(getJITServerVersion());
+         _cMsg.setFullVersion(getJITServerVersion(), CONFIGURATION_FLAGS);
          write(MessageType::compilationRequest, args...);
-         _cMsg.clearVersion();
+         _cMsg.clearFullVersion();
          }
       else // getVersionCheckStatus() == PASSED
          {
-         _cMsg.clearVersion(); // the compatibility check is done. We clear the version to save message size.
+         _cMsg.clearFullVersion(); // the compatibility check is done. We clear the version to save message size.
          write(MessageType::compilationRequest, args...);
          }
       }
