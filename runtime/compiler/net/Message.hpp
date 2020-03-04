@@ -62,7 +62,11 @@ public:
 
    /**
       @class DataDescriptor
-      @brief Metadata containing the type and size a single value in a message
+      @brief Metadata containing the type and size of a single value in a message
+
+      A DataDescriptor needs to be aligned on a 32-bit boundary. Because of this
+      requirement, the data following the descriptor needs to be padded to a 
+      32-bit boundary
    */
    struct DataDescriptor
       {
@@ -70,7 +74,7 @@ public:
       // Adding new types is possible, as long as
       // serialization/deserialization functions
       // are added to RawTypeConvert
-      enum DataType
+      enum DataType : uint8_t
          {
          INT32,
          INT64,
@@ -85,10 +89,32 @@ public:
          LAST_TYPE
          };
 
-      DataDescriptor(DataType type, uint32_t size) :
-         type(type),
-         size(size)
-         {}
+      /**
+         @brief Constructor
+
+         @param type The type of the data described by the descriptor
+         @param payloadSize Size of the real data (excluding any required padding)
+
+      */
+      DataDescriptor(DataType type, uint32_t payloadSize) : _type(type), _dataOffset(0), _reserved(0xff)
+         {
+         // align on 4 byte boundary
+         _size = (payloadSize + 3) & 0xfffffffc;
+         _paddingSize = static_cast<uint8_t>(_size - payloadSize);    
+         }
+      DataType getDataType() const { return _type; }
+      uint32_t getPayloadSize() const { return _size - _paddingSize; }
+      uint32_t getTotalSize() const { return _size; }
+      uint8_t getPaddingSize() const { return _paddingSize; }
+      uint8_t getDataOffset() const { return _dataOffset; }
+      void init(DataType type, uint32_t totalSize, uint8_t paddingSize, uint8_t dataOffset)
+         {
+         _type = type;
+         _paddingSize = paddingSize;
+         _dataOffset = dataOffset;
+         _reserved = 0xff;
+         _size = totalSize;
+         }
 
       /**
          @brief Tells if data attached to this descriptor is a type that
@@ -100,29 +126,30 @@ public:
 
          @return Whether the data descriptor is primitive
       */
-      bool isPrimitive() const { return type != VECTOR && type != TUPLE; }
+      bool isPrimitive() const { return _type != VECTOR && _type != TUPLE; }
 
       /**
          @brief Get the pointer to the beginning of data attached to this descriptor.
 
-         This assumes that the data is always located immediately after its descriptor.
-
-         TODO: maybe it's bad design to make this kind of assumption, even though it's valid
-         in current implementation. Maybe a better solution would be to store an offset to 
-         beginning of the data.
+         This assumes that the data is located after the descriptor at some
+         some offset, no more than 255 bytes away (typically such offset is 0).
+         This allows us to align data on a natural boundary.
 
          @return A pointer to the beginning of the data
       */
       void *getDataStart()
          {
-         return static_cast<void *>(this + 1);
+         return static_cast<void *>(static_cast<char*>(static_cast<void*>(this + 1)) + _dataOffset);
          }
 
       void print();
-
-      DataType type;
-      uint32_t size; // size of the data segment, which can include nested data
-      };
+      private:
+      DataType _type; // Message type on 8 bits
+      uint8_t  _paddingSize; // How many bytes are actually used for padding (0-3)
+      uint8_t  _dataOffset; // Offset from DataDescriptor to actual data. Always 0 for now.
+      uint8_t  _reserved; // For future use
+      uint32_t _size; // Size of the data segment, which can include nested data
+      }; // struct DataDescriptor
 
    Message();
 
@@ -132,12 +159,15 @@ public:
       @brief Add a new data point to the message.
 
       Writes the descriptor and attached data to the MessageBuffer
-      and updates the message structure.
+      and updates the message structure. If the attached data is not
+      aligned on a 32-bit boundary, some padding will be written as well.
 
       @param desc Descriptor for the new data
       @param dataStart Pointer to the new data
+
+      @return The total amount of data written (including padding, but not including the descriptor)
    */
-   void addData(const DataDescriptor &desc, const void *dataStart);
+   uint32_t addData(const DataDescriptor &desc, const void *dataStart);
 
    /**
       @brief Allocate space for a descriptor in the MessageBuffer

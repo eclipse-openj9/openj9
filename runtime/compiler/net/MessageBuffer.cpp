@@ -61,16 +61,16 @@ MessageBuffer::expandIfNeeded(uint32_t requiredSize)
    }
 
 uint32_t
-MessageBuffer::writeData(const void *dataStart, uint32_t dataSize)
+MessageBuffer::writeData(const void *dataStart, uint32_t dataSize, uint8_t paddingSize)
    {
    // write dataSize bytes starting from dataStart address
    // into the buffer. Might require buffer expansion.
    // Return the offset into the buffer for the beginning of data
-   uint32_t requiredSize = size() + dataSize;
+   uint32_t requiredSize = size() + dataSize + paddingSize;
    expandIfNeeded(requiredSize);
    char *data = _curPtr;
    memcpy(_curPtr, dataStart, dataSize);
-   _curPtr += dataSize;
+   _curPtr += dataSize + paddingSize;
    return offset(data);
    }
 

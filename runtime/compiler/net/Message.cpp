@@ -29,7 +29,7 @@ namespace JITServer
 Message::Message()
    {
    // when the message is constructed, it's not valid
-   _buffer.reserveValue<uint32_t>();
+   _buffer.reserveValue<uint32_t>(); // Reserve space for encoding the size
    _metaDataOffset = _buffer.reserveValue<Message::MetaData>();
    }
 
@@ -39,12 +39,15 @@ Message::getMetaData() const
    return _buffer.getValueAtOffset<MetaData>(_metaDataOffset);
    }
 
-void
+uint32_t
 Message::addData(const DataDescriptor &desc, const void *dataStart)
    {
-   uint32_t descOffset = _buffer.writeValue(desc);
-   _buffer.writeData(dataStart, desc.size);
+   // Write the descriptor itself
+   uint32_t descOffset = _buffer.writeValue(desc); 
+   // Write the real data and possibly some padding
+   _buffer.writeData(dataStart, desc.getPayloadSize(), desc.getPaddingSize()); 
    _descriptorOffsets.push_back(descOffset);
+   return desc.getTotalSize();
    }
 
 uint32_t
@@ -73,14 +76,17 @@ Message::deserialize()
    {
    // Assume that buffer is populated with data that defines a valid message
    // Reconstruct the message by setting metadata and pointers to descriptors
+   // Note that the size of the entire message buffer has already been stripped
    _metaDataOffset = _buffer.readValue<MetaData>();
+
    _descriptorOffsets.reserve(getMetaData()->_numDataPoints);
+   // TODO: do I need to clear the vector of _descriptorOffsets just in case?
    for (uint32_t i = 0; i < getMetaData()->_numDataPoints; ++i)
       {
-      uint32_t descOffset = _buffer.readValue<DataDescriptor>();
+      uint32_t descOffset = _buffer.readValue<DataDescriptor>(); // Read the descriptor itself
       _descriptorOffsets.push_back(descOffset);
       // skip the data segment, which is processed in getArgs
-      _buffer.readData(getLastDescriptor()->size);
+      _buffer.readData(getLastDescriptor()->getTotalSize());
       }
    }
 
@@ -120,15 +126,16 @@ Message::clearForWrite()
 void
 Message::DataDescriptor::print()
    {
-   TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor[%p]: type=%d size=%lu\n", this, type, size);
+   TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor[%p]: type=%d payload_size=%u padding=%u\n", 
+                                  this, getDataType(), getPayloadSize(), getPaddingSize());
    if (!isPrimitive())
       {
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor[%p]: nested data begin\n", this);
       DataDescriptor *curDesc = static_cast<DataDescriptor *>(getDataStart());
-      while ((char *) curDesc->getDataStart() + curDesc->size - (char *) getDataStart() <= size)
+      while ((char *) curDesc->getDataStart() + curDesc->getTotalSize() - (char *) getDataStart() <= getTotalSize())
          {
          curDesc->print();
-         curDesc = reinterpret_cast<DataDescriptor *>(reinterpret_cast<char *>(curDesc->getDataStart()) + curDesc->size);
+         curDesc = reinterpret_cast<DataDescriptor *>(reinterpret_cast<char *>(curDesc->getDataStart()) + curDesc->getTotalSize());
          }
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor[%p] nested data end\n", this);
       }
