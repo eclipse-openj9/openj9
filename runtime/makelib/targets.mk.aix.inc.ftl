@@ -34,7 +34,7 @@ $(UMA_DLLTARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 		$(UMA_OBJECTS) \
 		$(UMA_DLL_LINK_POSTFLAGS)
 ifdef j9vm_uma_gnuDebugSymbols
-	cp $(UMA_DLLTARGET) $(@:$(UMA_DOT_DLL)=.debuginfo)
+	cp $@ $(@:$(UMA_DOT_DLL)=.debuginfo)
 endif
 	strip -X32_64 -t $@
 </#assign>
@@ -46,6 +46,10 @@ $(UMA_EXETARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 		$(UMA_LINK_LIBRARIES) \
 		-o $@ -lm -lpthread -liconv -ldl \
 		$(UMA_EXE_LINK_POSTFLAGS)
+ifdef j9vm_uma_gnuDebugSymbols
+	cp $@ $(@:$(UMA_DOT_EXE)=.debuginfo)
+endif
+	strip -X32_64 -t $@
 </#assign>
 
 ifeq ($(j9vm_env_data64),1)
