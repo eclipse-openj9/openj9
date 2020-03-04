@@ -38,6 +38,9 @@ CONFIGURE_ARGS += \
 ifeq (osx_x86-64_cmprssptrs, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMR_GC_COMPRESSED_POINTERS
+else
+	CONFIGURE_ARGS += \
+		--enable-OMR_GC_FULL_POINTERS
 endif
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.dylib arlibext=.a objext=.o
