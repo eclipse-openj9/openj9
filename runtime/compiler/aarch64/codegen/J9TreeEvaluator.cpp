@@ -1029,6 +1029,7 @@ VMinlineFMA(TR::Node *node, TR::CodeGenerator *cg)
    cg->decReferenceCount(firstChild);
    cg->decReferenceCount(secondChild);
    cg->decReferenceCount(thirdChild);
+   TR_ASSERT_FATAL(false, "FMA inlined...\n");
    return src1Register;
    }
 
@@ -1038,8 +1039,16 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
    TR::CodeGenerator *cg = self();
    TR::MethodSymbol * methodSymbol = node->getSymbol()->getMethodSymbol();
 
+   
+
    if (methodSymbol)
       {
+      if(methodSymbol->getRecognizedMethod()!= 0)
+      {
+         printf("XDDDDD: methodSymbol = %d\n", methodSymbol->getRecognizedMethod());
+         printf("XDDDDD: TR::java_lang_Math_fma_D = %d\n", TR::java_lang_Math_fma_D);
+      }
+
       switch (methodSymbol->getRecognizedMethod())
          {
          case TR::sun_misc_Unsafe_compareAndSwapInt_jlObjectJII_Z:
@@ -1061,6 +1070,7 @@ J9::ARM64::CodeGenerator::inlineDirectCall(TR::Node *node, TR::Register *&result
          case TR::java_lang_StrictMath_fma_D:
          case TR::java_lang_Math_fma_F:
          case TR::java_lang_StrictMath_fma_F:
+            printf("RECONGIZED FMA METHOD, GOING TO EVALUATE FMA CALL...\n");
             resultReg = VMinlineFMA(node, cg);
             return true;
 
