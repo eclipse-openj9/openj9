@@ -2715,7 +2715,6 @@ modifyCacheName(J9JavaVM *vm, const char* origName, UDATA verboseFlags, char** m
 			/* List of un-acceptable characters in cache name */
 			if (*cursorOrig == '/' ||
 			*cursorOrig == '\\' ||
-			*cursorOrig == '$' ||
 			*cursorOrig == '&' ||
 			*cursorOrig == '*' ||
 			((U_8)*cursorOrig) == SHRINIT_ASCII_OF_POUND_SYMBOL ||
