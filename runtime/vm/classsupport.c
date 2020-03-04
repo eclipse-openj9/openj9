@@ -827,7 +827,7 @@ waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *table
 	Assert_VM_mustHaveVMAccess(vmThread);
 	/* get here if and only if someone else is loading the class */
 	/* give up the classloader monitor to allow other threads to run */
-	monitorOwner = getObjectMonitorOwner(vmThread->javaVM, vmThread, tableEntry->classLoader->classLoaderObject, &recursionCount);
+	monitorOwner = getObjectMonitorOwner(vmThread->javaVM, tableEntry->classLoader->classLoaderObject, &recursionCount);
 	if (monitorOwner == vmThread) {
 		Trc_VM_waitForContendedLoadClass_release_object_monitor(vmThread, vmThread, tableEntry->classLoader, classNameLength, className);
 		for (i = 0; i < recursionCount; ++i) {

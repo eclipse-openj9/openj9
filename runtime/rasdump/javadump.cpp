@@ -3958,12 +3958,7 @@ JavaCoreDumpWriter::writeMonitorObject(J9ThreadMonitor* monitor, j9object_t obj,
 	J9Thread*   lockOwner = lock->owner;
 
 	if (obj) {
-		J9VMThread tenantMarker;
-
-		memset(&tenantMarker, 0, sizeof(J9VMThread));
-
-
-		owner = getObjectMonitorOwner(_VirtualMachine, &tenantMarker, obj, &count);
+		owner = getObjectMonitorOwner(_VirtualMachine, obj, &count);
 	} else if (lockOwner) {
 		owner = getVMThreadFromOMRThread(_VirtualMachine, lockOwner);
 		count = lock->count;
