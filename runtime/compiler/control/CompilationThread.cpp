@@ -9111,7 +9111,11 @@ TR::CompilationInfoPerThreadBase::compile(
          }
 
       _methodBeingCompiled->_compErrCode = compilationOK;
-      if (!_methodBeingCompiled->isAotLoad() && !_methodBeingCompiled->isRemoteCompReq())
+      if (!_methodBeingCompiled->isAotLoad()
+#if defined(J9VM_OPT_JITSERVER)
+          && !_methodBeingCompiled->isRemoteCompReq()
+#endif /* defined(J9VM_OPT_JITSERVER) */
+         )
          {
          class TraceMethodMetadata
             {
