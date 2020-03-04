@@ -87,7 +87,8 @@ public:
       @brief Write value of type T to the buffer.
 
       Copies the value into buffer, expanding it if needed,
-      and advances _curPtr by sizeof(T) bytes.
+      and advances _curPtr by sizeof(T) bytes plus some padding
+      so that the data inside the buffer is always 32-bit aligned
       Behavior is undefined if T is not trivially copyable (i.e. not contiguous in memory).
 
       @param val value to be written
@@ -97,21 +98,23 @@ public:
    template <typename T>
    uint32_t writeValue(const T &val)
       {
-      return writeData(&val, sizeof(T));
+      uint8_t paddingSize = static_cast<uint8_t>(((sizeof(T) + 3) & 0xfffffffc) - sizeof(T));
+      return writeData(&val, sizeof(T), paddingSize);
       }
 
    /**
       @brief Write a given number of bytes into the buffer.
 
       Copies dataSize bytes from dataStart into the buffer, expanding it if needed,
-      and advances _curPtr by dataSize bytes.
+      and advances _curPtr by (dataSize + paddingSize) bytes.
 
       @param dataStart pointer to the beginning of the data to be written
-      @param dataSize number of bytes to be written
+      @param dataSize number of bytes of real data to be written
+      @param paddingSize number of bytes of padding
 
       @return offset to the beginning of written data inside the buffer
    */
-   uint32_t writeData(const void *dataStart, uint32_t dataSize);
+   uint32_t writeData(const void *dataStart, uint32_t dataSize, uint8_t paddingSize);
 
    /**
       @brief Reserve memory for a value of type T.

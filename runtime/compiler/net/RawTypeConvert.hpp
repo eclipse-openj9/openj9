@@ -53,59 +53,79 @@ struct Void
 template <typename T, typename = void> struct RawTypeConvert { };
 template <> struct RawTypeConvert<uint32_t>
    {
-   static inline uint32_t onRecv(Message::DataDescriptor *desc) { return *static_cast<uint32_t *>(desc->getDataStart()); }
+   static inline uint32_t onRecv(Message::DataDescriptor *desc) 
+      {
+      TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::UINT32, "onRecv type missmatch UINT32");
+      TR_ASSERT(desc->getTotalSize() == sizeof(uint32_t), "onRecv size missmatch");
+      return *static_cast<uint32_t *>(desc->getDataStart()); 
+      }
    static inline uint32_t onSend(Message &msg, const uint32_t &val)
       {
-      msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::UINT32, sizeof(uint32_t)), &val);
-      return sizeof(uint32_t);
+      return msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::UINT32, sizeof(uint32_t)), &val);
       }
    };
 template <> struct RawTypeConvert<uint64_t>
    {
-   static inline uint64_t onRecv(Message::DataDescriptor *desc) { return *static_cast<uint64_t *>(desc->getDataStart()); }
+   static inline uint64_t onRecv(Message::DataDescriptor *desc) 
+      {
+      TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::UINT64, "onRecv type missmatch UINT64");
+      TR_ASSERT(desc->getTotalSize() == sizeof(uint64_t), "onRecv size missmatch");
+      return *static_cast<uint64_t *>(desc->getDataStart()); 
+      }
    static inline uint32_t onSend(Message &msg, const uint64_t &val)
       {
-      msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::UINT64, sizeof(uint64_t)), &val);
-      return sizeof(uint64_t);
+      return msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::UINT64, sizeof(uint64_t)), &val);
       }
    };
 template <> struct RawTypeConvert<int32_t>
    {
-   static inline int32_t onRecv(Message::DataDescriptor *desc) { return *static_cast<int32_t *>(desc->getDataStart()); }
+   static inline int32_t onRecv(Message::DataDescriptor *desc) 
+      {
+      TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::INT32, "onRecv type missmatch INT32");
+      TR_ASSERT(desc->getTotalSize() == sizeof(int32_t), "onRecv size missmatch");
+      return *static_cast<int32_t *>(desc->getDataStart()); 
+      }
    static inline uint32_t onSend(Message &msg, const int32_t &val)
       {
-      msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::INT32, sizeof(int32_t)), &val);
-      return sizeof(int32_t);
+      return msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::INT32, sizeof(int32_t)), &val);
       }
    };
 template <> struct RawTypeConvert<int64_t>
    {
-   static inline int64_t onRecv(Message::DataDescriptor *desc) { return *static_cast<int64_t *>(desc->getDataStart()); }
+   static inline int64_t onRecv(Message::DataDescriptor *desc) 
+      {
+      TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::INT64, "onRecv type missmatch INT64");
+      TR_ASSERT(desc->getTotalSize() == sizeof(int64_t), "onRecv size missmatch");
+      return *static_cast<int64_t *>(desc->getDataStart()); 
+      }
    static inline uint32_t onSend(Message &msg, const int64_t &val)
       {
-      msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::INT64, sizeof(int64_t)), &val);
-      return sizeof(int64_t);
+      return msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::INT64, sizeof(int64_t)), &val);
       }
    };
 template <> struct RawTypeConvert<bool>
    {
-   static inline bool onRecv(Message::DataDescriptor *desc) { return *static_cast<bool *>(desc->getDataStart()); }
+   static inline bool onRecv(Message::DataDescriptor *desc) 
+      {
+      TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::BOOL, "onRecv type missmatch BOOL");
+      TR_ASSERT(desc->getTotalSize() == 4 && desc->getPaddingSize() == 3, "onRecv size missmatch");
+      return *static_cast<bool *>(desc->getDataStart()); 
+      }
    static inline uint32_t onSend(Message &msg, const bool &val)
       {
-      msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::BOOL, sizeof(bool)), &val);
-      return sizeof(bool);
+      return msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::BOOL, sizeof(bool)), &val);
       }
    };
 template <> struct RawTypeConvert<const std::string>
    {
    static inline std::string onRecv(Message::DataDescriptor *desc)
       {
-      return std::string(static_cast<char *>(desc->getDataStart()), desc->size);
+      TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::STRING, "onRecv type missmatch STRING");
+      return std::string(static_cast<char *>(desc->getDataStart()), desc->getPayloadSize());
       }
    static inline uint32_t onSend(Message &msg, const std::string &value)
       {
-      msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::STRING, value.length()), &value[0]);
-      return value.length();
+      return msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::STRING, value.length()), &value[0]);
       }
    };
 
@@ -114,11 +134,14 @@ template <> struct RawTypeConvert<std::string> : RawTypeConvert<const std::strin
 // For trivially copyable classes
 template <typename T> struct RawTypeConvert<T, typename std::enable_if<std::is_trivially_copyable<T>::value>::type>
    {
-   static inline T onRecv(Message::DataDescriptor *desc) { return *static_cast<T *>(desc->getDataStart()); }
+   static inline T onRecv(Message::DataDescriptor *desc) 
+      {
+      TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::OBJECT, "onRecv type missmatch OBJECT");
+      return *static_cast<T *>(desc->getDataStart()); 
+      }
    static inline uint32_t onSend(Message &msg, const T &value)
       {
-      msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::OBJECT, sizeof(T)), &value);
-      return sizeof(T);
+      return msg.addData(Message::DataDescriptor(Message::DataDescriptor::DataType::OBJECT, sizeof(T)), &value);
       }
    };
 
@@ -127,18 +150,21 @@ template <typename T> struct RawTypeConvert<T, typename std::enable_if<std::is_s
    {
    static inline T onRecv(Message::DataDescriptor *desc)
       {
+      TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::VECTOR, "onRecv type missmatch VECTOR");
+      // The first element is another descriptor to represent the number of elements in the vector
       Message::DataDescriptor *sizeDesc = static_cast<Message::DataDescriptor *>(desc->getDataStart());
       uint32_t size = RawTypeConvert<uint32_t>::onRecv(sizeDesc);
 
       std::vector<typename T::value_type> values;
       values.reserve(size);
 
-      auto curDesc = reinterpret_cast<Message::DataDescriptor *>(static_cast<char *>(sizeDesc->getDataStart()) + sizeDesc->size);
+      // Find the descriptor of the first element in the array
+      auto curDesc = reinterpret_cast<Message::DataDescriptor *>(static_cast<char *>(sizeDesc->getDataStart()) + sizeDesc->getTotalSize());
       char *ptr = reinterpret_cast<char *>(curDesc);
-      for (int32_t i = 0; i < size; ++i)
+      for (uint32_t i = 0; i < size; ++i)
          {
          values.push_back(RawTypeConvert<typename T::value_type>::onRecv(curDesc));
-         ptr = static_cast<char *>(curDesc->getDataStart()) + curDesc->size;
+         ptr = static_cast<char *>(curDesc->getDataStart()) + curDesc->getTotalSize();
          curDesc = reinterpret_cast<Message::DataDescriptor *>(ptr);
          }
       return values;
@@ -159,8 +185,8 @@ template <typename T> struct RawTypeConvert<T, typename std::enable_if<std::is_s
       // Only get pointer to the vector descriptor after all of its elements were serialized,
       // because buffer might have been reallocated
       Message::DataDescriptor *desc = msg.getDescriptor(descIndex);
-      desc->type = Message::DataDescriptor::DataType::VECTOR;
-      desc->size = totalSize;
+      // If each element is 32-bit aligned, then the entire vector is 32-bit aligned and padding is 0
+      desc->init(Message::DataDescriptor::DataType::VECTOR, totalSize, 0, 0);
       return totalSize;
       }
    };
@@ -179,7 +205,7 @@ struct TupleTypeConvert
       return std::tuple_cat(TupleTypeConvert<n, Arg1>::onRecvImpl(desc),
                             TupleTypeConvert<n + 1, Args...>::onRecvImpl(
                               reinterpret_cast<Message::DataDescriptor *>(
-                                 static_cast<char *>(desc->getDataStart()) + desc->size
+                                 static_cast<char *>(desc->getDataStart()) + desc->getTotalSize()
                               )));
       }
    static inline uint32_t onSendImpl(Message &msg, const Arg1 &arg1, const Args&... args)
@@ -207,6 +233,7 @@ template <typename... T> struct RawTypeConvert<const std::tuple<T...>>
    {
    static inline std::tuple<T...> onRecv(Message::DataDescriptor *desc)
       {
+      TR_ASSERT(desc->getDataType() == Message::DataDescriptor::DataType::TUPLE, "onRecv type missmatch TUPLE");
       return TupleTypeConvert<0, T...>::onRecvImpl(static_cast<Message::DataDescriptor *>(desc->getDataStart()));
       }
 
@@ -219,8 +246,8 @@ template <typename... T> struct RawTypeConvert<const std::tuple<T...>>
       // Only get pointer to the tuple descriptor after all of its elements were serialized,
       // because buffer might have been reallocated
       Message::DataDescriptor *desc = msg.getDescriptor(descIndex);
-      desc->type = Message::DataDescriptor::DataType::TUPLE;
-      desc->size = totalSize;
+      // If each element is 32-bit aligned, then the entire tuple is 32-bit aligned and padding is 0
+      desc->init(Message::DataDescriptor::DataType::TUPLE, totalSize, 0, 0);
       return totalSize;
       }
    
