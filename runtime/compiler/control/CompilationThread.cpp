@@ -9175,8 +9175,6 @@ TR::CompilationInfoPerThreadBase::compile(
                );
             }
 
-         setMetadata(metaData);
-
          // Put a metaData pointer into the Code Cache Header(s).
          //
          uint8_t *warmMethodHeader = compiler->cg()->getBinaryBufferStart() - sizeof(OMR::CodeCacheMethodHeader);
@@ -9194,6 +9192,8 @@ TR::CompilationInfoPerThreadBase::compile(
          // and in fact it would be wrong to do so because code during chtable.commit is
          // expecting something in the compiler object
          }
+
+      setMetadata(metaData);
 
       if (compiler->getOption(TR_BreakAfterCompile))
          {
