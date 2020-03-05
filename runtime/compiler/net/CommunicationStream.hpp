@@ -131,7 +131,6 @@ private:
                }
             totalBytesRead += bytesRead;
             }
-         totalBytesRead += bytesRead;
          }
       }
 
@@ -170,7 +169,6 @@ private:
                }
             totalBytesWritten += bytesWritten;
             }
-         totalBytesWritten += bytesWritten;
          }
       }
    }; // class CommunicationStream
