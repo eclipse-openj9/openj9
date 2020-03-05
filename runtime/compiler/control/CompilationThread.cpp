@@ -5931,18 +5931,14 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
          //
          if (vmThread->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method)))
             {
-            TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
-            if (
-               static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
-               || (
-                  static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
-                  && _sharedCacheReloRuntime.validateAOTHeader(fe, vmThread)
-                  )
-               )
+            if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes)
                {
                methodIsInSharedCache = TR_yes;
-//             if (getPersistentInfo()->isClassLoadingPhase() || TR::Options::getCmdLineOptions()->getOption(TR_ForceLoadAOT))
-                  useCodeFromSharedCache = true;
+               useCodeFromSharedCache = true;
+               }
+            else
+               {
+               TR_ASSERT_FATAL(static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader != TR_maybe, "Should not be possible for aotValidHeader to be TR_maybe at this point\n");
                }
             }
          }
@@ -11757,10 +11753,7 @@ TR::CompilationInfo::storeAOTInSharedCache(
       }
    else if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe)
       {
-      // If validation has been performed, then a header already existed
-      // or one was already been created in this JVM
-      TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
-      safeToStore = entry->_compInfoPT->reloRuntime()->storeAOTHeader(fe, vmThread);
+      TR_ASSERT_FATAL(static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader != TR_maybe, "Should not be possible for aotValidHeader to be TR_maybe at this point\n");
       }
    else
       {
