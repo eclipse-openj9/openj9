@@ -40,6 +40,9 @@ CONFIGURE_ARGS += \
 ifneq (,$(findstring _cmprssptrs,$(SPEC)))
 	CONFIGURE_ARGS += \
 		--enable-OMR_GC_COMPRESSED_POINTERS
+else
+	CONFIGURE_ARGS += \
+		--enable-OMR_GC_FULL_POINTERS
 endif
 
 ifneq (,$(findstring _cross,$(SPEC)))

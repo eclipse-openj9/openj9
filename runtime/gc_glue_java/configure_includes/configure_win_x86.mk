@@ -57,6 +57,7 @@ ifeq (win_x86-64, $(SPEC))
 		--enable-OMRTHREAD_LIB_WIN32 \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_GC_CONCURRENT_SCAVENGER \
@@ -69,6 +70,7 @@ ifeq (win_x86-64_purec, $(SPEC))
 		--enable-OMRTHREAD_LIB_WIN32 \
 		--enable-OMR_ARCH_X86 \
 		--enable-OMR_ENV_DATA64 \
+		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
@@ -79,6 +81,7 @@ ifeq (win_x86, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_WIN32 \
 		--enable-OMR_ARCH_X86 \
+		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
@@ -89,6 +92,7 @@ ifeq (win_x86_purec, $(SPEC))
 	CONFIGURE_ARGS += \
 		--enable-OMRTHREAD_LIB_WIN32 \
 		--enable-OMR_ARCH_X86 \
+		--enable-OMR_GC_FULL_POINTERS \
 		--enable-OMR_ENV_LITTLE_ENDIAN \
 		--enable-OMR_GC_TLH_PREFETCH_FTA \
 		--enable-OMR_PORT_ALLOCATE_TOP_DOWN \
