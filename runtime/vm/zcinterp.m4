@@ -1,4 +1,4 @@
-dnl Copyright (c) 2017, 2019 IBM Corp. and others
+dnl Copyright (c) 2017, 2020 IBM Corp. and others
 dnl
 dnl This program and the accompanying materials are made available under
 dnl the terms of the Eclipse Public License 2.0 which accompanies this
@@ -195,6 +195,10 @@ PLACE_LABEL(L_GS_CALL_HELPER)
 dnl Load the updated object pointer into CARG2
     LG CARG1,J9TR_VMThread_gsParameters_operandAddr(J9VMTHREAD)
 ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{
+ifdef({ASM_OMR_GC_FULL_POINTERS},{
+    TM J9TR_VMThreadCompressObjectReferences(J9VMTHREAD),1
+    JZ LABEL_NAME(L_GS_SKIP_SHIFT)
+}) dnl ASM_OMR_GC_FULL_POINTERS
 dnl Some objects may be stored in a decompressed format on the heap.
 dnl A typical example of this may be static objects. For such objects
 dnl we must not decompress via the compressedPointersShift value. To
@@ -208,7 +212,7 @@ dnl mainline and check whether it is an LGG or LLGFSG instruction.
     LG CARG2,J9TR_JavaVM_compressedPointersShift(CARG2)
     SLLG CARG2,CARG1,0(CARG2)
     J LABEL_NAME(L_GS_DONE_SHIFT)
-})
+}) dnl ASM_OMR_GC_COMPRESSED_POINTERS
 
 PLACE_LABEL(L_GS_SKIP_SHIFT)
     LG CARG2,0(CARG1)
