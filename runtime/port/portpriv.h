@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -273,157 +273,31 @@ j9port_create_library (struct J9PortLibrary *portLibrary, struct J9PortLibraryVe
 
 /* J9SourceSockets*/
 extern J9_CFUNC int32_t
-j9sock_hostent_addrlist (struct J9PortLibrary *portLibrary, j9hostent_t handle, uint32_t index);
-extern J9_CFUNC int32_t
 j9sock_getaddrinfo (struct J9PortLibrary *portLibrary, char *name, j9addrinfo_t hints, j9addrinfo_t result);
-extern J9_CFUNC int32_t
-j9sock_setopt_int (struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  int32_t *optval);
 extern J9_CFUNC int32_t
 j9sock_shutdown (struct J9PortLibrary *portLibrary );
 extern J9_CFUNC int32_t
-j9sock_hostent_aliaslist (struct J9PortLibrary *portLibrary, j9hostent_t handle, char ***aliasList);
-extern J9_CFUNC int32_t
-j9sock_fdset_init (struct J9PortLibrary *portLibrary, j9socket_t socketP);
-extern J9_CFUNC int32_t
 j9sock_getaddrinfo_create_hints (struct J9PortLibrary *portLibrary, j9addrinfo_t *result, int16_t family, int32_t socktype, int32_t protocol, int32_t flags);
-extern J9_CFUNC int32_t
-j9sock_connect_with_timeout (struct J9PortLibrary *portLibrary, j9socket_t sock, j9sockaddr_t addr, uint32_t timeout, uint32_t step, uint8_t** context);
-extern J9_CFUNC int32_t
-j9sock_getpeername (struct J9PortLibrary *portLibrary, j9socket_t handle, j9sockaddr_t addrHandle);
 extern J9_CFUNC const char*
 j9sock_error_message (struct J9PortLibrary *portLibrary);
 extern J9_CFUNC int32_t
-j9sock_getnameinfo (struct J9PortLibrary *portLibrary, j9sockaddr_t in_addr, int32_t sockaddr_size, char *name, int32_t name_length, int flags);
-extern J9_CFUNC int32_t
-j9sock_setopt_ipv6_mreq (struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  j9ipv6_mreq_t optval);
-extern J9_CFUNC int32_t
 j9sock_inetaddr (struct J9PortLibrary *portLibrary, const char *addrStr, uint32_t *addr);
-extern J9_CFUNC int32_t
-j9sock_bind (struct J9PortLibrary *portLibrary, j9socket_t sock, j9sockaddr_t addr);
-extern J9_CFUNC int32_t
-j9sock_connect (struct J9PortLibrary *portLibrary, j9socket_t sock, j9sockaddr_t addr);
-extern J9_CFUNC int32_t
-j9sock_listen (struct J9PortLibrary *portLibrary, j9socket_t sock, int32_t backlog);
-extern J9_CFUNC int32_t
-j9sock_setopt_bool (struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  BOOLEAN *optval);
-extern J9_CFUNC int32_t
-j9sock_readfrom (struct J9PortLibrary *portLibrary, j9socket_t sock, uint8_t *buf, int32_t nbyte, int32_t flags, j9sockaddr_t addrHandle);
-extern J9_CFUNC int32_t
-j9sock_getopt_bool (struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  BOOLEAN *optval);
-extern J9_CFUNC int32_t
-j9sock_fdset_size (struct J9PortLibrary *portLibrary, j9socket_t handle);
-extern J9_CFUNC int32_t
-j9sock_setopt_ipmreq (struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  j9ipmreq_t optval);
-extern J9_CFUNC int32_t
-j9sock_writeto (struct J9PortLibrary *portLibrary, j9socket_t sock, uint8_t *buf, int32_t nbyte, int32_t flags, j9sockaddr_t addrHandle);
-extern J9_CFUNC int32_t
-j9sock_linger_init (struct J9PortLibrary *portLibrary, j9linger_t handle, int32_t enabled, uint16_t timeout);
-extern J9_CFUNC int32_t
-j9sock_select_read (struct J9PortLibrary *portLibrary, j9socket_t j9socketP, int32_t secTime, int32_t uSecTime, BOOLEAN accept);
-extern J9_CFUNC int32_t
-j9sock_sockaddr (struct J9PortLibrary *portLibrary, j9sockaddr_t handle, const char *addrStr, uint16_t portNetworkOrder);
 extern J9_CFUNC int32_t
 j9sock_gethostbyaddr (struct J9PortLibrary *portLibrary, char *addr, int32_t length, int32_t type, j9hostent_t handle);
 extern J9_CFUNC int32_t
-j9sock_inetntoa (struct J9PortLibrary *portLibrary, char **addrStr, uint32_t nipAddr);
-extern J9_CFUNC int32_t
-j9sock_linger_enabled (struct J9PortLibrary *portLibrary, j9linger_t handle, BOOLEAN *enabled);
-extern J9_CFUNC int32_t
-j9sock_select (struct J9PortLibrary *portLibrary, int32_t nfds, j9fdset_t readfds, j9fdset_t writefds, j9fdset_t exceptfds, j9timeval_t timeout);
-extern J9_CFUNC int32_t
 j9sock_startup (struct J9PortLibrary *portLibrary);
-extern J9_CFUNC int32_t
-j9sock_linger_linger (struct J9PortLibrary *portLibrary, j9linger_t handle, uint16_t *linger);
 extern J9_CFUNC int32_t
 j9sock_getaddrinfo_name (struct J9PortLibrary *portLibrary, j9addrinfo_t handle, char *name, int index);
 extern J9_CFUNC int32_t
-j9sock_sockaddr_address (struct J9PortLibrary *portLibrary, j9sockaddr_t handle);
-extern J9_CFUNC int32_t
-j9sock_sockaddr_address6 (struct J9PortLibrary *portLibrary, j9sockaddr_t handle, uint8_t *address, uint32_t *length, uint32_t* scope_id);
-extern J9_CFUNC int32_t
-j9sock_write (struct J9PortLibrary *portLibrary, j9socket_t sock, uint8_t *buf, int32_t nbyte, int32_t flags);
-extern J9_CFUNC int32_t
-j9sock_shutdown_input (struct J9PortLibrary *portLibrary, j9socket_t sock);
-extern J9_CFUNC int32_t
-j9sock_free_network_interface_struct (struct J9PortLibrary *portLibrary, struct j9NetworkInterfaceArray_struct* array);
-extern J9_CFUNC int32_t
-j9sock_read (struct J9PortLibrary *portLibrary, j9socket_t sock, uint8_t *buf, int32_t nbyte, int32_t flags);
-extern J9_CFUNC int32_t
-j9sock_socket (struct J9PortLibrary *portLibrary, j9socket_t *handle, int32_t family, int32_t socktype,  int32_t protocol);
-extern J9_CFUNC int32_t
-j9sock_close (struct J9PortLibrary *portLibrary, j9socket_t *sock);
-extern J9_CFUNC int32_t
-j9sock_gethostname (struct J9PortLibrary *portLibrary, char *buffer, int32_t length );
-extern J9_CFUNC uint16_t
-j9sock_sockaddr_port (struct J9PortLibrary *portLibrary, j9sockaddr_t handle);
-extern J9_CFUNC int32_t
 j9sock_gethostbyname (struct J9PortLibrary *portLibrary, const char *name, j9hostent_t handle);
-extern J9_CFUNC int32_t
-j9sock_get_network_interfaces (struct J9PortLibrary *portLibrary, struct j9NetworkInterfaceArray_struct *array,BOOLEAN preferIPv4Stack);
 extern J9_CFUNC int32_t
 j9sock_getaddrinfo_length (struct J9PortLibrary *portLibrary, j9addrinfo_t handle, int32_t *length);
 extern J9_CFUNC int32_t
-j9sock_ipv6_mreq_init (struct J9PortLibrary *portLibrary, j9ipv6_mreq_t handle, uint8_t *ipmcast_addr, uint32_t ipv6mr_interface);
-extern J9_CFUNC int32_t
-j9sock_htonl (struct J9PortLibrary *portLibrary, int32_t val);
-extern J9_CFUNC int32_t
-j9sock_getsockname (struct J9PortLibrary *portLibrary, j9socket_t handle, j9sockaddr_t addrHandle);
-extern J9_CFUNC int32_t
 j9sock_freeaddrinfo (struct J9PortLibrary *portLibrary, j9addrinfo_t handle);
-extern J9_CFUNC uint16_t
-j9sock_htons (struct J9PortLibrary *portLibrary, uint16_t val);
-extern J9_CFUNC int32_t
-j9sock_sockaddr_init (struct J9PortLibrary *portLibrary, j9sockaddr_t handle, int16_t family, uint32_t ipAddrNetworkOrder, uint16_t portNetworkOrder);
 extern J9_CFUNC int32_t
 j9sock_getaddrinfo_address (struct J9PortLibrary *portLibrary, j9addrinfo_t handle, uint8_t *address, int index, uint32_t* scope_id);
 extern J9_CFUNC int32_t
-j9sock_socketIsValid (struct J9PortLibrary *portLibrary, j9socket_t handle);
-extern J9_CFUNC uint16_t
-j9sock_ntohs (struct J9PortLibrary *portLibrary, uint16_t val);
-extern J9_CFUNC int32_t
-j9sock_ntohl (struct J9PortLibrary *portLibrary, int32_t val);
-extern J9_CFUNC int32_t
-j9sock_sockaddr_init6 (struct J9PortLibrary *portLibrary, j9sockaddr_t handle, uint8_t *addr, int32_t addrlength, int16_t family, uint16_t portNetorkOrder,uint32_t flowinfo, uint32_t scope_id, j9socket_t sock);
-extern J9_CFUNC int32_t
 j9sock_getaddrinfo_family (struct J9PortLibrary *portLibrary, j9addrinfo_t handle, int32_t *family, int index );
-extern J9_CFUNC int32_t
-j9sock_setopt_sockaddr (struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  j9sockaddr_t optval);
-extern J9_CFUNC int32_t
-j9sock_setopt_linger (struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  j9linger_t optval);
-extern J9_CFUNC int32_t
-j9sock_getopt_linger (struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  j9linger_t optval);
-extern J9_CFUNC int32_t
-j9sock_getopt_sockaddr (struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname, j9sockaddr_t optval);
-extern J9_CFUNC int32_t
-j9sock_setflag (struct J9PortLibrary *portLibrary, int32_t flag, int32_t *arg);
-extern J9_CFUNC int32_t
-j9sock_shutdown_output (struct J9PortLibrary *portLibrary, j9socket_t sock);
-extern J9_CFUNC int32_t
-j9sock_hostent_hostname (struct J9PortLibrary *portLibrary, j9hostent_t handle, char** hostName);
-extern J9_CFUNC int32_t
-j9sock_accept (struct J9PortLibrary *portLibrary, j9socket_t serverSock, j9sockaddr_t addrHandle, j9socket_t *sockHandle);
-extern J9_CFUNC int32_t
-j9sock_sockaddr_family (struct J9PortLibrary *portLibrary, int16_t *family, j9sockaddr_t handle);
-extern J9_CFUNC int32_t
-j9sock_ipmreq_init (struct J9PortLibrary *portLibrary, j9ipmreq_t handle, uint32_t nipmcast, uint32_t nipinterface);
-extern J9_CFUNC int32_t
-j9sock_timeval_init (struct J9PortLibrary *portLibrary, uint32_t secTime, uint32_t uSecTime, j9timeval_t timeP);
-extern J9_CFUNC int32_t
-j9sock_set_nonblocking (struct J9PortLibrary *portLibrary, j9socket_t socketP, BOOLEAN nonblocking);
-extern J9_CFUNC int32_t
-j9sock_getopt_int (struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  int32_t *optval);
-extern J9_CFUNC int32_t
-j9sock_setopt_byte (struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  uint8_t *optval);
-extern J9_CFUNC int32_t
-j9sock_getopt_byte (struct J9PortLibrary *portLibrary, j9socket_t socketP, int32_t optlevel, int32_t optname,  uint8_t *optval);
-extern J9_CFUNC void
-j9sock_fdset_zero(struct J9PortLibrary *portLibrary, j9fdset_t j9fdset);
-extern J9_CFUNC void
-j9sock_fdset_set(struct J9PortLibrary *portLibrary, j9socket_t aSocket, j9fdset_t j9fdset);
-extern J9_CFUNC void
-j9sock_fdset_clr(struct J9PortLibrary *portLibrary, j9socket_t aSocket, j9fdset_t j9fdset);
-extern J9_CFUNC BOOLEAN
-j9sock_fdset_isset(struct J9PortLibrary *portLibrary, j9socket_t aSocket, j9fdset_t j9fdset);
 
 /* Per-thread buffer for platform-dependent socket information */
 struct J9SocketPTB;
