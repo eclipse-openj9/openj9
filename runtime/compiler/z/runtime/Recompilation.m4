@@ -4,7 +4,7 @@ define(`ZZ',`**')
 define(`ZZ',`##')
 ')dnl
 
-ZZ Copyright (c) 2000, 2019 IBM Corp. and others
+ZZ Copyright (c) 2000, 2020 IBM Corp. and others
 ZZ
 ZZ This program and the accompanying materials are made 
 ZZ available under the terms of the Eclipse Public License 2.0 
@@ -953,7 +953,7 @@ ZZ            rEP - new method Entry Point
 
 ZZ Get the lastCacheSlot pointer into r3.
     L_GPR     r3,eq_lastCachedSlotField_inInterfaceSnippet(r2)
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
 ZZ Load the class offset (32 bits)
     L         r0,J9TR_J9Object_class(,r1)
     LLGFR     r0,r0
@@ -973,7 +973,7 @@ ZZ slots or slots are uninitialized.
     JL        LJumpToNewRoutine
 
 ZZ Compare our class pointer with the class pointer in current slot
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     CL        r0,0(,r3)
 },{dnl
     CL_GPR    r0,0(,r3)
