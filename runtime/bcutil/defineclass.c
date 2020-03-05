@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -761,20 +761,19 @@ callDynamicLoader(J9VMThread *vmThread, J9LoadROMClassData *loadData, U_8 * inte
 			FALSE, /* isIntermediateROMClass */
 			localBuffer);
 
-	/* The module of a class transformed by a JVMTI agent needs access to unnamed modules */
-	if ((J2SE_VERSION(vm) >= J2SE_V11)
-		&& (classFileBytesReplacedByRIA || classFileBytesReplacedByRCA)
-		&& (NULL != loadData->romClass)
-	) {
-		J9Module *module = J9_VM_FUNCTION(vmThread, findModuleForPackage)(vmThread, loadData->classLoader,
-				loadData->className, (U_32) packageNameLength(loadData->romClass));
-		if (NULL != module) {
-			module->isLoose = TRUE;
+	if (BCT_ERR_NO_ERROR == result) {
+		/* The module of a class transformed by a JVMTI agent needs access to unnamed modules */
+		if ((J2SE_VERSION(vm) >= J2SE_V11)
+			&& (classFileBytesReplacedByRIA || classFileBytesReplacedByRCA)
+		) {
+			J9Module *module = J9_VM_FUNCTION(vmThread, findModuleForPackage)(vmThread, loadData->classLoader,
+					J9UTF8_DATA(J9ROMCLASS_CLASSNAME(loadData->romClass)), (U_32) packageNameLength(loadData->romClass));
+			if (NULL != module) {
+				module->isLoose = TRUE;
+			}
 		}
-	}
 
-	if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_RECREATE_CLASSFILE_ONLOAD)) {
-		if (BCT_ERR_NO_ERROR == result) {
+		if (J9_ARE_ANY_BITS_SET(vm->extendedRuntimeFlags, J9_EXTENDED_RUNTIME_RECREATE_CLASSFILE_ONLOAD)) {
 			U_8 * classFileBytes = NULL;
 			U_32 classFileBytesCount = 0;
 			U_8 * prevClassData = loadData->classData;
