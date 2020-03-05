@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2017 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -26,7 +26,6 @@
 #include "jni.h"
 #include "j9user.h"
 #include "j9port.h"
-#include "j9socket.h"
 #include "cfr.h"
 #include "j9.h"
 #include "j9protos.h"
