@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,11 @@
 #include "GCExtensionsBase.hpp"
 #include "ModronAssertions.h"
 #include "ObjectModel.hpp"
+
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+#include "ArrayletLeafIterator.hpp"
+#include "ObjectAccessBarrier.hpp"
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 bool
 GC_ArrayletObjectModel::initialize(MM_GCExtensionsBase *extensions)
@@ -110,3 +115,38 @@ GC_ArrayletObjectModel::getArrayletLayout(J9Class* clazz, UDATA dataSizeInBytes,
 	}
 	return layout;
 }
+
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+bool
+GC_ArrayletObjectModel::freeDoubleMapping(MM_EnvironmentBase *env, J9IndexableObject *objectPtr, struct J9PortVmemIdentifier *identifier)
+{
+	PORT_ACCESS_FROM_ENVIRONMENT(env);
+	void *handle = identifier->handle;
+	void *arrayletLeaveAddrs[J9_GC_ARRAYLET_ALLOC_THRESHOLD];
+	void *addressToFree = NULL;
+	if (NULL == handle) {
+		GC_ArrayletLeafIterator arrayletLeafIterator((J9JavaVM *)_omrVM->_language_vm, objectPtr);
+		GC_SlotObject *slotObject = NULL;
+		uintptr_t count = 0;
+
+		while (NULL != (slotObject = arrayletLeafIterator.nextLeafPointer())) {
+			void *currentLeaf = slotObject->readReferenceFromSlot();
+			/* In some corner cases the last leaf might be NULL therefore we must ignore it */
+			if (NULL == currentLeaf) {
+				break;
+			}
+			count++;
+			arrayletLeaveAddrs[count] = currentLeaf;
+		}
+		arrayletLeaveAddrs[0] = (void *)count;
+		identifier->handle = arrayletLeaveAddrs;
+	} else {
+		addressToFree = handle;
+	}
+	j9vmem_free_memory(identifier->address, identifier->size, identifier);
+	if (NULL != addressToFree) {
+		env->getForge()->free(addressToFree);
+	}
+	return true;
+}
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */

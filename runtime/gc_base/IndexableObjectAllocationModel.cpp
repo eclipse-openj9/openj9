@@ -321,20 +321,26 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 {
 	MM_GCExtensions *extensions = MM_GCExtensions::getExtensions(env);
 	J9JavaVM *javaVM = extensions->getJavaVM();
-	PORT_ACCESS_FROM_ENVIRONMENT(env);
 
 	GC_ArrayletLeafIterator arrayletLeafIterator(javaVM, (J9IndexableObject *)objectPtr);
 	MM_Heap *heap = extensions->getHeap();
 	UDATA arrayletLeafSize = env->getOmrVM()->_arrayletLeafSize;
 	UDATA arrayletLeafCount = MM_Math::roundToCeiling(arrayletLeafSize, _dataSize) / arrayletLeafSize;
+	Trc_MM_double_map_Entry(env->getLanguageVMThread(), (void *)objectPtr, arrayletLeafSize, arrayletLeafCount);
 
 	void *result = NULL;
-
-#define ARRAYLET_ALLOC_THRESHOLD 64
-	void *leaves[ARRAYLET_ALLOC_THRESHOLD];
+	void *leaves[J9_GC_ARRAYLET_ALLOC_THRESHOLD];
 	void **arrayletLeaveAddrs = leaves;
-	if (arrayletLeafCount > ARRAYLET_ALLOC_THRESHOLD) {
-		arrayletLeaveAddrs = (void **)env->getForge()->allocate(arrayletLeafCount * sizeof(uintptr_t), MM_AllocationCategory::GC_HEAP, J9_GET_CALLSITE());
+	if (arrayletLeafCount > J9_GC_ARRAYLET_ALLOC_THRESHOLD) {
+		arrayletLeaveAddrs = (void **)env->getForge()->allocate((arrayletLeafCount + 1) * sizeof(uintptr_t), MM_AllocationCategory::GC_HEAP, J9_GET_CALLSITE());
+		/* Store number of leaves as the first element */
+		arrayletLeaveAddrs[0] = (void *)arrayletLeafCount;
+	} else {
+		arrayletLeaveAddrs[0] = (void *)0;
+	}
+
+	if (NULL == arrayletLeaveAddrs) {
+		return NULL;
 	}
 
 	if (NULL == arrayletLeaveAddrs) {
@@ -348,31 +354,32 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 		void *currentLeaf = slotObject->readReferenceFromSlot();
 		/* In some corner cases the last leaf might be NULL therefore we must ignore it */
 		if (NULL == currentLeaf) {
+			Trc_MM_double_map_TraverseLeavesFailure(env->getLanguageVMThread());
 			break;
 		}
-		arrayletLeaveAddrs[count] = currentLeaf;
 		count++;
+		arrayletLeaveAddrs[count] = currentLeaf;
 	}
 
 	/* Number of arraylet leaves in the iterator must match the number of leaves calculated */
 	Assert_MM_true(arrayletLeafCount == count);
+
+	/* Round byteAmount to be double mapped to a multiple of region size */
+	uintptr_t byteAmount = arrayletLeafCount * arrayletLeafSize;
+	Assert_MM_true(byteAmount >= _dataSize);
 
 	GC_SlotObject objectSlot(env->getOmrVM(), extensions->indexableObjectModel.getArrayoidPointer((J9IndexableObject *)objectPtr));
 	J9Object *firstLeafSlot = objectSlot.readReferenceFromSlot();
 
 	MM_HeapRegionDescriptorVLHGC *firstLeafRegionDescriptor = (MM_HeapRegionDescriptorVLHGC *)heap->getHeapRegionManager()->tableDescriptorForAddress(firstLeafSlot);
 
-	/* gets pagesize  or j9vmem_supported_page_sizes()[0]? */
-	UDATA pageSize = j9mmap_get_region_granularity(NULL);
+	/* gets pagesize */
+	UDATA pageSize = extensions->requestedPageSize;
 
 	/* Get heap and from there call an OMR API that will doble map everything */
-	result = heap->doubleMapArraylet(env, arrayletLeaveAddrs, count, arrayletLeafSize, _dataSize,
+	result = heap->doubleMapArraylet(env, arrayletLeaveAddrs, count, arrayletLeafSize, byteAmount,
 				&firstLeafRegionDescriptor->_arrayletDoublemapID,
 				pageSize);
-
-	if (arrayletLeafCount > ARRAYLET_ALLOC_THRESHOLD) {
-		env->getForge()->free((void *)arrayletLeaveAddrs);
-	}
 
 	/*
 	 * Double map failed.
@@ -382,8 +389,10 @@ MM_IndexableObjectAllocationModel::doubleMapArraylets(MM_EnvironmentBase *env, J
 	 * but execution won't halt.
 	 */
 	if (NULL == firstLeafRegionDescriptor->_arrayletDoublemapID.address) {
+		Trc_MM_double_map_Failed(env->getLanguageVMThread());
 		result = NULL;
 	}
+	Trc_MM_double_map_Exit(env->getLanguageVMThread(), result);
 
 	return result;
 }

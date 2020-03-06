@@ -3892,12 +3892,12 @@ private:
 		if (!_copyForwardScheme->isLiveObject(objectPtr)) {
 			Assert_MM_true(_copyForwardScheme->isObjectInEvacuateMemory(objectPtr));
 			MM_ScavengerForwardedHeader forwardedHeader(objectPtr, _extensions);
+			void *objPtr = objectPtr;
 			objectPtr = forwardedHeader.getForwardedObject();
 			if (NULL == objectPtr) {
 				Assert_MM_mustBeClass(forwardedHeader.getPreservedClass());
 				env->_copyForwardStats._doubleMappedArrayletsCleared += 1;
-				PORT_ACCESS_FROM_ENVIRONMENT(_env);
-				j9vmem_free_memory(identifier->address, identifier->size, identifier);
+				_extensions->indexableObjectModel.freeDoubleMapping(_env, (J9IndexableObject *)objPtr, identifier);
 			}
 		}
 	}

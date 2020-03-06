@@ -38,6 +38,10 @@
 #include "Math.hpp"
 #include "SlotObject.hpp"
 
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+class MM_EnvironmentBase;
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
+
 class GC_ArrayletObjectModel : public GC_ArrayletObjectModelBase
 {
 /*
@@ -181,6 +185,10 @@ public:
 
 		return numberArraylets;
 	}
+
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+	bool freeDoubleMapping(MM_EnvironmentBase *env, J9IndexableObject *objectPtr, struct J9PortVmemIdentifier *identifier);
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 	/**
 	 * Get the total number of bytes consumed by arraylets external to the

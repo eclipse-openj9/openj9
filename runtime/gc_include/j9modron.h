@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -219,6 +219,10 @@ typedef jvmtiIterationControl J9MODRON_REFERENCE_CHAIN_WALKER_CALLBACK(J9Object 
 #define J9_GC_MANAGEMENT_COLLECTOR_GGC 					0x8
 #define J9_GC_MANAGEMENT_COLLECTOR_EPSILON				0x10
 #define J9_GC_MANAGEMENT_MAX_COLLECTOR 					5
+
+#if defined(J9VM_GC_ENABLE_DOUBLE_MAP)
+#define J9_GC_ARRAYLET_ALLOC_THRESHOLD 64
+#endif /* J9VM_GC_ENABLE_DOUBLE_MAP */
 
 #ifdef __cplusplus
 } /* extern "C" { */
