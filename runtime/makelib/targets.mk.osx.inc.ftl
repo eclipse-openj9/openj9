@@ -31,7 +31,9 @@ $(UMA_DLLTARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 		$(VMLINK) $(UMA_LINK_PATH) -o $@ \
 		$(UMA_OBJECTS) \
 		$(UMA_DLL_LINK_POSTFLAGS)
+ifdef j9vm_uma_gnuDebugSymbols
 	dsymutil -o $@.dSYM $@
+endif
 </#assign>
 
 <#assign exe_target_rule>
@@ -43,6 +45,9 @@ $(UMA_EXETARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 		$(UMA_END_DASH_L) \
 		$(UMA_LINK_SHARED_LIBRARIES) \
 		-o $@ $(UMA_EXE_POSTFIX_FLAGS)
+ifdef j9vm_uma_gnuDebugSymbols
+	dsymutil -o $@.dSYM $@
+endif
 </#assign>
 
 UMA_BEGIN_DASH_L =
