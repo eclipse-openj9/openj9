@@ -550,6 +550,11 @@ public:
     */
    uint32_t initializeLinkageInfo(void *linkageInfoPtr);
 
+   /**
+    * \brief Returns the JIT Entry Offset from the Interpreter Entry Point
+    */
+   uint32_t getJitEntryOffset();
+
 private:
 
    enum // Flags

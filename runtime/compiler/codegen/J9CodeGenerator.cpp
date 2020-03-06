@@ -5013,3 +5013,9 @@ J9::CodeGenerator::initializeLinkageInfo(void *linkageInfoPtr)
 
    return linkageInfo->getWord();
    }
+
+uint32_t
+J9::CodeGenerator::getJitEntryOffset()
+   {
+   return J9::PrivateLinkage::LinkageInfo::get(self()->getCodeStart())->getReservedWord();
+   }
