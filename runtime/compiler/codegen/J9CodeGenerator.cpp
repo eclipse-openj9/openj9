@@ -32,6 +32,7 @@
 #include "codegen/Relocation.hpp"
 #include "codegen/Instruction.hpp"
 #include "codegen/MonitorState.hpp"
+#include "codegen/PrivateLinkage.hpp"
 #include "compile/AOTClassInfo.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/OSRData.hpp"
@@ -4991,4 +4992,24 @@ J9::CodeGenerator::getMonClass(TR::Node* monNode)
       if (_monitorMapping[i] == monNode)
          return (TR_OpaqueClassBlock *) _monitorMapping[i+1];
    return 0;
+   }
+
+uint32_t
+J9::CodeGenerator::initializeLinkageInfo(void *linkageInfoPtr)
+   {
+   J9::PrivateLinkage::LinkageInfo *linkageInfo = (J9::PrivateLinkage::LinkageInfo *)linkageInfoPtr;
+
+   TR::Recompilation * recomp = self()->comp()->getRecompilationInfo();
+   if (recomp && recomp->couldBeCompiledAgain())
+      {
+      if (recomp->useSampling())
+         linkageInfo->setSamplingMethodBody();
+      else
+         linkageInfo->setCountingMethodBody();
+      }
+
+   linkageInfo->setReservedWord((self()->getBinaryBufferCursor() - self()->getCodeStart()));
+   linkageInfo->setReturnInfo(self()->comp()->getReturnInfo());
+
+   return linkageInfo->getWord();
    }
