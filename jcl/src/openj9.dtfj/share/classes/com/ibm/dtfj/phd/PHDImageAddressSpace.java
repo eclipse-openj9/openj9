@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2008, 2017 IBM Corp. and others
+ * Copyright (c) 2008, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,6 +24,7 @@ package com.ibm.dtfj.phd;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -40,7 +41,6 @@ import com.ibm.dtfj.image.ImageProcess;
 import com.ibm.dtfj.image.ImageSection;
 import com.ibm.dtfj.java.JavaHeap;
 import com.ibm.dtfj.java.JavaRuntime;
-import com.ibm.dtfj.phd.parser.HeapdumpReader;
 import com.ibm.dtfj.runtime.ManagedRuntime;
 
 /** 
@@ -53,22 +53,33 @@ class PHDImageAddressSpace implements ImageAddressSpace {
 	
 	PHDImageAddressSpace(File file, PHDImage parentImage, ImageAddressSpace metaImageAddressSpace) throws IOException {
 		this.metaImageAddressSpace = metaImageAddressSpace;
-		processList = new ArrayList<ImageProcess>();
+		processList = new ArrayList<>();
 		ImageProcess metaProc = metaImageAddressSpace != null ? metaImageAddressSpace.getCurrentProcess() : null;
 		processList.add(new PHDImageProcess(file, parentImage,this, metaProc));
 	}
 	
 	PHDImageAddressSpace(ImageInputStream stream, PHDImage parentImage, ImageAddressSpace metaImageAddressSpace) throws IOException {
 		this.metaImageAddressSpace = metaImageAddressSpace;
-		processList = new ArrayList<ImageProcess>();
+		processList = new ArrayList<>();
 		ImageProcess metaProc = metaImageAddressSpace != null ? metaImageAddressSpace.getCurrentProcess() : null;
-		processList.add(new PHDImageProcess(stream, parentImage,this, metaProc));
+		processList.add(new PHDImageProcess(stream, parentImage, this, metaProc));
 	}
 
+	@Override
 	public ImageProcess getCurrentProcess() {
-		return (ImageProcess)processList.get(0);
+		return processList.get(0);
 	}
 
+	@Override
+	public ByteOrder getByteOrder() {
+		if (metaImageAddressSpace != null) {
+			return metaImageAddressSpace.getByteOrder();
+		}
+
+		return ByteOrder.BIG_ENDIAN; // FIXME
+	}
+
+	@Override
 	public Iterator<ImageSection> getImageSections() {
 		List<ImageSection> list = new ArrayList<ImageSection>();
 		for (Iterator<ImageProcess>ip = getProcesses(); ip.hasNext(); ) {

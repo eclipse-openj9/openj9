@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2007, 2017 IBM Corp. and others
+ * Copyright (c) 2007, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
  *******************************************************************************/
 package com.ibm.dtfj.image.javacore;
 
+import java.nio.ByteOrder;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.Vector;
@@ -50,6 +51,11 @@ public class JCImageAddressSpace implements ImageAddressSpace {
 		fProcesses = new Vector();
 		fImageSections = new Vector();
 		image.addAddressSpace(this);
+	}
+
+	@Override
+	public ByteOrder getByteOrder() {
+		return ByteOrder.BIG_ENDIAN; // FIXME
 	}
 
 	/**

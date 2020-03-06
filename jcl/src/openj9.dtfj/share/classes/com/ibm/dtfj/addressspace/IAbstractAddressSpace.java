@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2004, 2019 IBM Corp. and others
+ * Copyright (c) 2004, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -22,6 +22,7 @@
  *******************************************************************************/
 package com.ibm.dtfj.addressspace;
 
+import java.nio.ByteOrder;
 import java.util.Iterator;
 
 import com.ibm.dtfj.corereaders.MemoryAccessException;
@@ -89,6 +90,13 @@ public interface IAbstractAddressSpace
 	public short getShortAt(int asid, long address) throws MemoryAccessException;
 
 	/**
+	 * Return the byte order of this address space.
+	 *
+	 * @return the byte order of this address space
+	 */
+	public ByteOrder getByteOrder();
+
+	/**
 	 * @param asid an address space ID
 	 * @param address a byte-offset into the asid
 	 * @return the 8-bit byte stored at address in asid
@@ -96,8 +104,21 @@ public interface IAbstractAddressSpace
 	 */
 	public byte getByteAt(int asid, long address) throws MemoryAccessException;
 	
+	/**
+	 * @param asid an address space ID
+	 * @param address a byte-offset into the asid
+	 * @return the pointer stored at address in asid
+	 * @throws MemoryAccessException if the memory cannot be read
+	 */
 	public long getPointerAt(int asid, long address) throws MemoryAccessException;
 	
+	/**
+	 * @param asid an address space ID
+	 * @param address a byte-offset into the asid
+	 * @param buffer a byte array to receive the bytes
+	 * @return the number of bytes read into buffer
+	 * @throws MemoryAccessException if the memory cannot be read
+	 */
 	public int getBytesAt(int asid, long address, byte[] buffer) throws MemoryAccessException;
 	
 	/**
@@ -117,7 +138,6 @@ public interface IAbstractAddressSpace
 	 * @param alignment The alignment boundary where the pattern can be expected to start
 	 * @param startFrom The first memory address to start searching in
 	 * @return
-	 * 
 	 */
 	public long findPattern(byte[] whatBytes, int alignment, long startFrom);
 
@@ -128,7 +148,6 @@ public interface IAbstractAddressSpace
 	 * @param vaddr
 	 * @param size
 	 * @return
-	 * 
 	 */
 	public byte[] getMemoryBytes(long vaddr, int size);
 }
