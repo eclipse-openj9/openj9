@@ -1991,6 +1991,24 @@ TR_J9VMBase::getByteOffsetToLockword(TR_OpaqueClassBlock * clazzPointer)
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)->lockOffset;
    }
 
+int32_t
+TR_J9VMBase::getInitialLockword(TR_OpaqueClassBlock* ramClass)
+   {
+   /* If ramClass is NULL for some reason, initial lockword is set to 0. */
+   if (!ramClass)
+      {
+      return 0;
+      }
+
+   return VM_ObjectMonitor::getInitialLockword(_jitConfig->javaVM, TR::Compiler->cls.convertClassOffsetToClassPtr(ramClass));
+   }
+
+bool
+TR_J9VMBase::isEnableGlobalLockReservationSet()
+   {
+   return (1 == _jitConfig->javaVM->enableGlobalLockReservation) ? true : false;
+   }
+
 bool
 TR_J9VMBase::isLogSamplingSet()
    {
@@ -4379,9 +4397,7 @@ TR::TreeTop* TR_J9VMBase::initializeClazzFlagsMonitorFields(TR::Compilation* com
       {
       // Initialize the monitor field
       //
-      int32_t lwInitialValue = 0;
-      if (TR::Compiler->cls.classFlagReservableWordInitValue(ramClass))
-         lwInitialValue = OBJECT_HEADER_LOCK_RESERVED;
+      int32_t lwInitialValue = getInitialLockword(ramClass);
 
       if (!comp->target().is64Bit() || generateCompressedLockWord())
          {

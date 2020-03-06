@@ -321,6 +321,9 @@ static BOOLEAN isPPC64bit(void);
 static UDATA predefinedHandlerWrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *userData);
 static void signalDispatch(J9VMThread *vmThread, I_32 sigNum);
 
+static UDATA parseGlrConfig(J9JavaVM* jvm, char* options);
+static UDATA parseGlrOption(J9JavaVM* jvm, char* option);
+
 J9_DECLARE_CONSTANT_UTF8(j9_int_void, "(I)V");
 J9_DECLARE_CONSTANT_UTF8(j9_dispatch, "dispatch");
 
@@ -2250,6 +2253,45 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			}
 			if (TRUE == lockwordWhat){
 				printLockwordWhat(vm);
+			}
+
+			/* Global Lock Reservation is off by default. */
+			vm->enableGlobalLockReservation = 0;
+
+			/* Set default parameters for Global Lock Reservation. */
+			vm->reservedTransitionThreshold = 1;
+			vm->reservedAbsoluteThreshold = 10;
+			vm->minimumReservedRatio = 1024;
+			vm->cancelAbsoluteThreshold = 10;
+			vm->minimumLearningRatio = 256;
+
+			argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOGLOBALLOCKRESERVATION, NULL);
+			argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXGLOBALLOCKRESERVATION, NULL);
+
+			if ((argIndex2 >= 0) && (argIndex2 > argIndex)) {
+				/* Global Lock Reservation is currently only supported on Power. */
+#if defined(AIXPPC) || defined(LINUXPPC)
+				vm->enableGlobalLockReservation = 1;
+#endif /* defined(AIXPPC) || defined(LINUXPPC) */
+			}
+
+			argIndex2 = FIND_AND_CONSUME_ARG_FORWARD(STARTSWITH_MATCH, VMOPT_XXGLOBALLOCKRESERVATIONCOLON, NULL);
+
+			while (argIndex2 >= 0) {
+				if (argIndex2 > argIndex) {
+					/* Global Lock Reservation is currently only supported on Power. */
+#if defined(AIXPPC) || defined(LINUXPPC)
+					vm->enableGlobalLockReservation = 1;
+#endif /* defined(AIXPPC) || defined(LINUXPPC) */
+				}
+
+				optionValue = NULL;
+				GET_OPTION_OPTION(argIndex2, ':', ':', &optionValue);
+
+				if (JNI_OK != parseGlrConfig(vm, optionValue)) {
+					goto _error;
+				}
+				argIndex2 = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XXGLOBALLOCKRESERVATIONCOLON, NULL, argIndex2);
 			}
 
 			break;
@@ -7130,3 +7172,70 @@ setThreadNameAsyncHandler(J9VMThread *currentThread, IDATA handlerKey, void *use
 }
 
 #endif /* J9VM_THR_ASYNC_NAME_UPDATE */
+
+static UDATA
+parseGlrConfig(J9JavaVM* jvm, char* options)
+{
+	UDATA result = JNI_OK;
+	char* nextOption = NULL;
+	char* cursor = options;
+	PORT_ACCESS_FROM_JAVAVM(jvm);
+
+	/* parse out each of the options */
+	while ((JNI_OK == result) && (strstr(cursor, ",") != NULL)) {
+		nextOption = scan_to_delim(PORTLIB, &cursor, ',');
+		if (NULL == nextOption) {
+			result = JNI_ERR;
+		} else {
+			result = parseGlrOption(jvm, nextOption);
+			j9mem_free_memory(nextOption);
+		}
+	}
+	if (result == JNI_OK) {
+		result = parseGlrOption(jvm, cursor);
+	}
+
+	return result;
+}
+
+static UDATA
+parseGlrOption(J9JavaVM* jvm, char* option)
+{
+	char* valueString = strstr(option, "=");
+	UDATA value = 0;
+
+	if (NULL == valueString) {
+		return JNI_ERR;
+	}
+
+	/* This trims off the leading equal sign. */
+	valueString = valueString + 1;
+
+	if (scan_udata(&valueString, &value) != 0) {
+		return JNI_ERR;
+	}
+
+	/* Thresholds are compared with 16 bit numbers so they never need to be higher than 0x10000. */
+	if (value > 0x10000) {
+		value = 0x10000;
+	}
+
+	if (strncmp(option, "reservedTransitionThreshold=", strlen("reservedTransitionThreshold=")) == 0) {
+		jvm->reservedTransitionThreshold = (U_32)value;
+		return JNI_OK;
+	} else if (strncmp(option, "reservedAbsoluteThreshold=", strlen("reservedAbsoluteThreshold=")) == 0) {
+		jvm->reservedAbsoluteThreshold = (U_32)value;
+		return JNI_OK;
+	} else if (strncmp(option, "minimumReservedRatio=", strlen("minimumReservedRatio=")) == 0) {
+		jvm->minimumReservedRatio = (U_32)value;
+		return JNI_OK;
+	} else if (strncmp(option, "cancelAbsoluteThreshold=", strlen("cancelAbsoluteThreshold=")) == 0) {
+		jvm->cancelAbsoluteThreshold = (U_32)value;
+		return JNI_OK;
+	} else if (strncmp(option, "minimumLearningRatio=", strlen("minimumLearningRatio=")) == 0) {
+		jvm->minimumLearningRatio = (U_32)value;
+		return JNI_OK;
+	}
+
+	return JNI_ERR;
+}

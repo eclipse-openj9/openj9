@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,8 +30,8 @@
 #include "util_internal.h"
 #include "monhelp.h"
 
-IDATA 
-objectMonitorExit(J9VMThread* vmStruct, j9object_t object) 
+IDATA
+objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 {
 	j9objectmonitor_t *lockEA = NULL;
 	j9objectmonitor_t lock = 0;
@@ -54,28 +54,67 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 	} else {
 		lockEA = J9OBJECT_MONITOR_EA(vmStruct, object);
 	}
+restart:
 	lock = J9_LOAD_LOCKWORD(vmStruct, lockEA);
 
 	if (J9_FLATLOCK_OWNER(lock) == vmStruct) {
 		/* the current thread owns the monitor, and it's a flat lock */
 		UDATA count = (UDATA)lock & OBJECT_HEADER_LOCK_BITS_MASK;
-		/* low bits may be:
-		 * 	 00 (no flatlock recursion, flatlock contention bit (FLC) is clear), 
-		 *	 01 (inflated -- impossible)
-		 *	 02 (no flatlock recursion, FLC set), or 
-		 *	 03 (FLC set and inflated set -- impossible)
-		 *   04-07 (RES=1, COUNT=0 -- reserved but unentered -- illegal)
-		 *	>=08 (flatlock recursion)
+		/*
+		 * If the learning bit is set, the lock is in the learning state. CAS should be used to decrement the RC field.
+		 *
+		 * If the learning bit is clear, the possible low bits may be:
+		 *     00 (no flatlock recursion, flatlock contention bit (FLC) is clear),
+		 *     01 (inflated -- impossible)
+		 *     02 (no flatlock recursion, FLC set), or
+		 *     03 (FLC set and inflated set -- impossible)
+		 *  04-07 (RES=1, COUNT=0 -- reserved but unentered -- illegal)
+		 *  08-15 (learning state)
+		 *   >=16 (RC >= 1)
 		 */
 
 		Assert_VM_false(lock & OBJECT_HEADER_LOCK_INFLATED);
 #ifndef J9VM_THR_LOCK_RESERVATION
 		Assert_VM_false(lock & OBJECT_HEADER_LOCK_RESERVED);
-#endif
+
+		/* Global Lock Reservation is currently only supported on Power. Learning bit should be clear on other platforms. */
+#if !(defined(AIXPPC) || defined(LINUXPPC))
+		Assert_VM_false(lock & OBJECT_HEADER_LOCK_LEARNING);
+#endif /* if !(defined(AIXPPC) || defined(LINUXPPC)) */
+#endif /* ifndef J9VM_THR_LOCK_RESERVATION */
 
 		if (count == 0x00) {
 			/* just release the flatlock */
-			clearLockWord(vmStruct, lockEA);
+			monitorExitWriteBarrier();
+			J9_STORE_LOCKWORD(vmStruct, lockEA, 0);
+		} else if ((count & OBJECT_HEADER_LOCK_LEARNING) && (count & OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK)) {
+			/* Learning state case */
+			I_32 casSuccess = FALSE;
+
+			if (1 == J9_FLATLOCK_COUNT(lock)) {
+				/* if RC field is 1, this fully unlocks the object so a write barrier is needed */
+				monitorExitWriteBarrier();
+			}
+
+			if (J9VMTHREAD_COMPRESS_OBJECT_REFERENCES(vmStruct)) {
+				casSuccess = (lock == compareAndSwapU32((uint32_t*)lockEA, (uint32_t)lock,
+				                                        (uint32_t)(lock - OBJECT_HEADER_LOCK_LEARNING_FIRST_RECURSION_BIT)));
+			} else {
+				casSuccess = (lock == compareAndSwapUDATA((uintptr_t*)lockEA, (uintptr_t)lock,
+				                                          (uintptr_t)(lock - OBJECT_HEADER_LOCK_LEARNING_FIRST_RECURSION_BIT)));
+			}
+
+			if (!casSuccess) {
+				/*
+				 * Another thread has attempted to get the lock and atomically changed the state to Flat.
+				 * Start over and read the new lockword. The lock can not go back to Learning so this will
+				 * only happen once.
+				 */
+				goto restart;
+			}
+		} else if (count & OBJECT_HEADER_LOCK_LEARNING) {
+			/* Lock is in Learning state but unowned (if it were owned it would have been caught by the first Learning state check) */
+			return J9THREAD_ILLEGAL_MONITOR_STATE;
 		} else if (count >= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT) {
 			/* just decrement the flatlock recursion count */
 			lock -= OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT;
@@ -92,7 +131,8 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 
 			if (objectMonitor == NULL) {
 				/* out of memory - impossible? */
-				clearLockWord(vmStruct, lockEA);
+				monitorExitWriteBarrier();
+				J9_STORE_LOCKWORD(vmStruct, lockEA, 0);
 			} else {
 				omrthread_monitor_t monitor = objectMonitor->monitor;
 
@@ -160,7 +200,8 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 
 					if (deflate) {
 						monitor->flags &= ~J9THREAD_MONITOR_INFLATED;
-						clearLockWord(vmStruct, lockEA);
+						monitorExitWriteBarrier();
+						J9_STORE_LOCKWORD(vmStruct, lockEA, 0);
 						Trc_VM_objectMonitorDeflated(vmStruct, vmStruct->osThread, object, lock);
 					}
 				}
@@ -182,7 +223,7 @@ objectMonitorExit(J9VMThread* vmStruct, j9object_t object)
 		return rc;
 	} else {
 		/* flat lock, but wrong thread */
-		Assert_VM_true( (lock == 0) || ((UDATA)lock & ~(UDATA)OBJECT_HEADER_LOCK_BITS_MASK) );
+		Assert_VM_true( (lock == 0) || (lock == OBJECT_HEADER_LOCK_LEARNING) || (lock == OBJECT_HEADER_LOCK_RESERVED) || ((UDATA)lock & ~(UDATA)OBJECT_HEADER_LOCK_BITS_MASK) );
 		Trc_VM_objectMonitorExit_Exit_IllegalFlatLock(vmStruct, lock, object);
 		return J9THREAD_ILLEGAL_MONITOR_STATE;
 	}
@@ -315,10 +356,13 @@ cancelLockReservation(J9VMThread* vmStruct)
 				}
 
 				/* 
-				 * This can only fail if another canceller has modified the lockword, in which case the
+				 * CAS can only fail if another canceller has modified the lockword, in which case the
 				 * object is either no longer reserved or reserved by a different thread.
 				 * Such cases should be detected by the calling function when it re-attempts to enter the monitor.
 				 */
+
+				/* Transition from Reserved to Flat occurred so the Cancel Counter in the object's J9Class is incremented by 1. */
+				incrementCancelCounter(J9OBJECT_CLAZZ(vmStruct, object));
 			}
 		}
 

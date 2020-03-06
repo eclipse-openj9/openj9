@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2018 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,6 +41,7 @@
 #define ALG_VM_VTABLE_VERSION 1
 #define ALG_VM_ITABLE_VERSION 1
 #define ALG_VM_BYTECODE_VERSION 1
+#define ALG_OBJECT_MONITOR_VERSION 1
 
 J9DDRConstantTableBegin(DDRAlgorithmVersions)
 	J9DDRConstantTableEntryWithValue("VM_MAJOR_VERSION", VM_MAJOR_VERSION)
@@ -59,6 +60,7 @@ J9DDRConstantTableBegin(DDRAlgorithmVersions)
 	J9DDRConstantTableEntryWithValue("ALG_VM_VTABLE_VERSION", ALG_VM_VTABLE_VERSION)
 	J9DDRConstantTableEntryWithValue("ALG_VM_ITABLE_VERSION", ALG_VM_ITABLE_VERSION)
 	J9DDRConstantTableEntryWithValue("ALG_VM_BYTECODE_VERSION", ALG_VM_BYTECODE_VERSION)
+	J9DDRConstantTableEntryWithValue("ALG_OBJECT_MONITOR_VERSION", ALG_OBJECT_MONITOR_VERSION)
 J9DDRConstantTableEnd
 
 J9DDRStructTableBegin(AlgorithmVersions)

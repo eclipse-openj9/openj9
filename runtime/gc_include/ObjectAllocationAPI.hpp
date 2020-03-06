@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -24,11 +24,13 @@
 #define OBJECTALLOCATIONAPI_HPP_
 
 #include "j9.h"
+#include "j9consts.h"
 #include "j9generated.h"
 #include "j9protos.h"
-#include "j9consts.h"
 #include "omrgcconsts.h"
+
 #include "AtomicSupport.hpp"
+#include "ObjectMonitor.hpp"
 
 class MM_ObjectAllocationAPI
 {
@@ -261,9 +263,6 @@ public:
 	{
 		j9object_t instance = NULL;
 #if defined(J9VM_GC_THREAD_LOCAL_HEAP) || defined(J9VM_GC_SEGREGATED_HEAP)
-		bool initializeLockWord = initializeSlots
-			&& J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit);
-
 		/* Calculate the size of the object */
 		UDATA const headerSize = J9VMTHREAD_OBJECT_HEADER_SIZE(currentThread);
 		UDATA dataSize = clazz->totalInstanceSize;
@@ -334,19 +333,24 @@ public:
 			if (initializeSlots) {
 				memset(objectHeader + 1, 0, dataSize);
 			}
-			if (initializeLockWord) {
-				*(U_32*)J9OBJECT_MONITOR_EA(currentThread, instance) = OBJECT_HEADER_LOCK_RESERVED;
-			}
 		} else {
 			J9ObjectFull *objectHeader = (J9ObjectFull*) instance;
 			objectHeader->clazz = (UDATA)clazz;
 			if (initializeSlots) {
 				memset(objectHeader + 1, 0, dataSize);
 			}
-			if (initializeLockWord) {
-				*(UDATA*)J9OBJECT_MONITOR_EA(currentThread, instance) = OBJECT_HEADER_LOCK_RESERVED;
+		}
+
+		if (initializeSlots) {
+			if (LN_HAS_LOCKWORD(currentThread, instance)) {
+				j9objectmonitor_t initialLockword = VM_ObjectMonitor::getInitialLockword(currentThread->javaVM, clazz);
+				if (0 != initialLockword) {
+					j9objectmonitor_t *lockEA = J9OBJECT_MONITOR_EA(currentThread, instance);
+					J9_STORE_LOCKWORD(currentThread, lockEA, initialLockword);
+				}
 			}
 		}
+
 		if (memoryBarrier) {
 			VM_AtomicSupport::writeBarrier();
 		}

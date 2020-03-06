@@ -768,13 +768,13 @@ public final class JITHelpers {
 			}
 		}
 
-		// if the object has a lockword zero it since this method
-		// is effectively the cloned objects initialization
+		/*
+		 * If the object has a lockword, it needs to be set to the correct initial value since this method
+		 * is effectively the cloned object's initialization.
+		 */
 		int lockOffset = unsafe.getInt(j9clazz + VM.J9CLASS_LOCK_OFFSET_OFFSET);
 		if (lockOffset != 0) {
-			int flags = getClassFlagsFromJ9Class32(j9clazz);
-			boolean reservable = (flags & VM.J9CLASS_RESERVABLE_LOCK_WORD_INIT) != 0;
-			int lwValue = reservable ? VM.OBJECT_HEADER_LOCK_RESERVED : 0;
+			int lwValue = getInitialLockword32(j9clazz);
 			putIntInObject(destObj, lockOffset, lwValue);
 		}
 		unsafe.storeFence();
@@ -827,13 +827,13 @@ public final class JITHelpers {
 			}
 		}
 
-		// if the object has a lockword zero it since this method
-		// is effectively the cloned objects initialization
+		/*
+		 * If the object has a lockword, it needs to be set to the correct initial value since this method
+		 * is effectively the cloned object's initialization.
+		 */
 		long lockOffset = unsafe.getLong(j9clazz + VM.J9CLASS_LOCK_OFFSET_OFFSET);
 		if (lockOffset != 0) {
-			int flags = getClassFlagsFromJ9Class64(j9clazz);
-			boolean reservable = (flags & VM.J9CLASS_RESERVABLE_LOCK_WORD_INIT) != 0;
-			int lwValue = reservable ? VM.OBJECT_HEADER_LOCK_RESERVED : 0;
+			int lwValue = getInitialLockword64(j9clazz);
 			if (SLOT_SIZE == 4) {
 				// for compressed reference, the LockWord is 4 bytes
 				putIntInObject(destObj, lockOffset, lwValue);
@@ -911,11 +911,10 @@ public final class JITHelpers {
 					bitIndex++;
 				}
 			}
+			/* If the object has a lockword, it needs to be set to the correct initial value. */
 			long lockOffset = unsafe.getInt(j9clazz + VM.J9CLASS_LOCK_OFFSET_OFFSET);
 			if (lockOffset != 0) {
-				int flags = getClassFlagsFromJ9Class32(j9clazz);
-				boolean reservable = (flags & VM.J9CLASS_RESERVABLE_LOCK_WORD_INIT) != 0;
-				int lwValue = reservable ? VM.OBJECT_HEADER_LOCK_RESERVED : 0;
+				int lwValue = getInitialLockword32(j9clazz);
 				unsafe.putInt(clnObj, lockOffset, lwValue);
 			}
 		} else {
@@ -954,11 +953,10 @@ public final class JITHelpers {
 					bitIndex++;
 				}
 			}
+			/* If the object has a lockword, it needs to be set to the correct initial value. */
 			long lockOffset = unsafe.getLong(j9clazz + VM.J9CLASS_LOCK_OFFSET_OFFSET);
 			if (lockOffset != 0) {
-				int flags = getClassFlagsFromJ9Class64(j9clazz);
-				boolean reservable = (flags & VM.J9CLASS_RESERVABLE_LOCK_WORD_INIT) != 0;
-				int lwValue = reservable ? VM.OBJECT_HEADER_LOCK_RESERVED : 0;
+				int lwValue = getInitialLockword64(j9clazz);
 				if (SLOT_SIZE == 4) {
 					// for compressed reference, the LockWord is 4 bytes
 					unsafe.putInt(clnObj, lockOffset, lwValue);
@@ -995,6 +993,103 @@ public final class JITHelpers {
 		return initStatus;
 	}
 
+	/**
+	 * Determine initial lockword value, 32-bit version. Calls to this method will return what the lockword should start at.
+	 *
+	 * @parm j9clazz
+	 *          The J9Class of the object whose lockword is being initialized.
+	 *
+	 * @return
+	 *          The initial lockword to use.
+	 */
+	public int getInitialLockword32(int j9clazz) {
+		int flags = getClassFlagsFromJ9Class32(j9clazz);
+
+		/*
+		 * Unsafe calls are used to get the reservedCounter and cancelCounter out of the J9Class.
+		 * reservedCounter and cancelCounter are unsigned 16 bit values so a mask is used to force a zero extend.
+		 */
+		int reservedCounter = ((int)(unsafe.getShort(j9clazz + VM.J9CLASS_LOCK_RESERVATION_HISTORY_RESERVED_COUNTER_OFFSET))) & 0xFFFF;
+		int cancelCounter = ((int)(unsafe.getShort(j9clazz + VM.J9CLASS_LOCK_RESERVATION_HISTORY_CANCEL_COUNTER_OFFSET))) & 0xFFFF;
+
+		return getInitialLockword(flags, reservedCounter, cancelCounter);
+	}
+
+	/**
+	 * Determine initial lockword value, 64-bit version. Calls to this method will return what the lockword should start at.
+	 *
+	 * @parm j9clazz
+	 *          The J9Class of the object whose lockword is being initialized.
+	 *
+	 * @return
+	 *          The initial lockword to use.
+	 */
+	public int getInitialLockword64(long j9clazz) {
+		int flags = getClassFlagsFromJ9Class64(j9clazz);
+
+		/*
+		 * Unsafe calls are used to get the reservedCounter and cancelCounter out of the J9Class.
+		 * reservedCounter and cancelCounter are unsigned 16 bit values so a mask is used to force a zero extend.
+		 */
+		int reservedCounter = ((int)(unsafe.getShort(j9clazz + VM.J9CLASS_LOCK_RESERVATION_HISTORY_RESERVED_COUNTER_OFFSET))) & 0xFFFF;
+		int cancelCounter = ((int)(unsafe.getShort(j9clazz + VM.J9CLASS_LOCK_RESERVATION_HISTORY_CANCEL_COUNTER_OFFSET))) & 0xFFFF;
+
+		return getInitialLockword(flags, reservedCounter, cancelCounter);
+	}
+
+	/**
+	 * Determine initial lockword value. Calls to this method will return what the lockword should start at.
+	 *
+	 * @parm flags
+	 *          Class flags from the J9Class.
+	 *
+	 * @parm reservedCounter
+	 *          reservedCounter from the J9Class.
+	 *
+	 * @parm cancelCounter
+	 *          cancelCounter from the J9Class.
+	 *
+	 * @return
+	 *          The initial lockword to use.
+	 */
+	public int getInitialLockword(int flags, int reservedCounter, int cancelCounter) {
+		int lwValue = 0;
+
+		if (1 == VM.GLR_ENABLE_GLOBAL_LOCK_RESERVATION) {
+			/* This path is taken when Global Lock Reservation is enabled. */
+			int reservedAbsoluteThreshold = VM.GLR_RESERVED_ABSOLUTE_THRESHOLD;
+			int minimumReservedRatio = VM.GLR_MINIMUM_RESERVED_RATIO;
+
+			int cancelAbsoluteThreshold = VM.GLR_CANCEL_ABSOLUTE_THRESHOLD;
+			int minimumLearningRatio = VM.GLR_MINIMUM_LEARNING_RATIO;
+
+			/*
+			 * Check reservedCounter and cancelCounter against different thresholds to determine what to initialize the lockword to.
+			 * First check if the ratio of resevation to cancellations is high enough to set the lockword to the New-AutoReserve state.
+			 * If so, the initial lockword value is OBJECT_HEADER_LOCK_RESERVED.
+			 * Second check if the ratio is high enough to set the lockword to the New-PreLearning state.
+			 * If so, the initial lockword value is OBJECT_HEADER_LOCK_LEARNING.
+			 * If the ratio is too low, the lockword starts in the Flat-Unlocked state and 0 is returned for the lockword value.
+			 *
+			 * Start as New-AutoReserve -> Initial lockword: OBJECT_HEADER_LOCK_RESERVED
+			 * Start as New-PreLearning -> Initial lockword: OBJECT_HEADER_LOCK_LEARNING
+			 * Start as Flat-Unlocked   -> Initial lockword: 0
+			 *
+			 * reservedCounter, cancelCounter, minimumReservedRatio and minimumLearningRatio all have a maximum value of 0xFFFF so casting to long
+			 * is required to guarantee signed overflow does not occur after multiplication.
+			 */
+			if ((reservedCounter >= reservedAbsoluteThreshold) && ((long)reservedCounter > ((long)cancelCounter * (long)minimumReservedRatio))) {
+				lwValue = VM.OBJECT_HEADER_LOCK_RESERVED;
+			} else if ((cancelCounter < cancelAbsoluteThreshold) || ((long)reservedCounter > ((long)cancelCounter * (long)minimumLearningRatio))) {
+				lwValue = VM.OBJECT_HEADER_LOCK_LEARNING;
+			}
+		} else if ((flags & VM.J9CLASS_RESERVABLE_LOCK_WORD_INIT) != 0) {
+			/* Initialize lockword to New-ReserveOnce. This path is x86 only. */
+			lwValue = VM.OBJECT_HEADER_LOCK_RESERVED;
+		}
+
+		return lwValue;
+	}
 
 	/**		
 	 * Determines whether the underlying platform's memory model is big-endian.		
