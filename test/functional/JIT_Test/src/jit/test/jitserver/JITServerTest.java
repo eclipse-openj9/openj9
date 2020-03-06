@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.Scanner;
+import java.util.ArrayList;
 import java.io.File;
 import java.io.IOException;
 import java.io.FileNotFoundException;
@@ -79,14 +80,28 @@ public class JITServerTest {
 			logger.info("Chose random port for server: " + randomPort + ", set " + SERVER_PORT_ENV_VAR_NAME + " in your env to override.");
 		}
 
-		clientBuilder = new ProcessBuilder(String.join(" ", CLIENT_EXE, "-XX:+UseJITServer", portOption, CLIENT_PROGRAM).split(" +"));
-		serverBuilder = new ProcessBuilder(String.join(" ", SERVER_EXE, portOption).split(" +"));
+		// This handy regex pattern uses positive lookahead to match a string containing either zero or an even number of " (double quote) characters.
+		// If a character is followed by this pattern it means that the character itself is not in a quoted string, otherwise it would be followed by
+		// an odd number of " characters. Note that this doesn't handle ' (single quote) characters.
+		final String QUOTES_LOOKAHEAD_PATTERN = "(?=([^\"]*\"[^\"]*\")*[^\"]*$)";
+		// We want to split the client program string on whitespace, unless the space appears in a quoted string.
+		final String SPLIT_ARGS_PATTERN = "\\s+" + QUOTES_LOOKAHEAD_PATTERN;
+		clientBuilder = new ProcessBuilder(stripQuotesFromEachArg(String.join(" ", CLIENT_EXE, "-XX:+UseJITServer", portOption, CLIENT_PROGRAM).split(SPLIT_ARGS_PATTERN)));
+		serverBuilder = new ProcessBuilder(stripQuotesFromEachArg(String.join(" ", SERVER_EXE, portOption).split(SPLIT_ARGS_PATTERN)));
+
 		// Redirect stderr to stdout, one log for each of the client and server is sufficient.
 		clientBuilder.redirectErrorStream(true);
 		serverBuilder.redirectErrorStream(true);
 		// Join our TR_Options with others if they exist, otherwise just set ours.
 		clientBuilder.environment().compute("TR_Options", (k, v) -> v != null && !v.isEmpty() ? String.join(",", v, JIT_LOG_ENV_OPTION) : JIT_LOG_ENV_OPTION);
 		serverBuilder.environment().compute("TR_Options", (k, v) -> v != null && !v.isEmpty() ? String.join(",", v, JIT_LOG_ENV_OPTION) : JIT_LOG_ENV_OPTION);
+	}
+
+	private static String[] stripQuotesFromEachArg(String[] args) {
+		for (int i = 0; i < args.length; ++i) {
+			args[i] = args[i].replaceAll("\"", "");
+		}
+		return args;
 	}
 
 	private static void dumpProcessLog(final ProcessBuilder b) {
@@ -127,7 +142,10 @@ public class JITServerTest {
 	}
 
 	private static Process startProcess(final ProcessBuilder builder, final String name) throws IOException, InterruptedException {
-		logger.info("Starting " + name + " with command line:\n" + String.join(" ", builder.command()));
+		// Wrap any arguments containing whitespace in quotes for display (we have to make a copy of ProcessBuilder.command() to avoid modifying our PB's commands).
+		ArrayList<String> command = new ArrayList<String>(builder.command());
+		command.replaceAll(s -> s.matches("\\S+") ? s : "\"" + s + "\"");
+		logger.info("Starting " + name + " with command line:\n" + String.join(" ", command));
 		logger.info("With stdout/stderr redirected to:\n" + builder.redirectOutput().file().getAbsolutePath());
 		final Process p = builder.start();
 		// We expect these processes to be fairly long running; if they exit almost immediately abort the test.
