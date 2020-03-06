@@ -29,18 +29,18 @@
 #include "ObjectAccessBarrier.hpp"
 
 #include "j9protos.h"
+#include "ModronAssertions.h"
 #include "rommeth.h"
 
 #include "ArrayletObjectModel.hpp"
 #include "AtomicOperations.hpp"
-#include "HeapRegionManager.hpp"
 #include "EnvironmentBase.hpp"
+#include "HeapRegionManager.hpp"
 #include "MemorySpace.hpp"
-#include "VMThreadListIterator.hpp"
-#include "ModronAssertions.h"
-#include "VMHelpers.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
-
+#include "ObjectMonitor.hpp"
+#include "VMHelpers.hpp"
+#include "VMThreadListIterator.hpp"
 
 bool 
 MM_ObjectAccessBarrier::initialize(MM_EnvironmentBase *env)
@@ -1539,11 +1539,8 @@ MM_ObjectAccessBarrier::copyObjectFields(J9VMThread *vmThread, J9Class *objectCl
 		/* initialize lockword, if present */
 		lockwordAddress = getLockwordAddress(vmThread, destObject);
 		if (NULL != lockwordAddress) {
-			if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(objectClass), J9ClassReservableLockWordInit)) {
-				J9_STORE_LOCKWORD(vmThread, lockwordAddress, OBJECT_HEADER_LOCK_RESERVED);
-			} else {
-				J9_STORE_LOCKWORD(vmThread, lockwordAddress, 0);
-			}
+			j9objectmonitor_t lwValue = VM_ObjectMonitor::getInitialLockword(vmThread->javaVM, objectClass);
+			J9_STORE_LOCKWORD(vmThread, lockwordAddress, lwValue);
 		}
 	}
 }
@@ -1574,10 +1571,12 @@ MM_ObjectAccessBarrier::cloneIndexableObject(J9VMThread *vmThread, J9IndexableOb
 		_extensions->indexableObjectModel.memcpyArray(destObject, srcObject);
 	}
 
-	/* zero lockword, if present */
+	/* initialize lockword, if present */
+	J9Class *objectClass = J9GC_J9OBJECT_CLAZZ_THREAD(destObject, vmThread);
 	lockwordAddress = getLockwordAddress(vmThread, (J9Object*) destObject);
 	if (NULL != lockwordAddress) {
-		J9_STORE_LOCKWORD(vmThread, lockwordAddress, OBJECT_HEADER_LOCK_RESERVED);
+		j9objectmonitor_t lwValue = VM_ObjectMonitor::getInitialLockword(vmThread->javaVM, objectClass);
+		J9_STORE_LOCKWORD(vmThread, lockwordAddress, lwValue);
 	}
 
 	return;

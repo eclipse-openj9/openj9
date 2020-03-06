@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -2531,6 +2531,8 @@ fail:
 			ramClass->romClass = romClass;
 			ramClass->eyecatcher = 0x99669966;
 			ramClass->module = NULL;
+			ramClass->reservedCounter = 0;
+			ramClass->cancelCounter = 0;
 
 			/* hostClass is exclusively defined only in Unsafe.defineAnonymousClass.
 			 * For all other cases, clazz->hostClass points to itself (clazz).

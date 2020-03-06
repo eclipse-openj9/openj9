@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -1239,7 +1239,8 @@ extern J9_CFUNC j9object_t  methodToString (J9VMThread * vmThread, J9Method* met
 #define _J9VMTASUKIMONITOR_
 extern J9_CFUNC IDATA  objectMonitorEnterBlocking (J9VMThread *currentThread);
 extern J9_CFUNC IDATA  objectMonitorEnterNonBlocking (J9VMThread *currentThread, j9object_t object);
-extern J9_CFUNC void  clearLockWord (J9VMThread *currentThread, j9objectmonitor_t *lockWord);
+extern J9_CFUNC void  monitorExitWriteBarrier ();
+extern J9_CFUNC void  incrementCancelCounter (J9Class *clazz);
 #endif /* _J9VMTASUKIMONITOR_ */
 
 /* J9VMUTF8Support*/

@@ -2774,10 +2774,25 @@ typedef struct J9Object {
 #define OBJECT_HEADER_LOCK_INFLATED  1
 #define OBJECT_HEADER_LOCK_FLC  2
 #define OBJECT_HEADER_LOCK_RESERVED  4
-#define OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT  8
+#define OBJECT_HEADER_LOCK_LEARNING  8
+#define OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT  0x10
 #define OBJECT_HEADER_LOCK_LAST_RECURSION_BIT  0x80
-#define OBJECT_HEADER_LOCK_RECURSION_MASK  0xF8
-#define OBJECT_HEADER_LOCK_RECURSION_OFFSET  3
+#define OBJECT_HEADER_LOCK_RECURSION_MASK  0xF0
+/*
+ * OBJECT_HEADER_LOCK_RECURSION_OFFSET (and later versions) are used in
+ * the ObjectMonitor_V#.java (eg. ObjectMonitor_V1.java) files used by DDR.
+ * Changing them may lead to breaking suport for older corefiles.
+ */
+#define OBJECT_HEADER_LOCK_RECURSION_OFFSET  3 /* Do not add new uses of this constant. Use new version instead. */
+#define OBJECT_HEADER_LOCK_V2_RECURSION_OFFSET  4
+#define OBJECT_HEADER_LOCK_LEARNING_FIRST_LC_BIT  0x10 /* LC = Learning Count */
+#define OBJECT_HEADER_LOCK_LEARNING_LAST_LC_BIT  0x20
+#define OBJECT_HEADER_LOCK_LEARNING_FIRST_RECURSION_BIT  0x40
+#define OBJECT_HEADER_LOCK_LEARNING_LAST_RECURSION_BIT  0x80
+#define OBJECT_HEADER_LOCK_LEARNING_LC_MASK  0x30
+#define OBJECT_HEADER_LOCK_LEARNING_LC_OFFSET  4
+#define OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK  0xC0
+#define OBJECT_HEADER_LOCK_LEARNING_RECURSION_OFFSET  6
 #define OBJECT_HEADER_LOCK_BITS_MASK  0xFF
 #define OBJECT_HEADER_INVALID_ADDR_BITS  3
 #define OBJECT_HEADER_MONITOR_ENTER_INTERRUPTED  1
@@ -2937,6 +2952,11 @@ typedef struct J9Class {
 	UDATA castClassCache;
 	void** jniIDs;
 	UDATA lockOffset;
+#if defined(J9VM_ENV_DATA64)
+	U_32 paddingForGLRCounters; /* This is used to preserve alignment under 64 bit. */
+#endif /* defined(J9VM_ENV_DATA64) */
+	U_16 reservedCounter;
+	U_16 cancelCounter;
 	UDATA newInstanceCount;
 	IDATA backfillOffset;
 	struct J9Class* replacedClass;
@@ -3005,6 +3025,11 @@ typedef struct J9ArrayClass {
 	UDATA castClassCache;
 	void** jniIDs;
 	UDATA lockOffset;
+#if defined(J9VM_ENV_DATA64)
+	U_32 paddingForGLRCounters; /* This is used to preserve alignment under 64 bit. */
+#endif /* defined(J9VM_ENV_DATA64) */
+	U_16 reservedCounter;
+	U_16 cancelCounter;
 	UDATA newInstanceCount;
 	IDATA backfillOffset;
 	struct J9Class* replacedClass;
@@ -5119,6 +5144,12 @@ typedef struct J9JavaVM {
 	 * of the feature constants listed in j9port.h
 	 */
 	U_32 cpuCacheWritebackCapabilities;
+	U_32 enableGlobalLockReservation;
+	U_32 reservedTransitionThreshold;
+	U_32 reservedAbsoluteThreshold;
+	U_32 minimumReservedRatio;
+	U_32 cancelAbsoluteThreshold;
+	U_32 minimumLearningRatio;
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2

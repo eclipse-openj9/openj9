@@ -42,25 +42,25 @@
 %endif
 
 eq_ObjectClassMask            equ -J9TR_RequiredClassAlignment
-eq_J9Monitor_IncDecValue      equ 08h
+eq_J9Monitor_IncDecValue      equ 10h
 eq_J9Monitor_INFBit           equ 01h
 eq_J9Monitor_RESBit           equ 04h
-eq_J9Monitor_RESINCBits       equ 0Ch
+eq_J9Monitor_RESINCBits       equ 14h
 eq_J9Monitor_FLCINFBits       equ 03h
-eq_J9Monitor_RecCountMask     equ 0F8h
+eq_J9Monitor_RecCountMask     equ 0F0h
 
 
 %ifndef TR_HOST_64BIT
 
-eq_J9Monitor_CountsClearMask  equ 0FFFFFF07h
-eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFF05h
+eq_J9Monitor_CountsClearMask  equ 0FFFFFF0Fh
+eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFF0Dh
 
 %else ; ndef  64bit
 ; this stupidness is required because masm2gas can't handle
 ; ifdef on definitions
 
-eq_J9Monitor_CountsClearMask  equ 0FFFFFFFFFFFFFF07h
-eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF05h
+eq_J9Monitor_CountsClearMask  equ 0FFFFFFFFFFFFFF0Fh
+eq_J9Monitor_CNTFLCClearMask  equ 0FFFFFFFFFFFFFF0Dh
 
 %endif ;64bit
 

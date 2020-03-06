@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008, 2019 IBM Corp. and others
+ * Copyright (c) 2008, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -250,7 +250,7 @@ getFlatLock(J9VMThread *owner, UDATA count)
 {
 	UDATA flatlock;
 	
-	count <<= OBJECT_HEADER_LOCK_RECURSION_OFFSET;
+	count <<= OBJECT_HEADER_LOCK_V2_RECURSION_OFFSET;
 	flatlock = (UDATA)owner | count;
 	return flatlock;
 }

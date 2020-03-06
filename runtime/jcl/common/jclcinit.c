@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1998, 2019 IBM Corp. and others
+ * Copyright (c) 1998, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -431,6 +431,8 @@ static const J9IntConstantMapping intVMConstants[] = {
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_INSTANCESIZE_OFFSET, offsetof(J9Class, totalInstanceSize) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_INSTANCE_DESCRIPTION_OFFSET, offsetof(J9Class, instanceDescription) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_LOCK_OFFSET_OFFSET, offsetof(J9Class, lockOffset) },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_LOCK_RESERVATION_HISTORY_RESERVED_COUNTER_OFFSET, offsetof(J9Class, reservedCounter) },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_LOCK_RESERVATION_HISTORY_CANCEL_COUNTER_OFFSET, offsetof(J9Class, cancelCounter) },
 
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_INITIALIZE_STATUS_OFFSET, offsetof(J9Class, initializeStatus) },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_SIZE, (I_32)sizeof(J9Class) },
@@ -455,6 +457,7 @@ static const J9IntConstantMapping intVMConstants[] = {
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9_CLASSLOADER_TYPE_PLATFORM, J9_CLASSLOADER_TYPE_PLATFORM },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_J9CLASS_RESERVABLE_LOCK_WORD_INIT, J9ClassReservableLockWordInit },
 		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_OBJECT_HEADER_LOCK_RESERVED, OBJECT_HEADER_LOCK_RESERVED },
+		{ J9VMCONSTANTPOOL_COMIBMOTIVMVM_OBJECT_HEADER_LOCK_LEARNING, OBJECT_HEADER_LOCK_LEARNING },
 };
 
 /**
@@ -508,6 +511,31 @@ intializeVMConstants(J9VMThread *currentThread)
 	}
 
 	rc = initializeStaticIntField(currentThread, vmClass, J9VMCONSTANTPOOL_COMIBMOTIVMVM_FJ9OBJECT_SIZE, (I_32)J9JAVAVM_REFERENCE_SIZE(vm));
+	if (JNI_OK != rc) {
+		goto done;
+	}
+
+	rc = initializeStaticIntField(currentThread, vmClass, J9VMCONSTANTPOOL_COMIBMOTIVMVM_GLR_ENABLE_GLOBAL_LOCK_RESERVATION, (I_32)vm->enableGlobalLockReservation);
+	if (JNI_OK != rc) {
+		goto done;
+	}
+
+	rc = initializeStaticIntField(currentThread, vmClass, J9VMCONSTANTPOOL_COMIBMOTIVMVM_GLR_RESERVED_ABSOLUTE_THRESHOLD, (I_32)vm->reservedAbsoluteThreshold);
+	if (JNI_OK != rc) {
+		goto done;
+	}
+
+	rc = initializeStaticIntField(currentThread, vmClass, J9VMCONSTANTPOOL_COMIBMOTIVMVM_GLR_MINIMUM_RESERVED_RATIO, (I_32)vm->minimumReservedRatio);
+	if (JNI_OK != rc) {
+		goto done;
+	}
+
+	rc = initializeStaticIntField(currentThread, vmClass, J9VMCONSTANTPOOL_COMIBMOTIVMVM_GLR_CANCEL_ABSOLUTE_THRESHOLD, (I_32)vm->cancelAbsoluteThreshold);
+	if (JNI_OK != rc) {
+		goto done;
+	}
+
+	rc = initializeStaticIntField(currentThread, vmClass, J9VMCONSTANTPOOL_COMIBMOTIVMVM_GLR_MINIMUM_LEARNING_RATIO, (I_32)vm->minimumLearningRatio);
 	if (JNI_OK != rc) {
 		goto done;
 	}
