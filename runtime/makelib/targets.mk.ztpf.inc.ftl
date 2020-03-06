@@ -56,6 +56,11 @@ $(UMA_EXETARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 	$(UMA_END_DASH_L) \
 	$(UMA_LINK_SHARED_LIBRARIES) \
 	-o $@ $(UMA_EXE_POSTFIX_FLAGS)
+ifdef j9vm_uma_gnuDebugSymbols
+	cp $@ $(@:$(UMA_DOT_EXE)=.debuginfo)
+	objcopy --strip-debug $@
+	objcopy --add-gnu-debuglink=$(@:$(UMA_DOT_EXE)=.debuginfo) $@
+endif
 </#assign>
 
 TPF_ROOT ?= /ztpf/java/bld/jvm/userfiles /zbld/svtcur/gnu/all /ztpf/commit

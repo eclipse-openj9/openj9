@@ -61,6 +61,11 @@ $(UMA_EXETARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 		$(UMA_END_DASH_L) \
 		$(UMA_LINK_SHARED_LIBRARIES) \
 		-o $@ $(UMA_EXE_POSTFIX_FLAGS)
+ifdef j9vm_uma_gnuDebugSymbols
+	$(OBJCOPY) --only-keep-debug $@ $(@:$(UMA_DOT_EXE)=.debuginfo)
+	$(OBJCOPY) --strip-debug $@
+	$(OBJCOPY) --add-gnu-debuglink=$(@:$(UMA_DOT_EXE)=.debuginfo) $@
+endif
 </#assign>
 
 <#if uma.spec.processor.s390>
