@@ -31,14 +31,14 @@ class GC_HeadlessMixedObjectScanner : public GC_ObjectScanner
 {
 	/* Data Members */
 private:
-	fomrobject_t * const _endPtr; /**< end scan pointer */
+
+protected:
+	fomrobject_t *_endPtr; /**< end scan pointer */
 	fomrobject_t *_mapPtr; /**< pointer to first slot in current scan segment */
 	uintptr_t *_descriptionPtr; /**< current description pointer */
 #if defined(J9VM_GC_LEAF_BITS)
 	uintptr_t *_leafPtr; /**< current leaf description pointer */
 #endif /* J9VM_GC_LEAF_BITS */
-
-protected:
 
 public:
 
@@ -51,13 +51,14 @@ public:
 
 	/**
 	 * @param env The scanning thread environment
-	 * @param[in] objectPtr the object to be processed
-	 * @param[in] flags Scanning context flags
+	 * @param scanPtr Pointer to the start of the object
+	 * @param size The instance size
+	 * @param flags Scanning context flags
 	 */
-	MMINLINE GC_HeadlessMixedObjectScanner(MM_EnvironmentBase *env, J9Class *clazzPtr, fomrobject_t *scanPtr, uintptr_t flags)
+	MMINLINE GC_HeadlessMixedObjectScanner(MM_EnvironmentBase *env, fomrobject_t *scanPtr, uintptr_t size, uintptr_t flags)
 		: GC_ObjectScanner(env, scanPtr, 0, flags)
-		, _endPtr((fomrobject_t *)((uint8_t*)_scanPtr + env->getExtensions()->mixedObjectModel.getSizeInBytesWithoutHeader(clazzPtr)))
-		, _mapPtr(_scanPtr)
+		, _endPtr((fomrobject_t *)((uintptr_t)scanPtr + size))
+		, _mapPtr(scanPtr)
 		, _descriptionPtr(NULL)
 #if defined(J9VM_GC_LEAF_BITS)
 		, _leafPtr(NULL)
@@ -66,19 +67,15 @@ public:
 		_typeId = __FUNCTION__;
 	}
 
-	/**
-	 * Subclasses must call this method to set up the instance description bits and description pointer.
-	 * @param[in] env The scanning thread environment
-	 */
 	MMINLINE void
-	initialize(MM_EnvironmentBase *env, J9Class *clazzPtr)
+	initialize(MM_EnvironmentBase *env, uintptr_t *descriptionPtr, uintptr_t *leafPtr)
 	{
 		GC_ObjectScanner::initialize(env);
 
 		/* Initialize the slot map from description bits */
-		_scanMap = (uintptr_t)clazzPtr->instanceDescription;
+		_scanMap = (uintptr_t)descriptionPtr;
 #if defined(J9VM_GC_LEAF_BITS)
-		_leafMap = (uintptr_t)clazzPtr->instanceLeafDescription;
+		_leafMap = (uintptr_t)leafPtr;
 #endif /* J9VM_GC_LEAF_BITS */
 		if (_scanMap & 1) {
 			_scanMap >>= 1;
@@ -99,7 +96,13 @@ public:
 #endif /* J9VM_GC_LEAF_BITS */
 		}
 	}
-	
+
+	MMINLINE void
+	initialize(MM_EnvironmentBase *env, uintptr_t *descriptionPtr)
+	{
+		initialize(env, descriptionPtr, NULL);
+	}
+
 	MMINLINE uintptr_t getBytesRemaining() { return (uintptr_t)_endPtr - (uintptr_t)_scanPtr; }
 
 	/**
