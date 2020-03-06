@@ -258,7 +258,7 @@ def checkoutRef (REF) {
 def build() {
     stage('Compile') {
         // 'all' target dependencies broken for zos, use 'images test-image-openj9'
-        def make_target = SPEC.contains('zos') ? 'images test-image-openj9' : 'all'
+        def make_target = SPEC.contains('zos') ? 'images test-image-openj9 debug-image' : 'all'
         OPENJDK_CLONE_DIR = "${env.WORKSPACE}/${OPENJDK_CLONE_DIR}"
         withEnv(BUILD_ENV_VARS_LIST) {
             dir(OPENJDK_CLONE_DIR) {
