@@ -63,11 +63,13 @@ ifneq (,$(findstring _cross,$(SPEC)))
 	ifeq (default,$(origin AR))
 		AR = $(OPENJ9_CC_PREFIX)-ar
 	endif
+	OBJCOPY = $(OPENJ9_CC_PREFIX)-objcopy
 endif
 
 CONFIGURE_ARGS += 'AS=$(AS)'
 CONFIGURE_ARGS += 'CC=$(CC)'
 CONFIGURE_ARGS += 'CXX=$(CXX)'
+CONFIGURE_ARGS += 'OBJCOPY=$(OBJCOPY)'
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 
