@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2019, 2019 IBM Corp. and others
+ * Copyright (c) 2019, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -47,7 +47,7 @@ public class DiagnosticUtils {
 
 	@SuppressWarnings("nls")
 	private static final String FILE_PATH_HELP = " <file path>%n"
-				+ " <file path> is mandatory: there is no default.%n"
+				+ " <file path> is optional, otherwise a default path/name is used."
 				+ " Relative paths are resolved to the target's working directory.%n"
 				+ " The dump agent may choose a different file path if the requested file exists.%n";
 
@@ -254,7 +254,9 @@ public class DiagnosticUtils {
 		DiagnosticProperties result = null;
 		String[] parts = diagnosticCommand.split(DIAGNOSTICS_OPTION_SEPARATOR);
 		IPC.logMessage("doDump: ", diagnosticCommand); //$NON-NLS-1$
-		if (parts.length != 2) {
+		if (parts.length == 0 || parts.length > 2) {
+			// The argument could be just Dump command which is going to use default configurations like -Xdump,
+			// or there is an optional path/name argument for the dump file generated.
 			result = DiagnosticProperties.makeErrorProperties("Error: wrong number of arguments"); //$NON-NLS-1$
 		} else {
 			String dumpType = ""; //$NON-NLS-1$
@@ -270,9 +272,11 @@ public class DiagnosticUtils {
 				}
 			}
 			if (!dumpType.isEmpty()) {
-				String fileDirective = ("system".equals(dumpType) && IPC.isZOS) ? ":dsn=" : ":file="; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-
-				String request = dumpType + fileDirective + parts[1];
+				String request = dumpType;
+				if (parts.length == 2) {
+					String fileDirective = ("system".equals(dumpType) && IPC.isZOS) ? ":dsn=" : ":file="; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+					request += fileDirective + parts[1];
+				}
 				try {
 					String actualDumpFile = triggerDumpsImpl(request, dumpType + "DumpToFile"); //$NON-NLS-1$
 					result = DiagnosticProperties.makeStringResult("Dump written to " + actualDumpFile); //$NON-NLS-1$
