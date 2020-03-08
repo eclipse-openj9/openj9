@@ -84,4 +84,21 @@ MessageBuffer::readData(uint32_t dataSize)
    _curPtr += dataSize;
    return offset(data);
    }
+
+uint8_t
+MessageBuffer::alignCurrentPositionOn64Bit()
+   {
+   // Compute the amount of padding required to align _curPtr on 64-bit boundary
+   uintptr_t alignedPtr = ((uintptr_t)_curPtr + 0x7) & (~((uintptr_t)0x7));
+   uint8_t padding = (uint8_t)(alignedPtr - (uintptr_t)_curPtr); // Guaranteed to fit on a byte
+
+   // Expand the buffer if it's too small to contain the padding
+   uint32_t requiredSize = size() + padding;
+   expandIfNeeded(requiredSize);
+
+   // Advance _curPtr to align it on 64-bit
+   _curPtr += padding;
+
+   return padding;
+   }
 };

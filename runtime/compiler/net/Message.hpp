@@ -115,10 +115,19 @@ public:
          _paddingSize = static_cast<uint8_t>(_size - payloadSize);    
          }
       DataType getDataType() const { return _type; }
-      uint32_t getPayloadSize() const { return _size - _paddingSize; }
+      uint32_t getPayloadSize() const { return _size - _paddingSize - _dataOffset; }
       uint32_t getTotalSize() const { return _size; }
       uint8_t getPaddingSize() const { return _paddingSize; }
       uint8_t getDataOffset() const { return _dataOffset; }
+
+      /**
+         @brief Initialize descriptor with values give as parameters.
+
+         @param type   The type of data described by descriptor
+         @param totalSize   Total size of data following the descriptor
+         @param paddingSize   Size of padding added after the real payload (included in totalSize)
+         @param dataOffset   Distance from end of descriptor to start of real payload (included in totalSize)
+      */
       void init(DataType type, uint32_t totalSize, uint8_t paddingSize, uint8_t dataOffset)
          {
          _type = type;
@@ -126,6 +135,19 @@ public:
          _dataOffset = dataOffset;
          _reserved = 0xff;
          _size = totalSize;
+         }
+
+      /**
+         @brief Adjust an existing descriptor by adding some offset to real payload
+
+         @param initialPadding   Distance from end of descriptor to start of real payload (included in totalSize)
+      */
+      void addInitialPadding(uint8_t initialPadding)
+         {
+         TR_ASSERT(_dataOffset == 0, "Initial padding added twice");
+         TR_ASSERT(initialPadding == 4, "Current implementation assumes only 4 bytes of padding"); // because we add 4 bytes to align on a 8-byte boundary
+         _dataOffset = initialPadding;
+         _size += initialPadding; // Total size increases as well
          }
 
       /**
@@ -154,6 +176,16 @@ public:
          return static_cast<void *>(static_cast<char*>(static_cast<void*>(this + 1)) + _dataOffset);
          }
 
+      /**
+          @brief Get a pointer to the beginning of the next descriptor in the MessageBuffer.
+
+          @return Returns a pointer to the following descriptor in the MessageBuffer
+      */
+      DataDescriptor* getNextDescriptor()
+         {
+         return static_cast<DataDescriptor*>(static_cast<void*>(static_cast<char*>(static_cast<void*>(this + 1)) + _size));
+         }
+
       void print();
       private:
       DataType _type; // Message type on 8 bits
@@ -176,10 +208,11 @@ public:
 
       @param desc Descriptor for the new data
       @param dataStart Pointer to the new data
+      @param needs64BitAlignment Whether data following the descriptor needs to be 64-bit aligned
 
       @return The total amount of data written (including padding, but not including the descriptor)
    */
-   uint32_t addData(const DataDescriptor &desc, const void *dataStart);
+   uint32_t addData(const DataDescriptor &desc, const void *dataStart, bool needs64BitAlignment = false);
 
    /**
       @brief Allocate space for a descriptor in the MessageBuffer
