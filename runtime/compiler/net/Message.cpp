@@ -40,14 +40,27 @@ Message::getMetaData() const
    }
 
 uint32_t
-Message::addData(const DataDescriptor &desc, const void *dataStart)
+Message::addData(const DataDescriptor &desc, const void *dataStart, bool needs64BitAlignment)
    {
    // Write the descriptor itself
-   uint32_t descOffset = _buffer.writeValue(desc); 
-   // Write the real data and possibly some padding
+   uint32_t descOffset = _buffer.writeValue(desc);
+
+   // If the data following the descriptor needs to be 64-bit aligned,
+   // add some initial padding in the outgoing buffer and write the
+   // offset to the real payload into the descriptor
+   uint8_t initialPadding = 0;
+   if (needs64BitAlignment && !_buffer.is64BitAligned())
+      {
+      initialPadding = _buffer.alignCurrentPositionOn64Bit();
+      TR_ASSERT(initialPadding != 0, "Initial padding must be non zero because we checked alignment");
+      DataDescriptor *serializedDescriptor = _buffer.getValueAtOffset<DataDescriptor>(descOffset);
+      serializedDescriptor->addInitialPadding(initialPadding);
+      }
+
+   // Write the real data and possibly some padding at the end
    _buffer.writeData(dataStart, desc.getPayloadSize(), desc.getPaddingSize()); 
    _descriptorOffsets.push_back(descOffset);
-   return desc.getTotalSize();
+   return desc.getTotalSize() + initialPadding;
    }
 
 uint32_t
@@ -82,12 +95,19 @@ Message::deserialize()
 
    uint32_t numDataPoints = getMetaData()->_numDataPoints;
 
+   //TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Metadata: type=%u numDataPoints=%u\n", type(), numDataPoints);
+
    _descriptorOffsets.reserve(numDataPoints);
    // TODO: do I need to clear the vector of _descriptorOffsets just in case?
    for (uint32_t i = 0; i < numDataPoints; ++i)
       {
       uint32_t descOffset = _buffer.readValue<DataDescriptor>(); // Read the descriptor itself
       _descriptorOffsets.push_back(descOffset);
+
+      //DataDescriptor *desc = getLastDescriptor();
+      //TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor: type=%d payload_size=%u dataOffset=%u, padding=%u\n",
+      //   desc->getDataType(), desc->getPayloadSize(), desc->getDataOffset(), desc->getPaddingSize());
+
       // skip the data segment, which is processed in getArgs
       _buffer.readData(getLastDescriptor()->getTotalSize());
       }
@@ -128,8 +148,8 @@ Message::clearForWrite()
 void
 Message::DataDescriptor::print()
    {
-   TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor[%p]: type=%d payload_size=%u padding=%u\n", 
-                                  this, getDataType(), getPayloadSize(), getPaddingSize());
+   TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor[%p]: type=%d payload_size=%u dataOffset=%u, padding=%u\n", 
+                                  this, getDataType(), getPayloadSize(), getDataOffset(), getPaddingSize());
    if (!isPrimitive())
       {
       TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "DataDescriptor[%p]: nested data begin\n", this);

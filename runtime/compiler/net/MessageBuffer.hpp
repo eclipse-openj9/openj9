@@ -161,6 +161,18 @@ public:
    void clear() { _curPtr = _storage; }
 
    /**
+      @brief Check to see if the current pointer in the MessageBuffer is 64-bit aligned.
+   */
+   bool is64BitAligned() { return ((uintptr_t)_curPtr & ((uintptr_t)0x7)) == 0; }
+
+   /**
+      @brief Moves the current pointer in the MessageBuffer to achieve 64-bit alignment
+
+      @return returns the number of padding bytes required for alignment (0-7)
+   */
+   uint8_t alignCurrentPositionOn64Bit();
+
+   /**
       @brief Expand the underlying buffer if more than allocated memory is needed.
 
       If requiredSize is greater than _capacity, allocates a new buffer of size

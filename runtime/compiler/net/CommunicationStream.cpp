@@ -78,7 +78,8 @@ void
 CommunicationStream::writeMessage(Message &msg)
    {
    char *serialMsg = msg.serialize();
-   msg.print();
+   //TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Will send a message of size %lu\n", msg.serializedSize());
+   //msg.print();
    // write serialized message to the socket
    writeBlocking(serialMsg, msg.serializedSize());
    msg.clearForWrite();
