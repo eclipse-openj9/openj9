@@ -2085,7 +2085,11 @@ public class MethodHandles {
 			}
 			
 			SecurityManager secmgr = System.getSecurityManager();
-			if (null != secmgr) {
+			if ((null != secmgr)
+				/*[IF Java14]*/
+				&& !hasFullPrivilegeAccess()
+				/*[ENDIF] Java14*/
+			) {
 				secmgr.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionDefineClass);
 			}
 			
