@@ -567,7 +567,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
       case MessageType::VM_stackWalkerMaySkipFrames:
          {
          client->getRecvData<JITServer::Void>();
-         client->write(response, vmThread->javaVM->jlrMethodInvoke);
+         client->write(response, 
+            vmThread->javaVM->jlrMethodInvoke, 
+            vmThread->javaVM->srMethodAccessor ? (TR_OpaqueClassBlock *) J9VM_J9CLASS_FROM_JCLASS(vmThread, vmThread->javaVM->srMethodAccessor) : NULL, 
+            vmThread->javaVM->srConstructorAccessor ? (TR_OpaqueClassBlock *) J9VM_J9CLASS_FROM_JCLASS(vmThread, vmThread->javaVM->srConstructorAccessor) : NULL);
          }
          break;
       case MessageType::VM_hasFinalFieldsInClass:

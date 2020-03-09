@@ -699,12 +699,17 @@ TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueC
 
    JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
    auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
-   
+   bool freshInfo = false;
+
    if (vmInfo->_jlrMethodInvoke == NULL)
       {
       // Cached information could be outdated. Ask the client again.
       stream->write(JITServer::MessageType::VM_stackWalkerMaySkipFrames, JITServer::Void());
-      vmInfo->_jlrMethodInvoke = std::get<0>(stream->read<J9Method*>());
+      auto recv = stream->read<J9Method*, TR_OpaqueClassBlock*, TR_OpaqueClassBlock*>();
+      vmInfo->_jlrMethodInvoke = std::get<0>(recv);
+      vmInfo->_srMethodAccessorClass = std::get<1>(recv);
+      vmInfo->_srConstructorAccessorClass = std::get<2>(recv);
+      freshInfo = true;
       if (vmInfo->_jlrMethodInvoke == NULL)
          return true;
       }
@@ -717,9 +722,29 @@ TR_J9ServerVM::stackWalkerMaySkipFrames(TR_OpaqueMethodBlock *method, TR_OpaqueC
       return false;
       }
 #if defined(J9VM_OPT_SIDECAR)
+   if (vmInfo->_srMethodAccessorClass == NULL && !freshInfo)
+      {
+      // Cached information could be outdated. Ask the client again.
+      stream->write(JITServer::MessageType::VM_stackWalkerMaySkipFrames, JITServer::Void());
+      auto recv = stream->read<J9Method*, TR_OpaqueClassBlock*, TR_OpaqueClassBlock*>();
+      vmInfo->_jlrMethodInvoke = std::get<0>(recv);
+      vmInfo->_srMethodAccessorClass = std::get<1>(recv);
+      vmInfo->_srConstructorAccessorClass = std::get<2>(recv);
+      freshInfo = true;
+      }
    if (vmInfo->_srMethodAccessorClass != NULL && TR_J9ServerVM::isInstanceOf( clazz, vmInfo->_srMethodAccessorClass ,false))
       {
       return true;
+      }
+   if (vmInfo->_srConstructorAccessorClass == NULL && !freshInfo)
+      {
+      // Cached information could be outdated. Ask the client again.
+      stream->write(JITServer::MessageType::VM_stackWalkerMaySkipFrames, JITServer::Void());
+      auto recv = stream->read<J9Method*, TR_OpaqueClassBlock*, TR_OpaqueClassBlock*>();
+      vmInfo->_jlrMethodInvoke = std::get<0>(recv);
+      vmInfo->_srMethodAccessorClass = std::get<1>(recv);
+      vmInfo->_srConstructorAccessorClass = std::get<2>(recv);
+      freshInfo = true;
       }
    if (vmInfo->_srConstructorAccessorClass != NULL && TR_J9ServerVM::isInstanceOf( clazz, vmInfo->_srConstructorAccessorClass ,false))
       {
