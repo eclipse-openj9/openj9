@@ -725,7 +725,8 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
                --with-freemarker-jar=/root/freemarker.jar \
                --with-boot-jdk=/root/bootjdk11 \
                --with-build-jdk=/root/bootjdk11 \
-               --disable-warnings-as-errors
+               --disable-warnings-as-errors \
+               --disable-ddr
 ```
 
 :pencil: **Non-compressed references support:** If you require a heap size greater than 57GB, enable a noncompressedrefs build with the `--with-noncompressedrefs` option during this step.
@@ -737,6 +738,8 @@ bash configure --openjdk-target=${OPENJ9_CC_PREFIX} \
   - `system` uses the package installed OpenSSL library in the system.  Use this option when you build on your AArch64 Linux system.
   - `path_to_library` uses an OpenSSL v1.1.x library that's already built.  You can use `${OPENJ9_CC_DIR}/${OPENJ9_CC_PREFIX}/libc/usr` as `path_to_library` when you are configuring in the Docker container.
   - Using `--with-openssl=fetched` will fail during the build in the Docker environment.
+
+:pencil: **DDR support:** You can build DDR support only on AArch64 Linux.  If you are building in a cross-compilation environment, you need the `--disable-ddr` option.
 
 ### 6. Build
 :penguin:
