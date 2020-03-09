@@ -494,7 +494,8 @@ def convert_build_identifier(val) {
 /*
 * Finds the downstream builds of a build.
 * Limits the search only to the downstream builds with given names.
-* Returns a map of builds.
+* Returns a map of builds by job name, where builds is a list of builds in
+* descending order.
 */
 def get_downstream_builds(upstreamBuild, upstreamJobName, downstreamJobNames) {
     def downstreamBuilds = [:]
@@ -504,20 +505,18 @@ def get_downstream_builds(upstreamBuild, upstreamJobName, downstreamJobNames) {
     for (name in downstreamJobNames.sort()) {
         def job = Jenkins.getInstance().getItemByFullName(name)
         if (job) {
-            def builds = [:]
+            def builds = []
             //find downstream jobs
             for (build in job.getBuilds().byTimestamp(upstreamBuild.getStartTimeInMillis(), System.currentTimeMillis())) {
                 if ((build && build.getCause(hudson.model.Cause.UpstreamCause) && build.getCause(hudson.model.Cause.UpstreamCause).upstreamRun)
                     && (build.getCause(hudson.model.Cause.UpstreamCause).upstreamRun==~pattern)) {
                         // cache all builds (in case of multiple runs)
-                        builds.put(build.getNumber(), build)
+                        builds.add(build)
                 }
             }
 
-            // fetch last build
             if (!builds.isEmpty()) {
-                lastBuildId = builds.keySet().max()
-                downstreamBuilds.put(name, builds.get(lastBuildId))
+                downstreamBuilds.put(name, builds)
             }
         }
     }
@@ -821,7 +820,9 @@ def build_all() {
 */
 def add_badges(downstreamBuilds) {
     downstreamBuilds.entrySet().each { entry ->
-        def build = entry.value
+        // entry.value is a list of builds in descending order
+        // fetch the latest build
+        def build = entry.value.get(0)
 
         switch (build.getResult()) {
             case "SUCCESS":
@@ -856,9 +857,12 @@ def add_summary_badge(downstreamBuilds) {
     summaryText += "<table>"
 
     downstreamBuilds.entrySet().each { entry ->
-        def buildLink = buildFile.get_build_embedded_status_link(entry.value)
-        Job job = entry.value.getParent()
-        def blueLink = "<a href=\"${JENKINS_URL}blue/organizations/jenkins/${job.getFullName()}/detail/${entry.key}/${entry.value.getNumber()}/pipeline\">${entry.key}</a>"
+        // entry.value is a list of builds in descending order
+        // fetch latest build
+        def build = entry.value.get(0)
+        def buildLink = buildFile.get_build_embedded_status_link(build)
+        Job job = build.getParent()
+        def blueLink = "<a href=\"${JENKINS_URL}blue/organizations/jenkins/${job.getFullName()}/detail/${entry.key}/${build.getNumber()}/pipeline\">${entry.key}</a>"
         summaryText += "<tr><td>${blueLink}</td><td>${buildLink}</td></tr>"
     }
 

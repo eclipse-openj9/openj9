@@ -531,7 +531,11 @@ def get_summary_table(identifier) {
             // check if this release is supported for this spec
             if (BUILD_SPECS.get(spec).contains(release)) {
                 def pipelineName = get_pipeline_name(spec, release)
-                def build = pipelineBuilds.get(pipelineName)
+                def build = null
+
+                if (pipelineBuilds.keySet().contains(pipelineName)) {
+                    build = pipelineBuilds.get(pipelineName).get(0)
+                }
 
                 if (build) {
                     pipelineLink = buildFile.get_build_embedded_status_link(build)
@@ -546,11 +550,24 @@ def get_summary_table(identifier) {
                 }
             }
 
-            innerTable += "<tr><td>&nbsp;</td><td style=\"text-align: right;\">${pipelineLink}</td><td style=\"text-align: right; white-space: nowrap;\">${pipelineDuration}</td></tr>"
+            innerTable += "<tr>"
+            innerTable += "<td>&nbsp;</td>"
+            innerTable += "<td style=\"text-align: right;\">${pipelineLink}</td>"
+            innerTable += "<td>&nbsp;</td>"
+            innerTable += "<td style=\"white-space: nowrap;\">${pipelineDuration}</td>"
+            innerTable += "</tr>"
 
             // add pipeline's downstream builds
             downstreamJobNames.each { label, jobName ->
-                def downstreamBuild = downstreamBuilds.get(jobName)
+                def downstreamBuild = null
+                // downstreamJobBuilds is a list of builds in descending order
+                def downstreamJobBuilds = downstreamBuilds.get(jobName)
+                if (downstreamJobBuilds) {
+                    // fetch the latest build
+                    downstreamBuild = downstreamJobBuilds.get(0)
+                    downstreamJobBuilds.remove(0)
+                }
+
                 def link = '&nbsp;'
                 def duration = '&nbsp;'
                 def aLabel = '&nbsp;'
@@ -566,7 +583,18 @@ def get_summary_table(identifier) {
                     aLabel = label
                 }
 
-                innerTable += "<tr style=\"vertical-align: bottom;\"><td>${aLabel}</td><td style=\"text-align: right\">${link}</td><td style=\"text-align: right; white-space: nowrap;\">${duration}</td></tr>"
+                // show restart info if there are previous builds for this job
+                def restartImage = '&nbsp;'
+                if (downstreamJobBuilds && downstreamJobBuilds.size() > 0) {
+                    restartImage += "<img title=\"This build has been restarted ${downstreamJobBuilds.size()} time[s]!\" src=\"/static/images/24x24/refresh.png\" alt=\"Restarts\" style=\"display: inline-block;\" />"
+                }
+
+                innerTable += "<tr>"
+                innerTable += "<td>${aLabel}</td>"
+                innerTable += "<td style=\"text-align: right;\">${link}</td>"
+                innerTable += "<td>${restartImage}</td>"
+                innerTable += "<td style=\"text-align: right; white-space: nowrap;\">${duration}</td>"
+                innerTable += "</tr>"
             }
 
             innerTable += "</tbody></table>"
