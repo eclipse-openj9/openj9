@@ -156,7 +156,7 @@ enum MessageType
    VM_getStaticHookAddress = 228;
    VM_isClassInitialized = 229;
    VM_getOSRFrameSizeInBytes = 230;
-   VM_getByteOffsetToLockword = 231;
+   VM_getInitialLockword = 231;
    VM_isString1 = 232;
    VM_getMethods = 233;
    /* VM_canMethodEnterEventBeHooked = 234; */
