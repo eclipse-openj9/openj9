@@ -2214,7 +2214,9 @@ public class MethodHandles {
 		 * 
 		 * @return a boolean type indicating whether the lookup class has private access
 		 */
+		/*[IF Java14]*/
 		@Deprecated(forRemoval=false, since="14")
+		/*[ENDIF] Java14 */
 		public boolean hasPrivateAccess() {
 			/* Full access for use by MH implementation */
 			if (INTERNAL_PRIVILEGED == accessMode) {
