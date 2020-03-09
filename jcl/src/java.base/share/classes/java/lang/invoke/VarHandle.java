@@ -413,12 +413,19 @@ public abstract class VarHandle extends VarHandleInternal
 		}
 
 		this.fieldType = setter.parameterType(setter.parameterCount() - 1);
-		this.coordinateTypes = getter.parameterArray();
+		
+		/* The first VarHandle parameter type should be removed from the getter in order to derive
+		 * the coordinate types. 
+		 */
+		Class<?>[] getterParams = getter.parameterArray();
+		this.coordinateTypes = Arrays.copyOfRange(getterParams, 1, getterParams.length);
+		
 		if (operationMTsExact != null) {
 			this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTsExact);
 		} else {
 			this.handleTable = populateMHsJEP370(operationsClass, operationMTs, operationMTs);
 		}
+		
 		this.modifiers = 0;
 		this.varFormUsed = true;
 	}
