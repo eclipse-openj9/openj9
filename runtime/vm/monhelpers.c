@@ -278,7 +278,7 @@ objectMonitorEnter(J9VMThread* vmStruct, j9object_t object)
 {
 	IDATA rc = objectMonitorEnterNonBlocking(vmStruct, object);
 
-	if (rc == 1) {
+	if (J9_OBJECT_MONITOR_BLOCKING == rc) {
 		rc = objectMonitorEnterBlocking(vmStruct);
 	}
 

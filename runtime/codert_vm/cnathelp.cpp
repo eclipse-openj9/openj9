@@ -358,6 +358,17 @@ setCurrentExceptionFromJIT(J9VMThread *currentThread, UDATA exceptionNumber, j9o
 	return J9_JITHELPER_ACTION_THROW;
 }
 
+static void*
+setCurrentExceptionNLSWithArgsFromJIT(J9VMThread *currentThread, U_32 moduleName, U_32 messageNumber, UDATA exceptionNumber, ...)
+{
+	va_list args;
+	TIDY_BEFORE_THROW();
+	va_start(args, exceptionNumber);
+	currentThread->javaVM->internalVMFunctions->setCurrentExceptionNLSWithArgs(currentThread, moduleName, messageNumber, exceptionNumber, args);
+	va_end(args);
+	return J9_JITHELPER_ACTION_THROW;
+}
+
 static VMINLINE void*
 setCurrentExceptionNLSFromJIT(J9VMThread *currentThread, UDATA exceptionNumber, U_32 moduleName, U_32 messageNumber)
 {
@@ -1191,9 +1202,7 @@ fast_jitMonitorEnterImpl(J9VMThread *currentThread, j9object_t syncObject, bool 
 {
 	bool slowPathRequired = false;
 	IDATA monstatus = currentThread->javaVM->internalVMFunctions->objectMonitorEnterNonBlocking(currentThread, syncObject);
-	switch(monstatus) {
-	case 0:
-	case 1:
+	if (monstatus <= J9_OBJECT_MONITOR_BLOCKING) {
 		slowPathRequired = true;
 		currentThread->floatTemp1 = (void*)(UDATA)monstatus;
 	}
@@ -1208,7 +1217,7 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 	UDATA flags = J9_STACK_FLAGS_JIT_RESOLVE_FRAME | (forMethod ? J9_STACK_FLAGS_JIT_METHOD_MONITOR_ENTER_RESOLVE : J9_STACK_FLAGS_JIT_MONITOR_ENTER_RESOLVE);
 	IDATA monstatus = (IDATA)(UDATA)currentThread->floatTemp1;
 	void *oldPC = buildJITResolveFrame(currentThread, flags, parmCount);
-	if (0 == monstatus) {
+	if (monstatus < J9_OBJECT_MONITOR_BLOCKING) {
 		if (forMethod) {
 			/* Only mark the outer frame for failed method monitor enter - inline frames have correct maps */
 			void * stackMap = NULL;
@@ -1223,7 +1232,15 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 				resolveFrame->specialFrameFlags = (resolveFrame->specialFrameFlags & ~J9_STACK_FLAGS_JIT_FRAME_SUB_TYPE_MASK) | J9_STACK_FLAGS_JIT_FAILED_METHOD_MONITOR_ENTER_RESOLVE;
 			}
 		}
-		addr = setNativeOutOfMemoryErrorFromJIT(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+		if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monstatus) {
+			addr = setCurrentExceptionNLSWithArgsFromJIT(currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION);
+			goto done;
+		}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+		if (J9_OBJECT_MONITOR_OOM == monstatus) {
+			addr = setNativeOutOfMemoryErrorFromJIT(currentThread, J9NLS_VM_FAILED_TO_ALLOCATE_MONITOR);
+		}
 	} else {
 		currentThread->javaVM->internalVMFunctions->objectMonitorEnterBlocking(currentThread);
 		/* Do not check asyncs for synchronized block (non-method) entry, since we now have the monitor,
@@ -1231,6 +1248,7 @@ slow_jitMonitorEnterImpl(J9VMThread *currentThread, bool forMethod)
 		 */
 		addr = restoreJITResolveFrame(currentThread, oldPC, forMethod, false);
 	}
+done:
 	SLOW_JIT_HELPER_EPILOGUE();
 	return addr;
 }

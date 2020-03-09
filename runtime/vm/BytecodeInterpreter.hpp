@@ -1126,7 +1126,7 @@ obj:;
 		IDATA rc = (IDATA)obj;
 		if (!VM_ObjectMonitor::inlineFastObjectMonitorEnter(_currentThread, obj)) {
 			rc = objectMonitorEnterNonBlocking(_currentThread, obj);
-			if (1 == rc) {
+			if (J9_OBJECT_MONITOR_BLOCKING == rc) {
 				updateVMStruct(REGISTER_ARGS);
 				rc = objectMonitorEnterBlocking(_currentThread);
 				VMStructHasBeenUpdated(REGISTER_ARGS);
@@ -1586,14 +1586,26 @@ obj:;
 					rc = GOTO_ASYNC_CHECK;
 					goto done;
 				}
-				if (0 == monitorRC) {
+				if (monitorRC < J9_OBJECT_MONITOR_BLOCKING) {
 					/* Monitor was not entered - hide the frame to prevent exception throw from processing it */
 					if (j2i) {
 						((UDATA*)(((J9SFJ2IFrame*)_sp) + 1))[-1] |= J9SF_A0_INVISIBLE_TAG;
 					} else {
 						((UDATA*)(((J9SFStackFrame*)_sp) + 1))[-1] |= J9SF_A0_INVISIBLE_TAG;
 					}
-					rc = THROW_MONITOR_ALLOC_FAIL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+					if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
+						J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, syncObject)->romClass);
+						updateVMStruct(REGISTER_ARGS);
+						prepareForExceptionThrow(_currentThread);
+						setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+						VMStructHasBeenUpdated(REGISTER_ARGS);
+						rc = GOTO_THROW_CURRENT_EXCEPTION;
+					} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+					{
+						rc = THROW_MONITOR_ALLOC_FAIL;
+					}
 					goto done;
 				}
 			}
@@ -1640,7 +1652,8 @@ done:
 	{
 		VM_BytecodeAction rc = REPORT_METHOD_ENTER;
 		UDATA *bp = bpForCurrentBytecodedMethod(REGISTER_ARGS);
-		IDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, ((j9object_t*)bp)[1]);
+		j9object_t syncObject = ((j9object_t*)bp)[1];
+		IDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, syncObject);
 		/* Monitor enter can only fail in the nonblocking case, which does not
 		 * release VM access, so the immediate async and failed enter cases are
 		 * mutually exclusive.
@@ -1649,12 +1662,25 @@ done:
 			rc = GOTO_ASYNC_CHECK;
 			goto done;
 		}
-		if (0 == monitorRC) {
-			/* Monitor was not entered - hide the frame to prevent exception throw from processing it.
-			 * Note that BP can not have changed during a failed enter.
-			 */
+
+		if (monitorRC < J9_OBJECT_MONITOR_BLOCKING) {
 			*bp |= J9SF_A0_INVISIBLE_TAG;
-			rc = THROW_MONITOR_ALLOC_FAIL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+			if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
+				J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, syncObject)->romClass);
+				updateVMStruct(REGISTER_ARGS);
+				prepareForExceptionThrow(_currentThread);
+				setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+			} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+			{
+				/* Monitor was not entered - hide the frame to prevent exception throw from processing it.
+				 * Note that BP can not have changed during a failed enter.
+				 */
+				rc = THROW_MONITOR_ALLOC_FAIL;
+			}
 			goto done;
 		}
 done:
@@ -1766,10 +1792,22 @@ throwStackOverflow:
 					rc = GOTO_ASYNC_CHECK;
 					goto done;
 				}
-				if (0 == monitorRC) {
+				if (monitorRC < J9_OBJECT_MONITOR_BLOCKING) {
 					/* Monitor was not entered - hide the frame to prevent exception throw from processing it */
 					*(_arg0EA + relativeBP) |= J9SF_A0_INVISIBLE_TAG;
-					rc = THROW_MONITOR_ALLOC_FAIL;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+					if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
+						J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, syncObject)->romClass);
+						updateVMStruct(REGISTER_ARGS);
+						prepareForExceptionThrow(_currentThread);
+						setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+						VMStructHasBeenUpdated(REGISTER_ARGS);
+						rc = GOTO_THROW_CURRENT_EXCEPTION;
+					} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+					{
+						rc = THROW_MONITOR_ALLOC_FAIL;
+					}
 					goto done;
 				}
 			}
@@ -2114,8 +2152,20 @@ done:
 			IDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, receiver);
 			// No immediate async possible due to the current frame being for a native method.
 			bp = _arg0EA - relativeBP;
-			if (0 == monitorRC) {
-				rc = THROW_MONITOR_ALLOC_FAIL;
+			if (monitorRC < J9_OBJECT_MONITOR_BLOCKING) {
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+				if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
+					J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, receiver)->romClass);
+					updateVMStruct(REGISTER_ARGS);
+					prepareForExceptionThrow(_currentThread);
+					setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+					VMStructHasBeenUpdated(REGISTER_ARGS);
+					rc = GOTO_THROW_CURRENT_EXCEPTION;
+				} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+				{
+					rc = THROW_MONITOR_ALLOC_FAIL;
+				}
 				goto done;
 			}
 		}
@@ -2584,10 +2634,10 @@ done:
 		j9object_t threadLock = J9VMJAVALANGTHREAD_LOCK(_currentThread, _currentThread->threadObject);
 		if (!VM_ObjectMonitor::inlineFastObjectMonitorEnter(_currentThread, threadLock)) {
 			IDATA monitorRC = objectMonitorEnterNonBlocking(_currentThread, threadLock);
-			if (0 == monitorRC) {
+			if (J9_OBJECT_MONITOR_OOM == monitorRC) {
 				rc = THROW_MONITOR_ALLOC_FAIL;
 				goto done;
-			} else if (1 == monitorRC) {
+			} else if (J9_OBJECT_MONITOR_BLOCKING == monitorRC) {
 				buildInternalNativeStackFrame(REGISTER_ARGS);
 				updateVMStruct(REGISTER_ARGS);
 				threadLock = (j9object_t)(UDATA)objectMonitorEnterBlocking(_currentThread);
@@ -7716,42 +7766,40 @@ done:
 		if (NULL == obj) {
 			rc = THROW_NPE;
 		} else {
+			IDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, obj);
+			/* Monitor enter can only fail in the nonblocking case, which does not
+			 * release VM access, so the immediate async and failed enter cases are
+			 * mutually exclusive.
+			 */
+			if (monitorRC < J9_OBJECT_MONITOR_BLOCKING) {
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			J9Class * objClass = J9OBJECT_CLAZZ(_currentThread, obj);
-			if (J9_IS_J9CLASS_VALUETYPE(objClass)) {
-				J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(objClass->romClass);
-				buildInternalNativeStackFrame(REGISTER_ARGS);
-				updateVMStruct(REGISTER_ARGS);
-				prepareForExceptionThrow(_currentThread);
-				setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
-			} else
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-			{
-				IDATA monitorRC = enterObjectMonitor(REGISTER_ARGS, obj);
-				/* Monitor enter can only fail in the nonblocking case, which does not
-				 * release VM access, so the immediate async and failed enter cases are
-				 * mutually exclusive.
-				 */
-				if (0 == monitorRC) {
+				if (J9_OBJECT_MONITOR_VALUE_TYPE_IMSE == monitorRC) {
+					J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(J9OBJECT_CLAZZ(_currentThread, obj)->romClass);
+					updateVMStruct(REGISTER_ARGS);
+					prepareForExceptionThrow(_currentThread);
+					setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
+					VMStructHasBeenUpdated(REGISTER_ARGS);
+					rc = GOTO_THROW_CURRENT_EXCEPTION;
+				} else
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+				{
 					rc = THROW_MONITOR_ALLOC_FAIL;
-				} else {
-					if (J9_UNEXPECTED(!VM_ObjectMonitor::recordBytecodeMonitorEnter(_currentThread, (j9object_t)monitorRC, _arg0EA))) {
-						objectMonitorExit(_currentThread, obj);
-						rc = THROW_MONITOR_ALLOC_FAIL;
-						if (immediateAsyncPending()) {
-							rc = GOTO_ASYNC_CHECK;
-						}
-						goto done;
-					}
+				}
+			} else {
+				if (J9_UNEXPECTED(!VM_ObjectMonitor::recordBytecodeMonitorEnter(_currentThread, (j9object_t)monitorRC, _arg0EA))) {
+					objectMonitorExit(_currentThread, obj);
+					rc = THROW_MONITOR_ALLOC_FAIL;
 					if (immediateAsyncPending()) {
 						rc = GOTO_ASYNC_CHECK;
-						goto done;
 					}
-					_pc += 1;
-					_sp += 1;
+					goto done;
 				}
+				if (immediateAsyncPending()) {
+					rc = GOTO_ASYNC_CHECK;
+					goto done;
+				}
+				_pc += 1;
+				_sp += 1;
 			}
 		}
 done:
@@ -7768,26 +7816,12 @@ done:
 		if (NULL == obj) {
 			rc = THROW_NPE;
 		} else {
-#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES) 
-			J9Class * objClass = J9OBJECT_CLAZZ(_currentThread, obj);
-			if (J9_IS_J9CLASS_VALUETYPE(objClass)) {
-				J9UTF8 *badClassName = J9ROMCLASS_CLASSNAME(objClass->romClass);
-				buildInternalNativeStackFrame(REGISTER_ARGS);
-				updateVMStruct(REGISTER_ARGS);
-				prepareForExceptionThrow(_currentThread);
-				setCurrentExceptionNLSWithArgs(_currentThread, J9NLS_VM_ERROR_BYTECODE_OBJECTREF_CANNOT_BE_VALUE_TYPE, J9VMCONSTANTPOOL_JAVALANGILLEGALMONITORSTATEEXCEPTION, J9UTF8_LENGTH(badClassName), J9UTF8_DATA(badClassName));
-				VMStructHasBeenUpdated(REGISTER_ARGS);
-				rc = GOTO_THROW_CURRENT_EXCEPTION;
-			} else
-#endif /* J9VM_OPT_VALHALLA_VALUE_TYPES */
-			{
-				IDATA monitorRC = exitObjectMonitor(REGISTER_ARGS, obj);
-				if (0 != monitorRC) {
-					rc = THROW_ILLEGAL_MONITOR_STATE;
-				} else {
-					VM_ObjectMonitor::recordBytecodeMonitorExit(_currentThread, obj);
-					_pc += 1;
-				}
+			IDATA monitorRC = exitObjectMonitor(REGISTER_ARGS, obj);
+			if (0 != monitorRC) {
+				rc = THROW_ILLEGAL_MONITOR_STATE;
+			} else {
+				VM_ObjectMonitor::recordBytecodeMonitorExit(_currentThread, obj);
+				_pc += 1;
 			}
 		}
 		return rc;

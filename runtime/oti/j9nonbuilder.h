@@ -5176,6 +5176,16 @@ typedef struct J9JavaVM {
 #define J9VM_DEBUG_ATTRIBUTE_UNUSED_0x800000  0x800000
 #define J9VM_DEFLATION_POLICY_NEVER  0
 
+/* objectMonitorEnterNonBlocking return codes */
+#define J9_OBJECT_MONITOR_OOM 0
+#define J9_OBJECT_MONITOR_VALUE_TYPE_IMSE 1
+/*
+ * Currently, not needed but reserving it for future use
+ *
+ * #define J9_OBJECT_MONITOR_PRIMITIVE_WRAPPER_IMSE 2
+ */
+#define J9_OBJECT_MONITOR_BLOCKING 3
+
 #if defined(OMR_GC_COMPRESSED_POINTERS)
 #if defined(OMR_GC_FULL_POINTERS)
 /* Mixed mode - necessarily 64-bit */
