@@ -678,7 +678,7 @@ public:
    virtual int32_t            getByteOffsetToLockword(TR_OpaqueClassBlock *clazzPointer);
    virtual int32_t            getInitialLockword(TR_OpaqueClassBlock* clazzPointer);
 
-   bool                       isEnableGlobalLockReservationSet();
+   virtual bool               isEnableGlobalLockReservationSet();
 
    virtual bool               javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result);
    virtual int32_t            getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed);

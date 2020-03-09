@@ -1983,8 +1983,6 @@ TR_J9VMBase::getWriteBarrierGCFlagMaskAsByte()
 int32_t
 TR_J9VMBase::getByteOffsetToLockword(TR_OpaqueClassBlock * clazzPointer)
    {
-   J9JavaVM * jvm = _jitConfig->javaVM;
-
    if (clazzPointer == NULL)
       return 0;
 
