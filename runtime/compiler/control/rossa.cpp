@@ -1870,7 +1870,7 @@ aboutToBootstrap(J9JavaVM * javaVM, J9JITConfig * jitConfig)
       {
       bool validateSCC = true;
 
-#if define(JITSERVER_SUPPORT)
+#if defined(JITSERVER_SUPPORT)
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          validateSCC = false;
 #endif
