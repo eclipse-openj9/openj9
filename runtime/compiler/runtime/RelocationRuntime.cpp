@@ -73,9 +73,9 @@
 #include "codegen/CodeGenerator.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "control/CompilationRuntime.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationThread.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 TR_RelocationRuntime::TR_RelocationRuntime(J9JITConfig *jitCfg)
    {
@@ -546,10 +546,10 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
          // Highest 2 bits indicate wide exceptions and FSD, unset them and extract
          // the number of exception ranges
          UDATA numExcptionRanges = ((UDATA)_exceptionTable->numExcptionRanges) & 0x7fff;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
          if (_comp->getOption(TR_FullSpeedDebug))
             numExcptionRanges &= ~(J9_JIT_METADATA_WIDE_EXCEPTIONS | J9_JIT_METADATA_HAS_BYTECODE_PC);
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
          /* 4 byte exception range entries */
          J9JIT32BitExceptionTableEntry *excptEntry32 = (J9JIT32BitExceptionTableEntry *)(_exceptionTable + 1);
@@ -567,10 +567,10 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
 
             //excptEntry32->ramMethod = _method;
             excptEntry32++;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
             if (_comp->getOption(TR_FullSpeedDebug))
                excptEntry32 = (J9JIT32BitExceptionTableEntry *) ((uint8_t *) excptEntry32 + 4);
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
             numExcptionRanges--;
             }
          }
@@ -580,9 +580,9 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
       startPC = _exceptionTable->startPC;
       } //end if J9_JIT_DCE_EXCEPTION_INFO
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    TR_ASSERT_FATAL(!TR::CompilationInfo::getStream(), "TR_RelocationRuntime::relocateAOTCodeAndData should not be called at the JITSERVER");
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    if (startPC)
       {
       // insert exceptionTable into JIT artifacts avl tree under mutex
@@ -591,13 +591,13 @@ TR_RelocationRuntime::relocateAOTCodeAndData(U_8 *tempDataStart,
 
          jit_artifact_insert(javaVM()->portLibrary, jitConfig()->translationArtifacts, _exceptionTable);
 
-#if !defined(JITSERVER_SUPPORT)
+#if !defined(J9VM_OPT_JITSERVER)
          // Fix up RAM method
          TR::CompilationInfo::setJ9MethodExtra(_method, startPC);
 
          // Return the send target
          _method->methodRunAddress = jitConfig()->i2jTransition;
-#endif /* !defined(JITSERVER_SUPPORT) */
+#endif /* !defined(J9VM_OPT_JITSERVER) */
 
          // Test for anonymous classes
          J9Class *j9clazz = ramCP()->ramClass;
@@ -693,7 +693,7 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
       TR_PersistentJittedBodyInfo *persistentBodyInfo = reinterpret_cast<TR_PersistentJittedBodyInfo *>( (_newPersistentInfo + sizeof(J9JITDataCacheHeader) ) );
       TR_PersistentMethodInfo *persistentMethodInfo = reinterpret_cast<TR_PersistentMethodInfo *>( (_newPersistentInfo + sizeof(J9JITDataCacheHeader) ) + sizeof(TR_PersistentJittedBodyInfo) );
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (_comp->isRemoteCompilation() && !_comp->getCurrentMethod()->isInterpreted())
          {
          TR_PersistentMethodInfo *existingPersistentMethodInfo = _comp->getRecompilationInfo()->getExistingMethodInfo(_comp->getCurrentMethod());
@@ -710,7 +710,7 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
          persistentBodyInfo->setMethodInfo(existingPersistentMethodInfo);
          }
       else
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
          {
          persistentBodyInfo->setMethodInfo(persistentMethodInfo);
          }
@@ -725,10 +725,10 @@ TR_RelocationRuntime::relocateMethodMetaData(UDATA codeRelocationAmount, UDATA d
       _exceptionTable->riData = (void *) (((U_8 *)_exceptionTable->riData) + dataRelocationAmount);
       }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (_exceptionTable->osrInfo)
       _exceptionTable->osrInfo = (void *) (((U_8 *)_exceptionTable->osrInfo) + dataRelocationAmount);
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    #if 0
       fprintf(stdout, "-> %p", _exceptionTable->ramMethod);
@@ -778,7 +778,7 @@ TR_RelocationRuntime::validateAOTHeader(TR_FrontEnd *fe, J9VMThread *curThread)
    return false;
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 J9JITExceptionTable *
 TR_RelocationRuntime::copyMethodMetaData(J9JITDataCacheHeader *dataCacheHeader)
    {
@@ -793,7 +793,7 @@ TR_RelocationRuntime::copyMethodMetaData(J9JITDataCacheHeader *dataCacheHeader)
       }
    return metaData;
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 bool TR_RelocationRuntime::_globalValuesInitialized=false;
 
@@ -1289,7 +1289,7 @@ void TR_RelocationRuntime::addClazzRecord(uint8_t *ia, uint32_t bcIndex, TR_Opaq
 
 #endif
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 void
 TR_JITServerRelocationRuntime::initializeCacheDeltas()
    {
@@ -1384,4 +1384,4 @@ TR_JITServerRelocationRuntime::copyDataToCodeCache(const void *startAddress, siz
 
    return coldCodeStart;
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */

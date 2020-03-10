@@ -35,15 +35,16 @@
 #include <string.h>
 #include <assert.h>
 
-#include "VMHelpers.hpp"
-#include "ObjectMonitor.hpp"
 #include "ArrayCopyHelpers.hpp"
+#include "AtomicSupport.hpp"
+#include "ObjectMonitor.hpp"
+#include "VMHelpers.hpp"
 
 extern "C" {
 
 #define BUFFER_SIZE 128
 
-jclass JNICALL 
+jclass JNICALL
 Java_sun_misc_Unsafe_defineClass__Ljava_lang_String_2_3BIILjava_lang_ClassLoader_2Ljava_security_ProtectionDomain_2(
 	JNIEnv *env, jobject receiver, jstring className, jbyteArray classRep, jint offset, jint length, jobject classLoader, jobject protectionDomain)
 {
@@ -174,7 +175,7 @@ Java_sun_misc_Unsafe_defineAnonymousClass(JNIEnv *env, jobject receiver, jclass 
 /**
  * Initialization function called during VM bootstrap (Unsafe.<clinit>).
  */
-void JNICALL 
+void JNICALL
 Java_sun_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
 {
 	jfieldID fid;
@@ -189,7 +190,7 @@ Java_sun_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
 	} else {
 		env->SetStaticIntField(clazz, fid, -1);
 	}
-	
+
 	Trc_JCL_sun_misc_Unsafe_registerNatives_Exit(env);
 }
 
@@ -843,8 +844,103 @@ Java_jdk_internal_misc_Unsafe_objectFieldOffset1(JNIEnv *env, jobject receiver, 
 		}
 	}
 	vmFuncs->internalExitVMToJNI(currentThread);
-	
+
 	return offset;
+}
+
+/**
+ * Writes modified memory in an address range from cache to main memory.
+ * Uses memory barriers before and after writeback to ensure ordering.
+ *
+ * On x86, the writeback is done using the CLWB instruction if available
+ * for performance, falling back to CLFLUSHOPT then CLFLUSH otherwise.
+ *
+ * @param addr address of block to write back to memory
+ * @param len length of block being written
+ */
+void JNICALL
+Java_jdk_internal_misc_Unsafe_writebackMemory(JNIEnv *env, jobject receiver, jlong addr, jlong len)
+{
+/* Exclude Windows since it does not support GCC assembly syntax,
+ * and Linux is the only target actually specified in JEP 352.
+ */
+#if (defined(J9X86) || defined(J9HAMMER)) && !defined(WIN32)
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	uintptr_t cacheLineSize = vm->dCacheLineSize;
+
+	if (cacheLineSize > 0) {
+		uintptr_t const uaddr = (uintptr_t)(U_64)addr;
+		uintptr_t const ulen = (uintptr_t)(U_64)len;
+		uintptr_t const firstCacheLine = uaddr & ~(cacheLineSize - 1);
+		uintptr_t const lastCacheLine = (uaddr + ((0 == ulen) ? 0 : (ulen - 1))) & ~(cacheLineSize - 1);
+
+		/* adjust for pre-increment in the loops below */
+		uintptr_t cacheLine = firstCacheLine - cacheLineSize;
+
+		VM_AtomicSupport::readWriteBarrier();
+		switch (vm->cpuCacheWritebackCapabilities) {
+		case J9PORT_X86_FEATURE_CLWB:
+			do {
+				cacheLine += cacheLineSize;
+				asm volatile("clwb %0" : "+m" (*(U_8 *)cacheLine));
+			} while (lastCacheLine != cacheLine);
+			break;
+		case J9PORT_X86_FEATURE_CLFLUSHOPT:
+			do {
+				cacheLine += cacheLineSize;
+				asm volatile("clflushopt %0" : "+m" (*(U_8 *)cacheLine));
+			} while (lastCacheLine != cacheLine);
+			break;
+		case J9PORT_X86_FEATURE_CLFSH:
+			do {
+				cacheLine += cacheLineSize;
+				asm volatile("clflush %0" : "+m" (*(U_8 *)cacheLine));
+			} while (lastCacheLine != cacheLine);
+			break;
+		default:
+			goto error;
+		}
+		VM_AtomicSupport::readWriteBarrier();
+		return;
+	}
+error:
+#endif /* x86 */
+
+	jclass exceptionClass = env->FindClass("java/lang/RuntimeException");
+	if (NULL == exceptionClass) {
+		/* Just return if we can't load the exception class. */
+		return;
+	}
+	env->ThrowNew(exceptionClass, "writebackMemory not supported");
+}
+
+/**
+ * Checks if the platform supports writeback from cache to memory. This
+ * function checks if the necessary CPU or OS features for writeback are
+ * enabled.
+ * On x86, these are the CLFLUSH, CLFLUSHOPT and CLWB instructions.
+ */
+jboolean JNICALL
+Java_jdk_internal_misc_Unsafe_isWritebackEnabled(JNIEnv *env, jclass clazz)
+{
+	jboolean result = JNI_FALSE;
+#if (defined(J9X86) || defined(J9HAMMER)) && !defined(WIN32)
+	J9VMThread *currentThread = (J9VMThread *)env;
+	J9JavaVM *vm = currentThread->javaVM;
+	if (vm->dCacheLineSize > 0) {
+		switch (vm->cpuCacheWritebackCapabilities) {
+		case J9PORT_X86_FEATURE_CLWB:
+		case J9PORT_X86_FEATURE_CLFLUSHOPT:
+		case J9PORT_X86_FEATURE_CLFSH:
+			result = JNI_TRUE;
+			break;
+		default:
+			break;
+		}
+	}
+#endif /* x86 */
+	return result;
 }
 
 /* register jdk.internal.misc.Unsafe natives common to Java 9, 10 and beyond */
@@ -970,6 +1066,25 @@ registerJdkInternalMiscUnsafeNativesJava10(JNIEnv *env, jclass clazz) {
 	env->RegisterNatives(clazz, natives, sizeof(natives)/sizeof(JNINativeMethod));
 }
 
+/* register jdk.internal.misc.Unsafe natives for Java 14 */
+static void
+registerJdkInternalMiscUnsafeNativesJava14(JNIEnv *env, jclass clazz) {
+	/* clazz can't be null */
+	JNINativeMethod natives[] = {
+		{
+			(char*)"writebackMemory",
+			(char*)"(JJ)V",
+			(void*)&Java_jdk_internal_misc_Unsafe_writebackMemory
+		},
+		{
+			(char*)"isWritebackEnabled",
+			(char*)"()Z",
+			(void*)&Java_jdk_internal_misc_Unsafe_isWritebackEnabled
+		}
+	};
+	env->RegisterNatives(clazz, natives, sizeof(natives)/sizeof(JNINativeMethod));
+}
+
 /* class jdk.internal.misc.Unsafe only presents in Java 9 and beyond */
 void JNICALL
 Java_jdk_internal_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
@@ -980,6 +1095,9 @@ Java_jdk_internal_misc_Unsafe_registerNatives(JNIEnv *env, jclass clazz)
 	registerJdkInternalMiscUnsafeNativesCommon(env, clazz);
 	if (J2SE_VERSION(currentThread->javaVM) >= J2SE_V11) {
 		registerJdkInternalMiscUnsafeNativesJava10(env, clazz);
+	}
+	if (J2SE_VERSION(currentThread->javaVM) >= J2SE_V14) {
+		registerJdkInternalMiscUnsafeNativesJava14(env, clazz);
 	}
 }
 

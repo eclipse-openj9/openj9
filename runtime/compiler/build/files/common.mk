@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -383,7 +383,7 @@ JIT_PRODUCT_SOURCE_FILES+=\
     omr/compiler/runtime/OMRCodeCacheMemorySegment.cpp \
     omr/compiler/runtime/OMRRuntimeAssumptions.cpp
 
-ifneq ($(JITSERVER_SUPPORT),)
+ifneq ($(J9VM_OPT_JITSERVER),)
 JIT_PRODUCT_SOURCE_FILES+=\
     compiler/control/JITClientCompilationThread.cpp \
     compiler/control/JITServerCompilationThread.cpp \
@@ -409,6 +409,6 @@ include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH).mk
 include $(JIT_MAKE_DIR)/files/target/$(TARGET_ARCH).mk
 -include $(JIT_MAKE_DIR)/files/host/$(HOST_ARCH)-extra.mk
 -include $(JIT_MAKE_DIR)/files/target/$(TARGET_ARCH)-extra.mk
-ifneq ($(JITSERVER_SUPPORT),)
+ifneq ($(J9VM_OPT_JITSERVER),)
 include $(JIT_MAKE_DIR)/files/net.mk
 endif

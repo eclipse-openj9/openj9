@@ -1,5 +1,5 @@
 ###############################################################################
-# Copyright (c) 2017, 2019 IBM Corp. and others
+# Copyright (c) 2017, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,6 +30,12 @@ FindAllFiles = \
 	$(wildcard $1/$2) \
 	$(foreach i,$(wildcard $1/*),$(call FindAllFiles,$i,$2))
 
+# check that $1 is exactly one word or fail with $2 as the error message
+OneWordOrFail = $(if $(filter 1,$(words $1)),$1,$(error $2))
+
+# return the unique path matching the patterns in $1 or fail
+UniqueExistingFile = $(call OneWordOrFail,$(wildcard $1),Exactly one of these files must exist: $1)
+
 DDR_INPUT_MODULES := j9ddr_misc j9gc j9jvmti j9prt j9shr j9thr j9trc j9vm j9vrb jclse
 DDR_INPUT_DEPENDS := $(addprefix $(TOP_DIR)/,$(foreach module,$(DDR_INPUT_MODULES),$($(module)_depend)))
 
@@ -52,11 +58,19 @@ DDR_EXCLUDED_FOLDERS := $(addsuffix /%, $(addprefix $(TOP_DIR)/, \
 DDR_INPUT_FILES := $(sort $(filter-out $(DDR_EXCLUDED_FOLDERS), $(call FindAllFiles,$(TOP_DIR),*.dbg)))
 
 <#elseif uma.spec.flags.uma_gnuDebugSymbols.enabled>
-DDR_INPUT_FILES := $(addsuffix .dbg,$(DDR_INPUT_DEPENDS))
 <#if uma.spec.type.osx>
+# temporarily accept .dylib.dbg files built by OMR make rules
+DDR_INPUT_FILES := \
+	$(foreach path,$(DDR_INPUT_DEPENDS), \
+		$(call UniqueExistingFile, $(path).dSYM/Contents/Resources/DWARF/* $(path).dbg))
 # workaround for OSX not keeping anonymous enum symbols in shared library
 # so get it directly from object file instead
 DDR_INPUT_FILES += $(TOP_DIR)/omr/gc/base/standard/CompactScheme$(UMA_DOT_O)
+<#else>
+# temporarily accept .so.dbg files built by OMR make rules
+DDR_INPUT_FILES := \
+	$(foreach path,$(DDR_INPUT_DEPENDS), \
+		$(call UniqueExistingFile, $(path:$(UMA_DOT_DLL)=.debuginfo) $(path).dbg))
 </#if>
 </#if>
 

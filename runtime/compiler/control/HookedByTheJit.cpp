@@ -78,7 +78,7 @@
 #include "runtime/HWProfiler.hpp"
 #include "runtime/LMGuardedStorage.hpp"
 #include "env/SystemSegmentProvider.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/JITServerHelpers.hpp"
 #include "runtime/JITServerIProfiler.hpp"
 #include "runtime/JITServerStatisticsThread.hpp"
@@ -1977,7 +1977,7 @@ IDATA dumpJitInfo(J9VMThread *crashedThread, char *logFileLabel, J9RASdumpContex
    {
    Trc_JIT_DumpStart(crashedThread);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (context && context->javaVM && context->javaVM->jitConfig)
       {
       J9JITConfig *jitConfig = context->javaVM->jitConfig;
@@ -2779,7 +2779,7 @@ static void jitHookClassUnload(J9HookInterface * * hookInterface, UDATA eventNum
    if (table)
       table->classGotUnloaded(fej9, clazz);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    // Add to JITServer unload list
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       compInfo->getUnloadedClassesTempList()->push_back(clazz);
@@ -3017,7 +3017,7 @@ void jitClassesRedefined(J9VMThread * currentThread, UDATA classCount, J9JITRede
    classPair = classList;
    for (i = 0; i < classCount; i++)
       {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       // Add to JITServer unload list
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
          compInfo->getUnloadedClassesTempList()->push_back((TR_OpaqueClassBlock *) classPair->oldClass);
@@ -3564,7 +3564,7 @@ static bool updateCHTable(J9VMThread * vmThread, J9Class  * cl)
    TR_PersistentCHTable * table = 0;
    if (TR::Options::getCmdLineOptions()->allowRecompilation()
       && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
 #endif
       )
@@ -4129,7 +4129,7 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
 
    if (TR::Options::getCmdLineOptions()->allowRecompilation() 
       && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
 #endif
       )
@@ -4195,7 +4195,7 @@ static void jitHookClassLoad(J9HookInterface * * hookInterface, UDATA eventNum, 
 
    // Determine whether this class gets lock reservation
    if (options->getOption(TR_ReservingLocks)
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
 #endif
       )
@@ -4284,7 +4284,7 @@ static void jitHookClassPreinitialize(J9HookInterface * * hookInterface, UDATA e
 
    if (TR::Options::getCmdLineOptions()->allowRecompilation() 
       && !TR::Options::getCmdLineOptions()->getOption(TR_DisableCHOpts)
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
 #endif
       )
@@ -4754,7 +4754,7 @@ void JitShutdown(J9JITConfig * jitConfig)
    if (!vm->isAOT_DEPRECATED_DO_NOT_USE())
       stopSamplingThread(jitConfig);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    JITServerStatisticsThread *statsThreadObj = ((TR_JitPrivateConfig*)(jitConfig->privateConfig))->statisticsThreadObject;
    if (statsThreadObj)
       {
@@ -4804,7 +4804,7 @@ void JitShutdown(J9JITConfig * jitConfig)
       j9tty_printf(PORTLIB, "\tNo prof. info because timestamp expired: %10d\n", TR_IProfiler::_STATS_timestampHasExpired);
       }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    static char * isPrintJITServerMsgStats = feGetEnv("TR_PrintJITServerMsgStats");
    if (isPrintJITServerMsgStats && compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       JITServerHelpers::printJITServerMsgStats(jitConfig);
@@ -5836,7 +5836,7 @@ static void iProfilerActivationLogic(J9JITConfig * jitConfig, TR::CompilationInf
          TR::PersistentInfo *persistentInfo = compInfo->getPersistentInfo();
          if (iProfiler 
             && iProfiler->getProfilerMemoryFootprint() < TR::Options::_iProfilerMemoryConsumptionLimit
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
             && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
 #endif
             )
@@ -6987,7 +6987,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    compInfo->setSamplingThreadLifetimeState(TR::CompilationInfo::SAMPLE_THR_NOT_CREATED); // just in case
    if (jitConfig->samplingFrequency 
       && !vmj9->isAOT_DEPRECATED_DO_NOT_USE()
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       && compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER
 #endif
       )
@@ -7067,7 +7067,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
       {
       // Do not register the hook that sets method invocation counts in JITServer server mode
       // This ensures that interpreter will not send methods for compilation
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER)
 #endif
          {
@@ -7088,7 +7088,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
             iProfiler->startIProfilerThread(javaVM);
             }
          if (TR::Options::getCmdLineOptions()->getOption(TR_NoIProfilerDuringStartupPhase)
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
             || compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER
 #endif
             )
@@ -7243,7 +7243,7 @@ int32_t setUpHooks(J9JavaVM * javaVM, J9JITConfig * jitConfig, TR_FrontEnd * vm)
    return 0;
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 int32_t startJITServer(J9JITConfig *jitConfig)
    {
    J9JavaVM *javaVM = jitConfig->javaVM;
@@ -7287,6 +7287,6 @@ int32_t waitJITServerTermination(J9JITConfig *jitConfig)
    rc = listener->waitForListenerThreadExit(javaVM);
    return rc;
    }
-#endif /* JITSERVER_SUPPORT */
+#endif /* J9VM_OPT_JITSERVER */
 
 } /* extern "C" */

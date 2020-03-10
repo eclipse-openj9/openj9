@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -94,7 +94,7 @@
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-	-testnames jsr292Test,jsr292Test_B95up,jsr292Test_optional \
+	-testnames jsr292Test,jsr292Test_optional \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
@@ -121,7 +121,7 @@
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-	-testnames jsr292Test,jsr292Test_B95up,jsr292Test_Java11up,jsr292Test_optional \
+	-testnames jsr292Test,jsr292Test_Java11up,jsr292Test_optional \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
@@ -212,7 +212,7 @@
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-	-testnames jsr292Test,jsr292Test_B95up \
+	-testnames jsr292Test \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
@@ -397,4 +397,76 @@
 		</impls>
 	</test>
 
+	<!--
+		TODO: The following test cases specific to Lookup are temporarily excluded in Java 14
+		as there is no backward compatibility of these APIs since Java 14 due to the new changes
+		required at https://github.com/eclipse/openj9/issues/8571. These test cases here
+		(mainly used prior to OpenJ9) will be re-evaluated against the Java 14 Spec and ideally copied
+		as a new version with modification to OpenJ9_Jsr_292_API to meet the new scenarios in Java 14.
+	-->
+	<test>
+		<testCaseName>jsr292Test_Lookup</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>Mode195</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
+	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames jsr292Test_Lookup \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+			<subset>13</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+
+	<test>
+		<testCaseName>jsr292Test_Lookup_JitCount0</testCaseName>
+		<variations>
+			<variation>-Xjit:count=0</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
+	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames jsr292Test_Lookup \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.arm</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>9</subset>
+			<subset>10</subset>
+			<subset>11</subset>
+			<subset>13</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 </playlist>

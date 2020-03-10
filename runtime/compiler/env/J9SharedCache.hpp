@@ -34,7 +34,7 @@
 class TR_J9VMBase;
 class TR_ResolvedMethod;
 namespace TR { class CompilationInfo; }
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 namespace JITServer { class ServerStream; }
 #endif
 
@@ -218,7 +218,7 @@ private:
    };
 
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 /**
 * @class TR_J9JITServerSharedCache
 * @brief Class used by JITServer for querying client-side SharedCache information
@@ -269,6 +269,6 @@ public:
 private:
    JITServer::ServerStream *_stream;
    };
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #endif

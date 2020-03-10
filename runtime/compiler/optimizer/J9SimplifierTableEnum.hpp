@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -243,9 +243,9 @@
    dftSimplifier,               // TR::ddRegStore
    dftSimplifier,               // TR::deRegStore
 
-   dftSimplifier,               // TR::dfternary
-   dftSimplifier,               // TR::ddternary
-   dftSimplifier,               // TR::deternary
+   dftSimplifier,               // TR::dfselect
+   dftSimplifier,               // TR::ddselect
+   dftSimplifier,               // TR::deselect
 
    dftSimplifier,               // TR::dfexp
    dftSimplifier,               // TR::ddexp

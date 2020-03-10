@@ -3278,10 +3278,10 @@ TR_J9ByteCodeIlGenerator::genOrFindAdjunct(TR::Node* node)
    else
       {
       // expect that adjunct part is third child of node
-      TR_ASSERT(node->isDualHigh() || node->isTernaryHigh(),
-             "this node should be a dual or ternary, where the adjunct part of the answer is in the third child");
+      TR_ASSERT(node->isDualHigh() || node->isSelectHigh(),
+             "this node should be a dual or select, where the adjunct part of the answer is in the third child");
       adjunct = node->getChild(2);
-      if (node->isTernaryHigh())
+      if (node->isSelectHigh())
          {
          adjunct = adjunct->getFirstChild();
          }
@@ -4575,7 +4575,7 @@ break
    // We disable this optimization for JITServer because TR_VMField is not supported on JITServer yet. Once we have decided how to build the data structures
    // required by this optimization efficiently, we can re-enable this optimization.
    if (cg()->getEnforceStoreOrder() && calledMethod->isConstructor()
-      #ifdef JITSERVER_SUPPORT
+      #ifdef J9VM_OPT_JITSERVER
          && !cg()->comp()->isOutOfProcessCompilation()
       #endif
       )
@@ -6519,14 +6519,14 @@ TR_J9ByteCodeIlGenerator::storeStatic(int32_t cpIndex)
 void
 TR_J9ByteCodeIlGenerator::storeDualAuto(TR::Node * storeValue, int32_t slot)
    {
-   TR_ASSERT(storeValue->isDualHigh() || storeValue->isTernaryHigh(), "Coerced types only happen when a dual or ternary operator is generated.");
+   TR_ASSERT(storeValue->isDualHigh() || storeValue->isSelectHigh(), "Coerced types only happen when a dual or select operator is generated.");
 
    // type may need to be coerced from TR::Address into the type of the value being stored
    TR::DataType type = storeValue->getDataType();
 
    // generate the two stores for the storeValue and its adjunct.
    TR::Node* adjunctValue = storeValue->getChild(2);
-   if (storeValue->isTernaryHigh())
+   if (storeValue->isSelectHigh())
       {
       adjunctValue = adjunctValue->getFirstChild();
       }
@@ -6554,7 +6554,7 @@ TR_J9ByteCodeIlGenerator::storeAuto(TR::DataType type, int32_t slot, bool isAdju
       }
 
    symRef = symRefTab()->findOrCreateAutoSymbol(_methodSymbol, slot, type, true, false, true, isAdjunct);
-   if (storeValue->isDualHigh() || storeValue->isTernaryHigh() || isAdjunct)
+   if (storeValue->isDualHigh() || storeValue->isSelectHigh() || isAdjunct)
       symRef->setIsDual();
 
    bool isStatic = _methodSymbol->isStatic();
@@ -6944,7 +6944,7 @@ void TR_J9ByteCodeIlGenerator::genFullFence(TR::Node *node)
 
 void TR_J9ByteCodeIlGenerator::performClassLookahead(TR_PersistentClassInfo *classInfo)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    // Do not perform class lookahead in server mode
    if (comp()->isOutOfProcessCompilation())
       return;

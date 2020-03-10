@@ -1548,7 +1548,7 @@ LABEL(LcontinueLookup)
 ZZ  # Load address of interface table & slot number
     LA      r2,eq_intfAddr_inInterfaceSnippet(,r14)
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)  # Load this
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     L       r1,J9TR_J9Object_class(,r1)
 ZZ # Load lookup class offset
     LLGFR   r1,r1
@@ -1565,7 +1565,7 @@ LOAD_ADDR_FROM_TOC(r14,TR_S390jitLookupInterfaceMethod)
     LR_GPR  r14,r0
 ZZ                                  # return interpVtable offset in r2
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)  # Load this
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     L       r3,J9TR_J9Object_class(,r1)
 ZZ # Load offset of the lookup class
     LLGFR   r3,r3
@@ -1583,7 +1583,7 @@ LABEL(LcommonJitDispatch)         # interpVtable offset in r2
     LNR_GPR r2,r2                 # negative the interpVtable offset
     AHI_GPR r2,J9TR_InterpVTableOffset
     LR_GPR  r0,r2                 # J9 requires the offset in R0
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     L       r3,J9TR_J9Object_class(,r1)
 ZZ # Load offset of the lookup class
     LLGFR   r3,r3
@@ -1653,7 +1653,7 @@ LABEL(ifCH1LcontinueLookup)
 ZZ  # Load address of interface table & slot number
     LA      r2,eq_intfAddr_inInterfaceSnippet(,r14)
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Load this
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     L       r1,J9TR_J9Object_class(,r1)
 ZZ # Load lookup class offset
     LLGFR   r1,r1
@@ -1670,7 +1670,7 @@ LOAD_ADDR_FROM_TOC(r14,TR_S390jitLookupInterfaceMethod)
 
 ZZ                                # return interpVtable offset in r2
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Load this
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     L       r3,J9TR_J9Object_class(,r1)
 ZZ # Load offset of the lookup class
     LLGFR   r3,r3
@@ -1683,7 +1683,7 @@ ZZ # Load the addr of the lookup class
     TM   eq_methodCompiledFlagOffset(r3),J9TR_MethodNotCompiledBit
     JNZ     ifCH1LcommonJitDispatch
 
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     L       r2,J9TR_J9Object_class(,r1)
 ZZ # Read class offset
     LLGFR   r2,r2
@@ -1827,7 +1827,7 @@ LABEL(ifCH1LcommonJitDispatch)      # interpVtable offset in rEP
     AHI_GPR rEP,J9TR_InterpVTableOffset
     LR_GPR  r0,rEP                  # J9 requires the offset in R0
     L_GPR   r1,(2*PTR_SIZE)(J9SP)   # Restore "this"
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     L       r3,J9TR_J9Object_class(,r1)
 ZZ # Load offset of lookup class
     LLGFR   r3,r3
@@ -1896,7 +1896,7 @@ LABEL(ifCHMLcontinueLookup)
 ZZ  # Load address of interface table & slot number
     LA      r2,eq_intfAddr_inInterfaceSnippet(,r14)
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Load this
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     L       r1,J9TR_J9Object_class(,r1)
 ZZ # Load offset of lookup class
     LLGFR   r1,r1
@@ -1913,7 +1913,7 @@ LOAD_ADDR_FROM_TOC(r14,TR_S390jitLookupInterfaceMethod)
 
 ZZ                          # returned interpVtable offset in r2
     L_GPR   r1,(2*PTR_SIZE)(,J9SP)       # Load this
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     L       r3,J9TR_J9Object_class(,r1)
 ZZ # Load offset of the lookup class
     LLGFR   r3,r3
@@ -1928,7 +1928,7 @@ ZZ # Load the address of the lookup class
     JNZ     ifCHMLcommonJitDispatch
 
 ZZ  #Load receiving object classPtr in R2
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     L       r2,J9TR_J9Object_class(,r1)
 ZZ # Read class offset
     LLGFR   r2,r2
@@ -1992,7 +1992,7 @@ LABEL(ifCHMLoopTillUpdate)
 
 ZZ  current slot is now updated,
 ZZ  Lets see if it has same classPtr as we are trying to store
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     L       r0,J9TR_J9Object_class(,r1)
 ZZ # Read class offset
     LLGFR   r0,r0
@@ -2014,7 +2014,7 @@ ZZ slot we contended for last time
 LABEL(ifCHMUpdateCacheSlot)
 ZZ store class pointer and method EP in the current empty slot
     ST_GPR  r3,PTR_SIZE(,r1)
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     ST  r2,0(,r1)
 },{dnl
     ST_GPR  r2,0(,r1)
@@ -2028,7 +2028,7 @@ ZZ  Load pic address as second address
     L_GPR   r0,J9TR_J9Class_classLoader(CARG1)
 
 ZZ  Load class pointer as first argument
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     L       CARG1,0(CARG2)   # May need to convert offset to J9Class
     LLGFR   CARG1,CARG1
 },{dnl
@@ -2112,7 +2112,7 @@ LABEL(ifCHMLcommonJitDispatch)    # interpVtable offset in rEP
     AHI_GPR rEP,J9TR_InterpVTableOffset
     LR_GPR  r0,rEP                # J9 requires the offset in R0
     L_GPR   r1,(2*PTR_SIZE)(J9SP) # Restore "this"
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     L       r3,J9TR_J9Object_class(,r1)
 ZZ # Load offset of the lookup class
     LLGFR   r3,r3

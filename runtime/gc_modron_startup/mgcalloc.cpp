@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,36 +25,34 @@
  * @ingroup GC_Modron_Startup
  */
 
+#include <string.h>
+
 #include "j9.h"
 #include "j9cfg.h"
 #include "j9consts.h"
-#include "modronopt.h"
+#include "mmhook_internal.h"
 #include "ModronAssertions.h"
+#include "modronopt.h"
 #include "omrgc.h"
-
-#include <string.h>
-
 #include "rommeth.h"
-
-#include "modronapi.hpp"
 
 #include "AllocateDescription.hpp"
 #include "AtomicOperations.hpp"
 #include "EnvironmentBase.hpp"
+#include "GlobalCollector.hpp"
 #include "IndexableObjectAllocationModel.hpp"
-#include "mmhook_internal.h"
 #include "MemorySpace.hpp"
 #include "MemorySubSpace.hpp"
 #include "MixedObjectAllocationModel.hpp"
+#include "modronapi.hpp"
 #include "ObjectAccessBarrier.hpp"
 #include "ObjectAccessBarrierAPI.hpp"
 #include "ObjectAllocationInterface.hpp"
 #include "ObjectModel.hpp"
-
+#include "ObjectMonitor.hpp"
 #if defined (J9VM_GC_REALTIME)
 #include "Scheduler.hpp"
 #endif /* J9VM_GC_REALTIME */
-#include "GlobalCollector.hpp"
 #include "VMAccess.hpp"
 
 extern "C" {
@@ -114,9 +112,12 @@ J9AllocateObjectNoGC(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFla
 			if (NULL != objectPtr) {
 				uintptr_t allocatedBytes = env->getExtensions()->objectModel.getConsumedSizeInBytesWithHeader(objectPtr);
 				Assert_MM_true(allocatedBytes == mixedOAM.getAllocateDescription()->getContiguousBytes());
-				if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit)) {
-					j9objectmonitor_t *lockEA = J9OBJECT_MONITOR_EA(vmThread, objectPtr);
-					J9_STORE_LOCKWORD(vmThread, lockEA, OBJECT_HEADER_LOCK_RESERVED);
+				if (LN_HAS_LOCKWORD(vmThread, objectPtr)) {
+					j9objectmonitor_t initialLockword = VM_ObjectMonitor::getInitialLockword(vmThread->javaVM, clazz);
+					if (0 != initialLockword) {
+						j9objectmonitor_t *lockEA = J9OBJECT_MONITOR_EA(vmThread, objectPtr);
+						J9_STORE_LOCKWORD(vmThread, lockEA, initialLockword);
+					}
 				}
 			}
 			env->_isInNoGCAllocationCall = false;
@@ -381,9 +382,12 @@ J9AllocateObject(J9VMThread *vmThread, J9Class *clazz, uintptr_t allocateFlags)
 		if (NULL != objectPtr) {
 			uintptr_t allocatedBytes = env->getExtensions()->objectModel.getConsumedSizeInBytesWithHeader(objectPtr);
 			Assert_MM_true(allocatedBytes == mixedOAM.getAllocateDescription()->getContiguousBytes());
-			if (J9_ARE_ANY_BITS_SET(J9CLASS_EXTENDED_FLAGS(clazz), J9ClassReservableLockWordInit)) {
-				j9objectmonitor_t *lockEA = J9OBJECT_MONITOR_EA(vmThread, objectPtr);
-				J9_STORE_LOCKWORD(vmThread, lockEA, OBJECT_HEADER_LOCK_RESERVED);
+			if (LN_HAS_LOCKWORD(vmThread, objectPtr)) {
+				j9objectmonitor_t initialLockword = VM_ObjectMonitor::getInitialLockword(vmThread->javaVM, clazz);
+				if (0 != initialLockword) {
+					j9objectmonitor_t *lockEA = J9OBJECT_MONITOR_EA(vmThread, objectPtr);
+					J9_STORE_LOCKWORD(vmThread, lockEA, initialLockword);
+				}
 			}
 		}
 	}

@@ -4208,7 +4208,8 @@ internalError:
 				goto done;
 			}
 			if (J9_CLASSLOADER_TYPE_PLATFORM == loaderType) {
-				_vm->platformClassLoader = result;
+				/* extensionClassLoader holds the platform class loader in Java 11+ */
+				_vm->extensionClassLoader = result;
 			}
 		}
 		restoreInternalNativeStackFrame(REGISTER_ARGS);
@@ -8269,6 +8270,15 @@ done:
 			/* Get MethodHandle for this operation from the VarHandles handleTable */
 			j9object_t handleTable = J9VMJAVALANGINVOKEVARHANDLE_HANDLETABLE(_currentThread, varHandle);
 			j9object_t methodHandle = J9JAVAARRAYOFOBJECT_LOAD(_currentThread, handleTable, operation);
+
+			if (NULL == methodHandle) {
+				updateVMStruct(REGISTER_ARGS);
+				prepareExceptionUsingClassName(_currentThread, "java/lang/UnsupportedOperationException");
+				VMStructHasBeenUpdated(REGISTER_ARGS);
+				rc = GOTO_THROW_CURRENT_EXCEPTION;
+				goto done;
+			}
+
 			j9object_t handleType = J9VMJAVALANGINVOKEMETHODHANDLE_TYPE(_currentThread, methodHandle);
 
 			/* Get call site MethodType */

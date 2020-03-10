@@ -48,8 +48,10 @@ extern "C" {
 /* Note: The following defines record flags used to build the VM. */
 /* Changing them here does not remove the feature and may cause linking problems. */
 
+#cmakedefine J9VM_ARCH_AARCH64
 #cmakedefine J9VM_ARCH_ARM
 #cmakedefine J9VM_ARCH_POWER
+#cmakedefine J9VM_ARCH_RISCV
 #cmakedefine J9VM_ARCH_S390
 #cmakedefine J9VM_ARCH_X86
 #cmakedefine J9VM_BUILD__SE6_PACKAGE
@@ -146,6 +148,7 @@ extern "C" {
 #cmakedefine J9VM_INTERP_AOT_COMPILE_SUPPORT
 #cmakedefine J9VM_INTERP_AOT_RUNTIME_SUPPORT
 #cmakedefine J9VM_INTERP_ATOMIC_FREE_JNI
+#cmakedefine J9VM_INTERP_ATOMIC_FREE_JNI_USES_FLUSH
 #cmakedefine J9VM_INTERP_BYTECODE_PREVERIFICATION
 #cmakedefine J9VM_INTERP_BYTECODE_VERIFICATION
 #cmakedefine J9VM_INTERP_COMPRESSED_OBJECT_HEADER
@@ -171,6 +174,7 @@ extern "C" {
 #cmakedefine J9VM_INTERP_SIG_QUIT_THREAD_USES_SEMAPHORES
 #cmakedefine J9VM_INTERP_SMALL_MONITOR_SLOT
 #cmakedefine J9VM_INTERP_TRACING
+#cmakedefine J9VM_INTERP_TWO_PASS_EXCLUSIVE
 #cmakedefine J9VM_INTERP_UPDATE_VMCTRACING
 #cmakedefine J9VM_INTERP_USE_SPLIT_SIDE_TABLES
 #cmakedefine J9VM_INTERP_USE_UNSAFE_HELPER
@@ -215,6 +219,7 @@ extern "C" {
 #cmakedefine J9VM_OPT_INLINE_JSRS
 #cmakedefine J9VM_OPT_INVARIANT_INTERNING
 #cmakedefine J9VM_OPT_JAVA_OFFLOAD_SUPPORT
+#cmakedefine J9VM_OPT_JITSERVER
 #cmakedefine J9VM_OPT_JVMTI
 #cmakedefine J9VM_OPT_JXE_LOAD_SUPPORT
 #cmakedefine J9VM_OPT_MEMORY_CHECK_SUPPORT

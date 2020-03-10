@@ -22,9 +22,9 @@
 
 #define J9_EXTERNAL_TO_VM
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "env/VMJ9Server.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #if defined (_MSC_VER) && (_MSC_VER < 1900)
 #define snprintf _snprintf
@@ -593,7 +593,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
       {
       // Check if this thread has cached the frontend inside
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (vmType==J9_SERVER_VM || vmType==J9_SHARED_CACHE_SERVER_VM)
          {
          TR_ASSERT(vmWithoutThreadInfo->_compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER, "J9_SERVER_VM and J9_SHARED_CACHE_SERVER_VM should only be instantiated in JITServer::SERVER mode");
@@ -658,7 +658,7 @@ TR_J9VMBase::get(J9JITConfig * jitConfig, J9VMThread * vmThread, VM_TYPE vmType)
             return serverVM;
             }
          }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
       if (vmType==AOT_VM)
          {
@@ -747,19 +747,19 @@ TR_J9VMBase::TR_J9VMBase(
 
    _sharedCache = NULL;
    if (TR::Options::sharedClassCache()
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       || (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       )
       // shared classes and AOT must be enabled, or we should be on the JITServer with remote AOT enabled
       {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          _sharedCache = new (PERSISTENT_NEW) TR_J9JITServerSharedCache(this);
          }
       else
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
          {
          _sharedCache = new (PERSISTENT_NEW) TR_J9SharedCache(this);
          }
@@ -784,9 +784,9 @@ TR_J9VMBase::freeSharedCache()
    {
    if (_sharedCache)        // shared classes and AOT must be enabled
       {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (_compInfo && (_compInfo->getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER))
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
          {
          TR_ASSERT(TR::Options::sharedClassCache(), "Found shared cache with option disabled");
          }
@@ -1976,12 +1976,28 @@ TR_J9VMBase::getWriteBarrierGCFlagMaskAsByte()
 int32_t
 TR_J9VMBase::getByteOffsetToLockword(TR_OpaqueClassBlock * clazzPointer)
    {
-   J9JavaVM * jvm = _jitConfig->javaVM;
-
    if (clazzPointer == NULL)
       return 0;
 
    return TR::Compiler->cls.convertClassOffsetToClassPtr(clazzPointer)->lockOffset;
+   }
+
+int32_t
+TR_J9VMBase::getInitialLockword(TR_OpaqueClassBlock* ramClass)
+   {
+   /* If ramClass is NULL for some reason, initial lockword is set to 0. */
+   if (!ramClass)
+      {
+      return 0;
+      }
+
+   return VM_ObjectMonitor::getInitialLockword(_jitConfig->javaVM, TR::Compiler->cls.convertClassOffsetToClassPtr(ramClass));
+   }
+
+bool
+TR_J9VMBase::isEnableGlobalLockReservationSet()
+   {
+   return (1 == _jitConfig->javaVM->enableGlobalLockReservation) ? true : false;
    }
 
 bool
@@ -3775,11 +3791,11 @@ TR_J9VMBase::tryToAcquireAccess(TR::Compilation * comp, bool *haveAcquiredVMAcce
    bool hasVMAccess;
    *haveAcquiredVMAccess = false;
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    // JITServer TODO: For now, we always take the "safe path" on the server
    if (comp->isOutOfProcessCompilation())
       return false;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    if (!comp->getOption(TR_DisableNoVMAccess))
       {
@@ -4372,9 +4388,7 @@ TR::TreeTop* TR_J9VMBase::initializeClazzFlagsMonitorFields(TR::Compilation* com
       {
       // Initialize the monitor field
       //
-      int32_t lwInitialValue = 0;
-      if (TR::Compiler->cls.classFlagReservableWordInitValue(ramClass))
-         lwInitialValue = OBJECT_HEADER_LOCK_RESERVED;
+      int32_t lwInitialValue = getInitialLockword(ramClass);
 
       if (!comp->target().is64Bit() || generateCompressedLockWord())
          {
@@ -7301,10 +7315,10 @@ TR_J9VM::inlineNativeCall(TR::Compilation * comp, TR::TreeTop * callNodeTreeTop,
 
          TR::SymbolReference *helperSymRef = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_j2iTransition, true, true, false);
          sym->setMethodAddress(helperSymRef->getMethodAddress());
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
          // JITServer: store the helper reference number in the node for use in creating TR_HelperAddress relocation
          callNode->getSymbolReference()->setReferenceNumber(helperSymRef->getReferenceNumber());
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
          return callNode;
          }
       case TR::java_lang_invoke_MethodHandle_invokeWithArgumentsHelper:

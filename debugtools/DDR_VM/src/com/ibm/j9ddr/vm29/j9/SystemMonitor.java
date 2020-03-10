@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2001, 2018 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -34,7 +34,7 @@ public abstract class SystemMonitor implements Comparable<SystemMonitor>
 	
 	public static SystemMonitor fromJ9ThreadMonitor(J9ThreadMonitorPointer monitor) throws CorruptDataException
 	{
-		AlgorithmVersion version = AlgorithmVersion.getVersionOf(AlgorithmVersion.OBJECT_MONITOR_VERSION);
+		AlgorithmVersion version = AlgorithmVersion.getVersionOf(AlgorithmVersion.ALG_OBJECT_MONITOR_VERSION);
 		switch (version.getAlgorithmVersion()) {
 			// Add case statements for new algorithm versions
 			default:

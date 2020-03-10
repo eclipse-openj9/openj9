@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2017, 2019 IBM Corp. and others
+Copyright (c) 2017, 2020 IBM Corp. and others
 
 This program and the accompanying materials are made available under
 the terms of the Eclipse Public License 2.0 which accompanies this
@@ -54,6 +54,9 @@ This folder contains Jenkins pipeline scripts that are used in the OpenJ9 Jenkin
     - Linux on ppc64le largeheap/non-compressed references
         - Spec: ppc64le_linux_xl
         - Shortname: plinuxlargeheap or plinuxxl
+    - Linux on ppc64le with CMake
+        - Spec: ppc64le_linux_cm
+        - Shortname: plinuxcm or plinuxcmake
     - Linux on aarch64
         - Spec: aarch64_linux
         - Shortname: alinux64

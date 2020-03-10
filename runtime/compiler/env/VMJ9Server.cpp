@@ -613,14 +613,41 @@ TR_J9ServerVM::getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method)
 int32_t
 TR_J9ServerVM::getByteOffsetToLockword(TR_OpaqueClassBlock * clazz)
    {
-#if defined (J9VM_THR_LOCK_NURSERY)
    uint32_t byteOffsetToLockword = 0;
-   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
-   JITServerHelpers::getAndCacheRAMClassInfo((J9Class *)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_BYTE_OFFSET_TO_LOCKWORD, (void *)&byteOffsetToLockword);
+   if (clazz)
+      {
+      JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+      JITServerHelpers::getAndCacheRAMClassInfo((J9Class*)clazz, _compInfoPT->getClientData(), stream, JITServerHelpers::CLASSINFO_BYTE_OFFSET_TO_LOCKWORD, (void*)&byteOffsetToLockword);
+      }
    return byteOffsetToLockword;
-#else
-   return TMP_OFFSETOF_J9OBJECT_MONITOR;
-#endif
+   }
+
+int32_t
+TR_J9ServerVM::getInitialLockword(TR_OpaqueClassBlock * ramClass)
+   {
+   /* If ramClass is NULL for some reason, initial lockword is set to 0. */
+   if (!ramClass)
+      {
+      return 0;
+      }
+   // TR_J9VMBase calls VM_ObjectMonitor::getInitialLockword which looks at some counters
+   // inside the J9Class, counters that change all the time. Thus, we cannot use caching.
+   // Moreover, the optimizer may see different answers from this queries depending on
+   // when the compilation takes place.
+   // A small optimization can be done knowing that the value returned is stable when
+   // javaVM->enableGlobalLockReservation is false. However, if the VM implementation changes
+   // without modifying this frontend query, JITServer could become broken.
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   stream->write(JITServer::MessageType::VM_getInitialLockword, ramClass);
+   return std::get<0>(stream->read<int32_t>());
+   }
+
+bool
+TR_J9ServerVM::isEnableGlobalLockReservationSet()
+   {
+   JITServer::ServerStream *stream = _compInfoPT->getMethodBeingCompiled()->_stream;
+   auto *vmInfo = _compInfoPT->getClientData()->getOrCacheVMInfo(stream);
+   return (1 == vmInfo->_enableGlobalLockReservation) ? true : false;
    }
 
 bool

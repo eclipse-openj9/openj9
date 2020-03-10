@@ -553,7 +553,7 @@ extern "C" void jitBytecodePrintFunction(void *userData, char *format, ...)
 void
 TR_Debug::printByteCodeStack(int32_t parentStackIndex, uint16_t byteCodeIndex, char * indent)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (_comp->isOutOfProcessCompilation() || _comp->isRemoteCompilation())
       return;
 #endif

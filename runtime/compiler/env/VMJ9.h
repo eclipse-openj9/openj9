@@ -61,10 +61,10 @@ class TR_ExternalProfiler;
 class TR_JitPrivateConfig;
 class TR_DataCacheManager;
 class TR_EstimateCodeSize;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 class TR_Listener;
 class JITServerStatisticsThread;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 struct TR_CallSite;
 struct TR_CallTarget;
 namespace J9 { class ObjectModel; }
@@ -141,10 +141,10 @@ typedef struct TR_JitPrivateConfig
    TR_IProfiler  *iProfiler;
    TR_HWProfiler *hwProfiler;
    TR_JProfilerThread  *jProfiler;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    TR_Listener   *listener;
    JITServerStatisticsThread   *statisticsThreadObject;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    TR_LMGuardedStorage *lmGuardedStorage;
    TR::CodeCacheManager *codeCacheManager; // reachable from JitPrivateConfig for kca's benefit
    TR_DataCacheManager *dcManager;  // reachable from JitPrivateConfig for kca's benefit
@@ -235,10 +235,10 @@ public:
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT)
       , AOT_VM
 #endif
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       , J9_SERVER_VM // for JITServer
       , J9_SHARED_CACHE_SERVER_VM // for Remote AOT JITServer
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       };
 
    TR_J9VMBase(J9JITConfig * jitConfig, TR::CompilationInfo * compInfo, J9VMThread * vmContext);
@@ -676,6 +676,9 @@ public:
    uint32_t                   getWordOffsetToGCFlags();
    uint32_t                   getWriteBarrierGCFlagMaskAsByte();
    virtual int32_t            getByteOffsetToLockword(TR_OpaqueClassBlock *clazzPointer);
+   virtual int32_t            getInitialLockword(TR_OpaqueClassBlock* clazzPointer);
+
+   virtual bool               isEnableGlobalLockReservationSet();
 
    virtual bool               javaLangClassGetModifiersImpl(TR_OpaqueClassBlock * clazzPointer, int32_t &result);
    virtual int32_t            getJavaLangClassHashCode(TR::Compilation * comp, TR_OpaqueClassBlock * clazzPointer, bool &hashCodeComputed);

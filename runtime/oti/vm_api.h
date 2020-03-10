@@ -689,6 +689,21 @@ void
 setCurrentExceptionNLS(J9VMThread * vmThread, UDATA exceptionNumber, U_32 moduleName, U_32 messageNumber);
 
 /**
+ * Prepare for throwing an exception. Find the exception class using its name.
+ * Create an object using the exception class. Set an OutOfMemoryError if the
+ * object cannot be created. Otherwise, set an exception pending using the
+ * created object.
+ *
+ * Note this does not generate the "systhrow" dump event.
+ *
+ * @param vmThread[in] the current J9VMThread
+ * @param exceptionClassName[in] the name of the exception class
+ * @return void
+ */
+void
+prepareExceptionUsingClassName(J9VMThread *vmThread, const char *exceptionClassName);
+
+/**
  * @brief Creates exception with nls message; substitutes string values into error message.
  * @param vmThread current VM thread
  * @param nlsModule nls module name
@@ -1625,7 +1640,7 @@ registerPredefinedHandler(J9JavaVM *vm, U_32 signal, void **oldOSHandler);
 IDATA
 registerOSHandler(J9JavaVM *vm, U_32 signal, void *newOSHandler, void **oldOSHandler);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 /**
  * @brief checks if the runtime flag for enabling JITServer is set or not
  *
@@ -1636,7 +1651,7 @@ registerOSHandler(J9JavaVM *vm, U_32 signal, void *newOSHandler, void **oldOSHan
 BOOLEAN
 isJITServerEnabled(J9JavaVM *vm);
 
-#endif /* JITSERVER_SUPPORT */
+#endif /* J9VM_OPT_JITSERVER */
 
 /* ---------------- romutil.c ---------------- */
 

@@ -138,7 +138,7 @@ uint8_t *TR::PPCDepImmSymInstruction::generateBinaryEncoding()
          }
 
       if ((cg()->comp()->compileRelocatableCode() 
-          #ifdef JITSERVER_SUPPORT 
+          #ifdef J9VM_OPT_JITSERVER 
              || cg()->comp()->isOutOfProcessCompilation()
           #endif
           ) &&

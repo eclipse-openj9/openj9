@@ -194,12 +194,12 @@ public:
    TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, J9Class * aClazz, uintptr_t cpIndex);
    TR_J9Method(TR_FrontEnd *trvm, TR_Memory *, TR_OpaqueMethodBlock * aMethod);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 protected:
    // To be used by JITServer.
    // Warning: some initialization must be done manually after calling this constructor
    TR_J9Method();
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    };
 
 class TR_ResolvedJ9MethodBase : public TR_ResolvedMethod

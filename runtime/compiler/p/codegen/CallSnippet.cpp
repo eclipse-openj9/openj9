@@ -720,7 +720,7 @@ uint8_t *TR::PPCInterfaceCallSnippet::emitSnippetBody()
          int32_t  *patchAddr = (int32_t *)getLowerInstruction()->getBinaryEncoding();
          intptrj_t addrValue = (intptrj_t)cursor;
          if (!comp->compileRelocatableCode() 
-            #ifdef JITSERVER_SUPPORT
+            #ifdef J9VM_OPT_JITSERVER
                && !comp->isOutOfProcessCompilation()
             #endif
             )

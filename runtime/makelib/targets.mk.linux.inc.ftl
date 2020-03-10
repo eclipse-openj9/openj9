@@ -42,13 +42,13 @@ $(UMA_LIBTARGET) : $(UMA_OBJECTS)
 <#assign dll_target_rule>
 $(UMA_DLLTARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 	$(UMA_DLL_LD) $(UMA_DLL_LINK_FLAGS) \
-		$(VMLINK) $(UMA_LINK_PATH) -o $(UMA_DLLTARGET) \
+		$(VMLINK) $(UMA_LINK_PATH) -o $@ \
 		$(UMA_OBJECTS) \
 		$(UMA_DLL_LINK_POSTFLAGS)
 ifdef j9vm_uma_gnuDebugSymbols
-	$(OBJCOPY) --only-keep-debug $(UMA_DLLTARGET) $(UMA_DLLTARGET).dbg
-	$(OBJCOPY) --strip-debug $(UMA_DLLTARGET)
-	$(OBJCOPY) --add-gnu-debuglink=$(UMA_DLLTARGET).dbg $(UMA_DLLTARGET)
+	$(OBJCOPY) --only-keep-debug $@ $(@:$(UMA_DOT_DLL)=.debuginfo)
+	$(OBJCOPY) --strip-debug $@
+	$(OBJCOPY) --add-gnu-debuglink=$(@:$(UMA_DOT_DLL)=.debuginfo) $@
 endif
 </#assign>
 
@@ -61,6 +61,11 @@ $(UMA_EXETARGET) : $(UMA_OBJECTS) $(UMA_TARGET_LIBRARIES)
 		$(UMA_END_DASH_L) \
 		$(UMA_LINK_SHARED_LIBRARIES) \
 		-o $@ $(UMA_EXE_POSTFIX_FLAGS)
+ifdef j9vm_uma_gnuDebugSymbols
+	$(OBJCOPY) --only-keep-debug $@ $(@:$(UMA_DOT_EXE)=.debuginfo)
+	$(OBJCOPY) --strip-debug $@
+	$(OBJCOPY) --add-gnu-debuglink=$(@:$(UMA_DOT_EXE)=.debuginfo) $@
+endif
 </#assign>
 
 <#if uma.spec.processor.s390>
@@ -171,7 +176,7 @@ to allow compilation with newer GCC versions.
 Reference - https://gcc.gnu.org/gcc-5/porting_to.html.
 -->
 <#if uma.spec.flags.env_gcc.enabled || !uma.spec.processor.ppc>
-# If $(CC) doesn't accept the '-dumpversion' option, assume it's not GCC versions 5 or newer. 
+# If $(CC) doesn't accept the '-dumpversion' option, assume it's not GCC versions 5 or newer.
 GCC_MAJOR_VERSION := $(shell ($(CC) -dumpversion 2>/dev/null || echo 1) | cut -d. -f1)
 
 ifeq (,$(findstring $(GCC_MAJOR_VERSION),1 2 3 4))

@@ -2,7 +2,7 @@
 package com.ibm.oti.jvmtests;
 
 /*******************************************************************************
- * Copyright (c) 2016, 2016 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -35,6 +35,8 @@ public class AutoRun {
 		/*if it fails it prints a detailed message, but if successful it only prints OK */ 
 		if (result.wasSuccessful()) {	
 			System.out.println("All tests were successful");
+		} else {
+			System.exit(-2);
 		}
 	}
 	

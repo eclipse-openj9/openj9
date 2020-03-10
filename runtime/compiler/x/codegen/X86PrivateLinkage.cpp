@@ -34,9 +34,9 @@
 #include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
 #include "compile/VirtualGuard.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationThread.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #include "env/CHTable.hpp"
 #include "env/CompilerEnv.hpp"
 #include "env/J2IThunk.hpp"
@@ -1903,7 +1903,7 @@ void J9::X86::PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef,
    if (cg()->comp()->target().is64Bit() && methodSymRef->getReferenceNumber()>=TR_AMD64numRuntimeHelpers)
       fej9->reserveTrampolineIfNecessary(comp(), methodSymRef, false);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    // JITServer Workaround: Further transmute dispatchJ9Method symbols to appear as a runtime helper, this will cause OMR to
    // generate a TR_HelperAddress relocation instead of a TR_RelativeMethodAddress Relocation.
    if (!comp()->getOption(TR_DisableInliningOfNatives) &&
@@ -1912,7 +1912,7 @@ void J9::X86::PrivateLinkage::buildDirectCall(TR::SymbolReference *methodSymRef,
       {
       methodSymbol->setHelper();
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    if (cg()->supportVMInternalNatives() && methodSymbol->isVMInternalNative())
       {

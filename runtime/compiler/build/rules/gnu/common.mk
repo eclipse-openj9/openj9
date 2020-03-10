@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -33,6 +33,7 @@ JIT_PRODUCT_OBJECTS=$(patsubst %,$(FIXED_OBJBASE)/%.o,$(basename $(JIT_PRODUCT_S
 
 # Figure out the name of the .so file
 JIT_PRODUCT_SONAME=$(FIXED_DLL_DIR)/$(LIBPREFIX)$(PRODUCT_NAME)$(SOSUFF)
+JIT_PRODUCT_DEBUGINFO=$(FIXED_DLL_DIR)/$(LIBPREFIX)$(PRODUCT_NAME)$(DBGSUFF)
 
 # Add build name to JIT
 JIT_PRODUCT_BUILDNAME_SRC=$(FIXED_OBJBASE)/omr/compiler/env/TRBuildName.cpp
@@ -47,16 +48,21 @@ endif
 jit: $(JIT_PRODUCT_SONAME)
 
 $(JIT_PRODUCT_SONAME): $(JIT_PRODUCT_OBJECTS) | jit_createdirs
-ifneq ($(JITSERVER_SUPPORT),)
 	$(SOLINK_CMD) -shared $(SOLINK_FLAGS) $(patsubst %,-L%,$(SOLINK_LIBPATH)) -o $@ $(SOLINK_PRE_OBJECTS) $(JIT_PRODUCT_OBJECTS) $(SOLINK_POST_OBJECTS) $(LINK_GROUP_START) $(patsubst %,-l%,$(SOLINK_SLINK)) $(SOLINK_SLINK_STATIC) $(LINK_GROUP_END) $(SOLINK_EXTRA_ARGS)
-else
-	$(SOLINK_CMD) -shared $(SOLINK_FLAGS) $(patsubst %,-L%,$(SOLINK_LIBPATH)) -o $@ $(SOLINK_PRE_OBJECTS) $(JIT_PRODUCT_OBJECTS) $(SOLINK_POST_OBJECTS) $(LINK_GROUP_START) $(patsubst %,-l%,$(SOLINK_SLINK)) $(LINK_GROUP_END) $(SOLINK_EXTRA_ARGS)
+ifeq ($(BUILD_CONFIG),prod)
+ifneq ($(OBJCOPY),)
+	$(OBJCOPY) --only-keep-debug $@ $(JIT_PRODUCT_DEBUGINFO)
+	$(OBJCOPY) --strip-debug $@
+	$(OBJCOPY) --add-gnu-debuglink=$(JIT_PRODUCT_DEBUGINFO) $@
+else ifneq ($(DSYMUTIL),)
+	$(DSYMUTIL) -o $(JIT_PRODUCT_DEBUGINFO) $@
+endif
 endif
 
 JIT_DIR_LIST+=$(dir $(JIT_PRODUCT_SONAME))
 
 jit_cleandll::
-	rm -f $(JIT_PRODUCT_SONAME)
+	rm -f $(JIT_PRODUCT_SONAME) $(JIT_PRODUCT_DEBUGINFO)
 
 $(call RULE.cpp,$(JIT_PRODUCT_BUILDNAME_OBJ),$(JIT_PRODUCT_BUILDNAME_SRC))
 
@@ -69,17 +75,30 @@ JIT_DIR_LIST+=$(dir $(JIT_PRODUCT_BUILDNAME_SRC))
 jit_cleanobjs::
 	rm -f $(JIT_PRODUCT_BUILDNAME_SRC)
 
-ifneq ($(JITSERVER_SUPPORT),)
-protoc: $(PROTO_GEN_DIR)/compile.pb.h
-$(call RULE.proto,$(PROTO_GEN_DIR)/compile,$(PROTO_DIR)/compile.proto)
-endif
-
 #
 # This part calls the "RULE.x" macros for each source file
 #
 $(foreach SRCFILE,$(JIT_PRODUCT_SOURCE_FILES),\
     $(call RULE$(suffix $(SRCFILE)),$(FIXED_OBJBASE)/$(basename $(SRCFILE))$(OBJSUFF),$(FIXED_SRCBASE)/$(SRCFILE)) \
  )
+
+ifneq (,$(J9VM_OPT_JITSERVER))
+#
+# Generate a rule to run the protobuf compiler.
+#
+$(call RULE.proto,$(PROTO_GEN_DIR)/compile,$(PROTO_DIR)/compile.proto)
+
+#
+# Make every object file, for which there is no corresponding depend.mk file,
+# depend on compile.pb.h. If a depend.mk file exists, it will include this
+# dependency only if appropriate. This will ensure the protobuf compilation
+# occurs early enough, but not more than necessary.
+#
+PROTO_DEP = $(if $(wildcard $(1)$(DEPSUFF)),,$(1) : $(PROTO_GEN_DIR)/compile.pb.h)
+
+$(foreach SRCFILE, $(JIT_PRODUCT_SOURCE_FILES), \
+	$(eval $(call PROTO_DEP,$(FIXED_OBJBASE)/$(basename $(SRCFILE))$(OBJSUFF))))
+endif # J9VM_OPT_JITSERVER
 
 #
 # Generate a rule that will create every directory before the build starts

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -32,9 +32,9 @@ namespace J9 { class ClassEnv; }
 namespace J9 { typedef J9::ClassEnv ClassEnvConnector; }
 #endif
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include <vector>
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #include "env/jittypes.h"
 #include "env/OMRClassEnv.hpp"
 #include "infra/Annotations.hpp"
@@ -75,9 +75,9 @@ public:
    J9ITable *iTableOf(TR_OpaqueClassBlock * clazz);
    J9ITable *iTableNext(J9ITable *current);
    J9ROMClass *iTableRomClass(J9ITable *current);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    std::vector<TR_OpaqueClassBlock *> getITable(TR_OpaqueClassBlock *clazz);
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    J9Class **superClassesOf(TR_OpaqueClassBlock * clazz);
 

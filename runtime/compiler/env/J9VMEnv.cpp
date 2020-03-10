@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -38,9 +38,9 @@
 #include "j9cfg.h"
 #include "jilconsts.h"
 #include "vmaccess.h"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "runtime/JITClientSession.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 int64_t
 J9::VMEnv::maxHeapSizeInBytes()
@@ -491,12 +491,12 @@ J9::VMEnv::isSelectiveMethodEnterExitEnabled(TR::Compilation *comp)
 size_t
 J9::VMEnv::getInterpreterVTableOffset()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
       auto *vmInfo = TR::compInfoPT->getClientData()->getOrCacheVMInfo(stream);
       return vmInfo->_interpreterVTableOffset;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return sizeof(J9Class);
    }

@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,9 +25,9 @@
 #include "compile/InlineBlock.hpp"
 #include "compile/Method.hpp"
 #include "compile/ResolvedMethod.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "env/j9methodServer.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #include "env/VMJ9.h"
 #include "il/Node.hpp"
 #include "il/Node_inlines.hpp"
@@ -437,7 +437,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
    size = calltarget->_myCallSite->_isIndirectCall ? 5 : 0;
    TR_J9ByteCode bc = bci.first(), nextBC;
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (comp()->isOutOfProcessCompilation())
       {
       // JITServer optimization:
@@ -446,7 +446,7 @@ TR_J9EstimateCodeSize::processBytecodeAndGenerateCFG(TR_CallTarget *calltarget, 
       auto calleeMethod = static_cast<TR_ResolvedJ9JITServerMethod *>(calltarget->_calleeMethod);
       calleeMethod->cacheResolvedMethodsCallees();
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    for (; bc != J9BCunknown; bc = bci.next())
       {
@@ -1144,9 +1144,9 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
 
    const static bool debugMHInlineWithOutPeeking = feGetEnv("TR_DebugMHInlineWithOutPeeking") ? true: false;
    bool mhInlineWithPeeking =  comp()->getOption(TR_DisableMHInlineWithoutPeeking);
-   bool isCalleeMethodHandleThunk = calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen();
+   bool isCalleeMethodHandleThunkInFirstPass = calltarget->_calleeMethod->convertToMethod()->isArchetypeSpecimen() && _inliner->firstPass();
    if (nph.doPeeking() && recurseDown ||
-       isCalleeMethodHandleThunk && mhInlineWithPeeking)
+       isCalleeMethodHandleThunkInFirstPass && mhInlineWithPeeking)
       {
 
       heuristicTrace(tracer(), "*** Depth %d: ECS CSI -- needsPeeking is true for calltarget %p",
@@ -1160,7 +1160,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
          wasPeekingSuccessfull = true;
          }
       }
-   else if (isCalleeMethodHandleThunk && !mhInlineWithPeeking && debugMHInlineWithOutPeeking)
+   else if (isCalleeMethodHandleThunkInFirstPass && !mhInlineWithPeeking && debugMHInlineWithOutPeeking)
       {
       traceMsg(comp(), "printing out trees and bytecodes through peeking because DebugMHInlineWithOutPeeking is on\n");
       methodSymbol->getResolvedMethod()->genMethodILForPeekingEvenUnderMethodRedefinition(methodSymbol, comp(), false, NULL);
@@ -1178,7 +1178,7 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    //
    TR_ValueProfileInfoManager * profileManager = TR_ValueProfileInfoManager::get(comp());
    bool callGraphEnabled = !comp()->getOption(TR_DisableCallGraphInlining);//profileManager->isCallGraphProfilingEnabled(comp());
-   if (!_inliner->firstPass() || isCalleeMethodHandleThunk)
+   if (!_inliner->firstPass() || isCalleeMethodHandleThunkInFirstPass)
       callGraphEnabled = false; // TODO: Work out why this doesn't function properly on subsequent passes
    if (callGraphEnabled && recurseDown)
       {
@@ -1276,8 +1276,12 @@ TR_J9EstimateCodeSize::realEstimateCodeSize(TR_CallTarget *calltarget, TR_CallSt
    if (!callsitesAreCreatedFromTrees)
       {
       bci.prepareToFindAndCreateCallsites(blocks, flags, callSites, &cfg, &newBCInfo, _recursionDepth, &callStack);
-      bool iteratorWithState = isCalleeMethodHandleThunk && !mhInlineWithPeeking;
-      bci.findAndCreateCallsitesFromBytecodes(wasPeekingSuccessfull, iteratorWithState);
+      bool iteratorWithState = isCalleeMethodHandleThunkInFirstPass && !mhInlineWithPeeking;
+      if (!bci.findAndCreateCallsitesFromBytecodes(wasPeekingSuccessfull, iteratorWithState))
+         {
+         heuristicTrace(tracer(), "*** Depth %d: ECS end for target %p signature %s. bci.findAndCreateCallsitesFromBytecode failed", _recursionDepth, calltarget, callerName);
+         return returnCleanup(7);
+         }
       _hasNonColdCalls = bci._nonColdCallExists;
       }
 

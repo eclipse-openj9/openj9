@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -447,13 +447,13 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::bRegStore
    NULL,          // TR::GlRegDeps
 
-   NULL,          // TR::iternary
-   NULL,          // TR::lternary
-   NULL,          // TR::bternary
-   NULL,          // TR::sternary
-   NULL,          // TR::aternary
-   NULL,          // TR::fternary
-   NULL,          // TR::dternary
+   NULL,          // TR::iselect
+   NULL,          // TR::lselect
+   NULL,          // TR::bselect
+   NULL,          // TR::sselect
+   NULL,          // TR::aselect
+   NULL,          // TR::fselect
+   NULL,          // TR::dselect
    NULL,          // TR::treetop
    NULL,          // TR::MethodEnterHook
    NULL,          // TR::MethodExitHook
@@ -491,7 +491,7 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::vicmpanyle
 
    NULL,          // TR::vnot
-   NULL,          // TR::vselect
+   NULL,          // TR::vbitselect
    NULL,          // TR::vperm
 
    NULL,          // TR::vsplats
@@ -564,7 +564,7 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::vreturn
    NULL,          // TR::vcall
    NULL,          // TR::vcalli
-   NULL,          // TR::vternary
+   NULL,          // TR::vselect
    NULL,          // TR::v2v
    NULL,          // TR::vl2vd
    NULL,          // TR::vconst
@@ -1072,9 +1072,9 @@ static const char * nvvmOpCodeNames[] =
    NULL,          // TR::ddRegStore
    NULL,          // TR::deRegStore
 
-   NULL,          // TR::dfternary
-   NULL,          // TR::ddternary
-   NULL,          // TR::deternary
+   NULL,          // TR::dfselect
+   NULL,          // TR::ddselect
+   NULL,          // TR::deselect
 
    NULL,          // TR::dfexp
    NULL,          // TR::ddexp

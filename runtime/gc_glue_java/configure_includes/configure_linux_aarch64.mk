@@ -40,6 +40,9 @@ CONFIGURE_ARGS += \
 ifneq (,$(findstring _cmprssptrs,$(SPEC)))
 	CONFIGURE_ARGS += \
 		--enable-OMR_GC_COMPRESSED_POINTERS
+else
+	CONFIGURE_ARGS += \
+		--enable-OMR_GC_FULL_POINTERS
 endif
 
 ifneq (,$(findstring _cross,$(SPEC)))
@@ -60,11 +63,15 @@ ifneq (,$(findstring _cross,$(SPEC)))
 	ifeq (default,$(origin AR))
 		AR = $(OPENJ9_CC_PREFIX)-ar
 	endif
+	OBJCOPY = $(OPENJ9_CC_PREFIX)-objcopy
+else
+	OBJCOPY ?= objcopy
 endif
 
 CONFIGURE_ARGS += 'AS=$(AS)'
 CONFIGURE_ARGS += 'CC=$(CC)'
 CONFIGURE_ARGS += 'CXX=$(CXX)'
+CONFIGURE_ARGS += 'OBJCOPY=$(OBJCOPY)'
 
 CONFIGURE_ARGS += libprefix=lib exeext= solibext=.so arlibext=.a objext=.o
 

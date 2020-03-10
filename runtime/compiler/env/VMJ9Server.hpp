@@ -90,6 +90,8 @@ public:
    virtual bool isClassInitialized(TR_OpaqueClassBlock * clazz) override;
    virtual UDATA getOSRFrameSizeInBytes(TR_OpaqueMethodBlock * method) override;
    virtual int32_t getByteOffsetToLockword(TR_OpaqueClassBlock * clazz) override;
+   virtual int32_t getInitialLockword(TR_OpaqueClassBlock* clazzPointer) override;
+   virtual bool isEnableGlobalLockReservationSet() override;
    virtual bool isString(TR_OpaqueClassBlock * clazz) override;
    virtual void * getMethods(TR_OpaqueClassBlock * clazz) override;
    virtual void getResolvedMethods(TR_Memory * trMemory, TR_OpaqueClassBlock * classPointer, List<TR_ResolvedMethod> * resolvedMethodsInClass) override;

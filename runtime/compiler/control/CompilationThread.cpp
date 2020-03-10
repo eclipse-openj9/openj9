@@ -93,7 +93,7 @@
 #include "env/J9SegmentCache.hpp"
 #include "env/SystemSegmentProvider.hpp"
 #include "env/DebugSegmentProvider.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/JITClientCompilationThread.hpp"
 #include "control/JITServerCompilationThread.hpp"
 #include "control/JITServerHelpers.hpp"
@@ -101,7 +101,7 @@
 #include "net/ClientStream.hpp"
 #include "net/ServerStream.hpp"
 #include "omrformatconsts.h"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #ifdef COMPRESS_AOT_DATA
 #include "shcdatatypes.h" // For CompiledMethodWrapper
 #ifdef J9ZOS390
@@ -168,7 +168,7 @@ void setThreadAffinity(unsigned _int64 handle, unsigned long mask)
 TR_RelocationRuntime*
 TR::CompilationInfoPerThreadBase::reloRuntime()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (_methodBeingCompiled->isAotLoad() ||
        _compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::NONE ||
        (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && TR::Options::sharedClassCache())) // Enable local AOT compilations at client
@@ -176,7 +176,7 @@ TR::CompilationInfoPerThreadBase::reloRuntime()
    return static_cast<TR_RelocationRuntime*>(&_remoteCompileReloRuntime);
 #else
    return static_cast<TR_RelocationRuntime*>(&_sharedCacheReloRuntime);
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
 void
@@ -207,9 +207,9 @@ blankDumpSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpI
    }
 #endif
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 thread_local TR::CompilationInfoPerThread *TR::compInfoPT;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 static UDATA
 jitSignalHandler(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *arg)
@@ -511,7 +511,7 @@ TR_YesNoMaybe TR::CompilationInfo::shouldActivateNewCompThread()
    if (getRampDownMCT())
       return TR_no;
 
-#ifdef JITSERVER_SUPPORT
+#ifdef J9VM_OPT_JITSERVER
    // Always activate in JITServer server mode
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       return TR_yes;
@@ -603,7 +603,7 @@ bool TR::CompilationInfo::shouldDowngradeCompReq(TR_MethodToBeCompiled *entry)
    {
    bool doDowngrade = false;
    J9Method *method = entry->getMethodDetails().getMethod();
-#ifdef JITSERVER_SUPPORT
+#ifdef J9VM_OPT_JITSERVER
    TR_ASSERT(getPersistentInfo()->getRemoteCompilationMode() != JITServer::SERVER, "shouldDowngradeCompReq should not be used by JITServer");
 #endif
    if (!isCompiled(method) && /*entry->_priority <= CP_ASYNC_MAX &&*/
@@ -823,15 +823,15 @@ void TR::CompilationInfo::freeCompilationInfo(J9JITConfig *jitConfig)
 
 void TR::CompilationInfoPerThread::freeAllResources()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (_classesThatShouldNotBeNewlyExtended)
       {
       TR_Memory::jitPersistentFree(_classesThatShouldNotBeNewlyExtended);
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 J9ROMClass *
 TR::CompilationInfoPerThread::getRemoteROMClassIfCached(J9Class *clazz)
    {
@@ -850,7 +850,7 @@ TR::CompilationInfoPerThread::getAndCacheRemoteROMClass(J9Class *clazz, TR_Memor
       }
    return romClass;
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 void
 TR::CompilationInfoPerThread::waitForGCCycleMonitor(bool threadHasVMAccess)
@@ -940,9 +940,9 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _compInfo(compInfo),
    _jitConfig(jitConfig),
    _sharedCacheReloRuntime(jitConfig),
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    _remoteCompileReloRuntime(jitConfig),
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    _compThreadId(id),
    _onSeparateThread(onSeparateThread),
    _vm(NULL),
@@ -956,10 +956,10 @@ TR::CompilationInfoPerThreadBase::CompilationInfoPerThreadBase(TR::CompilationIn
    _compilationCanBeInterrupted(false),
    _compilationThreadState(COMPTHREAD_UNINITIALIZED),
    _compilationShouldBeInterrupted(false),
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    _cachedClientDataPtr(NULL),
    _clientStream(NULL),
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    _addToJProfilingQueue(false)
    {
    // At this point, compilation threads have not been fully started yet. getNumTotalCompilationThreads()
@@ -1037,7 +1037,7 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
    _lastTimeThreadWasSuspended = 0;
    _lastTimeThreadWentToSleep = 0;
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    _serverVM = NULL;
    _sharedCacheServerVM = NULL;
 
@@ -1050,14 +1050,14 @@ TR::CompilationInfoPerThread::CompilationInfoPerThread(TR::CompilationInfo &comp
       {
       _classesThatShouldNotBeNewlyExtended = NULL;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
 TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    _sslKeys(decltype(_sslKeys)::allocator_type(TR::Compiler->persistentAllocator())),
    _sslCerts(decltype(_sslCerts)::allocator_type(TR::Compiler->persistentAllocator())),
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    _persistentMemory(pointer_cast<TR_PersistentMemory *>(jitConfig->scratchSegment)),
    _sharedCacheReloRuntime(jitConfig),
    _samplingThreadWaitTimeInDeepIdleToNotifyVM(-1),
@@ -1151,7 +1151,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _lowPriorityCompilationScheduler.setCompInfo(this);
    _JProfilingQueue.setCompInfo(this);
    _interpSamplTrackingInfo = new (PERSISTENT_NEW) TR_InterpreterSamplingTracking(this);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    _clientSessionHT = NULL; // This will be set later when options are processed
    _unloadedClassesTempList = NULL;
    _sequencingMonitor = TR::Monitor::create("JIT-SequencingMonitor");
@@ -1159,7 +1159,7 @@ TR::CompilationInfo::CompilationInfo(J9JITConfig *jitConfig) :
    _newlyExtendedClasses = NULL;
    _chTableUpdateFlags = 0;
    _localGCCounter = 0;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
 bool TR::CompilationInfo::initializeCompilationOnApplicationThread()
@@ -1486,18 +1486,18 @@ TR::CompilationInfo::getMethodBytecodeSize(const J9ROMMethod * romMethod)
    return (romMethod->bytecodeSizeHigh << 16) + romMethod->bytecodeSizeLow;
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 JITServer::ServerStream *
 TR::CompilationInfo::getStream()
    {
    return (TR::compInfoPT) ? TR::compInfoPT->getStream() : NULL;
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 uint32_t
 TR::CompilationInfo::getMethodBytecodeSize(J9Method* method)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
          {
@@ -1512,7 +1512,7 @@ TR::CompilationInfo::getMethodBytecodeSize(J9Method* method)
       stream->write(JITServer::MessageType::CompInfo_getMethodBytecodeSize, method);
       return std::get<0>(stream->read<uint32_t>());
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return getMethodBytecodeSize(J9_ROM_METHOD_FROM_RAM_METHOD(method));
    }
 
@@ -1525,7 +1525,7 @@ TR::CompilationInfo::isJSR292(const J9ROMMethod *romMethod)
 bool
 TR::CompilationInfo::isJSR292(J9Method *j9method)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (auto stream = TR::CompilationInfo::getStream())
       {
          {
@@ -1540,7 +1540,7 @@ TR::CompilationInfo::isJSR292(J9Method *j9method)
       stream->write(JITServer::MessageType::CompInfo_isJSR292, j9method);
       return std::get<0>(stream->read<bool>());
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    return isJSR292(J9_ROM_METHOD_FROM_RAM_METHOD(j9method));
    }
 
@@ -2166,7 +2166,7 @@ bool TR::CompilationInfo::shouldRetryCompilation(TR_MethodToBeCompiled *entry, T
                   entry->_doNotUseAotCodeFromSharedCache = true;
                tryCompilingAgain = true;
                break;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
             case compilationStreamFailure:
                // This feature TR_RequireJITServer is used when we would like the client to fail when server crashes
                static char *requireJITServer = feGetEnv("TR_RequireJITServer");
@@ -2678,7 +2678,7 @@ int32_t *TR::CompilationInfo::_compThreadActivationThresholdsonStarvation = NULL
 
 void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThreads)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       numUsableCompThreads = ((numUsableCompThreads <= 0) ||
@@ -2686,7 +2686,7 @@ void TR::CompilationInfo::updateNumUsableCompThreads(int32_t &numUsableCompThrea
                                MAX_SERVER_USABLE_COMP_THREADS : numUsableCompThreads;
       }
    else
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       {
       numUsableCompThreads = ((numUsableCompThreads <= 0) ||
                               (numUsableCompThreads > MAX_CLIENT_USABLE_COMP_THREADS)) ?
@@ -2709,14 +2709,14 @@ TR::CompilationInfo::allocateCompilationThreads(int32_t numUsableCompThreads)
    TR_ASSERT((numUsableCompThreads == TR::Options::_numUsableCompilationThreads),
              "numUsableCompThreads %d is not equal to the Option value %d", numUsableCompThreads, TR::Options::_numUsableCompilationThreads);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       TR_ASSERT((0 < numUsableCompThreads) && (numUsableCompThreads <= MAX_SERVER_USABLE_COMP_THREADS),
                "numUsableCompThreads %d is greater than supported %d", numUsableCompThreads, MAX_SERVER_USABLE_COMP_THREADS);
       }
    else
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       {
       TR_ASSERT((0 < numUsableCompThreads) && (numUsableCompThreads <= MAX_CLIENT_USABLE_COMP_THREADS),
                "numUsableCompThreads %d is greater than supported %d", numUsableCompThreads, MAX_CLIENT_USABLE_COMP_THREADS);
@@ -2822,13 +2822,13 @@ TR::CompilationInfo::startCompilationThread(int32_t priority, int32_t threadId, 
    setCompBudget(TR::Options::_compilationBudget); // might do it several time, but it does not hurt
 
    // Create a compInfo for this thread
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    TR::CompilationInfoPerThread  *compInfoPT = getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER ?
       new (persistentMemory()) TR::CompilationInfoPerThreadRemote(*this, _jitConfig, threadId, isDiagnosticThread) :
       new (persistentMemory()) TR::CompilationInfoPerThread(*this, _jitConfig, threadId, isDiagnosticThread);
 #else
    TR::CompilationInfoPerThread  *compInfoPT = new (persistentMemory()) TR::CompilationInfoPerThread(*this, _jitConfig, threadId, isDiagnosticThread);
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    if (!compInfoPT || !compInfoPT->initializationSucceeded() || !compInfoPT->getCompThreadMonitor())
       return 1; // TODO must deallocate some things in compInfoPT as well as the memory for it
@@ -3374,7 +3374,7 @@ void TR::CompilationInfo::stopCompilationThreads()
       fprintf(stderr, "NumQueuePromotions=%u\n", _statNumQueuePromotions);
       }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    static char *printJITServerIPMsgStats = feGetEnv("TR_PrintJITServerIPMsgStats");
    if (printJITServerIPMsgStats)
       {
@@ -3399,7 +3399,7 @@ void TR::CompilationInfo::stopCompilationThreads()
          fprintf(stderr, "Number of connections closed = %u\n", JITServer::ClientStream::getNumConnectionsClosed());
          }
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 #ifdef STATS
    if (compBudgetSupport() || dynamicThreadPriority())
@@ -3522,7 +3522,7 @@ void TR::CompilationInfo::stopCompilationThreads()
 #endif
 
    releaseCompMonitor(vmThread);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT)
       {
       try
@@ -3538,7 +3538,7 @@ void TR::CompilationInfo::stopCompilationThreads()
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "JITServer StreamFailure (server unreachable before the termination message was sent): %s", e.what());
          }
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
 IDATA J9THREAD_PROC compilationThreadProc(void *entryarg)
@@ -3770,18 +3770,18 @@ IDATA J9THREAD_PROC protectedCompilationThreadProc(J9PortLibrary *, TR::Compilat
    return 0;
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 JITServer::ServerStream *
 TR::CompilationInfoPerThread::getStream()
    {
    return (_methodBeingCompiled) ? _methodBeingCompiled->_stream : NULL;
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 void
 TR::CompilationInfoPerThread::run()
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    TR::compInfoPT = this; // set the thread_local pointer to this object on first run
 #endif
    for (
@@ -4073,7 +4073,7 @@ TR::CompilationInfoPerThread::processEntries()
          setCompilationThreadState(COMPTHREAD_SIGNAL_WAIT);
          }
       }
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    static bool enableJITServerPerCompConn = feGetEnv("TR_EnableJITServerPerCompConn") ? true : false;
    if (compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT && !enableJITServerPerCompConn)
       {
@@ -4099,7 +4099,7 @@ TR::CompilationInfoPerThread::processEntries()
          setClientStream(NULL);
          }
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    }
 
 void
@@ -4304,7 +4304,7 @@ TR::CompilationInfoPerThread::processEntry(TR_MethodToBeCompiled &entry, J9::J9S
       // We need some other form of flag, maybe in the optimization plan or
       // retrials of compilations from JPQ are not going to work correctly
       entry._reqFromJProfilingQueue = false;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       entry.unsetRemoteCompReq(); // remote compilation decisions do not carry over from one retrial to the next
 #endif
 
@@ -4815,7 +4815,7 @@ TR::CompilationInfo::addMethodToBeCompiled(TR::IlGeneratorMethodDetails & detail
          {
          // Must find one that is SUSPENDED/SUSPENDING
          TR::CompilationInfoPerThread *compInfoPT = getFirstSuspendedCompilationThread();
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
          if (compInfoPT) // FIXME this is null sometimes during shutdown. Why??
 #endif
             {
@@ -5128,7 +5128,7 @@ TR::CompilationInfo::getNextMethodToBeCompiled(TR::CompilationInfoPerThread *com
       if (compInfoPT->isDiagnosticThread() // InstantReplay compilations must be processed immediately
           || _methodQueue->_priority >= CP_SYNC_MIN // sync comp
           || _methodQueue->_methodIsInSharedCache == TR_yes // very cheap relocation
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
           || getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER // compile right away in server mode
 #endif
          )
@@ -5416,9 +5416,9 @@ void TR::CompilationInfo::recycleCompilationEntry(TR_MethodToBeCompiled *entry)
    entry->_freeTag |= ENTRY_IN_POOL_NOT_FREE;
    if (entry->_numThreadsWaiting == 0)
       entry->_freeTag |= ENTRY_IN_POOL_FREE;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    entry->freeJITServerAllocations();
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    entry->_next = _methodPool;
    _methodPool = entry;
@@ -5931,18 +5931,14 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
          //
          if (vmThread->javaVM->sharedClassConfig->existsCachedCodeForROMMethod(vmThread, J9_ROM_METHOD_FROM_RAM_METHOD(method)))
             {
-            TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
-            if (
-               static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes
-               || (
-                  static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe
-                  && _sharedCacheReloRuntime.validateAOTHeader(fe, vmThread)
-                  )
-               )
+            if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_yes)
                {
                methodIsInSharedCache = TR_yes;
-//             if (getPersistentInfo()->isClassLoadingPhase() || TR::Options::getCmdLineOptions()->getOption(TR_ForceLoadAOT))
-                  useCodeFromSharedCache = true;
+               useCodeFromSharedCache = true;
+               }
+            else
+               {
+               TR_ASSERT_FATAL(static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader != TR_maybe, "Should not be possible for aotValidHeader to be TR_maybe at this point\n");
                }
             }
          }
@@ -6240,7 +6236,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
       //
       acquireCompMonitor(vmThread);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       // If a remote sync compilation has been changed to a local sync compilation,
       // queue a new remote async compilation entry for this method.
       // - The second compilation is queued only when this is the last thread waiting
@@ -6289,7 +6285,7 @@ void *TR::CompilationInfo::compileOnSeparateThread(J9VMThread * vmThread, TR::Il
                }
             }
          }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
       entry->_numThreadsWaiting--;
 
@@ -6852,9 +6848,9 @@ const void*
 TR::CompilationInfoPerThreadBase::findAotBodyInSCC(J9VMThread *vmThread, const J9ROMMethod *romMethod)
    {
 #if defined(J9VM_INTERP_AOT_RUNTIME_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    TR_ASSERT(!TR::CompilationInfo::getStream(), "This function should not be called at the server because SCC does not exist at the server.");
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    UDATA flags = 0;
    const void *aotCachedMethod = vmThread->javaVM->sharedClassConfig->findCompiledMethodEx1(vmThread, romMethod, &flags);
    if (!(flags & J9SHR_AOT_METHOD_FLAG_INVALIDATED))
@@ -6897,7 +6893,7 @@ TR::CompilationInfoPerThreadBase::isMethodIneligibleForAot(J9Method *method)
    return false;
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 bool
 TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeCompiled *entry)
    {
@@ -6919,7 +6915,7 @@ TR::CompilationInfoPerThreadBase::shouldPerformLocalComp(const TR_MethodToBeComp
 
    return doLocalComp;
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 /**
  * @brief TR::CompilationInfoPerThreadBase::preCompilationTasks
@@ -7161,19 +7157,19 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
    if (canDoRelocatableCompile)
       {
       entry->_useAotCompilation = true;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (entry->isOutOfProcessCompReq())
          _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::J9_SHARED_CACHE_SERVER_VM);
       else
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
          _vm = TR_J9VMBase::get(_jitConfig, vmThread, TR_J9VMBase::AOT_VM);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if ((_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT) &&
          !shouldPerformLocalComp(entry))
          {
          entry->setRemoteCompReq();
          }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       }
    else if (entry->isOutOfProcessCompReq())
       {
@@ -7186,7 +7182,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
       // This is used for JIT compilations and AOT loads on the client side or non-JITServer
       _vm = TR_J9VMBase::get(_jitConfig, vmThread);
       entry->_useAotCompilation = false;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       // When both canDoRelocatableCompile and TR::Options::canJITCompile() are false,
       // remote compilation request should not be used.
       if ((_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::CLIENT) &&
@@ -7237,7 +7233,7 @@ TR::CompilationInfoPerThreadBase::preCompilationTasks(J9VMThread * vmThread,
          if (!doLocalCompilation)
             entry->setRemoteCompReq();
          }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       }
    }
 
@@ -7271,7 +7267,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
                                                        bool eligibleForRelocatableCompile,
                                                        TR_RelocationRuntime *reloRuntime)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    // JITServer cleanup tasks
    if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
@@ -7304,7 +7300,7 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
             "For local compilations _chTableUpdateFlags should not have the bit set for this comp ID");
          }
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    void *startPC = NULL;
 #if defined(J9VM_INTERP_AOT_COMPILE_SUPPORT) && defined(J9VM_OPT_SHARED_CLASSES) && (defined(TR_HOST_X86) || defined(TR_HOST_POWER) || defined(TR_HOST_S390) || defined(TR_HOST_ARM) || defined(TR_HOST_ARM64))
@@ -7502,11 +7498,11 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
       //
       if (_compiler->cg() && _compiler->cg()->getCodeCache())
          {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
          // For JITServer we should wipe this method from the code cache
          if (_compInfo.getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
             _compiler->cg()->getCodeCache()->resetCodeCache();
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
          _compiler->cg()->getCodeCache()->unreserve();
          _compiler->cg()->setCodeCache(0);
          }
@@ -7542,12 +7538,12 @@ TR::CompilationInfoPerThreadBase::postCompilationTasks(J9VMThread * vmThread,
    if (_compiler && _compiler->getKnownObjectTable())
       _compiler->freeKnownObjectTable();
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (_compiler && _compiler->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
       {
       _compiler->getOptions()->closeLogFileForClientOptions();
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    if (_compiler)
       _compiler->~Compilation();
@@ -7741,12 +7737,12 @@ TR::CompilationInfoPerThreadBase::compile(J9VMThread * vmThread,
          }
 
       Trc_JIT_outOfMemory(vmThread);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (getCompilation() && getCompilation()->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          getCompilation()->getOptions()->closeLogFileForClientOptions();
          }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       if (getCompilation())
          {
          getCompilation()->~Compilation();
@@ -7885,7 +7881,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          TR_ASSERT(p->_optimizationPlan, "Must have an optimization plan");
 
          TR::CompilationInfo *compInfo = &that->_compInfo;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
          // If the options come from a remote party, skip the setup options process
          if (that->_methodBeingCompiled->_clientOptions != NULL)
             {
@@ -7897,9 +7893,9 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             options->setOption(TR_DisableFastAssumptionReclamation);
             }
          else
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
             {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
             // JITServer: we want to suppress log file for client mode
             // Client will get the log files from server.
             if (that->_methodBeingCompiled->isRemoteCompReq())
@@ -7907,7 +7903,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                TR::Options::suppressLogFileBecauseDebugObjectNotCreated();
                }
             TR_ASSERT(!that->_methodBeingCompiled->isOutOfProcessCompReq(), "JITServer should not change options passed by client");
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
             bool aotCompilationReUpgradedToWarm = false;
             if (that->_methodBeingCompiled->_useAotCompilation)
                {
@@ -8381,13 +8377,13 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                p->_optimizationPlan,
                reloRuntime);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
          // JITServer TODO: put info in optPlan so that compilation constructor can do this
          if (that->_methodBeingCompiled->isRemoteCompReq())
             compiler->setRemoteCompilation();
          else if (that->_methodBeingCompiled->isOutOfProcessCompReq())
             compiler->setOutOfProcessCompilation();
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
          p->trMemory()->setCompilation(compiler);
          that->setCompilation(compiler);
@@ -8413,7 +8409,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
                // Try to increase scratch space limit for JSR292 compilations
                proposedScratchMemoryLimit *= TR::Options::getScratchSpaceFactorWhenJSR292Workload();
                }
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
             else if (compiler->isOutOfProcessCompilation())
                {
                // We want to increase the scratch memory if it's a out of process compilation
@@ -8487,7 +8483,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
          {
          throw;
          }
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       catch (const JITServer::StreamFailure &e)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -8500,7 +8496,7 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
             TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "<EARLY TRANSLATION FAILURE: compilation interrupted by JITClient>");
          that->_methodBeingCompiled->_compErrCode = compilationStreamInterrupted;
          }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       catch (const J9::JITShutdown)
          {
          if (TR::Options::isAnyVerboseOptionSet(TR_VerboseCompileEnd, TR_VerboseCompFailure, TR_VerbosePerformance))
@@ -8522,12 +8518,12 @@ TR::CompilationInfoPerThreadBase::wrappedCompile(J9PortLibrary *portLib, void * 
 
       Trc_JIT_outOfMemory(vmThread);
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (compiler && compiler->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER)
          {
          compiler->getOptions()->closeLogFileForClientOptions();
          }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
       if (compiler)
          {
@@ -8812,13 +8808,13 @@ TR::CompilationInfoPerThreadBase::compile(
                   traceMsg(&_compiler, "\tmethod=\"%s\"\n", _compiler.signature());
                   traceMsg(&_compiler, "\thotness=\"%s\"\n", _compiler.getHotnessName(_compiler.getMethodHotness()));
                   traceMsg(&_compiler, "\tisProfilingCompile=%d", _compiler.isProfilingCompilation());
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
                   if (_compiler.isOutOfProcessCompilation() && TR::compInfoPT->getClientData()) // using jitserver && client JVM
                      {
                      traceMsg(&_compiler, "\n");
                      traceMsg(&_compiler, "\tclientID=%" OMR_PRIu64, TR::compInfoPT->getClientData()->getClientUID());
                      }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
                   traceMsg(&_compiler, ">\n");
                   }
                }
@@ -9003,12 +8999,12 @@ TR::CompilationInfoPerThreadBase::compile(
          {
          metaData = performAOTLoad(vmThread, compiler, compilee, &vm, method);
          }
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       else if (_methodBeingCompiled->isRemoteCompReq()) // JITServer Client Mode
          {
          metaData = remoteCompile(vmThread, compiler, compilee, method, details, this);
          }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       else // non-jitserver, non-aot-load
          {
          if (TR::Options::getVerboseOption(TR_VerboseCompilationDispatch))
@@ -9894,15 +9890,15 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
    TR::CompilationInfo *compInfo = TR::CompilationInfo::get();
 
    bool isJITServerMode = false;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    isJITServerMode = compInfo->getPersistentInfo()->getRemoteCompilationMode() == JITServer::SERVER;
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    if (details.isNewInstanceThunk())
       {
       if (isJITServerMode)
          {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
          if (startPC) // compilation succeeded
             {
             outOfProcessCompilationEnd(entry, comp);
@@ -9918,7 +9914,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
                entry->_stream->writeError(compErrCode);
             }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
          }
       else
          {
@@ -9950,7 +9946,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
    if (details.isMethodInProgress())
       {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (isJITServerMode)
          {
          if (startPC) // compilation succeeded
@@ -9970,7 +9966,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             }
          }
       else // local compilation
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
          {
          if (startPC) // compilation succeeded
             {
@@ -10007,7 +10003,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
 
    if (details.isMethodHandleThunk())
       {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (isJITServerMode)
          {
          if (startPC) // compilation succeeded
@@ -10027,7 +10023,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
             }
          }
       else // local compilation
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
          {
          if (startPC)
             {
@@ -10076,13 +10072,13 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       {
       TR_ASSERT_FATAL(comp && entry, "comp object and entry must always exist when calling compilationEnd for a successful compilation");
       TR_ASSERT(vmThread, "We must always have a vmThread in compilationEnd()\n");
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (isJITServerMode)
          {
          outOfProcessCompilationEnd(entry, comp);
          }
       else
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       if (!(jitConfig->runtimeFlags & J9JIT_TOSS_CODE))
          {
          if (trvm->isAOT_DEPRECATED_DO_NOT_USE() && !entry->isRemoteCompReq())
@@ -10368,7 +10364,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       //
       if (vmThread && entry && !entry->isOutOfProcessCompReq())
          jitMethodFailedTranslation(vmThread, method);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (entry && isJITServerMode) // failure at the JITServer
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -10386,7 +10382,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
             entry->_stream->writeError(compErrCode);
          }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       }
    else // recompilation failure
       {
@@ -10397,7 +10393,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
       if (!isJITServerMode)
          TR::Recompilation::methodCannotBeRecompiled(oldStartPC, trvm);
       startPC = oldStartPC;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (entry && isJITServerMode)
          {
          if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -10409,7 +10405,7 @@ TR::CompilationInfo::compilationEnd(J9VMThread * vmThread, TR::IlGeneratorMethod
          if (compErrCode != compilationStreamInterrupted && compErrCode != compilationStreamFailure)
             entry->_stream->writeError(compilationNotNeeded);
          }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       }
 
    if (((jitConfig->runtimeFlags & J9JIT_TOSS_CODE) || isJITServerMode) && comp)
@@ -11114,7 +11110,7 @@ TR::CompilationInfoPerThreadBase::processException(
          }
          Trc_JIT_compilationFailed(vmThread, compiler->signature(), -1);
       }
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    catch (const JITServer::StreamFailure &e)
       {
       if (TR::Options::getVerboseOption(TR_VerboseJITServer))
@@ -11144,7 +11140,7 @@ TR::CompilationInfoPerThreadBase::processException(
       // no need to set error code here because error code is set
       // in remoteCompile when the compilation failed
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
    catch (...)
       {
       _methodBeingCompiled->_compErrCode = compilationFailure;
@@ -11757,10 +11753,7 @@ TR::CompilationInfo::storeAOTInSharedCache(
       }
    else if (static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader == TR_maybe)
       {
-      // If validation has been performed, then a header already existed
-      // or one was already been created in this JVM
-      TR_J9SharedCacheVM *fe = (TR_J9SharedCacheVM *) TR_J9VMBase::get(jitConfig, vmThread, TR_J9VMBase::AOT_VM);
-      safeToStore = entry->_compInfoPT->reloRuntime()->storeAOTHeader(fe, vmThread);
+      TR_ASSERT_FATAL(static_cast<TR_JitPrivateConfig *>(jitConfig->privateConfig)->aotValidHeader != TR_maybe, "Should not be possible for aotValidHeader to be TR_maybe at this point\n");
       }
    else
       {
@@ -12882,7 +12875,7 @@ TR::CompilationInfo::canRelocateMethod(TR::Compilation *comp)
    return canRelocateMethod;
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 // This method is executed by the JITServer to queue a placeholder for
 // a compilation request received from the client. At the time the new
 // entry is queued we do not know any details about the compilation request.
@@ -12955,4 +12948,4 @@ TR::CompilationInfo::requeueOutOfProcessEntry(TR_MethodToBeCompiled *entry)
       getCompilationMonitor()->notifyAll();
       }
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */

@@ -1,6 +1,6 @@
 /*[INCLUDE-IF Sidecar18-SE]*/
 /*******************************************************************************
- * Copyright (c) 2009, 2019 IBM Corp. and others
+ * Copyright (c) 2009, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -169,36 +169,51 @@ public class MethodHandles {
 		static final int VARARGS = 0x80;
 		
 		/* single cached value of public Lookup object */
-		/*[IF Sidecar19-SE-OpenJ9]
-		static Lookup PUBLIC_LOOKUP = new Lookup(Object.class, Lookup.PUBLIC | Lookup.UNCONDITIONAL);
-		/*[ELSE]*/
-		static Lookup PUBLIC_LOOKUP = new Lookup(Object.class, Lookup.PUBLIC);
-		/*[ENDIF] Sidecar19-SE-OpenJ9*/
+		static final int mhMask = 
+		/*[IF Java11]*/
+		/*[IF Java14]*/
+		Lookup.UNCONDITIONAL;
+		/*[ELSE] Java14*/
+		Lookup.PUBLIC | Lookup.UNCONDITIONAL;
+		/*[ENDIF] Java14*/
+		/*[ELSE] Java11*/
+		Lookup.PUBLIC;
+		/*[ENDIF] Java11*/
+		static Lookup PUBLIC_LOOKUP = new Lookup(Object.class, mhMask);
 		
 		/* single cached internal privileged lookup */
 		static Lookup internalPrivilegedLookup = new Lookup(MethodHandle.class, Lookup.INTERNAL_PRIVILEGED);
 		static Lookup IMPL_LOOKUP = internalPrivilegedLookup; /* hack for b56 of lambda-dev */
 		
 		/* Access token used in lookups - Object for public lookup */
+		final Class<?> prevAccessClass;
 		final Class<?> accessClass;
 		final int accessMode;
 		private final  boolean performSecurityCheck;
 		
-		Lookup(Class<?> lookupClass, int lookupMode, boolean doCheck) {
+		Lookup(Class<?> lookupClass, Class<?> prevLookupClass, int lookupMode, boolean doCheck) {
 			this.performSecurityCheck = doCheck;
 			if (doCheck && (INTERNAL_PRIVILEGED != lookupMode)) {
-				if ( lookupClass.getName().startsWith("java.lang.invoke.")) {  //$NON-NLS-1$
+				if (lookupClass.getName().startsWith("java.lang.invoke.")) {  //$NON-NLS-1$
 					/*[MSG "K0588", "Illegal Lookup object - originated from java.lang.invoke: {0}"]*/
 					throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K0588", lookupClass.getName())); //$NON-NLS-1$
 				}
 			}
-
 			accessClass = lookupClass;
+			prevAccessClass = prevLookupClass;
 			accessMode = lookupMode;
 		}
 		
+		Lookup(Class<?> lookupClass, Class<?> prevLookupClass, int lookupMode) {
+			this(lookupClass, prevLookupClass, lookupMode, true);
+		}
+		
+		Lookup(Class<?> lookupClass, int lookupMode, boolean doCheck) {
+			this(lookupClass, null, lookupMode, doCheck);
+		}
+		
 		Lookup(Class<?> lookupClass, int lookupMode) {
-			this(lookupClass, lookupMode, true);			
+			this(lookupClass, lookupMode, true);
 		}
 		
 		Lookup(Class<?> lookupClass) {
@@ -206,8 +221,8 @@ public class MethodHandles {
 		}
 		
 		Lookup(Class<?> lookupClass, boolean performSecurityCheck) {
-			 this(lookupClass, FULL_ACCESS_MASK, performSecurityCheck);
-		} 
+			this(lookupClass, FULL_ACCESS_MASK, performSecurityCheck);
+		}
 	
 		/**
 		 * A query to determine the lookup capabilities held by this instance.  
@@ -217,7 +232,6 @@ public class MethodHandles {
 		public int lookupModes() {
 			return accessMode;
 		}
-	
 
 		/*
 		 * Is the varargs bit set?
@@ -400,7 +414,7 @@ public class MethodHandles {
 			checkClassAccess(clazz);
 		}
 		/*[ENDIF]*/
-						
+
 		/**
 		 * Checks whether {@link #accessClass} can access a specific member of the {@code referenceClass}.
 		 * Equivalent of visible.c checkVisibility();
@@ -430,10 +444,17 @@ public class MethodHandles {
 				Module accessModule = accessClass.getModule();
 
 				try {
+					/*[IF Java14]*/
+					checkClassModuleVisibility(accessMode, accessClass, prevAccessClass, type.returnType);
+					for (Class<?> c: type.arguments) {
+						checkClassModuleVisibility(accessMode, accessClass, prevAccessClass, c);
+					}
+					/*[ELSE]*/
 					checkClassModuleVisibility(accessMode, accessModule, type.returnType);
 					for (Class<?> c: type.arguments) {
 						checkClassModuleVisibility(accessMode, accessModule, c);
 					}
+					/*[ENDIF] Java14*/
 				} catch (IllegalAccessException exc) {
 					IllegalAccessError err = new IllegalAccessError(exc.getMessage());
 					err.initCause(exc);
@@ -454,7 +475,19 @@ public class MethodHandles {
 				}
 			} else if (Modifier.isProtected(memberModifiers)) {
 				/* Ensure that the accessMode is not restricted (public-only) */
-				if (PUBLIC != accessMode) {
+				/*[IF !Java14]*/
+				if (accessMode != PUBLIC)
+				/*[ELSE]*/
+				/* Note: the lookup with the PUBLIC plus MODULE or UNCONDITIONAL mode 
+				 * can access public types in all modules, which means the access to 
+				 * non-public types should be rejected if the PUBLIC plus MODULE 
+				 * or UNCONDITIONAL mode is specified.
+				 */
+				if ((accessMode != PUBLIC) 
+					&& (accessMode != (PUBLIC | MODULE))
+					&& (accessMode != UNCONDITIONAL))
+				/*[ENDIF] Java14 */
+				{
 					if (definingClass.isArray()) {
 						/* The only methods array classes have are defined on Object and thus accessible */
 						return;
@@ -535,28 +568,67 @@ public class MethodHandles {
 		 */
 		private void checkClassAccess(Class<?> targetClass) throws IllegalAccessException {
 			/*[IF Sidecar19-SE]*/
+			/*[IF Java14]*/
+			checkClassModuleVisibility(accessMode, accessClass, prevAccessClass, targetClass);
+			/*[ELSE]*/
 			checkClassModuleVisibility(accessMode, accessClass.getModule(), targetClass);
+			/*[ENDIF] Java14*/
 			/*[ENDIF]*/
+			
 			if (NO_ACCESS != accessMode) {
-				/* target class should always be accessible to the lookup class when they are the same class */
-				if (accessClass == targetClass) {
-					return;
-				}
-				
-				int modifiers = targetClass.getModifiers();
-				
 				/* A protected class (must be a member class) is compiled to a public class as
 				 * the protected flag of this class doesn't exist on the VM level (there is no 
 				 * access flag in the binary form representing 'protected')
 				 */
-				if (Modifier.isPublic(modifiers) || Modifier.isProtected(modifiers)) {
-					/* Already determined that we have more than "no access" (public access) */
+				int targetClassModifiers = targetClass.getModifiers();
+				final boolean targetClassIsPublic = (Modifier.isPublic(targetClassModifiers) || Modifier.isProtected(targetClassModifiers));
+				 
+				/*[IF Java14]*/
+				Module accessModule = accessClass.getModule();
+				Module targetModule = targetClass.getModule();
+				String targetClassPackageName = targetClass.getPackageName();
+
+				/* An UNCONDITIONAL lookup has access to public types in any unconditionally exported package */
+				if (((UNCONDITIONAL & accessMode) == UNCONDITIONAL)
+					&& targetClassIsPublic
+					&& targetModule.isExported(targetClassPackageName)
+				) {
 					return;
-				} else {
-					if (((PACKAGE == (accessMode & PACKAGE)) || Modifier.isPrivate(accessMode)) && isSamePackage(accessClass, targetClass)) {
+				} else if ((targetModule != null) && (accessModule != null) 
+						&& (accessModule.equals(targetModule) || (!accessModule.isNamed() && !targetModule.isNamed()))
+				) {
+					if (((PRIVATE & accessMode) == PRIVATE)
+						&& ((targetClass == accessClass) || targetClass.isNestmateOf(accessClass))
+					) {
+						return;
+					} else if (((PACKAGE & accessMode) == PACKAGE) && isSamePackage(targetClass, accessClass)) {
+						return;
+					} else if (((MODULE & accessMode) == MODULE) && targetClassIsPublic) {
+						return;
+					} else if (((PUBLIC & accessMode) == PUBLIC) && targetClassIsPublic
+						&& (((prevAccessClass != null) && targetModule.isExported(targetClassPackageName, prevAccessClass.getModule()))
+							|| targetModule.isExported(targetClassPackageName))
+					) {
 						return;
 					}
+				} else if ((PUBLIC & accessMode) == PUBLIC) {
+				/*[ENDIF] Java14*/
+					/* target class should always be accessible to the lookup class when they are the same class */
+					if (accessClass == targetClass) {
+						return;
+					}
+					
+					if (targetClassIsPublic) {
+						/* Already determined that we have more than "no access" (public access) */
+						return;
+					} else {
+						if (((PACKAGE == (accessMode & PACKAGE)) || Modifier.isPrivate(accessMode)) && isSamePackage(accessClass, targetClass)) {
+							return;
+						}
+					}
+				/*[IF Java14]*/
 				}
+				/*[ENDIF] Java14*/
 			}
 
 			/*[MSG "K0680", "Class '{0}' no access to: class '{1}'"]*/
@@ -769,6 +841,77 @@ public class MethodHandles {
 			}
 			return moduleName;
 		}
+		
+		/*[IF Java14]*/
+		/**
+		 * Check if targetClass is in a package visible from the accessModule 
+		 * whether the previous lookup class is present or not
+		 * 
+		 * @param accessMode access mode of the lookup object
+		 * @param accessClass the referring class
+		 * @param prevAccessClass the previous lookup class
+		 * @param targetClass Class which the referring class is accessing
+		 * @throws IllegalAccessException if the targetClass is not visible
+		 */
+		static void checkClassModuleVisibility(int accessMode, Class<?> accessClass, Class<?> prevAccessClass, Class<?> targetClass) throws IllegalAccessException {
+			if (prevAccessClass == null) {
+				checkClassModuleVisibility(accessMode, accessClass.getModule(), targetClass);
+			}else {
+				checkClassModuleVisibilityWithPrevAccessClass(accessClass, prevAccessClass, targetClass);
+			}
+		}
+		/**
+		 * Check if targetClass is in a package visible from the accessModule in the presense of the previous lookup class
+		 * 
+		 * @param accessModule module of the referring class
+		 * @param prevAccessClass the previous lookup class
+		 * @param targetClass Class which the referring class is accessing
+		 * @return true if the targetClass is visible; otherwise return false
+		 */
+		static void checkClassModuleVisibilityWithPrevAccessClass(Class<?> accessClass, Class<?> prevAccessClass, Class<?> targetClass) throws IllegalAccessException {
+			Module prevAccessClassModule = prevAccessClass.getModule();
+			Module accessModule = accessClass.getModule();
+			Module targetModule = targetClass.getModule();
+			String targetClassPackageName = targetClass.getPackageName();
+			
+			if ((prevAccessClassModule != null) && (accessModule != null) && (targetModule != null)) {
+				if (prevAccessClassModule.equals(targetModule)
+					|| (!prevAccessClassModule.isNamed() && !targetModule.isNamed())
+				) {
+					if (!accessModule.canRead(prevAccessClassModule)) {
+						/*[MSG "K0679", "Module '{0}' no access to: package '{1}' because module '{0}' can't read module '{2}'"]*/
+						throw throwIllegalAccessException(accessModule, prevAccessClassModule, prevAccessClass.getPackageName(), "K0679"); //$NON-NLS-1$
+					} else if (!targetModule.isExported(targetClassPackageName, accessModule)) {
+						/*[MSG "K0677", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}' to module '{0}'"]*/
+						throw throwIllegalAccessException(accessModule, targetModule, targetClassPackageName, "K0677"); //$NON-NLS-1$
+					}
+				} else if (accessModule.equals(targetModule)
+					|| (!accessModule.isNamed() && !targetModule.isNamed())
+				) {
+					if (!prevAccessClassModule.canRead(accessModule)) {
+						/*[MSG "K0679", "Module '{0}' no access to: package '{1}' because module '{0}' can't read module '{2}'"]*/
+						throw throwIllegalAccessException(prevAccessClassModule, accessModule, accessClass.getPackageName(), "K0679"); //$NON-NLS-1$
+					} else if (!targetModule.isExported(targetClassPackageName, prevAccessClassModule)) {
+						/*[MSG "K0677", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}' to module '{0}'"]*/
+						throw throwIllegalAccessException(prevAccessClassModule, targetModule, targetClassPackageName, "K0677"); //$NON-NLS-1$
+					}
+				} else if (!prevAccessClassModule.canRead(targetModule)) {
+					/*[MSG "K0679", "Module '{0}' no access to: package '{1}' because module '{0}' can't read module '{2}'"]*/
+					throw throwIllegalAccessException(prevAccessClassModule, targetModule, targetClassPackageName, "K0679"); //$NON-NLS-1$
+				} else if (!accessModule.canRead(targetModule)) {
+					/*[MSG "K0679", "Module '{0}' no access to: package '{1}' because module '{0}' can't read module '{2}'"]*/
+					throw throwIllegalAccessException(accessModule, targetModule, targetClassPackageName, "K0679"); //$NON-NLS-1$
+				} else if (!targetModule.isExported(targetClassPackageName, prevAccessClassModule)) {
+					/*[MSG "K0677", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}' to module '{0}'"]*/
+					throw throwIllegalAccessException(prevAccessClassModule, targetModule, targetClassPackageName, "K0677"); //$NON-NLS-1$
+				} else if (!targetModule.isExported(targetClassPackageName, accessModule)) {
+					/*[MSG "K0677", "Module '{0}' no access to: package '{1}' which is not exported by module '{2}' to module '{0}'"]*/
+					throw throwIllegalAccessException(accessModule, targetModule, targetClassPackageName, "K0677"); //$NON-NLS-1$
+				}
+			}
+		}
+		/*[ENDIF] Java14*/
+
 		/**
 		 * Check if targetClass is in a package visible from the accessModule
 		 * @param accessMode access mode of the lookup object
@@ -776,7 +919,6 @@ public class MethodHandles {
 		 * @param targetClass Class which the referring class is accessing
 		 * @throws IllegalAccessException if the targetClass is not visible
 		 */
-
 		static void checkClassModuleVisibility(int accessMode, Module accessModule, Class<?> targetClass) throws IllegalAccessException {
 			if (INTERNAL_PRIVILEGED != accessMode) {
 				Module targetModule = targetClass.getModule();
@@ -793,8 +935,10 @@ public class MethodHandles {
 					} else if (!targetModule.isExported(targetClassPackageName)) {
 						// Need MODULE access to see packages conditionally exported
 						if (((MODULE & accessMode) != MODULE) 
-							|| (!accessModule.equals(targetModule) 
-								&& !targetModule.isExported(targetClassPackageName, accessModule))) {
+							|| (!accessModule.equals(targetModule)
+								&& (accessModule.isNamed() || targetModule.isNamed())
+								&& !targetModule.isExported(targetClassPackageName, accessModule))
+						) {
 							throw throwIllegalAccessException(accessModule, targetModule, targetClassPackageName, "K0677"); //$NON-NLS-1$
 						}
 					}
@@ -1100,6 +1244,18 @@ public class MethodHandles {
 			return handle;
 		}
 		
+		/*[IF Java14]*/
+		/**
+		 * Create a lookup on the request class.  The resulting lookup will have no more 
+		 * access privileges than the original.
+		 * 
+		 * @param lookupClass - the class to create the lookup on
+		 * @return a new MethodHandles.Lookup object
+		 * @throws NullPointerException - if lookupClass is null
+		 * @throws IllegalArgumentException - if the requested Class is a primitive type or an array class
+		 */
+		public MethodHandles.Lookup in(Class<?> lookupClass) throws NullPointerException, IllegalArgumentException {
+		/*[ELSE]*/
 		/**
 		 * Create a lookup on the request class.  The resulting lookup will have no more 
 		 * access privileges than the original.
@@ -1107,22 +1263,33 @@ public class MethodHandles {
 		 * @param lookupClass - the class to create the lookup on
 		 * @return a new MethodHandles.Lookup object
 		 */
-		public MethodHandles.Lookup in(Class<?> lookupClass){
-			lookupClass.getClass();	// implicit null check
+		public MethodHandles.Lookup in(Class<?> lookupClass) {
+		/*[ENDIF] Java14 */
+			Objects.requireNonNull(lookupClass);
+			
+			/*[IF Java14]*/
+			if (lookupClass.isPrimitive() || lookupClass.isArray()) {
+				/*[MSG "K065T", "The requested class: {0} must not be a void type, primitive type or an array class"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065T", lookupClass.getCanonicalName())); //$NON-NLS-1$
+			}
+			/*[ENDIF] Java14 */
 			
 			// If it's the same class as ourselves, return this
 			if (lookupClass == accessClass) {
 				return this;
 			}
 			
+			int newAccessMode = accessMode;
 			/*[IF ]*/
 			/* If the new lookup class differs from the old one, protected members will not be accessible by virtue of inheritance. (Protected members may continue to be accessible because of package sharing.) */
 			/*[ENDIF]*/
 			/*[IF !Sidecar19-SE-OpenJ9]
-			int newAccessMode = accessMode & ~PROTECTED;
+			newAccessMode &= ~PROTECTED;
 			/*[ELSE]*/
+			/*[IF !Java14]*/
 			/* The UNCONDITIONAL bit is discarded if the new lookup class differs from the old one in Java 9 */
-			int newAccessMode = accessMode & ~UNCONDITIONAL;
+			newAccessMode &= ~UNCONDITIONAL;
+			/*[ENDIF] Java14 */
 			
 			/* There are 3 cases to be addressed for the new lookup class from a different module:
 			 * 1) There is no access if the package containing the new lookup class is not exported to 
@@ -1137,7 +1304,9 @@ public class MethodHandles {
 			if (!Objects.equals(accessClassModule, lookupClassModule)) {
 				if (!lookupClassModule.isExported(lookupClass.getPackageName(), accessClassModule)) {
 					newAccessMode = NO_ACCESS;
-				} else if (accessClassModule.isNamed()) {
+				} else
+				/*[IF !Java14]*/
+				if (accessClassModule.isNamed()) {
 					/* If the old lookup class is in a named module different from the new lookup class,
 					 * we should keep the public access only when it is a public lookup.
 					 */
@@ -1146,7 +1315,9 @@ public class MethodHandles {
 					} else {
 						newAccessMode = NO_ACCESS;
 					}
-				} else {
+				} else
+				/*[ENDIF] Java14 */
+				{
 					newAccessMode &= ~MODULE;
 				}
 			}
@@ -1173,16 +1344,13 @@ public class MethodHandles {
 				}
 			}
 			
-			/*[IF ]*/
-			/* If the new lookup class is not accessible to the old lookup class, then no members, not even public members, will be accessible. (In all other cases, public members will continue to be accessible.) */
-			/*[ENDIF]*/
-			/* Treat a protected class as public as the access flag of a protected class
-			 * is set to public when compiled to a class file.
+			/* A protected class (must be a member class) is compiled to a public class as
+			 * the protected flag of this class doesn't exist on the VM level (there is no 
+			 * access flag in the binary form representing 'protected')
 			 */
 			int lookupClassModifiers = lookupClass.getModifiers();
-			if(!Modifier.isPublic(lookupClassModifiers)
-			&& !Modifier.isProtected(lookupClassModifiers)
-			){
+			final boolean lookupClassIsPublic = (Modifier.isPublic(lookupClassModifiers) || Modifier.isProtected(lookupClassModifiers));
+			if(!lookupClassIsPublic) {
 				if(isSamePackage(accessClass, lookupClass)) {
 					if (0 == (accessMode & PACKAGE)) {
 						newAccessMode = NO_ACCESS;
@@ -1197,7 +1365,60 @@ public class MethodHandles {
 				}
 			}
 			
-			return new Lookup(lookupClass, newAccessMode); 
+			/*[IF Java14]*/
+			/* If the new lookup class is not accessible to the old lookup class, 
+			 * then no members, not even public members, will be accessible.
+			 * Note: the invocation of accessClass() is explicitly required since JDK14
+			 * to do the access check on the requested lookup class.
+			 */
+			if (!isClassAccessible(lookupClass)) {
+				newAccessMode = NO_ACCESS;
+			}
+			
+			/* There is no access for the requested lookup class if the previous lookup
+			 * class's module is different from the modules of the requested lookup class
+			 * and the old lookup class (i.e.teleporting to a third module).
+			 * e.g. 
+			 * when the previous lookup class is in the module called M0,
+			 * the old lookup class is in the module called M1 and the requested lookup
+			 * class is in the module called M2, if M0 != M1 && M1 != M2 && M0 != M2
+			 * (only one module among them is allowed to be unnamed), then teleporting
+			 * from M0 to M2 (a 3rd module) will lose all accesses.
+			 * Note: all unnamed modules are treated as the same modules.
+			 */
+			Module prevAccessClassModule = (prevAccessClass != null) ? prevAccessClass.getModule() : null;
+			if (prevAccessClassModule != null) {
+				boolean isDiffModule1 = (!Objects.equals(prevAccessClassModule, accessClassModule)
+						&& (prevAccessClassModule.isNamed() || accessClassModule.isNamed()));
+				boolean isDiffModule2 = (!Objects.equals(accessClassModule, lookupClassModule)
+						&& (accessClassModule.isNamed() || lookupClassModule.isNamed()));
+				boolean isDiffModule3 = (!Objects.equals(prevAccessClassModule, lookupClassModule)
+						&& (prevAccessClassModule.isNamed() || lookupClassModule.isNamed()));
+
+				if (isDiffModule1 && isDiffModule2 && isDiffModule3) {
+					newAccessMode = NO_ACCESS;
+				}
+			}
+			
+			/* Set up the previous lookup class as the new previous lookup class assuming
+			 * the requested & currently configured lookup classes are in the same module;
+			 * otherwise, the new previous lookup class is the old lookup class.
+			 */
+			Class<?> newPrevAccessClass = (Objects.equals(lookupClassModule, accessClassModule)) ?
+									prevAccessClass : accessClass;
+			
+			/* If the existing access mode has UNCONDITIONAL bit, which means the previous
+			 * lookup class of the old lookup is also null, then there is no previous lookup
+			 * class for the requested lookup class.
+			 */
+			if ((accessMode & UNCONDITIONAL) == UNCONDITIONAL) {
+				newPrevAccessClass = null;
+			}
+			
+			return new Lookup(lookupClass, newPrevAccessClass, newAccessMode);
+			/*[ELSE]*/
+			return new Lookup(lookupClass, newAccessMode);
+			/*[ENDIF] Java14*/
 		}
 		
 		/*
@@ -1222,6 +1443,32 @@ public class MethodHandles {
 		public Class<?> lookupClass() {
 			return accessClass;
 		}
+		
+		/*[IF Java14]*/
+		/**
+		 * The class previously being used for visibility checks and access permissions.
+		 * 
+		 * @return The class previously used in by this Lookup object for access checking
+		 */
+		public Class<?> previousLookupClass() {
+			return prevAccessClass;
+		}
+		
+		/**
+		 * Check whether the target class is accessible to the lookup class.
+		 * 
+		 * @param targetClass The {@link Class} being accessed.
+		 * @return true if the accessiblity check is passed; otherwise return false.
+		 */
+		private boolean isClassAccessible(Class<?> targetClass) {
+			try {
+				accessClass(targetClass);
+			} catch (IllegalAccessException exc) {
+				return false;
+			}
+			return true;
+		}
+		/*[ENDIF] Java14*/
 		
 		/**
 		 * Make a MethodHandle to the Reflect method.  If the method is non-static, the receiver argument
@@ -1552,6 +1799,12 @@ public class MethodHandles {
 		@Override
 		public String toString() {
 			String toString = accessClass.getName();
+			/*[IF Java14]*/
+			if (prevAccessClass != null) {
+				toString += "/" + prevAccessClass.getName(); //$NON-NLS-1$
+			}
+			/*[ENDIF] Java14*/
+			
 			switch(accessMode) {
 			case NO_ACCESS:
 				toString += "/noaccess"; //$NON-NLS-1$
@@ -1560,6 +1813,22 @@ public class MethodHandles {
 				toString += "/public"; //$NON-NLS-1$
 				break;
 			/*[IF Sidecar19-SE-OpenJ9]
+			/*[IF Java14]*/
+			case UNCONDITIONAL:
+				toString += "/publicLookup"; //$NON-NLS-1$
+				break;
+			case PUBLIC | MODULE:
+				toString += "/module"; //$NON-NLS-1$
+				break;
+			case PUBLIC | PACKAGE: /* fall through */
+			case PUBLIC | PACKAGE | MODULE:
+				toString += "/package"; //$NON-NLS-1$
+				break;
+			case PUBLIC | PACKAGE | PRIVATE: /* fall through */
+			case PUBLIC | PACKAGE | PRIVATE | MODULE:
+				toString += "/private"; //$NON-NLS-1$
+				break;
+			/*[ELSE]*/
 			case PUBLIC | UNCONDITIONAL:
 				toString += "/publicLookup"; //$NON-NLS-1$
 				break;
@@ -1572,6 +1841,7 @@ public class MethodHandles {
 			case PUBLIC | PACKAGE | PRIVATE | MODULE:
 				toString += "/private"; //$NON-NLS-1$
 				break;
+			/*[ENDIF] Java14 */
 			/*[ELSE]*/
 			case PUBLIC | PACKAGE:
 				toString += "/package"; //$NON-NLS-1$
@@ -1815,7 +2085,11 @@ public class MethodHandles {
 			}
 			
 			SecurityManager secmgr = System.getSecurityManager();
-			if (null != secmgr) {
+			if ((null != secmgr)
+				/*[IF Java14]*/
+				&& !hasFullPrivilegeAccess()
+				/*[ENDIF] Java14*/
+			) {
 				secmgr.checkPermission(com.ibm.oti.util.RuntimePermissions.permissionDefineClass);
 			}
 			
@@ -1855,8 +2129,9 @@ public class MethodHandles {
 		
 		/**
 		 * Return a MethodHandles.Lookup object without the requested lookup mode.
+		 * Note: the requested mode must exists in the access mode; otherwise, do nothing.
 		 * 
-		 * @param dropMode the mode to be dropped
+		 * @param dropMode the mode to be dropped which must exists in the access mode
 		 * @return a MethodHandles.Lookup object without the requested lookup mode
 		 * @throws IllegalArgumentException - if the requested lookup mode is not one of the existing access modes
 		 */
@@ -1865,16 +2140,35 @@ public class MethodHandles {
 			 * as it is not set up for lookup objects by default.
 			 */
 			int fullAccessMode = FULL_ACCESS_MASK | MODULE | UNCONDITIONAL;
+			
+			switch(dropMode) {
+			case PUBLIC:
+			case MODULE:
+			case PACKAGE:
+			case PRIVATE:
+			case PROTECTED:
+			case UNCONDITIONAL:
+				/* dropMode is OK */
+				break;
+			default:
+				/*[MSG "K065R", "The requested lookup mode: 0x{0} is not one of the existing access modes: 0x{1}"]*/
+				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065R", Integer.toHexString(dropMode), Integer.toHexString(fullAccessMode))); //$NON-NLS-1$
+			}
 
+			/*[IF Java14]*/
+			/* The lookup object has to discard the protected access by default */
+			int newAccessMode = accessMode & ~PROTECTED;
+			/*[ELSE]*/
 			/* The lookup object has to discard the protected and unconditional access by default */
 			int newAccessMode = accessMode & ~(PROTECTED | UNCONDITIONAL);
+			/*[ENDIF] Java14*/
 			
-			switch (dropMode) {
+			/* The access mode to be dropped must exist in the current access mode;
+			 * otherwise, the new access mode remains unchanged.
+			 */
+			switch (dropMode & newAccessMode) {
 			case PUBLIC:
 				newAccessMode = NO_ACCESS;
-				break;
-			case MODULE:
-				newAccessMode &= ~(MODULE | PACKAGE | PRIVATE);
 				break;
 			case PACKAGE:
 				newAccessMode &= ~(PACKAGE | PRIVATE);
@@ -1882,15 +2176,37 @@ public class MethodHandles {
 			case PRIVATE:
 				newAccessMode &= ~PRIVATE;
 				break;
-			case PROTECTED:
 			case UNCONDITIONAL:
+				/*[IF Java14]*/
+				newAccessMode = NO_ACCESS;
+				/*[ENDIF] Java14*/
 				break;
 			default:
-				/*[MSG "K065R", "The requested lookup mode: 0x{0} is not one of the existing access modes: 0x{1}"]*/
-				throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065R", Integer.toHexString(dropMode), Integer.toHexString(fullAccessMode))); //$NON-NLS-1$
+				/* no change in the access mode */
 			}
 			
-			return new Lookup(accessClass, newAccessMode); 
+			/* The exception is MODULE in which case all access bits involved must be dropped
+			 * whether or not the MODULE bit exists in the access mode.
+			 */
+			if ((dropMode == MODULE) || ((dropMode & newAccessMode) == MODULE)) {
+				newAccessMode &= ~(MODULE | PACKAGE | PRIVATE);
+			}
+			
+			/*[IF Java14]*/
+			/* There is no previous lookup class for the requested lookup class
+			 * if the MODULE or UNCONDITIONAL bit is set in the new access mode.
+			 */
+			Class<?> newPrevAccessClass = prevAccessClass;
+			if (((newAccessMode & MODULE) == MODULE)
+				|| ((newAccessMode & UNCONDITIONAL) == UNCONDITIONAL)
+			) {
+				newPrevAccessClass = null;
+			}
+			
+			return new Lookup(accessClass, newPrevAccessClass, newAccessMode);
+			/*[ELSE]*/
+			return new Lookup(accessClass, newAccessMode);
+			/*[ENDIF] Java14*/
 		}
 		
 		/**
@@ -1898,14 +2214,37 @@ public class MethodHandles {
 		 * 
 		 * @return a boolean type indicating whether the lookup class has private access
 		 */
+		/*[IF Java14]*/
+		@Deprecated(forRemoval=false, since="14")
+		/*[ENDIF] Java14 */
 		public boolean hasPrivateAccess() {
 			/* Full access for use by MH implementation */
 			if (INTERNAL_PRIVILEGED == accessMode) {
 				return true;
 			}
 			
+			/*[IF Java14]*/
+			return (!isWeakenedLookup() && (MODULE == (accessMode & MODULE)));
+			/*[ELSE]*/
 			return !isWeakenedLookup();
+			/*[ENDIF] Java14*/
 		}
+		
+		/*[IF Java14]*/
+		/**
+		 * Return true if the lookup class has full privilege access
+		 * 
+		 * @return a boolean type indicating whether the lookup class has full privilege access
+		 */
+		public boolean hasFullPrivilegeAccess() {
+			/* Full access for use by MH implementation */
+			if (INTERNAL_PRIVILEGED == accessMode) {
+				return true;
+			}
+			
+			return (!isWeakenedLookup() && (MODULE == (accessMode & MODULE)));
+		}
+		/*[ENDIF] Java14*/
 		/*[ENDIF]*/
 	}
 	
@@ -1960,7 +2299,7 @@ public class MethodHandles {
 		}
 		
 		if (targetClass.isPrimitive() || targetClass.isArray()) {
-			/*[MSG "K065T", "The target class: {0} must not be a primitive type or an array class"]*/
+			/*[MSG "K065T", "The requested class: {0} must not be a void type, primitive type or an array class"]*/
 			throw new IllegalArgumentException(com.ibm.oti.util.Msg.getString("K065T", targetClass.getCanonicalName())); //$NON-NLS-1$
 		}
 		
@@ -1985,17 +2324,32 @@ public class MethodHandles {
 		}
 		
 		int callerLookupMode = callerLookup.lookupModes();
-		if (Lookup.MODULE != (Lookup.MODULE & callerLookupMode)) {
-			/*[MSG "K065W", "The access mode: 0x{0} of the caller lookup doesn't have the MODULE mode : 0x{1}"]*/
-			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065W", Integer.toHexString(callerLookupMode), Integer.toHexString(Lookup.MODULE))); //$NON-NLS-1$
+		/*[IF Java14]*/
+		if (!callerLookup.hasFullPrivilegeAccess()) {
+			/*[MSG "K065W1", "The access mode: 0x{0} of the caller lookup doesn't have the PRIVATE & MODULE mode : 0x{1}"]*/
+			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065W1", Integer.toHexString(callerLookupMode), Integer.toHexString(Lookup.PRIVATE | Lookup.MODULE))); //$NON-NLS-1$
 		}
+		/*[ELSE]*/
+		if (Lookup.MODULE != (Lookup.MODULE & callerLookupMode)) {
+			/*[MSG "K065W2", "The access mode: 0x{0} of the caller lookup doesn't have the MODULE mode : 0x{1}"]*/
+			throw new IllegalAccessException(com.ibm.oti.util.Msg.getString("K065W2", Integer.toHexString(callerLookupMode), Integer.toHexString(Lookup.MODULE))); //$NON-NLS-1$
+		}
+		/*[ENDIF] Java14*/
 		
 		SecurityManager secmgr = System.getSecurityManager();
 		if (null != secmgr) {
 			secmgr.checkPermission(com.ibm.oti.util.ReflectPermissions.permissionSuppressAccessChecks);
 		}
 		
+		/*[IF Java14]*/
+		if (Objects.equals(targetClassModule, accessClassModule)) {
+			return new Lookup(targetClass, null, callerLookupMode);
+		} else {
+			return new Lookup(targetClass, callerLookup.lookupClass(), (callerLookupMode & ~Lookup.MODULE));
+		}
+		/*[ELSE]*/
 		return new Lookup(targetClass);
+		/*[ENDIF] Java14*/
 	}
 	/*[ENDIF] Sidecar19-SE-OpenJ9*/
 	
@@ -2466,9 +2820,13 @@ public class MethodHandles {
 	 * @throws NullPointerException If {@code viewArrayClass} or {@code byteOrder} is null
 	 */
 	public static VarHandle byteArrayViewVarHandle(Class<?> viewArrayClass, ByteOrder byteOrder) throws IllegalArgumentException {
-		checkArrayClass(viewArrayClass);
 		Objects.requireNonNull(byteOrder);
+		/*[IF Java14]*/
+		return VarHandles.byteArrayViewHandle(viewArrayClass, (byteOrder == ByteOrder.BIG_ENDIAN));
+		/*[ELSE] Java14
+		checkArrayClass(viewArrayClass);
 		return new ByteArrayViewVarHandle(viewArrayClass.getComponentType(), byteOrder);
+		/*[ENDIF] Java14 */
 	}
 	
 	/**
@@ -2481,9 +2839,13 @@ public class MethodHandles {
 	 * @throws NullPointerException If {@code viewArrayClass} or {@code byteOrder} is null
 	 */
 	public static VarHandle byteBufferViewVarHandle(Class<?> viewArrayClass, ByteOrder byteOrder) throws IllegalArgumentException {
-		checkArrayClass(viewArrayClass);
 		Objects.requireNonNull(byteOrder);
+		/*[IF Java14]*/
+		return VarHandles.makeByteBufferViewHandle(viewArrayClass, (byteOrder == ByteOrder.BIG_ENDIAN));
+		/*[ELSE] Java14
+		checkArrayClass(viewArrayClass);
 		return new ByteBufferViewVarHandle(viewArrayClass.getComponentType(), byteOrder);
+		/*[ENDIF] Java14 */
 	}
 	
 	private static void checkArrayClass(Class<?> arrayClass) throws IllegalArgumentException {

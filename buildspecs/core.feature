@@ -44,7 +44,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<project id="runtime"/>
 	</source>
 	<flags>
-		<flag id="build_jitserver" value="false"/>
 		<flag id="build_stage_ottawa_vmlab" value="true"/>
 		<flag id="build_uma" value="true"/>
 		<flag id="compiler_promotion" value="true"/>
@@ -109,6 +108,7 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<flag id="module_vm" value="true"/>
 		<flag id="opt_fragmentRamClasses" value="true"/>
 		<flag id="opt_inlineJsrs" value="true"/>
+		<flag id="opt_jitserver" value="false"/>
 		<flag id="opt_module" value="true"/>
 		<flag id="opt_newObjectHash" value="true"/>
 		<flag id="opt_newRomClassBuilder" value="true"/>

@@ -186,10 +186,6 @@ SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-excepti
 		<description>BuildSpec represents a Java 9x configuration.</description>
 		<ifRemoved></ifRemoved>
 	</flag>
-	<flag id="build_jitserver">
-		<description>JITServer support is enabled in the buildspec.</description>
-		<ifRemoved></ifRemoved>
-	</flag>
 	<flag id="build_openj9">
 		<description>Buildspec compiles sources with openjdk.</description>
 		<ifRemoved>Openj9 clone,make jobs longer run on this buildspec.</ifRemoved>
@@ -1003,13 +999,13 @@ all data is stored in their own region. It additionaly reduces footprint, mainly
 		<description>DEBUGGING FEATURE.  Determines if the interpreter produces debug information at every bytecode.</description>
 		<ifRemoved>No full trace available.</ifRemoved>
 	</flag>
-	<flag id="interp_updateVMCTracing">
-		<description>Debug mode for tracing uses of updateVMStruct</description>
-		<ifRemoved>No tracing of updateVMStruct helpers</ifRemoved>
-	</flag>
 	<flag id="interp_twoPassExclusive">
 		<description>Exclusive VM access - Set halt bit in one pass, count responders in another pass</description>
 		<ifRemoved>Set and count in a single pass</ifRemoved>
+	</flag>
+	<flag id="interp_updateVMCTracing">
+		<description>Debug mode for tracing uses of updateVMStruct</description>
+		<ifRemoved>No tracing of updateVMStruct helpers</ifRemoved>
 	</flag>
 	<flag id="interp_useUnsafeHelper">
 		<description>If set, use helper functions in UnsafeAPI to access native memory</description>
@@ -1772,6 +1768,10 @@ Only available on zOS</description>
 		<requires>
 			<require flag="module_ifa"/>
 		</requires>
+	</flag>
+	<flag id="opt_jitserver">
+		<description>JITServer support is enabled in the buildspec.</description>
+		<ifRemoved></ifRemoved>
 	</flag>
 	<flag id="opt_jvmti">
 		<description>Support for the JVMTI interface</description>

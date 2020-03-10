@@ -326,7 +326,7 @@ def set_repos_variables(BUILD_SPECS=null) {
 * Initializes OpenJDK repository URL, branch, SHA for given release and returns
 * them as a map.
 * Build parameters take precedence over custom variables (see variables file).
-* Throws an error if repository URL or branch are not provided. 
+* Throws an error if repository URL or branch are not provided.
 */
 def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
     // map to store git repository information by spec
@@ -398,9 +398,9 @@ def get_openjdk_info(SDK_VERSION, SPECS, MULTI_RELEASE) {
 
 /*
 * Initializes the OpenJ9 and OMR repositories variables with values from
-* the variables file if they are not set as build parameters. 
+* the variables file if they are not set as build parameters.
 * If no values available in the variable file then initialize these variables
-* with default values, otherwise set them to empty strings (to avoid 
+* with default values, otherwise set them to empty strings (to avoid
 * downstream builds errors - Jenkins build parameters should not be null).
 */
 def set_extensions_variables(defaults=null) {
@@ -622,9 +622,11 @@ def set_sdk_variables() {
     SDK_FILENAME = "OpenJ9-JDK${SDK_VERSION}-${SPEC}-${DATESTAMP}.tar.gz"
     TEST_FILENAME = "test-images.tar.gz"
     JAVADOC_FILENAME = "OpenJ9-JDK${SDK_VERSION}-Javadoc-${SPEC}-${DATESTAMP}.tar.gz"
+    DEBUG_IMAGE_FILENAME = "debug-image.tar.gz"
     echo "Using SDK_FILENAME = ${SDK_FILENAME}"
     echo "Using TEST_FILENAME = ${TEST_FILENAME}"
     echo "Using JAVADOC_FILENAME = ${JAVADOC_FILENAME}"
+    echo "Using DEBUG_IMAGE_FILENAME = ${DEBUG_IMAGE_FILENAME}"
     DIAGNOSTICS_FILENAME = "${JOB_NAME}-${BUILD_NUMBER}-${DATESTAMP}-diagnostics.tar.gz"
 }
 
@@ -1290,7 +1292,7 @@ def create_job(JOB_NAME, SDK_VERSION, SPEC, downstreamJobType, id){
 
     def templatePath = 'buildenv/jenkins/jobs/pipelines/Pipeline_Template.groovy'
     pipelineFunctions.retry_and_delay({
-        jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params}, 
+        jobDsl targets: templatePath, ignoreExisting: false, additionalParameters: params},
         3, 120)
 }
 

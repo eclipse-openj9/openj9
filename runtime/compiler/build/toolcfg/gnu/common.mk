@@ -1,4 +1,4 @@
-# Copyright (c) 2000, 2019 IBM Corp. and others
+# Copyright (c) 2000, 2020 IBM Corp. and others
 #
 # This program and the accompanying materials are made available under
 # the terms of the Eclipse Public License 2.0 which accompanies this
@@ -30,8 +30,10 @@ OBJSUFF=.o
 ARSUFF=.a
 ifeq ($(OS),osx)
 SOSUFF=.dylib
+DBGSUFF=$(SOSUFF).dSYM
 else
 SOSUFF=.so
+DBGSUFF=.debuginfo
 endif
 EXESUFF=
 LIBPREFIX=lib
@@ -49,6 +51,11 @@ DEPSUFF=.depend.mk
 M4?=m4
 SED?=sed
 PERL?=perl
+ifeq ($(OS),osx)
+DSYMUTIL?=dsymutil
+else
+OBJCOPY?=objcopy
+endif
 
 #
 # z/Architecture arch and tune level
@@ -105,7 +112,7 @@ CX_FLAGS+=\
     -fno-strict-aliasing \
     -fstack-protector
 
-ifneq ($(JITSERVER_SUPPORT),)
+ifneq ($(J9VM_OPT_JITSERVER),)
     CXX_FLAGS+=\
         -std=c++11
 else
@@ -138,10 +145,6 @@ ifeq ($(HOST_ARCH),x)
         CX_DEFINES+=J9HAMMER
         CX_FLAGS+=-m64 -fPIC
     endif
-
-    ifneq ($(JITSERVER_SUPPORT),)
-        CX_DEFINES+=JITSERVER_SUPPORT
-    endif
 endif
 
 ifeq ($(HOST_ARCH),p)
@@ -163,10 +166,6 @@ ifeq ($(HOST_ARCH),p)
         CX_DEFINES+=ENABLE_SPMD_SIMD
         CX_FLAGS+=-qaltivec -qarch=pwr7 -qtune=pwr7
     endif
-
-    ifneq ($(JITSERVER_SUPPORT),)
-        CX_DEFINES+=JITSERVER_SUPPORT
-    endif
 endif
 
 ifeq ($(HOST_ARCH),z)
@@ -181,10 +180,6 @@ ifeq ($(HOST_ARCH),z)
     endif
 
     CX_FLAGS_DEBUG+=-gdwarf-2
-
-    ifneq ($(JITSERVER_SUPPORT),)
-        CX_DEFINES+=JITSERVER_SUPPORT
-    endif
 endif
 
 ifeq ($(HOST_ARCH),arm)
@@ -433,9 +428,6 @@ endif # HOST_ARCH == aarch64
 #
 SOLINK_CMD?=$(CXX)
 
-SOLINK_FLAGS+=
-SOLINK_FLAGS_PROD+=-Wl,-S
-
 SOLINK_LIBPATH+=$(PRODUCT_LIBPATH)
 SOLINK_SLINK+=$(PRODUCT_SLINK) j9thr$(J9_VERSION) j9hookable$(J9_VERSION)
 ifeq ($(HOST_ARCH),z)
@@ -492,6 +484,13 @@ ifeq ($(HOST_ARCH),z)
     endif
 endif
 
+ifeq ($(HOST_ARCH),aarch64)
+    SUPPORT_STATIC_LIBCXX = $(shell $(SOLINK_CMD) -static-libstdc++ 2>&1 | grep "unrecognized option" > /dev/null; echo $$?)
+    ifneq ($(SUPPORT_STATIC_LIBCXX),0)
+        SOLINK_FLAGS+=-static-libgcc -static-libstdc++
+    endif
+endif
+
 ifeq ($(HOST_ARCH),arm)
     SOLINK_SLINK+=c m gcc_s
 endif
@@ -519,7 +518,7 @@ endif
 
 SOLINK_FLAGS+=$(SOLINK_FLAGS_EXTRA)
 
-ifneq ($(JITSERVER_SUPPORT),)
+ifneq ($(J9VM_OPT_JITSERVER),)
     #
     # Setup protobuf
     #
@@ -543,4 +542,4 @@ ifneq ($(JITSERVER_SUPPORT),)
         C_INCLUDES+=$(OPENSSL_DIR)
         CXX_INCLUDES+=$(OPENSSL_DIR)
     endif
-endif # JITSERVER_SUPPORT
+endif # J9VM_OPT_JITSERVER

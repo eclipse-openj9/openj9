@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2018 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -245,10 +245,10 @@
    ddRegStore,  // Store decimal double global register
    deRegStore,  // Store decimal long double global register
 
-   dfternary,   // Ternary Operator:  Based on the result of the first child, take the value of the
+   dfselect,   // Select Operator:  Based on the result of the first child, take the value of the
                 // second or the third child.  Analogous to the "condition ? a : b" operations in C/Java.
-   ddternary,   //
-   deternary,   //
+   ddselect,   //
+   deselect,   //
 
    dfexp,       // decimal float exponent
    ddexp,       // decimal double exponent

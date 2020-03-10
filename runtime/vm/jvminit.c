@@ -321,6 +321,9 @@ static BOOLEAN isPPC64bit(void);
 static UDATA predefinedHandlerWrapper(struct J9PortLibrary *portLibrary, U_32 gpType, void *gpInfo, void *userData);
 static void signalDispatch(J9VMThread *vmThread, I_32 sigNum);
 
+static UDATA parseGlrConfig(J9JavaVM* jvm, char* options);
+static UDATA parseGlrOption(J9JavaVM* jvm, char* option);
+
 J9_DECLARE_CONSTANT_UTF8(j9_int_void, "(I)V");
 J9_DECLARE_CONSTANT_UTF8(j9_dispatch, "dispatch");
 
@@ -596,13 +599,13 @@ areValueTypesEnabled(J9JavaVM *vm)
 	return J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_VALHALLA);
 }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 BOOLEAN
 isJITServerEnabled(J9JavaVM *vm)
 {
 	return J9_ARE_ALL_BITS_SET(vm->extendedRuntimeFlags2, J9_EXTENDED_RUNTIME2_ENABLE_START_JITSERVER);
 }
-#endif /* JITSERVER_SUPPORT */
+#endif /* J9VM_OPT_JITSERVER */
 
 void
 freeJavaVM(J9JavaVM * vm)
@@ -1000,11 +1003,11 @@ initializeJavaVM(void * osMainThread, J9JavaVM ** vmPtr, J9CreateJavaVMParams *c
 	if (J9_ARE_ALL_BITS_SET(createParams->flags, J9_CREATEJAVAVM_ARGENCODING_PLATFORM)) {
 		vm->runtimeFlags |= J9_RUNTIME_ARGENCODING_UNICODE;
 	}
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 	if (J9_ARE_ALL_BITS_SET(createParams->flags, J9_CREATEJAVAVM_START_JITSERVER)) {
 		vm->extendedRuntimeFlags2 |= J9_EXTENDED_RUNTIME2_ENABLE_START_JITSERVER;
 	}
-#endif /* JITSERVER_SUPPORT */
+#endif /* J9VM_OPT_JITSERVER */
 
 	initArgs.j2seVersion = createParams->j2seVersion;
 	initArgs.j2seRootDirectory = createParams->j2seRootDirectory;
@@ -2202,8 +2205,8 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			}
 
 #if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
-			/* TODO pick a reasonable default */
-			vm->valueFlatteningThreshold = UDATA_MAX;
+			/* By default flattening is disabled */
+			vm->valueFlatteningThreshold = 0;
 			if ((argIndex = FIND_AND_CONSUME_ARG(STARTSWITH_MATCH, VMOPT_VALUEFLATTENINGTHRESHOLD_EQUALS, NULL)) >= 0) {
 				UDATA threshold = 0;
 				char *optname = VMOPT_VALUEFLATTENINGTHRESHOLD_EQUALS;
@@ -2250,6 +2253,45 @@ IDATA VMInitStages(J9JavaVM *vm, IDATA stage, void* reserved) {
 			}
 			if (TRUE == lockwordWhat){
 				printLockwordWhat(vm);
+			}
+
+			/* Global Lock Reservation is off by default. */
+			vm->enableGlobalLockReservation = 0;
+
+			/* Set default parameters for Global Lock Reservation. */
+			vm->reservedTransitionThreshold = 1;
+			vm->reservedAbsoluteThreshold = 10;
+			vm->minimumReservedRatio = 1024;
+			vm->cancelAbsoluteThreshold = 10;
+			vm->minimumLearningRatio = 256;
+
+			argIndex = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXNOGLOBALLOCKRESERVATION, NULL);
+			argIndex2 = FIND_AND_CONSUME_ARG(EXACT_MATCH, VMOPT_XXGLOBALLOCKRESERVATION, NULL);
+
+			if ((argIndex2 >= 0) && (argIndex2 > argIndex)) {
+				/* Global Lock Reservation is currently only supported on Power. */
+#if defined(AIXPPC) || defined(LINUXPPC)
+				vm->enableGlobalLockReservation = 1;
+#endif /* defined(AIXPPC) || defined(LINUXPPC) */
+			}
+
+			argIndex2 = FIND_AND_CONSUME_ARG_FORWARD(STARTSWITH_MATCH, VMOPT_XXGLOBALLOCKRESERVATIONCOLON, NULL);
+
+			while (argIndex2 >= 0) {
+				if (argIndex2 > argIndex) {
+					/* Global Lock Reservation is currently only supported on Power. */
+#if defined(AIXPPC) || defined(LINUXPPC)
+					vm->enableGlobalLockReservation = 1;
+#endif /* defined(AIXPPC) || defined(LINUXPPC) */
+				}
+
+				optionValue = NULL;
+				GET_OPTION_OPTION(argIndex2, ':', ':', &optionValue);
+
+				if (JNI_OK != parseGlrConfig(vm, optionValue)) {
+					goto _error;
+				}
+				argIndex2 = FIND_NEXT_ARG_IN_VMARGS_FORWARD(STARTSWITH_MATCH, VMOPT_XXGLOBALLOCKRESERVATIONCOLON, NULL, argIndex2);
 			}
 
 			break;
@@ -2827,6 +2869,45 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 			UDATA openFlags = (entry->loadFlags & XRUN_LIBRARY) ? J9PORT_SLOPEN_DECORATE | J9PORT_SLOPEN_LAZY : J9PORT_SLOPEN_DECORATE;
 			UDATA jitFileHandle = 0;
 			UDATA rc = 0;
+
+			/*
+			* On Linux on Z libj9jit dynamically loads libj9zlib as it is used for AOT method data compression
+			* which is currently only enabled on Z platform. We want to ensure that when the JVM loads libj9jit,
+			* libj9zlib is already loaded. See eclipse/openj9#8561 for more details.
+			*/
+#if (defined(S390) && defined(LINUX))
+			{
+			char zlibDll[EsMaxPath];
+			char *zlibDllDir = zlibDll;
+			UDATA expectedZlibPathLength = 0;
+			UDATA zlibDllLength = 0;
+			UDATA zlibFileHandle = 0;
+			UDATA zlibRC = 0;
+			
+			zlibDllLength = strlen(vm->j9libvmDirectory);
+			expectedZlibPathLength = zlibDllLength + (sizeof(DIR_SEPARATOR_STR) - 1) + strlen(J9_ZIP_DLL_NAME) + 1;
+			if (expectedZlibPathLength > EsMaxPath) {
+				zlibDllDir = j9mem_allocate_memory(expectedZlibPathLength, OMRMEM_CATEGORY_VM);
+				if (NULL == zlibDllDir) {
+					return JNI_ERR;
+				}
+			}
+			j9str_printf(PORTLIB, zlibDllDir, expectedZlibPathLength, "%s%s%s",
+					vm->j9libvmDirectory, DIR_SEPARATOR_STR, J9_ZIP_DLL_NAME);
+			zlibFileHandle = j9sl_open_shared_library(zlibDllDir, &(entry->descriptor), openFlags);
+			if (0 != zlibFileHandle) {
+				j9tty_printf(PORTLIB, "Error: Failed to open zlib DLL %s (%s)\n", zlibDllDir, j9error_last_error_message());
+				zlibRC = JNI_ERR;
+			}
+			if (zlibDll != zlibDllDir) {
+				j9mem_free_memory(zlibDllDir);
+				zlibDllDir = NULL;
+			}
+			if (zlibRC != 0) {
+				return JNI_ERR;
+			}
+			}
+#endif /* defined(S390) && defined(LINUX) */
 			
 			optionValueOperations(PORTLIB, j9vm_args, xxjitdirectoryIndex, GET_OPTION, &jitdirectoryValue, 0, '=', 0, NULL); /* get option value for xxjitdirectory= */
 			jitDirectoryLength = strlen(jitdirectoryValue);
@@ -2845,6 +2926,7 @@ modifyDllLoadTable(J9JavaVM * vm, J9Pool* loadTable, J9VMInitArgs* j9vm_args)
 			}
 			j9str_printf(PORTLIB, dllCheckPathPtr, expectedPathLength, "%s%s%s",
 					jitdirectoryValue, DIR_SEPARATOR_STR, entry->dllName);
+
 			jitFileHandle = j9sl_open_shared_library(dllCheckPathPtr, &(entry->descriptor), openFlags);
 			/* Confirm that we have a valid path being set */
 			if (0 == jitFileHandle) {
@@ -5751,16 +5833,38 @@ protectedInitializeJavaVM(J9PortLibrary* portLibrary, void * userData)
 #endif
 
 	PORT_ACCESS_FROM_PORT(portLibrary);
-	IDATA queryResult = 0;
-	J9CacheInfoQuery cQuery = {0};
-	cQuery.cmd = J9PORT_CACHEINFO_QUERY_LINESIZE;
-	cQuery.level = 1;
-	cQuery.cacheType = J9PORT_CACHEINFO_DCACHE;
-	queryResult = j9sysinfo_get_cache_info(&cQuery);
-	if (queryResult > 0) {
-		vm->dCacheLineSize = (UDATA)queryResult;
-	} else {
-		Trc_VM_contendedLinesizeFailed(queryResult);
+
+	/* check processor support for cache writeback */
+	vm->dCacheLineSize = 0;
+	vm->cpuCacheWritebackCapabilities = 0;
+#if defined(J9X86) || defined(J9HAMMER)
+	{
+		J9ProcessorDesc desc;
+		j9sysinfo_get_processor_description(&desc);
+		/* cache line size in bytes is the value of bits 8-15 * 8 */
+		vm->dCacheLineSize = ((desc.features[2] & 0xFF00) >> 8) * 8;
+		if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLWB)) {
+			vm->cpuCacheWritebackCapabilities = J9PORT_X86_FEATURE_CLWB;
+		} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLFLUSHOPT)) {
+			vm->cpuCacheWritebackCapabilities = J9PORT_X86_FEATURE_CLFLUSHOPT;
+		} else if (j9sysinfo_processor_has_feature(&desc, J9PORT_X86_FEATURE_CLFSH)) {
+			vm->cpuCacheWritebackCapabilities = J9PORT_X86_FEATURE_CLFSH;
+		}
+	}
+#endif /* x86 */
+
+	if (vm->dCacheLineSize == 0) {
+		IDATA queryResult = 0;
+		J9CacheInfoQuery cQuery = {0};
+		cQuery.cmd = J9PORT_CACHEINFO_QUERY_LINESIZE;
+		cQuery.level = 1;
+		cQuery.cacheType = J9PORT_CACHEINFO_DCACHE;
+		queryResult = j9sysinfo_get_cache_info(&cQuery);
+		if (queryResult > 0) {
+			vm->dCacheLineSize = (UDATA)queryResult;
+		} else {
+			Trc_VM_contendedLinesizeFailed(queryResult);
+		}
 	}
 
 	/* check for -Xipt flag and run the iconv_global_init accordingly.
@@ -7068,3 +7172,70 @@ setThreadNameAsyncHandler(J9VMThread *currentThread, IDATA handlerKey, void *use
 }
 
 #endif /* J9VM_THR_ASYNC_NAME_UPDATE */
+
+static UDATA
+parseGlrConfig(J9JavaVM* jvm, char* options)
+{
+	UDATA result = JNI_OK;
+	char* nextOption = NULL;
+	char* cursor = options;
+	PORT_ACCESS_FROM_JAVAVM(jvm);
+
+	/* parse out each of the options */
+	while ((JNI_OK == result) && (strstr(cursor, ",") != NULL)) {
+		nextOption = scan_to_delim(PORTLIB, &cursor, ',');
+		if (NULL == nextOption) {
+			result = JNI_ERR;
+		} else {
+			result = parseGlrOption(jvm, nextOption);
+			j9mem_free_memory(nextOption);
+		}
+	}
+	if (result == JNI_OK) {
+		result = parseGlrOption(jvm, cursor);
+	}
+
+	return result;
+}
+
+static UDATA
+parseGlrOption(J9JavaVM* jvm, char* option)
+{
+	char* valueString = strstr(option, "=");
+	UDATA value = 0;
+
+	if (NULL == valueString) {
+		return JNI_ERR;
+	}
+
+	/* This trims off the leading equal sign. */
+	valueString = valueString + 1;
+
+	if (scan_udata(&valueString, &value) != 0) {
+		return JNI_ERR;
+	}
+
+	/* Thresholds are compared with 16 bit numbers so they never need to be higher than 0x10000. */
+	if (value > 0x10000) {
+		value = 0x10000;
+	}
+
+	if (strncmp(option, "reservedTransitionThreshold=", strlen("reservedTransitionThreshold=")) == 0) {
+		jvm->reservedTransitionThreshold = (U_32)value;
+		return JNI_OK;
+	} else if (strncmp(option, "reservedAbsoluteThreshold=", strlen("reservedAbsoluteThreshold=")) == 0) {
+		jvm->reservedAbsoluteThreshold = (U_32)value;
+		return JNI_OK;
+	} else if (strncmp(option, "minimumReservedRatio=", strlen("minimumReservedRatio=")) == 0) {
+		jvm->minimumReservedRatio = (U_32)value;
+		return JNI_OK;
+	} else if (strncmp(option, "cancelAbsoluteThreshold=", strlen("cancelAbsoluteThreshold=")) == 0) {
+		jvm->cancelAbsoluteThreshold = (U_32)value;
+		return JNI_OK;
+	} else if (strncmp(option, "minimumLearningRatio=", strlen("minimumLearningRatio=")) == 0) {
+		jvm->minimumLearningRatio = (U_32)value;
+		return JNI_OK;
+	}
+
+	return JNI_ERR;
+}

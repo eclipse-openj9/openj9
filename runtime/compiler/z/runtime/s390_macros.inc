@@ -1,4 +1,4 @@
-ZZ Copyright (c) 2000, 2019 IBM Corp. and others
+ZZ Copyright (c) 2000, 2020 IBM Corp. and others
 ZZ
 ZZ This program and the accompanying materials are made 
 ZZ available under the terms of the Eclipse Public License 2.0 
@@ -540,7 +540,7 @@ define(MTComputeStaticAddress,{dnl
     NILH    r2,0                      # get col index
     SLLG    r2,r2,0(r1)               # col offset, data size
 
-ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+IfCompressedElse({dnl
     LGR     r14,r0                    # restore r14
     LG      r1,28(,r14)               # load CP word
     SRLG    r1,r1,8                   # shift amount
@@ -557,3 +557,42 @@ ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
 LABEL(LMTComputeStaticAddress$1End)
 })dnl
 
+ZZ ============================================================
+ZZ Perform either the compressed or non-compressed code path.
+ZZ inputs:
+ZZ r13 = current J9VMThread
+ZZ $1  = compressed code block
+ZZ $2  = non-compressed code block
+ZZ
+ZZ On compressed-only builds, this evaluates to $1
+ZZ On full-only builds, this evaluates to $2
+ZZ On mixed builds, a runtime test is inserted and both code paths
+ZZ are evaluated.
+ZZ ============================================================
+
+define({CONCAT},$1$2)dnl
+define({SYM_COUNT},0)dnl
+define({GENSYM},{dnl
+define({SYM_COUNT},eval(1+SYM_COUNT))dnl
+define({CURRENT_FULL},CONCAT(full,SYM_COUNT))dnl
+define({CURRENT_DONE},CONCAT(done,SYM_COUNT))dnl
+})dnl
+
+ZZ The ugly formatting in this macro is due to restrictions
+ZZ in the assembler regarding line length and spacing before
+ZZ comments.
+
+define({IfCompressedElse},{dnl
+ifdef({ASM_OMR_GC_COMPRESSED_POINTERS},{dnl
+ifdef({ASM_OMR_GC_FULL_POINTERS},{dnl
+GENSYM
+TM      J9TR_VMThreadCompressObjectReferences(r13),1
+JZ      CURRENT_FULL
+$1
+j       CURRENT_DONE
+LABEL(CURRENT_FULL)
+$2
+LABEL(CURRENT_DONE)
+},{$1})dnl
+},{$2})dnl
+})dnl

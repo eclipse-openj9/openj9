@@ -41,9 +41,9 @@ namespace J9 { typedef J9::CodeGenerator CodeGeneratorConnector; }
 #include "infra/List.hpp"
 #include "infra/HashTab.hpp"
 #include "codegen/RecognizedMethods.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationRuntime.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #include "control/Recompilation.hpp"
 #include "control/RecompilationInfo.hpp"
 #include "optimizer/Dominators.hpp"
@@ -139,10 +139,10 @@ public:
    // --------------------------------------
    // AOT Relocations
    //
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    void addExternalRelocation(TR::Relocation *r, const char *generatingFileName, uintptr_t generatingLineNumber, TR::Node *node, TR::ExternalRelocationPositionRequest where = TR::ExternalRelocationAtBack);
    void addExternalRelocation(TR::Relocation *r, TR::RelocationDebugInfo *info, TR::ExternalRelocationPositionRequest where = TR::ExternalRelocationAtBack);
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    void processRelocations();
 
@@ -176,10 +176,10 @@ public:
    bool needRelocationsForStatics();
    bool needRelocationsForHelpers();
    bool needRelocationsForCurrentMethodPC();
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    bool needRelocationsForBodyInfoData();
    bool needRelocationsForPersistentInfoData();
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    // ----------------------------------------
    TR::Node *createOrFindClonedNode(TR::Node *node, int32_t numChildren);
@@ -324,11 +324,11 @@ private:
       {
       // If we have a class pointer to consider, it should look like one.
       const uintptrj_t j9classEyecatcher = 0x99669966;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
       if (allegedClassPointer != NULL && !comp->isOutOfProcessCompilation())
 #else
       if (allegedClassPointer != NULL)
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
          {
          TR_ASSERT(*(const uintptrj_t*)allegedClassPointer == j9classEyecatcher,
                    "expected a J9Class* for omitted runtime assumption");

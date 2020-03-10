@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -52,14 +52,14 @@ TR_J2IThunk::allocate(
    int16_t terseSignatureBufLength = thunkTable->terseSignatureLength(signature)+1;
    int16_t totalSize = (int16_t)sizeof(TR_J2IThunk) + codeSize + terseSignatureBufLength;
    TR_J2IThunk *result;
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    if (cg->comp()->isOutOfProcessCompilation())
       {
       // Don't need to use code cache because the entire thunk will be copied and sent to the client 
       result = (TR_J2IThunk*)cg->comp()->trMemory()->allocateMemory(totalSize, heapAlloc);
       }
    else
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       {
       result = (TR_J2IThunk*)cg->allocateCodeMemory(totalSize, true, false);
       }

@@ -429,10 +429,10 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          client->write(response, fe->getOSRFrameSizeInBytes(method));
          }
          break;
-      case MessageType::VM_getByteOffsetToLockword:
+      case MessageType::VM_getInitialLockword:
          {
-         TR_OpaqueClassBlock * clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
-         client->write(response, fe->getByteOffsetToLockword(clazz));
+         TR_OpaqueClassBlock *clazz = std::get<0>(client->getRecvData<TR_OpaqueClassBlock *>());
+         client->write(response, fe->getInitialLockword(clazz));
          }
          break;
       case MessageType::VM_isString1:
@@ -501,6 +501,7 @@ handleServerMessage(JITServer::ClientStream *client, TR_J9VM *fe, JITServer::Mes
          vmInfo._floatInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactF, false, false, false)->getMethodAddress();
          vmInfo._doubleInvokeExactThunkHelper = comp->getSymRefTab()->findOrCreateRuntimeHelper(TR_icallVMprJavaSendInvokeExactD, false, false, false)->getMethodAddress();
          vmInfo._interpreterVTableOffset = TR::Compiler->vm.getInterpreterVTableOffset();
+         vmInfo._enableGlobalLockReservation = vmThread->javaVM->enableGlobalLockReservation;
          {
             TR::VMAccessCriticalSection getVMInfo(fe);
             vmInfo._jlrMethodInvoke = javaVM->jlrMethodInvoke;

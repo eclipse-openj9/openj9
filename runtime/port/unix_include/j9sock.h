@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -107,50 +107,6 @@ typedef struct addrinfo OSADDRINFO;  /* IPv6 */
 typedef struct hostent_data OSHOSTENT_DATA;
 #endif
 
-#define OSSOMAXCONN SOMAXCONN
-
-/* defines for socket levels */
-#define OS_SOL_SOCKET SOL_SOCKET
-#define OS_IPPROTO_TCP IPPROTO_TCP
-#define OS_IPPROTO_IP IPPROTO_IP
-#ifdef IPv6_FUNCTION_SUPPORT
-#define OS_IPPROTO_IPV6 IPPROTO_IPV6 
-#endif
-
-/* defines for socket options */
-#define OS_SO_LINGER SO_LINGER
-#define OS_SO_KEEPALIVE SO_KEEPALIVE
-#define OS_TCP_NODELAY TCP_NODELAY
-#define OS_SO_REUSEADDR SO_REUSEADDR
-#define OS_SO_SNDBUF SO_SNDBUF
-#define OS_SO_RCVBUF SO_RCVBUF
-#define OS_SO_BROADCAST SO_BROADCAST /*[PR1FLSKTU] Support datagram broadcasts */
-#if defined(AIXPPC) || defined(J9ZOS390)
-#define OS_SO_REUSEPORT SO_REUSEPORT
-#endif
-#define OS_SO_OOBINLINE SO_OOBINLINE
-#define OS_IP_TOS	 IP_TOS
-
-/* defines for socket options, multicast */
-#define OS_MCAST_TTL IP_MULTICAST_TTL
-#define OS_MCAST_ADD_MEMBERSHIP IP_ADD_MEMBERSHIP
-#define OS_MCAST_DROP_MEMBERSHIP IP_DROP_MEMBERSHIP
-#define OS_MCAST_INTERFACE IP_MULTICAST_IF
-#define OS_MCAST_LOOP IP_MULTICAST_LOOP
-
-#ifdef IPv6_FUNCTION_SUPPORT
-#define OS_MCAST_INTERFACE_2 IPV6_MULTICAST_IF
-
-#if defined(J9ZOS390)
-/* TODO: determine the correct defines for z/OS, leave it broken in the meantime */
-#define OS_IPV6_ADD_MEMBERSHIP (-1)
-#define OS_IPV6_DROP_MEMBERSHIP (-1)
-#else
-#define OS_IPV6_ADD_MEMBERSHIP IPV6_ADD_MEMBERSHIP
-#define OS_IPV6_DROP_MEMBERSHIP IPV6_DROP_MEMBERSHIP
-#endif /* J9ZOS390 */
-#endif /* IPv6_FUNCTION_SUPPORT */
-
 /* defines for the unix error constants.  These may be overridden for specific platforms. */
 #define J9PORT_ERROR_SOCKET_UNIX_CONNRESET 		ECONNRESET
 #define J9PORT_ERROR_SOCKET_UNIX_EAGAIN							EAGAIN
@@ -219,8 +175,6 @@ typedef struct hostent_data OSHOSTENT_DATA;
 /* Per-thread buffer for platform-dependent socket information */
 typedef struct J9SocketPTB {
 	struct J9PortLibrary *portLibrary;
-	j9fdset_t fdset;  /**< file descriptor set */
-	char ntoa[NTOA_SIZE];
 	j9addrinfo_struct addr_info_hints;
 	OSHOSTENT hostent;
 #if HOSTENT_DATA_R

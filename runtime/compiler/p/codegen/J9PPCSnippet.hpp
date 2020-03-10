@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2016 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -29,156 +29,10 @@
 #include "env/IO.hpp"
 #include "j9cfg.h"
 
-#define LOCK_INC_DEC_VALUE                                OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT
 #define LOCK_THREAD_PTR_MASK                              (~OBJECT_HEADER_LOCK_BITS_MASK)
-#define LOCK_THREAD_PTR_AND_UPPER_COUNT_BIT_MASK          (LOCK_THREAD_PTR_MASK | OBJECT_HEADER_LOCK_LAST_RECURSION_BIT)
-#define LOCK_FIRST_RECURSION_BIT_NUMBER	          leadingZeroes(OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT)
-#define LOCK_LAST_RECURSION_BIT_NUMBER	          leadingZeroes(OBJECT_HEADER_LOCK_LAST_RECURSION_BIT)
-#define LOCK_OWNING_NON_INFLATED_COMPLEMENT               (OBJECT_HEADER_LOCK_BITS_MASK & ~OBJECT_HEADER_LOCK_INFLATED)
-#define LOCK_RESERVATION_BIT                              OBJECT_HEADER_LOCK_RESERVED
-#define LOCK_RES_PRIMITIVE_ENTER_MASK                     (OBJECT_HEADER_LOCK_RECURSION_MASK | OBJECT_HEADER_LOCK_FLC)
-#define LOCK_RES_PRIMITIVE_EXIT_MASK                      (OBJECT_HEADER_LOCK_BITS_MASK & ~OBJECT_HEADER_LOCK_RECURSION_MASK)
-#define LOCK_RES_NON_PRIMITIVE_ENTER_MASK                 (OBJECT_HEADER_LOCK_RECURSION_MASK & ~OBJECT_HEADER_LOCK_LAST_RECURSION_BIT)
-#define LOCK_RES_NON_PRIMITIVE_EXIT_MASK                  (OBJECT_HEADER_LOCK_RECURSION_MASK & ~OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT)
-#define LOCK_RES_OWNING_COMPLEMENT                        (OBJECT_HEADER_LOCK_RECURSION_MASK | OBJECT_HEADER_LOCK_FLC)
-#define LOCK_RES_PRESERVE_ENTER_COMPLEMENT                (OBJECT_HEADER_LOCK_RECURSION_MASK & ~OBJECT_HEADER_LOCK_LAST_RECURSION_BIT)
-#define LOCK_RES_CONTENDED_VALUE                          (OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT|OBJECT_HEADER_LOCK_RESERVED|OBJECT_HEADER_LOCK_FLC)
+#define LOCK_LAST_RECURSION_BIT_NUMBER                    leadingZeroes(OBJECT_HEADER_LOCK_LAST_RECURSION_BIT)
 
 namespace TR {
-
-class PPCMonitorEnterSnippet : public TR::PPCHelperCallSnippet
-   {
-   TR::LabelSymbol *_incLabel;
-   int32_t         _lwOffset;
-   bool            _isReservationPreserving;
-   TR::Register     *_objectClassReg;
-
-   public:
-
-   PPCMonitorEnterSnippet(TR::CodeGenerator   *codeGen,
-                          TR::Node            *monitorNode,
-                          int32_t            lwOffset,
-                          bool               isPreserving,
-                          TR::LabelSymbol      *incLabel,
-                          TR::LabelSymbol      *callLabel,
-                          TR::LabelSymbol      *restartLabel,
-                          TR::Register        *objectClassReg);
-
-   virtual Kind getKind() { return IsMonitorEnter; }
-
-   virtual uint8_t *emitSnippetBody();
-
-   virtual uint32_t getLength(int32_t estimatedSnippetStart);
-   virtual void print(TR::FILE *, TR_Debug *);
-   virtual int32_t setEstimatedCodeLocation(int32_t p);
-
-   TR::LabelSymbol * getIncLabel() { return _incLabel; };
-   int32_t getLockWordOffset() { return _lwOffset; }
-   bool isReservationPreserving() { return _isReservationPreserving; }
-
-   // This is here so that _objectClassReg's real reg can be retrieved for log printing.
-   // Can be removed if that reg is exposed by a getter or something.
-   // (Need to change the corresponding TR_Debug::print method to use it.)
-   friend class TR_Debug;
-   };
-
-class PPCMonitorExitSnippet : public TR::PPCHelperCallSnippet
-   {
-   TR::LabelSymbol *_decLabel;
-   TR::LabelSymbol *_restoreAndCallLabel;
-   int32_t        _lwOffset;
-   bool           _isReservationPreserving;
-   bool           _isReadOnly;
-   TR::Register    *_objectClassReg;
-
-   public:
-
-   PPCMonitorExitSnippet(TR::CodeGenerator   *codeGen,
-                         TR::Node            *monitorNode,
-                         int32_t            lwOffset,
-                         bool               flag,
-                         bool               isPreserving,
-                         TR::LabelSymbol      *decLabel,
-                         TR::LabelSymbol      *restoreAndCallLabel,
-                         TR::LabelSymbol      *callLabel,
-                         TR::LabelSymbol      *restartLabel,
-                         TR::Register        *objectClassReg);
-
-   virtual Kind getKind() { return IsMonitorExit; }
-
-   virtual uint8_t *emitSnippetBody();
-
-   virtual uint32_t getLength(int32_t estimatedSnippetStart);
-   virtual void print(TR::FILE *, TR_Debug *);
-   virtual int32_t setEstimatedCodeLocation(int32_t p);
-
-   TR::LabelSymbol * getDecLabel() { return _decLabel; }
-   TR::LabelSymbol * getRestoreAndCallLabel() { return _restoreAndCallLabel; }
-   int32_t          getLockWordOffset() { return _lwOffset; }
-   bool             isReservationPreserving() { return _isReservationPreserving; }
-
-   // This is here so that _objectClassReg's real reg can be retrieved for log printing.
-   // Can be removed if that reg is exposed by a getter or something.
-   // (Need to change the corresponding TR_Debug::print method to use it.)
-   friend class TR_Debug;
-   };
-
-class PPCLockReservationEnterSnippet : public TR::PPCHelperCallSnippet
-   {
-   TR::LabelSymbol *_startLabel;
-   int32_t         _lwOffset;
-   TR::Register    *_objectClassReg;
-
-   public:
-
-   PPCLockReservationEnterSnippet(TR::CodeGenerator   *cg,
-                                  TR::Node            *monitorNode,
-                                  int32_t            lwOffset,
-                                  TR::LabelSymbol      *startLabel,
-                                  TR::LabelSymbol      *enterCallLabel,
-                                  TR::LabelSymbol      *restartLabel,
-                                  TR::Register        *objectClassReg);
-
-   virtual Kind getKind() { return IsLockReservationEnter; }
-
-   virtual uint8_t *emitSnippetBody();
-
-   virtual uint32_t getLength(int32_t estimatedSnippetStart);
-   virtual void print(TR::FILE *, TR_Debug*);
-   virtual int32_t setEstimatedCodeLocation(int32_t p);
-
-   TR::LabelSymbol * getStartLabel() { return _startLabel; };
-   int32_t getLockWordOffset() { return _lwOffset; }
-   };
-
-class PPCLockReservationExitSnippet : public TR::PPCHelperCallSnippet
-   {
-   TR::LabelSymbol *_startLabel;
-   int32_t        _lwOffset;
-   TR::Register    *_objectClassReg;
-
-   public:
-
-   PPCLockReservationExitSnippet(TR::CodeGenerator   *codeGen,
-                                 TR::Node            *monitorNode,
-                                 int32_t            lwOffset,
-                                 TR::LabelSymbol      *startLabel,
-                                 TR::LabelSymbol      *exitCallLabel,
-                                 TR::LabelSymbol      *restartLabel,
-                                 TR::Register        *objectClassReg);
-
-   virtual Kind getKind() { return IsLockReservationExit; }
-
-   virtual uint8_t *emitSnippetBody();
-
-   virtual uint32_t getLength(int32_t estimatedSnippetStart);
-   virtual void print(TR::FILE *, TR_Debug*);
-
-   virtual int32_t setEstimatedCodeLocation(int32_t p);
-
-   TR::LabelSymbol * getStartLabel() { return _startLabel; }
-   int32_t          getLockWordOffset() { return _lwOffset; }
-   };
 
 class PPCReadMonitorSnippet : public TR::PPCHelperCallSnippet
    {

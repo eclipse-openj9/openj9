@@ -83,6 +83,12 @@ restart_timeout:
   time: '5'
   units: 'HOURS'
 #========================================#
+# Debug information
+#========================================#
+debuginfo:
+  extra_configure_options:
+    8: '--disable-zip-debug-info'
+#========================================#
 # Large heap build
 #========================================#
 largeheap:
@@ -144,7 +150,7 @@ cuda_version:
 # Linux PPCLE 64bits Compressed Pointers
 #========================================#
 ppc64le_linux:
-  extends: ['freemarker', 'openjdk_reference_repo', 'openssl', 'cuda_version']
+  extends: ['cuda_version', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
@@ -161,6 +167,11 @@ ppc64le_linux:
     11: '--enable-jitserver'
   build_env:
     vars: 'PATH+GCC7=/usr/local/gcc-7.5.0/bin LD_LIBRARY_PATH=/usr/local/gcc-7.5.0/lib64:$LD_LIBRARY_PATH'
+#========================================#
+# Linux PPCLE 64bits Compressed Pointers /w cmake
+#========================================#
+ppc64le_linux_cm:
+  extends: ['ppc64le_linux', 'cmake']
 #========================================#
 # Linux PPCLE 64bits Large Heap
 #========================================#
@@ -182,7 +193,7 @@ ppc64le_linux_jit:
 # IBM 7 for the bootJDK or compiling corba will fail to find Object.
 #========================================#
 s390x_linux:
-  extends: ['freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     8: '/usr/lib/jvm/adoptojdk-java-s390x-80'
     11: '/usr/lib/jvm/adoptojdk-java-11'
@@ -196,9 +207,6 @@ s390x_linux:
     build: 'ci.role.build && hw.arch.s390x && sw.os.rhel.7'
   build_env:
     cmd: 'source /home/jenkins/set_gcc7.5.0_env'
-  excluded_tests:
-    11:
-      - special.system
 #========================================#
 # Linux S390 64bits Large Heap
 # Note: boot_jdk 8 must use an Adopt JDK8 build rather than an
@@ -207,7 +215,7 @@ s390x_linux:
 s390x_linux_xl:
   extends: ['s390x_linux', 'largeheap']
   excluded_tests:
-    8:
+    11:
       - special.system
 #========================================#
 # Linux S390 64bits Compressed Pointers /w JITSERVER
@@ -218,7 +226,7 @@ s390x_linux_jit:
 # AIX PPC 64bits Compressed Pointers
 #========================================#
 ppc64_aix:
-  extends: ['freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     8: '/usr/java7'
     11: '/usr/java11_64'
@@ -243,15 +251,13 @@ ppc64_aix:
       14: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
       next: 'PATH+XLC=/opt/IBM/xlC/16.1.0/bin:/opt/IBM/xlc/16.1.0/bin CC=xlclang CXX=xlclang++'
   excluded_tests:
-    8:
-      - special.system
     11:
       - special.system
 #========================================#
 # Linux x86 64bits Compressed Pointers
 #========================================#
 x86-64_linux:
-  extends: ['freemarker', 'openjdk_reference_repo', 'openssl', 'cuda_version']
+  extends: ['cuda_version', 'debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     8: '/usr/lib/jvm/jdk-7'
     11: '/usr/lib/jvm/jdk-11'
@@ -294,7 +300,7 @@ x86-64_linux_xl:
 # Linux Aarch 64bits Compressed Pointers
 #========================================#
 aarch64_linux:
-  extends: ['freemarker', 'openjdk_reference_repo', 'openssl']
+  extends: ['debuginfo', 'freemarker', 'openjdk_reference_repo', 'openssl']
   boot_jdk:
     11: '/usr/lib/jvm/adoptojdk-java-11'
   release:
@@ -311,7 +317,7 @@ aarch64_linux_xl:
 # Windows x86 64bits Compressed Pointers
 #========================================#
 x86-64_windows:
-  extends: ['openjdk_reference_repo', 'openssl_bundle', 'cuda']
+  extends: ['cuda', 'openjdk_reference_repo', 'openssl_bundle']
   boot_jdk:
     8: '/cygdrive/c/openjdk/jdk7'
     11: '/cygdrive/c/openjdk/jdk11'
@@ -365,7 +371,7 @@ x86-32_windows:
 # OSX x86 64bits Compressed Pointers
 #========================================#
 x86-64_mac:
-  extends: ['openssl', 'openssl_bundle']
+  extends: ['debuginfo', 'openssl', 'openssl_bundle']
   boot_jdk:
     8: '/Users/jenkins/bootjdks/adoptojdk-java-8'
     11: '/Users/jenkins/bootjdks/adoptojdk-java-11'

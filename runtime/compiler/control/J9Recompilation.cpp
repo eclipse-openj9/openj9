@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2000, 2019 IBM Corp. and others
+ * Copyright (c) 2000, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -31,9 +31,9 @@
 #include "env/VMJ9.h"
 #include "runtime/J9Profiler.hpp"
 #include "exceptions/RuntimeFailure.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/JITServerCompilationThread.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
 bool J9::Recompilation::_countingSupported = false;
 
@@ -65,7 +65,7 @@ J9::Recompilation::setupMethodInfo()
    //
    TR_OptimizationPlan * optimizationPlan =  _compilation->getOptimizationPlan();
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    // NOTE: cannot use _compilation->isOutOfProcessCompilation here, because this
    // method is called from within OMR::Compilation() constructor, before
    // _isOutOfProcessCompilation is set
@@ -81,7 +81,7 @@ J9::Recompilation::setupMethodInfo()
    else if (_firstCompile)
 #else
    if (_firstCompile)
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
       {
       // Create the persistent method information
       // If the previous compiled version of the method is AOTed, then we need to create a new persistent method information
@@ -737,7 +737,7 @@ TR_PersistentMethodInfo::setForSharedInfo(TR_PersistentProfileInfo** ptr, TR_Per
       TR_PersistentProfileInfo::decRefCount((TR_PersistentProfileInfo*)oldPtr);
    }
 
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 TR_PersistentJittedBodyInfo *
 J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInfoStr, const std::string &methodInfoStr, TR_Memory *trMemory)
    {
@@ -760,4 +760,4 @@ J9::Recompilation::persistentJittedBodyInfoFromString(const std::string &bodyInf
    methodInfo->_bestProfileInfo = NULL;
    return bodyInfo;
    }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */

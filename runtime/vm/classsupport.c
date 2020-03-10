@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -197,35 +197,56 @@ findPrimitiveArrayClass(J9JavaVM* vm, jchar sigChar)
 J9Class* 
 internalCreateArrayClass(J9VMThread* vmThread, J9ROMArrayClass* romClass, J9Class* elementClass)
 {
-	J9Class *result;
+	J9Class *result = NULL;
 	j9object_t heapClass = J9VM_J9CLASS_TO_HEAPCLASS(elementClass);
 	j9object_t protectionDomain = NULL;
 	J9ROMClass* arrayRomClass = (J9ROMClass*) romClass;
 	J9JavaVM *const javaVM = vmThread->javaVM;
 	UDATA options = 0;
+	BOOLEAN elementInitSuccess = TRUE;
 
-	if (J9_ARE_ANY_BITS_SET(elementClass->classFlags, J9ClassIsAnonymous)) {
-		options = J9_FINDCLASS_FLAG_ANON;
+#if defined(J9VM_OPT_VALHALLA_VALUE_TYPES)
+	/* When creating an array of valuetype elements, the array elements are initialized to the defaultValue of the
+	 * element type. As a result the element type must be fully initialized (if its a valuetype) before creating an
+	 * instance of the array. Element class init must be done before the arrayClass is created so that in the case
+	 * of an init failure the arrayClass is not temporarily exposed.
+	 */
+	if (J9_IS_J9CLASS_VALUETYPE(elementClass)) {
+		UDATA initStatus = elementClass->initializeStatus;
+		if ((J9ClassInitSucceeded != initStatus) && ((UDATA)vmThread != initStatus)) {
+			initializeClass(vmThread, elementClass);
+			if (NULL != vmThread->currentException) {
+				elementInitSuccess = FALSE;
+			}
+		}
+	}
+#endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
+
+	if (elementInitSuccess) {
+		if (J9_ARE_ANY_BITS_SET(elementClass->classFlags, J9ClassIsAnonymous)) {
+			options = J9_FINDCLASS_FLAG_ANON;
+		}
+
+		omrthread_monitor_enter(javaVM->classTableMutex);
+
+		if (NULL != heapClass) {
+			protectionDomain = J9VMJAVALANGCLASS_PROTECTIONDOMAIN(vmThread, heapClass);
+		}
+
+		result = internalCreateRAMClassFromROMClass(
+			vmThread,
+			elementClass->classLoader,
+			arrayRomClass,
+			options, /* options */
+			elementClass,
+			protectionDomain,
+			NULL,
+			J9_CP_INDEX_NONE,
+			LOAD_LOCATION_UNKNOWN,
+			NULL,
+			NULL);
 	}
 
-	omrthread_monitor_enter(javaVM->classTableMutex);
-
-	if (NULL != heapClass) {
-		protectionDomain = J9VMJAVALANGCLASS_PROTECTIONDOMAIN(vmThread, heapClass);
-	}
-
-	result = internalCreateRAMClassFromROMClass(
-		vmThread,
-		elementClass->classLoader,
-		arrayRomClass,
-		options, /* options */
-		elementClass,
-		protectionDomain,
-		NULL,
-		J9_CP_INDEX_NONE,
-		LOAD_LOCATION_UNKNOWN,
-		NULL,
-		NULL);
 	return result;
 }
 
@@ -806,7 +827,7 @@ waitForContendedLoadClass(J9VMThread* vmThread, J9ContendedLoadTableEntry *table
 	Assert_VM_mustHaveVMAccess(vmThread);
 	/* get here if and only if someone else is loading the class */
 	/* give up the classloader monitor to allow other threads to run */
-	monitorOwner = getObjectMonitorOwner(vmThread->javaVM, vmThread, tableEntry->classLoader->classLoaderObject, &recursionCount);
+	monitorOwner = getObjectMonitorOwner(vmThread->javaVM, tableEntry->classLoader->classLoaderObject, &recursionCount);
 	if (monitorOwner == vmThread) {
 		Trc_VM_waitForContendedLoadClass_release_object_monitor(vmThread, vmThread, tableEntry->classLoader, classNameLength, className);
 		for (i = 0; i < recursionCount; ++i) {

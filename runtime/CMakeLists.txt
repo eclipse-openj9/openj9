@@ -105,9 +105,6 @@ include(cmake/omr_config.cmake)
 if(OPENJ9_BUILD)
 	add_definitions(-DOPENJ9_BUILD)
 endif()
-if (JITSERVER_SUPPORT)
-	add_definitions(-DJITSERVER_SUPPORT)
-endif()
 
 # clean up the variables we used
 set(versionStr)
@@ -287,6 +284,7 @@ add_dependencies(j9vm_interface
 	j9vm_hookgen
 	j9vm_m4gen
 	j9vm_nlsgen
+	run_tracegen
 )
 
 # j9vm_gc_includes is used to track the include directories that are consumed by the various gc components
@@ -590,6 +588,6 @@ endif()
 # NOTE this is not conditional in the UMA module.xml
 add_subdirectory(tests)
 
-if (JITSERVER_SUPPORT)
+if (J9VM_OPT_JITSERVER)
 	add_subdirectory(jitserver_launcher)
 endif()

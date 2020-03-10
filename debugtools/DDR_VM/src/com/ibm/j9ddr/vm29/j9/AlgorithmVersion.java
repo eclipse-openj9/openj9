@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2010, 2018 IBM Corp. and others
+ * Copyright (c) 2010, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,7 +42,7 @@ public class AlgorithmVersion {
 	public static final String MONITOR_HASH_FUNCTION_VERSION = "ALG_MONITOR_HASH_FUNCTION_VERSION";
 	public static final String MONITOR_EQUAL_FUNCTION_VERSION = "ALG_MONITOR_EQUAL_FUNCTION_VERSION";
 	public static final String OBJECT_FIELD_OFFSET = "ALG_OBJECT_FIELD_OFFSET_VERSION";
-	public static final String OBJECT_MONITOR_VERSION = "OBJECT_MONITOR_VERSION";
+	public static final String ALG_OBJECT_MONITOR_VERSION = "ALG_OBJECT_MONITOR_VERSION";
 	public static final String OPT_INFO_VERSION = "OPT_INFO_VERSION";
 	public static final String POOL_VERSION = "ALG_POOL_VERSION";
 	public static final String ROM_HELP_VERSION = "ALG_ROM_HELP_VERSION";

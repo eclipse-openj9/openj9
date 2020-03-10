@@ -2774,10 +2774,25 @@ typedef struct J9Object {
 #define OBJECT_HEADER_LOCK_INFLATED  1
 #define OBJECT_HEADER_LOCK_FLC  2
 #define OBJECT_HEADER_LOCK_RESERVED  4
-#define OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT  8
+#define OBJECT_HEADER_LOCK_LEARNING  8
+#define OBJECT_HEADER_LOCK_FIRST_RECURSION_BIT  0x10
 #define OBJECT_HEADER_LOCK_LAST_RECURSION_BIT  0x80
-#define OBJECT_HEADER_LOCK_RECURSION_MASK  0xF8
-#define OBJECT_HEADER_LOCK_RECURSION_OFFSET  3
+#define OBJECT_HEADER_LOCK_RECURSION_MASK  0xF0
+/*
+ * OBJECT_HEADER_LOCK_RECURSION_OFFSET (and later versions) are used in
+ * the ObjectMonitor_V#.java (eg. ObjectMonitor_V1.java) files used by DDR.
+ * Changing them may lead to breaking suport for older corefiles.
+ */
+#define OBJECT_HEADER_LOCK_RECURSION_OFFSET  3 /* Do not add new uses of this constant. Use new version instead. */
+#define OBJECT_HEADER_LOCK_V2_RECURSION_OFFSET  4
+#define OBJECT_HEADER_LOCK_LEARNING_FIRST_LC_BIT  0x10 /* LC = Learning Count */
+#define OBJECT_HEADER_LOCK_LEARNING_LAST_LC_BIT  0x20
+#define OBJECT_HEADER_LOCK_LEARNING_FIRST_RECURSION_BIT  0x40
+#define OBJECT_HEADER_LOCK_LEARNING_LAST_RECURSION_BIT  0x80
+#define OBJECT_HEADER_LOCK_LEARNING_LC_MASK  0x30
+#define OBJECT_HEADER_LOCK_LEARNING_LC_OFFSET  4
+#define OBJECT_HEADER_LOCK_LEARNING_RECURSION_MASK  0xC0
+#define OBJECT_HEADER_LOCK_LEARNING_RECURSION_OFFSET  6
 #define OBJECT_HEADER_LOCK_BITS_MASK  0xFF
 #define OBJECT_HEADER_INVALID_ADDR_BITS  3
 #define OBJECT_HEADER_MONITOR_ENTER_INTERRUPTED  1
@@ -2937,6 +2952,11 @@ typedef struct J9Class {
 	UDATA castClassCache;
 	void** jniIDs;
 	UDATA lockOffset;
+#if defined(J9VM_ENV_DATA64)
+	U_32 paddingForGLRCounters; /* This is used to preserve alignment under 64 bit. */
+#endif /* defined(J9VM_ENV_DATA64) */
+	U_16 reservedCounter;
+	U_16 cancelCounter;
 	UDATA newInstanceCount;
 	IDATA backfillOffset;
 	struct J9Class* replacedClass;
@@ -3005,6 +3025,11 @@ typedef struct J9ArrayClass {
 	UDATA castClassCache;
 	void** jniIDs;
 	UDATA lockOffset;
+#if defined(J9VM_ENV_DATA64)
+	U_32 paddingForGLRCounters; /* This is used to preserve alignment under 64 bit. */
+#endif /* defined(J9VM_ENV_DATA64) */
+	U_16 reservedCounter;
+	U_16 cancelCounter;
 	UDATA newInstanceCount;
 	IDATA backfillOffset;
 	struct J9Class* replacedClass;
@@ -3701,11 +3726,11 @@ typedef struct J9JITConfig {
 	void ( *jitIllegalFinalFieldModification)(struct J9VMThread *currentThread, struct J9Class *fieldClass);
 	U_8* (*codeCacheWarmAlloc)(void *codeCache);
 	U_8* (*codeCacheColdAlloc)(void *codeCache);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 	int32_t (*startJITServer)(struct J9JITConfig *jitConfig);
 	int32_t (*waitJITServerTermination)(struct J9JITConfig *jitConfig);
 	uint64_t clientUID;
-#endif /* JITSERVER_SUPPORT */
+#endif /* J9VM_OPT_JITSERVER */
 } J9JITConfig;
 
 #define J9JIT_GROW_CACHES  0x100000
@@ -4434,9 +4459,9 @@ typedef struct J9InternalVMFunctions {
 #endif /* J9VM_OPT_VALHALLA_NESTMATES */
 	BOOLEAN ( *areValueTypesEnabled)(struct J9JavaVM *vm);
 	J9Class* ( *peekClassHashTable)(struct J9VMThread* currentThread, J9ClassLoader* classLoader, U_8* className, UDATA classNameLength);
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 	BOOLEAN ( *isJITServerEnabled )(struct J9JavaVM *vm);
-#endif /* JITSERVER_SUPPORT */
+#endif /* J9VM_OPT_JITSERVER */
 	IDATA ( *createJoinableThreadWithCategory)(omrthread_t* handle, UDATA stacksize, UDATA priority, UDATA suspend, omrthread_entrypoint_t entrypoint, void* entryarg, U_32 category) ;
 	BOOLEAN ( *valueTypeCapableAcmp)(struct J9VMThread *currentThread, j9object_t lhs, j9object_t rhs) ;
 } J9InternalVMFunctions;
@@ -4774,7 +4799,6 @@ typedef struct J9JavaVM {
 	U_32 extendedRuntimeFlags2;
 	UDATA zeroOptions;
 	struct J9ClassLoader* systemClassLoader;
-	struct J9ClassLoader *platformClassLoader;
 	UDATA sigFlags;
 	void* vmLocalStorageFunctions;
 	omrthread_monitor_t unsafeMemoryTrackingMutex;
@@ -4837,6 +4861,7 @@ typedef struct J9JavaVM {
 	UDATA rsOverflow;
 	UDATA maxStackUse;
 	UDATA maxCStackUse;
+	/* extensionClassLoader holds the platform class loader in Java 11+ */
 	struct J9ClassLoader* extensionClassLoader;
 	struct J9ClassLoader* applicationClassLoader;
 	UDATA doPrivilegedMethodID1;
@@ -5113,6 +5138,17 @@ typedef struct J9JavaVM {
 	UDATA valueFlatteningThreshold;
 #endif /* defined(J9VM_OPT_VALHALLA_VALUE_TYPES) */
 	UDATA dCacheLineSize;
+	/* Indicates processor support for committing cache lines to memory. On X86,
+	 * examples would be CLFLUSH or CLWB instructions. This field takes the value
+	 * of the feature constants listed in j9port.h
+	 */
+	U_32 cpuCacheWritebackCapabilities;
+	U_32 enableGlobalLockReservation;
+	U_32 reservedTransitionThreshold;
+	U_32 reservedAbsoluteThreshold;
+	U_32 minimumReservedRatio;
+	U_32 cancelAbsoluteThreshold;
+	U_32 minimumLearningRatio;
 } J9JavaVM;
 
 #define J9VM_PHASE_NOT_STARTUP  2

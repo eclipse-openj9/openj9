@@ -262,6 +262,9 @@ class ClientSessionData
       TR_FieldAttributesCache _staticAttributesCacheAOT;
       TR_JitFieldsCache _jitFieldsCache;
       PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _fieldOrStaticDeclaringClassCache;
+      // The following cache is very similar to _fieldOrStaticDeclaringClassCache but it uses
+      // a different API to populate it. In the future we may want to unify these two caches
+      PersistentUnorderedMap<int32_t, TR_OpaqueClassBlock *> _fieldOrStaticDefiningClassCache;
       PersistentUnorderedMap<int32_t, J9MethodNameAndSignature> _J9MethodNameCache; // key is a cpIndex
 
       char* getROMString(int32_t& len, void *basePtr, std::initializer_list<size_t> offsets);
@@ -320,6 +323,7 @@ class ClientSessionData
       void *_doubleInvokeExactThunkHelper;
       size_t _interpreterVTableOffset;
       J9Method *_jlrMethodInvoke;
+      uint32_t _enableGlobalLockReservation;
 #if defined(J9VM_OPT_SIDECAR)
       TR_OpaqueClassBlock *_srMethodAccessorClass;
       TR_OpaqueClassBlock *_srConstructorAccessorClass;

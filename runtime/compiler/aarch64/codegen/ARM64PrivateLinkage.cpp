@@ -731,8 +731,8 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
    int32_t argIndex = 0;
    int32_t numMemArgs = 0;
    int32_t memArgSize = 0;
-   int32_t memArgOffset;
    int32_t from, to, step;
+   int32_t argSize = -properties.getOffsetToFirstParm();
    int32_t totalSize = 0;
    int32_t multiplier;
 
@@ -841,8 +841,6 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
    if (numMemArgs > 0)
       {
       pushToMemory = new (trStackMemory()) TR::ARM64MemoryArgument[numMemArgs];
-
-      memArgOffset = rightToLeft ? 0 : memArgSize;
       }
 
    if (specialArgReg)
@@ -900,6 +898,7 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
                }
             else
                {
+               argSize += TR::Compiler->om.sizeofReferenceAddress() * ((childType == TR::Int64) ? 2 : 1);
                if (numIntegerArgs < numIntArgRegs)
                   {
                   if (!cg()->canClobberNodesRegister(child, 0))
@@ -930,16 +929,7 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
                else // numIntegerArgs >= numIntArgRegs
                   {
                   op = ((childType == TR::Address) || (childType == TR::Int64)) ? TR::InstOpCode::strimmx : TR::InstOpCode::strimmw;
-                  multiplier = (childType == TR::Int64) ? 2 : 1;
-                  if (!rightToLeft)
-                     {
-                     memArgOffset -= TR::Compiler->om.sizeofReferenceAddress() * multiplier;
-                     }
-                  pushOutgoingMemArgument(argRegister, memArgOffset, op, pushToMemory[argIndex++]);
-                  if (rightToLeft)
-                     {
-                     memArgOffset += TR::Compiler->om.sizeofReferenceAddress() * multiplier;
-                     }
+                  pushOutgoingMemArgument(argRegister, totalSize - argSize, op, pushToMemory[argIndex++]);
                   }
                numIntegerArgs++;
                }
@@ -948,10 +938,12 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
          case TR::Double:
             if (childType == TR::Float)
                {
+               argSize += TR::Compiler->om.sizeofReferenceAddress();
                argRegister = pushFloatArg(child);
                }
             else
                {
+               argSize += TR::Compiler->om.sizeofReferenceAddress() * 2;
                argRegister = pushDoubleArg(child);
                }
             if (numFloatArgs < numFloatArgRegs)
@@ -979,16 +971,7 @@ int32_t J9::ARM64::PrivateLinkage::buildPrivateLinkageArgs(TR::Node *callNode,
             else // numFloatArgs >= numFloatArgRegs
                {
                op = (childType == TR::Float) ? TR::InstOpCode::vstrimms : TR::InstOpCode::vstrimmd;
-               multiplier = (childType == TR::Double) ? 2 : 1;
-               if (!rightToLeft)
-                  {
-                  memArgOffset -= TR::Compiler->om.sizeofReferenceAddress() * multiplier;
-                  }
-               pushOutgoingMemArgument(argRegister, memArgOffset, op, pushToMemory[argIndex++]);
-               if (rightToLeft)
-                  {
-                  memArgOffset += TR::Compiler->om.sizeofReferenceAddress() * multiplier;
-                  }
+               pushOutgoingMemArgument(argRegister, totalSize - argSize, op, pushToMemory[argIndex++]);
                }
             numFloatArgs++;
             break;

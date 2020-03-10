@@ -23,9 +23,9 @@
 #include "optimizer/TransformUtil.hpp"
 #include "compile/Compilation.hpp"
 #include "compile/SymbolReferenceTable.hpp"
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
 #include "control/CompilationRuntime.hpp"
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 #include "env/CompilerEnv.hpp"
 #include "il/Block.hpp"
 #include "il/Block_inlines.hpp"
@@ -1441,7 +1441,7 @@ J9::TransformUtil::transformDirectLoad(TR::Compilation *comp, TR::Node *node)
 bool
 J9::TransformUtil::transformIndirectLoadChainAt(TR::Compilation *comp, TR::Node *node, TR::Node *baseExpression, uintptrj_t *baseReferenceLocation, TR::Node **removedNode)
    {
-#if defined(JITSERVER_SUPPORT)
+#if defined(J9VM_OPT_JITSERVER)
    // Bypass this method, because baseReferenceLocation is often an address of a pointer
    // on server's stack, which causes a segfault when getStaticReferenceFieldAtAddress is called
    // on the client.
@@ -1449,7 +1449,7 @@ J9::TransformUtil::transformIndirectLoadChainAt(TR::Compilation *comp, TR::Node 
       {
       return false;
       }
-#endif /* defined(JITSERVER_SUPPORT) */
+#endif /* defined(J9VM_OPT_JITSERVER) */
 
    TR::VMAccessCriticalSection transformIndirectLoadChainAt(comp->fej9());
    uintptrj_t baseAddress;
