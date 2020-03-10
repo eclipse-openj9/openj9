@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
 
 <!--
-  Copyright (c) 2019, 2019 IBM Corp. and others
+  Copyright (c) 2019, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -25,7 +25,7 @@
 <!DOCTYPE suite SYSTEM "cmdlinetester.dtd">
 
 <suite id="J9 Value Type ddr test with flattening enabled" timeout="600">
-	<variable name="ARGS" value="-Xint -XX:+EnableValhalla -Xverify:none --add-opens java.base/jdk.internal.misc=ALL-UNNAMED" />
+	<variable name="ARGS" value="-Xint -XX:ValueTypeFlatteningThreshold=999999 -XX:+EnableValhalla -Xverify:none --add-opens java.base/jdk.internal.misc=ALL-UNNAMED" />
 	<variable name="JARS" value="-cp $ASMJAR$:$JCOMMANDERJAR$:$TESTNGJAR$:$VALUETYPEJAR$" />
 	<variable name="PROGRAM" value="org.openj9.test.lworld.DDRValueTypeTest" />
 	<variable name="DUMPFILE" value="j9core.dmp" />
