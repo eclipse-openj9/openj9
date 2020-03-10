@@ -64,6 +64,8 @@ ifneq (,$(findstring _cross,$(SPEC)))
 		AR = $(OPENJ9_CC_PREFIX)-ar
 	endif
 	OBJCOPY = $(OPENJ9_CC_PREFIX)-objcopy
+else
+	OBJCOPY ?= objcopy
 endif
 
 CONFIGURE_ARGS += 'AS=$(AS)'
