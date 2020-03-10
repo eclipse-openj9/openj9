@@ -21,7 +21,10 @@
  *******************************************************************************/
 
 #include "control/CompilationRuntime.hpp"
+#include "control/Options.hpp" // TR::Options::useCompressedPointers()
+#include "env/CompilerEnv.hpp" // for TR::Compiler->target.is64Bit()
 #include "net/CommunicationStream.hpp"
+
 
 namespace JITServer
 {
@@ -64,7 +67,7 @@ CommunicationStream::readMessage(Message &msg)
    readBlocking(serializedSize);
    msg.setSerializedSize(serializedSize);
 
-   TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Will receive a message of size %lu\n", serializedSize);
+   //TR_VerboseLog::writeLineLocked(TR_Vlog_JITServer, "Will receive a message of size %lu\n", serializedSize);
 
    // read the rest of the message
    uint32_t messageSize = serializedSize - sizeof(uint32_t);

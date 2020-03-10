@@ -25,7 +25,6 @@
 #include "control/Options.hpp"
 #include "env/VerboseLog.hpp"
 #include "net/LoadSSLLibs.hpp"
-#include "net/SSLProtobufStream.hpp"
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
