@@ -615,6 +615,7 @@ public class ValueTypeTests {
 		int x = 0;
 		int y = 0;
 		Object valueType = makePoint2D.invoke(x, y);
+		Object valueTypeArray = Array.newInstance(flattenedLine2DClass, genericArraySize);
 
 		String fields[] = {"longField:J"};
 		Class<?> testMonitorEnterOnValueType = ValueTypeGenerator.generateRefClass("TestMonitorEnterOnValueType", fields);
@@ -623,6 +624,12 @@ public class ValueTypeTests {
 			monitorEnterOnValueType.invoke(valueType);
 			Assert.fail("should throw exception. MonitorEnter cannot be used with ValueType");
 		} catch (IllegalMonitorStateException e) {}
+		
+		try {
+			monitorEnterOnValueType.invoke(valueTypeArray);
+		} catch (IllegalMonitorStateException e) {
+			Assert.fail("Should not throw exception. MonitorEnter can be used with ValueType arrays");
+		}
 	}
 
 	/*
@@ -637,14 +644,24 @@ public class ValueTypeTests {
 		int x = 1;
 		int y = 1;
 		Object valueType = makePoint2D.invoke(x, y);
+		Object valueTypeArray = Array.newInstance(flattenedLine2DClass, genericArraySize);
 
 		String fields[] = {"longField:J"};
 		Class<?> testMonitorExitOnValueType = ValueTypeGenerator.generateRefClass("TestMonitorExitOnValueType", fields);
+		MethodHandle monitorEnterOnValueType = lookup.findStatic(testMonitorExitOnValueType, "testMonitorEnterOnObject", MethodType.methodType(void.class, Object.class));
 		MethodHandle monitorExitOnValueType = lookup.findStatic(testMonitorExitOnValueType, "testMonitorExitOnObject", MethodType.methodType(void.class, Object.class));
 		try {
+			monitorEnterOnValueType.invoke(valueType);
 			monitorExitOnValueType.invoke(valueType);
 			Assert.fail("should throw exception. MonitorExit cannot be used with ValueType");
 		} catch (IllegalMonitorStateException e) {}
+		
+		try {
+			monitorEnterOnValueType.invoke(valueTypeArray);
+			monitorExitOnValueType.invoke(valueTypeArray);
+		} catch (IllegalMonitorStateException e) {
+			Assert.fail("Should not throw exception. MonitorExit can be used with ValueType arrays");
+		}
 	}
 
 	/*
@@ -1453,6 +1470,26 @@ public class ValueTypeTests {
 		}
 	}
 
+	/*
+	 * Create a 2D array of valueTypes, verify that the default elements are null. 
+	 */
+	@Test(priority=5)
+	static public void testMultiDimentionalArrays() throws Throwable {
+		Class assortedValueWithLongAlignment2DClass = Array.newInstance(assortedValueWithLongAlignmentClass, 1).getClass();
+		Class assortedValueWithSingleAlignment2DClass = Array.newInstance(assortedValueWithSingleAlignmentClass, 1).getClass();
+		
+		Object assortedRefWithLongAlignment2DArray = Array.newInstance(assortedValueWithLongAlignment2DClass, genericArraySize);
+		Object assortedRefWithSingleAlignment2DArray = Array.newInstance(assortedValueWithSingleAlignment2DClass, genericArraySize);
+		
+		for (int i = 0; i < genericArraySize; i++) {
+			Object ref = Array.get(assortedRefWithLongAlignment2DArray, i);
+			assertNull(ref);
+			
+			ref = Array.get(assortedRefWithSingleAlignment2DArray, i);
+			assertNull(ref);
+		}
+	}
+	
 	/*
 	 * Create an assortedRefWithLongAlignment Array
 	 * Since it's ref type, the array should be filled with nullptrs

@@ -2894,12 +2894,19 @@ fail:
 				} else {
 					arity = 1;
 					leafComponentType = elementClass;
+					/* For arrays of valueType elements (where componentType is a valuetype), the arrays themselves are not
+					 * valuetypes but they should inherit the layout characteristics (ie. flattenable, etc.)
+					 * of the valuetype elements. A 2D (or more) array of valuetype elements (where leafComponentType is a Valuetype but
+					 * componentType is not) is not direct array array of valuetype elements, therefore it should not inherit any layout
+					 * properties from the leafComponentType. A 2D array is an array of references so it can never be flattened, however, its
+					 * elements may be flattened arrays.
+					 */
+					ramArrayClass->classFlags |= (elementClass->classFlags & (J9ClassIsFlattened | J9ClassLargestAlignmentConstraintReference | J9ClassLargestAlignmentConstraintDouble));
 				}
 				ramArrayClass->leafComponentType = leafComponentType;
 				ramArrayClass->arity = arity;
 				ramArrayClass->componentType = elementClass;
 				ramArrayClass->module = leafComponentType->module;
-				ramArrayClass->classFlags |= ((J9ClassIsValueType | J9ClassIsFlattened) & elementClass->classFlags);
 
 				if (J9_IS_J9CLASS_FLATTENED(elementClass)) {
 					if (J9_ARE_ALL_BITS_SET(elementClass->classFlags, J9ClassLargestAlignmentConstraintDouble)) {
