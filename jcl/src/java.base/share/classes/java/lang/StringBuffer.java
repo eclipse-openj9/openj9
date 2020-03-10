@@ -153,10 +153,17 @@ public StringBuffer (String string) {
 	int stringLength = string.lengthInternal();
 	
 	int newLength = stringLength + INITIAL_SIZE;
+	if (newLength < stringLength) {
+		newLength = stringLength;
+	}
 	
 	if (String.enableCompression) {
 		if (string.isCompressed ()) {
-			value = new char[(newLength + 1) / 2];
+			if (newLength == Integer.MAX_VALUE) {
+				value = new char[(newLength / 2) + 1];
+			} else {
+				value = new char[(newLength + 1) / 2];
+			}
 
 			string.getBytes(0, stringLength, value, 0);
 			
@@ -198,6 +205,10 @@ public synchronized StringBuffer append (char[] chars) {
 	int currentCapacity = capacityInternal();
 	
 	int newLength = currentLength + chars.length;
+	if (newLength < currentLength) {
+		/*[MSG "K0D01", "Array capacity exceeded"]*/
+		throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
+	}
 	
 	if (String.enableCompression) {
 		// Check if the StringBuffer is compressed
@@ -255,6 +266,10 @@ public synchronized StringBuffer append (char chars[], int start, int length) {
 		int currentCapacity = capacityInternal();
 		
 		int newLength = currentLength + length;
+		if (newLength < currentLength) {
+			/*[MSG "K0D01", "Array capacity exceeded"]*/
+			throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
+		}
 		
 		if (String.enableCompression) {
 			// Check if the StringBuffer is compressed
@@ -301,6 +316,10 @@ synchronized StringBuffer append (char[] chars, int start, int length, boolean c
 	int currentCapacity = capacityInternal();
 	
 	int newLength = currentLength + length;
+	if (newLength < currentLength) {
+		/*[MSG "K0D01", "Array capacity exceeded"]*/
+		throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
+	}
 	
 	if (String.enableCompression) {
 		// Check if the StringBuffer is compressed
@@ -359,6 +378,10 @@ public synchronized StringBuffer append(char ch) {
 	int currentCapacity = capacityInternal();
 	
 	int newLength = currentLength + 1;
+	if (newLength < currentLength) {
+		/*[MSG "K0D01", "Array capacity exceeded"]*/
+		throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
+	}
 	
 	if (String.enableCompression) {
 		// Check if the StringBuffer is compressed
@@ -443,6 +466,10 @@ public synchronized StringBuffer append(int value) {
 			}
 
 			int newLength = currentLength + valueLength;
+			if (newLength < currentLength) {
+				/*[MSG "K0D01", "Array capacity exceeded"]*/
+				throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
+			}
 
 			if (newLength > currentCapacity) {
 				ensureCapacityImpl(newLength);
@@ -488,6 +515,10 @@ public synchronized StringBuffer append(long value) {
 			}
 
 			int newLength = currentLength + valueLength;
+			if (newLength < currentLength) {
+				/*[MSG "K0D01", "Array capacity exceeded"]*/
+				throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
+			}
 
 			if (newLength > currentCapacity) {
 				ensureCapacityImpl(newLength);
@@ -537,6 +568,10 @@ public synchronized StringBuffer append (String string) {
 	int stringLength = string.lengthInternal();
 	
 	int newLength = currentLength + stringLength;
+	if (newLength < currentLength) {
+		/*[MSG "K0D01", "Array capacity exceeded"]*/
+		throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
+	}
 	
 	if (String.enableCompression) {
 		// Check if the StringBuffer is compressed
@@ -771,7 +806,12 @@ private void ensureCapacityImpl(int min) {
 	
 	// Check if the StringBuilder is compressed
 	if (String.enableCompression && count >= 0) {
-		char[] newData = new char[(newLength + 1) / 2];
+		char[] newData;
+		if (newLength == Integer.MAX_VALUE) { 
+			newData = new char[(newLength / 2) + 1];
+		} else {
+			newData = new char[(newLength + 1) / 2];
+		}
 		
 		String.compressedArrayCopy(value, 0, newData, 0, currentLength);
 		
@@ -1206,9 +1246,18 @@ private void move(int size, int index) {
 			newLength = currentCapacity;
 		} else {
 			newLength = Integer.max(currentLength + size, (currentCapacity << 1) + 2);
+			if (newLength < currentLength) {
+				/*[MSG "K0D01", "Array capacity exceeded"]*/
+				throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
+			}
 		}
 		
-		char[] newData = new char[(newLength + 1) / 2];
+		char[] newData;
+		if (newLength == Integer.MAX_VALUE) {
+			newData = new char[(newLength / 2) + 1];
+		} else {
+			newData = new char[(newLength + 1) / 2];
+		}
 		
 		String.compressedArrayCopy(value, 0, newData, 0, index);
 		String.compressedArrayCopy(value, index, newData, index + size, currentLength - index);
@@ -1230,6 +1279,10 @@ private void move(int size, int index) {
 			newLength = currentCapacity;
 		} else {
 			newLength = Integer.max(currentLength + size, (currentCapacity << 1) + 2);
+			if (newLength < currentLength) {
+				/*[MSG "K0D01", "Array capacity exceeded"]*/
+				throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
+			}
 		}
 		
 		char[] newData = new char[newLength];
@@ -2139,9 +2192,16 @@ public StringBuffer(CharSequence sequence) {
 	}
 	
 	int newLength = INITIAL_SIZE + size;
+	if (newLength < size) {
+		newLength = size;
+	}
 	
 	if (String.enableCompression) {
-		value = new char[(newLength + 1) / 2];
+		if (newLength == Integer.MAX_VALUE) { 
+			value = new char[(newLength / 2) + 1];
+		} else {
+			value = new char[(newLength + 1) / 2];
+		}
 	} else {
 		value = new char[newLength];
 	}
@@ -2213,6 +2273,10 @@ public synchronized StringBuffer append(CharSequence sequence) {
 		int sequenceLength = sequence.length();
 		
 		int newLength = currentLength + sequenceLength;
+		if (newLength < currentLength) {
+			/*[MSG "K0D01", "Array capacity exceeded"]*/
+			throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
+		}
 		
 		if (String.enableCompression) {
 			boolean isCompressed = true;
@@ -2315,6 +2379,10 @@ public synchronized StringBuffer append(CharSequence sequence, int start, int en
 			int currentCapacity = capacityInternal();
 			
 			int newLength = currentLength + end - start;
+			if (newLength < currentLength) {
+				/*[MSG "K0D01", "Array capacity exceeded"]*/
+				throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
+			}
 			
 			if (String.enableCompression) {
 				boolean isCompressed = true;
@@ -2812,6 +2880,10 @@ public synchronized StringBuffer appendCodePoint(int codePoint) {
 			int currentCapacity = capacityInternal();
 
 			int newLength = currentLength + 2;
+			if (newLength < currentLength) {
+				/*[MSG "K0D01", "Array capacity exceeded"]*/
+				throw new OutOfMemoryError(com.ibm.oti.util.Msg.getString("K0D01")); //$NON-NLS-1$
+			}
 
 			if (newLength > currentCapacity) {
 				ensureCapacityImpl(newLength);
