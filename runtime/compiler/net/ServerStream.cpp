@@ -37,7 +37,6 @@
 #include "control/CompilationRuntime.hpp"
 #include "env/TRMemory.hpp"
 #include "net/LoadSSLLibs.hpp"
-#include "net/SSLProtobufStream.hpp"
 
 namespace JITServer
 {
