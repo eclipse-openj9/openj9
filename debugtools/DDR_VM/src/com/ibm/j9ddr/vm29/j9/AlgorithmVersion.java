@@ -71,6 +71,8 @@ public class AlgorithmVersion {
 
 	public static final String MM_OBJECT_ACCESS_BARRIER_VERSION = "ALG_MM_OBJECT_ACCESS_BARRIER_VERSION";
 
+	public static final String MIXED_REFERENCE_MODE = "MIXED_REFERENCE_MODE";
+
 	// Fields
 	private static AlgorithmVersion DEFAULT_VERSION;
 	private static int vmMajorVersion;

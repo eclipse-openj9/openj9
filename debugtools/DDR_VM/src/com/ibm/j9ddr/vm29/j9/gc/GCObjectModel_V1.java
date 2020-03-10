@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -221,7 +221,7 @@ public UDATA getTotalFootprintInBytesWithHeader(J9ObjectPointer object) throws C
 	public UDATA adjustSizeInBytes(UDATA sizeInBytes)
 	{
 		long bytes = sizeInBytes.longValue();
-		if (!J9BuildFlags.env_data64 || J9BuildFlags.gc_compressedPointers) {
+		if (!J9BuildFlags.env_data64 || J9ObjectHelper.compressObjectReferences) {
 			bytes = (bytes + (ObjectModel.getObjectAlignmentInBytes() - 1)) & ~(ObjectModel.getObjectAlignmentInBytes() - 1);
 		}
 

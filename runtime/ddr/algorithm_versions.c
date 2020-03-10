@@ -61,6 +61,9 @@ J9DDRConstantTableBegin(DDRAlgorithmVersions)
 	J9DDRConstantTableEntryWithValue("ALG_VM_ITABLE_VERSION", ALG_VM_ITABLE_VERSION)
 	J9DDRConstantTableEntryWithValue("ALG_VM_BYTECODE_VERSION", ALG_VM_BYTECODE_VERSION)
 	J9DDRConstantTableEntryWithValue("ALG_OBJECT_MONITOR_VERSION", ALG_OBJECT_MONITOR_VERSION)
+#if defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS)
+	J9DDRConstantTableEntryWithValue("MIXED_REFERENCE_MODE", 1)
+#endif /* defined(OMR_GC_COMPRESSED_POINTERS) && defined(OMR_GC_FULL_POINTERS) */
 J9DDRConstantTableEnd
 
 J9DDRStructTableBegin(AlgorithmVersions)

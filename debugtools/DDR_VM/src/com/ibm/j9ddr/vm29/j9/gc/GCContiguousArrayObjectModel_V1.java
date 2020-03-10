@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -48,7 +48,7 @@ class GCContiguousArrayObjectModel_V1 extends GCArrayObjectModel
 
 	public UDATA getSizeInBytesWithHeader(J9IndexableObjectPointer array) throws CorruptDataException
 	{
-		return getSizeInBytesWithoutHeader(array).add(new UDATA(J9IndexableObjectContiguous.SIZEOF));
+		return getSizeInBytesWithoutHeader(array).add(new UDATA(J9IndexableObjectHelper.contiguousHeaderSize()));
 	}
 
 	public UDATA getHashcodeOffset(J9IndexableObjectPointer array) throws CorruptDataException
@@ -57,13 +57,13 @@ class GCContiguousArrayObjectModel_V1 extends GCArrayObjectModel
 		UDATA numberOfElements = getSizeInElements(array);
 		J9ROMArrayClassPointer romArrayClass = J9ROMArrayClassPointer.cast(clazz.romClass());
 		UDATA size = numberOfElements.leftShift(romArrayClass.arrayShape().bitAnd(0xFFFF).intValue());
-		size = size.add(J9IndexableObjectContiguous.SIZEOF);
+		size = size.add(J9IndexableObjectHelper.contiguousHeaderSize());
 		return UDATA.roundToSizeofU32(size);
 	}
 	
 	public UDATA getHeaderSize(J9IndexableObjectPointer array)
 	{
-		return new UDATA(J9IndexableObjectDiscontiguous.SIZEOF);
+		return new UDATA(J9IndexableObjectHelper.discontiguousHeaderSize());
 	}
 
 	/**

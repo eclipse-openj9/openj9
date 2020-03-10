@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 1991, 2019 IBM Corp. and others
+ * Copyright (c) 1991, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -67,6 +67,7 @@ import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.view.dtfj.DTFJContext;
 import com.ibm.j9ddr.vm29.view.dtfj.java.j9.DTFJConstantPoolIterator;
 import com.ibm.j9ddr.vm29.structure.J9Object;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 
 public class DTFJJavaClass implements JavaClass {
 	private final J9ClassPointer j9class;
@@ -597,7 +598,7 @@ public class DTFJJavaClass implements JavaClass {
 	public long getInstanceSize() throws CorruptDataException
 	{
 		try {
-			return j9class.totalInstanceSize().longValue() + J9Object.SIZEOF;
+			return j9class.totalInstanceSize().longValue() + J9ObjectHelper.headerSize();
 		} catch (Throwable t) {
 			throw J9DDRDTFJUtils.handleAsCorruptDataException(DTFJContext.getProcess(), t);
 		}

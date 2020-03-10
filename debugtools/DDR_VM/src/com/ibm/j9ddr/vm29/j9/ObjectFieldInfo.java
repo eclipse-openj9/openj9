@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2015, 2019 IBM Corp. and others
+ * Copyright (c) 2015, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -37,6 +37,7 @@ import com.ibm.j9ddr.vm29.pointer.helper.J9ROMFieldShapeHelper;
 import com.ibm.j9ddr.vm29.pointer.helper.J9UTF8Helper;
 import com.ibm.j9ddr.vm29.pointer.helper.ValueTypeHelper;
 import com.ibm.j9ddr.vm29.structure.J9Object;
+import com.ibm.j9ddr.vm29.pointer.helper.J9ObjectHelper;
 import com.ibm.j9ddr.vm29.types.Scalar;
 import com.ibm.j9ddr.vm29.types.U32;
 import com.ibm.j9ddr.vm29.types.U64;
@@ -49,9 +50,9 @@ public class ObjectFieldInfo {
 	boolean objectCanUseBackfill; /* true if an object reference is the same size as a backfill slot */
 	// Sizeof constants
 	public static final int fj9object_t_SizeOf =
-			(J9BuildFlags.gc_compressedPointers ? U32.SIZEOF : UDATA.SIZEOF);
+			(J9ObjectHelper.compressObjectReferences ? U32.SIZEOF : UDATA.SIZEOF);
 	public static final int j9objectmonitor_t_SizeOf =
-			(J9BuildFlags.gc_compressedPointers ? U32.SIZEOF : UDATA.SIZEOF);
+			(J9ObjectHelper.compressObjectReferences ? U32.SIZEOF : UDATA.SIZEOF);
 
 	int instanceObjectCount;
 	int instanceSingleCount;
@@ -197,7 +198,7 @@ public class ObjectFieldInfo {
 	 * @return offset of backfill slot from the start of the object
 	 */
 	UDATA getMyBackfillOffsetForHiddenField() {
-		return new UDATA(myBackfillOffset + J9Object.SIZEOF);
+		return new UDATA(myBackfillOffset + J9ObjectHelper.headerSize());
 	}
 
 	int getSuperclassFieldsSize() {
@@ -205,7 +206,7 @@ public class ObjectFieldInfo {
 	}
 
 	long getSuperclassObjectSize() {
-		return superclassFieldsSize + J9Object.SIZEOF;
+		return superclassFieldsSize + J9ObjectHelper.headerSize();
 	}
 
 	void
@@ -354,7 +355,7 @@ public class ObjectFieldInfo {
 	}
 
 	int calculateTotalFieldsSizeAndBackfill() { /* TODO update to handle contended fields */
-		long accumulator = superclassFieldsSize + (totalObjectCount * J9Object.SIZEOF) + (totalSingleCount * U32.SIZEOF)
+		long accumulator = superclassFieldsSize + (totalObjectCount * J9ObjectHelper.headerSize()) + (totalSingleCount * U32.SIZEOF)
 				+ (totalDoubleCount * U64.SIZEOF);
 
 		accumulator += totalFlatFieldDoubleBytes + totalFlatFieldRefBytes + totalFlatFieldSingleBytes;
@@ -377,7 +378,7 @@ public class ObjectFieldInfo {
 				myBackfillOffset = superclassBackfillOffset;
 				superclassBackfillOffset = NO_BACKFILL_AVAILABLE;
 			}
-			if (((accumulator + J9Object.SIZEOF) % ObjectModel.getObjectAlignmentInBytes()) != 0) {
+			if (((accumulator + J9ObjectHelper.headerSize()) % ObjectModel.getObjectAlignmentInBytes()) != 0) {
 				/* we have consumed the superclass's backfill (if any), so let our subclass use the residue at the end of this class. */
 				subclassBackfillOffset = (int)accumulator;
 				accumulator += BACKFILL_SIZE;
