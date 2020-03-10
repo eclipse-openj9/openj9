@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016, 2018 IBM Corp. and others
+ * Copyright (c) 2016, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -41,9 +41,9 @@ public class LookupAPITests_AccessClass {
 	 *
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(groups = { "level.sanity" })
 	public void test_AccessNestedClass_PublicAccess_SameNest() throws Throwable {
-		Class<?> expectedClass = Helper_LookupAPI_OtherPackage.PublicNestedClass.class;
+		Class<?> expectedClass = Helper_LookupAPI_OtherPackage.PublicNestedClass;
 		Class<?> targetClass = lookupObjectHelperPackage.accessClass(expectedClass);
 
 		AssertJUnit.assertFalse(Helper_LookupAPI_OtherPackage.initializedPublicNestedClass);
@@ -55,14 +55,12 @@ public class LookupAPITests_AccessClass {
 	 *
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(groups = { "level.sanity" }, expectedExceptions = IllegalAccessException.class)
 	public void test_AccessNestedClass_PrivateAccess_SameNest_PublicMode() throws Throwable {
-		try {
-			lookupObjectPublic.accessClass(Helper_LookupAPI_OtherPackage.privateNestedClass);
-			Assert.fail("The private class shouldn't be accessible to the lookup class only with public mode");
-		} catch (IllegalAccessException e) {
-			/* Success */
-		}
+		int expectedAccessModes = (Lookup.PUBLIC | Lookup.UNCONDITIONAL);
+		Assert.assertEquals(expectedAccessModes, lookupObjectPublic.lookupModes() & expectedAccessModes);
+		lookupObjectPublic.accessClass(Helper_LookupAPI_OtherPackage.privateNestedClass);
+		Assert.fail("The private class shouldn't be accessible to the lookup class only with public mode");
 	}
 
 	/**
@@ -70,7 +68,7 @@ public class LookupAPITests_AccessClass {
 	 *
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(groups = { "level.sanity" })
 	public void test_AccessLookupClass_PrivateAccess_SameClass() throws Throwable {
 		Class<?> expectedClass = Helper_LookupAPI_OtherPackage.privateNestedClass;
 		Class<?> targetClass = lookupObjectHelperPackage.in(expectedClass).accessClass(expectedClass);
@@ -84,7 +82,7 @@ public class LookupAPITests_AccessClass {
 	 *
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(groups = { "level.sanity" })
 	public void test_AccessNestedClass_PrivateAccess_SameNest() throws Throwable {
 		Class<?> expectedClass = Helper_LookupAPI_OtherPackage.privateNestedClass;
 		Class<?> targetClass = lookupObjectHelperPackage.accessClass(expectedClass);
@@ -98,7 +96,7 @@ public class LookupAPITests_AccessClass {
 	 *
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(groups = { "level.sanity" })
 	public void test_AccessDoubleNestedClass_PrivateAccess_SameNest() throws Throwable {
 		Class<?> expectedClass = Helper_LookupAPI_OtherPackage.privateDoubleNestedClass;
 		Class<?> targetClass = lookupObjectHelperPackage.accessClass(expectedClass);
@@ -115,7 +113,7 @@ public class LookupAPITests_AccessClass {
 	 *
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(groups = { "level.sanity" })
 	public void test_AccessNestedClass_PrivateAccess_DiffLookup_SamePackage() throws Throwable {
 		Class<?> expectedClass = Helper_LookupAPI_OtherPackage.privateNestedClass;
 		Class<?> targetClass = lookupObjectHelperPackageDiffNest.accessClass(expectedClass);
@@ -134,14 +132,11 @@ public class LookupAPITests_AccessClass {
 	 *
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(groups = { "level.sanity" }, expectedExceptions = IllegalAccessException.class)
 	public void test_AccessNestedClass_PrivateAccess_DiffPackage() throws Throwable {
-		try {
-			lookupObjectThisPackage.accessClass(Helper_LookupAPI_OtherPackage.privateNestedClass);
-			Assert.fail("The private class shouldn't be accessible to the lookup class from a different package");
-		} catch (IllegalAccessException e) {
-			/* Success */
-		}
+		Assert.assertEquals(Lookup.PRIVATE, lookupObjectThisPackage.lookupModes() & Lookup.PRIVATE);
+		lookupObjectThisPackage.accessClass(Helper_LookupAPI_OtherPackage.privateNestedClass);
+		Assert.fail("The private class shouldn't be accessible to the lookup class from a different package");
 	}
 
 	/**
@@ -151,7 +146,7 @@ public class LookupAPITests_AccessClass {
 	 *
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(groups = { "level.sanity" })
 	public void test_AccessNestedClass_ProtectedAccess_SameNest_SamePackage() throws Throwable {
 		Class<?> expectedClass = Helper_LookupAPI_OtherPackage.protectedNestedClass;
 		Class<?> targetClass = lookupObjectHelperPackageDiffNest.accessClass(expectedClass);
@@ -166,7 +161,7 @@ public class LookupAPITests_AccessClass {
 	 *
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(groups = { "level.sanity" })
 	public void test_AccessNestedClass_ProtectedAccess_DiffPackage() throws Throwable {
 		Class<?> expectedClass = Helper_LookupAPI_OtherPackage.protectedNestedClass;
 		Class<?> targetClass = lookupObjectThisPackage.accessClass(expectedClass);
@@ -181,7 +176,7 @@ public class LookupAPITests_AccessClass {
 	 *
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(groups = { "level.sanity" })
 	public void test_AccessNestedClass_ProtectedAccess_InterfaceLookup_DiffPackage() throws Throwable {
 		Helper_Interface.interfaceLookupObject.accessClass(Helper_LookupAPI_OtherPackage.protectedNestedClass);
 	}
@@ -192,7 +187,7 @@ public class LookupAPITests_AccessClass {
 	 *
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(groups = { "level.sanity" })
 	public void test_AccessClass_PackageAccess_DiffLookup_SamePackage() throws Throwable {
 		Class<?> expectedClass = Helper_LookupAPI_OtherPackage.class_PackageAccess;
 		Class<?> targetClass = lookupObjectHelperPackage.accessClass(expectedClass);
@@ -207,13 +202,9 @@ public class LookupAPITests_AccessClass {
 	 *
 	 * @throws Throwable
 	 */
-	@Test(groups = { "level.extended" })
+	@Test(groups = { "level.sanity" }, expectedExceptions = IllegalAccessException.class)
 	public void test_AccessClass_PackageAccess_DiffPackage() throws Throwable {
-		try {
-			lookupObjectThisPackage.accessClass(Helper_LookupAPI_OtherPackage.class_PackageAccess);
-			Assert.fail("The class shouldn't be accessible to the lookup class from a different package");
-		} catch (IllegalAccessException e) {
-			/* Success */
-		}
+		lookupObjectThisPackage.accessClass(Helper_LookupAPI_OtherPackage.class_PackageAccess);
+		Assert.fail("The class shouldn't be accessible to the lookup class from a different package");
 	}
 }

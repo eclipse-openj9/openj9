@@ -13,7 +13,7 @@ import java.util.TreeMap;
 import examples.PackageExamples;
 
 /*******************************************************************************
- * Copyright (c) 2001, 2019 IBM Corp. and others
+ * Copyright (c) 2001, 2020 IBM Corp. and others
  *
  * This program and the accompanying materials are made available under
  * the terms of the Eclipse Public License 2.0 which accompanies this
@@ -431,7 +431,7 @@ public class LookupAPITests_Bind {
 	 */
 	@Test(groups = { "level.extended" })
 	public void test_Bind_UnrelatedClassLoaders() throws Throwable {
-		ParentCustomClassLoader unrelatedClassLoader = new ParentCustomClassLoader( LookupInTests.class.getClassLoader() );
+		ParentCustomClassLoader unrelatedClassLoader = new ParentCustomClassLoader( LookupAPITests_In_Java8.class.getClassLoader() );
 		Object customLoadedClass = unrelatedClassLoader.loadClass( "com.ibm.j9.jsr292.CustomLoadedClass1" ).newInstance();
 		
 		MethodHandle mh = MethodHandles.lookup().bind( customLoadedClass, "add",  MethodType.methodType( int.class, int.class, int.class) );

@@ -54,6 +54,37 @@
 			<impl>ibm</impl>
 		</impls>
 	</test>
+	
+		<test>
+		<testCaseName>jsr292Test_MH_Lookup_jdk8</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_8.xml$(Q) \
+	-testnames jsr292Test_MH_Lookup_jdk8 \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+		</subsets>
+		<!-- 
+			TODO: Further investigation is needed for running against non-openj9 sdk
+		-->
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
 
 	<test>
 		<testCaseName>jsr292Test_jdk8_special</testCaseName>
@@ -174,7 +205,7 @@
 	</test>
 
 	<test>
-		<testCaseName>jsr292Test_JitCount0_jdk8</testCaseName>
+		<testCaseName>jsr292Test_jdk8_JitCount0</testCaseName>
 		<variations>
 			<variation>-Xjit:count=0</variation>
 		</variations>
@@ -183,6 +214,35 @@
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_8.xml$(Q) \
 	-testnames jsr292Test \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.arm</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>8</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	
+		<test>
+		<testCaseName>jsr292Test_MH_Lookup_jdk8_JitCount0</testCaseName>
+		<variations>
+			<variation>-Xjit:count=0</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng_8.xml$(Q) \
+	-testnames jsr292Test_MH_Lookup_jdk8 \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
@@ -397,15 +457,8 @@
 		</impls>
 	</test>
 
-	<!--
-		TODO: The following test cases specific to Lookup are temporarily excluded in Java 14
-		as there is no backward compatibility of these APIs since Java 14 due to the new changes
-		required at https://github.com/eclipse/openj9/issues/8571. These test cases here
-		(mainly used prior to OpenJ9) will be re-evaluated against the Java 14 Spec and ideally copied
-		as a new version with modification to OpenJ9_Jsr_292_API to meet the new scenarios in Java 14.
-	-->
 	<test>
-		<testCaseName>jsr292Test_Lookup</testCaseName>
+		<testCaseName>jsr292Test_MH_Lookup</testCaseName>
 		<variations>
 			<variation>NoOptions</variation>
 			<variation>Mode195</variation>
@@ -415,12 +468,77 @@
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-	-testnames jsr292Test_Lookup \
+	-testnames jsr292Test_MH_Lookup \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<levels>
 			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>9+</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+
+	<test>
+		<testCaseName>jsr292Test_MH_Lookup_JitCount0</testCaseName>
+		<variations>
+			<variation>-Xjit:count=0</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
+	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames jsr292Test_MH_Lookup \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.arm</platformRequirements>
+		<levels>
+			<level>extended</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>9+</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+	
+	<!--
+		The following Lookup specific test cases are only executed with the JDK version less than Java 14.
+		The same test cases intended for Java 14 are modified and placed in Jsr292_Java14Up
+	-->
+	<test>
+		<testCaseName>jsr292Test_MH_Lookup_JavaUpTo13</testCaseName>
+		<variations>
+			<variation>NoOptions</variation>
+			<variation>Mode195</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-modules mods.modulea,mods.moduleb,mods.modulec --module-path $(Q)$(TEST_RESROOT)$(D)mods$(Q) \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
+	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames jsr292Test_MH_Lookup_JavaUpTo13 \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
 		</levels>
 		<groups>
 			<group>functional</group>
@@ -438,22 +556,23 @@
 	</test>
 
 	<test>
-		<testCaseName>jsr292Test_Lookup_JitCount0</testCaseName>
+		<testCaseName>jsr292Test_MH_Lookup_JavaUpTo13_JitCount0</testCaseName>
 		<variations>
 			<variation>-Xjit:count=0</variation>
 		</variations>
 		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-modules mods.modulea,mods.moduleb,mods.modulec --module-path $(Q)$(TEST_RESROOT)$(D)mods$(Q) \
 	--add-opens=java.base/java.lang=ALL-UNNAMED \
 	-Djava.security.policy=$(Q)$(TEST_RESROOT)$(D)java.policy$(Q) \
 	-cp $(Q)$(TEST_RESROOT)$(D)jsr292test.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
 	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
-	-testnames jsr292Test_Lookup \
+	-testnames jsr292Test_MH_Lookup_JavaUpTo13 \
 	-groups $(TEST_GROUP) \
 	-excludegroups $(DEFAULT_EXCLUDE); \
 	$(TEST_STATUS)</command>
 		<platformRequirements>^arch.arm</platformRequirements>
 		<levels>
-			<level>extended</level>
+			<level>sanity</level>
 		</levels>
 		<groups>
 			<group>functional</group>

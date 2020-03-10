@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  Copyright (c) 2017, 2020 IBM Corp. and others
+
+  This program and the accompanying materials are made available under
+  the terms of the Eclipse Public License 2.0 which accompanies this
+  distribution and is available at https://www.eclipse.org/legal/epl-2.0/
+  or the Apache License, Version 2.0 which accompanies this distribution and
+  is available at https://www.apache.org/licenses/LICENSE-2.0.
+
+  This Source Code may also be made available under the following
+  Secondary Licenses when the conditions for such availability set
+  forth in the Eclipse Public License, v. 2.0 are satisfied: GNU
+  General Public License, version 2 with the GNU Classpath
+  Exception [1] and GNU General Public License, version 2 with the
+  OpenJDK Assembly Exception [2].
+
+  [1] https://www.gnu.org/software/classpath/license.html
+  [2] http://openjdk.java.net/legal/assembly-exception.html
+
+  SPDX-License-Identifier: EPL-2.0 OR Apache-2.0 OR GPL-2.0 WITH Classpath-exception-2.0 OR LicenseRef-GPL-2.0 WITH Assembly-exception
+-->
+
+<playlist xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../TKG/playlist.xsd">
+
+	<!--
+		TODO: The following test cases specific to Lookup are temporarily excluded in Java 14
+		as there is no backward compatibility of these APIs since Java 14 due to the new changes
+		required at https://github.com/eclipse/openj9/issues/8571. These test cases here
+		(mainly used prior to OpenJ9) will be re-evaluated against the Java 14 Spec and copied
+		as a new version with modification to meet the new scenarios in Java 14.
+	-->
+	<test>
+		<testCaseName>jsr292Test_MH_Lookup_Java14up</testCaseName>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-modules mods.modulea,mods.moduleb,mods.modulec \
+	--add-reads mods.moduleb=mods.modulea \
+	--add-reads mods.moduleb=mods.modulec \
+	--module-path $(Q)$(TEST_RESROOT)$(D)mods$(Q) \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292Test_Java14up.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames jsr292Test_MH_Lookup_Java14up \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>14+</subset>
+		</subsets>
+	</test>
+	
+	<test>
+		<testCaseName>jsr292Test_MH_Lookup_Java14up_JitCount0</testCaseName>
+		<variations>
+			<variation>-Xjit:count=0</variation>
+		</variations>
+		<command>$(JAVA_COMMAND) $(JVM_OPTIONS) \
+	--add-modules mods.modulea,mods.moduleb,mods.modulec \
+	--add-reads mods.moduleb=mods.modulea \
+	--add-reads mods.moduleb=mods.modulec \
+	--module-path $(Q)$(TEST_RESROOT)$(D)mods$(Q) \
+	--add-opens=java.base/java.lang=ALL-UNNAMED \
+	-cp $(Q)$(TEST_RESROOT)$(D)jsr292Test_Java14up.jar$(P)$(RESOURCES_DIR)$(P)$(TESTNG)$(P)$(LIB_DIR)$(D)asm-all.jar$(Q) \
+	org.testng.TestNG -d $(REPORTDIR) $(Q)$(TEST_RESROOT)$(D)testng.xml$(Q) \
+	-testnames jsr292Test_MH_Lookup_Java14up \
+	-groups $(TEST_GROUP) \
+	-excludegroups $(DEFAULT_EXCLUDE); \
+	$(TEST_STATUS)</command>
+		<platformRequirements>^arch.arm</platformRequirements>
+		<levels>
+			<level>sanity</level>
+		</levels>
+		<groups>
+			<group>functional</group>
+		</groups>
+		<subsets>
+			<subset>14+</subset>
+		</subsets>
+		<impls>
+			<impl>openj9</impl>
+			<impl>ibm</impl>
+		</impls>
+	</test>
+</playlist>

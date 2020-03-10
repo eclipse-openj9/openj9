@@ -50,14 +50,22 @@
 		</classes>
 	</test>
 
-	<test name="jsr292Test_Lookup">
+	<test name="jsr292Test_MH_Lookup">
 		<classes>
-			<class name="com.ibm.j9.jsr292.LookupAPITests_FindClass"/>
-			<class name="com.ibm.j9.jsr292.LookupAPITests_AccessClass"/>
 			<class name="com.ibm.j9.jsr292.LookupAPITests_Bind"/>
 			<class name="com.ibm.j9.jsr292.LookupAPITests_Find"/>
+			<class name="com.ibm.j9.jsr292.LookupAPITests_DefineClass"/>
+			<class name="com.ibm.j9.jsr292.LookupAPITests_FindClass"/>
 			<class name="com.ibm.j9.jsr292.LookupAPITests_Unreflect"/>
-			<class name="com.ibm.j9.jsr292.api.MethodHandleAPI_dropLookupMode"/>
+		</classes>
+	</test>
+	
+	<test name="jsr292Test_MH_Lookup_JavaUpTo13">
+		<classes>
+			<class name="com.ibm.j9.jsr292.LookupAPITests_AccessClass"/>
+			<class name="com.ibm.j9.jsr292.LookupAPITests_DropLookupMode"/>
+			<class name="com.ibm.j9.jsr292.LookupAPITests_In"/>
+			<class name="com.ibm.j9.jsr292.api.MethodHandleAPI_privateLookupIn"/>
 		</classes>
 	</test>
 

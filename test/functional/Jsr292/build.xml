@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!--
-  Copyright (c) 2016, 2019 IBM Corp. and others
+  Copyright (c) 2016, 2020 IBM Corp. and others
 
   This program and the accompanying materials are made available under
   the terms of the Eclipse Public License 2.0 which accompanies this
@@ -42,10 +42,97 @@
 	<property name="transformerListener" location="${TEST_ROOT}/Utils/src"/>
 	<property name="TestUtilities" location="../TestUtilities/src"/> 
 
+	<property name="mods_name" value="mods"/>
+	<property name="modulea_name" value="mods.modulea"/>
+	<property name="moduleb_name" value="mods.moduleb"/>
+	<property name="modulec_name" value="mods.modulec"/>
+
+	<property name="modulea_src" location="./modules/mods.modulea"/>
+	<property name="moduleb_src" location="./modules/mods.moduleb"/>
+	<property name="modulec_src" location="./modules/mods.modulec"/>
+	
+	<property name="mods_dir" location="./mods"/>
+	<property name="modulea_bin" location="./mods/mods.modulea"/>
+	<property name="moduleb_bin" location="./mods/mods.moduleb"/>
+	<property name="modulec_bin" location="./mods/mods.modulec"/>
+	
 	<target name="init">
 		<mkdir dir="${DEST}"/>
 		<mkdir dir="${build}"/>
 		<mkdir dir="${bootstrapBuild}"/>
+		<mkdir dir="${mods_dir}"/>
+		<mkdir dir="${modulea_bin}"/>
+		<mkdir dir="${moduleb_bin}"/>
+		<mkdir dir="${modulec_bin}"/>
+	</target>
+	
+	<target name="compile_modulec" depends="init" description="Compile the module files in mods.modulec">
+		<echo>Compiling the module files in mods.modulec</echo>
+		<echo>Ant version is ${ant.version}</echo>
+		<property name="compiler.javac" value="${TEST_JDK_HOME}/bin/javac" />
+		<echo>============COMPILER SETTINGS============</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
+		<if>
+			<not>
+				<equals arg1="${JDK_VERSION}" arg2="8"/>
+			</not>
+			<then>
+				<property name="modulec_path" value="--module-path ${mods_dir} -d ${modulec_bin}" />
+				<javac srcdir="${modulec_src}" destdir="${modulec_bin}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${modulec_src}"/>
+					<compilerarg line='${modulec_path}' />
+				</javac>
+			</then>
+		</if>
+	</target>
+
+	<target name="compile_moduleb" depends="init" description="Compile the module files in mods.moduleb">
+		<echo>Compiling the module files in mods.moduleb</echo>
+		<echo>Ant version is ${ant.version}</echo>
+		<property name="compiler.javac" value="${TEST_JDK_HOME}/bin/javac" />
+		<echo>============COMPILER SETTINGS============</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
+		<if>
+			<not>
+				<equals arg1="${JDK_VERSION}" arg2="8"/>
+			</not>
+			<then>
+				<property name="moduleb_path" value="--module-path ${mods_dir} -d ${moduleb_bin}" />
+				<javac srcdir="${moduleb_src}" destdir="${moduleb_bin}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${moduleb_src}"/>
+					<compilerarg line='${moduleb_path}' />
+				</javac>
+			</then>
+		</if>
+	</target>
+	
+	<target name="compile_modulea" depends="init,compile_moduleb,compile_modulec" description="Compile the module files in mods.modulea">
+		<echo>Compiling the module files in mods.modulea</echo>
+		<echo>Ant version is ${ant.version}</echo>
+		<property name="compiler.javac" value="${TEST_JDK_HOME}/bin/javac" />
+		<echo>============COMPILER SETTINGS============</echo>
+		<echo>===fork:                         yes</echo>
+		<echo>===executable:                   ${compiler.javac}</echo>
+		<echo>===debug:                        on</echo>
+		<echo>===destdir:                      ${DEST}</echo>
+		<if>
+			<not>
+				<equals arg1="${JDK_VERSION}" arg2="8"/>
+			</not>
+			<then>
+				<property name="modulea_path" value="--module-path ${mods_dir} -d ${modulea_bin}" />
+				<javac srcdir="${modulea_src}" destdir="${modulea_bin}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
+					<src path="${modulea_src}"/>
+					<compilerarg line='${modulea_path}' />
+				</javac>
+			</then>
+		</if>
 	</target>
 
 	<target name="compile_generator" depends="init" description="Compile SimpleIndyGenerator">
@@ -138,7 +225,7 @@
 		</if>
 	</target>
 
-	<target name="compile" depends="compile_bootstrap, generate_indyn" description="compile the test source " >
+	<target name="compile" depends="compile_bootstrap, generate_indyn, compile_modulea,compile_moduleb,compile_modulec" description="compile the test source " >
 		<echo>Ant version is ${ant.version}</echo>
 		<echo>============COMPILER SETTINGS============</echo>
 		<echo>===fork:                         yes</echo>
@@ -169,6 +256,10 @@
 					<exclude name="**/SamePackageExample.java" />
 					<exclude name="**/LookupAPITests_FindClass.java" />
 					<exclude name="**/LookupAPITests_AccessClass.java"/>
+					<exclude name="**/LookupAPITests_DefineClass.java"/>
+					<exclude name="**/LookupAPITests_DropLookupMode.java"/>
+					<exclude name="**/LookupAPITests_In.java"/>
+					<exclude name="**/MethodHandleAPI_privateLookupIn.java" />
 					<exclude name="**/MethodHandleAPI_dropArgumentsToMatch.java" />
 					
 					<!-- exclude non test files for indyn test -->
@@ -188,10 +279,12 @@
 				</javac>
 			</then>
 			<else>
+				<property name="addModules" value="--add-modules ${modulea_name},${moduleb_name},${modulec_name}  --module-path ${mods_dir}" />
 				<javac srcdir="${src}" destdir="${build}" debug="true" fork="true" executable="${compiler.javac}" includeAntRuntime="false" encoding="ISO-8859-1">
 					<src path="${src}" />
 					<src path="${transformerListener}" />
 					<src path="${TestUtilities}" /> 
+					<compilerarg line='${addModules}' />
 					<!-- exclude non test files for indyn test -->
 					<exclude name="**/indyn/BootstrapMethods.java" />
 					<exclude name="**/indyn/ComplexIndyGenerator.java" />
@@ -216,6 +309,9 @@
 			<fileset dir="${src}/../" includes="*.xml,*.policy" />
 			<fileset dir="${src}/../" includes="*.mk" />
 		</copy>
+		<copy todir="${DEST}/${mods_name}">
+			<fileset dir="${mods_dir}"/>
+		</copy>
 		<jar jarfile="${DEST}/jsr292test.jar" filesonly="true">
 			<fileset dir="${build}"/>
 		</jar>
@@ -227,6 +323,7 @@
 	<target name="clean" depends="dist" description="clean up" >
 		<delete dir="${build}"/>
 		<delete dir="${bootstrapBuild}"/>
+		<delete dir="${mods_dir}"/>
 	</target>
 
 	<target name="build" >
