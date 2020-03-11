@@ -297,7 +297,13 @@ def archive_sdk() {
             }
             // test if the debug-image directory is present
             if (fileExists("${debugImageDir}")) {
-                if (SPEC.contains('zos')) {
+                if (SPEC.contains('aix')) {
+                    // On AIX, .debuginfo files are simple copies of the shared libraries.
+                    // Change all suffixes from .debuginfo to .so; then remove the .so suffix
+                    // from names in the bin directory. This will result in an archive that
+                    // can be extracted overtop of a jdk yielding one that is debuggable.
+                    sh "tar -C ${debugImageDir} -zcvf ${DEBUG_IMAGE_FILENAME} . --transform 's#\\.debuginfo\$#.so#' --transform 's#\\(bin/.*\\)\\.so\$#\\1#' --show-stored-names"
+                } else if (SPEC.contains('zos')) {
                     // Note: to preserve the files ACLs set _OS390_USTAR=Y env variable (see variable files)
                     sh "pax -wvz '-s#${debugImageDir}##' -f ${DEBUG_IMAGE_FILENAME} ${debugImageDir}"
                 } else {
